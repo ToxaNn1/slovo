@@ -23,6 +23,8 @@ import {
 } from '@slovo/language-pack/edition';
 import {
   systemClock,
+  type AppleIdentity,
+  type AppleVerifier,
   type Edition,
   type GoogleIdentity,
   type GoogleVerifier,
@@ -230,6 +232,92 @@ export function createFakeGoogle(clientIds: readonly string[]): FakeGoogle {
   };
 }
 
+/**
+ * The bundle id of the Ukrainian Edition (`editions/uk/edition.json`), the
+ * audience of the fake Apple's tokens unless a test names another: the
+ * backend checks an Apple token against the Edition's bundle id (ADR 0047).
+ */
+export const UK_BUNDLE_ID = 'app.slovo.uk';
+
+/** Who issues Apple identity tokens; the fake's tokens name it unless a test names another. */
+export const APPLE_ISSUER = 'https://appleid.apple.com';
+
+/** What a fake Apple identity token carries, as the fake Apple signed it. */
+interface FakeAppleToken extends AppleIdentity {
+  readonly issuer: string;
+  /** The bundle id of the app the token is for. */
+  readonly audience: string;
+  /** When the token runs out, in milliseconds since the epoch. */
+  readonly expiresAt: number;
+  /** The fake Apple's signature; a token of another signer doesn't check. */
+  readonly signature: string;
+}
+
+/** What makes a token the fake Apple gives differ from the one a valid sign-in needs. */
+interface FakeAppleTokenOptions extends FakeTokenOptions {
+  /** Who issued it; Apple unless given. */
+  readonly issuer?: string;
+}
+
+/** How long an Apple identity token lasts. */
+const APPLE_TOKEN_MS = 10 * 60 * 1000;
+
+const FAKE_APPLE_SIGNATURE = 'signed-by-the-fake-apple';
+
+/**
+ * A fake Apple, in two parts: the sign-in sheet's side, which gives the app
+ * identity tokens, and the verifier's side, which checks them the way the
+ * real verifier checks Apple's: the signature, the issuer, the expiry against
+ * the test's clock and the audience against the Edition's bundle id.
+ */
+export interface FakeApple extends AppleVerifier {
+  /**
+   * An identity token for the email, as the sign-in sheet would give it: from
+   * Apple, for the Ukrainian Edition's app, for ten minutes, unless the test
+   * says otherwise.
+   */
+  token(
+    identity: Partial<AppleIdentity> & Pick<AppleIdentity, 'email'>,
+    options?: FakeAppleTokenOptions,
+  ): string;
+}
+
+export function createFakeApple(): FakeApple {
+  return {
+    token({ email, subject = `apple-${email}` }, options = {}) {
+      const token: FakeAppleToken = {
+        subject,
+        email,
+        issuer: options.issuer ?? APPLE_ISSUER,
+        audience: options.audience ?? UK_BUNDLE_ID,
+        expiresAt: (options.expiresAt ?? new Date(Date.now() + APPLE_TOKEN_MS)).getTime(),
+        signature: options.signed === false ? 'signed-by-someone-else' : FAKE_APPLE_SIGNATURE,
+      };
+      return Buffer.from(JSON.stringify(token)).toString('base64url');
+    },
+    verify(idToken, bundleId) {
+      let token: FakeAppleToken;
+      try {
+        token = JSON.parse(Buffer.from(idToken, 'base64url').toString()) as FakeAppleToken;
+      } catch {
+        return Promise.resolve({ ok: false, reason: 'invalid-token' });
+      }
+      if (
+        token.signature !== FAKE_APPLE_SIGNATURE ||
+        token.issuer !== APPLE_ISSUER ||
+        token.expiresAt <= Date.now()
+      ) {
+        return Promise.resolve({ ok: false, reason: 'invalid-token' });
+      }
+      if (token.audience !== bundleId) {
+        return Promise.resolve({ ok: false, reason: 'foreign-audience' });
+      }
+      const { subject, email } = token;
+      return Promise.resolve({ ok: true, identity: { subject, email } });
+    },
+  };
+}
+
 /** The SHA-256 of a file's bytes, as 64 lowercase hex digits. */
 export function sha256(bytes: Uint8Array): string {
   return createHash('sha256').update(bytes).digest('hex');
@@ -361,6 +449,8 @@ interface TestAppOptions {
   readonly googleClientIds?: readonly string[];
   /** The Google verifier; the fake Google of the client ids unless given. */
   readonly google?: GoogleVerifier;
+  /** The Apple verifier; the fake Apple unless given. */
+  readonly apple?: AppleVerifier;
   /** Where the ids of new Collection Links come from; the system's randomness unless given. */
   readonly random?: Random;
   /** How many proxies in front of the backend it trusts; none unless given. */
@@ -371,7 +461,7 @@ interface TestAppOptions {
 
 /**
  * The backend built by its composition root, with the test's clock, a fake
- * Mailer and a fake Google, and the ways a test sends it requests: the API's client, or a
+ * Mailer, a fake Google and a fake Apple, and the ways a test sends it requests: the API's client, or a
  * request of its own. Every request goes to the app in process, so no port is
  * opened, and comes on a connection: from the backend's own IP address unless
  * the test names another, so the limits per IP of one test never reach
@@ -383,6 +473,7 @@ export function testApp({
   editions = readEditions(EDITIONS_DIR),
   googleClientIds = [TEST_GOOGLE_CLIENT_ID],
   google: givenGoogle,
+  apple: givenApple,
   random = systemRandom,
   trustedProxyHops = 0,
   onAnswer,
@@ -390,6 +481,7 @@ export function testApp({
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
   const mailer = createFakeMailer();
   const google = createFakeGoogle(googleClientIds);
+  const apple = createFakeApple();
   const reports: ErrorReport[] = [];
   const app = createApp({
     database,
@@ -399,6 +491,7 @@ export function testApp({
     editions,
     mailer,
     google: givenGoogle ?? google,
+    apple: givenApple ?? apple,
     authSecret: TEST_AUTH_SECRET,
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
@@ -450,6 +543,8 @@ export function testApp({
     mailer,
     /** The fake Google the backend verifies tokens with, and the tokens its sign-in sheet gives. */
     google,
+    /** The fake Apple the backend verifies tokens with, and the tokens its sign-in sheet gives. */
+    apple,
     /** Every report of an unexpected failure the backend sent, oldest first. */
     reports: reports as readonly ErrorReport[],
     database,

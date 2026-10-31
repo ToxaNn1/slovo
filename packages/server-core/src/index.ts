@@ -22,6 +22,9 @@ export { createSync, type Sync, type SyncChange, type SyncPage } from './sync/sy
 export {
   systemClock,
   type AccountRecord,
+  type AppleIdentity,
+  type AppleTokenCheck,
+  type AppleVerifier,
   type Authenticator,
   type Clock,
   type CodeCheck,

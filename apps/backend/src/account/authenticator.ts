@@ -28,8 +28,9 @@ const SIGN_IN_CODE = {
 /** How long a Session lasts after its last use: one used now and then never ends. */
 const SESSION_SECONDS = 90 * 24 * 60 * 60;
 
-/** How better-auth names Google among the Sign-in methods. */
+/** How better-auth names Google and Apple among the Sign-in methods. */
 const GOOGLE = 'google';
+const APPLE = 'apple';
 
 /** The kind of Sign-in code: better-auth's email OTP also has others SLOVO never uses. */
 const SIGN_IN = 'sign-in';
@@ -170,6 +171,44 @@ export function createAuthenticator(
     return readValue(code.value).triesSpent;
   }
 
+  /**
+   * better-auth's own social sign-in verifies the token itself, with no way
+   * in for the server Core's verifiers, so the adapter does what it would:
+   * finds or creates the Account, records the identity of the provider
+   * (Google, Apple) as a Sign-in method and starts a Session (ADR 0047).
+   */
+  async function signInWith(
+    providerId: typeof GOOGLE | typeof APPLE,
+    { subject, email }: { readonly subject: string; readonly email: string },
+  ) {
+    const { internalAdapter, secret } = await auth.$context;
+    const found = await internalAdapter.findUserByEmail(email);
+    // SLOVO asks for no name; the email is the provider's.
+    const user =
+      found?.user ??
+      (await internalAdapter.createUser(
+        { email, emailVerified: true, name: '' },
+        { method: 'oauth', oauth: { providerId } },
+      ));
+    // By the table: with the renamed fields (ADR 0030) better-auth reads a
+    // Sign-in method back with the Account's id where the subject should be.
+    const [linked] = await database.db
+      .select({ id: signInMethods.id })
+      .from(signInMethods)
+      .where(
+        and(
+          eq(signInMethods.accountId, user.id),
+          eq(signInMethods.providerId, providerId),
+          eq(signInMethods.providerAccountId, subject),
+        ),
+      );
+    if (linked === undefined) {
+      await internalAdapter.linkAccount({ userId: user.id, providerId, accountId: subject });
+    }
+    const session = await internalAdapter.createSession(user.id);
+    return { token: signedToken(session.token, secret), account: accountRecord(user) };
+  }
+
   return {
     async createCode(email) {
       const { internalAdapter } = await auth.$context;
@@ -210,42 +249,9 @@ export function createAuthenticator(
       }
     },
 
-    // better-auth's own social sign-in verifies the token itself, with no
-    // way in for the server Core's verifier, so the adapter does what it
-    // would: finds or creates the Account, records the Google identity as a
-    // Sign-in method and starts a Session.
-    async signInWithGoogle({ subject, email }) {
-      const { internalAdapter, secret } = await auth.$context;
-      const found = await internalAdapter.findUserByEmail(email);
-      // SLOVO asks for no name; the email is verified by Google.
-      const user =
-        found?.user ??
-        (await internalAdapter.createUser(
-          { email, emailVerified: true, name: '' },
-          { method: 'oauth', oauth: { providerId: GOOGLE } },
-        ));
-      // By the table: with the renamed fields (ADR 0030) better-auth reads a
-      // Sign-in method back with the Account's id where the subject should be.
-      const [linked] = await database.db
-        .select({ id: signInMethods.id })
-        .from(signInMethods)
-        .where(
-          and(
-            eq(signInMethods.accountId, user.id),
-            eq(signInMethods.providerId, GOOGLE),
-            eq(signInMethods.providerAccountId, subject),
-          ),
-        );
-      if (linked === undefined) {
-        await internalAdapter.linkAccount({
-          userId: user.id,
-          providerId: GOOGLE,
-          accountId: subject,
-        });
-      }
-      const session = await internalAdapter.createSession(user.id);
-      return { token: signedToken(session.token, secret), account: accountRecord(user) };
-    },
+    signInWithGoogle: (identity) => signInWith(GOOGLE, identity),
+
+    signInWithApple: (identity) => signInWith(APPLE, identity),
 
     async sessionOf(token) {
       const session = await auth.api.getSession({ headers: bearerHeaders(token) });

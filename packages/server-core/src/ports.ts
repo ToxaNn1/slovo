@@ -105,6 +105,32 @@ export interface GoogleVerifier {
   verify(idToken: string): Promise<GoogleTokenCheck>;
 }
 
+/** Who an Apple identity token names, as Apple signed it. */
+export interface AppleIdentity {
+  /** Apple's own id of the person for SLOVO's apps, which never changes; the email may. */
+  readonly subject: string;
+  /** The email as the token carries it: the reader's own, or a private relay address (ADR 0047). */
+  readonly email: string;
+}
+
+/** What verifying an Apple identity token gives. */
+export type AppleTokenCheck =
+  | { readonly ok: true; readonly identity: AppleIdentity }
+  /** The token is not an Apple identity token, its signature doesn't check, or it has expired. */
+  | { readonly ok: false; readonly reason: 'invalid-token' }
+  /** The token was issued to an app that is not the Edition's: its audience is not the bundle id. */
+  | { readonly ok: false; readonly reason: 'foreign-audience' };
+
+/**
+ * Verifies Apple identity tokens (`jose` with Apple's kept keys in the
+ * backend): the signature against Apple's keys, the issuer, the expiry and
+ * the audience against the Edition's bundle id, SLOVO's client id at Apple
+ * (ADR 0047).
+ */
+export interface AppleVerifier {
+  verify(idToken: string, bundleId: string): Promise<AppleTokenCheck>;
+}
+
 /** What a sign-in that proved its identity gives: a new Session of the Account. */
 export interface SignedIn {
   readonly token: string;
@@ -134,6 +160,12 @@ export interface Authenticator {
    * Account once. The email is verified and normalised already.
    */
   signInWithGoogle(identity: GoogleIdentity): Promise<SignedIn>;
+  /**
+   * Signs in the Account of the identity's email, creating it when the email
+   * has none, and records the Apple identity as a Sign-in method of the
+   * Account once. The email is normalised already.
+   */
+  signInWithApple(identity: AppleIdentity): Promise<SignedIn>;
   /**
    * The Session the token carries, by its id, with its Account, if the
    * Session is on. Using a Session extends it.
