@@ -30,6 +30,7 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import { buildWordCard } from '../entries/word-card';
 import type { WordOfTheDay, WordOfTheDayChoice } from './word-of-the-day';
+import type { QuickQuestion } from '../game/quick-question';
 
 /** How long a card must stay on screen before its Entry counts as Seen. */
 export const SEEN_DWELL_MS = 500;
@@ -67,8 +68,11 @@ const SPACING: Readonly<Record<MixKindWeight, (every: number) => number>> = {
  */
 const REVIEW_EVERY = 3;
 
-/** Whether the card is no Feed Notice, so it counts in the turns and the Review slots (ADR 0054). */
-const takesTurns = (card: FeedCard) => card.kind !== 'notice';
+/**
+ * Whether the card is no Feed Notice and no Quick Question, so it counts in
+ * the turns and the Review slots (ADR 0054).
+ */
+const takesTurns = (card: FeedCard) => card.kind !== 'notice' && card.kind !== 'quick-question';
 
 /**
  * The Feed of one app session. Its cards are the ones shown so far, oldest
@@ -131,6 +135,12 @@ export interface Feed {
    * doesn't link that Correction.
    */
   openLinkedCorrection(position: number, correctionId: string): Promise<number | undefined>;
+  /**
+   * Keeps the option the reader picked on the Quick Question at `position`
+   * and resolves whether it is right; its card then carries the option.
+   * Nothing when no Quick Question not answered yet is there.
+   */
+  answerQuickQuestion(position: number, option: number): Promise<boolean | undefined>;
 }
 
 /**
@@ -350,6 +360,7 @@ export async function openFeed({
   seen,
   dayTurned,
   opened,
+  quickQuestion,
 }: {
   entries: Entries;
   userState: UserState;
@@ -366,6 +377,14 @@ export async function openFeed({
   seen: Pick<Subject<string>, 'publish'>;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
   opened: Pick<Subject<OpenedEntry>, 'subscribe'>;
+  /**
+   * The Quick Question and how often it comes, read for each card: one card
+   * in `every()` that is no Feed Notice, nothing while it is off.
+   */
+  quickQuestion?: {
+    every(): number | undefined;
+    questions: Pick<QuickQuestion, 'build' | 'answer'>;
+  };
 }): Promise<Feed> {
   /** The cards of the session and the reader's place among them. */
   const session = createFeedSession();
@@ -468,6 +487,13 @@ export async function openFeed({
       session.startCycle();
     }
     const id = nextEntryId(cycle.unseen(), session, eligibleDue(cycle, knowledge), kindWeights());
+    // A due Review goes before the Quick Question (ADR 0066), and the card
+    // after the end-of-Cycle card, which starts the new Cycle, is an Entry's.
+    const due = id !== undefined && knowledge.state.shown.get(id) === 'review';
+    if (!due && !atEnd) {
+      const asked = await addQuickQuestion();
+      if (asked !== undefined) return asked;
+    }
     let card: FeedCard = { kind: 'end-of-cycle' };
     if (id !== undefined) {
       const entryCard = await buildFeedCard(entries, id);
@@ -477,6 +503,38 @@ export async function openFeed({
     session.add(card, tooEarly);
     subscribers.tell();
     return card;
+  }
+
+  /**
+   * Adds a Quick Question when it is its turn: `every - 1` cards that take
+   * turns came since the last one, or since the session opened.
+   */
+  async function addQuickQuestion(): Promise<FeedCard | undefined> {
+    const every = quickQuestion?.every();
+    if (quickQuestion === undefined || every === undefined) return undefined;
+    const lastAsked = session.cards.findLastIndex((card) => card.kind === 'quick-question');
+    const since = session.cards.slice(lastAsked + 1).filter(takesTurns);
+    if (since.length < every - 1) return undefined;
+    const content = await quickQuestion.questions.build(since.at(-1)?.entryId);
+    if (content === undefined) return undefined;
+    const card: FeedCard = { ...content, kind: 'quick-question' };
+    session.add(card);
+    subscribers.tell();
+    return card;
+  }
+
+  async function answerQuickQuestion(
+    position: number,
+    option: number,
+  ): Promise<boolean | undefined> {
+    const card = session.cards[position];
+    if (quickQuestion === undefined || card?.kind !== 'quick-question') return undefined;
+    if (card.answered !== undefined) return undefined;
+    const right = await quickQuestion.questions.answer(card, option);
+    const answered: FeedCard = { ...card, answered: option };
+    session.renew((each) => (each === card ? answered : each));
+    subscribers.tell();
+    return right;
   }
 
   async function insertLinkedCorrection(
@@ -801,5 +859,7 @@ export async function openFeed({
     next,
     openLinkedCorrection: (position, correctionId) =>
       inTurn(() => insertLinkedCorrection(position, correctionId)),
+    answerQuickQuestion: (position, option) =>
+      inTurn(() => answerQuickQuestion(position, option)),
   };
 }

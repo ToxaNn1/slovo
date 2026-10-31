@@ -59,7 +59,7 @@ async function kindsOf(feed: Feed, count: number): Promise<string> {
   return feed.cards
     .slice(0, count)
     .map((card) =>
-      card.kind === 'notice' || card.kind === 'end-of-cycle' ? '' : letter[card.kind],
+      'entryId' in card && card.entryId !== undefined ? letter[card.kind] : '',
     )
     .join('');
 }

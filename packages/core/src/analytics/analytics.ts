@@ -31,6 +31,8 @@ export interface AnalyticsEvents {
   readonly dailyCrosswordSolved: { readonly date: string };
   /** The reader answered an Entry due for Review. */
   readonly reviewAnswered: { readonly mark: 'known' | 'unknown' };
+  /** The reader answered a Quick Question in the Feed, right or not. */
+  readonly quickQuestionAnswered: { readonly right: boolean };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 

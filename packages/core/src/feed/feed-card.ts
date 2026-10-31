@@ -2,6 +2,7 @@ import type { Knowledge } from '../knowledge/knowledge';
 import type { AnyEntryCard } from './entry-feed-card';
 import type { FeedNoticeContent } from './feed-notices';
 import type { LocalDate } from '../local-date';
+import type { QuickQuestionContent } from '../game/quick-question';
 
 export type {
   AnyEntryCard,
@@ -28,13 +29,29 @@ export type FeedNoticeCard = FeedNoticeContent & {
 };
 
 /**
+ * The card of a Quick Question: one pick Round of an enabled Game Mode over
+ * an Eligible Entry, in a Feed slot of its own. Like a Feed Notice it counts
+ * in no turn and no Review slot and makes nothing Seen; `answered` is the
+ * option the reader picked, once they did.
+ */
+export type QuickQuestionCard = QuickQuestionContent & {
+  readonly kind: 'quick-question';
+  readonly entryId?: undefined;
+  readonly review?: undefined;
+  readonly answered?: number;
+};
+
+/**
  * One card of the Feed: an Entry, the end-of-Cycle card that tells the
  * reader every live Entry is Seen and the next card starts a new Cycle, or a
- * Feed Notice. The end-of-Cycle card and a Feed Notice show no Entry, so any
- * card's `entryId` reads undefined there.
+ * Feed Notice. The end-of-Cycle card, a Feed Notice and a Quick Question show
+ * no Entry as theirs, so any card's `entryId` reads undefined there.
  */
 export type FeedCard =
-  AnyEntryCard | { readonly kind: 'end-of-cycle'; readonly entryId?: undefined } | FeedNoticeCard;
+  | AnyEntryCard
+  | { readonly kind: 'end-of-cycle'; readonly entryId?: undefined }
+  | FeedNoticeCard
+  | QuickQuestionCard;
 
 /**
  * The card as a Review, labelled «Повторення», while the Entry's card shows
