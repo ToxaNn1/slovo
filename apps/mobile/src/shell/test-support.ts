@@ -9,15 +9,17 @@ import {
   openUserState,
   trackChanges,
   type Clock,
+  type Edition,
   type FeatureSwitch,
   type Random,
   type Schedule,
+  type UserSettings,
 } from '@slovo/core';
 import { createFakeBackend, createMemoryContentPort } from '@slovo/core/testing';
 
 import { edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
-import type { Shell } from '../shell-value';
+import type { EditionSwitches, OpenedSettings, Shell } from '../shell-value';
 
 // Helpers the Jest tests share to draw a route under `ShellProvider`. No screen or module of the app imports them.
 
@@ -36,6 +38,30 @@ export function opened<T>(value: T): Opening<T> {
     reopen: () => Promise.resolve(),
     subscribe: () => () => undefined,
   };
+}
+
+/**
+ * The remote Feature Switches already open, with the Edition in effect as
+ * `edition` has it, for a screen drawn under the Language Pack's gate, so a
+ * test says which switches are on by the Edition it loads.
+ */
+export function switchedTo(edition: Edition): Opening<EditionSwitches> {
+  return opened({ edition, subscribe: () => () => undefined, ask: () => Promise.resolve(false) });
+}
+
+/**
+ * The settings already open over a user state of their own, at the Edition's
+ * defaults with `changes`, for a screen drawn under `SettingsProvider`; what
+ * the screen changes, `settings.read()` gives back.
+ */
+export async function settingsAt(
+  changes: Partial<UserSettings> = {},
+): Promise<Opening<OpenedSettings>> {
+  const settings = createSettings({
+    userState: await openUserState({ port: createMemoryUserStatePort() }),
+    defaults: edition.userSettingDefaults,
+  });
+  return opened({ settings, current: await settings.update(changes) });
 }
 
 /** A random source that gives the same numbers on every run. */

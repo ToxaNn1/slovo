@@ -21,7 +21,7 @@ import { edition, editionStrings } from '../edition/edition';
 import { screenSettled } from '../entries/use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 import { MoodButtonAndSheet } from './mood';
 
 /** The Ukrainian Edition with the Account off, and moods on or off. */
@@ -34,7 +34,7 @@ function editionWith({ moods }: { moods: boolean }): Edition {
 }
 
 /** The Edition the shell reads, as it ships unless a test turns moods off. */
-let mockEdition: Edition;
+let editionInEffect: Edition;
 
 /** The user state the settings and the composition keep, one for the whole file. */
 let userState: Awaited<ReturnType<typeof openUserState>>;
@@ -48,7 +48,6 @@ let composition: Composition;
 /** The screens the shell opens. */
 const mockPush = jest.fn<(href: string) => void>();
 
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 jest.mock('expo-router', () => ({
   useRouter: () => ({ push: mockPush }),
   // No stack of links holds anything yet, so the card opens on top.
@@ -99,13 +98,13 @@ beforeAll(async () => {
 beforeEach(async () => {
   jest.useFakeTimers();
   mockPush.mockClear();
-  mockEdition = editionWith({ moods: true });
+  editionInEffect = editionWith({ moods: true });
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
       words,
     }),
-    edition: mockEdition,
+    edition: editionInEffect,
     userState,
     clock,
     random: systemRandom,
@@ -141,6 +140,7 @@ async function renderHeader() {
       <ShellProvider
         shell={testShell({
           userState: opened(trackChanges({ userState, clock })),
+          remoteSwitches: switchedTo(editionInEffect),
           composition: opened(composition),
         })}
       >
@@ -237,7 +237,7 @@ describe('«Слово під настрій»', () => {
   });
 
   it('shows no 🎲 while moods are off in effect', async () => {
-    mockEdition = editionWith({ moods: false });
+    editionInEffect = editionWith({ moods: false });
     await renderHeader();
 
     expect(screen.queryByRole('button', { name: strings.title })).not.toBeOnTheScreen();

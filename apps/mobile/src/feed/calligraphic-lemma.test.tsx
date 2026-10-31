@@ -19,7 +19,7 @@ import config from 'slovo-edition/config';
 
 import HomeScreen from '../app/index';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
 import { edition, editionStrings, editionTokens } from '../edition/edition';
@@ -38,7 +38,7 @@ jest.mock('expo-constants', () => ({
 }));
 
 /** The Ukrainian Edition in effect, with `calligraphy` as the test sets it. */
-let mockEdition: Edition;
+let editionInEffect: Edition;
 
 /** The user state the settings and the composition keep, opened afresh for each test. */
 let userState: Awaited<ReturnType<typeof openUserState>>;
@@ -48,7 +48,6 @@ let composition: Composition;
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 // The Entry card's action row has its own tests.
 jest.mock('../entries/entry-actions', () => ({
   EntryActions: () => null,
@@ -93,7 +92,7 @@ function word(id: string, lemma: string): Word {
 /** Opens the composition over two Words, with the Edition's `calligraphy` on or off. */
 async function open(calligraphy: boolean) {
   const shipped = loadEdition(config);
-  mockEdition = {
+  editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
       feature === 'calligraphy' ? calligraphy : shipped.isFeatureEnabled(feature),
@@ -108,7 +107,7 @@ async function open(calligraphy: boolean) {
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
       words: [word('w_sumyrnyi', 'сумирний'), word('w_lahidnyi', 'лагідний')],
     }),
-    edition: mockEdition,
+    edition: editionInEffect,
     userState: userState,
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     // The first Word in each draw, so each opening shows the same Word of the Day.
@@ -141,6 +140,7 @@ const shell = () =>
         clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
       }),
     ),
+    remoteSwitches: switchedTo(editionInEffect),
     composition: opened(composition),
   });
 

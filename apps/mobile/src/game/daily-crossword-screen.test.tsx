@@ -18,19 +18,12 @@ import GameLayout from '../app/game/_layout';
 import DailyCrosswordScreen from '../app/game/crossword';
 import { edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { SettingsProvider } from '../settings/settings';
+import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SCREEN_OPEN_TIMEOUT_MS } from '../entries/open-screen';
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
-
-jest.mock('../edition/remote-switches', () => ({
-  useEditionInEffect: () =>
-    jest.requireActual<typeof import('../edition/edition')>('../edition/edition').edition,
-}));
-jest.mock('../settings/settings', () => ({
-  useSettings: () => ({ current: { hideStreak: false, selfCheck: false } }),
-}));
 
 /** A Word of one Category, with nothing but what the Game reads. */
 const word = (index: number): Word => ({
@@ -101,14 +94,20 @@ async function renderGame() {
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });
-  const shell = testShell({ composition: opened(composition) });
+  const shell = testShell({
+    composition: opened(composition),
+    remoteSwitches: switchedTo(edition),
+    settings: await settingsAt(),
+  });
   const app = renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
           <ShellProvider shell={shell}>
             <EditionProvider edition={edition} strings={editionStrings}>
-              <Slot />
+              <SettingsProvider>
+                <Slot />
+              </SettingsProvider>
             </EditionProvider>
           </ShellProvider>
         </SafeAreaProvider>

@@ -22,32 +22,33 @@ import config from 'slovo-edition/config';
 
 import { edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { SettingsProvider } from '../settings/settings';
+import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { EntryActions } from './entry-actions';
 
 /** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
-const mockEdition = loadEdition(config);
+const shippedEdition = loadEdition(config);
 
 /** The composition the card's actions change, opened afresh for each test. */
 let composition: Composition;
 
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 /** Whether Mistake Reports are on in effect, as the Edition ships them unless a test turns them off. */
-let mockMistakeReportsOn: boolean;
+let mistakeReportsOn: boolean;
 /** Whether the Knowledge switch is on in effect, as the Edition ships it unless a test turns it off. */
-let mockKnowledgeOn: boolean;
+let knowledgeOn: boolean;
 
-// The buttons of the action row as the Edition ships them, without the settings and the Mix.
-jest.mock('../shown-in-effect', () => ({
-  useShown: () => ({
-    entryButtons: {
-      shareCard: true,
-      pronunciation: true,
-      knowledge: mockKnowledgeOn,
-      mistakeReport: mockMistakeReportsOn,
-    },
-  }),
-}));
+/** The Edition in effect: as it ships, with Mistake Reports or the Knowledge switch off when a test turns them off. */
+const editionInEffect = (): typeof shippedEdition => ({
+  ...shippedEdition,
+  isFeatureEnabled: (feature) => {
+    if (feature === 'mistakeReports') return mistakeReportsOn;
+    if (feature === 'knowledge') return knowledgeOn;
+    return shippedEdition.isFeatureEnabled(feature);
+  },
+});
+
+/** The settings as they ship, opened afresh for each test. */
+let settings: Awaited<ReturnType<typeof settingsAt>>;
 
 /** The Core's Mistake Reports over a fake backend, opened afresh for each test. */
 let mistakeReports: MistakeReports;
@@ -65,6 +66,8 @@ let countersApi: FakeBackend;
 const shell = () =>
   testShell({
     composition: opened(composition),
+    remoteSwitches: switchedTo(editionInEffect()),
+    settings,
     mistakeReports: mockReportsOpening ?? opened(mistakeReports),
     counterReads: opened(counterReads),
     shareCard: () => Promise.resolve('closed'),
@@ -169,26 +172,27 @@ beforeEach(async () => {
       synonymRows: [row],
       tips: [tip],
     }),
-    edition: mockEdition,
+    edition: shippedEdition,
     userState,
     clock,
     random: systemRandom,
   });
   countersApi = createFakeBackend();
   counterReads = openCounterReads({
-    edition: mockEdition,
+    edition: shippedEdition,
     backend: countersApi.backend,
     userState,
     clock,
   });
-  mockMistakeReportsOn = true;
+  mistakeReportsOn = true;
   mockReportsOpening = undefined;
-  mockKnowledgeOn = true;
+  knowledgeOn = true;
+  settings = await settingsAt();
   reportsApi = createFakeBackend();
   mistakeReports = openMistakeReports({
     userState,
     backend: reportsApi.backend,
-    edition: mockEdition,
+    edition: shippedEdition,
     appVersion: '0.8.14',
     contentVersion: 42,
     clock,
@@ -217,9 +221,11 @@ async function renderCard(entryId: string): Promise<AnyEntryCard> {
       <ShellProvider shell={shell()}>
         <EditionProvider edition={edition} strings={editionStrings}>
           <HapticsProvider haptics={haptics}>
-            <UndoToastProvider>
-              <EntryCard card={card} actions={<EntryActions card={card} />} />
-            </UndoToastProvider>
+            <SettingsProvider>
+              <UndoToastProvider>
+                <EntryCard card={card} actions={<EntryActions card={card} />} />
+              </UndoToastProvider>
+            </SettingsProvider>
           </HapticsProvider>
         </EditionProvider>
       </ShellProvider>
@@ -294,9 +300,11 @@ describe.each([
         <ShellProvider shell={shell()}>
           <EditionProvider edition={edition} strings={editionStrings}>
             <HapticsProvider haptics={haptics}>
-              <UndoToastProvider>
-                <EntryCard card={card} actions={<EntryActions card={card} />} selfCheck />
-              </UndoToastProvider>
+              <SettingsProvider>
+                <UndoToastProvider>
+                  <EntryCard card={card} actions={<EntryActions card={card} />} selfCheck />
+                </UndoToastProvider>
+              </SettingsProvider>
             </HapticsProvider>
           </EditionProvider>
         </ShellProvider>
@@ -453,7 +461,7 @@ describe.each([
   });
 
   it('has no flag while Mistake Reports are off in effect', async () => {
-    mockMistakeReportsOn = false;
+    mistakeReportsOn = false;
     await renderCard(entryId);
 
     expect(screen.getByTestId('favorite-button')).toBeOnTheScreen();
@@ -517,7 +525,7 @@ describe.each([
   });
 
   it('is not read while the Knowledge switch hides it', async () => {
-    mockKnowledgeOn = false;
+    knowledgeOn = false;
     await renderCard(entryId);
     await settle();
 

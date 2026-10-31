@@ -11,16 +11,10 @@ import {
   editionTokens,
   seasonalMotifs,
 } from '../edition/edition';
+import { SettingsProvider } from '../settings/settings';
+import { ShellProvider } from '../shell-value';
 import { DecorInEffect } from './decor-in-effect';
-
-// The Decor reads the Feature Switches in effect and the settings through these.
-let mockSeasonalDecor = true;
-jest.mock('../settings/settings', () => ({
-  useSettings: () => ({ current: { seasonalDecor: mockSeasonalDecor }, update: () => undefined }),
-}));
-jest.mock('../edition/remote-switches', () => ({
-  useEditionInEffect: () => ({ isFeatureEnabled: () => true }),
-}));
+import { settingsAt, switchedTo, testShell } from './test-support';
 
 /** The Ukrainian Edition's plain Decor and its motifs. */
 const { background, divider } = editionDecor;
@@ -54,24 +48,34 @@ function drawnPaths(): string[] {
 
 const pathsOf = ({ layers }: DecorMotif) => layers.map(({ path }) => path);
 
-/** The screen background and a divided card under the Decor in effect at the system time. */
-async function renderDecor() {
+/**
+ * The screen background and a divided card under the Decor in effect at the
+ * system time, over the Edition as it ships and «Сезонний декор» as set.
+ */
+async function renderDecor({ seasonalDecor = true } = {}) {
+  const shell = testShell({
+    remoteSwitches: switchedTo(edition),
+    settings: await settingsAt({ seasonalDecor }),
+  });
   await render(
-    <EditionProvider edition={edition} strings={editionStrings}>
-      <TokensProvider tokens={editionTokens} colorScheme="light">
-        <DecorInEffect clock={kyiv}>
-          <DecorBackground />
-          <FontSizePreview lemma="Лемá" definition="Тлумачення" />
-        </DecorInEffect>
-      </TokensProvider>
-    </EditionProvider>,
+    <ShellProvider shell={shell}>
+      <EditionProvider edition={edition} strings={editionStrings}>
+        <TokensProvider tokens={editionTokens} colorScheme="light">
+          <SettingsProvider>
+            <DecorInEffect clock={kyiv}>
+              <DecorBackground />
+              <FontSizePreview lemma="Лемá" definition="Тлумачення" />
+            </DecorInEffect>
+          </SettingsProvider>
+        </TokensProvider>
+      </EditionProvider>
+    </ShellProvider>,
   );
 }
 
 describe('the Decor in effect', () => {
   afterEach(() => {
     jest.useRealTimers();
-    mockSeasonalDecor = true;
   });
 
   it('draws the winter tile and centre on a winter day', async () => {
@@ -113,9 +117,8 @@ describe('the Decor in effect', () => {
   });
 
   it('draws the plain Decor with «Сезонний декор» off', async () => {
-    mockSeasonalDecor = false;
     jest.useFakeTimers({ now: new Date('2027-01-15T12:00:00+02:00') });
-    await renderDecor();
+    await renderDecor({ seasonalDecor: false });
 
     expect(drawnPaths()).toEqual(
       expect.arrayContaining([...pathsOf(background.tile), ...pathsOf(divider.centre)]),

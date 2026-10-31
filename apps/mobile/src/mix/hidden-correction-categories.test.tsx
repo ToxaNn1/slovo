@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 import { type Correction } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
@@ -20,16 +20,14 @@ import config from 'slovo-edition/config';
 import HiddenScreen from '../app/settings/hidden';
 import { edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 import { useHide } from './hiding';
 
 /** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
-const mockEdition = loadEdition(config);
+const shippedEdition = loadEdition(config);
 
 /** The composition the card and the Hidden screen read, opened afresh for each test. */
 let composition: Composition;
-
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 
 /** The Language Pack's Categories of Corrections, in its order. */
 const work = { id: 'work', displayName: 'На роботі' };
@@ -63,7 +61,7 @@ beforeEach(async () => {
       correctionCategories: [work, shop],
       corrections: [correction('c_work', work.id), correction('c_shop', shop.id)],
     }),
-    edition: mockEdition,
+    edition: shippedEdition,
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-25T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
@@ -110,7 +108,10 @@ function CardScreen({ card }: { card: EntryFeedCard }) {
 /** The app with the card of the Entry as its first screen and the Hidden screen a push away. */
 async function openHideChoice(entryId: string) {
   const card = await cardOf(entryId);
-  const shell = testShell({ composition: opened(composition) });
+  const shell = testShell({
+    composition: opened(composition),
+    remoteSwitches: switchedTo(shippedEdition),
+  });
   const app = renderRouter(
     {
       _layout: () => (

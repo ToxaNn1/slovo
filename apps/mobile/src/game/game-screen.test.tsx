@@ -21,7 +21,8 @@ import config from 'slovo-edition/config';
 import GameScreen from '../app/game';
 import { edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { SettingsProvider } from '../settings/settings';
+import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 
 /** The Ukrainian Edition with the given Feature Switches turned off. */
 function editionWithout(switchedOff: readonly string[]): Edition {
@@ -36,7 +37,7 @@ function editionWithout(switchedOff: readonly string[]): Edition {
 }
 
 /** The Edition the screen reads, as it ships unless a test turns a switch off. */
-let mockEdition: Edition;
+let editionInEffect: Edition;
 
 /** The composition the screen reads, opened afresh for each test. */
 let composition: Composition;
@@ -66,10 +67,6 @@ async function moveApp(to: 'background' | 'foreground') {
   });
 }
 
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
-jest.mock('../settings/settings', () => ({
-  useSettings: () => ({ current: { hideStreak: false, selfCheck: false } }),
-}));
 jest.mock('expo-router', () => ({
   Redirect: () => null,
   useRouter: () => ({ navigate: () => undefined, push: () => undefined }),
@@ -233,7 +230,7 @@ async function open({
   /** What the Core runs something later by; nothing by default. */
   schedule?: Schedule;
 } = {}) {
-  mockEdition = editionWithout(switchedOff);
+  editionInEffect = editionWithout(switchedOff);
   const records = new Map(
     Object.entries(best).map(([modeId, result]) => [`game.best.${modeId}`, JSON.stringify(result)]),
   );
@@ -252,7 +249,7 @@ async function open({
       crosswordDay: (date) =>
         Promise.resolve(date === crosswordDay.date ? crosswordDay : undefined),
     },
-    edition: mockEdition,
+    edition: editionInEffect,
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: systemRandom,
@@ -261,12 +258,19 @@ async function open({
 }
 
 async function renderScreen() {
+  const shell = testShell({
+    composition: opened(composition),
+    remoteSwitches: switchedTo(editionInEffect),
+    settings: await settingsAt(),
+  });
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+      <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>
           <HapticsProvider haptics={haptics}>
-            <GameScreen />
+            <SettingsProvider>
+              <GameScreen />
+            </SettingsProvider>
           </HapticsProvider>
         </EditionProvider>
       </ShellProvider>
