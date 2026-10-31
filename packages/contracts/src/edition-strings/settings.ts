@@ -50,12 +50,10 @@ export const SettingsStringsSchema = z.strictObject({
     hidden: TextSchema,
     about: TextSchema,
   }),
-  /** The Sounds section and its rows. */
+  /** The Sounds section and its Vibration row. */
   sounds: z.strictObject({
     section: TextSchema,
-    sounds: TextSchema,
     vibration: TextSchema,
-    music: TextSchema,
   }),
   /** The About screen. */
   about: z.strictObject({

@@ -6,7 +6,6 @@ import {
   SectionLabel,
   SegmentedControl,
   SettingsGroup,
-  SoonRow,
   SwitchRow,
   space,
   useTokens,
@@ -53,7 +52,7 @@ const dailyLimitSegments = dailyLimits.map((dailyLimit) => ({
  * size, the Daily Limit while it is on in effect, «Пройти тест ще раз» while
  * the Rarity Test is, «Сезонний декор» while its Feature Switch is,
  * «Ділитися анонімною статистикою» with its privacy policy link while the
- * Community Counters are, and the rows of the design. The rows of later versions show as soon.
+ * Community Counters are, and the rows of the design.
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
@@ -213,7 +212,6 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <SectionLabel>{strings.sounds.section}</SectionLabel>
           <SettingsGroup>
-            <SoonRow testID="settings-row-sounds" label={strings.sounds.sounds} control="switch" />
             <SwitchRow
               testID="settings-vibration"
               label={strings.sounds.vibration}
@@ -222,7 +220,6 @@ export default function SettingsScreen() {
                 update({ vibration });
               }}
             />
-            <SoonRow testID="settings-row-music" label={strings.sounds.music} control="slider" />
           </SettingsGroup>
         </View>
         <View style={styles.section}>

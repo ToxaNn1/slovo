@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import type { DecorMotif } from '@slovo/contracts';
-import type { Clock } from '@slovo/core';
+import { loadEdition, type Clock } from '@slovo/core';
 import { DecorBackground, EditionProvider, FontSizePreview, TokensProvider } from '@slovo/ui';
 import { act, render, screen } from '@testing-library/react-native';
+import config from 'slovo-edition/config';
 
 import {
   edition,
@@ -48,13 +49,23 @@ function drawnPaths(): string[] {
 
 const pathsOf = ({ layers }: DecorMotif) => layers.map(({ path }) => path);
 
+/** The UA Edition as it ships, with its Seasonal Decor Feature Switch set as given. */
+function editionWithSeasonalDecor(on: boolean) {
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
+  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, seasonalDecor: on } });
+}
+
 /**
  * The screen background and a divided card under the Decor in effect at the
- * system time, over the Edition as it ships and «Сезонний декор» as set.
+ * system time, over the Edition with its Seasonal Decor Feature Switch on
+ * (unless `editionInEffect` is given) and «Сезонний декор» as set.
  */
-async function renderDecor({ seasonalDecor = true } = {}) {
+async function renderDecor({
+  seasonalDecor = true,
+  editionInEffect = editionWithSeasonalDecor(true),
+} = {}) {
   const shell = testShell({
-    remoteSwitches: switchedTo(edition),
+    remoteSwitches: switchedTo(editionInEffect),
     settings: await settingsAt({ seasonalDecor }),
   });
   await render(
@@ -119,6 +130,16 @@ describe('the Decor in effect', () => {
   it('draws the plain Decor with «Сезонний декор» off', async () => {
     jest.useFakeTimers({ now: new Date('2027-01-15T12:00:00+02:00') });
     await renderDecor({ seasonalDecor: false });
+
+    expect(drawnPaths()).toEqual(
+      expect.arrayContaining([...pathsOf(background.tile), ...pathsOf(divider.centre)]),
+    );
+    expect(drawnPaths()).not.toEqual(expect.arrayContaining(pathsOf(seasons.winter.tile)));
+  });
+
+  it('draws the plain Decor in the UA Edition as it ships, which pauses Seasonal Decor', async () => {
+    jest.useFakeTimers({ now: new Date('2027-01-15T12:00:00+02:00') });
+    await renderDecor({ editionInEffect: edition });
 
     expect(drawnPaths()).toEqual(
       expect.arrayContaining([...pathsOf(background.tile), ...pathsOf(divider.centre)]),

@@ -15,7 +15,7 @@ describe('the UA Edition', () => {
     });
   });
 
-  it('turns every Feature Switch on', () => {
+  it('turns every Feature Switch on but the paused Mood, Seasonal Decor and calligraphy', () => {
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
     expect(edition.isFeatureEnabled('synonymRows')).toBe(true);
@@ -58,14 +58,14 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('politePause')).toBe(true);
     expect(edition.isFeatureEnabled('firstWeek')).toBe(true);
     expect(edition.isFeatureEnabled('widgetHint')).toBe(true);
-    expect(edition.isFeatureEnabled('moods')).toBe(true);
-    expect(edition.isFeatureEnabled('seasonalDecor')).toBe(true);
+    expect(edition.isFeatureEnabled('moods')).toBe(false);
+    expect(edition.isFeatureEnabled('seasonalDecor')).toBe(false);
     expect(edition.isFeatureEnabled('stressAnimation')).toBe(true);
     expect(edition.isFeatureEnabled('illustrations')).toBe(true);
     expect(edition.isFeatureEnabled('mistakeReports')).toBe(true);
     expect(edition.isFeatureEnabled('communityCounters')).toBe(true);
     expect(edition.isFeatureEnabled('communityWord')).toBe(true);
-    expect(edition.isFeatureEnabled('calligraphy')).toBe(true);
+    expect(edition.isFeatureEnabled('calligraphy')).toBe(false);
     expect(edition.isFeatureEnabled('spotlight')).toBe(true);
     expect(edition.isFeatureEnabled('appIntents')).toBe(true);
     expect(edition.isFeatureEnabled('collectionLinks')).toBe(true);
