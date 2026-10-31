@@ -500,7 +500,8 @@
         "other": "Знають {known} з {count} читача"
       },
       "saved": "зберегли {saved}",
-      "line": "{known} · {saved}"
+      "line": "{known} · {saved}",
+      "spokenLine": "{known}, {saved}"
     }
   },
   "mistakeReport": {

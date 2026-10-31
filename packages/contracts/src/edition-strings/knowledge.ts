@@ -21,5 +21,7 @@ export const KnowledgeStringsSchema = z.strictObject({
     saved: templateOf('saved'),
     /** How the two join, e.g. "{known} · {saved}". */
     line: templateOf('known', 'saved'),
+    /** How VoiceOver reads the two as one sentence, e.g. "{known}, {saved}". */
+    spokenLine: templateOf('known', 'saved'),
   }),
 });

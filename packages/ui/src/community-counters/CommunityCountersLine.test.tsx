@@ -1,17 +1,18 @@
-import type { EditionStrings } from '@slovo/contracts';
 import { CommunityCountersLine, EditionProvider } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
+import { testStrings } from '../test-strings';
 
-const strings = {
+const strings = testStrings({
   knowledge: {
     communityCounters: {
       known: { one: '{known} of {count} reader know', other: '{known} of {count} readers know' },
       saved: 'saved by {saved}',
       line: '{known} · {saved}',
+      spokenLine: '{known}; {saved}',
     },
   },
-} as unknown as EditionStrings;
+});
 
 async function renderLine(line: Parameters<typeof CommunityCountersLine>[0]['line']) {
   await render(
@@ -28,11 +29,11 @@ describe('CommunityCountersLine', () => {
     expect(screen.getByText('0 of 1 reader know · saved by 0')).toBeOnTheScreen();
   });
 
-  it('is one element VoiceOver reads as one sentence, without the dot', async () => {
+  it('is one element VoiceOver reads as one sentence, joined as the Edition says', async () => {
     await renderLine({ known: 3, total: 5, saved: 2 });
 
     expect(screen.getByTestId('community-counters')).toHaveAccessibleName(
-      '3 of 5 readers know, saved by 2',
+      '3 of 5 readers know; saved by 2',
     );
   });
 
