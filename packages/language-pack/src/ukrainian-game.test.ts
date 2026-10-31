@@ -339,15 +339,23 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
-  it('writes no Seen, no History and no Active Day while it is played, only its Best result', async () => {
+  it('writes no Seen, no History and no Active Day while it is played, only the confirmed Entries and its Best result', async () => {
     const { port, writes } = recordingPort(new Map());
     const app = await runWords(6, port);
     writes.length = 0;
 
     await playGame(app);
 
-    const { roundsPassed } = current(app);
-    expect(writes).toEqual([userStateRecords.gameBest.record('guess-word').change(roundsPassed)]);
+    const { roundsPassed, played } = current(app);
+    const confirmed = writes.filter((write) =>
+      [...write.keys()].every((key) => key.startsWith('confirmed.')),
+    );
+    expect(new Set(confirmed.flatMap((write) => [...write.keys()]))).toEqual(
+      new Set(played.filter(({ right }) => right).map(({ entry }) => `confirmed.${entry.id}`)),
+    );
+    expect(writes.filter((write) => !confirmed.includes(write))).toEqual([
+      userStateRecords.gameBest.record('guess-word').change(roundsPassed),
+    ]);
   });
 });
 

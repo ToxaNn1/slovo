@@ -25,6 +25,7 @@ const word: EntryRowModel = {
   spoken: 'candid, Open and honest.',
   partOfSpeech: 'adjective',
   registers: [],
+  rarity: 3,
 };
 
 const correction: EntryRowModel = {

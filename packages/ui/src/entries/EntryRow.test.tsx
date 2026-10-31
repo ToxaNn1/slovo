@@ -17,6 +17,7 @@ const row: EntryRowModel = {
   spoken: 'lemma, what it means',
   partOfSpeech: 'adjective',
   registers: [],
+  rarity: 3,
 };
 
 const correction: EntryRowModel = {
