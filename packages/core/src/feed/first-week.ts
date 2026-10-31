@@ -1,10 +1,11 @@
+import type { ActiveDays } from '../progress/active-days';
 import type { Edition } from '../edition/edition';
 import { dateKeyOf } from '../local-date';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import type { FeedNotices, FirstWeekDay } from './feed-notices';
 
-const { activeDays, firstWeekFrom } = userStateRecords;
+const { firstWeekFrom } = userStateRecords;
 
 const FIRST_WEEK_DAYS = 7;
 
@@ -20,18 +21,18 @@ const isFirstWeekDay = (day: number): day is FirstWeekDay => day >= 1 && day <= 
 export function createFirstWeek({
   edition,
   userState,
+  activeDays,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
+  activeDays: Pick<ActiveDays, 'days'>;
 }): FeedNotices {
   return {
     async forDay(day) {
       const from = await userState.read(firstWeekFrom);
       if (from === undefined || !edition.isFeatureEnabled('firstWeek')) return [];
       const date = dateKeyOf(day);
-      const before = [...(await userState.list(activeDays)).keys()].filter(
-        (active) => active >= from && active < date,
-      );
+      const before = [...activeDays.days].filter((active) => active >= from && active < date);
       const firstWeekDay = before.length + 1;
       return isFirstWeekDay(firstWeekDay) ? [{ notice: 'firstWeek', firstWeekDay }] : [];
     },

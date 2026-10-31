@@ -76,6 +76,7 @@ const validConfig = {
     mixKindWeights: true,
     analytics: true,
     xpLog: true,
+    streakFreezes: true,
   },
   userSettingDefaults: {
     theme: 'system',

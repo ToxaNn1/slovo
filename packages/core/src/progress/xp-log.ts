@@ -2,7 +2,7 @@ import type { XpTable } from '@slovo/contracts';
 
 import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
-import type { Clock, Random } from '../ports';
+import type { Clock, Random, UserStateChanges } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { XpAction, XpAward } from '../game/game-xp';
 import type { LocalDate } from '../local-date';
@@ -20,6 +20,21 @@ export interface XpLogState {
   readonly today: number;
 }
 
+/** What the XP log holds by local date `YYYY-MM-DD`, for the Active Days and the Streak. */
+export interface XpLogDays {
+  /** The XP earned on each local date that has any. */
+  readonly byDate: ReadonlyMap<string, number>;
+  /** The missed local dates a consumed Streak freeze covers. */
+  readonly frozen: ReadonlySet<string>;
+}
+
+/** Records to append for another write, and the step that makes them in memory once written. */
+export interface XpLogAppend {
+  readonly changes: UserStateChanges;
+  /** Makes the change in memory. Call it once the changes are written. */
+  commit(): void;
+}
+
 /**
  * The XP log (ADR 0066): an append-only log of the XP each learning action
  * earned, kept per Edition, which the total and today's XP are derived from.
@@ -29,8 +44,16 @@ export interface XpLogState {
 export interface XpLog {
   /** The XP as it stands, in memory for the session. */
   readonly state: XpLogState;
+  /** The XP and the freezes by local date, in memory for the session. */
+  readonly days: XpLogDays;
   /** The record the action appends, for another write; empty when it earns nothing. */
   award(action: XpAction): XpAward;
+  /**
+   * The freeze-consumed records that cover the missed local dates, for another
+   * write. A date has one such record by its id, so two devices that cover the
+   * same day merge into one.
+   */
+  freeze(dates: readonly string[]): XpLogAppend;
   /** Calls `listener` after each change of the XP. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -76,20 +99,27 @@ export async function openXpLog({
   /** Tells the records of one session apart when the clock and the random source stand still. */
   let sequence = 0;
 
-  function derive(): XpLogState {
+  function derive(): XpLogState & XpLogDays {
     const today = todayKey(clock);
     let total = 0;
-    let todays = 0;
+    const byDate = new Map<string, number>();
+    const frozen = new Set<string>();
     for (const record of records.values()) {
+      if (record.kind === 'freeze') {
+        frozen.add(record.date);
+        continue;
+      }
       total += record.amount;
-      if (record.date === today) todays += record.amount;
+      byDate.set(record.date, (byDate.get(record.date) ?? 0) + record.amount);
     }
-    return { total, today: todays };
+    return { total, today: byDate.get(today) ?? 0, byDate, frozen };
   }
-  let state = derive();
+  let derived = derive();
+  let state: XpLogState = { total: derived.total, today: derived.today };
 
   function change(): void {
-    state = derive();
+    derived = derive();
+    state = { total: derived.total, today: derived.today };
     subscribers.tell();
   }
 
@@ -124,13 +154,34 @@ export async function openXpLog({
     };
   }
 
+  function freeze(dates: readonly string[]): XpLogAppend {
+    const at = clock.now().toISOString();
+    const added = new Map<string, XpRecord>(
+      dates.map((date) => [`freeze-${date}`, { kind: 'freeze', date, at }]),
+    );
+    return {
+      changes: new Map(
+        [...added].flatMap(([id, record]) => [...xpRecords.record(id).change(record)]),
+      ),
+      commit() {
+        if (added.size === 0) return;
+        for (const [id, record] of added) records.set(id, record);
+        change();
+      },
+    };
+  }
+
   dayTurned.subscribe(change);
 
   return {
     get state() {
       return state;
     },
+    get days() {
+      return derived;
+    },
     award,
+    freeze,
     subscribe: subscribers.subscribe,
   };
 }

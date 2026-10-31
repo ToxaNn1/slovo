@@ -247,6 +247,7 @@ describe('The stats sheet’s numbers', () => {
     expect(app.progress.state).toEqual({
       streak: 1,
       bestStreak: 1,
+      freezesHeld: 0,
       seenToday: 0,
       favorites: 0,
       inCollections: 0,

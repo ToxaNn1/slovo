@@ -37,7 +37,8 @@ async function run({
   const app: Composition = await openComposition({
     content: createMemoryContentPort({ words }),
     edition: testEdition({
-      isFeatureEnabled: () => true,
+      // With the XP log off, opening the app records the day as an Active Day, as before 1.0.
+      isFeatureEnabled: (feature) => feature !== 'xpLog',
       userSettingDefaults: { mix: { corrections: false }, notificationTimes: ['09:00', '19:00'] },
     }),
     userState: await openUserState({

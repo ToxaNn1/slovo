@@ -250,6 +250,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   mixKindWeights: z.boolean(),
   /** The XP log: XP for Game learning actions, kept per Edition, and the XP bar on the Feed (ADR 0066). */
   xpLog: z.boolean(),
+  /** Streak freezes: a held freeze covers a missed day automatically, 2 at the start, one more per 7 Streak days, at most 2 held (ADR 0066). */
+  streakFreezes: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
