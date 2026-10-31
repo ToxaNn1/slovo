@@ -1,5 +1,5 @@
 const { existsSync, mkdirSync, writeFileSync } = require('node:fs');
-const { dirname } = require('node:path');
+const { dirname, join } = require('node:path');
 
 const { getConfig } = require('expo/config');
 const { getDefaultConfig } = require('expo/metro-config');
@@ -23,7 +23,7 @@ const app = openAppConfig(REPO_DIR);
 
 /** The AppConfig and the native splash it names, as `slovo-app/*` (ADR 0065). */
 const appModules = {
-  'slovo-app/config': `${REPO_DIR}/${APP_CONFIG_FILE}`,
+  'slovo-app/config': join(REPO_DIR, APP_CONFIG_FILE),
   'slovo-app/splash': app.path('splash'),
 };
 

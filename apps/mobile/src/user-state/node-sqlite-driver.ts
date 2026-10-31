@@ -17,7 +17,9 @@ export function nodeDriver(file: string): NodeDriver {
   const db = new DatabaseSync(file);
   db.exec('PRAGMA journal_mode = WAL');
   return {
-    close: () => db.close(),
+    close() {
+      db.close();
+    },
     execAsync: (sql) => {
       db.exec(sql);
       return Promise.resolve();

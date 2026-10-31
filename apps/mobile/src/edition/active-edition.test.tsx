@@ -1,3 +1,4 @@
+import { afterAll, describe, expect, it } from '@jest/globals';
 import { userStateRecords } from '@slovo/core';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,7 +12,12 @@ import { chooseActiveEdition, type AppStore } from './active-edition';
 /** An app-level store in memory, as the device's keeps it between launches. */
 function memoryAppStore(records: Record<string, string> = {}): AppStore {
   const kept = new Map(Object.entries(records));
-  return { get: (key) => kept.get(key), set: (key, value) => void kept.set(key, value) };
+  return {
+    get: (key) => kept.get(key),
+    set(key, value) {
+      kept.set(key, value);
+    },
+  };
 }
 
 const editions = { editionIds: ['uk', 'pl'], defaultId: 'uk' };

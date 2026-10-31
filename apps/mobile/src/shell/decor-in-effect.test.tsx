@@ -4,7 +4,14 @@ import { loadEdition, type Clock } from '@slovo/core';
 import { DecorBackground, EditionProvider, FontSizePreview, TokensProvider } from '@slovo/ui';
 import { act, render, screen } from '@testing-library/react-native';
 
-import { activeEditionFiles, edition, editionDecor, editionStrings, editionTokens, seasonalMotifs } from '../edition/edition';
+import {
+  activeEditionFiles,
+  edition,
+  editionDecor,
+  editionStrings,
+  editionTokens,
+  seasonalMotifs,
+} from '../edition/edition';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
 import { DecorInEffect } from './decor-in-effect';
