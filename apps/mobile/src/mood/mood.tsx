@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
+import { useEditionInEffect } from '../edition/remote-switches';
+import { useReplaceOpenEntry } from '../entries/replace-open-entry';
 import { useOpenScreen } from '../entries/use-open-screen';
 import { useShown } from '../shown-in-effect';
 
@@ -39,13 +41,17 @@ function chipsOf(choices: readonly MoodChoice[]): readonly MoodChip[] {
  * sheet of mood chips it opens, while moods are on in effect. A chip runs the
  * roulette of its Lemmas, then the sheet leaves and the card of the Word it
  * landed on opens, which makes nothing Seen. Under Reduce Motion the card
- * opens straight away. Closing the sheet stops the roulette.
+ * opens straight away. Closing the sheet stops the roulette. With
+ * `replaceOpenEntry` on in effect, the card takes the place of the one the
+ * roulette opened before, so «Назад» returns to «Головна».
  */
 export function MoodButtonAndSheet() {
   const shown = useShown().moods;
   const composition = useComposition();
   const reduceMotion = useReduceMotion();
   const openScreen = useOpenScreen();
+  const replaceOpenEntry = useReplaceOpenEntry();
+  const replaces = useEditionInEffect().isFeatureEnabled('replaceOpenEntry');
   const [open, setOpen] = useState(false);
   const [chips, setChips] = useState<readonly MoodChip[]>([]);
   const [lemma, setLemma] = useState<string>();
@@ -119,7 +125,10 @@ export function MoodButtonAndSheet() {
           setLemma(undefined);
           const wordId = landed.current;
           landed.current = undefined;
-          if (wordId !== undefined) openScreen(`/mood/${wordId}`);
+          if (wordId === undefined) return;
+          const link = `/mood/${wordId}`;
+          if (replaces) replaceOpenEntry(link);
+          else openScreen(link);
         }}
       />
     </>

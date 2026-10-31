@@ -9,6 +9,9 @@ export type OpenedFrom = 'notification' | 'widget';
 /** The value of the search param `from` that marks an Entry link as the widget's. */
 const widgetSource = 'widget';
 
+/** The search the outside links keep on the widget's link to an Entry, and on no other link. */
+const widgetSearch = `?from=${widgetSource}`;
+
 /**
  * Where outside the app the search params of an Entry link say it opened
  * from, or nothing for a link from inside the app. The widget's link is the
@@ -101,7 +104,7 @@ function outsidePath(link: string, route: Route, widgetLinkKey: string | undefin
     params.get('from') === widgetSource &&
     widgetLinkKey !== undefined &&
     params.get('key') === widgetLinkKey;
-  return fromWidget ? `${path}?from=${widgetSource}` : path;
+  return fromWidget ? `${path}${widgetSearch}` : path;
 }
 
 /** The App Intent a link's route is, by its path and mark (`APP_INTENT_ROUTES`), or none. */
@@ -121,10 +124,22 @@ export interface AppIntentLandings {
   landOnWordOfTheDay(): void;
 }
 
+/** What the outside links read and ask of the app for a widget link that opens while it runs. */
+export interface WidgetEntries {
+  /** Whether the Feature Switch `replaceOpenEntry` is on in effect. */
+  replaceOpenEntry(): Promise<boolean>;
+  /** Opens the widget's Entry in place of the open Entry (`NotificationTaps`). */
+  open: (path: string) => void;
+}
+
 /**
  * Expo Router's `redirectSystemPath` (`app/+native-intent.tsx`), which sees
  * every link from outside the app and none from inside it, over the key of
- * the Widget Snapshot the widget reads now, or none without one. An App
+ * the Widget Snapshot the widget reads now, or none without one. The widget's
+ * link to an Entry that comes while the app runs, with `replaceOpenEntry` on
+ * in effect, goes to `widgetEntries` in place of Expo Router, which would push
+ * its Entry over the open one; the link that launches the app opens as it
+ * came, over a stack that holds nothing yet. An App
  * Intent's link opens its route without its mark: «Слово дня» the Feed,
  * landing on today's Word of the Day card, and «Відкрити гру» the Game; with
  * `appIntents` off in effect, or unknown, both open the app's start, the Feed
@@ -134,17 +149,26 @@ export function createOutsideLinks({
   linkDomain,
   widgetLinkKey,
   appIntents,
+  widgetEntries,
 }: {
   /** The Edition's link domain, the one host whose web addresses the app opens. */
   linkDomain: string;
   widgetLinkKey: () => Promise<string | undefined>;
   appIntents: AppIntentLandings;
-}): (link: { path: string }) => Promise<string | null> {
-  return async ({ path }) => {
+  widgetEntries: WidgetEntries;
+}): (link: { path: string; initial: boolean }) => Promise<string | null> {
+  return async ({ path, initial }) => {
     const route = routeOf(path, linkDomain);
     if (route === undefined) return null;
     const intent = appIntentOf(route, linkDomain);
-    if (intent === undefined) return outsidePath(path, route, await widgetLinkKey());
+    if (intent === undefined) {
+      const opened = outsidePath(path, route, await widgetLinkKey());
+      const fromWidget = opened === `${normalPath(route.path)}${widgetSearch}`;
+      if (initial || !fromWidget) return opened;
+      if (!(await widgetEntries.replaceOpenEntry().catch(() => false))) return opened;
+      widgetEntries.open(opened);
+      return null;
+    }
     if (!(await appIntents.on().catch(() => false))) return '/';
     if (intent === 'wordOfTheDay') appIntents.landOnWordOfTheDay();
     return routeOf(APP_INTENT_ROUTES[intent], linkDomain)?.path ?? '/';

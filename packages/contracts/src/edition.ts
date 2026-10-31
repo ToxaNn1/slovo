@@ -232,6 +232,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   appIntents: z.boolean(),
   /** Collection Links: «Поділитися посиланням» on a Collection and the `c/<id>` links that open its copy (ADR 0058). */
   collectionLinks: z.boolean(),
+  /** A Word from the mood roulette or the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
+  replaceOpenEntry: z.boolean(),
 });
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;

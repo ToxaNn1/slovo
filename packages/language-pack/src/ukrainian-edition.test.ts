@@ -69,6 +69,7 @@ describe('the Ukrainian Edition', () => {
     expect(edition.isFeatureEnabled('spotlight')).toBe(true);
     expect(edition.isFeatureEnabled('appIntents')).toBe(true);
     expect(edition.isFeatureEnabled('collectionLinks')).toBe(true);
+    expect(edition.isFeatureEnabled('replaceOpenEntry')).toBe(true);
   });
 
   it('starts new users on the agreed defaults', () => {

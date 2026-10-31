@@ -13,6 +13,7 @@ import { editionStrings } from '../edition/edition';
 import { APP_INTENT_ROUTES } from './app-intents';
 import { createOutsideLinks } from './entry-link';
 import { NotificationTaps } from './notification-taps';
+import { createLinkRelay } from './widget-entry-links';
 
 /**
  * The Entry screen's place: what the Entry route hands it, its «Назад» label
@@ -74,11 +75,12 @@ async function renderApp({
     return { remove: () => undefined } as ReturnType<typeof Linking.addEventListener>;
   });
   const taps = fakeNotificationTaps();
+  const widgetLinks = createLinkRelay();
   const app = renderRouter(
     {
       _layout: () => (
         <>
-          <NotificationTaps onTap={taps.onTap} />
+          <NotificationTaps onTap={taps.onTap} onWidgetLink={widgetLinks.listen} />
           <Slot />
         </>
       ),
@@ -92,6 +94,8 @@ async function renderApp({
               landings += 1;
             },
           },
+          // The app is launched by none of these links; a widget link goes to the notification taps.
+          widgetEntries: { replaceOpenEntry: () => Promise.resolve(true), open: widgetLinks.open },
         }),
       },
       index: () => <Text>Feed</Text>,
