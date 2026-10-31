@@ -69,7 +69,8 @@
     "spotlight": true,
     "appIntents": true,
     "collectionLinks": true,
-    "replaceOpenEntry": true
+    "replaceOpenEntry": true,
+    "mixKindWeights": true
   },
   "userSettingDefaults": {
     "theme": "system",

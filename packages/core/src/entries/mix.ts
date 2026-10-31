@@ -1,4 +1,4 @@
-import { RaritySchema, type Category, type Rarity } from '@slovo/contracts';
+import { RaritySchema, type Category, type MixKindWeight, type Rarity } from '@slovo/contracts';
 
 import type { DefaultMix, Edition, UserSettingDefaults } from '../edition/edition';
 import { MIX_KINDS, type CategoryKind, type MixKind } from './entry-kinds';
@@ -21,6 +21,17 @@ const CATEGORY_KINDS: readonly CategoryKind[] = ['word', 'correction'];
 
 /** Whether each kind of Entry is in the Mix as a whole. */
 export type KindsInMix = Readonly<Record<MixKind, boolean>>;
+
+/** The Mix kind weight of each kind of Entry beside Words. */
+export type MixKindWeights = Readonly<Record<MixKind, MixKindWeight>>;
+
+/** Every kind at «Звичайно»: the Feed's turns of 0.9, also while the Edition turns the weights off. */
+export const NORMAL_KIND_WEIGHTS: MixKindWeights = {
+  correction: 'normal',
+  idiom: 'normal',
+  synonymRow: 'normal',
+  tip: 'normal',
+};
 
 /**
  * Each kind of Entry in the Mix as a whole (the kind table names them, ADR
@@ -65,6 +76,11 @@ export interface MixState extends CategoriesInMix {
   /** Whether each kind of Entry, as a whole, is in the Mix: Corrections, Idioms, Synonym Rows and Tips. */
   readonly kinds: KindsInMix;
   /**
+   * The Mix kind weight of each kind beside Words, «Звичайно» unless the user
+   * chose another. Apart from `kinds`: a kind out of the Mix keeps its weight.
+   */
+  readonly kindWeights: MixKindWeights;
+  /**
    * The Rarity Floor, 1 to 5: only Words of that rarity or rarer are eligible
    * while the Edition turns its rarityFloor switch on. No other kind of Entry has a rarity.
    */
@@ -103,6 +119,8 @@ export interface Mix {
   turnAllOn(): Promise<void>;
   /** Puts the kind of Entry, as a whole, in the Mix or takes it out. */
   setKind(kind: MixKind, inMix: boolean): Promise<void>;
+  /** Sets the Mix kind weight of the kind; Words fill the rest of the Feed. */
+  setKindWeight(kind: MixKind, weight: MixKindWeight): Promise<void>;
   /**
    * Sets the Rarity Floor. A floor that is not a rarity, a whole number from
    * 1 to 5, is skipped, and so is one above the Rarity Ceiling while the
@@ -144,8 +162,11 @@ const CATEGORY_LISTS: Readonly<
   },
 };
 
-const { mixRarityFloor: rarityFloorRecord, mixRarityCeiling: rarityCeilingRecord } =
-  userStateRecords;
+const {
+  mixRarityFloor: rarityFloorRecord,
+  mixRarityCeiling: rarityCeilingRecord,
+  mixKindWeights: kindWeightRecords,
+} = userStateRecords;
 
 /** The Categories of the Language Pack, each kind's list. */
 export type CategoryLists = Readonly<Record<CategoryKind, readonly Category[]>>;
@@ -157,6 +178,7 @@ type CategoryChoices = Readonly<Record<CategoryKind, ReadonlyMap<string, boolean
 interface MixChoices {
   readonly categories: CategoryChoices;
   readonly kinds: Readonly<Record<MixKind, boolean | undefined>>;
+  readonly kindWeights: ReadonlyMap<string, MixKindWeight>;
   readonly rarityFloor: Rarity | undefined;
   readonly rarityCeiling: Rarity | undefined;
 }
@@ -235,6 +257,7 @@ function mixStateOf(lists: CategoryLists, edition: MixEdition, choices: MixChoic
     ...categoriesInMixOf(lists.word, edition, choices, 'word'),
     correctionCategories: categoriesInMixOf(lists.correction, edition, choices, 'correction'),
     kinds: eachKind((kind) => choices.kinds[kind] ?? KINDS[kind].byDefault(mix)),
+    kindWeights: eachKind((kind) => choices.kindWeights.get(kind) ?? NORMAL_KIND_WEIGHTS[kind]),
     ...raritiesOf(mix, choices),
   };
 }
@@ -255,15 +278,17 @@ function raritiesOf(
 }
 
 async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise<MixChoices> {
-  const [lists, rarityFloor, rarityCeiling, read] = await Promise.all([
+  const [lists, rarityFloor, rarityCeiling, read, kindWeights] = await Promise.all([
     Promise.all(CATEGORY_KINDS.map((kind) => userState.list(CATEGORY_LISTS[kind].records))),
     userState.read(rarityFloorRecord),
     userState.read(rarityCeilingRecord),
     Promise.all(MIX_KINDS.map((kind) => userState.read(KINDS[kind].record))),
+    userState.list(kindWeightRecords),
   ]);
   return {
     categories: eachList((kind) => lists[CATEGORY_KINDS.indexOf(kind)] ?? new Map()),
     kinds: eachKind((kind) => read[MIX_KINDS.indexOf(kind)]),
+    kindWeights,
     rarityFloor,
     rarityCeiling,
   };
@@ -320,9 +345,15 @@ export async function openMix({
     places: Partial<Record<CategoryKind, ReadonlyMap<string, boolean>>>,
     {
       kinds = state.kinds,
+      kindWeights = state.kindWeights,
       rarityFloor = state.rarityFloor,
       rarityCeiling = state.rarityCeiling,
-    }: { kinds?: KindsInMix; rarityFloor?: Rarity; rarityCeiling?: Rarity } = {},
+    }: {
+      kinds?: KindsInMix;
+      kindWeights?: MixKindWeights;
+      rarityFloor?: Rarity;
+      rarityCeiling?: Rarity;
+    } = {},
   ): Promise<void> {
     const writes = new Map<string, string | undefined>();
     const changed = eachList((of) => {
@@ -345,6 +376,14 @@ export async function openMix({
       if (kinds[kind] === state.kinds[kind]) continue;
       for (const [key, value] of KINDS[kind].record.change(kinds[kind])) writes.set(key, value);
     }
+    const weights = new Map(choices.kindWeights);
+    for (const kind of MIX_KINDS) {
+      if (kindWeights[kind] === state.kindWeights[kind]) continue;
+      weights.set(kind, kindWeights[kind]);
+      for (const [key, value] of kindWeightRecords.record(kind).change(kindWeights[kind])) {
+        writes.set(key, value);
+      }
+    }
     if (rarityFloor !== state.rarityFloor) {
       for (const [key, value] of rarityFloorRecord.change(rarityFloor)) writes.set(key, value);
     }
@@ -358,6 +397,7 @@ export async function openMix({
       kinds: eachKind((kind) =>
         kinds[kind] === state.kinds[kind] ? choices.kinds[kind] : kinds[kind],
       ),
+      kindWeights: weights,
       rarityFloor: rarityFloor === state.rarityFloor ? choices.rarityFloor : rarityFloor,
       rarityCeiling: rarityCeiling === state.rarityCeiling ? choices.rarityCeiling : rarityCeiling,
     };
@@ -397,6 +437,10 @@ export async function openMix({
     await change({}, { kinds: { ...state.kinds, [kind]: inMix } });
   }
 
+  async function setKindWeight(kind: MixKind, weight: MixKindWeight): Promise<void> {
+    await change({}, { kindWeights: { ...state.kindWeights, [kind]: weight } });
+  }
+
   const ceilingOn = () => edition.isFeatureEnabled('rarityCeiling');
 
   async function setRarityFloor(floor: number, raisingCeiling: boolean): Promise<void> {
@@ -429,6 +473,7 @@ export async function openMix({
     putBack: (categoryId, of = 'word') => inTurn(() => putBack(categoryId, of)),
     turnAllOn: () => inTurn(turnAllOn),
     setKind: (kind, inMix) => inTurn(() => setKind(kind, inMix)),
+    setKindWeight: (kind, weight) => inTurn(() => setKindWeight(kind, weight)),
     setRarityFloor: (floor) => inTurn(() => setRarityFloor(floor, false)),
     setRarityFloorRaisingCeiling: (floor) => inTurn(() => setRarityFloor(floor, true)),
     setRarityCeiling: (ceiling) => inTurn(() => setRarityCeiling(ceiling)),

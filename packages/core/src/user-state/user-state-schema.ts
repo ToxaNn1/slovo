@@ -2,6 +2,7 @@ import {
   DailyLimitSchema,
   FontSizeSchema,
   MistakeReportSchema,
+  MixKindWeightSchema,
   NotificationTimesSchema,
   RaritySchema,
   ThemeSchema,
@@ -229,6 +230,12 @@ export const userStateRecords = {
    * The Rarity Floor the user chose, 1 to 5; without it, the Edition's
    * default. It syncs last write wins like the rest of the Mix (ADR 0041).
    */
+  /**
+   * The Mix kind weight the user chose for Corrections, Idioms, Synonym Rows
+   * or Tips, one record per kind; without it, «Звичайно». It syncs last write
+   * wins like the rest of the Mix (ADR 0041); a new key needs no migration.
+   */
+  mixKindWeights: declareRecords('mix.kindWeights.', MixKindWeightSchema),
   mixRarityFloor: declareRecord('mix.rarityFloor', RaritySchema),
   /**
    * The Rarity Ceiling the user chose, 1 to 5; without it, the Edition's

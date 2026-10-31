@@ -73,6 +73,7 @@ const validConfig = {
     appIntents: true,
     collectionLinks: true,
     replaceOpenEntry: true,
+    mixKindWeights: true,
   },
   userSettingDefaults: {
     theme: 'system',

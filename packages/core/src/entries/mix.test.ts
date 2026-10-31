@@ -168,6 +168,7 @@ describe('the Mix', () => {
         lastCategoryId: undefined,
       },
       kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
+      kindWeights: { correction: 'normal', idiom: 'normal', synonymRow: 'normal', tip: 'normal' },
       hiddenCategories: [],
       lastCategoryId: undefined,
       rarityFloor: 1,
