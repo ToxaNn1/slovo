@@ -3,9 +3,9 @@ import type { DecorMotif } from '@slovo/contracts';
 import { loadEdition, type Clock } from '@slovo/core';
 import { DecorBackground, EditionProvider, FontSizePreview, TokensProvider } from '@slovo/ui';
 import { act, render, screen } from '@testing-library/react-native';
-import config from 'slovo-edition/config';
 
 import {
+  activeEditionFiles,
   edition,
   editionDecor,
   editionStrings,
@@ -16,6 +16,8 @@ import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
 import { DecorInEffect } from './decor-in-effect';
 import { settingsAt, switchedTo, testShell } from './test-support';
+
+const { config } = activeEditionFiles;
 
 /** The UA Edition's plain Decor and its motifs. */
 const { background, divider } = editionDecor;

@@ -9,11 +9,11 @@ import {
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
 
 import { afterAll, describe, expect, it } from 'vitest';
 
-import { openSqliteUserState, type UserStateDatabase } from './user-state-sqlite';
+import { nodeDriver, type NodeDriver } from './node-sqlite-driver';
+import { openSqliteUserState } from './user-state-sqlite';
 
 /** A place the user state lives, which can be opened again and again. */
 interface Store {
@@ -32,46 +32,18 @@ const adapters: [string, () => Store][] = [
     'in SQLite',
     () => {
       const file = join(mkdtempSync(join(tmpdir(), 'slovo-user-state-')), 'user-state.db');
-      return { open: () => openSqliteUserState(nodeDriver(file)) };
+      return {
+        open: () => {
+          const db = nodeDriver(file);
+          databases.push(db);
+          return openSqliteUserState(db);
+        },
+      };
     },
   ],
 ];
 
-/**
- * Puts `node:sqlite` behind the slice of expo-sqlite the adapter needs, so the
- * suite runs the same adapter code as the app: the database in WAL mode, as
- * the app opens it, and each exclusive transaction on a connection of its own.
- */
-function nodeDriver(file: string): UserStateDatabase {
-  const db = new DatabaseSync(file);
-  databases.push(db);
-  db.exec('PRAGMA journal_mode = WAL');
-  return {
-    execAsync: (sql) => {
-      db.exec(sql);
-      return Promise.resolve();
-    },
-    getFirstAsync: <T>(sql: string, params: string[]) =>
-      Promise.resolve((db.prepare(sql).get(...params) as T | undefined) ?? null),
-    getAllAsync: <T>(sql: string, params: string[]) =>
-      Promise.resolve(db.prepare(sql).all(...params) as T[]),
-    async withExclusiveTransactionAsync(task) {
-      const txn = new DatabaseSync(file);
-      txn.exec('BEGIN');
-      try {
-        await task({ runAsync: (sql, params) => Promise.resolve(txn.prepare(sql).run(...params)) });
-        txn.exec('COMMIT');
-      } catch (error) {
-        txn.exec('ROLLBACK');
-        throw error;
-      } finally {
-        txn.close();
-      }
-    },
-  };
-}
-
-const databases: DatabaseSync[] = [];
+const databases: NodeDriver[] = [];
 afterAll(() => {
   for (const db of databases) db.close();
 });

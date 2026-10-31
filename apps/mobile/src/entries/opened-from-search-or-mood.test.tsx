@@ -16,7 +16,6 @@ import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
@@ -26,9 +25,11 @@ import SavedLayout from '../app/saved/_layout';
 import EntryFromArchiveScreen from '../app/saved/words-of-the-day/[entryId]';
 import SearchLayout from '../app/search/_layout';
 import EntryFromSearchScreen from '../app/search/[entryId]';
-import { edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { screenSettled } from './use-open-screen';
 import { SettingsProvider } from '../settings/settings';
+
+const { config } = activeEditionFiles;
 
 jest.mock('expo-constants', () => ({
   __esModule: true,

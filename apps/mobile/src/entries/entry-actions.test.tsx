@@ -18,13 +18,14 @@ import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '@s
 import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { EntryActions } from './entry-actions';
+
+const { config } = activeEditionFiles;
 
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(config);

@@ -15,17 +15,18 @@ import { Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
 import { Linking, Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import CollectionScreen from '../app/saved/collections/[collectionId]';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { createOutsideLinks } from '../entries/entry-link';
 import { screenSettled } from '../entries/use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
+
+const { config } = activeEditionFiles;
 
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(config);

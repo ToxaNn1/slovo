@@ -13,13 +13,14 @@ import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import SearchScreen from '../app/search/index';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { screenSettled } from '../entries/use-open-screen';
 import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
+
+const { config } = activeEditionFiles;
 
 /** The composition the screen reads, opened afresh for each test. */
 let composition: Composition;

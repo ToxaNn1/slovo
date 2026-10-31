@@ -13,14 +13,15 @@ import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider, HideButton, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import HiddenScreen from '../app/settings/hidden';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { useHide } from './hiding';
 import { MixChoices } from './mix-choices';
+
+const { config } = activeEditionFiles;
 
 /** The UA Edition with Synonym Rows and Tips, and the Mix kind weights, turned on or off. */
 function editionWith(on: boolean, mixKindWeights = true): Edition {

@@ -15,16 +15,17 @@ import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import SettingsScreen from '../app/settings';
 import MixScreen from '../app/settings/mix';
 import RarityTestScreen from '../app/settings/rarity-test';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { screenSettled } from '../entries/use-open-screen';
 import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';
+
+const { config } = activeEditionFiles;
 
 /** The UA Edition as it ships, with the Feature Switches given off. */
 function editionWithout(...off: FeatureSwitch[]): Edition {

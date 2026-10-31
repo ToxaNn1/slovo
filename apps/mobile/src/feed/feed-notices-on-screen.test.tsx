@@ -15,16 +15,17 @@ import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import HomeScreen from '../app/index';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
-import { edition, editionStrings, editionTokens } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { screenSettled } from '../entries/use-open-screen';
 import { SettingsProvider } from '../settings/settings';
+
+const { config } = activeEditionFiles;
 
 jest.mock('expo-constants', () => ({
   __esModule: true,

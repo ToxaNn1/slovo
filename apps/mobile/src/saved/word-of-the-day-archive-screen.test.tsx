@@ -12,12 +12,13 @@ import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import WordOfTheDayArchiveScreen from '../app/saved/words-of-the-day/index';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
+
+const { config } = activeEditionFiles;
 
 /** The composition the screen reads, opened afresh for each test. */
 let composition: Composition;

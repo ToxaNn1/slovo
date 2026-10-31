@@ -16,13 +16,14 @@ import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, systemSchedule } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import config from 'slovo-edition/config';
 
 import GameScreen from '../app/game';
-import { edition, editionStrings } from '../edition/edition';
+import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+
+const { config } = activeEditionFiles;
 
 /** The UA Edition with the given Feature Switches turned off. */
 function editionWithout(switchedOff: readonly string[]): Edition {

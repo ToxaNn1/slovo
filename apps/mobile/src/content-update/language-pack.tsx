@@ -1,11 +1,10 @@
 import { createEntries, type Entries, type TrackedUserState } from '@slovo/core';
 import { openPack, type PackReader } from '@slovo/language-pack/reader';
 import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
-import languagePack from 'slovo-edition/language-pack';
 import { useMemo } from 'react';
 
 import { logError } from '../diagnostics/log';
-import { edition } from '../edition/edition';
+import { activeEditionFiles, edition } from '../edition/edition';
 import { reportedEditionId } from '../edition/reported-edition';
 import { openDeviceContentUpdate } from './device-content-updates';
 import { devicePackFiles, type DevicePackFiles } from './device-pack-files';
@@ -42,7 +41,7 @@ async function prepare(db: SQLiteDatabase): Promise<OpenedPack<PackReader>> {
  */
 async function openBundled(): Promise<OpenedPack<PackReader>> {
   await importDatabaseFromAssetAsync(DATABASE_NAME, {
-    assetId: languagePack,
+    assetId: activeEditionFiles.languagePack,
     forceOverwrite: true,
   });
   return prepare(await openDatabaseAsync(DATABASE_NAME));

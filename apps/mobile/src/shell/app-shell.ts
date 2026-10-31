@@ -3,6 +3,7 @@ import { counterReadsOpening } from '../community-counters/device-counter-reads'
 import { counterSendingOpening } from '../community-counters/device-counter-sending';
 import { compositionOpening } from '../composition';
 import { languagePackOpening } from '../content-update/language-pack';
+import { activeEditionId } from '../edition/edition';
 import { remoteSwitchesOpening } from '../edition/remote-switches';
 import { mistakeReportsOpening } from '../mistake-reports/device-mistake-reports';
 import { settingsOpening } from '../settings/settings';
@@ -12,12 +13,12 @@ import { storedUserStateOpening } from '../user-state/stored-user-state';
 import type { Shell } from '../shell-value';
 
 /**
- * The Shell of the device: every opening over the one user state, in the
- * order they wait for each other. Nothing opens until something reads it.
+ * The Shell of the device for one Edition: every opening over that
+ * Edition's user state, in the order they wait for each other. Nothing opens until something reads it.
  * The Account and Sync open apart from the composition (ADR 0037).
  */
-export function createShell(): Shell {
-  const userState = storedUserStateOpening();
+export function createShell(editionId: string): Shell {
+  const userState = storedUserStateOpening(editionId);
   const remoteSwitches = remoteSwitchesOpening({ userState });
   const languagePack = languagePackOpening({ remoteSwitches, userState });
   const account = accountOpening({ userState });
@@ -37,8 +38,8 @@ export function createShell(): Shell {
 }
 
 /**
- * The one Shell of the app run. The root layout hands it to every screen
+ * The one Shell of the app run, for the Edition chosen at launch (ADR 0065). The root layout hands it to every screen
  * (`ShellProvider`); the links from outside the app, which Expo Router
  * resolves outside React, read it here.
  */
-export const appShell = createShell();
+export const appShell = createShell(activeEditionId);
