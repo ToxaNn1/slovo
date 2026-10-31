@@ -187,6 +187,13 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Builds the image the Deployment runs (ADR 0063) and pushes it nowhere.
       - run: docker build --tag slovo-backend .
+      # The image holds the backend's runtime alone: no expo or react-native.
+      - name: Image size and contents
+        shell: bash
+        run: |
+          docker image ls slovo-backend --format 'slovo-backend {{.Size}}'
+          docker run --rm slovo-backend sh -c \
+            '! ls /app/node_modules/.pnpm | grep -E "^(expo|react-native)@"'
       # As on Railway: the release command first, then the server, which must
       # answer /health. The SMTP settings are placeholders: production refuses
       # to start without them, and nothing is sent here.
