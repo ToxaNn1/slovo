@@ -37,7 +37,6 @@ export {
   type MixConfig,
   type Mood,
   type OriginLanguage,
-  type ReleaseProblem,
   type Theme,
   type UserSettingDefaultsConfig,
 } from './edition';
