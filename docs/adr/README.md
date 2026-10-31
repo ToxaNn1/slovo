@@ -63,7 +63,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0059](0059-react-compiler-runs-on-code-without-animation.md) The React Compiler is on; animated modules opt out with `'use no memo'`.
 - [0060](0060-anonymous-community-counters.md) Community Counters are anonymous deltas aggregated per Entry; the Community Word is the week's most saved.
 - 0061: merged into 0006.
-- [0062](0062-ota-updates-are-signed-and-ship-per-edition-channel.md) OTA updates are signed, bound to the native fingerprint, one channel per Edition, published by hand.
+- [0062](0062-ota-updates-are-signed-and-ship-per-edition-channel.md) OTA updates are signed, bound to the native fingerprint, on the app's one channel from the AppConfig, published by hand.
 - [0063](0063-the-backend-runs-as-one-container-on-railway-behind-the-editions-domain.md) The backend runs as one container on Railway behind the Edition's domain; migrations in the release step, one trusted proxy hop, HTTPS only.
 - [0064](0064-one-backend-port-shaped-by-the-api-contract.md) The Core reaches the backend through one port, the contract's client; `answerOf` and the retry rule live in the Core; tests serve the contract in process.
 - [0065](0065-one-app-with-editions-inside-and-the-ua-edition.md) One app per platform with the Editions inside, one active at a time (a switch restarts the app), the others downloaded on choice; the first is the UA Edition, id `uk`.
