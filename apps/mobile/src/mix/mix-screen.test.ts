@@ -108,6 +108,25 @@ describe('the Мій Мікс screen', () => {
     },
   );
 
+  it('gives the Mix kind weight of each kind, as the user sets it, only while the Edition turns the weights on', async () => {
+    const without: Edition = {
+      ...ukrainian,
+      isFeatureEnabled: (each) => each !== 'mixKindWeights' && ukrainian.isFeatureEnabled(each),
+    };
+    const { mix } = await open(ukrainian);
+
+    await mix.setKindWeight('idiom', 'more');
+    await mix.setKindWeight('tip', 'less');
+
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).kindWeights).toEqual({
+      correction: 'normal',
+      idiom: 'more',
+      synonymRow: 'normal',
+      tip: 'less',
+    });
+    expect(mixScreenModel({ edition: without, mix: mix.state }).kindWeights).toBe(undefined);
+  });
+
   it('lists the switches in the Mix’s order: Corrections, Idioms, Synonym Rows, then Tips', async () => {
     const { mix } = await open(ukrainian);
 

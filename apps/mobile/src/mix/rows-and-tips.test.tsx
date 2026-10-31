@@ -22,12 +22,12 @@ import { opened, switchedTo, testShell } from '../shell/test-support';
 import { useHide } from './hiding';
 import { MixChoices } from './mix-choices';
 
-/** The UA Edition with Synonym Rows and Tips turned on or off. */
-function editionWith(on: boolean): Edition {
+/** The UA Edition with Synonym Rows and Tips, and the Mix kind weights, turned on or off. */
+function editionWith(on: boolean, mixKindWeights = true): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({
     ...rest,
-    featureSwitches: { ...featureSwitches, synonymRows: on, tips: on },
+    featureSwitches: { ...featureSwitches, synonymRows: on, tips: on, mixKindWeights },
   });
 }
 
@@ -73,8 +73,8 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-async function open(on: boolean) {
-  editionInEffect = editionWith(on);
+async function open(on: boolean, mixKindWeights = true) {
+  editionInEffect = editionWith(on, mixKindWeights);
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
@@ -171,6 +171,33 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     await fireEvent(toggle, 'valueChange', true);
     await settle();
     expect(composition.mix.state.kinds[kind]).toBe(true);
+  });
+
+  it('have a Mix kind weight under their switch that sets how often they come in the Feed', async () => {
+    await renderInApp(<MixChoices />);
+    const normal = screen.getByTestId(`mix-${feature}-weight-normal`);
+    expect(normal).toHaveAccessibleName(`${title} у Стрічці: Звичайно`);
+    expect(normal).toBeSelected();
+
+    await fireEvent.press(screen.getByTestId(`mix-${feature}-weight-more`));
+    await settle();
+    expect(composition.mix.state.kindWeights[kind]).toBe('more');
+    expect(screen.getByTestId(`mix-${feature}-weight-more`)).toBeSelected();
+
+    await fireEvent.press(screen.getByTestId(`mix-${feature}-weight-less`));
+    await settle();
+    expect(composition.mix.state.kindWeights[kind]).toBe('less');
+  });
+
+  it('have no Mix kind weight while they are out of the Mix or the Edition turns the weights off', async () => {
+    await composition.mix.setKind(kind, false);
+    await renderInApp(<MixChoices />);
+    expect(screen.queryByTestId(`mix-${feature}-weight-normal`)).toBeNull();
+
+    await open(true, false);
+    await renderInApp(<MixChoices />);
+    expect(screen.getByTestId(`mix-${feature}`)).toBeOnTheScreen();
+    expect(screen.queryByTestId(`mix-${feature}-weight-normal`)).toBeNull();
   });
 
   it('show a hidden one in their own section of the Hidden screen until it is put back', async () => {

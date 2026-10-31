@@ -40,6 +40,11 @@ export interface MixScreenModel extends MixCategoriesModel {
    * doesn't turn them on.
    */
   readonly correctionCategories: MixCategoriesModel | undefined;
+  /**
+   * The Mix kind weight of each kind, chosen under its switch while the kind
+   * is in the Mix; left out while the Edition turns its mixKindWeights switch off.
+   */
+  readonly kindWeights: MixState['kindWeights'] | undefined;
   /** The Rarity Floor choice, left out while the Edition turns its rarityFloor switch off. */
   readonly rarity: { readonly floor: number; readonly floors: readonly number[] } | undefined;
   /**
@@ -69,6 +74,7 @@ export function mixScreenModel({
     correctionCategories: kinds.some(({ entryKind, on }) => entryKind === 'correction' && on)
       ? categoriesModel(mix.correctionCategories)
       : undefined,
+    kindWeights: edition.isFeatureEnabled('mixKindWeights') ? mix.kindWeights : undefined,
     rarity: edition.isFeatureEnabled('rarityFloor')
       ? { floor: mix.rarityFloor, floors: RARITY_FLOORS }
       : undefined,

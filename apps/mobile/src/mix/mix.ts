@@ -1,3 +1,4 @@
+import type { MixKindWeight } from '@slovo/contracts';
 import type { CategoryKind, MixKind, MixState } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
@@ -33,6 +34,8 @@ export function useMixChanges(): {
   turnAllOn: () => void;
   /** Puts the kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole in the Mix (`inMix`) or takes it out. */
   setKind: (kind: MixKind, inMix: boolean) => void;
+  /** Sets the Mix kind weight of the kind: «Менше», «Звичайно» or «Більше». */
+  setKindWeight: (kind: MixKind, weight: MixKindWeight) => void;
   setRarityFloor: (floor: number) => void;
   setRarityCeiling: (ceiling: number) => void;
 } {
@@ -51,6 +54,9 @@ export function useMixChanges(): {
     },
     setKind: (kind, inMix) => {
       keep(mix.setKind(kind, inMix));
+    },
+    setKindWeight: (kind, weight) => {
+      keep(mix.setKindWeight(kind, weight));
     },
     setRarityFloor: (floor) => {
       keep(mix.setRarityFloor(floor));
