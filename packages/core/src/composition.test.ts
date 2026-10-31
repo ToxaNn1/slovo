@@ -9,7 +9,7 @@ import {
   type UserStatePort,
 } from './index';
 import { createFakeNotificationScheduler, createMemoryContentPort } from './testing';
-import { fakeClock, testEdition, word } from './test-support';
+import { fakeClock, testEdition, word, wordIdOf } from './test-support';
 
 const SECOND = 1000;
 
@@ -156,7 +156,7 @@ describe('a hidden Entry', () => {
     await vi.waitFor(() => {
       expect(guessWord()).toMatchObject({ canStart: true });
     });
-    expect(scheduler.plan?.map(({ wordId }) => wordId)).toContain(next);
+    expect(scheduler.plan?.map(wordIdOf)).toContain(next);
 
     // Six of the twenty Words hidden leave fewer than the 15 a Game needs.
     const shown = new Set(app.feed.cards.map((card) => card.entryId));
@@ -166,7 +166,7 @@ describe('a hidden Entry', () => {
     for (const entryId of [next, ...others]) await app.hide({ kind: 'entry', entryId });
 
     expect(app.feed.cards.map((card) => card.entryId)).not.toContain(next);
-    expect(scheduler.plan?.map(({ wordId }) => wordId)).not.toContain(next);
+    expect(scheduler.plan?.map(wordIdOf)).not.toContain(next);
     expect(guessWord()).toMatchObject({ canStart: false, refusal: 'too-few-entries' });
   });
 });

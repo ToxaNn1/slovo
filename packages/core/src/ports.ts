@@ -144,19 +144,29 @@ export type PlannedSound = { readonly file: string } | 'system' | 'silent';
  * (ADR 0021). It has no time zone: it comes at that wall-clock time in
  * whatever time zone the device is in when it is due.
  */
-export interface PlannedNotification {
+export type PlannedNotification = {
   /** The local date, `YYYY-MM-DD`. */
   readonly date: string;
   /** The local time, `HH:MM` on a 24-hour clock. */
   readonly time: string;
-  /** A title template filled with the Lemma and its Stress marks; empty for the farewell, under which the device shows the app's name. */
-  readonly title: string;
-  /** The primary Definition, cut short at a word boundary, or the Edition's farewell. */
-  readonly body: string;
-  /** The Word it carries, which a tap opens; the farewell carries none (ADR 0054). */
-  readonly wordId?: string;
   readonly sound: PlannedSound;
-}
+} & (
+  | {
+      /** A Word's notification, which a tap opens on its Word. */
+      readonly kind: 'word';
+      /** A title template filled with the Lemma and its Stress marks. */
+      readonly title: string;
+      /** The primary Definition, cut short at a word boundary. */
+      readonly body: string;
+      readonly wordId: string;
+    }
+  | {
+      /** The farewell of the polite pause: no title, under which the device shows the app's name, and no Word (ADR 0054). */
+      readonly kind: 'farewell';
+      /** The Edition's farewell. */
+      readonly body: string;
+    }
+);
 
 /**
  * Schedules the Core's notification plan on the device. The Core plans; the

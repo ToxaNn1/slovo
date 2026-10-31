@@ -17,7 +17,7 @@ import {
 import type { PlayedRound, Round, RoundAnswer } from './game/game-in-play';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
-import type { Clock, ContentReadPort, Random, Schedule } from './ports';
+import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } from './ports';
 
 // Helpers the Core's tests share. They are not part of the public `index.ts`;
 // `testing.ts` exports `testEdition` to the tests of other packages.
@@ -340,4 +340,14 @@ export function pickPlayed(round: PlayedRound): PlayedRound & {
     throw new Error(`Round ${String(round.number)} is no pick`);
   }
   return { ...round, answer: round.answer };
+}
+
+/** The Word a planned notification carries; none for the farewell. */
+export function wordIdOf(notification: PlannedNotification | undefined): string | undefined {
+  return notification?.kind === 'word' ? notification.wordId : undefined;
+}
+
+/** The title of a planned notification; none for the farewell. */
+export function titleOf(notification: PlannedNotification | undefined): string | undefined {
+  return notification?.kind === 'word' ? notification.title : undefined;
 }

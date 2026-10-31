@@ -52,7 +52,10 @@ function mockNotifications({
 
 const native = { inExpoGo: false };
 
-const planned = (overrides: Partial<PlannedNotification> = {}): PlannedNotification => ({
+const planned = (
+  overrides: Partial<Pick<PlannedNotification, 'date' | 'time' | 'sound'>> = {},
+): PlannedNotification => ({
+  kind: 'word',
   date: '2026-10-15',
   time: '09:00',
   title: 'кракелю́р',
@@ -97,9 +100,15 @@ describe('the notification scheduler on expo-notifications', () => {
   it('schedules the farewell with no title and no Word', async () => {
     const { module, notifications } = mockNotifications();
     const scheduler = createNotificationScheduler(notifications, native);
-    const { wordId: _none, ...farewell } = planned({ title: '', body: 'До зустрічі' });
-
-    await scheduler.replacePlan([farewell]);
+    await scheduler.replacePlan([
+      {
+        kind: 'farewell',
+        date: '2026-10-28',
+        time: '19:00',
+        body: 'До зустрічі',
+        sound: { file: 'notification.wav' },
+      },
+    ]);
 
     expect(module.scheduleNotificationAsync.mock.calls[0]?.[0].content).toEqual({
       title: '',

@@ -421,9 +421,11 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
     // The polite pause is on: every time up to the 14th day, whose last time is the farewell.
     const all = scheduler.plan ?? [];
     expect(all).toHaveLength(15 * ukrainian.userSettingDefaults.notificationTimes.length);
-    expect(all.at(-1)).toMatchObject({ date: '2026-10-28', body: 'Farewell', title: '' });
-    const plan = all.slice(0, -1);
-    expect(new Set(plan.map(({ wordId }) => wordId)).size).toBe(plan.length);
+    expect(all.at(-1)).toMatchObject({ kind: 'farewell', date: '2026-10-28', body: 'Farewell' });
+    const plan = all
+      .slice(0, -1)
+      .flatMap((notification) => (notification.kind === 'word' ? [notification] : []));
+    expect(new Set(plan.map(({ wordId }) => wordId)).size).toBe(all.length - 1);
     for (const notification of plan) {
       expect(liveIds).toContain(notification.wordId);
       expect(notification.title).toMatch(/\u0301/);

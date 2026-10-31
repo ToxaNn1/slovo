@@ -374,6 +374,7 @@ export function createNotificationPlanner({
     const templates = await chooseTemplates(planned.map(({ reserved }) => reserved));
     const notifications = planned.map(
       ({ reserved: { slot }, word }, index): PlannedNotification => ({
+        kind: 'word',
         date: dateKeyOf(slot.date),
         time: formatTimeOfDay(slot.time),
         // Every Edition lists its templates, so a template is always drawn.
@@ -385,9 +386,9 @@ export function createNotificationPlanner({
     );
     if (farewellSlot !== undefined) {
       notifications.push({
+        kind: 'farewell',
         date: dateKeyOf(farewellSlot.date),
         time: formatTimeOfDay(farewellSlot.time),
-        title: '',
         body: farewell,
         sound: soundOf(sound),
       });
