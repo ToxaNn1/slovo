@@ -63,8 +63,9 @@ export interface GameState {
   readonly bestResults: Readonly<Partial<Record<string, number>>>;
   /**
    * Whether the result of the Game just over offers the widget hint: after
-   * the first finished Game with at least one Life left, once ever on the
-   * device (ADR 0054), and never with the widget or its hint switched off.
+   * each finished Game with at least one Life left until the shell shows it,
+   * then never again on the device (ADR 0054), and never with the widget or
+   * its hint switched off.
    */
   readonly widgetHint: boolean;
 }
@@ -119,6 +120,11 @@ export interface Game {
    * in a Round without blanks, with one blank left or once it is answered.
    */
   openLetter(): void;
+  /**
+   * Keeps on the device that the widget hint the result offers is on screen,
+   * so no later Game offers it. The shell tells it once the hint shows.
+   */
+  widgetHintShown(): Promise<void>;
   /** Drops the Game in play or just over, so the mode screen shows again. It never writes the best result. */
   leave(): void;
   /**
@@ -148,7 +154,7 @@ const sameOffer = (one: GameModeOffer, other: GameModeOffer | undefined) =>
 const sameOffers = (one: readonly GameModeOffer[], other: readonly GameModeOffer[]) =>
   one.length === other.length && one.every((offer, index) => sameOffer(offer, other[index]));
 
-const { gameBest, widgetHintOffered } = userStateRecords;
+const { gameBest, widgetHintShown } = userStateRecords;
 
 /** Whether the Game is still in play: a Round to answer, or one answered and waiting for «Далі». */
 const inPlay = ({ status }: CurrentGame) => status === 'playing' || status === 'answered';
@@ -245,11 +251,11 @@ export async function openGame({
     bestResults,
     widgetHint: false,
   };
-  /** Whether the next finished Game with a Life left offers the widget hint. */
+  /** Whether the next finished Game with a Life left offers the widget hint: until it is shown. */
   let widgetHintDue =
     edition.isFeatureEnabled('widget') &&
     edition.isFeatureEnabled('widgetHint') &&
-    (await userState.read(widgetHintOffered)) === undefined;
+    (await userState.read(widgetHintShown)) === undefined;
   /** The Game in play, or just over; none on the mode screen. */
   let played: GameInPlay | undefined;
   /** Cancels the end of the timed Game in play, scheduled while its clock runs. */
@@ -409,22 +415,17 @@ export async function openGame({
   }
 
   /**
-   * Ends the Game, its Rounds passed the best result when they beat it, and
-   * offers the widget hint when it is due and a Life is left: both kept in
-   * the user state first, in one write, so a failed write changes nothing. A
-   * Game left during the write stays left.
+   * Ends the Game, its Rounds passed the best result when they beat it, kept
+   * in the user state first, so a failed write changes nothing, and offers the
+   * widget hint when it is due and a Life is left. A Game left during the
+   * write stays left.
    */
   async function finish(game: CurrentGame, over: CurrentGame): Promise<void> {
     const result = resultOf(over);
     const best = state.bestResults[over.modeId];
     const beaten = best === undefined || result > best;
     const widgetHint = widgetHintDue && over.lives !== undefined && over.lives > 0;
-    const changes = new Map([
-      ...(beaten ? gameBest.record(over.modeId).change(result) : []),
-      ...(widgetHint ? widgetHintOffered.change(true) : []),
-    ]);
-    if (changes.size > 0) await userState.write(changes);
-    if (widgetHint) widgetHintDue = false;
+    if (beaten) await userState.write(gameBest.record(over.modeId).change(result));
     const mode = beaten ? modes.find(({ id }) => id === over.modeId) : undefined;
     change({
       ...state,
@@ -494,6 +495,12 @@ export async function openGame({
       const opened = game && played?.openLetter(game);
       if (opened !== undefined) changeCurrent(opened);
     },
+    widgetHintShown: () =>
+      inTurn(async () => {
+        if (!state.widgetHint || !widgetHintDue) return;
+        await userState.write(widgetHintShown.change(true));
+        widgetHintDue = false;
+      }),
     leave() {
       played = undefined;
       stopTime();

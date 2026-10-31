@@ -346,20 +346,15 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     },
   );
 
-  it('writes no Seen, no History and no Active Day while it is played, only its Best result and the widget hint offered', async () => {
+  it('writes no Seen, no History and no Active Day while it is played, only its Best result', async () => {
     const { port, writes } = recordingPort(new Map());
     const app = await runWords(6, port);
     writes.length = 0;
 
     await playGame(app);
 
-    const { roundsPassed, lives = 0 } = current(app);
-    expect(writes).toEqual([
-      new Map([
-        ...userStateRecords.gameBest.record('guess-word').change(roundsPassed),
-        ...(lives > 0 ? userStateRecords.widgetHintOffered.change(true) : []),
-      ]),
-    ]);
+    const { roundsPassed } = current(app);
+    expect(writes).toEqual([userStateRecords.gameBest.record('guess-word').change(roundsPassed)]);
   });
 });
 

@@ -20,7 +20,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { useDailyCrosswordCard } from '@/game/daily-crossword';
-import { useGameActions, useGameState, usePauseInBackground, useTimeLeft } from '@/game/game';
+import {
+  useGameActions,
+  useGameState,
+  usePauseInBackground,
+  useTimeLeft,
+  useWidgetHintShown,
+} from '@/game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
 import { useShown } from '@/shown-in-effect';
 
@@ -50,8 +56,11 @@ function Game() {
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
   const [hintClosed, setHintClosed] = useState(false);
-
   const { current } = state;
+  const result = current?.status === 'won' || current?.status === 'lost';
+  const hintShown = result && state.widgetHint && !hintClosed;
+  useWidgetHintShown(hintShown);
+
   const timeLeft = useTimeLeft(current?.time);
   return (
     <SafeAreaView
@@ -61,7 +70,7 @@ function Game() {
     >
       {current === undefined ? (
         <ModeScreen modes={state.modes} onStart={actions.start} />
-      ) : current.status === 'won' || current.status === 'lost' ? (
+      ) : result ? (
         <>
           <GameResult
             game={current}
@@ -82,7 +91,7 @@ function Game() {
             }
           />
           <WidgetGuideSheet
-            visible={state.widgetHint && !hintClosed}
+            visible={hintShown}
             title={widgetStrings.guide.title}
             closeLabel={widgetStrings.guide.close}
             onClose={() => {

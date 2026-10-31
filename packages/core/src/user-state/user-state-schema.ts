@@ -298,8 +298,11 @@ export const userStateRecords = {
     z.object({ off: z.array(z.string()), etag: z.string() }),
     { sync: 'device-only' },
   ),
-  /** That the result of a finished Game offered the widget hint on this device, once ever (ADR 0054). */
-  widgetHintOffered: declareRecord('game.widgetHintOffered', z.literal(true), {
+  /**
+   * That the widget hint was on screen on this device, once ever (ADR 0054).
+   * The key keeps its first name, so a device that showed it shows it no more.
+   */
+  widgetHintShown: declareRecord('game.widgetHintOffered', z.literal(true), {
     sync: 'device-only',
   }),
   /**
