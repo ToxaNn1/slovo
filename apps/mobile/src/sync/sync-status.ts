@@ -12,10 +12,13 @@ const twoDigits = (value: number) => String(value).padStart(2, '0');
 export function syncStatusLine({
   state,
   strings,
+  months,
   clock,
 }: {
   state: SyncState;
   strings: EditionStrings['account']['sync'];
+  /** The short month names, as the line abbreviates them. */
+  months: EditionStrings['dates']['shortMonths'];
   clock: Clock;
 }): string | undefined {
   if (state.running) return strings.syncing;
@@ -27,7 +30,7 @@ export function syncStatusLine({
     return fill(strings.syncedToday, { time: `${twoDigits(hour)}:${twoDigits(minute)}` });
   }
   const day = String(date.day);
-  const month = strings.months[date.month - 1] ?? '';
+  const month = months[date.month - 1] ?? '';
   const thisYear = localDayOf(clock.now(), clock).date.year;
   return date.year === thisYear
     ? fill(strings.syncedOn, { day, month })

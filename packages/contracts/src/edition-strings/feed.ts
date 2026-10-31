@@ -27,9 +27,7 @@ export const feedStringsShape = {
   }),
   /** The badge on the card of the Word of the Day. */
   wordOfTheDay: z.strictObject({
-    /** The badge text; `{day}` stands for the day of the month and `{month}` for its name. */
+    /** The badge text; `{day}` stands for the day of the month and `{month}` for its name, one of `dates.months`. */
     badge: templateOf('day', 'month'),
-    /** The month names as the badge uses them, January first. */
-    months: z.array(TextSchema).length(12),
   }),
 };

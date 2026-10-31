@@ -13,8 +13,10 @@ import { useTokens } from '../providers/TokensProvider';
 export function WordOfTheDayBadge({ day: { month, day } }: { day: LocalDate }) {
   const { colors, fontFamilies, radii } = useTokens();
   const { strings, voice } = useEdition();
-  const { badge, months } = strings.wordOfTheDay;
-  const label = fill(badge, { day: String(day), month: months[month - 1] ?? '' });
+  const label = fill(strings.wordOfTheDay.badge, {
+    day: String(day),
+    month: strings.dates.months[month - 1] ?? '',
+  });
   return (
     <View
       testID="word-of-the-day-badge"

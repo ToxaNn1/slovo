@@ -72,7 +72,8 @@ const strings = testStrings({
     literaryUseSource: '{author}, {work}',
     literaryUseSourceWithYear: '{author}, {work}, {year}',
   },
-  wordOfTheDay: { badge: 'Word of the day · {day} {month}', months: [] },
+  wordOfTheDay: { badge: 'Word of the day · {day} {month}' },
+  dates: { months: [] },
   knowledge: {
     known: 'Known',
     unknown: 'Unknown',

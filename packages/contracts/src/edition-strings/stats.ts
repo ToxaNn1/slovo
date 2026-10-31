@@ -62,8 +62,6 @@ export const StatsStringsSchema = z.strictObject({
     weekdays: z.array(TextSchema).length(7),
     /** What VoiceOver reads after the month control: how to change the month. */
     hint: TextSchema,
-    /** The month names as a day takes them, January first. */
-    dayMonths: z.array(TextSchema).length(12),
     /**
      * What VoiceOver reads for each day, e.g. «27 жовтня, активний день». Each takes `{day}`
      * and `{month}`: an Active Day, a day missed, today before and after it is an Active Day,

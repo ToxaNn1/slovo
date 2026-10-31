@@ -81,7 +81,7 @@ async function open(
 const sectionsOf = (app: Composition, clock: Clock) =>
   historySections({
     history: app.history.list,
-    text: historyText({ strings: strings.history, count, clock }),
+    text: historyText({ strings: strings.history, dates: strings.dates, count, clock }),
     clock,
   });
 

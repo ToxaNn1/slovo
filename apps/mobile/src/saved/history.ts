@@ -39,7 +39,13 @@ function useHistoryText() {
   // Re-renders the screen when it gains or loses focus, so «щойно» does not go stale.
   useIsFocused();
   return useMemo(
-    () => historyText({ strings: editionStrings.history, count, clock: deviceClock }),
+    () =>
+      historyText({
+        strings: editionStrings.history,
+        dates: editionStrings.dates,
+        count,
+        clock: deviceClock,
+      }),
     [count],
   );
 }

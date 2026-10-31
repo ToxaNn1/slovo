@@ -29,7 +29,12 @@ function Opened({ opening }: { opening: Opening<Sync> }) {
 function Line({ sync }: { sync: Sync }) {
   const state = useSubscribed(sync, ({ state }) => state);
   const { colors, fontFamilies } = useTokens();
-  const line = syncStatusLine({ state, strings: editionStrings.account.sync, clock: deviceClock });
+  const line = syncStatusLine({
+    state,
+    strings: editionStrings.account.sync,
+    months: editionStrings.dates.shortMonths,
+    clock: deviceClock,
+  });
   if (line === undefined) return null;
   return (
     <Text

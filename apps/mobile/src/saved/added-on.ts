@@ -5,6 +5,7 @@ import { deviceClock } from '../device/device-clock';
 import { editionStrings } from '../edition/edition';
 
 const { added } = editionStrings.favorites;
+const { shortMonths } = editionStrings.dates;
 
 /**
  * When an Entry was added to Favorites or to a Collection, as its row says it:
@@ -17,7 +18,7 @@ export function addedOn(addedAt: Date): string {
   const thisYear = localDayOf(deviceClock.now(), deviceClock).date.year;
   return fill(date.year === thisYear ? added.date : added.dateInYear, {
     day: String(date.day),
-    month: added.months[date.month - 1] ?? '',
+    month: shortMonths[date.month - 1] ?? '',
     year: String(date.year),
   });
 }

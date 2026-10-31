@@ -91,7 +91,14 @@ export interface ShareCardContent {
 /** The texts a Share Card takes from the Edition. */
 export type ShareCardStrings = Pick<
   EditionStrings,
-  'share' | 'wordCard' | 'correctionCard' | 'idiomCard' | 'synonymRowCard' | 'tipCard'
+  | 'share'
+  | 'feedNotices'
+  | 'dates'
+  | 'wordCard'
+  | 'correctionCard'
+  | 'idiomCard'
+  | 'synonymRowCard'
+  | 'tipCard'
 >;
 
 /** The Share Card of an Entry or of a Weekly Recap, in the Edition's texts. */
@@ -214,8 +221,9 @@ function weeklyRecapContent(
   strings: ShareCardStrings,
 ): ShareCardContent {
   const texts = strings.share.weeklyRecap;
+  const labels = strings.feedNotices.weeklyRecap;
   const { firstDay, lastDay, seen, saved, known, streak } = recap;
-  const monthOf = ({ month }: LocalDate) => texts.months[month - 1] ?? '';
+  const monthOf = ({ month }: LocalDate) => strings.dates.months[month - 1] ?? '';
   const week =
     firstDay.month === lastDay.month
       ? fill(texts.week, {
@@ -230,10 +238,10 @@ function weeklyRecapContent(
           toMonth: monthOf(lastDay),
         });
   const numbers = [
-    { label: texts.seen, count: seen },
-    { label: texts.saved, count: saved },
-    ...(known === undefined ? [] : [{ label: texts.known, count: known }]),
-    ...(hideStreak ? [] : [{ label: texts.streak, count: streak }]),
+    { label: labels.seen, count: seen },
+    { label: labels.saved, count: saved },
+    ...(known === undefined ? [] : [{ label: labels.known, count: known }]),
+    ...(hideStreak ? [] : [{ label: labels.streak, count: streak }]),
   ];
   return {
     shows: week,
