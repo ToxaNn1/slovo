@@ -58,9 +58,7 @@ async function kindsOf(feed: Feed, count: number): Promise<string> {
   const letter = { word: 'W', correction: 'C', idiom: 'I', synonymRow: 'R', tip: 'T' } as const;
   return feed.cards
     .slice(0, count)
-    .map((card) =>
-      'entryId' in card && card.entryId !== undefined ? letter[card.kind] : '',
-    )
+    .map((card) => ('entryId' in card && card.entryId !== undefined ? letter[card.kind] : ''))
     .join('');
 }
 

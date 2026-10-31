@@ -16,7 +16,6 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
-import { useShown } from '../shown-in-effect';
 import { useMixChanges, useMixState } from './mix';
 import { mixScreenModel, type MixCategoriesModel } from './mix-screen';
 
@@ -46,7 +45,8 @@ export function MixChoices() {
     setQuickQuestionEvery,
   } = useMixChanges();
   const edition = useEditionInEffect();
-  const shown = useShown();
+  const quickQuestion =
+    edition.isFeatureEnabled('game') && edition.isFeatureEnabled('quickQuestion');
 
   const model = mixScreenModel({ edition, mix: state });
 
@@ -149,7 +149,7 @@ export function MixChoices() {
           </SettingsGroup>
         </View>
       )}
-      {shown.quickQuestion && (
+      {quickQuestion && (
         <View style={styles.rarity}>
           <RarityFloorChoice
             shown
