@@ -2,6 +2,7 @@ import { openEntryList } from '../entries/entry-list';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn } from '../in-turn';
 import type { Clock } from '../ports';
+import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -49,22 +50,22 @@ export interface HiddenEntries {
 }
 
 /**
- * Opens the Hidden Entries over the user state, for the Core composition,
- * which reads eligibility again in `eligibilityChanged` after each change,
- * before the subscribers hear of it. The list follows the written change even
- * when reading eligibility again fails; the next change or the next app
- * session reads it again.
+ * Opens the Hidden Entries over the user state, for the Core composition. Each
+ * change publishes `eligibility`, so the Cycle reads the eligible Entries
+ * again and the Feed, the plan and the Game follow, before the subscribers
+ * hear of it. The list follows the written change even when following
+ * eligibility fails; the next change or the next app session reads it again.
  */
 export async function openHiddenEntries({
   rows,
   userState,
   clock,
-  eligibilityChanged,
+  eligibility,
 }: {
   rows: EntryRows;
   userState: UserState;
   clock: Clock;
-  eligibilityChanged: () => Promise<void>;
+  eligibility: Pick<Subject<void>, 'publish'>;
 }): Promise<HiddenEntries> {
   const hiddenEntries = await openEntryList({
     records: userStateRecords.hiddenEntries,
@@ -72,7 +73,7 @@ export async function openHiddenEntries({
     rows,
     userState,
     clock,
-    afterWrite: eligibilityChanged,
+    afterWrite: () => eligibility.publish(),
   });
   const inTurn = createInTurn();
 

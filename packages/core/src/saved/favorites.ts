@@ -1,7 +1,8 @@
+import type { CommunityCounters } from '../community-counters/counter-deltas';
 import { openEntryList } from '../entries/entry-list';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn } from '../in-turn';
-import type { Clock, UserStateChanges } from '../ports';
+import type { Clock } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -45,20 +46,19 @@ export interface Favorites {
 }
 
 /**
- * Opens Favorites over the user state, for the Core composition, with
- * `countSaved`, the Community Counters' changes an add or a removal writes
- * with it (ADR 0060).
+ * Opens Favorites over the user state, for the Core composition. An add or a
+ * removal writes the Community Counters' changes that count it (ADR 0060).
  */
 export async function openFavorites({
   rows,
   userState,
   clock,
-  countSaved,
+  communityCounters,
 }: {
   rows: EntryRows;
   userState: UserState;
   clock: Clock;
-  countSaved: (entryId: string, saved: boolean) => Promise<UserStateChanges>;
+  communityCounters: Pick<CommunityCounters, 'countSaved'>;
 }): Promise<Favorites> {
   const favorites = await openEntryList({
     records: userStateRecords.favorites,
@@ -66,7 +66,7 @@ export async function openFavorites({
     rows,
     userState,
     clock,
-    changesWith: countSaved,
+    changesWith: communityCounters.countSaved,
   });
   const inTurn = createInTurn();
 

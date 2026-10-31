@@ -4,7 +4,9 @@ import type { Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { History } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
+import type { LocalDate } from '../local-date';
 import type { Clock, Random, Schedule } from '../ports';
+import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import type { GameEdition, GameMode, GameModeRefusal } from './game-mode';
@@ -180,12 +182,13 @@ const offerOf = (mode: GameMode, plan: RoundPlan, best: number | undefined): Gam
 
 /**
  * Opens the Game over the eligible Entries, History and the Knowledge Marks,
- * for the Core composition, with `followEligibility`, which reads the modes
- * on offer again after a hide, a restore or a Mix change, and `planOffers`. The Game Modes
- * come in the order they register. Their offers say they are still planned
- * until a planning succeeds: the first is the one `planOffers` starts, which
- * the Core composition calls once it is open. The best result is read from
- * the user state once, when it opens, so open one per app session (the Core
+ * for the Core composition. It reads the modes on offer again on
+ * `eligibility`, after a hide, a restore or a Mix change. The Game Modes come
+ * in the order they register. Their offers say they are still planned until a
+ * planning succeeds: the first is the one `dayTurned` starts, once the
+ * composition is open, and on each `dayTurned` and `returned` the Game tries
+ * again should every try have failed. The best result is read from the user
+ * state once, when it opens, so open one per app session (the Core
  * composition does).
  */
 export async function openGame({
@@ -198,6 +201,9 @@ export async function openGame({
   random,
   schedule,
   modes: registered,
+  eligibility,
+  dayTurned,
+  returned,
 }: {
   edition: GameEdition;
   entries: Pick<Entries, 'eligibleOfKind'>;
@@ -214,20 +220,10 @@ export async function openGame({
    */
   schedule?: Schedule;
   modes: readonly GameMode[];
-}): Promise<{
-  game: Game;
-  followEligibility: () => Promise<void>;
-  /**
-   * Plans the offers in the background, in turn with the Game's other
-   * changes, unless they are planned already or a planning is under way. A
-   * planning that fails is tried again after each delay of
-   * `OFFER_PLANNING_RETRY_DELAYS` (1, 2 and 4 s), then no more: the offers
-   * keep saying they are still planned until the next call, hide, restore or
-   * Mix change. The Core composition calls it once it is open and on each
-   * `resume`.
-   */
-  planOffers: () => void;
-}> {
+  eligibility: Pick<Subject<void>, 'subscribe'>;
+  dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
+  returned: Pick<Subject<void>, 'subscribe'>;
+}): Promise<Game> {
   const ids = new Set<string>();
   for (const { id } of registered) {
     if (ids.has(id)) throw new Error(`Two Game Modes have the id «${id}»`);
@@ -300,6 +296,14 @@ export async function openGame({
   let planningOffers = false;
   const unplanned = () => state.modes.some((offer) => 'planning' in offer);
 
+  /**
+   * Plans the offers in the background, in turn with the Game's other
+   * changes, unless they are planned already or a planning is under way. A
+   * planning that fails is tried again after each delay of
+   * `OFFER_PLANNING_RETRY_DELAYS` (1, 2 and 4 s), then no more: the offers
+   * keep saying they are still planned until the next day turned to, return,
+   * hide, restore or Mix change.
+   */
   function planOffers(): void {
     if (planningOffers || !unplanned()) return;
     planningOffers = true;
@@ -463,37 +467,37 @@ export async function openGame({
     return Object.fromEntries(read.filter(([, best]) => best !== undefined));
   }
 
+  eligibility.subscribe(() => inTurn(followEligibility));
+  dayTurned.subscribe(planOffers);
+  returned.subscribe(planOffers);
+
   return {
-    game: {
-      get state() {
-        return state;
-      },
-      subscribe: subscribers.subscribe,
-      start: (modeId) => inTurn(() => start(modeId)),
-      answer,
-      next: () => inTurn(next),
-      pause: () =>
-        inTurn(() => {
-          pause();
-          return Promise.resolve();
-        }),
-      resume: () =>
-        inTurn(() => {
-          resume();
-          return Promise.resolve();
-        }),
-      openLetter() {
-        const game = state.current;
-        const opened = game && played?.openLetter(game);
-        if (opened !== undefined) changeCurrent(opened);
-      },
-      leave() {
-        played = undefined;
-        stopTime();
-        if (state.current !== undefined) changeCurrent(undefined);
-      },
+    get state() {
+      return state;
     },
-    followEligibility: () => inTurn(followEligibility),
-    planOffers,
+    subscribe: subscribers.subscribe,
+    start: (modeId) => inTurn(() => start(modeId)),
+    answer,
+    next: () => inTurn(next),
+    pause: () =>
+      inTurn(() => {
+        pause();
+        return Promise.resolve();
+      }),
+    resume: () =>
+      inTurn(() => {
+        resume();
+        return Promise.resolve();
+      }),
+    openLetter() {
+      const game = state.current;
+      const opened = game && played?.openLetter(game);
+      if (opened !== undefined) changeCurrent(opened);
+    },
+    leave() {
+      played = undefined;
+      stopTime();
+      if (state.current !== undefined) changeCurrent(undefined);
+    },
   };
 }

@@ -4,8 +4,9 @@ import type { Edition } from '../edition/edition';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../mix/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
-import { dayNumber, parseLocalDate, todayDate } from '../local-date';
+import { dayNumber, parseLocalDate, todayDate, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
+import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import {
@@ -124,10 +125,11 @@ const sameState = (one: KnowledgeState, other: KnowledgeState) =>
   );
 
 /**
- * Opens the Knowledge Marks over the user state, for the Core composition,
- * with `followDay`, which the day change calls when it turns to a new local
- * day so the state follows it, and `countMark`, the Community Counters'
- * changes a tapped mark writes with it.
+ * Opens the Knowledge Marks over the user state, for the Core composition.
+ * The state follows `dayStarted`, the new local day the day change turns to,
+ * and a tapped mark writes `countMark`, the Community Counters' changes that
+ * count it, with it; the marks name what they need of the counters, as the
+ * counters read the marks' type.
  */
 export async function openKnowledge({
   edition,
@@ -136,6 +138,7 @@ export async function openKnowledge({
   userState,
   clock,
   countMark,
+  dayStarted,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   rows: EntryRows;
@@ -143,7 +146,8 @@ export async function openKnowledge({
   userState: UserState;
   clock: Clock;
   countMark: (entryId: string, mark: KnowledgeMark | undefined) => Promise<UserStateChanges>;
-}): Promise<{ knowledge: Knowledge; followDay: () => void }> {
+  dayStarted: Pick<Subject<LocalDate>, 'subscribe'>;
+}): Promise<Knowledge> {
   const { knowledge } = userStateRecords;
   let records: ReadonlyMap<string, KnowledgeRecord> = await userState.list(knowledge);
   const inTurn = createInTurn();
@@ -246,30 +250,27 @@ export async function openKnowledge({
       );
     });
 
+  dayStarted.subscribe(follow);
+
   return {
-    knowledge: {
-      get state() {
-        // The switch is read at each call, as the remote switches can turn it off while the app runs.
-        return edition.isFeatureEnabled('knowledge') ? state : off;
-      },
-      weak() {
-        if (!edition.isFeatureEnabled('knowledge')) return [];
-        const unknown = [...records].flatMap(([entryId, record]) =>
-          record.mark === 'unknown' && !hiddenEntries.has(entryId) ? [entryId] : [],
-        );
-        return [...new Set([...unknown, ...state.due])];
-      },
-      tap: (entryId, mark) =>
-        change(entryId, true, (record) => {
-          const today = todayDate(clock);
-          return shownMark(record, today) === mark
-            ? undefined
-            : answerKnowledge(record, mark, today);
-        }),
-      answer: (entryId, mark) =>
-        change(entryId, false, (record) => answerKnowledge(record, mark, todayDate(clock))),
-      subscribe: subscribers.subscribe,
+    get state() {
+      // The switch is read at each call, as the remote switches can turn it off while the app runs.
+      return edition.isFeatureEnabled('knowledge') ? state : off;
     },
-    followDay: follow,
+    weak() {
+      if (!edition.isFeatureEnabled('knowledge')) return [];
+      const unknown = [...records].flatMap(([entryId, record]) =>
+        record.mark === 'unknown' && !hiddenEntries.has(entryId) ? [entryId] : [],
+      );
+      return [...new Set([...unknown, ...state.due])];
+    },
+    tap: (entryId, mark) =>
+      change(entryId, true, (record) => {
+        const today = todayDate(clock);
+        return shownMark(record, today) === mark ? undefined : answerKnowledge(record, mark, today);
+      }),
+    answer: (entryId, mark) =>
+      change(entryId, false, (record) => answerKnowledge(record, mark, todayDate(clock))),
+    subscribe: subscribers.subscribe,
   };
 }

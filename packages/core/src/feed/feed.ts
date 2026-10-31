@@ -20,6 +20,8 @@ import type { HistoryRecorder, Seen } from '../saved/history';
 import type { WordOfTheDayArchiveRecorder } from '../saved/word-of-the-day-archive';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Knowledge } from '../knowledge/knowledge';
+import type { Subject } from '../subject';
+import type { OpenedEntry } from './day-change';
 import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -255,8 +257,8 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * feature. It opens on the card the reader was on when they come back the
  * same local day, and otherwise on the Word of the Day.
  *
- * The composition calls `openDay` with the local day it is whenever it turns
- * to a new one. A day the Feed hasn't opened with its Word of the Day yet
+ * The Feed follows `dayTurned`, the local day the composition turns to. A day
+ * the Feed hasn't opened with its Word of the Day yet
  * opens with it at the first `show` report on that day, or at once when one
  * came before the composition turned to it: the Word of the Day comes next,
  * in place of a card got ready the day before that the reader hasn't
@@ -288,24 +290,24 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * any card does. Every card whose Entry is due as the Feed adds it, in a
  * Review slot or not, is a Review, labelled «Повторення» (`review`).
  *
- * The composition calls `followEligibility` once the Cycle has read the
+ * The Feed follows `eligibility`, published once the Cycle has read the
  * eligible Entries again: the Feed drops every card whose Entry the Cycle no
  * longer covers and puts back the dropped ones it covers again, see
  * `Feed.position` for the reader's place. A card that leaves the screen this
  * way is Seen by the dwell rule, like any card that leaves it.
  *
- * The composition calls `markOpenedSeen` for an Entry opened outside the
+ * The Feed follows `opened`, an Entry opened outside the
  * Feed, from a notification or the widget: it becomes Seen with its History
- * entry and the caller's `changes` in one write, in turn with the cards, so a
+ * entry and the Active Day changes published with it in one write, in turn with the cards, so a
  * new Cycle never starts in between. It joins History as the Word of the
  * Day's card only if it is today's Word of the Day. An Entry the Cycle
  * doesn't cover (Hidden, Retired, out of the Mix) or one Seen already gets
- * only `changes` written, so a Hidden Entry never re-enters History. The
+ * only those changes written, so a Hidden Entry never re-enters History. The
  * Word of the Day's card becoming Seen keeps its day in the archive in the
  * same write.
  *
- * Once an Entry becomes Seen, by either way, the Feed calls `entrySeen`, for
- * the composition to follow it.
+ * Once an Entry becomes Seen, by either way, the Feed publishes it to `seen`,
+ * for the plan to follow it.
  *
  * Beside the Entry cards come the Feed Notices `notices` gives for the day:
  * from the second card on, each not closed takes the next card, in the order
@@ -323,8 +325,11 @@ export async function openFeed({
   wordOfTheDay,
   history,
   archive,
-  entrySeen,
   notices,
+  eligibility,
+  seen,
+  dayTurned,
+  opened,
 }: {
   entries: Entries;
   userState: UserState;
@@ -334,14 +339,12 @@ export async function openFeed({
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
   archive: WordOfTheDayArchiveRecorder;
-  entrySeen: (entryId: string) => Promise<void>;
   notices: FeedNotices;
-}): Promise<{
-  feed: Feed;
-  followEligibility: () => Promise<void>;
-  markOpenedSeen: (entryId: string, changes: UserStateChanges) => Promise<void>;
-  openDay: (day: LocalDate) => Promise<void>;
-}> {
+  eligibility: Pick<Subject<void>, 'subscribe'>;
+  seen: Pick<Subject<string>, 'publish'>;
+  dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
+  opened: Pick<Subject<OpenedEntry>, 'subscribe'>;
+}): Promise<Feed> {
   /** The cards of the session and the reader's place among them. */
   const session = createFeedSession();
   const subscribers = createSubscribers();
@@ -619,13 +622,12 @@ export async function openFeed({
   }
 
   /**
-   * Makes a change in turn with the others, then tells `entrySeen` of the
-   * Entry it made Seen, if any, out of turn, so following it never holds back
-   * the cards.
+   * Makes a change in turn with the others, then publishes the Entry it made
+   * Seen, if any, out of turn, so following it never holds back the cards.
    */
   async function inTurnTellingSeen(change: () => Promise<string | undefined>): Promise<void> {
     const seenId = await inTurn(change);
-    if (seenId !== undefined) await entrySeen(seenId);
+    if (seenId !== undefined) await seen.publish(seenId);
   }
 
   async function show(position: number | undefined): Promise<void> {
@@ -744,10 +746,27 @@ export async function openFeed({
     return keepSeen(cycle.covers(entryId) ? seen : undefined, changes);
   }
 
+  async function openDay(day: LocalDate): Promise<void> {
+    // In turn with the cards, so a card added after it opens the day.
+    await inTurn(() => {
+      const key = dateKeyOf(day);
+      dayToOpen = key === openedDay ? undefined : key;
+      return Promise.resolve();
+    });
+    await keepNextCardReady();
+    // A card got ready meanwhile may have checked for a stale ready card before the day turned.
+    if (readyCardStale()) await keepNextCardReady();
+  }
+
   if (!(await restore())) await addWordOfTheDay();
   const startPosition = Math.max(session.cards.length - 1, 0);
   session.moveTo(session.placeOf(startPosition));
-  const feed: Feed = {
+  eligibility.subscribe(followEligibility);
+  dayTurned.subscribe(openDay);
+  opened.subscribe(({ entryId, activeDay }) =>
+    inTurnTellingSeen(() => markOpenedSeen(entryId, activeDay)),
+  );
+  return {
     get cards() {
       return session.cards;
     },
@@ -760,21 +779,5 @@ export async function openFeed({
     next,
     openLinkedCorrection: (position, correctionId) =>
       inTurn(() => insertLinkedCorrection(position, correctionId)),
-  };
-  return {
-    feed,
-    followEligibility,
-    markOpenedSeen: (entryId, changes) => inTurnTellingSeen(() => markOpenedSeen(entryId, changes)),
-    async openDay(day) {
-      // In turn with the cards, so a card added after it opens the day.
-      await inTurn(() => {
-        const key = dateKeyOf(day);
-        dayToOpen = key === openedDay ? undefined : key;
-        return Promise.resolve();
-      });
-      await keepNextCardReady();
-      // A card got ready meanwhile may have checked for a stale ready card before the day turned.
-      if (readyCardStale()) await keepNextCardReady();
-    },
   };
 }

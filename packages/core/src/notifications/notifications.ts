@@ -4,7 +4,7 @@ import type { Cycle } from '../feed/cycle';
 import type { UserSettingDefaults } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import { createInTurn, createSubscribers } from '../in-turn';
-import { compareTimesOfDay, parseTimeOfDay } from '../local-date';
+import { compareTimesOfDay, parseTimeOfDay, type LocalDate } from '../local-date';
 import {
   createNotificationPlanner,
   noNotificationPlanner,
@@ -13,6 +13,7 @@ import {
   type PlanEdition,
 } from './notification-plan';
 import type { Clock, NotificationPermission, Random } from '../ports';
+import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
@@ -86,6 +87,12 @@ export interface Notifications {
    * nobody to ask: it stays not asked.
    */
   askPermission(): Promise<NotificationPermission>;
+  /**
+   * The morning notification a plan made now would hold were notifications
+   * allowed, in turn after every change before it, for the onboarding's
+   * sample; nothing without a scheduler.
+   */
+  nextMorning(): Promise<MorningNotification | undefined>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -107,17 +114,14 @@ function stateOf(
  * Opens Notifications over the user state, for the Core composition: the
  * stored times, or the Edition's default ones while the reader has never
  * changed them. It plans over the Cycle and the Word of the Day the
- * composition shares, and `replan` reads the permission and plans again, for
- * the composition to call when the app opens, the reader comes back, a new
- * local day starts or eligibility changes. Every plan first calls
- * `takeMorningWord`, the composition's day change, so a plan made on a new
- * day before the composition turned to it keeps the day's morning Word.
- * `followSeen` plans again when the Entry just Seen is a Reserved Word, so its
- * notification gets a new Word. `nextMorning` gives the morning
- * notification a plan made now would hold were notifications allowed, in turn
- * after every change before it, for the onboarding's sample. Without
- * `scheduling`, as in tools and in tests of other features, nothing is
- * planned and there is no next morning.
+ * composition shares, and reads the permission and plans again on
+ * `dayTurned`, `returned` and `eligibility`: when the app opens, a new local
+ * day starts, the reader comes back or eligibility changes. Every plan first
+ * calls `takeMorningWord`, the composition's day change, so a plan made on a
+ * new day before the composition turned to it keeps the day's morning Word.
+ * On `seen` it plans again when the Entry just Seen is a Reserved Word, so
+ * its notification gets a new Word. Without `scheduling`, as in tools and in
+ * tests of other features, nothing is planned and there is no next morning.
  */
 export async function openNotifications({
   edition,
@@ -129,6 +133,10 @@ export async function openNotifications({
   wordOfTheDay,
   takeMorningWord,
   scheduling,
+  eligibility,
+  seen,
+  dayTurned,
+  returned,
 }: {
   edition: NotificationsEdition;
   userState: UserState;
@@ -139,12 +147,11 @@ export async function openNotifications({
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   takeMorningWord: () => Promise<void>;
   scheduling: NotificationScheduling | undefined;
-}): Promise<{
-  notifications: Notifications;
-  replan: () => Promise<void>;
-  followSeen: (entryId: string) => Promise<void>;
-  nextMorning: () => Promise<MorningNotification | undefined>;
-}> {
+  eligibility: Pick<Subject<void>, 'subscribe'>;
+  seen: Pick<Subject<string>, 'subscribe'>;
+  dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
+  returned: Pick<Subject<void>, 'subscribe'>;
+}): Promise<Notifications> {
   const [storedTimes, storedSound] = await Promise.all([
     userState.read(timesRecord),
     userState.read(soundRecord),
@@ -230,28 +237,30 @@ export async function openNotifications({
   }
 
   const inTurn = createInTurn();
+  const replan = () => inTurn(plan);
+  eligibility.subscribe(replan);
+  dayTurned.subscribe(replan);
+  returned.subscribe(replan);
+  seen.subscribe((entryId) =>
+    inTurn(async () => {
+      if (await planner.isReserved(entryId)) await plan();
+    }),
+  );
 
   return {
-    notifications: {
-      get state() {
-        return state;
-      },
-      keepTime: (time, replacing) => inTurn(() => keepTime(time, replacing)),
-      removeTime: (time) => inTurn(() => removeTime(time)),
-      setSound: (on) => inTurn(() => setSound(on)),
-      askPermission: () => inTurn(askPermission),
-      subscribe: subscribers.subscribe,
+    get state() {
+      return state;
     },
-    replan: () => inTurn(plan),
-    followSeen: (entryId) =>
-      inTurn(async () => {
-        if (await planner.isReserved(entryId)) await plan();
-      }),
+    keepTime: (time, replacing) => inTurn(() => keepTime(time, replacing)),
+    removeTime: (time) => inTurn(() => removeTime(time)),
+    setSound: (on) => inTurn(() => setSound(on)),
+    askPermission: () => inTurn(askPermission),
     nextMorning: () =>
       inTurn(async () => {
         // As a plan does, so a new day the composition hasn't turned to keeps its morning Word.
         await takeMorningWord();
         return planner.nextMorning(planTimes());
       }),
+    subscribe: subscribers.subscribe,
   };
 }

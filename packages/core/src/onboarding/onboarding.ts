@@ -2,7 +2,6 @@ import type { AccountState } from '../account/account';
 import type { Entries } from '../entries/entries';
 import { createSubscribers } from '../in-turn';
 import { formatTimeOfDay, todayKey } from '../local-date';
-import type { MorningNotification } from '../notifications/notification-plan';
 import type { Notifications } from '../notifications/notifications';
 import type { Clock } from '../ports';
 import type { RarityTest, RarityTestWord } from '../rarity-test/rarity-test';
@@ -137,8 +136,8 @@ const noSample = (): undefined => undefined;
 
 /**
  * Opens the onboarding over the user state, for the Core composition, once
- * today's Word of the Day is chosen. `nextMorning` is the plan's next morning
- * notification, which the sample shows. `account` says whether the Edition
+ * today's Word of the Day is chosen. The sample shows the plan's next morning
+ * notification. `account` says whether the Edition
  * has the Account, which brings the SLOVO ID step. `rarityTest` is the
  * composition's Rarity Test while the Edition turns it on, which brings the
  * Rarity Test step while its draw has a Word.
@@ -149,7 +148,6 @@ export async function openOnboarding({
   entries,
   wordOfTheDay,
   notifications,
-  nextMorning,
   account,
   rarityTest,
 }: {
@@ -160,8 +158,7 @@ export async function openOnboarding({
     'get' | 'getMany' | 'linkedCorrections' | 'categories' | 'linkingSynonymRow' | 'illustrationOf'
   >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
-  notifications: Pick<Notifications, 'askPermission' | 'subscribe'>;
-  nextMorning: () => Promise<MorningNotification | undefined>;
+  notifications: Pick<Notifications, 'askPermission' | 'nextMorning' | 'subscribe'>;
   account: boolean;
   rarityTest: Pick<RarityTest, 'draw'> | undefined;
 }): Promise<Onboarding> {
@@ -187,7 +184,7 @@ export async function openOnboarding({
   }
 
   async function sampleNotification(): Promise<SampleNotification | undefined> {
-    const morning = await nextMorning();
+    const morning = await notifications.nextMorning();
     const wordCard = await wordCardOf(morning?.wordId);
     return morning === undefined || wordCard === undefined
       ? undefined
