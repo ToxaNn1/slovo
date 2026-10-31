@@ -1,6 +1,6 @@
 import type { EditionStrings } from '@slovo/contracts';
 import type { CalendarDay, CalendarMonth, ProgressState } from '@slovo/core';
-import { EditionProvider, StatsSheet } from '@slovo/ui';
+import { coreTokens, EditionProvider, StatsSheet } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -135,6 +135,18 @@ describe('the Active Days calendar on the stats sheet (spec #832)', () => {
     expect(screen.getByLabelText('26 Oct., active')).toBeOnTheScreen();
     expect(screen.getByLabelText('Today, 27 Oct.')).toBeOnTheScreen();
     expect(screen.getByLabelText('31 Oct., to come')).toBeOnTheScreen();
+  });
+
+  it('marks an Active Day with a dot in the success colour, never the accent, and a missed one in grey', async () => {
+    await renderSheet([september, october]);
+
+    const { correct, track } = coreTokens.colors.light;
+    expect(screen.getByTestId('stats-calendar-2026-10-01-dot')).toHaveStyle({
+      backgroundColor: correct,
+    });
+    expect(screen.getByTestId('stats-calendar-2026-10-02-dot')).toHaveStyle({
+      backgroundColor: track,
+    });
   });
 
   it('reads today as an Active Day once it is one', async () => {

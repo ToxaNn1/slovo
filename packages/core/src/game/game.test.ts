@@ -2686,6 +2686,7 @@ describe('the widget hint', () => {
     const records = new Map<string, string>();
     const first = await run({ records, on: hintOn });
     await playGame(first);
+    await first.game.widgetHintShown();
 
     await first.game.start('guess-word');
     expect(first.game.state.widgetHint).toBe(false);
@@ -2704,19 +2705,41 @@ describe('the widget hint', () => {
     expect(app.game.state.widgetHint).toBe(false);
   });
 
-  it('keeps on the device only that it was offered', async () => {
+  it('is offered again by the next Game with a Life left while it was never on screen', async () => {
+    const records = new Map<string, string>();
+    const first = await run({ records, on: hintOn });
+    await playGame(first);
+    expect(first.game.state.widgetHint).toBe(true);
+
+    // The reader left the result before the shell showed the hint.
+    first.game.leave();
+    await playGame(first);
+    expect(first.game.state.widgetHint).toBe(true);
+
+    const later = await run({ records, on: hintOn });
+    await playGame(later);
+    expect(later.game.state.widgetHint).toBe(true);
+  });
+
+  it('keeps on the device only that it was shown, once the shell shows it', async () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
     const app = await run({ port, on: hintOn });
     writes.length = 0;
 
     await playGame(app);
+    const kept = () =>
+      writes
+        .flatMap((changes) => [...changes.keys()])
+        .filter((key) => !key.startsWith('game.best.'));
+    expect(kept()).toEqual([]);
 
-    const offered = writes
-      .flatMap((changes) => [...changes.keys()])
-      .filter((key) => !key.startsWith('game.best.'));
-    expect(userStateRecords.widgetHintOffered.sync).toBe('device-only');
-    expect(offered).toEqual([userStateRecords.widgetHintOffered.key]);
+    await app.game.widgetHintShown();
+    await app.game.widgetHintShown();
+
+    expect(userStateRecords.widgetHintShown.sync).toBe('device-only');
+    expect(kept()).toEqual([userStateRecords.widgetHintShown.key]);
+    expect(app.game.state.widgetHint).toBe(true);
   });
 
   it.each([['widgetHint'], ['widget']] as const)(

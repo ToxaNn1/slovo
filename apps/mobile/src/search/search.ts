@@ -1,3 +1,4 @@
+import { fill } from '@slovo/contracts';
 import type { Composition, EntryRowModel, SearchResults } from '@slovo/core';
 import { useCallback, useEffect, useState } from 'react';
 
@@ -33,6 +34,22 @@ const groupOrder: readonly SearchGroupName[] = [
   'tips',
   'byMeaning',
 ];
+
+/** The group of each kind of Entry, whose title names the kind of a result in any group. */
+const groupOfKind: Readonly<Record<EntryRowModel['kind'], Exclude<SearchGroupName, 'byMeaning'>>> =
+  {
+    word: 'words',
+    correction: 'corrections',
+    idiom: 'idioms',
+    synonymRow: 'synonymRows',
+    tip: 'tips',
+  };
+
+/** How VoiceOver names a result: the kind of its Entry and its title, «За значенням» too. */
+export function resultLabel(row: EntryRowModel): string {
+  const { groups, resultLabel: label } = editionStrings.search;
+  return fill(label, { kind: groups[groupOfKind[row.kind]], text: row.title });
+}
 
 const nothingYet: SearchScreenModel = { groups: [], nothingFound: false };
 

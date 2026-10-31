@@ -43,6 +43,17 @@ export function useGameActions() {
   };
 }
 
+/**
+ * Keeps the widget hint as shown once `shown` turns on, that is once it is on
+ * screen, so no later Game offers it. A write that fails is logged.
+ */
+export function useWidgetHintShown(shown: boolean): void {
+  const { game } = useComposition();
+  useEffect(() => {
+    if (shown) void keep('the widget hint shown', game.widgetHintShown(), undefined);
+  }, [game, shown]);
+}
+
 /** How often the timer of a timed Game reads the clock, in milliseconds, so each second turns on time. */
 const TICK_MS = 250;
 

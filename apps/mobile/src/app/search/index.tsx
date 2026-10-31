@@ -1,7 +1,6 @@
 import {
   BackLink,
   EntryRow,
-  fill,
   OutlinedChip,
   RecentQueries,
   space,
@@ -17,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
 import {
+  resultLabel,
   useOpenSearchResult,
   useRecentQueries,
   useSearchScreen,
@@ -65,11 +65,11 @@ export default function SearchScreen() {
             />
           </View>
         )}
-        renderItem={({ item: row, section: { name, title } }) => (
+        renderItem={({ item: row, section: { name } }) => (
           <EntryRow
             testID={`${name === 'byMeaning' ? 'search-meaning' : 'search-result'}-${row.entryId}`}
             row={row}
-            accessibilityLabel={fill(strings.resultLabel, { kind: title, text: row.title })}
+            accessibilityLabel={resultLabel(row)}
             onPress={() => {
               openResult(row.entryId);
             }}

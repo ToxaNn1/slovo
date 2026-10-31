@@ -19,8 +19,9 @@ export interface DailyLimitEdition {
  * The Daily Limit card as a Feed Notice: on a local day once the distinct
  * Entries Seen on it, the Word of the Day included, reach the Daily Limit the
  * reader set, else the Edition's default. History keeps one entry per Entry,
- * its last Seen, so an Entry Seen again counts once. Never while the limit or
- * its Feature Switch is off (ADR 0054).
+ * its last Seen, so an Entry Seen again counts once. The Entry the card
+ * follows counts too, so the card comes right after the Entry that reaches
+ * the limit. Never while the limit or its Feature Switch is off (ADR 0054).
  */
 export function dailyLimitNotices({
   edition,
@@ -34,17 +35,20 @@ export function dailyLimitNotices({
   clock: Clock;
 }): FeedNotices {
   return {
-    async forDay(day) {
+    async forDay(day, after) {
       if (!edition.isFeatureEnabled('dailyLimit')) return [];
       const limit =
         (await userState.read(userStateRecords.dailyLimit)) ??
         edition.userSettingDefaults.dailyLimit;
       if (limit === 'off') return [];
       const date = dateKeyOf(day);
-      const seen = history.list.filter(
-        ({ seenAt }) => dateKeyOf(localDayOf(seenAt, clock).date) === date,
-      ).length;
-      return seen >= limit ? [{ notice: 'dailyLimit' }] : [];
+      const seen = new Set(
+        history.list.flatMap(({ entryId, seenAt }) =>
+          dateKeyOf(localDayOf(seenAt, clock).date) === date ? [entryId] : [],
+        ),
+      );
+      if (after !== undefined) seen.add(after);
+      return seen.size >= limit ? [{ notice: 'dailyLimit' }] : [];
     },
   };
 }

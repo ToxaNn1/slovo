@@ -177,9 +177,8 @@ describe('the Search screen', () => {
     expect(screen.getByTestId('search-group-byMeaning')).toHaveTextContent(
       strings.groups.byMeaning,
     );
-    expect(screen.getByTestId('search-meaning-w_polite')).toHaveAccessibleName(
-      'За значенням: ґречний',
-    );
+    // VoiceOver names the type of the Entry, as in the other groups.
+    expect(screen.getByTestId('search-meaning-w_polite')).toHaveAccessibleName('Слова: ґречний');
     expect(screen.queryByTestId('search-meaning-w_quiet')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('search-group-words')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('search-nothing-found')).not.toBeOnTheScreen();

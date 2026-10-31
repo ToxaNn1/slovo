@@ -1220,6 +1220,20 @@ describe('the Game screen', () => {
       expect(screen.getByText('Перемога!')).toBeOnTheScreen();
     });
 
+    it('keeps the widget guide as shown once it is on screen: a Game left from under it and the next won one offer none', async () => {
+      await renderScreen();
+      await winStress();
+      expect(await screen.findByTestId('widget-guide-sheet')).toBeOnTheScreen();
+
+      // Left without «Зрозуміло»: only the Core remembers that the hint was shown.
+      await act(() => {
+        composition.game.leave();
+      });
+      await winStress();
+
+      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+    });
+
     it('offers the widget guide once ever: the next won Game shows none', async () => {
       await renderScreen();
       await winStress();
