@@ -2,7 +2,7 @@
 
 The standing part of every ticket brief. The coordinator's launch message adds the moving part: the ticket number, the branch, the version spec's Testing Decisions, what runs in parallel, how to verify, and the permission in force. Read that message first, then this file once; do not reread either.
 
-Cost = steps × context. Every step resends the whole session, so a step costs about as much as everything read so far. Keep output short (`tail`, `grep`), read files in parts, and never print whole folders or many files into the session.
+Cost = steps × context. Every step resends the whole session, so a step costs about as much as everything read so far. Keep output short (`tail`, `grep`), read files in parts, and never print whole folders or many files into the session. The token budget in `CLAUDE.md` is enforced by `.claude/hooks/token-budget.mjs` in this session too: at 160k only git and a handoff file run. Then commit and push the finished part on your branch, put the handoff (≤ 2 KB: done, open, next steps) in your final report and stop; the coordinator continues the ticket in a fresh thread on the same branch.
 
 ## 0. Read first
 
