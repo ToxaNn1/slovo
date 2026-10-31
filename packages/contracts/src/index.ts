@@ -1,3 +1,10 @@
+export {
+  AppConfigSchema,
+  DomainSchema,
+  appReleaseProblems,
+  type AppConfig,
+  type ReleaseProblem,
+} from './app-config';
 /**
  * The contracts: the single definition of every shape shared across the
  * factory (Entries, the Edition config, the Language Pack). The API contract
@@ -18,7 +25,6 @@ export {
   ThemeSchema,
   TimeOfDaySchema,
   UserSettingDefaultsConfigSchema,
-  editionAppGroup,
   releaseProblems,
   type Category,
   type DailyLimit,

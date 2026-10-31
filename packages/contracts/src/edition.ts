@@ -1,5 +1,11 @@
 import { z } from 'zod';
 
+import {
+  DomainSchema,
+  isReservedDomain,
+  placeholderDomainMessage,
+  type ReleaseProblem,
+} from './app-config';
 import { NotificationSoundFileSchema } from './notification-sound';
 import { HexColorSchema } from './shared';
 
@@ -324,50 +330,6 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
 
 export type UserSettingDefaultsConfig = z.infer<typeof UserSettingDefaultsConfigSchema>;
 
-/**
- * A domain such as `slovo.example`: dot-separated lower-case labels of letters,
- * digits and inner hyphens, ending in a top-level domain of letters.
- */
-const DomainSchema = z
-  .string()
-  .regex(
-    /^([a-z0-9]([a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/,
-    'Expected a lower-case domain such as slovo.example',
-  );
-
-/**
- * The domains reserved for examples and tests (RFC 2606), the top-level ones
- * and the second-level `example.com`, `example.net` and `example.org`, such as
- * the placeholder `slovo.example`: no link to them, or to a name under them,
- * opens anywhere.
- */
-const RESERVED_DOMAINS = [
-  'example',
-  'test',
-  'invalid',
-  'localhost',
-  'example.com',
-  'example.net',
-  'example.org',
-];
-
-/** Whether the domain is a reserved one or a name under it. */
-const isReservedDomain = (domain: string) =>
-  RESERVED_DOMAINS.some((reserved) => domain === reserved || domain.endsWith(`.${reserved}`));
-
-/**
- * An Apple Developer Team ID, ten upper-case letters and digits, or empty
- * until the owner fills it in.
- */
-const AppleTeamIdSchema = z
-  .string()
-  .regex(/^([A-Z0-9]{10})?$/, 'Expected an Apple Team ID of ten upper-case letters and digits');
-
-/** The App Store Connect id of the app, its Apple ID of digits, or empty until the app is created. */
-const AppStoreConnectAppIdSchema = z
-  .string()
-  .regex(/^(\d+)?$/, 'Expected the App Store Connect app id, a number');
-
 /** The file name of a font among an Edition's fonts, in its `assets/fonts/` folder. */
 const FontFileSchema = z
   .string()
@@ -423,9 +385,6 @@ export const EditionConfigSchema = z
     id: EditionIdSchema,
     locale: LanguageTagSchema,
     displayName: z.string().min(1),
-    bundleId: z
-      .string()
-      .regex(/^[a-z][a-z0-9]*(\.[a-z][a-z0-9]*)+$/, 'Expected a reverse-DNS bundle id'),
     languageTraits: LanguageTraitsSchema,
     featureSwitches: FeatureSwitchesSchema,
     userSettingDefaults: UserSettingDefaultsConfigSchema,
@@ -447,14 +406,6 @@ export const EditionConfigSchema = z
      * from it and the Edition id, `https://<legalDomain>/<id>/privacy`.
      */
     legalDomain: DomainSchema,
-    /**
-     * The Apple Developer Team ID the app is signed with: the backend's
-     * app-site-association file names the app by it. Empty until the owner
-     * fills it in; the app config of a release build refuses it empty.
-     */
-    appleTeamId: AppleTeamIdSchema,
-    /** The app's id in App Store Connect, which TestFlight uploads name. Empty until the app is created. */
-    appStoreConnectAppId: AppStoreConnectAppIdSchema,
     /**
      * The font file, among the Edition's fonts, that sets the Lemma on the
      * Word of the Day card. The Edition check refuses a font without a glyph
@@ -575,52 +526,26 @@ export const EditionConfigSchema = z
         });
       }
     },
-  )
-  // The Update channel the app's OTA updates come from: the Edition id, never
-  // authored (ADR 0062).
-  .transform((config) => ({ ...config, updateChannel: config.id }));
+  );
 
 export type EditionConfig = z.infer<typeof EditionConfigSchema>;
 
-/** A field of an Edition config that a release build refuses, and why. */
-export interface ReleaseProblem {
-  readonly field: 'linkDomain' | 'legalDomain' | 'appleTeamId';
-  readonly message: string;
-}
-
 /**
- * What a release build refuses in a valid Edition config: the placeholders a
- * development build keeps, a link or legal domain reserved for examples and
- * an empty Team ID. Empty when the Edition is ready for release.
+ * What a release build refuses in a valid Edition config: a link or legal
+ * domain reserved for examples, the placeholder a development build keeps.
+ * Empty when the Edition is ready for release. The app's own identity is
+ * checked by `appReleaseProblems`.
  */
 export function releaseProblems({
   linkDomain,
   legalDomain,
-  appleTeamId,
-}: EditionConfig): ReleaseProblem[] {
-  const problems: ReleaseProblem[] = [];
-  for (const [field, domain] of [
-    ['linkDomain', linkDomain],
-    ['legalDomain', legalDomain],
-  ] as const) {
-    if (isReservedDomain(domain)) {
-      problems.push({
-        field,
-        message: `"${domain}" is a placeholder: a release build needs the Edition's real domain`,
-      });
-    }
-  }
-  if (appleTeamId === '') {
-    problems.push({
-      field: 'appleTeamId',
-      message: 'Empty: a release build needs the Apple Team ID the app is signed with',
-    });
-  }
-  return problems;
+}: EditionConfig): ReleaseProblem<'linkDomain' | 'legalDomain'>[] {
+  return (
+    [
+      ['linkDomain', linkDomain],
+      ['legalDomain', legalDomain],
+    ] as const
+  )
+    .filter(([, domain]) => isReservedDomain(domain))
+    .map(([field, domain]) => ({ field, message: placeholderDomainMessage(domain) }));
 }
-
-/**
- * The App Group an Edition's app shares with its widget (ADR 0026), derived
- * from the bundle id, so each Edition's widget reads only its own app's data.
- */
-export const editionAppGroup = (bundleId: string) => `group.${bundleId}`;
