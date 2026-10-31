@@ -52,13 +52,15 @@ function readAsked(reads: Opening<CounterReads>): void {
  * The Community Counters line of an Entry's card (ADR 0060), read again
  * whenever the reader's own mark or Favorite of it changes, so that change
  * shows at once; none until it is read, and none offline with nothing kept.
+ * Not read at all while the line is not `shown`, as with the Knowledge switch off.
  */
-export function useCounterLine(entryId: string): CounterLine | undefined {
+export function useCounterLine(entryId: string, shown: boolean): CounterLine | undefined {
   const [line, setLine] = useState<CounterLine | undefined>();
   const { mark } = useKnowledgeMark(entryId);
   const { inFavorites } = useFavorite(entryId);
   const reads = useShell().counterReads;
   useEffect(() => {
+    if (!shown) return;
     let current = true;
     void lineOf(reads, entryId).then((read) => {
       if (current) setLine(read);
@@ -66,6 +68,6 @@ export function useCounterLine(entryId: string): CounterLine | undefined {
     return () => {
       current = false;
     };
-  }, [reads, entryId, mark, inFavorites]);
+  }, [reads, entryId, shown, mark, inFavorites]);
   return line;
 }

@@ -78,7 +78,7 @@ export function EntryActions({ card }: { card: AnyEntryCard }) {
 export function useKnowledgeButtons(card: Pick<AnyEntryCard, 'entryId' | 'kind'>): ReactNode {
   const shown = useShown().entryButtons.knowledge;
   const knowledge = useKnowledgeMark(card.entryId);
-  const line = useCounterLine(card.entryId);
+  const line = useCounterLine(card.entryId, shown);
   return shown ? (
     <>
       <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
