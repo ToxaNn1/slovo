@@ -582,6 +582,28 @@ describe('app config', () => {
     expect(() => appConfig(broken)).toThrow(/widget-snapshot\.example\.json › format/);
   });
 
+  it('refuses an example Widget Snapshot of another Edition', () => {
+    const other = repoWithEdition(() => undefined, {
+      change: (edition) => {
+        editJson(edition.path('widgetSnapshotExample'), (example) => ({
+          ...example,
+          editionId: 'en',
+        }));
+      },
+    });
+
+    expect(() => appConfig(other)).toThrow(/is the Widget Snapshot of the Edition "en", not of "uk"/);
+  });
+
+  it('gives the widget extension the Edition id, so it shows only that Edition', async () => {
+    const repo = repoWithEdition(() => undefined);
+
+    await prebuildIos(repo);
+
+    const info = readFileSync(join(repo.projectRoot, '../widget/Info.plist'), 'utf8');
+    expect(info).toMatch(/<key>SLOVOEditionId<\/key>\s*<string>uk<\/string>/);
+  });
+
   it("names the field when the widget's strings are missing", () => {
     const broken = repoWithEdition(() => undefined, {
       change: (edition) => {
