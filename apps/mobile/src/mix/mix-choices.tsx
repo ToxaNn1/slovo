@@ -1,8 +1,9 @@
-import { fill } from '@slovo/contracts';
-import { featureOfKind } from '@slovo/core';
+import { fill, type MixKindWeight } from '@slovo/contracts';
+import { featureOfKind, type MixKind } from '@slovo/core';
 import {
   MixChip,
   RarityFloorChoice,
+  SegmentedControl,
   SettingsGroup,
   SwitchRow,
   space,
@@ -27,12 +28,14 @@ const strings = editionStrings.mix;
  * rarityFloor switch is on, the Rarity Ceiling choice while the rarityCeiling
  * switch is on, and the Corrections and Idioms switches, each when
  * the Edition turns it on, with the chips of the Categories of Corrections
- * under the Corrections switch while it is on (ADR 0033). A change applies at
+ * under the Corrections switch while it is on (ADR 0033), and under each kind
+ * in the Mix its Mix kind weight while the mixKindWeights switch is on. A change applies at
  * once (the Core's Mix, ADR 0019).
  */
 export function MixChoices() {
   const state = useMixState();
-  const { toggleCategory, turnAllOn, setKind, setRarityFloor, setRarityCeiling } = useMixChanges();
+  const { toggleCategory, turnAllOn, setKind, setKindWeight, setRarityFloor, setRarityCeiling } =
+    useMixChanges();
   const edition = useEditionInEffect();
 
   const model = mixScreenModel({ edition, mix: state });
@@ -104,27 +107,70 @@ export function MixChoices() {
                   }}
                 />
               );
+              const weight = on && model.kindWeights?.[entryKind];
               const categories = entryKind === 'correction' && model.correctionCategories;
-              if (!categories) return [row];
               return [
                 row,
-                <View key="correction-categories" style={styles.underSwitch}>
-                  <CategoryChips
-                    list={categories}
-                    testIDPrefix="mix-correction"
-                    hint={strings.corrections.lastCategoryHint}
-                    label={(name) => fill(strings.corrections.category, { category: name })}
-                    onToggle={(id, inMix) => {
-                      toggleCategory(id, inMix, 'correction');
-                    }}
-                  />
-                </View>,
+                weight && (
+                  <View key={`${entryKind}-weight`} style={styles.underSwitch}>
+                    <KindWeightChoice
+                      kind={entryKind}
+                      title={strings[name].title}
+                      weight={weight}
+                      onSelect={setKindWeight}
+                    />
+                  </View>
+                ),
+                categories && (
+                  <View key="correction-categories" style={styles.underSwitch}>
+                    <CategoryChips
+                      list={categories}
+                      testIDPrefix="mix-correction"
+                      hint={strings.corrections.lastCategoryHint}
+                      label={(name) => fill(strings.corrections.category, { category: name })}
+                      onToggle={(id, inMix) => {
+                        toggleCategory(id, inMix, 'correction');
+                      }}
+                    />
+                  </View>
+                ),
               ];
             })}
           </SettingsGroup>
         </View>
       )}
     </>
+  );
+}
+
+const WEIGHTS: readonly MixKindWeight[] = ['less', 'normal', 'more'];
+
+/** The Mix kind weight of one kind: «Менше», «Звичайно» or «Більше». */
+function KindWeightChoice({
+  kind,
+  title,
+  weight,
+  onSelect,
+}: {
+  kind: MixKind;
+  title: string;
+  weight: MixKindWeight;
+  onSelect: (kind: MixKind, weight: MixKindWeight) => void;
+}) {
+  const name = featureOfKind(kind);
+  return (
+    <SegmentedControl
+      accessibilityLabel={fill(strings.kindWeight.title, { kind: title })}
+      segments={WEIGHTS.map((value) => ({
+        value,
+        label: strings.kindWeight[value],
+        testID: `mix-${name}-weight-${value}`,
+      }))}
+      selected={weight}
+      onSelect={(chosen) => {
+        onSelect(kind, chosen);
+      }}
+    />
   );
 }
 

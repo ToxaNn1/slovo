@@ -1,4 +1,4 @@
-import type { Word } from '@slovo/contracts';
+import type { MixKindWeight, Word } from '@slovo/contracts';
 
 import { buildCorrectionCard } from '../entries/correction-card';
 import { buildIdiomCard } from '../entries/idiom-card';
@@ -25,6 +25,7 @@ import type { Subject } from '../subject';
 import type { OpenedEntry } from './day-change';
 import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
+import type { MixKindWeights } from '../entries/mix';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import { buildWordCard } from '../entries/word-card';
@@ -39,13 +40,25 @@ export const SEEN_DWELL_MS = 500;
  * often its turn comes (every 5th card a Correction's, every 7th an Idiom's,
  * every 9th a Synonym Row's, every 11th a Tip's), while the Cycle has unseen
  * Entries of it. When a turn falls on an earlier kind's, that kind takes the
- * card and the loser the next (ADR 0046, 0051).
+ * card and the loser the next (ADR 0046, 0051). These are the turns at
+ * «Звичайно»; `SPACING` turns them by the kind's Mix kind weight.
  */
 const TURNS = MIX_KINDS.map((kind) => ({
   kind,
   ids: ENTRY_KINDS[kind].name,
   every: ENTRY_KINDS[kind].feedTurn,
 }));
+
+/**
+ * How a Mix kind weight spaces a kind's turn of `every` cards: «Менше» twice
+ * as far apart, «Більше» twice as close, rounded up, so a Correction comes
+ * every 10th or every 3rd card; Words fill the rest (ADR 0051).
+ */
+const SPACING: Readonly<Record<MixKindWeight, (every: number) => number>> = {
+  less: (every) => every * 2,
+  normal: (every) => every,
+  more: (every) => Math.ceil(every / 2),
+};
 
 /**
  * One card in this many is a Word's due for Review, while any is due and it
@@ -189,7 +202,12 @@ const { feedPosition } = userStateRecords;
  * new one, and every `REVIEW_EVERY`th card of the session that is no other
  * kind's turn goes to a Word due for Review, if any (ADR 0043).
  */
-function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): string | undefined {
+function nextEntryId(
+  unseen: EntryIds,
+  session: FeedSession,
+  due: EntryIds,
+  weights: MixKindWeights,
+): string | undefined {
   const shown = session.shownIds();
   const last = session.cards.findLast(takesTurns)?.entryId;
   const inCycle = session.cycleCards().filter(takesTurns);
@@ -198,7 +216,7 @@ function nextEntryId(unseen: EntryIds, session: FeedSession, due: EntryIds): str
     const since = [...inCycle].reverse().findIndex((card) => card.kind === kind);
     return (since === -1 ? inCycle.length : since) >= every - 1;
   }
-  const turns = TURNS.filter(({ kind, every }) => turnOf(kind, every));
+  const turns = TURNS.filter(({ kind, every }) => turnOf(kind, SPACING[weights[kind]](every)));
   // The kinds in the order the next card goes to them: the turns first, then Words.
   const kinds: readonly (keyof EntryIds)[] = [
     ...turns.map(({ ids }) => ids),
@@ -327,6 +345,7 @@ export async function openFeed({
   history,
   archive,
   notices,
+  kindWeights,
   eligibility,
   seen,
   dayTurned,
@@ -341,6 +360,8 @@ export async function openFeed({
   history: HistoryRecorder;
   archive: WordOfTheDayArchiveRecorder;
   notices: FeedNotices;
+  /** The Mix kind weights the turns follow now, read for each card. */
+  kindWeights: () => MixKindWeights;
   eligibility: Pick<Subject<void>, 'subscribe'>;
   seen: Pick<Subject<string>, 'publish'>;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
@@ -446,7 +467,7 @@ export async function openFeed({
       started.commit();
       session.startCycle();
     }
-    const id = nextEntryId(cycle.unseen(), session, eligibleDue(cycle, knowledge));
+    const id = nextEntryId(cycle.unseen(), session, eligibleDue(cycle, knowledge), kindWeights());
     let card: FeedCard = { kind: 'end-of-cycle' };
     if (id !== undefined) {
       const entryCard = await buildFeedCard(entries, id);

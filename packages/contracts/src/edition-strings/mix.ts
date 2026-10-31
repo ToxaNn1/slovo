@@ -43,6 +43,16 @@ export const MixStringsSchema = z.strictObject({
     ceilingSubtitle: TextSchema,
     ceiling: templateOf('rarity'),
   }),
+  /**
+   * The Mix kind weight choice under a kind's switch: its VoiceOver label,
+   * which takes `{kind}`, the kind's name, and the names of the three weights.
+   */
+  kindWeight: z.strictObject({
+    title: templateOf('kind'),
+    less: TextSchema,
+    normal: TextSchema,
+    more: TextSchema,
+  }),
   /** The line that says why the last Category's chip can't be turned off. VoiceOver reads it as that chip's hint. */
   lastCategoryHint: TextSchema,
 });

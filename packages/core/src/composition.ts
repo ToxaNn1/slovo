@@ -47,7 +47,7 @@ import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { openCommunityCounters, type CommunityCounters } from './community-counters/counter-deltas';
 import { openHiddenEntries, type HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
-import { openMix, type Mix } from './entries/mix';
+import { NORMAL_KIND_WEIGHTS, openMix, type Mix } from './entries/mix';
 import type { NotificationScheduling } from './notifications/notification-plan';
 import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
@@ -394,6 +394,12 @@ export async function openComposition({
     returned,
   });
   const dailyLimit = dailyLimitNotices({ edition, userState, history, clock });
+  // The Mix opens before the Feed, whose turns follow its kind weights.
+  const [word, correction] = await Promise.all([
+    entries.categories(),
+    entries.correctionCategories(),
+  ]);
+  const mix = await openMix({ edition, categories: { word, correction }, userState, eligibility });
   const feed = await openFeed({
     entries,
     userState,
@@ -419,6 +425,8 @@ export async function openComposition({
       createYesterday({ edition, entries, hiddenEntries, userState }),
       dailyLimit,
     ),
+    kindWeights: () =>
+      edition.isFeatureEnabled('mixKindWeights') ? mix.state.kindWeights : NORMAL_KIND_WEIGHTS,
     eligibility,
     seen,
     dayTurned,
@@ -442,12 +450,9 @@ export async function openComposition({
     dayTurned,
     returned,
   });
-  const [favorites, collections, mix] = await Promise.all([
+  const [favorites, collections] = await Promise.all([
     openFavorites({ rows, userState, clock, communityCounters }),
     openCollections({ rows, userState, clock, random }),
-    Promise.all([entries.categories(), entries.correctionCategories()]).then(([word, correction]) =>
-      openMix({ edition, categories: { word, correction }, userState, eligibility }),
-    ),
   ]);
   const progress = openProgress({
     edition,

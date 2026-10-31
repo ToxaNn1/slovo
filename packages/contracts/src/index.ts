@@ -39,6 +39,8 @@ export {
   type OriginLanguage,
   type Theme,
   type UserSettingDefaultsConfig,
+  MixKindWeightSchema,
+  type MixKindWeight,
 } from './edition';
 export { COUNTERS_BATCH_SIZE } from './community-counters';
 export { AccountEmailSchema, SIGN_IN_CODE_DIGITS, SignInCodeSchema } from './account';

@@ -242,6 +242,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   collectionLinks: z.boolean(),
   /** A Word from the mood roulette or the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
   replaceOpenEntry: z.boolean(),
+  /** The Mix kind weights: «Менше», «Звичайно» or «Більше» for each kind beside Words, which space its Feed turns; off, every kind keeps its turn of 0.9. */
+  mixKindWeights: z.boolean(),
 });
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
@@ -250,6 +252,11 @@ export type FeatureSwitch = keyof FeatureSwitches;
 
 /** The user's light/dark choice. */
 export const ThemeSchema = z.enum(['system', 'light', 'dark']);
+
+/** A Mix kind weight: «Менше», «Звичайно» or «Більше» for a kind of Entry beside Words. */
+export const MixKindWeightSchema = z.enum(['less', 'normal', 'more']);
+
+export type MixKindWeight = z.infer<typeof MixKindWeightSchema>;
 
 export type Theme = z.infer<typeof ThemeSchema>;
 
