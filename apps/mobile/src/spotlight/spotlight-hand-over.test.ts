@@ -97,12 +97,15 @@ async function app() {
   const appState = fakeAppState();
   const reports = reportForeground({ clock: time.clock, appState: appState.source });
   const writes: SpotlightItem[][] = [];
-  const index = createSpotlightIndex({
-    replaceIndex(items) {
-      writes.push(items);
-      return Promise.resolve();
+  const index = createSpotlightIndex(
+    {
+      replaceIndex(items) {
+        writes.push(items);
+        return Promise.resolve();
+      },
     },
-  });
+    'uk',
+  );
   const stop = handOverSpotlight({ reports, composition, index, strings });
   await composition.opened();
   await settled();
@@ -110,8 +113,12 @@ async function app() {
     time,
     composition,
     writes,
-    /** The routes of the last items handed over. */
-    lastRoutes: () => writes.at(-1)?.map(({ route }) => route),
+    /** The routes of the last items handed over, each in the UA Edition, without the Edition's mark. */
+    lastRoutes: () =>
+      writes.at(-1)?.map(({ route }) => {
+        expect(route).toMatch(/[?&]edition=uk$/);
+        return route.replace(/[?&]edition=uk$/, '');
+      }),
     background: async () => {
       appState.change('background');
       await settled();

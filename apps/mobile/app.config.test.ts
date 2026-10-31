@@ -592,7 +592,9 @@ describe('app config', () => {
       },
     });
 
-    expect(() => appConfig(other)).toThrow(/is the Widget Snapshot of the Edition "en", not of "uk"/);
+    expect(() => appConfig(other)).toThrow(
+      /is the Widget Snapshot of the Edition "en", not of "uk"/,
+    );
   });
 
   it('gives the widget extension the Edition id, so it shows only that Edition', async () => {

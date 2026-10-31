@@ -96,7 +96,8 @@ export function appShortcutsSwift({ editionId, displayName, strings }: AppIntent
     ].join('\n');
   });
   const routes = intents.map(
-    ([, { type, route }]) => `extension ${type} {\n  static let route = "${swiftText(editionRoute(route, editionId))}"\n}\n`,
+    ([, { type, route }]) =>
+      `extension ${type} {\n  static let route = "${swiftText(editionRoute(route, editionId))}"\n}\n`,
   );
   return [
     `// Made at prebuild from the Edition's strings (plugins/app-intents.ts); not kept in git.`,
