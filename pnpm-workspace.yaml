@@ -46,3 +46,6 @@ auditConfig:
     # zod 3 has no patched release; SLOVO's own zod is 4.6.7+, so this only
     # covers zod 3.25 inside @expo/cli (build-time). Reviewed 2026-10-24.
     - GHSA-mrhx-c7xc-m3w5 # zod 3, via @expo/cli; reviewed 2026-10-24
+
+patchedDependencies:
+  query-string@7.1.3: patches/query-string@7.1.3.patch
