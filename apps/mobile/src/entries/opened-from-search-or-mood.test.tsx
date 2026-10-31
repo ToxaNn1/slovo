@@ -19,7 +19,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import config from 'slovo-edition/config';
 
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 import MoodLayout from '../app/mood/_layout';
 import EntryFromMoodScreen from '../app/mood/[entryId]';
 import SavedLayout from '../app/saved/_layout';
@@ -35,8 +35,8 @@ jest.mock('expo-constants', () => ({
   default: { expoConfig: { extra: { edition: { id: 'uk', wordOfTheDayFontFamily: 'Kurale' } } } },
 }));
 
-/** The Ukrainian Edition in effect. */
-let mockEdition: Edition;
+/** The Ukrainian Edition as its config file gives it, every Feature Switch as it ships. */
+const shippedEdition: Edition = loadEdition(config);
 
 /** The user state the settings and the composition keep, opened afresh for each test. */
 let userState: Awaited<ReturnType<typeof openUserState>>;
@@ -46,7 +46,6 @@ let composition: Composition;
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-jest.mock('../edition/remote-switches', () => ({ useEditionInEffect: () => mockEdition }));
 // The Entry card's action row has its own tests.
 jest.mock('../entries/entry-actions', () => ({
   EntryActions: () => null,
@@ -93,7 +92,6 @@ function word(id: string, lemma: string): Word {
  * onboarding with the records given, on 2026-10-28 in Kyiv.
  */
 async function open(records: Readonly<Record<string, unknown>>) {
-  mockEdition = loadEdition(config);
   userState = await openUserState({
     port: createMemoryUserStatePort(
       new Map(Object.entries(records).map(([key, value]) => [key, JSON.stringify(value)])),
@@ -104,7 +102,7 @@ async function open(records: Readonly<Record<string, unknown>>) {
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
       words: [word('w_sumyrnyi', 'сумирний'), word('w_lahidnyi', 'лагідний')],
     }),
-    edition: mockEdition,
+    edition: shippedEdition,
     userState: userState,
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     // The first Word in each draw, so each opening shows the same Word of the Day.
@@ -137,6 +135,7 @@ const shell = () =>
         clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
       }),
     ),
+    remoteSwitches: switchedTo(shippedEdition),
     composition: opened(composition),
   });
 
