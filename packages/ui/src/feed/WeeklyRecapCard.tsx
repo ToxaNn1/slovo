@@ -1,3 +1,4 @@
+import type { Plural } from '@slovo/contracts';
 import type { WeeklyRecapModel } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -33,12 +34,28 @@ export function WeeklyRecapCard({
     recap === undefined
       ? []
       : [
-          { key: 'seen', value: recap.seen, label: words.seen },
-          { key: 'saved', value: recap.saved, label: words.saved },
+          { key: 'seen', value: recap.seen, label: words.seen, spoken: words.spoken.seen },
+          { key: 'saved', value: recap.saved, label: words.saved, spoken: words.spoken.saved },
           ...(recap.known === undefined
             ? []
-            : [{ key: 'known', value: recap.known, label: words.known }]),
-          ...(hideStreak ? [] : [{ key: 'streak', value: recap.streak, label: words.streak }]),
+            : [
+                {
+                  key: 'known',
+                  value: recap.known,
+                  label: words.known,
+                  spoken: words.spoken.known,
+                },
+              ]),
+          ...(hideStreak
+            ? []
+            : [
+                {
+                  key: 'streak',
+                  value: recap.streak,
+                  label: words.streak,
+                  spoken: words.spoken.streak,
+                },
+              ]),
         ];
   return (
     <FeedNoticeCard
@@ -52,8 +69,14 @@ export function WeeklyRecapCard({
     >
       {numbers.length > 0 && (
         <View style={styles.grid}>
-          {numbers.map(({ key, value, label }) => (
-            <RecapNumber key={key} testID={`weekly-recap-${key}`} value={value} label={label} />
+          {numbers.map(({ key, value, label, spoken }) => (
+            <RecapNumber
+              key={key}
+              testID={`weekly-recap-${key}`}
+              value={value}
+              label={label}
+              spoken={spoken}
+            />
           ))}
         </View>
       )}
@@ -61,15 +84,26 @@ export function WeeklyRecapCard({
   );
 }
 
-function RecapNumber({ value, label, testID }: { value: number; label: string; testID: string }) {
+function RecapNumber({
+  value,
+  label,
+  spoken,
+  testID,
+}: {
+  value: number;
+  label: string;
+  /** What VoiceOver reads for the number, in the Edition's plural forms. */
+  spoken: Plural;
+  testID: string;
+}) {
   const { colors, fontFamilies } = useTokens();
-  const { voice } = useEdition();
+  const { voice, count } = useEdition();
   return (
-    // VoiceOver reads the number and its label as one element.
+    // VoiceOver reads the number and its label as one element, in the Edition's words.
     <View
       testID={testID}
       accessible
-      accessibilityLabel={`${String(value)} ${label}`}
+      accessibilityLabel={count(spoken, value)}
       {...voice}
       style={styles.number}
     >

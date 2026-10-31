@@ -1,4 +1,4 @@
-import { fill, type EditionStrings } from '@slovo/contracts';
+import { fill, pluralCount, type EditionStrings } from '@slovo/contracts';
 
 import type { AnyEntryCard } from '../feed/entry-feed-card';
 import type { LocalDate } from '../local-date';
@@ -88,7 +88,7 @@ export interface ShareCardContent {
   readonly body: ShareCardBody;
 }
 
-/** The texts a Share Card takes from the Edition. */
+/** The texts a Share Card takes from the Edition; a Weekly Recap's spoken numbers are its Feed Notice's. */
 export type ShareCardStrings = Pick<
   EditionStrings,
   | 'share'
@@ -101,12 +101,18 @@ export type ShareCardStrings = Pick<
   | 'tipCard'
 >;
 
-/** The Share Card of an Entry or of a Weekly Recap, in the Edition's texts. */
+/**
+ * The Share Card of an Entry or of a Weekly Recap, in the Edition's texts.
+ * `locale` picks the plural forms VoiceOver reads for the recap's numbers.
+ */
 export function buildShareCardContent(
   subject: ShareCardSubject,
   strings: ShareCardStrings,
+  locale: string,
 ): ShareCardContent {
-  if ('recap' in subject) return weeklyRecapContent(subject.recap, subject.hideStreak, strings);
+  if ('recap' in subject) {
+    return weeklyRecapContent(subject.recap, subject.hideStreak, strings, locale);
+  }
   const { card, todaysWordOfTheDay } = subject;
   const model = card.model;
   const shows = card.entryId;
@@ -219,9 +225,12 @@ function weeklyRecapContent(
   recap: WeeklyRecapModel,
   hideStreak: boolean,
   strings: ShareCardStrings,
+  locale: string,
 ): ShareCardContent {
   const texts = strings.share.weeklyRecap;
   const labels = strings.feedNotices.weeklyRecap;
+  const { spoken } = labels;
+  const countOf = pluralCount(locale);
   const { firstDay, lastDay, seen, saved, known, streak } = recap;
   const monthOf = ({ month }: LocalDate) => strings.dates.months[month - 1] ?? '';
   const week =
@@ -238,10 +247,10 @@ function weeklyRecapContent(
           toMonth: monthOf(lastDay),
         });
   const numbers = [
-    { label: labels.seen, count: seen },
-    { label: labels.saved, count: saved },
-    ...(known === undefined ? [] : [{ label: labels.known, count: known }]),
-    ...(hideStreak ? [] : [{ label: labels.streak, count: streak }]),
+    { label: labels.seen, count: seen, spoken: spoken.seen },
+    { label: labels.saved, count: saved, spoken: spoken.saved },
+    ...(known === undefined ? [] : [{ label: labels.known, count: known, spoken: spoken.known }]),
+    ...(hideStreak ? [] : [{ label: labels.streak, count: streak, spoken: spoken.streak }]),
   ];
   return {
     shows: week,
@@ -249,8 +258,12 @@ function weeklyRecapContent(
     label: sentences([
       week,
       texts.title,
-      ...numbers.map(({ label, count }) => `${String(count)} ${label}`),
+      ...numbers.map((number) => countOf(number.spoken, number.count)),
     ]),
-    body: { kind: 'weeklyRecap', title: texts.title, numbers },
+    body: {
+      kind: 'weeklyRecap',
+      title: texts.title,
+      numbers: numbers.map(({ label, count }) => ({ label, count })),
+    },
   };
 }

@@ -19,6 +19,7 @@ const strings = testStrings({
     start: 'Check your level',
     subtitle: 'A few words to pick your rarity',
     progress: '{n} of {total}',
+    announcement: 'Word {n} of {total}: {word}',
     result: 'Your level: from {n}',
   },
   knowledge: { known: 'Known', unknown: 'Unknown' },

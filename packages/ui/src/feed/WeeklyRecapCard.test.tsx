@@ -12,6 +12,12 @@ const strings = testStrings({
       saved: 'saved',
       known: 'known',
       streak: 'streak',
+      spoken: {
+        seen: { one: '{count} entry seen', other: '{count} entries seen' },
+        saved: { one: '{count} entry saved', other: '{count} entries saved' },
+        known: { one: 'marked known: {count} entry', other: 'marked known: {count} entries' },
+        streak: { one: 'streak: {count} day', other: 'streak: {count} days' },
+      },
     },
   },
   share: { share: 'Share' },
@@ -35,29 +41,38 @@ async function renderCard(props: Parameters<typeof WeeklyRecapCard>[0]) {
 }
 
 describe('the Weekly Recap card', () => {
-  it("shows «Your week» with the week's Seen, saved and Known numbers and the Streak, each under its label", async () => {
+  it("shows «Your week» with the week's Seen, saved and Known numbers and the Streak, each under its label, which VoiceOver reads in the Edition's words", async () => {
     await renderCard({ recap });
 
     expect(screen.getByTestId('feed-notice-weeklyRecap')).toBeTruthy();
     expect(screen.getByText('Your week')).toBeTruthy();
-    expect(screen.getByLabelText('23 seen')).toBeTruthy();
-    expect(screen.getByLabelText('4 saved')).toBeTruthy();
-    expect(screen.getByLabelText('9 known')).toBeTruthy();
-    expect(screen.getByLabelText('6 streak')).toBeTruthy();
+    expect(screen.getByLabelText('23 entries seen')).toBeTruthy();
+    expect(screen.getByLabelText('4 entries saved')).toBeTruthy();
+    expect(screen.getByLabelText('marked known: 9 entries')).toBeTruthy();
+    expect(screen.getByLabelText('streak: 6 days')).toBeTruthy();
+    expect(screen.getByText('23')).toBeTruthy();
+    expect(screen.getByText('seen')).toBeTruthy();
+  });
+
+  it('VoiceOver reads a number of one in its singular', async () => {
+    await renderCard({ recap: { ...recap, saved: 1, streak: 1 } });
+
+    expect(screen.getByLabelText('1 entry saved')).toBeTruthy();
+    expect(screen.getByLabelText('streak: 1 day')).toBeTruthy();
   });
 
   it('leaves the Known number out when the recap has none, with the Knowledge Marks off', async () => {
     const { known: _, ...withoutKnown } = recap;
     await renderCard({ recap: withoutKnown });
 
-    expect(screen.getByLabelText('23 seen')).toBeTruthy();
+    expect(screen.getByLabelText('23 entries seen')).toBeTruthy();
     expect(screen.queryByText('known')).toBeNull();
   });
 
   it('leaves the Streak out while the reader hides it', async () => {
     await renderCard({ recap, hideStreak: true });
 
-    expect(screen.getByLabelText('9 known')).toBeTruthy();
+    expect(screen.getByLabelText('marked known: 9 entries')).toBeTruthy();
     expect(screen.queryByText('streak')).toBeNull();
   });
 

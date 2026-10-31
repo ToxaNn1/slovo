@@ -29,9 +29,6 @@ const STRINGS = {
       weekAcrossMonths: '{from} {fromMonth} – {to} {toMonth}',
     },
   },
-  feedNotices: {
-    weeklyRecap: { seen: 'переглянуто', saved: 'збережено', known: 'знаю', streak: 'серія' },
-  },
   dates: {
     months: [
       'січня',
@@ -64,6 +61,40 @@ const STRINGS = {
   },
   synonymRowCard: { chip: 'Синоніми', heading: '{dominant}, синонімічний ряд: {members}' },
   tipCard: { chip: 'Порада', heading: 'Порада: {title}' },
+  feedNotices: {
+    weeklyRecap: {
+      seen: 'переглянуто',
+      saved: 'збережено',
+      known: 'знаю',
+      streak: 'серія',
+      spoken: {
+        seen: {
+          one: 'переглянуто {count} запис',
+          few: 'переглянуто {count} записи',
+          many: 'переглянуто {count} записів',
+          other: 'переглянуто {count} запису',
+        },
+        saved: {
+          one: 'збережено {count} запис',
+          few: 'збережено {count} записи',
+          many: 'збережено {count} записів',
+          other: 'збережено {count} запису',
+        },
+        known: {
+          one: 'позначено «Знаю»: {count} запис',
+          few: 'позначено «Знаю»: {count} записи',
+          many: 'позначено «Знаю»: {count} записів',
+          other: 'позначено «Знаю»: {count} запису',
+        },
+        streak: {
+          one: 'серія: {count} день поспіль',
+          few: 'серія: {count} дні поспіль',
+          many: 'серія: {count} днів поспіль',
+          other: 'серія: {count} дня поспіль',
+        },
+      },
+    },
+  },
 } as unknown as ShareCardStrings;
 
 const entries = (content: Parameters<typeof createMemoryContentPort>[0] = {}) =>
@@ -103,7 +134,7 @@ const tipCard = (shown: Tip): AnyEntryCard => ({
 });
 
 const contentOf = (card: AnyEntryCard, todaysWordOfTheDay = false) =>
-  buildShareCardContent({ card, todaysWordOfTheDay }, STRINGS);
+  buildShareCardContent({ card, todaysWordOfTheDay }, STRINGS, 'uk');
 
 const VEREMIJA = word('w_veremija', {
   lemma: 'веремія',
@@ -322,14 +353,15 @@ const RECAP: WeeklyRecapModel = {
 };
 
 const recapContent = (recap: WeeklyRecapModel, hideStreak = false) =>
-  buildShareCardContent({ recap, hideStreak }, STRINGS);
+  buildShareCardContent({ recap, hideStreak }, STRINGS, 'uk');
 
 describe('the Share Card of a Weekly Recap', () => {
   it('shows the title, the week as its overline and the four numbers in order, with no words', () => {
     expect(recapContent(RECAP)).toEqual({
       shows: '20–26 жовтня',
       overline: '20–26 жовтня',
-      label: '20–26 жовтня. Мій тиждень у SLOVO. 34 переглянуто. 5 збережено. 12 знаю. 9 серія',
+      label:
+        '20–26 жовтня. Мій тиждень у SLOVO. переглянуто 34 записи. збережено 5 записів. позначено «Знаю»: 12 записів. серія: 9 днів поспіль',
       body: {
         kind: 'weeklyRecap',
         title: 'Мій тиждень у SLOVO',
@@ -377,7 +409,7 @@ describe('the Share Card of a Weekly Recap', () => {
 
   it('shows a 0 as a number', () => {
     expect(recapContent({ ...RECAP, saved: 0, known: 0 }).label).toBe(
-      '20–26 жовтня. Мій тиждень у SLOVO. 34 переглянуто. 0 збережено. 0 знаю. 9 серія',
+      '20–26 жовтня. Мій тиждень у SLOVO. переглянуто 34 записи. збережено 0 записів. позначено «Знаю»: 0 записів. серія: 9 днів поспіль',
     );
   });
 });

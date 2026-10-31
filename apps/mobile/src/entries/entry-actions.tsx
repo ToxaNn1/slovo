@@ -142,6 +142,7 @@ function EntryShareSheet({
           todaysWordOfTheDay: card.kind === 'word' && isTodaysWordOfTheDay(card, deviceClock),
         },
         editionStrings,
+        edition.locale,
       )}
       watermark={edition.displayName}
       initialFormat={sessionShareFormat.format}
