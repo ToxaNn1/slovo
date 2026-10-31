@@ -27,6 +27,7 @@ const everything: Shown = {
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
   streakBreak: true,
+  quickQuestion: true,
   sync: true,
   dailyLimit: true,
   search: true,

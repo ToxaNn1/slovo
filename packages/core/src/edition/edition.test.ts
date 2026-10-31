@@ -78,6 +78,7 @@ const validConfig = {
     xpLog: true,
     streakFreezes: true,
     streakBreak: true,
+    quickQuestion: true,
   },
   userSettingDefaults: {
     theme: 'system',

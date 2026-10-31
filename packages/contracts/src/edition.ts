@@ -254,6 +254,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   streakFreezes: z.boolean(),
   /** The Break: the reader pauses the Streak for up to 7 days, once every 30 days, free; its days keep the Streak and add nothing (ADR 0066). */
   streakBreak: z.boolean(),
+  /** The Quick Question: every Nth Feed card asks one Round from an enabled Game Mode over an Eligible Entry; off, the Feed of 0.9. */
+  quickQuestion: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -298,6 +300,16 @@ export const ThemeSchema = z.enum(['system', 'light', 'dark']);
 export const MixKindWeightSchema = z.enum(['less', 'normal', 'more']);
 
 export type MixKindWeight = z.infer<typeof MixKindWeightSchema>;
+
+/** How often the Feed asks a Quick Question, a Mix setting: off, or every 20th, 10th or 6th card. */
+export const QuickQuestionEverySchema = z.union([
+  z.literal('off'),
+  z.literal(20),
+  z.literal(10),
+  z.literal(6),
+]);
+
+export type QuickQuestionEvery = z.infer<typeof QuickQuestionEverySchema>;
 
 export type Theme = z.infer<typeof ThemeSchema>;
 
