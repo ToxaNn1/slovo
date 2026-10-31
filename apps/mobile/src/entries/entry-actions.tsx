@@ -157,10 +157,10 @@ function EntryShareSheet({
 /**
  * The «Повідомити про помилку» flag of an Entry's action row, and the sheet
  * it opens: there only while Mistake Reports are on in effect (ADR 0056).
- * «Надіслати» closes the sheet and hands the report to the Core's queue,
- * which sends it now or later; once the Core answers, a toast thanks the
- * reader («Дякуємо! Ми перевіримо.», offline too) or says the daily limit
- * is spent.
+ * «Надіслати» closes the sheet, thanks the reader at once («Дякуємо! Ми
+ * перевіримо.», offline too) and hands the report to the Core's queue, which
+ * sends it now or later; if the Core then says the daily limit is spent, or
+ * keeps no report, a toast in its place says so.
  */
 function useMistakeReportAction(entryId: string): { button: ReactNode; sheet: ReactNode } {
   const [open, setOpen] = useState(false);
@@ -184,17 +184,19 @@ function useMistakeReportAction(entryId: string): { button: ReactNode; sheet: Re
         visible={open}
         onClose={close}
         onSend={({ type, comment }) => {
+          const toasts = editionStrings.mistakeReport;
           close();
+          showToast({ message: toasts.sent });
           mistakeReports
             .opened()
             .then((reports) => reports.report({ entryId, type, comment }))
             .then((answer) => {
-              const toasts = editionStrings.mistakeReport;
-              if (answer === 'thanked') showToast({ message: toasts.sent });
               if (answer === 'too-many-requests') showToast({ message: toasts.tooMany });
+              else if (answer !== 'thanked') showToast({ message: toasts.failed });
             })
             .catch((error: unknown) => {
               logError('Could not report the mistake', error);
+              showToast({ message: toasts.failed });
             });
         }}
       />
