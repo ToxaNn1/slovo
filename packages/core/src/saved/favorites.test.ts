@@ -146,6 +146,7 @@ describe('an Entry opened from a list', () => {
       spoken: 'old, The meaning of old.',
       partOfSpeech: 'noun',
       registers: [],
+      rarity: 3,
     });
   });
 

@@ -104,6 +104,7 @@ describe.each(keptLists)('$name', ({ prefix, timeKey, listOf, timesOf, put, take
           spoken: 'two, The meaning of two.',
           partOfSpeech: 'noun',
           registers: [],
+          rarity: 3,
         },
       },
     ]);
