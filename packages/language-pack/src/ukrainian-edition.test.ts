@@ -70,6 +70,7 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('appIntents')).toBe(true);
     expect(edition.isFeatureEnabled('collectionLinks')).toBe(true);
     expect(edition.isFeatureEnabled('replaceOpenEntry')).toBe(true);
+    expect(edition.isFeatureEnabled('analytics')).toBe(true);
   });
 
   it('starts new users on the agreed defaults', () => {

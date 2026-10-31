@@ -68,7 +68,8 @@
     "appIntents": true,
     "collectionLinks": true,
     "replaceOpenEntry": true,
-    "mixKindWeights": true
+    "mixKindWeights": true,
+    "analytics": true
   },
   "userSettingDefaults": {
     "theme": "system",
