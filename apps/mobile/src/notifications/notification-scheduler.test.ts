@@ -56,6 +56,7 @@ const planned = (
   overrides: Partial<Pick<PlannedNotification, 'date' | 'time' | 'sound'>> = {},
 ): PlannedNotification => ({
   kind: 'word',
+  editionId: 'uk',
   date: '2026-10-15',
   time: '09:00',
   title: 'кракелю́р',
@@ -83,7 +84,7 @@ describe('the notification scheduler on expo-notifications', () => {
           title: 'кракелю́р',
           body: 'Сітка тріщин на фарбі.',
           sound: 'notification.wav',
-          data: { wordId: 'w_00g2ap' },
+          data: { editionId: 'uk', wordId: 'w_00g2ap' },
         },
         trigger: { type: 'calendar', year: 2026, month: 10, day: 15, hour: 9, minute: 0 },
       },
@@ -103,6 +104,7 @@ describe('the notification scheduler on expo-notifications', () => {
     await scheduler.replacePlan([
       {
         kind: 'farewell',
+        editionId: 'uk',
         date: '2026-10-28',
         time: '19:00',
         body: 'До зустрічі',
@@ -114,7 +116,7 @@ describe('the notification scheduler on expo-notifications', () => {
       title: '',
       body: 'До зустрічі',
       sound: 'notification.wav',
-      data: {},
+      data: { editionId: 'uk' },
     });
   });
 
@@ -218,8 +220,8 @@ describe('a tap on a notification', () => {
     const { notifications, tap } = mockNotifications();
     const open = vi.fn<(link: string) => void>();
 
-    onNotificationTap(notifications, open);
-    tap(tapOn({ wordId: 'w_00g2ap' }));
+    onNotificationTap(notifications, 'uk', open);
+    tap(tapOn({ editionId: 'uk', wordId: 'w_00g2ap' }));
 
     const [[link]] = open.mock.calls as [[string]];
     expect(link).toBe('/entry/w_00g2ap?from=notification');
@@ -235,8 +237,8 @@ describe('a tap on a notification', () => {
     const { module, notifications, stopListening, tap } = mockNotifications();
     const open = vi.fn();
 
-    const stop = onNotificationTap(notifications, open);
-    tap(tapOn({ wordId: 'w_00g2ap' }));
+    const stop = onNotificationTap(notifications, 'uk', open);
+    tap(tapOn({ editionId: 'uk', wordId: 'w_00g2ap' }));
     tap(tapOn({}));
 
     expect(open.mock.calls).toEqual([['/entry/w_00g2ap?from=notification']]);
@@ -248,20 +250,44 @@ describe('a tap on a notification', () => {
 
   it('opens the Word of the tap that launched the app, once', () => {
     const { module, notifications } = mockNotifications({
-      lastResponse: tapOn({ wordId: 'w_00g2ap' }),
+      lastResponse: tapOn({ editionId: 'uk', wordId: 'w_00g2ap' }),
     });
     const open = vi.fn();
 
-    onNotificationTap(notifications, open);
+    onNotificationTap(notifications, 'uk', open);
 
     expect(open.mock.calls).toEqual([['/entry/w_00g2ap?from=notification']]);
     expect(module.clearLastNotificationResponse).toHaveBeenCalled();
   });
 
+  it("opens no Word of another Edition's notification, and the app opens as it is", () => {
+    const { module, notifications, tap } = mockNotifications({
+      lastResponse: tapOn({ editionId: 'en', wordId: 'w_00g2ap' }),
+    });
+    const open = vi.fn();
+
+    onNotificationTap(notifications, 'uk', open);
+    tap(tapOn({ editionId: 'en', wordId: 'w_00g2aq' }));
+    tap(tapOn({ editionId: 'uk', wordId: 'w_00g2ar' }));
+
+    expect(open.mock.calls).toEqual([['/entry/w_00g2ar?from=notification']]);
+    expect(module.clearLastNotificationResponse).toHaveBeenCalled();
+  });
+
+  it('opens the Word of a notification planned before notifications carried an Edition', () => {
+    const { notifications, tap } = mockNotifications();
+    const open = vi.fn();
+
+    onNotificationTap(notifications, 'uk', open);
+    tap(tapOn({ wordId: 'w_00g2ap' }));
+
+    expect(open.mock.calls).toEqual([['/entry/w_00g2ap?from=notification']]);
+  });
+
   it('listens to nothing without the module', () => {
     const open = vi.fn();
 
-    const stop = onNotificationTap(undefined, open);
+    const stop = onNotificationTap(undefined, 'uk', open);
     stop();
 
     expect(open).not.toHaveBeenCalled();

@@ -55,11 +55,12 @@ export interface NotificationScheduling {
 const { notificationTitles: titlesRecord } = userStateRecords;
 
 /**
- * What the plan needs to know of the Edition: its notification sound, if it
- * has one, and the effective values of the Feature Switches it follows,
+ * What the plan needs to know of the Edition: its id, which every
+ * notification carries, its notification sound, if it has one, and the
+ * effective values of the Feature Switches it follows,
  * notifications and the Word of the Day, which it reads each time it plans.
  */
-export interface PlanEdition extends Pick<Edition, 'isFeatureEnabled'> {
+export interface PlanEdition extends Pick<Edition, 'id' | 'isFeatureEnabled'> {
   /** The file name of the Edition's own sound; without one, notifications play the system sound. */
   readonly notificationSound?: string | undefined;
 }
@@ -213,6 +214,10 @@ export const noNotificationPlanner: NotificationPlanner = {
  * the Edition's farewell, with no title and no Word, so it Reserves none;
  * nothing comes after it until the next open plans again (ADR 0054). Off,
  * the plan holds 14 days of times from the next one ahead.
+ *
+ * The plan is the active Edition's alone (ADR 0065): the composition opens
+ * for that one Edition, so no other Edition plans, and every plan replaces
+ * all the device held. Each notification carries the Edition's id.
  *
  * Each notification is titled by one of the Edition's title templates with
  * its Word, the Lemma with its Stress; the body is the primary Definition.
@@ -375,6 +380,7 @@ export function createNotificationPlanner({
     const notifications = planned.map(
       ({ reserved: { slot }, word }, index): PlannedNotification => ({
         kind: 'word',
+        editionId: edition.id,
         date: dateKeyOf(slot.date),
         time: formatTimeOfDay(slot.time),
         // Every Edition lists its templates, so a template is always drawn.
@@ -387,6 +393,7 @@ export function createNotificationPlanner({
     if (farewellSlot !== undefined) {
       notifications.push({
         kind: 'farewell',
+        editionId: edition.id,
         date: dateKeyOf(farewellSlot.date),
         time: formatTimeOfDay(farewellSlot.time),
         body: farewell,

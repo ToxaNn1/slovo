@@ -1,6 +1,7 @@
 import { isRunningInExpoGo } from 'expo';
 
 import { nativeModules } from '../device/device-native-modules';
+import { activeEditionId } from '../edition/edition';
 import {
   createNotificationScheduler,
   onNotificationTap,
@@ -23,6 +24,6 @@ export const deviceNotificationScheduler = createNotificationScheduler(notificat
   inExpoGo: isRunningInExpoGo(),
 });
 
-/** Calls `open` with the link of each notification the reader taps; returns the call that stops it. */
+/** Calls `open` with the link of each active Edition's notification the reader taps; returns the call that stops it. */
 export const onDeviceNotificationTap = (open: (link: string) => void) =>
-  onNotificationTap(notifications, open);
+  onNotificationTap(notifications, activeEditionId, open);
