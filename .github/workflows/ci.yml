@@ -18,37 +18,76 @@ env:
   TURBO_TELEMETRY_DISABLED: 1
 
 jobs:
-  checks:
-    name: Lint, typecheck, test and Language Pack
+  # The checks run as parallel jobs, so a PR is green in about the time of its
+  # slowest one. Each job checks out and sets up on its own
+  # (.github/actions/setup); the job "Lint, typecheck, test and Language Pack",
+  # the check the ruleset requires, reports whether all of them passed.
+  lint:
+    name: Lint
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       - run: pnpm lint
+
+  typecheck:
+    name: Typecheck and package boundaries
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - run: pnpm typecheck
       # The package boundaries the ADRs set, import cycles and orphan modules.
       - run: pnpm deps
-      - run: pnpm typecheck
-      # The app's Jest transforms, kept from run to run. React Native loads
-      # most of its modules lazily, so on a cold cache the first test to open,
-      # say, a sheet pays for Babel over dozens of them within its 5 seconds.
-      # A transform is keyed by the file and the config, so an older cache
-      # restored after a dependency change still serves every file it holds.
-      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+
+  test:
+    name: Test ${{ matrix.part.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      # Every part reports, so one red part doesn't hide another.
+      fail-fast: false
+      matrix:
+        part:
+          - { name: Core, run: 'pnpm test --filter=@slovo/core' }
+          - { name: UI, run: 'pnpm test --filter=@slovo/ui' }
+          # The app's Vitest tests, then the other packages but the backend,
+          # whose tests need Postgres: the job "Backend" runs them.
+          - name: other packages
+            run: >-
+              pnpm --filter=@slovo/mobile exec vitest run &&
+              pnpm test --filter='!@slovo/backend' --filter='!@slovo/core'
+              --filter='!@slovo/ui' --filter='!@slovo/mobile'
+          # The app's Jest tests, the slowest part, cut in three.
+          - { name: app 1/3, shard: 1, run: 'pnpm --filter=@slovo/mobile exec jest --shard=1/3' }
+          - { name: app 2/3, shard: 2, run: 'pnpm --filter=@slovo/mobile exec jest --shard=2/3' }
+          - { name: app 3/3, shard: 3, run: 'pnpm --filter=@slovo/mobile exec jest --shard=3/3' }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      # The app's Jest transforms, kept from run to run for each shard. React
+      # Native loads most of its modules lazily, so on a cold cache the first
+      # test to open, say, a sheet pays for Babel over dozens of them within
+      # its 5 seconds. A transform is keyed by the file and the config, so an
+      # older cache restored after a dependency change still serves every file
+      # it holds.
+      - if: ${{ matrix.part.shard }}
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: apps/mobile/node_modules/.cache/jest
-          key: jest-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'apps/mobile/jest.config.js') }}
-          restore-keys: jest-${{ runner.os }}-
-      # The backend's tests need Postgres; the job "Backend" runs them.
-      # `pnpm test` runs one package at a time (--concurrency=1): each test
-      # runner already spreads over every core, and side by side they slowed
-      # the app's screen tests eightfold, past Jest's 5 seconds a test.
-      - run: pnpm test --filter='!@slovo/backend'
+          key: jest-${{ runner.os }}-${{ matrix.part.shard }}-${{ hashFiles('pnpm-lock.yaml', 'apps/mobile/jest.config.js') }}
+          restore-keys: jest-${{ runner.os }}-${{ matrix.part.shard }}-
+      - run: ${{ matrix.part.run }}
+
+  pack:
+    name: Contract and Language Pack
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
       # The contracts' tests hold the contract to the committed description of
       # /v1. This holds it to the one on the base branch too, so a description
       # edited by hand can't hide a breaking change (ADR 0031).
@@ -78,6 +117,25 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+  checks:
+    # The check ruleset 26239313 requires: keep this name.
+    name: Lint, typecheck, test and Language Pack
+    if: ${{ always() }}
+    needs: [lint, typecheck, test, pack]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      # Red when any job above failed, was cancelled or was skipped.
+      - name: Check that every job passed
+        shell: bash
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: $RESULTS"
+          for result in $RESULTS; do
+            if [ "$result" != success ]; then exit 1; fi
+          done
+
   backend:
     name: Backend
     runs-on: ubuntu-latest
@@ -101,12 +159,7 @@ jobs:
       DATABASE_URL: postgres://slovo:slovo@localhost:5432/slovo
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - uses: ./.github/actions/setup
       # Every migration, from an empty database.
       - run: pnpm --filter @slovo/backend db:migrate
       # Each test file makes its own database on the same server and drops it after.
