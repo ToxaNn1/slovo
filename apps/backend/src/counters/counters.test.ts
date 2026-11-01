@@ -4,7 +4,12 @@ import { and, eq } from 'drizzle-orm';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { Database } from '../database/database';
-import { communityCounters, favoritesAdds, rateLimits } from '../database/schema';
+import {
+  communityCounters,
+  favoritesAdds,
+  questionnaireCounters,
+  rateLimits,
+} from '../database/schema';
 import { newIp, passTime, testApp, testEditions } from '../test-support';
 
 /**
@@ -723,5 +728,124 @@ describe('counters.communityWord', () => {
         status: 404,
       });
     }
+  });
+});
+
+/** What the database keeps of the answers to the Edition's question: each answer with its count. */
+async function answersOf({ db }: Database, editionId: string, question = 'who') {
+  const rows = await db
+    .select()
+    .from(questionnaireCounters)
+    .where(
+      and(
+        eq(questionnaireCounters.editionId, editionId),
+        eq(questionnaireCounters.question, question),
+      ),
+    )
+    .orderBy(questionnaireCounters.answer);
+  return rows.map(({ answer, count }) => ({ answer, count }));
+}
+
+describe('counters.questionnaire', () => {
+  it('adds one to the count of the answer, per Edition, and answers 202 with no body', async () => {
+    const { request, client, database } = testApp({
+      editions: testEditions(['qa', 'qb']).read(),
+    });
+
+    const response = await request(
+      '/v1/counters/questionnaire',
+      post({ editionId: 'qa', question: 'who', answer: 'studying' }),
+    );
+    await client.counters.questionnaire({ editionId: 'qa', question: 'who', answer: 'studying' });
+    await client.counters.questionnaire({ editionId: 'qa', question: 'who', answer: 'gourmet' });
+    await client.counters.questionnaire({ editionId: 'qa', question: 'why', answer: 'play' });
+    await client.counters.questionnaire({ editionId: 'qb', question: 'who', answer: 'working' });
+
+    expect(response.status).toBe(202);
+    await expect(response.text()).resolves.toBe('');
+    await expect(answersOf(database, 'qa')).resolves.toEqual([
+      { answer: 'gourmet', count: 1 },
+      { answer: 'studying', count: 2 },
+    ]);
+    await expect(answersOf(database, 'qa', 'why')).resolves.toEqual([{ answer: 'play', count: 1 }]);
+    await expect(answersOf(database, 'qb')).resolves.toEqual([{ answer: 'working', count: 1 }]);
+  });
+
+  it('keeps totals only: no column names a reader, a device or an IP address', async () => {
+    const { clientFrom, database } = testApp({ editions: testEditions(['qid']).read() });
+    await clientFrom('2001:db8:7:6::15').counters.questionnaire({
+      editionId: 'qid',
+      question: 'who',
+      answer: 'working',
+    });
+
+    const rows = await database.db
+      .select()
+      .from(questionnaireCounters)
+      .where(eq(questionnaireCounters.editionId, 'qid'));
+    expect(rows).toEqual([{ editionId: 'qid', question: 'who', answer: 'working', count: 1 }]);
+    const keys = (await database.db.select({ key: rateLimits.key }).from(rateLimits)).map(
+      (row) => row.key,
+    );
+    for (const key of keys) expect(key).not.toContain('2001:db8');
+  });
+
+  it('refuses a request that names a reader or a device as BAD_REQUEST', async () => {
+    const { request } = testApp();
+
+    const response = await request(
+      '/v1/counters/questionnaire',
+      post({ editionId: 'uk', question: 'who', answer: 'studying', deviceId: 'd1' }),
+    );
+
+    expect(response.status).toBe(400);
+  });
+
+  it('answers NOT_FOUND for an answer that is not an option of the question, and counts nothing', async () => {
+    const { client, database } = testApp({ editions: testEditions(['qx']).read() });
+
+    await expect(
+      client.counters.questionnaire({ editionId: 'qx', question: 'why', answer: 'studying' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+    await expect(answersOf(database, 'qx', 'why')).resolves.toEqual([]);
+  });
+
+  it('answers NOT_FOUND for an Edition it does not serve, or with the questionnaire switched off, locally or remotely', async () => {
+    const folder = testEditions(['qoff'], (config) => ({
+      ...config,
+      featureSwitches: { ...config.featureSwitches, questionnaire: false },
+    }));
+    const { client, database, switchOff } = testApp({
+      editions: [...folder.read(), ...testEditions(['qremote']).read()],
+    });
+    await switchOff('qremote', 'questionnaire');
+
+    for (const editionId of ['xx', 'qoff', 'qremote']) {
+      await expect(
+        client.counters.questionnaire({ editionId, question: 'who', answer: 'studying' }),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+      await expect(answersOf(database, editionId)).resolves.toEqual([]);
+    }
+  });
+
+  it('are at most 100 a day from one IP address: the 101st is TOO_MANY_REQUESTS with Retry-After, and counts nothing', async () => {
+    const { request, client, clientFrom, database } = testApp({
+      editions: testEditions(['qlimit']).read(),
+    });
+    const answer = { editionId: 'qlimit', question: 'who', answer: 'studying' } as const;
+    for (let sent = 0; sent < 100; sent++) await client.counters.questionnaire(answer);
+    passTime(DAY / 2);
+
+    const next = await request('/v1/counters/questionnaire', post(answer));
+
+    expect(next.status).toBe(429);
+    await expect(next.json()).resolves.toMatchObject({ code: 'TOO_MANY_REQUESTS' });
+    expect(next.headers.get('retry-after')).toBe(String(DAY / 2 / 1000));
+    await expect(answersOf(database, 'qlimit')).resolves.toEqual([
+      { answer: 'studying', count: 100 },
+    ]);
+    await expect(clientFrom(newIp()).counters.questionnaire(answer)).resolves.toBeUndefined();
+    passTime(DAY / 2);
+    await expect(client.counters.questionnaire(answer)).resolves.toBeUndefined();
   });
 });

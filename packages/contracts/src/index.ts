@@ -22,6 +22,7 @@ export {
   LevelsSchema,
   QuestionnaireSchema,
   QuestionnaireQuestionSchema,
+  QuestionnaireAnswerIdSchema,
   FontSizeSchema,
   LanguageTraitsSchema,
   MAX_NOTIFICATION_TIMES,

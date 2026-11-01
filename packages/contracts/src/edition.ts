@@ -481,6 +481,9 @@ export const QuestionnaireQuestionSchema = z.enum(['who', 'why']);
 
 export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;
 
+/** The id of an option of a questionnaire question, e.g. `studying`. */
+export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
+
 /** The kinds of Entry beside Words, each with a Mix kind weight. */
 const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
 
@@ -492,13 +495,17 @@ const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
 export const QuestionnaireSchema = z.strictObject({
   who: z
     .array(
-      z.strictObject({ id: KebabCaseIdSchema, label: TextSchema, rarityCeiling: RaritySchema }),
+      z.strictObject({
+        id: QuestionnaireAnswerIdSchema,
+        label: TextSchema,
+        rarityCeiling: RaritySchema,
+      }),
     )
     .min(1),
   why: z
     .array(
       z.strictObject({
-        id: KebabCaseIdSchema,
+        id: QuestionnaireAnswerIdSchema,
         label: TextSchema,
         kindWeights: z.partialRecord(WeightedKindSchema, MixKindWeightSchema),
       }),

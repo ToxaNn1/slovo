@@ -9,6 +9,7 @@ import type {
   MistakeReport,
   PackMetadata,
   PublishedPack,
+  QuestionnaireQuestion,
 } from '@slovo/contracts';
 
 /** The current time, injected so the rules that read it stay testable. */
@@ -343,6 +344,8 @@ export interface CounterStore {
    * none when nobody added anything that week.
    */
   mostAdded(editionId: string, week: string): Promise<CommunityWord | undefined>;
+  /** Adds one to the count of the answer to the Edition's questionnaire question (ADR 0068). */
+  addAnswer(editionId: string, question: QuestionnaireQuestion, answer: string): Promise<void>;
 }
 
 /** The Community Word of a week: the Entry most added to Favorites, with its adds (ADR 0060). */

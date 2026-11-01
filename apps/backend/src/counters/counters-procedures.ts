@@ -23,7 +23,9 @@ interface CountersContext {
  * with `Retry-After` (ADR 0060). The counters read may be kept for 24 hours,
  * as the device keeps them. An Edition with the Community Word switched off
  * answers its Community Word `NOT_FOUND` too, so the Community Word needs both
- * switches on.
+ * switches on. A questionnaire answer of an Edition with the questionnaire
+ * switched off, or one that is not an option of its question, answers
+ * `NOT_FOUND` (ADR 0068).
  */
 export function countersProcedures(communityCounters: CommunityCounters) {
   const counters = implement(apiContract.counters).$context<CountersContext>();
@@ -53,6 +55,19 @@ export function countersProcedures(communityCounters: CommunityCounters) {
       const answer = await communityCounters.communityWord(input.edition);
       if (!answer.ok) throw errors.NOT_FOUND();
       return { communityWord: answer.communityWord ?? null };
+    }),
+    questionnaire: counters.questionnaire.handler(async ({ input, context, errors }) => {
+      const answered = await communityCounters.answer(input, context.ip);
+      if (answered.ok) return;
+      switch (answered.reason) {
+        case 'unknown-edition':
+        case 'switched-off':
+        case 'unknown-answer':
+          throw errors.NOT_FOUND();
+        case 'too-many-requests':
+          retryAfter(context, answered);
+          throw errors.TOO_MANY_REQUESTS();
+      }
     }),
   });
 }
