@@ -177,6 +177,20 @@ describe('the XP log and the Game', () => {
     expect(app.xpLog.state.total).toBe(first.right + 5 + second.right);
   });
 
+  it('gives no Best-result bonus for a first Game with no right answer', async () => {
+    const { app, records } = await run();
+
+    const { right, played } = await playGame(
+      app,
+      Array.from({ length: 30 }, (_, i) => i + 1),
+    );
+
+    expect(right).toBe(0);
+    expect(played).toBeGreaterThan(0);
+    expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
+    expect(xpKeys(records)).toHaveLength(0);
+  });
+
   it('appends nothing for an action the Edition sets at 0 XP', async () => {
     const { app, records } = await run({
       xp: {

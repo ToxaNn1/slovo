@@ -459,6 +459,9 @@ export async function openGame({
     const beaten = best === undefined || result > best;
     const widgetHint = widgetHintDue && over.lives !== undefined && over.lives > 0;
     const right = over.played.filter((round) => round.right).length;
+    // A Game with no right answer still sets the mode's first Best result but
+    // earns no XP for it: the bonus rewards effort, not random tapping (story 3).
+    const bestXp = beaten && right > 0;
     await writeAwards(
       [
         ...(roundXp === undefined ? [] : [roundXp]),
@@ -468,7 +471,7 @@ export async function openGame({
           right,
           played: over.played.length,
         }),
-        ...(beaten ? [xp.award({ source: 'game-best' })] : []),
+        ...(bestXp ? [xp.award({ source: 'game-best' })] : []),
       ],
       beaten ? gameBest.record(over.modeId).change(result) : new Map(),
     );
