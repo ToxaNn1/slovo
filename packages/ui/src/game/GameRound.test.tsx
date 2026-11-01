@@ -85,6 +85,7 @@ const first: CurrentGame = {
     prompt: 'open and honest',
     highlight: undefined,
     gap: undefined,
+    labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'pick',
     options: OPTIONS.map((text) => ({ text, stressedVowels: [] })),
@@ -137,6 +138,7 @@ const wordVowelRound: CurrentGame = {
     prompt: 'banana',
     highlight: undefined,
     gap: undefined,
+    labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'vowel',
     vowels: [1, 3, 5],
@@ -154,6 +156,7 @@ const trapVowelRound: CurrentGame = {
     prompt: 'mango',
     highlight: undefined,
     gap: undefined,
+    labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'vowel',
     vowels: [1, 4],
@@ -199,7 +202,7 @@ function answeredVowel(game: CurrentGame, chosen: number): CurrentGame {
 /** The first Round asking about a Synonym Row, the dominant its prompt, as the Core builds it. */
 const rowRound: CurrentGame = {
   ...first,
-  round: { ...first.round, entryKind: 'synonymRow', prompt: 'frank' },
+  round: { ...first.round, entryKind: 'synonymRow', labelKind: 'synonymRow', prompt: 'frank' },
 };
 
 /** The first Round asking a Tip its own question, a long one, as the Core builds it. */
@@ -208,6 +211,7 @@ const tipRound: CurrentGame = {
   round: {
     ...first.round,
     entryKind: 'tip',
+    labelKind: 'tip',
     prompt:
       'Which of these words would you choose to describe a friend who always says what they think?',
   },
@@ -222,6 +226,7 @@ const gapRound: CurrentGame = {
     prompt: 'She gave a … account of the evening.',
     highlight: { start: 11, end: 12 },
     gap: { start: 11, end: 12 },
+    labelKind: 'gap',
   },
 };
 
@@ -250,6 +255,7 @@ const pairsRound: CurrentGame = {
     prompt: '',
     highlight: undefined,
     gap: undefined,
+    labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'pairs',
     words: PAIR_WORDS.map((text) => ({ shown: { text, stressedVowels: [] }, gone: false })),
@@ -294,6 +300,7 @@ const typedRound: CurrentGame = {
     prompt: 'having read much',
     highlight: undefined,
     gap: undefined,
+    labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'typed',
     blanks: Array.from(TYPED, (character): RoundBlank => (character === '-' ? { mark: '-' } : {})),
@@ -350,8 +357,10 @@ const chipsRound: CurrentGame = {
     prompt: 'a tribute paid in kind',
     highlight: undefined,
     gap: undefined,
+    labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'chips',
+    chipKind: 'letter',
     chips: CHIPS,
     fixed: [{ at: 1, text: "'" }],
     answer: undefined,

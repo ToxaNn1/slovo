@@ -59,18 +59,22 @@ export {
   type Round,
   type RoundAnswer,
   type RoundBlank,
-} from './game/game-in-play';
+} from './game/game';
 export {
+  GAME_MODE_GROUPS,
   ROUND_OPTIONS,
   type AnswerSheet,
+  type ChipKind,
   type FixedChip,
   type GameEdition,
   type GameMode,
+  type GameModeGroup,
   type GameModeRefusal,
   type GridPair,
   type RoundContent,
   type RoundForm,
   type RoundInput,
+  type RoundLabelKind,
   type RoundOption,
   type TextRange,
 } from './game/game-mode';

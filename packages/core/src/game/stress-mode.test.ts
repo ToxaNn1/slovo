@@ -188,7 +188,12 @@ describe('«Наголос» on offer', () => {
   it('is offered when the Edition marks Stress and turns the mode on', async () => {
     const app = await run();
 
-    expect(stressOffer(app)).toEqual({ modeId: 'stress', entryKind: 'word', canStart: true });
+    expect(stressOffer(app)).toEqual({
+      modeId: 'stress',
+      entryKind: 'word',
+      group: 'words',
+      canStart: true,
+    });
   });
 
   it('is off with its Feature Switch off', async () => {
@@ -211,6 +216,7 @@ describe('«Наголос» on offer', () => {
     expect(stressOffer(app)).toEqual({
       modeId: 'stress',
       entryKind: 'word',
+      group: 'words',
       canStart: false,
       refusal: 'too-few-entries',
     });

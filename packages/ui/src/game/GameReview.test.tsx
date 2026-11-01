@@ -148,6 +148,7 @@ function played(
             : entry.primaryDefinition,
     highlight: undefined,
     gap: undefined,
+    labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'pick',
     options,
@@ -178,6 +179,7 @@ const playedIn = (
   prompt,
   highlight: undefined,
   gap: undefined,
+  labelKind: 'mode' as const,
   lifeLostAfter: 200,
   answer,
   entry,
@@ -203,8 +205,18 @@ const grid = {
     { shown: 'stern and gloomy', gone: false },
   ],
 };
-const letters = { form: 'chips' as const, chips: ['r', 'o', 'd', 'u'], fixed: [] };
-const words = { form: 'chips' as const, chips: ['beans', 'the', 'spill'], fixed: [] };
+const letters = {
+  form: 'chips' as const,
+  chipKind: 'letter' as const,
+  chips: ['r', 'o', 'd', 'u'],
+  fixed: [],
+};
+const words = {
+  form: 'chips' as const,
+  chipKind: 'word' as const,
+  chips: ['beans', 'the', 'spill'],
+  fixed: [],
+};
 const typed = { form: 'typed' as const, blanks: undefined, canOpenLetter: false as const };
 
 /** Every answer form other than a pick, each answered right, then wrong. */

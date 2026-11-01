@@ -98,21 +98,6 @@ const typedRound = (word: Word): RoundContent => ({
 /** What stands for the Lemma in an Example with a gap. */
 const GAP = '…';
 
-/**
- * The gap in a Round's prompt, the highlight that stands for the Lemma in an
- * Example, which the shell reads aloud as a gap; nothing in another Round.
- */
-export const gapOf = ({
-  prompt,
-  highlight,
-}: {
-  readonly prompt: string;
-  readonly highlight?: TextRange | undefined;
-}): TextRange | undefined =>
-  highlight !== undefined && prompt.slice(highlight.start, highlight.end) === GAP
-    ? highlight
-    : undefined;
-
 /** A character that belongs to a word: a letter, a mark, a digit, an apostrophe or a hyphen. */
 const wordCharacter = /[\p{L}\p{M}\p{N}'’ʼ-]/u;
 
@@ -187,7 +172,9 @@ function roundOf<T extends Word | Idiom>(
   return {
     form: 'pick',
     prompt: gap?.prompt ?? answer.primaryDefinition,
-    ...(gap === undefined ? {} : { highlight: gap.highlight }),
+    ...(gap === undefined
+      ? {}
+      : { highlight: gap.highlight, gap: gap.highlight, labelKind: 'gap' as const }),
     options: options.map(optionOf),
     correct: options.indexOf(answer),
     sheet: { answer: optionOf(answer), example: gap?.example ?? answer.examples[0] },
@@ -240,6 +227,7 @@ function synonymRound(
   return {
     form: 'pick',
     prompt: rowWordOption(answer.dominant).text,
+    labelKind: 'synonymRow',
     options: options.map(rowWordOption),
     correct: options.indexOf(right),
     sheet: { answer: rowWordOption(right), example: answer.example },
@@ -259,6 +247,7 @@ function tipRound({ gameQuestion, example }: Tip, random: Random): RoundContent 
   return {
     form: 'pick',
     prompt,
+    labelKind: 'tip',
     options: options.map(tipAnswerOption),
     correct: options.indexOf(rightAnswer),
     sheet: { answer: tipAnswerOption(rightAnswer), example },
@@ -290,6 +279,7 @@ function tipRound({ gameQuestion, example }: Tip, random: Random): RoundContent 
  */
 export const guessWord: GameMode = {
   id: 'guess-word',
+  group: 'words',
   entryKind: 'word',
   alsoAsks: ['idiom', 'synonymRow', 'tip'],
   isOn: (edition) => edition.isFeatureEnabled('gameGuessWord'),

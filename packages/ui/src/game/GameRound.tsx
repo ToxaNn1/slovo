@@ -224,7 +224,7 @@ export function GameRound({
           <OrderedChips
             key={round.number}
             chips={round.chips}
-            kind={round.entryKind === 'idiom' ? 'word' : 'letter'}
+            kind={round.chipKind}
             fixed={round.fixed}
             answer={answer?.form === 'chips' ? answer : undefined}
             onAnswer={(chips) => {
@@ -277,23 +277,29 @@ export function GameRound({
 }
 
 /**
- * The label and the prompt a Round shows by the kind of Entry it asks about:
- * a Synonym Row's question on its dominant, a Tip's own question under the
- * Tip's label, an Example with a gap under the gap's label, any other Round's
- * prompt under the mode's label.
+ * The label and the prompt a Round shows by its label kind: a Synonym Row's
+ * question on its dominant, a Tip's own question under the Tip's label, an
+ * Example with a gap under the gap's label, any other Round's prompt under
+ * the mode's label.
  */
 function askedAs(
-  { entryKind, prompt, gap }: Round,
+  { labelKind, prompt }: Round,
   label: string,
   strings: EditionStrings['game']['round'],
 ): { label: string; prompt: string } {
-  if (entryKind === 'synonymRow') {
-    const { synonymRow } = strings;
-    return { label: synonymRow.label, prompt: fill(synonymRow.prompt, { dominant: prompt }) };
+  switch (labelKind) {
+    case 'synonymRow':
+      return {
+        label: strings.synonymRow.label,
+        prompt: fill(strings.synonymRow.prompt, { dominant: prompt }),
+      };
+    case 'tip':
+      return { label: strings.tip.label, prompt };
+    case 'gap':
+      return { label: strings.gap.label, prompt };
+    case 'mode':
+      return { label, prompt };
   }
-  if (entryKind === 'tip') return { label: strings.tip.label, prompt };
-  if (gap !== undefined) return { label: strings.gap.label, prompt };
-  return { label, prompt };
 }
 
 /**

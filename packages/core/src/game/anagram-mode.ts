@@ -18,6 +18,7 @@ const IN_PLACE = new Set(["'", 'ʼ', '’', '-']);
  */
 export const anagramMode: GameMode = {
   id: 'anagram',
+  group: 'words',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gameAnagram'),
   buildRound({ answer, random }) {
@@ -31,6 +32,7 @@ export const anagramMode: GameMode = {
     if (letters.length < LETTERS.min || letters.length > LETTERS.max) return undefined;
     return {
       form: 'chips',
+      chipKind: 'letter',
       prompt: answer.primaryDefinition,
       chips: outOfOrder(letters, shuffled(letters, random)),
       expected: letters,

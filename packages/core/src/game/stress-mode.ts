@@ -53,6 +53,7 @@ function markedStressOf(text: string): number[] {
  */
 export const stressMode: GameMode = {
   id: 'stress',
+  group: 'words',
   entryKind: 'word',
   alsoAsks: ['correction'],
   isOn: (edition) =>

@@ -122,7 +122,12 @@ describe('«Пари» on offer', () => {
   it('is offered with its Feature Switch on', async () => {
     const app = await run();
 
-    expect(pairsOffer(app)).toEqual({ modeId: 'pairs', entryKind: 'word', canStart: true });
+    expect(pairsOffer(app)).toEqual({
+      modeId: 'pairs',
+      entryKind: 'word',
+      group: 'words',
+      canStart: true,
+    });
   });
 
   it('is off with its Feature Switch off', async () => {
@@ -140,6 +145,7 @@ describe('«Пари» on offer', () => {
     expect(pairsOffer(app)).toEqual({
       modeId: 'pairs',
       entryKind: 'word',
+      group: 'words',
       canStart: false,
       refusal: 'too-few-entries',
     });

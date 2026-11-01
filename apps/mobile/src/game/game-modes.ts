@@ -1,5 +1,5 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
-import type { GameModeOffer, OfferedBest } from '@slovo/core';
+import { GAME_MODE_GROUPS, type GameModeOffer, type OfferedBest } from '@slovo/core';
 import type { GameModeCard } from '@slovo/ui';
 import type { ComponentProps } from 'react';
 
@@ -64,24 +64,6 @@ export function bestText({ result, of }: OfferedBest, texts: GameStrings['modeBe
   return of === undefined ? fill(texts.count, { n }) : fill(texts.outOf, { n, total: String(of) });
 }
 
-/**
- * The groups of the mode screen in their agreed order, each with its modes
- * in theirs: what a mode trains, then the modes with a Lives, Round or time
- * challenge of their own.
- */
-const GAME_MODE_GROUPS: readonly {
-  readonly group: keyof GameStrings['groups'];
-  readonly modeIds: readonly string[];
-}[] = [
-  {
-    group: 'words',
-    modeIds: ['guess-word', 'stress', 'pairs', 'anagram', 'by-letters', 'type-word', 'origin'],
-  },
-  { group: 'corrections', modeIds: ['correction', 'anglicism'] },
-  { group: 'idioms', modeIds: ['idiom-meaning', 'build-idiom'] },
-  { group: 'challenge', modeIds: ['survival', 'timed'] },
-];
-
 /** A group of the mode screen: its title in the Edition's texts and its modes on offer. */
 export interface GameModeGroup {
   readonly title: string;
@@ -89,22 +71,16 @@ export interface GameModeGroup {
 }
 
 /**
- * The modes on offer in the mode screen's groups, the groups and the modes in
- * their agreed order; a group with no mode on offer is left out. It throws
- * for a mode on offer in no group, so a new mode never loses its card unseen.
+ * The modes on offer in the mode screen's groups, each under the group its
+ * mode declares, the groups in their agreed order and the modes in the order
+ * they register; a group with no mode on offer is left out.
  */
 export function gameModeGroups(
   offers: readonly GameModeOffer[],
   strings: GameStrings,
 ): GameModeGroup[] {
-  const ungrouped = offers.find(
-    ({ modeId }) => !GAME_MODE_GROUPS.some(({ modeIds }) => modeIds.includes(modeId)),
-  );
-  if (ungrouped !== undefined) {
-    throw new Error(`The Game Mode «${ungrouped.modeId}» is in no group of the mode screen`);
-  }
-  return GAME_MODE_GROUPS.map(({ group, modeIds }) => ({
+  return GAME_MODE_GROUPS.map((group) => ({
     title: strings.groups[group],
-    offers: modeIds.flatMap((id) => offers.filter(({ modeId }) => modeId === id)),
+    offers: offers.filter((offer) => offer.group === group),
   })).filter(({ offers: inGroup }) => inGroup.length > 0);
 }

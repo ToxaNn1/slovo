@@ -33,7 +33,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
-import { GAME_LIVES } from './game-in-play';
+import { GAME_LIVES } from './game';
 import { createMemoryContentPort } from '../testing';
 import {
   fakeClock,
@@ -355,7 +355,7 @@ describe('the Game Modes on offer', () => {
     const app = await run();
 
     expect(app.game.state).toEqual({
-      modes: [{ modeId: 'guess-word', entryKind: 'word', canStart: true }],
+      modes: [{ modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true }],
       current: undefined,
       bestResults: {},
       widgetHint: false,
@@ -382,13 +382,19 @@ describe('the Game Modes on offer', () => {
     await app.hide({ kind: 'entry', entryId: 'w_nnoun01' });
     await app.hide({ kind: 'entry', entryId: 'w_nnoun02' });
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
     ]);
 
     await app.hide({ kind: 'entry', entryId: 'w_nnoun03' });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+      {
+        modeId: 'guess-word',
+        entryKind: 'word',
+        group: 'words',
+        canStart: false,
+        refusal: 'too-few-entries',
+      },
     ]);
     await app.game.start('guess-word');
     expect(app.game.state.current).toBeUndefined();
@@ -396,7 +402,7 @@ describe('the Game Modes on offer', () => {
     await app.unhide({ kind: 'entry', entryId: 'w_nnoun03' });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
     ]);
   });
 });
@@ -669,7 +675,13 @@ describe('the idioms «Вгадай слово» asks about', () => {
     });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+      {
+        modeId: 'guess-word',
+        entryKind: 'word',
+        group: 'words',
+        canStart: false,
+        refusal: 'too-few-entries',
+      },
     ]);
   });
 
@@ -758,7 +770,7 @@ describe('the idioms «Вгадай слово» asks about', () => {
 
     for (const app of [outOfMix, switchedOff]) {
       expect(app.game.state.modes).toEqual([
-        { modeId: 'guess-word', entryKind: 'word', canStart: true },
+        { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
       ]);
       const played = await playAll(app);
       expect(played).toHaveLength(GAME_ROUNDS);
@@ -926,7 +938,7 @@ describe('the Synonym Rows «Вгадай слово» asks about', () => {
     expect(await askedKinds(await runWith({ synonymRows: four }))).toContain('synonymRow');
     for (const app of [await runWith({ synonymRows: three }), hiding]) {
       expect(app.game.state.modes).toEqual([
-        { modeId: 'guess-word', entryKind: 'word', canStart: true },
+        { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
       ]);
       const kinds = await askedKinds(app);
       expect(kinds).toHaveLength(GAME_ROUNDS);
@@ -1263,6 +1275,7 @@ describe('the rules of a Game', () => {
         {
           modeId: 'guess-word',
           entryKind: 'word',
+          group: 'words',
           canStart: false,
           refusal: 'too-few-entries',
           best: { result: 15, of: 15 },
@@ -1282,7 +1295,13 @@ describe('the rules of a Game', () => {
 
     expect(app.game.state.current).toBeUndefined();
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true, best: { result: 15, of: 15 } },
+      {
+        modeId: 'guess-word',
+        entryKind: 'word',
+        group: 'words',
+        canStart: true,
+        best: { result: 15, of: 15 },
+      },
     ]);
   });
 
@@ -1294,7 +1313,7 @@ describe('the rules of a Game', () => {
     app.game.leave();
     expect(app.game.state.current).toBeUndefined();
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
     ]);
 
     await app.game.start('guess-word');
@@ -1843,8 +1862,14 @@ describe('the Best result per mode', () => {
 
     // «12 з 15» for «Вгадай слово»; none yet for the mode with no Round limit.
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true, best: { result: 12, of: 15 } },
-      { modeId: 'test-lemma', entryKind: 'word', canStart: true },
+      {
+        modeId: 'guess-word',
+        entryKind: 'word',
+        group: 'words',
+        canStart: true,
+        best: { result: 12, of: 15 },
+      },
+      { modeId: 'test-lemma', entryKind: 'word', group: 'words', canStart: true },
     ]);
 
     await app.game.start('test-lemma');
@@ -1857,6 +1882,7 @@ describe('the Best result per mode', () => {
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'test-lemma',
       entryKind: 'word',
+      group: 'words',
       canStart: true,
       best: { result: 4 },
     });
@@ -1879,6 +1905,7 @@ describe('the Best result per mode', () => {
       {
         modeId: 'guess-word',
         entryKind: 'word',
+        group: 'words',
         canStart: false,
         planning: true,
         best: { result: 12, of: 15 },
@@ -1930,6 +1957,7 @@ describe('the Best result per mode', () => {
 /** A Game Mode that asks for a Word's Lemma among three made-up ones, the answer always first. */
 const lemmaMode: GameMode = {
   id: 'test-lemma',
+  group: 'words',
   entryKind: 'word',
   isOn: () => true,
   buildRound: ({ answer }) => {
@@ -1949,8 +1977,8 @@ describe('the Game Mode Extension Point', () => {
   it('plays a full Game in a Game Mode registered through it, after the Core modes', async () => {
     const app = await run({ gameModes: [lemmaMode] });
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
-      { modeId: 'test-lemma', entryKind: 'word', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      { modeId: 'test-lemma', entryKind: 'word', group: 'words', canStart: true },
     ]);
 
     await app.game.start('test-lemma');
@@ -1973,15 +2001,21 @@ describe('the Game Mode Extension Point', () => {
     const app = await run({ gameModes: [{ ...lemmaMode, isOn: () => false }] });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
     ]);
   });
 
   it("says a Game Mode that can't make its Rounds can't start, before a start and after it", async () => {
     const app = await run({ gameModes: [{ ...lemmaMode, buildRound: () => undefined }] });
     const offers = [
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
-      { modeId: 'test-lemma', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      {
+        modeId: 'test-lemma',
+        entryKind: 'word',
+        group: 'words',
+        canStart: false,
+        refusal: 'too-few-entries',
+      },
     ];
     expect(app.game.state.modes).toEqual(offers);
 
@@ -1997,10 +2031,11 @@ describe('the Game Mode Extension Point', () => {
     });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
       {
         modeId: 'test-correction',
         entryKind: 'correction',
+        group: 'words',
         canStart: false,
         refusal: 'corrections-out-of-mix',
       },
@@ -2012,8 +2047,20 @@ describe('the Game Mode Extension Point', () => {
     await app.hide({ kind: 'category', categoryId: 'nature' });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
-      { modeId: 'test-lemma', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+      {
+        modeId: 'guess-word',
+        entryKind: 'word',
+        group: 'words',
+        canStart: false,
+        refusal: 'too-few-entries',
+      },
+      {
+        modeId: 'test-lemma',
+        entryKind: 'word',
+        group: 'words',
+        canStart: false,
+        refusal: 'too-few-entries',
+      },
     ]);
   });
 
@@ -2047,8 +2094,14 @@ describe('the Lives and the Round limit a Game Mode sets', () => {
     await app.hide({ kind: 'entry', entryId: 'w_cnoun01' });
     // 12 eligible Words: too few for «Вгадай слово», enough for a mode of 10 Rounds.
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
-      { modeId: 'test-lemma', entryKind: 'word', canStart: true },
+      {
+        modeId: 'guess-word',
+        entryKind: 'word',
+        group: 'words',
+        canStart: false,
+        refusal: 'too-few-entries',
+      },
+      { modeId: 'test-lemma', entryKind: 'word', group: 'words', canStart: true },
     ]);
 
     await app.game.start('test-lemma');
@@ -2114,16 +2167,22 @@ describe('whether a Game Mode can start', () => {
     });
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: false, planning: true },
-      { modeId: 'test-lemma', entryKind: 'word', canStart: false, planning: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: false, planning: true },
+      { modeId: 'test-lemma', entryKind: 'word', group: 'words', canStart: false, planning: true },
     ]);
     const start = app.game.start('guess-word');
     release();
     await start;
 
     expect(app.game.state.modes).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: true },
-      { modeId: 'test-lemma', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true },
+      {
+        modeId: 'test-lemma',
+        entryKind: 'word',
+        group: 'words',
+        canStart: false,
+        refusal: 'too-few-entries',
+      },
     ]);
     expect(current(app)).toMatchObject({ modeId: 'guess-word', status: 'playing' });
   });
@@ -2138,6 +2197,7 @@ describe('whether a Game Mode can start', () => {
       offer: {
         modeId: 'test-noun',
         entryKind: 'word',
+        group: 'words',
         canStart: false,
         refusal: 'too-few-entries',
       },
@@ -2147,7 +2207,7 @@ describe('whether a Game Mode can start', () => {
 
   it('offers what a start then does, after a hide, a restore and a Mix change', async () => {
     const app = await run({ gameModes: [nounMode] });
-    const canStart = { modeId: 'test-noun', entryKind: 'word', canStart: true };
+    const canStart = { modeId: 'test-noun', entryKind: 'word', group: 'words', canStart: true };
     const refused = { ...canStart, canStart: false, refusal: 'too-few-entries' };
     // Without Speech, the Mix holds 17 nouns among 20 Words.
     await app.mix.takeOut('speech');
@@ -2258,8 +2318,10 @@ describe('a failed planning of the offers', () => {
     };
   }
 
-  const planning = [{ modeId: 'guess-word', entryKind: 'word', canStart: false, planning: true }];
-  const ready = [{ modeId: 'guess-word', entryKind: 'word', canStart: true }];
+  const planning = [
+    { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: false, planning: true },
+  ];
+  const ready = [{ modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true }];
 
   it('plans the offers again a second after a failed read, without a hide, a restore or a Mix change', async () => {
     let reads = 0;
@@ -2408,6 +2470,7 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
    */
   const pairsMode: GameMode = {
     id: 'test-pairs',
+    group: 'words',
     entryKind: 'word',
     isOn: () => true,
     buildRound: ({ answer, next, upTo }) => {
@@ -2511,6 +2574,7 @@ describe('weak Rounds and reshuffled repeats in every Game Mode', () => {
     expect(app.game.state.modes.find(({ modeId }) => modeId === endlessMode.id)).toEqual({
       modeId: endlessMode.id,
       entryKind: 'word',
+      group: 'words',
       canStart: false,
       refusal: 'too-few-entries',
     });

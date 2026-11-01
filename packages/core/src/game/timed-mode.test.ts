@@ -133,7 +133,12 @@ describe('«На час» on offer', () => {
   it('is offered when the Edition turns the mode on, a bare number its Best result', async () => {
     const app = await run();
 
-    expect(timedOffer(app)).toEqual({ modeId: 'timed', entryKind: 'word', canStart: true });
+    expect(timedOffer(app)).toEqual({
+      modeId: 'timed',
+      entryKind: 'word',
+      group: 'challenge',
+      canStart: true,
+    });
   });
 
   it('is off with its Feature Switch off', async () => {
@@ -148,6 +153,7 @@ describe('«На час» on offer', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
+      group: 'challenge',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -287,6 +293,7 @@ describe('a Game of «На час»', () => {
     expect(timedOffer(app)).toEqual({
       modeId: 'timed',
       entryKind: 'word',
+      group: 'challenge',
       best: { result: 4 },
       canStart: true,
     });
@@ -309,7 +316,12 @@ describe('a Game of «На час»', () => {
 
     expect(app.game.state.current).toBeUndefined();
     expect(app.game.state.bestResults['timed']).toBeUndefined();
-    expect(timedOffer(app)).toEqual({ modeId: 'timed', entryKind: 'word', canStart: true });
+    expect(timedOffer(app)).toEqual({
+      modeId: 'timed',
+      entryKind: 'word',
+      group: 'challenge',
+      canStart: true,
+    });
   });
 
   it('asks first about the Words the reader marked «Не знаю»', async () => {

@@ -4,6 +4,7 @@ import {
   systemRandom,
   type Composition,
   type GameMode,
+  type GameModeGroup,
   type GameModeOffer,
 } from '@slovo/core';
 import { createMemoryContentPort, testEdition, seedUserState } from '@slovo/core/testing';
@@ -38,6 +39,7 @@ const word = (index: number): Word => ({
 const unnamedMode: GameMode = {
   id: 'test-unnamed',
   entryKind: 'word',
+  group: 'words',
   isOn: () => true,
   buildRound: () => undefined,
 };
@@ -117,7 +119,7 @@ describe('the card of each Game Mode on offer', () => {
 
   it("draws a mode still planned as one that can't start yet, with no refusal", () => {
     const card = gameModeCard(
-      { modeId: 'guess-word', entryKind: 'word', canStart: false, planning: true },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: false, planning: true },
       strings,
     );
 
@@ -161,7 +163,7 @@ describe('the card of each Game Mode on offer', () => {
     [{ result: 23 }, 'Найкраще: 23'],
   ])('shows the Best result %j as «%s»', (best, text) => {
     const card = gameModeCard(
-      { modeId: 'guess-word', entryKind: 'word', canStart: true, best },
+      { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true, best },
       strings,
     );
 
@@ -202,36 +204,36 @@ describe('the label over a Round', () => {
   });
 });
 
-/** An offer of the mode that can start, with nothing else on it. */
-const offer = (modeId: string): GameModeOffer => ({ modeId, entryKind: 'word', canStart: true });
+/** An offer of the mode in the group that can start, with nothing else on it. */
+const offer = (modeId: string, group: GameModeGroup = 'words'): GameModeOffer => ({
+  modeId,
+  entryKind: 'word',
+  group,
+  canStart: true,
+});
 
 /** The groups as their titles and the ids of their modes, in order. */
 const shapeOf = (groups: ReturnType<typeof gameModeGroups>) =>
   groups.map(({ title, offers }) => [title, offers.map(({ modeId }) => modeId)]);
 
 describe('the groups of the modes on offer', () => {
-  it('puts every mode in its group, the groups and the modes in the agreed order', () => {
-    const shuffled = [
-      'timed',
-      'build-idiom',
-      'anglicism',
-      'origin',
-      'survival',
-      'type-word',
-      'idiom-meaning',
-      'by-letters',
-      'correction',
-      'anagram',
-      'pairs',
-      'stress',
-      'guess-word',
-    ].map(offer);
+  it('puts every mode in the group it declares, the groups in the agreed order and the modes in the order offered', () => {
+    const offers = [
+      offer('timed', 'challenge'),
+      offer('build-idiom', 'idioms'),
+      offer('anglicism', 'corrections'),
+      offer('origin'),
+      offer('survival', 'challenge'),
+      offer('idiom-meaning', 'idioms'),
+      offer('correction', 'corrections'),
+      offer('guess-word'),
+    ];
 
-    expect(shapeOf(gameModeGroups(shuffled, strings))).toEqual([
-      ['Слова', ['guess-word', 'stress', 'pairs', 'anagram', 'by-letters', 'type-word', 'origin']],
-      ['Виправлення', ['correction', 'anglicism']],
-      ['Вислови', ['idiom-meaning', 'build-idiom']],
-      ['Виклик', ['survival', 'timed']],
+    expect(shapeOf(gameModeGroups(offers, strings))).toEqual([
+      ['Слова', ['origin', 'guess-word']],
+      ['Виправлення', ['anglicism', 'correction']],
+      ['Вислови', ['build-idiom', 'idiom-meaning']],
+      ['Виклик', ['timed', 'survival']],
     ]);
   });
 
@@ -256,9 +258,12 @@ describe('the groups of the modes on offer', () => {
     ]);
   });
 
-  it('fails loudly for a mode on offer in no group', () => {
-    expect(() => gameModeGroups([offer('guess-word'), offer('test-unnamed')], strings)).toThrow(
-      'test-unnamed',
-    );
+  it('puts a Game Mode added only in the Core under the group its offer names', () => {
+    expect(
+      shapeOf(gameModeGroups([offer('guess-word'), offer('test-new', 'idioms')], strings)),
+    ).toEqual([
+      ['Слова', ['guess-word']],
+      ['Вислови', ['test-new']],
+    ]);
   });
 });
