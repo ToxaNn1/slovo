@@ -1,4 +1,4 @@
-import { appDomain, edition } from '@/edition/edition';
+import { activeEditionId, appDomain } from '@/edition/edition';
 import { createOutsideLinks } from '@/entries/entry-link';
 import { widgetEntryLinks } from '@/entries/widget-entry-links';
 import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
@@ -13,7 +13,7 @@ async function on(feature: 'appIntents' | 'replaceOpenEntry'): Promise<boolean> 
 /** Each link from outside the app, as `createOutsideLinks` lets it open. */
 export const redirectSystemPath = createOutsideLinks({
   domain: appDomain,
-  editionId: edition.id,
+  editionId: activeEditionId,
   widgetLinkKey: deviceWidgetLinkKey,
   // The App Intents (ADR 0057).
   appIntents: { on: () => on('appIntents'), landOnWordOfTheDay: wordOfTheDayLanding.ask },

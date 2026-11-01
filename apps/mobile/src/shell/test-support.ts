@@ -1,4 +1,5 @@
 import {
+  createAnalytics,
   createMemoryUserStatePort,
   createSettings,
   openComposition,
@@ -8,6 +9,7 @@ import {
   openRemoteSwitches,
   openUserState,
   trackChanges,
+  type AnalyticsPort,
   type Clock,
   type Edition,
   type FeatureSwitch,
@@ -49,17 +51,48 @@ export function switchedTo(edition: Edition): Opening<EditionSwitches> {
   return opened({ edition, subscribe: () => () => undefined, ask: () => Promise.resolve(false) });
 }
 
+/** An Analytics port a test reads: the events the Core sent it, and whether it was told to stop. */
+export interface RecordedAnalytics {
+  readonly port: AnalyticsPort;
+  /** The events the Core sent, in order, each with its properties. */
+  readonly events: readonly { readonly event: string; readonly properties: unknown }[];
+  /** Whether the Core told the port sharing was turned off. */
+  stopped(): boolean;
+}
+
+/** An Analytics port that keeps what the Core sends it, in place of PostHog. */
+export function recordedAnalytics(): RecordedAnalytics {
+  const events: { event: string; properties: unknown }[] = [];
+  let stopped = false;
+  return {
+    port: {
+      track: (event, properties) => void events.push({ event, properties }),
+      stop: () => {
+        stopped = true;
+      },
+    },
+    events,
+    stopped: () => stopped,
+  };
+}
+
 /**
  * The settings already open over a user state of their own, at the Edition's
  * defaults with `changes`, for a screen drawn under `SettingsProvider`; what
- * the screen changes, `settings.read()` gives back.
+ * the screen changes, `settings.read()` gives back. With `analytics`, a
+ * changed setting is told to that port through the Core's gate, as on the device.
  */
 export async function settingsAt(
   changes: Partial<UserSettings> = {},
+  analytics?: AnalyticsPort,
 ): Promise<Opening<OpenedSettings>> {
+  const userState = await openUserState({ port: createMemoryUserStatePort() });
   const settings = createSettings({
-    userState: await openUserState({ port: createMemoryUserStatePort() }),
+    userState,
     defaults: edition.userSettingDefaults,
+    ...(analytics === undefined
+      ? {}
+      : { analytics: createAnalytics({ edition, userState, port: analytics }) }),
   });
   return opened({ settings, current: await settings.update(changes) });
 }

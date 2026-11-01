@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { EditionProvider } from '@slovo/ui';
-import { render, screen } from '@testing-library/react-native';
+import { act, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
@@ -27,6 +27,7 @@ async function renderScreen() {
       </ShellProvider>
     </SafeAreaProvider>,
   );
+  return composition;
 }
 
 describe('the Badges screen', () => {
@@ -41,5 +42,18 @@ describe('the Badges screen', () => {
       '0 з 100 правильних відповідей',
     );
     expect(screen.getByTestId('badge-win-stress-status')).toHaveTextContent('Ще не отримано');
+  });
+
+  it("says the day a Badge was earned in the Edition's words", async () => {
+    const composition = await renderScreen();
+
+    await act(async () => {
+      composition.xpLog
+        .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+        .commit();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(screen.getByTestId('badge-win-words-status')).toHaveTextContent('Отримано 13 жовтня');
   });
 });

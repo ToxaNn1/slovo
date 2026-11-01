@@ -42,7 +42,9 @@ describe('the Break screen', () => {
     });
 
     expect(composition.streakBreak.state.kind).toBe('running');
-    expect(screen.getByTestId('streak-break-running')).toBeOnTheScreen();
+    expect(screen.getByTestId('streak-break-running')).toHaveTextContent(
+      'Перерва триває до 15 жовтня включно.',
+    );
     expect(screen.queryByTestId('streak-break-start')).not.toBeOnTheScreen();
     expect([...composition.xpLog.days.breaks.values()]).toEqual([3]);
   });

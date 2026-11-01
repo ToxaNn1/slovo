@@ -1,13 +1,16 @@
-# Onboarding: a fresh install shows the welcome over the Feed; «Почати»,
-# «Далі», the Rarity Test's «Пізніше» and «Пізніше» lead to the fifth step,
-# «КРОК 5 З 5», SLOVO ID, whose
-# «Увійти через SLOVO ID» opens the SLOVO ID screen and whose back link,
-# signed out, comes back to the step; «Продовжити без акаунта» finishes the
-# onboarding, and a relaunch shows no onboarding. («Пропустити» finishes it on
-# every fresh install, see `open-in-dev-client.yaml`.) A subflow of
-# `smoke.yaml`; run it from there. It starts from a fresh install, whatever the
-# simulator holds, so it clears the app's state: put it last in the smoke flow,
-# as it takes the Favorites and the other choices with it.
+# Onboarding (ADR 0067): a fresh install shows the welcome over the Feed;
+# «Почати» leads to the first Word, «КРОК 2 З 5», today's Word of the Day on
+# its card; «Далі» to «Хто ви?», «КРОК 3 З 5», whose answer leads to «Навіщо
+# вам рідкісні слова?», «КРОК 4 З 5», whose «Пізніше» keeps the defaults and
+# leads to the Daily Goal, «КРОК 5 З 5», with the Edition's default picked;
+# «Готово» with another goal picked finishes the onboarding on the Feed, and
+# Settings shows that goal; a relaunch shows no onboarding. («Пропустити»
+# finishes it on every fresh install, see `open-in-dev-client.yaml`.) The
+# onboarding asks for nothing: notifications are turned on in Settings ›
+# Сповіщення, see `notifications-enable.yaml`. A subflow of `smoke.yaml`; run
+# it from there. It starts from a fresh install, whatever the simulator holds,
+# so it clears the app's state: put it last in the smoke flow, as it takes the
+# Favorites and the other choices with it.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 # A fresh install shows the welcome.
@@ -16,53 +19,86 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: onboarding
 - assertVisible:
-    id: onboarding-hero-lemma
-- assertVisible:
     id: onboarding-start
+    text: Почати
 - assertVisible:
     id: onboarding-skip
 - takeScreenshot: onboarding-welcome
 # The onboarding covers the Feed: no Feed card is reachable behind it.
 - assertNotVisible:
     id: feed-card-.*
+# The first Word: today's Word of the Day on its card.
 - tapOn:
     id: onboarding-start
+- assertVisible:
+    id: onboarding-first-word
+- assertVisible:
+    id: onboarding-step
+- assertVisible: КРОК 2 З 5
+- assertVisible: Ваше перше слово
+- assertVisible:
+    id: onboarding-next
+    text: Далі
+- takeScreenshot: onboarding-first-word
+# «Хто ви?»: one button per option, and «Пізніше».
 - tapOn:
     id: onboarding-next
+- assertVisible:
+    id: onboarding-question
+- assertVisible: КРОК 3 З 5
+- assertVisible: Хто ви?
+- assertVisible:
+    id: onboarding-answer-studying
+- assertVisible:
+    id: onboarding-later
+    text: Пізніше
+- takeScreenshot: onboarding-who
+# An answer goes on to «Навіщо вам рідкісні слова?».
 - tapOn:
-    id: onboarding-rarity-later
+    id: onboarding-answer-studying
+- assertVisible:
+    id: onboarding-question
+- assertVisible: КРОК 4 З 5
+- assertVisible: Навіщо вам рідкісні слова?
+- assertVisible:
+    id: onboarding-answer-rare-words
+- takeScreenshot: onboarding-why
+# «Пізніше» keeps the defaults and goes on to the Daily Goal, 20 picked.
 - tapOn:
     id: onboarding-later
-# The fifth step, with the Edition's Account on.
 - assertVisible:
-    id: onboarding-account
+    id: onboarding-daily-goal
 - assertVisible: КРОК 5 З 5
+- assertVisible: Ваша денна ціль
 - assertVisible:
-    id: onboarding-sign-in
-    text: Увійти через SLOVO ID
-- assertVisible:
-    id: onboarding-continue
-    text: Продовжити без акаунта
-- takeScreenshot: onboarding-account
-# «Увійти через SLOVO ID» opens the SLOVO ID screen over the step; coming back
-# signed out stays on the step.
+    id: onboarding-daily-goal-20
+    selected: true
+- takeScreenshot: onboarding-daily-goal
+# «Готово» with 30 picked finishes the onboarding and brings the Feed.
 - tapOn:
-    id: onboarding-sign-in
+    id: onboarding-daily-goal-30
 - assertVisible:
-    id: account-email
-- assertNotVisible:
-    id: onboarding-account
+    id: onboarding-daily-goal-30
+    selected: true
 - tapOn:
-    id: account-back
-- assertVisible:
-    id: onboarding-account
-# «Продовжити без акаунта» finishes the onboarding and brings the Feed.
-- tapOn:
-    id: onboarding-continue
+    id: onboarding-done
+    text: Готово
 - assertVisible:
     id: feed-card-.*
 - assertNotVisible:
-    id: onboarding-account
+    id: onboarding-daily-goal
+- assertNotVisible:
+    id: onboarding
+# Settings shows the goal picked.
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-daily-goal-30
+- assertVisible:
+    id: settings-daily-goal-30
+    selected: true
+- tapOn:
+    id: tab-home
 # A relaunch brings the Feed, with no onboarding.
 - stopApp
 - launchApp:

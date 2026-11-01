@@ -4,8 +4,7 @@ import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } 
 import { useMemo } from 'react';
 
 import { logError } from '../diagnostics/log';
-import { activeEditionFiles, edition } from '../edition/edition';
-import { reportedEditionId } from '../edition/reported-edition';
+import { activeEditionFiles, activeEditionId } from '../edition/edition';
 import { openDeviceContentUpdate } from './device-content-updates';
 import { devicePackFiles, type DevicePackFiles } from './device-pack-files';
 import {
@@ -25,7 +24,8 @@ async function prepare(db: SQLiteDatabase): Promise<OpenedPack<PackReader>> {
   try {
     // expo-sqlite has no read-only open mode; this refuses every write instead.
     await db.execAsync('PRAGMA query_only = ON');
-    const opening = await openPack(db, { bundle: edition.id, native: reportedEditionId });
+    // The one app carries no Edition in its native config (ADR 0065): the pack must be the active Edition's.
+    const opening = await openPack(db, { bundle: activeEditionId, native: undefined });
     if (!opening.ok) throw new Error(opening.reason);
     return { reader: opening.reader, version: opening.metadata, close: () => db.closeAsync() };
   } catch (error) {

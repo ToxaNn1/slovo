@@ -14,8 +14,9 @@ import { useShown } from '../shown-in-effect';
 const { onboarding, feedNotices, settings } = editionStrings;
 
 /**
- * Settings › Пройти опитування ще раз (ADR 0067): «Хто ви», «Навіщо», the
- * self-rating while the Rarity Floor is on, and the interests. Each answer
+ * Settings › Пройти опитування ще раз (ADR 0067): «Хто ви» and «Навіщо» while
+ * the questionnaire is on, the self-rating while the Rarity Floor is on, and
+ * the interests. Each answer
  * applies at once through the Core's questionnaire, as on the onboarding and
  * the Feed Notices; the Rarity Test has its own row.
  */
@@ -28,8 +29,12 @@ export function QuestionnaireScreen() {
   if (shown === undefined) return <Redirect href="/settings" />;
 
   const questions: readonly { question: OptionQuestion; title: string }[] = [
-    { question: 'who', title: onboarding.who.title },
-    { question: 'why', title: onboarding.why.title },
+    ...(shown.whoWhy
+      ? [
+          { question: 'who' as const, title: onboarding.who.title },
+          { question: 'why' as const, title: onboarding.why.title },
+        ]
+      : []),
     ...(shown.selfRating
       ? [{ question: 'selfRating' as const, title: feedNotices.laterQuestions.selfRating.title }]
       : []),

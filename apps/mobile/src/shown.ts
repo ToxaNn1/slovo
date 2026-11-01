@@ -71,6 +71,8 @@ export interface Shown {
    * reader has not hidden the counters («Без лічильників», ADR 0066).
    */
   readonly xpBar: boolean;
+  /** The Mascot's celebrations, while the XP log is on and the reader has not hidden the counters (ADR 0066). */
+  readonly celebrations: boolean;
   /** The Settings row of the Break and its screen. */
   readonly streakBreak: boolean;
   /** The Settings row that opens the Badges (ADR 0066). */
@@ -99,8 +101,12 @@ export interface Shown {
   readonly wordOfTheDayArchive: boolean;
   /** The «Пройти тест ще раз» row of Settings, while the Rarity Floor it sets is on as well. */
   readonly rarityTest: boolean;
-  /** The «Пройти опитування ще раз» row of Settings, with the self-rating while the Rarity Floor is on. */
-  readonly questionnaire: { readonly selfRating: boolean } | undefined;
+  /**
+   * The «Пройти опитування ще раз» row of Settings, while any of its questions
+   * is on: «Хто ви» and «Навіщо» under the questionnaire, the self-rating
+   * under the Rarity Floor it sets.
+   */
+  readonly questionnaire: { readonly whoWhy: boolean; readonly selfRating: boolean } | undefined;
 }
 
 /**
@@ -153,6 +159,7 @@ export function shownOf({
         }
       : undefined,
     xpBar: on('xpLog') && !noCounters,
+    celebrations: on('xpLog') && !noCounters,
     streakBreak: on('xpLog') && on('streakBreak'),
     badges: on('xpLog') && on('badges'),
     progressShareCards: on('shareCards') && on('progressShareCards') && on('xpLog') && !noCounters,
@@ -166,6 +173,9 @@ export function shownOf({
     moods: on('moods'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarityTest: on('rarityTest') && on('rarityFloor'),
-    questionnaire: on('laterQuestions') ? { selfRating: on('rarityFloor') } : undefined,
+    questionnaire:
+      on('questionnaire') || on('rarityFloor')
+        ? { whoWhy: on('questionnaire'), selfRating: on('rarityFloor') }
+        : undefined,
   };
 }

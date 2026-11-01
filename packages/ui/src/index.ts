@@ -57,13 +57,6 @@ export { MoodSheet, type MoodChip } from './mood/MoodSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { MixChip } from './mix/MixChip';
 export { RarityFloorChoice } from './mix/RarityFloorChoice';
-export { OnboardingAccount } from './onboarding/OnboardingAccount';
-export { OnboardingMix } from './onboarding/OnboardingMix';
-export {
-  OnboardingNotifications,
-  type SampleNotificationLook,
-} from './onboarding/OnboardingNotifications';
-export { OnboardingRarityTest } from './onboarding/OnboardingRarityTest';
 export {
   HEADLINE_MAX_FONT_SCALE,
   LaterButton,

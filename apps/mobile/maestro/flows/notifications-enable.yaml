@@ -1,0 +1,91 @@
+# Settings › Сповіщення on a fresh install, the permission not asked yet: the
+# onboarding asks for nothing (ADR 0067), so after it the Settings row reads
+# «Вимкнено», and the screen shows the Edition's default times with
+# «Увімкнути сповіщення» above them, which asks once; a grant makes the row
+# count what a day brings: «2 на день» from 3 times, the Word of the Day at the
+# earliest and the evening one at the latest (story 57). On the dev client
+# built before the 0.4 native batch (no notifications module) «Увімкнути
+# сповіщення» asks nothing, so the row stays «Вимкнено»; the permission prompt
+# is checked after the native build. A subflow of `smoke.yaml`; run it from
+# there. It starts from a fresh install, whatever the simulator holds, so it
+# clears the app's state: put it last in the smoke flow, as it takes the
+# Favorites and the other choices with it.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+# A fresh install shows the welcome; «Пропустити» brings the Feed, nothing asked.
+- runFlow:
+    file: ../fresh-onboarding.yaml
+- tapOn:
+    id: onboarding-skip
+- assertVisible:
+    id: feed-card-.*
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-row-notifications
+# Nothing was allowed, so nothing comes: the row reads «Вимкнено».
+- assertVisible:
+    id: settings-row-notifications
+    text: Сповіщення, Вимкнено
+- tapOn:
+    id: settings-row-notifications
+- assertVisible:
+    id: notifications
+# The Edition's default times, and the offer to turn notifications on.
+- assertVisible:
+    id: notifications-time-09:00-content
+- assertVisible:
+    id: notifications-time-13:00-content
+- assertVisible:
+    id: notifications-time-19:00-content
+- assertVisible:
+    id: notifications-add-time
+- assertVisible:
+    id: notifications-enable
+    text: Увімкнути сповіщення
+- assertNotVisible:
+    id: notifications-denied
+- takeScreenshot: notifications-enable
+- tapOn:
+    id: notifications-enable
+# The iOS prompt, on a binary with the notifications module; its wording is
+# checked after the native build.
+- waitForAnimationToEnd
+- runFlow:
+    when:
+      visible: Allow
+    commands:
+      - tapOn: Allow
+      - waitForAnimationToEnd
+- evalScript: ${output.allowed = false}
+# Allowed: the offer is gone, and the row counts the Word of the Day and the
+# evening one, whatever the number of times.
+- runFlow:
+    when:
+      notVisible:
+        id: notifications-enable
+    commands:
+      - evalScript: ${output.allowed = true}
+      - assertVisible:
+          id: notifications-time-13:00-content
+      - tapOn:
+          id: notifications-back
+      - assertVisible:
+          id: settings-row-notifications
+          text: Сповіщення, 2 на день
+# Without the module nothing asks, and nothing changes.
+- runFlow:
+    when:
+      true: ${!output.allowed}
+    commands:
+      - assertVisible:
+          id: notifications-enable
+      - tapOn:
+          id: notifications-back
+      - assertVisible:
+          id: settings-row-notifications
+          text: Сповіщення, Вимкнено
+- tapOn:
+    id: tab-home
+- assertVisible:
+    id: home

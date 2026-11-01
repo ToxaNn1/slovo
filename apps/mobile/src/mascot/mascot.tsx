@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { useComposition } from '../composition';
 import { useEditionInEffect } from '../edition/remote-switches';
+import { useShown } from '../shown-in-effect';
 
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
@@ -19,10 +20,13 @@ export function MascotIn({ state }: { state: MascotState }) {
 /**
  * The Mascot's celebrations: a new Level, a Badge earned, the Daily Goal met
  * and a Streak milestone each show it for a while over the bottom of the
- * screen. It takes no touch, so it never interrupts the Feed.
+ * screen. It takes no touch and VoiceOver skips it, so it never interrupts
+ * the Feed. Nothing while the reader hides the counters («Без лічильників»,
+ * ADR 0066).
  */
 export function MascotCelebrations() {
   const { xpLog, badges, progress } = useComposition();
+  const { celebrations } = useShown();
   const [shown, setShown] = useState<MascotState | undefined>(undefined);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -58,9 +62,14 @@ export function MascotCelebrations() {
       for (const stop of stops) stop();
     };
   }, [xpLog, badges, progress]);
-  if (shown === undefined) return null;
+  if (shown === undefined || !celebrations) return null;
   return (
-    <View pointerEvents="none" style={styles.celebration}>
+    <View
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={styles.celebration}
+    >
       <MascotIn state={shown} />
     </View>
   );

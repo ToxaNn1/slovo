@@ -5,7 +5,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - launchApp:
     clearState: true
-    # Not asked yet, as on a fresh install, so «Увімкнути сповіщення» shows.
+    # Not asked yet, as on a fresh install: the onboarding asks for nothing,
+    # so Settings › Сповіщення shows «Увімкнути сповіщення» afterwards.
     permissions:
       notifications: unset
 - runFlow:

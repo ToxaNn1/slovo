@@ -5,8 +5,9 @@ import { act, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
+import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
-import { opened, switchedTo, testShell } from '../shell/test-support';
+import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { CELEBRATION_MS, MascotCelebrations } from './mascot';
 
 const { mascot } = edition;
@@ -16,8 +17,8 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-/** The celebrations over the Core's composition of a test Shell, with the Mascot on or off in effect. */
-async function renderCelebrations({ on = true } = {}) {
+/** The celebrations over the Core's composition of a test Shell, with the Mascot on or off in effect and the counters hidden or not. */
+async function renderCelebrations({ on = true, noCounters = false } = {}) {
   const composition = await testShell().composition.opened();
   const shell = testShell({
     composition: opened(composition),
@@ -26,12 +27,15 @@ async function renderCelebrations({ on = true } = {}) {
       isFeatureEnabled: (feature) =>
         feature === 'mascot' ? on : edition.isFeatureEnabled(feature),
     }),
+    settings: await settingsAt({ noCounters }),
   });
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>
-          <MascotCelebrations />
+          <SettingsProvider>
+            <MascotCelebrations />
+          </SettingsProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,
@@ -52,7 +56,10 @@ async function playRounds(composition: Composition, rounds: number) {
   });
 }
 
-const shownMascot = () => screen.queryByTestId(/^mascot-/);
+/** The Mascot on screen; VoiceOver skips the celebration, so the query looks past what it hides. */
+const shownMascot = () => screen.queryByTestId(/^mascot-/, { includeHiddenElements: true });
+const celebration = (state: string) =>
+  screen.getByTestId(`mascot-${state}`, { includeHiddenElements: true });
 
 beforeEach(() => {
   jest.useFakeTimers({ advanceTimers: true });
@@ -70,7 +77,9 @@ describe('the Mascot’s celebrations', () => {
 
     // The 5th XP makes today an Active Day, the first day of the Streak.
     await playRounds(composition, 5);
-    expect(screen.getByTestId('mascot-streakMilestone')).toHaveTextContent(mascot.streakMilestone);
+    expect(celebration('streakMilestone')).toHaveTextContent(mascot.streakMilestone);
+    // VoiceOver skips the line, which takes no touch either.
+    expect(screen.queryByText(mascot.streakMilestone)).toBeNull();
 
     await act(async () => {
       await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
@@ -79,11 +88,11 @@ describe('the Mascot’s celebrations', () => {
 
     // The 20th XP meets the Daily Goal of 20.
     await playRounds(composition, 15);
-    expect(screen.getByTestId('mascot-dailyGoal')).toHaveTextContent(mascot.dailyGoal);
+    expect(celebration('dailyGoal')).toHaveTextContent(mascot.dailyGoal);
 
     // The 50th XP reaches Level 1.
     await playRounds(composition, 30);
-    expect(screen.getByTestId('mascot-newLevel')).toHaveTextContent(mascot.newLevel);
+    expect(celebration('newLevel')).toHaveTextContent(mascot.newLevel);
   });
 
   it('celebrates a Badge earned by the first win in a Game Mode group', async () => {
@@ -97,7 +106,16 @@ describe('the Mascot’s celebrations', () => {
       await jest.advanceTimersByTimeAsync(0);
     });
 
-    expect(screen.getByTestId('mascot-badge')).toHaveTextContent(mascot.badge);
+    expect(celebration('badge')).toHaveTextContent(mascot.badge);
+  });
+
+  it('celebrates nothing while the reader hides the counters («Без лічильників», ADR 0066)', async () => {
+    const composition = await renderCelebrations({ noCounters: true });
+
+    // The 50th XP reaches Level 1, past the first Streak day and the Daily Goal.
+    await playRounds(composition, 50);
+
+    expect(shownMascot()).toBeNull();
   });
 
   it('celebrates nothing with its Feature Switch off, as in 0.9', async () => {

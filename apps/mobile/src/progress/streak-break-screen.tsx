@@ -19,11 +19,9 @@ import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
 import { useSubscribed } from '../opening';
+import { dayText } from './day-text';
 
 const strings = editionStrings.settings.streakBreak;
-
-/** A local date `YYYY-MM-DD` as the Break screen shows it, e.g. «20.10». */
-const shortDate = (date: string) => `${date.slice(8, 10)}.${date.slice(5, 7)}`;
 
 /**
  * Settings › Перерва (ADR 0066): what a Break does, and either the choice of
@@ -88,12 +86,12 @@ export function StreakBreakScreen() {
         )}
         {state.kind === 'running' && (
           <Text {...voice} testID="streak-break-running" style={textStyle}>
-            {fill(strings.running, { date: shortDate(state.lastDay) })}
+            {fill(strings.running, { date: dayText(state.lastDay) })}
           </Text>
         )}
         {state.kind === 'waiting' && (
           <Text {...voice} testID="streak-break-waiting" style={textStyle}>
-            {fill(strings.waiting, { date: shortDate(state.nextStart) })}
+            {fill(strings.waiting, { date: dayText(state.nextStart) })}
           </Text>
         )}
       </ScrollView>

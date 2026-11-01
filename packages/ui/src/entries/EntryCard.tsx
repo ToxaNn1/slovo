@@ -25,6 +25,12 @@ export interface EntryCardProps {
   onOpenWord?: (wordId: string) => void;
   /** Opens the Synonym Row a Word card names as the row the Word is a member of. */
   onOpenSynonymRow?: (synonymRowId: string) => void;
+  /**
+   * Called once a Word card's Word History is drawn, which the reader reaches
+   * by scrolling; the Entry screen counts it for Analytics (ADR 0068). Keep it
+   * stable across renders, as it is called again when it changes.
+   */
+  onWordHistoryShown?: () => void;
   /** The action row under the card: in 0.3 the heart, Collections, share and hide. */
   actions?: ReactNode;
   /**
@@ -79,6 +85,7 @@ export function EntryCard({
   onOpenCorrection,
   onOpenWord,
   onOpenSynonymRow,
+  onWordHistoryShown,
   actions,
   selfCheck = false,
   stressFalls = false,
@@ -118,6 +125,7 @@ export function EntryCard({
             lemmaSize={lemmaSize}
             onOpenCorrection={onOpenCorrection}
             onOpenSynonymRow={onOpenSynonymRow}
+            onHistoryShown={onWordHistoryShown}
             concealed={concealed}
             stressFalls={stressFalls}
             wordOfTheDayFont={wordOfTheDayFont}

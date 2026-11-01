@@ -223,7 +223,7 @@ describe('app config', () => {
   it("builds the AppConfig's default Edition, with no Edition named by the environment", () => {
     vi.stubEnv('SLOVO_EDITION', 'xx');
 
-    expect(appConfig(context).extra?.['edition']).toMatchObject({ id: 'uk' });
+    expect(appConfig(context).ios?.infoPlist?.['CFBundleDevelopmentRegion']).toBe('uk');
   });
 
   it('fails clearly when the default Edition does not exist', () => {
@@ -255,7 +255,6 @@ describe('app config', () => {
     expect(config.ios?.bundleIdentifier).toBe('app.slovo.uk');
     expect(config.icon).toMatch(/editions\/uk\/assets\/icon\.png$/);
     expect(config.ios?.infoPlist?.['CFBundleDevelopmentRegion']).toBe('uk');
-    expect(config.extra?.['edition']).toMatchObject({ id: 'uk' });
   });
 
   it('carries the version of the milestone the code belongs to (ADR 0044)', () => {
@@ -359,12 +358,13 @@ describe('app config', () => {
     expect(() => appConfig(repo)).toThrow(/not among the Edition's fonts: Kurale-Regular\.ttf/);
   });
 
-  it('embeds the Word of the Day font and passes its family on to the app', () => {
+  it('embeds the Word of the Day font and passes its family on to the app, naming no Edition', () => {
     const config = appConfig(context);
     const { fonts } = pluginOptions(config, 'expo-font') as { fonts: string[] };
 
     expect(fonts).toContain('../../editions/uk/assets/fonts/Kurale-Regular.ttf');
-    expect(config.extra?.['edition']).toEqual({ id: 'uk', wordOfTheDayFontFamily: 'Kurale' });
+    // The app learns its active Edition at launch (ADR 0065), not from the build.
+    expect(config.extra?.['edition']).toEqual({ wordOfTheDayFontFamily: 'Kurale' });
   });
 
   it('passes on the family of whichever font the Edition names for the Word of the Day', () => {

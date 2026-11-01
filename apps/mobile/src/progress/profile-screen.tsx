@@ -13,16 +13,18 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useEffect, useReducer } from 'react';
-import { ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useReducer, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAccountInEffect, useSignedOut } from '../account/account';
 import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
 import { bestText, gameModeStrings } from '../game/game-modes';
 import { type Opening, useSubscribed } from '../opening';
+import { ShareCardSheet } from '../share/share-card-sheet';
+import { useShell } from '../shell-value';
+import { useShown } from '../shown-in-effect';
 import { BadgeList } from './badges-screen';
 
 const strings = editionStrings.settings.profile;
@@ -48,6 +50,11 @@ export function ProfileScreen() {
   const [, changed] = useReducer((version: number) => version + 1, 0);
   useEffect(() => composition.progress.subscribe(changed), [composition.progress]);
   const account = useAccountInEffect();
+  const shown = useShown();
+  const { shareCard } = useShell();
+  /** The share port of the Level Share Card, while the progress Share Cards are shown. */
+  const share = shown.progressShareCards ? shareCard : undefined;
+  const [sharing, setSharing] = useState(false);
   const textStyle = [styles.text, { color: colors.ink, fontFamily: fontFamilies.ui }];
   const line = (testID: string, text: string) => (
     <Text {...voice} testID={testID} style={textStyle}>
@@ -55,6 +62,13 @@ export function ProfileScreen() {
     </Text>
   );
   const { level } = xp;
+  // The Streak shows under the stats sheet's rule: not while the reader hides the counters.
+  const streakShown = shown.stats?.streak === true;
+  /** The day the Level was reached, `YYYY-MM-DD`, which its Share Card shows; none before the first Level. */
+  const reachedOn =
+    level !== undefined && level.level > 0
+      ? composition.xpLog.reachedOn(xp.total - level.progress)
+      : undefined;
 
   return (
     <SafeAreaView
@@ -81,45 +95,61 @@ export function ProfileScreen() {
             }}
           />
         )}
-        <View style={styles.section}>
-          {level !== undefined && (
-            <>
-              {line(
-                'profile-level',
-                fill(strings.level, { level: String(level.level), name: level.name }),
-              )}
-              {line(
-                'profile-to-next',
-                fill(strings.toNext, {
-                  progress: String(level.progress),
-                  toNext: String(level.toNext),
-                }),
-              )}
-            </>
-          )}
-          {line('profile-total-xp', fill(strings.totalXp, { count: String(xp.total) }))}
-          {line('profile-streak', fill(strings.streak, { count: String(progress.streak) }))}
-          {line(
-            'profile-best-streak',
-            fill(strings.bestStreak, { count: String(progress.bestStreak) }),
-          )}
-          {level !== undefined && (
-            <SecondaryButton
-              testID="profile-share-level"
-              label={strings.shareLevel}
-              onPress={() => {
-                Share.share({
-                  message: fill(strings.shareMessage, {
-                    level: String(level.level),
-                    name: level.name,
+        {(shown.xpBar || streakShown) && (
+          <View style={styles.section}>
+            {shown.xpBar && level !== undefined && (
+              <>
+                {line(
+                  'profile-level',
+                  fill(strings.level, { level: String(level.level), name: level.name }),
+                )}
+                {line(
+                  'profile-to-next',
+                  fill(strings.toNext, {
+                    progress: String(level.progress),
+                    toNext: String(level.toNext),
                   }),
-                }).catch((error: unknown) => {
-                  logError('Could not share the Level', error);
-                });
-              }}
-            />
-          )}
-        </View>
+                )}
+              </>
+            )}
+            {shown.xpBar &&
+              line('profile-total-xp', fill(strings.totalXp, { count: String(xp.total) }))}
+            {streakShown && (
+              <>
+                {line('profile-streak', fill(strings.streak, { count: String(progress.streak) }))}
+                {line(
+                  'profile-best-streak',
+                  fill(strings.bestStreak, { count: String(progress.bestStreak) }),
+                )}
+              </>
+            )}
+            {shown.xpBar &&
+              share !== undefined &&
+              level !== undefined &&
+              reachedOn !== undefined && (
+                <>
+                  <SecondaryButton
+                    testID="profile-share-level"
+                    label={strings.shareLevel}
+                    onPress={() => {
+                      setSharing(true);
+                    }}
+                  />
+                  {sharing && (
+                    <ShareCardSheet
+                      subject={{ level, date: reachedOn }}
+                      kind="level"
+                      share={share}
+                      visible
+                      onClose={() => {
+                        setSharing(false);
+                      }}
+                    />
+                  )}
+                </>
+              )}
+          </View>
+        )}
         <View style={styles.section}>
           <SectionLabel>{strings.activeDays}</SectionLabel>
           <ActiveDaysCalendar months={composition.progress.calendar()} />
