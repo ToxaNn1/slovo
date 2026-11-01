@@ -5,19 +5,20 @@ import {
   openComposition,
   openUserState,
   systemRandom,
+  type AnalyticsPort,
   type Composition,
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import GameScreen from '../app/game';
 import GameLayout from '../app/game/_layout';
 import DailyCrosswordScreen from '../app/game/crossword';
 import { edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { ShellProvider, type ShareCard } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SCREEN_OPEN_TIMEOUT_MS } from '../entries/open-screen';
@@ -78,8 +79,26 @@ async function settle(action: () => unknown = () => undefined) {
   });
 }
 
-/** The Game tab as the app routes it, opened on its mode screen over a fresh composition. */
-async function renderGame() {
+/** The Analytics events the Core sent, by name and properties. */
+let events: unknown[][] = [];
+
+const analytics: AnalyticsPort = {
+  track: (event, properties) => void events.push([event, properties]),
+  stop: () => undefined,
+};
+
+/** A Share Card capture whose share sheet the reader always sends. */
+const sendingShareCard: ShareCard = (_view, _cardId, _format, onShared) => {
+  onShared();
+  return Promise.resolve('closed');
+};
+
+/**
+ * The Game tab as the app routes it, opened on its mode screen over a fresh
+ * composition, with a Share Card capture when the binary has one.
+ */
+async function renderGame({ shareCard }: { shareCard?: ShareCard } = {}) {
+  events = [];
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
@@ -93,11 +112,13 @@ async function renderGame() {
     userState: await openUserState({ port: createMemoryUserStatePort() }),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
+    analytics,
   });
   const shell = testShell({
     composition: opened(composition),
     remoteSwitches: switchedTo(edition),
     settings: await settingsAt(),
+    shareCard,
   });
   const app = renderRouter(
     {
@@ -162,6 +183,17 @@ async function type(letters: string) {
     );
 }
 
+/** Types every word of the test's crossword right. */
+async function solve() {
+  await type('кіт');
+  await tap(1, 0);
+  await type('от');
+  await tap(1, 2);
+  await type('ак');
+  await tap(2, 3);
+  await type('ит');
+}
+
 describe('the Daily Crossword screen', () => {
   it('opens from its card with the grid and the first word’s clue', async () => {
     const app = await renderGame();
@@ -215,17 +247,29 @@ describe('the Daily Crossword screen', () => {
     await renderGame();
     await openFromCard();
 
-    await type('кіт');
-    await tap(1, 0);
-    await type('от');
-    await tap(1, 2);
-    await type('ак');
-    await tap(2, 3);
-    await type('ит');
+    await solve();
 
     expect(screen.getByText('Розв’язано!')).toBeOnTheScreen();
     expect(screen.queryByText('Відкрити літеру')).toBeNull();
+    // The binary of this test can't capture a Share Card.
+    expect(screen.queryByTestId('daily-crossword-share')).toBeNull();
     await back();
     expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано');
+  });
+
+  it('shares a solved crossword’s grid without its letters and tells Analytics once it is shared', async () => {
+    await renderGame({ shareCard: sendingShareCard });
+    await openFromCard();
+    expect(screen.queryByTestId('daily-crossword-share')).toBeNull();
+
+    await solve();
+    await settle(() => fireEvent.press(screen.getByTestId('daily-crossword-share')));
+
+    const preview = within(screen.getByTestId('share-preview')).getByTestId('share-card');
+    expect(preview).toHaveAccessibleName(/Кросворд дня розв’язано/);
+    expect(within(preview).queryByText('к')).toBeNull();
+    await settle(() => fireEvent.press(screen.getByTestId('share-sheet-share')));
+
+    expect(events).toContainEqual(['shareCardShared', { card: 'dailyCrossword' }]);
   });
 });

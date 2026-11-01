@@ -6,11 +6,14 @@ import {
   openComposition,
   openUserState,
   systemRandom,
+  userStateRecords,
+  type AnalyticsPort,
   type Clock,
   type Composition,
   type Edition,
   type Haptics,
   type Schedule,
+  type XpRecord,
 } from '@slovo/core';
 import { createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, systemSchedule } from '@slovo/ui';
@@ -19,7 +22,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import GameScreen from '../app/game';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { ShellProvider } from '../shell-value';
+import { ShellProvider, type ShareCard } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 
@@ -218,7 +221,10 @@ async function open({
   crossword,
   clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
   schedule,
+  xp = [],
 }: {
+  /** XP earned before, each on its own day. */
+  xp?: readonly { date: string; amount: number }[];
   origins?: number;
   best?: Record<string, number>;
   corrections?: number;
@@ -236,6 +242,17 @@ async function open({
     Object.entries(best).map(([modeId, result]) => [`game.best.${modeId}`, JSON.stringify(result)]),
   );
   if (crossword !== undefined) records.set('crossword.progress', JSON.stringify(crossword));
+  const seeded = await openUserState({ port: createMemoryUserStatePort(records) });
+  for (const [index, { date, amount }] of xp.entries()) {
+    const record: XpRecord = {
+      kind: 'xp',
+      date,
+      at: `${date}T07:00:00.000Z`,
+      source: 'game-round',
+      amount,
+    };
+    await seeded.write(userStateRecords.xpLog.record(`seeded-${String(index)}`).change(record));
+  }
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
@@ -254,15 +271,31 @@ async function open({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: systemRandom,
+    analytics,
     ...(schedule === undefined ? {} : { schedule }),
   });
 }
 
-async function renderScreen() {
+/** The Analytics events the Core sent, by name and properties. */
+let events: unknown[][] = [];
+
+const analytics: AnalyticsPort = {
+  track: (event, properties) => void events.push([event, properties]),
+  stop: () => undefined,
+};
+
+/** A Share Card capture whose share sheet the reader always sends. */
+const sendingShareCard: ShareCard = (_view, _cardId, _format, onShared) => {
+  onShared();
+  return Promise.resolve('closed');
+};
+
+async function renderScreen({ shareCard }: { shareCard?: ShareCard } = {}) {
   const shell = testShell({
     composition: opened(composition),
     remoteSwitches: switchedTo(editionInEffect),
     settings: await settingsAt(),
+    shareCard,
   });
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
@@ -441,6 +474,7 @@ async function winStress({ fromCard = true } = {}) {
 
 beforeEach(async () => {
   mockInForeground = true;
+  events = [];
   await open();
 });
 
@@ -567,6 +601,37 @@ describe('the Game screen', () => {
 
     expect(screen.queryByTestId('daily-crossword')).toBeNull();
     expect(screen.getByTestId('game-mode-guess-word')).toBeOnTheScreen();
+  });
+
+  it('offers the Level reached today as a Share Card and tells Analytics once it is shared', async () => {
+    await open({ xp: [{ date: '2026-10-26', amount: 60 }] });
+    await renderScreen({ shareCard: sendingShareCard });
+
+    await fireEvent.press(
+      await screen.findByRole('button', { name: 'Новий рівень у SLOVO · Рівень 1' }),
+    );
+    expect(
+      within(screen.getByTestId('share-preview')).getByTestId('share-card'),
+    ).toHaveAccessibleName(/Рівень 1/);
+    await fireEvent.press(screen.getByTestId('share-sheet-share'));
+
+    await waitFor(() => {
+      expect(events).toContainEqual(['shareCardShared', { card: 'level' }]);
+    });
+  });
+
+  it('offers no progress Share Card for a Level reached on another day', async () => {
+    await open({ xp: [{ date: '2026-10-25', amount: 60 }] });
+    await renderScreen({ shareCard: sendingShareCard });
+
+    expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
+  });
+
+  it('offers no progress Share Card with its Feature Switch off', async () => {
+    await open({ xp: [{ date: '2026-10-26', amount: 60 }], switchedOff: ['progressShareCards'] });
+    await renderScreen({ shareCard: sendingShareCard });
+
+    expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
   });
 
   it('starts «Наголос» from its card and plays a whole Game to the result screen', async () => {
