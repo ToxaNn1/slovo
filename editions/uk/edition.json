@@ -84,7 +84,10 @@
     "questionnaire": true,
     "badges": true,
     "progressShareCards": true,
-    "dailyCrosswordShare": true
+    "dailyCrosswordShare": true,
+    "eveningNotification": true,
+    "notificationFarewell": true,
+    "notificationExplainer": true
   },
   "userSettingDefaults": {
     "theme": "system",

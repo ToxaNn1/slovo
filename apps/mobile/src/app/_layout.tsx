@@ -174,7 +174,15 @@ function ThemedTabs() {
               <Opened opening={composition} failedTestID="feed-error">
                 {/* The screens' background and divider follow the local date (ADR 0055). */}
                 <DecorInEffect clock={deviceClock}>
-                  <NotificationTaps />
+                  <NotificationTaps
+                    onOpened={(kind) => {
+                      // The event never fails; a composition that fails to open is reported where it opens.
+                      composition.opened().then(
+                        (open) => open.analytics.notificationOpened(kind),
+                        () => undefined,
+                      );
+                    }}
+                  />
                   <EditionTabs
                     screenOptions={{
                       headerShown: false,

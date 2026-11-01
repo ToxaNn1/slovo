@@ -84,7 +84,7 @@ describe('the notification scheduler on expo-notifications', () => {
           title: 'кракелю́р',
           body: 'Сітка тріщин на фарбі.',
           sound: 'notification.wav',
-          data: { editionId: 'uk', wordId: 'w_00g2ap' },
+          data: { editionId: 'uk', kind: 'word', wordId: 'w_00g2ap' },
         },
         trigger: { type: 'calendar', year: 2026, month: 10, day: 15, hour: 9, minute: 0 },
       },
@@ -116,7 +116,7 @@ describe('the notification scheduler on expo-notifications', () => {
       title: '',
       body: 'До зустрічі',
       sound: 'notification.wav',
-      data: { editionId: 'uk' },
+      data: { editionId: 'uk', kind: 'farewell' },
     });
   });
 
@@ -282,6 +282,22 @@ describe('a tap on a notification', () => {
     tap(tapOn({ wordId: 'w_00g2ap' }));
 
     expect(open.mock.calls).toEqual([['/entry/w_00g2ap?from=notification']]);
+  });
+
+  it('reports the kind of each tapped notification of the active Edition', () => {
+    const { notifications, tap } = mockNotifications({
+      lastResponse: tapOn({ editionId: 'uk', kind: 'evening' }),
+    });
+    const opened = vi.fn();
+
+    onNotificationTap(notifications, 'uk', vi.fn(), opened);
+    tap(tapOn({ editionId: 'uk', kind: 'word', wordId: 'w_00g2ap' }));
+    tap(tapOn({ editionId: 'en', kind: 'farewell' }));
+    // Planned before notifications carried their kind: a Word's, or else the farewell.
+    tap(tapOn({ editionId: 'uk', wordId: 'w_00g2aq' }));
+    tap(tapOn({ editionId: 'uk' }));
+
+    expect(opened.mock.calls).toEqual([['evening'], ['word'], ['word'], ['farewell']]);
   });
 
   it('listens to nothing without the module', () => {

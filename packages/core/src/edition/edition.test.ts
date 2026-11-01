@@ -88,6 +88,9 @@ const validConfig = {
     badges: true,
     progressShareCards: true,
     dailyCrosswordShare: true,
+    eveningNotification: true,
+    notificationFarewell: true,
+    notificationExplainer: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -208,6 +211,12 @@ function withoutQuestionnaireSwitch() {
   const { questionnaire: _removed, ...featureSwitches } = validConfig.featureSwitches;
   return { featureSwitches };
 }
+/** The Feature Switches of the 1.0 notification plan. */
+const notificationSwitches = [
+  'eveningNotification',
+  'notificationFarewell',
+  'notificationExplainer',
+] as const;
 
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {
@@ -256,6 +265,7 @@ describe('loadEdition', () => {
     ...learningSwitches,
     ...feelSwitches,
     ...nativeSwitches,
+    ...notificationSwitches,
     'signInWithApple',
     'synonymRows',
     'tips',

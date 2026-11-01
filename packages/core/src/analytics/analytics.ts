@@ -6,6 +6,7 @@ import type {
 } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
+import type { NotificationKind } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -61,6 +62,8 @@ export interface AnalyticsEvents {
   readonly badgeEarned: { readonly badge: string };
   /** The reader sent a Share Card from the system share sheet. */
   readonly shareCardShared: { readonly card: ShareCardKind };
+  /** The reader opened the app from a notification of this kind. */
+  readonly notificationOpened: { readonly kind: NotificationKind };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 
