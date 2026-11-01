@@ -1,7 +1,6 @@
 import type { EntryKind } from '@slovo/contracts';
 import {
-  featureOfKind,
-  MIX_KINDS,
+  kindsShown,
   type Edition,
   type FeatureSwitch,
   type MixState,
@@ -112,10 +111,10 @@ export interface Shown {
 /**
  * What the reader is shown, from the Edition in effect (ADR 0040), the
  * reader's settings and their Mix. A feature shows only while its Feature
- * Switch is on in effect; the reader may hide the counters (or, with
- * «Без лічильників» switched off, only the Streak) and turns
- * Self-check on, and the Known Corrections, Idioms, Synonym Rows and Tips
- * each count only while they are in the Mix as well.
+ * Switch is in effect, which the Edition answers with its dependencies
+ * applied; the reader may hide the counters (or, with «Без лічильників»
+ * switched off, only the Streak) and turns Self-check on. Only which screen
+ * draws what lives here.
  */
 export function shownOf({
   edition,
@@ -130,11 +129,6 @@ export function shownOf({
   const knowledge = on('knowledge');
   // «Без лічильників» hides every counter; with its switch off it is «Приховати Серію» of 0.9 and hides only the Streak.
   const noCounters = on('noCounters') && settings.noCounters;
-  // The kinds the Known count joins: Words, and every kind as a whole while on and in the Mix.
-  const knownKinds: readonly EntryKind[] = [
-    'word',
-    ...MIX_KINDS.filter((kind) => on(featureOfKind(kind)) && mix.kinds[kind]),
-  ];
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
@@ -155,24 +149,23 @@ export function shownOf({
     stats: on('statistics')
       ? {
           streak: !settings.noCounters,
-          knowledge: knowledge ? knownKinds : 'none',
+          knowledge: knowledge ? kindsShown({ edition, mix }) : 'none',
         }
       : undefined,
     xpBar: on('xpLog') && !noCounters,
     celebrations: on('xpLog') && !noCounters,
-    streakBreak: on('xpLog') && on('streakBreak'),
-    badges: on('xpLog') && on('badges'),
-    progressShareCards: on('shareCards') && on('progressShareCards') && on('xpLog') && !noCounters,
-    dailyCrosswordShare:
-      on('shareCards') && on('dailyCrosswordShare') && on('game') && on('dailyCrossword'),
-    profile: on('xpLog') && on('profile'),
-    quickQuestion: on('game') && on('quickQuestion'),
+    streakBreak: on('streakBreak'),
+    badges: on('badges'),
+    progressShareCards: on('progressShareCards') && !noCounters,
+    dailyCrosswordShare: on('dailyCrosswordShare'),
+    profile: on('profile'),
+    quickQuestion: on('quickQuestion'),
     sync: on('sync'),
-    dailyGoal: on('xpLog') && on('dailyGoal'),
+    dailyGoal: on('dailyGoal'),
     search: on('search'),
     moods: on('moods'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
-    rarityTest: on('rarityTest') && on('rarityFloor'),
+    rarityTest: on('rarityTest'),
     questionnaire:
       on('questionnaire') || on('rarityFloor')
         ? { whoWhy: on('questionnaire'), selfRating: on('rarityFloor') }

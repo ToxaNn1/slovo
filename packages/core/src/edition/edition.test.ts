@@ -1127,3 +1127,40 @@ describe('loadEdition', () => {
     },
   );
 });
+
+/** Each Feature Switch that depends on others, with the switches it needs on. */
+const dependentSwitches = [
+  ['streakBreak', ['xpLog']],
+  ['badges', ['xpLog']],
+  ['profile', ['xpLog']],
+  ['dailyGoal', ['xpLog']],
+  ['progressShareCards', ['shareCards', 'xpLog']],
+  ['dailyCrosswordShare', ['shareCards', 'dailyCrossword', 'game']],
+  ['quickQuestion', ['game']],
+  ['rarityTest', ['rarityFloor']],
+] as const;
+
+describe('the Feature Switches a feature depends on', () => {
+  it.each(dependentSwitches)('turn %s off while any of %j is off', (feature, needs) => {
+    expect(loadEdition(validConfig).isFeatureEnabled(feature)).toBe(true);
+    for (const need of needs) {
+      const edition = loadEdition({
+        ...validConfig,
+        featureSwitches: { ...validConfig.featureSwitches, [need]: false },
+      });
+
+      expect(edition.isFeatureEnabled(feature)).toBe(false);
+    }
+  });
+
+  it('keep a feature on while only a feature that depends on it is off', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, badges: false, quickQuestion: false },
+    });
+
+    expect(edition.isFeatureEnabled('xpLog')).toBe(true);
+    expect(edition.isFeatureEnabled('game')).toBe(true);
+    expect(edition.isFeatureEnabled('streakBreak')).toBe(true);
+  });
+});

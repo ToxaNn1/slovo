@@ -1,13 +1,14 @@
 import {
   RaritySchema,
   type Category,
+  type EntryKind,
   type MixKindWeight,
   type QuickQuestionEvery,
   type Rarity,
 } from '@slovo/contracts';
 
 import type { DefaultMix, Edition, UserSettingDefaults } from '../edition/edition';
-import { MIX_KINDS, type CategoryKind, type MixKind } from './entry-kinds';
+import { featureOfKind, MIX_KINDS, type CategoryKind, type MixKind } from './entry-kinds';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
@@ -209,6 +210,24 @@ function eachList<T>(of: (kind: CategoryKind) => T): Readonly<Record<CategoryKin
     CategoryKind,
     T
   >;
+}
+
+/**
+ * The kinds of Entry the reader is shown as a whole, in the Mix order: the
+ * Words always, and each other kind while the Edition turns it on and the
+ * user has it in the Mix. The Known counts of the statistics join these.
+ */
+export function kindsShown({
+  edition,
+  mix,
+}: {
+  edition: Pick<Edition, 'isFeatureEnabled'>;
+  mix: Pick<MixState, 'kinds'>;
+}): readonly EntryKind[] {
+  return [
+    'word',
+    ...MIX_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind)) && mix.kinds[kind]),
+  ];
 }
 
 /** The list of Categories of the kind in the Mix as it stands: the Words' are the Mix's own fields. */

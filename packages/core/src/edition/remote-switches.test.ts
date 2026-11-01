@@ -139,6 +139,21 @@ describe('the remote Feature Switches', () => {
     expect(switches.edition.isFeatureEnabled('dailyCrossword')).toBe(false);
   });
 
+  it('give the Badges, the Break, the Profile and the Daily Goal as off once the XP log is off remotely', async () => {
+    const app = device();
+    app.backend.switches.turnOff('xpLog');
+    const switches = await app.launch();
+
+    await switches.ask();
+
+    expect(switches.edition.isFeatureEnabled('badges')).toBe(false);
+    expect(switches.edition.isFeatureEnabled('streakBreak')).toBe(false);
+    expect(switches.edition.isFeatureEnabled('profile')).toBe(false);
+    expect(switches.edition.isFeatureEnabled('dailyGoal')).toBe(false);
+    expect(switches.edition.isFeatureEnabled('progressShareCards')).toBe(false);
+    expect(switches.edition.isFeatureEnabled('shareCards')).toBe(true);
+  });
+
   it('turn one Game Mode off remotely and keep the others', async () => {
     const app = device();
     app.backend.switches.turnOff('gameAnagram');

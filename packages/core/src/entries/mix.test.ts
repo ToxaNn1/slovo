@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  kindsShown,
   openComposition,
   SEEN_DWELL_MS,
   type Clock,
@@ -1002,5 +1003,40 @@ describe('the Categories of Corrections in the Mix', () => {
     expect(app.mix.state).toEqual(first.mix.state);
     expect(app.mix.state.correctionCategories.categoryIds).toEqual(['shop']);
     expect(await correctionsOffered(app.feed)).toEqual(['c_two']);
+  });
+});
+
+describe('the kinds of Entry shown as a whole', () => {
+  const allKinds = { correction: true, idiom: true, synonymRow: true, tip: true };
+
+  it('are the Words and every Mix kind the Edition turns on that is in the Mix, in the Mix order', () => {
+    const edition = testEdition();
+
+    expect(kindsShown({ edition, mix: { kinds: allKinds } })).toEqual([
+      'word',
+      'correction',
+      'idiom',
+      'synonymRow',
+      'tip',
+    ]);
+  });
+
+  it('leave out a kind the Edition turns off, whatever the Mix says', () => {
+    const edition = testEdition({ isFeatureEnabled: (feature) => feature !== 'corrections' });
+
+    expect(kindsShown({ edition, mix: { kinds: allKinds } })).toEqual([
+      'word',
+      'idiom',
+      'synonymRow',
+      'tip',
+    ]);
+  });
+
+  it('leave out a kind out of the Mix, and never the Words', () => {
+    const edition = testEdition();
+
+    expect(
+      kindsShown({ edition, mix: { kinds: { ...allKinds, idiom: false, tip: false } } }),
+    ).toEqual(['word', 'correction', 'synonymRow']);
   });
 });
