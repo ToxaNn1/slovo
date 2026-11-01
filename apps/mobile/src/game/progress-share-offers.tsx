@@ -1,4 +1,5 @@
 import { buildShareCardContent, type ProgressShareCard } from '@slovo/core';
+import { deviceClock } from '../device/device-clock';
 import { SecondaryButton } from '@slovo/ui';
 import { useState } from 'react';
 
@@ -28,7 +29,7 @@ export function ProgressShareOffers() {
   return (
     <>
       {cards.map((card) => {
-        const { body } = buildShareCardContent(card, editionStrings, edition.locale);
+        const { body } = buildShareCardContent(card, editionStrings, edition.locale, deviceClock);
         const kind = kindOf(card);
         return body.kind === 'milestone' ? (
           <SecondaryButton

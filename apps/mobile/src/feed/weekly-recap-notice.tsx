@@ -1,4 +1,5 @@
 import { buildShareCardContent, type LocalDate, type WeeklyRecapModel } from '@slovo/core';
+import { deviceClock } from '../device/device-clock';
 import { ShareSheet, WeeklyRecapCard } from '@slovo/ui';
 import { useState } from 'react';
 
@@ -42,7 +43,12 @@ export function WeeklyRecapNotice({ day }: { day: LocalDate }) {
       {recap !== undefined && share !== undefined && (
         <ShareSheet
           visible={open}
-          content={buildShareCardContent({ recap, hideStreak }, editionStrings, edition.locale)}
+          content={buildShareCardContent(
+            { recap, hideStreak },
+            editionStrings,
+            edition.locale,
+            deviceClock,
+          )}
           watermark={edition.displayName}
           initialFormat={sessionShareFormat.format}
           onFormatChange={(format) => {

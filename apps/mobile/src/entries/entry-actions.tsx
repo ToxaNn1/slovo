@@ -1,9 +1,4 @@
-import {
-  buildShareCardContent,
-  isTodaysWordOfTheDay,
-  type AnyEntryCard,
-  type Composition,
-} from '@slovo/core';
+import { buildShareCardContent, type AnyEntryCard, type Composition } from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
@@ -137,14 +132,7 @@ function EntryShareSheet({
   return (
     <ShareSheet
       visible={visible}
-      content={buildShareCardContent(
-        {
-          card,
-          todaysWordOfTheDay: card.kind === 'word' && isTodaysWordOfTheDay(card, deviceClock),
-        },
-        editionStrings,
-        edition.locale,
-      )}
+      content={buildShareCardContent({ card }, editionStrings, edition.locale, deviceClock)}
       watermark={edition.displayName}
       initialFormat={sessionShareFormat.format}
       onFormatChange={(format) => {

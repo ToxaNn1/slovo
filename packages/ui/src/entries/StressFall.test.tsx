@@ -22,6 +22,9 @@ import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
 
+/** A reader's clock, for the Share Cards: no card here is today's Word of the Day. */
+const clock = { now: () => new Date('2026-10-11T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
+
 const strings = testStrings({
   wordCard: {
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
@@ -288,11 +291,7 @@ describe('The falling Stress', () => {
         {inEdition(
           <ShareSheet
             visible
-            content={buildShareCardContent(
-              { card: shared, todaysWordOfTheDay: false },
-              strings,
-              'en',
-            )}
+            content={buildShareCardContent({ card: shared }, strings, 'en', clock)}
             watermark="SLOVO"
             initialFormat="story"
             onFormatChange={jest.fn()}

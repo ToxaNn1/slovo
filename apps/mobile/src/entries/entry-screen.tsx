@@ -1,4 +1,4 @@
-import type { AnyEntryCard, Composition } from '@slovo/core';
+import type { AnyEntryCard, Composition, EntryLinkSource } from '@slovo/core';
 import {
   BackLink,
   DecorBackground,
@@ -16,7 +16,6 @@ import { useCompositionRead } from '../composition';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { EntryActions } from './entry-actions';
-import type { OpenedFrom } from './entry-link';
 import { useOpenScreen } from './use-open-screen';
 
 /**
@@ -50,7 +49,7 @@ export function EntryScreen({
    * have opens the Feed, such as a plain link's or a Spotlight result's to an
    * Entry a pack update took out (ADR 0057).
    */
-  openedFrom?: OpenedFrom | 'search' | 'mood' | undefined;
+  openedFrom?: EntryLinkSource | 'search' | 'mood' | undefined;
 }) {
   const { colors } = useTokens();
   const router = useRouter();
@@ -124,7 +123,7 @@ export function EntryScreen({
 function openEntry(
   composition: Composition,
   entryId: string,
-  openedFrom: OpenedFrom | 'search' | 'mood' | undefined,
+  openedFrom: EntryLinkSource | 'search' | 'mood' | undefined,
 ): Promise<AnyEntryCard | undefined> {
   switch (openedFrom) {
     case 'search':

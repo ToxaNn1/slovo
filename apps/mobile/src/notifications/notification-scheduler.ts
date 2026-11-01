@@ -1,5 +1,6 @@
 import {
   formatTimeOfDay,
+  linkTo,
   parseLocalDate,
   parseTimeOfDay,
   type NotificationKind,
@@ -35,19 +36,6 @@ export function dateOfTime(time: string, day: Date): Date {
   const date = new Date(day);
   date.setHours(hour, minute, 0, 0);
   return date;
-}
-
-/** The value of the search param `from` that marks an Entry link as a notification's. */
-const notificationSource = 'notification';
-
-/** The Expo Router link of a notification's Word: the Entry screen, opened as from a notification. */
-function notificationLink(wordId: string): string {
-  return `/entry/${encodeURIComponent(wordId)}?from=${notificationSource}`;
-}
-
-/** Whether the search params of an Entry link mark it as a notification's link. */
-export function isFromNotification({ from }: { readonly from?: string }): boolean {
-  return from === notificationSource;
 }
 
 /** Where the app runs, as far as scheduling cares. */
@@ -210,7 +198,7 @@ export function onNotificationTap(
     if (data === undefined) return;
     opened(kindOf(data));
     const wordId = wordOf(data);
-    if (wordId !== undefined) open(notificationLink(wordId));
+    if (wordId !== undefined) open(linkTo(wordId, 'notification'));
   }
   tapped(notifications.getLastNotificationResponse());
   const subscription = notifications.addNotificationResponseReceivedListener(tapped);

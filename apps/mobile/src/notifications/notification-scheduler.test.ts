@@ -1,11 +1,10 @@
-import type { PlannedNotification } from '@slovo/core';
+import { linkSourceOf, type PlannedNotification } from '@slovo/core';
 import type { NotificationRequestInput, NotificationResponse } from 'expo-notifications';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   createNotificationScheduler,
   dateOfTime,
-  isFromNotification,
   onNotificationTap,
   timeOfDay,
   type NotificationsModule,
@@ -225,12 +224,7 @@ describe('a tap on a notification', () => {
 
     const [[link]] = open.mock.calls as [[string]];
     expect(link).toBe('/entry/w_00g2ap?from=notification');
-    expect(isFromNotification(paramsOf(link))).toBe(true);
-  });
-
-  it('reads a link without the mark as not from a notification', () => {
-    expect(isFromNotification(paramsOf('/entry/w_00g2ap'))).toBe(false);
-    expect(isFromNotification(paramsOf('/entry/w_00g2ap?from=feed'))).toBe(false);
+    expect(linkSourceOf(paramsOf(link))).toBe('notification');
   });
 
   it('opens the Word of each tap while the app runs, and stops when told', () => {

@@ -1,33 +1,8 @@
 import { CollectionLinkIdSchema } from '@slovo/contracts';
+import { linkFromOutside, linkTo, parseLink } from '@slovo/core';
 
 import { EDITION_PARAM } from '../edition/edition-link';
-import { isFromNotification } from '../notifications/notification-scheduler';
 import { APP_INTENT_PARAM, APP_INTENT_ROUTES, APP_INTENTS, type AppIntent } from './app-intents';
-
-/** Where outside the app an Entry link opened from: a notification or the home-screen widget. */
-export type OpenedFrom = 'notification' | 'widget';
-
-/** The value of the search param `from` that marks an Entry link as the widget's. */
-const widgetSource = 'widget';
-
-/** The search the outside links keep on the widget's link to an Entry, and on no other link. */
-const widgetSearch = `?from=${widgetSource}`;
-
-/**
- * Where outside the app the search params of an Entry link say it opened
- * from, or nothing for a link from inside the app. The widget's link is the
- * app's scheme + `entry/<id>?from=widget&key=<link key>`; by the time the
- * Entry route reads it, the outside links have checked its key and dropped it
- * (`createOutsideLinks`).
- */
-export function openedFromOf(params: { readonly from?: string }): OpenedFrom | undefined {
-  if (isFromNotification(params)) return 'notification';
-  if (params.from === widgetSource) return 'widget';
-  return undefined;
-}
-
-/** The path of an Entry opened from a link, `/entry/<id>`, the only one the widget's mark opens. */
-const linkEntryPath = /^\/entry\/[^/]+$/;
 
 /**
  * The path of an Entry on any of its routes: from a link, the Game, Favorites,
@@ -108,13 +83,9 @@ function outsidePath(route: Route, widgetLinkKey: string | undefined): string | 
   }
   if (!entryPath.test(path))
     return route.search === '' ? route.path : `${route.path}?${route.search}`;
-  const params = new URLSearchParams(route.search);
-  const fromWidget =
-    linkEntryPath.test(path) &&
-    params.get('from') === widgetSource &&
-    widgetLinkKey !== undefined &&
-    params.get('key') === widgetLinkKey;
-  return fromWidget ? `${path}${widgetSearch}` : path;
+  const link = parseLink(`${path}?${route.search}`);
+  const opened = link === undefined ? undefined : linkFromOutside(link, widgetLinkKey);
+  return opened?.source === undefined ? path : linkTo(opened.entryId, opened.source);
 }
 
 /** The App Intent a link's route is, by its path and mark (`APP_INTENT_ROUTES`), or none. */
@@ -180,7 +151,7 @@ export function createOutsideLinks({
     const intent = appIntentOf(route, domain);
     if (intent === undefined) {
       const opened = outsidePath(route, await widgetLinkKey());
-      const fromWidget = opened === `${normalPath(route.path)}${widgetSearch}`;
+      const fromWidget = opened !== null && parseLink(opened)?.source === 'widget';
       if (initial || !fromWidget) return opened;
       if (!(await widgetEntries.replaceOpenEntry().catch(() => false))) return opened;
       widgetEntries.open(opened);
