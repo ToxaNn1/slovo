@@ -22,6 +22,7 @@ Every variable the server reads at start, with the value it takes in the Deploym
 | `SMTP_TLS`           | `true` for port 465 (TLS from the first byte); unset requires STARTTLS, so the login never goes in the clear. |
 | `MAIL_FROM`          | The address the Sign-in codes come from, on the Edition's domain.                                             |
 | `GOOGLE_CLIENT_IDS`  | The OAuth client ids of the apps at Google, comma-separated (ADR 0047). Empty turns Google sign-in off.       |
+| `OWNER_EMAIL`        | The one Account the owner admin at `/admin` signs in (ADR 0069). Empty leaves the admin out.                  |
 | `SENTRY_DSN`         | Secret. The `https://` DSN of the backend's Sentry project (ADR 0048). Empty reports nothing.                 |
 | `TRUSTED_PROXY_HOPS` | `1`: Railway's proxy is the one hop whose forwarded-for address the limits per IP trust.                      |
 | `PORT`               | Unset: Railway sets it, and its proxy sends the traffic there.                                                |

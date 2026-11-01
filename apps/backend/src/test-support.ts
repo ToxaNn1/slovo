@@ -462,6 +462,8 @@ interface TestAppOptions {
   readonly random?: Random;
   /** How many proxies in front of the backend it trusts; none unless given. */
   readonly trustedProxyHops?: number;
+  /** The owner admin's one Account; no admin unless given. */
+  readonly ownerEmail?: string;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
@@ -484,6 +486,7 @@ export function testApp({
   apple: givenApple,
   random = systemRandom,
   trustedProxyHops = 0,
+  ownerEmail,
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
@@ -505,6 +508,7 @@ export function testApp({
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
     trustedProxyHops,
+    ownerEmail,
   });
   const ip = newIp();
   // The one way a request reaches the app.

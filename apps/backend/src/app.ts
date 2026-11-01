@@ -20,6 +20,7 @@ import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
+import { adminRoutes } from './admin/admin-routes';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -72,6 +73,8 @@ export interface AppDependencies {
    * whose addresses it trusts: 0 when nothing is in front of it.
    */
   readonly trustedProxyHops: number;
+  /** The one Account the owner admin signs in; without it the backend has no admin (ADR 0069). */
+  readonly ownerEmail?: string | undefined;
 }
 
 type Variables = RequestIdVariables & {
@@ -127,6 +130,7 @@ export function createApp({
   authSecret,
   reporter,
   trustedProxyHops,
+  ownerEmail,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -290,6 +294,21 @@ export function createApp({
     const entries = await packEntries.entries(found.link.edition, found.link.entryIds);
     return c.html(collectionPage(edition, appConfig.scheme, id, found.link, entries));
   });
+
+  // The owner admin (ADR 0069), only with the owner's email set.
+  if (ownerEmail !== undefined) {
+    app.route(
+      '/admin',
+      adminRoutes({
+        database,
+        accounts,
+        editions: editionRegistry,
+        served: editions,
+        app: appConfig,
+        ownerEmail,
+      }),
+    );
+  }
 
   // An address the backend doesn't serve, under `/v1` too.
   app.notFound((c) => c.json({ code: 'NOT_FOUND' }, 404));
