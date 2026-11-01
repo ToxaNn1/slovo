@@ -54,9 +54,9 @@ export interface AnalyticsEvents {
   /** The reader solved the Daily Crossword of the local date. */
   readonly dailyCrosswordSolved: { readonly date: string };
   /** The reader answered an Entry due for Review. */
-  readonly reviewAnswered: { readonly mark: 'known' | 'unknown' };
-  /** The reader answered a Quick Question in the Feed, right or not. */
-  readonly quickQuestionAnswered: { readonly right: boolean };
+  readonly reviewAnswered: EntryEventProperties & { readonly mark: 'known' | 'unknown' };
+  /** The reader answered a Quick Question in the Feed, right or not, about the Entry it asked. */
+  readonly quickQuestionAnswered: EntryEventProperties & { readonly right: boolean };
   /** The reader reached a new Level (ADR 0066). */
   readonly levelReached: { readonly level: number };
   /** The reader changed the Daily Goal (ADR 0066). */
