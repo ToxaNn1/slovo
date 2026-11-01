@@ -389,7 +389,10 @@ function earned(...xp: readonly [id: string, date: string, at: string, amount: n
 function fakeAnalytics() {
   const events: [string, unknown][] = [];
   const port: AnalyticsPort = {
-    track: (event, properties) => void events.push([event, properties]),
+    // The onboarding, which opens on a fresh user state, has events of its own.
+    track: (event, properties) => {
+      if (!event.startsWith('onboarding')) events.push([event, properties]);
+    },
     stop: () => undefined,
   };
   return { port, events };

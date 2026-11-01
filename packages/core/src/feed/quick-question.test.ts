@@ -38,7 +38,10 @@ async function run({
 }: { records?: Map<string, string>; on?: readonly FeatureSwitch[] } = {}) {
   const events: [string, unknown][] = [];
   const analytics: AnalyticsPort = {
-    track: (event, properties) => void events.push([event, properties]),
+    // The onboarding, which opens on a fresh user state, has events of its own.
+    track: (event, properties) => {
+      if (!event.startsWith('onboarding')) events.push([event, properties]);
+    },
     stop: () => undefined,
   };
   const time = fakeClock('2026-10-14T08:00:00+03:00');

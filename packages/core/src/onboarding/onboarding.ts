@@ -1,23 +1,31 @@
-import type { AccountState } from '../account/account';
+import type { DailyGoal, QuestionnaireQuestion } from '@slovo/contracts';
+
+import type { Analytics } from '../analytics/analytics';
+import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
-import { createSubscribers } from '../in-turn';
-import { formatTimeOfDay, todayKey } from '../local-date';
-import type { Notifications } from '../notifications/notifications';
-import type { Clock } from '../ports';
-import type { RarityTest, RarityTestWord } from '../mix/rarity-test';
-import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { MIX_KINDS } from '../entries/entry-kinds';
+import type { Mix } from '../entries/mix';
 import { buildWordCard, type WordCardModel } from '../entries/word-card';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
+import { createSubscribers } from '../in-turn';
+import { todayKey } from '../local-date';
+import type { Backend, Clock } from '../ports';
+import type { XpLog } from '../progress/xp-log';
+import type { UserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 /**
- * The steps of the onboarding, in order: the one place that has them, so a
- * step that joins changes the count everywhere. The Rarity Test step comes
- * only with the Rarity Test on, the SLOVO ID step last, only with the Account on.
+ * The steps of the onboarding, in order (ADR 0067): the one place that has
+ * them, so a step that joins changes the count everywhere. The first Word
+ * comes only with a Word of the Day, the two questions only with the
+ * `questionnaire` Feature Switch, the Daily Goal only with `dailyGoal`.
  */
-const STEPS = ['welcome', 'mix', 'rarityTest', 'notifications', 'account'] as const;
+const STEPS = ['welcome', 'firstWord', 'who', 'why', 'dailyGoal'] as const;
 
-type StepKind = (typeof STEPS)[number];
+export type OnboardingStepKind = (typeof STEPS)[number];
+
+/** The Daily Goals the reader picks from. */
+const DAILY_GOALS: readonly DailyGoal[] = [10, 20, 30, 50];
 
 /** Where a step stands among the steps, for the progress the UI draws. */
 interface StepPlace {
@@ -27,46 +35,31 @@ interface StepPlace {
   readonly total: number;
 }
 
-/** The notification the last step shows as a sample of the real one. */
-export interface SampleNotification {
-  /** The Word's card: the sample shows its Lemma with Stress. */
-  readonly wordCard: WordCardModel;
-  /** The body the notification has: the primary Definition, cut when long. */
-  readonly body: string;
-  /** When it comes, the earliest Notification time `HH:MM`; nothing with no time left. */
-  readonly time: string | undefined;
+/** An option of a questionnaire question: its id and the Edition's label. */
+export interface QuestionnaireOption {
+  readonly id: string;
+  readonly label: string;
 }
 
 /**
- * The step on screen, with what it shows. The Edition's strings and the
- * look stay with the UI: the step gives data only.
+ * The step on screen, with what it shows. The Edition's other strings and
+ * the look stay with the UI: the step gives data only.
  */
 export type OnboardingStep =
+  | (StepPlace & { readonly kind: 'welcome' })
+  /** Today's Word of the Day, the reader's first Word, with its Pronunciation on the card. */
+  | (StepPlace & { readonly kind: 'firstWord'; readonly word: WordCardModel })
+  /** «Хто ви» or «Навіщо», with the Edition's options; going on without an answer keeps the defaults. */
   | (StepPlace & {
-      readonly kind: 'welcome';
-      /** Today's Word of the Day, which the welcome shows large; nothing when there is none. */
-      readonly hero: WordCardModel | undefined;
+      readonly kind: QuestionnaireQuestion;
+      readonly options: readonly QuestionnaireOption[];
     })
-  /** The Mix, which the step changes through the composition's Mix. */
-  | (StepPlace & { readonly kind: 'mix' })
-  /**
-   * The Rarity Test, offered after the Mix and skippable: the Words to ask
-   * about, drawn when the step opens from the Mix the reader just chose. The
-   * shell applies the answers through the composition's Rarity Test.
-   */
-  | (StepPlace & { readonly kind: 'rarityTest'; readonly words: readonly RarityTestWord[] })
+  /** The Daily Goal, with the goals to pick from and the one highlighted. */
   | (StepPlace & {
-      readonly kind: 'notifications';
-      /**
-       * The morning notification the plan would hold if the reader allowed
-       * notifications now, the Word of the Day's: this morning's while its
-       * time is ahead, else the next day's (see `Notifications`). It follows
-       * the Notification times the step changes. Nothing without a Word for it.
-       */
-      readonly sample: SampleNotification | undefined;
-    })
-  /** SLOVO ID, which the step offers to sign in to, through the SLOVO ID screen. */
-  | (StepPlace & { readonly kind: 'account' });
+      readonly kind: 'dailyGoal';
+      readonly goals: readonly DailyGoal[];
+      readonly highlighted: DailyGoal;
+    });
 
 /** Where the onboarding stands. */
 export interface OnboardingState {
@@ -77,19 +70,17 @@ export interface OnboardingState {
 }
 
 /**
- * The onboarding: its steps in order (the welcome, the Mix, with the Rarity
- * Test on the Rarity Test, the notifications and, with the Account on, SLOVO ID), and whether the reader
- * finished it, which is also when they skipped it. It opens on launch until
- * then, at the welcome, and never again after. The step on screen is not kept: closing the app halfway
- * starts over at the welcome. Read from the user state once, when it opens,
- * like the Cycle, so open one per app session (the Core composition does).
- * A change is made in memory only once it is written.
+ * The onboarding (ADR 0067): the welcome, the first Word, «Хто ви» and
+ * «Навіщо», the Daily Goal, then the Feed; and whether the reader finished
+ * it, which is also when they skipped it. It opens on launch until then, at
+ * the welcome, and never again after, so a reader who finished the old
+ * onboarding sees none. The step on screen is not kept: closing the app
+ * halfway starts over at the welcome. Read from the user state once, when it
+ * opens, so open one per app session (the Core composition does).
  *
- * One tap ends a step: from the moment a call starts to end the step (going
- * on, finishing, or asking for permission) until the next step is on screen,
- * every other call does nothing, so a second tap, also on another button
- * while the prompt of iOS is up, neither skips a step nor asks twice. After
- * a call that fails, the step takes a tap again.
+ * One tap ends a step: from the moment a call starts to end the step until
+ * the next step is on screen, every other call does nothing, so a second tap
+ * never skips a step. After a call that fails, the step takes a tap again.
  */
 export interface Onboarding {
   /**
@@ -99,58 +90,49 @@ export interface Onboarding {
    */
   readonly state: OnboardingState;
   /**
-   * Goes on to the next step, for the welcome's and the Mix step's button,
-   * the Rarity Test step's way past it or on from its result, the
-   * notifications step's quiet "later" and the SLOVO ID step's «continue
-   * without an Account». Past the last step it finishes.
+   * Goes on to the next step without an answer, so a question skipped keeps
+   * the defaults and the Daily Goal stays as it is. Past the last step it finishes.
    */
   next(): Promise<void>;
   /**
-   * Finishes the onboarding as of now without asking for anything, for the
-   * skip on every step. Closing the app before this leaves the onboarding
-   * unfinished.
+   * Answers the question on screen with the option `answerId` and goes on:
+   * «Хто ви» sets the Rarity Ceiling and «Навіщо» the Mix kind weights by the
+   * Edition's mapping. The answer is counted by the backend with no reader id
+   * while the reader shares their anonymous statistics; a count that fails is
+   * lost. An id that is no option, or another step on screen, does nothing.
+   */
+  answer(answerId: string): Promise<void>;
+  /** Sets the Daily Goal the reader picked on its step and goes on. Another step on screen does nothing. */
+  chooseDailyGoal(goal: DailyGoal): Promise<void>;
+  /**
+   * Finishes the onboarding as of now, for the skip on every step: what is
+   * not answered keeps its default. Closing the app before this leaves the
+   * onboarding unfinished.
    */
   finish(): Promise<void>;
-  /**
-   * The notifications step's main button: asks the reader for permission to
-   * notify, which plans by the answer, then goes on as `next` does whatever
-   * the answer, also when nothing can ask or asking fails: the reader chose
-   * to go on, and the times stay for the notification settings. When asking
-   * fails, it rejects with the failure once the onboarding has gone on.
-   */
-  allowNotifications(): Promise<void>;
-  /**
-   * The reader came back from the SLOVO ID screen, which the SLOVO ID step
-   * opens, with the Account as it stands: signed in, the onboarding finishes;
-   * signed out, the step stays. Signing in never waits for the onboarding,
-   * and the merge of the reader's words is the Sync's.
-   */
-  backFromAccount(account: Pick<AccountState, 'status'>): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
 
-const { onboardingFinished, firstWeekFrom } = userStateRecords;
-
-const noSample = (): undefined => undefined;
+const { onboardingFinished, firstWeekFrom, shareCounters } = userStateRecords;
 
 /**
  * Opens the onboarding over the user state, for the Core composition, once
- * today's Word of the Day is chosen. The sample shows the plan's next morning
- * notification. `account` says whether the Edition
- * has the Account, which brings the SLOVO ID step. `rarityTest` is the
- * composition's Rarity Test while the Edition turns it on, which brings the
- * Rarity Test step while its draw has a Word.
+ * today's Word of the Day is chosen. The answers change the composition's
+ * Mix, the Daily Goal its XP log; `backend` counts the answers, none without it.
  */
 export async function openOnboarding({
+  edition,
   userState,
   clock,
   entries,
   wordOfTheDay,
-  notifications,
-  account,
-  rarityTest,
+  mix,
+  xpLog,
+  analytics,
+  backend,
 }: {
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled' | 'questionnaire' | 'userSettingDefaults'>;
   userState: UserState;
   clock: Clock;
   entries: Pick<
@@ -158,70 +140,59 @@ export async function openOnboarding({
     'get' | 'getMany' | 'linkedCorrections' | 'categories' | 'linkingSynonymRow' | 'illustrationOf'
   >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
-  notifications: Pick<Notifications, 'askPermission' | 'nextMorning' | 'subscribe'>;
-  account: boolean;
-  rarityTest: Pick<RarityTest, 'draw'> | undefined;
+  mix: Pick<Mix, 'setRarityCeiling' | 'setKindWeight'>;
+  xpLog: Pick<XpLog, 'setDailyGoal'>;
+  analytics: Pick<Analytics, 'track'>;
+  backend: Pick<Backend, 'counters'> | undefined;
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
-  /** The Rarity Test's Words, or none while it is off; a draw that fails asks about none. */
-  const drawn = async () => (await rarityTest?.draw().catch(() => [])) ?? [];
   const finished = await userState.read(onboardingFinished);
-  /**
-   * The steps the onboarding has now. The Rarity Test step is left out from
-   * the start when its draw has no Word, and from the moment it would open
-   * when the Mix chosen leaves it none, so the count follows.
-   */
-  let steps: readonly StepKind[] = STEPS.filter(
-    (kind) => (kind !== 'account' || account) && kind !== 'rarityTest',
+  const { questionnaire } = edition;
+  const wordId = wordOfTheDay.chosen()?.wordId;
+  const word = wordId === undefined ? undefined : await entries.get(wordId);
+  const firstWord = word?.kind === 'word' ? await buildWordCard({ word, entries }) : undefined;
+  const steps = STEPS.filter(
+    (kind) =>
+      (kind !== 'firstWord' || firstWord !== undefined) &&
+      ((kind !== 'who' && kind !== 'why') || edition.isFeatureEnabled('questionnaire')) &&
+      (kind !== 'dailyGoal' || edition.isFeatureEnabled('dailyGoal')),
   );
-  if (finished === undefined && (await drawn()).length > 0) {
-    steps = STEPS.filter((kind) => kind !== 'account' || account);
-  }
 
-  async function wordCardOf(wordId: string | undefined): Promise<WordCardModel | undefined> {
-    const word = wordId === undefined ? undefined : await entries.get(wordId);
-    return word?.kind === 'word' ? buildWordCard({ word, entries }) : undefined;
-  }
-
-  async function sampleNotification(): Promise<SampleNotification | undefined> {
-    const morning = await notifications.nextMorning();
-    const wordCard = await wordCardOf(morning?.wordId);
-    return morning === undefined || wordCard === undefined
-      ? undefined
-      : {
-          wordCard,
-          body: morning.body,
-          time: morning.time === undefined ? undefined : formatTimeOfDay(morning.time),
-        };
-  }
-
-  /**
-   * The step at `index` in the order, with what it shows; the Rarity Test step
-   * leaves the steps when it has nothing to show, and the next takes its
-   * place. Nothing past the last step.
-   */
-  async function stepAt(index: number): Promise<OnboardingStep | undefined> {
+  function stepAt(index: number): OnboardingStep | undefined {
     const place = { number: index + 1, total: steps.length };
     const kind = steps[index];
     if (kind === undefined) return undefined;
-    if (kind === 'welcome') {
-      return { kind, ...place, hero: await wordCardOf(wordOfTheDay.chosen()?.wordId) };
+    if (kind === 'welcome') return { kind, ...place };
+    if (kind === 'firstWord' && firstWord !== undefined) return { kind, ...place, word: firstWord };
+    if (kind === 'dailyGoal') {
+      return {
+        kind,
+        ...place,
+        goals: DAILY_GOALS,
+        highlighted: edition.userSettingDefaults.dailyGoal,
+      };
     }
-    if (kind === 'mix' || kind === 'account') return { kind, ...place };
-    if (kind === 'rarityTest') {
-      const words = await drawn();
-      if (words.length > 0) return { kind, ...place, words };
-      steps = steps.filter((each) => each !== 'rarityTest');
-      return stepAt(index);
+    if (kind === 'who' || kind === 'why') {
+      return {
+        kind,
+        ...place,
+        options: questionnaire[kind].map(({ id, label }) => ({ id, label })),
+      };
     }
-    // The step comes without a sample rather than not at all when it can't be read.
-    return { kind: 'notifications', ...place, sample: await sampleNotification().catch(noSample) };
+    return undefined;
   }
+
+  /** Emits an event; a failure is lost, never thrown. */
+  const viewed = (step: OnboardingStep | undefined): void => {
+    if (step === undefined) return;
+    analytics.track('onboardingStepViewed', { step: step.kind }).catch(() => undefined);
+  };
 
   let state: OnboardingState =
     finished === undefined
-      ? { finishedAt: undefined, step: await stepAt(0) }
+      ? { finishedAt: undefined, step: stepAt(0) }
       : { finishedAt: new Date(finished), step: undefined };
+  if (finished === undefined) viewed(state.step);
 
   function change(changed: OnboardingState): void {
     state = changed;
@@ -241,7 +212,7 @@ export async function openOnboarding({
     }
   }
 
-  async function keepFinished(): Promise<void> {
+  async function keepFinished(skipped: boolean): Promise<void> {
     const finishedAt = clock.now();
     // The first week counts from this day (ADR 0054).
     await userState.write(
@@ -251,52 +222,66 @@ export async function openOnboarding({
       ]),
     );
     change({ finishedAt, step: undefined });
+    analytics.track('onboardingFinished', { skipped }).catch(() => undefined);
   }
 
   /** Goes on from the step of `kind` to the next one, or finishes past the last. */
-  async function goOn(kind: StepKind): Promise<void> {
-    const step = await stepAt(steps.indexOf(kind) + 1);
+  async function goOn(kind: OnboardingStepKind): Promise<void> {
+    const step = stepAt(steps.indexOf(kind) + 1);
     if (step === undefined) {
-      await keepFinished();
+      await keepFinished(false);
       return;
     }
     change({ ...state, step });
+    viewed(step);
   }
 
-  /** Counts the samples asked for, so only the latest one reaches the step. */
-  let samplesAsked = 0;
-  notifications.subscribe(() => {
-    if (state.step?.kind !== 'notifications') return;
-    samplesAsked += 1;
-    const asked = samplesAsked;
-    // A sample that can't be read leaves the one before it.
-    sampleNotification().then((sample) => {
-      if (asked !== samplesAsked || state.step?.kind !== 'notifications') return;
-      change({ ...state, step: { ...state.step, sample } });
-    }, noSample);
-  });
+  /** Counts the answer on the backend with no reader id while the reader shares; a failure is lost. */
+  async function count(question: QuestionnaireQuestion, answer: string): Promise<void> {
+    if (backend === undefined || (await userState.read(shareCounters)) === false) return;
+    void backend.counters
+      .questionnaire({ editionId: edition.id, question, answer })
+      .catch(() => undefined);
+  }
+
+  async function apply(question: QuestionnaireQuestion, answerId: string): Promise<boolean> {
+    if (question === 'who') {
+      const option = questionnaire.who.find(({ id }) => id === answerId);
+      if (option === undefined) return false;
+      await mix.setRarityCeiling(option.rarityCeiling);
+      return true;
+    }
+    const option = questionnaire.why.find(({ id }) => id === answerId);
+    if (option === undefined) return false;
+    for (const kind of MIX_KINDS) {
+      const weight = option.kindWeights[kind];
+      if (weight !== undefined) await mix.setKindWeight(kind, weight);
+    }
+    return true;
+  }
 
   return {
     get state() {
       return state;
     },
     next: () => endStep(({ kind }) => goOn(kind)),
-    finish: () => endStep(keepFinished),
-    allowNotifications: () =>
+    answer: (answerId) =>
       endStep(async ({ kind }) => {
-        let failed: { readonly error: unknown } | undefined;
-        try {
-          await notifications.askPermission();
-        } catch (error) {
-          failed = { error };
-        }
+        if (kind !== 'who' && kind !== 'why') return;
+        if (!(await apply(kind, answerId))) return;
+        await count(kind, answerId);
+        analytics
+          .track('questionnaireAnswered', { question: kind, answer: answerId })
+          .catch(() => undefined);
         await goOn(kind);
-        if (failed !== undefined) throw failed.error;
       }),
-    backFromAccount: ({ status }) =>
-      endStep(async () => {
-        if (status === 'signed-in') await keepFinished();
+    chooseDailyGoal: (goal) =>
+      endStep(async ({ kind }) => {
+        if (kind !== 'dailyGoal') return;
+        await xpLog.setDailyGoal(goal);
+        await goOn(kind);
       }),
+    finish: () => endStep(() => keepFinished(true)),
     subscribe: subscribers.subscribe,
   };
 }
