@@ -32,7 +32,11 @@ export function linkTo(entryId: string, source: EntryLinkSource): string {
 }
 
 /** Where the search params of an Entry link say it opened from, or nothing for a link from inside the app. */
-export function linkSourceOf({ from }: { readonly from?: string | undefined }): EntryLinkSource | undefined {
+export function linkSourceOf({
+  from,
+}: {
+  readonly from?: string | undefined;
+}): EntryLinkSource | undefined {
   return SOURCES.find((source) => source === from);
 }
 
@@ -47,12 +51,26 @@ export function parseLink(link: string): ParsedEntryLink | undefined {
   } catch {
     return undefined;
   }
-  const params = new URLSearchParams(search);
   return {
     entryId,
-    source: linkSourceOf({ from: params.get('from') ?? undefined }),
-    key: params.get('key') ?? undefined,
+    source: linkSourceOf({ from: searchParam(search, 'from') }),
+    key: searchParam(search, 'key'),
   };
+}
+
+/** The first value of a search param, decoded as a web address decodes it, or nothing without one. */
+function searchParam(search: string, name: string): string | undefined {
+  for (const pair of search.split('&')) {
+    const [key = '', ...value] = pair.split('=');
+    if (key !== name) continue;
+    const raw = value.join('=').replace(/\+/g, ' ');
+    try {
+      return decodeURIComponent(raw);
+    } catch {
+      return raw;
+    }
+  }
+  return undefined;
 }
 
 /**
@@ -62,7 +80,10 @@ export function parseLink(link: string): ParsedEntryLink | undefined {
  * other is a plain link, so its Entry is not Seen and goes into no History. A
  * notification's link never comes from outside: the app opens it inside.
  */
-export function linkFromOutside(link: ParsedEntryLink, widgetLinkKey: string | undefined): EntryLink {
+export function linkFromOutside(
+  link: ParsedEntryLink,
+  widgetLinkKey: string | undefined,
+): EntryLink {
   const fromWidget =
     link.source === 'widget' && widgetLinkKey !== undefined && link.key === widgetLinkKey;
   return { entryId: link.entryId, source: fromWidget ? 'widget' : undefined };

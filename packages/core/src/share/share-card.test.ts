@@ -138,6 +138,13 @@ async function wordCard(shown: Word): Promise<AnyEntryCard> {
   return { kind: 'word', entryId: shown.id, model };
 }
 
+/** A Word's card as the Word of the Day of a day in October 2026. */
+async function wordOfTheDayCard(shown: Word, day: number): Promise<AnyEntryCard> {
+  const card = await wordCard(shown);
+  if (card.kind !== 'word') throw new Error('a Word builds a Word card');
+  return { ...card, wordOfTheDay: { year: 2026, month: 10, day } };
+}
+
 async function correctionCard(shown: Correction): Promise<AnyEntryCard> {
   const model = await buildCorrectionCard({ correction: shown, entries: entries() });
   return { kind: 'correction', entryId: shown.id, model };
@@ -191,16 +198,14 @@ describe('the Share Card of a Word', () => {
   });
 
   it('says «Слово дня» in place of the Category on today’s Word of the Day', async () => {
-    const card = await wordCard(VEREMIJA);
-    const content = contentOf({ ...card, wordOfTheDay: { year: 2026, month: 10, day: 11 } });
+    const content = contentOf(await wordOfTheDayCard(VEREMIJA, 11));
 
     expect(content.overline).toBe('Слово дня');
     expect(content.label).toMatch(/^Слово дня\. /);
   });
 
   it('says the Category on the Word of the Day of the day before, still in a Feed left open over midnight', async () => {
-    const card = await wordCard(VEREMIJA);
-    const content = contentOf({ ...card, wordOfTheDay: { year: 2026, month: 10, day: 10 } });
+    const content = contentOf(await wordOfTheDayCard(VEREMIJA, 10));
 
     expect(content.overline).toBe('Побут і ремесла');
   });
@@ -532,9 +537,9 @@ describe('the Share Card of progress', () => {
         detail: undefined,
       },
     });
-    expect(buildShareCardContent({ streak: 3, date: '2026-11-01' }, STRINGS, 'uk', clock).label).toBe(
-      '1 листопада. Моя серія в SLOVO. 3 дні поспіль',
-    );
+    expect(
+      buildShareCardContent({ streak: 3, date: '2026-11-01' }, STRINGS, 'uk', clock).label,
+    ).toBe('1 листопада. Моя серія в SLOVO. 3 дні поспіль');
   });
 });
 

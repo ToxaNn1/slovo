@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import type { Word } from '@slovo/contracts';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
+import { EditionProvider, HapticsProvider, type Haptics } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
 import { Linking, Text } from 'react-native';
@@ -30,6 +30,14 @@ let userState: Awaited<ReturnType<typeof seedUserState>>;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
+
+const haptics: Haptics = {
+  selection: jest.fn(),
+  impactLight: jest.fn(),
+  impactMedium: jest.fn(),
+  success: jest.fn(),
+  warning: jest.fn(),
+};
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -111,7 +119,9 @@ async function renderApp() {
           <ShellProvider shell={shell}>
             <EditionProvider edition={edition} strings={editionStrings}>
               <SettingsProvider>
-                <Slot />
+                <HapticsProvider haptics={haptics}>
+                  <Slot />
+                </HapticsProvider>
               </SettingsProvider>
             </EditionProvider>
           </ShellProvider>

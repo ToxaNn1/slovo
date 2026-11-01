@@ -180,7 +180,9 @@ export function buildShareCardContent(
   switch (model.kind) {
     case 'word': {
       const overline =
-        card.kind === 'word' && isTodaysWordOfTheDay(card, clock) ? strings.share.wordOfTheDay : model.categoryName;
+        card.kind === 'word' && isTodaysWordOfTheDay(card, clock)
+          ? strings.share.wordOfTheDay
+          : model.categoryName;
       return {
         shows,
         overline,

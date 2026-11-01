@@ -291,12 +291,7 @@ describe('The falling Stress', () => {
         {inEdition(
           <ShareSheet
             visible
-            content={buildShareCardContent(
-              { card: shared },
-              strings,
-              'en',
-              clock,
-            )}
+            content={buildShareCardContent({ card: shared }, strings, 'en', clock)}
             watermark="SLOVO"
             initialFormat="story"
             onFormatChange={jest.fn()}

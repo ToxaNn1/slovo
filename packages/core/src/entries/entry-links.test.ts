@@ -3,12 +3,15 @@ import { describe, expect, it } from 'vitest';
 import { linkFromOutside, linkTo, parseLink, linkSourceOf } from './entry-links';
 
 describe('the link to an Entry', () => {
-  it.each(['notification', 'widget'] as const)('marks a link from the %s with its source', (source) => {
-    const link = linkTo('w_00g2ap', source);
+  it.each(['notification', 'widget'] as const)(
+    'marks a link from the %s with its source',
+    (source) => {
+      const link = linkTo('w_00g2ap', source);
 
-    expect(link).toBe(`/entry/w_00g2ap?from=${source}`);
-    expect(parseLink(link)).toEqual({ entryId: 'w_00g2ap', source, key: undefined });
-  });
+      expect(link).toBe(`/entry/w_00g2ap?from=${source}`);
+      expect(parseLink(link)).toEqual({ entryId: 'w_00g2ap', source, key: undefined });
+    },
+  );
 
   it('reads a link without a known mark as a plain link from inside the app', () => {
     expect(parseLink('/entry/w_00g2ap')).toEqual({

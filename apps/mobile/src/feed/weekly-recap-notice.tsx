@@ -43,7 +43,12 @@ export function WeeklyRecapNotice({ day }: { day: LocalDate }) {
       {recap !== undefined && share !== undefined && (
         <ShareSheet
           visible={open}
-          content={buildShareCardContent({ recap, hideStreak }, editionStrings, edition.locale, deviceClock)}
+          content={buildShareCardContent(
+            { recap, hideStreak },
+            editionStrings,
+            edition.locale,
+            deviceClock,
+          )}
           watermark={edition.displayName}
           initialFormat={sessionShareFormat.format}
           onFormatChange={(format) => {
