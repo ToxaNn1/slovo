@@ -18,7 +18,8 @@ import { resolveReport } from '../reports/report-resolve';
 /** The cookie that carries the owner's Session token, on the admin's paths alone. */
 const COOKIE = 'slovo_admin';
 
-const FEATURES = FeatureSwitchesSchema.keyof().options;
+const FeatureSchema = FeatureSwitchesSchema.keyof();
+const FEATURES = FeatureSchema.options;
 
 const POSTHOG_URL = 'https://eu.posthog.com';
 
@@ -149,7 +150,8 @@ export function adminRoutes({
       return refused(c, 400, 'A remote switch only turns a feature off or clears that.');
     }
     const shipped = editions.find(editionId ?? '')?.config.featureSwitches;
-    if (action === 'clear' && shipped?.[feature as keyof typeof shipped] === false) {
+    const known = FeatureSchema.safeParse(feature);
+    if (action === 'clear' && known.success && shipped?.[known.data] === false) {
       return refused(c, 400, 'The Edition has the feature off; a remote switch never turns it on.');
     }
     const set =
