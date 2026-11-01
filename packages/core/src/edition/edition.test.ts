@@ -85,6 +85,7 @@ const validConfig = {
     widgetGoalRing: true,
     lockScreenWidget: true,
     questionnaire: true,
+    badges: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -144,6 +145,14 @@ const validConfig = {
     ],
     why: [{ id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } }],
   },
+  badges: [
+    { id: 'week', name: 'Week', condition: { kind: 'streak', days: 7 } },
+    {
+      id: 'sharp-stress',
+      name: 'Sharp stress',
+      condition: { kind: 'rightAnswers', modes: ['stress'], count: 100 },
+    },
+  ],
 };
 
 /** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
@@ -448,6 +457,40 @@ describe('loadEdition', () => {
   it('refuses an Edition without the levels Feature Switch', () => {
     const { levels, ...switches } = validConfig.featureSwitches;
     expect(levels).toBe(true);
+    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
+      InvalidEditionConfigError,
+    );
+  });
+
+  it('reports the Badges the Edition chooses, their names and conditions, in order (ADR 0066)', () => {
+    expect(loadEdition(validConfig).badges).toEqual([
+      { id: 'week', name: 'Week', condition: { kind: 'streak', days: 7 } },
+      {
+        id: 'sharp-stress',
+        name: 'Sharp stress',
+        condition: { kind: 'rightAnswers', modes: ['stress'], count: 100 },
+      },
+    ]);
+  });
+
+  it('refuses an Edition without Badges, with a Badge id twice, an unknown condition or a threshold of 0', () => {
+    const { badges, ...withoutBadges } = validConfig;
+    const [week, sharpStress] = badges;
+    expect(() => loadEdition(withoutBadges)).toThrow(InvalidEditionConfigError);
+    expect(() =>
+      loadEdition({ ...validConfig, badges: [week, { ...sharpStress, id: 'week' }] }),
+    ).toThrow(InvalidEditionConfigError);
+    expect(() =>
+      loadEdition({ ...validConfig, badges: [{ ...week, condition: { kind: 'shares', count: 3 } }] }),
+    ).toThrow(InvalidEditionConfigError);
+    expect(() =>
+      loadEdition({ ...validConfig, badges: [{ ...week, condition: { kind: 'streak', days: 0 } }] }),
+    ).toThrow(InvalidEditionConfigError);
+  });
+
+  it('refuses an Edition without the badges Feature Switch', () => {
+    const { badges, ...switches } = validConfig.featureSwitches;
+    expect(badges).toBe(true);
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
