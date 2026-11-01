@@ -10,13 +10,8 @@ import {
   WidgetSnapshotSchema,
   type WidgetSnapshot,
 } from '@slovo/contracts';
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Clock,
-  type Random,
-} from '@slovo/core';
+import { openComposition, type Clock, type Random } from '@slovo/core';
+import { seedUserState } from '@slovo/core/testing';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainian, ukrainianFolder } from './test-support';
@@ -85,7 +80,7 @@ describe('The Widget Snapshot of the UA Edition', () => {
     const app = await openComposition({
       content: pack,
       edition: ukrainian,
-      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      userState: await seedUserState(),
       clock,
       random: seededRandom(7),
     });
@@ -123,7 +118,7 @@ describe('The Widget Snapshot of the UA Edition', () => {
     const app = await openComposition({
       content: pack,
       edition: ukrainian,
-      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      userState: await seedUserState(),
       clock: fakeClock('2026-10-16T09:00:00+03:00').clock,
       random: seededRandom(7),
     });
@@ -155,7 +150,7 @@ describe('The Widget Snapshot of the UA Edition', () => {
     const app = await openComposition({
       content: pack,
       edition: ukrainian,
-      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      userState: await seedUserState(),
       clock,
       random: seededRandom(7),
     });
@@ -187,7 +182,7 @@ describe('The Widget Snapshot of the UA Edition', () => {
     const app = await openComposition({
       content: pack,
       edition: ukrainian,
-      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      userState: await seedUserState(),
       clock: fakeClock('2026-10-16T09:00:00+03:00').clock,
       random: seededRandom(7),
     });

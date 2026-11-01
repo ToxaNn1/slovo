@@ -4,14 +4,8 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import {
-  createEntries,
-  type Idiom,
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Entries,
-} from '@slovo/core';
+import { createEntries, type Idiom, openComposition, type Entries } from '@slovo/core';
+import { seedUserState } from '@slovo/core/testing';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainian, ukrainianFolder } from './test-support';
@@ -139,7 +133,7 @@ describe('the Known Idioms of the Ukrainian Language Pack', () => {
     const app = await openComposition({
       content: pack,
       edition: ukrainian,
-      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      userState: await seedUserState(),
       clock: { now: () => new Date('2026-10-23T09:00:00+03:00'), timeZone: () => 'Europe/Kyiv' },
       random: { next: () => 0.25 },
     });
