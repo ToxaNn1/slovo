@@ -476,6 +476,17 @@ const WidgetPaletteSchema = z.strictObject({
 /** The id of an Edition, e.g. `uk`. */
 export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lowercase id');
 
+/**
+ * The steps of the onboarding, in order (ADR 0067): the one place that has
+ * them, so a step that joins changes the count everywhere. The first Word
+ * comes only with a Word of the Day, the two questions only with the
+ * `questionnaire` Feature Switch, the Daily Goal only with `dailyGoal`.
+ */
+export const ONBOARDING_STEPS = ['welcome', 'firstWord', 'who', 'why', 'dailyGoal'] as const;
+
+/** A step of the onboarding. */
+export type OnboardingStepKind = (typeof ONBOARDING_STEPS)[number];
+
 /** The questions the onboarding asks (ADR 0067): «Хто ви» and «Навіщо». */
 export const QuestionnaireQuestionSchema = z.enum(['who', 'why']);
 

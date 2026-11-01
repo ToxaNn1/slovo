@@ -1,4 +1,9 @@
-import type { DailyGoal, QuestionnaireQuestion } from '@slovo/contracts';
+import {
+  ONBOARDING_STEPS as STEPS,
+  type DailyGoal,
+  type OnboardingStepKind,
+  type QuestionnaireQuestion,
+} from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
@@ -13,16 +18,6 @@ import type { Backend, Clock } from '../ports';
 import type { XpLog } from '../progress/xp-log';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
-
-/**
- * The steps of the onboarding, in order (ADR 0067): the one place that has
- * them, so a step that joins changes the count everywhere. The first Word
- * comes only with a Word of the Day, the two questions only with the
- * `questionnaire` Feature Switch, the Daily Goal only with `dailyGoal`.
- */
-const STEPS = ['welcome', 'firstWord', 'who', 'why', 'dailyGoal'] as const;
-
-export type OnboardingStepKind = (typeof STEPS)[number];
 
 /** The Daily Goals the reader picks from. */
 const DAILY_GOALS: readonly DailyGoal[] = [10, 20, 30, 50];

@@ -1,7 +1,11 @@
-import type { EntryKind, QuestionnaireQuestion, Rarity } from '@slovo/contracts';
+import type {
+  EntryKind,
+  OnboardingStepKind,
+  QuestionnaireQuestion,
+  Rarity,
+} from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
-import type { OnboardingStepKind } from '../onboarding/onboarding';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 

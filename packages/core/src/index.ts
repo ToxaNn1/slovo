@@ -156,11 +156,7 @@ export {
   type MixKindWeights,
   type MixState,
 } from './entries/mix';
-export {
-  type OnboardingStep,
-  type OnboardingStepKind,
-  type QuestionnaireOption,
-} from './onboarding/onboarding';
+export { type OnboardingStep, type QuestionnaireOption } from './onboarding/onboarding';
 export { type RarityTestAnswer, type RarityTestWord } from './mix/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
