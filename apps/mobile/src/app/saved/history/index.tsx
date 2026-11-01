@@ -1,3 +1,4 @@
+import { MascotIn } from '@/mascot/mascot';
 import { HISTORY_CAP } from '@slovo/core';
 import {
   BackLink,
@@ -92,6 +93,7 @@ export default function HistoryScreen() {
         }
         ListEmptyComponent={
           <EmptyState
+            mascot={<MascotIn state="empty" />}
             testID="history-empty"
             title={strings.empty.title}
             message={strings.empty.message}

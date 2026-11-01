@@ -1,3 +1,4 @@
+import { MascotIn } from '@/mascot/mascot';
 import {
   BackLink,
   CollectionMenuSheet,
@@ -165,6 +166,7 @@ function Collections() {
         ListEmptyComponent={
           editing?.kind !== 'new' ? (
             <EmptyState
+              mascot={<MascotIn state="empty" />}
               testID="collections-empty"
               title={strings.empty.title}
               message={strings.empty.message}

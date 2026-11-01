@@ -1,5 +1,6 @@
 // Before anything that counts in the Edition's language.
 import '@/shell/intl-polyfill';
+import { MascotCelebrations } from '@/mascot/mascot';
 
 import { createHaptics } from '@slovo/core';
 import {
@@ -198,6 +199,7 @@ function ThemedTabs() {
                     }}
                   />
                   {/* Over the tabs until the reader finishes or skips it. */}
+                  <MascotCelebrations />
                   <Onboarding />
                 </DecorInEffect>
               </Opened>

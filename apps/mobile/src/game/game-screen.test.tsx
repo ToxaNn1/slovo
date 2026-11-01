@@ -1327,4 +1327,43 @@ describe('the Game screen', () => {
       expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
     });
   });
+
+  describe('the Mascot (#1386)', () => {
+    const { mascot } = edition;
+
+    it('reacts to a right and a wrong answer and to the Game’s end with the Edition’s lines', async () => {
+      await open({ corrections: 15 });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-survival'));
+      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
+
+      await answerSurvivalRound(true);
+      expect(screen.getByTestId('mascot-gameRight')).toHaveTextContent(mascot.gameRight);
+      await fireEvent.press(screen.getByTestId('game-next'));
+      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
+
+      for (let mistake = 1; mistake <= 3; mistake += 1) {
+        await waitFor(() => {
+          expect(screen.getByTestId('game-prompt')).toBeTruthy();
+        });
+        await answerSurvivalRound(false);
+        expect(screen.getByTestId('mascot-gameWrong')).toHaveTextContent(mascot.gameWrong);
+        await fireEvent.press(screen.getByTestId('game-next'));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId('mascot-gameEnd')).toHaveTextContent(mascot.gameEnd);
+      });
+    });
+
+    it('stays out of the Game with its Feature Switch off, as in 0.9', async () => {
+      await open({ corrections: 15, switchedOff: ['mascot'] });
+      await renderScreen();
+      await fireEvent.press(screen.getByTestId('game-mode-survival'));
+
+      await answerSurvivalRound(true);
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
+    });
+  });
 });

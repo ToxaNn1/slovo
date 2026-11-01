@@ -1,3 +1,4 @@
+import { MascotIn } from '@/mascot/mascot';
 import { dateKeyOf, type WordOfTheDayArchiveDay } from '@slovo/core';
 import { BackLink, EmptyState, EntryRow, ScreenTitle, space, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
@@ -60,6 +61,7 @@ export default function WordOfTheDayArchiveScreen() {
         ListEmptyComponent={
           days === undefined ? null : (
             <EmptyState
+              mascot={<MascotIn state="empty" />}
               testID="words-of-the-day-empty"
               title={strings.empty.title}
               message={strings.empty.message}

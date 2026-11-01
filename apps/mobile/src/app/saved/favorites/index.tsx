@@ -1,3 +1,4 @@
+import { MascotIn } from '@/mascot/mascot';
 import { withoutStress, type Favorite } from '@slovo/core';
 import {
   BackLink,
@@ -109,6 +110,7 @@ export default function FavoritesScreen() {
         }
         ListEmptyComponent={
           <EmptyState
+            mascot={<MascotIn state="empty" />}
             testID="favorites-empty"
             title={strings.empty.title}
             message={strings.empty.message}

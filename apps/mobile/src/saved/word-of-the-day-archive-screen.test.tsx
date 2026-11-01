@@ -16,7 +16,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import WordOfTheDayArchiveScreen from '../app/saved/words-of-the-day/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
 
@@ -102,7 +102,9 @@ async function settle() {
 async function renderArchive() {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+      <ShellProvider
+        shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}
+      >
         <EditionProvider edition={edition} strings={editionStrings}>
           <WordOfTheDayArchiveScreen />
         </EditionProvider>
@@ -151,8 +153,9 @@ describe('the Word of the Day archive screen «Слова дня»', () => {
     await renderArchive();
 
     expect(screen.getByTestId('words-of-the-day-empty')).toHaveTextContent(
-      `${strings.empty.title}${strings.empty.message}`,
+      `${strings.empty.title}${strings.empty.message}${edition.mascot.empty}`,
     );
+    expect(screen.getByTestId('mascot-empty')).toBeOnTheScreen();
     expect(screen.queryAllByTestId(/^words-of-the-day-row-/)).toEqual([]);
   });
 });

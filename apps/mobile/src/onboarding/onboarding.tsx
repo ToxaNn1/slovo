@@ -18,6 +18,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { MascotIn } from '../mascot/mascot';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
@@ -93,6 +94,7 @@ export function Onboarding() {
     // Modal, so VoiceOver stays out of the Feed and the tabs behind it.
     <View style={StyleSheet.absoluteFill} accessibilityViewIsModal>
       {shown}
+      <MascotIn state="onboarding" />
     </View>
   );
 }
