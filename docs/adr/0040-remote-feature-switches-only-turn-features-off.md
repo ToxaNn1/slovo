@@ -2,7 +2,7 @@
 
 A Feature Switch lives in an Edition's `edition.json` (ADR 0030), so turning a broken feature off once took a new build and an App Store review. For that emergency the backend keeps remote switches (spec #378): the owner turns a feature off in one Edition with one local command, and the apps and the backend stop offering it without a build.
 
-**A remote switch only turns a feature off.** The effective value of a Feature Switch is the Edition's value and not off remotely, so the backend can never switch on what an Edition hasn't shipped. Every reader of a Feature Switch, in the app and on the backend, reads the effective value.
+**A remote switch only turns a feature off.** The effective value of a Feature Switch is the Edition's value and not off remotely, so the backend can never switch on what an Edition hasn't shipped. Every reader of a Feature Switch, in the app and on the backend, reads the effective value. A feature whose switch depends on another's (a Game Mode on `game`, the Badges on `xpLog`) is in effect only while every switch it depends on is; the Core's Edition module holds the one list of these dependencies and `isFeatureEnabled` applies it, so no shell or route joins two switches.
 
 ## The backend
 

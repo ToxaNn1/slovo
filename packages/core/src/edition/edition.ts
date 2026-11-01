@@ -84,12 +84,15 @@ export interface Edition {
    * Word naming any other file shows no Illustration (ADR 0055).
    */
   readonly illustrations: ReadonlySet<string>;
-  /** Whether the Edition turns the given Core feature on. */
+  /**
+   * Whether the given Core feature is in effect: its Feature Switch on, not
+   * off remotely (ADR 0040), and every switch it depends on in effect.
+   */
   isFeatureEnabled(feature: FeatureSwitch): boolean;
 }
 
 /** The Feature Switches of the Game Modes and the Daily Crossword, each off while `game` is (ADR 0052). */
-const GAME_PART_SWITCHES: ReadonlySet<FeatureSwitch> = new Set([
+const GAME_PART_SWITCHES = [
   'gameGuessWord',
   'gameCorrection',
   'gameStress',
@@ -104,15 +107,37 @@ const GAME_PART_SWITCHES: ReadonlySet<FeatureSwitch> = new Set([
   'gameByLetters',
   'gameOrigin',
   'dailyCrossword',
-]);
+] as const satisfies readonly FeatureSwitch[];
 
 /**
- * Whether a feature is on, from whether each switch is on by itself: a Game
- * Mode or the Daily Crossword only while `game` is on too (ADR 0052).
+ * What each Feature Switch depends on: a feature is in effect only while
+ * every switch it names here is in effect too (ADR 0040). A feature not
+ * listed depends on nothing. Every rule between two switches lives here, so
+ * the shell and the Core ask one question of the Edition.
+ */
+const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
+  ...Object.fromEntries(GAME_PART_SWITCHES.map((feature) => [feature, ['game']])),
+  // The 1.0 progress features all stand on the XP log (ADR 0066).
+  streakBreak: ['xpLog'],
+  badges: ['xpLog'],
+  profile: ['xpLog'],
+  dailyGoal: ['xpLog'],
+  progressShareCards: ['shareCards', 'xpLog'],
+  dailyCrosswordShare: ['shareCards', 'dailyCrossword'],
+  quickQuestion: ['game'],
+  // The Rarity Test sets the Rarity Floor.
+  rarityTest: ['rarityFloor'],
+};
+
+/**
+ * Whether a feature is in effect, from whether each switch is on by itself:
+ * its own switch on and every switch it depends on in effect, such as a Game
+ * Mode only while `game` is on too (ADR 0052).
  */
 export function switchedOn(isOn: (feature: FeatureSwitch) => boolean) {
-  return (feature: FeatureSwitch) =>
-    isOn(feature) && (!GAME_PART_SWITCHES.has(feature) || isOn('game'));
+  const inEffect = (feature: FeatureSwitch): boolean =>
+    isOn(feature) && (DEPENDS_ON[feature] ?? []).every(inEffect);
+  return inEffect;
 }
 
 /** Thrown when an Edition config doesn't match the contracts. */

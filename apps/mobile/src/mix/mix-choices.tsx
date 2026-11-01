@@ -45,8 +45,7 @@ export function MixChoices() {
     setQuickQuestionEvery,
   } = useMixChanges();
   const edition = useEditionInEffect();
-  const quickQuestion =
-    edition.isFeatureEnabled('game') && edition.isFeatureEnabled('quickQuestion');
+  const quickQuestion = edition.isFeatureEnabled('quickQuestion');
 
   const model = mixScreenModel({ edition, mix: state });
 

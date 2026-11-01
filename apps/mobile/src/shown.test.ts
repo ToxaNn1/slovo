@@ -3,7 +3,11 @@ import { describe, expect, it } from 'vitest';
 
 import { shownOf, type Shown } from './shown';
 
-/** An Edition with the given Feature Switches off and every other on. */
+/**
+ * An Edition with the given Feature Switches off and every other on. Each
+ * case turns off a feature's own switch: what a feature's switch depends on
+ * is the Edition's rule in the Core, tested there.
+ */
 function editionWithout(...off: FeatureSwitch[]) {
   return { isFeatureEnabled: (feature: FeatureSwitch) => !off.includes(feature) };
 }
@@ -61,11 +65,7 @@ describe('what the reader is shown', () => {
       'no Game tab with the Game off',
       {
         off: ['game'],
-        shown: {
-          tabs: ['home', 'settings', 'saved'],
-          quickQuestion: false,
-          dailyCrosswordShare: false,
-        },
+        shown: { tabs: ['home', 'settings', 'saved'] },
       },
     ],
     [
@@ -104,13 +104,6 @@ describe('what the reader is shown', () => {
       { off: ['rarityTest'], shown: { rarityTest: false } },
     ],
     [
-      'no «Пройти тест ще раз» with the Rarity Floor it sets off',
-      {
-        off: ['rarityFloor'],
-        shown: { rarityTest: false, questionnaire: { whoWhy: true, selfRating: false } },
-      },
-    ],
-    [
       'the self-rating alone in «Пройти опитування ще раз» with the questionnaire off',
       { off: ['questionnaire'], shown: { questionnaire: { whoWhy: false, selfRating: true } } },
     ],
@@ -118,7 +111,7 @@ describe('what the reader is shown', () => {
       'no «Пройти опитування ще раз» with the questionnaire and the Rarity Floor off',
       {
         off: ['questionnaire', 'rarityFloor'],
-        shown: { rarityTest: false, questionnaire: undefined },
+        shown: { questionnaire: undefined },
       },
     ],
     [
@@ -132,8 +125,6 @@ describe('what the reader is shown', () => {
             knowledge: true,
             mistakeReport: true,
           },
-          progressShareCards: false,
-          dailyCrosswordShare: false,
         },
       },
     ],
@@ -217,19 +208,8 @@ describe('what the reader is shown', () => {
       },
     ],
     [
-      'no XP bar, no celebrations and no Break with the XP log off',
-      {
-        off: ['xpLog'],
-        shown: {
-          xpBar: false,
-          celebrations: false,
-          streakBreak: false,
-          dailyGoal: false,
-          badges: false,
-          progressShareCards: false,
-          profile: false,
-        },
-      },
+      'no XP bar and no celebrations with the XP log off',
+      { off: ['xpLog'], shown: { xpBar: false, celebrations: false } },
     ],
     ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
     ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
@@ -241,10 +221,6 @@ describe('what the reader is shown', () => {
     [
       'no Daily Crossword Share Card with its switch off',
       { off: ['dailyCrosswordShare'], shown: { dailyCrosswordShare: false } },
-    ],
-    [
-      'no Daily Crossword Share Card with the Daily Crossword off',
-      { off: ['dailyCrossword'], shown: { dailyCrosswordShare: false } },
     ],
     [
       'no Quick Question with its switch off',

@@ -2,6 +2,7 @@ import { fill, type EditionStrings } from '@slovo/contracts';
 import {
   categoriesInMix,
   featureOfKind,
+  kindsShown,
   type CategoryKind,
   type Edition,
   type AnyEntryCard,
@@ -104,7 +105,7 @@ export function hideChoice({
     return category === undefined ? [entry] : [entry, category];
   }
   const entryKind = card.kind;
-  if (!edition.isFeatureEnabled(featureOfKind(entryKind)) || !mix.kinds[entryKind]) {
+  if (!kindsShown({ edition, mix }).includes(entryKind)) {
     return [entry];
   }
   const target = { kind: 'whole-kind', entryKind } as const;

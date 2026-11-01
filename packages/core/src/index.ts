@@ -159,6 +159,7 @@ export {
 } from './entries/entry-kinds';
 export {
   categoriesInMix,
+  kindsShown,
   type CategoriesInMix,
   type MixKindWeights,
   type MixState,
