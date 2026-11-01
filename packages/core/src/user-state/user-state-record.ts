@@ -1,10 +1,9 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 
 import type { UserStateChanges } from '../ports';
 
 /**
- * How a record syncs (ADR 0013, 0041); `user-state-schema.ts` marks each
- * record. A record without a mark syncs by last write wins, one record at a
+ * How a record syncs (ADR 0013, 0041); each record's declaration marks it. A record without a mark syncs by last write wins, one record at a
  * time.
  * - `device-only`: stays on this device (the notification times, say).
  * - `union`: the records of every device are all kept (Active Days, so the
@@ -13,6 +12,9 @@ import type { UserStateChanges } from '../ports';
  *   result, so a lower result on one device never replaces a higher one).
  */
 export type SyncMark = 'device-only' | 'union' | 'highest';
+
+/** An instant, kept as an ISO 8601 date and time in UTC. */
+export const InstantSchema = z.iso.datetime();
 
 /** The options of a declared record. */
 interface RecordOptions {

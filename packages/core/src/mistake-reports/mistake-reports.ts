@@ -6,7 +6,8 @@ import { answerOf } from '../backend';
 import type { Backend, Clock, Random, RequestFailure, Schedule } from '../ports';
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
-import { MISTAKE_REPORT_QUEUE_SIZE, userStateRecords } from '../user-state/user-state-schema';
+import { MISTAKE_REPORT_QUEUE_SIZE } from './records';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 /** What the reader wrote in the sheet of «Повідомити про помилку». */
 export interface MistakeReportDraft {
