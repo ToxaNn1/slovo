@@ -55,5 +55,13 @@
       "name": "Для листів",
       "entryIds": ["c_gxgxon", "w_0pdu2p"]
     }
-  ]
+  ],
+  "goalRing": {
+    "on": "2026-10-16",
+    "xp": 12,
+    "goal": 20,
+    "met": false,
+    "streak": 5
+  },
+  "lockScreenWidget": true
 }

@@ -198,6 +198,8 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
       SLOVOAppGroup: edition.appGroup,
       SLOVOURLScheme: edition.scheme,
       SLOVOEditionId: config.id,
+      // The widget extension offers the lock-screen families only while the Edition turns them on.
+      SLOVOLockScreenWidget: config.featureSwitches.lockScreenWidget,
       ...(word === undefined ? {} : { SLOVOWordFont: word }),
       ...(ui === undefined ? {} : { SLOVOUIFont: ui }),
     }),

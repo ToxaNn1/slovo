@@ -365,7 +365,7 @@ What a home-screen widget shows, chosen per widget: Улюблене (the Favori
 _Avoid_: Game Mode, filter
 
 **Widget Snapshot**:
-Everything each Widget Mode may show, decided by the Core and ready to draw, which the app writes into the App Group for the widget to read. It also says whether today's Word of the Day was Seen (`wordOfTheDaySeenOn`). The widget reads nothing else.
+Everything each Widget Mode may show, decided by the Core and ready to draw, which the app writes into the App Group for the widget to read. It also says whether today's Word of the Day was Seen (`wordOfTheDaySeenOn`). It may carry the goal ring, today's Daily Goal progress and the Streak (`goalRing`), and whether the lock-screen widget is on (`lockScreenWidget`). The widget reads nothing else.
 _Avoid_: Widget cache, widget database
 
 **Spotlight Snapshot**:

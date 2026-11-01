@@ -12,6 +12,9 @@ struct EntryMoment: TimelineEntry {
   let linkKey: String?
   /// Whether the Word of the Day was Seen on this moment's local date: the ✓.
   let wordOfTheDaySeen: Bool
+  /// The goal ring of the moment's day: an empty one, without the Streak, once its day is over.
+  let goalRing: GoalRing?
+  let lockScreenWidget: Bool
   /// The widget's «Тло».
   let background: BackgroundChoice
 }
@@ -68,7 +71,11 @@ struct EntryTimeline: AppIntentTimelineProvider {
     EntryMoment(
       date: date, overline: content.overline, entry: entry, emptyState: content.emptyState,
       linkKey: content.linkKey, wordOfTheDaySeen: content.wordOfTheDaySeenOn == localDate(date),
-      background: background)
+      goalRing: content.goalRing.map { ring in
+        ring.on == localDate(date)
+          ? ring : GoalRing(on: localDate(date), xp: 0, goal: ring.goal, met: false, streak: nil)
+      },
+      lockScreenWidget: content.lockScreenWidget, background: background)
   }
 
   /// The local date of `date` as the Widget Snapshot writes it: `yyyy-MM-dd`.

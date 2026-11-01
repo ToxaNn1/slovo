@@ -82,6 +82,8 @@ const validConfig = {
     noCounters: true,
     dailyGoal: true,
     enoughForToday: true,
+    widgetGoalRing: true,
+    lockScreenWidget: true,
   },
   userSettingDefaults: {
     theme: 'system',
