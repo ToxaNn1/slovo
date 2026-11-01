@@ -6,9 +6,12 @@ import type {
 } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
-import type { ShareCardKind } from '../share/share-card';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
+
+/** Which Share Card the reader shared, as its Analytics event says (ADR 0068). */
+export type ShareCardKind =
+  'entry' | 'weeklyRecap' | 'level' | 'badge' | 'streak' | 'dailyCrossword';
 
 /** What an event about one Entry tells of it: its kind, its rarity and its Category, where it has them. */
 export interface EntryEventProperties {

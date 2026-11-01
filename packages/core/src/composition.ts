@@ -70,7 +70,7 @@ import { createSpotlight, type Spotlight } from './spotlight/spotlight';
 import { createSubject, type Subject } from './subject';
 import { createAnalytics, type AnalyticsPort } from './analytics/analytics';
 import { openProgressShareCards, type ProgressShareCards } from './share/progress-share-cards';
-import type { ShareCardKind } from './share/share-card';
+import type { ShareCardKind } from './analytics/analytics';
 import { createWidget, type Widget } from './widget/widget';
 import { openWordOfTheDay } from './feed/word-of-the-day';
 
