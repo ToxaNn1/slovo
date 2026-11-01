@@ -6,13 +6,15 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import type { FeedNotices } from './feed-notices';
 
+const { levelMilestonesClosed, noCounters } = userStateRecords;
+
 /**
- * The level-milestone Feed Notices (ADR 0066): on the local day the reader
- * reaches Level 5, 10 or 20, a Feed Notice that suggests a wider rarity or a
- * new Category and forces neither. The day comes from the XP log, so each
- * milestone has one day and comes on no other; swiping past it closes it for
- * that day. None while the Level is off or the reader hides the counters
- * («Без лічильників»).
+ * The level-milestone Feed Notices (ADR 0066): once the reader reaches Level
+ * 5, 10 or 20, a Feed Notice that suggests a wider rarity or a new Category
+ * and forces neither. The day comes from the XP log; the Notice comes from
+ * that day on, highest Level first, until the reader swipes past it, which
+ * closes it for good on this device, so each milestone comes once. None while
+ * the Level is off or the reader hides the counters («Без лічильників»).
  */
 export function createLevelMilestones({
   edition,
@@ -26,15 +28,15 @@ export function createLevelMilestones({
   return {
     async forDay(day) {
       if (xpLog.state.level === undefined) return [];
-      if (
-        edition.isFeatureEnabled('noCounters') &&
-        (await userState.read(userStateRecords.noCounters)) === true
-      )
+      if (edition.isFeatureEnabled('noCounters') && (await userState.read(noCounters)) === true)
         return [];
       const date = dateKeyOf(day);
-      const level = LEVEL_MILESTONES.find(
-        (milestone) => xpLog.reachedOn(totalFor(edition.levels, milestone)) === date,
-      );
+      const closed = (await userState.read(levelMilestonesClosed)) ?? [];
+      const level = LEVEL_MILESTONES.find((milestone) => {
+        if (closed.includes(milestone)) return false;
+        const reached = xpLog.reachedOn(totalFor(edition.levels, milestone));
+        return reached !== undefined && reached <= date;
+      });
       return level === undefined
         ? []
         : [{ notice: 'levelMilestone', level, name: nameOf(edition.levels, level) }];

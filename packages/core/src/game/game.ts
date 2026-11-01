@@ -1,5 +1,6 @@
 import type { EntryKind } from '@slovo/contracts';
 
+import type { Analytics } from '../analytics/analytics';
 import type { Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { GameXp, XpAward } from './game-xp';
@@ -214,6 +215,7 @@ export async function openGame({
   eligibility,
   dayTurned,
   returned,
+  analytics,
 }: {
   edition: GameEdition;
   entries: Pick<Entries, 'eligibleOfKind'>;
@@ -235,6 +237,8 @@ export async function openGame({
   eligibility: Pick<Subject<void>, 'subscribe'>;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
   returned: Pick<Subject<void>, 'subscribe'>;
+  /** Where a Game started and finished go (ADR 0068). */
+  analytics?: Pick<Analytics, 'track'>;
 }): Promise<Game> {
   const ids = new Set<string>();
   for (const { id } of registered) {
@@ -264,6 +268,8 @@ export async function openGame({
     (await userState.read(widgetHintShown)) === undefined;
   /** The Game in play, or just over; none on the mode screen. */
   let played: GameInPlay | undefined;
+  /** When the Game in play started, by the clock. */
+  let startedAt = clock.now();
   /** Cancels the end of the timed Game in play, scheduled while its clock runs. */
   let cancelTimeUp: (() => void) | undefined;
 
@@ -362,6 +368,9 @@ export async function openGame({
         ? { ...played.first, timeLimit: mode.timeLimit, time: runTime(mode.timeLimit) }
         : played?.first;
     change({ ...state, modes: modesNow, current: first, widgetHint: false });
+    if (first === undefined) return;
+    startedAt = clock.now();
+    void analytics?.track('gameStarted', { mode: modeId }).catch(() => undefined);
   }
 
   /** Cancels the scheduled end of the timed Game in play, if any. */
@@ -463,6 +472,15 @@ export async function openGame({
       ],
       beaten ? gameBest.record(over.modeId).change(result) : new Map(),
     );
+    void analytics
+      ?.track('gameFinished', {
+        mode: over.modeId,
+        durationSeconds: Math.round((clock.now().getTime() - startedAt.getTime()) / 1000),
+        right,
+        played: over.played.length,
+        status: over.status === 'lost' ? 'lost' : 'won',
+      })
+      .catch(() => undefined);
     const mode = beaten ? modes.find(({ id }) => id === over.modeId) : undefined;
     change({
       ...state,

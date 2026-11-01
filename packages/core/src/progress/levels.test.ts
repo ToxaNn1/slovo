@@ -44,6 +44,15 @@ const xp = (date: string, amount: number): XpRecord => ({
   amount,
 });
 
+/** One Review XP record of `amount` on the local day `date`, at 08:30 in Kyiv. */
+const review = (date: string, amount: number): XpRecord => ({
+  kind: 'xp',
+  date,
+  at: new Date(`${date}T08:30:00+03:00`).toISOString(),
+  source: 'review-answer',
+  amount,
+});
+
 /** The records of a reader whose XP log holds `xps`. */
 async function readerWith(...xps: readonly XpRecord[]): Promise<Map<string, string>> {
   const records = new Map<string, string>();
@@ -109,6 +118,16 @@ async function milestonesIn(app: Composition): Promise<readonly FeedCard[]> {
   return app.feed.cards.filter(
     (card) => card.kind === 'notice' && card.notice === 'levelMilestone',
   );
+}
+
+/** Swipes from the level-milestone Feed Notice to the card after it, which closes it. */
+async function swipePastMilestone(app: Composition): Promise<void> {
+  const index = app.feed.cards.findIndex(
+    (card) => card.kind === 'notice' && card.notice === 'levelMilestone',
+  );
+  if (index < 0) throw new Error('No level-milestone Feed Notice among the cards');
+  await app.feed.show(index);
+  await app.feed.show(index + 1);
 }
 
 const rightOption = (round: Round) =>
@@ -178,6 +197,18 @@ describe('the Level curve', () => {
     expect(written.some((key) => /level/i.test(key))).toBe(false);
   });
 
+  it('counts Review XP up to the daily cap toward the day a Level is reached', async () => {
+    // 295 Game XP and 15 Review XP on one day, of which the cap counts 10: level 5 (306 XP) waits.
+    const dayOne = [xp('2026-10-13', 295), review('2026-10-13', 10), review('2026-10-13', 5)];
+    const { app } = await run({ records: await readerWith(...dayOne), on: '2026-10-13' });
+    expect(app.xpLog.state.level?.level).toBe(4);
+    expect(app.xpLog.reachedOn(306)).toBeUndefined();
+    expect(await milestonesIn(app)).toEqual([]);
+
+    const records = await readerWith(...dayOne, xp('2026-10-14', 6));
+    expect((await run({ records })).app.xpLog.reachedOn(306)).toBe('2026-10-14');
+  });
+
   it('has no Level while the levels Feature Switch is off, or the XP log is', async () => {
     const records = await readerWith(xp('2026-10-01', 400));
     expect((await run({ records, off: ['levels'] })).app.xpLog.state.level).toBeUndefined();
@@ -201,11 +232,17 @@ describe('the level-milestone Feed Notices', () => {
     ]);
   });
 
-  it('shows each milestone once: not on a later day, nor below its level', async () => {
-    const records = await readerWith(xp('2026-10-13', 300), xp('2026-10-14', 6));
+  it('shows each milestone once: from the day it is reached until closed, and not below its level', async () => {
+    const records = await readerWith(xp('2026-10-13', 305));
+    await earnOneXp((await run({ records, on: '2026-10-14' })).app);
 
-    expect(await milestonesIn((await run({ records, on: '2026-10-15' })).app)).toEqual([]);
-    expect(await milestonesIn((await run({ records, on: '2026-10-13' })).app)).toEqual([]);
+    const nextDay = (await run({ records, on: '2026-10-15' })).app;
+    expect(await milestonesIn(nextDay)).toEqual([expect.objectContaining({ level: 5 })]);
+    await swipePastMilestone(nextDay);
+    expect(await milestonesIn((await run({ records, on: '2026-10-16' })).app)).toEqual([]);
+
+    const below = await readerWith(xp('2026-10-13', 300), xp('2026-10-14', 6));
+    expect(await milestonesIn((await run({ records: below, on: '2026-10-13' })).app)).toEqual([]);
   });
 
   it('shows the milestones of levels 10 and 20, and none for the levels between', async () => {
@@ -219,7 +256,10 @@ describe('the level-milestone Feed Notices', () => {
     expect(await milestonesIn((await run({ records: at20 })).app)).toEqual([
       expect.objectContaining({ level: 20, name: 'Grove' }),
     ]);
-    expect(await milestonesIn((await run({ records: at11 })).app)).toEqual([]);
+    // Level 11 brings no milestone of its own: the one of level 10, still open, comes first.
+    expect(await milestonesIn((await run({ records: at11 })).app)).toEqual([
+      expect.objectContaining({ level: 10 }),
+    ]);
   });
 
   it('shows the milestone reached in a Game earlier that day', async () => {

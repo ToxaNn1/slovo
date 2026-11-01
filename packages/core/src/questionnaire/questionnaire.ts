@@ -127,7 +127,7 @@ export function openQuestionnaire({
 
   /** Closes the later question's Feed Notice for today and emits its answer; a failed event is lost. */
   async function answered(question: LaterQuestion, answer: string): Promise<void> {
-    await userState.write(await closeNotice(userState, question, todayKey(clock)));
+    await userState.write(await closeNotice(userState, { notice: question }, todayKey(clock)));
     analytics.track('laterQuestionAnswered', { question, answer }).catch(() => undefined);
   }
 

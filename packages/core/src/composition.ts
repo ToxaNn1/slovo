@@ -562,6 +562,7 @@ export async function openComposition({
     eligibility,
     dayTurned,
     returned,
+    analytics,
   });
   const [favorites, collections] = await Promise.all([
     openFavorites({

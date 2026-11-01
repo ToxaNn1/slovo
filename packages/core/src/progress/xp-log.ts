@@ -310,10 +310,12 @@ export async function openXpLog({
 
   function reachedOn(total: number): string | undefined {
     let sum = 0;
+    // Each record counts what `derive` counts it, so a Review answer past the cap reaches nothing.
+    const review = new Map<string, number>();
     const inTime = [...records.values()].sort((a, b) => a.at.localeCompare(b.at));
     for (const record of inTime) {
       if (record.kind !== 'xp') continue;
-      sum += record.amount;
+      sum += counted(record, review);
       if (sum >= total) return record.date;
     }
     return undefined;

@@ -1,4 +1,5 @@
 import { dateKeyOf, dayNumber, localDateAfter, parseLocalDate } from '../local-date';
+import { BREAK_DAYS_AT_MOST } from '../user-state/user-state-schema';
 
 /** The XP of learning actions a local date needs to be an Active Day (ADR 0066), apart from the Daily Goal. */
 export const ACTIVE_DAY_XP = 5;
@@ -10,8 +11,7 @@ const FREEZES_HELD_AT_MOST = 2;
 /** The Streak days that add one freeze. */
 const STREAK_DAYS_PER_FREEZE = 7;
 
-/** The most days a Break lasts. */
-export const BREAK_DAYS_AT_MOST = 7;
+export { BREAK_DAYS_AT_MOST };
 /** The days from the start of one Break to the first day another can start. */
 export const BREAK_INTERVAL_DAYS = 30;
 
@@ -95,10 +95,11 @@ export function deriveStreak({
 
   const first = Math.min(...active);
   for (let day = first; day < todayNumber; day += 1) {
-    if (active.has(day)) {
-      activeDay(day);
-    } else if (paused.has(day)) {
+    // A Break day keeps the Streak and adds nothing, even as an Active Day.
+    if (paused.has(day)) {
       lastKept = day;
+    } else if (active.has(day)) {
+      activeDay(day);
     } else if (covered.has(day)) {
       held = Math.max(0, held - 1);
       lastKept = day;
@@ -118,7 +119,7 @@ export function deriveStreak({
       day = end;
     }
   }
-  if (active.has(todayNumber)) activeDay(todayNumber);
+  if (active.has(todayNumber) && !paused.has(todayNumber)) activeDay(todayNumber);
 
   return {
     streak,
