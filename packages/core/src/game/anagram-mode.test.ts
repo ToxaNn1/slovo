@@ -151,7 +151,12 @@ describe('«Анаграми» on offer', () => {
   it('is offered with its Feature Switch on', async () => {
     const app = await run();
 
-    expect(anagramOffer(app)).toEqual({ modeId: 'anagram', entryKind: 'word', canStart: true });
+    expect(anagramOffer(app)).toEqual({
+      modeId: 'anagram',
+      entryKind: 'word',
+      group: 'words',
+      canStart: true,
+    });
   });
 
   it('is off with its Feature Switch off', async () => {
@@ -169,6 +174,7 @@ describe('«Анаграми» on offer', () => {
     expect(anagramOffer(app)).toEqual({
       modeId: 'anagram',
       entryKind: 'word',
+      group: 'words',
       canStart: false,
       refusal: 'too-few-entries',
     });

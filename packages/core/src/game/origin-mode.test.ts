@@ -157,7 +157,12 @@ describe('«Звідки слово» on offer', () => {
   it('is offered with its Feature Switch on', async () => {
     const app = await run();
 
-    expect(originOffer(app)).toEqual({ modeId: 'origin', entryKind: 'word', canStart: true });
+    expect(originOffer(app)).toEqual({
+      modeId: 'origin',
+      entryKind: 'word',
+      group: 'words',
+      canStart: true,
+    });
   });
 
   it.each([['gameOrigin'], ['game']])('is off with %s off', async (feature) => {
@@ -186,6 +191,7 @@ describe('«Звідки слово» on offer', () => {
     expect(originOffer(app)).toEqual({
       modeId: 'origin',
       entryKind: 'word',
+      group: 'words',
       canStart: false,
       refusal: 'too-few-entries',
     });

@@ -128,6 +128,7 @@ describe('«Виживання» on offer', () => {
     expect(survivalOffer(app)).toEqual({
       modeId: 'survival',
       entryKind: 'correction',
+      group: 'challenge',
       canStart: true,
     });
   });
@@ -153,6 +154,7 @@ describe('«Виживання» on offer', () => {
     expect(survivalOffer(app)).toEqual({
       modeId: 'survival',
       entryKind: 'correction',
+      group: 'challenge',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -168,6 +170,7 @@ describe('«Виживання» on offer', () => {
     expect(survivalOffer(app)).toEqual({
       modeId: 'survival',
       entryKind: 'correction',
+      group: 'challenge',
       canStart: false,
       refusal: 'corrections-out-of-mix',
     });
@@ -262,6 +265,7 @@ describe('a Game of «Виживання»', () => {
     expect(survivalOffer(app)).toEqual({
       modeId: 'survival',
       entryKind: 'correction',
+      group: 'challenge',
       best: { result: 19 },
       canStart: true,
     });

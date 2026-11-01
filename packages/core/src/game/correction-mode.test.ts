@@ -214,8 +214,14 @@ describe('«Обери правильне» on offer', () => {
     const app = await run({ withCorrections: true });
 
     expect(app.game.state.modes.slice(0, 2)).toEqual([
-      { modeId: 'guess-word', entryKind: 'word', canStart: false, refusal: 'too-few-entries' },
-      { modeId: 'correction', entryKind: 'correction', canStart: true },
+      {
+        modeId: 'guess-word',
+        entryKind: 'word',
+        group: 'words',
+        canStart: false,
+        refusal: 'too-few-entries',
+      },
+      { modeId: 'correction', entryKind: 'correction', group: 'corrections', canStart: true },
     ]);
   });
 
@@ -237,6 +243,7 @@ describe('«Обери правильне» on offer', () => {
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'correction',
       entryKind: 'correction',
+      group: 'corrections',
       canStart: false,
       refusal: 'corrections-out-of-mix',
     });
@@ -251,6 +258,7 @@ describe('«Обери правильне» on offer', () => {
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'correction',
       entryKind: 'correction',
+      group: 'corrections',
       canStart: true,
     });
   });
@@ -282,6 +290,7 @@ describe('«Обери правильне» on offer', () => {
     expect(app.game.state.modes[1]).toEqual({
       modeId: 'correction',
       entryKind: 'correction',
+      group: 'corrections',
       canStart: false,
       refusal: 'too-few-entries',
     });

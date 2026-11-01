@@ -51,6 +51,7 @@ const won: CurrentGame = {
     prompt: 'open and honest',
     highlight: undefined,
     gap: undefined,
+    labelKind: 'mode',
     lifeLostAfter: 200,
     form: 'pick',
     options: [{ text: 'candid', stressedVowels: [] }],

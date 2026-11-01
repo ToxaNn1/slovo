@@ -158,6 +158,7 @@ describe('«Впиши слово» on offer', () => {
     expect(typeWordOffer(app)).toEqual({
       modeId: 'type-word',
       entryKind: 'correction',
+      group: 'words',
       canStart: true,
     });
   });
@@ -181,6 +182,7 @@ describe('«Впиши слово» on offer', () => {
     expect(typeWordOffer(app)).toEqual({
       modeId: 'type-word',
       entryKind: 'correction',
+      group: 'words',
       canStart: false,
       refusal: 'too-few-entries',
     });
@@ -196,6 +198,7 @@ describe('«Впиши слово» on offer', () => {
     expect(typeWordOffer(app)).toEqual({
       modeId: 'type-word',
       entryKind: 'correction',
+      group: 'words',
       canStart: false,
       refusal: 'corrections-out-of-mix',
     });
