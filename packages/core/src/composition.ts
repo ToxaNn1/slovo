@@ -570,6 +570,7 @@ export async function openComposition({
     favorites,
     progress,
     activeDays,
+    xpLog,
   });
   await day.resume();
   // Once the day is turned to, so the welcome shows today's Word of the Day.
