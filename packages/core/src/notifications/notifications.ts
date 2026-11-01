@@ -17,6 +17,8 @@ import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
+import type { ActiveDays } from '../progress/active-days';
+import type { XpLog } from '../progress/xp-log';
 
 /**
  * What the Notifications module needs to know of the Edition: its default
@@ -137,6 +139,8 @@ export async function openNotifications({
   seen,
   dayTurned,
   returned,
+  xpLog,
+  activeDays,
 }: {
   edition: NotificationsEdition;
   userState: UserState;
@@ -151,6 +155,8 @@ export async function openNotifications({
   seen: Pick<Subject<string>, 'subscribe'>;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
   returned: Pick<Subject<void>, 'subscribe'>;
+  xpLog: Pick<XpLog, 'dayOf' | 'days' | 'subscribe'>;
+  activeDays: Pick<ActiveDays, 'days' | 'subscribe'>;
 }): Promise<Notifications> {
   const [storedTimes, storedSound] = await Promise.all([
     userState.read(timesRecord),
@@ -173,11 +179,15 @@ export async function openNotifications({
           random,
           edition,
           wordOfTheDay,
+          xpLog,
+          activeDays,
           scheduling,
         });
 
   /** The Notification times as the plan takes them. */
   const planTimes = () => state.times.map(parseTimeOfDay);
+  /** What the evening notifications of the last plan say. */
+  let eveningKey = '';
 
   /** Reads the permission, telling the subscribers when it changed, and plans by it. */
   async function plan(): Promise<void> {
@@ -187,6 +197,7 @@ export async function openNotifications({
       subscribers.tell();
     }
     await takeMorningWord();
+    eveningKey = await planner.eveningKey(planTimes());
     await planner.plan({ ...state, times: planTimes() });
   }
 
@@ -241,6 +252,13 @@ export async function openNotifications({
   eligibility.subscribe(replan);
   dayTurned.subscribe(replan);
   returned.subscribe(replan);
+  // The evening notifications follow the XP and the Streak: a change of what they say plans again.
+  const replanEvening = () =>
+    inTurn(async () => {
+      if ((await planner.eveningKey(planTimes())) !== eveningKey) await plan();
+    });
+  xpLog.subscribe(() => void replanEvening());
+  activeDays.subscribe(() => void replanEvening());
   seen.subscribe((entryId) =>
     inTurn(async () => {
       if (await planner.isReserved(entryId)) await plan();

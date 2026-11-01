@@ -1,4 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
+import type { NotificationKind } from '@slovo/core';
 import { router, Tabs, useLocalSearchParams, useRouter } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import { Linking, Pressable, Text } from 'react-native';
@@ -29,14 +30,22 @@ async function settle(action: () => unknown = () => undefined) {
 /** Stands in for the device's notifications: the test taps a notification's link. */
 function fakeNotificationTaps() {
   let open: ((link: string) => void) | undefined;
+  let opened: ((kind: NotificationKind) => void) | undefined;
   return {
-    onTap: (listener: (link: string) => void) => {
-      open = listener;
+    onTap: (
+      openListener: (link: string) => void,
+      openedListener: (kind: NotificationKind) => void,
+    ) => {
+      open = openListener;
+      opened = openedListener;
       return () => {
         open = undefined;
+        opened = undefined;
       };
     },
     tap: (link: string) => settle(() => open?.(link)),
+    /** Taps a notification of this kind with no Word, the evening one or the farewell. */
+    tapKind: (kind: NotificationKind) => settle(() => opened?.(kind)),
   };
 }
 
@@ -98,7 +107,10 @@ let landings = 0;
  */
 async function renderApp(
   taps: ReturnType<typeof fakeNotificationTaps>,
-  { replaceOpenEntry = true }: { replaceOpenEntry?: boolean } = {},
+  {
+    replaceOpenEntry = true,
+    onOpened,
+  }: { replaceOpenEntry?: boolean; onOpened?: (kind: NotificationKind) => void } = {},
 ) {
   landings = 0;
   const listeners: ((event: { url: string }) => void)[] = [];
@@ -111,7 +123,11 @@ async function renderApp(
     {
       _layout: () => (
         <>
-          <NotificationTaps onTap={taps.onTap} onWidgetLink={widgetLinks.listen} />
+          <NotificationTaps
+            onTap={taps.onTap}
+            onWidgetLink={widgetLinks.listen}
+            onOpened={onOpened}
+          />
           <Tabs screenOptions={{ headerShown: false }}>
             <Tabs.Screen name="index" />
             <Tabs.Screen name="entry" options={{ href: null }} />
@@ -165,6 +181,18 @@ async function renderApp(
 }
 
 describe('a tapped notification opens its Entry', () => {
+  it('reports the kind of each tapped notification, and a Word-less one leaves the app as it is', async () => {
+    const taps = fakeNotificationTaps();
+    const onOpened = jest.fn<(kind: NotificationKind) => void>();
+    const app = await renderApp(taps, { onOpened });
+
+    await taps.tapKind('evening');
+    await taps.tapKind('farewell');
+
+    expect(onOpened.mock.calls).toEqual([['evening'], ['farewell']]);
+    expect(app.pathname()).toBe('/');
+  });
+
   it('replaces the Entry of another notification, so «Назад» returns to the Feed', async () => {
     const taps = fakeNotificationTaps();
     const app = await renderApp(taps);

@@ -38,7 +38,7 @@ async function run({
     content: createMemoryContentPort({ words }),
     edition: testEdition({
       // With the XP log off, opening the app records the day as an Active Day, as before 1.0.
-      isFeatureEnabled: (feature) => feature !== 'xpLog',
+      isFeatureEnabled: (feature) => feature !== 'xpLog' && feature !== 'eveningNotification',
       userSettingDefaults: { mix: { corrections: false }, notificationTimes: ['09:00', '19:00'] },
     }),
     userState: await openUserState({
@@ -52,7 +52,14 @@ async function run({
     }),
     clock,
     random: { next: () => 0.25 },
-    scheduling: { scheduler, ellipsis: '…', titles: ['{word}'], farewell: 'Farewell' },
+    scheduling: {
+      scheduler,
+      ellipsis: '…',
+      titles: ['{word}'],
+      farewell: 'Farewell',
+      streakWarning: 'Streak warning',
+      goalNotMet: 'Goal not met',
+    },
   });
   return { app, records, writes, scheduler };
 }

@@ -264,6 +264,12 @@ export const FeatureSwitchesSchema = z.strictObject({
   questionnaire: z.boolean(),
   /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
   badges: z.boolean(),
+  /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
+  eveningNotification: z.boolean(),
+  /** The farewell: the polite pause ends with the Edition's farewell on the 14th day without an open; off, it ends in silence. */
+  notificationFarewell: z.boolean(),
+  /** The notification explainer: the sheet before the system permission prompt, after the first met Daily Goal or on day 3, and its one re-ask Feed Notice 7 days after a refusal. */
+  notificationExplainer: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

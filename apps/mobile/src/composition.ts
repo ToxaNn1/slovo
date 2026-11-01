@@ -46,6 +46,8 @@ async function openOver({
       ellipsis: editionStrings.notificationBody.ellipsis,
       titles: editionStrings.notificationTemplates.titles,
       farewell: editionStrings.notificationTemplates.farewell,
+      streakWarning: editionStrings.notificationTemplates.streakWarning,
+      goalNotMet: editionStrings.notificationTemplates.goalNotMet,
     },
     backend,
   });

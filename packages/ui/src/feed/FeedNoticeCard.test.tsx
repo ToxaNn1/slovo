@@ -5,6 +5,7 @@ import {
   FirstWeekCard,
   HapticsProvider,
   LevelMilestoneCard,
+  NotificationAskCard,
   VerticalPager,
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
@@ -16,6 +17,8 @@ import { testStrings } from '../test-strings';
 const strings = testStrings({
   feedNotices: {
     enoughForToday: { message: 'Maybe enough for today?', keepGoing: 'Keep going' },
+    notificationExplainer: { title: 'Send the word?', message: 'Two a day at most.', yes: 'Yes' },
+    notificationReask: { title: 'Once more?', message: 'The word each morning.', yes: 'Yes' },
     levelMilestone: {
       title: 'Level {level}: {name}',
       message: 'Try rarer words or a new Category in the Mix.',
@@ -107,6 +110,31 @@ describe('the «enough for today» card', () => {
     expect(onIndexChange).toHaveBeenCalledWith(1);
     expect(screen.getByText('Next')).toBeTruthy();
     expect(screen.queryByTestId('feed-notice-enoughForToday')).toBeNull();
+  });
+});
+
+describe('the notification explainer card', () => {
+  it('asks for permission only on «Yes», then turns to the next card', async () => {
+    const onIndexChange = jest.fn();
+    const onYes = jest.fn();
+    await renderFeed(
+      <NotificationAskCard notice="notificationExplainer" onYes={onYes} />,
+      onIndexChange,
+    );
+    expect(screen.getByLabelText('Send the word? Two a day at most.')).toBeTruthy();
+    expect(onYes).not.toHaveBeenCalled();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Yes' }));
+
+    expect(onYes).toHaveBeenCalledTimes(1);
+    expect(onIndexChange).toHaveBeenCalledWith(1);
+  });
+
+  it('shows the re-ask with its own text', async () => {
+    await renderFeed(<NotificationAskCard notice="notificationReask" onYes={() => undefined} />);
+
+    expect(screen.getByTestId('feed-notice-notificationReask')).toBeTruthy();
+    expect(screen.getByText('Once more?')).toBeTruthy();
   });
 });
 

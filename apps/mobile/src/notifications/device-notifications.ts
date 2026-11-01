@@ -1,4 +1,5 @@
 import { isRunningInExpoGo } from 'expo';
+import type { NotificationKind } from '@slovo/core';
 
 import { nativeModules } from '../device/device-native-modules';
 import { activeEditionId } from '../edition/edition';
@@ -25,5 +26,7 @@ export const deviceNotificationScheduler = createNotificationScheduler(notificat
 });
 
 /** Calls `open` with the link of each active Edition's notification the reader taps; returns the call that stops it. */
-export const onDeviceNotificationTap = (open: (link: string) => void) =>
-  onNotificationTap(notifications, activeEditionId, open);
+export const onDeviceNotificationTap = (
+  open: (link: string) => void,
+  opened: (kind: NotificationKind) => void,
+) => onNotificationTap(notifications, activeEditionId, open, opened);

@@ -24,7 +24,14 @@ async function open(
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: { now: () => new Date('2026-10-14T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
-    scheduling: { scheduler, ellipsis: '…', titles: ['{word}'], farewell: 'Farewell' },
+    scheduling: {
+      scheduler,
+      ellipsis: '…',
+      titles: ['{word}'],
+      farewell: 'Farewell',
+      streakWarning: 'Streak warning',
+      goalNotMet: 'Goal not met',
+    },
   });
 }
 

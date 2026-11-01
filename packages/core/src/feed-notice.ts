@@ -5,8 +5,8 @@
 /**
  * The Feed Notices, in the order the Feed shows those of one day: the Weekly
  * Recap, the Community Word, the first-week card, Yesterday, a level
- * milestone, and «Може, на сьогодні досить?» after 50 Seen Entries (ADR
- * 0054, 0060, 0066).
+ * milestone, «Може, на сьогодні досить?» after 50 Seen Entries, and the
+ * notification explainer and its one re-ask (ADR 0054, 0060, 0066, 0067).
  */
 export const FEED_NOTICES = [
   'weeklyRecap',
@@ -15,6 +15,8 @@ export const FEED_NOTICES = [
   'yesterday',
   'levelMilestone',
   'enoughForToday',
+  'notificationExplainer',
+  'notificationReask',
 ] as const;
 
 /** A Feed Notice: a Feed card that is not an Entry. */

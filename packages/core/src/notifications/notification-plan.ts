@@ -10,11 +10,13 @@ import {
   formatTimeOfDay,
   localDateAfter,
   localTimeOf,
+  parseLocalDate,
   todayDate,
   type TimeOfDay,
 } from '../local-date';
 import type {
   Clock,
+  EveningMessage,
   NotificationPermission,
   NotificationSchedulerPort,
   PlannedNotification,
@@ -33,6 +35,9 @@ import { notificationBody } from './notification-text';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
+import type { ActiveDays } from '../progress/active-days';
+import { ACTIVE_DAY_XP, deriveStreak } from '../progress/streak';
+import type { XpLog } from '../progress/xp-log';
 
 /** The most notifications the plan holds: the most iOS keeps pending for one app. */
 const MAX_PLANNED_NOTIFICATIONS = 64;
@@ -50,7 +55,13 @@ export interface NotificationScheduling {
   readonly ellipsis: string;
   readonly titles: readonly string[];
   readonly farewell: string;
+  /** The evening texts of the 1.0 plan. */
+  readonly streakWarning: string;
+  readonly goalNotMet: string;
 }
+
+/** The Streak below which the evening notification never warns of it. */
+const STREAK_WARNING_AT = 7;
 
 const { notificationTitles: titlesRecord } = userStateRecords;
 
@@ -156,6 +167,8 @@ export interface NotificationPlanner {
   /** Asks the reader for permission to notify when they haven't been asked yet, and reports it. */
   askPermission(): Promise<NotificationPermission>;
   plan(settings: PlanSettings): Promise<void>;
+  /** What the evening notifications of a plan made now would say: a change of it calls for a new plan. */
+  eveningKey(times: readonly TimeOfDay[]): Promise<string>;
   /** Whether a notification is planned with the Word. */
   isReserved(wordId: string): Promise<boolean>;
   /**
@@ -177,6 +190,7 @@ export const noNotificationPlanner: NotificationPlanner = {
   permission: () => Promise.resolve('not-asked'),
   askPermission: () => Promise.resolve('not-asked'),
   plan: () => Promise.resolve(),
+  eveningKey: () => Promise.resolve(''),
   isReserved: () => Promise.resolve(false),
   nextMorning: () => Promise.resolve(undefined),
 };
@@ -236,7 +250,9 @@ export function createNotificationPlanner({
   random,
   edition,
   wordOfTheDay,
-  scheduling: { scheduler, ellipsis, titles, farewell },
+  xpLog,
+  activeDays,
+  scheduling: { scheduler, ellipsis, titles, farewell, ...evening },
 }: {
   cycle: Pick<Cycle, 'order' | 'unseen'>;
   entries: Pick<Entries, 'get' | 'getMany'>;
@@ -245,6 +261,8 @@ export function createNotificationPlanner({
   random: Random;
   edition: PlanEdition;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
+  xpLog: Pick<XpLog, 'dayOf' | 'days'>;
+  activeDays: Pick<ActiveDays, 'days'>;
   scheduling: NotificationScheduling;
 }): NotificationPlanner {
   const reservedWords = createReservedWords({ userState });
@@ -329,11 +347,74 @@ export function createNotificationPlanner({
 
   const notificationsOn = () => edition.isFeatureEnabled('notifications');
 
-  /** The slots with a Word, and the farewell's while the polite pause is on. */
-  function slotsOf(times: readonly TimeOfDay[]): { slots: Slot[]; farewell: Slot | undefined } {
-    return edition.isFeatureEnabled('politePause')
+  /**
+   * The slots with a Word, the evening slots and the farewell's while the
+   * polite pause and the farewell are on. On the 1.0 plan only the earliest
+   * time of a day takes a Word and its latest the evening slot, so a day
+   * brings at most 2; off, every time takes a Word.
+   */
+  function slotsOf(times: readonly TimeOfDay[]): {
+    slots: Slot[];
+    evenings: Slot[];
+    farewell: Slot | undefined;
+  } {
+    const { slots, farewell } = edition.isFeatureEnabled('politePause')
       ? slotsUntilPause(times, clock)
       : { slots: slotsAhead(times, clock), farewell: undefined };
+    const shown = edition.isFeatureEnabled('notificationFarewell') ? farewell : undefined;
+    const [earliest] = times;
+    const latest = times.at(-1);
+    if (!edition.isFeatureEnabled('eveningNotification') || earliest === undefined) {
+      return { slots, evenings: [], farewell: shown };
+    }
+    const at = (time: TimeOfDay) => (slot: Slot) => compareTimesOfDay(slot.time, time) === 0;
+    return {
+      slots: slots.filter(at(earliest)),
+      evenings: latest === undefined || times.length < 2 ? [] : slots.filter(at(latest)),
+      farewell: shown,
+    };
+  }
+
+  /**
+   * Whether the evening slots stay silent: with the evening notification
+   * off, or while the reader hides the counters («Без лічильників»), since
+   * every evening message is a nudge by a counter.
+   */
+  async function eveningSilent(): Promise<boolean> {
+    if (!edition.isFeatureEnabled('eveningNotification')) return true;
+    return (
+      edition.isFeatureEnabled('noCounters') &&
+      (await userState.read(userStateRecords.noCounters)) === true
+    );
+  }
+
+  /**
+   * The evening message of a local date, projected with no XP earned from now
+   * on: the Streak warning while the Streak is 7 or more, the day is below an
+   * Active Day's XP and no freeze is held; else the goal reminder while the
+   * Daily Goal is not met; else none. None on the days of a Break.
+   */
+  function eveningMessageOf(date: string): EveningMessage | undefined {
+    const { breaks, frozen } = xpLog.days;
+    const onBreak = [...breaks].some(([start, days]) => {
+      const from = dayNumber(parseLocalDate(start));
+      const day = dayNumber(parseLocalDate(date));
+      return day >= from && day < from + days;
+    });
+    if (onBreak) return undefined;
+    const { xp, dailyGoal } = xpLog.dayOf(date);
+    const xpOn = edition.isFeatureEnabled('xpLog');
+    const { streak, freezesHeld } = deriveStreak({
+      activeDays: activeDays.days,
+      frozen,
+      breaks,
+      today: date,
+      freezes: xpOn && edition.isFeatureEnabled('streakFreezes'),
+    });
+    if (xpOn && streak >= STREAK_WARNING_AT && xp < ACTIVE_DAY_XP && freezesHeld === 0) {
+      return 'streakWarning';
+    }
+    return dailyGoal !== null && !dailyGoal.met ? 'goalNotMet' : undefined;
   }
 
   function soundOf(on: boolean): PlannedSound {
@@ -365,10 +446,13 @@ export function createNotificationPlanner({
   }
 
   async function plan({ times, sound, permission }: PlanSettings): Promise<void> {
-    const { slots, farewell: farewellSlot } =
-      permission === 'allowed' && notificationsOn()
-        ? slotsOf(times)
-        : { slots: [], farewell: undefined };
+    const {
+      slots,
+      evenings,
+      farewell: farewellSlot,
+    } = permission === 'allowed' && notificationsOn()
+      ? slotsOf(times)
+      : { slots: [], evenings: [], farewell: undefined };
     const stored = await reservedWords.stored();
     const chosen = chooseWords(slots, stored, times[0]);
     const words = await entries.getMany(chosen.map(({ wordId }) => wordId));
@@ -390,6 +474,23 @@ export function createNotificationPlanner({
         sound: soundOf(sound),
       }),
     );
+    const silent = await eveningSilent();
+    for (const slot of silent ? [] : evenings) {
+      const message = eveningMessageOf(dateKeyOf(slot.date));
+      if (message === undefined) continue;
+      notifications.push({
+        kind: 'evening',
+        editionId: edition.id,
+        date: dateKeyOf(slot.date),
+        time: formatTimeOfDay(slot.time),
+        message,
+        body: evening[message],
+        sound: soundOf(sound),
+      });
+    }
+    notifications.sort((one, other) =>
+      `${one.date}T${one.time}`.localeCompare(`${other.date}T${other.time}`),
+    );
     if (farewellSlot !== undefined) {
       notifications.push({
         kind: 'farewell',
@@ -408,6 +509,12 @@ export function createNotificationPlanner({
     permission: () => scheduler.permission(),
     askPermission: () => scheduler.askPermission(),
     plan,
+    eveningKey: async (times) =>
+      (await eveningSilent())
+        ? ''
+        : slotsOf(times)
+            .evenings.map((slot) => eveningMessageOf(dateKeyOf(slot.date)) ?? '')
+            .join(),
     isReserved: (wordId) => reservedWords.isReserved(wordId),
     nextMorning,
   };

@@ -415,17 +415,27 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
       userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
       clock: fakeClock('2026-10-14T08:00:00+03:00').clock,
       random: seededRandom(7),
-      scheduling: { scheduler, ellipsis: '…', titles: ['{word}'], farewell: 'Farewell' },
+      scheduling: {
+        scheduler,
+        ellipsis: '…',
+        titles: ['{word}'],
+        farewell: 'Farewell',
+        streakWarning: 'Streak warning',
+        goalNotMet: 'Goal not met',
+      },
     });
 
-    // The polite pause is on: every time up to the 14th day, whose last time is the farewell.
+    // The polite pause and the 1.0 plan are on: up to the 14th day, a morning Word and one
+    // evening notification a day, and the 14th day's last time is the farewell.
     const all = scheduler.plan ?? [];
-    expect(all).toHaveLength(15 * ukrainian.userSettingDefaults.notificationTimes.length);
+    expect(all).toHaveLength(15 * 2);
     expect(all.at(-1)).toMatchObject({ kind: 'farewell', date: '2026-10-28', body: 'Farewell' });
-    const plan = all
-      .slice(0, -1)
-      .flatMap((notification) => (notification.kind === 'word' ? [notification] : []));
-    expect(new Set(plan.map(({ wordId }) => wordId)).size).toBe(all.length - 1);
+    expect(all.filter(({ kind }) => kind === 'evening')).toHaveLength(14);
+    const plan = all.flatMap((notification) =>
+      notification.kind === 'word' ? [notification] : [],
+    );
+    expect(plan).toHaveLength(15);
+    expect(new Set(plan.map(({ wordId }) => wordId)).size).toBe(plan.length);
     for (const notification of plan) {
       expect(liveIds).toContain(notification.wordId);
       expect(notification.title).toMatch(/\u0301/);

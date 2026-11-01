@@ -187,6 +187,8 @@ export {
   type KeptSession,
   type NotificationPermission,
   type NotificationSchedulerPort,
+  type EveningMessage,
+  type NotificationKind,
   type PlannedNotification,
   type PlannedSound,
   type Random,

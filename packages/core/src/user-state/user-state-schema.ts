@@ -365,6 +365,20 @@ export const userStateRecords = {
    * without the record, it opens. It stays on the device: the onboarding asks
    * this device for permission to notify.
    */
+  /**
+   * How far the Feed has asked for permission to notify (ADR 0067): the local
+   * date `YYYY-MM-DD` the explainer was first offered, then the date of its
+   * one re-ask. It stays on the device, like the permission it asks for; a
+   * new key needs no migration, since without it nothing was offered.
+   */
+  notificationAsk: declareRecord(
+    'notifications.ask',
+    z.discriminatedUnion('step', [
+      z.object({ step: z.literal('explainer'), date: z.string() }),
+      z.object({ step: z.literal('reask'), date: z.string() }),
+    ]),
+    { sync: 'device-only' },
+  ),
   onboardingFinished: declareRecord('onboarding.finished', InstantSchema, { sync: 'device-only' }),
   /**
    * The local date `YYYY-MM-DD` a reader finished or skipped the onboarding
