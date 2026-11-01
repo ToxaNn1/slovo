@@ -35,7 +35,7 @@ const WORD_FONT = editionTokens.fontFamilies.word;
 
 jest.mock('expo-constants', () => ({
   __esModule: true,
-  default: { expoConfig: { extra: { edition: { id: 'uk', wordOfTheDayFontFamily: 'Kurale' } } } },
+  default: { expoConfig: { extra: { edition: { wordOfTheDayFontFamily: 'Kurale' } } } },
 }));
 
 /** The UA Edition in effect, with `calligraphy` as the test sets it. */

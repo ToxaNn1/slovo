@@ -32,6 +32,4 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/notifications-denied.yaml
 # Also from a fresh install.
 - runFlow: flows/onboarding.yaml
-- runFlow: flows/onboarding-mix.yaml
-- runFlow: flows/onboarding-rarity-test.yaml
-- runFlow: flows/onboarding-notifications.yaml
+- runFlow: flows/notifications-enable.yaml

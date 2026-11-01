@@ -16,15 +16,13 @@ import { StyleSheet, View } from 'react-native';
 import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { useOpenScreen } from '../entries/use-open-screen';
 import { useMixState } from '../mix/mix';
 
 const strings = editionStrings.feedNotices.laterQuestions;
 
 const dailyGoals: readonly DailyGoal[] = DailyGoalSchema.options.map(({ value }) => value);
-
-/** The Daily Goal a reader has until they choose one (ADR 0067). */
-const DEFAULT_DAILY_GOAL: DailyGoal = 20;
 
 /**
  * The Feed Notice of a later question of the questionnaire (ADR 0067): the
@@ -115,7 +113,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
   );
 }
 
-/** The goals in XP, 20 picked until the reader picks another, and «Готово», which sets it. */
+/** The goals in XP, the Edition's default picked until the reader picks another (ADR 0067), and «Готово», which sets it. */
 function DailyGoalQuestion({
   later,
   onDone,
@@ -123,7 +121,7 @@ function DailyGoalQuestion({
   later: ReactNode;
   onDone: (goal: DailyGoal) => void;
 }) {
-  const [picked, setPicked] = useState(DEFAULT_DAILY_GOAL);
+  const [picked, setPicked] = useState(useEditionInEffect().userSettingDefaults.dailyGoal);
   const { title, text } = strings.dailyGoalChoice;
   return (
     <FeedNoticeCard notice="dailyGoalChoice" title={title} message={text}>

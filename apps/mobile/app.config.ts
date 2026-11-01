@@ -413,7 +413,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       ...googleSignIn(),
     ],
     extra: {
-      edition: { id: edition.config.id, wordOfTheDayFontFamily: wordOfTheDayFontFamily(edition) },
+      // The app chooses its active Edition at launch (ADR 0065), so the build names none here.
+      edition: { wordOfTheDayFontFamily: wordOfTheDayFontFamily(edition) },
       eas: { projectId: EAS_PROJECT_ID },
     },
   };

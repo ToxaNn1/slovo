@@ -6,15 +6,19 @@ import {
   openComposition,
   openUserState,
   trackChanges,
+  userStateRecords,
   type Composition,
   type Edition,
   type Haptics,
   type NotificationSchedulerPort,
+  type XpRecord,
 } from '@slovo/core';
 import { createFakeNotificationScheduler, createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { State } from 'react-native-gesture-handler';
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/index';
@@ -30,7 +34,7 @@ const { config } = activeEditionFiles;
 
 jest.mock('expo-constants', () => ({
   __esModule: true,
-  default: { expoConfig: { extra: { edition: { id: 'uk', wordOfTheDayFontFamily: 'Kurale' } } } },
+  default: { expoConfig: { extra: { edition: { wordOfTheDayFontFamily: 'Kurale' } } } },
 }));
 
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
@@ -91,20 +95,43 @@ function word(id: string, lemma: string): Word {
   };
 }
 
+/** One XP record of `amount` from a game round on the local day `date`, at 08:00 in Kyiv. */
+const xp = (date: string, amount: number): XpRecord => ({
+  kind: 'xp',
+  date,
+  at: new Date(`${date}T08:00:00+03:00`).toISOString(),
+  source: 'game-round',
+  amount,
+});
+
 /**
  * Opens the composition over two Words for a reader who finished the
- * onboarding with the records given, on 2026-10-28 in Kyiv.
+ * onboarding with the records given, on 2026-10-28 in Kyiv: with the XP
+ * earned before, each record on its own day, and signed in or out as
+ * `signedIn` says, as the app tells the Core once the Account is open.
  */
 async function open(
   records: Readonly<Record<string, unknown>>,
-  scheduler?: NotificationSchedulerPort,
-  openedEdition: Edition = shippedEdition,
+  {
+    scheduler,
+    edition: openedEdition = shippedEdition,
+    xp: earned = [],
+    signedIn,
+  }: {
+    scheduler?: NotificationSchedulerPort;
+    edition?: Edition;
+    xp?: readonly XpRecord[];
+    signedIn?: () => boolean;
+  } = {},
 ) {
   userState = await openUserState({
     port: createMemoryUserStatePort(
       new Map(Object.entries(records).map(([key, value]) => [key, JSON.stringify(value)])),
     ),
   });
+  for (const [index, record] of earned.entries()) {
+    await userState.write(userStateRecords.xpLog.record(`seeded-${String(index)}`).change(record));
+  }
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
@@ -115,6 +142,7 @@ async function open(
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     // The first Word in each draw, so each opening shows the same Word of the Day.
     random: { next: () => 0 },
+    ...(signedIn === undefined ? {} : { signedIn }),
     ...(scheduler === undefined
       ? {}
       : {
@@ -159,9 +187,12 @@ const shell = () =>
     composition: opened(composition),
   });
 
-/** The app on the Feed, with the Entry screen a link opens. */
+/** The Account screen stands in: the save-progress Notice opens it, and its own tests draw it. */
+const AccountStandIn = () => null;
+
+/** The app on the Feed, with the Entry screen a link opens and the Account screen a Notice opens. */
 async function renderApp() {
-  await renderRouter(
+  const app = renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
@@ -181,18 +212,53 @@ async function renderApp() {
       index: HomeScreen,
       'entry/_layout': EntryLayout,
       'entry/[entryId]': EntryFromLinkScreen,
+      'settings/account': AccountStandIn,
     },
     { initialUrl: '/' },
   );
+  await app;
   await settle();
   // The pager lays its pages out once it knows its height.
   await fireEvent(screen.getByTestId('feed'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } },
   });
   await settle();
+  // Not the render result itself: an async function would await it, as it is thenable.
+  return { pathname: () => app.getPathname() };
 }
 
 const hidden = { includeHiddenElements: true };
+
+/** How far, in points, a drag goes before the swipe takes it, as on the device. */
+const ACTIVATION = 12;
+
+/** One swipe up on the Feed, which turns it to the next page. */
+async function swipeUp() {
+  const distance = -400;
+  await settle(() => {
+    fireGestureHandler(getByGestureTestId('feed-swipe'), [
+      { state: State.BEGAN, translationY: 0, velocityY: 0 },
+      { state: State.ACTIVE, translationY: -ACTIVATION, velocityY: -1000 },
+      { state: State.ACTIVE, translationY: -ACTIVATION, velocityY: -1000 },
+      { state: State.ACTIVE, translationY: distance, velocityY: -1000 },
+      { state: State.END, translationY: distance, velocityY: -1000 },
+    ]);
+  });
+}
+
+/** The position of the Feed page that holds `element`, from the `feed-card-N` test ID above it. */
+function pageOf(element: ReturnType<typeof screen.getByTestId>): number {
+  for (let node: typeof element | null = element; node !== null; node = node.parent) {
+    const match = /^feed-card-(\d+)$/.exec(String((node.props as { testID?: unknown }).testID));
+    if (match !== null) return Number(match[1]);
+  }
+  throw new Error('The element is on no Feed page');
+}
+
+/** Swipes the Feed up to the page that holds `element`. */
+async function swipeTo(element: ReturnType<typeof screen.getByTestId>) {
+  for (let page = pageOf(element); page > 0; page -= 1) await swipeUp();
+}
 
 describe('the Feed Notices on the Feed', () => {
   it('shows the first-week card of the first Active Day after the onboarding', async () => {
@@ -219,7 +285,10 @@ describe('the Feed Notices on the Feed', () => {
 
   it('shows the notification explainer by day 3, and the device is not asked before «Так»', async () => {
     const scheduler = createFakeNotificationScheduler({ permission: 'not-asked' });
-    await open({ 'onboarding.finished': '2026-10-26T08:00:00Z' }, scheduler, withoutLaterQuestions);
+    await open(
+      { 'onboarding.finished': '2026-10-26T08:00:00Z' },
+      { scheduler, edition: withoutLaterQuestions },
+    );
     await renderApp();
 
     const card = screen.getByTestId('feed-notice-notificationExplainer', hidden);
@@ -231,9 +300,47 @@ describe('the Feed Notices on the Feed', () => {
 
   it('shows no explainer to a reader the device asked already', async () => {
     const scheduler = createFakeNotificationScheduler({ permission: 'denied' });
-    await open({ 'onboarding.finished': '2026-10-26T08:00:00Z' }, scheduler);
+    await open({ 'onboarding.finished': '2026-10-26T08:00:00Z' }, { scheduler });
     await renderApp();
 
     expect(screen.queryByTestId('feed-notice-notificationExplainer', hidden)).toBeNull();
+  });
+
+  it('offers a signed-out reader to save progress on the day the Streak reaches 3, and «Зберегти прогрес» opens the Account screen', async () => {
+    await open(
+      { 'onboarding.finished': '2026-09-01T09:00:00Z' },
+      {
+        edition: withoutLaterQuestions,
+        xp: [xp('2026-10-26', 5), xp('2026-10-27', 5), xp('2026-10-28', 5)],
+        signedIn: () => false,
+      },
+    );
+    const app = await renderApp();
+
+    const card = screen.getByTestId('feed-notice-saveProgress', hidden);
+    const { title, save } = editionStrings.feedNotices.saveProgress;
+    expect(within(card).getByText(title, hidden)).toBeTruthy();
+    expect(within(card).getByText(save, hidden)).toBeTruthy();
+
+    // The Notice is a page the reader swipes to; until then the pager takes no touch on it.
+    await swipeTo(card);
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: save })));
+
+    expect(app.pathname()).toBe('/settings/account');
+  });
+
+  it('shows the level-milestone Notice on the day the reader reaches Level 5', async () => {
+    // Level 5 of the UA Edition costs 306 XP in all: 300 earned before, and today's 10 reach it.
+    await open(
+      { 'onboarding.finished': '2026-09-01T09:00:00Z' },
+      { edition: withoutLaterQuestions, xp: [xp('2026-10-20', 300), xp('2026-10-28', 10)] },
+    );
+    await renderApp();
+
+    const card = screen.getByTestId('feed-notice-levelMilestone', hidden);
+    expect(within(card).getByText('Рівень 5 — Читач', hidden)).toBeTruthy();
+    expect(
+      within(card).getByText(editionStrings.feedNotices.levelMilestone.message, hidden),
+    ).toBeTruthy();
   });
 });

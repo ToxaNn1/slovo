@@ -13,6 +13,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useCompositionRead } from '../composition';
+import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { EntryActions } from './entry-actions';
 import type { OpenedFrom } from './entry-link';
@@ -64,6 +65,12 @@ export function EntryScreen({
   useEffect(() => {
     if (card === null) router.replace('/');
   }, [card, router]);
+  // The Word History drawn is the history opened for Analytics (ADR 0068); stable, so it counts once per Entry.
+  const composition = useShell().composition;
+  const onWordHistoryShown = useCallback(() => {
+    const open = composition.state;
+    if (open.status === 'ready') void open.value.analytics.wordHistoryOpened(entryId);
+  }, [composition, entryId]);
 
   return (
     <UndoToastProvider>
@@ -102,6 +109,7 @@ export function EntryScreen({
                 const word = card.kind === 'word' ? card.model.lemma : back;
                 openScreen(`${route}/${synonymRowId}?back=${encodeURIComponent(word)}`);
               }}
+              onWordHistoryShown={onWordHistoryShown}
               actions={<EntryActions card={card} />}
               stressFalls={stressFall}
             />

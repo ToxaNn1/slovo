@@ -7,11 +7,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { useSubscribed } from '../opening';
+import { dayText } from './day-text';
 
 const strings = editionStrings.settings.badges;
-
-/** A local date `YYYY-MM-DD` as the Badges screen shows it, e.g. «20.10.2026». */
-const fullDate = (date: string) => `${date.slice(8, 10)}.${date.slice(5, 7)}.${date.slice(0, 4)}`;
 
 /** The progress forms of an unearned Badge's condition; none for a condition of one first time. */
 function progressForms({ condition }: BadgeState) {
@@ -40,7 +38,7 @@ export function BadgeList() {
   const textStyle = [styles.text, { color: colors.muted, fontFamily: fontFamilies.ui }];
 
   const statusOf = (badge: BadgeState) => {
-    if (badge.earned) return fill(strings.earned, { date: fullDate(badge.date) });
+    if (badge.earned) return fill(strings.earned, { date: dayText(badge.date) });
     const forms = progressForms(badge);
     if (forms === undefined) return strings.notYet;
     const { current, target } = badge.progress;

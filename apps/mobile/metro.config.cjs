@@ -1,7 +1,6 @@
 const { existsSync, mkdirSync, writeFileSync } = require('node:fs');
 const { dirname, join } = require('node:path');
 
-const { getConfig } = require('expo/config');
 const { getDefaultConfig } = require('expo/metro-config');
 const { require: tsxRequire } = require('tsx/cjs/api');
 
@@ -16,10 +15,9 @@ const { APP_CONFIG_FILE, EDITIONS_DIR, REPO_DIR, openAppConfig, openEdition } = 
  * the app's Edition registry reads, so the app code never names an Edition.
  * The build bundles the AppConfig's default Edition.
  */
-const { exp } = getConfig(__dirname, { skipSDKVersionRequirement: true });
-const defaultId = exp.extra.edition.id;
-const bundledIds = [defaultId];
 const app = openAppConfig(REPO_DIR);
+const defaultId = app.config.defaultEdition;
+const bundledIds = [defaultId];
 
 /** The AppConfig and the native splash it names, as `slovo-app/*` (ADR 0065). */
 const appModules = {

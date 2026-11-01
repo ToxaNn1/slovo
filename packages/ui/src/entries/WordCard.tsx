@@ -8,7 +8,7 @@ import {
   type LocalDate,
   type WordCardModel,
 } from '@slovo/core';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
@@ -43,6 +43,7 @@ export function WordCardBody({
   lemmaSize,
   onOpenCorrection,
   onOpenSynonymRow,
+  onHistoryShown,
   concealed,
   stressFalls,
   wordOfTheDayFont,
@@ -56,6 +57,8 @@ export function WordCardBody({
   lemmaSize: TextSize;
   onOpenCorrection: ((correctionId: string) => void) | undefined;
   onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
+  /** Called once the Word History is drawn, as the Entry screen tells Analytics (ADR 0068). */
+  onHistoryShown: (() => void) | undefined;
   /** Self-check: only the Lemma, part of speech and Category. */
   concealed: boolean;
   /** The falling Stress: on a Word card in the Feed and on the Entry screen, while its Feature Switch is on. */
@@ -177,18 +180,7 @@ export function WordCardBody({
             <ExampleText testID="word-example" example={card.example} size={sizes.example} />
           )}
           {card.history === undefined ? null : (
-            <DetailSection testID="word-history" title={strings.history}>
-              <Text
-                accessibilityLabel={withoutStress(card.history)}
-                {...voice}
-                style={[
-                  styles.sectionText,
-                  { color: colors.inkSecondary, fontFamily: fontFamilies.ui },
-                ]}
-              >
-                {card.history}
-              </Text>
-            </DetailSection>
+            <WordHistory history={card.history} onShown={onHistoryShown} />
           )}
           {relations.length === 0 && !compact ? null : (
             <View style={compact ? styles.compactRow : styles.relations}>
@@ -285,7 +277,30 @@ export function WordCardBody({
   );
 }
 
-/** An Example in italics, with its author's line only when the source names one. */
+/**
+ * The Word History under its heading: how the Word left the language or
+ * changed its meaning. The reader reaches it by scrolling, so `onShown` is
+ * called once it is drawn, and the caller counts that as the history opened.
+ */
+function WordHistory({ history, onShown }: { history: string; onShown: (() => void) | undefined }) {
+  const { colors, fontFamilies } = useTokens();
+  const { strings, voice } = useEdition();
+  useEffect(() => {
+    onShown?.();
+  }, [onShown]);
+  return (
+    <DetailSection testID="word-history" title={strings.wordCard.history}>
+      <Text
+        accessibilityLabel={withoutStress(history)}
+        {...voice}
+        style={[styles.sectionText, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
+      >
+        {history}
+      </Text>
+    </DetailSection>
+  );
+}
+
 /**
  * «У синонімічному ряду: {домінанта}», the row the Word is a member of, as a
  * button that opens the row (ADR 0051).
@@ -332,6 +347,7 @@ function SynonymRowLine({
   );
 }
 
+/** An Example in italics, with its author's line only when the source names one. */
 export function ExampleText({
   example,
   size,

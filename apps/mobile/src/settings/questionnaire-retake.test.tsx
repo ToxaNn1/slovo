@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import type { DailyGoal } from '@slovo/contracts';
 import {
   createMemoryUserStatePort,
   loadEdition,
@@ -26,9 +27,18 @@ import { SettingsProvider } from './settings';
 
 const { config } = activeEditionFiles;
 
-/** The UA Edition as it ships, with the Feature Switches given off. */
-function editionWithout(...off: FeatureSwitch[]): Edition {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
+/**
+ * The UA Edition as it ships, with the Feature Switches `off` given off and,
+ * given one, the Daily Goal a reader has until they choose one.
+ */
+function shippedEdition({
+  off = [],
+  dailyGoal,
+}: { off?: readonly FeatureSwitch[]; dailyGoal?: DailyGoal } = {}): Edition {
+  const { featureSwitches, userSettingDefaults, ...rest } = config as {
+    featureSwitches: Record<string, boolean>;
+    userSettingDefaults: Record<string, unknown>;
+  };
   return loadEdition({
     ...rest,
     featureSwitches: {
@@ -36,8 +46,13 @@ function editionWithout(...off: FeatureSwitch[]): Edition {
       account: false,
       ...Object.fromEntries(off.map((feature) => [feature, false])),
     },
+    userSettingDefaults:
+      dailyGoal === undefined ? userSettingDefaults : { ...userSettingDefaults, dailyGoal },
   });
 }
+
+/** The UA Edition as it ships, with the Feature Switches given off. */
+const editionWithout = (...off: FeatureSwitch[]) => shippedEdition({ off });
 
 /** The Edition the shell reads in effect. */
 let editionInEffect: Edition;
@@ -120,11 +135,13 @@ beforeEach(async () => {
 });
 
 describe('Settings › «Пройти опитування ще раз»', () => {
-  it('retakes the self-rating and the interests, each applied to the Mix', async () => {
+  it('retakes «Хто ви», the self-rating and the interests, each applied to the Mix', async () => {
     await render();
     screenSettled();
     await press(settings.rows.questionnaire);
 
+    expect(screen.getByTestId('questionnaire-who-studying')).toBeTruthy();
+    expect(screen.getByTestId('questionnaire-why-rare-words')).toBeTruthy();
     await press('Знаю дуже багато');
     expect(composition.mix.state.rarityFloor).toBe(3);
 
@@ -134,8 +151,19 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     expect(composition.mix.state.hiddenCategories.map(({ id }) => id)).toEqual(['food']);
   });
 
-  it('is not in Settings while the later questions are off', async () => {
-    await openWith(editionWithout('laterQuestions'));
+  it('has no «Хто ви» and «Навіщо» while the questionnaire is off, and the self-rating still', async () => {
+    await openWith(editionWithout('questionnaire'));
+    await render();
+    screenSettled();
+    await press(settings.rows.questionnaire);
+
+    expect(screen.queryByTestId('questionnaire-who-studying')).toBeNull();
+    expect(screen.queryByTestId('questionnaire-why-rare-words')).toBeNull();
+    expect(screen.getByTestId('questionnaire-selfRating-many')).toBeTruthy();
+  });
+
+  it('is not in Settings while the questionnaire and the Rarity Floor are off', async () => {
+    await openWith(editionWithout('questionnaire', 'rarityFloor'));
     await render();
 
     expect(
@@ -145,14 +173,15 @@ describe('Settings › «Пройти опитування ще раз»', () =>
 });
 
 describe('The Feed Notice of a later question', () => {
-  it('sets the Daily Goal picked, 20 until the reader picks another', async () => {
+  it("sets the Daily Goal picked, the Edition's default until the reader picks another", async () => {
+    await openWith(shippedEdition({ dailyGoal: 30 }));
     await render('dailyGoalChoice');
-    expect(screen.getByTestId('later-question-daily-goal-20')).toBeSelected();
+    expect(screen.getByTestId('later-question-daily-goal-30')).toBeSelected();
 
-    await fireEvent.press(screen.getByTestId('later-question-daily-goal-30'));
+    await fireEvent.press(screen.getByTestId('later-question-daily-goal-50'));
     await press(feedNotices.laterQuestions.done);
 
-    expect(composition.xpLog.state.dailyGoal?.goal).toBe(30);
+    expect(composition.xpLog.state.dailyGoal?.goal).toBe(50);
   });
 
   it('keeps the Rarity Floor as it was with «Пізніше» on the self-rating', async () => {

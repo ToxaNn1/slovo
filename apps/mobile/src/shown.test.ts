@@ -27,6 +27,7 @@ const everything: Shown = {
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
+  celebrations: true,
   streakBreak: true,
   badges: true,
   progressShareCards: true,
@@ -39,7 +40,7 @@ const everything: Shown = {
   moods: true,
   wordOfTheDayArchive: true,
   rarityTest: true,
-  questionnaire: { selfRating: true },
+  questionnaire: { whoWhy: true, selfRating: true },
 };
 
 interface Case {
@@ -104,11 +105,21 @@ describe('what the reader is shown', () => {
     ],
     [
       'no «Пройти тест ще раз» with the Rarity Floor it sets off',
-      { off: ['rarityFloor'], shown: { rarityTest: false, questionnaire: { selfRating: false } } },
+      {
+        off: ['rarityFloor'],
+        shown: { rarityTest: false, questionnaire: { whoWhy: true, selfRating: false } },
+      },
     ],
     [
-      'no «Пройти опитування ще раз» with the later questions off',
-      { off: ['laterQuestions'], shown: { questionnaire: undefined } },
+      'the self-rating alone in «Пройти опитування ще раз» with the questionnaire off',
+      { off: ['questionnaire'], shown: { questionnaire: { whoWhy: false, selfRating: true } } },
+    ],
+    [
+      'no «Пройти опитування ще раз» with the questionnaire and the Rarity Floor off',
+      {
+        off: ['questionnaire', 'rarityFloor'],
+        shown: { rarityTest: false, questionnaire: undefined },
+      },
     ],
     [
       'no Share Card button with Share Cards off',
@@ -179,12 +190,13 @@ describe('what the reader is shown', () => {
       { off: ['selfCheck'], selfCheck: true, shown: { selfCheck: false, selfCheckSetting: false } },
     ],
     [
-      'the statistics without the Streak, and no XP bar, when the reader hides the counters',
+      'the statistics without the Streak, no XP bar and no celebrations, when the reader hides the counters',
       {
         noCounters: true,
         shown: {
           stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
           xpBar: false,
+          celebrations: false,
           progressShareCards: false,
         },
       },
@@ -205,11 +217,12 @@ describe('what the reader is shown', () => {
       },
     ],
     [
-      'no XP bar and no Break with the XP log off',
+      'no XP bar, no celebrations and no Break with the XP log off',
       {
         off: ['xpLog'],
         shown: {
           xpBar: false,
+          celebrations: false,
           streakBreak: false,
           dailyGoal: false,
           badges: false,

@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { loadEdition, type Edition, type FeatureSwitch } from '@slovo/core';
+import { loadEdition, type AnalyticsPort, type Edition, type FeatureSwitch } from '@slovo/core';
 import { Linking } from 'react-native';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
@@ -10,7 +10,13 @@ import SettingsScreen from '../app/settings';
 import WidgetGuideScreen from '../app/settings/widgets';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import {
+  opened,
+  recordedAnalytics,
+  settingsAt,
+  switchedTo,
+  testShell,
+} from '../shell/test-support';
 import { SettingsProvider } from './settings';
 
 const { config } = activeEditionFiles;
@@ -34,10 +40,14 @@ const metrics = {
 /**
  * Settings as the app routes to it, over the Edition in effect with the
  * switches named set as given and the settings as they ship, with the widget guide a
- * push away. Gives the settings, which keep what the screen changes.
+ * push away. Gives the settings, which keep what the screen changes and tell
+ * `analytics` of them when a test gives a port.
  */
-async function renderSettings(switches: Partial<Record<FeatureSwitch, boolean>> = {}) {
-  const settings = await settingsAt();
+async function renderSettings(
+  switches: Partial<Record<FeatureSwitch, boolean>> = {},
+  analytics?: AnalyticsPort,
+) {
+  const settings = await settingsAt({}, analytics);
   const shell = testShell({
     composition: opened(await testShell().composition.opened()),
     remoteSwitches: switchedTo(editionWith(switches)),
@@ -122,6 +132,43 @@ describe('Settings › «Сезонний декор»', () => {
 });
 
 describe('Settings › «Ділитися анонімною статистикою»', () => {
+  it('shows its switch while the Community Counters are on and Analytics is off', async () => {
+    await renderSettings({ communityCounters: true, analytics: false });
+
+    expect(
+      screen.getByTestId('settings-share-counters', { includeHiddenElements: true }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }),
+    ).toBeOnTheScreen();
+  });
+
+  it('shows its switch while Analytics is on and the Community Counters are off', async () => {
+    await renderSettings({ communityCounters: false, analytics: true });
+
+    expect(
+      screen.getByTestId('settings-share-counters', { includeHiddenElements: true }),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }),
+    ).toBeOnTheScreen();
+  });
+
+  it('turns sharing off from its switch, which stops Analytics and tells it nothing more', async () => {
+    const analytics = recordedAnalytics();
+    const settings = await renderSettings({}, analytics.port);
+
+    await fireEvent(
+      screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }),
+      'valueChange',
+      false,
+    );
+
+    expect((await settings.read()).shareCounters).toBe(false);
+    expect(analytics.stopped()).toBe(true);
+    expect(analytics.events).toEqual([]);
+  });
+
   it('turns sharing the Community Counters off from its switch, which explains what it shares', async () => {
     const settings = await renderSettings();
 
@@ -181,5 +228,21 @@ describe('Settings › «Без лічильників»', () => {
     await fireEvent(screen.getByRole('switch', { name: 'Приховати Серію' }), 'valueChange', true);
 
     expect((await settings.read()).noCounters).toBe(true);
+  });
+});
+
+describe('Settings › Профіль and Значки', () => {
+  it('shows the «Профіль» and «Значки» rows while their switches are on', async () => {
+    await renderSettings();
+
+    expect(screen.getByTestId('settings-row-profile')).toBeOnTheScreen();
+    expect(screen.getByTestId('settings-row-badges')).toBeOnTheScreen();
+  });
+
+  it('shows neither row while the Edition turns the Profile and the Badges off', async () => {
+    await renderSettings({ profile: false, badges: false });
+
+    expect(screen.queryByTestId('settings-row-profile')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('settings-row-badges')).not.toBeOnTheScreen();
   });
 });
