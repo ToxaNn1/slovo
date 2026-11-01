@@ -55,6 +55,7 @@ import { NORMAL_KIND_WEIGHTS, openMix, type Mix } from './entries/mix';
 import type { NotificationScheduling } from './notifications/notification-plan';
 import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
+import { openQuestionnaire, type Questionnaire } from './questionnaire/questionnaire';
 import type { LocalDate } from './local-date';
 import type { Backend, Clock, ContentReadPort, NotificationKind, Random, Schedule } from './ports';
 import { openActiveDays } from './progress/active-days';
@@ -152,6 +153,8 @@ export interface Composition extends Hiding {
    * permission, and its sample notification, taken from the plan.
    */
   readonly onboarding: Onboarding;
+  /** The questionnaire past the onboarding: its later questions through Feed Notices and the retake in Settings (ADR 0067). */
+  readonly questionnaire: Questionnaire;
   /**
    * Search, over every live Entry that is not Hidden, the Mix and the Rarity
    * Floor aside; nothing while the Edition turns it off (ADR 0054). Open what
@@ -465,6 +468,7 @@ export async function openComposition({
     entries.correctionCategories(),
   ]);
   const mix = await openMix({ edition, categories: { word, correction }, userState, eligibility });
+  const later = openQuestionnaire({ edition, userState, clock, mix, xpLog, analytics });
   const feed = await openFeed({
     entries,
     userState,
@@ -489,6 +493,7 @@ export async function openComposition({
       createFirstWeek({ edition, userState, activeDays }),
       createYesterday({ edition, entries, hiddenEntries, userState }),
       createLevelMilestones({ edition, xpLog, userState }),
+      later.notices,
       enoughForToday,
       // Without a scheduler there is no device to ask.
       scheduling === undefined
@@ -652,6 +657,7 @@ export async function openComposition({
     notifications,
     game,
     onboarding,
+    questionnaire: later.questionnaire,
     search: createSearch({ content, edition, userState }),
     recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,

@@ -53,7 +53,8 @@ const dailyGoalSegments = dailyGoals.map((dailyGoal) => ({
 /**
  * Settings: SLOVO ID when the Account is on in effect, the Theme, the font
  * size, the Daily Goal while it is on in effect, «Пройти тест ще раз» while
- * the Rarity Test is, «Сезонний декор» while its Feature Switch is,
+ * the Rarity Test is, «Пройти опитування ще раз» while the later questions
+ * are, «Сезонний декор» while its Feature Switch is,
  * «Ділитися анонімною статистикою» with its privacy policy link while the
  * Community Counters are, and the rows of the design.
  */
@@ -202,6 +203,15 @@ export default function SettingsScreen() {
                 label={strings.rows.badges}
                 onPress={() => {
                   openScreen('/settings/badges');
+                }}
+              />
+            )}
+            {shown.questionnaire !== undefined && (
+              <NavigationRow
+                testID="settings-row-questionnaire"
+                label={strings.rows.questionnaire}
+                onPress={() => {
+                  openScreen('/settings/questionnaire');
                 }}
               />
             )}

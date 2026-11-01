@@ -95,6 +95,10 @@ const testEditionConfig = {
       { id: 'write-correctly', label: 'Write correctly', kindWeights: { correction: 'more' } },
       { id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } },
     ],
+    selfRating: [
+      { id: 'few', label: 'Few', rarityFloor: 1, offerRarityTest: false },
+      { id: 'many', label: 'Many', rarityFloor: 3, offerRarityTest: true },
+    ],
   },
   badges: [],
 };

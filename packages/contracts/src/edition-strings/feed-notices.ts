@@ -74,6 +74,26 @@ export const FeedNoticesStringsSchema = z.strictObject({
     /** What it suggests: a wider rarity or a new Category. */
     message: TextSchema,
   }),
+  /**
+   * The later questions of the questionnaire (ADR 0067), each a Feed Notice
+   * offered once: the Daily Goal, the interests, the self-rating, the Rarity
+   * Test offer and the Mix review. The goals, the Categories and the
+   * self-rating options come from the Edition.
+   */
+  laterQuestions: z.strictObject({
+    /** Puts the question off and keeps what it sets as it is. */
+    later: TextSchema,
+    /** Opens the Rarity Test or the Mix. */
+    open: TextSchema,
+    /** Sets the Daily Goal or the interests picked. */
+    done: TextSchema,
+    dailyGoalChoice: z.strictObject({ title: TextSchema, text: TextSchema }),
+    /** The Word Categories not picked become Hidden Categories. */
+    interests: z.strictObject({ title: TextSchema, text: TextSchema }),
+    selfRating: z.strictObject({ title: TextSchema }),
+    rarityTest: z.strictObject({ title: TextSchema, text: TextSchema }),
+    mixReview: z.strictObject({ title: TextSchema, text: TextSchema }),
+  }),
   /** The Community Word card. */
   communityWord: z.strictObject({
     title: TextSchema,

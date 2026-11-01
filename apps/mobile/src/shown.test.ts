@@ -36,6 +36,7 @@ const everything: Shown = {
   moods: true,
   wordOfTheDayArchive: true,
   rarityTest: true,
+  questionnaire: { selfRating: true },
 };
 
 interface Case {
@@ -93,7 +94,11 @@ describe('what the reader is shown', () => {
     ],
     [
       'no «Пройти тест ще раз» with the Rarity Floor it sets off',
-      { off: ['rarityFloor'], shown: { rarityTest: false } },
+      { off: ['rarityFloor'], shown: { rarityTest: false, questionnaire: { selfRating: false } } },
+    ],
+    [
+      'no «Пройти опитування ще раз» with the later questions off',
+      { off: ['laterQuestions'], shown: { questionnaire: undefined } },
     ],
     [
       'no Share Card button with Share Cards off',

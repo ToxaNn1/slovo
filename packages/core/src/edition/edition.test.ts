@@ -89,6 +89,7 @@ const validConfig = {
     eveningNotification: true,
     notificationFarewell: true,
     notificationExplainer: true,
+    laterQuestions: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -147,6 +148,7 @@ const validConfig = {
       { id: 'working', label: 'Working', rarityCeiling: 5 },
     ],
     why: [{ id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } }],
+    selfRating: [{ id: 'few', label: 'Few', rarityFloor: 1, offerRarityTest: false }],
   },
   badges: [
     { id: 'week', name: 'Week', condition: { kind: 'streak', days: 7 } },

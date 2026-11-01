@@ -51,6 +51,8 @@ export const SettingsStringsSchema = z.strictObject({
     streakBreak: TextSchema,
     /** The row that opens the Badges screen, e.g. «Відзнаки». */
     badges: TextSchema,
+    /** The row that retakes the questionnaire, e.g. «Пройти опитування ще раз». */
+    questionnaire: TextSchema,
   }),
   /** The Badges screen: each Badge earned with its date, or its progress (ADR 0066). */
   badges: z.strictObject({

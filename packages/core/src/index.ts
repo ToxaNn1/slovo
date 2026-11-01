@@ -45,7 +45,7 @@ export {
   type TipFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
-export type { FeedNotice } from './feed-notice';
+export { LATER_QUESTIONS, type FeedNotice, type LaterQuestion } from './feed-notice';
 export { type FirstWeekDay } from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
@@ -157,7 +157,12 @@ export {
   type MixKindWeights,
   type MixState,
 } from './entries/mix';
-export { type OnboardingStep, type QuestionnaireOption } from './onboarding/onboarding';
+export { type OnboardingStep } from './onboarding/onboarding';
+export type {
+  OptionQuestion,
+  Questionnaire,
+  QuestionnaireOption,
+} from './questionnaire/questionnaire';
 export { type RarityTestAnswer, type RarityTestWord } from './mix/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
