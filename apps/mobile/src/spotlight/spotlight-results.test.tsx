@@ -1,8 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
+import {
+  loadEdition,
+  openComposition,
+  systemRandom,
+  type Composition,
+  type Haptics,
+} from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, type Haptics } from '@slovo/ui';
+import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
 import { Linking, Text } from 'react-native';
