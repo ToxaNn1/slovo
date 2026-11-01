@@ -14,13 +14,13 @@ const strings = testStrings({
 
 const zeroInsets = { top: 0, left: 0, right: 0, bottom: 0 };
 
-function renderBar(today: number, onPress: () => void) {
+function renderBar(today: number, onPress: () => void, goal?: number) {
   return render(
     <SafeAreaProvider
       initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: zeroInsets }}
     >
       <EditionProvider edition={{ locale: 'uk' }} strings={strings}>
-        <XpBar today={today} onPress={onPress} />
+        <XpBar today={today} goal={goal} onPress={onPress} />
       </EditionProvider>
     </SafeAreaProvider>,
   );
@@ -33,6 +33,13 @@ describe('XpBar', () => {
     expect(screen.getByRole('button', { name: 'Experience: 12 XP today' })).toBeOnTheScreen();
     expect(screen.getByText('12 XP')).toBeOnTheScreen();
     expect(screen.getByTestId('xp-bar')).toHaveProp('accessibilityHint', 'Opens the Game');
+  });
+
+  it('draws today’s XP over the Daily Goal when it has one', async () => {
+    await renderBar(12, () => undefined, 20);
+
+    expect(screen.getByRole('button', { name: 'Experience: 12/20 XP today' })).toBeOnTheScreen();
+    expect(screen.getByText('12/20 XP')).toBeOnTheScreen();
   });
 
   it('calls back on a tap', async () => {

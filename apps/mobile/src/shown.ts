@@ -77,8 +77,8 @@ export interface Shown {
   readonly quickQuestion: boolean;
   /** The Sync status line of the SLOVO ID screen. */
   readonly sync: boolean;
-  /** The Daily Limit choice of Settings. */
-  readonly dailyLimit: boolean;
+  /** The Daily Goal choice of Settings and the goal on the XP bar; it lives in the XP log. */
+  readonly dailyGoal: boolean;
   /** The Search button of the «Головна» header, which opens the Search screen. */
   readonly search: boolean;
   /** The 🎲 «Слово під настрій» of the «Головна» header, which opens the moods. */
@@ -142,7 +142,7 @@ export function shownOf({
     streakBreak: on('xpLog') && on('streakBreak'),
     quickQuestion: on('game') && on('quickQuestion'),
     sync: on('sync'),
-    dailyLimit: on('dailyLimit'),
+    dailyGoal: on('xpLog') && on('dailyGoal'),
     search: on('search'),
     moods: on('moods'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),

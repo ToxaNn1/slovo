@@ -35,6 +35,10 @@ export interface AnalyticsEvents {
   readonly quickQuestionAnswered: { readonly right: boolean };
   /** The reader reached a new Level (ADR 0066). */
   readonly levelReached: { readonly level: number };
+  /** The reader changed the Daily Goal (ADR 0066). */
+  readonly dailyGoalChanged: { readonly goal: number };
+  /** Today's Daily Goal was met. */
+  readonly dailyGoalMet: { readonly goal: number };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 

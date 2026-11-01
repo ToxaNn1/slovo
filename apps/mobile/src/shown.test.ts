@@ -30,7 +30,7 @@ const everything: Shown = {
   streakBreak: true,
   quickQuestion: true,
   sync: true,
-  dailyLimit: true,
+  dailyGoal: true,
   search: true,
   moods: true,
   wordOfTheDayArchive: true,
@@ -82,8 +82,8 @@ describe('what the reader is shown', () => {
     ],
     ['no Game Review with its switch off', { off: ['gameReview'], shown: { gameReview: false } }],
     [
-      'no Daily Limit choice with the Daily Limit off',
-      { off: ['dailyLimit'], shown: { dailyLimit: false } },
+      'no Daily Goal choice with the Daily Goal off',
+      { off: ['dailyGoal'], shown: { dailyGoal: false } },
     ],
     ['no 🎲 «Слово під настрій» with moods off', { off: ['moods'], shown: { moods: false } }],
     [
@@ -187,7 +187,7 @@ describe('what the reader is shown', () => {
     ],
     [
       'no XP bar and no Break with the XP log off',
-      { off: ['xpLog'], shown: { xpBar: false, streakBreak: false } },
+      { off: ['xpLog'], shown: { xpBar: false, streakBreak: false, dailyGoal: false } },
     ],
     ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
     [

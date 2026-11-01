@@ -14,7 +14,7 @@ export {
  */
 export {
   CategorySchema,
-  DailyLimitSchema,
+  DailyGoalSchema,
   DistractorRuleSchema,
   EditionConfigSchema,
   FeatureSwitchesSchema,
@@ -29,7 +29,7 @@ export {
   TimeOfDaySchema,
   UserSettingDefaultsConfigSchema,
   type Category,
-  type DailyLimit,
+  type DailyGoal,
   type DistractorRule,
   type EditionConfig,
   type FeatureSwitch,

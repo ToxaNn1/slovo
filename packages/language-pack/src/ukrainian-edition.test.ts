@@ -54,7 +54,7 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('yesterday')).toBe(true);
     expect(edition.isFeatureEnabled('wordOfTheDayArchive')).toBe(true);
     expect(edition.isFeatureEnabled('activeDaysCalendar')).toBe(true);
-    expect(edition.isFeatureEnabled('dailyLimit')).toBe(true);
+    expect(edition.isFeatureEnabled('dailyGoal')).toBe(true);
     expect(edition.isFeatureEnabled('politePause')).toBe(true);
     expect(edition.isFeatureEnabled('firstWeek')).toBe(true);
     expect(edition.isFeatureEnabled('widgetHint')).toBe(true);
@@ -78,7 +78,7 @@ describe('the UA Edition', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      dailyLimit: 'off',
+      dailyGoal: 20,
       notificationTimes: ['09:00', '13:00', '19:00'],
       mix: {
         categoryIds: 'all',

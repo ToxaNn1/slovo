@@ -68,8 +68,8 @@ describe('the 0.4 user-state records', () => {
   it('reads the closed Feed Notices of a day only when each is a Feed Notice', () => {
     const { feedNoticesClosed } = userStateRecords;
     expect(
-      feedNoticesClosed.decode('{"date":"2026-10-31","notices":["weeklyRecap","dailyLimit"]}'),
-    ).toEqual({ date: '2026-10-31', notices: ['weeklyRecap', 'dailyLimit'] });
+      feedNoticesClosed.decode('{"date":"2026-10-31","notices":["weeklyRecap","enoughForToday"]}'),
+    ).toEqual({ date: '2026-10-31', notices: ['weeklyRecap', 'enoughForToday'] });
     expect(
       feedNoticesClosed.decode('{"date":"2026-10-31","notices":["weeklyRecap","banner"]}'),
     ).toBeUndefined();

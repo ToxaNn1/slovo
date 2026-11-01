@@ -1,4 +1,4 @@
-import type { DailyLimit, FontSize, Theme } from '@slovo/contracts';
+import type { FontSize, Theme } from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
 import { forgetUnsentCounters } from '../community-counters/counter-deltas';
@@ -28,8 +28,6 @@ export interface UserSettings {
    * waits to be sent.
    */
   readonly shareCounters: boolean;
-  /** The Daily Limit: off, or the distinct Entries Seen on a local day before the Feed says «enough». */
-  readonly dailyLimit: DailyLimit;
 }
 
 /**
@@ -95,7 +93,6 @@ export function createSettings({
       selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? all.selfCheck,
       seasonalDecor: (await userState.read(userStateRecords.seasonalDecor)) ?? all.seasonalDecor,
       shareCounters: (await userState.read(userStateRecords.shareCounters)) ?? all.shareCounters,
-      dailyLimit: (await userState.read(userStateRecords.dailyLimit)) ?? all.dailyLimit,
     };
   }
 
@@ -114,9 +111,6 @@ export function createSettings({
           ...('selfCheck' in changes ? userStateRecords.selfCheck.change(changes.selfCheck) : []),
           ...('seasonalDecor' in changes
             ? userStateRecords.seasonalDecor.change(changes.seasonalDecor)
-            : []),
-          ...('dailyLimit' in changes
-            ? userStateRecords.dailyLimit.change(changes.dailyLimit)
             : []),
           ...('shareCounters' in changes
             ? userStateRecords.shareCounters.change(changes.shareCounters)

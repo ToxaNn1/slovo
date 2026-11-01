@@ -13,11 +13,15 @@ const mockNavigate = jest.fn<(href: string) => void>();
 
 jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: mockNavigate }) }));
 
-/** The Edition in effect: as it ships, or with the XP log off. */
-const editionWith = (switches: { xpLog: boolean; noCounters: boolean }): typeof edition => ({
+/** The Edition in effect: as it ships, or with the XP log, «Без лічильників» or the Daily Goal off. */
+const editionWith = (switches: {
+  xpLog: boolean;
+  noCounters: boolean;
+  dailyGoal: boolean;
+}): typeof edition => ({
   ...edition,
   isFeatureEnabled: (feature) =>
-    feature === 'xpLog' || feature === 'noCounters'
+    feature === 'xpLog' || feature === 'noCounters' || feature === 'dailyGoal'
       ? switches[feature]
       : edition.isFeatureEnabled(feature),
 });
@@ -32,11 +36,16 @@ const metrics = {
  * in effect and the counters shown unless a test says otherwise. Gives back
  * the composition, so a test awards XP as the Game does.
  */
-async function renderBar({ xpLog = true, noCounters = false, noCountersSwitch = true } = {}) {
+async function renderBar({
+  xpLog = true,
+  dailyGoal = true,
+  noCounters = false,
+  noCountersSwitch = true,
+} = {}) {
   const composition = await testShell().composition.opened();
   const shell = testShell({
     composition: opened(composition),
-    remoteSwitches: switchedTo(editionWith({ xpLog, noCounters: noCountersSwitch })),
+    remoteSwitches: switchedTo(editionWith({ xpLog, noCounters: noCountersSwitch, dailyGoal })),
     settings: await settingsAt({ noCounters }),
   });
   await render(
@@ -54,9 +63,9 @@ async function renderBar({ xpLog = true, noCounters = false, noCountersSwitch = 
 }
 
 describe('the XP bar over the Feed', () => {
-  it('shows today’s XP as the Game awards it', async () => {
+  it('shows today’s XP over the Daily Goal as the Game awards it', async () => {
     const composition = await renderBar();
-    expect(screen.getByRole('button', { name: 'Досвід: сьогодні 0 XP' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Досвід: сьогодні 0/20 XP' })).toBeOnTheScreen();
 
     await act(async () => {
       composition.xpLog.award({ source: 'game-round' }).commit();
@@ -64,8 +73,14 @@ describe('the XP bar over the Feed', () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByRole('button', { name: 'Досвід: сьогодні 2 XP' })).toBeOnTheScreen();
-    expect(screen.getByText('2 XP')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Досвід: сьогодні 2/20 XP' })).toBeOnTheScreen();
+    expect(screen.getByText('2/20 XP')).toBeOnTheScreen();
+  });
+
+  it('shows today’s XP alone while the Daily Goal is off in effect', async () => {
+    await renderBar({ dailyGoal: false });
+
+    expect(screen.getByRole('button', { name: 'Досвід: сьогодні 0 XP' })).toBeOnTheScreen();
   });
 
   it('opens the Game on a tap', async () => {

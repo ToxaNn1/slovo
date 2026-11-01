@@ -53,7 +53,6 @@
     "yesterday": true,
     "wordOfTheDayArchive": true,
     "activeDaysCalendar": true,
-    "dailyLimit": true,
     "politePause": true,
     "firstWeek": true,
     "widgetHint": true,
@@ -76,13 +75,15 @@
     "streakBreak": true,
     "quickQuestion": true,
     "levels": true,
-    "noCounters": true
+    "noCounters": true,
+    "dailyGoal": true,
+    "enoughForToday": true
   },
   "userSettingDefaults": {
     "theme": "system",
     "fontSize": "M",
     "vibration": true,
-    "dailyLimit": "off",
+    "dailyGoal": 20,
     "notificationTimes": ["09:00"],
     "mix": {
       "categories": "all",

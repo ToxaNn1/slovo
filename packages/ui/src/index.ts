@@ -13,7 +13,7 @@ export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
 export {
-  DailyLimitCard,
+  EnoughForTodayCard,
   FeedNoticeCard,
   FirstWeekCard,
   LevelMilestoneCard,

@@ -1,4 +1,4 @@
-import type { XpTable } from '@slovo/contracts';
+import type { DailyGoal, XpTable } from '@slovo/contracts';
 
 import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
@@ -14,6 +14,21 @@ import { levelOf, type LevelState } from './levels';
 
 const { xpLog: xpRecords } = userStateRecords;
 
+/** The Daily Goal of a local day and whether the day met it (ADR 0066). */
+export interface DailyGoalState {
+  readonly goal: DailyGoal;
+  /** Whether the day's XP reached the goal in force at some moment of the day: a day met stays met. */
+  readonly met: boolean;
+}
+
+/** One local day as the XP log derives it. */
+export interface XpDay {
+  /** The XP earned on the day. */
+  readonly xp: number;
+  /** The day's Daily Goal; `null` while the Daily Goal is off. */
+  readonly dailyGoal: DailyGoalState | null;
+}
+
 /** What the XP log hands over: the XP derived from its records, never stored. */
 export interface XpLogState {
   /** All XP ever earned in this Edition. */
@@ -22,6 +37,8 @@ export interface XpLogState {
   readonly today: number;
   /** The Level the total reaches, while the Edition's `levels` Feature Switch is on (ADR 0066). */
   readonly level: LevelState | undefined;
+  /** Today's Daily Goal and whether it is met; `null` while the Daily Goal is off. */
+  readonly dailyGoal: DailyGoalState | null;
 }
 
 /** What the XP log holds by local date `YYYY-MM-DD`, for the Active Days and the Streak. */
@@ -43,7 +60,8 @@ export interface XpLogAppend {
 
 /**
  * The XP log (ADR 0066): an append-only log of the XP each learning action
- * earned, kept per Edition, which the total and today's XP are derived from.
+ * earned and of the Daily Goals set, kept per Edition, which the total,
+ * today's XP and each day's goal state are derived from.
  * The amounts and the Review cap come from the Edition's XP table; the log
  * syncs as a union by record id, so two devices agree and no record doubles.
  * The Daily Crossword of a date earns once, and Review answers count up to
@@ -72,6 +90,19 @@ export interface XpLog {
   reachedOn(total: number): string | undefined;
   /** Calls `listener` after each change of the XP. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
+  /** The XP and the Daily Goal of a local date `YYYY-MM-DD`: a past day keeps the goal it had. */
+  dayOf(date: string): XpDay;
+  /**
+   * Sets the Daily Goal from today on: today's goal changes, a day already
+   * met stays met, and the earlier days keep theirs. Nothing while the Daily
+   * Goal is off.
+   */
+  setDailyGoal(goal: DailyGoal): Promise<void>;
+  /**
+   * Calls `listener` once when today's Daily Goal becomes met: the
+   * celebration's trigger. Returns the call that stops it.
+   */
+  subscribeGoalMet(listener: () => void): () => void;
 }
 
 /** The award of an action that earns nothing: no change to write, nothing to make in memory. */
@@ -121,22 +152,62 @@ export async function openXpLog({
   dayTurned,
   analytics,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels'>;
-  userState: Pick<UserState, 'list'>;
+  edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels' | 'userSettingDefaults'>;
+  userState: Pick<UserState, 'list' | 'write'>;
   clock: Clock;
   random: Random;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
+  /** Where the Level's and the Daily Goal's events go (ADR 0068). */
   analytics: Pick<Analytics, 'track'>;
 }): Promise<XpLog> {
   const on = edition.isFeatureEnabled('xpLog');
   const levelsOn = on && edition.isFeatureEnabled('levels');
+  const goalOn = on && edition.isFeatureEnabled('dailyGoal');
   const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
   const subscribers = createSubscribers();
+  const goalMetSubscribers = createSubscribers();
   /** Tells the records of one session apart when the clock and the random source stand still. */
   let sequence = 0;
 
-  function derive(): XpLogState & XpLogDays & { reviewToday: number } {
-    const today = todayKey(clock);
+  /** The amount a record counts for: Review XP counts up to the daily cap of its date. */
+  function counted(record: Extract<XpRecord, { kind: 'xp' }>, review: Map<string, number>): number {
+    if (record.source !== 'review-answer') return record.amount;
+    const before = review.get(record.date) ?? 0;
+    const amount = Math.max(0, Math.min(record.amount, edition.xp.reviewDailyCap - before));
+    review.set(record.date, before + amount);
+    return amount;
+  }
+
+  function dayOf(date: string): XpDay {
+    // The goal in force when the day starts: the last one set before it, else the Edition's default.
+    let before: Extract<XpRecord, { kind: 'daily-goal' }> | undefined;
+    const ofDay: XpRecord[] = [];
+    for (const record of records.values()) {
+      if (record.date === date) ofDay.push(record);
+      else if (
+        record.kind === 'daily-goal' &&
+        record.date < date &&
+        (before === undefined ||
+          record.date > before.date ||
+          (record.date === before.date && record.at > before.at))
+      )
+        before = record;
+    }
+    let goal = before?.goal ?? edition.userSettingDefaults.dailyGoal;
+    let xp = 0;
+    let met = false;
+    const review = new Map<string, number>();
+    // In time order, the day is met once its XP reaches the goal in force at that moment.
+    for (const record of ofDay.sort((one, other) => (one.at < other.at ? -1 : 1))) {
+      if (record.kind === 'xp') xp += counted(record, review);
+      else if (record.kind === 'daily-goal') goal = record.goal;
+      if (xp >= goal) met = true;
+    }
+    return { xp, dailyGoal: goalOn ? { goal, met } : null };
+  }
+
+  function derive(): XpLogDays & { date: string; state: XpLogState; reviewToday: number } {
+    const date = todayKey(clock);
     let total = 0;
     const byDate = new Map<string, number>();
     const frozen = new Set<string>();
@@ -151,40 +222,47 @@ export async function openXpLog({
         case 'break':
           breaks.set(record.date, Math.max(breaks.get(record.date) ?? 0, record.days));
           break;
+        case 'daily-goal':
+          break;
         case 'xp': {
-          let amount = record.amount;
-          if (record.source === 'review-answer') {
-            const before = review.get(record.date) ?? 0;
-            amount = Math.max(0, Math.min(amount, edition.xp.reviewDailyCap - before));
-            review.set(record.date, before + amount);
-          }
+          const amount = counted(record, review);
           total += amount;
           byDate.set(record.date, (byDate.get(record.date) ?? 0) + amount);
         }
       }
     }
+    const { xp, dailyGoal } = dayOf(date);
     return {
-      total,
-      today: byDate.get(today) ?? 0,
-      reviewToday: review.get(today) ?? 0,
-      level: levelsOn ? levelOf(edition.levels, total) : undefined,
+      date,
+      state: {
+        total,
+        today: xp,
+        dailyGoal,
+        level: levelsOn ? levelOf(edition.levels, total) : undefined,
+      },
+      reviewToday: review.get(date) ?? 0,
       byDate,
       frozen,
       breaks,
     };
   }
   let derived = derive();
-  let state: XpLogState = { total: derived.total, today: derived.today, level: derived.level };
 
   function change(): void {
-    const before = state.level?.level;
+    const wasMet = derived.state.dailyGoal?.met === true;
+    const previousDate = derived.date;
+    const before = derived.state.level?.level;
     derived = derive();
-    state = { total: derived.total, today: derived.today, level: derived.level };
+    const { state } = derived;
     const after = state.level?.level;
     if (before !== undefined && after !== undefined && after > before) {
       void analytics.track('levelReached', { level: after });
     }
     subscribers.tell();
+    if (state.dailyGoal?.met === true && !wasMet && derived.date === previousDate) {
+      goalMetSubscribers.tell();
+      void analytics.track('dailyGoalMet', { goal: state.dailyGoal.goal }).catch(() => undefined);
+    }
   }
 
   function reachedOn(total: number): string | undefined {
@@ -261,11 +339,27 @@ export async function openXpLog({
     };
   }
 
+  async function setDailyGoal(goal: DailyGoal): Promise<void> {
+    if (!goalOn) return;
+    const at = clock.now();
+    const id = newId(at);
+    const record: XpRecord = {
+      kind: 'daily-goal',
+      date: todayKey(clock),
+      at: at.toISOString(),
+      goal,
+    };
+    await userState.write(xpRecords.record(id).change(record));
+    records.set(id, record);
+    change();
+    await analytics.track('dailyGoalChanged', { goal }).catch(() => undefined);
+  }
+
   dayTurned.subscribe(change);
 
   return {
     get state() {
-      return state;
+      return derived.state;
     },
     get days() {
       return derived;
@@ -275,5 +369,8 @@ export async function openXpLog({
     startBreak,
     reachedOn,
     subscribe: subscribers.subscribe,
+    dayOf,
+    setDailyGoal,
+    subscribeGoalMet: goalMetSubscribers.subscribe,
   };
 }

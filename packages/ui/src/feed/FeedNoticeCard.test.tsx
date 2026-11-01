@@ -1,6 +1,6 @@
 import type { Haptics } from '@slovo/core';
 import {
-  DailyLimitCard,
+  EnoughForTodayCard,
   EditionProvider,
   FirstWeekCard,
   HapticsProvider,
@@ -15,7 +15,7 @@ import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   feedNotices: {
-    dailyLimit: { message: 'Enough for today. Come back tomorrow', keepGoing: 'Keep going' },
+    enoughForToday: { message: 'Maybe enough for today?', keepGoing: 'Keep going' },
     levelMilestone: {
       title: 'Level {level}: {name}',
       message: 'Try rarer words or a new Category in the Mix.',
@@ -82,31 +82,31 @@ describe('the level-milestone card', () => {
   });
 });
 
-describe('the Daily Limit card', () => {
+describe('the «enough for today» card', () => {
   it('asks the reader to stop for today, with a button to keep going', async () => {
-    await renderFeed(<DailyLimitCard />);
+    await renderFeed(<EnoughForTodayCard />);
 
-    expect(screen.getByTestId('feed-notice-dailyLimit')).toBeTruthy();
-    expect(screen.getByText('Enough for today. Come back tomorrow')).toBeTruthy();
+    expect(screen.getByTestId('feed-notice-enoughForToday')).toBeTruthy();
+    expect(screen.getByText('Maybe enough for today?')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Keep going' })).toBeTruthy();
   });
 
   it('reads its text to VoiceOver as one element, then the button', async () => {
-    await renderFeed(<DailyLimitCard />);
+    await renderFeed(<EnoughForTodayCard />);
 
-    expect(screen.getByLabelText('Enough for today. Come back tomorrow')).toBeTruthy();
+    expect(screen.getByLabelText('Maybe enough for today?')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Keep going' })).toBeTruthy();
   });
 
   it('turns to the next card on «Keep going», as a swipe would, so it leaves the screen', async () => {
     const onIndexChange = jest.fn();
-    await renderFeed(<DailyLimitCard />, onIndexChange);
+    await renderFeed(<EnoughForTodayCard />, onIndexChange);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Keep going' }));
 
     expect(onIndexChange).toHaveBeenCalledWith(1);
     expect(screen.getByText('Next')).toBeTruthy();
-    expect(screen.queryByTestId('feed-notice-dailyLimit')).toBeNull();
+    expect(screen.queryByTestId('feed-notice-enoughForToday')).toBeNull();
   });
 });
 
