@@ -121,13 +121,24 @@ export default function SettingsScreen() {
         )}
         <View style={styles.section}>
           <SettingsGroup>
-            {shown.stats !== undefined && (
+            {shown.countersSetting === 'noCounters' && (
+              <SwitchRow
+                testID="settings-no-counters"
+                label={strings.noCounters.title}
+                subtitle={strings.noCounters.explanation}
+                value={current.noCounters}
+                onChange={(noCounters) => {
+                  update({ noCounters });
+                }}
+              />
+            )}
+            {shown.countersSetting === 'hideStreak' && (
               <SwitchRow
                 testID="settings-hide-streak"
                 label={strings.hideStreak}
-                value={current.hideStreak}
-                onChange={(hideStreak) => {
-                  update({ hideStreak });
+                value={current.noCounters}
+                onChange={(noCounters) => {
+                  update({ noCounters });
                 }}
               />
             )}

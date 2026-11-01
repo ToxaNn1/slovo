@@ -38,7 +38,7 @@ const everything: Shown = {
 
 interface Case {
   readonly off?: readonly FeatureSwitch[];
-  readonly hideStreak?: boolean;
+  readonly noCounters?: boolean;
   readonly selfCheck?: boolean;
   readonly correctionsInMix?: boolean;
   readonly idiomsInMix?: boolean;
@@ -162,7 +162,7 @@ describe('what the reader is shown', () => {
     [
       'the statistics without the Streak, and no XP bar, when the reader hides the counters',
       {
-        hideStreak: true,
+        noCounters: true,
         shown: {
           stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
           xpBar: false,
@@ -252,7 +252,7 @@ describe('what the reader is shown', () => {
       _,
       {
         off = [],
-        hideStreak = false,
+        noCounters = false,
         selfCheck = false,
         correctionsInMix = true,
         idiomsInMix = true,
@@ -264,7 +264,7 @@ describe('what the reader is shown', () => {
       expect(
         shownOf({
           edition: editionWithout(...off),
-          settings: { hideStreak, selfCheck },
+          settings: { noCounters, selfCheck },
           mix: {
             kinds: {
               correction: correctionsInMix,

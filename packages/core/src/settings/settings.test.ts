@@ -17,7 +17,7 @@ describe('settings', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -27,13 +27,13 @@ describe('settings', () => {
 
   it("gives its defaults, the Edition's and its own, whatever the user chose", async () => {
     const settings = await settingsOver();
-    await settings.update({ theme: 'dark', hideStreak: true, selfCheck: true });
+    await settings.update({ theme: 'dark', noCounters: true, selfCheck: true });
 
     expect(settings.defaults).toEqual({
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -48,7 +48,7 @@ describe('settings', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -58,7 +58,7 @@ describe('settings', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -73,7 +73,7 @@ describe('settings', () => {
       theme: 'system',
       fontSize: 'XL',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -83,7 +83,7 @@ describe('settings', () => {
       theme: 'system',
       fontSize: 'XL',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -99,7 +99,7 @@ describe('settings', () => {
       theme: 'light',
       fontSize: 'S',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -115,7 +115,7 @@ describe('settings', () => {
       theme: 'dark',
       fontSize: 'L',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -130,7 +130,7 @@ describe('settings', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -150,7 +150,7 @@ describe('settings', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -169,7 +169,7 @@ describe('settings', () => {
       theme: 'light',
       fontSize: 'L',
       vibration: false,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -193,7 +193,7 @@ describe('settings: Vibration', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: false,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -224,7 +224,7 @@ describe('settings: Vibration', () => {
       theme: 'dark',
       fontSize: 'XL',
       vibration: false,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -239,52 +239,52 @@ describe('settings: Vibration', () => {
   });
 });
 
-describe('settings: hide the Streak', () => {
-  it('shows the Streak until the user hides it', async () => {
+describe('settings: «Без лічильників»', () => {
+  it('shows the counters until the user hides them', async () => {
     const settings = await settingsOver();
 
-    expect((await settings.read()).hideStreak).toBe(false);
+    expect((await settings.read()).noCounters).toBe(false);
   });
 
-  it('hides the Streak once the user chooses to, and returns the settings in effect', async () => {
+  it('hides the counters once the user chooses to, and returns the settings in effect', async () => {
     const settings = await settingsOver();
 
-    expect(await settings.update({ hideStreak: true })).toEqual({
+    expect(await settings.update({ noCounters: true })).toEqual({
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      hideStreak: true,
+      noCounters: true,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
       dailyLimit: 'off',
     });
-    expect((await settings.read()).hideStreak).toBe(true);
+    expect((await settings.read()).noCounters).toBe(true);
   });
 
-  it('lets the user show the Streak again', async () => {
+  it('lets the user show the counters again', async () => {
     const settings = await settingsOver();
-    await settings.update({ hideStreak: true });
+    await settings.update({ noCounters: true });
 
-    expect((await settings.update({ hideStreak: false })).hideStreak).toBe(false);
+    expect((await settings.update({ noCounters: false })).noCounters).toBe(false);
   });
 
   it('keeps the choice when the user state is opened again', async () => {
     const records = new Map<string, string>();
-    await (await settingsOver(records)).update({ hideStreak: true });
+    await (await settingsOver(records)).update({ noCounters: true });
 
-    expect((await (await settingsOver(records)).read()).hideStreak).toBe(true);
+    expect((await (await settingsOver(records)).read()).noCounters).toBe(true);
   });
 
   it('changes the choice without touching the other settings', async () => {
     const settings = await settingsOver();
     await settings.update({ theme: 'dark', fontSize: 'XL', vibration: false });
 
-    expect(await settings.update({ hideStreak: true })).toEqual({
+    expect(await settings.update({ noCounters: true })).toEqual({
       theme: 'dark',
       fontSize: 'XL',
       vibration: false,
-      hideStreak: true,
+      noCounters: true,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -292,10 +292,16 @@ describe('settings: hide the Streak', () => {
     });
   });
 
-  it('shows the Streak when the stored choice is not on or off', async () => {
+  it('keeps a Streak hidden with «Приховати Серію» as «Без лічильників» on', async () => {
+    const settings = await settingsOver(new Map([['settings.hideStreak', 'true']]));
+
+    expect((await settings.read()).noCounters).toBe(true);
+  });
+
+  it('shows the counters when the stored choice is not on or off', async () => {
     const settings = await settingsOver(new Map([['settings.hideStreak', '"yes"']]));
 
-    expect((await settings.read()).hideStreak).toBe(false);
+    expect((await settings.read()).noCounters).toBe(false);
   });
 
   it('reads the user state a 0.8 app kept, schema version 4: its settings stay, the Streak shows', async () => {
@@ -311,7 +317,7 @@ describe('settings: hide the Streak', () => {
       theme: 'dark',
       fontSize: 'L',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
@@ -334,7 +340,7 @@ describe('settings: Self-check', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: true,
       seasonalDecor: true,
       shareCounters: true,
@@ -352,13 +358,13 @@ describe('settings: Self-check', () => {
 
   it('changes the choice without touching the other settings', async () => {
     const settings = await settingsOver();
-    await settings.update({ theme: 'dark', hideStreak: true });
+    await settings.update({ theme: 'dark', noCounters: true });
 
     expect(await settings.update({ selfCheck: true })).toEqual({
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
-      hideStreak: true,
+      noCounters: true,
       selfCheck: true,
       seasonalDecor: true,
       shareCounters: true,
@@ -390,7 +396,7 @@ describe('settings: Daily Limit', () => {
         theme: 'system',
         fontSize: 'M',
         vibration: true,
-        hideStreak: false,
+        noCounters: false,
         selfCheck: false,
         seasonalDecor: true,
         shareCounters: true,
@@ -429,7 +435,7 @@ describe('settings: Daily Limit', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: true,
       seasonalDecor: true,
       shareCounters: true,
@@ -463,7 +469,7 @@ describe('settings: Seasonal Decor', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
-      hideStreak: false,
+      noCounters: false,
       selfCheck: true,
       seasonalDecor: false,
       shareCounters: true,

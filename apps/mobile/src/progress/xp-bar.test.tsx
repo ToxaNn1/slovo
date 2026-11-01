@@ -29,12 +29,12 @@ const metrics = {
  * in effect and the counters shown unless a test says otherwise. Gives back
  * the composition, so a test awards XP as the Game does.
  */
-async function renderBar({ xpLog = true, hideStreak = false } = {}) {
+async function renderBar({ xpLog = true, noCounters = false } = {}) {
   const composition = await testShell().composition.opened();
   const shell = testShell({
     composition: opened(composition),
     remoteSwitches: switchedTo(editionWith({ xpLog })),
-    settings: await settingsAt({ hideStreak }),
+    settings: await settingsAt({ noCounters }),
   });
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
@@ -74,7 +74,7 @@ describe('the XP bar over the Feed', () => {
   });
 
   it('is left out while the reader hides the counters', async () => {
-    await renderBar({ hideStreak: true });
+    await renderBar({ noCounters: true });
 
     expect(screen.queryByTestId('xp-bar')).not.toBeOnTheScreen();
   });

@@ -155,17 +155,17 @@ describe('two devices of one Account', () => {
     const { device, server, time } = account();
     const phone = await device();
     const tablet = await device();
-    await phone.settings.update({ hideStreak: true });
+    await phone.settings.update({ noCounters: true });
     time.advance(HOUR);
-    await tablet.settings.update({ hideStreak: false });
+    await tablet.settings.update({ noCounters: false });
     await tablet.sync();
     time.advance(HOUR);
 
     await phone.sync();
     await tablet.sync();
 
-    expect((await phone.settings.read()).hideStreak).toBe(false);
-    expect((await tablet.settings.read()).hideStreak).toBe(false);
+    expect((await phone.settings.read()).noCounters).toBe(false);
+    expect((await tablet.settings.read()).noCounters).toBe(false);
     expect(server.sync.records.get('settings.hideStreak')?.value).toBe(false);
   });
 
@@ -237,12 +237,12 @@ describe('two devices of one Account', () => {
     const { device } = account();
     const phone = await device();
     const tablet = await device();
-    await phone.settings.update({ hideStreak: true });
+    await phone.settings.update({ noCounters: true });
     await phone.sync();
 
     await tablet.sync();
 
-    expect((await tablet.settings.read()).hideStreak).toBe(true);
+    expect((await tablet.settings.read()).noCounters).toBe(true);
   });
 
   it('let the newer choice of Self-check win, on either device', async () => {

@@ -80,6 +80,7 @@ const validConfig = {
     streakBreak: true,
     quickQuestion: true,
     levels: true,
+    noCounters: true,
   },
   userSettingDefaults: {
     theme: 'system',

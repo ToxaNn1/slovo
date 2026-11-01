@@ -105,10 +105,12 @@ export const userStateRecords = {
   /** Whether the user has haptics on. It stays on the device, which may have no haptics. */
   vibration: declareRecord('settings.vibration', z.boolean(), { sync: 'device-only' }),
   /**
-   * Whether the user hides the Streak. It syncs last write wins like the Theme
-   * (ADR 0041); a new key needs no migration, since without it the Streak shows.
+   * Whether the reader hides the counters: «Без лічильників», which replaced
+   * «Приховати Серію» in 1.0 and keeps its key, so a hidden Streak stays hidden
+   * (ADR 0066). It syncs last write wins like the Theme (ADR 0041); without it
+   * the counters show.
    */
-  hideStreak: declareRecord('settings.hideStreak', z.boolean()),
+  noCounters: declareRecord('settings.hideStreak', z.boolean()),
   /**
    * Whether the user has Self-check on. It syncs last write wins like the
    * Theme (ADR 0041); a new key needs no migration, since without it Self-check is off.
