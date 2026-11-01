@@ -1,13 +1,6 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import {
-  createMemoryUserStatePort,
-  loadEdition,
-  openComposition,
-  openUserState,
-  systemRandom,
-  type Composition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { fill } from '@slovo/contracts';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
@@ -64,7 +57,7 @@ beforeEach(async () => {
       correctionCategories,
     }),
     edition: shippedEdition,
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-25T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });

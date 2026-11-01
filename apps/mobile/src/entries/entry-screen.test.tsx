@@ -1,14 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  createMemoryUserStatePort,
-  loadEdition,
-  openComposition,
-  openUserState,
-  type Composition,
-  type Haptics,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { loadEdition, openComposition, type Composition, type Haptics } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
@@ -89,7 +82,7 @@ beforeEach(async () => {
       ],
     }),
     edition: shippedEdition,
-    userState: await openUserState({ port: createMemoryUserStatePort() }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: { next: () => 0 },
     analytics: analytics.port,

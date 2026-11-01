@@ -1,19 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
-  trackChanges,
-  userStateRecords,
   type Composition,
+  type TrackedUserState,
   type Edition,
   type Haptics,
   type NotificationSchedulerPort,
   type XpRecord,
 } from '@slovo/core';
-import { createFakeNotificationScheduler, createMemoryContentPort } from '@slovo/core/testing';
+import {
+  createFakeNotificationScheduler,
+  createMemoryContentPort,
+  seedUserState,
+  type UserStateFacts,
+} from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
@@ -47,10 +49,12 @@ const withoutLaterQuestions: Edition = {
 };
 
 /** The user state the settings and the composition keep, opened afresh for each test. */
-let userState: Awaited<ReturnType<typeof openUserState>>;
+let userState: TrackedUserState;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
+
+const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
@@ -106,12 +110,12 @@ const xp = (date: string, amount: number): XpRecord => ({
 
 /**
  * Opens the composition over two Words for a reader who finished the
- * onboarding with the records given, on 2026-10-28 in Kyiv: with the XP
+ * onboarding with the facts given, on 2026-10-28 in Kyiv: with the XP
  * earned before, each record on its own day, and signed in or out as
  * `signedIn` says, as the app tells the Core once the Account is open.
  */
 async function open(
-  records: Readonly<Record<string, unknown>>,
+  facts: UserStateFacts,
   {
     scheduler,
     edition: openedEdition = shippedEdition,
@@ -124,14 +128,13 @@ async function open(
     signedIn?: () => boolean;
   } = {},
 ) {
-  userState = await openUserState({
-    port: createMemoryUserStatePort(
-      new Map(Object.entries(records).map(([key, value]) => [key, JSON.stringify(value)])),
-    ),
-  });
-  for (const [index, record] of earned.entries()) {
-    await userState.write(userStateRecords.xpLog.record(`seeded-${String(index)}`).change(record));
-  }
+  userState = await seedUserState(
+    {
+      ...facts,
+      xpLog: Object.fromEntries(earned.map((record, index) => [`seeded-${String(index)}`, record])),
+    },
+    { clock },
+  );
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
@@ -139,7 +142,7 @@ async function open(
     }),
     edition: openedEdition,
     userState: userState,
-    clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    clock,
     // The first Word in each draw, so each opening shows the same Word of the Day.
     random: { next: () => 0 },
     ...(signedIn === undefined ? {} : { signedIn }),
@@ -177,12 +180,7 @@ async function settle(action: () => unknown = () => undefined) {
 /** The Shell the app draws under: the settings and the composition over the test's user state. */
 const shell = () =>
   testShell({
-    userState: opened(
-      trackChanges({
-        userState,
-        clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
-      }),
-    ),
+    userState: opened(userState),
     remoteSwitches: switchedTo(shippedEdition),
     composition: opened(composition),
   });
@@ -263,8 +261,8 @@ async function swipeTo(element: ReturnType<typeof screen.getByTestId>) {
 describe('the Feed Notices on the Feed', () => {
   it('shows the first-week card of the first Active Day after the onboarding', async () => {
     await open({
-      'onboarding.finished': '2026-10-28T08:00:00Z',
-      'firstWeek.from': '2026-10-28',
+      onboardingFinished: '2026-10-28T08:00:00Z',
+      firstWeekFrom: '2026-10-28',
     });
     await renderApp();
 
@@ -274,7 +272,7 @@ describe('the Feed Notices on the Feed', () => {
   });
 
   it('shows a reader past the first week with no other notice due only the Daily Goal later question', async () => {
-    await open({ 'onboarding.finished': '2026-09-01T09:00:00Z' });
+    await open({ onboardingFinished: '2026-09-01T09:00:00Z' });
     await renderApp();
 
     expect(screen.getAllByTestId('word-card', hidden).length).toBeGreaterThan(0);
@@ -286,7 +284,7 @@ describe('the Feed Notices on the Feed', () => {
   it('shows the notification explainer by day 3, and the device is not asked before «Так»', async () => {
     const scheduler = createFakeNotificationScheduler({ permission: 'not-asked' });
     await open(
-      { 'onboarding.finished': '2026-10-26T08:00:00Z' },
+      { onboardingFinished: '2026-10-26T08:00:00Z' },
       { scheduler, edition: withoutLaterQuestions },
     );
     await renderApp();
@@ -300,7 +298,7 @@ describe('the Feed Notices on the Feed', () => {
 
   it('shows no explainer to a reader the device asked already', async () => {
     const scheduler = createFakeNotificationScheduler({ permission: 'denied' });
-    await open({ 'onboarding.finished': '2026-10-26T08:00:00Z' }, { scheduler });
+    await open({ onboardingFinished: '2026-10-26T08:00:00Z' }, { scheduler });
     await renderApp();
 
     expect(screen.queryByTestId('feed-notice-notificationExplainer', hidden)).toBeNull();
@@ -308,7 +306,7 @@ describe('the Feed Notices on the Feed', () => {
 
   it('offers a signed-out reader to save progress on the day the Streak reaches 3, and «Зберегти прогрес» opens the Account screen', async () => {
     await open(
-      { 'onboarding.finished': '2026-09-01T09:00:00Z' },
+      { onboardingFinished: '2026-09-01T09:00:00Z' },
       {
         edition: withoutLaterQuestions,
         xp: [xp('2026-10-26', 5), xp('2026-10-27', 5), xp('2026-10-28', 5)],
@@ -332,7 +330,7 @@ describe('the Feed Notices on the Feed', () => {
   it('shows the level-milestone Notice on the day the reader reaches Level 5', async () => {
     // Level 5 of the UA Edition costs 306 XP in all: 300 earned before, and today's 10 reach it.
     await open(
-      { 'onboarding.finished': '2026-09-01T09:00:00Z' },
+      { onboardingFinished: '2026-09-01T09:00:00Z' },
       { edition: withoutLaterQuestions, xp: [xp('2026-10-20', 300), xp('2026-10-28', 10)] },
     );
     await renderApp();

@@ -1,13 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { Correction, Word } from '@slovo/contracts';
-import {
-  createMemoryUserStatePort,
-  loadEdition,
-  openComposition,
-  openUserState,
-  type Composition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { loadEdition, openComposition, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 
@@ -85,11 +79,7 @@ async function openFeed() {
       corrections: [correction],
     }),
     edition: loadEdition(config),
-    userState: await openUserState({
-      port: createMemoryUserStatePort(
-        new Map([['onboarding.finished', JSON.stringify('2026-10-01T09:00:00Z')]]),
-      ),
-    }),
+    userState: await seedUserState({ onboardingFinished: '2026-10-01T09:00:00Z' }),
     clock,
     random: { next: () => 0 },
   });

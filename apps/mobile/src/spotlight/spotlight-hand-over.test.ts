@@ -1,11 +1,5 @@
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  SEEN_DWELL_MS,
-  type Edition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { openComposition, SEEN_DWELL_MS, type Edition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import type { AppStateStatus } from 'react-native';
 import { describe, expect, it } from 'vitest';
 
@@ -81,7 +75,7 @@ function held<T>(opening: Opening<T>): T {
  */
 async function app() {
   const time = fakeClock('2026-10-28T09:00:00Z');
-  const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  const userState = await seedUserState();
   let edition: Edition = ukrainian;
   const composition = openOnce(
     () =>

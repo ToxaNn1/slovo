@@ -1,10 +1,4 @@
-import {
-  createMemoryUserStatePort,
-  openUserState,
-  trackChanges,
-  type TrackedUserState,
-  type UserStatePort,
-} from '@slovo/core';
+import { openTrackedUserState, type TrackedUserState } from '@slovo/core';
 import { openDatabaseAsync } from 'expo-sqlite';
 
 import { deviceClock } from '../device/device-clock';
@@ -29,11 +23,6 @@ export function userStateDatabaseName(editionId: string): string {
   return editionId === FIRST_EDITION_ID ? 'user-state.db' : `user-state-${editionId}.db`;
 }
 
-/** The user state over the port, tracked so each write of a synced record leaves its pending change (spec #378). */
-async function openTracked(port: UserStatePort): Promise<TrackedUserState> {
-  return trackChanges({ userState: await openUserState({ port }), clock: deviceClock });
-}
-
 async function openStoredUserState(
   editionId: string,
   openDatabase: OpenDatabase,
@@ -41,7 +30,7 @@ async function openStoredUserState(
   const db = await openDatabase(userStateDatabaseName(editionId));
   // Reads go on while a write commits on its own connection.
   await db.execAsync('PRAGMA journal_mode = WAL');
-  return openTracked(await openSqliteUserState(db));
+  return openTrackedUserState({ port: await openSqliteUserState(db), clock: deviceClock });
 }
 
 /**
@@ -58,6 +47,6 @@ export function storedUserStateOpening(
     onError(error) {
       logError('Could not open the user state; nothing will be kept', error);
     },
-    fallback: () => openTracked(createMemoryUserStatePort()),
+    fallback: () => openTrackedUserState({ clock: deviceClock }),
   });
 }

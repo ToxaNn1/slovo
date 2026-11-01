@@ -1,14 +1,7 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import {
-  createMemoryUserStatePort,
-  loadEdition,
-  openComposition,
-  openUserState,
-  systemRandom,
-  type Composition,
-} from '@slovo/core';
+import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import type { Word } from '@slovo/contracts';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, type UserStateFacts, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -67,15 +60,9 @@ const metrics = {
 };
 
 /** The archive as kept on each local date, by Word id. */
-const kept = (days: Record<string, string>) =>
-  new Map(
-    Object.entries(days).map(([date, wordId]) => [
-      `wordOfTheDayArchive.${date}`,
-      JSON.stringify(wordId),
-    ]),
-  );
+const kept = (days: Record<string, string>): UserStateFacts => ({ wordOfTheDayArchive: days });
 
-async function open(records: Map<string, string>) {
+async function open(facts: UserStateFacts) {
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
@@ -86,7 +73,7 @@ async function open(records: Map<string, string>) {
       ],
     }),
     edition: loadEdition(config),
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState: await seedUserState(facts),
     clock: { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });
@@ -148,7 +135,7 @@ describe('the Word of the Day archive screen «Слова дня»', () => {
   });
 
   it('says so while no day is kept', async () => {
-    await open(new Map());
+    await open({});
 
     await renderArchive();
 

@@ -1,14 +1,10 @@
 import {
   createMemorySessionStore,
-  createMemoryUserStatePort,
   createSettings,
   openAccount,
   openComposition,
   openSync,
-  openUserState,
   systemRandom,
-  trackChanges,
-  userStateRecords,
   type Composition,
   type Schedule,
   type Sync,
@@ -19,6 +15,7 @@ import {
   createFakeNotificationScheduler,
   createFakeBackend,
   createMemoryContentPort,
+  seedUserState,
 } from '@slovo/core/testing';
 import type { AppStateStatus } from 'react-native';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -77,12 +74,8 @@ async function held<T>(opening: Opening<T>): Promise<T> {
 async function app() {
   const time = fakeClock('2026-10-18T09:00:00.000Z');
   const server = createFakeBackend({ clock: time.clock });
-  const userState = trackChanges({
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
-    clock: time.clock,
-  });
   // This install has run before, so the Account keeps the Session it finds.
-  await userState.write(userStateRecords.installed.change(true));
+  const userState = await seedUserState({ installed: true }, { clock: time.clock });
   const account = await openAccount({
     backend: server.backend,
     edition: ukrainian,

@@ -1,15 +1,13 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { SynonymRow, Tip } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
   systemRandom,
   type Composition,
   type Edition,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HideButton, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -83,7 +81,7 @@ async function open(on: boolean, mixKindWeights = true) {
       tips: [tip],
     }),
     edition: editionInEffect,
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });

@@ -1,12 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { CrosswordDaySchema, type Correction, type Idiom, type Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
   systemRandom,
-  userStateRecords,
   type AnalyticsPort,
   type Clock,
   type Composition,
@@ -15,7 +12,7 @@ import {
   type Schedule,
   type XpRecord,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, systemSchedule } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -238,21 +235,17 @@ async function open({
   schedule?: Schedule;
 } = {}) {
   editionInEffect = editionWithout(switchedOff);
-  const records = new Map(
-    Object.entries(best).map(([modeId, result]) => [`game.best.${modeId}`, JSON.stringify(result)]),
+  const xpLog = Object.fromEntries(
+    xp.map(({ date, amount }, index): [string, XpRecord] => [
+      `seeded-${String(index)}`,
+      { kind: 'xp', date, at: `${date}T07:00:00.000Z`, source: 'game-round', amount },
+    ]),
   );
-  if (crossword !== undefined) records.set('crossword.progress', JSON.stringify(crossword));
-  const seeded = await openUserState({ port: createMemoryUserStatePort(records) });
-  for (const [index, { date, amount }] of xp.entries()) {
-    const record: XpRecord = {
-      kind: 'xp',
-      date,
-      at: `${date}T07:00:00.000Z`,
-      source: 'game-round',
-      amount,
-    };
-    await seeded.write(userStateRecords.xpLog.record(`seeded-${String(index)}`).change(record));
-  }
+  const userState = await seedUserState({
+    gameBest: best,
+    xpLog,
+    ...(crossword === undefined ? {} : { crosswordProgress: crossword }),
+  });
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
@@ -268,7 +261,7 @@ async function open({
         Promise.resolve(date === crosswordDay.date ? crosswordDay : undefined),
     },
     edition: editionInEffect,
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState,
     clock,
     random: systemRandom,
     analytics,

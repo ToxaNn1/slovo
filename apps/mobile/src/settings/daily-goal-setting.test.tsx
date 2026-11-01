@@ -1,15 +1,12 @@
 import { beforeAll, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
   systemRandom,
-  trackChanges,
   type Composition,
   type Edition,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -35,7 +32,7 @@ function editionWith({ dailyGoal }: { dailyGoal: boolean }): Edition {
 let editionInEffect: Edition;
 
 /** The user state the composition keeps, one for the whole file. */
-let userState: Awaited<ReturnType<typeof openUserState>>;
+let userState: Awaited<ReturnType<typeof seedUserState>>;
 
 /** The composition the screen reads, opened afresh for each test. */
 let composition: Composition;
@@ -63,7 +60,7 @@ function openOver(edition: Edition) {
 
 // The settings open once per app run, so the user state under them stays the same for the file.
 beforeAll(async () => {
-  userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  userState = await seedUserState({}, { clock });
 });
 
 beforeEach(async () => {
@@ -76,7 +73,7 @@ async function renderSettings() {
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({
-          userState: opened(trackChanges({ userState, clock })),
+          userState: opened(userState),
           remoteSwitches: switchedTo(editionInEffect),
           composition: opened(composition),
         })}

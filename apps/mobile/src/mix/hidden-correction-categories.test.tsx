@@ -1,15 +1,13 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { type Correction } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
   systemRandom,
   type Composition,
   type EntryFeedCard,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HideButton, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
 import { Link, Stack } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
@@ -63,7 +61,7 @@ beforeEach(async () => {
       corrections: [correction('c_work', work.id), correction('c_shop', shop.id)],
     }),
     edition: shippedEdition,
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-25T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });

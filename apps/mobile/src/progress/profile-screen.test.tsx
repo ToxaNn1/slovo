@@ -1,9 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import {
   createMemorySessionStore,
-  createMemoryUserStatePort,
   openAccount,
-  openUserState,
   systemRandom,
   type FeatureSwitch,
 } from '@slovo/core';
@@ -11,6 +9,7 @@ import {
   createFakeAppleSignInSheet,
   createFakeBackend,
   createFakeGoogleSignInSheet,
+  seedUserState,
 } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
@@ -43,7 +42,7 @@ async function signedOutAccount() {
         googleSheet: createFakeGoogleSignInSheet(),
         appleSheet: createFakeAppleSignInSheet(),
         sessions: createMemorySessionStore(),
-        userState: await openUserState({ port: createMemoryUserStatePort() }),
+        userState: await seedUserState(),
         clock: { now: () => new Date('2026-10-24T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
         schedule: (run) => {
           run();

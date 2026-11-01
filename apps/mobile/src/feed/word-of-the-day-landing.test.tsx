@@ -1,16 +1,14 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
   systemRandom,
   type Clock,
   type Composition,
   type FeedCard,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState, type UserStateFacts } from '@slovo/core/testing';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { act, renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -103,23 +101,15 @@ function fakePager() {
  * Opens the app's Feed over 10 Words and the user state kept from before,
  * on the given clock, with a landing of its own.
  */
-async function openFeed(clock: Clock, kept: Record<string, unknown> = {}) {
+async function openFeed(clock: Clock, kept: UserStateFacts = {}) {
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
       words: Array.from({ length: 10 }, (_, i) => word(i)),
     }),
     edition: loadEdition(config),
-    userState: await openUserState({
-      port: createMemoryUserStatePort(
-        new Map(
-          // The reader is past the onboarding, which would cover the Feed.
-          Object.entries({ 'onboarding.finished': '2026-10-01T09:00:00Z', ...kept }).map(
-            ([key, value]) => [key, JSON.stringify(value)],
-          ),
-        ),
-      ),
-    }),
+    // The reader is past the onboarding, which would cover the Feed.
+    userState: await seedUserState({ onboardingFinished: '2026-10-01T09:00:00Z', ...kept }),
     clock,
     random: systemRandom,
   });
@@ -161,8 +151,8 @@ describe('the «Слово дня» intent', () => {
     const clock = clockAt('2026-10-26T09:00:00Z');
     // The reader was on слово5 today, after today's Word of the Day, слово3.
     const { feed, pager, landing } = await openFeed(clock, {
-      'feed.wordOfTheDay': { entryId: 'w_test3', date: '2026-10-26' },
-      'feed.position': { entryId: 'w_test5', date: '2026-10-26' },
+      wordOfTheDay: { entryId: 'w_test3', date: '2026-10-26' },
+      feedPosition: { entryId: 'w_test5', date: '2026-10-26' },
     });
     expect(feed.result.current.startPosition).toBe(1);
 
@@ -181,8 +171,8 @@ describe('the «Слово дня» intent', () => {
   it("on a cold start on a new day lands on today's Word of the Day, not yesterday's", async () => {
     const clock = clockAt('2026-10-26T09:00:00Z');
     const { feed, pager, landing } = await openFeed(clock, {
-      'feed.wordOfTheDay': { entryId: 'w_test3', date: '2026-10-25' },
-      'feed.position': { entryId: 'w_test5', date: '2026-10-25' },
+      wordOfTheDay: { entryId: 'w_test3', date: '2026-10-25' },
+      feedPosition: { entryId: 'w_test5', date: '2026-10-25' },
     });
 
     await ask(landing);

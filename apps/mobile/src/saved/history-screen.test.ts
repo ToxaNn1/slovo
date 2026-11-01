@@ -1,12 +1,6 @@
 import { type Word } from '@slovo/contracts';
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Clock,
-  type Composition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { openComposition, type Clock, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { historySections } from './history-screen';
@@ -62,16 +56,16 @@ async function open(
   seen: readonly { entryId: string; at: string; wordOfTheDay?: boolean }[] = [],
 ): Promise<{ app: Composition; clock: Clock }> {
   const clock: Clock = { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' };
-  const records = new Map(
+  const history = Object.fromEntries(
     seen.map(({ entryId, at, wordOfTheDay = false }) => [
-      `history.${entryId}`,
-      JSON.stringify({ seenAt: new Date(at).toISOString(), wordOfTheDay }),
+      entryId,
+      { seenAt: new Date(at).toISOString(), wordOfTheDay },
     ]),
   );
   const app = await openComposition({
     content,
     edition: ukrainian,
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState: await seedUserState({ history }),
     clock,
     random: { next: () => 0.25 },
   });

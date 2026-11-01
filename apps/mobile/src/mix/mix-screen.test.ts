@@ -1,12 +1,5 @@
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  systemRandom,
-  type Composition,
-  type Edition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { openComposition, systemRandom, type Composition, type Edition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { mixScreenModel, mixSummary } from './mix-screen';
@@ -29,7 +22,7 @@ async function open(edition: Edition): Promise<Composition> {
   return openComposition({
     content: createMemoryContentPort({ categories, correctionCategories }),
     edition,
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });

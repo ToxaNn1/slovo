@@ -1,12 +1,6 @@
 import { type Word } from '@slovo/contracts';
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Composition,
-  type Edition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { openComposition, type Composition, type Edition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { hiddenScreenModel, hiddenSummary } from './hidden-screen';
@@ -87,7 +81,7 @@ async function open(): Promise<{ app: Composition; advance: () => void }> {
   const app = await openComposition({
     content,
     edition: ukrainian,
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: time.clock,
     random: { next: () => 0.25 },
   });

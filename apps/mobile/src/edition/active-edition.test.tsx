@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, it } from '@jest/globals';
-import { userStateRecords } from '@slovo/core';
+import { readFact, seedUserState } from '@slovo/core/testing';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -77,20 +77,21 @@ describe('the user state of each Edition', () => {
   it('adopts the store of a 0.9 reader as the UA Edition’s, with nothing moved', async () => {
     // What 0.9 left on the phone: one user state, before there were Editions.
     const before = await openSqliteUserState(await openDatabase('user-state.db'));
-    await before.write(userStateRecords.noCounters.change(true));
+    await seedUserState({ noCounters: true }, { port: before });
 
     const userState = await storedUserStateOpening('uk', openDatabase).opened();
 
-    expect(await userState.read(userStateRecords.noCounters)).toBe(true);
+    expect(await readFact(userState, 'noCounters')).toBe(true);
   });
 
   it('keeps another Edition’s user state apart from the UA Edition’s', async () => {
-    const uk = await storedUserStateOpening('uk', openDatabase).opened();
-    await uk.write(userStateRecords.selfCheck.change(true));
+    const ukPort = await openSqliteUserState(await openDatabase('user-state.db'));
+    await seedUserState({ selfCheck: true }, { port: ukPort });
 
     const pl = await storedUserStateOpening('pl', openDatabase).opened();
+    const uk = await storedUserStateOpening('uk', openDatabase).opened();
 
-    expect(await pl.read(userStateRecords.selfCheck)).toBeUndefined();
-    expect(await uk.read(userStateRecords.selfCheck)).toBe(true);
+    expect(await readFact(pl, 'selfCheck')).toBeUndefined();
+    expect(await readFact(uk, 'selfCheck')).toBe(true);
   });
 });

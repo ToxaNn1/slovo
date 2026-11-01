@@ -1,13 +1,9 @@
 import { describe, expect, it } from '@jest/globals';
 import {
   createMemorySessionStore,
-  createMemoryUserStatePort,
   openAccount,
   openSync,
-  openUserState,
   systemRandom,
-  trackChanges,
-  userStateRecords,
   type Composition,
   type Schedule,
   type Sync,
@@ -16,6 +12,7 @@ import {
   createFakeAppleSignInSheet,
   createFakeBackend,
   createFakeGoogleSignInSheet,
+  seedUserState,
 } from '@slovo/core/testing';
 import { waitFor } from '@testing-library/react-native';
 import type { AppStateStatus } from 'react-native';
@@ -63,12 +60,8 @@ function recorded<T>(name: string, opening: Opening<T>, events: string[]): Openi
  */
 async function app() {
   const server = createFakeBackend({ clock });
-  const userState = trackChanges({
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
-    clock,
-  });
   // This install has run before, so the Account keeps the Session it finds.
-  await userState.write(userStateRecords.installed.change(true));
+  const userState = await seedUserState({ installed: true }, { clock });
   const account = await openAccount({
     backend: server.backend,
     edition,

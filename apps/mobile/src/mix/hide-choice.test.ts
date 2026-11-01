@@ -1,14 +1,12 @@
 import { type Correction, type Idiom, type Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   featureOfKind,
   openComposition,
-  openUserState,
   type Composition,
   type Edition,
   type EntryFeedCard,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { hideChoice, hideToast } from './hide-choice';
@@ -76,7 +74,7 @@ async function open(): Promise<Composition> {
       idioms: [idiom],
     }),
     edition: ukrainian,
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: { next: () => 0.25 },
   });

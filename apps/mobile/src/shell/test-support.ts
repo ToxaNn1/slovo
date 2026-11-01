@@ -1,14 +1,11 @@
 import {
   createAnalytics,
-  createMemoryUserStatePort,
   createSettings,
   openComposition,
   openCounterReads,
   openCounterSending,
   openMistakeReports,
   openRemoteSwitches,
-  openUserState,
-  trackChanges,
   type AnalyticsPort,
   type Clock,
   type Edition,
@@ -17,7 +14,7 @@ import {
   type Schedule,
   type UserSettings,
 } from '@slovo/core';
-import { createFakeBackend, createMemoryContentPort } from '@slovo/core/testing';
+import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 
 import { edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
@@ -86,7 +83,7 @@ export async function settingsAt(
   changes: Partial<UserSettings> = {},
   analytics?: AnalyticsPort,
 ): Promise<Opening<OpenedSettings>> {
-  const userState = await openUserState({ port: createMemoryUserStatePort() });
+  const userState = await seedUserState();
   const settings = createSettings({
     userState,
     defaults: edition.userSettingDefaults,
@@ -124,15 +121,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
   const random = seeded(1);
   const onError = () => undefined;
   const userState =
-    overrides.userState ??
-    openOnce(
-      async () =>
-        trackChanges({
-          userState: await openUserState({ port: createMemoryUserStatePort() }),
-          clock,
-        }),
-      { onError },
-    );
+    overrides.userState ?? openOnce(() => seedUserState({}, { clock }), { onError });
   const remoteSwitches =
     overrides.remoteSwitches ??
     openOnce(
