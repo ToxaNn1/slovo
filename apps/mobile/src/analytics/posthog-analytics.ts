@@ -1,8 +1,11 @@
-import type { AnalyticsPort } from '@slovo/core';
+import type { AnalyticsEvent, AnalyticsEvents, AnalyticsPort } from '@slovo/core';
 import type { PostHog, PostHogOptions } from 'posthog-react-native';
 
 /** What the adapter uses of PostHog's client. */
-export type PostHogClient = Pick<PostHog, 'capture' | 'optIn' | 'optOut' | 'optedOut'>;
+export type PostHogClient = Pick<
+  PostHog,
+  'capture' | 'setPersonProperties' | 'optIn' | 'optOut' | 'optedOut'
+>;
 
 /** PostHog's project in the EU (ADR 0068). */
 export const POSTHOG_EU_HOST = 'https://eu.i.posthog.com';
@@ -31,11 +34,22 @@ function createPostHog(apiKey: string): PostHogClient {
   return new sdk.PostHog(apiKey, postHogOptions);
 }
 
+/** A questionnaire answer as a person property of the anonymous id: `questionnaire_<question>`. */
+function questionnaireAnswer(
+  event: AnalyticsEvent,
+  properties: AnalyticsEvents[AnalyticsEvent],
+): Record<string, string> | undefined {
+  if (event !== 'questionnaireAnswered' || !('question' in properties)) return undefined;
+  return { [`questionnaire_${properties.question}`]: properties.answer };
+}
+
 /**
  * The Core's Analytics port over PostHog. The Core calls it only while the
  * reader shares their anonymous statistics, so the client is made at the
  * first event, never while sharing is off from launch. Turning sharing off
  * opts the client out; the next event, once it is on again, opts it back in.
+ * A questionnaire answer is also kept as a person property of the anonymous
+ * id, `questionnaire_<question>`, without reloading feature flags.
  * Without a key (`EXPO_PUBLIC_POSTHOG_KEY` in the build's environment) it
  * sends nothing.
  */
@@ -51,6 +65,8 @@ export function postHogAnalytics(
       client ??= create(apiKey);
       if (client.optedOut) void client.optIn();
       client.capture(event, { ...properties });
+      const answer = questionnaireAnswer(event, properties);
+      if (answer !== undefined) client.setPersonProperties(answer, undefined, false);
     },
     stop() {
       void client?.optOut();

@@ -64,6 +64,7 @@ export function mixScreenModel({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   mix: MixState;
 }): MixScreenModel {
+  const ceilingOn = edition.isFeatureEnabled('rarityCeiling');
   const kinds = MIX_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind))).map(
     (entryKind) => ({ entryKind, on: mix.kinds[entryKind] }),
   );
@@ -76,9 +77,15 @@ export function mixScreenModel({
       : undefined,
     kindWeights: edition.isFeatureEnabled('mixKindWeights') ? mix.kindWeights : undefined,
     rarity: edition.isFeatureEnabled('rarityFloor')
-      ? { floor: mix.rarityFloor, floors: RARITY_FLOORS }
+      ? {
+          floor: mix.rarityFloor,
+          // The Core skips a floor above the ceiling while the ceiling is on; off, the ceiling rises with it.
+          floors: ceilingOn
+            ? RARITY_FLOORS.filter((floor) => floor <= mix.rarityCeiling)
+            : RARITY_FLOORS,
+        }
       : undefined,
-    ceiling: edition.isFeatureEnabled('rarityCeiling')
+    ceiling: ceilingOn
       ? {
           ceiling: mix.rarityCeiling,
           ceilings: RARITY_FLOORS.filter((ceiling) => ceiling >= mix.rarityFloor),
