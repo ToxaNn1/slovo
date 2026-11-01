@@ -26,7 +26,14 @@ const content = createMemoryContentPort({
 });
 const byDefinition = new Map(words.map((w) => [w.primaryDefinition, w]));
 
-const ALL_ON: readonly FeatureSwitch[] = ['game', 'gameGuessWord', 'xpLog', 'levels', 'noCounters', 'analytics'];
+const ALL_ON: readonly FeatureSwitch[] = [
+  'game',
+  'gameGuessWord',
+  'xpLog',
+  'levels',
+  'noCounters',
+  'analytics',
+];
 
 /** One XP record of `amount` on the local day `date`, at 08:00 in Kyiv. */
 const xp = (date: string, amount: number): XpRecord => ({

@@ -130,11 +130,7 @@ export function shownOf({
     selfCheckSetting: on('selfCheck'),
     seasonalDecorSetting: on('seasonalDecor'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
-    countersSetting: on('noCounters')
-      ? 'noCounters'
-      : on('statistics')
-        ? 'hideStreak'
-        : undefined,
+    countersSetting: on('noCounters') ? 'noCounters' : on('statistics') ? 'hideStreak' : undefined,
     learning: knowledge,
     stats: on('statistics')
       ? {

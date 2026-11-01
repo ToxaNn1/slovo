@@ -157,3 +157,29 @@ describe('Settings › «Ділитися анонімною статистик�
     expect(screen.queryByRole('button', { name: 'Політика приватності' })).not.toBeOnTheScreen();
   });
 });
+
+describe('Settings › «Без лічильників»', () => {
+  it('turns the counters off and on again from its switch, which says that counting goes on', async () => {
+    const settings = await renderSettings();
+
+    const row = screen.getByRole('switch', { name: 'Без лічильників' });
+    expect(row).toHaveProp('value', false);
+    expect(screen.getByHintText(editionStrings.settings.noCounters.explanation)).toBe(row);
+    expect(screen.queryByRole('switch', { name: 'Приховати Серію' })).not.toBeOnTheScreen();
+
+    await fireEvent(row, 'valueChange', true);
+    expect((await settings.read()).noCounters).toBe(true);
+
+    await fireEvent(screen.getByRole('switch', { name: 'Без лічильників' }), 'valueChange', false);
+    expect((await settings.read()).noCounters).toBe(false);
+  });
+
+  it('is «Приховати Серію» of 0.9 while its Feature Switch is off', async () => {
+    const settings = await renderSettings({ noCounters: false });
+
+    expect(screen.queryByRole('switch', { name: 'Без лічильників' })).not.toBeOnTheScreen();
+    await fireEvent(screen.getByRole('switch', { name: 'Приховати Серію' }), 'valueChange', true);
+
+    expect((await settings.read()).noCounters).toBe(true);
+  });
+});

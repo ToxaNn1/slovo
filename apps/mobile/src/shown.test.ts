@@ -23,6 +23,7 @@ const everything: Shown = {
   selfCheckSetting: true,
   seasonalDecorSetting: true,
   shareCountersSetting: true,
+  countersSetting: 'noCounters',
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
@@ -170,6 +171,21 @@ describe('what the reader is shown', () => {
       },
     ],
     [
+      'the Streak and the XP bar of 0.9, with «Приховати Серію» in place of «Без лічильників» while its switch is off',
+      { off: ['noCounters'], shown: { countersSetting: 'hideStreak' } },
+    ],
+    [
+      'the XP bar to a reader who hid the Streak while «Без лічильників» is switched off',
+      {
+        off: ['noCounters'],
+        noCounters: true,
+        shown: {
+          countersSetting: 'hideStreak',
+          stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
+        },
+      },
+    ],
+    [
       'no XP bar and no Break with the XP log off',
       { off: ['xpLog'], shown: { xpBar: false, streakBreak: false } },
     ],
@@ -179,8 +195,15 @@ describe('what the reader is shown', () => {
       { off: ['quickQuestion'], shown: { quickQuestion: false } },
     ],
     [
-      'no statistics, and so no setting to hide the Streak, with statistics off',
+      'no statistics, with statistics off, and still «Без лічильників» for the XP bar',
       { off: ['statistics'], shown: { stats: undefined } },
+    ],
+    [
+      'no statistics and no setting to hide the Streak, with statistics and «Без лічильників» off',
+      {
+        off: ['statistics', 'noCounters'],
+        shown: { stats: undefined, countersSetting: undefined },
+      },
     ],
     // Owner decision 19.10, #478: no count of Known Corrections while the reader sees none.
     [
