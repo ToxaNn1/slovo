@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { TextSchema } from '../shared';
-import { templateOf } from './shared';
+import { pluralOf, templateOf } from './shared';
 
 /** The texts of sharing an Entry: the share button, the share sheet and the Share Card's own labels. */
 export const ShareStringsSchema = z.strictObject({
@@ -33,5 +33,27 @@ export const ShareStringsSchema = z.strictObject({
     week: templateOf('from', 'to', 'month'),
     /** A week across two months, e.g. «27 жовтня – 2 листопада». Takes `{from}`, `{fromMonth}`, `{to}` and `{toMonth}`. */
     weekAcrossMonths: templateOf('from', 'fromMonth', 'to', 'toMonth'),
+  }),
+  /** The day of a progress Share Card or of a Daily Crossword's, as its overline, e.g. «1 листопада». Takes `{day}` and `{month}`, one of `dates.months`. */
+  day: templateOf('day', 'month'),
+  /** The Share Card of a Level reached. */
+  level: z.strictObject({
+    title: TextSchema,
+    /** The Level's number, e.g. «Рівень 5». Takes `{level}`; the Level's name goes under it. */
+    headline: templateOf('level'),
+  }),
+  /** The Share Card of a Badge earned, with the Badge's name under its title. */
+  badge: z.strictObject({ title: TextSchema }),
+  /** The Share Card of a Streak milestone. */
+  streak: z.strictObject({
+    title: TextSchema,
+    /** The Streak's length in every plural form, e.g. «7 днів поспіль». Takes `{count}`. */
+    headline: pluralOf(),
+  }),
+  /** The Share Card of a solved Daily Crossword: its grid with no letters, so it gives no answer away. */
+  dailyCrossword: z.strictObject({
+    title: TextSchema,
+    /** What VoiceOver reads of the empty grid. */
+    grid: TextSchema,
   }),
 });

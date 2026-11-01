@@ -17,6 +17,8 @@ const recap: WeeklyRecapModel = {
   saved: 4,
   known: 9,
   streak: 6,
+  xp: 140,
+  goalDays: 3,
 };
 
 /** The Edition in effect: as it ships, or with Share Cards off. */
@@ -70,19 +72,21 @@ function previewCard() {
 }
 
 describe('the Weekly Recap card', () => {
-  it('shares «Мій тиждень у SLOVO» with the dates and the four numbers', async () => {
+  it("shares «Мій тиждень у SLOVO» with the dates, the four numbers and the week's XP and goal days", async () => {
     await renderNotice();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Поділитися' }));
 
     expect(previewCard()).toHaveAccessibleName(
-      '19–25 жовтня. Мій тиждень у SLOVO. переглянуто 23 записи. збережено 4 записи. позначено «Знаю»: 9 записів. серія: 6 днів поспіль',
+      '19–25 жовтня. Мій тиждень у SLOVO. переглянуто 23 записи. збережено 4 записи. позначено «Знаю»: 9 записів. серія: 6 днів поспіль. 140 XP за тиждень. ціль виконано 3 дні',
     );
   });
 
-  it('leaves the Streak off its Share Card while the reader hides it', async () => {
+  it('leaves the Streak, the XP and the goal days off the card and its Share Card with «Без лічильників»', async () => {
     await renderNotice({ noCounters: true });
 
+    expect(screen.queryByLabelText('140 XP за тиждень')).not.toBeOnTheScreen();
+    expect(screen.queryByLabelText('ціль виконано 3 дні')).not.toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Поділитися' }));
 
     expect(previewCard()).toHaveAccessibleName(

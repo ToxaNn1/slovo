@@ -83,6 +83,8 @@
     "lockScreenWidget": true,
     "questionnaire": true,
     "badges": true,
+    "progressShareCards": true,
+    "dailyCrosswordShare": true,
     "eveningNotification": true,
     "notificationFarewell": true,
     "notificationExplainer": true,

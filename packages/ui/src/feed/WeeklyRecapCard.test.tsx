@@ -12,11 +12,15 @@ const strings = testStrings({
       saved: 'saved',
       known: 'known',
       streak: 'streak',
+      xp: 'XP',
+      goalDays: 'goal days',
       spoken: {
         seen: { one: '{count} entry seen', other: '{count} entries seen' },
         saved: { one: '{count} entry saved', other: '{count} entries saved' },
         known: { one: 'marked known: {count} entry', other: 'marked known: {count} entries' },
         streak: { one: 'streak: {count} day', other: 'streak: {count} days' },
+        xp: { one: '{count} XP this week', other: '{count} XP this week' },
+        goalDays: { one: 'goal met on {count} day', other: 'goal met on {count} days' },
       },
     },
   },
@@ -67,6 +71,20 @@ describe('the Weekly Recap card', () => {
 
     expect(screen.getByLabelText('23 entries seen')).toBeTruthy();
     expect(screen.queryByText('known')).toBeNull();
+  });
+
+  it("shows the week's XP and goal days when the recap has them", async () => {
+    await renderCard({ recap: { ...recap, xp: 140, goalDays: 3 } });
+
+    expect(screen.getByLabelText('140 XP this week')).toBeTruthy();
+    expect(screen.getByLabelText('goal met on 3 days')).toBeTruthy();
+  });
+
+  it('leaves XP and goal days out when the recap has none', async () => {
+    await renderCard({ recap });
+
+    expect(screen.queryByText('XP')).toBeNull();
+    expect(screen.queryByText('goal days')).toBeNull();
   });
 
   it('leaves the Streak out while the reader hides it', async () => {

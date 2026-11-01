@@ -3,18 +3,22 @@ import {
   CrosswordGrid,
   DecorBackground,
   ScreenTitle,
+  SecondaryButton,
   space,
   typeSize,
   useEdition,
   useTokens,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { AccessibilityInfo, Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
 import { crosswordCellLabel, useDailyCrossword } from '@/game/daily-crossword';
+import { ShareCardSheet } from '@/share/share-card-sheet';
+import { useShell } from '@/shell-value';
+import { useShown } from '@/shown-in-effect';
 
 const { game: strings } = editionStrings;
 
@@ -27,7 +31,8 @@ const SOLVED_MAX_FONT_SCALE = 1.5;
  * place of the button once every word is right. The letters stay on the
  * device as they go in, so «Назад» and the card's «Продовжити» find them.
  * With the crossword turned off while the reader is on it, the screen goes
- * back to the Game.
+ * back to the Game. A solved one offers its Share Card, the grid without a
+ * letter, while that card is on in effect and the binary can capture it.
  */
 export default function DailyCrosswordScreen() {
   const crossword = useDailyCrossword();
@@ -35,6 +40,9 @@ export default function DailyCrosswordScreen() {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const solved = crossword?.state.progress === 'solved';
+  const { shareCard } = useShell();
+  const share = useShown().dailyCrosswordShare ? shareCard : undefined;
+  const [sharing, setSharing] = useState(false);
 
   useEffect(() => {
     if (!solved) return;
@@ -88,6 +96,26 @@ export default function DailyCrosswordScreen() {
           >
             {strings.dailyCrossword.solved}
           </Text>
+        )}
+        {solved && share !== undefined && (
+          <>
+            <SecondaryButton
+              testID="daily-crossword-share"
+              label={editionStrings.share.button}
+              onPress={() => {
+                setSharing(true);
+              }}
+            />
+            <ShareCardSheet
+              subject={{ crossword: crossword.state }}
+              kind="dailyCrossword"
+              share={share}
+              visible={sharing}
+              onClose={() => {
+                setSharing(false);
+              }}
+            />
+          </>
         )}
       </ScrollView>
     </SafeAreaView>

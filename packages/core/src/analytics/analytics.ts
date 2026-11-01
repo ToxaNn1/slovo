@@ -11,6 +11,10 @@ import type { LaterQuestion } from '../feed-notice';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
+/** Which Share Card the reader shared, as its Analytics event says (ADR 0068). */
+export type ShareCardKind =
+  'entry' | 'weeklyRecap' | 'level' | 'badge' | 'streak' | 'dailyCrossword';
+
 /** What an event about one Entry tells of it: its kind, its rarity and its Category, where it has them. */
 export interface EntryEventProperties {
   readonly entryKind: EntryKind;
@@ -57,6 +61,8 @@ export interface AnalyticsEvents {
   };
   /** The reader earned a Badge (ADR 0066). */
   readonly badgeEarned: { readonly badge: string };
+  /** The reader sent a Share Card from the system share sheet. */
+  readonly shareCardShared: { readonly card: ShareCardKind };
   /** The reader opened the app from a notification of this kind. */
   readonly notificationOpened: { readonly kind: NotificationKind };
   /**

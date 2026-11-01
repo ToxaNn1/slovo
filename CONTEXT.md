@@ -357,7 +357,7 @@ The Word read aloud by the device's voice for the Edition's language.
 _Avoid_: Audio, TTS
 
 **Share Card**:
-A branded image of an Entry, or of the reader's Weekly Recap («Мій тиждень у SLOVO»), made for sharing outside the app.
+A branded image of an Entry, of the reader's Weekly Recap («Мій тиждень у SLOVO»), of their progress on the day it happens (a Level reached, a Badge earned, a Streak milestone), or of a solved Daily Crossword's grid without its letters, made for sharing outside the app.
 _Avoid_: Screenshot
 
 **Widget Mode**:

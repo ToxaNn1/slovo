@@ -264,6 +264,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   questionnaire: z.boolean(),
   /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
   badges: z.boolean(),
+  /** The Share Cards of a Level reached, a Badge earned and a Streak milestone; off while `shareCards` or `xpLog` is. */
+  progressShareCards: z.boolean(),
+  /** The Share Card of a solved Daily Crossword, its grid with no letters; off while `shareCards` or `dailyCrossword` is. */
+  dailyCrosswordShare: z.boolean(),
   /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
   eveningNotification: z.boolean(),
   /** The farewell: the polite pause ends with the Edition's farewell on the 14th day without an open; off, it ends in silence. */

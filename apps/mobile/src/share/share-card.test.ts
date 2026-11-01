@@ -21,7 +21,7 @@ describe('sharing a Share Card as an image', () => {
   it('makes a 1080×1920 PNG of a Story, keeps it in the cache and opens the share sheet with its file URL', async () => {
     const ports = fakePorts();
 
-    const outcome = await shareCardImage(ports, 'w_00g2ap', 'story');
+    const outcome = await shareCardImage(ports, 'w_00g2ap', 'story', vi.fn());
 
     expect(ports.capture).toHaveBeenCalledWith({ width: 1080, height: 1920 });
     expect(ports.keepInCache).toHaveBeenCalledWith(
@@ -35,7 +35,7 @@ describe('sharing a Share Card as an image', () => {
   it('makes a 1080×1080 PNG of a Square', async () => {
     const ports = fakePorts();
 
-    expect(await shareCardImage(ports, 'c_0003kq', 'square')).toBe('closed');
+    expect(await shareCardImage(ports, 'c_0003kq', 'square', vi.fn())).toBe('closed');
     expect(ports.capture).toHaveBeenCalledWith({ width: 1080, height: 1080 });
     expect(ports.openShareSheet).toHaveBeenCalledWith('file:///caches/share-card-c_0003kq.png');
   });
@@ -45,7 +45,7 @@ describe('sharing a Share Card as an image', () => {
       openShareSheet: vi.fn(() => Promise.resolve<ShareSheetResult>('cancelled')),
     });
 
-    expect(await shareCardImage(ports, 'w_00g2ap', 'story')).toBe('closed');
+    expect(await shareCardImage(ports, 'w_00g2ap', 'story', vi.fn())).toBe('closed');
   });
 
   it('fails without a share sheet when the image cannot be made', async () => {
@@ -53,7 +53,7 @@ describe('sharing a Share Card as an image', () => {
       capture: vi.fn(() => Promise.reject(new Error('The view cannot be captured'))),
     });
 
-    expect(await shareCardImage(ports, 'w_00g2ap', 'story')).toBe('failed');
+    expect(await shareCardImage(ports, 'w_00g2ap', 'story', vi.fn())).toBe('failed');
     expect(ports.openShareSheet).not.toHaveBeenCalled();
   });
 
@@ -62,7 +62,7 @@ describe('sharing a Share Card as an image', () => {
       keepInCache: vi.fn(() => Promise.reject(new Error('No space left on device'))),
     });
 
-    expect(await shareCardImage(ports, 'w_00g2ap', 'story')).toBe('failed');
+    expect(await shareCardImage(ports, 'w_00g2ap', 'story', vi.fn())).toBe('failed');
     expect(ports.openShareSheet).not.toHaveBeenCalled();
   });
 
@@ -71,7 +71,39 @@ describe('sharing a Share Card as an image', () => {
       openShareSheet: vi.fn(() => Promise.reject(new Error('Another share sheet is open'))),
     });
 
-    expect(await shareCardImage(ports, 'w_00g2ap', 'story')).toBe('failed');
+    expect(await shareCardImage(ports, 'w_00g2ap', 'story', vi.fn())).toBe('failed');
+  });
+});
+
+describe('telling that a Share Card was shared', () => {
+  it('tells once the reader sent the image somewhere', async () => {
+    const onShared = vi.fn();
+
+    await shareCardImage(fakePorts(), 'level', 'story', onShared);
+
+    expect(onShared).toHaveBeenCalledOnce();
+  });
+
+  it('tells nothing when the reader cancels the share sheet', async () => {
+    const onShared = vi.fn();
+    const ports = fakePorts({
+      openShareSheet: vi.fn(() => Promise.resolve<ShareSheetResult>('cancelled')),
+    });
+
+    await shareCardImage(ports, 'level', 'story', onShared);
+
+    expect(onShared).not.toHaveBeenCalled();
+  });
+
+  it('tells nothing when the image cannot be made', async () => {
+    const onShared = vi.fn();
+    const ports = fakePorts({
+      capture: vi.fn(() => Promise.reject(new Error('The view cannot be captured'))),
+    });
+
+    await shareCardImage(ports, 'level', 'story', onShared);
+
+    expect(onShared).not.toHaveBeenCalled();
   });
 });
 

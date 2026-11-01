@@ -27,6 +27,8 @@ export {
   type ShareCardStrings,
   type ShareCardSubject,
 } from './share/share-card';
+export { type ShareCardKind } from './analytics/analytics';
+export { type ProgressShareCard, type ProgressShareCards } from './share/progress-share-cards';
 export { partOfSpeechText, registerText, wordGrammarText } from './entries/part-of-speech';
 export { stressLabel } from './entries/stress-label';
 export { sentences } from './sentences';

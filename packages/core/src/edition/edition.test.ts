@@ -86,6 +86,8 @@ const validConfig = {
     lockScreenWidget: true,
     questionnaire: true,
     badges: true,
+    progressShareCards: true,
+    dailyCrosswordShare: true,
     eveningNotification: true,
     notificationFarewell: true,
     notificationExplainer: true,
@@ -282,6 +284,8 @@ describe('loadEdition', () => {
     'selfCheck',
     'rarityFloor',
     'gameReview',
+    'progressShareCards',
+    'dailyCrosswordShare',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({

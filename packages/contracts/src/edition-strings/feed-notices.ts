@@ -19,6 +19,10 @@ export const FeedNoticesStringsSchema = z.strictObject({
     known: TextSchema,
     /** The label of the Streak. */
     streak: TextSchema,
+    /** The label of the XP earned in the week. */
+    xp: TextSchema,
+    /** The label of the days of the week that met their Daily Goal. */
+    goalDays: TextSchema,
     /**
      * What VoiceOver reads for each number, in every plural form the
      * Edition's language has. Takes `{count}`. The Share Card of the recap
@@ -29,6 +33,8 @@ export const FeedNoticesStringsSchema = z.strictObject({
       saved: pluralOf(),
       known: pluralOf(),
       streak: pluralOf(),
+      xp: pluralOf(),
+      goalDays: pluralOf(),
     }),
   }),
   /** Asks about yesterday's Word of the Day. */

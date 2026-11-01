@@ -28,6 +28,19 @@ const STRINGS = {
       week: '{from}–{to} {month}',
       weekAcrossMonths: '{from} {fromMonth} – {to} {toMonth}',
     },
+    day: '{day} {month}',
+    level: { title: 'Новий рівень у SLOVO', headline: 'Рівень {level}' },
+    badge: { title: 'Нова відзнака в SLOVO' },
+    streak: {
+      title: 'Моя серія в SLOVO',
+      headline: {
+        one: '{count} день поспіль',
+        few: '{count} дні поспіль',
+        many: '{count} днів поспіль',
+        other: '{count} дня поспіль',
+      },
+    },
+    dailyCrossword: { title: 'Кросворд дня розв’язано', grid: 'Сітка кросворду без літер' },
   },
   dates: {
     months: [
@@ -67,6 +80,8 @@ const STRINGS = {
       saved: 'збережено',
       known: 'знаю',
       streak: 'серія',
+      xp: 'XP',
+      goalDays: 'дні з ціллю',
       spoken: {
         seen: {
           one: 'переглянуто {count} запис',
@@ -91,6 +106,18 @@ const STRINGS = {
           few: 'серія: {count} дні поспіль',
           many: 'серія: {count} днів поспіль',
           other: 'серія: {count} дня поспіль',
+        },
+        xp: {
+          one: '{count} XP за тиждень',
+          few: '{count} XP за тиждень',
+          many: '{count} XP за тиждень',
+          other: '{count} XP за тиждень',
+        },
+        goalDays: {
+          one: 'ціль виконано {count} день',
+          few: 'ціль виконано {count} дні',
+          many: 'ціль виконано {count} днів',
+          other: 'ціль виконано {count} дня',
         },
       },
     },
@@ -411,5 +438,145 @@ describe('the Share Card of a Weekly Recap', () => {
     expect(recapContent({ ...RECAP, saved: 0, known: 0 }).label).toBe(
       '20–26 жовтня. Мій тиждень у SLOVO. переглянуто 34 записи. збережено 0 записів. позначено «Знаю»: 0 записів. серія: 9 днів поспіль',
     );
+  });
+
+  it('ends with the week’s XP and goal days when the recap has them', () => {
+    const content = recapContent({ ...RECAP, xp: 120, goalDays: 3 });
+
+    expect(content.body).toMatchObject({
+      numbers: [
+        { label: 'переглянуто', count: 34 },
+        { label: 'збережено', count: 5 },
+        { label: 'знаю', count: 12 },
+        { label: 'серія', count: 9 },
+        { label: 'XP', count: 120 },
+        { label: 'дні з ціллю', count: 3 },
+      ],
+    });
+    expect(content.label).toContain('120 XP за тиждень. ціль виконано 3 дні');
+  });
+});
+
+describe('the Share Card of progress', () => {
+  it('shows a Level reached with its number and name, the day as its overline', () => {
+    const content = buildShareCardContent(
+      { level: { level: 5, name: 'Знавець', progress: 0, toNext: 300 }, date: '2026-11-01' },
+      STRINGS,
+      'uk',
+    );
+
+    expect(content).toEqual({
+      shows: 'level:5',
+      overline: '1 листопада',
+      label: '1 листопада. Новий рівень у SLOVO. Рівень 5. Знавець',
+      body: {
+        kind: 'milestone',
+        title: 'Новий рівень у SLOVO',
+        headline: 'Рівень 5',
+        detail: 'Знавець',
+      },
+    });
+  });
+
+  it('shows a Badge earned with its name, on the day it was earned', () => {
+    const content = buildShareCardContent(
+      {
+        badge: {
+          id: 'week',
+          name: 'Тиждень поспіль',
+          condition: { kind: 'streak', days: 7 },
+          earned: true,
+          date: '2026-10-30',
+        },
+      },
+      STRINGS,
+      'uk',
+    );
+
+    expect(content).toEqual({
+      shows: 'badge:week',
+      overline: '30 жовтня',
+      label: '30 жовтня. Нова відзнака в SLOVO. Тиждень поспіль',
+      body: {
+        kind: 'milestone',
+        title: 'Нова відзнака в SLOVO',
+        headline: 'Тиждень поспіль',
+        detail: undefined,
+      },
+    });
+  });
+
+  it('shows a Streak milestone in its plural form', () => {
+    const content = buildShareCardContent({ streak: 14, date: '2026-11-01' }, STRINGS, 'uk');
+
+    expect(content).toEqual({
+      shows: 'streak:14',
+      overline: '1 листопада',
+      label: '1 листопада. Моя серія в SLOVO. 14 днів поспіль',
+      body: {
+        kind: 'milestone',
+        title: 'Моя серія в SLOVO',
+        headline: '14 днів поспіль',
+        detail: undefined,
+      },
+    });
+    expect(buildShareCardContent({ streak: 3, date: '2026-11-01' }, STRINGS, 'uk').label).toBe(
+      '1 листопада. Моя серія в SLOVO. 3 дні поспіль',
+    );
+  });
+});
+
+describe('the Share Card of a solved Daily Crossword', () => {
+  const crossword = {
+    date: '2026-11-01',
+    letters: [
+      ['к', 'і', 'т', undefined, undefined],
+      [undefined, undefined, 'и', undefined, undefined],
+      [undefined, undefined, 'н', undefined, undefined],
+      [undefined, undefined, undefined, undefined, undefined],
+      [undefined, undefined, undefined, undefined, undefined],
+    ],
+    words: [
+      {
+        start: { row: 0, column: 0 },
+        direction: 'across',
+        length: 3,
+        clue: 'Свійська тварина',
+        right: true,
+      },
+      {
+        start: { row: 0, column: 2 },
+        direction: 'down',
+        length: 3,
+        clue: 'Огорожа з лози',
+        right: true,
+      },
+    ],
+    progress: 'solved',
+  } as const;
+
+  it('shows the grid’s open cells with no letter and no clue, the day as its overline', () => {
+    const content = buildShareCardContent({ crossword }, STRINGS, 'uk');
+
+    expect(content).toEqual({
+      shows: 'crossword:2026-11-01',
+      overline: '1 листопада',
+      label: '1 листопада. Кросворд дня розв’язано. Сітка кросворду без літер',
+      body: {
+        kind: 'dailyCrossword',
+        title: 'Кросворд дня розв’язано',
+        grid: [
+          [true, true, true, false, false],
+          [false, false, true, false, false],
+          [false, false, true, false, false],
+          [false, false, false, false, false],
+          [false, false, false, false, false],
+        ],
+      },
+    });
+    const shared = JSON.stringify(content);
+    for (const answerOrClue of ['кіт', 'тин', 'Свійська', 'лози']) {
+      expect(shared).not.toContain(answerOrClue);
+    }
   });
 });

@@ -36,6 +36,7 @@ export type ShareCard = (
   view: View,
   cardId: string,
   format: ShareCardFormat,
+  onShared: () => void,
 ) => Promise<ShareSheetOutcome>;
 
 /**

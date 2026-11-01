@@ -5,6 +5,7 @@ import type { History } from '../saved/history';
 import { dateKeyOf, isMonday, localDateAfter, localDayOf, type LocalDate } from '../local-date';
 import type { Clock } from '../ports';
 import type { Progress } from '../progress/progress';
+import type { XpLog } from '../progress/xp-log';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -25,6 +26,13 @@ export interface WeeklyRecapModel {
   readonly known?: number;
   /** The current Streak. */
   readonly streak: number;
+  /** The XP earned in the week. Absent with the `xpLog` Feature Switch off. */
+  readonly xp?: number;
+  /**
+   * The days of the week that met their Daily Goal. Absent with the `xpLog`
+   * or the `dailyGoal` Feature Switch off.
+   */
+  readonly goalDays?: number;
 }
 
 /**
@@ -54,6 +62,7 @@ export function createWeeklyRecap({
   favorites,
   progress,
   activeDays,
+  xpLog,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: UserState;
@@ -62,6 +71,7 @@ export function createWeeklyRecap({
   favorites: Pick<Favorites, 'list'>;
   progress: Pick<Progress, 'state'>;
   activeDays: Pick<ActiveDays, 'days'>;
+  xpLog: Pick<XpLog, 'dayOf'>;
 }): WeeklyRecap {
   return {
     async of(day) {
@@ -80,6 +90,14 @@ export function createWeeklyRecap({
             mark === 'known' && markedAt !== undefined && inWeek(new Date(markedAt)),
         ).length;
       }
+      /** The week's XP and goal days, each while its Feature Switch is on. */
+      function xpOfWeek(dates: readonly string[]): Pick<WeeklyRecapModel, 'xp' | 'goalDays'> {
+        if (!edition.isFeatureEnabled('xpLog')) return {};
+        const days = dates.map((date) => xpLog.dayOf(date));
+        const xp = days.reduce((sum, { xp: dayXp }) => sum + dayXp, 0);
+        if (!edition.isFeatureEnabled('dailyGoal')) return { xp };
+        return { xp, goalDays: days.filter(({ dailyGoal }) => dailyGoal?.met === true).length };
+      }
       return {
         firstDay: localDateAfter(day, -7),
         lastDay: localDateAfter(day, -1),
@@ -87,6 +105,7 @@ export function createWeeklyRecap({
         saved: favorites.list.filter(({ addedAt }) => inWeek(addedAt)).length,
         ...(edition.isFeatureEnabled('knowledge') ? { known: await knownInWeek() } : {}),
         streak: progress.state.streak,
+        ...xpOfWeek([...week]),
       };
     },
   };

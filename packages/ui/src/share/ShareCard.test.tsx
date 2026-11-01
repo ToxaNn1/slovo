@@ -52,4 +52,43 @@ describe('ShareCard', () => {
     }
     expect(card).toHaveAccessibleName('calque. Often said: take part. Better: join in');
   });
+
+  it("draws a Level's title, number and name", async () => {
+    const card = await renderCard(
+      {
+        shows: 'level:5',
+        overline: '1 November',
+        label: '1 November. New level. Level 5. Expert',
+        body: { kind: 'milestone', title: 'New level', headline: 'Level 5', detail: 'Expert' },
+      },
+      'story',
+    );
+
+    for (const text of ['1 November', 'New level', 'Level 5', 'Expert']) {
+      expect(within(card).getByText(text)).toBeOnTheScreen();
+    }
+  });
+
+  it("draws a solved Daily Crossword's open cells with no letter", async () => {
+    const card = await renderCard(
+      {
+        shows: 'crossword:2026-11-01',
+        overline: '1 November',
+        label: '1 November. Crossword solved. An empty grid',
+        body: {
+          kind: 'dailyCrossword',
+          title: 'Crossword solved',
+          grid: [
+            [true, true],
+            [false, true],
+          ],
+        },
+      },
+      'square',
+    );
+
+    expect(within(card).getByText('Crossword solved')).toBeOnTheScreen();
+    expect(within(card).getAllByTestId('crossword-open-cell')).toHaveLength(3);
+    expect(within(card).getAllByTestId('crossword-closed-cell')).toHaveLength(1);
+  });
 });

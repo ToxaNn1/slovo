@@ -29,6 +29,8 @@ const everything: Shown = {
   xpBar: true,
   streakBreak: true,
   badges: true,
+  progressShareCards: true,
+  dailyCrosswordShare: true,
   quickQuestion: true,
   sync: true,
   dailyGoal: true,
@@ -55,7 +57,14 @@ describe('what the reader is shown', () => {
     ['everything, with every switch on and the settings as they start', { shown: everything }],
     [
       'no Game tab with the Game off',
-      { off: ['game'], shown: { tabs: ['home', 'settings', 'saved'], quickQuestion: false } },
+      {
+        off: ['game'],
+        shown: {
+          tabs: ['home', 'settings', 'saved'],
+          quickQuestion: false,
+          dailyCrosswordShare: false,
+        },
+      },
     ],
     [
       'a still Stress mark with the falling Stress off',
@@ -111,6 +120,8 @@ describe('what the reader is shown', () => {
             knowledge: true,
             mistakeReport: true,
           },
+          progressShareCards: false,
+          dailyCrosswordShare: false,
         },
       },
     ],
@@ -173,6 +184,7 @@ describe('what the reader is shown', () => {
         shown: {
           stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
           xpBar: false,
+          progressShareCards: false,
         },
       },
     ],
@@ -195,11 +207,29 @@ describe('what the reader is shown', () => {
       'no XP bar and no Break with the XP log off',
       {
         off: ['xpLog'],
-        shown: { xpBar: false, streakBreak: false, dailyGoal: false, badges: false },
+        shown: {
+          xpBar: false,
+          streakBreak: false,
+          dailyGoal: false,
+          badges: false,
+          progressShareCards: false,
+        },
       },
     ],
     ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
     ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
+    [
+      'no progress Share Cards with their switch off',
+      { off: ['progressShareCards'], shown: { progressShareCards: false } },
+    ],
+    [
+      'no Daily Crossword Share Card with its switch off',
+      { off: ['dailyCrosswordShare'], shown: { dailyCrosswordShare: false } },
+    ],
+    [
+      'no Daily Crossword Share Card with the Daily Crossword off',
+      { off: ['dailyCrossword'], shown: { dailyCrosswordShare: false } },
+    ],
     [
       'no Quick Question with its switch off',
       { off: ['quickQuestion'], shown: { quickQuestion: false } },

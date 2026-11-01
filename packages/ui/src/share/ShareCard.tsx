@@ -217,7 +217,106 @@ function Blocks({ body, ...props }: BlockProps & { body: ShareCardBody }) {
       return <TipBlocks card={body} {...props} />;
     case 'weeklyRecap':
       return <WeeklyRecapBlocks card={body} {...props} />;
+    case 'milestone':
+      return <MilestoneBlocks card={body} {...props} />;
+    case 'dailyCrossword':
+      return <DailyCrosswordBlocks card={body} {...props} />;
   }
+}
+
+/** A card's title in the recap's type, over Decor slot 2. */
+function CardTitle({
+  title,
+  text,
+  format,
+}: Pick<BlockProps, 'text' | 'format'> & { title: string }) {
+  const { colors, fontFamilies } = useTokens();
+  const titleSize = text(shareCardLayout[format].type.nonStandard);
+  return (
+    <Text
+      allowFontScaling={false}
+      style={[
+        styles.tipTitle,
+        {
+          fontSize: titleSize,
+          lineHeight: titleSize * NON_STANDARD_LINE_HEIGHT,
+          color: colors.ink,
+          fontFamily: fontFamilies.word,
+        },
+      ]}
+    >
+      {title}
+    </Text>
+  );
+}
+
+/** A Level reached, a Badge earned or a Streak milestone: its title, Decor slot 2, its headline and the Level's name. */
+function MilestoneBlocks({ card, ...props }: BlockProps & { card: BodyOf<'milestone'> }) {
+  const { colors, fontFamilies } = useTokens();
+  const { text, format, dividerScale } = props;
+  const { type } = shareCardLayout[format];
+  return (
+    <>
+      <CardTitle title={card.title} {...props} />
+      <OrnamentDivider scale={dividerScale} />
+      <Text
+        allowFontScaling={false}
+        style={[
+          styles.headline,
+          {
+            fontSize: text(type.headline),
+            lineHeight: text(type.headline) * HEADLINE_LINE_HEIGHT,
+            color: colors.ink,
+            fontFamily: fontFamilies.word,
+          },
+        ]}
+      >
+        {card.headline}
+      </Text>
+      {card.detail !== undefined && (
+        <Text
+          allowFontScaling={false}
+          style={[
+            styles.label,
+            { fontSize: text(type.label), color: colors.muted, fontFamily: fontFamilies.ui },
+          ]}
+        >
+          {card.detail}
+        </Text>
+      )}
+    </>
+  );
+}
+
+/** A solved Daily Crossword: its title, Decor slot 2 and its grid with the open cells filled, never a letter. */
+function DailyCrosswordBlocks({ card, ...props }: BlockProps & { card: BodyOf<'dailyCrossword'> }) {
+  const { colors } = useTokens();
+  const { text, format, dividerScale } = props;
+  const cell = text(shareCardLayout[format].type.headline);
+  return (
+    <>
+      <CardTitle title={card.title} {...props} />
+      <OrnamentDivider scale={dividerScale} />
+      <View>
+        {card.grid.map((row, r) => (
+          <View key={r} style={styles.gridRow}>
+            {row.map((open, c) => (
+              <View
+                key={c}
+                testID={open ? 'crossword-open-cell' : 'crossword-closed-cell'}
+                style={{
+                  width: cell,
+                  height: cell,
+                  borderWidth: open ? StyleSheet.hairlineWidth : 0,
+                  borderColor: colors.ink,
+                }}
+              />
+            ))}
+          </View>
+        ))}
+      </View>
+    </>
+  );
 }
 
 /**
@@ -232,23 +331,9 @@ function WeeklyRecapBlocks({
 }: BlockProps & { card: BodyOf<'weeklyRecap'> }) {
   const { colors, fontFamilies } = useTokens();
   const { type, gap, labelGap } = shareCardLayout[format];
-  const titleSize = text(type.nonStandard);
   return (
     <>
-      <Text
-        allowFontScaling={false}
-        style={[
-          styles.tipTitle,
-          {
-            fontSize: titleSize,
-            lineHeight: titleSize * NON_STANDARD_LINE_HEIGHT,
-            color: colors.ink,
-            fontFamily: fontFamilies.word,
-          },
-        ]}
-      >
-        {card.title}
-      </Text>
+      <CardTitle title={card.title} text={text} format={format} />
       <OrnamentDivider scale={dividerScale} />
       <View style={[styles.numbers, { rowGap: text(gap) }]}>
         {card.numbers.map(({ label, count }) => (
@@ -584,5 +669,6 @@ const styles = StyleSheet.create({
   footer: { flexDirection: 'row', justifyContent: 'space-between' },
   numbers: { flexDirection: 'row', flexWrap: 'wrap' },
   number: { width: '50%' },
+  gridRow: { flexDirection: 'row' },
   footerText: { flexShrink: 1, fontWeight: '600', textTransform: 'uppercase' },
 });
