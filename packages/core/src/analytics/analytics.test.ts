@@ -106,6 +106,20 @@ describe('Analytics', () => {
     ]);
   });
 
+  it('sends «Без лічильників» turned on and off as a setting changed, and nothing while sharing is off', async () => {
+    const { settings, events } = await run();
+
+    await settings.update({ noCounters: true });
+    await settings.update({ noCounters: false });
+    await settings.update({ shareCounters: false });
+    await settings.update({ noCounters: true });
+
+    expect(events).toEqual([
+      ['settingChanged', { setting: 'noCounters', value: true }],
+      ['settingChanged', { setting: 'noCounters', value: false }],
+    ]);
+  });
+
   it('sends nothing once sharing is off, the change that turns it off included, and stops the port', async () => {
     const { app, settings, events, stops } = await run();
 

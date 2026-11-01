@@ -23,6 +23,7 @@ const everything: Shown = {
   selfCheckSetting: true,
   seasonalDecorSetting: true,
   shareCountersSetting: true,
+  countersSetting: 'noCounters',
   learning: true,
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
@@ -38,7 +39,7 @@ const everything: Shown = {
 
 interface Case {
   readonly off?: readonly FeatureSwitch[];
-  readonly hideStreak?: boolean;
+  readonly noCounters?: boolean;
   readonly selfCheck?: boolean;
   readonly correctionsInMix?: boolean;
   readonly idiomsInMix?: boolean;
@@ -162,10 +163,25 @@ describe('what the reader is shown', () => {
     [
       'the statistics without the Streak, and no XP bar, when the reader hides the counters',
       {
-        hideStreak: true,
+        noCounters: true,
         shown: {
           stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
           xpBar: false,
+        },
+      },
+    ],
+    [
+      'the Streak and the XP bar of 0.9, with «Приховати Серію» in place of «Без лічильників» while its switch is off',
+      { off: ['noCounters'], shown: { countersSetting: 'hideStreak' } },
+    ],
+    [
+      'the XP bar to a reader who hid the Streak while «Без лічильників» is switched off',
+      {
+        off: ['noCounters'],
+        noCounters: true,
+        shown: {
+          countersSetting: 'hideStreak',
+          stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
         },
       },
     ],
@@ -179,8 +195,15 @@ describe('what the reader is shown', () => {
       { off: ['quickQuestion'], shown: { quickQuestion: false } },
     ],
     [
-      'no statistics, and so no setting to hide the Streak, with statistics off',
+      'no statistics, with statistics off, and still «Без лічильників» for the XP bar',
       { off: ['statistics'], shown: { stats: undefined } },
+    ],
+    [
+      'no statistics and no setting to hide the Streak, with statistics and «Без лічильників» off',
+      {
+        off: ['statistics', 'noCounters'],
+        shown: { stats: undefined, countersSetting: undefined },
+      },
     ],
     // Owner decision 19.10, #478: no count of Known Corrections while the reader sees none.
     [
@@ -252,7 +275,7 @@ describe('what the reader is shown', () => {
       _,
       {
         off = [],
-        hideStreak = false,
+        noCounters = false,
         selfCheck = false,
         correctionsInMix = true,
         idiomsInMix = true,
@@ -264,7 +287,7 @@ describe('what the reader is shown', () => {
       expect(
         shownOf({
           edition: editionWithout(...off),
-          settings: { hideStreak, selfCheck },
+          settings: { noCounters, selfCheck },
           mix: {
             kinds: {
               correction: correctionsInMix,

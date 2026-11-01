@@ -11,8 +11,13 @@ export interface UserSettings {
   readonly fontSize: FontSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
-  /** Whether the Streak is hidden everywhere it is drawn. */
-  readonly hideStreak: boolean;
+  /**
+   * Whether «Без лічильників» is on: XP, Level, Streak, celebrations, level
+   * milestones and in-Game XP feedback are hidden while counting goes on
+   * (ADR 0066). While the Edition's `noCounters` switch is off it is
+   * «Приховати Серію» of 0.9 and hides only the Streak.
+   */
+  readonly noCounters: boolean;
   /** Whether Self-check hides the answer on an Entry card until the reader taps. */
   readonly selfCheck: boolean;
   /** Whether «Сезонний декор» is on: slots 1 and 2 of the Decor follow the local date (ADR 0055). */
@@ -28,14 +33,14 @@ export interface UserSettings {
 }
 
 /**
- * The settings an Edition sets the defaults of. The Streak is shown until the
- * user hides it, Self-check is off until the user turns it on and Seasonal
+ * The settings an Edition sets the defaults of. The counters are shown until the
+ * user hides them, Self-check is off until the user turns it on and Seasonal
  * Decor and sharing the Community Counters are on until the user turns them
  * off, in every Edition, so none of them has an Edition default.
  */
 export type SettingsDefaults = Omit<
   UserSettings,
-  'hideStreak' | 'selfCheck' | 'seasonalDecor' | 'shareCounters'
+  'noCounters' | 'selfCheck' | 'seasonalDecor' | 'shareCounters'
 >;
 
 /** The user's settings: their own choices over the Edition's defaults. */
@@ -75,7 +80,7 @@ export function createSettings({
 }): Settings {
   const all: UserSettings = {
     ...defaults,
-    hideStreak: false,
+    noCounters: false,
     selfCheck: false,
     seasonalDecor: true,
     shareCounters: true,
@@ -86,7 +91,7 @@ export function createSettings({
       theme: (await userState.read(userStateRecords.theme)) ?? all.theme,
       fontSize: (await userState.read(userStateRecords.fontSize)) ?? all.fontSize,
       vibration: (await userState.read(userStateRecords.vibration)) ?? all.vibration,
-      hideStreak: (await userState.read(userStateRecords.hideStreak)) ?? all.hideStreak,
+      noCounters: (await userState.read(userStateRecords.noCounters)) ?? all.noCounters,
       selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? all.selfCheck,
       seasonalDecor: (await userState.read(userStateRecords.seasonalDecor)) ?? all.seasonalDecor,
       shareCounters: (await userState.read(userStateRecords.shareCounters)) ?? all.shareCounters,
@@ -103,8 +108,8 @@ export function createSettings({
           ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
           ...('fontSize' in changes ? userStateRecords.fontSize.change(changes.fontSize) : []),
           ...('vibration' in changes ? userStateRecords.vibration.change(changes.vibration) : []),
-          ...('hideStreak' in changes
-            ? userStateRecords.hideStreak.change(changes.hideStreak)
+          ...('noCounters' in changes
+            ? userStateRecords.noCounters.change(changes.noCounters)
             : []),
           ...('selfCheck' in changes ? userStateRecords.selfCheck.change(changes.selfCheck) : []),
           ...('seasonalDecor' in changes

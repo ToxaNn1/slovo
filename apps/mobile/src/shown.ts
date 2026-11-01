@@ -42,6 +42,12 @@ export interface Shown {
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Ділитися анонімною статистикою», with its privacy policy link (ADR 0060). */
   readonly shareCountersSetting: boolean;
+  /**
+   * The Settings switch of the counters: «Без лічильників» while its Feature
+   * Switch is on; else «Приховати Серію» of 0.9 while the statistics are on;
+   * else none.
+   */
+  readonly countersSetting: 'noCounters' | 'hideStreak' | undefined;
   /** The «Вчу» card of the Saved tab and the list it opens. */
   readonly learning: boolean;
   /**
@@ -86,7 +92,8 @@ export interface Shown {
 /**
  * What the reader is shown, from the Edition in effect (ADR 0040), the
  * reader's settings and their Mix. A feature shows only while its Feature
- * Switch is on in effect; the reader may hide the Streak and turns
+ * Switch is on in effect; the reader may hide the counters (or, with
+ * «Без лічильників» switched off, only the Streak) and turns
  * Self-check on, and the Known Corrections, Idioms, Synonym Rows and Tips
  * each count only while they are in the Mix as well.
  */
@@ -96,11 +103,13 @@ export function shownOf({
   mix,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
-  settings: Pick<UserSettings, 'hideStreak' | 'selfCheck'>;
+  settings: Pick<UserSettings, 'noCounters' | 'selfCheck'>;
   mix: Pick<MixState, 'kinds'>;
 }): Shown {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
   const knowledge = on('knowledge');
+  // «Без лічильників» hides every counter; with its switch off it is «Приховати Серію» of 0.9 and hides only the Streak.
+  const noCounters = on('noCounters') && settings.noCounters;
   // The kinds the Known count joins: Words, and every kind as a whole while on and in the Mix.
   const knownKinds: readonly EntryKind[] = [
     'word',
@@ -121,14 +130,15 @@ export function shownOf({
     selfCheckSetting: on('selfCheck'),
     seasonalDecorSetting: on('seasonalDecor'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
+    countersSetting: on('noCounters') ? 'noCounters' : on('statistics') ? 'hideStreak' : undefined,
     learning: knowledge,
     stats: on('statistics')
       ? {
-          streak: !settings.hideStreak,
+          streak: !settings.noCounters,
           knowledge: knowledge ? knownKinds : 'none',
         }
       : undefined,
-    xpBar: on('xpLog') && !settings.hideStreak,
+    xpBar: on('xpLog') && !noCounters,
     streakBreak: on('xpLog') && on('streakBreak'),
     quickQuestion: on('game') && on('quickQuestion'),
     sync: on('sync'),

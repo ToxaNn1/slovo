@@ -77,11 +77,11 @@ describe('the user state of each Edition', () => {
   it('adopts the store of a 0.9 reader as the UA Edition’s, with nothing moved', async () => {
     // What 0.9 left on the phone: one user state, before there were Editions.
     const before = await openSqliteUserState(await openDatabase('user-state.db'));
-    await before.write(userStateRecords.hideStreak.change(true));
+    await before.write(userStateRecords.noCounters.change(true));
 
     const userState = await storedUserStateOpening('uk', openDatabase).opened();
 
-    expect(await userState.read(userStateRecords.hideStreak)).toBe(true);
+    expect(await userState.read(userStateRecords.noCounters)).toBe(true);
   });
 
   it('keeps another Edition’s user state apart from the UA Edition’s', async () => {

@@ -36,7 +36,7 @@ const metrics = {
  * week holds the numbers above, on a binary that can capture the Share Card,
  * with Share Cards on in effect and the Streak shown unless a test says otherwise.
  */
-async function renderNotice({ shareCards = true, hideStreak = false } = {}) {
+async function renderNotice({ shareCards = true, noCounters = false } = {}) {
   const composition = await testShell().composition.opened();
   const shell = testShell({
     composition: opened({
@@ -44,7 +44,7 @@ async function renderNotice({ shareCards = true, hideStreak = false } = {}) {
       weeklyRecap: { ...composition.weeklyRecap, of: () => Promise.resolve(recap) },
     }),
     remoteSwitches: switchedTo(editionWith({ shareCards })),
-    settings: await settingsAt({ hideStreak }),
+    settings: await settingsAt({ noCounters }),
     shareCard: () => Promise.resolve('closed'),
   });
   await render(
@@ -81,7 +81,7 @@ describe('the Weekly Recap card', () => {
   });
 
   it('leaves the Streak off its Share Card while the reader hides it', async () => {
-    await renderNotice({ hideStreak: true });
+    await renderNotice({ noCounters: true });
 
     await fireEvent.press(screen.getByRole('button', { name: 'Поділитися' }));
 

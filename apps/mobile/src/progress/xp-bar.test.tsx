@@ -14,9 +14,12 @@ const mockNavigate = jest.fn<(href: string) => void>();
 jest.mock('expo-router', () => ({ useRouter: () => ({ navigate: mockNavigate }) }));
 
 /** The Edition in effect: as it ships, or with the XP log off. */
-const editionWith = ({ xpLog }: { xpLog: boolean }): typeof edition => ({
+const editionWith = (switches: { xpLog: boolean; noCounters: boolean }): typeof edition => ({
   ...edition,
-  isFeatureEnabled: (feature) => (feature === 'xpLog' ? xpLog : edition.isFeatureEnabled(feature)),
+  isFeatureEnabled: (feature) =>
+    feature === 'xpLog' || feature === 'noCounters'
+      ? switches[feature]
+      : edition.isFeatureEnabled(feature),
 });
 
 const metrics = {
@@ -29,12 +32,12 @@ const metrics = {
  * in effect and the counters shown unless a test says otherwise. Gives back
  * the composition, so a test awards XP as the Game does.
  */
-async function renderBar({ xpLog = true, hideStreak = false } = {}) {
+async function renderBar({ xpLog = true, noCounters = false, noCountersSwitch = true } = {}) {
   const composition = await testShell().composition.opened();
   const shell = testShell({
     composition: opened(composition),
-    remoteSwitches: switchedTo(editionWith({ xpLog })),
-    settings: await settingsAt({ hideStreak }),
+    remoteSwitches: switchedTo(editionWith({ xpLog, noCounters: noCountersSwitch })),
+    settings: await settingsAt({ noCounters }),
   });
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
@@ -74,9 +77,15 @@ describe('the XP bar over the Feed', () => {
   });
 
   it('is left out while the reader hides the counters', async () => {
-    await renderBar({ hideStreak: true });
+    await renderBar({ noCounters: true });
 
     expect(screen.queryByTestId('xp-bar')).not.toBeOnTheScreen();
+  });
+
+  it('shows to a reader who hid the Streak while «Без лічильників» is switched off, as in 0.9', async () => {
+    await renderBar({ noCounters: true, noCountersSwitch: false });
+
+    expect(screen.getByTestId('xp-bar')).toBeOnTheScreen();
   });
 
   it('is left out with the XP log off in effect', async () => {
