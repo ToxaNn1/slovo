@@ -84,13 +84,11 @@ describe('the progress Share Cards', () => {
   it('offers the Level reached, the Badge earned and the Streak milestone of today', async () => {
     // Level 1 takes 50 XP: 30 two days ago, 10 yesterday, 10 today; 3 Active Days in a row.
     const app = await run({ xps: [xp('2026-10-12', 30), xp('2026-10-13', 10), xp(TODAY, 10)] });
-    expect(app.progressShareCards.state).toEqual([
-      { level: expect.objectContaining({ level: 1, name: 'Seed' }), date: TODAY },
-      {
-        badge: expect.objectContaining({ id: 'streak-3', name: 'Three days', date: TODAY }),
-      },
-      { streak: 3, date: TODAY },
-    ]);
+    const cards = app.progressShareCards.state;
+    expect(cards).toHaveLength(3);
+    expect(cards[0]).toMatchObject({ level: { level: 1, name: 'Seed' }, date: TODAY });
+    expect(cards[1]).toMatchObject({ badge: { id: 'streak-3', name: 'Three days', date: TODAY } });
+    expect(cards[2]).toEqual({ streak: 3, date: TODAY });
   });
 
   it('offers none of a Level, a Badge or a Streak milestone reached before today', async () => {
@@ -104,16 +102,12 @@ describe('the progress Share Cards', () => {
   it('offers no Streak past its milestones: 8 days in a row is none', async () => {
     const days = ['07', '08', '09', '10', '11', '12', '13', '14'];
     const app = await run({ xps: days.map((day) => xp(`2026-10-${day}`, 5)) });
-    expect(app.progressShareCards.state).not.toContainEqual(
-      expect.objectContaining({ streak: expect.any(Number) }),
-    );
+    expect(app.progressShareCards.state.some((card) => 'streak' in card)).toBe(false);
   });
 
   it('offers no Streak until today is an Active Day', async () => {
     const app = await run({ xps: [xp('2026-10-12', 5), xp('2026-10-13', 5), xp(TODAY, 4)] });
-    expect(app.progressShareCards.state).not.toContainEqual(
-      expect.objectContaining({ streak: expect.any(Number) }),
-    );
+    expect(app.progressShareCards.state.some((card) => 'streak' in card)).toBe(false);
   });
 
   it('keeps one state while nothing changes', async () => {
