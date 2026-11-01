@@ -212,5 +212,9 @@ export {
   openUserState,
   UserStateTooNewError,
 } from './user-state/user-state';
-export { trackChanges, type TrackedUserState } from './user-state/tracked-user-state';
+export {
+  openTrackedUserState,
+  trackChanges,
+  type TrackedUserState,
+} from './user-state/tracked-user-state';
 export type { UserStateMigration } from './user-state/user-state-migration';

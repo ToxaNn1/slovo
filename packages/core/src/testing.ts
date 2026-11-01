@@ -24,5 +24,13 @@ export {
   type FakeNotificationScheduler,
 } from './fakes/fake-notification-scheduler';
 export { createMemoryContentPort } from './fakes/memory-content';
+export {
+  readFact,
+  seedUserState,
+  type UserStateFact,
+  type UserStateFactName,
+  type UserStateFacts,
+} from './fakes/seeded-user-state';
+export { UserStateTooNewError } from './user-state/user-state';
 export { createMemoryPackFiles, type MemoryPackFile } from './fakes/memory-pack-files';
 export { testEdition, type TestEditionOverrides } from './test-support';
