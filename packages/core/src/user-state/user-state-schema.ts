@@ -49,8 +49,10 @@ function claims(declaration: Declaration): { readonly key: string; readonly pref
 /** Whether two declarations name a key in common. */
 function clash(a: Declaration, b: Declaration): boolean {
   const [first, second] = [claims(a), claims(b)];
-  if (first.prefix && second.key.startsWith(first.key)) return second.prefix || second.key.length > first.key.length;
-  if (second.prefix && first.key.startsWith(second.key)) return first.prefix || first.key.length > second.key.length;
+  if (first.prefix && second.key.startsWith(first.key))
+    return second.prefix || second.key.length > first.key.length;
+  if (second.prefix && first.key.startsWith(second.key))
+    return first.prefix || first.key.length > second.key.length;
   return first.key === second.key;
 }
 

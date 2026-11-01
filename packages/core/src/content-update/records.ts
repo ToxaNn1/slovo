@@ -1,4 +1,3 @@
-
 import { declareRecord, InstantSchema } from '../user-state/user-state-record';
 
 /** The records of the content update. */
