@@ -71,7 +71,12 @@ import { createSearch, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
 import { createSpotlight, type Spotlight } from './spotlight/spotlight';
 import { createSubject, type Subject } from './subject';
-import { createAnalytics, type AnalyticsPort, type ShareCardKind } from './analytics/analytics';
+import {
+  createAnalytics,
+  type AnalyticsPort,
+  type EntryEventProperties,
+  type ShareCardKind,
+} from './analytics/analytics';
 import { openProgressShareCards, type ProgressShareCards } from './share/progress-share-cards';
 import { createWidget, type Widget } from './widget/widget';
 import { openWordOfTheDay } from './feed/word-of-the-day';
@@ -414,8 +419,25 @@ export async function openComposition({
   const { history, recorder } = await openHistory({ rows, userState });
   const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const communityCounters = openCommunityCounters({ edition, userState });
-  /** Emits the event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
-  async function entryEvent(
+  /** Emits an event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
+  async function withEntryProperties(
+    entryId: string,
+    track: (properties: EntryEventProperties) => Promise<void>,
+  ): Promise<void> {
+    try {
+      const entry = await entries.get(entryId);
+      if (entry === undefined) return;
+      await track({
+        entryKind: entry.kind,
+        rarity: entry.kind === 'word' ? entry.rarity : null,
+        categoryId: entry.kind === 'word' || entry.kind === 'correction' ? entry.categoryId : null,
+      });
+    } catch {
+      // Analytics never stands in the way of what the reader does.
+    }
+  }
+  /** Emits the event about the Entry with its kind, rarity and Category alone. */
+  function entryEvent(
     event:
       | 'seen'
       | 'known'
@@ -426,17 +448,7 @@ export async function openComposition({
       | 'wordHistoryOpened',
     entryId: string,
   ): Promise<void> {
-    try {
-      const entry = await entries.get(entryId);
-      if (entry === undefined) return;
-      await analytics.track(event, {
-        entryKind: entry.kind,
-        rarity: entry.kind === 'word' ? entry.rarity : null,
-        categoryId: entry.kind === 'word' || entry.kind === 'correction' ? entry.categoryId : null,
-      });
-    } catch {
-      // Analytics never stands in the way of what the reader does.
-    }
+    return withEntryProperties(entryId, (properties) => analytics.track(event, properties));
   }
   seen.subscribe((entryId) => entryEvent('seen', entryId));
   // The Knowledge Marks leave a Hidden Entry out, and turn to a new day before anything of it is written.
@@ -452,7 +464,10 @@ export async function openComposition({
     },
     dayStarted,
     xp: xpLog,
-    analytics,
+    reviewAnswered: (entryId, mark) =>
+      withEntryProperties(entryId, (properties) =>
+        analytics.track('reviewAnswered', { ...properties, mark }),
+      ),
   });
   // On a day turned to, the plan is made again before the Feed opens the day
   // and the Game plans its offers; on a change of eligibility, before the Feed
@@ -540,7 +555,10 @@ export async function openComposition({
         userState,
         random,
         modes: [...coreGameModes, ...gameModes],
-        analytics,
+        answered: (askedId, right) =>
+          withEntryProperties(askedId, (properties) =>
+            analytics.track('quickQuestionAnswered', { ...properties, right }),
+          ),
       }),
     },
   });
@@ -706,6 +724,7 @@ export async function openComposition({
       onboarding,
       xpLog,
       progress,
+      activeDays,
       userState,
       clock,
       opened: openedFromOutside,

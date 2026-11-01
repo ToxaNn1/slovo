@@ -97,9 +97,13 @@ export const WidgetSnapshotSchema = z
     /**
      * The goal ring: the local date it was written on, the XP earned that day,
      * its Daily Goal and whether the day met it, and the Streak while it is
-     * shown. The widget draws it while `on` is today and an empty ring after.
-     * None while the widget goal ring, the XP log or the Daily Goal is off, or
-     * «Без лічильників» hides the counters. Optional, so the format stays.
+     * shown. The widget draws it while `on` is today, and `after` on the next
+     * local day: the empty ring with the Streak that day keeps, since a missed
+     * day breaks it only once that day ends (ADR 0066). A snapshot without
+     * `after` keeps the format; the widget then draws an empty ring without
+     * the Streak. None while the widget goal ring, the XP log or the Daily
+     * Goal is off, or «Без лічильників» hides the counters. Optional, so the
+     * format stays.
      */
     goalRing: z
       .strictObject({
@@ -108,6 +112,13 @@ export const WidgetSnapshotSchema = z
         goal: DailyGoalSchema,
         met: z.boolean(),
         streak: z.int().nonnegative().optional(),
+        after: z
+          .strictObject({
+            xp: z.int().nonnegative(),
+            met: z.boolean(),
+            streak: z.int().nonnegative().optional(),
+          })
+          .optional(),
       })
       .optional(),
     /** Present while the lock-screen widget is on; without it the lock-screen widget invites the reader to open the app. */

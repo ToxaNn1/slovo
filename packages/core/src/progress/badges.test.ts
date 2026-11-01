@@ -21,7 +21,15 @@ const content = createMemoryContentPort({
   categories: [{ id: 'test', displayName: 'Test' }],
   words: Array.from({ length: 20 }, (_, index) => word(`w_${String(index)}`)),
 });
-const ALL_ON: readonly FeatureSwitch[] = ['game', 'xpLog', 'levels', 'badges', 'analytics'];
+const ALL_ON: readonly FeatureSwitch[] = [
+  'game',
+  'xpLog',
+  'levels',
+  'badges',
+  'analytics',
+  'knowledge',
+  'confirmedEntries',
+];
 
 const badges: readonly Badge[] = [
   { id: 'streak-3', name: 'Three days', condition: { kind: 'streak', days: 3 } },
@@ -29,6 +37,11 @@ const badges: readonly Badge[] = [
   { id: 'crossword-2', name: 'Two crosswords', condition: { kind: 'dailyCrosswordRun', days: 2 } },
   { id: 'rare', name: 'Rare', condition: { kind: 'rightOnRarity', rarity: 5 } },
   { id: 'level-1', name: 'Level 1', condition: { kind: 'level', level: 1 } },
+  {
+    id: 'confirmed-3',
+    name: 'Three confirmed',
+    condition: { kind: 'confirmedEntries', entries: 3 },
+  },
   // An Edition's own Badge from a parameterised kind.
   {
     id: 'clean',
@@ -79,6 +92,14 @@ const earned = (app: Awaited<ReturnType<typeof run>>['app']) =>
   Object.fromEntries(
     app.badges.state.flatMap((badge) => (badge.earned ? [[badge.id, badge.date]] : [])),
   );
+/** Resolves when the Badges next tell their subscribers, after the check a change starts. */
+const checked = (app: Awaited<ReturnType<typeof run>>['app']) =>
+  new Promise<void>((resolve) => {
+    const stop = app.badges.subscribe(() => {
+      stop();
+      resolve();
+    });
+  });
 const progressOf = (app: Awaited<ReturnType<typeof run>>['app'], id: string) =>
   app.badges.state.find((badge) => badge.id === id);
 
@@ -153,5 +174,33 @@ describe('the Badges', () => {
     const records = await readerWith(xp('2026-10-14', 50));
     expect((await run({ records, off: ['badges'] })).app.badges.state).toEqual([]);
     expect(earned((await run({ records })).app)).toMatchObject({ 'level-1': '2026-10-14' });
+  });
+
+  it('earns the confirmed-Entries Badge at the Nth confirmed Entry, not at N-1, and keeps it', async () => {
+    const records = new Map<string, string>();
+    const { app } = await run({ records });
+    await app.knowledge.confirm('w_0');
+    const second = checked(app);
+    await app.knowledge.confirm('w_1');
+    await second;
+    expect(earned(app)).toEqual({});
+    expect(progressOf(app, 'confirmed-3')).toMatchObject({
+      earned: false,
+      progress: { current: 2, target: 3 },
+    });
+
+    const third = checked(app);
+    await app.knowledge.confirm('w_2');
+    await third;
+    expect(earned(app)).toEqual({ 'confirmed-3': '2026-10-14' });
+    const written = [...records].filter(([key]) => key.startsWith('xp.'));
+    expect(written.map(([, value]) => JSON.parse(value) as unknown)).toEqual([
+      expect.objectContaining({ kind: 'badge', badge: 'confirmed-3', date: '2026-10-14' }),
+    ]);
+
+    for (const key of records.keys()) if (key.startsWith('confirmed.')) records.delete(key);
+    const later = (await run({ records, on: '2026-10-30' })).app;
+    expect(later.knowledge.state.confirmed.total).toBe(0);
+    expect(progressOf(later, 'confirmed-3')).toMatchObject({ earned: true, date: '2026-10-14' });
   });
 });

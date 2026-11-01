@@ -1,4 +1,3 @@
-import type { Analytics } from '../analytics/analytics';
 import type { Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { Random } from '../ports';
@@ -43,7 +42,7 @@ export function createQuickQuestion({
   userState,
   random,
   modes: registered,
-  analytics,
+  answered,
 }: {
   edition: GameEdition;
   entries: Pick<Entries, 'eligibleOfKind'>;
@@ -52,7 +51,8 @@ export function createQuickQuestion({
   userState: Pick<UserState, 'write'>;
   random: Random;
   modes: readonly GameMode[];
-  analytics?: Pick<Analytics, 'track'>;
+  /** Tells of the reader's answer about the asked Entry, right or not; it never throws. */
+  answered?: (askedId: string, right: boolean) => Promise<void>;
 }): QuickQuestion {
   const modes = registered.filter((mode) => mode.isOn(edition));
 
@@ -85,7 +85,7 @@ export function createQuickQuestion({
       award.commit();
       await knowledge.confirm(content.askedId);
     } else await knowledge.answer(content.askedId, 'unknown');
-    await analytics?.track('quickQuestionAnswered', { right }).catch(() => undefined);
+    await answered?.(content.askedId, right);
     return right;
   }
 

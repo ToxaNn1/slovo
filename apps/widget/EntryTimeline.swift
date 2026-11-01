@@ -12,7 +12,8 @@ struct EntryMoment: TimelineEntry {
   let linkKey: String?
   /// Whether the Word of the Day was Seen on this moment's local date: the ✓.
   let wordOfTheDaySeen: Bool
-  /// The goal ring of the moment's day: an empty one, without the Streak, once its day is over.
+  /// The goal ring of the moment's day: on the next day the Core's empty one with the
+  /// Streak it keeps, and an empty one without the Streak after that.
   let goalRing: GoalRing?
   let lockScreenWidget: Bool
   /// The widget's «Тло».
@@ -72,8 +73,14 @@ struct EntryTimeline: AppIntentTimelineProvider {
       date: date, overline: content.overline, entry: entry, emptyState: content.emptyState,
       linkKey: content.linkKey, wordOfTheDaySeen: content.wordOfTheDaySeenOn == localDate(date),
       goalRing: content.goalRing.map { ring in
-        ring.on == localDate(date)
-          ? ring : GoalRing(on: localDate(date), xp: 0, goal: ring.goal, met: false, streak: nil)
+        if ring.on == localDate(date) { return ring }
+        // The Core's ring for the next day, with the Streak it keeps (ADR 0066);
+        // later, or from an older snapshot, an empty ring without the Streak.
+        let dayBefore = calendar.date(byAdding: .day, value: -1, to: date) ?? date
+        let after = ring.on == localDate(dayBefore) ? ring.after : nil
+        return GoalRing(
+          on: localDate(date), xp: after?.xp ?? 0, goal: ring.goal, met: after?.met ?? false,
+          streak: after?.streak, after: nil)
       },
       lockScreenWidget: content.lockScreenWidget, background: background)
   }

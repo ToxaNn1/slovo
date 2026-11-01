@@ -1,6 +1,5 @@
 import type { EntryKind, Rarity } from '@slovo/contracts';
 
-import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../mix/hidden-entries';
@@ -191,7 +190,7 @@ export async function openKnowledge({
   countMark,
   dayStarted,
   xp,
-  analytics,
+  reviewAnswered,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   rows: EntryRows;
@@ -202,7 +201,8 @@ export async function openKnowledge({
   dayStarted: Pick<Subject<LocalDate>, 'subscribe'>;
   /** The XP log, which a Review answer earns XP in. */
   xp: ReviewXp;
-  analytics: Pick<Analytics, 'track'>;
+  /** Tells of the reader's answer to an Entry due for Review; it never throws. */
+  reviewAnswered: (entryId: string, mark: KnowledgeMark) => Promise<void>;
 }): Promise<Knowledge> {
   const { knowledge, confirmed: confirmedRecords } = userStateRecords;
   let records: ReadonlyMap<string, KnowledgeRecord> = await userState.list(knowledge);
@@ -349,7 +349,7 @@ export async function openKnowledge({
           edition.isFeatureEnabled('confirmedEntries'),
         review ? xp.award({ source: 'review-answer' }) : undefined,
       );
-      if (review) await analytics.track('reviewAnswered', { mark }).catch(() => undefined);
+      if (review) await reviewAnswered(entryId, mark);
     });
 
   /** Confirms the Entry, unless the `confirmedEntries` switch is off or it is confirmed already. */

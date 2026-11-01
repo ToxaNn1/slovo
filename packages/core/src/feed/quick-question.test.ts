@@ -151,7 +151,10 @@ describe('a Quick Question answered', () => {
     expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
     expect(app.knowledge.state.confirmed.total).toBe(1);
     expect(app.feed.cards[position]).toMatchObject({ answered: card.round.correct });
-    expect(events).toContainEqual(['quickQuestionAnswered', { right: true }]);
+    expect(events).toContainEqual([
+      'quickQuestionAnswered',
+      { right: true, entryKind: 'word', rarity: 3, categoryId: 'test' },
+    ]);
   });
 
   it('wrong marks its Entry Unknown and earns nothing', async () => {
@@ -165,7 +168,10 @@ describe('a Quick Question answered', () => {
     expect(app.knowledge.state.shown.get(card.askedId)).toBe('unknown');
     expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     expect(app.knowledge.state.confirmed.total).toBe(0);
-    expect(events).toContainEqual(['quickQuestionAnswered', { right: false }]);
+    expect(events).toContainEqual([
+      'quickQuestionAnswered',
+      { right: false, entryKind: 'word', rarity: 3, categoryId: 'test' },
+    ]);
   });
 
   it('is answered once: a second answer changes nothing', async () => {

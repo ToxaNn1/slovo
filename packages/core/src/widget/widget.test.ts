@@ -614,14 +614,18 @@ describe("The Widget Snapshot's day the Word of the Day was Seen", () => {
 describe('the goal ring and the lock-screen widget in the Widget Snapshot', () => {
   const ring: readonly FeatureSwitch[] = ['widgetGoalRing', 'xpLog', 'dailyGoal', 'statistics'];
 
-  /** XP log records of 5 XP on 14 and 15 October, two Active Days, and 7 XP today, 16 October. */
-  function earned(): Map<string, string> {
+  /**
+   * XP log records of 5 XP on 14 and 15 October, two Active Days, and 7 XP
+   * today, 16 October, unless today is left out.
+   */
+  function earned({ today = true }: { today?: boolean } = {}): Map<string, string> {
     const records = new Map<string, string>();
-    for (const [date, amount] of [
+    const days = [
       ['2026-10-14', 5],
       ['2026-10-15', 5],
       ['2026-10-16', 7],
-    ] as const) {
+    ] as const;
+    for (const [date, amount] of today ? days : days.slice(0, 2)) {
       records.set(
         `xp.seed-${date}`,
         JSON.stringify({
@@ -639,8 +643,62 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
   it("carries today's XP, its Daily Goal and the Streak, dated today", async () => {
     const snapshot = await snapshotOf(await run({ records: earned(), on: ring }));
 
-    expect(snapshot.goalRing).toEqual({ on: '2026-10-16', xp: 7, goal: 20, met: false, streak: 3 });
+    expect(snapshot.goalRing).toEqual({
+      on: '2026-10-16',
+      xp: 7,
+      goal: 20,
+      met: false,
+      streak: 3,
+      after: { xp: 0, met: false, streak: 3 },
+    });
     expect(() => serializeWidgetSnapshot(snapshot)).not.toThrow();
+  });
+
+  /** The goal ring of a run over `records` at the instant `at`. */
+  async function ringAt(
+    records: Map<string, string>,
+    at: string,
+    on: readonly FeatureSwitch[] = ring,
+  ): Promise<WidgetSnapshot['goalRing']> {
+    return (await snapshotOf(await run({ records, clock: fakeClock(at).clock, on }))).goalRing;
+  }
+
+  // Spec #1358 stories 82-83, ADR 0066: a missed day breaks the Streak only once it ends.
+  it('keeps the Streak in the ring after midnight, as the Core counts it the next day', async () => {
+    const records = earned();
+    const today = await ringAt(records, start);
+    const tomorrow = await ringAt(records, '2026-10-17T09:00:00+03:00');
+
+    expect(today?.after).toEqual({ xp: 0, met: false, streak: 3 });
+    expect(tomorrow).toMatchObject({ on: '2026-10-17', xp: 0, met: false, streak: 3 });
+  });
+
+  it('keeps the Streak after a day not yet Active, and breaks it after midnight with no freeze', async () => {
+    const records = earned({ today: false });
+    const today = await ringAt(records, start);
+    const tomorrow = await ringAt(records, '2026-10-17T09:00:00+03:00');
+
+    expect(today).toMatchObject({ streak: 2, after: { xp: 0, met: false, streak: 0 } });
+    expect(tomorrow?.streak).toBe(0);
+  });
+
+  it('keeps the Streak after midnight when a held freeze covers the day not yet Active', async () => {
+    const records = earned({ today: false });
+    const on = [...ring, 'streakFreezes'] as const;
+    const today = await ringAt(records, start, on);
+    const tomorrow = await ringAt(records, '2026-10-17T09:00:00+03:00', on);
+
+    expect(today).toMatchObject({ streak: 2, after: { xp: 0, met: false, streak: 2 } });
+    expect(tomorrow?.streak).toBe(2);
+  });
+
+  it('parses a snapshot written before the ring after midnight', async () => {
+    const snapshot = await snapshotOf(await run({ records: earned(), on: ring }));
+    const { goalRing } = snapshot;
+    if (goalRing === undefined) throw new Error('No goal ring');
+    const { after: _after, ...older } = goalRing;
+
+    expect(WidgetSnapshotSchema.parse({ ...snapshot, goalRing: older }).goalRing).toEqual(older);
   });
 
   it('carries none while the goal ring, the XP log or the Daily Goal is off', async () => {
@@ -658,6 +716,7 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
       xp: 7,
       goal: 20,
       met: false,
+      after: { xp: 0, met: false },
     });
   });
 
@@ -676,6 +735,7 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
       xp: 7,
       goal: 20,
       met: false,
+      after: { xp: 0, met: false },
     });
   });
 

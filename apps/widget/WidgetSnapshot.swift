@@ -62,6 +62,16 @@ struct GoalRing: Decodable, Hashable {
   let goal: Int
   let met: Bool
   let streak: Int?
+  /// What the widget draws on the next local day, which the Core decides;
+  /// none in a snapshot written before it.
+  let after: After?
+
+  /// The ring on the day after `on`: empty, with the Streak that day keeps.
+  struct After: Decodable, Hashable {
+    let xp: Int
+    let met: Bool
+    let streak: Int?
+  }
 
   /// The share of the goal to draw, 1 once the day met it.
   var progress: Double { met ? 1 : min(1, Double(xp) / Double(max(goal, 1))) }

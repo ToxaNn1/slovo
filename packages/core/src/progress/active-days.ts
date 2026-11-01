@@ -1,6 +1,6 @@
 import type { Analytics } from '../analytics/analytics';
 import { createInTurn, createSubscribers } from '../in-turn';
-import { todayKey } from '../local-date';
+import { dateKeyOf, localDateAfter, todayDate, todayKey } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
@@ -35,6 +35,12 @@ export interface ActiveDays {
   readonly days: ReadonlySet<string>;
   /** The Streak, the Best Streak and the freezes held, derived on today's local date. */
   readonly streak: StreakState;
+  /**
+   * The Streak as it stands on tomorrow's local date, before tomorrow is
+   * kept: today's when today is kept, else what today's miss makes of it, a
+   * held freeze aside (ADR 0066).
+   */
+  readonly streakTomorrow: number;
   /**
    * Makes today's change, then makes it in memory: covers the missed days up
    * to yesterday with held freezes, and with the XP log off records today. The
@@ -75,12 +81,12 @@ export async function openActiveDays({
   }
   let days = daysOf();
 
-  const derive = (): DerivedStreak =>
+  const derive = (today = todayKey(clock)): DerivedStreak =>
     deriveStreak({
       activeDays: days,
       frozen: xpLog.days.frozen,
       breaks: xpLog.days.breaks,
-      today: todayKey(clock),
+      today,
       freezes: xpOn && edition.isFeatureEnabled('streakFreezes'),
     });
 
@@ -135,6 +141,9 @@ export async function openActiveDays({
     get streak() {
       const { streak, bestStreak, freezesHeld } = derive();
       return { streak, bestStreak, freezesHeld };
+    },
+    get streakTomorrow() {
+      return derive(dateKeyOf(localDateAfter(todayDate(clock), 1))).streak;
     },
     recordToday: () => inTurn(recordToday),
     todayChange,

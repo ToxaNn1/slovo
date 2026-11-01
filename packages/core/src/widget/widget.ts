@@ -18,6 +18,7 @@ import type { Onboarding } from '../onboarding/onboarding';
 import { notificationText } from '../notifications/notification-text';
 import type { History } from '../saved/history';
 import { dateKeyOf, localDayOf, todayKey } from '../local-date';
+import type { ActiveDays } from '../progress/active-days';
 import type { Progress } from '../progress/progress';
 import type { XpLog } from '../progress/xp-log';
 import type { UserState } from '../user-state/user-state';
@@ -117,12 +118,14 @@ async function goalRingOf({
   edition,
   xpLog,
   progress,
+  activeDays,
   userState,
   clock,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   xpLog: Pick<XpLog, 'state'>;
   progress: Pick<Progress, 'state'>;
+  activeDays: Pick<ActiveDays, 'streakTomorrow'>;
   userState: Pick<UserState, 'read'>;
   clock: Clock;
 }): Promise<GoalRing | undefined> {
@@ -132,7 +135,15 @@ async function goalRingOf({
   const hidden = (await userState.read(userStateRecords.noCounters)) === true;
   if (hidden && on('noCounters')) return undefined;
   const ring = { on: todayKey(clock), xp: today, goal: dailyGoal.goal, met: dailyGoal.met };
-  return on('statistics') && !hidden ? { ...ring, streak: progress.state.streak } : ring;
+  // The next day starts empty, and a missed day breaks the Streak only once it ends (ADR 0066).
+  const after = { xp: 0, met: false };
+  return on('statistics') && !hidden
+    ? {
+        ...ring,
+        streak: progress.state.streak,
+        after: { ...after, streak: activeDays.streakTomorrow },
+      }
+    : { ...ring, after };
 }
 
 /**
@@ -149,6 +160,7 @@ export function createWidget({
   onboarding,
   xpLog,
   progress,
+  activeDays,
   userState,
   clock,
   opened,
@@ -161,6 +173,7 @@ export function createWidget({
   onboarding: Onboarding;
   xpLog: Pick<XpLog, 'state'>;
   progress: Pick<Progress, 'state'>;
+  activeDays: Pick<ActiveDays, 'streakTomorrow'>;
   userState: Pick<UserState, 'read'>;
   clock: Clock;
   opened: Widget['opened'];
@@ -175,7 +188,14 @@ export function createWidget({
       const seenOn = edition.isFeatureEnabled('wordOfTheDay')
         ? wordOfTheDaySeenOn(history, clock)
         : undefined;
-      const goalRing = await goalRingOf({ edition, xpLog, progress, userState, clock });
+      const goalRing = await goalRingOf({
+        edition,
+        xpLog,
+        progress,
+        activeDays,
+        userState,
+        clock,
+      });
       return {
         format: WIDGET_SNAPSHOT_FORMAT,
         editionId: edition.id,

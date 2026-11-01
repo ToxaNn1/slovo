@@ -184,8 +184,8 @@ describe('the Review XP', () => {
 
     expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
     expect(events.filter(([event]) => event === 'reviewAnswered')).toEqual([
-      ['reviewAnswered', { mark: 'known' }],
-      ['reviewAnswered', { mark: 'unknown' }],
+      ['reviewAnswered', { mark: 'known', entryKind: 'word', rarity: 3, categoryId: 'test' }],
+      ['reviewAnswered', { mark: 'unknown', entryKind: 'word', rarity: 3, categoryId: 'test' }],
     ]);
   });
 
