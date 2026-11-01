@@ -6,10 +6,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   type Entry,
-  createMemoryUserStatePort,
   ENTRY_KINDS,
   openComposition,
-  openUserState,
   SEEN_DWELL_MS,
   type Clock,
   type ContentReadPort,
@@ -18,8 +16,9 @@ import {
   type FeedCard,
   NOTIFICATION_BODY_LENGTH,
   type Random,
+  type TrackedUserState,
 } from '@slovo/core';
-import { createFakeNotificationScheduler } from '@slovo/core/testing';
+import { createFakeNotificationScheduler, seedUserState } from '@slovo/core/testing';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainian, ukrainianFolder } from './test-support';
@@ -119,12 +118,11 @@ function fakeClock(start: string) {
 }
 
 async function run(
-  records: Map<string, string>,
+  userState: TrackedUserState,
   clock: Clock,
   seed = 7,
   edition: Edition = wordsOnly,
 ): Promise<Feed> {
-  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   const composition = await openComposition({
     content,
     edition,
@@ -168,8 +166,8 @@ async function look(feed: Feed, time: ReturnType<typeof fakeClock>, position: nu
 }
 
 /** The Words a fresh run offers the next day, when the Feed doesn't reopen on the last card. */
-async function unseenNextDay(records: Map<string, string>): Promise<string[]> {
-  return walk(await run(records, fakeClock('2026-10-12T09:00:00+03:00').clock));
+async function unseenNextDay(userState: TrackedUserState): Promise<string[]> {
+  return walk(await run(userState, fakeClock('2026-10-12T09:00:00+03:00').clock));
 }
 
 const today = '2026-10-11T09:00:00+03:00';
@@ -187,7 +185,7 @@ describe('the Feed over the Ukrainian Language Pack', () => {
   it('opens a pack the build writes in pack format 9 and shows its first card', async () => {
     expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 9 });
 
-    const feed = await run(new Map(), fakeClock(today).clock);
+    const feed = await run(await seedUserState(), fakeClock(today).clock);
 
     expect(liveIds).toContain(feed.cards[0]?.entryId);
   });
@@ -196,7 +194,7 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     'offers each live Word once and never a Retired Word',
     { timeout: WALK_TIMEOUT_MS },
     async () => {
-      const offered = await walk(await run(new Map(), fakeClock(today).clock));
+      const offered = await walk(await run(await seedUserState(), fakeClock(today).clock));
 
       const words = await content.getEntries(offered);
       expect(offered).toHaveLength(liveIds.length);
@@ -212,13 +210,13 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     'shuffles the same way for the same seed, also after a restart',
     { timeout: WALK_TIMEOUT_MS },
     async () => {
-      const records = new Map<string, string>();
-      const first = await walk(await run(records, fakeClock(today).clock, 7));
-      const sameSeed = await walk(await run(new Map(), fakeClock(today).clock, 7));
-      const otherSeed = await walk(await run(new Map(), fakeClock(today).clock, 8));
+      const userState = await seedUserState();
+      const first = await walk(await run(userState, fakeClock(today).clock, 7));
+      const sameSeed = await walk(await run(await seedUserState(), fakeClock(today).clock, 7));
+      const otherSeed = await walk(await run(await seedUserState(), fakeClock(today).clock, 8));
 
       // The Cycle keeps the seed it started with, whatever the random port draws now.
-      const restarted = await walk(await run(records, fakeClock(today).clock, 99));
+      const restarted = await walk(await run(userState, fakeClock(today).clock, 99));
 
       expect(sameSeed).toEqual(first);
       expect(restarted).toEqual(first);
@@ -228,9 +226,9 @@ describe('the Feed over the Ukrainian Language Pack', () => {
   );
 
   it(`makes a Word Seen only after ${String(SEEN_DWELL_MS)} ms on screen, never on a quick swipe, and never by going back`, async () => {
-    const records = new Map<string, string>();
+    const userState = await seedUserState();
     const time = fakeClock(today);
-    const feed = await run(records, time.clock);
+    const feed = await run(userState, time.clock);
     await feed.next();
     await feed.next();
     const [read, skipped, almost] = entryIdsOf(feed.cards);
@@ -242,7 +240,7 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     await look(feed, time, 1, 250);
     await look(feed, time, 0, 10_000);
 
-    const unseen = await unseenNextDay(records);
+    const unseen = await unseenNextDay(userState);
     expect(unseen).toHaveLength(liveIds.length - 1);
     expect(unseen).not.toContain(read);
     expect(unseen).toContain(skipped);
@@ -250,14 +248,14 @@ describe('the Feed over the Ukrainian Language Pack', () => {
   });
 
   it('offers no Seen Word again after a restart in the same Cycle', async () => {
-    const records = new Map<string, string>();
+    const userState = await seedUserState();
     const time = fakeClock(today);
-    const feed = await run(records, time.clock);
+    const feed = await run(userState, time.clock);
     // The Feed gets each next card ready while the one before it is on screen.
     for (let position = 0; position < 5; position++) await look(feed, time, position, 2000);
     const read = entryIdsOf(feed.cards).slice(0, 5);
 
-    const restarted = await run(records, time.clock);
+    const restarted = await run(userState, time.clock);
     // It reopens on the card the reader was on; every card after it is new.
     const [reopenedOn, ...after] = (await walk(restarted)).slice(restarted.startPosition);
 
@@ -267,17 +265,17 @@ describe('the Feed over the Ukrainian Language Pack', () => {
   });
 
   it('starts each local day with an unseen Word of the Day that stays until midnight', async () => {
-    const records = new Map<string, string>();
+    const userState = await seedUserState();
     const time = fakeClock(today);
-    const feed = await run(records, time.clock);
+    const feed = await run(userState, time.clock);
     // The Feed gets each next card ready while the one before it is on screen.
     for (let position = 0; position < 3; position++) await look(feed, time, position, 2000);
     const read = entryIdsOf(feed.cards).slice(0, 3);
 
     const midnight = fakeClock('2026-10-12T00:00:00+03:00');
-    const nextDay = await run(records, midnight.clock);
+    const nextDay = await run(userState, midnight.clock);
     await look(nextDay, midnight, 0, 300);
-    const lateThatDay = await run(records, fakeClock('2026-10-12T23:59:00+03:00').clock);
+    const lateThatDay = await run(userState, fakeClock('2026-10-12T23:59:00+03:00').clock);
 
     expect(wordOfTheDayOf(feed.cards[0])).toEqual({ year: 2026, month: 10, day: 11 });
     expect(wordOfTheDayOf(nextDay.cards[0])).toEqual({ year: 2026, month: 10, day: 12 });
@@ -293,7 +291,7 @@ describe('Corrections in the Feed over the Ukrainian Language Pack', () => {
   });
 
   it('gives each Correction card the Correction card model of its Correction', async () => {
-    const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
+    const feed = await run(await seedUserState(), fakeClock(today).clock, 7, ukrainian);
     while (feed.cards.length < CORRECTION_EVERY) await feed.next();
 
     const card = feed.cards[CORRECTION_EVERY - 1];
@@ -325,7 +323,7 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
     'opens on a Word and offers each live Entry of every kind once',
     { timeout: WALK_TIMEOUT_MS },
     async () => {
-      const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
+      const feed = await run(await seedUserState(), fakeClock(today).clock, 7, ukrainian);
       const offered = await walk(feed);
 
       expect(feed.cards[0]?.kind).toBe('word');
@@ -342,7 +340,7 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
   );
 
   it('gives each Idiom card the Idiom card model of its Idiom', async () => {
-    const feed = await run(new Map(), fakeClock(today).clock, 7, ukrainian);
+    const feed = await run(await seedUserState(), fakeClock(today).clock, 7, ukrainian);
     while (feed.cards.length < IDIOM_EVERY) await feed.next();
 
     const card = feed.cards[IDIOM_EVERY - 1];
@@ -364,20 +362,20 @@ describe('Idioms in the Feed over the Ukrainian Language Pack', () => {
 });
 
 describe('Favorites over the Ukrainian Language Pack', () => {
-  async function open(records: Map<string, string>, clock: Clock) {
+  async function open(userState: TrackedUserState, clock: Clock) {
     return openComposition({
       content,
       edition: ukrainian,
-      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+      userState,
       clock,
       random: seededRandom(7),
     });
   }
 
   it('keeps a Word and a Correction hearted on their Feed cards across a restart, newest first', async () => {
-    const records = new Map<string, string>();
+    const userState = await seedUserState();
     const time = fakeClock('2026-10-11T09:00:00+03:00');
-    const first = await open(records, time.clock);
+    const first = await open(userState, time.clock);
     const word = first.feed.cards[0];
     const correctionId = liveCorrectionIds[0];
     if (word?.kind !== 'word' || correctionId === undefined)
@@ -386,7 +384,7 @@ describe('Favorites over the Ukrainian Language Pack', () => {
     await first.favorites.toggle(word.entryId);
     time.advance(60_000);
     await first.favorites.toggle(correctionId);
-    const app = await open(records, time.clock);
+    const app = await open(userState, time.clock);
 
     expect(app.favorites.list.map((favorite) => favorite.entryId)).toEqual([
       correctionId,
@@ -412,7 +410,7 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
     await openComposition({
       content,
       edition: ukrainian,
-      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      userState: await seedUserState(),
       clock: fakeClock('2026-10-14T08:00:00+03:00').clock,
       random: seededRandom(7),
       scheduling: {
