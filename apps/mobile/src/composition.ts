@@ -1,6 +1,7 @@
 import {
   openComposition,
   systemRandom,
+  type Account,
   type Composition,
   type TrackedUserState,
 } from '@slovo/core';
@@ -24,12 +25,15 @@ interface CompositionSources {
   languagePack: Opening<LaunchPack<PackReader>>;
   remoteSwitches: Opening<EditionSwitches>;
   userState: Opening<TrackedUserState>;
+  /** The Account, which opens apart (ADR 0037); undefined when the Edition has none. */
+  account: Opening<Account> | undefined;
 }
 
 async function openOver({
   languagePack,
   remoteSwitches,
   userState,
+  account,
 }: CompositionSources): Promise<Composition> {
   const content = (await languagePack.opened()).reader;
   const composition = await openComposition({
@@ -50,6 +54,11 @@ async function openOver({
       goalNotMet: editionStrings.notificationTemplates.goalNotMet,
     },
     backend,
+    // Until the Account is open the reader counts as signed in, so no offer to save comes too early.
+    signedIn: () =>
+      account === undefined
+        ? false
+        : account.state.status !== 'ready' || account.state.value.state.status === 'signed-in',
   });
   // The modes on offer stay the same for the session: one without its strings fails here, at launch.
   for (const { modeId } of composition.game.state.modes) {

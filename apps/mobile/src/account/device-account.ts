@@ -1,6 +1,7 @@
 import { openAccount, systemRandom, type Account, type TrackedUserState } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 
+import { deviceAnalytics } from '../analytics/posthog-analytics';
 import { backend } from '../api';
 import { deviceClock } from '../device/device-clock';
 import { nativeModules } from '../device/device-native-modules';
@@ -80,7 +81,7 @@ const appleSignInSheet =
     : createAppleSignInSheet(appleAuthentication);
 
 /**
- * The reader's Account («SLOVO ID»), opened once per app run apart from the
+ * The reader's Account, under the Edition's name for it,, opened once per app run apart from the
  * composition (ADR 0036, 0037), or undefined when the Edition's `account`
  * switch is off. Its Session is in the Keychain, or in memory while the
  * binary lacks it. When the Keychain can't be read, the opening fails with a
@@ -106,6 +107,7 @@ export function accountOpening({
         clock: deviceClock,
         schedule: systemSchedule,
         random: systemRandom,
+        analytics: deviceAnalytics,
       }),
     {
       onError(error) {

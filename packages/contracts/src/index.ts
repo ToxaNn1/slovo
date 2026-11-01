@@ -69,7 +69,6 @@ export {
 } from './language-pack';
 export { NotificationSoundFileSchema, type NotificationSoundFormat } from './notification-sound';
 export {
-  ACCOUNT_NAME,
   EditionStringsSchema,
   fill,
   pluralCount,

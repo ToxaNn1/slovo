@@ -19,7 +19,7 @@ export function useAccountInEffect(): Opening<Account> | undefined {
 }
 
 /**
- * What the SLOVO ID screen offers the Google and the Apple sign-in by: the
+ * What the Account screen offers the Google and the Apple sign-in by: the
  * Edition's switches in effect and what the build has (ADR 0047).
  */
 export interface AccountScreenSignIn {
@@ -31,7 +31,7 @@ export interface AccountScreenSignIn {
   readonly appleModule: boolean;
 }
 
-/** What the SLOVO ID screen offers the Google and the Apple sign-in by on this device. */
+/** What the Account screen offers the Google and the Apple sign-in by on this device. */
 export function useAccountScreenSignIn(): AccountScreenSignIn {
   return { edition: useEditionInEffect(), googleClientId, appleModule: hasAppleSignIn };
 }
@@ -44,17 +44,23 @@ function useAccountStateOf(opening: Opening<Account>): AccountState | undefined 
   return useSubscribed<Source, AccountState | undefined>(account ?? opening, () => account?.state);
 }
 
-/** The value of the «SLOVO ID» row of Settings: «Увійти» or the email, nothing while it opens. */
+/** The value of the Account row of Settings: «Увійти» or the email, nothing while it opens. */
 export function useAccountSummary(opening: Opening<Account>): string | undefined {
   return accountSummary(useAccountStateOf(opening), editionStrings.account);
 }
 
-/** The Account of the SLOVO ID screen, drawn under its opening's gate, as it stands. */
+/** Whether no one is signed in to the Account; false while it opens, so no offer to save comes too early. */
+export function useSignedOut(opening: Opening<Account>): boolean {
+  const state = useAccountStateOf(opening);
+  return state !== undefined && state.status !== 'signed-in';
+}
+
+/** The Account of the Account screen, drawn under its opening's gate, as it stands. */
 export function useAccountState(account: Account): AccountState {
   return useSubscribed(account, ({ state }) => state);
 }
 
-/** The line under the field of the SLOVO ID screen for the last request's problem, if any. */
+/** The line under the field of the Account screen for the last request's problem, if any. */
 export function useAccountProblemLine(state: AccountState): string | undefined {
   const { count } = useEdition();
   return accountProblemLine({ state, strings: editionStrings.account, count });

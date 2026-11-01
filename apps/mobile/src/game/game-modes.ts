@@ -59,7 +59,7 @@ export function gameModeCard(offer: GameModeOffer, strings: GameStrings): GameMo
 }
 
 /** A mode's Best result: out of its Round limit («Найкраще: 12 з 15»), or bare without one («Найкраще: 23»). */
-function bestText({ result, of }: OfferedBest, texts: GameStrings['modeBest']): string {
+export function bestText({ result, of }: OfferedBest, texts: GameStrings['modeBest']): string {
   const n = String(result);
   return of === undefined ? fill(texts.count, { n }) : fill(texts.outOf, { n, total: String(of) });
 }

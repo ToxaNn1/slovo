@@ -51,7 +51,7 @@ const dailyGoalSegments = dailyGoals.map((dailyGoal) => ({
 }));
 
 /**
- * Settings: SLOVO ID when the Account is on in effect, the Theme, the font
+ * Settings: the Account when the Account is on in effect, the Theme, the font
  * size, the Daily Goal while it is on in effect, «Пройти тест ще раз» while
  * the Rarity Test is, «Пройти опитування ще раз» while the later questions
  * are, «Сезонний декор» while its Feature Switch is,
@@ -194,6 +194,15 @@ export default function SettingsScreen() {
                 label={editionStrings.rarityTest.retake}
                 onPress={() => {
                   openScreen('/settings/rarity-test');
+                }}
+              />
+            )}
+            {shown.profile && (
+              <NavigationRow
+                testID="settings-row-profile"
+                label={strings.rows.profile}
+                onPress={() => {
+                  openScreen('/settings/profile');
                 }}
               />
             )}

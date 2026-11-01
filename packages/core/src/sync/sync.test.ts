@@ -62,7 +62,7 @@ async function device({
   await userState.write(userStateRecords.installed.change(true));
   const account = await openAccount({
     backend: server.backend,
-    edition: { id: 'uk' },
+    edition: { id: 'uk', isFeatureEnabled: () => false },
     googleSheet,
     appleSheet,
     userState,
@@ -533,7 +533,7 @@ describe('Sync and the end of a Session', () => {
       backend: createFakeBackend({ clock: time.clock }).backend,
       account: await openAccount({
         backend: createFakeBackend().backend,
-        edition: { id: 'uk' },
+        edition: { id: 'uk', isFeatureEnabled: () => false },
         googleSheet: createFakeGoogleSignInSheet(),
         appleSheet: createFakeAppleSignInSheet(),
         sessions: createMemorySessionStore(),

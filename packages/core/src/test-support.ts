@@ -32,6 +32,7 @@ const testEditionConfig = {
   id: 'test',
   locale: 'en-US',
   displayName: 'SLOVO Test',
+  accountName: 'Test ID',
   languageTraits: {
     marksStress: false,
     alphabet: 'a b c d e f g h i j k l m n o p q r s t u v w x y z',

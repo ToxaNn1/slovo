@@ -1,5 +1,6 @@
 import { AccountEmailSchema, SignInCodeSchema } from '@slovo/contracts';
 
+import { createAnalytics, type AnalyticsPort, type SignInMethod } from '../analytics/analytics';
 import { createSubscribers } from '../in-turn';
 import type { Edition } from '../edition/edition';
 import type {
@@ -192,10 +193,11 @@ export async function openAccount({
   clock,
   schedule,
   random,
+  analytics: analyticsPort,
 }: {
   backend: Pick<Backend, 'account'>;
-  /** The Edition, which the Sign-in code email and the Google sign-in name. */
-  edition: Pick<Edition, 'id'>;
+  /** The Edition, which the Sign-in code email and the Google sign-in name, and whose `analytics` switch gates the events. */
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   googleSheet: GoogleSignInSheet;
   appleSheet: AppleSignInSheet;
   sessions: SessionStore;
@@ -206,8 +208,11 @@ export async function openAccount({
   schedule: Schedule;
   /** What the waits between tries are jittered by. */
   random: Random;
+  /** Where each sign-in is told (ADR 0068), while the reader shares anonymous statistics; nowhere without it. */
+  analytics?: AnalyticsPort | undefined;
 }): Promise<Account> {
   const api = accountRequests(backend, edition.id);
+  const analytics = createAnalytics({ edition, userState, port: analyticsPort });
   const subscribers = createSubscribers();
   const kept = await sessions.read();
   let state: AccountState = kept === undefined ? signedOut : signedIn(kept.email);
@@ -246,9 +251,13 @@ export async function openAccount({
     return signedOut;
   }
 
-  /** Keeps the Session a sign-in started, and answers signed in. */
-  async function startSession(session: { token: string; email: string }): Promise<AccountState> {
+  /** Keeps the Session a sign-in by `method` started, tells it to Analytics, and answers signed in. */
+  async function startSession(
+    session: { token: string; email: string },
+    method: SignInMethod,
+  ): Promise<AccountState> {
     await sessions.keep(session);
+    await analytics.track('signedIn', { method }).catch(() => undefined);
     token = session.token;
     checkedAt = clock.now().getTime();
     return signedIn(session.email);
@@ -385,7 +394,10 @@ export async function openAccount({
       () => send(shown.idToken),
       (answer) =>
         answer.ok
-          ? startSession({ token: answer.token, email: answer.email })
+          ? startSession(
+              { token: answer.token, email: answer.email },
+              name === 'signInWithGoogle' ? 'google' : 'apple',
+            )
           : { ...state, problem: problemOf(answer.reason) },
     );
   }
@@ -429,7 +441,9 @@ export async function openAccount({
         'verifyCode',
         () => api.verifyCode(sent.email, code),
         async (answer) => {
-          if (answer.ok) return startSession({ token: answer.token, email: answer.email });
+          if (answer.ok) {
+            return startSession({ token: answer.token, email: answer.email }, 'signInCode');
+          }
           if (answer.reason === 'wrong-code') {
             return { ...sent, triesLeft: answer.triesLeft, problem: 'wrong-code' };
           }

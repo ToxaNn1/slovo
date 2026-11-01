@@ -1,4 +1,4 @@
-import { AccountEmailSchema, ACCOUNT_NAME, fill } from '@slovo/contracts';
+import { AccountEmailSchema, fill } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type {
@@ -167,7 +167,7 @@ export function createAccounts({
       if (overLimit !== undefined) return overLimit;
 
       const code = await authenticator.createCode(email);
-      const values = { code, name: ACCOUNT_NAME };
+      const values = { code, name: edition.config.accountName };
       await mailer.send({
         to: email,
         senderName: edition.config.displayName,

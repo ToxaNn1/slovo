@@ -100,6 +100,13 @@ export const FeedNoticesStringsSchema = z.strictObject({
     rarityTest: z.strictObject({ title: TextSchema, text: TextSchema }),
     mixReview: z.strictObject({ title: TextSchema, text: TextSchema }),
   }),
+  /** The offer to save progress to a reader with no Account, at most twice (spec #1358 story 70). */
+  saveProgress: z.strictObject({
+    title: TextSchema,
+    message: TextSchema,
+    /** Opens the Account screen. */
+    save: TextSchema,
+  }),
   /** The Community Word card. */
   communityWord: z.strictObject({
     title: TextSchema,

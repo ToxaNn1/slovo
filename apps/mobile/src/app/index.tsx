@@ -2,6 +2,7 @@ import {
   EnoughForTodayCard,
   NotificationAskCard,
   LevelMilestoneCard,
+  SaveProgressCard,
   DecorBackground,
   EndOfCycleCard,
   EntryCard,
@@ -229,13 +230,13 @@ const FeedPage = memo(function FeedPage({
 
 /**
  * A Feed Notice that sits in the middle of its page: the Weekly Recap, the
- * Community Word, the first-week card, a level milestone, «Може, на сьогодні
- * досить?» or the notification explainer and its re-ask.
  * Community Word, the first-week card, a level milestone, a later question
- * of the questionnaire or «Може, на сьогодні досить?».
+ * of the questionnaire, the offer to save progress, «Може, на сьогодні
+ * досить?» or the notification explainer and its re-ask.
  */
 function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
   const streak = useFirstWeekStreak();
+  const openScreen = useOpenScreen();
   const { askPermission } = useNotificationsChanges();
   if (card.notice === 'notificationExplainer' || card.notice === 'notificationReask')
     return <NotificationAskCard notice={card.notice} onYes={askPermission} />;
@@ -245,6 +246,14 @@ function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterd
   if (card.notice === 'levelMilestone')
     return <LevelMilestoneCard level={card.level} name={card.name} />;
   if (card.notice === 'enoughForToday') return <EnoughForTodayCard />;
+  if (card.notice === 'saveProgress')
+    return (
+      <SaveProgressCard
+        onSave={() => {
+          openScreen('/settings/account');
+        }}
+      />
+    );
   return card.notice === 'firstWeek' ? (
     <FirstWeekCard day={card.firstWeekDay} streak={streak} />
   ) : (

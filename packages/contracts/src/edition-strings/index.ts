@@ -86,7 +86,6 @@ export const EditionStringsSchema = z.strictObject({
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;
 
-export { ACCOUNT_NAME } from './account';
 export {
   fill,
   pluralCount,

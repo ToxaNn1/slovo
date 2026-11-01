@@ -77,7 +77,7 @@ async function renderScreen({
     async () =>
       openAccount({
         backend,
-        edition: { id: 'uk' },
+        edition: { id: 'uk', isFeatureEnabled: () => false },
         googleSheet,
         appleSheet,
         sessions: createMemorySessionStore(),
@@ -118,6 +118,17 @@ const signInWithGoogle = () => settle(() => fireEvent.press(screen.getByTestId('
 /** Taps Apple's own button, which answers the press as its native view does, and lets the sign-in finish. */
 const signInWithApple = () =>
   settle(() => fireEvent(screen.getByTestId('account-apple-native'), 'buttonPress'));
+
+describe("the Account screen's name", () => {
+  it("is the Edition's Account name, never «SLOVO ID»", async () => {
+    await renderScreen();
+
+    const { accountName } = editionWith({ googleSignIn: true, signInWithApple: true });
+    expect(accountName).not.toBe('SLOVO ID');
+    expect(screen.getByText(accountName)).toBeOnTheScreen();
+    expect(screen.queryByText(/SLOVO ID/)).not.toBeOnTheScreen();
+  });
+});
 
 describe('«Увійти через Google» on the SLOVO ID screen', () => {
   it('shows above the email field while signed out, with the switch on and a client id', async () => {

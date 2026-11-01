@@ -1,9 +1,10 @@
-import { ACCOUNT_NAME } from '@slovo/contracts';
 import { EditionProvider, OnboardingAccount } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
+
+const ACCOUNT_NAME = 'Test ID';
 
 const strings = testStrings({
   splash: { wordmark: 'SLOVO' },
@@ -30,7 +31,7 @@ async function renderAccount() {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <OnboardingAccount step={5} total={5} {...handlers} />
+        <OnboardingAccount step={5} total={5} accountName={ACCOUNT_NAME} {...handlers} />
       </EditionProvider>
     </SafeAreaProvider>,
   );

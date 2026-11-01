@@ -7,6 +7,7 @@ const validConfig = {
   id: 'test',
   locale: 'xx-XX',
   displayName: 'SLOVO Test',
+  accountName: 'Test ID',
   languageTraits: {
     marksStress: true,
     alphabet: 'a b c',
@@ -92,6 +93,7 @@ const validConfig = {
     notificationFarewell: true,
     notificationExplainer: true,
     laterQuestions: true,
+    profile: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -508,6 +510,26 @@ describe('loadEdition', () => {
         badges: [{ ...week, condition: { kind: 'streak', days: 0 } }],
       }),
     ).toThrow(InvalidEditionConfigError);
+  });
+
+  it('reports what the Account is called, which the Edition names', () => {
+    expect(loadEdition(validConfig).accountName).toBe('Test ID');
+  });
+
+  it('refuses an Edition without an Account name or with an empty one', () => {
+    const { accountName: _removed, ...withoutName } = validConfig;
+    expect(() => loadEdition(withoutName)).toThrow(InvalidEditionConfigError);
+    expect(() => loadEdition({ ...validConfig, accountName: '' })).toThrow(
+      InvalidEditionConfigError,
+    );
+  });
+
+  it('refuses an Edition without the profile Feature Switch', () => {
+    const { profile, ...switches } = validConfig.featureSwitches;
+    expect(profile).toBe(true);
+    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
+      InvalidEditionConfigError,
+    );
   });
 
   it('refuses an Edition without the badges Feature Switch', () => {

@@ -47,7 +47,7 @@ describe('A binary without the Google sign-in module', () => {
       async () =>
         openAccount({
           backend: createFakeBackend().backend,
-          edition: { id: 'uk' },
+          edition: { id: 'uk', isFeatureEnabled: () => false },
           googleSheet: createFakeGoogleSignInSheet(),
           appleSheet: createFakeAppleSignInSheet(),
           sessions: createMemorySessionStore(),

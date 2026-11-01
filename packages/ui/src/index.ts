@@ -18,6 +18,7 @@ export {
   FeedNoticeCard,
   FirstWeekCard,
   LevelMilestoneCard,
+  SaveProgressCard,
 } from './feed/FeedNoticeCard';
 export { WeeklyRecapCard } from './feed/WeeklyRecapCard';
 export { CommunityWordCard } from './feed/CommunityWordCard';
@@ -111,6 +112,7 @@ export { SplashOverlay } from './onboarding/SplashOverlay';
 export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
 export { StatsPill } from './progress/StatsPill';
+export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
 export { StatsSheet } from './progress/StatsSheet';
 export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';

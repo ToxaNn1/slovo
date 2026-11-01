@@ -2,6 +2,7 @@
   "id": "uk",
   "locale": "uk-UA",
   "displayName": "SLOVO",
+  "accountName": "Акаунт SLOVO",
   "languageTraits": {
     "marksStress": true,
     "vowels": "а е є и і ї о у ю я",
@@ -88,7 +89,8 @@
     "eveningNotification": true,
     "notificationFarewell": true,
     "notificationExplainer": true,
-    "laterQuestions": true
+    "laterQuestions": true,
+    "profile": true
   },
   "userSettingDefaults": {
     "theme": "system",

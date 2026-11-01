@@ -20,7 +20,7 @@ async function open() {
   const api = createFakeBackend();
   const account = await openAccount({
     backend: api.backend,
-    edition: { id: 'uk' },
+    edition: { id: 'uk', isFeatureEnabled: () => false },
     googleSheet: createFakeGoogleSignInSheet(),
     appleSheet: createFakeAppleSignInSheet(),
     sessions: createMemorySessionStore(),
@@ -38,7 +38,7 @@ async function open() {
 const problemOf = ({ state }: Account) =>
   accountProblemLine({ state, strings: strings.account, count });
 
-describe('the «SLOVO ID» row of Settings', () => {
+describe('the Account row of Settings', () => {
   it('reads «Увійти» while signed out, and the email once signed in', async () => {
     const { account, api } = await open();
     expect(accountSummary(account.state, strings.account)).toBe('Увійти');
@@ -55,7 +55,7 @@ describe('the «SLOVO ID» row of Settings', () => {
   });
 });
 
-describe('the problem line of the SLOVO ID screen', () => {
+describe('the problem line of the Account screen', () => {
   it('has none while nothing went wrong', async () => {
     const { account } = await open();
 
