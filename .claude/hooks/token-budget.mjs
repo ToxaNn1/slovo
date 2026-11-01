@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 const LIMITS = {
-  coordinator: { soft: 90_000, hard: 120_000 },
+  coordinator: { soft: 120_000, hard: 160_000 },
   session: { soft: 120_000, hard: 160_000 },
   subagent: { soft: 120_000, hard: 160_000 },
 };
@@ -19,7 +19,7 @@ const NOTICE_STEP = 20_000;
 const COORDINATOR = /coordinator-prompt|coordinator chat|координатор/i;
 
 const RULES = `SLOVO token budget (enforced by .claude/hooks/token-budget.mjs, local and cloud):
-- Context limits: the coordinator 90k soft / 120k hard; every other session and subagent 120k / 160k. At the hard limit every tool except git and writing a handoff file is blocked: hand off, do not push on.
+- Context limits: every session, the coordinator included, and every subagent 120k soft / 160k hard. At the hard limit every tool except git and writing a handoff file is blocked: hand off, do not push on.
 - Subagents: a fresh agent with a brief of at most 1.5 KB; never a fork once the context is over 60k. Long results go to a file; return 5-10 lines.
 - Models: code on Opus; Fable only for Core logic, sync, architecture, specs, the version review and proofreading; the coordinator and questions on Opus.
 - Output: read in parts; never print README.md, CONTEXT.md or any file over 40 KB whole; tests and CI logs through tail or grep; a text snapshot before a screenshot.
