@@ -99,6 +99,7 @@ export const FeedNoticesStringsSchema = z.strictObject({
     selfRating: z.strictObject({ title: TextSchema }),
     rarityTest: z.strictObject({ title: TextSchema, text: TextSchema }),
     mixReview: z.strictObject({ title: TextSchema, text: TextSchema }),
+  }),
   /** The offer to save progress to a reader with no Account, at most twice (spec #1358 story 70). */
   saveProgress: z.strictObject({
     title: TextSchema,

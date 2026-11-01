@@ -230,22 +230,16 @@ const FeedPage = memo(function FeedPage({
 
 /**
  * A Feed Notice that sits in the middle of its page: the Weekly Recap, the
- * Community Word, the first-week card, a level milestone, «Може, на сьогодні
- * досить?» or the notification explainer and its re-ask.
  * Community Word, the first-week card, a level milestone, a later question
- * of the questionnaire or «Може, на сьогодні досить?».
- */
-function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
-  const streak = useFirstWeekStreak();
-  const { askPermission } = useNotificationsChanges();
-  if (card.notice === 'notificationExplainer' || card.notice === 'notificationReask')
-    return <NotificationAskCard notice={card.notice} onYes={askPermission} />;
- * Community Word, the first-week card, a level milestone, the offer to save
- * progress or «Може, на сьогодні досить?».
+ * of the questionnaire, the offer to save progress, «Може, на сьогодні
+ * досить?» or the notification explainer and its re-ask.
  */
 function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
   const streak = useFirstWeekStreak();
   const openScreen = useOpenScreen();
+  const { askPermission } = useNotificationsChanges();
+  if (card.notice === 'notificationExplainer' || card.notice === 'notificationReask')
+    return <NotificationAskCard notice={card.notice} onYes={askPermission} />;
   if (card.notice === 'weeklyRecap') return <WeeklyRecapNotice day={card.day} />;
   if (card.notice === 'communityWord')
     return <CommunityWordNotice entryId={card.card.entryId} adds={card.adds} />;
