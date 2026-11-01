@@ -6,13 +6,27 @@ import {
   createSwipeHint,
   openUserState,
   type UserStateChanges,
+  type UserStateMigration,
+  UserStateTooNewError,
 } from '../index';
 import { openCycle } from '../feed/cycle';
 import { openWordOfTheDay } from '../feed/word-of-the-day';
 import { userStateRecords } from './user-state-schema';
 
-// The contract suite in apps/mobile covers migrations on every adapter; these
-// cover what only the Core decides.
+const greet: UserStateMigration = {
+  version: 1,
+  migrate: () => Promise.resolve(new Map([['greeting', 'hello']])),
+};
+// Renames a record, so running it twice would show.
+const expand: UserStateMigration = {
+  version: 2,
+  migrate: async ({ get }) =>
+    new Map([
+      ['greeting', undefined],
+      ['message', `${String(await get('greeting'))}, world`],
+    ]),
+};
+
 describe('openUserState', () => {
   it('refuses a schema version it cannot read, rather than migrating again', async () => {
     const records = new Map([['schema.version', 'two']]);
@@ -33,6 +47,36 @@ describe('openUserState', () => {
     await expect(
       openUserState({ port: createMemoryUserStatePort(), migrations: [{ version: 2, migrate }] }),
     ).rejects.toThrow(/version 2/);
+  });
+
+  it('brings an older schema forward, running each pending migration once and keeping the data', async () => {
+    const records = new Map<string, string>();
+    const v1 = await openUserState({
+      port: createMemoryUserStatePort(records),
+      migrations: [greet],
+    });
+    await v1.write(new Map([['kept', 'yes']]));
+
+    for (let run = 0; run < 2; run++) {
+      await openUserState({
+        port: createMemoryUserStatePort(records),
+        migrations: [greet, expand],
+      });
+      expect(records.get('message')).toBe('hello, world');
+      expect(records.has('greeting')).toBe(false);
+      expect(records.get('kept')).toBe('yes');
+    }
+  });
+
+  it('refuses a schema newer than the Core knows, and leaves it untouched', async () => {
+    const records = new Map<string, string>();
+    await openUserState({ port: createMemoryUserStatePort(records), migrations: [greet, expand] });
+    const before = new Map(records);
+
+    await expect(
+      openUserState({ port: createMemoryUserStatePort(records), migrations: [greet] }),
+    ).rejects.toThrow(UserStateTooNewError);
+    expect(records).toEqual(before);
   });
 
   it('reads the user state a 0.2 app kept', async () => {

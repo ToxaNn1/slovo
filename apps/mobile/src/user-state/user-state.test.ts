@@ -1,11 +1,5 @@
-import {
-  createMemoryUserStatePort,
-  openUserState,
-  userStateRecords,
-  UserStateTooNewError,
-  type UserStateMigration,
-  type UserStatePort,
-} from '@slovo/core';
+import { openTrackedUserState, type Clock, type UserStatePort } from '@slovo/core';
+import { UserStateTooNewError } from '@slovo/core/testing';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -21,13 +15,6 @@ interface Store {
 }
 
 const adapters: [string, () => Store][] = [
-  [
-    'in memory',
-    () => {
-      const records = new Map<string, string>();
-      return { open: () => Promise.resolve(createMemoryUserStatePort(records)) };
-    },
-  ],
   [
     'in SQLite',
     () => {
@@ -48,19 +35,7 @@ afterAll(() => {
   for (const db of databases) db.close();
 });
 
-const greet: UserStateMigration = {
-  version: 1,
-  migrate: () => Promise.resolve(new Map([['greeting', 'hello']])),
-};
-// Renames a record, so running it twice would show.
-const expand: UserStateMigration = {
-  version: 2,
-  migrate: async ({ get }) =>
-    new Map([
-      ['greeting', undefined],
-      ['message', `${String(await get('greeting'))}, world`],
-    ]),
-};
+const clock: Clock = { now: () => new Date('2026-10-14T06:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 // The user-state contract (spec #51, seam 2): every adapter passes this suite.
 describe.each(adapters)('the user state %s', (_, createStore) => {
@@ -188,86 +163,67 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
   });
 
   it('keeps the 0.4 records, whole lists included, and finds each kind by its prefix', async () => {
-    const { activeDays, notificationTimes, notificationSound, notificationPlan } = userStateRecords;
-    const { onboardingFinished } = userStateRecords;
     const store = createStore();
     await (
       await store.open()
     ).write(
       new Map([
-        ...activeDays.record('2026-10-13').change(true),
-        ...activeDays.record('2026-10-14').change(true),
-        ...notificationTimes.change(['09:00', '13:00', '19:00']),
-        ...notificationSound.change(false),
-        ...onboardingFinished.change('2026-10-14T06:30:00.000Z'),
+        ['activeDays.2026-10-13', 'true'],
+        ['activeDays.2026-10-14', 'true'],
+        ['notifications.times', '["09:00","13:00","19:00"]'],
+        ['notifications.sound', 'false'],
+        ['onboarding.finished', '"2026-10-14T06:30:00.000Z"'],
       ]),
     );
 
     const port = await store.open();
-    expect(notificationTimes.decode(await port.get('notifications.times'))).toEqual([
-      '09:00',
-      '13:00',
-      '19:00',
-    ]);
-    expect(notificationSound.decode(await port.get('notifications.sound'))).toBe(false);
-    expect(onboardingFinished.decode(await port.get('onboarding.finished'))).toBe(
-      '2026-10-14T06:30:00.000Z',
-    );
-    expect([...(await port.list(activeDays.prefix)).keys()].sort()).toEqual([
+    expect(await port.get('notifications.times')).toBe('["09:00","13:00","19:00"]');
+    expect(await port.get('notifications.sound')).toBe('false');
+    expect(await port.get('onboarding.finished')).toBe('"2026-10-14T06:30:00.000Z"');
+    expect([...(await port.list('activeDays.')).keys()].sort()).toEqual([
       'activeDays.2026-10-13',
       'activeDays.2026-10-14',
     ]);
     // A prefix that several kinds share still finds them all; the plan's prefix finds neither.
     expect(await port.list('notifications.')).toHaveProperty('size', 2);
-    expect(await port.list(notificationPlan.prefix)).toEqual(new Map());
+    expect(await port.list('notifications.plan.')).toEqual(new Map());
     expect(await port.list('onboarding.')).toHaveProperty('size', 1);
   });
 
   it('keeps a Best result when it is opened again', async () => {
-    const guessWordBest = userStateRecords.gameBest.record('guess-word');
     const store = createStore();
-    await (await store.open()).write(guessWordBest.change(13));
+    await (await store.open()).write(new Map([['game.best.guess-word', '13']]));
 
-    expect(guessWordBest.decode(await (await store.open()).get('game.best.guess-word'))).toBe(13);
+    expect(await (await store.open()).get('game.best.guess-word')).toBe('13');
   });
 
   it('stores an empty list of notification times as a record, so it never reads as absent', async () => {
-    const { notificationTimes } = userStateRecords;
     const store = createStore();
-    await (await store.open()).write(notificationTimes.change([]));
+    await (await store.open()).write(new Map([['notifications.times', '[]']]));
 
-    expect(notificationTimes.decode(await (await store.open()).get('notifications.times'))).toEqual(
-      [],
-    );
-  });
-
-  it('brings an older schema forward, running each pending migration once and keeping the data', async () => {
-    const store = createStore();
-    const v1 = await openUserState({ port: await store.open(), migrations: [greet] });
-    await v1.write(new Map([['kept', 'yes']]));
-
-    for (let run = 0; run < 2; run++) {
-      const port = await store.open();
-      await openUserState({ port, migrations: [greet, expand] });
-      expect(await port.get('message')).toBe('hello, world');
-      expect(await port.get('greeting')).toBeUndefined();
-      expect(await port.get('kept')).toBe('yes');
-    }
+    expect(await (await store.open()).get('notifications.times')).toBe('[]');
   });
 
   it('refuses a schema newer than the Core knows, and leaves it untouched', async () => {
     const store = createStore();
-    await openUserState({ port: await store.open(), migrations: [greet, expand] });
+    await (
+      await store.open()
+    ).write(
+      new Map([
+        ['schema.version', '99'],
+        ['kept', 'yes'],
+      ]),
+    );
 
-    await expect(openUserState({ port: await store.open(), migrations: [greet] })).rejects.toThrow(
+    await expect(openTrackedUserState({ port: await store.open(), clock })).rejects.toThrow(
       UserStateTooNewError,
     );
     const port = await store.open();
-    await openUserState({ port, migrations: [greet, expand] });
-    expect(await port.get('message')).toBe('hello, world');
+    expect(await port.get('schema.version')).toBe('99');
+    expect(await port.get('kept')).toBe('yes');
   });
 
-  it('brings a 0.7 user state forward: each Seen record holds the id of the current Cycle', async () => {
+  it('brings a 0.7 user state forward once: each Seen record holds the id of the current Cycle', async () => {
     const store = createStore();
     await (
       await store.open()
@@ -280,25 +236,26 @@ describe.each(adapters)('the user state %s', (_, createStore) => {
       ]),
     );
 
-    await openUserState({ port: await store.open() });
+    await openTrackedUserState({ port: await store.open(), clock });
+    await openTrackedUserState({ port: await store.open(), clock });
 
     const port = await store.open();
-    expect(await port.list(userStateRecords.seen.prefix)).toEqual(
+    expect(await port.list('feed.seen.')).toEqual(
       new Map([
         ['feed.seen.w_1', '4'],
         ['feed.seen.c_1', '4'],
       ]),
     );
-    expect(userStateRecords.schemaVersion.decode(await port.get('schema.version'))).toBe(6);
+    expect(await port.get('schema.version')).toBe('6');
   });
 
   it("opens a new store at the Core's current schema", async () => {
     const store = createStore();
-    const state = await openUserState({ port: await store.open() });
+    const state = await openTrackedUserState({ port: await store.open(), clock });
     await state.write(new Map([['kept', 'yes']]));
 
     const port = await store.open();
-    await openUserState({ port });
+    await openTrackedUserState({ port, clock });
     expect(await port.get('kept')).toBe('yes');
   });
 });
