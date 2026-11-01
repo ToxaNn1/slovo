@@ -21,14 +21,9 @@ import { createEntries } from './entries/entries';
 import { createEntryRows, type EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
 import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed';
-import { enoughForTodayNotices } from './feed/enough-for-today';
 import { createCommunityWord } from './feed/community-word';
-import { allFeedNotices, noFeedNotices, type FeedNotices } from './feed/feed-notices';
-import { createFirstWeek } from './feed/first-week';
-import { createYesterday } from './feed/yesterday';
-import { createLevelMilestones } from './feed/level-milestone';
+import { noFeedNotices, openFeedNotices, type FeedNotices } from './feed/feed-notices';
 import { createNotificationExplainer } from './notifications/notification-explainer';
-import { createSaveProgress } from './feed/save-progress';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
 import { createQuickQuestion } from './game/quick-question';
@@ -489,7 +484,6 @@ export async function openComposition({
     xpLog,
     activeDays,
   });
-  const enoughForToday = enoughForTodayNotices({ edition, history, clock });
   // The Mix opens before the Feed, whose turns follow its kind weights.
   const [word, correction] = await Promise.all([
     entries.categories(),
@@ -506,35 +500,38 @@ export async function openComposition({
     wordOfTheDay,
     history: recorder,
     archive: createWordOfTheDayArchiveRecorder({ edition }),
-    // The Weekly Recap opens below, once Favorites and Progress it reads are
-    // open; the Feed asks for a day's Feed Notices only for a card after the
-    // first, which none asks for before the composition opens.
-    notices: allFeedNotices(
-      feedNotices,
-      {
-        forDay: async (day) =>
-          (await weeklyRecap.of(day)) === undefined ? [] : [{ notice: 'weeklyRecap' }],
-      },
-      backend === undefined
-        ? noFeedNotices
-        : createCommunityWord({ edition, entries, hiddenEntries, userState, backend, clock }),
-      createFirstWeek({ edition, userState, activeDays }),
-      createYesterday({ edition, entries, hiddenEntries, userState }),
-      createLevelMilestones({ edition, xpLog, userState }),
-      later.notices,
-      createSaveProgress({ edition, xpLog, activeDays, userState, signedIn }),
-      enoughForToday,
-      // Without a scheduler there is no device to ask.
-      scheduling === undefined
-        ? noFeedNotices
-        : createNotificationExplainer({
-            edition,
-            userState,
-            clock,
-            xpLog,
-            permission: () => notifications.state.permission,
-          }),
-    ),
+    notices: openFeedNotices({
+      edition,
+      userState,
+      clock,
+      entries,
+      hiddenEntries,
+      history,
+      xpLog,
+      activeDays,
+      // The Weekly Recap opens below, once Favorites and Progress it reads are
+      // open; the Feed asks for a day's Feed Notices only for a card after the
+      // first, which none asks for before the composition opens.
+      weeklyRecap: () => weeklyRecap,
+      signedIn,
+      sources: [
+        feedNotices,
+        backend === undefined
+          ? noFeedNotices
+          : createCommunityWord({ edition, entries, hiddenEntries, userState, backend, clock }),
+        later.notices,
+        // Without a scheduler there is no device to ask.
+        scheduling === undefined
+          ? noFeedNotices
+          : createNotificationExplainer({
+              edition,
+              userState,
+              clock,
+              xpLog,
+              permission: () => notifications.state.permission,
+            }),
+      ],
+    }),
     kindWeights: () =>
       edition.isFeatureEnabled('mixKindWeights') ? mix.state.kindWeights : NORMAL_KIND_WEIGHTS,
     eligibility,
