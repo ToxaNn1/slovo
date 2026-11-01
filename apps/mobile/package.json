@@ -18,7 +18,7 @@
     "@formatjs/intl-pluralrules": "^6.3.16",
     "@react-native-community/datetimepicker": "9.2.2",
     "@react-native-google-signin/google-signin": "^16.1.5",
-    "@sentry/react-native": "~7.11.0",
+    "@sentry/react-native": "~8.33.0",
     "@slovo/contracts": "workspace:*",
     "@slovo/core": "workspace:*",
     "@slovo/language-pack": "workspace:*",
