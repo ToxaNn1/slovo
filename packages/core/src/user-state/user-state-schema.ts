@@ -18,7 +18,7 @@ import {
   type UserStateRecord,
   type UserStateRecords,
 } from './user-state-record';
-import { FEED_NOTICES } from '../feed-notice';
+import { FEED_NOTICES, LATER_QUESTIONS } from '../feed-notice';
 import type { UserStateMigration } from './user-state-migration';
 
 /**
@@ -380,6 +380,22 @@ export const userStateRecords = {
     { sync: 'device-only' },
   ),
   onboardingFinished: declareRecord('onboarding.finished', InstantSchema, { sync: 'device-only' }),
+  /**
+   * The later questions offered on this device through a Feed Notice, each
+   * once, in order; the local date `date` the last one was offered, which
+   * stays its day; and whether the self-rating asked to offer the Rarity Test
+   * (ADR 0067). Without the record none was offered. It stays on the device,
+   * like the onboarding finished.
+   */
+  laterQuestions: declareRecord(
+    'questionnaire.later',
+    z.object({
+      asked: z.array(z.enum(LATER_QUESTIONS)),
+      date: z.string().optional(),
+      offerRarityTest: z.boolean().optional(),
+    }),
+    { sync: 'device-only' },
+  ),
   /**
    * The local date `YYYY-MM-DD` a reader finished or skipped the onboarding
    * with 0.8.13 or later, from which their first week counts its Active Days;

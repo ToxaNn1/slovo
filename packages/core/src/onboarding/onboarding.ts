@@ -8,7 +8,6 @@ import {
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
-import { MIX_KINDS } from '../entries/entry-kinds';
 import type { Mix } from '../entries/mix';
 import { buildWordCard, type WordCardModel } from '../entries/word-card';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
@@ -16,6 +15,11 @@ import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
 import type { Backend, Clock } from '../ports';
 import type { XpLog } from '../progress/xp-log';
+import {
+  applyAnswer,
+  dailyGoalAsked,
+  type QuestionnaireOption,
+} from '../questionnaire/questionnaire';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -28,12 +32,6 @@ interface StepPlace {
   readonly number: number;
   /** How many steps the onboarding has. */
   readonly total: number;
-}
-
-/** An option of a questionnaire question: its id and the Edition's label. */
-export interface QuestionnaireOption {
-  readonly id: string;
-  readonly label: string;
 }
 
 /**
@@ -135,7 +133,7 @@ export async function openOnboarding({
     'get' | 'getMany' | 'linkedCorrections' | 'categories' | 'linkingSynonymRow' | 'illustrationOf'
   >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
-  mix: Pick<Mix, 'setRarityCeiling' | 'setKindWeight'>;
+  mix: Pick<Mix, 'setRarityCeiling' | 'setKindWeight' | 'setRarityFloorRaisingCeiling'>;
   xpLog: Pick<XpLog, 'setDailyGoal'>;
   analytics: Pick<Analytics, 'track'>;
   backend: Pick<Backend, 'counters'> | undefined;
@@ -214,6 +212,8 @@ export async function openOnboarding({
       new Map([
         ...onboardingFinished.change(finishedAt.toISOString()),
         ...firstWeekFrom.change(todayKey(clock)),
+        // A reader asked the Daily Goal here gets no later Feed Notice for it (ADR 0067).
+        ...(steps.includes('dailyGoal') ? await dailyGoalAsked(userState) : []),
       ]),
     );
     change({ finishedAt, step: undefined });
@@ -239,22 +239,6 @@ export async function openOnboarding({
       .catch(() => undefined);
   }
 
-  async function apply(question: QuestionnaireQuestion, answerId: string): Promise<boolean> {
-    if (question === 'who') {
-      const option = questionnaire.who.find(({ id }) => id === answerId);
-      if (option === undefined) return false;
-      await mix.setRarityCeiling(option.rarityCeiling);
-      return true;
-    }
-    const option = questionnaire.why.find(({ id }) => id === answerId);
-    if (option === undefined) return false;
-    for (const kind of MIX_KINDS) {
-      const weight = option.kindWeights[kind];
-      if (weight !== undefined) await mix.setKindWeight(kind, weight);
-    }
-    return true;
-  }
-
   return {
     get state() {
       return state;
@@ -263,7 +247,7 @@ export async function openOnboarding({
     answer: (answerId) =>
       endStep(async ({ kind }) => {
         if (kind !== 'who' && kind !== 'why') return;
-        if (!(await apply(kind, answerId))) return;
+        if (!(await applyAnswer({ edition, mix }, kind, answerId))) return;
         await count(kind, answerId);
         analytics
           .track('questionnaireAnswered', { question: kind, answer: answerId })

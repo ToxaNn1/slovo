@@ -7,6 +7,7 @@ import type {
 
 import type { Edition } from '../edition/edition';
 import type { NotificationKind } from '../ports';
+import type { LaterQuestion } from '../feed-notice';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -58,6 +59,12 @@ export interface AnalyticsEvents {
   readonly badgeEarned: { readonly badge: string };
   /** The reader opened the app from a notification of this kind. */
   readonly notificationOpened: { readonly kind: NotificationKind };
+  /**
+   * The reader answered a later question's Feed Notice (ADR 0067): an option's
+   * id, the Daily Goal, the chosen Category ids joined by commas, `open` for
+   * the Rarity Test or the Mix opened, or `later` when put off.
+   */
+  readonly laterQuestionAnswered: { readonly question: LaterQuestion; readonly answer: string };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 
