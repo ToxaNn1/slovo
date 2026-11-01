@@ -9,6 +9,8 @@ import {
   type FeatureSwitch,
   type XpRecord,
 } from '../index';
+import type { Badge } from '@slovo/contracts';
+
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 
@@ -21,7 +23,7 @@ const content = createMemoryContentPort({
 });
 const ALL_ON: readonly FeatureSwitch[] = ['game', 'xpLog', 'levels', 'badges', 'analytics'];
 
-const badges = [
+const badges: readonly Badge[] = [
   { id: 'streak-3', name: 'Three days', condition: { kind: 'streak', days: 3 } },
   { id: 'win-words', name: 'First win', condition: { kind: 'gameWin', modes: ['guess-word'] } },
   { id: 'crossword-2', name: 'Two crosswords', condition: { kind: 'dailyCrosswordRun', days: 2 } },
@@ -33,7 +35,7 @@ const badges = [
     name: 'Clean language',
     condition: { kind: 'rightAnswers', modes: ['correction', 'anglicism'], count: 3 },
   },
-] as const;
+];
 
 const at = (date: string) => new Date(`${date}T08:00:00+03:00`).toISOString();
 const xp = (date: string, amount: number, more: Partial<XpRecord> = {}): XpRecord =>

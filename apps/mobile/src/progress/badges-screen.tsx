@@ -1,13 +1,5 @@
 import type { BadgeState } from '@slovo/core';
-import {
-  BackLink,
-  fill,
-  ScreenTitle,
-  space,
-  typeSize,
-  useEdition,
-  useTokens,
-} from '@slovo/ui';
+import { BackLink, fill, ScreenTitle, space, typeSize, useEdition, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -48,7 +40,7 @@ export function BadgesScreen() {
   const { voice, count } = useEdition();
   const router = useRouter();
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);
-  const nameStyle = [styles.name, { color: colors.text, fontFamily: fontFamilies.ui }];
+  const nameStyle = [styles.name, { color: colors.ink, fontFamily: fontFamilies.ui }];
   const textStyle = [styles.text, { color: colors.muted, fontFamily: fontFamilies.ui }];
 
   const statusOf = (badge: BadgeState) => {

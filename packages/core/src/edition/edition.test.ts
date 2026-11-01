@@ -481,10 +481,16 @@ describe('loadEdition', () => {
       loadEdition({ ...validConfig, badges: [week, { ...sharpStress, id: 'week' }] }),
     ).toThrow(InvalidEditionConfigError);
     expect(() =>
-      loadEdition({ ...validConfig, badges: [{ ...week, condition: { kind: 'shares', count: 3 } }] }),
+      loadEdition({
+        ...validConfig,
+        badges: [{ ...week, condition: { kind: 'shares', count: 3 } }],
+      }),
     ).toThrow(InvalidEditionConfigError);
     expect(() =>
-      loadEdition({ ...validConfig, badges: [{ ...week, condition: { kind: 'streak', days: 0 } }] }),
+      loadEdition({
+        ...validConfig,
+        badges: [{ ...week, condition: { kind: 'streak', days: 0 } }],
+      }),
     ).toThrow(InvalidEditionConfigError);
   });
 
