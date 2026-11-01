@@ -62,12 +62,19 @@ async function run({
   records,
   at,
   off = [],
+  xp = false,
 }: {
   records: Map<string, string>;
   at: string;
   off?: readonly FeatureSwitch[];
+  /** Whether the XP log and the Daily Goal are on. */
+  xp?: boolean;
 }): Promise<Composition> {
-  const on: readonly FeatureSwitch[] = ['knowledge', 'weeklyRecap'];
+  const on: readonly FeatureSwitch[] = [
+    'knowledge',
+    'weeklyRecap',
+    ...(xp ? (['xpLog', 'dailyGoal'] as const) : []),
+  ];
   return openComposition({
     content: createMemoryContentPort({ words }),
     edition: testEdition({
@@ -80,6 +87,17 @@ async function run({
     clock: fakeClock(at).clock,
     random: randomOf(0.25),
   });
+}
+
+/** The XP log records of `amount` XP from a Game Round on each local date. */
+function earned(records: Map<string, string>, amount: number, ...dates: string[]) {
+  for (const date of dates) {
+    records.set(
+      `xp.seed-${date}`,
+      JSON.stringify({ kind: 'xp', date, at: `${date}T09:00:00.000Z`, source: 'game-round', amount }),
+    );
+  }
+  return records;
 }
 
 /** The Feed's first three cards. */
@@ -164,5 +182,33 @@ describe('the Weekly Recap', () => {
       saved: 1,
       streak: 3,
     });
+  });
+
+  it('counts the XP earned in the week and the days that met their Daily Goal', async () => {
+    // The Daily Goal is 20 XP: the Tuesday and the Sunday meet it, the Thursday does not;
+    // the Sunday before and today are outside the week.
+    const records = earned(fakeWeek(), 25, '2026-10-20', '2026-10-25', '2026-10-18', '2026-10-26');
+    earned(records, 10, '2026-10-22');
+
+    const app = await run({ records, at: monday, xp: true });
+
+    expect(await app.weeklyRecap.of({ year: 2026, month: 10, day: 26 })).toMatchObject({
+      xp: 60,
+      goalDays: 2,
+    });
+  });
+
+  it('leaves the goal days out with the Daily Goal off, and the XP with the XP log off', async () => {
+    const records = earned(fakeWeek(), 25, '2026-10-20');
+
+    const noGoal = await run({ records, at: monday, xp: true, off: ['dailyGoal'] });
+    const noXp = await run({ records, at: monday, xp: true, off: ['xpLog'] });
+
+    const withoutGoal = await noGoal.weeklyRecap.of({ year: 2026, month: 10, day: 26 });
+    expect(withoutGoal).toMatchObject({ xp: 25 });
+    expect(withoutGoal).not.toHaveProperty('goalDays');
+    const withoutXp = await noXp.weeklyRecap.of({ year: 2026, month: 10, day: 26 });
+    expect(withoutXp).not.toHaveProperty('xp');
+    expect(withoutXp).not.toHaveProperty('goalDays');
   });
 });
