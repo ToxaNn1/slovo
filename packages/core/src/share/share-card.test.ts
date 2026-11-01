@@ -67,6 +67,8 @@ const STRINGS = {
       saved: 'збережено',
       known: 'знаю',
       streak: 'серія',
+      xp: 'XP',
+      goalDays: 'дні з ціллю',
       spoken: {
         seen: {
           one: 'переглянуто {count} запис',
@@ -91,6 +93,18 @@ const STRINGS = {
           few: 'серія: {count} дні поспіль',
           many: 'серія: {count} днів поспіль',
           other: 'серія: {count} дня поспіль',
+        },
+        xp: {
+          one: '{count} XP за тиждень',
+          few: '{count} XP за тиждень',
+          many: '{count} XP за тиждень',
+          other: '{count} XP за тиждень',
+        },
+        goalDays: {
+          one: 'ціль виконано {count} день',
+          few: 'ціль виконано {count} дні',
+          many: 'ціль виконано {count} днів',
+          other: 'ціль виконано {count} дня',
         },
       },
     },
@@ -411,5 +425,21 @@ describe('the Share Card of a Weekly Recap', () => {
     expect(recapContent({ ...RECAP, saved: 0, known: 0 }).label).toBe(
       '20–26 жовтня. Мій тиждень у SLOVO. переглянуто 34 записи. збережено 0 записів. позначено «Знаю»: 0 записів. серія: 9 днів поспіль',
     );
+  });
+
+  it('ends with the week’s XP and goal days when the recap has them', () => {
+    const content = recapContent({ ...RECAP, xp: 120, goalDays: 3 });
+
+    expect(content.body).toMatchObject({
+      numbers: [
+        { label: 'переглянуто', count: 34 },
+        { label: 'збережено', count: 5 },
+        { label: 'знаю', count: 12 },
+        { label: 'серія', count: 9 },
+        { label: 'XP', count: 120 },
+        { label: 'дні з ціллю', count: 3 },
+      ],
+    });
+    expect(content.label).toContain('120 XP за тиждень. ціль виконано 3 дні');
   });
 });

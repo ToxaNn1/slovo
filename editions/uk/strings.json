@@ -890,6 +890,8 @@
       "saved": "збережено",
       "known": "знаю",
       "streak": "серія",
+      "xp": "XP",
+      "goalDays": "дні з ціллю",
       "spoken": {
         "seen": {
           "one": "переглянуто {count} запис",
@@ -914,6 +916,18 @@
           "few": "серія: {count} дні поспіль",
           "many": "серія: {count} днів поспіль",
           "other": "серія: {count} дня поспіль"
+        },
+        "xp": {
+          "one": "{count} XP за тиждень",
+          "few": "{count} XP за тиждень",
+          "many": "{count} XP за тиждень",
+          "other": "{count} XP за тиждень"
+        },
+        "goalDays": {
+          "one": "ціль виконано {count} день",
+          "few": "ціль виконано {count} дні",
+          "many": "ціль виконано {count} днів",
+          "other": "ціль виконано {count} дня"
         }
       }
     },
@@ -1397,6 +1411,27 @@
       "title": "Мій тиждень у SLOVO",
       "week": "{from}–{to} {month}",
       "weekAcrossMonths": "{from} {fromMonth} – {to} {toMonth}"
+    },
+    "day": "{day} {month}",
+    "level": {
+      "title": "Новий рівень у SLOVO",
+      "headline": "Рівень {level}"
+    },
+    "badge": {
+      "title": "Нова відзнака в SLOVO"
+    },
+    "streak": {
+      "title": "Моя серія в SLOVO",
+      "headline": {
+        "one": "{count} день поспіль",
+        "few": "{count} дні поспіль",
+        "many": "{count} днів поспіль",
+        "other": "{count} дня поспіль"
+      }
+    },
+    "dailyCrossword": {
+      "title": "Кросворд дня розв’язано",
+      "grid": "Сітка кросворду без літер"
     }
   },
   "account": {

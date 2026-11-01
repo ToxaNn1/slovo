@@ -70,7 +70,7 @@ export type ShareCardBody =
       readonly kind: 'weeklyRecap';
       /** «Мій тиждень у SLOVO». */
       readonly title: string;
-      /** Seen, saved, Known (when the recap has it) and the Streak (when shown), in this order. */
+      /** Seen, saved, Known (when the recap has it), the Streak (when shown), the XP and the goal days (when the recap has them), in this order. */
       readonly numbers: readonly { readonly label: string; readonly count: number }[];
     };
 
@@ -231,7 +231,7 @@ function weeklyRecapContent(
   const labels = strings.feedNotices.weeklyRecap;
   const { spoken } = labels;
   const countOf = pluralCount(locale);
-  const { firstDay, lastDay, seen, saved, known, streak } = recap;
+  const { firstDay, lastDay, seen, saved, known, streak, xp, goalDays } = recap;
   const monthOf = ({ month }: LocalDate) => strings.dates.months[month - 1] ?? '';
   const week =
     firstDay.month === lastDay.month
@@ -251,6 +251,10 @@ function weeklyRecapContent(
     { label: labels.saved, count: saved, spoken: spoken.saved },
     ...(known === undefined ? [] : [{ label: labels.known, count: known, spoken: spoken.known }]),
     ...(hideStreak ? [] : [{ label: labels.streak, count: streak, spoken: spoken.streak }]),
+    ...(xp === undefined ? [] : [{ label: labels.xp, count: xp, spoken: spoken.xp }]),
+    ...(goalDays === undefined
+      ? []
+      : [{ label: labels.goalDays, count: goalDays, spoken: spoken.goalDays }]),
   ];
   return {
     shows: week,
