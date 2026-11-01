@@ -563,16 +563,15 @@ export async function openComposition({
   // Once the day is turned to, so the welcome shows today's Word of the Day.
   const rarityTest = createRarityTest({ edition, entries, mix, random });
   const onboarding = await openOnboarding({
+    edition,
     userState,
     clock,
     entries,
     wordOfTheDay,
-    notifications,
-    account: edition.isFeatureEnabled('account'),
-    rarityTest:
-      edition.isFeatureEnabled('rarityTest') && edition.isFeatureEnabled('rarityFloor')
-        ? rarityTest
-        : undefined,
+    mix,
+    xpLog,
+    analytics,
+    backend,
   });
   async function entryCard(entryId: string): Promise<AnyEntryCard | undefined> {
     const entry = await entries.get(entryId);

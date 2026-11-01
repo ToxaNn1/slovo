@@ -145,6 +145,12 @@ export interface FakeBackend {
     readonly asked: readonly (readonly string[])[];
     /** The events of each `counters.send` request the backend counted, in order. */
     readonly sent: readonly (readonly CounterEvent[])[];
+    /** The input of each `counters.questionnaire` request the backend counted, in order. */
+    readonly answers: readonly {
+      readonly editionId: string;
+      readonly question: string;
+      readonly answer: string;
+    }[];
     /** Sets the counts the backend keeps for an Entry; an Entry nobody counted answers zeros. */
     count(entryId: string, counts: Omit<EntryCounters, 'entryId'>): void;
     /** Answers this Community Word from now on; `undefined`, none, as when nobody added anything. */
@@ -204,6 +210,11 @@ export function createFakeBackend({
   const downloaded: number[] = [];
   const counts = new Map<string, Omit<EntryCounters, 'entryId'>>();
   const countersAsked: (readonly string[])[] = [];
+  const answers: {
+    readonly editionId: string;
+    readonly question: string;
+    readonly answer: string;
+  }[] = [];
   const sent: (readonly CounterEvent[])[] = [];
   let communityWord: CommunityWordAnswer | undefined;
   let off: string[] = [];
@@ -440,6 +451,10 @@ export function createFakeBackend({
         await arrive('counters.send', context);
         sent.push(input.events.map((event) => ({ ...event })));
       },
+      async questionnaire({ input, context }) {
+        await arrive('counters.questionnaire', context);
+        answers.push({ ...input });
+      },
       async communityWord({ context }) {
         await arrive('counters.communityWord', context);
         return { communityWord: communityWord ?? null };
@@ -521,6 +536,7 @@ export function createFakeBackend({
     counters: {
       asked: countersAsked,
       sent,
+      answers,
       count(entryId, entryCounts) {
         counts.set(entryId, entryCounts);
       },

@@ -1,4 +1,9 @@
-import type { EntryKind, Rarity } from '@slovo/contracts';
+import type {
+  EntryKind,
+  OnboardingStepKind,
+  QuestionnaireQuestion,
+  Rarity,
+} from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
@@ -39,6 +44,15 @@ export interface AnalyticsEvents {
   readonly dailyGoalChanged: { readonly goal: number };
   /** Today's Daily Goal was met. */
   readonly dailyGoalMet: { readonly goal: number };
+  /** An onboarding step came on screen (ADR 0067). */
+  readonly onboardingStepViewed: { readonly step: OnboardingStepKind };
+  /** The onboarding finished, past its last step or skipped. */
+  readonly onboardingFinished: { readonly skipped: boolean };
+  /** The reader answered «Хто ви» (`who`) or «Навіщо» (`why`) with an option's id. */
+  readonly questionnaireAnswered: {
+    readonly question: QuestionnaireQuestion;
+    readonly answer: string;
+  };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 

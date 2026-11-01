@@ -1,7 +1,11 @@
 import { z } from 'zod';
 
 import { COUNTERS_BATCH_SIZE } from '../community-counters';
-import { EditionIdSchema } from '../edition';
+import {
+  EditionIdSchema,
+  QuestionnaireAnswerIdSchema,
+  QuestionnaireQuestionSchema,
+} from '../edition';
 import { EntryIdSchema } from '../entry';
 import { hasNoRepeats } from '../shared';
 import { procedure } from './procedure';
@@ -124,4 +128,32 @@ export const countersContract = {
         communityWord: z.object({ entryId: EntryIdSchema, adds: z.int().positive() }).nullable(),
       }),
     ),
+
+  questionnaire: procedure
+    .route({
+      method: 'POST',
+      path: '/counters/questionnaire',
+      successStatus: 202,
+      summary: 'Count one answer of the onboarding questionnaire',
+      description:
+        'Adds one to the count of the answer, an option of «Хто ви» (`who`) or «Навіщо» (`why`) of the Edition. The backend keeps the totals per answer only: no Account, no device id, no IP address (ADR 0068).',
+      tags: ['counters'],
+    })
+    .errors({
+      /** An Edition the backend doesn't serve, one with the questionnaire switched off, or an answer that is not an option of the question. */
+      NOT_FOUND: { message: 'Not found' },
+      /**
+       * Over the limit of 100 answers from one IP address in a day;
+       * `Retry-After` says, in seconds, when to try again.
+       */
+      TOO_MANY_REQUESTS: { message: 'Too many requests' },
+    })
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema,
+        question: QuestionnaireQuestionSchema,
+        answer: QuestionnaireAnswerIdSchema,
+      }),
+    )
+    .output(z.void()),
 };

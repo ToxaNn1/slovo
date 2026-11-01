@@ -1,772 +1,190 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   createMemoryUserStatePort,
+  createSettings,
   openComposition,
   openUserState,
-  SEEN_DWELL_MS,
-  type Clock,
-  type Composition,
-  type ContentReadPort,
-  type NotificationSchedulerPort,
-  type OnboardingStep,
-  type PlannedNotification,
+  type AnalyticsPort,
+  type FeatureSwitch,
 } from '../index';
-import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
-import { fakeClock, testEdition, titleOf, word, wordIdOf } from '../test-support';
+import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '../testing';
+import { fakeClock, testEdition, word } from '../test-support';
 
-/** The instant these tests start at. */
-const start = '2026-10-14T08:00:00+03:00';
+const content = createMemoryContentPort({
+  words: Array.from({ length: 12 }, (_, index) => word(`w_${String(index)}`)),
+});
 
-/** The Language Pack's two Categories. */
-const categories = [
-  { id: 'test', displayName: 'Test' },
-  { id: 'other', displayName: 'Other' },
+const ALL_ON: readonly FeatureSwitch[] = [
+  'wordOfTheDay',
+  'questionnaire',
+  'dailyGoal',
+  'rarityCeiling',
+  'analytics',
+  'xpLog',
 ];
 
-/** Words of two Categories, so the Mix step can take one out. */
-const twoCategories = createMemoryContentPort({
-  categories,
-  words: [
-    ...Array.from({ length: 12 }, (_, index) =>
-      word(`w_test${String(index)}`, { categoryId: 'test' }),
-    ),
-    ...Array.from({ length: 12 }, (_, index) =>
-      word(`w_other${String(index)}`, { categoryId: 'other' }),
-    ),
-  ],
-  corrections: [],
-});
-
-/** One Word, whose Definition is longer than a notification body holds. */
-const longDefinitionOnly = createMemoryContentPort({
-  categories,
-  words: [word('w_long', { categoryId: 'test', primaryDefinition: 'very '.repeat(30).trim() })],
-  corrections: [],
-});
-
-/** The Core composition of one app run over the records, so the user state survives between runs. */
+/** One app run over the records, so the user state survives between runs. */
 async function run({
   records = new Map<string, string>(),
-  clock = fakeClock(start).clock,
-  scheduler,
-  content = twoCategories,
-  account = false,
-  notifications = true,
-  rarityTest = false,
-}: {
-  content?: ContentReadPort;
-  records?: Map<string, string>;
-  clock?: Clock;
-  scheduler?: NotificationSchedulerPort;
-  /** Whether the Edition turns the Account on. */
-  account?: boolean;
-  /** Whether the Edition in effect has the Feature Switch of notifications on. */
-  notifications?: boolean;
-  /** Whether the Edition turns the Rarity Test and the Rarity Floor it sets on. */
-  rarityTest?: boolean;
-} = {}): Promise<Composition> {
-  return openComposition({
+  on = ALL_ON,
+  api = createFakeBackend(),
+}: { records?: Map<string, string>; on?: readonly FeatureSwitch[]; api?: FakeBackend } = {}) {
+  const events: unknown[][] = [];
+  const analytics: AnalyticsPort = {
+    track: (event, properties) => void events.push([event, properties]),
+    stop: () => undefined,
+  };
+  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+  const edition = testEdition({ isFeatureEnabled: (feature) => on.includes(feature) });
+  const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
+  const app = await openComposition({
     content,
-    edition: testEdition({
-      isFeatureEnabled: (feature) =>
-        (feature === 'account' && account) ||
-        (feature === 'notifications' && notifications) ||
-        ((feature === 'rarityTest' || feature === 'rarityFloor') && rarityTest) ||
-        feature === 'wordOfTheDay',
-      userSettingDefaults: {
-        mix: { categoryIds: ['test', 'other'], corrections: false },
-        notificationTimes: ['09:00', '13:00', '19:00'],
-      },
-    }),
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
-    clock,
+    edition,
+    userState,
+    clock: fakeClock('2026-11-01T09:00:00+02:00').clock,
     random: { next: () => 0.25 },
-    ...(scheduler === undefined
-      ? {}
-      : { scheduling: { scheduler, ellipsis: '…', titles: ['{word}'], farewell: 'Farewell' } }),
+    analytics,
+    backend: api.backend,
   });
+  return { app, events, api, settings };
 }
 
-/** The Account as the reader comes back with it from the SLOVO ID screen. */
-const signedIn = { status: 'signed-in' } as const;
-const signedOut = { status: 'signed-out' } as const;
+const kinds = (app: Awaited<ReturnType<typeof run>>['app']) => app.onboarding.state.step?.kind;
 
-/** A scheduler that asks the reader for the first time, who answers `answer`. */
-const firstLaunch = (answer: 'allowed' | 'denied' = 'allowed') =>
-  createFakeNotificationScheduler({ permission: 'not-asked', answer });
-
-/** The step the onboarding is on; it fails the test once the onboarding is finished. */
-function stepOf(app: Composition): OnboardingStep {
-  const { step } = app.onboarding.state;
-  if (step === undefined) throw new Error('Expected the onboarding to be open');
-  return step;
-}
-
-/** Goes on from the welcome to the step of `kind`. */
-async function goTo(app: Composition, kind: OnboardingStep['kind']): Promise<void> {
-  while (stepOf(app).kind !== kind) await app.onboarding.next();
-}
-
-/** The sample of the notifications step; it fails the test on another step. */
-function sampleOf(app: Composition) {
-  const step = stepOf(app);
-  if (step.kind !== 'notifications') throw new Error('Expected the notifications step');
-  return step.sample;
-}
-
-/** The first notification at the earliest time of the plan the scheduler was last given. */
-function morningOf(plan: readonly PlannedNotification[] | undefined, earliest = '09:00') {
-  const morning = plan?.find(({ time }) => time === earliest);
-  if (morning === undefined) throw new Error('Expected a morning notification in the plan');
-  return morning;
-}
-
-/** The Word of the Day the Feed opens on. */
-function wordOfTheDayOf(app: Composition) {
-  const card = app.feed.cards.find((candidate) => candidate.kind === 'word');
-  if (card?.kind !== 'word' || card.wordOfTheDay === undefined) {
-    throw new Error('Expected the Word of the Day');
-  }
-  return card.model;
-}
-
-/** A promise the test settles by hand. */
-function deferred<T>() {
-  let resolve: (value: T) => void = () => undefined;
-  const promise = new Promise<T>((settle) => {
-    resolve = settle;
-  });
-  return { promise, resolve };
-}
-
-describe('Onboarding', () => {
-  it('opens on the welcome on a fresh install, with the Word of the Day as its hero', async () => {
-    const app = await run();
-
-    expect(app.onboarding.state.finishedAt).toBeUndefined();
-    expect(stepOf(app)).toEqual({
-      kind: 'welcome',
-      number: 1,
-      total: 3,
-      hero: wordOfTheDayOf(app),
-    });
+describe('the onboarding', () => {
+  it('runs welcome, the first Word, «Хто ви», «Навіщо», the Daily Goal, then the Feed', async () => {
+    const { app } = await run();
+    const seen = [];
+    for (let i = 0; i < 6 && app.onboarding.state.step !== undefined; i += 1) {
+      const { kind, number, total } = app.onboarding.state.step;
+      seen.push(`${kind} ${String(number)}/${String(total)}`);
+      await app.onboarding.next();
+    }
+    expect(seen).toEqual(['welcome 1/5', 'firstWord 2/5', 'who 3/5', 'why 4/5', 'dailyGoal 5/5']);
+    expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
   });
 
-  it('goes from the welcome to the Mix and on to the notifications, telling the subscribers', async () => {
-    const app = await run({ scheduler: firstLaunch() });
-    let told = 0;
-    app.onboarding.subscribe(() => {
-      told += 1;
-    });
-
+  it('shows the Word of the Day as the first Word, and the Edition options of the questions', async () => {
+    const { app } = await run();
     await app.onboarding.next();
-    expect(stepOf(app)).toEqual({ kind: 'mix', number: 2, total: 3 });
-
+    const first = app.onboarding.state.step;
+    expect(first?.kind === 'firstWord' && first.word.wordId).toMatch(/^w_/);
     await app.onboarding.next();
-    expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 3, total: 3 });
-    expect(told).toBe(2);
-    expect(app.onboarding.state.finishedAt).toBeUndefined();
+    const who = app.onboarding.state.step;
+    expect(who?.kind === 'who' && who.options).toEqual([
+      { id: 'studying', label: 'Studying' },
+      { id: 'working', label: 'Working' },
+    ]);
   });
 
-  it('finishes past the last step', async () => {
-    const app = await run();
-    await goTo(app, 'notifications');
-
+  it('leaves out the questions with the questionnaire switch off and the Daily Goal with its switch off', async () => {
+    const { app } = await run({ on: ['wordOfTheDay'] });
+    expect(app.onboarding.state.step).toMatchObject({ kind: 'welcome', total: 2 });
     await app.onboarding.next();
+    expect(kinds(app)).toBe('firstWord');
+  });
 
-    expect(app.onboarding.state).toEqual({
-      finishedAt: new Date('2026-10-14T08:00:00+03:00'),
-      step: undefined,
+  it('highlights 20 on the Daily Goal step and sets the goal the reader picks', async () => {
+    const { app } = await run({ on: ['dailyGoal', 'xpLog'] });
+    while (kinds(app) !== 'dailyGoal') await app.onboarding.next();
+    expect(app.onboarding.state.step).toMatchObject({
+      kind: 'dailyGoal',
+      goals: [10, 20, 30, 50],
+      highlighted: 20,
     });
+    await app.onboarding.chooseDailyGoal(30);
+    expect(app.xpLog.dayOf('2026-11-01').dailyGoal?.goal).toBe(30);
+    expect(app.onboarding.state.step).toBeUndefined();
   });
 
-  it('starts over at the welcome when the app is closed halfway', async () => {
-    const records = new Map<string, string>();
-    await goTo(await run({ records }), 'notifications');
-
-    const reopened = await run({ records });
-
-    expect(stepOf(reopened).kind).toBe('welcome');
+  it('sets the Rarity Ceiling by «Хто ви» and the kind weights by «Навіщо»', async () => {
+    const { app } = await run();
+    await app.onboarding.next();
+    await app.onboarding.next();
+    await app.onboarding.answer('studying');
+    expect(kinds(app)).toBe('why');
+    await app.onboarding.answer('write-correctly');
+    expect(app.mix.state.rarityCeiling).toBe(4);
+    expect(app.mix.state.kindWeights.correction).toBe('more');
   });
 
-  describe('skip', () => {
-    it.each(['welcome', 'mix', 'notifications'] as const)(
-      'on the %s step finishes at once, and the onboarding never opens again',
-      async (kind) => {
-        const records = new Map<string, string>();
-        const app = await run({ records, scheduler: firstLaunch() });
-        await goTo(app, kind);
-        const before = app.onboarding.state;
-        let told = 0;
-        app.onboarding.subscribe(() => {
-          told += 1;
-        });
-
-        await app.onboarding.finish();
-
-        expect(app.onboarding.state).toEqual({
-          finishedAt: new Date('2026-10-14T08:00:00+03:00'),
-          step: undefined,
-        });
-        expect(app.onboarding.state).not.toBe(before);
-        expect(told).toBe(1);
-        expect((await run({ records })).onboarding.state).toEqual(app.onboarding.state);
-      },
-    );
-
-    it("is the notifications step's later too: it asks nothing", async () => {
-      const scheduler = firstLaunch();
-      const app = await run({ scheduler });
-      await goTo(app, 'notifications');
-
-      await app.onboarding.finish();
-
-      expect(await scheduler.permission()).toBe('not-asked');
-      expect(app.notifications.state.permission).toBe('not-asked');
-      expect(app.onboarding.state.finishedAt).toBeDefined();
-    });
-  });
-
-  it('keeps the first moment when it ends again, and tells nobody', async () => {
-    const time = fakeClock(start);
-    const app = await run({ clock: time.clock });
+  it('keeps the defaults when the questions are skipped', async () => {
+    const { app } = await run();
+    const before = app.mix.state;
     await app.onboarding.finish();
-    const finished = app.onboarding.state;
-    let told = 0;
-    app.onboarding.subscribe(() => {
-      told += 1;
-    });
+    expect(app.onboarding.state.step).toBeUndefined();
+    expect(app.mix.state.rarityCeiling).toBe(before.rarityCeiling);
+    expect(app.mix.state.kindWeights).toEqual(before.kindWeights);
+  });
 
-    time.advance(60_000);
-    await app.onboarding.finish();
+  it('ignores an id that is no option, and stays on the step', async () => {
+    const { app } = await run();
     await app.onboarding.next();
-    await app.onboarding.allowNotifications();
-
-    expect(app.onboarding.state).toBe(finished);
-    expect(told).toBe(0);
+    await app.onboarding.next();
+    await app.onboarding.answer('nobody');
+    expect(kinds(app)).toBe('who');
   });
 
-  it('stays unfinished when the app is closed before it ends', async () => {
-    const records = new Map<string, string>();
-    await run({ records });
-
-    const reopened = await run({ records });
-
-    expect(reopened.onboarding.state.finishedAt).toBeUndefined();
-  });
-
-  it('is not finished by a record it cannot read', async () => {
-    const app = await run({ records: new Map([['onboarding.finished', '"yesterday"']]) });
-
-    expect(app.onboarding.state.finishedAt).toBeUndefined();
-    expect(stepOf(app).kind).toBe('welcome');
-  });
-
-  describe('allowing notifications', () => {
-    it('asks for permission, plans by the answer and then finishes', async () => {
-      const scheduler = firstLaunch('allowed');
-      const app = await run({ scheduler });
-      await goTo(app, 'notifications');
-
-      await app.onboarding.allowNotifications();
-
-      expect(app.notifications.state.permission).toBe('allowed');
-      expect(scheduler.plan?.length).toBeGreaterThan(0);
-      expect(app.onboarding.state.step).toBeUndefined();
-      expect(app.onboarding.state.finishedAt).toBeDefined();
-    });
-
-    it('finishes after a refusal, keeping the times for the notification settings', async () => {
-      const app = await run({ scheduler: firstLaunch('denied') });
-      await goTo(app, 'notifications');
-
-      await app.onboarding.allowNotifications();
-
-      expect(app.notifications.state.permission).toBe('denied');
-      expect(app.notifications.state.times).toEqual(['09:00', '13:00', '19:00']);
-      expect(app.onboarding.state.finishedAt).toBeDefined();
-    });
-
-    it('finishes when nothing can ask, as on a binary without the module', async () => {
-      const app = await run();
-      await goTo(app, 'notifications');
-
-      await app.onboarding.allowNotifications();
-
-      expect(app.notifications.state.permission).toBe('not-asked');
-      expect(app.onboarding.state.finishedAt).toBeDefined();
-    });
-
-    it('finishes when asking fails, and then reports the failure', async () => {
-      const failure = new Error('The prompt could not open');
-      const app = await run({
-        scheduler: { ...firstLaunch(), askPermission: () => Promise.reject(failure) },
-      });
-      await goTo(app, 'notifications');
-
-      await expect(app.onboarding.allowNotifications()).rejects.toBe(failure);
-
-      expect(app.onboarding.state.finishedAt).toBeDefined();
-    });
-
-    it('takes one tap: while the prompt is up, every other tap does nothing', async () => {
-      const answer = deferred<'allowed'>();
-      let asked = 0;
-      const scheduler = firstLaunch();
-      const app = await run({
-        scheduler: {
-          ...scheduler,
-          askPermission() {
-            asked += 1;
-            return answer.promise;
-          },
-        },
-      });
-      await goTo(app, 'notifications');
-      const onStep = app.onboarding.state;
-
-      const allowing = app.onboarding.allowNotifications();
-      await Promise.all([
-        app.onboarding.allowNotifications(),
-        app.onboarding.finish(),
-        app.onboarding.next(),
+  it('counts each answer on the backend with no reader id, and none when sharing is off', async () => {
+    const shared = await run();
+    await shared.app.onboarding.next();
+    await shared.app.onboarding.next();
+    await shared.app.onboarding.answer('working');
+    await vi.waitFor(() => {
+      expect(shared.api.counters.answers).toEqual([
+        { editionId: 'test', question: 'who', answer: 'working' },
       ]);
-
-      expect(asked).toBe(1);
-      expect(app.onboarding.state).toBe(onStep);
-      answer.resolve('allowed');
-      await allowing;
-      expect(app.onboarding.state.finishedAt).toBeDefined();
     });
+
+    const records = new Map<string, string>();
+    const quiet = await run({ records });
+    await quiet.settings.update({ shareCounters: false });
+    await quiet.app.onboarding.next();
+    await quiet.app.onboarding.next();
+    await quiet.app.onboarding.answer('working');
+    // Long enough for a count that was sent to arrive.
+    for (let turn = 0; turn < 50; turn += 1) await Promise.resolve();
+    expect(quiet.api.counters.answers).toEqual([]);
   });
 
-  describe('enabling notifications later, from the notification settings', () => {
-    it('asks after «Пізніше» and plans as allowing them on the step does', async () => {
-      const onTheStep = firstLaunch('allowed');
-      const allowedOnTheStep = await run({ scheduler: onTheStep });
-      await goTo(allowedOnTheStep, 'notifications');
-      await allowedOnTheStep.onboarding.allowNotifications();
-      const scheduler = firstLaunch('allowed');
-      const app = await run({ scheduler });
-      await goTo(app, 'notifications');
-      await app.onboarding.finish();
-      expect(app.notifications.state.permission).toBe('not-asked');
-      expect(scheduler.plan).toEqual([]);
-
-      expect(await app.notifications.askPermission()).toBe('allowed');
-
-      expect(app.notifications.state.permission).toBe('allowed');
-      // Every Word of the two Categories, one per notification.
-      expect(scheduler.plan).toHaveLength(24);
-      expect(scheduler.plan).toEqual(onTheStep.plan);
-    });
-
-    it('stays denied after a refusal, asking no more and planning nothing, until the reader allows them in the iOS settings', async () => {
-      const scheduler = firstLaunch('denied');
-      let asked = 0;
-      const app = await run({
-        scheduler: {
-          ...scheduler,
-          askPermission() {
-            asked += 1;
-            return scheduler.askPermission();
-          },
-        },
-      });
-      await app.onboarding.finish();
-
-      expect(await app.notifications.askPermission()).toBe('denied');
-      expect(await app.notifications.askPermission()).toBe('denied');
-
-      expect(asked).toBe(1);
-      expect(app.notifications.state.permission).toBe('denied');
-      expect(scheduler.plan).toEqual([]);
-      expect(app.notifications.state.times).toEqual(['09:00', '13:00', '19:00']);
-
-      scheduler.setPermission('allowed');
-      await app.resume();
-      expect(app.notifications.state.permission).toBe('allowed');
-      expect(scheduler.plan).toHaveLength(24);
-    });
+  it('goes on when the count fails', async () => {
+    const api = createFakeBackend();
+    api.failNext({ reason: 'offline', procedure: 'counters.questionnaire' });
+    const { app } = await run({ api });
+    await app.onboarding.next();
+    await app.onboarding.next();
+    await app.onboarding.answer('working');
+    expect(kinds(app)).toBe('why');
   });
 
-  it('takes one tap per step: a second tap on the welcome does not skip the Mix', async () => {
-    const app = await run();
+  it('emits its Analytics events, and none with sharing off', async () => {
+    const { app, events } = await run();
+    await app.onboarding.next();
+    await app.onboarding.next();
+    await app.onboarding.answer('working');
+    await app.onboarding.finish();
+    expect(events.filter(([event]) => /onboarding|questionnaire/.exec(String(event)))).toEqual([
+      ['onboardingStepViewed', { step: 'welcome' }],
+      ['onboardingStepViewed', { step: 'firstWord' }],
+      ['onboardingStepViewed', { step: 'who' }],
+      ['questionnaireAnswered', { question: 'who', answer: 'working' }],
+      ['onboardingStepViewed', { step: 'why' }],
+      ['onboardingFinished', { skipped: true }],
+    ]);
 
-    await Promise.all([app.onboarding.next(), app.onboarding.next()]);
-
-    expect(stepOf(app).kind).toBe('mix');
+    const quiet = await run();
+    await quiet.settings.update({ shareCounters: false });
+    quiet.events.length = 0;
+    await quiet.app.onboarding.finish();
+    expect(quiet.events).toEqual([]);
   });
 
-  describe('the sample notification', () => {
-    it('is none while the notifications are switched off', async () => {
-      const app = await run({ scheduler: firstLaunch(), notifications: false });
-      await goTo(app, 'notifications');
-
-      expect(sampleOf(app)).toBeUndefined();
-    });
-
-    it("is this morning's notification of the plan, the Word of the Day's", async () => {
-      const scheduler = firstLaunch();
-      const app = await run({ scheduler });
-      const wordOfTheDay = wordOfTheDayOf(app);
-      await goTo(app, 'notifications');
-      const sample = sampleOf(app);
-
-      await app.onboarding.allowNotifications();
-
-      const morning = morningOf(scheduler.plan);
-      expect(morning.date).toBe('2026-10-14');
-      expect(sample).toEqual({
-        wordCard: wordOfTheDay,
-        body: morning.body,
-        time: '09:00',
-      });
-      expect(wordIdOf(morning)).toBe(wordOfTheDay.wordId);
-    });
-
-    it("is the next day's morning notification once this morning's time has passed", async () => {
-      const scheduler = firstLaunch();
-      const app = await run({ scheduler, clock: fakeClock('2026-10-14T10:00:00+03:00').clock });
-      const wordOfTheDay = wordOfTheDayOf(app);
-      await goTo(app, 'notifications');
-      const sample = sampleOf(app);
-
-      await app.onboarding.allowNotifications();
-
-      const morning = morningOf(scheduler.plan);
-      expect(morning.date).toBe('2026-10-15');
-      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
-      expect(sample?.wordCard.wordId).not.toBe(wordOfTheDay.wordId);
-      expect(sample?.wordCard.lemma).toBe(titleOf(morning));
-      expect(sample?.body).toBe(morning.body);
-      expect(sample?.time).toBe('09:00');
-    });
-
-    it('follows the local time after a time-zone change that passes the morning', async () => {
-      const scheduler = firstLaunch();
-      const time = fakeClock('2026-10-14T08:00:00+03:00');
-      const app = await run({ scheduler, clock: time.clock });
-      time.moveTo('Asia/Tokyo');
-      await goTo(app, 'notifications');
-      const sample = sampleOf(app);
-
-      await app.onboarding.allowNotifications();
-
-      const morning = morningOf(scheduler.plan);
-      expect(morning.date).toBe('2026-10-15');
-      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
-    });
-
-    it("is not today's Word of the Day once it is Seen, as in a session restored from before", async () => {
-      const records = new Map<string, string>();
-      const time = fakeClock(start);
-      // A session before, closed on the onboarding, after the Word of the Day was read in the Feed.
-      const before = await run({ records, clock: time.clock });
-      const wordOfTheDay = wordOfTheDayOf(before);
-      await before.feed.show(0);
-      time.advance(SEEN_DWELL_MS);
-      await before.feed.show(undefined);
-      const scheduler = firstLaunch();
-      const app = await run({ records, clock: time.clock, scheduler });
-      await goTo(app, 'notifications');
-      const sample = sampleOf(app);
-
-      await app.onboarding.allowNotifications();
-
-      const morning = morningOf(scheduler.plan);
-      expect(morning.date).toBe('2026-10-14');
-      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
-      expect(sample?.wordCard.wordId).not.toBe(wordOfTheDay.wordId);
-    });
-
-    it("follows the plan after the Mix step takes the Word of the Day's Category out and restores it", async () => {
-      const scheduler = firstLaunch();
-      const app = await run({ scheduler });
-      const { categoryId } = wordOfTheDayOf(app);
-      await goTo(app, 'mix');
-      await app.mix.takeOut(categoryId);
-      await app.mix.putBack(categoryId);
-      await app.onboarding.next();
-      const sample = sampleOf(app);
-
-      await app.onboarding.allowNotifications();
-
-      const morning = morningOf(scheduler.plan);
-      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
-      expect(sample?.body).toBe(morning.body);
-    });
-
-    it('follows the Notification times changed on the step', async () => {
-      const scheduler = firstLaunch();
-      const app = await run({ scheduler });
-      await goTo(app, 'notifications');
-
-      await app.notifications.removeTime('09:00');
-      await app.notifications.keepTime('11:30');
-      await expect.poll(() => sampleOf(app)?.time).toBe('11:30');
-      const sample = sampleOf(app);
-
-      await app.onboarding.allowNotifications();
-
-      const morning = morningOf(scheduler.plan, '11:30');
-      expect(sample?.wordCard.wordId).toBe(wordIdOf(morning));
-    });
-
-    it('cuts a long Definition the way the notification does', async () => {
-      const scheduler = firstLaunch();
-      const app = await run({ scheduler, content: longDefinitionOnly });
-      await goTo(app, 'notifications');
-      const sample = sampleOf(app);
-
-      await app.onboarding.allowNotifications();
-
-      expect(sample?.wordCard.wordId).toBe('w_long');
-      expect(sample?.body).toBe(morningOf(scheduler.plan).body);
-      expect(sample?.body.endsWith('…')).toBe(true);
-    });
-
-    it('is the Word of the Day without a time once every Notification time is removed', async () => {
-      const app = await run({ scheduler: firstLaunch() });
-      const wordOfTheDay = wordOfTheDayOf(app);
-      await goTo(app, 'notifications');
-
-      for (const time of ['09:00', '13:00', '19:00']) await app.notifications.removeTime(time);
-
-      await expect.poll(() => sampleOf(app)?.time).toBeUndefined();
-      expect(sampleOf(app)?.wordCard).toEqual(wordOfTheDay);
-    });
-
-    it('is left out without a scheduler, as in tools: nothing is planned', async () => {
-      const app = await run();
-
-      await goTo(app, 'notifications');
-
-      expect(sampleOf(app)).toBeUndefined();
-    });
-  });
-
-  describe('the SLOVO ID step', () => {
-    it('comes fourth of four with the Account on, after the notifications', async () => {
-      const app = await run({ account: true, scheduler: firstLaunch() });
-      expect(stepOf(app)).toMatchObject({ kind: 'welcome', number: 1, total: 4 });
-      await goTo(app, 'notifications');
-      expect(stepOf(app)).toMatchObject({ number: 3, total: 4 });
-
-      await app.onboarding.next();
-
-      expect(stepOf(app)).toEqual({ kind: 'account', number: 4, total: 4 });
-    });
-
-    it('is left out with the Account off: the notifications step is the last of three', async () => {
-      const app = await run({ scheduler: firstLaunch() });
-      await goTo(app, 'notifications');
-      expect(stepOf(app)).toMatchObject({ number: 3, total: 3 });
-
-      await app.onboarding.allowNotifications();
-
-      expect(app.onboarding.state.finishedAt).toBeDefined();
-    });
-
-    it('follows allowing notifications, which asks first', async () => {
-      const scheduler = firstLaunch('allowed');
-      const app = await run({ account: true, scheduler });
-      await goTo(app, 'notifications');
-
-      await app.onboarding.allowNotifications();
-
-      expect(app.notifications.state.permission).toBe('allowed');
-      expect(scheduler.plan?.length).toBeGreaterThan(0);
-      expect(stepOf(app).kind).toBe('account');
-      expect(app.onboarding.state.finishedAt).toBeUndefined();
-    });
-
-    it('follows the notifications step when asking fails, and then reports the failure', async () => {
-      const failure = new Error('The prompt could not open');
-      const app = await run({
-        account: true,
-        scheduler: { ...firstLaunch(), askPermission: () => Promise.reject(failure) },
-      });
-      await goTo(app, 'notifications');
-
-      await expect(app.onboarding.allowNotifications()).rejects.toBe(failure);
-
-      expect(stepOf(app).kind).toBe('account');
-    });
-
-    it('finishes on «Продовжити без акаунта», and the onboarding never opens again', async () => {
-      const records = new Map<string, string>();
-      const app = await run({ records, account: true });
-      await goTo(app, 'account');
-
-      await app.onboarding.next();
-
-      expect(app.onboarding.state).toEqual({
-        finishedAt: new Date('2026-10-14T08:00:00+03:00'),
-        step: undefined,
-      });
-      expect((await run({ records, account: true })).onboarding.state).toEqual(
-        app.onboarding.state,
-      );
-    });
-
-    it('finishes when the reader comes back from the SLOVO ID screen signed in', async () => {
-      const records = new Map<string, string>();
-      const app = await run({ records, account: true });
-      await goTo(app, 'account');
-
-      await app.onboarding.backFromAccount(signedIn);
-
-      expect(app.onboarding.state).toEqual({
-        finishedAt: new Date('2026-10-14T08:00:00+03:00'),
-        step: undefined,
-      });
-      expect((await run({ records, account: true })).onboarding.state.finishedAt).toBeDefined();
-    });
-
-    it('stays when the reader comes back signed out, and tells nobody', async () => {
-      const app = await run({ account: true });
-      await goTo(app, 'account');
-      const onStep = app.onboarding.state;
-      let told = 0;
-      app.onboarding.subscribe(() => {
-        told += 1;
-      });
-
-      await app.onboarding.backFromAccount(signedOut);
-
-      expect(app.onboarding.state).toBe(onStep);
-      expect(told).toBe(0);
-    });
-
-    it('finishes on skip too', async () => {
-      const app = await run({ account: true });
-      await goTo(app, 'account');
-
-      await app.onboarding.finish();
-
-      expect(app.onboarding.state.finishedAt).toBeDefined();
-    });
-  });
-
-  describe('the Rarity Test step', () => {
-    it('comes third, after the Mix, with the Words drawn from the Mix the reader chose', async () => {
-      const app = await run({ rarityTest: true });
-      expect(stepOf(app)).toMatchObject({ kind: 'welcome', number: 1, total: 4 });
-      await goTo(app, 'mix');
-      await app.mix.takeOut('other');
-
-      await app.onboarding.next();
-
-      const step = stepOf(app);
-      expect(step).toMatchObject({ kind: 'rarityTest', number: 3, total: 4 });
-      if (step.kind !== 'rarityTest') throw new Error('Expected the Rarity Test step');
-      // Every Word is of rarity 3 here, so the draw has two.
-      expect(step.words).toHaveLength(2);
-      expect(step.words.every(({ wordId }) => wordId.startsWith('w_test'))).toBe(true);
-      expect(step.words[0]).toMatchObject({ rarity: 3, stressedVowels: ['t'] });
-    });
-
-    it('goes on to the notifications, whether the reader took the test or not', async () => {
-      const app = await run({ rarityTest: true });
-      await goTo(app, 'rarityTest');
-
-      await app.onboarding.next();
-
-      expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 4, total: 4 });
-    });
-
-    it('is left out while the Edition turns the Rarity Test off', async () => {
-      const app = await run();
-      await goTo(app, 'mix');
-
-      await app.onboarding.next();
-
-      expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 3, total: 3 });
-    });
-
-    it('is left out when it has no Word to ask about, counting the steps without it', async () => {
-      const app = await run({
-        rarityTest: true,
-        content: createMemoryContentPort({
-          categories,
-          words: [word('w_gone', { retired: true })],
-          corrections: [],
-        }),
-      });
-      expect(stepOf(app)).toMatchObject({ kind: 'welcome', number: 1, total: 3 });
-      await goTo(app, 'mix');
-
-      await app.onboarding.next();
-
-      expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 3, total: 3 });
-    });
-
-    it('is passed over once the Mix leaves it no Word, and the count follows', async () => {
-      const app = await run({
-        rarityTest: true,
-        content: createMemoryContentPort({
-          categories,
-          words: [
-            word('w_gone', { categoryId: 'test', retired: true }),
-            word('w_other', { categoryId: 'other' }),
-          ],
-          corrections: [],
-        }),
-      });
-      await goTo(app, 'mix');
-      expect(stepOf(app)).toMatchObject({ number: 2, total: 4 });
-      await app.mix.takeOut('other');
-
-      await app.onboarding.next();
-
-      expect(stepOf(app)).toMatchObject({ kind: 'notifications', number: 3, total: 3 });
-    });
-  });
-
-  describe('the Mix step', () => {
-    it('starts from the Edition default Mix, which finishing without a change keeps', async () => {
-      const records = new Map<string, string>();
-      const app = await run({ records });
-      expect(app.mix.state.categoryIds).toEqual(['test', 'other']);
-
-      await app.onboarding.finish();
-
-      expect((await run({ records })).mix.state.categoryIds).toEqual(['test', 'other']);
-    });
-
-    it('keeps a choice made on the way, when the reader skips', async () => {
-      const records = new Map<string, string>();
-      const app = await run({ records });
-
-      await app.mix.takeOut('other');
-      await app.onboarding.finish();
-
-      const reopened = await run({ records });
-      expect(reopened.mix.state.categoryIds).toEqual(['test']);
-      expect(reopened.onboarding.state.finishedAt).toBeDefined();
-    });
-
-    it('keeps a choice made before the app is closed halfway, and the onboarding opens again', async () => {
-      const records = new Map<string, string>();
-      await (await run({ records })).mix.takeOut('other');
-
-      const reopened = await run({ records });
-
-      expect(reopened.mix.state.categoryIds).toEqual(['test']);
-      expect(reopened.onboarding.state.finishedAt).toBeUndefined();
-    });
-
-    it('always leaves one Category in the Mix', async () => {
-      const app = await run();
-      await app.mix.takeOut('other');
-
-      const refused = await app.mix.takeOut('test');
-
-      expect(refused).toBe(false);
-      expect(app.mix.state.categoryIds).toEqual(['test']);
-      expect(app.mix.state.lastCategoryId).toBe('test');
-    });
+  it('never opens again once finished, so a reader of the old onboarding sees none', async () => {
+    const records = new Map<string, string>();
+    await (await run({ records })).app.onboarding.finish();
+    const again = await run({ records });
+    expect(again.app.onboarding.state.step).toBeUndefined();
+    expect(again.events.filter(([event]) => event === 'onboardingStepViewed')).toEqual([]);
   });
 });

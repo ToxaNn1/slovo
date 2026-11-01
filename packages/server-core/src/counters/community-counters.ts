@@ -1,4 +1,4 @@
-import type { CounterEvent } from '@slovo/contracts';
+import type { CounterEvent, QuestionnaireQuestion } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { Clock, CommunityWord, CounterStore, EntryCounts, RateLimits } from '../ports';
@@ -7,6 +7,15 @@ import { isoWeekOf } from './iso-week';
 
 /** The counter events one IP address may send in a day, each event of a batch counting (ADR 0060). */
 const EVENTS_PER_IP = { requests: 500, windowSeconds: 24 * 60 * 60 } as const;
+
+/** The questionnaire answers one IP address may send in a day (ADR 0068). */
+const ANSWERS_PER_IP = { requests: 100, windowSeconds: 24 * 60 * 60 } as const;
+
+/** What an answer that is not an option of the Edition's question gets. */
+export interface UnknownAnswer {
+  readonly ok: false;
+  readonly reason: 'unknown-answer';
+}
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -44,6 +53,20 @@ export interface CommunityCounters {
   communityWord(
     editionId: string,
   ): Promise<{ readonly ok: true; readonly communityWord: CommunityWord | undefined } | NotServing>;
+  /**
+   * Adds one to the count of an answer of the onboarding questionnaire, when
+   * the Edition serves the questionnaire and the answer is an option of its
+   * question (ADR 0068). An answer that takes its IP address over the day's
+   * limit counts nothing.
+   */
+  answer(
+    request: {
+      readonly editionId: string;
+      readonly question: QuestionnaireQuestion;
+      readonly answer: string;
+    },
+    ip: string,
+  ): Promise<{ readonly ok: true } | NotServing | UnknownAnswer | TooManyRequests>;
 }
 
 export function createCommunityCounters({
@@ -93,6 +116,22 @@ export function createCommunityCounters({
       if (!serving.ok) return serving;
       const lastWeek = isoWeekOf(new Date(clock.now().getTime() - WEEK_MS));
       return { ok: true, communityWord: await store.mostAdded(editionId, lastWeek) };
+    },
+
+    async answer({ editionId, question, answer }, ip) {
+      const serving = await editions.serving(editionId, 'questionnaire');
+      if (!serving.ok) return serving;
+      const options = serving.edition.config.questionnaire[question];
+      if (!options.some(({ id }) => id === answer)) return { ok: false, reason: 'unknown-answer' };
+      const refused = await countRequest(
+        rateLimits,
+        `questionnaireAnswersPerIp:${ipSubject(ip)}`,
+        ANSWERS_PER_IP,
+        clock.now(),
+      );
+      if (refused !== undefined) return refused;
+      await store.addAnswer(editionId, question, answer);
+      return { ok: true };
     },
   };
 }

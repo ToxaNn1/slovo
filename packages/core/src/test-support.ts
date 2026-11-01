@@ -86,6 +86,16 @@ const testEditionConfig = {
     later: 120,
     names: ['Seed', 'Sprout', 'Sapling', 'Tree', 'Grove'],
   },
+  questionnaire: {
+    who: [
+      { id: 'studying', label: 'Studying', rarityCeiling: 4 },
+      { id: 'working', label: 'Working', rarityCeiling: 5 },
+    ],
+    why: [
+      { id: 'write-correctly', label: 'Write correctly', kindWeights: { correction: 'more' } },
+      { id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } },
+    ],
+  },
 };
 
 /** The test Edition as `loadEdition` gives it, which every `testEdition` starts from. */

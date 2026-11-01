@@ -25,7 +25,10 @@ function fakePort() {
   const events: unknown[][] = [];
   let stops = 0;
   const port: AnalyticsPort = {
-    track: (event, properties) => void events.push([event, properties]),
+    // The onboarding, which opens on a fresh user state, has events of its own.
+    track: (event, properties) => {
+      if (!event.startsWith('onboarding')) events.push([event, properties]);
+    },
     stop: () => void (stops += 1),
   };
   return { port, events, stops: () => stops };

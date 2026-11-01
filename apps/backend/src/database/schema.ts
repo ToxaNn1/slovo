@@ -288,6 +288,24 @@ export const favoritesAdds = pgTable(
 );
 
 /**
+ * The count of each answer to the onboarding questionnaire of each Edition
+ * (ADR 0068): totals only, with no row and no column that names a reader.
+ */
+export const questionnaireCounters = pgTable(
+  'questionnaire_counters',
+  {
+    editionId: text('edition_id').notNull(),
+    /** The question answered: `who` or `why`. */
+    question: text('question').notNull(),
+    /** The id of the option chosen. */
+    answer: text('answer').notNull(),
+    /** The readers who chose it. */
+    count: integer('count').notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.question, table.answer] })],
+);
+
+/**
  * The Collection Links (ADR 0058): one row per link with the Collection as it
  * was shared. A row is never updated, and holds no IP address, device id or
  * Account; only the owner's script deletes one.

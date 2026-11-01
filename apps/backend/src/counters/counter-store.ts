@@ -2,12 +2,13 @@ import type { CounterStore } from '@slovo/server-core';
 import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
-import { communityCounters, favoritesAdds } from '../database/schema';
+import { communityCounters, favoritesAdds, questionnaireCounters } from '../database/schema';
 
 /**
  * The Community Counters of every Edition and Entry, kept in the
  * `community_counters` table, and their Favorites adds of each ISO week, in
- * `favorites_adds`.
+ * `favorites_adds`, and the count of each questionnaire answer, in
+ * `questionnaire_counters`.
  */
 export function createCounterStore({ db }: Database): CounterStore {
   return {
@@ -84,6 +85,20 @@ export function createCounterStore({ db }: Database): CounterStore {
         .orderBy(desc(favoritesAdds.adds), asc(sql`${favoritesAdds.entryId} collate "C"`))
         .limit(1);
       return mostAdded;
+    },
+
+    async addAnswer(editionId, question, answer) {
+      await db
+        .insert(questionnaireCounters)
+        .values({ editionId, question, answer, count: 1 })
+        .onConflictDoUpdate({
+          target: [
+            questionnaireCounters.editionId,
+            questionnaireCounters.question,
+            questionnaireCounters.answer,
+          ],
+          set: { count: sql`${questionnaireCounters.count} + 1` },
+        });
     },
   };
 }
