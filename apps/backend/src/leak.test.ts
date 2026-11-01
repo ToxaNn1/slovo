@@ -316,6 +316,11 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           await client.counters.communityWord({ edition: EDITION }).catch(refused);
           await client.counters.communityWord({ edition: 'pl' }).catch(refused);
         },
+        questionnaire: async () => {
+          const answer = { question: 'who', answer: 'studying' } as const;
+          await client.counters.questionnaire({ editionId: EDITION, ...answer }).catch(refused);
+          await client.counters.questionnaire({ editionId: 'pl', ...answer }).catch(refused);
+        },
       },
       edition: {
         switches: async () => {
