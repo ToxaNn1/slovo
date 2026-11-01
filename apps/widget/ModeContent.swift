@@ -13,6 +13,8 @@ struct ModeContent {
   let linkKey: String?
   /// The local date on which the Word of the Day was last Seen, for the ✓.
   let wordOfTheDaySeenOn: String?
+  let goalRing: GoalRing?
+  let lockScreenWidget: Bool
 
   init(of snapshot: WidgetSnapshot?, _ configuration: ChooseMode) {
     self.init(of: snapshot, mode: configuration.mode, collectionId: configuration.collection?.id)
@@ -23,6 +25,8 @@ struct ModeContent {
     let empty: String
     linkKey = snapshot?.linkKey
     wordOfTheDaySeenOn = snapshot?.wordOfTheDaySeenOn
+    goalRing = snapshot?.goalRing
+    lockScreenWidget = snapshot?.lockScreenWidget ?? false
     switch mode {
     case .allEntries:
       overline = Self.text("allEntries")

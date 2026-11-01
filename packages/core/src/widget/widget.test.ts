@@ -16,6 +16,7 @@ import {
   type Clock,
   type Composition,
   type ContentReadPort,
+  type FeatureSwitch,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, steppingRandom, testEdition, word } from '../test-support';
@@ -108,6 +109,7 @@ async function run({
   withRowsAndTips = true,
   withWidget = true,
   withWordOfTheDay = true,
+  on = [],
 }: {
   records?: Map<string, string>;
   content?: ContentReadPort;
@@ -120,6 +122,8 @@ async function run({
   withWidget?: boolean;
   /** Whether the Feature Switch of the Word of the Day is on. */
   withWordOfTheDay?: boolean;
+  /** Other Feature Switches that are on. */
+  on?: readonly FeatureSwitch[];
 } = {}): Promise<Composition> {
   return openComposition({
     content,
@@ -130,7 +134,8 @@ async function run({
           : (withWordOfTheDay && feature === 'wordOfTheDay') ||
             (withCorrections && feature === 'corrections') ||
             (withIdioms && feature === 'idioms') ||
-            (withRowsAndTips && (feature === 'synonymRows' || feature === 'tips')),
+            (withRowsAndTips && (feature === 'synonymRows' || feature === 'tips')) ||
+            on.includes(feature),
       userSettingDefaults: { mix: { categoryIds: categories.map(({ id }) => id) } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -602,5 +607,83 @@ describe("The Widget Snapshot's day the Word of the Day was Seen", () => {
     expect(() =>
       WidgetSnapshotSchema.parse({ ...after, wordOfTheDaySeenOn: '16.10.2026' }),
     ).toThrow();
+  });
+});
+
+// Spec #1358, ticket #1385: the goal ring and the lock-screen widget.
+describe('the goal ring and the lock-screen widget in the Widget Snapshot', () => {
+  const ring: readonly FeatureSwitch[] = ['widgetGoalRing', 'xpLog', 'dailyGoal', 'statistics'];
+
+  /** XP log records of 5 XP on 14 and 15 October, two Active Days, and 7 XP today, 16 October. */
+  function earned(): Map<string, string> {
+    const records = new Map<string, string>();
+    for (const [date, amount] of [
+      ['2026-10-14', 5],
+      ['2026-10-15', 5],
+      ['2026-10-16', 7],
+    ] as const) {
+      records.set(
+        `xp.seed-${date}`,
+        JSON.stringify({
+          kind: 'xp',
+          date,
+          at: `${date}T05:00:00.000Z`,
+          source: 'game-round',
+          amount,
+        }),
+      );
+    }
+    return records;
+  }
+
+  it("carries today's XP, its Daily Goal and the Streak, dated today", async () => {
+    const snapshot = await snapshotOf(await run({ records: earned(), on: ring }));
+
+    expect(snapshot.goalRing).toEqual({ on: '2026-10-16', xp: 7, goal: 20, met: false, streak: 3 });
+    expect(() => serializeWidgetSnapshot(snapshot)).not.toThrow();
+  });
+
+  it('carries none while the goal ring, the XP log or the Daily Goal is off', async () => {
+    for (const off of ring.filter((feature) => feature !== 'statistics')) {
+      const app = await run({ records: earned(), on: ring.filter((feature) => feature !== off) });
+      expect((await snapshotOf(app)).goalRing).toBeUndefined();
+    }
+  });
+
+  it('leaves the Streak out while statistics are off', async () => {
+    const app = await run({ records: earned(), on: ring.filter((f) => f !== 'statistics') });
+
+    expect((await snapshotOf(app)).goalRing).toEqual({
+      on: '2026-10-16',
+      xp: 7,
+      goal: 20,
+      met: false,
+    });
+  });
+
+  it('hides the whole ring with «Без лічильників», and only the Streak with «Приховати Серію»', async () => {
+    const hidden = () => {
+      const records = earned();
+      records.set('settings.hideStreak', 'true');
+      return records;
+    };
+    const noCounters = await run({ records: hidden(), on: [...ring, 'noCounters'] });
+    const hideStreak = await run({ records: hidden(), on: ring });
+
+    expect((await snapshotOf(noCounters)).goalRing).toBeUndefined();
+    expect((await snapshotOf(hideStreak)).goalRing).toEqual({
+      on: '2026-10-16',
+      xp: 7,
+      goal: 20,
+      met: false,
+    });
+  });
+
+  it('says the lock-screen widget is on only while its Feature Switch is', async () => {
+    const on = await run({ on: ['lockScreenWidget'] });
+    const off = await run();
+
+    expect((await snapshotOf(on)).lockScreenWidget).toBe(true);
+    expect((await snapshotOf(off)).lockScreenWidget).toBeUndefined();
   });
 });

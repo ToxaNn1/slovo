@@ -25,6 +25,10 @@ struct WidgetSnapshot: Decodable {
   /// The local date, as `yyyy-MM-dd`, on which the Word of the Day was last
   /// Seen; none before the first or when the Edition has no Word of the Day.
   let wordOfTheDaySeenOn: String?
+  /// Today's Daily Goal progress and the Streak, which the medium and lock-screen widgets draw.
+  let goalRing: GoalRing?
+  /// Present while the lock-screen widget is on.
+  let lockScreenWidget: Bool?
 
   /// The Entries of `ids`, in that order.
   func entries(_ ids: [String]) -> [WidgetEntry] {
@@ -51,6 +55,18 @@ struct WidgetEntry: Decodable, Hashable {
 }
 
 /// A Collection as its Widget Mode shows it.
+/// The goal ring as the Core wrote it on its local date `on`.
+struct GoalRing: Decodable, Hashable {
+  let on: String
+  let xp: Int
+  let goal: Int
+  let met: Bool
+  let streak: Int?
+
+  /// The share of the goal to draw, 1 once the day met it.
+  var progress: Double { met ? 1 : min(1, Double(xp) / Double(max(goal, 1))) }
+}
+
 struct WidgetCollection: Decodable {
   let id: String
   /// The name the reader gave it.

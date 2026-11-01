@@ -146,6 +146,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   notifications: z.boolean(),
   /** The home-screen widget: the Widget Snapshot and the widget it feeds. */
   widget: z.boolean(),
+  /** The widget goal ring: today's Daily Goal progress and the Streak on the medium widget, in the Widget Snapshot. */
+  widgetGoalRing: z.boolean(),
+  /** The lock-screen widget: its families in the widget extension and its content in the Widget Snapshot. */
+  lockScreenWidget: z.boolean(),
   /** Share Cards: the buttons that make and share an image of an Entry. */
   shareCards: z.boolean(),
   /** Pronunciation: the buttons that play a Word's audio. */

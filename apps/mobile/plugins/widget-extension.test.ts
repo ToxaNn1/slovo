@@ -254,9 +254,25 @@ describe("the widget extension's Edition files", () => {
       SLOVOAppGroup: 'group.app.slovo.uk',
       SLOVOURLScheme: 'slovo-uk',
       SLOVOEditionId: 'uk',
+      SLOVOLockScreenWidget: true,
       SLOVOWordFont: 'Literata',
       SLOVOUIFont: 'Manrope',
     });
+  });
+
+  it("offers the lock-screen widget only while the Edition's Feature Switch has it on", () => {
+    const { config } = ukrainian;
+    const off = widgetExtensionFiles({
+      ...ukrainian,
+      config: {
+        ...config,
+        featureSwitches: { ...config.featureSwitches, lockScreenWidget: false },
+      },
+    });
+
+    const info = plist.parse(text(off, 'Info.plist')) as Record<string, unknown>;
+
+    expect(info['SLOVOLockScreenWidget']).toBe(false);
   });
 
   it('leaves the font families out for an Edition on the system font', () => {

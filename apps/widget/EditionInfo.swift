@@ -16,6 +16,9 @@ enum EditionInfo {
   static let wordFontFamily = value("SLOVOWordFont")
   /// The font family of labels, or nil for the system font.
   static let uiFontFamily = value("SLOVOUIFont")
+  /// Whether the Edition offers the lock-screen widget, as its Feature Switch was at build time.
+  static let lockScreenWidget =
+    Bundle.main.object(forInfoDictionaryKey: "SLOVOLockScreenWidget") as? Bool ?? false
 
   /// The link that opens an Entry in the app or, without one (an empty or
   /// broken state), the app's root, which is the Feed. It carries the

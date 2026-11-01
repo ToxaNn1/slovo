@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { CorrectionIdSchema } from './correction';
+import { DailyGoalSchema } from './edition';
 import { IdiomIdSchema } from './idiom';
 import { hasNoRepeats, TextSchema } from './shared';
 import { SynonymRowIdSchema } from './synonym-row';
@@ -93,6 +94,24 @@ export const WidgetSnapshotSchema = z
      * Optional, so a snapshot without it keeps the format.
      */
     wordOfTheDaySeenOn: z.iso.date().optional(),
+    /**
+     * The goal ring: the local date it was written on, the XP earned that day,
+     * its Daily Goal and whether the day met it, and the Streak while it is
+     * shown. The widget draws it while `on` is today and an empty ring after.
+     * None while the widget goal ring, the XP log or the Daily Goal is off, or
+     * «Без лічильників» hides the counters. Optional, so the format stays.
+     */
+    goalRing: z
+      .strictObject({
+        on: z.iso.date(),
+        xp: z.int().nonnegative(),
+        goal: DailyGoalSchema,
+        met: z.boolean(),
+        streak: z.int().nonnegative().optional(),
+      })
+      .optional(),
+    /** Present while the lock-screen widget is on; without it the lock-screen widget invites the reader to open the app. */
+    lockScreenWidget: z.literal(true).optional(),
   })
   .superRefine((snapshot, context) => {
     const ids = snapshot.entries.map(({ id }) => id);

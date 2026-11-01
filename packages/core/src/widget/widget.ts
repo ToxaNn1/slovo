@@ -17,7 +17,11 @@ import type { Edition } from '../edition/edition';
 import type { Onboarding } from '../onboarding/onboarding';
 import { notificationText } from '../notifications/notification-text';
 import type { History } from '../saved/history';
-import { dateKeyOf, localDayOf } from '../local-date';
+import { dateKeyOf, localDayOf, todayKey } from '../local-date';
+import type { Progress } from '../progress/progress';
+import type { XpLog } from '../progress/xp-log';
+import type { UserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 import type { Clock } from '../ports';
 import { withoutStress } from '../entries/stress';
 
@@ -36,7 +40,13 @@ export interface Widget {
    * the call: the app writes no new snapshot and the widget just stops
    * updating, with no placeholder (ADR 0026). It carries the local date of
    * the newest Entry History keeps as Seen as the Word of the Day, in the
-   * clock's time zone, while the Edition has the Word of the Day.
+   * clock's time zone, while the Edition has the Word of the Day. It carries
+   * the goal ring while the widget goal ring, the XP log and the Daily Goal
+   * are on: today's XP, its Daily Goal and the Streak, by the rules of the
+   * XP bar: «Без лічильників» hides the whole ring, and while its switch is
+   * off the setting is «Приховати Серію» and hides only the Streak, as the
+   * Streak is hidden while statistics are off. It says whether the
+   * lock-screen widget is on.
    */
   snapshot(strings: EditionStrings['notificationBody']): Promise<WidgetSnapshot | undefined>;
   /**
@@ -100,6 +110,31 @@ function wordOfTheDaySeenOn(history: History, clock: Clock): string | undefined 
   return seen === undefined ? undefined : dateKeyOf(localDayOf(seen.seenAt, clock).date);
 }
 
+type GoalRing = NonNullable<WidgetSnapshot['goalRing']>;
+
+/** The goal ring the widget shows now, or none while it is off or hidden. */
+async function goalRingOf({
+  edition,
+  xpLog,
+  progress,
+  userState,
+  clock,
+}: {
+  edition: Pick<Edition, 'isFeatureEnabled'>;
+  xpLog: Pick<XpLog, 'state'>;
+  progress: Pick<Progress, 'state'>;
+  userState: Pick<UserState, 'read'>;
+  clock: Clock;
+}): Promise<GoalRing | undefined> {
+  const on = edition.isFeatureEnabled.bind(edition);
+  const { dailyGoal, today } = xpLog.state;
+  if (!on('widgetGoalRing') || !on('xpLog') || dailyGoal === null) return undefined;
+  const hidden = (await userState.read(userStateRecords.noCounters)) === true;
+  if (hidden && on('noCounters')) return undefined;
+  const ring = { on: todayKey(clock), xp: today, goal: dailyGoal.goal, met: dailyGoal.met };
+  return on('statistics') && !hidden ? { ...ring, streak: progress.state.streak } : ring;
+}
+
 /**
  * The widget over the composition's Entries, Favorites, Collections, History
  * and onboarding. `opened` is the composition's step for an Entry opened from
@@ -112,6 +147,9 @@ export function createWidget({
   collections,
   history,
   onboarding,
+  xpLog,
+  progress,
+  userState,
   clock,
   opened,
 }: {
@@ -121,6 +159,9 @@ export function createWidget({
   collections: Collections;
   history: History;
   onboarding: Onboarding;
+  xpLog: Pick<XpLog, 'state'>;
+  progress: Pick<Progress, 'state'>;
+  userState: Pick<UserState, 'read'>;
   clock: Clock;
   opened: Widget['opened'];
 }): Widget {
@@ -134,6 +175,7 @@ export function createWidget({
       const seenOn = edition.isFeatureEnabled('wordOfTheDay')
         ? wordOfTheDaySeenOn(history, clock)
         : undefined;
+      const goalRing = await goalRingOf({ edition, xpLog, progress, userState, clock });
       return {
         format: WIDGET_SNAPSHOT_FORMAT,
         editionId: edition.id,
@@ -148,6 +190,8 @@ export function createWidget({
           entryIds: onlyEligible(collections.entries(id)),
         })),
         ...(seenOn === undefined ? {} : { wordOfTheDaySeenOn: seenOn }),
+        ...(goalRing === undefined ? {} : { goalRing }),
+        ...(edition.isFeatureEnabled('lockScreenWidget') ? { lockScreenWidget: true } : {}),
       };
     },
     opened,
