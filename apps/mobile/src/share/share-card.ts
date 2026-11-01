@@ -20,18 +20,19 @@ export interface ShareImagePorts {
  * directory under the name of what it shows (an Entry's id, or
  * `weekly-recap`), so a new share of the same card replaces it, and opens the system share sheet with the file. Resolves to
  * `closed` once the system share sheet closes, shared or cancelled alike, or to
- * `failed` when a step fails, so the reader can try again. Writes no user
- * state.
+ * `failed` when a step fails, so the reader can try again. Calls `onShared`
+ * only when the reader sent the image somewhere. Writes no user state.
  */
 export async function shareCardImage(
   ports: ShareImagePorts,
   cardId: string,
   format: ShareCardFormat,
+  onShared: () => void,
 ): Promise<ShareSheetOutcome> {
   try {
     const file = await ports.capture(shareImage[format]);
     const url = await ports.keepInCache(file, `share-card-${cardId}.png`);
-    await ports.openShareSheet(url);
+    if ((await ports.openShareSheet(url)) === 'shared') onShared();
     return 'closed';
   } catch {
     return 'failed';

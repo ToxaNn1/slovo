@@ -22,13 +22,13 @@ const fileUrl = (path: string) => (path.startsWith('file://') ? path : `file://$
 
 /**
  * Shares a Share Card, drawn in `view` in a format and named by what it shows
- * (an Entry's id, or `weekly-recap`), through the iOS share sheet, or
- * undefined when the binary can't capture a view, so no share button shows.
+ * (an Entry's id, or `weekly-recap`), through the iOS share sheet, calling
+ * `onShared` once the reader sent it somewhere, or undefined when the binary can't capture a view, so no share button shows.
  */
 export const shareCardOnDevice: ShareCard | undefined =
   modules === undefined
     ? undefined
-    : (view, cardId, format) => {
+    : (view, cardId, format, onShared) => {
         const { viewShot, fileSystem } = modules;
         return shareCardImage(
           {
@@ -53,5 +53,6 @@ export const shareCardOnDevice: ShareCard | undefined =
           },
           cardId,
           format,
+          onShared,
         );
       };

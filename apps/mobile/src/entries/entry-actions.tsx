@@ -25,7 +25,7 @@ import { refusalText } from '../saved/collection-refusal';
 import { deviceClock } from '../device/device-clock';
 import { edition, editionStrings } from '../edition/edition';
 import { useEntryCollections } from '../saved/collections';
-import { useCompositionRead } from '../composition';
+import { useComposition, useCompositionRead } from '../composition';
 import { useCounterLine } from '../community-counters/counter-line';
 import { useFavorite } from '../saved/favorites';
 import { useKnowledgeMark } from '../knowledge/marks';
@@ -133,6 +133,7 @@ function EntryShareSheet({
   visible: boolean;
   onClose: () => void;
 }) {
+  const composition = useComposition();
   return (
     <ShareSheet
       visible={visible}
@@ -149,7 +150,11 @@ function EntryShareSheet({
       onFormatChange={(format) => {
         sessionShareFormat.choose(format);
       }}
-      onShare={(view, format) => share(view, card.entryId, format)}
+      onShare={(view, format) =>
+        share(view, card.entryId, format, () => {
+          void composition.analytics.shareCardShared('entry');
+        })
+      }
       onClose={onClose}
     />
   );

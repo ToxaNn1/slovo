@@ -2,6 +2,7 @@ import { buildShareCardContent, type LocalDate, type WeeklyRecapModel } from '@s
 import { ShareSheet, WeeklyRecapCard } from '@slovo/ui';
 import { useState } from 'react';
 
+import { useComposition } from '../composition';
 import { edition, editionStrings } from '../edition/edition';
 import { useShell } from '../shell-value';
 import { sessionShareFormat } from '../share/share-card';
@@ -24,6 +25,7 @@ export function WeeklyRecapNotice({ day }: { day: LocalDate }) {
   const { shareCard } = useShell();
   const share = shown.entryButtons.shareCard ? shareCard : undefined;
   const [open, setOpen] = useState(false);
+  const composition = useComposition();
   return (
     <>
       <WeeklyRecapCard
@@ -46,7 +48,11 @@ export function WeeklyRecapNotice({ day }: { day: LocalDate }) {
           onFormatChange={(format) => {
             sessionShareFormat.choose(format);
           }}
-          onShare={(view, format) => share(view, 'weekly-recap', format)}
+          onShare={(view, format) =>
+            share(view, 'weekly-recap', format, () => {
+              void composition.analytics.shareCardShared('weeklyRecap');
+            })
+          }
           onClose={() => {
             setOpen(false);
           }}
