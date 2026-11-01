@@ -1,5 +1,6 @@
 import {
   DailyLimitCard,
+  LevelMilestoneCard,
   DecorBackground,
   EndOfCycleCard,
   EntryCard,
@@ -225,13 +226,15 @@ const FeedPage = memo(function FeedPage({
 
 /**
  * A Feed Notice that sits in the middle of its page: the Weekly Recap, the
- * Community Word, the first-week card or the Daily Limit card.
+ * Community Word, the first-week card, a level milestone or the Daily Limit card.
  */
 function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
   const streak = useFirstWeekStreak();
   if (card.notice === 'weeklyRecap') return <WeeklyRecapNotice day={card.day} />;
   if (card.notice === 'communityWord')
     return <CommunityWordNotice entryId={card.card.entryId} adds={card.adds} />;
+  if (card.notice === 'levelMilestone')
+    return <LevelMilestoneCard level={card.level} name={card.name} />;
   return card.notice === 'firstWeek' ? (
     <FirstWeekCard day={card.firstWeekDay} streak={streak} />
   ) : (

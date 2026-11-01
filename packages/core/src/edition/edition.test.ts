@@ -79,6 +79,7 @@ const validConfig = {
     streakFreezes: true,
     streakBreak: true,
     quickQuestion: true,
+    levels: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -130,6 +131,7 @@ const validConfig = {
     reviewDailyCap: 10,
     quickQuestion: 2,
   },
+  levels: { first: 50, growth: 0.1, growingUntil: 10, later: 120, names: ['Seed', 'Sprout'] },
 };
 
 /** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
@@ -354,6 +356,38 @@ describe('loadEdition', () => {
     );
     const { reviewDailyCap: _, ...withoutCap } = xp;
     expect(() => loadEdition({ ...validConfig, xp: withoutCap })).toThrow(
+      InvalidEditionConfigError,
+    );
+  });
+
+  it('reports the Level curve and the Level names (ADR 0066)', () => {
+    expect(loadEdition(validConfig).levels).toEqual({
+      first: 50,
+      growth: 0.1,
+      growingUntil: 10,
+      later: 120,
+      names: ['Seed', 'Sprout'],
+    });
+  });
+
+  it('refuses an Edition without a Level curve, with a Level costing nothing or with no Level name', () => {
+    const { levels, ...withoutLevels } = validConfig;
+    expect(() => loadEdition(withoutLevels)).toThrow(InvalidEditionConfigError);
+    expect(() => loadEdition({ ...validConfig, levels: { ...levels, first: 0 } })).toThrow(
+      InvalidEditionConfigError,
+    );
+    expect(() => loadEdition({ ...validConfig, levels: { ...levels, growth: -0.1 } })).toThrow(
+      InvalidEditionConfigError,
+    );
+    expect(() => loadEdition({ ...validConfig, levels: { ...levels, names: [] } })).toThrow(
+      InvalidEditionConfigError,
+    );
+  });
+
+  it('refuses an Edition without the levels Feature Switch', () => {
+    const { levels, ...switches } = validConfig.featureSwitches;
+    expect(levels).toBe(true);
+    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
   });

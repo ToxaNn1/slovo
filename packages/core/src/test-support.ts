@@ -79,6 +79,13 @@ const testEditionConfig = {
     reviewDailyCap: 10,
     quickQuestion: 2,
   },
+  levels: {
+    first: 50,
+    growth: 0.1,
+    growingUntil: 10,
+    later: 120,
+    names: ['Seed', 'Sprout', 'Sapling', 'Tree', 'Grove'],
+  },
 };
 
 /** The test Edition as `loadEdition` gives it, which every `testEdition` starts from. */

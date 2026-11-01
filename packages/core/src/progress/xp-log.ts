@@ -3,12 +3,14 @@ import type { XpTable } from '@slovo/contracts';
 import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
 import type { Clock, Random, UserStateChanges } from '../ports';
+import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import type { XpAction, XpAward } from '../game/game-xp';
 import type { LocalDate } from '../local-date';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords, type XpRecord } from '../user-state/user-state-schema';
+import { levelOf, type LevelState } from './levels';
 
 const { xpLog: xpRecords } = userStateRecords;
 
@@ -18,6 +20,8 @@ export interface XpLogState {
   readonly total: number;
   /** The XP earned today, in the clock's time zone. */
   readonly today: number;
+  /** The Level the total reaches, while the Edition's `levels` Feature Switch is on (ADR 0066). */
+  readonly level: LevelState | undefined;
 }
 
 /** What the XP log holds by local date `YYYY-MM-DD`, for the Active Days and the Streak. */
@@ -64,6 +68,8 @@ export interface XpLog {
    * Break on the same day merge into one.
    */
   startBreak(days: number): XpLogAppend;
+  /** The local date (`YYYY-MM-DD`) the total XP first reached `total`, if it has. */
+  reachedOn(total: number): string | undefined;
   /** Calls `listener` after each change of the XP. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -113,14 +119,17 @@ export async function openXpLog({
   clock,
   random,
   dayTurned,
+  analytics,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled' | 'xp'>;
+  edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels'>;
   userState: Pick<UserState, 'list'>;
   clock: Clock;
   random: Random;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
+  analytics: Pick<Analytics, 'track'>;
 }): Promise<XpLog> {
   const on = edition.isFeatureEnabled('xpLog');
+  const levelsOn = on && edition.isFeatureEnabled('levels');
   const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
   const subscribers = createSubscribers();
   /** Tells the records of one session apart when the clock and the random source stand still. */
@@ -158,18 +167,35 @@ export async function openXpLog({
       total,
       today: byDate.get(today) ?? 0,
       reviewToday: review.get(today) ?? 0,
+      level: levelsOn ? levelOf(edition.levels, total) : undefined,
       byDate,
       frozen,
       breaks,
     };
   }
   let derived = derive();
-  let state: XpLogState = { total: derived.total, today: derived.today };
+  let state: XpLogState = { total: derived.total, today: derived.today, level: derived.level };
 
   function change(): void {
+    const before = state.level?.level;
     derived = derive();
-    state = { total: derived.total, today: derived.today };
+    state = { total: derived.total, today: derived.today, level: derived.level };
+    const after = state.level?.level;
+    if (before !== undefined && after !== undefined && after > before) {
+      void analytics.track('levelReached', { level: after });
+    }
     subscribers.tell();
+  }
+
+  function reachedOn(total: number): string | undefined {
+    let sum = 0;
+    const inTime = [...records.values()].sort((a, b) => a.at.localeCompare(b.at));
+    for (const record of inTime) {
+      if (record.kind !== 'xp') continue;
+      sum += record.amount;
+      if (sum >= total) return record.date;
+    }
+    return undefined;
   }
 
   /** An id no other device makes: the instant, a random part and this session's count. */
@@ -247,6 +273,7 @@ export async function openXpLog({
     award,
     freeze,
     startBreak,
+    reachedOn,
     subscribe: subscribers.subscribe,
   };
 }

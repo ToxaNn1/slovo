@@ -33,6 +33,8 @@ export interface AnalyticsEvents {
   readonly reviewAnswered: { readonly mark: 'known' | 'unknown' };
   /** The reader answered a Quick Question in the Feed, right or not. */
   readonly quickQuestionAnswered: { readonly right: boolean };
+  /** The reader reached a new Level (ADR 0066). */
+  readonly levelReached: { readonly level: number };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 

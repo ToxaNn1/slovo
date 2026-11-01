@@ -89,6 +89,7 @@ const contentOf = (notice: FeedNotice): FeedNoticeContent => {
   if (notice === 'yesterday') return { notice, word: yesterdaysWord };
   if (notice === 'communityWord')
     return { notice, card: { kind: 'word', entryId: 'w_00', model: yesterdaysWord }, adds: 3 };
+  if (notice === 'levelMilestone') return { notice, level: 5, name: 'Sprout' };
   return { notice };
 };
 

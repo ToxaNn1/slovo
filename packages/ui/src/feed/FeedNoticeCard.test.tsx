@@ -4,6 +4,7 @@ import {
   EditionProvider,
   FirstWeekCard,
   HapticsProvider,
+  LevelMilestoneCard,
   VerticalPager,
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
@@ -15,6 +16,10 @@ import { testStrings } from '../test-strings';
 const strings = testStrings({
   feedNotices: {
     dailyLimit: { message: 'Enough for today. Come back tomorrow', keepGoing: 'Keep going' },
+    levelMilestone: {
+      title: 'Level {level}: {name}',
+      message: 'Try rarer words or a new Category in the Mix.',
+    },
     firstWeek: {
       close: 'Got it',
       lastDayTitle: 'A week with us',
@@ -64,6 +69,18 @@ async function renderFeed(notice: ReactNode, onIndexChange: (index: number) => v
     nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 800 } },
   });
 }
+
+// Ticket #1368, ADR 0066: the level milestone suggests and forces nothing.
+describe('the level-milestone card', () => {
+  it('names the Level and its Edition name and suggests a wider rarity or a new Category, with no button', async () => {
+    await renderFeed(<LevelMilestoneCard level={5} name="Sprout" />);
+
+    expect(screen.getByTestId('feed-notice-levelMilestone')).toBeTruthy();
+    expect(screen.getByText('Level 5: Sprout')).toBeTruthy();
+    expect(screen.getByText('Try rarer words or a new Category in the Mix.')).toBeTruthy();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+});
 
 describe('the Daily Limit card', () => {
   it('asks the reader to stop for today, with a button to keep going', async () => {
