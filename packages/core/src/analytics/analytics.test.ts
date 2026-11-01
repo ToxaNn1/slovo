@@ -109,6 +109,20 @@ describe('Analytics', () => {
     ]);
   });
 
+  it('sends each notification opened with its kind, and nothing while sharing is off', async () => {
+    const { app, settings, events } = await run();
+
+    await app.analytics.notificationOpened('word');
+    await app.analytics.notificationOpened('evening');
+    await settings.update({ shareCounters: false });
+    await app.analytics.notificationOpened('farewell');
+
+    expect(events).toEqual([
+      ['notificationOpened', { kind: 'word' }],
+      ['notificationOpened', { kind: 'evening' }],
+    ]);
+  });
+
   it('sends «Без лічильників» turned on and off as a setting changed, and nothing while sharing is off', async () => {
     const { settings, events } = await run();
 

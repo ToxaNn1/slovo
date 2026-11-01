@@ -27,6 +27,7 @@ import { allFeedNotices, noFeedNotices, type FeedNotices } from './feed/feed-not
 import { createFirstWeek } from './feed/first-week';
 import { createYesterday } from './feed/yesterday';
 import { createLevelMilestones } from './feed/level-milestone';
+import { createNotificationExplainer } from './notifications/notification-explainer';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
 import { createQuickQuestion } from './game/quick-question';
@@ -55,7 +56,7 @@ import type { NotificationScheduling } from './notifications/notification-plan';
 import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
 import type { LocalDate } from './local-date';
-import type { Backend, Clock, ContentReadPort, Random, Schedule } from './ports';
+import type { Backend, Clock, ContentReadPort, NotificationKind, Random, Schedule } from './ports';
 import { openActiveDays } from './progress/active-days';
 import { openXpLog, type XpLog } from './progress/xp-log';
 import { openStreakBreak, type StreakBreak } from './progress/streak-break';
@@ -221,6 +222,8 @@ export interface Composition extends Hiding {
     pronunciationPlayed(entryId: string): Promise<void>;
     wordHistoryOpened(entryId: string): Promise<void>;
     screenViewed(screen: string): Promise<void>;
+    /** The reader opened the app from a notification of this kind. */
+    notificationOpened(kind: NotificationKind): Promise<void>;
   };
   /** The iPhone search: the Spotlight Snapshot the app hands its native module (ADR 0057). */
   readonly spotlight: Spotlight;
@@ -452,6 +455,8 @@ export async function openComposition({
     seen,
     dayTurned,
     returned,
+    xpLog,
+    activeDays,
   });
   const enoughForToday = enoughForTodayNotices({ edition, history, clock });
   // The Mix opens before the Feed, whose turns follow its kind weights.
@@ -485,6 +490,16 @@ export async function openComposition({
       createYesterday({ edition, entries, hiddenEntries, userState }),
       createLevelMilestones({ edition, xpLog, userState }),
       enoughForToday,
+      // Without a scheduler there is no device to ask.
+      scheduling === undefined
+        ? noFeedNotices
+        : createNotificationExplainer({
+            edition,
+            userState,
+            clock,
+            xpLog,
+            permission: () => notifications.state.permission,
+          }),
     ),
     kindWeights: () =>
       edition.isFeatureEnabled('mixKindWeights') ? mix.state.kindWeights : NORMAL_KIND_WEIGHTS,
@@ -684,6 +699,8 @@ export async function openComposition({
       pronunciationPlayed: (entryId) => entryEvent('pronunciationPlayed', entryId),
       wordHistoryOpened: (entryId) => entryEvent('wordHistoryOpened', entryId),
       screenViewed: (screen) => analytics.track('screenViewed', { screen }).catch(() => undefined),
+      notificationOpened: (kind) =>
+        analytics.track('notificationOpened', { kind }).catch(() => undefined),
     },
     close,
   };

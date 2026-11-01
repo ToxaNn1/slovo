@@ -1,5 +1,6 @@
 import {
   EnoughForTodayCard,
+  NotificationAskCard,
   LevelMilestoneCard,
   DecorBackground,
   EndOfCycleCard,
@@ -39,6 +40,7 @@ import { useShown } from '@/shown-in-effect';
 import { useSwipeHint } from '@/feed/swipe-hint';
 import { WeeklyRecapNotice } from '@/feed/weekly-recap-notice';
 import { CommunityWordNotice } from '@/feed/community-word-notice';
+import { useNotificationsChanges } from '@/notifications/notifications';
 
 const { feed: feedStrings } = editionStrings;
 const turnActionLabels = { next: feedStrings.nextEntry, previous: feedStrings.previousEntry };
@@ -226,10 +228,14 @@ const FeedPage = memo(function FeedPage({
 
 /**
  * A Feed Notice that sits in the middle of its page: the Weekly Recap, the
- * Community Word, the first-week card, a level milestone or «Може, на сьогодні досить?».
+ * Community Word, the first-week card, a level milestone, «Може, на сьогодні
+ * досить?» or the notification explainer and its re-ask.
  */
 function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
   const streak = useFirstWeekStreak();
+  const { askPermission } = useNotificationsChanges();
+  if (card.notice === 'notificationExplainer' || card.notice === 'notificationReask')
+    return <NotificationAskCard notice={card.notice} onYes={askPermission} />;
   if (card.notice === 'weeklyRecap') return <WeeklyRecapNotice day={card.day} />;
   if (card.notice === 'communityWord')
     return <CommunityWordNotice entryId={card.card.entryId} adds={card.adds} />;

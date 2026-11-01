@@ -9,8 +9,9 @@ import {
   type Composition,
   type Edition,
   type Haptics,
+  type NotificationSchedulerPort,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createFakeNotificationScheduler, createMemoryContentPort } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
@@ -88,7 +89,10 @@ function word(id: string, lemma: string): Word {
  * Opens the composition over two Words for a reader who finished the
  * onboarding with the records given, on 2026-10-28 in Kyiv.
  */
-async function open(records: Readonly<Record<string, unknown>>) {
+async function open(
+  records: Readonly<Record<string, unknown>>,
+  scheduler?: NotificationSchedulerPort,
+) {
   userState = await openUserState({
     port: createMemoryUserStatePort(
       new Map(Object.entries(records).map(([key, value]) => [key, JSON.stringify(value)])),
@@ -104,6 +108,18 @@ async function open(records: Readonly<Record<string, unknown>>) {
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     // The first Word in each draw, so each opening shows the same Word of the Day.
     random: { next: () => 0 },
+    ...(scheduler === undefined
+      ? {}
+      : {
+          scheduling: {
+            scheduler,
+            ellipsis: '…',
+            titles: ['{word}'],
+            farewell: 'Пауза',
+            streakWarning: 'Серія',
+            goalNotMet: 'Ціль',
+          },
+        }),
   });
 }
 
@@ -190,5 +206,25 @@ describe('the Feed Notices on the Feed', () => {
 
     expect(screen.getAllByTestId('word-card', hidden).length).toBeGreaterThan(0);
     expect(screen.queryByTestId(/^feed-notice-/, hidden)).toBeNull();
+  });
+
+  it('shows the notification explainer by day 3, and the device is not asked before «Так»', async () => {
+    const scheduler = createFakeNotificationScheduler({ permission: 'not-asked' });
+    await open({ 'onboarding.finished': '2026-10-26T08:00:00Z' }, scheduler);
+    await renderApp();
+
+    const card = screen.getByTestId('feed-notice-notificationExplainer', hidden);
+    const { title, yes } = editionStrings.feedNotices.notificationExplainer;
+    expect(within(card).getByText(title, hidden)).toBeTruthy();
+    expect(within(card).getByText(yes, hidden)).toBeTruthy();
+    expect(await scheduler.permission()).toBe('not-asked');
+  });
+
+  it('shows no explainer to a reader the device asked already', async () => {
+    const scheduler = createFakeNotificationScheduler({ permission: 'denied' });
+    await open({ 'onboarding.finished': '2026-10-26T08:00:00Z' }, scheduler);
+    await renderApp();
+
+    expect(screen.queryByTestId('feed-notice-notificationExplainer', hidden)).toBeNull();
   });
 });

@@ -110,7 +110,14 @@ async function app() {
         clock: time.clock,
         random: systemRandom,
         schedule,
-        scheduling: { scheduler, ellipsis: '…', titles: ['{word}'], farewell: 'Farewell' },
+        scheduling: {
+          scheduler,
+          ellipsis: '…',
+          titles: ['{word}'],
+          farewell: 'Farewell',
+          streakWarning: 'Streak warning',
+          goalNotMet: 'Goal not met',
+        },
       }),
     { onError: () => undefined },
   );

@@ -82,7 +82,10 @@
     "widgetGoalRing": true,
     "lockScreenWidget": true,
     "questionnaire": true,
-    "badges": true
+    "badges": true,
+    "eveningNotification": true,
+    "notificationFarewell": true,
+    "notificationExplainer": true
   },
   "userSettingDefaults": {
     "theme": "system",

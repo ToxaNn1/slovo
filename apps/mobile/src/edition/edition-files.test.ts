@@ -323,23 +323,32 @@ describe('the 0.8.13 strings', () => {
   });
 
   describe('notification templates', () => {
-    const templates = strings['notificationTemplates'] as { titles: string[]; farewell: string };
+    const templates = strings['notificationTemplates'] as {
+      titles: string[];
+      farewell: string;
+      streakWarning: string;
+      goalNotMet: string;
+    };
     const withTemplates = (changed: Partial<typeof templates>) =>
       issuesOf({ ...strings, notificationTemplates: { ...templates, ...changed } });
 
-    it('the UA Edition carries 10 title templates, each with {word}, and a farewell text', () => {
+    it('the UA Edition carries 10 title templates, each with {word}, and a farewell and the evening texts', () => {
       expect(parsed.notificationTemplates.titles).toHaveLength(10);
       for (const title of parsed.notificationTemplates.titles) expect(title).toContain('{word}');
-      expect(parsed.notificationTemplates.farewell).not.toBe('');
+      expect(parsed.notificationTemplates.farewell).toBe('Ми зупиняємо нагадування');
+      expect(parsed.notificationTemplates.goalNotMet).toBe('Ціль ще не виконана');
+      expect(parsed.notificationTemplates.streakWarning).not.toBe('');
     });
 
-    it('every Edition needs the templates and the farewell text', () => {
+    it('every Edition needs the templates, the farewell and the evening texts', () => {
       const without = Object.fromEntries(
         Object.entries(strings).filter(([name]) => name !== 'notificationTemplates'),
       );
 
       expect(issuesOf(without)).toEqual(['notificationTemplates']);
       expect(withTemplates({ farewell: '' })).toEqual(['notificationTemplates.farewell']);
+      expect(withTemplates({ streakWarning: '' })).toEqual(['notificationTemplates.streakWarning']);
+      expect(withTemplates({ goalNotMet: '' })).toEqual(['notificationTemplates.goalNotMet']);
     });
 
     it.each([9, 11])('refuses %i title templates', (count) => {

@@ -90,6 +90,37 @@ export function EnoughForTodayCard() {
 }
 
 /**
+ * The notification explainer, or its one re-ask, with «Так», which asks the
+ * device for permission to notify and turns to the next card; the iOS prompt
+ * comes only after it (ADR 0067). A swipe past it is a refusal.
+ */
+export function NotificationAskCard({
+  notice,
+  onYes,
+}: {
+  notice: 'notificationExplainer' | 'notificationReask';
+  onYes: () => void;
+}) {
+  const { strings } = useEdition();
+  const { title, message, yes } = strings.feedNotices[notice];
+  const turnToNext = useTurnToNextPage();
+  return (
+    <FeedNoticeCard
+      notice={notice}
+      title={title}
+      message={message}
+      action={{
+        label: yes,
+        onPress: () => {
+          onYes();
+          turnToNext?.();
+        },
+      }}
+    />
+  );
+}
+
+/**
  * The level-milestone card at Levels 5, 10 and 20: the Level with the
  * Edition's name for it, and a suggestion of a wider rarity or a new
  * Category that forces nothing, so it has no button; a swipe closes it

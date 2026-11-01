@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { Correction, FeatureSwitch, Word } from '@slovo/contracts';
 
@@ -47,6 +47,7 @@ async function run({
   mixCategoryIds = ['test'],
   switchedOff = [],
   politePause = false,
+  evening = false,
   titles = ['{word}'],
   editionId = 'test',
 }: {
@@ -62,6 +63,8 @@ async function run({
   switchedOff?: readonly FeatureSwitch[];
   /** Whether the polite pause is on; off unless a test is about it. */
   politePause?: boolean;
+  /** Whether the 1.0 plan with its evening notification is on; off unless a test is about it. */
+  evening?: boolean;
   /** The Edition's notification title templates. */
   titles?: readonly string[];
   /** The id of the Edition the app runs as. */
@@ -88,7 +91,9 @@ async function run({
     edition: testEdition({
       id: editionId,
       isFeatureEnabled: (feature) =>
-        !switchedOff.includes(feature) && (politePause || feature !== 'politePause'),
+        !switchedOff.includes(feature) &&
+        (politePause || feature !== 'politePause') &&
+        (evening || feature !== 'eveningNotification'),
       userSettingDefaults: {
         mix: { categoryIds: mixCategoryIds },
         notificationTimes: defaultTimes,
@@ -98,13 +103,17 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },
-    scheduling: { scheduler, ellipsis: '…', titles, farewell },
+    scheduling: { scheduler, ellipsis: '…', titles, farewell, streakWarning, goalNotMet },
   });
   return { app, scheduler, records, reads };
 }
 
 /** The Edition's farewell, the last notification of the polite pause. */
 const farewell = 'Ставимо сповіщення на паузу';
+
+/** The Edition's evening texts. */
+const streakWarning = 'Серія під загрозою';
+const goalNotMet = 'Ціль ще не виконана';
 
 /** Ten title templates, each telling its number before the Word. */
 const titles = Array.from({ length: 10 }, (_, index) => `Шаблон ${String(index)}: {word}`);
@@ -950,5 +959,192 @@ describe('the Reserved Words', () => {
       expect(today).toBeDefined();
       expect(today).not.toBe(morning);
     }
+  });
+});
+
+/** The records of an Active Day on each of the local dates. */
+const activeOn = (dates: readonly string[]) =>
+  dates.map((date): [string, string] => [`activeDays.${date}`, 'true']);
+
+/** The record of XP earned on a local date. */
+const xpOn = (date: string, amount: number): [string, string] => [
+  `xp.xp-${date}-${String(amount)}`,
+  JSON.stringify({ kind: 'xp', date, at: `${date}T07:00:00.000Z`, source: 'game-round', amount }),
+];
+
+/** The record of a Streak freeze consumed for a missed local date. */
+const frozenOn = (date: string): [string, string] => [
+  `xp.freeze-${date}`,
+  JSON.stringify({ kind: 'freeze', date, at: `${date}T07:00:00.000Z` }),
+];
+
+/** The record of a Break of `days` started on a local date. */
+const breakFrom = (date: string, days: number): [string, string] => [
+  `xp.break-${date}`,
+  JSON.stringify({ kind: 'break', date, at: `${date}T07:00:00.000Z`, days }),
+];
+
+/** The body of the evening notification planned on a local date, or nothing. */
+function eveningOf(plan: readonly PlannedNotification[], date: string): string | undefined {
+  const evening = plan.find(
+    (notification) => notification.kind === 'evening' && notification.date === date,
+  );
+  return evening?.body;
+}
+
+/** A Streak of 7 Active Days up to yesterday, 2026-10-13. */
+const sevenDays = datesFrom('2026-10-07', 7);
+
+describe('the evening notification', () => {
+  it('plans the Word of the Day at the earliest time and one evening slot at the latest, never more than 2 a day', async () => {
+    const { scheduler } = await run({ evening: true });
+
+    const plan = planOf(scheduler);
+    const perDay = new Map<string, number>();
+    for (const { date } of plan) perDay.set(date, (perDay.get(date) ?? 0) + 1);
+    expect(Math.max(...perDay.values())).toBe(2);
+    expect(plan.filter(({ time }) => time === '13:00')).toEqual([]);
+    expect(plan.filter(({ time }) => time === '09:00').every(({ kind }) => kind === 'word')).toBe(
+      true,
+    );
+    expect(plan.find(({ date, time }) => date === '2026-10-14' && time === '19:00')).toMatchObject({
+      kind: 'evening',
+      message: 'goalNotMet',
+      body: goalNotMet,
+      editionId: 'test',
+    });
+  });
+
+  it('warns of the Streak while it is 7 or more, today is below 5 XP and no freeze is held', async () => {
+    const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 4)]);
+    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+
+    const plan = planOf(scheduler);
+    expect(eveningOf(plan, '2026-10-14')).toBe(streakWarning);
+    // With no open tomorrow, today's miss breaks the Streak: the goal is left to remind of.
+    expect(eveningOf(plan, '2026-10-15')).toBe(goalNotMet);
+  });
+
+  it('warns of the Streak once the freezes held are used up', async () => {
+    const records = new Map([
+      ...activeOn(datesFrom('2026-10-01', 9)),
+      frozenOn('2026-10-10'),
+      frozenOn('2026-10-11'),
+      ...activeOn(['2026-10-12', '2026-10-13']),
+    ]);
+    const { scheduler } = await run({ evening: true, records });
+
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(streakWarning);
+  });
+
+  it('reminds of the goal, not the Streak, while a freeze is held', async () => {
+    const records = new Map(activeOn(sevenDays));
+    const { scheduler } = await run({ evening: true, records });
+
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
+  });
+
+  it('reminds of the goal, not the Streak, below a Streak of 7', async () => {
+    const records = new Map(activeOn(sevenDays.slice(1)));
+    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
+  });
+
+  it('reminds of the goal, not the Streak, once today has 5 XP', async () => {
+    const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 5)]);
+    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
+  });
+
+  it('plans no evening notification today once the goal is met', async () => {
+    const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 20)]);
+    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+
+    const plan = planOf(scheduler);
+    expect(eveningOf(plan, '2026-10-14')).toBeUndefined();
+    expect(plan.filter(({ date }) => date === '2026-10-14')).toHaveLength(1);
+    // Today is an Active Day, so tomorrow the Streak of 8 is at risk.
+    expect(eveningOf(plan, '2026-10-15')).toBe(streakWarning);
+  });
+
+  it('plans no evening notification with the Daily Goal off and no Streak at risk', async () => {
+    const { scheduler } = await run({ evening: true, switchedOff: ['dailyGoal'] });
+
+    expect(planOf(scheduler).filter(({ kind }) => kind === 'evening')).toEqual([]);
+  });
+
+  it('plans no evening notification on the days of a Break', async () => {
+    const records = new Map([...activeOn(sevenDays), breakFrom('2026-10-14', 3)]);
+    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+
+    const plan = planOf(scheduler);
+    for (const date of datesFrom('2026-10-14', 3)) expect(eveningOf(plan, date)).toBeUndefined();
+    // The Break kept the Streak of 7, which its first day after puts at risk.
+    expect(eveningOf(plan, '2026-10-17')).toBe(streakWarning);
+  });
+
+  it("drops today's evening notification once a new goal is met", async () => {
+    const records = new Map([xpOn('2026-10-14', 10)]);
+    const { app, scheduler } = await run({ evening: true, records });
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
+
+    await app.xpLog.setDailyGoal(10);
+
+    await vi.waitFor(() => {
+      expect(eveningOf(planOf(scheduler), '2026-10-14')).toBeUndefined();
+    });
+  });
+
+  it('sends neither the Streak warning nor the goal reminder while the reader hides the counters', async () => {
+    const records = new Map([
+      ...activeOn(sevenDays),
+      xpOn('2026-10-14', 4),
+      ['settings.hideStreak', 'true'] as [string, string],
+    ]);
+    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+
+    const plan = planOf(scheduler);
+    expect(plan.filter(({ kind }) => kind === 'evening')).toEqual([]);
+    expect(plan.filter(({ time }) => time === '19:00')).toEqual([]);
+    expect(plan.some(({ kind }) => kind === 'word')).toBe(true);
+  });
+
+  it('plans only the Word of the Day with one Notification time', async () => {
+    const records = new Map([['notifications.times', JSON.stringify(['09:00'])]]);
+    const { scheduler } = await run({ evening: true, records });
+
+    const plan = planOf(scheduler);
+    expect(plan.every(({ kind, time }) => kind === 'word' && time === '09:00')).toBe(true);
+  });
+});
+
+describe('the farewell of the 1.0 plan', () => {
+  it('fires once, at the last time of the 14th day, which brings no more than 2', async () => {
+    const { scheduler } = await run({ evening: true, politePause: true });
+
+    const plan = planOf(scheduler);
+    expect(plan.filter(({ kind }) => kind === 'farewell')).toEqual([
+      expect.objectContaining({ date: '2026-10-28', time: '19:00', body: farewell }),
+    ]);
+    expect(plan.filter(({ date }) => date === '2026-10-28').map(({ kind }) => kind)).toEqual([
+      'word',
+      'farewell',
+    ]);
+    expect(plan.at(-1)?.kind).toBe('farewell');
+  });
+
+  it('ends the pause in silence with the farewell switched off', async () => {
+    const { scheduler } = await run({
+      evening: true,
+      politePause: true,
+      switchedOff: ['notificationFarewell'],
+    });
+
+    const plan = planOf(scheduler);
+    expect(plan.filter(({ kind }) => kind === 'farewell')).toEqual([]);
+    expect(plan.at(-1)?.date).toBe('2026-10-28');
+    expect(plan.some(({ date }) => date > '2026-10-28')).toBe(false);
   });
 });

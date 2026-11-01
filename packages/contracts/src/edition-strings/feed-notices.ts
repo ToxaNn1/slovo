@@ -39,6 +39,14 @@ export const FeedNoticesStringsSchema = z.strictObject({
     /** Hides the card until tomorrow. */
     keepGoing: TextSchema,
   }),
+  /** The pre-permission explainer, after the first met Daily Goal and by day 3; «Так» asks the device (ADR 0067). */
+  notificationExplainer: z.strictObject({
+    title: TextSchema,
+    message: TextSchema,
+    yes: TextSchema,
+  }),
+  /** The one re-ask, 7 days after the explainer was refused. */
+  notificationReask: z.strictObject({ title: TextSchema, message: TextSchema, yes: TextSchema }),
   /** The intro cards of the first week. */
   firstWeek: z.strictObject({
     /** Closes a card for good. */

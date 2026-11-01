@@ -139,6 +139,9 @@ export type NotificationPermission = 'allowed' | 'denied' | 'not-asked';
  */
 export type PlannedSound = { readonly file: string } | 'system' | 'silent';
 
+/** The message of an evening notification: the Streak at risk or today's Daily Goal not met. */
+export type EveningMessage = 'streakWarning' | 'goalNotMet';
+
 /**
  * One notification of the plan: a Word at a local date and time, floating
  * (ADR 0021). It has no time zone: it comes at that wall-clock time in
@@ -163,12 +166,23 @@ export type PlannedNotification = {
       readonly wordId: string;
     }
   | {
+      /** The evening notification of the 1.0 plan: no title and no Word; a tap opens the app. */
+      readonly kind: 'evening';
+      /** Which of the Edition's evening texts it carries. */
+      readonly message: EveningMessage;
+      /** The Edition's text of the message. */
+      readonly body: string;
+    }
+  | {
       /** The farewell of the polite pause: no title, under which the device shows the app's name, and no Word (ADR 0054). */
       readonly kind: 'farewell';
       /** The Edition's farewell. */
       readonly body: string;
     }
 );
+
+/** What a notification is: a Word's, the evening one or the farewell; a tap reports it to Analytics. */
+export type NotificationKind = PlannedNotification['kind'];
 
 /**
  * Schedules the Core's notification plan on the device. The Core plans; the

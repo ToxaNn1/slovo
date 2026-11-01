@@ -14,6 +14,7 @@ export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
 export { EndOfCycleCard } from './feed/EndOfCycleCard';
 export {
   EnoughForTodayCard,
+  NotificationAskCard,
   FeedNoticeCard,
   FirstWeekCard,
   LevelMilestoneCard,
