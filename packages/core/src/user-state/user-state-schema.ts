@@ -19,9 +19,10 @@ import {
   type UserStateRecords,
 } from './user-state-record';
 import { FEED_NOTICES, LATER_QUESTIONS } from '../feed-notice';
-import { LEVEL_MILESTONES } from '../progress/levels';
-import { BREAK_DAYS_AT_MOST } from '../progress/streak';
 import type { UserStateMigration } from './user-state-migration';
+
+/** The most days a Break lasts (ADR 0066). */
+export const BREAK_DAYS_AT_MOST = 7;
 
 /**
  * The user-state schema (ADR 0013): every record the Core keeps, and the
@@ -171,7 +172,7 @@ export const userStateRecords = {
    */
   levelMilestonesClosed: declareRecord(
     'feed.levelMilestonesClosed',
-    z.array(z.literal(LEVEL_MILESTONES)),
+    z.array(z.number().int().positive()),
     { sync: 'device-only' },
   ),
   /**
