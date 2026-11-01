@@ -80,7 +80,8 @@
     "dailyGoal": true,
     "enoughForToday": true,
     "widgetGoalRing": true,
-    "lockScreenWidget": true
+    "lockScreenWidget": true,
+    "questionnaire": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -241,5 +242,29 @@
     "growingUntil": 10,
     "later": 120,
     "names": ["Початківець", "Читач", "Знавець", "Книжник", "Словолюб", "Мовознавець"]
+  },
+  "questionnaire": {
+    "who": [
+      { "id": "studying", "label": "Навчаюсь", "rarityCeiling": 4 },
+      { "id": "working", "label": "Працюю", "rarityCeiling": 5 },
+      { "id": "gourmet", "label": "Мовний гурман", "rarityCeiling": 5 }
+    ],
+    "why": [
+      {
+        "id": "write-correctly",
+        "label": "Писати без помилок",
+        "kindWeights": { "correction": "more" }
+      },
+      {
+        "id": "rare-words",
+        "label": "Знати рідкісні слова",
+        "kindWeights": { "correction": "less", "tip": "less" }
+      },
+      {
+        "id": "play",
+        "label": "Грати зі словами",
+        "kindWeights": { "idiom": "more", "synonymRow": "more" }
+      }
+    ]
   }
 }

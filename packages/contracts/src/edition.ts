@@ -260,6 +260,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   dailyGoal: z.boolean(),
   /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
   enoughForToday: z.boolean(),
+  /** The onboarding questions «Хто ви» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
+  questionnaire: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -474,6 +476,38 @@ const WidgetPaletteSchema = z.strictObject({
 /** The id of an Edition, e.g. `uk`. */
 export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a lowercase id');
 
+/** The questions the onboarding asks (ADR 0067): «Хто ви» and «Навіщо». */
+export const QuestionnaireQuestionSchema = z.enum(['who', 'why']);
+
+export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;
+
+/** The kinds of Entry beside Words, each with a Mix kind weight. */
+const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
+
+/**
+ * The Edition's questionnaire (ADR 0067): the options of «Хто ви», each
+ * setting the Rarity Ceiling, and of «Навіщо», each setting the Mix kind
+ * weights it names (the others stay). Ids are unique within a question.
+ */
+export const QuestionnaireSchema = z.strictObject({
+  who: z
+    .array(
+      z.strictObject({ id: KebabCaseIdSchema, label: TextSchema, rarityCeiling: RaritySchema }),
+    )
+    .min(1),
+  why: z
+    .array(
+      z.strictObject({
+        id: KebabCaseIdSchema,
+        label: TextSchema,
+        kindWeights: z.partialRecord(WeightedKindSchema, MixKindWeightSchema),
+      }),
+    )
+    .min(1),
+});
+
+export type Questionnaire = z.infer<typeof QuestionnaireSchema>;
+
 /** Everything Edition-specific that the app and the Language Pack build need. */
 export const EditionConfigSchema = z
   .strictObject({
@@ -537,6 +571,8 @@ export const EditionConfigSchema = z
     xp: XpTableSchema,
     /** The Level curve and the Level names (ADR 0066). */
     levels: LevelsSchema,
+    /** The onboarding questions, their options and what each sets (ADR 0067). */
+    questionnaire: QuestionnaireSchema,
   })
   .superRefine(
     (
@@ -547,9 +583,32 @@ export const EditionConfigSchema = z
         originLanguages,
         moods,
         userSettingDefaults,
+        questionnaire,
       },
       context,
     ) => {
+      for (const question of QuestionnaireQuestionSchema.options) {
+        const optionIds = new Set<string>();
+        questionnaire[question].forEach(({ id }, index) => {
+          if (optionIds.has(id)) {
+            context.addIssue({
+              code: 'custom',
+              path: ['questionnaire', question, index, 'id'],
+              message: `Duplicate option id "${id}"`,
+            });
+          }
+          optionIds.add(id);
+        });
+      }
+      questionnaire.who.forEach(({ rarityCeiling }, index) => {
+        if (rarityCeiling < userSettingDefaults.mix.rarityFloor) {
+          context.addIssue({
+            code: 'custom',
+            path: ['questionnaire', 'who', index, 'rarityCeiling'],
+            message: 'A Rarity Ceiling below the default Rarity Floor',
+          });
+        }
+      });
       const idsOf = (list: readonly Category[], field: 'categories' | 'correctionCategories') => {
         const ids = new Set<string>();
         list.forEach(({ id }, index) => {

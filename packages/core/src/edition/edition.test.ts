@@ -84,6 +84,7 @@ const validConfig = {
     enoughForToday: true,
     widgetGoalRing: true,
     lockScreenWidget: true,
+    questionnaire: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -136,6 +137,13 @@ const validConfig = {
     quickQuestion: 2,
   },
   levels: { first: 50, growth: 0.1, growingUntil: 10, later: 120, names: ['Seed', 'Sprout'] },
+  questionnaire: {
+    who: [
+      { id: 'studying', label: 'Studying', rarityCeiling: 4 },
+      { id: 'working', label: 'Working', rarityCeiling: 5 },
+    ],
+    why: [{ id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } }],
+  },
 };
 
 /** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
@@ -184,6 +192,11 @@ const feelSwitches = [
 
 /** The Feature Switches of the features of 0.8.15. */
 const nativeSwitches = ['calligraphy', 'spotlight', 'appIntents', 'collectionLinks'] as const;
+
+function withoutQuestionnaireSwitch() {
+  const { questionnaire: _removed, ...featureSwitches } = validConfig.featureSwitches;
+  return { featureSwitches };
+}
 
 describe('loadEdition', () => {
   it('reports the Edition id, locale and whether it marks Stress', () => {
@@ -386,6 +399,49 @@ describe('loadEdition', () => {
     );
     expect(() => loadEdition({ ...validConfig, levels: { ...levels, names: [] } })).toThrow(
       InvalidEditionConfigError,
+    );
+  });
+
+  it('reports the questionnaire: the options of «Хто ви» and «Навіщо» and what each sets (ADR 0067)', () => {
+    expect(loadEdition(validConfig).questionnaire).toEqual(validConfig.questionnaire);
+  });
+
+  it('refuses an Edition without a questionnaire, with no option, a repeated option id, an unknown Mix kind or a Ceiling below the default Floor', () => {
+    const { questionnaire, ...withoutQuestionnaire } = validConfig;
+    const [studying, working] = questionnaire.who;
+    expect(() => loadEdition(withoutQuestionnaire)).toThrow(InvalidEditionConfigError);
+    expect(() =>
+      loadEdition({ ...validConfig, questionnaire: { ...questionnaire, why: [] } }),
+    ).toThrow(InvalidEditionConfigError);
+    expect(() =>
+      loadEdition({
+        ...validConfig,
+        questionnaire: { ...questionnaire, who: [studying, { ...working, id: 'studying' }] },
+      }),
+    ).toThrow('questionnaire.who.1.id: Duplicate option id "studying"');
+    expect(() =>
+      loadEdition({
+        ...validConfig,
+        questionnaire: {
+          ...questionnaire,
+          why: [{ id: 'play', label: 'Play', kindWeights: { word: 'more' } }],
+        },
+      }),
+    ).toThrow(InvalidEditionConfigError);
+    expect(() =>
+      loadEdition({
+        ...validConfig,
+        userSettingDefaults: {
+          ...validConfig.userSettingDefaults,
+          mix: { ...validConfig.userSettingDefaults.mix, rarityFloor: 5, rarityCeiling: 5 },
+        },
+      }),
+    ).toThrow('questionnaire.who.0.rarityCeiling: A Rarity Ceiling below the default Rarity Floor');
+  });
+
+  it('refuses an Edition without the questionnaire Feature Switch', () => {
+    expect(() => loadEdition({ ...validConfig, ...withoutQuestionnaireSwitch() })).toThrow(
+      'featureSwitches.questionnaire',
     );
   });
 
