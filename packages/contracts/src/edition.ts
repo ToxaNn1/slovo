@@ -264,6 +264,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   questionnaire: z.boolean(),
   /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
   badges: z.boolean(),
+  /** The Share Cards of a Level reached, a Badge earned and a Streak milestone; off while `shareCards` or `xpLog` is. */
+  progressShareCards: z.boolean(),
+  /** The Share Card of a solved Daily Crossword, its grid with no letters; off while `shareCards` or `dailyCrossword` is. */
+  dailyCrosswordShare: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

@@ -81,7 +81,9 @@
     "widgetGoalRing": true,
     "lockScreenWidget": true,
     "questionnaire": true,
-    "badges": true
+    "badges": true,
+    "progressShareCards": true,
+    "dailyCrosswordShare": true
   },
   "userSettingDefaults": {
     "theme": "system",

@@ -75,6 +75,14 @@ export interface Shown {
   readonly streakBreak: boolean;
   /** The Settings row that opens the Badges (ADR 0066). */
   readonly badges: boolean;
+  /**
+   * The offers to share a Level reached, a Badge earned or a Streak
+   * milestone today, while Share Cards and the XP log are on and the reader
+   * has not hidden the counters («Без лічильників»).
+   */
+  readonly progressShareCards: boolean;
+  /** «Поділитися» under a solved Daily Crossword, its Share Card with no letters. */
+  readonly dailyCrosswordShare: boolean;
   /** The Quick Question in the Feed and its «Швидкі питання» row in the Mix; it asks the Game's Modes. */
   readonly quickQuestion: boolean;
   /** The Sync status line of the SLOVO ID screen. */
@@ -143,6 +151,9 @@ export function shownOf({
     xpBar: on('xpLog') && !noCounters,
     streakBreak: on('xpLog') && on('streakBreak'),
     badges: on('xpLog') && on('badges'),
+    progressShareCards: on('shareCards') && on('progressShareCards') && on('xpLog') && !noCounters,
+    dailyCrosswordShare:
+      on('shareCards') && on('dailyCrosswordShare') && on('game') && on('dailyCrossword'),
     quickQuestion: on('game') && on('quickQuestion'),
     sync: on('sync'),
     dailyGoal: on('xpLog') && on('dailyGoal'),
