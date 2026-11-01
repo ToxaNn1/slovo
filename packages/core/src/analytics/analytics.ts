@@ -41,6 +41,16 @@ export interface AnalyticsEvents {
   readonly streakBroken: { readonly streak: number };
   /** The reader started a Break of `days`. */
   readonly breakStarted: { readonly days: number };
+  /** The reader started a Game of the mode. */
+  readonly gameStarted: { readonly mode: string };
+  /** A Game ended, won or lost: its mode, how long it ran and its result. */
+  readonly gameFinished: {
+    readonly mode: string;
+    readonly durationSeconds: number;
+    readonly right: number;
+    readonly played: number;
+    readonly status: 'won' | 'lost';
+  };
   /** The reader solved the Daily Crossword of the local date. */
   readonly dailyCrosswordSolved: { readonly date: string };
   /** The reader answered an Entry due for Review. */

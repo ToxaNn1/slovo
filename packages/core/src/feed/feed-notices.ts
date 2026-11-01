@@ -49,7 +49,7 @@ export function allFeedNotices(...sources: readonly FeedNotices[]): FeedNotices 
 /** No Feed Notice on any day, as long as no feature makes one. */
 export const noFeedNotices: FeedNotices = { forDay: () => Promise.resolve([]) };
 
-const { feedNoticesClosed } = userStateRecords;
+const { feedNoticesClosed, levelMilestonesClosed } = userStateRecords;
 
 /** The Feed Notices closed for the local day `date` (`YYYY-MM-DD`). */
 export async function closedNotices(userState: UserState, date: string): Promise<Set<FeedNotice>> {
@@ -57,12 +57,18 @@ export async function closedNotices(userState: UserState, date: string): Promise
   return new Set(closed?.date === date ? closed.notices : []);
 }
 
-/** The change that closes the Feed Notice for the local day `date` (`YYYY-MM-DD`). */
+/**
+ * The change that closes the Feed Notice for the local day `date`
+ * (`YYYY-MM-DD`); a level milestone it closes for good, so it comes once.
+ */
 export async function closeNotice(
   userState: UserState,
-  notice: FeedNotice,
+  content: FeedNoticeContent,
   date: string,
 ): Promise<UserStateChanges> {
   const notices = await closedNotices(userState, date);
-  return feedNoticesClosed.change({ date, notices: [...notices.add(notice)] });
+  const closed = feedNoticesClosed.change({ date, notices: [...notices.add(content.notice)] });
+  if (content.notice !== 'levelMilestone') return closed;
+  const levels = new Set((await userState.read(levelMilestonesClosed)) ?? []);
+  return new Map([...closed, ...levelMilestonesClosed.change([...levels.add(content.level)])]);
 }

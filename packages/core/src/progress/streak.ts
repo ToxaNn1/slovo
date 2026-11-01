@@ -95,10 +95,11 @@ export function deriveStreak({
 
   const first = Math.min(...active);
   for (let day = first; day < todayNumber; day += 1) {
-    if (active.has(day)) {
-      activeDay(day);
-    } else if (paused.has(day)) {
+    // A Break day keeps the Streak and adds nothing, even as an Active Day.
+    if (paused.has(day)) {
       lastKept = day;
+    } else if (active.has(day)) {
+      activeDay(day);
     } else if (covered.has(day)) {
       held = Math.max(0, held - 1);
       lastKept = day;
@@ -118,7 +119,7 @@ export function deriveStreak({
       day = end;
     }
   }
-  if (active.has(todayNumber)) activeDay(todayNumber);
+  if (active.has(todayNumber) && !paused.has(todayNumber)) activeDay(todayNumber);
 
   return {
     streak,

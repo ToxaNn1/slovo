@@ -660,7 +660,7 @@ export async function openFeed({
     // A Feed Notice of a day before, left open over midnight, is closed already.
     const closed =
       swiped && left?.kind === 'notice' && dateKeyOf(left.day) === date
-        ? await closeNotice(userState, left.notice, date)
+        ? await closeNotice(userState, left, date)
         : new Map();
     return keepSeen(
       seenId === undefined

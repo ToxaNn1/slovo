@@ -284,6 +284,43 @@ describe('the Break', () => {
     expect(after.app.progress.state).toMatchObject({ streak: 5, bestStreak: 5 });
   });
 
+  it('adds no Active Day inside it, with no celebration, and counts on after it', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    const first = await openOn(records, '2026-10-14', BREAK_ON);
+    await first.app.streakBreak.start(7);
+    const celebrated: number[] = [];
+    first.app.progress.onStreakMilestone((streak) => celebrated.push(streak));
+    await earnRounds(first.app, 5, records);
+    expect(first.app.progress.state).toMatchObject({ streak: 4, bestStreak: 4, freezesHeld: 2 });
+
+    const inside = await openOn(records, '2026-10-16', BREAK_ON);
+    inside.app.progress.onStreakMilestone((streak) => celebrated.push(streak));
+    await earnRounds(inside.app, 5, records);
+    expect(inside.app.progress.state).toMatchObject({ streak: 4, bestStreak: 4, freezesHeld: 2 });
+    expect(celebrated).toEqual([]);
+
+    const after = await openOn(records, '2026-10-21', BREAK_ON);
+    await earnRounds(after.app, 5, records);
+    expect(after.app.progress.state).toMatchObject({ streak: 5, bestStreak: 5 });
+  });
+
+  it('drops a record of over 7 days from storage or Sync: it bridges nothing and runs not', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 13));
+    records.set(
+      'xp.seed-break',
+      JSON.stringify({
+        kind: 'break',
+        date: '2026-10-14',
+        at: '2026-10-14T06:00:00.000Z',
+        days: 30,
+      }),
+    );
+
+    const { app } = await openOn(records, '2026-10-25', BREAK_ON);
+    expect(app.progress.state).toMatchObject({ streak: 0, bestStreak: 4 });
+    expect(app.streakBreak.state).toEqual({ kind: 'available', longest: 7 });
+  });
+
   it('keeps nothing after its last day: a missed day then takes a freeze or resets', async () => {
     const records = earned(new Map<string, string>(), 5, ...october(10, 13));
     await (await openOn(records, '2026-10-14', BREAK_ON)).app.streakBreak.start(2);

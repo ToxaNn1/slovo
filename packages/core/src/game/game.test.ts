@@ -23,6 +23,7 @@ import {
   withoutStress,
   SEEN_DWELL_MS,
   userStateRecords,
+  type AnalyticsPort,
   type Clock,
   type Composition,
   type ContentReadPort,
@@ -37,7 +38,14 @@ import {
 } from '../index';
 import { GAME_LIVES } from './game-in-play';
 import { createMemoryContentPort } from '../testing';
-import { idiom, optionsOf, pickPlayed, seededRandom, testEdition } from '../test-support';
+import {
+  fakeClock,
+  idiom,
+  optionsOf,
+  pickPlayed,
+  seededRandom,
+  testEdition,
+} from '../test-support';
 
 function word(
   id: string,
@@ -181,6 +189,7 @@ async function run({
   pack = content,
   planned = true,
   schedule,
+  analytics,
   on = ['rarityFloor', 'knowledge'],
   off = [],
 }: {
@@ -198,6 +207,7 @@ async function run({
   /** Whether to wait for the Game to plan its offers. */
   planned?: boolean;
   schedule?: Schedule;
+  analytics?: AnalyticsPort;
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: pack,
@@ -214,6 +224,7 @@ async function run({
     random: seededRandom(seed),
     ...(gameModes === undefined ? {} : { gameModes }),
     ...(schedule === undefined ? {} : { schedule }),
+    ...(analytics === undefined ? {} : { analytics }),
   });
   return planned ? offersPlanned(app) : app;
 }
@@ -283,6 +294,60 @@ describe('the Game and the Community Counters', () => {
 
     expect(app.knowledge.state.shown.get(answerOf(first).id)).toBe('unknown');
     expect([...(await app.communityCounters.unsent())]).toEqual([]);
+  });
+});
+
+// Spec #1358 story 85; ADR 0068: a Game started and finished reach the Analytics port.
+describe('the Game and Analytics', () => {
+  /** A port that keeps the Game events that reached it. */
+  function fakePort() {
+    const events: unknown[][] = [];
+    const port: AnalyticsPort = {
+      track: (event, properties) => {
+        if (event.startsWith('game')) events.push([event, properties]);
+      },
+      stop: () => undefined,
+    };
+    return { port, events };
+  }
+
+  it('sends the Game started with its mode, and finished with its mode, duration, result and status', async () => {
+    const { port, events } = fakePort();
+    const time = fakeClock('2026-10-11T09:00:00+03:00');
+    const app = await run({
+      on: ['rarityFloor', 'knowledge', 'analytics'],
+      analytics: port,
+      time: time.clock,
+    });
+
+    await app.game.start('guess-word');
+    time.advance(42_000);
+    while (current(app).status === 'playing') await play(app, current(app).round.number !== 1);
+
+    expect(events).toEqual([
+      ['gameStarted', { mode: 'guess-word' }],
+      [
+        'gameFinished',
+        { mode: 'guess-word', durationSeconds: 42, right: 14, played: 15, status: 'won' },
+      ],
+    ]);
+  });
+
+  it('sends nothing of a Game while sharing is off', async () => {
+    const { port, events } = fakePort();
+    const records = new Map<string, string>();
+    for (const [key, value] of userStateRecords.shareCounters.change(false)) {
+      if (value !== undefined) records.set(key, value);
+    }
+    const app = await run({
+      records,
+      on: ['rarityFloor', 'knowledge', 'analytics'],
+      analytics: port,
+    });
+
+    await playGame(app, [1]);
+
+    expect(events).toEqual([]);
   });
 });
 

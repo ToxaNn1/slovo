@@ -19,6 +19,8 @@ import {
   type UserStateRecords,
 } from './user-state-record';
 import { FEED_NOTICES, LATER_QUESTIONS } from '../feed-notice';
+import { LEVEL_MILESTONES } from '../progress/levels';
+import { BREAK_DAYS_AT_MOST } from '../progress/streak';
 import type { UserStateMigration } from './user-state-migration';
 
 /**
@@ -80,7 +82,8 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     kind: z.literal('break'),
     date: z.string(),
     at: InstantSchema,
-    days: z.number().int().positive(),
+    /** The length in days, 1 to 7 (ADR 0066): a longer record, from Sync or storage, is dropped. */
+    days: z.number().int().min(1).max(BREAK_DAYS_AT_MOST),
   }),
   z.object({
     kind: z.literal('daily-goal'),
@@ -159,6 +162,16 @@ export const userStateRecords = {
   feedNoticesClosed: declareRecord(
     'feed.noticesClosed',
     z.object({ date: z.string(), notices: z.array(z.enum(FEED_NOTICES)) }),
+    { sync: 'device-only' },
+  ),
+  /**
+   * The level milestones whose Feed Notice the reader swiped past on this
+   * device: each comes from the day its Level is reached until then, once
+   * (ADR 0066). It stays on the device like the other closed Feed Notices.
+   */
+  levelMilestonesClosed: declareRecord(
+    'feed.levelMilestonesClosed',
+    z.array(z.literal(LEVEL_MILESTONES)),
     { sync: 'device-only' },
   ),
   /**
