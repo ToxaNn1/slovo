@@ -29,6 +29,7 @@ import {
   useWidgetHintShown,
 } from '@/game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
+import { MascotIn } from '@/mascot/mascot';
 import { useShown } from '@/shown-in-effect';
 
 const { game: strings, widget: widgetStrings } = editionStrings;
@@ -103,6 +104,7 @@ function Game() {
             mode={widgetStrings.allEntries}
             {...widgetStrings.guide.sample}
           />
+          <MascotIn state="gameEnd" />
         </>
       ) : (
         <GameRound
@@ -114,6 +116,9 @@ function Game() {
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
         />
+      )}
+      {current?.status === 'answered' && (
+        <MascotIn state={current.played.at(-1)?.right === true ? 'gameRight' : 'gameWrong'} />
       )}
     </SafeAreaView>
   );

@@ -1,3 +1,4 @@
+import { MascotIn } from '@/mascot/mascot';
 import {
   BackLink,
   EmptyState,
@@ -98,6 +99,7 @@ function Learning() {
         }
         ListEmptyComponent={
           <EmptyState
+            mascot={<MascotIn state="empty" />}
             testID="learning-empty"
             title={strings.empty.title}
             message={strings.empty.message}

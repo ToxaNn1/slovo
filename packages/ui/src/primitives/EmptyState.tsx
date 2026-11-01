@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { EmptyStateIllustration } from '../decor/DecorSlots';
@@ -20,12 +21,15 @@ export function EmptyState({
   title,
   message,
   action,
+  mascot,
   testID,
 }: {
   title: string;
   message: string;
   /** The button under the text, such as the way back to the Feed. */
   action?: { readonly label: string; readonly onPress: () => void; readonly testID?: string };
+  /** The Mascot in its empty state, under the text, if the app shows it. */
+  mascot?: ReactNode;
   testID?: string;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -45,6 +49,7 @@ export function EmptyState({
           {message}
         </Text>
       </View>
+      {mascot}
       {action !== undefined && (
         <View style={styles.action}>
           <PrimaryButton testID={action.testID} label={action.label} onPress={action.onPress} />

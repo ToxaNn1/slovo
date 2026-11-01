@@ -278,6 +278,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   laterQuestions: z.boolean(),
   /** The Profile: the screen of the reader's whole progress and the save-progress Feed Notice (ADR 0066). */
   profile: z.boolean(),
+  /** The Mascot: the Edition's silent figure with its short lines (CONTEXT.md, Mascot). */
+  mascot: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -368,6 +370,29 @@ export const BadgeSchema = z.strictObject({
 });
 
 export type Badge = z.infer<typeof BadgeSchema>;
+
+/**
+ * The Mascot's short line for each moment it shows in: the onboarding, the
+ * celebrations of a new Level, a Badge, the Daily Goal and a Streak
+ * milestone, a right and a wrong Game answer, the Game's end, and an empty
+ * state.
+ */
+export const MascotLinesSchema = z.strictObject({
+  onboarding: TextSchema,
+  newLevel: TextSchema,
+  badge: TextSchema,
+  dailyGoal: TextSchema,
+  streakMilestone: TextSchema,
+  gameRight: TextSchema,
+  gameWrong: TextSchema,
+  gameEnd: TextSchema,
+  empty: TextSchema,
+});
+
+export type MascotLines = z.infer<typeof MascotLinesSchema>;
+
+/** A moment the Mascot shows in, which picks its state and its line. */
+export type MascotState = keyof MascotLines;
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
 
@@ -669,6 +694,8 @@ export const EditionConfigSchema = z
         (badges) => new Set(badges.map(({ id }) => id)).size === badges.length,
         'Expected each Badge id once',
       ),
+    /** The Mascot's line for each moment it shows in. */
+    mascot: MascotLinesSchema,
   })
   .superRefine(
     (

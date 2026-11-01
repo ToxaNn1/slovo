@@ -90,7 +90,8 @@
     "notificationFarewell": true,
     "notificationExplainer": true,
     "laterQuestions": true,
-    "profile": true
+    "profile": true,
+    "mascot": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -556,5 +557,16 @@
         "count": 100
       }
     }
-  ]
+  ],
+  "mascot": {
+    "onboarding": "Вітаю! Я буду поруч, поки ви збираєте рідкісні слова.",
+    "newLevel": "Новий рівень! Так тримати.",
+    "badge": "Нова відзнака — тепер вона ваша назавжди.",
+    "dailyGoal": "Денну ціль виконано!",
+    "streakMilestone": "Серія росте — ще один день поспіль!",
+    "gameRight": "Влучно!",
+    "gameWrong": "Майже. Наступне вийде.",
+    "gameEnd": "Гру завершено. Гарна розминка!",
+    "empty": "Тут поки порожньо, але це ненадовго."
+  }
 }

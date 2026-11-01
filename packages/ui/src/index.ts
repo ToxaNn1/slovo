@@ -96,6 +96,7 @@ export { CollectionNameField, CollectionRow, NewCollectionButton } from './saved
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';
 export { SheetTitle } from './primitives/SheetParts';
+export { Mascot } from './primitives/Mascot';
 export { Placeholder } from './primitives/Placeholder';
 export { PronunciationButton } from './entries/PronunciationButton';
 export { SegmentedControl } from './primitives/SegmentedControl';

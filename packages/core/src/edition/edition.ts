@@ -10,6 +10,7 @@ import {
   type Theme,
   type XpTable,
   type Badge,
+  type MascotLines,
   type Levels,
   type Questionnaire,
 } from '@slovo/contracts';
@@ -76,6 +77,8 @@ export interface Edition {
   readonly questionnaire: Questionnaire;
   /** The Badges the Edition chooses and names, in their order (ADR 0066). */
   readonly badges: readonly Badge[];
+  /** The Mascot's short line for each moment it shows in. */
+  readonly mascot: MascotLines;
   /**
    * The file names of the Illustrations the app bundles as Edition assets; a
    * Word naming any other file shows no Illustration (ADR 0055).
@@ -146,6 +149,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     levels,
     questionnaire,
     badges,
+    mascot,
   } = result.data;
   const { mix, ...settings } = userSettingDefaults;
   return {
@@ -175,6 +179,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     levels,
     questionnaire,
     badges,
+    mascot,
     illustrations: new Set(illustrations),
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature]),
   };

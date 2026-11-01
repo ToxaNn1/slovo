@@ -89,7 +89,8 @@
     "notificationFarewell": true,
     "notificationExplainer": true,
     "laterQuestions": true,
-    "profile": true
+    "profile": true,
+    "mascot": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -226,5 +227,16 @@
       }
     ]
   },
-  "badges": []
+  "badges": [],
+  "mascot": {
+    "onboarding": "Mascot onboarding",
+    "newLevel": "Mascot newLevel",
+    "badge": "Mascot badge",
+    "dailyGoal": "Mascot dailyGoal",
+    "streakMilestone": "Mascot streakMilestone",
+    "gameRight": "Mascot gameRight",
+    "gameWrong": "Mascot gameWrong",
+    "gameEnd": "Mascot gameEnd",
+    "empty": "Mascot empty"
+  }
 }
