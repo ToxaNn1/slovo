@@ -78,7 +78,7 @@ const october = (first: number, last: number) =>
 /** Earns XP by answering Game Rounds right, 1 XP each, written as the Game writes them. */
 async function earnRounds(app: Composition, rounds: number, records: Map<string, string>) {
   for (let round = 0; round < rounds; round += 1) {
-    const award = app.xpLog.award({ source: 'game-round' });
+    const award = app.xpLog.award({ source: 'game-round', mode: 'test', rarity: undefined });
     for (const [key, value] of award.changes) if (value !== undefined) records.set(key, value);
     award.commit();
   }

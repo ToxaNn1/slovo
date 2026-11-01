@@ -51,6 +51,20 @@ export interface XpLogDays {
   readonly breaks: ReadonlyMap<string, number>;
 }
 
+/** What the XP log holds for the Badges (ADR 0066), derived from its records. */
+export interface XpLogMilestones {
+  /** The Game Modes with a win: a finished Game with at least half the answers right, which earned XP. */
+  readonly wins: ReadonlySet<string>;
+  /** The right Game answers that earned XP, by Game Mode. */
+  readonly rightByMode: ReadonlyMap<string, number>;
+  /** The rarities of the Words with a right Game answer that earned XP. */
+  readonly rightRarities: ReadonlySet<number>;
+  /** The local dates of the Daily Crosswords solved. */
+  readonly crosswords: ReadonlySet<string>;
+  /** The Badges earned: the local date each was earned on, by Badge id. */
+  readonly badges: ReadonlyMap<string, string>;
+}
+
 /** Records to append for another write, and the step that makes them in memory once written. */
 export interface XpLogAppend {
   readonly changes: UserStateChanges;
@@ -86,6 +100,14 @@ export interface XpLog {
    * Break on the same day merge into one.
    */
   startBreak(days: number): XpLogAppend;
+  /** What the Badges are evaluated against, in memory for the session. */
+  readonly milestones: XpLogMilestones;
+  /**
+   * The Badge-earned records of the Badges, for another write. A Badge has one
+   * such record by its id, so two devices that earn it merge into one, and an
+   * earned Badge is never earned again or removed.
+   */
+  earn(badges: readonly string[]): XpLogAppend;
   /** The local date (`YYYY-MM-DD`) the total XP first reached `total`, if it has. */
   reachedOn(total: number): string | undefined;
   /** Calls `listener` after each change of the XP. Returns the call that stops it. */
@@ -206,7 +228,12 @@ export async function openXpLog({
     return { xp, dailyGoal: goalOn ? { goal, met } : null };
   }
 
-  function derive(): XpLogDays & { date: string; state: XpLogState; reviewToday: number } {
+  function derive(): XpLogDays & {
+    date: string;
+    state: XpLogState;
+    reviewToday: number;
+    milestones: XpLogMilestones;
+  } {
     const date = todayKey(clock);
     let total = 0;
     const byDate = new Map<string, number>();
@@ -214,8 +241,16 @@ export async function openXpLog({
     const breaks = new Map<string, number>();
     /** The Review XP of each date, which counts up to the daily cap even as two devices' logs merge. */
     const review = new Map<string, number>();
+    const wins = new Set<string>();
+    const rightByMode = new Map<string, number>();
+    const rightRarities = new Set<number>();
+    const crosswords = new Set<string>();
+    const badges = new Map<string, string>();
     for (const record of records.values()) {
       switch (record.kind) {
+        case 'badge':
+          badges.set(record.badge, record.date);
+          break;
         case 'freeze':
           frozen.add(record.date);
           break;
@@ -225,6 +260,13 @@ export async function openXpLog({
         case 'daily-goal':
           break;
         case 'xp': {
+          const { source, mode, rarity } = record;
+          if (source === 'game-finished' && mode !== undefined) wins.add(mode);
+          if (source === 'game-round' && mode !== undefined) {
+            rightByMode.set(mode, (rightByMode.get(mode) ?? 0) + 1);
+          }
+          if (source === 'game-round' && rarity !== undefined) rightRarities.add(rarity);
+          if (source === 'daily-crossword') crosswords.add(record.date);
           const amount = counted(record, review);
           total += amount;
           byDate.set(record.date, (byDate.get(record.date) ?? 0) + amount);
@@ -244,6 +286,7 @@ export async function openXpLog({
       byDate,
       frozen,
       breaks,
+      milestones: { wins, rightByMode, rightRarities, crosswords, badges },
     };
   }
   let derived = derive();
@@ -298,6 +341,12 @@ export async function openXpLog({
       at: at.toISOString(),
       source: action.source,
       amount,
+      ...(action.source === 'game-round' || action.source === 'game-finished'
+        ? { mode: action.mode }
+        : {}),
+      ...(action.source === 'game-round' && action.rarity !== undefined
+        ? { rarity: action.rarity }
+        : {}),
     };
     return {
       changes: xpRecords.record(id).change(record),
@@ -313,6 +362,24 @@ export async function openXpLog({
     const at = clock.now().toISOString();
     const added = new Map<string, XpRecord>(
       dates.map((date) => [`freeze-${date}`, { kind: 'freeze', date, at }]),
+    );
+    return {
+      changes: new Map(
+        [...added].flatMap(([id, record]) => [...xpRecords.record(id).change(record)]),
+      ),
+      commit() {
+        if (added.size === 0) return;
+        for (const [id, record] of added) records.set(id, record);
+        change();
+      },
+    };
+  }
+
+  function earn(badges: readonly string[]): XpLogAppend {
+    const date = todayKey(clock);
+    const at = clock.now().toISOString();
+    const added = new Map<string, XpRecord>(
+      badges.map((badge) => [`badge-${badge}`, { kind: 'badge', date, at, badge }]),
     );
     return {
       changes: new Map(
@@ -364,7 +431,11 @@ export async function openXpLog({
     get days() {
       return derived;
     },
+    get milestones() {
+      return derived.milestones;
+    },
     award,
+    earn,
     freeze,
     startBreak,
     reachedOn,

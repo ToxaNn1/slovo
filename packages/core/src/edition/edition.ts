@@ -9,6 +9,7 @@ import {
   type Rarity,
   type Theme,
   type XpTable,
+  type Badge,
   type Levels,
   type Questionnaire,
 } from '@slovo/contracts';
@@ -71,6 +72,8 @@ export interface Edition {
   readonly levels: Levels;
   /** The onboarding questions, their options and what each sets (ADR 0067). */
   readonly questionnaire: Questionnaire;
+  /** The Badges the Edition chooses and names, in their order (ADR 0066). */
+  readonly badges: readonly Badge[];
   /**
    * The file names of the Illustrations the app bundles as Edition assets; a
    * Word naming any other file shows no Illustration (ADR 0055).
@@ -139,6 +142,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     xp,
     levels,
     questionnaire,
+    badges,
   } = result.data;
   const { mix, ...settings } = userSettingDefaults;
   return {
@@ -166,6 +170,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     xp,
     levels,
     questionnaire,
+    badges,
     illustrations: new Set(illustrations),
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature]),
   };

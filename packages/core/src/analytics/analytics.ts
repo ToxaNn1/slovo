@@ -53,6 +53,8 @@ export interface AnalyticsEvents {
     readonly question: QuestionnaireQuestion;
     readonly answer: string;
   };
+  /** The reader earned a Badge (ADR 0066). */
+  readonly badgeEarned: { readonly badge: string };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 

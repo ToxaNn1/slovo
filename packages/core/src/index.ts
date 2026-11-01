@@ -136,6 +136,7 @@ export type { PackFiles, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
 export type { XpAction, XpAward } from './game/game-xp';
 export type { XpLog, XpLogState } from './progress/xp-log';
+export type { BadgeProgress, BadgeState, Badges } from './progress/badges';
 export type { BreakState, StreakBreak } from './progress/streak-break';
 export type { LevelMilestone, LevelState } from './progress/levels';
 export type { XpRecord, XpSource } from './user-state/user-state-schema';

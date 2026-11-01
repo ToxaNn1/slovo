@@ -68,8 +68,12 @@ describe('the XP bar over the Feed', () => {
     expect(screen.getByRole('button', { name: 'Досвід: сьогодні 0/20 XP' })).toBeOnTheScreen();
 
     await act(async () => {
-      composition.xpLog.award({ source: 'game-round' }).commit();
-      composition.xpLog.award({ source: 'game-round' }).commit();
+      composition.xpLog
+        .award({ source: 'game-round', mode: 'guess-word', rarity: undefined })
+        .commit();
+      composition.xpLog
+        .award({ source: 'game-round', mode: 'guess-word', rarity: undefined })
+        .commit();
       await Promise.resolve();
     });
 

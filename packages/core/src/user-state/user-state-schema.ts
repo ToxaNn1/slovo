@@ -59,8 +59,9 @@ export const XpSourceSchema = z.literal([
  * One record of the XP log (ADR 0066): its local date and instant, and what
  * it records: XP a learning action earned on its date, a Streak freeze
  * consumed for its date, a missed day it covers, a Break started on its
- * date, with its length in days, or the Daily Goal the reader set from that
- * day on. The kinds the ADR names besides these come with their own tickets.
+ * date, with its length in days, the Daily Goal the reader set from that
+ * day on, or a Badge earned on its date. The kinds the ADR names besides
+ * these come with their own tickets.
  */
 const XpRecordSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -69,6 +70,10 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     at: InstantSchema,
     source: XpSourceSchema,
     amount: z.number().int().positive(),
+    /** The Game Mode of a Round or a finished Game, for the Badges; left out before them and for other sources. */
+    mode: z.string().optional(),
+    /** The rarity of the Word a Round answered right asked about, for the Badges; left out for other Entries. */
+    rarity: RaritySchema.optional(),
   }),
   z.object({ kind: z.literal('freeze'), date: z.string(), at: InstantSchema }),
   z.object({
@@ -83,6 +88,7 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     at: InstantSchema,
     goal: DailyGoalSchema,
   }),
+  z.object({ kind: z.literal('badge'), date: z.string(), at: InstantSchema, badge: z.string() }),
 ]);
 
 export type XpRecord = z.infer<typeof XpRecordSchema>;

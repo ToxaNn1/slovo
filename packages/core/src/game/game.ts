@@ -405,7 +405,13 @@ export async function openGame({
     const answered = game && played?.answer(game, given);
     if (game === undefined || answered === undefined) return;
     const round = answered.played.at(-1);
-    const roundXp = round?.right ? xp.award({ source: 'game-round' }) : undefined;
+    const roundXp = round?.right
+      ? xp.award({
+          source: 'game-round',
+          mode: game.modeId,
+          rarity: round.entry.kind === 'word' ? round.entry.rarity : undefined,
+        })
+      : undefined;
     if (inPlay(answered)) {
       changeCurrent(answered);
       if (roundXp !== undefined) await inTurn(() => writeAwards([roundXp]));
@@ -447,7 +453,12 @@ export async function openGame({
     await writeAwards(
       [
         ...(roundXp === undefined ? [] : [roundXp]),
-        xp.award({ source: 'game-finished', right, played: over.played.length }),
+        xp.award({
+          source: 'game-finished',
+          mode: over.modeId,
+          right,
+          played: over.played.length,
+        }),
         ...(beaten ? [xp.award({ source: 'game-best' })] : []),
       ],
       beaten ? gameBest.record(over.modeId).change(result) : new Map(),

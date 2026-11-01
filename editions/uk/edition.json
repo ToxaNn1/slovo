@@ -81,7 +81,8 @@
     "enoughForToday": true,
     "widgetGoalRing": true,
     "lockScreenWidget": true,
-    "questionnaire": true
+    "questionnaire": true,
+    "badges": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -103,8 +104,14 @@
   "notificationSound": "notification.wav",
   "wordOfTheDayFont": "Kurale-Regular.ttf",
   "widgetPalette": {
-    "parchment": { "background": "#F3E9D2", "text": "#3B2A1A" },
-    "blue": { "background": "#1F3A5F", "text": "#F3E9D2" }
+    "parchment": {
+      "background": "#F3E9D2",
+      "text": "#3B2A1A"
+    },
+    "blue": {
+      "background": "#1F3A5F",
+      "text": "#F3E9D2"
+    }
   },
   "categories": [
     {
@@ -204,28 +211,91 @@
   ],
   "categoriesRequiringHistory": ["repressed-words", "chameleon-words"],
   "originLanguages": [
-    { "code": "la", "name": "латинська" },
-    { "code": "el", "name": "грецька" },
-    { "code": "trk", "name": "тюркські" },
-    { "code": "pl", "name": "польська" },
-    { "code": "de", "name": "німецька" },
-    { "code": "fr", "name": "французька" },
-    { "code": "it", "name": "італійська" },
-    { "code": "en", "name": "англійська" },
-    { "code": "hbo", "name": "давньоєврейська" },
-    { "code": "cu", "name": "церковнослов’янська" },
-    { "code": "proto-slavic", "name": "праслов’янська" },
-    { "code": "other", "name": "інша" }
+    {
+      "code": "la",
+      "name": "латинська"
+    },
+    {
+      "code": "el",
+      "name": "грецька"
+    },
+    {
+      "code": "trk",
+      "name": "тюркські"
+    },
+    {
+      "code": "pl",
+      "name": "польська"
+    },
+    {
+      "code": "de",
+      "name": "німецька"
+    },
+    {
+      "code": "fr",
+      "name": "французька"
+    },
+    {
+      "code": "it",
+      "name": "італійська"
+    },
+    {
+      "code": "en",
+      "name": "англійська"
+    },
+    {
+      "code": "hbo",
+      "name": "давньоєврейська"
+    },
+    {
+      "code": "cu",
+      "name": "церковнослов’янська"
+    },
+    {
+      "code": "proto-slavic",
+      "name": "праслов’янська"
+    },
+    {
+      "code": "other",
+      "name": "інша"
+    }
   ],
   "moods": [
-    { "id": "joyful", "name": "Радісний", "emoji": "😊" },
-    { "id": "sad", "name": "Сумний", "emoji": "😢" },
-    { "id": "in-love", "name": "Закоханий", "emoji": "😍" },
-    { "id": "energetic", "name": "Бадьорий", "emoji": "⚡" },
-    { "id": "calm", "name": "Спокійний", "emoji": "😌" },
-    { "id": "thoughtful", "name": "Задумливий", "emoji": "🤔" }
+    {
+      "id": "joyful",
+      "name": "Радісний",
+      "emoji": "😊"
+    },
+    {
+      "id": "sad",
+      "name": "Сумний",
+      "emoji": "😢"
+    },
+    {
+      "id": "in-love",
+      "name": "Закоханий",
+      "emoji": "😍"
+    },
+    {
+      "id": "energetic",
+      "name": "Бадьорий",
+      "emoji": "⚡"
+    },
+    {
+      "id": "calm",
+      "name": "Спокійний",
+      "emoji": "😌"
+    },
+    {
+      "id": "thoughtful",
+      "name": "Задумливий",
+      "emoji": "🤔"
+    }
   ],
-  "searchLetters": { "ґ": "г", "ё": "е" },
+  "searchLetters": {
+    "ґ": "г",
+    "ё": "е"
+  },
   "xp": {
     "round": 1,
     "finishedGame": 5,
@@ -266,5 +336,177 @@
         "kindWeights": { "idiom": "more", "synonymRow": "more" }
       }
     ]
-  }
+  },
+  "badges": [
+    {
+      "id": "streak-3",
+      "name": "Три дні поспіль",
+      "condition": {
+        "kind": "streak",
+        "days": 3
+      }
+    },
+    {
+      "id": "streak-7",
+      "name": "Тиждень поспіль",
+      "condition": {
+        "kind": "streak",
+        "days": 7
+      }
+    },
+    {
+      "id": "streak-30",
+      "name": "Місяць поспіль",
+      "condition": {
+        "kind": "streak",
+        "days": 30
+      }
+    },
+    {
+      "id": "streak-100",
+      "name": "Сто днів поспіль",
+      "condition": {
+        "kind": "streak",
+        "days": 100
+      }
+    },
+    {
+      "id": "streak-365",
+      "name": "Рік поспіль",
+      "condition": {
+        "kind": "streak",
+        "days": 365
+      }
+    },
+    {
+      "id": "confirmed-10",
+      "name": "10 підтверджених",
+      "condition": {
+        "kind": "confirmedEntries",
+        "entries": 10
+      }
+    },
+    {
+      "id": "confirmed-50",
+      "name": "50 підтверджених",
+      "condition": {
+        "kind": "confirmedEntries",
+        "entries": 50
+      }
+    },
+    {
+      "id": "confirmed-100",
+      "name": "100 підтверджених",
+      "condition": {
+        "kind": "confirmedEntries",
+        "entries": 100
+      }
+    },
+    {
+      "id": "confirmed-500",
+      "name": "500 підтверджених",
+      "condition": {
+        "kind": "confirmedEntries",
+        "entries": 500
+      }
+    },
+    {
+      "id": "win-words",
+      "name": "Перша перемога в словах",
+      "condition": {
+        "kind": "gameWin",
+        "modes": ["guess-word", "type-word", "by-letters", "anagram", "origin", "pairs"]
+      }
+    },
+    {
+      "id": "win-corrections",
+      "name": "Перша перемога в суржику",
+      "condition": {
+        "kind": "gameWin",
+        "modes": ["correction", "anglicism"]
+      }
+    },
+    {
+      "id": "win-idioms",
+      "name": "Перша перемога у фразеологізмах",
+      "condition": {
+        "kind": "gameWin",
+        "modes": ["idiom-meaning", "build-idiom"]
+      }
+    },
+    {
+      "id": "win-stress",
+      "name": "Перша перемога в наголосах",
+      "condition": {
+        "kind": "gameWin",
+        "modes": ["stress"]
+      }
+    },
+    {
+      "id": "win-challenge",
+      "name": "Перша перемога у випробуваннях",
+      "condition": {
+        "kind": "gameWin",
+        "modes": ["survival", "timed"]
+      }
+    },
+    {
+      "id": "crossword-7",
+      "name": "Сім кросвордів поспіль",
+      "condition": {
+        "kind": "dailyCrosswordRun",
+        "days": 7
+      }
+    },
+    {
+      "id": "rarity-5",
+      "name": "Перше рідкісне слово",
+      "condition": {
+        "kind": "rightOnRarity",
+        "rarity": 5
+      }
+    },
+    {
+      "id": "level-5",
+      "name": "Рівень 5",
+      "condition": {
+        "kind": "level",
+        "level": 5
+      }
+    },
+    {
+      "id": "level-10",
+      "name": "Рівень 10",
+      "condition": {
+        "kind": "level",
+        "level": 10
+      }
+    },
+    {
+      "id": "level-20",
+      "name": "Рівень 20",
+      "condition": {
+        "kind": "level",
+        "level": 20
+      }
+    },
+    {
+      "id": "clean-language",
+      "name": "Чиста мова",
+      "condition": {
+        "kind": "rightAnswers",
+        "modes": ["correction", "anglicism"],
+        "count": 50
+      }
+    },
+    {
+      "id": "true-stress",
+      "name": "Влучний наголос",
+      "condition": {
+        "kind": "rightAnswers",
+        "modes": ["stress"],
+        "count": 100
+      }
+    }
+  ]
 }
