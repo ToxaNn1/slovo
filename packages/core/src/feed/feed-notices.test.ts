@@ -11,6 +11,7 @@ import {
   type WordCardModel,
 } from '../index';
 import { type FeedNoticeContent, type FeedNotices } from './feed-notices';
+import { dateKeyOf } from '../local-date';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -285,5 +286,51 @@ describe('Feed Notices', () => {
     await app.feed.show(0);
 
     expect(app.feed.cards.map((card) => card.kind)).toEqual(['word', 'notice', 'word']);
+  });
+});
+
+// ADR 0022: the Feed asks for the Feed Notices of the day the composition turned to.
+describe('The Feed Notices of a day', () => {
+  it('are those of the day the composition turned to, not of the clock, until the app comes back', async () => {
+    const asked: string[] = [];
+    const feedNotices: FeedNotices = {
+      forDay: (day) => {
+        asked.push(dateKeyOf(day));
+        return Promise.resolve([]);
+      },
+    };
+    const app = await run({ records: new Map(), at: '2026-10-11T23:58:00+03:00', feedNotices });
+    await firstCards(app.feed, 3);
+    app.advance(5 * 60_000);
+    await firstCards(app.feed, 5);
+
+    expect(new Set(asked)).toEqual(new Set(['2026-10-11']));
+
+    asked.length = 0;
+    await app.resume();
+    await firstCards(app.feed, app.feed.cards.length + 3);
+
+    expect(new Set(asked)).toEqual(new Set(['2026-10-12']));
+  });
+
+  it('take one card each, those the Core makes in their order among those of other features', async () => {
+    const records = new Map<string, string>();
+    const open = async () => {
+      const { clock } = fakeClock(dayOne);
+      return openComposition({
+        content: createMemoryContentPort({ words }),
+        edition: testEdition({ isFeatureEnabled: (feature) => feature === 'firstWeek' }),
+        userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+        clock,
+        random: randomOf(0.25),
+        feedNotices: fakeNotices(['yesterday', 'communityWord']),
+      });
+    };
+    await (await open()).onboarding.finish();
+
+    const cards = await firstCards((await open()).feed, 5);
+
+    expect(shownBy(cards.slice(1, 4))).toEqual(['communityWord', 'firstWeek', 'yesterday']);
+    expect(cards[4]?.kind).toBe('word');
   });
 });

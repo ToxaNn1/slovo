@@ -14,8 +14,7 @@ import {
   type FeedCard,
   type WordFeedCard,
 } from './feed-card';
-import { FEED_NOTICES } from '../feed-notice';
-import { closedNotices, closeNotice, type FeedNotices } from './feed-notices';
+import type { FeedNoticeQueue } from './feed-notices';
 import { createFeedSession, type FeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
 import type { WordOfTheDayArchiveRecorder } from '../saved/word-of-the-day-archive';
@@ -23,7 +22,7 @@ import { createInTurn, createSubscribers } from '../in-turn';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { Subject } from '../subject';
 import type { OpenedEntry } from './day-change';
-import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
+import { dateKeyOf, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { MixKindWeights } from '../entries/mix';
 import type { UserState } from '../user-state/user-state';
@@ -125,7 +124,8 @@ export interface Feed {
    * Adds the next card to the session and returns it, or nothing when the
    * Language Pack has no live Entry. After the last unseen Entry of the Cycle
    * comes the end-of-Cycle card. From the second card on, each Feed Notice of
-   * the day not closed takes the next card, in the order of `FEED_NOTICES`.
+   * the day the composition turned to not closed takes the next card, in the
+   * order of `FEED_NOTICES`.
    */
   next(): Promise<FeedCard | undefined>;
   /**
@@ -338,9 +338,9 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * Once an Entry becomes Seen, by either way, the Feed publishes it to `seen`,
  * for the plan to follow it.
  *
- * Beside the Entry cards come the Feed Notices `notices` gives for the day:
- * from the second card on, each not closed takes the next card, in the order
- * of `FEED_NOTICES`. A Feed Notice counts in no turn and no Review slot, makes
+ * Beside the Entry cards come the Feed Notices `notices` gives for the day
+ * the composition turned to: from the second card on, each not closed takes
+ * the next card, in the order of `FEED_NOTICES`. A Feed Notice counts in no turn and no Review slot, makes
  * nothing Seen and keeps no reader's place, and the Feed keeps the next card
  * after it ready too. Swiping past one to another card closes it for its
  * local day on this device (ADR 0054).
@@ -370,7 +370,7 @@ export async function openFeed({
   wordOfTheDay: WordOfTheDay;
   history: HistoryRecorder;
   archive: WordOfTheDayArchiveRecorder;
-  notices: FeedNotices;
+  notices: FeedNoticeQueue;
   /** The Mix kind weights the turns follow now, read for each card. */
   kindWeights: () => MixKindWeights;
   eligibility: Pick<Subject<void>, 'subscribe'>;
@@ -400,6 +400,8 @@ export async function openFeed({
   let openedDay: string | undefined;
   /** The local day `YYYY-MM-DD` the composition turned to that the Feed hasn't opened yet, if any. */
   let dayToOpen: string | undefined;
+  /** The local day the composition last turned to, whose Feed Notices the Feed shows. */
+  let noticeDay: LocalDate | undefined;
   /** The local day `YYYY-MM-DD` of the last `show` report. */
   let reportedOn: string | undefined;
 
@@ -430,26 +432,21 @@ export async function openFeed({
   const inTurn = createInTurn();
 
   /**
-   * Adds the next Feed Notice of today, if one is not closed nor in the
+   * Adds the next Feed Notice of the day the composition turned to, if one is not closed nor in the
    * session yet and the session has a card before it.
    */
   async function addNotice(): Promise<FeedCard | undefined> {
-    if (session.cards.length === 0) return undefined;
-    const day = todayDate(clock);
+    const day = noticeDay;
+    if (session.cards.length === 0 || day === undefined) return undefined;
     const date = dateKeyOf(day);
-    const given = await notices.forDay(day, session.cards.at(-1)?.entryId);
-    const closed = await closedNotices(userState, date);
     const inSession = new Set(
       session.all.flatMap((card) =>
         card.kind === 'notice' && dateKeyOf(card.day) === date ? [card.notice] : [],
       ),
     );
-    const content = FEED_NOTICES.flatMap((notice) =>
-      closed.has(notice) || inSession.has(notice)
-        ? []
-        : given.filter((each) => each.notice === notice),
-    )[0];
+    const content = await notices.nextFor(day, session.cards.at(-1)?.entryId, inSession);
     if (content === undefined) return undefined;
+    await notices.shown(content, day);
     const card: FeedCard = { ...content, kind: 'notice', day };
     session.add(card);
     subscribers.tell();
@@ -660,7 +657,7 @@ export async function openFeed({
     // A Feed Notice of a day before, left open over midnight, is closed already.
     const closed =
       swiped && left?.kind === 'notice' && dateKeyOf(left.day) === date
-        ? await closeNotice(userState, left, date)
+        ? await notices.close(left, date)
         : new Map();
     return keepSeen(
       seenId === undefined
@@ -830,6 +827,7 @@ export async function openFeed({
     // In turn with the cards, so a card added after it opens the day.
     await inTurn(() => {
       const key = dateKeyOf(day);
+      noticeDay = day;
       dayToOpen = key === openedDay ? undefined : key;
       return Promise.resolve();
     });
