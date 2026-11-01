@@ -108,7 +108,24 @@
       "about": "Про застосунок і відгук",
       "streakBreak": "Перерва",
       "badges": "Відзнаки",
-      "questionnaire": "Пройти опитування ще раз"
+      "questionnaire": "Пройти опитування ще раз",
+      "profile": "Профіль"
+    },
+    "profile": {
+      "title": "Профіль",
+      "level": "Рівень {level} · {name}",
+      "toNext": "{progress} з {toNext} XP до наступного рівня",
+      "totalXp": "Усього XP: {count}",
+      "streak": "Серія: {count}",
+      "bestStreak": "Найкраща серія: {count}",
+      "activeDays": "Активні дні",
+      "confirmed": "Підтверджені записи за рідкістю",
+      "confirmedOfRarity": "Рідкість {rarity}: {count}",
+      "badges": "Відзнаки",
+      "gameBest": "Найкраще в Грі",
+      "noGameBest": "Ще не грали",
+      "shareLevel": "Поділитися рівнем",
+      "shareMessage": "Мій рівень — {level} · {name}"
     },
     "streakBreak": {
       "title": "Перерва",
@@ -978,6 +995,11 @@
         "title": "Перегляньте свій Мікс",
         "text": "Можна змінити, що показувати у Стрічці: категорії, Виправлення, Фразеологізми, Поради."
       }
+    },
+    "saveProgress": {
+      "title": "Збережіть свій прогрес",
+      "message": "Увійдіть, щоб серія, рівень і збережені слова не загубилися, якщо зміните телефон.",
+      "save": "Зберегти прогрес"
     },
     "firstWeek": {
       "close": "Зрозуміло",

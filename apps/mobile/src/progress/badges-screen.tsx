@@ -31,14 +31,10 @@ function progressForms({ condition }: BadgeState) {
   }
 }
 
-/**
- * Settings › Відзнаки (ADR 0066): every Badge of the Edition in its order,
- * earned with its date or, while not, with how far its condition has come.
- */
-export function BadgesScreen() {
+/** Every Badge of the Edition in its order, earned with its date or, while not, with how far its condition has come. */
+export function BadgeList() {
   const { colors, fontFamilies } = useTokens();
   const { voice, count } = useEdition();
-  const router = useRouter();
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);
   const nameStyle = [styles.name, { color: colors.ink, fontFamily: fontFamilies.ui }];
   const textStyle = [styles.text, { color: colors.muted, fontFamily: fontFamilies.ui }];
@@ -50,6 +46,23 @@ export function BadgesScreen() {
     const { current, target } = badge.progress;
     return fill(count(forms, target), { current: String(current) });
   };
+
+  return badges.map((badge) => (
+    <View key={badge.id} testID={`badge-${badge.id}`} style={styles.badge}>
+      <Text {...voice} style={nameStyle}>
+        {badge.name}
+      </Text>
+      <Text {...voice} testID={`badge-${badge.id}-status`} style={textStyle}>
+        {statusOf(badge)}
+      </Text>
+    </View>
+  ));
+}
+
+/** Settings › Відзнаки (ADR 0066): the Badge list under its title. */
+export function BadgesScreen() {
+  const { colors } = useTokens();
+  const router = useRouter();
 
   return (
     <SafeAreaView
@@ -68,16 +81,7 @@ export function BadgesScreen() {
         <View style={styles.section}>
           <ScreenTitle>{strings.title}</ScreenTitle>
         </View>
-        {badges.map((badge) => (
-          <View key={badge.id} testID={`badge-${badge.id}`} style={styles.badge}>
-            <Text {...voice} style={nameStyle}>
-              {badge.name}
-            </Text>
-            <Text {...voice} testID={`badge-${badge.id}-status`} style={textStyle}>
-              {statusOf(badge)}
-            </Text>
-          </View>
-        ))}
+        <BadgeList />
       </ScrollView>
     </SafeAreaView>
   );

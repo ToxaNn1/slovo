@@ -139,6 +139,23 @@ export function LevelMilestoneCard({ level, name }: { level: LevelMilestone; nam
 }
 
 /**
+ * The offer to save progress to a reader with no Account (spec #1358 story
+ * 70): its button opens the Account screen; a swipe closes it.
+ */
+export function SaveProgressCard({ onSave }: { onSave: () => void }) {
+  const { strings } = useEdition();
+  const { title, message, save } = strings.feedNotices.saveProgress;
+  return (
+    <FeedNoticeCard
+      notice="saveProgress"
+      title={title}
+      message={message}
+      action={{ label: save, onPress: onSave }}
+    />
+  );
+}
+
+/**
  * The first-week card of its day: what the app offers that day, and on day 7
  * «Тиждень із нами» with the Streak, or with no Streak named while the reader
  * doesn't see it. «Зрозуміло» turns to the next card as a swipe would, and so

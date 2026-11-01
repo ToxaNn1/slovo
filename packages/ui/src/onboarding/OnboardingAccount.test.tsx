@@ -1,4 +1,4 @@
-import { ACCOUNT_NAME } from '@slovo/contracts';
+const ACCOUNT_NAME = 'Test ID';
 import { EditionProvider, OnboardingAccount } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
@@ -30,7 +30,7 @@ async function renderAccount() {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <OnboardingAccount step={5} total={5} {...handlers} />
+        <OnboardingAccount step={5} total={5} accountName={ACCOUNT_NAME} {...handlers} />
       </EditionProvider>
     </SafeAreaProvider>,
   );

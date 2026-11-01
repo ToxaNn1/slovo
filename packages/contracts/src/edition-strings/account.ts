@@ -4,13 +4,6 @@ import { TextSchema } from '../shared';
 import { PluralSchema, templateOf } from './shared';
 
 /**
- * What the Account is called on every screen of every Edition. The name is the
- * same in each Edition, so the strings never hold it: a text that names the
- * Account takes it as `{name}`.
- */
-export const ACCOUNT_NAME = 'SLOVO ID';
-
-/**
  * The line under the field for each problem the Account can meet. The keys are
  * the problems the Core gives, so a problem without a line, or a line for a
  * problem the Core never gives, is refused.
@@ -51,7 +44,7 @@ const SyncStatusStringsSchema = z.strictObject({
 
 /**
  * The texts of the SLOVO ID screen, reached from a row in Settings. The row
- * and the screen carry the Account's name, `ACCOUNT_NAME`, so the strings hold
+ * and the screen carry the Account's name, the Edition config's `accountName`, so the strings hold
  * only the words around it.
  */
 export const AccountStringsSchema = z.strictObject({

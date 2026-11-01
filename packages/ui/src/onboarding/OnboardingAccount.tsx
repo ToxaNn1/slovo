@@ -1,4 +1,3 @@
-import { ACCOUNT_NAME } from '@slovo/contracts';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { EmptyStateIllustration } from '../decor/DecorSlots';
@@ -23,6 +22,7 @@ import {
 export function OnboardingAccount({
   step,
   total,
+  accountName,
   onSignIn,
   onContinue,
   onSkip,
@@ -30,6 +30,8 @@ export function OnboardingAccount({
   /** This step's number, from 1, in the Core's order. */
   step: number;
   total: number;
+  /** What the Edition calls the Account. */
+  accountName: string;
   onSignIn: () => void;
   onContinue: () => void;
   onSkip: () => void;
@@ -37,7 +39,7 @@ export function OnboardingAccount({
   const { colors, fontFamilies } = useTokens();
   const { voice, strings } = useEdition();
   const { account } = strings.onboarding;
-  const name = { name: ACCOUNT_NAME };
+  const name = { name: accountName };
   return (
     <OnboardingStep
       testID="onboarding-account"
@@ -50,7 +52,7 @@ export function OnboardingAccount({
           <PrimaryButton
             testID="onboarding-sign-in"
             label={fill(account.signIn, name)}
-            mark={<AccountMark />}
+            mark={<AccountMark letter={Array.from(accountName)[0] ?? ''} />}
             onPress={onSignIn}
           />
           <SecondaryButton
@@ -85,8 +87,8 @@ export function OnboardingAccount({
   );
 }
 
-/** SLOVO ID's mark: its first letter on the background colour, inside the primary button's ink fill. */
-function AccountMark() {
+/** The Account's mark: its first letter on the background colour, inside the primary button's ink fill. */
+function AccountMark({ letter }: { letter: string }) {
   const { colors, fontFamilies } = useTokens();
   return (
     <View style={[styles.accountMark, { backgroundColor: colors.background }]}>
@@ -94,7 +96,7 @@ function AccountMark() {
         allowFontScaling={false}
         style={[styles.accountMarkLetter, { color: colors.ink, fontFamily: fontFamilies.word }]}
       >
-        {Array.from(ACCOUNT_NAME)[0]}
+        {letter}
       </Text>
     </View>
   );

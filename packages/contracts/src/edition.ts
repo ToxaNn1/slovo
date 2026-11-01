@@ -132,7 +132,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   synonymRows: z.boolean(),
   /** Tips: the fifth kind of Entry, rules of good speech (ADR 0051). */
   tips: z.boolean(),
-  /** The Account (SLOVO ID): its Settings row, its screen and the backend's answers to it. */
+  /** The Account, under the Edition's `accountName`: its Settings row, its screen and the backend's answers to it. */
   account: z.boolean(),
   /** Sign in with Google: the second Sign-in method, its button and the backend's procedure for it (ADR 0047). */
   googleSignIn: z.boolean(),
@@ -276,6 +276,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   notificationExplainer: z.boolean(),
   /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings (ADR 0067). */
   laterQuestions: z.boolean(),
+  /** The Profile: the screen of the reader's whole progress and the save-progress Feed Notice (ADR 0066). */
+  profile: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -599,6 +601,8 @@ export const EditionConfigSchema = z
     id: EditionIdSchema,
     locale: LanguageTagSchema,
     displayName: z.string().min(1),
+    /** What the Account is called on every screen and in the Sign-in code email, never «SLOVO ID» by default. */
+    accountName: TextSchema,
     languageTraits: LanguageTraitsSchema,
     featureSwitches: FeatureSwitchesSchema,
     userSettingDefaults: UserSettingDefaultsConfigSchema,

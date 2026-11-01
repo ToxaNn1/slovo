@@ -2,6 +2,7 @@ import {
   EnoughForTodayCard,
   NotificationAskCard,
   LevelMilestoneCard,
+  SaveProgressCard,
   DecorBackground,
   EndOfCycleCard,
   EntryCard,
@@ -239,12 +240,26 @@ function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterd
   const { askPermission } = useNotificationsChanges();
   if (card.notice === 'notificationExplainer' || card.notice === 'notificationReask')
     return <NotificationAskCard notice={card.notice} onYes={askPermission} />;
+ * Community Word, the first-week card, a level milestone, the offer to save
+ * progress or «Може, на сьогодні досить?».
+ */
+function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterday' }> }) {
+  const streak = useFirstWeekStreak();
+  const openScreen = useOpenScreen();
   if (card.notice === 'weeklyRecap') return <WeeklyRecapNotice day={card.day} />;
   if (card.notice === 'communityWord')
     return <CommunityWordNotice entryId={card.card.entryId} adds={card.adds} />;
   if (card.notice === 'levelMilestone')
     return <LevelMilestoneCard level={card.level} name={card.name} />;
   if (card.notice === 'enoughForToday') return <EnoughForTodayCard />;
+  if (card.notice === 'saveProgress')
+    return (
+      <SaveProgressCard
+        onSave={() => {
+          openScreen('/settings/account');
+        }}
+      />
+    );
   return card.notice === 'firstWeek' ? (
     <FirstWeekCard day={card.firstWeekDay} streak={streak} />
   ) : (

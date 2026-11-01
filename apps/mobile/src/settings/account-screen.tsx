@@ -1,4 +1,4 @@
-import { ACCOUNT_NAME, SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
+import { SIGN_IN_CODE_DIGITS } from '@slovo/contracts';
 import type { Account, AccountState } from '@slovo/core';
 import {
   BackLink,
@@ -28,7 +28,7 @@ import { Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { deviceClock } from '../device/device-clock';
-import { editionStrings } from '../edition/edition';
+import { edition, editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { Opened } from '../opened';
 import { useOpened, type Opening } from '../opening';
@@ -120,7 +120,7 @@ function AccountContent({
           }}
         />
         <View style={styles.header}>
-          <ScreenTitle>{ACCOUNT_NAME}</ScreenTitle>
+          <ScreenTitle>{edition.accountName}</ScreenTitle>
         </View>
         {state.status === 'signed-in' ? (
           <SignedIn account={account} state={state} problem={problem} />
@@ -377,8 +377,8 @@ function SignedIn({
       <DeleteAccountButton
         testID="account-delete"
         copy={{
-          button: fill(deletion.button, { name: ACCOUNT_NAME }),
-          title: fill(deletion.title, { name: ACCOUNT_NAME }),
+          button: fill(deletion.button, { name: edition.accountName }),
+          title: fill(deletion.title, { name: edition.accountName }),
           message: deletion.message,
           confirm: deletion.confirm,
           cancel: deletion.cancel,

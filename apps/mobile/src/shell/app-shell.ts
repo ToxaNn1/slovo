@@ -27,7 +27,7 @@ export function createShell(editionId: string): Shell {
     settings: settingsOpening({ userState }),
     remoteSwitches,
     languagePack,
-    composition: compositionOpening({ languagePack, remoteSwitches, userState }),
+    composition: compositionOpening({ languagePack, remoteSwitches, userState, account }),
     account,
     sync: syncOpening({ userState, remoteSwitches, account }),
     mistakeReports: mistakeReportsOpening({ userState, remoteSwitches, languagePack }),

@@ -83,6 +83,8 @@ export interface Shown {
   readonly progressShareCards: boolean;
   /** «Поділитися» under a solved Daily Crossword, its Share Card with no letters. */
   readonly dailyCrosswordShare: boolean;
+  /** The Settings row that opens the Profile, with the reader's whole progress. */
+  readonly profile: boolean;
   /** The Quick Question in the Feed and its «Швидкі питання» row in the Mix; it asks the Game's Modes. */
   readonly quickQuestion: boolean;
   /** The Sync status line of the SLOVO ID screen. */
@@ -156,6 +158,7 @@ export function shownOf({
     progressShareCards: on('shareCards') && on('progressShareCards') && on('xpLog') && !noCounters,
     dailyCrosswordShare:
       on('shareCards') && on('dailyCrosswordShare') && on('game') && on('dailyCrossword'),
+    profile: on('xpLog') && on('profile'),
     quickQuestion: on('game') && on('quickQuestion'),
     sync: on('sync'),
     dailyGoal: on('xpLog') && on('dailyGoal'),

@@ -162,6 +162,14 @@ export const userStateRecords = {
     { sync: 'device-only' },
   ),
   /**
+   * The local dates the save-progress Feed Notice came on, at most two: it
+   * comes on no third day (ADR 0066). It stays on the device, which has no
+   * Account to sync it while the Notice comes.
+   */
+  saveProgressOffered: declareRecord('feed.saveProgressOffered', z.array(z.string()).max(2), {
+    sync: 'device-only',
+  }),
+  /**
    * The Community Word the backend answered on the local date `date`, kept so
    * the week is read once a day; `null`, none (ADR 0060). It stays on the
    * device; a new key needs no migration.

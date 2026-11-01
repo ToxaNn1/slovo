@@ -53,6 +53,8 @@ export const SettingsStringsSchema = z.strictObject({
     badges: TextSchema,
     /** The row that retakes the questionnaire, e.g. «Пройти опитування ще раз». */
     questionnaire: TextSchema,
+    /** The row that opens the Profile, e.g. «Профіль». */
+    profile: TextSchema,
   }),
   /** The Badges screen: each Badge earned with its date, or its progress (ADR 0066). */
   badges: z.strictObject({
@@ -68,6 +70,36 @@ export const SettingsStringsSchema = z.strictObject({
       rightAnswers: pluralOf('current'),
       level: pluralOf('current'),
     }),
+  }),
+  /** The Profile: the reader's whole progress, with its Badges as the Badges screen words them. */
+  profile: z.strictObject({
+    title: TextSchema,
+    /** The Level and its name, e.g. «Рівень 3 · Читач». */
+    level: templateOf('level', 'name'),
+    /** The XP towards the next Level, e.g. «40 з 120 XP до наступного рівня». */
+    toNext: templateOf('progress', 'toNext'),
+    /** All XP ever earned, e.g. «Усього XP: 860». */
+    totalXp: templateOf('count'),
+    /** The Streak, e.g. «Серія: 12». */
+    streak: templateOf('count'),
+    /** The Best Streak, e.g. «Найкраща серія: 31». */
+    bestStreak: templateOf('count'),
+    /** The heading over the Active Days calendar. */
+    activeDays: TextSchema,
+    /** The heading over the confirmed Entries by rarity. */
+    confirmed: TextSchema,
+    /** The confirmed Entries of one rarity, e.g. «Рідкість 3: 14». */
+    confirmedOfRarity: templateOf('rarity', 'count'),
+    /** The heading over the Badges. */
+    badges: TextSchema,
+    /** The heading over each Game Mode's Best result. */
+    gameBest: TextSchema,
+    /** A Game Mode with no finished Game yet. */
+    noGameBest: TextSchema,
+    /** The button that shares the Level. */
+    shareLevel: TextSchema,
+    /** The text the Level is shared with, e.g. «Мій рівень — 3 · Читач». */
+    shareMessage: templateOf('level', 'name'),
   }),
   /** The Break screen: what a Break does, its length and whether one can start today (ADR 0066). */
   streakBreak: z.strictObject({

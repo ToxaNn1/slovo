@@ -28,6 +28,7 @@ import { createFirstWeek } from './feed/first-week';
 import { createYesterday } from './feed/yesterday';
 import { createLevelMilestones } from './feed/level-milestone';
 import { createNotificationExplainer } from './notifications/notification-explainer';
+import { createSaveProgress } from './feed/save-progress';
 import { asReviewIfDue, type AnyEntryCard } from './feed/feed-card';
 import { openGame, type Game } from './game/game';
 import { createQuickQuestion } from './game/quick-question';
@@ -350,6 +351,7 @@ export async function openComposition({
   feedNotices = noFeedNotices,
   backend,
   analytics: analyticsPort,
+  signedIn,
   ...ports
 }: {
   content: ContentReadPort;
@@ -363,7 +365,7 @@ export async function openComposition({
   scheduling?: NotificationScheduling;
   schedule?: Schedule;
   gameModes?: readonly GameMode[];
-  /** Feed Notices of each day beside those the Core makes, the Weekly Recap, the first-week card, Yesterday and «Може, на сьогодні досить?»; without it, none. */
+  /** Feed Notices of each day beside those the Core makes, the Weekly Recap, the first-week card, Yesterday, the offer to save progress and «Може, на сьогодні досить?»; without it, none. */
   feedNotices?: FeedNotices;
   /**
    * The backend (ADR 0064), which the Community Word the Feed shows on a
@@ -375,6 +377,12 @@ export async function openComposition({
   backend?: Pick<Backend, 'collectionLinks' | 'counters'>;
   /** Where the Analytics events go (ADR 0068); without it, as in tools and tests of other features, nowhere. */
   analytics?: AnalyticsPort;
+  /**
+   * Whether the reader is signed in to the Account, which opens apart from
+   * the composition (ADR 0037); without it, as in tools and tests of other
+   * features, the Feed offers no saving of progress.
+   */
+  signedIn?: () => boolean;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
   // The named subjects the modules link through (ADR 0018), made before any
@@ -499,6 +507,7 @@ export async function openComposition({
       createYesterday({ edition, entries, hiddenEntries, userState }),
       createLevelMilestones({ edition, xpLog, userState }),
       later.notices,
+      createSaveProgress({ edition, xpLog, activeDays, userState, signedIn }),
       enoughForToday,
       // Without a scheduler there is no device to ask.
       scheduling === undefined

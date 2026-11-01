@@ -6,6 +6,8 @@ import {
   createMemoryUserStatePort,
   openUserState,
   userStateRecords,
+  type AnalyticsPort,
+  type FeatureSwitch,
   type KeptSession,
   type Random,
   type Schedule,
@@ -40,7 +42,15 @@ async function setup({
   kept,
   random = randomOf(0.5),
   port,
-}: { kept?: KeptSession; random?: Random; port?: UserStatePort } = {}) {
+  analytics,
+  on = ['analytics'],
+}: {
+  kept?: KeptSession;
+  random?: Random;
+  port?: UserStatePort;
+  analytics?: AnalyticsPort;
+  on?: readonly FeatureSwitch[];
+} = {}) {
   const api = createFakeBackend();
   const googleSheet = createFakeGoogleSignInSheet();
   const appleSheet = createFakeAppleSignInSheet();
@@ -52,7 +62,7 @@ async function setup({
   const open = async (userState = installed) =>
     openAccount({
       backend: api.backend,
-      edition: { id: 'uk' },
+      edition: { id: 'uk', isFeatureEnabled: (feature) => on.includes(feature) },
       googleSheet,
       appleSheet,
       sessions,
@@ -60,6 +70,7 @@ async function setup({
       clock: time.clock,
       schedule: later.schedule,
       random,
+      analytics,
     });
   const account = await open();
   return { account, api, googleSheet, appleSheet, sessions, time, delays: later.delays, open };
@@ -1194,5 +1205,64 @@ describe('the Account on a fresh install', () => {
     expect(account.state).toMatchObject({ status: 'signed-in', email: 'anna@mail.com' });
     expect(await sessions.read()).toEqual(anna);
     expect(api.calls).toEqual([]);
+  });
+});
+
+describe('the Account and Analytics', () => {
+  /** A port that keeps the events that reached it. */
+  function fakePort() {
+    const events: unknown[][] = [];
+    const port: AnalyticsPort = {
+      track: (event, properties) => void events.push([event, properties]),
+      stop: () => undefined,
+    };
+    return { port, events };
+  }
+
+  it('tells the port of each sign-in with its Sign-in method, and of no request that fails', async () => {
+    const { port, events } = fakePort();
+    const { account, googleSheet, appleSheet } = await setup({ analytics: port });
+
+    await account.requestCode('anna@mail.com');
+    await account.verifyCode('999999');
+    expect(events).toEqual([]);
+    await account.verifyCode('100001');
+    await account.signOut();
+    googleSheet.signsIn('anna@mail.com');
+    await account.signInWithGoogle();
+    await account.signOut();
+    appleSheet.signsIn('anna@mail.com');
+    await account.signInWithApple();
+
+    expect(events).toEqual([
+      ['signedIn', { method: 'signInCode' }],
+      ['signedIn', { method: 'google' }],
+      ['signedIn', { method: 'apple' }],
+    ]);
+  });
+
+  it('tells nothing while the reader does not share anonymous statistics', async () => {
+    const { port, events } = fakePort();
+    const userStatePort = createMemoryUserStatePort();
+    const userState = await installedUserState(userStatePort);
+    await userState.write(userStateRecords.shareCounters.change(false));
+    const { account } = await setup({ analytics: port, port: userStatePort });
+
+    await account.requestCode('anna@mail.com');
+    await account.verifyCode('100001');
+
+    expect(account.state).toMatchObject({ status: 'signed-in' });
+    expect(events).toEqual([]);
+  });
+
+  it('tells nothing while the Edition switches Analytics off', async () => {
+    const { port, events } = fakePort();
+    const { account } = await setup({ analytics: port, on: [] });
+
+    await account.requestCode('anna@mail.com');
+    await account.verifyCode('100001');
+
+    expect(account.state).toMatchObject({ status: 'signed-in' });
+    expect(events).toEqual([]);
   });
 });

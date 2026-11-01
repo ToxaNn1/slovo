@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { ACCOUNT_NAME, fill } from '@slovo/contracts';
+import { fill } from '@slovo/contracts';
 import type { ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
 import { eq } from 'drizzle-orm';
@@ -62,8 +62,8 @@ describe('signing in with a Sign-in code', () => {
       {
         to: email,
         senderName: uk.config.displayName,
-        subject: fill(strings.subject, { code, name: ACCOUNT_NAME }),
-        text: fill(strings.body, { code, name: ACCOUNT_NAME }),
+        subject: fill(strings.subject, { code, name: 'SLOVO ID' }),
+        text: fill(strings.body, { code, name: 'SLOVO ID' }),
       },
     ]);
   });

@@ -22,6 +22,9 @@ export interface EntryEventProperties {
   readonly categoryId: string | null;
 }
 
+/** The Sign-in method of a sign-in: a Sign-in code, Sign in with Google or Sign in with Apple. */
+export type SignInMethod = 'signInCode' | 'google' | 'apple';
+
 /** The Analytics events the Core emits (ADR 0068), each with its properties. */
 export interface AnalyticsEvents {
   readonly seen: EntryEventProperties;
@@ -71,6 +74,12 @@ export interface AnalyticsEvents {
    * the Rarity Test or the Mix opened, or `later` when put off.
    */
   readonly laterQuestionAnswered: { readonly question: LaterQuestion; readonly answer: string };
+  /**
+   * A sign-in started this device's Session, by its Sign-in method. The
+   * sign-in answer tells no new Account from one there was, so this stands
+   * for «Account created» of ADR 0068.
+   */
+  readonly signedIn: { readonly method: SignInMethod };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 
