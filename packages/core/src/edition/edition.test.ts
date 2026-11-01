@@ -94,6 +94,7 @@ const validConfig = {
     notificationExplainer: true,
     laterQuestions: true,
     profile: true,
+    mascot: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -162,6 +163,17 @@ const validConfig = {
       condition: { kind: 'rightAnswers', modes: ['stress'], count: 100 },
     },
   ],
+  mascot: {
+    onboarding: 'Hello',
+    newLevel: 'New Level',
+    badge: 'New Badge',
+    dailyGoal: 'Goal met',
+    streakMilestone: 'Streak grows',
+    gameRight: 'Right',
+    gameWrong: 'Almost',
+    gameEnd: 'Game over',
+    empty: 'Nothing yet',
+  },
 };
 
 /** The Feature Switches of the Game Modes and the Daily Crossword (ADR 0052). */
@@ -535,6 +547,31 @@ describe('loadEdition', () => {
   it('refuses an Edition without the badges Feature Switch', () => {
     const { badges, ...switches } = validConfig.featureSwitches;
     expect(badges).toBe(true);
+    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
+      InvalidEditionConfigError,
+    );
+  });
+
+  it('reports the Mascot line of each moment', () => {
+    expect(loadEdition(validConfig).mascot).toEqual(validConfig.mascot);
+  });
+
+  it('refuses an Edition without Mascot lines, a moment left out or an empty line', () => {
+    const { mascot, ...withoutMascot } = validConfig;
+    const { empty, ...withoutEmpty } = mascot;
+    expect(empty).toBe('Nothing yet');
+    expect(() => loadEdition(withoutMascot)).toThrow(InvalidEditionConfigError);
+    expect(() => loadEdition({ ...validConfig, mascot: withoutEmpty })).toThrow(
+      InvalidEditionConfigError,
+    );
+    expect(() => loadEdition({ ...validConfig, mascot: { ...mascot, gameRight: '' } })).toThrow(
+      InvalidEditionConfigError,
+    );
+  });
+
+  it('refuses an Edition without the mascot Feature Switch', () => {
+    const { mascot, ...switches } = validConfig.featureSwitches;
+    expect(mascot).toBe(true);
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );

@@ -102,6 +102,17 @@ const testEditionConfig = {
     ],
   },
   badges: [],
+  mascot: {
+    onboarding: 'Hello',
+    newLevel: 'New Level',
+    badge: 'New Badge',
+    dailyGoal: 'Goal met',
+    streakMilestone: 'Streak grows',
+    gameRight: 'Right',
+    gameWrong: 'Almost',
+    gameEnd: 'Game over',
+    empty: 'Nothing yet',
+  },
 };
 
 /** The test Edition as `loadEdition` gives it, which every `testEdition` starts from. */
