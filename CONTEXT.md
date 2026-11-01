@@ -379,7 +379,7 @@ A run of Rounds in one Game Mode: up to 15 Rounds with 5 Lives by default. A Gam
 _Avoid_: Quiz, practice, test
 
 **Game Mode**:
-The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round limit (or none), its time limit (or none) and the form of its answers, and has its own Feature Switch. The Core modes, in four groups:
+The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round limit (or none), its time limit (or none), the form of its answers and the group of the mode screen it stands in, and has its own Feature Switch. The Core modes, in four groups:
 
 - «Слова»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «Наголос» (`stress`), tap the stressed vowel; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Анаграми» (`anagram`), assemble the Word from shuffled letters; «За буквами» (`by-letters`), type the Word, opening letters if needed; «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from.
 - «Виправлення»: «Обери правильне» (`correction`), a sentence with a non-standard form → pick the standard equivalent; «Англіцизми» (`anglicism`), the same with anglicisms only.
