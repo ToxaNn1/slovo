@@ -62,6 +62,13 @@ export {
   type SampleNotificationLook,
 } from './onboarding/OnboardingNotifications';
 export { OnboardingRarityTest } from './onboarding/OnboardingRarityTest';
+export {
+  HEADLINE_MAX_FONT_SCALE,
+  LaterButton,
+  OnboardingStep,
+  stepStyles,
+  TEXT_MAX_FONT_SCALE,
+} from './onboarding/OnboardingStep';
 export { OnboardingWelcome, type HeroWord } from './onboarding/OnboardingWelcome';
 export {
   RarityTestQuestions,
