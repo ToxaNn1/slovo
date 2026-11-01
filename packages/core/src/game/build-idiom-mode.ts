@@ -16,6 +16,7 @@ const WORDS = { min: 2, max: 8 } as const;
  */
 export const buildIdiomMode: GameMode = {
   id: 'build-idiom',
+  group: 'idioms',
   entryKind: 'idiom',
   isOn: (edition) =>
     edition.isFeatureEnabled('gameBuildIdiom') && edition.isFeatureEnabled('idioms'),
@@ -31,6 +32,7 @@ export const buildIdiomMode: GameMode = {
     if (words.length < WORDS.min || words.length > WORDS.max) return undefined;
     return {
       form: 'chips',
+      chipKind: 'word',
       prompt: answer.primaryDefinition,
       chips: outOfOrder(words, shuffled(words, random)),
       expected: words,

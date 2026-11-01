@@ -33,7 +33,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
-import { GAME_LIVES } from './game-in-play';
+import { GAME_LIVES } from './game';
 import { createMemoryContentPort } from '../testing';
 import {
   fakeClock,

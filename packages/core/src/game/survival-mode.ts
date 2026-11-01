@@ -13,6 +13,7 @@ import { guessWord } from './guess-word';
  */
 export const survivalMode: GameMode = {
   id: 'survival',
+  group: 'challenge',
   entryKind: 'correction',
   alsoAsks: ['word'],
   lives: 3,

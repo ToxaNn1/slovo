@@ -18,6 +18,7 @@ const staysInPlace = (character: string): boolean => IN_PLACE.has(character);
  */
 export const byLettersMode: GameMode = {
   id: 'by-letters',
+  group: 'words',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gameByLetters'),
   buildRound({ answer }) {

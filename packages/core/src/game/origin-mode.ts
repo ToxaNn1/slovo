@@ -13,6 +13,7 @@ import { shuffled } from '../shuffled';
  */
 export const originMode: GameMode = {
   id: 'origin',
+  group: 'words',
   entryKind: 'word',
   roundLimit: 8,
   isOn: (edition) => edition.isFeatureEnabled('gameOrigin'),

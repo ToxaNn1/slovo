@@ -45,6 +45,24 @@ export interface AnswerSheet {
   readonly asked?: RoundOption;
 }
 
+/**
+ * The groups of the mode screen, in their agreed order: what a mode trains,
+ * then the modes with a Lives, Round or time challenge of their own.
+ */
+export const GAME_MODE_GROUPS = ['words', 'corrections', 'idioms', 'challenge'] as const;
+
+/** The group of the mode screen a Game Mode's card stands in. */
+export type GameModeGroup = (typeof GAME_MODE_GROUPS)[number];
+
+/** What a chips Round's chips are: a Word's letters or an expression's words. */
+export type ChipKind = 'letter' | 'word';
+
+/**
+ * Which label a Round shows over its prompt: the Game Mode's, a Synonym
+ * Row's question on its dominant, a Tip's, or an Example's with a gap.
+ */
+export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap';
+
 /** A stretch of a text, from the character at `start` up to the one at `end`, which it leaves out. */
 export interface TextRange {
   readonly start: number;
@@ -101,6 +119,8 @@ export type RoundForm =
     }
   | {
       readonly form: 'chips';
+      /** What the chips are, a Word's letters or an expression's words. */
+      readonly chipKind: ChipKind;
       /** The chips, in the order shown. */
       readonly chips: readonly string[];
       /** The chips in the right order; equal chips are interchangeable. */
@@ -128,6 +148,13 @@ export type RoundContent = RoundForm & {
   readonly prompt: string;
   /** The part of the prompt to mark, such as a non-standard form in a sentence; nothing to mark when left out. */
   readonly highlight?: TextRange;
+  /**
+   * The gap in the prompt: the highlight when it stands for the Lemma in an
+   * Example, which the shell labels and reads aloud as a gap; none when left out.
+   */
+  readonly gap?: TextRange;
+  /** Which label the Round shows over its prompt: the Game Mode's when left out. */
+  readonly labelKind?: RoundLabelKind;
   /** The Definition shown under the prompt, such as a Word's in «Звідки слово»; none when left out. */
   readonly definition?: string;
 };
@@ -169,6 +196,8 @@ export interface GameMode {
   readonly id: string;
   /** The kind of Entry its Rounds ask about, which its card names and whose refusal it gives. */
   readonly entryKind: ShownKind;
+  /** The group of the mode screen its card stands in. */
+  readonly group: GameModeGroup;
   /**
    * Other kinds of Entry its Rounds may ask about, such as idioms and
    * Synonym Rows in «Вгадай слово»; a kind with no eligible Entry, such as

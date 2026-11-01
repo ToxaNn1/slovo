@@ -1,6 +1,6 @@
 import type { Example, Idiom, Word } from '@slovo/contracts';
 
-import type { PlayedRound, RoundAnswer } from './game-in-play';
+import type { PlayedRound, RoundAnswer } from './game';
 import type { FixedChip, RoundOption } from './game-mode';
 import { rowWordOption } from './guess-word';
 import { byKind } from '../entries/entry-kinds';

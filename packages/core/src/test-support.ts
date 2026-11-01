@@ -14,7 +14,7 @@ import {
   type Edition,
   type UserSettingDefaults,
 } from './edition/edition';
-import type { PlayedRound, Round, RoundAnswer } from './game/game-in-play';
+import type { PlayedRound, Round, RoundAnswer } from './game/game';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
 import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } from './ports';

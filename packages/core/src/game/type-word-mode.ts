@@ -12,6 +12,7 @@ import type { GameMode } from './game-mode';
  */
 export const typeWordMode: GameMode = {
   id: 'type-word',
+  group: 'words',
   entryKind: 'correction',
   isOn: (edition) =>
     edition.isFeatureEnabled('gameTypeWord') && edition.isFeatureEnabled('corrections'),

@@ -48,6 +48,7 @@ function pairOf(word: Word): GridPair {
  */
 export const pairsMode: GameMode = {
   id: 'pairs',
+  group: 'words',
   entryKind: 'word',
   isOn: (edition) => edition.isFeatureEnabled('gamePairs'),
   buildRound({ answer, next, upTo, random, edition }) {

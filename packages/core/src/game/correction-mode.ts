@@ -48,6 +48,7 @@ export const mainEquivalentOf = (correction: Correction): string =>
  */
 export const correctionMode: GameMode = {
   id: 'correction',
+  group: 'corrections',
   entryKind: 'correction',
   isOn: (edition) =>
     edition.isFeatureEnabled('gameCorrection') && edition.isFeatureEnabled('corrections'),
