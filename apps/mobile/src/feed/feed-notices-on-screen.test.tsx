@@ -35,6 +35,12 @@ jest.mock('expo-constants', () => ({
 
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition: Edition = loadEdition(config);
+// Feed Notices take one card each, a later question before the explainer.
+const withoutLaterQuestions: Edition = {
+  ...shippedEdition,
+  isFeatureEnabled: (feature) =>
+    feature !== 'laterQuestions' && shippedEdition.isFeatureEnabled(feature),
+};
 
 /** The user state the settings and the composition keep, opened afresh for each test. */
 let userState: Awaited<ReturnType<typeof openUserState>>;
@@ -92,6 +98,7 @@ function word(id: string, lemma: string): Word {
 async function open(
   records: Readonly<Record<string, unknown>>,
   scheduler?: NotificationSchedulerPort,
+  openedEdition: Edition = shippedEdition,
 ) {
   userState = await openUserState({
     port: createMemoryUserStatePort(
@@ -103,7 +110,7 @@ async function open(
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
       words: [word('w_sumyrnyi', 'сумирний'), word('w_lahidnyi', 'лагідний')],
     }),
-    edition: shippedEdition,
+    edition: openedEdition,
     userState: userState,
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     // The first Word in each draw, so each opening shows the same Word of the Day.
@@ -212,7 +219,7 @@ describe('the Feed Notices on the Feed', () => {
 
   it('shows the notification explainer by day 3, and the device is not asked before «Так»', async () => {
     const scheduler = createFakeNotificationScheduler({ permission: 'not-asked' });
-    await open({ 'onboarding.finished': '2026-10-26T08:00:00Z' }, scheduler);
+    await open({ 'onboarding.finished': '2026-10-26T08:00:00Z' }, scheduler, withoutLaterQuestions);
     await renderApp();
 
     const card = screen.getByTestId('feed-notice-notificationExplainer', hidden);

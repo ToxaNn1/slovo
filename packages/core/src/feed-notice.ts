@@ -22,10 +22,9 @@ export type LaterQuestion = (typeof LATER_QUESTIONS)[number];
 /**
  * The Feed Notices, in the order the Feed shows those of one day: the Weekly
  * Recap, the Community Word, the first-week card, Yesterday, a level
- * milestone, «Може, на сьогодні досить?» after 50 Seen Entries, and the
- * notification explainer and its one re-ask (ADR 0054, 0060, 0066, 0067).
- * milestone, a later question, and «Може, на сьогодні досить?» after 50 Seen
- * Entries (ADR 0054, 0060, 0066, 0067).
+ * milestone, a later question, «Може, на сьогодні досить?» after 50 Seen
+ * Entries, and the notification explainer and its one re-ask (ADR 0054, 0060,
+ * 0066, 0067).
  */
 export const FEED_NOTICES = [
   'weeklyRecap',
