@@ -80,7 +80,8 @@
     "enoughForToday": true,
     "widgetGoalRing": true,
     "lockScreenWidget": true,
-    "questionnaire": true
+    "questionnaire": true,
+    "badges": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -176,5 +177,6 @@
         "kindWeights": { "idiom": "more", "synonymRow": "more" }
       }
     ]
-  }
+  },
+  "badges": []
 }

@@ -96,6 +96,7 @@ const testEditionConfig = {
       { id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } },
     ],
   },
+  badges: [],
 };
 
 /** The test Edition as `loadEdition` gives it, which every `testEdition` starts from. */

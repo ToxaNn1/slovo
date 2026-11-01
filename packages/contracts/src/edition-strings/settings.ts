@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { FontSizeSchema, ThemeSchema } from '../edition';
 import { TextSchema } from '../shared';
-import { templateOf } from './shared';
+import { pluralOf, templateOf } from './shared';
 
 export const SettingsStringsSchema = z.strictObject({
   /** The Settings screen title. */
@@ -49,6 +49,23 @@ export const SettingsStringsSchema = z.strictObject({
     about: TextSchema,
     /** The row that opens the Break screen, e.g. «Перерва». */
     streakBreak: TextSchema,
+    /** The row that opens the Badges screen, e.g. «Відзнаки». */
+    badges: TextSchema,
+  }),
+  /** The Badges screen: each Badge earned with its date, or its progress (ADR 0066). */
+  badges: z.strictObject({
+    title: TextSchema,
+    /** An earned Badge. Takes `{date}`, the day it was earned, e.g. «20.10.2026». */
+    earned: templateOf('date'),
+    /** A Badge of one first time (a win, a right answer on a rarity) not earned yet. */
+    notYet: TextSchema,
+    /** The progress of an unearned Badge by its condition, `{current}` of `{count}`. */
+    progress: z.strictObject({
+      days: pluralOf('current'),
+      entries: pluralOf('current'),
+      rightAnswers: pluralOf('current'),
+      level: pluralOf('current'),
+    }),
   }),
   /** The Break screen: what a Break does, its length and whether one can start today (ADR 0066). */
   streakBreak: z.strictObject({

@@ -46,6 +46,7 @@ import {
   type WordOfTheDayArchive,
 } from './saved/word-of-the-day-archive';
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
+import { openBadges, type Badges } from './progress/badges';
 import { openCommunityCounters, type CommunityCounters } from './community-counters/counter-deltas';
 import { openHiddenEntries, type HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
@@ -118,6 +119,8 @@ export interface Composition extends Hiding {
    * derived from it, which the XP bar shows (ADR 0066).
    */
   readonly xpLog: XpLog;
+  /** The Badges: kept milestones the Edition chooses from the Core's catalogue of conditions (ADR 0066). */
+  readonly badges: Badges;
   /** The Break: a pause of the Streak the reader starts, up to 7 days, once every 30 days (ADR 0066). */
   readonly streakBreak: StreakBreak;
   /** The Weekly Recap, whose numbers its Feed Notice shows on a local Monday (ADR 0054). */
@@ -540,6 +543,15 @@ export async function openComposition({
     }),
     openCollections({ rows, userState, clock, random }),
   ]);
+  const badges = await openBadges({
+    edition,
+    userState,
+    clock,
+    xpLog,
+    knowledge,
+    activeDays,
+    analytics,
+  });
   const progress = openProgress({
     edition,
     clock,
@@ -618,6 +630,7 @@ export async function openComposition({
     communityCounters,
     progress,
     xpLog,
+    badges,
     streakBreak: openStreakBreak({ edition, userState, clock, xpLog, analytics }),
     weeklyRecap,
     resume: () => day.resume(),

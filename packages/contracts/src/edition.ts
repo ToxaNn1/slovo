@@ -262,6 +262,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   enoughForToday: z.boolean(),
   /** The onboarding questions «Хто ви» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
   questionnaire: z.boolean(),
+  /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
+  badges: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -314,6 +316,44 @@ export const LevelsSchema = z.strictObject({
 });
 
 export type Levels = z.infer<typeof LevelsSchema>;
+
+/** A threshold above 0 a Badge condition reaches. */
+const BadgeThresholdSchema = z.number().int().positive();
+
+/** The Game Mode ids a Badge condition counts in, at least one. */
+const BadgeModesSchema = z.array(KebabCaseIdSchema).min(1);
+
+/**
+ * A condition from the Core's catalogue of Badge conditions (ADR 0066), with
+ * its parameters: the Streak reaching `days`, `entries` confirmed Entries,
+ * the first win (a finished Game with at least half right) in one of
+ * `modes`, `days` Daily Crosswords in a row, `count` right Game answers in
+ * `modes`, the first right Game answer on a Word of `rarity`, and `level`.
+ */
+export const BadgeConditionSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('streak'), days: BadgeThresholdSchema }),
+  z.strictObject({ kind: z.literal('confirmedEntries'), entries: BadgeThresholdSchema }),
+  z.strictObject({ kind: z.literal('gameWin'), modes: BadgeModesSchema }),
+  z.strictObject({ kind: z.literal('dailyCrosswordRun'), days: BadgeThresholdSchema }),
+  z.strictObject({
+    kind: z.literal('rightAnswers'),
+    modes: BadgeModesSchema,
+    count: BadgeThresholdSchema,
+  }),
+  z.strictObject({ kind: z.literal('rightOnRarity'), rarity: RaritySchema }),
+  z.strictObject({ kind: z.literal('level'), level: BadgeThresholdSchema }),
+]);
+
+export type BadgeCondition = z.infer<typeof BadgeConditionSchema>;
+
+/** A Badge the Edition chooses (ADR 0066): its id, its name and its condition from the catalogue. */
+export const BadgeSchema = z.strictObject({
+  id: KebabCaseIdSchema,
+  name: TextSchema,
+  condition: BadgeConditionSchema,
+});
+
+export type Badge = z.infer<typeof BadgeSchema>;
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
 
@@ -591,6 +631,13 @@ export const EditionConfigSchema = z
     levels: LevelsSchema,
     /** The onboarding questions, their options and what each sets (ADR 0067). */
     questionnaire: QuestionnaireSchema,
+    /** The Badges, in their order, each id once (ADR 0066). */
+    badges: z
+      .array(BadgeSchema)
+      .refine(
+        (badges) => new Set(badges.map(({ id }) => id)).size === badges.length,
+        'Expected each Badge id once',
+      ),
   })
   .superRefine(
     (

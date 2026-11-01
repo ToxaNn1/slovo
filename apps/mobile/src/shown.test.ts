@@ -28,6 +28,7 @@ const everything: Shown = {
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
   streakBreak: true,
+  badges: true,
   quickQuestion: true,
   sync: true,
   dailyGoal: true,
@@ -187,9 +188,13 @@ describe('what the reader is shown', () => {
     ],
     [
       'no XP bar and no Break with the XP log off',
-      { off: ['xpLog'], shown: { xpBar: false, streakBreak: false, dailyGoal: false } },
+      {
+        off: ['xpLog'],
+        shown: { xpBar: false, streakBreak: false, dailyGoal: false, badges: false },
+      },
     ],
     ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
+    ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
     [
       'no Quick Question with its switch off',
       { off: ['quickQuestion'], shown: { quickQuestion: false } },

@@ -339,7 +339,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     }
   });
 
-  it('writes no Seen, no History and no Active Day while it is played, only the confirmed Entries, its XP and its Best result', async () => {
+  it('writes no Seen, no History and no Active Day while it is played, only the confirmed Entries, its XP, its Best result and the Badges it earns', async () => {
     const { port, writes } = recordingPort(new Map());
     const app = await runWords(6, port);
     writes.length = 0;
@@ -358,7 +358,12 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     const [bestKey, bestValue] = [
       ...userStateRecords.gameBest.record('guess-word').change(roundsPassed),
     ][0] as [string, unknown];
-    const others = writes.filter((write) => !confirmed.includes(write));
+    // Each Badge the Game earns goes in its own write of its XP log record.
+    const badges = writes.filter((write) =>
+      [...write.keys()].every((key) => key.startsWith('xp.badge-')),
+    );
+    expect(badges.every((write) => write.size === 1)).toBe(true);
+    const others = writes.filter((write) => !confirmed.includes(write) && !badges.includes(write));
     const withBest = others.filter((write) => write.has(bestKey));
     expect(withBest).toHaveLength(1);
     expect(withBest[0]?.get(bestKey)).toEqual(bestValue);

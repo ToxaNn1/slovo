@@ -1,3 +1,5 @@
+import type { Rarity } from '@slovo/contracts';
+
 import type { UserStateChanges } from '../ports';
 
 /**
@@ -7,8 +9,18 @@ import type { UserStateChanges } from '../ports';
  * Question answered right in the Feed.
  */
 export type XpAction =
-  | { readonly source: 'game-round' }
-  | { readonly source: 'game-finished'; readonly right: number; readonly played: number }
+  | {
+      readonly source: 'game-round';
+      /** The Game Mode and, for a Word, its rarity, which the Badges count. */
+      readonly mode: string;
+      readonly rarity: Rarity | undefined;
+    }
+  | {
+      readonly source: 'game-finished';
+      readonly mode: string;
+      readonly right: number;
+      readonly played: number;
+    }
   | { readonly source: 'game-best' }
   | { readonly source: 'daily-crossword'; readonly date: string }
   | { readonly source: 'review-answer' }
