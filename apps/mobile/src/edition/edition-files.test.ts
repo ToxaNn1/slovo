@@ -242,7 +242,7 @@ describe('the 0.8.13 strings', () => {
         streak: 'серія',
       },
       yesterday: { title: 'Пам’ятаєте вчорашнє слово?' },
-      dailyLimit: { message: 'На сьогодні досить. Повертайтеся завтра', keepGoing: 'Гортати далі' },
+      enoughForToday: { message: 'Може, на сьогодні досить?', keepGoing: 'Гортати далі' },
       firstWeek: { close: 'Зрозуміло', lastDayTitle: 'Тиждень із нами' },
     });
   });
@@ -299,7 +299,7 @@ describe('the 0.8.13 strings', () => {
   });
 
   it('the UA Edition carries the agreed texts of Settings, «Збережене», Mood and the widget', () => {
-    expect(parsed.settings.dailyLimit).toEqual({ title: 'Ліміт на день', off: 'Вимк.' });
+    expect(parsed.settings.dailyGoal).toEqual({ title: 'Денна ціль' });
     expect(parsed.wordOfTheDayArchive.title).toBe('Слова дня');
     expect(parsed.mood.title).toBe('Слово під настрій');
     expect(parsed.settings.howToAddWidget).toBe('Як додати віджет');

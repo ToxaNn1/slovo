@@ -13,13 +13,23 @@ const NUMBER_MAX_FONT_SCALE = 1.3;
 /**
  * The XP bar in the Feed's top row: today's XP from the XP log, on the
  * surface fill with an accent border, beside the Stats pill. A tap opens the
- * Game, where XP is earned. VoiceOver reads it whole as a button, such as
+ * Game, where XP is earned. With a Daily Goal it draws today's XP over the
+ * goal, such as «12/20 XP». VoiceOver reads it whole as a button, such as
  * «Досвід: сьогодні 12 XP», then that it opens the Game.
  */
-export function XpBar({ today, onPress }: { today: number; onPress: () => void }) {
+export function XpBar({
+  today,
+  goal,
+  onPress,
+}: {
+  today: number;
+  /** Today's Daily Goal; left out while the Daily Goal is off. */
+  goal?: number;
+  onPress: () => void;
+}) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
-  const count = String(today);
+  const count = goal === undefined ? String(today) : `${String(today)}/${String(goal)}`;
   return (
     <Pressable
       testID="xp-bar"

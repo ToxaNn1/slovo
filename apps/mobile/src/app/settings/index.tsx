@@ -1,4 +1,4 @@
-import { DailyLimitSchema, FontSizeSchema, ThemeSchema, type DailyLimit } from '@slovo/contracts';
+import { DailyGoalSchema, FontSizeSchema, ThemeSchema, type DailyGoal } from '@slovo/contracts';
 import {
   FontSizePreview,
   NavigationRow,
@@ -23,6 +23,9 @@ import { useShown } from '@/shown-in-effect';
 import { openLegalPage } from '@/settings/legal-page';
 import { useSettings } from '@/settings/settings';
 import { useOpenScreen } from '@/entries/use-open-screen';
+import { useComposition } from '@/composition';
+import { logError } from '@/diagnostics/log';
+import { useSubscribed } from '@/opening';
 
 const strings = editionStrings.settings;
 
@@ -38,18 +41,18 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
   testID: `settings-font-size-${fontSize}`,
 }));
 
-const dailyLimits: readonly DailyLimit[] = DailyLimitSchema.options.map(({ value }) => value);
+const dailyGoals: readonly DailyGoal[] = DailyGoalSchema.options.map(({ value }) => value);
 
-// A segment's value is text, so each Daily Limit is drawn by its own name: «Вимк.» or its number.
-const dailyLimitSegments = dailyLimits.map((dailyLimit) => ({
-  value: String(dailyLimit),
-  label: dailyLimit === 'off' ? strings.dailyLimit.off : String(dailyLimit),
-  testID: `settings-daily-limit-${String(dailyLimit)}`,
+// A segment's value is text, so each Daily Goal is drawn by its number of XP.
+const dailyGoalSegments = dailyGoals.map((dailyGoal) => ({
+  value: String(dailyGoal),
+  label: String(dailyGoal),
+  testID: `settings-daily-goal-${String(dailyGoal)}`,
 }));
 
 /**
  * Settings: SLOVO ID when the Account is on in effect, the Theme, the font
- * size, the Daily Limit while it is on in effect, «Пройти тест ще раз» while
+ * size, the Daily Goal while it is on in effect, «Пройти тест ще раз» while
  * the Rarity Test is, «Сезонний декор» while its Feature Switch is,
  * «Ділитися анонімною статистикою» with its privacy policy link while the
  * Community Counters are, and the rows of the design.
@@ -58,6 +61,8 @@ export default function SettingsScreen() {
   const { current, update } = useSettings();
   const { colors } = useTokens();
   const openScreen = useOpenScreen();
+  const { xpLog } = useComposition();
+  const { dailyGoal } = useSubscribed(xpLog, ({ state }) => state);
   const mixSummary = useMixSummary();
   const hiddenSummary = useHiddenSummary();
   const notificationsSummary = useNotificationsSummary();
@@ -105,16 +110,19 @@ export default function SettingsScreen() {
             }}
           />
         </View>
-        {shown.dailyLimit && (
+        {shown.dailyGoal && dailyGoal !== null && (
           <View style={styles.section}>
-            <SectionLabel>{strings.dailyLimit.title}</SectionLabel>
+            <SectionLabel>{strings.dailyGoal.title}</SectionLabel>
             <SegmentedControl
-              accessibilityLabel={strings.dailyLimit.title}
-              segments={dailyLimitSegments}
-              selected={String(current.dailyLimit)}
+              accessibilityLabel={strings.dailyGoal.title}
+              segments={dailyGoalSegments}
+              selected={String(dailyGoal.goal)}
               onSelect={(value) => {
-                const dailyLimit = dailyLimits.find((limit) => String(limit) === value);
-                if (dailyLimit !== undefined) update({ dailyLimit });
+                const goal = dailyGoals.find((option) => String(option) === value);
+                if (goal === undefined) return;
+                xpLog.setDailyGoal(goal).catch((error: unknown) => {
+                  logError('The Daily Goal could not be set', error);
+                });
               }}
             />
           </View>
