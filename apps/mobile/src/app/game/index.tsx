@@ -20,6 +20,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { useDailyCrosswordCard } from '@/game/daily-crossword';
+import { ProgressShareOffers } from '@/game/progress-share-offers';
 import {
   useGameActions,
   useGameState,
@@ -139,6 +140,7 @@ function ModeScreen({
         <View style={styles.heading}>
           <ScreenTitle>{strings.title}</ScreenTitle>
         </View>
+        <ProgressShareOffers />
         {crossword === undefined ? null : (
           <DailyCrosswordCard
             testID="daily-crossword"
