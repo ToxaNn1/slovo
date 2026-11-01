@@ -6,6 +6,7 @@ import type {
 } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
+import type { ShareCardKind } from '../share/share-card';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state/user-state-schema';
 
@@ -55,6 +56,8 @@ export interface AnalyticsEvents {
   };
   /** The reader earned a Badge (ADR 0066). */
   readonly badgeEarned: { readonly badge: string };
+  /** The reader sent a Share Card from the system share sheet. */
+  readonly shareCardShared: { readonly card: ShareCardKind };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
 }
 

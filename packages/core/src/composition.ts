@@ -69,6 +69,8 @@ import type { UserState } from './user-state/user-state';
 import { createSpotlight, type Spotlight } from './spotlight/spotlight';
 import { createSubject, type Subject } from './subject';
 import { createAnalytics, type AnalyticsPort } from './analytics/analytics';
+import { openProgressShareCards, type ProgressShareCards } from './share/progress-share-cards';
+import type { ShareCardKind } from './share/share-card';
 import { createWidget, type Widget } from './widget/widget';
 import { openWordOfTheDay } from './feed/word-of-the-day';
 
@@ -125,6 +127,8 @@ export interface Composition extends Hiding {
   readonly streakBreak: StreakBreak;
   /** The Weekly Recap, whose numbers its Feed Notice shows on a local Monday (ADR 0054). */
   readonly weeklyRecap: WeeklyRecap;
+  /** The progress Share Cards on offer today: a Level reached, a Badge earned, a Streak milestone. */
+  readonly progressShareCards: ProgressShareCards;
   /**
    * Tells the composition the app is in the foreground: it came back from the
    * background, or the shell's timer fired when the next local day started
@@ -221,6 +225,8 @@ export interface Composition extends Hiding {
     pronunciationPlayed(entryId: string): Promise<void>;
     wordHistoryOpened(entryId: string): Promise<void>;
     screenViewed(screen: string): Promise<void>;
+    /** The reader sent a Share Card from the system share sheet. */
+    shareCardShared(card: ShareCardKind): Promise<void>;
   };
   /** The iPhone search: the Spotlight Snapshot the app hands its native module (ADR 0057). */
   readonly spotlight: Spotlight;
@@ -634,6 +640,7 @@ export async function openComposition({
     badges,
     streakBreak: openStreakBreak({ edition, userState, clock, xpLog, analytics }),
     weeklyRecap,
+    progressShareCards: openProgressShareCards({ edition, clock, xpLog, badges, activeDays }),
     resume: () => day.resume(),
     notifications,
     game,
@@ -685,6 +692,8 @@ export async function openComposition({
       pronunciationPlayed: (entryId) => entryEvent('pronunciationPlayed', entryId),
       wordHistoryOpened: (entryId) => entryEvent('wordHistoryOpened', entryId),
       screenViewed: (screen) => analytics.track('screenViewed', { screen }).catch(() => undefined),
+      shareCardShared: (card) =>
+        analytics.track('shareCardShared', { card }).catch(() => undefined),
     },
     close,
   };

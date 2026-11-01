@@ -94,7 +94,13 @@ function earned(records: Map<string, string>, amount: number, ...dates: string[]
   for (const date of dates) {
     records.set(
       `xp.seed-${date}`,
-      JSON.stringify({ kind: 'xp', date, at: `${date}T09:00:00.000Z`, source: 'game-round', amount }),
+      JSON.stringify({
+        kind: 'xp',
+        date,
+        at: `${date}T09:00:00.000Z`,
+        source: 'game-round',
+        amount,
+      }),
     );
   }
   return records;

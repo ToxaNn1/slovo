@@ -38,6 +38,10 @@ export type ShareCardSubject =
   | { readonly streak: number; readonly date: string }
   | { readonly crossword: DailyCrosswordState };
 
+/** Which Share Card the reader shared, as its Analytics event says (ADR 0068). */
+export type ShareCardKind =
+  'entry' | 'weeklyRecap' | 'level' | 'badge' | 'streak' | 'dailyCrossword';
+
 /**
  * The blocks of a Share Card, by what it shows, each text final, with its
  * Stress where the card draws it (ADR 0017, 0051, 0054).
