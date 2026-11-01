@@ -4,16 +4,15 @@ import type { Word } from '@slovo/contracts';
 
 import {
   buildGameReview,
-  createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
-  openUserState,
   type Composition,
   type CurrentGame,
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { seededRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /**
  * The pack's Words that play, of 4 to 9 letters: one with an apostrophe, one

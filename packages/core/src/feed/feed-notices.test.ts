@@ -3,9 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   type Composition,
   type Feed,
   type FeedCard,
@@ -15,6 +13,7 @@ import {
 import { type FeedNoticeContent, type FeedNotices } from './feed-notices';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, randomOf, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const words: readonly Word[] = Array.from({ length: 30 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMemoryUserStatePort, openUserState } from '../index';
 import { createRecentQueries } from './recent-queries';
 import { createSearch } from './search';
 import { createMemoryContentPort } from '../testing';
 import { word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** An Ukrainian-like Edition: Search on, ґ read as г and ё as е. */
 const edition = {

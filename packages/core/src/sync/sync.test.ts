@@ -3,12 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createMemorySessionStore,
-  createMemoryUserStatePort,
   openAccount,
   openSync,
-  openUserState,
-  trackChanges,
-  userStateRecords,
   type RecordChange,
   type UserStateChanges,
 } from '../index';
@@ -19,6 +15,9 @@ import {
 } from '../testing';
 import { SYNC_AFTER_WRITE } from './sync';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { trackChanges } from '../user-state/tracked-user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 const { favorites, syncCursor, syncSyncedAt, theme } = userStateRecords;
 

@@ -1,15 +1,10 @@
 import { CrosswordDaySchema, type CrosswordDay } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  openUserState,
-  type Clock,
-  type FeatureSwitch,
-  type UserStatePort,
-} from '../index';
+import { type Clock, type FeatureSwitch, type UserStatePort } from '../index';
 import { openDailyCrossword, type CrosswordReadPort } from './daily-crossword';
 import { fakeClock } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /**
  * A day of four words:

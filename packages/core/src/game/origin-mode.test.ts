@@ -4,15 +4,14 @@ import type { OriginLanguage, Word } from '@slovo/contracts';
 
 import {
   buildGameReview,
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   type Composition,
   type CurrentGame,
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { seededRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Edition's origin languages, in its order. */
 const languages: readonly OriginLanguage[] = [

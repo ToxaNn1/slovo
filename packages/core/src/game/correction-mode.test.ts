@@ -4,11 +4,8 @@ import type { Correction, CorrectionType, FeatureSwitch, Word } from '@slovo/con
 
 import {
   buildGameReview,
-  createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
-  openUserState,
-  userStateRecords,
   type Composition,
   type ContentReadPort,
   type CurrentGame,
@@ -16,6 +13,8 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { optionsOf, seededRandom, testEdition } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 function correction(
   id: string,

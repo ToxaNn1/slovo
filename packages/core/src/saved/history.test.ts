@@ -3,10 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { Word } from '@slovo/contracts';
 
 import {
-  createMemoryUserStatePort,
   HISTORY_CAP,
   openComposition,
-  openUserState,
   SEEN_DWELL_MS,
   type Clock,
   type Composition,
@@ -15,6 +13,7 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 /** A small pack: three live Words, a Retired Word and a Correction. */

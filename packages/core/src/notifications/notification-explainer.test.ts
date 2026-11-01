@@ -2,15 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeatureSwitch, Word } from '@slovo/contracts';
 
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Composition,
-  type NotificationPermission,
-} from '../index';
+import { openComposition, type Composition, type NotificationPermission } from '../index';
 import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const words: readonly Word[] = Array.from({ length: 40 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),

@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   type Clock,
   type Composition,
   type UserStateChanges,
@@ -11,6 +9,7 @@ import {
 } from './index';
 import { createMemoryContentPort } from './testing';
 import { fakeClock, knownCounts, testEdition, word } from './test-support';
+import { createMemoryUserStatePort, openUserState } from './user-state/user-state';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const content = createMemoryContentPort({

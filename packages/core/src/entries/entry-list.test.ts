@@ -1,15 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Clock,
-  type Composition,
-  type UserStatePort,
-} from '../index';
+import { openComposition, type Clock, type Composition, type UserStatePort } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 /** A small pack: live Words, a Retired Word, a live and a Retired Correction. */

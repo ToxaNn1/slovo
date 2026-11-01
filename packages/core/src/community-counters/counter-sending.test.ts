@@ -1,15 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  createSettings,
-  openComposition,
-  openCounterSending,
-  openUserState,
-  type FeatureSwitch,
-} from '../index';
+import { createSettings, openComposition, openCounterSending, type FeatureSwitch } from '../index';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** Long enough for every wait between the tries of one request (ADR 0037). */
 const ALL_TRIES = 10_000;

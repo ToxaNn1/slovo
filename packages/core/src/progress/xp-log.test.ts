@@ -3,14 +3,10 @@ import type { XpTable } from '@slovo/contracts';
 
 import {
   createMemorySessionStore,
-  createMemoryUserStatePort,
   openAccount,
   openComposition,
   openSync,
-  openUserState,
   renderStress,
-  trackChanges,
-  userStateRecords,
   type AnalyticsPort,
   type Composition,
   type CurrentGame,
@@ -33,6 +29,9 @@ import {
   testSchedule,
   word,
 } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { trackChanges } from '../user-state/tracked-user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 // Spec #1358, ticket #1366, ADR 0066: the XP log and the XP the Game's learning actions earn.
 // Ticket #1372: the XP log syncs through the Account as a union by id.

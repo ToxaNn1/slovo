@@ -1,7 +1,7 @@
 import fc from 'fast-check';
 import { describe, it } from 'vitest';
 
-import { createMemoryUserStatePort, openComposition, openUserState, type Feed } from '../index';
+import { openComposition, type Feed } from '../index';
 import { ENTRY_KINDS } from '../entries/entry-kinds';
 import { createMemoryContentPort } from '../testing';
 import {
@@ -14,6 +14,7 @@ import {
   tip,
   word,
 } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Feed turns of the kinds, from the kind table: every how many cards each takes one. */
 const CORRECTION_EVERY = ENTRY_KINDS.correction.feedTurn;

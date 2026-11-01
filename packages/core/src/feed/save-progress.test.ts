@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
-  userStateRecords,
   type Composition,
   type FeatureSwitch,
   type FeedCard,
@@ -12,6 +9,8 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 // Spec #1358 story 70 and its Feed Notices, ticket #1383: the save-progress
 // Feed Notice on Streak day 3 and on the day of the first new Level, at most

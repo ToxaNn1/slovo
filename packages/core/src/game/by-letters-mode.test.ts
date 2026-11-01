@@ -4,10 +4,8 @@ import type { Category, Word } from '@slovo/contracts';
 
 import {
   buildGameReview,
-  createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
-  openUserState,
   type Composition,
   type ContentReadPort,
   type CurrentGame,
@@ -16,6 +14,7 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { seededRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const test: Category = { id: 'test', displayName: 'Test' };
 const crafts: Category = { id: 'crafts', displayName: 'Crafts' };

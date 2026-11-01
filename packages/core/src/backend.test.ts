@@ -9,15 +9,10 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import { answerOf } from './backend';
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openMistakeReports,
-  openUserState,
-  type Backend,
-} from './index';
+import { openComposition, openMistakeReports, type Backend } from './index';
 import { createMemoryContentPort } from './testing';
 import { fakeClock, randomOf, testEdition, testSchedule, word } from './test-support';
+import { createMemoryUserStatePort, openUserState } from './user-state/user-state';
 
 // ADR 0064: the Core reaches the backend through one port, the contract's
 // client, and answers, retries and maps every call itself (ADR 0037); its

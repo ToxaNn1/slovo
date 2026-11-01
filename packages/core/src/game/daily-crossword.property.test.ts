@@ -8,15 +8,10 @@ import {
   type CrosswordWord,
 } from '@slovo/contracts';
 
-import {
-  createMemoryUserStatePort,
-  openUserState,
-  type CrosswordPlace,
-  type DailyCrossword,
-  type DailyCrosswordWord,
-} from '../index';
+import { type CrosswordPlace, type DailyCrossword, type DailyCrosswordWord } from '../index';
 import { openDailyCrossword } from './daily-crossword';
 import { fakeClock } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** Seeded, so CI checks the same inputs on every run. */
 const runs = { seed: 20261027, numRuns: 100 };

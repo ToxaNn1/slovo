@@ -2,16 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Composition,
-  type FeatureSwitch,
-  type Feed,
-} from '../index';
+import { openComposition, type Composition, type FeatureSwitch, type Feed } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, randomOf, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** Twenty Words of the test Category, one of another Category and one of rarity 1. */
 const words: readonly Word[] = [

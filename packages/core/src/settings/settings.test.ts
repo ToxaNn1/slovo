@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { colorSchemeFor, createMemoryUserStatePort, createSettings, openUserState } from '../index';
+import { colorSchemeFor, createSettings } from '../index';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const defaults = { theme: 'system', fontSize: 'M', vibration: true } as const;
 

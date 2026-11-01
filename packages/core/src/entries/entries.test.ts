@@ -2,14 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction, EntryKind, FeatureSwitch, SynonymRow, Tip, Word } from '@slovo/contracts';
 
-import {
-  createEntries,
-  createMemoryUserStatePort,
-  openRemoteSwitches,
-  openUserState,
-} from '../index';
+import { createEntries, openRemoteSwitches } from '../index';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { countingReads, idiom, randomOf, testEdition } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
   return {

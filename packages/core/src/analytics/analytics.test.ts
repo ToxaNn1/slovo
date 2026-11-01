@@ -2,15 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   createAnalytics,
-  createMemoryUserStatePort,
   createSettings,
   openComposition,
-  openUserState,
   type AnalyticsPort,
   type FeatureSwitch,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, settle, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const SECOND = 1000;
 

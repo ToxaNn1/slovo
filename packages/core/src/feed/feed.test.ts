@@ -5,10 +5,8 @@ import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts'
 import {
   buildEntryCard,
   createEntries,
-  createMemoryUserStatePort,
   isTodaysWordOfTheDay,
   openComposition,
-  openUserState,
   SEEN_DWELL_MS,
   type Clock,
   type Composition,
@@ -30,6 +28,7 @@ import {
   testEdition,
   word as sharedWord,
 } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Feed turns of the kinds, from the kind table: every how many cards each takes one. */
 const CORRECTION_EVERY = ENTRY_KINDS.correction.feedTurn;

@@ -1,12 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createContentUpdate,
-  createMemoryUserStatePort,
-  openUserState,
-  type PackVersion,
-  type Schedule,
-} from '../index';
+import { createContentUpdate, type PackVersion, type Schedule } from '../index';
 import {
   createFakeBackend,
   createMemoryPackFiles,
@@ -16,6 +10,7 @@ import {
   type ProcedureName,
 } from '../testing';
 import { fakeClock, randomOf } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const HOUR = 60 * 60 * 1000;
 

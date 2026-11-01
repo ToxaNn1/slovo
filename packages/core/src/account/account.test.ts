@@ -3,9 +3,6 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   createMemorySessionStore,
   openAccount,
-  createMemoryUserStatePort,
-  openUserState,
-  userStateRecords,
   type AnalyticsPort,
   type FeatureSwitch,
   type KeptSession,
@@ -19,6 +16,8 @@ import {
   createFakeGoogleSignInSheet,
 } from '../testing';
 import { fakeClock, randomOf } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 /** A schedule that runs what it is given at once and keeps each delay asked for. */
 function atOnce() {

@@ -1,17 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  createSettings,
-  createSwipeHint,
-  openUserState,
-  type UserStateChanges,
-  type UserStateMigration,
-  UserStateTooNewError,
-} from '../index';
+import { createSettings, createSwipeHint, type UserStateChanges } from '../index';
 import { openCycle } from '../feed/cycle';
 import { openWordOfTheDay } from '../feed/word-of-the-day';
 import { userStateRecords } from './user-state-schema';
+import { createMemoryUserStatePort, openUserState, UserStateTooNewError } from './user-state';
+import { type UserStateMigration } from './user-state-migration';
 
 const greet: UserStateMigration = {
   version: 1,

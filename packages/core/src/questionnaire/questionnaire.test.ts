@@ -2,18 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import type { Category, FeatureSwitch } from '@slovo/contracts';
 
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  userStateRecords,
-  type AnalyticsPort,
-  type Composition,
-  type FeedCard,
-} from '../index';
+import { openComposition, type AnalyticsPort, type Composition, type FeedCard } from '../index';
 import { createMemoryContentPort } from '../testing';
 import type { UserState } from '../user-state/user-state';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 const categories: readonly Category[] = [
   { id: 'nature', displayName: 'Nature' },

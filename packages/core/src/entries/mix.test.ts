@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   SEEN_DWELL_MS,
   type Clock,
   type Composition,
@@ -15,6 +13,7 @@ import {
 import { createMemoryContentPort } from '../testing';
 import { RARITIES, type Category } from '@slovo/contracts';
 import { correction, fakeClock, idiom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Language Pack's Categories, in its order. */
 const nature: Category = { id: 'nature', displayName: 'Nature' };

@@ -4,9 +4,7 @@ import type { Word } from '@slovo/contracts';
 
 import {
   buildGameReview,
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   type Composition,
   type CurrentGame,
   type Round,
@@ -14,6 +12,7 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, optionsOf, seededRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** A Word with an Example that holds its Lemma, which «Вгадай слово» would ask with a gap in Rounds 6–10. */
 const wordOf = (index: number, categoryId = 'test'): Word => {
