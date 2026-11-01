@@ -200,12 +200,14 @@ describe('the Feed Notices on the Feed', () => {
     expect(within(card).getByText(day1.title, hidden)).toBeTruthy();
   });
 
-  it('shows no Feed Notice to a reader past the first week with no other notice due', async () => {
+  it('shows a reader past the first week with no other notice due only the Daily Goal later question', async () => {
     await open({ 'onboarding.finished': '2026-09-01T09:00:00Z' });
     await renderApp();
 
     expect(screen.getAllByTestId('word-card', hidden).length).toBeGreaterThan(0);
-    expect(screen.queryByTestId(/^feed-notice-/, hidden)).toBeNull();
+    expect(
+      screen.getAllByTestId(/^feed-notice-/, hidden).map(({ props }) => String(props['testID'])),
+    ).toEqual(['feed-notice-dailyGoalChoice']);
   });
 
   it('shows the notification explainer by day 3, and the device is not asked before «Так»', async () => {

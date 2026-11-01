@@ -96,7 +96,10 @@ async function open(calligraphy: boolean) {
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
-      feature === 'calligraphy' ? calligraphy : shipped.isFeatureEnabled(feature),
+      feature === 'calligraphy'
+        ? calligraphy
+        : // No later question takes the Word of the Day's place in the Feed.
+          feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   const records = new Map([

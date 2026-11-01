@@ -155,11 +155,7 @@ function DailyGoalQuestion({
   );
 }
 
-/**
- * A chip for every Word Category, those in the Mix picked, and «Готово»,
- * which hides every Category not picked. The last picked chip can't be
- * unpicked, as on the Mix screen.
- */
+/** The interests question on its Feed Notice: the chips, «Готово» and «Пізніше». */
 function InterestsQuestion({
   later,
   onDone,
@@ -167,39 +163,59 @@ function InterestsQuestion({
   later: ReactNode;
   onDone: (categoryIds: readonly string[]) => void;
 }) {
-  const { allCategories, categoryIds } = useMixState();
-  const [picked, setPicked] = useState<readonly string[]>(categoryIds);
   const { title, text } = strings.interests;
   return (
     <FeedNoticeCard notice="interests" title={title} message={text}>
       <View style={styles.block}>
-        <View style={styles.chips}>
-          {allCategories.map(({ id, displayName }) => {
-            const on = picked.includes(id);
-            return (
-              <MixChip
-                key={id}
-                testID={`later-question-interest-${id}`}
-                label={displayName}
-                on={on}
-                disabled={on && picked.length === 1}
-                onPress={() => {
-                  setPicked(on ? picked.filter((other) => other !== id) : [...picked, id]);
-                }}
-              />
-            );
-          })}
-        </View>
-        <PrimaryButton
-          testID="later-question-interests-done"
-          label={strings.done}
-          onPress={() => {
-            onDone(picked);
-          }}
-        />
+        <InterestsChoice testIDPrefix="later-question" onDone={onDone} />
         {later}
       </View>
     </FeedNoticeCard>
+  );
+}
+
+/**
+ * The interests: a chip for every Word Category, those in the Mix picked,
+ * and «Готово», which hides every Category not picked. The last picked chip
+ * can't be unpicked, as on the Mix screen. For the Feed Notice and the
+ * retake in Settings.
+ */
+export function InterestsChoice({
+  testIDPrefix,
+  onDone,
+}: {
+  testIDPrefix: string;
+  onDone: (categoryIds: readonly string[]) => void;
+}) {
+  const { allCategories, categoryIds } = useMixState();
+  const [picked, setPicked] = useState<readonly string[]>(categoryIds);
+  return (
+    <>
+      <View style={styles.chips}>
+        {allCategories.map(({ id, displayName }) => {
+          const on = picked.includes(id);
+          return (
+            <MixChip
+              key={id}
+              testID={`${testIDPrefix}-interest-${id}`}
+              label={displayName}
+              on={on}
+              disabled={on && picked.length === 1}
+              onPress={() => {
+                setPicked(on ? picked.filter((other) => other !== id) : [...picked, id]);
+              }}
+            />
+          );
+        })}
+      </View>
+      <PrimaryButton
+        testID={`${testIDPrefix}-interests-done`}
+        label={strings.done}
+        onPress={() => {
+          onDone(picked);
+        }}
+      />
+    </>
   );
 }
 

@@ -89,6 +89,8 @@ export interface Shown {
   readonly wordOfTheDayArchive: boolean;
   /** The «Пройти тест ще раз» row of Settings, while the Rarity Floor it sets is on as well. */
   readonly rarityTest: boolean;
+  /** The «Пройти опитування ще раз» row of Settings, with the self-rating while the Rarity Floor is on. */
+  readonly questionnaire: { readonly selfRating: boolean } | undefined;
 }
 
 /**
@@ -150,5 +152,6 @@ export function shownOf({
     moods: on('moods'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarityTest: on('rarityTest') && on('rarityFloor'),
+    questionnaire: on('laterQuestions') ? { selfRating: on('rarityFloor') } : undefined,
   };
 }
