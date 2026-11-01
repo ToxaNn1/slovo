@@ -196,6 +196,15 @@ export default function SettingsScreen() {
                 }}
               />
             )}
+            {shown.badges && (
+              <NavigationRow
+                testID="settings-row-badges"
+                label={strings.rows.badges}
+                onPress={() => {
+                  openScreen('/settings/badges');
+                }}
+              />
+            )}
             {shown.streakBreak && (
               <NavigationRow
                 testID="settings-row-streak-break"

@@ -73,6 +73,8 @@ export interface Shown {
   readonly xpBar: boolean;
   /** The Settings row of the Break and its screen. */
   readonly streakBreak: boolean;
+  /** The Settings row that opens the Badges (ADR 0066). */
+  readonly badges: boolean;
   /** The Quick Question in the Feed and its «Швидкі питання» row in the Mix; it asks the Game's Modes. */
   readonly quickQuestion: boolean;
   /** The Sync status line of the SLOVO ID screen. */
@@ -140,6 +142,7 @@ export function shownOf({
       : undefined,
     xpBar: on('xpLog') && !noCounters,
     streakBreak: on('xpLog') && on('streakBreak'),
+    badges: on('xpLog') && on('badges'),
     quickQuestion: on('game') && on('quickQuestion'),
     sync: on('sync'),
     dailyGoal: on('xpLog') && on('dailyGoal'),

@@ -106,7 +106,8 @@
       "myMix": "Мій Мікс",
       "hidden": "Приховані записи",
       "about": "Про застосунок і відгук",
-      "streakBreak": "Перерва"
+      "streakBreak": "Перерва",
+      "badges": "Відзнаки"
     },
     "streakBreak": {
       "title": "Перерва",
@@ -115,6 +116,28 @@
       "start": "Почати перерву",
       "running": "Перерва триває до {date} включно.",
       "waiting": "Наступну перерву можна почати з {date}."
+    },
+    "badges": {
+      "title": "Відзнаки",
+      "earned": "Отримано {date}",
+      "notYet": "Ще не отримано",
+      "progress": {
+        "days": {
+          "one": "{current} з {count} дня",
+          "other": "{current} з {count} днів"
+        },
+        "entries": {
+          "one": "{current} з {count} запису",
+          "other": "{current} з {count} записів"
+        },
+        "rightAnswers": {
+          "one": "{current} з {count} правильної відповіді",
+          "other": "{current} з {count} правильних відповідей"
+        },
+        "level": {
+          "other": "Рівень {current} з {count}"
+        }
+      }
     },
     "sounds": {
       "section": "ЗВУКИ",
