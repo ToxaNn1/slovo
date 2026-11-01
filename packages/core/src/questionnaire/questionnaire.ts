@@ -49,10 +49,10 @@ export interface Questionnaire {
 
 const { laterQuestions, onboardingFinished, firstWeekFrom } = userStateRecords;
 
-type Deps = {
+interface Deps {
   edition: Pick<Edition, 'isFeatureEnabled' | 'questionnaire'>;
   mix: Pick<Mix, 'setRarityCeiling' | 'setKindWeight' | 'setRarityFloorRaisingCeiling'>;
-};
+}
 
 /**
  * Applies the answer `answerId` to the question through the Mix by the

@@ -24,7 +24,9 @@ const categories: readonly Category[] = [
 const content = createMemoryContentPort({
   categories,
   words: categories.flatMap(({ id: categoryId }) =>
-    Array.from({ length: 6 }, (_, index) => word(`w_${categoryId}_${index}`, { categoryId })),
+    Array.from({ length: 6 }, (_, index) =>
+      word(`w_${categoryId}_${String(index)}`, { categoryId }),
+    ),
   ),
 });
 
