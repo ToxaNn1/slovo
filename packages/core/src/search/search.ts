@@ -4,7 +4,7 @@ import type { Edition } from '../edition/edition';
 import { byKind, featureOfKind, type ByKind, type MixKind } from '../entries/entry-kinds';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { searchKey } from './search-key';
 
 /** The shortest query Search answers, in letters of its Search key (ADR 0054). */

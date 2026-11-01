@@ -10,7 +10,7 @@ import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from './user-state';
 import { trackChanges } from './tracked-user-state';
-import { userStateRecords } from './user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 const {
   activeDays,

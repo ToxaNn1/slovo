@@ -26,7 +26,7 @@ import { dateKeyOf, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { MixKindWeights } from '../entries/mix';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { buildWordCard } from '../entries/word-card';
 import type { WordOfTheDay, WordOfTheDayChoice } from './word-of-the-day';
 import type { QuickQuestion } from '../game/quick-question';

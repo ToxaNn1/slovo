@@ -14,7 +14,7 @@ import {
 import { createMemoryContentPort } from '../testing';
 import { optionsOf, seededRandom, testEdition } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 function correction(
   id: string,

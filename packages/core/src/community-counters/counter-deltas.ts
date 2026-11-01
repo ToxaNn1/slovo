@@ -2,7 +2,7 @@ import type { Edition } from '../edition/edition';
 import type { KnowledgeMark } from '../knowledge/knowledge-record';
 import type { CounterChange, CounterDelta, CounterEvent, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /**
  * The Community Counters of this device (ADR 0060): the changes it counted

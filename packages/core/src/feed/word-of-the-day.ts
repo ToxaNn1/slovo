@@ -4,7 +4,7 @@ import { todayKey, parseLocalDate, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import { createReservedWords } from './reserved-words';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** The Word of the Day of one local day. */
 export interface WordOfTheDayChoice {

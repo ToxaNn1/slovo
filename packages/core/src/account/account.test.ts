@@ -17,7 +17,7 @@ import {
 } from '../testing';
 import { fakeClock, randomOf } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** A schedule that runs what it is given at once and keeps each delay asked for. */
 function atOnce() {

@@ -10,7 +10,7 @@ import {
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, knownCounts, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 const content = createMemoryContentPort({
   words: [word('w_one'), word('w_two'), word('w_three')],

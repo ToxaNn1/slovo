@@ -10,7 +10,7 @@ import type { LocalDate } from '../local-date';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import type { XpRecord } from './records';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { levelOf, type LevelState } from './levels';
 
 const { xpLog: xpRecords } = userStateRecords;

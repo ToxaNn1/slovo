@@ -6,7 +6,7 @@ import type { Badge } from '@slovo/contracts';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 // Spec #1358, ticket #1384: the progress Share Cards on offer today, a Level
 // reached, a Badge earned and a Streak milestone, each on its own day only.

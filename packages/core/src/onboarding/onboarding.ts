@@ -21,7 +21,7 @@ import {
   type QuestionnaireOption,
 } from '../questionnaire/questionnaire';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** The Daily Goals the reader picks from. */
 const DAILY_GOALS: readonly DailyGoal[] = [10, 20, 30, 50];

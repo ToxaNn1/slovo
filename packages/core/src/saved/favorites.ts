@@ -4,7 +4,7 @@ import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn } from '../in-turn';
 import type { Clock } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** An Entry in Favorites. */
 export interface Favorite {

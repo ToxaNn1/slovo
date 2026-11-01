@@ -6,7 +6,7 @@ import type { Badge } from '@slovo/contracts';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 // Spec #1358, ticket #1378, ADR 0066: Badges from the Core's catalogue of
 // conditions, chosen and named by the Edition, kept with their date.

@@ -5,7 +5,7 @@ import type { HiddenEntries } from '../mix/hidden-entries';
 import { answerOf } from '../backend';
 import type { Backend, Clock, CommunityWordAnswer } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { buildFeedCard } from './feed';
 import type { FeedNotices } from './feed-notices';
 

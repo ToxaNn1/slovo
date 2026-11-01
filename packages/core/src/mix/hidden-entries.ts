@@ -4,7 +4,7 @@ import { createInTurn } from '../in-turn';
 import type { Clock } from '../ports';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** An Entry the user hid. */
 export interface HiddenEntry {

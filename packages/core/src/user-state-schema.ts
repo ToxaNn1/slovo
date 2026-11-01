@@ -1,30 +1,30 @@
 import { z } from 'zod';
 
-import { accountRecords, INSTALLED_KEY } from '../account/records';
-import { communityCounterRecords } from '../community-counters/records';
-import { contentUpdateRecords } from '../content-update/records';
-import { editionRecords } from '../edition/records';
-import { feedRecords } from '../feed/records';
-import { gameRecords } from '../game/records';
-import { knowledgeRecords } from '../knowledge/records';
-import { mistakeReportRecords } from '../mistake-reports/records';
-import { mixRecords } from '../mix/records';
-import { notificationRecords } from '../notifications/records';
-import { onboardingRecords } from '../onboarding/records';
-import { progressRecords } from '../progress/records';
-import { questionnaireRecords } from '../questionnaire/records';
-import { savedRecords } from '../saved/records';
-import { searchRecords } from '../search/records';
-import { settingsRecords } from '../settings/records';
-import { syncRecords } from '../sync/records';
+import { accountRecords, INSTALLED_KEY } from './account/records';
+import { communityCounterRecords } from './community-counters/records';
+import { contentUpdateRecords } from './content-update/records';
+import { editionRecords } from './edition/records';
+import { feedRecords } from './feed/records';
+import { gameRecords } from './game/records';
+import { knowledgeRecords } from './knowledge/records';
+import { mistakeReportRecords } from './mistake-reports/records';
+import { mixRecords } from './mix/records';
+import { notificationRecords } from './notifications/records';
+import { onboardingRecords } from './onboarding/records';
+import { progressRecords } from './progress/records';
+import { questionnaireRecords } from './questionnaire/records';
+import { savedRecords } from './saved/records';
+import { searchRecords } from './search/records';
+import { settingsRecords } from './settings/records';
+import { syncRecords } from './sync/records';
 import {
   declareRecord,
   parseJson,
   type SyncMark,
   type UserStateRecord,
   type UserStateRecords,
-} from './user-state-record';
-import type { UserStateMigration } from './user-state-migration';
+} from './user-state/user-state-record';
+import type { UserStateMigration } from './user-state/user-state-migration';
 
 /**
  * The user-state schema (ADR 0013): the registry of every record the Core
@@ -134,7 +134,9 @@ export const userStateRecords = {
 };
 
 /** Every declared record and kind of record, for finding the one a key belongs to. */
-const declared: readonly Declaration[] = domains.flatMap((domain) => Object.values(domain));
+const declared: readonly Declaration[] = domains.flatMap(
+  (domain: Readonly<Record<string, Declaration>>) => Object.values(domain),
+);
 
 /**
  * How the record under the key syncs, by the schema: its mark,

@@ -23,7 +23,7 @@ import {
 import { readMix, type MixEdition, type MixState } from './mix';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 export type { ShownKind } from './entry-kinds';
 

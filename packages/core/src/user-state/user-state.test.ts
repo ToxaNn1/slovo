@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { createSettings, createSwipeHint, type UserStateChanges } from '../index';
 import { openCycle } from '../feed/cycle';
 import { openWordOfTheDay } from '../feed/word-of-the-day';
-import { userStateRecords } from './user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { createMemoryUserStatePort, openUserState, UserStateTooNewError } from './user-state';
 import { type UserStateMigration } from './user-state-migration';
 

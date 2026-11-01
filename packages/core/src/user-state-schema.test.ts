@@ -7,8 +7,8 @@ import {
   declareRecords,
   type UserStateRecord,
   type UserStateRecords,
-} from './user-state-record';
-import { createMemoryUserStatePort, openUserState } from './user-state';
+} from './user-state/user-state-record';
+import { createMemoryUserStatePort, openUserState } from './user-state/user-state';
 
 const { activeDays, notificationTimes, notificationSound, notificationPlan, onboardingFinished } =
   userStateRecords;
@@ -182,31 +182,31 @@ describe('the registry of the user-state records', () => {
   it('refuses two domains that declare the same name, the same key, or a key under a prefix', () => {
     const theme = { theme: declareRecord('settings.theme', z.string()) };
 
-    expect(() =>
-      checkUserStateRecords([theme, { theme: declareRecord('other.theme', z.string()) }]),
-    ).toThrow(/"theme"/);
-    expect(() =>
-      checkUserStateRecords([theme, { look: declareRecord('settings.theme', z.string()) }]),
-    ).toThrow(/"theme" and "look"/);
-    expect(() =>
+    expect(() => {
+      checkUserStateRecords([theme, { theme: declareRecord('other.theme', z.string()) }]);
+    }).toThrow(/"theme"/);
+    expect(() => {
+      checkUserStateRecords([theme, { look: declareRecord('settings.theme', z.string()) }]);
+    }).toThrow(/"theme" and "look"/);
+    expect(() => {
       checkUserStateRecords([
         { seen: declareRecords('feed.seen.', z.number()) },
         { one: declareRecord('feed.seen.w-1', z.number()) },
-      ]),
-    ).toThrow(/"seen" and "one"/);
-    expect(() =>
+      ]);
+    }).toThrow(/"seen" and "one"/);
+    expect(() => {
       checkUserStateRecords([
         { seen: declareRecords('feed.seen.', z.number()) },
         { some: declareRecords('feed.seen.w', z.number()) },
-      ]),
-    ).toThrow(/"seen" and "some"/);
-    expect(() =>
+      ]);
+    }).toThrow(/"seen" and "some"/);
+    expect(() => {
       checkUserStateRecords([
         theme,
         { seen: declareRecords('feed.seen.', z.number()) },
         { cycle: declareRecord('feed.cycle', z.number()) },
-      ]),
-    ).not.toThrow();
+      ]);
+    }).not.toThrow();
   });
 });
 

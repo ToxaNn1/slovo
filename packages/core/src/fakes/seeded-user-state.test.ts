@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { openTrackedUserState } from '../user-state/tracked-user-state';
 import { createMemoryUserStatePort } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { readFact, seedUserState } from './seeded-user-state';
 
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };

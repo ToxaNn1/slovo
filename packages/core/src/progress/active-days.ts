@@ -4,7 +4,7 @@ import { dateKeyOf, localDateAfter, todayDate, todayKey } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { ACTIVE_DAY_XP, deriveStreak, type DerivedStreak, type StreakState } from './streak';
 import type { XpLog } from './xp-log';
 

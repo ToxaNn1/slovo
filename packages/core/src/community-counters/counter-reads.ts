@@ -4,7 +4,7 @@ import type { Edition } from '../edition/edition';
 import { answerOf } from '../backend';
 import type { Backend, Clock, EntryCounters } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** How long the device keeps an Entry's numbers before it asks again, in milliseconds (ADR 0060). */
 const KEPT_FOR = 24 * 60 * 60 * 1000;

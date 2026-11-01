@@ -4,7 +4,7 @@ import { dateKeyOf, dayNumber, localDayOf, parseLocalDate } from '../local-date'
 import type { Clock, NotificationPermission } from '../ports';
 import type { XpLog } from '../progress/xp-log';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** The day after the onboarding's on which the explainer comes at the latest: day 3. */
 const EXPLAINER_LATEST_DAY = 2;

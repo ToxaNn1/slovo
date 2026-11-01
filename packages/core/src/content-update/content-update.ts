@@ -14,7 +14,7 @@ import type {
 } from '../ports';
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** A content request that failed as any request does, or found no such Edition or pack (404). */
 type ContentApiFailure = RequestFailure | { readonly ok: false; readonly reason: 'not-found' };

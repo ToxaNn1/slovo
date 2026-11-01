@@ -2,7 +2,7 @@ import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn, createSubscribers, newestFirst } from '../in-turn';
 import type { Clock, Random, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** A Collection, as the sheet and the Collections screens draw it. */
 export interface Collection {

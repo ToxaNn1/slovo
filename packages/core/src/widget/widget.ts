@@ -22,7 +22,7 @@ import type { ActiveDays } from '../progress/active-days';
 import type { Progress } from '../progress/progress';
 import type { XpLog } from '../progress/xp-log';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import type { Clock } from '../ports';
 import { withoutStress } from '../entries/stress';
 
