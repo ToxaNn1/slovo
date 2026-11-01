@@ -48,6 +48,9 @@ const ServerVariablesSchema = z.object({
   // The address the sign-in emails come from; the Edition names the sender.
   // Unset, no-reply@slovo.app.
   MAIL_FROM: unsetWhenEmpty(z.email({ error: 'must be an email address' })),
+  // The one Account the owner admin at /admin signs in (ADR 0069). Empty, or
+  // unset, leaves the admin out of the backend.
+  OWNER_EMAIL: unsetWhenEmpty(z.email({ error: 'must be an email address' })),
   // The OAuth client ids of SLOVO at Google, comma-separated: one per app
   // that signs in with Google (ADR 0047). A Google identity token must name
   // one as its audience. Empty, or unset, turns Google sign-in off.

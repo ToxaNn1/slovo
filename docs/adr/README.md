@@ -70,3 +70,4 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0066](0066-the-xp-log-derives-the-streak-the-active-day-freezes-and-the-break.md) An append-only XP log derives XP, Level, Active Day (≥5 XP), Streak, freezes and Break, merged by id; the Daily Goal replaces the Daily Limit (amends 0054).
 - [0067](0067-onboarding-is-short-and-asks-two-questions.md) Onboarding: welcome, the first Word, two questions, the Daily Goal, the Feed; the rest comes later as Feed Notices.
 - [0068](0068-analytics-go-through-one-port-and-questionnaire-counters-carry-no-id.md) Analytics go through one Core port behind the one privacy switch; questionnaire counters carry no reader id (amends 0060).
+- [0069](0069-the-owner-admin-is-web-pages-on-the-backend-for-one-account.md) The owner admin at `/admin` signs in one Account (`OWNER_EMAIL`), turns remote switches off only, sums the counters and holds the Mistake Report inbox.
