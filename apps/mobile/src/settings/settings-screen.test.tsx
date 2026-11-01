@@ -128,7 +128,7 @@ describe('Settings › «Ділитися анонімною статистик�
     const row = screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' });
     expect(row).toHaveProp('value', true);
     const explanation =
-      'Лише анонімні лічильники: скільки читачів знають і зберегли слово. Без акаунта й без даних пристрою.';
+      'Анонімні лічильники слів і відповідей анкети та анонімна статистика використання. Без акаунта, пошти й ідентифікатора пристрою.';
     expect(screen.getByText(explanation, { includeHiddenElements: true })).toBeOnTheScreen();
     // VoiceOver reads the row once, at its switch, with the explanation as its hint.
     expect(screen.getByHintText(explanation)).toBe(row);
