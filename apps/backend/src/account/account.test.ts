@@ -62,8 +62,8 @@ describe('signing in with a Sign-in code', () => {
       {
         to: email,
         senderName: uk.config.displayName,
-        subject: fill(strings.subject, { code, name: 'SLOVO ID' }),
-        text: fill(strings.body, { code, name: 'SLOVO ID' }),
+        subject: fill(strings.subject, { code, name: uk.config.accountName }),
+        text: fill(strings.body, { code, name: uk.config.accountName }),
       },
     ]);
   });
