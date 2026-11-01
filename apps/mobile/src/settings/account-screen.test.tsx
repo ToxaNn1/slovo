@@ -1,8 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import {
   createMemorySessionStore,
-  createMemoryUserStatePort,
-  openUserState,
   loadEdition,
   openAccount,
   systemRandom,
@@ -14,6 +12,7 @@ import {
   createFakeAppleSignInSheet,
   createFakeBackend,
   createFakeGoogleSignInSheet,
+  seedUserState,
 } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -81,7 +80,7 @@ async function renderScreen({
         googleSheet,
         appleSheet,
         sessions: createMemorySessionStore(),
-        userState: await openUserState({ port: createMemoryUserStatePort() }),
+        userState: await seedUserState(),
         clock,
         schedule: (run) => {
           run();

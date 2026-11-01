@@ -1,9 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   SEEN_DWELL_MS,
   type Clock,
   type Composition,
@@ -15,6 +13,7 @@ import {
 import { createWordOfTheDayArchive } from './word-of-the-day-archive';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Edition's one Category, the test Words' own, and its default Mix of every Category. */
 const content = createMemoryContentPort({

@@ -1,16 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
-  trackChanges,
   type Composition,
+  type TrackedUserState,
   type Edition,
   type Haptics,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { router, Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
@@ -42,10 +40,12 @@ jest.mock('expo-constants', () => ({
 let editionInEffect: Edition;
 
 /** The user state the settings and the composition keep, opened afresh for each test. */
-let userState: Awaited<ReturnType<typeof openUserState>>;
+let userState: TrackedUserState;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
+
+const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
@@ -102,10 +102,7 @@ async function open(calligraphy: boolean) {
           feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
-  const records = new Map([
-    ['onboarding.finished', JSON.stringify(new Date('2026-09-01T09:00:00Z'))],
-  ]);
-  userState = await openUserState({ port: createMemoryUserStatePort(records) });
+  userState = await seedUserState({ onboardingFinished: '2026-09-01T09:00:00.000Z' }, { clock });
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
@@ -113,7 +110,7 @@ async function open(calligraphy: boolean) {
     }),
     edition: editionInEffect,
     userState: userState,
-    clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    clock,
     // The first Word in each draw, so each opening shows the same Word of the Day.
     random: { next: () => 0 },
   });
@@ -138,12 +135,7 @@ async function settle(action: () => unknown = () => undefined) {
 /** The Shell the app draws under: the settings and the composition over the test's user state. */
 const shell = () =>
   testShell({
-    userState: opened(
-      trackChanges({
-        userState,
-        clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
-      }),
-    ),
+    userState: opened(userState),
     remoteSwitches: switchedTo(editionInEffect),
     composition: opened(composition),
   });

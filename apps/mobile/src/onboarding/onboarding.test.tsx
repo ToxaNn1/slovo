@@ -1,16 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
-  trackChanges,
   type Composition,
   type Edition,
   type Haptics,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -67,7 +64,7 @@ let composition: Composition;
 
 /** Draws the onboarding of a new reader over the Edition given, on 2026-10-28 in Kyiv. */
 async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFiles.config)) {
-  const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  const userState = await seedUserState({}, { clock });
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
@@ -81,7 +78,7 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
     random: { next: () => 0 },
   });
   const shell = testShell({
-    userState: opened(trackChanges({ userState, clock })),
+    userState: opened(userState),
     remoteSwitches: switchedTo(shipped),
     composition: opened(composition),
   });

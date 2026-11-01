@@ -1,15 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  openUserState,
-  type Clock,
-  type Random,
-  type UserStatePort,
-} from '../index';
+import { type Clock, type Random, type UserStatePort } from '../index';
 import { openCycle, type Cycle } from './cycle';
 import { openWordOfTheDay, type WordOfTheDay } from './word-of-the-day';
 import { fakeClock, randomOf, randomSequence } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const wordIds = Array.from({ length: 10 }, (_, index) => `w_${String(index)}`);
 const correctionIds = ['c_0', 'c_1', 'c_2'];

@@ -2,17 +2,12 @@ import type { FeatureSwitch, Mood, Word } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { createEntries } from '../entries/entries';
-import {
-  createMemoryUserStatePort,
-  openUserState,
-  type ContentReadPort,
-  type Edition,
-  type Random,
-} from '../index';
+import { type ContentReadPort, type Edition, type Random } from '../index';
 import type { UserState } from '../user-state/user-state';
 import { createMoodDraw, type MoodDraw } from './mood-draw';
 import { createMemoryContentPort } from '../testing';
 import { seededRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const moods: readonly Mood[] = [
   { id: 'calm', name: 'Calm', emoji: '😌' },

@@ -4,16 +4,15 @@ import type { Correction, Word } from '@slovo/contracts';
 
 import {
   buildGameReview,
-  createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
-  openUserState,
   type Composition,
   type CurrentGame,
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, seededRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The UA Edition's vowels. */
 const vowels = ['а', 'е', 'є', 'и', 'і', 'ї', 'о', 'у', 'ю', 'я'];

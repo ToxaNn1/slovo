@@ -1,15 +1,10 @@
 import { CrosswordDaySchema, type CrosswordDay } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type AnalyticsPort,
-  type FeatureSwitch,
-} from '../index';
+import { openComposition, type AnalyticsPort, type FeatureSwitch } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 // Spec #1358, ticket #1367, ADR 0066: the XP of the Daily Crossword and of Review answers.
 

@@ -1,9 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   type Clock,
   type Composition,
   type PlannedNotification,
@@ -15,6 +13,7 @@ import {
   type FakeNotificationScheduler,
 } from '../testing';
 import { fakeClock, testEdition, word, wordIdOf } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** More Words than the plan holds, so every notification gets one. */
 const words = Array.from({ length: 60 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`));

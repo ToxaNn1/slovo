@@ -206,11 +206,4 @@ export {
   type UserStateChanges,
   type UserStatePort,
 } from './ports';
-export { userStateRecords } from './user-state/user-state-schema';
-export {
-  createMemoryUserStatePort,
-  openUserState,
-  UserStateTooNewError,
-} from './user-state/user-state';
-export { trackChanges, type TrackedUserState } from './user-state/tracked-user-state';
-export type { UserStateMigration } from './user-state/user-state-migration';
+export { openTrackedUserState, type TrackedUserState } from './user-state/tracked-user-state';

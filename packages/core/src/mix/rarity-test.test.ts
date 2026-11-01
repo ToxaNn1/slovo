@@ -1,15 +1,10 @@
 import { RARITIES, type FeatureSwitch, type Word } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Composition,
-  type Random,
-} from '../index';
+import { openComposition, type Composition, type Random } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** Three Words of each rarity 1–5 in the Category `test`, ids like `w_r3_1`. */
 const threeOfEachRarity: Word[] = RARITIES.flatMap((rarity) =>

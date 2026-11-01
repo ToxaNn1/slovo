@@ -1,6 +1,6 @@
 import { createInTurn, createSubscribers } from '../in-turn';
-import type { Clock, UserStateChanges } from '../ports';
-import type { UserState } from './user-state';
+import type { Clock, UserStateChanges, UserStatePort } from '../ports';
+import { createMemoryUserStatePort, openUserState, type UserState } from './user-state';
 import { syncs, userStateRecords } from './user-state-schema';
 
 /**
@@ -124,4 +124,19 @@ export function trackChanges({
       }),
     subscribe: subscribers.subscribe,
   };
+}
+
+/**
+ * Opens the user state over the port, bringing an older schema forward, and
+ * tracks every write of a synced record (spec #378). Without a port the
+ * records live in memory, so they last until the app quits.
+ */
+export async function openTrackedUserState({
+  port = createMemoryUserStatePort(),
+  clock,
+}: {
+  port?: UserStatePort;
+  clock: Clock;
+}): Promise<TrackedUserState> {
+  return trackChanges({ userState: await openUserState({ port }), clock });
 }

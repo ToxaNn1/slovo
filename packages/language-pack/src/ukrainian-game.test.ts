@@ -5,10 +5,8 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
-  createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
-  openUserState,
   renderStress,
   type Composition,
   type Correction,
@@ -18,12 +16,12 @@ import {
   type Random,
   type Round,
   type RoundOption,
+  type TrackedUserState,
   type UserStateChanges,
-  type UserStatePort,
-  userStateRecords,
   type Word,
   withoutStress,
 } from '@slovo/core';
+import { readFact, seedUserState } from '@slovo/core/testing';
 
 import {
   buildLanguagePack,
@@ -78,19 +76,19 @@ function seededRandom(seed: number): Random {
   };
 }
 
-/** A user-state port over the records that keeps every write it is given. */
-function recordingPort(records: Map<string, string>) {
-  const port = createMemoryUserStatePort(records);
+/** A seeded user state that keeps every write it is given. */
+async function recordingUserState() {
+  const userState = await seedUserState();
   const writes: UserStateChanges[] = [];
   return {
     writes,
-    port: {
-      ...port,
+    userState: {
+      ...userState,
       write(changes) {
         writes.push(changes);
-        return port.write(changes);
+        return userState.write(changes);
       },
-    } satisfies UserStatePort,
+    } satisfies TrackedUserState,
   };
 }
 
@@ -121,11 +119,11 @@ const guessWordOnly: typeof ukrainian = {
     (!/^game[A-Z]/.test(feature) || ['gameGuessWord', 'gameReview'].includes(feature)),
 };
 
-async function run(seed: number, port = createMemoryUserStatePort(new Map()), edition = ukrainian) {
+async function run(seed: number, userState?: TrackedUserState, edition = ukrainian) {
   const app = await openComposition({
     content: pack,
     edition,
-    userState: await openUserState({ port }),
+    userState: userState ?? (await seedUserState()),
     clock: { now: () => new Date('2026-10-15T09:00:00+03:00'), timeZone: () => 'Europe/Kyiv' },
     random: seededRandom(seed),
   });
@@ -133,8 +131,8 @@ async function run(seed: number, port = createMemoryUserStatePort(new Map()), ed
 }
 
 /** The composition of `run` with Synonym Rows and Tips out of the Mix, so the Game asks Words and Idioms. */
-async function runWordsAndIdioms(seed: number, port?: UserStatePort, edition = ukrainian) {
-  const app = await run(seed, port, edition);
+async function runWordsAndIdioms(seed: number, userState?: TrackedUserState, edition = ukrainian) {
+  const app = await run(seed, userState, edition);
   await app.mix.setKind('synonymRow', false);
   await app.mix.setKind('tip', false);
   return app;
@@ -144,8 +142,8 @@ async function runWordsAndIdioms(seed: number, port?: UserStatePort, edition = u
  * The composition of `run` with Idioms, Synonym Rows and Tips out of the Mix,
  * so that «Вгадай слово» asks about Words alone, for the tests of Word Rounds.
  */
-async function runWords(seed: number, port?: UserStatePort, edition = ukrainian) {
-  const app = await runWordsAndIdioms(seed, port, edition);
+async function runWords(seed: number, userState?: TrackedUserState, edition = ukrainian) {
+  const app = await runWordsAndIdioms(seed, userState, edition);
   await app.mix.setKind('idiom', false);
   return app;
 }
@@ -340,8 +338,8 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
   });
 
   it('writes no Seen, no History and no Active Day while it is played, only the confirmed Entries, its XP, its Best result and the Badges it earns', async () => {
-    const { port, writes } = recordingPort(new Map());
-    const app = await runWords(6, port);
+    const { userState, writes } = await recordingUserState();
+    const app = await runWords(6, userState);
     writes.length = 0;
 
     await playGame(app);
@@ -355,9 +353,7 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     );
     // The XP of a right Round goes in its own write; the XP of the finished
     // Game and of the new Best result share the Best result's write.
-    const [bestKey, bestValue] = [
-      ...userStateRecords.gameBest.record('guess-word').change(roundsPassed),
-    ][0] as [string, unknown];
+    const bestKey = 'game.best.guess-word';
     // Each Badge the Game earns goes in its own write of its XP log record.
     const badges = writes.filter((write) =>
       [...write.keys()].every((key) => key.startsWith('xp.badge-')),
@@ -366,7 +362,8 @@ describe('«Вгадай слово» over the Ukrainian Language Pack', () => {
     const others = writes.filter((write) => !confirmed.includes(write) && !badges.includes(write));
     const withBest = others.filter((write) => write.has(bestKey));
     expect(withBest).toHaveLength(1);
-    expect(withBest[0]?.get(bestKey)).toEqual(bestValue);
+    expect(withBest[0]?.get(bestKey)).toBe(String(roundsPassed));
+    expect(await readFact(userState, 'gameBest')).toEqual(new Map([['guess-word', roundsPassed]]));
     for (const write of others) {
       const xpKeys = [...write.keys()].filter((key) => key !== bestKey);
       expect(xpKeys.length).toBeGreaterThan(0);

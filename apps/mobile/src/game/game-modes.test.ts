@@ -1,14 +1,12 @@
 import type { Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   systemRandom,
   type Composition,
   type GameMode,
   type GameModeOffer,
 } from '@slovo/core';
-import { createMemoryContentPort, testEdition } from '@slovo/core/testing';
+import { createMemoryContentPort, testEdition, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { gameModeCard, gameModeGroups, gameModeStrings } from './game-modes';
@@ -78,7 +76,7 @@ async function open({
       isFeatureEnabled: (feature) => !switchedOff.includes(feature),
       userSettingDefaults: { mix: { corrections: correctionsInMix } },
     }),
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-15T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     ...(gameModes === undefined ? {} : { gameModes }),

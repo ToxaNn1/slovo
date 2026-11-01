@@ -1,17 +1,16 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   type Clock,
   type Composition,
   type ContentReadPort,
   type FeatureSwitch,
-  userStateRecords,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, knownCounts, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 const content = createMemoryContentPort({
   words: [word('w_one'), word('w_two'), word('w_three')],

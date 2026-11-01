@@ -4,7 +4,8 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createMemoryUserStatePort, openComposition, openUserState, type Clock } from '@slovo/core';
+import { openComposition, type Clock } from '@slovo/core';
+import { seedUserState } from '@slovo/core/testing';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainian, ukrainianFolder } from './test-support';
@@ -59,21 +60,18 @@ const placeNameRow = {
 
 /** The composition over the pack for a reader who Saw both Idioms and marks them Unknown. */
 async function open() {
-  const records = new Map<string, string>();
-  for (const [entryId, seenAt] of [
-    [IDIOM, '2026-10-23T05:00:00.000Z'],
-    [PLACE_NAME, '2026-10-23T05:30:00.000Z'],
-  ] as const) {
-    records.set(`history.${entryId}`, JSON.stringify({ seenAt, wordOfTheDay: false }));
-    records.set(
-      `knowledge.${entryId}`,
-      JSON.stringify({ mark: 'unknown', step: 1, reviewDay: '2026-10-24', learned: false }),
-    );
-  }
+  const seenAt = (instant: string) => ({ seenAt: instant, wordOfTheDay: false });
+  const unknown = { mark: 'unknown', step: 1, reviewDay: '2026-10-24', learned: false } as const;
   return openComposition({
     content: pack,
     edition: ukrainian,
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState: await seedUserState({
+      history: {
+        [IDIOM]: seenAt('2026-10-23T05:00:00.000Z'),
+        [PLACE_NAME]: seenAt('2026-10-23T05:30:00.000Z'),
+      },
+      knowledge: { [IDIOM]: unknown, [PLACE_NAME]: unknown },
+    }),
     clock,
     random: { next: () => 0.25 },
   });

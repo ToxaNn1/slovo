@@ -15,14 +15,11 @@ import {
   buildGameReview,
   createGameHaptics,
   createHaptics,
-  createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
-  openUserState,
   renderStress,
   withoutStress,
   SEEN_DWELL_MS,
-  userStateRecords,
   type AnalyticsPort,
   type Clock,
   type Composition,
@@ -46,6 +43,8 @@ import {
   seededRandom,
   testEdition,
 } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 function word(
   id: string,

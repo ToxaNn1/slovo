@@ -1,15 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  openRemoteSwitches,
-  openUserState,
-  type Edition,
-  type FeatureSwitch,
-  type Schedule,
-} from '../index';
+import { openRemoteSwitches, type Edition, type FeatureSwitch, type Schedule } from '../index';
 import { randomOf } from '../test-support';
 import { createFakeBackend } from '../testing';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** An Edition that turns on every Feature Switch but those named. */
 const editionWithout = (

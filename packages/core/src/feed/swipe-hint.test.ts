@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMemoryUserStatePort, createSwipeHint, openUserState } from '../index';
+import { createSwipeHint } from '../index';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The swipe hint over user-state records that survive between app runs. */
 async function swipeHintOver(records: Map<string, string>) {

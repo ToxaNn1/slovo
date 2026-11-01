@@ -2,16 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { Word } from '@slovo/contracts';
 
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Composition,
-  type FeatureSwitch,
-  type FeedCard,
-} from '../index';
+import { openComposition, type Composition, type FeatureSwitch, type FeedCard } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const words: readonly Word[] = Array.from({ length: 12 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
+import { openComposition } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word, type TestEditionOverrides } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const moods = [
   { id: 'calm', name: 'Calm', emoji: '😌' },

@@ -1,11 +1,5 @@
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  systemRandom,
-  type Composition,
-} from '@slovo/core';
-import { createMemoryContentPort, testEdition } from '@slovo/core/testing';
+import { openComposition, systemRandom, type Composition } from '@slovo/core';
+import { createMemoryContentPort, testEdition, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { refusalText } from './collection-refusal';
@@ -15,7 +9,7 @@ async function open(): Promise<Composition> {
   return openComposition({
     content: createMemoryContentPort(),
     edition: testEdition({ isFeatureEnabled: () => false }),
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
   });

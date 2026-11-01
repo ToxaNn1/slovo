@@ -1,15 +1,9 @@
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  systemRandom,
-  type Composition,
-  type Edition,
-} from '@slovo/core';
+import { openComposition, systemRandom, type Composition, type Edition } from '@slovo/core';
 import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
   type FakeNotificationScheduler,
+  seedUserState,
 } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -22,7 +16,7 @@ async function open(
   return openComposition({
     content: createMemoryContentPort(),
     edition: ukrainian,
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-14T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     scheduling: {

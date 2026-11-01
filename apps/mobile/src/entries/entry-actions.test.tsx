@@ -1,12 +1,10 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
   openCounterReads,
   openMistakeReports,
-  openUserState,
   systemRandom,
   type AnyEntryCard,
   type Composition,
@@ -14,7 +12,12 @@ import {
   type Haptics,
   type MistakeReports,
 } from '@slovo/core';
-import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '@slovo/core/testing';
+import {
+  createFakeBackend,
+  createMemoryContentPort,
+  type FakeBackend,
+  seedUserState,
+} from '@slovo/core/testing';
 import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -164,7 +167,7 @@ const metrics = {
 const clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 beforeEach(async () => {
-  const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  const userState = await seedUserState();
   composition = await openComposition({
     content: createMemoryContentPort({
       words: [word],

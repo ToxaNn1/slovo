@@ -1,15 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
   systemRandom,
   type Composition,
   type Edition,
 } from '@slovo/core';
-import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '@slovo/core/testing';
+import {
+  createFakeBackend,
+  createMemoryContentPort,
+  type FakeBackend,
+  seedUserState,
+} from '@slovo/core/testing';
 import { EditionProvider, systemSchedule } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Share } from 'react-native';
@@ -86,7 +89,7 @@ beforeEach(async () => {
       words: [word('w_kvasha', 'кваша'), word('w_buzok', 'бузок')],
     }),
     edition: inEffect,
-    userState: await openUserState({ port: createMemoryUserStatePort() }),
+    userState: await seedUserState(),
     clock: { now: () => new Date(now), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     schedule: systemSchedule,

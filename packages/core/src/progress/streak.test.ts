@@ -1,15 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   type AnalyticsPort,
   type Composition,
   type FeatureSwitch,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, settle, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 // Spec #1358 stories 25-28 and 85, ticket #1370, ADR 0066: the Active Day at
 // 5 XP, the Streak and Best Streak derived by local date, and Streak freezes.

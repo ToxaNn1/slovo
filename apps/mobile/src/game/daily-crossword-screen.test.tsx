@@ -1,14 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { CrosswordDaySchema, type Word } from '@slovo/contracts';
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  systemRandom,
-  type AnalyticsPort,
-  type Composition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { openComposition, systemRandom, type AnalyticsPort, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
@@ -109,7 +102,7 @@ async function renderGame({ shareCard }: { shareCard?: ShareCard } = {}) {
         Promise.resolve(date === crosswordDay.date ? crosswordDay : undefined),
     },
     edition,
-    userState: await openUserState({ port: createMemoryUserStatePort() }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     analytics,

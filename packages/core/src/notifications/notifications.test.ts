@@ -1,13 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Composition,
-} from '../index';
+import { openComposition, type Composition } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { testEdition } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const defaultTimes = ['09:00', '13:00', '19:00'];
 

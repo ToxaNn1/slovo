@@ -9,9 +9,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   SEEN_DWELL_MS,
   type Clock,
   type Composition,
@@ -20,6 +18,7 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, steppingRandom, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The instant these tests start at. */
 const start = '2026-10-16T09:00:00+03:00';

@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMemoryUserStatePort, openUserState, type Random } from '../index';
+import { type Random } from '../index';
 import { openCycle, type Cycle, type CycleChange } from './cycle';
 import { randomOf, randomSequence } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const wordIds = Array.from({ length: 10 }, (_, index) => `w_${String(index)}`);
 const correctionIds = Array.from({ length: 4 }, (_, index) => `c_${String(index)}`);

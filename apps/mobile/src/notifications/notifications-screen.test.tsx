@@ -1,13 +1,15 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   systemRandom,
   type Composition,
   type NotificationPermission,
 } from '@slovo/core';
-import { createFakeNotificationScheduler, createMemoryContentPort } from '@slovo/core/testing';
+import {
+  createFakeNotificationScheduler,
+  createMemoryContentPort,
+  seedUserState,
+} from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
@@ -51,7 +53,7 @@ async function render(permission: NotificationPermission): Promise<{
   const composition = await openComposition({
     content: createMemoryContentPort(),
     edition,
-    userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     scheduling: {

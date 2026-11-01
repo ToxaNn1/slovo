@@ -2,13 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeatureSwitch } from '@slovo/contracts';
 
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Composition,
-  type Feed,
-} from '../index';
+import { openComposition, type Composition, type Feed } from '../index';
 import { createMemoryContentPort } from '../testing';
 import {
   correction,
@@ -20,6 +14,7 @@ import {
   tip,
   word,
 } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** Enough Entries of every kind that none runs out over the cards walked. */
 const many = <T>(count: number, prefix: string, make: (id: string) => T): T[] =>

@@ -4,16 +4,15 @@ import type { Idiom } from '@slovo/contracts';
 
 import {
   buildGameReview,
-  createMemoryUserStatePort,
   GAME_ROUNDS,
   openComposition,
-  openUserState,
   type Composition,
   type CurrentGame,
   type Round,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { idiom, seededRandom, testEdition } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /**
  * The pack's expressions that play, of 2 to 8 words: idioms and proverbs,

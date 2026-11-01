@@ -1,14 +1,12 @@
 import { readFileSync } from 'node:fs';
 
+import { createContentUpdate, loadEdition, type Edition, type PackVersion } from '@slovo/core';
 import {
-  createContentUpdate,
-  createMemoryUserStatePort,
-  loadEdition,
-  openUserState,
-  type Edition,
-  type PackVersion,
-} from '@slovo/core';
-import { createFakeBackend, createMemoryPackFiles, type MemoryPackFile } from '@slovo/core/testing';
+  createFakeBackend,
+  createMemoryPackFiles,
+  type MemoryPackFile,
+  seedUserState,
+} from '@slovo/core/testing';
 import { PACK_FORMAT } from '@slovo/language-pack/reader';
 import { describe, expect, it } from 'vitest';
 
@@ -40,7 +38,7 @@ function device({
 }: { bundled?: PackVersion; kept?: MemoryPackFile } = {}) {
   const contentApi = createFakeBackend();
   const packFiles = createMemoryPackFiles(kept);
-  const records = new Map<string, string>();
+  const userState = seedUserState();
   const { clock } = fakeClock();
   const closed: string[] = [];
   const errors: unknown[] = [];
@@ -57,7 +55,7 @@ function device({
         backend: contentApi.backend,
         edition: { id: 'uk' },
         packFiles,
-        userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+        userState: await userState,
         clock,
         random: { next: () => 0.5 },
         schedule: (run) => {

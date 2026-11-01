@@ -1,11 +1,5 @@
-import {
-  createMemoryUserStatePort,
-  openComposition,
-  openUserState,
-  type Clock,
-  type Composition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { openComposition, type Clock, type Composition, type TrackedUserState } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { undoHide, undoRestore } from './hiding-undo';
@@ -36,32 +30,32 @@ const content = createMemoryContentPort({
   })),
 });
 
-/** Opens the composition over the records, as the launch and each reopen do. */
-async function open(records: Map<string, string>, clock: Clock): Promise<Composition> {
+/** Opens the composition over the user state, as the launch and each reopen do. */
+async function open(userState: TrackedUserState, clock: Clock): Promise<Composition> {
   return openComposition({
     content,
     edition: ukrainian,
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState,
     clock,
     random: { next: () => 0.25 },
   });
 }
 
-/** The composition the reader hid with, and the one a reopen opened over the same records, the first closed. */
+/** The composition the reader hid with, and the one a reopen opened over the same user state, the first closed. */
 async function reopened() {
   const time = fakeClock();
-  const records = new Map<string, string>();
-  const before = await open(records, time.clock);
+  const userState = await seedUserState();
+  const before = await open(userState, time.clock);
   return {
     time,
     before,
     async reopen() {
-      const after = await open(records, time.clock);
+      const after = await open(userState, time.clock);
       await before.close();
       return after;
     },
     /** The composition of the next app run, which reads only what was kept. */
-    nextRun: () => open(records, time.clock),
+    nextRun: () => open(userState, time.clock),
   };
 }
 

@@ -3,10 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Correction, FeatureSwitch, Word } from '@slovo/contracts';
 
 import {
-  createMemoryUserStatePort,
   NOTIFICATION_BODY_LENGTH,
   openComposition,
-  openUserState,
   type Clock,
   type Composition,
   type PlannedNotification,
@@ -25,6 +23,7 @@ import {
   word,
   wordIdOf,
 } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The instant these tests start at. */
 const start = '2026-10-14T08:00:00+03:00';

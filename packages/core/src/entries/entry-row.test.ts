@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
+import { openComposition } from '../index';
 import { createMemoryContentPort } from '../testing';
 import {
   correction,
@@ -13,6 +13,7 @@ import {
   word,
 } from '../test-support';
 import { buildEntryRow } from './entry-row';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const words = Array.from({ length: 40 }, (_, place) => word(`w_${String(place).padStart(2, '0')}`));
 const corrections = Array.from({ length: 10 }, (_, place) => correction(`c_${String(place)}`));

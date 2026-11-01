@@ -1,14 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  createMemoryUserStatePort,
-  loadEdition,
-  openComposition,
-  openUserState,
-  systemRandom,
-  type Composition,
-} from '@slovo/core';
-import { createFakeBackend, createMemoryContentPort } from '@slovo/core/testing';
+import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
+import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { router, Tabs } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
@@ -66,7 +59,7 @@ beforeEach(async () => {
       words: [word('w_one', 'тихий'), word('w_two', 'лагідний')],
     }),
     edition: loadEdition(config),
-    userState: await openUserState({ port: createMemoryUserStatePort() }),
+    userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-29T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     backend: api.backend,

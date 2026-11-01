@@ -1,15 +1,7 @@
 import { afterEach, beforeAll, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  createMemoryUserStatePort,
-  loadEdition,
-  openComposition,
-  openUserState,
-  trackChanges,
-  type Composition,
-  type Edition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { loadEdition, openComposition, type Composition, type Edition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
@@ -37,7 +29,7 @@ function editionWith({ moods }: { moods: boolean }): Edition {
 let editionInEffect: Edition;
 
 /** The user state the settings and the composition keep, one for the whole file. */
-let userState: Awaited<ReturnType<typeof openUserState>>;
+let userState: Awaited<ReturnType<typeof seedUserState>>;
 
 /** The clock of the test. */
 const clock = { now: () => new Date('2026-10-27T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
@@ -99,7 +91,7 @@ const words = [
 ];
 
 beforeAll(async () => {
-  userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  userState = await seedUserState({}, { clock });
 });
 
 beforeEach(async () => {
@@ -146,7 +138,7 @@ async function renderHeader() {
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({
-          userState: opened(trackChanges({ userState, clock })),
+          userState: opened(userState),
           remoteSwitches: switchedTo(editionInEffect),
           composition: opened(composition),
         })}

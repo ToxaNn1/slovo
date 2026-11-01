@@ -1,15 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  createSettings,
-  openComposition,
-  openUserState,
-  type AnalyticsPort,
-  type FeatureSwitch,
-} from '../index';
+import { createSettings, openComposition, type AnalyticsPort, type FeatureSwitch } from '../index';
 import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const content = createMemoryContentPort({
   words: Array.from({ length: 12 }, (_, index) => word(`w_${String(index)}`)),

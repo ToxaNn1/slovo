@@ -2,9 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeatureSwitch } from '@slovo/contracts';
 
-import { createMemoryUserStatePort, openComposition, openUserState } from '../index';
+import { openComposition } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** An Edition whose Mix holds only the Category `test`, with Search on unless `off` names it. */
 const edition = (off: readonly FeatureSwitch[] = []) =>

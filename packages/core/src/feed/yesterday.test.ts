@@ -3,9 +3,7 @@ import { describe, expect, it } from 'vitest';
 import type { FeatureSwitch, Word } from '@slovo/contracts';
 
 import {
-  createMemoryUserStatePort,
   openComposition,
-  openUserState,
   SEEN_DWELL_MS,
   type Composition,
   type Feed,
@@ -13,6 +11,7 @@ import {
 } from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const words: readonly Word[] = Array.from({ length: 20 }, (_, index) =>
   word(`w_${String(index).padStart(2, '0')}`),

@@ -1,16 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
-  trackChanges,
   type Composition,
+  type TrackedUserState,
   type Edition,
   type Haptics,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { createMemoryContentPort, seedUserState, type UserStateFacts } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
@@ -36,10 +34,12 @@ jest.mock('expo-constants', () => ({
 const shippedEdition: Edition = loadEdition(config);
 
 /** The user state the settings and the composition keep, opened afresh for each test. */
-let userState: Awaited<ReturnType<typeof openUserState>>;
+let userState: TrackedUserState;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
+
+const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
@@ -86,14 +86,10 @@ function word(id: string, lemma: string): Word {
 
 /**
  * Opens the composition over 14 Words for a reader who finished the
- * onboarding with the records given, on 2026-10-28 in Kyiv.
+ * onboarding with the facts given, on 2026-10-28 in Kyiv.
  */
-async function open(records: Readonly<Record<string, unknown>>) {
-  userState = await openUserState({
-    port: createMemoryUserStatePort(
-      new Map(Object.entries(records).map(([key, value]) => [key, JSON.stringify(value)])),
-    ),
-  });
+async function open(facts: UserStateFacts) {
+  userState = await seedUserState(facts, { clock });
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
@@ -103,7 +99,7 @@ async function open(records: Readonly<Record<string, unknown>>) {
     }),
     edition: shippedEdition,
     userState: userState,
-    clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    clock,
     // The first Word in each draw, so each opening shows the same Word of the Day.
     random: { next: () => 0 },
   });
@@ -128,12 +124,7 @@ async function settle(action: () => unknown = () => undefined) {
 /** The Shell the app draws under: the settings and the composition over the test's user state. */
 const shell = () =>
   testShell({
-    userState: opened(
-      trackChanges({
-        userState,
-        clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
-      }),
-    ),
+    userState: opened(userState),
     remoteSwitches: switchedTo(shippedEdition),
     composition: opened(composition),
   });
@@ -176,7 +167,7 @@ const hidden = { includeHiddenElements: true };
 // Spec #1358, ticket #1374: the Quick Question in its own Feed slot.
 describe('the Quick Question on the Feed', () => {
   it('asks its Round and keeps the option the reader picked', async () => {
-    await open({ 'onboarding.finished': '2026-09-01T09:00:00Z', 'mix.quickQuestion': 6 });
+    await open({ onboardingFinished: '2026-09-01T09:00:00Z', mixQuickQuestion: 6 });
     while (!composition.feed.cards.some((card) => card.kind === 'quick-question')) {
       if ((await composition.feed.next()) === undefined) throw new Error('No Quick Question');
     }

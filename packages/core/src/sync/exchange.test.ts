@@ -1,18 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  createMemoryUserStatePort,
-  createSettings,
-  openComposition,
-  openUserState,
-  trackChanges,
-  userStateRecords,
-  type Backend,
-  type UserStateChanges,
-} from '../index';
+import { createSettings, openComposition, type Backend, type UserStateChanges } from '../index';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { createSyncExchange } from './exchange';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
+import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { trackChanges } from '../user-state/tracked-user-state';
+import { userStateRecords } from '../user-state/user-state-schema';
 
 const {
   activeDays,

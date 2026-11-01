@@ -1,17 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
 import {
-  createMemoryUserStatePort,
   loadEdition,
   openComposition,
-  openUserState,
-  trackChanges,
   type Composition,
   type Edition,
   type Haptics,
-  userStateRecords,
 } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import {
+  createMemoryContentPort,
+  readFact,
+  seedUserState,
+  type UserStateFacts,
+} from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
@@ -40,10 +41,12 @@ jest.mock('expo-constants', () => ({
 const shippedEdition: Edition = loadEdition(config);
 
 /** The user state the settings and the composition keep, opened afresh for each test. */
-let userState: Awaited<ReturnType<typeof openUserState>>;
+let userState: Awaited<ReturnType<typeof seedUserState>>;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
+
+const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
@@ -90,14 +93,10 @@ function word(id: string, lemma: string): Word {
 
 /**
  * Opens the composition over two Words for a reader who finished the
- * onboarding with the records given, on 2026-10-28 in Kyiv.
+ * onboarding with the facts given, on 2026-10-28 in Kyiv.
  */
-async function open(records: Readonly<Record<string, unknown>>) {
-  userState = await openUserState({
-    port: createMemoryUserStatePort(
-      new Map(Object.entries(records).map(([key, value]) => [key, JSON.stringify(value)])),
-    ),
-  });
+async function open(facts: UserStateFacts) {
+  userState = await seedUserState(facts, { clock });
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
@@ -105,7 +104,7 @@ async function open(records: Readonly<Record<string, unknown>>) {
     }),
     edition: shippedEdition,
     userState: userState,
-    clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    clock,
     // The first Word in each draw, so each opening shows the same Word of the Day.
     random: { next: () => 0 },
   });
@@ -130,12 +129,7 @@ async function settle(action: () => unknown = () => undefined) {
 /** The Shell the app draws under: the settings and the composition over the test's user state. */
 const shell = () =>
   testShell({
-    userState: opened(
-      trackChanges({
-        userState,
-        clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
-      }),
-    ),
+    userState: opened(userState),
     remoteSwitches: switchedTo(shippedEdition),
     composition: opened(composition),
   });
@@ -178,15 +172,15 @@ describe.each(['/search', '/mood', '/saved/words-of-the-day'])(
   'the Entry screen of %s',
   (route) => {
     it('shows the Word and leaves History empty, so nothing is Seen', async () => {
-      await open({ 'onboarding.finished': '2026-09-01T09:00:00Z' });
+      await open({ onboardingFinished: '2026-09-01T09:00:00Z' });
       await renderApp(`${route}/w_sumyrnyi`);
 
       expect(screen.getByTestId('word-lemma', hidden)).toHaveTextContent('су́мирний', {
         exact: false,
       });
       expect(composition.history.list).toEqual([]);
-      expect(await userState.list(userStateRecords.history)).toEqual(new Map());
-      expect(await userState.list(userStateRecords.seen)).toEqual(new Map());
+      expect(await readFact(userState, 'history')).toEqual(new Map());
+      expect(await readFact(userState, 'seen')).toEqual(new Map());
     });
   },
 );

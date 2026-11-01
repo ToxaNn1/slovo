@@ -1,15 +1,18 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import {
-  createMemoryUserStatePort,
   loadEdition,
-  type UserStatePort,
+  type TrackedUserState,
   openComposition,
-  openUserState,
   systemRandom,
   type Composition,
 } from '@slovo/core';
 import type { Word } from '@slovo/contracts';
-import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '@slovo/core/testing';
+import {
+  createFakeBackend,
+  createMemoryContentPort,
+  type FakeBackend,
+  seedUserState,
+} from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -86,11 +89,11 @@ let writesFail: boolean;
 async function open() {
   api = createFakeBackend();
   writesFail = false;
-  const memory = createMemoryUserStatePort();
-  const port: UserStatePort = {
-    ...memory,
+  const seeded = await seedUserState();
+  const userState: TrackedUserState = {
+    ...seeded,
     write: (changes) =>
-      writesFail ? Promise.reject(new Error('The disk is full')) : memory.write(changes),
+      writesFail ? Promise.reject(new Error('The disk is full')) : seeded.write(changes),
   };
   composition = await openComposition({
     content: createMemoryContentPort({
@@ -98,7 +101,7 @@ async function open() {
       words: PACK.map((id) => word(id, `слово-${id}`)),
     }),
     edition: loadEdition(config),
-    userState: await openUserState({ port }),
+    userState,
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     backend: api.backend,

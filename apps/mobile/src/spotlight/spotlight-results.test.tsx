@@ -1,15 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  createMemoryUserStatePort,
-  loadEdition,
-  openComposition,
-  openUserState,
-  systemRandom,
-  trackChanges,
-  type Composition,
-} from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, renderRouter, screen } from 'expo-router/testing-library';
@@ -34,7 +26,7 @@ const shippedEdition = loadEdition(config);
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 /** The user state the settings and the composition keep, opened afresh for each test. */
-let userState: Awaited<ReturnType<typeof openUserState>>;
+let userState: Awaited<ReturnType<typeof seedUserState>>;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
@@ -70,7 +62,7 @@ function word(id: string, lemma: string): Word {
 
 beforeEach(async () => {
   jest.useFakeTimers();
-  userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+  userState = await seedUserState({}, { clock });
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
@@ -110,7 +102,7 @@ async function renderApp() {
   });
   // The settings and the screens open over this test's user state and composition.
   const shell = testShell({
-    userState: opened(trackChanges({ userState, clock })),
+    userState: opened(userState),
     remoteSwitches: switchedTo(shippedEdition),
     composition: opened(composition),
   });
