@@ -24,7 +24,7 @@ export function XpBar({
 }: {
   today: number;
   /** Today's Daily Goal; left out while the Daily Goal is off. */
-  goal?: number;
+  goal?: number | undefined;
   onPress: () => void;
 }) {
   const { colors, fontFamilies } = useTokens();
