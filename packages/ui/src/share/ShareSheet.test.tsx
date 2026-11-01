@@ -16,6 +16,9 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react-n
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
 
+/** A reader's clock, for the Share Cards: no card here is today's Word of the Day. */
+const clock = { now: () => new Date('2026-10-11T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
+
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
@@ -89,7 +92,7 @@ async function renderSheet(outcome: ShareSheetOutcome, shown: AnyEntryCard = car
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <ShareSheet
           visible
-          content={buildShareCardContent({ card: shown, todaysWordOfTheDay: false }, strings, 'en')}
+          content={buildShareCardContent({ card: shown }, strings, 'en', clock)}
           watermark="SLOVO"
           initialFormat="story"
           onFormatChange={jest.fn()}
@@ -309,7 +312,7 @@ async function renderRecapSheet(format: 'story' | 'square') {
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <ShareSheet
           visible
-          content={buildShareCardContent({ recap, hideStreak: false }, strings, 'en')}
+          content={buildShareCardContent({ recap, hideStreak: false }, strings, 'en', clock)}
           watermark="SLOVO"
           initialFormat={format}
           onFormatChange={jest.fn()}

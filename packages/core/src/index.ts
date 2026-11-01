@@ -34,6 +34,15 @@ export { stressLabel } from './entries/stress-label';
 export { sentences } from './sentences';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export { createEntries, type Entries } from './entries/entries';
+export {
+  linkFromOutside,
+  linkSourceOf,
+  linkTo,
+  parseLink,
+  type EntryLink,
+  type EntryLinkSource,
+  type ParsedEntryLink,
+} from './entries/entry-links';
 export type { EntryRowModel } from './entries/entry-row';
 export { type Favorite } from './saved/favorites';
 export { buildEntryCard, isTodaysWordOfTheDay, SEEN_DWELL_MS, type Feed } from './feed/feed';

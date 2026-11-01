@@ -14,7 +14,7 @@ import {
 import { buildIdiomCard } from '../entries/idiom-card';
 import { buildSynonymRowCard } from '../entries/synonym-row-card';
 import { buildTipCard } from '../entries/tip-card';
-import { correction, idiom, synonymRow, tip, word } from '../test-support';
+import { correction, fakeClock, idiom, synonymRow, tip, word } from '../test-support';
 import { createMemoryContentPort } from '../testing';
 
 /** The texts of the UA Edition a Share Card reads. */
@@ -160,8 +160,10 @@ const tipCard = (shown: Tip): AnyEntryCard => ({
   model: buildTipCard({ tip: shown }),
 });
 
-const contentOf = (card: AnyEntryCard, todaysWordOfTheDay = false) =>
-  buildShareCardContent({ card, todaysWordOfTheDay }, STRINGS, 'uk');
+/** The reader's clock: 11 October 2026 in Kyiv. */
+const { clock } = fakeClock();
+
+const contentOf = (card: AnyEntryCard) => buildShareCardContent({ card }, STRINGS, 'uk', clock);
 
 const VEREMIJA = word('w_veremija', {
   lemma: 'веремія',
@@ -189,10 +191,18 @@ describe('the Share Card of a Word', () => {
   });
 
   it('says «Слово дня» in place of the Category on today’s Word of the Day', async () => {
-    const content = contentOf(await wordCard(VEREMIJA), true);
+    const card = await wordCard(VEREMIJA);
+    const content = contentOf({ ...card, wordOfTheDay: { year: 2026, month: 10, day: 11 } });
 
     expect(content.overline).toBe('Слово дня');
     expect(content.label).toMatch(/^Слово дня\. /);
+  });
+
+  it('says the Category on the Word of the Day of the day before, still in a Feed left open over midnight', async () => {
+    const card = await wordCard(VEREMIJA);
+    const content = contentOf({ ...card, wordOfTheDay: { year: 2026, month: 10, day: 10 } });
+
+    expect(content.overline).toBe('Побут і ремесла');
   });
 });
 
@@ -380,7 +390,7 @@ const RECAP: WeeklyRecapModel = {
 };
 
 const recapContent = (recap: WeeklyRecapModel, hideStreak = false) =>
-  buildShareCardContent({ recap, hideStreak }, STRINGS, 'uk');
+  buildShareCardContent({ recap, hideStreak }, STRINGS, 'uk', clock);
 
 describe('the Share Card of a Weekly Recap', () => {
   it('shows the title, the week as its overline and the four numbers in order, with no words', () => {
@@ -463,6 +473,7 @@ describe('the Share Card of progress', () => {
       { level: { level: 5, name: 'Знавець', progress: 0, toNext: 300 }, date: '2026-11-01' },
       STRINGS,
       'uk',
+      clock,
     );
 
     expect(content).toEqual({
@@ -491,6 +502,7 @@ describe('the Share Card of progress', () => {
       },
       STRINGS,
       'uk',
+      clock,
     );
 
     expect(content).toEqual({
@@ -507,7 +519,7 @@ describe('the Share Card of progress', () => {
   });
 
   it('shows a Streak milestone in its plural form', () => {
-    const content = buildShareCardContent({ streak: 14, date: '2026-11-01' }, STRINGS, 'uk');
+    const content = buildShareCardContent({ streak: 14, date: '2026-11-01' }, STRINGS, 'uk', clock);
 
     expect(content).toEqual({
       shows: 'streak:14',
@@ -520,7 +532,7 @@ describe('the Share Card of progress', () => {
         detail: undefined,
       },
     });
-    expect(buildShareCardContent({ streak: 3, date: '2026-11-01' }, STRINGS, 'uk').label).toBe(
+    expect(buildShareCardContent({ streak: 3, date: '2026-11-01' }, STRINGS, 'uk', clock).label).toBe(
       '1 листопада. Моя серія в SLOVO. 3 дні поспіль',
     );
   });
@@ -556,7 +568,7 @@ describe('the Share Card of a solved Daily Crossword', () => {
   } as const;
 
   it('shows the grid’s open cells with no letter and no clue, the day as its overline', () => {
-    const content = buildShareCardContent({ crossword }, STRINGS, 'uk');
+    const content = buildShareCardContent({ crossword }, STRINGS, 'uk', clock);
 
     expect(content).toEqual({
       shows: 'crossword:2026-11-01',

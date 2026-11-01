@@ -50,11 +50,6 @@ const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Eu
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-// The Entry card's action row has its own tests.
-jest.mock('../entries/entry-actions', () => ({
-  EntryActions: () => null,
-  useKnowledgeButtons: () => null,
-}));
 
 const haptics: Haptics = {
   selection: jest.fn(),

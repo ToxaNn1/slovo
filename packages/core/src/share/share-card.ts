@@ -1,12 +1,14 @@
 import { CROSSWORD_SIZE, fill, pluralCount, type EditionStrings } from '@slovo/contracts';
 
 import type { AnyEntryCard } from '../feed/entry-feed-card';
+import { isTodaysWordOfTheDay } from '../feed/feed';
 import type { DailyCrosswordState } from '../game/daily-crossword';
 import { parseLocalDate, type LocalDate } from '../local-date';
 import type { BadgeState } from '../progress/badges';
 import type { LevelState } from '../progress/levels';
 import type { WeeklyRecapModel } from '../feed/weekly-recap';
 import { wordGrammarText } from '../entries/part-of-speech';
+import type { Clock } from '../ports';
 import { sentences } from '../sentences';
 import { withoutStress } from '../entries/stress';
 import { stressLabel } from '../entries/stress-label';
@@ -23,10 +25,12 @@ const MORE_MEMBERS = '…';
  */
 export type ShareCardSubject =
   | {
-      /** The Entry's card, as the Core built it for the Feed. */
+      /**
+       * The Entry's card, as the Core built it for the Feed. The card of
+       * today's Word of the Day says so in its overline in place of the
+       * Category.
+       */
       readonly card: AnyEntryCard;
-      /** Whether it is today's Word of the Day, which the overline then says in place of the Category. */
-      readonly todaysWordOfTheDay: boolean;
     }
   | {
       readonly recap: WeeklyRecapModel;
@@ -133,12 +137,14 @@ export type ShareCardStrings = Pick<
 /**
  * The Share Card of an Entry, a Weekly Recap, progress or a solved Daily
  * Crossword, in the Edition's texts. `locale` picks the plural forms of the
- * recap's numbers and of a Streak.
+ * recap's numbers and of a Streak; `clock` says whether a Word's card is
+ * today's Word of the Day.
  */
 export function buildShareCardContent(
   subject: ShareCardSubject,
   strings: ShareCardStrings,
   locale: string,
+  clock: Clock,
 ): ShareCardContent {
   if ('recap' in subject) {
     return weeklyRecapContent(subject.recap, subject.hideStreak, strings, locale);
@@ -168,12 +174,13 @@ export function buildShareCardContent(
     });
   }
   if ('crossword' in subject) return dailyCrosswordContent(subject.crossword, strings);
-  const { card, todaysWordOfTheDay } = subject;
+  const { card } = subject;
   const model = card.model;
   const shows = card.entryId;
   switch (model.kind) {
     case 'word': {
-      const overline = todaysWordOfTheDay ? strings.share.wordOfTheDay : model.categoryName;
+      const overline =
+        card.kind === 'word' && isTodaysWordOfTheDay(card, clock) ? strings.share.wordOfTheDay : model.categoryName;
       return {
         shows,
         overline,

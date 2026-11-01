@@ -1,4 +1,5 @@
 import { buildShareCardContent, type ShareCardKind, type ShareCardSubject } from '@slovo/core';
+import { deviceClock } from '../device/device-clock';
 import { ShareSheet } from '@slovo/ui';
 
 import { useComposition } from '../composition';
@@ -25,7 +26,7 @@ export function ShareCardSheet({
   onClose: () => void;
 }) {
   const composition = useComposition();
-  const content = buildShareCardContent(subject, editionStrings, edition.locale);
+  const content = buildShareCardContent(subject, editionStrings, edition.locale, deviceClock);
   return (
     <ShareSheet
       visible={visible}

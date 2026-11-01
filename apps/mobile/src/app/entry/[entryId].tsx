@@ -1,7 +1,7 @@
+import { linkSourceOf } from '@slovo/core';
 import { useLocalSearchParams } from 'expo-router';
 
 import { editionStrings } from '@/edition/edition';
-import { openedFromOf } from '@/entries/entry-link';
 import { EntryScreen } from '@/entries/entry-screen';
 
 /**
@@ -22,7 +22,7 @@ export default function EntryFromLinkScreen() {
       entryId={entryId}
       back={back ?? editionStrings.tabs.home}
       route="/entry"
-      openedFrom={openedFromOf(params)}
+      openedFrom={linkSourceOf(params)}
     />
   );
 }

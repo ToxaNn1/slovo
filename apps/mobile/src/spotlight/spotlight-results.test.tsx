@@ -30,8 +30,6 @@ let userState: Awaited<ReturnType<typeof seedUserState>>;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
-// The Entry card's action row has its own tests.
-jest.mock('../entries/entry-actions', () => ({ EntryActions: () => null }));
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
