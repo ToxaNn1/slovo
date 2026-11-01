@@ -1,6 +1,7 @@
 import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
 import {
   featureOfKind,
+  kindsShown,
   MIX_KINDS,
   type CategoryKind,
   type Edition,
@@ -157,7 +158,7 @@ export function hiddenScreenModel({
         .map((hiddenEntry) => entryModel(hiddenEntry, strings)),
     }))
     .filter((section) => section.entries.length > 0);
-  const correctionsIn = edition.isFeatureEnabled('corrections') && mix.kinds.correction;
+  const correctionsIn = kindsShown({ edition, mix }).includes('correction');
   const categories: HiddenCategoryModel[] = [
     ...mix.hiddenCategories.map(({ id, displayName }) => ({
       id,
