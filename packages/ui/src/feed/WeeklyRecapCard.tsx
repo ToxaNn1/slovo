@@ -13,8 +13,9 @@ const NUMBER_MAX_FONT_SCALE = 1.5;
 /**
  * The Weekly Recap card «Ваш тиждень» in the Feed Notice frame: the past
  * week's Entries Seen, Favorites added and Known marks, and the current
- * Streak, two numbers to a row (ADR 0054). The Known number is left out when
- * the recap has none, and the Streak while the reader hides it. «Поділитися»
+ * Streak, then the week's XP and goal days, two numbers to a row (ADR 0054).
+ * The Known number, the XP and the goal days are left out when the recap has
+ * none, and the Streak while the reader hides it. «Поділитися»
  * under the numbers opens the recap's Share Card, when sharing is there.
  * Until its numbers are read the card shows its title alone.
  */
@@ -33,30 +34,18 @@ export function WeeklyRecapCard({
   const numbers =
     recap === undefined
       ? []
-      : [
-          { key: 'seen', value: recap.seen, label: words.seen, spoken: words.spoken.seen },
-          { key: 'saved', value: recap.saved, label: words.saved, spoken: words.spoken.saved },
-          ...(recap.known === undefined
-            ? []
-            : [
-                {
-                  key: 'known',
-                  value: recap.known,
-                  label: words.known,
-                  spoken: words.spoken.known,
-                },
-              ]),
-          ...(hideStreak
-            ? []
-            : [
-                {
-                  key: 'streak',
-                  value: recap.streak,
-                  label: words.streak,
-                  spoken: words.spoken.streak,
-                },
-              ]),
-        ];
+      : (
+          [
+            { key: 'seen', value: recap.seen },
+            { key: 'saved', value: recap.saved },
+            { key: 'known', value: recap.known },
+            { key: 'streak', value: hideStreak ? undefined : recap.streak },
+            { key: 'xp', value: recap.xp },
+            { key: 'goalDays', value: recap.goalDays },
+          ] as const
+        ).flatMap(({ key, value }) =>
+          value === undefined ? [] : [{ key, value, label: words[key], spoken: words.spoken[key] }],
+        );
   return (
     <FeedNoticeCard
       notice="weeklyRecap"
