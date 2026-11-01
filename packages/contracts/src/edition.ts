@@ -270,6 +270,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   notificationFarewell: z.boolean(),
   /** The notification explainer: the sheet before the system permission prompt, after the first met Daily Goal or on day 3, and its one re-ask Feed Notice 7 days after a refusal. */
   notificationExplainer: z.boolean(),
+  /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings (ADR 0067). */
+  laterQuestions: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -546,8 +548,9 @@ const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
 
 /**
  * The Edition's questionnaire (ADR 0067): the options of «Хто ви», each
- * setting the Rarity Ceiling, and of «Навіщо», each setting the Mix kind
- * weights it names (the others stay). Ids are unique within a question.
+ * setting the Rarity Ceiling, of «Навіщо», each setting the Mix kind
+ * weights it names (the others stay), and of the self-rating. Ids are unique
+ * within a question.
  */
 export const QuestionnaireSchema = z.strictObject({
   who: z
@@ -565,6 +568,20 @@ export const QuestionnaireSchema = z.strictObject({
         id: QuestionnaireAnswerIdSchema,
         label: TextSchema,
         kindWeights: z.partialRecord(WeightedKindSchema, MixKindWeightSchema),
+      }),
+    )
+    .min(1),
+  /**
+   * The vocabulary self-rating, asked later through a Feed Notice: each
+   * option sets the Rarity Floor and says whether to offer the Rarity Test.
+   */
+  selfRating: z
+    .array(
+      z.strictObject({
+        id: QuestionnaireAnswerIdSchema,
+        label: TextSchema,
+        rarityFloor: RaritySchema,
+        offerRarityTest: z.boolean(),
       }),
     )
     .min(1),
@@ -658,7 +675,7 @@ export const EditionConfigSchema = z
       },
       context,
     ) => {
-      for (const question of QuestionnaireQuestionSchema.options) {
+      for (const question of [...QuestionnaireQuestionSchema.options, 'selfRating'] as const) {
         const optionIds = new Set<string>();
         questionnaire[question].forEach(({ id }, index) => {
           if (optionIds.has(id)) {

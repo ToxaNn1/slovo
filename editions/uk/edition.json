@@ -85,7 +85,8 @@
     "badges": true,
     "eveningNotification": true,
     "notificationFarewell": true,
-    "notificationExplainer": true
+    "notificationExplainer": true,
+    "laterQuestions": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -318,25 +319,65 @@
   },
   "questionnaire": {
     "who": [
-      { "id": "studying", "label": "Навчаюсь", "rarityCeiling": 4 },
-      { "id": "working", "label": "Працюю", "rarityCeiling": 5 },
-      { "id": "gourmet", "label": "Мовний гурман", "rarityCeiling": 5 }
+      {
+        "id": "studying",
+        "label": "Навчаюсь",
+        "rarityCeiling": 4
+      },
+      {
+        "id": "working",
+        "label": "Працюю",
+        "rarityCeiling": 5
+      },
+      {
+        "id": "gourmet",
+        "label": "Мовний гурман",
+        "rarityCeiling": 5
+      }
     ],
     "why": [
       {
         "id": "write-correctly",
         "label": "Писати без помилок",
-        "kindWeights": { "correction": "more" }
+        "kindWeights": {
+          "correction": "more"
+        }
       },
       {
         "id": "rare-words",
         "label": "Знати рідкісні слова",
-        "kindWeights": { "correction": "less", "tip": "less" }
+        "kindWeights": {
+          "correction": "less",
+          "tip": "less"
+        }
       },
       {
         "id": "play",
         "label": "Грати зі словами",
-        "kindWeights": { "idiom": "more", "synonymRow": "more" }
+        "kindWeights": {
+          "idiom": "more",
+          "synonymRow": "more"
+        }
+      }
+    ],
+    "selfRating": [
+      {
+        "id": "few",
+        "label": "Знаю мало рідкісних слів",
+        "rarityFloor": 1,
+        "offerRarityTest": false
+      },
+      {
+        "id": "some",
+        "label": "Знаю чимало",
+        "rarityFloor": 2,
+        "offerRarityTest": true
+      },
+      {
+        "id": "many",
+        "label": "Знаю дуже багато",
+        "rarityFloor": 3,
+        "offerRarityTest": true
       }
     ]
   },
