@@ -7,7 +7,7 @@ import type { Clock } from '../ports';
 import type { Progress } from '../progress/progress';
 import type { XpLog } from '../progress/xp-log';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** The numbers of the Weekly Recap («Ваш тиждень»): one local Monday–Sunday week and the Streak. */
 export interface WeeklyRecapModel {

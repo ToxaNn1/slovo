@@ -13,7 +13,7 @@ import {
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, optionsOf, seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 // Spec #1358 stories 10–13 and 85, ticket #1368, ADR 0066: the Level derived
 // from total XP, its Edition name and the level-milestone Feed Notices.

@@ -1,7 +1,7 @@
 import type { Entries, EntryIds } from '../entries/entries';
 import type { Random, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /**
  * A change of the Cycle not made yet: the user-state changes that keep it,

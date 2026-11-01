@@ -9,7 +9,7 @@ import type { Edition } from '../edition/edition';
 import type { NotificationKind } from '../ports';
 import type { LaterQuestion } from '../feed-notice';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** Which Share Card the reader shared, as its Analytics event says (ADR 0068). */
 export type ShareCardKind =

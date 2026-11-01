@@ -1,6 +1,6 @@
 import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { searchKey } from './search-key';
 
 /** The most queries Search remembers (ADR 0054). */

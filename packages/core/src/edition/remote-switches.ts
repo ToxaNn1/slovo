@@ -5,7 +5,7 @@ import { createSubscribers } from '../in-turn';
 import type { Backend, Random, RemoteSwitchesAnswer, Schedule } from '../ports';
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { switchedOn, type Edition } from './edition';
 
 const everyFeature = FeatureSwitchesSchema.keyof().options;

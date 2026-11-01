@@ -4,7 +4,7 @@ import { createEntryRows, type EntryRowModel } from '../entries/entry-row';
 import { dateKeyOf, parseLocalDate, todayDate, type LocalDate } from '../local-date';
 import type { Clock, ContentReadPort, UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 const { wordOfTheDayArchive: archiveRecords } = userStateRecords;
 

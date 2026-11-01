@@ -17,7 +17,7 @@ import { SYNC_AFTER_WRITE } from './sync';
 import { fakeClock, randomOf, testSchedule } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { trackChanges } from '../user-state/tracked-user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 const { favorites, syncCursor, syncSyncedAt, theme } = userStateRecords;
 

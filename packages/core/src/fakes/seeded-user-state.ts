@@ -2,7 +2,7 @@ import type { Clock, UserStateChanges, UserStatePort } from '../ports';
 import { trackChanges, type TrackedUserState } from '../user-state/tracked-user-state';
 import { createMemoryUserStatePort, openUserState, type UserState } from '../user-state/user-state';
 import type { UserStateRecord, UserStateRecords } from '../user-state/user-state-record';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 type Declared = typeof userStateRecords;
 

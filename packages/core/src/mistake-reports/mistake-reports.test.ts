@@ -2,7 +2,7 @@ import type { FeatureSwitch } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { openMistakeReports } from '../index';
-import { MISTAKE_REPORT_QUEUE_SIZE } from '../user-state/user-state-schema';
+import { MISTAKE_REPORT_QUEUE_SIZE } from './records';
 import { type MistakeReportDraft } from './mistake-reports';
 import { createFakeBackend } from '../testing';
 import { fakeClock, randomOf, settle, testSchedule } from '../test-support';

@@ -15,7 +15,7 @@ import {
 import type { Clock, NotificationPermission, Random } from '../ports';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 import type { ActiveDays } from '../progress/active-days';
 import type { XpLog } from '../progress/xp-log';

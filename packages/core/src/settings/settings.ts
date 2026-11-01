@@ -3,7 +3,7 @@ import type { FontSize, Theme } from '@slovo/contracts';
 import type { Analytics } from '../analytics/analytics';
 import { forgetUnsentCounters } from '../community-counters/counter-deltas';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** The user settings in effect. */
 export interface UserSettings {

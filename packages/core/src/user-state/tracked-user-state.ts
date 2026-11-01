@@ -1,7 +1,7 @@
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Clock, UserStateChanges, UserStatePort } from '../ports';
 import { createMemoryUserStatePort, openUserState, type UserState } from './user-state';
-import { syncs, userStateRecords } from './user-state-schema';
+import { syncs, userStateRecords } from '../user-state-schema';
 
 /**
  * A change of a synced record not yet sent to the Account: the instant it was

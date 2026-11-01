@@ -10,7 +10,7 @@ import { dateKeyOf, todayKey } from '../local-date';
 import type { Clock } from '../ports';
 import type { XpLog } from '../progress/xp-log';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** An option of a questionnaire question: its id and the Edition's label. */
 export interface QuestionnaireOption {

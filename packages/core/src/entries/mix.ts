@@ -12,7 +12,7 @@ import { featureOfKind, MIX_KINDS, type CategoryKind, type MixKind } from './ent
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /**
  * What the Mix needs to know of the Edition: its default Mix, and whether the

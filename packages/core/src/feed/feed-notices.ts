@@ -14,7 +14,7 @@ import type { XpLog } from '../progress/xp-log';
 import type { Clock, UserStateChanges } from '../ports';
 import type { History } from '../saved/history';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** A day of the first week, the first Active Day after the onboarding day 1 (ADR 0054). */
 export type FirstWeekDay = 1 | 2 | 3 | 4 | 5 | 6 | 7;

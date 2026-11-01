@@ -16,7 +16,7 @@ import type {
 } from '../ports';
 import { withRetries, type Answer } from '../retry';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { accountRequests, type AccountApiFailure, type IdTokenSignIn } from './account-requests';
 
 /** How long after a Sign-in code was sent another can be sent, in milliseconds. */

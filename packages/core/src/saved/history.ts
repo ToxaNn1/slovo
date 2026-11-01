@@ -2,7 +2,7 @@ import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn, createSubscribers, newestFirst } from '../in-turn';
 import type { UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** How many Entries History keeps: the next one evicts the oldest. */
 export const HISTORY_CAP = 500;

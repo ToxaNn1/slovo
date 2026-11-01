@@ -8,7 +8,7 @@ import { dayNumber, parseLocalDate, todayDate, type LocalDate } from '../local-d
 import type { Clock, UserStateChanges } from '../ports';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import {
   answerKnowledge,
   confirmsOnKnown,

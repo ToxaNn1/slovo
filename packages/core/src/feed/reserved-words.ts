@@ -8,7 +8,7 @@ import {
 } from '../local-date';
 import type { UserStateChanges } from '../ports';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 /** When a notification comes: a local date and a local time of day. */
 export interface Slot {

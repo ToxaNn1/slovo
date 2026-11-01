@@ -33,7 +33,7 @@ import {
 import { renderStress } from '../entries/stress';
 import { notificationBody } from './notification-text';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 import type { ActiveDays } from '../progress/active-days';
 import { ACTIVE_DAY_XP, deriveStreak } from '../progress/streak';

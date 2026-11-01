@@ -1,7 +1,7 @@
 import type { UserStateChanges, UserStatePort } from '../ports';
 import type { UserStateMigration } from './user-state-migration';
 import type { UserStateRecord, UserStateRecords } from './user-state-record';
-import { SCHEMA_VERSION_KEY, userStateMigrations } from './user-state-schema';
+import { SCHEMA_VERSION_KEY, userStateMigrations } from '../user-state-schema';
 
 /**
  * The user state at the schema version this Core reads and writes, read and

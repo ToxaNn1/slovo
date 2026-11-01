@@ -1,5 +1,5 @@
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 const { swipeHintShown } = userStateRecords;
 

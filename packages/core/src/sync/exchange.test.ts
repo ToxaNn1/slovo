@@ -6,7 +6,7 @@ import { createSyncExchange } from './exchange';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { trackChanges } from '../user-state/tracked-user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 
 const {
   activeDays,

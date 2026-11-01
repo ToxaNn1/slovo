@@ -4,7 +4,7 @@ import { createSubscribers } from '../in-turn';
 import type { Backend, Clock, Random, Schedule } from '../ports';
 import { withRetries } from '../retry';
 import type { TrackedUserState } from '../user-state/tracked-user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { createSyncExchange, type SyncResult } from './exchange';
 
 /** How long after the last tracked write a sync starts, in milliseconds. */

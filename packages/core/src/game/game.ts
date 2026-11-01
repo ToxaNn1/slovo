@@ -10,7 +10,7 @@ import type { LocalDate } from '../local-date';
 import type { Clock, Random, Schedule, UserStateChanges } from '../ports';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import type {
   AnswerSheet,
   ChipKind,

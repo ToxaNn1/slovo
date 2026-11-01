@@ -1,5 +1,5 @@
 import { dateKeyOf, dayNumber, localDateAfter, parseLocalDate } from '../local-date';
-import { BREAK_DAYS_AT_MOST } from '../user-state/user-state-schema';
+import { BREAK_DAYS_AT_MOST } from './records';
 
 /** The XP of learning actions a local date needs to be an Active Day (ADR 0066), apart from the Daily Goal. */
 export const ACTIVE_DAY_XP = 5;

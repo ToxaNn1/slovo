@@ -13,7 +13,7 @@ import type {
 } from '../ports';
 import { withRetries } from '../retry';
 import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state/user-state-schema';
+import { userStateRecords } from '../user-state-schema';
 import { forgetUnsentCounters, unsentAfterSending } from './counter-deltas';
 
 /** How long the app waits, while it is in the foreground, between two sends of the unsent changes, in milliseconds. */
