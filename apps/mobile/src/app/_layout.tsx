@@ -108,8 +108,12 @@ function FocusedEnter({
 }: Pick<ScreenLayoutProps, 'navigation' | 'children'>) {
   const [focused, setFocused] = useState(() => navigation.isFocused());
   useEffect(() => {
-    const offFocus = navigation.addListener('focus', () => setFocused(true));
-    const offBlur = navigation.addListener('blur', () => setFocused(false));
+    const offFocus = navigation.addListener('focus', () => {
+      setFocused(true);
+    });
+    const offBlur = navigation.addListener('blur', () => {
+      setFocused(false);
+    });
     return () => {
       offFocus();
       offBlur();
