@@ -51,7 +51,7 @@ async function pass(ms: number) {
   });
 }
 
-/** A drag on the grabber by `distance` points down, let go at `velocity` points per second. */
+/** A drag on its top by `distance` points down, let go at `velocity` points per second. */
 async function drag(distance: number, velocity: number) {
   await act(() => {
     fireGestureHandler(getByGestureTestId('sheet-drag'), [

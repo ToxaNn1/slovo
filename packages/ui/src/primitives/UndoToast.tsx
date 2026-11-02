@@ -10,8 +10,16 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type Ref,
 } from 'react';
-import { AccessibilityInfo, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -50,6 +58,8 @@ const MARK = { width: 12, height: 22 };
 /** The toast's undo button, from the design; its tap area is taller. */
 const UNDO_HEIGHT = 38;
 
+/** The message stops growing here, so the toast stays whole over what it covers. */
+const MESSAGE_MAX_FONT_SCALE = 1.3;
 /** The undo button's label stops growing here, so it never breaks a word. */
 const UNDO_MAX_FONT_SCALE = 1.3;
 
@@ -124,9 +134,6 @@ function UndoToast({
   content: ToastContent;
   onDismiss: (id: number) => void;
 }) {
-  const tokens = useTokens();
-  const { colors, radii } = tokens;
-  const { voice } = useEdition();
   const { width: windowWidth } = useWindowDimensions();
   // Each toast mounts afresh, so it waits for the system's answer before it comes in.
   const reduceMotionKnown = useReduceMotionKnown();
@@ -187,26 +194,64 @@ function UndoToast({
     <Animated.View
       testID="undo-toast"
       onAccessibilityEscape={close}
-      style={[styles.toast, inStyle]}
+      style={[styles.place, inStyle]}
     >
+      <ToastFace message={content.message} messageRef={messageRef}>
+        {'onUndo' in content && <UndoButton {...content} onPress={close} />}
+      </ToastFace>
+    </Animated.View>
+  );
+}
+
+/**
+ * The look of a toast, wherever it is placed: the ink with its left corners
+ * round and its right edge slanting in, a red mark, the message in the
+ * background colour, and what follows it, such as an undo button.
+ */
+export function ToastFace({
+  message,
+  messageRef,
+  children,
+}: {
+  message: string;
+  messageRef?: Ref<Text> | undefined;
+  children?: ReactNode;
+}) {
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
+  const { voice } = useEdition();
+  const round = radii.chip + space[1];
+  return (
+    <View style={styles.face}>
       <View
         style={[
           styles.body,
-          { backgroundColor: colors.ink, borderTopLeftRadius: radii.chip + 4, borderBottomLeftRadius: radii.chip + 4 },
+          {
+            backgroundColor: colors.ink,
+            borderTopLeftRadius: round,
+            borderBottomLeftRadius: round,
+          },
         ]}
       />
-      <Wedge points={TAIL_SHAPE} color={colors.ink} width={TAIL} height="100%" style={styles.tail} />
+      <Wedge
+        points={TAIL_SHAPE}
+        color={colors.ink}
+        width={TAIL}
+        height="100%"
+        style={styles.tail}
+      />
       <Wedge points={wedges.band} color={colors.accent} {...MARK} />
       <Text
         ref={messageRef}
         testID="undo-toast-message"
         {...voice}
+        maxFontSizeMultiplier={MESSAGE_MAX_FONT_SCALE}
         style={[styles.message, typeStyle('toast', tokens), { color: colors.background }]}
       >
-        {content.message}
+        {message}
       </Text>
-      {'onUndo' in content && <UndoButton {...content} onPress={close} />}
-    </Animated.View>
+      {children}
+    </View>
   );
 }
 
@@ -254,11 +299,13 @@ const TAIL_SHAPE = [
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  toast: {
+  place: {
     position: 'absolute',
     left: space[3] + 2,
     right: space[3] + 2,
     bottom: space[8] + space[2],
+  },
+  face: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],

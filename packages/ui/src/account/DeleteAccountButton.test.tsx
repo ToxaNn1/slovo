@@ -42,7 +42,9 @@ describe('DeleteAccountButton', () => {
 
     expect(onDelete).toHaveBeenCalledTimes(1);
     // The dialog slides away before it unmounts.
-    await waitFor(() => expect(screen.queryByText('Delete SLOVO ID?')).not.toBeOnTheScreen());
+    await waitFor(() => {
+      expect(screen.queryByText('Delete SLOVO ID?')).not.toBeOnTheScreen();
+    });
   });
 
   it('deletes nothing when the reader cancels, and closes the dialog', async () => {
@@ -53,7 +55,9 @@ describe('DeleteAccountButton', () => {
 
     expect(onDelete).not.toHaveBeenCalled();
     // The dialog slides away before it unmounts.
-    await waitFor(() => expect(screen.queryByText('Delete SLOVO ID?')).not.toBeOnTheScreen());
+    await waitFor(() => {
+      expect(screen.queryByText('Delete SLOVO ID?')).not.toBeOnTheScreen();
+    });
   });
 
   it('takes no press while disabled', async () => {
@@ -62,6 +66,8 @@ describe('DeleteAccountButton', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Delete SLOVO ID' }));
 
     // The dialog slides away before it unmounts.
-    await waitFor(() => expect(screen.queryByText('Delete SLOVO ID?')).not.toBeOnTheScreen());
+    await waitFor(() => {
+      expect(screen.queryByText('Delete SLOVO ID?')).not.toBeOnTheScreen();
+    });
   });
 });

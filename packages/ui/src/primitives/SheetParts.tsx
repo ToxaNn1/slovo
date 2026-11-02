@@ -10,6 +10,8 @@ export const SHEET_ROW_HEIGHT = 56;
 
 /** How far the largest text sizes of iOS may scale a sheet's title, as a screen title. */
 const TITLE_MAX_FONT_SCALE = 1.3;
+/** The title band's padding above and below, and how far it reaches left of the sheet's edge, from the design. */
+const TITLE_BAND = { vertical: 10, outset: 2 };
 
 /** The title's turn, from the design: along the sheet's slanted top. */
 const TITLE_TURN = '-4.4deg';
@@ -42,8 +44,8 @@ export function SheetTitle({ children }: { children: ReactNode }) {
 const styles = StyleSheet.create({
   title: {
     alignSelf: 'flex-start',
-    marginLeft: -2,
-    paddingVertical: 10,
+    marginLeft: -TITLE_BAND.outset,
+    paddingVertical: TITLE_BAND.vertical,
     paddingHorizontal: space[4],
     transform: [{ rotate: TITLE_TURN }],
     transformOrigin: 'left',

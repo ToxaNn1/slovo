@@ -234,6 +234,8 @@ export const motion = {
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
   pop: { duration: 300, easing: ease },
+  /** One beat of the loader's wedges, from short to tall and back. */
+  loader: { duration: 800, easing: [0.42, 0, 0.58, 1] },
   /** Rows rise this far into place, one after another. */
   cascade: { duration: 400, easing: ease, rise: 16 },
   /** Under Reduce Motion every motion is this one fade. */
@@ -350,7 +352,7 @@ export const cardSpace = {
 } as const;
 
 /** The line heights the design gives in pixels rather than as a multiple of the size. */
-export const lineHeight = { toast: 21, pronunciationNote: 20, aboutDescription: 30 } as const;
+export const lineHeight = { pronunciationNote: 20, aboutDescription: 30 } as const;
 
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
 export const rowPadding = 14;
@@ -549,7 +551,6 @@ export const signInButtonHeight = 50;
 
 /** The colour of a shadow, black in both Themes. */
 export const shadowColor = '#000000';
-
 
 /** A toast's corner radius, from the design; layout, not an Edition token. */
 export const toastRadius = 6;

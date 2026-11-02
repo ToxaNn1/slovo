@@ -66,7 +66,7 @@ const DRAG_SPRING = {
   reduceMotion: ReduceMotion.Never,
 };
 
-/** How far, in points, a drag on the grabber must go to close the sheet. */
+/** How far, in points, a drag on its top must go to close the sheet. */
 const CLOSE_DISTANCE = 96;
 /** How fast, in points per second, a downward flick closes it whatever its length. */
 const CLOSE_VELOCITY = 800;
@@ -167,7 +167,7 @@ export function BottomSheet({
     onClose?.();
   };
 
-  // Only a sheet with `onClose` has the grabber that takes the drag.
+  // Only a sheet with `onClose` has the top strip that takes the drag.
   const pan = Gesture.Pan()
     .onUpdate(({ translationY }) => {
       drag.value = Math.max(translationY, 0);
@@ -217,7 +217,13 @@ export function BottomSheet({
       supportedOrientations={['portrait']}
     >
       <View style={styles.root} testID={testID}>
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: onClose === undefined ? 'transparent' : scrim }, scrimStyle]}>
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: onClose === undefined ? 'transparent' : scrim },
+            scrimStyle,
+          ]}
+        >
           {/* The scrim is no control for VoiceOver: the sheet closes with «Готово». */}
           <Pressable
             accessible={false}
@@ -263,11 +269,7 @@ function SheetPanel({
       onLayout={({ nativeEvent }) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[
-        styles.sheet,
-        { paddingBottom: Math.max(insets.bottom, space[8]) },
-        sheetStyle,
-      ]}
+      style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[8]) }, sheetStyle]}
     >
       <Wedge
         points={SLANT}

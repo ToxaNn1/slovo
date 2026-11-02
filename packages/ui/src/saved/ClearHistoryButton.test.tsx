@@ -43,7 +43,9 @@ describe('ClearHistoryButton', () => {
 
     expect(onClear).toHaveBeenCalledTimes(1);
     // The dialog slides away before it unmounts.
-    await waitFor(() => expect(screen.queryByText('Clear History?')).not.toBeOnTheScreen());
+    await waitFor(() => {
+      expect(screen.queryByText('Clear History?')).not.toBeOnTheScreen();
+    });
   });
 
   it('clears nothing when the reader cancels, and closes the dialog', async () => {
@@ -54,6 +56,8 @@ describe('ClearHistoryButton', () => {
 
     expect(onClear).not.toHaveBeenCalled();
     // The dialog slides away before it unmounts.
-    await waitFor(() => expect(screen.queryByText('Clear History?')).not.toBeOnTheScreen());
+    await waitFor(() => {
+      expect(screen.queryByText('Clear History?')).not.toBeOnTheScreen();
+    });
   });
 });

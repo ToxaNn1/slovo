@@ -17,10 +17,16 @@ import {
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { activeEditionFiles, editionStrings } from '../edition/edition';
 import { openOnce } from '../opening';
 import { AccountScreen } from './account-screen';
+
+const metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 0, left: 0, right: 0, bottom: 0 },
+};
 
 const { config } = activeEditionFiles;
 
@@ -93,17 +99,20 @@ async function renderScreen({
   await opening.opened();
   const edition = editionWith({ googleSignIn, signInWithApple });
   await render(
-    <EditionProvider edition={edition} strings={editionStrings}>
-      <AccountScreen
-        opening={opening}
-        back={{ label: editionStrings.settings.title, onPress: jest.fn() }}
-        signIn={{
-          edition,
-          googleClientId: withClientId ? CLIENT_ID : undefined,
-          appleModule,
-        }}
-      />
-    </EditionProvider>,
+    // The SLOVO ID screen's confirmation dialog is a bottom sheet, which reads the safe area.
+    <SafeAreaProvider initialMetrics={metrics}>
+      <EditionProvider edition={edition} strings={editionStrings}>
+        <AccountScreen
+          opening={opening}
+          back={{ label: editionStrings.settings.title, onPress: jest.fn() }}
+          signIn={{
+            edition,
+            googleClientId: withClientId ? CLIENT_ID : undefined,
+            appleModule,
+          }}
+        />
+      </EditionProvider>
+    </SafeAreaProvider>,
   );
   await settle();
 }

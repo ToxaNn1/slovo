@@ -29,7 +29,10 @@ export function Wedge({
       accessible={false}
       style={style}
     >
-      <Polygon points={points.map(([x, y]) => `${String(x)},${String(y)}`).join(' ')} fill={color} />
+      <Polygon
+        points={points.map(([x, y]) => `${String(x)},${String(y)}`).join(' ')}
+        fill={color}
+      />
     </Svg>
   );
 }

@@ -1008,7 +1008,9 @@ describe('GameRound', () => {
       await renderRound(jest.fn(), onLeave);
 
       // The dialog slides away before it unmounts.
-    await waitFor(() => expect(screen.queryByText('Leave?')).not.toBeOnTheScreen());
+      await waitFor(() => {
+        expect(screen.queryByText('Leave?')).not.toBeOnTheScreen();
+      });
 
       await fireEvent.press(screen.getByRole('button', { name: 'Leave the Game' }));
 
@@ -1026,7 +1028,9 @@ describe('GameRound', () => {
 
       expect(onLeave).toHaveBeenCalledTimes(1);
       // The dialog slides away before it unmounts.
-    await waitFor(() => expect(screen.queryByText('Leave?')).not.toBeOnTheScreen());
+      await waitFor(() => {
+        expect(screen.queryByText('Leave?')).not.toBeOnTheScreen();
+      });
     });
 
     it('plays on when the reader cancels, and closes the dialog', async () => {
@@ -1038,7 +1042,9 @@ describe('GameRound', () => {
 
       expect(onLeave).not.toHaveBeenCalled();
       // The dialog slides away before it unmounts.
-    await waitFor(() => expect(screen.queryByText('Leave?')).not.toBeOnTheScreen());
+      await waitFor(() => {
+        expect(screen.queryByText('Leave?')).not.toBeOnTheScreen();
+      });
       expect(screen.getByRole('button', { name: 'candid' })).toBeOnTheScreen();
     });
   });

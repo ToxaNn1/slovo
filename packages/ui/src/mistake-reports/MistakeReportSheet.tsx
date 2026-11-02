@@ -30,7 +30,7 @@ export interface MistakeReportSheetDraft {
  * stops at 500 characters; and «Надіслати», disabled until a type is chosen,
  * and for «Інше» until the comment says something. «Надіслати» hands the
  * draft to `onSend` and the sheet starts afresh; a tap on the scrim, a drag on
- * the grabber and VoiceOver's escape gesture ask `onClose`, and keep what was
+ * its top and VoiceOver's escape gesture ask `onClose`, and keep what was
  * written. The caller turns `visible` off in both callbacks. Needs a
  * `SafeAreaProvider` above it.
  */
