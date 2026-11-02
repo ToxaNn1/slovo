@@ -9,13 +9,14 @@ import {
   fill,
   FontSizeProvider,
   HapticsProvider,
+  ReduceMotionProvider,
   TokensProvider,
   typeSize,
   useEdition,
 } from '@slovo/ui';
 import { DarkTheme, DefaultTheme, Tabs, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo, type ComponentProps } from 'react';
+import { useMemo, type ComponentProps, type ReactNode } from 'react';
 import { Pressable } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -132,7 +133,7 @@ export default function RootLayout() {
   );
 }
 
-/** The tabs in their final order: Home, Settings, Game (when it is on in effect), Saved. */
+/** The tabs in their final order: Home, Game (when it is on in effect), Saved, Settings. */
 function ThemedTabs() {
   const { languagePack, composition } = useShell();
   const colorScheme = useColorSchemeInEffect();
@@ -174,34 +175,36 @@ function ThemedTabs() {
             <Opened opening={languagePack} failedTestID="language-pack-failed">
               <Opened opening={composition} failedTestID="feed-error">
                 {/* The screens' background and divider follow the local date (ADR 0055). */}
-                <DecorInEffect clock={deviceClock}>
-                  <NotificationTaps
-                    onOpened={(kind) => {
-                      // The event never fails; a composition that fails to open is reported where it opens.
-                      composition.opened().then(
-                        (open) => open.analytics.notificationOpened(kind),
-                        () => undefined,
-                      );
-                    }}
-                  />
-                  <EditionTabs
-                    screenOptions={{
-                      headerShown: false,
-                      tabBarIcon: () => null,
-                      tabBarButton: TabButton,
-                      tabBarActiveTintColor: colors.accent,
-                      tabBarInactiveTintColor: colors.inactiveTab,
-                      tabBarLabelStyle: {
-                        fontFamily: ui,
-                        fontSize: typeSize.tabLabel,
-                        fontWeight: '600',
-                      },
-                    }}
-                  />
-                  {/* Over the tabs until the reader finishes or skips it. */}
-                  <MascotCelebrations />
-                  <Onboarding />
-                </DecorInEffect>
+                <ReduceMotionInEffect>
+                  <DecorInEffect clock={deviceClock}>
+                    <NotificationTaps
+                      onOpened={(kind) => {
+                        // The event never fails; a composition that fails to open is reported where it opens.
+                        composition.opened().then(
+                          (open) => open.analytics.notificationOpened(kind),
+                          () => undefined,
+                        );
+                      }}
+                    />
+                    <EditionTabs
+                      screenOptions={{
+                        headerShown: false,
+                        tabBarIcon: () => null,
+                        tabBarButton: TabButton,
+                        tabBarActiveTintColor: colors.accent,
+                        tabBarInactiveTintColor: colors.inactiveTab,
+                        tabBarLabelStyle: {
+                          fontFamily: ui,
+                          fontSize: typeSize.tabLabel,
+                          fontWeight: '600',
+                        },
+                      }}
+                    />
+                    {/* Over the tabs until the reader finishes or skips it. */}
+                    <MascotCelebrations />
+                    <Onboarding />
+                  </DecorInEffect>
+                </ReduceMotionInEffect>
               </Opened>
             </Opened>
           </HapticsProvider>
@@ -209,6 +212,20 @@ function ThemedTabs() {
         <LaunchSplash />
       </ThemeProvider>
     </TokensProvider>
+  );
+}
+
+/**
+ * Gives the screens the reader's «Менше руху» while its Feature Switch is in
+ * effect; the system's Reduce Motion counts either way.
+ */
+function ReduceMotionInEffect({ children }: { children: ReactNode }) {
+  const { reduceMotionSetting } = useShown();
+  const { reduceMotion } = useSettings().current;
+  return (
+    <ReduceMotionProvider reduceMotion={reduceMotionSetting && reduceMotion}>
+      {children}
+    </ReduceMotionProvider>
   );
 }
 
@@ -222,9 +239,9 @@ function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
   return (
     <Tabs screenOptions={screenOptions}>
       <Tabs.Screen name="index" options={tabOptions('home', tabOrder)} />
-      <Tabs.Screen name="settings" options={tabOptions('settings', tabOrder)} />
       <Tabs.Screen name="game" options={tabOptions('game', tabOrder)} />
       <Tabs.Screen name="saved" options={tabOptions('saved', tabOrder)} />
+      <Tabs.Screen name="settings" options={tabOptions('settings', tabOrder)} />
       {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
       <Tabs.Screen name="entry" options={{ href: null }} />
       {/* The recipient sheet of a Collection Link opened from outside; no tab leads to it. */}
