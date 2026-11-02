@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, typeSize } from '../tokens';
+import { space, textFieldDrawing, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -51,7 +51,7 @@ export function TextField({
   | 'returnKeyType'
   | 'textContentType'
 >) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   return (
     <View style={styles.field}>
@@ -63,8 +63,7 @@ export function TextField({
           styles.box,
           {
             backgroundColor: editable ? colors.surface : colors.surfaceSunken,
-            borderColor: problem === undefined ? colors.line : colors.destructive,
-            borderRadius: radii.button,
+            borderColor: problem === undefined ? colors.line : colors.accent,
           },
         ]}
       >
@@ -121,7 +120,7 @@ export function ProblemLine({
     <Text
       testID={testID}
       {...voice}
-      style={[styles.problem, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+      style={[styles.problem, { color: colors.accent, fontFamily: fontFamilies.ui }]}
     >
       {problem}
     </Text>
@@ -132,13 +131,14 @@ const styles = StyleSheet.create({
   field: { gap: space[2] },
   label: { fontSize: typeSize.caption, fontWeight: '600' },
   box: {
-    minHeight: minTouchTarget + space[2],
+    minHeight: textFieldDrawing.height,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[2],
     paddingHorizontal: space[4],
-    borderWidth: 1,
+    borderWidth: textFieldDrawing.border,
+    borderRadius: textFieldDrawing.radius,
   },
-  input: { flex: 1, alignSelf: 'stretch', fontSize: typeSize.listItem },
-  problem: { fontSize: typeSize.caption, fontWeight: '600' },
+  input: { flex: 1, alignSelf: 'stretch', fontSize: textFieldDrawing.inputSize },
+  problem: { fontSize: textFieldDrawing.problemSize, fontWeight: '600' },
 });

@@ -449,15 +449,23 @@ export const chipDrawing = {
 export const searchFieldDrawing = {
   height: 50,
   radius: 14,
+  paddingHorizontal: 14,
+  gap: 10,
   icon: 18,
   inputSize: 16,
   clear: 28,
   clearRadius: 8,
-  clearIcon: 12,
+  clearIcon: 10,
 } as const;
 
 /** The text field's drawing (design `XSettings`): its box, and the border a problem draws. */
-export const textFieldDrawing = { height: 58, radius: 15, border: 2.5, inputSize: 16 } as const;
+export const textFieldDrawing = {
+  height: 58,
+  radius: 15,
+  border: 2.5,
+  inputSize: 16,
+  problemSize: 13,
+} as const;
 
 /** The corner radius of an outlined button, from the design; fixed like the toast's, not an Edition token. */
 export const outlineButtonRadius = 6;

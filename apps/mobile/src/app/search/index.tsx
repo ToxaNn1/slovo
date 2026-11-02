@@ -3,8 +3,8 @@ import {
   EntryRow,
   LabelChip,
   RecentQueries,
+  SearchField,
   space,
-  TextField,
   typeSize,
   useEdition,
   useTokens,
@@ -110,7 +110,7 @@ function SearchHeader({
   return (
     <View style={styles.header}>
       <BackLink testID="search-back" label={editionStrings.tabs.home} onPress={onBack} />
-      <TextField
+      <SearchField
         testID="search-field"
         label={strings.title}
         value={query}

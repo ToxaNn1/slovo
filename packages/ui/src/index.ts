@@ -94,6 +94,7 @@ export { Placeholder } from './primitives/Placeholder';
 export { PronunciationButton } from './entries/PronunciationButton';
 export { SegmentedControl } from './primitives/SegmentedControl';
 export { Switch } from './primitives/Switch';
+export { SearchField } from './primitives/SearchField';
 export { ProblemLine, TextField } from './primitives/TextField';
 export { ShareButton } from './share/ShareButton';
 export { MistakeReportButton } from './mistake-reports/MistakeReportButton';
