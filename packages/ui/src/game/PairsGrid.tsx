@@ -3,49 +3,68 @@
 
 import { stressLabel, type GridCell, type RoundAnswer, type RoundOption } from '@slovo/core';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  interpolateColor,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
+import { PressedTile, type TileTone } from '../primitives/PressedTile';
+import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { WholeWordsText } from '../primitives/WholeWordsText';
-import { onFill, roundLayout, space, typeSize } from '../tokens';
+import { useReduceMotion } from '../providers/useReduceMotion';
+import { space, typeSize } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
-/** A cell's least height, an answer option's, above the 44 pt touch target. */
-const CELL_HEIGHT = 58;
-/** A Word's text, smaller than an option's so it fits half the width. */
-const WORD_SIZE = { fontSize: typeSize.listItem, lineHeight: typeSize.listItem * 1.3 };
-/** A Definition's text, which wraps over as many lines as it needs. */
+/** A cell's height and corner, the design's pairs tile, above the 44 pt touch target. */
+const CELL_HEIGHT = 70;
+const CELL_RADIUS = 16;
+/** The gap between the columns and between the cells of a column. */
+const CELL_GAP = 12;
+/** A Word's text, Unbounded 800 14. */
+const WORD_SIZE = { fontSize: typeSize.caption, lineHeight: typeSize.caption * 1.15 };
+/** A Definition's text, Onest 600 15, which wraps over as many lines as it needs. */
 const DEFINITION_SIZE = typeSize.body;
-const DEFINITION_LINE_HEIGHT = typeSize.body * 1.35;
+const DEFINITION_LINE_HEIGHT = typeSize.body * 1.25;
 /** How far the largest text sizes of iOS may scale a Definition, so a long one stays in the grid. */
 const DEFINITION_MAX_FONT_SCALE = 1.5;
+/** How a right pair pops: from small, past its size, back. */
+const CELL_POP = [0.6, 1.12, 1];
+/** How far a wrong pair drops, how far its cells turn (a Word left, a Definition right), how much it fades. */
+const CELL_DROP = 8;
+const CELL_TURN = 3;
+const WRONG_OPACITY = 0.6;
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+/** The face of a cell in each look. */
+const TONES: Record<Look, TileTone> = {
+  rest: 'tile',
+  selected: 'ink',
+  right: 'accent',
+  wrong: 'none',
+};
 
 /** The answer to a Round of the pairs form. */
 type PairsAnswer = Extract<RoundAnswer, { form: 'pairs' }>;
 
-/** How a judged answer fills a cell; nothing before the answer or for a cell not in the pair. */
-type Fill = 'right' | 'wrong' | undefined;
+/** What a cell shows: at rest, the selected Word, or a judged pair's right or wrong look. */
+type Look = 'rest' | 'selected' | 'right' | 'wrong';
 
 /**
  * A pairs grid: its Words in a column on the left and its Definitions on the
- * right, each wrapping as long as it runs. A tap on a Word selects it, a tap
- * on it again or on another Word changes the selection, and a tap on a
- * Definition then gives the pair, which leaves nothing selected; a Definition
- * tapped before a Word does nothing. Once the pair is judged, its Word and
- * Definition fill in the correct or the wrong colour, and nothing shakes;
- * the screen plays the answer's haptic. A pair
- * gone, answered right, leaves its places empty, which VoiceOver skips.
- * VoiceOver reads each Word with its Stress and each Definition by its text.
- * Key it by the Round, so a new Round starts with nothing selected.
+ * right, each a tile of the design. A tap on a Word selects it, a tap on it
+ * again or on another Word changes the selection, and a tap on a Definition
+ * then gives the pair, which leaves nothing selected; a Definition tapped
+ * before a Word does nothing. The selected Word turns ink. Once the pair is
+ * judged, a right pair turns red and pops; a wrong one sinks, mutes, drops
+ * and turns aside, a Word left and a Definition right. Under Reduce Motion
+ * nothing pops, drops or turns. Nothing shakes; the screen plays the
+ * answer's haptic. A pair gone, answered right, leaves its places empty,
+ * which VoiceOver skips. VoiceOver reads each Word with its Stress and each
+ * Definition by its text. Key it by the Round, so a new Round starts with
+ * nothing selected.
  */
 export function PairsGrid({
   words,
@@ -63,26 +82,31 @@ export function PairsGrid({
   onAnswer: (word: number, definition: number) => void;
 }) {
   const { colors, fontFamilies } = useTokens();
+  const keyInk = useSchemeColors('light').ink;
   const { strings } = useEdition();
   const [selected, setSelected] = useState<number>();
-  const fillOf = (place: number, answered: number | undefined): Fill =>
-    answer === undefined || place !== answered ? undefined : answer.right ? 'right' : 'wrong';
+  const lookOf = (place: number, answered: number | undefined, on: boolean): Look => {
+    if (answer === undefined || place !== answered) return on ? 'selected' : 'rest';
+    return answer.right ? 'right' : 'wrong';
+  };
+  const textColor = (look: Look): string =>
+    ({ rest: colors.ink, selected: colors.background, right: keyInk, wrong: colors.muted })[look];
 
   return (
     <View testID="pairs" style={styles.grid}>
       <View style={styles.words}>
         {words.map(({ shown, gone }, place) => {
-          const fill = fillOf(place, answer?.word);
           const on = selected === place;
+          const look = lookOf(place, answer?.word, on);
           return (
             <Cell
               key={place}
               testID={`pairs-word-${String(place)}`}
               label={stressLabel(strings.wordCard, shown.text, shown.stressedVowels)}
-              selected={on}
+              look={look}
+              turn={-CELL_TURN}
               gone={gone}
-              fill={fill}
-              disabled={answer !== undefined}
+              answered={answer !== undefined}
               onPress={() => {
                 setSelected(on ? undefined : place);
               }}
@@ -91,10 +115,7 @@ export function PairsGrid({
                 text={shown.text}
                 size={WORD_SIZE}
                 tracking={0}
-                style={[
-                  styles.word,
-                  { color: textColor(fill, on, colors), fontFamily: fontFamilies.word },
-                ]}
+                style={[styles.word, { color: textColor(look), fontFamily: fontFamilies.word }]}
               />
             </Cell>
           );
@@ -102,16 +123,16 @@ export function PairsGrid({
       </View>
       <View style={styles.definitions}>
         {definitions.map(({ shown, gone }, place) => {
-          const fill = fillOf(place, answer?.definition);
+          const look = lookOf(place, answer?.definition, false);
           return (
             <Cell
               key={place}
               testID={`pairs-definition-${String(place)}`}
               label={shown}
-              selected={false}
+              look={look}
+              turn={CELL_TURN}
               gone={gone}
-              fill={fill}
-              disabled={answer !== undefined}
+              answered={answer !== undefined}
               onPress={() => {
                 if (selected === undefined) return;
                 setSelected(undefined);
@@ -120,10 +141,7 @@ export function PairsGrid({
             >
               <Text
                 maxFontSizeMultiplier={DEFINITION_MAX_FONT_SCALE}
-                style={[
-                  styles.definition,
-                  { color: textColor(fill, false, colors), fontFamily: fontFamilies.ui },
-                ]}
+                style={[styles.definition, { color: textColor(look), fontFamily: fontFamilies.ui }]}
               >
                 {shown}
               </Text>
@@ -135,103 +153,105 @@ export function PairsGrid({
   );
 }
 
-/** A cell's text colour: white on a fill, the background's on the selected Word, ink otherwise. */
-function textColor(
-  fill: Fill,
-  selected: boolean,
-  colors: ReturnType<typeof useTokens>['colors'],
-): string {
-  if (fill !== undefined) return onFill;
-  return selected ? colors.background : colors.ink;
-}
-
 /**
- * A Word or a Definition of the grid. The selected Word fills in ink; a judged
- * pair's cells fill in the correct or the wrong colour, the light scheme's in
- * both Themes; nothing shakes.
+ * A Word or a Definition of the grid on a pressed tile. Its face carries
+ * `${testID}-face` and what pops, drops or turns it `${testID}-motion`.
  */
 function Cell({
   testID,
   label,
-  selected,
+  look,
+  turn,
   gone,
-  fill,
-  disabled,
+  answered,
   onPress,
   children,
 }: {
   testID: string;
   label: string;
-  selected: boolean;
+  look: Look;
+  /** How far a wrong cell turns, in degrees. */
+  turn: number;
   /** Whether its pair is answered and gone, leaving its place empty. */
   gone: boolean;
-  fill: Fill;
-  disabled: boolean;
+  /** Whether the Round is answered, so no cell takes a tap. */
+  answered: boolean;
   onPress: () => void;
   children: ReactNode;
 }) {
-  const { colors, radii } = useTokens();
-  const light = useSchemeColors('light');
+  const { colors } = useTokens();
   const { voice } = useEdition();
-  /** 0 before the answer, 1 once the cell has filled. */
-  const filled = useSharedValue(fill === undefined ? 0 : 1);
-  // Whether the cell showed its fill before, so only the answer given now moves it.
-  const shownFill = useRef(fill !== undefined);
+  const reduceMotion = useReduceMotion();
+  const judged = look === 'right' || look === 'wrong';
+  /** 0 before the answer, 1 once the cell has popped or dropped. */
+  const moved = useSharedValue(judged ? 1 : 0);
+  // Whether the cell showed its answer before, so only the answer given now moves it.
+  const shownJudged = useRef(judged);
 
   useEffect(() => {
-    if (fill === undefined || shownFill.current) return;
-    shownFill.current = true;
-    filled.value = withTiming(1, fill === 'right' ? RIGHT_FILL : WRONG_FILL);
-    // The shared value is stable, so only the answer given fills the cell.
-  }, [fill, filled]);
+    if (!judged || shownJudged.current) return;
+    shownJudged.current = true;
+    moved.value = withTiming(1, look === 'right' ? RIGHT_FILL : WRONG_FILL);
+    // The shared value is stable, so only the answer given moves the cell.
+  }, [judged, look, moved]);
 
-  const rest = selected ? colors.ink : colors.surface;
-  const restBorder = selected ? colors.ink : colors.line;
-  const paint = fill === 'right' ? light.correct : light.wrong;
-  const motion = useAnimatedStyle(() =>
-    fill === undefined
-      ? {}
-      : {
-          backgroundColor: interpolateColor(filled.value, [0, 1], [rest, paint]),
-          borderColor: interpolateColor(filled.value, [0, 1], [restBorder, paint]),
-        },
-  );
+  const still = reduceMotion || !judged;
+  const motion = useAnimatedStyle(() => {
+    if (look === 'wrong')
+      return {
+        opacity: 1 - (1 - WRONG_OPACITY) * moved.value,
+        transform: still
+          ? []
+          : [
+              { translateY: CELL_DROP * moved.value },
+              { rotate: `${String(turn * moved.value)}deg` },
+            ],
+      };
+    return {
+      opacity: 1,
+      transform: still ? [] : [{ scale: interpolate(moved.value, [0, 0.6, 1], CELL_POP) }],
+    };
+  });
   return (
-    <AnimatedPressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ selected, disabled: disabled || gone }}
+    <View
       accessibilityElementsHidden={gone}
       importantForAccessibility={gone ? 'no-hide-descendants' : 'auto'}
-      {...voice}
-      disabled={disabled || gone}
-      onPress={onPress}
-      style={[
-        styles.cell,
-        { backgroundColor: rest, borderColor: restBorder, borderRadius: radii.button },
-        motion,
-        gone && styles.gone,
-      ]}
+      style={gone && styles.gone}
     >
-      {children}
-    </AnimatedPressable>
+      <Animated.View testID={`${testID}-motion`} style={motion} {...voice}>
+        <PressedTile
+          testID={testID}
+          tone={TONES[look]}
+          radius={CELL_RADIUS}
+          accessibilityLabel={label}
+          accessibilityState={{ selected: look === 'selected', disabled: answered || gone }}
+          inert={answered || gone}
+          onPress={onPress}
+          faceStyle={[styles.cell, look === 'wrong' && { backgroundColor: colors.surfaceSunken }]}
+        >
+          {children}
+        </PressedTile>
+      </Animated.View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', gap: roundLayout.gap },
-  words: { flex: 2, gap: roundLayout.gap },
-  definitions: { flex: 3, gap: roundLayout.gap },
+  grid: { flexDirection: 'row', gap: CELL_GAP },
+  // The design's columns, .8 and 1.2 of the width.
+  words: { flex: 2, gap: CELL_GAP },
+  definitions: { flex: 3, gap: CELL_GAP },
   cell: {
-    flexGrow: 1,
     minHeight: CELL_HEIGHT,
     justifyContent: 'center',
-    borderWidth: 1,
     paddingHorizontal: space[3],
     paddingVertical: space[2],
   },
   gone: { opacity: 0 },
-  word: { fontWeight: '500', textAlign: 'center' },
-  definition: { fontSize: DEFINITION_SIZE, lineHeight: DEFINITION_LINE_HEIGHT },
+  word: { fontWeight: '800', textAlign: 'center' },
+  definition: {
+    fontSize: DEFINITION_SIZE,
+    lineHeight: DEFINITION_LINE_HEIGHT,
+    fontWeight: '600',
+  },
 });
