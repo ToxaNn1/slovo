@@ -31,7 +31,7 @@ import { BottomSheet } from '../primitives/BottomSheet';
 import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
 import { CardCorners } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { HEART_PATH } from '../saved/FavoriteButton';
+import { Wedge } from '../primitives/Wedge';
 import { Button } from '../primitives/Button';
 import {
   minTouchTarget,
@@ -40,10 +40,10 @@ import {
   roundLayout,
   space,
   typeSize,
-  withAlpha,
+  wedges,
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { ease, RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
+import { ease, RIGHT_FILL, WRONG_FILL } from './round-motion';
 import { OrderedChips } from './OrderedChips';
 import { GameTimer } from './GameTimer';
 import { PairsGrid } from './PairsGrid';
@@ -53,9 +53,11 @@ import { VowelButtons } from './VowelButtons';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
-/** A Life's size and the gap between Lives, from the design. */
-const LIFE_SIZE = 20;
-const LIFE_GAP = 3;
+/** A Life's shield and the gap between Lives, from the design. */
+const LIFE_SIZE = { width: 18, height: 20 };
+const LIFE_GAP = 5;
+/** The «−1» that flies up off the Lives when one is lost. */
+const LIFE_LOST_MARK = '\u22121';
 /** The ✕'s glyph size; its touch target is `minTouchTarget`. */
 const EXIT_SIZE = 20;
 /** The height of the Round's progress bar. */
@@ -79,18 +81,20 @@ const ENDS_IN_PUNCTUATION = /\p{P}$/u;
 /** A right answer's option grows to 1.03 as it fills. */
 const RIGHT_SCALE = 1.03;
 /**
- * A lost Life pops in 300 ms, up to 1.4 and −12° and back, and its fill fades
- * to the outline on the way back. It comes once the wrong choice has filled,
- * when the Round says the Life is lost, as its haptic does.
+ * A lost Life (the design's `slLifeOut`) jumps to 1.6 and −25° in the red and
+ * settles back to the silhouette in 600 ms, while «−1» rises 80 pt and fades
+ * in 1.1 s (`slXp`). It comes once the wrong choice has filled, when the
+ * Round says the Life is lost, as its haptic does.
  */
-const LIFE_POP = { scale: 1.4, rotate: -12 };
-const LIFE_STEP = {
-  duration: 150,
+const LIFE_POP = { scale: 1.6, rotate: -25 };
+const LIFE_OUT = {
+  duration: 600,
   easing: Easing.out(Easing.ease),
   reduceMotion: ReduceMotion.Never,
 };
-/** With Reduce Motion a lost Life's fill only fades, in 250 ms. */
-const LIFE_FADE = { ...LIFE_STEP, duration: 250 };
+const LIFE_MARK = { rise: 80, duration: 1100, reduceMotion: ReduceMotion.Never } as const;
+/** With Reduce Motion a lost Life's fill and its «−1» only fade (the design's `slRm`). */
+const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Never };
 /** The progress bar grows in 300 ms; with Reduce Motion it is set at once, as its edge moves across the header. */
 const BAR_GROWTH = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Never };
 
@@ -543,9 +547,10 @@ function ExitButton({ onPress }: { onPress: () => void }) {
 }
 
 /**
- * One Life: full in the heart colour, or an outline once lost. A Life lost
- * meanwhile pops to the outline; with Reduce Motion its fill only fades. Its
- * haptic comes with the wrong answer that cost it.
+ * One Life, a shield: red while full, the silhouette once lost. A Life lost
+ * meanwhile jumps out in the red and settles to the silhouette as «−1» flies
+ * up off it; with Reduce Motion its fill and the «−1» only fade. Its haptic
+ * comes with the wrong answer that cost it.
  */
 function Life({
   place,
@@ -554,15 +559,18 @@ function Life({
 }: {
   place: number;
   full: boolean;
-  /** How long after the wrong answer the Life is lost, in milliseconds: when it pops. */
+  /** How long after the wrong answer the Life is lost, in milliseconds: when it jumps. */
   lostAfter: number;
 }) {
-  const { colors } = useTokens();
+  const { colors, fontFamilies } = useTokens();
   const reduceMotion = useReduceMotion();
   /** 1 while full, 0 once lost. */
   const fullness = useSharedValue(full ? 1 : 0);
+  /** 1 at the jump's height, 0 at rest. */
   const pop = useSharedValue(0);
-  // Whether the Life showed full before, so only losing it now pops it.
+  /** 0 before the «−1» shows, 1 once it has risen and faded. */
+  const mark = useSharedValue(1);
+  // Whether the Life showed full before, so only losing it now jumps.
   const shownFull = useRef(full);
 
   useEffect(() => {
@@ -573,20 +581,21 @@ function Life({
     }
     if (!shownFull.current) return;
     shownFull.current = false;
-    // The fill fades as the pop comes back, or at once with Reduce Motion.
-    fullness.value = withDelay(
-      reduceMotion ? lostAfter : lostAfter + LIFE_STEP.duration,
-      withTiming(0, reduceMotion ? LIFE_FADE : LIFE_STEP),
+    mark.value = 0;
+    mark.value = withDelay(
+      lostAfter,
+      withTiming(1, reduceMotion ? LIFE_FADE : { ...LIFE_MARK, easing: Easing.out(Easing.ease) }),
     );
+    fullness.value = withDelay(lostAfter, withTiming(0, reduceMotion ? LIFE_FADE : LIFE_OUT));
     if (!reduceMotion) {
       pop.value = withDelay(
         lostAfter,
-        withSequence(withTiming(1, LIFE_STEP), withTiming(0, LIFE_STEP)),
+        withSequence(withTiming(1, { duration: 0 }), withTiming(0, LIFE_OUT)),
       );
     }
     // The shared values are stable, and a change of Reduce Motion finds the
     // Life already lost.
-  }, [full, reduceMotion, lostAfter, fullness, pop]);
+  }, [full, reduceMotion, lostAfter, fullness, pop, mark]);
 
   const popStyle = useAnimatedStyle(() => ({
     transform: [
@@ -595,20 +604,34 @@ function Life({
     ],
   }));
   const fillStyle = useAnimatedStyle(() => ({ opacity: fullness.value }));
+  // The «−1» shows from the loss to the end of its flight; with Reduce Motion it fades in place.
+  const markStyle = useAnimatedStyle(() => ({
+    opacity: mark.value === 0 || mark.value === 1 ? 0 : 1 - mark.value,
+    transform: [{ translateY: reduceMotion ? 0 : -LIFE_MARK.rise * mark.value }],
+  }));
 
-  const heart = (paint: string, stroke: string) => (
-    <Svg width={LIFE_SIZE} height={LIFE_SIZE} viewBox="0 0 24 24">
-      <Path d={HEART_PATH} fill={paint} stroke={stroke} strokeWidth={1.8} />
-    </Svg>
+  const shield = (color: string) => (
+    <Wedge points={wedges.shield} color={color} width={LIFE_SIZE.width} height={LIFE_SIZE.height} />
   );
   return (
     <Animated.View testID={`game-life-${String(place)}`} style={popStyle}>
-      {heart('none', withAlpha(colors.ink, 0.32))}
+      {shield(colors.silhouette)}
       <Animated.View
         testID={`game-life-${String(place)}-fill`}
         style={[StyleSheet.absoluteFill, fillStyle]}
       >
-        {heart(colors.heart, colors.heart)}
+        {shield(colors.accent)}
+      </Animated.View>
+      <Animated.View
+        testID={`game-life-${String(place)}-lost`}
+        style={[styles.lifeLost, markStyle]}
+      >
+        <Text
+          accessible={false}
+          style={[styles.lifeLostText, { color: colors.accent, fontFamily: fontFamilies.word }]}
+        >
+          {LIFE_LOST_MARK}
+        </Text>
       </Animated.View>
     </Animated.View>
   );
@@ -742,7 +765,7 @@ function RoundLabel({ label }: { label: string }) {
  * option fills in the correct colour with «Правильно», a wrong choice in the
  * wrong colour with «Ваш вибір», and the others fade; the fills are the light
  * scheme's in both Themes, under white text. The chosen option, if right,
- * grows a little and, if wrong, shakes, both left out with Reduce Motion.
+ * grows a little, left out with Reduce Motion; nothing shakes.
  * VoiceOver reads the option with its Stress, then its tag, and the faded ones
  * as dimmed.
  */
@@ -778,7 +801,6 @@ function AnswerOption({
   const answered = useSharedValue(answer === undefined ? 0 : 1);
   /** 0 at rest, 1 grown: a right answer's option. */
   const grown = useSharedValue(0);
-  const shift = useSharedValue(0);
   // Whether the option showed an answer before, so only the answer given now moves.
   const shownAnswered = useRef(answer !== undefined);
 
@@ -786,17 +808,14 @@ function AnswerOption({
     if (answer === undefined || shownAnswered.current) return;
     shownAnswered.current = true;
     answered.value = withTiming(1, right ? RIGHT_FILL : WRONG_FILL);
-    if (!chosen) return;
-    if (reduceMotion) return;
-    if (right) grown.value = withTiming(1, RIGHT_FILL);
-    else shift.value = shake();
+    if (chosen && right && !reduceMotion) grown.value = withTiming(1, RIGHT_FILL);
     // The shared values are stable, and a change of Reduce Motion finds the
     // answer already shown, so only the answer given moves the option.
-  }, [answer, right, chosen, reduceMotion, answered, grown, shift]);
+  }, [answer, right, chosen, reduceMotion, answered, grown]);
 
   const motion = useAnimatedStyle(() => ({
     opacity: dimmed ? 1 - (1 - DIMMED_OPACITY) * answered.value : 1,
-    transform: [{ translateX: shift.value }, { scale: 1 + (RIGHT_SCALE - 1) * grown.value }],
+    transform: [{ scale: 1 + (RIGHT_SCALE - 1) * grown.value }],
   }));
   const fillStyle = useAnimatedStyle(() =>
     tag === undefined
@@ -965,6 +984,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   lives: { flexDirection: 'row', gap: LIFE_GAP },
+  lifeLost: { position: 'absolute', top: -space[1], right: 0 },
+  lifeLostText: { fontSize: typeSize.meta, fontWeight: '900' },
   exit: {
     width: minTouchTarget,
     height: minTouchTarget,

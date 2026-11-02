@@ -877,6 +877,9 @@ describe('GameRound', () => {
         opacity,
         flex,
         transform: transform as { translateX?: number; scale?: number }[] | undefined,
+        translateY: (transform as { translateY?: number }[] | undefined)?.find(
+          (one) => one.translateY !== undefined,
+        )?.translateY,
       };
     }
 
@@ -891,6 +894,8 @@ describe('GameRound', () => {
     /** The Life at that place, which pops when lost, and its fill, which fades. */
     const life = (place: number) => screen.getByTestId(`game-life-${String(place)}`);
     const lifeFill = (place: number) => screen.getByTestId(`game-life-${String(place)}-fill`);
+    /** The «−1» over the Life at that place. */
+    const lifeLost = (place: number) => screen.getByTestId(`game-life-${String(place)}-lost`);
 
     async function wait(ms: number) {
       await act(() => {
@@ -910,26 +915,29 @@ describe('GameRound', () => {
       expect(step(optionFace(CORRECT), 'scale')).toBeCloseTo(1.03);
       await wait(1000);
       expect(styleOf(optionFace(CORRECT)).backgroundColor).toBe(filled);
-      expect(step(optionFace(CORRECT), 'translateX')).toBe(0);
+      expect(step(optionFace(CORRECT), 'translateX')).toBeUndefined();
     });
 
-    it('shakes a wrong choice ±4 pt and settles it within 300 ms, the lost Life popping back within 300 ms more', async () => {
+    it('moves no wrong choice and, once it has filled, knocks the lost Life out with a rising «−1»', async () => {
       await renderRound();
 
       await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
-      await wait(60);
-      expect(step(optionFace(1), 'translateX')).toBe(-4);
-      await wait(60);
-      expect(step(optionFace(1), 'translateX')).toBe(4);
-      await wait(180);
-      expect(step(optionFace(1), 'translateX')).toBe(0);
+      for (const ms of [60, 60, 60]) {
+        await wait(ms);
+        expect(step(optionFace(1), 'translateX')).toBeUndefined();
+      }
 
-      // The Life pops once the choice has filled, 200 ms after the answer.
-      await wait(50);
+      // The Life jumps once the choice has filled, 200 ms after the answer.
+      await wait(100);
       expect(step(life(4), 'scale')).toBeGreaterThan(1);
-      await wait(200);
+      expect(styleOf(lifeLost(4)).opacity).toBeGreaterThan(0);
+      expect(styleOf(lifeLost(4)).translateY).toBeLessThan(0);
+      await wait(600);
       expect(step(life(4), 'scale')).toBe(1);
       expect(styleOf(lifeFill(4)).opacity).toBe(0);
+      await wait(600);
+      expect(styleOf(lifeLost(4)).opacity).toBe(0);
+      expect(styleOf(lifeLost(3)).opacity).toBe(0);
     });
 
     it('pops the lost Life when the Round says the Life is lost', async () => {
@@ -972,20 +980,21 @@ describe('GameRound', () => {
         expect(step(optionFace(CORRECT), 'scale')).toBe(1);
       });
 
-      it('fills a wrong choice in place, shaking nothing, and fades the lost Life without a pop', async () => {
+      it('fills a wrong choice in place and fades the lost Life and its «−1» without a jump', async () => {
         await renderRound();
         const before = styleOf(optionFace(1)).backgroundColor;
 
         await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
         for (const ms of [60, 60, 60, 60, 60]) {
           await wait(ms);
-          expect(step(optionFace(1), 'translateX')).toBe(0);
+          expect(step(optionFace(1), 'translateX')).toBeUndefined();
         }
         expect(styleOf(optionFace(1)).backgroundColor).not.toBe(before);
 
         for (const ms of [100, 100, 100]) {
           await wait(ms);
           expect(step(life(4), 'scale')).toBe(1);
+          expect(styleOf(lifeLost(4)).translateY).toBe(0);
         }
         expect(styleOf(lifeFill(4)).opacity).toBe(0);
       });
