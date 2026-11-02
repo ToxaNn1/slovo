@@ -5,9 +5,9 @@ import {
   GameModeCard,
   GameResult,
   GameRound,
+  GameModeGroupTitle,
+  GamesTitle,
   rowPadding,
-  ScreenTitle,
-  SectionLabel,
   space,
   useTokens,
   WidgetGuideSheet,
@@ -135,9 +135,10 @@ function Game() {
 }
 
 /**
- * The mode screen (`game-mode-select-dark`): the title, the Daily Crossword's
- * card while it is on, which opens its screen, and a card per mode on offer,
- * with its own Best result, under the titles of their groups.
+ * The mode screen, as the design's Games screen: the big title, the Daily
+ * Crossword's red card while it is on, which opens its screen, and a row per
+ * mode on offer, with its own Best result, under the titles of their groups,
+ * each after a red mark.
  */
 function ModeScreen({
   modes,
@@ -153,7 +154,7 @@ function ModeScreen({
       <DecorBackground />
       <ScrollView contentContainerStyle={styles.modes}>
         <View style={styles.heading}>
-          <ScreenTitle>{strings.title}</ScreenTitle>
+          <GamesTitle>{strings.title}</GamesTitle>
         </View>
         <ProgressShareOffers />
         {crossword === undefined ? null : (
@@ -167,7 +168,9 @@ function ModeScreen({
         )}
         {gameModeGroups(modes, strings).map(({ title, offers }) => (
           <View key={title} style={styles.group}>
-            <SectionLabel style={styles.groupTitle}>{title}</SectionLabel>
+            <View style={styles.groupTitle}>
+              <GameModeGroupTitle>{title}</GameModeGroupTitle>
+            </View>
             {offers.map((offer) => (
               <GameModeCard
                 key={offer.modeId}
@@ -194,6 +197,6 @@ const styles = StyleSheet.create({
     paddingBottom: space[8],
   },
   heading: { marginHorizontal: space[1], marginBottom: space[2] },
-  group: { gap: space[4] },
-  groupTitle: { marginHorizontal: space[1], marginTop: space[2] },
+  group: { gap: space[1] },
+  groupTitle: { marginHorizontal: space[1], marginTop: space[4] },
 });

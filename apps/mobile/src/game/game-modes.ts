@@ -34,10 +34,7 @@ export function gameModeStrings(modes: GameModesStrings, modeId: string): GameMo
  * reason it can't start.
  */
 export function gameModeCard(offer: GameModeOffer, strings: GameStrings): GameModeCardContent {
-  const { glyph, title, description, refusals } = gameModeStrings(
-    strings.modes,
-    offer.modeId,
-  );
+  const { glyph, title, description, refusals } = gameModeStrings(strings.modes, offer.modeId);
   const reason = 'refusal' in offer ? offer.refusal : undefined;
   const refusal = reason === undefined ? undefined : refusals[reason];
   if (reason !== undefined && refusal === undefined) {

@@ -38,7 +38,7 @@ export { ClearHistoryButton } from './saved/ClearHistoryButton';
 export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
 export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
 export { DailyCrosswordCard } from './game/DailyCrosswordCard';
-export { GameModeCard } from './game/GameModeCard';
+export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCard';
 export { GameResult } from './game/GameResult';
 export { GameReview } from './game/GameReview';
 export { GameRound, QuickQuestionRound } from './game/GameRound';
