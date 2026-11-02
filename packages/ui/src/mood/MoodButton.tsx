@@ -2,17 +2,17 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, typeSize, withAlpha } from '../tokens';
+import { minTouchTarget, pressedFade, typeSize } from '../tokens';
 
 /** The button's size, the Stats pill's height beside it. */
 const BUTTON_SIZE = 40;
 
 /**
- * The 🎲 of the «Головна» header, which opens the moods. A round button the
- * size of the Stats pill; VoiceOver reads «Слово під настрій».
+ * The 🎲 of the «Головна» header, which opens the moods. A tile the height
+ * of the Stats pill; VoiceOver reads «Слово під настрій».
  */
 export function MoodButton({ onPress }: { onPress: () => void }) {
-  const { colors } = useTokens();
+  const { colors, radii } = useTokens();
   const { strings, voice } = useEdition();
   return (
     <Pressable
@@ -21,13 +21,12 @@ export function MoodButton({ onPress }: { onPress: () => void }) {
       accessibilityLabel={strings.mood.title}
       {...voice}
       onPress={onPress}
-      // The 40 pt circle takes taps a little beyond its edge, to the 44 pt touch target.
+      // The 40 pt tile takes taps a little beyond its edge, to the 44 pt touch target.
       hitSlop={(minTouchTarget - BUTTON_SIZE) / 2}
       style={({ pressed }) => [
         styles.button,
-        // The border of the Stats pill, at 35% of the accent.
-        { backgroundColor: colors.surface, borderColor: withAlpha(colors.accent, 0.35) },
-        { opacity: pressed ? 0.85 : 1 },
+        { backgroundColor: colors.tile, borderColor: colors.line, borderRadius: radii.tile },
+        { opacity: pressed ? pressedFade : 1 },
       ]}
     >
       <Text
@@ -47,7 +46,6 @@ const styles = StyleSheet.create({
   button: {
     width: BUTTON_SIZE,
     height: BUTTON_SIZE,
-    borderRadius: BUTTON_SIZE / 2,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

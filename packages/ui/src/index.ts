@@ -114,6 +114,7 @@ export { SplashOverlay } from './onboarding/SplashOverlay';
 export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
 export { StatsPill } from './progress/StatsPill';
+export { FeedHeader } from './feed/FeedHeader';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
 export { BadgeMark } from './progress/BadgeMark';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';

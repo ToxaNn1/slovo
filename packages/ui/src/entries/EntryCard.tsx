@@ -11,6 +11,7 @@ import { CardCorners } from '../decor/DecorSlots';
 import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
+import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
 import { blockGap, correctionCardLayout, space, wordCardSide } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -77,7 +78,9 @@ const SPACING = {
  * the user's font size, with the compact layout on narrow screens, the Decor
  * slots and the action row under it. A card brought back for Review carries
  * the Review label on top. Under Self-check the card conceals its meaning
- * until the reader reveals it. The Edition's strings and language come
+ * until the reader reveals it. Each time the card comes on screen its
+ * headline's letters fly in and its details rise after them (the design's
+ * reveal); under Reduce Motion it fades in once. The Edition's strings and language come
  * from the `EditionProvider`.
  */
 export function EntryCard({
@@ -100,8 +103,8 @@ export function EntryCard({
   const spacing = SPACING[card.kind];
 
   return (
-    <>
-      <View
+    <EntryReveal>
+      <RevealFrame
         testID={`${card.kind}-card`}
         style={[
           styles.card,
@@ -163,9 +166,11 @@ export function EntryCard({
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
           <CardCorners />
         </View>
-      </View>
-      <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
-    </>
+      </RevealFrame>
+      <RevealDetail step={3} testID={`${card.kind}-actions`}>
+        <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
+      </RevealDetail>
+    </EntryReveal>
   );
 }
 

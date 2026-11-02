@@ -1,27 +1,28 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { EmptyStateIllustration } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
-import { space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { Mascot } from '../primitives/Mascot';
 import { usePageTurnActions } from '../primitives/VerticalPager';
-
-/** The width of the empty-state illustration (Decor slot 4), within the design's 90–120. */
-const ILLUSTRATION_WIDTH = 108;
+import { Wedge } from '../primitives/Wedge';
+import { endOfCycleCard, typeStyle, wedges } from '../tokens';
 
 /**
- * The end-of-Cycle card: the Edition's empty-state illustration over a
- * title and one line of muted text, centred on the Feed's background: it
- * says the reader has Seen every live Entry and asks them to wait for new
- * ones or swipe on to start a new Cycle. It has no surface of its own.
- * VoiceOver reads it as one element.
+ * The end-of-Cycle card: the waiting Mascot over a title and one line of
+ * muted text, centred on the Feed's background before a large ∞, with two
+ * chevrons under them that point down to swipe on: it says the reader has
+ * Seen every live Entry and asks them to wait for new ones or swipe on to
+ * start a new Cycle. It has no surface of its own. VoiceOver reads it as
+ * one element.
  */
 export function EndOfCycleCard() {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors, fontFamilies } = tokens;
   const { strings, voice } = useEdition();
   const { title, message } = strings.endOfCycle;
   // In the Feed, VoiceOver turns to the card that starts the new Cycle from here.
   const turnActions = usePageTurnActions();
+  const { width, height } = endOfCycleCard.chevrons;
   return (
     <View
       testID="end-of-cycle-card"
@@ -31,35 +32,46 @@ export function EndOfCycleCard() {
       {...turnActions}
       style={styles.card}
     >
-      <View style={styles.illustration}>
-        <EmptyStateIllustration width={ILLUSTRATION_WIDTH} />
-      </View>
-      <Text style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}>
+      <Text
+        style={[styles.infinity, { color: colors.surfaceSunken, fontFamily: fontFamilies.word }]}
+      >
+        ∞
+      </Text>
+      <Mascot state="waits" />
+      <Text style={[typeStyle('endOfCycleTitle', tokens), styles.text, { color: colors.ink }]}>
         {title}
       </Text>
-      <Text style={[styles.message, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+      <Text style={[typeStyle('stepText', tokens), styles.text, { color: colors.muted }]}>
         {message}
       </Text>
+      <View style={{ width, height }}>
+        <Wedge points={wedges.swipeOn} color={colors.accent} width={width} height={height} />
+        <Wedge
+          points={wedges.swipeOnLower}
+          color={colors.muted}
+          width={width}
+          height={height}
+          style={StyleSheet.absoluteFill}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  illustration: { marginBottom: space[6] },
-  // Narrow enough that the design's title breaks into two balanced lines.
-  title: {
-    maxWidth: 260,
-    fontSize: typeSize.emptyStateTitle,
-    lineHeight: typeSize.emptyStateTitle * 1.2,
-    fontWeight: '500',
-    textAlign: 'center',
+  card: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: endOfCycleCard.gap,
   },
-  message: {
-    maxWidth: 300,
-    marginTop: space[4],
-    fontSize: typeSize.body,
-    lineHeight: typeSize.body * 1.6,
-    textAlign: 'center',
+  infinity: {
+    position: 'absolute',
+    left: endOfCycleCard.infinity.left,
+    top: endOfCycleCard.infinity.top,
+    fontSize: endOfCycleCard.infinity.size,
+    lineHeight: endOfCycleCard.infinity.size,
+    fontWeight: '900',
   },
+  text: { textAlign: 'center' },
 });

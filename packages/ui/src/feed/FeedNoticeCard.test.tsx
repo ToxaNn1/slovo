@@ -94,6 +94,12 @@ describe('the «enough for today» card', () => {
     expect(screen.getByRole('button', { name: 'Keep going' })).toBeTruthy();
   });
 
+  it('shows the sleeping Mascot', async () => {
+    await renderFeed(<EnoughForTodayCard />);
+
+    expect(screen.getByTestId('mascot-sleeps')).toBeTruthy();
+  });
+
   it('reads its text to VoiceOver as one element, then the button', async () => {
     await renderFeed(<EnoughForTodayCard />);
 
@@ -160,6 +166,16 @@ describe('the first-week card', () => {
     expect(
       screen.getByLabelText('A week with us. Thanks for staying! Come back for new words.'),
     ).toBeTruthy();
+  });
+
+  it('shows the happy Mascot on day 7', async () => {
+    await renderFeed(<FirstWeekCard day={7} streak={undefined} />);
+    expect(screen.getByTestId('mascot-happy')).toBeTruthy();
+  });
+
+  it('shows no Mascot before day 7', async () => {
+    await renderFeed(<FirstWeekCard day={6} streak={undefined} />);
+    expect(screen.queryByTestId('mascot-happy')).toBeNull();
   });
 
   it('shows the card of its own day', async () => {
