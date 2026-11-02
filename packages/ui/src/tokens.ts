@@ -503,8 +503,12 @@ export const typeSize = {
   smallLabel: 12,
   /** A Game mode's description. */
   modeDescription: 14.5,
-  /** The title of the Game's result (Literata 500). */
-  resultTitle: 38,
+  /** The title of the Game's result (Unbounded 900). */
+  resultTitle: 34,
+  /** The Game Review's title (Unbounded 800). */
+  reviewTitle: 15,
+  /** A Round of the Game Review (Onest 600). */
+  reviewRow: 16,
   /** `Lemma, hero`: the onboarding welcome's Lemma (Literata 500, 76 / 1). */
   heroLemma: 76,
 } as const;
@@ -600,15 +604,24 @@ export const labelChipPadding = {
 export const modeCardPaddingHorizontal = 22;
 
 /**
- * The Game's result: the gaps between its numbers and inside one number, and
- * the width of the victory illustration (Decor slot 4) on a win and on a loss.
+ * The Game's result, from the design: the red panel's height, how far its
+ * title sits over the slant and where the victory illustration (Decor slot 4)
+ * sits in it; the gaps between the number tiles and inside one, a tile's
+ * corner; the illustration's width on a win and on a loss.
  */
 export const resultLayout = {
-  numbersGap: 28,
-  numberGap: 2,
+  panelHeight: 400,
+  panelFootBottom: 96,
+  illustrationTop: 70,
+  numbersGap: 10,
+  numberGap: 6,
+  numberRadius: 16,
   winIllustration: 120,
   lossIllustration: 64,
 } as const;
+
+/** The mark that leads a Round of the Game Review: a square with ✓ or ✗. */
+export const reviewMark = { side: 28, radius: 8 } as const;
 
 /** The empty state's space over its illustration. */
 export const emptyStatePaddingTop = 80;
