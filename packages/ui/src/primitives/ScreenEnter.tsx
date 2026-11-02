@@ -100,7 +100,9 @@ export function ScreenEnter({
       <Animated.View
         testID={testID === undefined ? undefined : `${testID}-content`}
         style={[styles.screen, contentStyle]}
-      >{children}</Animated.View>
+      >
+        {children}
+      </Animated.View>
       {!reduceMotion && (
         <>
           <Animated.View
@@ -108,7 +110,12 @@ export function ScreenEnter({
             pointerEvents="none"
             style={[styles.cover, { left: -travel, width: coverWidth }, coverStyle]}
           >
-            <Svg width={coverWidth} height="100%" viewBox={`0 0 ${String(coverWidth)} 1`} preserveAspectRatio="none">
+            <Svg
+              width={coverWidth}
+              height="100%"
+              viewBox={`0 0 ${String(coverWidth)} 1`}
+              preserveAspectRatio="none"
+            >
               <Polygon
                 points={`0,0 ${String(coverWidth)},0 ${String(coverWidth - slant)},1 0,1`}
                 fill={colors.background}

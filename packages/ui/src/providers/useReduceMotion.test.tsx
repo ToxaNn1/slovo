@@ -17,7 +17,7 @@ async function motionWith({ system, setting }: { system: boolean; setting: boole
   await act(async () => {
     await Promise.resolve();
   });
-  return screen.getByTestId('probe').props.children;
+  return screen.getByTestId('probe').props['children'];
 }
 
 describe('useReduceMotion', () => {
@@ -44,6 +44,6 @@ describe('useReduceMotion', () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByTestId('probe').props.children).toBe('reduced');
+    expect(screen.getByTestId('probe').props['children']).toBe('reduced');
   });
 });

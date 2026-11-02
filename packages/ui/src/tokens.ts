@@ -298,7 +298,6 @@ export const typeSize = {
   /** A sheet's title; also a result's number, an empty state's title and the Correction's non-standard form. */
   sheetTitle: 26,
   partOfSpeech: 14,
-  tabLabel: 10.5,
   /** `Block heading` (Manrope 700): the name of a card or a Collection, a sheet's text button; also an Example, an onboarding step's subtitle, a Round's sheet title. */
   blockHeading: 17,
   /** What an Entry's row leads with in a list, and over a sheet (the design's 20–22). */

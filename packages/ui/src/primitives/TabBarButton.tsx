@@ -2,7 +2,14 @@
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
 import { useEffect } from 'react';
-import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  type PressableProps,
+  type StyleProp,
+  type ViewStyle,
+} from 'react-native';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -39,12 +46,12 @@ export function TabBarButton({
   /** The tab's name under its icon, in the Edition's language. */
   label: string;
   selected: boolean;
-  onPress?: () => void;
-  onLongPress?: () => void;
+  onPress?: PressableProps['onPress'] | undefined;
+  onLongPress?: PressableProps['onLongPress'] | undefined;
   /** What VoiceOver reads, in the Edition's language. */
-  accessibilityLabel?: string;
-  testID?: string;
-  style?: StyleProp<ViewStyle>;
+  accessibilityLabel?: string | undefined;
+  testID?: string | undefined;
+  style?: StyleProp<ViewStyle> | undefined;
 }) {
   const tokens = useTokens();
   const { voice } = useEdition();
@@ -84,10 +91,7 @@ export function TabBarButton({
         style={[styles.indicator, { backgroundColor: tokens.colors.accent }, indicatorStyle]}
       />
       <Icon name={icon} color={color} size={tabBar.icon} />
-      <Text
-        style={[typeStyle('tabLabel', tokens), { color }]}
-        numberOfLines={1}
-      >
+      <Text style={[typeStyle('tabLabel', tokens), { color }]} numberOfLines={1}>
         {label}
       </Text>
     </Pressable>
