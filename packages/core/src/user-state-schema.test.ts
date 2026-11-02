@@ -119,6 +119,7 @@ describe('the 0.8 sync marks', () => {
       'feed.swipeHintShown',
       'feed.wordOfTheDay',
       'settings.vibration',
+      'settings.reduceMotion',
       'notifications.times',
       'notifications.sound',
       'notifications.plan.2026-10-18T09:00',
@@ -230,6 +231,7 @@ const storedIn1_0: readonly (readonly [
   ['selfCheck', undefined, 'settings.selfCheck', 'true'],
   ['seasonalDecor', undefined, 'settings.seasonalDecor', 'false'],
   ['shareCounters', undefined, 'settings.shareCounters', 'false'],
+  ['reduceMotion', undefined, 'settings.reduceMotion', 'true'],
   ['dailyLimit', undefined, 'settings.dailyLimit', '20'],
   ['swipeHintShown', undefined, 'feed.swipeHintShown', 'true'],
   [

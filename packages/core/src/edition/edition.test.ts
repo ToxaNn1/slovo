@@ -95,6 +95,7 @@ const validConfig = {
     laterQuestions: true,
     profile: true,
     mascot: true,
+    reduceMotion: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -572,6 +573,14 @@ describe('loadEdition', () => {
   it('refuses an Edition without the mascot Feature Switch', () => {
     const { mascot, ...switches } = validConfig.featureSwitches;
     expect(mascot).toBe(true);
+    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
+      InvalidEditionConfigError,
+    );
+  });
+
+  it('refuses an Edition without the «Менше руху» Feature Switch', () => {
+    const { reduceMotion, ...switches } = validConfig.featureSwitches;
+    expect(reduceMotion).toBe(true);
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
