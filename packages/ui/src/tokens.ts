@@ -237,6 +237,44 @@ export const wedges = {
   ],
 } as const satisfies Record<string, Wedge>;
 
+/** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
+export const levelCard = {
+  padding: 20,
+  radius: 24,
+  gap: 18,
+  /** The ring's box, its radius and its stroke. */
+  ring: { box: 124, radius: 54, stroke: 12, track: 'rgba(127, 127, 127, 0.3)' },
+  /** The red wedge in the bottom right corner, past the card's edges. */
+  wedge: { side: 170, right: -30, bottom: -40, opacity: 0.95 },
+  /** The wedge's slant: from 40% along the top to the bottom left corner. */
+  wedgeShape: [
+    [0.4, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ],
+  levelSize: 44,
+  linesGap: 6,
+} as const;
+
+/** The Badge stamp, from the design: the earned Badge's mark lands on red. */
+export const badgeStamp = {
+  markSide: 210,
+  /** The mark lands from this scale and turn to its rest. */
+  from: { scale: 3, turn: -26 },
+  turn: -8,
+  /** The hard ink drop under the mark. */
+  drop: 8,
+  padding: { top: 110, horizontal: 28, bottom: 40 },
+  markTop: 70,
+  titleTop: 34,
+  nameTop: 10,
+  titleSize: 30,
+  nameSize: 16,
+  buttonHeight: 62,
+  buttonRadius: 16,
+} as const;
+
 /** The depth of the hard edge under an earned Badge's shape. */
 export const badgeEdge = 4;
 
@@ -253,6 +291,8 @@ export const motion = {
   fly: { duration: 600, easing: [0.2, 0.9, 0.25, 1.15] },
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
+  /** The Level ring fills to the reader's progress. */
+  ring: { duration: 1100, easing: [0.2, 0.8, 0.2, 1] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
   pop: { duration: 300, easing: ease },
   /** One beat of the loader's wedges, from short to tall and back. */
