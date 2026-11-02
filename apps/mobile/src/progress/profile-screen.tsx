@@ -36,8 +36,7 @@ const strings = editionStrings.settings.profile;
  * Settings › Профіль: the reader's whole progress in one place: the Level and
  * the XP to the next, all XP, the Streak and the Best Streak, the Active Days
  * calendar, the confirmed Entries by rarity, the Badges as marks (an earned
- * one stamped on red at a tap)
- * and each Game Mode's Best result, with a button that shares the Level. A
+ * one stamped on red at a tap) and each Game Mode's Best result, with a button that shares the Level. A
  * reader with an Account to offer and none signed in sees the offer to save
  * progress at the top.
  */

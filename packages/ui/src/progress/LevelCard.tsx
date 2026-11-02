@@ -89,7 +89,6 @@ export function LevelCard({
             strokeWidth={ring.stroke}
           />
           <AnimatedCircle
-            testID={testID === undefined ? undefined : `${testID}-ring`}
             cx={ring.box / 2}
             cy={ring.box / 2}
             r={ring.radius}
@@ -100,7 +99,7 @@ export function LevelCard({
             animatedProps={ringProps}
           />
         </Svg>
-        <View style={styles.centre}>
+        <View style={[StyleSheet.absoluteFill, styles.centre]}>
           <Text
             testID={testID === undefined ? undefined : `${testID}-number`}
             maxFontSizeMultiplier={1}
@@ -151,7 +150,7 @@ const styles = StyleSheet.create({
   },
   ring: { width: ring.box, height: ring.box, flex: 0 },
   turned: { transform: [{ rotate: '-90deg' }] },
-  centre: { ...StyleSheet.absoluteFillObject, alignItems: 'center', justifyContent: 'center' },
+  centre: { alignItems: 'center', justifyContent: 'center' },
   number: { letterSpacing: 0 },
   lines: { flex: 1, minWidth: 0, gap: levelCard.linesGap },
 });
