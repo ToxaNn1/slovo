@@ -200,6 +200,38 @@ export const MascotAccessorySchema = z.strictObject({
 
 export type MascotAccessory = z.infer<typeof MascotAccessorySchema>;
 
+/** A point of a pictogram shape on its 100 by 100 grid. */
+const GridPointSchema = z.tuple([z.number().min(0).max(100), z.number().min(0).max(100)]);
+
+/**
+ * One shape of a Category pictogram on a 100 by 100 grid: a polygon through
+ * its points, or a circle of its radius in the middle of the grid.
+ */
+export const PictogramShapeSchema = z.discriminatedUnion('kind', [
+  z.strictObject({ kind: z.literal('polygon'), points: z.array(GridPointSchema).min(3) }),
+  z.strictObject({ kind: z.literal('circle'), radius: z.number().positive().max(50) }),
+]);
+
+export type PictogramShape = z.infer<typeof PictogramShapeSchema>;
+
+/**
+ * The colours of a Category tile, as roles the Theme resolves: `accent` the
+ * loud red face, `ink` the ink face, `tile` the plain face, `sunken` the
+ * sunken face, and `quiet` the sunken face with muted shapes and text, where
+ * the Mascot takes its hat off.
+ */
+export const CATEGORY_COVERS = ['accent', 'ink', 'tile', 'sunken', 'quiet'] as const;
+
+export type CategoryCover = (typeof CATEGORY_COVERS)[number];
+
+/** The art of one Category or Correction Category: its two-shape pictogram and its cover. */
+export const CategoryArtSchema = z.strictObject({
+  pictogram: z.strictObject({ large: PictogramShapeSchema, small: PictogramShapeSchema }),
+  cover: z.enum(CATEGORY_COVERS),
+});
+
+export type CategoryArt = z.infer<typeof CategoryArtSchema>;
+
 /**
  * The Decor an Edition draws in the app, by slot (ADR 0014, `docs/design/README.md`):
  * `editions/<edition>/decor/decor.json`. Every slot is optional; the Core's
@@ -248,6 +280,11 @@ export const EditionDecorSchema = z.strictObject({
   seasons: SeasonMotifsSchema.optional(),
   /** The Holidays, whose motif shows instead of the Season's on their day. */
   holidays: z.array(HolidaySchema).optional(),
+  /**
+   * The art of every Category and Correction Category, by its id. The
+   * Edition check asks for one for each and for no other id.
+   */
+  categories: z.record(z.string(), CategoryArtSchema).optional(),
 });
 
 export type EditionDecor = z.infer<typeof EditionDecorSchema>;
