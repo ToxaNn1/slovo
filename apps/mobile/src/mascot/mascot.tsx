@@ -27,9 +27,7 @@ const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
 export function MascotIn({ state }: { state: MascotMoment }) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
-  return (
-    <Mascot state={stateAt[state]} line={edition.mascot[state]} testID={`mascot-${state}`} />
-  );
+  return <Mascot state={stateAt[state]} line={edition.mascot[state]} testID={`mascot-${state}`} />;
 }
 
 /**

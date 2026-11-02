@@ -26,7 +26,7 @@ const pathOf = (name: string) => {
   return `M0 0h${String(names.indexOf(name) + 1)}v1H0z`;
 };
 /** One shape of a part, told apart by its path. */
-const part = (name: string, fill: string = 'body') => [{ path: pathOf(name), fill }];
+const part = (name: string, fill = 'body') => [{ path: pathOf(name), fill }];
 
 const mascot = {
   width: 150,
@@ -70,17 +70,22 @@ function drawn(part: string): { d: string; fill: number }[] | undefined {
     includeHiddenElements: true,
   });
   if (paths.length === 0) return undefined;
-  return paths.map((path) => ({ d: path.props.d as string, fill: (path.props.fill as { payload: number }).payload }));
+  return paths.map((path) => ({
+    d: path.props['d'] as string,
+    fill: (path.props['fill'] as { payload: number }).payload,
+  }));
 }
 
 /** The figure's motion now: how far up and how opaque. */
 function figureNow(): { up: number; opacity: number; moving: boolean } {
-  const style = getAnimatedStyle(screen.getByTestId('mascot-figure', { includeHiddenElements: true })) as {
+  const style = getAnimatedStyle(
+    screen.getByTestId('mascot-figure', { includeHiddenElements: true }),
+  ) as unknown as {
     transform?: Record<string, number | string>[];
     opacity?: number;
   };
   const transform = Object.assign({}, ...(style.transform ?? [])) as Record<string, unknown>;
-  const translateY = typeof transform.translateY === 'number' ? transform.translateY : 0;
+  const translateY = typeof transform['translateY'] === 'number' ? transform['translateY'] : 0;
   return {
     up: translateY === 0 ? 0 : -translateY,
     opacity: style.opacity ?? 1,

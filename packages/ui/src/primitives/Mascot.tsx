@@ -26,6 +26,7 @@ import {
   motion,
   space,
   typeSize,
+  type Easing as Curve,
   type MascotFrame,
 } from '../tokens';
 
@@ -156,7 +157,7 @@ function Shapes({
             testID={`${testID}-${String(index)}`}
             d={shape.path}
             fill={paintOf(shape.fill, paints)}
-            opacity={shape.opacity}
+            opacity={shape.opacity ?? 1}
           />
         ) : (
           <Path
@@ -168,12 +169,17 @@ function Shapes({
             strokeWidth={shape.width}
             strokeLinecap="round"
             strokeLinejoin="round"
-            opacity={shape.opacity}
+            opacity={shape.opacity ?? 1}
           />
         ),
       )}
     </G>
   );
+}
+
+/** A design easing curve as Reanimated takes it. */
+function curve([x1, y1, x2, y2]: Curve) {
+  return Easing.bezier(x1, y1, x2, y2);
 }
 
 function paintOf(paint: string, paints: Paints): string {
@@ -197,7 +203,7 @@ function useFigureMotion(state: MascotState) {
       shown.value = 0;
       shown.value = withTiming(1, {
         duration: motion.reduceMotion.duration,
-        easing: Easing.bezier(...motion.reduceMotion.easing),
+        easing: curve(motion.reduceMotion.easing),
         reduceMotion: ReduceMotion.Never,
       });
       return;
@@ -206,7 +212,7 @@ function useFigureMotion(state: MascotState) {
     if (plan === undefined) return;
     const timing = withTiming(1, {
       duration: plan.duration,
-      easing: Easing.bezier(...plan.easing),
+      easing: curve(plan.easing),
       reduceMotion: ReduceMotion.Never,
     });
     progress.value =

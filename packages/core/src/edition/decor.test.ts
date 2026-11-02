@@ -58,8 +58,17 @@ describe('loadDecor', () => {
       figure: part,
       shine: part,
       eyes: Object.fromEntries(
-        ['sleeps', 'waits', 'shouts', 'happy', 'surprised', 'cringes', 'sad', 'celebrates', 'hatOff']
-          .map((state) => [state, part]),
+        [
+          'sleeps',
+          'waits',
+          'shouts',
+          'happy',
+          'surprised',
+          'cringes',
+          'sad',
+          'celebrates',
+          'hatOff',
+        ].map((state) => [state, part]),
       ),
       hat: part,
       hatOnGround: part,

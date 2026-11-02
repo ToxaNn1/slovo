@@ -298,11 +298,7 @@ export const mascotMotion = {
     duration: 500,
     repeat: 'once',
     easing: ease,
-    frames: [
-      { at: 0 },
-      { at: 0.4, scaleX: 0.86, scaleY: 1.08 },
-      { at: 1, scaleX: 0.94 },
-    ],
+    frames: [{ at: 0 }, { at: 0.4, scaleX: 0.86, scaleY: 1.08 }, { at: 1, scaleX: 0.94 }],
   },
   sad: {
     duration: 3200,
