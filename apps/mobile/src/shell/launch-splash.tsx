@@ -21,7 +21,7 @@ export function LaunchSplash() {
   const [done, setDone] = useState(false);
   useEffect(() => {
     let active = true;
-    userState
+    void userState
       .opened()
       .then(launchKind)
       .catch((): LaunchKind => 'daily')

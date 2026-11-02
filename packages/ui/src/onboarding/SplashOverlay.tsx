@@ -102,7 +102,7 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
   }, [reduceMotion]);
 
   const fadeStyle = useAnimatedStyle(() => ({ opacity: fade.value }));
-  const bandStyle = useAnimatedStyle(() => ({ width: `${String(band.value * 100)}%` }));
+  const bandStyle = useAnimatedStyle(() => ({ width: band.value * width }));
   const rollStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: (1 - rolled.value) * roll.from * scale },
@@ -127,20 +127,21 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
       ]}
     >
       <Halftone />
-      {[...wordmark].map((char, index) => (
-        <Letter
-          // The wordmark never changes while the splash is up.
-          // eslint-disable-next-line react/no-array-index-key
-          key={index}
-          char={char}
-          index={index}
-          count={wordmark.length}
-          progress={letters}
-          scale={scale}
-          color={inkOnRed}
-          fontFamily={fontFamilies.word}
-        />
-      ))}
+      {Array.from(new Intl.Segmenter().segment(wordmark), ({ segment }) => segment).map(
+        (char, index) => (
+          <Letter
+            // The wordmark never changes while the splash is up.
+            key={index}
+            char={char}
+            index={index}
+            count={wordmark.length}
+            progress={letters}
+            scale={scale}
+            color={inkOnRed}
+            fontFamily={fontFamilies.word}
+          />
+        ),
+      )}
       <Animated.View style={[styles.band, bandStyle]}>
         <View style={{ width }}>
           <Wedge points={splashMotion.band} color={inkOnRed} width={width} height="100%" />
@@ -191,7 +192,7 @@ function Letter({
   progress: SharedValue<number>;
   scale: number;
   color: string;
-  fontFamily: string;
+  fontFamily: string | undefined;
 }) {
   const place = splashMotion.letters[index % splashMotion.letters.length] ?? {
     x: 0,
