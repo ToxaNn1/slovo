@@ -22,7 +22,8 @@ export function Opened({
   children: ReactNode;
 }) {
   const state = useSubscribed(opening, ({ state }) => state);
-  if (state.status === 'loading') return <FeedLoadingScreen />;
+  if (state.status === 'loading')
+    return <FeedLoadingScreen mascot={<ShippedMascot state="waits" />} />;
   if (state.status === 'failed') return <LoadFailed testID={failedTestID} onRetry={state.retry} />;
   return children;
 }

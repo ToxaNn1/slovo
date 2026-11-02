@@ -125,7 +125,12 @@ async function renderSheet() {
   await render(
     <GestureHandlerRootView>
       <SafeAreaProvider initialMetrics={metrics}>
-        <ShellProvider shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}>
+        <ShellProvider
+          shell={testShell({
+            composition: opened(composition),
+            remoteSwitches: switchedTo(edition),
+          })}
+        >
           <EditionProvider edition={edition} strings={editionStrings}>
             <CollectionLinkScreen />
           </EditionProvider>
