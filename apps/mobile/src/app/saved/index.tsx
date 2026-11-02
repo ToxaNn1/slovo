@@ -1,52 +1,47 @@
 import {
-  cardSpace,
+  Chip,
+  CollectionCard,
+  collectionCard,
   fill,
-  LearningCard,
-  OrnamentBand,
-  SavedCard,
-  SavedCardCollection,
-  SavedCardCollections,
-  SavedCardRows,
-  SavedCardTitles,
   ScreenTitle,
   space,
   useEdition,
   useTokens,
 } from '@slovo/ui';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useCollectionList } from '@/saved/collections';
 import { editionStrings } from '@/edition/edition';
 import { useFavoriteList } from '@/saved/favorites';
-import { useHistoryPreview } from '@/saved/history';
+import { useHistoryCount } from '@/saved/history';
 import { useLearningList } from '@/saved/learning';
 import { useWordOfTheDayArchive } from '@/saved/word-of-the-day-archive';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { useShown } from '@/shown-in-effect';
 
 const {
-  favorites: strings,
+  favorites: favoriteStrings,
   collections: collectionStrings,
   history: historyStrings,
+  learning: learningStrings,
   wordOfTheDayArchive: archiveStrings,
 } = editionStrings;
 
-/** How many of the newest Lemmas the Favorites and «Слова дня» cards show, and of the latest rows the History card. */
-const NEWEST_SHOWN = 3;
-/** How many of the newest Collections the Collections card shows. */
-const NEWEST_COLLECTIONS_SHOWN = 3;
+/** The Collection cards in rows of two. */
+function pairs<T>(items: readonly T[]): (readonly [T, T | undefined])[] {
+  const rows: (readonly [T, T | undefined])[] = [];
+  items.forEach((item, index) => {
+    if (index % 2 === 0) rows.push([item, items[index + 1]]);
+  });
+  return rows;
+}
 
 /**
- * The Saved tab's overview: a card per list with its count. Favorites comes
- * first, on the ink fill, with its newest Lemmas and the ornament band
- * (Decor slot 2). Collections follows on the surface with its count and
- * its newest Collections. The «Вчу» card, while Knowledge Marks are on in
- * effect, shows its count and the next Entries due for Review with their
- * days. The «Слова дня» card, while the Word of the Day archive is on in
- * effect, shows its count and its newest Lemmas. The History card shows its three latest rows with
- * how long ago each was Seen, and VoiceOver reads the card, rows and times
- * included, in full.
+ * The Saved tab's overview: a chip per list with its count, which opens the
+ * list: «Вчу» while Knowledge Marks are on in effect, Favorites, History,
+ * Collections, and «Слова дня» while the Word of the Day archive is on in
+ * effect. Under them every Collection is a card, two in a row, that opens it.
  */
 export default function SavedScreen() {
   const favorites = useFavoriteList();
@@ -54,10 +49,38 @@ export default function SavedScreen() {
   const learning = useLearningList();
   const { learning: learningShown, wordOfTheDayArchive: archiveShown } = useShown();
   const archive = useWordOfTheDayArchive() ?? [];
-  const history = useHistoryPreview(NEWEST_SHOWN);
+  const history = useHistoryCount();
   const { colors } = useTokens();
   const { count } = useEdition();
   const openScreen = useOpenScreen();
+
+  const lists = [
+    learningShown && {
+      id: 'learning',
+      strings: learningStrings,
+      total: learning.length,
+      route: '/saved/learning',
+    },
+    {
+      id: 'favorites',
+      strings: favoriteStrings,
+      total: favorites.length,
+      route: '/saved/favorites',
+    },
+    { id: 'history', strings: historyStrings, total: history, route: '/saved/history' },
+    {
+      id: 'collections',
+      strings: { ...collectionStrings, count: collectionStrings.collectionCount },
+      total: collections.length,
+      route: '/saved/collections',
+    },
+    archiveShown && {
+      id: 'words-of-the-day',
+      strings: archiveStrings,
+      total: archive.length,
+      route: '/saved/words-of-the-day',
+    },
+  ] as const;
 
   return (
     <SafeAreaView
@@ -66,89 +89,59 @@ export default function SavedScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenTitle>{editionStrings.tabs.saved}</ScreenTitle>
-        <SavedCard
-          testID="saved-favorites"
-          primary
-          title={strings.title}
-          count={favorites.length}
-          accessibilityLabel={fill(strings.cardLabel, {
-            count: count(strings.count, favorites.length),
-          })}
-          onPress={() => {
-            openScreen('/saved/favorites');
-          }}
+        <View style={styles.title}>
+          <ScreenTitle>{editionStrings.tabs.saved}</ScreenTitle>
+        </View>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chips}
         >
-          <SavedCardTitles
-            titles={favorites.slice(0, NEWEST_SHOWN).map((favorite) => favorite.row.title)}
-          />
-          <OrnamentBand />
-        </SavedCard>
-        <SavedCard
-          testID="saved-collections"
-          title={collectionStrings.title}
-          count={collections.length}
-          accessibilityLabel={fill(collectionStrings.cardLabel, {
-            count: count(collectionStrings.collectionCount, collections.length),
-          })}
-          onPress={() => {
-            openScreen('/saved/collections');
-          }}
-        >
-          {collections.length > 0 && (
-            <SavedCardCollections>
-              {collections.slice(0, NEWEST_COLLECTIONS_SHOWN).map((collection) => {
-                const entries = count(collectionStrings.count, collection.count);
-                return (
-                  <SavedCardCollection
+          {lists.map(
+            (list) =>
+              list !== false && (
+                <Chip
+                  key={list.id}
+                  testID={`saved-${list.id}`}
+                  label={list.strings.title}
+                  count={list.total}
+                  accessibilityLabel={fill(list.strings.cardLabel, {
+                    count: count(list.strings.count, list.total),
+                  })}
+                  on={false}
+                  onPress={() => {
+                    openScreen(list.route);
+                  }}
+                />
+              ),
+          )}
+        </ScrollView>
+        <View style={styles.cards}>
+          {pairs(collections).map((pair, row) => (
+            <View key={pair[0].id} style={styles.cardRow}>
+              {pair.map((collection, place) =>
+                collection === undefined ? (
+                  <View key="none" style={styles.none} />
+                ) : (
+                  <CollectionCard
                     key={collection.id}
                     testID={`saved-collection-${collection.id}`}
+                    index={row * 2 + place}
                     name={collection.name}
-                    count={entries}
+                    count={count(collectionStrings.count, collection.count)}
                     accessibilityLabel={fill(collectionStrings.collectionLabel, {
                       name: collection.name,
-                      count: entries,
+                      count: count(collectionStrings.count, collection.count),
                     })}
+                    onPress={() => {
+                      openScreen(`/saved/collections/${collection.id}`);
+                    }}
                   />
-                );
-              })}
-            </SavedCardCollections>
-          )}
-        </SavedCard>
-        {learningShown && (
-          <LearningCard
-            entries={learning}
-            onPress={() => {
-              openScreen('/saved/learning');
-            }}
-          />
-        )}
-        {archiveShown && (
-          <SavedCard
-            testID="saved-words-of-the-day"
-            title={archiveStrings.title}
-            count={archive.length}
-            accessibilityLabel={fill(archiveStrings.cardLabel, {
-              count: count(archiveStrings.count, archive.length),
-            })}
-            onPress={() => {
-              openScreen('/saved/words-of-the-day');
-            }}
-          >
-            <SavedCardTitles titles={archive.slice(0, NEWEST_SHOWN).map((day) => day.row.title)} />
-          </SavedCard>
-        )}
-        <SavedCard
-          testID="saved-history"
-          title={historyStrings.title}
-          count={history.count}
-          accessibilityLabel={history.label}
-          onPress={() => {
-            openScreen('/saved/history');
-          }}
-        >
-          <SavedCardRows rows={history.rows} />
-        </SavedCard>
+                ),
+              )}
+            </View>
+          ))}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -156,10 +149,10 @@ export default function SavedScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: {
-    gap: cardSpace.gap,
-    paddingHorizontal: space[5],
-    paddingTop: space[6],
-    paddingBottom: space[8],
-  },
+  content: { paddingTop: space[6], paddingBottom: space[8] },
+  title: { paddingHorizontal: space[5] },
+  chips: { gap: space[2], paddingHorizontal: space[5], paddingVertical: space[4] },
+  cards: { gap: collectionCard.gap, paddingHorizontal: space[5] },
+  cardRow: { flexDirection: 'row', gap: collectionCard.gap },
+  none: { flex: 1 },
 });

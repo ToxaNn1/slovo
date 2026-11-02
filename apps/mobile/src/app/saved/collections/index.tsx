@@ -112,9 +112,10 @@ function Collections() {
       <FlatList
         data={rows}
         keyExtractor={(collection) => collection.id}
-        renderItem={({ item }) => (
+        renderItem={({ item, index }) => (
           <View style={styles.item}>
             <EditableCollectionRow
+              index={index}
               collection={item}
               renaming={editing?.kind === 'rename' && editing.id === item.id}
               onOpen={openCollection}
@@ -230,6 +231,7 @@ function Collections() {
 
 /** A Collection's row, or the field that renames it in place. */
 const EditableCollectionRow = memo(function EditableCollectionRow({
+  index,
   collection,
   renaming,
   onOpen,
@@ -239,6 +241,8 @@ const EditableCollectionRow = memo(function EditableCollectionRow({
   onKeepRename,
   onCancelRename,
 }: {
+  /** The row's place among the rows, which picks its fill. */
+  index: number;
   collection: CollectionRowModel;
   renaming: boolean;
   onOpen: (id: string) => void;
@@ -263,6 +267,7 @@ const EditableCollectionRow = memo(function EditableCollectionRow({
   }
   return (
     <CollectionRow
+      index={index}
       testID={`collection-${collection.id}`}
       name={collection.name}
       count={collection.count}
