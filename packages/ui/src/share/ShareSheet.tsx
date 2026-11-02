@@ -20,7 +20,7 @@ import Animated, {
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { useEdition } from '../providers/EditionProvider';
-import { PrimaryButton } from '../primitives/PrimaryButton';
+import { Button } from '../primitives/Button';
 import { SegmentedControl } from '../primitives/SegmentedControl';
 import { SHARE_CARD, ShareCard, type ShareCardProps } from './ShareCard';
 import { SheetTitle } from '../primitives/SheetParts';
@@ -159,7 +159,7 @@ function ShareSheetContent({
           onFormatChange(chosen);
         }}
       />
-      <PrimaryButton
+      <Button
         testID="share-sheet-share"
         label={strings.share.share}
         onPress={() => {

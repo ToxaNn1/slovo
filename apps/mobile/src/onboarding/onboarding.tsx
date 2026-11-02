@@ -6,8 +6,7 @@ import {
   LaterButton,
   OnboardingStep,
   OnboardingWelcome,
-  OutlineButton,
-  PrimaryButton,
+  Button,
   SegmentedControl,
   space,
   stepStyles,
@@ -134,9 +133,7 @@ function FirstWord({
       total={step.total}
       onSkip={onSkip}
       fromTop
-      footer={
-        <PrimaryButton testID="onboarding-next" label={strings.firstWord.next} onPress={onNext} />
-      }
+      footer={<Button testID="onboarding-next" label={strings.firstWord.next} onPress={onNext} />}
     >
       <View style={stepStyles.heading}>
         <Title>{strings.firstWord.title}</Title>
@@ -176,7 +173,9 @@ function Question({
       </View>
       <View style={styles.options}>
         {options.map(({ id, label }) => (
-          <OutlineButton
+          <Button
+            size="small"
+            variant="neutral"
             key={id}
             testID={`onboarding-answer-${id}`}
             label={label}
@@ -215,7 +214,7 @@ function DailyGoalStep({
       onSkip={onSkip}
       fromTop
       footer={
-        <PrimaryButton
+        <Button
           testID="onboarding-done"
           label={strings.dailyGoal.done}
           onPress={() => {

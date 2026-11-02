@@ -8,7 +8,7 @@ import { ConcealedProvider, useSelfCheck } from './self-check';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
 import { CardCorners } from '../decor/DecorSlots';
-import { OutlineButton } from '../primitives/OutlineButton';
+import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
@@ -145,7 +145,9 @@ export function EntryCard({
           <TipCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
         )}
         {concealed && (
-          <OutlineButton
+          <Button
+            size="small"
+            variant="neutral"
             testID={`${card.kind}-reveal`}
             // The Edition names the reveal for each kind: a Word's, an Idiom's or a row's meaning, a Correction's or a Tip's right form.
             label={

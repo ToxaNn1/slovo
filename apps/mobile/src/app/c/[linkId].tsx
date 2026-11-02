@@ -2,7 +2,7 @@ import type { CollectionLinkPreview } from '@slovo/core';
 import {
   BackLink,
   EntryRow,
-  PrimaryButton,
+  Button,
   ScreenTitle,
   space,
   typeSize,
@@ -107,7 +107,7 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
               {count(strings.unavailable, preview.skipped)}
             </Text>
           )}
-          <PrimaryButton
+          <Button
             testID="collection-link-add"
             label={strings.add}
             busy={adding}

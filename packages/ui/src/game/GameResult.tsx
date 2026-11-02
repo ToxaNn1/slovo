@@ -4,8 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { VictoryIllustration } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { PrimaryButton } from '../primitives/PrimaryButton';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { Button } from '../primitives/Button';
 import { blockGap, resultLayout, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { GameReview } from './GameReview';
@@ -173,8 +172,8 @@ export function GameResult({
         )}
       </View>
       <View style={styles.buttons}>
-        <PrimaryButton testID="game-again" label={words.result.again} onPress={onAgain} />
-        <SecondaryButton testID="game-home" label={words.result.home} onPress={onHome} />
+        <Button testID="game-again" label={words.result.again} onPress={onAgain} />
+        <Button variant="neutral" testID="game-home" label={words.result.home} onPress={onHome} />
       </View>
       {onOpenEntry === undefined ? null : <GameReview rounds={game.played} onOpen={onOpenEntry} />}
     </ScrollView>

@@ -1,7 +1,7 @@
 import {
   BackLink,
   fill,
-  PrimaryButton,
+  Button,
   ScreenTitle,
   SectionLabel,
   SegmentedControl,
@@ -73,7 +73,7 @@ export function StreakBreakScreen() {
                 setDays(Number(value));
               }}
             />
-            <PrimaryButton
+            <Button
               testID="streak-break-start"
               label={strings.start}
               onPress={() => {

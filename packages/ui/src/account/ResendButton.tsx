@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { useEdition } from '../providers/EditionProvider';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { Button } from '../primitives/Button';
 
 /** The seconds left until `at`, counted up, so the button never reads 0. */
 const secondsUntil = (at: Date, now: Date) =>
@@ -47,7 +47,8 @@ export function ResendButton({
   }, [resendAt, now]);
 
   return (
-    <SecondaryButton
+    <Button
+      variant="neutral"
       testID={testID}
       label={secondsLeft > 0 ? count(resendIn, secondsLeft) : resend}
       onPress={onPress}

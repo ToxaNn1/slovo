@@ -4,8 +4,7 @@ import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
 import type { Rarity } from '@slovo/contracts';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { PrimaryButton } from '../primitives/PrimaryButton';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -122,11 +121,7 @@ export function RarityTestQuestions({
     return frame({
       testID: `${testID}-result`,
       footer: (
-        <PrimaryButton
-          testID={`${testID}-next`}
-          label={strings.onboarding.mix.next}
-          onPress={onDone}
-        />
+        <Button testID={`${testID}-next`} label={strings.onboarding.mix.next} onPress={onDone} />
       ),
       children: (
         <RarityTestTitle>
@@ -141,7 +136,7 @@ export function RarityTestQuestions({
     testID: `${testID}-question`,
     footer: (
       <>
-        <PrimaryButton
+        <Button
           testID={`${testID}-known`}
           label={strings.knowledge.known}
           busy={applying}
@@ -149,7 +144,8 @@ export function RarityTestQuestions({
             answer(true);
           }}
         />
-        <SecondaryButton
+        <Button
+          variant="neutral"
           testID={`${testID}-unknown`}
           label={strings.knowledge.unknown}
           disabled={applying}
