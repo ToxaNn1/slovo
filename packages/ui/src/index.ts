@@ -106,6 +106,10 @@ export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
 export { StatsPill } from './progress/StatsPill';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
+export { BadgeMark } from './progress/BadgeMark';
+export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
+export { BadgeStamp } from './progress/BadgeStamp';
+export { LevelCard, type LevelCardLine } from './progress/LevelCard';
 export { StatsSheet } from './progress/StatsSheet';
 export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
@@ -117,11 +121,13 @@ export {
   disabledOpacity,
   lineHeight,
   minTouchTarget,
+  onboardingLayout,
   rowPadding,
   signInButtonHeight,
   space,
   STACK_AT_FONT_SCALE,
   typeSize,
+  typeStyle,
   type ColorScheme,
   type DesignTokens,
   type ShareCardFormat,

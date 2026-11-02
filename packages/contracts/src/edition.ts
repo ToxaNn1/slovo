@@ -392,10 +392,15 @@ export const BadgeConditionSchema = z.discriminatedUnion('kind', [
 
 export type BadgeCondition = z.infer<typeof BadgeConditionSchema>;
 
-/** A Badge the Edition chooses (ADR 0066): its id, its name and its condition from the catalogue. */
+/**
+ * A Badge the Edition chooses (ADR 0066): its id, its name, the short symbol
+ * its mark shows (at most three characters) and its condition from the
+ * catalogue.
+ */
 export const BadgeSchema = z.strictObject({
   id: KebabCaseIdSchema,
   name: TextSchema,
+  symbol: TextSchema.max(3),
   condition: BadgeConditionSchema,
 });
 
