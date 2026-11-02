@@ -80,6 +80,7 @@ export function Onboarding() {
         key={step.kind}
         step={step}
         title={strings[step.kind].title}
+        shout={strings[step.kind].shout}
         options={step.options}
         onAnswer={(answerId) => {
           report(onboarding.answer(answerId));
@@ -131,8 +132,8 @@ function FirstWord({
       testID="onboarding-first-word"
       step={step.number}
       total={step.total}
+      shout={strings.firstWord.shout}
       onSkip={onSkip}
-      fromTop
       footer={<Button testID="onboarding-next" label={strings.firstWord.next} onPress={onNext} />}
     >
       <View style={stepStyles.heading}>
@@ -147,6 +148,7 @@ function FirstWord({
 function Question({
   step,
   title,
+  shout,
   options,
   onAnswer,
   onLater,
@@ -154,6 +156,7 @@ function Question({
 }: {
   step: Step;
   title: string;
+  shout: string;
   options: readonly QuestionnaireOption[];
   onAnswer: (answerId: string) => void;
   onLater: () => void;
@@ -164,8 +167,8 @@ function Question({
       testID="onboarding-question"
       step={step.number}
       total={step.total}
+      shout={shout}
       onSkip={onSkip}
-      fromTop
       footer={<LaterButton testID="onboarding-later" onPress={onLater} />}
     >
       <View style={stepStyles.heading}>
@@ -211,8 +214,8 @@ function DailyGoalStep({
       testID="onboarding-daily-goal"
       step={step.number}
       total={step.total}
+      shout={strings.dailyGoal.shout}
       onSkip={onSkip}
-      fromTop
       footer={
         <Button
           testID="onboarding-done"
