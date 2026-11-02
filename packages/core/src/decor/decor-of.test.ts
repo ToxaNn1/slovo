@@ -24,7 +24,17 @@ const plain = {
 };
 
 const seasons = { winter: motif(20), spring: motif(21), summer: motif(22), autumn: motif(23) };
-const holidays = [{ rule: { kind: 'fixed', day: 24, month: 8 }, motif: motif(30) }];
+/** The Mascot's accessory for a date, told apart by the width of its stroke. */
+const accessory = (width: number) => ({
+  shapes: [{ path: 'M0 0h1', stroke: 'ink', width }],
+  replacesHat: false,
+});
+const holidays = [
+  {
+    rule: { kind: 'fixed', day: 24, month: 8 },
+    motif: { ...motif(30), accessory: accessory(2) },
+  },
+];
 
 /** The Edition's plain Decor and its seasonal motifs, as the app loads them from one file. */
 const file = { ...plain, seasons, holidays };
@@ -79,6 +89,26 @@ describe('decorOf', () => {
 
     expect(shown.background).toEqual({ tile: motif(30).tile });
     expect(shown.divider.centre).toEqual(motif(30).centre);
+  });
+
+  it("puts the Holiday's Mascot accessory on, and none on a date whose motif has none", () => {
+    const shown = (date: string) =>
+      decorOf({ decor, motifs, date: on(date), edition: switchedOn, settings: seasonalOn });
+
+    expect(shown('2026-08-24').mascotAccessory).toEqual(accessory(2));
+    expect(shown('2026-08-25').mascotAccessory).toBeUndefined();
+  });
+
+  it('puts no Mascot accessory on while the setting is off', () => {
+    const shown = decorOf({
+      decor,
+      motifs,
+      date: on('2026-08-24'),
+      edition: switchedOn,
+      settings: { seasonalDecor: false },
+    });
+
+    expect(shown.mascotAccessory).toBeUndefined();
   });
 
   it('changes with the local date, the day after a Holiday back to the Season', () => {
