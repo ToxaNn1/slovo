@@ -3,7 +3,7 @@ import UIKit
 import WidgetKit
 
 /// SLOVO's home-screen widget: an Entry of its Widget Mode every five
-/// minutes, in the Edition's colours, fonts and band (ADR 0001, 0026). Each
+/// minutes, in the Edition's colours, fonts and Mascot (ADR 0001, 0026). Each
 /// widget chooses its mode, Улюблене, a Collection or Усі слова, and its «Тло».
 @main
 struct SlovoWidgets: WidgetBundle {
@@ -30,8 +30,8 @@ struct SlovoWidget: Widget {
 
 /// One moment of the widget, from the design's boards: the Widget Mode's name
 /// over the headline (and, in medium, the second line) or the mode's empty or
-/// broken state, with the band at the bottom. Behind it the mark: the
-/// headline's giant first letter in small, the wedge at the right in medium.
+/// broken state. Behind it the mark: the headline's giant first letter in
+/// small, the wedge at the right in medium, the Mascot standing on it.
 struct EntryView: View {
   @Environment(\.widgetFamily) private var family
   @Environment(\.widgetRenderingMode) private var renderingMode
@@ -55,17 +55,6 @@ struct EntryView: View {
     case .dark: Color(token + "Dark")
     case .parchment: Color(token + "Parchment")
     case .blue: Color(token + "Blue")
-    }
-  }
-
-  /// The appearance the band is drawn in: on Авто the light one on the small
-  /// widget's red and the phone's on the medium widget; the light one on the
-  /// light backgrounds (Світлий, Пергамент), the dark one on the dark.
-  private var bandScheme: ColorScheme {
-    switch background {
-    case .auto: isSmall ? .light : colorScheme
-    case .light, .parchment: .light
-    case .dark, .blue: .dark
     }
   }
 
@@ -102,12 +91,6 @@ struct EntryView: View {
           .lineLimit(4)
           .minimumScaleFactor(0.7)
       }
-      // Tiled across the width at the band's own height, which the Edition's Decor sets.
-      Image("band")
-        .resizable(resizingMode: .tile)
-        .frame(height: UIImage(named: "band")?.size.height ?? 0)
-        .environment(\.colorScheme, bandScheme)
-        .padding(.top, 10)
     }
     // Clear of the medium widget's wedge, whose slanted edge starts at 60% of its width.
     .padding(.trailing, isSmall ? 0 : 56)
@@ -136,7 +119,8 @@ struct EntryView: View {
 
   /// The mark behind the content, from the boards: in small the headline's
   /// first letter, 200/170 of the widget's height, out past the bottom right
-  /// corner; in medium the wedge, 130/364 of the width, slanted on its left.
+  /// corner; in medium the wedge, 130/364 of the width, slanted on its left,
+  /// with the Edition's Mascot, waiting, at its bottom right, if it has one.
   @ViewBuilder private var mark: some View {
     if isSmall {
       if let letter = moment.entry?.headline.first {
@@ -152,10 +136,19 @@ struct EntryView: View {
       }
     } else {
       GeometryReader { geometry in
-        Wedge()
-          .fill(color("mark"))
-          .frame(width: geometry.size.width * 130 / 364)
-          .frame(width: geometry.size.width, height: geometry.size.height, alignment: .trailing)
+        ZStack(alignment: .bottomTrailing) {
+          Wedge()
+            .fill(color("mark"))
+            .frame(width: geometry.size.width * 130 / 364)
+          if UIImage(named: "mascot") != nil {
+            Image("mascot")
+              .resizable()
+              .scaledToFit()
+              .frame(width: geometry.size.width * 72 / 364)
+              .padding([.trailing, .bottom], 12)
+          }
+        }
+        .frame(width: geometry.size.width, height: geometry.size.height, alignment: .trailing)
       }
       .accessibilityHidden(true)
     }

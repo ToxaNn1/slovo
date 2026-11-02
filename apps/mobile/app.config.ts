@@ -151,7 +151,7 @@ function widgetEdition(
     appGroup,
     strings: edition.read('strings').widget,
     tokens,
-    band: loadDecor(edition.readIfPresent('decor')).divider.band,
+    mascot: loadDecor(edition.readIfPresent('decor')).mascot,
     fontFiles: edition.fonts().filter((font) => {
       const family = readFontFamily(readFileSync(font));
       return family !== undefined && families.has(family);
