@@ -1,19 +1,14 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, StyleSheet, Text } from 'react-native';
+import { AccessibilityInfo, Text } from 'react-native';
 
 import type { Rarity } from '@slovo/contracts';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { typeSize } from '../tokens';
+import { typeRoles, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import {
-  HEADLINE_MAX_FONT_SCALE,
-  HERO_LEMMA,
-  stepStyles,
-  TEXT_MAX_FONT_SCALE,
-} from './OnboardingStep';
+import { HEADLINE_MAX_FONT_SCALE, HERO_LEMMA, TEXT_MAX_FONT_SCALE } from './OnboardingStep';
 
 /** A Word the Rarity Test asks about. */
 export interface RarityTestQuestion {
@@ -39,14 +34,14 @@ type RarityTestPhase =
 
 /** A Rarity Test screen's title, as VoiceOver's header. */
 export function RarityTestTitle({ children }: { children: string }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { voice } = useEdition();
   return (
     <Text
       accessibilityRole="header"
       {...voice}
       maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
-      style={[stepStyles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+      style={[typeStyle('stepTitle', tokens), { color: tokens.colors.ink }]}
     >
       {children}
     </Text>
@@ -80,7 +75,8 @@ export function RarityTestQuestions({
   onDone: () => void;
   frame: (screen: RarityTestScreen) => ReactNode;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice, strings } = useEdition();
   const [phase, setPhase] = useState<RarityTestPhase>({ kind: 'asking', answers: [] });
   /** Whether the answers are applied, so a second tap on the last Word applies nothing. */
@@ -161,14 +157,14 @@ export function RarityTestQuestions({
           testID={`${testID}-progress`}
           {...voice}
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[styles.counter, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('progressCount', tokens), { color: colors.muted }]}
         >
           {progressOf(phase.answers.length)}
         </Text>
         <WholeWordsText
           text={word.lemma}
           size={HERO_LEMMA}
-          tracking={-0.02}
+          tracking={typeRoles.heroLemma.letterSpacing / typeRoles.heroLemma.size}
           testID={`${testID}-lemma`}
           accessibilityLabel={word.accessibilityLabel}
           {...voice}
@@ -176,13 +172,9 @@ export function RarityTestQuestions({
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.5}
-          style={{ color: colors.ink, fontFamily: fontFamilies.word, fontWeight: '500' }}
+          style={[typeStyle('heroLemma', tokens), { color: colors.ink }]}
         />
       </>
     ),
   });
 }
-
-const styles = StyleSheet.create({
-  counter: { fontSize: typeSize.body, fontWeight: '600' },
-});

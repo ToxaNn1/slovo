@@ -5,7 +5,7 @@ import {
   fill,
   ScreenTitle,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -43,11 +43,12 @@ function progressForms({ condition }: BadgeState) {
 
 /** Every Badge of the Edition in its order, earned with its date or, while not, with how far its condition has come. */
 function BadgeList() {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice, count } = useEdition();
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);
-  const nameStyle = [styles.name, { color: colors.ink, fontFamily: fontFamilies.ui }];
-  const textStyle = [styles.text, { color: colors.muted, fontFamily: fontFamilies.ui }];
+  const nameStyle = [typeStyle('badgeName', tokens), { color: colors.ink }];
+  const textStyle = [typeStyle('badgeStatus', tokens), { color: colors.muted }];
 
   const statusOf = (badge: BadgeState) => {
     if (badge.earned) return fill(strings.earned, { date: dayText(badge.date) });
@@ -112,6 +113,4 @@ const styles = StyleSheet.create({
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },
   badge: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingBottom: space[4] },
   words: { flex: 1, gap: space[1] },
-  name: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.4 },
-  text: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
 });

@@ -11,7 +11,7 @@ import {
   Button,
   SectionLabel,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -41,7 +41,8 @@ const strings = editionStrings.settings.profile;
  * progress at the top.
  */
 export function ProfileScreen() {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const router = useRouter();
   const composition = useComposition();
@@ -61,7 +62,7 @@ export function ProfileScreen() {
   /** The share port of the Level Share Card, while the progress Share Cards are shown. */
   const share = shown.progressShareCards ? shareCard : undefined;
   const [sharing, setSharing] = useState(false);
-  const textStyle = [styles.text, { color: colors.ink, fontFamily: fontFamilies.ui }];
+  const textStyle = [typeStyle('profileText', tokens), { color: colors.ink }];
   const line = (testID: string, text: string) => (
     <Text {...voice} testID={testID} style={textStyle}>
       {text}
@@ -228,16 +229,17 @@ export function ProfileScreen() {
 
 /** The offer to save progress, in the save-progress Feed Notice's words, while no one is signed in. */
 function SaveProgressOffer({ opening, onSave }: { opening: Opening<Account>; onSave: () => void }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   if (!useSignedOut(opening)) return null;
   const { title, message, save } = editionStrings.feedNotices.saveProgress;
   return (
     <View testID="profile-save-progress" style={styles.section}>
-      <Text {...voice} style={[styles.text, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
+      <Text {...voice} style={[typeStyle('profileText', tokens), { color: colors.ink }]}>
         {title}
       </Text>
-      <Text {...voice} style={[styles.text, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+      <Text {...voice} style={[typeStyle('profileText', tokens), { color: colors.muted }]}>
         {message}
       </Text>
       <Button
@@ -254,5 +256,4 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },
-  text: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
 });

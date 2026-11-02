@@ -268,6 +268,14 @@ export const typeRoles = {
   emptyTitle: role('word', '900', 22, 25),
   /** An empty state's line of muted text under its title. */
   emptyText: role('ui', '400', 15, 22),
+  /** A letter of the Word in a Round of the vowel form, in the Round's prompt size. */
+  vowelWordLetter: role('word', '500', 25, 32.5),
+  /** A vowel on its button in a Round of the vowel form. */
+  vowelButton: role('word', '900', 25, 32.5),
+  /** A reminder's time on its Settings row. */
+  reminderTime: role('word', '500', 22, 26),
+  /** The «soon» tag of a Settings row that a later version brings. */
+  soonTag: role('ui', '700', 11, 13, 1.5, 'uppercase'),
   // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
@@ -313,6 +321,12 @@ export const typeRoles = {
   collectionCount: role('ui', '500', 14, 14),
   /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
   progressCount: role('ui', '600', 13, 13),
+  /** A Badge's name in the list of Badges. */
+  badgeName: role('ui', '400', 15, 21),
+  /** Under a Badge's name: when it was earned, or how far its condition has come. */
+  badgeStatus: role('ui', '400', 15, 22),
+  /** A line of the Profile, such as the Level or the Known count, and its offer to save progress. */
+  profileText: role('ui', '400', 15, 22),
   // Roles of batch D.
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
@@ -364,6 +378,14 @@ export const typeRoles = {
   calendarDay: role('word', '800', 13, 16),
   /** A hint under a control: why it is off, or what was refused. */
   hint: role('ui', '400', 15, 22),
+  /** A letter on its chip of a Round's chips form. */
+  chipLetter: role('word', '900', 26, 30),
+  /** A word on its chip of a Round's chips form, smaller so an expression of 8 words fits. */
+  chipWord: role('word', '800', 18, 22),
+  /** The text of a small label chip, such as a Correction Type. */
+  labelChip: role('ui', '700', 11.5, 14),
+  /** The label under the Streak's number on its red tile of the Weekly Recap. */
+  recapLabelMarked: role('ui', '600', 12, 14),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
