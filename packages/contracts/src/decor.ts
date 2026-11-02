@@ -60,6 +60,8 @@ export type DecorMotif = z.infer<typeof DecorMotifSchema>;
 export const SeasonalMotifSchema = z.strictObject({
   tile: DecorMotifSchema,
   centre: DecorMotifSchema,
+  /** The Mascot's accessory for the Season or Holiday, if any. */
+  accessory: z.lazy(() => MascotAccessorySchema).optional(),
 });
 
 export type SeasonalMotif = z.infer<typeof SeasonalMotifSchema>;
@@ -126,6 +128,79 @@ export const HolidaySchema = z.strictObject({
 export type Holiday = z.infer<typeof HolidaySchema>;
 
 /**
+ * What paints a shape of the Mascot: a role the Core resolves for the state,
+ * the Theme and the on-red variant (`body` the figure's colour, `ink` the
+ * Theme's ink, `accent` the red), or a fixed colour of the Edition.
+ */
+const MascotPaintSchema = z.union([z.enum(['body', 'ink', 'accent']), ColorSchema]);
+
+/** One shape of the Mascot, filled or stroked, at an optional opacity. */
+const MascotShapeSchema = z.union([
+  z.strictObject({
+    path: SvgPathSchema,
+    fill: MascotPaintSchema,
+    opacity: z.number().min(0).max(1).optional(),
+  }),
+  z.strictObject({
+    path: SvgPathSchema,
+    stroke: MascotPaintSchema,
+    width: SizeSchema,
+    opacity: z.number().min(0).max(1).optional(),
+  }),
+]);
+
+export type MascotShape = z.infer<typeof MascotShapeSchema>;
+
+const MascotShapesSchema = z.array(MascotShapeSchema).min(1);
+
+/**
+ * The Mascot's vector on its own grid, in parts the Core puts together for
+ * each state (ADR 0070): the figure, its shine, the eyes of every state, the
+ * hat on the head and on the ground (the hat-off state), and the rays,
+ * confetti and sleep marks some states add. `pivot` is where the sad and
+ * hat-off states turn the figure.
+ */
+export const MascotFigureSchema = z.strictObject({
+  width: SizeSchema,
+  height: SizeSchema,
+  pivot: z.tuple([z.number(), z.number()]),
+  figure: MascotShapesSchema,
+  shine: MascotShapesSchema,
+  eyes: z.strictObject({
+    sleeps: MascotShapesSchema,
+    waits: MascotShapesSchema,
+    shouts: MascotShapesSchema,
+    happy: MascotShapesSchema,
+    surprised: MascotShapesSchema,
+    cringes: MascotShapesSchema,
+    sad: MascotShapesSchema,
+    celebrates: MascotShapesSchema,
+    hatOff: MascotShapesSchema,
+  }),
+  hat: MascotShapesSchema,
+  hatOnGround: MascotShapesSchema,
+  rays: MascotShapesSchema,
+  confetti: MascotShapesSchema,
+  sleepMarks: MascotShapesSchema,
+});
+
+export type MascotFigure = z.infer<typeof MascotFigureSchema>;
+
+/** A state the Core draws the Mascot in. */
+export type MascotState = keyof MascotFigure['eyes'];
+
+/**
+ * The Season's or Holiday's accessory, a layer on the Mascot's figure; with
+ * `replacesHat` it is worn instead of the hat. It never changes the palette.
+ */
+export const MascotAccessorySchema = z.strictObject({
+  shapes: MascotShapesSchema,
+  replacesHat: z.boolean(),
+});
+
+export type MascotAccessory = z.infer<typeof MascotAccessorySchema>;
+
+/**
  * The Decor an Edition draws in the app, by slot (ADR 0014, `docs/design/README.md`):
  * `editions/<edition>/decor/decor.json`. Every slot is optional; the Core's
  * neutral Decor fills a slot the Edition leaves out. Decor holds shapes and
@@ -164,6 +239,8 @@ export const EditionDecorSchema = z.strictObject({
    * the four corners of the Square card, both scaled with the card.
    */
   shareCard: z.strictObject({ band: DecorMotifSchema, corner: DecorMotifSchema }).optional(),
+  /** The Mascot's vector, which the Core draws in its states (ADR 0070). */
+  mascot: MascotFigureSchema.optional(),
   /**
    * Seasonal Decor: a motif for every Season, shown in slots 1 and 2 while
    * «Сезонний декор» is on. Without it the slots keep their plain Decor.

@@ -19,6 +19,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { logError } from '@/diagnostics/log';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/entries/use-open-screen';
+import { MascotAs } from '@/mascot/mascot';
 import { useCollectionLinkPreview } from '@/saved/collection-link';
 
 const { collections: collectionStrings } = editionStrings;
@@ -60,7 +61,10 @@ export default function CollectionLinkScreen() {
           (preview.ok ? (
             <Preview preview={preview} />
           ) : (
-            <Failure text={preview.reason === 'offline' ? strings.offline : strings.notFound} />
+            <Failure
+              text={preview.reason === 'offline' ? strings.offline : strings.notFound}
+              offline={preview.reason === 'offline'}
+            />
           ))}
       </SafeAreaView>
     </UndoToastProvider>
@@ -135,18 +139,21 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
   );
 }
 
-/** Why the link opens no preview. */
-function Failure({ text }: { text: string }) {
+/** Why the link opens no preview, under the Mascot asleep when it is offline. */
+function Failure({ text, offline }: { text: string; offline: boolean }) {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   return (
-    <Text
-      testID="collection-link-failure"
-      {...voice}
-      style={[styles.failure, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-    >
-      {text}
-    </Text>
+    <View style={styles.failure}>
+      {offline && <MascotAs state="sleeps" />}
+      <Text
+        testID="collection-link-failure"
+        {...voice}
+        style={[styles.failureText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+      >
+        {text}
+      </Text>
+    </View>
   );
 }
 
@@ -157,9 +164,8 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: space[6], paddingTop: space[2], paddingBottom: space[4] },
   line: { marginTop: space[2], fontSize: typeSize.body },
   footer: { gap: space[4], paddingHorizontal: space[6], paddingTop: space[5] },
-  failure: {
-    paddingHorizontal: space[6],
-    paddingTop: space[6],
+  failure: { gap: space[4], paddingHorizontal: space[6], paddingTop: space[6] },
+  failureText: {
     fontSize: typeSize.body,
     lineHeight: typeSize.body * 1.5,
   },

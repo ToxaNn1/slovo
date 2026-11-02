@@ -1,7 +1,7 @@
 'use no memo';
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   cancelAnimation,
@@ -105,15 +105,19 @@ function Block({ width, height }: { width: number | `${number}%`; height: number
 /**
  * The Feed's loading state while the Language Pack opens: a skeleton of the
  * Word card that pulses, the divider being stitched, and a line of text under
- * it. With Reduce Motion the skeleton holds still and the divider is whole.
- * VoiceOver reads it as one element.
+ * it, under the Mascot waiting when the app shows it. With Reduce Motion the
+ * skeleton holds still and the divider is whole. VoiceOver reads it as one
+ * element.
  */
 export function FeedLoading({
   text,
   accessibilityLabel,
+  mascot,
 }: {
   text: string;
   accessibilityLabel: string;
+  /** The Mascot waiting, over the skeleton card, if the app shows it. */
+  mascot?: ReactNode;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const { voice } = useEdition();
@@ -144,6 +148,7 @@ export function FeedLoading({
       {...voice}
       style={styles.loading}
     >
+      {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
       <View
         style={[
           styles.skeleton,
@@ -176,8 +181,9 @@ const ERROR_ILLUSTRATION_WIDTH = 120;
 
 /**
  * The Feed's local error state, when the Language Pack can't be opened: the
- * Edition's error illustration (a broken thread in the Ukrainian Decor), a
- * title, what went wrong and a button that tries again. Nothing here speaks
+ * Mascot when the app shows it, else the Edition's error illustration (a
+ * broken thread in the Ukrainian Decor), a title, what went wrong and a
+ * button that tries again. Nothing here speaks
  * of the network: the Feed never needs it.
  */
 export function FeedError({
@@ -185,6 +191,7 @@ export function FeedError({
   message,
   retry,
   onRetry,
+  mascot,
   testID = 'feed-error',
 }: {
   title: string;
@@ -192,6 +199,8 @@ export function FeedError({
   /** The label of the button that tries again. */
   retry: string;
   onRetry: () => void;
+  /** The Mascot drawn instead of the illustration, if the app shows it. */
+  mascot?: ReactNode;
   testID?: string;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
@@ -199,7 +208,7 @@ export function FeedError({
   return (
     <View testID={testID} style={styles.error}>
       <View style={styles.illustration}>
-        <EmptyStateIllustration kind="error" width={ERROR_ILLUSTRATION_WIDTH} />
+        {mascot ?? <EmptyStateIllustration kind="error" width={ERROR_ILLUSTRATION_WIDTH} />}
       </View>
       <View
         accessible
@@ -290,6 +299,7 @@ export function SwipeHint({
 
 const styles = StyleSheet.create({
   loading: { gap: space[6] + space[1] },
+  mascot: { alignItems: 'center' },
   // The Word card's padding, so the skeleton has the card's shape.
   skeleton: {
     borderWidth: 1,

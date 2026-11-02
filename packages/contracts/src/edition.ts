@@ -97,8 +97,36 @@ export const LanguageTraitsSchema = z
      * Stress may fall on. Required when the Edition marks Stress.
      */
     vowels: LetterListSchema.optional(),
+    /**
+     * The rows of the on-screen keyboard of the Daily Crossword, top to
+     * bottom: every letter of the alphabet once. The alphabet in rows when
+     * left out.
+     */
+    keyboard: z.array(LetterListSchema).min(1).optional(),
   })
-  .superRefine(({ marksStress, alphabet, vowels }, context) => {
+  .superRefine(({ marksStress, alphabet, vowels, keyboard }, context) => {
+    if (keyboard !== undefined) {
+      const keys = keyboard.flat();
+      keyboard.forEach((row, rowIndex) => {
+        row.forEach((key, index) => {
+          if (!alphabet.includes(key))
+            context.addIssue({
+              code: 'custom',
+              path: ['keyboard', rowIndex, index],
+              message: `"${key}" is not a letter of the alphabet`,
+            });
+        });
+      });
+      alphabet.forEach((letter) => {
+        const count = keys.filter((key) => key === letter).length;
+        if (count !== 1)
+          context.addIssue({
+            code: 'custom',
+            path: ['keyboard'],
+            message: `Expected "${letter}" once on the keyboard, found ${String(count)}`,
+          });
+      });
+    }
     if (vowels === undefined) {
       if (marksStress) {
         context.addIssue({
@@ -392,7 +420,7 @@ export const MascotLinesSchema = z.strictObject({
 export type MascotLines = z.infer<typeof MascotLinesSchema>;
 
 /** A moment the Mascot shows in, which picks its state and its line. */
-export type MascotState = keyof MascotLines;
+export type MascotMoment = keyof MascotLines;
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
 

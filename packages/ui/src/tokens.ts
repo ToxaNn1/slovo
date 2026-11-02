@@ -1,4 +1,4 @@
-import type { ColorTokens, EditionTokens, FontSize } from '@slovo/contracts';
+import type { ColorTokens, EditionTokens, FontSize, MascotState } from '@slovo/contracts';
 
 /**
  * The design tokens from `docs/design/README.md`. The Core names every
@@ -160,6 +160,8 @@ export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamili
 export const offsetShadow = {
   rest: { depth: 5 },
   pressed: { depth: 1, translateY: 4 },
+  /** A key of an on-screen keyboard: a shallower edge, pressed down to the same thin one. */
+  key: { depth: 3, translateY: 2 },
 } as const;
 
 /** The edge colour of a tile's offset shadow: `accentEdge` under red, `tileEdge` under the rest. */
@@ -221,6 +223,8 @@ export const motion = {
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
   pop: { duration: 300, easing: ease },
+  /** The toggle's knob slides over and overshoots. */
+  switch: { duration: 280, easing: [0.3, 1.9, 0.5, 1] },
   /** Rows rise this far into place, one after another. */
   cascade: { duration: 400, easing: ease, rise: 16 },
   /** Under Reduce Motion every motion is this one fade. */
@@ -229,6 +233,100 @@ export const motion = {
   string,
   { readonly duration: number; readonly easing: Easing; readonly rise?: number }
 >;
+
+/** The Mascot's width in points; its height follows the Edition's vector. */
+export const mascotWidth = 130;
+
+/**
+ * Where the Mascot's figure stands at one point of its motion: `at` from 0 to
+ * 1 through the cycle, a shift in points, a turn in degrees and a scale. What
+ * a frame leaves out stays at rest.
+ */
+export interface MascotFrame {
+  readonly at: number;
+  readonly y?: number;
+  readonly rotate?: number;
+  readonly scaleX?: number;
+  readonly scaleY?: number;
+}
+
+/**
+ * The Mascot's motion in each state, from the design's keyframes (`rpBob`,
+ * `rpBreath`, `rpShout`, `rpHop`, `rpPop`, `rpSquish`, `rpSway`), turning
+ * about 30% across and 60% down the figure. `loop` repeats, `alternate` goes
+ * back and forth, `once` plays and holds its end. The hat-off state is still,
+ * and under Reduce Motion every state is the one fade of `motion.reduceMotion`.
+ */
+export const mascotMotion = {
+  waits: {
+    duration: 2400,
+    repeat: 'loop',
+    easing: [0.42, 0, 0.58, 1],
+    frames: [{ at: 0 }, { at: 0.5, y: -5 }, { at: 1 }],
+  },
+  sleeps: {
+    duration: 3000,
+    repeat: 'loop',
+    easing: [0.42, 0, 0.58, 1],
+    frames: [{ at: 0 }, { at: 0.5, scaleX: 1.04, scaleY: 0.97 }, { at: 1 }],
+  },
+  shouts: {
+    duration: 320,
+    repeat: 'alternate',
+    easing: [0.42, 0, 0.58, 1],
+    frames: [{ at: 0 }, { at: 1, scaleX: 1.07, scaleY: 1.07, rotate: -3 }],
+  },
+  happy: {
+    duration: 800,
+    repeat: 'loop',
+    easing: ease,
+    frames: [{ at: 0 }, { at: 0.4, y: -12, rotate: -4 }, { at: 1 }],
+  },
+  celebrates: {
+    duration: 550,
+    repeat: 'loop',
+    easing: ease,
+    frames: [{ at: 0 }, { at: 0.4, y: -12, rotate: -4 }, { at: 1 }],
+  },
+  surprised: {
+    duration: 450,
+    repeat: 'once',
+    easing: ease,
+    frames: [
+      { at: 0, scaleX: 0.7, scaleY: 0.7 },
+      { at: 0.6, scaleX: 1.15, scaleY: 1.15 },
+      { at: 1 },
+    ],
+  },
+  cringes: {
+    duration: 500,
+    repeat: 'once',
+    easing: ease,
+    frames: [{ at: 0 }, { at: 0.4, scaleX: 0.86, scaleY: 1.08 }, { at: 1, scaleX: 0.94 }],
+  },
+  sad: {
+    duration: 3200,
+    repeat: 'loop',
+    easing: [0.42, 0, 0.58, 1],
+    frames: [{ at: 0 }, { at: 0.5, rotate: 3 }, { at: 1 }],
+  },
+  hatOff: undefined,
+} as const satisfies Record<
+  MascotState,
+  | {
+      readonly duration: number;
+      readonly repeat: 'loop' | 'alternate' | 'once';
+      readonly easing: Easing;
+      readonly frames: readonly MascotFrame[];
+    }
+  | undefined
+>;
+
+/**
+ * How the Core poses the Mascot's parts in some states: the turn of the whole
+ * figure about the Edition's pivot, in degrees, and how far the hat drops.
+ */
+export const mascotPose = { sadTurn: 14, hatOffTurn: 26, cringeHatDrop: 4 } as const;
 
 /** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
 export function withAlpha(color: string, alpha: number): string {
@@ -260,7 +358,7 @@ export const typeSize = {
   /** `Big number`, a count of the stats sheet (the Scale gives 26–30). */
   count: 28,
   chip: 12.5,
-  outlinedChip: 11.5,
+  labelChip: 11.5,
   body: 15,
   button: 16,
   /** A sheet's title; also a result's number, an empty state's title and the Correction's non-standard form. */
@@ -384,10 +482,10 @@ export const badgePadding = { horizontal: 10, vertical: 6 } as const;
 /** The padding of the stats pill: the left side carries the icon, so it is tighter. */
 export const statsPillPadding = { left: 10, right: 14 } as const;
 
-/** The padding of an outlined chip, by density. */
-export const outlinedChipPadding = {
-  tight: { horizontal: 7, vertical: 2 },
-  roomy: { horizontal: 9, vertical: 4 },
+/** The padding of a label chip, by density. */
+export const labelChipPadding = {
+  tight: { horizontal: 7, vertical: 3 },
+  roomy: { horizontal: 10, vertical: 5 },
 } as const;
 
 /** The horizontal padding of a Game mode's card (the design's 22). */
@@ -407,8 +505,63 @@ export const resultLayout = {
 /** The empty state's space over its illustration. */
 export const emptyStatePaddingTop = 80;
 
-/** The padding between the segmented control's track and its segments. */
-export const segmentedPadding = 3;
+/** The segmented control's drawing (design `SlovoApp`): a sunken track around its segments. */
+export const segmentedDrawing = {
+  padding: 4,
+  gap: 4,
+  radius: 12,
+  segmentHeight: 38,
+  segmentRadius: 9,
+  labelSize: 13,
+} as const;
+
+/** The toggle's drawing (design `SlovoApp`): a track and the knob that travels inside it. */
+export const switchDrawing = {
+  width: 54,
+  height: 32,
+  radius: 10,
+  knob: 26,
+  knobRadius: 8,
+  /** The gap between the knob and the track's edge. */
+  inset: 3,
+  /** The knob's hard shadow straight below it. */
+  knobShadow: { depth: 2, color: 'rgba(20, 12, 10, 0.3)' },
+} as const;
+
+/** The chip's drawing (design `SlovoApp`, the Saved tabs): a label with an optional count. */
+export const chipDrawing = {
+  height: 38,
+  paddingHorizontal: 14,
+  gap: 6,
+  labelSize: 14,
+  countSize: 12,
+  /** How far the count fades beside its label. */
+  countOpacity: 0.7,
+  /** The chip's scale while it is pressed. */
+  pressedScale: 0.95,
+} as const;
+
+/** The search field's drawing (design `SlovoApp`): a sunken box, a magnifier and a clear button. */
+export const searchFieldDrawing = {
+  height: 50,
+  radius: 14,
+  paddingHorizontal: 14,
+  gap: 10,
+  icon: 18,
+  inputSize: 16,
+  clear: 28,
+  clearRadius: 8,
+  clearIcon: 10,
+} as const;
+
+/** The text field's drawing (design `XSettings`): its box, and the border a problem draws. */
+export const textFieldDrawing = {
+  height: 58,
+  radius: 15,
+  border: 2.5,
+  inputSize: 16,
+  problemSize: 13,
+} as const;
 
 /** The drawing of a slider on a row that is not available yet: track, fill and thumb. */
 export const sliderDrawing = {
@@ -418,8 +571,8 @@ export const sliderDrawing = {
   thumbRadius: 10,
 } as const;
 
-/** A checkbox's corner radius, one of the design's small radii (the segmented control's 4); fixed like the toast's, not an Edition token. */
-export const checkboxRadius = 4;
+/** The checkbox's and the radio's mark: its side, the checkbox's corner and the outline. */
+export const choiceMark = { size: 26, radius: 8, border: 2.5, tick: 16 } as const;
 
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;
@@ -509,6 +662,32 @@ export const iconButton = { side: 44, icon: 20 } as const;
  * the vertical padding of the Round's card.
  */
 export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVertical: 30 } as const;
+
+/**
+ * The Daily Crossword, from the design: a cell's side and the gap between
+ * cells (five of them fit the SE's width with the screen's margins), the
+ * selected cell's ink ring and a cell's letter size; the clue bar's text
+ * size and padding; the keyboard's key height, corner radius and letter
+ * size, the gaps between keys and between rows, and how much wider the
+ * delete key is than a letter key.
+ */
+/** The Daily Crossword's card on the mode screen, from the design: its padding, the gap beside its button, its name's size and the solved mark's size. */
+export const dailyCrosswordCard = { padding: 18, gap: 14, titleSize: 16, solvedSize: 18 } as const;
+
+export const crosswordLayout = {
+  cell: 62,
+  cellGap: 8,
+  ring: 3,
+  letterSize: 26,
+  clueSize: 15,
+  cluePadding: 12,
+  keyHeight: 46,
+  keyRadius: 9,
+  keySize: 15,
+  keyGap: 4,
+  keyRowGap: 7,
+  eraseKeyFlex: 1.5,
+} as const;
 
 /** The sample notification of the onboarding: its app icon (side and corner radius) and the gap between its lines. */
 export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as const;

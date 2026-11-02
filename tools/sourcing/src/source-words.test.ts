@@ -336,13 +336,20 @@ describe('sourceWords', () => {
     const lemmaList = 'завжди language-speech 1\n';
 
     it('puts a draft with a Lemma letter outside the alphabet in incomplete/ with the build message', async () => {
-      const edition = editionWith((config) => ({
-        ...config,
-        languageTraits: {
-          ...(config['languageTraits'] as Record<string, string>),
-          alphabet: 'а б в г ґ д е є з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я',
-        },
-      }));
+      // Without «ж», and so without the keyboard, which holds every letter of the alphabet.
+      const edition = editionWith((config) => {
+        const { keyboard: _keyboard, ...traits } = config['languageTraits'] as Record<
+          string,
+          unknown
+        >;
+        return {
+          ...config,
+          languageTraits: {
+            ...traits,
+            alphabet: 'а б в г ґ д е є з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я',
+          },
+        };
+      });
       const { options } = setup({ lemmaList, edition });
 
       const result = await sourceWords(options);

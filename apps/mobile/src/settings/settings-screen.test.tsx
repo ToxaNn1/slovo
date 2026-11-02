@@ -100,7 +100,7 @@ describe('Settings › ЗВУКИ', () => {
     expect(screen.queryByText('Музика', { includeHiddenElements: true })).not.toBeOnTheScreen();
     expect(screen.queryByText('СКОРО', { includeHiddenElements: true })).not.toBeOnTheScreen();
 
-    await fireEvent(screen.getByRole('switch', { name: 'Вібрація' }), 'valueChange', false);
+    await fireEvent.press(screen.getByRole('switch', { name: 'Вібрація' }));
 
     expect((await settings.read()).vibration).toBe(false);
   });
@@ -117,7 +117,7 @@ describe('Settings › «Сезонний декор»', () => {
     const settings = await renderSettings({ seasonalDecor: true });
 
     const row = screen.getByRole('switch', { name: 'Сезонний декор' });
-    expect(row).toHaveProp('value', true);
+    expect(row).toBeChecked();
     const { title, explanation } = editionStrings.settings.seasonalDecor;
     expect(screen.getByText(explanation, { includeHiddenElements: true })).toBeOnTheScreen();
     // VoiceOver reads the row once, at its switch, with the explanation as its hint.
@@ -125,7 +125,7 @@ describe('Settings › «Сезонний декор»', () => {
     expect(screen.queryByText(title)).not.toBeOnTheScreen();
     expect(screen.queryByText(explanation)).not.toBeOnTheScreen();
 
-    await fireEvent(row, 'valueChange', false);
+    await fireEvent.press(row);
 
     expect((await settings.read()).seasonalDecor).toBe(false);
   });
@@ -158,11 +158,7 @@ describe('Settings › «Ділитися анонімною статистик�
     const analytics = recordedAnalytics();
     const settings = await renderSettings({}, analytics.port);
 
-    await fireEvent(
-      screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }),
-      'valueChange',
-      false,
-    );
+    await fireEvent.press(screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }));
 
     expect((await settings.read()).shareCounters).toBe(false);
     expect(analytics.stopped()).toBe(true);
@@ -173,7 +169,7 @@ describe('Settings › «Ділитися анонімною статистик�
     const settings = await renderSettings();
 
     const row = screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' });
-    expect(row).toHaveProp('value', true);
+    expect(row).toBeChecked();
     const explanation =
       'Анонімні лічильники слів і відповідей анкети та анонімна статистика використання. Без акаунта, пошти й ідентифікатора пристрою.';
     expect(screen.getByText(explanation, { includeHiddenElements: true })).toBeOnTheScreen();
@@ -181,7 +177,7 @@ describe('Settings › «Ділитися анонімною статистик�
     expect(screen.getByHintText(explanation)).toBe(row);
     expect(screen.queryByText(explanation)).not.toBeOnTheScreen();
 
-    await fireEvent(row, 'valueChange', false);
+    await fireEvent.press(row);
 
     expect((await settings.read()).shareCounters).toBe(false);
   });
@@ -210,14 +206,14 @@ describe('Settings › «Без лічильників»', () => {
     const settings = await renderSettings();
 
     const row = screen.getByRole('switch', { name: 'Без лічильників' });
-    expect(row).toHaveProp('value', false);
+    expect(row).not.toBeChecked();
     expect(screen.getByHintText(editionStrings.settings.noCounters.explanation)).toBe(row);
     expect(screen.queryByRole('switch', { name: 'Приховати Серію' })).not.toBeOnTheScreen();
 
-    await fireEvent(row, 'valueChange', true);
+    await fireEvent.press(row);
     expect((await settings.read()).noCounters).toBe(true);
 
-    await fireEvent(screen.getByRole('switch', { name: 'Без лічильників' }), 'valueChange', false);
+    await fireEvent.press(screen.getByRole('switch', { name: 'Без лічильників' }));
     expect((await settings.read()).noCounters).toBe(false);
   });
 
@@ -225,7 +221,7 @@ describe('Settings › «Без лічильників»', () => {
     const settings = await renderSettings({ noCounters: false });
 
     expect(screen.queryByRole('switch', { name: 'Без лічильників' })).not.toBeOnTheScreen();
-    await fireEvent(screen.getByRole('switch', { name: 'Приховати Серію' }), 'valueChange', true);
+    await fireEvent.press(screen.getByRole('switch', { name: 'Приховати Серію' }));
 
     expect((await settings.read()).noCounters).toBe(true);
   });
