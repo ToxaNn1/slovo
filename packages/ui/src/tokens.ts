@@ -292,6 +292,12 @@ export const typeRoles = {
   chipLabel: role('ui', '700', 14, 17),
   /** The count beside a chip's label. */
   chipCount: role('ui', '600', 12, 14),
+  /** The seconds left beside a timed Game's bar. */
+  timerSeconds: role('word', '800', 14, 17),
+  /** A Collection's name on its card of the Saved overview. */
+  collectionCardName: role('word', '800', 14, 17),
+  /** How many Entries a Collection holds, under its name on its card. */
+  collectionCardCount: role('ui', '600', 12, 12),
   // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),

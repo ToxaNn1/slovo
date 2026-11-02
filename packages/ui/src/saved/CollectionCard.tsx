@@ -3,7 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { Wedge } from '../primitives/Wedge';
-import { collectionCard, collectionMarks, entryRow } from '../tokens';
+import { collectionCard, collectionMarks, entryRow, typeStyle } from '../tokens';
 
 /** The fills of the cards in turn: red, ink, sunken. */
 const FILLS = ['accent', 'ink', 'sunken'] as const;
@@ -54,7 +54,8 @@ export function CollectionCard({
   onPress: () => void;
   testID?: string;
 }) {
-  const { fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { radii } = tokens;
   const { voice } = useEdition();
   const paint = useCollectionPaint(index);
   const mark = collectionMarks[index % collectionMarks.length] ?? collectionMarks[0];
@@ -80,13 +81,13 @@ export function CollectionCard({
       <View style={styles.text}>
         <Text
           numberOfLines={2}
-          style={[styles.name, { color: paint.ink, fontFamily: fontFamilies.word }]}
+          style={[typeStyle('collectionCardName', tokens), { color: paint.ink }]}
         >
           {name}
         </Text>
         <Text
           numberOfLines={1}
-          style={[styles.count, { color: paint.ink, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('collectionCardCount', tokens), styles.count, { color: paint.ink }]}
         >
           {count}
         </Text>
@@ -106,14 +107,5 @@ const styles = StyleSheet.create({
   },
   pressed: { opacity: entryRow.pressedOpacity },
   text: { gap: collectionCard.textGap },
-  name: {
-    fontSize: collectionCard.nameSize,
-    lineHeight: collectionCard.nameLineHeight,
-    fontWeight: '800',
-  },
-  count: {
-    fontSize: collectionCard.countSize,
-    fontWeight: '600',
-    opacity: collectionCard.countOpacity,
-  },
+  count: { opacity: collectionCard.countOpacity },
 });
