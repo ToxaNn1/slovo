@@ -159,6 +159,22 @@ export const typeRoles = {
   goalNumber: role('word', '900', 26, 26),
   /** The unit under a Daily Goal tile's number. */
   goalUnit: role('ui', '600', 12, 12),
+  /** The title of a Feed Notice's card. */
+  noticeTitle: role('word', '900', 22, 24),
+  /** The text of a Feed Notice's card, under its title. */
+  noticeText: role('ui', '400', 15, 22),
+  /** A number of the Weekly Recap. */
+  recapNumber: role('word', '900', 24, 24),
+  /** The label under a number of the Weekly Recap. */
+  recapLabel: role('ui', '500', 12, 14),
+  /** The Word of the Community Word card. */
+  communityWord: role('word', '900', 30, 30, -0.5),
+  /** The Definition under the Word of the Community Word card. */
+  communityDefinition: role('ui', '500', 16, 22),
+  /** The title of the end-of-Cycle card. */
+  endOfCycleTitle: role('word', '900', 26, 29),
+  /** The name of a mood on its chip. */
+  moodName: role('ui', '700', 15, 15),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -223,6 +239,23 @@ export const wedges = {
     [0.333, 0.96],
     [0.125, 0.54],
     [0.375, 0.38],
+  ],
+  /** The two chevrons under the end-of-Cycle card, which point down to swipe on. */
+  swipeOn: [
+    [0, 0],
+    [0.5, 0.333],
+    [1, 0],
+    [1, 0.267],
+    [0.5, 0.6],
+    [0, 0.267],
+  ],
+  swipeOnLower: [
+    [0, 0.4],
+    [0.5, 0.733],
+    [1, 0.4],
+    [1, 0.667],
+    [0.5, 1],
+    [0, 0.667],
   ],
   /** The loader's wedge: a right edge narrower than the left, from the middle. */
   loader: [
@@ -707,6 +740,33 @@ export const streakPill = {
   gap: 5,
   mark: { width: 16, height: 18 },
 } as const;
+
+/**
+ * The card of a Feed Notice, from the design: its corner radius, padding
+ * and the gap between its parts; the notification mark's box, corner radius
+ * and wedge; and the Weekly Recap's grid of numbers, three to a row.
+ */
+export const noticeCard = {
+  radius: 24,
+  padding: 20,
+  gap: 14,
+  mark: { box: 40, radius: 11, wedge: { width: 12, height: 18 } },
+  recap: { columns: 3, gap: 8, padding: { vertical: 12, horizontal: 10 }, lineGap: 6 },
+} as const;
+
+/**
+ * The end-of-Cycle card, from the design: the ∞ behind it (its size and how
+ * far it reaches past the left edge and below the top), the gap between its
+ * parts and the chevrons' box.
+ */
+export const endOfCycleCard = {
+  infinity: { size: 330, left: -40, top: 30 },
+  gap: 18,
+  chevrons: { width: 22, height: 30 },
+} as const;
+
+/** The height of a mood's chip, and the gap between the chips. */
+export const moodChip = { height: 52, gap: 10 } as const;
 
 /** The padding of a label chip, by density. */
 export const labelChipPadding = {
