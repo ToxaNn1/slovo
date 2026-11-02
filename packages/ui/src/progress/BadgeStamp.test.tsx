@@ -36,7 +36,7 @@ describe('BadgeStamp', () => {
   it('closes on its take button', async () => {
     const onClose = jest.fn();
     await draw(false, onClose);
-    fireEvent.press(screen.getByTestId('badge-stamp-take'));
+    await fireEvent.press(screen.getByTestId('badge-stamp-take'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });

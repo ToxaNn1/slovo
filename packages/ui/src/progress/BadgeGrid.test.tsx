@@ -40,7 +40,7 @@ describe('BadgeGrid', () => {
   it('hands the pressed Badge to onPress', async () => {
     const onPress = jest.fn<(badge: BadgeGridItem) => void>();
     await draw(onPress);
-    fireEvent.press(screen.getByLabelText('Level five'));
+    await fireEvent.press(screen.getByLabelText('Level five'));
     expect(onPress).toHaveBeenCalledWith(badges[1]);
   });
 });
