@@ -2,11 +2,13 @@
 import '@/shell/intl-polyfill';
 import { MascotCelebrations } from '@/mascot/mascot';
 
+import { createHaptics } from '@slovo/core';
 import {
   DecorProvider,
   EditionProvider,
   fill,
   FontSizeProvider,
+  HapticsProvider,
   TokensProvider,
   typeSize,
   useEdition,
@@ -25,6 +27,7 @@ import {
   editionTokens,
 } from '@/edition/edition';
 import { ScreenViews } from '@/analytics/screen-views';
+import { hapticEngine } from '@/game/haptics';
 import { deviceClock } from '@/device/device-clock';
 import { startCrashReports } from '@/diagnostics/crash-reports';
 import { DecorInEffect } from '@/shell/decor-in-effect';
@@ -133,7 +136,11 @@ export default function RootLayout() {
 function ThemedTabs() {
   const { languagePack, composition } = useShell();
   const colorScheme = useColorSchemeInEffect();
-  const { fontSize } = useSettings().current;
+  const { fontSize, vibration } = useSettings().current;
+  const haptics = useMemo(
+    () => createHaptics({ engine: hapticEngine, vibration: () => vibration }),
+    [vibration],
+  );
   const colors = editionTokens.colors[colorScheme];
   const { ui } = editionTokens.fontFamilies;
 
@@ -158,44 +165,46 @@ function ThemedTabs() {
     <TokensProvider tokens={editionTokens} colorScheme={colorScheme}>
       <ThemeProvider value={navigationTheme}>
         <FontSizeProvider fontSize={fontSize}>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-          {/* Outside the gates: each of its listeners waits for its own opening (ADR 0036, 0037). */}
-          <Lifecycle />
-          <ScreenViews />
-          {/* Every screen draws over the open Language Pack and composition. */}
-          <Opened opening={languagePack} failedTestID="language-pack-failed">
-            <Opened opening={composition} failedTestID="feed-error">
-              {/* The screens' background and divider follow the local date (ADR 0055). */}
-              <DecorInEffect clock={deviceClock}>
-                <NotificationTaps
-                  onOpened={(kind) => {
-                    // The event never fails; a composition that fails to open is reported where it opens.
-                    composition.opened().then(
-                      (open) => open.analytics.notificationOpened(kind),
-                      () => undefined,
-                    );
-                  }}
-                />
-                <EditionTabs
-                  screenOptions={{
-                    headerShown: false,
-                    tabBarIcon: () => null,
-                    tabBarButton: TabButton,
-                    tabBarActiveTintColor: colors.accent,
-                    tabBarInactiveTintColor: colors.inactiveTab,
-                    tabBarLabelStyle: {
-                      fontFamily: ui,
-                      fontSize: typeSize.tabLabel,
-                      fontWeight: '600',
-                    },
-                  }}
-                />
-                {/* Over the tabs until the reader finishes or skips it. */}
-                <MascotCelebrations />
-                <Onboarding />
-              </DecorInEffect>
+          <HapticsProvider haptics={haptics}>
+            <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+            {/* Outside the gates: each of its listeners waits for its own opening (ADR 0036, 0037). */}
+            <Lifecycle />
+            <ScreenViews />
+            {/* Every screen draws over the open Language Pack and composition. */}
+            <Opened opening={languagePack} failedTestID="language-pack-failed">
+              <Opened opening={composition} failedTestID="feed-error">
+                {/* The screens' background and divider follow the local date (ADR 0055). */}
+                <DecorInEffect clock={deviceClock}>
+                  <NotificationTaps
+                    onOpened={(kind) => {
+                      // The event never fails; a composition that fails to open is reported where it opens.
+                      composition.opened().then(
+                        (open) => open.analytics.notificationOpened(kind),
+                        () => undefined,
+                      );
+                    }}
+                  />
+                  <EditionTabs
+                    screenOptions={{
+                      headerShown: false,
+                      tabBarIcon: () => null,
+                      tabBarButton: TabButton,
+                      tabBarActiveTintColor: colors.accent,
+                      tabBarInactiveTintColor: colors.inactiveTab,
+                      tabBarLabelStyle: {
+                        fontFamily: ui,
+                        fontSize: typeSize.tabLabel,
+                        fontWeight: '600',
+                      },
+                    }}
+                  />
+                  {/* Over the tabs until the reader finishes or skips it. */}
+                  <MascotCelebrations />
+                  <Onboarding />
+                </DecorInEffect>
+              </Opened>
             </Opened>
-          </Opened>
+          </HapticsProvider>
         </FontSizeProvider>
         <LaunchSplash />
       </ThemeProvider>

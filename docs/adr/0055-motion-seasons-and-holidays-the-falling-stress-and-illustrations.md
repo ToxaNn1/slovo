@@ -11,7 +11,7 @@ One set of rules governs every animation of the app, Decor follows the Season an
 - **The UI thread.** Animations run in Reanimated on the UI thread, so a busy JavaScript thread never makes them stutter on an older phone.
 - **Reduce Motion.** Under Reduce Motion, from the system setting or from the in-app «Менше руху» switch, nothing moves across the screen: every animation becomes one short opacity fade (300 ms, once, no delay), or nothing where there is nothing to fade. The splash shortens as the design says.
 
-The design boards (`docs/design/`) show each animation with its timing and its Reduce Motion variant. A right Game answer turns its tile red; nothing shakes, and the Game gives no haptic (ADR 0025). The heart springs to 1.2 and back with a light haptic when the reader saves.
+The design boards (`docs/design/`) show each animation with its timing and its Reduce Motion variant. A right Game answer turns its tile red; nothing shakes; the Game's haptics stay (ADR 0025). The heart springs to 1.2 and back with a light haptic when the reader saves.
 
 **Seasons and Holidays.** Paused in the UA Edition in 1.0 (spec #1358): the Feature Switch of the Decor is off, so Decor stays the Edition's own all year, the Settings row «Сезонний декор» is gone, and the code and the Edition's Holiday list stay so Decor can return after 1.0. The Word of the Day calligraphy (the `wordOfTheDayFont` of ADR 0006) is paused the same way.
 

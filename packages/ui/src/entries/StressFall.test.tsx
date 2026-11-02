@@ -2,9 +2,17 @@ import {
   buildShareCardContent,
   type EntryFeedCard,
   type EntryRowModel,
+  type Haptics,
   type WordFeedCard,
 } from '@slovo/core';
-import { EditionProvider, EntryCard, EntryRow, ShareSheet, VerticalPager } from '@slovo/ui';
+import {
+  EditionProvider,
+  EntryCard,
+  EntryRow,
+  HapticsProvider,
+  ShareSheet,
+  VerticalPager,
+} from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -73,6 +81,14 @@ const row: EntryRowModel = {
   partOfSpeech: 'noun',
   registers: [],
   rarity: 3,
+};
+
+const haptics: Haptics = {
+  selection: jest.fn(),
+  impactLight: jest.fn(),
+  impactMedium: jest.fn(),
+  success: jest.fn(),
+  warning: jest.fn(),
 };
 
 /** How long a page turn's motion takes, from the design. */
@@ -159,14 +175,16 @@ describe('The falling Stress', () => {
     const first = 'fi\u0301rst';
     await render(
       inEdition(
-        <VerticalPager
-          testID="pager"
-          items={[wordOf(first), wordOf('se\u0301cond')]}
-          initialIndex={0}
-          onIndexChange={jest.fn()}
-          renderPage={(card) => <EntryCard card={card} stressFalls />}
-          turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
-        />,
+        <HapticsProvider haptics={haptics}>
+          <VerticalPager
+            testID="pager"
+            items={[wordOf(first), wordOf('se\u0301cond')]}
+            initialIndex={0}
+            onIndexChange={jest.fn()}
+            renderPage={(card) => <EntryCard card={card} stressFalls />}
+            turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
+          />
+        </HapticsProvider>,
       ),
     );
     await fireEvent(screen.getByTestId('pager'), 'layout', {
@@ -201,14 +219,16 @@ describe('The falling Stress', () => {
     const second = 'se\u0301cond';
     await render(
       inEdition(
-        <VerticalPager
-          testID="pager"
-          items={[wordOf('fi\u0301rst'), wordOf(second)]}
-          initialIndex={0}
-          onIndexChange={jest.fn()}
-          renderPage={(card) => <EntryCard card={card} stressFalls />}
-          turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
-        />,
+        <HapticsProvider haptics={haptics}>
+          <VerticalPager
+            testID="pager"
+            items={[wordOf('fi\u0301rst'), wordOf(second)]}
+            initialIndex={0}
+            onIndexChange={jest.fn()}
+            renderPage={(card) => <EntryCard card={card} stressFalls />}
+            turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
+          />
+        </HapticsProvider>,
       ),
     );
     await fireEvent(screen.getByTestId('pager'), 'layout', {

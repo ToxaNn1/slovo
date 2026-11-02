@@ -8,11 +8,12 @@ import {
   type Clock,
   type Composition,
   type Edition,
+  type Haptics,
   type Schedule,
   type XpRecord,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, systemSchedule } from '@slovo/ui';
+import { EditionProvider, HapticsProvider, systemSchedule } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -140,6 +141,17 @@ const idiom = (index: number): Idiom => ({
   sources: [{ title: 'Test source' }],
   retired: false,
 });
+
+/** The haptic of a wrong answer. */
+const warning = jest.fn();
+
+const haptics: Haptics = {
+  selection: jest.fn(),
+  impactLight: jest.fn(),
+  impactMedium: jest.fn(),
+  success: jest.fn(),
+  warning,
+};
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -282,9 +294,11 @@ async function renderScreen({ shareCard }: { shareCard?: ShareCard } = {}) {
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>
-          <SettingsProvider>
-            <GameScreen />
-          </SettingsProvider>
+          <HapticsProvider haptics={haptics}>
+            <SettingsProvider>
+              <GameScreen />
+            </SettingsProvider>
+          </HapticsProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,
@@ -936,6 +950,7 @@ describe('the Game screen', () => {
       expect(screen.getByTestId('chips')).toBeOnTheScreen();
     });
     const words = theWordsOfThePrompt();
+    warning.mockClear();
     await assembleWords(words.toReversed());
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
@@ -943,6 +958,7 @@ describe('the Game screen', () => {
       exact: false,
     });
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(warning).toHaveBeenCalled();
   });
 
   it('starts «Англіцизми» from its card and plays a whole Game of anglicisms alone, picking each standard form, to the result screen', async () => {
@@ -988,6 +1004,7 @@ describe('the Game screen', () => {
       .getAllByTestId(/^game-option-\d+$/)
       .find((option) => option.props['accessibilityLabel'] !== standard);
     if (wrong === undefined) throw new Error('No wrong option');
+    warning.mockClear();
     await fireEvent.press(wrong);
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
@@ -996,6 +1013,7 @@ describe('the Game screen', () => {
       `Чому ${standard} краще.`,
     );
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(warning).toHaveBeenCalled();
   });
 
   it('starts «Фразеологізми» from its card and plays a whole Game, picking each meaning, to the result screen', async () => {
@@ -1038,11 +1056,13 @@ describe('the Game screen', () => {
       .getAllByTestId(/^game-option-\d+$/)
       .find((option) => option.props['accessibilityLabel'] !== meaning);
     if (wrong === undefined) throw new Error('No wrong option');
+    warning.mockClear();
     await fireEvent.press(wrong);
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(meaning, { exact: false });
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(warning).toHaveBeenCalled();
   });
 
   it('starts «Виживання» from its card with 3 Lives and no Round limit, mixing Words and Corrections, and ends on the third mistake with the Rounds passed', async () => {
@@ -1121,7 +1141,9 @@ describe('the Game screen', () => {
         expect(screen.queryByTestId('game-next')).toBeNull();
         expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
       }
+      warning.mockClear();
       await pickAnotherWord();
+      expect(warning).toHaveBeenCalled();
       expect(screen.queryByTestId('game-next')).toBeNull();
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
 
@@ -1229,12 +1251,14 @@ describe('the Game screen', () => {
       .getAllByTestId(/^game-option-\d+$/)
       .find((option) => option.props['accessibilityLabel'] !== language);
     if (wrong === undefined) throw new Error('No wrong option');
+    warning.mockClear();
     await fireEvent.press(wrong);
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(language, { exact: false });
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(`Від test${String(n)}.`);
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(warning).toHaveBeenCalled();
   });
 
   describe('the widget hint', () => {

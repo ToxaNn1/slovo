@@ -24,6 +24,7 @@ import type {
   TextRange,
 } from './game-mode';
 import { chipsMatch, entriesIn, roundsIn } from './game-mode';
+import { LIFE_LOST_DELAY } from './game-haptics';
 import {
   createRoundPlanner,
   GAME_ROUNDS,
@@ -36,13 +37,6 @@ import { typedAnswerMatches } from './typed-answer';
 
 /** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own. */
 export const GAME_LIVES = 5;
-
-/**
- * How long after a wrong answer its Life is lost: the time the wrong choice
- * takes to fill (200 ms), so the Life pops once the fill is done. The Round's
- * views start the Life's pop and the fill's fade by it.
- */
-export const LIFE_LOST_DELAY = 200;
 
 /** The Lives a Game in the mode starts with; none in a mode without Lives. */
 const livesOf = ({ lives = GAME_LIVES }: GameMode): number | undefined =>
@@ -148,8 +142,8 @@ export type Round = {
   /** The Definition shown under the prompt, such as a Word's in «Звідки слово»; none when left out. */
   readonly definition?: string;
   /**
-   * How long after a wrong answer its Life is lost, in milliseconds
-   * (`LIFE_LOST_DELAY`), so the shell pops the Life then.
+   * How long after a wrong answer its Life is lost, in milliseconds: when its
+   * haptic comes (`LIFE_LOST_DELAY`), so the shell pops the Life then too.
    */
   readonly lifeLostAfter: number;
   /** The answer, once given; a Round is answered once. */

@@ -43,7 +43,7 @@ type Fill = 'right' | 'wrong' | undefined;
  * Definition then gives the pair, which leaves nothing selected; a Definition
  * tapped before a Word does nothing. Once the pair is judged, its Word and
  * Definition fill in the correct or the wrong colour and a wrong pair shakes,
- * which Reduce Motion leaves out. A pair
+ * which Reduce Motion leaves out; the screen plays the answer's haptic. A pair
  * gone, answered right, leaves its places empty, which VoiceOver skips.
  * VoiceOver reads each Word with its Stress and each Definition by its text.
  * Key it by the Round, so a new Round starts with nothing selected.

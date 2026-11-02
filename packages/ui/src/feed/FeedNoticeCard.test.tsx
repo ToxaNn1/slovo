@@ -1,7 +1,9 @@
+import type { Haptics } from '@slovo/core';
 import {
   EnoughForTodayCard,
   EditionProvider,
   FirstWeekCard,
+  HapticsProvider,
   LevelMilestoneCard,
   NotificationAskCard,
   VerticalPager,
@@ -44,15 +46,25 @@ const strings = testStrings({
 /** The Feed's pages: a Feed Notice's card, then the next Entry's card behind it. */
 const PAGES = ['notice', 'next'] as const;
 
+const haptics: Haptics = {
+  selection: jest.fn(),
+  impactLight: jest.fn(),
+  impactMedium: jest.fn(),
+  success: jest.fn(),
+  warning: jest.fn(),
+};
+
 async function renderFeed(notice: ReactNode, onIndexChange: (index: number) => void = jest.fn()) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <VerticalPager
-        testID="pager"
-        items={PAGES}
-        onIndexChange={onIndexChange}
-        renderPage={(page) => (page === 'notice' ? notice : <Text>Next</Text>)}
-      />
+      <HapticsProvider haptics={haptics}>
+        <VerticalPager
+          testID="pager"
+          items={PAGES}
+          onIndexChange={onIndexChange}
+          renderPage={(page) => (page === 'notice' ? notice : <Text>Next</Text>)}
+        />
+      </HapticsProvider>
     </EditionProvider>,
   );
   // The pages are drawn once the pager knows its height.

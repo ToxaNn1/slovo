@@ -13,7 +13,7 @@ export const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
 export const RIGHT_FILL = { duration: 250, easing: ease, reduceMotion: ReduceMotion.Never };
 
 /**
- * A wrong choice fills in 200 ms (`LIFE_LOST_DELAY`, which the Life's pop
+ * A wrong choice fills in 200 ms (`LIFE_LOST_DELAY`, which the Life's haptic
  * waits for too), and the other options fade as quickly.
  */
 export const WRONG_FILL = {

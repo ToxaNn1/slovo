@@ -1,4 +1,5 @@
 import type { CurrentGame } from '@slovo/core';
+import { useEffect, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { VictoryIllustration } from '../decor/DecorSlots';
@@ -8,6 +9,7 @@ import { SecondaryButton } from '../primitives/SecondaryButton';
 import { blockGap, resultLayout, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { GameReview } from './GameReview';
+import { useGameHaptics } from './useGameHaptics';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
 /** How far the largest text sizes of iOS may scale the numbers, so they keep beside each other. */
@@ -56,7 +58,8 @@ function ResultNumber({
  * mode's Round limit, or alone in a mode without one), the Lives left
  * and the best result; a timed Game ends with its time up, its right answers
  * in place of the Rounds passed when there is one, «Ще раз» for a new Game in the same
- * mode and «На головну» for the Feed. The Edition's victory illustration (Decor slot 6) sits over the
+ * mode and «На головну» for the Feed. A win arrives with the success haptic
+ * twice. The Edition's victory illustration (Decor slot 6) sits over the
  * title, large and stitched in on a win, small and still on a loss. The Game
  * Review of every Round follows the buttons, while it opens Entries.
  */
@@ -85,6 +88,17 @@ export function GameResult({
   const timed = game.time !== undefined;
   const right = game.played.filter((round) => round.right).length;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
+  const gameHaptics = useGameHaptics();
+  // Whether the win has played, so only the screen's arrival plays it.
+  const played = useRef(false);
+
+  useEffect(() => {
+    if (!won || played.current) return;
+    played.current = true;
+    gameHaptics.win();
+    // New haptics, after a change of Vibration, find the win already played.
+  }, [won, gameHaptics]);
+
   return (
     <ScrollView
       testID="game-result"
