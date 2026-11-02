@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polygon } from 'react-native-svg';
 
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { badgeEdge, badgeStamp, wedges, type Wedge } from '../tokens';
+import { badgeEdge, badgeStamp, typeRoles, typeStyle, wedges, type Wedge } from '../tokens';
 
 /** The shape of a Badge family: the Streak, the Games, the confirmed Entries, the Levels. */
 export type BadgeShape = Wedge | 'circle';
@@ -63,7 +63,10 @@ export function BadgeMark({
   onRed?: boolean;
   testID?: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const symbolRole = typeRoles.badgeSymbol;
+  const symbolSize = size / 3;
   // The symbol on red is the ink of the light Theme in both Themes, as on every red face.
   const key = useSchemeColors('light');
   const keyInk = key.ink;
@@ -90,8 +93,12 @@ export function BadgeMark({
             numberOfLines={1}
             adjustsFontSizeToFit
             style={[
-              styles.text,
-              { color: keyInk, fontFamily: fontFamilies.word, fontSize: size / 3 },
+              typeStyle('badgeSymbol', tokens),
+              {
+                color: keyInk,
+                fontSize: symbolSize,
+                lineHeight: (symbolSize * symbolRole.lineHeight) / symbolRole.size,
+              },
             ]}
           >
             {symbol}
@@ -106,5 +113,4 @@ const styles = StyleSheet.create({
   mark: { position: 'relative' },
   layer: { position: 'absolute', left: 0, top: 0 },
   symbol: { position: 'absolute', left: 0, top: 0, alignItems: 'center', justifyContent: 'center' },
-  text: { fontWeight: '900' },
 });

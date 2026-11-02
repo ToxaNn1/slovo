@@ -17,7 +17,7 @@ import { endOfCycleCard, typeStyle, wedges } from '../tokens';
  */
 export function EndOfCycleCard() {
   const tokens = useTokens();
-  const { colors, fontFamilies } = tokens;
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const { title, message } = strings.endOfCycle;
   // In the Feed, VoiceOver turns to the card that starts the new Cycle from here.
@@ -33,7 +33,11 @@ export function EndOfCycleCard() {
       style={styles.card}
     >
       <Text
-        style={[styles.infinity, { color: colors.surfaceSunken, fontFamily: fontFamilies.word }]}
+        style={[
+          typeStyle('endOfCycleInfinity', tokens),
+          styles.infinity,
+          { color: colors.surfaceSunken },
+        ]}
       >
         ∞
       </Text>
@@ -69,9 +73,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: endOfCycleCard.infinity.left,
     top: endOfCycleCard.infinity.top,
-    fontSize: endOfCycleCard.infinity.size,
-    lineHeight: endOfCycleCard.infinity.size,
-    fontWeight: '900',
   },
   text: { textAlign: 'center' },
 });

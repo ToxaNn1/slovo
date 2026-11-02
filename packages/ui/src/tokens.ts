@@ -300,6 +300,10 @@ export const typeRoles = {
   collectionCardCount: role('ui', '600', 12, 12),
   /** The Community Counters line under an Entry card's mark buttons. */
   communityCounters: role('ui', '400', 13, 17),
+  /** The giant ∞ behind the end-of-Cycle card. */
+  endOfCycleInfinity: role('word', '900', 330, 330),
+  /** A Badge's symbol on its mark, at a 156-wide mark; the mark scales it to a third of its side. */
+  badgeSymbol: role('word', '900', 52, 62),
   // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
