@@ -28,9 +28,10 @@ struct SlovoWidget: Widget {
   }
 }
 
-/// One moment of the widget: the Widget Mode's name over the headline (and,
-/// in medium, the second line) or the mode's empty or broken state, with the
-/// band at the bottom.
+/// One moment of the widget, from the design's boards: the Widget Mode's name
+/// over the headline (and, in medium, the second line) or the mode's empty or
+/// broken state, with the band at the bottom. Behind it the mark: the
+/// headline's giant first letter in small, the wedge at the right in medium.
 struct EntryView: View {
   @Environment(\.widgetFamily) private var family
   @Environment(\.widgetRenderingMode) private var renderingMode
@@ -45,11 +46,11 @@ struct EntryView: View {
     renderingMode == .fullColor ? moment.background : .auto
   }
 
-  /// A colour token on the widget's «Тло»: Авто's colour set follows the
-  /// phone's appearance, each other choice has colour sets of its own.
+  /// A colour on the widget's «Тло»: Авто draws the design of each family,
+  /// in the phone's appearance; each other choice has colour sets of its own.
   private func color(_ token: String) -> Color {
     switch background {
-    case .auto: Color(token)
+    case .auto: Color(token + (isSmall ? "Small" : "Medium"))
     case .light: Color(token + "Light")
     case .dark: Color(token + "Dark")
     case .parchment: Color(token + "Parchment")
@@ -57,11 +58,12 @@ struct EntryView: View {
     }
   }
 
-  /// The appearance the band is drawn in: the phone's on Авто, the light one
-  /// on the light backgrounds (Світлий, Пергамент), the dark one on the dark.
+  /// The appearance the band is drawn in: on Авто the light one on the small
+  /// widget's red and the phone's on the medium widget; the light one on the
+  /// light backgrounds (Світлий, Пергамент), the dark one on the dark.
   private var bandScheme: ColorScheme {
     switch background {
-    case .auto: colorScheme
+    case .auto: isSmall ? .light : colorScheme
     case .light, .parchment: .light
     case .dark, .blue: .dark
     }
@@ -87,15 +89,15 @@ struct EntryView: View {
         headline(entry.headline)
         if !isSmall {
           Text(entry.secondLine)
-            .font(EditionInfo.wordFont(size: 15, weight: .regular))
+            .font(EditionInfo.uiFont(size: 13, weight: .medium))
             .foregroundStyle(color("inkSecondary"))
             .lineLimit(2)
             .minimumScaleFactor(0.75)
-            .padding(.top, 2)
+            .padding(.top, 6)
         }
       } else if let emptyState = moment.emptyState {
         Text(emptyState)
-          .font(EditionInfo.wordFont(size: isSmall ? 19 : 21, weight: .medium))
+          .font(EditionInfo.wordFont(size: isSmall ? 17 : 21, weight: .black))
           .foregroundStyle(color("ink"))
           .lineLimit(4)
           .minimumScaleFactor(0.7)
@@ -107,8 +109,15 @@ struct EntryView: View {
         .environment(\.colorScheme, bandScheme)
         .padding(.top, 10)
     }
+    // Clear of the medium widget's wedge, whose slanted edge starts at 60% of its width.
+    .padding(.trailing, isSmall ? 0 : 56)
     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-    .containerBackground(color("background"), for: .widget)
+    .containerBackground(for: .widget) {
+      ZStack {
+        color("background")
+        mark
+      }
+    }
     // One element for VoiceOver: the Widget Mode's name, then the Entry's
     // VoiceOver text, which has no Stress mark, or the mode's state, then the
     // ✓'s label (ADR 0026).
@@ -125,11 +134,38 @@ struct EntryView: View {
     .joined(separator: ". ")
   }
 
+  /// The mark behind the content, from the boards: in small the headline's
+  /// first letter, 200/170 of the widget's height, out past the bottom right
+  /// corner; in medium the wedge, 130/364 of the width, slanted on its left.
+  @ViewBuilder private var mark: some View {
+    if isSmall {
+      if let letter = moment.entry?.headline.first {
+        GeometryReader { geometry in
+          Text(String(letter).uppercased())
+            .font(EditionInfo.wordFont(size: geometry.size.height * 200 / 170, weight: .black))
+            .foregroundStyle(color("mark"))
+            .fixedSize()
+            .offset(x: geometry.size.height * 30 / 170, y: geometry.size.height * 40 / 170)
+            .frame(width: geometry.size.width, height: geometry.size.height, alignment: .bottomTrailing)
+        }
+        .accessibilityHidden(true)
+      }
+    } else {
+      GeometryReader { geometry in
+        Wedge()
+          .fill(color("mark"))
+          .frame(width: geometry.size.width * 130 / 364)
+          .frame(width: geometry.size.width, height: geometry.size.height, alignment: .trailing)
+      }
+      .accessibilityHidden(true)
+    }
+  }
+
   private var overline: some View {
     Text(moment.overline)
-      // The overline type of the app (`overlineType` in the UI tokens).
-      .font(EditionInfo.uiFont(size: 11, weight: .bold))
-      .tracking(11 * 0.14)
+      // The widget overline of the boards: the word font at 800, 10 points, tracked 1.5.
+      .font(EditionInfo.wordFont(size: 10, weight: .heavy))
+      .tracking(1.5)
       .foregroundStyle(color("accent"))
       // In capitals, as the app's overline type draws it, a Collection's name too.
       .textCase(.uppercase)
@@ -141,10 +177,23 @@ struct EntryView: View {
   /// so a word is never cut mid-letter: a single word stays on one line.
   private func headline(_ text: String) -> some View {
     Text(text)
-      .font(EditionInfo.wordFont(size: isSmall ? 30 : 34, weight: .medium))
+      .font(EditionInfo.wordFont(size: isSmall ? 21 : 26, weight: .black))
       .foregroundStyle(color("ink"))
       .lineLimit(text.contains(" ") ? 3 : 1)
       .minimumScaleFactor(0.4)
+  }
+}
+
+/// The medium widget's wedge: its top edge starts at 40% of its width, its bottom at the left.
+struct Wedge: Shape {
+  func path(in rect: CGRect) -> Path {
+    Path { path in
+      path.move(to: CGPoint(x: rect.minX + rect.width * 0.4, y: rect.minY))
+      path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+      path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+      path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+      path.closeSubpath()
+    }
   }
 }
 

@@ -61,7 +61,7 @@ describe("the widget extension's Edition files", () => {
   const cream = ['1.000', '0.957', '0.902'];
   const nearBlack = ['0.078', '0.047', '0.039'];
 
-  it('draws Авто as the small design: the red background, the ink on it and the giant letter in cream', () => {
+  it('draws Авто as the small design in both appearances: the red background, the ink on it and the giant letter in cream', () => {
     expect(fixed('backgroundSmall')).toEqual(oneColor(red));
     expect(fixed('inkSmall')).toEqual(oneColor(nearBlack));
     expect(fixed('inkSecondarySmall')).toEqual(oneColor(nearBlack));
@@ -69,10 +69,17 @@ describe("the widget extension's Edition files", () => {
     expect(fixed('markSmall')).toEqual(oneColor(cream));
   });
 
-  it('draws Авто as the medium design: the dark background, the cream ink, the second line at 85% and the red overline and wedge', () => {
-    expect(fixed('backgroundMedium')).toEqual(oneColor(nearBlack));
-    expect(fixed('inkMedium')).toEqual(oneColor(cream));
-    expect(fixed('inkSecondaryMedium')).toEqual(oneColor([...cream, '0.850']));
+  it("draws Авто as the medium design in the phone's appearance: the background, the ink, the second line at 85% and the red overline and wedge", () => {
+    const twoColors = (light: string[], darkRgb: string[]) => ({
+      colors: [oneColor(light).colors[0], { ...oneColor(darkRgb).colors[0], appearances: dark }],
+      info: { author: 'xcode', version: 1 },
+    });
+
+    expect(fixed('backgroundMedium')).toEqual(twoColors(cream, nearBlack));
+    expect(fixed('inkMedium')).toEqual(twoColors(nearBlack, cream));
+    expect(fixed('inkSecondaryMedium')).toEqual(
+      twoColors([...nearBlack, '0.850'], [...cream, '0.850']),
+    );
     expect(fixed('accentMedium')).toEqual(oneColor(red));
     expect(fixed('markMedium')).toEqual(oneColor(red));
   });
