@@ -225,7 +225,10 @@ export const motion = {
   cascade: { duration: 400, easing: ease, rise: 16 },
   /** Under Reduce Motion every motion is this one fade. */
   reduceMotion: { duration: 300, easing: ease },
-} as const satisfies Record<string, { readonly duration: number; readonly easing: Easing }>;
+} as const satisfies Record<
+  string,
+  { readonly duration: number; readonly easing: Easing; readonly rise?: number }
+>;
 
 /** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
 export function withAlpha(color: string, alpha: number): string {

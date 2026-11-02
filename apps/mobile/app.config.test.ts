@@ -399,17 +399,17 @@ describe('app config', () => {
     const localised = repoWithEdition(() => undefined, {
       change(edition) {
         writeFileSync(
-          join(edition.dir, FONTS_DIR, 'Kurale-Regular.ttf'),
+          join(edition.dir, FONTS_DIR, 'Unbounded-Black.ttf'),
           fontWithNames([
-            { nameId: 1, languageId: 0x409, text: 'Kurale' },
-            { nameId: 1, languageId: 0x422, text: 'Курале' },
+            { nameId: 1, languageId: 0x409, text: 'Unbounded' },
+            { nameId: 1, languageId: 0x422, text: 'Анбаундед' },
           ]),
         );
       },
     });
 
     expect(appConfig(localised).extra?.['edition']).toMatchObject({
-      wordOfTheDayFontFamily: 'Kurale',
+      wordOfTheDayFontFamily: 'Unbounded',
     });
   });
 
@@ -417,35 +417,35 @@ describe('app config', () => {
     const localised = repoWithEdition(() => undefined, {
       change(edition) {
         writeFileSync(
-          join(edition.dir, FONTS_DIR, 'Kurale-Regular.ttf'),
-          fontWithNames([{ nameId: 1, languageId: 0x422, text: 'Курале' }]),
+          join(edition.dir, FONTS_DIR, 'Unbounded-Black.ttf'),
+          fontWithNames([{ nameId: 1, languageId: 0x422, text: 'Анбаундед' }]),
         );
       },
     });
 
     expect(appConfig(localised).extra?.['edition']).toMatchObject({
-      wordOfTheDayFontFamily: 'Курале',
+      wordOfTheDayFontFamily: 'Анбаундед',
     });
   });
 
   it('fails clearly when the Word of the Day font is not among the Edition fonts', () => {
     const withoutFont = repoWithEdition(() => undefined, {
       change: (edition) => {
-        rmSync(join(edition.dir, FONTS_DIR, 'Kurale-Regular.ttf'));
+        rmSync(join(edition.dir, FONTS_DIR, 'Unbounded-Black.ttf'));
       },
     });
 
-    expect(() => appConfig(withoutFont)).toThrow(/wordOfTheDayFont.*Kurale-Regular\.ttf/);
+    expect(() => appConfig(withoutFont)).toThrow(/wordOfTheDayFont.*Unbounded-Black\.ttf/);
   });
 
   it('fails clearly when the Word of the Day font is not a font', () => {
     const notAFont = repoWithEdition(() => undefined, {
       change: (edition) => {
-        writeFileSync(join(edition.dir, FONTS_DIR, 'Kurale-Regular.ttf'), 'not a font');
+        writeFileSync(join(edition.dir, FONTS_DIR, 'Unbounded-Black.ttf'), 'not a font');
       },
     });
 
-    expect(() => appConfig(notAFont)).toThrow(/Kurale-Regular\.ttf has no family name/);
+    expect(() => appConfig(notAFont)).toThrow(/Unbounded-Black\.ttf has no family name/);
   });
 
   it('takes the splash the AppConfig names in both Themes', () => {
@@ -535,17 +535,17 @@ describe('app config', () => {
 
     await prebuildIos(repo);
 
-    // The widget draws in the word and UI families of the tokens, never in the Word of the Day font.
+    // The widget draws in the word and UI families of the tokens alone, so the Edition's Kurale stays out.
     const generated = join(repo.projectRoot, '../widget/Generated');
     expect(readdirSync(generated).filter((file) => file.endsWith('.ttf'))).toEqual([
-      'Literata-Italic.ttf',
-      'Literata-Medium.ttf',
-      'Literata-Regular.ttf',
-      'Literata-SemiBold.ttf',
-      'Manrope-Bold.ttf',
-      'Manrope-Medium.ttf',
-      'Manrope-Regular.ttf',
-      'Manrope-SemiBold.ttf',
+      'Onest-Bold.ttf',
+      'Onest-Medium.ttf',
+      'Onest-Regular.ttf',
+      'Onest-SemiBold.ttf',
+      'Unbounded-Black.ttf',
+      'Unbounded-ExtraBold.ttf',
+      'Unbounded-Regular.ttf',
+      'Unbounded-SemiBold.ttf',
     ]);
   });
 

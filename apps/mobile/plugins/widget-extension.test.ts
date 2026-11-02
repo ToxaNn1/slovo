@@ -1,11 +1,11 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, join } from 'node:path';
+import { join } from 'node:path';
 
 import plist from '@expo/plist';
 import { WidgetSnapshotSchema } from '@slovo/contracts';
 import { coreDecor, loadDecor } from '@slovo/core';
-import { coreFonts } from '@slovo/ui/fonts';
+import { FONTS_DIR } from '@slovo/language-pack/edition';
 import { coreTokens, designTokens } from '@slovo/ui/tokens';
 import { describe, expect, it } from 'vitest';
 
@@ -13,9 +13,9 @@ import { strings, ukrainianFolder } from '../src/test-support';
 
 import { widgetExtensionFiles, writeWidgetExtension, type WidgetEdition } from './widget-extension';
 
-/** Two of the Core's fonts, which the widget draws with. */
-const fontFiles = coreFonts().filter((font) =>
-  ['Literata-Medium.ttf', 'Manrope-Bold.ttf'].includes(basename(font)),
+/** Two of the Edition's fonts, in the word and UI families the widget draws with. */
+const fontFiles = ['Onest-Bold.ttf', 'Unbounded-SemiBold.ttf'].map((font) =>
+  join(ukrainianFolder.dir, FONTS_DIR, font),
 );
 
 /** The UA Edition as the prebuild hands it to the widget extension. */
@@ -46,10 +46,14 @@ describe("the widget extension's Edition files", () => {
   const files = widgetExtensionFiles(ukrainian);
 
   it.each([
-    ['background', ['0.961', '0.933', '0.886'], ['0.082', '0.067', '0.055']],
-    ['ink', ['0.118', '0.094', '0.075'], ['0.953', '0.918', '0.859']],
-    ['inkSecondary', ['0.243', '0.204', '0.165'], ['0.851', '0.804', '0.725']],
-    ['accent', ['0.639', '0.133', '0.106'], ['0.831', '0.682', '0.361']],
+    // #FFF4E6 and #140C0A
+    ['background', ['1.000', '0.957', '0.902'], ['0.078', '0.047', '0.039']],
+    // #140C0A and #FFF4E6
+    ['ink', ['0.078', '0.047', '0.039'], ['1.000', '0.957', '0.902']],
+    // #140C0A and #FFF4E6
+    ['inkSecondary', ['0.078', '0.047', '0.039'], ['1.000', '0.957', '0.902']],
+    // #FF3B2F in both
+    ['accent', ['1.000', '0.231', '0.184'], ['1.000', '0.231', '0.184']],
   ])(
     'writes the %s token as a colour set with a light and a dark appearance',
     (name, light, darkRgb) => {
@@ -84,17 +88,17 @@ describe("the widget extension's Edition files", () => {
   it.each([
     [
       'Light',
-      ['0.961', '0.933', '0.886'],
-      ['0.118', '0.094', '0.075'],
-      ['0.243', '0.204', '0.165'],
-      ['0.639', '0.133', '0.106'],
+      ['1.000', '0.957', '0.902'],
+      ['0.078', '0.047', '0.039'],
+      ['0.078', '0.047', '0.039'],
+      ['1.000', '0.231', '0.184'],
     ],
     [
       'Dark',
-      ['0.082', '0.067', '0.055'],
-      ['0.953', '0.918', '0.859'],
-      ['0.851', '0.804', '0.725'],
-      ['0.831', '0.682', '0.361'],
+      ['0.078', '0.047', '0.039'],
+      ['1.000', '0.957', '0.902'],
+      ['1.000', '0.957', '0.902'],
+      ['1.000', '0.231', '0.184'],
     ],
   ])(
     'writes the %s background with its ink, secondary ink and accent as colour sets that ignore the appearance',
@@ -234,8 +238,8 @@ describe("the widget extension's Edition files", () => {
     const font = readFileSync(fontFiles[0] ?? '');
 
     // Buffer.equals, as an element-wise comparison of a whole font is slow.
-    expect(font.equals(Buffer.from(files.get('Generated/Literata-Medium.ttf') ?? ''))).toBe(true);
-    expect(files.get('Generated/Manrope-Bold.ttf')).toBeInstanceOf(Buffer);
+    expect(font.equals(Buffer.from(files.get('Generated/Onest-Bold.ttf') ?? ''))).toBe(true);
+    expect(files.get('Generated/Unbounded-SemiBold.ttf')).toBeInstanceOf(Buffer);
   });
 
   it('bundles the example Widget Snapshot for the gallery preview', () => {
@@ -250,13 +254,13 @@ describe("the widget extension's Edition files", () => {
       CFBundleDisplayName: 'SLOVO',
       CFBundleLocalizations: ['uk'],
       NSExtension: { NSExtensionPointIdentifier: 'com.apple.widgetkit-extension' },
-      UIAppFonts: ['Literata-Medium.ttf', 'Manrope-Bold.ttf'],
+      UIAppFonts: ['Onest-Bold.ttf', 'Unbounded-SemiBold.ttf'],
       SLOVOAppGroup: 'group.app.slovo.uk',
       SLOVOURLScheme: 'slovo-uk',
       SLOVOEditionId: 'uk',
       SLOVOLockScreenWidget: true,
-      SLOVOWordFont: 'Literata',
-      SLOVOUIFont: 'Manrope',
+      SLOVOWordFont: 'Unbounded',
+      SLOVOUIFont: 'Onest',
     });
   });
 
