@@ -8,7 +8,7 @@ import {
   googleSignInButton,
   signInButtonHeight,
   space,
-  typeSize,
+  typeStyle,
 } from '../tokens';
 
 /** How far the largest text sizes of iOS may scale the label, so the button never outgrows its screen. */
@@ -64,7 +64,8 @@ export function GoogleSignInButton({
   disabled?: boolean | undefined;
   testID?: string | undefined;
 }) {
-  const { colorScheme, radii } = useTokens();
+  const tokens = useTokens();
+  const { colorScheme, radii } = tokens;
   const { voice } = useEdition();
   const theme = googleSignInButton[colorScheme];
   return (
@@ -90,7 +91,7 @@ export function GoogleSignInButton({
         {busy ? <ActivityIndicator color={theme.label} /> : <GoogleLogo />}
         <Text
           maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
-          style={[styles.label, { color: theme.label }]}
+          style={[typeStyle('googleSignIn', tokens), styles.label, { color: theme.label }]}
         >
           {label}
         </Text>
@@ -109,5 +110,5 @@ const styles = StyleSheet.create({
   },
   content: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   // Google's label is medium weight in the system's sans-serif, not the Edition's font.
-  label: { flexShrink: 1, fontSize: typeSize.body, fontWeight: '500', textAlign: 'center' },
+  label: { flexShrink: 1, textAlign: 'center' },
 });

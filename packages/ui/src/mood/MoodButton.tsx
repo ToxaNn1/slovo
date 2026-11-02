@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, pressedFade, typeSize } from '../tokens';
+import { minTouchTarget, pressedFade, roleSize } from '../tokens';
 
 /** The button's size, the Stats pill's height beside it. */
 const BUTTON_SIZE = 40;
@@ -50,5 +50,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  die: { fontSize: typeSize.blockHeading },
+  die: roleSize('moodDie'),
 });

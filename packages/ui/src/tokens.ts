@@ -337,6 +337,12 @@ export const typeRoles = {
   backLink: role('ui', '600', 17, 20),
   /** The label of an action a list row's swipe shows. */
   swipeAction: role('ui', '700', 14, 17),
+  /** The «Повторити» tag of an Entry due for review. */
+  reviewTag: role('word', '800', 11, 11, 1, 'uppercase'),
+  /** The label of the Sign in with Google button. */
+  googleSignIn: role('ui', '500', 15, 20),
+  /** The die on the mood button. */
+  moodDie: role('ui', '400', 17, 20),
   // Roles of batch D.
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),

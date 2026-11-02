@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { badgePadding, overlineType } from '../tokens';
+import { badgePadding, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -10,7 +10,8 @@ import { useTokens } from '../providers/TokensProvider';
  * the label as written.
  */
 export function ReviewLabel() {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { strings, voice } = useEdition();
   const label = strings.knowledge.review;
   return (
@@ -21,9 +22,7 @@ export function ReviewLabel() {
       {...voice}
       style={[styles.label, { borderColor: colors.accent, borderRadius: radii.chip }]}
     >
-      <Text style={[styles.text, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
-        {label}
-      </Text>
+      <Text style={[typeStyle('reviewTag', tokens), { color: colors.accent }]}>{label}</Text>
     </View>
   );
 }
@@ -35,5 +34,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: badgePadding.horizontal,
     paddingVertical: badgePadding.vertical,
   },
-  text: overlineType,
 });
