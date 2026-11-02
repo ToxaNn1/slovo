@@ -11,23 +11,24 @@ import {
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Keyboard, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '@/edition/edition';
-import { crosswordCellLabel, useDailyCrossword } from '@/game/daily-crossword';
+import { edition, editionStrings } from '@/edition/edition';
+import { crosswordCellLabel, crosswordKeys, useDailyCrossword } from '@/game/daily-crossword';
 import { ShareCardSheet } from '@/share/share-card-sheet';
 import { useShell } from '@/shell-value';
 import { useShown } from '@/shown-in-effect';
 
 const { game: strings } = editionStrings;
+const keys = crosswordKeys(edition.languageTraits);
 
 /** How far the largest text sizes of iOS may scale the solved line, so it never breaks a word. */
 const SOLVED_MAX_FONT_SCALE = 1.5;
 
 /**
  * Today's Daily Crossword, opened from its card on the Game's mode screen:
- * the grid with its clue line and «Відкрити літеру», and «Розв’язано!» in
+ * the grid with its clue bar, «Відкрити літеру» and the Edition's keyboard, and «Розв’язано!» in
  * place of the button once every word is right. The letters stay on the
  * device as they go in, so «Назад» and the card's «Продовжити» find them.
  * With the crossword turned off while the reader is on it, the screen goes
@@ -46,7 +47,6 @@ export default function DailyCrosswordScreen() {
 
   useEffect(() => {
     if (!solved) return;
-    Keyboard.dismiss();
     AccessibilityInfo.announceForAccessibility(strings.dailyCrossword.solved);
   }, [solved]);
 
@@ -67,23 +67,21 @@ export default function DailyCrosswordScreen() {
           }}
         />
       </View>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
-      >
+      <ScrollView contentContainerStyle={styles.content}>
         <ScreenTitle>{strings.dailyCrossword.title}</ScreenTitle>
         {crossword !== undefined && (
           <CrosswordGrid
             testID="daily-crossword-grid"
             letters={crossword.state.letters}
             words={crossword.state.words}
+            keys={keys}
             onLetter={crossword.setLetter}
             onOpenLetter={solved ? undefined : crossword.openCell}
             texts={{
               cellLabel: (letter, place) =>
                 crosswordCellLabel(crossword.state.words, strings, letter, place),
               openLetter: strings.openLetter,
+              eraseKey: strings.dailyCrossword.eraseKey,
             }}
           />
         )}

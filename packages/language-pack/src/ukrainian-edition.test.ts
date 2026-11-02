@@ -12,6 +12,9 @@ describe('the UA Edition', () => {
       sortLocale: 'uk',
       distractorRule: 'same-part-of-speech',
       vowels: 'а е є и і ї о у ю я'.split(' '),
+      keyboard: ['й ц у к е н г ш щ з х', 'ф і в а п р о л д ж є', 'я ч с м и т ь б ю ї ґ'].map(
+        (row) => row.split(' '),
+      ),
     });
   });
 
