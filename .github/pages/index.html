@@ -1,0 +1,2993 @@
+<!doctype html>
+<html lang="uk" data-th="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SLOVO — Тримай слово.</title>
+    <meta
+      name="description"
+      content="Рідкісні українські слова щодня: стрічка, слово дня, кросворд та ігри. Спочатку було слово. Потім його забули. Повертаємо."
+    />
+    <meta property="og:title" content="SLOVO — Тримай слово." />
+    <meta property="og:description" content="Спочатку було слово. Потім його забули. Повертаємо." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#FF3B2F" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <script>
+      (function () {
+        var mq = window.matchMedia('(prefers-color-scheme: dark)');
+        document.documentElement.dataset.th = mq.matches ? 'dark' : 'light';
+      })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&amp;family=Onest:wght@400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      @keyframes rpBob {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-5px);
+        }
+      }
+      @keyframes rpBreath {
+        0%,
+        100% {
+          transform: scale(1);
+        }
+        50% {
+          transform: scale(1.04, 0.97);
+        }
+      }
+      @keyframes rpShout {
+        from {
+          transform: scale(1) rotate(0);
+        }
+        to {
+          transform: scale(1.07) rotate(-3deg);
+        }
+      }
+      @keyframes rpHop {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        40% {
+          transform: translateY(-12px) rotate(-4deg);
+        }
+      }
+      @keyframes rpPop {
+        0% {
+          transform: scale(0.7);
+        }
+        60% {
+          transform: scale(1.15);
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+      @keyframes rpSquish {
+        0% {
+          transform: scale(1);
+        }
+        40% {
+          transform: scale(0.86, 1.08);
+        }
+        100% {
+          transform: scale(0.94, 1);
+        }
+      }
+      @keyframes rpSway {
+        0%,
+        100% {
+          transform: rotate(0);
+        }
+        50% {
+          transform: rotate(3deg);
+        }
+      }
+      @keyframes rpRoll {
+        from {
+          transform: translateX(-360px) rotate(-560deg);
+        }
+      }
+      @keyframes rpRay {
+        50% {
+          opacity: 0.25;
+        }
+      }
+      @keyframes rpZ {
+        0% {
+          opacity: 0;
+          transform: translate(0, 6px);
+        }
+        50% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 0;
+          transform: translate(6px, -8px);
+        }
+      }
+      .a1:active {
+        transform: translateY(4px) !important;
+        box-shadow: none !important;
+      }
+      .h2:hover {
+        color: #140c0a !important;
+        transform: translateY(2px) !important;
+        box-shadow: 0 2px 0 #c4271d !important;
+      }
+      .h3:hover {
+        color: #fff4e6 !important;
+        transform: translateY(2px) !important;
+        box-shadow: 0 4px 0 #6e1610 !important;
+      }
+      .a4:active {
+        transform: translateY(6px) !important;
+        box-shadow: 0 0 0 #6e1610 !important;
+      }
+      .rupor {
+        width: 290px;
+        aspect-ratio: 4/3;
+        flex: none;
+      }
+      .rupor-in {
+        width: 100%;
+        height: 100%;
+        transform-origin: 30% 60%;
+      }
+      .rupor-cta {
+        width: 260px;
+      }
+      @media (max-width: 999px) {
+        .rupor-hero {
+          width: 230px;
+        }
+      }
+      @media (max-width: 599px) {
+        .rupor-hero {
+          width: 170px;
+        }
+        .rupor-cta {
+          width: 180px;
+        }
+      }
+      .digit {
+        width: clamp(36px, 4vw, 46px);
+        height: clamp(46px, 5vw, 58px);
+        display: grid;
+        place-items: center;
+        background: #fff4e6;
+        color: #140c0a;
+        border-radius: 10px;
+        box-shadow: 0 5px 0 #140c0a;
+        font:
+          900 clamp(22px, 2.6vw, 30px)/1 Unbounded,
+          sans-serif;
+        font-variant-numeric: tabular-nums;
+      }
+      .digit-gap {
+        width: 8px;
+      }
+      .sr-only {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      [data-th='light'] {
+        --bg: #fff4e6;
+        --ink: #140c0a;
+        --sf: #fffbf5;
+        --sf2: #f5e4cf;
+        --line: rgba(20, 12, 10, 0.13);
+        --mute: #6b5d55;
+        --tile: #fffbf5;
+        --edge: #dcc2a6;
+        color-scheme: light;
+      }
+      [data-th='dark'] {
+        --bg: #140c0a;
+        --ink: #fff4e6;
+        --sf: #221714;
+        --sf2: #2e201b;
+        --line: rgba(255, 244, 230, 0.13);
+        --mute: #bdae9f;
+        --tile: #33241f;
+        --edge: #050302;
+        color-scheme: dark;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fff4e6;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      a {
+        color: #ff3b2f;
+        text-underline-offset: 3px;
+      }
+      a:hover {
+        color: inherit;
+      }
+      summary {
+        list-style: none;
+        cursor: pointer;
+      }
+      summary::-webkit-details-marker {
+        display: none;
+      }
+      details[open] [data-plus] {
+        transform: rotate(45deg);
+      }
+      @keyframes slFly {
+        0% {
+          opacity: 0;
+          transform: translate(var(--fx), var(--fy)) scale(0.3) rotate(-40deg);
+        }
+        60% {
+          opacity: 1;
+        }
+        100% {
+          opacity: 1;
+          transform: translate(0, 0) scale(1) rotate(var(--r));
+        }
+      }
+      @keyframes slBob {
+        0%,
+        100% {
+          transform: translateY(0) rotate(var(--r));
+        }
+        50% {
+          transform: translateY(-6px) rotate(var(--r));
+        }
+      }
+      @media (max-width: 820px) {
+        [data-desk] {
+          display: none !important;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div
+      style="
+        background: var(--bg);
+        color: var(--ink);
+        font-family: Onest, system-ui, sans-serif;
+        min-height: 100vh;
+        overflow-x: hidden;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      "
+    >
+      <header
+        style="
+          position: sticky;
+          top: 0;
+          z-index: 20;
+          background: var(--bg);
+          border-bottom: 1px solid var(--line);
+        "
+      >
+        <div
+          style="
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 12px clamp(16px, 4vw, 40px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+          "
+        >
+          <a
+            href="#top"
+            aria-label="SLOVO"
+            style="
+              display: flex;
+              align-items: center;
+              gap: 7px;
+              text-decoration: none;
+              color: var(--ink);
+            "
+          >
+            <svg width="33" height="28" viewBox="0 0 130 112">
+              <polygon points="4,44 30,46 30,66 4,68" style="fill: var(--ink)"></polygon>
+              <polygon points="30,40 104,12 104,100 30,72" fill="#FF3B2F"></polygon>
+              <polygon points="104,12 114,6 114,106 104,100" style="fill: var(--ink)"></polygon>
+              <path
+                d="M47 45 L60 54 L47 63 M86 45 L73 54 L86 63"
+                stroke="#140C0A"
+                stroke-width="8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                fill="none"
+              ></path></svg
+            ><span
+              style="
+                font:
+                  900 21px/1 Unbounded,
+                  sans-serif;
+                letter-spacing: -0.8px;
+                transform: skewX(-8deg);
+              "
+              >SLOVO</span
+            >
+          </a>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <button
+              class="a1"
+              id="theme-toggle"
+              type="button"
+              aria-label="Змінити тему"
+              style="
+                height: 44px;
+                padding: 0 14px;
+                border: 0;
+                border-radius: 12px;
+                background: var(--sf2);
+                color: var(--ink);
+                box-shadow: 0 4px 0 var(--edge);
+                font:
+                  800 12px/1 Unbounded,
+                  sans-serif;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+              "
+            >
+              <span
+                style="
+                  width: 14px;
+                  height: 14px;
+                  border-radius: 50%;
+                  border: 2px solid var(--ink);
+                  background: linear-gradient(90deg, var(--ink) 50%, transparent 50%);
+                "
+              ></span
+              ><span id="theme-label">Світла</span>
+            </button>
+            <a
+              class="h2"
+              data-desk=""
+              href="#cta"
+              style="
+                height: 44px;
+                padding: 0 18px;
+                display: flex;
+                align-items: center;
+                border-radius: 12px;
+                background: #ff3b2f;
+                color: #140c0a;
+                box-shadow: 0 4px 0 #c4271d;
+                font:
+                  800 13px/1 Unbounded,
+                  sans-serif;
+                text-decoration: none;
+              "
+              >Завантажити в App Store</a
+            >
+          </div>
+        </div>
+      </header>
+
+      <main id="top">
+        <section style="position: relative; background: #ff3b2f; color: #140c0a; overflow: hidden">
+          <div
+            style="
+              position: absolute;
+              inset: 0;
+              background: #140c0a;
+              clip-path: polygon(0 88%, 100% 70%, 100% 100%, 0 100%);
+            "
+          ></div>
+          <div
+            style="
+              position: relative;
+              max-width: 1280px;
+              margin: 0 auto;
+              padding: clamp(40px, 6vw, 88px) clamp(16px, 4vw, 40px) clamp(110px, 14vw, 200px);
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(min(100%, 460px), 1fr));
+              gap: clamp(36px, 5vw, 64px);
+              align-items: center;
+            "
+          >
+            <div style="display: flex; flex-direction: column; gap: 28px; min-width: 0">
+              <h1
+                style="
+                  margin: 0;
+                  font:
+                    900 clamp(54px, 8vw, 124px)/0.92 Unbounded,
+                    sans-serif;
+                  letter-spacing: -0.04em;
+                  transform: rotate(-5deg) skewX(-6deg);
+                  transform-origin: left bottom;
+                  padding: 0.15em 0 0.1em;
+                "
+              >
+                Тримай<br />слово.
+              </h1>
+              <p
+                style="
+                  margin: 0;
+                  font:
+                    600 clamp(19px, 1.9vw, 24px)/1.35 Onest,
+                    sans-serif;
+                  max-width: 26ch;
+                  text-wrap: pretty;
+                "
+              >
+                Спочатку було слово. Потім його забули. Повертаємо.
+              </p>
+              <div
+                id="download"
+                style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap"
+              >
+                <a
+                  class="h3 a4"
+                  href="#"
+                  style="
+                    display: inline-flex;
+                    align-items: center;
+                    min-height: 64px;
+                    padding: 0 30px;
+                    border-radius: 14px;
+                    background: #140c0a;
+                    color: #fff4e6;
+                    box-shadow: 0 6px 0 #6e1610;
+                    font:
+                      800 17px/1 Unbounded,
+                      sans-serif;
+                    text-decoration: none;
+                    transition:
+                      transform 0.12s,
+                      box-shadow 0.12s;
+                  "
+                  >Завантажити в App Store</a
+                >
+                <div
+                  data-desk=""
+                  style="
+                    width: 84px;
+                    height: 84px;
+                    border: 2px dashed #140c0a;
+                    border-radius: 12px;
+                    display: grid;
+                    place-items: center;
+                    text-align: center;
+                    font:
+                      800 10px/1.3 Unbounded,
+                      sans-serif;
+                    background: rgba(255, 244, 230, 0.25);
+                  "
+                >
+                  QR<br />ЗАГЛУШКА
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 14px; padding-top: 6px">
+                <div
+                  style="display: flex; align-items: flex-end; gap: 5px; flex-wrap: wrap"
+                  id="digits"
+                  role="img"
+                ></div>
+                <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap">
+                  <span
+                    style="
+                      font:
+                        700 16px/1.35 Onest,
+                        sans-serif;
+                    "
+                    >рідкісних слів уже повернуто у вжиток</span
+                  >
+                  <span
+                    style="
+                      padding: 7px 10px;
+                      background: #140c0a;
+                      color: #fff4e6;
+                      font:
+                        800 11px/1 Unbounded,
+                        sans-serif;
+                      letter-spacing: 1px;
+                      transform: skewX(-10deg);
+                    "
+                    >МЕТА — МІЛЬЙОН</span
+                  >
+                </div>
+                <span
+                  style="
+                    align-self: flex-start;
+                    font:
+                      700 12px/1 Onest,
+                      sans-serif;
+                    border: 1.5px dashed #140c0a;
+                    border-radius: 6px;
+                    padding: 6px 8px;
+                  "
+                  >ЗАГЛУШКА: демо-число</span
+                >
+              </div>
+            </div>
+
+            <div
+              style="
+                position: relative;
+                min-width: 0;
+                width: 100%;
+                aspect-ratio: 1/1;
+                max-height: 600px;
+                border: 2.5px dashed #140c0a;
+                border-radius: 24px;
+                background: rgba(255, 244, 230, 0.18);
+                overflow: hidden;
+              "
+            >
+              <span
+                style="
+                  position: absolute;
+                  left: 18px;
+                  top: 18px;
+                  z-index: 3;
+                  padding: 7px 10px;
+                  background: #140c0a;
+                  color: #fff4e6;
+                  font:
+                    800 11px/1 Unbounded,
+                    sans-serif;
+                  letter-spacing: 1px;
+                  transform: skewX(-10deg);
+                "
+                >ЗАГЛУШКА · 2D-ВІДЕО</span
+              >
+              <div
+                style="
+                  position: absolute;
+                  left: 6%;
+                  top: 30%;
+                  width: 52%;
+                  transform: rotate(-14deg);
+                "
+              >
+                <div class="rupor rupor-hero">
+                  <div
+                    class="rupor-in"
+                    style="animation: rpShout 0.32s ease-in-out infinite alternate"
+                  >
+                    <svg
+                      viewBox="0 0 150 112"
+                      width="100%"
+                      height="100%"
+                      style="overflow: visible; display: block"
+                    >
+                      <g transform="rotate(0 30 56)">
+                        <polygon points="8,44 30,46 30,66 8,68" style="fill: #140c0a" />
+                        <polygon points="30,40 104,12 104,100 30,72" style="fill: #fff4e6" />
+                        <polygon points="38,45 98,22 98,28 38,50" fill="#FFF4E6" opacity=".22" />
+                        <polygon points="104,12 114,6 114,106 104,100" style="fill: #140c0a" />
+                        <path
+                          d="M49 47 L60 54 L49 61 M84 47 L73 54 L84 61"
+                          stroke="#140C0A"
+                          stroke-width="4.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                        <g transform="translate(60 31) rotate(-20.7)">
+                          <path d="M-20 0 Q-20 -16 -4 -16 Q12 -16 12 0 Z" fill="#140C0A" />
+                          <polygon points="8,-4 31,-1 31,2.5 8,2.5" fill="#140C0A" />
+                          <circle cx="-4" cy="-16" r="3.2" fill="#FF3B2F" />
+                        </g>
+                        <g style="animation: rpRay 0.45s steps(2) infinite" fill="#140C0A">
+                          <polygon points="122,30 139,15 142,23" />
+                          <polygon points="124,56 145,52 145,61" />
+                          <polygon points="122,82 142,97 139,104" />
+                        </g>
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div style="position: absolute; inset: 0">
+                <span
+                  style="
+                    --r: -10deg;
+                    --fx: -110px;
+                    --fy: 160px;
+                    position: absolute;
+                    left: 52%;
+                    top: 20%;
+                    width: clamp(38px, 4.4vw, 54px);
+                    height: clamp(44px, 5.2vw, 62px);
+                    margin-left: -22px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    color: #140c0a;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 clamp(20px, 2.4vw, 30px)/1 Unbounded,
+                      sans-serif;
+                    transform: rotate(-10deg);
+                    animation:
+                      slFly 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.3s both,
+                      slBob 2.6s ease-in-out 1.4s infinite;
+                  "
+                  >Г</span
+                ><span
+                  style="
+                    --r: 6deg;
+                    --fx: -165px;
+                    --fy: 200px;
+                    position: absolute;
+                    left: 63%;
+                    top: 12%;
+                    width: clamp(38px, 4.4vw, 54px);
+                    height: clamp(44px, 5.2vw, 62px);
+                    margin-left: -22px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #140c0a;
+                    color: #fff4e6;
+                    box-shadow: 0 5px 0 #6e1610;
+                    font:
+                      900 clamp(20px, 2.4vw, 30px)/1 Unbounded,
+                      sans-serif;
+                    transform: rotate(6deg);
+                    animation:
+                      slFly 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.42s both,
+                      slBob 2.6s ease-in-out 1.55s infinite;
+                  "
+                  >Р</span
+                ><span
+                  style="
+                    --r: -4deg;
+                    --fx: -220px;
+                    --fy: 170px;
+                    position: absolute;
+                    left: 74%;
+                    top: 18%;
+                    width: clamp(38px, 4.4vw, 54px);
+                    height: clamp(44px, 5.2vw, 62px);
+                    margin-left: -22px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    color: #140c0a;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 clamp(20px, 2.4vw, 30px)/1 Unbounded,
+                      sans-serif;
+                    transform: rotate(-4deg);
+                    animation:
+                      slFly 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.54s both,
+                      slBob 2.6s ease-in-out 1.7s infinite;
+                  "
+                  >И</span
+                ><span
+                  style="
+                    --r: 9deg;
+                    --fx: -270px;
+                    --fy: 120px;
+                    position: absolute;
+                    left: 84%;
+                    top: 28%;
+                    width: clamp(38px, 4.4vw, 54px);
+                    height: clamp(44px, 5.2vw, 62px);
+                    margin-left: -22px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    color: #140c0a;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 clamp(20px, 2.4vw, 30px)/1 Unbounded,
+                      sans-serif;
+                    transform: rotate(9deg);
+                    animation:
+                      slFly 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.66s both,
+                      slBob 2.6s ease-in-out 1.85s infinite;
+                  "
+                  >З</span
+                ><span
+                  style="
+                    --r: -12deg;
+                    --fx: -190px;
+                    --fy: 90px;
+                    position: absolute;
+                    left: 68%;
+                    top: 34%;
+                    width: clamp(38px, 4.4vw, 54px);
+                    height: clamp(44px, 5.2vw, 62px);
+                    margin-left: -22px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    color: #140c0a;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 clamp(20px, 2.4vw, 30px)/1 Unbounded,
+                      sans-serif;
+                    transform: rotate(-12deg);
+                    animation:
+                      slFly 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.78s both,
+                      slBob 2.6s ease-in-out 2s infinite;
+                  "
+                  >О</span
+                ><span
+                  style="
+                    --r: 5deg;
+                    --fx: -245px;
+                    --fy: 40px;
+                    position: absolute;
+                    left: 79%;
+                    top: 44%;
+                    width: clamp(38px, 4.4vw, 54px);
+                    height: clamp(44px, 5.2vw, 62px);
+                    margin-left: -22px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #140c0a;
+                    color: #fff4e6;
+                    box-shadow: 0 5px 0 #6e1610;
+                    font:
+                      900 clamp(20px, 2.4vw, 30px)/1 Unbounded,
+                      sans-serif;
+                    transform: rotate(5deg);
+                    animation:
+                      slFly 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 0.9s both,
+                      slBob 2.6s ease-in-out 2.15s infinite;
+                  "
+                  >Т</span
+                ><span
+                  style="
+                    --r: -7deg;
+                    --fx: -290px;
+                    --fy: -20px;
+                    position: absolute;
+                    left: 88%;
+                    top: 56%;
+                    width: clamp(38px, 4.4vw, 54px);
+                    height: clamp(44px, 5.2vw, 62px);
+                    margin-left: -22px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    color: #140c0a;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 clamp(20px, 2.4vw, 30px)/1 Unbounded,
+                      sans-serif;
+                    transform: rotate(-7deg);
+                    animation:
+                      slFly 0.7s cubic-bezier(0.2, 0.9, 0.3, 1.2) 1.02s both,
+                      slBob 2.6s ease-in-out 2.3s infinite;
+                  "
+                  >А</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div
+            style="
+              max-width: 1280px;
+              margin: 0 auto;
+              padding: clamp(56px, 8vw, 112px) clamp(16px, 4vw, 40px);
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
+              gap: clamp(32px, 5vw, 72px);
+              align-items: center;
+            "
+          >
+            <h2
+              style="
+                margin: 0;
+                font:
+                  900 clamp(36px, 4.8vw, 68px)/1 Unbounded,
+                  sans-serif;
+                letter-spacing: -0.035em;
+                transform: rotate(-3deg);
+                transform-origin: left center;
+                text-wrap: balance;
+              "
+            >
+              Знайди слово, якого бракувало.
+            </h2>
+            <div style="display: flex; flex-direction: column; gap: 18px; min-width: 0">
+              <article
+                style="
+                  border-radius: 24px;
+                  background: var(--sf);
+                  border: 1px solid var(--line);
+                  box-shadow: 0 8px 0 var(--edge);
+                  padding: clamp(22px, 3vw, 34px);
+                  display: flex;
+                  flex-direction: column;
+                  gap: 18px;
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                  "
+                >
+                  <span
+                    style="
+                      padding: 7px 10px;
+                      background: #ff3b2f;
+                      color: #140c0a;
+                      font:
+                        800 11px/1 Unbounded,
+                        sans-serif;
+                      letter-spacing: 1px;
+                      transform: skewX(-10deg);
+                    "
+                    >СЛОВО ДНЯ</span
+                  >
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      font:
+                        600 13px/1 Onest,
+                        sans-serif;
+                      color: var(--mute);
+                    "
+                  >
+                    Рідкість 4/5
+                    <span style="display: flex; gap: 3px" aria-label="Рідкість 4 з 5">
+                      <span
+                        style="
+                          width: 10px;
+                          height: 16px;
+                          background: #ff3b2f;
+                          transform: skewX(-12deg);
+                        "
+                      ></span
+                      ><span
+                        style="
+                          width: 10px;
+                          height: 16px;
+                          background: #ff3b2f;
+                          transform: skewX(-12deg);
+                        "
+                      ></span
+                      ><span
+                        style="
+                          width: 10px;
+                          height: 16px;
+                          background: #ff3b2f;
+                          transform: skewX(-12deg);
+                        "
+                      ></span
+                      ><span
+                        style="
+                          width: 10px;
+                          height: 16px;
+                          background: #ff3b2f;
+                          transform: skewX(-12deg);
+                        "
+                      ></span
+                      ><span
+                        style="
+                          width: 10px;
+                          height: 16px;
+                          background: var(--line);
+                          transform: skewX(-12deg);
+                        "
+                      ></span>
+                    </span>
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <span
+                    style="
+                      font:
+                        900 clamp(40px, 5vw, 62px)/1.05 Unbounded,
+                        sans-serif;
+                      letter-spacing: -0.03em;
+                    "
+                    >кракелю́р</span
+                  >
+                  <span
+                    style="
+                      font:
+                        600 14px/1 Onest,
+                        sans-serif;
+                      color: var(--mute);
+                    "
+                    >іменник, ч. р.</span
+                  >
+                </div>
+                <span
+                  style="
+                    font:
+                      500 18px/1.5 Onest,
+                      sans-serif;
+                    text-wrap: pretty;
+                  "
+                  >Тріщинки, які з часом утворюються на витворах мистецтва, перев. в олійному
+                  живописі, а також на кераміці.</span
+                >
+                <div
+                  style="
+                    padding: 16px;
+                    border-radius: 16px;
+                    background: var(--sf2);
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                  "
+                >
+                  <span
+                    style="
+                      font:
+                        800 11px/1 Unbounded,
+                        sans-serif;
+                      letter-spacing: 1px;
+                    "
+                    >ПРИКЛАД</span
+                  >
+                  <span
+                    style="
+                      font:
+                        400 16px/1.5 Onest,
+                        sans-serif;
+                      text-wrap: pretty;
+                    "
+                    >Під час реставрації кракелюр на картині залишають, втручання реставратора
+                    потрібне лише у випадку лущення й обсипання часток фарби.</span
+                  >
+                </div>
+              </article>
+              <span
+                style="
+                  font:
+                    700 16px/1.4 Onest,
+                    sans-serif;
+                "
+                >У застосунку — твоє власне слово, щодня нове.</span
+              >
+            </div>
+          </div>
+        </section>
+
+        <section style="background: var(--sf2)">
+          <div
+            style="
+              max-width: 1280px;
+              margin: 0 auto;
+              padding: clamp(56px, 8vw, 112px) clamp(16px, 4vw, 40px);
+              display: flex;
+              flex-direction: column;
+              gap: clamp(36px, 5vw, 56px);
+            "
+          >
+            <h2
+              style="
+                margin: 0;
+                font:
+                  900 clamp(36px, 4.8vw, 68px)/1 Unbounded,
+                  sans-serif;
+                letter-spacing: -0.035em;
+                transform: rotate(-3deg);
+                transform-origin: left center;
+                max-width: 16ch;
+                text-wrap: balance;
+              "
+            >
+              Мова багатша, ніж ти думаєш.
+            </h2>
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(min(100%, 270px), 1fr));
+                gap: 20px;
+              "
+            >
+              <div
+                style="
+                  border-radius: 24px;
+                  background: var(--sf);
+                  border: 1px solid var(--line);
+                  box-shadow: 0 6px 0 var(--edge);
+                  padding: 24px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 14px;
+                "
+              >
+                <span
+                  style="
+                    align-self: flex-start;
+                    padding: 7px 10px;
+                    background: var(--ink);
+                    color: var(--bg);
+                    font:
+                      800 11px/1 Unbounded,
+                      sans-serif;
+                    letter-spacing: 1px;
+                    transform: skewX(-10deg);
+                  "
+                  >СТРІЧКА</span
+                >
+                <h3
+                  style="
+                    margin: 0;
+                    font:
+                      900 22px/1.15 Unbounded,
+                      sans-serif;
+                    letter-spacing: -0.02em;
+                  "
+                >
+                  Стрічка рідкісних слів
+                </h3>
+                <span
+                  style="
+                    font:
+                      400 16px/1.45 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                  "
+                  >Українська, якої не вчили в школі.</span
+                >
+              </div>
+              <div
+                style="
+                  border-radius: 24px;
+                  background: var(--sf);
+                  border: 1px solid var(--line);
+                  box-shadow: 0 6px 0 var(--edge);
+                  padding: 24px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 14px;
+                "
+              >
+                <span
+                  style="
+                    align-self: flex-start;
+                    padding: 7px 10px;
+                    background: var(--ink);
+                    color: var(--bg);
+                    font:
+                      800 11px/1 Unbounded,
+                      sans-serif;
+                    letter-spacing: 1px;
+                    transform: skewX(-10deg);
+                  "
+                  >КРОСВОРД</span
+                >
+                <h3
+                  style="
+                    margin: 0;
+                    font:
+                      900 22px/1.15 Unbounded,
+                      sans-serif;
+                    letter-spacing: -0.02em;
+                  "
+                >
+                  Щоденний кросворд
+                </h3>
+                <span
+                  style="
+                    font:
+                      400 16px/1.45 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                  "
+                  >Для тих, кому звичайних слів замало.</span
+                >
+                <div style="display: flex; gap: 4px; margin-top: auto">
+                  <span
+                    style="
+                      width: 30px;
+                      height: 34px;
+                      display: grid;
+                      place-items: center;
+                      border-radius: 7px;
+                      background: var(--tile);
+                      box-shadow: 0 3px 0 var(--edge);
+                      font:
+                        800 14px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >К</span
+                  ><span
+                    style="
+                      width: 30px;
+                      height: 34px;
+                      display: grid;
+                      place-items: center;
+                      border-radius: 7px;
+                      background: var(--tile);
+                      box-shadow: 0 3px 0 var(--edge);
+                      font:
+                        800 14px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >Р</span
+                  ><span
+                    style="
+                      width: 30px;
+                      height: 34px;
+                      display: grid;
+                      place-items: center;
+                      border-radius: 7px;
+                      background: #ff3b2f;
+                      color: #140c0a;
+                      box-shadow: 0 3px 0 #c4271d;
+                      font:
+                        800 14px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >А</span
+                  ><span
+                    style="
+                      width: 30px;
+                      height: 34px;
+                      border-radius: 7px;
+                      background: var(--tile);
+                      box-shadow: 0 3px 0 var(--edge);
+                    "
+                  ></span
+                  ><span
+                    style="
+                      width: 30px;
+                      height: 34px;
+                      border-radius: 7px;
+                      background: var(--tile);
+                      box-shadow: 0 3px 0 var(--edge);
+                    "
+                  ></span>
+                </div>
+              </div>
+              <div
+                style="
+                  border-radius: 24px;
+                  background: var(--sf);
+                  border: 1px solid var(--line);
+                  box-shadow: 0 6px 0 var(--edge);
+                  padding: 24px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 14px;
+                "
+              >
+                <span
+                  style="
+                    align-self: flex-start;
+                    padding: 7px 10px;
+                    background: var(--ink);
+                    color: var(--bg);
+                    font:
+                      800 11px/1 Unbounded,
+                      sans-serif;
+                    letter-spacing: 1px;
+                    transform: skewX(-10deg);
+                  "
+                  >ІГРИ</span
+                >
+                <div style="display: flex; flex-wrap: wrap; gap: 6px">
+                  <span
+                    style="
+                      padding: 9px 11px;
+                      border-radius: 10px;
+                      background: var(--sf2);
+                      font:
+                        800 12px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >Наголос</span
+                  ><span
+                    style="
+                      padding: 9px 11px;
+                      border-radius: 10px;
+                      background: var(--sf2);
+                      font:
+                        800 12px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >Пари</span
+                  ><span
+                    style="
+                      padding: 9px 11px;
+                      border-radius: 10px;
+                      background: var(--sf2);
+                      font:
+                        800 12px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >Анаграми</span
+                  ><span
+                    style="
+                      padding: 9px 11px;
+                      border-radius: 10px;
+                      background: var(--sf2);
+                      font:
+                        800 12px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >Обери правильне</span
+                  ><span
+                    style="
+                      padding: 9px 11px;
+                      border-radius: 10px;
+                      background: var(--sf2);
+                      font:
+                        800 12px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >На час</span
+                  >
+                </div>
+                <span
+                  style="
+                    font:
+                      400 16px/1.45 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                  "
+                  >Скарби зі словника — щодня в кишені.</span
+                >
+              </div>
+              <div
+                style="
+                  border-radius: 24px;
+                  background: var(--sf);
+                  border: 1px solid var(--line);
+                  box-shadow: 0 6px 0 var(--edge);
+                  padding: 24px;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 14px;
+                "
+              >
+                <span
+                  style="
+                    align-self: flex-start;
+                    padding: 7px 10px;
+                    background: var(--ink);
+                    color: var(--bg);
+                    font:
+                      800 11px/1 Unbounded,
+                      sans-serif;
+                    letter-spacing: 1px;
+                    transform: skewX(-10deg);
+                  "
+                  >КОЛЕКЦІЇ</span
+                >
+                <h3
+                  style="
+                    margin: 0;
+                    font:
+                      900 22px/1.15 Unbounded,
+                      sans-serif;
+                    letter-spacing: -0.02em;
+                  "
+                >
+                  Колекції й обране
+                </h3>
+                <span
+                  style="
+                    font:
+                      400 16px/1.45 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                  "
+                  >Збирай слова в колекції, а повторення поверне кожне через 1, 3, 7, 30 і 90
+                  днів.</span
+                >
+                <div style="display: flex; gap: 4px; margin-top: auto">
+                  <span
+                    style="
+                      min-width: 34px;
+                      height: 36px;
+                      padding: 0 6px;
+                      display: grid;
+                      place-items: center;
+                      border-radius: 8px;
+                      background: var(--tile);
+                      box-shadow: 0 3px 0 var(--edge);
+                      font:
+                        800 13px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >1</span
+                  ><span
+                    style="
+                      min-width: 34px;
+                      height: 36px;
+                      padding: 0 6px;
+                      display: grid;
+                      place-items: center;
+                      border-radius: 8px;
+                      background: var(--tile);
+                      box-shadow: 0 3px 0 var(--edge);
+                      font:
+                        800 13px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >3</span
+                  ><span
+                    style="
+                      min-width: 34px;
+                      height: 36px;
+                      padding: 0 6px;
+                      display: grid;
+                      place-items: center;
+                      border-radius: 8px;
+                      background: var(--tile);
+                      box-shadow: 0 3px 0 var(--edge);
+                      font:
+                        800 13px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >7</span
+                  ><span
+                    style="
+                      min-width: 34px;
+                      height: 36px;
+                      padding: 0 6px;
+                      display: grid;
+                      place-items: center;
+                      border-radius: 8px;
+                      background: var(--tile);
+                      box-shadow: 0 3px 0 var(--edge);
+                      font:
+                        800 13px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >30</span
+                  ><span
+                    style="
+                      min-width: 34px;
+                      height: 36px;
+                      padding: 0 6px;
+                      display: grid;
+                      place-items: center;
+                      border-radius: 8px;
+                      background: #ff3b2f;
+                      color: #140c0a;
+                      box-shadow: 0 3px 0 #c4271d;
+                      font:
+                        800 13px/1 Unbounded,
+                        sans-serif;
+                    "
+                    >90</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div
+            style="
+              max-width: 1280px;
+              margin: 0 auto;
+              padding: clamp(56px, 8vw, 112px) clamp(16px, 4vw, 40px);
+              display: flex;
+              flex-direction: column;
+              gap: clamp(32px, 4vw, 48px);
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: flex-end;
+                gap: 20px;
+                flex-wrap: wrap;
+              "
+            >
+              <h2
+                style="
+                  margin: 0;
+                  font:
+                    900 clamp(36px, 4.8vw, 68px)/1 Unbounded,
+                    sans-serif;
+                  letter-spacing: -0.035em;
+                  transform: rotate(-3deg);
+                  transform-origin: left center;
+                  max-width: 18ch;
+                  text-wrap: balance;
+                "
+              >
+                Слова, яких ти ще не знаєш, але вже любиш.
+              </h2>
+              <span
+                style="
+                  font:
+                    700 12px/1.3 Onest,
+                    sans-serif;
+                  color: #ff3b2f;
+                  border: 1.5px dashed #ff3b2f;
+                  border-radius: 6px;
+                  padding: 7px 10px;
+                "
+                >ЗАГЛУШКА: макети, не справжні скріншоти</span
+              >
+            </div>
+            <div
+              style="
+                display: flex;
+                gap: 28px;
+                overflow-x: auto;
+                padding: 10px 4px 28px;
+                scroll-snap-type: x mandatory;
+              "
+            >
+              <div
+                style="
+                  flex: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 14px;
+                  align-items: center;
+                  scroll-snap-align: start;
+                "
+              >
+                <div
+                  style="
+                    width: 292px;
+                    height: 610px;
+                    padding: 7px;
+                    background: #0b0706;
+                    border-radius: 48px;
+                    box-shadow:
+                      0 0 0 1.5px #3a2c27,
+                      0 24px 50px rgba(20, 12, 10, 0.25);
+                    outline: 2px dashed #ff3b2f;
+                    outline-offset: 8px;
+                  "
+                >
+                  <div
+                    style="
+                      width: 100%;
+                      height: 100%;
+                      border-radius: 41px;
+                      overflow: hidden;
+                      background: var(--bg);
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                      padding: 46px 10px 10px;
+                    "
+                  >
+                    <div style="display: flex; align-items: center; gap: 6px; padding: 0 6px 4px">
+                      <span
+                        style="
+                          width: 10px;
+                          height: 15px;
+                          background: #ff3b2f;
+                          clip-path: polygon(0 0, 100% 22%, 100% 78%, 0 100%);
+                        "
+                      ></span
+                      ><span
+                        style="
+                          font:
+                            900 15px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >SLOVO</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        border-radius: 18px;
+                        background: var(--sf);
+                        border: 1px solid var(--line);
+                        padding: 14px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                      "
+                    >
+                      <span
+                        style="
+                          align-self: flex-start;
+                          padding: 5px 7px;
+                          background: var(--ink);
+                          color: var(--bg);
+                          font:
+                            800 8px/1 Unbounded,
+                            sans-serif;
+                          letter-spacing: 1px;
+                          transform: skewX(-10deg);
+                        "
+                        >РІДКІСНЕ</span
+                      >
+                      <span
+                        style="
+                          font:
+                            900 22px/1.05 Unbounded,
+                            sans-serif;
+                        "
+                        >мжи́чка</span
+                      >
+                      <span
+                        style="
+                          font:
+                            400 12px/1.4 Onest,
+                            sans-serif;
+                          color: var(--mute);
+                        "
+                        >Дрібний густий дощ; мряка.</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        border-radius: 18px;
+                        background: var(--sf);
+                        border: 1px solid var(--line);
+                        padding: 14px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                      "
+                    >
+                      <span
+                        style="
+                          align-self: flex-start;
+                          padding: 5px 7px;
+                          background: var(--ink);
+                          color: var(--bg);
+                          font:
+                            800 8px/1 Unbounded,
+                            sans-serif;
+                          letter-spacing: 1px;
+                          transform: skewX(-10deg);
+                        "
+                        >НАУКА</span
+                      >
+                      <span
+                        style="
+                          font:
+                            900 22px/1.05 Unbounded,
+                            sans-serif;
+                        "
+                        >сизигі́я</span
+                      >
+                      <span
+                        style="
+                          font:
+                            400 12px/1.4 Onest,
+                            sans-serif;
+                          color: var(--mute);
+                        "
+                        >Розташування Сонця, Місяця й Землі на одній прямій.</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        border-radius: 18px;
+                        background: var(--sf);
+                        border: 1px solid var(--line);
+                        padding: 14px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 8px;
+                      "
+                    >
+                      <span
+                        style="
+                          align-self: flex-start;
+                          padding: 5px 7px;
+                          background: var(--ink);
+                          color: var(--bg);
+                          font:
+                            800 8px/1 Unbounded,
+                            sans-serif;
+                          letter-spacing: 1px;
+                          transform: skewX(-10deg);
+                        "
+                        >ПОБУТ</span
+                      >
+                      <span
+                        style="
+                          font:
+                            900 22px/1.05 Unbounded,
+                            sans-serif;
+                        "
+                        >окра́єць</span
+                      >
+                      <span
+                        style="
+                          font:
+                            400 12px/1.4 Onest,
+                            sans-serif;
+                          color: var(--mute);
+                        "
+                        >Відрізаний край хлібини.</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <span
+                  style="
+                    font:
+                      800 12px/1 Unbounded,
+                      sans-serif;
+                    letter-spacing: 1px;
+                  "
+                  >СТРІЧКА</span
+                >
+              </div>
+
+              <div
+                style="
+                  flex: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 14px;
+                  align-items: center;
+                  scroll-snap-align: start;
+                "
+              >
+                <div
+                  style="
+                    width: 292px;
+                    height: 610px;
+                    padding: 7px;
+                    background: #0b0706;
+                    border-radius: 48px;
+                    box-shadow:
+                      0 0 0 1.5px #3a2c27,
+                      0 24px 50px rgba(20, 12, 10, 0.25);
+                    outline: 2px dashed #ff3b2f;
+                    outline-offset: 8px;
+                  "
+                >
+                  <div
+                    style="
+                      width: 100%;
+                      height: 100%;
+                      border-radius: 41px;
+                      overflow: hidden;
+                      background: #ff3b2f;
+                      color: #140c0a;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 12px;
+                      padding: 56px 18px 18px;
+                    "
+                  >
+                    <span
+                      style="
+                        align-self: flex-start;
+                        padding: 5px 7px;
+                        background: #140c0a;
+                        color: #fff4e6;
+                        font:
+                          800 9px/1 Unbounded,
+                          sans-serif;
+                        letter-spacing: 1px;
+                        transform: skewX(-10deg);
+                      "
+                      >СЛОВО ДНЯ</span
+                    >
+                    <span
+                      style="
+                        font:
+                          900 38px/1 Unbounded,
+                          sans-serif;
+                        letter-spacing: -0.03em;
+                        margin-top: 30px;
+                        transform: rotate(-4deg);
+                      "
+                      >гризо́та</span
+                    >
+                    <span
+                      style="
+                        font:
+                          600 12px/1 Onest,
+                          sans-serif;
+                      "
+                      >іменник, ж. р.</span
+                    >
+                    <span
+                      style="
+                        font:
+                          500 15px/1.45 Onest,
+                          sans-serif;
+                      "
+                      >Те, що гризе, мучить; журба, турбота.</span
+                    >
+                    <div style="margin-top: auto; display: flex; gap: 8px">
+                      <span
+                        style="
+                          flex: 1;
+                          height: 46px;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 12px;
+                          background: #fff4e6;
+                          box-shadow: 0 4px 0 #140c0a;
+                          font:
+                            800 10px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >В ОБРАНЕ</span
+                      >
+                      <span
+                        style="
+                          flex: 1;
+                          height: 46px;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 12px;
+                          background: #140c0a;
+                          color: #fff4e6;
+                          box-shadow: 0 4px 0 #6e1610;
+                          font:
+                            800 10px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >ЗАСВОЇВ</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <span
+                  style="
+                    font:
+                      800 12px/1 Unbounded,
+                      sans-serif;
+                    letter-spacing: 1px;
+                  "
+                  >КАРТКА СЛОВА</span
+                >
+              </div>
+
+              <div
+                style="
+                  flex: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 14px;
+                  align-items: center;
+                  scroll-snap-align: start;
+                "
+              >
+                <div
+                  style="
+                    width: 292px;
+                    height: 610px;
+                    padding: 7px;
+                    background: #0b0706;
+                    border-radius: 48px;
+                    box-shadow:
+                      0 0 0 1.5px #3a2c27,
+                      0 24px 50px rgba(20, 12, 10, 0.25);
+                    outline: 2px dashed #ff3b2f;
+                    outline-offset: 8px;
+                  "
+                >
+                  <div
+                    style="
+                      width: 100%;
+                      height: 100%;
+                      border-radius: 41px;
+                      overflow: hidden;
+                      background: var(--bg);
+                      display: flex;
+                      flex-direction: column;
+                      gap: 14px;
+                      padding: 52px 14px 14px;
+                    "
+                  >
+                    <span
+                      style="
+                        font:
+                          900 22px/1 Unbounded,
+                          sans-serif;
+                        transform: rotate(-3deg);
+                        transform-origin: left;
+                      "
+                      >Кросворд дня</span
+                    >
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px">
+                      <span></span><span></span><span></span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 6px;
+                          background: var(--tile);
+                          box-shadow: 0 3px 0 var(--edge);
+                          font:
+                            800 13px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >М</span
+                      ><span></span><span></span><span></span> <span></span><span></span
+                      ><span></span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 6px;
+                          background: var(--tile);
+                          box-shadow: 0 3px 0 var(--edge);
+                          font:
+                            800 13px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >А</span
+                      ><span></span><span></span><span></span>
+                      <span
+                        style="
+                          aspect-ratio: 1;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 6px;
+                          background: #ff3b2f;
+                          color: #140c0a;
+                          box-shadow: 0 3px 0 #c4271d;
+                          font:
+                            800 13px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >К</span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 6px;
+                          background: #ff3b2f;
+                          color: #140c0a;
+                          box-shadow: 0 3px 0 #c4271d;
+                          font:
+                            800 13px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >Р</span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 6px;
+                          background: #ff3b2f;
+                          color: #140c0a;
+                          box-shadow: 0 3px 0 #c4271d;
+                          font:
+                            800 13px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >А</span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 6px;
+                          background: #ff3b2f;
+                          color: #140c0a;
+                          box-shadow: 0 3px 0 #c4271d;
+                          font:
+                            800 13px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >Р</span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          border-radius: 6px;
+                          background: #ff3b2f;
+                          box-shadow: 0 3px 0 #c4271d;
+                        "
+                      ></span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          border-radius: 6px;
+                          background: #ff3b2f;
+                          box-shadow: 0 3px 0 #c4271d;
+                        "
+                      ></span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          border-radius: 6px;
+                          background: #ff3b2f;
+                          box-shadow: 0 3px 0 #c4271d;
+                        "
+                      ></span>
+                      <span></span><span></span><span></span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 6px;
+                          background: var(--tile);
+                          box-shadow: 0 3px 0 var(--edge);
+                          font:
+                            800 13px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >Е</span
+                      ><span></span><span></span><span></span> <span></span><span></span
+                      ><span></span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 6px;
+                          background: var(--tile);
+                          box-shadow: 0 3px 0 var(--edge);
+                          font:
+                            800 13px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >В</span
+                      ><span></span><span></span><span></span> <span></span><span></span
+                      ><span></span
+                      ><span
+                        style="
+                          aspect-ratio: 1;
+                          display: grid;
+                          place-items: center;
+                          border-radius: 6px;
+                          background: var(--tile);
+                          box-shadow: 0 3px 0 var(--edge);
+                          font:
+                            800 13px/1 Unbounded,
+                            sans-serif;
+                        "
+                        >О</span
+                      ><span></span><span></span><span></span>
+                    </div>
+                    <div
+                      style="
+                        margin-top: auto;
+                        border-radius: 16px;
+                        background: var(--sf2);
+                        padding: 12px;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 6px;
+                      "
+                    >
+                      <span
+                        style="
+                          font:
+                            800 9px/1 Unbounded,
+                            sans-serif;
+                          letter-spacing: 1px;
+                          color: #ff3b2f;
+                        "
+                        >3 · ПО ГОРИЗОНТАЛІ</span
+                      >
+                      <span
+                        style="
+                          font:
+                            500 13px/1.4 Onest,
+                            sans-serif;
+                        "
+                        >Тріщинки на старій олійній картині (7)</span
+                      >
+                    </div>
+                  </div>
+                </div>
+                <span
+                  style="
+                    font:
+                      800 12px/1 Unbounded,
+                      sans-serif;
+                    letter-spacing: 1px;
+                  "
+                  >КРОСВОРД</span
+                >
+              </div>
+
+              <div
+                style="
+                  flex: none;
+                  display: flex;
+                  flex-direction: column;
+                  gap: 14px;
+                  align-items: center;
+                  scroll-snap-align: start;
+                "
+              >
+                <div
+                  style="
+                    width: 292px;
+                    height: 610px;
+                    padding: 7px;
+                    background: #0b0706;
+                    border-radius: 48px;
+                    box-shadow:
+                      0 0 0 1.5px #3a2c27,
+                      0 24px 50px rgba(20, 12, 10, 0.25);
+                    outline: 2px dashed #ff3b2f;
+                    outline-offset: 8px;
+                  "
+                >
+                  <div
+                    style="
+                      width: 100%;
+                      height: 100%;
+                      border-radius: 41px;
+                      overflow: hidden;
+                      background: var(--bg);
+                      display: flex;
+                      flex-direction: column;
+                      gap: 14px;
+                      padding: 52px 16px 18px;
+                    "
+                  >
+                    <div style="display: flex; justify-content: space-between; align-items: center">
+                      <span
+                        style="
+                          font:
+                            900 22px/1 Unbounded,
+                            sans-serif;
+                          transform: rotate(-3deg);
+                          transform-origin: left;
+                        "
+                        >Наголос</span
+                      ><span
+                        style="
+                          font:
+                            800 11px/1 Unbounded,
+                            sans-serif;
+                          color: var(--mute);
+                        "
+                        >4 / 10</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        height: 8px;
+                        border-radius: 4px;
+                        background: var(--sf2);
+                        overflow: hidden;
+                      "
+                    >
+                      <div style="width: 40%; height: 100%; background: #ff3b2f"></div>
+                    </div>
+                    <div style="flex: 1; display: grid; place-items: center">
+                      <div style="display: flex; gap: 4px">
+                        <span
+                          style="
+                            width: 34px;
+                            height: 42px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 8px;
+                            background: var(--tile);
+                            box-shadow: 0 4px 0 var(--edge);
+                            font:
+                              800 18px/1 Unbounded,
+                              sans-serif;
+                          "
+                          >М</span
+                        ><span
+                          style="
+                            width: 34px;
+                            height: 42px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 8px;
+                            background: var(--tile);
+                            box-shadow: 0 4px 0 var(--edge);
+                            font:
+                              800 18px/1 Unbounded,
+                              sans-serif;
+                          "
+                          >А</span
+                        ><span
+                          style="
+                            width: 34px;
+                            height: 42px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 8px;
+                            background: var(--tile);
+                            box-shadow: 0 4px 0 var(--edge);
+                            font:
+                              800 18px/1 Unbounded,
+                              sans-serif;
+                          "
+                          >Р</span
+                        ><span
+                          style="
+                            width: 34px;
+                            height: 42px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 8px;
+                            background: var(--tile);
+                            box-shadow: 0 4px 0 var(--edge);
+                            font:
+                              800 18px/1 Unbounded,
+                              sans-serif;
+                          "
+                          >Е</span
+                        ><span
+                          style="
+                            width: 34px;
+                            height: 42px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 8px;
+                            background: var(--tile);
+                            box-shadow: 0 4px 0 var(--edge);
+                            font:
+                              800 18px/1 Unbounded,
+                              sans-serif;
+                          "
+                          >В</span
+                        ><span
+                          style="
+                            width: 34px;
+                            height: 42px;
+                            display: grid;
+                            place-items: center;
+                            border-radius: 8px;
+                            background: var(--tile);
+                            box-shadow: 0 4px 0 var(--edge);
+                            font:
+                              800 18px/1 Unbounded,
+                              sans-serif;
+                          "
+                          >О</span
+                        >
+                      </div>
+                    </div>
+                    <span
+                      style="
+                        height: 54px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 0 16px;
+                        border-radius: 14px;
+                        background: #ff3b2f;
+                        color: #140c0a;
+                        box-shadow: 0 4px 0 #c4271d;
+                        font:
+                          900 18px/1 Unbounded,
+                          sans-serif;
+                      "
+                      >ма́рево<span
+                        style="
+                          font:
+                            800 16px/1 Onest,
+                            sans-serif;
+                        "
+                        >✓</span
+                      ></span
+                    >
+                    <span
+                      style="
+                        height: 54px;
+                        display: flex;
+                        align-items: center;
+                        padding: 0 16px;
+                        border-radius: 14px;
+                        background: var(--sf);
+                        border: 1px solid var(--line);
+                        box-shadow: 0 4px 0 var(--edge);
+                        font:
+                          900 18px/1 Unbounded,
+                          sans-serif;
+                        color: var(--mute);
+                      "
+                      >маре́во</span
+                    >
+                  </div>
+                </div>
+                <span
+                  style="
+                    font:
+                      800 12px/1 Unbounded,
+                      sans-serif;
+                    letter-spacing: 1px;
+                  "
+                  >ГРА «НАГОЛОС»</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section style="background: #140c0a; color: #fff4e6">
+          <div
+            style="
+              max-width: 1280px;
+              margin: 0 auto;
+              padding: clamp(56px, 8vw, 112px) clamp(16px, 4vw, 40px);
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+              gap: clamp(36px, 5vw, 72px);
+            "
+          >
+            <h2
+              style="
+                margin: 0;
+                font:
+                  900 clamp(52px, 7.5vw, 112px)/0.95 Unbounded,
+                  sans-serif;
+                letter-spacing: -0.04em;
+                color: #ff3b2f;
+                transform: rotate(-5deg) skewX(-6deg);
+                transform-origin: left center;
+              "
+            >
+              Навіщо
+            </h2>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                gap: clamp(28px, 4vw, 44px);
+                min-width: 0;
+              "
+            >
+              <div style="display: flex; flex-direction: column; gap: 26px">
+                <span
+                  style="
+                    font:
+                      600 clamp(20px, 2.1vw, 27px)/1.35 Onest,
+                      sans-serif;
+                    text-wrap: pretty;
+                  "
+                  >Словники знають сотні тисяч слів. Ми хочемо, щоб їх знали люди.</span
+                >
+                <span
+                  style="
+                    font:
+                      600 clamp(20px, 2.1vw, 27px)/1.35 Onest,
+                      sans-serif;
+                    text-wrap: pretty;
+                  "
+                  >Мова живе, поки нею говорять. Ми повертаємо їй забуті слова.</span
+                >
+                <span
+                  style="
+                    font:
+                      600 clamp(20px, 2.1vw, 27px)/1.35 Onest,
+                      sans-serif;
+                    text-wrap: pretty;
+                  "
+                  >Зробити багатство мови не обов'язком, а задоволенням.</span
+                >
+              </div>
+              <div
+                style="
+                  border-radius: 24px;
+                  background: #221714;
+                  border: 1px solid rgba(255, 244, 230, 0.13);
+                  padding: clamp(20px, 3vw, 28px);
+                  display: flex;
+                  flex-direction: column;
+                  gap: 16px;
+                "
+              >
+                <span
+                  style="
+                    align-self: flex-start;
+                    padding: 7px 10px;
+                    background: #ff3b2f;
+                    color: #140c0a;
+                    font:
+                      800 11px/1 Unbounded,
+                      sans-serif;
+                    letter-spacing: 1px;
+                    transform: skewX(-10deg);
+                  "
+                  >МЕТА</span
+                >
+                <span
+                  style="
+                    font:
+                      900 clamp(20px, 2.2vw, 26px)/1.2 Unbounded,
+                      sans-serif;
+                    letter-spacing: -0.02em;
+                  "
+                  >Мільйон рідкісних слів, повернутих у вжиток</span
+                >
+                <div
+                  style="height: 22px; border-radius: 6px; background: #33241f; overflow: hidden"
+                >
+                  <div
+                    style="height: 100%; width: 0.8%"
+                    id="goal-bar"
+                    data-x="background:#FF3B2F;clip-path:polygon(0 0,100% 0,calc(100% - 8px) 100%,0 100%)"
+                  ></div>
+                </div>
+                <div
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 12px;
+                    flex-wrap: wrap;
+                    font:
+                      600 15px/1 Onest,
+                      sans-serif;
+                    color: #bdae9f;
+                  "
+                >
+                  <span
+                    ><span
+                      style="
+                        font:
+                          800 18px/1 Unbounded,
+                          sans-serif;
+                        color: #fff4e6;
+                        font-variant-numeric: tabular-nums;
+                      "
+                      ><span id="goal-count">0</span></span
+                    >
+                    з 1 000 000</span
+                  >
+                  <span
+                    style="
+                      font:
+                        800 14px/1 Unbounded,
+                        sans-serif;
+                      color: #ff3b2f;
+                    "
+                    id="goal-pct"
+                    >0 %</span
+                  >
+                </div>
+                <span
+                  style="
+                    align-self: flex-start;
+                    font:
+                      700 12px/1 Onest,
+                      sans-serif;
+                    color: #ff3b2f;
+                    border: 1.5px dashed #ff3b2f;
+                    border-radius: 6px;
+                    padding: 6px 8px;
+                  "
+                  >ЗАГЛУШКА: демо-число</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div
+            style="
+              max-width: 780px;
+              margin: 0 auto;
+              padding: clamp(56px, 8vw, 104px) clamp(16px, 4vw, 40px);
+              display: flex;
+              flex-direction: column;
+              gap: 28px;
+            "
+          >
+            <h2
+              style="
+                margin: 0;
+                font:
+                  600 clamp(24px, 2.6vw, 30px)/1.1 Unbounded,
+                  sans-serif;
+              "
+            >
+              Питання
+            </h2>
+            <div style="display: flex; flex-direction: column; border-top: 1px solid var(--line)">
+              <details style="border-bottom: 1px solid var(--line)">
+                <summary
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px 0;
+                    font:
+                      600 17px/1.3 Onest,
+                      sans-serif;
+                  "
+                >
+                  Це безкоштовно?<span
+                    data-plus=""
+                    style="font-size: 22px; color: var(--mute); transition: transform 0.2s"
+                    >+</span
+                  >
+                </summary>
+                <div style="padding: 0 0 22px">
+                  <span
+                    style="
+                      display: inline-block;
+                      font:
+                        500 15px/1.4 Onest,
+                        sans-serif;
+                      color: #ff3b2f;
+                      border: 1.5px dashed #ff3b2f;
+                      border-radius: 6px;
+                      padding: 7px 10px;
+                    "
+                    >ЗАГЛУШКА: відповідь після рішення про монетизацію</span
+                  >
+                </div>
+              </details>
+              <details style="border-bottom: 1px solid var(--line)">
+                <summary
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px 0;
+                    font:
+                      600 17px/1.3 Onest,
+                      sans-serif;
+                  "
+                >
+                  Звідки слова?<span
+                    data-plus=""
+                    style="font-size: 22px; color: var(--mute); transition: transform 0.2s"
+                    >+</span
+                  >
+                </summary>
+                <p
+                  style="
+                    margin: 0;
+                    padding: 0 0 22px;
+                    font:
+                      400 16px/1.6 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                    max-width: 60ch;
+                  "
+                >
+                  З академічних словників української мови. Кожне слово має тлумачення, наголос і
+                  приклад.
+                </p>
+              </details>
+              <details style="border-bottom: 1px solid var(--line)">
+                <summary
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px 0;
+                    font:
+                      600 17px/1.3 Onest,
+                      sans-serif;
+                  "
+                >
+                  Чи працює без інтернету?<span
+                    data-plus=""
+                    style="font-size: 22px; color: var(--mute); transition: transform 0.2s"
+                    >+</span
+                  >
+                </summary>
+                <p
+                  style="
+                    margin: 0;
+                    padding: 0 0 22px;
+                    font:
+                      400 16px/1.6 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                    max-width: 60ch;
+                  "
+                >
+                  Так. Слова, ігри й кросворд працюють офлайн.
+                </p>
+              </details>
+              <details style="border-bottom: 1px solid var(--line)">
+                <summary
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px 0;
+                    font:
+                      600 17px/1.3 Onest,
+                      sans-serif;
+                  "
+                >
+                  Навіщо акаунт?<span
+                    data-plus=""
+                    style="font-size: 22px; color: var(--mute); transition: transform 0.2s"
+                    >+</span
+                  >
+                </summary>
+                <p
+                  style="
+                    margin: 0;
+                    padding: 0 0 22px;
+                    font:
+                      400 16px/1.6 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                    max-width: 60ch;
+                  "
+                >
+                  Необов'язково. Акаунт (вхід через Apple) зберігає прогрес і переносить його на
+                  новий телефон.
+                </p>
+              </details>
+              <details style="border-bottom: 1px solid var(--line)">
+                <summary
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px 0;
+                    font:
+                      600 17px/1.3 Onest,
+                      sans-serif;
+                  "
+                >
+                  Які дані ви збираєте?<span
+                    data-plus=""
+                    style="font-size: 22px; color: var(--mute); transition: transform 0.2s"
+                    >+</span
+                  >
+                </summary>
+                <p
+                  style="
+                    margin: 0;
+                    padding: 0 0 22px;
+                    font:
+                      400 16px/1.6 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                    max-width: 60ch;
+                  "
+                >
+                  Анонімну статистику без імені й без стеження між застосунками. Деталі — у
+                  <a href="uk/privacy">Політиці конфіденційності</a>.
+                </p>
+              </details>
+              <details style="border-bottom: 1px solid var(--line)">
+                <summary
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px 0;
+                    font:
+                      600 17px/1.3 Onest,
+                      sans-serif;
+                  "
+                >
+                  Є на Android?<span
+                    data-plus=""
+                    style="font-size: 22px; color: var(--mute); transition: transform 0.2s"
+                    >+</span
+                  >
+                </summary>
+                <p
+                  style="
+                    margin: 0;
+                    padding: 0 0 22px;
+                    font:
+                      400 16px/1.6 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                    max-width: 60ch;
+                  "
+                >
+                  Поки тільки iPhone. Android — після запуску.
+                </p>
+              </details>
+              <details style="border-bottom: 1px solid var(--line)">
+                <summary
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px 0;
+                    font:
+                      600 17px/1.3 Onest,
+                      sans-serif;
+                  "
+                >
+                  Для кого це?<span
+                    data-plus=""
+                    style="font-size: 22px; color: var(--mute); transition: transform 0.2s"
+                    >+</span
+                  >
+                </summary>
+                <p
+                  style="
+                    margin: 0;
+                    padding: 0 0 22px;
+                    font:
+                      400 16px/1.6 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                    max-width: 60ch;
+                  "
+                >
+                  Для всіх, кому звичайних слів замало.
+                </p>
+              </details>
+              <details style="border-bottom: 1px solid var(--line)">
+                <summary
+                  style="
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 16px;
+                    padding: 20px 0;
+                    font:
+                      600 17px/1.3 Onest,
+                      sans-serif;
+                  "
+                >
+                  Я знайшов помилку в слові.<span
+                    data-plus=""
+                    style="font-size: 22px; color: var(--mute); transition: transform 0.2s"
+                    >+</span
+                  >
+                </summary>
+                <p
+                  style="
+                    margin: 0;
+                    padding: 0 0 22px;
+                    font:
+                      400 16px/1.6 Onest,
+                      sans-serif;
+                    color: var(--mute);
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    flex-wrap: wrap;
+                  "
+                >
+                  Напишіть нам:
+                  <span
+                    style="
+                      font:
+                        600 14px/1 Onest,
+                        sans-serif;
+                      color: #ff3b2f;
+                      border: 1.5px dashed #ff3b2f;
+                      border-radius: 6px;
+                      padding: 6px 8px;
+                    "
+                    >ЗАГЛУШКА-ПОШТА</span
+                  >
+                </p>
+              </details>
+            </div>
+          </div>
+        </section>
+
+        <section
+          id="cta"
+          style="position: relative; background: #ff3b2f; color: #140c0a; overflow: hidden"
+        >
+          <div
+            style="
+              position: absolute;
+              inset: 0;
+              background: #140c0a;
+              clip-path: polygon(0 0, 100% 0, 100% 14%, 0 30%);
+            "
+          ></div>
+          <div
+            style="
+              position: relative;
+              max-width: 1280px;
+              margin: 0 auto;
+              padding: clamp(120px, 14vw, 190px) clamp(16px, 4vw, 40px) clamp(64px, 8vw, 112px);
+              display: grid;
+              grid-template-columns: repeat(auto-fit, minmax(min(100%, 400px), 1fr));
+              gap: clamp(40px, 6vw, 72px);
+              align-items: center;
+            "
+          >
+            <div style="display: flex; flex-direction: column; gap: 36px; align-items: flex-start">
+              <h2
+                style="
+                  margin: 0;
+                  font:
+                    900 clamp(54px, 8vw, 124px)/0.92 Unbounded,
+                    sans-serif;
+                  letter-spacing: -0.04em;
+                  transform: rotate(-5deg) skewX(-6deg);
+                  transform-origin: left bottom;
+                  padding: 0.15em 0 0.1em;
+                "
+              >
+                Тримай<br />слово.
+              </h2>
+              <a
+                class="h3 a4"
+                href="#"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  min-height: 64px;
+                  padding: 0 30px;
+                  border-radius: 14px;
+                  background: #140c0a;
+                  color: #fff4e6;
+                  box-shadow: 0 6px 0 #6e1610;
+                  font:
+                    800 17px/1 Unbounded,
+                    sans-serif;
+                  text-decoration: none;
+                  transition:
+                    transform 0.12s,
+                    box-shadow 0.12s;
+                "
+                >Завантажити в App Store</a
+              >
+            </div>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 28px">
+              <div style="transform: rotate(-10deg)">
+                <div class="rupor rupor-cta">
+                  <div class="rupor-in" style="animation: rpHop 0.55s ease infinite">
+                    <svg
+                      viewBox="0 0 150 112"
+                      width="100%"
+                      height="100%"
+                      style="overflow: visible; display: block"
+                    >
+                      <polygon points="12,14 22,9 20,21" fill="#FF3B2F" />
+                      <polygon points="70,-2 78,2 70,8" fill="#140C0A" />
+                      <polygon points="132,-4 142,0 136,8" fill="#140C0A" />
+                      <polygon points="4,96 14,92 12,104" fill="#140C0A" />
+                      <polygon points="96,112 106,108 104,118" fill="#FF3B2F" />
+                      <g transform="rotate(0 30 56)">
+                        <polygon points="8,44 30,46 30,66 8,68" style="fill: #140c0a" />
+                        <polygon points="30,40 104,12 104,100 30,72" style="fill: #fff4e6" />
+                        <polygon points="38,45 98,22 98,28 38,50" fill="#FFF4E6" opacity=".22" />
+                        <polygon points="104,12 114,6 114,106 104,100" style="fill: #140c0a" />
+                        <path
+                          d="M48 57 Q55 45 62 57 M70 57 Q77 45 84 57"
+                          stroke="#140C0A"
+                          stroke-width="4.5"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          fill="none"
+                        />
+                        <g transform="translate(60 31) rotate(-20.7)">
+                          <path d="M-20 0 Q-20 -16 -4 -16 Q12 -16 12 0 Z" fill="#140C0A" />
+                          <polygon points="8,-4 31,-1 31,2.5 8,2.5" fill="#140C0A" />
+                          <circle cx="-4" cy="-16" r="3.2" fill="#FF3B2F" />
+                        </g>
+                        <g style="animation: rpRay 0.45s steps(2) infinite" fill="#140C0A">
+                          <polygon points="122,30 139,15 142,23" />
+                          <polygon points="124,56 145,52 145,61" />
+                          <polygon points="122,82 142,97 139,104" />
+                        </g>
+                      </g>
+                    </svg>
+                  </div>
+                </div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  gap: 6px;
+                  flex-wrap: wrap;
+                  justify-content: center;
+                  transform: rotate(-4deg);
+                "
+              >
+                <span
+                  style="
+                    width: 44px;
+                    height: 52px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 22px/1 Unbounded,
+                      sans-serif;
+                  "
+                  >С</span
+                ><span
+                  style="
+                    width: 44px;
+                    height: 52px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 22px/1 Unbounded,
+                      sans-serif;
+                  "
+                  >И</span
+                ><span
+                  style="
+                    width: 44px;
+                    height: 52px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 22px/1 Unbounded,
+                      sans-serif;
+                  "
+                  >З</span
+                ><span
+                  style="
+                    width: 44px;
+                    height: 52px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 22px/1 Unbounded,
+                      sans-serif;
+                  "
+                  >И</span
+                ><span
+                  style="
+                    width: 44px;
+                    height: 52px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #140c0a;
+                    color: #fff4e6;
+                    box-shadow: 0 5px 0 #6e1610;
+                    font:
+                      900 22px/1 Unbounded,
+                      sans-serif;
+                  "
+                  >Г</span
+                ><span
+                  style="
+                    width: 44px;
+                    height: 52px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 22px/1 Unbounded,
+                      sans-serif;
+                  "
+                  >І</span
+                ><span
+                  style="
+                    width: 44px;
+                    height: 52px;
+                    display: grid;
+                    place-items: center;
+                    border-radius: 10px;
+                    background: #fff4e6;
+                    box-shadow: 0 5px 0 #140c0a;
+                    font:
+                      900 22px/1 Unbounded,
+                      sans-serif;
+                  "
+                  >Я</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer style="border-top: 1px solid var(--line)">
+        <div
+          style="
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 32px clamp(16px, 4vw, 40px);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px 32px;
+            flex-wrap: wrap;
+            font:
+              400 14px/1.4 Onest,
+              sans-serif;
+            color: var(--mute);
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 20px; flex-wrap: wrap">
+            <span style="display: flex; align-items: center; gap: 6px; color: var(--ink)">
+              <svg width="22" height="21" viewBox="0 0 120 112">
+                <polygon points="4,44 30,46 30,66 4,68" style="fill: var(--ink)"></polygon>
+                <polygon points="30,40 104,12 104,100 30,72" fill="#FF3B2F"></polygon>
+                <polygon
+                  points="104,12 116,5 116,107 104,100"
+                  style="fill: var(--ink)"
+                ></polygon></svg
+              ><span
+                style="
+                  font:
+                    900 16px/1 Unbounded,
+                    sans-serif;
+                  letter-spacing: -0.5px;
+                  transform: skewX(-8deg);
+                "
+                >SLOVO</span
+              >
+            </span>
+            <span style="display: flex; align-items: center; gap: 8px"
+              >Підтримка:
+              <span
+                style="
+                  font:
+                    600 13px/1 Onest,
+                    sans-serif;
+                  color: #ff3b2f;
+                  border: 1.5px dashed #ff3b2f;
+                  border-radius: 6px;
+                  padding: 5px 8px;
+                "
+                >ЗАГЛУШКА-ПОШТА</span
+              ></span
+            >
+          </div>
+          <nav style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center">
+            <a href="uk/privacy" style="color: var(--mute)">Політика конфіденційності</a>
+            <a href="uk/terms" style="color: var(--mute)">Умови</a>
+            <span>© SLOVO</span>
+          </nav>
+        </div>
+      </footer>
+    </div>
+    <script src="landing.js"></script>
+  </body>
+</html>
