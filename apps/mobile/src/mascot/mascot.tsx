@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useComposition } from '../composition';
+import { edition as shippedEdition } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useShown } from '../shown-in-effect';
 
@@ -28,6 +29,23 @@ export function MascotIn({ state }: { state: MascotMoment }) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
   return <Mascot state={stateAt[state]} line={edition.mascot[state]} testID={`mascot-${state}`} />;
+}
+
+/** The Mascot in `state` with no line, while its Feature Switch is on in effect; else nothing. */
+export function MascotAs({ state }: { state: MascotState }) {
+  const edition = useEditionInEffect();
+  if (!edition.isFeatureEnabled('mascot')) return null;
+  return <Mascot state={state} testID={`mascot-${state}`} />;
+}
+
+/**
+ * The Mascot in `state` with no line, while its Feature Switch is on in the
+ * shipped Edition; else nothing. For the gate of an opening, drawn before the
+ * remote Feature Switches are open.
+ */
+export function ShippedMascot({ state }: { state: MascotState }) {
+  if (!shippedEdition.isFeatureEnabled('mascot')) return null;
+  return <Mascot state={state} testID={`mascot-${state}`} />;
 }
 
 /**

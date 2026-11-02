@@ -248,13 +248,14 @@ describe('the recipient sheet of a Collection Link', () => {
     },
   );
 
-  it('says «Немає з’єднання» offline, with nothing to add', async () => {
+  it('says «Немає з’єднання» offline under the Mascot asleep, with nothing to add', async () => {
     await share('Осінь', PACK);
     api.online = false;
 
     await renderSheet();
 
     expect(screen.getByText(strings.offline)).toBeTruthy();
+    expect(screen.getByTestId('mascot-sleeps')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: strings.add })).toBeNull();
   });
 

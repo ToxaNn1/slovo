@@ -13,8 +13,9 @@ const ILLUSTRATION_WIDTH = 96;
 const TITLE_MAX_FONT_SCALE = 1.3;
 
 /**
- * An empty list's state: the Edition's empty-state illustration (Decor slot
- * 4), a title, one line of muted text and an optional primary button.
+ * An empty list's state: the Mascot on top when the app shows it, else the
+ * Edition's empty-state illustration (Decor slot 4), a title, one line of
+ * muted text and an optional primary button.
  * VoiceOver reads the title and the text as one element.
  */
 export function EmptyState({
@@ -28,7 +29,7 @@ export function EmptyState({
   message: string;
   /** The button under the text, such as the way back to the Feed. */
   action?: { readonly label: string; readonly onPress: () => void; readonly testID?: string };
-  /** The Mascot in its empty state, under the text, if the app shows it. */
+  /** The Mascot in its empty state, drawn on top instead of the illustration, if the app shows it. */
   mascot?: ReactNode;
   testID?: string;
 }) {
@@ -36,7 +37,7 @@ export function EmptyState({
   const { voice } = useEdition();
   return (
     <View testID={testID} style={styles.state}>
-      <EmptyStateIllustration width={ILLUSTRATION_WIDTH} />
+      {mascot ?? <EmptyStateIllustration width={ILLUSTRATION_WIDTH} />}
       <View accessible accessibilityLabel={`${title}. ${message}`} {...voice} style={styles.text}>
         <Text
           // A 26 pt title at the largest accessibility sizes would break a word across lines.
@@ -49,7 +50,6 @@ export function EmptyState({
           {message}
         </Text>
       </View>
-      {mascot}
       {action !== undefined && (
         <View style={styles.action}>
           <PrimaryButton testID={action.testID} label={action.label} onPress={action.onPress} />
