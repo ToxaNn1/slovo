@@ -1,4 +1,10 @@
-import { coreTokens, CollectionCard, EditionProvider, TokensProvider, type ColorScheme } from '@slovo/ui';
+import {
+  coreTokens,
+  CollectionCard,
+  EditionProvider,
+  TokensProvider,
+  type ColorScheme,
+} from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
