@@ -12,6 +12,7 @@ import type {
 } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
+import { categoryArtErrors } from './category-art';
 import { checkContent, type Authored } from './check-content';
 import { checkSynonymRows } from './check-synonym-rows';
 import { checkTips } from './check-tips';
@@ -76,6 +77,7 @@ export function readEdition(
   const targets = readOrCollect(() => folder.readIfPresent('targets') ?? {});
   const crosswordDays = readOrCollect(() => folder.readIfPresent('crosswordDays'));
   const tokens = readOrCollect(() => folder.readIfPresent('tokens'));
+  const decor = readOrCollect(() => folder.readIfPresent('decor'));
   const registry = readOrCollect(() =>
     registryRequired ? folder.read('idRegistry') : (folder.readIfPresent('idRegistry') ?? []),
   );
@@ -85,6 +87,7 @@ export function readEdition(
       ...checkSynonymRows(config, words, synonymRows),
       ...checkTips(config, tips),
       ...editionFontErrors(config, tokens, folder.fonts()),
+      ...categoryArtErrors(config, decor),
     );
   }
   errors.push(...illustrationErrors(words, (name) => folder.illustration(name)));
