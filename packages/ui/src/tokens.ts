@@ -137,6 +137,12 @@ export const typeRoles = {
   meta: role('ui', '500', 13, 17),
   /** A tab's label under its icon. */
   tabLabel: role('ui', '600', 11, 11),
+  /** The rotated black title of a bottom sheet. */
+  sheetTitle: role('word', '900', 18, 18, 0.5, 'uppercase'),
+  /** A toast's message. */
+  toast: role('ui', '600', 14, 19),
+  /** The label of a toast's button. */
+  toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -186,7 +192,14 @@ export const wedges = {
     [1, 0.7],
     [0, 1],
   ],
-  /** A slanted band. */
+  /** The loader's wedge: a right edge narrower than the left, from the middle. */
+  loader: [
+    [0, 0],
+    [1, 0.25],
+    [1, 0.75],
+    [0, 1],
+  ],
+  /** A slanted band: the toast's mark. */
   band: [
     [0, 0],
     [1, 0.25],
@@ -198,6 +211,13 @@ export const wedges = {
     [0, 0],
     [1, 0],
     [1, 0.8],
+    [0, 1],
+  ],
+  /** A band whose top rises to the right: the Share Card's footer. */
+  rise: [
+    [0, 0.3],
+    [1, 0],
+    [1, 1],
     [0, 1],
   ],
   /** A shield, pointed at the bottom. */
@@ -225,6 +245,8 @@ export const motion = {
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
   pop: { duration: 300, easing: ease },
+  /** One beat of the loader's wedges, from short to tall and back. */
+  loader: { duration: 800, easing: [0.42, 0, 0.58, 1] },
   /** The toggle's knob slides over and overshoots. */
   switch: { duration: 280, easing: [0.3, 1.9, 0.5, 1] },
   /** Rows rise this far into place, one after another. */
@@ -368,13 +390,8 @@ export function withAlpha(color: string, alpha: number): string {
   return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${String(alpha)})`;
 }
 
-/**
- * The scrim behind a bottom sheet or a dialog, from the design: the light
- * Theme's ink at 45%, black at 60% in the dark one.
- */
-export function scrimColor(ink: string, colorScheme: ColorScheme): string {
-  return colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.6)' : withAlpha(ink, 0.45);
-}
+/** The scrim behind a bottom sheet, from the design: the key ink at 55% in both Themes. */
+export const scrim = 'rgba(20, 12, 10, 0.55)';
 
 /** The 4-pt spacing grid. */
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
@@ -471,7 +488,7 @@ export const cardSpace = {
 } as const;
 
 /** The line heights the design gives in pixels rather than as a multiple of the size. */
-export const lineHeight = { toast: 21, pronunciationNote: 20, aboutDescription: 30 } as const;
+export const lineHeight = { pronunciationNote: 20, aboutDescription: 30 } as const;
 
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
 export const rowPadding = 14;
@@ -621,47 +638,81 @@ export const shareImage = {
 } as const satisfies Record<ShareCardFormat, { width: number; height: number }>;
 
 /**
- * Each format's layout, from the design. The Story centres its content between
- * its insets with the overline on top and the watermark under it; the Square
- * starts at the top and keeps the overline and the watermark for its footer.
+ * Each format's layout, from the design's share board, in its points: the
+ * Story 270 by 480, the Square 300 by 300. The kicker tops the card under the
+ * brand line, the headline follows it, the giant glyph sits behind them off
+ * the right edge, and the slanted footer band holds the Mascot and the
+ * watermark.
  */
 export const shareCardLayout = {
   story: {
-    padding: { horizontal: 34, vertical: 76 },
-    /** How far Decor slot 5's bands sit inside the top and bottom edges. */
-    frameInset: 28,
-    /** The space between the blocks, and between a label and its form. */
-    gap: 22,
-    labelGap: 8,
+    padding: { horizontal: 20, vertical: 22 },
+    kickerTop: 60,
+    gap: 8,
+    blockGap: 14,
+    giant: { size: 320, right: -50, top: 120 },
+    mascot: 96,
+    footer: 120,
+    cell: 22,
+    /** Each stat chip's base width: two to a row. */
+    statBasis: '40%',
     type: {
-      overline: 10,
-      headline: 54,
-      partOfSpeech: 13,
-      definition: 19,
-      label: 13,
-      nonStandard: 32,
-      /** A place name's etymology, between the part of speech and the Definition: the design has no Idiom yet. */
-      etymology: 15,
-      watermark: 11,
-    },
-  },
-  square: {
-    padding: { horizontal: 28, vertical: 30 },
-    /** How far Decor slot 5's corners sit inside the edges. */
-    frameInset: 10,
-    gap: 10,
-    labelGap: 10,
-    type: {
-      overline: 10,
-      headline: 34,
-      partOfSpeech: 12,
-      definition: 15,
-      label: 12,
-      nonStandard: 20,
-      etymology: 12,
+      kicker: 10,
+      /** The headline of an Entry. */
+      entryHeadline: 40,
+      /** The headline of a Weekly Recap, a milestone or a Daily Crossword. */
+      headline: 32,
+      sub: 12,
+      nonStandard: 22,
+      stat: 18,
+      label: 10,
       watermark: 10,
     },
   },
+  square: {
+    padding: { horizontal: 18, vertical: 18 },
+    kickerTop: 14,
+    gap: 8,
+    blockGap: 10,
+    giant: { size: 220, right: -30, top: 40 },
+    mascot: 70,
+    footer: 84,
+    cell: 18,
+    /** Four to a row. */
+    statBasis: '20%',
+    type: {
+      kicker: 10,
+      entryHeadline: 30,
+      headline: 24,
+      sub: 12,
+      nonStandard: 16,
+      stat: 18,
+      label: 10,
+      watermark: 10,
+    },
+  },
+} as const;
+
+/** The Share Card's fixed measures, from the design's share board. */
+export const shareCardDrawing = {
+  /** The brand wedge before the kicker. */
+  brand: { width: 9, height: 13 },
+  /** The kicker's letter spacing, the headline's and the giant glyph's. */
+  tracking: { kicker: 1.5, headline: -1, giant: -8 },
+  /** The raster's dots in the dark Theme, the ink at this opacity. */
+  darkDotAlpha: 0.08,
+  /** Secondary text over the card: the reading text and the watermark. */
+  subOpacity: 0.9,
+  watermarkOpacity: 0.8,
+  /** A stat's chip and a closed crossword cell, over red and over the dark ground. */
+  chipAlpha: { light: 0.55, dark: 0.1 },
+  closedCellAlpha: { light: 0.6, dark: 0.12 },
+  cellRadius: 4,
+  cellGap: 3,
+  chipRadius: 9,
+  chipPadding: 8,
+  /** The Mascot's whole width with its own padding, which the card scales to its size. */
+  mascotBox: 162,
 } as const;
 
 /** The smallest side of anything the user taps. */

@@ -2,6 +2,7 @@ import { EditionProvider, UndoToastProvider, useUndoToast } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, Pressable, Text } from 'react-native';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
 /** Opens a toast with the message, and an undo when it has `onUndo`. */
@@ -37,6 +38,19 @@ async function passTime(ms: number) {
   });
 }
 
+/** Where the toast is: how far left of its place, and how opaque. */
+function toastNow(): { left: number; opacity: number } {
+  const style = getAnimatedStyle(screen.getByTestId('undo-toast')) as {
+    transform?: { translateX?: number }[];
+    opacity?: number;
+  };
+  return { left: -(style.transform?.[0]?.translateX ?? 0), opacity: style.opacity ?? 1 };
+}
+
+function reduceMotion(on: boolean) {
+  jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(on);
+}
+
 describe('UndoToast', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -56,6 +70,34 @@ describe('UndoToast', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Undo' }));
 
     expect(onUndo).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('undo-toast')).toBeNull();
+  });
+
+  it('slides in from the left and stays shown', async () => {
+    reduceMotion(false);
+    await renderOpeners({ message: 'Hidden', onUndo: jest.fn() });
+
+    await fireEvent.press(screen.getByTestId('open-Hidden'));
+    await passTime(0);
+    expect(toastNow().left).toBeGreaterThan(0);
+    await passTime(1000);
+
+    expect(toastNow()).toEqual({ left: 0, opacity: 1 });
+    await passTime(4000);
+    expect(screen.queryByTestId('undo-toast')).toBeNull();
+  });
+
+  it('fades in place under Reduce Motion, and still leaves after 4 s', async () => {
+    reduceMotion(true);
+    await renderOpeners({ message: 'Hidden', onUndo: jest.fn() });
+
+    await fireEvent.press(screen.getByTestId('open-Hidden'));
+    await passTime(0);
+    expect(toastNow()).toEqual({ left: 0, opacity: 0 });
+    await passTime(1000);
+
+    expect(toastNow()).toEqual({ left: 0, opacity: 1 });
+    await passTime(4000);
     expect(screen.queryByTestId('undo-toast')).toBeNull();
   });
 

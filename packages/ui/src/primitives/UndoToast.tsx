@@ -10,9 +10,18 @@ import {
   useRef,
   useState,
   type ReactNode,
+  type Ref,
 } from 'react';
-import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  AccessibilityInfo,
+  Pressable,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from 'react-native';
 import Animated, {
+  Easing,
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
@@ -20,22 +29,37 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
-import {
-  lineHeight,
-  minTouchTarget,
-  space,
-  toastElevation,
-  toastRadius,
-  typeSize,
-} from '../tokens';
-import { useTokens } from '../providers/TokensProvider';
+import { minTouchTarget, motion, pressedFade, space, typeStyle, wedges } from '../tokens';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { useReduceMotionKnown } from '../providers/useReduceMotion';
+import { Wedge } from './Wedge';
 
 /** How long the toast stays, from the design. */
 const TOAST_MS = 4000;
 
-/** The toast's fade in. */
-const FADE_MS = 200;
+/** The design's `slToast`: in from the left, straightening as it comes. */
+const SLIDE_IN = {
+  duration: motion.toast.duration,
+  easing: Easing.bezier(...motion.toast.easing),
+  reduceMotion: ReduceMotion.Never,
+};
+/** Under Reduce Motion the toast fades in place, the design's `slRm`. */
+const FADE_IN = {
+  duration: motion.reduceMotion.duration,
+  easing: Easing.bezier(...motion.reduceMotion.easing),
+  reduceMotion: ReduceMotion.Never,
+};
+/** Where the toast starts, in widths of the window, and how far it leans. */
+const START = { across: -1.2, lean: -12 };
+/** The share of its width the toast's right edge slants in by at the bottom. */
+const TAIL = '4%';
+/** The toast's red mark. */
+const MARK = { width: 12, height: 22 };
+/** The toast's undo button, from the design; its tap area is taller. */
+const UNDO_HEIGHT = 38;
 
+/** The message stops growing here, so the toast stays whole over what it covers. */
+const MESSAGE_MAX_FONT_SCALE = 1.3;
 /** The undo button's label stops growing here, so it never breaks a word. */
 const UNDO_MAX_FONT_SCALE = 1.3;
 
@@ -94,8 +118,10 @@ export function useUndoToast(): (toast: ToastContent) => void {
 }
 
 /**
- * The toast from the design: radius 6, inverted colours, `elev.toast`, for
- * 4 s. With VoiceOver on, VoiceOver moves to it and reads it, and a toast with
+ * The ink wedge toast from the design, for 4 s: a red mark, the message in
+ * the background colour on the ink, the left corners round and the right edge
+ * slanting in. It comes in from the left, straightening as it comes; with
+ * Reduce Motion it fades in place. With VoiceOver on, VoiceOver moves to it and reads it, and a toast with
  * an undo stays until the reader takes the undo or dismisses it with the
  * escape gesture, so the undo is always in reach; one without leaves after 4 s.
  */
@@ -108,17 +134,26 @@ function UndoToast({
   content: ToastContent;
   onDismiss: (id: number) => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
-  const { voice } = useEdition();
+  const { width: windowWidth } = useWindowDimensions();
+  // Each toast mounts afresh, so it waits for the system's answer before it comes in.
+  const reduceMotionKnown = useReduceMotionKnown();
+  const reduceMotion = reduceMotionKnown === true;
+  const ready = reduceMotionKnown !== undefined;
   const messageRef = useRef<Text>(null);
-  const opacity = useSharedValue(0);
+  /** 0 before it shows, 1 once it is in place. */
+  const shown = useSharedValue(0);
   function close() {
     onDismiss(id);
   }
   const timeOut = useEffectEvent(close);
+  // Read when the toast comes in; a later change of Reduce Motion moves nothing.
+  const comeIn = useEffectEvent(() => {
+    shown.value = withTiming(1, reduceMotion ? FADE_IN : SLIDE_IN);
+  });
   const hasUndo = 'onUndo' in content;
 
   useEffect(() => {
+    if (!ready) return;
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     void AccessibilityInfo.isScreenReaderEnabled().then((screenReader) => {
@@ -129,11 +164,11 @@ function UndoToast({
         }, TOAST_MS);
       }
       if (!screenReader) {
-        opacity.value = withTiming(1, { duration: FADE_MS, reduceMotion: ReduceMotion.Never });
+        comeIn();
         return;
       }
-      // VoiceOver skips a view that is still fading in, so the toast shows at once.
-      opacity.value = 1;
+      // VoiceOver skips a view that is still coming in, so the toast shows at once.
+      shown.value = 1;
       if (messageRef.current !== null)
         AccessibilityInfo.sendAccessibilityEvent(messageRef.current, 'focus');
     });
@@ -141,32 +176,89 @@ function UndoToast({
       active = false;
       clearTimeout(timer);
     };
-  }, [opacity, hasUndo]);
+  }, [ready, shown, hasUndo]);
 
-  const fadeStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  const inStyle = useAnimatedStyle(() => {
+    // Under Reduce Motion it fades in place; otherwise it slides, fully opaque.
+    const away = reduceMotion ? 0 : 1 - shown.value;
+    return {
+      opacity: reduceMotion ? shown.value : 1,
+      transform: [
+        { translateX: away * START.across * windowWidth },
+        { skewX: `${String(away * START.lean)}deg` },
+      ],
+    };
+  });
 
   return (
     <Animated.View
       testID="undo-toast"
       onAccessibilityEscape={close}
-      style={[styles.toast, { backgroundColor: colors.ink }, fadeStyle]}
+      style={[styles.place, inStyle]}
     >
+      <ToastFace message={content.message} messageRef={messageRef}>
+        {'onUndo' in content && <UndoButton {...content} onPress={close} />}
+      </ToastFace>
+    </Animated.View>
+  );
+}
+
+/**
+ * The look of a toast, wherever it is placed: the ink with its left corners
+ * round and its right edge slanting in, a red mark, the message in the
+ * background colour, and what follows it, such as an undo button.
+ */
+export function ToastFace({
+  message,
+  messageRef,
+  children,
+}: {
+  message: string;
+  messageRef?: Ref<Text> | undefined;
+  children?: ReactNode;
+}) {
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
+  const { voice } = useEdition();
+  const round = radii.chip + space[1];
+  return (
+    <View style={styles.face}>
+      <View
+        style={[
+          styles.body,
+          {
+            backgroundColor: colors.ink,
+            borderTopLeftRadius: round,
+            borderBottomLeftRadius: round,
+          },
+        ]}
+      />
+      <Wedge
+        points={TAIL_SHAPE}
+        color={colors.ink}
+        width={TAIL}
+        height="100%"
+        style={styles.tail}
+      />
+      <Wedge points={wedges.band} color={colors.accent} {...MARK} />
       <Text
         ref={messageRef}
         testID="undo-toast-message"
         {...voice}
-        style={[styles.message, { color: colors.background, fontFamily: fontFamilies.ui }]}
+        maxFontSizeMultiplier={MESSAGE_MAX_FONT_SCALE}
+        style={[styles.message, typeStyle('toast', tokens), { color: colors.background }]}
       >
-        {content.message}
+        {message}
       </Text>
-      {'onUndo' in content && <UndoButton {...content} onPress={close} />}
-    </Animated.View>
+      {children}
+    </View>
   );
 }
 
 /** The toast's undo button: undoes what just happened, then closes the toast. */
 function UndoButton({ undoLabel, onUndo, onPress }: UndoToastContent & { onPress: () => void }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const key = useSchemeColors('light');
   const { voice } = useEdition();
   return (
     <Pressable
@@ -178,18 +270,19 @@ function UndoButton({ undoLabel, onUndo, onPress }: UndoToastContent & { onPress
         onUndo();
         onPress();
       }}
+      hitSlop={(minTouchTarget - UNDO_HEIGHT) / 2}
       style={({ pressed }) => [
         styles.undo,
         {
-          backgroundColor: colors.background,
-          borderRadius: radii.button,
-          opacity: pressed ? 0.7 : 1,
+          backgroundColor: tokens.colors.accent,
+          borderRadius: tokens.radii.chip,
+          opacity: pressed ? pressedFade : 1,
         },
       ]}
     >
       <Text
         maxFontSizeMultiplier={UNDO_MAX_FONT_SCALE}
-        style={[styles.undoLabel, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('toastAction', tokens), { color: key.ink }]}
       >
         {undoLabel}
       </Text>
@@ -197,28 +290,37 @@ function UndoButton({ undoLabel, onUndo, onPress }: UndoToastContent & { onPress
   );
 }
 
+/** The ink's right edge: from the top right corner in to the bottom. */
+const TAIL_SHAPE = [
+  [0, 0],
+  [1, 0],
+  [0, 1],
+] as const;
+
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  toast: {
+  place: {
     position: 'absolute',
-    borderRadius: toastRadius,
-    left: space[4],
-    right: space[4],
-    bottom: space[4],
+    left: space[3] + 2,
+    right: space[3] + 2,
+    bottom: space[8] + space[2],
+  },
+  face: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
-    paddingLeft: space[5],
-    paddingRight: space[3],
-    paddingVertical: space[3],
-    ...toastElevation,
+    paddingLeft: space[3] + 2,
+    paddingRight: space[5] + 2,
+    paddingVertical: space[3] + 2,
   },
-  message: { flex: 1, fontSize: typeSize.body, lineHeight: lineHeight.toast, fontWeight: '500' },
+  body: { position: 'absolute', top: 0, bottom: 0, left: 0, right: TAIL },
+  tail: { position: 'absolute', top: 0, right: 0 },
+  message: { flex: 1 },
   undo: {
-    minHeight: minTouchTarget,
-    paddingHorizontal: space[4],
+    height: UNDO_HEIGHT,
+    paddingLeft: space[3],
+    paddingRight: space[4] + 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  undoLabel: { fontSize: typeSize.body, fontWeight: '700' },
 });
