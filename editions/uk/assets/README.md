@@ -5,7 +5,7 @@
 - `sounds/`: the four Interface sounds, `shout`, `right`, `wrong` and `tap` as `.wav` files, written by `generate-interface-sounds.mjs` from the design's oscillator settings (run it with `node`). The app bundles each file the Edition brings and plays it with `expo-audio`, behind the `sounds` Feature Switch and «Звуки» (ADR 0070).
 - `notification.wav`: the sound of notifications, named by `notificationSound` in `edition.json`. The app config checks that it is a `.caf`, `.wav` or `.aiff` file of at most 30 seconds, which are the limits of iOS, and the `expo-notifications` plugin bundles it. Changing it needs a new development build.
 
-The sound is a **placeholder**: a 0.6 s plucked string synthesized by `generate-notification-sound.mjs` (run it with `node`), so no third-party licence is involved. The final bandura pluck from the design replaces it before 1.0, and it must be royalty-free and allowed for commercial use.
+The sound is the design's tap, quieter (owner 02.11): `generate-interface-sounds.mjs` writes it beside the Interface sounds, so no third-party licence is involved.
 
 ## Illustrations
 

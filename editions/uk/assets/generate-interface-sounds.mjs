@@ -2,6 +2,8 @@
 // synthesized from the design's own oscillator settings (SlovoApp `snd`):
 // a waveform swept exponentially from one frequency to another, its gain
 // falling exponentially to silence, so no third-party licence is involved.
+// It also writes assets/notification.wav, the sound of notifications: the
+// tap, quieter (owner 02.11).
 //
 //   node editions/uk/assets/generate-interface-sounds.mjs
 //
@@ -19,13 +21,17 @@ const SOUNDS = {
   tap: ['triangle', 520, 520, 0.05],
 };
 
+/** The peak of an Interface sound, and of the quieter notification sound, as a share of full range. */
+const LOUD = 0.6;
+const QUIET = 0.25;
+
 const WAVES = {
   sawtooth: (phase) => 2 * phase - 1,
   triangle: (phase) => 1 - 4 * Math.abs(phase - 0.5),
   square: (phase) => (phase < 0.5 ? 1 : -1),
 };
 
-function wavOf([wave, from, to, seconds]) {
+function wavOf([wave, from, to, seconds], peak = LOUD) {
   const frames = Math.round(SAMPLE_RATE * (seconds + 0.02));
   const samples = new Int16Array(frames);
   let phase = 0;
@@ -35,7 +41,7 @@ function wavOf([wave, from, to, seconds]) {
     // The gain falls from full to 1/80 over the sound; a 2 ms fade-in keeps the start from clicking.
     const gain = Math.min(1, index / (SAMPLE_RATE * 0.002)) * (1 / 80) ** (t / seconds);
     const tail = index / SAMPLE_RATE > seconds ? 0 : 1;
-    samples[index] = Math.round(WAVES[wave](phase) * gain * tail * 0.6 * 32767);
+    samples[index] = Math.round(WAVES[wave](phase) * gain * tail * peak * 32767);
   }
   const dataBytes = frames * 2;
   const wav = Buffer.alloc(44 + dataBytes);
@@ -58,3 +64,7 @@ function wavOf([wave, from, to, seconds]) {
 for (const [name, sound] of Object.entries(SOUNDS)) {
   writeFileSync(fileURLToPath(new URL(`sounds/${name}.wav`, import.meta.url)), wavOf(sound));
 }
+writeFileSync(
+  fileURLToPath(new URL('notification.wav', import.meta.url)),
+  wavOf(SOUNDS.tap, QUIET),
+);
