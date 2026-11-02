@@ -1,6 +1,8 @@
 const SIZE_PROPERTY =
   '/^(fontSize|lineHeight|gap|rowGap|columnGap|padding\\w*|margin\\w*|borderRadius|border\\w*Radius)$/';
 const MESSAGE = 'Take sizes from `@slovo/ui` tokens (docs/react-native.md)';
+const TYPE_ROLE_MESSAGE =
+  'Take the font and its weight from a type role: `typeStyle(role, tokens)` (ADR 0070)';
 
 /**
  * The files the token rule covers: `tokens.ts` defines the tokens and a test
@@ -14,7 +16,8 @@ export const tokenScope = {
 /**
  * `no-restricted-syntax` selectors that ban sizes, spacings, radii and colours
  * written as literals instead of taken from the `@slovo/ui` tokens
- * (docs/react-native.md).
+ * (docs/react-native.md), and a font family or weight written by hand instead
+ * of taken from a type role (ADR 0070): only `tokens.ts` sets them.
  *
  * `no-restricted-syntax` is one rule with one array, and a later declaration
  * replaces an earlier one for the same file. A workspace part that has other
@@ -30,6 +33,10 @@ export const tokenSelectors = [
   {
     selector: 'Literal[value=/^#[0-9a-fA-F]{3,8}$/]',
     message: MESSAGE,
+  },
+  {
+    selector: 'Property[key.name=/^(fontWeight|fontFamily)$/]',
+    message: TYPE_ROLE_MESSAGE,
   },
 ];
 

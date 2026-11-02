@@ -11,7 +11,8 @@
     "./prettier": "./prettier.config.js"
   },
   "scripts": {
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "test": "node --test"
   },
   "dependencies": {
     "@eslint/js": "^10.0.1",
