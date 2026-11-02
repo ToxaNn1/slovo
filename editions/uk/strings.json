@@ -175,6 +175,7 @@
     },
     "sounds": {
       "section": "ЗВУКИ",
+      "sounds": "Звуки",
       "vibration": "Вібрація"
     },
     "about": {
@@ -895,6 +896,7 @@
   },
   "search": {
     "title": "Пошук",
+    "recent": "Нещодавно",
     "clear": "Очистити",
     "groups": {
       "words": "Слова",

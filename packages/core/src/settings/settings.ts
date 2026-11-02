@@ -11,6 +11,8 @@ export interface UserSettings {
   readonly fontSize: FontSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
+  /** Whether «Звуки» is on: the Interface sounds play while the `sounds` switch is in effect too. */
+  readonly sounds: boolean;
   /**
    * Whether «Без лічильників» is on: XP, Level, Streak, celebrations, level
    * milestones and in-Game XP feedback are hidden while counting goes on
@@ -38,13 +40,13 @@ export interface UserSettings {
 /**
  * The settings an Edition sets the defaults of. The counters are shown until the
  * user hides them, Self-check is off until the user turns it on and Seasonal
- * Decor and sharing the Community Counters are on until the user turns them
- * off, and «Менше руху» is off until the user turns it on, in every Edition,
- * so none of them has an Edition default.
+ * Decor, sharing the Community Counters and «Звуки» are on until the user
+ * turns them off, and «Менше руху» is off until the user turns it on, in
+ * every Edition, so none of them has an Edition default.
  */
 export type SettingsDefaults = Omit<
   UserSettings,
-  'noCounters' | 'selfCheck' | 'seasonalDecor' | 'shareCounters' | 'reduceMotion'
+  'noCounters' | 'selfCheck' | 'seasonalDecor' | 'shareCounters' | 'sounds' | 'reduceMotion'
 >;
 
 /** The user's settings: their own choices over the Edition's defaults. */
@@ -88,6 +90,7 @@ export function createSettings({
     selfCheck: false,
     seasonalDecor: true,
     shareCounters: true,
+    sounds: true,
     reduceMotion: false,
   };
 
@@ -96,6 +99,7 @@ export function createSettings({
       theme: (await userState.read(userStateRecords.theme)) ?? all.theme,
       fontSize: (await userState.read(userStateRecords.fontSize)) ?? all.fontSize,
       vibration: (await userState.read(userStateRecords.vibration)) ?? all.vibration,
+      sounds: (await userState.read(userStateRecords.sounds)) ?? all.sounds,
       noCounters: (await userState.read(userStateRecords.noCounters)) ?? all.noCounters,
       selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? all.selfCheck,
       seasonalDecor: (await userState.read(userStateRecords.seasonalDecor)) ?? all.seasonalDecor,
@@ -113,6 +117,7 @@ export function createSettings({
           ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
           ...('fontSize' in changes ? userStateRecords.fontSize.change(changes.fontSize) : []),
           ...('vibration' in changes ? userStateRecords.vibration.change(changes.vibration) : []),
+          ...('sounds' in changes ? userStateRecords.sounds.change(changes.sounds) : []),
           ...('noCounters' in changes
             ? userStateRecords.noCounters.change(changes.noCounters)
             : []),

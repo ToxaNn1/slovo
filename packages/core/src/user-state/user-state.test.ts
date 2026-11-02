@@ -109,6 +109,7 @@ describe('openUserState', () => {
       theme: 'dark',
       fontSize: 'L',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,

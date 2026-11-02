@@ -2,11 +2,7 @@ import type { LearningEntry } from '@slovo/core';
 
 import { entryLabelBeside } from '../entries/entry-row-text';
 import { EntryRow } from '../entries/EntryRow';
-import { fill, useEdition } from '../providers/EditionProvider';
-import { SavedCard, SavedCardRows } from './SavedCard';
-
-/** How many of the next Entries the «Вчу» card shows. */
-const NEXT_SHOWN = 3;
+import { useEdition } from '../providers/EditionProvider';
 
 /** When the Entry is next due for Review, in the Edition's words: «сьогодні», «завтра», «через 3 дні». */
 function useReviewDayText(): (daysUntilReview: number) => string {
@@ -34,40 +30,5 @@ export function LearningRow({ entry, onPress }: { entry: LearningEntry; onPress:
       trailing={entryLabelBeside(strings.history, entry.row, reviewDayText(entry.daysUntilReview))}
       onPress={onPress}
     />
-  );
-}
-
-/**
- * The «Вчу» card of the Saved tab: the count over the next Entries due for
- * Review with their days. A tap opens the list.
- */
-export function LearningCard({
-  entries,
-  onPress,
-}: {
-  /** Every Entry of the list, the next Review first. */
-  entries: readonly LearningEntry[];
-  onPress: () => void;
-}) {
-  const { strings, count } = useEdition();
-  const reviewDayText = useReviewDayText();
-  const { learning } = strings;
-  return (
-    <SavedCard
-      testID="saved-learning"
-      title={learning.title}
-      count={entries.length}
-      accessibilityLabel={fill(learning.cardLabel, {
-        count: count(learning.count, entries.length),
-      })}
-      onPress={onPress}
-    >
-      <SavedCardRows
-        rows={entries.slice(0, NEXT_SHOWN).map(({ row, daysUntilReview }) => ({
-          title: row.title,
-          trailing: reviewDayText(daysUntilReview),
-        }))}
-      />
-    </SavedCard>
   );
 }

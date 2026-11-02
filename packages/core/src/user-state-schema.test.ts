@@ -227,6 +227,7 @@ const storedIn1_0: readonly (readonly [
   ['theme', undefined, 'settings.theme', '"dark"'],
   ['fontSize', undefined, 'settings.fontSize', '"L"'],
   ['vibration', undefined, 'settings.vibration', 'false'],
+  ['sounds', undefined, 'settings.sounds', 'false'],
   ['noCounters', undefined, 'settings.hideStreak', 'true'],
   ['selfCheck', undefined, 'settings.selfCheck', 'true'],
   ['seasonalDecor', undefined, 'settings.seasonalDecor', 'false'],

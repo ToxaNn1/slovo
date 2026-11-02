@@ -2,11 +2,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, space, typeSize } from '../tokens';
+import { minTouchTarget, space, typeRoles, typeSize } from '../tokens';
 
 /**
- * The recent queries of Search, under its empty field: «Очистити» on the
- * right, then one row a query, newest first. A tap on a query runs it again.
+ * The recent queries of Search, under its empty field: «Нещодавно» in small
+ * capitals with «Очистити» on the right, then one row a query, newest first. A tap on a query runs it again.
  */
 export function RecentQueries({
   queries,
@@ -21,18 +21,27 @@ export function RecentQueries({
   const { strings, voice } = useEdition();
   return (
     <View testID="search-recent">
-      <Pressable
-        testID="search-recent-clear"
-        accessibilityRole="button"
-        accessibilityLabel={strings.search.clear}
-        {...voice}
-        onPress={onClear}
-        style={styles.clear}
-      >
-        <Text style={[styles.clearText, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
-          {strings.search.clear}
+      <View style={styles.header}>
+        <Text
+          accessibilityRole="header"
+          {...voice}
+          style={[styles.eyebrow, { color: colors.muted, fontFamily: fontFamilies.word }]}
+        >
+          {strings.search.recent}
         </Text>
-      </Pressable>
+        <Pressable
+          testID="search-recent-clear"
+          accessibilityRole="button"
+          accessibilityLabel={strings.search.clear}
+          {...voice}
+          onPress={onClear}
+          style={styles.clear}
+        >
+          <Text style={[styles.clearText, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+            {strings.search.clear}
+          </Text>
+        </Pressable>
+      </View>
       {queries.map((query, index) => (
         <Pressable
           key={query}
@@ -54,11 +63,26 @@ export function RecentQueries({
   );
 }
 
+const { eyebrow } = typeRoles;
+
 const styles = StyleSheet.create({
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    columnGap: space[3],
+  },
+  eyebrow: {
+    flexShrink: 1,
+    fontSize: eyebrow.size,
+    fontWeight: eyebrow.weight,
+    lineHeight: eyebrow.lineHeight,
+    letterSpacing: eyebrow.letterSpacing,
+    textTransform: eyebrow.textTransform,
+  },
   clear: {
     minHeight: minTouchTarget,
     minWidth: minTouchTarget,
-    alignSelf: 'flex-end',
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
@@ -69,5 +93,5 @@ const styles = StyleSheet.create({
     paddingVertical: space[2],
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  query: { fontSize: typeSize.body + 2 },
+  query: { fontSize: typeSize.recentQuery, fontWeight: '600' },
 });

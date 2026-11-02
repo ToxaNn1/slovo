@@ -4,17 +4,20 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
-import { cardSpace, minTouchTarget, overlineType, space, typeSize } from '../tokens';
+import { cardSpace, entryRow, minTouchTarget, overlineType, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import { useCollectionPaint } from './CollectionCard';
 
 /**
  * A Collection on the Collections screen: a card with its name over its
- * newest Lemmas, and how many Entries it holds on the right. A tap opens the
+ * newest Lemmas, and how many Entries it holds on the right. The cards take
+ * their fill in turn by their place, as the Saved overview's cards do. A tap opens the
  * Collection; swipe actions slide out inside the card and are VoiceOver
  * actions too, and the «…» button at the right offers the same actions in a
  * menu. Needs a `GestureHandlerRootView` above it.
  */
 export function CollectionRow({
+  index,
   name,
   count,
   lemmas,
@@ -24,6 +27,8 @@ export function CollectionRow({
   onPress,
   testID,
 }: {
+  /** The row's place among the rows, which picks its fill. */
+  index: number;
   name: string;
   /** The Entries it holds, in the Edition's plural form, e.g. «17 записів». */
   count: string;
@@ -38,16 +43,14 @@ export function CollectionRow({
   onPress: () => void;
   testID: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const { fontFamilies, radii } = useTokens();
   const { voice } = useEdition();
+  const paint = useCollectionPaint(index);
   return (
     <SwipeableRow
       testID={testID}
       actions={actions}
-      containerStyle={[
-        styles.card,
-        { borderColor: colors.line, borderRadius: radii.card, backgroundColor: colors.surface },
-      ]}
+      containerStyle={[styles.filled, { borderRadius: radii.card, backgroundColor: paint.ground }]}
     >
       <View style={styles.line}>
         <Pressable
@@ -59,21 +62,20 @@ export function CollectionRow({
           onPress={onPress}
           style={({ pressed }) => [
             styles.content,
-            { backgroundColor: pressed ? colors.surfaceSunken : colors.surface },
+            { backgroundColor: paint.ground },
+            pressed && styles.pressed,
           ]}
         >
           <View style={styles.titleLine}>
-            <Text style={[styles.name, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
+            <Text style={[styles.name, { color: paint.ink, fontFamily: fontFamilies.ui }]}>
               {name}
             </Text>
-            <Text style={[styles.count, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+            <Text style={[styles.count, { color: paint.ink, fontFamily: fontFamilies.ui }]}>
               {count}
             </Text>
           </View>
           {lemmas.length > 0 && (
-            <Text
-              style={[styles.lemmas, { color: colors.inkSecondary, fontFamily: fontFamilies.word }]}
-            >
+            <Text style={[styles.lemmas, { color: paint.ink, fontFamily: fontFamilies.word }]}>
               {lemmas.join(' · ')}
             </Text>
           )}
@@ -89,7 +91,7 @@ export function CollectionRow({
         >
           <Svg width={20} height={20} viewBox="0 0 20 20">
             {[4, 10, 16].map((cx) => (
-              <Circle key={cx} cx={cx} cy={10} r={1.75} fill={colors.muted} />
+              <Circle key={cx} cx={cx} cy={10} r={1.75} fill={paint.ink} />
             ))}
           </Svg>
         </Pressable>
@@ -243,6 +245,8 @@ export function NewCollectionButton({
 
 const styles = StyleSheet.create({
   card: { borderWidth: 1, overflow: 'hidden' },
+  filled: { overflow: 'hidden' },
+  pressed: { opacity: entryRow.pressedOpacity },
   line: { flexDirection: 'row', alignItems: 'stretch' },
   content: {
     flex: 1,

@@ -25,6 +25,7 @@ const everything: Shown = {
   calligraphicLemma: true,
   selfCheck: false,
   selfCheckSetting: true,
+  soundsSetting: true,
   seasonalDecorSetting: true,
   reduceMotionSetting: true,
   shareCountersSetting: true,
@@ -82,6 +83,7 @@ describe('what the reader is shown', () => {
       'no «Сезонний декор» switch with Seasonal Decor off',
       { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },
     ],
+    ['no «Звуки» switch with the sounds off', { off: ['sounds'], shown: { soundsSetting: false } }],
     [
       'no «Менше руху» switch with its Feature Switch off',
       { off: ['reduceMotion'], shown: { reduceMotionSetting: false } },
