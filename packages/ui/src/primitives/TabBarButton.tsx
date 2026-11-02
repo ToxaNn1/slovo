@@ -74,7 +74,7 @@ export function TabBarButton({
       : { opacity: 1, transform: [{ skewX: tabBar.indicator.skewX }, { scaleX: shown.value }] },
   );
 
-  const color = selected ? tokens.colors.ink : tokens.colors.inactiveTab;
+  const color = selected ? tokens.colors.ink : tokens.colors.muted;
   return (
     <Pressable
       onPress={onPress}

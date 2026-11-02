@@ -24,9 +24,9 @@ export interface DesignTokens {
 }
 
 /**
- * The Core's neutral tokens, used for every group an Edition leaves out. The
- * design leaves some Core values open (its gaps #21 and #22); those marked
- * "derived" follow the nearest named value.
+ * The Core's neutral tokens, used for every group an Edition leaves out: greys
+ * alone. A right answer and the heart take the accent, a wrong answer the ink,
+ * and a destructive action a grey that carries white text in both Themes.
  */
 export const coreTokens: DesignTokens = {
   colors: {
@@ -37,16 +37,12 @@ export const coreTokens: DesignTokens = {
       muted: '#6A6A6A',
       accent: '#161616',
       decor: '#D6D6D2',
-      inkSecondary: '#3D3D3D',
       surfaceSunken: '#EFEFEC',
-      track: '#E8E8E5', // derived
       line: 'rgba(0, 0, 0, 0.1)',
-      // The design's #8A8A8A is only 3.1:1 on the background; muted keeps AA.
-      inactiveTab: '#6A6A6A',
-      correct: '#2F6B45',
-      wrong: '#A3271F',
-      heart: '#C8372D',
-      destructive: '#A3271F',
+      correct: '#161616',
+      wrong: '#161616',
+      heart: '#161616',
+      destructive: '#6A6A6A',
       tile: '#FFFFFF',
       tileEdge: '#D6D6D2',
       accentEdge: '#000000',
@@ -62,15 +58,12 @@ export const coreTokens: DesignTokens = {
       muted: '#9C9C9C',
       accent: '#F2F2F0',
       decor: '#3A3A3A',
-      inkSecondary: '#D0D0CC', // derived
-      surfaceSunken: '#262626', // derived
-      track: '#262626', // derived
-      line: 'rgba(255, 255, 255, 0.12)', // derived
-      inactiveTab: '#8A8A8A', // derived
-      correct: '#8FC79F',
-      wrong: '#E8877D', // derived, like correct, to read on the dark surfaces
-      heart: '#C8372D',
-      destructive: '#A3271F',
+      surfaceSunken: '#262626',
+      line: 'rgba(255, 255, 255, 0.12)',
+      correct: '#F2F2F0',
+      wrong: '#F2F2F0',
+      heart: '#F2F2F0',
+      destructive: '#6A6A6A',
       tile: '#262626',
       tileEdge: '#000000',
       accentEdge: '#9C9C9C',

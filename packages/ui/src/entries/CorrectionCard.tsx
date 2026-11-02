@@ -97,7 +97,7 @@ export function CorrectionCardBody({
                   fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') }),
                 )}
                 {...voice}
-                style={[styles.body, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
+                style={[styles.body, { color: colors.ink, fontFamily: fontFamilies.ui }]}
               >
                 {fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') })}
               </Text>

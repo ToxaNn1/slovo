@@ -366,11 +366,9 @@ describe('app config', () => {
 
   it('passes on the family of whichever font the Edition names for the Word of the Day', () => {
     const config = appConfig(
-      repoWithEdition(
-        (edition) => {
-          edition['wordOfTheDayFont'] = 'Onest-Bold.ttf';
-        },
-      ),
+      repoWithEdition((edition) => {
+        edition['wordOfTheDayFont'] = 'Onest-Bold.ttf';
+      }),
     );
 
     expect(config.extra?.['edition']).toMatchObject({ wordOfTheDayFontFamily: 'Onest' });

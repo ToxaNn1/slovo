@@ -126,10 +126,7 @@ export function IdiomCardBody({
               <Text
                 accessibilityLabel={withoutStress(card.etymology)}
                 {...voice}
-                style={[
-                  styles.etymology,
-                  { color: colors.inkSecondary, fontFamily: fontFamilies.ui },
-                ]}
+                style={[styles.etymology, { color: colors.ink, fontFamily: fontFamilies.ui }]}
               >
                 {card.etymology}
               </Text>

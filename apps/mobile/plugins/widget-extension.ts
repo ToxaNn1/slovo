@@ -25,8 +25,13 @@ export interface WidgetEdition {
   readonly exampleSnapshot: string;
 }
 
-/** The colour tokens the widget draws with. */
+/** The colours the widget draws with; on the colour tokens its secondary ink is the ink. */
 const WIDGET_COLORS = ['background', 'ink', 'inkSecondary', 'accent'] as const;
+
+/** The widget's colours in one appearance of the colour tokens. */
+function widgetColors({ background, ink, accent }: DesignTokens['colors']['light']) {
+  return { background, ink, inkSecondary: ink, accent };
+}
 
 /**
  * The opacity of the secondary ink on Пергамент and Синій: the widget palette
@@ -56,11 +61,9 @@ function fixedBackgrounds({ config, tokens }: WidgetEdition) {
     inkSecondary: withOpacity(text, SECONDARY_INK_OPACITY),
     accent: text,
   });
-  const oneAppearance = (colors: DesignTokens['colors']['light']) =>
-    Object.fromEntries(WIDGET_COLORS.map((name) => [name, colors[name]]));
   return {
-    Light: oneAppearance(light),
-    Dark: oneAppearance(dark),
+    Light: widgetColors(light),
+    Dark: widgetColors(dark),
     Parchment: fromPalette(parchment),
     Blue: fromPalette(blue),
   };
@@ -140,8 +143,12 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
       `${assets}/${name}.colorset/Contents.json`,
       asJson({
         colors: [
-          { idiom: 'universal', color: catalogColor(tokens.colors.light[name]) },
-          { idiom: 'universal', appearances: DARK, color: catalogColor(tokens.colors.dark[name]) },
+          { idiom: 'universal', color: catalogColor(widgetColors(tokens.colors.light)[name]) },
+          {
+            idiom: 'universal',
+            appearances: DARK,
+            color: catalogColor(widgetColors(tokens.colors.dark)[name]),
+          },
         ],
         info: ASSET_INFO,
       }),

@@ -19,16 +19,10 @@ export const ColorTokensSchema = z.strictObject({
   accent: ColorSchema,
   /** Decor only; never carries text. */
   decor: ColorSchema,
-  /** Examples, synonym values, row subtitles. */
-  inkSecondary: ColorSchema,
   /** Category chips, the example-pair box, skeleton blocks. */
   surfaceSunken: ColorSchema,
-  /** The track of a segmented control or a progress bar. */
-  track: ColorSchema,
   /** Card borders, list separators, the tab bar's top line. */
   line: ColorSchema,
-  /** Tab bar items that are not selected. */
-  inactiveTab: ColorSchema,
   /**
    * A correct answer, as text in this scheme («Правильно!») and the ✓ of a
    * Correction's example pair; the light scheme's also fills the right option

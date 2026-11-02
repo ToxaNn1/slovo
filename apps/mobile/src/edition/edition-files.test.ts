@@ -1483,7 +1483,7 @@ describe('Edition Decor', () => {
   });
 
   /** The text colour roles drawn straight on the screen background. */
-  const textRoles = ['ink', 'muted', 'inkSecondary', 'accent'] as const;
+  const textRoles = ['ink', 'muted', 'accent'] as const;
 
   describe.each(withDecor.filter((edition) => has(edition, 'tokens')))(
     'the %s Edition',
@@ -1566,17 +1566,13 @@ const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof Colo
   ['ink', 'background'],
   ['muted', 'background'],
   ['accent', 'background'],
-  ['inactiveTab', 'background'],
   // The Word card and the Correction card.
   ['ink', 'surface'],
   ['muted', 'surface'],
-  ['inkSecondary', 'surface'],
   ['accent', 'surface'],
   // The Category chip and the Correction's example pair.
   ['ink', 'surfaceSunken'],
   ['muted', 'surfaceSunken'],
-  // The segmented control.
-  ['ink', 'track'],
   // Inverted: the Word of the Day badge, the error button, the swipe hint.
   ['background', 'accent'],
   ['background', 'ink'],
@@ -1619,7 +1615,7 @@ describe('WCAG AA contrast of the 0.3 Favorites screens', () => {
       'keeps the Favorites card, drawn in the other scheme on the ink fill, at 4.5:1 or more in %s',
       (scheme) => {
         const fill = parseColor(colors[scheme].ink);
-        for (const text of ['ink', 'muted', 'inkSecondary', 'accent'] as const) {
+        for (const text of ['ink', 'muted', 'accent'] as const) {
           expect(
             contrast(parseColor(colors[otherScheme[scheme]][text]), fill),
             `the other scheme's ${text} on ink`,
