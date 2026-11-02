@@ -512,6 +512,29 @@ export const iconButton = { side: 44, icon: 20 } as const;
  */
 export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVertical: 30 } as const;
 
+/**
+ * The Daily Crossword, from the design: a cell's side and the gap between
+ * cells (five of them fit the SE's width with the screen's margins), the
+ * selected cell's ink ring and a cell's letter size; the clue bar's text
+ * size and padding; the keyboard's key height, corner radius and letter
+ * size, the gaps between keys and between rows, and how much wider the
+ * delete key is than a letter key.
+ */
+export const crosswordLayout = {
+  cell: 62,
+  cellGap: 8,
+  ring: 3,
+  letterSize: 26,
+  clueSize: 15,
+  cluePadding: 12,
+  keyHeight: 46,
+  keyRadius: 9,
+  keySize: 15,
+  keyGap: 4,
+  keyRowGap: 7,
+  eraseKeyFlex: 1.5,
+} as const;
+
 /** The sample notification of the onboarding: its app icon (side and corner radius) and the gap between its lines. */
 export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as const;
 
