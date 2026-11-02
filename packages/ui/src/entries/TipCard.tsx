@@ -5,7 +5,7 @@ import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
-import { space, typeSize } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { NonStandardForm, StandardForm } from './CorrectionCard';
@@ -33,7 +33,8 @@ export function TipCardBody({
   /** Self-check: only the title, its chip and the non-standard form. */
   concealed: boolean;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice } = edition;
@@ -53,10 +54,7 @@ export function TipCardBody({
         {...turnActions}
         style={styles.header}
       >
-        <Text
-          testID="tip-title"
-          style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
-        >
+        <Text testID="tip-title" style={[typeStyle('tipTitle', tokens), { color: colors.ink }]}>
           {card.title}
         </Text>
         <View style={styles.chip}>
@@ -91,7 +89,7 @@ export function TipCardBody({
             testID="tip-explanation"
             accessibilityLabel={withoutStress(shown.card.explanation)}
             {...voice}
-            style={[styles.explanation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+            style={[typeStyle('explanation', tokens), { color: colors.ink }]}
           >
             {shown.card.explanation}
           </Text>
@@ -102,7 +100,7 @@ export function TipCardBody({
             <Text
               testID="tip-source"
               {...voice}
-              style={[styles.source, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('meta', tokens), { color: colors.muted }]}
             >
               {fill(edition.strings.correctionCard.source, {
                 source: shown.card.sourceNames.join(SOURCE_SEPARATOR),
@@ -120,12 +118,5 @@ const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },
-  title: {
-    fontSize: typeSize.sheetTitle,
-    lineHeight: typeSize.sheetTitle * 1.2,
-    fontWeight: '500',
-  },
   chip: { flexDirection: 'row' },
-  explanation: { fontSize: typeSize.explanation, lineHeight: typeSize.explanation * 1.55 },
-  source: { fontSize: typeSize.meta, lineHeight: typeSize.meta * 1.4 },
 });

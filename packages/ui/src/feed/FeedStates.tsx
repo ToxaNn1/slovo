@@ -18,7 +18,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useDecor } from '../decor/DecorProvider';
 import { EmptyStateIllustration, OrnamentDivider } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, typeSize, wordCardSide } from '../tokens';
+import { minTouchTarget, space, typeStyle, wordCardSide } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
@@ -119,7 +119,8 @@ export function FeedLoading({
   /** The Mascot waiting, over the skeleton card, if the app shows it. */
   mascot?: ReactNode;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
   const pulse = useSharedValue(1);
@@ -168,7 +169,7 @@ export function FeedLoading({
       </View>
       <Text
         {...voice}
-        style={[styles.loadingText, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('sub', tokens), styles.loadingText, { color: colors.muted }]}
       >
         {text}
       </Text>
@@ -203,7 +204,8 @@ export function FeedError({
   mascot?: ReactNode;
   testID?: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { voice } = useEdition();
   return (
     <View testID={testID} style={styles.error}>
@@ -216,10 +218,12 @@ export function FeedError({
         accessibilityLabel={`${title}. ${message}`}
         {...voice}
       >
-        <Text style={[styles.errorTitle, { color: colors.ink, fontFamily: fontFamilies.word }]}>
+        <Text style={[typeStyle('errorTitle', tokens), styles.center, { color: colors.ink }]}>
           {title}
         </Text>
-        <Text style={[styles.errorMessage, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+        <Text
+          style={[typeStyle('errorText', tokens), styles.errorMessage, { color: colors.muted }]}
+        >
           {message}
         </Text>
       </View>
@@ -233,9 +237,7 @@ export function FeedError({
           { backgroundColor: colors.ink, borderRadius: radii.button, opacity: pressed ? 0.8 : 1 },
         ]}
       >
-        <Text
-          style={[styles.buttonText, { color: colors.background, fontFamily: fontFamilies.ui }]}
-        >
+        <Text style={[typeStyle('buttonLabel', tokens), { color: colors.background }]}>
           {retry}
         </Text>
       </Pressable>
@@ -259,7 +261,8 @@ export function SwipeHint({
   onShown: () => void;
   onDismiss: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
   const opacity = useSharedValue(0);
@@ -289,9 +292,7 @@ export function SwipeHint({
         <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
           <Path d="M12 19V5M6 11l6-6 6 6" stroke={colors.background} strokeWidth={2} />
         </Svg>
-        <Text style={[styles.hintText, { color: colors.background, fontFamily: fontFamilies.ui }]}>
-          {text}
-        </Text>
+        <Text style={[typeStyle('sub', tokens), { color: colors.background }]}>{text}</Text>
       </Pressable>
     </Animated.View>
   );
@@ -312,7 +313,7 @@ const styles = StyleSheet.create({
   skeletonLines: { gap: space[4] + space[1] },
   print: { opacity: 0.18 },
   stitched: { position: 'absolute', top: 0, left: 0, bottom: 0, overflow: 'hidden' },
-  loadingText: { fontSize: typeSize.body, fontWeight: '500', textAlign: 'center' },
+  loadingText: { textAlign: 'center' },
   error: {
     flex: 1,
     alignItems: 'center',
@@ -320,18 +321,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[8] + space[2],
   },
   illustration: { marginBottom: space[6] },
-  errorTitle: {
-    fontSize: typeSize.emptyStateTitle,
-    lineHeight: typeSize.emptyStateTitle * 1.2,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  errorMessage: {
-    marginTop: space[3],
-    fontSize: typeSize.body,
-    lineHeight: typeSize.body * 1.6,
-    textAlign: 'center',
-  },
+  center: { textAlign: 'center' },
+  errorMessage: { marginTop: space[3], textAlign: 'center' },
   button: {
     alignSelf: 'stretch',
     minHeight: 54,
@@ -339,7 +330,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  buttonText: { fontSize: typeSize.button, fontWeight: '700' },
   hintRow: { position: 'absolute', left: 0, right: 0, bottom: space[4], alignItems: 'center' },
   hint: {
     minHeight: minTouchTarget,
@@ -349,5 +339,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[5],
     borderRadius: minTouchTarget / 2,
   },
-  hintText: { fontSize: typeSize.body, fontWeight: '500' },
 });

@@ -7,7 +7,7 @@ import { ActiveDaysCalendar } from './ActiveDaysCalendar';
 import { knownLine } from './known-line';
 import { OrnamentBand } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { space, STACK_AT_FONT_SCALE, typeSize } from '../tokens';
+import { space, STACK_AT_FONT_SCALE, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** How far the largest text sizes of iOS may scale the numbers, so the big Streak fits beside its words. */
@@ -28,7 +28,8 @@ function Count({
   /** What VoiceOver reads for it, when the number and its words don't say it well. */
   spoken?: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     // VoiceOver reads the number and its words as one element, in the order they show.
@@ -41,13 +42,11 @@ function Count({
     >
       <Text
         maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
-        style={[styles.countValue, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[typeStyle('statsCount', tokens), { color: colors.ink }]}
       >
         {value}
       </Text>
-      <Text style={[styles.countLabel, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
-        {label}
-      </Text>
+      <Text style={[typeStyle('statsNote', tokens), { color: colors.muted }]}>{label}</Text>
     </View>
   );
 }
@@ -82,7 +81,8 @@ export function StatsSheet({
   calendar?: readonly CalendarMonth[];
   onClose: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice, count } = useEdition();
   const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
   const words = strings.stats;
@@ -104,19 +104,15 @@ export function StatsSheet({
           >
             <Text
               maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
-              style={[styles.streakValue, { color: colors.ink, fontFamily: fontFamilies.word }]}
+              style={[typeStyle('statsStreak', tokens), { color: colors.ink }]}
             >
               {stats.streak}
             </Text>
             <View style={stacked ? styles.streakWordsStacked : styles.streakWords}>
-              <Text
-                style={[styles.streakLabel, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-              >
+              <Text style={[typeStyle('statsStreakLabel', tokens), { color: colors.ink }]}>
                 {streak}
               </Text>
-              <Text
-                style={[styles.bestStreak, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-              >
+              <Text style={[typeStyle('statsNote', tokens), { color: colors.muted }]}>
                 {bestStreak}
               </Text>
             </View>
@@ -162,14 +158,14 @@ export function StatsSheet({
             <Text
               testID="stats-known"
               {...voice}
-              style={[styles.knowledgeRow, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('statsLine', tokens), { color: colors.ink }]}
             >
               {knownLine(words, stats.known, knowledge, count)}
             </Text>
             <Text
               testID="stats-due-today"
               {...voice}
-              style={[styles.knowledgeRow, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('statsLine', tokens), { color: colors.ink }]}
             >
               {fill(words.dueToday, { count: String(stats.dueToday) })}
             </Text>
@@ -190,12 +186,9 @@ const styles = StyleSheet.create({
     gap: space[4],
     marginBottom: space[6],
   },
-  streakValue: { fontSize: typeSize.streak, fontWeight: '500', lineHeight: typeSize.streak * 1.1 },
   streakStacked: { flexDirection: 'column', alignItems: 'flex-start', gap: space[2] },
   streakWords: { flex: 1, gap: space[1] },
   streakWordsStacked: { gap: space[1] },
-  streakLabel: { fontSize: typeSize.explanation, fontWeight: '600' },
-  bestStreak: { fontSize: typeSize.caption },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -203,8 +196,5 @@ const styles = StyleSheet.create({
     marginTop: space[6],
   },
   knowledge: { marginTop: space[6], gap: space[2] },
-  knowledgeRow: { fontSize: typeSize.explanation },
   count: { paddingRight: space[3], gap: space[1] },
-  countValue: { fontSize: typeSize.count, fontWeight: '500' },
-  countLabel: { fontSize: typeSize.caption },
 });

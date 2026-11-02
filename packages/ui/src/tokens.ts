@@ -189,9 +189,153 @@ export const typeRoles = {
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
   // Roles of batch A.
+  /** How many Rounds have passed, in a Game's header when it has no Round limit. */
+  roundPassed: role('word', '800', 13, 13),
+  /** The «−1» that rises from a lost Life. */
+  lifeLost: role('word', '900', 13, 13),
+  /** The label over a Round's prompt, and a Quick Question's title. */
+  roundLabel: role('word', '800', 12, 12, 1.5, 'uppercase'),
+  /** A Round's head: its label and place, such as «НАГОЛОС · 6/10». */
+  roundHead: role('word', '800', 12, 12, 2, 'uppercase'),
+  /** A Round's prompt on its card. */
+  roundPrompt: role('word', '800', 24, 30),
+  /** A Round's option on its tile. */
+  roundOption: role('word', '800', 18, 22),
+  /** The verdict over the Round's answer sheet: right or wrong. */
+  roundVerdict: role('word', '800', 16, 16),
+  /** The right answer on the Round's answer sheet. */
+  roundAnswer: role('word', '500', 30, 39),
+  /** A Round's explanation, and the Definition under its prompt. */
+  roundExplanation: role('ui', '400', 16, 25),
+  /** A letter in a blank of the typed answer. */
+  blankLetter: role('word', '900', 22, 26),
+  /** What the user types as a Round's answer. */
+  typedAnswer: role('word', '800', 20, 24),
+  /** The number of a step of the widget guide. */
+  guideNumber: role('ui', '700', 15, 15),
+  /** The title of a step of the widget guide. */
+  guideTitle: role('ui', '700', 17, 20),
+  /** The Lemma on a widget of the widget guide's drawing. */
+  widgetLemma: role('word', '500', 24, 29),
+  /** The short line under the Lemma on the drawing's medium widget. */
+  widgetLine: role('word', '500', 12, 15),
+  /** An Idiom's «Походження». */
+  idiomEtymology: role('ui', '400', 14, 20),
+  /** The name of a hidden category on the Hidden screen. */
+  hiddenName: role('ui', '700', 15, 18),
+  /** The count beside a Collection's title. */
+  collectionCount: role('word', '500', 22, 22),
+  /** A recent query of Search. */
+  recentQuery: role('ui', '600', 16, 19),
+  /** The text button that clears the recent queries of Search. */
+  recentClear: role('ui', '600', 15, 18),
+  /** The text button that clears the history of the Saved screen. */
+  historyClear: role('ui', '600', 17, 20),
+  /** The roulette's Lemma in the mood sheet. */
+  rouletteLemma: role('word', '500', 28, 34),
+  /** The line on a solved Daily Crossword. */
+  crosswordSolved: role('word', '500', 28, 32),
+  /** A segment's label in a segmented control. */
+  segment: role('ui', '700', 13, 16),
   // Roles of batch B.
+  /** The part of speech beside the Lemma on a Word card. */
+  partOfSpeech: role('ui', '600', 15, 15),
+  /** A Word named as a link inside a line of reading text, such as a Synonym Row's dominant. */
+  linkWord: role('word', '800', 15, 21),
+  /** An accent text button's label, such as a Word card's "more". */
+  textLink: role('ui', '700', 15, 15),
+  /** The text under a section heading of a card: the Word History, the etymology. */
+  sectionText: role('ui', '400', 15, 22),
+  /** A non-standard form a Word card links to a Correction, in italics. */
+  oftenSaidForm: role('word', '400', 14, 18),
+  /** A Collection's name on its row of the Collections screen. */
+  collectionRowName: role('ui', '700', 17, 20),
+  /** How many Entries a Collection holds, beside its name on its row. */
+  collectionRowCount: role('ui', '500', 14, 17),
+  /** A Collection's newest Lemmas on its row. */
+  collectionLemmas: role('word', '400', 22, 29),
+  /** A Synonym Row member's shade note, in italics after it. */
+  shadeNote: role('ui', '400', 13, 17),
+  /** `Lemma, hero`: the onboarding welcome's Lemma. */
+  heroLemma: role('word', '900', 76, 76),
+  /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
+  quietAction: role('ui', '700', 14, 17),
   // Roles of batch C.
+  /** The Game Review's title. */
+  reviewTitle: role('word', '800', 15, 15),
+  /** The ✓ or ✗ on a Round's mark in the Game Review. */
+  reviewMark: role('word', '900', 13, 13),
+  /** A Round's Lemma in the Game Review. */
+  reviewWord: role('ui', '700', 15, 17),
+  /** The line under a Round's Lemma in the Game Review: what was picked. */
+  reviewPicked: role('ui', '500', 12, 14),
+  /** A label over a part of an expanded Round, such as the standard form. */
+  reviewHeading: role('ui', '700', 13, 17),
+  /** The text of an expanded Round in the Game Review. */
+  reviewText: role('ui', '400', 15, 22),
+  /** The standard form of an expanded Round's Correction. */
+  reviewForm: role('ui', '500', 15, 22),
+  /** The big Streak at the top of the stats sheet. */
+  statsStreak: role('word', '500', 64, 70),
+  /** The words beside the big Streak of the stats sheet. */
+  statsStreakLabel: role('ui', '600', 16, 20),
+  /** A count's number on the stats sheet's grid. */
+  statsCount: role('word', '500', 28, 34),
+  /** The words under a count of the stats sheet, and the Best Streak. */
+  statsNote: role('ui', '400', 14, 18),
+  /** A line of the stats sheet's Known and due counts. */
+  statsLine: role('ui', '400', 16, 22),
+  /** The title of the Feed's error state. */
+  errorTitle: role('word', '500', 28, 34),
+  /** What went wrong, under the title of the Feed's error state. */
+  errorText: role('ui', '400', 15, 24),
+  /** A Tip's title. */
+  tipTitle: role('word', '900', 22, 25),
+  /** What leads a list row's Lemma, such as a Collection's name, in the Lemma's size. */
+  listLeading: role('ui', '500', 17, 20),
+  /** The trailing text of a list row, such as when it was saved. */
+  rowTrailing: role('ui', '700', 12, 12),
   // Roles of batch D.
+  /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
+  formLabel: role('ui', '600', 12, 12, 0.5),
+  /** A Correction's non-standard form, struck through. */
+  nonStandardForm: role('word', '800', 24, 26),
+  /** A Correction's explanation. */
+  explanation: role('ui', '400', 15, 22),
+  /** The Entry's Lemma over a sheet, such as the Collection sheet. */
+  sheetLemma: role('word', '600', 20, 24),
+  /** A text button: a sheet's «+ Нова колекція», a field's «Створити», «Додати час». */
+  textButton: role('ui', '700', 17, 20),
+  /** What the reader types in a field. */
+  fieldText: role('ui', '500', 16, 20),
+  /** The label over a field, and a small label of a form. */
+  fieldLabel: role('ui', '600', 14, 18),
+  /** What is wrong with a field's value, under it. */
+  fieldProblem: role('ui', '600', 13, 17),
+  /*
+   * The Share Card's roles at the Story's scale; the card scales each by its
+   * width, keeping the role's line height as a share of its size.
+   */
+  /** The giant glyph behind a Share Card's text. */
+  shareGiant: role('word', '900', 320, 320, -8),
+  /** The kicker over a Share Card's headline. */
+  shareKicker: role('word', '800', 10, 13, 1.5, 'uppercase'),
+  /** A Share Card's headline, with room above its glyphs for a Stress mark over a tall vowel. */
+  shareHeadline: role('word', '900', 40, 44, -1),
+  /** A Share Card's reading text. */
+  shareSub: role('ui', '500', 12, 16.8),
+  /** A label of a Share Card: over a form, under a stat. */
+  shareLabel: role('ui', '600', 10, 14),
+  /** A form on a Share Card under its label, such as the non-standard form. */
+  shareForm: role('word', '500', 22, 30.8),
+  /** A number of the Weekly Recap on its Share Card. */
+  shareStat: role('word', '900', 18, 22),
+  /** The watermark at the foot of a Share Card. */
+  shareWatermark: role('ui', '600', 10, 12),
+  /** The Edition's wordmark on the About screen, set wide. */
+  wordmark: role('word', '500', 32, 38, 9.6),
+  /** What SLOVO is, on the About screen's card. */
+  aboutDescription: role('word', '500', 22, 30),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
