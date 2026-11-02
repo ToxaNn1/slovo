@@ -909,5 +909,535 @@
         "width": 2.4
       }
     ]
+  },
+  "categories": {
+    "human-body": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [40, 0],
+            [60, 0],
+            [62, 30],
+            [90, 40],
+            [80, 100],
+            [20, 100],
+            [10, 40],
+            [38, 30]
+          ]
+        },
+        "small": {
+          "kind": "circle",
+          "radius": 50
+        }
+      },
+      "cover": "accent"
+    },
+    "emotions-character": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [50, 100],
+            [0, 35],
+            [20, 0],
+            [50, 20],
+            [80, 0],
+            [100, 35]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 0],
+            [50, 100]
+          ]
+        }
+      },
+      "cover": "ink"
+    },
+    "nature-weather": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 60],
+            [30, 20],
+            [60, 45],
+            [100, 0],
+            [100, 100],
+            [0, 100]
+          ]
+        },
+        "small": {
+          "kind": "circle",
+          "radius": 50
+        }
+      },
+      "cover": "tile"
+    },
+    "household-crafts": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [50, 0],
+            [100, 40],
+            [100, 100],
+            [0, 100],
+            [0, 40]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 0],
+            [100, 100],
+            [0, 100]
+          ]
+        }
+      },
+      "cover": "accent"
+    },
+    "technology": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [40, 0],
+            [60, 0],
+            [60, 20],
+            [100, 20],
+            [100, 80],
+            [60, 80],
+            [60, 100],
+            [40, 100],
+            [40, 80],
+            [0, 80],
+            [0, 20],
+            [40, 20]
+          ]
+        },
+        "small": {
+          "kind": "circle",
+          "radius": 50
+        }
+      },
+      "cover": "ink"
+    },
+    "military": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [50, 0],
+            [60, 30],
+            [100, 40],
+            [65, 60],
+            [75, 100],
+            [50, 75],
+            [25, 100],
+            [35, 60],
+            [0, 40],
+            [40, 30]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 50],
+            [0, 100]
+          ]
+        }
+      },
+      "cover": "tile"
+    },
+    "arts-culture": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 30],
+            [30, 30],
+            [60, 0],
+            [60, 100],
+            [30, 70],
+            [0, 70]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 40],
+            [100, 60],
+            [0, 100]
+          ]
+        }
+      },
+      "cover": "accent"
+    },
+    "history-antiquity": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [20, 0],
+            [80, 0],
+            [100, 100],
+            [0, 100]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 0],
+            [100, 100]
+          ]
+        }
+      },
+      "cover": "ink"
+    },
+    "science": {
+      "pictogram": {
+        "large": {
+          "kind": "circle",
+          "radius": 45
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 0],
+            [100, 100]
+          ]
+        }
+      },
+      "cover": "tile"
+    },
+    "language-speech": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 20],
+            [100, 0],
+            [100, 80],
+            [40, 80],
+            [20, 100],
+            [20, 80],
+            [0, 80]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 50],
+            [0, 100]
+          ]
+        }
+      },
+      "cover": "accent"
+    },
+    "dialects": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 40],
+            [100, 40],
+            [85, 100],
+            [15, 100]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [30, 0],
+            [70, 0],
+            [60, 100],
+            [40, 100]
+          ]
+        }
+      },
+      "cover": "ink"
+    },
+    "witty-insults": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 70],
+            [100, 0],
+            [70, 100]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 30],
+            [100, 100],
+            [0, 70]
+          ]
+        }
+      },
+      "cover": "tile"
+    },
+    "folk-names": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [50, 100],
+            [0, 40],
+            [25, 0],
+            [50, 25],
+            [75, 0],
+            [100, 40]
+          ]
+        },
+        "small": {
+          "kind": "circle",
+          "radius": 50
+        }
+      },
+      "cover": "accent"
+    },
+    "old-crafts": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [30, 0],
+            [70, 0],
+            [70, 70],
+            [40, 100],
+            [10, 85],
+            [30, 60]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 0],
+            [100, 30],
+            [0, 30]
+          ]
+        }
+      },
+      "cover": "ink"
+    },
+    "repressed-words": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [20, 0],
+            [80, 0],
+            [80, 100],
+            [20, 100]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 45],
+            [100, 45],
+            [100, 55],
+            [0, 55]
+          ]
+        }
+      },
+      "cover": "quiet"
+    },
+    "chameleon-words": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [50, 0],
+            [100, 25],
+            [100, 75],
+            [50, 100],
+            [0, 75],
+            [0, 25]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [40, 0],
+            [60, 0],
+            [60, 100],
+            [40, 100]
+          ]
+        }
+      },
+      "cover": "accent"
+    },
+    "conversation": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 0],
+            [100, 70],
+            [40, 70],
+            [20, 100],
+            [20, 70],
+            [0, 70]
+          ]
+        },
+        "small": {
+          "kind": "circle",
+          "radius": 50
+        }
+      },
+      "cover": "accent"
+    },
+    "home": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [50, 0],
+            [100, 45],
+            [85, 45],
+            [85, 100],
+            [15, 100],
+            [15, 45],
+            [0, 45]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 0],
+            [100, 100],
+            [0, 100]
+          ]
+        }
+      },
+      "cover": "sunken"
+    },
+    "work": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 25],
+            [100, 25],
+            [100, 100],
+            [0, 100]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [30, 0],
+            [70, 0],
+            [70, 30],
+            [30, 30]
+          ]
+        }
+      },
+      "cover": "sunken"
+    },
+    "shop": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [10, 30],
+            [90, 30],
+            [80, 100],
+            [20, 100]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 50],
+            [0, 100]
+          ]
+        }
+      },
+      "cover": "sunken"
+    },
+    "transport": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 20],
+            [100, 20],
+            [100, 75],
+            [0, 75]
+          ]
+        },
+        "small": {
+          "kind": "circle",
+          "radius": 50
+        }
+      },
+      "cover": "sunken"
+    },
+    "school": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 15],
+            [50, 0],
+            [100, 15],
+            [100, 100],
+            [50, 85],
+            [0, 100]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 30],
+            [100, 70],
+            [0, 100]
+          ]
+        }
+      },
+      "cover": "sunken"
+    },
+    "leisure-media": {
+      "pictogram": {
+        "large": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 50],
+            [0, 100]
+          ]
+        },
+        "small": {
+          "kind": "polygon",
+          "points": [
+            [0, 0],
+            [100, 0],
+            [100, 100],
+            [0, 100]
+          ]
+        }
+      },
+      "cover": "sunken"
+    }
   }
 }

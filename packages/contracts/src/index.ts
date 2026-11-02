@@ -82,8 +82,14 @@ export {
   type PluralLabel,
 } from './edition-strings';
 export {
+  CATEGORY_COVERS,
+  CategoryArtSchema,
   DecorLayerSchema,
   DecorMotifSchema,
+  PictogramShapeSchema,
+  type CategoryArt,
+  type CategoryCover,
+  type PictogramShape,
   EditionDecorSchema,
   HolidayRuleSchema,
   HolidaySchema,
