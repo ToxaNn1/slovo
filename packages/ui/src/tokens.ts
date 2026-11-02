@@ -262,56 +262,6 @@ export const tabBar = {
   indicator: { width: 34, height: 6, top: -9, skewX: '-24deg' },
 } as const;
 
-/** The tab icons of the design, each a wedge cut in the tab's colour. */
-export const tabIcons = {
-  /** The Feed: two slanted slabs. */
-  home: [
-    [0, 0.1],
-    [1, 0],
-    [1, 0.38],
-    [0, 0.46],
-    [0, 0.56],
-    [1, 0.5],
-    [1, 1],
-    [0, 1],
-  ],
-  /** The Games: a diamond with a diamond hole. */
-  game: [
-    [0.5, 0],
-    [1, 0.5],
-    [0.5, 1],
-    [0, 0.5],
-    [0.22, 0.5],
-    [0.5, 0.78],
-    [0.78, 0.5],
-    [0.5, 0.22],
-    [0.22, 0.5],
-    [0, 0.5],
-  ],
-  /** Saved: a bookmark. */
-  saved: [
-    [0.12, 0.08],
-    [0.88, 0],
-    [0.88, 1],
-    [0.5, 0.74],
-    [0.12, 1],
-  ],
-  /** The profile: a head over shoulders. */
-  settings: [
-    [0.3, 0],
-    [0.7, 0],
-    [0.74, 0.4],
-    [0.5, 0.48],
-    [0.26, 0.4],
-    [0.3, 0],
-    [0, 1],
-    [0.08, 0.58],
-    [0.92, 0.54],
-    [1, 1],
-    [0, 1],
-  ],
-} as const satisfies Record<string, Wedge>;
-
 /** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
 export function withAlpha(color: string, alpha: number): string {
   const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
