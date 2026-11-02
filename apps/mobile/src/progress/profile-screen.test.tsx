@@ -141,7 +141,7 @@ describe('the Profile', () => {
         `Рідкість ${String(rarity)}: 0`,
       );
     }
-    for (const { name } of edition.badges) expect(screen.getByText(name)).toBeOnTheScreen();
+    for (const { name } of edition.badges) expect(screen.getByLabelText(name)).toBeOnTheScreen();
     expect(screen.getByTestId('profile-best-guess-word')).toHaveTextContent(
       `Вгадай слово — ${strings.noGameBest}`,
     );
@@ -182,6 +182,14 @@ describe('the Profile', () => {
 
     expect(screen.getByTestId('profile-level')).toHaveTextContent(/^Рівень 1 · /);
     expect(screen.queryByRole('button', { name: strings.shareLevel })).not.toBeOnTheScreen();
+  });
+
+  it('stamps no Badge at a tap on one not yet earned', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByLabelText(edition.badges[0]?.name ?? ''));
+    expect(screen.queryByTestId('badge-stamp')).not.toBeOnTheScreen();
+    expect(screen.queryByText(strings.badgeStamp.title)).not.toBeOnTheScreen();
   });
 
   it('has no offer to save progress without an Account', async () => {

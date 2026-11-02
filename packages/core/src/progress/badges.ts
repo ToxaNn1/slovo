@@ -17,7 +17,7 @@ export interface BadgeProgress {
 }
 
 /** One Badge as the badges screen shows it: earned on its local date, or not yet, with its progress. */
-export type BadgeState = Pick<Badge, 'id' | 'name' | 'condition'> &
+export type BadgeState = Pick<Badge, 'id' | 'name' | 'symbol' | 'condition'> &
   (
     | { readonly earned: true; readonly date: string }
     | { readonly earned: false; readonly progress: BadgeProgress }
@@ -123,17 +123,17 @@ export async function openBadges({
     const { milestones } = xpLog;
     const state: BadgeState[] = [];
     const due: string[] = [];
-    for (const { id, name, condition } of edition.badges) {
+    for (const { id, name, symbol, condition } of edition.badges) {
       const date = milestones.badges.get(id);
       if (date !== undefined) {
-        state.push({ id, name, condition, earned: true, date });
+        state.push({ id, name, symbol, condition, earned: true, date });
         continue;
       }
       const reach = reachOf(condition, milestones);
       if (reach === undefined) continue;
       if (reach.best >= reach.target) due.push(id);
       const progress = { current: Math.min(reach.current, reach.target), target: reach.target };
-      state.push({ id, name, condition, earned: false, progress });
+      state.push({ id, name, symbol, condition, earned: false, progress });
     }
     return { state, due };
   }

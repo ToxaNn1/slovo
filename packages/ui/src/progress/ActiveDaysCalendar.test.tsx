@@ -1,5 +1,5 @@
 import type { CalendarDay, CalendarMonth, ProgressState } from '@slovo/core';
-import { coreTokens, EditionProvider, StatsSheet } from '@slovo/ui';
+import { coreTokens, EditionProvider, StatsSheet, TokensProvider } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -85,6 +85,10 @@ const october = month(2026, 10, 3, 31, (day): CalendarDay => {
   return { ...base, state: day === 1 || day === 26 ? 'active' : 'missed' };
 });
 
+// A red accent, as in the Ukrainian Edition, so that each day state has its own face.
+const light = { ...coreTokens.colors.light, accent: '#E0301E' };
+const tokens = { ...coreTokens, colors: { ...coreTokens.colors, light } };
+
 async function renderSheet(calendar: readonly CalendarMonth[]) {
   await render(
     <SafeAreaProvider
@@ -93,15 +97,17 @@ async function renderSheet(calendar: readonly CalendarMonth[]) {
         insets: { top: 0, left: 0, right: 0, bottom: 0 },
       }}
     >
-      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <StatsSheet
-          visible
-          stats={progress}
-          knowledge="none"
-          calendar={calendar}
-          onClose={() => undefined}
-        />
-      </EditionProvider>
+      <TokensProvider tokens={tokens} colorScheme="light">
+        <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+          <StatsSheet
+            visible
+            stats={progress}
+            knowledge="none"
+            calendar={calendar}
+            onClose={() => undefined}
+          />
+        </EditionProvider>
+      </TokensProvider>
     </SafeAreaProvider>,
   );
 }
@@ -138,16 +144,15 @@ describe('the Active Days calendar on the stats sheet (spec #832)', () => {
     expect(screen.getByLabelText('31 Oct., to come')).toBeOnTheScreen();
   });
 
-  it('marks an Active Day with a dot in the success colour, never the accent, and a missed one in grey', async () => {
+  it('draws each day as a tile in its state: active red, today ink, missed plain, to come none', async () => {
     await renderSheet([september, october]);
 
-    const { correct, track } = coreTokens.colors.light;
-    expect(screen.getByTestId('stats-calendar-2026-10-01-dot')).toHaveStyle({
-      backgroundColor: correct,
-    });
-    expect(screen.getByTestId('stats-calendar-2026-10-02-dot')).toHaveStyle({
-      backgroundColor: track,
-    });
+    const { accent, ink, tile } = light;
+    const face = (day: number) => screen.getByTestId(`stats-calendar-${date(10, day)}-face`);
+    expect(face(1)).toHaveStyle({ backgroundColor: accent });
+    expect(face(27)).toHaveStyle({ backgroundColor: ink });
+    expect(face(2)).toHaveStyle({ backgroundColor: tile });
+    expect(face(31)).toHaveStyle({ backgroundColor: 'transparent', borderStyle: 'dashed' });
   });
 
   it('reads today as an Active Day once it is one', async () => {

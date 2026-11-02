@@ -55,5 +55,7 @@ describe('the Badges screen', () => {
     });
 
     expect(screen.getByTestId('badge-win-words-status')).toHaveTextContent('Отримано 13 жовтня');
+    expect(screen.getByTestId('badge-win-words-mark-symbol')).toHaveTextContent('АЯ');
+    expect(screen.queryByTestId('badge-streak-3-mark-symbol')).toBeNull();
   });
 });
