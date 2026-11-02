@@ -16,7 +16,7 @@ import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
-import { OutlinedChip } from '../primitives/OutlinedChip';
+import { LabelChip } from '../primitives/LabelChip';
 import { blockGap, minTouchTarget, space, typeSize, wordCardControls } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';
@@ -131,7 +131,7 @@ export function WordCardBody({
             </Text>
             {!concealed &&
               card.registers.map((register) => (
-                <OutlinedChip
+                <LabelChip
                   key={register}
                   testID={`word-register-${register}`}
                   text={registerText(strings, register, card.region, 'short')}
