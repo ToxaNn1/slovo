@@ -1,10 +1,5 @@
 import type { EntryFeedCard } from '@slovo/core';
-import {
-  EditionProvider,
-  EntryCard,
-  KnowledgeButtons,
-  VerticalPager,
-} from '@slovo/ui';
+import { EditionProvider, EntryCard, KnowledgeButtons, VerticalPager } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
@@ -112,7 +107,6 @@ const TURN_LABELS = { next: 'Next page', previous: 'Previous page' };
 /** How long a page turn's motion takes (ADR 0055). */
 const SWIPE_MS = 300;
 
-
 async function renderFeed(
   on: boolean,
   cards: readonly EntryFeedCard[] = CARDS,
@@ -120,20 +114,20 @@ async function renderFeed(
 ) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <VerticalPager
-          testID="pager"
-          items={cards}
-          initialIndex={0}
-          onIndexChange={jest.fn()}
-          renderPage={(card) => (
-            <EntryCard
-              card={card}
-              selfCheck={on}
-              actions={<KnowledgeButtons entryKind={card.kind} mark={undefined} onTap={onMark} />}
-            />
-          )}
-          turnActionLabels={TURN_LABELS}
-        />
+      <VerticalPager
+        testID="pager"
+        items={cards}
+        initialIndex={0}
+        onIndexChange={jest.fn()}
+        renderPage={(card) => (
+          <EntryCard
+            card={card}
+            selfCheck={on}
+            actions={<KnowledgeButtons entryKind={card.kind} mark={undefined} onTap={onMark} />}
+          />
+        )}
+        turnActionLabels={TURN_LABELS}
+      />
     </EditionProvider>,
   );
   await fireEvent(screen.getByTestId('pager'), 'layout', {

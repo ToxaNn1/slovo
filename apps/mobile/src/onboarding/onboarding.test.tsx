@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  loadEdition,
-  openComposition,
-  type Composition,
-  type Edition,
-} from '@slovo/core';
+import { loadEdition, openComposition, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, TokensProvider } from '@slovo/ui';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
@@ -24,7 +19,6 @@ jest.mock('expo-constants', () => ({
 }));
 
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
-
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -81,7 +75,7 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
           <TokensProvider tokens={editionTokens} colorScheme="light">
             <ShellProvider shell={shell}>
               <EditionProvider edition={edition} strings={editionStrings}>
-                  <Onboarding />
+                <Onboarding />
               </EditionProvider>
             </ShellProvider>
           </TokensProvider>

@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  loadEdition,
-  openComposition,
-  systemRandom,
-  type Composition,
-} from '@slovo/core';
+import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
@@ -35,7 +30,6 @@ let userState: Awaited<ReturnType<typeof seedUserState>>;
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
-
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -117,7 +111,7 @@ async function renderApp() {
           <ShellProvider shell={shell}>
             <EditionProvider edition={edition} strings={editionStrings}>
               <SettingsProvider>
-                  <Slot />
+                <Slot />
               </SettingsProvider>
             </EditionProvider>
           </ShellProvider>

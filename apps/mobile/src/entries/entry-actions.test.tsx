@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { beforeEach, describe, expect, it } from '@jest/globals';
 import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import {
   loadEdition,
@@ -150,7 +150,6 @@ const tip: Tip = {
   retired: false,
 };
 
-
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
@@ -216,11 +215,11 @@ async function renderCard(entryId: string): Promise<AnyEntryCard> {
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell()}>
         <EditionProvider edition={edition} strings={editionStrings}>
-            <SettingsProvider>
-              <UndoToastProvider>
-                <EntryCard card={card} actions={<EntryActions card={card} />} />
-              </UndoToastProvider>
-            </SettingsProvider>
+          <SettingsProvider>
+            <UndoToastProvider>
+              <EntryCard card={card} actions={<EntryActions card={card} />} />
+            </UndoToastProvider>
+          </SettingsProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,
@@ -293,11 +292,11 @@ describe.each([
       <SafeAreaProvider initialMetrics={metrics}>
         <ShellProvider shell={shell()}>
           <EditionProvider edition={edition} strings={editionStrings}>
-              <SettingsProvider>
-                <UndoToastProvider>
-                  <EntryCard card={card} actions={<EntryActions card={card} />} selfCheck />
-                </UndoToastProvider>
-              </SettingsProvider>
+            <SettingsProvider>
+              <UndoToastProvider>
+                <EntryCard card={card} actions={<EntryActions card={card} />} selfCheck />
+              </UndoToastProvider>
+            </SettingsProvider>
           </EditionProvider>
         </ShellProvider>
       </SafeAreaProvider>,

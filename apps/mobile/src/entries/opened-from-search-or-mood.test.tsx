@@ -1,11 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  loadEdition,
-  openComposition,
-  type Composition,
-  type Edition,
-} from '@slovo/core';
+import { loadEdition, openComposition, type Composition, type Edition } from '@slovo/core';
 import {
   createMemoryContentPort,
   readFact,
@@ -49,7 +44,6 @@ const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Eu
 
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
-
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -130,9 +124,9 @@ async function renderApp(url: string) {
           <TokensProvider tokens={editionTokens} colorScheme="light">
             <ShellProvider shell={shell()}>
               <EditionProvider edition={edition} strings={editionStrings}>
-                  <SettingsProvider>
-                    <Slot />
-                  </SettingsProvider>
+                <SettingsProvider>
+                  <Slot />
+                </SettingsProvider>
               </EditionProvider>
             </ShellProvider>
           </TokensProvider>

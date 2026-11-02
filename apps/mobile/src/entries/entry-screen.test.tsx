@@ -30,7 +30,6 @@ jest.mock('./entry-actions', () => ({
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(activeEditionFiles.config);
 
-
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
@@ -106,9 +105,9 @@ async function renderEntry(entryId: string) {
           <TokensProvider tokens={editionTokens} colorScheme="light">
             <ShellProvider shell={shell}>
               <EditionProvider edition={edition} strings={editionStrings}>
-                  <SettingsProvider>
-                    <Slot />
-                  </SettingsProvider>
+                <SettingsProvider>
+                  <Slot />
+                </SettingsProvider>
               </EditionProvider>
             </ShellProvider>
           </TokensProvider>

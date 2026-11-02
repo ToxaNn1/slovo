@@ -38,7 +38,6 @@ const correction: EntryRowModel = {
   correctionType: 'calque',
 };
 
-
 /** The Feed's pages: the Community Word card, then the next Entry's card behind it. */
 const PAGES = ['communityWord', 'next'] as const;
 
@@ -46,18 +45,18 @@ async function renderFeed(row: EntryRowModel | undefined, adds: number) {
   const onOpen = jest.fn();
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <VerticalPager
-          testID="pager"
-          items={PAGES}
-          onIndexChange={jest.fn()}
-          renderPage={(page) =>
-            page === 'communityWord' ? (
-              <CommunityWordCard row={row} adds={adds} onOpen={onOpen} />
-            ) : (
-              <Text>Next</Text>
-            )
-          }
-        />
+      <VerticalPager
+        testID="pager"
+        items={PAGES}
+        onIndexChange={jest.fn()}
+        renderPage={(page) =>
+          page === 'communityWord' ? (
+            <CommunityWordCard row={row} adds={adds} onOpen={onOpen} />
+          ) : (
+            <Text>Next</Text>
+          )
+        }
+      />
     </EditionProvider>,
   );
   // The pages are drawn once the pager knows its height.

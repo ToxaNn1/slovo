@@ -1,10 +1,5 @@
 import type { WordCardModel } from '@slovo/core';
-import {
-  EditionProvider,
-  KnowledgeButtons,
-  VerticalPager,
-  YesterdayCard,
-} from '@slovo/ui';
+import { EditionProvider, KnowledgeButtons, VerticalPager, YesterdayCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
@@ -47,7 +42,6 @@ const word: WordCardModel = {
   illustration: undefined,
 };
 
-
 /** The Feed's pages: the Yesterday card, then the next Entry's card behind it. */
 const PAGES = ['yesterday', 'next'] as const;
 
@@ -55,25 +49,25 @@ async function renderFeed({ withMarks }: { withMarks: boolean }) {
   const onMark = jest.fn();
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <VerticalPager
-          testID="pager"
-          items={PAGES}
-          onIndexChange={jest.fn()}
-          renderPage={(page) =>
-            page === 'yesterday' ? (
-              <YesterdayCard
-                word={word}
-                marks={
-                  withMarks ? (
-                    <KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />
-                  ) : undefined
-                }
-              />
-            ) : (
-              <Text>Next</Text>
-            )
-          }
-        />
+      <VerticalPager
+        testID="pager"
+        items={PAGES}
+        onIndexChange={jest.fn()}
+        renderPage={(page) =>
+          page === 'yesterday' ? (
+            <YesterdayCard
+              word={word}
+              marks={
+                withMarks ? (
+                  <KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />
+                ) : undefined
+              }
+            />
+          ) : (
+            <Text>Next</Text>
+          )
+        }
+      />
     </EditionProvider>,
   );
   // The pages are drawn once the pager knows its height.

@@ -1,10 +1,4 @@
-import type {
-  CurrentGame,
-  GivenAnswer,
-  PlayedRound,
-  RoundAnswer,
-  RoundBlank,
-} from '@slovo/core';
+import type { CurrentGame, GivenAnswer, PlayedRound, RoundAnswer, RoundBlank } from '@slovo/core';
 import { EditionProvider, GameRound } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
@@ -59,7 +53,6 @@ const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
-
 
 const OPTIONS = ['ardent', 'brittle', 'candid', 'dour'] as const;
 /** The place of the right option. */
@@ -423,7 +416,7 @@ async function renderRound(
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-          <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
+        <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
       </EditionProvider>
     </SafeAreaProvider>,
   );
@@ -437,14 +430,14 @@ function PlainRound({ game }: { game: CurrentGame }) {
   return (
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-          <GameRound
-            game={game}
-            label="Definition"
-            onAnswer={jest.fn()}
-            onNext={jest.fn()}
-            onLeave={jest.fn()}
-            onOpenLetter={jest.fn()}
-          />
+        <GameRound
+          game={game}
+          label="Definition"
+          onAnswer={jest.fn()}
+          onNext={jest.fn()}
+          onLeave={jest.fn()}
+          onOpenLetter={jest.fn()}
+        />
       </EditionProvider>
     </SafeAreaProvider>
   );
@@ -784,15 +777,15 @@ describe('GameRound', () => {
       return (
         <SafeAreaProvider initialMetrics={metrics}>
           <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-              <GameRound
-                game={game}
-                timeLeft={timeLeft}
-                label="Definition"
-                onAnswer={jest.fn()}
-                onNext={jest.fn()}
-                onLeave={jest.fn()}
-                onOpenLetter={jest.fn()}
-              />
+            <GameRound
+              game={game}
+              timeLeft={timeLeft}
+              label="Definition"
+              onAnswer={jest.fn()}
+              onNext={jest.fn()}
+              onLeave={jest.fn()}
+              onOpenLetter={jest.fn()}
+            />
           </EditionProvider>
         </SafeAreaProvider>
       );

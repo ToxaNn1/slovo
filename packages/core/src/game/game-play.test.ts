@@ -7,7 +7,14 @@ import type { Random } from '../ports';
 import { createSubject } from '../subject';
 import { fakeClock, testEdition, testSchedule, word } from '../test-support';
 import { buildGameReview } from './game-review';
-import { GAME_LIVES, LIFE_LOST_DELAY, openGame, type CurrentGame, type Game, type GivenAnswer } from './game';
+import {
+  GAME_LIVES,
+  LIFE_LOST_DELAY,
+  openGame,
+  type CurrentGame,
+  type Game,
+  type GivenAnswer,
+} from './game';
 import type { GameMode, RoundContent, RoundInput, RoundOption } from './game-mode';
 import { GAME_ROUNDS } from './round-plan';
 

@@ -25,14 +25,14 @@ async function renderPager({
   onIndexChange?: (index: number) => void;
 }) {
   const pager = (items: readonly string[]) => (
-      <VerticalPager
-        testID="pager"
-        items={items}
-        initialIndex={initialIndex}
-        onIndexChange={onIndexChange}
-        renderPage={(page) => <TurnablePage page={page} />}
-        turnActionLabels={TURN_LABELS}
-      />
+    <VerticalPager
+      testID="pager"
+      items={items}
+      initialIndex={initialIndex}
+      onIndexChange={onIndexChange}
+      renderPage={(page) => <TurnablePage page={page} />}
+      turnActionLabels={TURN_LABELS}
+    />
   );
   await render(pager(PAGES));
   // The pages are drawn once the pager knows its height.

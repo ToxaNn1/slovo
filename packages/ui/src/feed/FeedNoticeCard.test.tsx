@@ -44,16 +44,15 @@ const strings = testStrings({
 /** The Feed's pages: a Feed Notice's card, then the next Entry's card behind it. */
 const PAGES = ['notice', 'next'] as const;
 
-
 async function renderFeed(notice: ReactNode, onIndexChange: (index: number) => void = jest.fn()) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <VerticalPager
-          testID="pager"
-          items={PAGES}
-          onIndexChange={onIndexChange}
-          renderPage={(page) => (page === 'notice' ? notice : <Text>Next</Text>)}
-        />
+      <VerticalPager
+        testID="pager"
+        items={PAGES}
+        onIndexChange={onIndexChange}
+        renderPage={(page) => (page === 'notice' ? notice : <Text>Next</Text>)}
+      />
     </EditionProvider>,
   );
   // The pages are drawn once the pager knows its height.

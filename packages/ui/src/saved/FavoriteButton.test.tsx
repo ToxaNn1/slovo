@@ -10,8 +10,6 @@ const strings = testStrings({
   favorites: { heart: { add: 'Add to Favorites', remove: 'Remove from Favorites' } },
 });
 
-
-
 /** The heart over Favorites that hold one Entry, or not. */
 function Heart({ saved }: { saved: boolean }) {
   const [inFavorites, setInFavorites] = useState(saved);
@@ -29,7 +27,7 @@ function Heart({ saved }: { saved: boolean }) {
 async function renderHeart(saved = false) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <Heart saved={saved} />
+      <Heart saved={saved} />
     </EditionProvider>,
   );
 }

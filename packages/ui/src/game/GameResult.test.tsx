@@ -28,7 +28,6 @@ const strings = testStrings({
   },
 });
 
-
 /** A victory illustration of three layers, each a square. */
 const layer = { path: 'M0 0h4v4H0z', light: '#000', dark: '#fff' };
 const decor: Decor = {
@@ -62,13 +61,13 @@ async function renderResult() {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <DecorProvider decor={decor}>
-          <GameResult
-            game={won}
-            bestResult={15}
-            onAgain={jest.fn()}
-            onHome={jest.fn()}
-            onOpenEntry={undefined}
-          />
+        <GameResult
+          game={won}
+          bestResult={15}
+          onAgain={jest.fn()}
+          onHome={jest.fn()}
+          onOpenEntry={undefined}
+        />
       </DecorProvider>
     </EditionProvider>,
   );

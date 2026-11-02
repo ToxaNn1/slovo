@@ -4,13 +4,7 @@ import {
   type EntryRowModel,
   type WordFeedCard,
 } from '@slovo/core';
-import {
-  EditionProvider,
-  EntryCard,
-  EntryRow,
-  ShareSheet,
-  VerticalPager,
-} from '@slovo/ui';
+import { EditionProvider, EntryCard, EntryRow, ShareSheet, VerticalPager } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -80,7 +74,6 @@ const row: EntryRowModel = {
   registers: [],
   rarity: 3,
 };
-
 
 /** How long a page turn's motion takes, from the design. */
 const SWIPE_MS = 420;
@@ -166,14 +159,14 @@ describe('The falling Stress', () => {
     const first = 'fi\u0301rst';
     await render(
       inEdition(
-          <VerticalPager
-            testID="pager"
-            items={[wordOf(first), wordOf('se\u0301cond')]}
-            initialIndex={0}
-            onIndexChange={jest.fn()}
-            renderPage={(card) => <EntryCard card={card} stressFalls />}
-            turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
-          />,
+        <VerticalPager
+          testID="pager"
+          items={[wordOf(first), wordOf('se\u0301cond')]}
+          initialIndex={0}
+          onIndexChange={jest.fn()}
+          renderPage={(card) => <EntryCard card={card} stressFalls />}
+          turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
+        />,
       ),
     );
     await fireEvent(screen.getByTestId('pager'), 'layout', {
@@ -208,14 +201,14 @@ describe('The falling Stress', () => {
     const second = 'se\u0301cond';
     await render(
       inEdition(
-          <VerticalPager
-            testID="pager"
-            items={[wordOf('fi\u0301rst'), wordOf(second)]}
-            initialIndex={0}
-            onIndexChange={jest.fn()}
-            renderPage={(card) => <EntryCard card={card} stressFalls />}
-            turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
-          />,
+        <VerticalPager
+          testID="pager"
+          items={[wordOf('fi\u0301rst'), wordOf(second)]}
+          initialIndex={0}
+          onIndexChange={jest.fn()}
+          renderPage={(card) => <EntryCard card={card} stressFalls />}
+          turnActionLabels={{ next: 'Next page', previous: 'Previous page' }}
+        />,
       ),
     );
     await fireEvent(screen.getByTestId('pager'), 'layout', {
