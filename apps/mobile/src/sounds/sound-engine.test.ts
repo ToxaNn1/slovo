@@ -57,13 +57,17 @@ describe('the sound engine', () => {
   });
 
   it('plays nothing, and does not throw, without the audio module', () => {
-    expect(() => createSoundEngine(undefined, sources).play('right')).not.toThrow();
+    expect(() => {
+      createSoundEngine(undefined, sources).play('right');
+    }).not.toThrow();
   });
 
   it('does not throw when a sound fails to load', () => {
     const { audio, played } = mockAudio({ failToLoad: true });
 
-    expect(() => createSoundEngine(audio, sources).play('right')).not.toThrow();
+    expect(() => {
+      createSoundEngine(audio, sources).play('right');
+    }).not.toThrow();
     expect(played).toEqual([]);
   });
 });

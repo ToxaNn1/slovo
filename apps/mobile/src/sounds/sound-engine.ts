@@ -25,10 +25,11 @@ export interface AudioModule {
  * to play is never the reader's problem.
  */
 export function createSoundEngine(
-  audio: AudioModule | undefined,
+  module: AudioModule | undefined,
   sources: Readonly<Partial<Record<InterfaceSound, number>>>,
 ): SoundEngine {
-  if (audio === undefined) return { play: () => undefined };
+  if (module === undefined) return { play: () => undefined };
+  const audio = module;
   const players = new Map<InterfaceSound, SoundPlayer>();
   let modeSet = false;
 
