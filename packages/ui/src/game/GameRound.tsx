@@ -17,15 +17,17 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  interpolateColor,
+  Extrapolation,
+  interpolate,
   ReduceMotion,
+  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Polygon } from 'react-native-svg';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
@@ -33,9 +35,11 @@ import { CardCorners } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Wedge } from '../primitives/Wedge';
 import { Button } from '../primitives/Button';
+import { PressedTile } from '../primitives/PressedTile';
 import {
+  badgeStamp,
   minTouchTarget,
-  onFill,
+  motion,
   overlineType,
   roundLayout,
   roundProgress,
@@ -64,10 +68,33 @@ const LIFE_LOST_MARK = '\u22121';
 const EXIT_SIZE = 16;
 /** The corners of the ✕'s sunken square. */
 const EXIT_RADIUS = 14;
-/** An answer option's least height, from the design (above the 44 pt touch target). */
-const OPTION_HEIGHT = 58;
+/** An answer option's least height and its corners, the board's answer tile. */
+const OPTION_HEIGHT = 84;
+const OPTION_RADIUS = 18;
+/** An option's side padding, the board's. */
+const OPTION_PADDING = 22;
 /** How much an answered Round's other options fade. */
-const DIMMED_OPACITY = 0.45;
+const DIMMED_OPACITY = 0.5;
+/** How far a wrong choice drops. */
+const OPTION_DROP = 8;
+/** How a right option pops, the board's `slPop`: its scale at the start, 60 % and the end. */
+const OPTION_POP = [0.6, 1.12, 1];
+/** The stamp on a right option: a ring of this side and border, this far off the corner, round a tick. */
+const STAMP = { side: 56, border: 4, right: 16, top: 14 };
+const STAMP_TICK = { width: 26, height: 22 };
+/** The stamp lands as the Badge's does (`motion.stamp`). */
+const STAMP_LANDING = {
+  duration: motion.stamp.duration,
+  easing: Easing.bezier(...motion.stamp.easing),
+  reduceMotion: ReduceMotion.Never,
+};
+/** The slash on a wrong choice: its thickness, side inset and turn, drawn in 300 ms, the board's `slSlash`. */
+const SLASH = { thickness: 5, inset: 12, turn: -4 };
+const SLASH_DRAWING = {
+  duration: 300,
+  easing: Easing.out(Easing.ease),
+  reduceMotion: ReduceMotion.Never,
+};
 /** How far the largest text sizes of iOS may scale the smaller text, so it never breaks a word. */
 const TEXT_MAX_FONT_SCALE = 1.5;
 /** The prompt's, an option's and the sheet's answer's sizes, from the design. */
@@ -80,8 +107,6 @@ const SHEET_ANSWER_SIZE = {
 /** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
 const ENDS_IN_PUNCTUATION = /\p{P}$/u;
 
-/** A right answer's option grows to 1.03 as it fills. */
-const RIGHT_SCALE = 1.03;
 /**
  * A lost Life (the design's `slLifeOut`) jumps to 1.6 and −25° in the red and
  * settles back to the silhouette in 600 ms, while «−1» rises 80 pt and fades
@@ -841,13 +866,13 @@ function RoundLabel({ label }: { label: string }) {
 }
 
 /**
- * One option of a Round, 58 pt tall. Once the Round is answered, the right
- * option fills in the correct colour with «Правильно», a wrong choice in the
- * wrong colour with «Ваш вибір», and the others fade; the fills are the light
- * scheme's in both Themes, under white text. The chosen option, if right,
- * grows a little, left out with Reduce Motion; nothing shakes.
- * VoiceOver reads the option with its Stress, then its tag, and the faded ones
- * as dimmed.
+ * One option of a Round, the design's answer tile, 84 pt tall. Once the
+ * Round is answered, the right option turns red, pops and takes the ink
+ * stamp of a tick; a wrong choice sinks, mutes, drops and is struck through
+ * with a red slash; the others fade. Under Reduce Motion nothing pops,
+ * drops or slides: the stamp and the slash appear in place. Nothing shakes.
+ * VoiceOver reads the option with its Stress, then «Правильно» or «Ваш
+ * вибір», and the faded ones as dimmed.
  */
 function AnswerOption({
   option,
@@ -862,99 +887,163 @@ function AnswerOption({
   answer: Pick<PickAnswer, 'chosen' | 'correct'> | undefined;
   onPress: () => void;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
-  const light = useSchemeColors('light');
+  const { colors, fontFamilies } = useTokens();
+  const keyInk = useSchemeColors('light').ink;
   const { strings, voice } = useEdition();
-  const tag =
+  const look =
     answer === undefined
-      ? undefined
+      ? 'rest'
       : place === answer.correct
-        ? { text: strings.game.round.correct, fill: light.correct }
+        ? 'right'
         : place === answer.chosen
-          ? { text: strings.game.round.chosen, fill: light.wrong }
-          : undefined;
-  const dimmed = answer !== undefined && tag === undefined;
-  const right = place === answer?.correct;
-  const chosen = place === answer?.chosen;
+          ? 'wrong'
+          : 'dimmed';
   const reduceMotion = useReduceMotion();
-  /** 0 before the answer, 1 once the option has filled or faded. */
+  /** 0 before the answer, 1 once the option has popped, dropped or faded. */
   const answered = useSharedValue(answer === undefined ? 0 : 1);
-  /** 0 at rest, 1 grown: a right answer's option. */
-  const grown = useSharedValue(0);
+  /** 0 before the answer, 1 once the stamp has landed or the slash is drawn. */
+  const marked = useSharedValue(answer === undefined ? 0 : 1);
   // Whether the option showed an answer before, so only the answer given now moves.
   const shownAnswered = useRef(answer !== undefined);
 
   useEffect(() => {
-    if (answer === undefined || shownAnswered.current) return;
+    if (look === 'rest' || shownAnswered.current) return;
     shownAnswered.current = true;
-    answered.value = withTiming(1, right ? RIGHT_FILL : WRONG_FILL);
-    if (chosen && right && !reduceMotion) grown.value = withTiming(1, RIGHT_FILL);
-    // The shared values are stable, and a change of Reduce Motion finds the
-    // answer already shown, so only the answer given moves the option.
-  }, [answer, right, chosen, reduceMotion, answered, grown]);
+    answered.value = withTiming(1, look === 'right' ? RIGHT_FILL : WRONG_FILL);
+    marked.value = withTiming(1, look === 'right' ? STAMP_LANDING : SLASH_DRAWING);
+    // The shared values are stable, so only the answer given moves the option.
+  }, [look, answered, marked]);
 
-  const motion = useAnimatedStyle(() => ({
-    opacity: dimmed ? 1 - (1 - DIMMED_OPACITY) * answered.value : 1,
-    transform: [{ scale: 1 + (RIGHT_SCALE - 1) * grown.value }],
-  }));
-  const fillStyle = useAnimatedStyle(() =>
-    tag === undefined
-      ? {}
-      : {
-          backgroundColor: interpolateColor(answered.value, [0, 1], [colors.surface, tag.fill]),
-          borderColor: interpolateColor(answered.value, [0, 1], [colors.line, tag.fill]),
-        },
+  const still = reduceMotion || look === 'rest';
+  const motion = useAnimatedStyle(() => {
+    if (look === 'dimmed')
+      return { opacity: 1 - (1 - DIMMED_OPACITY) * answered.value, transform: [] };
+    if (look === 'wrong')
+      return {
+        opacity: 1,
+        transform: still ? [] : [{ translateY: OPTION_DROP * answered.value }],
+      };
+    return {
+      opacity: 1,
+      transform: still ? [] : [{ scale: interpolate(answered.value, [0, 0.6, 1], OPTION_POP) }],
+    };
+  });
+  const testID = `game-option-${String(place)}`;
+  return (
+    <Animated.View testID={`${testID}-motion`} style={motion} {...voice}>
+      <PressedTile
+        testID={testID}
+        tone={look === 'right' ? 'accent' : look === 'wrong' ? 'none' : 'tile'}
+        radius={OPTION_RADIUS}
+        accessibilityLabel={[
+          stressLabel(strings.wordCard, option.text, option.stressedVowels),
+          look === 'right'
+            ? strings.game.round.correct
+            : look === 'wrong'
+              ? strings.game.round.chosen
+              : undefined,
+        ]
+          .filter(Boolean)
+          .join(', ')}
+        accessibilityState={{ disabled: look === 'dimmed' }}
+        inert={answer !== undefined}
+        onPress={onPress}
+        faceStyle={[styles.option, look === 'wrong' && { backgroundColor: colors.surfaceSunken }]}
+      >
+        <View style={styles.optionText}>
+          <WholeWordsText
+            text={option.text}
+            size={OPTION_SIZE}
+            tracking={0}
+            style={[
+              styles.optionWord,
+              {
+                color: look === 'right' ? keyInk : look === 'wrong' ? colors.muted : colors.ink,
+                fontFamily: fontFamilies.word,
+              },
+            ]}
+          />
+        </View>
+        {look === 'right' && <Stamp landed={marked} still={reduceMotion} ink={keyInk} />}
+        {look === 'wrong' && (
+          <Slash drawn={marked} still={reduceMotion} color={colors.accent} testID={testID} />
+        )}
+      </PressedTile>
+    </Animated.View>
+  );
+}
+
+/**
+ * The ink stamp on a right option: a tick in a ring, turned, that lands from
+ * large and turned further (the Badge stamp's landing); under Reduce Motion
+ * it fades in at rest.
+ */
+function Stamp({
+  landed,
+  still,
+  ink,
+}: {
+  landed: SharedValue<number>;
+  still: boolean;
+  ink: string;
+}) {
+  const motion = useAnimatedStyle(() => {
+    const opacity = interpolate(landed.value, [0, 0.7], [0, 1], Extrapolation.CLAMP);
+    if (still) return { opacity, transform: [{ rotate: `${String(badgeStamp.turn)}deg` }] };
+    const scale = interpolate(landed.value, [0, 0.7, 1], [badgeStamp.from.scale, 0.92, 1]);
+    const turn = interpolate(
+      landed.value,
+      [0, 0.7],
+      [badgeStamp.from.turn, badgeStamp.turn],
+      Extrapolation.CLAMP,
+    );
+    return { opacity, transform: [{ scale }, { rotate: `${String(turn)}deg` }] };
+  });
+  return (
+    <Animated.View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.stamp, { borderColor: ink }, motion]}
+    >
+      <Svg width={STAMP_TICK.width} height={STAMP_TICK.height} viewBox="0 0 26 22">
+        <Polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill={ink} />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+/**
+ * The red slash across a wrong choice, a little turned, drawn from the left;
+ * under Reduce Motion it fades in whole. Its line carries `${testID}-slash`.
+ */
+function Slash({
+  drawn,
+  still,
+  color,
+  testID,
+}: {
+  drawn: SharedValue<number>;
+  still: boolean;
+  color: string;
+  testID: string;
+}) {
+  const motion = useAnimatedStyle(() =>
+    still
+      ? { opacity: drawn.value, transform: [{ scaleX: 1 }] }
+      : { opacity: 1, transform: [{ scaleX: Math.min(drawn.value, 1) }] },
   );
   return (
-    <Pressable
-      testID={`game-option-${String(place)}`}
-      accessibilityRole="button"
-      accessibilityLabel={[
-        stressLabel(strings.wordCard, option.text, option.stressedVowels),
-        tag?.text,
-      ]
-        .filter(Boolean)
-        .join(', ')}
-      accessibilityState={{ disabled: dimmed }}
-      {...voice}
-      disabled={answer !== undefined}
-      onPress={onPress}
+    <View
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      pointerEvents="none"
+      style={styles.slashTrack}
     >
-      {({ pressed }) => (
-        <Animated.View
-          style={[
-            styles.option,
-            {
-              backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
-              borderColor: colors.line,
-              borderRadius: radii.button,
-            },
-            fillStyle,
-            motion,
-          ]}
-        >
-          <View style={styles.optionText}>
-            <WholeWordsText
-              text={option.text}
-              size={OPTION_SIZE}
-              tracking={0}
-              style={[
-                styles.optionWord,
-                { color: tag === undefined ? colors.ink : onFill, fontFamily: fontFamilies.word },
-              ]}
-            />
-          </View>
-          {tag === undefined ? null : (
-            <Text
-              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-              style={[styles.tag, { color: onFill, fontFamily: fontFamilies.ui }]}
-            >
-              {tag.text}
-            </Text>
-          )}
-        </Animated.View>
-      )}
-    </Pressable>
+      <Animated.View
+        testID={`${testID}-slash`}
+        style={[styles.slash, { backgroundColor: color }, motion]}
+      />
+    </View>
   );
 }
 
@@ -1096,15 +1185,34 @@ const styles = StyleSheet.create({
     minHeight: OPTION_HEIGHT,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: space[3],
-    paddingHorizontal: space[5],
     paddingVertical: space[2],
-    borderWidth: 1,
+    paddingLeft: OPTION_PADDING,
+    paddingRight: STAMP.side + STAMP.right + space[2],
   },
   optionText: { flex: 1 },
-  optionWord: { fontWeight: '500' },
-  tag: { fontSize: typeSize.meta, fontWeight: '700' },
+  optionWord: { fontWeight: '800' },
+  stamp: {
+    position: 'absolute',
+    right: STAMP.right,
+    top: STAMP.top,
+    width: STAMP.side,
+    height: STAMP.side,
+    borderWidth: STAMP.border,
+    borderRadius: STAMP.side / 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  slashTrack: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    justifyContent: 'center',
+    paddingHorizontal: SLASH.inset,
+    transform: [{ rotate: `${String(SLASH.turn)}deg` }],
+  },
+  slash: { height: SLASH.thickness, transformOrigin: 'left' },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   sheetContent: { gap: roundLayout.sheetGap, paddingHorizontal: space[1], paddingBottom: space[2] },
   sheetTitle: { fontSize: typeSize.blockHeading, fontWeight: '700' },

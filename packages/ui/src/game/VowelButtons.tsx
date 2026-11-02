@@ -190,7 +190,7 @@ function Vowel({
         tone={fill === 'right' ? 'accent' : fill === 'wrong' ? 'none' : 'tile'}
         radius={radii.tile}
         accessibilityLabel={label}
-        disabled={disabled}
+        inert={disabled}
         onPress={onPress}
         hitSlop={{ left: VOWEL_SLOP, right: VOWEL_SLOP }}
         faceStyle={[styles.vowel, fill === 'wrong' && { backgroundColor: colors.surfaceSunken }]}
