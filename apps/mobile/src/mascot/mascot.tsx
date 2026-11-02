@@ -31,11 +31,11 @@ export function MascotIn({ state }: { state: MascotMoment }) {
   return <Mascot state={stateAt[state]} line={edition.mascot[state]} testID={`mascot-${state}`} />;
 }
 
-/** The Mascot in `state` with no line, while its Feature Switch is on in effect; else nothing. */
-export function MascotAs({ state }: { state: MascotState }) {
+/** The Mascot in `state` with no line, while its Feature Switch is on in effect; else nothing. `onRed` draws it for a red ground. */
+export function MascotAs({ state, onRed = false }: { state: MascotState; onRed?: boolean }) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
-  return <Mascot state={state} testID={`mascot-${state}`} />;
+  return <Mascot state={state} onRed={onRed} testID={`mascot-${state}`} />;
 }
 
 /**
