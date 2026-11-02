@@ -18,6 +18,7 @@ describe('settings', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -34,6 +35,7 @@ describe('settings', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -49,6 +51,7 @@ describe('settings', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -59,6 +62,7 @@ describe('settings', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -74,6 +78,7 @@ describe('settings', () => {
       theme: 'system',
       fontSize: 'XL',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -84,6 +89,7 @@ describe('settings', () => {
       theme: 'system',
       fontSize: 'XL',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -100,6 +106,7 @@ describe('settings', () => {
       theme: 'light',
       fontSize: 'S',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -116,6 +123,7 @@ describe('settings', () => {
       theme: 'dark',
       fontSize: 'L',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -131,6 +139,7 @@ describe('settings', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -151,6 +160,7 @@ describe('settings', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -170,6 +180,7 @@ describe('settings', () => {
       theme: 'light',
       fontSize: 'L',
       vibration: false,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -194,6 +205,7 @@ describe('settings: Vibration', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: false,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -217,6 +229,15 @@ describe('settings: Vibration', () => {
     expect((await (await settingsOver(records)).read()).vibration).toBe(false);
   });
 
+  it('has «Звуки» on until the user turns it off, and keeps that choice', async () => {
+    const records = new Map<string, string>();
+    expect((await (await settingsOver(records)).read()).sounds).toBe(true);
+
+    await (await settingsOver(records)).update({ sounds: false });
+
+    expect((await (await settingsOver(records)).read()).sounds).toBe(false);
+  });
+
   it('changes Vibration without touching the Theme or the font size', async () => {
     const settings = await settingsOver();
     await settings.update({ theme: 'dark', fontSize: 'XL' });
@@ -225,6 +246,7 @@ describe('settings: Vibration', () => {
       theme: 'dark',
       fontSize: 'XL',
       vibration: false,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -254,6 +276,7 @@ describe('settings: «Без лічильників»', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: true,
       selfCheck: false,
       seasonalDecor: true,
@@ -285,6 +308,7 @@ describe('settings: «Без лічильників»', () => {
       theme: 'dark',
       fontSize: 'XL',
       vibration: false,
+      sounds: true,
       noCounters: true,
       selfCheck: false,
       seasonalDecor: true,
@@ -318,6 +342,7 @@ describe('settings: «Без лічильників»', () => {
       theme: 'dark',
       fontSize: 'L',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: false,
       seasonalDecor: true,
@@ -341,6 +366,7 @@ describe('settings: Self-check', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: true,
       seasonalDecor: true,
@@ -365,6 +391,7 @@ describe('settings: Self-check', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: true,
       selfCheck: true,
       seasonalDecor: true,
@@ -396,6 +423,7 @@ describe('settings: Seasonal Decor', () => {
       theme: 'dark',
       fontSize: 'M',
       vibration: true,
+      sounds: true,
       noCounters: false,
       selfCheck: true,
       seasonalDecor: false,

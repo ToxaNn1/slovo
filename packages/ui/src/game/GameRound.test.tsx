@@ -6,7 +6,7 @@ import type {
   RoundAnswer,
   RoundBlank,
 } from '@slovo/core';
-import { EditionProvider, GameRound, HapticsProvider } from '@slovo/ui';
+import { EditionProvider, GameRound, HapticsProvider, InterfaceSoundsProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useState } from 'react';
@@ -426,6 +426,9 @@ function Game({
   );
 }
 
+/** The Interface sounds the Round asks for. */
+const play = jest.fn();
+
 async function renderRound(
   onAnswer: (given: GivenAnswer) => void = jest.fn(),
   onLeave: () => void = jest.fn(),
@@ -436,7 +439,9 @@ async function renderRound(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
-          <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
+          <InterfaceSoundsProvider sounds={{ play }}>
+            <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
+          </InterfaceSoundsProvider>
         </HapticsProvider>
       </EditionProvider>
     </SafeAreaProvider>,
@@ -506,6 +511,18 @@ describe('GameRound', () => {
     expect(screen.getByRole('button', { name: 'candid, Right' })).toBeTruthy();
     expect(screen.queryByText('Your choice')).toBeNull();
     expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
+  });
+
+  it('asks for the right sound for a right answer and the wrong sound for a wrong one', async () => {
+    play.mockClear();
+    await renderRound();
+    await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
+    expect(play.mock.calls).toEqual([['right']]);
+
+    play.mockClear();
+    await renderRound();
+    await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
+    expect(play.mock.calls).toEqual([['wrong']]);
   });
 
   it('shows a wrong choice beside the right answer', async () => {

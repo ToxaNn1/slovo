@@ -93,6 +93,13 @@ export { type MoodChoice } from './mood/mood-draw';
 export { type SearchResults } from './search/search';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
 export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';
+export {
+  createInterfaceSounds,
+  silentInterfaceSounds,
+  type InterfaceSound,
+  type InterfaceSounds,
+  type SoundEngine,
+} from './sounds/interface-sounds';
 export { type HiddenEntry } from './mix/hidden-entries';
 export { type HideTarget, type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';

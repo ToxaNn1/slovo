@@ -308,6 +308,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   profile: z.boolean(),
   /** The Mascot: the Edition's silent figure with its short lines (CONTEXT.md, Mascot). */
   mascot: z.boolean(),
+  /** The Interface sounds (a shout, a right answer, a wrong answer, a tap) and the «Звуки» setting (ADR 0070). */
+  sounds: z.boolean(),
   /** «Менше руху»: the Settings switch that turns every animation into its calmer variant, as the system's Reduce Motion does (ADR 0055). */
   reduceMotion: z.boolean(),
 });
