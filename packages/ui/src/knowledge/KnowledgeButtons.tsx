@@ -2,7 +2,7 @@ import type { AnyEntryCard, KnowledgeMark } from '@slovo/core';
 import { StyleSheet, View } from 'react-native';
 
 import { useConcealed } from '../entries/self-check';
-import { OutlineButton } from '../primitives/OutlineButton';
+import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { space } from '../tokens';
 
@@ -30,7 +30,9 @@ export function KnowledgeButtons({
   const inactive = useConcealed();
   return (
     <View style={styles.row}>
-      <OutlineButton
+      <Button
+        size="small"
+        variant={mark === 'known' ? 'primary' : 'neutral'}
         testID="knowledge-known"
         label={strings.knowledge.known}
         accessibilityHint={
@@ -38,17 +40,17 @@ export function KnowledgeButtons({
         }
         selected={mark === 'known'}
         disabled={inactive}
-        paired
         onPress={() => {
           onTap('known');
         }}
       />
-      <OutlineButton
+      <Button
+        size="small"
+        variant={mark === 'unknown' ? 'primary' : 'neutral'}
         testID="knowledge-unknown"
         label={strings.knowledge.unknown}
         selected={mark === 'unknown'}
         disabled={inactive}
-        paired
         onPress={() => {
           onTap('unknown');
         }}

@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { Button } from '../primitives/Button';
 import { usePageTurnActions, useTurnToNextPage } from '../primitives/VerticalPager';
 
 /**
@@ -60,7 +60,8 @@ export function FeedNoticeCard({
       {children}
       {action !== undefined && (
         <View style={styles.action}>
-          <SecondaryButton
+          <Button
+            variant="neutral"
             label={action.label}
             onPress={action.onPress}
             testID={`feed-notice-${notice}-action`}

@@ -1,5 +1,5 @@
 import type { OptionQuestion } from '@slovo/core';
-import { BackLink, OutlineButton, ScreenTitle, SectionLabel, space, useTokens } from '@slovo/ui';
+import { BackLink, Button, ScreenTitle, SectionLabel, space, useTokens } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -61,7 +61,9 @@ export function QuestionnaireScreen() {
           <View key={question} style={styles.section}>
             <SectionLabel>{title}</SectionLabel>
             {questionnaire.options[question].map(({ id, label }) => (
-              <OutlineButton
+              <Button
+                size="small"
+                variant={answered[question] === id ? 'primary' : 'neutral'}
                 key={id}
                 testID={`questionnaire-${question}-${id}`}
                 label={label}

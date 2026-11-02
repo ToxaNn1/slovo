@@ -8,7 +8,7 @@ import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
-import { OutlinedChip } from '../primitives/OutlinedChip';
+import { LabelChip } from '../primitives/LabelChip';
 import { correctionCardLayout, space, typeSize, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
@@ -56,7 +56,7 @@ export function CorrectionCardBody({
       <View style={styles.header}>
         <SectionLabel style={styles.title}>{strings.title}</SectionLabel>
         {concealed ? null : (
-          <OutlinedChip
+          <LabelChip
             testID="correction-type"
             text={correctionType}
             accessibilityLabel={fill(strings.correctionType, { type: correctionType })}

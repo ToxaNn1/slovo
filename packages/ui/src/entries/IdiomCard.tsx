@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
-import { OutlinedChip } from '../primitives/OutlinedChip';
+import { LabelChip } from '../primitives/LabelChip';
 import { space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
@@ -67,7 +67,7 @@ export function IdiomCardBody({
           style={[styles.expression, { color: colors.ink, fontFamily: fontFamilies.word }]}
         />
         <View style={styles.chip}>
-          <OutlinedChip
+          <LabelChip
             testID="idiom-type"
             text={idiomType}
             accessibilityLabel={idiomType}

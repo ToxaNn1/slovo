@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { OrnamentBand } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
-import { PrimaryButton } from '../primitives/PrimaryButton';
+import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -51,7 +51,7 @@ export function OnboardingWelcome({
       step={step}
       total={total}
       onSkip={onSkip}
-      footer={<PrimaryButton testID="onboarding-start" label={welcome.start} onPress={onStart} />}
+      footer={<Button testID="onboarding-start" label={welcome.start} onPress={onStart} />}
     >
       {hero === undefined ? null : (
         <View style={styles.hero}>

@@ -9,45 +9,14 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import { BottomSheet } from '../primitives/BottomSheet';
+import { ChoiceMark } from '../primitives/ChoiceMark';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { PrimaryButton } from '../primitives/PrimaryButton';
+import { Button } from '../primitives/Button';
 import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
-import { checkboxRadius, minTouchTarget, space, typeSize } from '../tokens';
+import { minTouchTarget, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-
-/** The checkbox's side, from the design. */
-const CHECKBOX_SIZE = 26;
-
-/** A checkbox: an outline, or filled with the accent and a tick while checked. */
-function Checkbox({ checked }: { checked: boolean }) {
-  const { colors } = useTokens();
-  return (
-    <View
-      style={[
-        styles.checkbox,
-        checked
-          ? { backgroundColor: colors.accent, borderColor: colors.accent }
-          : { borderColor: colors.muted },
-      ]}
-    >
-      {checked && (
-        <Svg width={16} height={16} viewBox="0 0 16 16">
-          <Path
-            d="M3 8.5l3.2 3.2L13 4.8"
-            fill="none"
-            stroke={colors.background}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </Svg>
-      )}
-    </View>
-  );
-}
 
 /**
  * The «До колекції» sheet (design 2c): the reader's Collections with a
@@ -169,7 +138,7 @@ function SheetContent({
                 index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
               ]}
             >
-              <Checkbox checked={filed} />
+              <ChoiceMark kind="checkbox" on={filed} />
               <Text
                 style={[styles.name, { color: colors.ink, fontFamily: fontFamilies.ui }]}
                 {...voice}
@@ -265,7 +234,7 @@ function SheetContent({
         )}
       </ScrollView>
       <View style={styles.done}>
-        <PrimaryButton testID="collection-done" label={sheet.done} onPress={onClose} />
+        <Button testID="collection-done" label={sheet.done} onPress={onClose} />
       </View>
     </>
   );
@@ -288,14 +257,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: space[4],
     paddingVertical: space[2],
-  },
-  checkbox: {
-    width: CHECKBOX_SIZE,
-    height: CHECKBOX_SIZE,
-    borderWidth: 1.5,
-    borderRadius: checkboxRadius,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   name: { flex: 1, fontSize: typeSize.listItem, fontWeight: '600' },
   count: { fontSize: typeSize.body },

@@ -42,8 +42,8 @@ async function press(id: string) {
 }
 
 /** Turns the «Виправлення» switch and lets the Mix keep the change. */
-async function turnCorrections(on: boolean) {
-  await fireEvent(screen.getByTestId('mix-corrections'), 'valueChange', on);
+async function turnCorrections() {
+  await fireEvent.press(screen.getByTestId('mix-corrections'));
   await settle();
 }
 
@@ -137,11 +137,11 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
     await renderChoices();
     await press('mix-correction-chip-work');
 
-    await turnCorrections(false);
+    await turnCorrections();
     expect(screen.queryByTestId('mix-correction-chip-work')).toBeNull();
     expect(screen.queryByTestId('mix-correction-chip-shop')).toBeNull();
 
-    await turnCorrections(true);
+    await turnCorrections();
     expect(chipOf('work')).not.toBeSelected();
     expect(chipOf('shop')).toBeSelected();
   });

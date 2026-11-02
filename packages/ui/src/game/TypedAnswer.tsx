@@ -1,8 +1,7 @@
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { PrimaryButton } from '../primitives/PrimaryButton';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { Button } from '../primitives/Button';
 import { minTouchTarget, roundLayout, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
@@ -93,19 +92,15 @@ export function TypedAnswer({
         />
       </View>
       {onOpenLetter !== undefined && (
-        <SecondaryButton
+        <Button
+          variant="neutral"
           label={texts.openLetter}
           onPress={onOpenLetter}
           disabled={closed === undefined || closed.length <= 1}
           testID={`${testID}-open-letter`}
         />
       )}
-      <PrimaryButton
-        label={texts.submit}
-        onPress={submit}
-        disabled={!typed}
-        testID={`${testID}-submit`}
-      />
+      <Button label={texts.submit} onPress={submit} disabled={!typed} testID={`${testID}-submit`} />
     </View>
   );
 }

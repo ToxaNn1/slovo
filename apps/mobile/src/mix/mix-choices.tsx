@@ -1,7 +1,7 @@
 import { fill, type MixKindWeight, type QuickQuestionEvery } from '@slovo/contracts';
 import { featureOfKind, type MixKind } from '@slovo/core';
 import {
-  MixChip,
+  Chip,
   RarityFloorChoice,
   SegmentedControl,
   SettingsGroup,
@@ -59,7 +59,7 @@ export function MixChoices() {
           toggleCategory(id, inMix);
         }}
         all={
-          <MixChip
+          <Chip
             testID="mix-chip-all"
             label={strings.all}
             on={model.allOn}
@@ -238,7 +238,7 @@ function CategoryChips({
       <View style={styles.chips}>
         {all}
         {list.chips.map((chip) => (
-          <MixChip
+          <Chip
             key={chip.id}
             testID={`${testIDPrefix}-chip-${chip.id}`}
             label={chip.name}
