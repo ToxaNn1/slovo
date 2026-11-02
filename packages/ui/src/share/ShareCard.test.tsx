@@ -118,7 +118,7 @@ describe('ShareCard', () => {
         shows: 'w2',
         overline: 'Word of the Day',
         label: 'Word of the Day. echo',
-        body: { kind: 'word', lemma: 'éсho', grammar: 'n.', definition: 'A sound.' },
+        body: { kind: 'word', lemma: 'écho', grammar: 'n.', definition: 'A sound.' },
       },
       'story',
     );
@@ -131,8 +131,14 @@ describe('ShareCard', () => {
     const card = await renderCard(
       {
         shows: 'streak:23',
+        overline: '2 November',
         label: '23 days in a row',
-        body: { kind: 'milestone', title: 'My streak', headline: '23 days in a row' },
+        body: {
+          kind: 'milestone',
+          title: 'My streak',
+          headline: '23 days in a row',
+          detail: undefined,
+        },
       },
       'square',
     );
