@@ -12,8 +12,8 @@ import { space, typeSize } from '../tokens';
  * way to hide, in the order given, and the cancel row last. A row with a
  * `disabledHint` is dimmed and takes no tap, with the hint under it, which
  * VoiceOver reads as the row's hint. A tap on a row asks
- * `onChoose` with its key; the cancel row, a tap on the scrim, a drag on the
- * grabber and VoiceOver's escape gesture ask `onCancel`. The caller turns
+ * `onChoose` with its key; the cancel row, a tap on the scrim, a drag on its
+ * top and VoiceOver's escape gesture ask `onCancel`. The caller turns
  * `visible` off in both callbacks.
  */
 export function HideChoiceSheet({

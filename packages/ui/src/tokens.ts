@@ -135,6 +135,12 @@ export const typeRoles = {
   /** Reading text: the line under a heading. */
   sub: role('ui', '500', 15, 21),
   meta: role('ui', '500', 13, 17),
+  /** The rotated black title of a bottom sheet. */
+  sheetTitle: role('word', '900', 18, 18, 0.5, 'uppercase'),
+  /** A toast's message. */
+  toast: role('ui', '600', 14, 19),
+  /** The label of a toast's button. */
+  toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -184,7 +190,14 @@ export const wedges = {
     [1, 0.7],
     [0, 1],
   ],
-  /** A slanted band. */
+  /** The loader's wedge: a right edge narrower than the left, from the middle. */
+  loader: [
+    [0, 0],
+    [1, 0.25],
+    [1, 0.75],
+    [0, 1],
+  ],
+  /** A slanted band: the toast's mark. */
   band: [
     [0, 0],
     [1, 0.25],
@@ -223,6 +236,8 @@ export const motion = {
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
   pop: { duration: 300, easing: ease },
+  /** One beat of the loader's wedges, from short to tall and back. */
+  loader: { duration: 800, easing: [0.42, 0, 0.58, 1] },
   /** The toggle's knob slides over and overshoots. */
   switch: { duration: 280, easing: [0.3, 1.9, 0.5, 1] },
   /** Rows rise this far into place, one after another. */
@@ -336,13 +351,8 @@ export function withAlpha(color: string, alpha: number): string {
   return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${String(alpha)})`;
 }
 
-/**
- * The scrim behind a bottom sheet or a dialog, from the design: the light
- * Theme's ink at 45%, black at 60% in the dark one.
- */
-export function scrimColor(ink: string, colorScheme: ColorScheme): string {
-  return colorScheme === 'dark' ? 'rgba(0, 0, 0, 0.6)' : withAlpha(ink, 0.45);
-}
+/** The scrim behind a bottom sheet, from the design: the key ink at 55% in both Themes. */
+export const scrim = 'rgba(20, 12, 10, 0.55)';
 
 /** The 4-pt spacing grid. */
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
@@ -440,7 +450,7 @@ export const cardSpace = {
 } as const;
 
 /** The line heights the design gives in pixels rather than as a multiple of the size. */
-export const lineHeight = { toast: 21, pronunciationNote: 20, aboutDescription: 30 } as const;
+export const lineHeight = { pronunciationNote: 20, aboutDescription: 30 } as const;
 
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
 export const rowPadding = 14;

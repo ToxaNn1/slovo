@@ -51,7 +51,7 @@ async function pass(ms: number) {
   });
 }
 
-/** A drag on the grabber by `distance` points down, let go at `velocity` points per second. */
+/** A drag on its top by `distance` points down, let go at `velocity` points per second. */
 async function drag(distance: number, velocity: number) {
   await act(() => {
     fireGestureHandler(getByGestureTestId('sheet-drag'), [
@@ -80,14 +80,18 @@ describe('BottomSheet', () => {
     jest.restoreAllMocks();
   });
 
-  it('slides up in 300 ms', async () => {
+  it('slides up in 450 ms, a little past its place first', async () => {
     await renderSheet();
     await pass(150);
 
     expect(sheetNow().down).toBeGreaterThan(0);
     expect(sheetNow().opacity).toBe(1);
 
-    await pass(150);
+    await pass(180);
+
+    expect(sheetNow().down).toBeLessThan(0);
+
+    await pass(120);
 
     expect(sheetNow()).toEqual({ down: 0, opacity: 1 });
   });
@@ -165,7 +169,7 @@ describe('BottomSheet', () => {
     expect(onDismissed).toHaveBeenCalledTimes(1);
   });
 
-  it('slides up again in 300 ms when opened after a flick closed it', async () => {
+  it('slides up again in 450 ms when opened after a flick closed it', async () => {
     const { onClose, onDismissed } = await renderSheet();
     await pass(300);
     await drag(40, 1500);
@@ -177,7 +181,7 @@ describe('BottomSheet', () => {
 
     expect(sheetNow().down).toBeGreaterThan(0);
 
-    await pass(150);
+    await pass(300);
 
     expect(sheetNow()).toEqual({ down: 0, opacity: 1 });
   });

@@ -8,7 +8,7 @@ import { space } from '../tokens';
  * The menu a Collection's «…» button opens: a bottom sheet with «rename» and
  * «delete» and the cancel row last, and «share a link» first when it is given
  * one, dimmed while it is disabled, when VoiceOver reads why after its label. A tap on a row asks for its action; the
- * cancel row, a tap on the scrim, a drag on the grabber and VoiceOver's escape
+ * cancel row, a tap on the scrim, a drag on its top and VoiceOver's escape
  * gesture ask `onCancel`. The caller turns `visible` off in all three callbacks;
  * `onDismissed` runs once the sheet has slid away.
  */

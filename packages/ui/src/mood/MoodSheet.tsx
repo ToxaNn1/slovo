@@ -23,7 +23,7 @@ const COLUMNS = 2;
  * moods as chips, two to a row. A disabled chip is dimmed and takes no tap,
  * with why under it, which VoiceOver reads as its hint. Once a chip is chosen
  * the sheet shows the roulette's current Lemma (`roulette`) in their place,
- * hidden from VoiceOver. A tap on the scrim, a drag on the grabber and
+ * hidden from VoiceOver. A tap on the scrim, a drag on its top and
  * VoiceOver's escape gesture ask `onClose`; `onDismissed` runs once the sheet
  * has slid away.
  */

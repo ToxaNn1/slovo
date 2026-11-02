@@ -131,6 +131,7 @@ export {
 } from './tokens';
 export { TokensProvider, useTokens } from './providers/TokensProvider';
 export { useReduceMotion } from './providers/useReduceMotion';
+export { WedgeLoader } from './primitives/WedgeLoader';
 export {
   UndoToastProvider,
   useUndoToast,

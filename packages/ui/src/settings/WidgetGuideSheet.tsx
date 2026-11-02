@@ -8,7 +8,7 @@ import { WidgetGuide } from './WidgetGuide';
 
 /**
  * The widget hint: the widget guide in a bottom sheet under its title, and a
- * button that closes it. The button, a tap on the scrim, a drag on the grabber
+ * button that closes it. The button, a tap on the scrim, a drag on its top
  * and VoiceOver's escape gesture ask `onClose`; the caller turns `visible`
  * off. The guide scrolls on a small screen.
  */

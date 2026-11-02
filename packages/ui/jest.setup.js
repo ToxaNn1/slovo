@@ -1,3 +1,4 @@
+import { jest } from '@jest/globals';
 // The test doubles Gesture Handler and Reanimated ship for Jest.
 import 'react-native-gesture-handler/jestSetup';
 import * as ReactNative from 'react-native';
@@ -19,3 +20,10 @@ void [
   ReactNative.AccessibilityInfo,
   ReactNativePrivate.getNativeTagFromPublicInstance,
 ];
+
+// Safe area insets of zero wherever a test renders no provider of its own:
+// the confirmation dialog is a bottom sheet, which reads them.
+jest.mock(
+  'react-native-safe-area-context',
+  () => jest.requireActual('react-native-safe-area-context/jest/mock').default,
+);

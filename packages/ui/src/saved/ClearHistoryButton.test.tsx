@@ -1,6 +1,6 @@
 import { ClearHistoryButton, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 const copy = {
@@ -42,7 +42,10 @@ describe('ClearHistoryButton', () => {
     await fireEvent.press(screen.getByTestId('history-clear-dialog-destructive'));
 
     expect(onClear).toHaveBeenCalledTimes(1);
-    expect(screen.queryByText('Clear History?')).not.toBeOnTheScreen();
+    // The dialog slides away before it unmounts.
+    await waitFor(() => {
+      expect(screen.queryByText('Clear History?')).not.toBeOnTheScreen();
+    });
   });
 
   it('clears nothing when the reader cancels, and closes the dialog', async () => {
@@ -52,6 +55,9 @@ describe('ClearHistoryButton', () => {
     await fireEvent.press(screen.getByTestId('history-clear-dialog-cancel'));
 
     expect(onClear).not.toHaveBeenCalled();
-    expect(screen.queryByText('Clear History?')).not.toBeOnTheScreen();
+    // The dialog slides away before it unmounts.
+    await waitFor(() => {
+      expect(screen.queryByText('Clear History?')).not.toBeOnTheScreen();
+    });
   });
 });
