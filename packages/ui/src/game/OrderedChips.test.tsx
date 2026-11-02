@@ -1,5 +1,5 @@
 import type { FixedChip, RoundAnswer } from '@slovo/core';
-import { EditionProvider, OrderedChips } from '@slovo/ui';
+import { coreTokens, EditionProvider, OrderedChips } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
@@ -238,5 +238,67 @@ describe('OrderedChips', () => {
 
     expect(shiftOf(0)).toBe(0);
     expect([1, 2, 3].map(shiftOf)).toEqual([0, 0, 0]);
+  });
+
+  describe('the look of an answer', () => {
+    const { accent, surfaceSunken, tile } = coreTokens.colors.light;
+    const fillOf = (index: number) =>
+      (
+        getAnimatedStyle(screen.getByTestId(`chips-line-${String(index)}`)) as {
+          backgroundColor?: unknown;
+        }
+      ).backgroundColor;
+    /** A colour token as the line's fill shows it, in rgba. */
+    const rgba = (hex: string) => {
+      const [r, g, b] = [1, 3, 5].map((at) => parseInt(hex.slice(at, at + 2), 16));
+      return `rgba(${String(r)}, ${String(g)}, ${String(b)}, 1)`;
+    };
+    const slots = () =>
+      screen.queryAllByTestId(/^chips-slot-\d+$/, { includeHiddenElements: true });
+
+    it('shows a dashed place for each chip not yet in the line', async () => {
+      await renderChips();
+      expect(slots()).toHaveLength(5);
+
+      await tap(1, 3);
+
+      expect(slots()).toHaveLength(3);
+      expect(screen.getByTestId('chips-line-0')).toHaveStyle({ backgroundColor: tile });
+    });
+
+    it('turns a right line red', async () => {
+      await renderChips();
+
+      await tap(1, 3, 2, 4, 0);
+      await act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      expect([0, 1, 2, 3, 4].map(fillOf)).toEqual(Array(5).fill(rgba(accent)));
+    });
+
+    it('sinks a wrong line', async () => {
+      await renderChips();
+
+      await tap(1, 2, 3, 4, 0);
+      await act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      expect([0, 1, 2, 3, 4].map(fillOf)).toEqual(Array(5).fill(rgba(surfaceSunken)));
+    });
+
+    it('turns a right line red with Reduce Motion as well', async () => {
+      jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+      await renderChips();
+
+      await tap(1, 3, 2, 4, 0);
+      await act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+
+      expect(fillOf(0)).toBe(rgba(accent));
+      expect(shiftOf(0)).toBe(0);
+    });
   });
 });
