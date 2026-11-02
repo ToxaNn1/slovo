@@ -4,9 +4,10 @@ import { basename, dirname, join } from 'node:path';
 import plist from '@expo/plist';
 import {
   type ColorTokens,
-  type DecorMotif,
   type EditionConfig,
   type EditionStrings,
+  type MascotFigure,
+  type MascotShape,
 } from '@slovo/contracts';
 import type { DesignTokens } from '@slovo/ui/tokens';
 
@@ -22,8 +23,8 @@ export interface WidgetEdition {
   readonly appGroup: string;
   readonly strings: EditionStrings['widget'];
   readonly tokens: DesignTokens;
-  /** The divider's band (Decor slot 2), drawn under the headline. */
-  readonly band: DecorMotif;
+  /** The Mascot's vector, drawn on the medium widget's wedge; none for an Edition without one. */
+  readonly mascot: MascotFigure | undefined;
   /** The font files the extension bundles, as absolute paths. */
   readonly fontFiles: readonly string[];
   /** The Edition's example Widget Snapshot, which the gallery preview shows. */
@@ -142,24 +143,48 @@ function catalogColor(color: string) {
   };
 }
 
-/** A colour as an SVG fill: the hex value, and its opacity, the layer's included, when below 1. */
-function svgFill(color: string, opacity = 1): string {
+/** A colour with an opacity as SVG attributes: the hex value, and the opacity, the shape's included, when below 1. */
+function svgPaint(attribute: 'fill' | 'stroke', color: string, opacity = 1): string {
   const [red, green, blue, colorAlpha] = rgba(color);
   const alpha = colorAlpha * opacity;
   const hex = [red, green, blue]
     .map((channel) => channel.toString(16).padStart(2, '0'))
     .join('')
     .toUpperCase();
-  return alpha === 1 ? `fill="#${hex}"` : `fill="#${hex}" fill-opacity="${String(alpha)}"`;
+  const paint = `${attribute}="#${hex}"`;
+  return alpha === 1 ? paint : `${paint} ${attribute}-opacity="${String(alpha)}"`;
 }
 
-/** A Decor motif in the colour tokens of one colour scheme, as an SVG document. */
-function motifSvg({ width, height, layers }: DecorMotif, colors: ColorTokens): string {
+/**
+ * The Mascot as the medium widget draws it on its red wedge, as an SVG
+ * document, waiting or, once the Word of the Day is Seen, asleep with its
+ * sleep marks, as the design's boards draw it, in the on-red variant
+ * the app draws in one Theme (ADR 0070): the body in the on-accent colour, its
+ * ink and accent in the light Theme's ink, which the design keeps on red.
+ */
+function mascotSvg(
+  mascot: MascotFigure,
+  state: 'waits' | 'sleeps',
+  colors: ColorTokens,
+  inkOnRed: string,
+): string {
+  const paints = { body: colors.onAccent, ink: inkOnRed, accent: inkOnRed };
+  const paintOf = (paint: string) =>
+    paint === 'body' || paint === 'ink' || paint === 'accent' ? paints[paint] : paint;
+  const path = (shape: MascotShape) =>
+    'fill' in shape
+      ? `<path d="${shape.path}" ${svgPaint('fill', paintOf(shape.fill), shape.opacity)}/>`
+      : `<path d="${shape.path}" fill="none" ${svgPaint('stroke', paintOf(shape.stroke), shape.opacity)} stroke-width="${String(shape.width)}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  const { width, height } = mascot;
   const size = `width="${String(width)}" height="${String(height)}" viewBox="0 0 ${String(width)} ${String(height)}"`;
-  const paths = layers.map(
-    (layer) => `<path d="${layer.path}" ${svgFill(colors[layer.color], layer.opacity)}/>`,
-  );
-  return `<svg xmlns="http://www.w3.org/2000/svg" ${size}>${paths.join('')}</svg>\n`;
+  const shapes = [
+    ...mascot.figure,
+    ...mascot.shine,
+    ...mascot.eyes[state],
+    ...mascot.hat,
+    ...(state === 'sleeps' ? mascot.sleepMarks : []),
+  ];
+  return `<svg xmlns="http://www.w3.org/2000/svg" ${size}>${shapes.map(path).join('')}</svg>\n`;
 }
 
 /** A string in a `.strings` file: quoted, with its quotes, backslashes and line breaks escaped. */
@@ -169,14 +194,14 @@ const quoted = (value: string) =>
 /**
  * The files the prebuild writes into the widget extension's folder
  * (`apps/widget`), by path in that folder: the colours of each «Тло», Авто
- * once per family, as colour sets, with a dark appearance where it differs; the divider band as a vector
- * image, light and dark; the widget's strings in the Edition's language; the fonts; the example
+ * once per family, as colour sets, with a dark appearance where it differs; the Mascot, when the
+ * Edition has one, as a vector image, light and dark; the widget's strings in the Edition's language; the fonts; the example
  * Widget Snapshot for the gallery; and the Info.plist, which names the
  * fonts, the App Group, the URL scheme, the Edition id and the font families. None of them
  * is kept in git.
  */
 export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string | Buffer> {
-  const { config, tokens, band } = edition;
+  const { config, tokens, mascot } = edition;
   const [language = config.locale] = config.locale.split('-');
   const assets = `${GENERATED}/Assets.xcassets`;
   const files = new Map<string, string | Buffer>();
@@ -196,19 +221,29 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
     }
   }
 
-  files.set(
-    `${assets}/band.imageset/Contents.json`,
-    asJson({
-      images: [
-        { idiom: 'universal', filename: 'band-light.svg' },
-        { idiom: 'universal', filename: 'band-dark.svg', appearances: DARK },
-      ],
-      info: ASSET_INFO,
-      properties: { 'preserves-vector-representation': true },
-    }),
-  );
-  files.set(`${assets}/band.imageset/band-light.svg`, motifSvg(band, tokens.colors.light));
-  files.set(`${assets}/band.imageset/band-dark.svg`, motifSvg(band, tokens.colors.dark));
+  if (mascot !== undefined) {
+    const { light, dark } = tokens.colors;
+    // The waiting Mascot as `mascot`, the sleeping one, for a Seen Word of the Day, as `mascotSleeps`.
+    for (const [name, state] of [
+      ['mascot', 'waits'],
+      ['mascotSleeps', 'sleeps'],
+    ] as const) {
+      files.set(
+        `${assets}/${name}.imageset/Contents.json`,
+        asJson({
+          images: [
+            { idiom: 'universal', filename: `${name}-light.svg` },
+            { idiom: 'universal', filename: `${name}-dark.svg`, appearances: DARK },
+          ],
+          info: ASSET_INFO,
+          properties: { 'preserves-vector-representation': true },
+        }),
+      );
+      const svg = (colors: ColorTokens) => mascotSvg(mascot, state, colors, light.ink);
+      files.set(`${assets}/${name}.imageset/${name}-light.svg`, svg(light));
+      files.set(`${assets}/${name}.imageset/${name}-dark.svg`, svg(dark));
+    }
+  }
 
   files.set(
     `${GENERATED}/${language}.lproj/Localizable.strings`,

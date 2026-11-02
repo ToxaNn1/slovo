@@ -2,7 +2,7 @@ import SwiftUI
 import UIKit
 
 /// What the widget takes from the Edition. The prebuild writes it into the
-/// extension's Info.plist, beside the colour sets, the band, the fonts and the
+/// extension's Info.plist, beside the colour sets, the Mascot, the fonts and the
 /// strings it generates, so this code holds no Edition data.
 enum EditionInfo {
   /// The App Group the app writes the Widget Snapshot into.
