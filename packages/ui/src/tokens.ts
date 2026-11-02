@@ -339,8 +339,6 @@ export const typeRoles = {
   resultLine: role('ui', '700', 16, 20),
   /** The capitalised label over a group of controls or a card's section. */
   sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
-  /** How many Entries a list of Saved holds, beside its title. */
-  collectionCount: role('ui', '500', 14, 14),
   /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
   progressCount: role('ui', '600', 13, 13),
   /** A Badge's name in the list of Badges. */
