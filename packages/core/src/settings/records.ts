@@ -37,6 +37,12 @@ export const settingsRecords = {
    */
   shareCounters: declareRecord('settings.shareCounters', z.boolean(), { sync: 'device-only' }),
   /**
+   * Whether the user has «Менше руху» on (ADR 0055). It stays on the device,
+   * like the system's Reduce Motion it joins; a new key needs no migration,
+   * since without it the full motion plays.
+   */
+  reduceMotion: declareRecord('settings.reduceMotion', z.boolean(), { sync: 'device-only' }),
+  /**
    * The Daily Limit of 0.9 (ADR 0054), retired in 1.0 for the Daily Goal
    * (ADR 0066): no longer read, and kept declared so it still syncs last
    * write wins between devices on an older app.
