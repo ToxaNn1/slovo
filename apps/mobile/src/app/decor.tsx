@@ -19,7 +19,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionDecor, editionStrings, editionTokens, splashImageWidth } from '@/edition/edition';
+import { editionDecor, editionStrings, editionTokens } from '@/edition/edition';
 import { useEntries } from '@/content-update/language-pack';
 
 type Look = 'edition' | 'core';
@@ -71,9 +71,7 @@ function Showcase({
 }) {
   const { colors, fontFamilies, radii } = useTokens();
   const cards = useFirstCards();
-  const [splash, setSplash] = useState<'hidden' | 'shown' | 'fading'>(
-    splashFirst ? 'shown' : 'hidden',
-  );
+  const [splash, setSplash] = useState(splashFirst);
 
   return (
     <View testID="decor-showcase" style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -119,34 +117,26 @@ function Showcase({
               testID="decor-show-splash"
               accessibilityRole="button"
               onPress={() => {
-                setSplash('shown');
+                setSplash(true);
               }}
               style={[styles.button, { borderColor: colors.line, borderRadius: radii.button }]}
             >
               <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
-                Show the splash (tap it to close)
+                Show the splash
               </Text>
             </Pressable>
           </Slot>
         </ScrollView>
       </SafeAreaView>
-      {splash !== 'hidden' && (
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={() => {
-            setSplash('fading');
+      {splash && (
+        <SplashOverlay
+          wordmark={editionStrings.splash.wordmark}
+          tagline={editionStrings.splash.tagline}
+          kind="first"
+          onDone={() => {
+            setSplash(false);
           }}
-        >
-          <SplashOverlay
-            wordmark={editionStrings.splash.wordmark}
-            tagline={editionStrings.splash.tagline}
-            markWidth={splashImageWidth}
-            visible={splash === 'shown'}
-            onHidden={() => {
-              setSplash('hidden');
-            }}
-          />
-        </Pressable>
+        />
       )}
     </View>
   );
