@@ -1,9 +1,12 @@
 import { RARITIES } from '@slovo/contracts';
-import type { Account } from '@slovo/core';
+import type { Account, BadgeState } from '@slovo/core';
 import {
   ActiveDaysCalendar,
   BackLink,
+  BadgeGrid,
+  BadgeStamp,
   fill,
+  LevelCard,
   ScreenTitle,
   Button,
   SectionLabel,
@@ -25,14 +28,15 @@ import { type Opening, useSubscribed } from '../opening';
 import { ShareCardSheet } from '../share/share-card-sheet';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
-import { BadgeList } from './badges-screen';
+import { MascotAs } from '../mascot/mascot';
 
 const strings = editionStrings.settings.profile;
 
 /**
  * Settings › Профіль: the reader's whole progress in one place: the Level and
  * the XP to the next, all XP, the Streak and the Best Streak, the Active Days
- * calendar, the confirmed Entries by rarity, the Badges with their progress
+ * calendar, the confirmed Entries by rarity, the Badges as marks (an earned
+ * one stamped on red at a tap)
  * and each Game Mode's Best result, with a button that shares the Level. A
  * reader with an Account to offer and none signed in sees the offer to save
  * progress at the top.
@@ -45,6 +49,9 @@ export function ProfileScreen() {
   const xp = useSubscribed(composition.xpLog, ({ state }) => state);
   const progress = useSubscribed(composition.progress, ({ state }) => state);
   const confirmed = useSubscribed(composition.knowledge, ({ state }) => state.confirmed);
+  const badges = useSubscribed(composition.badges, ({ state }) => state);
+  /** The earned Badge stamped over the screen after a tap on its mark. */
+  const [stamped, setStamped] = useState<BadgeState | undefined>(undefined);
   const modes = useSubscribed(composition.game, ({ state }) => state.modes);
   // A change of the Active Days may leave every number as it was, so any change draws the calendar again.
   const [, changed] = useReducer((version: number) => version + 1, 0);
@@ -98,21 +105,32 @@ export function ProfileScreen() {
         {(shown.xpBar || streakShown) && (
           <View style={styles.section}>
             {shown.xpBar && level !== undefined && (
-              <>
-                {line(
-                  'profile-level',
-                  fill(strings.level, { level: String(level.level), name: level.name }),
-                )}
-                {line(
-                  'profile-to-next',
-                  fill(strings.toNext, {
-                    progress: String(level.progress),
-                    toNext: String(level.toNext),
-                  }),
-                )}
-              </>
+              <LevelCard
+                testID="profile-level-card"
+                level={level.level}
+                progress={level.progress}
+                toNext={level.toNext}
+                lines={[
+                  {
+                    testID: 'profile-level',
+                    text: fill(strings.level, { level: String(level.level), name: level.name }),
+                  },
+                  {
+                    testID: 'profile-to-next',
+                    text: fill(strings.toNext, {
+                      progress: String(level.progress),
+                      toNext: String(level.toNext),
+                    }),
+                  },
+                  {
+                    testID: 'profile-total-xp',
+                    text: fill(strings.totalXp, { count: String(xp.total) }),
+                  },
+                ]}
+              />
             )}
             {shown.xpBar &&
+              level === undefined &&
               line('profile-total-xp', fill(strings.totalXp, { count: String(xp.total) }))}
             {streakShown && (
               <>
@@ -169,7 +187,25 @@ export function ProfileScreen() {
         </View>
         <View style={styles.section}>
           <SectionLabel>{strings.badges}</SectionLabel>
-          <BadgeList />
+          <BadgeGrid
+            badges={badges}
+            onPress={(badge) => {
+              if (badge.earned) setStamped(badge);
+            }}
+          />
+          {stamped !== undefined && (
+            <BadgeStamp
+              condition={stamped.condition}
+              symbol={stamped.symbol}
+              name={stamped.name}
+              title={strings.badgeStamp.title}
+              takeLabel={strings.badgeStamp.take}
+              mascot={<MascotAs state="celebrates" onRed />}
+              onClose={() => {
+                setStamped(undefined);
+              }}
+            />
+          )}
         </View>
         {modes.length > 0 && (
           <View style={styles.section}>

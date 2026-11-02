@@ -42,7 +42,7 @@ function progressForms({ condition }: BadgeState) {
 }
 
 /** Every Badge of the Edition in its order, earned with its date or, while not, with how far its condition has come. */
-export function BadgeList() {
+function BadgeList() {
   const { colors, fontFamilies } = useTokens();
   const { voice, count } = useEdition();
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);

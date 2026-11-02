@@ -100,6 +100,13 @@ export const SettingsStringsSchema = z.strictObject({
     shareLevel: TextSchema,
     /** The text the Level is shared with, e.g. «Мій рівень — 3 · Читач». */
     shareMessage: templateOf('level', 'name'),
+    /** An earned Badge stamped on red after a tap on its mark. */
+    badgeStamp: z.strictObject({
+      /** The cry under the mark, e.g. «Твій!». */
+      title: TextSchema,
+      /** The button that closes the stamp, e.g. «Забрати». */
+      take: TextSchema,
+    }),
   }),
   /** The Break screen: what a Break does, its length and whether one can start today (ADR 0066). */
   streakBreak: z.strictObject({
