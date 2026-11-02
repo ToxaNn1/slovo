@@ -81,8 +81,8 @@ describe('what the reader is shown', () => {
     [
       'no «Сезонний декор» switch with Seasonal Decor off',
       { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },
-      { off: ['sounds'], shown: { soundsSetting: false } },
     ],
+    ['no «Звуки» switch with the sounds off', { off: ['sounds'], shown: { soundsSetting: false } }],
     [
       'no «Ділитися анонімною статистикою» switch with Community Counters and Analytics off',
       { off: ['communityCounters', 'analytics'], shown: { shareCountersSetting: false } },
