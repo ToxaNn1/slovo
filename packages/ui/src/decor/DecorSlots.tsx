@@ -18,7 +18,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useDecor } from './DecorProvider';
 import { DecorView, MotifImage, MotifLayerImage, MotifPattern } from './Motif';
-import { space, type ShareCardFormat } from '../tokens';
+import { space } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 
@@ -146,43 +146,6 @@ export function CardCorners({ corners: at = allCorners }: { corners?: readonly C
   const { corners } = useDecor();
   if (corners === undefined) return null;
   return <MirroredCorners corner={corners.corner} at={at} scale={1} inset={CORNER_INSET} />;
-}
-
-/**
- * Decor slot 5, the Share Card frame, `scale` times its size for a card drawn
- * larger or smaller than the design: the band across the Story card `inset`
- * points inside its top edge and, mirrored, its bottom edge, or the corner
- * mirrored into the four corners of the Square card, `inset` points in. Place
- * it inside the card. Nothing when the Decor has no Share Card frame, so the
- * card stays plain.
- */
-export function ShareCardFrame({
-  format,
-  scale,
-  inset,
-}: {
-  format: ShareCardFormat;
-  scale: number;
-  inset: number;
-}) {
-  const { shareCard } = useDecor();
-  if (shareCard === undefined) return null;
-  if (format === 'square') {
-    return (
-      <MirroredCorners corner={shareCard.corner} at={allCorners} scale={scale} inset={inset} />
-    );
-  }
-  const bandHeight = { height: shareCard.band.height * scale };
-  return (
-    <DecorView style={StyleSheet.absoluteFill}>
-      <View style={[styles.frameBand, bandHeight, { top: inset }]}>
-        <MotifPattern motif={shareCard.band} scale={scale} />
-      </View>
-      <View style={[styles.frameBand, bandHeight, styles.mirrored, { bottom: inset }]}>
-        <MotifPattern motif={shareCard.band} scale={scale} />
-      </View>
-    </DecorView>
-  );
 }
 
 /**
@@ -317,6 +280,4 @@ const styles = StyleSheet.create({
   divider: { flexDirection: 'row', alignItems: 'center' },
   band: { flex: 1, minWidth: 0, overflow: 'hidden' },
   corner: { position: 'absolute' },
-  frameBand: { position: 'absolute', left: 0, right: 0, overflow: 'hidden' },
-  mirrored: { transform: [{ scaleY: -1 }] },
 });

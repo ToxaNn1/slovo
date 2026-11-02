@@ -1,37 +1,36 @@
+import type { MascotState } from '@slovo/contracts';
 import type { ShareCardBody, ShareCardContent } from '@slovo/core';
-import { useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, Defs, Pattern, Polygon, Rect } from 'react-native-svg';
 
-import { DecorBackground, OrnamentDivider, ShareCardFrame } from '../decor/DecorSlots';
+import { Mascot } from '../primitives/Mascot';
 import { useEdition } from '../providers/EditionProvider';
-import { shareCardLayout, withAlpha, type ShareCardFormat } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+import {
+  halftone,
+  shareCardDrawing,
+  shareCardLayout,
+  wedges,
+  withAlpha,
+  type ShareCardFormat,
+  type Wedge,
+} from '../tokens';
 
 /**
- * A Share Card at the design's scale, in points, by format: the Story 324 wide
- * and 576 tall with its padding inside, a true 9:16,
- * and the Square 300 on each side. Every size below is at this scale.
+ * A Share Card at the design's scale, in points, by format: the Story 270
+ * wide and 480 tall, a true 9:16, and the Square 300 on each side. Every
+ * size below is at this scale.
  */
 export const SHARE_CARD = {
-  story: { width: 324, height: 576 },
+  story: { width: 270, height: 480 },
   square: { width: 300, height: 300 },
 } as const satisfies Record<ShareCardFormat, { width: number; height: number }>;
 
-/** The Story's watermark sits this far above the bottom edge, from the design. */
-const STORY_WATERMARK_BOTTOM = 52;
-/** The letter spacing of the overline and the watermark, as a share of their size, from the design. */
-const OVERLINE_TRACKING = 0.22;
-const STORY_WATERMARK_TRACKING = 0.32;
-const FOOTER_TRACKING = 0.24;
 /** Room above the headline's glyphs, so a Stress mark over a tall vowel isn't clipped. */
-const HEADLINE_LINE_HEIGHT = 1.15;
-const NON_STANDARD_LINE_HEIGHT = 1.2;
-const DEFINITION_LINE_HEIGHT = 1.45;
-const FOOTER_LINE_HEIGHT = 1.4;
-/** The strike through the non-standard form, in the accent colour at the design's 50%. */
-const STRIKE_ALPHA = 0.5;
-/** A Tip's title, above its forms, at the Definition's size and this much larger. */
-const TIP_TITLE_SCALE = 1.2;
+const HEADLINE_LINE_HEIGHT = 1.1;
+const KICKER_LINE_HEIGHT = 1.3;
+const SUB_LINE_HEIGHT = 1.4;
 
 /** Text that doesn't fit shrinks by this share of its size at a time. */
 const SHRINK_STEP = 0.05;
@@ -69,28 +68,72 @@ export interface ShareCardProps {
   watermark: string;
 }
 
+/** The colours of the card in the current Theme: red in the light one, the dark ground in the dark one. */
+interface Paint {
+  ground: string;
+  ink: string;
+  /** The brand wedge, the labels and the filled crossword cells. */
+  mark: string;
+  giant: string;
+  dot: string;
+  chip: string;
+  closedCell: string;
+  footer: string;
+  onFooter: string;
+  onRed: boolean;
+}
+
+function usePaint(): Paint {
+  const { colors, colorScheme } = useTokens();
+  if (colorScheme === 'light') {
+    return {
+      ground: colors.accent,
+      ink: colors.ink,
+      mark: colors.ink,
+      giant: colors.onAccent,
+      dot: halftone.dot,
+      chip: withAlpha(colors.onAccent, shareCardDrawing.chipAlpha.light),
+      closedCell: withAlpha(colors.onAccent, shareCardDrawing.closedCellAlpha.light),
+      footer: colors.ink,
+      onFooter: colors.onAccent,
+      onRed: true,
+    };
+  }
+  return {
+    ground: colors.background,
+    ink: colors.ink,
+    mark: colors.accent,
+    giant: colors.accent,
+    dot: withAlpha(colors.ink, shareCardDrawing.darkDotAlpha),
+    chip: withAlpha(colors.ink, shareCardDrawing.chipAlpha.dark),
+    closedCell: withAlpha(colors.ink, shareCardDrawing.closedCellAlpha.dark),
+    footer: colors.surfaceSunken,
+    onFooter: colors.ink,
+    onRed: false,
+  };
+}
+
 /**
- * The Share Card of an Entry in a format, `width` points wide, in the app's
- * current Theme, with no app chrome, over Decor slot 1 in the frame of slot 5
- * (designs `share-card-word-story-dark` and `share-card-correction-square-light`). A
- * Word's shows the Lemma with Stress in the word family, the part of speech
- * with gender and registers, and the primary Definition; a Correction's shows
- * «Так часто кажуть» over the non-standard form struck through, the divider
- * with the Correction's arrow and «Українською краще» over the main standard
- * equivalent; an Idiom's shows its expression and its primary Definition, and
- * a place name's adds «Походження» over its etymology. A Weekly Recap's
- * shows «Мій тиждень у SLOVO», Decor slot 2 and the week's numbers, each over
- * its label, two to a row, with the week's dates as its overline. A Synonym Row's and
- * a Tip's show what the Core decides for their Share Card (ADR 0051): a row's
- * dominant, its meaning and its first 6 members, ending in «…» when it has
- * more; a Tip's title over its forms, drawn as a Correction's, the
- * non-standard one only when it has one. The overline (today's Word of the
- * Day, the Category, the Correction Type, the chip of the Idiom Type or of the
- * row or the Tip) tops the Story and starts the Square's footer; the watermark
- * ends both. The card is laid out at its own size, so it is sharp at any size,
- * and its type keeps the design's proportions whatever the reader's text size.
- * A headline too wide for its line shrinks to a floor and then wraps; text too
- * tall for the card shrinks until it fits; nothing is cut.
+ * The Share Card of what the Core built, in a format, `width` points wide, in
+ * the app's current Theme, with no app chrome, as the design's share board
+ * draws it: red under a halftone raster in the light Theme, the dark ground in
+ * the dark one; the brand wedge and the kicker (the overline) on top; the
+ * headline in the loud type, the reading text under it; a giant glyph of the
+ * headline (its first letter, or its number) behind them off the right edge;
+ * and a slanted footer band with the Mascot and the watermark. A Word's shows
+ * the Lemma with Stress, the part of speech with gender and registers, and
+ * the primary Definition; a Correction's «Так часто кажуть» over the
+ * non-standard form struck through and «Українською краще» over the main
+ * standard equivalent; an Idiom's its expression, its primary Definition and
+ * a place name's «Походження» over its etymology; a Synonym Row's its
+ * dominant, its meaning and its first members; a Tip's its title over its
+ * forms; a Weekly Recap's its title and the week's numbers in chips; a
+ * milestone's its title, headline and the Level's name; a Daily Crossword's
+ * its title and its grid without letters. The card is laid out at its own
+ * size, so it is sharp at any size, and its type keeps the design's
+ * proportions whatever the reader's text size. A headline too wide for its
+ * line shrinks to a floor and then wraps; text too tall for the card shrinks
+ * until it fits; nothing is cut.
  */
 export function ShareCard(props: ShareCardProps & { format: ShareCardFormat; width: number }) {
   // A new Entry, week or format measures from the design's sizes again.
@@ -103,8 +146,9 @@ function FittedCard({
   format,
   width,
 }: ShareCardProps & { format: ShareCardFormat; width: number }) {
-  const { colors, fontFamilies } = useTokens();
+  const { fontFamilies } = useTokens();
   const { voice } = useEdition();
+  const paint = usePaint();
   const layout = shareCardLayout[format];
   /** The design's points in this card's points. */
   const unit = width / SHARE_CARD[format].width;
@@ -122,6 +166,7 @@ function FittedCard({
 
   /** A size of the design's text, shrunk with the rest of the text. */
   const text = (size: number) => size * unit * textScale;
+  const headlineSize = isEntry(body) ? layout.type.entryHeadline : layout.type.headline;
   const headline = (value: string) => (
     <Text
       allowFontScaling={false}
@@ -131,9 +176,10 @@ function FittedCard({
       style={[
         styles.headline,
         {
-          fontSize: text(layout.type.headline) * headlineScale,
-          lineHeight: text(layout.type.headline) * headlineScale * HEADLINE_LINE_HEIGHT,
-          color: colors.ink,
+          fontSize: text(headlineSize) * headlineScale,
+          lineHeight: text(headlineSize) * headlineScale * HEADLINE_LINE_HEIGHT,
+          letterSpacing: shareCardDrawing.tracking.headline * unit,
+          color: paint.ink,
           fontFamily: fontFamilies.word,
         },
       ]}
@@ -141,9 +187,8 @@ function FittedCard({
       {value}
     </Text>
   );
-  const blocks = (
-    <Blocks body={body} headline={headline} text={text} format={format} dividerScale={unit} />
-  );
+  const glyph = giantGlyph(body);
+  const mascotSize = layout.mascot * unit;
 
   return (
     <View
@@ -157,18 +202,46 @@ function FittedCard({
           width,
           height: SHARE_CARD[format].height * unit,
           paddingHorizontal: layout.padding.horizontal * unit,
-          paddingVertical: layout.padding.vertical * unit,
-          backgroundColor: colors.background,
+          paddingTop: layout.padding.vertical * unit,
+          backgroundColor: paint.ground,
         },
       ]}
     >
-      <DecorBackground scale={unit} />
-      <ShareCardFrame format={format} scale={unit} inset={layout.frameInset * unit} />
+      <Raster color={paint.dot} unit={unit} />
+      {glyph !== undefined && (
+        <Text
+          testID="share-card-giant"
+          allowFontScaling={false}
+          numberOfLines={1}
+          style={[
+            styles.giant,
+            {
+              right: layout.giant.right * unit,
+              top: layout.giant.top * unit,
+              fontSize: layout.giant.size * unit,
+              lineHeight: layout.giant.size * unit,
+              letterSpacing: shareCardDrawing.tracking.giant * unit,
+              color: paint.giant,
+              fontFamily: fontFamilies.word,
+            },
+          ]}
+        >
+          {glyph}
+        </Text>
+      )}
+      <View style={styles.brand}>
+        <Shape
+          wedge={wedges.wedge}
+          color={paint.mark}
+          width={shareCardDrawing.brand.width * unit}
+          height={shareCardDrawing.brand.height * unit}
+        />
+      </View>
       <View
         onLayout={({ nativeEvent }) => {
           setRoom(nativeEvent.layout.height);
         }}
-        style={format === 'story' ? styles.storyRoom : styles.squareRoom}
+        style={[styles.room, { marginTop: layout.kickerTop * unit - layout.gap * unit }]}
       >
         <View
           onLayout={({ nativeEvent }) => {
@@ -176,257 +249,146 @@ function FittedCard({
           }}
           style={{ gap: text(layout.gap) }}
         >
-          {format === 'story' && overline !== undefined && (
+          {overline !== undefined && (
             <Text
               allowFontScaling={false}
               style={[
-                styles.overline,
+                styles.kicker,
                 {
-                  fontSize: text(layout.type.overline),
-                  letterSpacing: text(layout.type.overline) * OVERLINE_TRACKING,
-                  color: colors.accent,
-                  fontFamily: fontFamilies.ui,
+                  fontSize: text(layout.type.kicker),
+                  lineHeight: text(layout.type.kicker) * KICKER_LINE_HEIGHT,
+                  letterSpacing: shareCardDrawing.tracking.kicker * unit,
+                  color: paint.ink,
+                  fontFamily: fontFamilies.word,
                 },
               ]}
             >
               {overline}
             </Text>
           )}
-          {blocks}
+          <Blocks body={body} headline={headline} text={text} format={format} paint={paint} />
         </View>
       </View>
-      <CardEnd format={format} unit={unit} overline={overline} watermark={watermark} />
-    </View>
-  );
-}
-
-/** The blocks of what the card shows. */
-function Blocks({ body, ...props }: BlockProps & { body: ShareCardBody }) {
-  switch (body.kind) {
-    case 'word':
-      return <WordBlocks card={body} {...props} />;
-    case 'idiom':
-      return <IdiomBlocks card={body} {...props} />;
-    case 'correction':
-      return (
-        <Forms {...props} nonStandardForm={body.nonStandardForm} standardForm={body.standardForm} />
-      );
-    case 'synonymRow':
-      return <SynonymRowBlocks card={body} {...props} />;
-    case 'tip':
-      return <TipBlocks card={body} {...props} />;
-    case 'weeklyRecap':
-      return <WeeklyRecapBlocks card={body} {...props} />;
-    case 'milestone':
-      return <MilestoneBlocks card={body} {...props} />;
-    case 'dailyCrossword':
-      return <DailyCrosswordBlocks card={body} {...props} />;
-  }
-}
-
-/** A card's title in the recap's type, over Decor slot 2. */
-function CardTitle({
-  title,
-  text,
-  format,
-}: Pick<BlockProps, 'text' | 'format'> & { title: string }) {
-  const { colors, fontFamilies } = useTokens();
-  const titleSize = text(shareCardLayout[format].type.nonStandard);
-  return (
-    <Text
-      allowFontScaling={false}
-      style={[
-        styles.tipTitle,
-        {
-          fontSize: titleSize,
-          lineHeight: titleSize * NON_STANDARD_LINE_HEIGHT,
-          color: colors.ink,
-          fontFamily: fontFamilies.word,
-        },
-      ]}
-    >
-      {title}
-    </Text>
-  );
-}
-
-/** A Level reached, a Badge earned or a Streak milestone: its title, Decor slot 2, its headline and the Level's name. */
-function MilestoneBlocks({ card, ...props }: BlockProps & { card: BodyOf<'milestone'> }) {
-  const { colors, fontFamilies } = useTokens();
-  const { text, format, dividerScale } = props;
-  const { type } = shareCardLayout[format];
-  return (
-    <>
-      <CardTitle title={card.title} {...props} />
-      <OrnamentDivider scale={dividerScale} />
-      <Text
-        allowFontScaling={false}
+      <View
         style={[
-          styles.headline,
+          styles.footer,
           {
-            fontSize: text(type.headline),
-            lineHeight: text(type.headline) * HEADLINE_LINE_HEIGHT,
-            color: colors.ink,
-            fontFamily: fontFamilies.word,
+            height: layout.footer * unit,
+            paddingHorizontal: layout.padding.horizontal * unit,
+            paddingBottom: layout.padding.vertical * unit,
           },
         ]}
       >
-        {card.headline}
-      </Text>
-      {card.detail !== undefined && (
+        <Shape
+          wedge={wedges.rise}
+          color={paint.footer}
+          width={width}
+          height={layout.footer * unit}
+          style={StyleSheet.absoluteFill}
+        />
+        <View style={{ width: mascotSize, height: mascotSize }}>
+          <View
+            style={[
+              styles.mascot,
+              { transform: [{ scale: mascotSize / shareCardDrawing.mascotBox }] },
+            ]}
+          >
+            <Mascot state={mascotState(body)} onRed={paint.onRed} />
+          </View>
+        </View>
         <Text
           allowFontScaling={false}
           style={[
-            styles.label,
-            { fontSize: text(type.label), color: colors.muted, fontFamily: fontFamilies.ui },
-          ]}
-        >
-          {card.detail}
-        </Text>
-      )}
-    </>
-  );
-}
-
-/** A solved Daily Crossword: its title, Decor slot 2 and its grid with the open cells filled, never a letter. */
-function DailyCrosswordBlocks({ card, ...props }: BlockProps & { card: BodyOf<'dailyCrossword'> }) {
-  const { colors } = useTokens();
-  const { text, format, dividerScale } = props;
-  const cell = text(shareCardLayout[format].type.headline);
-  return (
-    <>
-      <CardTitle title={card.title} {...props} />
-      <OrnamentDivider scale={dividerScale} />
-      <View>
-        {card.grid.map((row, r) => (
-          <View key={r} style={styles.gridRow}>
-            {row.map((open, c) => (
-              <View
-                key={c}
-                testID={open ? 'crossword-open-cell' : 'crossword-closed-cell'}
-                style={{
-                  width: cell,
-                  height: cell,
-                  borderWidth: open ? StyleSheet.hairlineWidth : 0,
-                  borderColor: colors.ink,
-                }}
-              />
-            ))}
-          </View>
-        ))}
-      </View>
-    </>
-  );
-}
-
-/**
- * A Weekly Recap's blocks: its title, Decor slot 2 and the week's numbers,
- * each over its label, two to a row.
- */
-function WeeklyRecapBlocks({
-  card,
-  text,
-  format,
-  dividerScale,
-}: BlockProps & { card: BodyOf<'weeklyRecap'> }) {
-  const { colors, fontFamilies } = useTokens();
-  const { type, gap, labelGap } = shareCardLayout[format];
-  return (
-    <>
-      <CardTitle title={card.title} text={text} format={format} />
-      <OrnamentDivider scale={dividerScale} />
-      <View style={[styles.numbers, { rowGap: text(gap) }]}>
-        {card.numbers.map(({ label, count }) => (
-          <View key={label} style={[styles.number, { gap: text(labelGap) / 2 }]}>
-            <Text
-              allowFontScaling={false}
-              style={[
-                styles.headline,
-                {
-                  fontSize: text(type.headline),
-                  lineHeight: text(type.headline) * HEADLINE_LINE_HEIGHT,
-                  color: colors.ink,
-                  fontFamily: fontFamilies.word,
-                },
-              ]}
-            >
-              {count}
-            </Text>
-            <Text
-              allowFontScaling={false}
-              style={[
-                styles.label,
-                { fontSize: text(type.label), color: colors.muted, fontFamily: fontFamilies.ui },
-              ]}
-            >
-              {label}
-            </Text>
-          </View>
-        ))}
-      </View>
-    </>
-  );
-}
-
-/**
- * The end of the card: the Story's watermark centred over its bottom edge, or
- * the Square's footer with the overline on the left and the watermark on the
- * right. Its type keeps the design's size whatever the text above shrinks to.
- */
-function CardEnd({
-  format,
-  unit,
-  overline,
-  watermark,
-}: {
-  format: ShareCardFormat;
-  /** The design's points in the card's points. */
-  unit: number;
-  overline: string | undefined;
-  watermark: string;
-}) {
-  const { colors, fontFamilies } = useTokens();
-  const { gap, type } = shareCardLayout[format];
-  const size = type.watermark * unit;
-  const ink = { color: colors.muted, fontFamily: fontFamilies.ui };
-  if (format === 'story') {
-    return (
-      <Text
-        allowFontScaling={false}
-        style={[
-          styles.storyWatermark,
-          ink,
-          {
-            bottom: STORY_WATERMARK_BOTTOM * unit,
-            fontSize: size,
-            letterSpacing: size * STORY_WATERMARK_TRACKING,
-          },
-        ]}
-      >
-        {watermark}
-      </Text>
-    );
-  }
-  return (
-    <View style={[styles.footer, { marginTop: gap * unit, gap: gap * unit }]}>
-      {[overline ?? '', watermark].map((part, index) => (
-        <Text
-          key={index}
-          allowFontScaling={false}
-          style={[
-            styles.footerText,
-            ink,
+            styles.watermark,
             {
-              fontSize: size,
-              lineHeight: size * FOOTER_LINE_HEIGHT,
-              letterSpacing: size * FOOTER_TRACKING,
+              fontSize: layout.type.watermark * unit,
+              color: paint.onFooter,
+              opacity: shareCardDrawing.watermarkOpacity,
+              fontFamily: fontFamilies.ui,
             },
           ]}
         >
-          {part}
+          {watermark}
         </Text>
-      ))}
+      </View>
     </View>
+  );
+}
+
+/** Whether the card shows an Entry, whose headline is the design's largest. */
+function isEntry(body: ShareCardBody): boolean {
+  return body.kind !== 'weeklyRecap' && body.kind !== 'milestone' && body.kind !== 'dailyCrossword';
+}
+
+/** The Mascot's state on the card, as the share board picks it. */
+function mascotState(body: ShareCardBody): MascotState {
+  if (body.kind === 'milestone') return 'celebrates';
+  if (body.kind === 'weeklyRecap' || body.kind === 'dailyCrossword') return 'happy';
+  return 'shouts';
+}
+
+/**
+ * The giant glyph behind the text: a milestone's number, or the first letter
+ * of what the card names, without its Stress; none for a week or a crossword.
+ */
+function giantGlyph(body: ShareCardBody): string | undefined {
+  switch (body.kind) {
+    case 'weeklyRecap':
+    case 'dailyCrossword':
+      return undefined;
+    case 'milestone':
+      return /\d+/.exec(body.headline)?.[0] ?? firstLetter(body.headline);
+    case 'word':
+      return firstLetter(body.lemma);
+    case 'idiom':
+      return firstLetter(body.expression);
+    case 'correction':
+      return firstLetter(body.standardForm);
+    case 'synonymRow':
+      return firstLetter(body.dominant);
+    case 'tip':
+      return firstLetter(body.title);
+  }
+}
+
+function firstLetter(value: string): string | undefined {
+  return /\p{L}/u.exec(value.normalize('NFD'))?.[0].normalize('NFC').toLocaleUpperCase();
+}
+
+/** The halftone raster over the whole card, at the card's scale. */
+function Raster({ color, unit }: { color: string; unit: number }) {
+  const id = `raster${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
+  const cell = halftone.cell * unit;
+  return (
+    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Defs>
+        <Pattern id={id} width={cell} height={cell} patternUnits="userSpaceOnUse">
+          <Circle cx={cell / 2} cy={cell / 2} r={halftone.radius * unit} fill={color} />
+        </Pattern>
+      </Defs>
+      <Rect width="100%" height="100%" fill={`url(#${id})`} />
+    </Svg>
+  );
+}
+
+/** A wedge of the design filled with `color`, `width` by `height`. */
+function Shape({
+  wedge,
+  color,
+  width,
+  height,
+  style,
+}: {
+  wedge: Wedge;
+  color: string;
+  width: number;
+  height: number;
+  style?: object;
+}) {
+  return (
+    <Svg width={width} height={height} viewBox="0 0 1 1" preserveAspectRatio="none" style={style}>
+      <Polygon points={wedge.map(([x, y]) => `${String(x)},${String(y)}`).join(' ')} fill={color} />
+    </Svg>
   );
 }
 
@@ -437,213 +399,217 @@ interface BlockProps {
   /** A size of the design's text in this card's points. */
   text: (size: number) => number;
   format: ShareCardFormat;
-  /** The design's points in the card's points, for Decor slot 2. */
-  dividerScale: number;
+  paint: Paint;
 }
 
 /** The body of one kind. */
 type BodyOf<Kind extends ShareCardBody['kind']> = Extract<ShareCardBody, { kind: Kind }>;
 
-/**
- * A Word's blocks: the Lemma with Stress, the part of speech with gender and
- * registers, and the primary Definition.
- */
-function WordBlocks({ card, headline, text, format }: BlockProps & { card: BodyOf<'word'> }) {
-  const { colors, fontFamilies } = useTokens();
-  const { type } = shareCardLayout[format];
-  return (
-    <>
-      {headline(card.lemma)}
-      <Text
-        allowFontScaling={false}
-        style={[
-          styles.partOfSpeech,
-          { fontSize: text(type.partOfSpeech), color: colors.muted, fontFamily: fontFamilies.ui },
-        ]}
-      >
-        {card.grammar}
-      </Text>
-      <Definition text={text} size={type.definition} value={card.definition} />
-    </>
-  );
+/** The blocks of what the card shows. */
+function Blocks({ body, ...props }: BlockProps & { body: ShareCardBody }) {
+  switch (body.kind) {
+    case 'word':
+      return (
+        <>
+          {props.headline(body.lemma)}
+          <Sub {...props} value={body.grammar} label />
+          <Sub {...props} value={body.definition} />
+        </>
+      );
+    case 'idiom':
+      return (
+        <>
+          {props.headline(body.expression)}
+          <Sub {...props} value={body.definition} />
+          {body.etymology !== undefined && <Etymology {...props} value={body.etymology} />}
+        </>
+      );
+    case 'correction':
+      return (
+        <Forms {...props} nonStandardForm={body.nonStandardForm} standardForm={body.standardForm} />
+      );
+    case 'synonymRow':
+      return (
+        <>
+          {props.headline(body.dominant)}
+          <Sub {...props} value={body.meaning} />
+          <Sub {...props} value={body.members} label />
+        </>
+      );
+    case 'tip':
+      return (
+        <>
+          {props.headline(body.title)}
+          <Forms
+            {...props}
+            nonStandardForm={body.nonStandardForm}
+            standardForm={body.standardForm}
+            small
+          />
+        </>
+      );
+    case 'weeklyRecap':
+      return <WeeklyRecapBlocks card={body} {...props} />;
+    case 'milestone':
+      return (
+        <>
+          <Sub {...props} value={body.title} label />
+          {props.headline(body.headline)}
+          {body.detail !== undefined && <Sub {...props} value={body.detail} />}
+        </>
+      );
+    case 'dailyCrossword':
+      return <DailyCrosswordBlocks card={body} {...props} />;
+  }
 }
 
-/**
- * An Idiom's blocks: the expression and the primary Definition, and a place
- * name's «Походження» over its etymology, the story of its name.
- */
-function IdiomBlocks({ card, headline, text, format }: BlockProps & { card: BodyOf<'idiom'> }) {
-  const { colors, fontFamilies } = useTokens();
-  const { strings } = useEdition();
-  const { type, labelGap } = shareCardLayout[format];
-  return (
-    <>
-      {headline(card.expression)}
-      <Definition text={text} size={type.definition} value={card.definition} />
-      {card.etymology !== undefined && (
-        <View style={{ gap: text(labelGap) }}>
-          <Text
-            allowFontScaling={false}
-            style={[
-              styles.label,
-              { fontSize: text(type.label), color: colors.accent, fontFamily: fontFamilies.ui },
-            ]}
-          >
-            {strings.idiomCard.etymology}
-          </Text>
-          <Text
-            allowFontScaling={false}
-            style={{
-              fontSize: text(type.etymology),
-              lineHeight: text(type.etymology) * DEFINITION_LINE_HEIGHT,
-              color: colors.inkSecondary,
-              fontFamily: fontFamilies.ui,
-            }}
-          >
-            {card.etymology}
-          </Text>
-        </View>
-      )}
-    </>
-  );
-}
-
-/** The primary Definition of a Word or an Idiom. */
-function Definition({
-  text,
-  size,
+/** Reading text under the headline, or with `label` a short line in the meta type. */
+function Sub({
   value,
-}: Pick<BlockProps, 'text'> & { size: number; value: string }) {
-  const { colors, fontFamilies } = useTokens();
+  text,
+  format,
+  paint,
+  label = false,
+  color,
+  strike = false,
+  size,
+}: Pick<BlockProps, 'text' | 'format' | 'paint'> & {
+  value: string;
+  label?: boolean;
+  color?: string;
+  strike?: boolean;
+  size?: number;
+}) {
+  const { fontFamilies } = useTokens();
+  const { type } = shareCardLayout[format];
+  const fontSize = text(size ?? (label ? type.label : type.sub));
   return (
     <Text
       allowFontScaling={false}
-      style={{
-        fontSize: text(size),
-        lineHeight: text(size) * DEFINITION_LINE_HEIGHT,
-        color: colors.ink,
-        fontFamily: fontFamilies.word,
-      }}
+      style={[
+        label ? styles.label : styles.sub,
+        strike && styles.strike,
+        {
+          fontSize,
+          lineHeight: fontSize * SUB_LINE_HEIGHT,
+          color: color ?? paint.ink,
+          opacity: label || color !== undefined ? 1 : shareCardDrawing.subOpacity,
+          textDecorationColor: paint.ink,
+          fontFamily: size !== undefined ? fontFamilies.word : fontFamilies.ui,
+        },
+      ]}
     >
       {value}
     </Text>
   );
 }
 
-/**
- * A Synonym Row's blocks: the dominant, its meaning and the members the Core
- * shares, ending in «…» when the row has more.
- */
-function SynonymRowBlocks({
-  card,
-  headline,
-  text,
-  format,
-}: BlockProps & { card: BodyOf<'synonymRow'> }) {
-  const { colors, fontFamilies } = useTokens();
-  const { type } = shareCardLayout[format];
+/** A place name's «Походження» over its etymology. */
+function Etymology({ value, ...props }: BlockProps & { value: string }) {
+  const { strings } = useEdition();
   return (
-    <>
-      {headline(card.dominant)}
-      <Definition text={text} size={type.definition} value={card.meaning} />
-      <Text
-        allowFontScaling={false}
-        style={{
-          fontSize: text(type.definition),
-          lineHeight: text(type.definition) * DEFINITION_LINE_HEIGHT,
-          color: colors.accent,
-          fontFamily: fontFamilies.word,
-        }}
-      >
-        {card.members}
-      </Text>
-    </>
-  );
-}
-
-/**
- * A Tip's blocks: its title over its forms, drawn as a Correction's; with no
- * non-standard form, Decor slot 2 has no arrow and only the standard form
- * follows it.
- */
-function TipBlocks({ card, ...props }: BlockProps & { card: BodyOf<'tip'> }) {
-  const { colors, fontFamilies } = useTokens();
-  const { type } = shareCardLayout[props.format];
-  const size = props.text(type.definition) * TIP_TITLE_SCALE;
-  return (
-    <>
-      <Text
-        allowFontScaling={false}
-        style={[
-          styles.tipTitle,
-          {
-            fontSize: size,
-            lineHeight: size * NON_STANDARD_LINE_HEIGHT,
-            color: colors.ink,
-            fontFamily: fontFamilies.word,
-          },
-        ]}
-      >
-        {card.title}
-      </Text>
-      <Forms {...props} nonStandardForm={card.nonStandardForm} standardForm={card.standardForm} />
-    </>
+    <View>
+      <Sub {...props} value={strings.idiomCard.etymology} label color={props.paint.mark} />
+      <Sub {...props} value={value} />
+    </View>
   );
 }
 
 /**
  * «Так часто кажуть» over the non-standard form struck through, when there is
- * one, Decor slot 2, with an arrow after a non-standard form, and «Українською
- * краще» over the standard form as the headline.
+ * one, and «Українською краще» over the standard form: the headline, or with
+ * `small` (a Tip's, under its title) the non-standard form's size.
  */
 function Forms({
   nonStandardForm,
   standardForm,
-  headline,
-  text,
-  format,
-  dividerScale,
-}: BlockProps & { nonStandardForm: string | undefined; standardForm: string }) {
-  const { colors, fontFamilies } = useTokens();
+  small = false,
+  ...props
+}: BlockProps & { nonStandardForm: string | undefined; standardForm: string; small?: boolean }) {
   const { strings } = useEdition();
-  const { type, labelGap } = shareCardLayout[format];
-  const label = (value: string, color: string) => (
-    <Text
-      allowFontScaling={false}
-      style={[styles.label, { fontSize: text(type.label), color, fontFamily: fontFamilies.ui }]}
-    >
-      {value}
-    </Text>
-  );
+  const { type } = shareCardLayout[props.format];
   return (
     <>
       {nonStandardForm !== undefined && (
-        <View style={{ gap: text(labelGap) }}>
-          {label(strings.share.nonStandard, colors.muted)}
-          <Text
-            allowFontScaling={false}
-            style={[
-              styles.nonStandard,
-              {
-                fontSize: text(type.nonStandard),
-                lineHeight: text(type.nonStandard) * NON_STANDARD_LINE_HEIGHT,
-                color: colors.muted,
-                fontFamily: fontFamilies.word,
-                textDecorationColor: withAlpha(colors.accent, STRIKE_ALPHA),
-              },
-            ]}
-          >
-            {nonStandardForm}
-          </Text>
+        <View>
+          <Sub {...props} value={strings.share.nonStandard} label />
+          <Sub {...props} value={nonStandardForm} size={type.nonStandard} strike />
         </View>
       )}
-      <OrnamentDivider
-        centre={nonStandardForm !== undefined ? 'arrow' : 'ornament'}
-        scale={dividerScale}
-      />
-      <View style={{ gap: text(labelGap) }}>
-        {label(strings.share.standard, colors.accent)}
-        {headline(standardForm)}
+      <View>
+        <Sub {...props} value={strings.share.standard} label color={props.paint.mark} />
+        {small ? (
+          <Sub {...props} value={standardForm} size={type.nonStandard} />
+        ) : (
+          props.headline(standardForm)
+        )}
+      </View>
+    </>
+  );
+}
+
+/** A Weekly Recap's title and the week's numbers, each in a chip over its label. */
+function WeeklyRecapBlocks({ card, ...props }: BlockProps & { card: BodyOf<'weeklyRecap'> }) {
+  const { fontFamilies } = useTokens();
+  const { text, format, paint } = props;
+  const { type, statBasis, gap } = shareCardLayout[format];
+  return (
+    <>
+      {props.headline(card.title)}
+      <View style={[styles.stats, { gap: text(gap) }]}>
+        {card.numbers.map(({ label, count }) => (
+          <View
+            key={label}
+            style={{
+              flexBasis: statBasis,
+              flexGrow: 1,
+              padding: text(shareCardDrawing.chipPadding),
+              borderRadius: text(shareCardDrawing.chipRadius),
+              backgroundColor: paint.chip,
+            }}
+          >
+            <Text
+              allowFontScaling={false}
+              style={[
+                styles.stat,
+                { fontSize: text(type.stat), color: paint.ink, fontFamily: fontFamilies.word },
+              ]}
+            >
+              {count}
+            </Text>
+            <Sub {...props} value={label} label />
+          </View>
+        ))}
+      </View>
+    </>
+  );
+}
+
+/** A solved Daily Crossword: its title and its grid with the open cells filled, never a letter. */
+function DailyCrosswordBlocks({ card, ...props }: BlockProps & { card: BodyOf<'dailyCrossword'> }) {
+  const { text, format, paint } = props;
+  const cell = text(shareCardLayout[format].cell);
+  const gap = text(shareCardDrawing.cellGap);
+  return (
+    <>
+      {props.headline(card.title)}
+      <View style={{ gap }}>
+        {card.grid.map((row, r) => (
+          <View key={r} style={[styles.gridRow, { gap }]}>
+            {row.map((open, c) => (
+              <View
+                key={c}
+                testID={open ? 'crossword-open-cell' : 'crossword-closed-cell'}
+                style={{
+                  width: cell,
+                  height: cell,
+                  borderRadius: text(shareCardDrawing.cellRadius),
+                  backgroundColor: open ? paint.mark : paint.closedCell,
+                }}
+              />
+            ))}
+          </View>
+        ))}
       </View>
     </>
   );
@@ -651,24 +617,22 @@ function Forms({
 
 const styles = StyleSheet.create({
   card: { overflow: 'hidden' },
-  storyRoom: { flex: 1, justifyContent: 'center' },
-  squareRoom: { flex: 1, justifyContent: 'flex-start' },
-  overline: { fontWeight: '700', textTransform: 'uppercase' },
-  headline: { fontWeight: '500' },
-  tipTitle: { fontWeight: '500' },
-  partOfSpeech: { fontWeight: '500' },
-  label: { fontWeight: '500' },
-  nonStandard: { fontWeight: '400', textDecorationLine: 'line-through' },
-  storyWatermark: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    textAlign: 'center',
-    fontWeight: '600',
-  },
-  footer: { flexDirection: 'row', justifyContent: 'space-between' },
-  numbers: { flexDirection: 'row', flexWrap: 'wrap' },
-  number: { width: '50%' },
+  giant: { position: 'absolute', fontWeight: '900' },
+  brand: { flexDirection: 'row' },
+  room: { flex: 1 },
+  kicker: { fontWeight: '800', textTransform: 'uppercase' },
+  headline: { fontWeight: '900' },
+  sub: { fontWeight: '500' },
+  label: { fontWeight: '600' },
+  strike: { textDecorationLine: 'line-through' },
+  stat: { fontWeight: '900' },
+  stats: { flexDirection: 'row', flexWrap: 'wrap' },
   gridRow: { flexDirection: 'row' },
-  footerText: { flexShrink: 1, fontWeight: '600', textTransform: 'uppercase' },
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  mascot: { position: 'absolute', left: 0, bottom: 0, transformOrigin: 'left bottom' },
+  watermark: { fontWeight: '600' },
 });
