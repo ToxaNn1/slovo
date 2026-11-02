@@ -462,7 +462,17 @@ export const blockGap = 18;
 export const wordCardSide = 26;
 
 /** The spacing inside an Entry's row in a list, off the 4-pt grid. */
-export const entryRow = { minHeight: 60, compactMinHeight: 52, lineGap: 3, titleGap: 10 } as const;
+export const entryRow = {
+  minHeight: 60,
+  compactMinHeight: 52,
+  /** The design's 4 between the word and its line. */
+  lineGap: 4,
+  titleGap: 10,
+  /** How far the text sits in from the row's hairline (design `SlovoApp`, the Saved list). */
+  inset: 4,
+  /** The row's opacity while it is pressed. */
+  pressedOpacity: 0.6,
+} as const;
 
 /**
  * The Word card's small controls: the Category chip's vertical padding, the
