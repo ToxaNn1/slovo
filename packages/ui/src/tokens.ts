@@ -160,6 +160,8 @@ export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamili
 export const offsetShadow = {
   rest: { depth: 5 },
   pressed: { depth: 1, translateY: 4 },
+  /** A key of an on-screen keyboard: a shallower edge, pressed down to the same thin one. */
+  key: { depth: 3, translateY: 2 },
 } as const;
 
 /** The edge colour of a tile's offset shadow: `accentEdge` under red, `tileEdge` under the rest. */
