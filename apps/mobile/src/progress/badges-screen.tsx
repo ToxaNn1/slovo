@@ -1,5 +1,14 @@
 import type { BadgeState } from '@slovo/core';
-import { BackLink, fill, ScreenTitle, space, typeSize, useEdition, useTokens } from '@slovo/ui';
+import {
+  BackLink,
+  BadgeMark,
+  fill,
+  ScreenTitle,
+  space,
+  typeSize,
+  useEdition,
+  useTokens,
+} from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +19,9 @@ import { useSubscribed } from '../opening';
 import { dayText } from './day-text';
 
 const strings = editionStrings.settings.badges;
+
+/** The side of a Badge's mark beside its name. */
+const BADGE_MARK = 44;
 
 /** The progress forms of an unearned Badge's condition; none for a condition of one first time. */
 function progressForms({ condition }: BadgeState) {
@@ -30,7 +42,7 @@ function progressForms({ condition }: BadgeState) {
 }
 
 /** Every Badge of the Edition in its order, earned with its date or, while not, with how far its condition has come. */
-export function BadgeList() {
+function BadgeList() {
   const { colors, fontFamilies } = useTokens();
   const { voice, count } = useEdition();
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);
@@ -47,12 +59,21 @@ export function BadgeList() {
 
   return badges.map((badge) => (
     <View key={badge.id} testID={`badge-${badge.id}`} style={styles.badge}>
-      <Text {...voice} style={nameStyle}>
-        {badge.name}
-      </Text>
-      <Text {...voice} testID={`badge-${badge.id}-status`} style={textStyle}>
-        {statusOf(badge)}
-      </Text>
+      <BadgeMark
+        testID={`badge-${badge.id}-mark`}
+        condition={badge.condition}
+        symbol={badge.symbol}
+        earned={badge.earned}
+        size={BADGE_MARK}
+      />
+      <View style={styles.words}>
+        <Text {...voice} style={nameStyle}>
+          {badge.name}
+        </Text>
+        <Text {...voice} testID={`badge-${badge.id}-status`} style={textStyle}>
+          {statusOf(badge)}
+        </Text>
+      </View>
     </View>
   ));
 }
@@ -89,7 +110,8 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },
-  badge: { gap: space[1], paddingBottom: space[4] },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingBottom: space[4] },
+  words: { flex: 1, gap: space[1] },
   name: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.4 },
   text: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
 });
