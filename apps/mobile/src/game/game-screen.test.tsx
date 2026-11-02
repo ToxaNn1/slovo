@@ -636,7 +636,9 @@ describe('the Game screen', () => {
       await waitFor(() => {
         expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
       });
-      expect(screen.getByText('Де наголос?')).toBeOnTheScreen();
+      expect(
+        screen.getByText(/^Де наголос\?( · |$)/, { includeHiddenElements: true }),
+      ).toBeOnTheScreen();
       // «слово» and its number: the first «о» is stressed, the second a vowel to tap too.
       await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
       expect(screen.getByRole('button', { name: 'о, третя літера, Правильно' })).toBeTruthy();
@@ -654,14 +656,18 @@ describe('the Game screen', () => {
     await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
     for (let round = 1; round <= 5; round += 1) {
       await waitFor(() => {
-        expect(screen.getByText('Визначення')).toBeOnTheScreen();
+        expect(
+          screen.getByText(/^Визначення( · |$)/, { includeHiddenElements: true }),
+        ).toBeOnTheScreen();
       });
       await pickTheWordOfThePrompt();
       await fireEvent.press(screen.getByTestId('game-next'));
     }
 
     await waitFor(() => {
-      expect(screen.getByText('Яке слово пропущено?')).toBeOnTheScreen();
+      expect(
+        screen.getByText(/^Яке слово пропущено\?( · |$)/, { includeHiddenElements: true }),
+      ).toBeOnTheScreen();
     });
     expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
       /^Яке слово пропущено\? Речення \d+: ось пропуск тут\.$/,
@@ -726,7 +732,9 @@ describe('the Game screen', () => {
           `Пройдено раундів: ${String(round - 1)} з 15`,
         );
       });
-      expect(screen.getByText('Знайдіть пари')).toBeOnTheScreen();
+      expect(
+        screen.getByText(/^Знайдіть пари( · |$)/, { includeHiddenElements: true }),
+      ).toBeOnTheScreen();
       const left = pairsLeft();
       // A grid with none of its pairs gone yet is a new one.
       if (left.length === screen.getAllByTestId(/^pairs-word-/, ALL_CELLS).length)
@@ -1101,11 +1109,11 @@ describe('the Game screen', () => {
       expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
     });
     expect(kinds).toEqual(new Set(['word', 'correction']));
-    expect(screen.getByTestId('game-result-rounds')).toHaveTextContent(/^11 ?раунд/);
+    expect(screen.getByTestId('game-result-rounds')).toHaveTextContent(/^раунд\S* ?11$/);
     expect(screen.getByTestId('game-result-rounds').props['accessibilityLabel']).toBe(
       'Пройдено раундів: 11',
     );
-    expect(screen.getByTestId('game-result-best')).toHaveTextContent(/^11/);
+    expect(screen.getByTestId('game-result-best')).toHaveTextContent(/11$/);
     // A Game with no Life left offers no widget hint.
     expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
   });
@@ -1132,9 +1140,11 @@ describe('the Game screen', () => {
       await waitFor(() => {
         expect(timerLabel()).toBe('лишилось 60 секунд');
       });
-      expect(screen.queryByTestId('game-progress')).toBeNull();
+      expect(screen.getByTestId('game-progress')).toHaveTextContent('Пройдено: 0');
       expect(screen.queryByTestId('game-lives')).toBeNull();
-      expect(screen.getByText('Визначення')).toBeOnTheScreen();
+      expect(
+        screen.getByText(/^Визначення( · |$)/, { includeHiddenElements: true }),
+      ).toBeOnTheScreen();
       for (let answered = 0; answered < 3; answered += 1) {
         await pickTheWordOfThePrompt();
         // The next Round comes at once, with no sheet.
@@ -1328,12 +1338,12 @@ describe('the Game screen', () => {
       await open({ corrections: 15 });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-survival'));
-      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
+      expect(screen.getByTestId('mascot-waits')).toBeTruthy();
 
       await answerSurvivalRound(true);
       expect(screen.getByTestId('mascot-gameRight')).toHaveTextContent(mascot.gameRight);
       await fireEvent.press(screen.getByTestId('game-next'));
-      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
+      expect(screen.getByTestId('mascot-waits')).toBeTruthy();
 
       for (let mistake = 1; mistake <= 3; mistake += 1) {
         await waitFor(() => {

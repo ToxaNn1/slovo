@@ -91,18 +91,14 @@ const cardsOf = ({ game }: Composition) =>
   game.state.modes.map((offer) => gameModeCard(offer, strings));
 
 const guessWordCard = {
-  entryKind: 'word',
-  overline: 'Визначення → слово',
+  glyph: '?',
   title: 'Вгадай слово',
   description: 'Читаєте визначення — обираєте одне слово чи вислів з чотирьох.',
-  sample: { prompt: '«метушня, безлад»', answer: 'веремі́я' },
 };
 const correctionCard = {
-  entryKind: 'correction',
-  overline: 'Виправлення',
+  glyph: '?!',
   title: 'Обери правильне',
   description: 'У реченні — поширена ненормативна форма. Знайдіть нормативну.',
-  sample: { prompt: 'слідуючий', answer: 'наступний' },
 };
 
 describe('the card of each Game Mode on offer', () => {

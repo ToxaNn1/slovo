@@ -12,11 +12,10 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { onFill, roundLayout, space, typeSize } from '../tokens';
-import { RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
+import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** A cell's least height, an answer option's, above the 44 pt touch target. */
 const CELL_HEIGHT = 58;
@@ -42,8 +41,8 @@ type Fill = 'right' | 'wrong' | undefined;
  * on it again or on another Word changes the selection, and a tap on a
  * Definition then gives the pair, which leaves nothing selected; a Definition
  * tapped before a Word does nothing. Once the pair is judged, its Word and
- * Definition fill in the correct or the wrong colour and a wrong pair shakes,
- * which Reduce Motion leaves out; the screen plays the answer's haptic. A pair
+ * Definition fill in the correct or the wrong colour, and nothing shakes;
+ * the screen plays the answer's haptic. A pair
  * gone, answered right, leaves its places empty, which VoiceOver skips.
  * VoiceOver reads each Word with its Stress and each Definition by its text.
  * Key it by the Round, so a new Round starts with nothing selected.
@@ -149,7 +148,7 @@ function textColor(
 /**
  * A Word or a Definition of the grid. The selected Word fills in ink; a judged
  * pair's cells fill in the correct or the wrong colour, the light scheme's in
- * both Themes, and the wrong ones shake, but with Reduce Motion.
+ * both Themes; nothing shakes.
  */
 function Cell({
   testID,
@@ -174,10 +173,8 @@ function Cell({
   const { colors, radii } = useTokens();
   const light = useSchemeColors('light');
   const { voice } = useEdition();
-  const reduceMotion = useReduceMotion();
   /** 0 before the answer, 1 once the cell has filled. */
   const filled = useSharedValue(fill === undefined ? 0 : 1);
-  const shift = useSharedValue(0);
   // Whether the cell showed its fill before, so only the answer given now moves it.
   const shownFill = useRef(fill !== undefined);
 
@@ -185,23 +182,20 @@ function Cell({
     if (fill === undefined || shownFill.current) return;
     shownFill.current = true;
     filled.value = withTiming(1, fill === 'right' ? RIGHT_FILL : WRONG_FILL);
-    if (fill === 'wrong' && !reduceMotion) shift.value = shake();
-    // The shared values are stable, and a change of Reduce Motion finds the
-    // answer already shown, so only the answer given moves the cell.
-  }, [fill, reduceMotion, filled, shift]);
+    // The shared value is stable, so only the answer given fills the cell.
+  }, [fill, filled]);
 
   const rest = selected ? colors.ink : colors.surface;
   const restBorder = selected ? colors.ink : colors.line;
   const paint = fill === 'right' ? light.correct : light.wrong;
-  const motion = useAnimatedStyle(() => ({
-    transform: [{ translateX: shift.value }],
-    ...(fill === undefined
+  const motion = useAnimatedStyle(() =>
+    fill === undefined
       ? {}
       : {
           backgroundColor: interpolateColor(filled.value, [0, 1], [rest, paint]),
           borderColor: interpolateColor(filled.value, [0, 1], [restBorder, paint]),
-        }),
-  }));
+        },
+  );
   return (
     <AnimatedPressable
       testID={testID}

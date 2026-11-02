@@ -153,6 +153,22 @@ export const typeRoles = {
   goalNumber: role('word', '900', 26, 26),
   /** The unit under a Daily Goal tile's number. */
   goalUnit: role('ui', '600', 12, 12),
+  /** The Games screen's title. */
+  gamesTitle: role('word', '900', 36, 36, -1),
+  /** The title of a group of Game Modes, after its red mark. */
+  groupTitle: role('word', '800', 13, 13, 1.5, 'uppercase'),
+  /** The glyph on a Game Mode's tile. */
+  modeGlyph: role('word', '900', 15, 15),
+  /** A Game Mode's name in its row. */
+  modeName: role('ui', '700', 16, 18),
+  /** A Game Mode's line under its name. */
+  modeLine: role('ui', '400', 13, 16),
+  /** A Game Mode's Best result at the end of its row. */
+  modeBest: role('word', '800', 12, 12),
+  /** The Daily Crossword's name on its red card. */
+  crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
+  /** How far today's Daily Crossword has come, on its red card. */
+  crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -599,8 +615,12 @@ export const typeSize = {
   smallLabel: 12,
   /** A Game mode's description. */
   modeDescription: 14.5,
-  /** The title of the Game's result (Literata 500). */
-  resultTitle: 38,
+  /** The title of the Game's result (Unbounded 900). */
+  resultTitle: 34,
+  /** The Game Review's title (Unbounded 800). */
+  reviewTitle: 15,
+  /** A Round of the Game Review (Onest 600). */
+  reviewRow: 16,
   /** `Lemma, hero`: the onboarding welcome's Lemma (Literata 500, 76 / 1). */
   heroLemma: 76,
 } as const;
@@ -715,19 +735,39 @@ export const labelChipPadding = {
   roomy: { horizontal: 10, vertical: 5 },
 } as const;
 
-/** The horizontal padding of a Game mode's card (the design's 22). */
-export const modeCardPaddingHorizontal = 22;
+/**
+ * A Game Mode's row on the mode screen, from the design: its tile's side,
+ * corner and edge, the gap to its texts and the row's padding; the red mark
+ * before a group's title.
+ */
+export const modeRow = {
+  tile: 46,
+  tileRadius: 13,
+  tileDepth: 4,
+  gap: 14,
+  paddingVertical: 12,
+  groupMark: { width: 10, height: 14 },
+} as const;
 
 /**
- * The Game's result: the gaps between its numbers and inside one number, and
- * the width of the victory illustration (Decor slot 4) on a win and on a loss.
+ * The Game's result, from the design: the red panel's height, how far its
+ * title sits over the slant and where the victory illustration (Decor slot 4)
+ * sits in it; the gaps between the number tiles and inside one, a tile's
+ * corner; the illustration's width on a win and on a loss.
  */
 export const resultLayout = {
-  numbersGap: 28,
-  numberGap: 2,
+  panelHeight: 400,
+  panelFootBottom: 96,
+  illustrationTop: 70,
+  numbersGap: 10,
+  numberGap: 6,
+  numberRadius: 16,
   winIllustration: 120,
   lossIllustration: 64,
 } as const;
+
+/** The mark that leads a Round of the Game Review: a square with ✓ or ✗. */
+export const reviewMark = { side: 28, radius: 8 } as const;
 
 /** The empty state's space over its illustration. */
 export const emptyStatePaddingTop = 80;
@@ -930,6 +970,9 @@ export const iconButton = { side: 44, icon: 20 } as const;
  * progress label over its bar, «Далі» under the sheet), the sheet's own and
  * the vertical padding of the Round's card.
  */
+/** The Round's progress (design `SlovoApp`): a skewed segment per Round. */
+export const roundProgress = { height: 8, gap: 4, skew: '-20deg' } as const;
+
 export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVertical: 30 } as const;
 
 /**
@@ -940,8 +983,8 @@ export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVert
  * size, the gaps between keys and between rows, and how much wider the
  * delete key is than a letter key.
  */
-/** The Daily Crossword's card on the mode screen, from the design: its padding, the gap beside its button, its name's size and the solved mark's size. */
-export const dailyCrosswordCard = { padding: 18, gap: 14, titleSize: 16, solvedSize: 18 } as const;
+/** The Daily Crossword's red card on the mode screen, from the design: its padding and the gap between its lines. */
+export const dailyCrosswordCard = { padding: 18, gap: 6 } as const;
 
 export const crosswordLayout = {
   cell: 62,

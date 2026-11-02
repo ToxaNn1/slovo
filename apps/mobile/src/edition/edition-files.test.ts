@@ -1085,7 +1085,7 @@ describe('the strings of each Game Mode', () => {
     },
   );
 
-  it.each(['overline', 'title', 'description', 'sample', 'roundLabel', 'refusals'])(
+  it.each(['glyph', 'title', 'description', 'roundLabel', 'refusals'])(
     'needs every mode alike to have its %s',
     (key) => {
       const changed = Object.fromEntries(

@@ -3,15 +3,15 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, rowPadding, space, typeSize } from '../tokens';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { minTouchTarget, reviewMark, rowPadding, space, typeSize } from '../tokens';
 
 /** How far the largest text sizes of iOS may scale the rows' text, so it never breaks a word. */
 const TEXT_MAX_FONT_SCALE = 1.5;
 
 /**
  * The Game Review under the result: every Round of the Game just over, in
- * order, as the Core's Game Review items, with ✓ or ✗ and, on a mistake, the
+ * order, as the Core's Game Review items, led by a red ✓ or an ink ✗ and, on a mistake, the
  * reader's answer in the Round's form: the option picked, the form stressed on
  * the vowel tapped, the Definition matched to a pair's Word, the chips tapped
  * as one Word or expression, or the text typed, which reads «Ви ввели» where a
@@ -41,7 +41,7 @@ export function GameReview({
         accessibilityRole="header"
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
         {...voice}
-        style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
       >
         {strings.game.review.title}
       </Text>
@@ -72,6 +72,7 @@ function ReviewRow({
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
   const { review } = strings.game;
+  const keyInk = useSchemeColors('light').ink;
   const pickedTemplate = pickedOption?.form === 'typed' ? review.typed : review.picked;
   const picked =
     pickedOption === undefined ? undefined : fill(pickedTemplate, { text: pickedOption.text });
@@ -101,16 +102,24 @@ function ReviewRow({
         onPress={onPress}
         style={styles.head}
       >
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[styles.number, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        <View
+          testID={`game-review-mark-${String(number)}`}
+          style={[styles.mark, { backgroundColor: right ? colors.accent : colors.ink }]}
         >
-          {number}
-        </Text>
+          <Text
+            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            style={[
+              styles.markText,
+              { color: right ? keyInk : colors.background, fontFamily: fontFamilies.word },
+            ]}
+          >
+            {right ? '✓' : '✗'}
+          </Text>
+        </View>
         <View style={styles.text}>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-            style={[styles.lemma, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[styles.lemma, { color: colors.ink, fontFamily: fontFamilies.ui }]}
           >
             {withAnswer(title.text)}
           </Text>
@@ -123,15 +132,6 @@ function ReviewRow({
             </Text>
           )}
         </View>
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[
-            styles.mark,
-            { color: right ? colors.correct : colors.wrong, fontFamily: fontFamilies.ui },
-          ]}
-        >
-          {right ? '✓' : '✗'}
-        </Text>
       </Pressable>
       {expanded ? <ReviewDetails details={details} /> : null}
     </View>
@@ -142,7 +142,7 @@ function ReviewRow({
 function ReviewDetails({ details }: { details: GameReviewItem['details'] }) {
   const { colors, fontFamilies } = useTokens();
   const { strings, voice } = useEdition();
-  const body = [styles.body, { color: colors.ink, fontFamily: fontFamilies.word }];
+  const body = [styles.body, { color: colors.ink, fontFamily: fontFamilies.ui }];
   const heading = [styles.heading, { color: colors.muted, fontFamily: fontFamilies.ui }];
   if (details.kind === 'correction') {
     return (
@@ -217,21 +217,27 @@ function ReviewDetails({ details }: { details: GameReviewItem['details'] }) {
 
 const styles = StyleSheet.create({
   review: { alignSelf: 'stretch', marginTop: space[4] },
-  title: { fontSize: typeSize.blockHeading, fontWeight: '700', marginBottom: space[2] },
-  row: { borderTopWidth: StyleSheet.hairlineWidth },
+  title: { fontSize: typeSize.reviewTitle, fontWeight: '800', marginBottom: space[1] },
+  row: { borderBottomWidth: StyleSheet.hairlineWidth },
   head: {
     minHeight: minTouchTarget,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[3],
-    paddingVertical: rowPadding,
+    paddingVertical: space[3],
   },
-  number: { minWidth: space[5], fontSize: typeSize.meta, fontWeight: '700' },
   text: { flex: 1, gap: space[1] },
-  lemma: { fontSize: typeSize.listItem, fontWeight: '500' },
+  lemma: { fontSize: typeSize.reviewRow, fontWeight: '600' },
   picked: { fontSize: typeSize.caption, fontWeight: '500' },
-  mark: { fontSize: typeSize.blockHeading, fontWeight: '700' },
-  details: { gap: space[3], paddingBottom: rowPadding, paddingLeft: space[5] + space[3] },
+  mark: {
+    width: reviewMark.side,
+    height: reviewMark.side,
+    borderRadius: reviewMark.radius,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  markText: { fontSize: typeSize.caption, fontWeight: '900' },
+  details: { gap: space[3], paddingBottom: rowPadding, paddingLeft: reviewMark.side + space[3] },
   heading: { fontSize: typeSize.meta, fontWeight: '700' },
   body: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   form: { fontWeight: '500' },

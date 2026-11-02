@@ -501,19 +501,19 @@ describe('GameReview', () => {
         '10, candid, wrong, you typed candit',
       ].map((name) => screen.getByRole('button', { name })),
     );
-    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('1re\u0301cord✓');
+    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('✓re\u0301cord');
     expect(screen.getByTestId('game-review-row-2')).toHaveTextContent(
-      '2re\u0301cordyou picked reco\u0301rd✗',
+      '✗re\u0301cordyou picked reco\u0301rd',
     );
     expect(screen.getByTestId('game-review-row-4')).toHaveTextContent(
-      '4douryou picked open and honest✗',
+      '✗douryou picked open and honest',
     );
-    expect(screen.getByTestId('game-review-row-6')).toHaveTextContent('6douryou picked duor✗');
-    expect(screen.getByTestId('game-review-row-7')).toHaveTextContent('7spill the beans✓');
+    expect(screen.getByTestId('game-review-row-6')).toHaveTextContent('✗douryou picked duor');
+    expect(screen.getByTestId('game-review-row-7')).toHaveTextContent('✓spill the beans');
     expect(screen.getByTestId('game-review-row-8')).toHaveTextContent(
-      '8spill the beansyou picked beans the spill✗',
+      '✗spill the beansyou picked beans the spill',
     );
-    expect(screen.getByTestId('game-review-row-10')).toHaveTextContent('10candidyou typed candit✗');
+    expect(screen.getByTestId('game-review-row-10')).toHaveTextContent('✗candidyou typed candit');
   });
 
   it('leads a Round of the origin mode with the Word asked about, its right language beside it', async () => {
@@ -524,9 +524,9 @@ describe('GameReview', () => {
         (name) => screen.getByRole('button', { name }),
       ),
     );
-    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('1re\u0301cord — Latin✓');
+    expect(screen.getByTestId('game-review-row-1')).toHaveTextContent('✓re\u0301cord — Latin');
     expect(screen.getByTestId('game-review-row-2')).toHaveTextContent(
-      '2candid — Latinyou picked Greek✗',
+      '✗candid — Latinyou picked Greek',
     );
   });
 

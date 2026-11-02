@@ -4,7 +4,10 @@ import { render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { testStrings } from '../test-strings';
 
-const texts = { remaining: (seconds: number) => `${String(seconds)} seconds left` };
+const texts = {
+  remaining: (seconds: number) => `${String(seconds)} seconds left`,
+  shown: (seconds: number) => `${String(seconds)} s`,
+};
 
 function Timer({ remainingMs }: { remainingMs: number }) {
   return (
@@ -26,14 +29,14 @@ describe('GameTimer', () => {
   it('shows the whole seconds left, counted up, and reads them by name', async () => {
     await render(<Timer remainingMs={39_200} />);
 
-    expect(screen.getByText('40')).toBeTruthy();
+    expect(screen.getByText('40 s')).toBeTruthy();
     expect(screen.getByLabelText('40 seconds left')).toBeTruthy();
   });
 
   it('never shows less than none', async () => {
     await render(<Timer remainingMs={-300} />);
 
-    expect(screen.getByText('0')).toBeTruthy();
+    expect(screen.getByText('0 s')).toBeTruthy();
   });
 
   it('announces the time left as each ten seconds pass, and only then', async () => {

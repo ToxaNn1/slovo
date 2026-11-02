@@ -1,4 +1,4 @@
-import { EditionProvider, GameModeCard } from '@slovo/ui';
+import { coreTokens, EditionProvider, GameModeCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
@@ -15,11 +15,9 @@ function Card({
   return (
     <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
       <GameModeCard
-        entryKind="word"
-        overline="Definition → word"
+        glyph="?"
         title="Guess the word"
         description={description}
-        sample={{ prompt: 'a fuss', answer: 'bustle' }}
         canStart={refusal === undefined}
         refusal={refusal}
         best={best}
@@ -62,5 +60,16 @@ describe('GameModeCard', () => {
     expect(screen.getByRole('button').props['accessibilityLabel']).toBe(
       'Guess the word. Pick one of four. Best: 7 of 15',
     );
+  });
+
+  it('draws the tile of a mode that can start in red, and of one that cannot in the neutral tile', async () => {
+    const { accent, tile } = coreTokens.colors.light;
+    await render(<Card />);
+    expect(screen.getByTestId('card-tile')).toHaveStyle({ backgroundColor: accent });
+
+    await render(<Card refusal="Too few words." />);
+    expect(screen.getByTestId('card-tile')).toHaveStyle({ backgroundColor: tile });
+    expect(screen.getByText('Too few words.')).toBeTruthy();
+    expect(screen.queryByText('Read a Definition, pick a word')).toBeNull();
   });
 });

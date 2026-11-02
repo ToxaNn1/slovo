@@ -34,10 +34,7 @@ export function gameModeStrings(modes: GameModesStrings, modeId: string): GameMo
  * reason it can't start.
  */
 export function gameModeCard(offer: GameModeOffer, strings: GameStrings): GameModeCardContent {
-  const { overline, title, description, sample, refusals } = gameModeStrings(
-    strings.modes,
-    offer.modeId,
-  );
+  const { glyph, title, description, refusals } = gameModeStrings(strings.modes, offer.modeId);
   const reason = 'refusal' in offer ? offer.refusal : undefined;
   const refusal = reason === undefined ? undefined : refusals[reason];
   if (reason !== undefined && refusal === undefined) {
@@ -45,13 +42,11 @@ export function gameModeCard(offer: GameModeOffer, strings: GameStrings): GameMo
       `The Edition has no text for why the Game Mode «${offer.modeId}» can't start: «${reason}»`,
     );
   }
-  const { canStart, entryKind, best } = offer;
+  const { canStart, best } = offer;
   return {
-    entryKind,
-    overline,
+    glyph,
     title,
     description,
-    sample,
     canStart,
     refusal,
     best: best === undefined ? undefined : bestText(best, strings.modeBest),

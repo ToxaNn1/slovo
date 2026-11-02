@@ -139,7 +139,7 @@ describe('OrderedChips', () => {
     expect(screen.getByTestId('chips-line-0')).toBeDisabled();
   });
 
-  it('shakes the first wrong chip of a wrong answer', async () => {
+  it('moves no chip of a wrong answer', async () => {
     await renderChips();
 
     // o, r where b belongs, then the rest.
@@ -148,7 +148,7 @@ describe('OrderedChips', () => {
       jest.advanceTimersByTime(60);
     });
 
-    expect(shiftOf(1)).toBe(-4);
+    expect(shiftOf(1)).toBe(0);
     expect(shiftOf(0)).toBe(0);
     expect(shiftOf(2)).toBe(0);
     await act(() => {
@@ -223,7 +223,7 @@ describe('OrderedChips', () => {
     expect(lineText()).toEqual(['the', 'tail']);
   });
 
-  it('shakes the first word out of place in a wrong expression', async () => {
+  it('moves no word of a wrong expression', async () => {
     await renderChips({
       chips: ['tail', 'the', 'wag', 'dog'],
       expected: ['the', 'tail', 'wag', 'dog'],
@@ -236,7 +236,7 @@ describe('OrderedChips', () => {
       jest.advanceTimersByTime(60);
     });
 
-    expect(shiftOf(0)).toBe(-4);
+    expect(shiftOf(0)).toBe(0);
     expect([1, 2, 3].map(shiftOf)).toEqual([0, 0, 0]);
   });
 });
