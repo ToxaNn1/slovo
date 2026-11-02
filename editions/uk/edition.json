@@ -10,7 +10,8 @@
     "lemmaPunctuation": "' -",
     "expressionPunctuation": ", —",
     "sortLocale": "uk",
-    "distractorRule": "same-part-of-speech"
+    "distractorRule": "same-part-of-speech",
+    "keyboard": ["й ц у к е н г ш щ з х", "ф і в а п р о л д ж є", "я ч с м и т ь б ю ї ґ"]
   },
   "featureSwitches": {
     "game": true,

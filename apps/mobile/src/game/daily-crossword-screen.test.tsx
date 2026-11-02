@@ -168,12 +168,10 @@ const tap = (row: number, column: number) =>
     fireEvent.press(screen.getByTestId(`daily-crossword-grid-${String(row)}-${String(column)}`)),
   );
 
-/** Types letters on the keyboard, one by one, into the selected word. */
+/** Presses the keys of the crossword's keyboard, one by one, into the selected word. */
 async function type(letters: string) {
   for (const letter of letters)
-    await settle(() =>
-      fireEvent.changeText(screen.getByTestId('daily-crossword-grid-keyboard'), letter),
-    );
+    await settle(() => fireEvent.press(screen.getByTestId(`daily-crossword-grid-key-${letter}`)));
 }
 
 /** Types every word of the test's crossword right. */

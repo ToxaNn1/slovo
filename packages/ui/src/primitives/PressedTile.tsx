@@ -26,11 +26,13 @@ export type TileTone = 'tile' | 'accent' | 'ink' | 'none';
  * face over a hard offset edge (`offsetShadow`). A press moves the face
  * down and leaves a thin edge, on the UI thread; under Reduce Motion the
  * face stays and fades instead, as does a face with no edge. Disabled, it
- * is dimmed and takes no press. Its face carries the test ID
+ * is dimmed and takes no press. A `key` stands on a shallower edge, as a
+ * key of an on-screen keyboard. Its face carries the test ID
  * `${testID}-face`.
  */
 export function PressedTile({
   tone = 'tile',
+  depth = 'tile',
   radius,
   onPress,
   disabled = false,
@@ -42,6 +44,8 @@ export function PressedTile({
   children,
 }: {
   tone?: TileTone;
+  /** How deep its edge is: a tile's, or a keyboard key's shallower one. */
+  depth?: 'tile' | 'key';
   /** The face's corner radius; `radii.tile` when left out. */
   radius?: number;
   onPress: () => void;
@@ -65,6 +69,10 @@ export function PressedTile({
     ink: { face: keyInk, edge: withAlpha(keyInk, 0.45) },
     none: { face: 'transparent', edge: 'transparent' },
   }[tone];
+  const edge =
+    depth === 'key'
+      ? offsetShadow.key
+      : { depth: offsetShadow.rest.depth, translateY: offsetShadow.pressed.translateY };
   const timing = sinks ? motion.press : motion.reduceMotion;
   const press = (to: number) => {
     pressed.value = withTiming(to, {
@@ -75,7 +83,7 @@ export function PressedTile({
   };
   const faceMotion = useAnimatedStyle(() =>
     sinks
-      ? { opacity: 1, transform: [{ translateY: pressed.value * offsetShadow.pressed.translateY }] }
+      ? { opacity: 1, transform: [{ translateY: pressed.value * edge.translateY }] }
       : { opacity: 1 - pressed.value * (1 - pressedFade), transform: [{ translateY: 0 }] },
   );
   const shape = { borderRadius: radius ?? radii.tile };
@@ -94,9 +102,9 @@ export function PressedTile({
       onPressOut={() => {
         press(0);
       }}
-      style={[styles.tile, disabled && styles.disabled]}
+      style={[{ paddingBottom: edge.depth }, disabled && styles.disabled]}
     >
-      <View style={[styles.edge, shape, { backgroundColor: look.edge }]} />
+      <View style={[styles.edge, shape, { top: edge.depth, backgroundColor: look.edge }]} />
       <Animated.View
         testID={testID === undefined ? undefined : `${testID}-face`}
         style={[shape, { backgroundColor: look.face }, faceStyle, faceMotion]}
@@ -108,7 +116,6 @@ export function PressedTile({
 }
 
 const styles = StyleSheet.create({
-  tile: { paddingBottom: offsetShadow.rest.depth },
-  edge: { position: 'absolute', top: offsetShadow.rest.depth, right: 0, bottom: 0, left: 0 },
+  edge: { position: 'absolute', right: 0, bottom: 0, left: 0 },
   disabled: { opacity: disabledOpacity },
 });
