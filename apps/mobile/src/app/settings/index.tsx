@@ -1,10 +1,9 @@
 import { DailyGoalSchema, FontSizeSchema, ThemeSchema, type DailyGoal } from '@slovo/contracts';
 import {
+  ChoiceRow,
   FontSizePreview,
   NavigationRow,
   ScreenTitle,
-  SectionLabel,
-  SegmentedControl,
   SettingsGroup,
   SwitchRow,
   space,
@@ -85,54 +84,54 @@ export default function SettingsScreen() {
           </View>
         )}
         <View style={styles.section}>
-          <SectionLabel>{strings.theme}</SectionLabel>
-          <SegmentedControl
-            accessibilityLabel={strings.theme}
-            segments={themeSegments}
-            selected={current.theme}
-            onSelect={(theme) => {
-              update({ theme });
-            }}
-          />
-        </View>
-        <View style={styles.section}>
-          <SectionLabel>{strings.fontSize}</SectionLabel>
-          <FontSizePreview
-            testID="settings-font-size-preview"
-            lemma={strings.fontSizePreview.lemma}
-            definition={strings.fontSizePreview.definition}
-          />
-          <SegmentedControl
-            accessibilityLabel={strings.fontSize}
-            segments={fontSizeSegments}
-            selected={current.fontSize}
-            onSelect={(fontSize) => {
-              update({ fontSize });
-            }}
-          />
-        </View>
-        {shown.dailyGoal && dailyGoal !== null && (
-          <View style={styles.section}>
-            <SectionLabel>{strings.dailyGoal.title}</SectionLabel>
-            <SegmentedControl
-              accessibilityLabel={strings.dailyGoal.title}
-              segments={dailyGoalSegments}
-              selected={String(dailyGoal.goal)}
-              onSelect={(value) => {
-                const goal = dailyGoals.find((option) => String(option) === value);
-                if (goal === undefined) return;
-                xpLog.setDailyGoal(goal).catch((error: unknown) => {
-                  logError('The Daily Goal could not be set', error);
-                });
+          <SettingsGroup>
+            <ChoiceRow
+              icon="hex"
+              label={strings.theme}
+              segments={themeSegments}
+              selected={current.theme}
+              onSelect={(theme) => {
+                update({ theme });
               }}
             />
-          </View>
-        )}
+            <ChoiceRow
+              icon="square"
+              label={strings.fontSize}
+              segments={fontSizeSegments}
+              selected={current.fontSize}
+              onSelect={(fontSize) => {
+                update({ fontSize });
+              }}
+            >
+              <FontSizePreview
+                testID="settings-font-size-preview"
+                lemma={strings.fontSizePreview.lemma}
+                definition={strings.fontSizePreview.definition}
+              />
+            </ChoiceRow>
+            {shown.dailyGoal && dailyGoal !== null && (
+              <ChoiceRow
+                icon="triangle"
+                label={strings.dailyGoal.title}
+                segments={dailyGoalSegments}
+                selected={String(dailyGoal.goal)}
+                onSelect={(value) => {
+                  const goal = dailyGoals.find((option) => String(option) === value);
+                  if (goal === undefined) return;
+                  xpLog.setDailyGoal(goal).catch((error: unknown) => {
+                    logError('The Daily Goal could not be set', error);
+                  });
+                }}
+              />
+            )}
+          </SettingsGroup>
+        </View>
         <View style={styles.section}>
           <SettingsGroup>
             {shown.countersSetting === 'noCounters' && (
               <SwitchRow
                 testID="settings-no-counters"
+                icon="bar"
                 label={strings.noCounters.title}
                 subtitle={strings.noCounters.explanation}
                 value={current.noCounters}
@@ -144,6 +143,7 @@ export default function SettingsScreen() {
             {shown.countersSetting === 'hideStreak' && (
               <SwitchRow
                 testID="settings-hide-streak"
+                icon="bar"
                 label={strings.hideStreak}
                 value={current.noCounters}
                 onChange={(noCounters) => {
@@ -154,6 +154,7 @@ export default function SettingsScreen() {
             {shown.selfCheckSetting && (
               <SwitchRow
                 testID="settings-self-check"
+                icon="diamond"
                 label={strings.selfCheck}
                 value={current.selfCheck}
                 onChange={(selfCheck) => {
@@ -164,6 +165,7 @@ export default function SettingsScreen() {
             {shown.seasonalDecorSetting && (
               <SwitchRow
                 testID="settings-seasonal-decor"
+                icon="wedge"
                 label={strings.seasonalDecor.title}
                 subtitle={strings.seasonalDecor.explanation}
                 value={current.seasonalDecor}
@@ -174,6 +176,7 @@ export default function SettingsScreen() {
             )}
             <NavigationRow
               testID="settings-row-notifications"
+              icon="triangle"
               label={strings.rows.notifications}
               value={notificationsSummary}
               onPress={() => {
@@ -182,6 +185,7 @@ export default function SettingsScreen() {
             />
             <NavigationRow
               testID="settings-row-my-mix"
+              icon="diamond"
               label={strings.rows.myMix}
               value={mixSummary}
               onPress={() => {
@@ -191,6 +195,7 @@ export default function SettingsScreen() {
             {shown.rarityTest && (
               <NavigationRow
                 testID="settings-row-rarity-test"
+                icon="bar"
                 label={editionStrings.rarityTest.retake}
                 onPress={() => {
                   openScreen('/settings/rarity-test');
@@ -200,6 +205,7 @@ export default function SettingsScreen() {
             {shown.profile && (
               <NavigationRow
                 testID="settings-row-profile"
+                icon="hex"
                 label={strings.rows.profile}
                 onPress={() => {
                   openScreen('/settings/profile');
@@ -209,6 +215,7 @@ export default function SettingsScreen() {
             {shown.badges && (
               <NavigationRow
                 testID="settings-row-badges"
+                icon="diamond"
                 label={strings.rows.badges}
                 onPress={() => {
                   openScreen('/settings/badges');
@@ -218,6 +225,7 @@ export default function SettingsScreen() {
             {shown.questionnaire !== undefined && (
               <NavigationRow
                 testID="settings-row-questionnaire"
+                icon="square"
                 label={strings.rows.questionnaire}
                 onPress={() => {
                   openScreen('/settings/questionnaire');
@@ -227,6 +235,7 @@ export default function SettingsScreen() {
             {shown.streakBreak && (
               <NavigationRow
                 testID="settings-row-streak-break"
+                icon="bar"
                 label={strings.rows.streakBreak}
                 onPress={() => {
                   openScreen('/settings/streak-break');
@@ -235,6 +244,7 @@ export default function SettingsScreen() {
             )}
             <NavigationRow
               testID="settings-row-hidden"
+              icon="square"
               label={strings.rows.hidden}
               value={hiddenSummary}
               onPress={() => {
@@ -248,6 +258,7 @@ export default function SettingsScreen() {
             <SettingsGroup>
               <SwitchRow
                 testID="settings-share-counters"
+                icon="bar"
                 label={strings.anonymousStats.title}
                 subtitle={strings.anonymousStats.explanation}
                 value={current.shareCounters}
@@ -257,6 +268,7 @@ export default function SettingsScreen() {
               />
               <NavigationRow
                 testID="settings-row-privacy"
+                icon="hex"
                 label={strings.about.privacyPolicy}
                 onPress={() => {
                   openLegalPage('privacy');
@@ -266,10 +278,10 @@ export default function SettingsScreen() {
           </View>
         )}
         <View style={styles.section}>
-          <SectionLabel>{strings.sounds.section}</SectionLabel>
-          <SettingsGroup>
+          <SettingsGroup title={strings.sounds.section}>
             <SwitchRow
               testID="settings-vibration"
+              icon="wedge"
               label={strings.sounds.vibration}
               value={current.vibration}
               onChange={(vibration) => {
@@ -279,10 +291,10 @@ export default function SettingsScreen() {
           </SettingsGroup>
         </View>
         <View style={styles.section}>
-          <SectionLabel>{strings.widgets}</SectionLabel>
-          <SettingsGroup>
+          <SettingsGroup title={strings.widgets}>
             <NavigationRow
               testID="settings-row-widgets"
+              icon="square"
               label={strings.howToAddWidget}
               onPress={() => {
                 openScreen('/settings/widgets');
@@ -294,6 +306,7 @@ export default function SettingsScreen() {
           <SettingsGroup>
             <NavigationRow
               testID="settings-row-about"
+              icon="hex"
               label={strings.rows.about}
               onPress={() => {
                 openScreen('/settings/about');
@@ -309,5 +322,5 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[6], paddingBottom: space[8] },
-  section: { gap: space[3], marginTop: space[8] },
+  section: { marginTop: space[6] },
 });
