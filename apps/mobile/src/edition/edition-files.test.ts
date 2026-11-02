@@ -444,6 +444,7 @@ describe('the 0.8.14 strings', () => {
 
   it.each([
     ['settings', 'seasonalDecor'],
+    ['settings', 'reduceMotion'],
     ['settings', 'anonymousStats'],
     ['knowledge', 'communityCounters'],
     ['feedNotices', 'communityWord'],
@@ -1401,11 +1402,12 @@ describe('Edition Decor', () => {
     expect(EditionDecorSchema.safeParse(readJson(edition, 'decor')).error).toBeUndefined();
   });
 
-  it('the UA Edition fills every Decor slot the Feed, the Game result, the splash, the Share Cards and the Mascot use', () => {
+  it('the UA Edition fills every Decor slot the Feed, the Game result, the splash, the Share Cards, the Mascot and the Categories use', () => {
     const decor = EditionDecorSchema.parse(readJson('uk', 'decor'));
 
     expect(Object.keys(decor).sort()).toEqual([
       'background',
+      'categories',
       'corners',
       'divider',
       'emptyState',

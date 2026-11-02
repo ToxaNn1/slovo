@@ -308,6 +308,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   profile: z.boolean(),
   /** The Mascot: the Edition's silent figure with its short lines (CONTEXT.md, Mascot). */
   mascot: z.boolean(),
+  /** «Менше руху»: the Settings switch that turns every animation into its calmer variant, as the system's Reduce Motion does (ADR 0055). */
+  reduceMotion: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -390,10 +392,15 @@ export const BadgeConditionSchema = z.discriminatedUnion('kind', [
 
 export type BadgeCondition = z.infer<typeof BadgeConditionSchema>;
 
-/** A Badge the Edition chooses (ADR 0066): its id, its name and its condition from the catalogue. */
+/**
+ * A Badge the Edition chooses (ADR 0066): its id, its name, the short symbol
+ * its mark shows (at most three characters) and its condition from the
+ * catalogue.
+ */
 export const BadgeSchema = z.strictObject({
   id: KebabCaseIdSchema,
   name: TextSchema,
+  symbol: TextSchema.max(3),
   condition: BadgeConditionSchema,
 });
 

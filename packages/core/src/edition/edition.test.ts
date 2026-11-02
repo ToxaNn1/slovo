@@ -95,6 +95,7 @@ const validConfig = {
     laterQuestions: true,
     profile: true,
     mascot: true,
+    reduceMotion: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -156,10 +157,11 @@ const validConfig = {
     selfRating: [{ id: 'few', label: 'Few', rarityFloor: 1, offerRarityTest: false }],
   },
   badges: [
-    { id: 'week', name: 'Week', condition: { kind: 'streak', days: 7 } },
+    { id: 'week', name: 'Week', symbol: '1', condition: { kind: 'streak', days: 7 } },
     {
       id: 'sharp-stress',
       name: 'Sharp stress',
+      symbol: '1',
       condition: { kind: 'rightAnswers', modes: ['stress'], count: 100 },
     },
   ],
@@ -494,10 +496,11 @@ describe('loadEdition', () => {
 
   it('reports the Badges the Edition chooses, their names and conditions, in order (ADR 0066)', () => {
     expect(loadEdition(validConfig).badges).toEqual([
-      { id: 'week', name: 'Week', condition: { kind: 'streak', days: 7 } },
+      { id: 'week', name: 'Week', symbol: '1', condition: { kind: 'streak', days: 7 } },
       {
         id: 'sharp-stress',
         name: 'Sharp stress',
+        symbol: '1',
         condition: { kind: 'rightAnswers', modes: ['stress'], count: 100 },
       },
     ]);
@@ -572,6 +575,14 @@ describe('loadEdition', () => {
   it('refuses an Edition without the mascot Feature Switch', () => {
     const { mascot, ...switches } = validConfig.featureSwitches;
     expect(mascot).toBe(true);
+    expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
+      InvalidEditionConfigError,
+    );
+  });
+
+  it('refuses an Edition without the «Менше руху» Feature Switch', () => {
+    const { reduceMotion, ...switches } = validConfig.featureSwitches;
+    expect(reduceMotion).toBe(true);
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );

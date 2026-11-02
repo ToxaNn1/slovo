@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { OrnamentBand } from '../decor/DecorSlots';
@@ -25,13 +26,14 @@ export interface HeroWord {
 
 /**
  * The welcome: what SLOVO is. A hero Word with its Definition, the ornament band,
- * the Edition's promise and «Почати». The hero Word is left out when the
+ * the Edition's promise and «Почати», under the step's shout word. The hero Word is left out when the
  * Language Pack has none to show.
  */
 export function OnboardingWelcome({
   step,
   total,
   hero,
+  mascot,
   onStart,
   onSkip,
 }: {
@@ -39,6 +41,8 @@ export function OnboardingWelcome({
   step: number;
   total: number;
   hero: HeroWord | undefined;
+  /** The on-red Mascot in the step's top, when it shows. */
+  mascot?: ReactNode;
   onStart: () => void;
   onSkip: () => void;
 }) {
@@ -50,6 +54,8 @@ export function OnboardingWelcome({
       testID="onboarding"
       step={step}
       total={total}
+      shout={welcome.shout}
+      mascot={mascot}
       onSkip={onSkip}
       footer={<Button testID="onboarding-start" label={welcome.start} onPress={onStart} />}
     >

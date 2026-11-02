@@ -1,5 +1,6 @@
 import {
   EditionDecorSchema,
+  type CategoryArt,
   type DecorMotif,
   type EditionDecor,
   type MascotAccessory,
@@ -31,6 +32,8 @@ export interface Decor {
   readonly mascot: MascotFigure | undefined;
   /** The Season's or Holiday's accessory the Mascot wears while seasonal Decor is on. */
   readonly mascotAccessory: MascotAccessory | undefined;
+  /** The pictogram and cover of each Category and Correction Category, by its id. */
+  readonly categories: Readonly<Record<string, CategoryArt>> | undefined;
 }
 
 /**
@@ -63,6 +66,7 @@ export const coreDecor: Decor = {
   shareCard: undefined,
   mascot: undefined,
   mascotAccessory: undefined,
+  categories: undefined,
 };
 
 /** Thrown when an Edition's Decor doesn't match the contracts. */
@@ -87,8 +91,17 @@ export function parseDecor(decor: unknown): EditionDecor {
  * Core's neutral Decor. An Edition without Decor gets the Core's throughout.
  */
 export function loadDecor(decor: unknown): Decor {
-  const { background, divider, corners, emptyState, splash, victory, shareCard, mascot } =
-    parseDecor(decor);
+  const {
+    background,
+    divider,
+    corners,
+    emptyState,
+    splash,
+    victory,
+    shareCard,
+    mascot,
+    categories,
+  } = parseDecor(decor);
   return {
     background: background ?? coreDecor.background,
     divider: divider ?? coreDecor.divider,
@@ -102,5 +115,6 @@ export function loadDecor(decor: unknown): Decor {
     shareCard: shareCard ?? coreDecor.shareCard,
     mascot: mascot ?? coreDecor.mascot,
     mascotAccessory: coreDecor.mascotAccessory,
+    categories: categories ?? coreDecor.categories,
   };
 }

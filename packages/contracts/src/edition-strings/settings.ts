@@ -33,6 +33,8 @@ export const SettingsStringsSchema = z.strictObject({
   selfCheck: TextSchema,
   /** The switch that makes the Decor follow the Season and the Holidays, and the explanation under it. */
   seasonalDecor: z.strictObject({ title: TextSchema, explanation: TextSchema }),
+  /** «Менше руху»: the switch that calms every animation, and the explanation under it. */
+  reduceMotion: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The switch that shares the Community Counters, and the explanation under it. */
   anonymousStats: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The Daily Goal choice; its numbers of XP are drawn as they are. */
@@ -100,6 +102,13 @@ export const SettingsStringsSchema = z.strictObject({
     shareLevel: TextSchema,
     /** The text the Level is shared with, e.g. «Мій рівень — 3 · Читач». */
     shareMessage: templateOf('level', 'name'),
+    /** An earned Badge stamped on red after a tap on its mark. */
+    badgeStamp: z.strictObject({
+      /** The cry under the mark, e.g. «Твій!». */
+      title: TextSchema,
+      /** The button that closes the stamp, e.g. «Забрати». */
+      take: TextSchema,
+    }),
   }),
   /** The Break screen: what a Break does, its length and whether one can start today (ADR 0066). */
   streakBreak: z.strictObject({

@@ -1,13 +1,7 @@
-import {
-  AppConfigSchema,
-  EditionStringsSchema,
-  EditionTokensSchema,
-  SplashDecorSchema,
-} from '@slovo/contracts';
+import { AppConfigSchema, EditionStringsSchema, EditionTokensSchema } from '@slovo/contracts';
 import { loadDecor, loadEdition, loadSeasonalMotifs } from '@slovo/core';
 import { designTokens } from '@slovo/ui';
 import appConfig from 'slovo-app/config';
-import splash from 'slovo-app/splash';
 
 import { deviceActiveEdition } from './device-active-edition';
 import { bundledEditions } from './registry';
@@ -49,6 +43,3 @@ export const editionDecor = loadDecor(decor);
 
 /** The Edition's motifs per Season and per Holiday, or none when its Decor stays plain (ADR 0055). */
 export const seasonalMotifs = loadSeasonalMotifs(decor);
-
-/** The width of the native splash image, which the app's splash draws its mark over. */
-export const splashImageWidth = SplashDecorSchema.parse(splash).imageWidth;

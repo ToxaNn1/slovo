@@ -8,7 +8,7 @@ The victory illustration (slot 6) is one such motif; the Game's result screen st
 
 Seasonal Decor (ADR 0055) changes only slot 1 and slot 2. Beside their motifs, `decor/decor.json` holds a motif for each Season and the Edition's Holidays, each a rule (a fixed day and month, or the nth weekday of a month) with its motif. While «Сезонний декор» and the `seasonalDecor` switch are on, the Core draws in those two slots the motif of the local date's Holiday, or else of its Season, and the Edition's own motifs otherwise; the other slots never change with the date.
 
-Decor holds shapes and colours only. Words drawn with Decor, such as the splash's wordmark and tagline, are Edition strings that the Core lays out. The native splash stays a PNG described by `decor/splash.json`, because it is baked into the build before any JavaScript runs; the app's splash then draws slot 7 from the motifs over it, with the mark exactly where the native image was.
+Decor holds shapes and colours only. Words drawn with Decor, such as the splash's wordmark and tagline, are Edition strings that the Core lays out. The native splash stays a PNG described by `decor/splash.json`, because it is baked into the build before any JavaScript runs; the app's splash then takes over from it with the design's splash cut (ADR 0070), which the Core lays out from the Edition's wordmark and tagline on the red halftone, so it draws no motif over the native image.
 
 ## Considered Options
 
