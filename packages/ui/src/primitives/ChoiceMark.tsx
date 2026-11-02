@@ -33,7 +33,7 @@ export function ChoiceMark({
     >
       {on && kind === 'checkbox' && (
         <Svg
-          testID={testID === undefined ? undefined : `${testID}-tick`}
+          testID={`${testID ?? 'choice'}-tick`}
           width={choiceMark.tick}
           height={choiceMark.tick}
           viewBox="0 0 16 16"
@@ -50,7 +50,7 @@ export function ChoiceMark({
       )}
       {on && kind === 'radio' && (
         <View
-          testID={testID === undefined ? undefined : `${testID}-dot`}
+          testID={`${testID ?? 'choice'}-dot`}
           style={[styles.dot, { backgroundColor: colors.onAccent }]}
         />
       )}

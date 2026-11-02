@@ -5,7 +5,10 @@ import { minTouchTarget, segmentedDrawing } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The slack above and below a segment up to the smallest tap area. */
-const HIT_SLOP = { top: (minTouchTarget - segmentedDrawing.segmentHeight) / 2, bottom: (minTouchTarget - segmentedDrawing.segmentHeight) / 2 };
+const HIT_SLOP = {
+  top: (minTouchTarget - segmentedDrawing.segmentHeight) / 2,
+  bottom: (minTouchTarget - segmentedDrawing.segmentHeight) / 2,
+};
 
 /** A segment's label stops growing here, so it never breaks a word at the largest text sizes. */
 const LABEL_MAX_FONT_SCALE = 1.3;

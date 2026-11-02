@@ -17,7 +17,7 @@ function Tab({ disabled, onPress }: { disabled?: boolean; onPress?: () => void }
         accessibilityLabel="Words, 12"
         accessibilityHint="The last one stays on"
         on={on}
-        disabled={disabled}
+        disabled={disabled ?? false}
         onPress={() => {
           setOn(!on);
           onPress?.();
@@ -92,7 +92,7 @@ describe('Chip', () => {
     await render(<Tab disabled onPress={onPress} />);
     const chip = screen.getByRole('button', { name: 'Words, 12' });
     expect(chip).toBeDisabled();
-    expect(chip.props.accessibilityHint).toBe('The last one stays on');
+    expect(chip).toHaveProp('accessibilityHint', 'The last one stays on');
 
     await fireEvent.press(chip);
 

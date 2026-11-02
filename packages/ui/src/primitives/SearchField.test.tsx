@@ -7,7 +7,10 @@ import { testStrings } from '../test-strings';
 function Search() {
   const [query, setQuery] = useState('');
   return (
-    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({ search: { clear: 'Clear' } })}>
+    <EditionProvider
+      edition={{ locale: 'en' }}
+      strings={testStrings({ search: { clear: 'Clear' } })}
+    >
       <SearchField testID="search" label="Search" value={query} onChangeText={setQuery} />
     </EditionProvider>
   );
@@ -23,8 +26,8 @@ describe('SearchField', () => {
 
   it('clears the query with its clear button', async () => {
     await render(<Search />);
-    await fireEvent.changeText(screen.getByLabelText('Search'), 'гре');
-    expect(screen.getByLabelText('Search')).toHaveDisplayValue('гре');
+    await fireEvent.changeText(screen.getByLabelText('Search'), 'gre');
+    expect(screen.getByLabelText('Search')).toHaveDisplayValue('gre');
 
     await fireEvent.press(screen.getByRole('button', { name: 'Clear' }));
 
