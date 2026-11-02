@@ -2,13 +2,12 @@ import {
   BackLink,
   CardCorners,
   fill,
-  lineHeight,
   NavigationRow,
   SectionLabel,
   SettingsGroup,
   SoonRow,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -30,7 +29,9 @@ const strings = editionStrings.settings;
  * mistake wait for the backend (0.7).
  */
 export function AboutScreen() {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
+  const wordmark = typeStyle('wordmark', tokens);
   const router = useRouter();
   const { voice } = useEdition();
   const build = installedBuild();
@@ -52,13 +53,17 @@ export function AboutScreen() {
           <Text
             accessibilityRole="header"
             {...voice}
-            style={[styles.wordmark, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[
+              wordmark,
+              // The last letter's spacing would push the word off centre.
+              { paddingLeft: wordmark.letterSpacing, color: colors.ink },
+            ]}
           >
             {editionStrings.splash.wordmark}
           </Text>
           <Text
             {...voice}
-            style={[styles.editionLine, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            style={[typeStyle('sub', tokens), styles.editionLine, { color: colors.muted }]}
           >
             {strings.about.editionLine}
           </Text>
@@ -66,7 +71,7 @@ export function AboutScreen() {
             <Text
               testID="about-version"
               {...voice}
-              style={[styles.editionLine, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('sub', tokens), styles.editionLine, { color: colors.muted }]}
             >
               {fill(strings.about.versionLine, { version: build.version, build: build.build })}
             </Text>
@@ -75,7 +80,7 @@ export function AboutScreen() {
             <Text
               testID="about-update"
               {...voice}
-              style={[styles.editionLine, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('sub', tokens), styles.editionLine, { color: colors.muted }]}
             >
               {fill(strings.about.updateLine, { id: build.updateId })}
             </Text>
@@ -91,14 +96,14 @@ export function AboutScreen() {
           <Text
             testID="about-description"
             {...voice}
-            style={[styles.description, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[typeStyle('aboutDescription', tokens), { color: colors.ink }]}
           >
             {strings.about.description}
           </Text>
           <Text
             testID="about-sources"
             {...voice}
-            style={[styles.sources, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            style={[typeStyle('sub', tokens), { color: colors.muted }]}
           >
             {strings.about.sources}
           </Text>
@@ -141,30 +146,15 @@ export function AboutScreen() {
   );
 }
 
-const WORDMARK_SIZE = 32;
-
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   identity: { alignItems: 'center', gap: space[2], marginVertical: space[6] },
-  wordmark: {
-    fontSize: WORDMARK_SIZE,
-    fontWeight: '500',
-    letterSpacing: WORDMARK_SIZE * 0.3,
-    // The last letter's spacing would push the word off centre.
-    paddingLeft: WORDMARK_SIZE * 0.3,
-  },
-  editionLine: { fontSize: typeSize.body, textAlign: 'center' },
+  editionLine: { textAlign: 'center' },
   card: {
     gap: space[3],
     padding: space[6],
     borderWidth: StyleSheet.hairlineWidth,
   },
-  description: {
-    fontSize: typeSize.subhead,
-    lineHeight: lineHeight.aboutDescription,
-    fontWeight: '500',
-  },
-  sources: { fontSize: typeSize.body },
   section: { gap: space[3], marginTop: space[6] },
 });

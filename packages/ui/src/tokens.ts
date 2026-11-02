@@ -260,6 +260,10 @@ export const typeRoles = {
   heroLemma: role('word', '900', 76, 76),
   /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
   quietAction: role('ui', '700', 14, 17),
+  /** A Word on its cell of the Pairs Game. */
+  pairsWord: role('word', '800', 14, 16),
+  /** A Definition on its cell of the Pairs Game, wrapping over as many lines as it needs. */
+  pairsDefinition: role('ui', '600', 15, 19),
   // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
@@ -295,6 +299,12 @@ export const typeRoles = {
   listLeading: role('ui', '500', 17, 20),
   /** The trailing text of a list row, such as when it was saved. */
   rowTrailing: role('ui', '700', 12, 12),
+  /** The title on the red panel of the Game's result. */
+  resultTitle: role('word', '900', 40, 38, -1.5),
+  /** The line under the title of the Game's result. */
+  resultLine: role('ui', '700', 16, 20),
+  /** The capitalised label over a group of controls or a card's section. */
+  sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
   // Roles of batch D.
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
@@ -336,6 +346,8 @@ export const typeRoles = {
   wordmark: role('word', '500', 32, 38, 9.6),
   /** What SLOVO is, on the About screen's card. */
   aboutDescription: role('word', '500', 22, 30),
+  /** The hero Word's Definition under its Lemma on the onboarding welcome. */
+  heroDefinition: role('word', '500', 22, 29),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;

@@ -15,7 +15,7 @@ import { ChoiceMark } from '../primitives/ChoiceMark';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
-import { minTouchTarget, space, typeSize } from '../tokens';
+import { minTouchTarget, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -73,7 +73,8 @@ function SheetContent({
   onCreate,
   onClose,
 }: Omit<Parameters<typeof CollectionSheet>[0], 'visible'>) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { strings, voice, count } = useEdition();
   const sheet = strings.collections.sheet;
   const [creating, setCreating] = useState(collections.length === 0);
@@ -110,7 +111,7 @@ function SheetContent({
         <SheetTitle>{sheet.title}</SheetTitle>
         <Text
           {...voice}
-          style={[styles.entry, { color: colors.accent, fontFamily: fontFamilies.word }]}
+          style={[typeStyle('sheetLemma', tokens), styles.entry, { color: colors.accent }]}
           numberOfLines={2}
         >
           {entryTitle}
@@ -140,13 +141,13 @@ function SheetContent({
             >
               <ChoiceMark kind="checkbox" on={filed} />
               <Text
-                style={[styles.name, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('rowLabel', tokens), styles.name, { color: colors.ink }]}
                 {...voice}
               >
                 {collection.name}
               </Text>
               <Text
-                style={[styles.count, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('rowSub', tokens), { color: colors.muted }]}
                 {...voice}
               >
                 {count(strings.collections.count, collection.count)}
@@ -176,13 +177,13 @@ function SheetContent({
                 spellCheck={false}
                 selectionColor={colors.accent}
                 style={[
+                  typeStyle('fieldText', tokens),
                   styles.field,
                   {
                     backgroundColor: colors.background,
                     borderColor: refusal === undefined ? colors.accent : colors.heart,
                     borderRadius: radii.button,
                     color: colors.ink,
-                    fontFamily: fontFamilies.ui,
                   },
                 ]}
               />
@@ -197,10 +198,7 @@ function SheetContent({
                 ]}
               >
                 <Text
-                  style={[
-                    styles.createLabel,
-                    { color: colors.background, fontFamily: fontFamilies.ui },
-                  ]}
+                  style={[typeStyle('textButton', tokens), { color: colors.background }]}
                 >
                   {sheet.create}
                 </Text>
@@ -210,7 +208,7 @@ function SheetContent({
               <Text
                 testID="collection-refusal"
                 {...voice}
-                style={[styles.refusal, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('fieldProblem', tokens), { color: colors.ink }]}
               >
                 {refusal}
               </Text>
@@ -227,7 +225,7 @@ function SheetContent({
             }}
             style={styles.newCollection}
           >
-            <Text style={[styles.newLabel, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+            <Text style={[typeStyle('textButton', tokens), { color: colors.accent }]}>
               {sheet.newCollection}
             </Text>
           </Pressable>
@@ -249,7 +247,7 @@ const styles = StyleSheet.create({
     columnGap: space[3],
     paddingBottom: space[3],
   },
-  entry: { flexShrink: 1, fontSize: typeSize.rowLemma, fontWeight: '600', textAlign: 'right' },
+  entry: { flexShrink: 1, textAlign: 'right' },
   list: { flexGrow: 0, flexShrink: 1 },
   row: {
     minHeight: SHEET_ROW_HEIGHT,
@@ -258,10 +256,8 @@ const styles = StyleSheet.create({
     gap: space[4],
     paddingVertical: space[2],
   },
-  name: { flex: 1, fontSize: typeSize.listItem, fontWeight: '600' },
-  count: { fontSize: typeSize.body },
+  name: { flex: 1 },
   newCollection: { minHeight: minTouchTarget, justifyContent: 'center', marginTop: space[3] },
-  newLabel: { fontSize: typeSize.blockHeading, fontWeight: '700' },
   creation: { marginTop: space[3], gap: space[2] },
   creationRow: { flexDirection: 'row', gap: space[3] },
   field: {
@@ -269,7 +265,6 @@ const styles = StyleSheet.create({
     minHeight: SHEET_ROW_HEIGHT,
     borderWidth: 1,
     paddingHorizontal: space[4],
-    fontSize: typeSize.listItem,
   },
   create: {
     minHeight: SHEET_ROW_HEIGHT,
@@ -277,7 +272,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  createLabel: { fontSize: typeSize.blockHeading, fontWeight: '700' },
-  refusal: { fontSize: typeSize.caption, fontWeight: '600' },
   done: { marginTop: space[4] },
 });

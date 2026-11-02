@@ -5,13 +5,12 @@ import { OrnamentBand } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { space, typeSize } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import {
   HEADLINE_MAX_FONT_SCALE,
   HERO_LEMMA,
   OnboardingStep,
-  stepStyles,
   TEXT_MAX_FONT_SCALE,
 } from './OnboardingStep';
 
@@ -46,7 +45,8 @@ export function OnboardingWelcome({
   onStart: () => void;
   onSkip: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice, strings } = useEdition();
   const { welcome } = strings.onboarding;
   return (
@@ -72,13 +72,13 @@ export function OnboardingWelcome({
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.5}
-            style={{ color: colors.ink, fontFamily: fontFamilies.word, fontWeight: '500' }}
+            style={[typeStyle('heroLemma', tokens), { color: colors.ink }]}
           />
           <Text
             testID="onboarding-hero-definition"
             {...voice}
             maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-            style={[styles.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[typeStyle('heroDefinition', tokens), { color: colors.ink }]}
           >
             {hero.definition}
           </Text>
@@ -92,14 +92,14 @@ export function OnboardingWelcome({
         accessibilityRole="header"
         {...voice}
         maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
-        style={[stepStyles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[typeStyle('stepTitle', tokens), { color: colors.ink }]}
       >
         {welcome.title}
       </Text>
       <Text
         {...voice}
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-        style={[stepStyles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('stepText', tokens), { color: colors.muted }]}
       >
         {welcome.subtitle}
       </Text>
@@ -110,5 +110,4 @@ export function OnboardingWelcome({
 const styles = StyleSheet.create({
   band: { flexDirection: 'row' },
   hero: { gap: space[2] },
-  definition: { fontSize: typeSize.subhead, lineHeight: typeSize.subhead * 1.3, fontWeight: '500' },
 });
