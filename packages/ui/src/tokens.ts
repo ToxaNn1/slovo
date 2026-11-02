@@ -135,6 +135,8 @@ export const typeRoles = {
   /** Reading text: the line under a heading. */
   sub: role('ui', '500', 15, 21),
   meta: role('ui', '500', 13, 17),
+  /** A tab's label under its icon. */
+  tabLabel: role('ui', '600', 11, 11),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -223,12 +225,92 @@ export const motion = {
   pop: { duration: 300, easing: ease },
   /** Rows rise this far into place, one after another. */
   cascade: { duration: 400, easing: ease, rise: 16 },
+  /** The tab indicator stretching in under the tab it moves to. */
+  tab: { duration: 300, easing: [0.3, 1.6, 0.5, 1] },
+  /** The red band sweeping over a screen as it enters. */
+  sweep: { duration: 500, easing: [0.6, 0, 0.3, 1] },
   /** Under Reduce Motion every motion is this one fade. */
   reduceMotion: { duration: 300, easing: ease },
 } as const satisfies Record<
   string,
   { readonly duration: number; readonly easing: Easing; readonly rise?: number }
 >;
+
+/**
+ * A screen's entrance (the design's `slScr` and `slSweep`), in fractions of
+ * the screen's width: the screen slides in by `shift` points while its
+ * slanted left edge, `slant` wider at the bottom than at the top, wipes from
+ * the right edge `travel` across; a red band of `band.width` sweeps over it,
+ * slanted by `band.skewX`, from `band.from` to `band.to` of its own width.
+ */
+export const screenEnter = {
+  shift: 30,
+  slant: 0.25,
+  travel: 1.4,
+  band: { width: 0.45, skewX: '-18deg', from: -1.7, to: 2.8 },
+} as const;
+
+/** The tab bar of the design. */
+export const tabBar = {
+  /** A tab's height above the safe area. */
+  height: 56,
+  /** A tab's icon, square. */
+  icon: 24,
+  /** Space between a tab's icon and its label. */
+  gap: 5,
+  /** The red slanted indicator over the active tab, `top` points over the tab. */
+  indicator: { width: 34, height: 6, top: -9, skewX: '-24deg' },
+} as const;
+
+/** The tab icons of the design, each a wedge cut in the tab's colour. */
+export const tabIcons = {
+  /** The Feed: two slanted slabs. */
+  home: [
+    [0, 0.1],
+    [1, 0],
+    [1, 0.38],
+    [0, 0.46],
+    [0, 0.56],
+    [1, 0.5],
+    [1, 1],
+    [0, 1],
+  ],
+  /** The Games: a diamond with a diamond hole. */
+  game: [
+    [0.5, 0],
+    [1, 0.5],
+    [0.5, 1],
+    [0, 0.5],
+    [0.22, 0.5],
+    [0.5, 0.78],
+    [0.78, 0.5],
+    [0.5, 0.22],
+    [0.22, 0.5],
+    [0, 0.5],
+  ],
+  /** Saved: a bookmark. */
+  saved: [
+    [0.12, 0.08],
+    [0.88, 0],
+    [0.88, 1],
+    [0.5, 0.74],
+    [0.12, 1],
+  ],
+  /** The profile: a head over shoulders. */
+  settings: [
+    [0.3, 0],
+    [0.7, 0],
+    [0.74, 0.4],
+    [0.5, 0.48],
+    [0.26, 0.4],
+    [0.3, 0],
+    [0, 1],
+    [0.08, 0.58],
+    [0.92, 0.54],
+    [1, 1],
+    [0, 1],
+  ],
+} as const satisfies Record<string, Wedge>;
 
 /** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
 export function withAlpha(color: string, alpha: number): string {
