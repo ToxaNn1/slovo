@@ -10,7 +10,7 @@ import {
   space,
   SplashOverlay,
   TokensProvider,
-  typeSize,
+  typeStyle,
   useTokens,
   type ColorScheme,
 } from '@slovo/ui';
@@ -69,7 +69,8 @@ function Showcase({
   onScheme: (scheme: ColorScheme) => void;
   splashFirst: boolean;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const cards = useFirstCards();
   const [splash, setSplash] = useState(splashFirst);
 
@@ -121,7 +122,7 @@ function Showcase({
               }}
               style={[styles.button, { borderColor: colors.line, borderRadius: radii.button }]}
             >
-              <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+              <Text style={[typeStyle('sub', tokens), { color: colors.accent }]}>
                 Show the splash
               </Text>
             </Pressable>
@@ -143,10 +144,11 @@ function Showcase({
 }
 
 function Slot({ label, children }: { label: string; children: ReactNode }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   return (
     <View style={styles.slot}>
-      <Text style={[styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+      <Text style={[typeStyle('sub', tokens), { color: colors.muted }]}>
         {label}
       </Text>
       {children}
@@ -192,7 +194,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { padding: space[6], gap: space[3] },
   slot: { gap: space[2], marginTop: space[2] },
-  label: { fontSize: typeSize.body, fontWeight: '500' },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
   button: {
     minHeight: minTouchTarget,

@@ -6,7 +6,7 @@ import {
   SectionLabel,
   SegmentedControl,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -29,7 +29,8 @@ const strings = editionStrings.settings.streakBreak;
  * one runs, or the next one waits for its date.
  */
 export function StreakBreakScreen() {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const router = useRouter();
   const streakBreak = useComposition().streakBreak;
@@ -40,7 +41,7 @@ export function StreakBreakScreen() {
     const value = String(index + 1);
     return { value, label: value, testID: `streak-break-days-${value}` };
   });
-  const textStyle = [styles.text, { color: colors.muted, fontFamily: fontFamilies.ui }];
+  const textStyle = [typeStyle('noticeText', tokens), { color: colors.muted }];
 
   return (
     <SafeAreaView
@@ -103,5 +104,4 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },
-  text: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
 });

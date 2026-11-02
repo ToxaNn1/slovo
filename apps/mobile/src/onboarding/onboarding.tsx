@@ -113,7 +113,7 @@ function Title({ children }: { children: string }) {
       accessibilityRole="header"
       {...voice}
       maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
-      style={[stepStyles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+      style={[typeStyle('stepTitle', tokens), { color: colors.ink }]}
     >
       {children}
     </Text>
@@ -245,7 +245,7 @@ function DailyGoalStep({
         <Text
           {...voice}
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[stepStyles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('stepText', tokens), { color: colors.muted }]}
         >
           {strings.dailyGoal.subtitle}
         </Text>
@@ -269,13 +269,13 @@ function DailyGoalStep({
               >
                 <Text
                   maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
-                  style={[typeStyle('goalNumber', { fontFamilies }), { color: ink }]}
+                  style={[typeStyle('goalNumber', tokens), { color: ink }]}
                 >
                   {String(goal)}
                 </Text>
                 <Text
                   maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-                  style={[typeStyle('goalUnit', { fontFamilies }), { color: ink }]}
+                  style={[typeStyle('goalUnit', tokens), { color: ink }]}
                 >
                   {strings.dailyGoal.unit}
                 </Text>

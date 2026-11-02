@@ -133,9 +133,8 @@ function RecapNumber({
       </Text>
       <Text
         style={[
-          typeStyle('recapLabel', tokens),
+          typeStyle(marked ? 'recapLabelMarked' : 'recapLabel', tokens),
           { color: marked ? keyInk : colors.muted },
-          marked && styles.markedLabel,
         ]}
       >
         {label}
@@ -153,5 +152,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: noticeCard.recap.padding.horizontal,
     gap: noticeCard.recap.lineGap,
   },
-  markedLabel: { fontWeight: '600' },
 });

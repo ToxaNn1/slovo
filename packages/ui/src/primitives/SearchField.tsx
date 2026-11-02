@@ -3,7 +3,7 @@ import Svg, { Circle, Polygon } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, searchFieldDrawing } from '../tokens';
+import { minTouchTarget, searchFieldDrawing, typeStyle } from '../tokens';
 
 /** The slack around the clear button up to the smallest tap area. */
 const CLEAR_HIT_SLOP = (minTouchTarget - searchFieldDrawing.clear) / 2;
@@ -25,7 +25,8 @@ export function SearchField({
   onChangeText: (text: string) => void;
   testID: string;
 } & Pick<TextInputProps, 'autoFocus' | 'onSubmitEditing' | 'returnKeyType'>) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   return (
     <View style={[styles.box, { backgroundColor: colors.surfaceSunken }]}>
@@ -52,7 +53,7 @@ export function SearchField({
         autoCorrect={false}
         spellCheck={false}
         selectionColor={colors.accent}
-        style={[styles.input, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('fieldText', tokens), styles.input, { color: colors.ink }]}
       />
       {value.length > 0 && (
         <Pressable
@@ -95,8 +96,6 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     alignSelf: 'stretch',
-    fontSize: searchFieldDrawing.inputSize,
-    fontWeight: '500',
   },
   clear: {
     width: searchFieldDrawing.clear,

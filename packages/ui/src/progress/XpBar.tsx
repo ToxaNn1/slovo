@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, typeSize, withAlpha, xpBarPadding } from '../tokens';
+import { minTouchTarget, space, typeStyle, withAlpha, xpBarPadding } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The bar's height, the Search and Mood buttons' beside it. */
@@ -27,7 +27,8 @@ export function XpBar({
   goal?: number | undefined;
   onPress: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const count = goal === undefined ? String(today) : `${String(today)}/${String(goal)}`;
   return (
@@ -49,7 +50,7 @@ export function XpBar({
     >
       <Text
         maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
-        style={[styles.today, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('textLink', tokens), { color: colors.ink }]}
       >
         {fill(strings.stats.xpToday, { count })}
       </Text>
@@ -68,5 +69,4 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     gap: space[1],
   },
-  today: { fontSize: typeSize.body, fontWeight: '700' },
 });

@@ -2,7 +2,7 @@ import type { LocalDate } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { badgePadding, overlineType, space } from '../tokens';
+import { badgePadding, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -11,7 +11,8 @@ import { useTokens } from '../providers/TokensProvider';
  * the label as written.
  */
 export function WordOfTheDayBadge({ day: { month, day } }: { day: LocalDate }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { strings, voice } = useEdition();
   const label = fill(strings.wordOfTheDay.badge, {
     day: String(day),
@@ -25,7 +26,7 @@ export function WordOfTheDayBadge({ day: { month, day } }: { day: LocalDate }) {
       {...voice}
       style={[styles.badge, { backgroundColor: colors.accent, borderRadius: radii.chip }]}
     >
-      <Text style={[styles.label, { color: colors.background, fontFamily: fontFamilies.ui }]}>
+      <Text style={[typeStyle('eyebrow', tokens), { color: colors.background }]}>
         {label}
       </Text>
     </View>
@@ -39,5 +40,4 @@ const styles = StyleSheet.create({
     paddingVertical: badgePadding.vertical,
     marginBottom: space[3],
   },
-  label: overlineType,
 });

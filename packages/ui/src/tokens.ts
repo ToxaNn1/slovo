@@ -282,6 +282,10 @@ export const typeRoles = {
   crosswordClue: role('ui', '600', 15, 19.5),
   /** A letter on a key of the Daily Crossword's keyboard. */
   crosswordKey: role('ui', '700', 15, 18, 0, 'uppercase'),
+  /** A letter of the wordmark flying in on the splash, on its 390-wide frame; the splash scales it. */
+  splashLetter: role('word', '900', 250, 250, -10),
+  /** The tagline on the splash's ink band. */
+  splashTagline: role('word', '800', 15, 15, 4, 'uppercase'),
   // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
@@ -343,6 +347,8 @@ export const typeRoles = {
   googleSignIn: role('ui', '500', 15, 20),
   /** The die on the mood button. */
   moodDie: role('ui', '400', 17, 20),
+  /** A Settings screen's explaining text, such as why notifications are off. */
+  settingsHint: role('ui', '400', 15, 22),
   // Roles of batch D.
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),

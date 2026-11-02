@@ -20,7 +20,14 @@ import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Mascot } from '../primitives/Mascot';
 import { Wedge } from '../primitives/Wedge';
-import { halftone, motion, splashMotion, type Easing as Curve } from '../tokens';
+import {
+  halftone,
+  motion,
+  splashMotion,
+  typeRoles,
+  typeStyle,
+  type Easing as Curve,
+} from '../tokens';
 
 export interface SplashOverlayProps {
   /** The app's name, whose letters fly in. */
@@ -48,7 +55,8 @@ function curve([x1, y1, x2, y2]: Curve) {
  * about half a second; under Reduce Motion it is one fade and a shorter hold.
  */
 export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: SplashOverlayProps) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   // The design's black on red is the light Theme's ink in both Themes.
   const inkOnRed = useSchemeColors('light').ink;
@@ -138,7 +146,6 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
             progress={letters}
             scale={scale}
             color={inkOnRed}
-            fontFamily={fontFamilies.word}
           />
         ),
       )}
@@ -150,10 +157,9 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
               {...voice}
               numberOfLines={1}
               style={[
-                styles.tagline,
+                typeStyle('splashTagline', tokens),
                 {
                   color: colors.onAccent,
-                  fontFamily: fontFamilies.word,
                   transform: [{ rotate: `${String(splashMotion.tagline.turn)}deg` }],
                 },
               ]}
@@ -184,7 +190,6 @@ function Letter({
   progress,
   scale,
   color,
-  fontFamily,
 }: {
   char: string;
   index: number;
@@ -192,8 +197,9 @@ function Letter({
   progress: SharedValue<number>;
   scale: number;
   color: string;
-  fontFamily: string | undefined;
 }) {
+  const tokens = useTokens();
+  const { size, letterSpacing } = typeRoles.splashLetter;
   const place = splashMotion.letters[index % splashMotion.letters.length] ?? {
     x: 0,
     y: 0,
@@ -221,15 +227,15 @@ function Letter({
     <Animated.Text
       accessible={false}
       style={[
+        typeStyle('splashLetter', tokens),
         styles.letter,
         {
           left: place.x * scale,
           top: place.y * scale,
           color,
-          fontFamily,
-          fontSize: letter.size * scale,
-          lineHeight: letter.size * scale,
-          letterSpacing: letter.letterSpacing * scale,
+          fontSize: size * scale,
+          lineHeight: size * scale,
+          letterSpacing: letterSpacing * scale,
         },
         style,
       ]}
@@ -265,7 +271,7 @@ function Halftone() {
 
 const styles = StyleSheet.create({
   ground: { overflow: 'hidden' },
-  letter: { position: 'absolute', fontWeight: '900' },
+  letter: { position: 'absolute' },
   band: { position: 'absolute', top: 0, bottom: 0, left: 0, overflow: 'hidden' },
   taglineRow: {
     position: 'absolute',
@@ -273,11 +279,6 @@ const styles = StyleSheet.create({
     right: 0,
     top: '50%',
     alignItems: 'center',
-  },
-  tagline: {
-    fontSize: splashMotion.tagline.size,
-    letterSpacing: splashMotion.tagline.letterSpacing,
-    fontWeight: '800',
   },
   mascot: { position: 'absolute' },
 });
