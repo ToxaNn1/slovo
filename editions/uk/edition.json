@@ -390,6 +390,7 @@
     {
       "id": "streak-3",
       "name": "Три дні поспіль",
+      "symbol": "3",
       "condition": {
         "kind": "streak",
         "days": 3
@@ -398,6 +399,7 @@
     {
       "id": "streak-7",
       "name": "Тиждень поспіль",
+      "symbol": "7",
       "condition": {
         "kind": "streak",
         "days": 7
@@ -406,6 +408,7 @@
     {
       "id": "streak-30",
       "name": "Місяць поспіль",
+      "symbol": "30",
       "condition": {
         "kind": "streak",
         "days": 30
@@ -414,6 +417,7 @@
     {
       "id": "streak-100",
       "name": "Сто днів поспіль",
+      "symbol": "100",
       "condition": {
         "kind": "streak",
         "days": 100
@@ -422,6 +426,7 @@
     {
       "id": "streak-365",
       "name": "Рік поспіль",
+      "symbol": "365",
       "condition": {
         "kind": "streak",
         "days": 365
@@ -430,6 +435,7 @@
     {
       "id": "confirmed-10",
       "name": "10 підтверджених",
+      "symbol": "10",
       "condition": {
         "kind": "confirmedEntries",
         "entries": 10
@@ -438,6 +444,7 @@
     {
       "id": "confirmed-50",
       "name": "50 підтверджених",
+      "symbol": "50",
       "condition": {
         "kind": "confirmedEntries",
         "entries": 50
@@ -446,6 +453,7 @@
     {
       "id": "confirmed-100",
       "name": "100 підтверджених",
+      "symbol": "100",
       "condition": {
         "kind": "confirmedEntries",
         "entries": 100
@@ -454,6 +462,7 @@
     {
       "id": "confirmed-500",
       "name": "500 підтверджених",
+      "symbol": "500",
       "condition": {
         "kind": "confirmedEntries",
         "entries": 500
@@ -462,6 +471,7 @@
     {
       "id": "win-words",
       "name": "Перша перемога в словах",
+      "symbol": "АЯ",
       "condition": {
         "kind": "gameWin",
         "modes": ["guess-word", "type-word", "by-letters", "anagram", "origin", "pairs"]
@@ -470,6 +480,7 @@
     {
       "id": "win-corrections",
       "name": "Перша перемога в суржику",
+      "symbol": "Ї",
       "condition": {
         "kind": "gameWin",
         "modes": ["correction", "anglicism"]
@@ -478,6 +489,7 @@
     {
       "id": "win-idioms",
       "name": "Перша перемога у фразеологізмах",
+      "symbol": "«»",
       "condition": {
         "kind": "gameWin",
         "modes": ["idiom-meaning", "build-idiom"]
@@ -486,6 +498,7 @@
     {
       "id": "win-stress",
       "name": "Перша перемога в наголосах",
+      "symbol": "А́",
       "condition": {
         "kind": "gameWin",
         "modes": ["stress"]
@@ -494,6 +507,7 @@
     {
       "id": "win-challenge",
       "name": "Перша перемога у випробуваннях",
+      "symbol": "?!",
       "condition": {
         "kind": "gameWin",
         "modes": ["survival", "timed"]
@@ -502,6 +516,7 @@
     {
       "id": "crossword-7",
       "name": "Сім кросвордів поспіль",
+      "symbol": "7",
       "condition": {
         "kind": "dailyCrosswordRun",
         "days": 7
@@ -510,6 +525,7 @@
     {
       "id": "rarity-5",
       "name": "Перше рідкісне слово",
+      "symbol": "Ґ",
       "condition": {
         "kind": "rightOnRarity",
         "rarity": 5
@@ -518,6 +534,7 @@
     {
       "id": "level-5",
       "name": "Рівень 5",
+      "symbol": "5",
       "condition": {
         "kind": "level",
         "level": 5
@@ -526,6 +543,7 @@
     {
       "id": "level-10",
       "name": "Рівень 10",
+      "symbol": "10",
       "condition": {
         "kind": "level",
         "level": 10
@@ -534,6 +552,7 @@
     {
       "id": "level-20",
       "name": "Рівень 20",
+      "symbol": "20",
       "condition": {
         "kind": "level",
         "level": 20
@@ -542,6 +561,7 @@
     {
       "id": "clean-language",
       "name": "Чиста мова",
+      "symbol": "50",
       "condition": {
         "kind": "rightAnswers",
         "modes": ["correction", "anglicism"],
@@ -551,6 +571,7 @@
     {
       "id": "true-stress",
       "name": "Влучний наголос",
+      "symbol": "100",
       "condition": {
         "kind": "rightAnswers",
         "modes": ["stress"],
