@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { space, typeSize } from '../tokens';
-import { MixChip } from './MixChip';
+import { Chip } from '../primitives/Chip';
 
 /**
  * The Rarity Floor choice of the Mix screen: one chip per floor, «від 1» to
@@ -50,7 +50,7 @@ export function RarityFloorChoice<Floor extends number | string>({
       </Text>
       <View style={styles.chips}>
         {options.map((option) => (
-          <MixChip
+          <Chip
             key={String(option.floor)}
             testID={`${testID}-${String(option.floor)}`}
             label={option.label}

@@ -1,10 +1,10 @@
 import {
   BackLink,
   EntryRow,
-  OutlinedChip,
+  LabelChip,
   RecentQueries,
+  SearchField,
   space,
-  TextField,
   typeSize,
   useEdition,
   useTokens,
@@ -56,7 +56,7 @@ export default function SearchScreen() {
         stickySectionHeadersEnabled={false}
         renderSectionHeader={({ section: { name, title } }) => (
           <View style={styles.group}>
-            <OutlinedChip
+            <LabelChip
               testID={`search-group-${name}`}
               text={title}
               accessibilityLabel={title}
@@ -110,7 +110,7 @@ function SearchHeader({
   return (
     <View style={styles.header}>
       <BackLink testID="search-back" label={editionStrings.tabs.home} onPress={onBack} />
-      <TextField
+      <SearchField
         testID="search-field"
         label={strings.title}
         value={query}

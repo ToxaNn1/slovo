@@ -1,8 +1,14 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, segmentedPadding, shadowColor, typeSize } from '../tokens';
+import { minTouchTarget, segmentedDrawing } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
+
+/** The slack above and below a segment up to the smallest tap area. */
+const HIT_SLOP = {
+  top: (minTouchTarget - segmentedDrawing.segmentHeight) / 2,
+  bottom: (minTouchTarget - segmentedDrawing.segmentHeight) / 2,
+};
 
 /** A segment's label stops growing here, so it never breaks a word at the largest text sizes. */
 const LABEL_MAX_FONT_SCALE = 1.3;
@@ -14,8 +20,8 @@ export interface Segment<Value extends string> {
 }
 
 /**
- * Picks one of a few values (Theme, font size): a track with the selected
- * segment raised on the surface colour.
+ * Picks one of a few values (Theme, font size): a sunken track with the
+ * selected segment filled in ink.
  */
 export function SegmentedControl<Value extends string>({
   segments,
@@ -28,13 +34,13 @@ export function SegmentedControl<Value extends string>({
   onSelect: (value: Value) => void;
   accessibilityLabel: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   return (
     <View
       accessibilityLabel={accessibilityLabel}
       {...voice}
-      style={[styles.track, { backgroundColor: colors.track, borderRadius: radii.button }]}
+      style={[styles.track, { backgroundColor: colors.surfaceSunken }]}
     >
       {segments.map(({ value, label, testID }) => {
         const isSelected = value === selected;
@@ -47,24 +53,17 @@ export function SegmentedControl<Value extends string>({
             accessibilityLabel={`${accessibilityLabel}: ${label}`}
             accessibilityState={{ selected: isSelected }}
             {...voice}
+            hitSlop={HIT_SLOP}
             onPress={() => {
               if (!isSelected) onSelect(value);
             }}
-            style={[
-              styles.segment,
-              { borderRadius: Math.max(radii.button - 1, 0) },
-              isSelected && [
-                styles.selected,
-                { backgroundColor: colors.surface, borderColor: colors.line },
-              ],
-            ]}
+            style={[styles.segment, isSelected && { backgroundColor: colors.ink }]}
           >
             <Text
               maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
               style={[
                 styles.label,
-                { color: colors.ink, fontFamily: fontFamilies.ui },
-                isSelected && styles.selectedLabel,
+                { color: isSelected ? colors.background : colors.ink, fontFamily: fontFamilies.ui },
               ]}
             >
               {label}
@@ -77,21 +76,18 @@ export function SegmentedControl<Value extends string>({
 }
 
 const styles = StyleSheet.create({
-  track: { flexDirection: 'row', padding: segmentedPadding },
+  track: {
+    flexDirection: 'row',
+    gap: segmentedDrawing.gap,
+    padding: segmentedDrawing.padding,
+    borderRadius: segmentedDrawing.radius,
+  },
   segment: {
     flex: 1,
-    minHeight: minTouchTarget,
+    minHeight: segmentedDrawing.segmentHeight,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'transparent',
+    borderRadius: segmentedDrawing.segmentRadius,
   },
-  selected: {
-    shadowColor,
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 3,
-  },
-  label: { fontSize: typeSize.body, fontWeight: '500' },
-  selectedLabel: { fontWeight: '600' },
+  label: { fontSize: segmentedDrawing.labelSize, fontWeight: '700' },
 });

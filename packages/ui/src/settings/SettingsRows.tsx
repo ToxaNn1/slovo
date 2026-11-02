@@ -1,9 +1,10 @@
 import { Children, Fragment, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Switch, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
+import { Switch } from '../primitives/Switch';
 import {
   minTouchTarget,
   overlineType,
@@ -138,8 +139,6 @@ export function SwitchRow({
         {...look.voice}
         value={value}
         onValueChange={onChange}
-        trackColor={{ false: look.colors.track, true: look.colors.accent }}
-        ios_backgroundColor={look.colors.track}
       />
     </View>
   );
@@ -238,12 +237,9 @@ export function SoonRow({
           {soon}
         </Text>
         {control === 'switch' && (
-          <Switch
-            disabled
-            value
-            trackColor={{ false: look.colors.track, true: look.colors.accent }}
-            importantForAccessibility="no-hide-descendants"
-          />
+          <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+            <Switch disabled value onValueChange={noChange} />
+          </View>
         )}
       </View>
       {control === 'slider' && <SliderTrack />}
@@ -310,3 +306,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
   },
 });
+
+/** The toggle of a row that waits for its version takes no change. */
+const noChange = () => undefined;

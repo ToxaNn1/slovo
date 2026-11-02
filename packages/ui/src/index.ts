@@ -55,7 +55,7 @@ export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { MoodButton } from './mood/MoodButton';
 export { MoodSheet, type MoodChip } from './mood/MoodSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
-export { MixChip } from './mix/MixChip';
+export { Chip } from './primitives/Chip';
 export { RarityFloorChoice } from './mix/RarityFloorChoice';
 export {
   HEADLINE_MAX_FONT_SCALE,
@@ -76,7 +76,7 @@ export { IconButton } from './primitives/IconButton';
 export { PressedTile, type TileTone } from './primitives/PressedTile';
 export { ScreenEnter } from './primitives/ScreenEnter';
 export { TabBarButton } from './primitives/TabBarButton';
-export { OutlinedChip } from './primitives/OutlinedChip';
+export { LabelChip } from './primitives/LabelChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
 export {
   SavedCard,
@@ -96,6 +96,8 @@ export { Mascot } from './primitives/Mascot';
 export { Placeholder } from './primitives/Placeholder';
 export { PronunciationButton } from './entries/PronunciationButton';
 export { SegmentedControl } from './primitives/SegmentedControl';
+export { Switch } from './primitives/Switch';
+export { SearchField } from './primitives/SearchField';
 export { ProblemLine, TextField } from './primitives/TextField';
 export { ShareButton } from './share/ShareButton';
 export { MistakeReportButton } from './mistake-reports/MistakeReportButton';

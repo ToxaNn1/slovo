@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
-import { OutlinedChip } from '../primitives/OutlinedChip';
+import { LabelChip } from '../primitives/LabelChip';
 import { space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
@@ -60,7 +60,7 @@ export function TipCardBody({
           {card.title}
         </Text>
         <View style={styles.chip}>
-          <OutlinedChip
+          <LabelChip
             testID="tip-chip"
             text={strings.chip}
             accessibilityLabel={strings.chip}
