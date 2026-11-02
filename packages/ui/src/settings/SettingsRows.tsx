@@ -1,39 +1,87 @@
 import { Children, Fragment, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Polygon } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
+import { SegmentedControl, type Segment } from '../primitives/SegmentedControl';
 import { Switch } from '../primitives/Switch';
 import {
   minTouchTarget,
   overlineType,
+  settingsRowDrawing,
   sliderDrawing,
   space,
   STACK_AT_FONT_SCALE,
   typeSize,
+  typeStyle,
 } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** How much a row that a later version brings is dimmed. */
 const SOON_OPACITY = 0.5;
 
-/** A card that holds rows under one another, with a hairline between two rows. */
-export function SettingsGroup({ children }: { children: ReactNode }) {
-  const { colors, radii } = useTokens();
+/**
+ * A card that holds rows under one another, with a hairline between two rows,
+ * under an optional title in the eyebrow role.
+ */
+export function SettingsGroup({ title, children }: { title?: string; children: ReactNode }) {
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
+  const { voice } = useEdition();
+  return (
+    <View style={styles.titled}>
+      {title !== undefined && (
+        <Text
+          accessibilityRole="header"
+          {...voice}
+          style={[styles.title, typeStyle('eyebrow', tokens), { color: colors.muted }]}
+        >
+          {title}
+        </Text>
+      )}
+      <View
+        style={[
+          styles.group,
+          { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
+        ]}
+      >
+        {Children.toArray(children).map((row, index) => (
+          <Fragment key={index}>
+            {index > 0 && <View style={[styles.divider, { backgroundColor: colors.line }]} />}
+            {row}
+          </Fragment>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** The slanted shapes a row's icon tile holds (design `SlovoApp`, `ICON`), on a 100 × 100 box. */
+const rowIcons = {
+  hex: '25,0 75,0 100,50 75,100 25,100 0,50',
+  bar: '0,30 100,0 100,70 0,100',
+  wedge: '0,0 100,30 100,70 0,100',
+  triangle: '0,0 100,50 0,100',
+  square: '0,0 100,15 100,100 0,85',
+  diamond: '50,0 100,50 50,100 0,50',
+} as const;
+
+/** The shape in a row's icon tile. */
+export type RowIcon = keyof typeof rowIcons;
+
+/** The sunken tile at a row's start, with its shape in ink; VoiceOver skips it. */
+function IconTile({ icon }: { icon: RowIcon }) {
+  const { colors } = useTokens();
   return (
     <View
-      style={[
-        styles.group,
-        { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
-      ]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[styles.iconTile, { backgroundColor: colors.surfaceSunken }]}
     >
-      {Children.toArray(children).map((row, index) => (
-        <Fragment key={index}>
-          {index > 0 && <View style={[styles.divider, { backgroundColor: colors.line }]} />}
-          {row}
-        </Fragment>
-      ))}
+      <Svg width={settingsRowDrawing.icon} height={settingsRowDrawing.icon} viewBox="0 0 100 100">
+        <Polygon points={rowIcons[icon]} fill={colors.ink} />
+      </Svg>
     </View>
   );
 }
@@ -41,33 +89,34 @@ export function SettingsGroup({ children }: { children: ReactNode }) {
 interface RowProps {
   readonly label: string;
   readonly testID?: string;
+  /** The shape in the tile at the row's start; without it, the row has no tile. */
+  readonly icon?: RowIcon;
 }
 
 /** What a row says on its right and where it stands in its group. */
 function useRowLook() {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors, fontFamilies } = tokens;
   const { voice } = useEdition();
   return {
     voice,
     colors,
     fontFamilies,
-    label: [styles.label, { color: colors.ink, fontFamily: fontFamilies.ui }],
-    value: [styles.value, { color: colors.muted, fontFamily: fontFamilies.ui }],
+    label: [typeStyle('rowLabel', tokens), { color: colors.ink }],
+    value: [typeStyle('rowSub', tokens), { color: colors.muted }],
   };
 }
 
+/** The design's slanted chevron, in the muted colour. */
 function Chevron() {
   const { colors } = useTokens();
   return (
-    <Svg width={8} height={14} viewBox="0 0 8 14">
-      <Path
-        d="M1 1l6 6-6 6"
-        fill="none"
-        stroke={colors.muted}
-        strokeWidth={1.8}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+    <Svg
+      width={settingsRowDrawing.chevronWidth}
+      height={settingsRowDrawing.chevronHeight}
+      viewBox="0 0 10 16"
+    >
+      <Polygon points="0,0 4,0 10,8 4,16 0,16 6,8" fill={colors.muted} />
     </Svg>
   );
 }
@@ -78,6 +127,7 @@ export function NavigationRow({
   value,
   onPress,
   testID,
+  icon,
 }: RowProps & { value?: string | undefined; onPress: () => void }) {
   const look = useRowLook();
   // At the largest text sizes the value drops under the label instead of squeezing it.
@@ -89,8 +139,12 @@ export function NavigationRow({
       accessibilityLabel={value === undefined ? label : `${label}, ${value}`}
       {...look.voice}
       onPress={onPress}
-      style={styles.row}
+      style={({ pressed }) => [
+        styles.row,
+        pressed && { backgroundColor: look.colors.surfaceSunken },
+      ]}
     >
+      {icon !== undefined && <IconTile icon={icon} />}
       {stacked ? (
         <View style={styles.grow}>
           <Text style={look.label}>{label}</Text>
@@ -118,6 +172,7 @@ export function SwitchRow({
   value,
   onChange,
   testID,
+  icon,
 }: RowProps & { subtitle?: string; value: boolean; onChange: (value: boolean) => void }) {
   const look = useRowLook();
   // At the largest text sizes the switch drops under the label instead of squeezing it.
@@ -127,10 +182,10 @@ export function SwitchRow({
       <View
         accessibilityElementsHidden
         importantForAccessibility="no-hide-descendants"
-        style={!stacked && styles.grow}
+        style={[styles.lead, !stacked && styles.grow]}
       >
-        <Text style={look.label}>{label}</Text>
-        {subtitle !== undefined && <Text style={look.value}>{subtitle}</Text>}
+        {icon !== undefined && <IconTile icon={icon} />}
+        <RowText look={look} label={label} subtitle={subtitle} />
       </View>
       <Switch
         testID={testID}
@@ -139,6 +194,67 @@ export function SwitchRow({
         {...look.voice}
         value={value}
         onValueChange={onChange}
+      />
+    </View>
+  );
+}
+
+/** A row's label and the optional muted line under it. */
+function RowText({
+  look,
+  label,
+  subtitle,
+}: {
+  look: ReturnType<typeof useRowLook>;
+  label: string;
+  subtitle: string | undefined;
+}) {
+  return (
+    <View style={styles.text}>
+      <Text style={look.label}>{label}</Text>
+      {subtitle !== undefined && <Text style={look.value}>{subtitle}</Text>}
+    </View>
+  );
+}
+
+/**
+ * A row that picks one of a few values: its label, an optional line and,
+ * under them, the segmented control, which VoiceOver reads by the label.
+ */
+export function ChoiceRow<T extends string>({
+  label,
+  subtitle,
+  icon,
+  testID,
+  segments,
+  selected,
+  onSelect,
+  children,
+}: RowProps & {
+  subtitle?: string;
+  segments: readonly Segment<T>[];
+  selected: T;
+  onSelect: (value: T) => void;
+  /** What the row shows between its label and its control, e.g. a preview. */
+  children?: ReactNode;
+}) {
+  const look = useRowLook();
+  return (
+    <View testID={testID} style={[styles.row, styles.choiceRow]}>
+      <View
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+        style={styles.lead}
+      >
+        {icon !== undefined && <IconTile icon={icon} />}
+        <RowText look={look} label={label} subtitle={subtitle} />
+      </View>
+      {children}
+      <SegmentedControl
+        accessibilityLabel={label}
+        segments={segments}
+        selected={selected}
+        onSelect={onSelect}
       />
     </View>
   );
@@ -262,18 +378,28 @@ function SliderTrack() {
 
 const styles = StyleSheet.create({
   divider: { height: StyleSheet.hairlineWidth },
+  titled: { gap: space[2] },
+  title: { paddingHorizontal: space[1] },
   group: { borderWidth: StyleSheet.hairlineWidth, overflow: 'hidden' },
   row: {
     minHeight: minTouchTarget + space[2],
     flexDirection: 'row',
     alignItems: 'center',
-    gap: space[3],
-    paddingHorizontal: space[4],
-    paddingVertical: space[2],
+    gap: settingsRowDrawing.gap,
+    paddingHorizontal: settingsRowDrawing.paddingHorizontal,
+    paddingVertical: settingsRowDrawing.paddingVertical,
   },
   stackedRow: { flexDirection: 'column', alignItems: 'flex-start' },
-  label: { fontSize: typeSize.body, fontWeight: '500' },
-  value: { fontSize: typeSize.body },
+  choiceRow: { flexDirection: 'column', alignItems: 'stretch' },
+  lead: { flexDirection: 'row', alignItems: 'center', gap: settingsRowDrawing.gap },
+  text: { flex: 1, minWidth: 0, gap: space[1] },
+  iconTile: {
+    width: settingsRowDrawing.iconTile,
+    height: settingsRowDrawing.iconTile,
+    borderRadius: settingsRowDrawing.iconTileRadius,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   time: { fontSize: typeSize.subhead, fontWeight: '500' },
   soonRow: {
     opacity: SOON_OPACITY,

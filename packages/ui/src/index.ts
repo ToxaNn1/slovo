@@ -104,7 +104,15 @@ export {
   type MistakeReportSheetDraft,
 } from './mistake-reports/MistakeReportSheet';
 export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
-export { NavigationRow, SettingsGroup, SoonRow, SwitchRow, TimeRow } from './settings/SettingsRows';
+export {
+  ChoiceRow,
+  NavigationRow,
+  SettingsGroup,
+  SoonRow,
+  SwitchRow,
+  TimeRow,
+  type RowIcon,
+} from './settings/SettingsRows';
 export { SplashOverlay } from './onboarding/SplashOverlay';
 export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
