@@ -8,14 +8,20 @@ import {
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
-import { TextInput } from 'react-native';
 import { testStrings } from '../test-strings';
 
 const texts = {
   cellLabel: (letter: string | undefined, place: CrosswordPlace) =>
     `${letter ?? 'empty'}, row ${String(place.row + 1)}, column ${String(place.column + 1)}`,
   openLetter: 'Open a letter',
+  eraseKey: 'Erase',
 };
+
+/** The keyboard: every letter the answers need and a few more. */
+const keys = [
+  ['c', 'a', 't', 'u'],
+  ['e', 'n', 'i', 'x'],
+];
 
 /**
  * A 5 × 5 grid of four words: «cat» and «ten» across in rows 1 and 3,
@@ -63,6 +69,7 @@ function Crossword({ onOpenLetter }: { onOpenLetter?: (place: CrosswordPlace) =>
             ),
           );
         }}
+        keys={keys}
         onOpenLetter={onOpenLetter}
         texts={texts}
         testID="crossword"
@@ -73,12 +80,12 @@ function Crossword({ onOpenLetter }: { onOpenLetter?: (place: CrosswordPlace) =>
 
 const cell = (row: number, column: number) =>
   screen.getByTestId(`crossword-${String(row)}-${String(column)}`);
+const face = (row: number, column: number) =>
+  screen.getByTestId(`crossword-${String(row)}-${String(column)}-face`);
 const type = async (text: string) => {
-  for (const letter of text)
-    await fireEvent.changeText(screen.getByTestId('crossword-keyboard'), letter);
+  for (const letter of text) await fireEvent.press(screen.getByTestId(`crossword-key-${letter}`));
 };
-const { surfaceSunken } = coreTokens.colors.light;
-const { correct } = coreTokens.colors.light;
+const { highlight, correct, accent, wrong } = coreTokens.colors.light;
 
 describe('CrosswordGrid', () => {
   it('shows a cell for every letter of a word and none elsewhere', async () => {
@@ -94,8 +101,9 @@ describe('CrosswordGrid', () => {
 
     expect(screen.getByText('A pet that purrs')).toBeOnTheScreen();
     expect(cell(0, 0)).toBeSelected();
-    expect(cell(0, 2)).toHaveStyle({ backgroundColor: surfaceSunken });
-    expect(cell(1, 0)).not.toHaveStyle({ backgroundColor: surfaceSunken });
+    expect(face(0, 0)).toHaveStyle({ backgroundColor: accent });
+    expect(face(0, 2)).toHaveStyle({ backgroundColor: highlight });
+    expect(face(1, 0)).not.toHaveStyle({ backgroundColor: highlight });
   });
 
   it('selects the word of a tapped cell and shows its clue', async () => {
@@ -106,8 +114,9 @@ describe('CrosswordGrid', () => {
     expect(screen.getByText('A can of food')).toBeOnTheScreen();
     expect(screen.queryByText('A pet that purrs')).toBeNull();
     expect(cell(1, 2)).toBeSelected();
-    expect(cell(2, 2)).toHaveStyle({ backgroundColor: surfaceSunken });
-    expect(cell(0, 1)).not.toHaveStyle({ backgroundColor: surfaceSunken });
+    expect(face(1, 2)).toHaveStyle({ backgroundColor: accent });
+    expect(face(2, 2)).toHaveStyle({ backgroundColor: highlight });
+    expect(face(0, 1)).not.toHaveStyle({ backgroundColor: highlight });
   });
 
   it('keeps across on a first tap and turns down on a second tap of a crossing cell', async () => {
@@ -120,7 +129,7 @@ describe('CrosswordGrid', () => {
     expect(screen.getByText('A can of food')).toBeOnTheScreen();
   });
 
-  it('fills the selected word letter by letter as the reader types', async () => {
+  it('fills the selected word letter by letter as the reader presses keys', async () => {
     await render(<Crossword />);
 
     await type('ca');
@@ -134,9 +143,7 @@ describe('CrosswordGrid', () => {
     await render(<Crossword />);
 
     await type('ca');
-    await fireEvent(screen.getByTestId('crossword-keyboard'), 'keyPress', {
-      nativeEvent: { key: 'Backspace' },
-    });
+    await fireEvent.press(screen.getByRole('button', { name: 'Erase' }));
 
     expect(screen.getByLabelText('empty, row 1, column 2')).toBeSelected();
   });
@@ -149,31 +156,26 @@ describe('CrosswordGrid', () => {
     await type('tan');
 
     for (const column of [0, 1, 2])
-      expect(cell(0, column)).toHaveStyle({ backgroundColor: correct });
-    expect(cell(2, 1)).not.toHaveStyle({ backgroundColor: correct });
-    expect(cell(2, 1)).not.toHaveStyle({ backgroundColor: coreTokens.colors.light.wrong });
+      expect(face(0, column)).toHaveStyle({ backgroundColor: correct });
+    expect(face(2, 1)).not.toHaveStyle({ backgroundColor: correct });
+    expect(face(2, 1)).not.toHaveStyle({ backgroundColor: wrong });
   });
 
-  it('opens the keyboard on a tap of a cell, but not once the grid is solved', async () => {
-    const focus = jest.spyOn(TextInput.prototype, 'focus');
+  it('takes no letter from the keys once the grid is solved', async () => {
     await render(<Crossword />);
-    focus.mockClear();
 
     await fireEvent.press(cell(2, 0));
-    expect(focus).toHaveBeenCalledTimes(1);
-
     await type('ten');
     await fireEvent.press(cell(0, 0));
     await type('cat');
     await fireEvent.press(cell(1, 0));
     await type('u');
     await fireEvent.press(cell(1, 2));
+    expect(screen.getByTestId('crossword-key-x')).toBeEnabled();
     await type('i');
-    focus.mockClear();
-    await fireEvent.press(cell(0, 1));
 
-    expect(focus).not.toHaveBeenCalled();
-    focus.mockRestore();
+    expect(screen.getByTestId('crossword-key-x')).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Erase' })).toBeDisabled();
   });
 
   it('opens the selected cell with «open a letter»', async () => {

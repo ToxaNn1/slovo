@@ -40,7 +40,7 @@ function dailyCrosswordCard(
         : progress === 'started'
           ? strings.resume
           : strings.start,
-    solved: progress === 'solved',
+    progress,
   };
 }
 
@@ -174,4 +174,24 @@ export function crosswordCellLabel(
     row: String(row + 1),
     column: String(column + 1),
   });
+}
+
+/** How many letters a row of the crossword's keyboard holds when the Edition names no rows. */
+const KEYS_PER_ROW = 11;
+
+/**
+ * The rows of the Daily Crossword's keyboard: the Edition's own, or its
+ * alphabet in rows of eleven when it names none.
+ */
+export function crosswordKeys({
+  keyboard,
+  alphabet,
+}: {
+  readonly keyboard?: readonly (readonly string[])[] | undefined;
+  readonly alphabet: readonly string[];
+}): readonly (readonly string[])[] {
+  if (keyboard !== undefined) return keyboard;
+  return Array.from({ length: Math.ceil(alphabet.length / KEYS_PER_ROW) }, (_, row) =>
+    alphabet.slice(row * KEYS_PER_ROW, (row + 1) * KEYS_PER_ROW),
+  );
 }
