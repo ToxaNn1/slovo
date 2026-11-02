@@ -86,14 +86,4 @@ describe('the History texts', () => {
     expect(text.label(entry('tip'))).toBe('порада');
     expect(text.label(entry('word', true))).toBe('слово дня');
   });
-
-  it('reads the Saved card to VoiceOver in full: the count, then each row with its age', () => {
-    expect(
-      text.cardLabel(312, [
-        { title: 'веремія', spoken: 'щойно' },
-        { title: 'брати участь', spoken: '5 хвилин тому' },
-      ]),
-    ).toBe('Історія, 312 записів. веремія, щойно. брати участь, 5 хвилин тому');
-    expect(text.cardLabel(0, [])).toBe('Історія, 0 записів');
-  });
 });

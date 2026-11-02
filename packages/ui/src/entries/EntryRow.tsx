@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-na
 
 import { entryRowSubtitle } from './entry-row-text';
 import { useEdition } from '../providers/EditionProvider';
-import { entryRow, rowPadding, space, STACK_AT_FONT_SCALE, typeSize } from '../tokens';
+import { entryRow, rowPadding, space, STACK_AT_FONT_SCALE, typeSize, typeStyle } from '../tokens';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
 import { useTokens } from '../providers/TokensProvider';
 
@@ -59,7 +59,8 @@ export function EntryRow({
   compact?: boolean;
   testID?: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors, fontFamilies } = tokens;
   const { strings, voice } = useEdition();
   const { fontScale } = useWindowDimensions();
   const subtitle =
@@ -80,7 +81,7 @@ export function EntryRow({
         <Text
           // Beside a button the Lemma stops growing at 1.3×, so it never breaks a word.
           maxFontSizeMultiplier={hasAccessory ? ACCESSORY_TITLE_MAX_FONT_SCALE : undefined}
-          style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+          style={[typeStyle('listWord', tokens), styles.title, { color: colors.ink }]}
         >
           {leading !== undefined && (
             <Text style={[styles.leading, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
@@ -97,7 +98,7 @@ export function EntryRow({
       </View>
       {subtitle !== undefined && (
         <Text
-          style={[styles.subtitle, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
+          style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
           numberOfLines={hasAccessory ? undefined : 1}
         >
           {subtitle}
@@ -149,7 +150,8 @@ export function EntryRow({
             onPress={onPress}
             style={({ pressed }) => [
               textStyle,
-              { backgroundColor: pressed ? colors.surfaceSunken : colors.background },
+              { backgroundColor: colors.background },
+              pressed && styles.pressed,
             ]}
           >
             {text}
@@ -162,12 +164,14 @@ export function EntryRow({
 }
 
 const styles = StyleSheet.create({
-  container: { borderBottomWidth: 1 },
+  // The design's word rows sit in from the screen's edge, a hairline under each.
+  container: { borderBottomWidth: 1, marginHorizontal: space[5] },
   containerCompact: { marginHorizontal: space[6] },
+  pressed: { opacity: entryRow.pressedOpacity },
   row: {
     minHeight: entryRow.minHeight,
     paddingVertical: rowPadding,
-    paddingHorizontal: space[6],
+    paddingHorizontal: entryRow.inset,
     gap: entryRow.lineGap,
   },
   rowCompact: {
@@ -179,7 +183,7 @@ const styles = StyleSheet.create({
   withAccessory: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: space[6],
+    paddingRight: entryRow.inset,
     gap: space[3],
   },
   rowBesideAccessory: { flex: 1, paddingRight: 0 },
@@ -187,7 +191,7 @@ const styles = StyleSheet.create({
   withAccessoryStacked: {
     flexDirection: 'column',
     alignItems: 'flex-start',
-    paddingLeft: space[6],
+    paddingLeft: entryRow.inset,
     paddingBottom: rowPadding,
   },
   rowAboveAccessory: { flex: 0, alignSelf: 'stretch', paddingLeft: 0, paddingBottom: space[2] },
@@ -199,8 +203,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     columnGap: entryRow.titleGap,
   },
-  title: { flexShrink: 1, fontSize: typeSize.subhead, fontWeight: '500' },
+  title: { flexShrink: 1 },
   leading: { fontWeight: '500' },
-  trailing: { flexShrink: 0, fontSize: typeSize.smallLabel, fontWeight: '500' },
-  subtitle: { fontSize: typeSize.caption, lineHeight: typeSize.caption * 1.4 },
+  trailing: { flexShrink: 0, fontSize: typeSize.smallLabel, fontWeight: '600' },
+  subtitle: { fontSize: typeSize.meta, lineHeight: typeSize.meta * 1.3 },
 });

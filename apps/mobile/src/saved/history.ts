@@ -1,4 +1,4 @@
-import { relativeTimeOf, type HistoryEntry } from '@slovo/core';
+import type { HistoryEntry } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
 import { useMemo } from 'react';
@@ -60,29 +60,7 @@ export function useHistorySections(): readonly HistorySection[] {
   return useMemo(() => historySections({ history: list, text, clock: deviceClock }), [list, text]);
 }
 
-/** The History card of the Saved tab: the count, the latest rows and what VoiceOver reads for it. */
-export interface HistoryPreview {
-  readonly count: number;
-  /** The latest rows, each a title and how long ago it was Seen. */
-  readonly rows: readonly { readonly title: string; readonly trailing: string }[];
-  /** The card's name and count, then each latest row with its time in full words. */
-  readonly label: string;
-}
-
-/**
- * The History card of the Saved tab, with the `latest` rows, kept up to date;
- * each row's time is read on the device's clock as the card renders.
- */
-export function useHistoryPreview(latest: number): HistoryPreview {
-  const history = useHistoryList();
-  const text = useHistoryText();
-  const rows = history.slice(0, latest).map(({ row, seenAt }) => ({
-    title: row.title,
-    ...text.relative(relativeTimeOf(seenAt, deviceClock)),
-  }));
-  return {
-    count: history.length,
-    rows: rows.map(({ title, text: trailing }) => ({ title, trailing })),
-    label: text.cardLabel(history.length, rows),
-  };
+/** How many Entries History holds, kept up to date. */
+export function useHistoryCount(): number {
+  return useHistoryList().length;
 }

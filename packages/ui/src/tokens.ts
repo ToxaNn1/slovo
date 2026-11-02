@@ -272,6 +272,44 @@ export const wedges = {
   ],
 } as const satisfies Record<string, Wedge>;
 
+/** The marks of the Collection cards of the Saved overview, in turn by the card's place. */
+export const collectionMarks = [
+  [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+  ],
+  [
+    [0, 0],
+    [1, 0.3],
+    [1, 1],
+    [0, 0.7],
+  ],
+  [
+    [0.5, 0],
+    [1, 1],
+    [0, 1],
+  ],
+  [
+    [0, 0],
+    [1, 0],
+    [0.6, 1],
+    [0, 1],
+  ],
+  [
+    [0, 0.3],
+    [1, 0],
+    [1, 0.7],
+    [0, 1],
+  ],
+  [
+    [0.3, 0],
+    [1, 0],
+    [0.7, 1],
+    [0, 1],
+  ],
+] as const satisfies readonly Wedge[];
+
 /** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
 export const levelCard = {
   padding: 20,
@@ -553,6 +591,8 @@ export const typeSize = {
   collectionLemmas: 22,
   /** A line of a card's list, a Collection's name in a sheet, a name field. */
   listItem: 18,
+  /** A recent query of Search. */
+  recentQuery: 16,
   /** A count or a refusal beside a name; also the onboarding sample notification's body, a row's subtitle, a swipe action's label and a note under a button. */
   caption: 14,
   /** What goes on the right of a card's row, such as a relative time; also the Round's progress and tags, an Example's author, a notification's app name and time. */
@@ -617,10 +657,23 @@ export const fontSizeSteps: Readonly<
 export const cardSpace = {
   /** Between the blocks of a card of the Saved overview, and between its cards. */
   gap: 14,
-  /** Over and under the content of the Favorites card (the design's 22, between the 4-pt steps). */
-  primaryPaddingVertical: 22,
   /** Around the content of a Collection's row and of the field that names one. */
   collectionPadding: 18,
+} as const;
+
+/** A Collection's card on the Saved overview (design `SlovoApp`, the Collections tab). */
+export const collectionCard = {
+  height: 150,
+  padding: 14,
+  /** Between the cards, across and down. */
+  gap: 12,
+  mark: 34,
+  /** Between the name and the count. */
+  textGap: 6,
+  nameSize: 14,
+  nameLineHeight: 17,
+  countSize: 12,
+  countOpacity: 0.85,
 } as const;
 
 /** The line heights the design gives in pixels rather than as a multiple of the size. */
@@ -636,7 +689,17 @@ export const blockGap = 18;
 export const wordCardSide = 26;
 
 /** The spacing inside an Entry's row in a list, off the 4-pt grid. */
-export const entryRow = { minHeight: 60, compactMinHeight: 52, lineGap: 3, titleGap: 10 } as const;
+export const entryRow = {
+  minHeight: 60,
+  compactMinHeight: 52,
+  /** The design's 4 between the word and its line. */
+  lineGap: 4,
+  titleGap: 10,
+  /** How far the text sits in from the row's hairline (design `SlovoApp`, the Saved list). */
+  inset: 4,
+  /** The row's opacity while it is pressed. */
+  pressedOpacity: 0.6,
+} as const;
 
 /**
  * The Word card's small controls: the Category chip's vertical padding, the
