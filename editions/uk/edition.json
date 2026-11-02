@@ -93,7 +93,7 @@
     "laterQuestions": true,
     "profile": true,
     "mascot": true,
-    "sounds": true,
+    "sounds": false,
     "reduceMotion": true
   },
   "userSettingDefaults": {
