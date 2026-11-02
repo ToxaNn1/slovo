@@ -45,34 +45,6 @@ const dark = [{ appearance: 'luminosity', value: 'dark' }];
 describe("the widget extension's Edition files", () => {
   const files = widgetExtensionFiles(ukrainian);
 
-  it.each([
-    // #FFF4E6 and #140C0A
-    ['background', ['1.000', '0.957', '0.902'], ['0.078', '0.047', '0.039']],
-    // #140C0A and #FFF4E6
-    ['ink', ['0.078', '0.047', '0.039'], ['1.000', '0.957', '0.902']],
-    // #140C0A and #FFF4E6
-    ['inkSecondary', ['0.078', '0.047', '0.039'], ['1.000', '0.957', '0.902']],
-    // #FF3B2F in both
-    ['accent', ['1.000', '0.231', '0.184'], ['1.000', '0.231', '0.184']],
-  ])(
-    'writes the %s token as a colour set with a light and a dark appearance',
-    (name, light, darkRgb) => {
-      const components = ([red, green, blue]: string[]) => ({ red, green, blue, alpha: '1.000' });
-
-      expect(json(files, `Generated/Assets.xcassets/${name}.colorset/Contents.json`)).toEqual({
-        colors: [
-          { idiom: 'universal', color: { 'color-space': 'srgb', components: components(light) } },
-          {
-            idiom: 'universal',
-            appearances: dark,
-            color: { 'color-space': 'srgb', components: components(darkRgb) },
-          },
-        ],
-        info: { author: 'xcode', version: 1 },
-      });
-    },
-  );
-
   const fixed = (name: string) =>
     json(files, `Generated/Assets.xcassets/${name}.colorset/Contents.json`);
   const oneColor = ([red, green, blue, alpha = '1.000']: string[]) => ({
@@ -85,28 +57,37 @@ describe("the widget extension's Edition files", () => {
     info: { author: 'xcode', version: 1 },
   });
 
+  const red = ['1.000', '0.231', '0.184'];
+  const cream = ['1.000', '0.957', '0.902'];
+  const nearBlack = ['0.078', '0.047', '0.039'];
+
+  it('draws Авто as the small design: the red background, the ink on it and the giant letter in cream', () => {
+    expect(fixed('backgroundSmall')).toEqual(oneColor(red));
+    expect(fixed('inkSmall')).toEqual(oneColor(nearBlack));
+    expect(fixed('inkSecondarySmall')).toEqual(oneColor(nearBlack));
+    expect(fixed('accentSmall')).toEqual(oneColor(nearBlack));
+    expect(fixed('markSmall')).toEqual(oneColor(cream));
+  });
+
+  it('draws Авто as the medium design: the dark background, the cream ink, the second line at 85% and the red overline and wedge', () => {
+    expect(fixed('backgroundMedium')).toEqual(oneColor(nearBlack));
+    expect(fixed('inkMedium')).toEqual(oneColor(cream));
+    expect(fixed('inkSecondaryMedium')).toEqual(oneColor([...cream, '0.850']));
+    expect(fixed('accentMedium')).toEqual(oneColor(red));
+    expect(fixed('markMedium')).toEqual(oneColor(red));
+  });
+
   it.each([
-    [
-      'Light',
-      ['1.000', '0.957', '0.902'],
-      ['0.078', '0.047', '0.039'],
-      ['0.078', '0.047', '0.039'],
-      ['1.000', '0.231', '0.184'],
-    ],
-    [
-      'Dark',
-      ['0.078', '0.047', '0.039'],
-      ['1.000', '0.957', '0.902'],
-      ['1.000', '0.957', '0.902'],
-      ['1.000', '0.231', '0.184'],
-    ],
+    ['Light', cream, nearBlack],
+    ['Dark', nearBlack, cream],
   ])(
-    'writes the %s background with its ink, secondary ink and accent as colour sets that ignore the appearance',
-    (name, background, ink, inkSecondary, accent) => {
+    'writes the %s background with one appearance of the colour tokens, the accent as the mark',
+    (name, background, ink) => {
       expect(fixed(`background${name}`)).toEqual(oneColor(background));
       expect(fixed(`ink${name}`)).toEqual(oneColor(ink));
-      expect(fixed(`inkSecondary${name}`)).toEqual(oneColor(inkSecondary));
-      expect(fixed(`accent${name}`)).toEqual(oneColor(accent));
+      expect(fixed(`inkSecondary${name}`)).toEqual(oneColor(ink));
+      expect(fixed(`accent${name}`)).toEqual(oneColor(red));
+      expect(fixed(`mark${name}`)).toEqual(oneColor(red));
     },
   );
 
@@ -114,12 +95,13 @@ describe("the widget extension's Edition files", () => {
     ['Parchment', ['0.953', '0.914', '0.824'], ['0.231', '0.165', '0.102']],
     ['Blue', ['0.122', '0.227', '0.373'], ['0.953', '0.914', '0.824']],
   ])(
-    'writes the %s background and its ink, with the secondary ink as the ink at 72%% and the accent as the ink, since the widget palette has one text colour',
+    'writes the %s background and its ink, with the secondary ink as the ink at 72%%, the accent as the ink and the mark as the ink at 16%%, since the widget palette has one text colour',
     (name, background, ink) => {
       expect(fixed(`background${name}`)).toEqual(oneColor(background));
       expect(fixed(`ink${name}`)).toEqual(oneColor(ink));
       expect(fixed(`inkSecondary${name}`)).toEqual(oneColor([...ink, '0.720']));
       expect(fixed(`accent${name}`)).toEqual(oneColor(ink));
+      expect(fixed(`mark${name}`)).toEqual(oneColor([...ink, '0.160']));
     },
   );
 
@@ -149,22 +131,15 @@ describe("the widget extension's Edition files", () => {
       tokens: {
         ...ukrainian.tokens,
         colors: {
-          light: { ...ukrainian.tokens.colors.light, ink: 'rgba(0, 0, 0, 0.5)' },
+          light: { ...ukrainian.tokens.colors.light, background: 'rgba(0, 0, 0, 0.5)' },
           dark: ukrainian.tokens.colors.dark,
         },
       },
     });
 
-    expect(json(translucent, 'Generated/Assets.xcassets/ink.colorset/Contents.json')).toMatchObject(
-      {
-        colors: [
-          {
-            color: { components: { red: '0.000', green: '0.000', blue: '0.000', alpha: '0.500' } },
-          },
-          {},
-        ],
-      },
-    );
+    expect(
+      json(translucent, 'Generated/Assets.xcassets/backgroundLight.colorset/Contents.json'),
+    ).toEqual(oneColor(['0.000', '0.000', '0.000', '0.500']));
   });
 
   it('renders the divider band (Decor slot 2) to a vector image, light and dark', () => {
