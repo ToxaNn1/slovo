@@ -1,4 +1,4 @@
-import type { Holiday, SeasonalMotif, SeasonMotifs } from '@slovo/contracts';
+import type { DecorMotif, Holiday, SeasonalMotif, SeasonMotifs } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { parseLocalDate as on } from '../index';
@@ -6,7 +6,7 @@ import { holidayOf, motifOf } from './holiday';
 
 /** A motif told apart by its tile's width alone. */
 function motif(width: number): SeasonalMotif {
-  const drawing = {
+  const drawing: DecorMotif = {
     width,
     height: 1,
     layers: [{ path: 'M0 0h1v1H0z', color: 'decor' }],

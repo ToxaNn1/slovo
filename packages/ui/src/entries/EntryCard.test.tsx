@@ -1,3 +1,4 @@
+import type { DecorMotif } from '@slovo/contracts';
 import {
   coreDecor,
   type CorrectionCardModel,
@@ -189,7 +190,7 @@ const longestWordOfTheDay = {
   },
 } as const satisfies EntryFeedCard;
 
-const motif = {
+const motif: DecorMotif = {
   width: 4,
   height: 4,
   layers: [{ path: 'M0 0h4v4H0z', color: 'decor' }],

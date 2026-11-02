@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import plist from '@expo/plist';
-import { WidgetSnapshotSchema } from '@slovo/contracts';
+import { type DecorMotif, WidgetSnapshotSchema } from '@slovo/contracts';
 import { coreDecor, loadDecor } from '@slovo/core';
 import { FONTS_DIR } from '@slovo/language-pack/edition';
 import { coreTokens, designTokens } from '@slovo/ui/tokens';
@@ -197,14 +197,14 @@ describe("the widget extension's Edition files", () => {
   });
 
   it('draws a band layer at its own opacity, times the opacity of its colour role', () => {
-    const band = {
+    const band: DecorMotif = {
       width: 4,
       height: 1,
       layers: [
         { path: 'M0 0h4v1H0z', color: 'accent', opacity: 0.5 },
         { path: 'M0 0h4v1H0z', color: 'line', opacity: 0.5 },
       ],
-    } as const;
+    };
     const faint = widgetExtensionFiles({ ...ukrainian, band });
 
     expect(text(faint, 'Generated/Assets.xcassets/band.imageset/band-dark.svg')).toBe(

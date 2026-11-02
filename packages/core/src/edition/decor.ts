@@ -47,15 +47,12 @@ export const coreDecor: Decor = {
     band: {
       width: 4,
       height: 1,
-      layers: [
-        { path: 'M0 0h4v1H0z', color: 'line' }],
+      layers: [{ path: 'M0 0h4v1H0z', color: 'line' }],
     },
     centre: {
       width: 5,
       height: 5,
-      layers: [
-        { path: 'M0 2.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0z', color: 'ink' },
-      ],
+      layers: [{ path: 'M0 2.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0z', color: 'ink' }],
     },
   },
   corners: undefined,

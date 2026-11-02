@@ -8,7 +8,7 @@ import { useTokens } from '../providers/TokensProvider';
 /** One layer in its colour role of the colour scheme in effect. */
 function LayerPath({ layer }: { layer: DecorLayer }) {
   const { colors } = useTokens();
-  return <Path d={layer.path} fill={colors[layer.color]} fillOpacity={layer.opacity} />;
+  return <Path d={layer.path} fill={colors[layer.color]} fillOpacity={layer.opacity ?? 1} />;
 }
 
 /** The motif's layers in the colours of the colour scheme in effect. */

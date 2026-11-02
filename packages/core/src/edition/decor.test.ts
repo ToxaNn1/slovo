@@ -186,7 +186,11 @@ describe('loadDecor', () => {
     ],
     [
       'a layer in its own light and dark colours',
-      { corners: { corner: motif({ layers: [{ path: layer.path, light: '#000000', dark: '#FFFFFF' }] }) } },
+      {
+        corners: {
+          corner: motif({ layers: [{ path: layer.path, light: '#000000', dark: '#FFFFFF' }] }),
+        },
+      },
       'corners.corner.layers.0',
     ],
     [
