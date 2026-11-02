@@ -36,18 +36,22 @@ type Paints = Readonly<Record<'body' | 'ink' | 'accent', string>>;
 /**
  * The Mascot (ADR 0070) in a state, drawn from the Edition's vector with its
  * design motion, and the Edition's short line for it under it. `onRed` draws
- * the variant for a red ground. It is silent and takes no touch, so it never
+ * the variant for a red ground; `width` sets a smaller figure, such as the
+ * Round's. It is silent and takes no touch, so it never
  * stands in the reader's way. An Edition without a vector shows the line alone.
  */
 export function Mascot({
   state,
   line,
   onRed = false,
+  width = mascotWidth,
   testID = `mascot-${state}`,
 }: {
   state: MascotState;
   line?: string;
   onRed?: boolean;
+  /** The figure's width in points; the Mascot's own by default. */
+  width?: number;
   testID?: string;
 }) {
   const { colors, fontFamilies } = useTokens();
@@ -55,7 +59,7 @@ export function Mascot({
   const { mascot } = useDecor();
   return (
     <View testID={testID} pointerEvents="none" style={styles.mascot}>
-      {mascot !== undefined && <Figure mascot={mascot} state={state} onRed={onRed} />}
+      {mascot !== undefined && <Figure mascot={mascot} state={state} onRed={onRed} width={width} />}
       {line !== undefined && (
         <Text
           {...voice}
@@ -76,10 +80,12 @@ function Figure({
   mascot,
   state,
   onRed,
+  width,
 }: {
   mascot: MascotFigure;
   state: MascotState;
   onRed: boolean;
+  width: number;
 }) {
   const { colors } = useTokens();
   // The design's black on red is the light Theme's ink in both Themes.
@@ -103,8 +109,8 @@ function Figure({
     <DecorView>
       <Animated.View testID="mascot-figure" style={[styles.figure, style]}>
         <Svg
-          width={mascotWidth}
-          height={(mascotWidth * mascot.height) / mascot.width}
+          width={width}
+          height={(width * mascot.height) / mascot.width}
           viewBox={`0 0 ${String(mascot.width)} ${String(mascot.height)}`}
         >
           {(state === 'shouts' || state === 'celebrates') && (

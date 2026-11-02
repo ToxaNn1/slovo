@@ -466,9 +466,6 @@ function PlainRound({ game }: { game: CurrentGame }) {
   );
 }
 
-/** The filled part of the progress bar, its share of the Rounds passed as a flex weight. */
-const barFill = () => screen.getByTestId('game-progress-filled');
-
 describe('GameRound', () => {
   it('counts the Rounds passed out of the Round limit and the Lives out of those the Game started with', async () => {
     await renderRound(jest.fn(), jest.fn(), { ...first, roundsPassed: 7, lives: 4 });
@@ -476,7 +473,6 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
       'Rounds passed: 7 of 15',
     );
-    expect(screen.getByText('7 / 15')).toBeTruthy();
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Lives: 4 of 5');
   });
 
@@ -953,17 +949,6 @@ describe('GameRound', () => {
       expect(step(life(4), 'scale')).toBeGreaterThan(1);
     });
 
-    it('grows the progress bar within 300 ms when a Round passes', async () => {
-      const { rerender } = await render(<PlainRound game={first} />);
-
-      await rerender(<PlainRound game={{ ...first, roundsPassed: 1 }} />);
-      await wait(16);
-      expect(styleOf(barFill()).flex).toBeLessThan(1);
-      await wait(284);
-
-      expect(styleOf(barFill()).flex).toBe(1);
-    });
-
     describe('with Reduce Motion', () => {
       beforeEach(() => {
         jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
@@ -997,16 +982,6 @@ describe('GameRound', () => {
           expect(styleOf(lifeLost(4)).translateY).toBe(0);
         }
         expect(styleOf(lifeFill(4)).opacity).toBe(0);
-      });
-
-      it('sets the progress bar at once when a Round passes', async () => {
-        const { rerender } = await render(<PlainRound game={first} />);
-
-        await rerender(<PlainRound game={{ ...first, roundsPassed: 1 }} />);
-        // The next frame.
-        await wait(16);
-
-        expect(styleOf(barFill()).flex).toBe(1);
       });
     });
   });

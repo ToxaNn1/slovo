@@ -38,6 +38,7 @@ import {
   onFill,
   overlineType,
   roundLayout,
+  roundProgress,
   space,
   typeSize,
   wedges,
@@ -59,9 +60,9 @@ const LIFE_GAP = 5;
 /** The «−1» that flies up off the Lives when one is lost. */
 const LIFE_LOST_MARK = '\u22121';
 /** The ✕'s glyph size; its touch target is `minTouchTarget`. */
-const EXIT_SIZE = 20;
-/** The height of the Round's progress bar. */
-const BAR_HEIGHT = 4;
+const EXIT_SIZE = 16;
+/** The corners of the ✕'s sunken square. */
+const EXIT_RADIUS = 14;
 /** An answer option's least height, from the design (above the 44 pt touch target). */
 const OPTION_HEIGHT = 58;
 /** How much an answered Round's other options fade. */
@@ -95,8 +96,6 @@ const LIFE_OUT = {
 const LIFE_MARK = { rise: 80, duration: 1100, reduceMotion: ReduceMotion.Never } as const;
 /** With Reduce Motion a lost Life's fill and its «−1» only fade (the design's `slRm`). */
 const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Never };
-/** The progress bar grows in 300 ms; with Reduce Motion it is set at once, as its edge moves across the header. */
-const BAR_GROWTH = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Never };
 
 /** The answer to a Round of the pick form. */
 type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
@@ -169,6 +168,8 @@ export function GameRound({
         lives={game.lives}
         livesAtStart={game.livesAtStart}
         lifeLostAfter={round.lifeLostAfter}
+        results={game.played.map((played) => played.right)}
+        current={answer === undefined ? game.played.length : undefined}
         time={
           game.time === undefined || game.timeLimit === undefined
             ? undefined
@@ -427,10 +428,16 @@ function GameHeader({
   lives,
   livesAtStart,
   lifeLostAfter,
+  results,
+  current,
   time,
   onExit,
 }: {
   roundsPassed: number;
+  /** Whether each Round played was answered right, in order. */
+  results: readonly boolean[];
+  /** The place of the Round still to answer; none once it is answered. */
+  current: number | undefined;
   /** The mode's Round limit; none in a mode without one, which shows no bar. */
   roundLimit: number | undefined;
   /** The Lives left; none in a mode without Lives, which shows none. */
@@ -447,15 +454,6 @@ function GameHeader({
   const { strings, voice, count } = useEdition();
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
-  const reduceMotion = useReduceMotion();
-  const passed = useSharedValue(roundsPassed);
-  useEffect(() => {
-    passed.value = reduceMotion ? roundsPassed : withTiming(roundsPassed, BAR_GROWTH);
-    // The shared value is stable, so only a Round passing grows the bar.
-  }, [roundsPassed, reduceMotion, passed]);
-  // The share of the Rounds passed, as flex weights, so the bar needs no width.
-  const filled = useAnimatedStyle(() => ({ flex: passed.value }));
-  const unfilled = useAnimatedStyle(() => ({ flex: (roundLimit ?? 0) - passed.value }));
   return (
     <View style={styles.header}>
       <ExitButton onPress={onExit} />
@@ -470,22 +468,34 @@ function GameHeader({
           {...voice}
           style={styles.progress}
         >
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-            style={[styles.progressText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-          >
-            {fill(roundLimit === undefined ? words.passed : words.progress, progress)}
-          </Text>
-          {roundLimit === undefined ? null : (
-            <View
-              testID="game-progress-bar"
-              style={[styles.bar, { backgroundColor: colors.track }]}
+          {roundLimit === undefined ? (
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              style={[styles.progressText, { color: colors.ink, fontFamily: fontFamilies.word }]}
             >
-              <Animated.View
-                testID="game-progress-filled"
-                style={[filled, { backgroundColor: colors.accent }]}
-              />
-              <Animated.View style={unfilled} />
+              {fill(words.passed, progress)}
+            </Text>
+          ) : (
+            <View testID="game-progress-bar" style={styles.segments}>
+              {Array.from({ length: roundLimit }, (_, place) => (
+                <View
+                  key={place}
+                  testID={`game-progress-${String(place)}`}
+                  style={[
+                    styles.segment,
+                    {
+                      backgroundColor:
+                        place < results.length
+                          ? results[place]
+                            ? colors.accent
+                            : colors.ink
+                          : place === current
+                            ? colors.muted
+                            : colors.silhouette,
+                    },
+                  ]}
+                />
+              ))}
             </View>
           )}
         </View>
@@ -531,15 +541,12 @@ function ExitButton({ onPress }: { onPress: () => void }) {
       accessibilityLabel={strings.game.exit.label}
       {...voice}
       onPress={onPress}
-      style={styles.exit}
+      style={[styles.exit, { backgroundColor: colors.surfaceSunken }]}
     >
-      <Svg width={EXIT_SIZE} height={EXIT_SIZE} viewBox="0 0 24 24">
+      <Svg width={EXIT_SIZE} height={EXIT_SIZE} viewBox="0 0 20 20">
         <Path
-          d="M5 5l14 14M19 5L5 19"
-          fill="none"
-          stroke={colors.ink}
-          strokeWidth={2}
-          strokeLinecap="round"
+          d="M0 3L3 0L10 7L17 0L20 3L13 10L20 17L17 20L10 13L3 20L0 17L7 10Z"
+          fill={colors.ink}
         />
       </Svg>
     </Pressable>
@@ -976,19 +983,16 @@ const styles = StyleSheet.create({
     paddingRight: space[4],
   },
   progress: { flex: 1, gap: roundLayout.tightGap },
-  progressText: { fontSize: typeSize.meta, fontWeight: '700' },
-  bar: {
-    flexDirection: 'row',
-    height: BAR_HEIGHT,
-    borderRadius: BAR_HEIGHT / 2,
-    overflow: 'hidden',
-  },
+  progressText: { fontSize: typeSize.meta, fontWeight: '800' },
+  segments: { flexDirection: 'row', gap: roundProgress.gap },
+  segment: { flex: 1, height: roundProgress.height, transform: [{ skewX: roundProgress.skew }] },
   lives: { flexDirection: 'row', gap: LIFE_GAP },
   lifeLost: { position: 'absolute', top: -space[1], right: 0 },
   lifeLostText: { fontSize: typeSize.meta, fontWeight: '900' },
   exit: {
     width: minTouchTarget,
     height: minTouchTarget,
+    borderRadius: EXIT_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
   },

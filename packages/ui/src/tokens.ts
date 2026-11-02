@@ -712,6 +712,9 @@ export const iconButton = { side: 44, icon: 20 } as const;
  * progress label over its bar, «Далі» under the sheet), the sheet's own and
  * the vertical padding of the Round's card.
  */
+/** The Round's progress (design `SlovoApp`): a skewed segment per Round. */
+export const roundProgress = { height: 8, gap: 4, skew: '-20deg' } as const;
+
 export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVertical: 30 } as const;
 
 /**
