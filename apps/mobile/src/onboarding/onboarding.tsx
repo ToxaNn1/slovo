@@ -106,7 +106,8 @@ export function Onboarding() {
 
 /** A step's title, read as its header. */
 function Title({ children }: { children: string }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <Text
@@ -219,7 +220,8 @@ function DailyGoalStep({
   onDone: (goal: DailyGoal) => void;
   onSkip: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const [picked, setPicked] = useState(highlighted);
   return (

@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { space, typeSize, wordCardControls } from '../tokens';
+import { space, typeStyle, wordCardControls } from '../tokens';
 
 /**
  * The chip naming an Entry's Category on its card, filled where the chips of
@@ -10,7 +10,8 @@ import { space, typeSize, wordCardControls } from '../tokens';
  * Category, in the Edition's language.
  */
 export function CategoryChip({ testID, name }: { testID: string; name: string }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { voice, strings } = useEdition();
   return (
     <View
@@ -20,7 +21,7 @@ export function CategoryChip({ testID, name }: { testID: string; name: string })
       {...voice}
       style={[styles.chip, { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip }]}
     >
-      <Text style={[styles.text, { color: colors.ink, fontFamily: fontFamilies.ui }]}>{name}</Text>
+      <Text style={[typeStyle('categoryChip', tokens), { color: colors.ink }]}>{name}</Text>
     </View>
   );
 }
@@ -32,5 +33,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[3],
     paddingVertical: wordCardControls.chipPaddingVertical,
   },
-  text: { fontSize: typeSize.chip, fontWeight: '600' },
 });
