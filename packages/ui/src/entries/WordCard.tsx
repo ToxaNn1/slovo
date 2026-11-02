@@ -200,10 +200,7 @@ export function WordCardBody({
                         `${words.length === 1 ? one : many} ${words.join(', ')}`,
                       )}
                       {...voice}
-                      style={[
-                        styles.relation,
-                        { color: colors.inkSecondary, fontFamily: fontFamilies.ui },
-                      ]}
+                      style={[styles.relation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
                     >
                       <Text style={{ color: colors.muted }}>{words.length === 1 ? one : many}</Text>{' '}
                       {words.join(', ')}
@@ -265,7 +262,7 @@ export function WordCardBody({
                     <Text
                       style={[
                         styles.oftenSaidForms,
-                        { color: colors.inkSecondary, fontFamily: fontFamilies.word },
+                        { color: colors.ink, fontFamily: fontFamilies.word },
                       ]}
                     >
                       {index < card.linkedCorrections.length - 1
@@ -299,7 +296,7 @@ function WordHistory({ history, onShown }: { history: string; onShown: (() => vo
       <Text
         accessibilityLabel={withoutStress(history)}
         {...voice}
-        style={[styles.sectionText, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
+        style={[styles.sectionText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
       >
         {history}
       </Text>
@@ -378,13 +375,7 @@ export function ExampleText({
       accessibilityLabel={withoutStress(author === undefined ? text : `${text}, ${author}`)}
       {...voice}
     >
-      <Text
-        style={[
-          styles.example,
-          size,
-          { color: colors.inkSecondary, fontFamily: fontFamilies.word },
-        ]}
-      >
+      <Text style={[styles.example, size, { color: colors.ink, fontFamily: fontFamilies.word }]}>
         {text}
       </Text>
       {author === undefined ? null : (
@@ -458,10 +449,7 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
               <Text
                 accessibilityLabel={withoutStress(details.etymology)}
                 {...voice}
-                style={[
-                  styles.sectionText,
-                  { color: colors.inkSecondary, fontFamily: fontFamilies.ui },
-                ]}
+                style={[styles.sectionText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
               >
                 {details.etymology}
               </Text>

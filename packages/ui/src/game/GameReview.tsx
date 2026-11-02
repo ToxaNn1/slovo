@@ -187,7 +187,7 @@ function ReviewDetails({ details }: { details: GameReviewItem['details'] }) {
         <View>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-            style={[body, styles.example, { color: colors.inkSecondary }]}
+            style={[body, styles.example, { color: colors.ink }]}
           >
             {fill(strings.wordCard.example, { text: example.text })}
           </Text>

@@ -19,7 +19,7 @@ The one native build of 0.9 goes to TestFlight (ADR 0004). It carries every nati
 
 1. **Widget.** Add the SLOVO widget to the Home Screen: it shows the Word of the Day; open the Word in the app and the widget shows the ✓ («Слово дня переглянуто»). In the widget's settings, «Тло» switches between «Авто», «Світлий», «Темний» and «Пергамент», and the widget redraws in each.
 2. **Notification sound.** Turn on the Word of the Day notification and wait for it with the phone not muted: it plays the Edition's own sound, not the iOS default.
-3. **Calligraphic Lemma.** The Lemma on the Word of the Day card is set in the Edition's calligraphic font (Kurale), every letter and the Stress mark included.
+3. **Calligraphic Lemma.** The Lemma on the Word of the Day card is set in the Edition's Word of the Day font (Unbounded Black), every letter and the Stress mark included.
 4. **Spotlight.** Search for a Seen Word in Spotlight: it is found, and a tap opens its Entry in the app.
 5. **App Intents.** Say «Слово дня в SLOVO» and «Відкрий гру в SLOVO» to Siri, and find both in the Shortcuts app: each opens the app on its screen.
 6. **Collection Links.** Share a Collection; open its `https://<domain>/c/<id>` link from Notes on a phone with the app: it opens in the app and offers the copy. On a phone without the app the link opens the web page.

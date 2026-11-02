@@ -46,7 +46,7 @@ const SLIDE_DISTANCE = 40;
  */
 export const HEADLINE_MAX_FONT_SCALE = 1.3;
 export const TEXT_MAX_FONT_SCALE = 1.5;
-/** The design's hero Lemma, `Lemma, hero`: Literata 500, 76 / 1. */
+/** The design's hero Lemma, `Lemma, hero`, 76 / 1. */
 export const HERO_LEMMA = { fontSize: typeSize.heroLemma, lineHeight: typeSize.heroLemma } as const;
 /**
  * One step of the onboarding over the whole screen, as the design draws it:

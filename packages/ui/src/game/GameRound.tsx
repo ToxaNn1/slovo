@@ -1106,7 +1106,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
         <View accessible {...voice}>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-            style={[styles.example, { color: colors.inkSecondary, fontFamily: fontFamilies.word }]}
+            style={[styles.example, { color: colors.ink, fontFamily: fontFamilies.word }]}
           >
             {fill(strings.wordCard.example, { text: example.text })}
           </Text>

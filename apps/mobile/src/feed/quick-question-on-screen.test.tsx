@@ -27,7 +27,7 @@ const { config } = activeEditionFiles;
 
 jest.mock('expo-constants', () => ({
   __esModule: true,
-  default: { expoConfig: { extra: { edition: { wordOfTheDayFontFamily: 'Kurale' } } } },
+  default: { expoConfig: { extra: { edition: { wordOfTheDayFontFamily: 'Unbounded' } } } },
 }));
 
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
