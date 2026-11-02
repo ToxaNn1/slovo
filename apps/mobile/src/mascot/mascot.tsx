@@ -24,18 +24,31 @@ const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
   empty: 'sleeps',
 };
 
-/** The Mascot at the moment `state` with the Edition's line for it, while its Feature Switch is on in effect; else nothing, as in 0.9. */
-export function MascotIn({ state }: { state: MascotMoment }) {
+/**
+ * The Mascot at the moment `state` with the Edition's line for it, while its
+ * Feature Switch is on in effect; else nothing, as in 0.9. `width` sets a
+ * smaller figure, such as the Round head's.
+ */
+export function MascotIn({ state, width }: { state: MascotMoment; width?: number }) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
-  return <Mascot state={stateAt[state]} line={edition.mascot[state]} testID={`mascot-${state}`} />;
+  return (
+    <Mascot
+      state={stateAt[state]}
+      line={edition.mascot[state]}
+      testID={`mascot-${state}`}
+      {...(width === undefined ? {} : { width })}
+    />
+  );
 }
 
 /** The Mascot in `state` with no line, while its Feature Switch is on in effect; else nothing. */
-export function MascotAs({ state }: { state: MascotState }) {
+export function MascotAs({ state, width }: { state: MascotState; width?: number }) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
-  return <Mascot state={state} testID={`mascot-${state}`} />;
+  return (
+    <Mascot state={state} testID={`mascot-${state}`} {...(width === undefined ? {} : { width })} />
+  );
 }
 
 /**

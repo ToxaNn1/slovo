@@ -10,7 +10,7 @@ import { EditionProvider, GameRound, HapticsProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useState } from 'react';
-import { AccessibilityInfo, StyleSheet, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
@@ -470,9 +470,10 @@ describe('GameRound', () => {
       roundsPassed: 2,
       played: [played(true), played(false)],
     });
-    const fillOf = (place: number): unknown =>
-      StyleSheet.flatten(screen.getByTestId(`game-progress-${String(place)}`).props['style'])
-        .backgroundColor;
+    const fillOf = (place: number): unknown => {
+      const style: unknown = screen.getByTestId(`game-progress-${String(place)}`).props['style'];
+      return (StyleSheet.flatten(style as ViewStyle) as ViewStyle | undefined)?.backgroundColor;
+    };
 
     expect(screen.getAllByTestId(/^game-progress-\d+$/)).toHaveLength(15);
     expect(fillOf(2)).not.toBe(fillOf(3));
