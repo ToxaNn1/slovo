@@ -925,10 +925,28 @@ describe('app config', () => {
       expect(appConfig(channel).updates?.requestHeaders).toEqual({ 'expo-channel-name': 'main' });
     });
 
-    it('turns updates off in a development build', () => {
-      vi.stubEnv('EAS_BUILD_PROFILE', 'development-simulator');
+    it('gives every build profile the config Metro gets, so the fingerprint matches on the laptop and on EAS', () => {
+      vi.stubEnv('EXPO_PUBLIC_SLOVO_API_URL', 'https://api.example.com');
+      const repo = repoWithCertificate();
+      // The fingerprint hashes the config as JSON, so the mods' functions drop out.
+      const fingerprinted = (profile: string | undefined) => {
+        vi.stubEnv('EAS_BUILD_PROFILE', profile);
+        return JSON.parse(JSON.stringify(appConfig(repo))) as unknown;
+      };
 
-      expect(appConfig(context).updates?.enabled).toBe(false);
+      const metro = fingerprinted(undefined);
+
+      expect(metro).toHaveProperty(['updates', 'enabled'], true);
+      expect(fingerprinted('development-simulator')).toEqual(metro);
+      expect(fingerprinted('testflight')).toEqual(metro);
+    });
+
+    it('leaves the generated native folders out of the fingerprint', () => {
+      const ignored = readFileSync(join(context.projectRoot, '.fingerprintignore'), 'utf8')
+        .split('\n')
+        .map((line) => line.trim());
+
+      expect(ignored).toEqual(expect.arrayContaining(['ios/**/*', 'android/**/*']));
     });
 
     it('refuses a release build without the code-signing certificate', () => {
