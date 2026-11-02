@@ -5,7 +5,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { useTokens } from '../providers/TokensProvider';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { calendarDay, space, typeSize } from '../tokens';
 
 /** How far, in points, a finger moves sideways before the swipe takes over from the sheet's scroll. */
@@ -14,18 +14,24 @@ const SWIPE_START = 15;
 const SWIPE_DISTANCE = 50;
 
 /**
- * One day of the grid: its number, today's ring, and the dot of an Active Day,
- * in the success colour (the accent reads as an error in an Edition whose
- * accent is red), or the quiet grey of a missed one.
+ * One day of the grid as a tile: an Active Day red over its dark edge, today
+ * in ink over a red edge, a missed day a plain tile over its edge, and a day
+ * to come no tile, only a dashed outline.
  */
 function Day({ day, month }: { day: CalendarDay; month: number }) {
   const { colors, fontFamilies } = useTokens();
+  // The number on red is the ink of the light Theme in both Themes, as on every red face.
+  const keyInk = useSchemeColors('light').ink;
   const { strings, voice } = useEdition();
   const words = strings.stats.calendar;
   const today = day.state === 'today';
-  const active = day.state === 'active' || (today && day.active);
-  const spoken = today ? (active ? 'todayActive' : 'today') : day.state;
-  const dot = active ? colors.correct : day.state === 'missed' ? colors.track : 'transparent';
+  const spoken = today ? (day.active ? 'todayActive' : 'today') : day.state;
+  const look = {
+    active: { face: colors.accent, edge: colors.accentEdge, number: keyInk },
+    today: { face: colors.ink, edge: colors.accent, number: colors.background },
+    missed: { face: colors.tile, edge: colors.tileEdge, number: colors.muted },
+    future: { face: 'transparent', edge: undefined, number: colors.muted },
+  }[day.state];
   return (
     <View
       testID={`stats-calendar-${day.date}`}
@@ -37,31 +43,29 @@ function Day({ day, month }: { day: CalendarDay; month: number }) {
       {...voice}
       style={styles.cell}
     >
-      <View style={[styles.ring, today && { borderColor: colors.ink }]}>
-        <Text
-          style={[
-            styles.number,
-            {
-              color: day.state === 'future' || day.state === 'missed' ? colors.muted : colors.ink,
-              fontFamily: fontFamilies.ui,
-            },
-          ]}
-        >
+      {look.edge !== undefined && (
+        <View style={[styles.tile, styles.edge, { backgroundColor: look.edge }]} />
+      )}
+      <View
+        testID={`stats-calendar-${day.date}-face`}
+        style={[
+          styles.tile,
+          { backgroundColor: look.face },
+          day.state === 'future' && [styles.future, { borderColor: colors.line }],
+        ]}
+      >
+        <Text style={[styles.number, { color: look.number, fontFamily: fontFamilies.word }]}>
           {day.day}
         </Text>
       </View>
-      <View
-        testID={`stats-calendar-${day.date}-dot`}
-        style={[styles.dot, { backgroundColor: dot }]}
-      />
     </View>
   );
 }
 
 /**
  * The Active Days calendar of the stats sheet: a month grid, Monday first,
- * with a filled dot on each Active Day, a quiet grey one on each day missed,
- * never red, and today outlined. It opens on the current month; a swipe to the
+ * of day tiles: red for each Active Day, plain for each day missed, ink for
+ * today and a dashed outline for each day to come. It opens on the current month; a swipe to the
  * right goes back a month, to the left forward, from the first month to the
  * current one and no further, and VoiceOver turns it with a swipe up or down on
  * the month's name. Each day reads its date and whether it is an Active Day.
@@ -146,18 +150,25 @@ export function ActiveDaysCalendar({ months }: { months: readonly CalendarMonth[
 const styles = StyleSheet.create({
   calendar: { marginTop: space[6], gap: space[2] },
   title: { fontSize: typeSize.blockHeading, fontWeight: '600', marginBottom: space[1] },
-  week: { flexDirection: 'row' },
-  weekday: { flex: 1, textAlign: 'center', fontSize: typeSize.meta },
-  cell: { flex: 1, alignItems: 'center', gap: calendarDay.dotGap },
-  ring: {
-    width: calendarDay.ring,
-    height: calendarDay.ring,
-    borderRadius: calendarDay.ring / 2,
-    borderWidth: calendarDay.ringBorder,
-    borderColor: 'transparent',
+  week: { flexDirection: 'row', gap: calendarDay.gap },
+  weekday: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: calendarDay.weekday,
+    fontWeight: '700',
+  },
+  cell: { flex: 1, height: calendarDay.height + calendarDay.edge },
+  tile: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    height: calendarDay.height,
+    borderRadius: calendarDay.radius,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  number: { fontSize: typeSize.caption },
-  dot: { width: calendarDay.dot, height: calendarDay.dot, borderRadius: calendarDay.dot / 2 },
+  edge: { top: calendarDay.edge },
+  future: { borderWidth: calendarDay.futureBorder, borderStyle: 'dashed' },
+  number: { fontSize: calendarDay.number, fontWeight: '800' },
 });

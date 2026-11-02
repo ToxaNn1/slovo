@@ -42,12 +42,28 @@ export function MascotIn({ state, width }: { state: MascotMoment; width?: number
   );
 }
 
-/** The Mascot in `state` with no line, while its Feature Switch is on in effect; else nothing. */
-export function MascotAs({ state, width }: { state: MascotState; width?: number }) {
+/**
+ * The Mascot in `state` with no line, while its Feature Switch is on in effect;
+ * else nothing. `onRed` draws it for a red ground; `width` sets a smaller figure.
+ */
+export function MascotAs({
+  state,
+  onRed = false,
+  width,
+}: {
+  state: MascotState;
+  onRed?: boolean;
+  width?: number;
+}) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
   return (
-    <Mascot state={state} testID={`mascot-${state}`} {...(width === undefined ? {} : { width })} />
+    <Mascot
+      state={state}
+      onRed={onRed}
+      testID={`mascot-${state}`}
+      {...(width === undefined ? {} : { width })}
+    />
   );
 }
 

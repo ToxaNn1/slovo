@@ -228,7 +228,65 @@ export const wedges = {
     [0.5, 1],
     [0, 0.64],
   ],
+  /** A hexagon lying on its side: the Streak Badges. */
+  hexagon: [
+    [0.25, 0.03],
+    [0.75, 0.03],
+    [1, 0.5],
+    [0.75, 0.97],
+    [0.25, 0.97],
+    [0, 0.5],
+  ],
+  /** A diamond standing on its point: the Level Badges. */
+  diamond: [
+    [0.5, 0],
+    [1, 0.5],
+    [0.5, 1],
+    [0, 0.5],
+  ],
 } as const satisfies Record<string, Wedge>;
+
+/** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
+export const levelCard = {
+  padding: 20,
+  radius: 24,
+  gap: 18,
+  /** The ring's box, its radius and its stroke. */
+  ring: { box: 124, radius: 54, stroke: 12, track: 'rgba(127, 127, 127, 0.3)' },
+  /** The red wedge in the bottom right corner, past the card's edges. */
+  wedge: { side: 170, right: -30, bottom: -40, opacity: 0.95 },
+  /** The wedge's slant: from 40% along the top to the bottom left corner. */
+  wedgeShape: [
+    [0.4, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ],
+  levelSize: 44,
+  linesGap: 6,
+} as const;
+
+/** The Badge stamp, from the design: the earned Badge's mark lands on red. */
+export const badgeStamp = {
+  markSide: 210,
+  /** The mark lands from this scale and turn to its rest. */
+  from: { scale: 3, turn: -26 },
+  turn: -8,
+  /** The depth of the hard ink edge under the stamped mark. */
+  drop: 8,
+  padding: { top: 110, horizontal: 28, bottom: 40 },
+  markTop: 70,
+  titleTop: 34,
+  nameTop: 10,
+  titleSize: 30,
+  nameSize: 16,
+} as const;
+
+/** The Profile's Badge grid: marks of this side in rows of their family. */
+export const badgeGrid = { side: 42, gap: 6, familyGap: 14, pressedScale: 0.88 } as const;
+
+/** The depth of the hard edge under an earned Badge's shape. */
+export const badgeEdge = 4;
 
 /** A cubic Bézier easing curve, as CSS `cubic-bezier(x1, y1, x2, y2)` takes it. */
 export type Easing = readonly [number, number, number, number];
@@ -243,6 +301,8 @@ export const motion = {
   fly: { duration: 600, easing: [0.2, 0.9, 0.25, 1.15] },
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
+  /** The Level ring fills to the reader's progress. */
+  ring: { duration: 1100, easing: [0.2, 0.8, 0.2, 1] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
   pop: { duration: 300, easing: ease },
   /** One beat of the loader's wedges, from short to tall and back. */
@@ -719,11 +779,19 @@ export const shareCardDrawing = {
 export const minTouchTarget = 44;
 
 /**
- * A day of the Active Days calendar on the stats sheet: the ring that
- * outlines today around the day's number, its line, and the dot under the
- * number of an Active Day or a missed one.
+ * A day of the Active Days calendar: a tile of this height and corner on a
+ * grid with this gap, over a hard edge this deep, a day to come outlined by a
+ * dashed line this wide, and the day's number at this size.
  */
-export const calendarDay = { ring: 32, ringBorder: 1.5, dot: 6, dotGap: 3 } as const;
+export const calendarDay = {
+  height: 42,
+  radius: 11,
+  gap: 7,
+  edge: 4,
+  futureBorder: 2,
+  number: 13,
+  weekday: 11,
+} as const;
 
 /** How much a button that takes no press is dimmed. */
 export const disabledOpacity = 0.5;
