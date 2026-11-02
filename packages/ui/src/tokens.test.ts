@@ -34,6 +34,14 @@ describe('designTokens', () => {
     expect(designTokens({})).toEqual(coreTokens);
   });
 
+  it('keeps the Core’s palette neutral: the accent marks a right answer and the heart, the ink a wrong one', () => {
+    for (const scheme of ['light', 'dark'] as const) {
+      const colors = coreTokens.colors[scheme];
+      expect([colors.correct, colors.heart]).toEqual([colors.accent, colors.accent]);
+      expect(colors.wrong).toBe(colors.ink);
+    }
+  });
+
   it('takes an Edition’s group over the Core’s, group by group', () => {
     const radii = { tile: 5, card: 1, chip: 2, button: 3, sheet: 4 };
     expect(designTokens({ radii })).toEqual({ ...coreTokens, radii });
@@ -73,11 +81,11 @@ describe('the Ukrainian Edition’s design tokens', () => {
     });
   });
 
-  it('resolves the old roles to the design’s values in both Themes', () => {
+  it('draws an answer, the heart and a destructive action in the design’s red in both Themes', () => {
     for (const scheme of ['light', 'dark'] as const) {
       const colors = tokens.colors[scheme];
       expect([colors.correct, colors.heart, colors.destructive]).toEqual(Array(3).fill('#FF3B2F'));
-      expect([colors.inkSecondary, colors.wrong]).toEqual([colors.ink, colors.ink]);
+      expect(colors.wrong).toBe(colors.ink);
     }
   });
 

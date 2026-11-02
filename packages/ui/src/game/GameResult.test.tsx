@@ -1,3 +1,4 @@
+import type { DecorLayer } from '@slovo/contracts';
 import { coreDecor, type CurrentGame, type Decor, type Haptics } from '@slovo/core';
 import { DecorProvider, EditionProvider, GameResult, HapticsProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
@@ -37,7 +38,7 @@ const haptics: Haptics = {
 };
 
 /** A victory illustration of three layers, each a square. */
-const layer = { path: 'M0 0h4v4H0z', light: '#000', dark: '#fff' };
+const layer: DecorLayer = { path: 'M0 0h4v4H0z', color: 'decor' };
 const decor: Decor = {
   ...coreDecor,
   victory: { illustration: { width: 4, height: 4, layers: [layer, layer, layer] } },

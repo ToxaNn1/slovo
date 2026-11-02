@@ -363,7 +363,7 @@ export function SoonRow({
 function SliderTrack() {
   const { colors } = useTokens();
   return (
-    <View style={[styles.sliderTrack, { backgroundColor: colors.track }]}>
+    <View style={[styles.sliderTrack, { backgroundColor: colors.silhouette }]}>
       <View style={[styles.sliderFill, { backgroundColor: colors.accent }]} />
       <View
         style={[styles.sliderThumb, { backgroundColor: colors.surface, borderColor: colors.line }]}

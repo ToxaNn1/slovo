@@ -12,6 +12,7 @@ import {
   PluralLabelSchema,
   PluralSchema,
   type ColorTokens,
+  type DecorLayer,
 } from '@slovo/contracts';
 import {
   EDITIONS_DIR,
@@ -1483,7 +1484,7 @@ describe('Edition Decor', () => {
   });
 
   /** The text colour roles drawn straight on the screen background. */
-  const textRoles = ['ink', 'muted', 'inkSecondary', 'accent'] as const;
+  const textRoles = ['ink', 'muted', 'accent'] as const;
 
   describe.each(withDecor.filter((edition) => has(edition, 'tokens')))(
     'the %s Edition',
@@ -1510,7 +1511,7 @@ describe('Edition Decor', () => {
           if (colors === undefined) return;
           const screen = colors[scheme].background;
           const stitched = tiles.flatMap(({ layers }) =>
-            layers.map((layer) => over(layer[scheme], screen)),
+            layers.map((layer) => over(layerColor(layer, colors[scheme]), screen)),
           );
 
           for (const role of textRoles) {
@@ -1533,7 +1534,9 @@ describe('Edition Decor', () => {
 
           for (const { layers } of centres) {
             const strongest = Math.max(
-              ...layers.map((layer) => contrast(over(layer[scheme], screen), parseColor(screen))),
+              ...layers.map((layer) =>
+                contrast(over(layerColor(layer, colors[scheme]), screen), parseColor(screen)),
+              ),
             );
             expect(strongest, JSON.stringify(layers)).toBeGreaterThanOrEqual(3);
           }
@@ -1566,17 +1569,13 @@ const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof Colo
   ['ink', 'background'],
   ['muted', 'background'],
   ['accent', 'background'],
-  ['inactiveTab', 'background'],
   // The Word card and the Correction card.
   ['ink', 'surface'],
   ['muted', 'surface'],
-  ['inkSecondary', 'surface'],
   ['accent', 'surface'],
   // The Category chip and the Correction's example pair.
   ['ink', 'surfaceSunken'],
   ['muted', 'surfaceSunken'],
-  // The segmented control.
-  ['ink', 'track'],
   // Inverted: the Word of the Day badge, the error button, the swipe hint.
   ['background', 'accent'],
   ['background', 'ink'],
@@ -1619,7 +1618,7 @@ describe('WCAG AA contrast of the 0.3 Favorites screens', () => {
       'keeps the Favorites card, drawn in the other scheme on the ink fill, at 4.5:1 or more in %s',
       (scheme) => {
         const fill = parseColor(colors[scheme].ink);
-        for (const text of ['ink', 'muted', 'inkSecondary', 'accent'] as const) {
+        for (const text of ['ink', 'muted', 'accent'] as const) {
           expect(
             contrast(parseColor(colors[otherScheme[scheme]][text]), fill),
             `the other scheme's ${text} on ink`,
@@ -1699,6 +1698,12 @@ function parseRgba(color: string): readonly [number, number, number, number] {
 function parseColor(color: string): Rgb {
   const [r, g, b] = parseRgba(color);
   return [r, g, b];
+}
+
+/** A Decor layer's colour role in one colour scheme, at the layer's opacity. */
+function layerColor(layer: DecorLayer, colors: ColorTokens): string {
+  const [r, g, b, a] = parseRgba(colors[layer.color]);
+  return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${String(a * (layer.opacity ?? 1))})`;
 }
 
 /** A colour drawn over an opaque one. */

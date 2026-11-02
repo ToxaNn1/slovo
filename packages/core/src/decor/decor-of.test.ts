@@ -1,13 +1,13 @@
-import type { FeatureSwitch } from '@slovo/contracts';
+import type { DecorMotif, FeatureSwitch } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { decorOf, loadDecor, loadSeasonalMotifs, parseLocalDate as on } from '../index';
 
 /** A drawing told apart by its width alone. */
-const drawing = (width: number) => ({
+const drawing = (width: number): DecorMotif => ({
   width,
   height: 1,
-  layers: [{ path: 'M0 0h1v1H0z', light: '#000000', dark: '#FFFFFF' }],
+  layers: [{ path: 'M0 0h1v1H0z', color: 'decor' }],
 });
 
 /** A motif told apart by its tile's width; its centre is the tile's width plus 100. */

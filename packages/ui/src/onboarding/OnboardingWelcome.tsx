@@ -78,10 +78,7 @@ export function OnboardingWelcome({
             testID="onboarding-hero-definition"
             {...voice}
             maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-            style={[
-              styles.definition,
-              { color: colors.inkSecondary, fontFamily: fontFamilies.word },
-            ]}
+            style={[styles.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
           >
             {hero.definition}
           </Text>

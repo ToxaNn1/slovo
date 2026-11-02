@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import plist from '@expo/plist';
-import { WidgetSnapshotSchema } from '@slovo/contracts';
+import { type DecorMotif, WidgetSnapshotSchema } from '@slovo/contracts';
 import { coreDecor, loadDecor } from '@slovo/core';
 import { FONTS_DIR } from '@slovo/language-pack/edition';
 import { coreTokens, designTokens } from '@slovo/ui/tokens';
@@ -160,11 +160,11 @@ describe("the widget extension's Edition files", () => {
     });
     expect(text(files, 'Generated/Assets.xcassets/band.imageset/band-light.svg')).toBe(
       '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="10" viewBox="0 0 16 10">' +
-        '<path d="M0 8h2v2H0zM2 6h2v2H2zM4 4h2v2H4zM6 2h2v2H6zM8 0h2v2H8zM10 2h2v2h-2zM12 4h2v2h-2zM14 6h2v2h-2z" fill="#A3221B"/>' +
+        '<path d="M0 8h2v2H0zM2 6h2v2H2zM4 4h2v2H4zM6 2h2v2H6zM8 0h2v2H8zM10 2h2v2h-2zM12 4h2v2h-2zM14 6h2v2h-2z" fill="#FF3B2F"/>' +
         '</svg>\n',
     );
     expect(text(files, 'Generated/Assets.xcassets/band.imageset/band-dark.svg')).toContain(
-      'fill="#D4AE5C"',
+      'fill="#FF3B2F"',
     );
   });
 
@@ -173,7 +173,26 @@ describe("the widget extension's Edition files", () => {
 
     expect(text(plain, 'Generated/Assets.xcassets/band.imageset/band-light.svg')).toBe(
       '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="1" viewBox="0 0 4 1">' +
-        '<path d="M0 0h4v1H0z" fill="#000000" fill-opacity="0.14"/>' +
+        '<path d="M0 0h4v1H0z" fill="#140C0A" fill-opacity="0.13"/>' +
+        '</svg>\n',
+    );
+  });
+
+  it('draws a band layer at its own opacity, times the opacity of its colour role', () => {
+    const band: DecorMotif = {
+      width: 4,
+      height: 1,
+      layers: [
+        { path: 'M0 0h4v1H0z', color: 'accent', opacity: 0.5 },
+        { path: 'M0 0h4v1H0z', color: 'line', opacity: 0.5 },
+      ],
+    };
+    const faint = widgetExtensionFiles({ ...ukrainian, band });
+
+    expect(text(faint, 'Generated/Assets.xcassets/band.imageset/band-dark.svg')).toBe(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="1" viewBox="0 0 4 1">' +
+        '<path d="M0 0h4v1H0z" fill="#FF3B2F" fill-opacity="0.5"/>' +
+        '<path d="M0 0h4v1H0z" fill="#FFF4E6" fill-opacity="0.065"/>' +
         '</svg>\n',
     );
   });

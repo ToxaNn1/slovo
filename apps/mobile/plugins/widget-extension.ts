@@ -2,7 +2,12 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 
 import plist from '@expo/plist';
-import { type DecorMotif, type EditionConfig, type EditionStrings } from '@slovo/contracts';
+import {
+  type ColorTokens,
+  type DecorMotif,
+  type EditionConfig,
+  type EditionStrings,
+} from '@slovo/contracts';
 import type { DesignTokens } from '@slovo/ui/tokens';
 
 /**
@@ -137,9 +142,10 @@ function catalogColor(color: string) {
   };
 }
 
-/** A colour as an SVG fill: the hex value, and its opacity when it has one. */
-function svgFill(color: string): string {
-  const [red, green, blue, alpha] = rgba(color);
+/** A colour as an SVG fill: the hex value, and its opacity, the layer's included, when below 1. */
+function svgFill(color: string, opacity = 1): string {
+  const [red, green, blue, colorAlpha] = rgba(color);
+  const alpha = colorAlpha * opacity;
   const hex = [red, green, blue]
     .map((channel) => channel.toString(16).padStart(2, '0'))
     .join('')
@@ -147,10 +153,12 @@ function svgFill(color: string): string {
   return alpha === 1 ? `fill="#${hex}"` : `fill="#${hex}" fill-opacity="${String(alpha)}"`;
 }
 
-/** A Decor motif in one colour scheme, light or dark, as an SVG document. */
-function motifSvg({ width, height, layers }: DecorMotif, colorScheme: 'light' | 'dark'): string {
+/** A Decor motif in the colour tokens of one colour scheme, as an SVG document. */
+function motifSvg({ width, height, layers }: DecorMotif, colors: ColorTokens): string {
   const size = `width="${String(width)}" height="${String(height)}" viewBox="0 0 ${String(width)} ${String(height)}"`;
-  const paths = layers.map((layer) => `<path d="${layer.path}" ${svgFill(layer[colorScheme])}/>`);
+  const paths = layers.map(
+    (layer) => `<path d="${layer.path}" ${svgFill(colors[layer.color], layer.opacity)}/>`,
+  );
   return `<svg xmlns="http://www.w3.org/2000/svg" ${size}>${paths.join('')}</svg>\n`;
 }
 
@@ -199,8 +207,8 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
       properties: { 'preserves-vector-representation': true },
     }),
   );
-  files.set(`${assets}/band.imageset/band-light.svg`, motifSvg(band, 'light'));
-  files.set(`${assets}/band.imageset/band-dark.svg`, motifSvg(band, 'dark'));
+  files.set(`${assets}/band.imageset/band-light.svg`, motifSvg(band, tokens.colors.light));
+  files.set(`${assets}/band.imageset/band-dark.svg`, motifSvg(band, tokens.colors.dark));
 
   files.set(
     `${GENERATED}/${language}.lproj/Localizable.strings`,

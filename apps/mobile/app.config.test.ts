@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { basename, dirname, join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -21,7 +21,6 @@ import {
   REPO_DIR,
   type EditionFolder,
 } from '@slovo/language-pack/edition';
-import { coreFonts } from '@slovo/ui/fonts';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
 import { compileModsAsync } from 'expo/config-plugins';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -329,22 +328,11 @@ describe('app config', () => {
     expect(appConfig(repoWithEdition(() => undefined)).ios?.bundleIdentifier).toBe('app.slovo.uk');
   });
 
-  it("embeds the Core's fonts and the Edition's own in the native app", () => {
+  it("embeds the Edition's fonts in the native app", () => {
     const { fonts } = pluginOptions(appConfig(context), 'expo-font') as { fonts: string[] };
 
-    expect(fonts).toEqual([
-      ...[
-        'Literata-Italic.ttf',
-        'Literata-Medium.ttf',
-        'Literata-Regular.ttf',
-        'Literata-SemiBold.ttf',
-        'Manrope-Bold.ttf',
-        'Manrope-Medium.ttf',
-        'Manrope-Regular.ttf',
-        'Manrope-SemiBold.ttf',
-      ].map((file) => `../../packages/ui/assets/fonts/${file}`),
-      ...[
-        'Kurale-Regular.ttf',
+    expect(fonts).toEqual(
+      [
         'Onest-Bold.ttf',
         'Onest-Medium.ttf',
         'Onest-Regular.ttf',
@@ -354,13 +342,12 @@ describe('app config', () => {
         'Unbounded-Regular.ttf',
         'Unbounded-SemiBold.ttf',
       ].map((file) => `../../editions/uk/assets/fonts/${file}`),
-    ]);
+    );
   });
 
-  it("embeds the Core's fonts alone for an Edition that brings none", () => {
+  it('refuses an Edition that brings no fonts, since its Word of the Day font is then missing', () => {
     const repo = repoWithEdition(() => undefined, {
       change: (edition) => {
-        // Its Word of the Day font is then one of the Core's, which it may not name.
         rmSync(join(edition.dir, FONTS_DIR), { recursive: true });
       },
     });
@@ -379,20 +366,12 @@ describe('app config', () => {
 
   it('passes on the family of whichever font the Edition names for the Word of the Day', () => {
     const config = appConfig(
-      repoWithEdition(
-        (edition) => {
-          edition['wordOfTheDayFont'] = 'Literata-Italic.ttf';
-        },
-        {
-          change: (edition) => {
-            const literata = coreFonts().find((font) => basename(font) === 'Literata-Italic.ttf');
-            cpSync(literata ?? '', join(edition.dir, FONTS_DIR, 'Literata-Italic.ttf'));
-          },
-        },
-      ),
+      repoWithEdition((edition) => {
+        edition['wordOfTheDayFont'] = 'Onest-Bold.ttf';
+      }),
     );
 
-    expect(config.extra?.['edition']).toMatchObject({ wordOfTheDayFontFamily: 'Literata' });
+    expect(config.extra?.['edition']).toMatchObject({ wordOfTheDayFontFamily: 'Onest' });
   });
 
   it('passes on the English (US) family of a font that also names it in other languages', () => {
@@ -539,17 +518,21 @@ describe('app config', () => {
   });
 
   it('bundles into the widget extension only the fonts of the families it draws with', async () => {
-    const repo = repoWithEdition(() => undefined);
+    // Both token families set in Unbounded, so the Edition's Onest files stay out.
+    const repo = repoWithEdition(() => undefined, {
+      change: (edition) => {
+        const tokens = JSON.parse(readFileSync(edition.path('tokens'), 'utf8')) as {
+          fontFamilies: { ui: string };
+        };
+        tokens.fontFamilies.ui = 'Unbounded';
+        writeFileSync(edition.path('tokens'), JSON.stringify(tokens));
+      },
+    });
 
     await prebuildIos(repo);
 
-    // The widget draws in the word and UI families of the tokens alone, so the Edition's Kurale stays out.
     const generated = join(repo.projectRoot, '../widget/Generated');
     expect(readdirSync(generated).filter((file) => file.endsWith('.ttf'))).toEqual([
-      'Onest-Bold.ttf',
-      'Onest-Medium.ttf',
-      'Onest-Regular.ttf',
-      'Onest-SemiBold.ttf',
       'Unbounded-Black.ttf',
       'Unbounded-ExtraBold.ttf',
       'Unbounded-Regular.ttf',

@@ -112,7 +112,7 @@ function SampleWidget({
           <Text
             allowFontScaling={false}
             numberOfLines={1}
-            style={[styles.line, { color: colors.inkSecondary, fontFamily: fontFamilies.word }]}
+            style={[styles.line, { color: colors.ink, fontFamily: fontFamilies.word }]}
           >
             {definition}
           </Text>
