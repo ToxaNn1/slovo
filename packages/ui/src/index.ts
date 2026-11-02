@@ -74,6 +74,8 @@ export { Button, type ButtonVariant } from './primitives/Button';
 export { Icon, type IconName } from './primitives/Icon';
 export { IconButton } from './primitives/IconButton';
 export { PressedTile, type TileTone } from './primitives/PressedTile';
+export { ScreenEnter } from './primitives/ScreenEnter';
+export { TabBarButton } from './primitives/TabBarButton';
 export { LabelChip } from './primitives/LabelChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
 export {
@@ -130,6 +132,7 @@ export {
   type ShareCardFormat,
 } from './tokens';
 export { TokensProvider, useTokens } from './providers/TokensProvider';
+export { ReduceMotionProvider } from './providers/ReduceMotionProvider';
 export { useReduceMotion } from './providers/useReduceMotion';
 export { WedgeLoader } from './primitives/WedgeLoader';
 export {

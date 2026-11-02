@@ -135,6 +135,8 @@ export const typeRoles = {
   /** Reading text: the line under a heading. */
   sub: role('ui', '500', 15, 21),
   meta: role('ui', '500', 13, 17),
+  /** A tab's label under its icon. */
+  tabLabel: role('ui', '600', 11, 11),
   /** The rotated black title of a bottom sheet. */
   sheetTitle: role('word', '900', 18, 18, 0.5, 'uppercase'),
   /** A toast's message. */
@@ -259,6 +261,10 @@ export const motion = {
   switch: { duration: 280, easing: [0.3, 1.9, 0.5, 1] },
   /** Rows rise this far into place, one after another. */
   cascade: { duration: 400, easing: ease, rise: 16 },
+  /** The tab indicator stretching in under the tab it moves to. */
+  tab: { duration: 300, easing: [0.3, 1.6, 0.5, 1] },
+  /** The red band sweeping over a screen as it enters. */
+  sweep: { duration: 500, easing: [0.6, 0, 0.3, 1] },
   /** Under Reduce Motion every motion is this one fade. */
   reduceMotion: { duration: 300, easing: ease },
 } as const satisfies Record<
@@ -310,6 +316,32 @@ export const splashMotion = {
   mascot: { x: 110, y: 640 },
   /** The Mascot rolls in from the left, turning as it comes. */
   roll: { duration: 600, from: -360, turn: -560, easing: [0.25, 0.9, 0.3, 1.1] },
+} as const;
+
+/**
+ * A screen's entrance (the design's `slScr` and `slSweep`), in fractions of
+ * the screen's width: the screen slides in by `shift` points while its
+ * slanted left edge, `slant` wider at the bottom than at the top, wipes from
+ * the right edge `travel` across; a red band of `band.width` sweeps over it,
+ * slanted by `band.skewX`, from `band.from` to `band.to` of its own width.
+ */
+export const screenEnter = {
+  shift: 30,
+  slant: 0.25,
+  travel: 1.4,
+  band: { width: 0.45, skewX: '-18deg', from: -1.7, to: 2.8 },
+} as const;
+
+/** The tab bar of the design. */
+export const tabBar = {
+  /** A tab's height above the safe area. */
+  height: 56,
+  /** A tab's icon, square. */
+  icon: 24,
+  /** Space between a tab's icon and its label. */
+  gap: 5,
+  /** The red slanted indicator over the active tab, `top` points over the tab. */
+  indicator: { width: 34, height: 6, top: -9, skewX: '-24deg' },
 } as const;
 
 /** The Mascot's width in points; its height follows the Edition's vector. */
@@ -437,7 +469,6 @@ export const typeSize = {
   /** A sheet's title; also a result's number, an empty state's title and the Correction's non-standard form. */
   sheetTitle: 26,
   partOfSpeech: 14,
-  tabLabel: 10.5,
   /** `Block heading` (Manrope 700): the name of a card or a Collection, a sheet's text button; also an Example, an onboarding step's subtitle, a Round's sheet title. */
   blockHeading: 17,
   /** What an Entry's row leads with in a list, and over a sheet (the design's 20–22). */
