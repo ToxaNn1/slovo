@@ -469,6 +469,14 @@ describe('app config', () => {
     });
   });
 
+  it('links the audio of the Interface sounds without the microphone or background playback', () => {
+    expect(pluginOptions(appConfig(context), 'expo-audio')).toEqual({
+      microphonePermission: false,
+      recordAudioAndroid: false,
+      enableBackgroundPlayback: false,
+    });
+  });
+
   it('bundles no sound when the Edition has none', () => {
     const withoutSound = repoWithEdition((config) => {
       delete config['notificationSound'];

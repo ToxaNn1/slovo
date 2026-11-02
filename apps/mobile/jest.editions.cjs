@@ -1,7 +1,7 @@
 // The bundled Editions in place of the module Metro writes (see
 // metro.config.cjs): the UA Edition alone, its Illustrations each PNG by file
-// name, as jest-expo stubs it. A test that renders a screen opens no Language
-// Pack, so its asset id is never read.
+// name and its Interface sounds by sound, as jest-expo stubs them. A test that
+// renders a screen opens no Language Pack, so its asset id is never read.
 const { readdirSync } = require('node:fs');
 const { join } = require('node:path');
 
@@ -20,6 +20,12 @@ module.exports = {
         readdirSync(illustrations)
           .filter((file) => file.endsWith('.png'))
           .map((file) => [file, require(join(illustrations, file))]),
+      ),
+      sounds: Object.fromEntries(
+        ['shout', 'right', 'wrong', 'tap'].map((sound) => [
+          sound,
+          require(join(dir, 'assets/sounds', `${sound}.wav`)),
+        ]),
       ),
       languagePack: 1,
     },

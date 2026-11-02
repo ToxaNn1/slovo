@@ -120,6 +120,7 @@ describe('the Language Pack the app opens at launch', () => {
       application: () => false,
       updates: () => false,
       spotlight: () => false,
+      audio: () => false,
     });
 
     const launched = await app.launch({

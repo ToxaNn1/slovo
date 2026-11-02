@@ -69,6 +69,18 @@ function illustrations(edition) {
   return `{\n${lines.join('\n')}\n    }`;
 }
 
+/**
+ * The Interface sounds of an Edition (ADR 0070): each of
+ * `assets/sounds/{shout,right,wrong,tap}.wav` it brings.
+ */
+function sounds(edition) {
+  const lines = ['shout', 'right', 'wrong', 'tap']
+    .map((sound) => [sound, join(edition.dir, 'assets/sounds', `${sound}.wav`)])
+    .filter(([, file]) => existsSync(file))
+    .map(([sound, file]) => `      ${sound}: ${required(file)},`);
+  return `{\n${lines.join('\n')}\n    }`;
+}
+
 /** The files of one bundled Edition, which the app validates at startup. */
 function bundledEdition(edition) {
   const id = edition.config.id;
@@ -78,6 +90,7 @@ function bundledEdition(edition) {
     tokens: ${optional(edition, 'tokens')},
     decor: ${optional(edition, 'decor')},
     illustrations: ${illustrations(edition)},
+    sounds: ${sounds(edition)},
     languagePack: ${mandatory(edition, 'languagePack', `Run \`pnpm build:pack ${id}\` to build the Language Pack first.`)},
   },`;
 }

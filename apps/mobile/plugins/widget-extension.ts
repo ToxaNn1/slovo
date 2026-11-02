@@ -30,19 +30,29 @@ export interface WidgetEdition {
   readonly exampleSnapshot: string;
 }
 
-/** The colours the widget draws with; on the colour tokens its secondary ink is the ink. */
-const WIDGET_COLORS = ['background', 'ink', 'inkSecondary', 'accent'] as const;
+/** The widget's colours: its background, its inks, its accent and the mark (the giant letter, the wedge). */
+const WIDGET_COLORS = ['background', 'ink', 'inkSecondary', 'accent', 'mark'] as const;
+type WidgetColors = Record<(typeof WIDGET_COLORS)[number], string>;
 
-/** The widget's colours in one appearance of the colour tokens. */
-function widgetColors({ background, ink, accent }: DesignTokens['colors']['light']) {
-  return { background, ink, inkSecondary: ink, accent };
+/** A background's colours in the light and the dark appearance, the same for a fixed «Тло». */
+interface Appearances {
+  readonly light: WidgetColors;
+  readonly dark: WidgetColors;
 }
+
+const inBothAppearances = (colors: WidgetColors): Appearances => ({ light: colors, dark: colors });
 
 /**
  * The opacity of the secondary ink on Пергамент and Синій: the widget palette
  * gives each one text colour, so the second line and the ✓ draw it fainter.
  */
 const SECONDARY_INK_OPACITY = 0.72;
+
+/** The opacity of the second line on the medium widget's Авто, as the design draws it. */
+const MEDIUM_SECOND_LINE_OPACITY = 0.85;
+
+/** The opacity of the mark on Пергамент and Синій, faint behind the ink of their one text colour. */
+const PALETTE_MARK_OPACITY = 0.16;
 
 /** A `#RRGGBB` colour at an opacity, as a colour token. */
 function withOpacity(color: string, opacity: number): string {
@@ -51,26 +61,53 @@ function withOpacity(color: string, opacity: number): string {
 }
 
 /**
- * The widget's backgrounds («Тло», ADR 0026) besides Авто, which is the
- * colour tokens in the phone's appearance, each with the colours the widget
- * draws on it: Світлий and Темний keep one appearance of the colour tokens;
- * Пергамент and Синій take the Edition's widget palette, whose text colour
- * is also the accent and, fainter, the secondary ink.
+ * The widget's backgrounds («Тло», ADR 0026), each with the colours the
+ * widget draws on it in the light and the dark appearance. Авто is the
+ * design's widget, one per family: the small one red in both appearances,
+ * with the key ink and a giant letter in the on-accent colour; the medium one
+ * on the appearance's background, with its ink, the second line fainter and
+ * the red wedge. Світлий and Темний take one appearance of the colour tokens,
+ * with the accent as the mark; Пергамент and Синій take the Edition's widget
+ * palette, whose text colour is also the accent, fainter the secondary ink
+ * and faintest the mark.
  */
-function fixedBackgrounds({ config, tokens }: WidgetEdition) {
+function widgetBackgrounds({ config, tokens }: WidgetEdition): Record<string, Appearances> {
   const { parchment, blue } = config.widgetPalette;
   const { light, dark } = tokens.colors;
+  const theme = ({ background, ink, accent }: DesignTokens['colors']['light']) => ({
+    background,
+    ink,
+    inkSecondary: ink,
+    accent,
+    mark: accent,
+  });
   const fromPalette = ({ background, text }: { background: string; text: string }) => ({
     background,
     ink: text,
     inkSecondary: withOpacity(text, SECONDARY_INK_OPACITY),
     accent: text,
+    mark: withOpacity(text, PALETTE_MARK_OPACITY),
+  });
+  const medium = ({ background, ink, accent }: DesignTokens['colors']['light']) => ({
+    background,
+    ink,
+    inkSecondary: withOpacity(ink, MEDIUM_SECOND_LINE_OPACITY),
+    accent,
+    mark: accent,
   });
   return {
-    Light: widgetColors(light),
-    Dark: widgetColors(dark),
-    Parchment: fromPalette(parchment),
-    Blue: fromPalette(blue),
+    Small: inBothAppearances({
+      background: light.accent,
+      ink: light.ink,
+      inkSecondary: light.ink,
+      accent: light.ink,
+      mark: light.onAccent,
+    }),
+    Medium: { light: medium(light), dark: medium(dark) },
+    Light: inBothAppearances(theme(light)),
+    Dark: inBothAppearances(theme(dark)),
+    Parchment: inBothAppearances(fromPalette(parchment)),
+    Blue: inBothAppearances(fromPalette(blue)),
   };
 }
 
@@ -131,10 +168,9 @@ const quoted = (value: string) =>
 
 /**
  * The files the prebuild writes into the widget extension's folder
- * (`apps/widget`), by path in that folder: the colour tokens the widget uses
- * as colour sets and the divider band as a vector image, both light and dark;
- * the same colours for each «Тло» other than Авто as colour sets of one
- * colour; the widget's strings in the Edition's language; the fonts; the example
+ * (`apps/widget`), by path in that folder: the colours of each «Тло», Авто
+ * once per family, as colour sets, with a dark appearance where it differs; the divider band as a vector
+ * image, light and dark; the widget's strings in the Edition's language; the fonts; the example
  * Widget Snapshot for the gallery; and the Info.plist, which names the
  * fonts, the App Group, the URL scheme, the Edition id and the font families. None of them
  * is kept in git.
@@ -146,28 +182,16 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
   const files = new Map<string, string | Buffer>();
 
   files.set(`${assets}/Contents.json`, asJson({ info: ASSET_INFO }));
-  for (const name of WIDGET_COLORS) {
-    files.set(
-      `${assets}/${name}.colorset/Contents.json`,
-      asJson({
-        colors: [
-          { idiom: 'universal', color: catalogColor(widgetColors(tokens.colors.light)[name]) },
-          {
-            idiom: 'universal',
-            appearances: DARK,
-            color: catalogColor(widgetColors(tokens.colors.dark)[name]),
-          },
-        ],
-        info: ASSET_INFO,
-      }),
-    );
-  }
-
-  for (const [name, colors] of Object.entries(fixedBackgrounds(edition))) {
-    for (const [token, color] of Object.entries(colors)) {
+  for (const [name, { light, dark }] of Object.entries(widgetBackgrounds(edition))) {
+    for (const token of WIDGET_COLORS) {
+      const lightColor = { idiom: 'universal', color: catalogColor(light[token]) };
+      const darkColor = { idiom: 'universal', appearances: DARK, color: catalogColor(dark[token]) };
       files.set(
         `${assets}/${token}${name}.colorset/Contents.json`,
-        asJson({ colors: [{ idiom: 'universal', color: catalogColor(color) }], info: ASSET_INFO }),
+        asJson({
+          colors: light[token] === dark[token] ? [lightColor] : [lightColor, darkColor],
+          info: ASSET_INFO,
+        }),
       );
     }
   }

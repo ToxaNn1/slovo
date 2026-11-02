@@ -399,6 +399,11 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       ['expo-font', { fonts: edition.fonts().map((font) => relative(projectRoot, font)) }],
       ['expo-splash-screen', appSplash(app, projectRoot)],
       ['expo-notifications', { sounds: editionNotificationSounds(edition, projectRoot) }],
+      // The Interface sounds play in the foreground only and record nothing.
+      [
+        'expo-audio',
+        { microphonePermission: false, recordAudioAndroid: false, enableBackgroundPlayback: false },
+      ],
       '@react-native-community/datetimepicker',
       ['expo-build-properties', { ios: { deploymentTarget: '17.0' } }],
       // The widget extension, from apps/widget/expo-target.config.json (ADR 0026).

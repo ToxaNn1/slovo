@@ -16,7 +16,7 @@ import { createNativeModules } from './native-module';
  * Sign in with Apple Expo's Apple authentication module. About reports the
  * installed build with `expo-application` and the update it runs with
  * `expo-updates`. The iPhone search needs the app's own Spotlight module
- * (`modules/spotlight`).
+ * (`modules/spotlight`). The Interface sounds play with `expo-audio`.
  */
 export const nativeModules = createNativeModules({
   notifications: () =>
@@ -36,4 +36,5 @@ export const nativeModules = createNativeModules({
   application: () => requireOptionalNativeModule('ExpoApplication') !== null,
   updates: () => requireOptionalNativeModule('ExpoUpdates') !== null,
   spotlight: () => requireOptionalNativeModule('SlovoSpotlight') !== null,
+  audio: () => requireOptionalNativeModule('ExpoAudio') !== null,
 });

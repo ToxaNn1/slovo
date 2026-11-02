@@ -17,6 +17,7 @@ const installed: NativeModuleProbes = {
   application: () => true,
   updates: () => true,
   spotlight: () => true,
+  audio: () => true,
 };
 
 /** A Keychain that keeps its items in a map, as `expo-secure-store` does in the device's Keychain. */

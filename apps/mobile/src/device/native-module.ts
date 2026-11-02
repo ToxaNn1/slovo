@@ -4,7 +4,8 @@
  * that content updates keep a downloaded pack with; 0.7: the Keychain that
  * keeps the Session; 0.8.9: Google's sign-in SDK; 0.8.15: the app's own
  * Spotlight module; 0.9: Expo's Apple authentication module, and the
- * application and updates modules About reports the build with), which a
+ * application and updates modules About reports the build with; 1.0:
+ * `expo-audio`, which plays the Interface sounds), which a
  * dev client built before that batch lacks.
  */
 export type NativeModuleName =
@@ -18,7 +19,8 @@ export type NativeModuleName =
   | 'appleSignIn'
   | 'application'
   | 'updates'
-  | 'spotlight';
+  | 'spotlight'
+  | 'audio';
 
 /** How to tell whether the installed binary has each native module. A probe may throw. */
 export type NativeModuleProbes = Record<NativeModuleName, () => boolean>;

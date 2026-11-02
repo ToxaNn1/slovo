@@ -14,6 +14,8 @@ declare module 'slovo-editions' {
     readonly decor: unknown;
     /** The asset ids of the Illustrations the Edition brings, by file name. */
     readonly illustrations: Readonly<Record<string, number>>;
+    /** The asset ids of the Interface sounds the Edition brings, by sound. */
+    readonly sounds: Readonly<Partial<Record<'shout' | 'right' | 'wrong' | 'tap', number>>>;
     /** The asset id of the compiled Language Pack. */
     readonly languagePack: number;
   }
