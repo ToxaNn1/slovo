@@ -392,7 +392,7 @@ export const MascotLinesSchema = z.strictObject({
 export type MascotLines = z.infer<typeof MascotLinesSchema>;
 
 /** A moment the Mascot shows in, which picks its state and its line. */
-export type MascotState = keyof MascotLines;
+export type MascotMoment = keyof MascotLines;
 
 export type FeatureSwitches = z.infer<typeof FeatureSwitchesSchema>;
 

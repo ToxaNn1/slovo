@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { editionStrings } from './edition/edition';
 import { FeedLoadingScreen } from './edition/feed-loading';
+import { ShippedMascot } from './mascot/mascot';
 import { useSubscribed, type Opening } from './opening';
 
 /**
@@ -21,19 +22,27 @@ export function Opened({
   children: ReactNode;
 }) {
   const state = useSubscribed(opening, ({ state }) => state);
-  if (state.status === 'loading') return <FeedLoadingScreen />;
+  if (state.status === 'loading')
+    return <FeedLoadingScreen mascot={<ShippedMascot state="waits" />} />;
   if (state.status === 'failed') return <LoadFailed testID={failedTestID} onRetry={state.retry} />;
   return children;
 }
 
-/** The local error state: the Language Pack or the composition over it can't be opened. */
+/** The local error state: the Language Pack or the composition over it can't be opened; the Mascot cringes. */
 function LoadFailed({ onRetry, testID }: { onRetry: () => void; testID: string }) {
   const { colors } = useTokens();
   const { title, message, retry } = editionStrings.loadFailed;
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
       <DecorBackground />
-      <FeedError title={title} message={message} retry={retry} onRetry={onRetry} testID={testID} />
+      <FeedError
+        title={title}
+        message={message}
+        retry={retry}
+        onRetry={onRetry}
+        mascot={<ShippedMascot state="cringes" />}
+        testID={testID}
+      />
     </View>
   );
 }

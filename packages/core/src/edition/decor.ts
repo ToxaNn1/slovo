@@ -1,4 +1,10 @@
-import { EditionDecorSchema, type DecorMotif, type EditionDecor } from '@slovo/contracts';
+import {
+  EditionDecorSchema,
+  type DecorMotif,
+  type EditionDecor,
+  type MascotAccessory,
+  type MascotFigure,
+} from '@slovo/contracts';
 
 /**
  * The Decor the app draws, slot by slot (ADR 0014, `docs/design/README.md`). A
@@ -21,6 +27,10 @@ export interface Decor {
   readonly victory: { readonly illustration: DecorMotif } | undefined;
   /** Slot 5: the Share Card frame, a band for the Story card and a corner for the Square card. */
   readonly shareCard: { readonly band: DecorMotif; readonly corner: DecorMotif } | undefined;
+  /** The Mascot's vector (ADR 0070); without it the Mascot is its line alone. */
+  readonly mascot: MascotFigure | undefined;
+  /** The Season's or Holiday's accessory the Mascot wears while seasonal Decor is on. */
+  readonly mascotAccessory: MascotAccessory | undefined;
 }
 
 /**
@@ -51,6 +61,8 @@ export const coreDecor: Decor = {
   splash: undefined,
   victory: undefined,
   shareCard: undefined,
+  mascot: undefined,
+  mascotAccessory: undefined,
 };
 
 /** Thrown when an Edition's Decor doesn't match the contracts. */
@@ -75,7 +87,7 @@ export function parseDecor(decor: unknown): EditionDecor {
  * Core's neutral Decor. An Edition without Decor gets the Core's throughout.
  */
 export function loadDecor(decor: unknown): Decor {
-  const { background, divider, corners, emptyState, splash, victory, shareCard } =
+  const { background, divider, corners, emptyState, splash, victory, shareCard, mascot } =
     parseDecor(decor);
   return {
     background: background ?? coreDecor.background,
@@ -88,5 +100,7 @@ export function loadDecor(decor: unknown): Decor {
     splash: splash === undefined ? coreDecor.splash : { mark: splash.mark, band: splash.band },
     victory: victory ?? coreDecor.victory,
     shareCard: shareCard ?? coreDecor.shareCard,
+    mascot: mascot ?? coreDecor.mascot,
+    mascotAccessory: coreDecor.mascotAccessory,
   };
 }
