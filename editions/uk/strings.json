@@ -1116,6 +1116,7 @@
       "resume": "Продовжити",
       "solvedMark": "✓ Розв’язано",
       "solved": "Розв’язано!",
+      "eraseKey": "Стерти",
       "cellLabel": "{cell}. {clue}. Рядок {row}, стовпець {column}"
     },
     "modes": {
