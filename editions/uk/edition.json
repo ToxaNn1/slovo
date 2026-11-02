@@ -111,7 +111,7 @@
     }
   },
   "notificationSound": "notification.wav",
-  "wordOfTheDayFont": "Kurale-Regular.ttf",
+  "wordOfTheDayFont": "Unbounded-Black.ttf",
   "widgetPalette": {
     "parchment": {
       "background": "#F3E9D2",
