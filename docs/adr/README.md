@@ -7,7 +7,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0003](0003-own-backend-instead-of-baas.md) Our own TypeScript backend on Postgres, not a BaaS.
 - [0004](0004-native-builds-in-eas-cloud.md) Native builds run in EAS; a manual CI macOS runner builds the simulator app for Maestro.
 - 0005: merged into 0041.
-- [0006](0006-editions-extend-core-only-through-extension-points.md) An Edition changes the Core only through Feature Switches, Extension Points and Decor; its config names its assets (fonts, widget palette, notification sound); Core fonts live in the Core.
+- [0006](0006-editions-extend-core-only-through-extension-points.md) An Edition changes the Core only through Feature Switches, Extension Points and Decor; its config names its assets (fonts, widget palette, notification sound); it brings its own fonts, the Core names none.
 - [0007](0007-editions-live-at-head.md) Every Edition builds from `main`; per-Edition control is switches; one build and one Update channel for the one app.
 - 0008: merged into 0030.
 - [0009](0009-editions-declare-their-content-targets.md) An Edition's content floors live in `content/targets.json`; the pack build fails on a miss.
