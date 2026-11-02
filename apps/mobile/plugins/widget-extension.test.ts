@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import plist from '@expo/plist';
-import { type DecorMotif, WidgetSnapshotSchema } from '@slovo/contracts';
-import { coreDecor, loadDecor } from '@slovo/core';
+import { WidgetSnapshotSchema } from '@slovo/contracts';
+import { loadDecor } from '@slovo/core';
 import { FONTS_DIR } from '@slovo/language-pack/edition';
 import { coreTokens, designTokens } from '@slovo/ui/tokens';
 import { describe, expect, it } from 'vitest';
@@ -25,7 +25,7 @@ const ukrainian: WidgetEdition = {
   appGroup: 'group.app.slovo.uk',
   strings: strings.widget,
   tokens: designTokens(ukrainianFolder.read('tokens')),
-  band: loadDecor(ukrainianFolder.read('decor')).divider.band,
+  mascot: loadDecor(ukrainianFolder.read('decor')).mascot,
   fontFiles,
   exampleSnapshot: ukrainianFolder.path('widgetSnapshotExample'),
 };
@@ -149,52 +149,45 @@ describe("the widget extension's Edition files", () => {
     ).toEqual(oneColor(['0.000', '0.000', '0.000', '0.500']));
   });
 
-  it('renders the divider band (Decor slot 2) to a vector image, light and dark', () => {
-    expect(json(files, 'Generated/Assets.xcassets/band.imageset/Contents.json')).toEqual({
+  it('renders the Mascot waiting, on red, to a vector image, light and dark', () => {
+    expect(json(files, 'Generated/Assets.xcassets/mascot.imageset/Contents.json')).toEqual({
       images: [
-        { idiom: 'universal', filename: 'band-light.svg' },
-        { idiom: 'universal', filename: 'band-dark.svg', appearances: dark },
+        { idiom: 'universal', filename: 'mascot-light.svg' },
+        { idiom: 'universal', filename: 'mascot-dark.svg', appearances: dark },
       ],
       info: { author: 'xcode', version: 1 },
       properties: { 'preserves-vector-representation': true },
     });
-    expect(text(files, 'Generated/Assets.xcassets/band.imageset/band-light.svg')).toBe(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="10" viewBox="0 0 16 10">' +
-        '<path d="M0 8h2v2H0zM2 6h2v2H2zM4 4h2v2H4zM6 2h2v2H6zM8 0h2v2H8zM10 2h2v2h-2zM12 4h2v2h-2zM14 6h2v2h-2z" fill="#FF3B2F"/>' +
-        '</svg>\n',
-    );
-    expect(text(files, 'Generated/Assets.xcassets/band.imageset/band-dark.svg')).toContain(
-      'fill="#FF3B2F"',
-    );
+    for (const scheme of ['light', 'dark']) {
+      const svg = text(files, `Generated/Assets.xcassets/mascot.imageset/mascot-${scheme}.svg`);
+      expect(svg).toMatch(/^<svg xmlns="http:\/\/www.w3.org\/2000\/svg" width="150" height="112"/);
+      // The body in the on-accent cream and the ink in the light Theme's ink, in both appearances.
+      expect(svg).toContain('fill="#FFF4E6"');
+      expect(svg).toContain('fill="#140C0A"');
+    }
   });
 
-  it("renders the Core's band, with its translucent line, for an Edition without Decor", () => {
-    const plain = widgetExtensionFiles({ ...ukrainian, band: coreDecor.divider.band });
+  it.each([
+    ['mascot', 'waits'],
+    ['mascotSleeps', 'sleeps'],
+  ] as const)('draws the %s image in the %s state alone', (name, state) => {
+    const mascot = loadDecor(ukrainianFolder.read('decor')).mascot;
+    if (mascot === undefined) throw new Error('The UA Edition has a Mascot');
+    const other = state === 'waits' ? 'sleeps' : 'waits';
+    const svg = text(files, `Generated/Assets.xcassets/${name}.imageset/${name}-dark.svg`);
+    const has = (shapes: readonly { path: string }[]) =>
+      shapes.every((shape) => svg.includes(`d="${shape.path}"`));
 
-    expect(text(plain, 'Generated/Assets.xcassets/band.imageset/band-light.svg')).toBe(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="1" viewBox="0 0 4 1">' +
-        '<path d="M0 0h4v1H0z" fill="#140C0A" fill-opacity="0.13"/>' +
-        '</svg>\n',
-    );
+    expect(has([...mascot.figure, ...mascot.eyes[state], ...mascot.hat])).toBe(true);
+    expect(has(mascot.eyes[other])).toBe(false);
+    expect(has(mascot.sleepMarks)).toBe(state === 'sleeps');
+    expect(has(mascot.rays)).toBe(false);
   });
 
-  it('draws a band layer at its own opacity, times the opacity of its colour role', () => {
-    const band: DecorMotif = {
-      width: 4,
-      height: 1,
-      layers: [
-        { path: 'M0 0h4v1H0z', color: 'accent', opacity: 0.5 },
-        { path: 'M0 0h4v1H0z', color: 'line', opacity: 0.5 },
-      ],
-    };
-    const faint = widgetExtensionFiles({ ...ukrainian, band });
+  it('writes no Mascot for an Edition without one', () => {
+    const plain = widgetExtensionFiles({ ...ukrainian, mascot: undefined });
 
-    expect(text(faint, 'Generated/Assets.xcassets/band.imageset/band-dark.svg')).toBe(
-      '<svg xmlns="http://www.w3.org/2000/svg" width="4" height="1" viewBox="0 0 4 1">' +
-        '<path d="M0 0h4v1H0z" fill="#FF3B2F" fill-opacity="0.5"/>' +
-        '<path d="M0 0h4v1H0z" fill="#FFF4E6" fill-opacity="0.065"/>' +
-        '</svg>\n',
-    );
+    expect([...plain.keys()].some((path) => path.includes('mascot'))).toBe(false);
   });
 
   it("writes the widget's strings, its Widget Modes and its states into the string table of the Edition's language", () => {
