@@ -7,10 +7,12 @@ import {
   OnboardingStep,
   OnboardingWelcome,
   Button,
-  SegmentedControl,
+  onboardingLayout,
+  PressedTile,
   space,
   stepStyles,
   TEXT_MAX_FONT_SCALE,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -48,6 +50,7 @@ export function Onboarding() {
     report(onboarding.next());
   };
   const { number, total } = step;
+  const mascot = <MascotIn state="onboarding" onRed />;
   let shown: ReactNode;
   if (step.kind === 'welcome') {
     shown = (
@@ -55,12 +58,13 @@ export function Onboarding() {
         step={number}
         total={total}
         hero={undefined}
+        mascot={mascot}
         onStart={next}
         onSkip={skip}
       />
     );
   } else if (step.kind === 'firstWord') {
-    shown = <FirstWord step={step} word={step.word} onNext={next} onSkip={skip} />;
+    shown = <FirstWord step={step} word={step.word} mascot={mascot} onNext={next} onSkip={skip} />;
   } else if (step.kind === 'dailyGoal') {
     shown = (
       <DailyGoalStep
@@ -68,6 +72,7 @@ export function Onboarding() {
         key={step.number}
         step={step}
         highlighted={step.highlighted}
+        mascot={mascot}
         onDone={(goal) => {
           report(onboarding.chooseDailyGoal(goal));
         }}
@@ -80,7 +85,9 @@ export function Onboarding() {
         key={step.kind}
         step={step}
         title={strings[step.kind].title}
+        shout={strings[step.kind].shout}
         options={step.options}
+        mascot={mascot}
         onAnswer={(answerId) => {
           report(onboarding.answer(answerId));
         }}
@@ -93,7 +100,6 @@ export function Onboarding() {
     // Modal, so VoiceOver stays out of the Feed and the tabs behind it.
     <View style={StyleSheet.absoluteFill} accessibilityViewIsModal>
       {shown}
-      <MascotIn state="onboarding" />
     </View>
   );
 }
@@ -118,11 +124,13 @@ function Title({ children }: { children: string }) {
 function FirstWord({
   step,
   word,
+  mascot,
   onNext,
   onSkip,
 }: {
   step: Step;
   word: WordCardModel;
+  mascot: ReactNode;
   onNext: () => void;
   onSkip: () => void;
 }) {
@@ -131,8 +139,9 @@ function FirstWord({
       testID="onboarding-first-word"
       step={step.number}
       total={step.total}
+      shout={strings.firstWord.shout}
+      mascot={mascot}
       onSkip={onSkip}
-      fromTop
       footer={<Button testID="onboarding-next" label={strings.firstWord.next} onPress={onNext} />}
     >
       <View style={stepStyles.heading}>
@@ -147,14 +156,18 @@ function FirstWord({
 function Question({
   step,
   title,
+  shout,
   options,
+  mascot,
   onAnswer,
   onLater,
   onSkip,
 }: {
   step: Step;
   title: string;
+  shout: string;
   options: readonly QuestionnaireOption[];
+  mascot: ReactNode;
   onAnswer: (answerId: string) => void;
   onLater: () => void;
   onSkip: () => void;
@@ -164,8 +177,9 @@ function Question({
       testID="onboarding-question"
       step={step.number}
       total={step.total}
+      shout={shout}
+      mascot={mascot}
       onSkip={onSkip}
-      fromTop
       footer={<LaterButton testID="onboarding-later" onPress={onLater} />}
     >
       <View style={stepStyles.heading}>
@@ -191,15 +205,17 @@ function Question({
 
 const dailyGoals: readonly DailyGoal[] = DailyGoalSchema.options.map(({ value }) => value);
 
-/** The Daily Goal: the goals in XP, the highlighted one picked, and «Готово», which sets it. */
+/** The Daily Goal: a tile per goal in XP, the highlighted one picked, and «Готово», which sets it. */
 function DailyGoalStep({
   step,
   highlighted,
+  mascot,
   onDone,
   onSkip,
 }: {
   step: Step;
   highlighted: DailyGoal;
+  mascot: ReactNode;
   onDone: (goal: DailyGoal) => void;
   onSkip: () => void;
 }) {
@@ -211,8 +227,9 @@ function DailyGoalStep({
       testID="onboarding-daily-goal"
       step={step.number}
       total={step.total}
+      shout={strings.dailyGoal.shout}
+      mascot={mascot}
       onSkip={onSkip}
-      fromTop
       footer={
         <Button
           testID="onboarding-done"
@@ -233,20 +250,40 @@ function DailyGoalStep({
           {strings.dailyGoal.subtitle}
         </Text>
       </View>
-      <SegmentedControl
-        accessibilityLabel={strings.dailyGoal.title}
-        // A segment's value is text, so each Daily Goal is drawn by its number of XP.
-        segments={dailyGoals.map((goal) => ({
-          value: String(goal),
-          label: String(goal),
-          testID: `onboarding-daily-goal-${String(goal)}`,
-        }))}
-        selected={String(picked)}
-        onSelect={(value) => {
-          const goal = dailyGoals.find((option) => String(option) === value);
-          if (goal !== undefined) setPicked(goal);
-        }}
-      />
+      <View style={styles.goals}>
+        {dailyGoals.map((goal) => {
+          const selected = goal === picked;
+          const ink = selected ? colors.onAccent : colors.ink;
+          return (
+            <View key={goal} style={styles.goal}>
+              <PressedTile
+                testID={`onboarding-daily-goal-${String(goal)}`}
+                tone={selected ? 'accent' : 'tile'}
+                radius={onboardingLayout.goalTile.radius}
+                accessibilityLabel={`${String(goal)} ${strings.dailyGoal.unit}`}
+                accessibilityState={{ selected }}
+                faceStyle={styles.goalFace}
+                onPress={() => {
+                  setPicked(goal);
+                }}
+              >
+                <Text
+                  maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+                  style={[typeStyle('goalNumber', { fontFamilies }), { color: ink }]}
+                >
+                  {String(goal)}
+                </Text>
+                <Text
+                  maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+                  style={[typeStyle('goalUnit', { fontFamilies }), { color: ink }]}
+                >
+                  {strings.dailyGoal.unit}
+                </Text>
+              </PressedTile>
+            </View>
+          );
+        })}
+      </View>
     </OnboardingStep>
   );
 }
@@ -254,4 +291,12 @@ function DailyGoalStep({
 const styles = StyleSheet.create({
   // The same gap the step puts between its blocks.
   options: { gap: space[3] },
+  goals: { flexDirection: 'row', gap: onboardingLayout.goalTile.gap },
+  goal: { flex: 1 },
+  goalFace: {
+    height: onboardingLayout.goalTile.height,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: onboardingLayout.goalTile.lineGap,
+  },
 });
