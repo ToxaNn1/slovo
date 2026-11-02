@@ -188,6 +188,234 @@ export const typeRoles = {
   crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
+  /** How many Rounds have passed, in a Game's header when it has no Round limit. */
+  roundPassed: role('word', '800', 13, 13),
+  /** The «−1» that rises from a lost Life. */
+  lifeLost: role('word', '900', 13, 13),
+  /** The label over a Round's prompt, and a Quick Question's title. */
+  roundLabel: role('word', '800', 12, 12, 1.5, 'uppercase'),
+  /** A Round's head: its label and place, such as «НАГОЛОС · 6/10». */
+  roundHead: role('word', '800', 12, 12, 2, 'uppercase'),
+  /** A Round's prompt on its card. */
+  roundPrompt: role('word', '800', 24, 30),
+  /** A Round's option on its tile. */
+  roundOption: role('word', '800', 18, 22),
+  /** The verdict over the Round's answer sheet: right or wrong. */
+  roundVerdict: role('word', '800', 16, 16),
+  /** The right answer on the Round's answer sheet. */
+  roundAnswer: role('word', '500', 30, 39),
+  /** A Round's explanation, and the Definition under its prompt. */
+  roundExplanation: role('ui', '400', 16, 25),
+  /** A letter in a blank of the typed answer. */
+  blankLetter: role('word', '900', 22, 26),
+  /** What the user types as a Round's answer. */
+  typedAnswer: role('word', '800', 20, 24),
+  /** The number of a step of the widget guide. */
+  guideNumber: role('ui', '700', 15, 15),
+  /** The title of a step of the widget guide. */
+  guideTitle: role('ui', '700', 17, 20),
+  /** The Lemma on a widget of the widget guide's drawing. */
+  widgetLemma: role('word', '500', 24, 29),
+  /** The short line under the Lemma on the drawing's medium widget. */
+  widgetLine: role('word', '500', 12, 15),
+  /** An Idiom's «Походження». */
+  idiomEtymology: role('ui', '400', 14, 20),
+  /** The name of a hidden category on the Hidden screen. */
+  hiddenName: role('ui', '700', 15, 18),
+  /** The count beside a Collection's title. */
+  collectionCount: role('word', '500', 22, 22),
+  /** A recent query of Search. */
+  recentQuery: role('ui', '600', 16, 19),
+  /** The text button that clears the recent queries of Search. */
+  recentClear: role('ui', '600', 15, 18),
+  /** The text button that clears the history of the Saved screen. */
+  historyClear: role('ui', '600', 17, 20),
+  /** The roulette's Lemma in the mood sheet. */
+  rouletteLemma: role('word', '500', 28, 34),
+  /** The line on a solved Daily Crossword. */
+  crosswordSolved: role('word', '500', 28, 32),
+  /** A segment's label in a segmented control. */
+  segment: role('ui', '700', 13, 16),
+  /** The part of speech beside the Lemma on a Word card. */
+  partOfSpeech: role('ui', '600', 15, 15),
+  /** A Word named as a link inside a line of reading text, such as a Synonym Row's dominant. */
+  linkWord: role('word', '800', 15, 21),
+  /** An accent text button's label, such as a Word card's "more". */
+  textLink: role('ui', '700', 15, 15),
+  /** The text under a section heading of a card: the Word History, the etymology. */
+  sectionText: role('ui', '400', 15, 22),
+  /** A non-standard form a Word card links to a Correction, in italics. */
+  oftenSaidForm: role('word', '400', 14, 18),
+  /** A Collection's name on its row of the Collections screen. */
+  collectionRowName: role('ui', '700', 17, 20),
+  /** How many Entries a Collection holds, beside its name on its row. */
+  collectionRowCount: role('ui', '500', 14, 17),
+  /** A Collection's newest Lemmas on its row. */
+  collectionLemmas: role('word', '400', 22, 29),
+  /** A Synonym Row member's shade note, in italics after it. */
+  shadeNote: role('ui', '400', 13, 17),
+  /** `Lemma, hero`: the onboarding welcome's Lemma. */
+  heroLemma: role('word', '900', 76, 76),
+  /** A quiet text button of the onboarding, such as «Пропустити» and «Пізніше». */
+  quietAction: role('ui', '700', 14, 17),
+  /** A Word on its cell of the Pairs Game. */
+  pairsWord: role('word', '800', 14, 16),
+  /** A Definition on its cell of the Pairs Game, wrapping over as many lines as it needs. */
+  pairsDefinition: role('ui', '600', 15, 19),
+  /** An empty state's title. */
+  emptyTitle: role('word', '900', 22, 25),
+  /** An empty state's line of muted text under its title. */
+  emptyText: role('ui', '400', 15, 22),
+  /** A letter of the Word in a Round of the vowel form, in the Round's prompt size. */
+  vowelWordLetter: role('word', '500', 25, 32.5),
+  /** A vowel on its button in a Round of the vowel form. */
+  vowelButton: role('word', '900', 25, 32.5),
+  /** A reminder's time on its Settings row. */
+  reminderTime: role('word', '500', 22, 26),
+  /** The «soon» tag of a Settings row that a later version brings. */
+  soonTag: role('ui', '700', 11, 13, 1.5, 'uppercase'),
+  /** A letter on its cell of the Daily Crossword. */
+  crosswordLetter: role('word', '900', 26, 31.2, 0, 'uppercase'),
+  /** The clue of the Daily Crossword's selected word, on its bar. */
+  crosswordClue: role('ui', '600', 15, 19.5),
+  /** A letter on a key of the Daily Crossword's keyboard. */
+  crosswordKey: role('ui', '700', 15, 18, 0, 'uppercase'),
+  /** A letter of the wordmark flying in on the splash, on its 390-wide frame; the splash scales it. */
+  splashLetter: role('word', '900', 250, 250, -10),
+  /** The tagline on the splash's ink band. */
+  splashTagline: role('word', '800', 15, 15, 4, 'uppercase'),
+  /** The Category's name on its filled chip of a Word card. */
+  categoryChip: role('ui', '600', 12.5, 15),
+  /** A chip's label: a Category of the Mix, a tab of the Saved screen. */
+  chipLabel: role('ui', '700', 14, 17),
+  /** The count beside a chip's label. */
+  chipCount: role('ui', '600', 12, 14),
+  /** The seconds left beside a timed Game's bar. */
+  timerSeconds: role('word', '800', 14, 17),
+  /** A Collection's name on its card of the Saved overview. */
+  collectionCardName: role('word', '800', 14, 17),
+  /** How many Entries a Collection holds, under its name on its card. */
+  collectionCardCount: role('ui', '600', 12, 12),
+  /** The Community Counters line under an Entry card's mark buttons. */
+  communityCounters: role('ui', '400', 13, 17),
+  /** The giant ∞ behind the end-of-Cycle card. */
+  endOfCycleInfinity: role('word', '900', 330, 330),
+  /** A Badge's symbol on its mark, at a 156-wide mark; the mark scales it to a third of its side. */
+  badgeSymbol: role('word', '900', 52, 62),
+  /** The Game Review's title. */
+  reviewTitle: role('word', '800', 15, 15),
+  /** The ✓ or ✗ on a Round's mark in the Game Review. */
+  reviewMark: role('word', '900', 13, 13),
+  /** A Round's Lemma in the Game Review. */
+  reviewWord: role('ui', '700', 15, 17),
+  /** The line under a Round's Lemma in the Game Review: what was picked. */
+  reviewPicked: role('ui', '500', 12, 14),
+  /** A label over a part of an expanded Round, such as the standard form. */
+  reviewHeading: role('ui', '700', 13, 17),
+  /** The standard form of an expanded Round's Correction. */
+  reviewForm: role('ui', '500', 15, 22),
+  /** The big Streak at the top of the stats sheet. */
+  statsStreak: role('word', '500', 64, 70),
+  /** The words beside the big Streak of the stats sheet. */
+  statsStreakLabel: role('ui', '600', 16, 20),
+  /** A count's number on the stats sheet's grid. */
+  statsCount: role('word', '500', 28, 34),
+  /** The words under a count of the stats sheet, and the Best Streak. */
+  statsNote: role('ui', '400', 14, 18),
+  /** A line of the stats sheet's Known and due counts. */
+  statsLine: role('ui', '400', 16, 22),
+  /** The title of the Feed's error state. */
+  errorTitle: role('word', '500', 28, 34),
+  /** What went wrong, under the title of the Feed's error state. */
+  errorText: role('ui', '400', 15, 24),
+  /** A Tip's title. */
+  tipTitle: role('word', '900', 22, 25),
+  /** What leads a list row's Lemma, such as a Collection's name, in the Lemma's size. */
+  listLeading: role('ui', '500', 17, 20),
+  /** The trailing text of a list row, such as when it was saved. */
+  rowTrailing: role('ui', '700', 12, 12),
+  /** The title on the red panel of the Game's result. */
+  resultTitle: role('word', '900', 40, 38, -1.5),
+  /** The line under the title of the Game's result. */
+  resultLine: role('ui', '700', 16, 20),
+  /** The capitalised label over a group of controls or a card's section. */
+  sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
+  /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
+  progressCount: role('ui', '600', 13, 13),
+  /** A Badge's name under its title on the stamp of a newly earned Badge. */
+  stampName: role('ui', '500', 16, 21),
+  /** A Badge's name in the list of Badges. */
+  badgeName: role('ui', '400', 15, 21),
+  /** Under a Badge's name: when it was earned, or how far its condition has come. */
+  badgeStatus: role('ui', '400', 15, 22),
+  /** A line of the Profile, such as the Level or the Known count, and its offer to save progress. */
+  profileText: role('ui', '400', 15, 22),
+  /** The label of the link back to the screen before. */
+  backLink: role('ui', '600', 17, 20),
+  /** The label of an action a list row's swipe shows. */
+  swipeAction: role('ui', '700', 14, 17),
+  /** The «Повторити» tag of an Entry due for review. */
+  reviewTag: role('word', '800', 11, 11, 1, 'uppercase'),
+  /** The die on the mood button. */
+  moodDie: role('ui', '400', 17, 20),
+  /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
+  formLabel: role('ui', '600', 12, 12, 0.5),
+  /** A Correction's non-standard form, struck through. */
+  nonStandardForm: role('word', '800', 24, 26),
+  /** A Correction's explanation, also in an expanded Round of the Game Review. */
+  explanation: role('ui', '400', 15, 22),
+  /** The Entry's Lemma over a sheet, such as the Collection sheet. */
+  sheetLemma: role('word', '600', 20, 24),
+  /** A text button of a sheet: «+ Нова колекція», a field's «Створити». */
+  textButton: role('ui', '700', 17, 20),
+  /** What the reader types in a field. */
+  fieldText: role('ui', '500', 16, 20),
+  /** The label over a field, and a small label of a form. */
+  fieldLabel: role('ui', '600', 14, 18),
+  /** What is wrong with a field's value, under it. */
+  fieldProblem: role('ui', '600', 13, 17),
+  /*
+   * The Share Card's roles at the Story's scale; the card scales each by its
+   * width, keeping the role's line height as a share of its size.
+   */
+  /** The giant glyph behind a Share Card's text. */
+  shareGiant: role('word', '900', 320, 320, -8),
+  /** The kicker over a Share Card's headline. */
+  shareKicker: role('word', '800', 10, 13, 1.5, 'uppercase'),
+  /** A Share Card's headline, with room above its glyphs for a Stress mark over a tall vowel. */
+  shareHeadline: role('word', '900', 40, 44, -1),
+  /** A Share Card's reading text. */
+  shareSub: role('ui', '500', 12, 16.8),
+  /** A label of a Share Card: over a form, under a stat. */
+  shareLabel: role('ui', '600', 10, 14),
+  /** A form on a Share Card under its label, such as the non-standard form. */
+  shareForm: role('word', '500', 22, 30.8),
+  /** A number of the Weekly Recap on its Share Card. */
+  shareStat: role('word', '900', 18, 22),
+  /** The watermark at the foot of a Share Card. */
+  shareWatermark: role('ui', '600', 10, 12),
+  /** The Edition's wordmark on the About screen, set wide. */
+  wordmark: role('word', '500', 32, 38, 9.6),
+  /** What SLOVO is, on the About screen's card. */
+  aboutDescription: role('word', '500', 22, 30),
+  /** The hero Word's Definition under its Lemma on the onboarding welcome. */
+  heroDefinition: role('word', '500', 22, 29),
+  /** The title over the Active Days calendar. */
+  calendarTitle: role('ui', '600', 17, 20),
+  /** A weekday's letters over a column of the Active Days calendar. */
+  calendarWeekday: role('ui', '700', 11, 13),
+  /** A day's number on its tile of the Active Days calendar. */
+  calendarDay: role('word', '800', 13, 16),
+  /** A hint under a control: why it is off, or what was refused. */
+  hint: role('ui', '400', 15, 22),
+  /** A letter on its chip of a Round's chips form. */
+  chipLetter: role('word', '900', 26, 30),
+  /** A word on its chip of a Round's chips form, smaller so an expression of 8 words fits. */
+  chipWord: role('word', '800', 18, 22),
+  /** The text of a small label chip, such as a Correction Type. */
+  labelChip: role('ui', '700', 11.5, 14),
+  /** The label under the Streak's number on its red tile of the Weekly Recap. */
+  recapLabelMarked: role('ui', '600', 12, 14),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -203,6 +431,12 @@ export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamili
     letterSpacing,
     textTransform,
   };
+}
+
+/** A type role's size and line height alone, for text that scales them itself. */
+export function roleSize(name: TypeRole) {
+  const { size, lineHeight } = typeRoles[name];
+  return { fontSize: size, lineHeight };
 }
 
 /**
@@ -394,8 +628,6 @@ export const badgeStamp = {
   markTop: 70,
   titleTop: 34,
   nameTop: 10,
-  titleSize: 30,
-  nameSize: 16,
 } as const;
 
 /** The Profile's Badge grid: marks of this side in rows of their family. */
@@ -459,8 +691,6 @@ export const splashMotion = {
     { x: 40, y: 520, rotate: -10 },
   ],
   letter: {
-    size: 250,
-    letterSpacing: -10,
     /** The middle of the frame the letters fly from, less the letter's own offset. */
     from: { x: 90, y: 580 },
     fromScale: 0.15,
@@ -478,7 +708,7 @@ export const splashMotion = {
     [0, 0.74],
   ],
   cut: { duration: 350, delay: 1250, easing: [0.7, 0, 0.3, 1] },
-  tagline: { size: 15, letterSpacing: 4, turn: -12.5 },
+  tagline: { turn: -12.5 },
   mascot: { x: 110, y: 640 },
   /** The Mascot rolls in from the left, turning as it comes. */
   roll: { duration: 600, from: -360, turn: -560, easing: [0.25, 0.9, 0.3, 1.1] },
@@ -639,73 +869,6 @@ export const scrim = 'rgba(20, 12, 10, 0.55)';
 /** The 4-pt spacing grid. */
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
 
-/** Type sizes of the UI roles; the UI body follows iOS Dynamic Type. */
-export const typeSize = {
-  screenTitle: 34,
-  /** An empty state's title; also a Game mode's title. */
-  emptyStateTitle: 28,
-  overline: 11,
-  /** `Big number`, the Streak. */
-  streak: 64,
-  /** `Big number`, a count of the stats sheet (the Scale gives 26–30). */
-  count: 28,
-  chip: 12.5,
-  labelChip: 11.5,
-  body: 15,
-  button: 16,
-  /** A sheet's title; also a result's number, an empty state's title and the Correction's non-standard form. */
-  sheetTitle: 26,
-  partOfSpeech: 14,
-  /** `Block heading`; the name of a card or a Collection, a sheet's text button; also an Example, an onboarding step's subtitle, a Round's sheet title. */
-  blockHeading: 17,
-  /** What an Entry's row leads with in a list, and over a sheet (the design's 20–22). */
-  rowLemma: 20,
-  /** A Collection row's newest Lemmas. */
-  collectionLemmas: 22,
-  /** A line of a card's list, a Collection's name in a sheet, a name field. */
-  listItem: 18,
-  /** A recent query of Search. */
-  recentQuery: 16,
-  /** A count or a refusal beside a name; also the onboarding sample notification's body, a row's subtitle, a swipe action's label and a note under a button. */
-  caption: 14,
-  /** What goes on the right of a card's row, such as a relative time; also the Round's progress and tags, an Example's author, a notification's app name and time. */
-  meta: 13,
-  /** `Big number`, the count on a card of the Saved overview (the Scale gives 26–30). */
-  cardCount: 30,
-  /** The Correction's explanation; also a result's line and a Game mode's sample. */
-  explanation: 16,
-  /** A step's wordmark, the hero Definition and the app icon's mark; also an Entry row's title, the count of a Collection or of Favorites, a time and the About description. */
-  subhead: 22,
-  /** A Round's option. */
-  roundOption: 21,
-  /** A Round's prompt. */
-  roundPrompt: 25,
-  /** The answer on a Round's sheet. */
-  roundAnswer: 30,
-  /** The title of an onboarding step. */
-  onboardingTitle: 32,
-  /** A small label beside a value: a row's trailing text, the name of a result's number. */
-  smallLabel: 12,
-  /** A Game mode's description. */
-  modeDescription: 14.5,
-  /** The title of the Game's result (Unbounded 900). */
-  resultTitle: 34,
-  /** The Game Review's title (Unbounded 800). */
-  reviewTitle: 15,
-  /** A Round of the Game Review (Onest 600). */
-  reviewRow: 16,
-  /** `Lemma, hero`: the onboarding welcome's Lemma. */
-  heroLemma: 76,
-} as const;
-
-/** The overline label's type: bold capitals spaced 0.14em apart. */
-export const overlineType = {
-  fontSize: typeSize.overline,
-  fontWeight: '700',
-  letterSpacing: typeSize.overline * 0.14,
-  textTransform: 'uppercase',
-} as const;
-
 /**
  * The Word card's type sizes at each font-size step: the design's three
  * steps, the hero word and the reading text at their base size, 1.15 times it
@@ -743,14 +906,8 @@ export const collectionCard = {
   mark: 34,
   /** Between the name and the count. */
   textGap: 6,
-  nameSize: 14,
-  nameLineHeight: 17,
-  countSize: 12,
   countOpacity: 0.85,
 } as const;
-
-/** The line heights the design gives in pixels rather than as a multiple of the size. */
-export const lineHeight = { pronunciationNote: 20, aboutDescription: 30 } as const;
 
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
 export const rowPadding = 14;
@@ -900,7 +1057,6 @@ export const segmentedDrawing = {
   radius: 12,
   segmentHeight: 38,
   segmentRadius: 9,
-  labelSize: 13,
 } as const;
 
 /** The toggle's drawing (design `SlovoApp`): a track and the knob that travels inside it. */
@@ -921,8 +1077,6 @@ export const chipDrawing = {
   height: 38,
   paddingHorizontal: 14,
   gap: 6,
-  labelSize: 14,
-  countSize: 12,
   /** How far the count fades beside its label. */
   countOpacity: 0.7,
   /** The chip's scale while it is pressed. */
@@ -936,7 +1090,6 @@ export const searchFieldDrawing = {
   paddingHorizontal: 14,
   gap: 10,
   icon: 18,
-  inputSize: 16,
   clear: 28,
   clearRadius: 8,
   clearIcon: 10,
@@ -947,8 +1100,6 @@ export const textFieldDrawing = {
   height: 58,
   radius: 15,
   border: 2.5,
-  inputSize: 16,
-  problemSize: 13,
 } as const;
 
 /** The drawing of a slider on a row that is not available yet: track, fill and thumb. */
@@ -1077,7 +1228,7 @@ export const minTouchTarget = 44;
 /**
  * A day of the Active Days calendar: a tile of this height and corner on a
  * grid with this gap, over a hard edge this deep, a day to come outlined by a
- * dashed line this wide, and the day's number at this size.
+ * dashed line this wide.
  */
 export const calendarDay = {
   height: 42,
@@ -1085,8 +1236,6 @@ export const calendarDay = {
   gap: 7,
   edge: 4,
   futureBorder: 2,
-  number: 13,
-  weekday: 11,
 } as const;
 
 /** How much a button that takes no press is dimmed. */
@@ -1115,10 +1264,9 @@ export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVert
 /**
  * The Daily Crossword, from the design: a cell's side and the gap between
  * cells (five of them fit the SE's width with the screen's margins), the
- * selected cell's ink ring and a cell's letter size; the clue bar's text
- * size and padding; the keyboard's key height, corner radius and letter
- * size, the gaps between keys and between rows, and how much wider the
- * delete key is than a letter key.
+ * selected cell's ink ring; the clue bar's padding; the keyboard's key
+ * height and corner radius, the gaps between keys and between rows, and how
+ * much wider the delete key is than a letter key.
  */
 /** The Daily Crossword's red card on the mode screen, from the design: its padding and the gap between its lines. */
 export const dailyCrosswordCard = { padding: 18, gap: 6 } as const;
@@ -1127,12 +1275,9 @@ export const crosswordLayout = {
   cell: 62,
   cellGap: 8,
   ring: 3,
-  letterSize: 26,
-  clueSize: 15,
   cluePadding: 12,
   keyHeight: 46,
   keyRadius: 9,
-  keySize: 15,
   keyGap: 4,
   keyRowGap: 7,
   eraseKeyFlex: 1.5,
@@ -1140,9 +1285,6 @@ export const crosswordLayout = {
 
 /** The sample notification of the onboarding: its app icon (side and corner radius) and the gap between its lines. */
 export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as const;
-
-/** SLOVO ID's mark on the onboarding's sign-in button: its side, corner radius and letter size. */
-export const accountMark = { size: 26, radius: 6, letterSize: 17 } as const;
 
 /**
  * An onboarding step of the design (`isOb` in `SlovoApp.dc.html`): the red
@@ -1172,13 +1314,16 @@ export const onFill = '#FFFFFF';
  * «Sign in with Google» in Google's branding rules for the button
  * (https://developers.google.com/identity/branding-guidelines): the fill,
  * stroke and label of its light and dark themes, which follow the Theme, and
- * the side and the four colours of Google's "G" logo. Google's, not an
- * Edition's, so no Edition token changes them.
+ * the side and the four colours of Google's "G" logo, and its label's type:
+ * medium weight in the system's sans-serif. Google's, not an Edition's, so no
+ * Edition token changes them, and the label is the one text that takes no
+ * type role (ADR 0070).
  */
 export const googleSignInButton = {
   light: { fill: '#FFFFFF', stroke: '#747775', label: '#1F1F1F' },
   dark: { fill: '#131314', stroke: '#8E918F', label: '#E3E3E3' },
   logoSize: 20,
+  labelType: { fontSize: 15, fontWeight: '500' },
   logo: { blue: '#4285F4', green: '#34A853', yellow: '#FBBC05', red: '#EA4335' },
 } as const;
 
@@ -1199,16 +1344,13 @@ export const toastElevation = {
   shadowRadius: 15,
 } as const;
 
-/**
- * The widget guide's numbered steps: the square that holds the number, the
- * title's size and the hint's line height as a multiple of its size.
- */
-export const guideStep = { badge: 28, badgeRadius: 4, titleSize: 17, hintLeading: 1.4 } as const;
+/** The widget guide's numbered steps: the square that holds the number. */
+export const guideStep = { badge: 28, badgeRadius: 4 } as const;
 
 /**
  * The drawing of the widgets in the widget guide. It is a picture of the
  * phone, so it does not follow the text size of iOS and its wallpaper is no
- * Edition token. The type sizes are smaller than the design's real widgets
+ * Edition token. Its type roles are smaller than the design's real widgets
  * (28–30 for the Lemma at 170×170, 34 at 364×170), which the drawing scales
  * down with its own width.
  */
@@ -1225,6 +1367,4 @@ export const widgetDrawing = {
   widgetRadius: 22,
   /** The medium widget's width over its height, from the design's 364 × 170. */
   mediumAspectRatio: 364 / 170,
-  lemmaSize: 24,
-  lineSize: 12,
 } as const;

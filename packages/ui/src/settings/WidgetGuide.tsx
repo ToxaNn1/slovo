@@ -14,7 +14,7 @@ import Animated, {
 
 import { OrnamentBand } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
-import { guideStep, overlineType, space, typeSize, widgetDrawing, withAlpha } from '../tokens';
+import { guideStep, space, typeStyle, widgetDrawing, withAlpha } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 
@@ -36,7 +36,8 @@ function GuideStep({
   last?: boolean;
   testID?: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <View
@@ -49,7 +50,7 @@ function GuideStep({
       <View style={[styles.badge, { backgroundColor: colors.accent }]}>
         <Text
           allowFontScaling={false}
-          style={[styles.badgeNumber, { color: colors.background, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('guideNumber', tokens), { color: colors.background }]}
         >
           {number}
         </Text>
@@ -57,13 +58,13 @@ function GuideStep({
       <View style={styles.stepText}>
         <Text
           maxFontSizeMultiplier={STEP_MAX_FONT_SCALE}
-          style={[styles.stepTitle, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('guideTitle', tokens), { color: colors.ink }]}
         >
           {title}
         </Text>
         <Text
           maxFontSizeMultiplier={STEP_MAX_FONT_SCALE}
-          style={[styles.stepHint, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('sub', tokens), { color: colors.muted }]}
         >
           {hint}
         </Text>
@@ -84,7 +85,8 @@ function SampleWidget({
   lemma: string;
   definition: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   return (
     <View
       style={[
@@ -96,7 +98,7 @@ function SampleWidget({
       <Text
         allowFontScaling={false}
         numberOfLines={1}
-        style={[overlineType, { color: colors.decor, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('eyebrow', tokens), { color: colors.decor }]}
       >
         {mode}
       </Text>
@@ -104,7 +106,7 @@ function SampleWidget({
         <Text
           allowFontScaling={false}
           numberOfLines={1}
-          style={[styles.lemma, { color: colors.ink, fontFamily: fontFamilies.word }]}
+          style={[typeStyle('widgetLemma', tokens), { color: colors.ink }]}
         >
           {lemma}
         </Text>
@@ -112,7 +114,7 @@ function SampleWidget({
           <Text
             allowFontScaling={false}
             numberOfLines={1}
-            style={[styles.line, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[typeStyle('widgetLine', tokens), { color: colors.ink }]}
           >
             {definition}
           </Text>
@@ -146,7 +148,8 @@ function WidgetDrawing({
   definition: string;
   testID?: string;
 }) {
-  const { fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { radii } = tokens;
   return (
     <View
       testID={testID}
@@ -174,11 +177,9 @@ function WidgetDrawing({
       <Text
         allowFontScaling={false}
         style={[
+          typeStyle('sub', tokens),
           styles.caption,
-          {
-            color: withAlpha(widgetDrawing.white, widgetDrawing.captionOpacity),
-            fontFamily: fontFamilies.ui,
-          },
+          { color: withAlpha(widgetDrawing.white, widgetDrawing.captionOpacity) },
         ]}
       >
         {caption}
@@ -287,10 +288,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  badgeNumber: { fontSize: typeSize.body, fontWeight: '700' },
   stepText: { flex: 1, gap: space[1] },
-  stepTitle: { fontSize: guideStep.titleSize, fontWeight: '700' },
-  stepHint: { fontSize: typeSize.body, lineHeight: typeSize.body * guideStep.hintLeading },
   stage: { padding: space[4], gap: space[3] },
   topRow: { flexDirection: 'row', gap: space[3] },
   icons: { flex: 1, justifyContent: 'space-between' },
@@ -311,7 +309,5 @@ const styles = StyleSheet.create({
   mediumWidget: { aspectRatio: widgetDrawing.mediumAspectRatio },
   bandRow: { flexDirection: 'row' },
   widgetWord: { gap: space[1] },
-  lemma: { fontSize: widgetDrawing.lemmaSize, fontWeight: '500' },
-  line: { fontSize: widgetDrawing.lineSize, fontWeight: '500' },
-  caption: { fontSize: typeSize.body, textAlign: 'center' },
+  caption: { textAlign: 'center' },
 });

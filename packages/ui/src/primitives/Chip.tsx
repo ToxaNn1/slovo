@@ -11,7 +11,7 @@ import Animated, {
 import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { useTokens } from '../providers/TokensProvider';
-import { chipDrawing, disabledOpacity, minTouchTarget, motion } from '../tokens';
+import { chipDrawing, disabledOpacity, minTouchTarget, motion, typeStyle } from '../tokens';
 
 /** The slack around the chip up to the smallest tap area. */
 const HIT_SLOP = (minTouchTarget - chipDrawing.height) / 2;
@@ -48,7 +48,8 @@ export function Chip({
   feature?: boolean;
   testID?: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
   const scale = useSharedValue(1);
@@ -56,7 +57,7 @@ export function Chip({
 
   const fill = on ? (feature ? colors.accent : colors.ink) : colors.surfaceSunken;
   const ink = on ? (feature ? colors.onAccent : colors.background) : colors.ink;
-  const text = { color: ink, fontFamily: fontFamilies.ui };
+  const text = { color: ink };
 
   return (
     <Pressable
@@ -81,8 +82,10 @@ export function Chip({
         testID={testID === undefined ? undefined : `${testID}-face`}
         style={[styles.chip, { backgroundColor: fill, borderRadius: radii.chip }, pressed]}
       >
-        <Text style={[styles.label, text]}>{label}</Text>
-        {count === undefined ? null : <Text style={[styles.count, text]}>{count}</Text>}
+        <Text style={[typeStyle('chipLabel', tokens), text]}>{label}</Text>
+        {count === undefined ? null : (
+          <Text style={[typeStyle('chipCount', tokens), styles.count, text]}>{count}</Text>
+        )}
       </Animated.View>
     </Pressable>
   );
@@ -96,7 +99,6 @@ const styles = StyleSheet.create({
     gap: chipDrawing.gap,
     paddingHorizontal: chipDrawing.paddingHorizontal,
   },
-  label: { fontSize: chipDrawing.labelSize, fontWeight: '700' },
-  count: { fontSize: chipDrawing.countSize, fontWeight: '600', opacity: chipDrawing.countOpacity },
+  count: { opacity: chipDrawing.countOpacity },
   disabled: { opacity: disabledOpacity },
 });

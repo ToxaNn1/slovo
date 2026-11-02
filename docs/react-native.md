@@ -15,7 +15,7 @@ How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT
 ## Styling
 
 - Static styles go in one `StyleSheet.create` at the bottom of the file; theme values join them through a style array: `style={[styles.title, { color: colors.ink }]}`.
-- Take every size from `@slovo/ui` tokens: `space[n]` for spacing, `typeSize.*` and `overlineType` for type, `minTouchTarget` for tap areas, `useTokens()` for colours and font families. A size missing from the tokens goes into `tokens.ts` with a doc comment, then gets used. A literal size, spacing, radius or hex colour outside `tokens.ts` (tests aside) fails lint.
+- Take every size from `@slovo/ui` tokens: `space[n]` for spacing, a type role for text (`typeStyle(role, tokens)`, or `roleSize(role)` for text that scales itself; the role carries the font family and weight, ADR 0070), `minTouchTarget` for tap areas, `useTokens()` for colours. A size missing from the tokens goes into `tokens.ts` with a doc comment, then gets used. A literal size, spacing, radius or hex colour, or a hand-written `fontWeight` or `fontFamily`, outside `tokens.ts` (tests aside) fails lint.
 - A pressable piece of text, a label style or a row shape that two screens need becomes a component in `@slovo/ui`.
 
 ## Lists

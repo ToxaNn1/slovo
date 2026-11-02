@@ -5,7 +5,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { PressedTile } from '../primitives/PressedTile';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { crosswordLayout, roundLayout } from '../tokens';
+import { crosswordLayout, roundLayout, typeStyle } from '../tokens';
 
 /** How far the largest text sizes of iOS may scale a cell's letter, so it stays inside its cell. */
 const CELL_MAX_FONT_SCALE = 1.3;
@@ -102,7 +102,8 @@ export function CrosswordGrid({
   };
   testID: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { voice } = useEdition();
   const first = words[0];
   const [selection, setSelection] = useState<Selection | undefined>(
@@ -196,7 +197,7 @@ export function CrosswordGrid({
             testID={`${testID}-clue`}
             accessibilityLiveRegion="polite"
             {...voice}
-            style={[styles.clue, { color: colors.background, fontFamily: fontFamilies.ui }]}
+            style={[typeStyle('crosswordClue', tokens), { color: colors.background }]}
           >
             {selected.clue}
           </Text>
@@ -271,7 +272,8 @@ function Cell({
   right: boolean;
   onPress: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
   const red = selected && !right;
@@ -293,8 +295,8 @@ function Cell({
         {...voice}
         maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
         style={[
-          styles.letter,
-          { color: right || red ? keyInk : colors.ink, fontFamily: fontFamilies.word },
+          typeStyle('crosswordLetter', tokens),
+          { color: right || red ? keyInk : colors.ink },
         ]}
       >
         {letter ?? ''}
@@ -319,7 +321,8 @@ function Key({
   onPress: () => void;
   children: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <View style={wide ? styles.wideKey : styles.key}>
@@ -335,7 +338,7 @@ function Key({
         <Text
           {...voice}
           maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
-          style={[styles.keyLetter, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('crosswordKey', tokens), { color: colors.ink }]}
         >
           {children}
         </Text>
@@ -354,32 +357,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  letter: {
-    fontSize: crosswordLayout.letterSize,
-    lineHeight: crosswordLayout.letterSize * 1.2,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-  },
   clueBar: {
     alignSelf: 'stretch',
     justifyContent: 'center',
     minHeight: crosswordLayout.keyHeight,
     padding: crosswordLayout.cluePadding,
   },
-  clue: {
-    fontSize: crosswordLayout.clueSize,
-    lineHeight: crosswordLayout.clueSize * 1.3,
-    fontWeight: '600',
-  },
   keyboard: { alignSelf: 'stretch', gap: crosswordLayout.keyRowGap },
   keyRow: { flexDirection: 'row', justifyContent: 'center', gap: crosswordLayout.keyGap },
   key: { flex: 1 },
   wideKey: { flex: crosswordLayout.eraseKeyFlex },
   keyFace: { height: crosswordLayout.keyHeight, alignItems: 'center', justifyContent: 'center' },
-  keyLetter: {
-    fontSize: crosswordLayout.keySize,
-    lineHeight: crosswordLayout.keySize * 1.2,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-  },
 });

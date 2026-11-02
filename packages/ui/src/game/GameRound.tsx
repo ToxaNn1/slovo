@@ -40,11 +40,12 @@ import {
   badgeStamp,
   minTouchTarget,
   motion,
-  overlineType,
   roundLayout,
   roundProgress,
   space,
-  typeSize,
+  roleSize,
+  typeRoles,
+  typeStyle,
   wedges,
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
@@ -97,13 +98,6 @@ const SLASH_DRAWING = {
 };
 /** How far the largest text sizes of iOS may scale the smaller text, so it never breaks a word. */
 const TEXT_MAX_FONT_SCALE = 1.5;
-/** The prompt's, an option's and the sheet's answer's sizes, from the design. */
-const PROMPT_SIZE = { fontSize: typeSize.roundPrompt, lineHeight: typeSize.roundPrompt * 1.35 };
-const OPTION_SIZE = { fontSize: typeSize.roundOption, lineHeight: typeSize.roundOption * 1.3 };
-const SHEET_ANSWER_SIZE = {
-  fontSize: typeSize.roundAnswer,
-  lineHeight: typeSize.roundAnswer * 1.3,
-};
 /** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
 const ENDS_IN_PUNCTUATION = /\p{P}$/u;
 
@@ -487,7 +481,8 @@ function GameHeader({
   time: { left: number; limit: number } | undefined;
   onExit: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice, count } = useEdition();
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
@@ -508,7 +503,7 @@ function GameHeader({
           {roundLimit === undefined ? (
             <Text
               maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-              style={[styles.progressText, { color: colors.ink, fontFamily: fontFamilies.word }]}
+              style={[typeStyle('roundPassed', tokens), { color: colors.ink }]}
             >
               {fill(words.passed, progress)}
             </Text>
@@ -612,7 +607,8 @@ function Life({
   /** How long after the wrong answer the Life is lost, in milliseconds: when it jumps. */
   lostAfter: number;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const reduceMotion = useReduceMotion();
   /** 1 while full, 0 once lost. */
   const fullness = useSharedValue(full ? 1 : 0);
@@ -676,10 +672,7 @@ function Life({
         testID={`game-life-${String(place)}-lost`}
         style={[styles.lifeLost, markStyle]}
       >
-        <Text
-          accessible={false}
-          style={[styles.lifeLostText, { color: colors.accent, fontFamily: fontFamilies.word }]}
-        >
+        <Text accessible={false} style={[typeStyle('lifeLost', tokens), { color: colors.accent }]}>
           {LIFE_LOST_MARK}
         </Text>
       </Animated.View>
@@ -720,7 +713,8 @@ function RoundCard({
   /** What the card shows for the prompt, the answer drawn in it; the prompt's text if nothing. */
   children?: ReactNode;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { strings, voice } = useEdition();
   const read =
     gap === undefined
@@ -756,7 +750,7 @@ function RoundCard({
         <Text
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
           {...voice}
-          style={[overlineType, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('roundLabel', tokens), { color: colors.muted }]}
         >
           {label}
         </Text>
@@ -764,9 +758,9 @@ function RoundCard({
       {children ?? (
         <WholeWordsText
           text={prompt}
-          size={PROMPT_SIZE}
-          tracking={0}
-          style={{ color: colors.ink, fontFamily: fontFamilies.word }}
+          size={roleSize('roundPrompt')}
+          tracking={typeRoles.roundPrompt.letterSpacing / typeRoles.roundPrompt.size}
+          style={[typeStyle('roundPrompt', tokens), { color: colors.ink }]}
           highlight={
             highlight === undefined
               ? undefined
@@ -786,7 +780,7 @@ function RoundCard({
           testID="game-definition"
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
           {...voice}
-          style={[styles.explanation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('roundExplanation', tokens), { color: colors.ink }]}
         >
           {definition}
         </Text>
@@ -819,7 +813,8 @@ function RoundHead({
   testID: string | undefined;
   mascot: ReactNode;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const place =
     roundLimit === undefined
@@ -837,7 +832,7 @@ function RoundHead({
           ? { accessibilityRole: 'header', accessibilityLabel: label }
           : { accessibilityElementsHidden: true, importantForAccessibility: 'no' })}
         {...voice}
-        style={[styles.headLabel, { color: colors.muted, fontFamily: fontFamilies.word }]}
+        style={[typeStyle('roundHead', tokens), styles.headLabel, { color: colors.muted }]}
       >
         {place === undefined ? label : `${label} · ${place}`}
       </Text>
@@ -850,7 +845,7 @@ function RoundHead({
  * A title over a Quick Question's card, which VoiceOver reads as its heading.
  */
 function RoundLabel({ label }: { label: string }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { voice } = useEdition();
   return (
     <Text
@@ -858,7 +853,7 @@ function RoundLabel({ label }: { label: string }) {
       accessibilityRole="header"
       maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
       {...voice}
-      style={[overlineType, styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+      style={[typeStyle('roundLabel', tokens), styles.label, { color: tokens.colors.muted }]}
     >
       {label}
     </Text>
@@ -887,7 +882,8 @@ function AnswerOption({
   answer: Pick<PickAnswer, 'chosen' | 'correct'> | undefined;
   onPress: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const keyInk = useSchemeColors('light').ink;
   const { strings, voice } = useEdition();
   const look =
@@ -953,14 +949,11 @@ function AnswerOption({
         <View style={styles.optionText}>
           <WholeWordsText
             text={option.text}
-            size={OPTION_SIZE}
-            tracking={0}
+            size={roleSize('roundOption')}
+            tracking={typeRoles.roundOption.letterSpacing / typeRoles.roundOption.size}
             style={[
-              styles.optionWord,
-              {
-                color: look === 'right' ? keyInk : look === 'wrong' ? colors.muted : colors.ink,
-                fontFamily: fontFamilies.word,
-              },
+              typeStyle('roundOption', tokens),
+              { color: look === 'right' ? keyInk : look === 'wrong' ? colors.muted : colors.ink },
             ]}
           />
         </View>
@@ -1072,7 +1065,8 @@ function AnswerSheet({ answer, onNext }: { answer: RoundAnswer | undefined; onNe
 }
 
 function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: () => void }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const { right } = answer;
   const { example, explanation } = answer.sheet;
@@ -1084,36 +1078,36 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
         {...voice}
         style={[
-          styles.sheetTitle,
-          { color: right ? colors.correct : colors.wrong, fontFamily: fontFamilies.ui },
+          typeStyle('roundVerdict', tokens),
+          { color: right ? colors.correct : colors.wrong },
         ]}
       >
         {right ? strings.game.sheet.correct : strings.game.sheet.wrong}
       </Text>
       <WholeWordsText
         text={answer.sheet.answer.text}
-        size={SHEET_ANSWER_SIZE}
-        tracking={0}
+        size={roleSize('roundAnswer')}
+        tracking={typeRoles.roundAnswer.letterSpacing / typeRoles.roundAnswer.size}
         accessibilityLabel={stressLabel(
           strings.wordCard,
           answer.sheet.answer.text,
           answer.sheet.answer.stressedVowels,
         )}
         {...voice}
-        style={[styles.sheetAnswer, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[typeStyle('roundAnswer', tokens), { color: colors.ink }]}
       />
       {example === undefined ? null : (
         <View accessible {...voice}>
           <Text
             maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-            style={[styles.example, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[typeStyle('example', tokens), styles.example, { color: colors.ink }]}
           >
             {fill(strings.wordCard.example, { text: example.text })}
           </Text>
           {example.author === undefined ? null : (
             <Text
               maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-              style={[styles.author, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('meta', tokens), styles.author, { color: colors.muted }]}
             >
               {fill(strings.wordCard.exampleAuthor, { author: example.author })}
             </Text>
@@ -1125,7 +1119,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
           testID="game-sheet-explanation"
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
           {...voice}
-          style={[styles.explanation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('roundExplanation', tokens), { color: colors.ink }]}
         >
           {explanation}
         </Text>
@@ -1150,13 +1144,11 @@ const styles = StyleSheet.create({
     paddingRight: space[4],
   },
   progress: { flex: 1, gap: roundLayout.tightGap },
-  progressText: { fontSize: typeSize.meta, fontWeight: '800' },
   segments: { flexDirection: 'row', gap: roundProgress.gap },
   segment: { flex: 1, height: roundProgress.height, transform: [{ skewX: roundProgress.skew }] },
   lives: { flexDirection: 'row', gap: LIFE_GAP },
   timer: { marginTop: space[3], paddingHorizontal: space[4] },
   lifeLost: { position: 'absolute', top: -space[1], right: 0 },
-  lifeLostText: { fontSize: typeSize.meta, fontWeight: '900' },
   exit: {
     width: minTouchTarget,
     height: minTouchTarget,
@@ -1170,13 +1162,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: roundLayout.gap,
   },
-  headLabel: {
-    flexShrink: 1,
-    fontSize: typeSize.smallLabel,
-    fontWeight: '800',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-  },
+  headLabel: { flexShrink: 1 },
   card: {
     minHeight: 220,
     justifyContent: 'center',
@@ -1195,7 +1181,6 @@ const styles = StyleSheet.create({
     paddingRight: STAMP.side + STAMP.right + space[2],
   },
   optionText: { flex: 1 },
-  optionWord: { fontWeight: '800' },
   stamp: {
     position: 'absolute',
     right: STAMP.right,
@@ -1220,14 +1205,7 @@ const styles = StyleSheet.create({
   slash: { height: SLASH.thickness, transformOrigin: 'left' },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   sheetContent: { gap: roundLayout.sheetGap, paddingHorizontal: space[1], paddingBottom: space[2] },
-  sheetTitle: { fontSize: typeSize.blockHeading, fontWeight: '700' },
-  sheetAnswer: { fontWeight: '500' },
-  example: {
-    fontSize: typeSize.blockHeading,
-    lineHeight: typeSize.blockHeading * 1.5,
-    fontStyle: 'italic',
-  },
-  author: { marginTop: space[1], fontSize: typeSize.meta, fontWeight: '500' },
-  explanation: { fontSize: typeSize.explanation, lineHeight: typeSize.explanation * 1.55 },
+  example: { fontStyle: 'italic' },
+  author: { marginTop: space[1] },
   next: { marginTop: roundLayout.tightGap },
 });

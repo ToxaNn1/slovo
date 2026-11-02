@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-na
 
 import { entryRowSubtitle } from './entry-row-text';
 import { useEdition } from '../providers/EditionProvider';
-import { entryRow, rowPadding, space, STACK_AT_FONT_SCALE, typeSize, typeStyle } from '../tokens';
+import { entryRow, rowPadding, space, STACK_AT_FONT_SCALE, typeStyle } from '../tokens';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
 import { useTokens } from '../providers/TokensProvider';
 
@@ -60,7 +60,7 @@ export function EntryRow({
   testID?: string;
 }) {
   const tokens = useTokens();
-  const { colors, fontFamilies } = tokens;
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const { fontScale } = useWindowDimensions();
   const subtitle =
@@ -84,21 +84,23 @@ export function EntryRow({
           style={[typeStyle('listWord', tokens), styles.title, { color: colors.ink }]}
         >
           {leading !== undefined && (
-            <Text style={[styles.leading, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+            <Text style={[typeStyle('listLeading', tokens), { color: colors.muted }]}>
               {leading} ·{' '}
             </Text>
           )}
           {row.title}
         </Text>
         {trailing !== undefined && (
-          <Text style={[styles.trailing, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+          <Text
+            style={[typeStyle('rowTrailing', tokens), styles.trailing, { color: colors.muted }]}
+          >
             {trailing}
           </Text>
         )}
       </View>
       {subtitle !== undefined && (
         <Text
-          style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('rowSub', tokens), { color: colors.muted }]}
           numberOfLines={hasAccessory ? undefined : 1}
         >
           {subtitle}
@@ -204,7 +206,5 @@ const styles = StyleSheet.create({
     columnGap: entryRow.titleGap,
   },
   title: { flexShrink: 1 },
-  leading: { fontWeight: '500' },
-  trailing: { flexShrink: 0, fontSize: typeSize.smallLabel, fontWeight: '600' },
-  subtitle: { fontSize: typeSize.meta, lineHeight: typeSize.meta * 1.3 },
+  trailing: { flexShrink: 0 },
 });

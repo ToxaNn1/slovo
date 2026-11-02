@@ -6,7 +6,7 @@ import {
   rowPadding,
   ScreenTitle,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -36,7 +36,8 @@ export default function LearningScreen() {
 
 function Learning() {
   const list = useLearningList();
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { count, voice } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
@@ -80,7 +81,7 @@ function Learning() {
                 testID="learning-count"
                 accessibilityLabel={count(strings.count, list.length)}
                 {...voice}
-                style={[styles.count, { color: colors.accent, fontFamily: fontFamilies.word }]}
+                style={[typeStyle('collectionCount', tokens), { color: colors.accent }]}
               >
                 {String(list.length)}
               </Text>
@@ -91,7 +92,7 @@ function Learning() {
           list.length > 0 ? (
             <Text
               {...voice}
-              style={[styles.footer, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('meta', tokens), styles.footer, { color: colors.muted }]}
             >
               {strings.footer}
             </Text>
@@ -124,12 +125,5 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
     paddingBottom: rowPadding,
   },
-  count: { fontSize: typeSize.subhead, fontWeight: '500' },
-  footer: {
-    marginHorizontal: space[6],
-    marginTop: space[4],
-    fontSize: typeSize.chip,
-    lineHeight: typeSize.chip * 1.5,
-    fontWeight: '500',
-  },
+  footer: { marginHorizontal: space[6], marginTop: space[4] },
 });

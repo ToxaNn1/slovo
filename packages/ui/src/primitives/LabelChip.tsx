@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { labelChipPadding, typeSize } from '../tokens';
+import { labelChipPadding, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -24,7 +24,8 @@ export function LabelChip({
   testID: string;
   size: 'tight' | 'roomy';
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { voice } = useEdition();
   return (
     <View
@@ -38,7 +39,7 @@ export function LabelChip({
         { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
       ]}
     >
-      <Text style={[styles.text, { color: colors.ink, fontFamily: fontFamilies.ui }]}>{text}</Text>
+      <Text style={[typeStyle('labelChip', tokens), { color: colors.ink }]}>{text}</Text>
     </View>
   );
 }
@@ -52,5 +53,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: labelChipPadding.roomy.horizontal,
     paddingVertical: labelChipPadding.roomy.vertical,
   },
-  text: { fontSize: typeSize.labelChip, fontWeight: '700' },
 });

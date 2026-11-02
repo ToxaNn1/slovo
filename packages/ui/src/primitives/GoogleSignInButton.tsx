@@ -3,13 +3,7 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import {
-  disabledOpacity,
-  googleSignInButton,
-  signInButtonHeight,
-  space,
-  typeSize,
-} from '../tokens';
+import { disabledOpacity, googleSignInButton, signInButtonHeight, space } from '../tokens';
 
 /** How far the largest text sizes of iOS may scale the label, so the button never outgrows its screen. */
 const LABEL_MAX_FONT_SCALE = 1.3;
@@ -109,5 +103,5 @@ const styles = StyleSheet.create({
   },
   content: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   // Google's label is medium weight in the system's sans-serif, not the Edition's font.
-  label: { flexShrink: 1, fontSize: typeSize.body, fontWeight: '500', textAlign: 'center' },
+  label: { ...googleSignInButton.labelType, flexShrink: 1, textAlign: 'center' },
 });

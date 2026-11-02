@@ -6,7 +6,7 @@ import {
   SettingsGroup,
   SwitchRow,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -38,7 +38,8 @@ const strings = editionStrings.notifications;
 export default function NotificationsScreen() {
   const state = useNotificationsState();
   const { setSound, askPermission } = useNotificationsChanges();
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const router = useRouter();
 
@@ -66,10 +67,7 @@ export default function NotificationsScreen() {
         )}
         {state.permission === 'denied' && (
           <View testID="notifications-denied" style={styles.denied}>
-            <Text
-              {...voice}
-              style={[styles.hint, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-            >
+            <Text {...voice} style={[typeStyle('hint', tokens), { color: colors.ink }]}>
               {strings.denied.message}
             </Text>
             <SettingsGroup>
@@ -105,7 +103,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   header: { paddingTop: space[2], paddingBottom: space[5] },
-  hint: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   section: { marginTop: space[6] },
   enable: { marginBottom: space[6] },
   denied: { gap: space[3], marginBottom: space[6] },

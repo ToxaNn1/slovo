@@ -7,7 +7,7 @@ import {
   SettingsGroup,
   SwitchRow,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -231,7 +231,8 @@ function CategoryChips({
   onToggle: (categoryId: string, inMix: boolean) => void;
   all?: ReactNode;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <>
@@ -259,7 +260,7 @@ function CategoryChips({
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           {...voice}
-          style={[styles.hint, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('sub', tokens), styles.hint, { color: colors.muted }]}
         >
           {hint}
         </Text>
@@ -270,7 +271,7 @@ function CategoryChips({
 
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  hint: { fontSize: typeSize.body, marginTop: space[3] },
+  hint: { marginTop: space[3] },
   rarity: { marginTop: space[6] },
   switches: { marginTop: space[6] },
   underSwitch: { paddingHorizontal: space[4], paddingVertical: space[3] },

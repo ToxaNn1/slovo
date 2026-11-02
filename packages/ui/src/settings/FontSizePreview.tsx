@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { OrnamentDivider } from '../decor/DecorSlots';
 import { useLemmaSize, useWordTextSizes } from '../providers/FontSizeProvider';
-import { space } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -20,7 +20,8 @@ export function FontSizePreview({
   definition: string;
   testID?: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const lemmaSize = useLemmaSize();
   const { definition: definitionSize } = useWordTextSizes();
   const { voice } = useEdition();
@@ -37,14 +38,14 @@ export function FontSizePreview({
     >
       <Text
         testID="font-size-preview-lemma"
-        style={[styles.lemma, lemmaSize, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[typeStyle('heroWord', tokens), lemmaSize, { color: colors.ink }]}
       >
         {lemma}
       </Text>
       <OrnamentDivider />
       <Text
         testID="font-size-preview-definition"
-        style={[definitionSize, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[typeStyle('definition', tokens), definitionSize, { color: colors.ink }]}
       >
         {definition}
       </Text>
@@ -59,5 +60,4 @@ const styles = StyleSheet.create({
     paddingVertical: space[5],
     borderWidth: StyleSheet.hairlineWidth,
   },
-  lemma: { fontWeight: '500' },
 });

@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, typeSize } from '../tokens';
+import { minTouchTarget, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** How far the largest text sizes of iOS may scale the label. */
@@ -18,7 +18,8 @@ export function BackLink({
   onPress: () => void;
   testID?: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <Pressable
@@ -42,7 +43,7 @@ export function BackLink({
       <Text
         // At the largest accessibility sizes the screen's name would break across lines.
         maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
-        style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('backLink', tokens), { color: colors.accent }]}
       >
         {label}
       </Text>
@@ -58,5 +59,4 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     gap: space[2],
   },
-  label: { fontSize: typeSize.body + 2, fontWeight: '600' },
 });

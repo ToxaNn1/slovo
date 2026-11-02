@@ -2,14 +2,12 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
-import { minTouchTarget, roundLayout, space, typeSize } from '../tokens';
+import { minTouchTarget, roundLayout, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** A blank's width and the thickness of the line it stands on. */
 const BLANK_WIDTH = 28;
 const BLANK_LINE = 2;
-/** A blank's letter size (the Round's option size). */
-const BLANK_SIZE = { fontSize: typeSize.roundOption, lineHeight: typeSize.roundOption * 1.3 };
 /** How far the largest text sizes of iOS may scale a blank's letter, so the row keeps its shape. */
 const BLANK_MAX_FONT_SCALE = 1.5;
 
@@ -55,7 +53,8 @@ export function TypedAnswer({
   };
   testID: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { voice } = useEdition();
   const typed = value.trim() !== '';
   const closed = blanks?.filter((blank) => !('mark' in blank) && blank.letter === undefined);
@@ -88,7 +87,7 @@ export function TypedAnswer({
           spellCheck={false}
           placeholderTextColor={colors.muted}
           selectionColor={colors.accent}
-          style={[styles.input, { color: colors.ink, fontFamily: fontFamilies.word }]}
+          style={[typeStyle('typedAnswer', tokens), styles.input, { color: colors.ink }]}
         />
       </View>
       {onOpenLetter !== undefined && (
@@ -115,13 +114,10 @@ function Blanks({
   blankLabel: (place: number, letter: string | undefined) => string;
   testID: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
-  const letterStyle = [
-    BLANK_SIZE,
-    styles.letter,
-    { color: colors.ink, fontFamily: fontFamilies.word },
-  ];
+  const letterStyle = [typeStyle('blankLetter', tokens), styles.letter, { color: colors.ink }];
   return (
     <View testID={testID} style={styles.blanks}>
       {placeBlanks(blanks).map((blank, index) => {
@@ -175,12 +171,12 @@ const styles = StyleSheet.create({
     paddingVertical: space[2],
   },
   blank: { minWidth: BLANK_WIDTH, alignItems: 'center', borderBottomWidth: BLANK_LINE },
-  letter: { fontWeight: '500', textAlign: 'center' },
+  letter: { textAlign: 'center' },
   box: {
     minHeight: minTouchTarget + space[2],
     justifyContent: 'center',
     paddingHorizontal: space[4],
     borderWidth: 1,
   },
-  input: { alignSelf: 'stretch', fontSize: typeSize.listItem },
+  input: { alignSelf: 'stretch' },
 });

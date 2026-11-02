@@ -4,7 +4,7 @@ import {
   minTouchTarget,
   SettingsGroup,
   TimeRow,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -32,7 +32,8 @@ const strings = editionStrings.notifications;
 export function NotificationTimes() {
   const state = useNotificationsState();
   const { keepTime, removeTime } = useNotificationsChanges();
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { count, voice } = useEdition();
   /** The time being picked: the one it replaces (none when adding), and where the picker starts. */
   const [picking, setPicking] = useState<{ replacing?: string; value: Date }>();
@@ -111,10 +112,7 @@ export function NotificationTimes() {
         style={styles.addTime}
       >
         <Text
-          style={[
-            styles.addTimeLabel,
-            { color: canAdd ? colors.accent : colors.muted, fontFamily: fontFamilies.ui },
-          ]}
+          style={[typeStyle('textLink', tokens), { color: canAdd ? colors.accent : colors.muted }]}
         >
           {strings.addTime}
         </Text>
@@ -126,7 +124,7 @@ export function NotificationTimes() {
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           {...voice}
-          style={[styles.hint, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('hint', tokens), { color: colors.muted }]}
         >
           {limitHint}
         </Text>
@@ -135,7 +133,7 @@ export function NotificationTimes() {
         <Text
           testID="notifications-duplicate-hint"
           {...voice}
-          style={[styles.hint, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('hint', tokens), { color: colors.ink }]}
         >
           {strings.duplicateHint}
         </Text>
@@ -159,6 +157,4 @@ function listKey(times: readonly string[]): string {
 
 const styles = StyleSheet.create({
   addTime: { minHeight: minTouchTarget, justifyContent: 'center', alignSelf: 'flex-start' },
-  addTimeLabel: { fontSize: typeSize.body, fontWeight: '700' },
-  hint: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
 });

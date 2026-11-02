@@ -15,7 +15,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { PressedTile } from '../primitives/PressedTile';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { minTouchTarget, space, typeSize } from '../tokens';
+import { minTouchTarget, space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** A vowel tile's width, narrower than the touch target so a long Word fits the SE; its hit slop makes up the rest. */
@@ -29,8 +29,6 @@ const VOWEL_POP = [0.6, 1.12, 1];
 const VOWEL_SLOP = (minTouchTarget - VOWEL_WIDTH) / 2;
 /** The gap between the Word's letters, which leaves the vowel buttons apart. */
 const LETTER_GAP = 2;
-/** The Word's letter size (the Round's prompt size). */
-const LETTER_SIZE = { fontSize: typeSize.roundPrompt, lineHeight: typeSize.roundPrompt * 1.3 };
 /** How far the largest text sizes of iOS may scale a letter, so the Word keeps its shape. */
 const LETTER_MAX_FONT_SCALE = 1.3;
 /** Whether a character is a letter, which counts for a vowel's place, unlike an apostrophe or a hyphen. */
@@ -76,8 +74,9 @@ export function VowelButtons({
   };
   testID: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
-  const letterStyle = [LETTER_SIZE, styles.letter, { fontFamily: fontFamilies.word }];
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const letterStyle = [typeStyle('vowelWordLetter', tokens), styles.letter];
   let place = 0;
   return (
     <View testID={testID} style={styles.word}>
@@ -149,7 +148,8 @@ function Vowel({
   disabled: boolean;
   onPress: () => void;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
   const reduceMotion = useReduceMotion();
@@ -198,11 +198,10 @@ function Vowel({
         <Text
           maxFontSizeMultiplier={LETTER_MAX_FONT_SCALE}
           style={[
-            LETTER_SIZE,
-            styles.vowelLetter,
+            typeStyle('vowelButton', tokens),
+            styles.letter,
             {
               color: fill === 'right' ? keyInk : fill === 'wrong' ? colors.muted : colors.ink,
-              fontFamily: fontFamilies.word,
             },
           ]}
         >
@@ -222,12 +221,11 @@ const styles = StyleSheet.create({
     gap: LETTER_GAP,
     paddingVertical: space[2],
   },
-  letter: { fontWeight: '500', textAlign: 'center' },
+  letter: { textAlign: 'center' },
   vowel: {
     minHeight: VOWEL_HEIGHT,
     minWidth: VOWEL_WIDTH,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  vowelLetter: { fontWeight: '900', textAlign: 'center' },
 });

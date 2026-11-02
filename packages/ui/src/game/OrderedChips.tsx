@@ -14,7 +14,7 @@ import Animated, {
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { PressedTile } from '../primitives/PressedTile';
-import { space, typeSize } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** A place of the answer line, the design's slot: its height, least width, corner and border. */
@@ -31,9 +31,6 @@ const LINE_GAP = 22;
 const PLACED_OPACITY = 0.25;
 /** How far the largest text sizes of iOS may scale a chip's text, so a chip never breaks a word. */
 const CHIP_MAX_FONT_SCALE = 1.5;
-/** A letter's text, Unbounded 900 26, and a word chip's, smaller so an expression of 8 words fits. */
-const LETTER_SIZE = 26;
-const WORD_SIZE = typeSize.listItem;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -274,14 +271,11 @@ function FixedMark({ text, kind }: { text: string; kind: 'letter' | 'word' }) {
 }
 
 function ChipText({ text, kind, color }: { text: string; kind: 'letter' | 'word'; color: string }) {
-  const { fontFamilies } = useTokens();
+  const tokens = useTokens();
   return (
     <Text
       maxFontSizeMultiplier={CHIP_MAX_FONT_SCALE}
-      style={[
-        kind === 'letter' ? styles.letterText : styles.wordText,
-        { color, fontFamily: fontFamilies.word },
-      ]}
+      style={[typeStyle(kind === 'letter' ? 'chipLetter' : 'chipWord', tokens), { color }]}
     >
       {text}
     </Text>
@@ -314,6 +308,4 @@ const styles = StyleSheet.create({
   word: { minWidth: CHIP_WIDTH, paddingHorizontal: space[4] },
   placed: { opacity: PLACED_OPACITY },
   mark: { height: SLOT_HEIGHT, justifyContent: 'center' },
-  letterText: { fontSize: LETTER_SIZE, fontWeight: '900' },
-  wordText: { fontSize: WORD_SIZE, fontWeight: '800' },
 });

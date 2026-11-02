@@ -1,4 +1,4 @@
-import { BackLink, ScreenTitle, space, typeSize, useEdition, useTokens } from '@slovo/ui';
+import { BackLink, ScreenTitle, space, typeStyle, useEdition, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -16,7 +16,8 @@ const strings = editionStrings.mix;
  * disabled, with a hint why.
  */
 export default function MixScreen() {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const router = useRouter();
 
@@ -36,10 +37,7 @@ export default function MixScreen() {
         />
         <View style={styles.header}>
           <ScreenTitle>{strings.title}</ScreenTitle>
-          <Text
-            {...voice}
-            style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-          >
+          <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
             {strings.subtitle}
           </Text>
         </View>
@@ -53,5 +51,4 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   header: { gap: space[2], paddingTop: space[2], paddingBottom: space[5] },
-  subtitle: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
 });

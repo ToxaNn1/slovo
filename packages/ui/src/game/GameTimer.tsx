@@ -3,7 +3,7 @@ import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { roundLayout, roundProgress, typeSize } from '../tokens';
+import { roundLayout, roundProgress, typeStyle } from '../tokens';
 
 /** The height of the timer's skewed bar, from the design. */
 const BAR_HEIGHT = 10;
@@ -43,7 +43,8 @@ export function GameTimer({
   };
   testID: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const seconds = secondsLeft(remainingMs);
   const announced = useRef(Math.ceil(seconds / ANNOUNCE_EVERY));
@@ -75,7 +76,7 @@ export function GameTimer({
       </View>
       <Text
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-        style={[styles.seconds, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[typeStyle('timerSeconds', tokens), styles.seconds, { color: colors.ink }]}
       >
         {shown(seconds)}
       </Text>
@@ -88,8 +89,6 @@ const styles = StyleSheet.create({
   seconds: {
     width: SECONDS_WIDTH,
     textAlign: 'right',
-    fontSize: typeSize.caption,
-    fontWeight: '800',
     fontVariant: ['tabular-nums'],
   },
   bar: {

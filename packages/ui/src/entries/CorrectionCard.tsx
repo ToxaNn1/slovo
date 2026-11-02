@@ -9,7 +9,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
 import { LabelChip } from '../primitives/LabelChip';
-import { correctionCardLayout, space, typeSize, withAlpha } from '../tokens';
+import { correctionCardLayout, space, typeStyle, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -40,7 +40,8 @@ export function CorrectionCardBody({
   /** Self-check: only the non-standard form and the question. */
   concealed: boolean;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice } = edition;
@@ -49,7 +50,7 @@ export function CorrectionCardBody({
   const formLabel = (form: string, stressedVowels: readonly string[]) =>
     stressLabel(edition.strings.wordCard, form, stressedVowels);
   const correctionType = strings.correctionTypes[card.correctionType];
-  const sentence = [sizes.example, { fontFamily: fontFamilies.word }];
+  const sentence = [typeStyle('example', tokens), sizes.example];
 
   return (
     <>
@@ -77,7 +78,7 @@ export function CorrectionCardBody({
         <Text
           testID="correction-how-to-say"
           {...voice}
-          style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('formLabel', tokens), { color: colors.accent }]}
         >
           {strings.howToSay}
         </Text>
@@ -97,7 +98,7 @@ export function CorrectionCardBody({
                   fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') }),
                 )}
                 {...voice}
-                style={[styles.body, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('sub', tokens), { color: colors.ink }]}
               >
                 {fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') })}
               </Text>
@@ -107,7 +108,7 @@ export function CorrectionCardBody({
             testID="correction-explanation"
             accessibilityLabel={withoutStress(card.explanation)}
             {...voice}
-            style={[styles.explanation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+            style={[typeStyle('explanation', tokens), { color: colors.ink }]}
           >
             {card.explanation}
           </Text>
@@ -172,7 +173,7 @@ export function CorrectionCardBody({
             <Text
               testID="correction-source"
               {...voice}
-              style={[styles.source, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('meta', tokens), { color: colors.muted }]}
             >
               {fill(strings.source, { source: card.sourceNames.join(SOURCE_SEPARATOR) })}
             </Text>
@@ -198,7 +199,8 @@ export function NonStandardForm({
   spoken: string;
   testID: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   // In the Feed, VoiceOver turns to the next or previous card from the forms.
   const turnActions = usePageTurnActions();
@@ -211,15 +213,15 @@ export function NonStandardForm({
       {...turnActions}
       style={styles.form}
     >
-      <Text style={[styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+      <Text style={[typeStyle('formLabel', tokens), { color: colors.muted }]}>
         {strings.correctionCard.nonStandard}
       </Text>
       <Text
         style={[
+          typeStyle('nonStandardForm', tokens),
           styles.nonStandardForm,
           {
             color: colors.muted,
-            fontFamily: fontFamilies.word,
             textDecorationColor: withAlpha(colors.accent, 0.55),
           },
         ]}
@@ -248,7 +250,8 @@ export function StandardForm({
   size: TextSize;
   testID: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const turnActions = usePageTurnActions();
   return (
@@ -260,7 +263,7 @@ export function StandardForm({
       {...turnActions}
       style={styles.form}
     >
-      <Text style={[styles.label, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+      <Text style={[typeStyle('formLabel', tokens), { color: colors.accent }]}>
         {strings.correctionCard.standard}
       </Text>
       <WholeWordsText
@@ -271,7 +274,7 @@ export function StandardForm({
         numberOfLines={form.includes(' ') ? 3 : 1}
         adjustsFontSizeToFit
         minimumFontScale={0.5}
-        style={[styles.mainEquivalent, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
       />
     </View>
   );
@@ -314,19 +317,9 @@ const styles = StyleSheet.create({
   },
   title: { flexShrink: 1 },
   form: { gap: space[2] },
-  label: { fontSize: typeSize.body, fontWeight: '500' },
-  nonStandardForm: {
-    fontSize: typeSize.sheetTitle,
-    lineHeight: typeSize.sheetTitle * 1.2,
-    fontWeight: '400',
-    textDecorationLine: 'line-through',
-  },
-  mainEquivalent: { fontWeight: '500' },
-  body: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.4 },
-  explanation: { fontSize: typeSize.explanation, lineHeight: typeSize.explanation * 1.55 },
+  nonStandardForm: { textDecorationLine: 'line-through' },
   examplePair: { gap: space[3], paddingVertical: space[4], paddingHorizontal: space[4] },
   exampleRow: { flexDirection: 'row', gap: space[3] },
-  source: { fontSize: typeSize.meta, lineHeight: typeSize.meta * 1.4 },
   mark: { width: correctionCardLayout.exampleMark, justifyContent: 'center' },
   sentence: { flex: 1 },
 });

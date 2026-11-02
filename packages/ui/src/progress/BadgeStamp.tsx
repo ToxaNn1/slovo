@@ -126,7 +126,7 @@ export function BadgeStamp({
         >
           {title}
         </Text>
-        <Text {...voice} style={[typeStyle('sub', tokens), styles.name, { color: keyInk }]}>
+        <Text {...voice} style={[typeStyle('stampName', tokens), styles.name, { color: keyInk }]}>
           {name}
         </Text>
         <View style={styles.spring} />
@@ -156,11 +156,10 @@ const styles = StyleSheet.create({
   mark: { marginTop: badgeStamp.markTop },
   title: {
     marginTop: badgeStamp.titleTop,
-    fontSize: badgeStamp.titleSize,
     textAlign: 'center',
     textTransform: 'uppercase',
   },
-  name: { marginTop: badgeStamp.nameTop, fontSize: badgeStamp.nameSize, textAlign: 'center' },
+  name: { marginTop: badgeStamp.nameTop, textAlign: 'center' },
   spring: { flex: 1 },
   mascot: { alignSelf: 'flex-start' },
   take: { alignSelf: 'stretch' },

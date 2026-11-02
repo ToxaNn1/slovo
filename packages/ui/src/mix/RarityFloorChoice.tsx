@@ -2,7 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { space, typeSize } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { Chip } from '../primitives/Chip';
 
 /**
@@ -30,7 +30,8 @@ export function RarityFloorChoice<Floor extends number | string>({
   floor: Floor;
   onChange: (floor: Floor) => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   if (!shown) return null;
   return (
@@ -38,14 +39,11 @@ export function RarityFloorChoice<Floor extends number | string>({
       <Text
         accessibilityRole="header"
         {...voice}
-        style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('rowLabel', tokens), { color: colors.ink }]}
       >
         {title}
       </Text>
-      <Text
-        {...voice}
-        style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-      >
+      <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
         {subtitle}
       </Text>
       <View style={styles.chips}>
@@ -67,7 +65,5 @@ export function RarityFloorChoice<Floor extends number | string>({
 
 const styles = StyleSheet.create({
   group: { gap: space[2] },
-  title: { fontSize: typeSize.body, fontWeight: '600' },
-  subtitle: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2], marginTop: space[1] },
 });

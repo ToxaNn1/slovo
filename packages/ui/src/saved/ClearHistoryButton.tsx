@@ -4,7 +4,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { typeSize } from '../tokens';
+import { typeStyle } from '../tokens';
 
 /**
  * The «Очистити» button of the History screen. A press asks first, with the
@@ -27,7 +27,7 @@ export function ClearHistoryButton({
   onClear: () => void;
   testID?: string | undefined;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { voice } = useEdition();
   const [asking, setAsking] = useState(false);
   return (
@@ -42,7 +42,7 @@ export function ClearHistoryButton({
         }}
         style={styles.button}
       >
-        <Text style={[styles.text, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
+        <Text style={[typeStyle('historyClear', tokens), { color: tokens.colors.ink }]}>
           {copy.action}
         </Text>
       </Pressable>
@@ -67,5 +67,4 @@ export function ClearHistoryButton({
 
 const styles = StyleSheet.create({
   button: { minHeight: 44, minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' },
-  text: { fontSize: typeSize.blockHeading, fontWeight: '600' },
 });

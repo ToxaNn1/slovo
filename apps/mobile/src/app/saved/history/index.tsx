@@ -9,7 +9,7 @@ import {
   ScreenTitle,
   SectionLabel,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -34,7 +34,8 @@ const { history: strings } = editionStrings;
 export default function HistoryScreen() {
   const sections = useHistorySections();
   const clear = useClearHistory();
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
@@ -84,7 +85,7 @@ export default function HistoryScreen() {
               <Text
                 testID="history-limit"
                 {...voice}
-                style={[styles.limit, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('meta', tokens), { color: colors.muted }]}
               >
                 {fill(strings.limit, { count: String(HISTORY_CAP) })}
               </Text>
@@ -126,6 +127,5 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
     paddingBottom: space[2],
   },
-  limit: { fontSize: typeSize.caption, fontWeight: '500' },
   day: { paddingHorizontal: space[6], paddingTop: space[5], paddingBottom: space[1] },
 });

@@ -9,11 +9,14 @@ import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import {
   halftone,
+  roleSize,
   shareCardDrawing,
   shareCardLayout,
   wedges,
   withAlpha,
+  typeStyle,
   type ShareCardFormat,
+  type TypeRole,
   type Wedge,
 } from '../tokens';
 
@@ -27,10 +30,11 @@ export const SHARE_CARD = {
   square: { width: 300, height: 300 },
 } as const satisfies Record<ShareCardFormat, { width: number; height: number }>;
 
-/** Room above the headline's glyphs, so a Stress mark over a tall vowel isn't clipped. */
-const HEADLINE_LINE_HEIGHT = 1.1;
-const KICKER_LINE_HEIGHT = 1.3;
-const SUB_LINE_HEIGHT = 1.4;
+/** A type role's line height as a share of its size: the card scales its text by its width. */
+function lineRatio(name: TypeRole): number {
+  const { fontSize, lineHeight } = roleSize(name);
+  return lineHeight / fontSize;
+}
 
 /** Text that doesn't fit shrinks by this share of its size at a time. */
 const SHRINK_STEP = 0.05;
@@ -146,7 +150,7 @@ function FittedCard({
   format,
   width,
 }: ShareCardProps & { format: ShareCardFormat; width: number }) {
-  const { fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { voice } = useEdition();
   const paint = usePaint();
   const layout = shareCardLayout[format];
@@ -174,13 +178,12 @@ function FittedCard({
         reportHeadline(headlineScale, nativeEvent.lines.length <= 1);
       }}
       style={[
-        styles.headline,
+        typeStyle('shareHeadline', tokens),
         {
           fontSize: text(headlineSize) * headlineScale,
-          lineHeight: text(headlineSize) * headlineScale * HEADLINE_LINE_HEIGHT,
+          lineHeight: text(headlineSize) * headlineScale * lineRatio('shareHeadline'),
           letterSpacing: shareCardDrawing.tracking.headline * unit,
           color: paint.ink,
-          fontFamily: fontFamilies.word,
         },
       ]}
     >
@@ -214,6 +217,7 @@ function FittedCard({
           allowFontScaling={false}
           numberOfLines={1}
           style={[
+            typeStyle('shareGiant', tokens),
             styles.giant,
             {
               right: layout.giant.right * unit,
@@ -222,7 +226,6 @@ function FittedCard({
               lineHeight: layout.giant.size * unit,
               letterSpacing: shareCardDrawing.tracking.giant * unit,
               color: paint.giant,
-              fontFamily: fontFamilies.word,
             },
           ]}
         >
@@ -253,13 +256,12 @@ function FittedCard({
             <Text
               allowFontScaling={false}
               style={[
-                styles.kicker,
+                typeStyle('shareKicker', tokens),
                 {
                   fontSize: text(layout.type.kicker),
-                  lineHeight: text(layout.type.kicker) * KICKER_LINE_HEIGHT,
+                  lineHeight: text(layout.type.kicker) * lineRatio('shareKicker'),
                   letterSpacing: shareCardDrawing.tracking.kicker * unit,
                   color: paint.ink,
-                  fontFamily: fontFamilies.word,
                 },
               ]}
             >
@@ -299,12 +301,12 @@ function FittedCard({
         <Text
           allowFontScaling={false}
           style={[
-            styles.watermark,
+            typeStyle('shareWatermark', tokens),
             {
               fontSize: layout.type.watermark * unit,
+              lineHeight: layout.type.watermark * unit * lineRatio('shareWatermark'),
               color: paint.onFooter,
               opacity: shareCardDrawing.watermarkOpacity,
-              fontFamily: fontFamilies.ui,
             },
           ]}
         >
@@ -480,22 +482,22 @@ function Sub({
   strike?: boolean;
   size?: number;
 }) {
-  const { fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { type } = shareCardLayout[format];
   const fontSize = text(size ?? (label ? type.label : type.sub));
+  const role: TypeRole = size !== undefined ? 'shareForm' : label ? 'shareLabel' : 'shareSub';
   return (
     <Text
       allowFontScaling={false}
       style={[
-        label ? styles.label : styles.sub,
+        typeStyle(role, tokens),
         strike && styles.strike,
         {
           fontSize,
-          lineHeight: fontSize * SUB_LINE_HEIGHT,
+          lineHeight: fontSize * lineRatio(role),
           color: color ?? paint.ink,
           opacity: label || color !== undefined ? 1 : shareCardDrawing.subOpacity,
           textDecorationColor: paint.ink,
-          fontFamily: size !== undefined ? fontFamilies.word : fontFamilies.ui,
         },
       ]}
     >
@@ -550,7 +552,7 @@ function Forms({
 
 /** A Weekly Recap's title and the week's numbers, each in a chip over its label. */
 function WeeklyRecapBlocks({ card, ...props }: BlockProps & { card: BodyOf<'weeklyRecap'> }) {
-  const { fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { text, format, paint } = props;
   const { type, statBasis, gap } = shareCardLayout[format];
   return (
@@ -571,8 +573,12 @@ function WeeklyRecapBlocks({ card, ...props }: BlockProps & { card: BodyOf<'week
             <Text
               allowFontScaling={false}
               style={[
-                styles.stat,
-                { fontSize: text(type.stat), color: paint.ink, fontFamily: fontFamilies.word },
+                typeStyle('shareStat', tokens),
+                {
+                  fontSize: text(type.stat),
+                  lineHeight: text(type.stat) * lineRatio('shareStat'),
+                  color: paint.ink,
+                },
               ]}
             >
               {count}
@@ -617,15 +623,10 @@ function DailyCrosswordBlocks({ card, ...props }: BlockProps & { card: BodyOf<'d
 
 const styles = StyleSheet.create({
   card: { overflow: 'hidden' },
-  giant: { position: 'absolute', fontWeight: '900' },
+  giant: { position: 'absolute' },
   brand: { flexDirection: 'row' },
   room: { flex: 1 },
-  kicker: { fontWeight: '800', textTransform: 'uppercase' },
-  headline: { fontWeight: '900' },
-  sub: { fontWeight: '500' },
-  label: { fontWeight: '600' },
   strike: { textDecorationLine: 'line-through' },
-  stat: { fontWeight: '900' },
   stats: { flexDirection: 'row', flexWrap: 'wrap' },
   gridRow: { flexDirection: 'row' },
   footer: {
@@ -634,5 +635,4 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mascot: { position: 'absolute', left: 0, bottom: 0, transformOrigin: 'left bottom' },
-  watermark: { fontWeight: '600' },
 });

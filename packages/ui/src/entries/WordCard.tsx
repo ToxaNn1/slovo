@@ -17,7 +17,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
 import { LabelChip } from '../primitives/LabelChip';
-import { blockGap, minTouchTarget, space, typeSize, wordCardControls } from '../tokens';
+import { blockGap, minTouchTarget, space, typeRoles, typeStyle, wordCardControls } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
@@ -67,7 +67,8 @@ export function WordCardBody({
   /** The calligraphic font family the Lemma is set in on the card of the Word of the Day. */
   wordOfTheDayFont: string | undefined;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors, fontFamilies } = tokens;
   const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice, Pronunciation } = edition;
@@ -110,7 +111,7 @@ export function WordCardBody({
             flying={flying}
             text={card.lemma}
             size={lemmaSize}
-            tracking={-0.01}
+            tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
             testID="word-lemma"
             falling={falling}
             accessibilityRole="header"
@@ -122,7 +123,10 @@ export function WordCardBody({
             numberOfLines={card.lemma.includes(' ') ? 2 : 1}
             adjustsFontSizeToFit
             minimumFontScale={0.5}
-            style={[styles.lemma, { color: colors.ink, fontFamily: lemmaFont }]}
+            style={[
+              typeStyle('heroWord', { fontFamilies: { ...fontFamilies, word: lemmaFont } }),
+              { color: colors.ink },
+            ]}
           />
           <RevealDetail step={0}>
             <View style={styles.grammar}>
@@ -130,7 +134,7 @@ export function WordCardBody({
                 testID="word-part-of-speech"
                 accessibilityLabel={grammar('full')}
                 {...voice}
-                style={[styles.partOfSpeech, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('partOfSpeech', tokens), { color: colors.muted }]}
               >
                 {grammar('short')}
               </Text>
@@ -178,7 +182,7 @@ export function WordCardBody({
             accessibilityLabel={withoutStress(card.primaryDefinition)}
             {...voice}
             {...turnActions}
-            style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
           >
             {card.primaryDefinition}
           </Text>
@@ -200,7 +204,7 @@ export function WordCardBody({
                         `${words.length === 1 ? one : many} ${words.join(', ')}`,
                       )}
                       {...voice}
-                      style={[styles.relation, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                      style={[typeStyle('sub', tokens), { color: colors.ink }]}
                     >
                       <Text style={{ color: colors.muted }}>{words.length === 1 ? one : many}</Text>{' '}
                       {words.join(', ')}
@@ -239,10 +243,7 @@ export function WordCardBody({
                 <Text
                   accessibilityElementsHidden
                   importantForAccessibility="no"
-                  style={[
-                    styles.oftenSaidText,
-                    { color: colors.muted, fontFamily: fontFamilies.ui },
-                  ]}
+                  style={[typeStyle('meta', tokens), { color: colors.muted }]}
                 >
                   {strings.oftenSaid}
                 </Text>
@@ -261,8 +262,9 @@ export function WordCardBody({
                   >
                     <Text
                       style={[
-                        styles.oftenSaidForms,
-                        { color: colors.ink, fontFamily: fontFamilies.word },
+                        typeStyle('oftenSaidForm', tokens),
+                        styles.italic,
+                        { color: colors.ink },
                       ]}
                     >
                       {index < card.linkedCorrections.length - 1
@@ -286,7 +288,8 @@ export function WordCardBody({
  * called once it is drawn, and the caller counts that as the history opened.
  */
 function WordHistory({ history, onShown }: { history: string; onShown: (() => void) | undefined }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   useEffect(() => {
     onShown?.();
@@ -296,7 +299,7 @@ function WordHistory({ history, onShown }: { history: string; onShown: (() => vo
       <Text
         accessibilityLabel={withoutStress(history)}
         {...voice}
-        style={[styles.sectionText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('sectionText', tokens), { color: colors.ink }]}
       >
         {history}
       </Text>
@@ -315,7 +318,8 @@ function SynonymRowLine({
   synonymRow: NonNullable<WordCardModel['synonymRow']>;
   onOpen: ((synonymRowId: string) => void) | undefined;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   // The dominant stands out as the link inside the Edition's sentence around it.
   const [before = '', after = ''] = strings.wordCard.synonymRow.split('{dominant}');
@@ -334,14 +338,9 @@ function SynonymRowLine({
       onPress={() => onOpen?.(synonymRowId)}
       style={styles.synonymRow}
     >
-      <Text style={[styles.relation, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+      <Text style={[typeStyle('sub', tokens), { color: colors.muted }]}>
         {before}
-        <Text
-          style={[
-            styles.synonymRowDominant,
-            { color: colors.accent, fontFamily: fontFamilies.word },
-          ]}
-        >
+        <Text style={[typeStyle('linkWord', tokens), { color: colors.accent }]}>
           {dominant.text}
         </Text>
         {after}
@@ -360,7 +359,8 @@ export function ExampleText({
   size: TextSize;
   testID?: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const text = fill(strings.wordCard.example, { text: example.text });
   const author =
@@ -375,11 +375,11 @@ export function ExampleText({
       accessibilityLabel={withoutStress(author === undefined ? text : `${text}, ${author}`)}
       {...voice}
     >
-      <Text style={[styles.example, size, { color: colors.ink, fontFamily: fontFamilies.word }]}>
+      <Text style={[typeStyle('example', tokens), size, styles.italic, { color: colors.ink }]}>
         {text}
       </Text>
       {author === undefined ? null : (
-        <Text style={[styles.author, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+        <Text style={[typeStyle('meta', tokens), styles.author, { color: colors.muted }]}>
           {author}
         </Text>
       )}
@@ -389,11 +389,12 @@ export function ExampleText({
 
 /** "More": the etymology, extra Definitions and further Examples, opened on demand. */
 function Details({ details }: { details: NonNullable<WordCardModel['details']> }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const sizes = useWordTextSizes();
   const [open, setOpen] = useState(false);
-  const bodyText = [sizes.example, { color: colors.ink, fontFamily: fontFamilies.word }];
+  const bodyText = [typeStyle('example', tokens), sizes.example, { color: colors.ink }];
   return (
     <View>
       <Pressable
@@ -407,7 +408,7 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
         }}
         style={styles.moreButton}
       >
-        <Text style={[styles.moreText, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+        <Text style={[typeStyle('textLink', tokens), { color: colors.accent }]}>
           {strings.wordCard.more}
         </Text>
         <Svg
@@ -449,7 +450,7 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
               <Text
                 accessibilityLabel={withoutStress(details.etymology)}
                 {...voice}
-                style={[styles.sectionText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('sectionText', tokens), { color: colors.ink }]}
               >
                 {details.etymology}
               </Text>
@@ -487,15 +488,11 @@ const styles = StyleSheet.create({
   // Over the blocks below it, so the Pronunciation message can open over them.
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], zIndex: 1 },
   headline: { flex: 1, minWidth: 0, gap: space[2] },
-  lemma: { fontWeight: '500' },
   grammar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
-  partOfSpeech: { fontSize: typeSize.partOfSpeech, fontWeight: '500' },
-  example: { fontStyle: 'italic' },
-  author: { marginTop: space[1], fontSize: typeSize.meta, fontWeight: '500' },
+  italic: { fontStyle: 'italic' },
+  author: { marginTop: space[1] },
   relations: { gap: space[1] },
-  relation: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.4 },
   synonymRow: { alignSelf: 'flex-start' },
-  synonymRowDominant: { fontWeight: '500' },
   compactRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -513,13 +510,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: wordCardControls.moreGap,
   },
-  moreText: { fontSize: typeSize.body, fontWeight: '700' },
   chevronOpen: { transform: [{ rotate: '180deg' }] },
   // The details keep the card's gap between blocks.
   details: { gap: blockGap, marginTop: space[4] },
   detailSection: { gap: space[2] },
-  // The text under a section heading: the Word History and the etymology.
-  sectionText: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   oftenSaid: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -534,6 +528,4 @@ const styles = StyleSheet.create({
     alignItems: 'baseline',
     columnGap: space[2],
   },
-  oftenSaidText: { fontSize: typeSize.partOfSpeech, fontWeight: '500' },
-  oftenSaidForms: { fontSize: typeSize.partOfSpeech, fontStyle: 'italic', fontWeight: '400' },
 });

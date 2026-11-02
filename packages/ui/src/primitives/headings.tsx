@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { overlineType, typeSize } from '../tokens';
+import { roleSize, typeRoles, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { WholeWordsText } from './WholeWordsText';
 
@@ -17,7 +17,7 @@ const TITLE_MAX_FONT_SCALE = 1.3;
  * wider than the row (a Collection's) goes in a view that also shrinks.
  */
 export function ScreenTitle({ children }: { children: string }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { voice } = useEdition();
   return (
     <View style={styles.room}>
@@ -26,9 +26,9 @@ export function ScreenTitle({ children }: { children: string }) {
         {...voice}
         maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
         text={children}
-        size={TITLE_SIZE}
-        tracking={0}
-        style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        size={roleSize('screenTitle')}
+        tracking={TITLE_TRACKING}
+        style={[typeStyle('screenTitle', tokens), { color: tokens.colors.ink }]}
       />
     </View>
   );
@@ -42,23 +42,21 @@ export function SectionLabel({
   children: string;
   style?: StyleProp<TextStyle>;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { voice } = useEdition();
   return (
     <Text
       accessibilityRole="header"
       {...voice}
-      style={[styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }, style]}
+      style={[typeStyle('sectionLabel', tokens), { color: tokens.colors.muted }, style]}
     >
       {children}
     </Text>
   );
 }
 
-const TITLE_SIZE = { fontSize: typeSize.screenTitle, lineHeight: typeSize.screenTitle * 1.2 };
+const TITLE_TRACKING = typeRoles.screenTitle.letterSpacing / typeRoles.screenTitle.size;
 
 const styles = StyleSheet.create({
   room: { flexGrow: 1 },
-  title: { fontWeight: '500' },
-  label: overlineType,
 });

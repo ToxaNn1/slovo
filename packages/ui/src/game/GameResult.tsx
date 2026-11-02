@@ -10,9 +10,9 @@ import {
   blockGap,
   halftone,
   resultLayout,
+  roleSize,
   space,
   typeRoles,
-  typeSize,
   typeStyle,
   wedges,
 } from '../tokens';
@@ -25,9 +25,7 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 const NUMBER_MAX_FONT_SCALE = 1.3;
 /** How far they may scale the smaller text, so it never breaks a word. */
 const TEXT_MAX_FONT_SCALE = 1.5;
-/** The title's size, from the design: the screen title's type, larger. */
-const TITLE_SIZE = { fontSize: typeSize.resultTitle, lineHeight: typeSize.resultTitle };
-const TITLE_TRACKING = typeRoles.screenTitle.letterSpacing / typeRoles.screenTitle.size;
+const TITLE_TRACKING = typeRoles.resultTitle.letterSpacing / typeRoles.resultTitle.size;
 
 /**
  * The red panel's ground, across the screen's width: the accent cut by its
@@ -134,7 +132,8 @@ export function GameResult({
   /** The Mascot at the Game's end, drawn for the red panel; none without it. */
   mascot?: ReactNode;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice, count } = useEdition();
   const words = strings.game;
   const { roundsPassed, roundLimit, lives } = game;
@@ -184,18 +183,14 @@ export function GameResult({
           <View accessible {...voice} style={styles.text}>
             <WholeWordsText
               text={title}
-              size={TITLE_SIZE}
+              size={roleSize('resultTitle')}
               tracking={TITLE_TRACKING}
               accessibilityRole="header"
-              style={{
-                color: keyInk,
-                fontFamily: fontFamilies.word,
-                fontWeight: typeRoles.screenTitle.weight,
-              }}
+              style={[typeStyle('resultTitle', tokens), { color: keyInk }]}
             />
             <Text
               maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-              style={[styles.line, { color: keyInk, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('resultLine', tokens), { color: keyInk }]}
             >
               {line}
             </Text>
@@ -278,7 +273,6 @@ const styles = StyleSheet.create({
     paddingBottom: resultLayout.panelFootBottom,
   },
   text: { flex: 1, gap: space[2] - 2 },
-  line: { fontSize: typeSize.button, fontWeight: '700' },
   body: { paddingHorizontal: space[5], gap: blockGap },
   numbers: { flexDirection: 'row', flexWrap: 'wrap', gap: resultLayout.numbersGap },
   number: {

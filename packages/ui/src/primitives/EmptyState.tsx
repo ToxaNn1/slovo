@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { EmptyStateIllustration } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from './Button';
-import { blockGap, emptyStatePaddingTop, space, typeSize } from '../tokens';
+import { blockGap, emptyStatePaddingTop, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The width of the empty-state illustration (Decor slot 4), within the design's 90–120. */
@@ -33,20 +33,21 @@ export function EmptyState({
   mascot?: ReactNode;
   testID?: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <View testID={testID} style={styles.state}>
       {mascot ?? <EmptyStateIllustration width={ILLUSTRATION_WIDTH} />}
       <View accessible accessibilityLabel={`${title}. ${message}`} {...voice} style={styles.text}>
         <Text
-          // A 26 pt title at the largest accessibility sizes would break a word across lines.
+          // A 22 pt title at the largest accessibility sizes would break a word across lines.
           maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
-          style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}
+          style={[typeStyle('emptyTitle', tokens), styles.centered, { color: colors.ink }]}
         >
           {title}
         </Text>
-        <Text style={[styles.message, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+        <Text style={[typeStyle('emptyText', tokens), styles.centered, { color: colors.muted }]}>
           {message}
         </Text>
       </View>
@@ -68,12 +69,6 @@ const styles = StyleSheet.create({
     paddingBottom: space[8],
   },
   text: { alignItems: 'center', gap: blockGap },
-  title: {
-    fontSize: typeSize.sheetTitle,
-    lineHeight: typeSize.sheetTitle * 1.2,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
-  message: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5, textAlign: 'center' },
+  centered: { textAlign: 'center' },
   action: { marginTop: space[1] + 2 },
 });

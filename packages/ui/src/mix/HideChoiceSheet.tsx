@@ -5,7 +5,7 @@ import { BottomSheet } from '../primitives/BottomSheet';
 import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { space, typeSize } from '../tokens';
+import { space, typeStyle } from '../tokens';
 
 /**
  * The hide choice a card's hide button opens: a bottom sheet with a row per
@@ -37,7 +37,8 @@ export function HideChoiceSheet({
   onCancel: () => void;
   testID?: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <BottomSheet visible={visible} onClose={onCancel} testID={testID}>
@@ -61,7 +62,7 @@ export function HideChoiceSheet({
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
                 {...voice}
-                style={[styles.hint, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('sub', tokens), { color: colors.muted }]}
               >
                 {disabledHint}
               </Text>
@@ -81,5 +82,4 @@ export function HideChoiceSheet({
 
 const styles = StyleSheet.create({
   rows: { gap: space[2] },
-  hint: { fontSize: typeSize.body },
 });
