@@ -1,13 +1,15 @@
 # Fonts of the UA Edition
 
-The Edition's own fonts (ADR 0006). The app embeds every font file in this folder at build time, with the Core's Literata and Manrope from `packages/ui/assets/fonts/` (see `apps/mobile/app.config.ts`), so text never waits for the network. Changing a font needs a new development build.
+The Edition's own fonts (ADR 0006, 0070). The app embeds every font file in this folder at build time, with the Core's own from `packages/ui/assets/fonts/` (see `apps/mobile/app.config.ts`), so text never waits for the network. Changing a font needs a new development build.
 
-| Family | Weights | Used for                              |
-| ------ | ------- | ------------------------------------- |
-| Kurale | 400     | The Lemma on the Word of the Day card |
+| Family    | Weights            | Used for                                                                                  |
+| --------- | ------------------ | ----------------------------------------------------------------------------------------- |
+| Unbounded | 400, 600, 800, 900 | The word family of `tokens.json`: the Word, shout, headings, buttons; the Word of the Day |
+| Onest     | 400, 500, 600, 700 | The UI family of `tokens.json`: reading text and meta                                     |
+| Kurale    | 400                | Nothing since Клин 2.0; it leaves with the old design                                     |
 
-On iOS a font is selected by its PostScript name, which is also its file name here without `.ttf`: `Kurale-Regular`.
+On iOS a font is selected by its PostScript name, which is also its file name here without `.ttf`: `Unbounded-Regular`, `Unbounded-SemiBold`, `Unbounded-ExtraBold`, `Unbounded-Black`, `Onest-Regular`, `Onest-Medium`, `Onest-SemiBold` and `Onest-Bold`, so keep the names: the Edition check also finds a family's files by them.
 
-`wordOfTheDayFont` in `edition.json` names the font file that sets the Lemma on the Word of the Day card, one of this folder's: `Kurale-Regular.ttf`, a calligraphic face with ґ, є, і, ї, the apostrophe and a combining acute that sits over every vowel, `ї` included. The Edition check (`pnpm content check`, `pnpm build:pack`) refuses a font that is not in this folder or has no glyph for a letter of the alphabet, in either case, for the apostrophe or hyphen a Lemma may hold, or for the Stress mark.
+`wordOfTheDayFont` in `edition.json` names the font file that sets the Lemma on the Word of the Day card, one of this folder's: `Unbounded-Black.ttf`. The Edition check (`pnpm content check`, `pnpm build:pack`) refuses a Word of the Day font that is not in this folder, and refuses a family `tokens.json` names when this folder has no file of it. It refuses any of those files that has no glyph for a letter of the alphabet, in either case, or for the apostrophe or hyphen a Lemma may hold, and a Word of the Day font or word family file without the Stress mark. Unbounded and Onest both have ґ, є, і, ї and the combining acute.
 
-`Kurale-Regular.ttf` and `OFL-Kurale.txt` are taken unmodified from `ofl/kurale` in the Google Fonts repository (github.com/google/fonts). Kurale is under the SIL Open Font License 1.1, which allows bundling it with the app: see `OFL-Kurale.txt`.
+The Unbounded and Onest files are the static Google Fonts builds, taken unmodified from `@expo-google-fonts/unbounded` 0.4.1 and `@expo-google-fonts/onest` 0.4.2 and renamed after their PostScript names. `Kurale-Regular.ttf` and `OFL-Kurale.txt` are taken unmodified from `ofl/kurale` in the Google Fonts repository (github.com/google/fonts). All three families are under the SIL Open Font License 1.1, which allows bundling them with the app: see `OFL-Unbounded.txt`, `OFL-Onest.txt` and `OFL-Kurale.txt`.

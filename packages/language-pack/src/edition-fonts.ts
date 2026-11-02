@@ -1,31 +1,59 @@
 import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 
-import type { EditionConfig } from '@slovo/contracts';
+import type { EditionConfig, EditionTokens } from '@slovo/contracts';
 import { STRESS_MARK } from '@slovo/core';
 
 import type { BuildError } from './build-error';
 import { FONTS_DIR } from './edition-folder';
 
 /**
- * Why the Word of the Day font named in the Edition config can't set every
- * Lemma: it is not among the Edition's fonts, is not a font, or has no
- * glyph for a letter of the alphabet, in either case, for the punctuation
- * a Lemma may hold, or for the Stress mark of an Edition that marks Stress.
- * The refusal names every missing character.
+ * Why the Edition's fonts can't set its text (ADR 0035, 0070): the Word of
+ * the Day font named in the Edition config, and every file of the word and
+ * UI families its tokens name. A font must be among the Edition's fonts, be
+ * a font, and have a glyph for every letter of the alphabet, in either case,
+ * and for the punctuation a Lemma may hold. The fonts that set a Lemma, the
+ * Word of the Day font and the word family, also need the Stress mark of an
+ * Edition that marks Stress. A family is found by its files' names, which
+ * are their PostScript names: `Unbounded-Black.ttf` is of the family
+ * `Unbounded`. Each refusal names every missing character.
  */
-export function wordOfTheDayFontErrors(
-  { wordOfTheDayFont: name, locale, languageTraits }: EditionConfig,
+export function editionFontErrors(
+  config: EditionConfig,
+  tokens: EditionTokens | undefined,
   fonts: readonly string[],
 ): BuildError[] {
-  const refuse = (message: string): BuildError[] => [
-    { file: 'edition.json', field: 'wordOfTheDayFont', message },
-  ];
-  const path = fonts.find((font) => basename(font) === name);
-  if (path === undefined) return refuse(`No font file ${name} in ${FONTS_DIR}/`);
-  const shown = `${FONTS_DIR}/${name}`;
+  const errors: BuildError[] = [];
+  const name = config.wordOfTheDayFont;
+  const wordOfTheDayFont = fonts.find((font) => basename(font) === name);
+  const refuseWordOfTheDayFont = (message: string) =>
+    errors.push({ file: 'edition.json', field: 'wordOfTheDayFont', message });
+  if (wordOfTheDayFont === undefined)
+    refuseWordOfTheDayFont(`No font file ${name} in ${FONTS_DIR}/`);
+  else glyphErrors(wordOfTheDayFont, config, true).forEach(refuseWordOfTheDayFont);
+
+  for (const role of ['word', 'ui'] as const) {
+    const family = tokens?.fontFamilies?.[role];
+    if (family === undefined) continue;
+    const refuse = (message: string) =>
+      errors.push({ file: 'tokens.json', field: `fontFamilies.${role}`, message });
+    const prefix = `${family.replaceAll(' ', '')}-`;
+    const files = fonts.filter((font) => basename(font).startsWith(prefix));
+    if (files.length === 0) refuse(`No font file of the family ${family} in ${FONTS_DIR}/`);
+    for (const file of files) glyphErrors(file, config, role === 'word').forEach(refuse);
+  }
+  return errors;
+}
+
+/** Why one font file can't set the Edition's text, as at most one message. */
+function glyphErrors(
+  path: string,
+  { locale, languageTraits }: EditionConfig,
+  setsLemmas: boolean,
+): string[] {
+  const shown = `${FONTS_DIR}/${basename(path)}`;
   const hasGlyph = characterMap(readFileSync(path));
-  if (hasGlyph === undefined) return refuse(`${shown} is not a TrueType or OpenType font`);
+  if (hasGlyph === undefined) return [`${shown} is not a TrueType or OpenType font`];
   const characters = [
     ...languageTraits.alphabet.flatMap((letter) => [letter, letter.toLocaleUpperCase(locale)]),
     ...(languageTraits.lemmaPunctuation ?? []),
@@ -33,9 +61,11 @@ export function wordOfTheDayFontErrors(
   const missing = [...new Set(characters)]
     .filter((shown) => Array.from(shown).some((character) => !hasGlyph(character)))
     .concat(
-      languageTraits.marksStress && !hasGlyph(STRESS_MARK) ? ['the Stress mark (U+0301)'] : [],
+      setsLemmas && languageTraits.marksStress && !hasGlyph(STRESS_MARK)
+        ? ['the Stress mark (U+0301)']
+        : [],
     );
-  return missing.length === 0 ? [] : refuse(`${shown} has no glyph for ${missing.join(', ')}`);
+  return missing.length === 0 ? [] : [`${shown} has no glyph for ${missing.join(', ')}`];
 }
 
 /**

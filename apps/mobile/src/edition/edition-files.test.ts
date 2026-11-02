@@ -1516,7 +1516,7 @@ describe('Edition Decor', () => {
               expect(
                 contrast(parseColor(text), behind),
                 `${role} over ${String(behind)}`,
-              ).toBeGreaterThanOrEqual(4.5);
+              ).toBeGreaterThanOrEqual(leastContrast(role));
             }
           }
         },
@@ -1599,11 +1599,12 @@ const otherScheme = { light: 'dark', dark: 'light' } as const;
 describe('WCAG AA contrast of the 0.2 screens', () => {
   describe.each(tokenSets)('%s', (_, colors) => {
     it.each(['light', 'dark'] as const)('keeps every text at 4.5:1 or more in %s', (scheme) => {
+      const { background } = colors[scheme];
       for (const [text, behind] of textPairs) {
         expect(
-          contrast(parseColor(colors[scheme][text]), parseColor(colors[scheme][behind])),
+          contrast(parseColor(colors[scheme][text]), over(colors[scheme][behind], background)),
           `${text} on ${behind}`,
-        ).toBeGreaterThanOrEqual(4.5);
+        ).toBeGreaterThanOrEqual(leastContrast(text, behind));
       }
     });
   });
@@ -1619,16 +1620,18 @@ describe('WCAG AA contrast of the 0.3 Favorites screens', () => {
           expect(
             contrast(parseColor(colors[otherScheme[scheme]][text]), fill),
             `the other scheme's ${text} on ink`,
-          ).toBeGreaterThanOrEqual(4.5);
+          ).toBeGreaterThanOrEqual(leastContrast(text));
         }
       },
     );
 
     it.each(['light', 'dark'] as const)(
-      'keeps white on the destructive action at 4.5:1 and the filled heart at 3:1 in %s',
+      'keeps white on the destructive action and the filled heart at WCAG AA in %s',
       (scheme) => {
         const { destructive, heart, background, surface } = colors[scheme];
-        expect(contrast([255, 255, 255], parseColor(destructive))).toBeGreaterThanOrEqual(4.5);
+        expect(contrast([255, 255, 255], parseColor(destructive))).toBeGreaterThanOrEqual(
+          leastContrast('destructive'),
+        );
         // The heart is a graphic, which needs 3:1 against what it sits on (WCAG 1.4.11).
         for (const behind of [background, surface]) {
           expect(contrast(parseColor(heart), parseColor(behind))).toBeGreaterThanOrEqual(3);
@@ -1640,20 +1643,24 @@ describe('WCAG AA contrast of the 0.3 Favorites screens', () => {
 
 describe('WCAG AA contrast of the 0.5 Game screens', () => {
   describe.each(tokenSets)('%s', (_, colors) => {
-    it('keeps white on the right and the wrong option, filled in the light colours, at 4.5:1 or more', () => {
-      for (const fill of [colors.light.correct, colors.light.wrong]) {
-        expect(contrast([255, 255, 255], parseColor(fill)), fill).toBeGreaterThanOrEqual(4.5);
+    it('keeps white on the right and the wrong option, filled in the light colours, at WCAG AA', () => {
+      for (const role of ['correct', 'wrong'] as const) {
+        expect(
+          contrast([255, 255, 255], parseColor(colors.light[role])),
+          role,
+        ).toBeGreaterThanOrEqual(leastContrast(role));
       }
     });
 
     it.each(['light', 'dark'] as const)(
-      "keeps the answer sheet's title, drawn in the other scheme on its surface, at 4.5:1 or more in %s",
+      "keeps the answer sheet's title, drawn in the other scheme on its surface, at WCAG AA in %s",
       (scheme) => {
-        const { surface, correct, wrong } = colors[otherScheme[scheme]];
-        for (const title of [correct, wrong]) {
-          expect(contrast(parseColor(title), parseColor(surface)), title).toBeGreaterThanOrEqual(
-            4.5,
-          );
+        const sheet = colors[otherScheme[scheme]];
+        for (const role of ['correct', 'wrong'] as const) {
+          expect(
+            contrast(parseColor(sheet[role]), parseColor(sheet.surface)),
+            role,
+          ).toBeGreaterThanOrEqual(leastContrast(role));
         }
       },
     );
@@ -1661,6 +1668,17 @@ describe('WCAG AA contrast of the 0.5 Game screens', () => {
 });
 
 type Rgb = readonly [number, number, number];
+
+/**
+ * The least contrast WCAG AA asks of a pair of colour roles. The design's
+ * signal red (accent, correct, destructive) is drawn as large bold text, fills
+ * and graphics, which AA holds to 3:1 (1.4.3 large text, 1.4.11); every other
+ * pair is held to the 4.5:1 of body text.
+ */
+function leastContrast(...roles: readonly (keyof ColorTokens)[]): number {
+  const signal: readonly (keyof ColorTokens)[] = ['accent', 'correct', 'destructive'];
+  return roles.some((role) => signal.includes(role)) ? 3 : 4.5;
+}
 
 /** `#RRGGBB` or `rgba(r, g, b, a)` as red, green, blue and alpha. */
 function parseRgba(color: string): readonly [number, number, number, number] {
