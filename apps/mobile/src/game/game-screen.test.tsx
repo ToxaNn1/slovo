@@ -1109,11 +1109,11 @@ describe('the Game screen', () => {
       expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
     });
     expect(kinds).toEqual(new Set(['word', 'correction']));
-    expect(screen.getByTestId('game-result-rounds')).toHaveTextContent(/^11 ?раунд/);
+    expect(screen.getByTestId('game-result-rounds')).toHaveTextContent(/^раунд\S* ?11$/);
     expect(screen.getByTestId('game-result-rounds').props['accessibilityLabel']).toBe(
       'Пройдено раундів: 11',
     );
-    expect(screen.getByTestId('game-result-best')).toHaveTextContent(/^11/);
+    expect(screen.getByTestId('game-result-best')).toHaveTextContent(/11$/);
     // A Game with no Life left offers no widget hint.
     expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
   });
