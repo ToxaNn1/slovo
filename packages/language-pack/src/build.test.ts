@@ -2079,6 +2079,106 @@ describe('the Word of the Day font', () => {
   });
 });
 
+describe('the fonts of the word and UI families', () => {
+  const letters = 'абвгґдеєжзиіїйклмнопрстуфхцчшщьюя';
+  const stressMark = '́';
+  const everyCharacter = `${letters}${letters.toLocaleUpperCase('uk')}'-${stressMark}`;
+
+  /** A copy of the valid fixture whose tokens name the Display and Sans families, with these files. */
+  function withFamilies(files: Readonly<Record<string, Buffer>>): string {
+    const editionDir = copyFixture('valid');
+    for (const [name, font] of Object.entries(files)) {
+      writeFileSync(join(editionDir, 'assets/fonts', name), font);
+    }
+    writeFileSync(
+      join(editionDir, 'tokens.json'),
+      JSON.stringify({ fontFamilies: { word: 'Display', ui: 'Sans' } }),
+    );
+    return editionDir;
+  }
+
+  const familyErrorsOf = (editionDir: string) => {
+    const result = checkLanguagePack({ editionDir });
+    return (result.ok ? [] : result.errors).filter(({ file }) => file === 'tokens.json');
+  };
+
+  it('passes when every file of both families sets the alphabet, and the word family the Stress mark', () => {
+    const editionDir = withFamilies({
+      'Display-Regular.ttf': fontWith(everyCharacter),
+      'Display-Black.ttf': fontWith(everyCharacter),
+      'Sans-Regular.ttf': fontWith(everyCharacter.replace(stressMark, '')),
+    });
+
+    expect(familyErrorsOf(editionDir)).toEqual([]);
+  });
+
+  it('refuses a file of the word family without «ї», naming the file and the letter', () => {
+    const editionDir = withFamilies({
+      'Display-Regular.ttf': fontWith(everyCharacter),
+      'Display-Black.ttf': fontWith(everyCharacter.replace('ї', '')),
+      'Sans-Regular.ttf': fontWith(everyCharacter),
+    });
+
+    expect(familyErrorsOf(editionDir)).toEqual([
+      {
+        file: 'tokens.json',
+        field: 'fontFamilies.word',
+        message: 'assets/fonts/Display-Black.ttf has no glyph for ї',
+      },
+    ]);
+  });
+
+  it('refuses a word family without the Stress mark', () => {
+    const editionDir = withFamilies({
+      'Display-Regular.ttf': fontWith(everyCharacter.replace(stressMark, '')),
+      'Sans-Regular.ttf': fontWith(everyCharacter),
+    });
+
+    expect(familyErrorsOf(editionDir)).toEqual([
+      {
+        file: 'tokens.json',
+        field: 'fontFamilies.word',
+        message: 'assets/fonts/Display-Regular.ttf has no glyph for the Stress mark (U+0301)',
+      },
+    ]);
+  });
+
+  it('refuses a family the Edition brings no file of', () => {
+    const editionDir = withFamilies({ 'Display-Regular.ttf': fontWith(everyCharacter) });
+
+    expect(familyErrorsOf(editionDir)).toEqual([
+      {
+        file: 'tokens.json',
+        field: 'fontFamilies.ui',
+        message: 'No font file of the family Sans in assets/fonts/',
+      },
+    ]);
+  });
+
+  it('passes the Ukrainian Edition: Unbounded and Onest set its alphabet', () => {
+    const ukFonts = fileURLToPath(new URL('../../../editions/uk/assets/fonts', import.meta.url));
+    const files = Object.fromEntries(
+      [
+        'Unbounded-Regular',
+        'Unbounded-SemiBold',
+        'Unbounded-ExtraBold',
+        'Unbounded-Black',
+        'Onest-Regular',
+        'Onest-Medium',
+        'Onest-SemiBold',
+        'Onest-Bold',
+      ].map((name) => [`${name}.ttf`, readFileSync(join(ukFonts, `${name}.ttf`))]),
+    );
+    const editionDir = withFamilies(files);
+    writeFileSync(
+      join(editionDir, 'tokens.json'),
+      JSON.stringify({ fontFamilies: { word: 'Unbounded', ui: 'Onest' } }),
+    );
+
+    expect(familyErrorsOf(editionDir)).toEqual([]);
+  });
+});
+
 describe('the id registry', () => {
   const registryOf = (editionDir: string) =>
     JSON.parse(readFileSync(join(editionDir, 'content/ids.json'), 'utf8')) as string[];
