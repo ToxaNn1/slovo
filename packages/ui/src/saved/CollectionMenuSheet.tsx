@@ -1,7 +1,7 @@
 import { StyleSheet, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { Button } from '../primitives/Button';
 import { space } from '../tokens';
 
 /**
@@ -44,7 +44,8 @@ export function CollectionMenuSheet({
     <BottomSheet visible={visible} onClose={onCancel} onDismissed={onDismissed} testID={testID}>
       <View style={styles.rows}>
         {share !== undefined && (
-          <SecondaryButton
+          <Button
+            variant="neutral"
             label={share.label}
             onPress={share.onPress}
             disabled={share.disabled}
@@ -52,14 +53,19 @@ export function CollectionMenuSheet({
             testID={`${testID}-share`}
           />
         )}
-        <SecondaryButton label={copy.rename} onPress={onRename} testID={`${testID}-rename`} />
-        <SecondaryButton
-          label={copy.delete}
-          onPress={onDelete}
-          destructive
-          testID={`${testID}-delete`}
+        <Button
+          variant="neutral"
+          label={copy.rename}
+          onPress={onRename}
+          testID={`${testID}-rename`}
         />
-        <SecondaryButton label={copy.cancel} onPress={onCancel} testID={`${testID}-cancel`} />
+        <Button label={copy.delete} onPress={onDelete} testID={`${testID}-delete`} />
+        <Button
+          variant="neutral"
+          label={copy.cancel}
+          onPress={onCancel}
+          testID={`${testID}-cancel`}
+        />
       </View>
     </BottomSheet>
   );

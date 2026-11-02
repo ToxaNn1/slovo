@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { space, typeSize } from '../tokens';
@@ -44,7 +44,8 @@ export function HideChoiceSheet({
       <View style={styles.rows}>
         {options.map(({ key, label, disabledHint }) => (
           <Fragment key={key}>
-            <SecondaryButton
+            <Button
+              variant="neutral"
               label={label}
               disabled={disabledHint !== undefined}
               accessibilityHint={disabledHint}
@@ -67,7 +68,12 @@ export function HideChoiceSheet({
             )}
           </Fragment>
         ))}
-        <SecondaryButton label={cancelLabel} onPress={onCancel} testID={`${testID}-cancel`} />
+        <Button
+          variant="neutral"
+          label={cancelLabel}
+          onPress={onCancel}
+          testID={`${testID}-cancel`}
+        />
       </View>
     </BottomSheet>
   );

@@ -1,7 +1,7 @@
 import { ScrollView, StyleSheet } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
-import { PrimaryButton } from '../primitives/PrimaryButton';
+import { Button } from '../primitives/Button';
 import { SheetTitle } from '../primitives/SheetParts';
 import { space } from '../tokens';
 import { WidgetGuide } from './WidgetGuide';
@@ -32,7 +32,7 @@ export function WidgetGuideSheet({
         <SheetTitle>{title}</SheetTitle>
         <WidgetGuide {...guide} testID={testID} />
       </ScrollView>
-      <PrimaryButton testID={`${testID}-close`} label={closeLabel} onPress={onClose} />
+      <Button testID={`${testID}-close`} label={closeLabel} onPress={onClose} />
     </BottomSheet>
   );
 }

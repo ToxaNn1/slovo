@@ -410,9 +410,6 @@ export const emptyStatePaddingTop = 80;
 /** The padding between the segmented control's track and its segments. */
 export const segmentedPadding = 3;
 
-/** The corner radius of an outlined button, from the design; fixed like the toast's, not an Edition token. */
-export const outlineButtonRadius = 6;
-
 /** The drawing of a slider on a row that is not available yet: track, fill and thumb. */
 export const sliderDrawing = {
   trackHeight: 4,
