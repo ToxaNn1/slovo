@@ -15,6 +15,22 @@ function fillAt(index: number): Fill {
 }
 
 /**
+ * The paint of the Collection at a place among the Collections: its ground, the
+ * ink of its text and the colour of its mark. The Saved overview's cards and the
+ * Collections screen's rows take it in turn: red, ink, then sunken.
+ */
+export function useCollectionPaint(index: number): { ground: string; ink: string; mark: string } {
+  const { colors, colorScheme } = useTokens();
+  // The design's dark ink, the same in both Themes: the light ink, the dark ground.
+  const darkInk = colorScheme === 'light' ? colors.ink : colors.background;
+  return {
+    accent: { ground: colors.accent, ink: darkInk, mark: darkInk },
+    ink: { ground: colors.ink, ink: colors.background, mark: colors.accent },
+    sunken: { ground: colors.surfaceSunken, ink: colors.ink, mark: colors.accent },
+  }[fillAt(index)];
+}
+
+/**
  * A Collection's card on the Saved overview: its mark, its name in two lines at
  * most and how many Entries it holds. The cards take their fill in turn by
  * their place, red, ink, then sunken, and their mark in turn too. A tap opens
@@ -38,15 +54,9 @@ export function CollectionCard({
   onPress: () => void;
   testID?: string;
 }) {
-  const { colors, colorScheme, fontFamilies, radii } = useTokens();
+  const { fontFamilies, radii } = useTokens();
   const { voice } = useEdition();
-  // The design's dark ink, the same in both Themes: the light ink, the dark ground.
-  const darkInk = colorScheme === 'light' ? colors.ink : colors.background;
-  const paint = {
-    accent: { ground: colors.accent, ink: darkInk, mark: darkInk },
-    ink: { ground: colors.ink, ink: colors.background, mark: colors.accent },
-    sunken: { ground: colors.surfaceSunken, ink: colors.ink, mark: colors.accent },
-  }[fillAt(index)];
+  const paint = useCollectionPaint(index);
   const mark = collectionMarks[index % collectionMarks.length] ?? collectionMarks[0];
   return (
     <Pressable

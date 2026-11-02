@@ -428,6 +428,8 @@ export const typeSize = {
   collectionLemmas: 22,
   /** A line of a card's list, a Collection's name in a sheet, a name field. */
   listItem: 18,
+  /** A recent query of Search. */
+  recentQuery: 16,
   /** A count or a refusal beside a name; also the onboarding sample notification's body, a row's subtitle, a swipe action's label and a note under a button. */
   caption: 14,
   /** What goes on the right of a card's row, such as a relative time; also the Round's progress and tags, an Example's author, a notification's app name and time. */
@@ -488,8 +490,6 @@ export const fontSizeSteps: Readonly<
 export const cardSpace = {
   /** Between the blocks of a card of the Saved overview, and between its cards. */
   gap: 14,
-  /** Over and under the content of the Favorites card (the design's 22, between the 4-pt steps). */
-  primaryPaddingVertical: 22,
   /** Around the content of a Collection's row and of the field that names one. */
   collectionPadding: 18,
 } as const;
