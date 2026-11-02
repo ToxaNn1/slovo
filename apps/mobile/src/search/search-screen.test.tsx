@@ -197,6 +197,7 @@ describe('the Search screen', () => {
     expect(screen.getByTestId('search-recent-0')).toHaveAccessibleName('гре');
     expect(screen.getByTestId('search-recent-1')).toHaveAccessibleName('сум');
     expect(screen.getByTestId('search-recent-clear')).toHaveTextContent(strings.clear);
+    expect(screen.getByRole('header', { name: strings.recent })).toBeOnTheScreen();
 
     await type('сум');
     expect(screen.queryByTestId('search-recent-0')).not.toBeOnTheScreen();

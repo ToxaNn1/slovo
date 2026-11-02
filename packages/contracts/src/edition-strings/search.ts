@@ -7,6 +7,8 @@ import { templateOf } from './shared';
 export const SearchStringsSchema = z.strictObject({
   /** The screen title and the magnifier's VoiceOver label. */
   title: TextSchema,
+  /** The small capitals over the recent queries. */
+  recent: TextSchema,
   /** Clears the recent queries. */
   clear: TextSchema,
   /** The heading of each group of results. */

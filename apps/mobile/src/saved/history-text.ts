@@ -61,17 +61,6 @@ export function historyText({
       return dateText(date, dates.months, strings.days);
     },
 
-    /**
-     * What VoiceOver reads for the Saved card: the name and the count in full,
-     * then each latest row with how long ago it was Seen in full words.
-     */
-    cardLabel(total: number, rows: readonly { title: string; spoken: string }[]): string {
-      return [
-        fill(strings.cardLabel, { count: count(strings.count, total) }),
-        ...rows.map(({ title, spoken }) => `${title}, ${spoken}`),
-      ].join('. ');
-    },
-
     /** «щойно», «5 хв тому», «сьогодні, 09:02»; VoiceOver gets «5 хвилин тому» in full. */
     relative(time: RelativeTime): RelativeText {
       const { relative } = strings;
