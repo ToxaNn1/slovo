@@ -157,11 +157,17 @@ function svgPaint(attribute: 'fill' | 'stroke', color: string, opacity = 1): str
 
 /**
  * The Mascot as the medium widget draws it on its red wedge, as an SVG
- * document: the waiting state of the design's boards, in the on-red variant
+ * document, waiting or, once the Word of the Day is Seen, asleep with its
+ * sleep marks, as the design's boards draw it, in the on-red variant
  * the app draws in one Theme (ADR 0070): the body in the on-accent colour, its
  * ink and accent in the light Theme's ink, which the design keeps on red.
  */
-function mascotSvg(mascot: MascotFigure, colors: ColorTokens, inkOnRed: string): string {
+function mascotSvg(
+  mascot: MascotFigure,
+  state: 'waits' | 'sleeps',
+  colors: ColorTokens,
+  inkOnRed: string,
+): string {
   const paints = { body: colors.onAccent, ink: inkOnRed, accent: inkOnRed };
   const paintOf = (paint: string) =>
     paint === 'body' || paint === 'ink' || paint === 'accent' ? paints[paint] : paint;
@@ -171,7 +177,13 @@ function mascotSvg(mascot: MascotFigure, colors: ColorTokens, inkOnRed: string):
       : `<path d="${shape.path}" fill="none" ${svgPaint('stroke', paintOf(shape.stroke), shape.opacity)} stroke-width="${String(shape.width)}" stroke-linecap="round" stroke-linejoin="round"/>`;
   const { width, height } = mascot;
   const size = `width="${String(width)}" height="${String(height)}" viewBox="0 0 ${String(width)} ${String(height)}"`;
-  const shapes = [...mascot.figure, ...mascot.shine, ...mascot.eyes.waits, ...mascot.hat];
+  const shapes = [
+    ...mascot.figure,
+    ...mascot.shine,
+    ...mascot.eyes[state],
+    ...mascot.hat,
+    ...(state === 'sleeps' ? mascot.sleepMarks : []),
+  ];
   return `<svg xmlns="http://www.w3.org/2000/svg" ${size}>${shapes.map(path).join('')}</svg>\n`;
 }
 
@@ -211,19 +223,26 @@ export function widgetExtensionFiles(edition: WidgetEdition): Map<string, string
 
   if (mascot !== undefined) {
     const { light, dark } = tokens.colors;
-    files.set(
-      `${assets}/mascot.imageset/Contents.json`,
-      asJson({
-        images: [
-          { idiom: 'universal', filename: 'mascot-light.svg' },
-          { idiom: 'universal', filename: 'mascot-dark.svg', appearances: DARK },
-        ],
-        info: ASSET_INFO,
-        properties: { 'preserves-vector-representation': true },
-      }),
-    );
-    files.set(`${assets}/mascot.imageset/mascot-light.svg`, mascotSvg(mascot, light, light.ink));
-    files.set(`${assets}/mascot.imageset/mascot-dark.svg`, mascotSvg(mascot, dark, light.ink));
+    // The waiting Mascot as `mascot`, the sleeping one, for a Seen Word of the Day, as `mascotSleeps`.
+    for (const [name, state] of [
+      ['mascot', 'waits'],
+      ['mascotSleeps', 'sleeps'],
+    ] as const) {
+      files.set(
+        `${assets}/${name}.imageset/Contents.json`,
+        asJson({
+          images: [
+            { idiom: 'universal', filename: `${name}-light.svg` },
+            { idiom: 'universal', filename: `${name}-dark.svg`, appearances: DARK },
+          ],
+          info: ASSET_INFO,
+          properties: { 'preserves-vector-representation': true },
+        }),
+      );
+      const svg = (colors: ColorTokens) => mascotSvg(mascot, state, colors, light.ink);
+      files.set(`${assets}/${name}.imageset/${name}-light.svg`, svg(light));
+      files.set(`${assets}/${name}.imageset/${name}-dark.svg`, svg(dark));
+    }
   }
 
   files.set(

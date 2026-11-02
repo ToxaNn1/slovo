@@ -120,7 +120,7 @@ struct EntryView: View {
   /// The mark behind the content, from the boards: in small the headline's
   /// first letter, 200/170 of the widget's height, out past the bottom right
   /// corner; in medium the wedge, 130/364 of the width, slanted on its left,
-  /// with the Edition's Mascot, waiting, at its bottom right, if it has one.
+  /// with the Edition's Mascot at its bottom right, if it has one.
   @ViewBuilder private var mark: some View {
     if isSmall {
       if let letter = moment.entry?.headline.first {
@@ -140,8 +140,10 @@ struct EntryView: View {
           Wedge()
             .fill(color("mark"))
             .frame(width: geometry.size.width * 130 / 364)
-          if UIImage(named: "mascot") != nil {
-            Image("mascot")
+          // Asleep once today's Word of the Day is Seen, as the design's board draws it.
+          let mascot = moment.wordOfTheDaySeen ? "mascotSleeps" : "mascot"
+          if UIImage(named: mascot) != nil {
+            Image(mascot)
               .resizable()
               .scaledToFit()
               .frame(width: geometry.size.width * 72 / 364)

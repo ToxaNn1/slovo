@@ -167,15 +167,21 @@ describe("the widget extension's Edition files", () => {
     }
   });
 
-  it('draws only the waiting eyes, with no rays, confetti or sleep marks', () => {
+  it.each([
+    ['mascot', 'waits'],
+    ['mascotSleeps', 'sleeps'],
+  ] as const)('draws the %s image in the %s state alone', (name, state) => {
     const mascot = loadDecor(ukrainianFolder.read('decor')).mascot;
     if (mascot === undefined) throw new Error('The UA Edition has a Mascot');
-    const svg = text(files, 'Generated/Assets.xcassets/mascot.imageset/mascot-light.svg');
+    const other = state === 'waits' ? 'sleeps' : 'waits';
+    const svg = text(files, `Generated/Assets.xcassets/${name}.imageset/${name}-dark.svg`);
+    const has = (shapes: readonly { path: string }[]) =>
+      shapes.every((shape) => svg.includes(`d="${shape.path}"`));
 
-    for (const shape of [...mascot.figure, ...mascot.eyes.waits, ...mascot.hat])
-      expect(svg).toContain(`d="${shape.path}"`);
-    for (const shape of [...mascot.eyes.sleeps, ...mascot.rays, ...mascot.sleepMarks])
-      expect(svg).not.toContain(`d="${shape.path}"`);
+    expect(has([...mascot.figure, ...mascot.eyes[state], ...mascot.hat])).toBe(true);
+    expect(has(mascot.eyes[other])).toBe(false);
+    expect(has(mascot.sleepMarks)).toBe(state === 'sleeps');
+    expect(has(mascot.rays)).toBe(false);
   });
 
   it('writes no Mascot for an Edition without one', () => {
