@@ -29,8 +29,8 @@ import {
   motion,
   onboardingLayout,
   space,
+  roleSize,
   typeRoles,
-  typeSize,
   typeStyle,
   wedges,
 } from '../tokens';
@@ -46,8 +46,8 @@ const SLIDE_DISTANCE = 40;
  */
 export const HEADLINE_MAX_FONT_SCALE = 1.3;
 export const TEXT_MAX_FONT_SCALE = 1.5;
-/** The design's hero Lemma, `Lemma, hero`, 76 / 1. */
-export const HERO_LEMMA = { fontSize: typeSize.heroLemma, lineHeight: typeSize.heroLemma } as const;
+/** The design's hero Lemma, `Lemma, hero`: the size of its type role. */
+export const HERO_LEMMA = roleSize('heroLemma');
 /**
  * One step of the onboarding over the whole screen, as the design draws it:
  * the red halftone top cut by a wedge, with the step's shout word, the
@@ -160,7 +160,7 @@ export function OnboardingStep({
           >
             <Text
               maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
-              style={[styles.skipLabel, { color: inkOnRed, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('quietAction', { fontFamilies }), { color: inkOnRed }]}
             >
               {onboarding.skip}
             </Text>
@@ -205,7 +205,8 @@ export function OnboardingStep({
 
 /** The quiet «Пізніше» under a step's main button, which goes on without it. */
 export function LaterButton({ testID, onPress }: { testID: string; onPress: () => void }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice, strings } = useEdition();
   return (
     <Pressable
@@ -217,7 +218,7 @@ export function LaterButton({ testID, onPress }: { testID: string; onPress: () =
     >
       <Text
         maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
-        style={[styles.laterLabel, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('quietAction', tokens), { color: colors.muted }]}
       >
         {strings.onboarding.notifications.later}
       </Text>
@@ -234,12 +235,10 @@ export const stepStyles = StyleSheet.create({
     fontSize: typeRoles.stepTitle.size,
     lineHeight: typeRoles.stepTitle.lineHeight,
     letterSpacing: typeRoles.stepTitle.letterSpacing,
-    fontWeight: typeRoles.stepTitle.weight,
   },
   subtitle: {
     fontSize: typeRoles.stepText.size,
     lineHeight: typeRoles.stepText.lineHeight,
-    fontWeight: typeRoles.stepText.weight,
   },
 });
 
@@ -258,7 +257,6 @@ const styles = StyleSheet.create({
   },
   topRow: { paddingHorizontal: side, flexDirection: 'row', justifyContent: 'flex-end' },
   skip: { minHeight: minTouchTarget, minWidth: minTouchTarget, justifyContent: 'center' },
-  skipLabel: { fontSize: typeSize.body, fontWeight: '600' },
   scroll: { flex: 1 },
   content: {
     flexGrow: 1,
@@ -275,5 +273,4 @@ const styles = StyleSheet.create({
   dots: { flexDirection: 'row', alignItems: 'center', gap: dot.gap },
   dot: { height: dot.height, transform: [{ skewX: dot.skew }] },
   later: { minHeight: minTouchTarget, alignItems: 'center', justifyContent: 'center' },
-  laterLabel: { fontSize: typeSize.button, fontWeight: '600' },
 });

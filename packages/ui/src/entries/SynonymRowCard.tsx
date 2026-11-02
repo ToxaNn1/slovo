@@ -11,7 +11,7 @@ import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
-import { space, typeSize } from '../tokens';
+import { space, typeRoles, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -43,7 +43,8 @@ export function SynonymRowCardBody({
   /** Opens the Word a linked member names, Hidden or out of the Mix alike. */
   onOpenWord: ((wordId: string) => void) | undefined;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice } = edition;
@@ -76,9 +77,9 @@ export function SynonymRowCardBody({
           flying={flying}
           text={shown.card.dominant.text}
           size={lemmaSize}
-          tracking={-0.01}
+          tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
           testID="synonym-row-dominant"
-          style={[styles.dominant, { color: colors.ink, fontFamily: fontFamilies.word }]}
+          style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
         />
         <View style={styles.chip}>
           <LabelChip
@@ -101,7 +102,7 @@ export function SynonymRowCardBody({
             accessibilityLabel={withoutStress(shown.card.meaning)}
             {...voice}
             {...turnActions}
-            style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
           >
             {shown.card.meaning}
           </Text>
@@ -127,7 +128,7 @@ export function SynonymRowCardBody({
             <Text
               testID="synonym-row-source"
               {...voice}
-              style={[styles.source, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('meta', tokens), { color: colors.muted }]}
             >
               {fill(strings.source, { source: shown.card.sourceNames.join(SOURCE_SEPARATOR) })}
             </Text>
@@ -153,7 +154,8 @@ function Member({
   testID: string;
   onOpenWord: ((wordId: string) => void) | undefined;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   const { wordId, shadeNote } = member;
   const spoken = stressLabel(strings.wordCard, member.text, member.stressedVowels);
@@ -161,14 +163,14 @@ function Member({
   const text = (
     <Text
       style={[
+        typeStyle('listWord', tokens),
         size,
-        styles.member,
-        { color: wordId === undefined ? colors.ink : colors.accent, fontFamily: fontFamilies.word },
+        { color: wordId === undefined ? colors.ink : colors.accent },
       ]}
     >
       {member.text}
       {shadeNote === undefined ? null : (
-        <Text style={[styles.shade, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+        <Text style={[typeStyle('shadeNote', tokens), styles.italic, { color: colors.muted }]}>
           {` ${shadeNote}`}
         </Text>
       )}
@@ -199,11 +201,8 @@ const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },
-  dominant: { fontWeight: '500' },
   chip: { flexDirection: 'row' },
   // Members flow along the line and wrap onto the next one, however many and however large.
   members: { flexDirection: 'row', flexWrap: 'wrap', columnGap: space[4], rowGap: space[2] },
-  member: { fontWeight: '500' },
-  shade: { fontSize: typeSize.meta, fontStyle: 'italic', fontWeight: '400' },
-  source: { fontSize: typeSize.meta, lineHeight: typeSize.meta * 1.4 },
+  italic: { fontStyle: 'italic' },
 });

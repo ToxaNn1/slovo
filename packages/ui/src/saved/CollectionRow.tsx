@@ -4,7 +4,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
-import { cardSpace, entryRow, minTouchTarget, overlineType, space, typeSize } from '../tokens';
+import { cardSpace, entryRow, minTouchTarget, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { useCollectionPaint } from './CollectionCard';
 
@@ -43,7 +43,8 @@ export function CollectionRow({
   onPress: () => void;
   testID: string;
 }) {
-  const { fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { radii } = tokens;
   const { voice } = useEdition();
   const paint = useCollectionPaint(index);
   return (
@@ -67,15 +68,19 @@ export function CollectionRow({
           ]}
         >
           <View style={styles.titleLine}>
-            <Text style={[styles.name, { color: paint.ink, fontFamily: fontFamilies.ui }]}>
+            <Text
+              style={[typeStyle('collectionRowName', tokens), styles.name, { color: paint.ink }]}
+            >
               {name}
             </Text>
-            <Text style={[styles.count, { color: paint.ink, fontFamily: fontFamilies.ui }]}>
+            <Text
+              style={[typeStyle('collectionRowCount', tokens), styles.count, { color: paint.ink }]}
+            >
               {count}
             </Text>
           </View>
           {lemmas.length > 0 && (
-            <Text style={[styles.lemmas, { color: paint.ink, fontFamily: fontFamilies.word }]}>
+            <Text style={[typeStyle('collectionLemmas', tokens), { color: paint.ink }]}>
               {lemmas.join(' · ')}
             </Text>
           )}
@@ -124,7 +129,8 @@ export function CollectionNameField({
   onCancel: () => void;
   testID: string;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { voice } = useEdition();
   const [name, setName] = useState(initialName);
   const [refusal, setRefusal] = useState<string>();
@@ -158,7 +164,7 @@ export function CollectionNameField({
       <Text
         accessibilityRole="header"
         {...voice}
-        style={[styles.overline, { color: colors.accent, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('eyebrow', tokens), { color: colors.accent }]}
       >
         {overline}
       </Text>
@@ -187,20 +193,16 @@ export function CollectionNameField({
         spellCheck={false}
         selectionColor={colors.accent}
         style={[
+          typeStyle('fieldText', tokens),
           styles.field,
-          {
-            backgroundColor: colors.surfaceSunken,
-            borderRadius: radii.chip,
-            color: colors.ink,
-            fontFamily: fontFamilies.ui,
-          },
+          { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip, color: colors.ink },
         ]}
       />
       {refusal !== undefined && (
         <Text
           testID={`${testID}-refusal`}
           {...voice}
-          style={[styles.refusal, { color: colors.destructive, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('fieldProblem', tokens), { color: colors.destructive }]}
         >
           {refusal}
         </Text>
@@ -262,9 +264,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     columnGap: space[3],
   },
-  name: { flexShrink: 1, fontSize: typeSize.blockHeading, fontWeight: '700' },
-  count: { flexShrink: 0, fontSize: typeSize.caption, fontWeight: '500' },
-  lemmas: { fontSize: typeSize.collectionLemmas, lineHeight: typeSize.collectionLemmas * 1.3 },
+  name: { flexShrink: 1 },
+  count: { flexShrink: 0 },
   more: {
     minWidth: minTouchTarget,
     alignItems: 'center',
@@ -276,9 +277,7 @@ const styles = StyleSheet.create({
     paddingVertical: space[4],
     gap: space[3],
   },
-  overline: overlineType,
-  field: { minHeight: 52, paddingHorizontal: space[4], fontSize: typeSize.listItem },
-  refusal: { fontSize: typeSize.caption, fontWeight: '500' },
+  field: { minHeight: 52, paddingHorizontal: space[4] },
   add: {
     minHeight: minTouchTarget,
     minWidth: minTouchTarget,

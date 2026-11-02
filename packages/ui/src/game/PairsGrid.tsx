@@ -16,7 +16,7 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { space, typeSize } from '../tokens';
+import { roleSize, space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** A cell's height and corner, the design's pairs tile, above the 44 pt touch target. */
@@ -24,11 +24,8 @@ const CELL_HEIGHT = 70;
 const CELL_RADIUS = 16;
 /** The gap between the columns and between the cells of a column. */
 const CELL_GAP = 12;
-/** A Word's text, Unbounded 800 14. */
-const WORD_SIZE = { fontSize: typeSize.caption, lineHeight: typeSize.caption * 1.15 };
-/** A Definition's text, Onest 600 15, which wraps over as many lines as it needs. */
-const DEFINITION_SIZE = typeSize.body;
-const DEFINITION_LINE_HEIGHT = typeSize.body * 1.25;
+/** A Word's text, at its type role's size. */
+const WORD_SIZE = roleSize('pairsWord');
 /** How far the largest text sizes of iOS may scale a Definition, so a long one stays in the grid. */
 const DEFINITION_MAX_FONT_SCALE = 1.5;
 /** How a right pair pops: from small, past its size, back. */
@@ -81,7 +78,8 @@ export function PairsGrid({
   /** The place of the Word tapped among the Words, then of the Definition among the Definitions. */
   onAnswer: (word: number, definition: number) => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const keyInk = useSchemeColors('light').ink;
   const { strings } = useEdition();
   const [selected, setSelected] = useState<number>();
@@ -115,7 +113,7 @@ export function PairsGrid({
                 text={shown.text}
                 size={WORD_SIZE}
                 tracking={0}
-                style={[styles.word, { color: textColor(look), fontFamily: fontFamilies.word }]}
+                style={[typeStyle('pairsWord', tokens), styles.word, { color: textColor(look) }]}
               />
             </Cell>
           );
@@ -141,7 +139,7 @@ export function PairsGrid({
             >
               <Text
                 maxFontSizeMultiplier={DEFINITION_MAX_FONT_SCALE}
-                style={[styles.definition, { color: textColor(look), fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('pairsDefinition', tokens), { color: textColor(look) }]}
               >
                 {shown}
               </Text>
@@ -248,10 +246,5 @@ const styles = StyleSheet.create({
     paddingVertical: space[2],
   },
   gone: { opacity: 0 },
-  word: { fontWeight: '800', textAlign: 'center' },
-  definition: {
-    fontSize: DEFINITION_SIZE,
-    lineHeight: DEFINITION_LINE_HEIGHT,
-    fontWeight: '600',
-  },
+  word: { textAlign: 'center' },
 });
