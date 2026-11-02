@@ -520,6 +520,9 @@ export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVert
  * size, the gaps between keys and between rows, and how much wider the
  * delete key is than a letter key.
  */
+/** The Daily Crossword's card on the mode screen, from the design: its padding, the gap beside its button, its name's size and the solved mark's size. */
+export const dailyCrosswordCard = { padding: 18, gap: 14, titleSize: 16, solvedSize: 18 } as const;
+
 export const crosswordLayout = {
   cell: 62,
   cellGap: 8,
