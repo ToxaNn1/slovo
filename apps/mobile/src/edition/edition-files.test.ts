@@ -444,6 +444,7 @@ describe('the 0.8.14 strings', () => {
 
   it.each([
     ['settings', 'seasonalDecor'],
+    ['settings', 'reduceMotion'],
     ['settings', 'anonymousStats'],
     ['knowledge', 'communityCounters'],
     ['feedNotices', 'communityWord'],

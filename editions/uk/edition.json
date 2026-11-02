@@ -91,7 +91,8 @@
     "notificationExplainer": true,
     "laterQuestions": true,
     "profile": true,
-    "mascot": true
+    "mascot": true,
+    "reduceMotion": true
   },
   "userSettingDefaults": {
     "theme": "system",

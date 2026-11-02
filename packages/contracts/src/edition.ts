@@ -280,6 +280,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   profile: z.boolean(),
   /** The Mascot: the Edition's silent figure with its short lines (CONTEXT.md, Mascot). */
   mascot: z.boolean(),
+  /** «Менше руху»: the Settings switch that turns every animation into its calmer variant, as the system's Reduce Motion does (ADR 0055). */
+  reduceMotion: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
