@@ -2,7 +2,6 @@ import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, join, relative } from 'node:path';
 
 import type * as EditionFolders from '@slovo/language-pack/edition';
-import type * as UiFonts from '@slovo/ui/fonts';
 import type * as UiTokens from '@slovo/ui/tokens';
 import type * as Core from '@slovo/core';
 import type { ConfigContext, ExpoConfig } from 'expo/config';
@@ -50,7 +49,6 @@ const { readNotificationSound } = tsxRequire(
   './plugins/notification-sound.ts',
   import.meta.url,
 ) as typeof NotificationSound;
-const { coreFonts } = tsxRequire('@slovo/ui/fonts', import.meta.url) as typeof UiFonts;
 const { designTokens } = tsxRequire('@slovo/ui/tokens', import.meta.url) as typeof UiTokens;
 const { writeWidgetExtension } = tsxRequire(
   './plugins/widget-extension.ts',
@@ -127,11 +125,6 @@ function wordOfTheDayFontFamily(edition: EditionFolder): string {
   return family;
 }
 
-/** Every font file the app embeds: the Core's, then the Edition's own (ADR 0006). */
-function appFonts(edition: EditionFolder): string[] {
-  return [...coreFonts(), ...edition.fonts()];
-}
-
 /**
  * What the widget extension takes from the Edition, checked here so a broken
  * Edition stops the config rather than the native build. The files
@@ -159,7 +152,7 @@ function widgetEdition(
     strings: edition.read('strings').widget,
     tokens,
     band: loadDecor(edition.readIfPresent('decor')).divider.band,
-    fontFiles: appFonts(edition).filter((font) => {
+    fontFiles: edition.fonts().filter((font) => {
       const family = readFontFamily(readFileSync(font));
       return family !== undefined && families.has(family);
     }),
@@ -402,8 +395,8 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     plugins: [
       'expo-router',
       'expo-sqlite',
-      // The Core's fonts and the Edition's own, embedded in the native app.
-      ['expo-font', { fonts: appFonts(edition).map((font) => relative(projectRoot, font)) }],
+      // The Edition's fonts, embedded in the native app; the Core brings none (ADR 0006).
+      ['expo-font', { fonts: edition.fonts().map((font) => relative(projectRoot, font)) }],
       ['expo-splash-screen', appSplash(app, projectRoot)],
       ['expo-notifications', { sounds: editionNotificationSounds(edition, projectRoot) }],
       '@react-native-community/datetimepicker',

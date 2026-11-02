@@ -2143,20 +2143,6 @@ describe('the Word of the Day font', () => {
 
     expect(errorsOf(editionDir).filter(({ file }) => file === 'edition.json')).toEqual([]);
   });
-
-  it('reads the character map of a real font: Manrope has Cyrillic but no Stress mark', () => {
-    const manrope = readFileSync(
-      fileURLToPath(new URL('../../ui/assets/fonts/Manrope-Regular.ttf', import.meta.url)),
-    );
-
-    expect(errorsOf(withFont('Manrope-Regular.ttf', manrope))).toEqual([
-      {
-        file: 'edition.json',
-        field: 'wordOfTheDayFont',
-        message: 'assets/fonts/Manrope-Regular.ttf has no glyph for the Stress mark (U+0301)',
-      },
-    ]);
-  });
 });
 
 describe('the fonts of the word and UI families', () => {

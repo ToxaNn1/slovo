@@ -649,7 +649,7 @@ export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
 /** Type sizes of the UI roles; the UI body follows iOS Dynamic Type. */
 export const typeSize = {
   screenTitle: 34,
-  /** An empty state's title (Literata 500); also a Game mode's title. */
+  /** An empty state's title; also a Game mode's title. */
   emptyStateTitle: 28,
   overline: 11,
   /** `Big number`, the Streak. */
@@ -663,11 +663,11 @@ export const typeSize = {
   /** A sheet's title; also a result's number, an empty state's title and the Correction's non-standard form. */
   sheetTitle: 26,
   partOfSpeech: 14,
-  /** `Block heading` (Manrope 700): the name of a card or a Collection, a sheet's text button; also an Example, an onboarding step's subtitle, a Round's sheet title. */
+  /** `Block heading`; the name of a card or a Collection, a sheet's text button; also an Example, an onboarding step's subtitle, a Round's sheet title. */
   blockHeading: 17,
   /** What an Entry's row leads with in a list, and over a sheet (the design's 20–22). */
   rowLemma: 20,
-  /** A Collection row's newest Lemmas (the design's Literata 22). */
+  /** A Collection row's newest Lemmas. */
   collectionLemmas: 22,
   /** A line of a card's list, a Collection's name in a sheet, a name field. */
   listItem: 18,
@@ -679,17 +679,17 @@ export const typeSize = {
   meta: 13,
   /** `Big number`, the count on a card of the Saved overview (the Scale gives 26–30). */
   cardCount: 30,
-  /** The Correction's explanation (Manrope 16 / 1.55); also a result's line and a Game mode's sample. */
+  /** The Correction's explanation; also a result's line and a Game mode's sample. */
   explanation: 16,
   /** A step's wordmark, the hero Definition and the app icon's mark; also an Entry row's title, the count of a Collection or of Favorites, a time and the About description. */
   subhead: 22,
-  /** A Round's option (Literata 500). */
+  /** A Round's option. */
   roundOption: 21,
   /** A Round's prompt. */
   roundPrompt: 25,
   /** The answer on a Round's sheet. */
   roundAnswer: 30,
-  /** The title of an onboarding step (Literata 500). */
+  /** The title of an onboarding step. */
   onboardingTitle: 32,
   /** A small label beside a value: a row's trailing text, the name of a result's number. */
   smallLabel: 12,
@@ -701,7 +701,7 @@ export const typeSize = {
   reviewTitle: 15,
   /** A Round of the Game Review (Onest 600). */
   reviewRow: 16,
-  /** `Lemma, hero`: the onboarding welcome's Lemma (Literata 500, 76 / 1). */
+  /** `Lemma, hero`: the onboarding welcome's Lemma. */
   heroLemma: 76,
 } as const;
 
@@ -1208,8 +1208,7 @@ export const toastElevation = {
 
 /**
  * The widget guide's numbered steps: the square that holds the number, the
- * title's size (Manrope 700, 17 in the design) and the hint's line height as a
- * multiple of its size.
+ * title's size and the hint's line height as a multiple of its size.
  */
 export const guideStep = { badge: 28, badgeRadius: 4, titleSize: 17, hintLeading: 1.4 } as const;
 

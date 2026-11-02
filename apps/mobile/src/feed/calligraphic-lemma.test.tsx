@@ -26,14 +26,14 @@ import { SettingsProvider } from '../settings/settings';
 const { config } = activeEditionFiles;
 
 /** The family app.config.ts reports for the UA Edition's Word of the Day font. */
-const CALLIGRAPHIC = 'Kurale';
+const CALLIGRAPHIC = 'Script';
 
 /** The Word font every other Lemma is set in. */
 const WORD_FONT = editionTokens.fontFamilies.word;
 
 jest.mock('expo-constants', () => ({
   __esModule: true,
-  default: { expoConfig: { extra: { edition: { wordOfTheDayFontFamily: 'Kurale' } } } },
+  default: { expoConfig: { extra: { edition: { wordOfTheDayFontFamily: 'Script' } } } },
 }));
 
 /** The UA Edition in effect, with `calligraphy` as the test sets it. */

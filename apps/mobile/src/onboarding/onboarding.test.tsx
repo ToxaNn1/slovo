@@ -21,7 +21,7 @@ const { onboarding: strings } = editionStrings;
 
 jest.mock('expo-constants', () => ({
   __esModule: true,
-  default: { expoConfig: { extra: { edition: { wordOfTheDayFontFamily: 'Kurale' } } } },
+  default: { expoConfig: { extra: { edition: { wordOfTheDayFontFamily: 'Unbounded' } } } },
 }));
 
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
