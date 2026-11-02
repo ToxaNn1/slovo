@@ -8,9 +8,8 @@ const strings = testStrings({
   splash: { wordmark: 'SLOVO' },
   onboarding: {
     skip: 'Skip',
-    step: 'STEP {step} OF {total}',
     stepLabel: 'Step {step} of {total}',
-    welcome: { start: 'Start', title: 'Rare words', subtitle: 'One a day' },
+    welcome: { shout: 'WORD', start: 'Start', title: 'Rare words', subtitle: 'One a day' },
   },
 });
 

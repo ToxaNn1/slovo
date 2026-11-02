@@ -1,36 +1,47 @@
+import { launchKind, type LaunchKind } from '@slovo/core';
 import { SplashOverlay } from '@slovo/ui';
 import * as SplashScreen from 'expo-splash-screen';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { editionStrings, splashImageWidth } from '../edition/edition';
+import { editionStrings } from '../edition/edition';
+import { useShell } from '../shell-value';
 
 // The native splash stays until the app's own splash is drawn over it.
 void SplashScreen.preventAutoHideAsync();
 
-/** How long the splash stays once the wordmark and tagline are in. */
-const HOLD_MS = 1000;
-
 /**
- * Decor slot 7: takes over from the native splash with the Edition's full
- * splash in the Theme in effect, then fades out to the app.
+ * The design's splash cut over the native splash (ADR 0070): the whole cut on
+ * the first launch, the fast replay on a daily open, then the app. The native
+ * splash stays while the user state says which launch this is; one that fails
+ * to open counts as a daily open, so the splash never holds the app back.
  */
 export function LaunchSplash() {
-  const [visible, setVisible] = useState(true);
+  const { userState } = useShell();
+  const [kind, setKind] = useState<LaunchKind>();
   const [done, setDone] = useState(false);
-  if (done) return null;
+  useEffect(() => {
+    let active = true;
+    void userState
+      .opened()
+      .then(launchKind)
+      .catch((): LaunchKind => 'daily')
+      .then((read) => {
+        if (active) setKind(read);
+      });
+    return () => {
+      active = false;
+    };
+  }, [userState]);
+  if (done || kind === undefined) return null;
   return (
     <SplashOverlay
       wordmark={editionStrings.splash.wordmark}
       tagline={editionStrings.splash.tagline}
-      markWidth={splashImageWidth}
-      visible={visible}
+      kind={kind}
       onShown={() => {
         void SplashScreen.hideAsync();
-        setTimeout(() => {
-          setVisible(false);
-        }, HOLD_MS);
       }}
-      onHidden={() => {
+      onDone={() => {
         setDone(true);
       }}
     />

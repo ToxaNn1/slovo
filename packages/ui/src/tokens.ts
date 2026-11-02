@@ -143,6 +143,16 @@ export const typeRoles = {
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
+  /** The word an onboarding step shouts on its red top. */
+  stepShout: role('word', '900', 168, 151, -8),
+  /** An onboarding step's title. */
+  stepTitle: role('word', '800', 28, 31, -0.5),
+  /** An onboarding step's text under its title. */
+  stepText: role('ui', '400', 16, 23),
+  /** The number on a Daily Goal tile of the onboarding. */
+  goalNumber: role('word', '900', 26, 26),
+  /** The unit under a Daily Goal tile's number. */
+  goalUnit: role('ui', '600', 12, 12),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -321,6 +331,52 @@ export const motion = {
   string,
   { readonly duration: number; readonly easing: Easing; readonly rise?: number }
 >;
+
+/**
+ * The splash cut of the design (`startSplash` in `SlovoApp.dc.html`), on its
+ * 390 × 844 frame, which the splash scales to the screen's width. The wordmark's
+ * letters fly in one after another, the ink band cuts across with the tagline,
+ * the Mascot rolls in shouting, and the app takes over after `hold`. The daily
+ * open runs the same cut at `pace` of the first launch's; under Reduce Motion
+ * the cut is one fade and the app takes over after `reduceMotionHold`.
+ */
+export const splashMotion = {
+  frame: { width: 390, height: 844 },
+  first: { pace: 1, hold: 2050, reduceMotionHold: 800 },
+  daily: { pace: 0.28, hold: 560, reduceMotionHold: 350 },
+  /** Each letter: where it stands, its turn, and its fly in from the screen's middle. */
+  letters: [
+    { x: -40, y: 70, rotate: -4 },
+    { x: 178, y: 110, rotate: 6 },
+    { x: -56, y: 300, rotate: 3 },
+    { x: 190, y: 330, rotate: -7 },
+    { x: 40, y: 520, rotate: -10 },
+  ],
+  letter: {
+    size: 250,
+    letterSpacing: -10,
+    /** The middle of the frame the letters fly from, less the letter's own offset. */
+    from: { x: 90, y: 580 },
+    fromScale: 0.15,
+    fromTurn: -30,
+    duration: 500,
+    delay: 500,
+    stagger: 80,
+    easing: [0.2, 0.9, 0.25, 1.15],
+  },
+  /** The ink band, as fractions of the screen, drawn in from the left. */
+  band: [
+    [0, 0.58],
+    [1, 0.36],
+    [1, 0.52],
+    [0, 0.74],
+  ],
+  cut: { duration: 350, delay: 1250, easing: [0.7, 0, 0.3, 1] },
+  tagline: { size: 15, letterSpacing: 4, turn: -12.5 },
+  mascot: { x: 110, y: 640 },
+  /** The Mascot rolls in from the left, turning as it comes. */
+  roll: { duration: 600, from: -360, turn: -560, easing: [0.25, 0.9, 0.3, 1.1] },
+} as const;
 
 /**
  * A screen's entrance (the design's `slScr` and `slSweep`), in fractions of
@@ -844,6 +900,24 @@ export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as
 
 /** SLOVO ID's mark on the onboarding's sign-in button: its side, corner radius and letter size. */
 export const accountMark = { size: 26, radius: 6, letterSize: 17 } as const;
+
+/**
+ * An onboarding step of the design (`isOb` in `SlovoApp.dc.html`): the red
+ * halftone top cut by `wedges.cut`, its shout word turned and flown in from
+ * the left, the on-red Mascot, the skewed step dots and the Daily Goal tiles.
+ */
+export const onboardingLayout = {
+  heroHeight: 440,
+  shout: { left: -14, top: 96, turn: '-8deg', flyFrom: -120 },
+  /** The Mascot's corner, less its own padding. */
+  mascot: { right: 10, top: 270 },
+  dot: { height: 8, width: 14, currentWidth: 34, gap: 6, skew: '-20deg' },
+  side: 24,
+  contentTop: 6,
+  gap: 14,
+  bottom: 40,
+  goalTile: { height: 78, gap: 10, radius: 16, lineGap: 2 },
+} as const;
 
 /** The width of the rosette (Decor slot 4) between the SLOVO ID step's text and its buttons. */
 export const onboardingRosetteWidth = 120;
