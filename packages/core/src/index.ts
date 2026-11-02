@@ -60,6 +60,7 @@ export { LATER_QUESTIONS, type FeedNotice, type LaterQuestion } from './feed-not
 export { type FirstWeekDay } from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
+  LIFE_LOST_DELAY,
   type CurrentGame,
   type GameTime,
   type GivenAnswer,
@@ -91,8 +92,7 @@ export { buildGameReview, type GameReviewItem } from './game/game-review';
 export { GAME_ROUNDS } from './game/round-plan';
 export { type MoodChoice } from './mood/mood-draw';
 export { type SearchResults } from './search/search';
-export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
-export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';
+export { gameHaptics, type GameChange } from './game/game-haptics';
 export { type HiddenEntry } from './mix/hidden-entries';
 export { type HideTarget, type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
