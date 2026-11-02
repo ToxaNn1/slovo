@@ -2,6 +2,7 @@
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
 import { createContext, useContext, useEffect, type ReactNode } from 'react';
+import { type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -32,10 +33,9 @@ const fadeEasing = Easing.bezier(...motion.reduceMotion.easing);
  * its headline fly in and its details rise into place after them. Under
  * Reduce Motion nothing moves and the card fades in once instead. Until the
  * system answers on Reduce Motion, and while the page is off screen, the
- * card waits unseen. Returns the card's fade, and the provider its parts read
- * the reveal from.
+ * card waits unseen. Returns the card's fade, and the state its parts read.
  */
-export function useEntryReveal() {
+function useEntryReveal() {
   const onScreen = useIsPageOnScreen();
   const reduceMotion = useReduceMotionKnown();
   const state: RevealState =
@@ -58,8 +58,35 @@ export function useEntryReveal() {
   return { fade, state };
 }
 
-/** Lets the parts of an Entry card read the card's reveal. */
-export const EntryRevealProvider = RevealContext.Provider;
+const FadeContext = createContext<ReturnType<typeof useEntryReveal>['fade'] | undefined>(undefined);
+
+/** An Entry card and its action row, whose parts play the card's reveal. */
+export function EntryReveal({ children }: { children: ReactNode }) {
+  const { fade, state } = useEntryReveal();
+  return (
+    <RevealContext.Provider value={state}>
+      <FadeContext.Provider value={fade}>{children}</FadeContext.Provider>
+    </RevealContext.Provider>
+  );
+}
+
+/** The card's frame, which fades in under Reduce Motion. */
+export function RevealFrame({
+  testID,
+  style,
+  children,
+}: {
+  testID: string;
+  style: StyleProp<ViewStyle>;
+  children: ReactNode;
+}) {
+  const fade = useContext(FadeContext);
+  return (
+    <Animated.View testID={testID} style={[style, fade]}>
+      {children}
+    </Animated.View>
+  );
+}
 
 /** The headline's letters fly in while the card reveals; none outside a card or under Reduce Motion. */
 export function useFlyingLetters(): FlyingLettersOf | undefined {
