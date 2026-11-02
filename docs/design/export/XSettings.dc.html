@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+[data-slovo][data-th="light"]{--bg:#FFF4E6;--ink:#140C0A;--sf:#FFFBF5;--sf2:#F5E4CF;--line:rgba(20,12,10,.13);--mute:#6B5D55;--tile:#FFFBF5;--edge:#DCC2A6;--hl:#F2D3AE;--sil:rgba(20,12,10,.14);--bar:rgba(255,244,230,.94)}
+[data-slovo][data-th="dark"]{--bg:#140C0A;--ink:#FFF4E6;--sf:#221714;--sf2:#2E201B;--line:rgba(255,244,230,.13);--mute:#BDAE9F;--tile:#33241F;--edge:#050302;--hl:#5A3C33;--sil:rgba(255,244,230,.1);--bar:rgba(20,12,10,.94)}
+[data-slovo] *{box-sizing:border-box}
+[data-slovo] button{font:inherit;border:0;cursor:pointer;color:inherit;background:none;padding:0;text-align:inherit}
+[data-rm="1"] *{animation-name:slRm!important;animation-duration:.3s!important;animation-delay:0s!important;animation-iteration-count:1!important;animation-timing-function:ease!important}
+@keyframes slRm{from{opacity:0}}
+@keyframes slScr{from{clip-path:polygon(100% 0,140% 0,140% 100%,125% 100%);transform:translateX(30px)}to{clip-path:polygon(-40% 0,140% 0,140% 100%,-25% 100%);transform:none}}
+@keyframes slCasc{from{opacity:0;transform:translateY(16px)}}
+@keyframes slPop{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes slFade{from{opacity:0}}
+@keyframes slSheet{0%{transform:translateY(100%)}72%{transform:translateY(-10px)}100%{transform:translateY(0)}}
+@keyframes slShake{0%,100%{transform:none}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes slBlink{50%{opacity:0}}
+@keyframes slSkel{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes slWedge{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@keyframes slToastD{from{transform:translateY(-120%)}}
+</style>
+</helmet>
+<div data-slovo="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:406px;height:860px;padding:8px;background:#0B0706;border-radius:62px;box-shadow:0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35);font-family:'Onest',sans-serif;flex:none">
+<div style="position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:var(--bg,#FFF4E6);color:var(--ink,#140C0A)">
+
+<sc-if value="{{ setHead }}" hint-placeholder-val="{{ true }}">
+<div style="position:absolute;left:0;right:0;top:54px;z-index:2;display:flex;flex-direction:column;gap:8px;padding:6px 16px 0">
+  <div style="display:flex;align-items:center;gap:12px"><span style="flex:none;width:40px;height:40px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center"><svg width="10" height="16" viewBox="0 0 10 16"><polygon points="10,0 6,0 0,8 6,16 10,16 4,8" fill="currentColor"></polygon></svg></span><span style="font:500 14px/1 Onest;color:var(--mute)">Налаштування</span></div>
+  <span style="padding:6px 4px 0;font:900 28px/1.05 Unbounded,sans-serif;letter-spacing:-1px">{{ title }}</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_t1 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:20px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <div style="display:flex;flex-direction:column;gap:12px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">РІДКІСТЬ</span><span style="font:700 14px/1 Onest">від 2 до 4</span></div>
+    <div style="position:relative;display:flex;gap:6px;height:54px;align-items:flex-end">
+      <sc-for list="{{ rar }}" as="r" hint-placeholder-count="5"><div style="flex:1;height:{{ r.h }};background:{{ r.bg }};transform:skewX(-14deg);display:flex;align-items:flex-end;justify-content:center;padding-bottom:6px;font:800 13px/1 Unbounded,sans-serif;color:{{ r.fg }}">{{ r.n }}</div></sc-for>
+    </div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">КАТЕГОРІЇ</span><span style="font:600 13px/1 Onest;color:var(--mute)">9 з 16</span></div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ cats }}" as="c" hint-placeholder-count="16"><span style="height:34px;padding:0 11px;border-radius:10px;background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;font:600 13px/1 Onest">{{ c.n }}</span></sc-for></div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:10px">
+    <span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">ТИПИ КАРТОК</span>
+    <div style="border-radius:16px;background:var(--sf);border:1px solid var(--line);overflow:hidden"><sc-for list="{{ types }}" as="t" hint-placeholder-count="5"><div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top:{{ t.bt }};font:600 15px/1 Onest">{{ t.n }}<span style="width:50px;height:30px;border-radius:9px;background:{{ t.track }};padding:3px;display:flex;justify-content:{{ t.jc }}"><span style="width:24px;height:24px;border-radius:7px;background:#FFF4E6"></span></span></div></sc-for></div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_t2 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:12px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <span style="font:500 15px/1.4 Onest;color:var(--mute)">Те, що ви попросили не показувати в Стрічці.</span>
+  <div style="border-radius:18px;background:var(--sf);border:1px solid var(--line);overflow:hidden">
+    <sc-for list="{{ hidden }}" as="h" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;padding:14px;border-top:{{ h.bt }};animation:{{ h.anim }}"><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px"><span style="font:700 15px/1.2 Onest">{{ h.n }}</span><span style="font:500 12px/1 Onest;color:var(--mute)">{{ h.k }}</span></span><span style="flex:none;height:36px;padding:0 14px;border-radius:10px;background:var(--sf2);display:flex;align-items:center;font:700 13px/1 Onest">Показати</span></div></sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_t3 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:16px;overflow:hidden;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <sc-for list="{{ fams }}" as="f" hint-placeholder-count="5">
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <div style="display:flex;justify-content:space-between"><span style="font:800 12px/1 Unbounded,sans-serif;letter-spacing:1px">{{ f.t }}</span><span style="font:600 12px/1 Onest;color:var(--mute)">{{ f.c }}</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ f.items }}" as="b" hint-placeholder-count="4"><span title="{{ b.n }}" style="width:58px;height:58px;background:{{ b.bg }};clip-path:{{ f.clip }};display:flex;align-items:center;justify-content:center;font:900 15px/1 Unbounded,sans-serif;color:{{ b.fg }};animation:{{ b.anim }}">{{ b.s }}</span></sc-for></div>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_t4 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:18px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <span style="font:500 15px/1.45 Onest;color:var(--mute);text-wrap:pretty">Серія завмре, нагадування замовкнуть. Повертайтеся, коли зручно.</span>
+  <span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">Тривалість, днів</span>
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:20px;background:var(--sf2)">
+    <span style="width:64px;height:64px;border-radius:16px;background:var(--tile);box-shadow:0 4px 0 var(--edge);display:flex;align-items:center;justify-content:center;font:900 28px/1 Unbounded,sans-serif">−</span>
+    <span style="font:900 64px/1 Unbounded,sans-serif;letter-spacing:-2px;animation:slPop .3s both">7</span>
+    <span style="width:64px;height:64px;border-radius:16px;background:var(--tile);box-shadow:0 4px 0 var(--edge);display:flex;align-items:center;justify-content:center;font:900 28px/1 Unbounded,sans-serif">+</span>
+  </div>
+  <span style="font:500 14px/1.4 Onest;color:var(--mute)">Перерва триває до 9 листопада включно.</span>
+  <div style="flex:1"></div>
+  <button style="height:62px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ПОЧАТИ ПЕРЕРВУ</button>
+  <span style="text-align:center;font:500 13px/1.4 Onest;color:var(--mute)">Наступну перерву можна почати з 9 грудня.</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_t5 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:18px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <sc-for list="{{ survey }}" as="q" hint-placeholder-count="3">
+    <div style="display:flex;flex-direction:column;gap:10px;animation:{{ q.anim }}">
+      <span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">{{ q.t }}</span>
+      <div style="display:flex;flex-wrap:wrap;gap:8px"><sc-for list="{{ q.o }}" as="o" hint-placeholder-count="3"><span style="height:44px;padding:0 14px;border-radius:12px;background:{{ o.bg }};color:{{ o.fg }};display:flex;align-items:center;font:600 14px/1 Onest">{{ o.n }}</span></sc-for></div>
+    </div>
+  </sc-for>
+  <div style="flex:1"></div>
+  <button style="height:62px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_t6 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 40px;display:flex;flex-direction:column;gap:16px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <div style="display:flex;gap:4px"><sc-for list="{{ tseg }}" as="c" hint-placeholder-count="10"><span style="flex:1;height:6px;background:{{ c }};transform:skewX(-20deg)"></span></sc-for></div>
+  <span style="font:600 13px/1 Onest;color:var(--mute)">4 з 10 · Чи знаєте ви це слово?</span>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center"><span style="font:900 46px/1 Unbounded,sans-serif;letter-spacing:-1.5px;animation:slPop .35s both">вирій</span></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <button style="height:66px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">НЕ ЗНАЮ</button>
+    <button style="height:66px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ЗНАЮ</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_t7 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 40px;display:flex;flex-direction:column;gap:16px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <div style="position:relative;border-radius:24px;background:var(--sf2);padding:22px 20px;overflow:hidden;display:flex;flex-direction:column;gap:14px">
+    <div style="position:absolute;right:-14px;top:-40px;font:900 200px/1 Unbounded,sans-serif;color:#FF3B2F;animation:slPop .45s both">3</div>
+    <span style="position:relative;font:900 26px/1.05 Unbounded,sans-serif;width:200px">Ваш рівень: від 3</span>
+    <div style="position:relative;display:flex;gap:5px;width:200px"><sc-for list="{{ rarRes }}" as="r" hint-placeholder-count="5"><span style="flex:1;height:14px;background:{{ r }};transform:skewX(-20deg)"></span></sc-for></div>
+    <span style="position:relative;font:500 14px/1.4 Onest;color:var(--mute);width:220px">7 з 10 слів знайомі. Стрічка покаже рідкість від 3 до 5.</span>
+  </div>
+  <div style="flex:1"></div>
+  <button style="height:62px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ГОТОВО</button>
+  <button style="height:48px;font:700 15px/1 Onest;display:flex;align-items:center;justify-content:center">Пройти тест ще раз</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_t8 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <div style="display:flex;align-items:center;gap:14px;padding:16px;border-radius:20px;background:var(--sf2)"><span style="flex:none;width:58px;height:58px;border-radius:16px;background:#FF3B2F;color:#140C0A;display:flex;align-items:center;justify-content:center;font:900 24px/1 Unbounded,sans-serif">О</span><span style="display:flex;flex-direction:column;gap:5px"><span style="font:800 18px/1 Unbounded,sans-serif">Олена</span><span style="font:500 13px/1 Onest;color:var(--mute)">Рівень 3 — Знавець</span></span></div>
+  <div style="border-radius:18px;background:var(--sf);border:1px solid var(--line);overflow:hidden">
+    <sc-for list="{{ prof }}" as="r" hint-placeholder-count="4"><div style="display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 14px;border-top:{{ r.bt }}"><span style="font:600 15px/1 Onest">{{ r.n }}</span><span style="display:flex;align-items:center;gap:8px;font:500 14px/1 Onest;color:var(--mute)">{{ r.v }}<svg width="7" height="12" viewBox="0 0 10 16"><polygon points="0,0 4,0 10,8 4,16 0,16 6,8" fill="currentColor"></polygon></svg></span></div></sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_a1 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:12px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <button style="height:58px;border-radius:15px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:700 16px/1 Onest;display:flex;align-items:center;justify-content:center;gap:10px"><svg width="16" height="19" viewBox="0 0 17 20"><path d="M14 10.6c0-2.4 2-3.5 2-3.6-1.1-1.6-2.8-1.8-3.4-1.8-1.4-.2-2.8.8-3.5.8-.7 0-1.8-.8-3-.8C4.500 5.3 3 6.2 2.200 7.600.5 10.500 1.800 14.800 3.400 17.100c.8 1.100 1.700 2.400 2.900 2.300 1.200 0 1.600-.7 3-.7s1.800.7 3 .7c1.300 0 2.100-1.100 2.800-2.200.9-1.300 1.300-2.500 1.300-2.600 0 0-2.400-.9-2.400-4zM11.700 3.700c.6-.8 1.100-1.800 1-2.900-.9 0-2 .6-2.700 1.400-.6.700-1.100 1.800-1 2.800 1 .1 2.100-.5 2.700-1.300z" fill="currentColor"></path></svg>Увійти через Apple</button>
+  <button style="height:58px;border-radius:15px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);font:700 16px/1 Onest;display:flex;align-items:center;justify-content:center;gap:10px"><span style="font:900 18px/1 Unbounded,sans-serif">G</span>Увійти через Google</button>
+  <div style="display:flex;align-items:center;gap:10px;margin:8px 0;font:600 13px/1 Onest;color:var(--mute)"><span style="flex:1;height:1px;background:var(--line)"></span>або поштою<span style="flex:1;height:1px;background:var(--line)"></span></div>
+  <div style="height:58px;border-radius:15px;border:2.5px solid #FF3B2F;background:var(--sf);display:flex;align-items:center;padding:0 16px;font:500 16px/1 Onest;animation:slShake .35s .2s both">olena@ukrnet</div>
+  <span style="font:600 13px/1 Onest;color:#FF3B2F">Перевірте адресу пошти.</span>
+  <button style="height:58px;border-radius:15px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">НАДІСЛАТИ КОД</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_a2 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <span style="font:500 15px/1.45 Onest;color:var(--mute)">Код надіслано на olena@ukr.net</span>
+  <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;animation:slShake .35s .2s both"><sc-for list="{{ code }}" as="c" hint-placeholder-count="6"><span style="height:62px;border-radius:13px;background:var(--sf2);box-shadow:inset 0 3px 0 var(--edge);border:2px solid {{ c.bc }};display:flex;align-items:center;justify-content:center;font:900 24px/1 Unbounded,sans-serif">{{ c.d }}</span></sc-for></div>
+  <span style="font:600 13px/1 Onest;color:#FF3B2F">Код не підходить. Лишилось 2 спроби.</span>
+  <span style="font:500 14px/1 Onest;color:var(--mute)">Надіслати ще раз через 42 секунди</span>
+  <span style="font:700 14px/1 Onest">Змінити пошту</span>
+  <div style="margin-top:10px;padding:14px;border-radius:14px;background:var(--sf2);display:flex;flex-direction:column;gap:10px">
+    <span style="font:600 12px/1 Onest;color:var(--mute)">Якщо код прострочено:</span>
+    <span style="font:600 14px/1.3 Onest;color:#FF3B2F">Код більше не діє. Надішліть новий.</span>
+    <span style="align-self:flex-start;height:40px;padding:0 16px;border-radius:11px;background:var(--ink);color:var(--bg);display:flex;align-items:center;font:800 12px/1 Unbounded,sans-serif">НАДІСЛАТИ КОД</span>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_a3 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:14px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <div style="padding:18px;border-radius:20px;background:var(--sf2);display:flex;flex-direction:column;gap:6px"><span style="font:500 13px/1 Onest;color:var(--mute)">Ви увійшли як</span><span style="font:800 18px/1.2 Unbounded,sans-serif">olena@ukr.net</span><span style="display:flex;align-items:center;gap:6px;font:600 13px/1 Onest;color:var(--mute);margin-top:4px"><svg width="13" height="11" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#FF3B2F"></polygon></svg>Синхронізовано сьогодні о 20:12</span></div>
+  <div style="flex:1"></div>
+  <button style="height:60px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ВИЙТИ</button>
+  <button style="height:60px;border-radius:16px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;font:900 14px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">ВИЙТИ НА ВСІХ ПРИСТРОЯХ</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:110px 20px;display:flex;flex-direction:column;gap:10px;opacity:.6"><span style="font:900 28px/1 Unbounded,sans-serif">Колекції</span><span style="height:64px;border-radius:16px;background:var(--sf2)"></span><span style="height:64px;border-radius:16px;background:var(--sf2)"></span></div>
+<div style="position:absolute;inset:0;z-index:80;background:rgba(20,12,10,.55);animation:slFade .25s both"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:81;padding:62px 20px 38px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);animation:slSheet .45s cubic-bezier(.2,.9,.3,1) both;display:flex;flex-direction:column;gap:14px">
+  <div style="position:absolute;left:18px;top:30px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 17px/1 Unbounded,sans-serif;transform:rotate(-4.4deg);transform-origin:left">{{ shT }}</div>
+  <div style="height:14px"></div>
+  <sc-if value="{{ shField }}" hint-placeholder-val="{{ false }}">
+    <div style="height:58px;border-radius:15px;border:2.5px solid {{ shBc }};background:var(--bg);display:flex;align-items:center;padding:0 16px;font:600 16px/1 Onest;white-space:nowrap;overflow:hidden">{{ shVal }}<span style="width:2px;height:20px;background:#FF3B2F;margin-left:1px;animation:slBlink 1s steps(1) infinite"></span></div>
+    <span style="font:600 13px/1.3 Onest;color:#FF3B2F">{{ shErr }}</span>
+  </sc-if>
+  <sc-if value="{{ is_m4 }}" hint-placeholder-val="{{ false }}">
+    <span style="font:500 15px/1.4 Onest;color:var(--mute)">До трьох нагадувань на день.</span>
+    <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden"><sc-for list="{{ times }}" as="t" hint-placeholder-count="3"><div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-top:{{ t.bt }}"><span style="font:900 24px/1 Unbounded,sans-serif">{{ t.t }}</span><span style="width:50px;height:30px;border-radius:9px;background:{{ t.track }};padding:3px;display:flex;justify-content:{{ t.jc }}"><span style="width:24px;height:24px;border-radius:7px;background:#FFF4E6"></span></span></div></sc-for></div>
+    <span style="height:48px;border-radius:13px;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest;color:var(--mute)">Додати час · максимум 3</span>
+  </sc-if>
+  <sc-if value="{{ is_m3 }}" hint-placeholder-val="{{ false }}">
+    <span style="font:500 16px/1.45 Onest">Самі записи нікуди не зникнуть.</span>
+  </sc-if>
+  <button style="height:62px;border-radius:16px;background:{{ shPBg }};color:{{ shPFg }};box-shadow:0 5px 0 {{ shPSh }};font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">{{ shP }}</button>
+  <button style="height:62px;border-radius:16px;background:var(--tile);box-shadow:0 5px 0 var(--edge);border:1px solid var(--line);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center">СКАСУВАТИ</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_m5 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px">
+  <div style="height:430px;border-radius:30px 30px 0 0;background:var(--sf2);clip-path:polygon(0 0,100% 0,100% 90%,0 100%);display:flex;align-items:center;justify-content:center;gap:8px;animation:slSkel 1.4s ease-in-out infinite">
+    <span style="width:14px;height:44px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 75%,0 100%);animation:slWedge .8s ease-in-out infinite"></span><span style="width:14px;height:44px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 75%,0 100%);animation:slWedge .8s .15s ease-in-out infinite"></span><span style="width:14px;height:44px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 75%,0 100%);animation:slWedge .8s .3s ease-in-out infinite"></span>
+  </div>
+  <span style="height:22px;width:60%;border-radius:6px;background:var(--sf2);animation:slSkel 1.4s .2s ease-in-out infinite"></span>
+  <span style="height:16px;width:85%;border-radius:6px;background:var(--sf2);animation:slSkel 1.4s .3s ease-in-out infinite"></span>
+  <span style="height:16px;width:70%;border-radius:6px;background:var(--sf2);animation:slSkel 1.4s .4s ease-in-out infinite"></span>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_m6 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:110px 12px 100px;display:flex;flex-direction:column;gap:14px;opacity:.5">
+  <div style="height:430px;border-radius:30px 30px 0 0;background:#FF3B2F;clip-path:polygon(0 0,100% 0,100% 90%,0 100%)"></div>
+</div>
+<div style="position:absolute;left:14px;right:14px;top:56px;z-index:70;display:flex;align-items:center;gap:12px;padding:15px 16px;background:var(--ink);color:var(--bg);border-radius:14px;clip-path:polygon(0 0,100% 0,100% 100%,3% 100%);animation:slToastD .4s cubic-bezier(.2,.9,.3,1.1) both">
+  <svg width="20" height="16" viewBox="0 0 20 16" style="flex:none"><rect x="0" y="11" width="4" height="5" fill="currentColor" opacity=".35"></rect><rect x="6" y="7" width="4" height="9" fill="currentColor" opacity=".35"></rect><rect x="12" y="3" width="4" height="13" fill="currentColor" opacity=".35"></rect><polygon points="1,0 4,0 19,14 19,16 16,16 1,2" fill="#FF3B2F"></polygon></svg>
+  <span style="font:600 14px/1.35 Onest">Немає з’єднання. Спробуйте пізніше.</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ is_m7 }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;padding:120px 32px 120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;animation:slFade .3s both">
+  <svg width="220" height="60" viewBox="0 0 220 60"><path d="M0 30 Q30 10 60 30 T96 28" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"></path><path d="M124 34 Q150 50 180 30 T220 30" fill="none" stroke="var(--ink)" stroke-width="5" stroke-linecap="round"></path><polygon points="98,14 108,30 98,44" fill="#FF3B2F"></polygon><polygon points="122,16 112,32 122,46" fill="#FF3B2F"></polygon></svg>
+  <span style="font:900 26px/1.1 Unbounded,sans-serif">Нитка урвалася</span>
+  <span style="font:400 16px/1.45 Onest;color:var(--mute)">Не вдалося відкрити словник.</span>
+  <button style="margin-top:8px;height:58px;padding:0 28px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 14px/1 Unbounded,sans-serif">СПРОБУВАТИ ЩЕ</button>
+</div>
+</sc-if>
+
+<div style="position:absolute;top:0;left:0;right:0;height:50px;z-index:99;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 44px;pointer-events:none;color:var(--ink)">
+  <span style="font:600 16px/1 Onest,sans-serif">20:30</span>
+  <div style="display:flex;align-items:center;gap:6px"><svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" fill="currentColor"></rect><rect x="5" y="5.5" width="3" height="6.5" fill="currentColor"></rect><rect x="10" y="3" width="3" height="9" fill="currentColor"></rect><rect x="15" y="0" width="3" height="12" fill="currentColor"></rect></svg><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".75" y=".75" width="21.5" height="10.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="currentColor"></rect></svg></div>
+</div>
+<div style="position:absolute;top:11px;left:50%;margin-left:-62px;width:124px;height:36px;border-radius:20px;background:#000;z-index:100"></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;t1&quot;,&quot;t2&quot;,&quot;t3&quot;,&quot;t4&quot;,&quot;t5&quot;,&quot;t6&quot;,&quot;t7&quot;,&quot;t8&quot;,&quot;a1&quot;,&quot;a2&quot;,&quot;a3&quot;,&quot;m1&quot;,&quot;m1b&quot;,&quot;m2&quot;,&quot;m3&quot;,&quot;m4&quot;,&quot;m5&quot;,&quot;m6&quot;,&quot;m7&quot;],&quot;default&quot;:&quot;t1&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const NEWCATS=['Людина і тіло','Емоції та характер','Природа і погода','Побут і ремесла','Техніка','Військова справа','Мистецтво і культура','Історія та старовина','Наука','Мова і мовлення','Діалекти','Дотепна лайка','Народні назви','Старі ремесла','Розстріляна лексика','Слова-хамелеони'];
+const TITLE={t1:'Мій Мікс',t2:'Приховане',t3:'Відзнаки',t4:'Перерва',t5:'Опитування ще раз',t6:'Тест рідкості',t7:'Тест рідкості',t8:'Профіль',a1:'Акаунт',a2:'Код із листа',a3:'Акаунт'};
+const FAMS=[
+ {t:'СЕРІЯ',clip:'polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)',items:[['Три дні поспіль','3',1],['Тиждень поспіль','7',1],['Місяць поспіль','30',0],['Сто днів поспіль','100',0],['Рік поспіль','365',0]]},
+ {t:'ПІДТВЕРДЖЕНІ',clip:'polygon(50% 0,100% 50%,50% 100%,0 50%)',items:[['10 підтверджених','10',1],['50 підтверджених','50',1],['100 підтверджених','100',0],['500 підтверджених','500',0]]},
+ {t:'ПЕРШІ ПЕРЕМОГИ',clip:'polygon(0 0,100% 30%,100% 70%,0 100%)',items:[['Перша перемога в словах','Сл',1],['Перша перемога в суржику','Сж',0],['Перша перемога у фразеологізмах','Фр',1],['Перша перемога в наголосах','а́',1],['Перша перемога у випробуваннях','Вп',0]]},
+ {t:'РІВНІ',clip:'polygon(10% 0,100% 8%,90% 100%,0 92%)',items:[['Рівень 5','5',0],['Рівень 10','10',0],['Рівень 20','20',0]]},
+ {t:'ОСОБЛИВІ',clip:'circle(50%)',items:[['Сім кросвордів поспіль','7×',1],['Перше рідкісне слово','R',1],['Чиста мова','Ч',0],['Влучний наголос','́',0]]}];
+class Component extends DCLogic {
+  renderVals(){
+    const s=this.props.screen||'t1';
+    const v={th:this.props.theme||'light',rmAttr:this.props.reduceMotion?'1':'0'};
+    v['is_'+s]=true;v.title=TITLE[s];v.setHead=!!TITLE[s];
+    v.rar=[1,2,3,4,5].map(n=>{const on=n>=2&&n<=4;return {n:String(n),h:(20+n*7)+'px',bg:on?'#FF3B2F':'var(--sil)',fg:on?'#140C0A':'var(--mute)'};});
+    const sel=[0,1,2,6,7,9,10,12,14];
+    v.cats=NEWCATS.map((n,i)=>({n,bg:sel.includes(i)?'var(--ink)':'var(--sf2)',fg:sel.includes(i)?'var(--bg)':'var(--ink)'}));
+    v.types=[['Слова',1],['Виправлення',1],['Фразеологізми',1],['Синонімічні ряди',0],['Поради',1]].map(([n,on],i)=>({n,bt:i?'1px solid var(--line)':'0',track:on?'#FF3B2F':'var(--sil)',jc:on?'flex-end':'flex-start'}));
+    v.hidden=[['Діалекти','категорія'],['Поради','тип карток'],['Бити байдики','запис'],['Шухляда','запис']].map(([n,k],i)=>({n,k,bt:i?'1px solid var(--line)':'0',anim:'slCasc .3s '+(.1+i*.05)+'s both'}));
+    let k=0;
+    v.fams=FAMS.map(f=>({t:f.t,clip:f.clip,c:f.items.filter(x=>x[2]).length+' з '+f.items.length,items:f.items.map(([n,sy,got])=>({n,s:sy,bg:got?'#FF3B2F':'var(--sil)',fg:got?'#140C0A':'transparent',anim:'slPop .3s '+(.05+(k++)*.03)+'s both'}))}));
+    const opt=(arr,on)=>arr.map(n=>({n,bg:n===on?'var(--ink)':'var(--sf2)',fg:n===on?'var(--bg)':'var(--ink)'}));
+    v.survey=[{t:'ХТО ВИ',o:opt(['Навчаюсь','Працюю','Мовний гурман'],'Мовний гурман')},{t:'НАВІЩО',o:opt(['Писати без помилок','Знати рідкісні слова','Грати зі словами'],'Знати рідкісні слова')},{t:'САМООЦІНКА',o:opt(['Знаю мало рідкісних слів','Знаю чимало'],'Знаю чимало')}].map((q,i)=>({...q,anim:'slCasc .35s '+(.1+i*.08)+'s both'}));
+    v.tseg=Array.from({length:10},(_,i)=>i<3?'#FF3B2F':i===3?'var(--mute)':'var(--sil)');
+    v.rarRes=[1,2,3,4,5].map(n=>n>=3?'#FF3B2F':'var(--sil)');
+    v.prof=[['Ім’я','Олена'],['Хто ви','Мовний гурман'],['Навіщо','Знати рідкісні слова'],['Самооцінка','Знаю чимало']].map(([n,val],i)=>({n,v:val,bt:i?'1px solid var(--line)':'0'}));
+    v.code=['4','8','1','9','0','2'].map(d=>({d,bc:'#FF3B2F'}));
+    const SH={
+      m1:{t:'НОВА КОЛЕКЦІЯ',f:1,val:'Осінні слова',err:'Колекція з такою назвою вже є.',p:'СТВОРИТИ'},
+      m1b:{t:'НОВА КОЛЕКЦІЯ',f:1,val:'',err:'Дайте колекції назву.',p:'СТВОРИТИ'},
+      m2:{t:'ПЕРЕЙМЕНУВАТИ',f:1,val:'Слова, які я почула від бабусі в Карпатах',err:'Назва задовга: не більше 40 символів.',p:'ЗБЕРЕГТИ'},
+      m3:{t:'ВИДАЛИТИ КОЛЕКЦІЮ «ОСІННІ СЛОВА»?',f:0,p:'ВИДАЛИТИ',red:1},
+      m4:{t:'СПОВІЩЕННЯ',f:0,p:'ГОТОВО'}};
+    const sh=SH[s];v.sheetOn=!!sh;
+    if(sh){v.shT=sh.t;v.shField=!!sh.f;v.shVal=sh.val;v.shErr=sh.err;v.shBc='#FF3B2F';v.shP=sh.p;v.shPBg=sh.red?'#FF3B2F':'var(--ink)';v.shPFg=sh.red?'#140C0A':'var(--bg)';v.shPSh=sh.red?'#C4271D':'rgba(0,0,0,.35)';}
+    v.times=[['09:00',1],['13:00',0],['19:00',1]].map(([t,on],i)=>({t,bt:i?'1px solid var(--line)':'0',track:on?'#FF3B2F':'var(--sil)',jc:on?'flex-end':'flex-start'}));
+    return v;
+  }
+}
+</script>
+</body>
+</html>

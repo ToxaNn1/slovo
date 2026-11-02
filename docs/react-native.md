@@ -1,6 +1,6 @@
 # React Native guide
 
-How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT.md` and `docs/adr/` win over this guide; `docs/design/design-system.md` holds the visual rules.
+How to write screens and components in `apps/mobile` and `packages/ui`. `CONTEXT.md` and `docs/adr/` win over this guide; `docs/design/README.md` maps the design to the tokens.
 
 ## Where code lives
 

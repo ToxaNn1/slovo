@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+</helmet>
+<div style="position:relative;width:{{ w }};height:{{ h }};background:{{ bg }};color:{{ fg }};overflow:hidden;border-radius:18px;font-family:'Onest',sans-serif;display:flex;flex-direction:column;padding:{{ pad }};box-shadow:0 14px 40px rgba(20,12,10,.25);flex:none">
+  <div style="position:absolute;inset:0;background-image:radial-gradient({{ dot }} 1px,transparent 1.5px);background-size:5px 5px"></div>
+  <div style="position:absolute;right:{{ gR }};top:{{ gT }};font:900 {{ gS }}/1 Unbounded,sans-serif;letter-spacing:-8px;color:{{ giant }};white-space:nowrap">{{ g }}</div>
+  <div style="position:relative;display:flex;align-items:center;gap:6px"><span style="width:9px;height:13px;background:{{ acc }};clip-path:polygon(0 0,100% 22%,100% 78%,0 100%)"></span><span style="font:900 12px/1 Unbounded,sans-serif">SLOVO</span></div>
+  <span style="position:relative;margin-top:{{ kickTop }};font:800 10px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">{{ kick }}</span>
+  <span style="position:relative;margin-top:8px;font:900 {{ tS }}/1 Unbounded,sans-serif;letter-spacing:-1px;text-wrap:balance">{{ t }}</span>
+  <sc-if value="{{ showSub }}" hint-placeholder-val="{{ true }}"><span style="position:relative;margin-top:8px;font:500 12px/1.4 Onest;opacity:.9;text-wrap:pretty">{{ sub }}</span></sc-if>
+  <sc-if value="{{ isCw }}" hint-placeholder-val="{{ false }}"><div style="position:relative;margin-top:14px;display:grid;grid-template-columns:repeat(5,22px);gap:3px"><sc-for list="{{ cw }}" as="c" hint-placeholder-count="25"><span style="width:22px;height:22px;border-radius:4px;background:{{ c }}"></span></sc-for></div></sc-if>
+  <sc-if value="{{ isWeek }}" hint-placeholder-val="{{ false }}"><div style="position:relative;margin-top:14px;display:grid;grid-template-columns:repeat({{ stCols }},minmax(0,1fr));gap:6px"><sc-for list="{{ stats }}" as="x" hint-placeholder-count="4"><span style="padding:8px;border-radius:9px;background:{{ chip }};display:flex;flex-direction:column;gap:3px"><span style="font:900 18px/1 Unbounded,sans-serif">{{ x.n }}</span><span style="font:500 10px/1 Onest">{{ x.l }}</span></span></sc-for></div></sc-if>
+  <div style="flex:1"></div>
+  <div style="position:relative;display:flex;align-items:flex-end;justify-content:space-between">
+    <dc-import name="Rupor" state="{{ m }}" on-red="{{ onRed }}" size="{{ ms }}" motion="none" hint-size="80px,60px"></dc-import>
+    <span style="font:600 10px/1 Onest;opacity:.8">slovo.app</span>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:320,&quot;height&quot;:500},&quot;kind&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;word&quot;,&quot;level&quot;,&quot;streak&quot;,&quot;game&quot;,&quot;cw&quot;,&quot;week&quot;,&quot;badge&quot;],&quot;default&quot;:&quot;word&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;format&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;story&quot;,&quot;square&quot;],&quot;default&quot;:&quot;story&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const K={
+ word:{kick:'СЛОВО ДНЯ',t:'Заграва',sub:'Червоне світло на небі під час сходу чи заходу сонця.',g:'З',m:'shout'},
+ level:{kick:'Новий рівень у SLOVO',t:'Рівень 4',sub:'Книжник',g:'4',m:'celebrate'},
+ streak:{kick:'Моя серія в SLOVO',t:'23 дні поспіль',sub:'Щодня одне рідкісне слово.',g:'23',m:'happy'},
+ game:{kick:'НАГОЛОС · РЕЗУЛЬТАТ',t:'9 з 10',sub:'Гру завершено. Гарна розминка!',g:'9',m:'celebrate'},
+ cw:{kick:'Кросворд дня розв’язано',t:'2 листопада',sub:'4:12 · без підказок',g:'',m:'happy'},
+ week:{kick:'Мій тиждень у SLOVO',t:'26.10–1.11',sub:'',g:'',m:'happy'},
+ badge:{kick:'Нова відзнака в SLOVO',t:'Тиждень поспіль',sub:'Нова відзнака — тепер вона ваша назавжди.',g:'7',m:'celebrate'}};
+class Component extends DCLogic {
+  renderVals(){
+    const kind=this.props.kind||'word',sq=this.props.format==='square',dark=this.props.theme==='dark';
+    const k=K[kind];
+    const pat=[1,1,1,0,1, 1,0,1,1,1, 1,1,1,0,1, 0,1,0,1,1, 1,1,1,1,0];
+    return {...k,w:sq?'300px':'270px',h:sq?'300px':'480px',pad:sq?'18px':'22px 20px',kickTop:sq?'14px':'60px',tS:sq?(kind==='word'?'30px':'24px'):(kind==='word'?'40px':'32px'),
+      bg:dark?'#140C0A':'#FF3B2F',fg:dark?'#FFF4E6':'#140C0A',acc:dark?'#FF3B2F':'#140C0A',dot:dark?'rgba(255,244,230,.08)':'rgba(20,12,10,.2)',giant:dark?'#FF3B2F':'#FFF4E6',
+      gS:sq?'220px':'320px',gR:sq?'-30px':'-50px',gT:sq?'40px':'120px',onRed:!dark,ms:sq?70:96,chip:dark?'rgba(255,244,230,.1)':'rgba(255,244,230,.55)',
+      isCw:kind==='cw',cw:pat.map(p=>p?(dark?'#FF3B2F':'#140C0A'):(dark?'rgba(255,244,230,.12)':'rgba(255,244,230,.6)')),
+      isWeek:kind==='week',showSub:!(sq&&kind==='week')&&!!k.sub,stCols:sq?4:2,stats:[['48','переглянуто'],['31','знаю'],['23','серія'],['340','XP']].map(([n,l])=>({n,l}))};
+  }
+}
+</script>
+</body>
+</html>

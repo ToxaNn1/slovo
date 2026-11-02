@@ -56,7 +56,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0052](0052-game-modes-typed-answers-a-best-result-per-mode-and-the-daily-crossword.md) Thirteen Game Modes with their own Lives, limits and answer forms, one typed-answer comparison, a Best result per mode, the Daily Crossword.
 - 0053: merged into 0027.
 - [0054](0054-learning-and-habit-search-the-rarity-test-feed-notices-the-daily-limit-and-mood.md) Search, the Rarity Test, the Feed Notices, the Word of the Day archive, the Active Days calendar, the polite pause, the first week, the widget hint and Mood; the Daily Limit is retired for the Daily Goal (0066) and Mood is paused in 1.0.
-- [0055](0055-motion-seasons-and-holidays-the-falling-stress-and-illustrations.md) Animations last 200–300 ms on the UI thread and fade under Reduce Motion; Decor follows the Season or Holiday (paused in 1.0); the falling Stress; Illustrations.
+- [0055](0055-motion-seasons-and-holidays-the-falling-stress-and-illustrations.md) Animations last 200–300 ms (the Рупор design's peaks may run longer) on the UI thread and become one short fade under Reduce Motion; Decor follows the Season or Holiday (paused in 1.0); the falling Stress; Illustrations.
 - [0056](0056-mistake-reports.md) «Повідомити про помилку» sends an anonymous report to `POST /v1/reports`; the owner reads and resolves them with scripts.
 - [0057](0057-spotlight-and-app-intents-read-what-the-core-decides.md) The Core builds the Spotlight Snapshot; Swift only writes it; App Intents only open the app.
 - [0058](0058-a-shared-collection-is-a-server-snapshot-behind-a-link.md) A Collection Link is an immutable server snapshot at `https://<domain>/<edition>/c/<id>`, with a web page and universal links.
@@ -71,3 +71,4 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0067](0067-onboarding-is-short-and-asks-two-questions.md) Onboarding: welcome, the first Word, two questions, the Daily Goal, the Feed; the rest comes later as Feed Notices.
 - [0068](0068-analytics-go-through-one-port-and-questionnaire-counters-carry-no-id.md) Analytics go through one Core port behind the one privacy switch; questionnaire counters carry no reader id (amends 0060).
 - [0069](0069-the-owner-admin-is-web-pages-on-the-backend-for-one-account.md) The owner admin at `/admin` signs in one Account (`OWNER_EMAIL`), turns remote switches off only, sums the counters and holds the Mistake Report inbox.
+- [0070](0070-klyn-2-rupor-is-the-apps-design.md) «Клин 2.0: Рупор» is the app's design: palette and fonts are Edition tokens, shapes, type, motion and the Mascot's states are Core; four interface sounds behind the `sounds` switch; no Game haptics.

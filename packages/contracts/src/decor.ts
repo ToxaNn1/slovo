@@ -126,7 +126,7 @@ export const HolidaySchema = z.strictObject({
 export type Holiday = z.infer<typeof HolidaySchema>;
 
 /**
- * The Decor an Edition draws in the app, by slot (`docs/design/design-system.md`):
+ * The Decor an Edition draws in the app, by slot (ADR 0014, `docs/design/README.md`):
  * `editions/<edition>/decor/decor.json`. Every slot is optional; the Core's
  * neutral Decor fills a slot the Edition leaves out. Decor holds shapes and
  * colours only, never text or behaviour (ADR 0014).

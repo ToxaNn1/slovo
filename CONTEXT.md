@@ -209,8 +209,12 @@ The screen of the reader's whole progress: Level and progress to the next, total
 _Avoid_: Account (the identity that syncs), dashboard, stats screen
 
 **Mascot**:
-The Edition's character, a silent figure that moves and shows short lines from the Edition in onboarding, celebrations (a new Level, a Badge, the Daily Goal, Streak milestones), Game reactions and empty states, and never interrupts the Feed. Its look and motion belong to the design.
-_Avoid_: Avatar, bot, assistant
+The Edition's character, a silent figure that moves and shows short lines from the Edition in onboarding, celebrations (a new Level, a Badge, the Daily Goal, Streak milestones), Game reactions and empty states, and never interrupts the Feed. The Edition supplies its vector; the Core draws its states and their motion (ADR 0070). It makes no sound: the interface sounds of the app are not its voice.
+_Avoid_: Avatar, bot, assistant, voice (of the Mascot)
+
+**Interface sound**:
+One of the short sounds the app plays for a shout, a right answer, a wrong answer or a tap, behind the `sounds` Feature Switch and the «Звуки» setting. It belongs to the interface, never to the Mascot.
+_Avoid_: Voice, music, notification sound (that is the sound of a notification)
 
 **Account**:
 The optional identity that keeps a reader's words and progress across devices, shown under the name its Edition gives it (set in the Edition's config), never «SLOVO ID». One Account works in every Edition; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code, Sign in with Google or Sign in with Apple. Knowledge Marks, the XP log and Badges sync through it. Without an Account everything lives on the device only.

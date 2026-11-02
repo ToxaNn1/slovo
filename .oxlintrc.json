@@ -19,7 +19,7 @@
     "apps/mobile/android/**",
     "apps/mobile/expo-env.d.ts",
     "tools/sourcing/fixtures/**",
-    "docs/design/claude-design/**"
+    "docs/design/export/**"
   ],
   "rules": {
     // A few rules beyond `correctness`, picked because the repo has no hits.

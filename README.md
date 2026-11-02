@@ -41,7 +41,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 | `editions/<edition>`     | One folder per Edition: configuration, strings, design tokens, Decor, content, assets, legal pages. |
 | `tools/sourcing`         | Dev-only tool that drafts Words from goroh.pp.ua and СУМ-11 for human review.                       |
 | `tools/content`          | Dev-only CLI that drafts Entries in `$EDITOR` and checks an Edition with the build's rules.         |
-| `docs/`                  | Architecture decision records in `docs/adr/` and the design brief in `docs/design/`.                |
+| `docs/`                  | Architecture decision records in `docs/adr/` and the design boards in `docs/design/`.               |
 
 ## Documents
 

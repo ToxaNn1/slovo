@@ -6,12 +6,12 @@ One set of rules governs every animation of the app, Decor follows the Season an
 
 **Motion.** Every animation of the app follows four rules.
 
-- **Timing.** An animation lasts 200–300 ms.
+- **Timing.** An animation lasts 200–300 ms. The motion of «Клин 2.0: Рупор» (ADR 0070) is the one exception, and only where its boards draw it: the screen transition (a wedge wipe with a red sweep, about 500 ms), the reveal of the Word and its cascades, the pop, the stamp, the bottom sheet, the toast and the spring toggle may run longer. Everything else, and every animation the boards do not draw, keeps 200–300 ms.
 - **Gestures.** What follows the reader's finger, such as a swipe, moves with a spring, not a timed curve.
 - **The UI thread.** Animations run in Reanimated on the UI thread, so a busy JavaScript thread never makes them stutter on an older phone.
-- **Reduce Motion.** Under Reduce Motion nothing moves across the screen: every animation becomes an opacity fade, or nothing where there is nothing to fade.
+- **Reduce Motion.** Under Reduce Motion, from the system setting or from the in-app «Менше руху» switch, nothing moves across the screen: every animation becomes one short opacity fade (300 ms, once, no delay), or nothing where there is nothing to fade. The splash shortens as the design says.
 
-The animation audit (`docs/design/animation-audit.md`) lists every animation with its timing and its Reduce Motion behaviour. The heart springs to 1.2 and back with a light haptic when the reader saves; a right Game answer flashes green briefly and a wrong one shakes.
+The design boards (`docs/design/`) show each animation with its timing and its Reduce Motion variant. A right Game answer turns its tile red; nothing shakes, and the Game gives no haptic (ADR 0025). The heart springs to 1.2 and back with a light haptic when the reader saves.
 
 **Seasons and Holidays.** Paused in the UA Edition in 1.0 (spec #1358): the Feature Switch of the Decor is off, so Decor stays the Edition's own all year, the Settings row «Сезонний декор» is gone, and the code and the Edition's Holiday list stay so Decor can return after 1.0. The Word of the Day calligraphy (the `wordOfTheDayFont` of ADR 0006) is paused the same way.
 
@@ -37,6 +37,7 @@ The animation audit (`docs/design/animation-audit.md`) lists every animation wit
 
 - **Timed curves for gestures**: rejected. A swipe that stops dead at the end of a curve feels drawn, not held.
 - **Animations on the JavaScript thread**: rejected. They stutter whenever the Feed loads its next card.
+- **Lift the 300 ms limit for every animation**: rejected. Only the peaks the design draws are loud; lists and controls stay quick.
 - **Keep the movement under Reduce Motion, only slower**: rejected. Reduce Motion asks that nothing move across the screen.
 - **Astronomical Seasons, or Seasons by hemisphere**: rejected. The meteorological months are what readers call the seasons, and an Edition's readers live in one hemisphere.
 - **Holidays as a list of dates per year**: rejected. Someone would have to add next year's dates, and День вишиванки moves.

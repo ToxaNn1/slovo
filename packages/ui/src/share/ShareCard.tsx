@@ -9,7 +9,7 @@ import { useTokens } from '../providers/TokensProvider';
 
 /**
  * A Share Card at the design's scale, in points, by format: the Story 324 wide
- * and 576 tall with its padding inside, a true 9:16 (design-system gap 17),
+ * and 576 tall with its padding inside, a true 9:16,
  * and the Square 300 on each side. Every size below is at this scale.
  */
 export const SHARE_CARD = {

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { ColorSchema } from './shared';
 
 /**
- * The colour roles of one colour scheme (`docs/design/design-system.md`). The
+ * The colour roles of one colour scheme (ADR 0070, `docs/design/README.md`). The
  * Core names the roles; an Edition supplies the values.
  */
 export const ColorTokensSchema = z.strictObject({
