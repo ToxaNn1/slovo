@@ -1,11 +1,11 @@
 import { LIFE_LOST_DELAY } from '@slovo/core';
-import { Easing, ReduceMotion, withSequence, withTiming } from 'react-native-reanimated';
+import { Easing, ReduceMotion } from 'react-native-reanimated';
 
 /**
  * The canvas's CSS `ease`, for the Game's motion, from the design's motion
  * table and canvas keyframes. Each motion runs whatever the system setting,
  * which would otherwise skip the fills and fades too; with Reduce Motion the
- * components leave out the shake, the scale and the pop themselves.
+ * components leave out the scale and the pop themselves. Nothing shakes.
  */
 export const ease = Easing.bezier(0.25, 0.1, 0.25, 1);
 
@@ -21,14 +21,3 @@ export const WRONG_FILL = {
   easing: ease,
   reduceMotion: ReduceMotion.Never,
 };
-
-/** A wrong choice shakes ±4 pt twice in 300 ms: five steps between the keyframes. */
-const SHAKE = [-4, 4, -4, 4, 0] as const;
-const SHAKE_STEP = {
-  duration: 60,
-  easing: Easing.inOut(Easing.ease),
-  reduceMotion: ReduceMotion.Never,
-};
-
-/** A wrong choice's shake, for its horizontal shift; the caller leaves it out with Reduce Motion. */
-export const shake = () => withSequence(...SHAKE.map((offset) => withTiming(offset, SHAKE_STEP)));
