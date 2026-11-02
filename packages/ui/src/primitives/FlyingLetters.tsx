@@ -58,12 +58,12 @@ export function FlyingLetters({
 }) {
   const all = letters(text);
   const { color } = StyleSheet.flatten(style);
-  let order = -1;
   return (
     <>
       {all.map((letter, index) => {
         if (letter.trim() === '') return null;
-        order += 1;
+        // The letters fly in turn; a space takes no turn.
+        const order = all.slice(0, index).filter((before) => before.trim() !== '').length;
         const shown =
           clearMark === undefined
             ? letter
