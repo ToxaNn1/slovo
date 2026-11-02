@@ -107,10 +107,10 @@ const face = (testID: string) => screen.getByTestId(`${testID}-face`);
 
 /** What pops, drops or turns a cell now. */
 function motionOf(testID: string) {
-  const { opacity, transform } = getAnimatedStyle(screen.getByTestId(`${testID}-motion`)) as {
-    opacity?: number;
-    transform?: { translateX?: number; translateY?: number; scale?: number; rotate?: string }[];
-  };
+  const style = getAnimatedStyle(screen.getByTestId(`${testID}-motion`));
+  const opacity = style.opacity;
+  const transform = style.transform as
+    { translateX?: number; translateY?: number; scale?: number; rotate?: string }[] | undefined;
   const step = <K extends 'translateX' | 'translateY' | 'scale' | 'rotate'>(key: K) =>
     transform?.find((one) => one[key] !== undefined)?.[key];
   return {
