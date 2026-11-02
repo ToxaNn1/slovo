@@ -8,7 +8,7 @@ import type {
 } from '@slovo/core';
 import { EditionProvider, GameRound, HapticsProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -1007,7 +1007,8 @@ describe('GameRound', () => {
       const onLeave = jest.fn();
       await renderRound(jest.fn(), onLeave);
 
-      expect(screen.queryByText('Leave?')).not.toBeOnTheScreen();
+      // The dialog slides away before it unmounts.
+    await waitFor(() => expect(screen.queryByText('Leave?')).not.toBeOnTheScreen());
 
       await fireEvent.press(screen.getByRole('button', { name: 'Leave the Game' }));
 
@@ -1024,7 +1025,8 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByTestId('game-exit-dialog-destructive'));
 
       expect(onLeave).toHaveBeenCalledTimes(1);
-      expect(screen.queryByText('Leave?')).not.toBeOnTheScreen();
+      // The dialog slides away before it unmounts.
+    await waitFor(() => expect(screen.queryByText('Leave?')).not.toBeOnTheScreen());
     });
 
     it('plays on when the reader cancels, and closes the dialog', async () => {
@@ -1035,7 +1037,8 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByTestId('game-exit-dialog-cancel'));
 
       expect(onLeave).not.toHaveBeenCalled();
-      expect(screen.queryByText('Leave?')).not.toBeOnTheScreen();
+      // The dialog slides away before it unmounts.
+    await waitFor(() => expect(screen.queryByText('Leave?')).not.toBeOnTheScreen());
       expect(screen.getByRole('button', { name: 'candid' })).toBeOnTheScreen();
     });
   });

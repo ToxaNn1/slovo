@@ -23,7 +23,7 @@ import Animated, {
 import { useEdition } from '../providers/EditionProvider';
 import { minTouchTarget, motion, pressedFade, space, typeStyle, wedges } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
+import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Wedge } from './Wedge';
 
 /** How long the toast stays, from the design. */
@@ -128,7 +128,10 @@ function UndoToast({
   const { colors, radii } = tokens;
   const { voice } = useEdition();
   const { width: windowWidth } = useWindowDimensions();
-  const reduceMotion = useReduceMotion();
+  // Each toast mounts afresh, so it waits for the system's answer before it comes in.
+  const reduceMotionKnown = useReduceMotionKnown();
+  const reduceMotion = reduceMotionKnown === true;
+  const ready = reduceMotionKnown !== undefined;
   const messageRef = useRef<Text>(null);
   /** 0 before it shows, 1 once it is in place. */
   const shown = useSharedValue(0);
@@ -136,9 +139,14 @@ function UndoToast({
     onDismiss(id);
   }
   const timeOut = useEffectEvent(close);
+  // Read when the toast comes in; a later change of Reduce Motion moves nothing.
+  const comeIn = useEffectEvent(() => {
+    shown.value = withTiming(1, reduceMotion ? FADE_IN : SLIDE_IN);
+  });
   const hasUndo = 'onUndo' in content;
 
   useEffect(() => {
+    if (!ready) return;
     let active = true;
     let timer: ReturnType<typeof setTimeout> | undefined;
     void AccessibilityInfo.isScreenReaderEnabled().then((screenReader) => {
@@ -149,7 +157,7 @@ function UndoToast({
         }, TOAST_MS);
       }
       if (!screenReader) {
-        shown.value = withTiming(1, reduceMotion ? FADE_IN : SLIDE_IN);
+        comeIn();
         return;
       }
       // VoiceOver skips a view that is still coming in, so the toast shows at once.
@@ -161,20 +169,19 @@ function UndoToast({
       active = false;
       clearTimeout(timer);
     };
-    // The toast comes in once; a later change of Reduce Motion moves nothing.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [shown, hasUndo]);
+  }, [ready, shown, hasUndo]);
 
-  const inStyle = useAnimatedStyle(() =>
-    reduceMotion
-      ? { opacity: shown.value }
-      : {
-          transform: [
-            { translateX: (1 - shown.value) * START.across * windowWidth },
-            { skewX: `${String((1 - shown.value) * START.lean)}deg` },
-          ],
-        },
-  );
+  const inStyle = useAnimatedStyle(() => {
+    // Under Reduce Motion it fades in place; otherwise it slides, fully opaque.
+    const away = reduceMotion ? 0 : 1 - shown.value;
+    return {
+      opacity: reduceMotion ? shown.value : 1,
+      transform: [
+        { translateX: away * START.across * windowWidth },
+        { skewX: `${String(away * START.lean)}deg` },
+      ],
+    };
+  });
 
   return (
     <Animated.View
