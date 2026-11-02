@@ -3,7 +3,7 @@ import { StyleSheet, Text } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { space, typeSize } from '../tokens';
+import { space, typeStyle } from '../tokens';
 
 /**
  * The Community Counters line under an Entry card's mark buttons (ADR 0060),
@@ -14,7 +14,8 @@ import { space, typeSize } from '../tokens';
  */
 export function CommunityCountersLine({ line }: { line: CounterLine | undefined }) {
   const { strings, voice, count } = useEdition();
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   if (line === undefined) return null;
   const texts = strings.knowledge.communityCounters;
   const known = fill(count(texts.known, line.total), { known: String(line.known) });
@@ -25,7 +26,7 @@ export function CommunityCountersLine({ line }: { line: CounterLine | undefined 
       accessible
       accessibilityLabel={fill(texts.spokenLine, { known, saved })}
       {...voice}
-      style={[styles.line, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+      style={[typeStyle('communityCounters', tokens), styles.line, { color: colors.muted }]}
     >
       {fill(texts.line, { known, saved })}
     </Text>
@@ -33,5 +34,5 @@ export function CommunityCountersLine({ line }: { line: CounterLine | undefined 
 }
 
 const styles = StyleSheet.create({
-  line: { marginTop: space[2], fontSize: typeSize.meta, textAlign: 'center' },
+  line: { marginTop: space[2], textAlign: 'center' },
 });

@@ -298,6 +298,8 @@ export const typeRoles = {
   collectionCardName: role('word', '800', 14, 17),
   /** How many Entries a Collection holds, under its name on its card. */
   collectionCardCount: role('ui', '600', 12, 12),
+  /** The Community Counters line under an Entry card's mark buttons. */
+  communityCounters: role('ui', '400', 13, 17),
   // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
