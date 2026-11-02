@@ -91,7 +91,8 @@
     "laterQuestions": true,
     "profile": true,
     "mascot": true,
-    "sounds": true
+    "sounds": true,
+    "reduceMotion": true
   },
   "userSettingDefaults": {
     "theme": "system",

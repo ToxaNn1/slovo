@@ -13,7 +13,7 @@ function editionWithout(...off: FeatureSwitch[]) {
 }
 
 const everything: Shown = {
-  tabs: ['home', 'settings', 'game', 'saved'],
+  tabs: ['home', 'game', 'saved', 'settings'],
   gameReview: true,
   entryButtons: {
     shareCard: true,
@@ -27,6 +27,7 @@ const everything: Shown = {
   selfCheckSetting: true,
   soundsSetting: true,
   seasonalDecorSetting: true,
+  reduceMotionSetting: true,
   shareCountersSetting: true,
   countersSetting: 'noCounters',
   learning: true,
@@ -66,7 +67,7 @@ describe('what the reader is shown', () => {
       'no Game tab with the Game off',
       {
         off: ['game'],
-        shown: { tabs: ['home', 'settings', 'saved'] },
+        shown: { tabs: ['home', 'saved', 'settings'] },
       },
     ],
     [
@@ -83,6 +84,10 @@ describe('what the reader is shown', () => {
       { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },
     ],
     ['no «Звуки» switch with the sounds off', { off: ['sounds'], shown: { soundsSetting: false } }],
+    [
+      'no «Менше руху» switch with its Feature Switch off',
+      { off: ['reduceMotion'], shown: { reduceMotionSetting: false } },
+    ],
     [
       'no «Ділитися анонімною статистикою» switch with Community Counters and Analytics off',
       { off: ['communityCounters', 'analytics'], shown: { shareCountersSetting: false } },

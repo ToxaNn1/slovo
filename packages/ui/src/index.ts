@@ -75,6 +75,8 @@ export { Button, type ButtonVariant } from './primitives/Button';
 export { Icon, type IconName } from './primitives/Icon';
 export { IconButton } from './primitives/IconButton';
 export { PressedTile, type TileTone } from './primitives/PressedTile';
+export { ScreenEnter } from './primitives/ScreenEnter';
+export { TabBarButton } from './primitives/TabBarButton';
 export { LabelChip } from './primitives/LabelChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
 export {
@@ -111,6 +113,10 @@ export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
 export { StatsPill } from './progress/StatsPill';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
+export { BadgeMark } from './progress/BadgeMark';
+export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
+export { BadgeStamp } from './progress/BadgeStamp';
+export { LevelCard, type LevelCardLine } from './progress/LevelCard';
 export { StatsSheet } from './progress/StatsSheet';
 export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
@@ -121,16 +127,19 @@ export {
   disabledOpacity,
   lineHeight,
   minTouchTarget,
+  onboardingLayout,
   rowPadding,
   signInButtonHeight,
   space,
   STACK_AT_FONT_SCALE,
   typeSize,
+  typeStyle,
   type ColorScheme,
   type DesignTokens,
   type ShareCardFormat,
 } from './tokens';
 export { TokensProvider, useTokens } from './providers/TokensProvider';
+export { ReduceMotionProvider } from './providers/ReduceMotionProvider';
 export { useReduceMotion } from './providers/useReduceMotion';
 export { WedgeLoader } from './primitives/WedgeLoader';
 export {

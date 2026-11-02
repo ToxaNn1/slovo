@@ -7,8 +7,8 @@ import {
   type UserSettings,
 } from '@slovo/core';
 
-/** Every tab in its final order: Home, Settings, Game, Saved. */
-const allTabs = ['home', 'settings', 'game', 'saved'] as const;
+/** Every tab in its final order: Home, Game, Saved, Settings. */
+const allTabs = ['home', 'game', 'saved', 'settings'] as const;
 
 export type Tab = (typeof allTabs)[number];
 
@@ -41,6 +41,8 @@ export interface Shown {
   readonly soundsSetting: boolean;
   /** The Settings switch for «Сезонний декор» (ADR 0055). */
   readonly seasonalDecorSetting: boolean;
+  /** The Settings switch «Менше руху», which joins the system's Reduce Motion. */
+  readonly reduceMotionSetting: boolean;
   /** The Settings switch «Ділитися анонімною статистикою», with its privacy policy link (ADR 0060). */
   readonly shareCountersSetting: boolean;
   /**
@@ -146,6 +148,7 @@ export function shownOf({
     selfCheckSetting: on('selfCheck'),
     soundsSetting: on('sounds'),
     seasonalDecorSetting: on('seasonalDecor'),
+    reduceMotionSetting: on('reduceMotion'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
     countersSetting: on('noCounters') ? 'noCounters' : on('statistics') ? 'hideStreak' : undefined,
     learning: knowledge,

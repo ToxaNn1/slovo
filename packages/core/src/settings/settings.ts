@@ -30,17 +30,23 @@ export interface UserSettings {
    * waits to be sent.
    */
   readonly shareCounters: boolean;
+  /**
+   * Whether «Менше руху» is on: the app draws the calmer variant of every
+   * animation, as it does when the system's Reduce Motion is on (ADR 0055).
+   */
+  readonly reduceMotion: boolean;
 }
 
 /**
  * The settings an Edition sets the defaults of. The counters are shown until the
  * user hides them, Self-check is off until the user turns it on and Seasonal
  * Decor, sharing the Community Counters and «Звуки» are on until the user
- * turns them off, in every Edition, so none of them has an Edition default.
+ * turns them off, and «Менше руху» is off until the user turns it on, in
+ * every Edition, so none of them has an Edition default.
  */
 export type SettingsDefaults = Omit<
   UserSettings,
-  'noCounters' | 'selfCheck' | 'seasonalDecor' | 'shareCounters' | 'sounds'
+  'noCounters' | 'selfCheck' | 'seasonalDecor' | 'shareCounters' | 'sounds' | 'reduceMotion'
 >;
 
 /** The user's settings: their own choices over the Edition's defaults. */
@@ -85,6 +91,7 @@ export function createSettings({
     seasonalDecor: true,
     shareCounters: true,
     sounds: true,
+    reduceMotion: false,
   };
 
   async function read(): Promise<UserSettings> {
@@ -97,6 +104,7 @@ export function createSettings({
       selfCheck: (await userState.read(userStateRecords.selfCheck)) ?? all.selfCheck,
       seasonalDecor: (await userState.read(userStateRecords.seasonalDecor)) ?? all.seasonalDecor,
       shareCounters: (await userState.read(userStateRecords.shareCounters)) ?? all.shareCounters,
+      reduceMotion: (await userState.read(userStateRecords.reduceMotion)) ?? all.reduceMotion,
     };
   }
 
@@ -119,6 +127,9 @@ export function createSettings({
             : []),
           ...('shareCounters' in changes
             ? userStateRecords.shareCounters.change(changes.shareCounters)
+            : []),
+          ...('reduceMotion' in changes
+            ? userStateRecords.reduceMotion.change(changes.reduceMotion)
             : []),
           ...(changes.shareCounters === false ? await forgetUnsentCounters(userState) : []),
         ]),

@@ -114,6 +114,7 @@ describe('openUserState', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
     expect(await createSwipeHint({ userState }).isDue()).toBe(false);
     expect(new Set(cycle.unseen().words)).toEqual(new Set(['w_0', 'w_3', 'w_4']));

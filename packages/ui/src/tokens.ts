@@ -135,12 +135,24 @@ export const typeRoles = {
   /** Reading text: the line under a heading. */
   sub: role('ui', '500', 15, 21),
   meta: role('ui', '500', 13, 17),
+  /** A tab's label under its icon. */
+  tabLabel: role('ui', '600', 11, 11),
   /** The rotated black title of a bottom sheet. */
   sheetTitle: role('word', '900', 18, 18, 0.5, 'uppercase'),
   /** A toast's message. */
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
+  /** The word an onboarding step shouts on its red top. */
+  stepShout: role('word', '900', 168, 151, -8),
+  /** An onboarding step's title. */
+  stepTitle: role('word', '800', 28, 31, -0.5),
+  /** An onboarding step's text under its title. */
+  stepText: role('ui', '400', 16, 23),
+  /** The number on a Daily Goal tile of the onboarding. */
+  goalNumber: role('word', '900', 26, 26),
+  /** The unit under a Daily Goal tile's number. */
+  goalUnit: role('ui', '600', 12, 12),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -226,7 +238,65 @@ export const wedges = {
     [0.5, 1],
     [0, 0.64],
   ],
+  /** A hexagon lying on its side: the Streak Badges. */
+  hexagon: [
+    [0.25, 0.03],
+    [0.75, 0.03],
+    [1, 0.5],
+    [0.75, 0.97],
+    [0.25, 0.97],
+    [0, 0.5],
+  ],
+  /** A diamond standing on its point: the Level Badges. */
+  diamond: [
+    [0.5, 0],
+    [1, 0.5],
+    [0.5, 1],
+    [0, 0.5],
+  ],
 } as const satisfies Record<string, Wedge>;
+
+/** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
+export const levelCard = {
+  padding: 20,
+  radius: 24,
+  gap: 18,
+  /** The ring's box, its radius and its stroke. */
+  ring: { box: 124, radius: 54, stroke: 12, track: 'rgba(127, 127, 127, 0.3)' },
+  /** The red wedge in the bottom right corner, past the card's edges. */
+  wedge: { side: 170, right: -30, bottom: -40, opacity: 0.95 },
+  /** The wedge's slant: from 40% along the top to the bottom left corner. */
+  wedgeShape: [
+    [0.4, 0],
+    [1, 0],
+    [1, 1],
+    [0, 1],
+  ],
+  levelSize: 44,
+  linesGap: 6,
+} as const;
+
+/** The Badge stamp, from the design: the earned Badge's mark lands on red. */
+export const badgeStamp = {
+  markSide: 210,
+  /** The mark lands from this scale and turn to its rest. */
+  from: { scale: 3, turn: -26 },
+  turn: -8,
+  /** The depth of the hard ink edge under the stamped mark. */
+  drop: 8,
+  padding: { top: 110, horizontal: 28, bottom: 40 },
+  markTop: 70,
+  titleTop: 34,
+  nameTop: 10,
+  titleSize: 30,
+  nameSize: 16,
+} as const;
+
+/** The Profile's Badge grid: marks of this side in rows of their family. */
+export const badgeGrid = { side: 42, gap: 6, familyGap: 14, pressedScale: 0.88 } as const;
+
+/** The depth of the hard edge under an earned Badge's shape. */
+export const badgeEdge = 4;
 
 /** A cubic Bézier easing curve, as CSS `cubic-bezier(x1, y1, x2, y2)` takes it. */
 export type Easing = readonly [number, number, number, number];
@@ -241,6 +311,8 @@ export const motion = {
   fly: { duration: 600, easing: [0.2, 0.9, 0.25, 1.15] },
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
+  /** The Level ring fills to the reader's progress. */
+  ring: { duration: 1100, easing: [0.2, 0.8, 0.2, 1] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
   pop: { duration: 300, easing: ease },
   /** One beat of the loader's wedges, from short to tall and back. */
@@ -249,12 +321,88 @@ export const motion = {
   switch: { duration: 280, easing: [0.3, 1.9, 0.5, 1] },
   /** Rows rise this far into place, one after another. */
   cascade: { duration: 400, easing: ease, rise: 16 },
+  /** The tab indicator stretching in under the tab it moves to. */
+  tab: { duration: 300, easing: [0.3, 1.6, 0.5, 1] },
+  /** The red band sweeping over a screen as it enters. */
+  sweep: { duration: 500, easing: [0.6, 0, 0.3, 1] },
   /** Under Reduce Motion every motion is this one fade. */
   reduceMotion: { duration: 300, easing: ease },
 } as const satisfies Record<
   string,
   { readonly duration: number; readonly easing: Easing; readonly rise?: number }
 >;
+
+/**
+ * The splash cut of the design (`startSplash` in `SlovoApp.dc.html`), on its
+ * 390 × 844 frame, which the splash scales to the screen's width. The wordmark's
+ * letters fly in one after another, the ink band cuts across with the tagline,
+ * the Mascot rolls in shouting, and the app takes over after `hold`. The daily
+ * open runs the same cut at `pace` of the first launch's; under Reduce Motion
+ * the cut is one fade and the app takes over after `reduceMotionHold`.
+ */
+export const splashMotion = {
+  frame: { width: 390, height: 844 },
+  first: { pace: 1, hold: 2050, reduceMotionHold: 800 },
+  daily: { pace: 0.28, hold: 560, reduceMotionHold: 350 },
+  /** Each letter: where it stands, its turn, and its fly in from the screen's middle. */
+  letters: [
+    { x: -40, y: 70, rotate: -4 },
+    { x: 178, y: 110, rotate: 6 },
+    { x: -56, y: 300, rotate: 3 },
+    { x: 190, y: 330, rotate: -7 },
+    { x: 40, y: 520, rotate: -10 },
+  ],
+  letter: {
+    size: 250,
+    letterSpacing: -10,
+    /** The middle of the frame the letters fly from, less the letter's own offset. */
+    from: { x: 90, y: 580 },
+    fromScale: 0.15,
+    fromTurn: -30,
+    duration: 500,
+    delay: 500,
+    stagger: 80,
+    easing: [0.2, 0.9, 0.25, 1.15],
+  },
+  /** The ink band, as fractions of the screen, drawn in from the left. */
+  band: [
+    [0, 0.58],
+    [1, 0.36],
+    [1, 0.52],
+    [0, 0.74],
+  ],
+  cut: { duration: 350, delay: 1250, easing: [0.7, 0, 0.3, 1] },
+  tagline: { size: 15, letterSpacing: 4, turn: -12.5 },
+  mascot: { x: 110, y: 640 },
+  /** The Mascot rolls in from the left, turning as it comes. */
+  roll: { duration: 600, from: -360, turn: -560, easing: [0.25, 0.9, 0.3, 1.1] },
+} as const;
+
+/**
+ * A screen's entrance (the design's `slScr` and `slSweep`), in fractions of
+ * the screen's width: the screen slides in by `shift` points while its
+ * slanted left edge, `slant` wider at the bottom than at the top, wipes from
+ * the right edge `travel` across; a red band of `band.width` sweeps over it,
+ * slanted by `band.skewX`, from `band.from` to `band.to` of its own width.
+ */
+export const screenEnter = {
+  shift: 30,
+  slant: 0.25,
+  travel: 1.4,
+  band: { width: 0.45, skewX: '-18deg', from: -1.7, to: 2.8 },
+} as const;
+
+/** The tab bar of the design. */
+export const tabBar = {
+  /** A tab's height above the safe area. */
+  height: 56,
+  /** A tab's icon, square. */
+  icon: 24,
+  /** Space between a tab's icon and its label. */
+  gap: 5,
+  /** The red slanted indicator over the active tab, `top` points over the tab. */
+  indicator: { width: 34, height: 6, top: -9, skewX: '-24deg' },
+} as const;
 
 /** The Mascot's width in points; its height follows the Edition's vector. */
 export const mascotWidth = 130;
@@ -381,7 +529,6 @@ export const typeSize = {
   /** A sheet's title; also a result's number, an empty state's title and the Correction's non-standard form. */
   sheetTitle: 26,
   partOfSpeech: 14,
-  tabLabel: 10.5,
   /** `Block heading` (Manrope 700): the name of a card or a Collection, a sheet's text button; also an Example, an onboarding step's subtitle, a Round's sheet title. */
   blockHeading: 17,
   /** What an Entry's row leads with in a list, and over a sheet (the design's 20–22). */
@@ -688,11 +835,19 @@ export const shareCardDrawing = {
 export const minTouchTarget = 44;
 
 /**
- * A day of the Active Days calendar on the stats sheet: the ring that
- * outlines today around the day's number, its line, and the dot under the
- * number of an Active Day or a missed one.
+ * A day of the Active Days calendar: a tile of this height and corner on a
+ * grid with this gap, over a hard edge this deep, a day to come outlined by a
+ * dashed line this wide, and the day's number at this size.
  */
-export const calendarDay = { ring: 32, ringBorder: 1.5, dot: 6, dotGap: 3 } as const;
+export const calendarDay = {
+  height: 42,
+  radius: 11,
+  gap: 7,
+  edge: 4,
+  futureBorder: 2,
+  number: 13,
+  weekday: 11,
+} as const;
 
 /** How much a button that takes no press is dimmed. */
 export const disabledOpacity = 0.5;
@@ -745,6 +900,24 @@ export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as
 
 /** SLOVO ID's mark on the onboarding's sign-in button: its side, corner radius and letter size. */
 export const accountMark = { size: 26, radius: 6, letterSize: 17 } as const;
+
+/**
+ * An onboarding step of the design (`isOb` in `SlovoApp.dc.html`): the red
+ * halftone top cut by `wedges.cut`, its shout word turned and flown in from
+ * the left, the on-red Mascot, the skewed step dots and the Daily Goal tiles.
+ */
+export const onboardingLayout = {
+  heroHeight: 440,
+  shout: { left: -14, top: 96, turn: '-8deg', flyFrom: -120 },
+  /** The Mascot's corner, less its own padding. */
+  mascot: { right: 10, top: 270 },
+  dot: { height: 8, width: 14, currentWidth: 34, gap: 6, skew: '-20deg' },
+  side: 24,
+  contentTop: 6,
+  gap: 14,
+  bottom: 40,
+  goalTile: { height: 78, gap: 10, radius: 16, lineGap: 2 },
+} as const;
 
 /** The width of the rosette (Decor slot 4) between the SLOVO ID step's text and its buttons. */
 export const onboardingRosetteWidth = 120;

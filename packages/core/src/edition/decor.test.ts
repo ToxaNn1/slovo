@@ -20,6 +20,23 @@ const editionDecor = {
   splash: { mark: stitch('#A3221B', '#D4AE5C'), band: stitch('#A3221B', '#D4AE5C') },
   victory: { illustration: stitch('#A3221B', '#D4AE5C') },
   shareCard: { band: stitch('#A3221B', '#D4AE5C'), corner: stitch('#9C7A2E', '#D4AE5C') },
+  categories: {
+    'repressed-words': {
+      pictogram: {
+        large: {
+          kind: 'polygon',
+          points: [
+            [20, 0],
+            [80, 0],
+            [80, 100],
+            [20, 100],
+          ],
+        },
+        small: { kind: 'circle', radius: 50 },
+      },
+      cover: 'quiet',
+    },
+  },
 };
 
 describe('loadDecor', () => {
@@ -132,6 +149,16 @@ describe('loadDecor', () => {
     expect(decor.background).toBeUndefined();
   });
 
+  it('draws no Category art for an Edition that supplies none', () => {
+    expect(loadDecor({ corners: editionDecor.corners }).categories).toBeUndefined();
+  });
+
+  it('takes the art of each Category an Edition supplies', () => {
+    expect(loadDecor({ categories: editionDecor.categories }).categories).toEqual(
+      editionDecor.categories,
+    );
+  });
+
   it('has no error illustration when the Edition supplies only the empty-state one', () => {
     const decor = loadDecor({ emptyState: { illustration: editionDecor.emptyState.illustration } });
 
@@ -139,6 +166,11 @@ describe('loadDecor', () => {
   });
 
   const layer = { path: 'M0 0h2v2H0z', light: '#000000', dark: '#FFFFFF' };
+  const categoryArt = (pictogram: object, cover = 'tile') => ({
+    categories: {
+      science: { pictogram: { small: { kind: 'circle', radius: 50 }, ...pictogram }, cover },
+    },
+  });
   const motif = (override: object) => ({ width: 2, height: 2, layers: [layer], ...override });
 
   it.each([
@@ -179,6 +211,43 @@ describe('loadDecor', () => {
       'a Share Card band that is not a motif',
       { shareCard: { band: motif({ height: -1 }), corner: motif({}) } },
       'shareCard.band.height',
+    ],
+    [
+      'a pictogram polygon of two points',
+      categoryArt({
+        large: {
+          kind: 'polygon',
+          points: [
+            [0, 0],
+            [100, 100],
+          ],
+        },
+      }),
+      'categories.science.pictogram.large.points',
+    ],
+    [
+      'a pictogram point outside its grid',
+      categoryArt({
+        large: {
+          kind: 'polygon',
+          points: [
+            [0, 0],
+            [120, 0],
+            [0, 100],
+          ],
+        },
+      }),
+      'categories.science.pictogram.large.points.1.0',
+    ],
+    [
+      'a pictogram circle wider than its grid',
+      categoryArt({ large: { kind: 'circle', radius: 60 } }),
+      'categories.science.pictogram.large.radius',
+    ],
+    [
+      'a Category cover the Theme has no colours for',
+      categoryArt({ large: { kind: 'circle', radius: 45 } }, 'gold'),
+      'categories.science.cover',
     ],
     ['an unknown slot', { frame: {} }, '(root)'],
   ])('rejects %s, naming the field', (_, decor, field) => {

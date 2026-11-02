@@ -138,6 +138,28 @@ describe('Settings › «Сезонний декор»', () => {
   });
 });
 
+describe('Settings › «Менше руху»', () => {
+  it('turns «Менше руху» on from its switch while its Feature Switch is on', async () => {
+    const settings = await renderSettings({ reduceMotion: true });
+
+    const row = screen.getByRole('switch', { name: 'Менше руху' });
+    expect(row).not.toBeChecked();
+    expect(screen.getByHintText(editionStrings.settings.reduceMotion.explanation)).toBe(row);
+
+    await fireEvent(row, 'valueChange', true);
+
+    expect((await settings.read()).reduceMotion).toBe(true);
+  });
+
+  it('leaves the switch out while its Feature Switch is off', async () => {
+    await renderSettings({ reduceMotion: false });
+
+    expect(
+      screen.queryByTestId('settings-reduce-motion', { includeHiddenElements: true }),
+    ).not.toBeOnTheScreen();
+  });
+});
+
 describe('Settings › «Ділитися анонімною статистикою»', () => {
   it('shows its switch while the Community Counters are on and Analytics is off', async () => {
     await renderSettings({ communityCounters: true, analytics: false });

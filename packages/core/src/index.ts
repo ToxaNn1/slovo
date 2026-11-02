@@ -180,7 +180,7 @@ export {
   type MixKindWeights,
   type MixState,
 } from './entries/mix';
-export { type OnboardingStep } from './onboarding/onboarding';
+export { launchKind, type LaunchKind, type OnboardingStep } from './onboarding/onboarding';
 export type {
   OptionQuestion,
   Questionnaire,

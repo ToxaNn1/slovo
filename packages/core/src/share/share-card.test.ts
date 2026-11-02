@@ -500,6 +500,7 @@ describe('the Share Card of progress', () => {
         badge: {
           id: 'week',
           name: 'Тиждень поспіль',
+          symbol: '1',
           condition: { kind: 'streak', days: 7 },
           earned: true,
           date: '2026-10-30',
