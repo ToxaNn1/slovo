@@ -143,14 +143,12 @@ export const typeRoles = {
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
-<<<<<<< HEAD
   /** The app's name beside the wedge at the top of the Feed. */
   logo: role('word', '900', 22, 22, -0.5),
   /** Today in the Feed's header. */
   headerDate: role('ui', '600', 13, 13),
   /** The Streak in its pill. */
   streak: role('word', '800', 14, 14),
-=======
   /** The word an onboarding step shouts on its red top. */
   stepShout: role('word', '900', 168, 151, -8),
   /** An onboarding step's title. */
@@ -161,7 +159,6 @@ export const typeRoles = {
   goalNumber: role('word', '900', 26, 26),
   /** The unit under a Daily Goal tile's number. */
   goalUnit: role('ui', '600', 12, 12),
->>>>>>> origin/main
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
