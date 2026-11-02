@@ -356,8 +356,6 @@ export const typeRoles = {
   swipeAction: role('ui', '700', 14, 17),
   /** The «Повторити» tag of an Entry due for review. */
   reviewTag: role('word', '800', 11, 11, 1, 'uppercase'),
-  /** The label of the Sign in with Google button. */
-  googleSignIn: role('ui', '500', 15, 20),
   /** The die on the mood button. */
   moodDie: role('ui', '400', 17, 20),
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
@@ -1316,13 +1314,16 @@ export const onFill = '#FFFFFF';
  * «Sign in with Google» in Google's branding rules for the button
  * (https://developers.google.com/identity/branding-guidelines): the fill,
  * stroke and label of its light and dark themes, which follow the Theme, and
- * the side and the four colours of Google's "G" logo. Google's, not an
- * Edition's, so no Edition token changes them.
+ * the side and the four colours of Google's "G" logo, and its label's type:
+ * medium weight in the system's sans-serif. Google's, not an Edition's, so no
+ * Edition token changes them, and the label is the one text that takes no
+ * type role (ADR 0070).
  */
 export const googleSignInButton = {
   light: { fill: '#FFFFFF', stroke: '#747775', label: '#1F1F1F' },
   dark: { fill: '#131314', stroke: '#8E918F', label: '#E3E3E3' },
   logoSize: 20,
+  labelType: { fontSize: 15, fontWeight: '500' },
   logo: { blue: '#4285F4', green: '#34A853', yellow: '#FBBC05', red: '#EA4335' },
 } as const;
 

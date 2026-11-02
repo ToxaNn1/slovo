@@ -17,7 +17,9 @@ export const tokenScope = {
  * `no-restricted-syntax` selectors that ban sizes, spacings, radii and colours
  * written as literals instead of taken from the `@slovo/ui` tokens
  * (docs/react-native.md), and a font family or weight written by hand instead
- * of taken from a type role (ADR 0070): only `tokens.ts` sets them.
+ * of taken from a type role (ADR 0070): only `tokens.ts` sets them. The one
+ * exception is Google's sign-in label, whose system font and weight Google's
+ * branding rules set: `googleSignInButton.labelType` in `tokens.ts` holds it.
  *
  * `no-restricted-syntax` is one rule with one array, and a later declaration
  * replaces an earlier one for the same file. A workspace part that has other
