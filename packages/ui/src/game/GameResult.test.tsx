@@ -37,7 +37,7 @@ const haptics: Haptics = {
 };
 
 /** A victory illustration of three layers, each a square. */
-const layer = { path: 'M0 0h4v4H0z', light: '#000', dark: '#fff' };
+const layer = { path: 'M0 0h4v4H0z', color: 'decor' };
 const decor: Decor = {
   ...coreDecor,
   victory: { illustration: { width: 4, height: 4, layers: [layer, layer, layer] } },

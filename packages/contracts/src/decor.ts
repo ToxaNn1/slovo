@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { ColorRoleSchema } from './edition-tokens';
 import { ColorSchema, HexColorSchema } from './shared';
 
 /** The splash in one Theme: an image from the Edition's `decor/` folder on a plain colour. */
@@ -29,11 +30,14 @@ const SvgPathSchema = z
   .string()
   .regex(/^\s*[Mm][MmLlHhVvCcSsQqTtAaZz\d\s,.+-]*$/, 'Expected SVG path data such as M0 0h2v2H0z');
 
-/** One colour of a motif: its shapes and their colour in each colour scheme. */
+/**
+ * One colour of a motif: its shapes, the colour role they take in the colour
+ * scheme in effect, and how opaque they are drawn (whole when left out).
+ */
 export const DecorLayerSchema = z.strictObject({
   path: SvgPathSchema,
-  light: ColorSchema,
-  dark: ColorSchema,
+  color: ColorRoleSchema,
+  opacity: z.number().gt(0).max(1).optional(),
 });
 
 export type DecorLayer = z.infer<typeof DecorLayerSchema>;

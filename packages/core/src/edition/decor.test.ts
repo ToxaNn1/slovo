@@ -3,23 +3,23 @@ import { describe, expect, it } from 'vitest';
 import { coreDecor, loadDecor } from '../index';
 import { InvalidDecorError } from './decor';
 
-const stitch = (light: string, dark: string) => ({
+const stitch = (color: string, opacity?: number) => ({
   width: 4,
   height: 4,
-  layers: [{ path: 'M0 0h2v2H0z', light, dark }],
+  layers: [{ path: 'M0 0h2v2H0z', color, ...(opacity === undefined ? {} : { opacity }) }],
 });
 
 const editionDecor = {
-  background: { tile: stitch('rgba(163, 34, 27, 0.05)', 'rgba(212, 174, 92, 0.06)') },
-  divider: { band: stitch('#A3221B', '#D4AE5C'), centre: stitch('#1E1813', '#C8372D') },
-  corners: { corner: stitch('#9C7A2E', '#D4AE5C') },
+  background: { tile: stitch('decor', 0.06) },
+  divider: { band: stitch('decor'), centre: stitch('ink') },
+  corners: { corner: stitch('muted') },
   emptyState: {
-    illustration: stitch('#A3221B', '#D4AE5C'),
-    error: stitch('#A3221B', '#D4AE5C'),
+    illustration: stitch('decor'),
+    error: stitch('decor'),
   },
-  splash: { mark: stitch('#A3221B', '#D4AE5C'), band: stitch('#A3221B', '#D4AE5C') },
-  victory: { illustration: stitch('#A3221B', '#D4AE5C') },
-  shareCard: { band: stitch('#A3221B', '#D4AE5C'), corner: stitch('#9C7A2E', '#D4AE5C') },
+  splash: { mark: stitch('decor'), band: stitch('decor') },
+  victory: { illustration: stitch('decor') },
+  shareCard: { band: stitch('decor'), corner: stitch('muted') },
   categories: {
     'repressed-words': {
       pictogram: {
@@ -165,7 +165,7 @@ describe('loadDecor', () => {
     expect(decor.emptyState?.error).toBeUndefined();
   });
 
-  const layer = { path: 'M0 0h2v2H0z', light: '#000000', dark: '#FFFFFF' };
+  const layer = { path: 'M0 0h2v2H0z', color: 'decor' };
   const categoryArt = (pictogram: object, cover = 'tile') => ({
     categories: {
       science: { pictogram: { small: { kind: 'circle', radius: 50 }, ...pictogram }, cover },
@@ -175,14 +175,24 @@ describe('loadDecor', () => {
 
   it.each([
     [
-      'a colour that is not #RRGGBB or rgba()',
-      { corners: { corner: motif({ layers: [{ ...layer, dark: 'gold' }] }) } },
-      'corners.corner.layers.0.dark',
+      'a layer in its own hex instead of a colour role',
+      { corners: { corner: motif({ layers: [{ ...layer, color: '#FF3B2F' }] }) } },
+      'corners.corner.layers.0.color',
     ],
     [
-      'a layer without its dark colour',
-      { corners: { corner: motif({ layers: [{ path: layer.path, light: '#000000' }] }) } },
-      'corners.corner.layers.0.dark',
+      'a layer in a removed colour role',
+      { corners: { corner: motif({ layers: [{ ...layer, color: 'inkSecondary' }] }) } },
+      'corners.corner.layers.0.color',
+    ],
+    [
+      'a layer in its own light and dark colours',
+      { corners: { corner: motif({ layers: [{ path: layer.path, light: '#000000', dark: '#FFFFFF' }] }) } },
+      'corners.corner.layers.0',
+    ],
+    [
+      'a layer drawn at no opacity',
+      { corners: { corner: motif({ layers: [{ ...layer, opacity: 0 }] }) } },
+      'corners.corner.layers.0.opacity',
     ],
     [
       'a path that is not SVG path data',

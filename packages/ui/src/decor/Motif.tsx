@@ -5,12 +5,15 @@ import Svg, { Defs, G, Path, Pattern, Rect } from 'react-native-svg';
 
 import { useTokens } from '../providers/TokensProvider';
 
+/** One layer in its colour role of the colour scheme in effect. */
+function LayerPath({ layer }: { layer: DecorLayer }) {
+  const { colors } = useTokens();
+  return <Path d={layer.path} fill={colors[layer.color]} fillOpacity={layer.opacity} />;
+}
+
 /** The motif's layers in the colours of the colour scheme in effect. */
 function Layers({ motif }: { motif: DecorMotif }) {
-  const { colorScheme } = useTokens();
-  return motif.layers.map((layer, index) => (
-    <Path key={index} d={layer.path} fill={layer[colorScheme]} />
-  ));
+  return motif.layers.map((layer, index) => <LayerPath key={index} layer={layer} />);
 }
 
 /** Keeps Decor out of VoiceOver and out of the way of touches. */
@@ -56,14 +59,13 @@ export function MotifLayerImage({
   layer: DecorLayer;
   width: number;
 }) {
-  const { colorScheme } = useTokens();
   return (
     <Svg
       width={width}
       height={(width * motif.height) / motif.width}
       viewBox={`0 0 ${String(motif.width)} ${String(motif.height)}`}
     >
-      <Path d={layer.path} fill={layer[colorScheme]} />
+      <LayerPath layer={layer} />
     </Svg>
   );
 }

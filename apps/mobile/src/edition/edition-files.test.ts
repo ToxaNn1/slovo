@@ -12,6 +12,7 @@ import {
   PluralLabelSchema,
   PluralSchema,
   type ColorTokens,
+  type DecorLayer,
 } from '@slovo/contracts';
 import {
   EDITIONS_DIR,
@@ -1510,7 +1511,7 @@ describe('Edition Decor', () => {
           if (colors === undefined) return;
           const screen = colors[scheme].background;
           const stitched = tiles.flatMap(({ layers }) =>
-            layers.map((layer) => over(layer[scheme], screen)),
+            layers.map((layer) => over(layerColor(layer, colors[scheme]), screen)),
           );
 
           for (const role of textRoles) {
@@ -1533,7 +1534,9 @@ describe('Edition Decor', () => {
 
           for (const { layers } of centres) {
             const strongest = Math.max(
-              ...layers.map((layer) => contrast(over(layer[scheme], screen), parseColor(screen))),
+              ...layers.map((layer) =>
+                contrast(over(layerColor(layer, colors[scheme]), screen), parseColor(screen)),
+              ),
             );
             expect(strongest, JSON.stringify(layers)).toBeGreaterThanOrEqual(3);
           }
@@ -1695,6 +1698,12 @@ function parseRgba(color: string): readonly [number, number, number, number] {
 function parseColor(color: string): Rgb {
   const [r, g, b] = parseRgba(color);
   return [r, g, b];
+}
+
+/** A Decor layer's colour role in one colour scheme, at the layer's opacity. */
+function layerColor(layer: DecorLayer, colors: ColorTokens): string {
+  const [r, g, b, a] = parseRgba(colors[layer.color]);
+  return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${String(a * (layer.opacity ?? 1))})`;
 }
 
 /** A colour drawn over an opaque one. */

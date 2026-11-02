@@ -7,7 +7,7 @@ import { decorOf, loadDecor, loadSeasonalMotifs, parseLocalDate as on } from '..
 const drawing = (width: number) => ({
   width,
   height: 1,
-  layers: [{ path: 'M0 0h1v1H0z', light: '#000000', dark: '#FFFFFF' }],
+  layers: [{ path: 'M0 0h1v1H0z', color: 'decor' }],
 });
 
 /** A motif told apart by its tile's width; its centre is the tile's width plus 100. */

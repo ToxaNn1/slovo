@@ -192,7 +192,7 @@ const longestWordOfTheDay = {
 const motif = {
   width: 4,
   height: 4,
-  layers: [{ path: 'M0 0h4v4H0z', light: '#000', dark: '#fff' }],
+  layers: [{ path: 'M0 0h4v4H0z', color: 'decor' }],
 };
 const framedDecor: Decor = { ...coreDecor, corners: { corner: motif } };
 

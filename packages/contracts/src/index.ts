@@ -114,8 +114,10 @@ export {
   type MascotState,
 } from './decor';
 export {
+  ColorRoleSchema,
   ColorTokensSchema,
   EditionTokensSchema,
+  type ColorRole,
   type ColorTokens,
   type EditionTokens,
 } from './edition-tokens';

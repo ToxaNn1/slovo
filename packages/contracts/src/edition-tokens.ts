@@ -57,6 +57,11 @@ export const ColorTokensSchema = z.strictObject({
 
 export type ColorTokens = z.infer<typeof ColorTokensSchema>;
 
+/** The name of one colour role. */
+export const ColorRoleSchema = ColorTokensSchema.keyof();
+
+export type ColorRole = z.infer<typeof ColorRoleSchema>;
+
 const RadiusSchema = z.number().nonnegative();
 
 /**

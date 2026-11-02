@@ -9,7 +9,7 @@ function motif(width: number): SeasonalMotif {
   const drawing = {
     width,
     height: 1,
-    layers: [{ path: 'M0 0h1v1H0z', light: '#000', dark: '#FFF' }],
+    layers: [{ path: 'M0 0h1v1H0z', color: 'decor' }],
   };
   return { tile: drawing, centre: drawing };
 }
