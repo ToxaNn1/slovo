@@ -48,6 +48,7 @@ import { OrderedChips } from './OrderedChips';
 import { GameTimer } from './GameTimer';
 import { PairsGrid } from './PairsGrid';
 import { TypedAnswer } from './TypedAnswer';
+import { useGameHaptics } from './useGameHaptics';
 import { VowelButtons } from './VowelButtons';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -80,7 +81,7 @@ const RIGHT_SCALE = 1.03;
 /**
  * A lost Life pops in 300 ms, up to 1.4 and −12° and back, and its fill fades
  * to the outline on the way back. It comes once the wrong choice has filled,
- * when the Round says the Life is lost.
+ * when the Round says the Life is lost, as its haptic does.
  */
 const LIFE_POP = { scale: 1.4, rotate: -12 };
 const LIFE_STEP = {
@@ -135,6 +136,21 @@ export function GameRound({
   const { strings } = useEdition();
   const { round } = game;
   const { answer } = round;
+  const gameHaptics = useGameHaptics();
+  // The answer just given: the Round's, or in a timed Game, which moves on at once, the last Round's.
+  const given = game.time === undefined ? answer : game.played.at(-1)?.answer;
+  // The answer shown before, so only the answer given now plays.
+  const shownAnswer = useRef(given);
+
+  useEffect(() => {
+    if (given === shownAnswer.current) return;
+    shownAnswer.current = given;
+    if (given === undefined) return;
+    if (given.right) gameHaptics.rightAnswer();
+    else gameHaptics.wrongAnswer();
+    // New haptics, after a change of Vibration, find the answer already played.
+  }, [given, gameHaptics]);
+
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;
   const asked = askedAs(round, label, strings.game.round);
@@ -307,6 +323,7 @@ export function QuickQuestionRound({
   answered: number | undefined;
   onAnswer: (option: number) => void;
 }) {
+  const gameHaptics = useGameHaptics();
   const answer = answered === undefined ? undefined : { chosen: answered, correct: round.correct };
   return (
     <View testID="quick-question" style={styles.round}>
@@ -326,6 +343,8 @@ export function QuickQuestionRound({
             place={place}
             answer={answer}
             onPress={() => {
+              if (place === round.correct) gameHaptics.rightAnswer();
+              else gameHaptics.wrongAnswer();
               onAnswer(place);
             }}
           />
@@ -525,7 +544,8 @@ function ExitButton({ onPress }: { onPress: () => void }) {
 
 /**
  * One Life: full in the heart colour, or an outline once lost. A Life lost
- * meanwhile pops to the outline; with Reduce Motion its fill only fades.
+ * meanwhile pops to the outline; with Reduce Motion its fill only fades. Its
+ * haptic comes with the wrong answer that cost it.
  */
 function Life({
   place,

@@ -26,7 +26,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0022](0022-one-core-module-owns-the-day-change.md) One Core module owns the day change in a fixed order; the shell only reports the foreground.
 - 0023: merged into 0006.
 - [0024](0024-the-game-asks-about-words-in-history-and-draws-distractors-from-the-whole-pack.md) The Game asks about eligible Entries in History (15 or more), else the whole pack, and draws Distractors from every eligible Entry; Round planning alone decides a start.
-- [0025](0025-the-core-turns-a-game-change-into-its-haptic-sequence.md) Games give no haptics: `gameHaptics` returns an empty sequence for every Game change.
+- [0025](0025-the-core-turns-a-game-change-into-its-haptic-sequence.md) `createGameHaptics` in the Core turns each Game change into its haptic sequence.
 - [0026](0026-the-widget-reads-a-widget-snapshot-the-core-builds.md) The Core builds the Widget Snapshot, the app writes it into the App Group, the widget only reads it.
 - [0027](0027-source-folders-group-modules-by-glossary-domain.md) One folder per glossary domain, the same name in every package; folders import one way; routes import through `@/`.
 - [0028](0028-maestro-runs-only-on-the-owners-command.md) Maestro runs only on the owner's command; a ticket's PR touches no flow, one visual pass per version does.
@@ -71,4 +71,4 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0067](0067-onboarding-is-short-and-asks-two-questions.md) Onboarding: welcome, the first Word, two questions, the Daily Goal, the Feed; the rest comes later as Feed Notices.
 - [0068](0068-analytics-go-through-one-port-and-questionnaire-counters-carry-no-id.md) Analytics go through one Core port behind the one privacy switch; questionnaire counters carry no reader id (amends 0060).
 - [0069](0069-the-owner-admin-is-web-pages-on-the-backend-for-one-account.md) The owner admin at `/admin` signs in one Account (`OWNER_EMAIL`), turns remote switches off only, sums the counters and holds the Mistake Report inbox.
-- [0070](0070-klyn-2-rupor-is-the-apps-design.md) «Клин 2.0: Рупор» is the app's design: palette and fonts are Edition tokens, shapes, type, motion and the Mascot's states are Core; four interface sounds behind the `sounds` switch; no Game haptics.
+- [0070](0070-klyn-2-rupor-is-the-apps-design.md) «Клин 2.0: Рупор» is the app's design: palette and fonts are Edition tokens, shapes, type, motion and the Mascot's states are Core; four interface sounds behind the `sounds` switch; Game haptics stay.

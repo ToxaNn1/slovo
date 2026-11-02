@@ -45,6 +45,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
+import { useHaptics } from '../providers/HapticsProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
 /**
@@ -178,6 +179,7 @@ export function VerticalPager<Item>({
   ref,
 }: VerticalPagerProps<Item>) {
   const reduceMotion = useReduceMotion();
+  const haptics = useHaptics();
   const motion = reduceMotion ? CROSS_FADE : TURN;
   /** The page the last swipe went to, which may still be moving in. */
   const [index, setIndex] = useState(initialIndex);
@@ -292,8 +294,9 @@ export function VerticalPager<Item>({
   // Gesture Handler asks for a memoised gesture: a new one on each render
   // sends its worklets to the UI thread again.
   const pan = useMemo(() => {
-    /** A swipe turned the page. */
+    /** A swipe turned the page: the page turns, with the light tick of a selection. */
     function swipeTo(target: number) {
+      haptics.selection();
       turn(target);
     }
 
@@ -349,6 +352,7 @@ export function VerticalPager<Item>({
   }, [
     drag,
     dragStart,
+    haptics,
     lastIndex,
     pageHeight,
     position,

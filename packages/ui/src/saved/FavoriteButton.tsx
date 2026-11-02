@@ -12,6 +12,7 @@ import Animated, {
 import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
+import { useHaptics } from '../providers/HapticsProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
@@ -37,7 +38,7 @@ const POP = [
 /**
  * The heart of the action row: an outline, or filled with the heart colour
  * while the Entry is in Favorites. A tap that fills it springs it to 1.2 and
- * back; with Reduce Motion it only fills. VoiceOver reads
+ * back with a light haptic; with Reduce Motion it only fills. VoiceOver reads
  * what a tap will do.
  */
 export function FavoriteButton({
@@ -52,11 +53,13 @@ export function FavoriteButton({
 }) {
   const { colors } = useTokens();
   const { strings, voice } = useEdition();
+  const haptics = useHaptics();
   const reduceMotion = useReduceMotion();
   const scale = useSharedValue(1);
 
-  /** Pops the heart that just filled. */
+  /** Pops the heart that just filled, with its haptic. */
   function pop() {
+    haptics.impactLight();
     if (reduceMotion) return;
     // Assigning 1 first stops a pop still running, so a new one starts from rest.
     scale.value = 1;

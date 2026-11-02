@@ -17,7 +17,7 @@ The owner chose «Клин 2.0: Рупор» for the whole app after the design 
 
 **Sounds.** Four short interface sounds (a shout, a right answer, a wrong answer, a tap) play behind a Feature Switch `sounds`, declared by the Edition, and the «Звуки» setting. They are interface sounds, not the Mascot's voice. A remote switch only turns the feature off (ADR 0040).
 
-**Motion and haptics.** ADR 0055 allows the design's peaks to run longer than 300 ms and sets one short fade under Reduce Motion. Games give no haptics and nothing shakes; the Game haptics module turns every Game change into no haptic sequence (ADR 0025, amended with that change).
+**Motion and haptics.** ADR 0055 allows the design's peaks to run longer than 300 ms and sets one short fade under Reduce Motion. Nothing shakes; the Game keeps its haptics (ADR 0025).
 
 ## Considered Options
 
