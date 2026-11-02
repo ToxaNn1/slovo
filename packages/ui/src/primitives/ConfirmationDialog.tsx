@@ -49,7 +49,7 @@ export function ConfirmationDialog({
         <Text
           {...voice}
           maxFontSizeMultiplier={MESSAGE_MAX_FONT_SCALE}
-          style={[typeStyle('sub', tokens), styles.message, { color: tokens.colors.ink }]}
+          style={[typeStyle('sub', tokens), { color: tokens.colors.ink }]}
           testID={id('message')}
         >
           {message}
@@ -64,6 +64,5 @@ export function ConfirmationDialog({
 }
 
 const styles = StyleSheet.create({
-  message: { fontSize: 16, lineHeight: 23 },
   actions: { gap: space[3] },
 });

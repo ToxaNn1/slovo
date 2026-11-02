@@ -350,7 +350,7 @@ export const cardSpace = {
 } as const;
 
 /** The line heights the design gives in pixels rather than as a multiple of the size. */
-export const lineHeight = { pronunciationNote: 20, aboutDescription: 30 } as const;
+export const lineHeight = { toast: 21, pronunciationNote: 20, aboutDescription: 30 } as const;
 
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
 export const rowPadding = 14;
@@ -550,6 +550,17 @@ export const signInButtonHeight = 50;
 /** The colour of a shadow, black in both Themes. */
 export const shadowColor = '#000000';
 
+
+/** A toast's corner radius, from the design; layout, not an Edition token. */
+export const toastRadius = 6;
+
+/** `elev.toast`: `0 10 30 rgba(0, 0, 0, .4)`. */
+export const toastElevation = {
+  shadowColor,
+  shadowOffset: { width: 0, height: 10 },
+  shadowOpacity: 0.4,
+  shadowRadius: 15,
+} as const;
 
 /**
  * The widget guide's numbered steps: the square that holds the number, the

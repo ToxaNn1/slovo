@@ -100,7 +100,7 @@ export function BottomSheet({
   onDismissed?: (() => void) | undefined;
   inverted?: boolean;
   children: ReactNode;
-  testID?: string;
+  testID?: string | undefined;
 }) {
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
