@@ -1,4 +1,4 @@
-import type { ColorTokens, EditionTokens, FontSize } from '@slovo/contracts';
+import type { ColorTokens, EditionTokens, FontSize, MascotState } from '@slovo/contracts';
 
 /**
  * The design tokens from `docs/design/README.md`. The Core names every
@@ -229,6 +229,104 @@ export const motion = {
   string,
   { readonly duration: number; readonly easing: Easing; readonly rise?: number }
 >;
+
+/** The Mascot's width in points; its height follows the Edition's vector. */
+export const mascotWidth = 130;
+
+/**
+ * Where the Mascot's figure stands at one point of its motion: `at` from 0 to
+ * 1 through the cycle, a shift in points, a turn in degrees and a scale. What
+ * a frame leaves out stays at rest.
+ */
+export interface MascotFrame {
+  readonly at: number;
+  readonly y?: number;
+  readonly rotate?: number;
+  readonly scaleX?: number;
+  readonly scaleY?: number;
+}
+
+/**
+ * The Mascot's motion in each state, from the design's keyframes (`rpBob`,
+ * `rpBreath`, `rpShout`, `rpHop`, `rpPop`, `rpSquish`, `rpSway`), turning
+ * about 30% across and 60% down the figure. `loop` repeats, `alternate` goes
+ * back and forth, `once` plays and holds its end. The hat-off state is still,
+ * and under Reduce Motion every state is the one fade of `motion.reduceMotion`.
+ */
+export const mascotMotion = {
+  waits: {
+    duration: 2400,
+    repeat: 'loop',
+    easing: [0.42, 0, 0.58, 1],
+    frames: [{ at: 0 }, { at: 0.5, y: -5 }, { at: 1 }],
+  },
+  sleeps: {
+    duration: 3000,
+    repeat: 'loop',
+    easing: [0.42, 0, 0.58, 1],
+    frames: [{ at: 0 }, { at: 0.5, scaleX: 1.04, scaleY: 0.97 }, { at: 1 }],
+  },
+  shouts: {
+    duration: 320,
+    repeat: 'alternate',
+    easing: [0.42, 0, 0.58, 1],
+    frames: [{ at: 0 }, { at: 1, scaleX: 1.07, scaleY: 1.07, rotate: -3 }],
+  },
+  happy: {
+    duration: 800,
+    repeat: 'loop',
+    easing: ease,
+    frames: [{ at: 0 }, { at: 0.4, y: -12, rotate: -4 }, { at: 1 }],
+  },
+  celebrates: {
+    duration: 550,
+    repeat: 'loop',
+    easing: ease,
+    frames: [{ at: 0 }, { at: 0.4, y: -12, rotate: -4 }, { at: 1 }],
+  },
+  surprised: {
+    duration: 450,
+    repeat: 'once',
+    easing: ease,
+    frames: [
+      { at: 0, scaleX: 0.7, scaleY: 0.7 },
+      { at: 0.6, scaleX: 1.15, scaleY: 1.15 },
+      { at: 1 },
+    ],
+  },
+  cringes: {
+    duration: 500,
+    repeat: 'once',
+    easing: ease,
+    frames: [
+      { at: 0 },
+      { at: 0.4, scaleX: 0.86, scaleY: 1.08 },
+      { at: 1, scaleX: 0.94 },
+    ],
+  },
+  sad: {
+    duration: 3200,
+    repeat: 'loop',
+    easing: [0.42, 0, 0.58, 1],
+    frames: [{ at: 0 }, { at: 0.5, rotate: 3 }, { at: 1 }],
+  },
+  hatOff: undefined,
+} as const satisfies Record<
+  MascotState,
+  | {
+      readonly duration: number;
+      readonly repeat: 'loop' | 'alternate' | 'once';
+      readonly easing: Easing;
+      readonly frames: readonly MascotFrame[];
+    }
+  | undefined
+>;
+
+/**
+ * How the Core poses the Mascot's parts in some states: the turn of the whole
+ * figure about the Edition's pivot, in degrees, and how far the hat drops.
+ */
+export const mascotPose = { sadTurn: 14, hatOffTurn: 26, cringeHatDrop: 4 } as const;
 
 /** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
 export function withAlpha(color: string, alpha: number): string {
