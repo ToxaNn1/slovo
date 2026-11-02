@@ -49,7 +49,7 @@ export {
   type Badge,
   type BadgeCondition,
   type MascotLines,
-  type MascotState,
+  type MascotMoment,
   type FontSize,
   type LanguageTraits,
   type MixConfig,
@@ -100,6 +100,12 @@ export {
   type SeasonMotifs,
   type SplashDecor,
   type Weekday,
+  MascotAccessorySchema,
+  MascotFigureSchema,
+  type MascotAccessory,
+  type MascotFigure,
+  type MascotShape,
+  type MascotState,
 } from './decor';
 export {
   ColorTokensSchema,

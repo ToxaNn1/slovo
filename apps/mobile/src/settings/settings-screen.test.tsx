@@ -136,7 +136,7 @@ describe('Settings › «Менше руху»', () => {
     const settings = await renderSettings({ reduceMotion: true });
 
     const row = screen.getByRole('switch', { name: 'Менше руху' });
-    expect(row).toHaveProp('value', false);
+    expect(row).not.toBeChecked();
     expect(screen.getByHintText(editionStrings.settings.reduceMotion.explanation)).toBe(row);
 
     await fireEvent(row, 'valueChange', true);

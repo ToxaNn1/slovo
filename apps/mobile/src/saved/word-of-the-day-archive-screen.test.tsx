@@ -140,7 +140,7 @@ describe('the Word of the Day archive screen «Слова дня»', () => {
     await renderArchive();
 
     expect(screen.getByTestId('words-of-the-day-empty')).toHaveTextContent(
-      `${strings.empty.title}${strings.empty.message}${edition.mascot.empty}`,
+      `${edition.mascot.empty}${strings.empty.title}${strings.empty.message}`,
     );
     expect(screen.getByTestId('mascot-empty')).toBeOnTheScreen();
     expect(screen.queryAllByTestId(/^words-of-the-day-row-/)).toEqual([]);
