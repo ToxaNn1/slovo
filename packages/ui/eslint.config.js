@@ -56,6 +56,7 @@ export default [
       'src/progress/ActiveDaysCalendar.tsx',
       'src/primitives/BottomSheet.tsx',
       'src/primitives/FallingMarks.tsx',
+      'src/primitives/PressedTile.tsx',
       'src/primitives/SwipeableRow.tsx',
       'src/primitives/UndoToast.tsx',
       'src/primitives/VerticalPager.tsx',
