@@ -30,7 +30,6 @@ import {
   onboardingLayout,
   space,
   roleSize,
-  typeRoles,
   typeStyle,
   wedges,
 } from '../tokens';
@@ -231,15 +230,6 @@ const { dot, side } = onboardingLayout;
 /** The text every step's content shares: the heading block, its title and its text, in the type roles' sizes. */
 export const stepStyles = StyleSheet.create({
   heading: { gap: onboardingLayout.gap },
-  title: {
-    fontSize: typeRoles.stepTitle.size,
-    lineHeight: typeRoles.stepTitle.lineHeight,
-    letterSpacing: typeRoles.stepTitle.letterSpacing,
-  },
-  subtitle: {
-    fontSize: typeRoles.stepText.size,
-    lineHeight: typeRoles.stepText.lineHeight,
-  },
 });
 
 const styles = StyleSheet.create({

@@ -142,7 +142,7 @@ function ReviewDetails({ details }: { details: GameReviewItem['details'] }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
-  const body = [typeStyle('reviewText', tokens), { color: colors.ink }];
+  const body = [typeStyle('explanation', tokens), { color: colors.ink }];
   const heading = [typeStyle('reviewHeading', tokens), { color: colors.muted }];
   if (details.kind === 'correction') {
     return (

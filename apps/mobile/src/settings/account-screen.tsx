@@ -345,10 +345,7 @@ function SignedIn({
   return (
     <View style={styles.form}>
       <View style={styles.signedInAs}>
-        <Text
-          {...voice}
-          style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}
-        >
+        <Text {...voice} style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}>
           {strings.signedInAs}
         </Text>
         <Text

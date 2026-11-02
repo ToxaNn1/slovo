@@ -55,9 +55,7 @@ function Day({ day, month }: { day: CalendarDay; month: number }) {
           day.state === 'future' && [styles.future, { borderColor: colors.line }],
         ]}
       >
-        <Text style={[typeStyle('calendarDay', tokens), { color: look.number }]}>
-          {day.day}
-        </Text>
+        <Text style={[typeStyle('calendarDay', tokens), { color: look.number }]}>{day.day}</Text>
       </View>
     </View>
   );
@@ -127,7 +125,11 @@ export function ActiveDaysCalendar({ months }: { months: readonly CalendarMonth[
           {words.weekdays.map((weekday) => (
             <Text
               key={weekday}
-              style={[typeStyle('calendarWeekday', tokens), styles.weekday, { color: colors.muted }]}
+              style={[
+                typeStyle('calendarWeekday', tokens),
+                styles.weekday,
+                { color: colors.muted },
+              ]}
             >
               {weekday}
             </Text>

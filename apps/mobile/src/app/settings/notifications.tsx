@@ -67,7 +67,7 @@ export default function NotificationsScreen() {
         )}
         {state.permission === 'denied' && (
           <View testID="notifications-denied" style={styles.denied}>
-            <Text {...voice} style={[typeStyle('settingsHint', tokens), { color: colors.ink }]}>
+            <Text {...voice} style={[typeStyle('hint', tokens), { color: colors.ink }]}>
               {strings.denied.message}
             </Text>
             <SettingsGroup>

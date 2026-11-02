@@ -146,10 +146,7 @@ function SheetContent({
               >
                 {collection.name}
               </Text>
-              <Text
-                style={[typeStyle('rowSub', tokens), { color: colors.muted }]}
-                {...voice}
-              >
+              <Text style={[typeStyle('rowSub', tokens), { color: colors.muted }]} {...voice}>
                 {count(strings.collections.count, collection.count)}
               </Text>
             </Pressable>
@@ -197,9 +194,7 @@ function SheetContent({
                   { backgroundColor: colors.accent, borderRadius: radii.button },
                 ]}
               >
-                <Text
-                  style={[typeStyle('textButton', tokens), { color: colors.background }]}
-                >
+                <Text style={[typeStyle('textButton', tokens), { color: colors.background }]}>
                   {sheet.create}
                 </Text>
               </Pressable>

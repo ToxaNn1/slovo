@@ -26,9 +26,7 @@ export function WordOfTheDayBadge({ day: { month, day } }: { day: LocalDate }) {
       {...voice}
       style={[styles.badge, { backgroundColor: colors.accent, borderRadius: radii.chip }]}
     >
-      <Text style={[typeStyle('eyebrow', tokens), { color: colors.background }]}>
-        {label}
-      </Text>
+      <Text style={[typeStyle('eyebrow', tokens), { color: colors.background }]}>{label}</Text>
     </View>
   );
 }

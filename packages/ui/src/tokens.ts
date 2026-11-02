@@ -188,7 +188,6 @@ export const typeRoles = {
   crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
-  // Roles of batch A.
   /** How many Rounds have passed, in a Game's header when it has no Round limit. */
   roundPassed: role('word', '800', 13, 13),
   /** The «−1» that rises from a lost Life. */
@@ -237,7 +236,6 @@ export const typeRoles = {
   crosswordSolved: role('word', '500', 28, 32),
   /** A segment's label in a segmented control. */
   segment: role('ui', '700', 13, 16),
-  // Roles of batch B.
   /** The part of speech beside the Lemma on a Word card. */
   partOfSpeech: role('ui', '600', 15, 15),
   /** A Word named as a link inside a line of reading text, such as a Synonym Row's dominant. */
@@ -304,7 +302,6 @@ export const typeRoles = {
   endOfCycleInfinity: role('word', '900', 330, 330),
   /** A Badge's symbol on its mark, at a 156-wide mark; the mark scales it to a third of its side. */
   badgeSymbol: role('word', '900', 52, 62),
-  // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
   /** The ✓ or ✗ on a Round's mark in the Game Review. */
@@ -315,8 +312,6 @@ export const typeRoles = {
   reviewPicked: role('ui', '500', 12, 14),
   /** A label over a part of an expanded Round, such as the standard form. */
   reviewHeading: role('ui', '700', 13, 17),
-  /** The text of an expanded Round in the Game Review. */
-  reviewText: role('ui', '400', 15, 22),
   /** The standard form of an expanded Round's Correction. */
   reviewForm: role('ui', '500', 15, 22),
   /** The big Streak at the top of the stats sheet. */
@@ -347,6 +342,8 @@ export const typeRoles = {
   sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
   /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
   progressCount: role('ui', '600', 13, 13),
+  /** A Badge's name under its title on the stamp of a newly earned Badge. */
+  stampName: role('ui', '500', 16, 21),
   /** A Badge's name in the list of Badges. */
   badgeName: role('ui', '400', 15, 21),
   /** Under a Badge's name: when it was earned, or how far its condition has come. */
@@ -363,14 +360,11 @@ export const typeRoles = {
   googleSignIn: role('ui', '500', 15, 20),
   /** The die on the mood button. */
   moodDie: role('ui', '400', 17, 20),
-  /** A Settings screen's explaining text, such as why notifications are off. */
-  settingsHint: role('ui', '400', 15, 22),
-  // Roles of batch D.
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
   /** A Correction's non-standard form, struck through. */
   nonStandardForm: role('word', '800', 24, 26),
-  /** A Correction's explanation. */
+  /** A Correction's explanation, also in an expanded Round of the Game Review. */
   explanation: role('ui', '400', 15, 22),
   /** The Entry's Lemma over a sheet, such as the Collection sheet. */
   sheetLemma: role('word', '600', 20, 24),
@@ -636,8 +630,6 @@ export const badgeStamp = {
   markTop: 70,
   titleTop: 34,
   nameTop: 10,
-  titleSize: 30,
-  nameSize: 16,
 } as const;
 
 /** The Profile's Badge grid: marks of this side in rows of their family. */
@@ -701,8 +693,6 @@ export const splashMotion = {
     { x: 40, y: 520, rotate: -10 },
   ],
   letter: {
-    size: 250,
-    letterSpacing: -10,
     /** The middle of the frame the letters fly from, less the letter's own offset. */
     from: { x: 90, y: 580 },
     fromScale: 0.15,
@@ -720,7 +710,7 @@ export const splashMotion = {
     [0, 0.74],
   ],
   cut: { duration: 350, delay: 1250, easing: [0.7, 0, 0.3, 1] },
-  tagline: { size: 15, letterSpacing: 4, turn: -12.5 },
+  tagline: { turn: -12.5 },
   mascot: { x: 110, y: 640 },
   /** The Mascot rolls in from the left, turning as it comes. */
   roll: { duration: 600, from: -360, turn: -560, easing: [0.25, 0.9, 0.3, 1.1] },
@@ -881,73 +871,6 @@ export const scrim = 'rgba(20, 12, 10, 0.55)';
 /** The 4-pt spacing grid. */
 export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32 } as const;
 
-/** Type sizes of the UI roles; the UI body follows iOS Dynamic Type. */
-export const typeSize = {
-  screenTitle: 34,
-  /** An empty state's title; also a Game mode's title. */
-  emptyStateTitle: 28,
-  overline: 11,
-  /** `Big number`, the Streak. */
-  streak: 64,
-  /** `Big number`, a count of the stats sheet (the Scale gives 26–30). */
-  count: 28,
-  chip: 12.5,
-  labelChip: 11.5,
-  body: 15,
-  button: 16,
-  /** A sheet's title; also a result's number, an empty state's title and the Correction's non-standard form. */
-  sheetTitle: 26,
-  partOfSpeech: 14,
-  /** `Block heading`; the name of a card or a Collection, a sheet's text button; also an Example, an onboarding step's subtitle, a Round's sheet title. */
-  blockHeading: 17,
-  /** What an Entry's row leads with in a list, and over a sheet (the design's 20–22). */
-  rowLemma: 20,
-  /** A Collection row's newest Lemmas. */
-  collectionLemmas: 22,
-  /** A line of a card's list, a Collection's name in a sheet, a name field. */
-  listItem: 18,
-  /** A recent query of Search. */
-  recentQuery: 16,
-  /** A count or a refusal beside a name; also the onboarding sample notification's body, a row's subtitle, a swipe action's label and a note under a button. */
-  caption: 14,
-  /** What goes on the right of a card's row, such as a relative time; also the Round's progress and tags, an Example's author, a notification's app name and time. */
-  meta: 13,
-  /** `Big number`, the count on a card of the Saved overview (the Scale gives 26–30). */
-  cardCount: 30,
-  /** The Correction's explanation; also a result's line and a Game mode's sample. */
-  explanation: 16,
-  /** A step's wordmark, the hero Definition and the app icon's mark; also an Entry row's title, the count of a Collection or of Favorites, a time and the About description. */
-  subhead: 22,
-  /** A Round's option. */
-  roundOption: 21,
-  /** A Round's prompt. */
-  roundPrompt: 25,
-  /** The answer on a Round's sheet. */
-  roundAnswer: 30,
-  /** The title of an onboarding step. */
-  onboardingTitle: 32,
-  /** A small label beside a value: a row's trailing text, the name of a result's number. */
-  smallLabel: 12,
-  /** A Game mode's description. */
-  modeDescription: 14.5,
-  /** The title of the Game's result (Unbounded 900). */
-  resultTitle: 34,
-  /** The Game Review's title (Unbounded 800). */
-  reviewTitle: 15,
-  /** A Round of the Game Review (Onest 600). */
-  reviewRow: 16,
-  /** `Lemma, hero`: the onboarding welcome's Lemma. */
-  heroLemma: 76,
-} as const;
-
-/** The overline label's type: bold capitals spaced 0.14em apart. */
-export const overlineType = {
-  fontSize: typeSize.overline,
-  fontWeight: '700',
-  letterSpacing: typeSize.overline * 0.14,
-  textTransform: 'uppercase',
-} as const;
-
 /**
  * The Word card's type sizes at each font-size step: the design's three
  * steps, the hero word and the reading text at their base size, 1.15 times it
@@ -985,14 +908,8 @@ export const collectionCard = {
   mark: 34,
   /** Between the name and the count. */
   textGap: 6,
-  nameSize: 14,
-  nameLineHeight: 17,
-  countSize: 12,
   countOpacity: 0.85,
 } as const;
-
-/** The line heights the design gives in pixels rather than as a multiple of the size. */
-export const lineHeight = { pronunciationNote: 20, aboutDescription: 30 } as const;
 
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
 export const rowPadding = 14;
@@ -1142,7 +1059,6 @@ export const segmentedDrawing = {
   radius: 12,
   segmentHeight: 38,
   segmentRadius: 9,
-  labelSize: 13,
 } as const;
 
 /** The toggle's drawing (design `SlovoApp`): a track and the knob that travels inside it. */
@@ -1163,8 +1079,6 @@ export const chipDrawing = {
   height: 38,
   paddingHorizontal: 14,
   gap: 6,
-  labelSize: 14,
-  countSize: 12,
   /** How far the count fades beside its label. */
   countOpacity: 0.7,
   /** The chip's scale while it is pressed. */
@@ -1178,7 +1092,6 @@ export const searchFieldDrawing = {
   paddingHorizontal: 14,
   gap: 10,
   icon: 18,
-  inputSize: 16,
   clear: 28,
   clearRadius: 8,
   clearIcon: 10,
@@ -1189,8 +1102,6 @@ export const textFieldDrawing = {
   height: 58,
   radius: 15,
   border: 2.5,
-  inputSize: 16,
-  problemSize: 13,
 } as const;
 
 /** The drawing of a slider on a row that is not available yet: track, fill and thumb. */
@@ -1319,7 +1230,7 @@ export const minTouchTarget = 44;
 /**
  * A day of the Active Days calendar: a tile of this height and corner on a
  * grid with this gap, over a hard edge this deep, a day to come outlined by a
- * dashed line this wide, and the day's number at this size.
+ * dashed line this wide.
  */
 export const calendarDay = {
   height: 42,
@@ -1327,8 +1238,6 @@ export const calendarDay = {
   gap: 7,
   edge: 4,
   futureBorder: 2,
-  number: 13,
-  weekday: 11,
 } as const;
 
 /** How much a button that takes no press is dimmed. */
@@ -1357,10 +1266,9 @@ export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVert
 /**
  * The Daily Crossword, from the design: a cell's side and the gap between
  * cells (five of them fit the SE's width with the screen's margins), the
- * selected cell's ink ring and a cell's letter size; the clue bar's text
- * size and padding; the keyboard's key height, corner radius and letter
- * size, the gaps between keys and between rows, and how much wider the
- * delete key is than a letter key.
+ * selected cell's ink ring; the clue bar's padding; the keyboard's key
+ * height and corner radius, the gaps between keys and between rows, and how
+ * much wider the delete key is than a letter key.
  */
 /** The Daily Crossword's red card on the mode screen, from the design: its padding and the gap between its lines. */
 export const dailyCrosswordCard = { padding: 18, gap: 6 } as const;
@@ -1369,12 +1277,9 @@ export const crosswordLayout = {
   cell: 62,
   cellGap: 8,
   ring: 3,
-  letterSize: 26,
-  clueSize: 15,
   cluePadding: 12,
   keyHeight: 46,
   keyRadius: 9,
-  keySize: 15,
   keyGap: 4,
   keyRowGap: 7,
   eraseKeyFlex: 1.5,
@@ -1382,9 +1287,6 @@ export const crosswordLayout = {
 
 /** The sample notification of the onboarding: its app icon (side and corner radius) and the gap between its lines. */
 export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as const;
-
-/** SLOVO ID's mark on the onboarding's sign-in button: its side, corner radius and letter size. */
-export const accountMark = { size: 26, radius: 6, letterSize: 17 } as const;
 
 /**
  * An onboarding step of the design (`isOb` in `SlovoApp.dc.html`): the red
@@ -1441,16 +1343,13 @@ export const toastElevation = {
   shadowRadius: 15,
 } as const;
 
-/**
- * The widget guide's numbered steps: the square that holds the number, the
- * title's size and the hint's line height as a multiple of its size.
- */
-export const guideStep = { badge: 28, badgeRadius: 4, titleSize: 17, hintLeading: 1.4 } as const;
+/** The widget guide's numbered steps: the square that holds the number. */
+export const guideStep = { badge: 28, badgeRadius: 4 } as const;
 
 /**
  * The drawing of the widgets in the widget guide. It is a picture of the
  * phone, so it does not follow the text size of iOS and its wallpaper is no
- * Edition token. The type sizes are smaller than the design's real widgets
+ * Edition token. Its type roles are smaller than the design's real widgets
  * (28–30 for the Lemma at 170×170, 34 at 364×170), which the drawing scales
  * down with its own width.
  */
@@ -1467,6 +1366,4 @@ export const widgetDrawing = {
   widgetRadius: 22,
   /** The medium widget's width over its height, from the design's 364 × 170. */
   mediumAspectRatio: 364 / 170,
-  lemmaSize: 24,
-  lineSize: 12,
 } as const;

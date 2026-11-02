@@ -115,6 +115,22 @@ describe('the Core’s shape, type and motion roles', () => {
     });
   });
 
+  it('carries each role’s weight, so a component sets none: black for the loud roles, light for reading text', () => {
+    const weight = (name: Parameters<typeof typeStyle>[0]) =>
+      typeStyle(name, coreTokens).fontWeight;
+    expect([weight('shout'), weight('screenTitle'), weight('buttonLabel')]).toEqual([
+      '900',
+      '900',
+      '900',
+    ]);
+    expect([weight('heading'), weight('listWord')]).toEqual(['800', '800']);
+    expect([weight('definition'), weight('example'), weight('explanation')]).toEqual([
+      '500',
+      '400',
+      '400',
+    ]);
+  });
+
   it('maps the font size setting to the design’s three steps', () => {
     expect(fontSizeSteps.S).toEqual(fontSizeSteps.M);
     expect(fontSizeSteps.M.lemma).toBe(typeStyle('heroWord', coreTokens).fontSize);

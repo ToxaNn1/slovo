@@ -188,9 +188,9 @@ describe('the calligraphic Lemma', () => {
     for (const { wordOfTheDay, lemma } of cards) {
       expect(lemma).toHaveStyle({ fontFamily: wordOfTheDay ? CALLIGRAPHIC : WORD_FONT });
     }
-    // The rest of the card stays in the Word font.
+    // The rest of the card keeps its role's font: the Definition reads in the UI font.
     const [first] = screen.getAllByTestId('word-definition', { includeHiddenElements: true });
-    expect(first).toHaveStyle({ fontFamily: WORD_FONT });
+    expect(first).toHaveStyle({ fontFamily: editionTokens.fontFamilies.ui });
   });
 
   it('keeps what VoiceOver reads for the Lemma', async () => {

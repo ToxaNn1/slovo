@@ -148,9 +148,7 @@ function Slot({ label, children }: { label: string; children: ReactNode }) {
   const { colors } = tokens;
   return (
     <View style={styles.slot}>
-      <Text style={[typeStyle('sub', tokens), { color: colors.muted }]}>
-        {label}
-      </Text>
+      <Text style={[typeStyle('sub', tokens), { color: colors.muted }]}>{label}</Text>
       {children}
     </View>
   );
