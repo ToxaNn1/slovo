@@ -52,7 +52,7 @@ const dailyGoalSegments = dailyGoals.map((dailyGoal) => ({
 /**
  * Settings: the Account when the Account is on in effect, the Theme, the font
  * size, the Daily Goal while it is on in effect, «Пройти тест ще раз» while
- * the Rarity Test is, «Пройти опитування ще раз» while the later questions
+ * the Rarity Test is, «Менше руху» under the Theme while its Feature Switch is, «Пройти опитування ще раз» while the later questions
  * are, «Сезонний декор» while its Feature Switch is,
  * «Ділитися анонімною статистикою» with its privacy policy link while the
  * Community Counters are, and the rows of the design.
@@ -94,6 +94,18 @@ export default function SettingsScreen() {
                 update({ theme });
               }}
             />
+            {shown.reduceMotionSetting && (
+              <SwitchRow
+                testID="settings-reduce-motion"
+                icon="wedge"
+                label={strings.reduceMotion.title}
+                subtitle={strings.reduceMotion.explanation}
+                value={current.reduceMotion}
+                onChange={(reduceMotion) => {
+                  update({ reduceMotion });
+                }}
+              />
+            )}
             <ChoiceRow
               icon="square"
               label={strings.fontSize}

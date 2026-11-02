@@ -22,6 +22,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -37,6 +38,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -51,6 +53,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
     expect(await settings.read()).toEqual({
       theme: 'dark',
@@ -60,6 +63,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -74,6 +78,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
     expect(await settings.read()).toEqual({
       theme: 'system',
@@ -83,6 +88,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -98,6 +104,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -113,6 +120,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -127,6 +135,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -146,6 +155,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -164,6 +174,7 @@ describe('settings', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 });
@@ -187,6 +198,7 @@ describe('settings: Vibration', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
     expect((await settings.read()).vibration).toBe(false);
   });
@@ -217,6 +229,7 @@ describe('settings: Vibration', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -245,6 +258,7 @@ describe('settings: «Без лічильників»', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
     expect((await settings.read()).noCounters).toBe(true);
   });
@@ -275,6 +289,7 @@ describe('settings: «Без лічильників»', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -307,6 +322,7 @@ describe('settings: «Без лічильників»', () => {
       selfCheck: false,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 });
@@ -329,6 +345,7 @@ describe('settings: Self-check', () => {
       selfCheck: true,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
     expect((await settings.read()).selfCheck).toBe(true);
   });
@@ -352,6 +369,7 @@ describe('settings: Self-check', () => {
       selfCheck: true,
       seasonalDecor: true,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -382,6 +400,7 @@ describe('settings: Seasonal Decor', () => {
       selfCheck: true,
       seasonalDecor: false,
       shareCounters: true,
+      reduceMotion: false,
     });
   });
 
@@ -413,4 +432,26 @@ describe('colorSchemeFor', () => {
       expect(colorSchemeFor(theme, deviceAppearance)).toBe(expected);
     },
   );
+});
+
+describe('settings: «Менше руху»', () => {
+  it('is off until the user turns it on', async () => {
+    const settings = await settingsOver();
+
+    expect((await settings.read()).reduceMotion).toBe(false);
+    expect(settings.defaults.reduceMotion).toBe(false);
+  });
+
+  it('keeps the choice when the user state is opened again', async () => {
+    const records = new Map<string, string>();
+    await (await settingsOver(records)).update({ reduceMotion: true });
+
+    expect((await (await settingsOver(records)).read()).reduceMotion).toBe(true);
+  });
+
+  it('is off when the stored choice is not on or off', async () => {
+    const settings = await settingsOver(new Map([['settings.reduceMotion', '"yes"']]));
+
+    expect((await settings.read()).reduceMotion).toBe(false);
+  });
 });
