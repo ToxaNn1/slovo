@@ -170,7 +170,7 @@ export function EntryCard({
           <CardCorners />
         </View>
       </Animated.View>
-      <RevealDetail step={3}>
+      <RevealDetail step={3} testID={`${card.kind}-actions`}>
         <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
       </RevealDetail>
     </EntryRevealProvider>
