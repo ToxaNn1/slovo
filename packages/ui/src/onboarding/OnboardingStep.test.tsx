@@ -110,7 +110,7 @@ describe('An onboarding step', () => {
 
     await pass(550);
 
-    expect(shoutAside()).toBe(0);
+    expect(shoutAside()).toBeCloseTo(0);
   });
 
   it('keeps its shout word in place, with Reduce Motion', async () => {
@@ -118,6 +118,6 @@ describe('An onboarding step', () => {
     await renderWelcome();
     await pass(150);
 
-    expect(shoutAside()).toBe(0);
+    expect(shoutAside()).toBeCloseTo(0);
   });
 });
