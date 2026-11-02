@@ -7,7 +7,7 @@ import {
   rowPadding,
   ScreenTitle,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -34,7 +34,8 @@ const strings = collectionStrings.entries;
 export default function CollectionScreen() {
   const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
   const { collection, entries, remove } = useCollectionEntries(collectionId);
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { count, voice } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
@@ -93,7 +94,7 @@ export default function CollectionScreen() {
                   testID="collection-count"
                   accessibilityLabel={count(collectionStrings.count, entries.length)}
                   {...voice}
-                  style={[styles.count, { color: colors.accent, fontFamily: fontFamilies.word }]}
+                  style={[typeStyle('collectionCount', tokens), { color: colors.accent }]}
                 >
                   {String(entries.length)}
                 </Text>
@@ -105,7 +106,7 @@ export default function CollectionScreen() {
           entries.length > 0 ? (
             <Text
               {...voice}
-              style={[styles.footer, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('meta', tokens), styles.footer, { color: colors.muted }]}
             >
               {strings.footer}
             </Text>
@@ -141,12 +142,8 @@ const styles = StyleSheet.create({
     paddingBottom: rowPadding,
   },
   title: { flexGrow: 1, flexShrink: 1 },
-  count: { fontSize: typeSize.subhead, fontWeight: '500' },
   footer: {
     marginHorizontal: space[6],
     marginTop: space[4],
-    fontSize: typeSize.chip,
-    lineHeight: typeSize.chip * 1.5,
-    fontWeight: '500',
   },
 });

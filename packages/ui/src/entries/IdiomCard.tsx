@@ -5,7 +5,7 @@ import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
-import { space, typeSize } from '../tokens';
+import { space, typeRoles, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -33,7 +33,8 @@ export function IdiomCardBody({
   /** Self-check: only the expression and its chip. */
   concealed: boolean;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice } = edition;
@@ -43,7 +44,7 @@ export function IdiomCardBody({
   // The headline's letters fly in as the card reveals.
   const flying = useFlyingLetters();
   const idiomType = strings.idiomTypes[card.idiomType];
-  const bodyText = [sizes.example, { color: colors.ink, fontFamily: fontFamilies.word }];
+  const bodyText = [typeStyle('example', tokens), sizes.example, { color: colors.ink }];
 
   return (
     <>
@@ -62,13 +63,13 @@ export function IdiomCardBody({
           flying={flying}
           text={card.expression}
           size={lemmaSize}
-          tracking={-0.01}
+          tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
           testID="idiom-expression"
           // An expression wraps between its words and shrinks rather than break inside one.
           numberOfLines={3}
           adjustsFontSizeToFit
           minimumFontScale={0.5}
-          style={[styles.expression, { color: colors.ink, fontFamily: fontFamilies.word }]}
+          style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
         />
         <View style={styles.chip}>
           <LabelChip
@@ -91,7 +92,7 @@ export function IdiomCardBody({
             accessibilityLabel={withoutStress(card.primaryDefinition)}
             {...voice}
             {...turnActions}
-            style={[sizes.definition, { color: colors.ink, fontFamily: fontFamilies.word }]}
+            style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
           >
             {card.primaryDefinition}
           </Text>
@@ -126,7 +127,7 @@ export function IdiomCardBody({
               <Text
                 accessibilityLabel={withoutStress(card.etymology)}
                 {...voice}
-                style={[styles.etymology, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+                style={[typeStyle('idiomEtymology', tokens), { color: colors.ink }]}
               >
                 {card.etymology}
               </Text>
@@ -136,7 +137,7 @@ export function IdiomCardBody({
             <Text
               testID="idiom-source"
               {...voice}
-              style={[styles.source, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('meta', tokens), { color: colors.muted }]}
             >
               {fill(strings.source, { source: card.sourceNames.join(SOURCE_SEPARATOR) })}
             </Text>
@@ -152,8 +153,5 @@ const SOURCE_SEPARATOR = '; ';
 
 const styles = StyleSheet.create({
   header: { gap: space[2] },
-  expression: { fontWeight: '500' },
   chip: { flexDirection: 'row' },
-  etymology: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
-  source: { fontSize: typeSize.meta, lineHeight: typeSize.meta * 1.4 },
 });

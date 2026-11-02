@@ -9,7 +9,7 @@ import {
   SectionLabel,
   space,
   STACK_AT_FONT_SCALE,
-  typeSize,
+  typeStyle,
   UndoToastProvider,
   useEdition,
   useTokens,
@@ -130,7 +130,8 @@ function hiddenSections(model: HiddenScreenModel): HiddenSection[] {
 
 /** Above the list: back link, title, and the empty line. */
 function HiddenHeader({ empty, onBack }: { empty: boolean; onBack: () => void }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <>
@@ -138,10 +139,7 @@ function HiddenHeader({ empty, onBack }: { empty: boolean; onBack: () => void })
         <BackLink testID="hidden-back" label={editionStrings.settings.title} onPress={onBack} />
         <View style={styles.header}>
           <ScreenTitle>{strings.title}</ScreenTitle>
-          <Text
-            {...voice}
-            style={[styles.subtitle, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-          >
+          <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
             {strings.subtitle}
           </Text>
         </View>
@@ -150,7 +148,7 @@ function HiddenHeader({ empty, onBack }: { empty: boolean; onBack: () => void })
         <Text
           testID="hidden-empty"
           {...voice}
-          style={[styles.empty, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('sub', tokens), styles.empty, { color: colors.muted }]}
         >
           {strings.empty}
         </Text>
@@ -210,7 +208,8 @@ function TurnOnRow({
   accessibilityLabel: string;
   onTurnOn: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
   return (
@@ -226,7 +225,7 @@ function TurnOnRow({
         {...voice}
         // A name stops growing at 1.3×, so it never breaks a word.
         maxFontSizeMultiplier={1.3}
-        style={[styles.categoryName, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('hiddenName', tokens), styles.categoryName, { color: colors.ink }]}
       >
         {name}
       </Text>
@@ -247,12 +246,9 @@ const styles = StyleSheet.create({
   content: { paddingBottom: space[8] },
   padded: { paddingHorizontal: space[5], paddingTop: space[2] },
   header: { gap: space[2], paddingTop: space[2], paddingBottom: space[3] },
-  subtitle: { fontSize: typeSize.body, lineHeight: typeSize.body * 1.5 },
   empty: {
     marginHorizontal: space[5],
     marginTop: space[6],
-    fontSize: typeSize.body,
-    lineHeight: typeSize.body * 1.5,
   },
   section: { marginTop: space[4] },
   sectionLabel: { marginHorizontal: space[6], marginBottom: space[2] },
@@ -267,5 +263,5 @@ const styles = StyleSheet.create({
   },
   // At the largest text sizes the button drops under the name instead of squeezing it.
   categoryRowStacked: { flexDirection: 'column', alignItems: 'flex-start' },
-  categoryName: { flexShrink: 1, fontSize: typeSize.rowLemma, fontWeight: '600' },
+  categoryName: { flexShrink: 1 },
 });

@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, space, typeRoles, typeSize } from '../tokens';
+import { minTouchTarget, space, typeStyle } from '../tokens';
 
 /**
  * The recent queries of Search, under its empty field: «Нещодавно» in small
@@ -17,7 +17,8 @@ export function RecentQueries({
   onRun: (query: string) => void;
   onClear: () => void;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   return (
     <View testID="search-recent">
@@ -25,7 +26,7 @@ export function RecentQueries({
         <Text
           accessibilityRole="header"
           {...voice}
-          style={[styles.eyebrow, { color: colors.muted, fontFamily: fontFamilies.word }]}
+          style={[typeStyle('eyebrow', tokens), styles.eyebrow, { color: colors.muted }]}
         >
           {strings.search.recent}
         </Text>
@@ -37,7 +38,7 @@ export function RecentQueries({
           onPress={onClear}
           style={styles.clear}
         >
-          <Text style={[styles.clearText, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+          <Text style={[typeStyle('recentClear', tokens), { color: colors.accent }]}>
             {strings.search.clear}
           </Text>
         </Pressable>
@@ -54,16 +55,12 @@ export function RecentQueries({
           }}
           style={[styles.row, { borderBottomColor: colors.line }]}
         >
-          <Text style={[styles.query, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
-            {query}
-          </Text>
+          <Text style={[typeStyle('recentQuery', tokens), { color: colors.ink }]}>{query}</Text>
         </Pressable>
       ))}
     </View>
   );
 }
-
-const { eyebrow } = typeRoles;
 
 const styles = StyleSheet.create({
   header: {
@@ -72,26 +69,17 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     columnGap: space[3],
   },
-  eyebrow: {
-    flexShrink: 1,
-    fontSize: eyebrow.size,
-    fontWeight: eyebrow.weight,
-    lineHeight: eyebrow.lineHeight,
-    letterSpacing: eyebrow.letterSpacing,
-    textTransform: eyebrow.textTransform,
-  },
+  eyebrow: { flexShrink: 1 },
   clear: {
     minHeight: minTouchTarget,
     minWidth: minTouchTarget,
     alignItems: 'flex-end',
     justifyContent: 'center',
   },
-  clearText: { fontSize: typeSize.body, fontWeight: '600' },
   row: {
     minHeight: minTouchTarget,
     justifyContent: 'center',
     paddingVertical: space[2],
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
-  query: { fontSize: typeSize.recentQuery, fontWeight: '600' },
 });
