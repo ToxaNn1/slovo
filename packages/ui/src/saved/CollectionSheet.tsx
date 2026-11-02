@@ -15,7 +15,7 @@ import { BottomSheet } from '../primitives/BottomSheet';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { PrimaryButton } from '../primitives/PrimaryButton';
 import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
-import { checkboxRadius, minTouchTarget, space, typeSize } from '../tokens';
+import { choiceMark, minTouchTarget, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The checkbox's side, from the design. */
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     width: CHECKBOX_SIZE,
     height: CHECKBOX_SIZE,
     borderWidth: 1.5,
-    borderRadius: checkboxRadius,
+    borderRadius: choiceMark.radius,
     alignItems: 'center',
     justifyContent: 'center',
   },

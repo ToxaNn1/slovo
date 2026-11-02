@@ -38,9 +38,7 @@ export function LabelChip({
         { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
       ]}
     >
-      <Text style={[styles.text, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
-        {text}
-      </Text>
+      <Text style={[styles.text, { color: colors.ink, fontFamily: fontFamilies.ui }]}>{text}</Text>
     </View>
   );
 }

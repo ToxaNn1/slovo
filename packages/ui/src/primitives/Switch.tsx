@@ -45,8 +45,8 @@ export function Switch({
   /** What VoiceOver says; leave it out where the row around the toggle names it. */
   accessibilityLabel?: string;
   accessibilityHint?: string | undefined;
-  disabled?: boolean;
-  testID?: string;
+  disabled?: boolean | undefined;
+  testID?: string | undefined;
 }) {
   const { colors } = useTokens();
   const { voice } = useEdition();

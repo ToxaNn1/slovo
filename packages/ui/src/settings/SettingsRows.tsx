@@ -308,4 +308,4 @@ const styles = StyleSheet.create({
 });
 
 /** The toggle of a row that waits for its version takes no change. */
-function noChange() {}
+const noChange = () => undefined;
