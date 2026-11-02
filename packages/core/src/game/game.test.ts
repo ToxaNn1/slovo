@@ -13,8 +13,6 @@ import type {
 
 import {
   buildGameReview,
-  createGameHaptics,
-  createHaptics,
   GAME_ROUNDS,
   openComposition,
   renderStress,
@@ -1195,35 +1193,6 @@ describe('the Tips «Вгадай слово» asks about', () => {
 });
 
 describe('the rules of a Game', () => {
-  it('tells the shell when a wrong answer costs its Life: as the Life haptic comes', async () => {
-    const app = await run();
-    await app.game.start('guess-word');
-    const pending: { delay: number; run: () => void }[] = [];
-    const played: string[] = [];
-    const haptics = createGameHaptics({
-      haptics: createHaptics({
-        engine: {
-          selection: () => played.push('selection'),
-          impactLight: () => played.push('impactLight'),
-          impactMedium: () => played.push('impactMedium'),
-          success: () => played.push('success'),
-          warning: () => played.push('warning'),
-        },
-        vibration: () => true,
-      }),
-      schedule: (run, delay) => {
-        pending.push({ delay, run });
-        return () => undefined;
-      },
-    });
-
-    haptics.wrongAnswer();
-
-    expect(pending.map(({ delay }) => delay)).toEqual([current(app).round.lifeLostAfter]);
-    pending[0]?.run();
-    expect(played).toEqual(['warning', 'impactMedium']);
-  });
-
   it('starts a new Game with no played Rounds', async () => {
     const app = await run();
     await playGame(app);

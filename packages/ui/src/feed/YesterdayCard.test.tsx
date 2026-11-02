@@ -1,11 +1,5 @@
-import type { Haptics, WordCardModel } from '@slovo/core';
-import {
-  EditionProvider,
-  HapticsProvider,
-  KnowledgeButtons,
-  VerticalPager,
-  YesterdayCard,
-} from '@slovo/ui';
+import type { WordCardModel } from '@slovo/core';
+import { EditionProvider, KnowledgeButtons, VerticalPager, YesterdayCard } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
@@ -48,14 +42,6 @@ const word: WordCardModel = {
   illustration: undefined,
 };
 
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
-
 /** The Feed's pages: the Yesterday card, then the next Entry's card behind it. */
 const PAGES = ['yesterday', 'next'] as const;
 
@@ -63,27 +49,25 @@ async function renderFeed({ withMarks }: { withMarks: boolean }) {
   const onMark = jest.fn();
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <HapticsProvider haptics={haptics}>
-        <VerticalPager
-          testID="pager"
-          items={PAGES}
-          onIndexChange={jest.fn()}
-          renderPage={(page) =>
-            page === 'yesterday' ? (
-              <YesterdayCard
-                word={word}
-                marks={
-                  withMarks ? (
-                    <KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />
-                  ) : undefined
-                }
-              />
-            ) : (
-              <Text>Next</Text>
-            )
-          }
-        />
-      </HapticsProvider>
+      <VerticalPager
+        testID="pager"
+        items={PAGES}
+        onIndexChange={jest.fn()}
+        renderPage={(page) =>
+          page === 'yesterday' ? (
+            <YesterdayCard
+              word={word}
+              marks={
+                withMarks ? (
+                  <KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />
+                ) : undefined
+              }
+            />
+          ) : (
+            <Text>Next</Text>
+          )
+        }
+      />
     </EditionProvider>,
   );
   // The pages are drawn once the pager knows its height.

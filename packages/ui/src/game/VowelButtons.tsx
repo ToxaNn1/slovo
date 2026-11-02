@@ -38,7 +38,7 @@ type VowelAnswer = Extract<RoundAnswer, { form: 'vowel' }>;
  * answers with where the vowel stands. Once the answer is judged, every
  * stressed vowel fills in the correct colour with the correct tag and a wrong
  * tap in the wrong colour with the chosen tag, and shakes, which Reduce Motion
- * leaves out; the screen plays the answer's haptic. VoiceOver reads a vowel
+ * leaves out. VoiceOver reads a vowel
  * with its place among the letters («а, третя літера»), then its tag. Key it
  * by the Round, so a new Round starts unanswered.
  */

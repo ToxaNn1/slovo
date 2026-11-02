@@ -1,14 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import {
-  loadEdition,
-  openComposition,
-  type Composition,
-  type Edition,
-  type Haptics,
-} from '@slovo/core';
+import { loadEdition, openComposition, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
+import { EditionProvider, TokensProvider } from '@slovo/ui';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -25,14 +19,6 @@ jest.mock('expo-constants', () => ({
 }));
 
 const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -89,9 +75,7 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
           <TokensProvider tokens={editionTokens} colorScheme="light">
             <ShellProvider shell={shell}>
               <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
-                  <Onboarding />
-                </HapticsProvider>
+                <Onboarding />
               </EditionProvider>
             </ShellProvider>
           </TokensProvider>

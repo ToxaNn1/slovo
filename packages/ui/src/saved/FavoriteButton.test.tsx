@@ -1,5 +1,4 @@
-import type { Haptics } from '@slovo/core';
-import { EditionProvider, FavoriteButton, HapticsProvider } from '@slovo/ui';
+import { EditionProvider, FavoriteButton } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
@@ -10,16 +9,6 @@ import { testStrings } from '../test-strings';
 const strings = testStrings({
   favorites: { heart: { add: 'Add to Favorites', remove: 'Remove from Favorites' } },
 });
-
-const impactLight = jest.fn();
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight,
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
 
 /** The heart over Favorites that hold one Entry, or not. */
 function Heart({ saved }: { saved: boolean }) {
@@ -38,9 +27,7 @@ function Heart({ saved }: { saved: boolean }) {
 async function renderHeart(saved = false) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <HapticsProvider haptics={haptics}>
-        <Heart saved={saved} />
-      </HapticsProvider>
+      <Heart saved={saved} />
     </EditionProvider>,
   );
 }
@@ -74,39 +61,35 @@ describe('FavoriteButton', () => {
   afterEach(() => {
     jest.useRealTimers();
     jest.restoreAllMocks();
-    impactLight.mockClear();
   });
 
-  it('springs to 1.2 and back within 300 ms with one light haptic when saving', async () => {
+  it('springs to 1.2 and back within 300 ms when saving', async () => {
     await renderHeart();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Add to Favorites' }));
     const scales = await scalesOver(320);
 
-    expect(impactLight).toHaveBeenCalledTimes(1);
     expect(Math.max(...scales)).toBeCloseTo(1.2, 1);
     expect(scales.at(-1)).toBeCloseTo(1, 2);
     expect(screen.getByRole('button', { name: 'Remove from Favorites' })).toBeOnTheScreen();
   });
 
-  it('neither springs nor plays a haptic when taking the Entry out', async () => {
+  it('does not spring when taking the Entry out', async () => {
     await renderHeart(true);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Remove from Favorites' }));
     const scales = await scalesOver(320);
 
-    expect(impactLight).not.toHaveBeenCalled();
     expect(scales.every((value) => value === 1)).toBe(true);
   });
 
-  it('only fills with Reduce Motion, with the same light haptic', async () => {
+  it('only fills with Reduce Motion', async () => {
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
     await renderHeart();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Add to Favorites' }));
     const scales = await scalesOver(320);
 
-    expect(impactLight).toHaveBeenCalledTimes(1);
     expect(scales.every((value) => value === 1)).toBe(true);
     expect(screen.getByRole('button', { name: 'Remove from Favorites' })).toBeOnTheScreen();
   });

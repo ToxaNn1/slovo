@@ -1,5 +1,4 @@
-import type { Haptics } from '@slovo/core';
-import { HapticsProvider, usePageTurnActions, VerticalPager } from '@slovo/ui';
+import { usePageTurnActions, VerticalPager } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, Text } from 'react-native';
@@ -21,31 +20,19 @@ function TurnablePage({ page }: { page: string }) {
 async function renderPager({
   initialIndex = 0,
   onIndexChange = jest.fn(),
-  selection = jest.fn(),
 }: {
   initialIndex?: number;
   onIndexChange?: (index: number) => void;
-  /** The light tick of a selection, which a swipe plays as it turns the page. */
-  selection?: () => void;
 }) {
-  const haptics: Haptics = {
-    selection,
-    impactLight: jest.fn(),
-    impactMedium: jest.fn(),
-    success: jest.fn(),
-    warning: jest.fn(),
-  };
   const pager = (items: readonly string[]) => (
-    <HapticsProvider haptics={haptics}>
-      <VerticalPager
-        testID="pager"
-        items={items}
-        initialIndex={initialIndex}
-        onIndexChange={onIndexChange}
-        renderPage={(page) => <TurnablePage page={page} />}
-        turnActionLabels={TURN_LABELS}
-      />
-    </HapticsProvider>
+    <VerticalPager
+      testID="pager"
+      items={items}
+      initialIndex={initialIndex}
+      onIndexChange={onIndexChange}
+      renderPage={(page) => <TurnablePage page={page} />}
+      turnActionLabels={TURN_LABELS}
+    />
   );
   await render(pager(PAGES));
   // The pages are drawn once the pager knows its height.
@@ -131,14 +118,12 @@ describe('VerticalPager', () => {
 
   it('turns to the next page on a swipe up', async () => {
     const onIndexChange = jest.fn();
-    const selection = jest.fn();
-    await renderPager({ onIndexChange, selection });
+    await renderPager({ onIndexChange });
 
     await swipe(-HEIGHT / 2, -100);
 
     expect(onIndexChange).toHaveBeenCalledTimes(1);
     expect(onIndexChange).toHaveBeenCalledWith(1);
-    expect(selection).toHaveBeenCalledTimes(1);
     expect(screen.getByText('Second')).toBeTruthy();
     expect(screen.queryByText('First')).toBeNull();
   });
@@ -164,13 +149,11 @@ describe('VerticalPager', () => {
 
   it('stays on the page after a short slow drag', async () => {
     const onIndexChange = jest.fn();
-    const selection = jest.fn();
-    await renderPager({ onIndexChange, selection });
+    await renderPager({ onIndexChange });
 
     await swipe(-HEIGHT / 10, -100);
 
     expect(onIndexChange).not.toHaveBeenCalled();
-    expect(selection).not.toHaveBeenCalled();
     expect(screen.getByText('First')).toBeTruthy();
   });
 
