@@ -1,4 +1,4 @@
-import type { MascotState } from '@slovo/contracts';
+import type { MascotMoment } from '@slovo/contracts';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
@@ -10,7 +10,7 @@ import { useTokens } from '../providers/TokensProvider';
  * and takes no touch, so it never stands in the reader's way. Its look and
  * motion wait for the design: until then it is the line alone.
  */
-export function Mascot({ state, line }: { state: MascotState; line: string }) {
+export function Mascot({ state, line }: { state: MascotMoment; line: string }) {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   return (

@@ -1,4 +1,4 @@
-import type { MascotState } from '@slovo/contracts';
+import type { MascotMoment } from '@slovo/contracts';
 import { Mascot } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -11,7 +11,7 @@ import { useShown } from '../shown-in-effect';
 export const CELEBRATION_MS = 4000;
 
 /** The Mascot in `state` with the Edition's line for it, while its Feature Switch is on in effect; else nothing, as in 0.9. */
-export function MascotIn({ state }: { state: MascotState }) {
+export function MascotIn({ state }: { state: MascotMoment }) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
   return <Mascot state={state} line={edition.mascot[state]} />;
@@ -27,10 +27,10 @@ export function MascotIn({ state }: { state: MascotState }) {
 export function MascotCelebrations() {
   const { xpLog, badges, progress } = useComposition();
   const { celebrations } = useShown();
-  const [shown, setShown] = useState<MascotState | undefined>(undefined);
+  const [shown, setShown] = useState<MascotMoment | undefined>(undefined);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const celebrate = (state: MascotState) => {
+    const celebrate = (state: MascotMoment) => {
       clearTimeout(timer);
       setShown(state);
       timer = setTimeout(() => {
