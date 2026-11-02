@@ -440,12 +440,7 @@ async function renderRound(
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
           <InterfaceSoundsProvider sounds={{ play }}>
-            <Game
-              start={start}
-              onAnswer={onAnswer}
-              onLeave={onLeave}
-              onOpenLetter={onOpenLetter}
-            />
+            <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
           </InterfaceSoundsProvider>
         </HapticsProvider>
       </EditionProvider>

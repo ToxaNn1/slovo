@@ -31,6 +31,7 @@ import { hapticEngine } from '@/game/haptics';
 import { deviceClock } from '@/device/device-clock';
 import { startCrashReports } from '@/diagnostics/crash-reports';
 import { DecorInEffect } from '@/shell/decor-in-effect';
+import { InterfaceSoundsInEffect, soundEngine } from '@/sounds/interface-sounds';
 import { appShell } from '@/shell/app-shell';
 import { LaunchSplash } from '@/shell/launch-splash';
 import { Lifecycle } from '@/shell/lifecycle';
@@ -174,34 +175,36 @@ function ThemedTabs() {
             <Opened opening={languagePack} failedTestID="language-pack-failed">
               <Opened opening={composition} failedTestID="feed-error">
                 {/* The screens' background and divider follow the local date (ADR 0055). */}
-                <DecorInEffect clock={deviceClock}>
-                  <NotificationTaps
-                    onOpened={(kind) => {
-                      // The event never fails; a composition that fails to open is reported where it opens.
-                      composition.opened().then(
-                        (open) => open.analytics.notificationOpened(kind),
-                        () => undefined,
-                      );
-                    }}
-                  />
-                  <EditionTabs
-                    screenOptions={{
-                      headerShown: false,
-                      tabBarIcon: () => null,
-                      tabBarButton: TabButton,
-                      tabBarActiveTintColor: colors.accent,
-                      tabBarInactiveTintColor: colors.inactiveTab,
-                      tabBarLabelStyle: {
-                        fontFamily: ui,
-                        fontSize: typeSize.tabLabel,
-                        fontWeight: '600',
-                      },
-                    }}
-                  />
-                  {/* Over the tabs until the reader finishes or skips it. */}
-                  <MascotCelebrations />
-                  <Onboarding />
-                </DecorInEffect>
+                <InterfaceSoundsInEffect engine={soundEngine}>
+                  <DecorInEffect clock={deviceClock}>
+                    <NotificationTaps
+                      onOpened={(kind) => {
+                        // The event never fails; a composition that fails to open is reported where it opens.
+                        composition.opened().then(
+                          (open) => open.analytics.notificationOpened(kind),
+                          () => undefined,
+                        );
+                      }}
+                    />
+                    <EditionTabs
+                      screenOptions={{
+                        headerShown: false,
+                        tabBarIcon: () => null,
+                        tabBarButton: TabButton,
+                        tabBarActiveTintColor: colors.accent,
+                        tabBarInactiveTintColor: colors.inactiveTab,
+                        tabBarLabelStyle: {
+                          fontFamily: ui,
+                          fontSize: typeSize.tabLabel,
+                          fontWeight: '600',
+                        },
+                      }}
+                    />
+                    {/* Over the tabs until the reader finishes or skips it. */}
+                    <MascotCelebrations />
+                    <Onboarding />
+                  </DecorInEffect>
+                </InterfaceSoundsInEffect>
               </Opened>
             </Opened>
           </HapticsProvider>

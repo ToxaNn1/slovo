@@ -92,11 +92,18 @@ describe('Settings › Віджети', () => {
 });
 
 describe('Settings › ЗВУКИ', () => {
-  it('shows only «Вібрація», with no «Звуки» or «Музика» row', async () => {
+  it('turns «Звуки» off', async () => {
+    const settings = await renderSettings();
+
+    await fireEvent.press(screen.getByRole('switch', { name: 'Звуки' }));
+
+    expect((await settings.read()).sounds).toBe(false);
+  });
+
+  it('shows «Звуки» and «Вібрація», with no «Музика» row', async () => {
     const settings = await renderSettings();
 
     expect(screen.getByText('ЗВУКИ')).toBeOnTheScreen();
-    expect(screen.queryByText('Звуки', { includeHiddenElements: true })).not.toBeOnTheScreen();
     expect(screen.queryByText('Музика', { includeHiddenElements: true })).not.toBeOnTheScreen();
     expect(screen.queryByText('СКОРО', { includeHiddenElements: true })).not.toBeOnTheScreen();
 

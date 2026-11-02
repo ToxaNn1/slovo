@@ -37,6 +37,8 @@ export interface Shown {
   readonly selfCheck: boolean;
   /** The Settings switch for Self-check. */
   readonly selfCheckSetting: boolean;
+  /** The Settings switch «Звуки». */
+  readonly soundsSetting: boolean;
   /** The Settings switch for «Сезонний декор» (ADR 0055). */
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Ділитися анонімною статистикою», with its privacy policy link (ADR 0060). */
@@ -142,6 +144,7 @@ export function shownOf({
     calligraphicLemma: on('calligraphy'),
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),
+    soundsSetting: on('sounds'),
     seasonalDecorSetting: on('seasonalDecor'),
     shareCountersSetting: on('communityCounters') || on('analytics'),
     countersSetting: on('noCounters') ? 'noCounters' : on('statistics') ? 'hideStreak' : undefined,

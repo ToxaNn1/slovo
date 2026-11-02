@@ -25,6 +25,7 @@ const everything: Shown = {
   calligraphicLemma: true,
   selfCheck: false,
   selfCheckSetting: true,
+  soundsSetting: true,
   seasonalDecorSetting: true,
   shareCountersSetting: true,
   countersSetting: 'noCounters',
@@ -80,6 +81,7 @@ describe('what the reader is shown', () => {
     [
       'no «Сезонний декор» switch with Seasonal Decor off',
       { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },
+      { off: ['sounds'], shown: { soundsSetting: false } },
     ],
     [
       'no «Ділитися анонімною статистикою» switch with Community Counters and Analytics off',

@@ -54,7 +54,7 @@ const dailyGoalSegments = dailyGoals.map((dailyGoal) => ({
  * Settings: the Account when the Account is on in effect, the Theme, the font
  * size, the Daily Goal while it is on in effect, «Пройти тест ще раз» while
  * the Rarity Test is, «Пройти опитування ще раз» while the later questions
- * are, «Сезонний декор» while its Feature Switch is,
+ * are, «Сезонний декор» and «Звуки» while their Feature Switches are,
  * «Ділитися анонімною статистикою» with its privacy policy link while the
  * Community Counters are, and the rows of the design.
  */
@@ -268,6 +268,16 @@ export default function SettingsScreen() {
         <View style={styles.section}>
           <SectionLabel>{strings.sounds.section}</SectionLabel>
           <SettingsGroup>
+            {shown.soundsSetting && (
+              <SwitchRow
+                testID="settings-sounds"
+                label={strings.sounds.sounds}
+                value={current.sounds}
+                onChange={(sounds) => {
+                  update({ sounds });
+                }}
+              />
+            )}
             <SwitchRow
               testID="settings-vibration"
               label={strings.sounds.vibration}
