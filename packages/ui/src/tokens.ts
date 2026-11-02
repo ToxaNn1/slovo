@@ -611,7 +611,8 @@ export const shareCardLayout = {
     mascot: 96,
     footer: 120,
     cell: 22,
-    statColumns: 2,
+    /** Each stat chip's base width: two to a row. */
+    statBasis: '40%',
     type: {
       kicker: 10,
       /** The headline of an Entry. */
@@ -634,7 +635,8 @@ export const shareCardLayout = {
     mascot: 70,
     footer: 84,
     cell: 18,
-    statColumns: 4,
+    /** Four to a row. */
+    statBasis: '20%',
     type: {
       kicker: 10,
       entryHeadline: 30,

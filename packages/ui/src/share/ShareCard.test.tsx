@@ -1,5 +1,5 @@
 import type { ShareCardContent } from '@slovo/core';
-import { EditionProvider } from '@slovo/ui';
+import { coreTokens, EditionProvider, TokensProvider, type ColorScheme } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { render, screen, within } from '@testing-library/react-native';
 
@@ -11,11 +11,17 @@ const strings = testStrings({
   idiomCard: { etymology: 'Origin' },
 });
 
-async function renderCard(content: ShareCardContent, format: 'story' | 'square') {
+async function renderCard(
+  content: ShareCardContent,
+  format: 'story' | 'square',
+  colorScheme: ColorScheme = 'light',
+) {
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <ShareCard content={content} watermark="SLOVO" format={format} width={300} />
-    </EditionProvider>,
+    <TokensProvider tokens={coreTokens} colorScheme={colorScheme}>
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <ShareCard content={content} watermark="SLOVO" format={format} width={300} />
+      </EditionProvider>
+    </TokensProvider>,
   );
   return screen.getByTestId('share-card');
 }
@@ -90,5 +96,66 @@ describe('ShareCard', () => {
     expect(within(card).getByText('Crossword solved')).toBeOnTheScreen();
     expect(within(card).getAllByTestId('crossword-open-cell')).toHaveLength(3);
     expect(within(card).getAllByTestId('crossword-closed-cell')).toHaveLength(1);
+  });
+
+  it('is red in the light Theme and the dark ground in the dark one, the giant glyph in cream or red', async () => {
+    const { light, dark } = coreTokens.colors;
+
+    const lightCard = await renderCard(word, 'story', 'light');
+    expect(lightCard).toHaveStyle({ backgroundColor: light.accent });
+    expect(within(lightCard).getByTestId('share-card-giant')).toHaveStyle({
+      color: light.onAccent,
+    });
+
+    const darkCard = await renderCard(word, 'square', 'dark');
+    expect(darkCard).toHaveStyle({ backgroundColor: dark.background });
+    expect(within(darkCard).getByTestId('share-card-giant')).toHaveStyle({ color: dark.accent });
+  });
+
+  it("puts an Entry's first letter, without its Stress, behind it, and the Mascot shouting", async () => {
+    const card = await renderCard(
+      {
+        shows: 'w2',
+        overline: 'Word of the Day',
+        label: 'Word of the Day. echo',
+        body: { kind: 'word', lemma: 'éсho', grammar: 'n.', definition: 'A sound.' },
+      },
+      'story',
+    );
+
+    expect(within(card).getByTestId('share-card-giant')).toHaveTextContent('E');
+    expect(within(card).getByTestId('mascot-shouts')).toBeOnTheScreen();
+  });
+
+  it("puts a milestone's number behind it, and the Mascot celebrating", async () => {
+    const card = await renderCard(
+      {
+        shows: 'streak:23',
+        label: '23 days in a row',
+        body: { kind: 'milestone', title: 'My streak', headline: '23 days in a row' },
+      },
+      'square',
+    );
+
+    expect(within(card).getByTestId('share-card-giant')).toHaveTextContent('23');
+    expect(within(card).getByTestId('mascot-celebrates')).toBeOnTheScreen();
+  });
+
+  it("draws a Weekly Recap's numbers with no giant glyph, and the Mascot happy", async () => {
+    const card = await renderCard(
+      {
+        shows: 'week:2026-10-26',
+        overline: '26.10–1.11',
+        label: 'My week. 48 seen',
+        body: { kind: 'weeklyRecap', title: 'My week', numbers: [{ label: 'seen', count: 48 }] },
+      },
+      'story',
+    );
+
+    for (const text of ['26.10–1.11', 'My week', '48', 'seen']) {
+      expect(within(card).getByText(text)).toBeOnTheScreen();
+    }
+    expect(within(card).queryByTestId('share-card-giant')).toBeNull();
+    expect(within(card).getByTestId('mascot-happy')).toBeOnTheScreen();
   });
 });

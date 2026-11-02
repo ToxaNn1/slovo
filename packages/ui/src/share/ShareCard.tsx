@@ -552,7 +552,7 @@ function Forms({
 function WeeklyRecapBlocks({ card, ...props }: BlockProps & { card: BodyOf<'weeklyRecap'> }) {
   const { fontFamilies } = useTokens();
   const { text, format, paint } = props;
-  const { type, statColumns, gap } = shareCardLayout[format];
+  const { type, statBasis, gap } = shareCardLayout[format];
   return (
     <>
       {props.headline(card.title)}
@@ -561,7 +561,8 @@ function WeeklyRecapBlocks({ card, ...props }: BlockProps & { card: BodyOf<'week
           <View
             key={label}
             style={{
-              width: `${String(100 / statColumns - 4)}%`,
+              flexBasis: statBasis,
+              flexGrow: 1,
               padding: text(shareCardDrawing.chipPadding),
               borderRadius: text(shareCardDrawing.chipRadius),
               backgroundColor: paint.chip,
