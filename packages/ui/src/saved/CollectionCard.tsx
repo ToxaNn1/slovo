@@ -1,0 +1,109 @@
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { useEdition } from '../providers/EditionProvider';
+import { useTokens } from '../providers/TokensProvider';
+import { Wedge } from '../primitives/Wedge';
+import { collectionCard, collectionMarks, entryRow } from '../tokens';
+
+/** The fills of the cards in turn: red, ink, sunken. */
+const FILLS = ['accent', 'ink', 'sunken'] as const;
+
+type Fill = (typeof FILLS)[number];
+
+function fillAt(index: number): Fill {
+  return FILLS[index % FILLS.length] ?? 'accent';
+}
+
+/**
+ * A Collection's card on the Saved overview: its mark, its name in two lines at
+ * most and how many Entries it holds. The cards take their fill in turn by
+ * their place, red, ink, then sunken, and their mark in turn too. A tap opens
+ * the Collection.
+ */
+export function CollectionCard({
+  index,
+  name,
+  count,
+  accessibilityLabel,
+  onPress,
+  testID,
+}: {
+  /** The card's place among the cards, which picks its fill and its mark. */
+  index: number;
+  name: string;
+  /** The Entries it holds, in the Edition's plural form, e.g. «17 записів». */
+  count: string;
+  /** The Collection as VoiceOver reads it, e.g. «Для листів, 17 записів». */
+  accessibilityLabel: string;
+  onPress: () => void;
+  testID?: string;
+}) {
+  const { colors, colorScheme, fontFamilies, radii } = useTokens();
+  const { voice } = useEdition();
+  // The design's dark ink, the same in both Themes: the light ink, the dark ground.
+  const darkInk = colorScheme === 'light' ? colors.ink : colors.background;
+  const paint = {
+    accent: { ground: colors.accent, ink: darkInk, mark: darkInk },
+    ink: { ground: colors.ink, ink: colors.background, mark: colors.accent },
+    sunken: { ground: colors.surfaceSunken, ink: colors.ink, mark: colors.accent },
+  }[fillAt(index)];
+  const mark = collectionMarks[index % collectionMarks.length] ?? collectionMarks[0];
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      {...voice}
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.card,
+        { backgroundColor: paint.ground, borderRadius: radii.card },
+        pressed && styles.pressed,
+      ]}
+    >
+      <Wedge
+        points={mark}
+        color={paint.mark}
+        width={collectionCard.mark}
+        height={collectionCard.mark}
+      />
+      <View style={styles.text}>
+        <Text
+          numberOfLines={2}
+          style={[styles.name, { color: paint.ink, fontFamily: fontFamilies.word }]}
+        >
+          {name}
+        </Text>
+        <Text
+          numberOfLines={1}
+          style={[styles.count, { color: paint.ink, fontFamily: fontFamilies.ui }]}
+        >
+          {count}
+        </Text>
+      </View>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    flex: 1,
+    minWidth: 0,
+    height: collectionCard.height,
+    padding: collectionCard.padding,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
+  },
+  pressed: { opacity: entryRow.pressedOpacity },
+  text: { gap: collectionCard.textGap },
+  name: {
+    fontSize: collectionCard.nameSize,
+    lineHeight: collectionCard.nameLineHeight,
+    fontWeight: '800',
+  },
+  count: {
+    fontSize: collectionCard.countSize,
+    fontWeight: '600',
+    opacity: collectionCard.countOpacity,
+  },
+});

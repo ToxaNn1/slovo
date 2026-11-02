@@ -76,16 +76,10 @@ export { IconButton } from './primitives/IconButton';
 export { PressedTile, type TileTone } from './primitives/PressedTile';
 export { LabelChip } from './primitives/LabelChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
-export {
-  SavedCard,
-  SavedCardCollection,
-  SavedCardCollections,
-  SavedCardRows,
-  SavedCardTitles,
-} from './saved/SavedCard';
-export { LearningCard, LearningRow } from './saved/Learning';
+export { LearningRow } from './saved/Learning';
 export { CollectionButton } from './saved/CollectionButton';
 export { CollectionEntryRow } from './saved/CollectionEntryRow';
+export { CollectionCard } from './saved/CollectionCard';
 export { CollectionNameField, CollectionRow, NewCollectionButton } from './saved/CollectionRow';
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';
@@ -115,6 +109,7 @@ export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
   cardSpace,
+  collectionCard,
   coreTokens,
   designTokens,
   disabledOpacity,

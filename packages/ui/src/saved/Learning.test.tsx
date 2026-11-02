@@ -1,5 +1,5 @@
 import type { EntryRowModel, LearningEntry } from '@slovo/core';
-import { EditionProvider, LearningCard, LearningRow } from '@slovo/ui';
+import { EditionProvider, LearningRow } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactElement } from 'react';
@@ -172,34 +172,5 @@ describe('LearningRow', () => {
     expect(screen.queryAllByRole('button', { includeHiddenElements: true })).toEqual([
       screen.getByTestId('learning-row-w1-open'),
     ]);
-  });
-});
-
-describe('LearningCard', () => {
-  const entries = [
-    learning(word('w1', 'river'), 0),
-    learning(word('w2', 'stone'), 1),
-    learning(correction, 3),
-    learning(word('w3', 'cloud'), 7),
-  ];
-
-  it('shows the count and the next three Entries with their Review days', async () => {
-    await renderInEdition(<LearningCard entries={entries} onPress={jest.fn()} />);
-
-    expect(screen.getByText('Learning')).toBeTruthy();
-    expect(screen.getByText('4')).toBeTruthy();
-    for (const text of ['river', 'today', 'stone', 'tomorrow', 'right', 'in 3 days']) {
-      expect(screen.getByText(text, { includeHiddenElements: true })).toBeTruthy();
-    }
-    expect(screen.queryByText('cloud', { includeHiddenElements: true })).toBeNull();
-  });
-
-  it('opens the list on a tap', async () => {
-    const onPress = jest.fn();
-    await renderInEdition(<LearningCard entries={entries} onPress={onPress} />);
-
-    await fireEvent.press(screen.getByRole('button', { name: 'Learning, 4 entries' }));
-
-    expect(onPress).toHaveBeenCalledTimes(1);
   });
 });

@@ -228,6 +228,44 @@ export const wedges = {
   ],
 } as const satisfies Record<string, Wedge>;
 
+/** The marks of the Collection cards of the Saved overview, in turn by the card's place. */
+export const collectionMarks = [
+  [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+  ],
+  [
+    [0, 0],
+    [1, 0.3],
+    [1, 1],
+    [0, 0.7],
+  ],
+  [
+    [0.5, 0],
+    [1, 1],
+    [0, 1],
+  ],
+  [
+    [0, 0],
+    [1, 0],
+    [0.6, 1],
+    [0, 1],
+  ],
+  [
+    [0, 0.3],
+    [1, 0],
+    [1, 0.7],
+    [0, 1],
+  ],
+  [
+    [0.3, 0],
+    [1, 0],
+    [0.7, 1],
+    [0, 1],
+  ],
+] as const satisfies readonly Wedge[];
+
 /** A cubic Bézier easing curve, as CSS `cubic-bezier(x1, y1, x2, y2)` takes it. */
 export type Easing = readonly [number, number, number, number];
 
@@ -454,6 +492,21 @@ export const cardSpace = {
   primaryPaddingVertical: 22,
   /** Around the content of a Collection's row and of the field that names one. */
   collectionPadding: 18,
+} as const;
+
+/** A Collection's card on the Saved overview (design `SlovoApp`, the Collections tab). */
+export const collectionCard = {
+  height: 150,
+  padding: 14,
+  /** Between the cards, across and down. */
+  gap: 12,
+  mark: 34,
+  /** Between the name and the count. */
+  textGap: 6,
+  nameSize: 14,
+  nameLineHeight: 17,
+  countSize: 12,
+  countOpacity: 0.85,
 } as const;
 
 /** The line heights the design gives in pixels rather than as a multiple of the size. */
