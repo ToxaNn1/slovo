@@ -141,6 +141,16 @@ export const typeRoles = {
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
+  /** The word an onboarding step shouts on its red top. */
+  stepShout: role('word', '900', 168, 151, -8),
+  /** An onboarding step's title. */
+  stepTitle: role('word', '800', 28, 31, -0.5),
+  /** An onboarding step's text under its title. */
+  stepText: role('ui', '400', 16, 23),
+  /** The number on a Daily Goal tile of the onboarding. */
+  goalNumber: role('word', '900', 26, 26),
+  /** The unit under a Daily Goal tile's number. */
+  goalUnit: role('ui', '600', 12, 12),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -791,6 +801,24 @@ export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as
 
 /** SLOVO ID's mark on the onboarding's sign-in button: its side, corner radius and letter size. */
 export const accountMark = { size: 26, radius: 6, letterSize: 17 } as const;
+
+/**
+ * An onboarding step of the design (`isOb` in `SlovoApp.dc.html`): the red
+ * halftone top cut by `wedges.cut`, its shout word turned and flown in from
+ * the left, the on-red Mascot, the skewed step dots and the Daily Goal tiles.
+ */
+export const onboardingLayout = {
+  heroHeight: 440,
+  shout: { left: -14, top: 96, turn: '-8deg', flyFrom: -120 },
+  /** The Mascot's corner, less its own padding. */
+  mascot: { right: 10, top: 270 },
+  dot: { height: 8, width: 14, currentWidth: 34, gap: 6, skew: '-20deg' },
+  side: 24,
+  contentTop: 6,
+  gap: 14,
+  bottom: 40,
+  goalTile: { height: 78, gap: 10, radius: 16, lineGap: 2 },
+} as const;
 
 /** The width of the rosette (Decor slot 4) between the SLOVO ID step's text and its buttons. */
 export const onboardingRosetteWidth = 120;
