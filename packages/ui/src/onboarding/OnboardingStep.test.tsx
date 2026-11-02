@@ -10,9 +10,8 @@ const strings = testStrings({
   splash: { wordmark: 'SLOVO' },
   onboarding: {
     skip: 'Skip',
-    step: 'STEP {step} OF {total}',
     stepLabel: 'Step {step} of {total}',
-    welcome: { start: 'Start', title: 'Rare words', subtitle: 'One a day' },
+    welcome: { shout: 'WORD', start: 'Start', title: 'Rare words', subtitle: 'One a day' },
   },
 });
 
@@ -44,6 +43,14 @@ function stepNow(): { aside: number; opacity: number } {
     opacity?: number;
   };
   return { aside: style.transform?.[0]?.translateX ?? 0, opacity: style.opacity ?? 1 };
+}
+
+/** How far the shout word is from its place, sideways. */
+function shoutAside(): number {
+  const style = getAnimatedStyle(screen.getByTestId('onboarding-shout')) as {
+    transform?: { translateX?: number }[];
+  };
+  return style.transform?.[0]?.translateX ?? 0;
 }
 
 /** Lets the given milliseconds pass on the faked timers. */
@@ -92,5 +99,25 @@ describe('An onboarding step', () => {
     await pass(150);
 
     expect(stepNow()).toEqual({ aside: 0, opacity: 1 });
+  });
+
+  it('flies its shout word in from the left in 600 ms', async () => {
+    await renderWelcome();
+    await pass(50);
+
+    expect(screen.getByText('WORD')).toBeTruthy();
+    expect(shoutAside()).toBeLessThan(0);
+
+    await pass(550);
+
+    expect(shoutAside()).toBe(0);
+  });
+
+  it('keeps its shout word in place, with Reduce Motion', async () => {
+    reduceMotion(true);
+    await renderWelcome();
+    await pass(150);
+
+    expect(shoutAside()).toBe(0);
   });
 });
