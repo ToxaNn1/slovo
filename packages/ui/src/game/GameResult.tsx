@@ -249,7 +249,12 @@ export function GameResult({
         )}
         <View style={styles.buttons}>
           <View style={styles.button}>
-            <Button variant="neutral" testID="game-home" label={words.result.home} onPress={onHome} />
+            <Button
+              variant="neutral"
+              testID="game-home"
+              label={words.result.home}
+              onPress={onHome}
+            />
           </View>
           <View style={styles.button}>
             <Button testID="game-again" label={words.result.again} onPress={onAgain} />

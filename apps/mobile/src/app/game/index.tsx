@@ -94,6 +94,7 @@ function Game() {
                   }
                 : undefined
             }
+            mascot={<MascotIn state="gameEnd" onRed />}
           />
           <WidgetGuideSheet
             visible={hintShown}
@@ -107,7 +108,6 @@ function Game() {
             mode={widgetStrings.allEntries}
             {...widgetStrings.guide.sample}
           />
-          <MascotIn state="gameEnd" />
         </>
       ) : (
         <GameRound
