@@ -637,7 +637,7 @@ describe('the Game screen', () => {
         expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
       });
       expect(
-        screen.getByText(/^Де\ наголос\?( · |$)/, { includeHiddenElements: true }),
+        screen.getByText(/^Де наголос\?( · |$)/, { includeHiddenElements: true }),
       ).toBeOnTheScreen();
       // «слово» and its number: the first «о» is stressed, the second a vowel to tap too.
       await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
@@ -733,7 +733,7 @@ describe('the Game screen', () => {
         );
       });
       expect(
-        screen.getByText(/^Знайдіть\ пари( · |$)/, { includeHiddenElements: true }),
+        screen.getByText(/^Знайдіть пари( · |$)/, { includeHiddenElements: true }),
       ).toBeOnTheScreen();
       const left = pairsLeft();
       // A grid with none of its pairs gone yet is a new one.

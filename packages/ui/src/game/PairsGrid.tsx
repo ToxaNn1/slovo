@@ -188,14 +188,14 @@ function Cell({
   const rest = selected ? colors.ink : colors.surface;
   const restBorder = selected ? colors.ink : colors.line;
   const paint = fill === 'right' ? light.correct : light.wrong;
-  const motion = useAnimatedStyle(() => ({
-    ...(fill === undefined
+  const motion = useAnimatedStyle(() =>
+    fill === undefined
       ? {}
       : {
           backgroundColor: interpolateColor(filled.value, [0, 1], [rest, paint]),
           borderColor: interpolateColor(filled.value, [0, 1], [restBorder, paint]),
-        }),
-  }));
+        },
+  );
   return (
     <AnimatedPressable
       testID={testID}

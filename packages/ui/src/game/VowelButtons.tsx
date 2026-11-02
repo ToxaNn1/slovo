@@ -155,14 +155,14 @@ function Vowel({
   }, [fill, filled]);
 
   const paint = fill === 'right' ? light.correct : light.wrong;
-  const motion = useAnimatedStyle(() => ({
-    ...(fill === undefined
+  const motion = useAnimatedStyle(() =>
+    fill === undefined
       ? {}
       : {
           backgroundColor: interpolateColor(filled.value, [0, 1], [colors.surface, paint]),
           borderColor: interpolateColor(filled.value, [0, 1], [colors.line, paint]),
-        }),
-  }));
+        },
+  );
   return (
     <Pressable
       testID={testID}
