@@ -446,26 +446,6 @@ async function renderRound(
 /** An element on the screen, as the queries return it. */
 type Shown = ReturnType<typeof screen.getByTestId>;
 
-/** A Round on its own, which a test moves on by `rerender`. */
-function PlainRound({ game }: { game: CurrentGame }) {
-  return (
-    <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <HapticsProvider haptics={haptics}>
-          <GameRound
-            game={game}
-            label="Definition"
-            onAnswer={jest.fn()}
-            onNext={jest.fn()}
-            onLeave={jest.fn()}
-            onOpenLetter={jest.fn()}
-          />
-        </HapticsProvider>
-      </EditionProvider>
-    </SafeAreaProvider>
-  );
-}
-
 describe('GameRound', () => {
   it('counts the Rounds passed out of the Round limit and the Lives out of those the Game started with', async () => {
     await renderRound(jest.fn(), jest.fn(), { ...first, roundsPassed: 7, lives: 4 });
