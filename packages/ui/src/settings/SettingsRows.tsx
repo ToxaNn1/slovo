@@ -219,7 +219,7 @@ function RowText({
 
 /**
  * A row that picks one of a few values: its label, an optional line and,
- * under them, the segmented control, which VoiceOver reads by the label.
+ * under them, the segmented control, whose segments VoiceOver reads with the label.
  */
 export function ChoiceRow<T extends string>({
   label,
@@ -241,11 +241,7 @@ export function ChoiceRow<T extends string>({
   const look = useRowLook();
   return (
     <View testID={testID} style={[styles.row, styles.choiceRow]}>
-      <View
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-        style={styles.lead}
-      >
+      <View style={styles.lead}>
         {icon !== undefined && <IconTile icon={icon} />}
         <RowText look={look} label={label} subtitle={subtitle} />
       </View>
