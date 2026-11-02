@@ -1,4 +1,4 @@
-import { Button, EditionProvider, GoogleSignInButton } from '@slovo/ui';
+import { Button, EditionProvider, GoogleSignInButton, InterfaceSoundsProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -75,5 +75,24 @@ describe('Button with a mark', () => {
 
     expect(onPress).toHaveBeenCalledTimes(1);
     expect(screen.getByTestId('mark')).toBeOnTheScreen();
+  });
+});
+
+describe('Button and the Interface sounds', () => {
+  it('asks for the tap sound on a press, and for none while disabled', async () => {
+    const play = jest.fn();
+    await render(
+      <Edition>
+        <InterfaceSoundsProvider sounds={{ play }}>
+          <Button label="Go" onPress={jest.fn()} />
+          <Button label="Stop" onPress={jest.fn()} disabled />
+        </InterfaceSoundsProvider>
+      </Edition>,
+    );
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Stop' }));
+    expect(play).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Go' }));
+    expect(play.mock.calls).toEqual([['tap']]);
   });
 });

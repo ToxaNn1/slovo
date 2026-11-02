@@ -37,6 +37,8 @@ export interface Shown {
   readonly selfCheck: boolean;
   /** The Settings switch for Self-check. */
   readonly selfCheckSetting: boolean;
+  /** The Settings switch «Звуки». */
+  readonly soundsSetting: boolean;
   /** The Settings switch for «Сезонний декор» (ADR 0055). */
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Менше руху», which joins the system's Reduce Motion. */
@@ -144,6 +146,7 @@ export function shownOf({
     calligraphicLemma: on('calligraphy'),
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),
+    soundsSetting: on('sounds'),
     seasonalDecorSetting: on('seasonalDecor'),
     reduceMotionSetting: on('reduceMotion'),
     shareCountersSetting: on('communityCounters') || on('analytics'),

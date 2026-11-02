@@ -124,9 +124,10 @@ export const SettingsStringsSchema = z.strictObject({
     /** While the next Break waits. Takes `{date}`, the first day it can start, e.g. «13.11». */
     waiting: templateOf('date'),
   }),
-  /** The Sounds section and its Vibration row. */
+  /** The Sounds section, its «Звуки» row and its Vibration row. */
   sounds: z.strictObject({
     section: TextSchema,
+    sounds: TextSchema,
     vibration: TextSchema,
   }),
   /** The About screen. */
