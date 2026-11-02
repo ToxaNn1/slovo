@@ -11,12 +11,11 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import {
-  lineHeight,
   minTouchTarget,
   space,
   toastElevation,
   toastRadius,
-  typeSize,
+  typeStyle,
   withAlpha,
 } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -52,7 +51,8 @@ export function PronunciationButton({
   onPress,
   onDismissMessage,
 }: PronunciationButtonProps) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings: editionStrings, voice } = useEdition();
   const strings = editionStrings.wordCard.pronunciation;
   const window = useWindowDimensions();
@@ -102,9 +102,7 @@ export function PronunciationButton({
             },
           ]}
         >
-          <Text
-            style={[styles.messageText, { color: colors.surface, fontFamily: fontFamilies.ui }]}
-          >
+          <Text style={[typeStyle('toast', tokens), { color: colors.surface }]}>
             {strings.noVoice}
           </Text>
         </Pressable>
@@ -153,10 +151,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[4],
     paddingVertical: space[3],
     ...toastElevation,
-  },
-  messageText: {
-    fontSize: typeSize.caption,
-    lineHeight: lineHeight.pronunciationNote,
-    fontWeight: '500',
   },
 });

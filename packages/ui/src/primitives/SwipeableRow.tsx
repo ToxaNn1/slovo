@@ -8,7 +8,7 @@ import ReanimatedSwipeable, {
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { onFill, space, typeSize } from '../tokens';
+import { onFill, space, typeStyle } from '../tokens';
 
 /** The width of each swipe action, from the design. */
 const ACTION_WIDTH = 96;
@@ -61,7 +61,8 @@ export function SwipeableRow({
   testID: string;
   children: ReactNode;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const swipeable = useRef<SwipeableMethods>(null);
   return (
@@ -100,11 +101,11 @@ export function SwipeableRow({
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 style={[
+                  typeStyle('swipeAction', tokens),
                   styles.actionLabel,
                   {
                     // White on the destructive fill, as the design draws it.
                     color: action.tone === 'destructive' ? onFill : colors.background,
-                    fontFamily: fontFamilies.ui,
                   },
                 ]}
               >
@@ -123,5 +124,5 @@ export function SwipeableRow({
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row' },
   action: { width: ACTION_WIDTH, alignItems: 'center', justifyContent: 'center' },
-  actionLabel: { fontSize: typeSize.caption, fontWeight: '700', paddingHorizontal: space[1] },
+  actionLabel: { paddingHorizontal: space[1] },
 });

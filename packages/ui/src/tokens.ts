@@ -327,6 +327,10 @@ export const typeRoles = {
   badgeStatus: role('ui', '400', 15, 22),
   /** A line of the Profile, such as the Level or the Known count, and its offer to save progress. */
   profileText: role('ui', '400', 15, 22),
+  /** The label of the link back to the screen before. */
+  backLink: role('ui', '600', 17, 20),
+  /** The label of an action a list row's swipe shows. */
+  swipeAction: role('ui', '700', 14, 17),
   // Roles of batch D.
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
