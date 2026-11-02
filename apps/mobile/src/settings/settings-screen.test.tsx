@@ -93,7 +93,7 @@ describe('Settings › Віджети', () => {
 
 describe('Settings › ЗВУКИ', () => {
   it('turns «Звуки» off', async () => {
-    const settings = await renderSettings();
+    const settings = await renderSettings({ sounds: true });
 
     await fireEvent.press(screen.getByRole('switch', { name: 'Звуки' }));
 
