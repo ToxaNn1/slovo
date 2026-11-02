@@ -807,12 +807,14 @@ export const streakPill = {
 /**
  * The card of a Feed Notice, from the design: its corner radius, padding
  * and the gap between its parts; the notification mark's box, corner radius
- * and wedge; and the Weekly Recap's grid of numbers, three to a row.
+ * and wedge; the gap between the Community Word's Word and its Definition;
+ * and the Weekly Recap's grid of numbers, three to a row.
  */
 export const noticeCard = {
   radius: 24,
   padding: 20,
   gap: 14,
+  wordGap: 10,
   mark: { box: 40, radius: 11, wedge: { width: 12, height: 18 } },
   recap: { columns: 3, gap: 8, padding: { vertical: 12, horizontal: 10 }, lineGap: 6 },
 } as const;
