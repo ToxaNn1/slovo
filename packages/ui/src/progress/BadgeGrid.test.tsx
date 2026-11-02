@@ -4,8 +4,20 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 const badges: readonly BadgeGridItem[] = [
-  { id: 'streak-3', name: 'Three days', condition: { kind: 'streak', days: 3 }, symbol: '3', earned: true },
-  { id: 'level-5', name: 'Level five', condition: { kind: 'level', level: 5 }, symbol: '5', earned: false },
+  {
+    id: 'streak-3',
+    name: 'Three days',
+    condition: { kind: 'streak', days: 3 },
+    symbol: '3',
+    earned: true,
+  },
+  {
+    id: 'level-5',
+    name: 'Level five',
+    condition: { kind: 'level', level: 5 },
+    symbol: '5',
+    earned: false,
+  },
 ];
 
 async function draw(onPress: (badge: BadgeGridItem) => void) {

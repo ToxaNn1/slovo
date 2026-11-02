@@ -23,10 +23,13 @@ async function draw(reduceMotion: boolean) {
 }
 
 describe('LevelCard', () => {
-  it.each([false, true])('shows the Level in its ring and the lines beside it (Reduce Motion %s)', async (reduceMotion) => {
-    await draw(reduceMotion);
-    expect(screen.getByTestId('level-number')).toHaveTextContent('7');
-    expect(screen.getByTestId('level-name')).toHaveTextContent('Level 7 · Catcher');
-    expect(screen.getByTestId('level-xp')).toHaveTextContent('640 of 1000 XP');
-  });
+  it.each([false, true])(
+    'shows the Level in its ring and the lines beside it (Reduce Motion %s)',
+    async (reduceMotion) => {
+      await draw(reduceMotion);
+      expect(screen.getByTestId('level-number')).toHaveTextContent('7');
+      expect(screen.getByTestId('level-name')).toHaveTextContent('Level 7 · Catcher');
+      expect(screen.getByTestId('level-xp')).toHaveTextContent('640 of 1000 XP');
+    },
+  );
 });

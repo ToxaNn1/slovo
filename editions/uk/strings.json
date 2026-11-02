@@ -126,7 +126,7 @@
       "noGameBest": "Ще не грали",
       "shareLevel": "Поділитися рівнем",
       "shareMessage": "Мій рівень — {level} · {name}",
-    "badgeStamp": { "title": "Твій!", "take": "Забрати" }
+      "badgeStamp": { "title": "Твій!", "take": "Забрати" }
     },
     "streakBreak": {
       "title": "Перерва",

@@ -22,13 +22,16 @@ async function draw(reduceMotion: boolean, onClose: () => void) {
 }
 
 describe('BadgeStamp', () => {
-  it.each([false, true])('stamps the Badge with its symbol, name and the Mascot (Reduce Motion %s)', async (reduceMotion) => {
-    await draw(reduceMotion, () => undefined);
-    expect(screen.getByTestId('badge-stamp-mark-symbol')).toHaveTextContent('7');
-    expect(screen.getByText('Yours!')).toBeOnTheScreen();
-    expect(screen.getByText('A week')).toBeOnTheScreen();
-    expect(screen.getByTestId('mascot')).toBeOnTheScreen();
-  });
+  it.each([false, true])(
+    'stamps the Badge with its symbol, name and the Mascot (Reduce Motion %s)',
+    async (reduceMotion) => {
+      await draw(reduceMotion, () => undefined);
+      expect(screen.getByTestId('badge-stamp-mark-symbol')).toHaveTextContent('7');
+      expect(screen.getByText('Yours!')).toBeOnTheScreen();
+      expect(screen.getByText('A week')).toBeOnTheScreen();
+      expect(screen.getByTestId('mascot')).toBeOnTheScreen();
+    },
+  );
 
   it('closes on its take button', async () => {
     const onClose = jest.fn();

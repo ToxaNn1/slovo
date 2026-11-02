@@ -93,7 +93,8 @@ export function BadgeStamp({
   }, [landed, reduceMotion]);
   const markStyle = useAnimatedStyle(() => {
     const t = landed.value;
-    if (reduceMotion) return { opacity: t, transform: [{ rotate: `${String(badgeStamp.turn)}deg` }] };
+    if (reduceMotion)
+      return { opacity: t, transform: [{ rotate: `${String(badgeStamp.turn)}deg` }] };
     const { scale, turn } = badgeStamp.from;
     return {
       opacity: Math.min(t * 2, 1),

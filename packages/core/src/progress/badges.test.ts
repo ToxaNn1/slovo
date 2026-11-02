@@ -27,8 +27,18 @@ const ALL_ON: readonly FeatureSwitch[] = [
 
 const badges: readonly Badge[] = [
   { id: 'streak-3', name: 'Three days', symbol: '1', condition: { kind: 'streak', days: 3 } },
-  { id: 'win-words', name: 'First win', symbol: '1', condition: { kind: 'gameWin', modes: ['guess-word'] } },
-  { id: 'crossword-2', name: 'Two crosswords', symbol: '1', condition: { kind: 'dailyCrosswordRun', days: 2 } },
+  {
+    id: 'win-words',
+    name: 'First win',
+    symbol: '1',
+    condition: { kind: 'gameWin', modes: ['guess-word'] },
+  },
+  {
+    id: 'crossword-2',
+    name: 'Two crosswords',
+    symbol: '1',
+    condition: { kind: 'dailyCrosswordRun', days: 2 },
+  },
   { id: 'rare', name: 'Rare', symbol: '1', condition: { kind: 'rightOnRarity', rarity: 5 } },
   { id: 'level-1', name: 'Level 1', symbol: '1', condition: { kind: 'level', level: 1 } },
   {
