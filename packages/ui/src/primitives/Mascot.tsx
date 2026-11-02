@@ -151,6 +151,7 @@ function Shapes({
         'fill' in shape ? (
           <Path
             key={index}
+            testID={`${testID}-${String(index)}`}
             d={shape.path}
             fill={paintOf(shape.fill, paints)}
             opacity={shape.opacity}
@@ -158,6 +159,7 @@ function Shapes({
         ) : (
           <Path
             key={index}
+            testID={`${testID}-${String(index)}`}
             d={shape.path}
             fill="none"
             stroke={paintOf(shape.stroke, paints)}
