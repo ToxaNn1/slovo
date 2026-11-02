@@ -2,7 +2,7 @@ import { DailyGoalSchema, type DailyGoal } from '@slovo/contracts';
 import type { LaterQuestion } from '@slovo/core';
 import {
   FeedNoticeCard,
-  MixChip,
+  Chip,
   OutlineButton,
   PrimaryButton,
   SecondaryButton,
@@ -193,7 +193,7 @@ export function InterestsChoice({
         {allCategories.map(({ id, displayName }) => {
           const on = picked.includes(id);
           return (
-            <MixChip
+            <Chip
               key={id}
               testID={`${testIDPrefix}-interest-${id}`}
               label={displayName}

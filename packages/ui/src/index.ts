@@ -55,7 +55,7 @@ export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { MoodButton } from './mood/MoodButton';
 export { MoodSheet, type MoodChip } from './mood/MoodSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
-export { MixChip } from './mix/MixChip';
+export { Chip } from './primitives/Chip';
 export { RarityFloorChoice } from './mix/RarityFloorChoice';
 export {
   HEADLINE_MAX_FONT_SCALE,

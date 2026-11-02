@@ -55,6 +55,7 @@ export default [
       'src/onboarding/SplashOverlay.tsx',
       'src/progress/ActiveDaysCalendar.tsx',
       'src/primitives/BottomSheet.tsx',
+      'src/primitives/Chip.tsx',
       'src/primitives/FallingMarks.tsx',
       'src/primitives/SwipeableRow.tsx',
       'src/primitives/Switch.tsx',
