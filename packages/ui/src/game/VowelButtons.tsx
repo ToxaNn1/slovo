@@ -3,9 +3,9 @@
 
 import type { RoundAnswer } from '@slovo/core';
 import { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  interpolateColor,
+  interpolate,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -13,11 +13,19 @@ import Animated, {
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, onFill, space, typeSize } from '../tokens';
+import { PressedTile } from '../primitives/PressedTile';
+import { useReduceMotion } from '../providers/useReduceMotion';
+import { minTouchTarget, space, typeSize } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
-/** A vowel button's width, narrower than the touch target so a long Word fits the SE; its hit slop makes up the rest. */
-const VOWEL_WIDTH = 36;
+/** A vowel tile's width, narrower than the touch target so a long Word fits the SE; its hit slop makes up the rest. */
+const VOWEL_WIDTH = 38;
+/** A vowel tile's height, the board's. */
+const VOWEL_HEIGHT = 62;
+/** How a wrong tap drops: down, tilted and faded, the board's `slDrop`. */
+const VOWEL_DROP = { translateY: 12, rotate: -6, opacity: 0.55 };
+/** How a right vowel pops, the board's `slPop`: its scale at the start, 60 % and the end. */
+const VOWEL_POP = [0.6, 1.12, 1];
 const VOWEL_SLOP = (minTouchTarget - VOWEL_WIDTH) / 2;
 /** The gap between the Word's letters, which leaves the vowel buttons apart. */
 const LETTER_GAP = 2;
@@ -35,8 +43,8 @@ type VowelAnswer = Extract<RoundAnswer, { form: 'vowel' }>;
  * A Round of the vowel form: the Word drawn letter by letter, each vowel to
  * tap a button and the other letters plain, which VoiceOver skips. A tap
  * answers with where the vowel stands. Once the answer is judged, every
- * stressed vowel fills in the correct colour with the correct tag and a wrong
- * tap in the wrong colour with the chosen tag, nothing shaking; the screen
+ * stressed vowel turns red and pops with the correct tag and a wrong tap
+ * drops with the chosen tag, nothing shaking; the screen
  * plays the answer's haptic. VoiceOver reads a vowel
  * with its place among the letters («а, третя літера»), then its tag. Key it
  * by the Round, so a new Round starts unanswered.
@@ -120,8 +128,10 @@ export function VowelButtons({
 }
 
 /**
- * A vowel to tap. A judged answer fills it in the correct or the wrong
- * colour; nothing shakes.
+ * A vowel to tap, the design's letter tile. A judged answer turns a stressed
+ * vowel red on its red edge and pops it, and drops a wrong tap: sunken,
+ * muted, tilted and faded. Under Reduce Motion nothing pops or tilts; the
+ * fill and the fade alone show the answer. Nothing shakes.
  */
 function Vowel({
   testID,
@@ -140,65 +150,66 @@ function Vowel({
   onPress: () => void;
 }) {
   const { colors, fontFamilies, radii } = useTokens();
-  const light = useSchemeColors('light');
+  const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
-  /** 0 before the answer, 1 once the vowel has filled. */
-  const filled = useSharedValue(fill === undefined ? 0 : 1);
+  const reduceMotion = useReduceMotion();
+  /** 0 before the answer, 1 once the vowel has popped or dropped. */
+  const moved = useSharedValue(fill === undefined ? 0 : 1);
   // Whether the vowel showed its fill before, so only the answer given now moves it.
   const shownFill = useRef(fill !== undefined);
 
   useEffect(() => {
     if (fill === undefined || shownFill.current) return;
     shownFill.current = true;
-    filled.value = withTiming(1, fill === 'right' ? RIGHT_FILL : WRONG_FILL);
-    // The shared value is stable, so only the answer given fills the vowel.
-  }, [fill, filled]);
+    moved.value = 0;
+    moved.value = withTiming(1, fill === 'right' ? RIGHT_FILL : WRONG_FILL);
+    // The shared value is stable, so only the answer given moves the vowel.
+  }, [fill, moved]);
 
-  const paint = fill === 'right' ? light.correct : light.wrong;
-  const motion = useAnimatedStyle(() =>
-    fill === undefined
-      ? {}
-      : {
-          backgroundColor: interpolateColor(filled.value, [0, 1], [colors.surface, paint]),
-          borderColor: interpolateColor(filled.value, [0, 1], [colors.line, paint]),
-        },
-  );
+  const still = reduceMotion || fill === undefined;
+  const motion = useAnimatedStyle(() => {
+    if (fill === 'wrong')
+      return {
+        opacity: 1 - (1 - VOWEL_DROP.opacity) * moved.value,
+        transform: still
+          ? []
+          : [
+              { translateY: VOWEL_DROP.translateY * moved.value },
+              { rotate: `${String(VOWEL_DROP.rotate * moved.value)}deg` },
+            ],
+      };
+    return {
+      opacity: 1,
+      transform: still ? [] : [{ scale: interpolate(moved.value, [0, 0.6, 1], VOWEL_POP) }],
+    };
+  });
   return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      accessibilityState={{ disabled }}
-      {...voice}
-      disabled={disabled}
-      onPress={onPress}
-      hitSlop={{ left: VOWEL_SLOP, right: VOWEL_SLOP }}
-    >
-      {({ pressed }) => (
-        <Animated.View
+    <Animated.View testID={`${testID}-motion`} style={motion} {...voice}>
+      <PressedTile
+        testID={testID}
+        tone={fill === 'right' ? 'accent' : fill === 'wrong' ? 'none' : 'tile'}
+        radius={radii.tile}
+        accessibilityLabel={label}
+        disabled={disabled}
+        onPress={onPress}
+        hitSlop={{ left: VOWEL_SLOP, right: VOWEL_SLOP }}
+        faceStyle={[styles.vowel, fill === 'wrong' && { backgroundColor: colors.surfaceSunken }]}
+      >
+        <Text
+          maxFontSizeMultiplier={LETTER_MAX_FONT_SCALE}
           style={[
-            styles.vowel,
+            LETTER_SIZE,
+            styles.vowelLetter,
             {
-              backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
-              borderColor: colors.line,
-              borderRadius: radii.button,
+              color: fill === 'right' ? keyInk : fill === 'wrong' ? colors.muted : colors.ink,
+              fontFamily: fontFamilies.word,
             },
-            motion,
           ]}
         >
-          <Text
-            maxFontSizeMultiplier={LETTER_MAX_FONT_SCALE}
-            style={[
-              LETTER_SIZE,
-              styles.letter,
-              { color: fill === undefined ? colors.ink : onFill, fontFamily: fontFamilies.word },
-            ]}
-          >
-            {letter}
-          </Text>
-        </Animated.View>
-      )}
-    </Pressable>
+          {letter}
+        </Text>
+      </PressedTile>
+    </Animated.View>
   );
 }
 
@@ -213,10 +224,10 @@ const styles = StyleSheet.create({
   },
   letter: { fontWeight: '500', textAlign: 'center' },
   vowel: {
-    minHeight: minTouchTarget,
+    minHeight: VOWEL_HEIGHT,
     minWidth: VOWEL_WIDTH,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
   },
+  vowelLetter: { fontWeight: '900', textAlign: 'center' },
 });

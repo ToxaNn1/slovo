@@ -40,6 +40,7 @@ export function PressedTile({
   accessibilityHint,
   accessibilityState,
   faceStyle,
+  hitSlop,
   testID,
   children,
 }: {
@@ -55,6 +56,8 @@ export function PressedTile({
   accessibilityState?: { busy?: boolean; selected?: boolean | undefined };
   /** The face's own layout: its height, padding and content alignment. */
   faceStyle?: StyleProp<ViewStyle>;
+  /** How far past its edges a tap still counts, for a tile narrower than the touch target. */
+  hitSlop?: { left?: number; right?: number; top?: number; bottom?: number };
   testID?: string | undefined;
   children: ReactNode;
 }) {
@@ -95,6 +98,7 @@ export function PressedTile({
       accessibilityHint={accessibilityHint}
       accessibilityState={{ ...accessibilityState, disabled }}
       disabled={disabled}
+      hitSlop={hitSlop}
       onPress={onPress}
       onPressIn={() => {
         press(1);

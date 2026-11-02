@@ -1,7 +1,10 @@
 import type { RoundAnswer } from '@slovo/core';
-import { EditionProvider, VowelButtons } from '@slovo/ui';
-import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { coreTokens, EditionProvider, VowelButtons } from '@slovo/ui';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import type { ReactElement } from 'react';
+import { AccessibilityInfo } from 'react-native';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
 const ORDINALS = ['first', 'second', 'third', 'fourth', 'fifth', 'sixth', 'seventh'];
@@ -112,5 +115,66 @@ describe('VowelButtons', () => {
     expect(screen.getByRole('button', { name: 'a, second letter, Your pick' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'a, fourth letter, Right' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'a, sixth letter, Right' })).toBeOnTheScreen();
+  });
+});
+
+describe('VowelButtons on the design’s tiles', () => {
+  const { accent, surfaceSunken, tile } = coreTokens.colors.light;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  async function settle(reduceMotion: boolean, node: ReactElement) {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(reduceMotion);
+    await render(node);
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+  }
+
+  /** The tilt of a vowel's tile, in degrees, once it has moved. */
+  function tilt(position: number): number {
+    const style = getAnimatedStyle(screen.getByTestId(`vowels-${String(position)}-motion`)) as {
+      transform: { rotate?: string }[];
+    };
+    const rotate = style.transform.find((step) => step.rotate !== undefined)?.rotate ?? '0deg';
+    return Number.parseFloat(rotate);
+  }
+
+  it('rests every vowel on a tile before the answer', async () => {
+    await settle(false, <Vowels />);
+
+    for (const position of BANANA.vowels)
+      expect(screen.getByTestId(`vowels-${String(position)}-face`)).toHaveStyle({
+        backgroundColor: tile,
+      });
+  });
+
+  it('turns a right vowel red and drops a wrong tap, sunken and tilted', async () => {
+    await settle(false, <Vowels />);
+    await render(<Vowels answer={answered(1, [3])} />);
+    await act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getByTestId('vowels-3-face')).toHaveStyle({ backgroundColor: accent });
+    expect(screen.getByTestId('vowels-1-face')).toHaveStyle({ backgroundColor: surfaceSunken });
+    expect(tilt(1)).toBeLessThan(0);
+    expect(tilt(3)).toBe(0);
+  });
+
+  it('tilts no wrong tap with Reduce Motion, and still turns the right vowel red', async () => {
+    await settle(true, <Vowels answer={answered(1, [3])} />);
+
+    expect(screen.getByTestId('vowels-3-face')).toHaveStyle({ backgroundColor: accent });
+    expect(screen.getByTestId('vowels-1-face')).toHaveStyle({ backgroundColor: surfaceSunken });
+    expect(tilt(1)).toBe(0);
   });
 });
