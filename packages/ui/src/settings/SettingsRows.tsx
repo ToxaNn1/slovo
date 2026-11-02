@@ -8,12 +8,10 @@ import { SegmentedControl, type Segment } from '../primitives/SegmentedControl';
 import { Switch } from '../primitives/Switch';
 import {
   minTouchTarget,
-  overlineType,
   settingsRowDrawing,
   sliderDrawing,
   space,
   STACK_AT_FONT_SCALE,
-  typeSize,
   typeStyle,
 } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -96,12 +94,12 @@ interface RowProps {
 /** What a row says on its right and where it stands in its group. */
 function useRowLook() {
   const tokens = useTokens();
-  const { colors, fontFamilies } = tokens;
+  const { colors } = tokens;
   const { voice } = useEdition();
   return {
     voice,
     colors,
-    fontFamilies,
+    tokens,
     label: [typeStyle('rowLabel', tokens), { color: colors.ink }],
     value: [typeStyle('rowSub', tokens), { color: colors.muted }],
   };
@@ -301,11 +299,7 @@ export function TimeRow({
         ]}
       >
         <Text
-          style={[
-            styles.time,
-            styles.grow,
-            { color: look.colors.ink, fontFamily: look.fontFamilies.word },
-          ]}
+          style={[typeStyle('reminderTime', look.tokens), styles.grow, { color: look.colors.ink }]}
         >
           {time}
         </Text>
@@ -345,7 +339,9 @@ export function SoonRow({
           <Text style={look.label}>{label}</Text>
           {subtitle !== undefined && <Text style={look.value}>{subtitle}</Text>}
         </View>
-        <Text style={[styles.soon, { color: look.colors.muted, fontFamily: look.fontFamilies.ui }]}>
+        <Text
+          style={[typeStyle('soonTag', look.tokens), styles.soon, { color: look.colors.muted }]}
+        >
           {soon}
         </Text>
         {control === 'switch' && (
@@ -396,7 +392,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  time: { fontSize: typeSize.subhead, fontWeight: '500' },
   soonRow: {
     opacity: SOON_OPACITY,
     flexDirection: 'column',
@@ -408,7 +403,7 @@ const styles = StyleSheet.create({
   grow: { flex: 1 },
   trailing: { flexShrink: 1, textAlign: 'right' },
   soonText: { flex: 1 },
-  soon: { ...overlineType, flexShrink: 0 },
+  soon: { flexShrink: 0 },
   sliderTrack: {
     height: sliderDrawing.trackHeight,
     borderRadius: sliderDrawing.trackRadius,

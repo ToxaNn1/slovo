@@ -8,7 +8,7 @@ import {
   rowPadding,
   ScreenTitle,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -55,7 +55,8 @@ function FavoriteRow({ favorite: { entryId, row, addedAt } }: { favorite: Favori
  */
 export default function FavoritesScreen() {
   const list = useFavoriteList();
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { count, voice } = useEdition();
   const router = useRouter();
 
@@ -91,7 +92,7 @@ export default function FavoritesScreen() {
                 testID="favorites-count"
                 accessibilityLabel={count(strings.count, list.length)}
                 {...voice}
-                style={[styles.count, { color: colors.accent, fontFamily: fontFamilies.word }]}
+                style={[typeStyle('collectionCount', tokens), { color: colors.accent }]}
               >
                 {String(list.length)}
               </Text>
@@ -102,7 +103,7 @@ export default function FavoritesScreen() {
           list.length > 0 ? (
             <Text
               {...voice}
-              style={[styles.footer, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('meta', tokens), styles.footer, { color: colors.muted }]}
             >
               {strings.footer}
             </Text>
@@ -142,12 +143,8 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
     paddingBottom: rowPadding,
   },
-  count: { fontSize: typeSize.subhead, fontWeight: '500' },
   footer: {
     marginHorizontal: space[6],
     marginTop: space[4],
-    fontSize: typeSize.chip,
-    lineHeight: typeSize.chip * 1.5,
-    fontWeight: '500',
   },
 });

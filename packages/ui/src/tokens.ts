@@ -276,6 +276,12 @@ export const typeRoles = {
   reminderTime: role('word', '500', 22, 26),
   /** The «soon» tag of a Settings row that a later version brings. */
   soonTag: role('ui', '700', 11, 13, 1.5, 'uppercase'),
+  /** A letter on its cell of the Daily Crossword. */
+  crosswordLetter: role('word', '900', 26, 31.2, 0, 'uppercase'),
+  /** The clue of the Daily Crossword's selected word, on its bar. */
+  crosswordClue: role('ui', '600', 15, 19.5),
+  /** A letter on a key of the Daily Crossword's keyboard. */
+  crosswordKey: role('ui', '700', 15, 18, 0, 'uppercase'),
   // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
