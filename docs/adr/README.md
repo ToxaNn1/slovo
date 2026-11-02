@@ -26,7 +26,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0022](0022-one-core-module-owns-the-day-change.md) One Core module owns the day change in a fixed order; the shell only reports the foreground.
 - 0023: merged into 0006.
 - [0024](0024-the-game-asks-about-words-in-history-and-draws-distractors-from-the-whole-pack.md) The Game asks about eligible Entries in History (15 or more), else the whole pack, and draws Distractors from every eligible Entry; Round planning alone decides a start.
-- [0025](0025-the-core-turns-a-game-change-into-its-haptic-sequence.md) `createGameHaptics` in the Core turns each Game change into its haptic sequence.
+- [0025](0025-the-core-turns-a-game-change-into-its-haptic-sequence.md) Games give no haptics: `gameHaptics` returns an empty sequence for every Game change.
 - [0026](0026-the-widget-reads-a-widget-snapshot-the-core-builds.md) The Core builds the Widget Snapshot, the app writes it into the App Group, the widget only reads it.
 - [0027](0027-source-folders-group-modules-by-glossary-domain.md) One folder per glossary domain, the same name in every package; folders import one way; routes import through `@/`.
 - [0028](0028-maestro-runs-only-on-the-owners-command.md) Maestro runs only on the owner's command; a ticket's PR touches no flow, one visual pass per version does.
