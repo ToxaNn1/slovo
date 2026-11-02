@@ -13,7 +13,7 @@ import {
 import { BottomSheet } from '../primitives/BottomSheet';
 import { ChoiceMark } from '../primitives/ChoiceMark';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { PrimaryButton } from '../primitives/PrimaryButton';
+import { Button } from '../primitives/Button';
 import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
 import { minTouchTarget, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -234,7 +234,7 @@ function SheetContent({
         )}
       </ScrollView>
       <View style={styles.done}>
-        <PrimaryButton testID="collection-done" label={sheet.done} onPress={onClose} />
+        <Button testID="collection-done" label={sheet.done} onPress={onClose} />
       </View>
     </>
   );

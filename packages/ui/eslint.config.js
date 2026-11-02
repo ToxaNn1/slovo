@@ -57,6 +57,7 @@ export default [
       'src/primitives/BottomSheet.tsx',
       'src/primitives/Chip.tsx',
       'src/primitives/FallingMarks.tsx',
+      'src/primitives/PressedTile.tsx',
       'src/primitives/SwipeableRow.tsx',
       'src/primitives/Switch.tsx',
       'src/primitives/UndoToast.tsx',

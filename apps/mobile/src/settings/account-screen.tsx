@@ -6,11 +6,10 @@ import {
   disabledOpacity,
   fill,
   GoogleSignInButton,
-  PrimaryButton,
+  Button,
   ProblemLine,
   ResendButton,
   ScreenTitle,
-  SecondaryButton,
   signInButtonHeight,
   space,
   TextField,
@@ -211,7 +210,7 @@ function SignIn({
           returnKeyType="send"
           onSubmitEditing={send}
         />
-        <PrimaryButton
+        <Button
           testID="account-send-code"
           label={strings.sendCode}
           busy={state.inFlight === 'requestCode'}
@@ -258,7 +257,8 @@ function SignIn({
           run(account.resendCode());
         }}
       />
-      <SecondaryButton
+      <Button
+        variant="neutral"
         testID="account-change-email"
         label={strings.changeEmail}
         disabled={state.inFlight !== undefined}
@@ -358,14 +358,16 @@ function SignedIn({
           <SyncStatusLine />
         </Text>
       </View>
-      <SecondaryButton
+      <Button
+        variant="neutral"
         testID="account-sign-out"
         label={strings.signOut}
         onPress={() => {
           run(account.signOut());
         }}
       />
-      <SecondaryButton
+      <Button
+        variant="neutral"
         testID="account-sign-out-everywhere"
         label={strings.signOutEverywhere}
         busy={state.inFlight === 'signOutEverywhere'}

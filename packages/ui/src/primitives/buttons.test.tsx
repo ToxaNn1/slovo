@@ -1,4 +1,4 @@
-import { EditionProvider, GoogleSignInButton, PrimaryButton, SecondaryButton } from '@slovo/ui';
+import { Button, EditionProvider, GoogleSignInButton } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -14,15 +14,14 @@ function Edition({ children }: { children: ReactNode }) {
 }
 
 describe.each([
-  ['PrimaryButton', PrimaryButton],
-  ['SecondaryButton', SecondaryButton],
+  ['Button', Button],
   ['GoogleSignInButton', GoogleSignInButton],
-])('%s', (_, Button) => {
+])('%s', (_, Subject) => {
   it('acts on a press', async () => {
     const onPress = jest.fn();
     await render(
       <Edition>
-        <Button label="Send the code" onPress={onPress} />
+        <Subject label="Send the code" onPress={onPress} />
       </Edition>,
     );
 
@@ -35,7 +34,7 @@ describe.each([
     const onPress = jest.fn();
     await render(
       <Edition>
-        <Button label="Send the code" onPress={onPress} busy />
+        <Subject label="Send the code" onPress={onPress} busy />
       </Edition>,
     );
 
@@ -51,7 +50,7 @@ describe.each([
     const onPress = jest.fn();
     await render(
       <Edition>
-        <Button label="Send the code" onPress={onPress} disabled />
+        <Subject label="Send the code" onPress={onPress} disabled />
       </Edition>,
     );
 
@@ -63,12 +62,12 @@ describe.each([
   });
 });
 
-describe('PrimaryButton with a mark', () => {
+describe('Button with a mark', () => {
   it('draws the mark before the label, and VoiceOver reads the label alone', async () => {
     const onPress = jest.fn();
     await render(
       <Edition>
-        <PrimaryButton label="Sign in" mark={<Text testID="mark">S</Text>} onPress={onPress} />
+        <Button label="Sign in" mark={<Text testID="mark">S</Text>} onPress={onPress} />
       </Edition>,
     );
 

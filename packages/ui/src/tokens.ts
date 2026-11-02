@@ -140,7 +140,7 @@ export const typeRoles = {
 export type TypeRole = keyof typeof typeRoles;
 
 /** The text style of a type role in the given tokens' families. */
-export function typeStyle(name: TypeRole, tokens: DesignTokens) {
+export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamilies'>) {
   const { family, size, weight, lineHeight, letterSpacing, textTransform } = typeRoles[name];
   return {
     fontFamily: tokens.fontFamilies[family],
@@ -467,9 +467,6 @@ export const textFieldDrawing = {
   problemSize: 13,
 } as const;
 
-/** The corner radius of an outlined button, from the design; fixed like the toast's, not an Edition token. */
-export const outlineButtonRadius = 6;
-
 /** The drawing of a slider on a row that is not available yet: track, fill and thumb. */
 export const sliderDrawing = {
   trackHeight: 4,
@@ -552,6 +549,15 @@ export const calendarDay = { ring: 32, ringBorder: 1.5, dot: 6, dotGap: 3 } as c
 
 /** How much a button that takes no press is dimmed. */
 export const disabledOpacity = 0.5;
+
+/** The opacity a pressed tile fades to where its face does not sink: under Reduce Motion, or with no edge. */
+export const pressedFade = 0.7;
+
+/** The heights of a button's face: the design's 58 pt main button, and a small one as tall as a tap area. */
+export const buttonHeight = { large: 58, small: 44 } as const;
+
+/** The side of the design's square icon button, and of the icon inside it. */
+export const iconButton = { side: 44, icon: 20 } as const;
 
 /**
  * Gaps and paddings of the Game's Round off the 4-pt grid, from the design:

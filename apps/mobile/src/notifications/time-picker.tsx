@@ -1,5 +1,5 @@
 import type DateTimePicker from '@react-native-community/datetimepicker';
-import { BottomSheet, PrimaryButton, SheetTitle, space, useEdition, useTokens } from '@slovo/ui';
+import { BottomSheet, Button, SheetTitle, space, useEdition, useTokens } from '@slovo/ui';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -78,7 +78,7 @@ function SheetContent({ value, onPick }: { value: Date; onPick: (picked: Date) =
         )}
       </View>
       <View style={styles.done}>
-        <PrimaryButton
+        <Button
           testID="time-picker-done"
           label={strings.done}
           onPress={() => {

@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
+import { Button } from '../primitives/Button';
 import { ChoiceMark } from '../primitives/ChoiceMark';
-import { PrimaryButton } from '../primitives/PrimaryButton';
 import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
@@ -128,7 +128,7 @@ export function MistakeReportSheet({
         />
       </View>
       <View style={styles.send}>
-        <PrimaryButton
+        <Button
           testID={`${testID}-send`}
           label={sheet.send}
           disabled={!ready}

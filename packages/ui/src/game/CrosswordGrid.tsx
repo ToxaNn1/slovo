@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { Button } from '../primitives/Button';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { onFill, roundLayout, space, typeSize } from '../tokens';
 
@@ -216,7 +216,8 @@ export function CrosswordGrid({
         style={styles.keyboard}
       />
       {onOpenLetter !== undefined && selection !== undefined && (
-        <SecondaryButton
+        <Button
+          variant="neutral"
           label={texts.openLetter}
           onPress={() => {
             onOpenLetter(selection.place);

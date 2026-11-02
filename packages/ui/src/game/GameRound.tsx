@@ -32,7 +32,7 @@ import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
 import { CardCorners } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { HEART_PATH } from '../saved/FavoriteButton';
-import { PrimaryButton } from '../primitives/PrimaryButton';
+import { Button } from '../primitives/Button';
 import {
   minTouchTarget,
   onFill,
@@ -938,7 +938,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
         </Text>
       )}
       <View style={styles.next}>
-        <PrimaryButton testID="game-next" label={strings.game.sheet.next} onPress={onNext} />
+        <Button testID="game-next" label={strings.game.sheet.next} onPress={onNext} />
       </View>
     </ScrollView>
   );

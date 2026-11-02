@@ -3,7 +3,7 @@ import {
   CrosswordGrid,
   DecorBackground,
   ScreenTitle,
-  SecondaryButton,
+  Button,
   space,
   typeSize,
   useEdition,
@@ -99,7 +99,8 @@ export default function DailyCrosswordScreen() {
         )}
         {solved && share !== undefined && (
           <>
-            <SecondaryButton
+            <Button
+              variant="neutral"
               testID="daily-crossword-share"
               label={editionStrings.share.button}
               onPress={() => {

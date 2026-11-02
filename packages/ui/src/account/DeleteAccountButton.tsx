@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
-import { SecondaryButton } from '../primitives/SecondaryButton';
+import { Button } from '../primitives/Button';
 
 /**
  * The destructive «Видалити SLOVO ID» button of the SLOVO ID screen. A press
@@ -32,10 +32,9 @@ export function DeleteAccountButton({
   const [asking, setAsking] = useState(false);
   return (
     <>
-      <SecondaryButton
+      <Button
         testID={testID}
         label={copy.button}
-        destructive
         busy={busy}
         disabled={disabled}
         onPress={() => {

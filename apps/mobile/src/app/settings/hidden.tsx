@@ -3,7 +3,7 @@ import {
   BackLink,
   EntryRow,
   fill,
-  OutlineButton,
+  Button,
   rowPadding,
   ScreenTitle,
   SectionLabel,
@@ -72,7 +72,9 @@ function HiddenList() {
             subtitle={labels.text}
             accessibilityLabel={`${row.title}, ${labels.spoken}`}
             accessory={
-              <OutlineButton
+              <Button
+                size="small"
+                variant="neutral"
                 testID={`hidden-entry-${entryId}-restore`}
                 label={strings.restore}
                 accessibilityLabel={fill(strings.restoreLabel, { title: withoutStress(row.title) })}
@@ -228,7 +230,9 @@ function TurnOnRow({
       >
         {name}
       </Text>
-      <OutlineButton
+      <Button
+        size="small"
+        variant="neutral"
         testID={`${testID}-turn-on`}
         label={strings.turnOn}
         accessibilityLabel={accessibilityLabel}

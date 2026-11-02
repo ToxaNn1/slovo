@@ -3,9 +3,7 @@ import type { LaterQuestion } from '@slovo/core';
 import {
   FeedNoticeCard,
   Chip,
-  OutlineButton,
-  PrimaryButton,
-  SecondaryButton,
+  Button,
   SegmentedControl,
   space,
   useTurnToNextPage,
@@ -49,7 +47,8 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
   }
 
   const later = (
-    <SecondaryButton
+    <Button
+      variant="neutral"
       testID={`later-question-${question}-later`}
       label={strings.later}
       onPress={() => {
@@ -81,7 +80,9 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
       <FeedNoticeCard notice={question} title={strings.selfRating.title}>
         <View style={styles.block}>
           {questionnaire.options.selfRating.map(({ id, label }) => (
-            <OutlineButton
+            <Button
+              size="small"
+              variant="neutral"
               key={id}
               testID={`later-question-selfRating-${id}`}
               label={label}
@@ -98,7 +99,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
   return (
     <FeedNoticeCard notice={question} title={title} message={text}>
       <View style={styles.block}>
-        <PrimaryButton
+        <Button
           testID={`later-question-${question}-open`}
           label={strings.open}
           onPress={() => {
@@ -140,7 +141,7 @@ function DailyGoalQuestion({
             if (goal !== undefined) setPicked(goal);
           }}
         />
-        <PrimaryButton
+        <Button
           testID="later-question-dailyGoalChoice-done"
           label={strings.done}
           onPress={() => {
@@ -206,7 +207,7 @@ export function InterestsChoice({
           );
         })}
       </View>
-      <PrimaryButton
+      <Button
         testID={`${testIDPrefix}-interests-done`}
         label={strings.done}
         onPress={() => {
