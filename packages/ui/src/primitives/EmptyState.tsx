@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { EmptyStateIllustration } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
-import { PrimaryButton } from './PrimaryButton';
+import { Button } from './Button';
 import { blockGap, emptyStatePaddingTop, space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
@@ -52,7 +52,7 @@ export function EmptyState({
       {mascot}
       {action !== undefined && (
         <View style={styles.action}>
-          <PrimaryButton testID={action.testID} label={action.label} onPress={action.onPress} />
+          <Button testID={action.testID} label={action.label} onPress={action.onPress} />
         </View>
       )}
     </View>

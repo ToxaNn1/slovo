@@ -1,7 +1,7 @@
 import {
   BackLink,
   NavigationRow,
-  PrimaryButton,
+  Button,
   ScreenTitle,
   SettingsGroup,
   SwitchRow,
@@ -61,11 +61,7 @@ export default function NotificationsScreen() {
         </View>
         {state.permission === 'not-asked' && (
           <View style={styles.enable}>
-            <PrimaryButton
-              testID="notifications-enable"
-              label={strings.enable}
-              onPress={askPermission}
-            />
+            <Button testID="notifications-enable" label={strings.enable} onPress={askPermission} />
           </View>
         )}
         {state.permission === 'denied' && (

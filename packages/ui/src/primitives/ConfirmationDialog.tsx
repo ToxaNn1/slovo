@@ -3,7 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { scrimColor, space, typeSize } from '../tokens';
-import { SecondaryButton } from './SecondaryButton';
+import { Button } from './Button';
 import { SheetTitle } from './SheetParts';
 
 /** The widest the dialog grows, so it stays a card in the middle of a wide screen. */
@@ -89,13 +89,13 @@ export function ConfirmationDialog({
             </Text>
           )}
           <View style={styles.actions}>
-            <SecondaryButton
-              destructive
-              label={destructiveLabel}
-              onPress={onDestructive}
-              testID={id('destructive')}
+            <Button label={destructiveLabel} onPress={onDestructive} testID={id('destructive')} />
+            <Button
+              variant="neutral"
+              label={cancelLabel}
+              onPress={onCancel}
+              testID={id('cancel')}
             />
-            <SecondaryButton label={cancelLabel} onPress={onCancel} testID={id('cancel')} />
           </View>
         </View>
       </View>

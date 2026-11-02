@@ -5,7 +5,7 @@ import {
   BackLink,
   fill,
   ScreenTitle,
-  SecondaryButton,
+  Button,
   SectionLabel,
   space,
   typeSize,
@@ -128,7 +128,8 @@ export function ProfileScreen() {
               level !== undefined &&
               reachedOn !== undefined && (
                 <>
-                  <SecondaryButton
+                  <Button
+                    variant="neutral"
                     testID="profile-share-level"
                     label={strings.shareLevel}
                     onPress={() => {
@@ -204,7 +205,12 @@ function SaveProgressOffer({ opening, onSave }: { opening: Opening<Account>; onS
       <Text {...voice} style={[styles.text, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
         {message}
       </Text>
-      <SecondaryButton testID="profile-save-progress-button" label={save} onPress={onSave} />
+      <Button
+        variant="neutral"
+        testID="profile-save-progress-button"
+        label={save}
+        onPress={onSave}
+      />
     </View>
   );
 }

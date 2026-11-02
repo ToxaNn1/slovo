@@ -70,11 +70,12 @@ export {
   type RarityTestQuestion,
   type RarityTestScreen,
 } from './onboarding/RarityTestQuestions';
-export { OutlineButton } from './primitives/OutlineButton';
+export { Button, type ButtonVariant } from './primitives/Button';
+export { Icon, type IconName } from './primitives/Icon';
+export { IconButton } from './primitives/IconButton';
+export { PressedTile, type TileTone } from './primitives/PressedTile';
 export { OutlinedChip } from './primitives/OutlinedChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
-export { PrimaryButton } from './primitives/PrimaryButton';
-export { SecondaryButton } from './primitives/SecondaryButton';
 export {
   SavedCard,
   SavedCardCollection,
