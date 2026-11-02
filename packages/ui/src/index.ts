@@ -128,6 +128,7 @@ export {
   type ShareCardFormat,
 } from './tokens';
 export { TokensProvider, useTokens } from './providers/TokensProvider';
+export { ReduceMotionProvider } from './providers/ReduceMotionProvider';
 export { useReduceMotion } from './providers/useReduceMotion';
 export {
   UndoToastProvider,
