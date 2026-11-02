@@ -305,6 +305,8 @@ export const typeRoles = {
   resultLine: role('ui', '700', 16, 20),
   /** The capitalised label over a group of controls or a card's section. */
   sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
+  /** How many Entries a list of Saved holds, beside its title. */
+  collectionCount: role('ui', '500', 14, 14),
   // Roles of batch D.
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
@@ -314,7 +316,7 @@ export const typeRoles = {
   explanation: role('ui', '400', 15, 22),
   /** The Entry's Lemma over a sheet, such as the Collection sheet. */
   sheetLemma: role('word', '600', 20, 24),
-  /** A text button: a sheet's «+ Нова колекція», a field's «Створити», «Додати час». */
+  /** A text button of a sheet: «+ Нова колекція», a field's «Створити». */
   textButton: role('ui', '700', 17, 20),
   /** What the reader types in a field. */
   fieldText: role('ui', '500', 16, 20),
@@ -348,6 +350,14 @@ export const typeRoles = {
   aboutDescription: role('word', '500', 22, 30),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
   heroDefinition: role('word', '500', 22, 29),
+  /** The title over the Active Days calendar. */
+  calendarTitle: role('ui', '600', 17, 20),
+  /** A weekday's letters over a column of the Active Days calendar. */
+  calendarWeekday: role('ui', '700', 11, 13),
+  /** A day's number on its tile of the Active Days calendar. */
+  calendarDay: role('word', '800', 13, 16),
+  /** A hint under a control: why it is off, or what was refused. */
+  hint: role('ui', '400', 15, 22),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
