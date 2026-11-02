@@ -17,7 +17,7 @@ async function motionWith({ system, setting }: { system: boolean; setting: boole
   await act(async () => {
     await Promise.resolve();
   });
-  return screen.getByTestId('probe').props['children'];
+  return String(screen.getByTestId('probe').props['children']);
 }
 
 describe('useReduceMotion', () => {
@@ -25,7 +25,7 @@ describe('useReduceMotion', () => {
     jest.restoreAllMocks();
   });
 
-  it('reports reduced motion when «Менше руху» is on', async () => {
+  it('reports reduced motion when the in-app Reduce Motion setting is on', async () => {
     expect(await motionWith({ system: false, setting: true })).toBe('reduced');
   });
 
