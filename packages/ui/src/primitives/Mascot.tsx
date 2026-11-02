@@ -42,16 +42,18 @@ export function Mascot({
   state,
   line,
   onRed = false,
+  testID = `mascot-${state}`,
 }: {
   state: MascotState;
   line?: string;
   onRed?: boolean;
+  testID?: string;
 }) {
   const { colors, fontFamilies } = useTokens();
   const { voice } = useEdition();
   const { mascot } = useDecor();
   return (
-    <View testID={`mascot-${state}`} pointerEvents="none" style={styles.mascot}>
+    <View testID={testID} pointerEvents="none" style={styles.mascot}>
       {mascot !== undefined && <Figure mascot={mascot} state={state} onRed={onRed} />}
       {line !== undefined && (
         <Text

@@ -1,4 +1,4 @@
-import type { MascotMoment } from '@slovo/contracts';
+import type { MascotMoment, MascotState } from '@slovo/contracts';
 import { Mascot } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -10,11 +10,26 @@ import { useShown } from '../shown-in-effect';
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
 
-/** The Mascot in `state` with the Edition's line for it, while its Feature Switch is on in effect; else nothing, as in 0.9. */
+/** The state the Mascot is drawn in at each moment it shows in (ADR 0070). */
+const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
+  onboarding: 'shouts',
+  newLevel: 'celebrates',
+  badge: 'celebrates',
+  dailyGoal: 'celebrates',
+  streakMilestone: 'celebrates',
+  gameRight: 'happy',
+  gameWrong: 'cringes',
+  gameEnd: 'happy',
+  empty: 'sleeps',
+};
+
+/** The Mascot at the moment `state` with the Edition's line for it, while its Feature Switch is on in effect; else nothing, as in 0.9. */
 export function MascotIn({ state }: { state: MascotMoment }) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
-  return <Mascot state={state} line={edition.mascot[state]} />;
+  return (
+    <Mascot state={stateAt[state]} line={edition.mascot[state]} testID={`mascot-${state}`} />
+  );
 }
 
 /**
