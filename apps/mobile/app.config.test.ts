@@ -451,9 +451,9 @@ describe('app config', () => {
   it('takes the splash the AppConfig names in both Themes', () => {
     expect(pluginOptions(appConfig(context), 'expo-splash-screen')).toEqual({
       image: '../../editions/uk/decor/splash-light.png',
-      backgroundColor: '#F5EEE2',
+      backgroundColor: '#FFF4E6',
       imageWidth: 72,
-      dark: { image: '../../editions/uk/decor/splash-dark.png', backgroundColor: '#15110E' },
+      dark: { image: '../../editions/uk/decor/splash-dark.png', backgroundColor: '#140C0A' },
     });
   });
 

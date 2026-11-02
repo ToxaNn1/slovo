@@ -6,7 +6,7 @@
       "layers": [
         {
           "path": "M20 14h4v16h-4zM14 20h16v4H14z",
-          "light": "rgba(163, 34, 27, 0.05)",
+          "light": "rgba(163, 34, 27, 0.04)",
           "dark": "rgba(212, 174, 92, 0.06)"
         }
       ]
@@ -177,7 +177,7 @@
         "layers": [
           {
             "path": "M15 15h2v2H15zM21 15h2v2H21zM27 15h2v2H27zM17 17h2v2H17zM21 17h2v2H21zM25 17h2v2H25zM19 19h6v2H19zM15 21h14v2H15zM19 23h6v2H19zM17 25h2v2H17zM21 25h2v2H21zM25 25h2v2H25zM15 27h2v2H15zM21 27h2v2H21zM27 27h2v2H27z",
-            "light": "rgba(59, 110, 158, 0.06)",
+            "light": "rgba(59, 110, 158, 0.04)",
             "dark": "rgba(157, 195, 230, 0.07)"
           }
         ]
@@ -206,7 +206,7 @@
         "layers": [
           {
             "path": "M17 15h2v2H17zM21 15h2v2H21zM25 15h2v2H25zM17 17h10v2H17zM17 19h10v2H17zM19 21h6v2H19zM21 23h2v2H21zM17 25h2v2H17zM21 25h2v2H21zM25 25h2v2H25zM19 27h6v2H19z",
-            "light": "rgba(163, 34, 27, 0.06)",
+            "light": "rgba(163, 34, 27, 0.04)",
             "dark": "rgba(200, 55, 45, 0.07)"
           }
         ]
@@ -235,7 +235,7 @@
         "layers": [
           {
             "path": "M15 15h2v2H15zM21 15h2v2H21zM27 15h2v2H27zM17 17h2v2H17zM25 17h2v2H25zM19 19h6v2H19zM15 21h2v2H15zM19 21h6v2H19zM27 21h2v2H27zM19 23h6v2H19zM17 25h2v2H17zM25 25h2v2H25zM15 27h2v2H15zM21 27h2v2H21zM27 27h2v2H27z",
-            "light": "rgba(176, 122, 18, 0.06)",
+            "light": "rgba(176, 122, 18, 0.04)",
             "dark": "rgba(227, 181, 74, 0.07)"
           }
         ]
@@ -264,7 +264,7 @@
         "layers": [
           {
             "path": "M21 15h8v2H21zM19 17h6v2H19zM27 17h2v2H27zM17 19h6v2H17zM25 19h4v2H25zM17 21h4v2H17zM23 21h6v2H23zM17 23h2v2H17zM21 23h6v2H21zM15 25h2v2H15zM19 25h6v2H19zM15 27h2v2H15z",
-            "light": "rgba(160, 82, 28, 0.06)",
+            "light": "rgba(160, 82, 28, 0.04)",
             "dark": "rgba(217, 138, 74, 0.07)"
           }
         ]
@@ -301,12 +301,12 @@
           "layers": [
             {
               "path": "M19 15h4v2H19zM17 17h2v2H17zM19 19h2v2H19zM23 23h2v2H23zM25 25h2v2H25zM27 27h2v2H27z",
-              "light": "rgba(0, 87, 183, 0.06)",
+              "light": "rgba(0, 87, 183, 0.04)",
               "dark": "rgba(91, 155, 230, 0.07)"
             },
             {
               "path": "M23 15h2v2H23zM25 17h2v2H25zM23 19h2v2H23zM21 21h2v2H21zM19 23h2v2H19zM17 25h2v2H17zM15 27h2v2H15z",
-              "light": "rgba(224, 176, 0, 0.06)",
+              "light": "rgba(224, 176, 0, 0.04)",
               "dark": "rgba(255, 213, 0, 0.07)"
             }
           ]
@@ -343,7 +343,7 @@
           "layers": [
             {
               "path": "M21 15h2v2H21zM19 17h2v2H19zM23 17h2v2H23zM17 19h2v2H17zM21 19h2v2H21zM25 19h2v2H25zM15 21h2v2H15zM19 21h2v2H19zM23 21h2v2H23zM27 21h2v2H27zM17 23h2v2H17zM21 23h2v2H21zM25 23h2v2H25zM19 25h2v2H19zM23 25h2v2H23zM21 27h2v2H21z",
-              "light": "rgba(163, 34, 27, 0.06)",
+              "light": "rgba(163, 34, 27, 0.04)",
               "dark": "rgba(200, 55, 45, 0.07)"
             }
           ]
@@ -379,7 +379,7 @@
           "layers": [
             {
               "path": "M21 15h2v2H21zM21 17h2v2H21zM19 19h6v2H19zM15 21h14v2H15zM19 23h6v2H19zM21 25h2v2H21zM21 27h2v2H21z",
-              "light": "rgba(156, 122, 46, 0.06)",
+              "light": "rgba(156, 122, 46, 0.04)",
               "dark": "rgba(212, 174, 92, 0.07)"
             }
           ]
@@ -415,7 +415,7 @@
           "layers": [
             {
               "path": "M15 15h2v2H15zM21 15h2v2H21zM27 15h2v2H27zM19 19h2v2H19zM23 19h2v2H23zM15 21h2v2H15zM21 21h2v2H21zM27 21h2v2H27zM19 23h2v2H19zM23 23h2v2H23zM15 27h2v2H15zM21 27h2v2H21zM27 27h2v2H27z",
-              "light": "rgba(163, 34, 27, 0.06)",
+              "light": "rgba(163, 34, 27, 0.04)",
               "dark": "rgba(212, 174, 92, 0.07)"
             }
           ]
