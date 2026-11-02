@@ -1965,6 +1965,86 @@ describe('checkLanguagePack', () => {
   });
 });
 
+describe('the art of each Category', () => {
+  const art = (cover = 'tile') => ({
+    pictogram: {
+      large: {
+        kind: 'polygon',
+        points: [
+          [0, 0],
+          [100, 0],
+          [50, 100],
+        ],
+      },
+      small: { kind: 'circle', radius: 50 },
+    },
+    cover,
+  });
+
+  /** A copy of the valid fixture whose Decor gives art to the given ids. */
+  function withCategoryArt(categories: Record<string, unknown>): string {
+    const editionDir = copyFixture('valid');
+    mkdirSync(join(editionDir, 'decor'));
+    writeFileSync(join(editionDir, 'decor/decor.json'), JSON.stringify({ categories }));
+    return editionDir;
+  }
+
+  const errorsOf = (editionDir: string) => {
+    const result = checkLanguagePack({ editionDir });
+    return result.ok ? [] : result.errors;
+  };
+
+  it('passes a pictogram and a cover for every Category and Correction Category', () => {
+    const editionDir = withCategoryArt({
+      nature: art('accent'),
+      speech: art('quiet'),
+      work: art(),
+      shop: art('sunken'),
+    });
+
+    expect(errorsOf(editionDir)).toEqual([]);
+  });
+
+  it('passes an Edition whose Decor draws no Category art', () => {
+    expect(errorsOf(copyFixture('valid'))).toEqual([]);
+  });
+
+  it('refuses a Category or Correction Category without art, and art of no Category', () => {
+    const editionDir = withCategoryArt({ nature: art(), work: art(), weather: art() });
+
+    expect(errorsOf(editionDir)).toEqual([
+      {
+        file: 'decor/decor.json',
+        field: 'categories.speech',
+        message: 'No pictogram and cover for the Category speech',
+      },
+      {
+        file: 'decor/decor.json',
+        field: 'categories.shop',
+        message: 'No pictogram and cover for the Correction Category shop',
+      },
+      {
+        file: 'decor/decor.json',
+        field: 'categories.weather',
+        message: 'Art for weather, which is no Category or Correction Category of the Edition',
+      },
+    ]);
+  });
+
+  it('refuses art that is not a pictogram and a cover', () => {
+    const editionDir = withCategoryArt({
+      nature: art(),
+      speech: { pictogram: art().pictogram },
+      work: art(),
+      shop: art(),
+    });
+
+    expect(errorsOf(editionDir)).toEqual([
+      expect.objectContaining({ file: 'decor/decor.json', field: 'categories.speech.cover' }),
+    ]);
+  });
+});
+
 describe('the Word of the Day font', () => {
   const letters = 'абвгґдеєжзиіїйклмнопрстуфхцчшщьюя';
   const stressMark = '\u0301';
