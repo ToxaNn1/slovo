@@ -286,6 +286,12 @@ export const typeRoles = {
   splashLetter: role('word', '900', 250, 250, -10),
   /** The tagline on the splash's ink band. */
   splashTagline: role('word', '800', 15, 15, 4, 'uppercase'),
+  /** The Category's name on its filled chip of a Word card. */
+  categoryChip: role('ui', '600', 12.5, 15),
+  /** A chip's label: a Category of the Mix, a tab of the Saved screen. */
+  chipLabel: role('ui', '700', 14, 17),
+  /** The count beside a chip's label. */
+  chipCount: role('ui', '600', 12, 14),
   // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
