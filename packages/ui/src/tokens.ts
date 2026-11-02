@@ -264,6 +264,10 @@ export const typeRoles = {
   pairsWord: role('word', '800', 14, 16),
   /** A Definition on its cell of the Pairs Game, wrapping over as many lines as it needs. */
   pairsDefinition: role('ui', '600', 15, 19),
+  /** An empty state's title. */
+  emptyTitle: role('word', '900', 22, 25),
+  /** An empty state's line of muted text under its title. */
+  emptyText: role('ui', '400', 15, 22),
   // Roles of batch C.
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
@@ -307,6 +311,8 @@ export const typeRoles = {
   sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
   /** How many Entries a list of Saved holds, beside its title. */
   collectionCount: role('ui', '500', 14, 14),
+  /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
+  progressCount: role('ui', '600', 13, 13),
   // Roles of batch D.
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),

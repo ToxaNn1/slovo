@@ -13,7 +13,7 @@ import {
   signInButtonHeight,
   space,
   TextField,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -337,7 +337,8 @@ function SignedIn({
   state: StateOf<'signed-in'>;
   problem: string | undefined;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const deletion = strings.delete;
 
@@ -346,13 +347,13 @@ function SignedIn({
       <View style={styles.signedInAs}>
         <Text
           {...voice}
-          style={[styles.signedInLabel, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}
         >
           {strings.signedInAs}
         </Text>
         <Text
           testID="account-signed-in-email"
-          style={[styles.email, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('rowLabel', tokens), { color: colors.ink }]}
         >
           {state.email}
           <SyncStatusLine />
@@ -403,6 +404,4 @@ const styles = StyleSheet.create({
   form: { gap: space[4] },
   appleButton: { height: signInButtonHeight },
   signedInAs: { gap: space[1], marginBottom: space[2] },
-  signedInLabel: { fontSize: typeSize.caption, fontWeight: '600' },
-  email: { fontSize: typeSize.listItem, fontWeight: '600' },
 });
