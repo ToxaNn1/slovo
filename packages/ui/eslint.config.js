@@ -54,6 +54,8 @@ export default [
       'src/onboarding/OnboardingStep.tsx',
       'src/onboarding/SplashOverlay.tsx',
       'src/progress/ActiveDaysCalendar.tsx',
+      'src/progress/BadgeStamp.tsx',
+      'src/progress/LevelCard.tsx',
       'src/primitives/BottomSheet.tsx',
       'src/primitives/Chip.tsx',
       'src/primitives/FallingMarks.tsx',

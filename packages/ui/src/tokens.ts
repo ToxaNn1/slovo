@@ -263,7 +263,7 @@ export const badgeStamp = {
   /** The mark lands from this scale and turn to its rest. */
   from: { scale: 3, turn: -26 },
   turn: -8,
-  /** The hard ink drop under the mark. */
+  /** The depth of the hard ink edge under the stamped mark. */
   drop: 8,
   padding: { top: 110, horizontal: 28, bottom: 40 },
   markTop: 70,
@@ -271,9 +271,10 @@ export const badgeStamp = {
   nameTop: 10,
   titleSize: 30,
   nameSize: 16,
-  buttonHeight: 62,
-  buttonRadius: 16,
 } as const;
+
+/** The Profile's Badge grid: marks of this side in rows of their family. */
+export const badgeGrid = { side: 42, gap: 6, familyGap: 14, pressedScale: 0.88 } as const;
 
 /** The depth of the hard edge under an earned Badge's shape. */
 export const badgeEdge = 4;

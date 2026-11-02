@@ -3,13 +3,13 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polygon } from 'react-native-svg';
 
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { badgeEdge, wedges, type Wedge } from '../tokens';
+import { badgeEdge, badgeStamp, wedges, type Wedge } from '../tokens';
 
 /** The shape of a Badge family: the Streak, the Games, the confirmed Entries, the Levels. */
-type BadgeShape = Wedge | 'circle';
+export type BadgeShape = Wedge | 'circle';
 
 /** Each Badge family's own shape, read from the kind of its condition. */
-function shapeOf(kind: BadgeCondition['kind']): BadgeShape {
+export function shapeOf(kind: BadgeCondition['kind']): BadgeShape {
   switch (kind) {
     case 'streak':
       return wedges.hexagon;
@@ -43,14 +43,16 @@ function Shape({ shape, size, fill }: { shape: BadgeShape; size: number; fill: s
 
 /**
  * A Badge as its family's shape: earned, red with its symbol over a hard
- * edge; not yet, a dark silhouette with no symbol. The symbol carries the
- * test ID `${testID}-symbol`.
+ * edge; not yet, a dark silhouette with no symbol. `onRed` draws an earned
+ * Badge for a red ground: cream over a deeper ink edge. The symbol carries
+ * the test ID `${testID}-symbol`.
  */
 export function BadgeMark({
   condition,
   symbol,
   earned,
   size,
+  onRed = false,
   testID,
 }: {
   condition: BadgeCondition;
@@ -58,24 +60,28 @@ export function BadgeMark({
   earned: boolean;
   /** The side of the square the shape fills. */
   size: number;
+  onRed?: boolean;
   testID?: string;
 }) {
   const { colors, fontFamilies } = useTokens();
   // The symbol on red is the ink of the light Theme in both Themes, as on every red face.
-  const keyInk = useSchemeColors('light').ink;
+  const key = useSchemeColors('light');
+  const keyInk = key.ink;
   const shape = shapeOf(condition.kind);
+  const edge = onRed ? badgeStamp.drop : badgeEdge;
+  const face = onRed ? key.background : colors.accent;
   return (
     <View
       testID={testID}
-      style={[styles.mark, { width: size, height: size + (earned ? badgeEdge : 0) }]}
+      style={[styles.mark, { width: size, height: size + (earned ? edge : 0) }]}
     >
       {earned && (
-        <View style={[styles.layer, { top: badgeEdge }]}>
-          <Shape shape={shape} size={size} fill={colors.accentEdge} />
+        <View style={[styles.layer, { top: edge }]}>
+          <Shape shape={shape} size={size} fill={onRed ? keyInk : colors.accentEdge} />
         </View>
       )}
       <View style={styles.layer}>
-        <Shape shape={shape} size={size} fill={earned ? colors.accent : colors.silhouette} />
+        <Shape shape={shape} size={size} fill={earned ? face : colors.silhouette} />
       </View>
       {earned && (
         <View style={[styles.symbol, { width: size, height: size }]}>
