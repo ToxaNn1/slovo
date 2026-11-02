@@ -21,7 +21,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import CollectionLinkScreen from '../app/c/[linkId]';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
 
@@ -125,7 +125,7 @@ async function renderSheet() {
   await render(
     <GestureHandlerRootView>
       <SafeAreaProvider initialMetrics={metrics}>
-        <ShellProvider shell={testShell({ composition: opened(composition) })}>
+        <ShellProvider shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}>
           <EditionProvider edition={edition} strings={editionStrings}>
             <CollectionLinkScreen />
           </EditionProvider>
@@ -265,6 +265,7 @@ describe('the recipient sheet of a Collection Link', () => {
     await renderSheet();
 
     expect(screen.getByText(strings.notFound)).toBeTruthy();
+    expect(screen.queryByTestId(/^mascot-/)).toBeNull();
     expect(screen.queryByRole('button', { name: strings.add })).toBeNull();
   });
 });
