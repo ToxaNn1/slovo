@@ -190,7 +190,8 @@ export default {
       comment:
         'A module that imports nothing and is imported by nothing is dead. Tool ' +
         "configuration files, Jest's setup, resolver and stand-in files, the Expo Router routes and " +
-        "the Maestro flows' scripts (found by their place, not by an import) are entry points.",
+        "the Maestro flows' scripts (found by their place, not by an import) are entry points, and so " +
+        "are the site's React islands, imported from Astro components the cruiser doesn't read.",
       severity: 'error',
       from: {
         orphan: true,
@@ -200,6 +201,7 @@ export default {
           '(^|/)jest\\.(setup|resolver|glass-effect|language-pack)\\.(js|cjs)$',
           '^apps/mobile/src/app/',
           '^apps/mobile/maestro/',
+          '^apps/site/src/components/[^/]+\\.tsx$',
         ],
       },
       to: {},
@@ -207,7 +209,7 @@ export default {
   ],
   options: {
     doNotFollow: { path: 'node_modules' },
-    exclude: { path: ['/node_modules/', '/dist/', '/\\.expo/'] },
+    exclude: { path: ['/node_modules/', '/dist/', '/\\.expo/', '/\\.astro/'] },
     // Count `import type` too: a type-only cycle is still a cycle.
     tsPreCompilationDeps: true,
     tsConfig: { fileName: 'tsconfig.json' },

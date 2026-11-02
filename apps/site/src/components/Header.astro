@@ -1,0 +1,35 @@
+---
+import { ThemeToggle } from './ThemeToggle';
+---
+
+<header class="sticky top-0 z-20 border-b border-line bg-bg">
+  <div class="mx-auto flex max-w-[1280px] items-center justify-between gap-4 px-[clamp(16px,4vw,40px)] py-3">
+    <a href="#top" aria-label="SLOVO" class="flex items-center gap-[7px] text-ink no-underline">
+      <svg width="33" height="28" viewBox="0 0 130 112" aria-hidden="true">
+        <polygon points="4,44 30,46 30,66 4,68" fill="var(--ink)"></polygon>
+        <polygon points="30,40 104,12 104,100 30,72" fill="var(--red)"></polygon>
+        <polygon points="104,12 114,6 114,106 104,100" fill="var(--ink)"></polygon>
+        <path
+          d="M47 45 L60 54 L47 63 M86 45 L73 54 L86 63"
+          stroke="var(--coal)"
+          stroke-width="8"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          fill="none"
+        ></path>
+      </svg>
+      <span class="-skew-x-[8deg] font-word text-[21px] leading-none font-black tracking-[-0.8px]">
+        SLOVO
+      </span>
+    </a>
+    <div class="flex items-center gap-2.5">
+      <ThemeToggle client:load />
+      <a
+        href="#cta"
+        class="hidden h-11 items-center rounded-xl bg-red px-[18px] font-word text-[13px] leading-none font-extrabold text-coal no-underline shadow-[0_4px_0_var(--red-edge)] hover:translate-y-0.5 hover:text-coal hover:shadow-[0_2px_0_var(--red-edge)] desk:flex"
+      >
+        Завантажити в App Store
+      </a>
+    </div>
+  </div>
+</header>

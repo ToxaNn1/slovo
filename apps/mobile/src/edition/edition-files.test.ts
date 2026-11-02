@@ -1022,7 +1022,7 @@ describe('the legal pages of About', () => {
   });
 
   it("the Pages site names the app's one domain as its custom domain", () => {
-    const cname = readFileSync(join(EDITIONS_DIR, '..', '.github', 'pages', 'CNAME'), 'utf8');
+    const cname = readFileSync(join(EDITIONS_DIR, '..', 'apps', 'site', 'public', 'CNAME'), 'utf8');
     const app = readFileSync(join(EDITIONS_DIR, '..', 'app', 'app.json'), 'utf8');
 
     expect(cname.trim()).toBe(AppConfigSchema.parse(JSON.parse(app)).domain);

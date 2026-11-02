@@ -1,9 +1,0 @@
-# The GitHub Pages site the workflow "Pages" builds: the landing at the root
-# (index.html, ADR 0071) and each Edition's legal pages
-# under /<edition-id>/. Every legal page takes the one layout; the landing has
-# no front matter, so Jekyll copies it as is.
-defaults:
-  - scope:
-      path: ''
-    values:
-      layout: default

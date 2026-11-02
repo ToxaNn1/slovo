@@ -1,0 +1,108 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/unbounded';
+@import '@fontsource-variable/onest';
+
+/*
+ * The landing's Theme follows `data-th` on <html> (light by the reader's
+ * system, or the one the switch picks). The Theme colours come from the
+ * Edition's tokens: Base.astro writes them as --bg, --ink, ... per Theme.
+ */
+@custom-variant dark (&:where([data-th='dark'], [data-th='dark'] *));
+
+@theme inline {
+  /* Theme colours, from the Edition's tokens of the current Theme. */
+  --color-bg: var(--bg);
+  --color-ink: var(--ink);
+  --color-sf: var(--sf);
+  --color-sf2: var(--sf2);
+  --color-line: var(--line);
+  --color-mute: var(--mute);
+  --color-tile: var(--tile);
+  --color-edge: var(--edge);
+  /* Fixed colours of the design, the same in both Themes, from the Edition's tokens. */
+  --color-red: var(--red);
+  --color-red-edge: var(--red-edge);
+  --color-coal: var(--coal);
+  --color-cream: var(--cream);
+  --font-word: var(--font-word);
+  --font-ui: var(--font-ui);
+}
+
+@theme {
+  /* Shades the design draws that are no Edition token: the deep shadow under a
+     dark button on red, and the phone mock-ups' body and screen edge. */
+  --color-shadow-red: #6e1610;
+  --color-phone: #3a2c27;
+  --color-phone-edge: #0b0706;
+  --breakpoint-desk: 821px;
+
+  --animate-ray: ray 0.45s steps(2) infinite;
+  --animate-fly: fly 0.9s cubic-bezier(0.25, 0.9, 0.3, 1.1) both;
+  --animate-float: float 3.2s ease-in-out infinite;
+
+  @keyframes ray {
+    50% {
+      opacity: 0.25;
+    }
+  }
+  @keyframes fly {
+    0% {
+      opacity: 0;
+      transform: translate(var(--fx), var(--fy)) scale(0.3) rotate(-40deg);
+    }
+    60% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+      transform: translate(0, 0) scale(1) rotate(var(--r));
+    }
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0) rotate(var(--r));
+    }
+    50% {
+      transform: translateY(-6px) rotate(var(--r));
+    }
+  }
+}
+
+@layer base {
+  html {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font-ui);
+    -webkit-text-size-adjust: 100%;
+  }
+  [data-th='light'] {
+    color-scheme: light;
+  }
+  [data-th='dark'] {
+    color-scheme: dark;
+  }
+  a {
+    color: var(--red);
+    text-underline-offset: 3px;
+  }
+  a:hover {
+    color: inherit;
+  }
+  summary {
+    list-style: none;
+    cursor: pointer;
+  }
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

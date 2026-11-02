@@ -66,6 +66,8 @@ const ASSETS_DIR = 'assets';
 export const FONTS_DIR = 'assets/fonts';
 /** Where an Edition keeps the Illustrations its Words name (ADR 0055). */
 export const ILLUSTRATIONS_DIR = 'assets/illustrations';
+/** Where an Edition keeps its legal pages, one Markdown file per page (ADR 0049). */
+const LEGAL_DIR = 'legal';
 const WORDS_DIR = 'content/words';
 const CORRECTIONS_DIR = 'content/corrections';
 const IDIOMS_DIR = 'content/idioms';
@@ -202,6 +204,8 @@ export interface EditionFiles {
   illustrations(): string[];
   /** Every font file the Edition brings, in code-unit order. */
   fonts(): string[];
+  /** Every legal page the Edition brings, its Markdown files, in code-unit order (ADR 0049). */
+  legalPages(): string[];
   /** Every Word, Correction, Idiom, Synonym Row and Tip the Edition authors, in a stable order. */
   entries(): AuthoredContent;
   /** The file an Entry with this id is authored in, relative to the folder. */
@@ -318,6 +322,14 @@ export function editionFiles(dir: string): EditionFiles {
         .filter((file) => /\.(otf|ttf)$/.test(file))
         .toSorted()
         .map((file) => join(fontsDir, file));
+    },
+    legalPages() {
+      const legalDir = join(dir, LEGAL_DIR);
+      if (!existsSync(legalDir)) return [];
+      return readdirSync(legalDir)
+        .filter((file) => file.endsWith('.md'))
+        .toSorted()
+        .map((file) => join(legalDir, file));
     },
     entries() {
       const errors: BuildError[] = [];

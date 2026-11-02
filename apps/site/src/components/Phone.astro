@@ -1,0 +1,18 @@
+---
+/** A phone mock-up: the dark body, the screen (styled by `class`) and its caption below. */
+interface Props {
+  label: string;
+  class?: string;
+}
+
+const { label, class: screenClass } = Astro.props;
+---
+
+<div class="flex flex-none snap-start flex-col items-center gap-3.5">
+  <div class="h-[610px] w-[292px] rounded-[48px] bg-phone-edge p-[7px] shadow-[0_0_0_1.5px_var(--color-phone),0_24px_50px_color-mix(in_srgb,var(--coal)_25%,transparent)] outline-2 outline-offset-8 outline-red outline-dashed">
+    <div class:list={['flex size-full flex-col overflow-hidden rounded-[41px]', screenClass]}>
+      <slot />
+    </div>
+  </div>
+  <span class="font-word text-xs leading-none font-extrabold tracking-[1px]">{label}</span>
+</div>
