@@ -31,19 +31,20 @@ import { BottomSheet } from '../primitives/BottomSheet';
 import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
 import { CardCorners } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { HEART_PATH } from '../saved/FavoriteButton';
+import { Wedge } from '../primitives/Wedge';
 import { Button } from '../primitives/Button';
 import {
   minTouchTarget,
   onFill,
   overlineType,
   roundLayout,
+  roundProgress,
   space,
   typeSize,
-  withAlpha,
+  wedges,
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { ease, RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
+import { ease, RIGHT_FILL, WRONG_FILL } from './round-motion';
 import { OrderedChips } from './OrderedChips';
 import { GameTimer } from './GameTimer';
 import { PairsGrid } from './PairsGrid';
@@ -54,13 +55,15 @@ import { VowelButtons } from './VowelButtons';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
-/** A Life's size and the gap between Lives, from the design. */
-const LIFE_SIZE = 20;
-const LIFE_GAP = 3;
+/** A Life's shield and the gap between Lives, from the design. */
+const LIFE_SIZE = { width: 18, height: 20 };
+const LIFE_GAP = 5;
+/** The «−1» that flies up off the Lives when one is lost. */
+const LIFE_LOST_MARK = '\u22121';
 /** The ✕'s glyph size; its touch target is `minTouchTarget`. */
-const EXIT_SIZE = 20;
-/** The height of the Round's progress bar. */
-const BAR_HEIGHT = 4;
+const EXIT_SIZE = 16;
+/** The corners of the ✕'s sunken square. */
+const EXIT_RADIUS = 14;
 /** An answer option's least height, from the design (above the 44 pt touch target). */
 const OPTION_HEIGHT = 58;
 /** How much an answered Round's other options fade. */
@@ -80,20 +83,20 @@ const ENDS_IN_PUNCTUATION = /\p{P}$/u;
 /** A right answer's option grows to 1.03 as it fills. */
 const RIGHT_SCALE = 1.03;
 /**
- * A lost Life pops in 300 ms, up to 1.4 and −12° and back, and its fill fades
- * to the outline on the way back. It comes once the wrong choice has filled,
- * when the Round says the Life is lost, as its haptic does.
+ * A lost Life (the design's `slLifeOut`) jumps to 1.6 and −25° in the red and
+ * settles back to the silhouette in 600 ms, while «−1» rises 80 pt and fades
+ * in 1.1 s (`slXp`). It comes once the wrong choice has filled, when the
+ * Round says the Life is lost, as its haptic does.
  */
-const LIFE_POP = { scale: 1.4, rotate: -12 };
-const LIFE_STEP = {
-  duration: 150,
+const LIFE_POP = { scale: 1.6, rotate: -25 };
+const LIFE_OUT = {
+  duration: 600,
   easing: Easing.out(Easing.ease),
   reduceMotion: ReduceMotion.Never,
 };
-/** With Reduce Motion a lost Life's fill only fades, in 250 ms. */
-const LIFE_FADE = { ...LIFE_STEP, duration: 250 };
-/** The progress bar grows in 300 ms; with Reduce Motion it is set at once, as its edge moves across the header. */
-const BAR_GROWTH = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Never };
+const LIFE_MARK = { rise: 80, duration: 1100, reduceMotion: ReduceMotion.Never } as const;
+/** With Reduce Motion a lost Life's fill and its «−1» only fade (the design's `slRm`). */
+const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Never };
 
 /** The answer to a Round of the pick form. */
 type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
@@ -121,6 +124,7 @@ export function GameRound({
   onLeave,
   onOpenLetter,
   timeLeft,
+  mascot,
 }: {
   game: CurrentGame;
   /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
@@ -133,6 +137,8 @@ export function GameRound({
   onOpenLetter: () => void;
   /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
   timeLeft?: number | undefined;
+  /** The Mascot on the right of the Round's head, as the Round leaves it; none. */
+  mascot?: ReactNode;
 }) {
   const { strings } = useEdition();
   const { round } = game;
@@ -168,6 +174,8 @@ export function GameRound({
         lives={game.lives}
         livesAtStart={game.livesAtStart}
         lifeLostAfter={round.lifeLostAfter}
+        results={game.played.map((played) => played.right)}
+        current={answer === undefined ? game.played.length : undefined}
         time={
           game.time === undefined || game.timeLimit === undefined
             ? undefined
@@ -178,6 +186,14 @@ export function GameRound({
         }}
       />
       <ScrollView contentContainerStyle={styles.round}>
+        <RoundHead
+          label={asked.label}
+          number={round.number}
+          roundLimit={game.roundLimit}
+          heading={round.form === 'vowel' || round.form === 'pairs'}
+          testID={round.form === 'pairs' ? 'game-prompt' : undefined}
+          mascot={mascot}
+        />
         {round.form === 'vowel' ? (
           <RoundCard
             label={asked.label}
@@ -202,18 +218,15 @@ export function GameRound({
             />
           </RoundCard>
         ) : round.form === 'pairs' ? (
-          <>
-            <RoundLabel label={asked.label} />
-            <PairsGrid
-              key={round.number}
-              words={round.words}
-              definitions={round.definitions}
-              answer={answer?.form === 'pairs' ? answer : undefined}
-              onAnswer={(word, definition) => {
-                onAnswer({ form: 'pairs', word, definition });
-              }}
-            />
-          </>
+          <PairsGrid
+            key={round.number}
+            words={round.words}
+            definitions={round.definitions}
+            answer={answer?.form === 'pairs' ? answer : undefined}
+            onAnswer={(word, definition) => {
+              onAnswer({ form: 'pairs', word, definition });
+            }}
+          />
         ) : (
           <RoundCard
             label={asked.label}
@@ -337,6 +350,7 @@ export function QuickQuestionRound({
         highlight={round.highlight}
         gap={undefined}
         definition={round.definition}
+        labelShown
       />
       <View style={styles.options}>
         {round.options.map((option, place) => (
@@ -426,10 +440,16 @@ function GameHeader({
   lives,
   livesAtStart,
   lifeLostAfter,
+  results,
+  current,
   time,
   onExit,
 }: {
   roundsPassed: number;
+  /** Whether each Round played was answered right, in order. */
+  results: readonly boolean[];
+  /** The place of the Round still to answer; none once it is answered. */
+  current: number | undefined;
   /** The mode's Round limit; none in a mode without one, which shows no bar. */
   roundLimit: number | undefined;
   /** The Lives left; none in a mode without Lives, which shows none. */
@@ -446,19 +466,10 @@ function GameHeader({
   const { strings, voice, count } = useEdition();
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
-  const reduceMotion = useReduceMotion();
-  const passed = useSharedValue(roundsPassed);
-  useEffect(() => {
-    passed.value = reduceMotion ? roundsPassed : withTiming(roundsPassed, BAR_GROWTH);
-    // The shared value is stable, so only a Round passing grows the bar.
-  }, [roundsPassed, reduceMotion, passed]);
-  // The share of the Rounds passed, as flex weights, so the bar needs no width.
-  const filled = useAnimatedStyle(() => ({ flex: passed.value }));
-  const unfilled = useAnimatedStyle(() => ({ flex: (roundLimit ?? 0) - passed.value }));
   return (
-    <View style={styles.header}>
-      <ExitButton onPress={onExit} />
-      {time === undefined ? (
+    <>
+      <View style={styles.header}>
+        <ExitButton onPress={onExit} />
         <View
           testID="game-progress"
           accessible
@@ -469,50 +480,68 @@ function GameHeader({
           {...voice}
           style={styles.progress}
         >
-          <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-            style={[styles.progressText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
-          >
-            {fill(roundLimit === undefined ? words.passed : words.progress, progress)}
-          </Text>
-          {roundLimit === undefined ? null : (
-            <View
-              testID="game-progress-bar"
-              style={[styles.bar, { backgroundColor: colors.track }]}
+          {roundLimit === undefined ? (
+            <Text
+              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              style={[styles.progressText, { color: colors.ink, fontFamily: fontFamilies.word }]}
             >
-              <Animated.View
-                testID="game-progress-filled"
-                style={[filled, { backgroundColor: colors.accent }]}
-              />
-              <Animated.View style={unfilled} />
+              {fill(words.passed, progress)}
+            </Text>
+          ) : (
+            <View testID="game-progress-bar" style={styles.segments}>
+              {Array.from({ length: roundLimit }, (_, place) => (
+                <View
+                  key={place}
+                  testID={`game-progress-${String(place)}`}
+                  style={[
+                    styles.segment,
+                    {
+                      backgroundColor:
+                        place < results.length
+                          ? results[place]
+                            ? colors.accent
+                            : colors.ink
+                          : place === current
+                            ? colors.muted
+                            : colors.silhouette,
+                    },
+                  ]}
+                />
+              ))}
             </View>
           )}
         </View>
-      ) : (
-        <GameTimer
-          remainingMs={time.left}
-          totalMs={time.limit}
-          texts={{ remaining: (seconds) => count(words.timer, seconds) }}
-          testID="game-timer"
-        />
-      )}
-      {lives !== undefined && livesAtStart !== undefined && (
-        <View
-          testID="game-lives"
-          accessible
-          accessibilityLabel={fill(words.lives, {
-            count: String(lives),
-            total: String(livesAtStart),
-          })}
-          {...voice}
-          style={styles.lives}
-        >
-          {Array.from({ length: livesAtStart }, (_, life) => (
-            <Life key={life} place={life} full={life < lives} lostAfter={lifeLostAfter} />
-          ))}
+        {lives !== undefined && livesAtStart !== undefined && (
+          <View
+            testID="game-lives"
+            accessible
+            accessibilityLabel={fill(words.lives, {
+              count: String(lives),
+              total: String(livesAtStart),
+            })}
+            {...voice}
+            style={styles.lives}
+          >
+            {Array.from({ length: livesAtStart }, (_, life) => (
+              <Life key={life} place={life} full={life < lives} lostAfter={lifeLostAfter} />
+            ))}
+          </View>
+        )}
+      </View>
+      {time !== undefined && (
+        <View style={styles.timer}>
+          <GameTimer
+            remainingMs={time.left}
+            totalMs={time.limit}
+            texts={{
+              remaining: (seconds) => count(words.timer, seconds),
+              shown: (seconds) => fill(words.timerShown, { seconds: String(seconds) }),
+            }}
+            testID="game-timer"
+          />
         </View>
       )}
-    </View>
+    </>
   );
 }
 
@@ -530,15 +559,12 @@ function ExitButton({ onPress }: { onPress: () => void }) {
       accessibilityLabel={strings.game.exit.label}
       {...voice}
       onPress={onPress}
-      style={styles.exit}
+      style={[styles.exit, { backgroundColor: colors.surfaceSunken }]}
     >
-      <Svg width={EXIT_SIZE} height={EXIT_SIZE} viewBox="0 0 24 24">
+      <Svg width={EXIT_SIZE} height={EXIT_SIZE} viewBox="0 0 20 20">
         <Path
-          d="M5 5l14 14M19 5L5 19"
-          fill="none"
-          stroke={colors.ink}
-          strokeWidth={2}
-          strokeLinecap="round"
+          d="M0 3L3 0L10 7L17 0L20 3L13 10L20 17L17 20L10 13L3 20L0 17L7 10Z"
+          fill={colors.ink}
         />
       </Svg>
     </Pressable>
@@ -546,9 +572,10 @@ function ExitButton({ onPress }: { onPress: () => void }) {
 }
 
 /**
- * One Life: full in the heart colour, or an outline once lost. A Life lost
- * meanwhile pops to the outline; with Reduce Motion its fill only fades. Its
- * haptic comes with the wrong answer that cost it.
+ * One Life, a shield: red while full, the silhouette once lost. A Life lost
+ * meanwhile jumps out in the red and settles to the silhouette as «−1» flies
+ * up off it; with Reduce Motion its fill and the «−1» only fade. Its haptic
+ * comes with the wrong answer that cost it.
  */
 function Life({
   place,
@@ -557,15 +584,18 @@ function Life({
 }: {
   place: number;
   full: boolean;
-  /** How long after the wrong answer the Life is lost, in milliseconds: when it pops. */
+  /** How long after the wrong answer the Life is lost, in milliseconds: when it jumps. */
   lostAfter: number;
 }) {
-  const { colors } = useTokens();
+  const { colors, fontFamilies } = useTokens();
   const reduceMotion = useReduceMotion();
   /** 1 while full, 0 once lost. */
   const fullness = useSharedValue(full ? 1 : 0);
+  /** 1 at the jump's height, 0 at rest. */
   const pop = useSharedValue(0);
-  // Whether the Life showed full before, so only losing it now pops it.
+  /** 0 before the «−1» shows, 1 once it has risen and faded. */
+  const mark = useSharedValue(1);
+  // Whether the Life showed full before, so only losing it now jumps.
   const shownFull = useRef(full);
 
   useEffect(() => {
@@ -576,20 +606,21 @@ function Life({
     }
     if (!shownFull.current) return;
     shownFull.current = false;
-    // The fill fades as the pop comes back, or at once with Reduce Motion.
-    fullness.value = withDelay(
-      reduceMotion ? lostAfter : lostAfter + LIFE_STEP.duration,
-      withTiming(0, reduceMotion ? LIFE_FADE : LIFE_STEP),
+    mark.value = 0;
+    mark.value = withDelay(
+      lostAfter,
+      withTiming(1, reduceMotion ? LIFE_FADE : { ...LIFE_MARK, easing: Easing.out(Easing.ease) }),
     );
+    fullness.value = withDelay(lostAfter, withTiming(0, reduceMotion ? LIFE_FADE : LIFE_OUT));
     if (!reduceMotion) {
       pop.value = withDelay(
         lostAfter,
-        withSequence(withTiming(1, LIFE_STEP), withTiming(0, LIFE_STEP)),
+        withSequence(withTiming(1, { duration: 0 }), withTiming(0, LIFE_OUT)),
       );
     }
     // The shared values are stable, and a change of Reduce Motion finds the
     // Life already lost.
-  }, [full, reduceMotion, lostAfter, fullness, pop]);
+  }, [full, reduceMotion, lostAfter, fullness, pop, mark]);
 
   const popStyle = useAnimatedStyle(() => ({
     transform: [
@@ -598,20 +629,34 @@ function Life({
     ],
   }));
   const fillStyle = useAnimatedStyle(() => ({ opacity: fullness.value }));
+  // The «−1» shows from the loss to the end of its flight; with Reduce Motion it fades in place.
+  const markStyle = useAnimatedStyle(() => ({
+    opacity: mark.value === 0 || mark.value === 1 ? 0 : 1 - mark.value,
+    transform: [{ translateY: reduceMotion ? 0 : -LIFE_MARK.rise * mark.value }],
+  }));
 
-  const heart = (paint: string, stroke: string) => (
-    <Svg width={LIFE_SIZE} height={LIFE_SIZE} viewBox="0 0 24 24">
-      <Path d={HEART_PATH} fill={paint} stroke={stroke} strokeWidth={1.8} />
-    </Svg>
+  const shield = (color: string) => (
+    <Wedge points={wedges.shield} color={color} width={LIFE_SIZE.width} height={LIFE_SIZE.height} />
   );
   return (
     <Animated.View testID={`game-life-${String(place)}`} style={popStyle}>
-      {heart('none', withAlpha(colors.ink, 0.32))}
+      {shield(colors.silhouette)}
       <Animated.View
         testID={`game-life-${String(place)}-fill`}
         style={[StyleSheet.absoluteFill, fillStyle]}
       >
-        {heart(colors.heart, colors.heart)}
+        {shield(colors.accent)}
+      </Animated.View>
+      <Animated.View
+        testID={`game-life-${String(place)}-lost`}
+        style={[styles.lifeLost, markStyle]}
+      >
+        <Text
+          accessible={false}
+          style={[styles.lifeLostText, { color: colors.accent, fontFamily: fontFamilies.word }]}
+        >
+          {LIFE_LOST_MARK}
+        </Text>
       </Animated.View>
     </Animated.View>
   );
@@ -634,9 +679,12 @@ function RoundCard({
   highlight,
   gap,
   definition,
+  labelShown = false,
   children,
 }: {
   label: string;
+  /** Whether the card shows its label over the prompt, as in the Feed; a Game's Round shows it in its head. */
+  labelShown?: boolean;
   prompt: string;
   /** The part of the prompt to mark; nothing to mark. */
   highlight: TextRange | undefined;
@@ -679,13 +727,15 @@ function RoundCard({
       ]}
     >
       <CardCorners corners={['topLeft', 'bottomRight']} />
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-        {...voice}
-        style={[overlineType, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-      >
-        {label}
-      </Text>
+      {labelShown && (
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          {...voice}
+          style={[overlineType, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {label}
+        </Text>
+      )}
       {children ?? (
         <WholeWordsText
           text={prompt}
@@ -721,8 +771,58 @@ function RoundCard({
 }
 
 /**
- * The mode's label over a Round without a prompt, such as a pairs grid, which
- * VoiceOver reads as the Round's heading before the grid.
+ * The Round's head (`game-round-dark`): its label and place, such as
+ * «ВИЗНАЧЕННЯ · 3 / 15», in the muted Unbounded, and the Mascot on the
+ * right. The label is the Round's heading for VoiceOver where its card does
+ * not read it, a vowel or a pairs Round; the place is the header's to read.
+ */
+function RoundHead({
+  label,
+  number,
+  roundLimit,
+  heading,
+  testID,
+  mascot,
+}: {
+  label: string;
+  /** Which Round of the Game it is, from 1. */
+  number: number;
+  /** The mode's Round limit; none in a mode without one, which shows no place. */
+  roundLimit: number | undefined;
+  /** Whether VoiceOver reads the label as the Round's heading; else the card reads it. */
+  heading: boolean;
+  testID: string | undefined;
+  mascot: ReactNode;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { strings, voice } = useEdition();
+  const place =
+    roundLimit === undefined
+      ? undefined
+      : fill(strings.game.round.progress, {
+          passed: String(number),
+          total: String(roundLimit),
+        });
+  return (
+    <View style={styles.head}>
+      <Text
+        testID={testID}
+        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        {...(heading
+          ? { accessibilityRole: 'header', accessibilityLabel: label }
+          : { accessibilityElementsHidden: true, importantForAccessibility: 'no' })}
+        {...voice}
+        style={[styles.headLabel, { color: colors.muted, fontFamily: fontFamilies.word }]}
+      >
+        {place === undefined ? label : `${label} · ${place}`}
+      </Text>
+      {mascot}
+    </View>
+  );
+}
+
+/**
+ * A title over a Quick Question's card, which VoiceOver reads as its heading.
  */
 function RoundLabel({ label }: { label: string }) {
   const { colors, fontFamilies } = useTokens();
@@ -745,7 +845,7 @@ function RoundLabel({ label }: { label: string }) {
  * option fills in the correct colour with «Правильно», a wrong choice in the
  * wrong colour with «Ваш вибір», and the others fade; the fills are the light
  * scheme's in both Themes, under white text. The chosen option, if right,
- * grows a little and, if wrong, shakes, both left out with Reduce Motion.
+ * grows a little, left out with Reduce Motion; nothing shakes.
  * VoiceOver reads the option with its Stress, then its tag, and the faded ones
  * as dimmed.
  */
@@ -781,7 +881,6 @@ function AnswerOption({
   const answered = useSharedValue(answer === undefined ? 0 : 1);
   /** 0 at rest, 1 grown: a right answer's option. */
   const grown = useSharedValue(0);
-  const shift = useSharedValue(0);
   // Whether the option showed an answer before, so only the answer given now moves.
   const shownAnswered = useRef(answer !== undefined);
 
@@ -789,17 +888,14 @@ function AnswerOption({
     if (answer === undefined || shownAnswered.current) return;
     shownAnswered.current = true;
     answered.value = withTiming(1, right ? RIGHT_FILL : WRONG_FILL);
-    if (!chosen) return;
-    if (reduceMotion) return;
-    if (right) grown.value = withTiming(1, RIGHT_FILL);
-    else shift.value = shake();
+    if (chosen && right && !reduceMotion) grown.value = withTiming(1, RIGHT_FILL);
     // The shared values are stable, and a change of Reduce Motion finds the
     // answer already shown, so only the answer given moves the option.
-  }, [answer, right, chosen, reduceMotion, answered, grown, shift]);
+  }, [answer, right, chosen, reduceMotion, answered, grown]);
 
   const motion = useAnimatedStyle(() => ({
     opacity: dimmed ? 1 - (1 - DIMMED_OPACITY) * answered.value : 1,
-    transform: [{ translateX: shift.value }, { scale: 1 + (RIGHT_SCALE - 1) * grown.value }],
+    transform: [{ scale: 1 + (RIGHT_SCALE - 1) * grown.value }],
   }));
   const fillStyle = useAnimatedStyle(() =>
     tag === undefined
@@ -960,19 +1056,32 @@ const styles = StyleSheet.create({
     paddingRight: space[4],
   },
   progress: { flex: 1, gap: roundLayout.tightGap },
-  progressText: { fontSize: typeSize.meta, fontWeight: '700' },
-  bar: {
-    flexDirection: 'row',
-    height: BAR_HEIGHT,
-    borderRadius: BAR_HEIGHT / 2,
-    overflow: 'hidden',
-  },
+  progressText: { fontSize: typeSize.meta, fontWeight: '800' },
+  segments: { flexDirection: 'row', gap: roundProgress.gap },
+  segment: { flex: 1, height: roundProgress.height, transform: [{ skewX: roundProgress.skew }] },
   lives: { flexDirection: 'row', gap: LIFE_GAP },
+  timer: { marginTop: space[3], paddingHorizontal: space[4] },
+  lifeLost: { position: 'absolute', top: -space[1], right: 0 },
+  lifeLostText: { fontSize: typeSize.meta, fontWeight: '900' },
   exit: {
     width: minTouchTarget,
     height: minTouchTarget,
+    borderRadius: EXIT_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: roundLayout.gap,
+  },
+  headLabel: {
+    flexShrink: 1,
+    fontSize: typeSize.smallLabel,
+    fontWeight: '800',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   card: {
     minHeight: 220,

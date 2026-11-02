@@ -12,10 +12,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { minTouchTarget, onFill, roundLayout, space, typeSize } from '../tokens';
-import { RIGHT_FILL, shake, WRONG_FILL } from './round-motion';
+import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** A chip's height, above the 44 pt touch target. */
 const CHIP_HEIGHT = 52;
@@ -35,7 +34,7 @@ type ChipsAnswer = Extract<RoundAnswer, { form: 'chips' }>;
  * the end of the line and a tap in the line puts it back; the last chip gives
  * the answer, the chips' places in the order tapped. Once the answer is
  * judged, a right line fills in the correct colour and, in a wrong one, the
- * first chip out of place fills in the wrong colour and shakes, which Reduce
+ * first chip out of place fills in the wrong colour, nothing shaking, which Reduce
  * Motion leaves out; the screen plays the answer's haptic. VoiceOver reads
  * every chip by its text, the line's in the order placed. A character that
  * stays in place, such as an apostrophe, is no chip: it shows in the line
@@ -181,7 +180,7 @@ function Chip({
 
 /**
  * A chip in the answer line. A judged answer fills it in the correct or the
- * wrong colour, and the wrong one shakes, but with Reduce Motion.
+ * wrong colour; nothing shakes.
  */
 function LineChip({
   index,
@@ -203,10 +202,8 @@ function LineChip({
   const { colors, radii } = useTokens();
   const light = useSchemeColors('light');
   const { voice } = useEdition();
-  const reduceMotion = useReduceMotion();
   /** 0 before the answer, 1 once the chip has filled. */
   const filled = useSharedValue(fill === undefined ? 0 : 1);
-  const shift = useSharedValue(0);
   // Whether the chip showed its fill before, so only the answer given now moves it.
   const shownFill = useRef(fill !== undefined);
 
@@ -214,21 +211,18 @@ function LineChip({
     if (fill === undefined || shownFill.current) return;
     shownFill.current = true;
     filled.value = withTiming(1, fill === 'right' ? RIGHT_FILL : WRONG_FILL);
-    if (fill === 'wrong' && !reduceMotion) shift.value = shake();
-    // The shared values are stable, and a change of Reduce Motion finds the
-    // answer already shown, so only the answer given moves the chip.
-  }, [fill, reduceMotion, filled, shift]);
+    // The shared value is stable, so only the answer given fills the chip.
+  }, [fill, filled]);
 
   const paint = fill === 'right' ? light.correct : light.wrong;
-  const motion = useAnimatedStyle(() => ({
-    transform: [{ translateX: shift.value }],
-    ...(fill === undefined
+  const motion = useAnimatedStyle(() =>
+    fill === undefined
       ? {}
       : {
           backgroundColor: interpolateColor(filled.value, [0, 1], [colors.surface, paint]),
           borderColor: interpolateColor(filled.value, [0, 1], [colors.line, paint]),
-        }),
-  }));
+        },
+  );
   return (
     <AnimatedPressable
       testID={`chips-line-${String(index)}`}

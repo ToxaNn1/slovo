@@ -26,10 +26,18 @@ const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
 
 /**
  * The Mascot at the moment `state` with the Edition's line for it, while its
- * Feature Switch is on in effect; else nothing, as in 0.9. `onRed` draws its
- * on-red variant, for a Mascot over the red.
+ * Feature Switch is on in effect; else nothing, as in 0.9. `width` sets a
+ * smaller figure, such as the Round head's; `onRed` draws it for a red ground.
  */
-export function MascotIn({ state, onRed = false }: { state: MascotMoment; onRed?: boolean }) {
+export function MascotIn({
+  state,
+  onRed = false,
+  width,
+}: {
+  state: MascotMoment;
+  onRed?: boolean;
+  width?: number;
+}) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
   return (
@@ -38,15 +46,34 @@ export function MascotIn({ state, onRed = false }: { state: MascotMoment; onRed?
       line={edition.mascot[state]}
       onRed={onRed}
       testID={`mascot-${state}`}
+      {...(width === undefined ? {} : { width })}
     />
   );
 }
 
-/** The Mascot in `state` with no line, while its Feature Switch is on in effect; else nothing. `onRed` draws it for a red ground. */
-export function MascotAs({ state, onRed = false }: { state: MascotState; onRed?: boolean }) {
+/**
+ * The Mascot in `state` with no line, while its Feature Switch is on in effect;
+ * else nothing. `onRed` draws it for a red ground; `width` sets a smaller figure.
+ */
+export function MascotAs({
+  state,
+  onRed = false,
+  width,
+}: {
+  state: MascotState;
+  onRed?: boolean;
+  width?: number;
+}) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
-  return <Mascot state={state} onRed={onRed} testID={`mascot-${state}`} />;
+  return (
+    <Mascot
+      state={state}
+      onRed={onRed}
+      testID={`mascot-${state}`}
+      {...(width === undefined ? {} : { width })}
+    />
+  );
 }
 
 /**

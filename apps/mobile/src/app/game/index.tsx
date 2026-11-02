@@ -5,9 +5,9 @@ import {
   GameModeCard,
   GameResult,
   GameRound,
+  GameModeGroupTitle,
+  GamesTitle,
   rowPadding,
-  ScreenTitle,
-  SectionLabel,
   space,
   useTokens,
   WidgetGuideSheet,
@@ -29,7 +29,7 @@ import {
   useWidgetHintShown,
 } from '@/game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
-import { MascotIn } from '@/mascot/mascot';
+import { MascotAs, MascotIn } from '@/mascot/mascot';
 import { useShown } from '@/shown-in-effect';
 
 const { game: strings, widget: widgetStrings } = editionStrings;
@@ -42,6 +42,9 @@ const { game: strings, widget: widgetStrings } = editionStrings;
  * background. The Game stays in the Core composition, so another tab and back,
  * or an Entry the Game Review opens and back, finds it where it was.
  */
+/** The Mascot's width in the Round's head, from the design. */
+const ROUND_MASCOT_WIDTH = 88;
+
 export default function GameScreen() {
   // Turned off remotely while the reader is on it: its tab goes, and so does the screen.
   if (!useShown().tabs.includes('game')) return <Redirect href="/" />;
@@ -91,6 +94,7 @@ function Game() {
                   }
                 : undefined
             }
+            mascot={<MascotIn state="gameEnd" onRed />}
           />
           <WidgetGuideSheet
             visible={hintShown}
@@ -104,7 +108,6 @@ function Game() {
             mode={widgetStrings.allEntries}
             {...widgetStrings.guide.sample}
           />
-          <MascotIn state="gameEnd" />
         </>
       ) : (
         <GameRound
@@ -115,19 +118,27 @@ function Game() {
           onNext={actions.next}
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
+          mascot={
+            current.status === 'answered' ? (
+              <MascotIn
+                state={current.played.at(-1)?.right === true ? 'gameRight' : 'gameWrong'}
+                width={ROUND_MASCOT_WIDTH}
+              />
+            ) : (
+              <MascotAs state="waits" width={ROUND_MASCOT_WIDTH} />
+            )
+          }
         />
-      )}
-      {current?.status === 'answered' && (
-        <MascotIn state={current.played.at(-1)?.right === true ? 'gameRight' : 'gameWrong'} />
       )}
     </SafeAreaView>
   );
 }
 
 /**
- * The mode screen (`game-mode-select-dark`): the title, the Daily Crossword's
- * card while it is on, which opens its screen, and a card per mode on offer,
- * with its own Best result, under the titles of their groups.
+ * The mode screen, as the design's Games screen: the big title, the Daily
+ * Crossword's red card while it is on, which opens its screen, and a row per
+ * mode on offer, with its own Best result, under the titles of their groups,
+ * each after a red mark.
  */
 function ModeScreen({
   modes,
@@ -143,7 +154,7 @@ function ModeScreen({
       <DecorBackground />
       <ScrollView contentContainerStyle={styles.modes}>
         <View style={styles.heading}>
-          <ScreenTitle>{strings.title}</ScreenTitle>
+          <GamesTitle>{strings.title}</GamesTitle>
         </View>
         <ProgressShareOffers />
         {crossword === undefined ? null : (
@@ -157,7 +168,9 @@ function ModeScreen({
         )}
         {gameModeGroups(modes, strings).map(({ title, offers }) => (
           <View key={title} style={styles.group}>
-            <SectionLabel style={styles.groupTitle}>{title}</SectionLabel>
+            <View style={styles.groupTitle}>
+              <GameModeGroupTitle>{title}</GameModeGroupTitle>
+            </View>
             {offers.map((offer) => (
               <GameModeCard
                 key={offer.modeId}
@@ -184,6 +197,6 @@ const styles = StyleSheet.create({
     paddingBottom: space[8],
   },
   heading: { marginHorizontal: space[1], marginBottom: space[2] },
-  group: { gap: space[4] },
-  groupTitle: { marginHorizontal: space[1], marginTop: space[2] },
+  group: { gap: space[1] },
+  groupTitle: { marginHorizontal: space[1], marginTop: space[4] },
 });

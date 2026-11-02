@@ -3,7 +3,7 @@ import { EditionProvider, PairsGrid } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
-import { AccessibilityInfo, Pressable, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
@@ -100,6 +100,12 @@ async function next() {
   await fireEvent.press(screen.getByRole('button', { name: 'next' }));
 }
 
+/** The fill of a cell. */
+function backgroundOf(testID: string): unknown {
+  const style = getAnimatedStyle(screen.getByTestId(testID)) as { backgroundColor?: unknown };
+  return style.backgroundColor;
+}
+
 /** The horizontal shift of a cell. */
 function shiftOf(testID: string): number {
   const style = getAnimatedStyle(screen.getByTestId(testID)) as {
@@ -179,41 +185,39 @@ describe('PairsGrid', () => {
     expect(definition(2)).toBeEnabled();
   });
 
-  it('shakes the Word and the Definition of a wrong pair', async () => {
+  it('fills a wrong pair in a colour of its own and moves none of its cells', async () => {
     await renderGrid();
+    const rest = backgroundOf('pairs-word-0');
 
     await match(0, 2);
     await act(() => {
-      jest.advanceTimersByTime(60);
+      jest.advanceTimersByTime(300);
     });
 
-    expect(shiftOf('pairs-word-0')).toBe(-4);
-    expect(shiftOf('pairs-definition-2')).toBe(-4);
-    expect(shiftOf('pairs-word-1')).toBe(0);
+    const wrong = backgroundOf('pairs-word-0');
+    expect(wrong).not.toBe(rest);
+    expect(backgroundOf('pairs-definition-2')).toBe(wrong);
+    expect(backgroundOf('pairs-word-1')).toBe(rest);
+    expect(shiftOf('pairs-word-0')).toBe(0);
+    expect(shiftOf('pairs-definition-2')).toBe(0);
   });
 
-  it('shakes nothing of a right pair', async () => {
+  it('fills a right pair in another colour than a wrong one', async () => {
     await renderGrid();
+    await match(0, 2);
+    await act(() => {
+      jest.advanceTimersByTime(300);
+    });
+    const wrong = backgroundOf('pairs-word-0');
+    await next();
 
     await match(0, 1);
     await act(() => {
-      jest.advanceTimersByTime(60);
+      jest.advanceTimersByTime(300);
     });
 
-    expect(shiftOf('pairs-word-0')).toBe(0);
+    expect(backgroundOf('pairs-definition-1')).not.toBe(wrong);
     expect(shiftOf('pairs-definition-1')).toBe(0);
-  });
-
-  it('shakes nothing with Reduce Motion', async () => {
-    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
-    await renderGrid();
-
-    await match(0, 2);
-    await act(() => {
-      jest.advanceTimersByTime(60);
-    });
-
-    expect(shiftOf('pairs-word-0')).toBe(0);
   });
 
   it('names each Word with its Stress and each Definition by its text for VoiceOver', async () => {
