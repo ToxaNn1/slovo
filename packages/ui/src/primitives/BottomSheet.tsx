@@ -17,32 +17,42 @@ import Animated, {
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
+  withSequence,
   withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { scrimColor, space } from '../tokens';
+import { motion, scrim, space, type Easing as Easing4, type Wedge as WedgePoints } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
+import { Wedge } from './Wedge';
 
-/**
- * The sheet's slide: 300 ms, `cubic-bezier(.2, .8, .2, 1)` (ADR 0055). With
- * Reduce Motion it fades in place instead. Both run whatever the system
- * setting, which would otherwise skip the fade too.
- */
-const SLIDE_IN = {
-  duration: 300,
-  easing: Easing.bezier(0.2, 0.8, 0.2, 1),
-  reduceMotion: ReduceMotion.Never,
+/** The slant over the sheet's top: the left edge lower than the right. */
+const SLANT: WedgePoints = [
+  [0, 1],
+  [1, 0],
+  [1, 1],
+];
+
+/** `ReduceMotion.Never` on every timing: under Reduce Motion the sheet fades instead, and the system setting would skip the fade too. */
+const never = { reduceMotion: ReduceMotion.Never };
+const bezier = ([x1, y1, x2, y2]: Easing4) => Easing.bezier(x1, y1, x2, y2);
+/** The design's `slSheet`: up in 450 ms, a little past its place, then back. */
+const SLIDE_IN = { duration: motion.sheet.duration, easing: bezier(motion.sheet.easing), ...never };
+/** Under Reduce Motion the sheet fades in place, the design's `slRm`. */
+const FADE = {
+  duration: motion.reduceMotion.duration,
+  easing: bezier(motion.reduceMotion.easing),
+  ...never,
 };
 /** Leaving is quicker than arriving. */
-const SLIDE_OUT = {
-  duration: 220,
-  easing: Easing.in(Easing.quad),
-  reduceMotion: ReduceMotion.Never,
-};
+const SLIDE_OUT = { duration: 220, easing: Easing.in(Easing.quad), ...never };
+/** How far past its place, in points, the sheet rises before it settles. */
+const OVERSHOOT = 10;
+/** The share of the slide spent rising past its place, from `slSheet`. */
+const RISE_SHARE = 0.72;
 
 /**
  * What follows a drag: a critically damped spring that settles in about
@@ -56,23 +66,21 @@ const DRAG_SPRING = {
   reduceMotion: ReduceMotion.Never,
 };
 
-/** How far, in points, a drag on the grabber must go to close the sheet. */
+/** How far, in points, a drag on its top must go to close the sheet. */
 const CLOSE_DISTANCE = 96;
 /** How fast, in points per second, a downward flick closes it whatever its length. */
 const CLOSE_VELOCITY = 800;
 
-/** The grabber, from the design. */
-const GRABBER = { width: 38, height: 5 };
-/** The strip the grabber sits in, which takes the drag. */
-const HANDLE_HEIGHT = 32;
+/** How far down the top edge slants, from the right edge to the left. */
+export const SHEET_SLANT = 30;
 
 /**
- * A bottom sheet over a scrim: `radius.sheet` top corners, a hairline on top,
- * a 38×5 grabber, and a slide up. A tap on the scrim, a downward drag or flick
- * on the grabber, and VoiceOver's escape gesture ask `onClose`; the sheet
- * leaves when `visible` turns false. Without `onClose` only its content closes
- * it: it has no grabber, and no scrim dims the screen, which takes no taps
- * meanwhile. `inverted` draws the sheet in the other colour scheme. The
+ * A bottom sheet of the design over a scrim: a top edge that slants up to the
+ * right, and a slide up that rises a little past its place (with Reduce Motion
+ * a fade). A tap on the scrim, a downward drag or flick on its top strip, and
+ * VoiceOver's escape gesture ask `onClose`; the sheet leaves when `visible`
+ * turns false. Without `onClose` only its content closes it: its top takes no
+ * drag, and no scrim dims the screen, which takes no taps meanwhile. `inverted` draws the sheet in the other colour scheme. The
  * `onDismissed` runs once the sheet has slid away, for what must wait until no
  * modal is on screen (another modal asked for earlier is not presented). The
  * content is mounted only while the sheet is open, so its state starts fresh
@@ -92,9 +100,8 @@ export function BottomSheet({
   onDismissed?: (() => void) | undefined;
   inverted?: boolean;
   children: ReactNode;
-  testID?: string;
+  testID?: string | undefined;
 }) {
-  const { colors, colorScheme } = useTokens();
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const reduceMotion = useReduceMotion();
@@ -118,7 +125,15 @@ export function BottomSheet({
       setMounted(true);
       flick.current = undefined;
       drag.value = 0;
-      progress.value = withTiming(1, SLIDE_IN);
+      progress.value = reduceMotion
+        ? withTiming(1, FADE)
+        : withSequence(
+            withTiming(1 + OVERSHOOT / height.value, {
+              ...SLIDE_IN,
+              duration: SLIDE_IN.duration * RISE_SHARE,
+            }),
+            withTiming(1, { ...SLIDE_IN, duration: SLIDE_IN.duration * (1 - RISE_SHARE) }),
+          );
       wasVisible.current = true;
     } else {
       const wasOpen = wasVisible.current;
@@ -152,7 +167,7 @@ export function BottomSheet({
     onClose?.();
   };
 
-  // Only a sheet with `onClose` has the grabber that takes the drag.
+  // Only a sheet with `onClose` has the top strip that takes the drag.
   const pan = Gesture.Pan()
     .onUpdate(({ translationY }) => {
       drag.value = Math.max(translationY, 0);
@@ -173,15 +188,14 @@ export function BottomSheet({
     transform: [
       { translateY: (reduceMotion ? 0 : (1 - progress.value) * height.value) + drag.value },
     ],
-    opacity: reduceMotion ? progress.value : 1,
+    opacity: reduceMotion ? Math.min(progress.value, 1) : 1,
   }));
   // The scrim lightens as the sheet goes down, so it fades with a drag that closes it too.
   const scrimStyle = useAnimatedStyle(() => ({
-    opacity: progress.value * (1 - Math.min(drag.value / height.value, 1)),
+    opacity: Math.min(progress.value, 1) * (1 - Math.min(drag.value / height.value, 1)),
   }));
 
   if (!mounted) return null;
-  const scrim = onClose === undefined ? 'transparent' : scrimColor(colors.ink, colorScheme);
   const panel = (
     <SheetPanel
       onClose={onClose}
@@ -203,7 +217,13 @@ export function BottomSheet({
       supportedOrientations={['portrait']}
     >
       <View style={styles.root} testID={testID}>
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: scrim }, scrimStyle]}>
+        <Animated.View
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: onClose === undefined ? 'transparent' : scrim },
+            scrimStyle,
+          ]}
+        >
           {/* The scrim is no control for VoiceOver: the sheet closes with «Готово». */}
           <Pressable
             accessible={false}
@@ -223,7 +243,7 @@ export function BottomSheet({
   );
 }
 
-/** The sheet itself, in the tokens in effect where it is drawn, with the grabber when it can be dragged away. */
+/** The sheet itself, in the tokens in effect where it is drawn, with the strip that drags it away when it can be. */
 function SheetPanel({
   onClose,
   testID,
@@ -239,7 +259,7 @@ function SheetPanel({
   pan: ReturnType<typeof Gesture.Pan>;
   children: ReactNode;
 }) {
-  const { colors, radii } = useTokens();
+  const { colors } = useTokens();
   const insets = useSafeAreaInsets();
   return (
     <Animated.View
@@ -249,33 +269,28 @@ function SheetPanel({
       onLayout={({ nativeEvent }) => {
         onHeight(nativeEvent.layout.height);
       }}
-      style={[
-        styles.sheet,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.line,
-          borderTopLeftRadius: radii.sheet,
-          borderTopRightRadius: radii.sheet,
-          paddingBottom: Math.max(insets.bottom, space[4]),
-        },
-        onClose === undefined && styles.withoutGrabber,
-        sheetStyle,
-      ]}
+      style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[8]) }, sheetStyle]}
     >
+      <Wedge
+        points={SLANT}
+        color={colors.surface}
+        width="100%"
+        height={SHEET_SLANT}
+        style={styles.slant}
+      />
+      <View style={[styles.body, { backgroundColor: colors.surface }]} />
+      {children}
       {onClose === undefined ? null : (
         // A Modal is its own native root, so the gestures need a root of their own; a local one keeps the rest of the sheet out of the gesture system.
-        <GestureHandlerRootView style={styles.handle}>
+        <GestureHandlerRootView style={styles.dragStrip}>
           <GestureDetector gesture={pan}>
             <View
-              style={styles.handleHit}
-              testID={testID === undefined ? undefined : `${testID}-grabber`}
-            >
-              <View style={[styles.grabber, { backgroundColor: colors.muted, opacity: 0.45 }]} />
-            </View>
+              style={styles.fill}
+              testID={testID === undefined ? undefined : `${testID}-drag-strip`}
+            />
           </GestureDetector>
         </GestureHandlerRootView>
       )}
-      {children}
     </Animated.View>
   );
 }
@@ -284,9 +299,10 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   // Over the scrim, which takes the taps beside the sheet.
   avoiding: { flex: 1, justifyContent: 'flex-end', pointerEvents: 'box-none' },
-  sheet: { maxHeight: '100%', borderTopWidth: 1, paddingHorizontal: space[5] },
-  withoutGrabber: { paddingTop: space[6] },
-  handle: { height: HANDLE_HEIGHT, marginHorizontal: -space[5] },
-  handleHit: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  grabber: { ...GRABBER, borderRadius: GRABBER.height / 2 },
+  sheet: { maxHeight: '100%', paddingTop: SHEET_SLANT, paddingHorizontal: space[5], gap: space[4] },
+  slant: { position: 'absolute', top: 0, left: 0 },
+  body: { position: 'absolute', top: SHEET_SLANT, left: 0, right: 0, bottom: 0 },
+  // The slanted top, above the content, takes the drag.
+  dragStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: SHEET_SLANT },
+  fill: { flex: 1 },
 });

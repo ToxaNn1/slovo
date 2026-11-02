@@ -7,7 +7,6 @@ import {
   PixelRatio,
   ScrollView,
   StyleSheet,
-  Text,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -24,15 +23,8 @@ import { Button } from '../primitives/Button';
 import { SegmentedControl } from '../primitives/SegmentedControl';
 import { SHARE_CARD, ShareCard, type ShareCardProps } from './ShareCard';
 import { SheetTitle } from '../primitives/SheetParts';
-import {
-  lineHeight,
-  type ShareCardFormat,
-  shareImage,
-  space,
-  toastElevation,
-  toastRadius,
-  typeSize,
-} from '../tokens';
+import { ToastFace } from '../primitives/UndoToast';
+import { type ShareCardFormat, shareImage, space } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The share of the screen's height the preview may take, so the sheet fits the SE. */
@@ -42,8 +34,6 @@ const PREVIEW_HEIGHT_SHARE = 0.58;
 const TOAST_MS = 4000;
 /** The toast's fade in, as the undo toast's. */
 const FADE_MS = 200;
-/** The toast's message stops growing here, so it stays whole over the preview. */
-const TOAST_MAX_FONT_SCALE = 1.3;
 
 /** What sharing came to, as the shell reports it. */
 export type ShareSheetOutcome = 'closed' | 'failed';
@@ -186,8 +176,6 @@ function ShareSheetContent({
  * the preview, for 4 s. VoiceOver announces it.
  */
 function Toast({ message }: { message: string }) {
-  const { colors, fontFamilies } = useTokens();
-  const { voice } = useEdition();
   const opacity = useSharedValue(0);
   const [shown, setShown] = useState(true);
 
@@ -206,17 +194,8 @@ function Toast({ message }: { message: string }) {
 
   if (!shown) return null;
   return (
-    <Animated.View
-      testID="share-toast"
-      style={[styles.toast, { backgroundColor: colors.ink }, fadeStyle]}
-    >
-      <Text
-        {...voice}
-        maxFontSizeMultiplier={TOAST_MAX_FONT_SCALE}
-        style={[styles.toastMessage, { color: colors.background, fontFamily: fontFamilies.ui }]}
-      >
-        {message}
-      </Text>
+    <Animated.View testID="share-toast" style={[styles.toast, fadeStyle]}>
+      <ToastFace message={message} />
     </Animated.View>
   );
 }
@@ -232,15 +211,5 @@ const styles = StyleSheet.create({
     top: 0,
     left: -Math.max(shareImage.story.width, shareImage.square.width),
   },
-  toast: {
-    position: 'absolute',
-    left: space[3],
-    right: space[3],
-    bottom: space[3],
-    borderRadius: toastRadius,
-    paddingHorizontal: space[4],
-    paddingVertical: space[3],
-    ...toastElevation,
-  },
-  toastMessage: { fontSize: typeSize.body, lineHeight: lineHeight.toast, fontWeight: '500' },
+  toast: { position: 'absolute', left: space[3], right: space[3], bottom: space[3] },
 });
