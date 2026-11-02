@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { ukrainian as edition } from './test-support';
+import { loadDecor } from '@slovo/core';
+
+import { ukrainian as edition, ukrainianFolder } from './test-support';
 
 describe('the UA Edition', () => {
   it('marks Stress, sorts with the Ukrainian alphabet and allows the apostrophe and hyphen in a Lemma, and the comma and dash in an expression', () => {
@@ -94,5 +96,19 @@ describe('the UA Edition', () => {
         rarityCeiling: 5,
       },
     });
+  });
+
+  it('draws a pictogram and a cover for every Category and Correction Category, «Розстріляна лексика» quiet', () => {
+    const art = loadDecor(ukrainianFolder.read('decor')).categories ?? {};
+    const { categories, correctionCategories } = ukrainianFolder.read('config');
+    const ids = [...categories, ...correctionCategories].map(({ id }) => id);
+
+    expect(Object.keys(art).toSorted()).toEqual(ids.toSorted());
+    expect(art['repressed-words']?.cover).toBe('quiet');
+    expect(
+      Object.entries(art)
+        .filter(([, { cover }]) => cover === 'quiet')
+        .map(([id]) => id),
+    ).toEqual(['repressed-words']);
   });
 });
