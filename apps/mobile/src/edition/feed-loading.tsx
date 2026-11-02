@@ -5,8 +5,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { editionStrings } from './edition';
 
-/** The Feed's top row, kept for the Stats pill (0.4). */
-export const TOP_ROW = 48;
+/**
+ * The Feed's header over the cards: the design's row of the logo, today and
+ * the Streak pill (32), a gap (8), and the row of the XP bar, Search and Mood (40).
+ */
+export const TOP_ROW = 80;
 
 const { feed: feedStrings } = editionStrings;
 

@@ -15,6 +15,7 @@ import { space, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
+import { useFlyingLetters } from './reveal';
 import { ExampleText } from './WordCard';
 
 /**
@@ -49,6 +50,8 @@ export function SynonymRowCardBody({
   const strings = edition.strings.synonymRowCard;
   // In the Feed, VoiceOver turns to the next or previous card from the dominant and the meaning.
   const turnActions = usePageTurnActions();
+  // The headline's letters fly in as the card reveals.
+  const flying = useFlyingLetters();
   const shown = selfCheckSynonymRowCard({ card, concealed });
   const dominant = withoutStress(card.dominant.text);
 
@@ -70,6 +73,7 @@ export function SynonymRowCardBody({
         style={styles.header}
       >
         <WholeWordsText
+          flying={flying}
           text={shown.card.dominant.text}
           size={lemmaSize}
           tracking={-0.01}

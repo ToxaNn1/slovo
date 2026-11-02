@@ -11,6 +11,7 @@ import {
 
 import type { TextSize } from '../providers/FontSizeProvider';
 import { clearMarks, FallingMarks, withMarks, type FallingMarksOf } from './FallingMarks';
+import { FlyingLetters, type FlyingLettersOf } from './FlyingLetters';
 
 /**
  * Large text that wraps between words and never inside one. On iOS,
@@ -20,7 +21,8 @@ import { clearMarks, FallingMarks, withMarks, type FallingMarksOf } from './Fall
  * `size` first, and the text is drawn small enough for that word to fit on a
  * line; `numberOfLines` and `adjustsFontSizeToFit` still apply on top.
  * A `highlight` draws one stretch of the text in a style of its own, or
- * `falling` lets the text's marks fall into place over it.
+ * `falling` lets the text's marks fall into place over it. `flying` lets its
+ * letters fly into place over it, one after another.
  */
 export function WholeWordsText({
   text,
@@ -29,6 +31,7 @@ export function WholeWordsText({
   style,
   highlight,
   falling,
+  flying,
   ...props
 }: Omit<TextProps, 'children' | 'style'> & {
   text: string;
@@ -38,6 +41,8 @@ export function WholeWordsText({
   tracking: number;
   /** Everything but the size and letter spacing: colour, font and weight. */
   style: StyleProp<TextStyle>;
+  /** Letters that fly into place over the text, which is drawn clear meanwhile. */
+  flying?: FlyingLettersOf | undefined;
 } & (
     | {
         /** A stretch of the text to mark, and how it looks on top of `style`. */
@@ -65,6 +70,13 @@ export function WholeWordsText({
 
   // Hidden until measured, so a word never shows split for a frame.
   const textStyle = [style, sized(scale ?? 1), scale === undefined && styles.hidden];
+  const textProps = {
+    numberOfLines: props.numberOfLines,
+    adjustsFontSizeToFit: props.adjustsFontSizeToFit,
+    minimumFontScale: props.minimumFontScale,
+    allowFontScaling: props.allowFontScaling,
+    maxFontSizeMultiplier: props.maxFontSizeMultiplier,
+  };
 
   return (
     <View
@@ -73,7 +85,7 @@ export function WholeWordsText({
         if (event.nativeEvent.layout.width > 0) setLineWidth(event.nativeEvent.layout.width);
       }}
     >
-      <Text {...props} style={textStyle}>
+      <Text {...props} style={flying === undefined ? textStyle : [textStyle, styles.clear]}>
         {falling !== undefined ? (
           withMarks(text, falling.mark, clearMarks)
         ) : highlight === undefined ? (
@@ -93,15 +105,19 @@ export function WholeWordsText({
           text={text}
           falling={falling}
           fontSize={size.fontSize * (scale ?? 1)}
-          textProps={{
-            numberOfLines: props.numberOfLines,
-            adjustsFontSizeToFit: props.adjustsFontSizeToFit,
-            minimumFontScale: props.minimumFontScale,
-            allowFontScaling: props.allowFontScaling,
-            maxFontSizeMultiplier: props.maxFontSizeMultiplier,
-          }}
+          textProps={textProps}
           style={textStyle}
           testID={props.testID === undefined ? undefined : `${props.testID}-falling`}
+        />
+      )}
+      {flying === undefined ? null : (
+        <FlyingLetters
+          text={text}
+          flying={flying}
+          clearMark={falling?.mark}
+          textProps={textProps}
+          style={textStyle}
+          testID={props.testID === undefined ? undefined : `${props.testID}-letter`}
         />
       )}
       {/* Every word on its own line, wide enough that none of them wraps. */}
@@ -129,5 +145,6 @@ export function WholeWordsText({
 
 const styles = StyleSheet.create({
   hidden: { opacity: 0 },
+  clear: { color: 'transparent' },
   measure: { position: 'absolute', top: 0, left: 0, width: 10000, opacity: 0 },
 });

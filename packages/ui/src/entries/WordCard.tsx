@@ -22,6 +22,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
+import { RevealDetail, useFlyingLetters } from './reveal';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 import { CategoryChip } from './CategoryChip';
 
@@ -77,6 +78,8 @@ export function WordCardBody({
     card.illustration === undefined ? undefined : edition.illustrations[card.illustration];
   // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
   const turnActions = usePageTurnActions();
+  // The headline's letters fly in as the card reveals.
+  const flying = useFlyingLetters();
   // A page of the Feed comes on screen again each time the reader turns back to it.
   const onScreen = useIsPageOnScreen();
   const reduceMotion = useReduceMotionKnown();
@@ -104,6 +107,7 @@ export function WordCardBody({
       <View style={styles.header}>
         <View style={styles.headline}>
           <WholeWordsText
+            flying={flying}
             text={card.lemma}
             size={lemmaSize}
             tracking={-0.01}
@@ -120,26 +124,28 @@ export function WordCardBody({
             minimumFontScale={0.5}
             style={[styles.lemma, { color: colors.ink, fontFamily: lemmaFont }]}
           />
-          <View style={styles.grammar}>
-            <Text
-              testID="word-part-of-speech"
-              accessibilityLabel={grammar('full')}
-              {...voice}
-              style={[styles.partOfSpeech, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-            >
-              {grammar('short')}
-            </Text>
-            {!concealed &&
-              card.registers.map((register) => (
-                <LabelChip
-                  key={register}
-                  testID={`word-register-${register}`}
-                  text={registerText(strings, register, card.region, 'short')}
-                  accessibilityLabel={registerText(strings, register, card.region, 'full')}
-                  size="tight"
-                />
-              ))}
-          </View>
+          <RevealDetail step={0}>
+            <View style={styles.grammar}>
+              <Text
+                testID="word-part-of-speech"
+                accessibilityLabel={grammar('full')}
+                {...voice}
+                style={[styles.partOfSpeech, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              >
+                {grammar('short')}
+              </Text>
+              {!concealed &&
+                card.registers.map((register) => (
+                  <LabelChip
+                    key={register}
+                    testID={`word-register-${register}`}
+                    text={registerText(strings, register, card.region, 'short')}
+                    accessibilityLabel={registerText(strings, register, card.region, 'full')}
+                    size="tight"
+                  />
+                ))}
+            </View>
+          </RevealDetail>
         </View>
         {Pronunciation === undefined ? null : (
           <Pronunciation lemma={card.lemma} entryId={card.wordId} />

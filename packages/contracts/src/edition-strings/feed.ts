@@ -26,6 +26,11 @@ export const feedStringsShape = {
     previousEntry: TextSchema,
     /** The title over a Quick Question in the Feed. */
     quickQuestion: TextSchema,
+    /**
+     * Today in the Feed's header, e.g. «пн, 2 листопада». Takes `{weekday}`, one of
+     * `dates.weekdays`, `{day}`, the day of the month, and `{month}`, one of `dates.months`.
+     */
+    today: templateOf('weekday', 'day', 'month'),
   }),
   /** The badge on the card of the Word of the Day. */
   wordOfTheDay: z.strictObject({

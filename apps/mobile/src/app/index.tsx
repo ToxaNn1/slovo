@@ -6,6 +6,7 @@ import {
   DecorBackground,
   EndOfCycleCard,
   EntryCard,
+  FeedHeader,
   FirstWeekCard,
   PagerScrollView,
   Placeholder,
@@ -39,6 +40,7 @@ import { StatsPillAndSheet } from '@/progress/progress';
 import { XpBarToGame } from '@/progress/xp-bar';
 import { useShown } from '@/shown-in-effect';
 import { useSwipeHint } from '@/feed/swipe-hint';
+import { todayText } from '@/feed/today-text';
 import { WeeklyRecapNotice } from '@/feed/weekly-recap-notice';
 import { CommunityWordNotice } from '@/feed/community-word-notice';
 import { useNotificationsChanges } from '@/notifications/notifications';
@@ -109,21 +111,21 @@ function FeedScreen() {
         onIndexChange={onIndexChange}
         turnActionLabels={turnActionLabels}
       />
-      {/* The top row stays put over the cards, like the background. */}
-      <View pointerEvents="box-none" style={[styles.topRow, { top }]}>
-        <View style={styles.pills}>
-          <StatsPillAndSheet />
+      {/* The header stays put over the cards, like the background. */}
+      <View pointerEvents="box-none" style={[styles.header, { top }]}>
+        <FeedHeader today={todayText(deviceClock, editionStrings)} streak={<StatsPillAndSheet />} />
+        <View pointerEvents="box-none" style={styles.tools}>
           <XpBarToGame />
-        </View>
-        <View style={styles.headerButtons}>
-          {shown.search && (
-            <SearchButton
-              onPress={() => {
-                openScreen('/search');
-              }}
-            />
-          )}
-          <MoodButtonAndSheet />
+          <View style={styles.headerButtons}>
+            {shown.search && (
+              <SearchButton
+                onPress={() => {
+                  openScreen('/search');
+                }}
+              />
+            )}
+            <MoodButtonAndSheet />
+          </View>
         </View>
       </View>
       {swipeHint.visible ? (
@@ -269,17 +271,17 @@ function YesterdayNotice({ word }: { word: WordCardModel }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  topRow: {
+  header: {
     position: 'absolute',
     left: space[6],
     right: space[6],
     height: TOP_ROW,
     justifyContent: 'center',
+    gap: space[2],
   },
-  // The Stats pill and the XP bar, side by side at the row's left end.
-  pills: { flexDirection: 'row', alignItems: 'center', gap: space[2] },
-  // At the row's right end, in the middle of its height, with the Stats pill or without it.
-  headerButtons: { position: 'absolute', right: 0, flexDirection: 'row', gap: space[2] },
+  // Under the header: the XP bar at the start, Search and Mood at the end, with the XP bar or without it.
+  tools: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  headerButtons: { marginLeft: 'auto', flexDirection: 'row', gap: space[2] },
   page: { flex: 1 },
   // A card that fits sits in the middle of the page; a taller one starts at the top.
   content: {

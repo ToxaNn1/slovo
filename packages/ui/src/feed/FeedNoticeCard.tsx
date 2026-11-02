@@ -1,19 +1,31 @@
 import { sentences, type FeedNotice, type FirstWeekDay, type LevelMilestone } from '@slovo/core';
+import type { MascotState } from '@slovo/contracts';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { space, typeSize } from '../tokens';
-import { useTokens } from '../providers/TokensProvider';
-import { Button } from '../primitives/Button';
+import { noticeCard, typeStyle, wedges } from '../tokens';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { Button, type ButtonVariant } from '../primitives/Button';
+import { Mascot } from '../primitives/Mascot';
 import { usePageTurnActions, useTurnToNextPage } from '../primitives/VerticalPager';
+import { Wedge } from '../primitives/Wedge';
 
 /**
- * The frame of a Feed Notice's card: a title and a line of muted text,
- * centred on the Feed's background like the end-of-Cycle card, then what
- * the notice shows of its own and a button, if it has them. VoiceOver reads
- * the title and the text as one element, a sentence each, which turns the
- * page as a swipe would.
+ * The ground of a Feed Notice's card: `surface` the card with a hairline,
+ * `sunken` the darker card a Mascot sits on, `accent` the red card.
+ */
+export type NoticeTone = 'surface' | 'sunken' | 'accent';
+
+/**
+ * The frame of a Feed Notice's card, from the design: a rounded card in the
+ * middle of the page, with the Mascot in a state at its top, if it has one,
+ * then a title and a line of muted text, what the notice shows of its own
+ * and a button, if it has them. The title is an eyebrow over what the notice
+ * shows when it names the card rather than says something, and has the
+ * notification mark before it on the notification ask. VoiceOver reads the
+ * title and the text as one element, a sentence each, which turns the page
+ * as a swipe would.
  */
 export function FeedNoticeCard({
   notice,
@@ -21,36 +33,83 @@ export function FeedNoticeCard({
   message,
   children,
   action,
+  tone = 'surface',
+  mascot,
+  titleKind = 'title',
 }: {
   notice: FeedNotice;
   title?: string | undefined;
   message?: string | undefined;
   /** What the notice shows under its text, such as a Word or a week's numbers. */
   children?: ReactNode;
-  /** The button under the card, such as «Гортати далі». */
-  action?: { readonly label: string; readonly onPress: () => void } | undefined;
+  /** The button under the card, such as «Гортати далі», in the design's variant for it. */
+  action?:
+    | { readonly label: string; readonly onPress: () => void; readonly variant?: ButtonVariant }
+    | undefined;
+  tone?: NoticeTone;
+  /** The Mascot's state at the top of the card, if the card has the Mascot. */
+  mascot?: MascotState | undefined;
+  /** `eyebrow` names the card over what it shows; `marked` puts the notification mark before it. */
+  titleKind?: 'title' | 'eyebrow' | 'marked';
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const keyColors = useSchemeColors('light');
   const { voice } = useEdition();
   const turnActions = usePageTurnActions();
   const spoken = sentences([title, message]);
+  const onAccent = tone === 'accent';
+  const ink = onAccent ? keyColors.ink : colors.ink;
+  const ground = {
+    surface: { backgroundColor: colors.surface, borderColor: colors.line, borderWidth: 1 },
+    sunken: { backgroundColor: colors.surfaceSunken },
+    accent: { backgroundColor: colors.accent },
+  }[tone];
+  const titleText = title !== undefined && (
+    <Text
+      style={[
+        titleKind === 'eyebrow'
+          ? [typeStyle('eyebrow', tokens), { color: colors.accent }]
+          : [typeStyle('noticeTitle', tokens), { color: ink }],
+        titleKind === 'marked' && styles.markedTitle,
+      ]}
+    >
+      {title}
+    </Text>
+  );
   return (
-    <View testID={`feed-notice-${notice}`} style={styles.card}>
+    <View testID={`feed-notice-${notice}`} style={[styles.card, ground]}>
+      {mascot !== undefined && (
+        <View style={styles.mascot}>
+          <Mascot state={mascot} />
+        </View>
+      )}
       {spoken !== '' && (
-        <View accessible accessibilityLabel={spoken} {...voice} {...turnActions}>
-          {title !== undefined && (
-            <Text style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}>
-              {title}
-            </Text>
+        <View
+          accessible
+          accessibilityLabel={spoken}
+          {...voice}
+          {...turnActions}
+          style={styles.texts}
+        >
+          {titleKind === 'marked' ? (
+            <View style={styles.markRow}>
+              <NotificationMark />
+              {titleText}
+            </View>
+          ) : (
+            titleText
           )}
           {message !== undefined && (
             <Text
-              style={[
-                title === undefined ? styles.title : styles.message,
+              style={
                 title === undefined
-                  ? { color: colors.ink, fontFamily: fontFamilies.word }
-                  : { color: colors.muted, fontFamily: fontFamilies.ui },
-              ]}
+                  ? [typeStyle('noticeTitle', tokens), { color: ink }]
+                  : [
+                      typeStyle('noticeText', tokens),
+                      { color: onAccent ? keyColors.ink : colors.muted },
+                    ]
+              }
             >
               {message}
             </Text>
@@ -59,15 +118,29 @@ export function FeedNoticeCard({
       )}
       {children}
       {action !== undefined && (
-        <View style={styles.action}>
-          <Button
-            variant="neutral"
-            label={action.label}
-            onPress={action.onPress}
-            testID={`feed-notice-${notice}-action`}
-          />
-        </View>
+        <Button
+          variant={action.variant ?? 'neutral'}
+          label={action.label}
+          onPress={action.onPress}
+          testID={`feed-notice-${notice}-action`}
+        />
       )}
+    </View>
+  );
+}
+
+/** The red square with the ink wedge before the title of the notification ask. */
+function NotificationMark() {
+  const { colors } = useTokens();
+  const keyColors = useSchemeColors('light');
+  return (
+    <View style={[styles.mark, { backgroundColor: colors.accent }]}>
+      <Wedge
+        points={wedges.logo}
+        color={keyColors.ink}
+        width={noticeCard.mark.wedge.width}
+        height={noticeCard.mark.wedge.height}
+      />
     </View>
   );
 }
@@ -84,6 +157,8 @@ export function EnoughForTodayCard() {
   return (
     <FeedNoticeCard
       notice="enoughForToday"
+      tone="sunken"
+      mascot="sleeps"
       message={message}
       action={{ label: keepGoing, onPress: () => turnToNext?.() }}
     />
@@ -108,9 +183,11 @@ export function NotificationAskCard({
   return (
     <FeedNoticeCard
       notice={notice}
+      titleKind="marked"
       title={title}
       message={message}
       action={{
+        variant: 'primary',
         label: yes,
         onPress: () => {
           onYes();
@@ -149,9 +226,10 @@ export function SaveProgressCard({ onSave }: { onSave: () => void }) {
   return (
     <FeedNoticeCard
       notice="saveProgress"
+      tone="accent"
       title={title}
       message={message}
-      action={{ label: save, onPress: onSave }}
+      action={{ variant: 'onAccent', label: save, onPress: onSave }}
     />
   );
 }
@@ -191,29 +269,32 @@ export function FirstWeekCard({
   return (
     <FeedNoticeCard
       notice="firstWeek"
+      // The last day's «Тиждень із нами» has the happy Mascot on the darker card.
+      tone={day === 7 ? 'sunken' : 'surface'}
+      mascot={day === 7 ? 'happy' : undefined}
       title={title}
       message={text}
-      action={{ label: close, onPress: () => turnToNext?.() }}
+      action={{ variant: 'onAccent', label: close, onPress: () => turnToNext?.() }}
     />
   );
 }
 
 const styles = StyleSheet.create({
-  card: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  // Narrow enough that a title breaks into two balanced lines, as on the end-of-Cycle card.
-  title: {
-    maxWidth: 260,
-    fontSize: typeSize.emptyStateTitle,
-    lineHeight: typeSize.emptyStateTitle * 1.2,
-    fontWeight: '500',
-    textAlign: 'center',
+  card: {
+    alignSelf: 'stretch',
+    borderRadius: noticeCard.radius,
+    padding: noticeCard.padding,
+    gap: noticeCard.gap,
   },
-  message: {
-    maxWidth: 300,
-    marginTop: space[4],
-    fontSize: typeSize.body,
-    lineHeight: typeSize.body * 1.6,
-    textAlign: 'center',
+  mascot: { alignSelf: 'flex-start' },
+  texts: { gap: noticeCard.gap },
+  markRow: { flexDirection: 'row', alignItems: 'center', gap: noticeCard.gap },
+  markedTitle: { flexShrink: 1 },
+  mark: {
+    width: noticeCard.mark.box,
+    height: noticeCard.mark.box,
+    borderRadius: noticeCard.mark.radius,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  action: { alignSelf: 'stretch', marginTop: space[8] },
 });

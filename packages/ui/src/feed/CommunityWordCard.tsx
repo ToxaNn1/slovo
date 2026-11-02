@@ -4,15 +4,15 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import { entryRowSubtitle } from '../entries/entry-row-text';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { space, typeSize } from '../tokens';
+import { noticeCard, typeStyle } from '../tokens';
 import { FeedNoticeCard } from './FeedNoticeCard';
 
 /**
  * The Community Word («Слово тижня спільноти», ADR 0060): the Feed Notice
- * with how many readers added the Entry to Favorites last week, «додали 12
- * читачів» in the Edition's plural forms, and the mini card of the Entry, its
- * title over its second line as its row says them. A tap on the mini card
- * opens the Entry. Until the Entry's row is read, there is no mini card.
+ * named by its eyebrow, with how many readers added the Entry to Favorites
+ * last week, «додали 12 читачів» in the Edition's plural forms, and the mini
+ * card of the Entry, its title large over its second line as its row says
+ * them. A tap on the mini card opens the Entry. Until the Entry's row is read, there is no mini card.
  */
 export function CommunityWordCard({
   row,
@@ -26,11 +26,17 @@ export function CommunityWordCard({
   onOpen: () => void;
 }) {
   const { strings, count, voice } = useEdition();
-  const { colors, radii, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
   const { title, added } = strings.feedNotices.communityWord;
   const subtitle = row === undefined ? undefined : entryRowSubtitle(strings.correctionCard, row);
   return (
-    <FeedNoticeCard notice="communityWord" title={title} message={count(added, adds)}>
+    <FeedNoticeCard
+      notice="communityWord"
+      titleKind="eyebrow"
+      title={title}
+      message={count(added, adds)}
+    >
       {row !== undefined && (
         <Pressable
           testID="community-word-open"
@@ -42,18 +48,17 @@ export function CommunityWordCard({
           style={({ pressed }) => [
             styles.card,
             {
-              backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
-              borderColor: colors.line,
-              borderRadius: radii.card,
+              backgroundColor: pressed ? colors.surfaceSunken : undefined,
+              borderRadius: radii.tile,
             },
           ]}
         >
-          <Text style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.word }]}>
+          <Text style={[typeStyle('communityWord', tokens), { color: colors.ink }]}>
             {row.title}
           </Text>
           <Text
             numberOfLines={2}
-            style={[styles.subtitle, { color: colors.inkSecondary, fontFamily: fontFamilies.ui }]}
+            style={[typeStyle('communityDefinition', tokens), { color: colors.ink }]}
           >
             {subtitle}
           </Text>
@@ -64,18 +69,5 @@ export function CommunityWordCard({
 }
 
 const styles = StyleSheet.create({
-  // The border is the card's only elevation, as on an Entry card.
-  card: {
-    alignSelf: 'stretch',
-    marginTop: space[6],
-    padding: space[6],
-    gap: space[2],
-    borderWidth: 1,
-  },
-  title: { fontSize: typeSize.subhead, fontWeight: '500', textAlign: 'center' },
-  subtitle: {
-    fontSize: typeSize.body,
-    lineHeight: typeSize.body * 1.6,
-    textAlign: 'center',
-  },
+  card: { alignSelf: 'stretch', gap: noticeCard.wordGap },
 });

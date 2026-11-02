@@ -147,6 +147,12 @@ export const typeRoles = {
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
+  /** The app's name beside the wedge at the top of the Feed. */
+  logo: role('word', '900', 22, 22, -0.5),
+  /** Today in the Feed's header. */
+  headerDate: role('ui', '600', 13, 13),
+  /** The Streak in its pill. */
+  streak: role('word', '800', 14, 14),
   /** The word an onboarding step shouts on its red top. */
   stepShout: role('word', '900', 168, 151, -8),
   /** An onboarding step's title. */
@@ -157,6 +163,22 @@ export const typeRoles = {
   goalNumber: role('word', '900', 26, 26),
   /** The unit under a Daily Goal tile's number. */
   goalUnit: role('ui', '600', 12, 12),
+  /** The title of a Feed Notice's card. */
+  noticeTitle: role('word', '900', 22, 24),
+  /** The text of a Feed Notice's card, under its title. */
+  noticeText: role('ui', '400', 15, 22),
+  /** A number of the Weekly Recap. */
+  recapNumber: role('word', '900', 24, 24),
+  /** The label under a number of the Weekly Recap. */
+  recapLabel: role('ui', '500', 12, 14),
+  /** The Word of the Community Word card. */
+  communityWord: role('word', '900', 30, 30, -0.5),
+  /** The Definition under the Word of the Community Word card. */
+  communityDefinition: role('ui', '500', 16, 22),
+  /** The title of the end-of-Cycle card. */
+  endOfCycleTitle: role('word', '900', 26, 29),
+  /** The name of a mood on its chip. */
+  moodName: role('ui', '700', 15, 15),
   /** The Games screen's title. */
   gamesTitle: role('word', '900', 36, 36, -1),
   /** The title of a group of Game Modes, after its red mark. */
@@ -221,6 +243,39 @@ export const wedges = {
     [1, 0.3],
     [1, 0.7],
     [0, 1],
+  ],
+  /** The logo's wedge at the top of the Feed: a right edge narrower than the left. */
+  logo: [
+    [0, 0],
+    [1, 0.22],
+    [1, 0.78],
+    [0, 1],
+  ],
+  /** The Streak's mark in its pill: a cut gem, pointed at the top. */
+  streak: [
+    [0.5, 0.04],
+    [0.875, 0.54],
+    [0.667, 0.96],
+    [0.333, 0.96],
+    [0.125, 0.54],
+    [0.375, 0.38],
+  ],
+  /** The two chevrons under the end-of-Cycle card, which point down to swipe on. */
+  swipeOn: [
+    [0, 0],
+    [0.5, 0.333],
+    [1, 0],
+    [1, 0.267],
+    [0.5, 0.6],
+    [0, 0.267],
+  ],
+  swipeOnLower: [
+    [0, 0.4],
+    [0.5, 0.733],
+    [1, 0.4],
+    [1, 0.667],
+    [0.5, 1],
+    [0, 0.667],
   ],
   /** The loader's wedge: a right edge narrower than the left, from the middle. */
   loader: [
@@ -449,6 +504,27 @@ export const screenEnter = {
   travel: 1.4,
   band: { width: 0.45, skewX: '-18deg', from: -1.7, to: 2.8 },
 } as const;
+
+/**
+ * An Entry card's reveal (the design's `slFly` and `slCasc` on the Word of the
+ * Day): each letter of the headline flies in from `letters.from`, small and
+ * turned, the n-th after `letters.delay + n × letters.stagger` ms, then the
+ * card's details rise into place one after another at `details` ms.
+ */
+export const entryReveal = {
+  letters: {
+    duration: 550,
+    easing: [0.2, 0.9, 0.25, 1.2],
+    delay: 120,
+    stagger: 60,
+    /** The n-th letter starts `x - n × xStep` points across and `y` points down. */
+    from: { x: 40, xStep: 44, y: 240, scale: 0.15, rotate: -30 },
+  },
+  details: [650, 720, 800, 900],
+} as const satisfies {
+  readonly letters: { readonly easing: Easing } & Record<string, unknown>;
+  readonly details: readonly number[];
+};
 
 /** The tab bar of the design. */
 export const tabBar = {
@@ -730,8 +806,56 @@ export const actionButtonSize = 52;
 /** The padding of the Word of the day badge. */
 export const badgePadding = { horizontal: 10, vertical: 6 } as const;
 
-/** The padding of the stats pill: the left side carries the icon, so it is tighter. */
-export const statsPillPadding = { left: 10, right: 14 } as const;
+/** The XP bar's side padding. */
+export const xpBarPadding = 14;
+
+/**
+ * The Feed's header, from the design: the logo's wedge and its gap to the
+ * name, and the gap between today and the Streak pill.
+ */
+export const feedHeader = { logoWedge: { width: 15, height: 22 }, logoGap: 8, endGap: 10 } as const;
+
+/**
+ * The Streak pill in the Feed's header: its height and corner radius, its
+ * padding (the left side carries the mark, so it is tighter), the gap after
+ * the mark and the mark's box.
+ */
+export const streakPill = {
+  height: 32,
+  radius: 10,
+  padding: { left: 8, right: 11 },
+  gap: 5,
+  mark: { width: 16, height: 18 },
+} as const;
+
+/**
+ * The card of a Feed Notice, from the design: its corner radius, padding
+ * and the gap between its parts; the notification mark's box, corner radius
+ * and wedge; the gap between the Community Word's Word and its Definition;
+ * and the Weekly Recap's grid of numbers, three to a row.
+ */
+export const noticeCard = {
+  radius: 24,
+  padding: 20,
+  gap: 14,
+  wordGap: 10,
+  mark: { box: 40, radius: 11, wedge: { width: 12, height: 18 } },
+  recap: { columns: 3, gap: 8, padding: { vertical: 12, horizontal: 10 }, lineGap: 6 },
+} as const;
+
+/**
+ * The end-of-Cycle card, from the design: the ∞ behind it (its size and how
+ * far it reaches past the left edge and below the top), the gap between its
+ * parts and the chevrons' box.
+ */
+export const endOfCycleCard = {
+  infinity: { size: 330, left: -40, top: 30 },
+  gap: 18,
+  chevrons: { width: 22, height: 30 },
+} as const;
+
+/** The height of a mood's chip, and the gap between the chips. */
+export const moodChip = { height: 52, gap: 10 } as const;
 
 /** The padding of a label chip, by density. */
 export const labelChipPadding = {

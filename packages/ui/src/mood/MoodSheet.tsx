@@ -1,10 +1,11 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
+import { PressedTile } from '../primitives/PressedTile';
 import { SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { disabledOpacity, minTouchTarget, space, typeSize, withAlpha } from '../tokens';
+import { minTouchTarget, moodChip, space, typeSize, typeStyle } from '../tokens';
 
 /** A mood on offer: its id, name and emoji, and why it is disabled, if it is. */
 export interface MoodChip {
@@ -20,7 +21,7 @@ const COLUMNS = 2;
 
 /**
  * The sheet the 🎲 of the «Головна» header opens: «Слово під настрій» over the
- * moods as chips, two to a row. A disabled chip is dimmed and takes no tap,
+ * moods as pressed tiles, two to a row. A disabled chip is dimmed and takes no tap,
  * with why under it, which VoiceOver reads as its hint. Once a chip is chosen
  * the sheet shows the roulette's current Lemma (`roulette`) in their place,
  * hidden from VoiceOver. A tap on the scrim, a drag on its top and
@@ -77,35 +78,26 @@ function MoodChipButton({
   mood: MoodChip;
   onChoose: (moodId: string) => void;
 }) {
-  const { colors, fontFamilies, radii } = useTokens();
+  const tokens = useTokens();
+  const { colors, fontFamilies } = tokens;
   const { voice } = useEdition();
   const disabled = disabledHint !== undefined;
   return (
     <View style={styles.cell}>
-      <Pressable
+      <PressedTile
         testID={`mood-chip-${id}`}
-        accessibilityRole="button"
         accessibilityLabel={name}
         accessibilityHint={disabledHint}
-        accessibilityState={{ disabled }}
-        {...voice}
         disabled={disabled}
         onPress={() => {
           onChoose(id);
         }}
-        style={({ pressed }) => [
-          styles.chip,
-          {
-            borderColor: withAlpha(colors.accent, 0.45),
-            borderRadius: radii.chip,
-            opacity: disabled ? disabledOpacity : pressed ? 0.85 : 1,
-          },
-        ]}
+        faceStyle={styles.chip}
       >
-        <Text style={[styles.chipText, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
+        <Text {...voice} style={[typeStyle('moodName', tokens), { color: colors.ink }]}>
           {`${emoji} ${name}`}
         </Text>
-      </Pressable>
+      </PressedTile>
       {disabled && (
         <Text
           testID={`mood-chip-${id}-hint`}
@@ -148,18 +140,15 @@ function Roulette({ lemma }: { lemma: string }) {
 }
 
 const styles = StyleSheet.create({
-  content: { gap: space[3], paddingBottom: space[4] },
-  row: { flexDirection: 'row', gap: space[3] },
+  content: { gap: moodChip.gap, paddingBottom: space[4] },
+  row: { flexDirection: 'row', gap: moodChip.gap },
   cell: { flex: 1, gap: space[1] },
   chip: {
-    minHeight: minTouchTarget,
-    borderWidth: 1,
+    minHeight: moodChip.height,
     paddingHorizontal: space[3],
-    paddingVertical: space[2],
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chipText: { fontSize: typeSize.button, fontWeight: '600' },
   hint: { fontSize: typeSize.meta, textAlign: 'center' },
   // The height of the three rows of chips it takes the place of, so the sheet keeps its size.
   roulette: {
