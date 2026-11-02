@@ -36,16 +36,70 @@ describe('loadDecor', () => {
   });
 
   it('leaves the slots the Core shows nothing in empty', () => {
-    const { background, corners, emptyState, splash, victory, shareCard } = coreDecor;
+    const { background, corners, emptyState, splash, victory, shareCard, mascot } = coreDecor;
 
-    expect({ background, corners, emptyState, splash, victory, shareCard }).toEqual({
+    expect({ background, corners, emptyState, splash, victory, shareCard, mascot }).toEqual({
       background: undefined,
       corners: undefined,
       emptyState: undefined,
       splash: undefined,
       victory: undefined,
       shareCard: undefined,
+      mascot: undefined,
     });
+  });
+
+  it("takes the Mascot's vector an Edition supplies, and wears no accessory by itself", () => {
+    const part = [{ path: 'M0 0h1v1H0z', fill: 'body' }];
+    const mascot = {
+      width: 10,
+      height: 8,
+      pivot: [5, 8],
+      figure: part,
+      shine: part,
+      eyes: Object.fromEntries(
+        [
+          'sleeps',
+          'waits',
+          'shouts',
+          'happy',
+          'surprised',
+          'cringes',
+          'sad',
+          'celebrates',
+          'hatOff',
+        ].map((state) => [state, part]),
+      ),
+      hat: part,
+      hatOnGround: part,
+      rays: part,
+      confetti: part,
+      sleepMarks: part,
+    };
+
+    const decor = loadDecor({ mascot });
+
+    expect(decor.mascot).toEqual(mascot);
+    expect(decor.mascotAccessory).toBeUndefined();
+  });
+
+  it('refuses a Mascot without the eyes of every state', () => {
+    const part = [{ path: 'M0 0h1v1H0z', fill: 'body' }];
+    const mascot = {
+      width: 10,
+      height: 8,
+      pivot: [5, 8],
+      figure: part,
+      shine: part,
+      eyes: { waits: part },
+      hat: part,
+      hatOnGround: part,
+      rays: part,
+      confetti: part,
+      sleepMarks: part,
+    };
+
+    expect(() => loadDecor({ mascot })).toThrow(InvalidDecorError);
   });
 
   it('gives an Edition without a Share Card frame a plain Share Card', () => {

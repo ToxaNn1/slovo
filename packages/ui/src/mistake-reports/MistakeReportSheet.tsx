@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { Button } from '../primitives/Button';
+import { ChoiceMark } from '../primitives/ChoiceMark';
 import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
@@ -11,9 +12,6 @@ import { minTouchTarget, space, typeSize } from '../tokens';
 
 /** The types of mistake in the order the sheet offers them. */
 const TYPES: readonly MistakeType[] = ['typo', 'stress', 'definition', 'other'];
-
-/** The radio mark's side, the size of the Collections sheet's checkbox. */
-const RADIO_SIZE = 26;
 
 /** How many lines of the comment show before it scrolls. */
 const COMMENT_LINES = 4;
@@ -76,9 +74,7 @@ export function MistakeReportSheet({
                 index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
               ]}
             >
-              <View style={[styles.radio, { borderColor: chosen ? colors.accent : colors.muted }]}>
-                {chosen && <View style={[styles.dot, { backgroundColor: colors.accent }]} />}
-              </View>
+              <ChoiceMark kind="radio" on={chosen} />
               <Text
                 {...voice}
                 style={[styles.type, { color: colors.ink, fontFamily: fontFamilies.ui }]}
@@ -157,15 +153,6 @@ const styles = StyleSheet.create({
     gap: space[4],
     paddingVertical: space[2],
   },
-  radio: {
-    width: RADIO_SIZE,
-    height: RADIO_SIZE,
-    borderRadius: RADIO_SIZE / 2,
-    borderWidth: 1.5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dot: { width: RADIO_SIZE / 2, height: RADIO_SIZE / 2, borderRadius: RADIO_SIZE / 4 },
   type: { flex: 1, fontSize: typeSize.listItem, fontWeight: '600' },
   comment: { marginTop: space[3], gap: space[2] },
   commentHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },

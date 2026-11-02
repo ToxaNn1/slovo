@@ -163,11 +163,11 @@ describe.each(kinds)('$name', ({ kind, feature, entry, title, subtitle }) => {
     expect(toggle).toHaveAccessibleName(title);
     expect(screen.getByHintText(subtitle)).toBe(toggle);
 
-    await fireEvent(toggle, 'valueChange', false);
+    await fireEvent.press(toggle);
     await settle();
     expect(composition.mix.state.kinds[kind]).toBe(false);
 
-    await fireEvent(toggle, 'valueChange', true);
+    await fireEvent.press(toggle);
     await settle();
     expect(composition.mix.state.kinds[kind]).toBe(true);
   });

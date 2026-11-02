@@ -1,20 +1,51 @@
-import type { MascotState } from '@slovo/contracts';
+import type { MascotMoment, MascotState } from '@slovo/contracts';
 import { Mascot } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useComposition } from '../composition';
+import { edition as shippedEdition } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useShown } from '../shown-in-effect';
 
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
 
-/** The Mascot in `state` with the Edition's line for it, while its Feature Switch is on in effect; else nothing, as in 0.9. */
-export function MascotIn({ state }: { state: MascotState }) {
+/** The state the Mascot is drawn in at each moment it shows in (ADR 0070). */
+const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
+  onboarding: 'shouts',
+  newLevel: 'celebrates',
+  badge: 'celebrates',
+  dailyGoal: 'celebrates',
+  streakMilestone: 'celebrates',
+  gameRight: 'happy',
+  gameWrong: 'cringes',
+  gameEnd: 'happy',
+  empty: 'sleeps',
+};
+
+/** The Mascot at the moment `state` with the Edition's line for it, while its Feature Switch is on in effect; else nothing, as in 0.9. */
+export function MascotIn({ state }: { state: MascotMoment }) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
-  return <Mascot state={state} line={edition.mascot[state]} />;
+  return <Mascot state={stateAt[state]} line={edition.mascot[state]} testID={`mascot-${state}`} />;
+}
+
+/** The Mascot in `state` with no line, while its Feature Switch is on in effect; else nothing. */
+export function MascotAs({ state }: { state: MascotState }) {
+  const edition = useEditionInEffect();
+  if (!edition.isFeatureEnabled('mascot')) return null;
+  return <Mascot state={state} testID={`mascot-${state}`} />;
+}
+
+/**
+ * The Mascot in `state` with no line, while its Feature Switch is on in the
+ * shipped Edition; else nothing. For the gate of an opening, drawn before the
+ * remote Feature Switches are open.
+ */
+export function ShippedMascot({ state }: { state: MascotState }) {
+  if (!shippedEdition.isFeatureEnabled('mascot')) return null;
+  return <Mascot state={state} testID={`mascot-${state}`} />;
 }
 
 /**
@@ -27,10 +58,10 @@ export function MascotIn({ state }: { state: MascotState }) {
 export function MascotCelebrations() {
   const { xpLog, badges, progress } = useComposition();
   const { celebrations } = useShown();
-  const [shown, setShown] = useState<MascotState | undefined>(undefined);
+  const [shown, setShown] = useState<MascotMoment | undefined>(undefined);
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const celebrate = (state: MascotState) => {
+    const celebrate = (state: MascotMoment) => {
       clearTimeout(timer);
       setShown(state);
       timer = setTimeout(() => {
