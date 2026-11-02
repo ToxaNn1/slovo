@@ -964,7 +964,9 @@ function AnswerOption({
             ]}
           />
         </View>
-        {look === 'right' && <Stamp landed={marked} still={reduceMotion} ink={keyInk} />}
+        {look === 'right' && (
+          <Stamp landed={marked} still={reduceMotion} ink={keyInk} testID={testID} />
+        )}
         {look === 'wrong' && (
           <Slash drawn={marked} still={reduceMotion} color={colors.accent} testID={testID} />
         )}
@@ -976,16 +978,18 @@ function AnswerOption({
 /**
  * The ink stamp on a right option: a tick in a ring, turned, that lands from
  * large and turned further (the Badge stamp's landing); under Reduce Motion
- * it fades in at rest.
+ * it fades in at rest. It carries `${testID}-stamp`.
  */
 function Stamp({
   landed,
   still,
   ink,
+  testID,
 }: {
   landed: SharedValue<number>;
   still: boolean;
   ink: string;
+  testID: string;
 }) {
   const motion = useAnimatedStyle(() => {
     const opacity = interpolate(landed.value, [0, 0.7], [0, 1], Extrapolation.CLAMP);
@@ -1001,6 +1005,7 @@ function Stamp({
   });
   return (
     <Animated.View
+      testID={`${testID}-stamp`}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       style={[styles.stamp, { borderColor: ink }, motion]}

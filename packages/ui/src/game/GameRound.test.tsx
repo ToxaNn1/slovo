@@ -6,7 +6,13 @@ import type {
   RoundAnswer,
   RoundBlank,
 } from '@slovo/core';
-import { EditionProvider, GameRound, HapticsProvider, InterfaceSoundsProvider } from '@slovo/ui';
+import {
+  coreTokens,
+  EditionProvider,
+  GameRound,
+  HapticsProvider,
+  InterfaceSoundsProvider,
+} from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useState } from 'react';
@@ -929,12 +935,12 @@ describe('GameRound', () => {
       };
     }
 
-    /** The face of the option at that place, which fills, grows and shakes. */
-    const optionFace = (place: number) => {
-      const [face] = screen.getByTestId(`game-option-${String(place)}`).children;
-      if (typeof face !== 'object') throw new Error('No option face');
-      return face;
-    };
+    const { accent, surfaceSunken, tile } = coreTokens.colors.light;
+    /** The face of the option at that place, which turns red or sinks. */
+    const optionFace = (place: number) => screen.getByTestId(`game-option-${String(place)}-face`);
+    /** What moves the option at that place: its pop, its drop or its fade. */
+    const optionMotion = (place: number) =>
+      screen.getByTestId(`game-option-${String(place)}-motion`);
     const step = (element: Shown, key: 'translateX' | 'scale') =>
       styleOf(element).transform?.find((one) => one[key] !== undefined)?.[key];
     /** The Life at that place, which pops when lost, and its fill, which fades. */
@@ -949,19 +955,44 @@ describe('GameRound', () => {
       });
     }
 
-    it('fills a right answer green and grows it, both within 300 ms', async () => {
+    it('turns a right answer red, pops it and stamps it with a tick', async () => {
       await renderRound();
-      const before = styleOf(optionFace(CORRECT)).backgroundColor;
+      expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: tile });
 
       await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
-      await wait(300);
-
-      const filled = styleOf(optionFace(CORRECT)).backgroundColor;
-      expect(filled).not.toBe(before);
-      expect(step(optionFace(CORRECT), 'scale')).toBeCloseTo(1.03);
+      await wait(150);
+      expect(step(optionMotion(CORRECT), 'scale')).not.toBe(1);
       await wait(1000);
-      expect(styleOf(optionFace(CORRECT)).backgroundColor).toBe(filled);
-      expect(step(optionFace(CORRECT), 'translateX')).toBeUndefined();
+
+      expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
+      expect(step(optionMotion(CORRECT), 'scale')).toBe(1);
+      expect(
+        styleOf(
+          screen.getByTestId(`game-option-${String(CORRECT)}-stamp`, {
+            includeHiddenElements: true,
+          }),
+        ).opacity,
+      ).toBe(1);
+      expect(step(optionMotion(CORRECT), 'translateX')).toBeUndefined();
+    });
+
+    it('sinks a wrong choice, drops it, strikes it through and fades the others', async () => {
+      await renderRound();
+
+      await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
+      await wait(1000);
+
+      expect(optionFace(1)).toHaveStyle({ backgroundColor: surfaceSunken });
+      expect(styleOf(optionMotion(1)).translateY).toBe(8);
+      expect(
+        step(
+          screen.getByTestId('game-option-1-slash', { includeHiddenElements: true }),
+          'scaleX' as 'scale',
+        ),
+      ).toBe(1);
+      expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
+      expect(styleOf(optionMotion(0)).opacity).toBe(0.5);
+      expect(optionFace(0)).toHaveStyle({ backgroundColor: tile });
     });
 
     it('moves no wrong choice and, once it has filled, knocks the lost Life out with a rising «−1»', async () => {
@@ -970,7 +1001,7 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
       for (const ms of [60, 60, 60]) {
         await wait(ms);
-        expect(step(optionFace(1), 'translateX')).toBeUndefined();
+        expect(step(optionMotion(1), 'translateX')).toBeUndefined();
       }
 
       // The Life jumps once the choice has filled, 200 ms after the answer.
@@ -1004,27 +1035,34 @@ describe('GameRound', () => {
         jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
       });
 
-      it('fills a right answer green in place, growing nothing', async () => {
+      it('turns a right answer red and stamps it in place, popping nothing', async () => {
         await renderRound();
-        const before = styleOf(optionFace(CORRECT)).backgroundColor;
 
         await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
-        await wait(300);
+        for (const ms of [100, 100, 600]) {
+          await wait(ms);
+          expect(step(optionMotion(CORRECT), 'scale')).toBeUndefined();
+        }
 
-        expect(styleOf(optionFace(CORRECT)).backgroundColor).not.toBe(before);
-        expect(step(optionFace(CORRECT), 'scale')).toBe(1);
+        expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
+        expect(
+          styleOf(
+            screen.getByTestId(`game-option-${String(CORRECT)}-stamp`, {
+              includeHiddenElements: true,
+            }),
+          ).transform,
+        ).toEqual([{ rotate: '-8deg' }]);
       });
 
-      it('fills a wrong choice in place and fades the lost Life and its «−1» without a jump', async () => {
+      it('sinks a wrong choice in place and fades the lost Life and its «−1» without a jump', async () => {
         await renderRound();
-        const before = styleOf(optionFace(1)).backgroundColor;
 
         await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
         for (const ms of [60, 60, 60, 60, 60]) {
           await wait(ms);
-          expect(step(optionFace(1), 'translateX')).toBeUndefined();
+          expect(styleOf(optionMotion(1)).translateY).toBeUndefined();
         }
-        expect(styleOf(optionFace(1)).backgroundColor).not.toBe(before);
+        expect(optionFace(1)).toHaveStyle({ backgroundColor: surfaceSunken });
 
         for (const ms of [100, 100, 100]) {
           await wait(ms);
