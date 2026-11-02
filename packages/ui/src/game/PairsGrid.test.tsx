@@ -1,9 +1,9 @@
 import type { GridCell, RoundAnswer, RoundOption } from '@slovo/core';
-import { EditionProvider, PairsGrid } from '@slovo/ui';
+import { coreTokens, EditionProvider, PairsGrid } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
-import { Pressable, Text } from 'react-native';
+import { AccessibilityInfo, Pressable, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
@@ -100,23 +100,38 @@ async function next() {
   await fireEvent.press(screen.getByRole('button', { name: 'next' }));
 }
 
-/** The fill of a cell. */
-function backgroundOf(testID: string): unknown {
-  const style = getAnimatedStyle(screen.getByTestId(testID)) as { backgroundColor?: unknown };
-  return style.backgroundColor;
+const { accent, ink, surfaceSunken, tile } = coreTokens.colors.light;
+
+/** The face of a cell, which turns ink, red or sinks. */
+const face = (testID: string) => screen.getByTestId(`${testID}-face`);
+
+/** What pops, drops or turns a cell now. */
+function motionOf(testID: string) {
+  const style = getAnimatedStyle(screen.getByTestId(`${testID}-motion`));
+  const opacity = style.opacity;
+  const transform = style.transform as
+    { translateX?: number; translateY?: number; scale?: number; rotate?: string }[] | undefined;
+  const step = <K extends 'translateX' | 'translateY' | 'scale' | 'rotate'>(key: K) =>
+    transform?.find((one) => one[key] !== undefined)?.[key];
+  return {
+    opacity,
+    scale: step('scale'),
+    translateX: step('translateX'),
+    translateY: step('translateY'),
+    rotate: step('rotate'),
+  };
 }
 
-/** The horizontal shift of a cell. */
-function shiftOf(testID: string): number {
-  const style = getAnimatedStyle(screen.getByTestId(testID)) as {
-    transform?: { translateX?: number }[];
-  };
-  return style.transform?.find((step) => step.translateX !== undefined)?.translateX ?? 0;
+async function wait(ms: number) {
+  await act(() => {
+    jest.advanceTimersByTime(ms);
+  });
 }
 
 describe('PairsGrid', () => {
   beforeEach(() => {
     jest.useFakeTimers();
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
   });
 
   afterEach(() => {
@@ -185,39 +200,85 @@ describe('PairsGrid', () => {
     expect(definition(2)).toBeEnabled();
   });
 
-  it('fills a wrong pair in a colour of its own and moves none of its cells', async () => {
+  it('turns the selected Word ink', async () => {
     await renderGrid();
-    const rest = backgroundOf('pairs-word-0');
+    expect(face('pairs-word-0')).toHaveStyle({ backgroundColor: tile });
 
-    await match(0, 2);
-    await act(() => {
-      jest.advanceTimersByTime(300);
-    });
+    await fireEvent.press(word(0));
 
-    const wrong = backgroundOf('pairs-word-0');
-    expect(wrong).not.toBe(rest);
-    expect(backgroundOf('pairs-definition-2')).toBe(wrong);
-    expect(backgroundOf('pairs-word-1')).toBe(rest);
-    expect(shiftOf('pairs-word-0')).toBe(0);
-    expect(shiftOf('pairs-definition-2')).toBe(0);
+    expect(face('pairs-word-0')).toHaveStyle({ backgroundColor: ink });
+    expect(face('pairs-word-1')).toHaveStyle({ backgroundColor: tile });
   });
 
-  it('fills a right pair in another colour than a wrong one', async () => {
+  it('sinks a wrong pair, drops it and turns its Word left and its Definition right', async () => {
     await renderGrid();
+
     await match(0, 2);
-    await act(() => {
-      jest.advanceTimersByTime(300);
+    await wait(1000);
+
+    expect(face('pairs-word-0')).toHaveStyle({ backgroundColor: surfaceSunken });
+    expect(face('pairs-definition-2')).toHaveStyle({ backgroundColor: surfaceSunken });
+    expect(motionOf('pairs-word-0')).toMatchObject({
+      translateY: 8,
+      rotate: '-3deg',
+      opacity: 0.6,
     });
-    const wrong = backgroundOf('pairs-word-0');
-    await next();
+    expect(motionOf('pairs-definition-2')).toMatchObject({
+      translateY: 8,
+      rotate: '3deg',
+      opacity: 0.6,
+    });
+    expect(motionOf('pairs-word-0').translateX).toBeUndefined();
+    expect(face('pairs-word-1')).toHaveStyle({ backgroundColor: tile });
+    expect(motionOf('pairs-word-1')).toMatchObject({ opacity: 1, translateY: undefined });
+  });
+
+  it('turns a right pair red and pops it', async () => {
+    await renderGrid();
 
     await match(0, 1);
-    await act(() => {
-      jest.advanceTimersByTime(300);
+    await wait(150);
+    expect(motionOf('pairs-definition-1').scale).not.toBe(1);
+    await wait(1000);
+
+    expect(face('pairs-word-0')).toHaveStyle({ backgroundColor: accent });
+    expect(face('pairs-definition-1')).toHaveStyle({ backgroundColor: accent });
+    expect(motionOf('pairs-definition-1')).toMatchObject({ scale: 1, translateX: undefined });
+    expect(face('pairs-definition-0')).toHaveStyle({ backgroundColor: tile });
+  });
+
+  describe('with Reduce Motion', () => {
+    beforeEach(() => {
+      jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
     });
 
-    expect(backgroundOf('pairs-definition-1')).not.toBe(wrong);
-    expect(shiftOf('pairs-definition-1')).toBe(0);
+    it('turns a right pair red in place, popping nothing', async () => {
+      await renderGrid();
+
+      await match(0, 1);
+      for (const ms of [100, 100, 600]) {
+        await wait(ms);
+        expect(motionOf('pairs-word-0').scale).toBeUndefined();
+      }
+
+      expect(face('pairs-word-0')).toHaveStyle({ backgroundColor: accent });
+    });
+
+    it('sinks a wrong pair in place, dropping and turning nothing', async () => {
+      await renderGrid();
+
+      await match(0, 2);
+      for (const ms of [100, 100, 600]) {
+        await wait(ms);
+        expect(motionOf('pairs-word-0')).toMatchObject({
+          translateY: undefined,
+          rotate: undefined,
+        });
+      }
+
+      expect(face('pairs-word-0')).toHaveStyle({ backgroundColor: surfaceSunken });
+      expect(motionOf('pairs-word-0').opacity).toBe(0.6);
+    });
   });
 
   it('names each Word with its Stress and each Definition by its text for VoiceOver', async () => {

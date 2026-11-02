@@ -13,14 +13,26 @@ import Animated, {
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, onFill, roundLayout, space, typeSize } from '../tokens';
+import { PressedTile } from '../primitives/PressedTile';
+import { space, typeSize } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
-/** A chip's height, above the 44 pt touch target. */
-const CHIP_HEIGHT = 52;
+/** A place of the answer line, the design's slot: its height, least width, corner and border. */
+const SLOT_HEIGHT = 64;
+const SLOT_BORDER = 3;
+/** A chip among the shuffled ones, the design's letter tile. */
+const CHIP_HEIGHT = 60;
+const CHIP_WIDTH = 54;
+const CHIP_RADIUS = 14;
+/** The gap between the chips, and between the answer line and the chips. */
+const CHIP_GAP = 8;
+const LINE_GAP = 22;
+/** How faint a chip placed in the line stays among the shuffled ones. */
+const PLACED_OPACITY = 0.25;
 /** How far the largest text sizes of iOS may scale a chip's text, so a chip never breaks a word. */
 const CHIP_MAX_FONT_SCALE = 1.5;
-/** A word chip's text, smaller than a letter's so an expression of 8 words fits. */
+/** A letter's text, Unbounded 900 26, and a word chip's, smaller so an expression of 8 words fits. */
+const LETTER_SIZE = 26;
 const WORD_SIZE = typeSize.listItem;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -28,18 +40,21 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 /** The answer to a Round of the chips form. */
 type ChipsAnswer = Extract<RoundAnswer, { form: 'chips' }>;
 
+/** How a judged answer shows in the line; nothing before the answer. */
+type Judged = 'right' | 'wrong' | undefined;
+
 /**
  * The chips of a Round of the chips form, letters of a Word or words of an
- * expression, shuffled, and the answer line over them. A tap moves a chip to
- * the end of the line and a tap in the line puts it back; the last chip gives
- * the answer, the chips' places in the order tapped. Once the answer is
- * judged, a right line fills in the correct colour and, in a wrong one, the
- * first chip out of place fills in the wrong colour, nothing shaking, which Reduce
- * Motion leaves out; the screen plays the answer's haptic. VoiceOver reads
- * every chip by its text, the line's in the order placed. A character that
- * stays in place, such as an apostrophe, is no chip: it shows in the line
- * once the chips before it are there. Key it by the Round, so a new Round
- * starts with an empty line.
+ * expression, shuffled on tiles, and the answer line over them, a dashed
+ * place for each chip. A tap moves a chip to the first empty place and a tap
+ * in the line puts it back; the last chip gives the answer, the chips'
+ * places in the order tapped. Once the answer is judged, a right line turns
+ * red and a wrong one sinks, nothing shaking; the screen plays the answer's
+ * haptic. VoiceOver reads every chip by its text, the line's in the order
+ * placed, and skips the empty places. A character that stays in place, such
+ * as an apostrophe, is no chip: it shows in the line once the chips before
+ * it are there. Key it by the Round, so a new Round starts with an empty
+ * line.
  */
 export function OrderedChips({
   chips,
@@ -61,44 +76,41 @@ export function OrderedChips({
 }) {
   const [tapped, setTapped] = useState<readonly number[]>([]);
   const line = answer?.chosen ?? tapped;
-  const wrongAt =
-    answer === undefined || answer.right
-      ? undefined
-      : line.findIndex((place, index) => chips[place] !== answer.expected[index]);
+  const judged: Judged = answer === undefined ? undefined : answer.right ? 'right' : 'wrong';
 
   return (
     <View testID="chips" style={styles.chips}>
       <View testID="chips-line" style={styles.line}>
-        <LineRule />
-        {[...line, undefined].map((place, index) => (
-          <Fragment key={place ?? 'end'}>
-            {fixed
-              .filter(({ at }) => at === index)
-              .map(({ text }, mark) => (
-                <FixedMark key={mark} text={text} kind={kind} />
-              ))}
-            {place !== undefined && (
-              <LineChip
-                index={index}
-                text={chips[place] ?? ''}
-                kind={kind}
-                fill={
-                  answer === undefined
-                    ? undefined
-                    : answer.right
-                      ? 'right'
-                      : wrongAt === index
-                        ? 'wrong'
-                        : undefined
-                }
-                disabled={answer !== undefined}
-                onPress={() => {
-                  setTapped(tapped.filter((other) => other !== place));
-                }}
-              />
-            )}
-          </Fragment>
-        ))}
+        {chips.map((_, index) => {
+          const place = line[index];
+          return (
+            <Fragment key={index}>
+              {index <= line.length &&
+                fixed
+                  .filter(({ at }) => at === index)
+                  .map(({ text }, mark) => <FixedMark key={mark} text={text} kind={kind} />)}
+              {place === undefined ? (
+                <EmptySlot index={index} kind={kind} />
+              ) : (
+                <LineChip
+                  key={place}
+                  index={index}
+                  text={chips[place] ?? ''}
+                  kind={kind}
+                  judged={judged}
+                  disabled={answer !== undefined}
+                  onPress={() => {
+                    setTapped(tapped.filter((other) => other !== place));
+                  }}
+                />
+              )}
+            </Fragment>
+          );
+        })}
+        {line.length === chips.length &&
+          fixed
+            .filter(({ at }) => at === chips.length)
+            .map(({ text }, mark) => <FixedMark key={mark} text={text} kind={kind} />)}
       </View>
       <View style={styles.tray}>
         {chips.map((text, place) => {
@@ -110,7 +122,7 @@ export function OrderedChips({
               text={text}
               kind={kind}
               placed={placed}
-              disabled={placed || answer !== undefined}
+              inert={placed || answer !== undefined}
               onPress={() => {
                 const next = [...tapped, place];
                 setTapped(next);
@@ -124,69 +136,75 @@ export function OrderedChips({
   );
 }
 
-/** The rule the answer line's chips stand on, under them across the line. */
-function LineRule() {
+/** An empty place of the answer line, dashed, which VoiceOver skips. It carries `chips-slot-${index}`. */
+function EmptySlot({ index, kind }: { index: number; kind: 'letter' | 'word' }) {
   const { colors } = useTokens();
-  return <View style={[styles.rule, { backgroundColor: colors.line }]} />;
+  return (
+    <View
+      testID={`chips-slot-${String(index)}`}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      style={[
+        styles.slot,
+        kind === 'letter' ? styles.letter : styles.word,
+        { borderColor: colors.line, borderStyle: 'dashed' },
+      ]}
+    />
+  );
 }
 
 /**
- * A chip among the shuffled ones. Once placed in the line it leaves an empty
- * place of its size, which VoiceOver skips.
+ * A chip among the shuffled ones, on a pressed tile. Once placed in the line
+ * it stays faint in its place, takes no tap, and VoiceOver skips it.
  */
 function Chip({
   testID,
   text,
   kind,
   placed,
-  disabled,
+  inert,
   onPress,
 }: {
   testID: string;
   text: string;
   kind: 'letter' | 'word';
   placed: boolean;
-  disabled: boolean;
+  inert: boolean;
   onPress: () => void;
 }) {
-  const { colors, radii } = useTokens();
+  const { colors } = useTokens();
   const { voice } = useEdition();
   return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
-      accessibilityLabel={text}
-      accessibilityState={{ disabled }}
+    <View
       accessibilityElementsHidden={placed}
       importantForAccessibility={placed ? 'no-hide-descendants' : 'auto'}
+      style={placed && styles.placed}
       {...voice}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.chip,
-        kind === 'letter' ? styles.letter : styles.word,
-        {
-          backgroundColor: pressed ? colors.surfaceSunken : colors.surface,
-          borderColor: colors.line,
-          borderRadius: radii.button,
-        },
-        placed && styles.placed,
-      ]}
     >
-      <ChipText text={text} kind={kind} color={colors.ink} />
-    </Pressable>
+      <PressedTile
+        testID={testID}
+        radius={CHIP_RADIUS}
+        accessibilityLabel={text}
+        accessibilityState={{ disabled: inert }}
+        inert={inert}
+        onPress={onPress}
+        faceStyle={[styles.chip, kind === 'letter' ? styles.letter : styles.word]}
+      >
+        <ChipText text={text} kind={kind} color={colors.ink} />
+      </PressedTile>
+    </View>
   );
 }
 
 /**
- * A chip in the answer line. A judged answer fills it in the correct or the
- * wrong colour; nothing shakes.
+ * A chip in the answer line, in a place bordered in ink. A right answer
+ * turns the line red, a wrong one sinks it; nothing shakes.
  */
 function LineChip({
   index,
   text,
   kind,
-  fill,
+  judged,
   disabled,
   onPress,
 }: {
@@ -194,33 +212,33 @@ function LineChip({
   index: number;
   text: string;
   kind: 'letter' | 'word';
-  /** How the judged answer fills it; nothing before the answer or for a chip in place in a wrong one. */
-  fill: 'right' | 'wrong' | undefined;
+  judged: Judged;
   disabled: boolean;
   onPress: () => void;
 }) {
-  const { colors, radii } = useTokens();
-  const light = useSchemeColors('light');
+  const { colors } = useTokens();
+  const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
-  /** 0 before the answer, 1 once the chip has filled. */
-  const filled = useSharedValue(fill === undefined ? 0 : 1);
-  // Whether the chip showed its fill before, so only the answer given now moves it.
-  const shownFill = useRef(fill !== undefined);
+  /** 0 before the answer, 1 once the chip has turned. */
+  const turned = useSharedValue(judged === undefined ? 0 : 1);
+  // Whether the chip showed the answer before, so only the answer given now moves it.
+  const shownJudged = useRef(judged !== undefined);
 
   useEffect(() => {
-    if (fill === undefined || shownFill.current) return;
-    shownFill.current = true;
-    filled.value = withTiming(1, fill === 'right' ? RIGHT_FILL : WRONG_FILL);
-    // The shared value is stable, so only the answer given fills the chip.
-  }, [fill, filled]);
+    if (judged === undefined || shownJudged.current) return;
+    shownJudged.current = true;
+    turned.value = withTiming(1, judged === 'right' ? RIGHT_FILL : WRONG_FILL);
+    // The shared value is stable, so only the answer given turns the chip.
+  }, [judged, turned]);
 
-  const paint = fill === 'right' ? light.correct : light.wrong;
+  const face = judged === 'right' ? colors.accent : colors.surfaceSunken;
+  const border = judged === 'right' ? colors.accentEdge : colors.ink;
   const motion = useAnimatedStyle(() =>
-    fill === undefined
+    judged === undefined
       ? {}
       : {
-          backgroundColor: interpolateColor(filled.value, [0, 1], [colors.surface, paint]),
-          borderColor: interpolateColor(filled.value, [0, 1], [colors.line, paint]),
+          backgroundColor: interpolateColor(turned.value, [0, 1], [colors.tile, face]),
+          borderColor: interpolateColor(turned.value, [0, 1], [colors.ink, border]),
         },
   );
   return (
@@ -233,13 +251,13 @@ function LineChip({
       disabled={disabled}
       onPress={onPress}
       style={[
-        styles.chip,
+        styles.slot,
         kind === 'letter' ? styles.letter : styles.word,
-        { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.button },
+        { backgroundColor: colors.tile, borderColor: colors.ink, borderStyle: 'solid' },
         motion,
       ]}
     >
-      <ChipText text={text} kind={kind} color={fill === undefined ? colors.ink : onFill} />
+      <ChipText text={text} kind={kind} color={judged === 'right' ? keyInk : colors.ink} />
     </AnimatedPressable>
   );
 }
@@ -271,33 +289,31 @@ function ChipText({ text, kind, color }: { text: string; kind: 'letter' | 'word'
 }
 
 const styles = StyleSheet.create({
-  chips: { gap: space[8] },
+  chips: { gap: LINE_GAP },
   line: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: roundLayout.tightGap,
-    minHeight: CHIP_HEIGHT + space[2],
-    paddingBottom: space[2],
+    gap: CHIP_GAP,
   },
-  rule: { position: 'absolute', left: 0, right: 0, bottom: 0, height: StyleSheet.hairlineWidth },
   tray: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: roundLayout.gap,
+    gap: CHIP_GAP,
   },
-  chip: {
-    minHeight: CHIP_HEIGHT,
-    minWidth: minTouchTarget,
+  slot: {
+    height: SLOT_HEIGHT,
+    borderWidth: SLOT_BORDER,
+    borderRadius: CHIP_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
   },
-  letter: { paddingHorizontal: space[3] },
-  word: { paddingHorizontal: space[4] },
-  placed: { opacity: 0 },
-  mark: { minHeight: CHIP_HEIGHT, justifyContent: 'center' },
-  letterText: { fontSize: typeSize.roundOption, fontWeight: '500' },
-  wordText: { fontSize: WORD_SIZE, fontWeight: '500' },
+  chip: { height: CHIP_HEIGHT, alignItems: 'center', justifyContent: 'center' },
+  letter: { minWidth: CHIP_WIDTH, paddingHorizontal: space[1] },
+  word: { minWidth: CHIP_WIDTH, paddingHorizontal: space[4] },
+  placed: { opacity: PLACED_OPACITY },
+  mark: { height: SLOT_HEIGHT, justifyContent: 'center' },
+  letterText: { fontSize: LETTER_SIZE, fontWeight: '900' },
+  wordText: { fontSize: WORD_SIZE, fontWeight: '800' },
 });

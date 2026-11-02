@@ -26,7 +26,8 @@ export type TileTone = 'tile' | 'accent' | 'ink' | 'none';
  * face over a hard offset edge (`offsetShadow`). A press moves the face
  * down and leaves a thin edge, on the UI thread; under Reduce Motion the
  * face stays and fades instead, as does a face with no edge. Disabled, it
- * is dimmed and takes no press. A `key` stands on a shallower edge, as a
+ * is dimmed and takes no press; inert, as an answered tile, it takes no
+ * press but keeps its look. A `key` stands on a shallower edge, as a
  * key of an on-screen keyboard. Its face carries the test ID
  * `${testID}-face`.
  */
@@ -36,10 +37,12 @@ export function PressedTile({
   radius,
   onPress,
   disabled = false,
+  inert = false,
   accessibilityLabel,
   accessibilityHint,
   accessibilityState,
   faceStyle,
+  hitSlop,
   testID,
   children,
 }: {
@@ -50,11 +53,15 @@ export function PressedTile({
   radius?: number;
   onPress: () => void;
   disabled?: boolean;
+  /** Whether it takes no press while it keeps its look, as an answered tile. */
+  inert?: boolean;
   accessibilityLabel?: string;
   accessibilityHint?: string | undefined;
-  accessibilityState?: { busy?: boolean; selected?: boolean | undefined };
+  accessibilityState?: { busy?: boolean; selected?: boolean | undefined; disabled?: boolean };
   /** The face's own layout: its height, padding and content alignment. */
   faceStyle?: StyleProp<ViewStyle>;
+  /** How far past its edges a tap still counts, for a tile narrower than the touch target. */
+  hitSlop?: { left?: number; right?: number; top?: number; bottom?: number };
   testID?: string | undefined;
   children: ReactNode;
 }) {
@@ -93,8 +100,12 @@ export function PressedTile({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ ...accessibilityState, disabled }}
-      disabled={disabled}
+      accessibilityState={{
+        ...accessibilityState,
+        disabled: disabled || (accessibilityState?.disabled ?? false),
+      }}
+      disabled={disabled || inert}
+      hitSlop={hitSlop}
       onPress={onPress}
       onPressIn={() => {
         press(1);

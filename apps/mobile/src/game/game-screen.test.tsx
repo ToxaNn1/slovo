@@ -330,10 +330,11 @@ const ALL_CELLS = { includeHiddenElements: true };
  */
 function pairsLeft(): { word: number; definition: number }[] {
   const definitions = screen
-    .getAllByTestId(/^pairs-definition-/, ALL_CELLS)
+    .getAllByTestId(/^pairs-definition-\d+$/, ALL_CELLS)
     .map((cell): unknown => cell.props['accessibilityLabel']);
-  return screen.getAllByTestId(/^pairs-word-/, ALL_CELLS).flatMap((cell, word) => {
-    if (cell.props['accessibilityElementsHidden'] === true) return [];
+  return screen.getAllByTestId(/^pairs-word-\d+$/, ALL_CELLS).flatMap((cell, word) => {
+    // A pair gone leaves its place empty, which VoiceOver skips.
+    if (screen.queryByTestId(`pairs-word-${String(word)}`) === null) return [];
     const n = /\d+/.exec(String(cell.props['accessibilityLabel']))?.[0] ?? '';
     return [{ word, definition: definitions.indexOf(`The meaning of test${n}.`) }];
   });
@@ -737,7 +738,7 @@ describe('the Game screen', () => {
       ).toBeOnTheScreen();
       const left = pairsLeft();
       // A grid with none of its pairs gone yet is a new one.
-      if (left.length === screen.getAllByTestId(/^pairs-word-/, ALL_CELLS).length)
+      if (left.length === screen.getAllByTestId(/^pairs-word-\d+$/, ALL_CELLS).length)
         grids.push(left.length);
       const [{ word, definition }] = left as [(typeof left)[number]];
       await fireEvent.press(screen.getByTestId(`pairs-word-${String(word)}`));
