@@ -8,12 +8,11 @@ import {
   type Clock,
   type Composition,
   type Edition,
-  type Haptics,
   type Schedule,
   type XpRecord,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, systemSchedule } from '@slovo/ui';
+import { EditionProvider, systemSchedule } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -145,13 +144,6 @@ const idiom = (index: number): Idiom => ({
 /** The haptic of a wrong answer. */
 const warning = jest.fn();
 
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning,
-};
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -294,11 +286,9 @@ async function renderScreen({ shareCard }: { shareCard?: ShareCard } = {}) {
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>
-          <HapticsProvider haptics={haptics}>
             <SettingsProvider>
               <GameScreen />
             </SettingsProvider>
-          </HapticsProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,

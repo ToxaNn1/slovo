@@ -6,7 +6,6 @@ import {
   type Composition,
   type TrackedUserState,
   type Edition,
-  type Haptics,
   type NotificationSchedulerPort,
   type XpRecord,
 } from '@slovo/core';
@@ -16,7 +15,7 @@ import {
   seedUserState,
   type UserStateFacts,
 } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
+import { EditionProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { State } from 'react-native-gesture-handler';
@@ -59,13 +58,6 @@ const clock = { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Eu
 // The app in the foreground, where the Feed gets its next card ready.
 jest.mock('../foreground/in-foreground', () => ({ useInForeground: () => true }));
 
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
@@ -192,11 +184,9 @@ async function renderApp() {
           <TokensProvider tokens={editionTokens} colorScheme="light">
             <ShellProvider shell={shell()}>
               <EditionProvider edition={edition} strings={editionStrings}>
-                <HapticsProvider haptics={haptics}>
                   <SettingsProvider>
                     <Slot />
                   </SettingsProvider>
-                </HapticsProvider>
               </EditionProvider>
             </ShellProvider>
           </TokensProvider>

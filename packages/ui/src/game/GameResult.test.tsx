@@ -1,5 +1,5 @@
-import { coreDecor, type CurrentGame, type Decor, type Haptics } from '@slovo/core';
-import { DecorProvider, EditionProvider, GameResult, HapticsProvider } from '@slovo/ui';
+import { coreDecor, type CurrentGame, type Decor } from '@slovo/core';
+import { DecorProvider, EditionProvider, GameResult } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
@@ -28,13 +28,6 @@ const strings = testStrings({
   },
 });
 
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
 
 /** A victory illustration of three layers, each a square. */
 const layer = { path: 'M0 0h4v4H0z', light: '#000', dark: '#fff' };
@@ -69,7 +62,6 @@ async function renderResult() {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <DecorProvider decor={decor}>
-        <HapticsProvider haptics={haptics}>
           <GameResult
             game={won}
             bestResult={15}
@@ -77,7 +69,6 @@ async function renderResult() {
             onHome={jest.fn()}
             onOpenEntry={undefined}
           />
-        </HapticsProvider>
       </DecorProvider>
     </EditionProvider>,
   );

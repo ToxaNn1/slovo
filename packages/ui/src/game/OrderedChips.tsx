@@ -36,7 +36,7 @@ type ChipsAnswer = Extract<RoundAnswer, { form: 'chips' }>;
  * the answer, the chips' places in the order tapped. Once the answer is
  * judged, a right line fills in the correct colour and, in a wrong one, the
  * first chip out of place fills in the wrong colour and shakes, which Reduce
- * Motion leaves out; the screen plays the answer's haptic. VoiceOver reads
+ * Motion leaves out. VoiceOver reads
  * every chip by its text, the line's in the order placed. A character that
  * stays in place, such as an apostrophe, is no chip: it shows in the line
  * once the chips before it are there. Key it by the Round, so a new Round

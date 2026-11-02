@@ -1,7 +1,6 @@
-import type { Haptics, WordCardModel } from '@slovo/core';
+import type { WordCardModel } from '@slovo/core';
 import {
   EditionProvider,
-  HapticsProvider,
   KnowledgeButtons,
   VerticalPager,
   YesterdayCard,
@@ -48,13 +47,6 @@ const word: WordCardModel = {
   illustration: undefined,
 };
 
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
 
 /** The Feed's pages: the Yesterday card, then the next Entry's card behind it. */
 const PAGES = ['yesterday', 'next'] as const;
@@ -63,7 +55,6 @@ async function renderFeed({ withMarks }: { withMarks: boolean }) {
   const onMark = jest.fn();
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <HapticsProvider haptics={haptics}>
         <VerticalPager
           testID="pager"
           items={PAGES}
@@ -83,7 +74,6 @@ async function renderFeed({ withMarks }: { withMarks: boolean }) {
             )
           }
         />
-      </HapticsProvider>
     </EditionProvider>,
   );
   // The pages are drawn once the pager knows its height.

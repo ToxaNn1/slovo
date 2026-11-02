@@ -2,13 +2,11 @@
 import '@/shell/intl-polyfill';
 import { MascotCelebrations } from '@/mascot/mascot';
 
-import { createHaptics } from '@slovo/core';
 import {
   DecorProvider,
   EditionProvider,
   fill,
   FontSizeProvider,
-  HapticsProvider,
   TokensProvider,
   typeSize,
   useEdition,
@@ -27,7 +25,6 @@ import {
   editionTokens,
 } from '@/edition/edition';
 import { ScreenViews } from '@/analytics/screen-views';
-import { hapticEngine } from '@/game/haptics';
 import { deviceClock } from '@/device/device-clock';
 import { startCrashReports } from '@/diagnostics/crash-reports';
 import { DecorInEffect } from '@/shell/decor-in-effect';
@@ -136,11 +133,7 @@ export default function RootLayout() {
 function ThemedTabs() {
   const { languagePack, composition } = useShell();
   const colorScheme = useColorSchemeInEffect();
-  const { fontSize, vibration } = useSettings().current;
-  const haptics = useMemo(
-    () => createHaptics({ engine: hapticEngine, vibration: () => vibration }),
-    [vibration],
-  );
+  const { fontSize } = useSettings().current;
   const colors = editionTokens.colors[colorScheme];
   const { ui } = editionTokens.fontFamilies;
 
@@ -165,7 +158,6 @@ function ThemedTabs() {
     <TokensProvider tokens={editionTokens} colorScheme={colorScheme}>
       <ThemeProvider value={navigationTheme}>
         <FontSizeProvider fontSize={fontSize}>
-          <HapticsProvider haptics={haptics}>
             <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
             {/* Outside the gates: each of its listeners waits for its own opening (ADR 0036, 0037). */}
             <Lifecycle />
@@ -204,7 +196,6 @@ function ThemedTabs() {
                 </DecorInEffect>
               </Opened>
             </Opened>
-          </HapticsProvider>
         </FontSizeProvider>
         <LaunchSplash />
       </ThemeProvider>

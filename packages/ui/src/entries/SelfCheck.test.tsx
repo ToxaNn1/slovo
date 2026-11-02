@@ -1,8 +1,7 @@
-import type { EntryFeedCard, Haptics } from '@slovo/core';
+import type { EntryFeedCard } from '@slovo/core';
 import {
   EditionProvider,
   EntryCard,
-  HapticsProvider,
   KnowledgeButtons,
   VerticalPager,
 } from '@slovo/ui';
@@ -113,13 +112,6 @@ const TURN_LABELS = { next: 'Next page', previous: 'Previous page' };
 /** How long a page turn's motion takes (ADR 0055). */
 const SWIPE_MS = 300;
 
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
 
 async function renderFeed(
   on: boolean,
@@ -128,7 +120,6 @@ async function renderFeed(
 ) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <HapticsProvider haptics={haptics}>
         <VerticalPager
           testID="pager"
           items={cards}
@@ -143,7 +134,6 @@ async function renderFeed(
           )}
           turnActionLabels={TURN_LABELS}
         />
-      </HapticsProvider>
     </EditionProvider>,
   );
   await fireEvent(screen.getByTestId('pager'), 'layout', {

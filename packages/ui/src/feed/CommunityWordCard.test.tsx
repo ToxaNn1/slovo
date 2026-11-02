@@ -1,5 +1,5 @@
-import type { EntryRowModel, Haptics } from '@slovo/core';
-import { CommunityWordCard, EditionProvider, HapticsProvider, VerticalPager } from '@slovo/ui';
+import type { EntryRowModel } from '@slovo/core';
+import { CommunityWordCard, EditionProvider, VerticalPager } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
@@ -38,13 +38,6 @@ const correction: EntryRowModel = {
   correctionType: 'calque',
 };
 
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success: jest.fn(),
-  warning: jest.fn(),
-};
 
 /** The Feed's pages: the Community Word card, then the next Entry's card behind it. */
 const PAGES = ['communityWord', 'next'] as const;
@@ -53,7 +46,6 @@ async function renderFeed(row: EntryRowModel | undefined, adds: number) {
   const onOpen = jest.fn();
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <HapticsProvider haptics={haptics}>
         <VerticalPager
           testID="pager"
           items={PAGES}
@@ -66,7 +58,6 @@ async function renderFeed(row: EntryRowModel | undefined, adds: number) {
             )
           }
         />
-      </HapticsProvider>
     </EditionProvider>,
   );
   // The pages are drawn once the pager knows its height.

@@ -1,12 +1,11 @@
 import type {
   CurrentGame,
   GivenAnswer,
-  Haptics,
   PlayedRound,
   RoundAnswer,
   RoundBlank,
 } from '@slovo/core';
-import { EditionProvider, GameRound, HapticsProvider } from '@slovo/ui';
+import { EditionProvider, GameRound } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
@@ -61,17 +60,6 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-/** The haptics of a right and a wrong answer. */
-const success = jest.fn();
-const warning = jest.fn();
-
-const haptics: Haptics = {
-  selection: jest.fn(),
-  impactLight: jest.fn(),
-  impactMedium: jest.fn(),
-  success,
-  warning,
-};
 
 const OPTIONS = ['ardent', 'brittle', 'candid', 'dour'] as const;
 /** The place of the right option. */
@@ -435,9 +423,7 @@ async function renderRound(
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <HapticsProvider haptics={haptics}>
           <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
-        </HapticsProvider>
       </EditionProvider>
     </SafeAreaProvider>,
   );
@@ -451,7 +437,6 @@ function PlainRound({ game }: { game: CurrentGame }) {
   return (
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <HapticsProvider haptics={haptics}>
           <GameRound
             game={game}
             label="Definition"
@@ -460,7 +445,6 @@ function PlainRound({ game }: { game: CurrentGame }) {
             onLeave={jest.fn()}
             onOpenLetter={jest.fn()}
           />
-        </HapticsProvider>
       </EditionProvider>
     </SafeAreaProvider>
   );
@@ -800,7 +784,6 @@ describe('GameRound', () => {
       return (
         <SafeAreaProvider initialMetrics={metrics}>
           <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-            <HapticsProvider haptics={haptics}>
               <GameRound
                 game={game}
                 timeLeft={timeLeft}
@@ -810,7 +793,6 @@ describe('GameRound', () => {
                 onLeave={jest.fn()}
                 onOpenLetter={jest.fn()}
               />
-            </HapticsProvider>
           </EditionProvider>
         </SafeAreaProvider>
       );
@@ -838,21 +820,13 @@ describe('GameRound', () => {
       expect(screen.queryByTestId('game-lives')).not.toBeOnTheScreen();
     });
 
-    it('plays the haptic of each answer as the next Round comes at once, with no sheet', async () => {
-      success.mockClear();
-      warning.mockClear();
+    it('moves on to the next Round at once after each answer, with no sheet', async () => {
       const { rerender } = await render(<TimedRound game={timed} timeLeft={60_000} />);
       const right = movedOn(timed, true);
 
       await rerender(<TimedRound game={right} timeLeft={58_000} />);
-
-      expect(success).toHaveBeenCalledTimes(1);
-      expect(warning).not.toHaveBeenCalled();
-
       await rerender(<TimedRound game={movedOn(right, false)} timeLeft={56_000} />);
 
-      expect(success).toHaveBeenCalledTimes(1);
-      expect(warning).toHaveBeenCalledTimes(1);
       expect(screen.queryByTestId('game-next')).not.toBeOnTheScreen();
     });
   });
