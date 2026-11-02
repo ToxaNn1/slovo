@@ -1,0 +1,77 @@
+---
+const plus = 'text-[22px] text-mute transition-transform duration-200 group-open:rotate-45';
+const answer = 'm-0 pb-[22px] text-base leading-[1.6] text-mute';
+---
+
+<section>
+  <div class="mx-auto flex max-w-[780px] flex-col gap-7 px-[clamp(16px,4vw,40px)] py-[clamp(56px,8vw,104px)]">
+    <h2 class="m-0 font-word text-[clamp(24px,2.6vw,30px)] leading-[1.1] font-semibold">Питання</h2>
+    <div class="flex flex-col border-t border-line">
+      <details class="group border-b border-line">
+        <summary class="flex items-center justify-between gap-4 py-5 text-[17px] leading-[1.3] font-semibold">
+          Це безкоштовно?<span class={plus}>+</span>
+        </summary>
+        <div class="pb-[22px]">
+          <span class="inline-block rounded-md border-[1.5px] border-dashed border-red px-2.5 py-[7px] text-[15px] leading-[1.4] font-medium text-red">
+            ЗАГЛУШКА: відповідь після рішення про монетизацію
+          </span>
+        </div>
+      </details>
+      <details class="group border-b border-line">
+        <summary class="flex items-center justify-between gap-4 py-5 text-[17px] leading-[1.3] font-semibold">
+          Звідки слова?<span class={plus}>+</span>
+        </summary>
+        <p class:list={[answer, 'max-w-[60ch]']}>
+          З академічних словників української мови. Кожне слово має тлумачення, наголос і приклад.
+        </p>
+      </details>
+      <details class="group border-b border-line">
+        <summary class="flex items-center justify-between gap-4 py-5 text-[17px] leading-[1.3] font-semibold">
+          Чи працює без інтернету?<span class={plus}>+</span>
+        </summary>
+        <p class:list={[answer, 'max-w-[60ch]']}>Так. Слова, ігри й кросворд працюють офлайн.</p>
+      </details>
+      <details class="group border-b border-line">
+        <summary class="flex items-center justify-between gap-4 py-5 text-[17px] leading-[1.3] font-semibold">
+          Навіщо акаунт?<span class={plus}>+</span>
+        </summary>
+        <p class:list={[answer, 'max-w-[60ch]']}>
+          Необов'язково. Акаунт (вхід через Apple) зберігає прогрес і переносить його на новий
+          телефон.
+        </p>
+      </details>
+      <details class="group border-b border-line">
+        <summary class="flex items-center justify-between gap-4 py-5 text-[17px] leading-[1.3] font-semibold">
+          Які дані ви збираєте?<span class={plus}>+</span>
+        </summary>
+        <p class:list={[answer, 'max-w-[60ch]']}>
+          Анонімну статистику без імені й без стеження між застосунками. Деталі — у
+          <a href="uk/privacy">Політиці конфіденційності</a>.
+        </p>
+      </details>
+      <details class="group border-b border-line">
+        <summary class="flex items-center justify-between gap-4 py-5 text-[17px] leading-[1.3] font-semibold">
+          Є на Android?<span class={plus}>+</span>
+        </summary>
+        <p class:list={[answer, 'max-w-[60ch]']}>Поки тільки iPhone. Android — після запуску.</p>
+      </details>
+      <details class="group border-b border-line">
+        <summary class="flex items-center justify-between gap-4 py-5 text-[17px] leading-[1.3] font-semibold">
+          Для кого це?<span class={plus}>+</span>
+        </summary>
+        <p class:list={[answer, 'max-w-[60ch]']}>Для всіх, кому звичайних слів замало.</p>
+      </details>
+      <details class="group border-b border-line">
+        <summary class="flex items-center justify-between gap-4 py-5 text-[17px] leading-[1.3] font-semibold">
+          Я знайшов помилку в слові.<span class={plus}>+</span>
+        </summary>
+        <p class:list={[answer, 'flex flex-wrap items-center gap-2']}>
+          Напишіть нам:
+          <span class="rounded-md border-[1.5px] border-dashed border-red px-2 py-1.5 text-sm leading-none font-semibold text-red">
+            ЗАГЛУШКА-ПОШТА
+          </span>
+        </p>
+      </details>
+    </div>
+  </div>
+</section>

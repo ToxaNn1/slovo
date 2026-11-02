@@ -1,0 +1,22 @@
+---
+import { getCollection, render } from 'astro:content';
+
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const pages = await getCollection('legal');
+  return pages.map((entry) => {
+    const [edition, page] = entry.id.split('/');
+    return { params: { edition, page }, props: { entry } };
+  });
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<Base title={`${entry.data.title} · SLOVO`} lang={entry.data.lang}>
+  <main class="mx-auto max-w-2xl px-5 pt-8 pb-16 text-[17px] leading-relaxed [&_a]:text-inherit [&_h1]:my-6 [&_h1]:font-word [&_h1]:text-3xl [&_h1]:leading-tight [&_h1]:font-black [&_h2]:mt-8 [&_h2]:mb-3 [&_h2]:font-word [&_h2]:text-xl [&_h2]:font-extrabold [&_li]:my-1 [&_p]:my-4 [&_ul]:list-disc [&_ul]:pl-6">
+    <Content />
+  </main>
+</Base>

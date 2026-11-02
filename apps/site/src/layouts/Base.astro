@@ -1,0 +1,44 @@
+---
+import '../styles/global.css';
+
+import { landingEdition } from '../landing-edition';
+import { themeVariables } from '../theme';
+
+interface Props {
+  title: string;
+  description?: string;
+  lang: string;
+}
+
+const { title, description, lang } = Astro.props;
+const { tokens } = await landingEdition();
+const { light, dark } = tokens.colors;
+const { word, ui } = tokens.fontFamilies;
+// Fixed colours: the red, its edge, and the light Theme's ink and ground,
+// which the design keeps on red in both Themes.
+const fixed = `--red:${light.accent};--red-edge:${light.accentEdge};--coal:${light.ink};--cream:${light.background};--font-word:'${word} Variable',${word},sans-serif;--font-ui:'${ui} Variable',${ui},system-ui,sans-serif;`;
+const css = `:root{${fixed}}[data-th='light']{${themeVariables(light)}}[data-th='dark']{${themeVariables(dark)}}`;
+const favicon = `${import.meta.env.BASE_URL.replace(/\/?$/, '/')}favicon.svg`;
+---
+
+<!doctype html>
+<html lang={lang} data-th="light">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    {description !== undefined && <meta name="description" content={description} />}
+    <meta name="theme-color" content={light.accent} />
+    <link rel="icon" type="image/svg+xml" href={favicon} />
+    <slot name="head" />
+    <script is:inline>
+      document.documentElement.dataset.th = matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+    </script>
+    <style is:global set:html={css}></style>
+  </head>
+  <body class="m-0 min-h-screen overflow-x-hidden bg-bg text-ink transition-colors duration-300">
+    <slot />
+  </body>
+</html>

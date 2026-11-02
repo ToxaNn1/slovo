@@ -260,6 +260,28 @@ describe('an Edition folder', () => {
 
     expect(openEdition(editionsDir, 'fixture').fonts()).toEqual([]);
   });
+
+  it('lists the legal pages it brings, its Markdown files, in code-unit order', () => {
+    const edition = openEdition(
+      editionsWith({
+        change: (dir) => {
+          mkdirSync(join(dir, 'legal'), { recursive: true });
+          for (const file of ['terms.md', 'privacy.md', 'notes.txt']) {
+            writeFileSync(join(dir, 'legal', file), '');
+          }
+        },
+      }),
+      'fixture',
+    );
+
+    expect(edition.legalPages()).toEqual(
+      ['privacy.md', 'terms.md'].map((file) => join(edition.dir, 'legal', file)),
+    );
+  });
+
+  it('brings no legal pages when it has no legal folder', () => {
+    expect(openEdition(editionsWith(), 'fixture').legalPages()).toEqual([]);
+  });
 });
 
 describe('checkNewWords', () => {
