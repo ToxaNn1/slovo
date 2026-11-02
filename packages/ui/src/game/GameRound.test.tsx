@@ -10,7 +10,7 @@ import { EditionProvider, GameRound, HapticsProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
 import { useState } from 'react';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet, View } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
@@ -31,6 +31,7 @@ const strings = testStrings({
       tip: { label: 'Tip' },
       typed: { label: 'Your answer', submit: 'Check' },
       timer: { one: '{count} second left', other: '{count} seconds left' },
+      timerShown: '{seconds} s',
     },
     openLetter: 'Open a letter',
     letters: {
@@ -456,6 +457,55 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Lives: 4 of 5');
   });
 
+  it('fills the progress by each Round played, then the current one, then the rest', async () => {
+    const played = (right: boolean): PlayedRound => {
+      const { round } = answeredPick(first, { form: 'pick', option: right ? CORRECT : 0 });
+      if (round.answer === undefined) throw new Error('No answer');
+      const entry = { kind: 'word', id: 'w_candid' } as PlayedRound['entry'];
+      return { ...round, answer: round.answer, entry, right };
+    };
+    await renderRound(jest.fn(), jest.fn(), {
+      ...first,
+      round: { ...first.round, number: 3 },
+      roundsPassed: 2,
+      played: [played(true), played(false)],
+    });
+    const fillOf = (place: number): unknown =>
+      StyleSheet.flatten(screen.getByTestId(`game-progress-${String(place)}`).props['style'])
+        .backgroundColor;
+
+    expect(screen.getAllByTestId(/^game-progress-\d+$/)).toHaveLength(15);
+    expect(fillOf(2)).not.toBe(fillOf(3));
+    expect(fillOf(0)).not.toBe(fillOf(2));
+    expect(fillOf(1)).not.toBe(fillOf(3));
+    expect(fillOf(14)).toBe(fillOf(3));
+  });
+
+  it('shows the Mascot it is given on the right of the Round’s head', async () => {
+    await render(
+      <SafeAreaProvider initialMetrics={metrics}>
+        <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+          <HapticsProvider haptics={haptics}>
+            <GameRound
+              game={first}
+              label="Definition"
+              mascot={<View testID="round-mascot" />}
+              onAnswer={jest.fn()}
+              onNext={jest.fn()}
+              onLeave={jest.fn()}
+              onOpenLetter={jest.fn()}
+            />
+          </HapticsProvider>
+        </EditionProvider>
+      </SafeAreaProvider>,
+    );
+
+    expect(screen.getByTestId('round-mascot')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Definition · 1 / 15', { includeHiddenElements: true }),
+    ).toBeOnTheScreen();
+  });
+
   it('counts the Rounds passed with no limit in a mode without one, and its own Lives', async () => {
     await renderRound(jest.fn(), jest.fn(), {
       ...first,
@@ -595,7 +645,9 @@ describe('GameRound', () => {
     it('asks under the mode’s label with the Word’s vowels as buttons VoiceOver reads by place', async () => {
       await renderRound(jest.fn(), jest.fn(), wordVowelRound);
 
-      expect(screen.getByText('Where is the stress?')).toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'Where is the stress?' })).toHaveTextContent(
+        'Where is the stress? · 1 / 15',
+      );
       expect(screen.getByTestId('game-vowels')).toHaveTextContent('banana', { exact: true });
       expect(
         screen.getAllByRole('button').map((button): unknown => button.props['accessibilityLabel']),
@@ -806,11 +858,11 @@ describe('GameRound', () => {
       };
     }
 
-    it('shows the time left on top in place of the Rounds passed, and no Lives', async () => {
+    it('shows the time left in its own row under the Rounds passed, and no Lives', async () => {
       await render(<TimedRound game={timed} timeLeft={39_200} />);
 
-      expect(screen.getByRole('timer', { name: '40 seconds left' })).toHaveTextContent('40');
-      expect(screen.queryByTestId('game-progress')).not.toBeOnTheScreen();
+      expect(screen.getByRole('timer', { name: '40 seconds left' })).toHaveTextContent('40 s');
+      expect(screen.getByTestId('game-progress')).toHaveTextContent('Passed: 0');
       expect(screen.queryByTestId('game-lives')).not.toBeOnTheScreen();
     });
 

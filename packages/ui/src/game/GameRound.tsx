@@ -123,6 +123,7 @@ export function GameRound({
   onLeave,
   onOpenLetter,
   timeLeft,
+  mascot,
 }: {
   game: CurrentGame;
   /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
@@ -135,6 +136,8 @@ export function GameRound({
   onOpenLetter: () => void;
   /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
   timeLeft?: number | undefined;
+  /** The Mascot on the right of the Round's head, as the Round leaves it; none. */
+  mascot?: ReactNode;
 }) {
   const { strings } = useEdition();
   const { round } = game;
@@ -180,6 +183,14 @@ export function GameRound({
         }}
       />
       <ScrollView contentContainerStyle={styles.round}>
+        <RoundHead
+          label={asked.label}
+          number={round.number}
+          roundLimit={game.roundLimit}
+          heading={round.form === 'vowel' || round.form === 'pairs'}
+          testID={round.form === 'pairs' ? 'game-prompt' : undefined}
+          mascot={mascot}
+        />
         {round.form === 'vowel' ? (
           <RoundCard
             label={asked.label}
@@ -204,18 +215,15 @@ export function GameRound({
             />
           </RoundCard>
         ) : round.form === 'pairs' ? (
-          <>
-            <RoundLabel label={asked.label} />
-            <PairsGrid
-              key={round.number}
-              words={round.words}
-              definitions={round.definitions}
-              answer={answer?.form === 'pairs' ? answer : undefined}
-              onAnswer={(word, definition) => {
-                onAnswer({ form: 'pairs', word, definition });
-              }}
-            />
-          </>
+          <PairsGrid
+            key={round.number}
+            words={round.words}
+            definitions={round.definitions}
+            answer={answer?.form === 'pairs' ? answer : undefined}
+            onAnswer={(word, definition) => {
+              onAnswer({ form: 'pairs', word, definition });
+            }}
+          />
         ) : (
           <RoundCard
             label={asked.label}
@@ -339,6 +347,7 @@ export function QuickQuestionRound({
         highlight={round.highlight}
         gap={undefined}
         definition={round.definition}
+        labelShown
       />
       <View style={styles.options}>
         {round.options.map((option, place) => (
@@ -455,9 +464,9 @@ function GameHeader({
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
   return (
-    <View style={styles.header}>
-      <ExitButton onPress={onExit} />
-      {time === undefined ? (
+    <>
+      <View style={styles.header}>
+        <ExitButton onPress={onExit} />
         <View
           testID="game-progress"
           accessible
@@ -499,31 +508,37 @@ function GameHeader({
             </View>
           )}
         </View>
-      ) : (
-        <GameTimer
-          remainingMs={time.left}
-          totalMs={time.limit}
-          texts={{ remaining: (seconds) => count(words.timer, seconds) }}
-          testID="game-timer"
-        />
-      )}
-      {lives !== undefined && livesAtStart !== undefined && (
-        <View
-          testID="game-lives"
-          accessible
-          accessibilityLabel={fill(words.lives, {
-            count: String(lives),
-            total: String(livesAtStart),
-          })}
-          {...voice}
-          style={styles.lives}
-        >
-          {Array.from({ length: livesAtStart }, (_, life) => (
-            <Life key={life} place={life} full={life < lives} lostAfter={lifeLostAfter} />
-          ))}
+        {lives !== undefined && livesAtStart !== undefined && (
+          <View
+            testID="game-lives"
+            accessible
+            accessibilityLabel={fill(words.lives, {
+              count: String(lives),
+              total: String(livesAtStart),
+            })}
+            {...voice}
+            style={styles.lives}
+          >
+            {Array.from({ length: livesAtStart }, (_, life) => (
+              <Life key={life} place={life} full={life < lives} lostAfter={lifeLostAfter} />
+            ))}
+          </View>
+        )}
+      </View>
+      {time !== undefined && (
+        <View style={styles.timer}>
+          <GameTimer
+            remainingMs={time.left}
+            totalMs={time.limit}
+            texts={{
+              remaining: (seconds) => count(words.timer, seconds),
+              shown: (seconds) => fill(words.timerShown, { seconds: String(seconds) }),
+            }}
+            testID="game-timer"
+          />
         </View>
       )}
-    </View>
+    </>
   );
 }
 
@@ -661,9 +676,12 @@ function RoundCard({
   highlight,
   gap,
   definition,
+  labelShown = false,
   children,
 }: {
   label: string;
+  /** Whether the card shows its label over the prompt, as in the Feed; a Game's Round shows it in its head. */
+  labelShown?: boolean;
   prompt: string;
   /** The part of the prompt to mark; nothing to mark. */
   highlight: TextRange | undefined;
@@ -706,13 +724,15 @@ function RoundCard({
       ]}
     >
       <CardCorners corners={['topLeft', 'bottomRight']} />
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-        {...voice}
-        style={[overlineType, { color: colors.muted, fontFamily: fontFamilies.ui }]}
-      >
-        {label}
-      </Text>
+      {labelShown && (
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          {...voice}
+          style={[overlineType, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+        >
+          {label}
+        </Text>
+      )}
       {children ?? (
         <WholeWordsText
           text={prompt}
@@ -748,8 +768,58 @@ function RoundCard({
 }
 
 /**
- * The mode's label over a Round without a prompt, such as a pairs grid, which
- * VoiceOver reads as the Round's heading before the grid.
+ * The Round's head (`game-round-dark`): its label and place, such as
+ * «ВИЗНАЧЕННЯ · 3 / 15», in the muted Unbounded, and the Mascot on the
+ * right. The label is the Round's heading for VoiceOver where its card does
+ * not read it, a vowel or a pairs Round; the place is the header's to read.
+ */
+function RoundHead({
+  label,
+  number,
+  roundLimit,
+  heading,
+  testID,
+  mascot,
+}: {
+  label: string;
+  /** Which Round of the Game it is, from 1. */
+  number: number;
+  /** The mode's Round limit; none in a mode without one, which shows no place. */
+  roundLimit: number | undefined;
+  /** Whether VoiceOver reads the label as the Round's heading; else the card reads it. */
+  heading: boolean;
+  testID: string | undefined;
+  mascot: ReactNode;
+}) {
+  const { colors, fontFamilies } = useTokens();
+  const { strings, voice } = useEdition();
+  const place =
+    roundLimit === undefined
+      ? undefined
+      : fill(strings.game.round.progress, {
+          passed: String(number),
+          total: String(roundLimit),
+        });
+  return (
+    <View style={styles.head}>
+      <Text
+        testID={testID}
+        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        {...(heading
+          ? { accessibilityRole: 'header', accessibilityLabel: label }
+          : { accessibilityElementsHidden: true, importantForAccessibility: 'no' })}
+        {...voice}
+        style={[styles.headLabel, { color: colors.muted, fontFamily: fontFamilies.word }]}
+      >
+        {place === undefined ? label : `${label} · ${place}`}
+      </Text>
+      {mascot}
+    </View>
+  );
+}
+
+/**
+ * A title over a Quick Question's card, which VoiceOver reads as its heading.
  */
 function RoundLabel({ label }: { label: string }) {
   const { colors, fontFamilies } = useTokens();
@@ -987,6 +1057,7 @@ const styles = StyleSheet.create({
   segments: { flexDirection: 'row', gap: roundProgress.gap },
   segment: { flex: 1, height: roundProgress.height, transform: [{ skewX: roundProgress.skew }] },
   lives: { flexDirection: 'row', gap: LIFE_GAP },
+  timer: { marginTop: space[3], paddingHorizontal: space[4] },
   lifeLost: { position: 'absolute', top: -space[1], right: 0 },
   lifeLostText: { fontSize: typeSize.meta, fontWeight: '900' },
   exit: {
@@ -995,6 +1066,19 @@ const styles = StyleSheet.create({
     borderRadius: EXIT_RADIUS,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: roundLayout.gap,
+  },
+  headLabel: {
+    flexShrink: 1,
+    fontSize: typeSize.smallLabel,
+    fontWeight: '800',
+    letterSpacing: 2,
+    textTransform: 'uppercase',
   },
   card: {
     minHeight: 220,

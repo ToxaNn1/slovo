@@ -134,6 +134,8 @@ export const GameStringsSchema = z.strictObject({
     typed: z.strictObject({ label: TextSchema, submit: TextSchema }),
     /** What VoiceOver reads of the timer of a mode with a time limit, e.g. «лишилось 40 секунд». Takes `{count}`, the seconds left. */
     timer: PluralSchema,
+    /** The seconds left as the timer shows them, e.g. «40 с». Takes `{seconds}`. */
+    timerShown: TextSchema,
   }),
   /** The ✕ that leaves a Game and its confirmation, a system alert. */
   exit: z.strictObject({
