@@ -14,6 +14,7 @@ const installed: NativeModuleProbes = {
   application: () => true,
   updates: () => true,
   spotlight: () => true,
+  audio: () => true,
 };
 
 describe('the native modules of the installed dev client', () => {

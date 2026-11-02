@@ -10,6 +10,7 @@ const { editions } = vi.hoisted(() => {
     tokens: undefined,
     decor: undefined,
     illustrations: {},
+    sounds: {},
     languagePack: 1,
   });
   return { editions: { uk: files('uk'), pl: files('pl') } };
