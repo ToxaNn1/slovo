@@ -48,6 +48,7 @@ import { OrderedChips } from './OrderedChips';
 import { GameTimer } from './GameTimer';
 import { PairsGrid } from './PairsGrid';
 import { TypedAnswer } from './TypedAnswer';
+import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useGameHaptics } from './useGameHaptics';
 import { VowelButtons } from './VowelButtons';
 import { useReduceMotion } from '../providers/useReduceMotion';
@@ -137,6 +138,7 @@ export function GameRound({
   const { round } = game;
   const { answer } = round;
   const gameHaptics = useGameHaptics();
+  const sounds = useInterfaceSounds();
   // The answer just given: the Round's, or in a timed Game, which moves on at once, the last Round's.
   const given = game.time === undefined ? answer : game.played.at(-1)?.answer;
   // The answer shown before, so only the answer given now plays.
@@ -146,10 +148,11 @@ export function GameRound({
     if (given === shownAnswer.current) return;
     shownAnswer.current = given;
     if (given === undefined) return;
+    sounds.play(given.right ? 'right' : 'wrong');
     if (given.right) gameHaptics.rightAnswer();
     else gameHaptics.wrongAnswer();
-    // New haptics, after a change of Vibration, find the answer already played.
-  }, [given, gameHaptics]);
+    // New haptics or sounds, after a change in Settings, find the answer already played.
+  }, [given, gameHaptics, sounds]);
 
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;

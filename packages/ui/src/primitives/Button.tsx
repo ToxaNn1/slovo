@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
+import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { buttonHeight, space, typeStyle } from '../tokens';
 import { PressedTile, type TileTone } from './PressedTile';
@@ -63,6 +64,7 @@ export function Button({
   testID?: string | undefined;
 }) {
   const tokens = useTokens();
+  const sounds = useInterfaceSounds();
   const keyColors = useSchemeColors('light');
   const { voice } = useEdition();
   const labelColor = {
@@ -75,7 +77,10 @@ export function Button({
     <PressedTile
       tone={tones[variant]}
       radius={tokens.radii.button}
-      onPress={onPress}
+      onPress={() => {
+        sounds.play('tap');
+        onPress();
+      }}
       disabled={busy || disabled}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}

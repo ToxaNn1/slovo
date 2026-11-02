@@ -48,6 +48,7 @@ export { PairsGrid } from './game/PairsGrid';
 export { GameTimer } from './game/GameTimer';
 export { CrosswordGrid, type CrosswordPlace, type CrosswordWord } from './game/CrosswordGrid';
 export { HapticsProvider } from './providers/HapticsProvider';
+export { InterfaceSoundsProvider } from './providers/InterfaceSoundsProvider';
 export { HideButton } from './mix/HideButton';
 export { CommunityCountersLine } from './community-counters/CommunityCountersLine';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
