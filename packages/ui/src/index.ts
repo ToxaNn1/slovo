@@ -136,6 +136,7 @@ export {
   signInButtonHeight,
   space,
   STACK_AT_FONT_SCALE,
+  roleSize,
   typeSize,
   typeStyle,
   type ColorScheme,

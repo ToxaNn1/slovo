@@ -188,6 +188,10 @@ export const typeRoles = {
   crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
+  // Roles of batch A.
+  // Roles of batch B.
+  // Roles of batch C.
+  // Roles of batch D.
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -203,6 +207,12 @@ export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamili
     letterSpacing,
     textTransform,
   };
+}
+
+/** A type role's size and line height alone, for text that scales them itself. */
+export function roleSize(name: TypeRole) {
+  const { size, lineHeight } = typeRoles[name];
+  return { fontSize: size, lineHeight };
 }
 
 /**
