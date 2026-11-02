@@ -1,15 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { outlinedChipPadding, typeSize, withAlpha } from '../tokens';
+import { labelChipPadding, typeSize } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
- * A short label in an accent outline, such as a register («розм.»), a
+ * A short label on a sunken fill, such as a register («розм.»), a
  * Correction Type («росіянізм») or a group of Search results («Слова»). The
  * register's chip is the tighter one.
  */
-export function OutlinedChip({
+export function LabelChip({
   text,
   accessibilityLabel,
   accessibilityRole,
@@ -34,12 +34,11 @@ export function OutlinedChip({
       accessibilityRole={accessibilityRole}
       {...voice}
       style={[
-        styles.chip,
         size === 'tight' ? styles.tight : styles.roomy,
-        { borderColor: withAlpha(colors.accent, 0.45), borderRadius: radii.chip },
+        { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
       ]}
     >
-      <Text style={[styles.text, { color: colors.accent, fontFamily: fontFamilies.ui }]}>
+      <Text style={[styles.text, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
         {text}
       </Text>
     </View>
@@ -47,14 +46,13 @@ export function OutlinedChip({
 }
 
 const styles = StyleSheet.create({
-  chip: { borderWidth: 1 },
   tight: {
-    paddingHorizontal: outlinedChipPadding.tight.horizontal,
-    paddingVertical: outlinedChipPadding.tight.vertical,
+    paddingHorizontal: labelChipPadding.tight.horizontal,
+    paddingVertical: labelChipPadding.tight.vertical,
   },
   roomy: {
-    paddingHorizontal: outlinedChipPadding.roomy.horizontal,
-    paddingVertical: outlinedChipPadding.roomy.vertical,
+    paddingHorizontal: labelChipPadding.roomy.horizontal,
+    paddingVertical: labelChipPadding.roomy.vertical,
   },
-  text: { fontSize: typeSize.outlinedChip, fontWeight: '600' },
+  text: { fontSize: typeSize.labelChip, fontWeight: '700' },
 });

@@ -71,7 +71,7 @@ export {
   type RarityTestScreen,
 } from './onboarding/RarityTestQuestions';
 export { OutlineButton } from './primitives/OutlineButton';
-export { OutlinedChip } from './primitives/OutlinedChip';
+export { LabelChip } from './primitives/LabelChip';
 export { GoogleSignInButton } from './primitives/GoogleSignInButton';
 export { PrimaryButton } from './primitives/PrimaryButton';
 export { SecondaryButton } from './primitives/SecondaryButton';
@@ -93,6 +93,7 @@ export { Mascot } from './primitives/Mascot';
 export { Placeholder } from './primitives/Placeholder';
 export { PronunciationButton } from './entries/PronunciationButton';
 export { SegmentedControl } from './primitives/SegmentedControl';
+export { Switch } from './primitives/Switch';
 export { ProblemLine, TextField } from './primitives/TextField';
 export { ShareButton } from './share/ShareButton';
 export { MistakeReportButton } from './mistake-reports/MistakeReportButton';

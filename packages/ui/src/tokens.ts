@@ -221,6 +221,8 @@ export const motion = {
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
   pop: { duration: 300, easing: ease },
+  /** The toggle's knob slides over and overshoots. */
+  switch: { duration: 280, easing: [0.3, 1.9, 0.5, 1] },
   /** Rows rise this far into place, one after another. */
   cascade: { duration: 400, easing: ease, rise: 16 },
   /** Under Reduce Motion every motion is this one fade. */
@@ -260,7 +262,7 @@ export const typeSize = {
   /** `Big number`, a count of the stats sheet (the Scale gives 26–30). */
   count: 28,
   chip: 12.5,
-  outlinedChip: 11.5,
+  labelChip: 11.5,
   body: 15,
   button: 16,
   /** A sheet's title; also a result's number, an empty state's title and the Correction's non-standard form. */
@@ -384,10 +386,10 @@ export const badgePadding = { horizontal: 10, vertical: 6 } as const;
 /** The padding of the stats pill: the left side carries the icon, so it is tighter. */
 export const statsPillPadding = { left: 10, right: 14 } as const;
 
-/** The padding of an outlined chip, by density. */
-export const outlinedChipPadding = {
-  tight: { horizontal: 7, vertical: 2 },
-  roomy: { horizontal: 9, vertical: 4 },
+/** The padding of a label chip, by density. */
+export const labelChipPadding = {
+  tight: { horizontal: 7, vertical: 3 },
+  roomy: { horizontal: 10, vertical: 5 },
 } as const;
 
 /** The horizontal padding of a Game mode's card (the design's 22). */
@@ -407,8 +409,55 @@ export const resultLayout = {
 /** The empty state's space over its illustration. */
 export const emptyStatePaddingTop = 80;
 
-/** The padding between the segmented control's track and its segments. */
-export const segmentedPadding = 3;
+/** The segmented control's drawing (design `SlovoApp`): a sunken track around its segments. */
+export const segmentedDrawing = {
+  padding: 4,
+  gap: 4,
+  radius: 12,
+  segmentHeight: 38,
+  segmentRadius: 9,
+  labelSize: 13,
+} as const;
+
+/** The toggle's drawing (design `SlovoApp`): a track and the knob that travels inside it. */
+export const switchDrawing = {
+  width: 54,
+  height: 32,
+  radius: 10,
+  knob: 26,
+  knobRadius: 8,
+  /** The gap between the knob and the track's edge. */
+  inset: 3,
+  /** The knob's hard shadow straight below it. */
+  knobShadow: { depth: 2, color: 'rgba(20, 12, 10, 0.3)' },
+} as const;
+
+/** The chip's drawing (design `SlovoApp`, the Saved tabs): a label with an optional count. */
+export const chipDrawing = {
+  height: 38,
+  paddingHorizontal: 14,
+  gap: 6,
+  labelSize: 14,
+  countSize: 12,
+  /** How far the count fades beside its label. */
+  countOpacity: 0.7,
+  /** The chip's scale while it is pressed. */
+  pressedScale: 0.95,
+} as const;
+
+/** The search field's drawing (design `SlovoApp`): a sunken box, a magnifier and a clear button. */
+export const searchFieldDrawing = {
+  height: 50,
+  radius: 14,
+  icon: 18,
+  inputSize: 16,
+  clear: 28,
+  clearRadius: 8,
+  clearIcon: 12,
+} as const;
+
+/** The text field's drawing (design `XSettings`): its box, and the border a problem draws. */
+export const textFieldDrawing = { height: 58, radius: 15, border: 2.5, inputSize: 16 } as const;
 
 /** The corner radius of an outlined button, from the design; fixed like the toast's, not an Edition token. */
 export const outlineButtonRadius = 6;
@@ -421,8 +470,8 @@ export const sliderDrawing = {
   thumbRadius: 10,
 } as const;
 
-/** A checkbox's corner radius, one of the design's small radii (the segmented control's 4); fixed like the toast's, not an Edition token. */
-export const checkboxRadius = 4;
+/** The checkbox's and the radio's mark: its side, the checkbox's corner and the outline. */
+export const choiceMark = { size: 26, radius: 8, border: 2.5, tick: 16 } as const;
 
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;

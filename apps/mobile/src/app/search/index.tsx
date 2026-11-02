@@ -1,7 +1,7 @@
 import {
   BackLink,
   EntryRow,
-  OutlinedChip,
+  LabelChip,
   RecentQueries,
   space,
   TextField,
@@ -56,7 +56,7 @@ export default function SearchScreen() {
         stickySectionHeadersEnabled={false}
         renderSectionHeader={({ section: { name, title } }) => (
           <View style={styles.group}>
-            <OutlinedChip
+            <LabelChip
               testID={`search-group-${name}`}
               text={title}
               accessibilityLabel={title}
