@@ -40,7 +40,6 @@ function dailyCrosswordCard(
         : progress === 'started'
           ? strings.resume
           : strings.start,
-    progress,
   };
 }
 

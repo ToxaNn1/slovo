@@ -4,17 +4,15 @@ import { TextSchema } from '../shared';
 import { PluralLabelSchema, PluralSchema, templateOf } from './shared';
 
 /**
- * The texts of one Game Mode, alike for every mode: its card on the mode
+ * The texts of one Game Mode, alike for every mode: its row on the mode
  * screen, the label of its Rounds and what its card says for each reason it
  * can't start.
  */
 const GameModeStringsSchema = z.strictObject({
-  /** The card's overline, e.g. «ВИЗНАЧЕННЯ → СЛОВО». */
-  overline: TextSchema,
+  /** The few characters on the mode's tile on the mode screen, e.g. «АЯ». */
+  glyph: TextSchema,
   title: TextSchema,
   description: TextSchema,
-  /** The card's sample: a prompt and the answer it asks for, e.g. a Definition and a Lemma with Stress. */
-  sample: z.strictObject({ prompt: TextSchema, answer: TextSchema }),
   /** The label over a Round's prompt, e.g. «ВИЗНАЧЕННЯ». */
   roundLabel: TextSchema,
   /** What the card says for each reason the Core gives that the mode can't start. */
