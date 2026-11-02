@@ -145,10 +145,12 @@ describe('the onboarding', () => {
     expect(composition.mix.state).toBe(weights);
 
     expect(screen.getByText(strings.dailyGoal.title)).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: `${strings.dailyGoal.title}: 20` }).props,
-    ).toMatchObject({ accessibilityState: { selected: true } });
+    const goal = (xp: number) =>
+      screen.getByRole('button', { name: `${String(xp)} ${strings.dailyGoal.unit}` }).props;
+    expect(goal(20)).toMatchObject({ accessibilityState: { selected: true } });
     await press('onboarding-daily-goal-30');
+    expect(goal(30)).toMatchObject({ accessibilityState: { selected: true } });
+    expect(goal(20)).toMatchObject({ accessibilityState: { selected: false } });
     await press('onboarding-done');
 
     expect(composition.xpLog.state.dailyGoal?.goal).toBe(30);

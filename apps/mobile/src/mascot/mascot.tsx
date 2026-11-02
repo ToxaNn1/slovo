@@ -24,11 +24,22 @@ const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
   empty: 'sleeps',
 };
 
-/** The Mascot at the moment `state` with the Edition's line for it, while its Feature Switch is on in effect; else nothing, as in 0.9. */
-export function MascotIn({ state }: { state: MascotMoment }) {
+/**
+ * The Mascot at the moment `state` with the Edition's line for it, while its
+ * Feature Switch is on in effect; else nothing, as in 0.9. `onRed` draws its
+ * on-red variant, for a Mascot over the red.
+ */
+export function MascotIn({ state, onRed = false }: { state: MascotMoment; onRed?: boolean }) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
-  return <Mascot state={stateAt[state]} line={edition.mascot[state]} testID={`mascot-${state}`} />;
+  return (
+    <Mascot
+      state={stateAt[state]}
+      line={edition.mascot[state]}
+      onRed={onRed}
+      testID={`mascot-${state}`}
+    />
+  );
 }
 
 /** The Mascot in `state` with no line, while its Feature Switch is on in effect; else nothing. */
