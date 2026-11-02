@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, segmentedDrawing } from '../tokens';
+import { minTouchTarget, segmentedDrawing, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The slack above and below a segment up to the smallest tap area. */
@@ -34,7 +34,8 @@ export function SegmentedControl<Value extends string>({
   onSelect: (value: Value) => void;
   accessibilityLabel: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <View
@@ -62,8 +63,8 @@ export function SegmentedControl<Value extends string>({
             <Text
               maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
               style={[
-                styles.label,
-                { color: isSelected ? colors.background : colors.ink, fontFamily: fontFamilies.ui },
+                typeStyle('segment', tokens),
+                { color: isSelected ? colors.background : colors.ink },
               ]}
             >
               {label}
@@ -89,5 +90,4 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     borderRadius: segmentedDrawing.segmentRadius,
   },
-  label: { fontSize: segmentedDrawing.labelSize, fontWeight: '700' },
 });

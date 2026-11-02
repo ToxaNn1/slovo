@@ -1,5 +1,5 @@
 import type { Sync } from '@slovo/core';
-import { typeSize, useTokens } from '@slovo/ui';
+import { typeStyle, useTokens } from '@slovo/ui';
 import { Text } from 'react-native';
 
 import { deviceClock } from '../device/device-clock';
@@ -28,7 +28,7 @@ function Opened({ opening }: { opening: Opening<Sync> }) {
 
 function Line({ sync }: { sync: Sync }) {
   const state = useSubscribed(sync, ({ state }) => state);
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
   const line = syncStatusLine({
     state,
     strings: editionStrings.account.sync,
@@ -37,15 +37,6 @@ function Line({ sync }: { sync: Sync }) {
   });
   if (line === undefined) return null;
   return (
-    <Text
-      style={{
-        color: colors.muted,
-        fontFamily: fontFamilies.ui,
-        fontSize: typeSize.caption,
-        fontWeight: '400',
-      }}
-    >
-      {`\n${line}`}
-    </Text>
+    <Text style={[typeStyle('rowSub', tokens), { color: tokens.colors.muted }]}>{`\n${line}`}</Text>
   );
 }

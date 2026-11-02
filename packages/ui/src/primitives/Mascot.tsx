@@ -25,7 +25,7 @@ import {
   mascotWidth,
   motion,
   space,
-  typeSize,
+  typeStyle,
   type Easing as Curve,
   type MascotFrame,
 } from '../tokens';
@@ -54,7 +54,8 @@ export function Mascot({
   width?: number;
   testID?: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const { mascot } = useDecor();
   return (
@@ -64,8 +65,9 @@ export function Mascot({
         <Text
           {...voice}
           style={[
+            typeStyle('sub', tokens),
             styles.line,
-            { color: onRed ? colors.onAccent : colors.muted, fontFamily: fontFamilies.ui },
+            { color: onRed ? colors.onAccent : colors.muted },
           ]}
         >
           {line}
@@ -246,5 +248,5 @@ const styles = StyleSheet.create({
   mascot: { alignItems: 'center', gap: space[2], padding: space[4] },
   // The design turns the figure about 30% across and 60% down.
   figure: { transformOrigin: '30% 60%' },
-  line: { fontSize: typeSize.body, fontWeight: '500', textAlign: 'center' },
+  line: { textAlign: 'center' },
 });

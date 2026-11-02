@@ -117,11 +117,7 @@ function Blanks({
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
-  const letterStyle = [
-    typeStyle('blankLetter', tokens),
-    styles.letter,
-    { color: colors.ink },
-  ];
+  const letterStyle = [typeStyle('blankLetter', tokens), styles.letter, { color: colors.ink }];
   return (
     <View testID={testID} style={styles.blanks}>
       {placeBlanks(blanks).map((blank, index) => {

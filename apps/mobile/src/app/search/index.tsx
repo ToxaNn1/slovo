@@ -5,7 +5,7 @@ import {
   RecentQueries,
   SearchField,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -127,7 +127,7 @@ function SearchHeader({
  * stays in the field while the reader types, so the screen says it aloud.
  */
 function NothingFound() {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { voice } = useEdition();
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility(strings.nothingFound);
@@ -136,7 +136,7 @@ function NothingFound() {
     <Text
       testID="search-nothing-found"
       {...voice}
-      style={[styles.nothingFound, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+      style={[typeStyle('sub', tokens), styles.nothingFound, { color: tokens.colors.muted }]}
     >
       {strings.nothingFound}
     </Text>
@@ -152,7 +152,5 @@ const styles = StyleSheet.create({
   nothingFound: {
     marginHorizontal: space[5],
     marginTop: space[6],
-    fontSize: typeSize.body,
-    lineHeight: typeSize.body * 1.5,
   },
 });
