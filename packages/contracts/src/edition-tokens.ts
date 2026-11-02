@@ -45,6 +45,20 @@ export const ColorTokensSchema = z.strictObject({
   heart: ColorSchema,
   /** Delete and Clear actions, with white text on them; never Decor. */
   destructive: ColorSchema,
+  /** The face of a tile or button. */
+  tile: ColorSchema,
+  /** The 3D edge of a tile, and its offset shadow. */
+  tileEdge: ColorSchema,
+  /** The red's edge and its pressed shadow. */
+  accentEdge: ColorSchema,
+  /** Text and marks on the accent. */
+  onAccent: ColorSchema,
+  /** The crossword's Word, the selected letter. */
+  highlight: ColorSchema,
+  /** The off track, the locked Badge, the empty tile. */
+  silhouette: ColorSchema,
+  /** The tab bar, drawn over a blur. */
+  tabBar: ColorSchema,
 });
 
 export type ColorTokens = z.infer<typeof ColorTokensSchema>;
@@ -62,6 +76,7 @@ export const EditionTokensSchema = z.strictObject({
   fontFamilies: z.strictObject({ word: z.string().min(1), ui: z.string().min(1) }).optional(),
   radii: z
     .strictObject({
+      tile: RadiusSchema,
       card: RadiusSchema,
       chip: RadiusSchema,
       button: RadiusSchema,

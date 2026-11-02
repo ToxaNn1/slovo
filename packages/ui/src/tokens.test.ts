@@ -21,7 +21,7 @@ describe('designTokens', () => {
   });
 
   it('takes an Edition’s group over the Core’s, group by group', () => {
-    const radii = { card: 1, chip: 2, button: 3, sheet: 4 };
+    const radii = { tile: 5, card: 1, chip: 2, button: 3, sheet: 4 };
     expect(designTokens({ radii })).toEqual({ ...coreTokens, radii });
   });
 });

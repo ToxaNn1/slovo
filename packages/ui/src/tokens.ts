@@ -15,6 +15,7 @@ export interface DesignTokens {
   /** Font family names, or `undefined` for the platform's system font. */
   readonly fontFamilies: { readonly word: string | undefined; readonly ui: string | undefined };
   readonly radii: {
+    readonly tile: number;
     readonly card: number;
     readonly chip: number;
     readonly button: number;
@@ -46,6 +47,13 @@ export const coreTokens: DesignTokens = {
       wrong: '#A3271F',
       heart: '#C8372D',
       destructive: '#A3271F',
+      tile: '#FFFFFF',
+      tileEdge: '#D6D6D2',
+      accentEdge: '#000000',
+      onAccent: '#FFFFFF',
+      highlight: '#E8E8E5',
+      silhouette: 'rgba(0, 0, 0, 0.14)',
+      tabBar: 'rgba(244, 244, 242, 0.94)',
     },
     dark: {
       background: '#111111',
@@ -63,10 +71,17 @@ export const coreTokens: DesignTokens = {
       wrong: '#E8877D', // derived, like correct, to read on the dark surfaces
       heart: '#C8372D',
       destructive: '#A3271F',
+      tile: '#262626',
+      tileEdge: '#000000',
+      accentEdge: '#9C9C9C',
+      onAccent: '#111111',
+      highlight: '#3A3A3A',
+      silhouette: 'rgba(255, 255, 255, 0.1)',
+      tabBar: 'rgba(17, 17, 17, 0.94)',
     },
   },
   fontFamilies: { word: undefined, ui: undefined },
-  radii: { card: 22, chip: 14, button: 14, sheet: 22 },
+  radii: { tile: 14, card: 22, chip: 14, button: 14, sheet: 22 },
 };
 
 /** The Edition's tokens over the Core's neutral ones, group by group. */
