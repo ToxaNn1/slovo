@@ -122,6 +122,7 @@ export {
   localTimeOf,
   parseLocalDate,
   parseTimeOfDay,
+  todayDate,
   untilNextLocalDay,
   type LocalDate,
   type LocalDay,

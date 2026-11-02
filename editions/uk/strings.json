@@ -34,7 +34,8 @@
       "жовт.",
       "лист.",
       "груд."
-    ]
+    ],
+    "weekdays": ["пн", "вт", "ср", "чт", "пт", "сб", "нд"]
   },
   "loadFailed": {
     "title": "Нитка урвалася",
@@ -52,7 +53,8 @@
     "swipeHint": "Гортайте вгору — наступне слово",
     "nextEntry": "Наступний запис",
     "previousEntry": "Попередній запис",
-    "quickQuestion": "Швидке питання"
+    "quickQuestion": "Швидке питання",
+    "today": "{weekday}, {day} {month}"
   },
   "wordOfTheDay": {
     "badge": "Слово дня · {day} {month}"

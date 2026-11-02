@@ -8,4 +8,6 @@ export const DatesStringsSchema = z.strictObject({
   months: z.array(TextSchema).length(12),
   /** The short month names, e.g. «27 жовт.», January first. */
   shortMonths: z.array(TextSchema).length(12),
+  /** The short weekday names as a date takes them, e.g. «пн, 2 листопада», Monday first. */
+  weekdays: z.array(TextSchema).length(7),
 });

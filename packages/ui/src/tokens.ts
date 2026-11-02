@@ -143,6 +143,12 @@ export const typeRoles = {
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
+  /** The app's name beside the wedge at the top of the Feed. */
+  logo: role('word', '900', 22, 22, -0.5),
+  /** Today in the Feed's header. */
+  headerDate: role('ui', '600', 13, 13),
+  /** The Streak in its pill. */
+  streak: role('word', '800', 14, 14),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -191,6 +197,22 @@ export const wedges = {
     [1, 0.3],
     [1, 0.7],
     [0, 1],
+  ],
+  /** The logo's wedge at the top of the Feed: a right edge narrower than the left. */
+  logo: [
+    [0, 0],
+    [1, 0.22],
+    [1, 0.78],
+    [0, 1],
+  ],
+  /** The Streak's mark in its pill: a cut gem, pointed at the top. */
+  streak: [
+    [0.5, 0.04],
+    [0.875, 0.54],
+    [0.667, 0.96],
+    [0.333, 0.96],
+    [0.125, 0.54],
+    [0.375, 0.38],
   ],
   /** The loader's wedge: a right edge narrower than the left, from the middle. */
   loader: [
@@ -608,8 +630,27 @@ export const actionButtonSize = 52;
 /** The padding of the Word of the day badge. */
 export const badgePadding = { horizontal: 10, vertical: 6 } as const;
 
-/** The padding of the stats pill: the left side carries the icon, so it is tighter. */
-export const statsPillPadding = { left: 10, right: 14 } as const;
+/** The XP bar's side padding. */
+export const xpBarPadding = 14;
+
+/**
+ * The Feed's header, from the design: the logo's wedge and its gap to the
+ * name, and the gap between today and the Streak pill.
+ */
+export const feedHeader = { logoWedge: { width: 15, height: 22 }, logoGap: 8, endGap: 10 } as const;
+
+/**
+ * The Streak pill in the Feed's header: its height and corner radius, its
+ * padding (the left side carries the mark, so it is tighter), the gap after
+ * the mark and the mark's box.
+ */
+export const streakPill = {
+  height: 32,
+  radius: 10,
+  padding: { left: 8, right: 11 },
+  gap: 5,
+  mark: { width: 16, height: 18 },
+} as const;
 
 /** The padding of a label chip, by density. */
 export const labelChipPadding = {

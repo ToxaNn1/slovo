@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, statsPillPadding, typeSize, withAlpha } from '../tokens';
+import { minTouchTarget, space, typeSize, withAlpha, xpBarPadding } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The bar's height, from the design: the same as the Stats pill it stands beside. */
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     height: BAR_HEIGHT,
     borderRadius: BAR_HEIGHT / 2,
     borderWidth: 1,
-    paddingHorizontal: statsPillPadding.right,
+    paddingHorizontal: xpBarPadding,
     flexDirection: 'row',
     alignItems: 'center',
     alignSelf: 'flex-start',
