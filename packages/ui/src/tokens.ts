@@ -656,11 +656,19 @@ export const shareCardLayout = {
 export const minTouchTarget = 44;
 
 /**
- * A day of the Active Days calendar on the stats sheet: the ring that
- * outlines today around the day's number, its line, and the dot under the
- * number of an Active Day or a missed one.
+ * A day of the Active Days calendar: a tile of this height and corner on a
+ * grid with this gap, over a hard edge this deep, a day to come outlined by a
+ * dashed line this wide, and the day's number at this size.
  */
-export const calendarDay = { ring: 32, ringBorder: 1.5, dot: 6, dotGap: 3 } as const;
+export const calendarDay = {
+  height: 42,
+  radius: 11,
+  gap: 7,
+  edge: 4,
+  futureBorder: 2,
+  number: 13,
+  weekday: 11,
+} as const;
 
 /** How much a button that takes no press is dimmed. */
 export const disabledOpacity = 0.5;
