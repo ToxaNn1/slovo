@@ -1,7 +1,7 @@
 import { EditionDecorSchema, type DecorMotif, type EditionDecor } from '@slovo/contracts';
 
 /**
- * The Decor the app draws, slot by slot (`docs/design/design-system.md`). A
+ * The Decor the app draws, slot by slot (ADR 0014, `docs/design/README.md`). A
  * slot the Decor leaves empty shows nothing. Shapes and colours only: Decor
  * never carries text or behaviour.
  */

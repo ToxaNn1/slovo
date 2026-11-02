@@ -27,7 +27,7 @@ export function useReduceMotionKnown(): boolean | undefined {
 /**
  * Whether the reader turned on Reduce Motion in the system settings. It
  * follows the setting while the app runs; every animation has a calmer
- * variant for it (`docs/design/design-system.md`, "Motion, sound and haptics").
+ * variant for it (ADR 0055, `docs/design/README.md`).
  */
 export function useReduceMotion(): boolean {
   return useReduceMotionKnown() === true;

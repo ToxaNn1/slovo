@@ -13,8 +13,8 @@
       // Kept files outside any package: the script that generates the
       // Ukrainian notification sound (editions/uk/assets/README.md).
       "entry": ["editions/*/assets/*.mjs"],
-      // The Claude Design export is kept byte for byte, never run by the repo.
-      "ignore": ["docs/design/claude-design/**"],
+      // The design export is kept byte for byte, never run by the repo.
+      "ignore": ["docs/design/export/**"],
       // The Maestro CLI is installed on the Mac, not by pnpm (scripts/smoke-halves.mjs).
       "ignoreBinaries": ["maestro"],
     },

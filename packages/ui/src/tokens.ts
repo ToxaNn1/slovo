@@ -1,7 +1,7 @@
 import type { ColorTokens, EditionTokens, FontSize } from '@slovo/contracts';
 
 /**
- * The design tokens from `docs/design/design-system.md`. The Core names every
+ * The design tokens from `docs/design/README.md`. The Core names every
  * token and holds the neutral values; an Edition supplies its own values in
  * `editions/<edition>/tokens.json` (ADR 0006). Sizes and spacing belong to the
  * layouts, so they stay in the Core.
@@ -276,7 +276,7 @@ export type ShareCardFormat = 'story' | 'square';
 
 /**
  * A Share Card's image in pixels, by format: the Story a true 9:16
- * (design-system gap 17), the Square 1:1.
+ * (the design's 9:16), the Square 1:1.
  */
 export const shareImage = {
   story: { width: 1080, height: 1920 },
