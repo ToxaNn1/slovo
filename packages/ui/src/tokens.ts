@@ -135,6 +135,10 @@ export const typeRoles = {
   /** Reading text: the line under a heading. */
   sub: role('ui', '500', 15, 21),
   meta: role('ui', '500', 13, 17),
+  /** A Settings row's label. */
+  rowLabel: role('ui', '600', 16, 19),
+  /** The muted line under a Settings row's label, and its value. */
+  rowSub: role('ui', '400', 13, 17),
   /** A tab's label under its icon. */
   tabLabel: role('ui', '600', 11, 11),
   /** The rotated black title of a bottom sheet. */
@@ -836,6 +840,22 @@ export const sliderDrawing = {
   trackRadius: 2,
   thumbSize: 20,
   thumbRadius: 10,
+} as const;
+
+/**
+ * A Settings row's drawing (design `SlovoApp`, Settings): its padding, the
+ * gap between its parts, the sunken icon tile at its start with the slanted
+ * shape inside, and the chevron that ends a row that opens a screen.
+ */
+export const settingsRowDrawing = {
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  gap: 12,
+  iconTile: 30,
+  iconTileRadius: 9,
+  icon: 14,
+  chevronWidth: 8,
+  chevronHeight: 13,
 } as const;
 
 /** The checkbox's and the radio's mark: its side, the checkbox's corner and the outline. */
