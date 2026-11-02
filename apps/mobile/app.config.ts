@@ -269,8 +269,14 @@ const UPDATES_CERTIFICATE = './certs/certificate.pem';
  * OTA updates (ADR 0062): on launch the app checks the app's one channel,
  * waits a few seconds at most and otherwise starts the code it has; it
  * accepts only an update signed with SLOVO's key and made for its native
- * code (the fingerprint runtime version). A development build takes no
- * updates, and a release refuses to build without the certificate.
+ * code (the fingerprint runtime version). A release refuses to build without
+ * the certificate.
+ *
+ * The block is the same for every build, so the fingerprint eas-cli computes
+ * on the laptop, where no `EAS_BUILD_PROFILE` is set, matches the one the EAS
+ * build computes (#1498). A development build still takes no update from the
+ * channel: its Debug configuration loads the bundle from Metro through the
+ * development client.
  */
 function updates(
   build: Build,
@@ -287,7 +293,7 @@ function updates(
   return {
     runtimeVersion: { policy: 'fingerprint' },
     updates: {
-      enabled: build.kind !== 'development',
+      enabled: true,
       url: `https://u.expo.dev/${EAS_PROJECT_ID}`,
       requestHeaders: { 'expo-channel-name': channel },
       checkAutomatically: 'ON_LOAD',
