@@ -276,6 +276,27 @@ export const screenEnter = {
   band: { width: 0.45, skewX: '-18deg', from: -1.7, to: 2.8 },
 } as const;
 
+/**
+ * An Entry card's reveal (the design's `slFly` and `slCasc` on the Word of the
+ * Day): each letter of the headline flies in from `letters.from`, small and
+ * turned, the n-th after `letters.delay + n × letters.stagger` ms, then the
+ * card's details rise into place one after another at `details` ms.
+ */
+export const entryReveal = {
+  letters: {
+    duration: 550,
+    easing: [0.2, 0.9, 0.25, 1.2],
+    delay: 120,
+    stagger: 60,
+    /** The n-th letter starts `x - n × xStep` points across and `y` points down. */
+    from: { x: 40, xStep: 44, y: 240, scale: 0.15, rotate: -30 },
+  },
+  details: [650, 720, 800, 900],
+} as const satisfies {
+  readonly letters: { readonly easing: Easing } & Record<string, unknown>;
+  readonly details: readonly number[];
+};
+
 /** The tab bar of the design. */
 export const tabBar = {
   /** A tab's height above the safe area. */

@@ -1,6 +1,7 @@
 import type { EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from '@slovo/core';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
@@ -11,6 +12,7 @@ import { CardCorners } from '../decor/DecorSlots';
 import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
+import { EntryRevealProvider, RevealDetail, useEntryReveal } from './reveal';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
 import { blockGap, correctionCardLayout, space, wordCardSide } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -77,7 +79,9 @@ const SPACING = {
  * the user's font size, with the compact layout on narrow screens, the Decor
  * slots and the action row under it. A card brought back for Review carries
  * the Review label on top. Under Self-check the card conceals its meaning
- * until the reader reveals it. The Edition's strings and language come
+ * until the reader reveals it. Each time the card comes on screen its
+ * headline's letters fly in and its details rise after them (the design's
+ * reveal); under Reduce Motion it fades in once. The Edition's strings and language come
  * from the `EditionProvider`.
  */
 export function EntryCard({
@@ -98,10 +102,11 @@ export function EntryCard({
   const compact = useCompactLayout();
   const padding = compact ? COMPACT_PADDING : 1;
   const spacing = SPACING[card.kind];
+  const { fade, state } = useEntryReveal();
 
   return (
-    <>
-      <View
+    <EntryRevealProvider value={state}>
+      <Animated.View
         testID={`${card.kind}-card`}
         style={[
           styles.card,
@@ -114,6 +119,7 @@ export function EntryCard({
             paddingBottom: spacing.bottom * padding,
             gap: spacing.gap * padding,
           },
+          fade,
         ]}
       >
         {card.review === true && <ReviewLabel />}
@@ -163,9 +169,11 @@ export function EntryCard({
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
           <CardCorners />
         </View>
-      </View>
-      <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
-    </>
+      </Animated.View>
+      <RevealDetail step={3}>
+        <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
+      </RevealDetail>
+    </EntryRevealProvider>
   );
 }
 
