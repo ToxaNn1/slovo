@@ -93,6 +93,140 @@ export function designTokens(edition: EditionTokens): DesignTokens {
   };
 }
 
+/** A font weight a type role sets; the Edition's families bring these weights. */
+export type FontWeight = '400' | '500' | '600' | '700' | '800' | '900';
+
+/** One type role of the design: which family slot it takes and how it sets text. */
+export interface TypeRoleSpec {
+  readonly family: 'word' | 'ui';
+  readonly size: number;
+  readonly weight: FontWeight;
+  readonly lineHeight: number;
+  readonly letterSpacing: number;
+  readonly textTransform: 'none' | 'uppercase';
+}
+
+const role = (
+  family: TypeRoleSpec['family'],
+  weight: FontWeight,
+  size: number,
+  lineHeight: number,
+  letterSpacing = 0,
+  textTransform: TypeRoleSpec['textTransform'] = 'none',
+): TypeRoleSpec => ({ family, size, weight, lineHeight, letterSpacing, textTransform });
+
+/**
+ * The Core's type roles (ADR 0070): a role carries its weight, so components
+ * write none. The word family sets the loud roles, the UI family the reading
+ * text and the meta.
+ */
+export const typeRoles = {
+  shout: role('word', '900', 96, 88, -5),
+  heroWord: role('word', '900', 50, 50, -1.5),
+  screenTitle: role('word', '900', 30, 30, -1),
+  heading: role('word', '800', 18, 20, 0.5),
+  eyebrow: role('word', '700', 11, 13, 2, 'uppercase'),
+  buttonLabel: role('word', '900', 16, 16),
+  listWord: role('word', '800', 17, 20),
+  /** Reading text: a Definition. */
+  definition: role('ui', '500', 19, 27),
+  /** Reading text: an Example. */
+  example: role('ui', '400', 17, 25),
+  /** Reading text: the line under a heading. */
+  sub: role('ui', '500', 15, 21),
+  meta: role('ui', '500', 13, 17),
+} as const satisfies Record<string, TypeRoleSpec>;
+
+export type TypeRole = keyof typeof typeRoles;
+
+/** The text style of a type role in the given tokens' families. */
+export function typeStyle(name: TypeRole, tokens: DesignTokens) {
+  const { family, size, weight, lineHeight, letterSpacing, textTransform } = typeRoles[name];
+  return {
+    fontFamily: tokens.fontFamilies[family],
+    fontSize: size,
+    fontWeight: weight,
+    lineHeight,
+    letterSpacing,
+    textTransform,
+  };
+}
+
+/**
+ * The hard offset shadow under a pressed tile or button: no blur, the edge
+ * colour straight below. Pressed, the tile drops by the difference, so its
+ * bottom edge stays where it was.
+ */
+export const offsetShadow = {
+  rest: { depth: 5 },
+  pressed: { depth: 1, translateY: 4 },
+} as const;
+
+/** The edge colour of a tile's offset shadow: `accentEdge` under red, `tileEdge` under the rest. */
+export function shadowEdge(colors: ColorTokens, onAccent: boolean): string {
+  return onAccent ? colors.accentEdge : colors.tileEdge;
+}
+
+/** The halftone raster: ink dots of this radius on a square grid of this cell. */
+export const halftone = { dot: 'rgba(20, 12, 10, 0.22)', radius: 1.1, cell: 6 } as const;
+
+/** A wedge shape as polygon points, each `[x, y]` a fraction of the box. */
+export type Wedge = readonly (readonly [number, number])[];
+
+/** The design's wedge cuts. */
+export const wedges = {
+  /** A right edge narrower than the left: the toast. */
+  wedge: [
+    [0, 0],
+    [1, 0.3],
+    [1, 0.7],
+    [0, 1],
+  ],
+  /** A slanted band. */
+  band: [
+    [0, 0],
+    [1, 0.25],
+    [1, 1],
+    [0, 0.75],
+  ],
+  /** A box with its bottom right corner cut up. */
+  cut: [
+    [0, 0],
+    [1, 0],
+    [1, 0.8],
+    [0, 1],
+  ],
+  /** A shield, pointed at the bottom. */
+  shield: [
+    [0, 0],
+    [1, 0],
+    [1, 0.64],
+    [0.5, 1],
+    [0, 0.64],
+  ],
+} as const satisfies Record<string, Wedge>;
+
+/** A cubic Bézier easing curve, as CSS `cubic-bezier(x1, y1, x2, y2)` takes it. */
+export type Easing = readonly [number, number, number, number];
+
+/** CSS `ease`, for the motions the design gives no curve. */
+const ease: Easing = [0.25, 0.1, 0.25, 1];
+
+/** The design's motions: durations in milliseconds and their curves (ADR 0070). */
+export const motion = {
+  press: { duration: 80, easing: ease },
+  screen: { duration: 500, easing: [0.2, 0.8, 0.2, 1] },
+  fly: { duration: 600, easing: [0.2, 0.9, 0.25, 1.15] },
+  toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
+  stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
+  sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
+  pop: { duration: 300, easing: ease },
+  /** Rows rise this far into place, one after another. */
+  cascade: { duration: 400, easing: ease, rise: 16 },
+  /** Under Reduce Motion every motion is this one fade. */
+  reduceMotion: { duration: 300, easing: ease },
+} as const satisfies Record<string, { readonly duration: number; readonly easing: Easing }>;
+
 /** A `#RRGGBB` colour at the given opacity; any other colour as it is. */
 export function withAlpha(color: string, alpha: number): string {
   const hex = /^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(color);
@@ -174,17 +308,21 @@ export const overlineType = {
   textTransform: 'uppercase',
 } as const;
 
-/** The Word card's type sizes at each font-size step (spec #51: one table). */
+/**
+ * The Word card's type sizes at each font-size step: the design's three
+ * steps, the hero word and the reading text at their base size, 1.15 times it
+ * and 1.3 times it (ADR 0070). S and M both take the base step.
+ */
 export const fontSizeSteps: Readonly<
   Record<
     FontSize,
     { readonly lemma: number; readonly definition: number; readonly example: number }
   >
 > = {
-  S: { lemma: 40, definition: 17, example: 15 },
-  M: { lemma: 48, definition: 19, example: 17 },
-  L: { lemma: 56, definition: 21, example: 19 },
-  XL: { lemma: 64, definition: 23, example: 21 },
+  S: { lemma: 50, definition: 19, example: 17 },
+  M: { lemma: 50, definition: 19, example: 17 },
+  L: { lemma: 58, definition: 22, example: 20 },
+  XL: { lemma: 65, definition: 25, example: 22 },
 };
 
 /**
