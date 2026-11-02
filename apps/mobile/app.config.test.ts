@@ -343,7 +343,17 @@ describe('app config', () => {
         'Manrope-Regular.ttf',
         'Manrope-SemiBold.ttf',
       ].map((file) => `../../packages/ui/assets/fonts/${file}`),
-      '../../editions/uk/assets/fonts/Kurale-Regular.ttf',
+      ...[
+        'Kurale-Regular.ttf',
+        'Onest-Bold.ttf',
+        'Onest-Medium.ttf',
+        'Onest-Regular.ttf',
+        'Onest-SemiBold.ttf',
+        'Unbounded-Black.ttf',
+        'Unbounded-ExtraBold.ttf',
+        'Unbounded-Regular.ttf',
+        'Unbounded-SemiBold.ttf',
+      ].map((file) => `../../editions/uk/assets/fonts/${file}`),
     ]);
   });
 
@@ -355,16 +365,16 @@ describe('app config', () => {
       },
     });
 
-    expect(() => appConfig(repo)).toThrow(/not among the Edition's fonts: Kurale-Regular\.ttf/);
+    expect(() => appConfig(repo)).toThrow(/not among the Edition's fonts: Unbounded-Black\.ttf/);
   });
 
   it('embeds the Word of the Day font and passes its family on to the app, naming no Edition', () => {
     const config = appConfig(context);
     const { fonts } = pluginOptions(config, 'expo-font') as { fonts: string[] };
 
-    expect(fonts).toContain('../../editions/uk/assets/fonts/Kurale-Regular.ttf');
+    expect(fonts).toContain('../../editions/uk/assets/fonts/Unbounded-Black.ttf');
     // The app learns its active Edition at launch (ADR 0065), not from the build.
-    expect(config.extra?.['edition']).toEqual({ wordOfTheDayFontFamily: 'Kurale' });
+    expect(config.extra?.['edition']).toEqual({ wordOfTheDayFontFamily: 'Unbounded' });
   });
 
   it('passes on the family of whichever font the Edition names for the Word of the Day', () => {
