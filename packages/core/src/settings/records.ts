@@ -11,6 +11,8 @@ export const settingsRecords = {
   fontSize: declareRecord('settings.fontSize', FontSizeSchema),
   /** Whether the user has haptics on. It stays on the device, which may have no haptics. */
   vibration: declareRecord('settings.vibration', z.boolean(), { sync: 'device-only' }),
+  /** Whether the user has «Звуки» on. It stays on the device, like Vibration. */
+  sounds: declareRecord('settings.sounds', z.boolean(), { sync: 'device-only' }),
   /**
    * Whether the reader hides the counters: «Без лічильників», which replaced
    * «Приховати Серію» in 1.0 and keeps its key, so a hidden Streak stays hidden

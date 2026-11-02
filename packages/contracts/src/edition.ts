@@ -308,6 +308,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   profile: z.boolean(),
   /** The Mascot: the Edition's silent figure with its short lines (CONTEXT.md, Mascot). */
   mascot: z.boolean(),
+  /** The Interface sounds (a shout, a right answer, a wrong answer, a tap) and the «Звуки» setting (ADR 0070). */
+  sounds: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

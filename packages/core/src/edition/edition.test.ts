@@ -95,6 +95,7 @@ const validConfig = {
     laterQuestions: true,
     profile: true,
     mascot: true,
+    sounds: true,
   },
   userSettingDefaults: {
     theme: 'system',
