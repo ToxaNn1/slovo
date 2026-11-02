@@ -249,6 +249,52 @@ export const motion = {
   { readonly duration: number; readonly easing: Easing; readonly rise?: number }
 >;
 
+/**
+ * The splash cut of the design (`startSplash` in `SlovoApp.dc.html`), on its
+ * 390 × 844 frame, which the splash scales to the screen's width. The wordmark's
+ * letters fly in one after another, the ink band cuts across with the tagline,
+ * the Mascot rolls in shouting, and the app takes over after `hold`. The daily
+ * open runs the same cut at `pace` of the first launch's; under Reduce Motion
+ * the cut is one fade and the app takes over after `reduceMotionHold`.
+ */
+export const splashMotion = {
+  frame: { width: 390, height: 844 },
+  first: { pace: 1, hold: 2050, reduceMotionHold: 800 },
+  daily: { pace: 0.28, hold: 560, reduceMotionHold: 350 },
+  /** Each letter: where it stands, its turn, and its fly in from the screen's middle. */
+  letters: [
+    { x: -40, y: 70, rotate: -4 },
+    { x: 178, y: 110, rotate: 6 },
+    { x: -56, y: 300, rotate: 3 },
+    { x: 190, y: 330, rotate: -7 },
+    { x: 40, y: 520, rotate: -10 },
+  ],
+  letter: {
+    size: 250,
+    letterSpacing: -10,
+    /** The middle of the frame the letters fly from, less the letter's own offset. */
+    from: { x: 90, y: 580 },
+    fromScale: 0.15,
+    fromTurn: -30,
+    duration: 500,
+    delay: 500,
+    stagger: 80,
+    easing: [0.2, 0.9, 0.25, 1.15],
+  },
+  /** The ink band, as fractions of the screen, drawn in from the left. */
+  band: [
+    [0, 0.58],
+    [1, 0.36],
+    [1, 0.52],
+    [0, 0.74],
+  ],
+  cut: { duration: 350, delay: 1250, easing: [0.7, 0, 0.3, 1] },
+  tagline: { size: 15, letterSpacing: 4, turn: -12.5 },
+  mascot: { x: 110, y: 640 },
+  /** The Mascot rolls in from the left, turning as it comes. */
+  roll: { duration: 600, from: -360, turn: -560, easing: [0.25, 0.9, 0.3, 1.1] },
+} as const;
+
 /** The Mascot's width in points; its height follows the Edition's vector. */
 export const mascotWidth = 130;
 
