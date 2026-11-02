@@ -5,7 +5,7 @@ import {
   Button,
   ScreenTitle,
   space,
-  typeSize,
+  typeStyle,
   UndoToastProvider,
   useEdition,
   useTokens,
@@ -76,7 +76,8 @@ export default function CollectionLinkScreen() {
  * nothing to copy; the copy opens once made, or a toast says it wasn't.
  */
 function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: true }> }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { count, voice } = useEdition();
   const openScreen = useOpenScreen();
   const showToast = useUndoToast();
@@ -94,7 +95,7 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
           <Text
             testID="collection-link-count"
             {...voice}
-            style={[styles.line, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+            style={[typeStyle('sub', tokens), styles.line, { color: colors.muted }]}
           >
             {count(collectionStrings.count, preview.count)}
           </Text>
@@ -106,7 +107,7 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
             <Text
               testID="collection-link-skipped"
               {...voice}
-              style={[styles.line, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('sub', tokens), styles.line, { color: colors.muted }]}
             >
               {count(strings.unavailable, preview.skipped)}
             </Text>
@@ -141,7 +142,8 @@ function Preview({ preview }: { preview: Extract<CollectionLinkPreview, { ok: tr
 
 /** Why the link opens no preview, under the Mascot asleep when it is offline. */
 function Failure({ text, offline }: { text: string; offline: boolean }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <View style={styles.failure}>
@@ -149,7 +151,7 @@ function Failure({ text, offline }: { text: string; offline: boolean }) {
       <Text
         testID="collection-link-failure"
         {...voice}
-        style={[styles.failureText, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+        style={[typeStyle('sub', tokens), { color: colors.ink }]}
       >
         {text}
       </Text>
@@ -162,11 +164,7 @@ const styles = StyleSheet.create({
   content: { paddingBottom: space[8] },
   bar: { paddingHorizontal: space[3], paddingTop: space[2] },
   header: { paddingHorizontal: space[6], paddingTop: space[2], paddingBottom: space[4] },
-  line: { marginTop: space[2], fontSize: typeSize.body },
+  line: { marginTop: space[2] },
   footer: { gap: space[4], paddingHorizontal: space[6], paddingTop: space[5] },
   failure: { gap: space[4], paddingHorizontal: space[6], paddingTop: space[6] },
-  failureText: {
-    fontSize: typeSize.body,
-    lineHeight: typeSize.body * 1.5,
-  },
 });

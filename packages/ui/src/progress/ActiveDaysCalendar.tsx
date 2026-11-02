@@ -6,7 +6,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { calendarDay, space, typeSize } from '../tokens';
+import { calendarDay, space, typeStyle } from '../tokens';
 
 /** How far, in points, a finger moves sideways before the swipe takes over from the sheet's scroll. */
 const SWIPE_START = 15;
@@ -19,7 +19,8 @@ const SWIPE_DISTANCE = 50;
  * to come no tile, only a dashed outline.
  */
 function Day({ day, month }: { day: CalendarDay; month: number }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   // The number on red is the ink of the light Theme in both Themes, as on every red face.
   const keyInk = useSchemeColors('light').ink;
   const { strings, voice } = useEdition();
@@ -54,7 +55,7 @@ function Day({ day, month }: { day: CalendarDay; month: number }) {
           day.state === 'future' && [styles.future, { borderColor: colors.line }],
         ]}
       >
-        <Text style={[styles.number, { color: look.number, fontFamily: fontFamilies.word }]}>
+        <Text style={[typeStyle('calendarDay', tokens), { color: look.number }]}>
           {day.day}
         </Text>
       </View>
@@ -72,7 +73,8 @@ function Day({ day, month }: { day: CalendarDay; month: number }) {
  * With no months, as with its Feature Switch off, it draws nothing.
  */
 export function ActiveDaysCalendar({ months }: { months: readonly CalendarMonth[] }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { strings, voice } = useEdition();
   // How many months back from the current one the reader has turned.
   const [back, setBack] = useState(0);
@@ -112,7 +114,7 @@ export function ActiveDaysCalendar({ months }: { months: readonly CalendarMonth[
           }}
           {...voice}
         >
-          <Text style={[styles.title, { color: colors.ink, fontFamily: fontFamilies.ui }]}>
+          <Text style={[typeStyle('calendarTitle', tokens), styles.title, { color: colors.ink }]}>
             {title}
           </Text>
         </View>
@@ -125,7 +127,7 @@ export function ActiveDaysCalendar({ months }: { months: readonly CalendarMonth[
           {words.weekdays.map((weekday) => (
             <Text
               key={weekday}
-              style={[styles.weekday, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+              style={[typeStyle('calendarWeekday', tokens), styles.weekday, { color: colors.muted }]}
             >
               {weekday}
             </Text>
@@ -149,13 +151,11 @@ export function ActiveDaysCalendar({ months }: { months: readonly CalendarMonth[
 
 const styles = StyleSheet.create({
   calendar: { marginTop: space[6], gap: space[2] },
-  title: { fontSize: typeSize.blockHeading, fontWeight: '600', marginBottom: space[1] },
+  title: { marginBottom: space[1] },
   week: { flexDirection: 'row', gap: calendarDay.gap },
   weekday: {
     flex: 1,
     textAlign: 'center',
-    fontSize: calendarDay.weekday,
-    fontWeight: '700',
   },
   cell: { flex: 1, height: calendarDay.height + calendarDay.edge },
   tile: {
@@ -170,5 +170,4 @@ const styles = StyleSheet.create({
   },
   edge: { top: calendarDay.edge },
   future: { borderWidth: calendarDay.futureBorder, borderStyle: 'dashed' },
-  number: { fontSize: calendarDay.number, fontWeight: '800' },
 });

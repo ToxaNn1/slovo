@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { space, textFieldDrawing, typeSize } from '../tokens';
+import { space, textFieldDrawing, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -51,11 +51,12 @@ export function TextField({
   | 'returnKeyType'
   | 'textContentType'
 >) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   return (
     <View style={styles.field}>
-      <Text {...voice} style={[styles.label, { color: colors.muted, fontFamily: fontFamilies.ui }]}>
+      <Text {...voice} style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}>
         {label}
       </Text>
       <View
@@ -81,7 +82,7 @@ export function TextField({
           spellCheck={false}
           placeholderTextColor={colors.muted}
           selectionColor={colors.accent}
-          style={[styles.input, { color: colors.ink, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('fieldText', tokens), styles.input, { color: colors.ink }]}
         />
         {busy && <ActivityIndicator color={colors.muted} />}
       </View>
@@ -108,7 +109,8 @@ export function ProblemLine({
   cause?: unknown;
   testID: string;
 }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
 
   useEffect(() => {
@@ -120,7 +122,7 @@ export function ProblemLine({
     <Text
       testID={testID}
       {...voice}
-      style={[styles.problem, { color: colors.accent, fontFamily: fontFamilies.ui }]}
+      style={[typeStyle('fieldProblem', tokens), { color: colors.accent }]}
     >
       {problem}
     </Text>
@@ -129,7 +131,6 @@ export function ProblemLine({
 
 const styles = StyleSheet.create({
   field: { gap: space[2] },
-  label: { fontSize: typeSize.caption, fontWeight: '600' },
   box: {
     minHeight: textFieldDrawing.height,
     flexDirection: 'row',
@@ -139,6 +140,5 @@ const styles = StyleSheet.create({
     borderWidth: textFieldDrawing.border,
     borderRadius: textFieldDrawing.radius,
   },
-  input: { flex: 1, alignSelf: 'stretch', fontSize: textFieldDrawing.inputSize },
-  problem: { fontSize: textFieldDrawing.problemSize, fontWeight: '600' },
+  input: { flex: 1, alignSelf: 'stretch' },
 });

@@ -5,7 +5,7 @@ import { PressedTile } from '../primitives/PressedTile';
 import { SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, moodChip, space, typeSize, typeStyle } from '../tokens';
+import { minTouchTarget, moodChip, space, typeStyle } from '../tokens';
 
 /** A mood on offer: its id, name and emoji, and why it is disabled, if it is. */
 export interface MoodChip {
@@ -79,7 +79,7 @@ function MoodChipButton({
   onChoose: (moodId: string) => void;
 }) {
   const tokens = useTokens();
-  const { colors, fontFamilies } = tokens;
+  const { colors } = tokens;
   const { voice } = useEdition();
   const disabled = disabledHint !== undefined;
   return (
@@ -105,7 +105,7 @@ function MoodChipButton({
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           {...voice}
-          style={[styles.hint, { color: colors.muted, fontFamily: fontFamilies.ui }]}
+          style={[typeStyle('rowSub', tokens), styles.hint, { color: colors.muted }]}
         >
           {disabledHint}
         </Text>
@@ -116,7 +116,7 @@ function MoodChipButton({
 
 /** The roulette's current Lemma, large, in the middle of the sheet. */
 function Roulette({ lemma }: { lemma: string }) {
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
   const { voice } = useEdition();
   return (
     <View
@@ -131,7 +131,7 @@ function Roulette({ lemma }: { lemma: string }) {
         {...voice}
         numberOfLines={1}
         adjustsFontSizeToFit
-        style={[styles.lemma, { color: colors.ink, fontFamily: fontFamilies.word }]}
+        style={[typeStyle('rouletteLemma', tokens), { color: tokens.colors.ink }]}
       >
         {lemma}
       </Text>
@@ -149,12 +149,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  hint: { fontSize: typeSize.meta, textAlign: 'center' },
+  hint: { textAlign: 'center' },
   // The height of the three rows of chips it takes the place of, so the sheet keeps its size.
   roulette: {
     minHeight: minTouchTarget * 3 + space[3] * 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  lemma: { fontSize: typeSize.emptyStateTitle, fontWeight: '500' },
 });

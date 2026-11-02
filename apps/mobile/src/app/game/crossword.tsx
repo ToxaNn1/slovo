@@ -5,7 +5,7 @@ import {
   ScreenTitle,
   Button,
   space,
-  typeSize,
+  typeStyle,
   useEdition,
   useTokens,
 } from '@slovo/ui';
@@ -38,7 +38,8 @@ const SOLVED_MAX_FONT_SCALE = 1.5;
 export default function DailyCrosswordScreen() {
   const crossword = useDailyCrossword();
   const router = useRouter();
-  const { colors, fontFamilies } = useTokens();
+  const tokens = useTokens();
+  const { colors } = tokens;
   const { voice } = useEdition();
   const solved = crossword?.state.progress === 'solved';
   const { shareCard } = useShell();
@@ -90,7 +91,7 @@ export default function DailyCrosswordScreen() {
             testID="daily-crossword-solved"
             {...voice}
             maxFontSizeMultiplier={SOLVED_MAX_FONT_SCALE}
-            style={[styles.solved, { color: colors.correct, fontFamily: fontFamilies.word }]}
+            style={[typeStyle('crosswordSolved', tokens), styles.solved, { color: colors.correct }]}
           >
             {strings.dailyCrossword.solved}
           </Text>
@@ -125,10 +126,5 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   back: { paddingHorizontal: space[3], paddingTop: space[2] },
   content: { gap: space[4], paddingHorizontal: space[5], paddingBottom: space[8] },
-  solved: {
-    fontSize: typeSize.emptyStateTitle,
-    lineHeight: typeSize.emptyStateTitle * 1.15,
-    fontWeight: '500',
-    textAlign: 'center',
-  },
+  solved: { textAlign: 'center' },
 });
