@@ -110,6 +110,7 @@ export { SearchButton } from './search/SearchButton';
 export { RecentQueries } from './search/RecentQueries';
 export { StatsPill } from './progress/StatsPill';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
+export { BadgeMark } from './progress/BadgeMark';
 export { StatsSheet } from './progress/StatsSheet';
 export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';

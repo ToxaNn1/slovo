@@ -204,7 +204,26 @@ export const wedges = {
     [0.5, 1],
     [0, 0.64],
   ],
+  /** A hexagon lying on its side: the Streak Badges. */
+  hexagon: [
+    [0.25, 0.03],
+    [0.75, 0.03],
+    [1, 0.5],
+    [0.75, 0.97],
+    [0.25, 0.97],
+    [0, 0.5],
+  ],
+  /** A diamond standing on its point: the Level Badges. */
+  diamond: [
+    [0.5, 0],
+    [1, 0.5],
+    [0.5, 1],
+    [0, 0.5],
+  ],
 } as const satisfies Record<string, Wedge>;
+
+/** The depth of the hard edge under an earned Badge's shape. */
+export const badgeEdge = 4;
 
 /** A cubic Bézier easing curve, as CSS `cubic-bezier(x1, y1, x2, y2)` takes it. */
 export type Easing = readonly [number, number, number, number];
