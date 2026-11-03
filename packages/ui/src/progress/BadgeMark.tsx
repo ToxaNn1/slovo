@@ -3,7 +3,15 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polygon } from 'react-native-svg';
 
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { badgeEdge, badgeStamp, typeRoles, typeStyle, wedges, type Wedge } from '../tokens';
+import {
+  badgeEdge,
+  badgeStamp,
+  capitalMarkStyle,
+  typeRoles,
+  typeStyle,
+  wedges,
+  type Wedge,
+} from '../tokens';
 
 /** A Badge family: the Streak, the Games, the confirmed Entries, the Levels. */
 export type BadgeFamily = 'streak' | 'games' | 'entries' | 'levels';
@@ -109,6 +117,7 @@ export function BadgeMark({
                 color: keyInk,
                 fontSize: symbolSize,
                 lineHeight: (symbolSize * symbolRole.lineHeight) / symbolRole.size,
+                ...capitalMarkStyle('badgeSymbol', symbolSize / symbolRole.size),
               },
             ]}
           >

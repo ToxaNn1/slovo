@@ -8,6 +8,7 @@ import { Mascot } from '../primitives/Mascot';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import {
+  capitalMarkStyle,
   halftone,
   roleSize,
   shareCardDrawing,
@@ -30,10 +31,18 @@ export const SHARE_CARD = {
   square: { width: 300, height: 300 },
 } as const satisfies Record<ShareCardFormat, { width: number; height: number }>;
 
-/** A type role's line height as a share of its size: the card scales its text by its width. */
-function lineRatio(name: TypeRole): number {
-  const { fontSize, lineHeight } = roleSize(name);
-  return lineHeight / fontSize;
+/**
+ * A type role drawn at `fontSize`: the card scales its text by its width,
+ * keeping the role's line height, and the room for its capital marks, as a
+ * share of its size.
+ */
+function scaledRole(name: TypeRole, fontSize: number) {
+  const scale = fontSize / roleSize(name).fontSize;
+  return {
+    fontSize,
+    lineHeight: roleSize(name).lineHeight * scale,
+    ...capitalMarkStyle(name, scale),
+  };
 }
 
 /** Text that doesn't fit shrinks by this share of its size at a time. */
@@ -180,8 +189,7 @@ function FittedCard({
       style={[
         typeStyle('shareHeadline', tokens),
         {
-          fontSize: text(headlineSize) * headlineScale,
-          lineHeight: text(headlineSize) * headlineScale * lineRatio('shareHeadline'),
+          ...scaledRole('shareHeadline', text(headlineSize) * headlineScale),
           letterSpacing: shareCardDrawing.tracking.headline * unit,
           color: paint.ink,
         },
@@ -222,8 +230,7 @@ function FittedCard({
             {
               right: layout.giant.right * unit,
               top: layout.giant.top * unit,
-              fontSize: layout.giant.size * unit,
-              lineHeight: layout.giant.size * unit,
+              ...scaledRole('shareGiant', layout.giant.size * unit),
               letterSpacing: shareCardDrawing.tracking.giant * unit,
               color: paint.giant,
             },
@@ -258,8 +265,7 @@ function FittedCard({
               style={[
                 typeStyle('shareKicker', tokens),
                 {
-                  fontSize: text(layout.type.kicker),
-                  lineHeight: text(layout.type.kicker) * lineRatio('shareKicker'),
+                  ...scaledRole('shareKicker', text(layout.type.kicker)),
                   letterSpacing: shareCardDrawing.tracking.kicker * unit,
                   color: paint.ink,
                 },
@@ -303,8 +309,7 @@ function FittedCard({
           style={[
             typeStyle('shareWatermark', tokens),
             {
-              fontSize: layout.type.watermark * unit,
-              lineHeight: layout.type.watermark * unit * lineRatio('shareWatermark'),
+              ...scaledRole('shareWatermark', layout.type.watermark * unit),
               color: paint.onFooter,
               opacity: shareCardDrawing.watermarkOpacity,
             },
@@ -493,8 +498,7 @@ function Sub({
         typeStyle(role, tokens),
         strike && styles.strike,
         {
-          fontSize,
-          lineHeight: fontSize * lineRatio(role),
+          ...scaledRole(role, fontSize),
           color: color ?? paint.ink,
           opacity: label || color !== undefined ? 1 : shareCardDrawing.subOpacity,
           textDecorationColor: paint.ink,
@@ -575,8 +579,7 @@ function WeeklyRecapBlocks({ card, ...props }: BlockProps & { card: BodyOf<'week
               style={[
                 typeStyle('shareStat', tokens),
                 {
-                  fontSize: text(type.stat),
-                  lineHeight: text(type.stat) * lineRatio('shareStat'),
+                  ...scaledRole('shareStat', text(type.stat)),
                   color: paint.ink,
                 },
               ]}
