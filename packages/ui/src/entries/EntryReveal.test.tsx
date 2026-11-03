@@ -45,11 +45,14 @@ const card: WordFeedCard = {
   },
 };
 
-async function renderCard(reduceMotion: boolean) {
+async function renderCard(reduceMotion: boolean, lemma = card.model.lemma) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <ReduceMotionProvider reduceMotion={reduceMotion}>
-        <EntryCard card={card} actions={<Text>Actions</Text>} />
+        <EntryCard
+          card={{ ...card, model: { ...card.model, lemma } }}
+          actions={<Text>Actions</Text>}
+        />
       </ReduceMotionProvider>
     </EditionProvider>,
   );
@@ -105,12 +108,27 @@ describe('the Entry card reveal', () => {
     expect(styleOf('word-lemma-letter-4').opacity).toBe(0);
     expect(styleOf('word-actions').opacity).toBe(0);
 
-    await wait(900 + 400 - 220);
+    await wait(1000 - 220);
     expect(styleOf('word-lemma-letter-4').opacity).toBeCloseTo(1);
     expect(styleOf('word-lemma-letter-4').rise).toBeCloseTo(0);
     expect(styleOf('word-actions').opacity).toBeCloseTo(1);
     expect(styleOf('word-actions').rise).toBeCloseTo(0);
     expect(screen.getByText('Actions')).toBeTruthy();
+  });
+
+  it('settles within a second, however long the Lemma', async () => {
+    // 15 letters, as long as a rare Lemma runs.
+    await renderCard(false, 'incomprehension');
+
+    await wait(1000);
+    for (const letter of ['word-lemma-letter-0', 'word-lemma-letter-14']) {
+      expect(styleOf(letter).opacity).toBeCloseTo(1);
+      expect(styleOf(letter).rise).toBeCloseTo(0);
+    }
+    expect(styleOf('word-actions')).toEqual({
+      opacity: expect.closeTo(1),
+      rise: expect.closeTo(0),
+    });
   });
 
   it('under Reduce Motion fades the card in once and moves nothing', async () => {
