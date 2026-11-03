@@ -207,7 +207,7 @@ describe('BottomSheet', () => {
     const { onClose } = await renderSheet();
     await pass(450);
 
-    fireEvent.press(screen.getByTestId('sheet-scrim'));
+    await fireEvent.press(screen.getByTestId('sheet-scrim'));
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
