@@ -32,8 +32,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
           id: collections-delete-destructive
       - waitForAnimationToEnd
 - tapOn:
-    id: collections-back
-- tapOn:
     id: tab-home
 # The Collections button sits under the card, which may be taller than the screen.
 - scrollUntilVisible:
@@ -98,9 +96,11 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: saved-collections
     text: Колекції, 1 колекція
+- tapOn:
+    id: saved-collections
 - assertVisible:
-    id: saved-collection-.*
-    text: Poets, 1 запис
+    id: collection-.*-content
+    text: Poets, 1 запис.*
 - takeScreenshot: collection-saved-overview
 # Back on the card, a checkbox applies at once: unfiled, and the card counts it.
 - tapOn:
@@ -117,9 +117,11 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collection-done
 - tapOn:
     id: tab-saved
+- tapOn:
+    id: saved-collections
 - assertVisible:
-    id: saved-collection-.*
-    text: Poets, 0 записів
+    id: collection-.*-content
+    text: Poets, 0 записів.*
 - tapOn:
     id: tab-home
 - assertVisible:

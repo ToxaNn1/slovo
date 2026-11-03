@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
-import { useOpenScreen } from '../entries/use-open-screen';
+import { useOpenScreen } from '../use-open-screen';
 
 /** A group of the Search screen: the kind of Entry its results are. */
 export type SearchGroupName = keyof SearchResults;

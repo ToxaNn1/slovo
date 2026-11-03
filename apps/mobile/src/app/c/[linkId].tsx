@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { logError } from '@/diagnostics/log';
 import { editionStrings } from '@/edition/edition';
-import { useOpenScreen } from '@/entries/use-open-screen';
+import { useOpenScreen } from '@/use-open-screen';
 import { MascotAs } from '@/mascot/mascot';
 import { useCollectionLinkPreview } from '@/saved/collection-link';
 

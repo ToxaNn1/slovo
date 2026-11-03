@@ -1,6 +1,6 @@
 import { CommunityWordCard } from '@slovo/ui';
 
-import { useOpenScreen } from '../entries/use-open-screen';
+import { useOpenScreen } from '../use-open-screen';
 import { useCommunityWordRow } from './community-word';
 
 /**

@@ -5,25 +5,36 @@ import Svg, { Circle, Polygon } from 'react-native-svg';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { badgeEdge, badgeStamp, typeRoles, typeStyle, wedges, type Wedge } from '../tokens';
 
-/** The shape of a Badge family: the Streak, the Games, the confirmed Entries, the Levels. */
-export type BadgeShape = Wedge | 'circle';
+/** A Badge family: the Streak, the Games, the confirmed Entries, the Levels. */
+export type BadgeFamily = 'streak' | 'games' | 'entries' | 'levels';
 
-/** Each Badge family's own shape, read from the kind of its condition. */
-export function shapeOf(kind: BadgeCondition['kind']): BadgeShape {
+/** The family of a Badge, read from the kind of its condition. */
+export function familyOf(kind: BadgeCondition['kind']): BadgeFamily {
   switch (kind) {
     case 'streak':
-      return wedges.hexagon;
+      return 'streak';
     case 'confirmedEntries':
-      return wedges.shield;
+      return 'entries';
     case 'level':
-      return wedges.diamond;
+      return 'levels';
     case 'gameWin':
     case 'dailyCrosswordRun':
     case 'rightAnswers':
     case 'rightOnRarity':
-      return 'circle';
+      return 'games';
   }
 }
+
+/** The shape of a Badge family. */
+type BadgeShape = Wedge | 'circle';
+
+/** Each Badge family's own shape. */
+const shapes: Record<BadgeFamily, BadgeShape> = {
+  streak: wedges.hexagon,
+  entries: wedges.shield,
+  levels: wedges.diamond,
+  games: 'circle',
+};
 
 /** The shape drawn in `fill` over a box of `size`. */
 function Shape({ shape, size, fill }: { shape: BadgeShape; size: number; fill: string }) {
@@ -70,7 +81,7 @@ export function BadgeMark({
   // The symbol on red is the ink of the light Theme in both Themes, as on every red face.
   const key = useSchemeColors('light');
   const keyInk = key.ink;
-  const shape = shapeOf(condition.kind);
+  const shape = shapes[familyOf(condition.kind)];
   const edge = onRed ? badgeStamp.drop : badgeEdge;
   const face = onRed ? key.background : colors.accent;
   return (

@@ -188,6 +188,12 @@ export const typeRoles = {
   crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
+  /** The day under the Daily Crossword's name on its red card. */
+  crosswordDay: role('ui', '600', 13, 17),
+  /** A letter in a cell of the small grid on the Daily Crossword's red card. */
+  crosswordMiniLetter: role('word', '800', 11, 13, 0, 'uppercase'),
+  /** The XP earned in all, in its pill beside the Games screen's title. */
+  xpPill: role('word', '800', 13, 13),
   /** How many Rounds have passed, in a Game's header when it has no Round limit. */
   roundPassed: role('word', '800', 13, 13),
   /** The «−1» that rises from a lost Life. */
@@ -292,10 +298,6 @@ export const typeRoles = {
   chipCount: role('ui', '600', 12, 14),
   /** The seconds left beside a timed Game's bar. */
   timerSeconds: role('word', '800', 14, 17),
-  /** A Collection's name on its card of the Saved overview. */
-  collectionCardName: role('word', '800', 14, 17),
-  /** How many Entries a Collection holds, under its name on its card. */
-  collectionCardCount: role('ui', '600', 12, 12),
   /** The Community Counters line under an Entry card's mark buttons. */
   communityCounters: role('ui', '400', 13, 17),
   /** The giant ∞ behind the end-of-Cycle card. */
@@ -344,12 +346,22 @@ export const typeRoles = {
   progressCount: role('ui', '600', 13, 13),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */
   stampName: role('ui', '500', 16, 21),
-  /** A Badge's name in the list of Badges. */
-  badgeName: role('ui', '400', 15, 21),
-  /** Under a Badge's name: when it was earned, or how far its condition has come. */
-  badgeStatus: role('ui', '400', 15, 22),
-  /** A line of the Profile, such as the Level or the Known count, and its offer to save progress. */
+  /** The name over a Badge family's row of marks. */
+  badgeFamily: role('word', '800', 12, 14, 1),
+  /** A line of the Profile with no card of its own, such as all XP while the Levels are off. */
   profileText: role('ui', '400', 15, 22),
+  /** The Level's number in the ring of the Profile's Level card. */
+  levelNumber: role('word', '900', 44, 44),
+  /** The word under the Level's number in its ring. */
+  levelLabel: role('word', '700', 10, 10, 1.5, 'uppercase'),
+  /** The Level's name on the Profile's Level card. */
+  levelName: role('word', '900', 21, 23),
+  /** The XP towards the next Level on the Profile's Level card. */
+  levelXp: role('ui', '600', 14, 18),
+  /** The Profile's giant red Streak. */
+  profileStreak: role('word', '900', 60, 54, -2),
+  /** The words beside the Profile's giant Streak. */
+  profileStreakLabel: role('word', '800', 16, 18),
   /** The name of the screen before, beside the back tile that returns to it. */
   backLink: role('ui', '500', 14, 17),
   /** The label of an action a list row's swipe shows. */
@@ -394,8 +406,10 @@ export const typeRoles = {
   shareStat: role('word', '900', 18, 22),
   /** The watermark at the foot of a Share Card. */
   shareWatermark: role('ui', '600', 10, 12),
-  /** The Edition's wordmark on the About screen, set wide. */
-  wordmark: role('word', '500', 32, 38, 9.6),
+  /** The giant letter behind the About screen's red panel. */
+  aboutGiant: role('word', '900', 220, 220),
+  /** The app's name on the About screen's red panel. */
+  aboutName: role('word', '900', 34, 34, -1),
   /** What SLOVO is, on the About screen's card. */
   aboutDescription: role('word', '500', 22, 30),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
@@ -461,6 +475,8 @@ export const offsetShadow = {
   pressed: { depth: 1, translateY: 4 },
   /** A key of an on-screen keyboard: a shallower edge, pressed down to the same thin one. */
   key: { depth: 3, translateY: 2 },
+  /** A big card, as the Daily Crossword's: a deeper edge, pressed down to the same thin one. */
+  card: { depth: 6, translateY: 5 },
 } as const;
 
 /** The edge colour of a tile's offset shadow: `accentEdge` under red, `tileEdge` under the rest. */
@@ -577,44 +593,6 @@ export const wedges = {
   ],
 } as const satisfies Record<string, Wedge>;
 
-/** The marks of the Collection cards of the Saved overview, in turn by the card's place. */
-export const collectionMarks = [
-  [
-    [0, 0],
-    [1, 0],
-    [1, 1],
-  ],
-  [
-    [0, 0],
-    [1, 0.3],
-    [1, 1],
-    [0, 0.7],
-  ],
-  [
-    [0.5, 0],
-    [1, 1],
-    [0, 1],
-  ],
-  [
-    [0, 0],
-    [1, 0],
-    [0.6, 1],
-    [0, 1],
-  ],
-  [
-    [0, 0.3],
-    [1, 0],
-    [1, 0.7],
-    [0, 1],
-  ],
-  [
-    [0.3, 0],
-    [1, 0],
-    [0.7, 1],
-    [0, 1],
-  ],
-] as const satisfies readonly Wedge[];
-
 /** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
 export const levelCard = {
   padding: 20,
@@ -631,7 +609,6 @@ export const levelCard = {
     [1, 1],
     [0, 1],
   ],
-  levelSize: 44,
   linesGap: 6,
 } as const;
 
@@ -649,8 +626,19 @@ export const badgeStamp = {
   nameTop: 10,
 } as const;
 
-/** The Profile's Badge grid: marks of this side in rows of their family. */
-export const badgeGrid = { side: 42, gap: 6, familyGap: 14, pressedScale: 0.88 } as const;
+/**
+ * The Badge grid, from the design: marks in rows of their family under its
+ * name, seven to a row of the Profile (`side`), larger on the Badges screen
+ * (`screenSide`).
+ */
+export const badgeGrid = {
+  side: 44,
+  screenSide: 58,
+  gap: 6,
+  familyGap: 14,
+  headGap: 10,
+  pressedScale: 0.88,
+} as const;
 
 /** The depth of the hard edge under an earned Badge's shape. */
 export const badgeEdge = 4;
@@ -905,27 +893,10 @@ export const fontSizeSteps: Readonly<
   XL: { lemma: 65, definition: 25, example: 22 },
 };
 
-/**
- * Spacing the design draws between the steps of the 4-pt grid on the cards of
- * the Saved overview and of the Collections screen.
- */
+/** Spacing the design draws between the steps of the 4-pt grid on the Collections' rows. */
 export const cardSpace = {
-  /** Between the blocks of a card of the Saved overview, and between its cards. */
-  gap: 14,
   /** Around the content of a Collection's row and of the field that names one. */
   collectionPadding: 18,
-} as const;
-
-/** A Collection's card on the Saved overview (design `SlovoApp`, the Collections tab). */
-export const collectionCard = {
-  height: 150,
-  padding: 14,
-  /** Between the cards, across and down. */
-  gap: 12,
-  mark: 34,
-  /** Between the name and the count. */
-  textGap: 6,
-  countOpacity: 0.85,
 } as const;
 
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
@@ -1175,6 +1146,20 @@ export const settingsRowDrawing = {
   chevronHeight: 13,
 } as const;
 
+/**
+ * The About screen's red panel (design `SlovoApp`, `subAbout`): its height,
+ * corner and padding, where the giant letter sits off its top right, and the
+ * wedge before the app's name with the gap after it.
+ */
+export const aboutPanel = {
+  height: 150,
+  radius: 20,
+  padding: 18,
+  giant: { right: -30, top: -40 },
+  wedge: { width: 23, height: 34 },
+  gap: 10,
+} as const;
+
 /** The checkbox's and the radio's mark: its side, the checkbox's corner and the outline. */
 export const choiceMark = { size: 26, radius: 8, border: 2.5, tick: 16 } as const;
 
@@ -1311,15 +1296,25 @@ export const roundProgress = { height: 8, gap: 4, skew: '-20deg' } as const;
 export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVertical: 30 } as const;
 
 /**
+ * The Daily Crossword's red card on the mode screen, from the design: its
+ * padding, the gap between its grid and its lines and between its lines, the
+ * gap over the state, and the small grid's cell (side, corner, edge) and gap.
+ */
+export const dailyCrosswordCard = {
+  padding: 18,
+  gap: 16,
+  lineGap: 6,
+  stateGap: 4,
+  mini: { cell: 22, radius: 5, depth: 2, gap: 4 },
+} as const;
+
+/**
  * The Daily Crossword, from the design: a cell's side and the gap between
  * cells (five of them fit the SE's width with the screen's margins), the
  * selected cell's ink ring; the clue bar's padding; the keyboard's key
  * height and corner radius, the gaps between keys and between rows, and how
  * much wider the delete key is than a letter key.
  */
-/** The Daily Crossword's red card on the mode screen, from the design: its padding and the gap between its lines. */
-export const dailyCrosswordCard = { padding: 18, gap: 6 } as const;
-
 export const crosswordLayout = {
   cell: 62,
   cellGap: 8,

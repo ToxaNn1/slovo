@@ -6,12 +6,35 @@ import { useEdition } from '../providers/EditionProvider';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
 import { cardSpace, entryRow, minTouchTarget, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { useCollectionPaint } from './CollectionCard';
+
+/** The fills of the cards in turn: red, ink, sunken. */
+const FILLS = ['accent', 'ink', 'sunken'] as const;
+
+type Fill = (typeof FILLS)[number];
+
+function fillAt(index: number): Fill {
+  return FILLS[index % FILLS.length] ?? 'accent';
+}
+
+/**
+ * The paint of the Collection at a place among the Collections: its ground, the
+ * ink of its text and the colour of its mark. The Collections' rows take it in turn: red, ink, then sunken.
+ */
+function useCollectionPaint(index: number): { ground: string; ink: string; mark: string } {
+  const { colors, colorScheme } = useTokens();
+  // The design's dark ink, the same in both Themes: the light ink, the dark ground.
+  const darkInk = colorScheme === 'light' ? colors.ink : colors.background;
+  return {
+    accent: { ground: colors.accent, ink: darkInk, mark: darkInk },
+    ink: { ground: colors.ink, ink: colors.background, mark: colors.accent },
+    sunken: { ground: colors.surfaceSunken, ink: colors.ink, mark: colors.accent },
+  }[fillAt(index)];
+}
 
 /**
  * A Collection on the Collections screen: a card with its name over its
  * newest Lemmas, and how many Entries it holds on the right. The cards take
- * their fill in turn by their place, as the Saved overview's cards do. A tap opens the
+ * their fill in turn by their place. A tap opens the
  * Collection; swipe actions slide out inside the card and are VoiceOver
  * actions too, and the «…» button at the right offers the same actions in a
  * menu. Needs a `GestureHandlerRootView` above it.

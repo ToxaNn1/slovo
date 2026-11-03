@@ -76,8 +76,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collection-.*-content
     text: Poets, 0 записів
 - tapOn:
-    id: collections-back
-- tapOn:
     id: tab-home
 - assertVisible:
     id: home

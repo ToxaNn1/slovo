@@ -11,11 +11,13 @@ async function draw(reduceMotion: boolean) {
       <LevelCard
         testID="level"
         level={7}
+        label="Level"
+        name="Catcher"
         progress={640}
         toNext={1000}
         lines={[
-          { testID: 'level-name', text: 'Level 7 · Catcher' },
           { testID: 'level-xp', text: '640 of 1000 XP' },
+          { testID: 'level-total', text: 'All XP: 2400' },
         ]}
       />
     </EditionProvider>,
@@ -24,12 +26,14 @@ async function draw(reduceMotion: boolean) {
 
 describe('LevelCard', () => {
   it.each([false, true])(
-    'shows the Level in its ring and the lines beside it (Reduce Motion %s)',
+    'shows the Level and its label in its ring, its name and the lines beside it (Reduce Motion %s)',
     async (reduceMotion) => {
       await draw(reduceMotion);
       expect(screen.getByTestId('level-number')).toHaveTextContent('7');
-      expect(screen.getByTestId('level-name')).toHaveTextContent('Level 7 · Catcher');
+      expect(screen.getByText('Level')).toBeOnTheScreen();
+      expect(screen.getByTestId('level-name')).toHaveTextContent('Catcher');
       expect(screen.getByTestId('level-xp')).toHaveTextContent('640 of 1000 XP');
+      expect(screen.getByTestId('level-total')).toHaveTextContent('All XP: 2400');
     },
   );
 });

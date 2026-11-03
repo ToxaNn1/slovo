@@ -1,7 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { Linking } from 'react-native';
 
 import AboutScreen from '../app/settings/about';
@@ -59,6 +59,17 @@ async function renderAbout() {
 }
 
 describe('About', () => {
+  it("heads the screen with the Edition's name on the red panel, under its giant letter", async () => {
+    await renderAbout();
+
+    const panel = within(screen.getByTestId('about-panel'));
+    expect(panel.getByRole('header', { name: edition.displayName })).toBeTruthy();
+    expect(
+      panel.getByText(editionStrings.settings.about.glyph, { includeHiddenElements: true }),
+    ).toBeTruthy();
+    expect(panel.queryByText(editionStrings.settings.about.glyph)).toBeNull();
+  });
+
   it.each([
     ['privacy policy', 'about-row-privacy', 'https://slovo.example/uk/privacy'],
     ['terms', 'about-row-terms', 'https://slovo.example/uk/terms'],

@@ -58,9 +58,18 @@ export const SettingsStringsSchema = z.strictObject({
     /** The row that opens the Profile, e.g. «Профіль». */
     profile: TextSchema,
   }),
-  /** The Badges screen: each Badge earned with its date, or its progress (ADR 0066). */
+  /** The Badges screen: the Badges in a grid by family, each earned with its date, or its progress (ADR 0066). */
   badges: z.strictObject({
     title: TextSchema,
+    /** How many Badges of a family, or of all, are earned, e.g. «10 з 21». */
+    earnedOf: templateOf('earned', 'total'),
+    /** The name over each Badge family's row. */
+    families: z.strictObject({
+      streak: TextSchema,
+      games: TextSchema,
+      entries: TextSchema,
+      levels: TextSchema,
+    }),
     /** An earned Badge. Takes `{date}`, the day it was earned, e.g. «20.10.2026». */
     earned: templateOf('date'),
     /** A Badge of one first time (a win, a right answer on a rarity) not earned yet. */
@@ -76,18 +85,12 @@ export const SettingsStringsSchema = z.strictObject({
   /** The Profile: the reader's whole progress, with its Badges as the Badges screen words them. */
   profile: z.strictObject({
     title: TextSchema,
-    /** The Level and its name, e.g. «Рівень 3 · Читач». */
-    level: templateOf('level', 'name'),
+    /** The word under the Level's number in its ring, e.g. «Рівень». */
+    levelLabel: TextSchema,
     /** The XP towards the next Level, e.g. «40 з 120 XP до наступного рівня». */
     toNext: templateOf('progress', 'toNext'),
     /** All XP ever earned, e.g. «Усього XP: 860». */
     totalXp: templateOf('count'),
-    /** The Streak, e.g. «Серія: 12». */
-    streak: templateOf('count'),
-    /** The Best Streak, e.g. «Найкраща серія: 31». */
-    bestStreak: templateOf('count'),
-    /** The heading over the Active Days calendar. */
-    activeDays: TextSchema,
     /** The heading over the confirmed Entries by rarity. */
     confirmed: TextSchema,
     /** The confirmed Entries of one rarity, e.g. «Рідкість 3: 14». */
@@ -132,6 +135,8 @@ export const SettingsStringsSchema = z.strictObject({
   }),
   /** The About screen. */
   about: z.strictObject({
+    /** The giant letter on the red panel. */
+    glyph: TextSchema,
     /** The Edition's line under its name. */
     editionLine: TextSchema,
     /** The installed build's line. Takes `{version}` and `{build}`. */

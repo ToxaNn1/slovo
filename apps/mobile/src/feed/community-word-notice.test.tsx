@@ -33,7 +33,7 @@ let composition: Composition;
 
 /** The screens the card opens, by their path. */
 const mockOpened: string[] = [];
-jest.mock('../entries/use-open-screen', () => ({
+jest.mock('../use-open-screen', () => ({
   useOpenScreen: () => (href: string) => mockOpened.push(href),
 }));
 

@@ -7,6 +7,8 @@ import { templateOf } from './shared';
 export const SearchStringsSchema = z.strictObject({
   /** The screen title and the magnifier's VoiceOver label. */
   title: TextSchema,
+  /** The placeholder of the search field on the Saved screen, which opens Search. */
+  placeholder: TextSchema,
   /** The small capitals over the recent queries. */
   recent: TextSchema,
   /** Clears the recent queries. */

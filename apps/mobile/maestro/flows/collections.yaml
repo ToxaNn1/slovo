@@ -1,4 +1,4 @@
-# The Collections screen: the Saved tab's card opens it, «+» makes a Collection
+# Collections: the Saved tab's «Колекції» tab shows them in place, «+» makes a Collection
 # (a taken name is refused), a swipe or the «…» menu renames it in place and
 # deletes it after the SLOVO dialog. A subflow of `smoke.yaml`; run it from there.
 # Names are Latin, so the keyboard of any simulator can type them. It leaves
@@ -52,18 +52,16 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collections-new-refusal
     text: Колекція з такою назвою вже є.
 - takeScreenshot: collections-refused
-# Leaving the field drops it.
-- tapOn: Колекції
+# Leaving the field drops it: a tap on the Saved title, the first «Збережене» over the tab bar's.
+- tapOn:
+    text: Збережене
+    index: 0
 - assertNotVisible:
     id: collections-new
-# The Saved overview counts what the screen made.
-- tapOn:
-    id: collections-back
+# The Collections tab counts what the list made.
 - assertVisible:
-    id: saved-collection-.*
-    text: Bravo, 0 записів
-- tapOn:
     id: saved-collections
+    text: 'Колекції, [2-9]\d* колекці.*'
 # A swipe while the screen still slides in is lost, and a long list slides in later.
 - waitForAnimationToEnd
 # Swipe «Bravo» to «Назва»: its row becomes the field, with its name in it.
@@ -169,8 +167,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collections-delete-destructive
 - assertNotVisible:
     text: Delta, 0 записів
-- tapOn:
-    id: collections-back
 - swipe:
     from:
       id: gearshape.fill

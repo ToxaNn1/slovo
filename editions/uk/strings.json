@@ -122,12 +122,9 @@
     },
     "profile": {
       "title": "Профіль",
-      "level": "Рівень {level} · {name}",
+      "levelLabel": "Рівень",
       "toNext": "{progress} з {toNext} XP до наступного рівня",
       "totalXp": "Усього XP: {count}",
-      "streak": "Серія: {count}",
-      "bestStreak": "Найкраща серія: {count}",
-      "activeDays": "Активні дні",
       "confirmed": "Підтверджені записи за рідкістю",
       "confirmedOfRarity": "Рідкість {rarity}: {count}",
       "badges": "Відзнаки",
@@ -147,6 +144,8 @@
     },
     "badges": {
       "title": "Відзнаки",
+      "earnedOf": "{earned} з {total}",
+      "families": { "streak": "Серія", "games": "Ігри", "entries": "Слова", "levels": "Рівні" },
       "earned": "Отримано {date}",
       "notYet": "Ще не отримано",
       "progress": {
@@ -182,6 +181,7 @@
       "vibration": "Вібрація"
     },
     "about": {
+      "glyph": "З",
       "editionLine": "Українське видання",
       "versionLine": "Версія {version} · збірка {build}",
       "updateLine": "Оновлення {id}",
@@ -916,6 +916,7 @@
   },
   "search": {
     "title": "Пошук",
+    "placeholder": "Пошук слова чи значення",
     "recent": "Нещодавно",
     "clear": "Очистити",
     "groups": {
@@ -1102,6 +1103,7 @@
   },
   "game": {
     "title": "Ігри",
+    "xp": "{count} XP",
     "groups": {
       "words": "Слова",
       "corrections": "Виправлення",
@@ -1141,7 +1143,7 @@
     },
     "dailyCrossword": {
       "title": "Кросворд дня",
-      "dated": "Кросворд дня · {day} {month}",
+      "dated": "{day} {month}",
       "start": "Почати",
       "resume": "Продовжити",
       "solvedMark": "✓ Розв’язано",

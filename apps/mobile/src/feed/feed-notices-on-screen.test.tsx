@@ -29,7 +29,7 @@ import { opened, switchedTo, testShell } from '../shell/test-support';
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { screenSettled } from '../entries/use-open-screen';
+import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;

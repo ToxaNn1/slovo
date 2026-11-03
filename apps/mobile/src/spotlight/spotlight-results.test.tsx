@@ -19,7 +19,7 @@ import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { createOutsideLinks } from '../entries/entry-link';
-import { screenSettled } from '../entries/use-open-screen';
+import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';

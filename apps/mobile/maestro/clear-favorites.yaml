@@ -30,5 +30,3 @@ appId: ${APP_ID || 'app.slovo.uk'}
           text: Прибрати з Улюбленого
       - tapOn:
           id: entry-screen-back
-- tapOn:
-    id: favorites-back

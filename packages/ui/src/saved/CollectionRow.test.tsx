@@ -30,7 +30,7 @@ async function renderRow(index = 0) {
 }
 
 describe('CollectionRow', () => {
-  it('takes its fill in turn by its place, as the cards of the Saved overview do', async () => {
+  it('takes its fill in turn by its place', async () => {
     const { light } = coreTokens.colors;
 
     await renderRow(1);

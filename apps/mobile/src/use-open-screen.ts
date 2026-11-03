@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback } from 'react';
 
-import { deviceClock } from '../device/device-clock';
+import { deviceClock } from './device/device-clock';
 import { createScreenOpener } from './open-screen';
 
 const screenOpener = createScreenOpener(deviceClock);
