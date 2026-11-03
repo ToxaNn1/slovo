@@ -70,5 +70,6 @@ export function HistoryList({ header }: { header: ListHeader }) {
 
 const styles = StyleSheet.create({
   content: { paddingBottom: space[8] },
-  day: { paddingHorizontal: space[6], paddingTop: space[5], paddingBottom: space[1] },
+  // The day's own top padding holds the capitals' marks, so it takes none of the label's room.
+  day: { paddingHorizontal: space[6], paddingTop: space[5], paddingBottom: space[1], marginTop: 0 },
 });

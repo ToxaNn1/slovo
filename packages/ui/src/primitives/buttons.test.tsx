@@ -2,7 +2,7 @@ import { Button, EditionProvider, GoogleSignInButton, InterfaceSoundsProvider } 
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text, type TextStyle } from 'react-native';
 import { testStrings } from '../test-strings';
 
 function Edition({ children }: { children: ReactNode }) {
@@ -94,5 +94,23 @@ describe('Button and the Interface sounds', () => {
     expect(play).not.toHaveBeenCalled();
     await fireEvent.press(screen.getByRole('button', { name: 'Go' }));
     expect(play.mock.calls).toEqual([['tap']]);
+  });
+});
+
+describe('Button with a capital mark in its label', () => {
+  it('draws a capital with a mark above it whole and keeps the label’s line where it was', async () => {
+    await render(
+      <Edition>
+        <Button label="Language gourmet" onPress={jest.fn()} />
+      </Edition>,
+    );
+
+    const style = StyleSheet.flatten(screen.getByText('Language gourmet').props['style']) as TextStyle;
+    const { paddingTop = 0, marginTop = 0, fontSize = 0, lineHeight = 0 } = style;
+    // Й's breve rises 0.987 em above the baseline; iOS keeps 0.245 em of the line below it.
+    expect(Number(paddingTop) + lineHeight - 0.245 * fontSize).toBeGreaterThanOrEqual(
+      0.987 * fontSize,
+    );
+    expect(Number(paddingTop) + Number(marginTop)).toBe(0);
   });
 });
