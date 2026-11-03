@@ -1290,8 +1290,8 @@ export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as
 export const onboardingLayout = {
   heroHeight: 440,
   shout: { left: -14, top: 96, turn: '-8deg', flyFrom: -120 },
-  /** The Mascot's corner, less its own padding. */
-  mascot: { right: 10, top: 270 },
+  /** The Mascot's corner, less its own padding, and its figure's width. */
+  mascot: { right: 10, top: 270, width: 140 },
   dot: { height: 8, width: 14, currentWidth: 34, gap: 6, skew: '-20deg' },
   side: 24,
   contentTop: 6,

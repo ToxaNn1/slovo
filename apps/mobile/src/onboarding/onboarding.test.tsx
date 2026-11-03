@@ -158,18 +158,19 @@ describe('the onboarding', () => {
     expect(screen.queryByTestId('onboarding-daily-goal')).toBeNull();
   });
 
-  it('shows the Mascot with the Edition’s onboarding line, and none with its Feature Switch off', async () => {
+  it('poses the Mascot per step as the design does, with no line, and none with its Feature Switch off', async () => {
     const shipped = loadEdition(activeEditionFiles.config);
     await renderOnboarding();
-    expect(screen.getByTestId('mascot-onboarding')).toHaveTextContent(shipped.mascot.onboarding);
+    expect(screen.getByTestId('mascot-shouts')).not.toHaveTextContent(shipped.mascot.onboarding);
     await press('onboarding-start');
-    expect(screen.getByTestId('mascot-onboarding')).toBeTruthy();
+    expect(screen.queryByTestId('mascot-shouts')).toBeNull();
+    expect(screen.getByTestId('mascot-happy')).toBeTruthy();
 
     await renderOnboarding({
       ...shipped,
       isFeatureEnabled: (feature) => feature !== 'mascot' && shipped.isFeatureEnabled(feature),
     });
-    expect(screen.queryByTestId('mascot-onboarding')).toBeNull();
+    expect(screen.queryByTestId('mascot-shouts')).toBeNull();
   });
 
   it('ends at once on «Пропустити», keeping the defaults', async () => {
