@@ -17,7 +17,8 @@ import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
 import { LabelChip } from '../primitives/LabelChip';
 import { blockGap, minTouchTarget, space, typeRoles, typeStyle, wordCardControls } from '../tokens';
-import { useTokens } from '../providers/TokensProvider';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { useOnAccent } from './on-accent';
 import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -66,21 +67,63 @@ export function WordCardBody({
   /** The calligraphic font family the Lemma is set in on the card of the Word of the Day. */
   wordOfTheDayFont: string | undefined;
 }) {
+  return (
+    <>
+      {wordOfTheDay === undefined ? null : <WordOfTheDayBadge day={wordOfTheDay} />}
+      <WordHeadline
+        card={card}
+        lemmaSize={lemmaSize}
+        concealed={concealed}
+        stressFalls={stressFalls}
+        lemmaFont={wordOfTheDay === undefined ? undefined : wordOfTheDayFont}
+      />
+      {concealed ? (
+        card.categoryName === undefined ? null : (
+          <CategoryChip testID="word-category" name={card.categoryName} />
+        )
+      ) : (
+        <WordSections
+          card={card}
+          compact={compact}
+          onOpenCorrection={onOpenCorrection}
+          onOpenSynonymRow={onOpenSynonymRow}
+          onHistoryShown={onHistoryShown}
+        />
+      )}
+    </>
+  );
+}
+
+/**
+ * The Word's headline: the Lemma with its falling Stress, part of speech and
+ * register chips, and the Pronunciation button beside them. On the red ground
+ * (`useOnAccent`) it is set in the key ink of both Themes.
+ */
+export function WordHeadline({
+  card,
+  lemmaSize,
+  concealed,
+  stressFalls,
+  lemmaFont: calligraphic,
+}: {
+  card: WordCardModel;
+  lemmaSize: TextSize;
+  /** Self-check: no register chips yet. */
+  concealed: boolean;
+  stressFalls: boolean;
+  /** The calligraphic font family of the Word of the Day's Lemma, if it is set in one. */
+  lemmaFont: string | undefined;
+}) {
   const tokens = useTokens();
-  const { colors, fontFamilies } = tokens;
-  const sizes = useWordTextSizes();
+  const { fontFamilies } = tokens;
+  const keyInk = useSchemeColors('light').ink;
+  const onAccent = useOnAccent();
+  const colors = onAccent ? { ink: keyInk, muted: keyInk } : tokens.colors;
   const edition = useEdition();
   const { voice, Pronunciation } = edition;
   const strings = edition.strings.wordCard;
-  const { categoryName } = card;
-  // The same Illustration in light and dark mode; a file the app lacks shows none (ADR 0055).
-  const illustration =
-    card.illustration === undefined ? undefined : edition.illustrations[card.illustration];
-  // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
   const turnActions = usePageTurnActions();
-  // The headline's letters fly in as the card reveals.
   const flying = useFlyingLetters();
-  // A page of the Feed comes on screen again each time the reader turns back to it.
   const onScreen = useIsPageOnScreen();
   const reduceMotion = useReduceMotionKnown();
   // Until the system answers on Reduce Motion, and while the page is off screen,
@@ -89,189 +132,209 @@ export function WordCardBody({
     stressFalls && reduceMotion !== true && card.stressedVowels.length > 0
       ? { mark: STRESS_MARK, playing: onScreen && reduceMotion === false }
       : undefined;
-  const lemmaFont =
-    (wordOfTheDay === undefined ? undefined : wordOfTheDayFont) ?? fontFamilies.word;
-
+  const lemmaFont = calligraphic ?? fontFamilies.word;
   const grammar = (form: 'short' | 'full') => partOfSpeechText(strings, card, form);
+  return (
+    <View style={styles.header}>
+      <View style={styles.headline}>
+        <WholeWordsText
+          flying={flying}
+          text={card.lemma}
+          size={lemmaSize}
+          tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
+          testID="word-lemma"
+          falling={falling}
+          accessibilityRole="header"
+          // The voices skip the Stress mark, so VoiceOver also says where it falls.
+          accessibilityLabel={stressLabel(strings, card.lemma, card.stressedVowels)}
+          {...voice}
+          {...turnActions}
+          // A long Lemma shrinks to fit rather than break inside a word.
+          numberOfLines={card.lemma.includes(' ') ? 2 : 1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.5}
+          style={[
+            typeStyle('heroWord', { fontFamilies: { ...fontFamilies, word: lemmaFont } }),
+            { color: colors.ink },
+          ]}
+        />
+        <RevealDetail step={0}>
+          <View style={styles.grammar}>
+            <Text
+              testID="word-part-of-speech"
+              accessibilityLabel={grammar('full')}
+              {...voice}
+              style={[typeStyle('partOfSpeech', tokens), { color: colors.muted }]}
+            >
+              {grammar('short')}
+            </Text>
+            {!concealed &&
+              card.registers.map((register) => (
+                <LabelChip
+                  key={register}
+                  testID={`word-register-${register}`}
+                  text={registerText(strings, register, card.region, 'short')}
+                  accessibilityLabel={registerText(strings, register, card.region, 'full')}
+                  size="tight"
+                />
+              ))}
+          </View>
+        </RevealDetail>
+      </View>
+      {Pronunciation === undefined ? null : (
+        <Pronunciation lemma={card.lemma} entryId={card.wordId} />
+      )}
+    </View>
+  );
+}
 
+/**
+ * The Word's meaning under its headline: the Illustration, the primary
+ * Definition, the first Example, the Word History, Synonyms and antonyms,
+ * the Category chip, the details behind "more", the Synonym Row and the
+ * linked Corrections, each only when the Core put it in the card.
+ */
+export function WordSections({
+  card,
+  compact,
+  onOpenCorrection,
+  onOpenSynonymRow,
+  onHistoryShown,
+}: {
+  card: WordCardModel;
+  compact: boolean;
+  onOpenCorrection: ((correctionId: string) => void) | undefined;
+  onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
+  onHistoryShown: (() => void) | undefined;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const sizes = useWordTextSizes();
+  const edition = useEdition();
+  const { voice } = edition;
+  const strings = edition.strings.wordCard;
+  const { categoryName } = card;
+  // The same Illustration in light and dark mode; a file the app lacks shows none (ADR 0055).
+  const illustration =
+    card.illustration === undefined ? undefined : edition.illustrations[card.illustration];
+  // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
+  const turnActions = usePageTurnActions();
   const categoryChip =
     categoryName === undefined ? null : <CategoryChip testID="word-category" name={categoryName} />;
   const relations = [
     { key: 'synonyms', words: card.synonyms, one: strings.synonym, many: strings.synonyms },
     { key: 'antonyms', words: card.antonyms, one: strings.antonym, many: strings.antonyms },
   ].filter(({ words }) => words.length > 0);
-
   return (
     <>
-      {wordOfTheDay === undefined ? null : <WordOfTheDayBadge day={wordOfTheDay} />}
-      <View style={styles.header}>
-        <View style={styles.headline}>
-          <WholeWordsText
-            flying={flying}
-            text={card.lemma}
-            size={lemmaSize}
-            tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
-            testID="word-lemma"
-            falling={falling}
-            accessibilityRole="header"
-            // The voices skip the Stress mark, so VoiceOver also says where it falls.
-            accessibilityLabel={stressLabel(strings, card.lemma, card.stressedVowels)}
-            {...voice}
-            {...turnActions}
-            // A long Lemma shrinks to fit rather than break inside a word.
-            numberOfLines={card.lemma.includes(' ') ? 2 : 1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.5}
-            style={[
-              typeStyle('heroWord', { fontFamilies: { ...fontFamilies, word: lemmaFont } }),
-              { color: colors.ink },
-            ]}
-          />
-          <RevealDetail step={0}>
-            <View style={styles.grammar}>
-              <Text
-                testID="word-part-of-speech"
-                accessibilityLabel={grammar('full')}
-                {...voice}
-                style={[typeStyle('partOfSpeech', tokens), { color: colors.muted }]}
-              >
-                {grammar('short')}
-              </Text>
-              {!concealed &&
-                card.registers.map((register) => (
-                  <LabelChip
-                    key={register}
-                    testID={`word-register-${register}`}
-                    text={registerText(strings, register, card.region, 'short')}
-                    accessibilityLabel={registerText(strings, register, card.region, 'full')}
-                    size="tight"
-                  />
-                ))}
-            </View>
-          </RevealDetail>
-        </View>
-        {Pronunciation === undefined ? null : (
-          <Pronunciation lemma={card.lemma} entryId={card.wordId} />
-        )}
-      </View>
-      {concealed ? (
-        categoryChip
-      ) : (
-        <>
-          {illustration === undefined ? null : (
-            <Image
-              testID="word-illustration"
-              source={illustration}
-              accessible
-              accessibilityRole="image"
-              accessibilityLabel={fill(strings.illustration, { lemma: withoutStress(card.lemma) })}
-              {...voice}
-              {...turnActions}
-              resizeMode="contain"
-              style={styles.illustration}
-            />
-          )}
-          <Text
-            testID="word-definition"
-            // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
-            accessibilityLabel={withoutStress(card.primaryDefinition)}
-            {...voice}
-            {...turnActions}
-            style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
-          >
-            {card.primaryDefinition}
-          </Text>
-          {card.example === undefined ? null : (
-            <ExampleText testID="word-example" example={card.example} size={sizes.example} />
-          )}
-          {card.history === undefined ? null : (
-            <WordHistory history={card.history} onShown={onHistoryShown} />
-          )}
-          {relations.length === 0 && !compact ? null : (
-            <View style={compact ? styles.compactRow : styles.relations}>
-              {relations.length === 0 ? null : (
-                <View style={[styles.relations, compact && styles.compactRelations]}>
-                  {relations.map(({ key, words, one, many }) => (
-                    <Text
-                      key={key}
-                      testID={`word-${key}`}
-                      accessibilityLabel={withoutStress(
-                        `${words.length === 1 ? one : many} ${words.join(', ')}`,
-                      )}
-                      {...voice}
-                      style={[typeStyle('sub', tokens), { color: colors.ink }]}
-                    >
-                      <Text style={{ color: colors.muted }}>{words.length === 1 ? one : many}</Text>{' '}
-                      {words.join(', ')}
-                    </Text>
-                  ))}
-                </View>
-              )}
-              {compact ? categoryChip : null}
-            </View>
-          )}
-          {compact ? null : categoryChip}
-          {card.details === undefined ? null : <Details details={card.details} />}
-          {card.synonymRow === undefined ? null : (
-            <SynonymRowLine synonymRow={card.synonymRow} onOpen={onOpenSynonymRow} />
-          )}
-          {card.linkedCorrections.length === 0 ? null : (
-            <View
-              testID="word-often-said"
-              {...voice}
-              style={[styles.oftenSaid, { borderTopColor: colors.line }]}
-            >
-              <Svg
-                width={wordCardControls.oftenSaidIcon}
-                height={wordCardControls.oftenSaidIcon}
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <Path
-                  d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"
-                  stroke={colors.accent}
-                  strokeWidth={1.8}
-                />
-              </Svg>
-              <View style={styles.oftenSaidLine}>
-                {/* Each form below says the label for VoiceOver. */}
+      {illustration === undefined ? null : (
+        <Image
+          testID="word-illustration"
+          source={illustration}
+          accessible
+          accessibilityRole="image"
+          accessibilityLabel={fill(strings.illustration, { lemma: withoutStress(card.lemma) })}
+          {...voice}
+          {...turnActions}
+          resizeMode="contain"
+          style={styles.illustration}
+        />
+      )}
+      <Text
+        testID="word-definition"
+        // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
+        accessibilityLabel={withoutStress(card.primaryDefinition)}
+        {...voice}
+        {...turnActions}
+        style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
+      >
+        {card.primaryDefinition}
+      </Text>
+      {card.example === undefined ? null : (
+        <ExampleText testID="word-example" example={card.example} size={sizes.example} />
+      )}
+      {card.history === undefined ? null : (
+        <WordHistory history={card.history} onShown={onHistoryShown} />
+      )}
+      {relations.length === 0 && !compact ? null : (
+        <View style={compact ? styles.compactRow : styles.relations}>
+          {relations.length === 0 ? null : (
+            <View style={[styles.relations, compact && styles.compactRelations]}>
+              {relations.map(({ key, words, one, many }) => (
                 <Text
-                  accessibilityElementsHidden
-                  importantForAccessibility="no"
-                  style={[typeStyle('meta', tokens), { color: colors.muted }]}
+                  key={key}
+                  testID={`word-${key}`}
+                  accessibilityLabel={withoutStress(
+                    `${words.length === 1 ? one : many} ${words.join(', ')}`,
+                  )}
+                  {...voice}
+                  style={[typeStyle('sub', tokens), { color: colors.ink }]}
                 >
-                  {strings.oftenSaid}
+                  <Text style={{ color: colors.muted }}>{words.length === 1 ? one : many}</Text>{' '}
+                  {words.join(', ')}
                 </Text>
-                {card.linkedCorrections.map(({ correctionId, nonStandardForm }, index) => (
-                  <Pressable
-                    key={correctionId}
-                    testID={`word-often-said-${correctionId}`}
-                    accessibilityRole="button"
-                    accessibilityLabel={`${strings.oftenSaid} ${withoutStress(nonStandardForm)}`}
-                    accessibilityHint={strings.oftenSaidHint}
-                    {...voice}
-                    disabled={onOpenCorrection === undefined}
-                    // The 14 pt line grows to a full touch target.
-                    hitSlop={{ top: space[4], bottom: space[4], left: space[1], right: space[1] }}
-                    onPress={() => onOpenCorrection?.(correctionId)}
-                  >
-                    <Text
-                      style={[
-                        typeStyle('oftenSaidForm', tokens),
-                        styles.italic,
-                        { color: colors.ink },
-                      ]}
-                    >
-                      {index < card.linkedCorrections.length - 1
-                        ? `${nonStandardForm},`
-                        : nonStandardForm}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+              ))}
             </View>
           )}
-        </>
+          {compact ? categoryChip : null}
+        </View>
+      )}
+      {compact ? null : categoryChip}
+      {card.details === undefined ? null : <Details details={card.details} />}
+      {card.synonymRow === undefined ? null : (
+        <SynonymRowLine synonymRow={card.synonymRow} onOpen={onOpenSynonymRow} />
+      )}
+      {card.linkedCorrections.length === 0 ? null : (
+        <View
+          testID="word-often-said"
+          {...voice}
+          style={[styles.oftenSaid, { borderTopColor: colors.line }]}
+        >
+          <Svg
+            width={wordCardControls.oftenSaidIcon}
+            height={wordCardControls.oftenSaidIcon}
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <Path
+              d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"
+              stroke={colors.accent}
+              strokeWidth={1.8}
+            />
+          </Svg>
+          <View style={styles.oftenSaidLine}>
+            {/* Each form below says the label for VoiceOver. */}
+            <Text
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+              style={[typeStyle('meta', tokens), { color: colors.muted }]}
+            >
+              {strings.oftenSaid}
+            </Text>
+            {card.linkedCorrections.map(({ correctionId, nonStandardForm }, index) => (
+              <Pressable
+                key={correctionId}
+                testID={`word-often-said-${correctionId}`}
+                accessibilityRole="button"
+                accessibilityLabel={`${strings.oftenSaid} ${withoutStress(nonStandardForm)}`}
+                accessibilityHint={strings.oftenSaidHint}
+                {...voice}
+                disabled={onOpenCorrection === undefined}
+                // The 14 pt line grows to a full touch target.
+                hitSlop={{ top: space[4], bottom: space[4], left: space[1], right: space[1] }}
+                onPress={() => onOpenCorrection?.(correctionId)}
+              >
+                <Text
+                  style={[typeStyle('oftenSaidForm', tokens), styles.italic, { color: colors.ink }]}
+                >
+                  {index < card.linkedCorrections.length - 1
+                    ? `${nonStandardForm},`
+                    : nonStandardForm}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
       )}
     </>
   );

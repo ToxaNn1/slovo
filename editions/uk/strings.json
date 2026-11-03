@@ -58,7 +58,9 @@
     "today": "{weekday}, {day} {month}"
   },
   "wordOfTheDay": {
-    "badge": "Слово дня · {day} {month}"
+    "badge": "Слово дня · {day} {month}",
+    "shout": "Лови слово!",
+    "reveal": "Розкрити"
   },
   "splash": {
     "wordmark": "СЛОВО",
@@ -367,6 +369,7 @@
       "add": "Додати в Улюблене",
       "remove": "Прибрати з Улюбленого"
     },
+    "hint": "В Улюбленому",
     "footer": "Найновіші — першими. Тап відкриває повну картку.",
     "remove": "Видалити",
     "removeLabel": "Видалити «{title}»",
@@ -399,6 +402,20 @@
     "cardLabel": "Колекції, {count}",
     "collectionLabel": "{name}, {count}",
     "button": "Додати до колекції",
+    "tile": {
+      "add": "До колекції",
+      "filed": "У колекції"
+    },
+    "hint": {
+      "one": "У колекції «{name}»",
+      "many": {
+        "one": "У {count} колекції",
+        "few": "У {count} колекціях",
+        "many": "У {count} колекціях",
+        "other": "У {count} колекції"
+      },
+      "withFavorites": "{place} · в Улюбленому"
+    },
     "screen": {
       "add": "Нова колекція",
       "newOverline": "Нова колекція",
@@ -556,6 +573,7 @@
   },
   "mistakeReport": {
     "action": "Повідомити про помилку",
+    "tile": "Помилка",
     "types": {
       "typo": "Друкарська помилка",
       "stress": "Наголос",
@@ -595,6 +613,7 @@
   },
   "hiding": {
     "button": "Не показувати",
+    "tile": "Сховати",
     "choice": {
       "entry": "Не показувати цей запис",
       "category": "Не показувати категорію «{category}»",

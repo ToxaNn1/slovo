@@ -12,26 +12,27 @@ import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
 import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
-import { blockGap, correctionCardLayout, space, wordCardSide } from '../tokens';
+import { blockGap, correctionCardLayout, space, wordCardSide, wordHero } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { WordCardBody } from './WordCard';
+import { WordHero } from './WordHero';
 
 export interface EntryCardProps {
   /** The card of a Word, a Correction, an Idiom, a Synonym Row or a Tip, as the Core built it. */
   card: EntryFeedCard | SynonymRowFeedCard | TipFeedCard;
   /** Opens a linked Correction when the reader taps its form in a Word's «often said» line. */
-  onOpenCorrection?: (correctionId: string) => void;
+  onOpenCorrection?: ((correctionId: string) => void) | undefined;
   /** Opens a Word when the reader taps a linked member of a Synonym Row. */
-  onOpenWord?: (wordId: string) => void;
+  onOpenWord?: ((wordId: string) => void) | undefined;
   /** Opens the Synonym Row a Word card names as the row the Word is a member of. */
-  onOpenSynonymRow?: (synonymRowId: string) => void;
+  onOpenSynonymRow?: ((synonymRowId: string) => void) | undefined;
   /**
    * Called once a Word card's Word History is drawn, which the reader reaches
    * by scrolling; the Entry screen counts it for Analytics (ADR 0068). Keep it
    * stable across renders, as it is called again when it changes.
    */
-  onWordHistoryShown?: () => void;
-  /** The action row under the card: in 0.3 the heart, Collections, share and hide. */
+  onWordHistoryShown?: (() => void) | undefined;
+  /** The action row: under a Word's card, at the bottom inside the card of every other kind. */
   actions?: ReactNode;
   /**
    * Self-check applies to the card: until the reader reveals it, a Word card
@@ -46,7 +47,7 @@ export interface EntryCardProps {
    * The falling Stress of a Word card (ADR 0055): only in the Feed and on the
    * Entry screen, while the Edition's `stressAnimation` is on in effect.
    */
-  stressFalls?: boolean;
+  stressFalls?: boolean | undefined;
   /**
    * The Edition's calligraphic font family, which the Lemma on the card of
    * the Word of the Day is set in: only in the Feed, while the Edition's
@@ -100,6 +101,38 @@ export function EntryCard({
   const compact = useCompactLayout();
   const padding = compact ? COMPACT_PADDING : 1;
   const spacing = SPACING[card.kind];
+  // A Word's raised tiles stand under its card; the icons of the other kinds sit in theirs (XActions a10).
+  const actionsOf = (kind: typeof card.kind) => (
+    <RevealDetail step={3} testID={`${kind}-actions`}>
+      <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
+    </RevealDetail>
+  );
+
+  // The Word of the Day is the red shout card, which draws its own reveal button.
+  if (card.kind === 'word' && card.wordOfTheDay !== undefined)
+    return (
+      <EntryReveal>
+        <RevealFrame testID="word-card" style={styles.hero}>
+          {card.review === true && <ReviewLabel />}
+          <WordHero
+            card={card.model}
+            day={card.wordOfTheDay}
+            compact={compact}
+            lemmaSize={lemmaSize}
+            concealed={concealed}
+            onReveal={reveal}
+            stressFalls={stressFalls}
+            lemmaFont={wordOfTheDayFont}
+            onOpenCorrection={onOpenCorrection}
+            onOpenSynonymRow={onOpenSynonymRow}
+            onHistoryShown={onWordHistoryShown}
+          />
+        </RevealFrame>
+        <RevealDetail step={3} testID="word-actions">
+          <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
+        </RevealDetail>
+      </EntryReveal>
+    );
 
   return (
     <EntryReveal>
@@ -161,10 +194,9 @@ export function EntryCard({
             onPress={reveal}
           />
         )}
+        {card.kind !== 'word' && actionsOf(card.kind)}
       </RevealFrame>
-      <RevealDetail step={3} testID={`${card.kind}-actions`}>
-        <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
-      </RevealDetail>
+      {card.kind === 'word' && actionsOf(card.kind)}
     </EntryReveal>
   );
 }
@@ -172,4 +204,5 @@ export function EntryCard({
 const styles = StyleSheet.create({
   // The border is the card's only elevation.
   card: { borderWidth: 1 },
+  hero: { borderRadius: wordHero.radius, overflow: 'hidden' },
 });

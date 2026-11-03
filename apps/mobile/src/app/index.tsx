@@ -194,7 +194,14 @@ const FeedPage = memo(function FeedPage({
   return (
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
-      <PagerScrollView contentContainerStyle={styles.content}>
+      <PagerScrollView
+        // The red card of the Word of the Day hangs from the top row, closer to the edges.
+        contentContainerStyle={
+          card.kind === 'word' && card.wordOfTheDay !== undefined
+            ? styles.heroContent
+            : styles.content
+        }
+      >
         {card.kind === 'notice' ? (
           <YesterdayNotice word={card.word} />
         ) : card.kind === 'tip' ? (
@@ -290,6 +297,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingTop: TOP_ROW,
     paddingHorizontal: space[6],
+    paddingBottom: space[6],
+  },
+  heroContent: {
+    flexGrow: 1,
+    paddingTop: TOP_ROW + space[2],
+    paddingHorizontal: space[3],
     paddingBottom: space[6],
   },
   // The end-of-Cycle card and a Feed Notice but Yesterday sit in the middle of the page, under the top row.

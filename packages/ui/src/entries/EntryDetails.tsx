@@ -1,0 +1,143 @@
+import { StyleSheet, View } from 'react-native';
+
+import { Icon } from '../primitives/Icon';
+import { PressedTile } from '../primitives/PressedTile';
+import { useEdition } from '../providers/EditionProvider';
+import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { entryPanel, iconButton, space, wedges, wordCardSide } from '../tokens';
+import { AccentGround } from './AccentGround';
+import { EntryCard, type EntryCardProps } from './EntryCard';
+import { EntryReveal, RevealDetail } from './reveal';
+import { WordHeadline, WordSections } from './WordCard';
+import { firstLetter } from './WordHero';
+import { WordOfTheDayBadge } from './WordOfTheDayBadge';
+
+/**
+ * Entry details (XActions a4): the red panel on top, cut by a slanted bottom
+ * edge, under the halftone raster, with the ink back tile. A Word's panel
+ * carries the giant first letter of its Lemma, the Word of the Day's kicker
+ * when it is one, the Lemma, part of speech and the Pronunciation button;
+ * its meaning and the action row follow on the screen's ground. Any other
+ * kind keeps its Entry card under the panel. It never conceals the meaning.
+ */
+export function EntryDetails({
+  card,
+  back,
+  onBack,
+  topInset,
+  stressFalls = false,
+  onOpenCorrection,
+  onOpenWord,
+  onOpenSynonymRow,
+  onWordHistoryShown,
+  actions,
+}: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
+  /** The name of the screen the back tile returns to, which VoiceOver reads. */
+  back: string;
+  onBack: () => void;
+  /** The status bar's height: the panel runs under it. */
+  topInset: number;
+}) {
+  const lemmaSize = useLemmaSize();
+  const compact = useCompactLayout();
+  const word = card.kind === 'word' ? card : undefined;
+  return (
+    <EntryReveal>
+      <AccentGround
+        id="entry-panel"
+        testID="entry-panel"
+        letter={word === undefined ? '' : firstLetter(word.model.lemma)}
+        letterRole="panelLetter"
+        letterAt={entryPanel.letter}
+        points={wedges.panel}
+        letterStopsAt={entryPanel.cutAt}
+        style={[styles.panel, { paddingTop: topInset + space[3] }]}
+      >
+        <BackTile label={back} onPress={onBack} />
+        {word !== undefined && (
+          <View style={styles.panelText}>
+            {word.wordOfTheDay !== undefined && <WordOfTheDayBadge day={word.wordOfTheDay} />}
+            <WordHeadline
+              card={word.model}
+              lemmaSize={lemmaSize}
+              concealed={false}
+              stressFalls={stressFalls}
+              lemmaFont={undefined}
+            />
+          </View>
+        )}
+      </AccentGround>
+      {word === undefined ? (
+        <View style={styles.otherKind}>
+          <EntryCard
+            card={card}
+            onOpenCorrection={onOpenCorrection}
+            onOpenWord={onOpenWord}
+            onOpenSynonymRow={onOpenSynonymRow}
+            onWordHistoryShown={onWordHistoryShown}
+            actions={actions}
+            stressFalls={stressFalls}
+          />
+        </View>
+      ) : (
+        <View testID="word-card" style={styles.body}>
+          <WordSections
+            card={word.model}
+            compact={compact}
+            onOpenCorrection={onOpenCorrection}
+            onOpenSynonymRow={onOpenSynonymRow}
+            onHistoryShown={onWordHistoryShown}
+          />
+          <RevealDetail step={3} testID="word-actions">
+            {actions}
+          </RevealDetail>
+        </View>
+      )}
+    </EntryReveal>
+  );
+}
+
+/** The ink tile with the cream chevron that goes back, in the panel's top left corner. */
+function BackTile({ label, onPress }: { label: string; onPress: () => void }) {
+  const { radii } = useTokens();
+  const cream = useSchemeColors('light').background;
+  const { voice } = useEdition();
+  return (
+    <View style={styles.backTile} {...voice}>
+      <PressedTile
+        tone="ink"
+        radius={radii.tile}
+        testID="entry-screen-back"
+        accessibilityLabel={label}
+        onPress={onPress}
+        faceStyle={styles.backFace}
+      >
+        <Icon name="back" size={iconButton.icon} color={cream} />
+      </PressedTile>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  panel: {
+    paddingHorizontal: space[4],
+    paddingBottom: entryPanel.paddingBottom,
+    gap: entryPanel.kickerGap,
+  },
+  panelText: { paddingHorizontal: space[1], gap: space[3] },
+  backTile: { alignSelf: 'flex-start' },
+  backFace: {
+    width: iconButton.side,
+    height: iconButton.side,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  body: {
+    paddingHorizontal: wordCardSide - space[1],
+    paddingTop: space[1],
+    paddingBottom: space[6],
+    gap: entryPanel.bodyGap,
+  },
+  otherKind: { paddingHorizontal: space[6], paddingBottom: space[6] },
+});

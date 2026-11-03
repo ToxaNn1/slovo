@@ -13,6 +13,8 @@ export const FavoritesStringsSchema = z.strictObject({
   cardLabel: templateOf('count'),
   /** The heart's VoiceOver labels: what a tap will do. */
   heart: z.strictObject({ add: TextSchema, remove: TextSchema }),
+  /** The line under the action row when the Entry is in Favorites and in no Collection, «В Улюбленому». */
+  hint: TextSchema,
   /** The line under the list. */
   footer: TextSchema,
   /** The swipe action that takes a row's Entry out of Favorites. */

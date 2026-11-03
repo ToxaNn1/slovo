@@ -1,15 +1,13 @@
-import { Pressable, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-
+import { ActionIcon, ActionTile } from '../primitives/ActionTile';
 import { useEdition } from '../providers/EditionProvider';
-import { useTokens } from '../providers/TokensProvider';
 
-/** The share icon's size in the action row, from the design. */
-const ICON_SIZE = 26;
+/** The design's arrow up out of an open tray, on a 24-point grid. */
+const SHARE_ICON = { outline: 'M12 3v12M7.5 7.5 12 3l4.5 4.5', inner: 'M5 12v8h14v-8' };
 
 /**
- * The share button of the action row: a box with an arrow out of it, which
- * opens the sheet with the Share Card. VoiceOver reads what a tap will do.
+ * The «Поділитися» action of the action row: an arrow up out of a tray,
+ * which opens the sheet with the Share Card. VoiceOver reads what a tap
+ * will do.
  */
 export function ShareButton({
   onPress,
@@ -18,32 +16,14 @@ export function ShareButton({
   onPress: () => void;
   testID?: string;
 }) {
-  const { colors } = useTokens();
-  const { strings, voice } = useEdition();
+  const { strings } = useEdition();
   return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
+    <ActionTile
+      label={strings.share.button}
       accessibilityLabel={strings.share.button}
-      {...voice}
       onPress={onPress}
-      style={styles.button}
-    >
-      <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24">
-        <Path
-          d="M12 3.5v11M8 7.5l4-4 4 4M6 11v8.5h12V11"
-          fill="none"
-          stroke={colors.ink}
-          strokeWidth={1.7}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    </Pressable>
+      testID={testID}
+      icon={(look) => <ActionIcon paths={SHARE_ICON} look={look} />}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  // The whole 52 pt slot of the action row takes the tap.
-  button: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
-});

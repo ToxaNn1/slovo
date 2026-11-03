@@ -381,6 +381,7 @@ describe('the 0.8.14 strings', () => {
   it('the UA Edition carries the agreed Mistake Report texts verbatim', () => {
     expect(parsed.mistakeReport).toEqual({
       action: 'Повідомити про помилку',
+      tile: 'Помилка',
       types: {
         typo: 'Друкарська помилка',
         stress: 'Наголос',

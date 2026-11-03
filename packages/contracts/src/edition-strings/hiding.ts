@@ -7,6 +7,8 @@ import { templateOf } from './shared';
 export const HidingStringsSchema = z.strictObject({
   /** The hide button's VoiceOver label: what a tap will do. */
   button: TextSchema,
+  /** The label under the thumb of the action row's tile, «Сховати». */
+  tile: TextSchema,
   /** The hide choice: the sheet the hide button opens. */
   choice: z.strictObject({
     /** Hides this Entry. */

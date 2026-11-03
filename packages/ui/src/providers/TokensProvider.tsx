@@ -58,6 +58,26 @@ export function InvertedTokens({ children }: { children: ReactNode }) {
 }
 
 /**
+ * Draws everything below in one colour scheme's tokens, whichever is in
+ * effect, as the design's fixed surfaces have it: the cream panel on the red
+ * card of the Word of the Day.
+ */
+export function SchemeTokens({
+  colorScheme,
+  children,
+}: {
+  colorScheme: ColorScheme;
+  children: ReactNode;
+}) {
+  const tokens = useContext(DesignTokensContext);
+  return (
+    <TokensProvider tokens={tokens} colorScheme={colorScheme}>
+      {children}
+    </TokensProvider>
+  );
+}
+
+/**
  * The colours of one colour scheme, whichever is in effect, for what the
  * design draws alike in both Themes, such as the Game's answer fills.
  */

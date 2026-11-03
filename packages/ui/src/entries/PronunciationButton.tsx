@@ -18,7 +18,8 @@ import {
   typeStyle,
   withAlpha,
 } from '../tokens';
-import { useTokens } from '../providers/TokensProvider';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { useOnAccent } from './on-accent';
 
 /**
  * What the button shows: ready, the Lemma being spoken, or the message that
@@ -44,7 +45,8 @@ const MESSAGE_MARGIN = 64;
 /**
  * The Pronunciation button of the Word card: an outlined accent circle with a
  * speaker, filled while the Lemma is spoken. When the device has no voice for
- * the language, a message opens under it; a tap closes it.
+ * the language, a message opens under it; a tap closes it. On the red
+ * ground the circle and speaker take the key ink instead of the accent.
  */
 export function PronunciationButton({
   state,
@@ -52,7 +54,11 @@ export function PronunciationButton({
   onDismissMessage,
 }: PronunciationButtonProps) {
   const tokens = useTokens();
-  const { colors } = tokens;
+  const key = useSchemeColors('light');
+  const onAccent = useOnAccent();
+  const colors = onAccent
+    ? { ...tokens.colors, accent: key.ink, ink: key.ink, surface: key.background }
+    : tokens.colors;
   const { strings: editionStrings, voice } = useEdition();
   const strings = editionStrings.wordCard.pronunciation;
   const window = useWindowDimensions();

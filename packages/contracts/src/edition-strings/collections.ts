@@ -17,6 +17,18 @@ export const CollectionsStringsSchema = z.strictObject({
   collectionLabel: templateOf('name', 'count'),
   /** The action row's Collections button, as VoiceOver reads it: what a tap will do. */
   button: TextSchema,
+  /** The label under the bookmark of the action row's tile: `add` while the Entry is in no Collection, «До колекції», `filed` once it is in one, «У колекції». */
+  tile: z.strictObject({ add: TextSchema, filed: TextSchema }),
+  /**
+   * The line under the action row that says where the Entry is kept: `one`
+   * names its one Collection, `{name}`; `many` counts them, `{count}`; and
+   * `withFavorites` adds Favorites after either, `{place}`.
+   */
+  hint: z.strictObject({
+    one: templateOf('name'),
+    many: pluralOf(),
+    withFavorites: templateOf('place'),
+  }),
   /** The Collections screen: its rows, its swipe actions, the name fields, the delete confirmation and the empty list. */
   screen: z.strictObject({
     /** The «+» that opens the field for a new Collection, as VoiceOver reads it. */
