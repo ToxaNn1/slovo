@@ -5,7 +5,6 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
-  splash: { wordmark: 'SLOVO' },
   stats: {
     pillLabel: { one: 'Stats: {count} day', other: 'Stats: {count} days' },
     pillLabelWithoutStreak: 'Stats',
@@ -17,6 +16,7 @@ async function renderHeader({ hideStreak = false } = {}) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <FeedHeader
+        wordmark="SLOVO"
         today="Mon, 2 November"
         streak={<StatsPill streak={12} hideStreak={hideStreak} onPress={onPress} />}
       />

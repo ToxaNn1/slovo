@@ -25,7 +25,7 @@ import { memo, useCallback, useRef } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { editionStrings } from '@/edition/edition';
+import { edition, editionStrings } from '@/edition/edition';
 import { EntryActions, useKnowledgeButtons } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/entries/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
@@ -113,7 +113,11 @@ function FeedScreen() {
       />
       {/* The header stays put over the cards, like the background. */}
       <View pointerEvents="box-none" style={[styles.header, { top }]}>
-        <FeedHeader today={todayText(deviceClock, editionStrings)} streak={<StatsPillAndSheet />} />
+        <FeedHeader
+          wordmark={edition.displayName}
+          today={todayText(deviceClock, editionStrings)}
+          streak={<StatsPillAndSheet />}
+        />
         <View pointerEvents="box-none" style={styles.tools}>
           <XpBarToGame />
           <View style={styles.headerButtons}>
