@@ -4,28 +4,26 @@ import type { Easing } from './base';
 
 /**
  * An Entry card's reveal (the design's `slFly` and `slCasc` on the Word of the
- * Day): each letter of the headline flies in from `from`, small and turned,
- * the n-th after `letters.delay + n × letters.stagger` ms, the turns of a long
- * headline squeezed so the last starts within `letters.spread` ms; then the
- * card's details rise into place one after another at `details.at` ms. The
- * `full` pace, the design's shortened, settles within 1 s whatever the
- * headline; the `fast` one, about a third of it, is for the cards after the
- * first in one visit to the Feed.
+ * Day): the headline flies in as one from `from`, small and turned, after
+ * `headline.delay` ms; then the card's details rise into place one after
+ * another at `details.at` ms. The `full` pace, the design's shortened, settles
+ * within 1 s whatever the headline; the `fast` one, about a third of it, is
+ * for the cards after the first in one visit to the Feed.
  */
 export const entryReveal = {
-  letterEasing: [0.2, 0.9, 0.25, 1.2],
-  /** The n-th letter starts `x - n × xStep` points across and `y` points down. */
-  from: { x: 40, xStep: 44, y: 240, scale: 0.15, rotate: -30 },
+  headlineEasing: [0.2, 0.9, 0.25, 1.2],
+  /** The headline starts `x` points across and `y` points down. */
+  from: { x: 40, y: 240, scale: 0.15, rotate: -30 },
   full: {
-    letters: { duration: 450, delay: 80, stagger: 50, spread: 420 },
+    headline: { duration: 450, delay: 80 },
     details: { at: [500, 560, 620, 680], duration: 300 },
   },
   fast: {
-    letters: { duration: 180, delay: 40, stagger: 20, spread: 200 },
+    headline: { duration: 180, delay: 40 },
     details: { at: [220, 240, 270, 300], duration: 130 },
   },
 } as const satisfies {
-  readonly letterEasing: Easing;
+  readonly headlineEasing: Easing;
   readonly from: Record<string, number>;
 } & Record<RevealPace, RevealTimings>;
 
@@ -34,13 +32,7 @@ export type RevealPace = 'full' | 'fast';
 
 /** The timings of one pace of the Entry card's reveal, in ms. */
 export interface RevealTimings {
-  readonly letters: {
-    readonly duration: number;
-    readonly delay: number;
-    readonly stagger: number;
-    /** The latest a letter starts after the first, however many letters fly. */
-    readonly spread: number;
-  };
+  readonly headline: { readonly duration: number; readonly delay: number };
   readonly details: { readonly at: readonly number[]; readonly duration: number };
 }
 

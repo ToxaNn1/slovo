@@ -11,7 +11,7 @@ import {
 
 import type { TextSize } from '../providers/FontSizeProvider';
 import { clearMarks, FallingMarks, withMarks, type FallingMarksOf } from './FallingMarks';
-import { FlyingLetters, type FlyingLettersOf } from './FlyingLetters';
+import { FlyingText, type FlyingTextOf } from './FlyingText';
 import { capitalMarkRoom, roleSize, typeRoles, type TypeRole } from '../tokens';
 
 /**
@@ -22,8 +22,8 @@ import { capitalMarkRoom, roleSize, typeRoles, type TypeRole } from '../tokens';
  * `size` first, and the text is drawn small enough for that word to fit on a
  * line; `numberOfLines` and `adjustsFontSizeToFit` still apply on top.
  * A `highlight` draws one stretch of the text in a style of its own, or
- * `falling` lets the text's marks fall into place over it. `flying` lets its
- * letters fly into place over it, one after another. The text sets its own top
+ * `falling` lets the text's marks fall into place over it. `flying` lets it
+ * fly into place over it as one. The text sets its own top
  * padding and margin: the room its `typeRole`'s capital marks need at the size
  * it is drawn at.
  */
@@ -47,8 +47,8 @@ export function WholeWordsText({
   tracking?: number | undefined;
   /** Everything but the size and letter spacing: colour, font and weight. */
   style: StyleProp<TextStyle>;
-  /** Letters that fly into place over the text, which is drawn clear meanwhile. */
-  flying?: FlyingLettersOf | undefined;
+  /** The text flying into place over it, which is drawn clear meanwhile. */
+  flying?: FlyingTextOf | undefined;
 } & (
     | {
         /** A stretch of the text to mark, and how it looks on top of `style`. */
@@ -122,13 +122,13 @@ export function WholeWordsText({
         />
       )}
       {flying === undefined ? null : (
-        <FlyingLetters
+        <FlyingText
           text={text}
           flying={flying}
           clearMark={falling?.mark}
           textProps={textProps}
           style={textStyle}
-          testID={props.testID === undefined ? undefined : `${props.testID}-letter`}
+          testID={props.testID === undefined ? undefined : `${props.testID}-flying`}
         />
       )}
       {/* Every word on its own line, wide enough that none of them wraps. */}

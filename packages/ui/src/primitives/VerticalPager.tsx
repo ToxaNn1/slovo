@@ -138,6 +138,10 @@ interface PagerContextValue {
   readonly scrolls: SharedValue<Record<number, PageScroll>>;
   /** Whether a drag is turning the page now, so the page's content holds still. */
   readonly turning: SharedValue<boolean>;
+  /** The page the last swipe or turn went to, on the UI thread. */
+  readonly turnedTo: SharedValue<number>;
+  /** The page the screen last came to rest on, alone on screen, on the UI thread. */
+  readonly settled: SharedValue<number>;
 }
 
 /** The props that give an accessible element the page-turn actions. */
@@ -185,13 +189,18 @@ export function VerticalPager<Item>({
   const [index, setIndex] = useState(initialIndex);
   /** The page nearest to the screen's position, while a swipe moves. */
   const [nearest, setNearest] = useState(initialIndex);
-  /** The page the screen last came to rest on, alone on screen. */
-  const [settled, setSettled] = useState(initialIndex);
+  /** The page the screen last came to rest on, for the pages' renders. */
+  const [rested, setRested] = useState(initialIndex);
   const [height, setHeight] = useState(0);
   /** The page on screen, in pages; fractional while a swipe moves. */
   const position = useSharedValue(initialIndex);
   /** `index` for the gestures, which read it on the UI thread. */
   const turnedTo = useSharedValue(initialIndex);
+  /**
+   * The page the screen last came to rest on, on the UI thread, where a page
+   * starts its motion as soon as the screen rests, before `rested` reaches JS.
+   */
+  const settled = useSharedValue(initialIndex);
   const pageHeight = useSharedValue(0);
   const lastIndex = useSharedValue(items.length - 1);
   const dragStart = useSharedValue(0);
@@ -217,7 +226,9 @@ export function VerticalPager<Item>({
   useAnimatedReaction(
     () => (Number.isInteger(position.value) ? position.value : undefined),
     (rest, previous) => {
-      if (rest !== undefined && rest !== previous) scheduleOnRN(setSettled, rest);
+      if (rest === undefined || rest === previous) return;
+      settled.value = rest;
+      scheduleOnRN(setRested, rest);
     },
   );
 
@@ -289,7 +300,10 @@ export function VerticalPager<Item>({
         : undefined,
     [index, items.length, turnTo],
   );
-  const pager = useMemo(() => ({ panRef, scrolls, turning }), [scrolls, turning]);
+  const pager = useMemo(
+    () => ({ panRef, scrolls, turning, turnedTo, settled }),
+    [scrolls, turning, turnedTo, settled],
+  );
 
   // Gesture Handler asks for a memoised gesture: a new one on each render
   // sends its worklets to the UI thread again.
@@ -387,7 +401,7 @@ export function VerticalPager<Item>({
                   key={first + offset}
                   index={first + offset}
                   current={first + offset === index}
-                  onScreen={first + offset === index || first + offset === settled}
+                  onScreen={first + offset === index || first + offset === rested}
                   turnActions={first + offset === index ? turnActions : undefined}
                   turnToNext={first + offset === index ? turnToNext : undefined}
                   position={position}
@@ -477,6 +491,28 @@ export function useTurnToNextPage(): (() => void) | undefined {
  */
 export function useIsPageOnScreen(): boolean {
   return useContext(PageOnScreenContext);
+}
+
+/**
+ * Where the pager stands towards a page, on the UI thread, so a page can start
+ * its motion there without a render: the page's index, the page the last swipe
+ * or turn went to, and the page the screen last came to rest on. None outside
+ * a `VerticalPager`.
+ */
+export interface PageSettle {
+  readonly page: number;
+  readonly turnedTo: SharedValue<number>;
+  readonly settled: SharedValue<number>;
+}
+
+export function usePageSettle(): PageSettle | undefined {
+  const pager = useContext(PagerContext);
+  const page = useContext(PageIndexContext);
+  return useMemo(
+    () =>
+      pager === undefined ? undefined : { page, turnedTo: pager.turnedTo, settled: pager.settled },
+    [pager, page],
+  );
 }
 
 const AnimatedScrollView = Animated.createAnimatedComponent(ScrollView);
