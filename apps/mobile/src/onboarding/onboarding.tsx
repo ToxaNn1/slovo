@@ -1,4 +1,4 @@
-import { DailyGoalSchema, type DailyGoal } from '@slovo/contracts';
+import { DailyGoalSchema, type DailyGoal, type MascotState } from '@slovo/contracts';
 import type { OnboardingStep as Step, QuestionnaireOption, WordCardModel } from '@slovo/core';
 import {
   EntryCard,
@@ -19,13 +19,23 @@ import {
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { MascotIn } from '../mascot/mascot';
+import { MascotAs } from '../mascot/mascot';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 
 const { onboarding: strings } = editionStrings;
+
+/** The Mascot's state on each step, as the design poses it: it shouts hello, enjoys the Word and waits for an answer. */
+const poseOn: Readonly<Record<Step['kind'], MascotState>> = {
+  welcome: 'shouts',
+  firstWord: 'happy',
+  whoAreYou: 'waits',
+  why: 'waits',
+  dailyGoal: 'waits',
+};
 
 /** Logs what the onboarding could not do on a tap. */
 function report(done: Promise<void>): void {
@@ -41,6 +51,7 @@ function report(done: Promise<void>): void {
  */
 export function Onboarding() {
   const { onboarding } = useComposition();
+  const edition = useEditionInEffect();
   const step = useSubscribed(onboarding, ({ state }) => state.step);
   if (step === undefined) return null;
   const skip = () => {
@@ -50,7 +61,11 @@ export function Onboarding() {
     report(onboarding.next());
   };
   const { number, total } = step;
-  const mascot = <MascotIn state="onboarding" onRed />;
+  const mascot = (
+    <MascotAs state={poseOn[step.kind]} onRed width={onboardingLayout.mascot.width} />
+  );
+  // The Edition's onboarding line goes with the Mascot, on the red beside it.
+  const mascotLine = edition.isFeatureEnabled('mascot') ? edition.mascot.onboarding : undefined;
   let shown: ReactNode;
   if (step.kind === 'welcome') {
     shown = (
