@@ -7,7 +7,7 @@ import {
   type CrosswordWord,
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { useState } from 'react';
 import { testStrings } from '../test-strings';
 
@@ -122,6 +122,49 @@ describe('CrosswordGrid', () => {
     },
   );
 
+  it('numbers the clue by its word’s start, in reading order, with the word’s direction', async () => {
+    await render(<Crossword />);
+
+    expect(screen.getByTestId('crossword-clue-number')).toHaveTextContent('1→');
+
+    await fireEvent.press(cell(0, 0));
+    expect(screen.getByTestId('crossword-clue-number')).toHaveTextContent('1↓');
+
+    await fireEvent.press(cell(1, 2));
+    expect(screen.getByTestId('crossword-clue-number')).toHaveTextContent('2↓');
+
+    await fireEvent.press(cell(2, 1));
+    expect(screen.getByTestId('crossword-clue-number')).toHaveTextContent('3→');
+  });
+
+  it('shows each word’s number in its first cell and none in the others', async () => {
+    await render(<Crossword />);
+
+    expect(within(cell(0, 0)).getByText('1')).toBeOnTheScreen();
+    expect(within(cell(0, 2)).getByText('2')).toBeOnTheScreen();
+    expect(within(cell(2, 0)).getByText('3')).toBeOnTheScreen();
+    expect(within(cell(0, 1)).queryByText(/\d/)).toBeNull();
+  });
+
+  it.each(['light', 'dark'] as const)(
+    'draws the clue number on red with the light ink in the %s Theme',
+    async (colorScheme) => {
+      const { accent: red } = coreTokens.colors[colorScheme];
+      await render(
+        <TokensProvider tokens={coreTokens} colorScheme={colorScheme}>
+          <Crossword />
+        </TokensProvider>,
+      );
+
+      expect(screen.getByTestId('crossword-clue-number-badge')).toHaveStyle({
+        backgroundColor: red,
+      });
+      expect(screen.getByTestId('crossword-clue-number')).toHaveStyle({
+        color: coreTokens.colors.light.ink,
+      });
+    },
+  );
+
   it('selects the word of a tapped cell and shows its clue', async () => {
     await render(<Crossword />);
 
@@ -150,7 +193,7 @@ describe('CrosswordGrid', () => {
 
     await type('ca');
 
-    expect(screen.getByLabelText('c, row 1, column 1')).toHaveTextContent('c');
+    expect(within(cell(0, 0)).getByText('c')).toBeOnTheScreen();
     expect(screen.getByLabelText('a, row 1, column 2')).toHaveTextContent('a');
     expect(cell(0, 2)).toBeSelected();
   });

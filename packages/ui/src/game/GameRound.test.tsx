@@ -1180,4 +1180,18 @@ describe('the answer sheet', () => {
       expect(screen.getByTestId('game-sheet-title')).toHaveStyle({ color: text });
     },
   );
+
+  it.each(['candid', 'brittle'])(
+    'titles the answer to «%s» in the board’s big uppercase banner type',
+    async (option) => {
+      await answerIn('light', option);
+
+      expect(screen.getByTestId('game-sheet-title')).toHaveStyle({
+        fontSize: 30,
+        textTransform: 'uppercase',
+        fontWeight: '900',
+        fontFamily: boardTokens.fontFamilies.word,
+      });
+    },
+  );
 });
