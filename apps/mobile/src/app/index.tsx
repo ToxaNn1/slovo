@@ -7,6 +7,7 @@ import {
   EntryCard,
   FeedHeader,
   FirstWeekCard,
+  HeaderFade,
   PagerScrollView,
   RevealPace,
   Placeholder,
@@ -112,15 +113,23 @@ function FeedScreen() {
           turnActionLabels={turnActionLabels}
         />
       </RevealPace>
-      {/* The header stays put over the cards, on the screen's background from the top edge, so a scrolled card passes under it unseen. */}
+      {/*
+        The header stays put over the cards, on the screen's background from the top edge, so a
+        scrolled card passes under it unseen. Its lower edge fades out inside the top row, so the
+        card fades under it and the first card at rest stays clear of the fade.
+      */}
       <View
         testID="feed-header"
         pointerEvents="box-none"
-        style={[
-          styles.header,
-          { paddingTop: top, height: top + TOP_ROW, backgroundColor: colors.background },
-        ]}
+        style={[styles.header, { paddingTop: top, height: top + TOP_ROW }]}
       >
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <View
+            testID="feed-header-backdrop"
+            style={[styles.headerBackdrop, { backgroundColor: colors.background }]}
+          />
+          <HeaderFade testID="feed-header-fade" color={colors.background} />
+        </View>
         <FeedHeader
           wordmark={edition.displayName}
           today={todayText(deviceClock, editionStrings)}
@@ -299,6 +308,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: space[2],
   },
+  headerBackdrop: { flex: 1 },
   // Under the header: the XP bar at the start, Search and Mood at the end, with the XP bar or without it.
   tools: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerButtons: { marginLeft: 'auto', flexDirection: 'row', gap: space[2] },
