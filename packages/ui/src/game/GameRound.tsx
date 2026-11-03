@@ -42,6 +42,7 @@ import {
   roundLayout,
   roundProgress,
   space,
+  capitalMarkRoom,
   roleSize,
   typeRoles,
   typeStyle,
@@ -1213,7 +1214,7 @@ const styles = StyleSheet.create({
   slash: { height: SLASH.thickness, transformOrigin: 'left' },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   // The board's banner title sits clear of the slant over the sheet, not on its low edge.
-  sheetTitle: { marginTop: space[3] },
+  sheetTitle: { marginTop: space[3] - capitalMarkRoom('roundVerdict') },
   sheetContent: { gap: roundLayout.sheetGap, paddingHorizontal: space[1], paddingBottom: space[2] },
   example: { fontStyle: 'italic' },
   author: { marginTop: space[1] },

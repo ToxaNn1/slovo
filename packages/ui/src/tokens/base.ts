@@ -458,9 +458,36 @@ export const typeRoles = {
 
 export type TypeRole = keyof typeof typeRoles;
 
-/** The text style of a type role in the given tokens' families. */
+/**
+ * How far above the baseline the word family's tallest capital mark rises
+ * (Ї; Й's breve is just below), and how far its descent falls, in em.
+ * Measured in Unbounded Black.
+ */
+const WORD_CAPITAL_MARK_TOP = 1.01;
+const WORD_DESCENT = 0.245;
+
+/**
+ * The room a capitalised word role needs above its line for Й and Ї. iOS
+ * cuts a line set tighter than the font from the top and keeps the descent
+ * at the bottom, so a breve or dots over a capital fall outside the text's
+ * box and are clipped: «МОВНИЙ» showed «МОВНИИ».
+ */
+export function capitalMarkRoom(name: TypeRole): number {
+  const { family, size, lineHeight, textTransform } = typeRoles[name];
+  if (family !== 'word' || textTransform !== 'uppercase') return 0;
+  return Math.max(0, Math.ceil((WORD_CAPITAL_MARK_TOP + WORD_DESCENT) * size - lineHeight));
+}
+
+/**
+ * The text style of a type role in the given tokens' families. A capitalised
+ * word role pads its top by `capitalMarkRoom` and pulls its margin up by the
+ * same, so the marks draw whole and the line stays where the board sets it.
+ * A component that sets its own top margin on such a role adds the room's
+ * negative to it.
+ */
 export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamilies'>) {
   const { family, size, weight, lineHeight, letterSpacing, textTransform } = typeRoles[name];
+  const room = capitalMarkRoom(name);
   return {
     fontFamily: tokens.fontFamilies[family],
     fontSize: size,
@@ -468,6 +495,7 @@ export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamili
     lineHeight,
     letterSpacing,
     textTransform,
+    ...(room > 0 ? { paddingTop: room, marginTop: -room } : {}),
   };
 }
 

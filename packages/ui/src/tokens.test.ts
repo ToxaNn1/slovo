@@ -9,7 +9,9 @@ import {
   motion,
   offsetShadow,
   shadowEdge,
+  typeRoles,
   typeStyle,
+  type TypeRole,
   wedges,
   withAlpha,
 } from '@slovo/ui/tokens';
@@ -123,6 +125,33 @@ describe('the Core’s shape, type and motion roles', () => {
       'uppercase',
       'uppercase',
     ]);
+  });
+
+  it('gives a capital with a mark above it room above a tight line without moving the line', () => {
+    // Measured in Unbounded Black: Ї rises 1.010 em above the baseline, the
+    // descent is 0.245 em. iOS cuts a line set tighter than the font from the
+    // top, so the baseline sits 0.245 em above the line's bottom.
+    const capitalRoles = (Object.keys(typeRoles) as TypeRole[]).filter(
+      (name) => typeRoles[name].family === 'word' && typeRoles[name].textTransform === 'uppercase',
+    );
+    expect(capitalRoles).toEqual(
+      expect.arrayContaining(['buttonLabel', 'screenTitle', 'heroShout']),
+    );
+    for (const name of capitalRoles) {
+      const { fontSize, lineHeight, paddingTop = 0, marginTop = 0 } = typeStyle(name, coreTokens);
+      const capitalTop = lineHeight - 0.245 * fontSize - 1.01 * fontSize;
+      expect({ name, room: paddingTop + capitalTop >= 0 }).toEqual({ name, room: true });
+      expect({ name, line: paddingTop + marginTop }).toEqual({ name, line: 0 });
+    }
+  });
+
+  it('keeps the button label’s 16-point line on the board', () => {
+    expect(typeStyle('buttonLabel', coreTokens)).toMatchObject({
+      fontSize: 16,
+      lineHeight: 16,
+      paddingTop: 5,
+      marginTop: -5,
+    });
   });
 
   it('carries each role’s weight, so a component sets none: black for the loud roles, light for reading text', () => {

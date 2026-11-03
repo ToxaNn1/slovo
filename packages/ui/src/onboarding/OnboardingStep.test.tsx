@@ -198,4 +198,36 @@ describe('An onboarding step', () => {
     expect(small.frame.height - small.insets.bottom - hero).toBeGreaterThanOrEqual(370);
     expect(shoutOnScreen().scale).toBeCloseTo(hero / 440);
   });
+
+  // Visual audit t8 (#1532): the first Word's card ran under «Далі», its quote out of sight.
+  describe('with content taller than the room under its red top', () => {
+    /** Lays out the step's buttons and content at the given heights. */
+    async function layOut({ footer, content }: { footer: number; content: number }) {
+      await fireEvent(screen.getByTestId('onboarding-footer'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 390, height: footer } },
+      });
+      await fireEvent(screen.getByTestId('onboarding-content'), 'contentSizeChange', 390, content);
+    }
+    const room = notched.frame.height - notched.insets.bottom;
+
+    it('draws its red top shorter, so the whole content shows above the buttons', async () => {
+      await renderWelcome(notched);
+      await layOut({ footer: 108, content: 400 });
+      const hero = Number(styleOf('onboarding-hero')['height']);
+      expect(hero + 400 + 108).toBe(room);
+      expect(shoutOnScreen().scale).toBeCloseTo(hero / 440);
+    });
+
+    it('keeps a red top that holds its art, and lets the rest of the content scroll', async () => {
+      await renderWelcome(notched);
+      await layOut({ footer: 108, content: 1000 });
+      expect(styleOf('onboarding-hero')['height']).toBe(260);
+    });
+
+    it("keeps the board's red top when the content fits under it", async () => {
+      await renderWelcome(notched);
+      await layOut({ footer: 108, content: 200 });
+      expect(styleOf('onboarding-hero')['height']).toBe(440);
+    });
+  });
 });
