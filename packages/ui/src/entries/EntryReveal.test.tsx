@@ -1,7 +1,8 @@
 import type { WordFeedCard } from '@slovo/core';
-import { EditionProvider, EntryCard, ReduceMotionProvider } from '@slovo/ui';
+import { EditionProvider, EntryCard, ReduceMotionProvider, RevealPace } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, render, screen } from '@testing-library/react-native';
+import type { ReactElement } from 'react';
 import { AccessibilityInfo, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 
@@ -122,5 +123,113 @@ describe('the Entry card reveal', () => {
     await wait(300);
     expect(styleOf('word-card').opacity).toBeCloseTo(1);
     expect(screen.getByText('lemma')).toBeTruthy();
+  });
+
+  it('under Reduce Motion fades in once at either pace', async () => {
+    await renderFeed({ fast: true, visiting: true, card: 'w1', reduceMotion: true });
+    await rerenderFeed({ fast: true, visiting: true, card: 'w2', reduceMotion: true });
+
+    expect(screen.queryByTestId('word-lemma-letter-0', { includeHiddenElements: true })).toBeNull();
+    expect(styleOf('word-actions')).toEqual({ opacity: 1, rise: 0 });
+    expect(styleOf('word-card').opacity).toBeLessThan(1);
+    await wait(300);
+    expect(styleOf('word-card').opacity).toBeCloseTo(1);
+  });
+});
+
+/** Whether the card on screen shows its actions this long after it started to play: the fast reveal has, the full one not yet. */
+async function actionsShownAfter(ms: number) {
+  await wait(ms);
+  return styleOf('word-actions').opacity > 0.99;
+}
+
+interface FeedVisit {
+  fast: boolean;
+  visiting: boolean;
+  /** The Entry of the card on screen; another one is a card reached by scrolling. */
+  card: string;
+  reduceMotion?: boolean;
+}
+
+function feed({ fast, visiting, card: entryId, reduceMotion = false }: FeedVisit) {
+  return (
+    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+      <ReduceMotionProvider reduceMotion={reduceMotion}>
+        <RevealPace fast={fast} visiting={visiting}>
+          <EntryCard
+            key={entryId}
+            card={{ ...card, entryId }}
+            actions={<Text>Actions</Text>}
+          />
+        </RevealPace>
+      </ReduceMotionProvider>
+    </EditionProvider>
+  );
+}
+
+let rerender: (element: ReactElement) => Promise<void> = async () => {};
+
+async function renderFeed(visit: FeedVisit) {
+  const rendered = await render(feed(visit));
+  rerender = async (element) => {
+    await rendered.rerender(element);
+  };
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
+async function rerenderFeed(visit: FeedVisit) {
+  await rerender(feed(visit));
+  await act(async () => {
+    await Promise.resolve();
+  });
+}
+
+describe('the pace of the Entry card reveal in one visit to the Feed', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks();
+    jest.useRealTimers();
+  });
+
+  it('plays the full reveal on the first card and the fast one on the next card', async () => {
+    await renderFeed({ fast: true, visiting: true, card: 'w1' });
+    expect(await actionsShownAfter(450)).toBe(false);
+    await wait(1000);
+    expect(styleOf('word-actions').opacity).toBeCloseTo(1);
+
+    await rerenderFeed({ fast: true, visiting: true, card: 'w2' });
+    expect(styleOf('word-actions').opacity).toBe(0);
+    expect(await actionsShownAfter(450)).toBe(true);
+    expect(styleOf('word-lemma-letter-4').opacity).toBeCloseTo(1);
+  });
+
+  it('plays the full reveal again on the first card after the Feed comes back in sight', async () => {
+    await renderFeed({ fast: true, visiting: true, card: 'w1' });
+    await wait(1500);
+    await rerenderFeed({ fast: true, visiting: true, card: 'w2' });
+    await wait(1500);
+
+    await rerenderFeed({ fast: true, visiting: false, card: 'w2' });
+    await rerenderFeed({ fast: true, visiting: true, card: 'w3' });
+    expect(await actionsShownAfter(450)).toBe(false);
+
+    await rerenderFeed({ fast: true, visiting: true, card: 'w4' });
+    expect(await actionsShownAfter(450)).toBe(true);
+  });
+
+  it('plays the full reveal on every card with the fast reveal switched off', async () => {
+    await renderFeed({ fast: false, visiting: true, card: 'w1' });
+    await wait(1500);
+
+    await rerenderFeed({ fast: false, visiting: true, card: 'w2' });
+    expect(await actionsShownAfter(450)).toBe(false);
+    await wait(1000);
+    expect(styleOf('word-actions').opacity).toBeCloseTo(1);
   });
 });
