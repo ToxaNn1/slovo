@@ -1,13 +1,12 @@
 import { afterEach, describe, expect, it, jest } from '@jest/globals';
-import type { DecorMotif } from '@slovo/contracts';
+import type { SeasonalMotif } from '@slovo/contracts';
 import { loadEdition, type Clock } from '@slovo/core';
-import { DecorBackground, EditionProvider, FontSizePreview, TokensProvider } from '@slovo/ui';
+import { EditionProvider, Mascot, TokensProvider } from '@slovo/ui';
 import { act, render, screen } from '@testing-library/react-native';
 
 import {
   activeEditionFiles,
   edition,
-  editionDecor,
   editionStrings,
   editionTokens,
   seasonalMotifs,
@@ -19,11 +18,8 @@ import { settingsAt, switchedTo, testShell } from './test-support';
 
 const { config } = activeEditionFiles;
 
-/** The UA Edition's plain Decor and its motifs. */
-const { background, divider } = editionDecor;
-if (background === undefined || seasonalMotifs === undefined) {
-  throw new Error('The Edition has a background and seasonal motifs');
-}
+/** The UA Edition's seasonal motifs. */
+if (seasonalMotifs === undefined) throw new Error('The Edition has seasonal motifs');
 const { seasons, holidays } = seasonalMotifs;
 const independenceDay = holidays.find(
   ({ rule }) => rule.kind === 'fixed' && rule.month === 8 && rule.day === 24,
@@ -32,24 +28,14 @@ const independenceDay = holidays.find(
 /** A clock in Kyiv that reads the system time, which the tests set. */
 const kyiv: Clock = { now: () => new Date(), timeZone: () => 'Europe/Kyiv' };
 
-/** Every path drawn on the screen, in order. */
-function drawnPaths(): string[] {
-  const paths: string[] = [];
-  const visit = (node: unknown) => {
-    if (typeof node !== 'object' || node === null) return;
-    if (Array.isArray(node)) {
-      node.forEach(visit);
-      return;
-    }
-    const { props, children } = node as { props?: { d?: unknown }; children?: unknown };
-    if (typeof props?.d === 'string') paths.push(props.d);
-    visit(children);
-  };
-  visit(screen.toJSON());
-  return paths;
+/** The paths of the accessory the Mascot wears, empty when it wears none. */
+function accessoryPaths(): string[] {
+  return screen
+    .queryAllByTestId(/^mascot-accessory-\d+$/, { includeHiddenElements: true })
+    .map((path) => path.props['d'] as string);
 }
 
-const pathsOf = ({ layers }: DecorMotif) => layers.map(({ path }) => path);
+const pathsOf = ({ accessory }: SeasonalMotif) => accessory.shapes.map(({ path }) => path);
 
 /** The UA Edition as it ships, with its Seasonal Decor Feature Switch set as given. */
 function editionWithSeasonalDecor(on: boolean) {
@@ -58,8 +44,7 @@ function editionWithSeasonalDecor(on: boolean) {
 }
 
 /**
- * The screen background and a divided card under the Decor in effect at the
- * system time, over the Edition with its Seasonal Decor Feature Switch on
+ * The Mascot under the Decor in effect at the system time, over the Edition with its Seasonal Decor Feature Switch on
  * (unless `editionInEffect` is given) and «Сезонний декор» as set.
  */
 async function renderDecor({
@@ -76,8 +61,7 @@ async function renderDecor({
         <TokensProvider tokens={editionTokens} colorScheme="light">
           <SettingsProvider>
             <DecorInEffect clock={kyiv}>
-              <DecorBackground />
-              <FontSizePreview lemma="Лемá" definition="Тлумачення" />
+              <Mascot state="waits" />
             </DecorInEffect>
           </SettingsProvider>
         </TokensProvider>
@@ -91,61 +75,45 @@ describe('the Decor in effect', () => {
     jest.useRealTimers();
   });
 
-  it('draws the winter tile and centre on a winter day', async () => {
+  it('puts the winter accessory on the Mascot on a winter day', async () => {
     jest.useFakeTimers({ now: new Date('2027-01-15T12:00:00+02:00') });
     await renderDecor();
 
-    expect(drawnPaths()).toEqual(
-      expect.arrayContaining([...pathsOf(seasons.winter.tile), ...pathsOf(seasons.winter.centre)]),
-    );
-    expect(drawnPaths()).not.toEqual(expect.arrayContaining(pathsOf(background.tile)));
+    expect(accessoryPaths()).toEqual(pathsOf(seasons.winter));
   });
 
-  it('draws the ribbon of 24 August over the summer motif', async () => {
+  it('puts the ribbon of 24 August on the Mascot over the summer accessory', async () => {
     if (independenceDay === undefined) throw new Error('The Edition lists no 24 August');
     jest.useFakeTimers({ now: new Date('2027-08-24T09:00:00+03:00') });
     await renderDecor();
 
-    expect(drawnPaths()).toEqual(
-      expect.arrayContaining([
-        ...pathsOf(independenceDay.tile),
-        ...pathsOf(independenceDay.centre),
-      ]),
-    );
-    expect(drawnPaths()).not.toEqual(expect.arrayContaining(pathsOf(seasons.summer.tile)));
+    expect(accessoryPaths()).toEqual(pathsOf(independenceDay));
   });
 
   it('turns to the ribbon at local midnight before 24 August', async () => {
     if (independenceDay === undefined) throw new Error('The Edition lists no 24 August');
     jest.useFakeTimers({ now: new Date('2027-08-23T23:59:00+03:00') });
     await renderDecor();
-    expect(drawnPaths()).toEqual(expect.arrayContaining(pathsOf(seasons.summer.tile)));
+    expect(accessoryPaths()).toEqual(pathsOf(seasons.summer));
 
     await act(() => {
       jest.advanceTimersByTime(60 * 1000);
     });
 
-    expect(drawnPaths()).toEqual(expect.arrayContaining(pathsOf(independenceDay.tile)));
-    expect(drawnPaths()).not.toEqual(expect.arrayContaining(pathsOf(seasons.summer.tile)));
+    expect(accessoryPaths()).toEqual(pathsOf(independenceDay));
   });
 
-  it('draws the plain Decor with «Сезонний декор» off', async () => {
+  it('leaves the Mascot without an accessory with «Сезонний декор» off', async () => {
     jest.useFakeTimers({ now: new Date('2027-01-15T12:00:00+02:00') });
     await renderDecor({ seasonalDecor: false });
 
-    expect(drawnPaths()).toEqual(
-      expect.arrayContaining([...pathsOf(background.tile), ...pathsOf(divider.centre)]),
-    );
-    expect(drawnPaths()).not.toEqual(expect.arrayContaining(pathsOf(seasons.winter.tile)));
+    expect(accessoryPaths()).toEqual([]);
   });
 
-  it('draws the plain Decor in the UA Edition as it ships, which pauses Seasonal Decor', async () => {
+  it('leaves the Mascot without an accessory in the UA Edition as it ships, which pauses Seasonal Decor', async () => {
     jest.useFakeTimers({ now: new Date('2027-01-15T12:00:00+02:00') });
     await renderDecor({ editionInEffect: edition });
 
-    expect(drawnPaths()).toEqual(
-      expect.arrayContaining([...pathsOf(background.tile), ...pathsOf(divider.centre)]),
-    );
-    expect(drawnPaths()).not.toEqual(expect.arrayContaining(pathsOf(seasons.winter.tile)));
+    expect(accessoryPaths()).toEqual([]);
   });
 });

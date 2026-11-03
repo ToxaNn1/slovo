@@ -1,33 +1,18 @@
 import {
   EditionDecorSchema,
   type CategoryArt,
-  type DecorMotif,
   type EditionDecor,
   type MascotAccessory,
   type MascotFigure,
 } from '@slovo/contracts';
 
 /**
- * The Decor the app draws, slot by slot (ADR 0014, `docs/design/README.md`). A
- * slot the Decor leaves empty shows nothing. Shapes and colours only: Decor
- * never carries text or behaviour.
+ * The Decor the app draws (ADR 0014, `docs/design/README.md`): the Mascot, the
+ * Season's or Holiday's accessory it wears, and the Category art. A part the
+ * Decor leaves out shows nothing. Shapes and colours only: Decor never
+ * carries text or behaviour.
  */
 export interface Decor {
-  /** Slot 1: the tile behind a screen's content. */
-  readonly background: { readonly tile: DecorMotif } | undefined;
-  /** Slot 2: the ornament divider. Every Decor has one. */
-  readonly divider: { readonly band: DecorMotif; readonly centre: DecorMotif };
-  /** Slot 3: the top-left corner of a card frame. */
-  readonly corners: { readonly corner: DecorMotif } | undefined;
-  /** Slot 4: the empty-state illustration, and one for an error state. */
-  readonly emptyState:
-    { readonly illustration: DecorMotif; readonly error: DecorMotif | undefined } | undefined;
-  /** Slot 7 as the app draws it over the native splash. */
-  readonly splash: { readonly mark: DecorMotif; readonly band: DecorMotif | undefined } | undefined;
-  /** Slot 6: the illustration of a won Game on the result screen. */
-  readonly victory: { readonly illustration: DecorMotif } | undefined;
-  /** Slot 5: the Share Card frame, a band for the Story card and a corner for the Square card. */
-  readonly shareCard: { readonly band: DecorMotif; readonly corner: DecorMotif } | undefined;
   /** The Mascot's vector (ADR 0070); without it the Mascot is its line alone. */
   readonly mascot: MascotFigure | undefined;
   /** The Season's or Holiday's accessory the Mascot wears while seasonal Decor is on. */
@@ -36,30 +21,8 @@ export interface Decor {
   readonly categories: Readonly<Record<string, CategoryArt>> | undefined;
 }
 
-/**
- * The Core's neutral Decor: a thin line with a small dot in the middle for the
- * divider, and nothing in the other slots, so the screen background stays
- * plain, cards keep just their rounded corners and Share Cards stay plain.
- */
+/** The Core's Decor: nothing, for an Edition that brings none. */
 export const coreDecor: Decor = {
-  background: undefined,
-  divider: {
-    band: {
-      width: 4,
-      height: 1,
-      layers: [{ path: 'M0 0h4v1H0z', color: 'line' }],
-    },
-    centre: {
-      width: 5,
-      height: 5,
-      layers: [{ path: 'M0 2.5a2.5 2.5 0 1 0 5 0a2.5 2.5 0 1 0-5 0z', color: 'ink' }],
-    },
-  },
-  corners: undefined,
-  emptyState: undefined,
-  splash: undefined,
-  victory: undefined,
-  shareCard: undefined,
   mascot: undefined,
   mascotAccessory: undefined,
   categories: undefined,
@@ -83,34 +46,10 @@ export function parseDecor(decor: unknown): EditionDecor {
 }
 
 /**
- * Validates an Edition's Decor and fills every slot it leaves out with the
- * Core's neutral Decor. An Edition without Decor gets the Core's throughout.
+ * Validates an Edition's Decor and gives what the app draws of it. An Edition
+ * without Decor gets the Core's, which draws nothing.
  */
 export function loadDecor(decor: unknown): Decor {
-  const {
-    background,
-    divider,
-    corners,
-    emptyState,
-    splash,
-    victory,
-    shareCard,
-    mascot,
-    categories,
-  } = parseDecor(decor);
-  return {
-    background: background ?? coreDecor.background,
-    divider: divider ?? coreDecor.divider,
-    corners: corners ?? coreDecor.corners,
-    emptyState:
-      emptyState === undefined
-        ? coreDecor.emptyState
-        : { illustration: emptyState.illustration, error: emptyState.error },
-    splash: splash === undefined ? coreDecor.splash : { mark: splash.mark, band: splash.band },
-    victory: victory ?? coreDecor.victory,
-    shareCard: shareCard ?? coreDecor.shareCard,
-    mascot: mascot ?? coreDecor.mascot,
-    mascotAccessory: coreDecor.mascotAccessory,
-    categories: categories ?? coreDecor.categories,
-  };
+  const { mascot, categories } = parseDecor(decor);
+  return { mascot, mascotAccessory: undefined, categories };
 }

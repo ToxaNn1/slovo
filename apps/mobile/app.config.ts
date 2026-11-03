@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { basename, dirname, join, relative } from 'node:path';
+import { basename, join, relative } from 'node:path';
 
 import type * as EditionFolders from '@slovo/language-pack/edition';
 import type * as UiTokens from '@slovo/ui/tokens';
@@ -18,10 +18,8 @@ type AppFolder = EditionFolders.AppFolder;
 
 /** The options of the `expo-splash-screen` config plugin that the config sets. */
 interface SplashPluginOptions {
-  image?: string;
   backgroundColor: string;
-  imageWidth?: number;
-  dark: { image?: string; backgroundColor: string };
+  dark: { backgroundColor: string };
 }
 
 // Expo evaluates this file with plain Node, which cannot load the TypeScript
@@ -55,20 +53,12 @@ const { writeWidgetExtension } = tsxRequire(
   import.meta.url,
 ) as typeof WidgetExtension;
 
-/** The native splash the AppConfig names (Decor slot 7), its images beside it. */
-function appSplash(app: AppFolder, projectRoot: string): SplashPluginOptions {
-  const { imageWidth, light, dark } = app.splash();
-  const image = (name: string) => {
-    const path = join(dirname(app.path('splash')), name);
-    if (!existsSync(path))
-      throw new Error(`${app.path('splash')} names a missing splash image: expected ${path}`);
-    return relative(projectRoot, path);
-  };
+/** The native splash the AppConfig names: a plain colour in each Theme. */
+function appSplash(app: AppFolder): SplashPluginOptions {
+  const { light, dark } = app.splash();
   return {
-    image: image(light.image),
     backgroundColor: light.backgroundColor,
-    imageWidth,
-    dark: { image: image(dark.image), backgroundColor: dark.backgroundColor },
+    dark: { backgroundColor: dark.backgroundColor },
   };
 }
 
@@ -403,7 +393,7 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
       'expo-sqlite',
       // The Edition's fonts, embedded in the native app; the Core brings none (ADR 0006).
       ['expo-font', { fonts: edition.fonts().map((font) => relative(projectRoot, font)) }],
-      ['expo-splash-screen', appSplash(app, projectRoot)],
+      ['expo-splash-screen', appSplash(app)],
       ['expo-notifications', { sounds: editionNotificationSounds(edition, projectRoot) }],
       // The Interface sounds play in the foreground only and record nothing.
       [

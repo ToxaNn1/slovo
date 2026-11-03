@@ -1,7 +1,6 @@
 import { withoutStress, type IdiomCardModel } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
@@ -79,10 +78,6 @@ export function IdiomCardBody({
             size="tight"
           />
         </View>
-      </View>
-      <View>
-        {/* Decor slot 2, between the header and the Definition. */}
-        <OrnamentDivider />
       </View>
       {concealed ? null : (
         <>

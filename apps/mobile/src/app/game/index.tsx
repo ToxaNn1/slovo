@@ -1,7 +1,6 @@
 import type { GameModeOffer } from '@slovo/core';
 import {
   DailyCrosswordCard,
-  DecorBackground,
   GameModeCard,
   GameResult,
   GameRound,
@@ -151,7 +150,6 @@ function ModeScreen({
   const openScreen = useOpenScreen();
   return (
     <View testID="game-modes" style={styles.screen}>
-      <DecorBackground />
       <ScrollView contentContainerStyle={styles.modes}>
         <View style={styles.heading}>
           <GamesTitle>{strings.title}</GamesTitle>

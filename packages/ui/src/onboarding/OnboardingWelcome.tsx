@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { OrnamentBand } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -24,7 +23,7 @@ export interface HeroWord {
 }
 
 /**
- * The welcome: what SLOVO is. A hero Word with its Definition, the ornament band,
+ * The welcome: what SLOVO is. A hero Word with its Definition,
  * the Edition's promise and «Почати», under the step's shout word. The hero Word is left out when the
  * Language Pack has none to show.
  */
@@ -84,10 +83,6 @@ export function OnboardingWelcome({
           </Text>
         </View>
       )}
-      {/* In a row, since the band fills the width with `flex`. */}
-      <View style={styles.band}>
-        <OrnamentBand />
-      </View>
       <Text
         accessibilityRole="header"
         {...voice}
@@ -108,6 +103,5 @@ export function OnboardingWelcome({
 }
 
 const styles = StyleSheet.create({
-  band: { flexDirection: 'row' },
   hero: { gap: space[2] },
 });

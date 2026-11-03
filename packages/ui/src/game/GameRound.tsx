@@ -31,7 +31,6 @@ import Svg, { Path, Polygon } from 'react-native-svg';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
-import { CardCorners } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Wedge } from '../primitives/Wedge';
 import { Button } from '../primitives/Button';
@@ -745,7 +744,6 @@ function RoundCard({
         { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
       ]}
     >
-      <CardCorners corners={['topLeft', 'bottomRight']} />
       {labelShown && (
         <Text
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}

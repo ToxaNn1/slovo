@@ -24,12 +24,6 @@ export { WeeklyRecapCard } from './feed/WeeklyRecapCard';
 export { CommunityWordCard } from './feed/CommunityWordCard';
 export { YesterdayCard } from './feed/YesterdayCard';
 export { EntryCard } from './entries/EntryCard';
-export {
-  CardCorners,
-  DecorBackground,
-  EmptyStateIllustration,
-  OrnamentBand,
-} from './decor/DecorSlots';
 export { ConfirmationDialog } from './primitives/ConfirmationDialog';
 export { EmptyState } from './primitives/EmptyState';
 export { EntryRow, type EntryRowAction } from './entries/EntryRow';

@@ -12,7 +12,6 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { OrnamentBand } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
 import { guideStep, space, typeStyle, widgetDrawing, withAlpha } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';
@@ -73,7 +72,7 @@ function GuideStep({
   );
 }
 
-/** A widget of the drawing: the mode's name, the Word and the band, and the short line on the medium one. */
+/** A widget of the drawing: the mode's name, the Word, and the short line on the medium one. */
 function SampleWidget({
   size,
   mode,
@@ -119,10 +118,6 @@ function SampleWidget({
             {definition}
           </Text>
         )}
-      </View>
-      {/* The band grows along its row, so it keeps its own height in the widget's column. */}
-      <View style={styles.bandRow}>
-        <OrnamentBand />
       </View>
     </View>
   );
@@ -307,7 +302,6 @@ const styles = StyleSheet.create({
   },
   smallWidget: { flex: 1, aspectRatio: 1 },
   mediumWidget: { aspectRatio: widgetDrawing.mediumAspectRatio },
-  bandRow: { flexDirection: 'row' },
   widgetWord: { gap: space[1] },
   caption: { textAlign: 'center' },
 });

@@ -44,9 +44,9 @@ function useToday(clock: Clock) {
 }
 
 /**
- * Gives every Decor slot below the Decor of today (ADR 0055): the Season or
- * Holiday motif in the background and the divider centre while «Сезонний
- * декор» and its Feature Switch are on, the Edition's plain Decor otherwise.
+ * Gives everything below the Decor of today (ADR 0055): the Mascot wears the
+ * accessory of the Season or Holiday while «Сезонний декор» and its Feature
+ * Switch are on, and the Edition's plain Decor otherwise.
  * It changes at local midnight. Draw it under the gate of the Language Pack.
  */
 export function DecorInEffect({ clock, children }: { clock: Clock; children: ReactNode }) {

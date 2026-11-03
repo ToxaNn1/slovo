@@ -1,6 +1,5 @@
 import {
   BackLink,
-  CardCorners,
   fill,
   NavigationRow,
   SectionLabel,
@@ -92,7 +91,6 @@ export function AboutScreen() {
             { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
           ]}
         >
-          <CardCorners />
           <Text
             testID="about-description"
             {...voice}

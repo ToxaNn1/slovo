@@ -33,7 +33,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 | `apps/widget`            | The native SwiftUI home-screen widget, linked into the iOS project at prebuild.                     |
 | `apps/backend`           | The API: the HTTP shell, the adapters and the composition root of the backend.                      |
 | `packages/core`          | Pure TypeScript domain logic (no React, no React Native).                                           |
-| `packages/ui`            | Screens, components, design tokens and Decor slots.                                                 |
+| `packages/ui`            | Screens, components, design tokens and Decor.                                                       |
 | `packages/contracts`     | Zod schemas for Entries, the Edition config and the Language Pack.                                  |
 | `packages/server-core`   | The backend's rules and ports (no HTTP, no SQL, no language).                                       |
 | `packages/language-pack` | Builds an Edition's content into a read-only SQLite Language Pack and reads packs back.             |
@@ -58,7 +58,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 
 The native app is a development build made in EAS cloud ([ADR 0004](docs/adr/0004-native-builds-in-eas-cloud.md)). The JavaScript runs locally against it, served by Metro with fast refresh, so day-to-day work never waits for a cloud build.
 
-Every build is the one app (ADR 0065) and bundles the AppConfig's default Edition (`defaultEdition` in `app/app.json`); no command names an Edition. The app name, bundle id, icon and splash come from the AppConfig, and the locale, fonts and notification sound from `editions/<edition>/`: the fonts are the Core's (`packages/ui/assets/fonts/`) and every file in the Edition's `assets/fonts/` (ADR 0006), and the splash is Decor slot 7, described by `decor/splash.json`. An Edition without a splash gets the Core's plain one. Once the JavaScript runs, the app draws the rest of slot 7 over the native splash (the background, the wordmark, the tagline and the band from `decor/decor.json`) and fades it out.
+Every build is the one app (ADR 0065) and bundles the AppConfig's default Edition (`defaultEdition` in `app/app.json`); no command names an Edition. The app name, bundle id, icon and splash come from the AppConfig, and the locale, fonts and notification sound from `editions/<edition>/`: the fonts are the Core's (`packages/ui/assets/fonts/`) and every file in the Edition's `assets/fonts/` (ADR 0006), and the native splash is a plain colour per Theme from `decor/splash.json`. An Edition without a splash gets the Core's plain one. Once the JavaScript runs, the app's splash (ADR 0070) takes over from the native one with the Edition's wordmark and tagline.
 
 You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulator (iOS 17 or later) and access to the Expo account `anton_de`. The commands below run the Expo CLI and `eas-cli` through `npx`, so neither needs a global install.
 
@@ -101,8 +101,6 @@ You need the Node version in [`.nvmrc`](.nvmrc), pnpm, Xcode with an iOS Simulat
    ```
 
    The app draws itself with the Edition's design tokens (`editions/<edition>/tokens.json`) and Decor (`editions/<edition>/decor/decor.json`, [ADR 0014](docs/adr/0014-editions-supply-decor-as-vector-motifs.md)). To check the Core's neutral look instead, start Metro with `SLOVO_CORE_TOKENS=1 SLOVO_EDITION=uk pnpm start --clear`, and drop the variable (with `--clear` again) to go back.
-
-   In a development build, `xcrun simctl openurl booted slovo://decor` opens a showcase of every Decor slot 0.2 uses. Its switches show the Edition's Decor or the Core's, light or dark; the link takes `?look=core`, `?scheme=dark` and `?splash=1` to start in that state.
 
 4. Check the result. The tabs read Головна, Налаштування, Гра, Збережене (Home, Settings, Game, Saved). Home is the Feed, one card per screen:
    - Each local day opens on its Word of the Day, badged «Слово дня · 12 жовтня». Swipe up for the next card and down to go back; a hint says so on the first launch only.

@@ -31,4 +31,4 @@ The master spec put the local database in the App Group's shared container, so t
 - **The ✓ worked out by Swift from a list of Seen Entries**: rejected. Swift would copy the Core's rule for which Entry is the Word of the Day; one local date is all the widget needs.
 - **«Тло» chosen once in the app's Settings**: rejected. Two widgets could not differ, and the app would store a widget setting.
 - **The key in a file or store of its own**: rejected. The snapshot is already the one file the app writes and the widget reads.
-- **The divider band (Decor slot 2) under the headline**: dropped (owner 02.11). The design's widget boards draw none, and the medium widget's wedge already marks the Edition.
+- **The divider band under the headline**: dropped (owner 02.11). The design's widget boards draw none, and the medium widget's wedge already marks the Edition.

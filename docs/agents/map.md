@@ -9,7 +9,7 @@ The short map. `README.md` is for people; grep it for one section when you need 
 | `apps/backend`           | The API: HTTP shell, adapters, composition root.              |
 | `apps/site`              | The Astro site on Pages: the landing and the legal pages.     |
 | `packages/core`          | Pure TypeScript domain logic, no React or React Native.       |
-| `packages/ui`            | Screens, components, design tokens, Decor slots.              |
+| `packages/ui`            | Screens, components, design tokens, the Mascot.               |
 | `packages/contracts`     | Zod schemas: Entries, Edition config, Language Pack.          |
 | `packages/server-core`   | Backend rules and ports, no HTTP, SQL or language.            |
 | `packages/language-pack` | Builds and reads the SQLite Language Pack.                    |

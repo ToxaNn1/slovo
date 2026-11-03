@@ -15,7 +15,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0011](0011-the-content-version-follows-the-content-checksum.md) `content/manifest.json` pairs the content version with its checksum; `--record` raises it.
 - [0012](0012-definitions-come-from-goroh.md) Ukrainian Definitions and Examples come from goroh «Тлумачення», citing СУМ-20 or СУМ-11.
 - [0013](0013-the-core-owns-the-user-state-schema.md) The Core owns the user-state keys, encoding, migrations and sync marks; adapters store text records by key.
-- [0014](0014-editions-supply-decor-as-vector-motifs.md) Decor is vector motifs in `decor/decor.json`; the Core owns the slots and draws them.
+- [0014](0014-editions-supply-decor-as-vector-motifs.md) Decor is vector data in `decor/decor.json` (the Mascot, its Season and Holiday accessories, the Category pictograms); no ornament layer; the native splash is a plain colour.
 - [0015](0015-one-entries-module-decides-which-entries-are-eligible.md) One Entries module decides eligibility and owns the table of Entry kinds; any Entry stays reachable by id.
 - [0016](0016-the-feed-is-told-which-card-is-on-screen.md) The shell tells the Feed which card is on screen; the Feed owns Seen, the place, the next card and the Feed Notices.
 - [0017](0017-one-entry-card-draws-every-kind-of-entry.md) One Entry card draws every kind; the Core builds the card, Round, Share Card and Entry row models; strings come from `EditionProvider`.

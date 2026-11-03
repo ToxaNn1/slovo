@@ -1,12 +1,5 @@
 import type { AnyEntryCard, Composition, EntryLinkSource } from '@slovo/core';
-import {
-  BackLink,
-  DecorBackground,
-  EntryCard,
-  space,
-  UndoToastProvider,
-  useTokens,
-} from '@slovo/ui';
+import { BackLink, EntryCard, space, UndoToastProvider, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -78,7 +71,6 @@ export function EntryScreen({
         edges={['top']}
         style={[styles.screen, { backgroundColor: colors.background }]}
       >
-        <DecorBackground />
         <View style={styles.back}>
           <BackLink
             testID="entry-screen-back"

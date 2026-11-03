@@ -139,7 +139,7 @@ export interface AppFolder {
   readonly config: AppConfig;
   /** Where the icon or the splash the AppConfig names lies, whether or not it is there. */
   path(file: 'icon' | 'splash'): string;
-  /** The native splash, checked against its contract; its images lie beside it. */
+  /** The native splash, checked against its contract. */
   splash(): SplashDecor;
 }
 

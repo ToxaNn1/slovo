@@ -84,8 +84,6 @@ export {
 export {
   CATEGORY_COVERS,
   CategoryArtSchema,
-  DecorLayerSchema,
-  DecorMotifSchema,
   PictogramShapeSchema,
   type CategoryArt,
   type CategoryCover,
@@ -97,8 +95,6 @@ export {
   SeasonMotifsSchema,
   SplashDecorSchema,
   WEEKDAYS,
-  type DecorLayer,
-  type DecorMotif,
   type EditionDecor,
   type Holiday,
   type HolidayRule,

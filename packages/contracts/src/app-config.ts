@@ -81,7 +81,7 @@ export const AppConfigSchema = z
     domain: DomainSchema,
     /** The app icon, a 1024×1024 PNG. */
     icon: RepoFileSchema,
-    /** The native splash, a `splash.json` of Decor slot 7, its images beside it (ADR 0014). */
+    /** The native splash, a `splash.json` of its colour in each Theme (ADR 0014). */
     splash: RepoFileSchema,
     /**
      * The Edition the app bundles and opens when no Edition matches the

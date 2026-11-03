@@ -1,113 +1,27 @@
 'use no memo';
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
-  cancelAnimation,
-  Easing,
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
-  withRepeat,
-  withSequence,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 
-import { useDecor } from '../decor/DecorProvider';
-import { EmptyStateIllustration, OrnamentDivider } from '../decor/DecorSlots';
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, space, typeStyle, wordCardSide } from '../tokens';
+import { minTouchTarget, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-
-/** The design's loading motion: the divider is stitched in square by square, 140 ms each. */
-const STITCH_MS = 140;
-/** The narrowest stitch, so a fine divider doesn't take ages to stitch. */
-const MIN_STITCH = 14;
-/** Stitches the divider waits, full, before it starts again. */
-const STITCHES_HELD = 4;
-/** The skeleton's pulse: 1.4 s from full to faint and back. */
-const PULSE_MS = 1400;
-const PULSE_FAINT = 0.45;
+import { WedgeLoader } from '../primitives/WedgeLoader';
 
 /**
- * Decor slot 2 being stitched: the divider fills in from the left one stitch
- * at a time over a faint print of itself, then starts again, on the UI
- * thread. With Reduce Motion it is drawn whole and still.
- */
-function StitchedDivider() {
-  const { divider } = useDecor();
-  const reduceMotion = useReduceMotion();
-  const [width, setWidth] = useState(0);
-  const stitch = Math.max(divider.band.width, MIN_STITCH);
-  const stitches = Math.ceil(width / stitch);
-  /** The stitches drawn, counting up through each round of stitching and holding. */
-  const stitched = useSharedValue(0);
-  /** The divider's width, on the UI thread. */
-  const whole = useSharedValue(0);
-
-  useEffect(() => {
-    if (reduceMotion || stitches === 0) {
-      stitched.value = stitches;
-      return;
-    }
-    const steps = stitches + STITCHES_HELD + 1;
-    stitched.value = 0;
-    stitched.value = withRepeat(
-      withTiming(steps, {
-        duration: steps * STITCH_MS,
-        easing: Easing.linear,
-        reduceMotion: ReduceMotion.Never,
-      }),
-      -1,
-    );
-    return () => {
-      cancelAnimation(stitched);
-    };
-  }, [reduceMotion, stitches, stitched]);
-
-  const stitchedStyle = useAnimatedStyle(() => ({
-    width: Math.min(Math.floor(stitched.value) * stitch, whole.value),
-  }));
-
-  return (
-    <View
-      testID="feed-loading-divider"
-      onLayout={(event) => {
-        setWidth(event.nativeEvent.layout.width);
-        whole.value = event.nativeEvent.layout.width;
-      }}
-    >
-      <View style={styles.print}>
-        <OrnamentDivider />
-      </View>
-      <Animated.View testID="feed-loading-stitched" style={[styles.stitched, stitchedStyle]}>
-        <View style={{ width }}>
-          <OrnamentDivider />
-        </View>
-      </Animated.View>
-    </View>
-  );
-}
-
-/** A grey block of the skeleton card, `width` wide (a number, or a share such as `'85%'`). */
-function Block({ width, height }: { width: number | `${number}%`; height: number }) {
-  const { colors, radii } = useTokens();
-  return (
-    <View
-      style={{ width, height, backgroundColor: colors.surfaceSunken, borderRadius: radii.chip }}
-    />
-  );
-}
-
-/**
- * The Feed's loading state while the Language Pack opens: a skeleton of the
- * Word card that pulses, the divider being stitched, and a line of text under
- * it, under the Mascot waiting when the app shows it. With Reduce Motion the
- * skeleton holds still and the divider is whole. VoiceOver reads it as one
- * element.
+ * The Feed's loading state while the Language Pack opens: the design's red
+ * wedges and a line of text under them, under the Mascot waiting when the app
+ * shows it. With Reduce Motion the wedges stand still. VoiceOver reads it as
+ * one element.
  */
 export function FeedLoading({
   text,
@@ -116,28 +30,12 @@ export function FeedLoading({
 }: {
   text: string;
   accessibilityLabel: string;
-  /** The Mascot waiting, over the skeleton card, if the app shows it. */
+  /** The Mascot waiting, over the wedges, if the app shows it. */
   mascot?: ReactNode;
 }) {
   const tokens = useTokens();
-  const { colors, radii } = tokens;
+  const { colors } = tokens;
   const { voice } = useEdition();
-  const reduceMotion = useReduceMotion();
-  const pulse = useSharedValue(1);
-
-  useEffect(() => {
-    if (reduceMotion) {
-      pulse.value = 1;
-      return;
-    }
-    const half = { duration: PULSE_MS / 2, reduceMotion: ReduceMotion.Never };
-    pulse.value = withRepeat(withSequence(withTiming(PULSE_FAINT, half), withTiming(1, half)), -1);
-    return () => {
-      cancelAnimation(pulse);
-    };
-  }, [reduceMotion, pulse]);
-
-  const pulseStyle = useAnimatedStyle(() => ({ opacity: pulse.value }));
 
   return (
     <View
@@ -150,23 +48,7 @@ export function FeedLoading({
       style={styles.loading}
     >
       {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
-      <View
-        style={[
-          styles.skeleton,
-          { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
-        ]}
-      >
-        <Animated.View style={[styles.skeletonHeader, pulseStyle]}>
-          <Block width={180} height={50} />
-          <Block width={88} height={14} />
-        </Animated.View>
-        <StitchedDivider />
-        <Animated.View style={[styles.skeletonLines, pulseStyle]}>
-          <Block width="100%" height={16} />
-          <Block width="84%" height={16} />
-          <Block width="70%" height={16} />
-        </Animated.View>
-      </View>
+      <WedgeLoader testID="feed-loading-wedges" />
       <Text
         {...voice}
         style={[typeStyle('sub', tokens), styles.loadingText, { color: colors.muted }]}
@@ -177,14 +59,10 @@ export function FeedLoading({
   );
 }
 
-/** The width of the error illustration (Decor slot 4, the broken thread). */
-const ERROR_ILLUSTRATION_WIDTH = 120;
-
 /**
  * The Feed's local error state, when the Language Pack can't be opened: the
- * Mascot when the app shows it, else the Edition's error illustration (a
- * broken thread in the Ukrainian Decor), a title, what went wrong and a
- * button that tries again. Nothing here speaks
+ * Mascot when the app shows it, a title, what went wrong and a button that
+ * tries again. Nothing here speaks
  * of the network: the Feed never needs it.
  */
 export function FeedError({
@@ -200,7 +78,7 @@ export function FeedError({
   /** The label of the button that tries again. */
   retry: string;
   onRetry: () => void;
-  /** The Mascot drawn instead of the illustration, if the app shows it. */
+  /** The Mascot drawn over the title, if the app shows it. */
   mascot?: ReactNode;
   testID?: string;
 }) {
@@ -209,9 +87,7 @@ export function FeedError({
   const { voice } = useEdition();
   return (
     <View testID={testID} style={styles.error}>
-      <View style={styles.illustration}>
-        {mascot ?? <EmptyStateIllustration kind="error" width={ERROR_ILLUSTRATION_WIDTH} />}
-      </View>
+      {mascot !== undefined && <View style={styles.illustration}>{mascot}</View>}
       <View
         accessible
         accessibilityRole="alert"
@@ -299,20 +175,8 @@ export function SwipeHint({
 }
 
 const styles = StyleSheet.create({
-  loading: { gap: space[6] + space[1] },
+  loading: { alignItems: 'center', gap: space[6] + space[1] },
   mascot: { alignItems: 'center' },
-  // The Word card's padding, so the skeleton has the card's shape.
-  skeleton: {
-    borderWidth: 1,
-    paddingTop: space[8],
-    paddingHorizontal: wordCardSide,
-    paddingBottom: space[8],
-    gap: space[6],
-  },
-  skeletonHeader: { gap: space[4] },
-  skeletonLines: { gap: space[4] + space[1] },
-  print: { opacity: 0.18 },
-  stitched: { position: 'absolute', top: 0, left: 0, bottom: 0, overflow: 'hidden' },
   loadingText: { textAlign: 'center' },
   error: {
     flex: 1,

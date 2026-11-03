@@ -1,13 +1,12 @@
 import type { EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from '@slovo/core';
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
 import { ConcealedProvider, useSelfCheck } from './self-check';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
-import { CardCorners } from '../decor/DecorSlots';
 import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
@@ -162,10 +161,6 @@ export function EntryCard({
             onPress={reveal}
           />
         )}
-        {/* Corner ornaments over the edges (Decor slot 3), on every kind of card. */}
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          <CardCorners />
-        </View>
       </RevealFrame>
       <RevealDetail step={3} testID={`${card.kind}-actions`}>
         <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>

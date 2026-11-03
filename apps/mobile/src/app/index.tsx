@@ -3,7 +3,6 @@ import {
   NotificationAskCard,
   LevelMilestoneCard,
   SaveProgressCard,
-  DecorBackground,
   EndOfCycleCard,
   EntryCard,
   FeedHeader,
@@ -100,8 +99,6 @@ function FeedScreen() {
 
   return (
     <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
-      {/* The background stays put while the cards move over it. */}
-      <DecorBackground />
       <VerticalPager
         ref={pager}
         testID="feed"

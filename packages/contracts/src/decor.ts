@@ -1,24 +1,19 @@
 import { z } from 'zod';
 
-import { ColorRoleSchema } from './edition-tokens';
 import { ColorSchema, HexColorSchema } from './shared';
 
-/** The splash in one Theme: an image from the Edition's `decor/` folder on a plain colour. */
+/** The native splash in one Theme: a plain colour. */
 const SplashThemeSchema = z.strictObject({
-  image: z
-    .string()
-    .regex(/^[a-z0-9-]+\.png$/, 'Expected the name of a PNG file in the decor folder'),
   backgroundColor: HexColorSchema,
 });
 
 /**
- * Decor slot 7, the splash the native app shows while it starts: an image
- * centred on a background colour, in light and dark. It is baked into the
- * native build, so changing it needs a new development build.
+ * The splash the native app shows while it starts, before any JavaScript
+ * runs: a plain colour in light and dark, the colour the app's own splash
+ * cut opens on (ADR 0014, 0070). It is baked into the native build, so
+ * changing it needs a new development build.
  */
 export const SplashDecorSchema = z.strictObject({
-  /** The width of the image on screen, in points. */
-  imageWidth: z.number().int().positive(),
   light: SplashThemeSchema,
   dark: SplashThemeSchema,
 });
@@ -30,42 +25,14 @@ const SvgPathSchema = z
   .string()
   .regex(/^\s*[Mm][MmLlHhVvCcSsQqTtAaZz\d\s,.+-]*$/, 'Expected SVG path data such as M0 0h2v2H0z');
 
-/**
- * One colour of a motif: its shapes, the colour role they take in the colour
- * scheme in effect, and how opaque they are drawn (whole when left out).
- */
-export const DecorLayerSchema = z.strictObject({
-  path: SvgPathSchema,
-  color: ColorRoleSchema,
-  opacity: z.number().gt(0).max(1).optional(),
-});
-
-export type DecorLayer = z.infer<typeof DecorLayerSchema>;
-
 const SizeSchema = z.number().positive();
 
 /**
- * A vector drawing on its own grid, `width` by `height` units, drawn as its
- * layers in order. A slot draws it at its own size in points, or scales it.
- */
-export const DecorMotifSchema = z.strictObject({
-  width: SizeSchema,
-  height: SizeSchema,
-  layers: z.array(DecorLayerSchema).min(1),
-});
-
-export type DecorMotif = z.infer<typeof DecorMotifSchema>;
-
-/**
- * The motif of a Season or a Holiday: the tile Decor slot 1 repeats across
- * the screen and the centre of the slot 2 divider, each at its size in points.
- * It changes only those two slots (ADR 0055).
+ * The motif of a Season or a Holiday: the accessory the Mascot wears while
+ * seasonal Decor is on (ADR 0055).
  */
 export const SeasonalMotifSchema = z.strictObject({
-  tile: DecorMotifSchema,
-  centre: DecorMotifSchema,
-  /** The Mascot's accessory for the Season or Holiday, if any. */
-  accessory: z.lazy(() => MascotAccessorySchema).optional(),
+  accessory: z.lazy(() => MascotAccessorySchema),
 });
 
 export type SeasonalMotif = z.infer<typeof SeasonalMotifSchema>;
@@ -237,49 +204,17 @@ export const CategoryArtSchema = z.strictObject({
 export type CategoryArt = z.infer<typeof CategoryArtSchema>;
 
 /**
- * The Decor an Edition draws in the app, by slot (ADR 0014, `docs/design/README.md`):
- * `editions/<edition>/decor/decor.json`. Every slot is optional; the Core's
- * neutral Decor fills a slot the Edition leaves out. Decor holds shapes and
- * colours only, never text or behaviour (ADR 0014).
+ * The Decor an Edition draws in the app (ADR 0014, `docs/design/README.md`):
+ * `editions/<edition>/decor/decor.json`. Every part is optional; without one
+ * the Core draws nothing in its place. Decor holds shapes and colours only,
+ * never text or behaviour (ADR 0014).
  */
 export const EditionDecorSchema = z.strictObject({
-  /** Slot 1: a tile repeated across the screen behind everything, at its size in points. */
-  background: z.strictObject({ tile: DecorMotifSchema }).optional(),
-  /**
-   * Slot 2: the ornament divider. The band repeats sideways at its size in
-   * points on both sides of the centre, drawn at its size in points.
-   */
-  divider: z.strictObject({ band: DecorMotifSchema, centre: DecorMotifSchema }).optional(),
-  /** Slot 3: the top-left corner of a card frame, at its size; mirrored for the others. */
-  corners: z.strictObject({ corner: DecorMotifSchema }).optional(),
-  /**
-   * Slot 4: the empty-state illustration, scaled to the size the screen asks
-   * for, and an optional one for an error state.
-   */
-  emptyState: z
-    .strictObject({ illustration: DecorMotifSchema, error: DecorMotifSchema.optional() })
-    .optional(),
-  /**
-   * Slot 7 as the app draws it over the native splash: the mark at the native
-   * splash image's width, so the two line up, and an optional band near the bottom.
-   */
-  splash: z.strictObject({ mark: DecorMotifSchema, band: DecorMotifSchema.optional() }).optional(),
-  /**
-   * Slot 6: the victory illustration on the Game's result screen, scaled to the
-   * size the screen asks for. Its layers are stitched in one after another.
-   */
-  victory: z.strictObject({ illustration: DecorMotifSchema }).optional(),
-  /**
-   * Slot 5, the Share Card frame: the band repeated across the Story card at
-   * the top and, mirrored, at the bottom, and the top-left corner mirrored into
-   * the four corners of the Square card, both scaled with the card.
-   */
-  shareCard: z.strictObject({ band: DecorMotifSchema, corner: DecorMotifSchema }).optional(),
   /** The Mascot's vector, which the Core draws in its states (ADR 0070). */
   mascot: MascotFigureSchema.optional(),
   /**
-   * Seasonal Decor: a motif for every Season, shown in slots 1 and 2 while
-   * «Сезонний декор» is on. Without it the slots keep their plain Decor.
+   * Seasonal Decor: a motif for every Season, whose accessory the Mascot
+   * wears while «Сезонний декор» is on.
    */
   seasons: SeasonMotifsSchema.optional(),
   /** The Holidays, whose motif shows instead of the Season's on their day. */

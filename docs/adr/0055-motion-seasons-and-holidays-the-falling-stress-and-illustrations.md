@@ -20,7 +20,7 @@ The design boards (`docs/design/`) show each animation with its timing and its R
 - **A Holiday wins over the Season.** On a Holiday its motif shows instead of the Season's.
 - **Local midnight.** The motif follows the local date, so it changes at local midnight with the day change (ADR 0022).
 
-**Seasonal Decor** changes only Decor slot 1 (the background) and slot 2 (the divider centre); the other slots keep the Edition's Decor, so the app stays familiar. The Edition supplies in `decor/decor.json` a motif for each Season and, with each Holiday rule, the Holiday's motif, in the motif shape of ADR 0014. The UA Edition ships simple vector placeholders until final art: a snowflake, a flower, a sun and a leaf for the Seasons; a blue-yellow ribbon, an embroidered rhombus, a star and a firework for the Holidays. «Сезонний декор» is a synced setting (ADR 0041), on by default; off gives the plain Edition Decor.
+**Seasonal Decor** changes only the Mascot's accessory (ADR 0014); everything else keeps the Edition's Decor, so the app stays familiar. The Edition supplies in `decor/decor.json` an accessory for each Season and, with each Holiday rule, the Holiday's accessory. «Сезонний декор» is a synced setting (ADR 0041), on by default; off gives the plain Edition Decor.
 
 **The falling Stress.** On a Word card in the Feed and on the Entry screen, the Stress mark of the Word Lemma falls onto its vowel in 300 ms each time the card appears. Lists, the widget and Share Cards show the mark still, and so does every other kind of Entry. Under Reduce Motion the mark is simply in place. The animation draws the mark only: VoiceOver reads the Lemma as before.
 
@@ -42,7 +42,7 @@ The design boards (`docs/design/`) show each animation with its timing and its R
 - **Astronomical Seasons, or Seasons by hemisphere**: rejected. The meteorological months are what readers call the seasons, and an Edition's readers live in one hemisphere.
 - **Holidays as a list of dates per year**: rejected. Someone would have to add next year's dates, and День вишиванки moves.
 - **Seasons and Holidays in the Core**: rejected. Which days a language celebrates and how they look belong to the Edition.
-- **Seasonal motifs in every slot**: rejected. The corners, the Share Card frame and the splash are the Edition's identity, which a reader should always recognise.
+- **Seasonal Decor beyond the Mascot**: rejected. The rest of the screen is the Edition's identity, which a reader should always recognise.
 - **The Stress falls in lists, the widget and Share Cards**: rejected. A list of moving marks distracts, and the widget and a Share Card are still images.
 - **Illustrations in the Language Pack**: rejected. Illustrations would make every Content update many times larger.
 - **SVG Illustrations**: rejected. Metro would need an SVG transformer and the build could not check a file before the app runs (ADR 0014).

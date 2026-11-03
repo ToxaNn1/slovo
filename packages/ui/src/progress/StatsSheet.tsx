@@ -5,7 +5,6 @@ import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-n
 import { BottomSheet } from '../primitives/BottomSheet';
 import { ActiveDaysCalendar } from './ActiveDaysCalendar';
 import { knownLine } from './known-line';
-import { OrnamentBand } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { space, STACK_AT_FONT_SCALE, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -53,7 +52,7 @@ function Count({
 
 /**
  * The stats sheet the Stats pill opens (design `stats-sheet-dark`): the big
- * Streak with its Best Streak, Decor slot 2's band, then the Entries Seen
+ * Streak with its Best Streak, then the Entries Seen
  * today, the Favorites count, the Entries in Collections and the best Game
  * result once a Game has finished, each in the Edition's plural form, and
  * under them the Known count of each kind of Entry shown, and the Entries
@@ -118,7 +117,6 @@ export function StatsSheet({
             </View>
           </View>
         )}
-        <OrnamentBand />
         <View style={styles.grid}>
           <Count
             testID="stats-seen-today"

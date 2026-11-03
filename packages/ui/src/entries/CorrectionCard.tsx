@@ -4,7 +4,6 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
-import { OrnamentDivider } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
@@ -70,10 +69,6 @@ export function CorrectionCardBody({
         form={card.nonStandardForm}
         spoken={formLabel(card.nonStandardForm, card.nonStandardStressedVowels)}
       />
-      <View>
-        {/* Decor slot 2 with an arrow from the non-standard form to the standard one. */}
-        <OrnamentDivider centre="arrow" />
-      </View>
       {concealed ? (
         <Text
           testID="correction-how-to-say"

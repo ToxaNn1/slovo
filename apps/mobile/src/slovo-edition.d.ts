@@ -37,7 +37,7 @@ declare module 'slovo-app/config' {
   export default config;
 }
 
-/** The native splash the AppConfig names (Decor slot 7). */
+/** The native splash the AppConfig names. */
 declare module 'slovo-app/splash' {
   const splash: unknown;
   export default splash;

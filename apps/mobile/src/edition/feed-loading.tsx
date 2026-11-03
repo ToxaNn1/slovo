@@ -1,4 +1,4 @@
-import { DecorBackground, FeedLoading, space, useTokens } from '@slovo/ui';
+import { FeedLoading, space, useTokens } from '@slovo/ui';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,13 +13,12 @@ export const TOP_ROW = 80;
 
 const { feed: feedStrings } = editionStrings;
 
-/** The Feed's loading state on its own screen: the `mascot` over the skeleton card, the divider being stitched. */
+/** The Feed's loading state on its own screen: the `mascot` over the red wedges. */
 export function FeedLoadingScreen({ mascot }: { mascot?: ReactNode }) {
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <DecorBackground />
       <View style={[styles.content, { paddingTop: top + TOP_ROW }]}>
         <FeedLoading
           text={feedStrings.loading}
