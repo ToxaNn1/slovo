@@ -12,6 +12,9 @@ import {
   GameRound,
   HapticsProvider,
   InterfaceSoundsProvider,
+  TokensProvider,
+  type ColorScheme,
+  type DesignTokens,
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
@@ -1120,4 +1123,61 @@ describe('GameRound', () => {
       expect(screen.getByRole('button', { name: 'candid' })).toBeOnTheScreen();
     });
   });
+});
+
+describe('the answer sheet', () => {
+  /** An Edition's palette as the boards have it: ink and background swap between the Themes, the accent is red. */
+  const RED = '#FF3B2F';
+  const DARK = '#140C0A';
+  const CREAM = '#FFF4E6';
+  const boardTokens: DesignTokens = {
+    ...coreTokens,
+    colors: {
+      light: { ...coreTokens.colors.light, background: CREAM, ink: DARK, accent: RED },
+      dark: { ...coreTokens.colors.dark, background: DARK, ink: CREAM, accent: RED },
+    },
+  };
+
+  async function answerIn(colorScheme: ColorScheme, option: string) {
+    await render(
+      <TokensProvider tokens={boardTokens} colorScheme={colorScheme}>
+        <SafeAreaProvider initialMetrics={metrics}>
+          <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+            <HapticsProvider haptics={haptics}>
+              <InterfaceSoundsProvider sounds={{ play }}>
+                <Game
+                  start={first}
+                  onAnswer={jest.fn()}
+                  onLeave={jest.fn()}
+                  onOpenLetter={jest.fn()}
+                />
+              </InterfaceSoundsProvider>
+            </HapticsProvider>
+          </EditionProvider>
+        </SafeAreaProvider>
+      </TokensProvider>,
+    );
+    await fireEvent.press(screen.getByRole('button', { name: option }));
+  }
+
+  it.each(['light', 'dark'] as const)(
+    'draws a right answer red with ink on it in the %s Theme',
+    async (colorScheme) => {
+      await answerIn(colorScheme, 'candid');
+
+      expect(screen.getByTestId('game-sheet-fill')).toHaveStyle({ backgroundColor: RED });
+      expect(screen.getByTestId('game-sheet-title')).toHaveStyle({ color: DARK });
+    },
+  );
+
+  it.each(['light', 'dark'] as const)(
+    'draws a wrong answer on the Theme’s ink with its background on it in the %s Theme',
+    async (colorScheme) => {
+      const { ink: fill, background: text } = boardTokens.colors[colorScheme];
+      await answerIn(colorScheme, 'brittle');
+
+      expect(screen.getByTestId('game-sheet-fill')).toHaveStyle({ backgroundColor: fill });
+      expect(screen.getByTestId('game-sheet-title')).toHaveStyle({ color: text });
+    },
+  );
 });

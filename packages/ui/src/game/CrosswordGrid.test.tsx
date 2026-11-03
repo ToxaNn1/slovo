@@ -2,6 +2,7 @@ import {
   coreTokens,
   CrosswordGrid,
   EditionProvider,
+  TokensProvider,
   type CrosswordPlace,
   type CrosswordWord,
 } from '@slovo/ui';
@@ -105,6 +106,21 @@ describe('CrosswordGrid', () => {
     expect(face(0, 2)).toHaveStyle({ backgroundColor: highlight });
     expect(face(1, 0)).not.toHaveStyle({ backgroundColor: highlight });
   });
+
+  it.each(['light', 'dark'] as const)(
+    'draws the clue card on the Theme’s ink with its background on it in the %s Theme',
+    async (colorScheme) => {
+      const { ink, background } = coreTokens.colors[colorScheme];
+      await render(
+        <TokensProvider tokens={coreTokens} colorScheme={colorScheme}>
+          <Crossword />
+        </TokensProvider>,
+      );
+
+      expect(screen.getByTestId('crossword-clue-card')).toHaveStyle({ backgroundColor: ink });
+      expect(screen.getByTestId('crossword-clue')).toHaveStyle({ color: background });
+    },
+  );
 
   it('selects the word of a tapped cell and shows its clue', async () => {
     await render(<Crossword />);
