@@ -24,6 +24,6 @@ Among the assets and values the Edition config names, each required of every Edi
 - **Core fonts in each Edition's folder**: rejected. Every Edition would carry a copy of the Core's files, and an Edition without them would draw the Core's families in the system font.
 - **A Core font package of its own**: rejected. The tokens that name the families live in `@slovo/ui`; the files beside them need no new package.
 - **A Feature Switch for the notification sound**: rejected. A switch turns a Core feature on or off, and the sound is a file the Core has no behaviour for.
-- **The sound as a Decor slot**: rejected. Decor is vector motifs drawn by the Core (ADR 0014); a sound is neither.
+- **The sound as Decor**: rejected. Decor is vector data drawn by the Core (ADR 0014); a sound is neither.
 - **A flag and the sound's file name as a pair**: rejected. The pair could disagree, and the scheduler re-checked what the Core already decided. One optional value cannot.
 - **The sound's header reader in `contracts`**: rejected. Its only caller is the app config, and `contracts` then holds code nothing shares.
