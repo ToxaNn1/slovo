@@ -1,7 +1,6 @@
 import {
   BackLink,
   CrosswordGrid,
-  DecorBackground,
   ScreenTitle,
   Button,
   space,
@@ -58,7 +57,6 @@ export default function DailyCrosswordScreen() {
       edges={['top']}
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
-      <DecorBackground />
       <View style={styles.back}>
         <BackLink
           testID="daily-crossword-screen-back"

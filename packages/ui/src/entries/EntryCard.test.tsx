@@ -1,15 +1,11 @@
-import type { DecorMotif } from '@slovo/contracts';
 import {
-  coreDecor,
   type CorrectionCardModel,
-  type Decor,
   type EntryFeedCard,
   type IdiomCardModel,
   type WordFeedCard,
 } from '@slovo/core';
 import {
   ActionRow,
-  DecorProvider,
   EditionProvider,
   EntryCard,
   KnowledgeButtons,
@@ -190,13 +186,6 @@ const longestWordOfTheDay = {
   },
 } as const satisfies EntryFeedCard;
 
-const motif: DecorMotif = {
-  width: 4,
-  height: 4,
-  layers: [{ path: 'M0 0h4v4H0z', color: 'decor' }],
-};
-const framedDecor: Decor = { ...coreDecor, corners: { corner: motif } };
-
 function inEdition(children: React.ReactNode) {
   return (
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
@@ -206,25 +195,6 @@ function inEdition(children: React.ReactNode) {
 }
 
 describe('EntryCard', () => {
-  it.each([
-    ['Word', wordCard, 'word-card'],
-    ['Correction', card, 'correction-card'],
-    ['Idiom', { kind: 'idiom' as const, entryId: 'i1', model: idiomCard() }, 'idiom-card'],
-  ])('draws the Decor frame on a %s card in all four corners', async (_kind, entry, testID) => {
-    await render(
-      inEdition(
-        <DecorProvider decor={framedDecor}>
-          <EntryCard card={entry} />
-        </DecorProvider>,
-      ),
-    );
-
-    const frame = within(screen.getByTestId(testID));
-    for (const corner of ['topLeft', 'topRight', 'bottomLeft', 'bottomRight']) {
-      expect(frame.getByTestId(`card-corner-${corner}`, { hidden: true })).toBeTruthy();
-    }
-  });
-
   it("shows the Edition's name of the wrong-stress Correction Type as the chip of a stress trap", async () => {
     await render(inEdition(<EntryCard card={stressTrap} />));
 
@@ -311,12 +281,6 @@ describe('EntryCard', () => {
 
     expect(screen.getByRole('button', { name: reveal })).toBeTruthy();
     expect(screen.getByText('Review')).toBeTruthy();
-  });
-
-  it('draws no frame on a card when the Edition has no corners', async () => {
-    await render(inEdition(<EntryCard card={card} />));
-
-    expect(screen.queryByTestId('card-corner-topLeft', { hidden: true })).toBeNull();
   });
 
   it('keeps the Category chip and the Pronunciation button on the longest Word of the Day on the SE', async () => {

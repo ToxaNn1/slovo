@@ -1,4 +1,4 @@
-import { DecorBackground, FeedError, useTokens } from '@slovo/ui';
+import { FeedError, useTokens } from '@slovo/ui';
 import type { ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -34,7 +34,6 @@ function LoadFailed({ onRetry, testID }: { onRetry: () => void; testID: string }
   const { title, message, retry } = editionStrings.loadFailed;
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
-      <DecorBackground />
       <FeedError
         title={title}
         message={message}

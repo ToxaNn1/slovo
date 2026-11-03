@@ -12,7 +12,6 @@ import {
   PluralLabelSchema,
   PluralSchema,
   type ColorTokens,
-  type DecorLayer,
 } from '@slovo/contracts';
 import {
   EDITIONS_DIR,
@@ -1403,24 +1402,10 @@ describe('Edition Decor', () => {
     expect(EditionDecorSchema.safeParse(readJson(edition, 'decor')).error).toBeUndefined();
   });
 
-  it('the UA Edition fills every Decor slot the Feed, the Game result, the splash, the Share Cards, the Mascot and the Categories use', () => {
+  it('the UA Edition supplies the Mascot, its seasonal accessories and the Categories, and no ornament', () => {
     const decor = EditionDecorSchema.parse(readJson('uk', 'decor'));
 
-    expect(Object.keys(decor).sort()).toEqual([
-      'background',
-      'categories',
-      'corners',
-      'divider',
-      'emptyState',
-      'holidays',
-      'mascot',
-      'seasons',
-      'shareCard',
-      'splash',
-      'victory',
-    ]);
-    expect(decor.emptyState?.error).toBeDefined();
-    expect(decor.splash?.band).toBeDefined();
+    expect(Object.keys(decor).sort()).toEqual(['categories', 'holidays', 'mascot', 'seasons']);
   });
 
   it.each(editions.filter((edition) => has(edition, 'decor')))(
@@ -1475,88 +1460,21 @@ describe('Edition Decor', () => {
     expect(EditionDecorSchema.safeParse({ ...decor, seasons: withoutWinter }).success).toBe(false);
   });
 
-  it("the app's native splash sits on the UA Edition's background colour in both Themes", () => {
+  it("the app's native splash is the UA Edition's red in both Themes", () => {
     const { colors } = EditionTokensSchema.parse(readJson('uk', 'tokens'));
     const splash = openAppConfig(REPO_DIR).splash();
 
-    expect(splash.light.backgroundColor).toBe(colors?.light.background);
-    expect(splash.dark.backgroundColor).toBe(colors?.dark.background);
+    expect(splash.light.backgroundColor).toBe(colors?.light.accent);
+    expect(splash.dark.backgroundColor).toBe(colors?.dark.accent);
   });
 
-  /** The text colour roles drawn straight on the screen background. */
-  const textRoles = ['ink', 'muted', 'accent'] as const;
-
-  describe.each(withDecor.filter((edition) => has(edition, 'tokens')))(
-    'the %s Edition',
-    (edition) => {
-      const { colors } = EditionTokensSchema.parse(readJson(edition, 'tokens'));
-      const { background, seasons, holidays } = EditionDecorSchema.parse(
-        readJson(edition, 'decor'),
-      );
-      /** Every tile Decor slot 1 may repeat: the plain one, each Season's and each Holiday's. */
-      const tiles = [
-        ...(background === undefined ? [] : [background.tile]),
-        ...Object.values(seasons ?? {}).map(({ tile }) => tile),
-        ...(holidays ?? []).map(({ motif }) => motif.tile),
-      ];
-      /** Every divider centre slot 2 may draw on a Season or a Holiday. */
-      const centres = [
-        ...Object.values(seasons ?? {}).map(({ centre }) => centre),
-        ...(holidays ?? []).map(({ motif }) => motif.centre),
-      ];
-
-      it.each(['light', 'dark'] as const)(
-        'keeps text at WCAG AA contrast over its background Decor in %s',
-        (scheme) => {
-          if (colors === undefined) return;
-          const screen = colors[scheme].background;
-          const stitched = tiles.flatMap(({ layers }) =>
-            layers.map((layer) => over(layerColor(layer, colors[scheme]), screen)),
-          );
-
-          for (const role of textRoles) {
-            const text = colors[scheme][role satisfies keyof ColorTokens];
-            for (const behind of [parseColor(screen), ...stitched]) {
-              expect(
-                contrast(parseColor(text), behind),
-                `${role} over ${String(behind)}`,
-              ).toBeGreaterThanOrEqual(leastContrast(role));
-            }
-          }
-        },
-      );
-
-      it.each(['light', 'dark'] as const)(
-        'draws each Season and Holiday divider centre at 3:1 or more over the screen in %s',
-        (scheme) => {
-          if (colors === undefined) return;
-          const screen = colors[scheme].background;
-
-          for (const { layers } of centres) {
-            const strongest = Math.max(
-              ...layers.map((layer) =>
-                contrast(over(layerColor(layer, colors[scheme]), screen), parseColor(screen)),
-              ),
-            );
-            expect(strongest, JSON.stringify(layers)).toBeGreaterThanOrEqual(3);
-          }
-        },
-      );
-    },
-  );
-
-  it('gives every Ukrainian Season and Holiday a motif of its own', () => {
-    const { background, divider, seasons, holidays } = EditionDecorSchema.parse(
-      readJson('uk', 'decor'),
+  it('gives every Ukrainian Season an accessory of its own', () => {
+    const { seasons } = EditionDecorSchema.parse(readJson('uk', 'decor'));
+    const accessories = Object.values(seasons ?? {}).map(({ accessory }) =>
+      JSON.stringify(accessory),
     );
-    const motifs = [...Object.values(seasons ?? {}), ...(holidays ?? []).map(({ motif }) => motif)];
-    const drawn = (motif: unknown) => JSON.stringify(motif);
 
-    expect(motifs).toHaveLength(8);
-    expect(new Set(motifs.map(({ tile }) => drawn(tile))).size).toBe(8);
-    expect(new Set(motifs.map(({ centre }) => drawn(centre))).size).toBe(8);
-    expect(motifs.map(({ tile }) => drawn(tile))).not.toContain(drawn(background?.tile));
-    expect(motifs.map(({ centre }) => drawn(centre))).not.toContain(drawn(divider?.centre));
+    expect(new Set(accessories).size).toBe(4);
   });
 });
 
@@ -1698,12 +1616,6 @@ function parseRgba(color: string): readonly [number, number, number, number] {
 function parseColor(color: string): Rgb {
   const [r, g, b] = parseRgba(color);
   return [r, g, b];
-}
-
-/** A Decor layer's colour role in one colour scheme, at the layer's opacity. */
-function layerColor(layer: DecorLayer, colors: ColorTokens): string {
-  const [r, g, b, a] = parseRgba(colors[layer.color]);
-  return `rgba(${String(r)}, ${String(g)}, ${String(b)}, ${String(a * (layer.opacity ?? 1))})`;
 }
 
 /** A colour drawn over an opaque one. */

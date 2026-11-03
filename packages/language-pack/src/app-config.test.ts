@@ -49,7 +49,7 @@ describe('the AppConfig', () => {
       buildProfiles: { ios: { development: 'development-simulator', release: 'testflight' } },
     });
     expect(app.path('icon')).toBe(join(REPO_DIR, 'editions/uk/assets/icon.png'));
-    expect(app.splash().light.image).toMatch(/\.png$/);
+    expect(app.splash().light.backgroundColor).toMatch(/^#[0-9A-F]{6}$/i);
   });
 
   it('names every wrong field, and refuses an authored App Group', () => {

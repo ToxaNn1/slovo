@@ -1,7 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { OrnamentDivider } from '../decor/DecorSlots';
 import { useLemmaSize, useWordTextSizes } from '../providers/FontSizeProvider';
 import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -42,7 +41,6 @@ export function FontSizePreview({
       >
         {lemma}
       </Text>
-      <OrnamentDivider />
       <Text
         testID="font-size-preview-definition"
         style={[typeStyle('definition', tokens), definitionSize, { color: colors.ink }]}

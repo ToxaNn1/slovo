@@ -39,15 +39,15 @@ A place the Core deliberately opens for an Edition to plug in its own behaviour 
 _Avoid_: Hook, override, plugin
 
 **Decor**:
-Purely visual elements an Edition supplies for slots the Core defines, such as backgrounds or an embroidery-style ornament divider. Decor never carries behaviour. While «Сезонний декор» is on, slot 1 (the background) and slot 2 (the divider centre) show the motif of the local date's Holiday, or else of its Season; the other slots never change with the date.
+Purely visual elements an Edition supplies for the Core to draw: the Mascot's vector, the accessory it wears and the Category pictograms and covers. Decor never carries behaviour. While «Сезонний декор» is on, the Mascot wears the accessory of the local date's Holiday, or else of its Season; nothing else changes with the date.
 _Avoid_: Skin, theme (a Theme is the user's light/dark choice)
 
 **Season**:
-The meteorological season of the reader's local date: December–February winter, March–May spring, June–August summer, September–November autumn. The Edition supplies a Decor motif for each; it changes at local midnight. Paused in the UA Edition in 1.0 with Holiday Decor behind its Feature Switch; the code stays.
+The meteorological season of the reader's local date: December–February winter, March–May spring, June–August summer, September–November autumn. The Edition supplies a Mascot accessory for each; it changes at local midnight. Paused in the UA Edition in 1.0 with Holiday Decor behind its Feature Switch; the code stays.
 _Avoid_: Time of year, theme
 
 **Holiday**:
-A date the Edition lists by a rule, a fixed day and month (24 August) or the nth weekday of a month (День вишиванки, the third Thursday of May), with its own Decor motif. On a Holiday its motif shows instead of the Season's. Paused in the UA Edition in 1.0 behind the Decor Feature Switch; the code stays.
+A date the Edition lists by a rule, a fixed day and month (24 August) or the nth weekday of a month (День вишиванки, the third Thursday of May), with its own Mascot accessory. On a Holiday its accessory shows instead of the Season's. Paused in the UA Edition in 1.0 behind the Decor Feature Switch; the code stays.
 _Avoid_: Event, celebration, special day
 
 ### Entries
@@ -66,7 +66,7 @@ _Avoid_: Etymology, history on its own
 
 **Illustration**:
 A PNG picture a Word may carry above its Definition, named by its field `illustration` and bundled in the app as an Edition asset, not in the Language Pack. It is square, at most 150 KB, shown at most 160 pt high and the same in both Themes. Only Words carry Illustrations.
-_Avoid_: Image, picture, Decor (Decor belongs to slots, not to Words)
+_Avoid_: Image, picture, Decor (Decor belongs to the Edition's look, not to Words)
 
 **Retired Word**:
 A Word withdrawn from the Language Pack. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History).
@@ -139,7 +139,7 @@ _Avoid_: Hack, advice, lifehack
 
 **Entry card**:
 How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. The Feed and every screen that opens a kept Entry show the same Entry card.
-_Avoid_: Item, tile (for a card; a tile is the motif Decor slot 1 repeats)
+_Avoid_: Item, tile (for a card; a tile is the pressed button of the design)
 
 ### User's words
 

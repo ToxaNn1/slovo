@@ -3,7 +3,6 @@ import { type ReactNode, useEffect, useId, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Svg, { Circle, Defs, Pattern, Polygon } from 'react-native-svg';
 
-import { VictoryIllustration } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import {
@@ -109,9 +108,7 @@ function ResultNumber({
  * result; a timed Game ends with its time up, its right answers in place of
  * the Rounds passed. The Game Review of every Round follows, while it opens
  * Entries, then «На головну» for the Feed beside «Ще раз» for a new Game in
- * the same mode. A win arrives with the success haptic twice. The Edition's
- * victory illustration (Decor slot 6) sits high on the panel, large and
- * stitched in on a win, small and still on a loss.
+ * the same mode. A win arrives with the success haptic twice.
  */
 export function GameResult({
   game,
@@ -173,12 +170,6 @@ export function GameResult({
     >
       <View style={styles.panel}>
         <PanelGround color={colors.accent} />
-        <View style={styles.illustration}>
-          <VictoryIllustration
-            width={won ? resultLayout.winIllustration : resultLayout.lossIllustration}
-            stitched={won}
-          />
-        </View>
         <View style={styles.panelFoot}>
           <View accessible {...voice} style={styles.text}>
             <WholeWordsText
@@ -263,7 +254,6 @@ export function GameResult({
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, paddingBottom: space[8] + space[2] },
   panel: { height: resultLayout.panelHeight, justifyContent: 'flex-end' },
-  illustration: { position: 'absolute', top: resultLayout.illustrationTop, left: space[5] },
   // The title and line on the left, the Mascot on the right, over the slant.
   panelFoot: {
     flexDirection: 'row',

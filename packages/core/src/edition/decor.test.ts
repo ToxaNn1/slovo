@@ -110,9 +110,13 @@ describe('loadDecor', () => {
   const seasons = { winter: season, spring: season, summer: season, autumn: season };
   const motif = { width: 2, height: 2, layers: [{ path: 'M0 0h2v2H0z', color: 'decor' }] };
 
-  it.each([
+  it.each<[name: string, decor: unknown, field: string]>([
     ...['background', 'divider', 'corners', 'emptyState', 'splash', 'victory', 'shareCard'].map(
-      (slot) => [`the removed ornament slot ${slot}`, { [slot]: { motif } }, '(root)'] as const,
+      (slot): [string, unknown, string] => [
+        `the removed ornament slot ${slot}`,
+        { [slot]: { motif } },
+        '(root)',
+      ],
     ),
     [
       'a Season motif with the removed tile and centre',

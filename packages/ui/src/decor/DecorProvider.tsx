@@ -3,7 +3,7 @@ import { createContext, useContext, type ReactNode } from 'react';
 
 const DecorContext = createContext<Decor>(coreDecor);
 
-/** Gives every Decor slot below the Edition's Decor. */
+/** Gives everything below the Edition's Decor: the Mascot, its accessory and the Categories. */
 export function DecorProvider({ decor, children }: { decor: Decor; children: ReactNode }) {
   return <DecorContext value={decor}>{children}</DecorContext>;
 }

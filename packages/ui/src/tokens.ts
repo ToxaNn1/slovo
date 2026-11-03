@@ -1029,25 +1029,21 @@ export const modeRow = {
 
 /**
  * The Game's result, from the design: the red panel's height, how far its
- * title sits over the slant and where the victory illustration (Decor slot 4)
- * sits in it; the gaps between the number tiles and inside one, a tile's
- * corner; the illustration's width on a win and on a loss.
+ * title sits over the slant; the gaps between the number tiles and inside
+ * one, a tile's corner.
  */
 export const resultLayout = {
   panelHeight: 400,
   panelFootBottom: 96,
-  illustrationTop: 70,
   numbersGap: 10,
   numberGap: 6,
   numberRadius: 16,
-  winIllustration: 120,
-  lossIllustration: 64,
 } as const;
 
 /** The mark that leads a Round of the Game Review: a square with ✓ or ✗. */
 export const reviewMark = { side: 28, radius: 8 } as const;
 
-/** The empty state's space over its illustration. */
+/** The empty state's space over its content. */
 export const emptyStatePaddingTop = 80;
 
 /** The segmented control's drawing (design `SlovoApp`): a sunken track around its segments. */
@@ -1303,9 +1299,6 @@ export const onboardingLayout = {
   bottom: 40,
   goalTile: { height: 78, gap: 10, radius: 16, lineGap: 2 },
 } as const;
-
-/** The width of the rosette (Decor slot 4) between the SLOVO ID step's text and its buttons. */
-export const onboardingRosetteWidth = 120;
 
 /** The text on a filled option of the Game and on a destructive swipe action, white in both Themes. */
 export const onFill = '#FFFFFF';

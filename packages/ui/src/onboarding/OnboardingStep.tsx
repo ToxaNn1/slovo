@@ -21,7 +21,6 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { DecorBackground } from '../decor/DecorSlots';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { HalftoneGround } from '../primitives/HalftoneGround';
 import {
@@ -129,7 +128,6 @@ export function OnboardingStep({
       testID={testID}
       style={[styles.step, slide, { backgroundColor: colors.background, paddingBottom: bottom }]}
     >
-      <DecorBackground />
       <View style={styles.hero}>
         <HalftoneGround
           id="onboarding-top"
