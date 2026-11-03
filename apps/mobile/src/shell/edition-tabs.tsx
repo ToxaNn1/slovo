@@ -136,8 +136,6 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       <Tabs.Screen name="search" options={offTabs} />
       {/* The Word the mood roulette of the «Стрічка» header lands on; no tab leads to it. */}
       <Tabs.Screen name="mood" options={offTabs} />
-      {/* The dev-only Decor showcase; no tab leads to it. */}
-      <Tabs.Screen name="decor" options={offTabs} />
     </Tabs>
   );
 }

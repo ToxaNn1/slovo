@@ -64,7 +64,7 @@ export function ProfileScreen() {
   const [sharing, setSharing] = useState(false);
   const textStyle = [typeStyle('profileText', tokens), { color: colors.ink }];
   const line = (testID: string, text: string) => (
-    <Text {...voice} testID={testID} style={textStyle}>
+    <Text key={testID} {...voice} testID={testID} style={textStyle}>
       {text}
     </Text>
   );

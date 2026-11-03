@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { TextSchema } from '../shared';
 import { templateOf } from './shared';
 
-/** The Search screen, opened by the magnifier in the «Головна» header. */
+/** The Search screen, opened by the magnifier in the «Стрічка» header. */
 export const SearchStringsSchema = z.strictObject({
   /** The screen title and the magnifier's VoiceOver label. */
   title: TextSchema,
