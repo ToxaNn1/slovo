@@ -1048,15 +1048,20 @@ function Slash({
  * `game-round-wrong-dark`, `game-round-correction-answered-light`):
  * «Правильно!» or «Не цього разу», the right answer with its Stress and its
  * Example with the author, or its explanation, or the answer alone, and
- * «Далі», the only way to close it. It is drawn on the Theme's surface, as
- * every sheet is, and keeps what it showed while it slides away.
+ * «Далі», the only way to close it. As the boards draw it, a right answer is
+ * on red with ink on it and a wrong one on the Theme's ink; it keeps what it
+ * showed while it slides away.
  */
 function AnswerSheet({ answer, onNext }: { answer: RoundAnswer | undefined; onNext: () => void }) {
   // The answer it shows, kept while the sheet leaves after «Далі» took the Round's away.
   const [shown, setShown] = useState(answer);
   if (answer !== undefined && answer !== shown) setShown(answer);
   return (
-    <BottomSheet visible={answer !== undefined} testID="game-sheet">
+    <BottomSheet
+      visible={answer !== undefined}
+      tone={shown?.right === true ? 'accent' : 'ink'}
+      testID="game-sheet"
+    >
       {shown === undefined ? null : <AnswerSheetContent answer={shown} onNext={onNext} />}
     </BottomSheet>
   );
@@ -1075,10 +1080,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
         accessibilityRole="header"
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
         {...voice}
-        style={[
-          typeStyle('roundVerdict', tokens),
-          { color: right ? colors.correct : colors.wrong },
-        ]}
+        style={[typeStyle('roundVerdict', tokens), { color: colors.ink }]}
       >
         {right ? strings.game.sheet.correct : strings.game.sheet.wrong}
       </Text>
@@ -1123,7 +1125,12 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
         </Text>
       )}
       <View style={styles.next}>
-        <Button testID="game-next" label={strings.game.sheet.next} onPress={onNext} />
+        <Button
+          testID="game-next"
+          label={strings.game.sheet.next}
+          variant={right ? 'onAccent' : 'primary'}
+          onPress={onNext}
+        />
       </View>
     </ScrollView>
   );

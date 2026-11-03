@@ -25,7 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { motion, scrim, space, type Easing as Easing4, type Wedge as WedgePoints } from '../tokens';
-import { useTokens } from '../providers/TokensProvider';
+import { InvertedTokens, SchemeTokens, useTokens } from '../providers/TokensProvider';
 import { useRouteOnScreen } from '../providers/RouteProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { Wedge } from './Wedge';
@@ -72,6 +72,9 @@ const CLOSE_DISTANCE = 96;
 /** How fast, in points per second, a downward flick closes it whatever its length. */
 const CLOSE_VELOCITY = 800;
 
+/** The colour role a sheet is drawn on. */
+export type SheetTone = 'surface' | 'ink' | 'accent';
+
 /** How far down the top edge slants, from the right edge to the left. */
 export const SHEET_SLANT = 30;
 
@@ -82,7 +85,9 @@ export const SHEET_SLANT = 30;
  * VoiceOver's escape gesture ask `onClose`; the sheet leaves when `visible`
  * turns false. Without `onClose` only its content closes it: its top takes no
  * drag, and no scrim dims the screen, which takes no taps meanwhile. The sheet
- * is drawn on the Theme's `surface`. It belongs to the route it opened on
+ * is drawn in its `tone`: the Theme's `surface`, its `ink` with the content in
+ * the other colour scheme, or its `accent` with the content in the light one,
+ * as the design draws ink on red. It belongs to the route it opened on
  * (`RouteProvider`): when another route comes on screen it asks `onClose`, and
  * without `onClose` it leaves until its route is back. The
  * `onDismissed` runs once the sheet has slid away, for what must wait until no
@@ -97,12 +102,14 @@ export function BottomSheet({
   onDismissed,
   children,
   testID,
+  tone = 'surface',
 }: {
   visible: boolean;
   onClose?: () => void;
   onDismissed?: (() => void) | undefined;
   children: ReactNode;
   testID?: string | undefined;
+  tone?: SheetTone;
 }) {
   const route = useRouteOnScreen();
   /** The route the sheet opened on, while it is open. */
@@ -226,6 +233,7 @@ export function BottomSheet({
       }}
       sheetStyle={sheetStyle}
       strip={strip}
+      tone={tone}
     >
       {children}
     </SheetPanel>
@@ -271,6 +279,7 @@ function SheetPanel({
   onHeight,
   sheetStyle,
   strip,
+  tone,
   children,
 }: {
   onClose: (() => void) | undefined;
@@ -278,9 +287,11 @@ function SheetPanel({
   onHeight: (height: number) => void;
   sheetStyle: ReturnType<typeof useAnimatedStyle>;
   strip: ReturnType<typeof Gesture.Race>;
+  tone: SheetTone;
   children: ReactNode;
 }) {
   const { colors } = useTokens();
+  const fill = colors[tone];
   const insets = useSafeAreaInsets();
   return (
     <Animated.View
@@ -292,15 +303,18 @@ function SheetPanel({
       }}
       style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[8]) }, sheetStyle]}
     >
-      <Wedge
-        points={SLANT}
-        color={colors.surface}
-        width="100%"
-        height={SHEET_SLANT}
-        style={styles.slant}
+      <Wedge points={SLANT} color={fill} width="100%" height={SHEET_SLANT} style={styles.slant} />
+      <View
+        style={[styles.body, { backgroundColor: fill }]}
+        testID={testID === undefined ? undefined : `${testID}-fill`}
       />
-      <View style={[styles.body, { backgroundColor: colors.surface }]} />
-      {children}
+      {tone === 'ink' ? (
+        <InvertedTokens>{children}</InvertedTokens>
+      ) : tone === 'accent' ? (
+        <SchemeTokens colorScheme="light">{children}</SchemeTokens>
+      ) : (
+        children
+      )}
       {onClose === undefined ? null : (
         // A Modal is its own native root, so the gestures need a root of their own; a local one keeps the rest of the sheet out of the gesture system.
         <GestureHandlerRootView style={styles.dragStrip}>
