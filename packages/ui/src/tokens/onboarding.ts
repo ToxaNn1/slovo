@@ -60,6 +60,11 @@ export const onboardingLayout = {
    * top and its art are drawn smaller to keep it.
    */
   contentRoom: 370,
+  /**
+   * The shortest the red top gets so a tall step (the first Word's card)
+   * shows its content: it still holds «Пропустити», the shout word and the Mascot.
+   */
+  minHeroHeight: 260,
   /** Where the shout word sits on the red top, its turn in degrees, and where it flies in from. */
   shout: { left: -14, top: 96, turn: -8, flyFrom: -120 },
   /** The Mascot's corner, less its own padding, and its figure's width. */

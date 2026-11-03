@@ -108,7 +108,12 @@
     "dailyGoal": {
       "title": "Денна ціль"
     },
-    "widgets": "ВІДЖЕТИ",
+    "groups": {
+      "look": "ВИГЛЯД",
+      "sound": "ЗВУК І СПОВІЩЕННЯ",
+      "learning": "НАВЧАННЯ",
+      "account": "АКАУНТ"
+    },
     "howToAddWidget": "Як додати віджет",
     "rows": {
       "notifications": "Сповіщення",
@@ -176,7 +181,6 @@
       }
     },
     "sounds": {
-      "section": "ЗВУКИ",
       "sounds": "Звуки",
       "vibration": "Вібрація"
     },

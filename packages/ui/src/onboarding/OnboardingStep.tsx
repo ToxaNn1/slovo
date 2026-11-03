@@ -1,7 +1,7 @@
 'use no memo';
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
   findNodeHandle,
@@ -55,7 +55,9 @@ const SHOUT_TURN = `${String(shoutAt.turn)}deg`;
 
 /**
  * The red top on a screen `width` × `height`: as tall as the board draws it,
- * or shorter so the content keeps the board's room, with its art (the shout
+ * or shorter so the content keeps the board's room, and shorter still, down
+ * to the shortest top that holds its art, so a step's `content` shows whole
+ * above its `footer` (the rest scrolls), with its art (the shout
  * word and the Mascot) drawn at the board's size over `artWidth` and scaled
  * by `scale`. The shout word sits low enough that its turned right end stays
  * under «Пропустити», whose row ends at `skipBottom`.
@@ -65,15 +67,20 @@ function onboardingHero({
   height,
   bottom,
   skipBottom,
+  content,
+  footer,
 }: {
   width: number;
   height: number;
   bottom: number;
   skipBottom: number;
+  content: number;
+  footer: number;
 }): { height: number; scale: number; artWidth: number; shoutTop: number } {
   const heroHeight = Math.min(
     onboardingLayout.heroHeight,
     height - bottom - onboardingLayout.contentRoom,
+    Math.max(onboardingLayout.minHeroHeight, height - bottom - footer - content),
   );
   const scale = heroHeight / onboardingLayout.heroHeight;
   const artWidth = width / scale;
@@ -121,7 +128,17 @@ export function OnboardingStep({
   const { voice, strings } = useEdition();
   const { top, bottom } = useSafeAreaInsets();
   const { width, height } = useSafeAreaFrame();
-  const hero = onboardingHero({ width, height, bottom, skipBottom: top + minTouchTarget });
+  // The content's and the buttons' own heights, once laid out: a taller content gets a shorter red top.
+  const [content, setContent] = useState(0);
+  const [footerHeight, setFooterHeight] = useState(0);
+  const hero = onboardingHero({
+    width,
+    height,
+    bottom,
+    skipBottom: top + minTouchTarget,
+    content,
+    footer: footerHeight,
+  });
   const { onboarding } = strings;
 
   // With Reduce Motion the step only fades in, so the timing runs whatever the system says.
@@ -213,6 +230,10 @@ export function OnboardingStep({
         </View>
       </View>
       <ScrollView
+        testID="onboarding-content"
+        onContentSizeChange={(_, contentHeight) => {
+          setContent(contentHeight);
+        }}
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
@@ -244,7 +265,15 @@ export function OnboardingStep({
         {children}
       </ScrollView>
       {/* Opaque, so content scrolled under the pinned buttons never shows through them. */}
-      <View style={[styles.footer, { backgroundColor: colors.background }]}>{footer}</View>
+      <View
+        testID="onboarding-footer"
+        onLayout={({ nativeEvent }) => {
+          setFooterHeight(nativeEvent.layout.height);
+        }}
+        style={[styles.footer, { backgroundColor: colors.background }]}
+      >
+        {footer}
+      </View>
     </Animated.View>
   );
 }
@@ -299,8 +328,8 @@ const styles = StyleSheet.create({
   topRow: { paddingHorizontal: side, flexDirection: 'row', justifyContent: 'flex-end' },
   skip: { minHeight: minTouchTarget, minWidth: minTouchTarget, justifyContent: 'center' },
   scroll: { flex: 1 },
+  // Never grown to the scroll's height: the step measures how tall its content is.
   content: {
-    flexGrow: 1,
     paddingHorizontal: side,
     paddingTop: onboardingLayout.contentTop,
     gap: onboardingLayout.gap,

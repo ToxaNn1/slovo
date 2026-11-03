@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 
 import { EditionTokensSchema } from '@slovo/contracts';
 import {
+  capitalMarkStyle,
   coreTokens,
   designTokens,
   fontSizeSteps,
@@ -9,7 +10,9 @@ import {
   motion,
   offsetShadow,
   shadowEdge,
+  typeRoles,
   typeStyle,
+  type TypeRole,
   wedges,
   withAlpha,
 } from '@slovo/ui/tokens';
@@ -97,6 +100,8 @@ describe('the Ukrainian Edition’s design tokens', () => {
       lineHeight: 50,
       letterSpacing: -1.5,
       textTransform: 'none',
+      paddingTop: 13,
+      marginTop: -13,
     });
     expect(typeStyle('definition', tokens)).toMatchObject({
       fontFamily: 'Onest',
@@ -123,6 +128,45 @@ describe('the Core’s shape, type and motion roles', () => {
       'uppercase',
       'uppercase',
     ]);
+  });
+
+  it('gives a capital with a mark above it room above a tight line in every word role, without moving the line', () => {
+    // Measured in Unbounded Black: Ї rises 1.010 em above the baseline, the
+    // descent is 0.245 em. iOS cuts a line set tighter than the font from the
+    // top, so the baseline sits 0.245 em above the line's bottom. A capital Й
+    // or Ї can open any word role, capitalised or not.
+    const wordRoles = (Object.keys(typeRoles) as TypeRole[]).filter(
+      (name) => typeRoles[name].family === 'word',
+    );
+    expect(wordRoles).toEqual(
+      expect.arrayContaining(['buttonLabel', 'screenTitle', 'heading', 'heroWord', 'giantLetter']),
+    );
+    for (const name of wordRoles) {
+      const { fontSize, lineHeight, paddingTop = 0, marginTop = 0 } = typeStyle(name, coreTokens);
+      const capitalTop = lineHeight - 0.245 * fontSize - 1.01 * fontSize;
+      expect({ name, room: paddingTop + capitalTop >= 0 }).toEqual({ name, room: true });
+      expect({ name, line: paddingTop + marginTop }).toEqual({ name, line: 0 });
+    }
+  });
+
+  it('gives a word role drawn at another size room for its capital marks at that size', () => {
+    // The Share Card's giant glyph, 320 points on a 320-point line, drawn at
+    // three times the size: Ї needs 1.255 × 960 = 1204.8 points of line.
+    const { fontSize, lineHeight } = typeStyle('shareGiant', coreTokens);
+    const { paddingTop = 0, marginTop = 0 } = capitalMarkStyle('shareGiant', 3);
+    expect(paddingTop + 3 * lineHeight).toBeGreaterThanOrEqual(1.255 * 3 * fontSize);
+    expect(paddingTop).toBe(245);
+    expect(paddingTop + marginTop).toBe(0);
+    expect(capitalMarkStyle('definition', 3)).toEqual({});
+  });
+
+  it('keeps the button label’s 16-point line on the board', () => {
+    expect(typeStyle('buttonLabel', coreTokens)).toMatchObject({
+      fontSize: 16,
+      lineHeight: 16,
+      paddingTop: 5,
+      marginTop: -5,
+    });
   });
 
   it('carries each role’s weight, so a component sets none: black for the loud roles, light for reading text', () => {

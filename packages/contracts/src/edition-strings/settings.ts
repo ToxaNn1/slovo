@@ -39,9 +39,18 @@ export const SettingsStringsSchema = z.strictObject({
   anonymousStats: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The Daily Goal choice; its numbers of XP are drawn as they are. */
   dailyGoal: z.strictObject({ title: TextSchema }),
-  /** The title over the widget's rows. */
-  widgets: TextSchema,
-  /** The row under «Віджети» that opens the widget guide. */
+  /** The heads of the Settings groups, as the board names them. */
+  groups: z.strictObject({
+    /** The Theme, motion, Seasonal Decor and the font size. */
+    look: TextSchema,
+    /** Sounds, vibration, the Notifications and the widgets. */
+    sound: TextSchema,
+    /** The Daily Goal, My Mix and the rows of learning. */
+    learning: TextSchema,
+    /** The Account, the anonymous statistics and About. */
+    account: TextSchema,
+  }),
+  /** The row that opens the widget guide. */
   howToAddWidget: TextSchema,
   /** The names of the rows under the Theme and the font size. */
   rows: z.strictObject({
@@ -127,9 +136,8 @@ export const SettingsStringsSchema = z.strictObject({
     /** While the next Break waits. Takes `{date}`, the first day it can start, e.g. «13.11». */
     waiting: templateOf('date'),
   }),
-  /** The Sounds section, its «Звуки» row and its Vibration row. */
+  /** The «Звуки» row and the Vibration row. */
   sounds: z.strictObject({
-    section: TextSchema,
     sounds: TextSchema,
     vibration: TextSchema,
   }),

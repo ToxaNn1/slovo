@@ -21,6 +21,7 @@ import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Mascot } from '../primitives/Mascot';
 import { Wedge } from '../primitives/Wedge';
 import {
+  capitalMarkStyle,
   halftone,
   motion,
   splashMotion,
@@ -59,8 +60,9 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
   const { colors } = tokens;
   const { voice } = useEdition();
   const letterChars = Array.from(wordmark);
-  // The design's black on red is the light Theme's ink in both Themes.
-  const inkOnRed = useSchemeColors('light').ink;
+  // The design's splash is fixed in both Themes: the light Theme's ink for the
+  // letters and the band, its cream background for the tagline on the band.
+  const { ink: inkOnRed, background: creamOnInk } = useSchemeColors('light');
   const reduceMotion = useReduceMotionKnown();
   const { width } = useWindowDimensions();
   const scale = width / frame.width;
@@ -161,7 +163,7 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
               style={[
                 typeStyle('splashTagline', tokens),
                 {
-                  color: colors.onAccent,
+                  color: creamOnInk,
                   transform: [{ rotate: `${String(splashMotion.tagline.turn)}deg` }],
                 },
               ]}
@@ -238,6 +240,7 @@ function Letter({
           fontSize: size * scale,
           lineHeight: size * scale,
           letterSpacing: letterSpacing * scale,
+          ...capitalMarkStyle('splashLetter', scale),
         },
         style,
       ]}

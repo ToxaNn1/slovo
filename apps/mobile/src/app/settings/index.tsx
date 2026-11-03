@@ -1,10 +1,9 @@
 import { DailyGoalSchema, FontSizeSchema, ThemeSchema, type DailyGoal } from '@slovo/contracts';
 import {
-  BackLink,
   ChoiceRow,
   FontSizePreview,
   NavigationRow,
-  ScreenTitle,
+  SettingsHeader,
   SettingsGroup,
   SwitchRow,
   space,
@@ -79,26 +78,24 @@ export default function SettingsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Opened from the Profile tab while the Profile is shown; otherwise Settings is the tab itself. */}
-        {shown.profile && (
-          <BackLink
-            testID="settings-back"
-            label={editionStrings.tabs.profile}
-            onPress={() => {
-              router.back();
-            }}
-          />
-        )}
-        <ScreenTitle>{strings.title}</ScreenTitle>
-        {accountOpening !== undefined && (
-          <View style={styles.section}>
-            <SettingsGroup>
-              <AccountRow opening={accountOpening} />
-            </SettingsGroup>
-          </View>
-        )}
-        <View style={styles.section}>
-          <SettingsGroup>
+        <SettingsHeader
+          kind="settings"
+          title={strings.title}
+          // Opened from the Profile tab while the Profile is shown; otherwise Settings is the tab itself.
+          back={
+            shown.profile
+              ? {
+                  label: editionStrings.tabs.profile,
+                  testID: 'settings-back',
+                  onPress: () => {
+                    router.back();
+                  },
+                }
+              : undefined
+          }
+        />
+        <View testID="settings-group-look" style={styles.section}>
+          <SettingsGroup title={strings.groups.look}>
             <ChoiceRow
               icon="hex"
               label={strings.theme}
@@ -120,6 +117,18 @@ export default function SettingsScreen() {
                 }}
               />
             )}
+            {shown.seasonalDecorSetting && (
+              <SwitchRow
+                testID="settings-seasonal-decor"
+                icon="wedge"
+                label={strings.seasonalDecor.title}
+                subtitle={strings.seasonalDecor.explanation}
+                value={current.seasonalDecor}
+                onChange={(seasonalDecor) => {
+                  update({ seasonalDecor });
+                }}
+              />
+            )}
             <ChoiceRow
               icon="square"
               label={strings.fontSize}
@@ -135,6 +144,51 @@ export default function SettingsScreen() {
                 definition={strings.fontSizePreview.definition}
               />
             </ChoiceRow>
+          </SettingsGroup>
+        </View>
+        <View testID="settings-group-sound" style={styles.section}>
+          <SettingsGroup title={strings.groups.sound}>
+            {shown.soundsSetting && (
+              <SwitchRow
+                testID="settings-sounds"
+                icon="triangle"
+                label={strings.sounds.sounds}
+                value={current.sounds}
+                onChange={(sounds) => {
+                  update({ sounds });
+                }}
+              />
+            )}
+            <SwitchRow
+              testID="settings-vibration"
+              icon="wedge"
+              label={strings.sounds.vibration}
+              value={current.vibration}
+              onChange={(vibration) => {
+                update({ vibration });
+              }}
+            />
+            <NavigationRow
+              testID="settings-row-notifications"
+              icon="triangle"
+              label={strings.rows.notifications}
+              value={notificationsSummary}
+              onPress={() => {
+                openScreen('/settings/notifications');
+              }}
+            />
+            <NavigationRow
+              testID="settings-row-widgets"
+              icon="square"
+              label={strings.howToAddWidget}
+              onPress={() => {
+                openScreen('/settings/widgets');
+              }}
+            />
+          </SettingsGroup>
+        </View>
+        <View testID="settings-group-learning" style={styles.section}>
+          <SettingsGroup title={strings.groups.learning}>
             {shown.dailyGoal && dailyGoal !== null && (
               <ChoiceRow
                 icon="triangle"
@@ -150,65 +204,6 @@ export default function SettingsScreen() {
                 }}
               />
             )}
-          </SettingsGroup>
-        </View>
-        <View style={styles.section}>
-          <SettingsGroup>
-            {shown.countersSetting === 'noCounters' && (
-              <SwitchRow
-                testID="settings-no-counters"
-                icon="bar"
-                label={strings.noCounters.title}
-                subtitle={strings.noCounters.explanation}
-                value={current.noCounters}
-                onChange={(noCounters) => {
-                  update({ noCounters });
-                }}
-              />
-            )}
-            {shown.countersSetting === 'hideStreak' && (
-              <SwitchRow
-                testID="settings-hide-streak"
-                icon="bar"
-                label={strings.hideStreak}
-                value={current.noCounters}
-                onChange={(noCounters) => {
-                  update({ noCounters });
-                }}
-              />
-            )}
-            {shown.selfCheckSetting && (
-              <SwitchRow
-                testID="settings-self-check"
-                icon="diamond"
-                label={strings.selfCheck}
-                value={current.selfCheck}
-                onChange={(selfCheck) => {
-                  update({ selfCheck });
-                }}
-              />
-            )}
-            {shown.seasonalDecorSetting && (
-              <SwitchRow
-                testID="settings-seasonal-decor"
-                icon="wedge"
-                label={strings.seasonalDecor.title}
-                subtitle={strings.seasonalDecor.explanation}
-                value={current.seasonalDecor}
-                onChange={(seasonalDecor) => {
-                  update({ seasonalDecor });
-                }}
-              />
-            )}
-            <NavigationRow
-              testID="settings-row-notifications"
-              icon="triangle"
-              label={strings.rows.notifications}
-              value={notificationsSummary}
-              onPress={() => {
-                openScreen('/settings/notifications');
-              }}
-            />
             <NavigationRow
               testID="settings-row-my-mix"
               icon="diamond"
@@ -258,6 +253,40 @@ export default function SettingsScreen() {
                 }}
               />
             )}
+            {shown.countersSetting === 'noCounters' && (
+              <SwitchRow
+                testID="settings-no-counters"
+                icon="bar"
+                label={strings.noCounters.title}
+                subtitle={strings.noCounters.explanation}
+                value={current.noCounters}
+                onChange={(noCounters) => {
+                  update({ noCounters });
+                }}
+              />
+            )}
+            {shown.countersSetting === 'hideStreak' && (
+              <SwitchRow
+                testID="settings-hide-streak"
+                icon="bar"
+                label={strings.hideStreak}
+                value={current.noCounters}
+                onChange={(noCounters) => {
+                  update({ noCounters });
+                }}
+              />
+            )}
+            {shown.selfCheckSetting && (
+              <SwitchRow
+                testID="settings-self-check"
+                icon="diamond"
+                label={strings.selfCheck}
+                value={current.selfCheck}
+                onChange={(selfCheck) => {
+                  update({ selfCheck });
+                }}
+              />
+            )}
             <NavigationRow
               testID="settings-row-hidden"
               icon="square"
@@ -269,9 +298,10 @@ export default function SettingsScreen() {
             />
           </SettingsGroup>
         </View>
-        {shown.shareCountersSetting && (
-          <View style={styles.section}>
-            <SettingsGroup>
+        <View testID="settings-group-account" style={styles.section}>
+          <SettingsGroup title={strings.groups.account}>
+            {accountOpening !== undefined && <AccountRow opening={accountOpening} />}
+            {shown.shareCountersSetting && (
               <SwitchRow
                 testID="settings-share-counters"
                 icon="bar"
@@ -282,6 +312,8 @@ export default function SettingsScreen() {
                   update({ shareCounters });
                 }}
               />
+            )}
+            {shown.shareCountersSetting && (
               <NavigationRow
                 testID="settings-row-privacy"
                 icon="hex"
@@ -290,47 +322,7 @@ export default function SettingsScreen() {
                   openLegalPage('privacy');
                 }}
               />
-            </SettingsGroup>
-          </View>
-        )}
-        <View style={styles.section}>
-          <SettingsGroup title={strings.sounds.section}>
-            {shown.soundsSetting && (
-              <SwitchRow
-                testID="settings-sounds"
-                icon="triangle"
-                label={strings.sounds.sounds}
-                value={current.sounds}
-                onChange={(sounds) => {
-                  update({ sounds });
-                }}
-              />
             )}
-            <SwitchRow
-              testID="settings-vibration"
-              icon="wedge"
-              label={strings.sounds.vibration}
-              value={current.vibration}
-              onChange={(vibration) => {
-                update({ vibration });
-              }}
-            />
-          </SettingsGroup>
-        </View>
-        <View style={styles.section}>
-          <SettingsGroup title={strings.widgets}>
-            <NavigationRow
-              testID="settings-row-widgets"
-              icon="square"
-              label={strings.howToAddWidget}
-              onPress={() => {
-                openScreen('/settings/widgets');
-              }}
-            />
-          </SettingsGroup>
-        </View>
-        <View style={styles.section}>
-          <SettingsGroup>
             <NavigationRow
               testID="settings-row-about"
               icon="hex"
@@ -348,6 +340,6 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[6], paddingBottom: space[8] },
-  section: { marginTop: space[6] },
+  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
+  section: { marginTop: space[4] },
 });
