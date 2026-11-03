@@ -105,7 +105,9 @@ describe('Button with a capital mark in its label', () => {
       </Edition>,
     );
 
-    const style = StyleSheet.flatten(screen.getByText('Language gourmet').props['style']) as TextStyle;
+    const style = StyleSheet.flatten(
+      screen.getByText('Language gourmet').props['style'],
+    ) as TextStyle;
     const { paddingTop = 0, marginTop = 0, fontSize = 0, lineHeight = 0 } = style;
     // Й's breve rises 0.987 em above the baseline; iOS keeps 0.245 em of the line below it.
     expect(Number(paddingTop) + lineHeight - 0.245 * fontSize).toBeGreaterThanOrEqual(

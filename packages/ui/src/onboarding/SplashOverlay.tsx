@@ -21,6 +21,7 @@ import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Mascot } from '../primitives/Mascot';
 import { Wedge } from '../primitives/Wedge';
 import {
+  capitalMarkStyle,
   halftone,
   motion,
   splashMotion,
@@ -239,6 +240,7 @@ function Letter({
           fontSize: size * scale,
           lineHeight: size * scale,
           letterSpacing: letterSpacing * scale,
+          ...capitalMarkStyle('splashLetter', scale),
         },
         style,
       ]}
