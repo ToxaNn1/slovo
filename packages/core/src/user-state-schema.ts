@@ -1,3 +1,4 @@
+import { RaritySchema } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { accountRecords, INSTALLED_KEY } from './account/records';
@@ -249,6 +250,26 @@ export const userStateMigrations: readonly UserStateMigration[] = [
         ['game.best.guess-word', value],
         [
           'sync.pending.game.best.guess-word',
+          JSON.stringify({ changedAt: new Date(0).toISOString(), value }),
+        ],
+      ]);
+    },
+  },
+  // 1.0: one Rarity Ceiling for every surface (ADR 0072). The Ceiling of the
+  // Mix becomes the `settings.rarityCeiling` setting, with a pending change
+  // from the first-sign-in time so the Account gets it too; `mix.rarityFloor`
+  // is dropped and `mix.rarityCeiling` stays as it is, no longer read.
+  {
+    version: 7,
+    async migrate({ get }) {
+      const text = await get('mix.rarityCeiling');
+      const ceiling = RaritySchema.safeParse(text === undefined ? undefined : parseJson(text));
+      if (!ceiling.success) return new Map();
+      const value = JSON.stringify(ceiling.data);
+      return new Map([
+        ['settings.rarityCeiling', value],
+        [
+          'sync.pending.settings.rarityCeiling',
           JSON.stringify({ changedAt: new Date(0).toISOString(), value }),
         ],
       ]);

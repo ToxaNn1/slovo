@@ -1,4 +1,4 @@
-import { FontSizeSchema, ThemeSchema } from '@slovo/contracts';
+import { FontSizeSchema, RaritySchema, ThemeSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { declareRecord } from '../user-state/user-state-record';
@@ -31,6 +31,13 @@ export const settingsRecords = {
    * without it Seasonal Decor is on.
    */
   seasonalDecor: declareRecord('settings.seasonalDecor', z.boolean()),
+  /**
+   * The Rarity Ceiling the user chose, 1 to 5, the one «Рідкість» setting
+   * every surface obeys (ADR 0072); without it, the Edition's default. It
+   * syncs last write wins like the Theme (ADR 0041). Schema version 7 moves
+   * it here from `mix.rarityCeiling`, which stays unread with `mix.rarityFloor`.
+   */
+  rarityCeiling: declareRecord('settings.rarityCeiling', RaritySchema),
   /**
    * Whether the user has «Ділитися анонімною статистикою» on: this device
    * counts and sends its Community Counters (ADR 0060). It stays on the

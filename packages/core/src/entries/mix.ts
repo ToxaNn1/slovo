@@ -1,11 +1,4 @@
-import {
-  RaritySchema,
-  type Category,
-  type EntryKind,
-  type MixKindWeight,
-  type QuickQuestionEvery,
-  type Rarity,
-} from '@slovo/contracts';
+import type { Category, EntryKind, MixKindWeight, QuickQuestionEvery } from '@slovo/contracts';
 
 import type { DefaultMix, Edition, UserSettingDefaults } from '../edition/edition';
 import { featureOfKind, MIX_KINDS, type CategoryKind, type MixKind } from './entry-kinds';
@@ -15,8 +8,8 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
 /**
- * What the Mix needs to know of the Edition: its default Mix, and whether the
- * Rarity Ceiling is on. Its Categories come from the Language Pack.
+ * What the Mix needs to know of the Edition: its default Mix, and which kinds
+ * of Entry are on. Its Categories come from the Language Pack.
  */
 export interface MixEdition {
   readonly userSettingDefaults: Pick<UserSettingDefaults, 'mix'>;
@@ -90,23 +83,14 @@ export interface MixState extends CategoriesInMix {
    * chose another. Apart from `kinds`: a kind out of the Mix keeps its weight.
    */
   readonly kindWeights: MixKindWeights;
-  /**
-   * The Rarity Floor, 1 to 5: only Words of that rarity or rarer are eligible
-   * while the Edition turns its rarityFloor switch on. No other kind of Entry has a rarity.
-   */
-  readonly rarityFloor: Rarity;
-  /**
-   * The Rarity Ceiling, 1 to 5, never below the Rarity Floor: only Words up to
-   * that rarity are eligible while the Edition turns its rarityCeiling switch on.
-   */
-  readonly rarityCeiling: Rarity;
   /** How often the Feed asks a Quick Question: off, or every 20th, 10th or 6th card. */
   readonly quickQuestionEvery: QuickQuestionEvery;
 }
 
 /**
  * The Mix: the Categories, plus each other kind of Entry as a whole, the
- * user chose to see in everything new, and the Rarity Floor. A Category out of the Mix is a Hidden Category, so the
+ * user chose to see in everything new; the Rarity Ceiling is a setting apart
+ * from it (ADR 0072). A Category out of the Mix is a Hidden Category, so the
  * Mix screen, the hide action and the Hidden screen all change it here (ADR
  * 0019). Read from the user state once, when it opens, like the Cycle, so
  * open one per app session (the Core composition does). A change is made in
@@ -133,22 +117,6 @@ export interface Mix {
   setKind(kind: MixKind, inMix: boolean): Promise<void>;
   /** Sets the Mix kind weight of the kind; Words fill the rest of the Feed. */
   setKindWeight(kind: MixKind, weight: MixKindWeight): Promise<void>;
-  /**
-   * Sets the Rarity Floor. A floor that is not a rarity, a whole number from
-   * 1 to 5, is skipped, and so is one above the Rarity Ceiling while the
-   * rarityCeiling switch is on; while it is off, the ceiling rises with the floor.
-   */
-  setRarityFloor(floor: number): Promise<void>;
-  /**
-   * Sets the Rarity Floor the Rarity Test found, raising the Rarity Ceiling to
-   * it when it is below, so the result always applies. A floor that is not a rarity is skipped.
-   */
-  setRarityFloorRaisingCeiling(floor: number): Promise<void>;
-  /**
-   * Sets the Rarity Ceiling. A ceiling that is not a rarity, or that is below
-   * the Rarity Floor, is skipped, and so is any while the rarityCeiling switch is off.
-   */
-  setRarityCeiling(ceiling: number): Promise<void>;
   /** Sets how often the Feed asks a Quick Question. It changes nothing eligible. */
   setQuickQuestionEvery(every: QuickQuestionEvery): Promise<void>;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
@@ -176,12 +144,8 @@ const CATEGORY_LISTS: Readonly<
   },
 };
 
-const {
-  mixRarityFloor: rarityFloorRecord,
-  mixRarityCeiling: rarityCeilingRecord,
-  mixKindWeights: kindWeightRecords,
-  mixQuickQuestion: quickQuestionRecord,
-} = userStateRecords;
+const { mixKindWeights: kindWeightRecords, mixQuickQuestion: quickQuestionRecord } =
+  userStateRecords;
 
 /** The Categories of the Language Pack, each kind's list. */
 export type CategoryLists = Readonly<Record<CategoryKind, readonly Category[]>>;
@@ -189,13 +153,11 @@ export type CategoryLists = Readonly<Record<CategoryKind, readonly Category[]>>;
 /** The places the user chose, by Category id, for each kind's list. */
 type CategoryChoices = Readonly<Record<CategoryKind, ReadonlyMap<string, boolean>>>;
 
-/** The places in the Mix the user chose: by Category of each list, by kind of Entry as a whole; and the Rarity Floor. */
+/** The places in the Mix the user chose: by Category of each list, by kind of Entry as a whole. */
 interface MixChoices {
   readonly categories: CategoryChoices;
   readonly kinds: Readonly<Record<MixKind, boolean | undefined>>;
   readonly kindWeights: ReadonlyMap<string, MixKindWeight>;
-  readonly rarityFloor: Rarity | undefined;
-  readonly rarityCeiling: Rarity | undefined;
   readonly quickQuestionEvery: QuickQuestionEvery | undefined;
 }
 
@@ -292,42 +254,21 @@ function mixStateOf(lists: CategoryLists, edition: MixEdition, choices: MixChoic
     correctionCategories: categoriesInMixOf(lists.correction, edition, choices, 'correction'),
     kinds: eachKind((kind) => choices.kinds[kind] ?? KINDS[kind].byDefault(mix)),
     kindWeights: eachKind((kind) => choices.kindWeights.get(kind) ?? NORMAL_KIND_WEIGHTS[kind]),
-    ...raritiesOf(mix, choices),
     quickQuestionEvery: choices.quickQuestionEvery ?? DEFAULT_QUICK_QUESTION_EVERY,
   };
 }
 
-/**
- * The Rarity Floor and Ceiling of the user's choices over the Edition's
- * default. The floor is never above the ceiling: it is refused when set, but
- * a merge of two devices could still store one above; then the ceiling rises
- * to it, and nothing is written for it (ADR 0013).
- */
-function raritiesOf(
-  mix: DefaultMix,
-  choices: MixChoices,
-): Pick<MixState, 'rarityFloor' | 'rarityCeiling'> {
-  const rarityFloor = choices.rarityFloor ?? mix.rarityFloor;
-  const rarityCeiling = choices.rarityCeiling ?? mix.rarityCeiling;
-  return { rarityFloor, rarityCeiling: rarityCeiling < rarityFloor ? rarityFloor : rarityCeiling };
-}
-
 async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise<MixChoices> {
-  const [lists, rarityFloor, rarityCeiling, read, kindWeights, quickQuestionEvery] =
-    await Promise.all([
-      Promise.all(CATEGORY_KINDS.map((kind) => userState.list(CATEGORY_LISTS[kind].records))),
-      userState.read(rarityFloorRecord),
-      userState.read(rarityCeilingRecord),
-      Promise.all(MIX_KINDS.map((kind) => userState.read(KINDS[kind].record))),
-      userState.list(kindWeightRecords),
-      userState.read(quickQuestionRecord),
-    ]);
+  const [lists, read, kindWeights, quickQuestionEvery] = await Promise.all([
+    Promise.all(CATEGORY_KINDS.map((kind) => userState.list(CATEGORY_LISTS[kind].records))),
+    Promise.all(MIX_KINDS.map((kind) => userState.read(KINDS[kind].record))),
+    userState.list(kindWeightRecords),
+    userState.read(quickQuestionRecord),
+  ]);
   return {
     categories: eachList((kind) => lists[CATEGORY_KINDS.indexOf(kind)] ?? new Map()),
     kinds: eachKind((kind) => read[MIX_KINDS.indexOf(kind)]),
     kindWeights,
-    rarityFloor,
-    rarityCeiling,
     quickQuestionEvery,
   };
 }
@@ -384,14 +325,10 @@ export async function openMix({
     {
       kinds = state.kinds,
       kindWeights = state.kindWeights,
-      rarityFloor = state.rarityFloor,
-      rarityCeiling = state.rarityCeiling,
       quickQuestionEvery = state.quickQuestionEvery,
     }: {
       kinds?: KindsInMix;
       kindWeights?: MixKindWeights;
-      rarityFloor?: Rarity;
-      rarityCeiling?: Rarity;
       quickQuestionEvery?: QuickQuestionEvery;
     } = {},
   ): Promise<void> {
@@ -424,12 +361,6 @@ export async function openMix({
         writes.set(key, value);
       }
     }
-    if (rarityFloor !== state.rarityFloor) {
-      for (const [key, value] of rarityFloorRecord.change(rarityFloor)) writes.set(key, value);
-    }
-    if (rarityCeiling !== state.rarityCeiling) {
-      for (const [key, value] of rarityCeilingRecord.change(rarityCeiling)) writes.set(key, value);
-    }
     // How often the Quick Question comes changes nothing eligible, so alone it
     // doesn't make the Cycle read eligibility again.
     const eligibilityChanged = writes.size > 0;
@@ -446,8 +377,6 @@ export async function openMix({
         kinds[kind] === state.kinds[kind] ? choices.kinds[kind] : kinds[kind],
       ),
       kindWeights: weights,
-      rarityFloor: rarityFloor === state.rarityFloor ? choices.rarityFloor : rarityFloor,
-      rarityCeiling: rarityCeiling === state.rarityCeiling ? choices.rarityCeiling : rarityCeiling,
       quickQuestionEvery:
         quickQuestionEvery === state.quickQuestionEvery
           ? choices.quickQuestionEvery
@@ -493,28 +422,6 @@ export async function openMix({
     await change({}, { kindWeights: { ...state.kindWeights, [kind]: weight } });
   }
 
-  const ceilingOn = () => edition.isFeatureEnabled('rarityCeiling');
-
-  async function setRarityFloor(floor: number, raisingCeiling: boolean): Promise<void> {
-    const rarity = RaritySchema.safeParse(floor);
-    if (!rarity.success) return;
-    const rarityFloor = rarity.data;
-    if (rarityFloor <= state.rarityCeiling) {
-      await change({}, { rarityFloor });
-      return;
-    }
-    // Off, the ceiling isn't seen, so the floor is set as before 1.0 and the
-    // ceiling only keeps up with it.
-    if (!raisingCeiling && ceilingOn()) return;
-    await change({}, { rarityFloor, rarityCeiling: rarityFloor });
-  }
-
-  async function setRarityCeiling(ceiling: number): Promise<void> {
-    const rarity = RaritySchema.safeParse(ceiling);
-    if (!rarity.success || !ceilingOn() || rarity.data < state.rarityFloor) return;
-    await change({}, { rarityCeiling: rarity.data });
-  }
-
   const inTurn = createInTurn();
 
   return {
@@ -526,9 +433,6 @@ export async function openMix({
     turnAllOn: () => inTurn(turnAllOn),
     setKind: (kind, inMix) => inTurn(() => setKind(kind, inMix)),
     setKindWeight: (kind, weight) => inTurn(() => setKindWeight(kind, weight)),
-    setRarityFloor: (floor) => inTurn(() => setRarityFloor(floor, false)),
-    setRarityFloorRaisingCeiling: (floor) => inTurn(() => setRarityFloor(floor, true)),
-    setRarityCeiling: (ceiling) => inTurn(() => setRarityCeiling(ceiling)),
     setQuickQuestionEvery: (quickQuestionEvery) => inTurn(() => change({}, { quickQuestionEvery })),
     subscribe: subscribers.subscribe,
   };

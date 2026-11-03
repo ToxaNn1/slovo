@@ -192,9 +192,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   confirmedEntries: z.boolean(),
   /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
   selfCheck: z.boolean(),
-  /** The Mix's Rarity Floor: the lowest rarity of the Words shown. */
-  rarityFloor: z.boolean(),
-  /** The Mix's Rarity Ceiling: the highest rarity of the Words shown. Off, every Word up to rarity 5 is in, as before 1.0. */
+  /** The Rarity Ceiling: the one «Рідкість» setting every surface obeys. Off, every Word up to rarity 5 is in, as before 1.0. */
   rarityCeiling: z.boolean(),
   /** Game Review: the list of every Round on the Game's result. */
   gameReview: z.boolean(),
@@ -228,7 +226,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   dailyCrossword: z.boolean(),
   /** Search: its header button and screen over every non-Retired, non-Hidden Entry (ADR 0054). */
   search: z.boolean(),
-  /** The Rarity Test: the short test that sets the Rarity Floor (ADR 0054). */
+  /** The Rarity Test: the short test that sets the Rarity Ceiling (ADR 0054, 0072). */
   rarityTest: z.boolean(),
   /** The Weekly Recap «Ваш тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
   weeklyRecap: z.boolean(),
@@ -518,14 +516,6 @@ export const MixConfigSchema = z
     synonymRows: z.boolean(),
     /** Whether Tips, as a whole, are in the Mix (ADR 0051). */
     tips: z.boolean(),
-    /** The Rarity Floor a new user starts with, «від 1» to «від 5». */
-    rarityFloor: RaritySchema,
-    /** The Rarity Ceiling a new user starts with, «до 1» to «до 5»; never below the Rarity Floor. */
-    rarityCeiling: RaritySchema,
-  })
-  .refine(({ rarityFloor, rarityCeiling }) => rarityFloor <= rarityCeiling, {
-    path: ['rarityCeiling'],
-    message: 'Expected a Rarity Ceiling at the Rarity Floor or above it',
   });
 
 export type MixConfig = z.infer<typeof MixConfigSchema>;
@@ -540,6 +530,8 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
   dailyGoal: DailyGoalSchema,
   /** The default notification times, kept in time order. */
   notificationTimes: NotificationTimesSchema.transform((times) => [...times].sort()),
+  /** The Rarity Ceiling a new user starts with, «до 1» to «до 5» (ADR 0072). */
+  rarityCeiling: RaritySchema,
   mix: MixConfigSchema,
 });
 
@@ -643,14 +635,13 @@ export const QuestionnaireSchema = z.strictObject({
     .min(1),
   /**
    * The vocabulary self-rating, asked later through a Feed Notice: each
-   * option sets the Rarity Floor and says whether to offer the Rarity Test.
+   * option only says whether to offer the Rarity Test (ADR 0072).
    */
   selfRating: z
     .array(
       z.strictObject({
         id: QuestionnaireAnswerIdSchema,
         label: TextSchema,
-        rarityFloor: RaritySchema,
         offerRarityTest: z.boolean(),
       }),
     )
@@ -762,15 +753,6 @@ export const EditionConfigSchema = z
           optionIds.add(id);
         });
       }
-      questionnaire.who.forEach(({ rarityCeiling }, index) => {
-        if (rarityCeiling < userSettingDefaults.mix.rarityFloor) {
-          context.addIssue({
-            code: 'custom',
-            path: ['questionnaire', 'who', index, 'rarityCeiling'],
-            message: 'A Rarity Ceiling below the default Rarity Floor',
-          });
-        }
-      });
       const idsOf = (list: readonly Category[], field: 'categories' | 'correctionCategories') => {
         const ids = new Set<string>();
         list.forEach(({ id }, index) => {

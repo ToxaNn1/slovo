@@ -31,7 +31,6 @@
     "knowledge": true,
     "confirmedEntries": true,
     "selfCheck": true,
-    "rarityFloor": true,
     "rarityCeiling": true,
     "gameReview": true,
     "gameGuessWord": true,
@@ -101,15 +100,14 @@
     "vibration": true,
     "dailyGoal": 20,
     "notificationTimes": ["09:00"],
+    "rarityCeiling": 5,
     "mix": {
       "categories": "all",
       "correctionCategories": "all",
       "corrections": true,
       "idioms": true,
       "synonymRows": true,
-      "tips": true,
-      "rarityFloor": 1,
-      "rarityCeiling": 5
+      "tips": true
     }
   },
   "wordOfTheDayFont": "Fixture-Script.ttf",
@@ -213,19 +211,16 @@
       {
         "id": "few",
         "label": "Навчаюсь",
-        "rarityFloor": 1,
         "offerRarityTest": false
       },
       {
         "id": "some",
         "label": "Навчаюсь",
-        "rarityFloor": 2,
         "offerRarityTest": true
       },
       {
         "id": "many",
         "label": "Навчаюсь",
-        "rarityFloor": 3,
         "offerRarityTest": true
       }
     ]

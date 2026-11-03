@@ -4,6 +4,7 @@ import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import { MIX_KINDS } from '../entries/entry-kinds';
 import type { Mix } from '../entries/mix';
+import type { RarityCeiling } from '../settings/rarity-ceiling';
 import { closeNotice, type FeedNotices } from '../feed/feed-notices';
 import { LATER_QUESTIONS, type LaterQuestion } from '../feed-notice';
 import { dateKeyOf, todayKey } from '../local-date';
@@ -32,9 +33,9 @@ export interface Questionnaire {
   readonly options: Readonly<Record<OptionQuestion, readonly QuestionnaireOption[]>>;
   /**
    * Answers the question with the option `answerId`: «Хто ви» sets the
-   * Rarity Ceiling, «Навіщо» the Mix kind weights, the self-rating the
-   * Rarity Floor, raising the Ceiling to it, and whether the Rarity Test is
-   * offered. Resolves to whether `answerId` is an option of it.
+   * Rarity Ceiling, «Навіщо» the Mix kind weights, the self-rating only
+   * whether the Rarity Test is offered (ADR 0072). Resolves to whether
+   * `answerId` is an option of it.
    */
   answer(question: OptionQuestion, answerId: string): Promise<boolean>;
   /** Keeps in the Mix the Word Categories of `categoryIds` and hides every other one. */
@@ -51,28 +52,28 @@ const { laterQuestions, onboardingFinished, firstWeekFrom } = userStateRecords;
 
 interface Deps {
   edition: Pick<Edition, 'isFeatureEnabled' | 'questionnaire'>;
-  mix: Pick<Mix, 'setRarityCeiling' | 'setKindWeight' | 'setRarityFloorRaisingCeiling'>;
+  mix: Pick<Mix, 'setKindWeight'>;
+  rarityCeiling: Pick<RarityCeiling, 'set'>;
 }
 
 /**
- * Applies the answer `answerId` to the question through the Mix by the
- * Edition's mapping, for the onboarding and the questionnaire. Resolves to
- * whether `answerId` is an option of it.
+ * Applies the answer `answerId` to the question through the Rarity Ceiling
+ * or the Mix by the Edition's mapping, for the onboarding and the
+ * questionnaire. Resolves to whether `answerId` is an option of it. The
+ * self-rating sets nothing: it only decides whether to offer the Rarity Test.
  */
 export async function applyAnswer(
-  { edition: { questionnaire }, mix }: Deps,
+  { edition: { questionnaire }, mix, rarityCeiling }: Deps,
   question: OptionQuestion,
   answerId: string,
 ): Promise<boolean> {
   if (question === 'who') {
     const option = questionnaire.who.find(({ id }) => id === answerId);
-    if (option !== undefined) await mix.setRarityCeiling(option.rarityCeiling);
+    if (option !== undefined) await rarityCeiling.set(option.rarityCeiling);
     return option !== undefined;
   }
   if (question === 'selfRating') {
-    const option = questionnaire.selfRating.find(({ id }) => id === answerId);
-    if (option !== undefined) await mix.setRarityFloorRaisingCeiling(option.rarityFloor);
-    return option !== undefined;
+    return questionnaire.selfRating.some(({ id }) => id === answerId);
   }
   const option = questionnaire.why.find(({ id }) => id === answerId);
   if (option === undefined) return false;
@@ -91,21 +92,21 @@ export async function applyAnswer(
  * not offered before whose feature is on is offered and keeps that day, so it
  * is offered once even when swiped past: the Daily Goal, which the onboarding
  * that asks it marks as offered, so only an existing reader gets it; the
- * interests; the self-rating, with the Rarity Floor on; the Rarity Test,
- * with its feature on and once the self-rating said to offer it; the Mix
- * review.
+ * interests; the self-rating and the Rarity Test, with the Rarity Test on,
+ * the test once the self-rating said to offer it; the Mix review.
  */
 export function openQuestionnaire({
   edition,
   userState,
   clock,
   mix,
+  rarityCeiling,
   xpLog,
   analytics,
 }: Deps & {
   userState: UserState;
   clock: Clock;
-  mix: Pick<Mix, 'state' | 'takeOut' | 'putBack'>;
+  mix: Pick<Mix, 'state' | 'takeOut' | 'putBack' | 'setKindWeight'>;
   xpLog: Pick<XpLog, 'setDailyGoal'>;
   analytics: Pick<Analytics, 'track'>;
 }): { questionnaire: Questionnaire; notices: FeedNotices } {
@@ -120,7 +121,7 @@ export function openQuestionnaire({
   /** Whether the later question can be offered now, beside the offers before it. */
   function applies(question: LaterQuestion, offerRarityTest: boolean | undefined): boolean {
     if (question === 'dailyGoalChoice') return on('dailyGoal');
-    if (question === 'selfRating') return on('rarityFloor');
+    if (question === 'selfRating') return on('rarityTest');
     if (question === 'rarityTest') return on('rarityTest') && offerRarityTest === true;
     return true;
   }
@@ -162,7 +163,7 @@ export function openQuestionnaire({
       selfRating: options.selfRating.map(({ id, label }) => ({ id, label })),
     },
     async answer(question, answerId) {
-      if (!(await applyAnswer({ edition, mix }, question, answerId))) return false;
+      if (!(await applyAnswer({ edition, mix, rarityCeiling }, question, answerId))) return false;
       if (question !== 'selfRating') {
         analytics
           .track('questionnaireAnswered', { question, answer: answerId })
