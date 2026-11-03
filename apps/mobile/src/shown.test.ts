@@ -43,6 +43,7 @@ const everything: Shown = {
   sync: true,
   dailyGoal: true,
   search: true,
+  fastReveal: true,
   moods: true,
   wordOfTheDayArchive: true,
   rarityTest: true,
@@ -79,6 +80,10 @@ describe('what the reader is shown', () => {
       { off: ['calligraphy'], shown: { calligraphicLemma: false } },
     ],
     ['no Search button with Search off', { off: ['search'], shown: { search: false } }],
+    [
+      'the full reveal on every Feed card with the fast reveal off',
+      { off: ['fastReveal'], shown: { fastReveal: false } },
+    ],
     [
       'no «Сезонний декор» switch with Seasonal Decor off',
       { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },

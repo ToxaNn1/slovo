@@ -8,6 +8,7 @@ import {
   FeedHeader,
   FirstWeekCard,
   PagerScrollView,
+  RevealPace,
   Placeholder,
   QuickQuestionRound,
   SearchButton,
@@ -99,15 +100,18 @@ function FeedScreen() {
 
   return (
     <View testID="home" style={[styles.screen, { backgroundColor: colors.background }]}>
-      <VerticalPager
-        ref={pager}
-        testID="feed"
-        items={cards}
-        initialIndex={feed.startPosition}
-        renderPage={renderPage}
-        onIndexChange={onIndexChange}
-        turnActionLabels={turnActionLabels}
-      />
+      {/* Each time the Feed comes back in sight, its first card plays the full reveal again. */}
+      <RevealPace fast={shown.fastReveal} visiting={feed.inSight}>
+        <VerticalPager
+          ref={pager}
+          testID="feed"
+          items={cards}
+          initialIndex={feed.startPosition}
+          renderPage={renderPage}
+          onIndexChange={onIndexChange}
+          turnActionLabels={turnActionLabels}
+        />
+      </RevealPace>
       {/* The header stays put over the cards, on the screen's background from the top edge, so a scrolled card passes under it unseen. */}
       <View
         testID="feed-header"

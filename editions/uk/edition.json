@@ -94,7 +94,8 @@
     "profile": true,
     "mascot": true,
     "sounds": false,
-    "reduceMotion": true
+    "reduceMotion": true,
+    "fastReveal": true
   },
   "userSettingDefaults": {
     "theme": "system",
