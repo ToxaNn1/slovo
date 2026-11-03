@@ -20,7 +20,7 @@ import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { TOP_ROW } from '../edition/feed-loading';
-import { screenSettled } from '../entries/use-open-screen';
+import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;

@@ -1,72 +1,25 @@
-import { MascotIn } from '@/mascot/mascot';
 import { HISTORY_CAP } from '@slovo/core';
-import {
-  BackLink,
-  ClearHistoryButton,
-  EmptyState,
-  EntryRow,
-  fill,
-  ScreenTitle,
-  SectionLabel,
-  space,
-  typeStyle,
-  useEdition,
-  useTokens,
-} from '@slovo/ui';
+import { BackLink, fill, ScreenTitle, space, typeStyle, useEdition, useTokens } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { SectionList, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
-import { useOpenScreen } from '@/entries/use-open-screen';
-import { useClearHistory, useHistorySections } from '@/saved/history';
-import type { HistoryEntryModel, HistorySection } from '@/saved/history-screen';
+import { HistoryList } from '@/saved/history-list';
 
 const { history: strings } = editionStrings;
 
-/**
- * History: the Entries the reader has Seen, newest first, grouped under the
- * day they were Seen («СЬОГОДНІ», «УЧОРА», then dates), each row saying
- * whether it was a Word, a Correction or the Word of the Day. A tap opens the
- * Entry screen without making it Seen again. «Очистити» asks first, with the
- * SLOVO confirmation dialog, and clears History only.
- */
+/** History on its own screen: a back link to Saved and «Очистити», the title with how many Entries History keeps, then the list. */
 export default function HistoryScreen() {
-  const sections = useHistorySections();
-  const clear = useClearHistory();
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
   const router = useRouter();
-  const openScreen = useOpenScreen();
 
   return (
-    <SafeAreaView
-      testID="history"
-      edges={['top']}
-      style={[styles.screen, { backgroundColor: colors.background }]}
-    >
-      <SectionList<HistoryEntryModel, HistorySection>
-        sections={sections}
-        keyExtractor={(entry) => entry.entryId}
-        stickySectionHeadersEnabled={false}
-        renderSectionHeader={({ section }) => (
-          <SectionLabel style={[styles.day, { color: colors.accent }]}>
-            {section.title}
-          </SectionLabel>
-        )}
-        renderItem={({ item }) => (
-          <EntryRow
-            compact
-            row={item.row}
-            trailing={item.label}
-            onPress={() => {
-              openScreen(`/saved/history/${item.entryId}`);
-            }}
-            testID={`history-row-${item.entryId}`}
-          />
-        )}
-        ListHeaderComponent={
+    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
+      <HistoryList
+        header={(clear) => (
           <>
             <View style={styles.bar}>
               <BackLink
@@ -76,9 +29,7 @@ export default function HistoryScreen() {
                   router.back();
                 }}
               />
-              {sections.length > 0 && (
-                <ClearHistoryButton testID="history-clear" copy={strings.clear} onClear={clear} />
-              )}
+              {clear}
             </View>
             <View style={styles.header}>
               <ScreenTitle>{strings.title}</ScreenTitle>
@@ -91,16 +42,7 @@ export default function HistoryScreen() {
               </Text>
             </View>
           </>
-        }
-        ListEmptyComponent={
-          <EmptyState
-            mascot={<MascotIn state="empty" />}
-            testID="history-empty"
-            title={strings.empty.title}
-            message={strings.empty.message}
-          />
-        }
-        contentContainerStyle={styles.content}
+        )}
       />
     </SafeAreaView>
   );
@@ -108,7 +50,6 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingBottom: space[8] },
   bar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -127,5 +68,4 @@ const styles = StyleSheet.create({
     paddingTop: space[2],
     paddingBottom: space[2],
   },
-  day: { paddingHorizontal: space[6], paddingTop: space[5], paddingBottom: space[1] },
 });

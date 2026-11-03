@@ -9,7 +9,11 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
-async function renderCard(index: number, colorScheme: ColorScheme, onPress = jest.fn()) {
+async function renderCard(
+  index: number,
+  colorScheme: ColorScheme,
+  { onPress = jest.fn(), onLongPress = jest.fn(), onRename = jest.fn() } = {},
+) {
   await render(
     <TokensProvider tokens={coreTokens} colorScheme={colorScheme}>
       <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
@@ -19,7 +23,9 @@ async function renderCard(index: number, colorScheme: ColorScheme, onPress = jes
           name="Nature"
           count="3 entries"
           accessibilityLabel="Nature, 3 entries"
+          actions={[{ name: 'rename', accessibilityLabel: 'Rename “Nature”', onPress: onRename }]}
           onPress={onPress}
+          onLongPress={onLongPress}
         />
       </EditionProvider>
     </TokensProvider>,
@@ -43,10 +49,26 @@ describe('CollectionCard', () => {
     expect(await renderCard(3, 'light')).toHaveStyle({ backgroundColor: light.accent });
   });
 
-  it('opens the Collection on a tap', async () => {
+  it('opens the Collection on a tap and its menu on a long press', async () => {
     const onPress = jest.fn();
-    await fireEvent.press(await renderCard(1, 'light', onPress));
+    const onLongPress = jest.fn();
+    const card = await renderCard(1, 'light', { onPress, onLongPress });
 
+    await fireEvent.press(card);
     expect(onPress).toHaveBeenCalledTimes(1);
+    expect(onLongPress).not.toHaveBeenCalled();
+
+    await fireEvent(card, 'longPress');
+    expect(onLongPress).toHaveBeenCalledTimes(1);
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('offers its actions to VoiceOver', async () => {
+    const onRename = jest.fn();
+    const card = await renderCard(0, 'light', { onRename });
+
+    expect(card).toHaveProp('accessibilityActions', [{ name: 'rename', label: 'Rename “Nature”' }]);
+    await fireEvent(card, 'accessibilityAction', { nativeEvent: { actionName: 'rename' } });
+    expect(onRename).toHaveBeenCalledTimes(1);
   });
 });

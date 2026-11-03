@@ -27,7 +27,7 @@ import EntryFromArchiveScreen from '../app/saved/words-of-the-day/[entryId]';
 import SearchLayout from '../app/search/_layout';
 import EntryFromSearchScreen from '../app/search/[entryId]';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { screenSettled } from './use-open-screen';
+import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 
 const { config } = activeEditionFiles;

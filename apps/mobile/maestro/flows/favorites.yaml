@@ -39,8 +39,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: saved-favorites
 - assertVisible:
-    id: favorites-count
-    text: 1 запис
+    id: favorites
 - assertVisible:
     id: entry-row-.*-open
 - takeScreenshot: favorites-list
@@ -54,7 +53,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: entry-screen-back
 - assertVisible:
-    id: favorites-count
+    id: favorites
 - assertNotVisible:
     id: entry-screen
 - tapOn:
@@ -88,8 +87,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: favorites-empty
 - takeScreenshot: favorites-empty
-- tapOn:
-    id: favorites-back
 - assertVisible:
     id: saved-favorites
     text: Улюблене, 0 записів

@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 import Svg, { Circle, Polygon } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
@@ -30,16 +30,7 @@ export function SearchField({
   const { strings, voice } = useEdition();
   return (
     <View style={[styles.box, { backgroundColor: colors.surfaceSunken }]}>
-      <Svg
-        width={searchFieldDrawing.icon}
-        height={searchFieldDrawing.icon}
-        viewBox="0 0 24 24"
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
-      >
-        <Circle cx={10} cy={10} r={7} fill="none" stroke={colors.ink} strokeWidth={3.5} />
-        <Polygon points="15,17 18,14 24,20 21,23" fill={colors.ink} />
-      </Svg>
+      <Magnifier color={colors.ink} />
       <TextInput
         testID={testID}
         accessibilityLabel={label}
@@ -83,6 +74,57 @@ export function SearchField({
   );
 }
 
+/**
+ * The search field's look as a link: the sunken box with the magnifier and
+ * `label` as its placeholder, which opens Search when tapped.
+ */
+export function SearchLink({
+  label,
+  onPress,
+  testID,
+}: {
+  label: string;
+  onPress: () => void;
+  testID: string;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  return (
+    <Pressable
+      testID={testID}
+      accessibilityRole="search"
+      accessibilityLabel={label}
+      {...voice}
+      onPress={onPress}
+      style={[styles.box, { backgroundColor: colors.surfaceSunken }]}
+    >
+      <Magnifier color={colors.ink} />
+      <Text
+        numberOfLines={1}
+        style={[typeStyle('fieldText', tokens), styles.placeholder, { color: colors.muted }]}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+function Magnifier({ color }: { color: string }) {
+  return (
+    <Svg
+      width={searchFieldDrawing.icon}
+      height={searchFieldDrawing.icon}
+      viewBox="0 0 24 24"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      <Circle cx={10} cy={10} r={7} fill="none" stroke={color} strokeWidth={3.5} />
+      <Polygon points="15,17 18,14 24,20 21,23" fill={color} />
+    </Svg>
+  );
+}
+
 const styles = StyleSheet.create({
   box: {
     height: searchFieldDrawing.height,
@@ -97,6 +139,7 @@ const styles = StyleSheet.create({
     minWidth: 0,
     alignSelf: 'stretch',
   },
+  placeholder: { flex: 1, minWidth: 0 },
   clear: {
     width: searchFieldDrawing.clear,
     height: searchFieldDrawing.clear,

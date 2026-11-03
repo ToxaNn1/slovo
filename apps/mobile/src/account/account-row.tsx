@@ -3,7 +3,7 @@ import { NavigationRow } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 
-import { useOpenScreen } from '../entries/use-open-screen';
+import { useOpenScreen } from '../use-open-screen';
 import { logError } from '../diagnostics/log';
 import { edition } from '../edition/edition';
 import type { Opening } from '../opening';

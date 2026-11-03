@@ -2,6 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
+import { rowActionProps, type RowAction } from '../primitives/SwipeableRow';
 import { Wedge } from '../primitives/Wedge';
 import { collectionCard, collectionMarks, entryRow, typeStyle } from '../tokens';
 
@@ -16,10 +17,9 @@ function fillAt(index: number): Fill {
 
 /**
  * The paint of the Collection at a place among the Collections: its ground, the
- * ink of its text and the colour of its mark. The Saved overview's cards and the
- * Collections screen's rows take it in turn: red, ink, then sunken.
+ * ink of its text and the colour of its mark, in turn: red, ink, then sunken.
  */
-export function useCollectionPaint(index: number): { ground: string; ink: string; mark: string } {
+function useCollectionPaint(index: number): { ground: string; ink: string; mark: string } {
   const { colors, colorScheme } = useTokens();
   // The design's dark ink, the same in both Themes: the light ink, the dark ground.
   const darkInk = colorScheme === 'light' ? colors.ink : colors.background;
@@ -30,18 +30,24 @@ export function useCollectionPaint(index: number): { ground: string; ink: string
   }[fillAt(index)];
 }
 
+/** An action a card offers to VoiceOver as a custom action, such as rename or delete. */
+export type CollectionCardAction = Pick<RowAction, 'name' | 'accessibilityLabel' | 'onPress'>;
+
 /**
- * A Collection's card on the Saved overview: its mark, its name in two lines at
- * most and how many Entries it holds. The cards take their fill in turn by
- * their place, red, ink, then sunken, and their mark in turn too. A tap opens
- * the Collection.
+ * A Collection's card on the Collections screen: its mark, its name in two
+ * lines at most and how many Entries it holds. The cards take their fill in
+ * turn by their place, red, ink, then sunken, and their mark in turn too. A
+ * tap opens the Collection, a long press its menu; the actions go to
+ * VoiceOver as custom actions.
  */
 export function CollectionCard({
   index,
   name,
   count,
   accessibilityLabel,
+  actions,
   onPress,
+  onLongPress,
   testID,
 }: {
   /** The card's place among the cards, which picks its fill and its mark. */
@@ -51,7 +57,11 @@ export function CollectionCard({
   count: string;
   /** The Collection as VoiceOver reads it, e.g. «Для листів, 17 записів». */
   accessibilityLabel: string;
+  actions: readonly CollectionCardAction[];
+  /** Opens the Collection. */
   onPress: () => void;
+  /** Opens the Collection's menu. */
+  onLongPress: () => void;
   testID?: string;
 }) {
   const tokens = useTokens();
@@ -64,8 +74,10 @@ export function CollectionCard({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      {...rowActionProps(actions)}
       {...voice}
       onPress={onPress}
+      onLongPress={onLongPress}
       style={({ pressed }) => [
         styles.card,
         { backgroundColor: paint.ground, borderRadius: radii.card },

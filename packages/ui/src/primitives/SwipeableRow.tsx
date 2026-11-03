@@ -29,10 +29,12 @@ export interface RowAction {
 }
 
 /**
- * The props that offer a row's actions to VoiceOver as custom actions. Spread
- * them on the row's own element, the one VoiceOver focuses.
+ * The props that offer a row's or a card's actions to VoiceOver as custom
+ * actions. Spread them on the element VoiceOver focuses.
  */
-export function rowActionProps(actions: readonly RowAction[]) {
+export function rowActionProps(
+  actions: readonly Pick<RowAction, 'name' | 'accessibilityLabel' | 'onPress'>[],
+) {
   return {
     accessibilityActions: actions.map(({ name, accessibilityLabel }) => ({
       name,

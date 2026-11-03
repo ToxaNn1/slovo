@@ -31,18 +31,25 @@ export interface LevelCardLine {
 
 /**
  * The Profile's Level card: an ink card with a red wedge, the Level's number
- * inside a red ring that fills to `progress` of `toNext`, and the card's
- * lines beside it, the first one loud. The ring fills as the card shows;
- * under Reduce Motion it is drawn full at once.
+ * over its `label` inside a red ring that fills to `progress` of `toNext`,
+ * and beside it the Level's name, loud, over the card's quieter lines. The
+ * ring fills as the card shows; under Reduce Motion it is drawn full at once.
+ * The number carries the test ID `${testID}-number`, the name `${testID}-name`.
  */
 export function LevelCard({
   level,
+  label,
+  name,
   progress,
   toNext,
   lines,
   testID,
 }: {
   level: number;
+  /** The word under the number, such as «Рівень». */
+  label: string;
+  /** The Level's name. */
+  name: string;
   progress: number;
   toNext: number;
   lines: readonly LevelCardLine[];
@@ -99,28 +106,37 @@ export function LevelCard({
             animatedProps={ringProps}
           />
         </Svg>
-        <View style={[StyleSheet.absoluteFill, styles.centre]}>
+        <View accessible style={[StyleSheet.absoluteFill, styles.centre]} {...voice}>
           <Text
             testID={testID === undefined ? undefined : `${testID}-number`}
             maxFontSizeMultiplier={1}
-            style={[
-              typeStyle('screenTitle', tokens),
-              styles.number,
-              { color: ink, fontSize: levelCard.levelSize, lineHeight: levelCard.levelSize },
-            ]}
+            style={[typeStyle('levelNumber', tokens), { color: ink }]}
           >
             {String(level)}
+          </Text>
+          <Text maxFontSizeMultiplier={1} style={[typeStyle('levelLabel', tokens), { color: ink }]}>
+            {label}
           </Text>
         </View>
       </View>
       <View style={styles.lines}>
+        <Text
+          {...voice}
+          testID={testID === undefined ? undefined : `${testID}-name`}
+          // A Level name is one word: it shrinks to the line rather than break mid-word.
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          style={[typeStyle('levelName', tokens), { color: ink }]}
+        >
+          {name}
+        </Text>
         {lines.map((line, index) => (
           <Text
             {...voice}
             key={line.testID}
             testID={line.testID}
             style={[
-              index === 0 ? typeStyle('heading', tokens) : typeStyle('sub', tokens),
+              index === 0 ? typeStyle('levelXp', tokens) : typeStyle('meta', tokens),
               { color: ink },
             ]}
           >
@@ -151,6 +167,5 @@ const styles = StyleSheet.create({
   ring: { width: ring.box, height: ring.box, flex: 0 },
   turned: { transform: [{ rotate: '-90deg' }] },
   centre: { alignItems: 'center', justifyContent: 'center' },
-  number: { letterSpacing: 0 },
   lines: { flex: 1, minWidth: 0, gap: levelCard.linesGap },
 });

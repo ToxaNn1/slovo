@@ -132,7 +132,7 @@ async function openMenuOf(collectionId: string) {
     </SafeAreaProvider>,
   );
   await settle();
-  await fireEvent.press(screen.getByTestId(`collection-${collectionId}-more`));
+  await fireEvent(screen.getByTestId(`collection-card-${collectionId}`), 'longPress');
   await settle();
 }
 
@@ -147,7 +147,7 @@ async function toast() {
   return screen.findByTestId('undo-toast-message', {}, { timeout: 10_000 });
 }
 
-describe('«Поділитися посиланням» in a Collection’s menu', () => {
+describe('«Поділитися посиланням» in the menu a long press on a Collection’s card opens', () => {
   it('opens the share sheet with «Колекція «Осінь» у SLOVO: …» and the new link', async () => {
     const autumn = await collection('Осінь', ['w_kvasha', 'w_buzok']);
     await openMenuOf(autumn);

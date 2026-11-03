@@ -14,7 +14,7 @@ import { edition, editionStrings } from '../edition/edition';
 import { ShellProvider, type ShareCard } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
-import { SCREEN_OPEN_TIMEOUT_MS } from '../entries/open-screen';
+import { SCREEN_OPEN_TIMEOUT_MS } from '../open-screen';
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
@@ -188,7 +188,7 @@ async function solve() {
 describe('the Daily Crossword screen', () => {
   it('opens from its card with the grid and the first word’s clue', async () => {
     const app = await renderGame();
-    expect(card()).toBe('Кросворд дня · 26 жовтня. Почати');
+    expect(card()).toBe('Кросворд дня. 26 жовтня. Почати');
 
     await openFromCard();
 
@@ -227,7 +227,7 @@ describe('the Daily Crossword screen', () => {
     await type('кі');
 
     await back();
-    expect(card()).toBe('Кросворд дня · 26 жовтня. Продовжити');
+    expect(card()).toBe('Кросворд дня. 26 жовтня. Продовжити');
 
     await openFromCard();
     expect(cell(0, 0)).toBe('к, перша літера. Звір. Рядок 1, стовпець 1');
@@ -245,7 +245,7 @@ describe('the Daily Crossword screen', () => {
     // The binary of this test can't capture a Share Card.
     expect(screen.queryByTestId('daily-crossword-share')).toBeNull();
     await back();
-    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано');
+    expect(card()).toBe('Кросворд дня. 26 жовтня. ✓ Розв’язано');
   });
 
   it('shares a solved crossword’s grid without its letters and tells Analytics once it is shared', async () => {

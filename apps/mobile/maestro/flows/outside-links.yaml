@@ -49,8 +49,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: history-empty
 - takeScreenshot: outside-links-history
 - tapOn:
-    id: history-back
-- tapOn:
     id: tab-home
 - assertVisible:
     id: home

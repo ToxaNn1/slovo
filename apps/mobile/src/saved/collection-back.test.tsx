@@ -15,7 +15,7 @@ import CollectionScreen from '../app/saved/collections/[collectionId]';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
-import { screenSettled } from '../entries/use-open-screen';
+import { screenSettled } from '../use-open-screen';
 
 const { config } = activeEditionFiles;
 

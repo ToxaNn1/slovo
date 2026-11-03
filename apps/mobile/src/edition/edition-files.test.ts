@@ -54,7 +54,33 @@ describe('Edition UI strings', () => {
     expect(counts.length).toBeGreaterThan(0);
     for (const forms of counts) expect(Object.keys(forms).sort()).toEqual([...categories].sort());
   });
+
+  // #1508: Favorites' empty state said «Тут поки порожньо» in the Mascot's line and again as its title.
+  it.each(editions)(
+    'the %s Edition never says an empty state’s title again in the Mascot’s line',
+    (id) => {
+      const edition = openEdition(EDITIONS_DIR, id);
+      const line = edition.config.mascot.empty.toLocaleLowerCase(edition.config.locale);
+      const titles = emptyTitlesOf(edition.read('strings'));
+
+      expect(titles.length).toBeGreaterThan(0);
+      for (const title of titles) {
+        expect(line).not.toContain(title.toLocaleLowerCase(edition.config.locale));
+      }
+    },
+  );
 });
+
+/** Every `empty.title` of the UI strings, at any depth. */
+function emptyTitlesOf(strings: unknown): string[] {
+  if (typeof strings !== 'object' || strings === null) return [];
+  const entries: [string, unknown][] = Object.entries(strings);
+  return entries.flatMap(([key, value]) =>
+    key === 'empty' && typeof value === 'object' && value !== null && 'title' in value
+      ? [String(value.title)]
+      : emptyTitlesOf(value),
+  );
+}
 
 describe('the 0.4 UI strings groups', () => {
   const groups = ['stats', 'onboarding', 'notifications', 'notificationBody'] as const;

@@ -8,8 +8,8 @@ import {
   fill,
   LevelCard,
   ScreenTitle,
+  SettingsGroup,
   Button,
-  SectionLabel,
   space,
   typeStyle,
   useEdition,
@@ -33,12 +33,13 @@ import { MascotAs } from '../mascot/mascot';
 const strings = editionStrings.settings.profile;
 
 /**
- * Settings › Профіль: the reader's whole progress in one place: the Level and
- * the XP to the next, all XP, the Streak and the Best Streak, the Active Days
- * calendar, the confirmed Entries by rarity, the Badges as marks (an earned
- * one stamped on red at a tap) and each Game Mode's Best result, with a button that shares the Level. A
- * reader with an Account to offer and none signed in sees the offer to save
- * progress at the top.
+ * The Profile tab, as the board: the reader's whole progress in one place:
+ * the Level card (its ring, its name, the XP to the next and all XP), the
+ * giant Streak and the Best Streak, the Active Days calendar, the Badges as
+ * marks by family (an earned one stamped on red at a tap), the confirmed
+ * Entries by rarity and each Game Mode's Best result, with a button that
+ * shares the Level. A reader with an Account to offer and none signed in sees
+ * the offer to save progress at the top.
  */
 export function ProfileScreen() {
   const tokens = useTokens();
@@ -63,8 +64,14 @@ export function ProfileScreen() {
   const share = shown.progressShareCards ? shareCard : undefined;
   const [sharing, setSharing] = useState(false);
   const textStyle = [typeStyle('profileText', tokens), { color: colors.ink }];
+  /** A row of a card: one line of words. */
   const line = (testID: string, text: string) => (
-    <Text key={testID} {...voice} testID={testID} style={textStyle}>
+    <Text
+      key={testID}
+      {...voice}
+      testID={testID}
+      style={[typeStyle('rowLabel', tokens), styles.row, { color: colors.ink }]}
+    >
       {text}
     </Text>
   );
@@ -104,91 +111,85 @@ export function ProfileScreen() {
             }}
           />
         )}
-        {(shown.xpBar || streakShown) && (
+        {shown.xpBar && level !== undefined && (
           <View style={styles.section}>
-            {shown.xpBar && level !== undefined && (
-              <LevelCard
-                testID="profile-level-card"
-                level={level.level}
-                progress={level.progress}
-                toNext={level.toNext}
-                lines={[
-                  {
-                    testID: 'profile-level',
-                    text: fill(strings.level, { level: String(level.level), name: level.name }),
-                  },
-                  {
-                    testID: 'profile-to-next',
-                    text: fill(strings.toNext, {
-                      progress: String(level.progress),
-                      toNext: String(level.toNext),
-                    }),
-                  },
-                  {
-                    testID: 'profile-total-xp',
-                    text: fill(strings.totalXp, { count: String(xp.total) }),
-                  },
-                ]}
-              />
-            )}
-            {shown.xpBar &&
-              level === undefined &&
-              line('profile-total-xp', fill(strings.totalXp, { count: String(xp.total) }))}
-            {streakShown && (
+            <LevelCard
+              testID="profile-level"
+              level={level.level}
+              label={strings.levelLabel}
+              name={level.name}
+              progress={level.progress}
+              toNext={level.toNext}
+              lines={[
+                {
+                  testID: 'profile-to-next',
+                  text: fill(strings.toNext, {
+                    progress: String(level.progress),
+                    toNext: String(level.toNext),
+                  }),
+                },
+                {
+                  testID: 'profile-total-xp',
+                  text: fill(strings.totalXp, { count: String(xp.total) }),
+                },
+              ]}
+            />
+            {share !== undefined && reachedOn !== undefined && (
               <>
-                {line('profile-streak', fill(strings.streak, { count: String(progress.streak) }))}
-                {line(
-                  'profile-best-streak',
-                  fill(strings.bestStreak, { count: String(progress.bestStreak) }),
+                <Button
+                  variant="neutral"
+                  testID="profile-share-level"
+                  label={strings.shareLevel}
+                  onPress={() => {
+                    setSharing(true);
+                  }}
+                />
+                {sharing && (
+                  <ShareCardSheet
+                    subject={{ level, date: reachedOn }}
+                    kind="level"
+                    share={share}
+                    visible
+                    onClose={() => {
+                      setSharing(false);
+                    }}
+                  />
                 )}
               </>
             )}
-            {shown.xpBar &&
-              share !== undefined &&
-              level !== undefined &&
-              reachedOn !== undefined && (
-                <>
-                  <Button
-                    variant="neutral"
-                    testID="profile-share-level"
-                    label={strings.shareLevel}
-                    onPress={() => {
-                      setSharing(true);
-                    }}
-                  />
-                  {sharing && (
-                    <ShareCardSheet
-                      subject={{ level, date: reachedOn }}
-                      kind="level"
-                      share={share}
-                      visible
-                      onClose={() => {
-                        setSharing(false);
-                      }}
-                    />
-                  )}
-                </>
-              )}
           </View>
         )}
+        {shown.xpBar && level === undefined && (
+          <View style={styles.section}>
+            <Text {...voice} testID="profile-total-xp" style={textStyle}>
+              {fill(strings.totalXp, { count: String(xp.total) })}
+            </Text>
+          </View>
+        )}
+        {streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />}
         <View style={styles.section}>
-          <SectionLabel>{strings.activeDays}</SectionLabel>
           <ActiveDaysCalendar months={composition.progress.calendar()} />
         </View>
         <View style={styles.section}>
-          <SectionLabel>{strings.confirmed}</SectionLabel>
-          {RARITIES.map((rarity) =>
-            line(
-              `profile-confirmed-${String(rarity)}`,
-              fill(strings.confirmedOfRarity, {
-                rarity: String(rarity),
-                count: String(confirmed.byRarity[rarity]),
-              }),
-            ),
-          )}
-        </View>
-        <View style={styles.section}>
-          <SectionLabel>{strings.badges}</SectionLabel>
+          <View style={styles.badgesHead}>
+            <Text
+              accessibilityRole="header"
+              {...voice}
+              style={[typeStyle('heading', tokens), { color: colors.ink }]}
+            >
+              {strings.badges}
+            </Text>
+            <Text
+              {...voice}
+              testID="profile-badges-count"
+              style={[typeStyle('progressCount', tokens), { color: colors.muted }]}
+            >
+              {fill(editionStrings.settings.badges.earnedOf, {
+                earned: String(badges.filter(({ earned }) => earned).length),
+                total: String(badges.length),
+              })}
+            </Text>
+          </View>
           <BadgeGrid
             badges={badges}
             onPress={(badge) => {
@@ -209,23 +210,70 @@ export function ProfileScreen() {
             />
           )}
         </View>
-        {modes.length > 0 && (
-          <View style={styles.section}>
-            <SectionLabel>{strings.gameBest}</SectionLabel>
-            {modes.map(({ modeId, best }) =>
+        <View style={styles.section}>
+          <SettingsGroup title={strings.confirmed}>
+            {RARITIES.map((rarity) =>
               line(
-                `profile-best-${modeId}`,
-                `${gameModeStrings(editionStrings.game.modes, modeId).title} — ${
-                  best === undefined
-                    ? strings.noGameBest
-                    : bestText(best, editionStrings.game.modeBest)
-                }`,
+                `profile-confirmed-${String(rarity)}`,
+                fill(strings.confirmedOfRarity, {
+                  rarity: String(rarity),
+                  count: String(confirmed.byRarity[rarity]),
+                }),
               ),
             )}
+          </SettingsGroup>
+        </View>
+        {modes.length > 0 && (
+          <View style={styles.section}>
+            <SettingsGroup title={strings.gameBest}>
+              {modes.map(({ modeId, best }) =>
+                line(
+                  `profile-best-${modeId}`,
+                  `${gameModeStrings(editionStrings.game.modes, modeId).title} — ${
+                    best === undefined
+                      ? strings.noGameBest
+                      : bestText(best, editionStrings.game.modeBest)
+                  }`,
+                ),
+              )}
+            </SettingsGroup>
           </View>
         )}
       </ScrollView>
     </SafeAreaView>
+  );
+}
+
+/** The giant red Streak, its words, and the Best Streak at the far end, as the board. */
+function StreakLine({ streak, bestStreak }: { streak: number; bestStreak: number }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice, count } = useEdition();
+  const words = editionStrings.stats;
+  return (
+    <View style={[styles.section, styles.streak]}>
+      <Text
+        testID="profile-streak"
+        maxFontSizeMultiplier={1}
+        style={[typeStyle('profileStreak', tokens), { color: colors.accent }]}
+      >
+        {String(streak)}
+      </Text>
+      <Text
+        {...voice}
+        testID="profile-streak-words"
+        style={[typeStyle('profileStreakLabel', tokens), styles.streakWords, { color: colors.ink }]}
+      >
+        {count(words.streak, streak)}
+      </Text>
+      <Text
+        {...voice}
+        testID="profile-best-streak"
+        style={[typeStyle('meta', tokens), styles.best, { color: colors.muted }]}
+      >
+        {fill(words.bestStreak, { count: String(bestStreak) })}
+      </Text>
+    </View>
   );
 }
 
@@ -238,24 +286,24 @@ function SaveProgressOffer({ opening, onSave }: { opening: Opening<Account>; onS
   const { title, message, save } = editionStrings.feedNotices.saveProgress;
   return (
     <View testID="profile-save-progress" style={styles.section}>
-      <Text {...voice} style={[typeStyle('profileText', tokens), { color: colors.ink }]}>
+      <Text {...voice} style={[typeStyle('heading', tokens), { color: colors.ink }]}>
         {title}
       </Text>
-      <Text {...voice} style={[typeStyle('profileText', tokens), { color: colors.muted }]}>
+      <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
         {message}
       </Text>
-      <Button
-        variant="neutral"
-        testID="profile-save-progress-button"
-        label={save}
-        onPress={onSave}
-      />
+      <Button testID="profile-save-progress-button" label={save} onPress={onSave} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  streak: { flexDirection: 'row', alignItems: 'flex-end', gap: space[3] },
+  streakWords: { flexShrink: 1 },
+  best: { flex: 1, textAlign: 'right' },
+  badgesHead: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
+  row: { paddingHorizontal: space[4], paddingVertical: space[3] },
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },

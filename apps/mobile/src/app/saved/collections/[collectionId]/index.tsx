@@ -18,7 +18,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { addedOn } from '@/saved/added-on';
 import { useCollectionEntries } from '@/saved/collections';
 import { editionStrings } from '@/edition/edition';
-import { useOpenScreen } from '@/entries/use-open-screen';
+import { useOpenScreen } from '@/use-open-screen';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.entries;

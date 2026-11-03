@@ -94,7 +94,6 @@ describe('the «Колекції» screen', () => {
         name: 'Порожня',
         count: '0 записів',
         empty: true,
-        lemmas: [],
         accessibilityLabel: 'Порожня, 0 записів',
         renameLabel: 'Перейменувати «Порожня»',
         deleteLabel: 'Видалити «Порожня»',
@@ -105,7 +104,6 @@ describe('the «Колекції» screen', () => {
         name: 'Читання',
         count: '2 записи',
         empty: false,
-        lemmas: ['гармидер', 'веремія'],
         accessibilityLabel: 'Читання, 2 записи: гармидер, веремія',
         renameLabel: 'Перейменувати «Читання»',
         deleteLabel: 'Видалити «Читання»',
@@ -114,12 +112,11 @@ describe('the «Колекції» screen', () => {
     ]);
   });
 
-  it('shows the newest Lemmas with their Stress mark and reads them to VoiceOver without it', async () => {
+  it('reads the newest Lemmas to VoiceOver without their Stress mark', async () => {
     const { app } = await open();
     await create(app, 'Мистецтво', 'w_three');
 
     const [row] = rowsOf(app);
-    expect(row?.lemmas).toEqual(['кракелю\u0301р']);
     expect(row?.accessibilityLabel).toBe('Мистецтво, 1 запис: кракелюр');
   });
 

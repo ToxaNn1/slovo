@@ -19,7 +19,7 @@ import {
   testShell,
   type RecordedAnalytics,
 } from '../shell/test-support';
-import { screenSettled } from './use-open-screen';
+import { screenSettled } from '../use-open-screen';
 
 // The Entry card's action row has its own tests; here it is a stand-in to find on the screen.
 jest.mock('./entry-actions', () => {

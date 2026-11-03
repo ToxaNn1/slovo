@@ -1,3 +1,4 @@
+import { fill } from '@slovo/contracts';
 import type { GameModeOffer } from '@slovo/core';
 import {
   DailyCrosswordCard,
@@ -10,14 +11,16 @@ import {
   space,
   useTokens,
   WidgetGuideSheet,
+  XpPill,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useComposition } from '@/composition';
 import { editionStrings } from '@/edition/edition';
-import { useOpenScreen } from '@/entries/use-open-screen';
+import { useOpenScreen } from '@/use-open-screen';
 import { useDailyCrosswordCard } from '@/game/daily-crossword';
 import { ProgressShareOffers } from '@/game/progress-share-offers';
 import {
@@ -29,9 +32,10 @@ import {
 } from '@/game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
 import { MascotAs, MascotIn } from '@/mascot/mascot';
+import { useSubscribed } from '@/opening';
 import { useShown } from '@/shown-in-effect';
 
-const { game: strings, widget: widgetStrings } = editionStrings;
+const { game: strings, widget: widgetStrings, settings: settingsStrings } = editionStrings;
 
 /**
  * The Game tab: the mode screen, a Round with its answer sheet, or the result
@@ -153,6 +157,7 @@ function ModeScreen({
       <ScrollView contentContainerStyle={styles.modes}>
         <View style={styles.heading}>
           <GamesTitle>{strings.title}</GamesTitle>
+          <TotalXp />
         </View>
         <ProgressShareOffers />
         {crossword === undefined ? null : (
@@ -186,6 +191,23 @@ function ModeScreen({
   );
 }
 
+/**
+ * The XP earned in all beside the title, while the XP log is on and the
+ * reader has not hidden the counters.
+ */
+function TotalXp() {
+  const { total } = useSubscribed(useComposition().xpLog, ({ state }) => state);
+  if (!useShown().xpBar) return null;
+  const count = String(total);
+  return (
+    <XpPill
+      testID="games-xp"
+      text={fill(strings.xp, { count })}
+      label={fill(settingsStrings.profile.totalXp, { count })}
+    />
+  );
+}
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   modes: {
@@ -194,7 +216,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[5],
     paddingBottom: space[8],
   },
-  heading: { marginHorizontal: space[1], marginBottom: space[2] },
+  heading: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    gap: space[3],
+    marginHorizontal: space[1],
+    marginBottom: space[2],
+  },
   group: { gap: space[1] },
   groupTitle: { marginHorizontal: space[1], marginTop: space[4] },
 });

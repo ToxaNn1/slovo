@@ -23,7 +23,7 @@ import { useNotificationsSummary } from '@/notifications/notifications';
 import { useShown } from '@/shown-in-effect';
 import { openLegalPage } from '@/settings/legal-page';
 import { useSettings } from '@/settings/settings';
-import { useOpenScreen } from '@/entries/use-open-screen';
+import { useOpenScreen } from '@/use-open-screen';
 import { useComposition } from '@/composition';
 import { logError } from '@/diagnostics/log';
 import { useSubscribed } from '@/opening';

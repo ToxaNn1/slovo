@@ -36,8 +36,8 @@ export type TileTone = 'tile' | 'accent' | 'ink' | 'inverse' | 'none';
  * face stays and fades instead, as does a face with no edge. Disabled, it
  * is dimmed and takes no press; inert, as an answered tile, it takes no
  * press but keeps its look. A `key` stands on a shallower edge, as a
- * key of an on-screen keyboard, and an `action` tile of the action row on
- * one between the two. Its face carries the test ID
+ * key of an on-screen keyboard, an `action` tile of the action row on
+ * one between the two, and a `card` on a deeper one. Its face carries the test ID
  * `${testID}-face`.
  */
 export function PressedTile({
@@ -57,8 +57,8 @@ export function PressedTile({
   children,
 }: {
   tone?: TileTone;
-  /** How deep its edge is: a tile's, an action row tile's, or a keyboard key's shallowest one. */
-  depth?: 'tile' | 'action' | 'key';
+  /** How deep its edge is: a tile's, an action row tile's, a keyboard key's shallowest one or a big card's deeper one. */
+  depth?: 'tile' | 'action' | 'key' | 'card';
   /** The face's corner radius; `radii.tile` when left out. */
   radius?: number;
   onPress: () => void;
@@ -93,6 +93,7 @@ export function PressedTile({
     tile: { depth: offsetShadow.rest.depth, translateY: offsetShadow.pressed.translateY },
     action: actionTile.edge,
     key: offsetShadow.key,
+    card: offsetShadow.card,
   }[depth];
   const timing = sinks ? motion.press : motion.reduceMotion;
   const press = (to: number) => {

@@ -15,7 +15,7 @@ import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
-import { useOpenScreen } from '../entries/use-open-screen';
+import { useOpenScreen } from '../use-open-screen';
 import { useMixState } from '../mix/mix';
 
 const strings = editionStrings.feedNotices.laterQuestions;

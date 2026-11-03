@@ -1,113 +1,14 @@
 import { useRef, useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
-import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
-import { cardSpace, entryRow, minTouchTarget, space, typeStyle } from '../tokens';
+import { cardSpace, minTouchTarget, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { useCollectionPaint } from './CollectionCard';
-
-/**
- * A Collection on the Collections screen: a card with its name over its
- * newest Lemmas, and how many Entries it holds on the right. The cards take
- * their fill in turn by their place, as the Saved overview's cards do. A tap opens the
- * Collection; swipe actions slide out inside the card and are VoiceOver
- * actions too, and the «…» button at the right offers the same actions in a
- * menu. Needs a `GestureHandlerRootView` above it.
- */
-export function CollectionRow({
-  index,
-  name,
-  count,
-  lemmas,
-  accessibilityLabel,
-  actions,
-  more,
-  onPress,
-  testID,
-}: {
-  /** The row's place among the rows, which picks its fill. */
-  index: number;
-  name: string;
-  /** The Entries it holds, in the Edition's plural form, e.g. «17 записів». */
-  count: string;
-  /** What its newest Entries lead with, newest first; none for an empty Collection. */
-  lemmas: readonly string[];
-  /** The Collection as VoiceOver reads it: its name, its count and its Lemmas. */
-  accessibilityLabel: string;
-  actions: readonly RowAction[];
-  /** The «…» button: what VoiceOver reads for it, and what a tap does (opens the menu). */
-  more: { label: string; onPress: () => void };
-  /** Opens the Collection. */
-  onPress: () => void;
-  testID: string;
-}) {
-  const tokens = useTokens();
-  const { radii } = tokens;
-  const { voice } = useEdition();
-  const paint = useCollectionPaint(index);
-  return (
-    <SwipeableRow
-      testID={testID}
-      actions={actions}
-      containerStyle={[styles.filled, { borderRadius: radii.card, backgroundColor: paint.ground }]}
-    >
-      <View style={styles.line}>
-        <Pressable
-          testID={`${testID}-content`}
-          accessibilityRole="button"
-          accessibilityLabel={accessibilityLabel}
-          {...rowActionProps(actions)}
-          {...voice}
-          onPress={onPress}
-          style={({ pressed }) => [
-            styles.content,
-            { backgroundColor: paint.ground },
-            pressed && styles.pressed,
-          ]}
-        >
-          <View style={styles.titleLine}>
-            <Text
-              style={[typeStyle('collectionRowName', tokens), styles.name, { color: paint.ink }]}
-            >
-              {name}
-            </Text>
-            <Text
-              style={[typeStyle('collectionRowCount', tokens), styles.count, { color: paint.ink }]}
-            >
-              {count}
-            </Text>
-          </View>
-          {lemmas.length > 0 && (
-            <Text style={[typeStyle('collectionLemmas', tokens), { color: paint.ink }]}>
-              {lemmas.join(' · ')}
-            </Text>
-          )}
-        </Pressable>
-        <Pressable
-          testID={`${testID}-more`}
-          accessibilityRole="button"
-          accessibilityLabel={more.label}
-          {...voice}
-          hitSlop={space[2]}
-          onPress={more.onPress}
-          style={styles.more}
-        >
-          <Svg width={20} height={20} viewBox="0 0 20 20">
-            {[4, 10, 16].map((cx) => (
-              <Circle key={cx} cx={cx} cy={10} r={1.75} fill={paint.ink} />
-            ))}
-          </Svg>
-        </Pressable>
-      </View>
-    </SwipeableRow>
-  );
-}
 
 /**
  * The card in which a Collection is named: one for a new Collection and one
- * in place of a row being renamed. The name field takes the focus; the
+ * for a Collection being renamed, over the Collections' cards. The name field takes the focus; the
  * keyboard's return key keeps the name, and leaving the field drops the
  * change (unless a name is being kept). A refused name stays in the field with the reason under it.
  */
@@ -247,31 +148,6 @@ export function NewCollectionButton({
 
 const styles = StyleSheet.create({
   card: { borderWidth: 1, overflow: 'hidden' },
-  filled: { overflow: 'hidden' },
-  pressed: { opacity: entryRow.pressedOpacity },
-  line: { flexDirection: 'row', alignItems: 'stretch' },
-  content: {
-    flex: 1,
-    paddingHorizontal: cardSpace.collectionPadding,
-    paddingVertical: cardSpace.collectionPadding,
-    gap: space[2],
-  },
-  // At the largest text sizes the count drops under the name instead of squeezing it.
-  titleLine: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    columnGap: space[3],
-  },
-  name: { flexShrink: 1 },
-  count: { flexShrink: 0 },
-  more: {
-    minWidth: minTouchTarget,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    paddingTop: cardSpace.collectionPadding,
-  },
   editing: {
     paddingHorizontal: cardSpace.collectionPadding,
     paddingVertical: space[4],

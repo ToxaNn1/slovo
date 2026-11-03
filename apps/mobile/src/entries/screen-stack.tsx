@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 
-import { screenSettled } from './use-open-screen';
+import { screenSettled } from '../use-open-screen';
 
 /**
  * The stack of a tab or a link: no header, and it tells the screen opener when
