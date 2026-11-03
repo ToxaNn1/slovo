@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { editionStrings } from '../edition/edition';
+import { edition, editionStrings } from '../edition/edition';
 import { installedBuild } from './installed-build';
 import { openLegalPage } from './legal-page';
 
@@ -59,7 +59,7 @@ export function AboutScreen() {
               { paddingLeft: wordmark.letterSpacing, color: colors.ink },
             ]}
           >
-            {editionStrings.splash.wordmark}
+            {edition.displayName}
           </Text>
           <Text
             {...voice}

@@ -2,7 +2,6 @@ import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Wedge } from '../primitives/Wedge';
-import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { feedHeader, typeStyle, wedges } from '../tokens';
 
@@ -10,21 +9,29 @@ import { feedHeader, typeStyle, wedges } from '../tokens';
 const HEADER_MAX_FONT_SCALE = 1.3;
 
 /**
- * The Feed's header, from the design: the red wedge and the wordmark at the
+ * The Feed's header, from the design: the red wedge and the app's name
+ * (`wordmark`, the Latin one, not the splash's) at the
  * start, today and the Streak pill (`streak`) at the end. VoiceOver reads the
  * wordmark as the screen's header.
  */
-export function FeedHeader({ today, streak }: { today: string; streak: ReactNode }) {
+export function FeedHeader({
+  wordmark,
+  today,
+  streak,
+}: {
+  wordmark: string;
+  today: string;
+  streak: ReactNode;
+}) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings } = useEdition();
   return (
     <View style={styles.row}>
       <View
         testID="feed-logo"
         accessible
         accessibilityRole="header"
-        accessibilityLabel={strings.splash.wordmark}
+        accessibilityLabel={wordmark}
         style={styles.logo}
       >
         <Wedge
@@ -37,7 +44,7 @@ export function FeedHeader({ today, streak }: { today: string; streak: ReactNode
           maxFontSizeMultiplier={HEADER_MAX_FONT_SCALE}
           style={[typeStyle('logo', tokens), { color: colors.ink }]}
         >
-          {strings.splash.wordmark}
+          {wordmark}
         </Text>
       </View>
       <View style={styles.end}>

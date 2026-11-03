@@ -94,7 +94,7 @@ describe('About', () => {
     mockBuild.updateId = '0198e3a1-7c2b-7f00-9a4e-3b5d6c7e8f90';
     await renderAbout();
 
-    expect(screen.getByText(editionStrings.splash.wordmark)).toBeTruthy();
+    expect(screen.getByText(edition.displayName)).toBeTruthy();
     expect(screen.queryByTestId('about-version')).toBeNull();
     expect(screen.queryByTestId('about-update')).toBeNull();
   });
