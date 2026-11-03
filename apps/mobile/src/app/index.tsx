@@ -108,8 +108,15 @@ function FeedScreen() {
         onIndexChange={onIndexChange}
         turnActionLabels={turnActionLabels}
       />
-      {/* The header stays put over the cards, like the background. */}
-      <View pointerEvents="box-none" style={[styles.header, { top }]}>
+      {/* The header stays put over the cards, on the screen's background from the top edge, so a scrolled card passes under it unseen. */}
+      <View
+        testID="feed-header"
+        pointerEvents="box-none"
+        style={[
+          styles.header,
+          { paddingTop: top, height: top + TOP_ROW, backgroundColor: colors.background },
+        ]}
+      >
         <FeedHeader
           wordmark={edition.displayName}
           today={todayText(deviceClock, editionStrings)}
@@ -281,9 +288,10 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: {
     position: 'absolute',
-    left: space[6],
-    right: space[6],
-    height: TOP_ROW,
+    top: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: space[6],
     justifyContent: 'center',
     gap: space[2],
   },
