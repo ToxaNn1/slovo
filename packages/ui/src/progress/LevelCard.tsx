@@ -123,6 +123,9 @@ export function LevelCard({
         <Text
           {...voice}
           testID={testID === undefined ? undefined : `${testID}-name`}
+          // A Level name is one word: it shrinks to the line rather than break mid-word.
+          numberOfLines={1}
+          adjustsFontSizeToFit
           style={[typeStyle('levelName', tokens), { color: ink }]}
         >
           {name}

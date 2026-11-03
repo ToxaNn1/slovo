@@ -359,7 +359,7 @@ export const typeRoles = {
   /** The XP towards the next Level on the Profile's Level card. */
   levelXp: role('ui', '600', 14, 18),
   /** The Profile's giant red Streak. */
-  profileStreak: role('word', '900', 60, 54, -2),
+  profileStreak: role('word', '900', 60, 60, -2),
   /** The words beside the Profile's giant Streak. */
   profileStreakLabel: role('word', '800', 16, 18),
   /** The name of the screen before, beside the back tile that returns to it. */
