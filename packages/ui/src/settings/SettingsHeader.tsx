@@ -23,7 +23,7 @@ export function SettingsHeader({
 }: {
   kind: 'settings' | 'subScreen';
   title: string;
-  back?: { label: string; onPress: () => void; testID?: string };
+  back?: { label: string; onPress: () => void; testID?: string } | undefined;
 }) {
   const tokens = useTokens();
   const { colors, radii } = tokens;

@@ -25,7 +25,7 @@ describe('Settings header', () => {
       </Providers>,
     );
     expect(screen.getByRole('header', { name: 'Settings' })).toBeTruthy();
-    fireEvent.press(screen.getByRole('button', { name: 'Profile' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Profile' }));
     expect(onPress).toHaveBeenCalledTimes(1);
   });
 
