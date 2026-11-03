@@ -127,7 +127,7 @@ describe('the Core’s shape, type and motion roles', () => {
     ]);
   });
 
-  it('gives a capital Й and Ї room above a tight line without moving the line', () => {
+  it('gives a capital with a mark above it room above a tight line without moving the line', () => {
     // Measured in Unbounded Black: Ї rises 1.010 em above the baseline, the
     // descent is 0.245 em. iOS cuts a line set tighter than the font from the
     // top, so the baseline sits 0.245 em above the line's bottom.

@@ -98,14 +98,14 @@ describe('Button and the Interface sounds', () => {
 });
 
 describe('Button with a capital mark in its label', () => {
-  it('draws the label’s Й whole and keeps the label’s line where it was', async () => {
+  it('draws a capital with a mark above it whole and keeps the label’s line where it was', async () => {
     await render(
       <Edition>
-        <Button label="Мовний гурман" onPress={jest.fn()} />
+        <Button label="Language gourmet" onPress={jest.fn()} />
       </Edition>,
     );
 
-    const style: TextStyle = StyleSheet.flatten(screen.getByText('Мовний гурман').props['style']);
+    const style = StyleSheet.flatten(screen.getByText('Language gourmet').props['style']) as TextStyle;
     const { paddingTop = 0, marginTop = 0, fontSize = 0, lineHeight = 0 } = style;
     // Й's breve rises 0.987 em above the baseline; iOS keeps 0.245 em of the line below it.
     expect(Number(paddingTop) + lineHeight - 0.245 * fontSize).toBeGreaterThanOrEqual(
