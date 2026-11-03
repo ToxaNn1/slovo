@@ -26,7 +26,7 @@ test('lets a type role set the text', () => {
   assert.deepEqual(lint("const s = [typeStyle('meta', tokens), { color: ink }];"), []);
 });
 
-test('leaves the role table in tokens.ts alone', () => {
-  const messages = lint("const r = { fontWeight: '900' };", 'src/tokens.ts');
+test('leaves the role table in the tokens folder alone', () => {
+  const messages = lint("const r = { fontWeight: '900' };", 'src/tokens/base.ts');
   assert.ok(!messages.some((m) => /type role/.test(m)));
 });

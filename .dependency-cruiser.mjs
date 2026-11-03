@@ -113,12 +113,13 @@ export default {
         "ADR 0027: the UI's providers/, decor/ and primitives/ sit below its domain " +
         'folders, so a button or a sheet never depends on the Entries, the Game or ' +
         'any other domain it is used in. index.ts counts too, as it re-exports them all. ' +
+        'The tokens/ folder is the shared base below every layer, not a domain folder. ' +
         'A test is not part of the layer: it renders through index.ts, the public seam.',
       severity: 'error',
       from: { path: '^packages/ui/src/(providers|decor|primitives)/', pathNot: '\\.test\\.tsx?$' },
       to: {
         path: ['^packages/ui/src/[^/]+/', '^packages/ui/src/index\\.ts$'],
-        pathNot: '^packages/ui/src/(providers|decor|primitives)/',
+        pathNot: '^packages/ui/src/(providers|decor|primitives|tokens)/',
       },
     },
     {
@@ -171,7 +172,7 @@ export default {
           '^packages/$2/',
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
-          '^packages/[^/]+/src/(index|testing|tokens|fonts|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
+          '^packages/[^/]+/src/(index|testing|tokens/index|fonts|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
         ],
       },
     },

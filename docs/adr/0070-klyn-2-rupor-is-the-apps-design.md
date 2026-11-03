@@ -7,7 +7,7 @@ The owner chose «Клин 2.0: Рупор» for the whole app after the design 
 **Where the design lives (ADR 0006).**
 
 - **Edition tokens** (`editions/<edition>/tokens.json`): the palette of both Themes and the font families. The Ukrainian Edition carries the design's light and dark palettes, Unbounded for the word and Onest for the interface.
-- **Core tokens** (`packages/ui/src/tokens.ts`): shapes and radii, type roles (family slot, size, weight, line height, letter spacing), hard offset shadows, wedge shapes, the halftone raster and motion durations and curves. The Core keeps neutral defaults for every Edition token.
+- **Core tokens** (`packages/ui/src/tokens/`): shapes and radii, type roles (family slot, size, weight, line height, letter spacing), hard offset shadows, wedge shapes, the halftone raster and motion durations and curves. The Core keeps neutral defaults for every Edition token.
 
 **The colour roles of one scheme.** `background`, `ink`, `surface`, `surfaceSunken` (the design's second surface), `tile` (the face of a tile or button), `tileEdge` (its 3D edge), `accent` (the red), `accentEdge` (the red's edge and pressed shadow), `onAccent` (cream on red), `highlight` (the crossword word, the selected letter), `muted`, `line`, `silhouette` (the off track, the locked Badge, the empty tile), `tabBar`, `decor`, and the existing `correct`, `wrong`, `heart` and `destructive`, which the design maps: `correct`, `heart` and `destructive` are the red, and `wrong` is the ink with a slash. `inkSecondary`, `track` and `inactiveTab` are removed, not kept as aliases. The radii are `tile`, `button`, `card`, `chip` and `sheet`. The Edition schema refuses a removed role.
 

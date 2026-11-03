@@ -21,7 +21,7 @@ on:
       - 'apps/site/**'
       - 'packages/contracts/**'
       - 'packages/language-pack/src/**'
-      - 'packages/ui/src/tokens.ts'
+      - 'packages/ui/src/tokens/**'
       - 'pnpm-lock.yaml'
       - '.github/workflows/pages.yml'
   workflow_dispatch:

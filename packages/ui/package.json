@@ -8,7 +8,7 @@
     ".": "./src/index.ts",
     "./entry-row-text": "./src/entries/entry-row-text.ts",
     "./known-line": "./src/progress/known-line.ts",
-    "./tokens": "./src/tokens.ts"
+    "./tokens": "./src/tokens/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
