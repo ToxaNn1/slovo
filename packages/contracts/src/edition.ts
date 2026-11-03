@@ -312,6 +312,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   sounds: z.boolean(),
   /** «Менше руху»: the Settings switch that turns every animation into its calmer variant, as the system's Reduce Motion does (ADR 0055). */
   reduceMotion: z.boolean(),
+  /** The fast reveal: in one visit to the Feed the first Entry card plays the full reveal and every next card a fast one; off, every card plays the full reveal. */
+  fastReveal: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
