@@ -193,13 +193,14 @@ export function CrosswordGrid({
       </View>
       {selected && (
         <View
-          style={[styles.clueBar, { backgroundColor: colors.surface, borderRadius: radii.tile }]}
+          testID={`${testID}-clue-card`}
+          style={[styles.clueBar, { backgroundColor: colors.ink, borderRadius: radii.tile }]}
         >
           <Text
             testID={`${testID}-clue`}
             accessibilityLiveRegion="polite"
             {...voice}
-            style={[typeStyle('crosswordClue', tokens), { color: colors.ink }]}
+            style={[typeStyle('crosswordClue', tokens), { color: colors.background }]}
           >
             {selected.clue}
           </Text>
