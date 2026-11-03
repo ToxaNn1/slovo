@@ -303,13 +303,7 @@ function SheetPanel({
       }}
       style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[8]) }, sheetStyle]}
     >
-      <Wedge
-        points={SLANT}
-        color={fill}
-        width="100%"
-        height={SHEET_SLANT}
-        style={styles.slant}
-      />
+      <Wedge points={SLANT} color={fill} width="100%" height={SHEET_SLANT} style={styles.slant} />
       <View
         style={[styles.body, { backgroundColor: fill }]}
         testID={testID === undefined ? undefined : `${testID}-fill`}

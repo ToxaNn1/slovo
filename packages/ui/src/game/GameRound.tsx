@@ -1080,10 +1080,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
         accessibilityRole="header"
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
         {...voice}
-        style={[
-          typeStyle('roundVerdict', tokens),
-          { color: colors.ink },
-        ]}
+        style={[typeStyle('roundVerdict', tokens), { color: colors.ink }]}
       >
         {right ? strings.game.sheet.correct : strings.game.sheet.wrong}
       </Text>

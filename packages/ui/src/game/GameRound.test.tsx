@@ -1145,7 +1145,12 @@ describe('the answer sheet', () => {
           <EditionProvider edition={{ locale: 'en' }} strings={strings}>
             <HapticsProvider haptics={haptics}>
               <InterfaceSoundsProvider sounds={{ play }}>
-                <Game start={first} onAnswer={jest.fn()} onLeave={jest.fn()} onOpenLetter={jest.fn()} />
+                <Game
+                  start={first}
+                  onAnswer={jest.fn()}
+                  onLeave={jest.fn()}
+                  onOpenLetter={jest.fn()}
+                />
               </InterfaceSoundsProvider>
             </HapticsProvider>
           </EditionProvider>
@@ -1165,12 +1170,10 @@ describe('the answer sheet', () => {
     },
   );
 
-  it.each([
-    ['light', DARK, CREAM],
-    ['dark', CREAM, DARK],
-  ] as const)(
+  it.each(['light', 'dark'] as const)(
     'draws a wrong answer on the Theme’s ink with its background on it in the %s Theme',
-    async (colorScheme, fill, text) => {
+    async (colorScheme) => {
+      const { ink: fill, background: text } = boardTokens.colors[colorScheme];
       await answerIn(colorScheme, 'brittle');
 
       expect(screen.getByTestId('game-sheet-fill')).toHaveStyle({ backgroundColor: fill });
