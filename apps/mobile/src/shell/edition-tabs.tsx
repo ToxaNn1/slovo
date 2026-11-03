@@ -1,7 +1,7 @@
 import { fill, ScreenEnter, TabBarButton, type IconName } from '@slovo/ui';
-import { Tabs } from 'expo-router';
+import { Tabs, useIsFocused } from 'expo-router';
 import { getFocusedRouteNameFromRoute } from 'expo-router/react-navigation';
-import { useEffect, useState, type ComponentProps } from 'react';
+import type { ComponentProps } from 'react';
 
 import { editionStrings } from '@/edition/edition';
 import { useGameState } from '@/game/game';
@@ -74,25 +74,18 @@ function barShown(shown: boolean, style: TabOptions['tabBarStyle']) {
   return { tabBarStyle: shown ? style : [style, { display: 'none' as const }] };
 }
 
-/** A screen of the tabs, entering as the design has it each time it gains focus. */
-function FocusedEnter({
-  navigation,
-  children,
-}: Pick<ScreenLayoutProps, 'navigation' | 'children'>) {
-  const [focused, setFocused] = useState(() => navigation.isFocused());
-  useEffect(() => {
-    const offFocus = navigation.addListener('focus', () => {
-      setFocused(true);
-    });
-    const offBlur = navigation.addListener('blur', () => {
-      setFocused(false);
-    });
-    return () => {
-      offFocus();
-      offBlur();
-    };
-  }, [navigation]);
-  return <ScreenEnter focused={focused}>{children}</ScreenEnter>;
+/**
+ * A screen of the tabs, entering as the design has it each time it gains
+ * focus. Its focus is read from the navigation state on each render, so no
+ * focus is missed between the first render and a subscription.
+ */
+function FocusedEnter({ route, children }: Pick<ScreenLayoutProps, 'route' | 'children'>) {
+  const focused = useIsFocused();
+  return (
+    <ScreenEnter focused={focused} testID={`${route.name}-enter`}>
+      {children}
+    </ScreenEnter>
+  );
 }
 
 /**
@@ -117,9 +110,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
   return (
     <Tabs
       screenOptions={screenOptions}
-      screenLayout={({ navigation, children }) => (
-        <FocusedEnter navigation={navigation}>{children}</FocusedEnter>
-      )}
+      screenLayout={({ route, children }) => <FocusedEnter route={route}>{children}</FocusedEnter>}
     >
       <Tabs.Screen name="index" options={tab('home')} />
       <Tabs.Screen name="game" options={({ route }) => tab('game', atRoot(route) && !gameOn)} />

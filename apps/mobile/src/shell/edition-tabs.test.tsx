@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import { Text } from 'react-native';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ScreenStack } from '../entries/screen-stack';
@@ -110,5 +111,33 @@ describe('the tab bar', () => {
 
     expect(await screen.findByText(shown)).toBeOnTheScreen();
     expect(screen.queryByText(tabs.home)).toBeNull();
+  });
+});
+
+/** How far a tab's screen still stands off its place as it enters. */
+function shiftOf(tab: string) {
+  return (
+    getAnimatedStyle(screen.getByTestId(`${tab}-enter-content`)) as {
+      transform?: { translateX?: number }[];
+    }
+  ).transform?.find((step) => step.translateX !== undefined)?.translateX;
+}
+
+describe('the entrance of a tab', () => {
+  it('brings the Feed to rest on the first open', async () => {
+    await renderTabs('/');
+    await settle(() => undefined);
+
+    expect(shiftOf('index')).toBe(0);
+  });
+
+  it('brings a tab to rest each time it is opened again', async () => {
+    await renderTabs('/');
+    await settle(() => fireEvent.press(screen.getByText(tabs.saved)));
+    await settle(() => fireEvent.press(screen.getByText(tabs.home)));
+    // The tab comes back on screen a step after the press; its entrance runs from there.
+    await settle(() => undefined);
+
+    expect(shiftOf('index')).toBe(0);
   });
 });

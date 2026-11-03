@@ -58,6 +58,7 @@ export function FlyingLetters({
   testID: string | undefined;
 }) {
   const all = letters(text);
+  const count = all.filter((letter) => letter.trim() !== '').length;
   const { color } = StyleSheet.flatten(style);
   return (
     <>
@@ -82,6 +83,7 @@ export function FlyingLetters({
           <FlyingLetter
             key={index}
             order={order}
+            count={count}
             playing={flying.playing}
             pace={flying.pace}
             testID={testID === undefined ? undefined : `${testID}-${String(order)}`}
@@ -100,12 +102,15 @@ export function FlyingLetters({
 
 function FlyingLetter({
   order,
+  count,
   playing,
   pace,
   testID,
   children,
 }: {
   order: number;
+  /** How many letters fly, the spaces left out. */
+  count: number;
   playing: boolean;
   pace: () => RevealPace;
   testID: string | undefined;
@@ -120,15 +125,17 @@ function FlyingLetter({
       return;
     }
     const flight = entryReveal[pace()].letters;
+    // A long headline takes shorter turns, so its last letter starts within the spread.
+    const stagger = Math.min(flight.stagger, flight.spread / Math.max(1, count - 1));
     landed.value = withDelay(
-      flight.delay + order * flight.stagger,
+      flight.delay + order * stagger,
       withTiming(1, {
         duration: flight.duration,
         easing: letterEasing,
         reduceMotion: ReduceMotion.Never,
       }),
     );
-  }, [playing, pace, order, landed]);
+  }, [playing, pace, order, count, landed]);
   const startX = from.x - order * from.xStep;
   const fly = useAnimatedStyle(() => {
     const away = 1 - landed.value;
