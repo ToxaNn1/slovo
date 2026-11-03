@@ -190,6 +190,8 @@ export const typeRoles = {
   modeBest: role('word', '800', 12, 12),
   /** The Daily Crossword's name on its red card. */
   crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
+  /** The Daily Crossword's name in its screen's header, beside the back tile. */
+  crosswordHeader: role('word', '900', 18, 18, 0, 'uppercase'),
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The day under the Daily Crossword's name on its red card. */

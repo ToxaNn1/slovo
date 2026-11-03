@@ -1,8 +1,7 @@
 import {
-  BackLink,
   CrosswordGrid,
-  ScreenTitle,
   Button,
+  IconButton,
   space,
   typeStyle,
   useEdition,
@@ -11,7 +10,7 @@ import {
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
 import { crosswordCellLabel, crosswordKeys, useDailyCrossword } from '@/game/daily-crossword';
@@ -22,6 +21,8 @@ import { useShown } from '@/shown-in-effect';
 const { game: strings } = editionStrings;
 const keys = crosswordKeys(edition.languageTraits);
 
+/** How far the largest text sizes of iOS may scale the header's name, so it stays on one line. */
+const HEADER_MAX_FONT_SCALE = 1.3;
 /** How far the largest text sizes of iOS may scale the solved line, so it never breaks a word. */
 const SOLVED_MAX_FONT_SCALE = 1.5;
 
@@ -44,6 +45,7 @@ export default function DailyCrosswordScreen() {
   const { shareCard } = useShell();
   const share = useShown().dailyCrosswordShare ? shareCard : undefined;
   const [sharing, setSharing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!solved) return;
@@ -52,22 +54,38 @@ export default function DailyCrosswordScreen() {
 
   if (crossword === null) return <Redirect href="/game" />;
   return (
-    <SafeAreaView
+    // The bottom inset keeps the keyboard's last row, ⌫ with it, above the home indicator.
+    <View
       testID="daily-crossword-screen"
-      edges={['top']}
-      style={[styles.screen, { backgroundColor: colors.background }]}
+      style={[
+        styles.screen,
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        },
+      ]}
     >
-      <View style={styles.back}>
-        <BackLink
+      <View style={styles.header}>
+        <IconButton
           testID="daily-crossword-screen-back"
-          label={strings.title}
+          icon="back"
+          accessibilityLabel={strings.title}
           onPress={() => {
             router.back();
           }}
         />
+        <Text
+          accessibilityRole="header"
+          {...voice}
+          numberOfLines={1}
+          maxFontSizeMultiplier={HEADER_MAX_FONT_SCALE}
+          style={[typeStyle('crosswordHeader', tokens), styles.title, { color: colors.ink }]}
+        >
+          {strings.dailyCrossword.title}
+        </Text>
       </View>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenTitle>{strings.dailyCrossword.title}</ScreenTitle>
         {crossword !== undefined && (
           <CrosswordGrid
             testID="daily-crossword-grid"
@@ -116,13 +134,22 @@ export default function DailyCrosswordScreen() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  back: { paddingHorizontal: space[3], paddingTop: space[2] },
+  // As the board: the 44-point back tile and the name beside it, in one row.
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space[3],
+    paddingHorizontal: space[4],
+    paddingTop: space[2],
+    paddingBottom: space[4],
+  },
+  title: { flex: 1 },
   content: { gap: space[4], paddingHorizontal: space[5], paddingBottom: space[8] },
   solved: { textAlign: 'center' },
 });
