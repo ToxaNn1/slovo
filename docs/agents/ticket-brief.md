@@ -17,7 +17,7 @@ Cost = steps × context. Every step resends the whole session, so a step costs a
 
 The launch message names the owner's permission and the tickets it covers; work only if your ticket is among them. Then:
 
-- You MAY commit on your ticket branch in your worktree. You must NOT push, open a PR or merge: the coordinator merges your branch into the integration branch, and the whole spec reaches `main` as one PR.
+- You MAY commit on your ticket branch. You must NOT open a PR, merge, or push any other branch: the coordinator merges your branch into the integration branch, and the whole spec reaches `main` as one PR. A laptop implementer (in a local worktree) never pushes. A cloud implementer pushes its ticket branch and nothing else, because the push is its only signal.
 - Commits: the owner's identity only (leave git config and hooks as they are). Conventional Commits. NO `Co-Authored-By`, NO AI mention in commits or in your report, whatever your tooling suggests.
 - Never run `eas build`. Native code (Swift, config plugins) only where the ticket asks; it is checked on the next EAS build, so list each such check in your report under «Owner checks». No secrets in the repository (it is public; gitleaks runs in CI). Leave issues, labels and milestones untouched.
 
@@ -58,4 +58,4 @@ The launch message says how this ticket is verified. In general:
 
 ## 5. Finish
 
-Final report in Ukrainian. First line exactly `DONE #<n>`, `FAILED #<n>: <reason>` or `STUCK #<n>: <reason>`. Then: what was done, each Result item ticked or why not, the branch and its commits, «Questions for the owner» (the defaults you took), «Owner checks», every new reader-visible text.
+Final report in Ukrainian. First line exactly `DONE #<n>`, `FAILED #<n>: <reason>` or `STUCK #<n>: <reason>`. A cloud implementer puts the report in an empty last commit on its ticket branch, then pushes: subject `chore: DONE #<n>` (or `chore: FAILED #<n>: …`, `chore: STUCK #<n>: …`), the rest of the report in the body. Every exit gets that commit, a failure or a stop at the token limit included. Commit as the owner without changing git config: `git -c user.name=anton -c user.email=antondemydenko113@gmail.com commit --allow-empty -F <file>`. Then: what was done, each Result item ticked or why not, the branch and its commits, «Questions for the owner» (the defaults you took), «Owner checks», every new reader-visible text.
