@@ -303,7 +303,9 @@ function SheetPanel({
       }}
       style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[8]) }, sheetStyle]}
     >
-      <Wedge points={SLANT} color={fill} width="100%" height={SHEET_SLANT} style={styles.slant} />
+      <View style={styles.slant}>
+        <Wedge points={SLANT} color={fill} width="100%" height={SHEET_SLANT} />
+      </View>
       <View
         style={[styles.body, { backgroundColor: fill }]}
         testID={testID === undefined ? undefined : `${testID}-fill`}
@@ -335,7 +337,8 @@ const styles = StyleSheet.create({
   // Over the scrim, which takes the taps beside the sheet.
   avoiding: { flex: 1, justifyContent: 'flex-end', pointerEvents: 'box-none' },
   sheet: { maxHeight: '100%', paddingTop: SHEET_SLANT, paddingHorizontal: space[5], gap: space[4] },
-  slant: { position: 'absolute', top: 0, left: 0 },
+  // Edge to edge: an absolute child's percentage width counts without the sheet's side padding.
+  slant: { position: 'absolute', top: 0, left: 0, right: 0, height: SHEET_SLANT },
   body: { position: 'absolute', top: SHEET_SLANT, left: 0, right: 0, bottom: 0 },
   // The slanted top, above the content, takes the drag and the tap.
   dragStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: SHEET_SLANT },
