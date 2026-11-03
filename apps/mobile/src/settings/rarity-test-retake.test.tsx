@@ -18,7 +18,7 @@ import SettingsScreen from '../app/settings';
 import MixScreen from '../app/settings/mix';
 import RarityTestScreen from '../app/settings/rarity-test';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { screenSettled } from '../entries/use-open-screen';
+import { screenSettled } from '../use-open-screen';
 import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';

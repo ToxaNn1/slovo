@@ -119,9 +119,11 @@ async function renderScreen({
 /** The lines of the counters «Без лічильників» hides. */
 const counterLines = [
   'profile-level',
+  'profile-level-name',
   'profile-to-next',
   'profile-total-xp',
   'profile-streak',
+  'profile-streak-words',
   'profile-best-streak',
 ];
 
@@ -131,11 +133,16 @@ describe('the Profile', () => {
 
     expect(screen.getByText(strings.title)).toBeOnTheScreen();
     expect(screen.getByTestId('profile-total-xp')).toHaveTextContent('Усього XP: 0');
-    expect(screen.getByTestId('profile-streak')).toHaveTextContent('Серія: 0');
-    expect(screen.getByTestId('profile-best-streak')).toHaveTextContent('Найкраща серія: 0');
-    expect(screen.getByTestId('profile-level')).toBeOnTheScreen();
+    expect(screen.getByTestId('profile-streak')).toHaveTextContent('0');
+    expect(screen.getByTestId('profile-streak-words')).toHaveTextContent('днів поспіль');
+    expect(screen.getByTestId('profile-best-streak')).toHaveTextContent('найкраща серія — 0');
+    expect(screen.getByTestId('profile-level-number')).toHaveTextContent('0');
+    expect(screen.getByText(strings.levelLabel)).toBeOnTheScreen();
     expect(screen.getByTestId('profile-to-next')).toHaveTextContent(/XP до наступного рівня/);
-    expect(screen.getByText(strings.activeDays)).toBeOnTheScreen();
+    expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
+    expect(screen.getByTestId('profile-badges-count')).toHaveTextContent(
+      `0 з ${String(edition.badges.length)}`,
+    );
     for (const rarity of [1, 2, 3, 4, 5]) {
       expect(screen.getByTestId(`profile-confirmed-${String(rarity)}`)).toHaveTextContent(
         `Рідкість ${String(rarity)}: 0`,
@@ -160,13 +167,13 @@ describe('the Profile', () => {
 
     for (const line of counterLines) expect(screen.queryByTestId(line)).not.toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: strings.shareLevel })).not.toBeOnTheScreen();
-    expect(screen.getByText(strings.activeDays)).toBeOnTheScreen();
+    expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
     expect(screen.getByText(strings.confirmed)).toBeOnTheScreen();
   });
 
   it('shares the Level reached as its Share Card and tells Analytics once it is shared', async () => {
     await renderScreen({ rounds: 50, shareCard: sendingShareCard });
-    expect(screen.getByTestId('profile-level')).toHaveTextContent(/^Рівень 1 · /);
+    expect(screen.getByTestId('profile-level-number')).toHaveTextContent('1');
 
     await fireEvent.press(screen.getByRole('button', { name: strings.shareLevel }));
 
@@ -177,7 +184,7 @@ describe('the Profile', () => {
   it('offers no share of the Level before the first one is reached', async () => {
     await renderScreen({ shareCard: sendingShareCard });
 
-    expect(screen.getByTestId('profile-level')).toHaveTextContent(/^Рівень 0 · /);
+    expect(screen.getByTestId('profile-level-number')).toHaveTextContent('0');
     expect(screen.queryByRole('button', { name: strings.shareLevel })).not.toBeOnTheScreen();
   });
 
@@ -188,7 +195,7 @@ describe('the Profile', () => {
       shareCard: sendingShareCard,
     });
 
-    expect(screen.getByTestId('profile-level')).toHaveTextContent(/^Рівень 1 · /);
+    expect(screen.getByTestId('profile-level-number')).toHaveTextContent('1');
     expect(screen.queryByRole('button', { name: strings.shareLevel })).not.toBeOnTheScreen();
   });
 

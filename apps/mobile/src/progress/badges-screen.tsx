@@ -1,7 +1,8 @@
 import type { BadgeState } from '@slovo/core';
 import {
   BackLink,
-  BadgeMark,
+  BadgeGrid,
+  BadgeStamp,
   fill,
   ScreenTitle,
   space,
@@ -10,18 +11,17 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
+import { MascotAs } from '../mascot/mascot';
 import { useSubscribed } from '../opening';
 import { dayText } from './day-text';
 
 const strings = editionStrings.settings.badges;
-
-/** The side of a Badge's mark beside its name. */
-const BADGE_MARK = 44;
 
 /** The progress forms of an unearned Badge's condition; none for a condition of one first time. */
 function progressForms({ condition }: BadgeState) {
@@ -41,14 +41,18 @@ function progressForms({ condition }: BadgeState) {
   }
 }
 
-/** Every Badge of the Edition in its order, earned with its date or, while not, with how far its condition has come. */
-function BadgeList() {
+/**
+ * Every Badge of the Edition as its mark, in a grid by family under how many
+ * of all are earned; each shows, and VoiceOver reads, its date or, while not earned,
+ * how far its condition has come. A tap on an earned one stamps it on red.
+ */
+function Badges() {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice, count } = useEdition();
   const badges = useSubscribed(useComposition().badges, ({ state }) => state);
-  const nameStyle = [typeStyle('badgeName', tokens), { color: colors.ink }];
-  const textStyle = [typeStyle('badgeStatus', tokens), { color: colors.muted }];
+  /** The earned Badge stamped over the screen after a tap on its mark. */
+  const [stamped, setStamped] = useState<BadgeState | undefined>(undefined);
 
   const statusOf = (badge: BadgeState) => {
     if (badge.earned) return fill(strings.earned, { date: dayText(badge.date) });
@@ -58,28 +62,44 @@ function BadgeList() {
     return fill(count(forms, target), { current: String(current) });
   };
 
-  return badges.map((badge) => (
-    <View key={badge.id} testID={`badge-${badge.id}`} style={styles.badge}>
-      <BadgeMark
-        testID={`badge-${badge.id}-mark`}
-        condition={badge.condition}
-        symbol={badge.symbol}
-        earned={badge.earned}
-        size={BADGE_MARK}
+  return (
+    <>
+      <Text
+        {...voice}
+        testID="badges-count"
+        style={[typeStyle('progressCount', tokens), styles.count, { color: colors.muted }]}
+      >
+        {fill(strings.earnedOf, {
+          earned: String(badges.filter(({ earned }) => earned).length),
+          total: String(badges.length),
+        })}
+      </Text>
+      <BadgeGrid
+        badges={badges}
+        size="screen"
+        statusOf={statusOf}
+        onPress={(badge) => {
+          if (badge.earned) setStamped(badge);
+        }}
       />
-      <View style={styles.words}>
-        <Text {...voice} style={nameStyle}>
-          {badge.name}
-        </Text>
-        <Text {...voice} testID={`badge-${badge.id}-status`} style={textStyle}>
-          {statusOf(badge)}
-        </Text>
-      </View>
-    </View>
-  ));
+      {stamped !== undefined && (
+        <BadgeStamp
+          condition={stamped.condition}
+          symbol={stamped.symbol}
+          name={stamped.name}
+          title={editionStrings.settings.profile.badgeStamp.title}
+          takeLabel={editionStrings.settings.profile.badgeStamp.take}
+          mascot={<MascotAs state="celebrates" onRed />}
+          onClose={() => {
+            setStamped(undefined);
+          }}
+        />
+      )}
+    </>
+  );
 }
 
-/** Settings › Відзнаки (ADR 0066): the Badge list under its title. */
+/** Settings › Відзнаки (ADR 0066), as the board: the Badges in a grid by family under its title. */
 export function BadgesScreen() {
   const { colors } = useTokens();
   const router = useRouter();
@@ -101,7 +121,7 @@ export function BadgesScreen() {
         <View style={styles.section}>
           <ScreenTitle>{strings.title}</ScreenTitle>
         </View>
-        <BadgeList />
+        <Badges />
       </ScrollView>
     </SafeAreaView>
   );
@@ -109,8 +129,7 @@ export function BadgesScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
-  section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: space[3], paddingBottom: space[4] },
-  words: { flex: 1, gap: space[1] },
+  content: { paddingHorizontal: space[4], paddingTop: space[2], paddingBottom: space[8] },
+  section: { gap: space[3], paddingTop: space[2], paddingBottom: space[2] },
+  count: { paddingBottom: space[4] },
 });

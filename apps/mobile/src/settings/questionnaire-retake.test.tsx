@@ -18,7 +18,7 @@ import SettingsScreen from '../app/settings';
 import QuestionnaireScreen from '../app/settings/questionnaire';
 import { LaterQuestionNotice } from '../feed/later-question-notice';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { screenSettled } from '../entries/use-open-screen';
+import { screenSettled } from '../use-open-screen';
 import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SettingsProvider } from './settings';

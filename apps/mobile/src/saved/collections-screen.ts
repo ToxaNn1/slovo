@@ -1,7 +1,7 @@
 import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
 import { withoutStress, type Collection } from '@slovo/core';
 
-/** A Collection's row on the Collections screen. */
+/** A Collection's card on the Collections screen. */
 export interface CollectionRowModel {
   readonly id: string;
   readonly name: string;
@@ -9,22 +9,20 @@ export interface CollectionRowModel {
   readonly count: string;
   /** Whether it holds no Entries, so it has nothing to share. */
   readonly empty: boolean;
-  /** Its newest Lemmas. */
-  readonly lemmas: readonly string[];
   /**
-   * What VoiceOver reads for the row: the name, the count and the newest
+   * What VoiceOver reads for the card: the name, the count and the newest
    * Lemmas, without the Stress mark the voices break a word at.
    */
   readonly accessibilityLabel: string;
-  /** What VoiceOver reads for the row's rename action. */
+  /** What VoiceOver reads for the card's rename action. */
   readonly renameLabel: string;
-  /** What VoiceOver reads for the row's delete action. */
+  /** What VoiceOver reads for the card's delete action. */
   readonly deleteLabel: string;
-  /** What VoiceOver reads for the row's «…» button. */
+  /** What VoiceOver reads for the card's menu action. */
   readonly moreLabel: string;
 }
 
-/** The Collections screen's rows, in the order of the Collections (newest first). */
+/** The Collections screen's cards, in the order of the Collections (newest first). */
 export function collectionRows({
   collections,
   strings,
@@ -42,7 +40,6 @@ export function collectionRows({
       name,
       count: entries,
       empty: total === 0,
-      lemmas: newestLemmas,
       accessibilityLabel:
         newestLemmas.length === 0
           ? fill(strings.collectionLabel, { name, count: entries })

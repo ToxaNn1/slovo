@@ -27,7 +27,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
 import { EntryActions, useKnowledgeButtons } from '@/entries/entry-actions';
-import { useOpenScreen } from '@/entries/use-open-screen';
+import { useOpenScreen } from '@/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
 import { gameModeStrings } from '@/game/game-modes';

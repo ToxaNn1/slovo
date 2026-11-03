@@ -1,13 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
 
+import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useEdition } from '../providers/EditionProvider';
 import { useLemmaSize, useWordTextSizes } from '../providers/FontSizeProvider';
-import { space, typeStyle } from '../tokens';
+import { space, typeRoles, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
  * A Word card in small, drawn at the user's font size and in the Theme in
- * effect, so a size can be judged before leaving Settings.
+ * effect, so a size can be judged before leaving Settings. The Lemma wraps
+ * between words and never inside one, smaller when a word is wider than the card.
  */
 export function FontSizePreview({
   lemma,
@@ -35,12 +37,13 @@ export function FontSizePreview({
         { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
       ]}
     >
-      <Text
+      <WholeWordsText
         testID="font-size-preview-lemma"
-        style={[typeStyle('heroWord', tokens), lemmaSize, { color: colors.ink }]}
-      >
-        {lemma}
-      </Text>
+        text={lemma}
+        size={lemmaSize}
+        tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
+        style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
+      />
       <Text
         testID="font-size-preview-definition"
         style={[typeStyle('definition', tokens), definitionSize, { color: colors.ink }]}

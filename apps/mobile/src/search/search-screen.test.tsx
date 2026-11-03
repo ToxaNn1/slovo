@@ -9,7 +9,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SearchScreen from '../app/search/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { screenSettled } from '../entries/use-open-screen';
+import { screenSettled } from '../use-open-screen';
 import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
 

@@ -1,7 +1,9 @@
 import {
+  AboutPanel,
   BackLink,
   fill,
   NavigationRow,
+  rowPadding,
   SectionLabel,
   SettingsGroup,
   SoonRow,
@@ -21,7 +23,7 @@ import { openLegalPage } from './legal-page';
 const strings = editionStrings.settings;
 
 /**
- * About: the Edition's name, the installed build and the OTA update it runs
+ * About: the Edition's name on the red shout panel, the installed build and the OTA update it runs
  * (ADR 0062), so a bug report names the exact code, while the binary reports
  * them; what SLOVO is and where its words come from, and its privacy policy
  * and terms, which open in the browser. Suggesting a word and reporting a
@@ -29,11 +31,11 @@ const strings = editionStrings.settings;
  */
 export function AboutScreen() {
   const tokens = useTokens();
-  const { colors, radii } = tokens;
-  const wordmark = typeStyle('wordmark', tokens);
+  const { colors } = tokens;
   const router = useRouter();
   const { voice } = useEdition();
   const build = installedBuild();
+  const sub = [typeStyle('rowSub', tokens), { color: colors.muted }];
   return (
     <SafeAreaView
       testID="about"
@@ -48,64 +50,38 @@ export function AboutScreen() {
             router.back();
           }}
         />
-        <View style={styles.identity}>
-          <Text
-            accessibilityRole="header"
-            {...voice}
-            style={[
-              wordmark,
-              // The last letter's spacing would push the word off centre.
-              { paddingLeft: wordmark.letterSpacing, color: colors.ink },
-            ]}
-          >
-            {edition.displayName}
-          </Text>
-          <Text
-            {...voice}
-            style={[typeStyle('sub', tokens), styles.editionLine, { color: colors.muted }]}
-          >
-            {strings.about.editionLine}
-          </Text>
-          {build !== undefined && (
-            <Text
-              testID="about-version"
-              {...voice}
-              style={[typeStyle('sub', tokens), styles.editionLine, { color: colors.muted }]}
-            >
-              {fill(strings.about.versionLine, { version: build.version, build: build.build })}
-            </Text>
-          )}
-          {build?.updateId !== undefined && (
-            <Text
-              testID="about-update"
-              {...voice}
-              style={[typeStyle('sub', tokens), styles.editionLine, { color: colors.muted }]}
-            >
-              {fill(strings.about.updateLine, { id: build.updateId })}
-            </Text>
-          )}
+        <View style={styles.panel}>
+          <AboutPanel testID="about-panel" name={edition.displayName} glyph={strings.about.glyph} />
         </View>
-        <View
-          style={[
-            styles.card,
-            { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
-          ]}
-        >
-          <Text
-            testID="about-description"
-            {...voice}
-            style={[typeStyle('aboutDescription', tokens), { color: colors.ink }]}
-          >
-            {strings.about.description}
-          </Text>
-          <Text
-            testID="about-sources"
-            {...voice}
-            style={[typeStyle('sub', tokens), { color: colors.muted }]}
-          >
-            {strings.about.sources}
-          </Text>
-        </View>
+        <SettingsGroup>
+          <View style={styles.block}>
+            <Text {...voice} style={[typeStyle('rowLabel', tokens), { color: colors.ink }]}>
+              {strings.about.editionLine}
+            </Text>
+            {build !== undefined && (
+              <Text testID="about-version" {...voice} style={sub}>
+                {fill(strings.about.versionLine, { version: build.version, build: build.build })}
+              </Text>
+            )}
+            {build?.updateId !== undefined && (
+              <Text testID="about-update" {...voice} style={sub}>
+                {fill(strings.about.updateLine, { id: build.updateId })}
+              </Text>
+            )}
+          </View>
+          <View style={[styles.block, styles.description]}>
+            <Text
+              testID="about-description"
+              {...voice}
+              style={[typeStyle('aboutDescription', tokens), { color: colors.ink }]}
+            >
+              {strings.about.description}
+            </Text>
+            <Text testID="about-sources" {...voice} style={sub}>
+              {strings.about.sources}
+            </Text>
+          </View>
+        </SettingsGroup>
         <View style={styles.section}>
           <SectionLabel>{strings.about.feedback}</SectionLabel>
           <SettingsGroup>
@@ -147,12 +123,8 @@ export function AboutScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
-  identity: { alignItems: 'center', gap: space[2], marginVertical: space[6] },
-  editionLine: { textAlign: 'center' },
-  card: {
-    gap: space[3],
-    padding: space[6],
-    borderWidth: StyleSheet.hairlineWidth,
-  },
+  panel: { marginTop: space[3], marginBottom: space[4] },
+  block: { gap: space[1], paddingHorizontal: space[4], paddingVertical: rowPadding },
+  description: { gap: space[3] },
   section: { gap: space[3], marginTop: space[6] },
 });

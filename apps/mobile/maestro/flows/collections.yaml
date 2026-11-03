@@ -1,6 +1,7 @@
-# The Collections screen: the Saved tab's card opens it, «+» makes a Collection
-# (a taken name is refused), a swipe or the «…» menu renames it in place and
-# deletes it after the SLOVO dialog. A subflow of `smoke.yaml`; run it from there.
+# Collections: the Saved tab's «Колекції» tab shows them as cards, two to a row,
+# «+» makes a Collection (a taken name is refused), and the menu a long press on
+# a card opens renames it in the field over the cards and deletes it after the
+# SLOVO dialog. A subflow of `smoke.yaml`; run it from there.
 # Names are Latin, so the keyboard of any simulator can type them. It leaves
 # the Collections it found.
 appId: ${APP_ID || 'app.slovo.uk'}
@@ -30,7 +31,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - inputText: Alpha
 - pressKey: Enter
 - assertVisible:
-    id: collection-.*-content
+    id: collection-card-.*
     text: Alpha, 0 записів
 - assertNotVisible:
     id: collections-new
@@ -40,7 +41,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - inputText: Bravo
 - pressKey: Enter
 - assertVisible:
-    id: collection-.*-content
+    id: collection-card-.*
     text: Bravo, 0 записів
 - takeScreenshot: collections-created
 # A name that breaks a rule stays in the field with its reason, in any letter case.
@@ -52,28 +53,27 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collections-new-refusal
     text: Колекція з такою назвою вже є.
 - takeScreenshot: collections-refused
-# Leaving the field drops it.
-- tapOn: Колекції
+# Leaving the field drops it: a tap on the Saved title, the first «Збережене» over the tab bar's.
+- tapOn:
+    text: Збережене
+    index: 0
 - assertNotVisible:
     id: collections-new
-# The Saved overview counts what the screen made.
-- tapOn:
-    id: collections-back
+# The Collections tab counts what the list made.
 - assertVisible:
-    id: saved-collection-.*
-    text: Bravo, 0 записів
-- tapOn:
     id: saved-collections
-# A swipe while the screen still slides in is lost, and a long list slides in later.
+    text: 'Колекції, [2-9]\d* колекці.*'
+# A long press while the screen still slides in is lost, and a long list slides in later.
 - waitForAnimationToEnd
-# Swipe «Bravo» to «Назва»: its row becomes the field, with its name in it.
-- swipe:
-    from:
-      text: Bravo, 0 записів
-    direction: LEFT
-- takeScreenshot: collections-swiped
+# A long press on «Bravo» opens its menu; «Перейменувати» opens the field over the cards, with its name in it.
+- longPressOn:
+    id: collection-card-.*
+    text: Bravo, 0 записів
+# A tap while the sheet still slides in is lost.
+- waitForAnimationToEnd
+- takeScreenshot: collections-menu
 - tapOn:
-    id: collection-.*-rename
+    id: collections-menu-rename
 - assertVisible:
     id: collections-rename-input
     text: Bravo
@@ -82,17 +82,18 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - takeScreenshot: collections-renaming
 - pressKey: Enter
 - assertVisible:
-    id: collection-.*-content
+    id: collection-card-.*
     text: Charlie, 0 записів
 - assertNotVisible:
     text: Bravo, 0 записів
 # A name another Collection has is refused while renaming.
-- swipe:
-    from:
-      text: Charlie, 0 записів
-    direction: LEFT
+- longPressOn:
+    id: collection-card-.*
+    text: Charlie, 0 записів
+# A tap while the sheet still slides in is lost.
+- waitForAnimationToEnd
 - tapOn:
-    id: collection-.*-rename
+    id: collections-menu-rename
 - eraseText: 7
 - inputText: alpha
 - pressKey: Enter
@@ -102,13 +103,15 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn: Колекції
 - assertVisible:
     text: Charlie, 0 записів
-# Swipe to «Видалити»: the SLOVO dialog asks first, and cancelling keeps it.
-- swipe:
-    from:
-      text: Charlie, 0 записів
-    direction: LEFT
+# «Видалити» in the menu: the SLOVO dialog asks first, and cancelling keeps it.
+- longPressOn:
+    id: collection-card-.*
+    text: Charlie, 0 записів
+# A tap while the sheet still slides in is lost.
+- waitForAnimationToEnd
 - tapOn:
-    id: collection-.*-delete
+    id: collections-menu-delete
+- waitForAnimationToEnd
 - assertVisible: Видалити колекцію «Charlie»?
 - assertVisible: Самі записи нікуди не зникнуть.
 - takeScreenshot: collections-delete-confirm
@@ -116,61 +119,43 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: collections-delete-cancel
 - assertVisible:
     text: Charlie, 0 записів
-- swipe:
-    from:
-      text: Charlie, 0 записів
-    direction: LEFT
+- longPressOn:
+    id: collection-card-.*
+    text: Charlie, 0 записів
+# A tap while the sheet still slides in is lost.
+- waitForAnimationToEnd
 - tapOn:
-    id: collection-.*-delete
+    id: collections-menu-delete
 # A tap while the dialog still fades in is lost.
 - waitForAnimationToEnd
 - tapOn:
     id: collections-delete-destructive
 - assertNotVisible:
     text: Charlie, 0 записів
-# The «…» button offers the same two actions: rename first.
-- tapOn:
-    id: collection-.*-more
-- assertVisible:
-    id: collections-menu-rename
-- takeScreenshot: collections-menu
-# A tap while the sheet still slides in is lost.
-- waitForAnimationToEnd
-- tapOn:
-    id: collections-menu-rename
-- assertVisible:
-    id: collections-rename-input
-    text: Alpha
-- eraseText: 5
-- inputText: Delta
-- pressKey: Enter
-- assertVisible:
-    id: collection-.*-content
-    text: Delta, 0 записів
-- assertNotVisible:
-    text: Alpha, 0 записів
 # «Cancel» in the menu keeps everything as it is.
-- tapOn:
-    id: collection-.*-more
+- longPressOn:
+    id: collection-card-.*
+    text: Alpha, 0 записів
+# A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
 - tapOn:
     id: collections-menu-cancel
 - assertVisible:
-    text: Delta, 0 записів
-# «Delta» goes through the menu and the SLOVO dialog, leaving the Collections the flow found.
-- tapOn:
-    id: collection-.*-more
+    text: Alpha, 0 записів
+# «Alpha» goes through the menu and the SLOVO dialog, leaving the Collections the flow found.
+- longPressOn:
+    id: collection-card-.*
+    text: Alpha, 0 записів
+# A tap while the sheet still slides in is lost.
 - waitForAnimationToEnd
 - tapOn:
     id: collections-menu-delete
 - waitForAnimationToEnd
-- assertVisible: Видалити колекцію «Delta»?
+- assertVisible: Видалити колекцію «Alpha»?
 - tapOn:
     id: collections-delete-destructive
 - assertNotVisible:
-    text: Delta, 0 записів
-- tapOn:
-    id: collections-back
+    text: Alpha, 0 записів
 - swipe:
     from:
       id: gearshape.fill

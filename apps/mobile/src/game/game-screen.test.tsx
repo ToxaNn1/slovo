@@ -283,11 +283,14 @@ const sendingShareCard: ShareCard = (_view, _cardId, _format, onShared) => {
   return Promise.resolve('closed');
 };
 
-async function renderScreen({ shareCard }: { shareCard?: ShareCard } = {}) {
+async function renderScreen({
+  shareCard,
+  settings = {},
+}: { shareCard?: ShareCard; settings?: Parameters<typeof settingsAt>[0] } = {}) {
   const shell = testShell({
     composition: opened(composition),
     remoteSwitches: switchedTo(editionInEffect),
-    settings: await settingsAt(),
+    settings: await settingsAt(settings),
     shareCard,
   });
   await render(
@@ -553,8 +556,9 @@ describe('the Game screen', () => {
     await renderScreen();
 
     const card = await screen.findByTestId('daily-crossword');
-    expect(card).toHaveTextContent('Кросворд дня · 26 жовтня', { exact: false });
-    expect(card.props['accessibilityLabel']).toBe('Кросворд дня · 26 жовтня. Почати');
+    expect(within(card).getByText('Кросворд дня')).toBeOnTheScreen();
+    expect(within(card).getByText('26 жовтня')).toBeOnTheScreen();
+    expect(card.props['accessibilityLabel']).toBe('Кросворд дня. 26 жовтня. Почати');
     const cards = within(screen.getByTestId('game-modes'))
       .getAllByTestId(/^(daily-crossword|game-mode-.+)$/)
       .map((node): unknown => node.props['testID']);
@@ -567,7 +571,7 @@ describe('the Game screen', () => {
     await renderScreen();
 
     expect((await screen.findByTestId('daily-crossword')).props['accessibilityLabel']).toBe(
-      'Кросворд дня · 26 жовтня. Продовжити',
+      'Кросворд дня. 26 жовтня. Продовжити',
     );
   });
 
@@ -576,7 +580,7 @@ describe('the Game screen', () => {
     await renderScreen();
 
     const card = await screen.findByTestId('daily-crossword');
-    expect(card.props['accessibilityLabel']).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано');
+    expect(card.props['accessibilityLabel']).toBe('Кросворд дня. 26 жовтня. ✓ Розв’язано');
     expect(within(card).queryByText('Продовжити')).toBeNull();
   });
 
@@ -585,8 +589,51 @@ describe('the Game screen', () => {
     await renderScreen();
 
     expect((await screen.findByTestId('daily-crossword')).props['accessibilityLabel']).toBe(
-      'Кросворд дня · 26 жовтня. Почати',
+      'Кросворд дня. 26 жовтня. Почати',
     );
+  });
+
+  it('draws today’s grid on the Daily Crossword’s card: the letters in, and dark places no word reads through', async () => {
+    await open({ crossword: { date: '2026-10-26', letters: { '0,0': 'к', '1,0': 'о' } } });
+    await renderScreen();
+
+    const card = await screen.findByTestId('daily-crossword');
+    const cell = (row: number, column: number) =>
+      within(card).getByTestId(`daily-crossword-cell-${String(row)}-${String(column)}`);
+    expect(cell(0, 0)).toHaveTextContent('к');
+    expect(cell(1, 0)).toHaveTextContent('о');
+    expect(cell(0, 1)).toHaveTextContent('');
+    expect(cell(2, 4)).toHaveTextContent('');
+    expect(within(card).getAllByTestId(/^daily-crossword-cell-/)).toHaveLength(9);
+    expect(within(card).getAllByTestId(/^daily-crossword-block-/)).toHaveLength(16);
+    expect(within(card).getByTestId('daily-crossword-block-1-1')).toBeTruthy();
+  });
+
+  it('shows the XP earned in all, over every day, beside the title', async () => {
+    await open({
+      xp: [
+        { date: '2026-10-20', amount: 30 },
+        { date: '2026-10-26', amount: 15 },
+      ],
+    });
+    await renderScreen();
+
+    const pill = screen.getByTestId('games-xp');
+    expect(pill).toHaveTextContent('45 XP');
+    expect(pill.props['accessibilityLabel']).toBe('Усього XP: 45');
+  });
+
+  it('shows no XP while the reader hides the counters', async () => {
+    await renderScreen({ settings: { noCounters: true } });
+
+    expect(screen.queryByTestId('games-xp')).toBeNull();
+  });
+
+  it('shows no XP with the XP log switched off', async () => {
+    await open({ switchedOff: ['xpLog'] });
+    await renderScreen();
+
+    expect(screen.queryByTestId('games-xp')).toBeNull();
   });
 
   it('leaves out the Daily Crossword’s card with its Feature Switch off', async () => {

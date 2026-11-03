@@ -56,7 +56,5 @@ appId: ${APP_ID || 'app.slovo.uk'}
           id: entry-screen-back
       - assertVisible:
           id: learning
-- tapOn:
-    id: learning-back
 - assertVisible:
     id: saved

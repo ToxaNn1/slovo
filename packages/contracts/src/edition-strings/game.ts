@@ -34,6 +34,8 @@ const GameModeStringsSchema = z.strictObject({
 export const GameStringsSchema = z.strictObject({
   /** The mode screen's title. */
   title: TextSchema,
+  /** The XP earned in all, beside the mode screen's title, e.g. «45 XP». Takes `{count}`. */
+  xp: templateOf('count'),
   /** The titles of the mode screen's groups of mode cards, e.g. «Слова». */
   groups: z.strictObject({
     /** The modes that ask about Words, e.g. «Слова». */
@@ -67,7 +69,7 @@ export const GameStringsSchema = z.strictObject({
   dailyCrossword: z.strictObject({
     /** Its name, e.g. «Кросворд дня». */
     title: TextSchema,
-    /** Its name with the day on the card, e.g. «Кросворд дня · 26 жовтня». Takes `{day}`, the day of the month, and `{month}`, one of `dates.months`. */
+    /** The day under its name on the card, e.g. «26 жовтня». Takes `{day}`, the day of the month, and `{month}`, one of `dates.months`. */
     dated: templateOf('day', 'month'),
     /** The card's button before any letter is in, e.g. «Почати». */
     start: TextSchema,

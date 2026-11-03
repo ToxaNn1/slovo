@@ -121,8 +121,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: favorites
 # The SLOVO ID screen says when.
 - tapOn:
-    id: favorites-back
-- tapOn:
     id: tab-settings
 - runFlow:
     file: ../open-settings-row.yaml

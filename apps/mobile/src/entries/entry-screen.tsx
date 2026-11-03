@@ -10,7 +10,7 @@ import { useCompositionRead } from '../composition';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { EntryActions } from './entry-actions';
-import { useOpenScreen } from './use-open-screen';
+import { useOpenScreen } from '../use-open-screen';
 
 /**
  * The Entry screen a list opens: Entry details, the red panel with the back

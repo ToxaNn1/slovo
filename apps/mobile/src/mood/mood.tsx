@@ -7,7 +7,7 @@ import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useReplaceOpenEntry } from '../entries/replace-open-entry';
-import { useOpenScreen } from '../entries/use-open-screen';
+import { useOpenScreen } from '../use-open-screen';
 import { useShown } from '../shown-in-effect';
 
 /** The roulette's first pause between two Lemmas; each next one is longer, so it slows down. */

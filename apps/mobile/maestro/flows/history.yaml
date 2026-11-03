@@ -75,8 +75,6 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertNotVisible:
     id: history-clear
 - takeScreenshot: history-empty
-- tapOn:
-    id: history-back
 - assertVisible:
     id: saved-history
     text: Історія, 0 записів

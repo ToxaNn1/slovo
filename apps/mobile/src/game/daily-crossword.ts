@@ -6,7 +6,7 @@ import type {
   DailyCrosswordState,
   DailyCrosswordWord,
 } from '@slovo/core';
-import type { DailyCrosswordCard } from '@slovo/ui';
+import type { CrosswordMiniCell, DailyCrosswordCard } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useState, type ComponentProps } from 'react';
 
@@ -21,19 +21,42 @@ export type DailyCrosswordCardContent = Omit<
 >;
 
 /**
- * The Daily Crossword's card in the Edition's texts: its name with the day
- * and month of its date, and «Почати», «Продовжити» or the solved mark.
+ * The small grid of the Daily Crossword's card: each place of its letters, a
+ * cell with the letter typed in it where a word reads through, else dark.
+ */
+function miniGrid({ letters, words }: DailyCrosswordState): CrosswordMiniCell[][] {
+  const inWord = ({ row, column }: CrosswordPlace) =>
+    words.some(({ start, direction, length }) =>
+      direction === 'across'
+        ? row === start.row && column >= start.column && column < start.column + length
+        : column === start.column && row >= start.row && row < start.row + length,
+    );
+  return letters.map((cells, row) =>
+    cells.map((letter, column) =>
+      inWord({ row, column }) ? { kind: 'cell', letter } : { kind: 'block' },
+    ),
+  );
+}
+
+/**
+ * The Daily Crossword's card in the Edition's texts: its name, the day and
+ * month of its date, «Почати», «Продовжити» or the solved mark, and its grid
+ * with the letters typed.
  */
 function dailyCrosswordCard(
-  { date, progress }: DailyCrosswordState,
+  state: DailyCrosswordState,
   strings: EditionStrings['game']['dailyCrossword'],
   months: EditionStrings['dates']['months'],
 ): DailyCrosswordCardContent {
+  const { date, progress } = state;
   const [, month = 0, day = 0] = date.split('-').map(Number);
   const monthName = months[month - 1];
   if (monthName === undefined) throw new Error(`The Daily Crossword's date «${date}» has no month`);
   return {
-    title: fill(strings.dated, { day: String(day), month: monthName }),
+    title: strings.title,
+    day: fill(strings.dated, { day: String(day), month: monthName }),
+    solved: progress === 'solved',
+    grid: miniGrid(state),
     state:
       progress === 'solved'
         ? strings.solvedMark
