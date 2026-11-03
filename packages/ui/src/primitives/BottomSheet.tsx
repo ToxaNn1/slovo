@@ -78,7 +78,7 @@ export const SHEET_SLANT = 30;
 /**
  * A bottom sheet of the design over a scrim: a top edge that slants up to the
  * right, and a slide up that rises a little past its place (with Reduce Motion
- * a fade). A tap on the scrim, a downward drag or flick on its top strip, and
+ * a fade). A tap on the scrim or its top strip, a downward drag or flick on that strip, and
  * VoiceOver's escape gesture ask `onClose`; the sheet leaves when `visible`
  * turns false. Without `onClose` only its content closes it: its top takes no
  * drag, and no scrim dims the screen, which takes no taps meanwhile. The sheet
@@ -197,6 +197,13 @@ export function BottomSheet({
       }
     });
   if (testID !== undefined) pan.withTestId(`${testID}-drag`);
+  // A tall sheet leaves the scrim little more than the corner over its slant,
+  // which the strip covers: a tap there closes the sheet, as on the scrim.
+  const tap = Gesture.Tap().onEnd((_event, success) => {
+    if (success && onClose !== undefined) scheduleOnRN(onClose);
+  });
+  if (testID !== undefined) tap.withTestId(`${testID}-tap`);
+  const strip = Gesture.Race(pan, tap);
 
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [
@@ -218,7 +225,7 @@ export function BottomSheet({
         height.value = measured;
       }}
       sheetStyle={sheetStyle}
-      pan={pan}
+      strip={strip}
     >
       {children}
     </SheetPanel>
@@ -263,14 +270,14 @@ function SheetPanel({
   testID,
   onHeight,
   sheetStyle,
-  pan,
+  strip,
   children,
 }: {
   onClose: (() => void) | undefined;
   testID: string | undefined;
   onHeight: (height: number) => void;
   sheetStyle: ReturnType<typeof useAnimatedStyle>;
-  pan: ReturnType<typeof Gesture.Pan>;
+  strip: ReturnType<typeof Gesture.Race>;
   children: ReactNode;
 }) {
   const { colors } = useTokens();
@@ -297,7 +304,7 @@ function SheetPanel({
       {onClose === undefined ? null : (
         // A Modal is its own native root, so the gestures need a root of their own; a local one keeps the rest of the sheet out of the gesture system.
         <GestureHandlerRootView style={styles.dragStrip}>
-          <GestureDetector gesture={pan}>
+          <GestureDetector gesture={strip}>
             <View
               style={styles.fill}
               testID={testID === undefined ? undefined : `${testID}-drag-strip`}
@@ -316,7 +323,7 @@ const styles = StyleSheet.create({
   sheet: { maxHeight: '100%', paddingTop: SHEET_SLANT, paddingHorizontal: space[5], gap: space[4] },
   slant: { position: 'absolute', top: 0, left: 0 },
   body: { position: 'absolute', top: SHEET_SLANT, left: 0, right: 0, bottom: 0 },
-  // The slanted top, above the content, takes the drag.
+  // The slanted top, above the content, takes the drag and the tap.
   dragStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: SHEET_SLANT },
   fill: { flex: 1 },
 });

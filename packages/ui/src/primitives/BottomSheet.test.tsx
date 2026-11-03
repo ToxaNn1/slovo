@@ -211,6 +211,22 @@ describe('BottomSheet', () => {
 
     expect(onClose).toHaveBeenCalledTimes(1);
   });
+
+  it('asks to close at a tap on its slanted top, where a tall sheet leaves the scrim', async () => {
+    const { onClose } = await renderSheet();
+    await pass(450);
+
+    await act(() => {
+      fireGestureHandler(getByGestureTestId('sheet-tap'), [
+        { state: State.BEGAN },
+        { state: State.ACTIVE },
+        { state: State.END },
+      ]);
+    });
+    await pass(0);
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('BottomSheet on a route', () => {
