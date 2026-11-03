@@ -1,4 +1,4 @@
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '../primitives/Icon';
 import { PressedTile } from '../primitives/PressedTile';
@@ -18,14 +18,16 @@ import { WordOfTheDayBadge } from './WordOfTheDayBadge';
  * edge, under the halftone raster, with the ink back tile. A Word's panel
  * carries the giant first letter of its Lemma, the Word of the Day's kicker
  * when it is one, the Lemma, part of speech and the Pronunciation button;
- * its meaning and the action row follow on the screen's ground. Any other
- * kind keeps its Entry card under the panel. It never conceals the meaning.
+ * its meaning follows on the screen's ground and its action row is docked at
+ * the screen's foot. Any other kind keeps its Entry card under the panel.
+ * It never conceals the meaning.
  */
 export function EntryDetails({
   card,
   back,
   onBack,
   topInset,
+  bottomInset,
   stressFalls = false,
   onOpenCorrection,
   onOpenWord,
@@ -38,57 +40,81 @@ export function EntryDetails({
   onBack: () => void;
   /** The status bar's height: the panel runs under it. */
   topInset: number;
+  /** The home indicator's height: a Word's dock keeps its buttons above it. */
+  bottomInset: number;
 }) {
+  const { colors } = useTokens();
   const lemmaSize = useLemmaSize();
   const compact = useCompactLayout();
   const word = card.kind === 'word' ? card : undefined;
   return (
     <EntryReveal>
-      <AccentGround
-        id="entry-panel"
-        testID="entry-panel"
-        letter={word === undefined ? '' : firstLetter(word.model.lemma)}
-        letterRole="panelLetter"
-        letterAt={entryPanel.letter}
-        points={wedges.panel}
-        letterStopsAt={entryPanel.cutAt}
-        style={[styles.panel, { paddingTop: topInset + space[3] }]}
+      <ScrollView
+        testID="entry-scroll"
+        style={styles.scroll}
+        // The sheet of the action row is a child in React's tree, so a tap in its
+        // name field must not be swallowed to put the keyboard away.
+        keyboardShouldPersistTaps="handled"
       >
-        <BackTile label={back} onPress={onBack} />
-        {word !== undefined && (
-          <View style={styles.panelText}>
-            {word.wordOfTheDay !== undefined && <WordOfTheDayBadge day={word.wordOfTheDay} />}
-            <WordHeadline
-              card={word.model}
-              lemmaSize={lemmaSize}
-              concealed={false}
+        <AccentGround
+          id="entry-panel"
+          testID="entry-panel"
+          letter={word === undefined ? '' : firstLetter(word.model.lemma)}
+          letterRole="panelLetter"
+          letterAt={entryPanel.letter}
+          points={wedges.panel}
+          letterStopsAt={entryPanel.cutAt}
+          style={[styles.panel, { paddingTop: topInset + space[3] }]}
+        >
+          <BackTile label={back} onPress={onBack} />
+          {word !== undefined && (
+            <View style={styles.panelText}>
+              {word.wordOfTheDay !== undefined && <WordOfTheDayBadge day={word.wordOfTheDay} />}
+              <WordHeadline
+                card={word.model}
+                lemmaSize={lemmaSize}
+                concealed={false}
+                stressFalls={stressFalls}
+                lemmaFont={undefined}
+              />
+            </View>
+          )}
+        </AccentGround>
+        {word === undefined ? (
+          <View style={styles.otherKind}>
+            <EntryCard
+              card={card}
+              onOpenCorrection={onOpenCorrection}
+              onOpenWord={onOpenWord}
+              onOpenSynonymRow={onOpenSynonymRow}
+              onWordHistoryShown={onWordHistoryShown}
+              actions={actions}
               stressFalls={stressFalls}
-              lemmaFont={undefined}
+            />
+          </View>
+        ) : (
+          <View testID="word-card" style={styles.body}>
+            <WordSections
+              card={word.model}
+              compact={compact}
+              onOpenCorrection={onOpenCorrection}
+              onOpenSynonymRow={onOpenSynonymRow}
+              onHistoryShown={onWordHistoryShown}
             />
           </View>
         )}
-      </AccentGround>
-      {word === undefined ? (
-        <View style={styles.otherKind}>
-          <EntryCard
-            card={card}
-            onOpenCorrection={onOpenCorrection}
-            onOpenWord={onOpenWord}
-            onOpenSynonymRow={onOpenSynonymRow}
-            onWordHistoryShown={onWordHistoryShown}
-            actions={actions}
-            stressFalls={stressFalls}
-          />
-        </View>
-      ) : (
-        <View testID="word-card" style={styles.body}>
-          <WordSections
-            card={word.model}
-            compact={compact}
-            onOpenCorrection={onOpenCorrection}
-            onOpenSynonymRow={onOpenSynonymRow}
-            onHistoryShown={onWordHistoryShown}
-          />
+      </ScrollView>
+      {word !== undefined && (
+        <View
+          style={[
+            styles.dock,
+            {
+              paddingBottom: Math.max(bottomInset, space[3]),
+              backgroundColor: colors.background,
+              borderTopColor: colors.line,
+            },
+          ]}
+        >
           <RevealDetail step={3} testID="word-actions">
             {actions}
           </RevealDetail>
@@ -120,6 +146,12 @@ function BackTile({ label, onPress }: { label: string; onPress: () => void }) {
 }
 
 const styles = StyleSheet.create({
+  scroll: { flex: 1 },
+  // A Word's action row stays at the screen's foot over the scrolling text (XActions a4).
+  dock: {
+    paddingHorizontal: space[3],
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
   panel: {
     paddingHorizontal: space[4],
     paddingBottom: entryPanel.paddingBottom,

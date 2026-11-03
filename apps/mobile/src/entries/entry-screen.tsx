@@ -3,7 +3,7 @@ import { EntryDetails, UndoToastProvider, useTokens } from '@slovo/ui';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCompositionRead } from '../composition';
@@ -46,7 +46,7 @@ export function EntryScreen({
   openedFrom?: EntryLinkSource | 'search' | 'mood' | undefined;
 }) {
   const { colors } = useTokens();
-  const { top } = useSafeAreaInsets();
+  const { top, bottom } = useSafeAreaInsets();
   const router = useRouter();
   const openScreen = useOpenScreen();
   const { stressFall } = useShown();
@@ -72,34 +72,29 @@ export function EntryScreen({
         {/* The status bar sits on the red panel in both Themes. */}
         <StatusBar style="dark" />
         {card?.entryId === entryId && (
-          <ScrollView
-            // The sheet of the action row is a child in React's tree, so a tap in its
-            // name field must not be swallowed to put the keyboard away.
-            keyboardShouldPersistTaps="handled"
-          >
-            <EntryDetails
-              card={card}
-              back={back}
-              onBack={() => {
-                router.back();
-              }}
-              topInset={top}
-              onOpenCorrection={(correctionId) => {
-                const word = card.kind === 'word' ? card.model.lemma : back;
-                openScreen(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
-              }}
-              onOpenWord={(wordId) => {
-                openScreen(`${route}/${wordId}?back=${encodeURIComponent(back)}`);
-              }}
-              onOpenSynonymRow={(synonymRowId) => {
-                const word = card.kind === 'word' ? card.model.lemma : back;
-                openScreen(`${route}/${synonymRowId}?back=${encodeURIComponent(word)}`);
-              }}
-              onWordHistoryShown={onWordHistoryShown}
-              actions={<EntryActions card={card} place="details" />}
-              stressFalls={stressFall}
-            />
-          </ScrollView>
+          <EntryDetails
+            card={card}
+            back={back}
+            onBack={() => {
+              router.back();
+            }}
+            topInset={top}
+            bottomInset={bottom}
+            onOpenCorrection={(correctionId) => {
+              const word = card.kind === 'word' ? card.model.lemma : back;
+              openScreen(`${route}/${correctionId}?back=${encodeURIComponent(word)}`);
+            }}
+            onOpenWord={(wordId) => {
+              openScreen(`${route}/${wordId}?back=${encodeURIComponent(back)}`);
+            }}
+            onOpenSynonymRow={(synonymRowId) => {
+              const word = card.kind === 'word' ? card.model.lemma : back;
+              openScreen(`${route}/${synonymRowId}?back=${encodeURIComponent(word)}`);
+            }}
+            onWordHistoryShown={onWordHistoryShown}
+            actions={<EntryActions card={card} place="details" />}
+            stressFalls={stressFall}
+          />
         )}
         {/* Scrolled, the content passes under a red band behind the status bar. */}
         <View

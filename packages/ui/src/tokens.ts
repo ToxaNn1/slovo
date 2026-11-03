@@ -1415,6 +1415,9 @@ export const widgetDrawing = {
   mediumAspectRatio: 364 / 170,
 } as const;
 
+/** The «Знаю» and «Не знаю» pair: two equal columns across the card's width (XActions). */
+export const knowledgePair = { gap: 10 } as const;
+
 /**
  * The action row under an Entry card (XActions a1–a3): five raised tiles
  * with an icon over a label, each `height` tall with this `radius`, `gap`

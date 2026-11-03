@@ -4,7 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { useConcealed } from '../entries/self-check';
 import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
-import { space } from '../tokens';
+import { knowledgePair } from '../tokens';
 
 /**
  * The «Знаю» and «Не знаю» buttons of an Entry card (ADR 0043): the chosen
@@ -30,35 +30,38 @@ export function KnowledgeButtons({
   const inactive = useConcealed();
   return (
     <View style={styles.row}>
-      <Button
-        size="small"
-        variant={mark === 'known' ? 'primary' : 'neutral'}
-        testID="knowledge-known"
-        label={strings.knowledge.known}
-        accessibilityHint={
-          entryKind === 'correction' ? strings.knowledge.correctionKnownHint : undefined
-        }
-        selected={mark === 'known'}
-        disabled={inactive}
-        onPress={() => {
-          onTap('known');
-        }}
-      />
-      <Button
-        size="small"
-        variant={mark === 'unknown' ? 'primary' : 'neutral'}
-        testID="knowledge-unknown"
-        label={strings.knowledge.unknown}
-        selected={mark === 'unknown'}
-        disabled={inactive}
-        onPress={() => {
-          onTap('unknown');
-        }}
-      />
+      <View style={styles.cell}>
+        <Button
+          variant={mark === 'known' ? 'primary' : 'neutral'}
+          testID="knowledge-known"
+          label={strings.knowledge.known}
+          accessibilityHint={
+            entryKind === 'correction' ? strings.knowledge.correctionKnownHint : undefined
+          }
+          selected={mark === 'known'}
+          disabled={inactive}
+          onPress={() => {
+            onTap('known');
+          }}
+        />
+      </View>
+      <View style={styles.cell}>
+        <Button
+          variant={mark === 'unknown' ? 'primary' : 'neutral'}
+          testID="knowledge-unknown"
+          label={strings.knowledge.unknown}
+          selected={mark === 'unknown'}
+          disabled={inactive}
+          onPress={() => {
+            onTap('unknown');
+          }}
+        />
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', justifyContent: 'center', gap: space[3] },
+  row: { flexDirection: 'row', gap: knowledgePair.gap },
+  cell: { flex: 1 },
 });
