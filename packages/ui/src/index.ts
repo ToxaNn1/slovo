@@ -114,6 +114,7 @@ export { RecentQueries } from './search/RecentQueries';
 export { StatsPill } from './progress/StatsPill';
 export { XpPill } from './progress/XpPill';
 export { FeedHeader } from './feed/FeedHeader';
+export { HeaderFade } from './feed/HeaderFade';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
 export { BadgeMark } from './progress/BadgeMark';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
@@ -127,6 +128,7 @@ export {
   collectionCard,
   coreTokens,
   designTokens,
+  feedHeader,
   disabledOpacity,
   minTouchTarget,
   onboardingLayout,

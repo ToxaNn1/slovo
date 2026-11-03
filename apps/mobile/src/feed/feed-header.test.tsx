@@ -9,7 +9,7 @@ import {
   type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
+import { EditionProvider, feedHeader, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import type { ColorScheme } from '@slovo/ui';
@@ -147,6 +147,32 @@ async function renderApp(colorScheme: ColorScheme) {
   await settle();
 }
 
+/** A `#RRGGBB` colour as react-native-svg hands it to the native side: an opaque ARGB, as a signed 32-bit integer. */
+function argb(color: string) {
+  return parseInt(`FF${color.slice(1)}`, 16) | 0;
+}
+
+/** A drawn element: its props and what it holds. */
+interface Drawn {
+  props: Record<string, unknown>;
+  children: readonly (Drawn | string)[];
+}
+
+/** The stops of the gradient drawn in `node`, each an offset and a colour, from the top down. */
+function gradientStops(node: Drawn): unknown[] | undefined {
+  const { gradient } = node.props;
+  if (Array.isArray(gradient)) {
+    const stops: unknown[] = gradient;
+    return stops;
+  }
+  for (const child of node.children) {
+    if (typeof child === 'string') continue;
+    const stops = gradientStops(child);
+    if (stops) return stops;
+  }
+  return undefined;
+}
+
 describe('the Feed header', () => {
   it.each<ColorScheme>(['light', 'dark'])(
     'covers the scrolled cards with the screen background from the top edge, in the %s Theme',
@@ -155,12 +181,30 @@ describe('the Feed header', () => {
       await renderApp(colorScheme);
       // From the top of the screen, behind the status bar, down past the top row the cards scroll under.
       expect(screen.getByTestId('feed-header')).toHaveStyle({
-        backgroundColor: editionTokens.colors[colorScheme].background,
         top: 0,
         left: 0,
         right: 0,
         height: 47 + TOP_ROW,
       });
+      expect(
+        screen.getByTestId('feed-header-backdrop', { includeHiddenElements: true }),
+      ).toHaveStyle({ backgroundColor: editionTokens.colors[colorScheme].background });
+    },
+  );
+
+  it.each<ColorScheme>(['light', 'dark'])(
+    'fades its lower edge from the screen background to transparent, inside the top row, in the %s Theme',
+    async (colorScheme) => {
+      await open();
+      await renderApp(colorScheme);
+      const fade = screen.getByTestId('feed-header-fade', { includeHiddenElements: true });
+      // The fade ends where the top row ends, so the first card at rest starts below it.
+      expect(fade).toHaveProp('height', feedHeader.fade);
+      expect(fade).toHaveProp('pointerEvents', 'none');
+      const background = argb(editionTokens.colors[colorScheme].background);
+      // Two stops, each an offset and a colour: the background, then the background fully transparent.
+      const stops = gradientStops(fade);
+      expect(stops).toEqual([0, background, 1, background & 0xffffff]);
     },
   );
 });

@@ -1055,9 +1055,15 @@ export const xpBarPadding = 14;
 
 /**
  * The Feed's header, from the design: the logo's wedge and its gap to the
- * name, and the gap between today and the Streak pill.
+ * name, the gap between today and the Streak pill, and how tall the fade at
+ * its lower edge is, where a scrolled card passes under it.
  */
-export const feedHeader = { logoWedge: { width: 15, height: 22 }, logoGap: 8, endGap: 10 } as const;
+export const feedHeader = {
+  logoWedge: { width: 15, height: 22 },
+  logoGap: 8,
+  endGap: 10,
+  fade: 16,
+} as const;
 
 /**
  * The Streak pill in the Feed's header: its height and corner radius, its
