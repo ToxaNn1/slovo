@@ -1,7 +1,6 @@
 import {
-  BackLink,
   CrosswordGrid,
-  ScreenTitle,
+  BackHeader,
   Button,
   space,
   typeStyle,
@@ -11,7 +10,7 @@ import {
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
 import { crosswordCellLabel, crosswordKeys, useDailyCrossword } from '@/game/daily-crossword';
@@ -44,6 +43,7 @@ export default function DailyCrosswordScreen() {
   const { shareCard } = useShell();
   const share = useShown().dailyCrosswordShare ? shareCard : undefined;
   const [sharing, setSharing] = useState(false);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (!solved) return;
@@ -52,22 +52,32 @@ export default function DailyCrosswordScreen() {
 
   if (crossword === null) return <Redirect href="/game" />;
   return (
-    <SafeAreaView
+    // The bottom inset keeps the keyboard's last row, ⌫ with it, above the home indicator.
+    <View
       testID="daily-crossword-screen"
-      edges={['top']}
-      style={[styles.screen, { backgroundColor: colors.background }]}
+      style={[
+        styles.screen,
+        {
+          backgroundColor: colors.background,
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+        },
+      ]}
     >
-      <View style={styles.back}>
-        <BackLink
-          testID="daily-crossword-screen-back"
-          label={strings.title}
-          onPress={() => {
-            router.back();
+      <View style={styles.header}>
+        <BackHeader
+          title={strings.dailyCrossword.title}
+          titleRole="crosswordHeader"
+          back={{
+            label: strings.title,
+            testID: 'daily-crossword-screen-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
       </View>
       <ScrollView contentContainerStyle={styles.content}>
-        <ScreenTitle>{strings.dailyCrossword.title}</ScreenTitle>
         {crossword !== undefined && (
           <CrosswordGrid
             testID="daily-crossword-grid"
@@ -116,13 +126,13 @@ export default function DailyCrosswordScreen() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  back: { paddingHorizontal: space[3], paddingTop: space[2] },
+  header: { paddingHorizontal: space[4], paddingTop: space[2] },
   content: { gap: space[4], paddingHorizontal: space[5], paddingBottom: space[8] },
   solved: { textAlign: 'center' },
 });

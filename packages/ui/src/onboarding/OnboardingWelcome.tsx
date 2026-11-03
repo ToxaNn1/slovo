@@ -6,12 +6,7 @@ import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import {
-  HEADLINE_MAX_FONT_SCALE,
-  HERO_LEMMA,
-  OnboardingStep,
-  TEXT_MAX_FONT_SCALE,
-} from './OnboardingStep';
+import { HEADLINE_MAX_FONT_SCALE, OnboardingStep, TEXT_MAX_FONT_SCALE } from './OnboardingStep';
 
 /** The Word the welcome shows large. */
 export interface HeroWord {
@@ -62,7 +57,7 @@ export function OnboardingWelcome({
         <View style={styles.hero}>
           <WholeWordsText
             text={hero.lemma}
-            size={HERO_LEMMA}
+            typeRole="heroLemma"
             tracking={-0.02}
             testID="onboarding-hero-lemma"
             accessibilityLabel={hero.accessibilityLabel}

@@ -5,16 +5,7 @@ import Svg, { Circle, Defs, Pattern, Polygon } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
-import {
-  blockGap,
-  halftone,
-  resultLayout,
-  roleSize,
-  space,
-  typeRoles,
-  typeStyle,
-  wedges,
-} from '../tokens';
+import { blockGap, halftone, resultLayout, space, typeRoles, typeStyle, wedges } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { GameReview } from './GameReview';
 import { useGameHaptics } from './useGameHaptics';
@@ -174,7 +165,7 @@ export function GameResult({
           <View accessible {...voice} style={styles.text}>
             <WholeWordsText
               text={title}
-              size={roleSize('resultTitle')}
+              typeRole="resultTitle"
               tracking={TITLE_TRACKING}
               accessibilityRole="header"
               style={[typeStyle('resultTitle', tokens), { color: keyInk }]}

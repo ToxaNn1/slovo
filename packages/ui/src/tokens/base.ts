@@ -190,6 +190,8 @@ export const typeRoles = {
   modeBest: role('word', '800', 12, 12),
   /** The Daily Crossword's name on its red card. */
   crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
+  /** The Daily Crossword's name in its screen's header, beside the back tile. */
+  crosswordHeader: role('word', '900', 18, 18, 0, 'uppercase'),
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The day under the Daily Crossword's name on its red card. */
@@ -420,6 +422,10 @@ export const typeRoles = {
   aboutName: role('word', '900', 34, 34, -1),
   /** What SLOVO is, on the About screen's card. */
   aboutDescription: role('word', '500', 22, 30),
+  /** Settings' title beside its back tile (design `SlovoApp`, Settings). */
+  settingsTitle: role('word', '800', 22, 22),
+  /** The title of a screen that a Settings row opens, beside its back tile. */
+  settingsSubTitle: role('word', '800', 20, 22),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
   heroDefinition: role('word', '500', 22, 29),
   /** The title over the Active Days calendar. */
@@ -454,7 +460,62 @@ export const typeRoles = {
 
 export type TypeRole = keyof typeof typeRoles;
 
-/** The text style of a type role in the given tokens' families. */
+/**
+ * How far above the baseline the word family's tallest capital mark rises
+ * (Ї; Й's breve is just below), and how far its descent falls, in em.
+ * Measured in Unbounded Black.
+ */
+const WORD_CAPITAL_MARK_TOP = 1.01;
+const WORD_DESCENT = 0.245;
+
+/** The size a type role is drawn at: its font size and line height. */
+export interface DrawnSize {
+  readonly fontSize: number;
+  readonly lineHeight: number;
+}
+
+/**
+ * The room a word role needs above its line for a capital Й or Ї, drawn at
+ * `drawn`, the role's own size unless given. iOS cuts a line set tighter
+ * than the font from the top and keeps the descent at the bottom, so a breve
+ * or dots over a capital fall outside the text's box and are clipped:
+ * «МОВНИЙ» showed «МОВНИИ». Any word role can start with a capital, so each
+ * one set tighter than the font gets the room, capitalised or not.
+ */
+export function capitalMarkRoom(name: TypeRole, drawn: DrawnSize = roleSize(name)): number {
+  if (typeRoles[name].family !== 'word') return 0;
+  return Math.max(
+    0,
+    Math.ceil((WORD_CAPITAL_MARK_TOP + WORD_DESCENT) * drawn.fontSize - drawn.lineHeight),
+  );
+}
+
+/**
+ * The top padding that holds a word role's capital marks, drawn at `drawn`,
+ * and the top margin that pulls the line back to where the board sets it.
+ */
+export function capitalMarkStyle(name: TypeRole, drawn: DrawnSize = roleSize(name)) {
+  const room = capitalMarkRoom(name, drawn);
+  return room > 0 ? { paddingTop: room, marginTop: -room } : {};
+}
+
+/**
+ * A type role drawn at `fontSize`, for text that scales a role itself: the
+ * line height keeps its share of the size, and the capital marks get the
+ * room they need at that size.
+ */
+export function roleAt(name: TypeRole, fontSize: number) {
+  const { size, lineHeight } = typeRoles[name];
+  const drawn = { fontSize, lineHeight: (lineHeight * fontSize) / size };
+  return { ...drawn, ...capitalMarkStyle(name, drawn) };
+}
+
+/**
+ * The text style of a type role in the given tokens' families. A word role
+ * set tighter than the font carries `capitalMarkStyle`, so the marks draw
+ * whole and the line stays where the board sets it. A component that sets
+ * its own top margin on such a role adds the room's negative to it.
+ */
 export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamilies'>) {
   const { family, size, weight, lineHeight, letterSpacing, textTransform } = typeRoles[name];
   return {
@@ -464,11 +525,12 @@ export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamili
     lineHeight,
     letterSpacing,
     textTransform,
+    ...capitalMarkStyle(name),
   };
 }
 
 /** A type role's size and line height alone, for text that scales them itself. */
-export function roleSize(name: TypeRole) {
+export function roleSize(name: TypeRole): DrawnSize {
   const { size, lineHeight } = typeRoles[name];
   return { fontSize: size, lineHeight };
 }

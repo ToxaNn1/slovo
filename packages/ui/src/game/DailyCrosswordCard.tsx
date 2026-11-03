@@ -5,7 +5,7 @@ import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import { HalftoneGround } from '../primitives/HalftoneGround';
 import { PressedTile } from '../primitives/PressedTile';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { dailyCrosswordCard, typeStyle } from '../tokens';
+import { capitalMarkRoom, dailyCrosswordCard, typeStyle } from '../tokens';
 
 /** How far the largest text sizes of iOS may scale the card's text, so it never breaks a word. */
 const TEXT_MAX_FONT_SCALE = 1.3;
@@ -153,5 +153,5 @@ const styles = StyleSheet.create({
   // The edge sits inside the cell's side, as the design's 2 pt shadow under a 22 pt cell.
   letterCell: { borderBottomWidth: mini.depth, alignItems: 'center', justifyContent: 'center' },
   texts: { flex: 1, minWidth: 0, gap: dailyCrosswordCard.lineGap },
-  state: { marginTop: dailyCrosswordCard.stateGap },
+  state: { marginTop: dailyCrosswordCard.stateGap - capitalMarkRoom('crosswordState') },
 });

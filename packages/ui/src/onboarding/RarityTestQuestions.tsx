@@ -6,9 +6,9 @@ import type { Rarity } from '@slovo/contracts';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { typeRoles, typeStyle } from '../tokens';
+import { typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { HEADLINE_MAX_FONT_SCALE, HERO_LEMMA, TEXT_MAX_FONT_SCALE } from './OnboardingStep';
+import { HEADLINE_MAX_FONT_SCALE, TEXT_MAX_FONT_SCALE } from './OnboardingStep';
 
 /** A Word the Rarity Test asks about. */
 export interface RarityTestQuestion {
@@ -163,8 +163,7 @@ export function RarityTestQuestions({
         </Text>
         <WholeWordsText
           text={word.lemma}
-          size={HERO_LEMMA}
-          tracking={typeRoles.heroLemma.letterSpacing / typeRoles.heroLemma.size}
+          typeRole="heroLemma"
           testID={`${testID}-lemma`}
           accessibilityLabel={word.accessibilityLabel}
           {...voice}

@@ -263,6 +263,7 @@ export function StandardForm({
       </Text>
       <WholeWordsText
         text={form}
+        typeRole="heroWord"
         size={size}
         tracking={-0.01}
         // A phrase wraps; a single word shrinks to fit rather than break.

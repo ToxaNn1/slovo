@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polygon } from 'react-native-svg';
 
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { badgeEdge, badgeStamp, typeRoles, typeStyle, wedges, type Wedge } from '../tokens';
+import { badgeEdge, badgeStamp, roleAt, typeStyle, wedges, type Wedge } from '../tokens';
 
 /** A Badge family: the Streak, the Games, the confirmed Entries, the Levels. */
 export type BadgeFamily = 'streak' | 'games' | 'entries' | 'levels';
@@ -76,7 +76,6 @@ export function BadgeMark({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const symbolRole = typeRoles.badgeSymbol;
   const symbolSize = size / 3;
   // The symbol on red is the ink of the light Theme in both Themes, as on every red face.
   const key = useSchemeColors('light');
@@ -107,8 +106,7 @@ export function BadgeMark({
               typeStyle('badgeSymbol', tokens),
               {
                 color: keyInk,
-                fontSize: symbolSize,
-                lineHeight: (symbolSize * symbolRole.lineHeight) / symbolRole.size,
+                ...roleAt('badgeSymbol', symbolSize),
               },
             ]}
           >

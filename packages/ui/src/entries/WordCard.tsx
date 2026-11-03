@@ -16,7 +16,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
 import { LabelChip } from '../primitives/LabelChip';
-import { blockGap, minTouchTarget, space, typeRoles, typeStyle, wordCardControls } from '../tokens';
+import { blockGap, minTouchTarget, space, typeStyle, wordCardControls } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useOnAccent } from './on-accent';
 import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';
@@ -141,7 +141,7 @@ export function WordHeadline({
           flying={flying}
           text={card.lemma}
           size={lemmaSize}
-          tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
+          typeRole="heroWord"
           testID="word-lemma"
           falling={falling}
           accessibilityRole="header"

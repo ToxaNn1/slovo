@@ -1,6 +1,6 @@
 import {
   AboutPanel,
-  BackLink,
+  BackHeader,
   fill,
   NavigationRow,
   rowPadding,
@@ -43,11 +43,15 @@ export function AboutScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="about-back"
-          label={strings.title}
-          onPress={() => {
-            router.back();
+        <BackHeader
+          titleRole="settingsSubTitle"
+          title={strings.rows.about}
+          back={{
+            label: strings.title,
+            testID: 'about-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
         <View style={styles.panel}>

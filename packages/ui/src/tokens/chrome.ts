@@ -130,3 +130,9 @@ export const actionTile = {
   hintGap: 8,
   compact: { width: 46, height: 44, radius: 12, icon: 21, gap: 4, paddingTop: 8 },
 } as const;
+
+/**
+ * A screen's header with a back tile (design `SlovoApp`, Settings): the gap
+ * between the back tile and the title, and the room under it.
+ */
+export const backHeader = { gap: 12, paddingBottom: 14 } as const;

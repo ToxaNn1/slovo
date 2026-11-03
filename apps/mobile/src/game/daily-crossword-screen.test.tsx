@@ -58,7 +58,7 @@ const crosswordDay = CrosswordDaySchema.parse({
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
+  insets: { top: 47, left: 0, right: 0, bottom: 34 },
 };
 
 /**
@@ -197,6 +197,22 @@ describe('the Daily Crossword screen', () => {
     expect(screen.getByTestId('daily-crossword-grid-clue')).toHaveTextContent('Звір');
     expect(cell(0, 0)).toBe('перша літера, порожня. Звір. Рядок 1, стовпець 1');
     expect(screen.getByTestId('daily-crossword-grid-open-letter')).toBeOnTheScreen();
+  });
+
+  it('heads the screen as the board, with the keyboard above the home indicator', async () => {
+    await renderGame();
+    await openFromCard();
+
+    expect(screen.getByRole('header', { name: 'Кросворд дня' })).toHaveStyle({
+      fontSize: 18,
+      fontWeight: '900',
+      textTransform: 'uppercase',
+    });
+    expect(screen.getByRole('button', { name: 'Ігри' })).toBeOnTheScreen();
+    expect(screen.getByTestId('daily-crossword-screen')).toHaveStyle({
+      paddingTop: metrics.insets.top,
+      paddingBottom: metrics.insets.bottom,
+    });
   });
 
   it('fills the selected word as the reader types, and shows a crossing word’s clue on a tap', async () => {

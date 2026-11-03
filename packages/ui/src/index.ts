@@ -70,6 +70,7 @@ export {
 } from './onboarding/RarityTestQuestions';
 export { Button, type ButtonVariant } from './primitives/Button';
 export { Icon, type IconName } from './primitives/Icon';
+export { BackHeader } from './primitives/BackHeader';
 export { IconButton } from './primitives/IconButton';
 export { PressedTile, type TileTone } from './primitives/PressedTile';
 export { ScreenEnter } from './primitives/ScreenEnter';

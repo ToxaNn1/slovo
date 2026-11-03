@@ -1,8 +1,7 @@
 import {
-  BackLink,
+  BackHeader,
   NavigationRow,
   Button,
-  ScreenTitle,
   SettingsGroup,
   SwitchRow,
   space,
@@ -50,15 +49,18 @@ export default function NotificationsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="notifications-back"
-          label={editionStrings.settings.title}
-          onPress={() => {
-            router.back();
-          }}
-        />
         <View style={styles.header}>
-          <ScreenTitle>{strings.title}</ScreenTitle>
+          <BackHeader
+            titleRole="settingsSubTitle"
+            title={strings.title}
+            back={{
+              label: editionStrings.settings.title,
+              testID: 'notifications-back',
+              onPress: () => {
+                router.back();
+              },
+            }}
+          />
         </View>
         {state.permission === 'not-asked' && (
           <View style={styles.enable}>
@@ -102,7 +104,7 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
-  header: { paddingTop: space[2], paddingBottom: space[5] },
+  header: { paddingBottom: space[2] },
   section: { marginTop: space[6] },
   enable: { marginBottom: space[6] },
   denied: { gap: space[3], marginBottom: space[6] },

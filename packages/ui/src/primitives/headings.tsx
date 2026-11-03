@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { roleSize, typeRoles, typeStyle } from '../tokens';
+import { typeRoles, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { WholeWordsText } from './WholeWordsText';
 
@@ -26,7 +26,7 @@ export function ScreenTitle({ children }: { children: string }) {
         {...voice}
         maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
         text={children}
-        size={roleSize('screenTitle')}
+        typeRole="screenTitle"
         tracking={TITLE_TRACKING}
         style={[typeStyle('screenTitle', tokens), { color: tokens.colors.ink }]}
       />

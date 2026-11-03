@@ -4,7 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
-import { space, typeRoles, typeStyle } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -62,7 +62,7 @@ export function IdiomCardBody({
           flying={flying}
           text={card.expression}
           size={lemmaSize}
-          tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
+          typeRole="heroWord"
           testID="idiom-expression"
           // An expression wraps between its words and shrinks rather than break inside one.
           numberOfLines={3}
