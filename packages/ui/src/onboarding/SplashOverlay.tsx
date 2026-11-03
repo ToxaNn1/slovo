@@ -58,6 +58,7 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
+  const letterChars = Array.from(wordmark);
   // The design's black on red is the light Theme's ink in both Themes.
   const inkOnRed = useSchemeColors('light').ink;
   const reduceMotion = useReduceMotionKnown();
@@ -135,27 +136,28 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
       ]}
     >
       <Halftone />
-      {Array.from(new Intl.Segmenter().segment(wordmark), ({ segment }) => segment).map(
-        (char, index) => (
-          <Letter
-            // The wordmark never changes while the splash is up.
-            key={index}
-            char={char}
-            index={index}
-            count={wordmark.length}
-            progress={letters}
-            scale={scale}
-            color={inkOnRed}
-          />
-        ),
-      )}
+      {/* Code points, not graphemes: Hermes has no Intl.Segmenter. */}
+      {letterChars.map((char, index) => (
+        <Letter
+          // The wordmark never changes while the splash is up.
+          key={index}
+          char={char}
+          index={index}
+          count={letterChars.length}
+          progress={letters}
+          scale={scale}
+          color={inkOnRed}
+        />
+      ))}
       <Animated.View style={[styles.band, bandStyle]}>
         <View style={{ width }}>
           <Wedge points={splashMotion.band} color={inkOnRed} width={width} height="100%" />
           <View style={styles.taglineRow}>
             <Text
               {...voice}
+              // One line at every text size, as on the board: shrink, never cut.
               numberOfLines={1}
+              adjustsFontSizeToFit
               style={[
                 typeStyle('splashTagline', tokens),
                 {

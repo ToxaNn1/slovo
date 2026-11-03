@@ -40,6 +40,17 @@ describe('SplashOverlay', () => {
     expect(screen.getAllByText(/^[SLOV]$/)).toHaveLength(5);
   });
 
+  it('draws the wordmark on an engine without Intl.Segmenter, as Hermes is', async () => {
+    const segmenter = Object.getOwnPropertyDescriptor(Intl, 'Segmenter');
+    Reflect.deleteProperty(Intl, 'Segmenter');
+    try {
+      await renderSplash('daily', false);
+      expect(screen.getAllByText(/^[SLOV]$/)).toHaveLength(5);
+    } finally {
+      if (segmenter) Object.defineProperty(Intl, 'Segmenter', segmenter);
+    }
+  });
+
   it.each<[LaunchKind, boolean, number]>([
     ['first', false, 2050],
     ['daily', false, 560],
