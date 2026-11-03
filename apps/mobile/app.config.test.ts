@@ -427,12 +427,10 @@ describe('app config', () => {
     expect(() => appConfig(notAFont)).toThrow(/Unbounded-Black\.ttf has no family name/);
   });
 
-  it('takes the splash the AppConfig names in both Themes', () => {
+  it('takes the plain red splash the AppConfig names in both Themes', () => {
     expect(pluginOptions(appConfig(context), 'expo-splash-screen')).toEqual({
-      image: '../../editions/uk/decor/splash-light.png',
-      backgroundColor: '#FFF4E6',
-      imageWidth: 72,
-      dark: { image: '../../editions/uk/decor/splash-dark.png', backgroundColor: '#140C0A' },
+      backgroundColor: '#FF3B2F',
+      dark: { backgroundColor: '#FF3B2F' },
     });
   });
 
@@ -441,25 +439,13 @@ describe('app config', () => {
       change: (_, appFile) => {
         editJson(appFile('splash'), (splash) => ({
           ...splash,
-          dark: { image: 'splash-dark.png', backgroundColor: 'black' },
+          dark: { backgroundColor: 'black' },
         }));
       },
     });
 
     expect(() => appConfig(broken)).toThrow(
       /AppConfig.*is not valid.*decor\/splash\.json › dark\.backgroundColor/s,
-    );
-  });
-
-  it('fails clearly when a splash image is missing', () => {
-    const withoutImage = repoWithEdition(() => undefined, {
-      change: (_, appFile) => {
-        rmSync(join(dirname(appFile('splash')), 'splash-dark.png'));
-      },
-    });
-
-    expect(() => appConfig(withoutImage)).toThrow(
-      /splash image.*editions\/uk\/decor\/splash-dark\.png/s,
     );
   });
 

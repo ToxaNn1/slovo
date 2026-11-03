@@ -15,7 +15,7 @@ import Animated, {
 import Svg, { G, Path } from 'react-native-svg';
 
 import { useDecor } from '../decor/DecorProvider';
-import { DecorView } from '../decor/Motif';
+import { DecorView } from '../decor/DecorView';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
