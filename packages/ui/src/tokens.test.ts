@@ -2,13 +2,13 @@ import { readFileSync } from 'node:fs';
 
 import { EditionTokensSchema } from '@slovo/contracts';
 import {
-  capitalMarkStyle,
   coreTokens,
   designTokens,
   fontSizeSteps,
   halftone,
   motion,
   offsetShadow,
+  roleAt,
   shadowEdge,
   typeRoles,
   typeStyle,
@@ -135,9 +135,10 @@ describe('the Core’s shape, type and motion roles', () => {
     // descent is 0.245 em. iOS cuts a line set tighter than the font from the
     // top, so the baseline sits 0.245 em above the line's bottom. A capital Й
     // or Ї can open any word role, capitalised or not.
-    const wordRoles = (Object.keys(typeRoles) as TypeRole[]).filter(
-      (name) => typeRoles[name].family === 'word',
-    );
+    const isTypeRole = (name: string): name is TypeRole => name in typeRoles;
+    const wordRoles = Object.keys(typeRoles)
+      .filter(isTypeRole)
+      .filter((name) => typeRoles[name].family === 'word');
     expect(wordRoles).toEqual(
       expect.arrayContaining(['buttonLabel', 'screenTitle', 'heading', 'heroWord', 'giantLetter']),
     );
@@ -152,12 +153,14 @@ describe('the Core’s shape, type and motion roles', () => {
   it('gives a word role drawn at another size room for its capital marks at that size', () => {
     // The Share Card's giant glyph, 320 points on a 320-point line, drawn at
     // three times the size: Ї needs 1.255 × 960 = 1204.8 points of line.
-    const { fontSize, lineHeight } = typeStyle('shareGiant', coreTokens);
-    const { paddingTop = 0, marginTop = 0 } = capitalMarkStyle('shareGiant', 3);
-    expect(paddingTop + 3 * lineHeight).toBeGreaterThanOrEqual(1.255 * 3 * fontSize);
-    expect(paddingTop).toBe(245);
-    expect(paddingTop + marginTop).toBe(0);
-    expect(capitalMarkStyle('definition', 3)).toEqual({});
+    expect(roleAt('shareGiant', 960)).toEqual({
+      fontSize: 960,
+      lineHeight: 960,
+      paddingTop: 245,
+      marginTop: -245,
+    });
+    // A role outside the word family needs no room at any size.
+    expect(roleAt('definition', 57)).toEqual({ fontSize: 57, lineHeight: 81 });
   });
 
   it('keeps the button label’s 16-point line on the board', () => {

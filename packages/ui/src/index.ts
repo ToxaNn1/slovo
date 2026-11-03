@@ -9,7 +9,6 @@ export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading, SwipeHint } from './feed/FeedStates';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
-export { SettingsHeader } from './settings/SettingsHeader';
 export { FontSizeProvider } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';
@@ -71,6 +70,7 @@ export {
 } from './onboarding/RarityTestQuestions';
 export { Button, type ButtonVariant } from './primitives/Button';
 export { Icon, type IconName } from './primitives/Icon';
+export { BackHeader } from './primitives/BackHeader';
 export { IconButton } from './primitives/IconButton';
 export { PressedTile, type TileTone } from './primitives/PressedTile';
 export { ScreenEnter } from './primitives/ScreenEnter';

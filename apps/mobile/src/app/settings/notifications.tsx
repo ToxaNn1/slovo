@@ -1,5 +1,5 @@
 import {
-  SettingsHeader,
+  BackHeader,
   NavigationRow,
   Button,
   SettingsGroup,
@@ -50,8 +50,8 @@ export default function NotificationsScreen() {
     >
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.header}>
-          <SettingsHeader
-            kind="subScreen"
+          <BackHeader
+            titleRole="settingsSubTitle"
             title={strings.title}
             back={{
               label: editionStrings.settings.title,

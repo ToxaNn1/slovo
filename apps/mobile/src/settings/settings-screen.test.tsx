@@ -81,7 +81,7 @@ describe('Settings, as the board', () => {
     expect(screen.getByRole('header', { name: 'Налаштування' })).toBeOnTheScreen();
     const heads = screen
       .getAllByRole('header')
-      .map((head) => head.props['children'] as unknown)
+      .map((head): unknown => head.props['children'])
       .filter((text) => text !== 'Налаштування');
     expect(heads).toEqual(['ВИГЛЯД', 'ЗВУК І СПОВІЩЕННЯ', 'НАВЧАННЯ', 'АКАУНТ']);
   });

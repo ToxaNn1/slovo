@@ -12,6 +12,7 @@ import {
 import type { TextSize } from '../providers/FontSizeProvider';
 import { clearMarks, FallingMarks, withMarks, type FallingMarksOf } from './FallingMarks';
 import { FlyingLetters, type FlyingLettersOf } from './FlyingLetters';
+import { capitalMarkRoom, roleSize, typeRoles, type TypeRole } from '../tokens';
 
 /**
  * Large text that wraps between words and never inside one. On iOS,
@@ -22,12 +23,15 @@ import { FlyingLetters, type FlyingLettersOf } from './FlyingLetters';
  * line; `numberOfLines` and `adjustsFontSizeToFit` still apply on top.
  * A `highlight` draws one stretch of the text in a style of its own, or
  * `falling` lets the text's marks fall into place over it. `flying` lets its
- * letters fly into place over it, one after another.
+ * letters fly into place over it, one after another. The text sets its own top
+ * padding and margin: the room its `typeRole`'s capital marks need at the size
+ * it is drawn at.
  */
 export function WholeWordsText({
   text,
-  size,
-  tracking,
+  typeRole,
+  size = roleSize(typeRole),
+  tracking = typeRoles[typeRole].letterSpacing / typeRoles[typeRole].size,
   style,
   highlight,
   falling,
@@ -35,10 +39,12 @@ export function WholeWordsText({
   ...props
 }: Omit<TextProps, 'children' | 'style'> & {
   text: string;
-  /** The size to draw at when every word fits on a line. */
-  size: TextSize;
-  /** The letter spacing as a share of the font size. */
-  tracking: number;
+  /** The type role the text is set in. */
+  typeRole: TypeRole;
+  /** The size to draw at when every word fits on a line: the role's own unless given. */
+  size?: TextSize | undefined;
+  /** The letter spacing as a share of the font size: the role's own unless given. */
+  tracking?: number | undefined;
   /** Everything but the size and letter spacing: colour, font and weight. */
   style: StyleProp<TextStyle>;
   /** Letters that fly into place over the text, which is drawn clear meanwhile. */
@@ -62,11 +68,16 @@ export function WholeWordsText({
     lineWidth === undefined || widestWord === undefined
       ? undefined
       : Math.min(1, (lineWidth - 1) / widestWord);
-  const sized = (ratio: number) => ({
-    fontSize: size.fontSize * ratio,
-    lineHeight: size.lineHeight * ratio,
-    letterSpacing: size.fontSize * ratio * tracking,
-  });
+  const sized = (ratio: number) => {
+    const drawn = { fontSize: size.fontSize * ratio, lineHeight: size.lineHeight * ratio };
+    const room = capitalMarkRoom(typeRole, drawn);
+    return {
+      ...drawn,
+      letterSpacing: drawn.fontSize * tracking,
+      paddingTop: room,
+      marginTop: 0 - room,
+    };
+  };
 
   // Hidden until measured, so a word never shows split for a frame.
   const textStyle = [style, sized(scale ?? 1), scale === undefined && styles.hidden];

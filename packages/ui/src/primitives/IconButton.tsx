@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet } from 'react-native';
 
+import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { disabledOpacity, iconButton, pressedFade } from '../tokens';
 import { Icon, type IconName } from './Icon';
@@ -26,11 +27,13 @@ export function IconButton({
   testID?: string | undefined;
 }) {
   const { colors, radii } = useTokens();
+  const { voice } = useEdition();
   return (
     <Pressable
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      {...voice}
       accessibilityState={{ disabled }}
       disabled={disabled}
       onPress={onPress}

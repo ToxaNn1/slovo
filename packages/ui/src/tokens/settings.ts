@@ -38,12 +38,6 @@ export const aboutPanel = {
   gap: 10,
 } as const;
 
-/**
- * The header of Settings and of the screens its rows open (design `SlovoApp`,
- * Settings): the gap between the back tile and the title, and the room under it.
- */
-export const settingsHeader = { gap: 12, paddingBottom: 14 } as const;
-
 /** The widget guide's numbered steps: the square that holds the number. */
 export const guideStep = { badge: 28, badgeRadius: 4 } as const;
 

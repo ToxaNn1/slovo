@@ -3,7 +3,7 @@ import {
   ChoiceRow,
   FontSizePreview,
   NavigationRow,
-  SettingsHeader,
+  BackHeader,
   SettingsGroup,
   SwitchRow,
   space,
@@ -78,8 +78,8 @@ export default function SettingsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <SettingsHeader
-          kind="settings"
+        <BackHeader
+          titleRole="settingsTitle"
           title={strings.title}
           // Opened from the Profile tab while the Profile is shown; otherwise Settings is the tab itself.
           back={
@@ -301,6 +301,7 @@ export default function SettingsScreen() {
         <View testID="settings-group-account" style={styles.section}>
           <SettingsGroup title={strings.groups.account}>
             {accountOpening !== undefined && <AccountRow opening={accountOpening} />}
+            {/* One condition per row: the group draws its hairlines between its children, and a fragment is one child. */}
             {shown.shareCountersSetting && (
               <SwitchRow
                 testID="settings-share-counters"

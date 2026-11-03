@@ -43,8 +43,6 @@ import {
   roundProgress,
   space,
   capitalMarkRoom,
-  roleSize,
-  typeRoles,
   typeStyle,
   wedges,
 } from '../tokens';
@@ -757,8 +755,7 @@ function RoundCard({
       {children ?? (
         <WholeWordsText
           text={prompt}
-          size={roleSize('roundPrompt')}
-          tracking={typeRoles.roundPrompt.letterSpacing / typeRoles.roundPrompt.size}
+          typeRole="roundPrompt"
           style={[typeStyle('roundPrompt', tokens), { color: colors.ink }]}
           highlight={
             highlight === undefined
@@ -950,8 +947,7 @@ function AnswerOption({
         <View style={styles.optionText}>
           <WholeWordsText
             text={option.text}
-            size={roleSize('roundOption')}
-            tracking={typeRoles.roundOption.letterSpacing / typeRoles.roundOption.size}
+            typeRole="roundOption"
             style={[
               typeStyle('roundOption', tokens),
               { color: look === 'right' ? keyInk : look === 'wrong' ? colors.muted : colors.ink },
@@ -1089,8 +1085,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
       </Text>
       <WholeWordsText
         text={answer.sheet.answer.text}
-        size={roleSize('roundAnswer')}
-        tracking={typeRoles.roundAnswer.letterSpacing / typeRoles.roundAnswer.size}
+        typeRole="roundAnswer"
         accessibilityLabel={stressLabel(
           strings.wordCard,
           answer.sheet.answer.text,

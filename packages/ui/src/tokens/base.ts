@@ -468,32 +468,46 @@ export type TypeRole = keyof typeof typeRoles;
 const WORD_CAPITAL_MARK_TOP = 1.01;
 const WORD_DESCENT = 0.245;
 
+/** The size a type role is drawn at: its font size and line height. */
+export interface DrawnSize {
+  readonly fontSize: number;
+  readonly lineHeight: number;
+}
+
 /**
  * The room a word role needs above its line for a capital Й or Ї, drawn at
- * `scale` times the role's size and line height. iOS cuts a line set tighter
+ * `drawn`, the role's own size unless given. iOS cuts a line set tighter
  * than the font from the top and keeps the descent at the bottom, so a breve
  * or dots over a capital fall outside the text's box and are clipped:
  * «МОВНИЙ» showed «МОВНИИ». Any word role can start with a capital, so each
  * one set tighter than the font gets the room, capitalised or not.
  */
-export function capitalMarkRoom(name: TypeRole, scale = 1): number {
-  const { family, size, lineHeight } = typeRoles[name];
-  if (family !== 'word') return 0;
+export function capitalMarkRoom(name: TypeRole, drawn: DrawnSize = roleSize(name)): number {
+  if (typeRoles[name].family !== 'word') return 0;
   return Math.max(
     0,
-    Math.ceil(scale * ((WORD_CAPITAL_MARK_TOP + WORD_DESCENT) * size - lineHeight)),
+    Math.ceil((WORD_CAPITAL_MARK_TOP + WORD_DESCENT) * drawn.fontSize - drawn.lineHeight),
   );
 }
 
 /**
- * The top padding that holds a word role's capital marks, drawn at `scale`
- * times its size and line height, and the top margin that pulls the line back
- * to where the board sets it. Text that scales a role itself spreads this in
- * with its own size.
+ * The top padding that holds a word role's capital marks, drawn at `drawn`,
+ * and the top margin that pulls the line back to where the board sets it.
  */
-export function capitalMarkStyle(name: TypeRole, scale = 1) {
-  const room = capitalMarkRoom(name, scale);
+export function capitalMarkStyle(name: TypeRole, drawn: DrawnSize = roleSize(name)) {
+  const room = capitalMarkRoom(name, drawn);
   return room > 0 ? { paddingTop: room, marginTop: -room } : {};
+}
+
+/**
+ * A type role drawn at `fontSize`, for text that scales a role itself: the
+ * line height keeps its share of the size, and the capital marks get the
+ * room they need at that size.
+ */
+export function roleAt(name: TypeRole, fontSize: number) {
+  const { size, lineHeight } = typeRoles[name];
+  const drawn = { fontSize, lineHeight: (lineHeight * fontSize) / size };
+  return { ...drawn, ...capitalMarkStyle(name, drawn) };
 }
 
 /**
@@ -516,7 +530,7 @@ export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamili
 }
 
 /** A type role's size and line height alone, for text that scales them itself. */
-export function roleSize(name: TypeRole) {
+export function roleSize(name: TypeRole): DrawnSize {
   const { size, lineHeight } = typeRoles[name];
   return { fontSize: size, lineHeight };
 }

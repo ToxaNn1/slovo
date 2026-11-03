@@ -1,7 +1,7 @@
 import {
   CrosswordGrid,
+  BackHeader,
   Button,
-  IconButton,
   space,
   typeStyle,
   useEdition,
@@ -21,8 +21,6 @@ import { useShown } from '@/shown-in-effect';
 const { game: strings } = editionStrings;
 const keys = crosswordKeys(edition.languageTraits);
 
-/** How far the largest text sizes of iOS may scale the header's name, so it stays on one line. */
-const HEADER_MAX_FONT_SCALE = 1.3;
 /** How far the largest text sizes of iOS may scale the solved line, so it never breaks a word. */
 const SOLVED_MAX_FONT_SCALE = 1.5;
 
@@ -67,23 +65,17 @@ export default function DailyCrosswordScreen() {
       ]}
     >
       <View style={styles.header}>
-        <IconButton
-          testID="daily-crossword-screen-back"
-          icon="back"
-          accessibilityLabel={strings.title}
-          onPress={() => {
-            router.back();
+        <BackHeader
+          title={strings.dailyCrossword.title}
+          titleRole="crosswordHeader"
+          back={{
+            label: strings.title,
+            testID: 'daily-crossword-screen-back',
+            onPress: () => {
+              router.back();
+            },
           }}
         />
-        <Text
-          accessibilityRole="header"
-          {...voice}
-          numberOfLines={1}
-          maxFontSizeMultiplier={HEADER_MAX_FONT_SCALE}
-          style={[typeStyle('crosswordHeader', tokens), styles.title, { color: colors.ink }]}
-        >
-          {strings.dailyCrossword.title}
-        </Text>
       </View>
       <ScrollView contentContainerStyle={styles.content}>
         {crossword !== undefined && (
@@ -140,16 +132,7 @@ export default function DailyCrosswordScreen() {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  // As the board: the 44-point back tile and the name beside it, in one row.
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: space[3],
-    paddingHorizontal: space[4],
-    paddingTop: space[2],
-    paddingBottom: space[4],
-  },
-  title: { flex: 1 },
+  header: { paddingHorizontal: space[4], paddingTop: space[2] },
   content: { gap: space[4], paddingHorizontal: space[5], paddingBottom: space[8] },
   solved: { textAlign: 'center' },
 });

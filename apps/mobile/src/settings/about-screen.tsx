@@ -1,6 +1,6 @@
 import {
   AboutPanel,
-  SettingsHeader,
+  BackHeader,
   fill,
   NavigationRow,
   rowPadding,
@@ -43,8 +43,8 @@ export function AboutScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <SettingsHeader
-          kind="subScreen"
+        <BackHeader
+          titleRole="settingsSubTitle"
           title={strings.rows.about}
           back={{
             label: strings.title,

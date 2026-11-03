@@ -16,7 +16,7 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { roleSize, space, typeStyle } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** A cell's height and corner, the design's pairs tile, above the 44 pt touch target. */
@@ -24,8 +24,6 @@ const CELL_HEIGHT = 70;
 const CELL_RADIUS = 16;
 /** The gap between the columns and between the cells of a column. */
 const CELL_GAP = 12;
-/** A Word's text, at its type role's size. */
-const WORD_SIZE = roleSize('pairsWord');
 /** How far the largest text sizes of iOS may scale a Definition, so a long one stays in the grid. */
 const DEFINITION_MAX_FONT_SCALE = 1.5;
 /** How a right pair pops: from small, past its size, back. */
@@ -111,7 +109,7 @@ export function PairsGrid({
             >
               <WholeWordsText
                 text={shown.text}
-                size={WORD_SIZE}
+                typeRole="pairsWord"
                 tracking={0}
                 style={[typeStyle('pairsWord', tokens), styles.word, { color: textColor(look) }]}
               />

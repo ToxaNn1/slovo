@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useEdition } from '../providers/EditionProvider';
 import { useLemmaSize, useWordTextSizes } from '../providers/FontSizeProvider';
-import { space, typeRoles, typeStyle } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -41,7 +41,7 @@ export function FontSizePreview({
         testID="font-size-preview-lemma"
         text={lemma}
         size={lemmaSize}
-        tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
+        typeRole="heroWord"
         style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
       />
       <Text

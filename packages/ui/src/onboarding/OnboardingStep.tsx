@@ -23,16 +23,7 @@ import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { fill, useEdition } from '../providers/EditionProvider';
 import { HalftoneGround } from '../primitives/HalftoneGround';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import {
-  minTouchTarget,
-  motion,
-  onboardingLayout,
-  space,
-  roleSize,
-  typeRoles,
-  typeStyle,
-  wedges,
-} from '../tokens';
+import { minTouchTarget, motion, onboardingLayout, space, typeStyle, wedges } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
@@ -45,11 +36,6 @@ const SLIDE_DISTANCE = 40;
  */
 export const HEADLINE_MAX_FONT_SCALE = 1.3;
 export const TEXT_MAX_FONT_SCALE = 1.5;
-/** The design's hero Lemma, `Lemma, hero`: the size of its type role. */
-export const HERO_LEMMA = roleSize('heroLemma');
-/** The shout word's size, and its letter spacing as a share of it. */
-const SHOUT = roleSize('stepShout');
-const SHOUT_TRACKING = typeRoles.stepShout.letterSpacing / SHOUT.fontSize;
 const { shout: shoutAt } = onboardingLayout;
 const SHOUT_TURN = `${String(shoutAt.turn)}deg`;
 
@@ -201,8 +187,7 @@ export function OnboardingStep({
             {/* Scaled down until the whole word fits across the top, never cut. */}
             <WholeWordsText
               text={shout}
-              size={SHOUT}
-              tracking={SHOUT_TRACKING}
+              typeRole="stepShout"
               testID="onboarding-shout-word"
               accessible={false}
               maxFontSizeMultiplier={1}

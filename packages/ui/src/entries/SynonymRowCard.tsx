@@ -10,7 +10,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
-import { space, typeRoles, typeStyle } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -76,7 +76,7 @@ export function SynonymRowCardBody({
           flying={flying}
           text={shown.card.dominant.text}
           size={lemmaSize}
-          tracking={typeRoles.heroWord.letterSpacing / typeRoles.heroWord.size}
+          typeRole="heroWord"
           testID="synonym-row-dominant"
           style={[typeStyle('heroWord', tokens), { color: colors.ink }]}
         />

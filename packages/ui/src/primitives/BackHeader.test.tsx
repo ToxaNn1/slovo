@@ -1,4 +1,4 @@
-import { EditionProvider, SettingsHeader } from '@slovo/ui';
+import { EditionProvider, BackHeader } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
@@ -12,13 +12,13 @@ function Providers({ children }: { children: ReactNode }) {
   );
 }
 
-describe('Settings header', () => {
+describe('BackHeader', () => {
   it('names the screen as its header and goes back from the tile', async () => {
     const onPress = jest.fn();
     await render(
       <Providers>
-        <SettingsHeader
-          kind="settings"
+        <BackHeader
+          titleRole="settingsTitle"
           title="Settings"
           back={{ label: 'Profile', onPress, testID: 'settings-back' }}
         />
@@ -32,7 +32,7 @@ describe('Settings header', () => {
   it('draws no back tile when there is nowhere to go back to', async () => {
     await render(
       <Providers>
-        <SettingsHeader kind="subScreen" title="About" />
+        <BackHeader titleRole="settingsSubTitle" title="About" />
       </Providers>,
     );
     expect(screen.getByRole('header', { name: 'About' })).toBeTruthy();
