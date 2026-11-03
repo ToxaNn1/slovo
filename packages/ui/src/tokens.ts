@@ -1289,7 +1289,14 @@ export const sampleNotification = { iconSize: 38, iconRadius: 9, lineGap: 2 } as
  */
 export const onboardingLayout = {
   heroHeight: 440,
-  shout: { left: -14, top: 96, turn: '-8deg', flyFrom: -120 },
+  /**
+   * The room the board leaves under its red top for a step's content and
+   * buttons, home indicator aside (844 − 34 − 440): on a shorter phone the red
+   * top and its art are drawn smaller to keep it.
+   */
+  contentRoom: 370,
+  /** Where the shout word sits on the red top, its turn in degrees, and where it flies in from. */
+  shout: { left: -14, top: 96, turn: -8, flyFrom: -120 },
   /** The Mascot's corner, less its own padding, and its figure's width. */
   mascot: { right: 10, top: 270, width: 140 },
   dot: { height: 8, width: 14, currentWidth: 34, gap: 6, skew: '-20deg' },
