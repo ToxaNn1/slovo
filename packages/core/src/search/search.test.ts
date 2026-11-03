@@ -333,13 +333,22 @@ describe('Search by meaning («За значенням»)', () => {
 
     expect(await byMeaningOf(search, 'шумит')).toEqual(['тихий']);
     expect(await byMeaningOf(search, 'чутн')).toEqual(['тихий']);
-    expect(await byMeaningOf(search, 'тих')).toEqual(['іти', 'тихий']);
+    expect(await byMeaningOf(search, 'тих')).toEqual(['іти']);
+  });
+
+  it('leaves out an Entry its kind’s group lists already, so each Entry shows once', async () => {
+    const search = await searchOver(pack);
+    const results = await search.search('тих');
+
+    expect(results.synonymRows.map(({ id }) => id)).toEqual(['s_quiet']);
+    expect(results.byMeaning.map(({ id }) => id)).not.toContain('s_quiet');
+    expect(await byMeaningOf(search, 'шумит')).toEqual(['тихий']);
   });
 
   it('lists Words and Synonym Rows together in the Edition’s alphabet', async () => {
     const search = await searchOver(pack);
 
-    expect(await byMeaningOf(search, 'тих')).toEqual(['безгомінний', 'іти', 'сумирний', 'тихий']);
+    expect(await byMeaningOf(search, 'тих')).toEqual(['безгомінний', 'іти', 'сумирний']);
   });
 
   it('gives at most 50', async () => {
@@ -363,13 +372,13 @@ describe('Search by meaning («За значенням»)', () => {
         synonymRows: [
           synonymRow('s_hidden', { meaning: 'Тихий.' }),
           synonymRow('s_retired', { meaning: 'Тихий.', retired: true }),
-          synonymRow('s_live', { dominant: { text: 'тихий', stress: [1] }, meaning: 'Тихий.' }),
+          synonymRow('s_live', { dominant: { text: 'спокійний', stress: [1] }, meaning: 'Тихий.' }),
         ],
       },
       { hidden: ['w_hidden', 's_hidden'] },
     );
 
-    expect(await byMeaningOf(search, 'тих')).toEqual(['сумирний', 'тихий']);
+    expect(await byMeaningOf(search, 'тих')).toEqual(['спокійний', 'сумирний']);
   });
 
   it('leaves out Synonym Rows while the Edition turns them off, and all while Search is off', async () => {

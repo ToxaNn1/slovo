@@ -9,9 +9,10 @@ import {
   FontSizeProvider,
   HapticsProvider,
   ReduceMotionProvider,
+  RouteProvider,
   TokensProvider,
 } from '@slovo/ui';
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, ThemeProvider, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useMemo, type ReactNode } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -109,31 +110,33 @@ function ThemedTabs() {
               <Opened opening={composition} failedTestID="feed-error">
                 {/* The screens' background and divider follow the local date (ADR 0055). */}
                 <ReduceMotionInEffect>
-                  <InterfaceSoundsInEffect engine={soundEngine}>
-                    <DecorInEffect clock={deviceClock}>
-                      <NotificationTaps
-                        onOpened={(kind) => {
-                          // The event never fails; a composition that fails to open is reported where it opens.
-                          composition.opened().then(
-                            (open) => open.analytics.notificationOpened(kind),
-                            () => undefined,
-                          );
-                        }}
-                      />
-                      <EditionTabs
-                        screenOptions={{
-                          headerShown: false,
-                          tabBarStyle: {
-                            backgroundColor: colors.tabBar,
-                            borderTopColor: colors.line,
-                          },
-                        }}
-                      />
-                      {/* Over the tabs until the reader finishes or skips it. */}
-                      <MascotCelebrations />
-                      <Onboarding />
-                    </DecorInEffect>
-                  </InterfaceSoundsInEffect>
+                  <RouteInEffect>
+                    <InterfaceSoundsInEffect engine={soundEngine}>
+                      <DecorInEffect clock={deviceClock}>
+                        <NotificationTaps
+                          onOpened={(kind) => {
+                            // The event never fails; a composition that fails to open is reported where it opens.
+                            composition.opened().then(
+                              (open) => open.analytics.notificationOpened(kind),
+                              () => undefined,
+                            );
+                          }}
+                        />
+                        <EditionTabs
+                          screenOptions={{
+                            headerShown: false,
+                            tabBarStyle: {
+                              backgroundColor: colors.tabBar,
+                              borderTopColor: colors.line,
+                            },
+                          }}
+                        />
+                        {/* Over the tabs until the reader finishes or skips it. */}
+                        <MascotCelebrations />
+                        <Onboarding />
+                      </DecorInEffect>
+                    </InterfaceSoundsInEffect>
+                  </RouteInEffect>
                 </ReduceMotionInEffect>
               </Opened>
             </Opened>
@@ -157,4 +160,9 @@ function ReduceMotionInEffect({ children }: { children: ReactNode }) {
       {children}
     </ReduceMotionProvider>
   );
+}
+
+/** The route on screen for every sheet below, so a sheet closes when another route comes on screen. */
+function RouteInEffect({ children }: { children: ReactNode }) {
+  return <RouteProvider route={usePathname()}>{children}</RouteProvider>;
 }

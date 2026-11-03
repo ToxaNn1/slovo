@@ -1,6 +1,6 @@
-import { BottomSheet, EditionProvider } from '@slovo/ui';
+import { BottomSheet, EditionProvider, RouteProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, Text } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -201,5 +201,88 @@ describe('BottomSheet', () => {
 
     expect(screen.queryByText('Content')).toBeNull();
     expect(onDismissed).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks to close at a tap on the scrim', async () => {
+    const { onClose } = await renderSheet();
+    await pass(450);
+
+    await fireEvent.press(screen.getByTestId('sheet-scrim'));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('asks to close at a tap on its slanted top, where a tall sheet leaves the scrim', async () => {
+    const { onClose } = await renderSheet();
+    await pass(450);
+
+    await act(() => {
+      fireGestureHandler(getByGestureTestId('sheet-tap'), [
+        { state: State.BEGAN },
+        { state: State.ACTIVE },
+        { state: State.END },
+      ]);
+    });
+    await pass(0);
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('BottomSheet on a route', () => {
+  beforeEach(() => {
+    jest.useFakeTimers();
+    reduceMotion(false);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  function onRoute(route: string, onClose?: () => void) {
+    return (
+      <SafeAreaProvider initialMetrics={metrics}>
+        <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+          <RouteProvider route={route}>
+            {/* Without `onClose`, as the Game's answer sheet, which only «Далі» closes. */}
+            {onClose === undefined ? (
+              <BottomSheet visible testID="sheet">
+                <Text>Content</Text>
+              </BottomSheet>
+            ) : (
+              <BottomSheet visible onClose={onClose} testID="sheet">
+                <Text>Content</Text>
+              </BottomSheet>
+            )}
+          </RouteProvider>
+        </EditionProvider>
+      </SafeAreaProvider>
+    );
+  }
+
+  it('asks to close when another route comes on screen', async () => {
+    const onClose = jest.fn();
+    await render(onRoute('/settings/notifications', onClose));
+    await pass(450);
+    expect(onClose).not.toHaveBeenCalled();
+
+    await screen.rerender(onRoute('/settings/about', onClose));
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves while another route is on screen when only its content closes it, and is back with its route', async () => {
+    await render(onRoute('/game/w_1'));
+    await pass(450);
+    expect(screen.getByText('Content')).toBeOnTheScreen();
+
+    await screen.rerender(onRoute('/settings/about'));
+    await pass(300);
+    expect(screen.queryByText('Content')).not.toBeOnTheScreen();
+
+    await screen.rerender(onRoute('/game/w_1'));
+    await pass(450);
+    expect(screen.getByText('Content')).toBeOnTheScreen();
   });
 });

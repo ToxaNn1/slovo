@@ -147,6 +147,14 @@ describe('the Profile', () => {
     );
   });
 
+  it('draws its lists without the React warning of a missing key', async () => {
+    const errors = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    await renderScreen();
+
+    expect(errors.mock.calls.flat().join(' ')).not.toMatch(/unique "key"/);
+    errors.mockRestore();
+  });
+
   it('hides the Level, the XP and the Streaks while the reader hides the counters («Без лічильників»)', async () => {
     await renderScreen({ rounds: 50, noCounters: true, shareCard: sendingShareCard });
 
