@@ -1,56 +1,52 @@
 'use no memo';
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { createContext, useContext, useEffect, useMemo, type ReactNode } from 'react';
 import { type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
   Easing,
   ReduceMotion,
+  useAnimatedReaction,
   useAnimatedStyle,
+  useDerivedValue,
   useSharedValue,
-  withDelay,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 
-import type { FlyingLettersOf } from '../primitives/FlyingLetters';
-import { useIsPageOnScreen } from '../primitives/VerticalPager';
+import type { FlyingTextOf } from '../primitives/FlyingText';
+import { useIsPageOnScreen, usePageSettle } from '../primitives/VerticalPager';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
-import { entryReveal, motion, type RevealPace } from '../tokens';
+import { entryReveal, motion, type RevealTimings } from '../tokens';
 
 /**
- * Where an Entry card's reveal stands: `waiting` unseen to play, `playing`,
- * or `still`, where nothing moves (under Reduce Motion, or outside a card).
+ * An Entry card's reveal as its parts read it: `still` where nothing moves
+ * (under Reduce Motion, or outside a card), or `moving`, where each part
+ * follows the reveal's one timeline on the UI thread: the ms played so far,
+ * at the full or the fast pace.
  */
-type RevealState = 'waiting' | 'playing' | 'still';
+type Reveal =
+  | { readonly kind: 'still' }
+  | {
+      readonly kind: 'moving';
+      readonly elapsed: SharedValue<number>;
+      readonly fast: SharedValue<boolean>;
+      readonly headline: FlyingTextOf;
+    };
 
-/** A card's reveal as its parts read it: its state, and the pace it plays at, known once it plays. */
-interface Reveal {
-  readonly state: RevealState;
-  readonly pace: () => RevealPace;
-}
-
-const fullPace = (): RevealPace => 'full';
-
-const RevealContext = createContext<Reveal>({ state: 'still', pace: fullPace });
+const RevealContext = createContext<Reveal>({ kind: 'still' });
 
 /**
- * Which pace a card's play takes: each play asks once, by a token of its own,
- * and asking again by the same token answers the same.
+ * The pace of the reveals in one visit to the Feed, read and kept on the UI
+ * thread where each reveal starts: whether the fast reveal is on, and whether
+ * a card already played the full one in this visit.
  */
 interface RevealPacer {
-  readonly paceOf: (play: object) => RevealPace;
+  readonly fastOn: SharedValue<boolean>;
+  readonly firstPlayed: SharedValue<boolean>;
 }
 
-const PacerContext = createContext<RevealPacer>({ paceOf: fullPace });
+const PacerContext = createContext<RevealPacer | undefined>(undefined);
 
 /**
  * The reveals of one visit to the Feed: the first card to play plays the full
@@ -66,55 +62,119 @@ export function RevealPace({
   visiting: boolean;
   children: ReactNode;
 }) {
-  const fastOn = useRef(fast);
-  /** The play that played the full reveal in this visit, if any did. */
-  const first = useRef<object | undefined>(undefined);
+  const fastOn = useSharedValue(fast);
+  const firstPlayed = useSharedValue(false);
   useEffect(() => {
-    fastOn.current = fast;
-  }, [fast]);
+    fastOn.value = fast;
+  }, [fast, fastOn]);
   useEffect(() => {
-    if (!visiting) first.current = undefined;
-  }, [visiting]);
-  const [pacer] = useState<RevealPacer>(() => ({
-    paceOf(play) {
-      if (!fastOn.current) return 'full';
-      first.current ??= play;
-      return first.current === play ? 'full' : 'fast';
-    },
-  }));
+    if (!visiting) firstPlayed.value = false;
+  }, [visiting, firstPlayed]);
+  const pacer = useMemo(() => ({ fastOn, firstPlayed }), [fastOn, firstPlayed]);
   return <PacerContext.Provider value={pacer}>{children}</PacerContext.Provider>;
 }
 
-const detailEasing = Easing.bezier(...motion.cascade.easing);
+/** Whether a play starting now takes the fast pace; full outside a `RevealPace`. */
+function playsFast(pacer: RevealPacer | undefined): boolean {
+  'worklet';
+  if (!pacer?.fastOn.value) return false;
+  if (!pacer.firstPlayed.value) {
+    pacer.firstPlayed.value = true;
+    return false;
+  }
+  return true;
+}
+
+/** When a pace's reveal ends, in ms from its start. */
+function endOf({ headline, details }: RevealTimings): number {
+  return Math.max(
+    headline.delay + headline.duration,
+    ...details.at.map((at) => at + details.duration),
+  );
+}
+
+const FULL_END = endOf(entryReveal.full);
+const FAST_END = endOf(entryReveal.fast);
+
+const headlineEasing = Easing.bezierFn(...entryReveal.headlineEasing);
+const detailEasing = Easing.bezierFn(...motion.cascade.easing);
 const fadeEasing = Easing.bezier(...motion.reduceMotion.easing);
 
+/** How far a part has come, from 0 to 1, `ms` into the reveal, for a part starting at `at` and lasting `duration`. */
+function stepOf(ms: number, at: number, duration: number): number {
+  'worklet';
+  return Math.min(1, Math.max(0, (ms - at) / duration));
+}
+
+/** Where the pager stands towards the card: resting on it, heading for it, or away. */
+type Towards = 'unknown' | 'settled' | 'heading' | 'away';
+
 /**
- * An Entry card's reveal each time its page comes on screen: the letters of
- * its headline fly in and its details rise into place after them. Under
- * Reduce Motion nothing moves and the card fades in once instead. Until the
- * system answers on Reduce Motion, and while the page is off screen, the
- * card waits unseen. Each play takes its pace from the Feed's `RevealPace`,
- * full outside one. Returns the card's fade, and the state its parts read.
+ * An Entry card's reveal, played once: the headline flies in and the details
+ * rise into place after it. It starts on the UI thread when the Feed's pager
+ * comes to rest on the card, at once outside a pager; a card the pager heads
+ * for and leaves before it rests there shows its final frame. Under Reduce
+ * Motion nothing moves and the card fades in once instead. Until the system
+ * answers on Reduce Motion the card waits unseen. Each play takes its pace
+ * from the Feed's `RevealPace`, full outside one. Returns the card's fade, and
+ * the reveal its parts read.
  */
 function useEntryReveal() {
   const onScreen = useIsPageOnScreen();
   const reduceMotion = useReduceMotionKnown();
-  const state: RevealState =
-    reduceMotion === true ? 'still' : onScreen && reduceMotion === false ? 'playing' : 'waiting';
+  const settle = usePageSettle();
   const pacer = useContext(PacerContext);
-  // A new token for each play, so the pacer tells each play apart.
-  const play = useMemo(() => ({ state }), [state]);
-  const pace = useRef<RevealPace>('full');
-  // Before the effects of the card's parts, which start their motion at this pace.
-  useLayoutEffect(() => {
-    if (play.state === 'playing') pace.current = pacer.paceOf(play);
-  }, [play, pacer]);
-  const [readPace] = useState(() => () => pace.current);
-  const reveal = useMemo<Reveal>(() => ({ state, pace: readPace }), [state, readPace]);
+  const elapsed = useSharedValue(0);
+  const fast = useSharedValue(false);
+  /** Whether the reveal played or jumped to its final frame: each card does so once. */
+  const started = useSharedValue(false);
+  const landed = useDerivedValue(() => {
+    const { delay, duration } = (fast.value ? entryReveal.fast : entryReveal.full).headline;
+    return headlineEasing(stepOf(elapsed.value, delay, duration));
+  });
+
+  const known = reduceMotion === false;
+  useAnimatedReaction(
+    (): Towards => {
+      if (!known) return 'unknown';
+      if (settle === undefined || settle.settled.value === settle.page) return 'settled';
+      return settle.turnedTo.value === settle.page ? 'heading' : 'away';
+    },
+    (towards, previous) => {
+      if (started.value) return;
+      if (towards === 'settled') {
+        const playFast = playsFast(pacer);
+        const end = playFast ? FAST_END : FULL_END;
+        started.set(true);
+        fast.set(playFast);
+        elapsed.set(
+          withTiming(end, {
+            duration: end,
+            easing: Easing.linear,
+            reduceMotion: ReduceMotion.Never,
+          }),
+        );
+      } else if (towards === 'away' && previous === 'heading') {
+        // Swiped past before it settled: whole at once, never half drawn.
+        started.set(true);
+        fast.set(false);
+        elapsed.set(FULL_END);
+      }
+    },
+    [known, settle, pacer],
+  );
+
+  const reveal = useMemo<Reveal>(
+    () =>
+      reduceMotion === true
+        ? { kind: 'still' }
+        : { kind: 'moving', elapsed, fast, headline: { landed } },
+    [reduceMotion, elapsed, fast, landed],
+  );
   const faded = useSharedValue(0);
   useEffect(() => {
     if (reduceMotion === undefined || faded.value > 0) return;
-    // With motion the letters and details carry the entrance; the card is there at once.
+    // With motion the headline and details carry the entrance; the card is there at once.
     faded.value = reduceMotion
       ? onScreen
         ? withTiming(1, {
@@ -159,13 +219,10 @@ export function RevealFrame({
   );
 }
 
-/** The headline's letters fly in while the card reveals; none outside a card or under Reduce Motion. */
-export function useFlyingLetters(): FlyingLettersOf | undefined {
-  const { state, pace } = useContext(RevealContext);
-  return useMemo(
-    () => (state === 'still' ? undefined : { playing: state === 'playing', pace }),
-    [state, pace],
-  );
+/** The headline flies in as one while the card reveals; it doesn't outside a card or under Reduce Motion. */
+export function useFlyingText(): FlyingTextOf | undefined {
+  const reveal = useContext(RevealContext);
+  return reveal.kind === 'moving' ? reveal.headline : undefined;
 }
 
 /**
@@ -181,23 +238,18 @@ export function RevealDetail({
   testID?: string;
   children: ReactNode;
 }) {
-  const { state, pace } = useContext(RevealContext);
-  const shown = useSharedValue(state === 'still' ? 1 : 0);
-  useEffect(() => {
-    if (state === 'still') shown.value = 1;
-    else if (state === 'waiting') shown.value = 0;
-    else {
-      const { at, duration } = entryReveal[pace()].details;
-      shown.value = withDelay(
-        at[Math.min(step, at.length - 1)] ?? 0,
-        withTiming(1, { duration, easing: detailEasing, reduceMotion: ReduceMotion.Never }),
-      );
-    }
-  }, [state, pace, step, shown]);
-  const rise = useAnimatedStyle(() => ({
-    opacity: shown.value,
-    transform: [{ translateY: (1 - shown.value) * motion.cascade.rise }],
-  }));
+  const reveal = useContext(RevealContext);
+  const rise = useAnimatedStyle(() => {
+    if (reveal.kind === 'still') return { opacity: 1, transform: [{ translateY: 0 }] };
+    const { at, duration } = (reveal.fast.value ? entryReveal.fast : entryReveal.full).details;
+    const shown = detailEasing(
+      stepOf(reveal.elapsed.value, at[Math.min(step, at.length - 1)] ?? 0, duration),
+    );
+    return {
+      opacity: shown,
+      transform: [{ translateY: (1 - shown) * motion.cascade.rise }],
+    };
+  }, [reveal, step]);
   return (
     <Animated.View testID={testID} style={rise}>
       {children}

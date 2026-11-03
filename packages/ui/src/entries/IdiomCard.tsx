@@ -8,7 +8,7 @@ import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { useFlyingLetters } from './reveal';
+import { useFlyingText } from './reveal';
 import { DetailSection, ExampleText } from './WordCard';
 
 /**
@@ -41,7 +41,7 @@ export function IdiomCardBody({
   // In the Feed, VoiceOver turns to the next or previous card from the expression and the Definition.
   const turnActions = usePageTurnActions();
   // The headline's letters fly in as the card reveals.
-  const flying = useFlyingLetters();
+  const flying = useFlyingText();
   const idiomType = strings.idiomTypes[card.idiomType];
   const bodyText = [typeStyle('example', tokens), sizes.example, { color: colors.ink }];
 
