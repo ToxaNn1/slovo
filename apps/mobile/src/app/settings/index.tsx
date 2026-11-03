@@ -1,5 +1,6 @@
 import { DailyGoalSchema, FontSizeSchema, ThemeSchema, type DailyGoal } from '@slovo/contracts';
 import {
+  BackLink,
   ChoiceRow,
   FontSizePreview,
   NavigationRow,
@@ -11,6 +12,7 @@ import {
 } from '@slovo/ui';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 
 import { AccountRow } from '@/account/account-row';
 import { useAccountInEffect } from '@/account/account';
@@ -69,6 +71,7 @@ export default function SettingsScreen() {
   const notificationsSummary = useNotificationsSummary();
   const accountOpening = useAccountInEffect();
   const shown = useShown();
+  const router = useRouter();
   return (
     <SafeAreaView
       testID="settings"
@@ -76,6 +79,16 @@ export default function SettingsScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
+        {/* Opened from the Profile tab while the Profile is shown; otherwise Settings is the tab itself. */}
+        {shown.profile && (
+          <BackLink
+            testID="settings-back"
+            label={editionStrings.tabs.profile}
+            onPress={() => {
+              router.back();
+            }}
+          />
+        )}
         <ScreenTitle>{strings.title}</ScreenTitle>
         {accountOpening !== undefined && (
           <View style={styles.section}>
@@ -212,16 +225,6 @@ export default function SettingsScreen() {
                 label={editionStrings.rarityTest.retake}
                 onPress={() => {
                   openScreen('/settings/rarity-test');
-                }}
-              />
-            )}
-            {shown.profile && (
-              <NavigationRow
-                testID="settings-row-profile"
-                icon="hex"
-                label={strings.rows.profile}
-                onPress={() => {
-                  openScreen('/settings/profile');
                 }}
               />
             )}

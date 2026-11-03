@@ -96,9 +96,9 @@ export interface Shown {
   readonly sync: boolean;
   /** The Daily Goal choice of Settings and the goal on the XP bar; it lives in the XP log. */
   readonly dailyGoal: boolean;
-  /** The Search button of the «Головна» header, which opens the Search screen. */
+  /** The Search button of the «Стрічка» header, which opens the Search screen. */
   readonly search: boolean;
-  /** The 🎲 «Слово під настрій» of the «Головна» header, which opens the moods. */
+  /** The 🎲 «Слово під настрій» of the «Стрічка» header, which opens the moods. */
   readonly moods: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;

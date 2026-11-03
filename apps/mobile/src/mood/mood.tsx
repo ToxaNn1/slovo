@@ -38,13 +38,13 @@ function chipsOf(choices: readonly MoodChoice[]): readonly MoodChip[] {
 }
 
 /**
- * «Слово під настрій» (ADR 0054): the 🎲 of the «Головна» header and the
+ * «Слово під настрій» (ADR 0054): the 🎲 of the «Стрічка» header and the
  * sheet of mood chips it opens, while moods are on in effect. A chip runs the
  * roulette of its Lemmas, then the sheet leaves and the card of the Word it
  * landed on opens, which makes nothing Seen. Under Reduce Motion the card
  * opens straight away. Closing the sheet stops the roulette. With
  * `replaceOpenEntry` on in effect, the card takes the place of the one the
- * roulette opened before, so «Назад» returns to «Головна».
+ * roulette opened before, so «Назад» returns to «Стрічка».
  */
 export function MoodButtonAndSheet() {
   const shown = useShown().moods;

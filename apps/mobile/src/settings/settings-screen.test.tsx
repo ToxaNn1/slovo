@@ -256,18 +256,18 @@ describe('Settings › «Без лічильників»', () => {
   });
 });
 
-describe('Settings › Профіль and Значки', () => {
-  it('shows the «Профіль» and «Значки» rows while their switches are on', async () => {
+describe('Settings › Значки', () => {
+  it('shows the «Значки» row while its switch is on, and no «Профіль» row: the Profile is a tab', async () => {
     await renderSettings();
 
-    expect(screen.getByTestId('settings-row-profile')).toBeOnTheScreen();
     expect(screen.getByTestId('settings-row-badges')).toBeOnTheScreen();
+    // The back tile names the Profile; no row of the list opens it.
+    expect(screen.queryByTestId('settings-row-profile')).not.toBeOnTheScreen();
   });
 
-  it('shows neither row while the Edition turns the Profile and the Badges off', async () => {
-    await renderSettings({ profile: false, badges: false });
+  it('shows no «Значки» row while the Edition turns the Badges off', async () => {
+    await renderSettings({ badges: false });
 
-    expect(screen.queryByTestId('settings-row-profile')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('settings-row-badges')).not.toBeOnTheScreen();
   });
 });

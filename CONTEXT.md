@@ -310,7 +310,7 @@ An Entry that may appear anywhere new (the Feed, notifications, widgets, the Gam
 _Avoid_: Available, visible, active entry
 
 **Search**:
-«Пошук»: finding Entries by their visible text, behind a magnifier in the «Головна» header. It covers every Entry of a kind the Edition turns on that is neither Retired nor Hidden, the Mix and the Rarity Floor aside, and ignores case, Stress, the kind of apostrophe, г/ґ and е/ё. A text matches from 2 characters when it or one of its words starts with the query; «За значенням», from 3 characters, finds Words by their Definition and the Synonym Rows that contain the query. Opening a result makes nothing Seen. The last 10 queries stay on the device.
+«Пошук»: finding Entries by their visible text, behind a magnifier in the «Стрічка» header. It covers every Entry of a kind the Edition turns on that is neither Retired nor Hidden, the Mix and the Rarity Floor aside, and ignores case, Stress, the kind of apostrophe, г/ґ and е/ё. A text matches from 2 characters when it or one of its words starts with the query; «За значенням», from 3 characters, finds Words by their Definition and the Synonym Rows that contain the query. Opening a result makes nothing Seen. The last 10 queries stay on the device.
 _Avoid_: Lookup, filter, dictionary
 
 **Rarity Test**:

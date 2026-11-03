@@ -9,7 +9,7 @@ import { minTouchTarget, withAlpha } from '../tokens';
 const BUTTON_SIZE = 40;
 
 /**
- * The magnifier of the «Головна» header, which opens Search. A round button
+ * The magnifier of the «Стрічка» header, which opens Search. A round button
  * the size of the Stats pill beside it; VoiceOver reads «Пошук».
  */
 export function SearchButton({ onPress }: { onPress: () => void }) {

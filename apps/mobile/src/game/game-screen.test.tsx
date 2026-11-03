@@ -477,7 +477,7 @@ describe('the Game screen', () => {
     await renderScreen();
 
     expect(shape()).toEqual([
-      'Гра',
+      'Ігри',
       'Слова',
       'game-mode-guess-word',
       'game-mode-stress',
@@ -532,7 +532,7 @@ describe('the Game screen', () => {
     await renderScreen();
 
     expect(shape()).toEqual([
-      'Гра',
+      'Ігри',
       'Слова',
       'game-mode-guess-word',
       'game-mode-stress',

@@ -1,8 +1,9 @@
 {
   "tabs": {
-    "home": "Головна",
+    "home": "Стрічка",
+    "profile": "Профіль",
     "settings": "Налаштування",
-    "game": "Гра",
+    "game": "Ігри",
     "saved": "Збережене",
     "accessibilityLabel": "{tab}, вкладка {position} з {count}"
   },
@@ -1081,7 +1082,7 @@
     "noEligibleWord": "Немає слів у вашому Міксі"
   },
   "game": {
-    "title": "Гра",
+    "title": "Ігри",
     "groups": {
       "words": "Слова",
       "corrections": "Виправлення",
