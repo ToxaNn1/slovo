@@ -156,18 +156,14 @@ function feed({ fast, visiting, card: entryId, reduceMotion = false }: FeedVisit
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <ReduceMotionProvider reduceMotion={reduceMotion}>
         <RevealPace fast={fast} visiting={visiting}>
-          <EntryCard
-            key={entryId}
-            card={{ ...card, entryId }}
-            actions={<Text>Actions</Text>}
-          />
+          <EntryCard key={entryId} card={{ ...card, entryId }} actions={<Text>Actions</Text>} />
         </RevealPace>
       </ReduceMotionProvider>
     </EditionProvider>
   );
 }
 
-let rerender: (element: ReactElement) => Promise<void> = async () => {};
+let rerender: ((element: ReactElement) => Promise<void>) | undefined;
 
 async function renderFeed(visit: FeedVisit) {
   const rendered = await render(feed(visit));
@@ -180,6 +176,7 @@ async function renderFeed(visit: FeedVisit) {
 }
 
 async function rerenderFeed(visit: FeedVisit) {
+  if (rerender === undefined) throw new Error('Render the Feed first');
   await rerender(feed(visit));
   await act(async () => {
     await Promise.resolve();
