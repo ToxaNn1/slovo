@@ -48,14 +48,16 @@ export const HEADLINE_MAX_FONT_SCALE = 1.3;
 export const TEXT_MAX_FONT_SCALE = 1.5;
 /** The design's hero Lemma, `Lemma, hero`: the size of its type role. */
 export const HERO_LEMMA = roleSize('heroLemma');
-/** The shout word's size, and its letter spacing as a share of it. */
+/** The shout word's size, and its letter spacing as a share of it, to scale down together. */
 const SHOUT = roleSize('stepShout');
-const SHOUT_TRACKING = typeRoles.stepShout.letterSpacing / SHOUT.fontSize;
+const SHOUT_TRACKING = typeRoles.stepShout.letterSpacing / typeRoles.stepShout.size;
 /**
  * One step of the onboarding over the whole screen, as the design draws it:
  * the red halftone top cut by a wedge, with the step's shout word, the
- * on-red Mascot and «Пропустити»; under it the step dots, the step's content
- * and its buttons. The step slides in from the side and its shout word flies
+ * on-red Mascot with its line and «Пропустити»; under it the step dots, the
+ * step's content, which scrolls, and its buttons, pinned under it. The shout
+ * word is drawn small enough to fit the screen whole, never cut, and the
+ * Mascot's line stays on the red, beside the Mascot. The step slides in from the side and its shout word flies
  * in from the left; with Reduce Motion both only fade in where they are.
  * VoiceOver starts a step at its dots, which say its number.
  */
@@ -64,6 +66,7 @@ export function OnboardingStep({
   total,
   shout,
   mascot,
+  mascotLine,
   onSkip,
   children,
   footer,
@@ -74,8 +77,10 @@ export function OnboardingStep({
   total: number;
   /** The word the step shouts on its red top. */
   shout: string;
-  /** The on-red Mascot in the top's corner, when it shows. */
+  /** The on-red Mascot in the top's corner, when it shows, drawn at `onboardingLayout.mascot.width`. */
   mascot?: ReactNode;
+  /** The Mascot's line, on the red beside it, when it shows. */
+  mascotLine?: string | undefined;
   /** Finishes the onboarding at once. */
   onSkip: () => void;
   children: ReactNode;
@@ -141,17 +146,26 @@ export function OnboardingStep({
           points={wedges.cut}
         />
         <Animated.View testID="onboarding-shout" style={[styles.shout, flyIn]}>
-          {/* Scaled down until the whole word fits across the top, never cut. */}
           <WholeWordsText
+            testID="onboarding-shout-word"
             text={shout}
             size={SHOUT}
             tracking={SHOUT_TRACKING}
-            testID="onboarding-shout-word"
             accessible={false}
             maxFontSizeMultiplier={1}
             style={[typeStyle('stepShout', { fontFamilies }), { color: inkOnRed }]}
           />
         </Animated.View>
+        {mascotLine !== undefined && (
+          <Text
+            testID="onboarding-mascot-line"
+            {...voice}
+            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            style={[typeStyle('sub', { fontFamilies }), styles.mascotLine, { color: inkOnRed }]}
+          >
+            {mascotLine}
+          </Text>
+        )}
         {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
         <View style={[styles.topRow, { paddingTop: top }]}>
           <Pressable
@@ -202,7 +216,8 @@ export function OnboardingStep({
         </View>
         {children}
       </ScrollView>
-      <View style={styles.footer}>{footer}</View>
+      {/* On the screen's ground, so content scrolled under it never shows through. */}
+      <View style={[styles.footer, { backgroundColor: colors.background }]}>{footer}</View>
     </Animated.View>
   );
 }
@@ -230,7 +245,7 @@ export function LaterButton({ testID, onPress }: { testID: string; onPress: () =
   );
 }
 
-const { dot, side } = onboardingLayout;
+const { dot, side, mascot: mascotPlace } = onboardingLayout;
 
 /** The text every step's content shares: the heading block, its title and its text, in the type roles' sizes. */
 export const stepStyles = StyleSheet.create({
@@ -246,10 +261,13 @@ const styles = StyleSheet.create({
     right: side,
     top: onboardingLayout.shout.top,
   },
-  mascot: {
+  mascot: { position: 'absolute', right: mascotPlace.right, top: mascotPlace.top },
+  // Left of the Mascot and above the wedge, which runs lowest on the left.
+  mascotLine: {
     position: 'absolute',
-    right: onboardingLayout.mascot.right,
-    top: onboardingLayout.mascot.top,
+    left: side,
+    right: mascotPlace.right + mascotPlace.width + mascotPlace.padding,
+    bottom: mascotPlace.lineBottom,
   },
   topRow: { paddingHorizontal: side, flexDirection: 'row', justifyContent: 'flex-end' },
   skip: { minHeight: minTouchTarget, minWidth: minTouchTarget, justifyContent: 'center' },
