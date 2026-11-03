@@ -5,21 +5,21 @@ const TYPE_ROLE_MESSAGE =
   'Take the font and its weight from a type role: `typeStyle(role, tokens)` (ADR 0070)';
 
 /**
- * The files the token rule covers: `tokens.ts` defines the tokens and a test
+ * The files the token rule covers: the `tokens/` folder defines the tokens and a test
  * may write any value, so both are left out.
  */
 export const tokenScope = {
   files: ['**/*.{ts,tsx}'],
-  ignores: ['**/tokens.ts', '**/*.test.{ts,tsx}'],
+  ignores: ['**/tokens/*.ts', '**/*.test.{ts,tsx}'],
 };
 
 /**
  * `no-restricted-syntax` selectors that ban sizes, spacings, radii and colours
  * written as literals instead of taken from the `@slovo/ui` tokens
  * (docs/react-native.md), and a font family or weight written by hand instead
- * of taken from a type role (ADR 0070): only `tokens.ts` sets them. The one
+ * of taken from a type role (ADR 0070): only the `tokens/` folder sets them. The one
  * exception is Google's sign-in label, whose system font and weight Google's
- * branding rules set: `googleSignInButton.labelType` in `tokens.ts` holds it.
+ * branding rules set: `googleSignInButton.labelType` in `tokens/chrome.ts` holds it.
  *
  * `no-restricted-syntax` is one rule with one array, and a later declaration
  * replaces an earlier one for the same file. A workspace part that has other
