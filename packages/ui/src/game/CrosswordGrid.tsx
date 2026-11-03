@@ -236,11 +236,7 @@ export function CrosswordGrid({
             testID={`${testID}-clue`}
             accessibilityLiveRegion="polite"
             {...voice}
-            style={[
-              typeStyle('crosswordClue', tokens),
-              styles.clue,
-              { color: colors.background },
-            ]}
+            style={[typeStyle('crosswordClue', tokens), styles.clue, { color: colors.background }]}
           >
             {selected.clue}
           </Text>
