@@ -1,4 +1,4 @@
-import { EditionProvider, SplashOverlay } from '@slovo/ui';
+import { coreTokens, EditionProvider, SplashOverlay, TokensProvider } from '@slovo/ui';
 import type { LaunchKind } from '@slovo/core';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, render, screen } from '@testing-library/react-native';
@@ -66,6 +66,22 @@ describe('SplashOverlay', () => {
       expect(onDone).toHaveBeenCalledTimes(1);
     },
   );
+
+  it('draws the letters in ink and the tagline in cream in the dark Theme, as the board', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    await render(
+      <TokensProvider tokens={coreTokens} colorScheme="dark">
+        <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+          <SplashOverlay wordmark="SLOVO" tagline="rare words" kind="first" onDone={jest.fn()} />
+        </EditionProvider>
+      </TokensProvider>,
+    );
+    await pass(0);
+    // The board's band is fixed: #140C0A ink letters and band, #FFF4E6 cream tagline in both Themes.
+    const light = coreTokens.colors.light;
+    expect(screen.getAllByText('S')[0]).toHaveStyle({ color: light.ink });
+    expect(screen.getByText('RARE WORDS')).toHaveStyle({ color: light.background });
+  });
 
   it('shows the shouting Mascot on the red', async () => {
     await renderSplash('daily', false);

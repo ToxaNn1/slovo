@@ -1,4 +1,4 @@
-import { EditionProvider, OnboardingWelcome } from '@slovo/ui';
+import { coreTokens, EditionProvider, OnboardingWelcome, TokensProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo, StyleSheet } from 'react-native';
@@ -143,6 +143,26 @@ describe('An onboarding step', () => {
     await pass(550);
 
     expect(shoutAside()).toBeCloseTo(0);
+  });
+
+  it("draws its shout word in the board's ink on the red in the dark Theme too", async () => {
+    await render(
+      <TokensProvider tokens={coreTokens} colorScheme="dark">
+        <SafeAreaProvider initialMetrics={metrics}>
+          <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+            <OnboardingWelcome
+              step={1}
+              total={4}
+              hero={undefined}
+              onStart={jest.fn()}
+              onSkip={jest.fn()}
+            />
+          </EditionProvider>
+        </SafeAreaProvider>
+      </TokensProvider>,
+    );
+
+    expect(screen.getByText('WORD')).toHaveStyle({ color: coreTokens.colors.light.ink });
   });
 
   it('keeps its shout word in place, with Reduce Motion', async () => {
