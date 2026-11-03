@@ -25,7 +25,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { motion, scrim, space, type Easing as Easing4, type Wedge as WedgePoints } from '../tokens';
-import { InvertedTokens, useTokens } from '../providers/TokensProvider';
+import { useTokens } from '../providers/TokensProvider';
+import { useRouteOnScreen } from '../providers/RouteProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { Wedge } from './Wedge';
 
@@ -80,7 +81,10 @@ export const SHEET_SLANT = 30;
  * a fade). A tap on the scrim, a downward drag or flick on its top strip, and
  * VoiceOver's escape gesture ask `onClose`; the sheet leaves when `visible`
  * turns false. Without `onClose` only its content closes it: its top takes no
- * drag, and no scrim dims the screen, which takes no taps meanwhile. `inverted` draws the sheet in the other colour scheme. The
+ * drag, and no scrim dims the screen, which takes no taps meanwhile. The sheet
+ * is drawn on the Theme's `surface`. It belongs to the route it opened on
+ * (`RouteProvider`): when another route comes on screen it asks `onClose`, and
+ * without `onClose` it leaves until its route is back. The
  * `onDismissed` runs once the sheet has slid away, for what must wait until no
  * modal is on screen (another modal asked for earlier is not presented). The
  * content is mounted only while the sheet is open, so its state starts fresh
@@ -91,21 +95,31 @@ export function BottomSheet({
   visible,
   onClose,
   onDismissed,
-  inverted = false,
   children,
   testID,
 }: {
   visible: boolean;
   onClose?: () => void;
   onDismissed?: (() => void) | undefined;
-  inverted?: boolean;
   children: ReactNode;
   testID?: string | undefined;
 }) {
+  const route = useRouteOnScreen();
+  /** The route the sheet opened on, while it is open. */
+  const [openedOn, setOpenedOn] = useState<{ route: string | undefined }>();
+  if (visible && openedOn === undefined) setOpenedOn({ route });
+  if (!visible && openedOn !== undefined) setOpenedOn(undefined);
+  const away = visible && openedOn !== undefined && openedOn.route !== route;
+  const shown = visible && !away;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  useEffect(() => {
+    if (away) onCloseRef.current?.();
+  }, [away]);
   const insets = useSafeAreaInsets();
   const { height: windowHeight } = useWindowDimensions();
   const reduceMotion = useReduceMotion();
-  const [mounted, setMounted] = useState(visible);
+  const [mounted, setMounted] = useState(shown);
   /** 0 while away, 1 while open. */
   const progress = useSharedValue(0);
   const drag = useSharedValue(0);
@@ -121,7 +135,7 @@ export function BottomSheet({
   };
 
   useEffect(() => {
-    if (visible) {
+    if (shown) {
       setMounted(true);
       flick.current = undefined;
       drag.value = 0;
@@ -158,9 +172,9 @@ export function BottomSheet({
         progress.value = withTiming(0, SLIDE_OUT, gone);
       }
     }
-    // The shared values are stable, so only `visible` starts a slide; a change
+    // The shared values are stable, so only `shown` starts a slide; a change
     // of Reduce Motion runs it again towards the same end, which moves nothing.
-  }, [visible, reduceMotion, drag, progress, height]);
+  }, [shown, reduceMotion, drag, progress, height]);
 
   const closeByDrag = (velocity: number) => {
     flick.current = velocity;
@@ -236,7 +250,7 @@ export function BottomSheet({
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           style={[styles.avoiding, { paddingTop: insets.top + space[2] }]}
         >
-          {inverted ? <InvertedTokens>{panel}</InvertedTokens> : panel}
+          {panel}
         </KeyboardAvoidingView>
       </View>
     </Modal>

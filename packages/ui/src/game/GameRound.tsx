@@ -1048,15 +1048,15 @@ function Slash({
  * `game-round-wrong-dark`, `game-round-correction-answered-light`):
  * «Правильно!» or «Не цього разу», the right answer with its Stress and its
  * Example with the author, or its explanation, or the answer alone, and
- * «Далі», the only way to close it. It is drawn in the other colour scheme
- * and keeps what it showed while it slides away.
+ * «Далі», the only way to close it. It is drawn on the Theme's surface, as
+ * every sheet is, and keeps what it showed while it slides away.
  */
 function AnswerSheet({ answer, onNext }: { answer: RoundAnswer | undefined; onNext: () => void }) {
   // The answer it shows, kept while the sheet leaves after «Далі» took the Round's away.
   const [shown, setShown] = useState(answer);
   if (answer !== undefined && answer !== shown) setShown(answer);
   return (
-    <BottomSheet visible={answer !== undefined} inverted testID="game-sheet">
+    <BottomSheet visible={answer !== undefined} testID="game-sheet">
       {shown === undefined ? null : <AnswerSheetContent answer={shown} onNext={onNext} />}
     </BottomSheet>
   );

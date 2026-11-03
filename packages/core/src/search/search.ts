@@ -36,7 +36,7 @@ export interface SearchResults {
   /**
    * «За значенням»: the Words whose Definition contains the query and the
    * Synonym Rows that contain it, together in the Edition's alphabet by the
-   * Lemma or the dominant.
+   * Lemma or the dominant, without those the groups above list already.
    */
   readonly byMeaning: readonly (Word | SynonymRow)[];
 }
@@ -192,16 +192,20 @@ export function createSearch({
           .sort((a, b) => exact(a) - exact(b) || collator.compare(a.shown, b.shown))
           .slice(0, GROUP_LIMIT)
           .map(({ entry }) => entry);
+      /** Leaves out the Hidden Entries and those a kind's group lists already, so each Entry shows once. */
       const byMeaning = <Found extends Entry>(
         keyed: readonly Keyed<Found>[],
         hidden: ReadonlyMap<string, string>,
+        listed: ReadonlySet<string>,
       ) =>
         Array.from(wanted).length < SHORTEST_MEANING_QUERY
           ? []
           : keyed
               .filter(
                 ({ entry, meaningKeys }) =>
-                  !hidden.has(entry.id) && meaningKeys.some((key) => key.includes(wanted)),
+                  !hidden.has(entry.id) &&
+                  !listed.has(entry.id) &&
+                  meaningKeys.some((key) => key.includes(wanted)),
               )
               .sort((a, b) => collator.compare(a.shown, b.shown))
               .slice(0, GROUP_LIMIT)
@@ -219,13 +223,17 @@ export function createSearch({
         ofKind('synonymRow', others.synonymRow),
         ofKind('tip', others.tip),
       ]);
-      return {
+      const groups = {
         words: group(wordsFound, hidden),
         corrections: group(corrections, hidden),
         idioms: group(idioms, hidden),
         synonymRows: group(synonymRows, hidden),
         tips: group(tips, hidden),
-        byMeaning: byMeaning<Word | SynonymRow>([...wordsFound, ...synonymRows], hidden),
+      };
+      const listed = new Set([...groups.words, ...groups.synonymRows].map(({ id }) => id));
+      return {
+        ...groups,
+        byMeaning: byMeaning<Word | SynonymRow>([...wordsFound, ...synonymRows], hidden, listed),
       };
     },
   };
