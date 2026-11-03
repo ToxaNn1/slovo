@@ -11,6 +11,7 @@ import { require as tsxRequire } from 'tsx/cjs/api';
 import type * as AppIntents from './plugins/app-intents';
 import type * as FontFamily from './plugins/font-family';
 import type * as NotificationSound from './plugins/notification-sound';
+import type * as SplashBackground from './plugins/splash-background';
 import type * as WidgetExtension from './plugins/widget-extension';
 
 type EditionFolder = EditionFolders.EditionFolder;
@@ -47,6 +48,10 @@ const { readNotificationSound } = tsxRequire(
   './plugins/notification-sound.ts',
   import.meta.url,
 ) as typeof NotificationSound;
+const { withSplashBackground } = tsxRequire(
+  './plugins/splash-background.ts',
+  import.meta.url,
+) as typeof SplashBackground;
 const { designTokens } = tsxRequire('@slovo/ui/tokens', import.meta.url) as typeof UiTokens;
 const { writeWidgetExtension } = tsxRequire(
   './plugins/widget-extension.ts',
@@ -413,7 +418,12 @@ export default ({ config, projectRoot }: ConfigContext): ExpoConfig => {
     },
   };
   return withAppIntents(
-    withWidgetExtension(expoConfig, join(projectRoot, '../widget'), widget),
+    withWidgetExtension(
+      // The launch screen in the splash colour, once expo-splash-screen has written it.
+      withSplashBackground(expoConfig),
+      join(projectRoot, '../widget'),
+      widget,
+    ),
     appIntents,
   );
 };

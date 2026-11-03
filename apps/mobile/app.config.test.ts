@@ -166,6 +166,15 @@ const NATIVE_PROJECT = `// !$*UTF8*$!
 }
 `;
 
+/** The launch screen of a native project whose splash has a colour and no image. */
+const LAUNCH_SCREEN = `<document>
+    <view key="view" id="EXPO-ContainerView" userLabel="ContainerView">
+        <subviews/>
+        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+    </view>
+</document>
+`;
+
 /**
  * Runs the native project changes the app config makes at prebuild on a
  * minimal native project in the context's folder, and returns that folder's
@@ -175,6 +184,8 @@ async function prebuildIos(context: ConfigContext, times = 1): Promise<string> {
   const iosDir = join(context.projectRoot, 'ios');
   mkdirSync(join(iosDir, 'SLOVO.xcodeproj'), { recursive: true });
   writeFileSync(join(iosDir, 'SLOVO.xcodeproj/project.pbxproj'), NATIVE_PROJECT);
+  mkdirSync(join(iosDir, 'SLOVO'), { recursive: true });
+  writeFileSync(join(iosDir, 'SLOVO/SplashScreen.storyboard'), LAUNCH_SCREEN);
   for (let run = 0; run < times; run += 1) {
     await compileModsAsync(appConfig(context), {
       projectRoot: context.projectRoot,
@@ -432,6 +443,14 @@ describe('app config', () => {
       backgroundColor: '#FF3B2F',
       dark: { backgroundColor: '#FF3B2F' },
     });
+  });
+
+  it('draws the native launch screen in the splash colour, not the system background', async () => {
+    const iosDir = await prebuildIos(repoWithEdition(() => undefined));
+
+    expect(readFileSync(join(iosDir, 'SLOVO/SplashScreen.storyboard'), 'utf8')).toContain(
+      '<color key="backgroundColor" name="SplashScreenBackground"/>',
+    );
   });
 
   it('names the field when the splash Decor is invalid', () => {
