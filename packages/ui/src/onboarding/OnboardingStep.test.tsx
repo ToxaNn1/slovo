@@ -1,7 +1,7 @@
 import { EditionProvider, OnboardingWelcome } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, render, screen } from '@testing-library/react-native';
-import { AccessibilityInfo } from 'react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
@@ -15,14 +15,29 @@ const strings = testStrings({
   },
 });
 
-const metrics = {
+interface Metrics {
+  frame: { x: number; y: number; width: number; height: number };
+  insets: { top: number; left: number; right: number; bottom: number };
+}
+
+const metrics: Metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
+/** The phone the board is drawn on, with its notch and home indicator. */
+const notched: Metrics = {
+  frame: { x: 0, y: 0, width: 390, height: 844 },
+  insets: { top: 59, left: 0, right: 0, bottom: 34 },
+};
+/** The smallest phone: iPhone SE. */
+const small: Metrics = {
+  frame: { x: 0, y: 0, width: 375, height: 667 },
+  insets: { top: 20, left: 0, right: 0, bottom: 0 },
+};
 
-async function renderWelcome() {
+async function renderWelcome(on: Metrics = metrics) {
   await render(
-    <SafeAreaProvider initialMetrics={metrics}>
+    <SafeAreaProvider initialMetrics={on}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <OnboardingWelcome
           step={1}
@@ -51,6 +66,23 @@ function shoutAside(): number {
     transform?: { translateX?: number }[];
   };
   return style.transform?.[0]?.translateX ?? 0;
+}
+
+/** A view's own numeric style, flattened. */
+function styleOf(testID: string): Record<string, unknown> {
+  return StyleSheet.flatten(screen.getByTestId(testID).props['style']) as Record<string, unknown>;
+}
+
+/** On the screen: how much the red top's art is scaled, and the highest point of the turned shout word. */
+function shoutOnScreen(): { scale: number; highest: number } {
+  const art = styleOf('onboarding-art');
+  const transform = art['transform'] as { scale: number }[];
+  const scale = transform[0]?.scale ?? 1;
+  const shout = styleOf('onboarding-shout');
+  const width = Number(art['width']) - Number(shout['left']) - Number(shout['right']);
+  // Turned 8° about its middle, the word's right end rises by half its width times sin 8°.
+  const rise = (width / 2) * Math.sin((8 * Math.PI) / 180);
+  return { scale, highest: scale * (Number(shout['top']) - rise) };
 }
 
 /** Lets the given milliseconds pass on the faked timers. */
@@ -119,5 +151,51 @@ describe('An onboarding step', () => {
     await pass(150);
 
     expect(shoutAside()).toBeCloseTo(0);
+  });
+
+  // Audit C15: the shout word was cut to one letter and «…».
+  it('draws its whole shout word, smaller when it is wider than the top, at any text size', async () => {
+    await renderWelcome();
+    const word = screen.getByTestId('onboarding-shout-word');
+    const line = word.parent;
+    if (line === null) throw new Error('The shout word has no line around it');
+    await fireEvent(line, 'layout', { nativeEvent: { layout: { width: 380 } } });
+    // The word measured at full size: twice as wide as the top has room for, less a point.
+    const measured = screen
+      .getAllByText('WORD', { includeHiddenElements: true })
+      .find((text) => text !== word);
+    if (measured === undefined) throw new Error('The shout word is not measured');
+    await fireEvent(measured, 'textLayout', { nativeEvent: { lines: [{ width: 758 }] } });
+
+    expect(word).toHaveTextContent('WORD');
+    expect(word.props['numberOfLines']).toBeUndefined();
+    expect(word.props['maxFontSizeMultiplier']).toBe(1);
+    expect(word).toHaveStyle({ fontSize: 168 / 2 });
+    expect(word).not.toHaveStyle({ opacity: 0 });
+  });
+
+  // Shot pass on #1512: under a notch the turned word rose into the skip button and covered it.
+  it.each([
+    ['under a notch', notched],
+    ['on the smallest phone', small],
+  ])('keeps its shout word under its skip button %s', async (_, on) => {
+    await renderWelcome(on);
+    const skipRowBottom = on.insets.top + 44;
+    expect(shoutOnScreen().highest).toBeGreaterThanOrEqual(skipRowBottom);
+  });
+
+  it("draws its red top as the board on the board's phone", async () => {
+    await renderWelcome(notched);
+    expect(styleOf('onboarding-hero')['height']).toBe(440);
+    expect(shoutOnScreen().scale).toBe(1);
+  });
+
+  // Shot pass on #1512: on iPhone SE the full red top left room for the title alone.
+  it("leaves the content the board's room on the smallest phone, its red top drawn smaller", async () => {
+    await renderWelcome(small);
+    const hero = Number(styleOf('onboarding-hero')['height']);
+    // The board leaves 844 − 34 − 440 points under its red top for the content and buttons.
+    expect(small.frame.height - small.insets.bottom - hero).toBeGreaterThanOrEqual(370);
+    expect(shoutOnScreen().scale).toBeCloseTo(hero / 440);
   });
 });

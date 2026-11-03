@@ -9,7 +9,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native';
 import Animated, {
@@ -19,16 +18,18 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { HalftoneGround } from '../primitives/HalftoneGround';
+import { WholeWordsText } from '../primitives/WholeWordsText';
 import {
   minTouchTarget,
   motion,
   onboardingLayout,
   space,
   roleSize,
+  typeRoles,
   typeStyle,
   wedges,
 } from '../tokens';
@@ -46,6 +47,42 @@ export const HEADLINE_MAX_FONT_SCALE = 1.3;
 export const TEXT_MAX_FONT_SCALE = 1.5;
 /** The design's hero Lemma, `Lemma, hero`: the size of its type role. */
 export const HERO_LEMMA = roleSize('heroLemma');
+/** The shout word's size, and its letter spacing as a share of it. */
+const SHOUT = roleSize('stepShout');
+const SHOUT_TRACKING = typeRoles.stepShout.letterSpacing / SHOUT.fontSize;
+const { shout: shoutAt } = onboardingLayout;
+const SHOUT_TURN = `${String(shoutAt.turn)}deg`;
+
+/**
+ * The red top on a screen `width` × `height`: as tall as the board draws it,
+ * or shorter so the content keeps the board's room, with its art (the shout
+ * word and the Mascot) drawn at the board's size over `artWidth` and scaled
+ * by `scale`. The shout word sits low enough that its turned right end stays
+ * under «Пропустити», whose row ends at `skipBottom`.
+ */
+function onboardingHero({
+  width,
+  height,
+  bottom,
+  skipBottom,
+}: {
+  width: number;
+  height: number;
+  bottom: number;
+  skipBottom: number;
+}): { height: number; scale: number; artWidth: number; shoutTop: number } {
+  const heroHeight = Math.min(
+    onboardingLayout.heroHeight,
+    height - bottom - onboardingLayout.contentRoom,
+  );
+  const scale = heroHeight / onboardingLayout.heroHeight;
+  const artWidth = width / scale;
+  // Turned about its middle, the word's right end rises by half its width times the turn's sine.
+  const shoutWidth = artWidth - shoutAt.left - onboardingLayout.side;
+  const rise = (shoutWidth / 2) * Math.abs(Math.sin((shoutAt.turn * Math.PI) / 180));
+  const shoutTop = Math.max(shoutAt.top, skipBottom / scale + rise);
+  return { height: heroHeight, scale, artWidth, shoutTop };
+}
 /**
  * One step of the onboarding over the whole screen, as the design draws it:
  * the red halftone top cut by a wedge, with the step's shout word, the
@@ -83,7 +120,8 @@ export function OnboardingStep({
   const inkOnRed = useSchemeColors('light').ink;
   const { voice, strings } = useEdition();
   const { top, bottom } = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, height } = useSafeAreaFrame();
+  const hero = onboardingHero({ width, height, bottom, skipBottom: top + minTouchTarget });
   const { onboarding } = strings;
 
   // With Reduce Motion the step only fades in, so the timing runs whatever the system says.
@@ -118,8 +156,8 @@ export function OnboardingStep({
   const flyIn = useAnimatedStyle(() => ({
     opacity: Math.min(1, fly.value),
     transform: [
-      { translateX: reduceMotion ? 0 : (1 - fly.value) * onboardingLayout.shout.flyFrom },
-      { rotate: onboardingLayout.shout.turn },
+      { translateX: reduceMotion ? 0 : (1 - fly.value) * shoutAt.flyFrom },
+      { rotate: SHOUT_TURN },
     ],
   }));
 
@@ -128,24 +166,34 @@ export function OnboardingStep({
       testID={testID}
       style={[styles.step, slide, { backgroundColor: colors.background, paddingBottom: bottom }]}
     >
-      <View style={styles.hero}>
+      <View testID="onboarding-hero" style={[styles.hero, { height: hero.height }]}>
         <HalftoneGround
           id="onboarding-top"
           width={width}
-          height={onboardingLayout.heroHeight}
+          height={hero.height}
           points={wedges.cut}
         />
-        <Animated.View testID="onboarding-shout" style={[styles.shout, flyIn]}>
-          <Text
-            accessible={false}
-            numberOfLines={1}
-            maxFontSizeMultiplier={1}
-            style={[typeStyle('stepShout', { fontFamilies }), { color: inkOnRed }]}
+        <View
+          testID="onboarding-art"
+          style={[styles.art, { width: hero.artWidth, transform: [{ scale: hero.scale }] }]}
+        >
+          <Animated.View
+            testID="onboarding-shout"
+            style={[styles.shout, { top: hero.shoutTop }, flyIn]}
           >
-            {shout}
-          </Text>
-        </Animated.View>
-        {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
+            {/* Scaled down until the whole word fits across the top, never cut. */}
+            <WholeWordsText
+              text={shout}
+              size={SHOUT}
+              tracking={SHOUT_TRACKING}
+              testID="onboarding-shout-word"
+              accessible={false}
+              maxFontSizeMultiplier={1}
+              style={[typeStyle('stepShout', { fontFamilies }), { color: inkOnRed }]}
+            />
+          </Animated.View>
+          {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
+        </View>
         <View style={[styles.topRow, { paddingTop: top }]}>
           <Pressable
             testID="onboarding-skip"
@@ -195,7 +243,8 @@ export function OnboardingStep({
         </View>
         {children}
       </ScrollView>
-      <View style={styles.footer}>{footer}</View>
+      {/* Opaque, so content scrolled under the pinned buttons never shows through them. */}
+      <View style={[styles.footer, { backgroundColor: colors.background }]}>{footer}</View>
     </Animated.View>
   );
 }
@@ -232,12 +281,16 @@ export const stepStyles = StyleSheet.create({
 
 const styles = StyleSheet.create({
   step: { flex: 1 },
-  hero: { height: onboardingLayout.heroHeight, overflow: 'hidden' },
-  shout: {
+  hero: { overflow: 'hidden' },
+  // The art is laid out at the board's size and scaled from its top left corner.
+  art: {
     position: 'absolute',
-    left: onboardingLayout.shout.left,
-    top: onboardingLayout.shout.top,
+    left: 0,
+    top: 0,
+    height: onboardingLayout.heroHeight,
+    transformOrigin: 'top left',
   },
+  shout: { position: 'absolute', left: shoutAt.left, right: side },
   mascot: {
     position: 'absolute',
     right: onboardingLayout.mascot.right,

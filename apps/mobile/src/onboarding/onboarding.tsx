@@ -1,4 +1,4 @@
-import { DailyGoalSchema, type DailyGoal } from '@slovo/contracts';
+import { DailyGoalSchema, type DailyGoal, type MascotState } from '@slovo/contracts';
 import type { OnboardingStep as Step, QuestionnaireOption, WordCardModel } from '@slovo/core';
 import {
   EntryCard,
@@ -19,7 +19,7 @@ import {
 import { useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { MascotIn } from '../mascot/mascot';
+import { MascotAs } from '../mascot/mascot';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
@@ -50,7 +50,10 @@ export function Onboarding() {
     report(onboarding.next());
   };
   const { number, total } = step;
-  const mascot = <MascotIn state="onboarding" onRed />;
+  // The design draws the Mascot without a line, in each step's own state.
+  const mascot = (
+    <MascotAs state={mascotState[step.kind]} onRed width={onboardingLayout.mascot.width} />
+  );
   let shown: ReactNode;
   if (step.kind === 'welcome') {
     shown = (
@@ -103,6 +106,15 @@ export function Onboarding() {
     </View>
   );
 }
+
+/** The Mascot's state on each step, as the design poses it. */
+const mascotState: Readonly<Record<Step['kind'], MascotState>> = {
+  welcome: 'shouts',
+  firstWord: 'happy',
+  who: 'waits',
+  why: 'waits',
+  dailyGoal: 'waits',
+};
 
 /** A step's title, read as its header. */
 function Title({ children }: { children: string }) {
