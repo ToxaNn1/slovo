@@ -23,12 +23,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { HalftoneGround } from '../primitives/HalftoneGround';
+import { WholeWordsText } from '../primitives/WholeWordsText';
 import {
   minTouchTarget,
   motion,
   onboardingLayout,
   space,
   roleSize,
+  typeRoles,
   typeStyle,
   wedges,
 } from '../tokens';
@@ -46,6 +48,9 @@ export const HEADLINE_MAX_FONT_SCALE = 1.3;
 export const TEXT_MAX_FONT_SCALE = 1.5;
 /** The design's hero Lemma, `Lemma, hero`: the size of its type role. */
 export const HERO_LEMMA = roleSize('heroLemma');
+/** The shout word's size, and its letter spacing as a share of it. */
+const SHOUT = roleSize('stepShout');
+const SHOUT_TRACKING = typeRoles.stepShout.letterSpacing / SHOUT.fontSize;
 /**
  * One step of the onboarding over the whole screen, as the design draws it:
  * the red halftone top cut by a wedge, with the step's shout word, the
@@ -136,14 +141,16 @@ export function OnboardingStep({
           points={wedges.cut}
         />
         <Animated.View testID="onboarding-shout" style={[styles.shout, flyIn]}>
-          <Text
+          {/* Scaled down until the whole word fits across the top, never cut. */}
+          <WholeWordsText
+            text={shout}
+            size={SHOUT}
+            tracking={SHOUT_TRACKING}
+            testID="onboarding-shout-word"
             accessible={false}
-            numberOfLines={1}
             maxFontSizeMultiplier={1}
             style={[typeStyle('stepShout', { fontFamilies }), { color: inkOnRed }]}
-          >
-            {shout}
-          </Text>
+          />
         </Animated.View>
         {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
         <View style={[styles.topRow, { paddingTop: top }]}>
@@ -236,6 +243,7 @@ const styles = StyleSheet.create({
   shout: {
     position: 'absolute',
     left: onboardingLayout.shout.left,
+    right: side,
     top: onboardingLayout.shout.top,
   },
   mascot: {
