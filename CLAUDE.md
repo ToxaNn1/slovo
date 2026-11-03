@@ -25,6 +25,7 @@ Work comes from GitHub issues in STAR form: Situation / Task / Action / Result /
 - Specs form a tree: master spec #1, version specs (one per milestone), tickets under them.
 - Labels: one type (`feature`, `bug`, `chore`, `docs`), `area:*` labels, `ready-for-agent`, `spec`. Milestones are versions `0.1` to `1.0`. Leave labels, milestones and issue edits to the owner.
 - Branch names: `<type>/<ticket-number>-<slug>`, e.g. `docs/4-repo-conventions`.
+- A spec is built on one integration branch by implementer subagents and reaches `main` as one PR: `docs/agents/waves.md`.
 
 ## Language
 
