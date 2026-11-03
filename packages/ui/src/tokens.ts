@@ -200,8 +200,8 @@ export const typeRoles = {
   roundPrompt: role('word', '800', 24, 30),
   /** A Round's option on its tile. */
   roundOption: role('word', '800', 18, 22),
-  /** The verdict over the Round's answer sheet: right or wrong. */
-  roundVerdict: role('word', '800', 16, 16),
+  /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
+  roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
   /** The right answer on the Round's answer sheet. */
   roundAnswer: role('word', '500', 30, 39),
   /** A Round's explanation, and the Definition under its prompt. */
@@ -278,6 +278,10 @@ export const typeRoles = {
   crosswordLetter: role('word', '900', 26, 31.2, 0, 'uppercase'),
   /** The clue of the Daily Crossword's selected word, on its bar. */
   crosswordClue: role('ui', '600', 15, 19.5),
+  /** The selected word's number and direction, such as «1→», on its red badge of the clue bar. */
+  crosswordClueNumber: role('word', '900', 14, 14),
+  /** A word's number in the corner of its first cell of the Daily Crossword. */
+  crosswordCellNumber: role('ui', '700', 10, 10),
   /** A letter on a key of the Daily Crossword's keyboard. */
   crosswordKey: role('ui', '700', 15, 18, 0, 'uppercase'),
   /** A letter of the wordmark flying in on the splash, on its 390-wide frame; the splash scales it. */
@@ -1299,32 +1303,46 @@ export const buttonHeight = { large: 58, small: 44 } as const;
 /** The side of the design's square icon button, and of the icon inside it. */
 export const iconButton = { side: 44, icon: 20 } as const;
 
+/** The Round's progress (design `SlovoApp`): a skewed segment per Round. */
+export const roundProgress = { height: 8, gap: 4, skew: '-20deg' } as const;
+
 /**
  * Gaps and paddings of the Game's Round off the 4-pt grid, from the design:
  * between the options and between the header's parts, a tight one (the
  * progress label over its bar, «Далі» under the sheet), the sheet's own and
- * the vertical padding of the Round's card.
+ * the vertical padding of the Round's card; and the most of the Round's
+ * head the Mascot and its line take, so the label keeps room for its whole
+ * words.
  */
-/** The Round's progress (design `SlovoApp`): a skewed segment per Round. */
-export const roundProgress = { height: 8, gap: 4, skew: '-20deg' } as const;
+export const roundLayout = {
+  gap: 10,
+  tightGap: 6,
+  sheetGap: 14,
+  cardPaddingVertical: 30,
+  mascotShare: '40%',
+} as const;
 
-export const roundLayout = { gap: 10, tightGap: 6, sheetGap: 14, cardPaddingVertical: 30 } as const;
+/** The Daily Crossword's red card on the mode screen, from the design: its padding and the gap between its lines. */
+export const dailyCrosswordCard = { padding: 18, gap: 6 } as const;
 
 /**
  * The Daily Crossword, from the design: a cell's side and the gap between
  * cells (five of them fit the SE's width with the screen's margins), the
- * selected cell's ink ring; the clue bar's padding; the keyboard's key
- * height and corner radius, the gaps between keys and between rows, and how
- * much wider the delete key is than a letter key.
+ * selected cell's ink ring, where a word's number sits in its first cell;
+ * the clue bar's padding, the gap between its parts and its red number
+ * badge (least width, height, corner radius and side padding); the
+ * keyboard's key height and corner radius, the gaps between keys and between
+ * rows, and how much wider the delete key is than a letter key.
  */
-/** The Daily Crossword's red card on the mode screen, from the design: its padding and the gap between its lines. */
-export const dailyCrosswordCard = { padding: 18, gap: 6 } as const;
-
 export const crosswordLayout = {
   cell: 62,
   cellGap: 8,
   ring: 3,
+  cellNumberLeft: 6,
+  cellNumberTop: 5,
   cluePadding: 12,
+  clueGap: 10,
+  clueNumber: { minWidth: 40, height: 34, radius: 9, paddingHorizontal: 6 },
   keyHeight: 46,
   keyRadius: 9,
   keyGap: 4,

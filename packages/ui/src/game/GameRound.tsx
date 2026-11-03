@@ -790,7 +790,9 @@ function RoundCard({
 /**
  * The Round's head (`game-round-dark`): its label and place, such as
  * «ВИЗНАЧЕННЯ · 3 / 15», in the muted Unbounded, and the Mascot on the
- * right. The label is the Round's heading for VoiceOver where its card does
+ * right, which takes at most `roundLayout.mascotShare` of the row, so a long
+ * Mascot line wraps under the figure and the label keeps room to break only
+ * between whole words. The label is the Round's heading for VoiceOver where its card does
  * not read it, a vowel or a pairs Round; the place is the header's to read.
  */
 function RoundHead({
@@ -834,7 +836,7 @@ function RoundHead({
       >
         {place === undefined ? label : `${label} · ${place}`}
       </Text>
-      {mascot}
+      <View style={styles.headMascot}>{mascot}</View>
     </View>
   );
 }
@@ -1168,6 +1170,7 @@ const styles = StyleSheet.create({
     gap: roundLayout.gap,
   },
   headLabel: { flexShrink: 1 },
+  headMascot: { flexShrink: 1, maxWidth: roundLayout.mascotShare, alignItems: 'flex-end' },
   card: {
     minHeight: 220,
     justifyContent: 'center',

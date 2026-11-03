@@ -54,6 +54,25 @@ function wordAt(
   );
 }
 
+/**
+ * The words' numbers, as a crossword numbers them: each place a word starts
+ * at takes the next number in reading order, row by row, so an across and a
+ * down word that start together share one.
+ */
+function numbersOf(words: readonly CrosswordWord[]): (place: CrosswordPlace) => number | undefined {
+  const starts = words
+    .map((word) => word.start)
+    .filter((start, index, all) => all.findIndex((at) => samePlace(at, start)) === index)
+    .sort((a, b) => a.row - b.row || a.column - b.column);
+  return (place) => {
+    const index = starts.findIndex((start) => samePlace(start, place));
+    return index === -1 ? undefined : index + 1;
+  };
+}
+
+/** The arrow after a word's number on the clue bar, as the design draws it. */
+const DIRECTION_GLYPH: Record<CrosswordWord['direction'], string> = { across: '→', down: '↓' };
+
 const otherWay = (direction: CrosswordWord['direction']) =>
   direction === 'across' ? 'down' : 'across';
 
@@ -66,7 +85,9 @@ const otherWay = (direction: CrosswordWord['direction']) =>
  * key's letter fills the selected cell and moves on along the word; the
  * delete key erases the cell or, if it is empty, the one behind. Once every
  * word is right the keys take no letter. The cells of a right word turn
- * green and take no letter; a wrong letter is never marked. «Відкрити
+ * green and take no letter; a wrong letter is never marked. A word's first
+ * cell carries its number, and the clue bar puts the selected word's number
+ * and direction, such as «1→», on a red badge before its clue. «Відкрити
  * літеру» opens the selected cell, a wrong letter in it included, unless its
  * word is right. The screen keeps the letters and which words are right
  * (the Core decides them) and passes the keyboard's rows and the texts; the
@@ -115,6 +136,8 @@ export function CrosswordGrid({
   const isRight = (place: CrosswordPlace) => rightPlaces.some((at) => samePlace(at, place));
   const solved = words.every((word) => word.right === true);
   const letterAt = (place: CrosswordPlace) => letters[place.row]?.[place.column];
+  const numberAt = numbersOf(words);
+  const keyInk = useSchemeColors('light').ink;
 
   const tap = (place: CrosswordPlace) => {
     const again = selection !== undefined && samePlace(selection.place, place);
@@ -178,6 +201,7 @@ export function CrosswordGrid({
                   key={columnIndex}
                   testID={`${testID}-${String(rowIndex)}-${String(columnIndex)}`}
                   letter={letter}
+                  number={numberAt(place)}
                   label={texts.cellLabel(letter, place)}
                   selected={selection !== undefined && samePlace(selection.place, place)}
                   inWord={selectedPlaces.some((at) => samePlace(at, place))}
@@ -196,11 +220,27 @@ export function CrosswordGrid({
           testID={`${testID}-clue-card`}
           style={[styles.clueBar, { backgroundColor: colors.ink, borderRadius: radii.tile }]}
         >
+          <View
+            testID={`${testID}-clue-number-badge`}
+            style={[styles.clueNumber, { backgroundColor: colors.accent }]}
+          >
+            <Text
+              testID={`${testID}-clue-number`}
+              maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
+              style={[typeStyle('crosswordClueNumber', tokens), { color: keyInk }]}
+            >
+              {`${String(numberAt(selected.start))}${DIRECTION_GLYPH[selected.direction]}`}
+            </Text>
+          </View>
           <Text
             testID={`${testID}-clue`}
             accessibilityLiveRegion="polite"
             {...voice}
-            style={[typeStyle('crosswordClue', tokens), { color: colors.background }]}
+            style={[
+              typeStyle('crosswordClue', tokens),
+              styles.clue,
+              { color: colors.background },
+            ]}
           >
             {selected.clue}
           </Text>
@@ -261,6 +301,7 @@ const ERASE_GLYPH = '⌫';
 function Cell({
   testID,
   letter,
+  number,
   label,
   selected,
   inWord,
@@ -269,6 +310,8 @@ function Cell({
 }: {
   testID: string;
   letter: string | undefined;
+  /** The number of the words that start here; none elsewhere. */
+  number: number | undefined;
   label: string;
   selected: boolean;
   inWord: boolean;
@@ -280,6 +323,7 @@ function Cell({
   const keyInk = useSchemeColors('light').ink;
   const { voice } = useEdition();
   const red = selected && !right;
+  const ink = right || red ? keyInk : colors.ink;
   return (
     <PressedTile
       testID={testID}
@@ -294,13 +338,18 @@ function Cell({
         selected && { borderWidth: crosswordLayout.ring, borderColor: colors.ink },
       ]}
     >
+      {number !== undefined && (
+        <Text
+          maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
+          style={[typeStyle('crosswordCellNumber', tokens), styles.cellNumber, { color: ink }]}
+        >
+          {String(number)}
+        </Text>
+      )}
       <Text
         {...voice}
         maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
-        style={[
-          typeStyle('crosswordLetter', tokens),
-          { color: right || red ? keyInk : colors.ink },
-        ]}
+        style={[typeStyle('crosswordLetter', tokens), { color: ink }]}
       >
         {letter ?? ''}
       </Text>
@@ -360,12 +409,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  cellNumber: {
+    position: 'absolute',
+    left: crosswordLayout.cellNumberLeft,
+    top: crosswordLayout.cellNumberTop,
+  },
   clueBar: {
     alignSelf: 'stretch',
-    justifyContent: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: crosswordLayout.clueGap,
     minHeight: crosswordLayout.keyHeight,
     padding: crosswordLayout.cluePadding,
   },
+  clueNumber: {
+    minWidth: crosswordLayout.clueNumber.minWidth,
+    height: crosswordLayout.clueNumber.height,
+    borderRadius: crosswordLayout.clueNumber.radius,
+    paddingHorizontal: crosswordLayout.clueNumber.paddingHorizontal,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  clue: { flex: 1 },
   keyboard: { alignSelf: 'stretch', gap: crosswordLayout.keyRowGap },
   keyRow: { flexDirection: 'row', justifyContent: 'center', gap: crosswordLayout.keyGap },
   key: { flex: 1 },
