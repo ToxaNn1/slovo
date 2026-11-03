@@ -97,6 +97,7 @@ const validConfig = {
     mascot: true,
     sounds: true,
     reduceMotion: true,
+    fastReveal: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -303,6 +304,7 @@ describe('loadEdition', () => {
     'gameReview',
     'progressShareCards',
     'dailyCrosswordShare',
+    'fastReveal',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({

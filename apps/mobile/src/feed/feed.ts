@@ -13,6 +13,8 @@ import type { LandingAsked, WordOfTheDayLanding } from './word-of-the-day-landin
 /** The Feed as the pager shows it: a page for each of its cards. */
 export interface FeedState {
   readonly cards: readonly FeedCard[];
+  /** Whether the Feed is in sight: its tab focused, the app in the foreground and nothing over it. */
+  readonly inSight: boolean;
   /** The position of the card the Feed opens on. */
   readonly startPosition: number;
   /** Tells the Feed which card is on screen now. */
@@ -135,6 +137,7 @@ export function useFeed(
 
   return {
     cards,
+    inSight,
     startPosition: feed.startPosition,
     onCardChange,
     openCorrection,

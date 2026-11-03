@@ -98,6 +98,8 @@ export interface Shown {
   readonly dailyGoal: boolean;
   /** The Search button of the «Стрічка» header, which opens the Search screen. */
   readonly search: boolean;
+  /** The fast reveal of the Feed's Entry cards after the first one in a visit; off, each plays the full reveal. */
+  readonly fastReveal: boolean;
   /** The 🎲 «Слово під настрій» of the «Стрічка» header, which opens the moods. */
   readonly moods: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
@@ -169,6 +171,7 @@ export function shownOf({
     sync: on('sync'),
     dailyGoal: on('dailyGoal'),
     search: on('search'),
+    fastReveal: on('fastReveal'),
     moods: on('moods'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarityTest: on('rarityTest'),

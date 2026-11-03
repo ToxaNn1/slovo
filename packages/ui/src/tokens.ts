@@ -753,24 +753,37 @@ export const screenEnter = {
 
 /**
  * An Entry card's reveal (the design's `slFly` and `slCasc` on the Word of the
- * Day): each letter of the headline flies in from `letters.from`, small and
- * turned, the n-th after `letters.delay + n × letters.stagger` ms, then the
- * card's details rise into place one after another at `details` ms.
+ * Day): each letter of the headline flies in from `from`, small and turned,
+ * the n-th after `letters.delay + n × letters.stagger` ms, then the card's
+ * details rise into place one after another at `details.at` ms. The `full`
+ * pace is the design's; the `fast` one, about a third of it, is for the cards
+ * after the first in one visit to the Feed.
  */
 export const entryReveal = {
-  letters: {
-    duration: 550,
-    easing: [0.2, 0.9, 0.25, 1.2],
-    delay: 120,
-    stagger: 60,
-    /** The n-th letter starts `x - n × xStep` points across and `y` points down. */
-    from: { x: 40, xStep: 44, y: 240, scale: 0.15, rotate: -30 },
+  letterEasing: [0.2, 0.9, 0.25, 1.2],
+  /** The n-th letter starts `x - n × xStep` points across and `y` points down. */
+  from: { x: 40, xStep: 44, y: 240, scale: 0.15, rotate: -30 },
+  full: {
+    letters: { duration: 550, delay: 120, stagger: 60 },
+    details: { at: [650, 720, 800, 900], duration: motion.cascade.duration },
   },
-  details: [650, 720, 800, 900],
+  fast: {
+    letters: { duration: 180, delay: 40, stagger: 20 },
+    details: { at: [220, 240, 270, 300], duration: 130 },
+  },
 } as const satisfies {
-  readonly letters: { readonly easing: Easing } & Record<string, unknown>;
-  readonly details: readonly number[];
-};
+  readonly letterEasing: Easing;
+  readonly from: Record<string, number>;
+} & Record<RevealPace, RevealTimings>;
+
+/** How fast an Entry card plays its reveal. */
+export type RevealPace = 'full' | 'fast';
+
+/** The timings of one pace of the Entry card's reveal, in ms. */
+export interface RevealTimings {
+  readonly letters: { readonly duration: number; readonly delay: number; readonly stagger: number };
+  readonly details: { readonly at: readonly number[]; readonly duration: number };
+}
 
 /** The tab bar of the design. */
 export const tabBar = {

@@ -12,13 +12,14 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { entryReveal } from '../tokens';
+import { entryReveal, type RevealPace } from '../tokens';
 
-const letterEasing = Easing.bezier(...entryReveal.letters.easing);
+const letterEasing = Easing.bezier(...entryReveal.letterEasing);
 
-/** Letters of a text that fly into place: whether they are flying, or wait unseen. */
+/** Letters of a text that fly into place: whether they are flying, or wait unseen, and at which pace once they fly. */
 export interface FlyingLettersOf {
   readonly playing: boolean;
+  readonly pace: () => RevealPace;
 }
 
 /** Each letter with the combining marks after it, such as a Stress mark. */
@@ -82,6 +83,7 @@ export function FlyingLetters({
             key={index}
             order={order}
             playing={flying.playing}
+            pace={flying.pace}
             testID={testID === undefined ? undefined : `${testID}-${String(order)}`}
           >
             <Text {...textProps} style={[style, styles.clear]}>
@@ -99,39 +101,44 @@ export function FlyingLetters({
 function FlyingLetter({
   order,
   playing,
+  pace,
   testID,
   children,
 }: {
   order: number;
   playing: boolean;
+  pace: () => RevealPace;
   testID: string | undefined;
   children: ReactNode;
 }) {
-  const { letters: flight } = entryReveal;
+  const { from } = entryReveal;
   const landed = useSharedValue(0);
   useEffect(() => {
     // Each play flies in from the start; a letter that stops playing waits there again, unseen.
-    landed.value = playing
-      ? withDelay(
-          flight.delay + order * flight.stagger,
-          withTiming(1, {
-            duration: flight.duration,
-            easing: letterEasing,
-            reduceMotion: ReduceMotion.Never,
-          }),
-        )
-      : 0;
-  }, [playing, order, landed, flight]);
-  const startX = flight.from.x - order * flight.from.xStep;
+    if (!playing) {
+      landed.value = 0;
+      return;
+    }
+    const flight = entryReveal[pace()].letters;
+    landed.value = withDelay(
+      flight.delay + order * flight.stagger,
+      withTiming(1, {
+        duration: flight.duration,
+        easing: letterEasing,
+        reduceMotion: ReduceMotion.Never,
+      }),
+    );
+  }, [playing, pace, order, landed]);
+  const startX = from.x - order * from.xStep;
   const fly = useAnimatedStyle(() => {
     const away = 1 - landed.value;
     return {
       opacity: Math.min(1, Math.max(0, landed.value)),
       transform: [
         { translateX: away * startX },
-        { translateY: away * flight.from.y },
-        { scale: flight.from.scale + (1 - flight.from.scale) * landed.value },
-        { rotate: `${String(away * flight.from.rotate)}deg` },
+        { translateY: away * from.y },
+        { scale: from.scale + (1 - from.scale) * landed.value },
+        { rotate: `${String(away * from.rotate)}deg` },
       ],
     };
   });
