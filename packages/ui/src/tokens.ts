@@ -116,10 +116,10 @@ const role = (
 export const typeRoles = {
   shout: role('word', '900', 96, 88, -5),
   heroWord: role('word', '900', 50, 50, -1.5),
-  screenTitle: role('word', '900', 30, 30, -1),
+  screenTitle: role('word', '900', 30, 30, -1, 'uppercase'),
   heading: role('word', '800', 18, 20, 0.5),
   eyebrow: role('word', '700', 11, 13, 2, 'uppercase'),
-  buttonLabel: role('word', '900', 16, 16),
+  buttonLabel: role('word', '900', 16, 16, 0, 'uppercase'),
   listWord: role('word', '800', 17, 20),
   /** Reading text: a Definition. */
   definition: role('ui', '500', 19, 27),
@@ -173,7 +173,7 @@ export const typeRoles = {
   /** The name of a mood on its chip. */
   moodName: role('ui', '700', 15, 15),
   /** The Games screen's title. */
-  gamesTitle: role('word', '900', 36, 36, -1),
+  gamesTitle: role('word', '900', 36, 36, -1, 'uppercase'),
   /** The title of a group of Game Modes, after its red mark. */
   groupTitle: role('word', '800', 13, 13, 1.5, 'uppercase'),
   /** The glyph on a Game Mode's tile. */
@@ -350,8 +350,8 @@ export const typeRoles = {
   badgeStatus: role('ui', '400', 15, 22),
   /** A line of the Profile, such as the Level or the Known count, and its offer to save progress. */
   profileText: role('ui', '400', 15, 22),
-  /** The label of the link back to the screen before. */
-  backLink: role('ui', '600', 17, 20),
+  /** The name of the screen before, beside the back tile that returns to it. */
+  backLink: role('ui', '500', 14, 17),
   /** The label of an action a list row's swipe shows. */
   swipeAction: role('ui', '700', 14, 17),
   /** The «Повторити» tag of an Entry due for review. */

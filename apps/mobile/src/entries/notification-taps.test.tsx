@@ -320,7 +320,7 @@ describe("the widget's link while the app runs", () => {
 });
 
 describe('a second Word from the mood roulette', () => {
-  it('replaces the first, so «Назад» returns to «Головна»', async () => {
+  it('replaces the first, so «Назад» returns to «Стрічка»', async () => {
     const app = await renderApp(fakeNotificationTaps());
 
     await app.spinRoulette();

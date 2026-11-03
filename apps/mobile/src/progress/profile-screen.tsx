@@ -2,7 +2,7 @@ import { RARITIES } from '@slovo/contracts';
 import type { Account, BadgeState } from '@slovo/core';
 import {
   ActiveDaysCalendar,
-  BackLink,
+  IconButton,
   BadgeGrid,
   BadgeStamp,
   fill,
@@ -84,15 +84,17 @@ export function ProfileScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="profile-back"
-          label={editionStrings.settings.title}
-          onPress={() => {
-            router.back();
-          }}
-        />
-        <View style={styles.section}>
+        {/* The Profile tab's head, as the board: the title, and the tile that opens Settings. */}
+        <View style={[styles.section, styles.head]}>
           <ScreenTitle>{strings.title}</ScreenTitle>
+          <IconButton
+            testID="profile-settings"
+            icon="settings"
+            accessibilityLabel={editionStrings.settings.title}
+            onPress={() => {
+              router.push('/settings');
+            }}
+          />
         </View>
         {account !== undefined && (
           <SaveProgressOffer
@@ -253,6 +255,7 @@ function SaveProgressOffer({ opening, onSave }: { opening: Opening<Account>; onS
 }
 
 const styles = StyleSheet.create({
+  head: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
   section: { gap: space[3], paddingTop: space[2], paddingBottom: space[5] },

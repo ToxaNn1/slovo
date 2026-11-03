@@ -4,7 +4,7 @@ Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active D
 
 **Feature Switches.** Each feature has its own Feature Switch: `search`, `rarityTest`, `weeklyRecap`, `yesterday`, `wordOfTheDayArchive`, `activeDaysCalendar`, `dailyLimit`, `politePause`, `firstWeek`, `widgetHint` and `moods`. They are required of every Edition and all on in the UA Edition. A feature whose switch is off is absent: no header button, no Settings row, no Feed Notice, no list; its records are kept. A remote switch only turns a feature off (ADR 0040).
 
-**Search** («Пошук») is a Core Search behind a magnifier in the «Головна» header, over the open Language Pack and the user state.
+**Search** («Пошук») is a Core Search behind a magnifier in the «Стрічка» header, over the open Language Pack and the user state.
 
 - **Scope.** Every Entry of a kind the Edition turns on (and not off remotely) that is neither Retired nor Hidden; the Mix and the Rarity Floor don't apply, so a reader finds anything the app knows.
 - **Texts.** A Word's Lemma; both forms of a Correction; an Idiom's expression; a Synonym Row's dominant and members; a Tip's title.
@@ -52,7 +52,7 @@ Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active D
 
 - **The Edition lists its moods**, each an id, a name and an emoji, so the Core stays language-agnostic. The UA Edition has 😊 Радісний, 😢 Сумний, 😍 Закоханий, ⚡ Бадьорий, 😌 Спокійний and 🤔 Задумливий, and tags 15 existing Words with each.
 - **Words carry `moods`**, an optional array of the Edition's mood ids. The Language Pack build refuses an unknown id, and the content CLI adds, edits and checks `moods`.
-- **The roulette.** 🎲 «Слово під настрій» in the «Головна» header opens the six moods as chips; a chip runs a 1–2 second roulette over Lemmas that lands on a random Eligible Word of that mood, drawn with injected randomness (the Mix applies), and opens its card, which makes nothing Seen. A mood with no Eligible Word is disabled with a reason (`no-eligible-word`). The Core's mood draw (`createMoodDraw`) lists the moods with that reason and draws the roulette: 12 Lemmas of the mood's Eligible Words, never one twice in a row, ending on the Word it lands on, which the shell opens with `openedFromMood`. Under Reduce Motion the card opens straight away.
+- **The roulette.** 🎲 «Слово під настрій» in the «Стрічка» header opens the six moods as chips; a chip runs a 1–2 second roulette over Lemmas that lands on a random Eligible Word of that mood, drawn with injected randomness (the Mix applies), and opens its card, which makes nothing Seen. A mood with no Eligible Word is disabled with a reason (`no-eligible-word`). The Core's mood draw (`createMoodDraw`) lists the moods with that reason and draws the roulette: 12 Lemmas of the mood's Eligible Words, never one twice in a row, ending on the Word it lands on, which the shell opens with `openedFromMood`. Under Reduce Motion the card opens straight away.
 - **The pack format.** The pack carries each Word's `moods`, which an older app can't read, so they took a new pack format (ADR 0032).
 
 **Not Seen, in one place.** Opening an Entry from Search or from the mood roulette, the Rarity Test and every Feed Notice make nothing Seen; Seen stays the Feed's dwell rule and an Entry opened from a notification or the widget (ADR 0016, 0018). The Core names each way in: an Entry opened from Search (`openedFromSearch`) or from the mood roulette (`openedFromMood`) gets its card and writes nothing, beside the notification and the widget, which make it Seen.

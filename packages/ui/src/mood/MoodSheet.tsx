@@ -20,7 +20,7 @@ export interface MoodChip {
 const COLUMNS = 2;
 
 /**
- * The sheet the 🎲 of the «Головна» header opens: «Слово під настрій» over the
+ * The sheet the 🎲 of the «Стрічка» header opens: «Слово під настрій» over the
  * moods as pressed tiles, two to a row. A disabled chip is dimmed and takes no tap,
  * with why under it, which VoiceOver reads as its hint. Once a chip is chosen
  * the sheet shows the roulette's current Lemma (`roulette`) in their place,

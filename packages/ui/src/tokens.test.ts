@@ -115,6 +115,16 @@ describe('the Core’s shape, type and motion roles', () => {
     });
   });
 
+  it('sets the screen titles and the button labels in capitals, as the board', () => {
+    const transform = (name: Parameters<typeof typeStyle>[0]) =>
+      typeStyle(name, coreTokens).textTransform;
+    expect([transform('screenTitle'), transform('gamesTitle'), transform('buttonLabel')]).toEqual([
+      'uppercase',
+      'uppercase',
+      'uppercase',
+    ]);
+  });
+
   it('carries each role’s weight, so a component sets none: black for the loud roles, light for reading text', () => {
     const weight = (name: Parameters<typeof typeStyle>[0]) =>
       typeStyle(name, coreTokens).fontWeight;

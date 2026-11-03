@@ -8,7 +8,7 @@ import { minTouchTarget, pressedFade, roleSize } from '../tokens';
 const BUTTON_SIZE = 40;
 
 /**
- * The 🎲 of the «Головна» header, which opens the moods. A tile the height
+ * The 🎲 of the «Стрічка» header, which opens the moods. A tile the height
  * of the Stats pill; VoiceOver reads «Слово під настрій».
  */
 export function MoodButton({ onPress }: { onPress: () => void }) {

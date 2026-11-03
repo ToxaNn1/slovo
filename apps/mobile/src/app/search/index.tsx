@@ -26,7 +26,7 @@ import {
 const strings = editionStrings.search;
 
 /**
- * Search («Пошук»), from the magnifier of the «Головна» header: a field and,
+ * Search («Пошук»), from the magnifier of the «Стрічка» header: a field and,
  * from 2 letters, what it finds, each kind in its group under its chip and
  * from 3 «За значенням», or «Нічого не знайдено». A result opens its Entry
  * card, which makes nothing Seen, and keeps the query among the recent ones,
@@ -97,7 +97,7 @@ export default function SearchScreen() {
   );
 }
 
-/** Above the results: the link back to «Головна» and the field. */
+/** Above the results: the link back to «Стрічка» and the field. */
 function SearchHeader({
   query,
   onQueryChange,
