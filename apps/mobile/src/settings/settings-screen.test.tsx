@@ -74,10 +74,38 @@ async function renderSettings(
   return (await settings.opened()).settings;
 }
 
-describe('Settings › Віджети', () => {
-  it('opens the widget guide from «Як додати віджет» under «ВІДЖЕТИ», with its 3 steps', async () => {
+describe('Settings, as the board', () => {
+  it('heads the screen with «Налаштування» and its groups as the board: look, sound, learning, account', async () => {
     await renderSettings();
-    expect(screen.getByText('ВІДЖЕТИ')).toBeOnTheScreen();
+
+    expect(screen.getByRole('header', { name: 'Налаштування' })).toBeOnTheScreen();
+    const heads = screen
+      .getAllByRole('header')
+      .map((head) => head.props['children'] as unknown)
+      .filter((text) => text !== 'Налаштування');
+    expect(heads).toEqual(['ВИГЛЯД', 'ЗВУК І СПОВІЩЕННЯ', 'НАВЧАННЯ', 'АКАУНТ']);
+  });
+
+  it('keeps every row of the app under the group the board gives it', async () => {
+    await renderSettings();
+
+    const groups: Record<string, string[]> = {
+      look: ['settings-theme-light', 'settings-font-size-M'],
+      sound: ['settings-vibration', 'settings-row-notifications', 'settings-row-widgets'],
+      learning: ['settings-row-my-mix', 'settings-row-hidden', 'settings-row-badges'],
+      account: ['settings-row-about'],
+    };
+    for (const [key, rows] of Object.entries(groups)) {
+      const group = screen.getByTestId(`settings-group-${key}`);
+      for (const row of rows) expect(within(group).getByTestId(row)).toBeOnTheScreen();
+    }
+  });
+});
+
+describe('Settings › Віджети', () => {
+  it('opens the widget guide from «Як додати віджет» under «ЗВУК І СПОВІЩЕННЯ», with its 3 steps', async () => {
+    await renderSettings();
+    expect(screen.getByText('ЗВУК І СПОВІЩЕННЯ')).toBeOnTheScreen();
 
     await fireEvent.press(screen.getByRole('button', { name: /^Як додати віджет/ }));
 
@@ -91,7 +119,7 @@ describe('Settings › Віджети', () => {
   });
 });
 
-describe('Settings › ЗВУКИ', () => {
+describe('Settings › ЗВУК І СПОВІЩЕННЯ', () => {
   it('turns «Звуки» off', async () => {
     const settings = await renderSettings({ sounds: true });
 
@@ -103,7 +131,7 @@ describe('Settings › ЗВУКИ', () => {
   it('shows «Звуки» and «Вібрація», with no «Музика» row', async () => {
     const settings = await renderSettings();
 
-    expect(screen.getByText('ЗВУКИ')).toBeOnTheScreen();
+    expect(screen.getByText('ЗВУК І СПОВІЩЕННЯ')).toBeOnTheScreen();
     expect(screen.queryByText('Музика', { includeHiddenElements: true })).not.toBeOnTheScreen();
     expect(screen.queryByText('СКОРО', { includeHiddenElements: true })).not.toBeOnTheScreen();
 

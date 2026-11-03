@@ -17,7 +17,7 @@ import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { badgeStamp, halftone, motion, typeStyle } from '../tokens';
+import { badgeStamp, capitalMarkRoom, halftone, motion, typeStyle } from '../tokens';
 import { BadgeMark } from './BadgeMark';
 
 /** The stamp lands with the design's `slStamp`. */
@@ -155,7 +155,7 @@ const styles = StyleSheet.create({
   },
   mark: { marginTop: badgeStamp.markTop },
   title: {
-    marginTop: badgeStamp.titleTop,
+    marginTop: badgeStamp.titleTop - capitalMarkRoom('screenTitle'),
     textAlign: 'center',
     textTransform: 'uppercase',
   },

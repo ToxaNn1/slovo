@@ -31,8 +31,8 @@ export function SheetTitle({ children }: { children: ReactNode }) {
       {...voice}
       maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
       style={[
-        styles.title,
         typeStyle('sheetTitle', tokens),
+        styles.title,
         { color: key.background, backgroundColor: key.ink },
       ]}
     >
@@ -45,7 +45,11 @@ const styles = StyleSheet.create({
   title: {
     alignSelf: 'flex-start',
     marginLeft: -TITLE_BAND.outset,
-    paddingVertical: TITLE_BAND.vertical,
+    // The band's own top padding holds the capitals' marks, so the line
+    // takes none of the role's room.
+    paddingTop: TITLE_BAND.vertical,
+    paddingBottom: TITLE_BAND.vertical,
+    marginTop: 0,
     paddingHorizontal: space[4],
     transform: [{ rotate: TITLE_TURN }],
     transformOrigin: 'left',
