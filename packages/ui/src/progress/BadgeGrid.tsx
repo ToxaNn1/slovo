@@ -21,7 +21,8 @@ export interface BadgeGridItem {
  * how many of it are earned («3 з 5»). A mark not yet earned is a silhouette.
  * A mark is announced by the Badge's name, with `statusOf` as its value, and
  * pressing it calls `onPress`. The marks take the Profile's size, or the
- * larger one of the Badges screen.
+ * larger one of the Badges screen, where `statusOf` is also written under
+ * each mark (`badge-<id>-status`).
  * The marks carry the test IDs `badge-<id>-mark`, a family's count
  * `badge-family-<family>-count`.
  */
@@ -83,7 +84,10 @@ export function BadgeGrid<B extends BadgeGridItem>({
                 onPress={() => {
                   onPress(badge);
                 }}
-                style={({ pressed }) => pressed && styles.pressed}
+                style={({ pressed }) => [
+                  size === 'screen' && styles.cell,
+                  pressed && styles.pressed,
+                ]}
               >
                 <BadgeMark
                   testID={`badge-${badge.id}-mark`}
@@ -92,6 +96,19 @@ export function BadgeGrid<B extends BadgeGridItem>({
                   earned={badge.earned}
                   size={side}
                 />
+                {size === 'screen' && statusOf !== undefined && (
+                  <Text
+                    testID={`badge-${badge.id}-status`}
+                    {...voice}
+                    style={[
+                      typeStyle('badgeProgress', tokens),
+                      styles.caption,
+                      { color: badge.earned ? colors.ink : colors.muted },
+                    ]}
+                  >
+                    {statusOf(badge)}
+                  </Text>
+                )}
               </Pressable>
             ))}
           </View>
@@ -106,5 +123,7 @@ const styles = StyleSheet.create({
   family: { gap: badgeGrid.headGap },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
   marks: { flexDirection: 'row', flexWrap: 'wrap', gap: badgeGrid.gap },
+  cell: { width: badgeGrid.screenCell, alignItems: 'center', gap: badgeGrid.captionGap },
+  caption: { textAlign: 'center' },
   pressed: { transform: [{ scale: badgeGrid.pressedScale }] },
 });

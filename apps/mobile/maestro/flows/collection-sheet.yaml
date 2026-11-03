@@ -6,8 +6,9 @@
 # can type it).
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-# Delete every Collection, so the sheet opens on the empty state. A swipe
-# deletes after the SLOVO dialog; the Entries stay where they are.
+# Delete every Collection, so the sheet opens on the empty state. A long press
+# on a card opens its menu, whose «Видалити» deletes after the SLOVO dialog;
+# the Entries stay where they are.
 - tapOn:
     id: tab-saved
 - tapOn:
@@ -17,15 +18,14 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - repeat:
     while:
       visible:
-        id: collection-.*-content
+        id: collection-card-.*
     times: 20
     commands:
-      - swipe:
-          from:
-            id: collection-.*-content
-          direction: LEFT
+      - longPressOn:
+          id: collection-card-.*
+      - waitForAnimationToEnd
       - tapOn:
-          id: collection-.*-delete
+          id: collections-menu-delete
       # A tap while the dialog still fades in is lost.
       - waitForAnimationToEnd
       - tapOn:
@@ -99,7 +99,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: saved-collections
 - assertVisible:
-    id: collection-.*-content
+    id: collection-card-.*
     text: Poets, 1 запис.*
 - takeScreenshot: collection-saved-overview
 # Back on the card, a checkbox applies at once: unfiled, and the card counts it.
@@ -120,7 +120,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: saved-collections
 - assertVisible:
-    id: collection-.*-content
+    id: collection-card-.*
     text: Poets, 0 записів.*
 - tapOn:
     id: tab-home

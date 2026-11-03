@@ -79,7 +79,8 @@ export { LearningRow } from './saved/Learning';
 export { CollectionButton } from './saved/CollectionButton';
 export { CollectionEntryRow } from './saved/CollectionEntryRow';
 export { SavedTabs, type SavedTab } from './saved/SavedTabs';
-export { CollectionNameField, CollectionRow, NewCollectionButton } from './saved/CollectionRow';
+export { CollectionCard } from './saved/CollectionCard';
+export { CollectionNameField, NewCollectionButton } from './saved/CollectionNameField';
 export { CollectionSheet } from './saved/CollectionSheet';
 export { BottomSheet } from './primitives/BottomSheet';
 export { SheetTitle } from './primitives/SheetParts';
@@ -122,6 +123,7 @@ export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
   cardSpace,
+  collectionCard,
   coreTokens,
   designTokens,
   disabledOpacity,

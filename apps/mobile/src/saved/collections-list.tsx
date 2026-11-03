@@ -1,8 +1,9 @@
 import { MascotIn } from '@/mascot/mascot';
 import {
+  CollectionCard,
+  collectionCard,
   CollectionMenuSheet,
   CollectionNameField,
-  CollectionRow,
   DeleteCollectionDialog,
   EmptyState,
   NewCollectionButton,
@@ -23,15 +24,16 @@ import { createMenuFollowUp } from '@/saved/menu-follow-up';
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.screen;
 
-/** The name field that is open: for a new Collection, or in place of the row being renamed. */
+/** The name field that is open over the cards: for a new Collection, or for the one being renamed. */
 type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id: string };
 
 /**
- * Collections: the reader's lists, newest first, each with how many Entries it
- * holds and its newest Lemmas; a tap opens the Collection. «+» makes a new one
- * from here; a swipe or the row's «…» offers rename (in place) and delete (after a
- * SLOVO confirmation dialog that says the Entries stay), and the same actions go to
- * VoiceOver. The list's tool is «+». The «…» menu also offers «Поділитися посиланням» while Collection Links
+ * Collections: the reader's lists, newest first, as cards two to a row, each
+ * with its name and how many Entries it holds; a tap opens the Collection. «+»
+ * makes a new one from here; a long press on a card opens its menu of rename
+ * (in the name field over the cards) and delete (after a SLOVO confirmation
+ * dialog that says the Entries stay), and the same actions go to VoiceOver. The
+ * list's tool is «+». The menu also offers «Поділитися посиланням» while Collection Links
  * are on, disabled for an empty Collection; a share that fails says why in a toast.
  */
 export function CollectionsList({ header }: { header: ListHeader }) {
@@ -51,7 +53,7 @@ function Collections({ header }: { header: ListHeader }) {
   const [menu, setMenu] = useState<CollectionRowModel>();
   const [deleting, setDeleting] = useState<CollectionRowModel>();
 
-  // Kept from render to render, so the rows re-render only when the list or the row being renamed changes.
+  // Kept from render to render, so the cards re-render only when the list changes.
   const openCollection = useCallback(
     (id: string) => {
       openScreen(`/saved/collections/${id}`);
@@ -92,10 +94,11 @@ function Collections({ header }: { header: ListHeader }) {
     if (refusal === undefined) setEditing(undefined);
     return refusal;
   }, []);
-  const keepRename = useCallback(
-    (id: string, name: string) => keepName(rename(id, name)),
-    [keepName, rename],
-  );
+  /** The Collection being renamed, while it is still there. */
+  const renaming =
+    editing?.kind === 'rename'
+      ? rows.find((collection) => collection.id === editing.id)
+      : undefined;
 
   return (
     <>
@@ -103,18 +106,17 @@ function Collections({ header }: { header: ListHeader }) {
         testID="collections"
         data={rows}
         keyExtractor={(collection) => collection.id}
+        numColumns={2}
+        columnWrapperStyle={styles.cardsRow}
         renderItem={({ item, index }) => (
-          <View style={styles.item}>
-            <EditableCollectionRow
+          <View style={[styles.cell, index % 2 === 0 ? styles.leftCell : styles.rightCell]}>
+            <Card
               index={index}
               collection={item}
-              renaming={editing?.kind === 'rename' && editing.id === item.id}
               onOpen={openCollection}
               onRename={startRename}
               onDelete={confirmDelete}
-              onMore={openMenu}
-              onKeepRename={keepRename}
-              onCancelRename={stopEditing}
+              onMenu={openMenu}
             />
           </View>
         )}
@@ -131,6 +133,19 @@ function Collections({ header }: { header: ListHeader }) {
                   setEditing({ kind: 'new' });
                 }}
               />,
+            )}
+            {renaming !== undefined && (
+              <View style={[styles.item, styles.newField]}>
+                <CollectionNameField
+                  key={renaming.id}
+                  testID="collections-rename"
+                  overline={strings.renameOverline}
+                  placeholder={collectionStrings.sheet.namePlaceholder}
+                  initialName={renaming.name}
+                  onSubmit={(name) => keepName(rename(renaming.id, name))}
+                  onCancel={stopEditing}
+                />
+              </View>
             )}
             {editing?.kind === 'new' && (
               <View style={[styles.item, styles.newField]}>
@@ -210,76 +225,56 @@ function Collections({ header }: { header: ListHeader }) {
   );
 }
 
-/** A Collection's row, or the field that renames it in place. */
-const EditableCollectionRow = memo(function EditableCollectionRow({
+/** A Collection's card, its menu on a long press and its actions for VoiceOver. */
+const Card = memo(function Card({
   index,
   collection,
-  renaming,
   onOpen,
   onRename,
   onDelete,
-  onMore,
-  onKeepRename,
-  onCancelRename,
+  onMenu,
 }: {
-  /** The row's place among the rows, which picks its fill. */
+  /** The card's place among the cards, which picks its fill and its mark. */
   index: number;
   collection: CollectionRowModel;
-  renaming: boolean;
   onOpen: (id: string) => void;
   onRename: (id: string) => void;
   onDelete: (collection: CollectionRowModel) => void;
-  onMore: (collection: CollectionRowModel) => void;
-  /** Resolves to the reason the name is refused, or to nothing once it is kept. */
-  onKeepRename: (id: string, name: string) => Promise<string | undefined>;
-  onCancelRename: () => void;
+  onMenu: (collection: CollectionRowModel) => void;
 }) {
-  if (renaming) {
-    return (
-      <CollectionNameField
-        testID="collections-rename"
-        overline={strings.renameOverline}
-        placeholder={collectionStrings.sheet.namePlaceholder}
-        initialName={collection.name}
-        onSubmit={(name) => onKeepRename(collection.id, name)}
-        onCancel={onCancelRename}
-      />
-    );
-  }
   return (
-    <CollectionRow
+    <CollectionCard
       index={index}
-      testID={`collection-${collection.id}`}
+      testID={`collection-card-${collection.id}`}
       name={collection.name}
       count={collection.count}
-      lemmas={collection.lemmas}
       accessibilityLabel={collection.accessibilityLabel}
       onPress={() => {
         onOpen(collection.id);
       }}
-      more={{
-        label: collection.moreLabel,
-        onPress: () => {
-          onMore(collection);
-        },
+      onLongPress={() => {
+        onMenu(collection);
       }}
       actions={[
         {
           name: 'rename',
-          label: strings.rename,
           accessibilityLabel: collection.renameLabel,
-          tone: 'muted',
           onPress: () => {
             onRename(collection.id);
           },
         },
         {
           name: 'delete',
-          label: strings.delete,
           accessibilityLabel: collection.deleteLabel,
-          tone: 'destructive',
           onPress: () => {
             onDelete(collection);
+          },
+        },
+        {
+          name: 'menu',
+          accessibilityLabel: collection.moreLabel,
+          onPress: () => {
+            onMenu(collection);
           },
         },
       ]}
@@ -296,5 +291,10 @@ const styles = StyleSheet.create({
   // The design's side padding for Collections is 20.
   item: { marginHorizontal: space[5] },
   newField: { marginBottom: space[3] },
-  separator: { height: space[3] },
+  cardsRow: { marginHorizontal: space[5] },
+  // Each card takes half the row, so a last card alone keeps its width.
+  cell: { width: '50%', flexDirection: 'row' },
+  leftCell: { paddingRight: collectionCard.gap / 2 },
+  rightCell: { paddingLeft: collectionCard.gap / 2 },
+  separator: { height: collectionCard.gap },
 });

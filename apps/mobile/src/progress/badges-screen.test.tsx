@@ -56,6 +56,10 @@ describe('the Badges screen', () => {
     expect(screen.getByTestId('badge-win-stress')).toHaveAccessibilityValue({
       text: 'Ще не отримано',
     });
+    // Not only to VoiceOver: each mark shows how far its condition has come.
+    expect(screen.getByTestId('badge-streak-3-status')).toHaveTextContent('0 з 3 днів');
+    expect(screen.getByTestId('badge-streak-3-status')).toBeVisible();
+    expect(screen.getByTestId('badge-win-stress-status')).toHaveTextContent('Ще не отримано');
   });
 
   it("says the day a Badge was earned in the Edition's words and stamps it at a tap", async () => {
@@ -71,6 +75,7 @@ describe('the Badges screen', () => {
     expect(screen.getByTestId('badge-win-words')).toHaveAccessibilityValue({
       text: 'Отримано 13 жовтня',
     });
+    expect(screen.getByTestId('badge-win-words-status')).toHaveTextContent('Отримано 13 жовтня');
     expect(screen.getByTestId('badge-win-words-mark-symbol')).toHaveTextContent('АЯ');
     expect(screen.queryByTestId('badge-streak-3-mark-symbol')).toBeNull();
     expect(screen.getByTestId('badges-count')).toHaveTextContent(

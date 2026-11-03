@@ -36,7 +36,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: saved-collections
 - tapOn:
-    id: collection-.*-content
+    id: collection-card-.*
     text: Poets, 1 запис.*
 - assertVisible:
     id: collection
@@ -73,7 +73,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - tapOn:
     id: collection-back
 - assertVisible:
-    id: collection-.*-content
+    id: collection-card-.*
     text: Poets, 0 записів
 - tapOn:
     id: tab-home

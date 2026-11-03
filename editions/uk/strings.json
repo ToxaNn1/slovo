@@ -181,7 +181,7 @@
       "vibration": "Вібрація"
     },
     "about": {
-      "glyph": "З",
+      "glyph": "S",
       "editionLine": "Українське видання",
       "versionLine": "Версія {version} · збірка {build}",
       "updateLine": "Оновлення {id}",

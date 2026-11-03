@@ -43,7 +43,7 @@ function progressForms({ condition }: BadgeState) {
 
 /**
  * Every Badge of the Edition as its mark, in a grid by family under how many
- * of all are earned; VoiceOver reads each with its date or, while not earned,
+ * of all are earned; each shows, and VoiceOver reads, its date or, while not earned,
  * how far its condition has come. A tap on an earned one stamps it on red.
  */
 function Badges() {

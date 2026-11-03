@@ -252,12 +252,10 @@ export const typeRoles = {
   sectionText: role('ui', '400', 15, 22),
   /** A non-standard form a Word card links to a Correction, in italics. */
   oftenSaidForm: role('word', '400', 14, 18),
-  /** A Collection's name on its row of the Collections screen. */
-  collectionRowName: role('ui', '700', 17, 20),
-  /** How many Entries a Collection holds, beside its name on its row. */
-  collectionRowCount: role('ui', '500', 14, 17),
-  /** A Collection's newest Lemmas on its row. */
-  collectionLemmas: role('word', '400', 22, 29),
+  /** A Collection's name on its card of the Collections screen. */
+  collectionCardName: role('word', '800', 14, 17),
+  /** How many Entries a Collection holds, under its name on its card. */
+  collectionCardCount: role('ui', '600', 12, 12),
   /** A Synonym Row member's shade note, in italics after it. */
   shadeNote: role('ui', '400', 13, 17),
   /** `Lemma, hero`: the onboarding welcome's Lemma. */
@@ -344,6 +342,8 @@ export const typeRoles = {
   sectionLabel: role('word', '800', 13, 13, 1, 'uppercase'),
   /** How far a run of questions has come, such as «4 з 10» of the Rarity Test. */
   progressCount: role('ui', '600', 13, 13),
+  /** A Badge's date or progress under its mark on the Badges screen. */
+  badgeProgress: role('ui', '500', 11, 13),
   /** A Badge's name under its title on the stamp of a newly earned Badge. */
   stampName: role('ui', '500', 16, 21),
   /** The name over a Badge family's row of marks. */
@@ -593,6 +593,44 @@ export const wedges = {
   ],
 } as const satisfies Record<string, Wedge>;
 
+/** The marks of the Collection cards of the Collections screen, in turn by the card's place. */
+export const collectionMarks = [
+  [
+    [0, 0],
+    [1, 0],
+    [1, 1],
+  ],
+  [
+    [0, 0],
+    [1, 0.3],
+    [1, 1],
+    [0, 0.7],
+  ],
+  [
+    [0.5, 0],
+    [1, 1],
+    [0, 1],
+  ],
+  [
+    [0, 0],
+    [1, 0],
+    [0.6, 1],
+    [0, 1],
+  ],
+  [
+    [0, 0.3],
+    [1, 0],
+    [1, 0.7],
+    [0, 1],
+  ],
+  [
+    [0.3, 0],
+    [1, 0],
+    [0.7, 1],
+    [0, 1],
+  ],
+] as const satisfies readonly Wedge[];
+
 /** The Profile's Level card, from the design: an ink card with a red wedge and the XP ring. */
 export const levelCard = {
   padding: 20,
@@ -634,6 +672,9 @@ export const badgeStamp = {
 export const badgeGrid = {
   side: 44,
   screenSide: 58,
+  /** The Badges screen's cell: the mark with its date or progress under it. */
+  screenCell: 80,
+  captionGap: 6,
   gap: 6,
   familyGap: 14,
   headGap: 10,
@@ -893,10 +934,22 @@ export const fontSizeSteps: Readonly<
   XL: { lemma: 65, definition: 25, example: 22 },
 };
 
-/** Spacing the design draws between the steps of the 4-pt grid on the Collections' rows. */
+/** Spacing the design draws between the steps of the 4-pt grid on the field that names a Collection. */
 export const cardSpace = {
-  /** Around the content of a Collection's row and of the field that names one. */
+  /** Around the content of the field that names a Collection. */
   collectionPadding: 18,
+} as const;
+
+/** A Collection's card on the Collections screen (design `SlovoApp`, the Collections tab). */
+export const collectionCard = {
+  height: 150,
+  padding: 14,
+  /** Between the cards, across and down. */
+  gap: 12,
+  mark: 34,
+  /** Between the name and the count. */
+  textGap: 6,
+  countOpacity: 0.85,
 } as const;
 
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
