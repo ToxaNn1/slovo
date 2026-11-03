@@ -9,6 +9,7 @@ export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading, SwipeHint } from './feed/FeedStates';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
+export { SettingsHeader } from './settings/SettingsHeader';
 export { FontSizeProvider } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';

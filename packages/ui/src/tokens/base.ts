@@ -420,6 +420,10 @@ export const typeRoles = {
   aboutName: role('word', '900', 34, 34, -1),
   /** What SLOVO is, on the About screen's card. */
   aboutDescription: role('word', '500', 22, 30),
+  /** Settings' title beside its back tile (design `SlovoApp`, Settings). */
+  settingsTitle: role('word', '800', 22, 22),
+  /** The title of a screen that a Settings row opens, beside its back tile. */
+  settingsSubTitle: role('word', '800', 20, 22),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
   heroDefinition: role('word', '500', 22, 29),
   /** The title over the Active Days calendar. */
