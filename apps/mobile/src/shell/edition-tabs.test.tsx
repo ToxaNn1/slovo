@@ -1,11 +1,11 @@
-import { describe, expect, it } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { EditionProvider } from '@slovo/ui';
-import { router } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ScreenStack } from '../entries/screen-stack';
+import { screenSettled } from '../entries/use-open-screen';
 import { edition, editionStrings } from '../edition/edition';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
@@ -57,6 +57,23 @@ async function renderTabs(url: string) {
 
 const tabs = editionStrings.tabs;
 
+beforeEach(() => {
+  jest.useFakeTimers();
+});
+
+afterEach(() => {
+  jest.useRealTimers();
+  screenSettled();
+});
+
+/** Runs an action, and lets the navigators finish it. */
+async function settle(action: () => unknown) {
+  await act(async () => {
+    await action();
+    await jest.runAllTimersAsync();
+  });
+}
+
 describe('the tab bar', () => {
   it('names the tabs as the board: «Стрічка · Ігри · Збережене · Профіль»', async () => {
     await renderTabs('/');
@@ -67,35 +84,31 @@ describe('the tab bar', () => {
     }
   });
 
-  it('opens the Profile on the fourth tab, and hides over Settings pushed from it', async () => {
+  it('opens the Profile on the fourth tab', async () => {
     await renderTabs('/');
-    fireEvent.press(screen.getByText(tabs.profile));
+    await settle(() => fireEvent.press(screen.getByText(tabs.profile)));
+
     expect(await screen.findByText('Profile')).toBeOnTheScreen();
     expect(screen.getByText(tabs.profile)).toBeVisible();
-
-    act(() => {
-      router.push('/settings');
-    });
-
-    expect(await screen.findByText('Settings')).toBeOnTheScreen();
-    expect(screen.queryByText(tabs.profile)).toBeNull();
   });
 
   it('shows on the first screen of a tab', async () => {
     await renderTabs('/');
-    fireEvent.press(screen.getByText(tabs.saved));
+    await settle(() => fireEvent.press(screen.getByText(tabs.saved)));
 
     expect(await screen.findByText('Saved')).toBeOnTheScreen();
     expect(screen.getByText(tabs.saved)).toBeVisible();
   });
 
-  it.each(['/entry/w_one', '/search', '/game/crossword'])(
-    'hides over a screen pushed off the tabs: %s',
-    async (url) => {
-      await renderTabs(url);
+  it.each([
+    ['/entry/w_one', 'Entry'],
+    ['/search', 'Search'],
+    ['/game/crossword', 'Crossword'],
+    ['/settings', 'Settings'],
+  ])('hides over a screen pushed off the tabs: %s', async (url, shown) => {
+    await renderTabs(url);
 
-      expect(screen.queryByText(tabs.home)).toBeNull();
-    },
-  );
-
+    expect(await screen.findByText(shown)).toBeOnTheScreen();
+    expect(screen.queryByText(tabs.home)).toBeNull();
+  });
 });

@@ -261,7 +261,8 @@ describe('Settings › Значки', () => {
     await renderSettings();
 
     expect(screen.getByTestId('settings-row-badges')).toBeOnTheScreen();
-    expect(screen.queryByText(editionStrings.settings.rows.profile)).not.toBeOnTheScreen();
+    // The back tile names the Profile; no row of the list opens it.
+    expect(screen.queryByTestId('settings-row-profile')).not.toBeOnTheScreen();
   });
 
   it('shows no «Значки» row while the Edition turns the Badges off', async () => {
