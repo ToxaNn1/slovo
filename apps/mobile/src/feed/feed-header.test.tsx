@@ -13,7 +13,6 @@ import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import type { ColorScheme } from '@slovo/ui';
-import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/index';
@@ -154,10 +153,14 @@ describe('the Feed header', () => {
     async (colorScheme) => {
       await open();
       await renderApp(colorScheme);
-      const header = StyleSheet.flatten(screen.getByTestId('feed-header').props.style);
-      expect(header.backgroundColor).toBe(editionTokens.colors[colorScheme].background);
       // From the top of the screen, behind the status bar, down past the top row the cards scroll under.
-      expect(header).toMatchObject({ top: 0, left: 0, right: 0, height: 47 + TOP_ROW });
+      expect(screen.getByTestId('feed-header')).toHaveStyle({
+        backgroundColor: editionTokens.colors[colorScheme].background,
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 47 + TOP_ROW,
+      });
     },
   );
 });
