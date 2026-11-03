@@ -12,14 +12,22 @@ import Animated, {
 
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { disabledOpacity, motion, offsetShadow, pressedFade, withAlpha } from '../tokens';
+import {
+  actionTile,
+  disabledOpacity,
+  motion,
+  offsetShadow,
+  pressedFade,
+  withAlpha,
+} from '../tokens';
 
 /**
  * What a tile's face is: the cream `tile` with its `tileEdge`, the red
  * `accent` with its `accentEdge`, the ink of both Themes for a tile on red,
- * or `none`, a face with no fill and no edge.
+ * the Theme's own `inverse` ink on a dark edge, as a filed tile of the
+ * action row, or `none`, a face with no fill and no edge.
  */
-export type TileTone = 'tile' | 'accent' | 'ink' | 'none';
+export type TileTone = 'tile' | 'accent' | 'ink' | 'inverse' | 'none';
 
 /**
  * The pressed tile, the design's base of every button and letter tile: a
@@ -28,7 +36,8 @@ export type TileTone = 'tile' | 'accent' | 'ink' | 'none';
  * face stays and fades instead, as does a face with no edge. Disabled, it
  * is dimmed and takes no press; inert, as an answered tile, it takes no
  * press but keeps its look. A `key` stands on a shallower edge, as a
- * key of an on-screen keyboard. Its face carries the test ID
+ * key of an on-screen keyboard, and an `action` tile of the action row on
+ * one between the two. Its face carries the test ID
  * `${testID}-face`.
  */
 export function PressedTile({
@@ -39,6 +48,7 @@ export function PressedTile({
   disabled = false,
   inert = false,
   accessibilityLabel,
+  accessibilityLanguage,
   accessibilityHint,
   accessibilityState,
   faceStyle,
@@ -47,8 +57,8 @@ export function PressedTile({
   children,
 }: {
   tone?: TileTone;
-  /** How deep its edge is: a tile's, or a keyboard key's shallower one. */
-  depth?: 'tile' | 'key';
+  /** How deep its edge is: a tile's, an action row tile's, or a keyboard key's shallowest one. */
+  depth?: 'tile' | 'action' | 'key';
   /** The face's corner radius; `radii.tile` when left out. */
   radius?: number;
   onPress: () => void;
@@ -56,6 +66,8 @@ export function PressedTile({
   /** Whether it takes no press while it keeps its look, as an answered tile. */
   inert?: boolean;
   accessibilityLabel?: string;
+  /** The language VoiceOver reads the label in: the Edition's, from `voice`, for a tile with no text. */
+  accessibilityLanguage?: string;
   accessibilityHint?: string | undefined;
   accessibilityState?: { busy?: boolean; selected?: boolean | undefined; disabled?: boolean };
   /** The face's own layout: its height, padding and content alignment. */
@@ -74,12 +86,14 @@ export function PressedTile({
     tile: { face: colors.tile, edge: colors.tileEdge },
     accent: { face: colors.accent, edge: colors.accentEdge },
     ink: { face: keyInk, edge: withAlpha(keyInk, 0.45) },
+    inverse: { face: colors.ink, edge: actionTile.inverseEdge },
     none: { face: 'transparent', edge: 'transparent' },
   }[tone];
-  const edge =
-    depth === 'key'
-      ? offsetShadow.key
-      : { depth: offsetShadow.rest.depth, translateY: offsetShadow.pressed.translateY };
+  const edge = {
+    tile: { depth: offsetShadow.rest.depth, translateY: offsetShadow.pressed.translateY },
+    action: actionTile.edge,
+    key: offsetShadow.key,
+  }[depth];
   const timing = sinks ? motion.press : motion.reduceMotion;
   const press = (to: number) => {
     pressed.value = withTiming(to, {
@@ -99,6 +113,7 @@ export function PressedTile({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityLanguage={accessibilityLanguage}
       accessibilityHint={accessibilityHint}
       accessibilityState={{
         ...accessibilityState,

@@ -1,7 +1,18 @@
-import { ActionRow } from '@slovo/ui';
+import { ActionRow, EditionProvider } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
+import type { ReactElement } from 'react';
 import { Text } from 'react-native';
+
+import { testStrings } from '../test-strings';
+
+function inEdition(element: ReactElement) {
+  return render(
+    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+      {element}
+    </EditionProvider>,
+  );
+}
 
 function row(share: boolean, marks?: boolean) {
   return (
@@ -15,49 +26,56 @@ function row(share: boolean, marks?: boolean) {
   );
 }
 
+/** How many action slots the row draws. */
+function slotCount(): number {
+  const slots = screen.getByTestId('action-row-actions').children;
+  return slots.length;
+}
+
 describe('ActionRow', () => {
   it('has a share button when it is given one', async () => {
-    await render(row(true));
+    await inEdition(row(true));
 
-    expect(screen.getByTestId('share')).toBeTruthy();
-    expect(screen.getByTestId('favorite')).toBeTruthy();
+    expect(screen.getByTestId('share')).toBeOnTheScreen();
+    expect(screen.getByTestId('favorite')).toBeOnTheScreen();
+    expect(slotCount()).toBe(4);
   });
 
   it('leaves the share slot out, and keeps the other three, without one', async () => {
-    await render(row(false));
+    await inEdition(row(false));
 
     expect(screen.queryByTestId('share')).toBeNull();
-    for (const id of ['favorite', 'collection', 'hide']) {
-      expect(screen.getByTestId(id)).toBeTruthy();
-    }
+    for (const id of ['favorite', 'collection', 'hide'])
+      expect(screen.getByTestId(id)).toBeOnTheScreen();
+    expect(slotCount()).toBe(3);
   });
 
   it('has the mark buttons when it is given them', async () => {
-    await render(row(true, true));
+    await inEdition(row(true, true));
 
-    expect(screen.getByTestId('marks')).toBeTruthy();
+    expect(screen.getByTestId('marks')).toBeOnTheScreen();
   });
 
   it('has no mark buttons without them', async () => {
-    await render(row(true));
+    await inEdition(row(true));
 
     expect(screen.queryByTestId('marks')).toBeNull();
   });
 
-  it('spreads the heart and Collections alone over the row without share and hide, as on a Synonym Row', async () => {
-    await render(
+  it('draws only the actions it is given, as on a Synonym Row', async () => {
+    await inEdition(
       <ActionRow
+        look="icons"
         favorite={<Text testID="favorite">♡</Text>}
         collection={<Text testID="collection">+</Text>}
       />,
     );
 
-    const [slots] = screen.getByTestId('action-row').children;
-    expect(typeof slots === 'string' ? [] : slots?.children).toHaveLength(2);
+    expect(slotCount()).toBe(2);
   });
 
-  it('has a slot for the report flag when it is given one', async () => {
-    await render(
+  it('puts the report flag last when it is given one', async () => {
+    await inEdition(
       <ActionRow
         favorite={<Text testID="favorite">♡</Text>}
         collection={<Text testID="collection">+</Text>}
@@ -65,9 +83,24 @@ describe('ActionRow', () => {
       />,
     );
 
-    const [slots] = screen.getByTestId('action-row').children;
-    const children = typeof slots === 'string' ? [] : (slots?.children ?? []);
-    expect(children).toHaveLength(3);
+    expect(slotCount()).toBe(3);
     expect(screen.getByTestId('report')).toBeOnTheScreen();
+  });
+
+  it('shows the hint under the tiles, and none without one', async () => {
+    const { rerender } = await inEdition(row(true));
+    expect(screen.queryByTestId('action-row-hint')).toBeNull();
+
+    await rerender(
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+        <ActionRow
+          favorite={<Text testID="favorite">♡</Text>}
+          collection={<Text testID="collection">+</Text>}
+          hint="In «Autumn words» · in Favorites"
+        />
+      </EditionProvider>,
+    );
+
+    expect(screen.getByText('In «Autumn words» · in Favorites')).toBeOnTheScreen();
   });
 });

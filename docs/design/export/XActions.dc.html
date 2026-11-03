@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+[data-slovo][data-th="light"]{--bg:#FFF4E6;--ink:#140C0A;--sf:#FFFBF5;--sf2:#F5E4CF;--line:rgba(20,12,10,.13);--mute:#6B5D55;--tile:#FFFBF5;--edge:#DCC2A6;--sil:rgba(20,12,10,.14);--bar:rgba(255,244,230,.94)}
+[data-slovo][data-th="dark"]{--bg:#140C0A;--ink:#FFF4E6;--sf:#221714;--sf2:#2E201B;--line:rgba(255,244,230,.13);--mute:#BDAE9F;--tile:#33241F;--edge:#050302;--sil:rgba(255,244,230,.1);--bar:rgba(20,12,10,.94)}
+[data-slovo] *{box-sizing:border-box}
+[data-rm="1"] *{animation-name:slRm!important;animation-duration:.3s!important;animation-delay:0s!important;animation-iteration-count:1!important;animation-timing-function:ease!important}
+@keyframes slRm{from{opacity:0}}
+@keyframes slCasc{from{opacity:0;transform:translateY(16px)}}
+@keyframes slPop{0%{transform:scale(.6)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes slFade{from{opacity:0}}
+@keyframes slSheet{0%{transform:translateY(100%)}72%{transform:translateY(-10px)}100%{transform:translateY(0)}}
+@keyframes slToast{from{transform:translateX(-120%) skewX(-12deg)}}
+@keyframes slFold{from{height:300px;opacity:1}}
+</style>
+</helmet>
+<div data-slovo="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:406px;height:860px;padding:8px;background:#0B0706;border-radius:62px;box-shadow:0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35);font-family:'Onest',sans-serif;flex:none">
+<div style="position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:var(--bg,#FFF4E6);color:var(--ink,#140C0A)">
+
+<sc-if value="{{ feedOn }}" hint-placeholder-val="{{ true }}">
+  <div style="position:absolute;left:0;right:0;top:54px;display:flex;align-items:center;justify-content:space-between;padding:8px 20px 14px;z-index:2">
+    <div style="display:flex;align-items:center;gap:8px"><span style="width:15px;height:22px;background:#FF3B2F;clip-path:polygon(0 0,100% 22%,100% 78%,0 100%)"></span><span style="font:900 22px/1 Unbounded,sans-serif;letter-spacing:-.5px">SLOVO</span></div>
+    <div style="display:flex;align-items:center;gap:10px"><span style="font:600 13px/1 Onest;color:var(--mute)">вт, 3 листопада</span><div style="display:flex;align-items:center;gap:5px;height:32px;padding:0 11px 0 8px;background:var(--ink);color:var(--bg);border-radius:10px;font:800 14px/1 Unbounded,sans-serif"><svg width="16" height="18" viewBox="0 0 24 26"><polygon points="12,1 21,14 16,25 8,25 3,14 9,10" fill="#FF3B2F"></polygon></svg>1</div></div>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;height:88px;z-index:50;background:var(--bar);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:8px 10px 0">
+    <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+      <div style="position:relative;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:{{ t.c }}">
+        <span style="position:absolute;top:-9px;width:34px;height:6px;background:#FF3B2F;transform:skewX(-24deg) scaleX({{ t.on }})"></span>
+        <span style="width:24px;height:24px;background:currentColor;clip-path:{{ t.ic }}"></span>
+        <span style="font:600 11px/1 Onest">{{ t.n }}</span>
+      </div>
+    </sc-for>
+  </div>
+</sc-if>
+
+<sc-if value="{{ heroClosed }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:12px;right:12px;top:108px;display:flex;flex-direction:column;gap:14px">
+  <div style="position:relative;height:392px;border-radius:28px;background:#FF3B2F;color:#140C0A;overflow:hidden;padding:22px;animation:slCasc .4s both">
+    <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
+    <div style="position:absolute;right:-30px;top:-40px;font:900 360px/1 Unbounded,sans-serif;color:#FFF4E6">?</div>
+    <span style="position:relative;display:block;font:800 11px/1 Unbounded,sans-serif;letter-spacing:2px">СЛОВО ДНЯ · 3 ЛИСТОПАДА</span>
+    <span style="position:relative;display:block;margin-top:16px;font:900 40px/.95 Unbounded,sans-serif;letter-spacing:-1.5px;width:220px">ЛОВИ СЛОВО!</span>
+    <span style="position:relative;display:inline-flex;margin-top:14px;height:30px;padding:0 12px;border-radius:9px;background:rgba(255,244,230,.7);align-items:center;font:600 13px/1 Onest">Людина і тіло</span>
+    <div style="position:absolute;left:14px;bottom:20px"><dc-import name="Rupor" state="shout" on-red="{{ true }}" size="{{ 120 }}" hint-size="120px,90px"></dc-import></div>
+    <span style="position:absolute;right:20px;bottom:26px;height:56px;padding:0 24px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);display:flex;align-items:center;font:900 15px/1 Unbounded,sans-serif">РОЗКРИТИ</span>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ heroOpen }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:12px;right:12px;top:108px;display:flex;flex-direction:column;gap:14px">
+  <div style="position:relative;height:392px;border-radius:28px;background:#FF3B2F;color:#140C0A;overflow:hidden;padding:22px;display:flex;flex-direction:column;gap:12px;animation:slFade .3s both">
+    <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
+    <div style="position:absolute;right:-40px;top:-50px;font:900 360px/1 Unbounded,sans-serif;color:#FFF4E6">Г</div>
+    <span style="position:relative;font:800 11px/1 Unbounded,sans-serif;letter-spacing:2px">СЛОВО ДНЯ · 3 ЛИСТОПАДА</span>
+    <span style="position:relative;font:900 46px/1 Unbounded,sans-serif;letter-spacing:-1.5px">голі́нка</span>
+    <span style="position:relative;font:600 14px/1 Onest">ім., ж. р.</span>
+    <div style="flex:1"></div>
+    <div style="position:relative;border-radius:18px;background:#FFF4E6;padding:16px;display:flex;flex-direction:column;gap:8px">
+      <span style="font:600 17px/1.35 Onest">Частина ноги від коліна до стопи; гомілка.</span>
+      <span style="font:500 13px/1.3 Onest;color:#6B5D55">Синонім: гомілка · Людина і тіло</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ feedBar }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:12px;right:12px;top:514px;display:flex;flex-direction:column;gap:12px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;opacity:{{ knowOp }}">
+    <span style="height:56px;border-radius:16px;background:var(--tile);border:1px solid var(--line);box-shadow:0 5px 0 var(--edge);display:flex;align-items:center;justify-content:center;font:900 15px/1 Unbounded,sans-serif">Знаю</span>
+    <span style="height:56px;border-radius:16px;background:var(--tile);border:1px solid var(--line);box-shadow:0 5px 0 var(--edge);display:flex;align-items:center;justify-content:center;font:900 15px/1 Unbounded,sans-serif">Не знаю</span>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:4px">
+    <sc-for list="{{ bar }}" as="b" hint-placeholder-count="5"><div style="height:64px;border-radius:14px;background:{{ b.bg }};color:{{ b.fg }};box-shadow:{{ b.sh }};border:1px solid {{ b.bc }};opacity:{{ b.op }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;animation:{{ b.anim }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="{{ b.d1 }}" fill="{{ b.fill }}"></path><path d="{{ b.d2 }}" stroke="{{ b.s2 }}"></path></svg><span style="font:600 10.5px/1 Onest;white-space:nowrap">{{ b.n }}</span></div></sc-for>
+  </div>
+  <sc-if value="{{ colChip }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:8px;font:600 13px/1.2 Onest;color:var(--mute);animation:slCasc .3s .2s both"><span style="width:8px;height:12px;background:#FF3B2F;clip-path:polygon(0 0,100% 30%,100% 70%,0 100%)"></span>У колекції «Осінні слова» · в Улюбленому</div></sc-if>
+</div>
+</sc-if>
+
+<sc-if value="{{ hiddenOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:12px;right:12px;top:108px;display:flex;flex-direction:column;gap:14px">
+  <div style="height:120px;border-radius:24px;border:2.5px dashed var(--line);display:flex;align-items:center;gap:14px;padding:0 18px;animation:slFold .45s cubic-bezier(.4,0,.2,1) both;overflow:hidden">
+    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--mute)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 4h4v10H4zM8 14l3.5 6.5c1.4 0 2.6-1.1 2.2-2.6L13 15h5.5a2 2 0 0 0 2-2.3l-1.1-6.6A2.5 2.5 0 0 0 16.9 4H8"></path></svg>
+    <div style="flex:1;display:flex;flex-direction:column;gap:5px"><span style="font:800 15px/1.1 Unbounded,sans-serif">Слово сховано</span><span style="font:500 13px/1.3 Onest;color:var(--mute)">Повернути можна в Налаштуваннях → Приховане</span></div>
+    <span style="flex:none;height:40px;padding:0 14px;border-radius:11px;background:var(--ink);color:var(--bg);display:flex;align-items:center;font:800 11px/1 Unbounded,sans-serif">СКАСУВАТИ</span>
+  </div>
+  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:20px;display:flex;flex-direction:column;gap:12px;animation:slCasc .4s .3s both">
+    <span style="align-self:flex-start;padding:7px 10px;background:var(--ink);color:var(--bg);font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">ФРАЗЕОЛОГІЗМ</span>
+    <span style="font:900 28px/1.05 Unbounded,sans-serif">Бити байдики</span>
+    <span style="font:500 16px/1.4 Onest">Ледарювати, байдикувати.</span>
+  </div>
+</div>
+<div style="position:absolute;left:14px;right:14px;bottom:104px;z-index:70;display:flex;align-items:center;gap:12px;padding:12px 12px 12px 14px;background:var(--ink);color:var(--bg);clip-path:polygon(0 0,100% 0,97% 100%,0 100%);border-radius:14px 0 0 14px;animation:slToast .35s cubic-bezier(.2,.9,.3,1.1) both">
+  <span style="flex:none;width:12px;height:22px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 100%,0 75%)"></span>
+  <span style="flex:1;font:600 14px/1.35 Onest;min-width:0">«голінка» приховано</span>
+  <span style="flex:none;height:38px;padding:0 18px 0 12px;border-radius:10px;background:#FF3B2F;color:#140C0A;display:flex;align-items:center;font:800 12px/1 Unbounded,sans-serif">СКАСУВАТИ</span>
+</div>
+</sc-if>
+
+<sc-if value="{{ othersOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;left:12px;right:12px;top:108px;display:flex;flex-direction:column;gap:12px">
+  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:18px 18px 12px;display:flex;flex-direction:column;gap:10px">
+    <div style="display:flex;gap:8px;align-items:center"><span style="padding:7px 10px;background:var(--ink);color:var(--bg);font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">ВИПРАВЛЕННЯ</span><span style="font:600 13px/1 Onest;color:var(--mute)">калька · У розмові</span></div>
+    <span style="font:600 12px/1 Onest;color:var(--mute)">Так часто кажуть</span><span style="font:800 20px/1 Unbounded,sans-serif;color:var(--mute);text-decoration:line-through #FF3B2F 3px">приймати участь</span>
+    <span style="font:600 12px/1 Onest;color:#FF3B2F">Українською краще</span><span style="font:900 24px/1 Unbounded,sans-serif">брати участь</span>
+    <div style="display:flex;gap:4px;border-top:1px solid var(--line);padding-top:8px;margin-top:2px"><sc-for list="{{ cbFull }}" as="b" hint-placeholder-count="5"><span style="width:46px;height:44px;border-radius:12px;background:{{ b.bg }};color:{{ b.fg }};display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="{{ b.d1 }}" fill="{{ b.fill }}"></path><path d="{{ b.d2 }}" stroke="{{ b.s2 }}"></path></svg></span></sc-for></div>
+  </div>
+  <div style="border-radius:24px;background:var(--sf);border:1px solid var(--line);padding:18px 18px 12px;display:flex;flex-direction:column;gap:10px">
+    <span style="align-self:flex-start;padding:7px 10px;background:var(--ink);color:var(--bg);font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">СИНОНІМИ</span>
+    <span style="font:900 22px/1 Unbounded,sans-serif">Говорити</span>
+    <span style="font:500 14px/1.3 Onest;color:var(--mute)">мовити · балакати · гомоніти · теревенити</span>
+    <div style="display:flex;gap:4px;border-top:1px solid var(--line);padding-top:8px;margin-top:2px"><sc-for list="{{ cbFull2 }}" as="b" hint-placeholder-count="5"><span style="width:46px;height:44px;border-radius:12px;background:{{ b.bg }};color:{{ b.fg }};display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="{{ b.d1 }}" fill="{{ b.fill }}"></path><path d="{{ b.d2 }}" stroke="{{ b.s2 }}"></path></svg></span></sc-for></div>
+  </div>
+  <div style="border-radius:24px;background:var(--ink);color:var(--bg);padding:18px 18px 12px;display:flex;flex-direction:column;gap:10px">
+    <span style="align-self:flex-start;padding:7px 10px;background:#FF3B2F;color:#140C0A;font:800 11px/1 Unbounded,sans-serif;letter-spacing:1px;transform:skewX(-10deg)">ПОРАДА</span>
+    <span style="font:900 19px/1.15 Unbounded,sans-serif">Порада: апостроф після «р»</span>
+    <div style="display:flex;gap:4px;border-top:1px solid rgba(255,244,230,.15);padding-top:8px;margin-top:2px"><sc-for list="{{ cbTip }}" as="b" hint-placeholder-count="3"><span style="width:46px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="{{ b.d1 }}"></path><path d="{{ b.d2 }}"></path></svg></span></sc-for></div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ wordOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;overflow:hidden">
+  <div style="position:relative;height:290px;background:#FF3B2F;clip-path:polygon(0 0,100% 0,100% 86%,0 100%);overflow:hidden;color:#140C0A">
+    <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
+    <div style="position:absolute;right:-50px;top:-60px;font:900 420px/1 Unbounded,sans-serif;color:#FFF4E6">Г</div>
+    <div style="position:absolute;left:16px;top:58px;width:44px;height:44px;border-radius:12px;background:#140C0A;display:flex;align-items:center;justify-content:center"><svg width="10" height="16" viewBox="0 0 10 16"><polygon points="10,0 6,0 0,8 6,16 10,16 4,8" fill="#FFF4E6"></polygon></svg></div>
+    <div style="position:absolute;right:16px;top:58px;width:44px;height:44px;border-radius:12px;background:{{ dotsBg }};box-shadow:{{ dotsSh }};display:flex;align-items:center;justify-content:center;gap:3px"><span style="width:4px;height:4px;background:{{ dotsFg }}"></span><span style="width:4px;height:4px;background:{{ dotsFg }}"></span><span style="width:4px;height:4px;background:{{ dotsFg }}"></span></div>
+    <div style="position:absolute;left:22px;top:126px;font:800 11px/1 Unbounded,sans-serif;letter-spacing:2px">СЛОВО ДНЯ · 3 ЛИСТОПАДА</div>
+    <div style="position:absolute;left:20px;top:150px;font:900 48px/1 Unbounded,sans-serif;letter-spacing:-1.5px">голі́нка</div>
+    <div style="position:absolute;left:22px;top:208px;font:600 15px/1 Onest">ім., ж. р.</div>
+  </div>
+  <div style="padding:4px 22px 0;display:flex;flex-direction:column;gap:14px">
+    <span style="font:500 18px/1.4 Onest">Частина ноги від коліна до стопи; гомілка.</span>
+    <span style="padding-left:14px;border-left:3px solid #FF3B2F;font:italic 400 15px/1.45 Onest">«В ногах у чабанів лежала ягничка, що зламала того дня голінку.» <span style="font-style:normal;color:var(--mute)">— С. Скляренко</span></span>
+    <span style="font:500 15px/1.3 Onest"><span style="color:var(--mute)">Синонім:</span> гомілка</span>
+    <sc-if value="{{ colChipW }}" hint-placeholder-val="{{ false }}"><span style="align-self:flex-start;height:32px;padding:0 12px;border-radius:10px;background:var(--sf2);display:flex;align-items:center;gap:8px;font:600 13px/1 Onest;animation:slPop .35s .2s both"><svg width="12" height="14" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z" fill="var(--ink)"></path></svg>У колекції «Осінні слова»</span></sc-if>
+  </div>
+  <div style="position:absolute;left:0;right:0;bottom:0;padding:12px 12px 34px;background:var(--bg);border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px">
+    <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px">
+      <sc-for list="{{ bar }}" as="b" hint-placeholder-count="5"><div style="height:64px;border-radius:14px;background:{{ b.bg }};color:{{ b.fg }};box-shadow:{{ b.sh }};border:1px solid {{ b.bc }};opacity:{{ b.op }};display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;animation:{{ b.anim }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="{{ b.d1 }}" fill="{{ b.fill }}"></path><path d="{{ b.d2 }}" stroke="{{ b.s2 }}"></path></svg><span style="font:600 10.5px/1 Onest;white-space:nowrap">{{ b.n }}</span></div></sc-for>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <span style="height:58px;border-radius:16px;background:var(--tile);border:1px solid var(--line);box-shadow:0 5px 0 var(--edge);display:flex;align-items:center;justify-content:center;font:900 15px/1 Unbounded,sans-serif">Знаю</span>
+      <span style="height:58px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font:900 15px/1 Unbounded,sans-serif">Не знаю</span>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ sheetOn }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;z-index:80;background:rgba(20,12,10,.55);animation:slFade .25s both"></div>
+<div style="position:absolute;left:0;right:0;bottom:0;z-index:81;padding:62px 16px 34px;background:var(--sf);clip-path:polygon(0 30px,100% 0,100% 100%,0 100%);animation:slSheet .45s cubic-bezier(.2,.9,.3,1) both;display:flex;flex-direction:column;gap:12px">
+  <div style="position:absolute;left:18px;top:30px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 17px/1 Unbounded,sans-serif;transform:rotate(-4.4deg);transform-origin:left">{{ shTitle }}</div>
+  <div style="height:12px"></div>
+  <sc-if value="{{ isMenu }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
+      <sc-for list="{{ menu }}" as="m" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:14px;padding:15px 16px;border-top:{{ m.bt }};color:{{ m.c }}"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="{{ m.d1 }}" fill="{{ m.fill }}"></path><path d="{{ m.d2 }}"></path></svg><span style="flex:1;font:600 16px/1.2 Onest">{{ m.n }}</span><span style="font:500 13px/1 Onest;color:var(--mute)">{{ m.st }}</span></div></sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isCol }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
+      <sc-for list="{{ cols }}" as="c" hint-placeholder-count="3"><div style="display:flex;align-items:center;gap:14px;padding:15px 16px;border-top:{{ c.bt }}"><span style="flex:1;display:flex;flex-direction:column;gap:4px"><span style="font:700 16px/1.2 Onest">{{ c.n }}</span><span style="font:500 12px/1 Onest;color:var(--mute)">{{ c.k }}</span></span><span style="width:30px;height:30px;border-radius:9px;background:{{ c.bg }};border:2px solid {{ c.bc }};display:flex;align-items:center;justify-content:center;animation:{{ c.anim }}"><svg width="14" height="12" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="{{ c.ck }}"></polygon></svg></span></div></sc-for>
+    </div>
+    <span style="height:52px;border-radius:14px;border:2px dashed var(--line);display:flex;align-items:center;justify-content:center;font:700 15px/1 Onest">+ Нова колекція</span>
+  </sc-if>
+  <sc-if value="{{ isHide }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;flex-direction:column;border-radius:16px;border:1px solid var(--line);overflow:hidden">
+      <div style="padding:17px 16px;font:600 16px/1.2 Onest">Не показувати цей запис</div>
+      <div style="padding:17px 16px;border-top:1px solid var(--line);font:600 16px/1.2 Onest">Не показувати категорію «Людина і тіло»</div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isReport }}" hint-placeholder-val="{{ false }}">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <span style="height:48px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest">Друкарська помилка</span>
+      <span style="height:48px;border-radius:12px;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest">Наголос</span>
+      <span style="height:48px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest">Визначення</span>
+      <span style="height:48px;border-radius:12px;background:var(--sf2);display:flex;align-items:center;justify-content:center;font:600 14px/1 Onest">Інше</span>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font:600 13px/1 Onest;color:var(--mute)">Коментар (необов’язково)</span><div style="height:84px;border-radius:14px;border:2px solid var(--line);background:var(--bg);padding:12px 14px;font:400 15px/1.4 Onest">Наголос на другому складі</div></div>
+  </sc-if>
+  <span style="height:60px;border-radius:16px;background:{{ shPBg }};color:{{ shPFg }};box-shadow:0 5px 0 {{ shPSh }};border:1px solid {{ shPBc }};display:flex;align-items:center;justify-content:center;font:900 15px/1 Unbounded,sans-serif">{{ shP }}</span>
+</div>
+</sc-if>
+
+<div style="position:absolute;top:0;left:0;right:0;height:50px;z-index:99;display:flex;align-items:center;justify-content:space-between;padding:6px 30px 0 44px;pointer-events:none;color:{{ sbc }}">
+  <span style="font:600 16px/1 Onest,sans-serif">10:09</span>
+  <div style="display:flex;align-items:center;gap:6px"><svg width="18" height="12" viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" fill="currentColor"></rect><rect x="5" y="5.5" width="3" height="6.5" fill="currentColor"></rect><rect x="10" y="3" width="3" height="9" fill="currentColor"></rect><rect x="15" y="0" width="3" height="12" fill="currentColor"></rect></svg><svg width="26" height="12" viewBox="0 0 26 12"><rect x=".75" y=".75" width="21.5" height="10.5" rx="3" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".5"></rect><rect x="2.5" y="2.5" width="15" height="7" rx="1.5" fill="currentColor"></rect></svg></div>
+</div>
+<div style="position:absolute;top:11px;left:50%;margin-left:-62px;width:124px;height:36px;border-radius:20px;background:#000;z-index:100"></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;a1&quot;,&quot;a2&quot;,&quot;a3&quot;,&quot;a4&quot;,&quot;a5&quot;,&quot;a6&quot;,&quot;a7&quot;,&quot;a8&quot;,&quot;a9&quot;,&quot;a10&quot;],&quot;default&quot;:&quot;a1&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const TABI={feed:'polygon(0 10%,100% 0,100% 38%,0 46%,0 56%,100% 50%,100% 100%,0 100%)',games:'polygon(50% 0,100% 50%,50% 100%,0 50%,22% 50%,50% 78%,78% 50%,50% 22%,22% 50%,0 50%)',saved:'polygon(12% 8%,88% 0,88% 100%,50% 74%,12% 100%)',profile:'polygon(30% 0,70% 0,74% 40%,50% 48%,26% 40%,30% 0,30% 0,0 100%,8% 58%,92% 54%,100% 100%,0 100%)'};
+const IC={
+ fav:{n:'Улюблене',d1:'M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z',d2:''},
+ share:{n:'Поділитися',d1:'M12 3v12M7.5 7.5 12 3l4.5 4.5',d2:'M5 12v8h14v-8'},
+ col:{n:'До колекції',d1:'M6 3h12v18l-6-4.5L6 21z',d2:'M12 7v6M9 10h6',on:'У колекції',d2on:'M9 10.5l2.2 2.2L15.5 8'},
+ hide:{n:'Сховати',d1:'M4 4h4v10H4zM8 14l3.5 6.5c1.4 0 2.6-1.1 2.2-2.6L13 15h5.5a2 2 0 0 0 2-2.3l-1.1-6.6A2.5 2.5 0 0 0 16.9 4H8',d2:''},
+ flag:{n:'Помилка',d1:'M5 21V4',d2:'M5 4h12l-2.5 4.5L17 13H5'}};
+const ORDER=['fav','share','col','hide','flag'];
+const S={
+ a1:{feed:1,closed:1,dis:['flag'],know:'.4'},
+ a2:{feed:1,open:1},
+ a3:{feed:1,open:1,fav:1,col:1,chip:1},
+ a4:{word:1},
+ a5:{word:1,fav:1,col:1,chipW:1,dots:1,sheet:'menu'},
+ a6:{word:1,col:1,chipW:1,sheet:'col'},
+ a7:{word:1,sheet:'hide'},
+ a8:{feed:1,hidden:1},
+ a9:{word:1,sheet:'report'},
+ a10:{feed:1,others:1}};
+class Component extends DCLogic {
+  renderVals(){
+    const s=this.props.screen||'a1',c=S[s];
+    const v={th:this.props.theme||'light',rmAttr:this.props.reduceMotion?'1':'0',sbc:c.word?'#140C0A':'var(--ink)'};
+    v.feedOn=!!c.feed;v.heroClosed=!!c.closed;v.heroOpen=!!c.open;v.feedBar=!!(c.closed||c.open);v.knowOp=c.know||'1';v.colChip=!!c.chip;
+    v.hiddenOn=!!c.hidden;v.othersOn=!!c.others;v.wordOn=!!c.word;v.colChipW=!!c.chipW;
+    v.dotsBg=c.dots?'#FFF4E6':'#140C0A';v.dotsFg=c.dots?'#140C0A':'#FFF4E6';v.dotsSh=c.dots?'0 0 0 3px #140C0A':'none';
+    const item=(k,big)=>{const i=IC[k],on=(k==='fav'&&c.fav)||(k==='col'&&c.col),dis=(c.dis||[]).includes(k);
+      return {n:on&&i.on?i.on:i.n,d1:i.d1,d2:on&&i.d2on?i.d2on:i.d2,
+        fill:on?'currentColor':'none',s2:on&&k==='col'?(k==='col'?'var(--bg)':'currentColor'):'currentColor',
+        bg:on?(k==='fav'?'#FF3B2F':'var(--ink)'):'var(--tile)',fg:on?(k==='fav'?'#140C0A':'var(--bg)'):'var(--ink)',
+        bc:on?'transparent':'var(--line)',sh:on?(k==='fav'?'0 4px 0 #C4271D':'0 4px 0 rgba(0,0,0,.35)'):dis?'none':'0 4px 0 var(--edge)',
+        op:dis?'.35':'1',anim:on?'slPop .35s .15s both':'none'};};
+    v.bar=ORDER.map(k=>item(k));
+    if(c.fav){v.bar[0].fg='#140C0A';}
+    v.tabs=[['feed','Стрічка'],['games','Ігри'],['saved','Збережене'],['profile','Профіль']].map(([id,n])=>({n,ic:TABI[id],c:id==='feed'?'var(--ink)':'var(--mute)',on:id==='feed'?1:0}));
+    const cb=(keys,onK)=>keys.map(k=>{const i=IC[k],on=onK.includes(k);return {d1:i.d1,d2:on&&i.d2on?i.d2on:i.d2,fill:on?'currentColor':'none',s2:on&&k==='col'?'var(--sf)':'currentColor',bg:on&&k==='fav'?'#FF3B2F':'transparent',fg:on&&k==='fav'?'#140C0A':'var(--ink)'};});
+    v.cbFull=cb(ORDER,['fav']);v.cbFull2=cb(ORDER,['col']);
+    v.cbTip=['share','hide','flag'].map(k=>({d1:IC[k].d1,d2:IC[k].d2}));
+    v.sheetOn=!!c.sheet;v.isMenu=c.sheet==='menu';v.isCol=c.sheet==='col';v.isHide=c.sheet==='hide';v.isReport=c.sheet==='report';
+    v.shTitle={menu:'ДІЇ ЗІ СЛОВОМ',col:'ДО КОЛЕКЦІЇ',hide:'НЕ ПОКАЗУВАТИ',report:'ПОВІДОМИТИ ПРО ПОМИЛКУ'}[c.sheet];
+    v.shP={menu:'СКАСУВАТИ',col:'ГОТОВО',hide:'СКАСУВАТИ',report:'НАДІСЛАТИ'}[c.sheet];
+    const prim=c.sheet==='col'||c.sheet==='report';
+    v.shPBg=prim?'var(--ink)':'var(--tile)';v.shPFg=prim?'var(--bg)':'var(--ink)';v.shPSh=prim?'rgba(0,0,0,.35)':'var(--edge)';v.shPBc=prim?'transparent':'var(--line)';
+    v.menu=[['fav','Прибрати з Улюбленого','увімкнено'],['share','Поділитися',''],['col','Змінити колекції','1'],['hide','Сховати…',''],['flag','Повідомити про помилку','']].map(([k,n,st],i)=>({n,st,d1:IC[k].d1,d2:k==='col'?IC.col.d2on:IC[k].d2,fill:(k==='fav'||k==='col')?'currentColor':'none',c:k==='fav'?'#FF3B2F':'var(--ink)',bt:i?'1px solid var(--line)':'0'}));
+    v.cols=[['Осінні слова','5 слів',1],['Для есе','0 слів',0],['Від бабусі','12 слів',0]].map(([n,k,on],i)=>({n,k,bt:i?'1px solid var(--line)':'0',bg:on?'#FF3B2F':'transparent',bc:on?'#FF3B2F':'var(--mute)',ck:on?'#140C0A':'transparent',anim:on?'slPop .3s .3s both':'none'}));
+    return v;
+  }
+}
+</script>
+</body>
+</html>

@@ -1,15 +1,15 @@
-import { Pressable, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-
+import { useConcealed } from '../entries/self-check';
+import { ActionIcon, ActionTile } from '../primitives/ActionTile';
 import { useEdition } from '../providers/EditionProvider';
-import { useTokens } from '../providers/TokensProvider';
 
-/** The flag's size in the action row, the size of the other icons. */
-const ICON_SIZE = 26;
+/** The design's flag: its pole and a notched pennant, on a 24-point grid. */
+const FLAG_ICON = { outline: 'M5 21V4', inner: 'M5 4h12l-2.5 4.5L17 13H5' };
 
 /**
- * The «Повідомити про помилку» button of the action row: a flag, which opens
- * the sheet of a Mistake Report. VoiceOver reads what a tap will do.
+ * The «Помилка» action of the action row: a flag, which opens the sheet of
+ * a Mistake Report. While Self-check conceals the meaning of the Entry card
+ * it is under, there is nothing to report yet, so it is disabled. VoiceOver
+ * reads what a tap will do.
  */
 export function MistakeReportButton({
   onPress,
@@ -18,32 +18,16 @@ export function MistakeReportButton({
   onPress: () => void;
   testID?: string;
 }) {
-  const { colors } = useTokens();
-  const { strings, voice } = useEdition();
+  const { strings } = useEdition();
+  const concealed = useConcealed();
   return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
+    <ActionTile
+      label={strings.mistakeReport.tile}
       accessibilityLabel={strings.mistakeReport.action}
-      {...voice}
+      disabled={concealed}
       onPress={onPress}
-      style={styles.button}
-    >
-      <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24">
-        <Path
-          d="M5.5 20.5v-16M5.5 4.5h11.5l-2.5 4.5 2.5 4.5H5.5"
-          fill="none"
-          stroke={colors.ink}
-          strokeWidth={1.7}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-    </Pressable>
+      testID={testID}
+      icon={(look) => <ActionIcon paths={FLAG_ICON} look={look} />}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  // The whole 52 pt slot of the action row takes the tap.
-  button: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
-});

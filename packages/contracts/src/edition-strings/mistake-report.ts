@@ -6,6 +6,8 @@ import { TextSchema } from '../shared';
 export const MistakeReportStringsSchema = z.strictObject({
   /** The card menu's action that opens the sheet, e.g. «Повідомити про помилку». */
   action: TextSchema,
+  /** The label under the flag of the action row's tile, «Помилка». */
+  tile: TextSchema,
   /** The name of every type of mistake the reader picks from. */
   types: z.strictObject({
     typo: TextSchema,

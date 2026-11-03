@@ -32,9 +32,13 @@ export const feedStringsShape = {
      */
     today: templateOf('weekday', 'day', 'month'),
   }),
-  /** The badge on the card of the Word of the Day. */
+  /** The badge, the shout and the reveal on the card of the Word of the Day. */
   wordOfTheDay: z.strictObject({
     /** The badge text; `{day}` stands for the day of the month and `{month}` for its name, one of `dates.months`. */
     badge: templateOf('day', 'month'),
+    /** The shout on its red card while Self-check keeps the meaning closed, «Лови слово!». */
+    shout: TextSchema,
+    /** The button on its red card that reveals the meaning, «Розкрити». */
+    reveal: TextSchema,
   }),
 };

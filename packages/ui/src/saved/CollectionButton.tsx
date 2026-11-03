@@ -1,55 +1,38 @@
-import { Pressable, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-
+import { ActionIcon, ActionTile } from '../primitives/ActionTile';
 import { useEdition } from '../providers/EditionProvider';
-import { useTokens } from '../providers/TokensProvider';
 
-/** The bookmark's size in the action row, from the design. */
-const ICON_SIZE = 26;
+/** The design's bookmark with a plus in it, on a 24-point grid. */
+const BOOKMARK_ICON = { outline: 'M6 3h12v18l-6-4.5L6 21z', inner: 'M12 7v6M9 10h6' };
+
+/** The same bookmark, filled, with a check in place of the plus once the Entry is filed. */
+const FILED_ICON = { outline: BOOKMARK_ICON.outline, inner: 'M9 10.5l2.2 2.2L15.5 8' };
 
 /**
- * The Collections button of the action row: a bookmark with a plus, which
- * opens the «До колекції» sheet. VoiceOver reads what a tap will do.
+ * The Collections action of the action row: a bookmark with a plus,
+ * «До колекції», which opens the «До колекції» sheet. Once the Entry is in
+ * a Collection the bookmark is filled with a check, «У колекції».
+ * VoiceOver reads what a tap will do, and the filed state as selected.
  */
 export function CollectionButton({
+  filed,
   onPress,
   testID = 'collection-button',
 }: {
+  /** Whether the Entry is in at least one Collection. */
+  filed: boolean;
   onPress: () => void;
   testID?: string;
 }) {
-  const { colors } = useTokens();
-  const { strings, voice } = useEdition();
+  const { strings } = useEdition();
+  const { tile } = strings.collections;
   return (
-    <Pressable
-      testID={testID}
-      accessibilityRole="button"
+    <ActionTile
+      label={filed ? tile.filed : tile.add}
       accessibilityLabel={strings.collections.button}
-      {...voice}
+      mark={filed ? 'filed' : 'none'}
       onPress={onPress}
-      style={styles.button}
-    >
-      <Svg width={ICON_SIZE} height={ICON_SIZE} viewBox="0 0 24 24">
-        <Path
-          d="M6.5 3.5h11v17l-5.5-4-5.5 4z"
-          fill="none"
-          stroke={colors.ink}
-          strokeWidth={1.7}
-          strokeLinejoin="round"
-        />
-        <Path
-          d="M12 7v5M9.5 9.5h5"
-          fill="none"
-          stroke={colors.ink}
-          strokeWidth={1.7}
-          strokeLinecap="round"
-        />
-      </Svg>
-    </Pressable>
+      testID={testID}
+      icon={(look) => <ActionIcon paths={filed ? FILED_ICON : BOOKMARK_ICON} look={look} />}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  // The whole 52 pt slot of the action row takes the tap.
-  button: { flex: 1, alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
-});

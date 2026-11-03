@@ -19,7 +19,7 @@ export function HalftoneGround({
   id: string;
   width: number;
   height: number;
-  points?: Wedge;
+  points?: Wedge | undefined;
 }) {
   const { colors } = useTokens();
   const cut = points?.map(([x, y]) => `${String(x * width)},${String(y * height)}`).join(' ');

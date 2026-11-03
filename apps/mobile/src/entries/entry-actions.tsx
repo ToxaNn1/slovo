@@ -12,6 +12,7 @@ import {
   MistakeReportSheet,
   ShareButton,
   ShareSheet,
+  useEdition,
   useUndoToast,
 } from '@slovo/ui';
 import { useCallback, useState, type ReactNode } from 'react';
@@ -20,6 +21,7 @@ import { refusalText } from '../saved/collection-refusal';
 import { deviceClock } from '../device/device-clock';
 import { edition, editionStrings } from '../edition/edition';
 import { useEntryCollections } from '../saved/collections';
+import { keptHint } from '../saved/kept-hint';
 import { useComposition, useCompositionRead } from '../composition';
 import { useCounterLine } from '../community-counters/counter-line';
 import { useFavorite } from '../saved/favorites';
@@ -32,14 +34,24 @@ import { useShown } from '../shown-in-effect';
 
 /**
  * The action row of an Entry card of any kind, wherever the card appears: the
- * Feed (its Word of the Day too) and the Entry screen a list opens. Each action
- * fills its own slot. The «Знаю» and «Не знаю» buttons are there only when the
+ * Feed (its Word of the Day too) and Entry details, the screen a list opens.
+ * Each action fills its own slot: raised tiles with labels under a Word, with
+ * the line that says where the Entry is kept under them, and bare icons
+ * under the other kinds (XActions). The «Знаю» and «Не знаю» buttons are there only when the
  * Knowledge switch is on in effect, and inactive while Self-check conceals the
  * card's meaning (the card tells them); the «Повідомити про помилку» flag only
- * while Mistake Reports are on in effect. Its screen gives it an
+ * while Mistake Reports are on in effect, disabled while the meaning is concealed.
+ * The «Знаю» and «Не знаю» buttons go above the actions in the Feed and below
+ * them on Entry details (`place`). Its screen gives it an
  * `UndoToastProvider` for the toasts after a hide and a Mistake Report.
  */
-export function EntryActions({ card }: { card: AnyEntryCard }) {
+export function EntryActions({
+  card,
+  place = 'feed',
+}: {
+  card: AnyEntryCard;
+  place?: 'feed' | 'details';
+}) {
   const { entryId } = card;
   const favorite = useFavorite(entryId);
   const hide = useHide(card);
@@ -47,10 +59,19 @@ export function EntryActions({ card }: { card: AnyEntryCard }) {
   const share = useShareAction(card);
   const marks = useKnowledgeButtons(card);
   const report = useMistakeReportAction(entryId);
+  const { count } = useEdition();
   return (
     <>
       <ActionRow
+        look={card.kind === 'word' ? 'tiles' : 'icons'}
         marks={marks}
+        marksAt={place === 'details' ? 'below' : 'above'}
+        hint={keptHint({
+          collectionNames: collection.filedNames,
+          inFavorites: favorite.inFavorites,
+          strings: editionStrings,
+          count,
+        })}
         favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
         share={share.button}
         collection={collection.button}
@@ -198,12 +219,24 @@ function useMistakeReportAction(entryId: string): { button: ReactNode; sheet: Re
   };
 }
 
-/** The «До колекції» button of an Entry's action row, and the sheet it opens. */
-function useCollectionAction(entryId: string): { button: ReactNode; sheet: ReactNode } {
+/**
+ * The «До колекції» button of an Entry's action row, filled once the Entry is
+ * in a Collection, the sheet it opens, and the names of the Collections the
+ * Entry is in.
+ */
+function useCollectionAction(entryId: string): {
+  button: ReactNode;
+  sheet: ReactNode;
+  filedNames: readonly string[];
+} {
   const [open, setOpen] = useState(false);
+  const { collections, isFiled } = useEntryCollections(entryId);
+  const filedNames = collections.filter(({ id }) => isFiled(id)).map(({ name }) => name);
   return {
+    filedNames,
     button: (
       <CollectionButton
+        filed={filedNames.length > 0}
         onPress={() => {
           setOpen(true);
         }}

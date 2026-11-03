@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;800;900&family=Onest:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#EDE2D3;font-family:Onest,sans-serif;color:#140C0A}a{color:#140C0A}a:hover{color:#FF3B2F}</style>
+</helmet>
+<div style="padding:56px 64px 100px;display:flex;flex-direction:column;gap:72px;width:max-content;min-width:100%">
+  <header style="display:flex;flex-direction:column;gap:16px;max-width:1000px">
+    <div style="display:flex;align-items:center;gap:14px"><span style="width:24px;height:36px;background:#FF3B2F;clip-path:polygon(0 0,100% 22%,100% 78%,0 100%)"></span><span style="font:900 52px/1 Unbounded,sans-serif;letter-spacing:-2px">SLOVO · Дії зі словом</span></div>
+    <span style="font:400 17px/1.55 Onest;color:#4A3E38;text-wrap:pretty">Пропозиція для 5 дій, які вже працюють у застосунку: Улюблене, Поділитися, До колекції, Сховати, Помилка. Основні дошки не змінено, це окрема сторінка на погодження.</span>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:20px 22px;border-radius:20px;background:#140C0A;color:#FFF4E6">
+      <span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#FF3B2F">РІШЕННЯ</span>
+      <span style="font:500 15px/1.5 Onest">1. Ряд із 5 дій завжди видимий під словом дня і на екрані слова. Це об'ємні кахлі з підписами, порядок як у застосунку.</span>
+      <span style="font:500 15px/1.5 Onest">2. До «Розкрити» неактивна тільки «Помилка», бо значення ще не видно. «Знаю / Не знаю» приглушені, як зараз.</span>
+      <span style="font:500 15px/1.5 Onest">3. На екрані слова плитки «поділитися» і серце з червоної панелі прибрано, щоб не дублювати ряд. Лишається «⋯» з тими самими діями (VoiceOver, довгий список).</span>
+      <span style="font:500 15px/1.5 Onest">4. На інших картках Стрічки — компактний ряд іконок без підписів. У «Поради» лише 3 дії, бо це не слово.</span>
+    </div>
+  </header>
+  <section style="display:flex;flex-direction:column;gap:22px">
+    <span style="font:900 32px/1 Unbounded,sans-serif">1 · Стрічка: слово дня</span>
+    <span style="max-width:900px;font:400 16px/1.5 Onest;color:#4A3E38;text-wrap:pretty">До «Розкрити» і після. Стан «увімкнено»: серце червоне, закладка чорна з галочкою, під рядом підказка, де лежить слово.</span>
+    <div style="display:grid;grid-template-columns:repeat(2,max-content);gap:56px 56px">
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">ДО «РОЗКРИТИ»</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a1" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a1" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">ПІСЛЯ «РОЗКРИТИ»</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a2" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a2" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">УЛЮБЛЕНЕ + У КОЛЕКЦІЇ</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a3" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a3" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:22px">
+    <span style="font:900 32px/1 Unbounded,sans-serif">2 · Екран слова</span>
+    <span style="max-width:900px;font:400 16px/1.5 Onest;color:#4A3E38;text-wrap:pretty">Кожна дія має своє місце в нижній панелі над «Знаю / Не знаю». Меню «⋯» (w2) повторює ці дії й показує поточний стан.</span>
+    <div style="display:grid;grid-template-columns:repeat(2,max-content);gap:56px 56px">
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">ТИПОВО</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a4" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a4" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">МЕНЮ «⋯» · СТАНИ УВІМКНЕНО</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a5" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a5" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:22px">
+    <span style="font:900 32px/1 Unbounded,sans-serif">3 · Стани і шторки</span>
+    <span style="max-width:900px;font:400 16px/1.5 Onest;color:#4A3E38;text-wrap:pretty">«До колекції» — шторка з галочками, можна обрати кілька колекцій. «Сховати» — запис або категорія. Після «Сховати» картка згортається в заглушку з «Скасувати» і з’являється тост, а повернути пізніше можна в Налаштуваннях → Приховане.</span>
+    <div style="display:grid;grid-template-columns:repeat(2,max-content);gap:56px 56px">
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">ДО КОЛЕКЦІЇ</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a6" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a6" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">СХОВАТИ</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a7" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a7" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">СЛОВО СХОВАНО · СКАСУВАТИ</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a8" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a8" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">ПОВІДОМИТИ ПРО ПОМИЛКУ</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a9" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a9" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:22px">
+    <span style="font:900 32px/1 Unbounded,sans-serif">5 · Інші картки Стрічки</span>
+    <span style="max-width:900px;font:400 16px/1.5 Onest;color:#4A3E38;text-wrap:pretty">Так, дії потрібні: «Не показувати» та «Помилка» стосуються будь-якого запису, а Виправлення, Фразеологізми й Синоніми зберігають так само, як слова. Ряд компактний, щоб Стрічка лишалась легкою.</span>
+    <div style="display:flex;flex-direction:column;max-width:760px;border-radius:18px;background:#FFFBF5;padding:8px 14px">
+<div style="display:grid;grid-template-columns:200px repeat(5,110px);border-top:1px solid rgba(20,12,10,.13)"><span style="padding:12px 10px;font:800 14px/1.2 Unbounded,sans-serif;">Картка</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">Улюблене</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">Поділитися</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">До колекції</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">Сховати</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">Помилка</span></div>
+<div style="display:grid;grid-template-columns:200px repeat(5,110px);border-top:1px solid rgba(20,12,10,.13)"><span style="padding:12px 10px;font:800 14px/1.2 Unbounded,sans-serif;">Слово дня / слово</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span></div>
+<div style="display:grid;grid-template-columns:200px repeat(5,110px);border-top:1px solid rgba(20,12,10,.13)"><span style="padding:12px 10px;font:800 14px/1.2 Unbounded,sans-serif;">Виправлення</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span></div>
+<div style="display:grid;grid-template-columns:200px repeat(5,110px);border-top:1px solid rgba(20,12,10,.13)"><span style="padding:12px 10px;font:800 14px/1.2 Unbounded,sans-serif;">Фразеологізм</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span></div>
+<div style="display:grid;grid-template-columns:200px repeat(5,110px);border-top:1px solid rgba(20,12,10,.13)"><span style="padding:12px 10px;font:800 14px/1.2 Unbounded,sans-serif;">Синонімічний ряд</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span></div>
+<div style="display:grid;grid-template-columns:200px repeat(5,110px);border-top:1px solid rgba(20,12,10,.13)"><span style="padding:12px 10px;font:800 14px/1.2 Unbounded,sans-serif;">Порада</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;color:#9A8B82">—</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;color:#9A8B82">—</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span><span style="padding:12px 10px;font:700 15px/1.2 Onest;">✓</span></div>
+</div>
+    <div style="display:grid;grid-template-columns:repeat(2,max-content);gap:56px">
+      <div style="display:flex;flex-direction:column;gap:14px"><span style="font:800 13px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">ВИПРАВЛЕННЯ · СИНОНІМИ · ПОРАДА</span><div style="display:flex;gap:20px"><dc-import name="XActions" screen="a10" theme="light" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import><dc-import name="XActions" screen="a10" theme="dark" reduce-motion="{{ rm }}" hint-size="406px,860px"></dc-import></div></div>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic { renderVals(){ return {rm:!!this.props.reduceMotion}; } }
+</script>
+</body>
+</html>

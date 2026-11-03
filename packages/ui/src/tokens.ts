@@ -416,6 +416,18 @@ export const typeRoles = {
   labelChip: role('ui', '700', 11.5, 14),
   /** The label under the Streak's number on its red tile of the Weekly Recap. */
   recapLabelMarked: role('ui', '600', 12, 14),
+  /** The label under the icon of a tile of an Entry's action row, «Улюблене». */
+  actionLabel: role('ui', '600', 10.5, 10.5),
+  /** The line under an Entry's action row that says where the Entry is kept. */
+  actionHint: role('ui', '600', 13, 15.6),
+  /** The shout on the closed card of the Word of the Day, «ЛОВИ СЛОВО!». */
+  heroShout: role('word', '900', 40, 38, -1.5, 'uppercase'),
+  /** The kicker over the Lemma on a red ground, such as «СЛОВО ДНЯ · 3 ЛИСТОПАДА». */
+  heroKicker: role('word', '800', 11, 11, 2, 'uppercase'),
+  /** The giant letter behind the card of the Word of the Day: the Lemma's first, or «?» while it is closed. */
+  giantLetter: role('word', '900', 360, 360),
+  /** The giant letter behind the red panel on top of Entry details. */
+  panelLetter: role('word', '900', 420, 420),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -548,6 +560,13 @@ export const wedges = {
     [0.75, 0.97],
     [0.25, 0.97],
     [0, 0.5],
+  ],
+  /** A box whose bottom edge falls to the left: the red panel on top of Entry details. */
+  panel: [
+    [0, 0],
+    [1, 0],
+    [1, 0.86],
+    [0, 1],
   ],
   /** A diamond standing on its point: the Level Badges. */
   diamond: [
@@ -941,6 +960,40 @@ export const wordCardControls = {
   moreGap: 6,
   moreChevron: 14,
   oftenSaidIcon: 16,
+} as const;
+
+/**
+ * The red card of the Word of the Day in the Feed (XActions a1–a2): its
+ * corner, padding, least height and gap between blocks; where the giant
+ * letter overhangs the top right corner, closed and open; the width the
+ * shout wraps in, the Mascot's width, the alpha of the Category chip's cream
+ * fill, and the cream panel the open card's meaning sits on.
+ */
+export const wordHero = {
+  radius: 28,
+  padding: 22,
+  minHeight: 392,
+  gap: 12,
+  letter: { closed: { right: -30, top: -40 }, open: { right: -40, top: -50 } },
+  shoutWidth: 220,
+  mascot: 120,
+  chipFill: 0.7,
+  panel: { radius: 18, padding: 16, gap: 8 },
+} as const;
+
+/**
+ * The red panel on top of Entry details (XActions a4): where the giant letter
+ * overhangs the top right corner, how far down the right edge the slanted
+ * bottom starts (as `wedges.panel` cuts it, so the letter stops there too),
+ * the room the slant takes under the text, the gap over the kicker, and the
+ * gap between the blocks of the body under the panel.
+ */
+export const entryPanel = {
+  letter: { right: -50, top: -60 },
+  cutAt: 0.86,
+  paddingBottom: 56,
+  kickerGap: 24,
+  bodyGap: 14,
 } as const;
 
 /**
@@ -1367,4 +1420,32 @@ export const widgetDrawing = {
   widgetRadius: 22,
   /** The medium widget's width over its height, from the design's 364 × 170. */
   mediumAspectRatio: 364 / 170,
+} as const;
+
+/** The «Знаю» and «Не знаю» pair: two equal columns across the card's width (XActions). */
+export const knowledgePair = { gap: 10 } as const;
+
+/**
+ * The action row under an Entry card (XActions a1–a3): five raised tiles
+ * with an icon over a label, each `height` tall with this `radius`, `gap`
+ * between its icon and label, `rowGap` between the tiles and `icon` its
+ * icon's side; their edge is shallower than a button's (`edge`, pressed down
+ * to the same thin one), and a filed tile's ink face stands on `inverseEdge`.
+ * The pennant before the hint line is `pennant` wide and tall, `hintGap` from
+ * its text. On a Correction, Idiom, Synonym Row or Tip card (a10) the row is
+ * `compact`: icon-only items of that width, height, radius, icon and gap,
+ * under a hairline with `paddingTop` above them.
+ */
+export const actionTile = {
+  height: 64,
+  radius: 14,
+  gap: 6,
+  rowGap: 7,
+  icon: 22,
+  iconStroke: 2,
+  edge: { depth: 4, translateY: 3 },
+  inverseEdge: 'rgba(0, 0, 0, 0.35)',
+  pennant: { width: 8, height: 12 },
+  hintGap: 8,
+  compact: { width: 46, height: 44, radius: 12, icon: 21, gap: 4, paddingTop: 8 },
 } as const;

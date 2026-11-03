@@ -4,7 +4,7 @@ import { loadEdition, openComposition, type Composition, type Haptics } from '@s
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, renderRouter, screen } from 'expo-router/testing-library';
+import { act, renderRouter, screen, within } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import EntryLayout from '../app/entry/_layout';
@@ -21,11 +21,14 @@ import {
 } from '../shell/test-support';
 import { screenSettled } from './use-open-screen';
 
-// The Entry card's action row has its own tests.
-jest.mock('./entry-actions', () => ({
-  EntryActions: () => null,
-  useKnowledgeButtons: () => null,
-}));
+// The Entry card's action row has its own tests; here it is a stand-in to find on the screen.
+jest.mock('./entry-actions', () => {
+  const { View } = jest.requireActual<typeof import('react-native')>('react-native');
+  return {
+    EntryActions: () => <View testID="entry-actions" />,
+    useKnowledgeButtons: () => null,
+  };
+});
 
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(activeEditionFiles.config);
@@ -153,5 +156,16 @@ describe('the Entry screen and the Word History', () => {
     expect(screen.getByTestId('word-card')).toBeOnTheScreen();
     expect(screen.queryByTestId('word-history')).not.toBeOnTheScreen();
     expect(historyOpened()).toEqual([]);
+  });
+});
+
+describe('the Entry screen of a Word', () => {
+  it('keeps the action row docked under the text, out of the scroll, as long as the text runs', async () => {
+    await renderEntry('w_sumyrnyi');
+
+    const scroll = screen.getByTestId('entry-scroll');
+    expect(within(scroll).getByTestId('word-definition')).toBeOnTheScreen();
+    expect(screen.getByTestId('entry-actions')).toBeOnTheScreen();
+    expect(within(scroll).queryByTestId('entry-actions')).not.toBeOnTheScreen();
   });
 });

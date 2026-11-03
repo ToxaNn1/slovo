@@ -47,8 +47,7 @@ async function renderHeart(saved = false) {
 
 /** The scale of the heart's icon. */
 function scale(): number {
-  const icon = screen.getByTestId('favorite-button').children[0];
-  if (typeof icon !== 'object') throw new Error('The heart draws no icon.');
+  const icon = screen.getByTestId('favorite-button-icon');
   const style = getAnimatedStyle(icon) as { transform?: { scale?: number }[] };
   return style.transform?.find((step) => step.scale !== undefined)?.scale ?? 1;
 }
