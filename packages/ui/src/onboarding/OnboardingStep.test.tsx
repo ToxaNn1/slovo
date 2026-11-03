@@ -1,6 +1,6 @@
 import { EditionProvider, OnboardingWelcome } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -119,5 +119,26 @@ describe('An onboarding step', () => {
     await pass(150);
 
     expect(shoutAside()).toBeCloseTo(0);
+  });
+
+  // Audit C15: the shout word was cut to one letter and «…».
+  it('draws its whole shout word, smaller when it is wider than the top, at any text size', async () => {
+    await renderWelcome();
+    const word = screen.getByTestId('onboarding-shout-word');
+    const line = word.parent;
+    if (line === null) throw new Error('The shout word has no line around it');
+    await fireEvent(line, 'layout', { nativeEvent: { layout: { width: 380 } } });
+    // The word measured at full size: twice as wide as the top has room for, less a point.
+    const measured = screen
+      .getAllByText('WORD', { includeHiddenElements: true })
+      .find((text) => text !== word);
+    if (measured === undefined) throw new Error('The shout word is not measured');
+    await fireEvent(measured, 'textLayout', { nativeEvent: { lines: [{ width: 758 }] } });
+
+    expect(word).toHaveTextContent('WORD');
+    expect(word.props['numberOfLines']).toBeUndefined();
+    expect(word.props['maxFontSizeMultiplier']).toBe(1);
+    expect(word).toHaveStyle({ fontSize: 168 / 2 });
+    expect(word).not.toHaveStyle({ opacity: 0 });
   });
 });

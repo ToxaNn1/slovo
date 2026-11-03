@@ -202,7 +202,8 @@ export function OnboardingStep({
         </View>
         {children}
       </ScrollView>
-      <View style={styles.footer}>{footer}</View>
+      {/* Opaque, so content scrolled under the pinned buttons never shows through them. */}
+      <View style={[styles.footer, { backgroundColor: colors.background }]}>{footer}</View>
     </Animated.View>
   );
 }
