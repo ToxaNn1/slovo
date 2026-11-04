@@ -1,5 +1,6 @@
 import {
   CrosswordGrid,
+  TracedCrosswordGrid,
   BackHeader,
   Button,
   space,
@@ -8,12 +9,18 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
 import { crosswordCellLabel, crosswordKeys, useDailyCrossword } from '@/game/daily-crossword';
+import {
+  tracedCrosswordTexts,
+  useScreenReader,
+  useTracedCrossword,
+  type TracedCrosswordPlay,
+} from '@/game/traced-crossword';
 import { ShareCardSheet } from '@/share/share-card-sheet';
 import { useShell } from '@/shell-value';
 import { useShown } from '@/shown-in-effect';
@@ -34,25 +41,21 @@ const SOLVED_MAX_FONT_SCALE = 1.5;
  * letter, while that card is on in effect and the binary can capture it.
  */
 export default function DailyCrosswordScreen() {
-  const crossword = useDailyCrossword();
+  const traced = useTracedCrossword();
+  if (traced === undefined) return <CrosswordFrame />;
+  if (traced.kind === 'play') return <TracedCrosswordScreen crossword={traced} />;
+  return <PrintedCrosswordScreen />;
+}
+
+/**
+ * The screen's background and its header with «Назад», over the content;
+ * empty while the crossword opens.
+ */
+function CrosswordFrame({ children }: { children?: ReactNode }) {
   const router = useRouter();
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { voice } = useEdition();
-  const solved = crossword?.state.progress === 'solved';
-  const { shareCard } = useShell();
-  const share = useShown().dailyCrosswordShare ? shareCard : undefined;
-  const [sharing, setSharing] = useState(false);
+  const { colors } = useTokens();
   const insets = useSafeAreaInsets();
-
-  useEffect(() => {
-    if (!solved) return;
-    AccessibilityInfo.announceForAccessibility(strings.dailyCrossword.solved);
-  }, [solved]);
-
-  if (crossword === null) return <Redirect href="/game" />;
   return (
-    // The bottom inset keeps the keyboard's last row, ⌫ with it, above the home indicator.
     <View
       testID="daily-crossword-screen"
       style={[
@@ -77,6 +80,111 @@ export default function DailyCrosswordScreen() {
           }}
         />
       </View>
+      {children}
+    </View>
+  );
+}
+
+/**
+ * The traced Daily Crossword (ADR 0073): a line on how to play, the grid the
+ * reader traces by finger, or taps with VoiceOver on, and its clues;
+ * «Розв’язано!» and its Share Card, every cell open with no letter, once
+ * every Word is found.
+ */
+function TracedCrosswordScreen({ crossword }: { crossword: TracedCrosswordPlay }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  const accessibleMode = useScreenReader();
+  const { solved } = crossword;
+  const { shareCard } = useShell();
+  const share = useShown().dailyCrosswordShare ? shareCard : undefined;
+  const [sharing, setSharing] = useState(false);
+
+  useEffect(() => {
+    if (!solved) return;
+    AccessibilityInfo.announceForAccessibility(strings.dailyCrossword.solved);
+  }, [solved]);
+
+  return (
+    <CrosswordFrame>
+      <ScrollView contentContainerStyle={styles.content} scrollEnabled={accessibleMode || solved}>
+        {!solved && (
+          <Text {...voice} style={[typeStyle('hint', tokens), { color: colors.muted }]}>
+            {strings.dailyCrossword.traceHint}
+          </Text>
+        )}
+        <TracedCrosswordGrid
+          testID="traced-crossword-grid"
+          grid={crossword.puzzle.grid}
+          words={crossword.words}
+          trace={crossword.trace}
+          miss={crossword.miss}
+          accessibleMode={accessibleMode}
+          onExtend={crossword.extend}
+          onStepBack={crossword.stepBack}
+          onRelease={crossword.release}
+          texts={tracedCrosswordTexts}
+        />
+        {solved && (
+          <Text
+            testID="daily-crossword-solved"
+            {...voice}
+            maxFontSizeMultiplier={SOLVED_MAX_FONT_SCALE}
+            style={[typeStyle('crosswordSolved', tokens), styles.solved, { color: colors.correct }]}
+          >
+            {strings.dailyCrossword.solved}
+          </Text>
+        )}
+        {solved && share !== undefined && (
+          <>
+            <Button
+              variant="neutral"
+              testID="daily-crossword-share"
+              label={editionStrings.share.button}
+              onPress={() => {
+                setSharing(true);
+              }}
+            />
+            <ShareCardSheet
+              subject={{ puzzle: crossword.puzzle }}
+              kind="dailyCrossword"
+              share={share}
+              visible={sharing}
+              onClose={() => {
+                setSharing(false);
+              }}
+            />
+          </>
+        )}
+      </ScrollView>
+    </CrosswordFrame>
+  );
+}
+
+/**
+ * The printed Daily Crossword, while the traced one is off or cannot fill its
+ * grid (ADR 0073).
+ */
+function PrintedCrosswordScreen() {
+  const crossword = useDailyCrossword();
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  const solved = crossword?.state.progress === 'solved';
+  const { shareCard } = useShell();
+  const share = useShown().dailyCrosswordShare ? shareCard : undefined;
+  const [sharing, setSharing] = useState(false);
+
+  useEffect(() => {
+    if (!solved) return;
+    AccessibilityInfo.announceForAccessibility(strings.dailyCrossword.solved);
+  }, [solved]);
+
+  if (crossword === null) return <Redirect href="/game" />;
+  return (
+    // The frame's bottom inset keeps the keyboard's last row, ⌫ with it, above the home indicator.
+    <CrosswordFrame>
       <ScrollView contentContainerStyle={styles.content}>
         {crossword !== undefined && (
           <CrosswordGrid
@@ -126,7 +234,7 @@ export default function DailyCrosswordScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </CrosswordFrame>
   );
 }
 
