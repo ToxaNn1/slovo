@@ -1,3 +1,4 @@
+import type { Plural } from '@slovo/contracts';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
@@ -30,17 +31,17 @@ export function XpBar({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings, voice } = useEdition();
+  const { strings, voice, count: plural } = useEdition();
   const count = { count: String(today) };
-  const words = goal && { seen: String(goal.seen), goal: String(goal.goal) };
+  // The goal picks the plural form: «з 21 слова», «з 10 слів» (ADR 0020).
+  const words =
+    goal && ((forms: Plural) => fill(plural(forms, goal.goal), { seen: String(goal.seen) }));
   return (
     <Pressable
       testID="xp-bar"
       accessibilityRole="button"
       accessibilityLabel={
-        words
-          ? fill(strings.stats.wordsTowardGoalLabel, words)
-          : fill(strings.stats.xpBarLabel, count)
+        words ? words(strings.stats.wordsTowardGoalLabel) : fill(strings.stats.xpBarLabel, count)
       }
       accessibilityHint={strings.stats.xpBarHint}
       {...voice}
@@ -58,7 +59,7 @@ export function XpBar({
         maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
         style={[typeStyle('textLink', tokens), { color: colors.ink }]}
       >
-        {words ? fill(strings.stats.wordsTowardGoal, words) : fill(strings.stats.xpToday, count)}
+        {words ? words(strings.stats.wordsTowardGoal) : fill(strings.stats.xpToday, count)}
       </Text>
     </Pressable>
   );
