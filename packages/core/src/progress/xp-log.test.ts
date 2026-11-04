@@ -567,6 +567,19 @@ describe('the Daily Goal', () => {
     ]);
   });
 
+  it('keeps a day met as an Active Day with the Daily Goal off', async () => {
+    const { app } = await run({
+      records: new Map([
+        [
+          'xp.goal-met-2026-10-12',
+          JSON.stringify({ kind: 'goal-met', date: '2026-10-12', at: '2026-10-12T05:00:00.000Z' }),
+        ],
+      ]),
+    });
+
+    expect(app.xpLog.days.active.has('2026-10-12')).toBe(true);
+  });
+
   it('reads a goal in XP set before Words counted as no goal', async () => {
     const { app } = await run({
       on: dailyGoal,

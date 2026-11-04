@@ -353,7 +353,7 @@ export async function openXpLog({
     }
     for (const record of records.values()) {
       // A day met stays met whatever goal is set later, «Без цілі» included.
-      if (record.kind === 'goal-met' && goalOn) active.add(record.date);
+      if (record.kind === 'goal-met') active.add(record.date);
     }
     const { xp, dailyGoal } = dayOf(date);
     return {
@@ -535,7 +535,6 @@ export async function openXpLog({
     let counted = derived.seenWordsCounted;
     for (const { entryId, seenAt, row } of history.list) {
       if (inHistory.has(entryId)) continue;
-      inHistory.add(entryId);
       const time = seenAt.getTime();
       if (
         !seenWordOn ||
@@ -574,11 +573,18 @@ export async function openXpLog({
     }
     const goal = goalOf(todayKey(clock));
     const added = new Map([...seenWordsToday(goal), ...metToday(goal)]);
+    // Marked once written, so the Words of a write that fails are taken up again.
+    const taken = history.list.map(({ entryId }) => entryId);
+    const markSeen = () => {
+      for (const entryId of taken) inHistory.add(entryId);
+    };
     if (added.size === 0) {
+      markSeen();
       change();
       return;
     }
     meeting = write(added)
+      .then(markSeen)
       .catch(() => undefined)
       .finally(() => {
         meeting = undefined;
