@@ -326,21 +326,31 @@
     "names": ["Початківець", "Читач", "Знавець", "Книжник", "Словолюб", "Мовознавець"]
   },
   "questionnaire": {
-    "who": [
+    "level": [
       {
-        "id": "studying",
-        "label": "Навчаюсь",
+        "id": "only-starting",
+        "label": "Тільки починаю",
+        "rarityCeiling": 2
+      },
+      {
+        "id": "fair",
+        "label": "Непогано",
+        "rarityCeiling": 3
+      },
+      {
+        "id": "good",
+        "label": "Добре",
         "rarityCeiling": 4
       },
       {
-        "id": "working",
-        "label": "Працюю",
+        "id": "gourmet",
+        "label": "Я мовний гурман",
         "rarityCeiling": 5
       },
       {
-        "id": "gourmet",
-        "label": "Мовний гурман",
-        "rarityCeiling": 5
+        "id": "dont-know",
+        "label": "Не знаю",
+        "rarityTest": true
       }
     ],
     "why": [
