@@ -287,7 +287,7 @@ export function LaterButton({ testID, onPress }: { testID: string; onPress: () =
         maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
         style={[typeStyle('quietAction', tokens), { color: colors.muted }]}
       >
-        {strings.onboarding.notifications.later}
+        {strings.onboarding.later}
       </Text>
     </Pressable>
   );

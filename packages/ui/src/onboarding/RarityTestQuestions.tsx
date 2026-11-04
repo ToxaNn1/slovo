@@ -116,9 +116,7 @@ export function RarityTestQuestions({
   if (phase.kind === 'result') {
     return frame({
       testID: `${testID}-result`,
-      footer: (
-        <Button testID={`${testID}-next`} label={strings.onboarding.mix.next} onPress={onDone} />
-      ),
+      footer: <Button testID={`${testID}-next`} label={strings.rarityTest.next} onPress={onDone} />,
       children: (
         <RarityTestTitle>
           {fill(strings.rarityTest.result, { n: String(phase.ceiling) })}
