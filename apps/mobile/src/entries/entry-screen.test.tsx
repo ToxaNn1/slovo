@@ -4,11 +4,12 @@ import { loadEdition, openComposition, type Composition, type Haptics } from '@s
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, renderRouter, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
+import HistoryEntryScreen from '../app/saved/history/[entryId]';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
@@ -103,8 +104,8 @@ async function settle() {
   });
 }
 
-/** The Entry screen of `entryId`, as a link opens it over the composition. */
-async function renderEntry(entryId: string) {
+/** The Entry screen of `entryId`, as a link opens it over the composition, or as `url` opens it. */
+async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
   const shell = testShell({
     composition: opened(composition),
     remoteSwitches: switchedTo(shippedEdition),
@@ -128,8 +129,9 @@ async function renderEntry(entryId: string) {
       ),
       'entry/_layout': EntryLayout,
       'entry/[entryId]': EntryFromLinkScreen,
+      'saved/history/[entryId]': HistoryEntryScreen,
     },
-    { initialUrl: `/entry/${entryId}` },
+    { initialUrl: url },
   );
   await settle();
 }
@@ -167,5 +169,26 @@ describe('the Entry screen of a Word', () => {
     expect(within(scroll).getByTestId('word-definition')).toBeOnTheScreen();
     expect(screen.getByTestId('entry-actions')).toBeOnTheScreen();
     expect(within(scroll).queryByTestId('entry-actions')).not.toBeOnTheScreen();
+  });
+});
+
+describe('an Entry opened from History', () => {
+  it('shows the error with a retry when its read fails, and the retry reads it again', async () => {
+    jest.spyOn(composition, 'entryCard').mockRejectedValueOnce(new Error('The pack is busy'));
+
+    await renderEntry('w_sumyrnyi', '/saved/history/w_sumyrnyi');
+
+    const error = screen.getByTestId('entry-error');
+    expect(within(error).getByText(editionStrings.loadFailed.title)).toBeOnTheScreen();
+    expect(screen.getByTestId('entry-back')).toHaveTextContent(editionStrings.history.title);
+    expect(screen.queryByTestId('word-card')).not.toBeOnTheScreen();
+
+    await act(async () => {
+      await fireEvent.press(within(error).getByText(editionStrings.loadFailed.retry));
+      await jest.runAllTimersAsync();
+    });
+
+    expect(screen.queryByTestId('entry-error')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('word-card')).toHaveTextContent(/сумирний/);
   });
 });
