@@ -55,7 +55,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
     />
   );
 
-  if (question === 'dailyGoalChoice')
+  if (question === 'wordGoalChoice')
     return (
       <DailyGoalQuestion
         later={later}
@@ -122,9 +122,9 @@ function DailyGoalQuestion({
 }) {
   const { options: dailyGoals, highlighted } = useEditionInEffect().dailyGoals;
   const [picked, setPicked] = useState(highlighted);
-  const { title, text } = strings.dailyGoalChoice;
+  const { title, text } = strings.wordGoalChoice;
   return (
-    <FeedNoticeCard notice="dailyGoalChoice" title={title} message={text}>
+    <FeedNoticeCard notice="wordGoalChoice" title={title} message={text}>
       <View style={styles.block}>
         <SegmentedControl
           accessibilityLabel={title}
@@ -141,7 +141,7 @@ function DailyGoalQuestion({
           }}
         />
         <Button
-          testID="later-question-dailyGoalChoice-done"
+          testID="later-question-wordGoalChoice-done"
           label={strings.done}
           onPress={() => {
             onDone(picked);

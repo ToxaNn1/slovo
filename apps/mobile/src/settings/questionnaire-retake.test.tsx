@@ -170,7 +170,7 @@ describe('Settings › «Пройти опитування ще раз»', () =>
 describe('The Feed Notice of a later question', () => {
   it('sets the Daily Goal picked, the Edition’s highlighted goal until the reader picks another', async () => {
     await openWith(shippedEdition());
-    await render('dailyGoalChoice');
+    await render('wordGoalChoice');
     expect(screen.getByTestId('later-question-daily-goal-10')).toBeSelected();
 
     await fireEvent.press(screen.getByTestId('later-question-daily-goal-50'));

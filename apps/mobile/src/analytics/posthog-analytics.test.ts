@@ -73,7 +73,7 @@ describe('The PostHog adapter', () => {
     const analytics = postHogAnalytics('phc_test', () => client);
 
     analytics.track('seen', seen);
-    analytics.track('laterQuestionAnswered', { question: 'dailyGoalChoice', answer: '10' });
+    analytics.track('laterQuestionAnswered', { question: 'wordGoalChoice', answer: '10' });
 
     expect(personProperties).toEqual([]);
   });
