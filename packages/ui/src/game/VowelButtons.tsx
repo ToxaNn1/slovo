@@ -69,7 +69,7 @@ export function VowelButtons({
     vowelLabel: (letter: string, place: number) => string;
     /** The tag of a stressed vowel once answered, «Правильно». */
     correct: string;
-    /** The tag of a wrong tap, «Ваш вибір». */
+    /** The tag of a wrong tap, «Твій вибір». */
     chosen: string;
   };
   testID: string;

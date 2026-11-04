@@ -125,7 +125,7 @@ export const SettingsStringsSchema = z.strictObject({
     shareMessage: templateOf('level', 'name'),
     /** An earned Badge stamped on red after a tap on its mark. */
     badgeStamp: z.strictObject({
-      /** The cry under the mark, e.g. «Ваш!». */
+      /** The cry under the mark, e.g. «Твій!». */
       title: TextSchema,
       /** The button that closes the stamp, e.g. «Забрати». */
       take: TextSchema,

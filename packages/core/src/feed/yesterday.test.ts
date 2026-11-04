@@ -75,7 +75,7 @@ async function sawWordOfTheDay(on: string, records = new Map<string, string>()) 
   return { records, wordId };
 }
 
-// Spec #832, ADR 0054: «Пам'ятаєте вчорашнє слово?» shows yesterday's Word of the Day.
+// Spec #832, ADR 0054: «Пам'ятаєш вчорашнє слово?» shows yesterday's Word of the Day.
 describe('Yesterday', () => {
   it("shows yesterday's Word of the Day on the second card, as a Word card", async () => {
     const { records, wordId } = await sawWordOfTheDay('2026-10-26');

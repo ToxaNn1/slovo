@@ -741,7 +741,7 @@ describe('the Game screen', () => {
       );
       expect(screen.queryByTestId('game-typed-blanks')).not.toBeOnTheScreen();
       expect(screen.queryByRole('button', { name: 'Відкрити літеру' })).not.toBeOnTheScreen();
-      await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), theWordOfThePrompt());
+      await fireEvent.changeText(screen.getByLabelText('Твоя відповідь'), theWordOfThePrompt());
       await fireEvent.press(screen.getByRole('button', { name: 'Перевірити' }));
       expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
       await fireEvent.press(screen.getByTestId('game-next'));
@@ -757,11 +757,11 @@ describe('the Game screen', () => {
 
     await startGuessWordAtRound11();
     await waitFor(() => {
-      expect(screen.getByLabelText('Ваша відповідь')).toBeOnTheScreen();
+      expect(screen.getByLabelText('Твоя відповідь')).toBeOnTheScreen();
     });
     const word = theWordOfThePrompt();
-    await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), 'слово');
-    await fireEvent(screen.getByLabelText('Ваша відповідь'), 'submitEditing');
+    await fireEvent.changeText(screen.getByLabelText('Твоя відповідь'), 'слово');
+    await fireEvent(screen.getByLabelText('Твоя відповідь'), 'submitEditing');
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
@@ -781,7 +781,7 @@ describe('the Game screen', () => {
         );
       });
       expect(
-        screen.getByText(/^Знайдіть пари( · |$)/, { includeHiddenElements: true }),
+        screen.getByText(/^Знайди пари( · |$)/, { includeHiddenElements: true }),
       ).toBeOnTheScreen();
       const left = pairsLeft();
       // A grid with none of its pairs gone yet is a new one.
@@ -833,7 +833,7 @@ describe('the Game screen', () => {
       expect(screen.getAllByLabelText(/ літера, порожня$/)).toHaveLength(
         theWordOfThePrompt().length,
       );
-      await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), theWordOfThePrompt());
+      await fireEvent.changeText(screen.getByLabelText('Твоя відповідь'), theWordOfThePrompt());
       await fireEvent.press(screen.getByRole('button', { name: 'Перевірити' }));
       expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
       await fireEvent.press(screen.getByTestId('game-next'));
@@ -859,8 +859,8 @@ describe('the Game screen', () => {
     expect(screen.getByLabelText('третя літера, порожня')).toBeOnTheScreen();
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 5 з 5');
 
-    await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), 'слово');
-    await fireEvent(screen.getByLabelText('Ваша відповідь'), 'submitEditing');
+    await fireEvent.changeText(screen.getByLabelText('Твоя відповідь'), 'слово');
+    await fireEvent(screen.getByLabelText('Твоя відповідь'), 'submitEditing');
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(/слово\d+/);
@@ -928,7 +928,7 @@ describe('the Game screen', () => {
       // The reader types the whole form: no blanks, no «Відкрити літеру».
       expect(screen.queryByTestId('game-typed-blanks')).toBeNull();
       await fireEvent.changeText(
-        screen.getByLabelText('Ваша відповідь'),
+        screen.getByLabelText('Твоя відповідь'),
         theStandardFormOfThePrompt(),
       );
       await fireEvent.press(screen.getByRole('button', { name: 'Перевірити' }));
@@ -947,11 +947,11 @@ describe('the Game screen', () => {
 
     await fireEvent.press(screen.getByTestId('game-mode-type-word'));
     await waitFor(() => {
-      expect(screen.getByLabelText('Ваша відповідь')).toBeOnTheScreen();
+      expect(screen.getByLabelText('Твоя відповідь')).toBeOnTheScreen();
     });
     const standard = theStandardFormOfThePrompt();
-    await fireEvent.changeText(screen.getByLabelText('Ваша відповідь'), 'хибне');
-    await fireEvent(screen.getByLabelText('Ваша відповідь'), 'submitEditing');
+    await fireEvent.changeText(screen.getByLabelText('Твоя відповідь'), 'хибне');
+    await fireEvent(screen.getByLabelText('Твоя відповідь'), 'submitEditing');
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(new RegExp(standard));
@@ -974,7 +974,7 @@ describe('the Game screen', () => {
         );
       });
       expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
-        /^Складіть вислів\. The sense of idiom\d+\.$/,
+        /^Склади вислів\. The sense of idiom\d+\.$/,
       );
       // A chip for each word, the comma and the dash none.
       expect(
@@ -1256,7 +1256,7 @@ describe('the Game screen', () => {
 
     const card = screen.getByTestId('game-mode-origin');
     expect(card.props['accessibilityState']).toEqual({ disabled: true });
-    expect(card).toHaveTextContent(/Замало слів із відомим походженням у вашому Міксі\./);
+    expect(card).toHaveTextContent(/Замало слів із відомим походженням у твоєму Міксі\./);
   });
 
   it('starts «Звідки слово» from its card and plays a whole Game of 8 Rounds, picking each Word’s language, to the result screen', async () => {
