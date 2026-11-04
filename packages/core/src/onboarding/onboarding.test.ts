@@ -234,6 +234,83 @@ describe('the onboarding', () => {
     expect(kinds(app)).toBe('why');
   });
 
+  describe('counts the Daily Goal and the bucket of the Notification time on the backend with no reader id', () => {
+    const counted = (api: FakeBackend) =>
+      api.counters.answers.filter(({ question }) => question !== 'level' && question !== 'why');
+    async function goTo(app: Awaited<ReturnType<typeof run>>['app'], kind: string) {
+      while (app.onboarding.state.step !== undefined && kinds(app) !== kind) {
+        await app.onboarding.next();
+      }
+    }
+
+    it('counts the goal picked and the time chosen', async () => {
+      const { app, api } = await run();
+      await goTo(app, 'dailyGoal');
+      await app.onboarding.chooseDailyGoal(25);
+      await app.onboarding.chooseNotificationTime('20:30');
+
+      await vi.waitFor(() => {
+        expect(counted(api)).toEqual([
+          { editionId: 'test', question: 'dailyGoal', answer: '25' },
+          { editionId: 'test', question: 'notificationTime', answer: 'evening' },
+        ]);
+      });
+    });
+
+    it.each([
+      ['09:00', 'morning'],
+      ['13:00', 'midday'],
+      ['20:30', 'evening'],
+      ['07:45', 'other'],
+      [undefined, 'none'],
+    ] as const)('counts %s as %s', async (time, bucket) => {
+      const { app, api } = await run();
+      await goTo(app, 'notificationTime');
+      await app.onboarding.chooseNotificationTime(time);
+
+      await vi.waitFor(() => {
+        expect(counted(api).filter(({ question }) => question === 'notificationTime')).toEqual([
+          { editionId: 'test', question: 'notificationTime', answer: bucket },
+        ]);
+      });
+    });
+
+    it('counts `none` for a step skipped, by going on or by the skip on it', async () => {
+      const goneOn = await run();
+      await goTo(goneOn.app, 'notificationTime');
+      await goneOn.app.onboarding.next();
+      const skipped = await run();
+      await goTo(skipped.app, 'dailyGoal');
+      await skipped.app.onboarding.finish();
+
+      await vi.waitFor(() => {
+        expect(counted(goneOn.api)).toEqual([
+          { editionId: 'test', question: 'dailyGoal', answer: 'none' },
+          { editionId: 'test', question: 'notificationTime', answer: 'none' },
+        ]);
+        expect(counted(skipped.api)).toEqual([
+          { editionId: 'test', question: 'dailyGoal', answer: 'none' },
+        ]);
+      });
+    });
+
+    it('counts nothing for steps never shown, and nothing when sharing is off', async () => {
+      const early = await run();
+      await early.app.onboarding.finish();
+      const quiet = await run();
+      await quiet.settings.update({ shareCounters: false });
+      await goTo(quiet.app, 'dailyGoal');
+      await quiet.app.onboarding.chooseDailyGoal(10);
+      await quiet.app.onboarding.chooseNotificationTime('09:00');
+
+      // Long enough for a count that was sent to arrive.
+      for (let turn = 0; turn < 50; turn += 1) await Promise.resolve();
+      expect(counted(early.api)).toEqual([]);
+      expect(quiet.api.counters.answers).toEqual([]);
+      expect(quiet.app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+    });
+  });
+
   it('emits its Analytics events, and none with sharing off', async () => {
     const { app, events } = await run();
     await app.onboarding.next();

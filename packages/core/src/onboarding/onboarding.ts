@@ -1,6 +1,8 @@
 import {
   ONBOARDING_STEPS as STEPS,
+  type CountedQuestion,
   type DailyGoal,
+  type NotificationTimeBucket,
   type QuestionnaireQuestion,
 } from '@slovo/contracts';
 
@@ -26,6 +28,17 @@ import { userStateRecords } from '../user-state-schema';
 
 /** The times «Коли нагадати?» offers, local times `HH:MM`. */
 const NOTIFICATION_TIMES: readonly string[] = ['09:00', '13:00', '20:30'];
+
+/** The bucket each time «Коли нагадати?» offers is counted in; any other time is `other`. */
+const BUCKET_OF: ReadonlyMap<string, NotificationTimeBucket> = new Map([
+  ['09:00', 'morning'],
+  ['13:00', 'midday'],
+  ['20:30', 'evening'],
+]);
+
+/** The bucket a time chosen on «Коли нагадати?» is counted in; nothing is `none`. */
+const bucketOf = (time: string | undefined): NotificationTimeBucket =>
+  time === undefined ? 'none' : (BUCKET_OF.get(time) ?? 'other');
 
 /** Where a step stands among the steps, for the progress the UI draws. */
 interface StepPlace {
@@ -106,12 +119,19 @@ export interface Onboarding {
    * lost. An id that is no option, or another step on screen, does nothing.
    */
   answer(answerId: string): Promise<void>;
-  /** Sets the Daily Goal the reader picked on its step and goes on. Another step on screen does nothing. */
+  /**
+   * Sets the Daily Goal the reader picked on its step and goes on. The goal is
+   * counted as `answer` is, and a goal step left unanswered as `none`. Another
+   * step on screen does nothing.
+   */
   chooseDailyGoal(goal: DailyGoal): Promise<void>;
   /**
    * Answers «Коли нагадати?» with the reader's time, or with nothing for «Без
    * нагадувань», through Notifications, and goes on once the device answered
-   * the permission, a refusal too. Another step on screen does nothing.
+   * the permission, a refusal too. The time is counted as `answer` is, by its
+   * bucket (`morning`, `midday`, `evening` for the times offered, `other`, or
+   * `none` for nothing or the step left unanswered). Another step on screen
+   * does nothing.
    */
   chooseNotificationTime(time: string | undefined): Promise<void>;
   /**
@@ -282,18 +302,27 @@ export async function openOnboarding({
     questionnaire.level.some((option) => option.id === answerId && 'rarityTest' in option);
 
   /** Counts the answer on the backend with no reader id while the reader shares; a failure is lost. */
-  async function count(question: QuestionnaireQuestion, answer: string): Promise<void> {
+  async function count(question: CountedQuestion, answer: string): Promise<void> {
     if (backend === undefined || (await userState.read(shareCounters)) === false) return;
     void backend.counters
       .questionnaire({ editionId: edition.id, question, answer })
       .catch(() => undefined);
   }
 
+  /** Counts `none` for the Daily Goal or «Коли нагадати?» when the reader leaves it unanswered. */
+  async function countSkipped(kind: OnboardingStep['kind']): Promise<void> {
+    if (kind === 'dailyGoal' || kind === 'notificationTime') await count(kind, 'none');
+  }
+
   return {
     get state() {
       return state;
     },
-    next: () => endStep(({ kind }) => goOn(kind)),
+    next: () =>
+      endStep(async ({ kind }) => {
+        await countSkipped(kind);
+        await goOn(kind);
+      }),
     answer: (answerId) =>
       endStep(async ({ kind, number, total }) => {
         if (kind !== 'level' && kind !== 'why') return;
@@ -311,15 +340,21 @@ export async function openOnboarding({
       endStep(async ({ kind }) => {
         if (kind !== 'dailyGoal') return;
         await xpLog.setDailyGoal(goal);
+        await count(kind, String(goal));
         await goOn(kind);
       }),
     chooseNotificationTime: (time) =>
       endStep(async ({ kind }) => {
         if (kind !== 'notificationTime') return;
         await notifications.chooseOnboardingTime(time);
+        await count(kind, bucketOf(time));
         await goOn(kind);
       }),
-    finish: () => endStep(() => keepFinished(true)),
+    finish: () =>
+      endStep(async ({ kind }) => {
+        await countSkipped(kind);
+        await keepFinished(true);
+      }),
     subscribe: subscribers.subscribe,
   };
 }

@@ -166,7 +166,12 @@ export {
   CollectionLinkSchema,
   type CollectionLink,
 } from './collection-link';
-export { type CountedQuestion, type CounterEvent } from './api/counters';
+export {
+  NotificationTimeBucketSchema,
+  type CountedQuestion,
+  type CounterEvent,
+  type NotificationTimeBucket,
+} from './api/counters';
 export {
   MistakeReportSchema,
   MistakeTypeSchema,
