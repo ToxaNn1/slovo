@@ -327,7 +327,7 @@ const storedIn1_0: readonly (readonly [
     'tracedCrosswordProgress',
     undefined,
     'crossword.traced',
-    '{"date":"2026-10-30","found":["w_кіт"]}',
+    '{"date":"2026-10-30","puzzle":"w_кіт 0.0 0.1 0.2","found":["w_кіт"]}',
   ],
   [
     'syncPending',
