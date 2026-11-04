@@ -60,7 +60,6 @@ import { openXpLog, type XpLog } from './progress/xp-log';
 import { openStreakBreak, type StreakBreak } from './progress/streak-break';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
-import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
 import { openRarityCeiling, type RarityCeiling } from './entries/rarity-ceiling';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
@@ -174,11 +173,6 @@ export interface Composition extends Hiding {
   /** The Rarity Ceiling, the one «Рідкість» setting every surface obeys (ADR 0072). */
   readonly rarityCeiling: RarityCeiling;
   /**
-   * «Слово під настрій» (ADR 0054): the Edition's moods and a mood's roulette,
-   * which lands on a Word the shell opens with `openedFromMood`.
-   */
-  readonly moodDraw: MoodDraw;
-  /**
    * Opens today's Daily Crossword with the letters this device kept for it,
    * for its card and its screen; nothing when the Edition has it off, the pack
    * has no day for the local date or the composition was opened without
@@ -198,7 +192,7 @@ export interface Composition extends Hiding {
    * today's Word of the Day carries its day, and the card of an Entry due for
    * Review is a Review (`review`), as in the Feed. Opening it never
    * makes the Entry Seen: Seen comes from the Feed, a notification or the
-   * widget, never from Search or the mood roulette.
+   * widget, never from Search.
    */
   entryCard(entryId: string): Promise<AnyEntryCard | undefined>;
   /**
@@ -219,12 +213,6 @@ export interface Composition extends Hiding {
    * (ADR 0054).
    */
   openedFromSearch(entryId: string): Promise<AnyEntryCard | undefined>;
-  /**
-   * Opens the Word the mood roulette landed on: its Entry card, like
-   * `entryCard`. It writes nothing, so the Word is not Seen and History stays
-   * as it was (ADR 0054).
-   */
-  openedFromMood(entryId: string): Promise<AnyEntryCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
   entryRow(entryId: string): Promise<EntryRowModel | undefined>;
   /**
@@ -715,7 +703,6 @@ export async function openComposition({
     recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,
     rarityCeiling,
-    moodDraw: createMoodDraw({ edition, entries, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
       return openDailyCrossword({
@@ -732,9 +719,8 @@ export async function openComposition({
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,
-    // Opened from inside the app: one rule for both, nothing Seen (ADR 0054).
+    // Opened from inside the app: nothing Seen (ADR 0054).
     openedFromSearch: entryCard,
-    openedFromMood: entryCard,
     entryRow: (entryId) => rows.row(entryId),
     widget: createWidget({
       edition,

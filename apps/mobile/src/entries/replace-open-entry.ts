@@ -1,7 +1,7 @@
 import { useNavigationContainerRef, useRouter } from 'expo-router';
 import { useCallback } from 'react';
 
-/** The name of the Entry route in each stack of links, `entry/[entryId]` and `mood/[entryId]`. */
+/** The name of the Entry route in the stack of links, `entry/[entryId]`. */
 const entryRoute = '[entryId]';
 
 /** A navigator's state as far as this file reads it: its key and its routes, each with its own. */
@@ -26,7 +26,7 @@ function navigatorWith(
 
 /**
  * Opens the Entry of a link, `/<stack>/<id>?<params>`, in place of whatever
- * its stack of links (`/entry` or `/mood`) holds: the Entry open on it, a
+ * its stack of links (`/entry`) holds: the Entry open on it, a
  * Correction over that Entry, or the Entry the reader left with «Назад»,
  * which the stack keeps out of sight. The stack is left with the new Entry
  * alone and comes to the front, so one «Назад» returns to where the reader
