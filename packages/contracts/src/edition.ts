@@ -502,6 +502,19 @@ export const TimeOfDaySchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Expected a 24-hour time such as 09:00');
 
+/**
+ * The three Notification times «Коли нагадати?» offers, one for each bucket
+ * it is counted in, in time order (ADR 0067).
+ */
+export const OnboardingNotificationTimesSchema = z
+  .strictObject({ morning: TimeOfDaySchema, midday: TimeOfDaySchema, evening: TimeOfDaySchema })
+  .refine(
+    ({ morning, midday, evening }) => morning < midday && midday < evening,
+    'Expected the morning, midday and evening times in time order',
+  );
+
+export type OnboardingNotificationTimes = z.infer<typeof OnboardingNotificationTimesSchema>;
+
 /** The most notification times a user may have. */
 export const MAX_NOTIFICATION_TIMES = 10;
 
@@ -756,6 +769,8 @@ export const EditionConfigSchema = z
     levels: LevelsSchema,
     /** The Daily Goals in Words the reader chooses from (ADR 0074). */
     dailyGoals: DailyGoalsSchema,
+    /** The Notification times «Коли нагадати?» offers (ADR 0067). */
+    onboardingNotificationTimes: OnboardingNotificationTimesSchema,
     /** The onboarding questions, their options and what each sets (ADR 0067). */
     questionnaire: QuestionnaireSchema,
     /** The Badges, in their order, each id once (ADR 0066). */
