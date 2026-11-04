@@ -286,6 +286,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   noCounters: z.boolean(),
   /** The Daily Goal: its Settings row, its progress on the XP bar and its celebration trigger (ADR 0066). */
   dailyGoal: z.boolean(),
+  /** The Seen-Word XP: 1 XP for each Word Seen for the first time, up to the day's Daily Goal; off, viewing earns nothing. */
+  seenWordXp: z.boolean(),
   /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
   enoughForToday: z.boolean(),
   /** The onboarding questions «Як добре ви знаєте мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
@@ -347,6 +349,8 @@ export const XpTableSchema = z.strictObject({
   reviewDailyCap: XpAmountSchema,
   /** A Quick Question answered right in the Feed. */
   quickQuestion: XpAmountSchema,
+  /** A Word Seen for the first time, up to the day's Daily Goal. */
+  seenWord: XpAmountSchema,
 });
 
 export type XpTable = z.infer<typeof XpTableSchema>;

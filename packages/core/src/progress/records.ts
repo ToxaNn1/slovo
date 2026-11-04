@@ -14,6 +14,7 @@ export const XpSourceSchema = z.literal([
   'daily-crossword',
   'review-answer',
   'quick-question',
+  'seen-word',
 ]);
 
 /**
