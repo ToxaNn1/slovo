@@ -57,6 +57,41 @@ describe('an opening', () => {
     expect(onError).toHaveBeenCalledWith(failure);
   });
 
+  it('rejects what waits for it when it fails, so an opening over it fails too and never loads for ever', async () => {
+    const failure = new Error('no switches');
+    const switches = openOnce<string>(() => Promise.reject(failure), { onError: vi.fn() });
+    const pack = openOnce(async () => `pack over ${await switches.opened()}`, {
+      onError: vi.fn(),
+    });
+
+    await expect(switches.opened()).rejects.toBe(failure);
+    expect(pack.state.status).toBe('loading');
+    await settle();
+
+    expect(pack.state.status).toBe('failed');
+  });
+
+  it('opens a failed opening again when something waits for it, such as the retry of an opening over it', async () => {
+    const open = vi
+      .fn<() => Promise<string>>()
+      .mockRejectedValueOnce(new Error('offline'))
+      .mockResolvedValue('switches');
+    const switches = openOnce(open, { onError: vi.fn() });
+    const pack = openOnce(async () => `pack over ${await switches.opened()}`, {
+      onError: vi.fn(),
+    });
+    pack.subscribe(vi.fn());
+    await settle();
+    const failed = pack.state;
+    expect(failed.status).toBe('failed');
+
+    if (failed.status === 'failed') failed.retry();
+    await settle();
+
+    expect(pack.state).toEqual({ status: 'ready', value: 'pack over switches' });
+    expect(open).toHaveBeenCalledTimes(2);
+  });
+
   it('opens again on a retry and tells every subscriber, until it is ready', async () => {
     const busy = deferred<string>();
     const free = deferred<string>();
@@ -66,10 +101,10 @@ describe('an opening', () => {
     const second: string[] = [];
     opening.subscribe(() => first.push(statusOf(opening.state)));
     opening.subscribe(() => second.push(statusOf(opening.state)));
-    const opened = opening.opened();
+    const waiting = opening.opened();
 
     busy.reject(new Error('busy'));
-    await settle();
+    await expect(waiting).rejects.toThrow('busy');
     const { state } = opening;
     if (state.status !== 'failed') throw new Error('expected the opening to fail');
     state.retry();
@@ -77,7 +112,7 @@ describe('an opening', () => {
     state.retry();
     free.resolve('pack');
 
-    expect(await opened).toBe('pack');
+    expect(await opening.opened()).toBe('pack');
     expect(open).toHaveBeenCalledTimes(2);
     expect(first).toEqual(['failed', 'loading', 'ready']);
     expect(second).toEqual(first);
