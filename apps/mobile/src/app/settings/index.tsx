@@ -43,13 +43,19 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
   testID: `settings-font-size-${fontSize}`,
 }));
 
-// A segment's value is text, so each Daily Goal is drawn by its number of Words.
+/** The segment of «Без цілі», which turns the Daily Goal off from today (ADR 0074). */
+const NO_DAILY_GOAL = 'none';
+
+// A segment's value is text, so each Daily Goal is drawn by its number of Words, and «Без цілі» comes last.
 function dailyGoalSegments(dailyGoals: readonly DailyGoal[]) {
-  return dailyGoals.map((dailyGoal) => ({
-    value: String(dailyGoal),
-    label: String(dailyGoal),
-    testID: `settings-daily-goal-${String(dailyGoal)}`,
-  }));
+  return [
+    ...dailyGoals.map((dailyGoal) => ({
+      value: String(dailyGoal),
+      label: String(dailyGoal),
+      testID: `settings-daily-goal-${String(dailyGoal)}`,
+    })),
+    { value: NO_DAILY_GOAL, label: strings.dailyGoal.none, testID: 'settings-daily-goal-none' },
+  ];
 }
 
 // «до 1» to «до 5», each Rarity Ceiling by its rarity.
@@ -207,10 +213,13 @@ export default function SettingsScreen() {
                 icon="triangle"
                 label={strings.dailyGoal.title}
                 segments={dailyGoalSegments(dailyGoals)}
-                // No segment is selected while the reader has set no Daily Goal.
-                selected={dailyGoal === null ? '' : String(dailyGoal.goal)}
+                // «Без цілі» is selected while today has no Daily Goal.
+                selected={dailyGoal === null ? NO_DAILY_GOAL : String(dailyGoal.goal)}
                 onSelect={(value) => {
-                  const goal = dailyGoals.find((option) => String(option) === value);
+                  const goal =
+                    value === NO_DAILY_GOAL
+                      ? null
+                      : dailyGoals.find((option) => String(option) === value);
                   if (goal === undefined) return;
                   xpLog.setDailyGoal(goal).catch((error: unknown) => {
                     logError('The Daily Goal could not be set', error);
