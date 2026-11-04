@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createSettings, openComposition, type AnalyticsPort, type FeatureSwitch } from '../index';
 import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '../testing';
+import { switchedOn } from '../edition/edition';
 import { fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
@@ -17,6 +18,8 @@ const ALL_ON: readonly FeatureSwitch[] = [
   'analytics',
   'xpLog',
   'rarityTest',
+  'notifications',
+  'notificationTimeStep',
 ];
 
 /** One app run over the records, so the user state survives between runs. */
@@ -31,7 +34,8 @@ async function run({
     stop: () => undefined,
   };
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  const edition = testEdition({ isFeatureEnabled: (feature) => on.includes(feature) });
+  // As a real Edition, a switch is in effect only with every switch it depends on.
+  const edition = testEdition({ isFeatureEnabled: switchedOn((feature) => on.includes(feature)) });
   const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
   const app = await openComposition({
     content,
@@ -48,15 +52,22 @@ async function run({
 const kinds = (app: Awaited<ReturnType<typeof run>>['app']) => app.onboarding.state.step?.kind;
 
 describe('the onboarding', () => {
-  it('runs welcome, the first Word, «Рівень», «Навіщо», the Daily Goal, then the Feed', async () => {
+  it('runs welcome, the first Word, «Рівень», «Навіщо», the Daily Goal, «Коли нагадати?», then the Feed', async () => {
     const { app } = await run();
     const seen = [];
-    for (let i = 0; i < 6 && app.onboarding.state.step !== undefined; i += 1) {
+    for (let i = 0; i < 7 && app.onboarding.state.step !== undefined; i += 1) {
       const { kind, number, total } = app.onboarding.state.step;
       seen.push(`${kind} ${String(number)}/${String(total)}`);
       await app.onboarding.next();
     }
-    expect(seen).toEqual(['welcome 1/5', 'firstWord 2/5', 'level 3/5', 'why 4/5', 'dailyGoal 5/5']);
+    expect(seen).toEqual([
+      'welcome 1/6',
+      'firstWord 2/6',
+      'level 3/6',
+      'why 4/6',
+      'dailyGoal 5/6',
+      'notificationTime 6/6',
+    ]);
     expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
   });
 
@@ -111,7 +122,7 @@ describe('the onboarding', () => {
     await app.onboarding.next();
     const ceiling = app.rarityCeiling.state;
     await app.onboarding.answer('dont-know');
-    expect(app.onboarding.state.step).toEqual({ kind: 'rarityTest', number: 3, total: 5 });
+    expect(app.onboarding.state.step).toEqual({ kind: 'rarityTest', number: 3, total: 6 });
     expect(app.rarityCeiling.state).toBe(ceiling);
     await vi.waitFor(() => {
       expect(api.counters.answers).toEqual([
@@ -218,5 +229,61 @@ describe('the onboarding', () => {
     const again = await run({ records });
     expect(again.app.onboarding.state.step).toBeUndefined();
     expect(again.events.filter(([event]) => event === 'onboardingStepViewed')).toEqual([]);
+  });
+  // Spec #1553, ticket #1559.
+  describe('«Коли нагадати?»', () => {
+    /** Goes on to the step of `kind`. */
+    async function goTo(app: Awaited<ReturnType<typeof run>>['app'], kind: string) {
+      while (app.onboarding.state.step !== undefined && kinds(app) !== kind) {
+        await app.onboarding.next();
+      }
+    }
+
+    it('offers 09:00, 13:00 and 20:30, and a chosen time becomes the only Notification time', async () => {
+      const { app } = await run();
+      await goTo(app, 'notificationTime');
+      const step = app.onboarding.state.step;
+      expect(step?.kind === 'notificationTime' && step.times).toEqual(['09:00', '13:00', '20:30']);
+
+      await app.onboarding.chooseNotificationTime('07:45');
+
+      expect(app.notifications.state.times).toEqual(['07:45']);
+      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+    });
+
+    it('leaves no Notification time after «Без нагадувань»', async () => {
+      const { app } = await run();
+      await goTo(app, 'notificationTime');
+
+      await app.onboarding.chooseNotificationTime(undefined);
+
+      expect(app.notifications.state.times).toEqual([]);
+      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+    });
+
+    it('keeps the default Notification times and the later explainer when skipped', async () => {
+      const records = new Map<string, string>();
+      const { app } = await run({ records });
+      const defaults = app.notifications.state.times;
+      await goTo(app, 'notificationTime');
+
+      await app.onboarding.next();
+
+      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+      expect(app.notifications.state.times).toEqual(defaults);
+      expect(records.has('notifications.ask')).toBe(false);
+    });
+
+    it('is absent with notifications or its switch off, and ignores a time on another step', async () => {
+      for (const off of ['notifications', 'notificationTimeStep'] as const) {
+        const { app } = await run({ on: ALL_ON.filter((feature) => feature !== off) });
+        const before = app.notifications.state.times;
+        await app.onboarding.chooseNotificationTime('07:45');
+        expect(kinds(app)).toBe('welcome');
+        await goTo(app, 'notificationTime');
+        expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+        expect(app.notifications.state.times).toEqual(before);
+      }
+    });
   });
 });

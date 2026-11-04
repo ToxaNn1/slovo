@@ -40,12 +40,15 @@ export const notificationRecords = {
   /**
    * How far the Feed has asked for permission to notify (ADR 0067): the local
    * date `YYYY-MM-DD` the explainer was first offered, then the date of its
-   * one re-ask. It stays on the device, like the permission it asks for; a
-   * new key needs no migration, since without it nothing was offered.
+   * one re-ask; or `onboarding`, the reader answered «Коли нагадати?» on the
+   * onboarding, so the Feed never asks. It stays on the device, like the
+   * permission it asks for; a new key needs no migration, since without it
+   * nothing was offered.
    */
   notificationAsk: declareRecord(
     'notifications.ask',
     z.discriminatedUnion('step', [
+      z.object({ step: z.literal('onboarding') }),
       z.object({ step: z.literal('explainer'), date: z.string() }),
       z.object({ step: z.literal('reask'), date: z.string() }),
     ]),

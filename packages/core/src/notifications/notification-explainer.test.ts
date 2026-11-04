@@ -178,4 +178,27 @@ describe('the notification explainer', () => {
     const later = await run({ records, date: '2026-10-20', permission: 'denied' });
     expect(await askIn(later)).toBeUndefined();
   });
+  // Spec #1553, ticket #1559: any answer to «Коли нагадати?» is the ask.
+  it('never comes after «Без нагадувань» on the onboarding, and asks the device nothing', async () => {
+    const records = new Map([onboarded]);
+    const app = await run({ records, date: '2026-10-11' });
+    await app.notifications.chooseOnboardingTime(undefined);
+    expect(app.notifications.state.permission).toBe('not-asked');
+
+    expect(await asksOn(records, ['2026-10-13', '2026-10-20', '2026-10-21'])).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it('never comes after a time chosen on the onboarding, which asks the device, a refusal too', async () => {
+    const records = new Map([onboarded]);
+    const app = await run({ records, date: '2026-10-11', answer: 'denied' });
+
+    await app.notifications.chooseOnboardingTime('09:00');
+
+    expect(app.notifications.state.permission).toBe('denied');
+    expect(await askIn(await run({ records, date: '2026-10-13' }))).toBeUndefined();
+  });
 });
