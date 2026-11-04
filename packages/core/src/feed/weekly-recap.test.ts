@@ -100,6 +100,21 @@ function earned(records: Map<string, string>, amount: number, ...dates: string[]
   return records;
 }
 
+/** Sets a Daily Goal in Words before the week and meets it on each of the dates (ADR 0074). */
+function goalMet(records: Map<string, string>, ...dates: string[]) {
+  records.set(
+    'xp.word-goal',
+    JSON.stringify({ kind: 'word-goal', date: '2026-10-01', at: '2026-10-01T09:00:00.000Z', goal: 10 }),
+  );
+  for (const date of dates) {
+    records.set(
+      `xp.goal-met-${date}`,
+      JSON.stringify({ kind: 'goal-met', date, at: `${date}T09:00:00.000Z` }),
+    );
+  }
+  return records;
+}
+
 /** The Feed's first three cards. */
 async function firstCards(app: Composition): Promise<readonly FeedCard[]> {
   while (app.feed.cards.length < 3) await app.feed.next();
@@ -185,10 +200,11 @@ describe('the Weekly Recap', () => {
   });
 
   it('counts the XP earned in the week and the days that met their Daily Goal', async () => {
-    // The Daily Goal is 20 XP: the Tuesday and the Sunday meet it, the Thursday does not;
+    // The Tuesday and the Sunday meet the Daily Goal, the Thursday does not;
     // the Sunday before and today are outside the week.
     const records = earned(fakeWeek(), 25, '2026-10-20', '2026-10-25', '2026-10-18', '2026-10-26');
     earned(records, 10, '2026-10-22');
+    goalMet(records, '2026-10-20', '2026-10-25', '2026-10-18', '2026-10-26');
 
     const app = await run({ records, at: monday, xp: true });
 
