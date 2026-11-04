@@ -603,6 +603,54 @@ describe('the Daily Goal', () => {
     expect(app.xpLog.state.dailyGoal).toBeNull();
   });
 
+  it('keeps a past day met under a goal in XP set before Words counted', async () => {
+    const record = (id: string, value: object) => [`xp.${id}`, JSON.stringify(value)] as const;
+    const xp = (date: string, at: string, amount: number) =>
+      record(`${date}-${at}`, { kind: 'xp', date, at, source: 'daily-crossword', amount });
+    const { app } = await run({
+      on: dailyGoal,
+      records: new Map([
+        record('old', {
+          kind: 'daily-goal',
+          date: '2026-10-10',
+          at: '2026-10-10T05:00:00.000Z',
+          goal: 20,
+        }),
+        xp('2026-10-11', '2026-10-11T05:00:00.000Z', 25),
+        xp('2026-10-12', '2026-10-12T05:00:00.000Z', 10),
+        // Lowered once the day's 10 XP were earned: met at that moment.
+        record('lowered', {
+          kind: 'daily-goal',
+          date: '2026-10-12',
+          at: '2026-10-12T06:00:00.000Z',
+          goal: 10,
+        }),
+        record('raised', {
+          kind: 'daily-goal',
+          date: '2026-10-12',
+          at: '2026-10-12T07:00:00.000Z',
+          goal: 30,
+        }),
+        xp('2026-10-13', '2026-10-13T05:00:00.000Z', 20),
+        // «Без цілі» from 10-14: no day from then on reads the goal in XP.
+        record('off', {
+          kind: 'word-goal',
+          date: '2026-10-14',
+          at: '2026-10-14T04:00:00.000Z',
+          goal: null,
+        }),
+      ]),
+      time: fakeClock('2026-10-15T08:00:00+03:00'),
+    });
+
+    expect(app.xpLog.dayOf('2026-10-09').dailyGoal).toBeNull();
+    expect(app.xpLog.dayOf('2026-10-11').dailyGoal?.met).toBe(true);
+    expect(app.xpLog.dayOf('2026-10-12').dailyGoal?.met).toBe(true);
+    expect(app.xpLog.dayOf('2026-10-13').dailyGoal?.met).toBe(false);
+    expect(app.xpLog.dayOf('2026-10-14').dailyGoal).toBeNull();
+    expect(app.xpLog.dayOf('2026-10-15').dailyGoal).toBeNull();
+  });
+
   it('has no goal and records none with its Feature Switch off', async () => {
     const { app, records } = await run();
     await app.xpLog.setDailyGoal(50);
