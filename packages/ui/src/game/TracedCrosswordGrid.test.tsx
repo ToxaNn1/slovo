@@ -13,6 +13,7 @@ import {
   type TracedMiss,
 } from '@slovo/ui';
 import { testStrings } from '../test-strings';
+import { disabledOpacity } from '../tokens';
 
 /**
  * A 3 × 3 puzzle of three hidden Words, one per row:
@@ -105,7 +106,11 @@ function Crossword({ accessibleMode = false }: { accessibleMode?: boolean }) {
   );
 }
 
-/** Renders the grid laid out 3 × 3 in a 304-point square: a cell of 96 points every 104. */
+/**
+ * Renders the grid laid out 3 × 3 as Yoga lays it: 304 points wide, a cell of
+ * 96 points every 104 across, and every 109 down, as each row adds the cell's
+ * 5-point edge.
+ */
 async function renderGrid(accessibleMode = false) {
   await render(
     <TokensProvider tokens={coreTokens} colorScheme="light">
@@ -115,15 +120,15 @@ async function renderGrid(accessibleMode = false) {
     </TokensProvider>,
   );
   await fireEvent(screen.getByTestId('grid'), 'layout', {
-    nativeEvent: { layout: { x: 0, y: 0, width: 304, height: 304 } },
+    nativeEvent: { layout: { x: 0, y: 0, width: 304, height: 319 } },
   });
 }
 
-const centre = (index: number) => index * 104 + 48;
+const centre = (index: number, pitch = 104) => index * pitch + 48;
 
 /** A finger drawn through the centres of the cells, then lifted. */
 async function trace(cells: readonly [number, number][]) {
-  const points = cells.map(([row, column]) => ({ x: centre(column), y: centre(row) }));
+  const points = cells.map(([row, column]) => ({ x: centre(column), y: centre(row, 109) }));
   const [first, ...rest] = points;
   await act(() => {
     fireGestureHandler(getByGestureTestId('grid-trace'), [
@@ -154,6 +159,9 @@ describe('the traced Daily Crossword grid (ADR 0073)', () => {
     expect(clue(1).props['accessibilityLabel']).toBe('A pet that barks: dog');
     expect(clue(1).props['accessibilityState']).toEqual({ checked: true });
     expect(clue(0).props['accessibilityState']).toEqual({ checked: false });
+    // Tracing takes no tap, but no cell is dimmed, a found one included.
+    for (const cell of ['grid-0-0', 'grid-1-0'])
+      expect(screen.getByTestId(cell)).not.toHaveStyle({ opacity: disabledOpacity });
   });
 
   it('clears a wrong trace and locks nothing', async () => {
@@ -165,6 +173,7 @@ describe('the traced Daily Crossword grid (ADR 0073)', () => {
     ]);
     for (const index of [0, 1, 2])
       expect(clue(index).props['accessibilityState']).toEqual({ checked: false });
+    expect(screen.getByTestId('grid-miss')).toBeTruthy();
     expect(screen.getByTestId('grid-1-1').props['accessibilityState']).toMatchObject({
       selected: false,
     });

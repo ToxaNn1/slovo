@@ -65,12 +65,22 @@ export function seededRandomOf(seed: string): Random {
   };
 }
 
+/** The puzzle's hidden Words and their paths, which the kept progress must match. */
+function fingerprintOf(puzzle: CrosswordPuzzle): string {
+  return puzzle.words
+    .map(({ word, path }) =>
+      [word.id, ...path.map(({ row, column }) => `${String(row)}.${String(column)}`)].join(' '),
+    )
+    .join('\n');
+}
+
 /**
  * Opens the traced Daily Crossword of the clock's local date (ADR 0073), with
  * the Words this device found in it today. Its seed is the date and the ids of
- * the Words within the Rarity Ceiling, so every reader with the same Ceiling
- * and Edition content gets the same puzzle on a date. A new local date starts
- * with none found. It is not a Game and never touches Seen or Knowledge Marks;
+ * the Words within the Rarity Ceiling, Hidden ones included, so every reader
+ * with the same Ceiling and Edition content gets the same puzzle on a date.
+ * The Words found are kept with the puzzle's fingerprint: a new local date, or
+ * another puzzle the same day, starts with none found. It is not a Game and never touches Seen or Knowledge Marks;
  * its progress stays on this device with no Sync. The Word that solves it
  * appends its XP in the same write, which the XP log gives once for the date
  * (ADR 0066).
@@ -102,8 +112,10 @@ export async function openTracedCrossword({
   if (generation.kind === 'no-tiling') return generation;
   const { puzzle } = generation;
 
+  const fingerprint = fingerprintOf(puzzle);
   const kept = await userState.read(tracedCrosswordProgress);
-  let state = startPuzzle(puzzle, kept?.date === date ? kept.found : []);
+  const same = kept?.date === date && kept.puzzle === fingerprint;
+  let state = startPuzzle(puzzle, same ? kept.found : []);
   const inTurn = createInTurn();
 
   const crossword: TracedCrossword = {
@@ -122,7 +134,10 @@ export async function openTracedCrossword({
         const solves = isSolved(next);
         const award = solves ? xp.award({ source: 'daily-crossword', date }) : undefined;
         await userState.write(
-          new Map([...tracedCrosswordProgress.change({ date, found }), ...(award?.changes ?? [])]),
+          new Map([
+            ...tracedCrosswordProgress.change({ date, puzzle: fingerprint, found }),
+            ...(award?.changes ?? []),
+          ]),
         );
         award?.commit();
         state = next;
