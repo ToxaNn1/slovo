@@ -204,6 +204,7 @@ describe('the XP log and the Game', () => {
         reviewAnswer: 1,
         reviewDailyCap: 10,
         quickQuestion: 0,
+        seenWord: 0,
       },
     });
 
@@ -630,5 +631,141 @@ describe('the Active Day with a Daily Goal', () => {
     await app.xpLog.setDailyGoal(10);
 
     expect(app.xpLog.days.active).toEqual(new Set(['2026-10-12', '2026-10-13']));
+  });
+});
+
+// Ticket #1555: 1 XP for every Word Seen for the first time, up to the Daily Goal.
+describe('the Seen-Word XP', () => {
+  const on: readonly FeatureSwitch[] = ['dailyGoal', 'seenWordXp'];
+
+  /** An XP log record a device appended for a Word Seen for the first time. */
+  const seenWord = (id: string, date: string, at: string) =>
+    [
+      `xp.seen-word-${id}`,
+      JSON.stringify({ kind: 'xp', date, at, source: 'seen-word', amount: 1 }),
+    ] as const;
+  const goalSet = (goal: number, at: string) =>
+    [`xp.goal-${at}`, JSON.stringify({ kind: 'word-goal', date: '2026-10-14', at, goal })] as const;
+
+  it('earns 1 XP for each Word Seen for the first time while the day has a goal', async () => {
+    const { app, time, records } = await run({ on });
+    await app.xpLog.setDailyGoal(10);
+
+    await look(app, time);
+    await look(app, time);
+
+    expect(app.xpLog.state.today).toBe(2);
+    expect(app.xpLog.state.total).toBe(2);
+    expect(xpKeys(records).filter((key) => key.startsWith('xp.seen-word-'))).toHaveLength(2);
+  });
+
+  it('earns the amount the Edition’s XP table holds', async () => {
+    const { app, time } = await run({ on, xp: { ...testEdition().xp, seenWord: 3 } });
+    await app.xpLog.setDailyGoal(10);
+
+    await look(app, time);
+
+    expect(app.xpLog.state.today).toBe(3);
+  });
+
+  it('earns nothing for an Entry that is not a Word', async () => {
+    const { app, time } = await run({ on: [...on, 'corrections'] });
+    await app.xpLog.setDailyGoal(50);
+
+    for (let card = 0; card <= words.length; card += 1) await look(app, time);
+
+    expect(app.xpLog.state.dailyGoal?.seen).toBe(words.length);
+    expect(app.xpLog.state.today).toBe(words.length);
+  });
+
+  it('earns nothing for a Word already in History', async () => {
+    const { app, time } = await run({
+      on,
+      records: seen(...words.map((w): [string, string] => [w.id, '2026-10-13T04:00:00.000Z'])),
+    });
+    await app.xpLog.setDailyGoal(10);
+
+    await look(app, time);
+
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 10, seen: 1, met: false });
+    expect(app.xpLog.state.today).toBe(0);
+  });
+
+  it('earns nothing for a Word Seen in an earlier Cycle', async () => {
+    const { app, time } = await run({
+      on,
+      records: new Map([['feed.cycle', '{"id":2,"seed":7}']]),
+    });
+    await app.xpLog.setDailyGoal(10);
+
+    await look(app, time);
+
+    expect(app.xpLog.state.dailyGoal?.seen).toBe(1);
+    expect(app.xpLog.state.today).toBe(0);
+  });
+
+  it('earns nothing once today’s Seen-Word XP reaches the goal, while the Game still earns', async () => {
+    const { app, time } = await run({ on });
+    await app.xpLog.setDailyGoal(2);
+
+    for (let card = 0; card < 4; card += 1) await look(app, time);
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 2, seen: 4, met: true });
+    expect(app.xpLog.state.today).toBe(2);
+
+    await app.game.start('guess-word');
+    for (let round = 0; round < 3; round += 1) await play(app, true);
+
+    expect(app.xpLog.state.today).toBe(5);
+  });
+
+  it('earns nothing without a goal', async () => {
+    const { app, time, records } = await run({ on });
+
+    await look(app, time);
+
+    expect(app.xpLog.state.total).toBe(0);
+    expect(xpKeys(records)).toEqual([]);
+  });
+
+  it('earns nothing while its Feature Switch is off, and the goal still counts the Words Seen', async () => {
+    const { app, time } = await run({ on: ['dailyGoal'] });
+    await app.xpLog.setDailyGoal(1);
+
+    await look(app, time);
+
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 1, seen: 1, met: true });
+    expect(app.xpLog.state.total).toBe(0);
+  });
+
+  it('counts a Word Seen on two devices once when their XP logs merge', async () => {
+    const phone = await run({ on });
+    const tablet = await run({ on });
+    for (const device of [phone, tablet]) {
+      await device.app.xpLog.setDailyGoal(10);
+      await look(device.app, device.time);
+    }
+
+    // Sync merges the XP logs as a union by record id.
+    const merged = await run({ on, records: new Map([...phone.records, ...tablet.records]) });
+
+    expect(phone.app.xpLog.state.today).toBe(1);
+    expect(merged.app.xpLog.state.today).toBe(1);
+  });
+
+  it('counts up to the goal when two devices’ Words merge past it', async () => {
+    const { app } = await run({
+      on,
+      records: new Map([
+        goalSet(2, '2026-10-14T03:00:00.000Z'),
+        seenWord('w_00', '2026-10-14', '2026-10-14T04:00:00.000Z'),
+        seenWord('w_01', '2026-10-14', '2026-10-14T04:01:00.000Z'),
+        seenWord('w_02', '2026-10-14', '2026-10-14T04:02:00.000Z'),
+        seenWord('w_03', '2026-10-14', '2026-10-14T04:03:00.000Z'),
+      ]),
+    });
+
+    expect(app.xpLog.state.today).toBe(2);
+    expect(app.xpLog.state.total).toBe(2);
+    expect(app.xpLog.dayOf('2026-10-14').xp).toBe(2);
   });
 });

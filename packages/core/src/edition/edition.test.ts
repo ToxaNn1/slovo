@@ -80,6 +80,7 @@ const validConfig = {
     streakBreak: true,
     quickQuestion: true,
     playStep: true,
+    seenWordXp: true,
     levels: true,
     noCounters: true,
     dailyGoal: true,
@@ -149,6 +150,7 @@ const validConfig = {
     reviewAnswer: 1,
     reviewDailyCap: 10,
     quickQuestion: 2,
+    seenWord: 1,
   },
   levels: { first: 50, growth: 0.1, growingUntil: 10, later: 120, names: ['Seed', 'Sprout'] },
   questionnaire: {
@@ -400,6 +402,7 @@ describe('loadEdition', () => {
       reviewAnswer: 1,
       quickQuestion: 2,
       reviewDailyCap: 10,
+      seenWord: 1,
     });
   });
 
@@ -1119,6 +1122,7 @@ const dependentSwitches = [
   ['badges', ['xpLog']],
   ['profile', ['xpLog']],
   ['dailyGoal', ['xpLog']],
+  ['seenWordXp', ['xpLog', 'dailyGoal']],
   ['progressShareCards', ['shareCards', 'xpLog']],
   ['dailyCrosswordShare', ['shareCards', 'dailyCrossword', 'game']],
   ['tracedCrossword', ['dailyCrossword', 'game']],
