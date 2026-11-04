@@ -44,6 +44,12 @@ export { OrderedChips } from './game/OrderedChips';
 export { PairsGrid } from './game/PairsGrid';
 export { GameTimer } from './game/GameTimer';
 export { CrosswordGrid, type CrosswordPlace, type CrosswordWord } from './game/CrosswordGrid';
+export {
+  TracedCrosswordGrid,
+  type TracedLetter,
+  type TracedMiss,
+  type TracedWord,
+} from './game/TracedCrosswordGrid';
 export { HapticsProvider } from './providers/HapticsProvider';
 export { InterfaceSoundsProvider } from './providers/InterfaceSoundsProvider';
 export { HideButton } from './mix/HideButton';
