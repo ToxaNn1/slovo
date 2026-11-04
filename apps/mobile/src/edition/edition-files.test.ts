@@ -866,10 +866,16 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
   /**
    * The «ви» forms, as whole words: the pronouns, the plural imperatives
    * («оберіть», «спробуйте», «торкніться») and the plural present and future
-   * («знаєте», «оберете», «торкнетеся»). No text is an exception.
+   * («знаєте», «оберете», «торкнетеся»). No text is an exception; only words
+   * that merely end like a verb («навіть», «відкрите») are not «ви» forms.
    */
-  const vy =
-    /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте)(ся|сь)?)(?![а-яіїєґʼ'’])/iu;
+  const vyWord =
+    /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;
+  const notVerbs = new Set(['навіть', 'відкрите', 'закрите', 'вкрите', 'сите']);
+  const vy = {
+    test: (text: string) =>
+      [...text.matchAll(vyWord)].some(([word]) => !notVerbs.has(word.toLowerCase())),
+  };
 
   it('has no «ви» form in its UI strings', () => {
     const texts = textsOf(readJson('uk', 'strings'), '');
@@ -889,7 +895,7 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
 
   it('tells a «ви» form from a «ти» one', () => {
     const vyTexts = ['Оберіть колекцію', 'Чи знаєте ви?', 'Ваш!', 'Торкніться', 'коли торкнетеся'];
-    const tyTexts = ['Обери колекцію', 'Чи знаєш ти?', 'Твій!', 'Торкнися', 'коли торкнешся'];
+    const tyTexts = ['Обери колекцію', 'Чи знаєш ти?', 'Твій!', 'Торкнися', 'навіть відкрите'];
 
     expect(vyTexts.filter((text) => !vy.test(text))).toEqual([]);
     expect(tyTexts.filter((text) => vy.test(text))).toEqual([]);
