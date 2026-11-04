@@ -61,7 +61,7 @@ import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
-import { openRarityCeiling, type RarityCeiling } from './settings/rarity-ceiling';
+import { openRarityCeiling, type RarityCeiling } from './entries/rarity-ceiling';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
 import { createSearch, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';

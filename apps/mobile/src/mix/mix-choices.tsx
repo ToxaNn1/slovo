@@ -16,7 +16,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
-import { useRarityCeiling } from '../settings/rarity-ceiling';
+import { useRarityCeiling } from './rarity-ceiling';
 import { useMixChanges, useMixState } from './mix';
 import { mixScreenModel, type MixCategoriesModel } from './mix-screen';
 
