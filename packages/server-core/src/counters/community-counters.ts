@@ -1,4 +1,4 @@
-import type { CounterEvent, QuestionnaireQuestion } from '@slovo/contracts';
+import type { CountedQuestion, CounterEvent } from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { Clock, CommunityWord, CounterStore, EntryCounts, RateLimits } from '../ports';
@@ -62,7 +62,7 @@ export interface CommunityCounters {
   answer(
     request: {
       readonly editionId: string;
-      readonly question: QuestionnaireQuestion;
+      readonly question: CountedQuestion;
       readonly answer: string;
     },
     ip: string,
@@ -121,6 +121,8 @@ export function createCommunityCounters({
     async answer({ editionId, question, answer }, ip) {
       const serving = await editions.serving(editionId, 'questionnaire');
       if (!serving.ok) return serving;
+      // «Хто ви» is no longer asked, so no answer is its option; older builds still send it (ADR 0031).
+      if (question === 'who') return { ok: false, reason: 'unknown-answer' };
       const options = serving.edition.config.questionnaire[question];
       if (!options.some(({ id }) => id === answer)) return { ok: false, reason: 'unknown-answer' };
       const refused = await countRequest(

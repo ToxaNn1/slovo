@@ -286,7 +286,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   dailyGoal: z.boolean(),
   /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
   enoughForToday: z.boolean(),
-  /** The onboarding questions «Хто ви» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
+  /** The onboarding questions «Як добре ви знаєте мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
   questionnaire: z.boolean(),
   /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
   badges: z.boolean(),
@@ -593,13 +593,13 @@ export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a
  * comes only with a Word of the Day, the two questions only with the
  * `questionnaire` Feature Switch, the Daily Goal only with `dailyGoal`.
  */
-export const ONBOARDING_STEPS = ['welcome', 'firstWord', 'who', 'why', 'dailyGoal'] as const;
+export const ONBOARDING_STEPS = ['welcome', 'firstWord', 'level', 'why', 'dailyGoal'] as const;
 
 /** A step of the onboarding. */
 export type OnboardingStepKind = (typeof ONBOARDING_STEPS)[number];
 
-/** The questions the onboarding asks (ADR 0067): «Хто ви» and «Навіщо». */
-export const QuestionnaireQuestionSchema = z.enum(['who', 'why']);
+/** The questions the onboarding asks (ADR 0067): «Як добре ви знаєте мову?» and «Навіщо». */
+export const QuestionnaireQuestionSchema = z.enum(['level', 'why']);
 
 export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;
 
@@ -610,19 +610,27 @@ export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
 
 /**
- * The Edition's questionnaire (ADR 0067): the options of «Хто ви», each
- * setting the Rarity Ceiling, of «Навіщо», each setting the Mix kind
- * weights it names (the others stay), and of the self-rating. Ids are unique
- * within a question.
+ * The Edition's questionnaire (ADR 0067): the options of the level
+ * question, each setting the Rarity Ceiling or opening the Rarity Test, of
+ * «Навіщо», each setting the Mix kind weights it names (the others stay), and
+ * of the self-rating. Ids are unique within a question.
  */
 export const QuestionnaireSchema = z.strictObject({
-  who: z
+  level: z
     .array(
-      z.strictObject({
-        id: QuestionnaireAnswerIdSchema,
-        label: TextSchema,
-        rarityCeiling: RaritySchema,
-      }),
+      z.union([
+        z.strictObject({
+          id: QuestionnaireAnswerIdSchema,
+          label: TextSchema,
+          rarityCeiling: RaritySchema,
+        }),
+        /** «Не знаю»: the onboarding opens the Rarity Test, whose result sets the Rarity Ceiling. */
+        z.strictObject({
+          id: QuestionnaireAnswerIdSchema,
+          label: TextSchema,
+          rarityTest: z.literal(true),
+        }),
+      ]),
     )
     .min(1),
   why: z

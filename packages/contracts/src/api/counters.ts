@@ -10,6 +10,16 @@ import { EntryIdSchema } from '../entry';
 import { hasNoRepeats } from '../shared';
 import { procedure } from './procedure';
 
+/**
+ * The questions an answer is counted for: the questionnaire's, and «Хто ви»
+ * (`who`), which builds before the level question still send. The API only
+ * grows within `/v1` (ADR 0031), so `who` stays, and the backend refuses it
+ * as an answer that is no option.
+ */
+export const CountedQuestionSchema = z.enum([...QuestionnaireQuestionSchema.options, 'who']);
+
+export type CountedQuestion = z.infer<typeof CountedQuestionSchema>;
+
 /** A change of one count: one taken away, none or one added. */
 const DeltaSchema = z.literal([-1, 0, 1]);
 
@@ -136,7 +146,7 @@ export const countersContract = {
       successStatus: 202,
       summary: 'Count one answer of the onboarding questionnaire',
       description:
-        'Adds one to the count of the answer, an option of «Хто ви» (`who`) or «Навіщо» (`why`) of the Edition. The backend keeps the totals per answer only: no Account, no device id, no IP address (ADR 0068).',
+        'Adds one to the count of the answer, an option of «Як добре ви знаєте мову?» (`level`) or «Навіщо» (`why`) of the Edition. The backend keeps the totals per answer only: no Account, no device id, no IP address (ADR 0068).',
       tags: ['counters'],
     })
     .errors({
@@ -151,7 +161,7 @@ export const countersContract = {
     .input(
       z.strictObject({
         editionId: EditionIdSchema,
-        question: QuestionnaireQuestionSchema,
+        question: CountedQuestionSchema,
         answer: QuestionnaireAnswerIdSchema,
       }),
     )
