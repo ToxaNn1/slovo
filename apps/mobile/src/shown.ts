@@ -110,10 +110,10 @@ export interface Shown {
   readonly rarityTest: boolean;
   /**
    * The «Пройти опитування ще раз» row of Settings, while any of its questions
-   * is on: «Хто ви» and «Навіщо» under the questionnaire, the self-rating
+   * is on: «Рівень» and «Навіщо» under the questionnaire, the self-rating
    * under the Rarity Test it offers.
    */
-  readonly questionnaire: { readonly whoWhy: boolean; readonly selfRating: boolean } | undefined;
+  readonly questionnaire: { readonly levelWhy: boolean; readonly selfRating: boolean } | undefined;
 }
 
 /**
@@ -180,7 +180,7 @@ export function shownOf({
     rarityTest: on('rarityTest'),
     questionnaire:
       on('questionnaire') || on('rarityTest')
-        ? { whoWhy: on('questionnaire'), selfRating: on('rarityTest') }
+        ? { levelWhy: on('questionnaire'), selfRating: on('rarityTest') }
         : undefined,
   };
 }

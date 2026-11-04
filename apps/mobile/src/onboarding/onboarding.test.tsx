@@ -122,7 +122,7 @@ afterEach(() => {
 
 // Spec #1358, ticket #1379: the onboarding of 1.0 (ADR 0067).
 describe('the onboarding', () => {
-  it('goes from the welcome to the first Word, «Хто ви», «Навіщо» and the Daily Goal, then the Feed', async () => {
+  it('goes from the welcome to the first Word, «Рівень», «Навіщо» and the Daily Goal, then the Feed', async () => {
     await renderOnboarding();
     expect(screen.getByText(strings.welcome.title)).toBeTruthy();
 
@@ -133,9 +133,9 @@ describe('the onboarding', () => {
     expect(screen.getAllByText(firstWord.word.primaryDefinition).length).toBeGreaterThan(0);
 
     await press('onboarding-next');
-    expect(screen.getByText(strings.who.title)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Мовний гурман' })).toBeTruthy();
-    await press('onboarding-answer-studying');
+    expect(screen.getByText(strings.level.title)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Я мовний гурман' })).toBeTruthy();
+    await press('onboarding-answer-good');
     expect(composition.rarityCeiling.state).toBe(4);
 
     expect(screen.getByText(strings.why.title)).toBeTruthy();
@@ -160,6 +160,22 @@ describe('the onboarding', () => {
     expect(composition.xpLog.state.dailyGoal?.goal).toBe(30);
     expect(composition.onboarding.state.finishedAt).toEqual(clock.now());
     expect(screen.queryByTestId('onboarding-daily-goal')).toBeNull();
+  });
+
+  it('opens the Rarity Test with «Не знаю» in the «Рівень» frame, and its result goes on to «Навіщо»', async () => {
+    await renderOnboarding();
+    await press('onboarding-start');
+    await press('onboarding-next');
+    await press('onboarding-answer-dont-know');
+
+    expect(screen.getByText(strings.level.shout)).toBeTruthy();
+    while (screen.queryByTestId('onboarding-rarity-question') !== null) {
+      await press('onboarding-rarity-known');
+    }
+    await press('onboarding-rarity-next');
+
+    expect(composition.rarityCeiling.state).toBe(5);
+    expect(screen.getByText(strings.why.title)).toBeTruthy();
   });
 
   it('poses the Mascot per step as the design does, with no line, and none with its Feature Switch off', async () => {
@@ -195,7 +211,7 @@ describe('the onboarding', () => {
     await press('onboarding-start');
     await press('onboarding-next');
 
-    expect(screen.queryByText(strings.who.title)).toBeNull();
+    expect(screen.queryByText(strings.level.title)).toBeNull();
     expect(screen.getByText(strings.dailyGoal.title)).toBeTruthy();
   });
 });
