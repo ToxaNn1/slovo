@@ -5,7 +5,6 @@ import { todayBounds, todayKey } from '../local-date';
 import type { Clock, Random, UserStateChanges } from '../ports';
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
-import type { Cycle } from '../feed/cycle';
 import type { History } from '../saved/history';
 import type { XpAction, XpAward } from '../game/game-xp';
 import type { LocalDate } from '../local-date';
@@ -191,14 +190,14 @@ export async function openXpLog({
   dayTurned,
   analytics,
   history,
-  cycle,
+  isFirstCycle,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels'>;
   userState: Pick<UserState, 'list' | 'write'>;
   /** The Entries Seen, whose Words today count toward the Daily Goal. */
   history: Pick<History, 'list' | 'subscribe'>;
   /** Whether a Word Seen now may be Seen for the first time: only in the first Cycle. */
-  cycle: Pick<Cycle, 'isFirst'>;
+  isFirstCycle: () => boolean;
   clock: Clock;
   random: Random;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
@@ -217,30 +216,34 @@ export async function openXpLog({
 
   /**
    * Counts records in turn: Review XP up to the daily cap of its date, and
-   * Seen-Word XP up to the Daily Goal of its date, also as two devices' logs
-   * merge. `xpOf` is what a capped source counted on a date so far.
+   * the Seen-Word records up to the Daily Goal in Words of its date, also as
+   * two devices' logs merge. `reviewXpOf` is the Review XP counted on a date
+   * so far, `seenWordsOf` the Seen-Word records.
    */
   function counter() {
-    const counts = new Map<string, number>();
+    const reviewXp = new Map<string, number>();
+    const seenWords = new Map<string, number>();
     const goals = new Map<string, DailyGoal | undefined>();
-    const key = (source: string, date: string) => `${source} ${date}`;
-    function capOf({ source, date }: Extract<XpRecord, { kind: 'xp' }>): number {
-      if (source === 'review-answer') return edition.xp.reviewDailyCap;
-      if (source !== 'seen-word') return Infinity;
+    function goalAsCap(date: string): number {
       if (!goals.has(date)) goals.set(date, goalOf(date));
       return goals.get(date) ?? Infinity;
     }
     return {
-      count: (record: Extract<XpRecord, { kind: 'xp' }>): number => {
-        const cap = capOf(record);
-        if (cap === Infinity) return record.amount;
-        const before = counts.get(key(record.source, record.date)) ?? 0;
-        const amount = Math.max(0, Math.min(record.amount, cap - before));
-        counts.set(key(record.source, record.date), before + amount);
-        return amount;
+      count: ({ source, date, amount }: Extract<XpRecord, { kind: 'xp' }>): number => {
+        if (source === 'seen-word') {
+          const before = seenWords.get(date) ?? 0;
+          if (before >= goalAsCap(date)) return 0;
+          seenWords.set(date, before + 1);
+          return amount;
+        }
+        if (source !== 'review-answer') return amount;
+        const before = reviewXp.get(date) ?? 0;
+        const counted = Math.max(0, Math.min(amount, edition.xp.reviewDailyCap - before));
+        reviewXp.set(date, before + counted);
+        return counted;
       },
-      xpOf: (source: 'review-answer' | 'seen-word', date: string) =>
-        counts.get(key(source, date)) ?? 0,
+      reviewXpOf: (date: string) => reviewXp.get(date) ?? 0,
+      seenWordsOf: (date: string) => seenWords.get(date) ?? 0,
     };
   }
 
@@ -298,7 +301,8 @@ export async function openXpLog({
     date: string;
     state: XpLogState;
     reviewToday: number;
-    seenWordToday: number;
+    /** Today's Seen-Word records counted toward today's goal. */
+    seenWordsCounted: number;
     milestones: XpLogMilestones;
   } {
     const date = todayKey(clock);
@@ -307,7 +311,7 @@ export async function openXpLog({
     const frozen = new Set<string>();
     const breaks = new Map<string, number>();
     /** The Review and Seen-Word XP of each date, which count up to their caps even as two devices' logs merge. */
-    const { count, xpOf } = counter();
+    const { count, reviewXpOf, seenWordsOf } = counter();
     const wins = new Set<string>();
     const rightByMode = new Map<string, number>();
     const rightRarities = new Set<number>();
@@ -360,8 +364,8 @@ export async function openXpLog({
         dailyGoal: dailyGoal === null ? null : { ...dailyGoal, seen: seenToday() },
         level: levelsOn ? levelOf(edition.levels, total) : undefined,
       },
-      reviewToday: xpOf('review-answer', date),
-      seenWordToday: xpOf('seen-word', date),
+      reviewToday: reviewXpOf(date),
+      seenWordsCounted: seenWordsOf(date),
       byDate,
       active,
       frozen,
@@ -523,12 +527,12 @@ export async function openXpLog({
   /**
    * The Seen-Word records of the Words that joined History today for the
    * first time: in the first Cycle, never in History, never earned on any
-   * device, while today's Seen-Word XP is below today's goal.
+   * device, while today's Seen-Word records are fewer than today's goal in Words.
    */
   function seenWordsToday(goal: DailyGoal | undefined): Map<string, XpRecord> {
     const { start, end } = todayBounds(clock);
     const added = new Map<string, XpRecord>();
-    let xp = derived.seenWordToday;
+    let counted = derived.seenWordsCounted;
     for (const { entryId, seenAt, row } of history.list) {
       if (inHistory.has(entryId)) continue;
       inHistory.add(entryId);
@@ -539,12 +543,12 @@ export async function openXpLog({
         row.kind !== 'word' ||
         time < start ||
         time >= end ||
-        !cycle.isFirst() ||
+        !isFirstCycle() ||
         records.has(seenWordId(entryId)) ||
-        xp >= goal
+        counted >= goal
       )
         continue;
-      xp += edition.xp.seenWord;
+      counted += 1;
       added.set(seenWordId(entryId), {
         kind: 'xp',
         date: todayKey(clock),
