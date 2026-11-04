@@ -223,12 +223,12 @@ describe('the summary of the owner admin', () => {
     });
     await client.counters.questionnaire({
       editionId: 'summed',
-      question: 'who',
+      question: 'level',
       answer: 'studying',
     });
     await client.counters.questionnaire({
       editionId: 'summed',
-      question: 'who',
+      question: 'level',
       answer: 'studying',
     });
 

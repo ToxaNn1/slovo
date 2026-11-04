@@ -703,6 +703,16 @@ describe('counters.communityWord', () => {
     });
   });
 
+  it('answers NOT_FOUND for `who`, the old name of «Рівень», and counts nothing', async () => {
+    const { client, database } = testApp({ editions: testEditions(['qwho']).read() });
+
+    await expect(
+      client.counters.questionnaire({ editionId: 'qwho', question: 'who', answer: 'studying' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+    await expect(answersOf(database, 'qwho', 'who')).resolves.toEqual([]);
+    await expect(answersOf(database, 'qwho')).resolves.toEqual([]);
+  });
+
   it('answers NOT_FOUND for an Edition it does not serve, or with the Community Word or the Community Counters switched off, locally or remotely', async () => {
     const locallyOff = new Map([
       ['off', 'communityWord'],
@@ -732,7 +742,7 @@ describe('counters.communityWord', () => {
 });
 
 /** What the database keeps of the answers to the Edition's question: each answer with its count. */
-async function answersOf({ db }: Database, editionId: string, question = 'who') {
+async function answersOf({ db }: Database, editionId: string, question = 'level') {
   const rows = await db
     .select()
     .from(questionnaireCounters)
@@ -754,12 +764,12 @@ describe('counters.questionnaire', () => {
 
     const response = await request(
       '/v1/counters/questionnaire',
-      post({ editionId: 'qa', question: 'who', answer: 'studying' }),
+      post({ editionId: 'qa', question: 'level', answer: 'studying' }),
     );
-    await client.counters.questionnaire({ editionId: 'qa', question: 'who', answer: 'studying' });
-    await client.counters.questionnaire({ editionId: 'qa', question: 'who', answer: 'gourmet' });
+    await client.counters.questionnaire({ editionId: 'qa', question: 'level', answer: 'studying' });
+    await client.counters.questionnaire({ editionId: 'qa', question: 'level', answer: 'gourmet' });
     await client.counters.questionnaire({ editionId: 'qa', question: 'why', answer: 'play' });
-    await client.counters.questionnaire({ editionId: 'qb', question: 'who', answer: 'working' });
+    await client.counters.questionnaire({ editionId: 'qb', question: 'level', answer: 'working' });
 
     expect(response.status).toBe(202);
     await expect(response.text()).resolves.toBe('');
@@ -775,7 +785,7 @@ describe('counters.questionnaire', () => {
     const { clientFrom, database } = testApp({ editions: testEditions(['qid']).read() });
     await clientFrom('2001:db8:7:6::15').counters.questionnaire({
       editionId: 'qid',
-      question: 'who',
+      question: 'level',
       answer: 'working',
     });
 
@@ -783,7 +793,7 @@ describe('counters.questionnaire', () => {
       .select()
       .from(questionnaireCounters)
       .where(eq(questionnaireCounters.editionId, 'qid'));
-    expect(rows).toEqual([{ editionId: 'qid', question: 'who', answer: 'working', count: 1 }]);
+    expect(rows).toEqual([{ editionId: 'qid', question: 'level', answer: 'working', count: 1 }]);
     const keys = (await database.db.select({ key: rateLimits.key }).from(rateLimits)).map(
       (row) => row.key,
     );
@@ -795,7 +805,7 @@ describe('counters.questionnaire', () => {
 
     const response = await request(
       '/v1/counters/questionnaire',
-      post({ editionId: 'uk', question: 'who', answer: 'studying', deviceId: 'd1' }),
+      post({ editionId: 'uk', question: 'level', answer: 'studying', deviceId: 'd1' }),
     );
 
     expect(response.status).toBe(400);
@@ -822,7 +832,7 @@ describe('counters.questionnaire', () => {
 
     for (const editionId of ['xx', 'qoff', 'qremote']) {
       await expect(
-        client.counters.questionnaire({ editionId, question: 'who', answer: 'studying' }),
+        client.counters.questionnaire({ editionId, question: 'level', answer: 'studying' }),
       ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
       await expect(answersOf(database, editionId)).resolves.toEqual([]);
     }
@@ -832,7 +842,7 @@ describe('counters.questionnaire', () => {
     const { request, client, clientFrom, database } = testApp({
       editions: testEditions(['qlimit']).read(),
     });
-    const answer = { editionId: 'qlimit', question: 'who', answer: 'studying' } as const;
+    const answer = { editionId: 'qlimit', question: 'level', answer: 'studying' } as const;
     for (let sent = 0; sent < 100; sent++) await client.counters.questionnaire(answer);
     passTime(DAY / 2);
 

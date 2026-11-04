@@ -295,7 +295,7 @@ export const questionnaireCounters = pgTable(
   'questionnaire_counters',
   {
     editionId: text('edition_id').notNull(),
-    /** The question answered: `who` or `why`. */
+    /** The question answered: `level` or `why` (the rows of `who`, its name before, are kept). */
     question: text('question').notNull(),
     /** The id of the option chosen. */
     answer: text('answer').notNull(),
