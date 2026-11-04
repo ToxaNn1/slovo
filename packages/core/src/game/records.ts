@@ -31,4 +31,14 @@ export const gameRecords = {
     z.object({ date: z.iso.date(), letters: z.record(z.string(), z.string()) }),
     { sync: 'device-only' },
   ),
+  /**
+   * The hidden Words found in the traced Daily Crossword, by Word id, and the
+   * local date of its day. Only today's day counts; a new day starts with
+   * none found. It stays on the device, with no Sync (ADR 0073).
+   */
+  tracedCrosswordProgress: declareRecord(
+    'crossword.traced',
+    z.object({ date: z.iso.date(), found: z.array(z.string()) }),
+    { sync: 'device-only' },
+  ),
 };
