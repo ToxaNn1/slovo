@@ -151,13 +151,13 @@ describe('the onboarding', () => {
     expect(screen.getByText(strings.dailyGoal.title)).toBeTruthy();
     const goal = (xp: number) =>
       screen.getByRole('button', { name: `${String(xp)} ${strings.dailyGoal.unit}` }).props;
-    expect(goal(20)).toMatchObject({ accessibilityState: { selected: true } });
-    await press('onboarding-daily-goal-30');
-    expect(goal(30)).toMatchObject({ accessibilityState: { selected: true } });
-    expect(goal(20)).toMatchObject({ accessibilityState: { selected: false } });
+    expect(goal(10)).toMatchObject({ accessibilityState: { selected: true } });
+    await press('onboarding-daily-goal-25');
+    expect(goal(25)).toMatchObject({ accessibilityState: { selected: true } });
+    expect(goal(10)).toMatchObject({ accessibilityState: { selected: false } });
     await press('onboarding-done');
 
-    expect(composition.xpLog.state.dailyGoal?.goal).toBe(30);
+    expect(composition.xpLog.state.dailyGoal?.goal).toBe(25);
     expect(composition.onboarding.state.finishedAt).toEqual(clock.now());
     expect(screen.queryByTestId('onboarding-daily-goal')).toBeNull();
   });
@@ -193,13 +193,13 @@ describe('the onboarding', () => {
     expect(screen.queryByTestId('mascot-shouts')).toBeNull();
   });
 
-  it('ends at once on «Пропустити», keeping the defaults', async () => {
+  it('ends at once on «Пропустити», setting no Daily Goal', async () => {
     await renderOnboarding();
     await press('onboarding-skip');
 
     expect(screen.queryByTestId('onboarding')).toBeNull();
     expect(composition.onboarding.state.finishedAt).toEqual(clock.now());
-    expect(composition.xpLog.state.dailyGoal?.goal).toBe(20);
+    expect(composition.xpLog.state.dailyGoal).toBeNull();
   });
 
   it('asks no question while the questionnaire is off', async () => {
