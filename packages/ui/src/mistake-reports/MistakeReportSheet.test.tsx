@@ -117,8 +117,11 @@ describe('MistakeReportSheet', () => {
     await renderSheet();
 
     const field = screen.getByLabelText('Comment (optional)');
-    // Four lines of 20 pt, 12 pt of padding above and below, and a 1 pt border each side.
-    expect(field).toHaveStyle({ maxHeight: 4 * 20 + 2 * 12 + 2 });
+    // Four lines of 20 pt at the text size React Native's Jest setup gives (2),
+    // capped at 1.5 times, 12 pt of padding above and below, and a 1 pt border
+    // each side: the letters grow up to 1.5 times, and the cap with them.
+    expect(field).toHaveStyle({ maxHeight: 4 * 20 * 1.5 + 2 * 12 + 2 });
+    expect(field).toHaveProp('maxFontSizeMultiplier', 1.5);
     expect(field).toHaveProp('scrollEnabled', true);
   });
 
