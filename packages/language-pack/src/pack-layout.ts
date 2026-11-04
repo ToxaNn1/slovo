@@ -96,13 +96,6 @@ CREATE TABLE word_registers (
   PRIMARY KEY (word_id, position)
 ) WITHOUT ROWID;
 
-CREATE TABLE word_moods (
-  word_id TEXT NOT NULL REFERENCES words (id),
-  position INTEGER NOT NULL,
-  mood TEXT NOT NULL,
-  PRIMARY KEY (word_id, position)
-) WITHOUT ROWID;
-
 CREATE TABLE corrections (
   id TEXT PRIMARY KEY REFERENCES entries (id),
   non_standard_form TEXT NOT NULL,
@@ -269,9 +262,10 @@ CREATE TABLE sources (
  * keeps format 7's layout, adding only the Word's illustration column, and
  * admits the Word's Illustration of 0.8.14 (ADR 0055); format 9 keeps format
  * 8's layout, adding only the source's short name column, and admits the
- * short names of the «Джерело:» line (ADR 0032).
+ * short names of the «Джерело:» line (ADR 0032); format 10 drops the table
+ * `word_moods` and the Word's moods, which a Mood no longer tags (spec #1564).
  */
-export const PACK_FORMAT = 9;
+export const PACK_FORMAT = 10;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how
