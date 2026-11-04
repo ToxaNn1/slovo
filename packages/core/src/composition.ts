@@ -411,7 +411,16 @@ export async function openComposition({
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const analytics = createAnalytics({ edition, userState, port: analyticsPort });
-  const xpLog = await openXpLog({ edition, userState, clock, random, dayTurned, analytics });
+  const { history, recorder } = await openHistory({ rows, userState });
+  const xpLog = await openXpLog({
+    edition,
+    userState,
+    clock,
+    random,
+    dayTurned,
+    analytics,
+    history,
+  });
   const activeDays = await openActiveDays({ edition, userState, clock, xpLog, analytics });
   const day = createDayChange({
     clock,
@@ -422,7 +431,6 @@ export async function openComposition({
     dayTurned,
     returned,
   });
-  const { history, recorder } = await openHistory({ rows, userState });
   const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const communityCounters = openCommunityCounters({ edition, userState });
   /** Emits an event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
