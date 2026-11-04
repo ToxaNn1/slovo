@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createSettings, openComposition, type AnalyticsPort, type FeatureSwitch } from '../index';
+import { switchedOn } from '../edition/edition';
 import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -31,7 +32,8 @@ async function run({
     stop: () => undefined,
   };
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  const edition = testEdition({ isFeatureEnabled: (feature) => on.includes(feature) });
+  // The switches in effect as the Edition reads them, with what each depends on.
+  const edition = testEdition({ isFeatureEnabled: switchedOn((feature) => on.includes(feature)) });
   const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
   const app = await openComposition({
     content,
@@ -59,6 +61,38 @@ describe('the onboarding', () => {
     expect(seen).toEqual(['welcome 1/5', 'firstWord 2/5', 'level 3/5', 'why 4/5', 'dailyGoal 5/5']);
     expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
   });
+
+  // Spec #1553, ticket #1558: «ГРАЙ!» shows the Games after the first Word.
+  it('shows «ГРАЙ!» after the first Word while the Game and `playStep` are on, counted in the steps', async () => {
+    const { app } = await run({ on: [...ALL_ON, 'game', 'playStep'] });
+    const seen = [];
+    for (let i = 0; i < 7 && app.onboarding.state.step !== undefined; i += 1) {
+      const { kind, number, total } = app.onboarding.state.step;
+      seen.push(`${kind} ${String(number)}/${String(total)}`);
+      await app.onboarding.next();
+    }
+    expect(seen).toEqual([
+      'welcome 1/6',
+      'firstWord 2/6',
+      'playStep 3/6',
+      'level 4/6',
+      'why 5/6',
+      'dailyGoal 6/6',
+    ]);
+  });
+
+  it.each([
+    ['the Game', ['playStep']],
+    ['`playStep`', ['game']],
+  ] as const)(
+    'leaves out «ГРАЙ!» with %s off, and the step numbers stay right',
+    async (_, more) => {
+      const { app } = await run({ on: [...ALL_ON, ...more] });
+      await app.onboarding.next();
+      await app.onboarding.next();
+      expect(app.onboarding.state.step).toMatchObject({ kind: 'level', number: 3, total: 5 });
+    },
+  );
 
   it('shows the Word of the Day as the first Word, and the Edition options of the questions', async () => {
     const { app } = await run();

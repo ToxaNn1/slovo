@@ -29,6 +29,14 @@ export const OnboardingStringsSchema = z.strictObject({
     title: TextSchema,
     next: TextSchema,
   }),
+  /** «ГРАЙ!»: the Games in one screen; «Далі» goes on. */
+  playStep: z.strictObject({
+    /** The word the step shouts large on its red top. */
+    shout: TextSchema,
+    title: TextSchema,
+    subtitle: TextSchema,
+    next: TextSchema,
+  }),
   /** «Як добре ви знаєте мову?»: its options are the Edition's questionnaire; «Пізніше» goes on without an answer. */
   level: z.strictObject({
     /** The word the step shouts large on its red top. */
