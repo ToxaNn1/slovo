@@ -102,8 +102,6 @@ export interface Shown {
   readonly fastReveal: boolean;
   /** Whether the home is the Dashboard, which opens the Feed; else the Feed is the home (ADR 0074). */
   readonly dashboard: boolean;
-  /** The 🎲 «Слово під настрій» of the «Стрічка» header, which opens the moods. */
-  readonly moods: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
   /** The «Рідкість» row of Settings, the Rarity Ceiling (ADR 0072). */
@@ -177,7 +175,6 @@ export function shownOf({
     search: on('search'),
     fastReveal: on('fastReveal'),
     dashboard: on('dashboard'),
-    moods: on('moods'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarityCeiling: on('rarityCeiling'),
     rarityTest: on('rarityTest'),

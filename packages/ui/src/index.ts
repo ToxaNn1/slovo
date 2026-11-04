@@ -56,8 +56,6 @@ export { HideButton } from './mix/HideButton';
 export { CommunityCountersLine } from './community-counters/CommunityCountersLine';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
-export { MoodButton } from './mood/MoodButton';
-export { MoodSheet, type MoodChip } from './mood/MoodSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
 export { ChipChoice } from './mix/ChipChoice';

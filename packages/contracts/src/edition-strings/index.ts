@@ -19,7 +19,6 @@ import { KnowledgeStringsSchema } from './knowledge';
 import { LearningStringsSchema } from './learning';
 import { MistakeReportStringsSchema } from './mistake-report';
 import { MixStringsSchema } from './mix';
-import { MoodStringsSchema } from './mood';
 import { NotificationBodyStringsSchema } from './notification-body';
 import { NotificationTemplatesStringsSchema } from './notification-templates';
 import { NotificationsStringsSchema } from './notifications';
@@ -76,7 +75,6 @@ export const EditionStringsSchema = z.strictObject({
   feedNotices: FeedNoticesStringsSchema,
   wordOfTheDayArchive: WordOfTheDayArchiveStringsSchema,
   dashboard: DashboardStringsSchema,
-  mood: MoodStringsSchema,
   game: GameStringsSchema,
   widget: WidgetStringsSchema,
   spotlight: SpotlightStringsSchema,

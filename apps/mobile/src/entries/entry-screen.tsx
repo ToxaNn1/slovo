@@ -39,13 +39,12 @@ export function EntryScreen({
   route: string;
   /**
    * Where outside the app it opened from, if it did: the Entry is Seen, in
-   * History and today is an Active Day. A Search result, or the Word the mood
-   * roulette landed on, opens through its own way in, which makes nothing
-   * Seen (`search`, `mood`). On any way in, an id the Language Pack doesn't
+   * History and today is an Active Day. A Search result opens through its
+   * own way in, which makes nothing Seen (`search`). On any way in, an id the Language Pack doesn't
    * have opens the Feed, such as a plain link's or a Spotlight result's to an
    * Entry a pack update took out (ADR 0057).
    */
-  openedFrom?: EntryLinkSource | 'search' | 'mood' | undefined;
+  openedFrom?: EntryLinkSource | 'search' | undefined;
 }) {
   const { colors } = useTokens();
   const { top, bottom } = useSafeAreaInsets();
@@ -155,13 +154,11 @@ function ReadFailed({
 function openEntry(
   composition: Composition,
   entryId: string,
-  openedFrom: EntryLinkSource | 'search' | 'mood' | undefined,
+  openedFrom: EntryLinkSource | 'search' | undefined,
 ): Promise<AnyEntryCard | undefined> {
   switch (openedFrom) {
     case 'search':
       return composition.openedFromSearch(entryId);
-    case 'mood':
-      return composition.openedFromMood(entryId);
     case 'notification':
       return composition.openedFromNotification(entryId);
     case 'widget':

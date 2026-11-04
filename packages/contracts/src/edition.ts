@@ -38,8 +38,8 @@ export const OriginLanguageSchema = z.strictObject({
 export type OriginLanguage = z.infer<typeof OriginLanguageSchema>;
 
 /**
- * A Mood («настрій») a Word may carry (ADR 0054): its id, its name in the
- * Edition's language and its emoji.
+ * A Mood («настрій») the Edition lists: its id, its name in the Edition's
+ * language and its emoji.
  */
 export const MoodSchema = z.strictObject({
   id: KebabCaseIdSchema,
@@ -242,8 +242,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   firstWeek: z.boolean(),
   /** The widget hint: the sheet after the first finished Game and the guide to adding the widget (ADR 0054). */
   widgetHint: z.boolean(),
-  /** Mood: the moods a Word may carry and «Слово під настрій» (ADR 0054). */
-  moods: z.boolean(),
   /** «Сезонний декор»: the Decor motif of the local date's Holiday or Season, and its setting (ADR 0055). */
   seasonalDecor: z.boolean(),
   /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel (ADR 0055). */
@@ -266,7 +264,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   appIntents: z.boolean(),
   /** Collection Links: «Поділитися посиланням» on a Collection and the `c/<id>` links that open its copy (ADR 0058). */
   collectionLinks: z.boolean(),
-  /** A Word from the mood roulette or the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
+  /** A Word from the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
   replaceOpenEntry: z.boolean(),
   /** The Mix kind weights: «Менше», «Звичайно» or «Більше» for each kind beside Words, which space its Feed turns; off, every kind keeps its turn of 0.9. */
   mixKindWeights: z.boolean(),

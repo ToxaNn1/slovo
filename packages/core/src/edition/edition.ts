@@ -63,7 +63,7 @@ export interface Edition {
   readonly notificationSound: string | undefined;
   /** The languages Words come from, in their order, which «Звідки слово» offers (ADR 0052). */
   readonly originLanguages: readonly OriginLanguage[];
-  /** The moods a Word may carry, in their order, which «Слово під настрій» offers (ADR 0054). */
+  /** The Edition's moods, in their order. */
   readonly moods: readonly Mood[];
   /** The letters Search reads as another, such as ґ as г (ADR 0054). */
   readonly searchLetters: Readonly<Record<string, string>>;
