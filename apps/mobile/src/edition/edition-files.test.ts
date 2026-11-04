@@ -325,7 +325,7 @@ describe('the 0.8.13 strings', () => {
   });
 
   it('the UA Edition carries the agreed texts of Settings, «Збережене», Mood and the widget', () => {
-    expect(parsed.settings.dailyGoal).toEqual({ title: 'Денна ціль' });
+    expect(parsed.settings.dailyGoal).toEqual({ title: 'Денна ціль', none: 'Без цілі' });
     expect(parsed.wordOfTheDayArchive.title).toBe('Слова дня');
     expect(parsed.mood.title).toBe('Слово під настрій');
     expect(parsed.settings.howToAddWidget).toBe('Як додати віджет');

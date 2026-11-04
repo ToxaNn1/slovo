@@ -55,12 +55,12 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     at: InstantSchema,
     goal: z.number(),
   }),
-  /** The Daily Goal in Words set from a local day on (ADR 0074). */
+  /** The Daily Goal in Words set from a local day on, or `null` where «Без цілі» turned it off (ADR 0074). */
   z.object({
     kind: z.literal('word-goal'),
     date: z.string(),
     at: InstantSchema,
-    goal: DailyGoalSchema,
+    goal: DailyGoalSchema.nullable(),
   }),
   /** The day's Seen Words reached its Daily Goal; one per local date by its id (ADR 0074). */
   z.object({ kind: z.literal('goal-met'), date: z.string(), at: InstantSchema }),

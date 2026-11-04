@@ -59,8 +59,8 @@ export interface AnalyticsEvents {
   readonly quickQuestionAnswered: EntryEventProperties & { readonly right: boolean };
   /** The reader reached a new Level (ADR 0066). */
   readonly levelReached: { readonly level: number };
-  /** The reader changed the Daily Goal (ADR 0066). */
-  readonly dailyGoalChanged: { readonly goal: number };
+  /** The reader changed the Daily Goal (ADR 0074): `null` where «Без цілі» turned it off. */
+  readonly dailyGoalChanged: { readonly goal: number | null };
   /** Today's Daily Goal was met. */
   readonly dailyGoalMet: { readonly goal: number };
   /** An onboarding step came on screen (ADR 0067). */
