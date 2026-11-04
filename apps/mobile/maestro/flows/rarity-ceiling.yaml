@@ -8,11 +8,12 @@ appId: ${APP_ID || 'app.slovo.uk'}
     file: ../open-settings-row.yaml
     env:
       ROW: settings-rarity-5
-# «до 5»'s left part: the development client's floating tools button may sit
-# over its right end.
+# «до 5»'s left edge: the development client's floating tools button, parked
+# on the right edge by `open-settings-row.yaml`, takes touches well beyond its
+# circle and may cover the rest of it.
 - tapOn:
     id: settings-rarity-5
-    point: 25%, 50%
+    point: 8%, 50%
 - assertVisible:
     id: settings-rarity-5
     text: 'Рідкість: до 5'
@@ -45,7 +46,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     selected: true
 - tapOn:
     id: settings-rarity-5
-    point: 25%, 50%
+    point: 8%, 50%
 - assertVisible:
     id: settings-rarity-5
     selected: true

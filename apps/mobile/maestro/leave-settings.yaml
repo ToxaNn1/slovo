@@ -12,5 +12,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
           element:
             id: settings-back
           direction: UP
+      # A tap on a list still gliding only stops it: let it settle first.
+      - waitForAnimationToEnd
       - tapOn:
           id: settings-back

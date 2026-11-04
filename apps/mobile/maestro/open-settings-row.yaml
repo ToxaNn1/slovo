@@ -13,43 +13,38 @@ appId: ${APP_ID || 'app.slovo.uk'}
       visible:
         id: profile
     commands:
-      # The development client's floating tools button sits over the tile:
-      # drag it down while the tile is tapped, and back to the top after.
-      - runFlow:
-          when:
-            visible:
-              id: gearshape.fill
-          commands:
-            - swipe:
-                from:
-                  id: gearshape.fill
-                direction: DOWN
-                duration: 600
-            - waitForAnimationToEnd
-            - runFlow:
-                file: dismiss-dev-menu.yaml
       - scrollUntilVisible:
           element:
             id: profile-settings
           direction: UP
+      # `open-in-dev-client.yaml` parks the development client's floating
+      # tools button at the top right, right over the tile, and Maestro does
+      # not see the button. Drag from the tile's spot down the right edge: the
+      # button stays there, clear of the tile; with no button there, the drag
+      # only pulls the list. It is not dragged back: a drag that counts as a
+      # tap opens the development client's menu.
+      - swipe:
+          start: 90%, 11%
+          end: 90%, 66%
+          duration: 600
+      - waitForAnimationToEnd
+      - runFlow:
+          file: dismiss-dev-menu.yaml
       - tapOn:
           id: profile-settings
-      - runFlow:
-          when:
-            visible:
-              id: gearshape.fill
-          commands:
-            - swipe:
-                from:
-                  id: gearshape.fill
-                direction: UP
-                duration: 600
-            # A drag that counts as a tap opens the menu, which slides up.
-            - waitForAnimationToEnd
-            - runFlow:
-                file: dismiss-dev-menu.yaml
+# On a busy machine the scroll may run past the row before it is seen, leaving
+# it under the header: then scroll back up to it.
 - scrollUntilVisible:
     element:
       id: ${ROW}
     centerElement: true
     visibilityPercentage: 50
+    optional: true
+- scrollUntilVisible:
+    element:
+      id: ${ROW}
+    direction: UP
+    centerElement: true
+    visibilityPercentage: 50
+# A tap on a list still gliding only stops it: let it settle first.
+- waitForAnimationToEnd
