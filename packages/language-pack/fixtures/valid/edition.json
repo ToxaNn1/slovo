@@ -85,6 +85,7 @@
     "badges": true,
     "progressShareCards": true,
     "dailyCrosswordShare": true,
+    "tracedCrossword": true,
     "eveningNotification": true,
     "notificationFarewell": true,
     "notificationExplainer": true,

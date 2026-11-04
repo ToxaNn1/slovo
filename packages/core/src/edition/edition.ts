@@ -122,6 +122,7 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   dailyGoal: ['xpLog'],
   progressShareCards: ['shareCards', 'xpLog'],
   dailyCrosswordShare: ['shareCards', 'dailyCrossword'],
+  tracedCrossword: ['dailyCrossword'],
   quickQuestion: ['game'],
   // The Rarity Test sets the Rarity Ceiling (ADR 0072).
   rarityTest: ['rarityCeiling'],

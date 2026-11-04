@@ -324,6 +324,12 @@ const storedIn1_0: readonly (readonly [
     '{"date":"2026-10-30","letters":{"0,1":"п"}}',
   ],
   [
+    'tracedCrosswordProgress',
+    undefined,
+    'crossword.traced',
+    '{"date":"2026-10-30","found":["w_кіт"]}',
+  ],
+  [
     'syncPending',
     'settings.theme',
     'sync.pending.settings.theme',
