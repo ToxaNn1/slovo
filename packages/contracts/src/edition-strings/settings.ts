@@ -39,6 +39,15 @@ export const SettingsStringsSchema = z.strictObject({
   anonymousStats: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The Daily Goal choice; its numbers of XP are drawn as they are. */
   dailyGoal: z.strictObject({ title: TextSchema }),
+  /**
+   * «Рідкість», the Rarity Ceiling row (ADR 0072): its label, the line under
+   * it, and a ceiling's segment, which takes `{rarity}`, e.g. «до 3».
+   */
+  rarity: z.strictObject({
+    title: TextSchema,
+    subtitle: TextSchema,
+    ceiling: templateOf('rarity'),
+  }),
   /** The heads of the Settings groups, as the board names them. */
   groups: z.strictObject({
     /** The Theme, motion, Seasonal Decor and the font size. */
