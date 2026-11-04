@@ -7,6 +7,7 @@ const validConfig = {
   id: 'test',
   locale: 'xx-XX',
   dailyGoals: { options: [10, 25, 50], highlighted: 10 },
+  onboardingNotificationTimes: { morning: '09:00', midday: '13:00', evening: '20:30' },
   displayName: 'SLOVO Test',
   accountName: 'Test ID',
   languageTraits: {
@@ -605,6 +606,13 @@ describe('loadEdition', () => {
     ).toThrow();
   });
 
+  it('reports the Notification times «Коли нагадати?» offers, one for each bucket', () => {
+    const onboardingNotificationTimes = { morning: '08:15', midday: '12:00', evening: '21:00' };
+    expect(
+      loadEdition({ ...validConfig, onboardingNotificationTimes }).onboardingNotificationTimes,
+    ).toEqual(onboardingNotificationTimes);
+  });
+
   it('refuses hand-written legal page addresses in the config', () => {
     const legalPages = {
       privacy: 'https://example.org/privacy',
@@ -890,6 +898,23 @@ describe('loadEdition', () => {
       'Daily Goals out of rising order',
       { dailyGoals: { options: [25, 10], highlighted: 10 } },
       'dailyGoals.options',
+    ],
+    [
+      'onboarding Notification times out of time order',
+      { onboardingNotificationTimes: { morning: '13:00', midday: '09:00', evening: '20:30' } },
+      'onboardingNotificationTimes',
+    ],
+    [
+      'an onboarding Notification time for a fourth bucket',
+      {
+        onboardingNotificationTimes: {
+          morning: '09:00',
+          midday: '13:00',
+          evening: '20:30',
+          night: '23:00',
+        },
+      },
+      'onboardingNotificationTimes',
     ],
     [
       'a notification time that is not HH:MM',

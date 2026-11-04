@@ -26,19 +26,8 @@ import {
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
-/** The times «Коли нагадати?» offers, local times `HH:MM`. */
-const NOTIFICATION_TIMES: readonly string[] = ['09:00', '13:00', '20:30'];
-
-/** The bucket each time «Коли нагадати?» offers is counted in; any other time is `other`. */
-const BUCKET_OF: ReadonlyMap<string, NotificationTimeBucket> = new Map([
-  ['09:00', 'morning'],
-  ['13:00', 'midday'],
-  ['20:30', 'evening'],
-]);
-
-/** The bucket a time chosen on «Коли нагадати?» is counted in; nothing is `none`. */
-const bucketOf = (time: string | undefined): NotificationTimeBucket =>
-  time === undefined ? 'none' : (BUCKET_OF.get(time) ?? 'other');
+/** The buckets of the times «Коли нагадати?» offers, in time order. */
+const OFFERED = ['morning', 'midday', 'evening'] as const;
 
 /** Where a step stands among the steps, for the progress the UI draws. */
 interface StepPlace {
@@ -175,7 +164,10 @@ export async function openOnboarding({
   backend,
   notifications,
 }: {
-  edition: Pick<Edition, 'id' | 'isFeatureEnabled' | 'questionnaire' | 'dailyGoals'>;
+  edition: Pick<
+    Edition,
+    'id' | 'isFeatureEnabled' | 'questionnaire' | 'dailyGoals' | 'onboardingNotificationTimes'
+  >;
   userState: UserState;
   clock: Clock;
   entries: Pick<
@@ -192,7 +184,13 @@ export async function openOnboarding({
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
   const finished = await userState.read(onboardingFinished);
-  const { questionnaire } = edition;
+  const { questionnaire, onboardingNotificationTimes } = edition;
+  const offeredTimes = OFFERED.map((bucket) => onboardingNotificationTimes[bucket]);
+  /** The bucket a time chosen on «Коли нагадати?» is counted in; nothing is `none`. */
+  const bucketOf = (time: string | undefined): NotificationTimeBucket =>
+    time === undefined
+      ? 'none'
+      : (OFFERED.find((bucket) => onboardingNotificationTimes[bucket] === time) ?? 'other');
   const wordId = wordOfTheDay.chosen()?.wordId;
   const word = wordId === undefined ? undefined : await entries.get(wordId);
   const firstWord = word?.kind === 'word' ? await buildWordCard({ word, entries }) : undefined;
@@ -219,7 +217,7 @@ export async function openOnboarding({
         highlighted: edition.dailyGoals.highlighted,
       };
     }
-    if (kind === 'notificationTime') return { kind, ...place, times: NOTIFICATION_TIMES };
+    if (kind === 'notificationTime') return { kind, ...place, times: offeredTimes };
     if (kind === 'level') {
       const options = questionnaire.level.filter(
         (option) => 'rarityCeiling' in option || edition.isFeatureEnabled('rarityTest'),

@@ -80,7 +80,8 @@ export interface Notifications {
    * The reader's answer to the onboarding's «Коли нагадати?»: `time` becomes
    * the only Notification time, or with nothing («Без нагадувань») none is
    * left. Either answer is the ask, so the Feed's explainer never comes; a
-   * time then asks for permission to notify, as `askPermission` does.
+   * time then asks for permission to notify, as `askPermission` does; a
+   * device that fails to ask leaves the time kept and the ask unanswered.
    */
   chooseOnboardingTime(time: string | undefined): Promise<void>;
   /** Removes the time. A time not in the list is skipped. */
@@ -250,7 +251,8 @@ export async function openNotifications({
       time === undefined ? [] : [time],
       notificationAsk.change({ step: 'onboarding' }),
     );
-    if (time !== undefined) await askPermission();
+    // A device that fails to ask keeps the time and the reader going on.
+    if (time !== undefined) await askPermission().catch(() => undefined);
   }
 
   async function removeTime(time: string): Promise<void> {

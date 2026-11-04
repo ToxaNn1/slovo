@@ -2,8 +2,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createSettings, openComposition, type AnalyticsPort, type FeatureSwitch } from '../index';
 import { switchedOn } from '../edition/edition';
-import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '../testing';
-import { fakeClock, testEdition, word } from '../test-support';
+import {
+  createFakeBackend,
+  createFakeNotificationScheduler,
+  createMemoryContentPort,
+  type FakeBackend,
+} from '../testing';
+import { fakeClock, testEdition, word, type TestEditionOverrides } from '../test-support';
+import type { NotificationSchedulerPort } from '../ports';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const content = createMemoryContentPort({
@@ -27,7 +33,15 @@ async function run({
   records = new Map<string, string>(),
   on = ALL_ON,
   api = createFakeBackend(),
-}: { records?: Map<string, string>; on?: readonly FeatureSwitch[]; api?: FakeBackend } = {}) {
+  overrides = {},
+  scheduler,
+}: {
+  records?: Map<string, string>;
+  on?: readonly FeatureSwitch[];
+  api?: FakeBackend;
+  overrides?: TestEditionOverrides;
+  scheduler?: NotificationSchedulerPort;
+} = {}) {
   const events: unknown[][] = [];
   const analytics: AnalyticsPort = {
     track: (event, properties) => void events.push([event, properties]),
@@ -35,7 +49,10 @@ async function run({
   };
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
   // The switches in effect as the Edition reads them, with what each depends on.
-  const edition = testEdition({ isFeatureEnabled: switchedOn((feature) => on.includes(feature)) });
+  const edition = testEdition({
+    ...overrides,
+    isFeatureEnabled: switchedOn((feature) => on.includes(feature)),
+  });
   const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
   const app = await openComposition({
     content,
@@ -45,6 +62,18 @@ async function run({
     random: { next: () => 0.25 },
     analytics,
     backend: api.backend,
+    ...(scheduler === undefined
+      ? {}
+      : {
+          scheduling: {
+            scheduler,
+            ellipsis: '…',
+            titles: ['{word}'],
+            farewell: 'Farewell',
+            streakWarning: 'Streak warning',
+            goalNotMet: 'Goal not met',
+          },
+        }),
   });
   return { app, events, api, settings };
 }
@@ -358,6 +387,41 @@ describe('the onboarding', () => {
       await app.onboarding.chooseNotificationTime('07:45');
 
       expect(app.notifications.state.times).toEqual(['07:45']);
+      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+    });
+
+    it('offers the Edition times and counts each by its bucket', async () => {
+      const { app, api } = await run({
+        overrides: {
+          onboardingNotificationTimes: { morning: '08:15', midday: '12:00', evening: '21:00' },
+        },
+      });
+      await goTo(app, 'notificationTime');
+      const step = app.onboarding.state.step;
+      expect(step?.kind === 'notificationTime' && step.times).toEqual(['08:15', '12:00', '21:00']);
+
+      await app.onboarding.chooseNotificationTime('21:00');
+
+      await vi.waitFor(() => {
+        expect(
+          api.counters.answers.filter(({ question }) => question === 'notificationTime'),
+        ).toEqual([{ editionId: 'test', question: 'notificationTime', answer: 'evening' }]);
+      });
+    });
+
+    it('keeps the time and goes on when asking the permission fails', async () => {
+      const fake = createFakeNotificationScheduler();
+      const scheduler: NotificationSchedulerPort = {
+        ...fake,
+        permission: () => Promise.resolve('not-asked'),
+        askPermission: () => Promise.reject(new Error('no device')),
+      };
+      const { app } = await run({ scheduler });
+      await goTo(app, 'notificationTime');
+
+      await app.onboarding.chooseNotificationTime('09:00');
+
+      expect(app.notifications.state.times).toEqual(['09:00']);
       expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
     });
 

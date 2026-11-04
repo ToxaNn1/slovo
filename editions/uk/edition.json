@@ -322,6 +322,7 @@
     "seenWord": 1
   },
   "dailyGoals": { "options": [10, 25, 50], "highlighted": 10 },
+  "onboardingNotificationTimes": { "morning": "09:00", "midday": "13:00", "evening": "20:30" },
   "levels": {
     "first": 50,
     "growth": 0.1,
