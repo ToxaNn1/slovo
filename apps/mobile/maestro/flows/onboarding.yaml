@@ -40,22 +40,24 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: onboarding-next
     text: Далі
 - takeScreenshot: onboarding-first-word
-# «Хто ви?»: one button per option, and «Пізніше».
+# «Як добре ви знаєте мову?»: one button per option, «Не знаю» among them, and «Пізніше».
 - tapOn:
     id: onboarding-next
 - assertVisible:
     id: onboarding-question
 - assertVisible: КРОК 3 З 5
-- assertVisible: Хто ви?
+- assertVisible: Як добре ви знаєте мову?
 - assertVisible:
-    id: onboarding-answer-studying
+    id: onboarding-answer-good
+- assertVisible:
+    id: onboarding-answer-dont-know
 - assertVisible:
     id: onboarding-later
     text: Пізніше
-- takeScreenshot: onboarding-who
+- takeScreenshot: onboarding-level
 # An answer goes on to «Навіщо вам рідкісні слова?».
 - tapOn:
-    id: onboarding-answer-studying
+    id: onboarding-answer-good
 - assertVisible:
     id: onboarding-question
 - assertVisible: КРОК 4 З 5

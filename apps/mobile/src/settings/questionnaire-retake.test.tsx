@@ -133,12 +133,13 @@ beforeEach(async () => {
 });
 
 describe('Settings › «Пройти опитування ще раз»', () => {
-  it('retakes «Хто ви», the self-rating and the interests, each applied to the Mix', async () => {
+  it('retakes «Рівень», with no «Не знаю», the self-rating and the interests, each applied to the Mix', async () => {
     await render();
     screenSettled();
     await press(settings.rows.questionnaire);
 
-    expect(screen.getByTestId('questionnaire-who-studying')).toBeTruthy();
+    expect(screen.getByTestId('questionnaire-level-good')).toBeTruthy();
+    expect(screen.queryByTestId('questionnaire-level-dont-know')).toBeNull();
     expect(screen.getByTestId('questionnaire-why-rare-words')).toBeTruthy();
     // The self-rating only decides whether to offer the Rarity Test (ADR 0072).
     await press('Знаю дуже багато');
@@ -150,13 +151,13 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     expect(composition.mix.state.hiddenCategories.map(({ id }) => id)).toEqual(['food']);
   });
 
-  it('has no «Хто ви» and «Навіщо» while the questionnaire is off, and the self-rating still', async () => {
+  it('has no «Рівень» and «Навіщо» while the questionnaire is off, and the self-rating still', async () => {
     await openWith(editionWithout('questionnaire'));
     await render();
     screenSettled();
     await press(settings.rows.questionnaire);
 
-    expect(screen.queryByTestId('questionnaire-who-studying')).toBeNull();
+    expect(screen.queryByTestId('questionnaire-level-good')).toBeNull();
     expect(screen.queryByTestId('questionnaire-why-rare-words')).toBeNull();
     expect(screen.getByTestId('questionnaire-selfRating-many')).toBeTruthy();
   });

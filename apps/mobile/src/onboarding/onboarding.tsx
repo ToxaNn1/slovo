@@ -9,14 +9,16 @@ import {
   Button,
   onboardingLayout,
   PressedTile,
+  RarityTestQuestions,
   space,
   stepStyles,
   TEXT_MAX_FONT_SCALE,
   typeStyle,
   useEdition,
   useTokens,
+  type RarityTestQuestion,
 } from '@slovo/ui';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { MascotAs } from '../mascot/mascot';
@@ -24,6 +26,7 @@ import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
+import { rarityTestQuestionOf, useApplyRarityTest } from '../mix/rarity-test';
 
 const { onboarding: strings } = editionStrings;
 
@@ -82,6 +85,8 @@ export function Onboarding() {
         onSkip={skip}
       />
     );
+  } else if (step.kind === 'rarityTest') {
+    shown = <RarityTestStep step={step} mascot={mascot} onSkip={skip} />;
   } else {
     shown = (
       <Question
@@ -111,7 +116,8 @@ export function Onboarding() {
 const mascotState: Readonly<Record<Step['kind'], MascotState>> = {
   welcome: 'shouts',
   firstWord: 'happy',
-  who: 'waits',
+  level: 'waits',
+  rarityTest: 'waits',
   why: 'waits',
   dailyGoal: 'waits',
 };
@@ -165,7 +171,73 @@ function FirstWord({
   );
 }
 
-/** «Хто ви» or «Навіщо»: one button per option, and «Пізніше», which keeps the defaults. */
+/**
+ * The Rarity Test that «Не знаю» on «Рівень» opens, in the frame of that
+ * step: drawn afresh from the Mix, its result sets the Rarity Ceiling and
+ * «Далі» goes on. A draw with no Word, or one that fails, goes on at once.
+ */
+function RarityTestStep({
+  step,
+  mascot,
+  onSkip,
+}: {
+  step: Step;
+  mascot: ReactNode;
+  onSkip: () => void;
+}) {
+  const { rarityTest, onboarding } = useComposition();
+  const applyRarityTest = useApplyRarityTest();
+  const [words, setWords] = useState<readonly RarityTestQuestion[]>();
+  useEffect(() => {
+    let open = true;
+    const onDone = () => {
+      report(onboarding.next());
+    };
+    rarityTest
+      .draw()
+      .then((drawn) => {
+        if (!open) return;
+        if (drawn.length === 0) onDone();
+        else setWords(drawn.map(rarityTestQuestionOf));
+      })
+      .catch((error: unknown) => {
+        logError('Could not draw the Rarity Test', error);
+        if (open) onDone();
+      });
+    return () => {
+      open = false;
+    };
+  }, [rarityTest, onboarding]);
+  const done = () => {
+    report(onboarding.next());
+  };
+
+  const frame = ({ testID, footer, children }: { testID: string; footer: ReactNode; children: ReactNode }) => (
+    <OnboardingStep
+      testID={testID}
+      step={step.number}
+      total={step.total}
+      shout={strings.level.shout}
+      mascot={mascot}
+      onSkip={onSkip}
+      footer={footer}
+    >
+      {children}
+    </OnboardingStep>
+  );
+  if (words === undefined) return frame({ testID: 'onboarding-rarity', footer: null, children: null });
+  return (
+    <RarityTestQuestions
+      testID="onboarding-rarity"
+      words={words}
+      onApply={applyRarityTest}
+      onDone={done}
+      frame={frame}
+    />
+  );
+}
+
+/** «Рівень» or «Навіщо»: one button per option, and «Пізніше», which keeps the defaults. */
 function Question({
   step,
   title,
