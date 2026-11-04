@@ -85,6 +85,17 @@ describe('the traced Daily Crossword', () => {
     expect(tomorrow.state.words.every(({ kind }) => kind === 'hidden')).toBe(true);
   });
 
+  it('starts afresh when the puzzle changes on the same day', async () => {
+    const records = new Map<string, string>();
+    const crossword = await opened({ records });
+    const [hidden] = crossword.puzzle.words;
+    for (const action of traceOf(hidden?.path ?? [])) await crossword.play(action);
+
+    const other = await opened({ records, under: [...words, word('w_місто')] });
+    expect(other.puzzle.grid).not.toEqual(crossword.puzzle.grid);
+    expect(other.state.words.every(({ kind }) => kind === 'hidden')).toBe(true);
+  });
+
   it('keeps no trace, and is solved once every Word is found', async () => {
     const records = new Map<string, string>();
     const crossword = await opened({ records });
@@ -120,6 +131,19 @@ describe('the traced Daily Crossword of the composition', () => {
   it('is off while the Edition has it off', async () => {
     const { composition } = await app(['game', 'dailyCrossword']);
     expect(await composition.openTracedCrossword()).toEqual({ kind: 'off' });
+  });
+
+  it('gives a reader who hid a Word the same puzzle as one who did not', async () => {
+    const plain = await app(['game', 'dailyCrossword', 'tracedCrossword']);
+    const hiding = await app(['game', 'dailyCrossword', 'tracedCrossword']);
+    await hiding.composition.hide({ kind: 'entry', entryId: 'w_вовк' });
+
+    const [first, second] = await Promise.all([
+      plain.composition.openTracedCrossword(),
+      hiding.composition.openTracedCrossword(),
+    ]);
+    if (first.kind !== 'open' || second.kind !== 'open') throw new Error('Expected the puzzle');
+    expect(second.crossword.puzzle).toEqual(first.crossword.puzzle);
   });
 
   it('opens the puzzle of the Words within the Rarity Ceiling, and solving it earns XP', async () => {

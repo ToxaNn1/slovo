@@ -118,7 +118,7 @@ describe('the Rarity Ceiling', () => {
     expect(app.rarityCeiling.state).toBe(5);
   });
 
-  it('bounds the Words the Daily Crossword picks from: the live Words up to it, the Hidden aside, in pack order', async () => {
+  it('bounds the Words the Daily Crossword picks from: the live Words up to it, Hidden ones included, in pack order', async () => {
     const port = createMemoryUserStatePort();
     const app = await open({ port });
     await app.rarityCeiling.set(2);
@@ -131,7 +131,7 @@ describe('the Rarity Ceiling', () => {
 
     const words = await entries.wordsUnderRarityCeiling();
 
-    expect(words.map(({ id }) => id)).toEqual(['w_r1_0', 'w_r2_0', 'w_r2_1']);
+    expect(words.map(({ id }) => id)).toEqual(['w_r1_0', 'w_r1_1', 'w_r2_0', 'w_r2_1']);
   });
 
   it('is set by the Rarity Test to the lowest rarity the reader does not know', async () => {

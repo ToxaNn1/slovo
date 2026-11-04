@@ -53,7 +53,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0049](0049-each-edition-publishes-its-legal-pages.md) An Edition's legal pages are Markdown in its folder, published on GitHub Pages at `/<edition>/` on the app's domain.
 - 0050: merged into 0033.
 - [0051](0051-synonym-row-and-tip-are-the-fourth-and-fifth-kinds-of-entry.md) A Synonym Row and a Tip are full kinds of Entry with Feed turns and Mix switches of their own; notifications stay Words.
-- [0052](0052-game-modes-typed-answers-a-best-result-per-mode-and-the-daily-crossword.md) Thirteen Game Modes with their own Lives, limits and answer forms, one typed-answer comparison, a Best result per mode, the Daily Crossword (its Words within the Rarity Ceiling, 0072).
+- [0052](0052-game-modes-typed-answers-a-best-result-per-mode-and-the-daily-crossword.md) Thirteen Game Modes with their own Lives, limits and answer forms, one typed-answer comparison, a Best result per mode, the Daily Crossword (its Words within the Rarity Ceiling, 0072; its crossword Generation and Play superseded by 0073).
 - 0053: merged into 0027.
 - [0054](0054-learning-and-habit-search-the-rarity-test-feed-notices-the-daily-limit-and-mood.md) Search, the Rarity Test, the Feed Notices, the Word of the Day archive, the Active Days calendar, the polite pause, the first week, the widget hint and Mood; the Daily Limit is retired for the Daily Goal (0066) and Mood is paused in 1.0.
 - [0055](0055-motion-seasons-and-holidays-the-falling-stress-and-illustrations.md) Animations last 200–300 ms (the Рупор design's peaks may run longer) on the UI thread and become one short fade under Reduce Motion; Decor follows the Season or Holiday (paused in 1.0); the falling Stress; Illustrations.
