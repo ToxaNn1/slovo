@@ -15,6 +15,7 @@ import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
 import type { Backend, Clock } from '../ports';
 import type { XpLog } from '../progress/xp-log';
+import type { RarityCeiling } from '../settings/rarity-ceiling';
 import {
   applyAnswer,
   dailyGoalAsked,
@@ -132,6 +133,7 @@ export async function openOnboarding({
   entries,
   wordOfTheDay,
   mix,
+  rarityCeiling,
   xpLog,
   analytics,
   backend,
@@ -144,7 +146,8 @@ export async function openOnboarding({
     'get' | 'getMany' | 'linkedCorrections' | 'categories' | 'linkingSynonymRow' | 'illustrationOf'
   >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
-  mix: Pick<Mix, 'setRarityCeiling' | 'setKindWeight' | 'setRarityFloorRaisingCeiling'>;
+  mix: Pick<Mix, 'setKindWeight'>;
+  rarityCeiling: Pick<RarityCeiling, 'set'>;
   xpLog: Pick<XpLog, 'setDailyGoal'>;
   analytics: Pick<Analytics, 'track'>;
   backend: Pick<Backend, 'counters'> | undefined;
@@ -258,7 +261,7 @@ export async function openOnboarding({
     answer: (answerId) =>
       endStep(async ({ kind }) => {
         if (kind !== 'who' && kind !== 'why') return;
-        if (!(await applyAnswer({ edition, mix }, kind, answerId))) return;
+        if (!(await applyAnswer({ edition, mix, rarityCeiling }, kind, answerId))) return;
         await count(kind, answerId);
         analytics
           .track('questionnaireAnswered', { question: kind, answer: answerId })

@@ -106,10 +106,10 @@ describe('Search over Word Lemmas', () => {
     expect(await lemmasOf(search, 'сум')).toEqual(['сумирний']);
   });
 
-  it('finds a Word out of the Mix and below the Rarity Floor', async () => {
+  it('finds a Word out of the Mix and above the Rarity Ceiling', async () => {
     const records = new Map([
       ['mix.categories.nature', JSON.stringify(false)],
-      ['mix.rarityFloor', JSON.stringify(5)],
+      ['settings.rarityCeiling', JSON.stringify(1)],
     ]);
     const search = createSearch({
       content: createMemoryContentPort({
@@ -117,7 +117,7 @@ describe('Search over Word Lemmas', () => {
           { id: 'speech', displayName: 'Мова' },
           { id: 'nature', displayName: 'Природа' },
         ],
-        words: [word('w_nature', { lemma: 'сумирний', categoryId: 'nature', rarity: 1 })],
+        words: [word('w_nature', { lemma: 'сумирний', categoryId: 'nature', rarity: 5 })],
       }),
       edition: edition(),
       userState: await openUserState({ port: createMemoryUserStatePort(records) }),

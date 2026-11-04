@@ -7,11 +7,11 @@ import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
-/** Twenty Words of the test Category, one of another Category and one of rarity 1. */
+/** Twenty Words of the test Category, one of another Category and one of rarity 5. */
 const words: readonly Word[] = [
   ...Array.from({ length: 20 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`)),
   word('w_other', { categoryId: 'other' }),
-  word('w_common', { rarity: 1 }),
+  word('w_rare', { rarity: 5 }),
 ];
 
 const corrections: readonly Correction[] = Array.from({ length: 4 }, (_, index) =>
@@ -61,7 +61,7 @@ async function run({
   withCorrections = false,
   withIdioms = false,
   withRowsAndTips = false,
-  on = ['knowledge', 'corrections', 'idioms', 'synonymRows', 'tips', 'rarityFloor'],
+  on = ['knowledge', 'corrections', 'idioms', 'synonymRows', 'tips', 'rarityCeiling'],
 }: {
   records: Map<string, string>;
   at: string;
@@ -171,7 +171,7 @@ describe('Review in the Feed', () => {
     await markSeenWordsUnknown(records, { count: 3, unknown: 0 });
     const unmarked = new Map(records);
     await markUnknown(records, ['w_05', 'w_06']);
-    const off: FeatureSwitch[] = ['corrections', 'rarityFloor'];
+    const off: FeatureSwitch[] = ['corrections', 'rarityCeiling'];
 
     const ids = await firstCards((await run({ records, at: dayTwo, on: off })).feed, 12);
 
@@ -218,19 +218,19 @@ describe('Review in the Feed', () => {
     expect((await firstCards(app.feed, 5))[4]).toBe(due);
   });
 
-  it('skips a due Word out of the Mix or under the Rarity Floor until it is eligible again', async () => {
+  it('skips a due Word out of the Mix or above the Rarity Ceiling until it is eligible again', async () => {
     const records = new Map<string, string>();
-    const due = ['w_other', 'w_common'];
+    const due = ['w_other', 'w_rare'];
     await markUnknown(records, due);
     const app = await run({ records, at: dayTwo });
 
     await app.mix.takeOut('other');
-    await app.mix.setRarityFloor(2);
+    await app.rarityCeiling.set(4);
     const ids = await firstCards(app.feed, 9);
     expect(ids.filter((id) => id !== undefined && due.includes(id))).toEqual([]);
 
     await app.mix.putBack('other');
-    await app.mix.setRarityFloor(1);
+    await app.rarityCeiling.set(5);
     const back = await firstCards(app.feed, 15);
     expect(due).toContain(back[11]);
     expect(due).toContain(back[14]);

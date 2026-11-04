@@ -36,8 +36,6 @@ export function useMixChanges(): {
   setKind: (kind: MixKind, inMix: boolean) => void;
   /** Sets the Mix kind weight of the kind: «Менше», «Звичайно» or «Більше». */
   setKindWeight: (kind: MixKind, weight: MixKindWeight) => void;
-  setRarityFloor: (floor: number) => void;
-  setRarityCeiling: (ceiling: number) => void;
   /** Sets how often the Feed asks a Quick Question. */
   setQuickQuestionEvery: (every: QuickQuestionEvery) => void;
 } {
@@ -59,12 +57,6 @@ export function useMixChanges(): {
     },
     setKindWeight: (kind, weight) => {
       keep(mix.setKindWeight(kind, weight));
-    },
-    setRarityFloor: (floor) => {
-      keep(mix.setRarityFloor(floor));
-    },
-    setRarityCeiling: (ceiling) => {
-      keep(mix.setRarityCeiling(ceiling));
     },
     setQuickQuestionEvery: (every) => {
       keep(mix.setQuickQuestionEvery(every));

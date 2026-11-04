@@ -151,6 +151,11 @@ export {
   type SettingsDefaults,
   type UserSettings,
 } from './settings/settings';
+export {
+  readRarityCeiling,
+  withinRarityCeiling,
+  type RarityCeiling,
+} from './settings/rarity-ceiling';
 export { renderStress, STRESS_MARK, withoutStress } from './entries/stress';
 export { createSwipeHint, type SwipeHint } from './feed/swipe-hint';
 export { buildWordCard, type WordCardModel } from './entries/word-card';

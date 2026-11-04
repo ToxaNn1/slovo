@@ -136,7 +136,7 @@ describe('the onboarding', () => {
     expect(screen.getByText(strings.who.title)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Мовний гурман' })).toBeTruthy();
     await press('onboarding-answer-studying');
-    expect(composition.mix.state.rarityCeiling).toBe(4);
+    expect(composition.rarityCeiling.state).toBe(4);
 
     expect(screen.getByText(strings.why.title)).toBeTruthy();
     // «Пізніше» goes on and keeps the Mix kind weights.

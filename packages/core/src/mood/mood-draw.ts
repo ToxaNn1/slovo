@@ -26,8 +26,8 @@ export interface MoodRoulette {
 
 /**
  * «Слово під настрій» (ADR 0054): a random Eligible Word of a Mood, drawn over
- * the Words the Mix gives (its Categories, its Rarity Floor, not Retired, not
- * Hidden). The Mix and the Hidden Entries are read afresh on every call. It
+ * the Words the Mix gives (its Categories, under the Rarity Ceiling, not
+ * Retired, not Hidden). The Mix and the Hidden Entries are read afresh on every call. It
  * writes nothing, so no Word is Seen.
  */
 export interface MoodDraw {

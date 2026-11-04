@@ -37,7 +37,7 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('statistics')).toBe(true);
     expect(edition.isFeatureEnabled('knowledge')).toBe(true);
     expect(edition.isFeatureEnabled('selfCheck')).toBe(true);
-    expect(edition.isFeatureEnabled('rarityFloor')).toBe(true);
+    expect(edition.isFeatureEnabled('rarityCeiling')).toBe(true);
     expect(edition.isFeatureEnabled('gameReview')).toBe(true);
     expect(edition.isFeatureEnabled('gameGuessWord')).toBe(true);
     expect(edition.isFeatureEnabled('gameCorrection')).toBe(true);
@@ -92,9 +92,8 @@ describe('the UA Edition', () => {
         idioms: true,
         synonymRows: true,
         tips: true,
-        rarityFloor: 1,
-        rarityCeiling: 5,
       },
+      rarityCeiling: 5,
     });
   });
 

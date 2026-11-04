@@ -1,4 +1,4 @@
-import { MixKindWeightSchema, QuickQuestionEverySchema, RaritySchema } from '@slovo/contracts';
+import { MixKindWeightSchema, QuickQuestionEverySchema } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { declareRecord, declareRecords, InstantSchema } from '../user-state/user-state-record';
@@ -47,17 +47,6 @@ export const mixRecords = {
    * wins like the rest of the Mix (ADR 0041); a new key needs no migration.
    */
   mixKindWeights: declareRecords('mix.kindWeights.', MixKindWeightSchema),
-  /**
-   * The Rarity Floor the user chose, 1 to 5; without it, the Edition's
-   * default. It syncs last write wins like the rest of the Mix (ADR 0041).
-   */
-  mixRarityFloor: declareRecord('mix.rarityFloor', RaritySchema),
-  /**
-   * The Rarity Ceiling the user chose, 1 to 5; without it, the Edition's
-   * default. Never below the Rarity Floor when read. It syncs last write wins
-   * like the rest of the Mix (ADR 0041).
-   */
-  mixRarityCeiling: declareRecord('mix.rarityCeiling', RaritySchema),
   /** How often the Feed asks a Quick Question; the Core's default unless the user chose. */
   mixQuickQuestion: declareRecord('mix.quickQuestion', QuickQuestionEverySchema),
 };

@@ -140,8 +140,9 @@ describe('Settings › «Пройти опитування ще раз»', () =>
 
     expect(screen.getByTestId('questionnaire-who-studying')).toBeTruthy();
     expect(screen.getByTestId('questionnaire-why-rare-words')).toBeTruthy();
+    // The self-rating only decides whether to offer the Rarity Test (ADR 0072).
     await press('Знаю дуже багато');
-    expect(composition.mix.state.rarityFloor).toBe(3);
+    expect(composition.rarityCeiling.state).toBe(5);
 
     await fireEvent.press(screen.getByTestId('questionnaire-interest-food'));
     await press(feedNotices.laterQuestions.done);
@@ -160,8 +161,8 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     expect(screen.getByTestId('questionnaire-selfRating-many')).toBeTruthy();
   });
 
-  it('is not in Settings while the questionnaire and the Rarity Floor are off', async () => {
-    await openWith(editionWithout('questionnaire', 'rarityFloor'));
+  it('is not in Settings while the questionnaire and the Rarity Test are off', async () => {
+    await openWith(editionWithout('questionnaire', 'rarityTest'));
     await render();
 
     expect(
@@ -180,14 +181,5 @@ describe('The Feed Notice of a later question', () => {
     await press(feedNotices.laterQuestions.done);
 
     expect(composition.xpLog.state.dailyGoal?.goal).toBe(50);
-  });
-
-  it('keeps the Rarity Floor as it was with «Пізніше» on the self-rating', async () => {
-    await composition.mix.setRarityFloor(2);
-    await render('selfRating');
-
-    await press(feedNotices.laterQuestions.later);
-
-    expect(composition.mix.state.rarityFloor).toBe(2);
   });
 });

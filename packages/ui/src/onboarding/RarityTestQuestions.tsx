@@ -67,11 +67,11 @@ export function RarityTestQuestions({
   /** The Words to ask about, in the order asked. */
   words: readonly RarityTestQuestion[];
   /**
-   * Applies the answers and resolves to the Rarity Floor they set, or to
+   * Applies the answers and resolves to the Rarity Ceiling they set, or to
    * nothing when none was set; it never rejects.
    */
   onApply: (answers: readonly { rarity: Rarity; known: boolean }[]) => Promise<Rarity | undefined>;
-  /** Goes on from the result, or at once when the answers set no floor. */
+  /** Goes on from the result, or at once when the answers set no ceiling. */
   onDone: () => void;
   frame: (screen: RarityTestScreen) => ReactNode;
 }) {

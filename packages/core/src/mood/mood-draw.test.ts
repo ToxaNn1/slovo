@@ -138,16 +138,16 @@ describe('the mood draw', () => {
     expect(await landings(draw, 'joyful')).toEqual(new Set(['w_still', 'w_glad']));
   });
 
-  it('applies the Mix: its Categories, its Rarity Floor and the Hidden Entries', async () => {
+  it('applies the Mix’s Categories, the Rarity Ceiling and the Hidden Entries', async () => {
     const draw = await open({
       records: {
         'mix.categories.other': false,
-        'mix.rarityFloor': 5,
+        'settings.rarityCeiling': 4,
         'hidden.w_quiet': '2026-10-20T10:00:00.000Z',
       },
     });
 
-    expect(await landings(draw, 'calm')).toEqual(new Set(['w_rare']));
+    expect(await landings(draw, 'calm')).toEqual(new Set(['w_still']));
   });
 
   it('gives a roulette of the mood’s Lemmas that ends on the Lemma of the Word it lands on', async () => {

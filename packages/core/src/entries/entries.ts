@@ -3,6 +3,7 @@ import type {
   Correction,
   Entry,
   EntryKind,
+  Rarity,
   SynonymRow,
   Tip,
   Word,
@@ -21,6 +22,11 @@ import {
   type ShownKind,
 } from './entry-kinds';
 import { readMix, type MixEdition, type MixState } from './mix';
+import {
+  readRarityCeiling,
+  withinRarityCeiling,
+  type RarityCeilingEdition,
+} from '../settings/rarity-ceiling';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -65,14 +71,14 @@ export type EligibleOfKind<E extends AskableEntry = ShownEntry> =
  * the Feed, the Cycle, the Word of the Day and the card builders never check
  * Retired, a Feature Switch or the Mix themselves. An eligible Entry is live
  * (not Retired), of a kind the Edition turns on and no remote Feature Switch
- * turns off, in the user's Mix (a Word from its Rarity Floor up to its Rarity Ceiling; the
- * rarities touch no other kind) and not Hidden (ADR 0015, 0019, 0040,
- * 0051). Synonym Rows and Tips are eligible by the same rules.
+ * turns off, in the user's Mix, within the Rarity Ceiling (a Word up to it;
+ * the rarities touch no other kind) and not Hidden (ADR 0015, 0019, 0040,
+ * 0051, 0072). Synonym Rows and Tips are eligible by the same rules.
  */
 export interface Entries {
   /**
    * The ids of the eligible Entries: the live Words of the Categories in the
-   * Mix at the Rarity Floor or rarer, Category by Category in the Language
+   * Mix within the Rarity Ceiling, Category by Category in the Language
    * Pack's order, and the live Corrections, Idioms, Synonym Rows and Tips,
    * each kind when the Edition turns it on and it is in the Mix, each in the
    * Language Pack's stable order, leaving out every Hidden Entry. The Mix and
@@ -81,12 +87,19 @@ export interface Entries {
    */
   eligible(): Promise<EntryIds>;
   /**
-   * The Words that would be eligible at the lowest Rarity Floor: the live
+   * The Words that would be eligible at the highest Rarity Ceiling: the live
    * Words of the Categories in the Mix that are not Hidden, whatever the
-   * Rarity Floor, in the order `eligible` gives Words, for the Rarity Test
-   * that sets the floor. Read afresh on every call, as `eligible` reads.
+   * Rarity Ceiling, in the order `eligible` gives Words, for the Rarity Test
+   * that sets the ceiling. Read afresh on every call, as `eligible` reads.
    */
   eligibleWordsOfAnyRarity(): Promise<readonly Word[]>;
+  /**
+   * The Words within the Rarity Ceiling, the Mix aside: every live Word up to
+   * it that is not Hidden, in the Language Pack's order, which the Daily
+   * Crossword picks from, so readers at one Ceiling get the same puzzle (ADR
+   * 0072). Read afresh on every call, as `eligible` reads.
+   */
+  wordsUnderRarityCeiling(): Promise<readonly Word[]>;
   /**
    * The eligible Entries of one kind themselves, in the order `eligible` gives
    * their ids, for a feature that weighs them all at once, such as the Game;
@@ -192,7 +205,7 @@ export function createEntries(
     | { content: ContentReadPort; edition: EntriesEdition }
     | {
         content: ContentReadPort;
-        edition: EntriesEdition & MixEdition;
+        edition: EntriesEdition & MixEdition & RarityCeilingEdition;
         userState: Pick<UserState, 'list' | 'read'>;
       },
 ): Entries {
@@ -273,40 +286,25 @@ export function createEntries(
     return ids.flat();
   }
 
-  /**
-   * The Words of the ids at the Rarity Floor or above it, while the Edition
-   * turns its rarityFloor switch on; every one of them otherwise, or at the lowest
-   * floor, without reading the Words.
-   */
-  async function atRarityFloor(
-    ids: readonly string[],
-    floor: number | undefined,
-  ): Promise<readonly string[]> {
-    if (floor === undefined || floor <= 1 || !edition.isFeatureEnabled('rarityFloor')) return ids;
-    const words = await live.word();
-    return ids.filter((id) => {
-      const word = words.get(id);
-      return word?.kind === 'word' && word.rarity >= floor;
-    });
-  }
+  /** The Rarity Ceiling in force; the highest, so every Word is within it, without the user state. */
+  const rarityCeiling = () =>
+    'userState' in options ? readRarityCeiling(options) : Promise.resolve<Rarity>(5);
+
+  /** The live Word of the id when it is within the Rarity Ceiling. */
+  const wordWithinCeiling = (words: ReadonlyMap<string, Entry>, id: string, ceiling: Rarity) => {
+    const word = words.get(id);
+    return word?.kind === 'word' && withinRarityCeiling(word.rarity, ceiling) ? word : undefined;
+  };
 
   /**
-   * The Words of the ids up to the Rarity Ceiling, while the Edition turns its
-   * rarityCeiling switch on; every one of them otherwise, or at the highest
-   * ceiling, without reading the Words.
+   * The Words of the ids within the Rarity Ceiling; every one of them at the
+   * highest ceiling, without reading the Words.
    */
-  async function atRarityCeiling(
-    ids: readonly string[],
-    ceiling: number | undefined,
-  ): Promise<readonly string[]> {
-    if (ceiling === undefined || ceiling >= 5 || !edition.isFeatureEnabled('rarityCeiling')) {
-      return ids;
-    }
+  async function underRarityCeiling(ids: readonly string[]): Promise<readonly string[]> {
+    const ceiling = await rarityCeiling();
+    if (ceiling >= 5) return ids;
     const words = await live.word();
-    return ids.filter((id) => {
-      const word = words.get(id);
-      return word?.kind === 'word' && word.rarity <= ceiling;
-    });
+    return ids.filter((id) => wordWithinCeiling(words, id, ceiling) !== undefined);
   }
 
   /** The ids of the Hidden Entries; none without the user state. */
@@ -317,9 +315,7 @@ export function createEntries(
     const [mix, hidden] = await Promise.all([readUserMix(), hiddenIds()]);
     const ofKind = (kind: MixKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
     const [words, corrections, idioms, synonymRows, tips] = await Promise.all([
-      idsInCategories('word', mix?.categoryIds)
-        .then((ids) => atRarityFloor(ids, mix?.rarityFloor))
-        .then((ids) => atRarityCeiling(ids, mix?.rarityCeiling)),
+      idsInCategories('word', mix?.categoryIds).then(underRarityCeiling),
       kindShown('correction', mix)
         ? idsInCategories('correction', mix?.correctionCategories.categoryIds)
         : [],
@@ -365,9 +361,23 @@ export function createEntries(
     });
   }
 
+  async function wordsUnderRarityCeiling(): Promise<readonly Word[]> {
+    const [ceiling, hidden, words, ids] = await Promise.all([
+      rarityCeiling(),
+      hiddenIds(),
+      live.word(),
+      listIds.word(),
+    ]);
+    return ids.flatMap((id) => {
+      const word = wordWithinCeiling(words, id, ceiling);
+      return word !== undefined && !hidden.has(id) ? [word] : [];
+    });
+  }
+
   return {
     eligible,
     eligibleWordsOfAnyRarity,
+    wordsUnderRarityCeiling,
     // The kinds asked for pick the Entries returned, as the generic signature says.
     eligibleOfKind: eligibleOfKind as Entries['eligibleOfKind'],
     async get(id) {
