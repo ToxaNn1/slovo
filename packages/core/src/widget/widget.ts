@@ -130,11 +130,17 @@ async function goalRingOf({
   clock: Clock;
 }): Promise<GoalRing | undefined> {
   const on = edition.isFeatureEnabled.bind(edition);
-  const { dailyGoal, today } = xpLog.state;
+  const { dailyGoal } = xpLog.state;
   if (!on('widgetGoalRing') || !on('xpLog') || dailyGoal === null) return undefined;
   const hidden = (await userState.read(userStateRecords.noCounters)) === true;
   if (hidden && on('noCounters')) return undefined;
-  const ring = { on: todayKey(clock), xp: today, goal: dailyGoal.goal, met: dailyGoal.met };
+  // `xp` carries the Words Seen toward the Daily Goal (ADR 0074).
+  const ring = {
+    on: todayKey(clock),
+    xp: dailyGoal.seen,
+    goal: dailyGoal.goal,
+    met: dailyGoal.met,
+  };
   // The next day starts empty, and a missed day breaks the Streak only once it ends (ADR 0066).
   const after = { xp: 0, met: false };
   return on('statistics') && !hidden
