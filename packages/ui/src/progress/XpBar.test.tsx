@@ -9,12 +9,18 @@ const strings = testStrings({
     xpToday: '{count} XP',
     xpBarLabel: 'Experience: {count} XP today',
     xpBarHint: 'Opens the Game',
+    wordsTowardGoal: '{seen} of {goal} words',
+    wordsTowardGoalLabel: 'Daily Goal: {seen} of {goal} words',
   },
 });
 
 const zeroInsets = { top: 0, left: 0, right: 0, bottom: 0 };
 
-function renderBar(today: number, onPress: () => void, goal?: number) {
+function renderBar(
+  today: number,
+  onPress: () => void,
+  goal?: { readonly seen: number; readonly goal: number },
+) {
   return render(
     <SafeAreaProvider
       initialMetrics={{ frame: { x: 0, y: 0, width: 390, height: 844 }, insets: zeroInsets }}
@@ -35,11 +41,12 @@ describe('XpBar', () => {
     expect(screen.getByTestId('xp-bar')).toHaveProp('accessibilityHint', 'Opens the Game');
   });
 
-  it('draws today’s XP over the Daily Goal when it has one', async () => {
-    await renderBar(12, () => undefined, 20);
+  it('draws the Words Seen today over the Daily Goal in Words when it has one', async () => {
+    await renderBar(12, () => undefined, { seen: 3, goal: 10 });
 
-    expect(screen.getByRole('button', { name: 'Experience: 12/20 XP today' })).toBeOnTheScreen();
-    expect(screen.getByText('12/20 XP')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Daily Goal: 3 of 10 words' })).toBeOnTheScreen();
+    expect(screen.getByText('3 of 10 words')).toBeOnTheScreen();
+    expect(screen.queryByText('12 XP')).toBeNull();
   });
 
   it('calls back on a tap', async () => {

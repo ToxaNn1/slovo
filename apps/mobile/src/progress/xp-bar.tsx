@@ -6,8 +6,8 @@ import { useSubscribed } from '../opening';
 import { useShown } from '../shown-in-effect';
 
 /**
- * The XP bar over the Feed with today's XP over the Daily Goal while it is
- * on, kept up to date as the XP log grows; a tap opens the Game tab. Left out while the XP log is off or the
+ * The XP bar over the Feed with today's XP, or today's Words Seen over the
+ * Daily Goal while one is set and on, kept up to date as the XP log grows; a tap opens the Game tab. Left out while the XP log is off or the
  * reader hides the counters.
  */
 export function XpBarToGame() {
@@ -18,7 +18,7 @@ export function XpBarToGame() {
   return (
     <XpBar
       today={today}
-      goal={shown.dailyGoal ? dailyGoal?.goal : undefined}
+      goal={shown.dailyGoal && dailyGoal ? { seen: dailyGoal.seen, goal: dailyGoal.goal } : undefined}
       onPress={() => {
         router.navigate('/game');
       }}
