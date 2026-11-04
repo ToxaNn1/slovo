@@ -1109,7 +1109,10 @@ describe('the evening notification', () => {
   it("drops today's evening notification once a new goal is met", async () => {
     const records = new Map([
       goalSet,
-      ['history.w_000', JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false })],
+      [
+        'history.w_000',
+        JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
+      ],
     ]);
     const { app, scheduler } = await run({ evening: true, records });
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);

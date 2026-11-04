@@ -102,8 +102,9 @@ export const WidgetSnapshotSchema = z
      * day breaks it only once that day ends (ADR 0066). A snapshot without
      * `after` keeps the format; the widget then draws an empty ring without
      * the Streak. None while the widget goal ring, the XP log or the Daily
-     * Goal is off, or «Без лічильників» hides the counters. Optional, so the
-     * format stays.
+     * Goal is off or not set, or «Без лічильників» hides the counters.
+     * Optional, so the format stays. `xp` keeps its name for the format and
+     * carries the Words Seen toward the Daily Goal (ADR 0074).
      */
     goalRing: z
       .strictObject({

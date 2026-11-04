@@ -104,7 +104,12 @@ function earned(records: Map<string, string>, amount: number, ...dates: string[]
 function goalMet(records: Map<string, string>, ...dates: string[]) {
   records.set(
     'xp.word-goal',
-    JSON.stringify({ kind: 'word-goal', date: '2026-10-01', at: '2026-10-01T09:00:00.000Z', goal: 10 }),
+    JSON.stringify({
+      kind: 'word-goal',
+      date: '2026-10-01',
+      at: '2026-10-01T09:00:00.000Z',
+      goal: 10,
+    }),
   );
   for (const date of dates) {
     records.set(

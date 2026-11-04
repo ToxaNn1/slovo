@@ -476,7 +476,8 @@ export const DailyGoalsSchema = z
       .array(DailyGoalSchema)
       .min(1)
       .refine(
-        (options) => options.every((goal, index) => index === 0 || goal > (options[index - 1] ?? 0)),
+        (options) =>
+          options.every((goal, index) => index === 0 || goal > (options[index - 1] ?? 0)),
         'Expected the Daily Goals in rising order, each once',
       ),
     highlighted: DailyGoalSchema,
