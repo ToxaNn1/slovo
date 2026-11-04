@@ -165,7 +165,7 @@ _Avoid_: Recent, log
 ### Progress
 
 **Active Day**:
-A local calendar day on which the reader earned at least 5 XP from learning actions, counted separately from the Daily Goal. Active Days recorded before 1.0, when a day on which the app was opened was an Active Day, stay Active Days. Derived from the XP log and the kept earlier days, never stored on its own.
+A local calendar day on which the reader met the Daily Goal set for it (a `goal-met` record) or, on a day with no Daily Goal, earned at least 5 XP from learning actions (ADR 0074). Active Days recorded before 1.0, when a day on which the app was opened was an Active Day, stay Active Days. Derived from the XP log and the kept earlier days, never stored on its own.
 _Avoid_: Opened day, visit day
 
 **Streak**:
@@ -181,7 +181,7 @@ The points a learning action earns: a right answer in a Game (1 per Round), a fi
 _Avoid_: Points, score, coins, experience
 
 **XP log**:
-The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set for a day, a freeze consumed, a Break started and a Badge earned. Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
+The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started and a Badge earned. Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
 _Avoid_: XP history, score table, ledger
 
 **Level**:
@@ -189,7 +189,7 @@ A step derived from total XP: 50 XP reach level 1, each level up to 10 costs 10%
 _Avoid_: Rank, tier, grade
 
 **Daily Goal**:
-The XP the reader aims for on a local day: 10, 20, 30 or 50, chosen in onboarding with 20 highlighted. It is recorded per day in the XP log, so a past day keeps the goal the reader had then; a change applies from the same local day and a day already met stays met. It is separate from the Active Day threshold of 5 XP. It replaces the Daily Limit.
+The number of Words Seen the reader aims for on a local day: one of the Edition's options (10, 25 or 50 in the UA Edition), chosen in onboarding with 10 highlighted, or none when skipped (ADR 0074). Only Words count. It is recorded in the XP log as `word-goal` (the last set on or before a day is in force) and met once by a `goal-met` record, so a past day keeps the goal the reader had then; a change applies from the same local day and a day already met stays met. It replaces the Daily Limit.
 _Avoid_: Target, quota, Daily Limit
 
 **Streak freeze**:
