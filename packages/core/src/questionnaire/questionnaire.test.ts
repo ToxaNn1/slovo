@@ -179,6 +179,16 @@ describe('The later questions', () => {
     expect(app.rarityCeiling.state).toBe(2);
   });
 
+  it('sets the Rarity Ceiling by a «Рівень» option and has no «Не знаю» on its retake', async () => {
+    const app = await run({ records: await existingReader(), on: '2026-11-02' });
+    expect(app.questionnaire.options.level.map(({ id }) => id)).toEqual(['starting', 'good']);
+
+    expect(await app.questionnaire.answer('level', 'dont-know')).toBe(false);
+    expect(await app.questionnaire.answer('level', 'starting')).toBe(true);
+
+    expect(app.rarityCeiling.state).toBe(2);
+  });
+
   it('asks no self-rating while the Rarity Test is off', async () => {
     const records = await existingReader();
 
