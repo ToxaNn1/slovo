@@ -1,6 +1,7 @@
 import { EditionProvider, MistakeReportSheet } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, within } from '@testing-library/react-native';
+import { Keyboard } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
 
@@ -111,5 +112,36 @@ describe('MistakeReportSheet', () => {
 
     expect(screen.getByRole('radio', { name: 'Typo' })).not.toBeChecked();
     expect(screen.getByText('0/500')).toBeOnTheScreen();
+  });
+  it('caps the comment field at four lines, so a long comment scrolls inside it', async () => {
+    await renderSheet();
+
+    const field = screen.getByLabelText('Comment (optional)');
+    // Four lines of 20 pt, 12 pt of padding above and below, and a 1 pt border each side.
+    expect(field).toHaveStyle({ maxHeight: 4 * 20 + 2 * 12 + 2 });
+    expect(field).toHaveProp('scrollEnabled', true);
+  });
+
+  it('closes the keyboard on the return key «Done» instead of adding a line', async () => {
+    await renderSheet();
+
+    const field = screen.getByLabelText('Comment (optional)');
+    expect(field).toHaveProp('returnKeyType', 'done');
+    expect(field).toHaveProp('submitBehavior', 'blurAndSubmit');
+  });
+
+  it('closes the keyboard on a drag of the sheet and on a tap beside the field', async () => {
+    const dismiss = jest.spyOn(Keyboard, 'dismiss');
+    const { onSend } = await renderSheet();
+
+    const content = screen.getByTestId('mistake-report-content');
+    expect(content).toHaveProp('keyboardDismissMode', 'on-drag');
+    expect(content).toHaveProp('keyboardShouldPersistTaps', 'handled');
+    await fireEvent.changeText(screen.getByLabelText('Comment (optional)'), 'Wrong stress');
+    await fireEvent.press(within(content).getByRole('radio', { name: 'Stress' }));
+    expect(dismiss).toHaveBeenCalledTimes(1);
+    await fireEvent.press(send());
+    expect(onSend).toHaveBeenCalledWith({ type: 'stress', comment: 'Wrong stress' });
+    dismiss.mockRestore();
   });
 });
