@@ -1,8 +1,8 @@
-# Onboarding is short: welcome, the first Word, two questions, the Daily Goal, the Feed
+# Onboarding is short: welcome, the first Word, two questions, the Daily Goal, the home
 
 Spec #1358 wants a new reader in the Feed within a minute, already knowing what SLOVO is and with a Feed in their taste.
 
-**The order.** Welcome, the first Word with its Pronunciation, two questions, the Daily Goal (ADR 0066, 20 highlighted, the reader picks), then the Feed. Every step can be skipped; skipping the questions keeps the defaults.
+**The order.** Welcome, the first Word with its Pronunciation, two questions, the Daily Goal (ADR 0066, 20 highlighted, the reader picks), then the home: the Dashboard, or the Feed with `dashboard` off (ADR 0074). Every step can be skipped; skipping the questions keeps the defaults.
 
 **The two questions.** «Хто ви» («Навчаюсь», «Працюю», «Мовний гурман») sets the Rarity Ceiling: «Навчаюсь» «до 4», the others «до 5». «Навіщо» sets the Mix kind weights (more Corrections, more rare Words or more Game). The Edition config holds the options and their mapping, so the Core stays language-agnostic.
 
