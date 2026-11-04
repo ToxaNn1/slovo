@@ -94,15 +94,15 @@ async function newReader(on: string): Promise<Map<string, string>> {
 
 // Ticket #1380, ADR 0067: the later questions come through Feed Notices, one a local day, each once.
 describe('The later questions', () => {
-  it('gives an existing reader the Daily Goal choice once, with 20 until they choose', async () => {
+  it('gives an existing reader the Daily Goal choice once, with no goal until they choose', async () => {
     const records = await existingReader();
 
     const first = await run({ records, on: '2026-11-02' });
 
     expect(await laterQuestionsIn(first)).toEqual(['dailyGoalChoice']);
-    expect(first.xpLog.state.dailyGoal?.goal).toBe(20);
-    await first.questionnaire.chooseDailyGoal(30);
-    expect(first.xpLog.state.dailyGoal?.goal).toBe(30);
+    expect(first.xpLog.state.dailyGoal).toBeNull();
+    await first.questionnaire.chooseDailyGoal(25);
+    expect(first.xpLog.state.dailyGoal?.goal).toBe(25);
 
     const sameDay = await run({ records, on: '2026-11-02' });
     expect(await laterQuestionsIn(sameDay)).toEqual([]);
@@ -225,7 +225,7 @@ describe('The later questions', () => {
 
     await app.questionnaire.later('dailyGoalChoice');
 
-    expect(app.xpLog.state.dailyGoal?.goal).toBe(20);
+    expect(app.xpLog.state.dailyGoal).toBeNull();
     expect(await laterQuestionsIn(await run({ records, on: '2026-11-02' }))).toEqual([]);
   });
 
