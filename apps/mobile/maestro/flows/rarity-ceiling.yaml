@@ -1,82 +1,53 @@
-# The Rarity Ceiling (ADR 0072): Мій Мікс offers «до 1» to «до 5», «до 5» by
-# default, until its own Settings row (#1545); a lower ceiling is kept and the
-# Feed still shows a card. A subflow of `smoke.yaml`; run it from there. It
-# starts by putting the ceiling back to «до 5», whatever an earlier run left,
-# and leaves it there.
+# The Rarity Ceiling (ADR 0072): Settings' «Рідкість» row offers «до 1» to
+# «до 5» (#1545); a lower ceiling is kept and the Feed still shows a card. A
+# subflow of `smoke.yaml`; run it from there. It starts by putting the ceiling
+# back to «до 5», whatever an earlier run left, and leaves it there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - runFlow:
     file: ../open-settings-row.yaml
     env:
-      ROW: settings-row-my-mix
+      ROW: settings-rarity-5
+# «до 5»'s left edge: the development client's floating tools button, parked
+# on the right edge by `open-settings-row.yaml`, takes touches well beyond its
+# circle and may cover the rest of it.
 - tapOn:
-    id: settings-row-my-mix
+    id: settings-rarity-5
+    point: 8%, 50%
 - assertVisible:
-    id: mix
-- scrollUntilVisible:
-    element:
-      id: mix-rarity-ceiling-1
-    centerElement: true
-- runFlow:
-    when:
-      visible:
-        id: mix-rarity-ceiling-5
-        selected: false
-    commands:
-      - tapOn:
-          id: mix-rarity-ceiling-5
-- assertVisible:
-    id: mix-rarity-ceiling-5
-    text: до 5
+    id: settings-rarity-5
+    text: 'Рідкість: до 5'
     selected: true
-# A lower ceiling applies at once: its chip is filled, the others are not.
+# A lower ceiling applies at once: its segment is selected, the others are not.
 - tapOn:
-    id: mix-rarity-ceiling-1
+    id: settings-rarity-1
 - assertVisible:
-    id: mix-rarity-ceiling-1
-    text: до 1
+    id: settings-rarity-1
+    text: 'Рідкість: до 1'
     selected: true
 - assertVisible:
-    id: mix-rarity-ceiling-5
+    id: settings-rarity-5
     selected: false
 - takeScreenshot: rarity-ceiling-1
-# The Mix keeps it: the screen opens as it was left.
-- tapOn:
-    id: mix-back
-- tapOn:
-    id: settings-row-my-mix
-- scrollUntilVisible:
-    element:
-      id: mix-rarity-ceiling-1
-    centerElement: true
-- assertVisible:
-    id: mix-rarity-ceiling-1
-    selected: true
 # The Feed still has a card under the ceiling: only the commonest Words, and
 # the Entries of other kinds, which have no rarity.
-- tapOn:
-    id: mix-back
+- runFlow: ../leave-settings.yaml
 - tapOn:
     id: tab-home
 - assertVisible:
-    id: (word|correction|idiom)-card
-# Back to «до 5».
+    id: feed-card-.*
+# Settings keeps it: the row opens as it was left. Then back to «до 5».
 - runFlow:
     file: ../open-settings-row.yaml
     env:
-      ROW: settings-row-my-mix
-- tapOn:
-    id: settings-row-my-mix
-- scrollUntilVisible:
-    element:
-      id: mix-rarity-ceiling-5
-    centerElement: true
-- tapOn:
-    id: mix-rarity-ceiling-5
+      ROW: settings-rarity-1
 - assertVisible:
-    id: mix-rarity-ceiling-5
+    id: settings-rarity-1
     selected: true
 - tapOn:
-    id: mix-back
+    id: settings-rarity-5
+    point: 8%, 50%
 - assertVisible:
-    id: settings-row-my-mix
+    id: settings-rarity-5
+    selected: true
+- runFlow: ../leave-settings.yaml
