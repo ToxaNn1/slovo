@@ -18,7 +18,8 @@ const { notificationAsk, onboardingFinished } = userStateRecords;
  * The pre-permission explainer as a Feed Notice (ADR 0067): once the
  * onboarding is finished and while the reader has not been asked for
  * permission to notify, the explainer comes on the first local day the Daily
- * Goal is met, and no later than the onboarding day + 2 (day 3). Its «Так»
+ * Goal is met, and no later than the onboarding day + 2 (day 3), unless the
+ * reader answered «Коли нагадати?» on the onboarding. Its «Так»
  * asks the device; the iOS prompt never comes before it. The day it is first
  * offered is kept: offered on a later day with the permission still not
  * asked, it was refused, and the re-ask comes once, 7 days after the first
@@ -62,6 +63,8 @@ export function createNotificationExplainer({
         await userState.write(notificationAsk.change({ step: 'explainer', date }));
         return [{ notice: 'notificationExplainer' }];
       }
+      // The reader answered «Коли нагадати?» on the onboarding: that was the ask.
+      if (asked.step === 'onboarding') return [];
       if (asked.date === date) {
         return [
           { notice: asked.step === 'explainer' ? 'notificationExplainer' : 'notificationReask' },

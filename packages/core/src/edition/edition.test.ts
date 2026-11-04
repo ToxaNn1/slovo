@@ -93,6 +93,7 @@ const validConfig = {
     eveningNotification: true,
     notificationFarewell: true,
     notificationExplainer: true,
+    notificationTimeStep: true,
     laterQuestions: true,
     profile: true,
     mascot: true,

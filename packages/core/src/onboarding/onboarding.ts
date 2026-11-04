@@ -8,6 +8,7 @@ import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import type { Mix } from '../entries/mix';
+import type { Notifications } from '../notifications/notifications';
 import { buildWordCard, type WordCardModel } from '../entries/word-card';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 import { createSubscribers } from '../in-turn';
@@ -25,6 +26,9 @@ import { userStateRecords } from '../user-state-schema';
 
 /** The Daily Goals the reader picks from. */
 const DAILY_GOALS: readonly DailyGoal[] = [10, 20, 30, 50];
+
+/** The times «Коли нагадати?» offers, local times `HH:MM`. */
+const NOTIFICATION_TIMES: readonly string[] = ['09:00', '13:00', '20:30'];
 
 /** Where a step stands among the steps, for the progress the UI draws. */
 interface StepPlace {
@@ -55,6 +59,8 @@ export type OnboardingStep =
       readonly goals: readonly DailyGoal[];
       readonly highlighted: DailyGoal;
     })
+  /** «Коли нагадати?», with the times it offers; «Інший час» picks any other. */
+  | (StepPlace & { readonly kind: 'notificationTime'; readonly times: readonly string[] })
   /**
    * The Rarity Test, opened by «Не знаю» on «Рівень» and numbered as that
    * step; going on from it goes to the step after «Рівень».
@@ -71,7 +77,8 @@ export interface OnboardingState {
 
 /**
  * The onboarding (ADR 0067): the welcome, the first Word, «ГРАЙ!», «Рівень» (whose
- * «Не знаю» opens the Rarity Test) and «Навіщо», the Daily Goal, then the Feed; and whether the reader finished
+ * «Не знаю» opens the Rarity Test) and «Навіщо», the Daily Goal, «Коли
+ * нагадати?», then the Feed; and whether the reader finished
  * it, which is also when they skipped it. It opens on launch until then, at
  * the welcome, and never again after, so a reader who finished the old
  * onboarding sees none. The step on screen is not kept: closing the app
@@ -104,6 +111,12 @@ export interface Onboarding {
   answer(answerId: string): Promise<void>;
   /** Sets the Daily Goal the reader picked on its step and goes on. Another step on screen does nothing. */
   chooseDailyGoal(goal: DailyGoal): Promise<void>;
+  /**
+   * Answers «Коли нагадати?» with the reader's time, or with nothing for «Без
+   * нагадувань», through Notifications, and goes on once the device answered
+   * the permission, a refusal too. Another step on screen does nothing.
+   */
+  chooseNotificationTime(time: string | undefined): Promise<void>;
   /**
    * Finishes the onboarding as of now, for the skip on every step: what is
    * not answered keeps its default. Closing the app before this leaves the
@@ -143,6 +156,7 @@ export async function openOnboarding({
   xpLog,
   analytics,
   backend,
+  notifications,
 }: {
   edition: Pick<Edition, 'id' | 'isFeatureEnabled' | 'questionnaire' | 'userSettingDefaults'>;
   userState: UserState;
@@ -157,6 +171,7 @@ export async function openOnboarding({
   xpLog: Pick<XpLog, 'setDailyGoal'>;
   analytics: Pick<Analytics, 'track'>;
   backend: Pick<Backend, 'counters'> | undefined;
+  notifications: Pick<Notifications, 'chooseOnboardingTime'>;
 }): Promise<Onboarding> {
   const subscribers = createSubscribers();
   const finished = await userState.read(onboardingFinished);
@@ -169,7 +184,8 @@ export async function openOnboarding({
       (kind !== 'firstWord' || firstWord !== undefined) &&
       (kind !== 'playStep' || edition.isFeatureEnabled('playStep')) &&
       ((kind !== 'level' && kind !== 'why') || edition.isFeatureEnabled('questionnaire')) &&
-      (kind !== 'dailyGoal' || edition.isFeatureEnabled('dailyGoal')),
+      (kind !== 'dailyGoal' || edition.isFeatureEnabled('dailyGoal')) &&
+      (kind !== 'notificationTime' || edition.isFeatureEnabled('notificationTimeStep')),
   );
 
   function stepAt(index: number): OnboardingStep | undefined {
@@ -186,6 +202,7 @@ export async function openOnboarding({
         highlighted: edition.userSettingDefaults.dailyGoal,
       };
     }
+    if (kind === 'notificationTime') return { kind, ...place, times: NOTIFICATION_TIMES };
     if (kind === 'level') {
       const options = questionnaire.level.filter(
         (option) => 'rarityCeiling' in option || edition.isFeatureEnabled('rarityTest'),
@@ -297,6 +314,12 @@ export async function openOnboarding({
       endStep(async ({ kind }) => {
         if (kind !== 'dailyGoal') return;
         await xpLog.setDailyGoal(goal);
+        await goOn(kind);
+      }),
+    chooseNotificationTime: (time) =>
+      endStep(async ({ kind }) => {
+        if (kind !== 'notificationTime') return;
+        await notifications.chooseOnboardingTime(time);
         await goOn(kind);
       }),
     finish: () => endStep(() => keepFinished(true)),

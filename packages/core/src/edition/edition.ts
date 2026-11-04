@@ -127,6 +127,7 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   playStep: ['game'],
   // The Rarity Test sets the Rarity Ceiling (ADR 0072).
   rarityTest: ['rarityCeiling'],
+  notificationTimeStep: ['notifications'],
 };
 
 /**
