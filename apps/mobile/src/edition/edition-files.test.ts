@@ -776,8 +776,6 @@ describe('the 0.8 Sync strings', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const account = strings['account'] as Record<string, unknown>;
   const sync = account['sync'] as Record<string, unknown>;
-  const onboarding = strings['onboarding'] as Record<string, unknown>;
-  const onboardingAccount = onboarding['account'] as Record<string, unknown>;
   /** The strings schema's issues as paths. */
   const issuesOf = (changed: unknown) =>
     EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
@@ -816,33 +814,82 @@ describe('the 0.8 Sync strings', () => {
 
     expect(issuesOf(changed)).toEqual([`dates.${key}`]);
   });
+});
 
-  it("the UA Edition needs the onboarding's SLOVO ID step", () => {
-    const changed = { ...strings, onboarding: without(onboarding, 'account') };
+describe('the onboarding strings of the «Весь потік» flow', () => {
+  const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
+  const onboarding = strings['onboarding'] ?? {};
+  const rarityTest = strings['rarityTest'] ?? {};
+  /** The strings schema's issues as paths. */
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+  /** The group without the key. */
+  const without = (group: Record<string, unknown>, key: string) =>
+    Object.fromEntries(Object.entries(group).filter(([name]) => name !== key));
 
-    expect(issuesOf(changed)).toEqual(['onboarding.account']);
-  });
-
-  it.each(['title', 'subtitle', 'signIn', 'continueWithout'])(
-    'the UA Edition needs onboarding.account.%s',
+  it.each(['mix', 'notifications', 'account'])(
+    'refuses onboarding.%s, a step the onboarding no longer has',
     (key) => {
-      const changed = {
-        ...strings,
-        onboarding: { ...onboarding, account: without(onboardingAccount, key) },
-      };
+      const changed = { ...strings, onboarding: { ...onboarding, [key]: { title: 'Крок' } } };
 
-      expect(issuesOf(changed)).toEqual([`onboarding.account.${key}`]);
+      expect(EditionStringsSchema.safeParse(changed).error?.issues).toEqual([
+        expect.objectContaining({ code: 'unrecognized_keys', keys: [key] }),
+      ]);
     },
   );
 
-  it.each(['subtitle', 'signIn'])('needs onboarding.account.%s to name the Account', (key) => {
-    const text = (onboardingAccount[key] as string).replace('{name}', 'SLOVO ID');
-    const changed = {
-      ...strings,
-      onboarding: { ...onboarding, account: { ...onboardingAccount, [key]: text } },
-    };
+  it('the UA Edition gives the quiet «Пізніше» of the onboarding steps', () => {
+    expect(EditionStringsSchema.parse(strings).onboarding.later).toBe('Пізніше');
+    expect(issuesOf({ ...strings, onboarding: without(onboarding, 'later') })).toEqual([
+      'onboarding.later',
+    ]);
+  });
 
-    expect(issuesOf(changed)).toEqual([`onboarding.account.${key}`]);
+  it("the UA Edition gives the button under the Rarity Test's result", () => {
+    expect(EditionStringsSchema.parse(strings).rarityTest.next).toBe('Далі');
+    expect(issuesOf({ ...strings, rarityTest: without(rarityTest, 'next') })).toEqual([
+      'rarityTest.next',
+    ]);
+  });
+});
+
+describe('the UA Edition addresses the reader with «ви»', () => {
+  /** Every text of the UI strings with its path. */
+  const textsOf = (value: unknown, path: string): [string, string][] =>
+    typeof value === 'string'
+      ? [[path, value]]
+      : typeof value === 'object' && value !== null
+        ? Object.entries(value).flatMap(([key, inner]) =>
+            textsOf(inner, path === '' ? key : `${path}.${key}`),
+          )
+        : [];
+  /** The «ти» pronouns, as whole words. */
+  const ty =
+    /(?<![а-яіїєґʼ'])(ти|тебе|тобі|тобою|твій|твоя|твоє|твої|твого|твоєї|твоїх|твоїм|твоєму|твоїми|твою)(?![а-яіїєґʼ'])/iu;
+  /**
+   * The «ти» imperatives the Edition once used, and the exceptions: the Game
+   * Mode names the glossary fixes (CONTEXT.md, ADR 0052) and a Siri phrase,
+   * which the reader says to Siri.
+   */
+  const imperatives =
+    /(?<![а-яіїєґʼ'])(лови|грай|гортай|збережи|обери|вгадай|впиши|склади|покажи|повернись)(?![а-яіїєґʼ'])/iu;
+  const exceptions = new Set([
+    'game.modes.guess-word.title',
+    'game.modes.type-word.title',
+    'game.modes.correction.title',
+    'game.modes.build-idiom.title',
+    'appIntents.wordOfTheDay.phrases.1',
+  ]);
+
+  it('has no «ти» form in its UI strings', () => {
+    const texts = textsOf(readJson('uk', 'strings'), '');
+
+    expect(texts.length).toBeGreaterThan(100);
+    expect(
+      texts.filter(
+        ([path, text]) => ty.test(text) || (imperatives.test(text) && !exceptions.has(path)),
+      ),
+    ).toEqual([]);
   });
 });
 
