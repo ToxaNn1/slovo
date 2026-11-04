@@ -5,6 +5,7 @@ import { todayBounds, todayKey } from '../local-date';
 import type { Clock, Random, UserStateChanges } from '../ports';
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
+import type { Cycle } from '../feed/cycle';
 import type { History } from '../saved/history';
 import type { XpAction, XpAward } from '../game/game-xp';
 import type { LocalDate } from '../local-date';
@@ -93,8 +94,9 @@ export interface XpLogAppend {
  * today's XP and each day's goal state are derived from.
  * The amounts and the Review cap come from the Edition's XP table; the log
  * syncs as a union by record id, so two devices agree and no record doubles.
- * The Daily Crossword of a date earns once, and Review answers count up to
- * the cap a day, however many devices' records merge.
+ * The Daily Crossword of a date earns once, Review answers count up to
+ * the cap a day, and a Word Seen for the first time earns once, up to the
+ * day's Daily Goal, however many devices' records merge.
  */
 export interface XpLog {
   /** The XP as it stands, in memory for the session. */
@@ -189,11 +191,14 @@ export async function openXpLog({
   dayTurned,
   analytics,
   history,
+  cycle,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels'>;
   userState: Pick<UserState, 'list' | 'write'>;
   /** The Entries Seen, whose Words today count toward the Daily Goal. */
   history: Pick<History, 'list' | 'subscribe'>;
+  /** Whether a Word Seen now may be Seen for the first time: only in the first Cycle. */
+  cycle: Pick<Cycle, 'isFirst'>;
   clock: Clock;
   random: Random;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
@@ -203,19 +208,40 @@ export async function openXpLog({
   const on = edition.isFeatureEnabled('xpLog');
   const levelsOn = on && edition.isFeatureEnabled('levels');
   const goalOn = on && edition.isFeatureEnabled('dailyGoal');
+  const seenWordOn = goalOn && edition.isFeatureEnabled('seenWordXp');
   const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
   const subscribers = createSubscribers();
   const goalMetSubscribers = createSubscribers();
   /** Tells the records of one session apart when the clock and the random source stand still. */
   let sequence = 0;
 
-  /** The amount a record counts for: Review XP counts up to the daily cap of its date. */
-  function counted(record: Extract<XpRecord, { kind: 'xp' }>, review: Map<string, number>): number {
-    if (record.source !== 'review-answer') return record.amount;
-    const before = review.get(record.date) ?? 0;
-    const amount = Math.max(0, Math.min(record.amount, edition.xp.reviewDailyCap - before));
-    review.set(record.date, before + amount);
-    return amount;
+  /**
+   * Counts records in turn: Review XP up to the daily cap of its date, and
+   * Seen-Word XP up to the Daily Goal of its date, also as two devices' logs
+   * merge. `xpOf` is what a capped source counted on a date so far.
+   */
+  function counter() {
+    const counts = new Map<string, number>();
+    const goals = new Map<string, DailyGoal | undefined>();
+    const key = (source: string, date: string) => `${source} ${date}`;
+    function capOf({ source, date }: Extract<XpRecord, { kind: 'xp' }>): number {
+      if (source === 'review-answer') return edition.xp.reviewDailyCap;
+      if (source !== 'seen-word') return Infinity;
+      if (!goals.has(date)) goals.set(date, goalOf(date));
+      return goals.get(date) ?? Infinity;
+    }
+    return {
+      count: (record: Extract<XpRecord, { kind: 'xp' }>): number => {
+        const cap = capOf(record);
+        if (cap === Infinity) return record.amount;
+        const before = counts.get(key(record.source, record.date)) ?? 0;
+        const amount = Math.max(0, Math.min(record.amount, cap - before));
+        counts.set(key(record.source, record.date), before + amount);
+        return amount;
+      },
+      xpOf: (source: 'review-answer' | 'seen-word', date: string) =>
+        counts.get(key(source, date)) ?? 0,
+    };
   }
 
   /** The goal in force on a local date: the last `word-goal` set on or before it. */
@@ -244,10 +270,10 @@ export async function openXpLog({
 
   function dayOf(date: string): XpDay {
     let xp = 0;
-    const review = new Map<string, number>();
+    const { count } = counter();
     const ofDay = [...records.values()].filter((record) => record.date === date);
     for (const record of ofDay.sort((one, other) => (one.at < other.at ? -1 : 1))) {
-      if (record.kind === 'xp') xp += counted(record, review);
+      if (record.kind === 'xp') xp += count(record);
     }
     return { xp, dailyGoal: dailyGoalOf(date) };
   }
@@ -272,6 +298,7 @@ export async function openXpLog({
     date: string;
     state: XpLogState;
     reviewToday: number;
+    seenWordToday: number;
     milestones: XpLogMilestones;
   } {
     const date = todayKey(clock);
@@ -279,8 +306,8 @@ export async function openXpLog({
     const byDate = new Map<string, number>();
     const frozen = new Set<string>();
     const breaks = new Map<string, number>();
-    /** The Review XP of each date, which counts up to the daily cap even as two devices' logs merge. */
-    const review = new Map<string, number>();
+    /** The Review and Seen-Word XP of each date, which count up to their caps even as two devices' logs merge. */
+    const { count, xpOf } = counter();
     const wins = new Set<string>();
     const rightByMode = new Map<string, number>();
     const rightRarities = new Set<number>();
@@ -309,7 +336,7 @@ export async function openXpLog({
           }
           if (source === 'game-round' && rarity !== undefined) rightRarities.add(rarity);
           if (source === 'daily-crossword') crosswords.add(record.date);
-          const amount = counted(record, review);
+          const amount = count(record);
           total += amount;
           byDate.set(record.date, (byDate.get(record.date) ?? 0) + amount);
         }
@@ -332,7 +359,8 @@ export async function openXpLog({
         dailyGoal: dailyGoal === null ? null : { ...dailyGoal, seen: seenToday() },
         level: levelsOn ? levelOf(edition.levels, total) : undefined,
       },
-      reviewToday: review.get(date) ?? 0,
+      reviewToday: xpOf('review-answer', date),
+      seenWordToday: xpOf('seen-word', date),
       byDate,
       active,
       frozen,
@@ -362,11 +390,11 @@ export async function openXpLog({
   function reachedOn(total: number): string | undefined {
     let sum = 0;
     // Each record counts what `derive` counts it, so a Review answer past the cap reaches nothing.
-    const review = new Map<string, number>();
+    const { count } = counter();
     const inTime = [...records.values()].sort((a, b) => a.at.localeCompare(b.at));
     for (const record of inTime) {
       if (record.kind !== 'xp') continue;
-      sum += counted(record, review);
+      sum += count(record);
       if (sum >= total) return record.date;
     }
     return undefined;
@@ -487,11 +515,60 @@ export async function openXpLog({
     await analytics.track('dailyGoalChanged', { goal }).catch(() => undefined);
   }
 
-  /** Meets today's goal once the Words Seen reach it; one write at a time, so it records once. */
+  /** The Entries in History so far, also those cleared since: a Word among them is not Seen for the first time. */
+  const inHistory = new Set(history.list.map(({ entryId }) => entryId));
+  const seenWordId = (entryId: string) => `seen-word-${entryId}`;
+
+  /**
+   * The Seen-Word records of the Words that joined History today for the
+   * first time: in the first Cycle, never in History, never earned on any
+   * device, while today's Seen-Word XP is below today's goal.
+   */
+  function seenWordsToday(goal: DailyGoal | undefined): Map<string, XpRecord> {
+    const { start, end } = todayBounds(clock);
+    const added = new Map<string, XpRecord>();
+    let xp = derived.seenWordToday;
+    for (const { entryId, seenAt, row } of history.list) {
+      if (inHistory.has(entryId)) continue;
+      inHistory.add(entryId);
+      const time = seenAt.getTime();
+      if (
+        !seenWordOn ||
+        goal === undefined ||
+        row.kind !== 'word' ||
+        time < start ||
+        time >= end ||
+        !cycle.isFirst() ||
+        records.has(seenWordId(entryId)) ||
+        xp >= goal
+      )
+        continue;
+      xp += edition.xp.seenWord;
+      added.set(seenWordId(entryId), {
+        kind: 'xp',
+        date: todayKey(clock),
+        at: clock.now().toISOString(),
+        source: 'seen-word',
+        amount: edition.xp.seenWord,
+      });
+    }
+    return added;
+  }
+
+  /**
+   * Appends the Seen-Word XP of the Words Seen and meets today's goal once
+   * the Words Seen reach it; one write at a time, so each records once. A
+   * change while a write runs is taken up after it.
+   */
   let meeting: Promise<void> | undefined;
+  let changedMeanwhile = false;
   function meetGoal(): void {
-    if (meeting !== undefined) return;
-    const added = metToday(goalOf(todayKey(clock)));
+    if (meeting !== undefined) {
+      changedMeanwhile = true;
+      return;
+    }
+    const goal = goalOf(todayKey(clock));
+    const added = new Map([...seenWordsToday(goal), ...metToday(goal)]);
     if (added.size === 0) {
       change();
       return;
@@ -500,6 +577,9 @@ export async function openXpLog({
       .catch(() => undefined)
       .finally(() => {
         meeting = undefined;
+        if (!changedMeanwhile) return;
+        changedMeanwhile = false;
+        meetGoal();
       });
   }
 

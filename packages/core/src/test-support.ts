@@ -77,6 +77,7 @@ const testEditionConfig = {
     reviewAnswer: 1,
     reviewDailyCap: 10,
     quickQuestion: 2,
+    seenWord: 1,
   },
   dailyGoals: { options: [10, 25, 50], highlighted: 10 },
   levels: {
