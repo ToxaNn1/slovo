@@ -124,6 +124,7 @@ export { FeedHeader } from './feed/FeedHeader';
 export { HeaderFade } from './feed/HeaderFade';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
 export { BadgeMark } from './progress/BadgeMark';
+export { DashboardHero } from './dashboard/DashboardHero';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { LevelCard } from './progress/LevelCard';
