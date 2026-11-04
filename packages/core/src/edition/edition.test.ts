@@ -97,6 +97,7 @@ const validConfig = {
     sounds: true,
     reduceMotion: true,
     fastReveal: true,
+    dashboard: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -303,6 +304,7 @@ describe('loadEdition', () => {
     'dailyCrosswordShare',
     'tracedCrossword',
     'fastReveal',
+    'dashboard',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({

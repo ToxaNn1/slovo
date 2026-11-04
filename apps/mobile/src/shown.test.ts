@@ -44,6 +44,7 @@ const everything: Shown = {
   dailyGoal: true,
   search: true,
   fastReveal: true,
+  dashboard: true,
   wordOfTheDayArchive: true,
   rarityCeiling: true,
   rarityTest: true,

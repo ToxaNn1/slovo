@@ -94,7 +94,8 @@
     "mascot": true,
     "sounds": false,
     "reduceMotion": true,
-    "fastReveal": true
+    "fastReveal": true,
+    "dashboard": true
   },
   "userSettingDefaults": {
     "theme": "system",

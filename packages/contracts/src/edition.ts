@@ -312,6 +312,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   reduceMotion: z.boolean(),
   /** The fast reveal: in one visit to the Feed the first Entry card plays the full reveal and every next card a fast one; off, every card plays the full reveal. */
   fastReveal: z.boolean(),
+  /** The Dashboard: the home behind the «Стрічка» tab, with the Word of the Day hero; off, the Feed is the home (ADR 0074). Off while `wordOfTheDay` is. */
+  dashboard: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

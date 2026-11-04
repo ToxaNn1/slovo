@@ -16,6 +16,7 @@ import {
 } from './game/daily-crossword';
 import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
 import { openCycle } from './feed/cycle';
+import { openDashboard, type Dashboard } from './dashboard/dashboard';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
 import { createEntries } from './entries/entries';
@@ -88,6 +89,8 @@ import { openWordOfTheDay } from './feed/word-of-the-day';
 export interface Composition extends Hiding {
   /** The Feed of the app session. */
   readonly feed: Feed;
+  /** The Dashboard, the home's blocks for the local day (ADR 0074); none with `dashboard` off. */
+  readonly dashboard: Dashboard;
   /** Favorites, which a heart tapped anywhere changes. */
   readonly favorites: Favorites;
   /** Collections, which the sheet and the Collections screens change. */
@@ -631,6 +634,16 @@ export async function openComposition({
     xpLog,
   });
   await day.resume();
+  // Once the day is turned to, so its hero is today's Word of the Day.
+  const dashboard = await openDashboard({
+    edition,
+    entries,
+    cycle,
+    wordOfTheDay,
+    feed,
+    seen,
+    dayTurned,
+  });
   // Once the day is turned to, so the welcome shows today's Word of the Day.
   const rarityTest = createRarityTest({ edition, entries, rarityCeiling, random });
   const onboarding = await openOnboarding({
@@ -665,6 +678,7 @@ export async function openComposition({
   const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   return {
     feed,
+    dashboard,
     favorites,
     collections,
     collectionLinkCopy: createCollectionLinkCopy({
