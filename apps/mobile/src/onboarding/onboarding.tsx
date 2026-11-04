@@ -27,6 +27,9 @@ import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 import { rarityTestQuestionOf, useApplyRarityTest } from '../mix/rarity-test';
+import { deviceClock } from '../device/device-clock';
+import { timeOfDay } from '../notifications/notification-scheduler';
+import { TimePickerSheet, timePickerAvailable } from '../notifications/time-picker';
 
 const { onboarding: strings } = editionStrings;
 
@@ -87,6 +90,18 @@ export function Onboarding() {
         onSkip={skip}
       />
     );
+  } else if (step.kind === 'notificationTime') {
+    shown = (
+      <NotificationTimeStep
+        step={step}
+        times={step.times}
+        mascot={mascot}
+        onChoose={(time) => {
+          report(onboarding.chooseNotificationTime(time));
+        }}
+        onSkip={skip}
+      />
+    );
   } else if (step.kind === 'rarityTest') {
     shown = <RarityTestStep step={step} mascot={mascot} onSkip={skip} />;
   } else {
@@ -123,6 +138,7 @@ const mascotState: Readonly<Record<Step['kind'], MascotState>> = {
   rarityTest: 'waits',
   why: 'waits',
   dailyGoal: 'waits',
+  notificationTime: 'waits',
 };
 
 /** A step's title, read as its header. */
@@ -343,6 +359,79 @@ function Question({
         ))}
         <LaterButton testID="onboarding-later" onPress={onLater} />
       </View>
+    </OnboardingStep>
+  );
+}
+
+/** A local time `HH:MM` as the chip says it: `09:00` as 9:00. */
+const chipTime = (time: string): string => time.replace(/^0/, '');
+
+/**
+ * «Коли нагадати?»: a chip per time, «Інший час», which opens the time picker
+ * while the binary has it, and «Без нагадувань». Each answer goes on.
+ */
+function NotificationTimeStep({
+  step,
+  times,
+  mascot,
+  onChoose,
+  onSkip,
+}: {
+  step: Step;
+  times: readonly string[];
+  mascot: ReactNode;
+  onChoose: (time: string | undefined) => void;
+  onSkip: () => void;
+}) {
+  const [picking, setPicking] = useState(false);
+  const chip = (testID: string, label: string, onPress: () => void) => (
+    <Button
+      size="small"
+      variant="neutral"
+      key={testID}
+      testID={testID}
+      label={label}
+      onPress={onPress}
+    />
+  );
+  return (
+    <OnboardingStep
+      testID="onboarding-notification-time"
+      step={step.number}
+      total={step.total}
+      shout={strings.notificationTime.shout}
+      mascot={mascot}
+      onSkip={onSkip}
+      footer={null}
+    >
+      <View style={stepStyles.heading}>
+        <Title>{strings.notificationTime.title}</Title>
+      </View>
+      <View style={styles.options}>
+        {times.map((time) =>
+          chip(`onboarding-time-${time}`, chipTime(time), () => {
+            onChoose(time);
+          }),
+        )}
+        {timePickerAvailable() &&
+          chip('onboarding-time-other', strings.notificationTime.otherTime, () => {
+            setPicking(true);
+          })}
+        {chip('onboarding-time-none', strings.notificationTime.none, () => {
+          onChoose(undefined);
+        })}
+      </View>
+      <TimePickerSheet
+        visible={picking}
+        value={deviceClock.now()}
+        onPick={(picked) => {
+          setPicking(false);
+          onChoose(timeOfDay(picked));
+        }}
+        onClose={() => {
+          setPicking(false);
+        }}
+      />
     </OnboardingStep>
   );
 }

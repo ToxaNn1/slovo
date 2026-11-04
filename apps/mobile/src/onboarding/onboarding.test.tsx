@@ -122,7 +122,7 @@ afterEach(() => {
 
 // Spec #1358, ticket #1379: the onboarding of 1.0 (ADR 0067).
 describe('the onboarding', () => {
-  it('goes from the welcome to the first Word, «ГРАЙ!», «Рівень», «Навіщо» and the Daily Goal, then the Feed', async () => {
+  it('goes from the welcome to the first Word, «ГРАЙ!», «Рівень», «Навіщо», the Daily Goal and «Коли нагадати?», then the Feed', async () => {
     await renderOnboarding();
     expect(screen.getByText(strings.welcome.title)).toBeTruthy();
 
@@ -161,6 +161,14 @@ describe('the onboarding', () => {
     await press('onboarding-done');
 
     expect(composition.xpLog.state.dailyGoal?.goal).toBe(30);
+    expect(screen.getByText('НАГАДУВАННЯ')).toBeTruthy();
+    expect(screen.getByText('Коли нагадати?')).toBeTruthy();
+    for (const chip of ['9:00', '13:00', '20:30', 'Без нагадувань']) {
+      expect(screen.getByRole('button', { name: chip })).toBeTruthy();
+    }
+    await press('onboarding-time-20:30');
+
+    expect(composition.notifications.state.times).toEqual(['20:30']);
     expect(composition.onboarding.state.finishedAt).toEqual(clock.now());
     expect(screen.queryByTestId('onboarding-daily-goal')).toBeNull();
   });
