@@ -69,7 +69,7 @@ export function seededRandomOf(seed: string): Random {
 function fingerprintOf(puzzle: CrosswordPuzzle): string {
   return puzzle.words
     .map(({ word, path }) =>
-      [word.id, ...path.map(({ row, column }) => `${row}.${column}`)].join(' '),
+      [word.id, ...path.map(({ row, column }) => `${String(row)}.${String(column)}`)].join(' '),
     )
     .join('\n');
 }
