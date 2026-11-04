@@ -87,5 +87,19 @@ export const crosswordLayout = {
   eraseKeyFlex: 1.5,
 } as const;
 
+/**
+ * The traced Daily Crossword (ADR 0073): how much of a cell's side, from its
+ * centre, catches the finger, so a diagonal passes between corners; the dotted
+ * trace's dot and the gap between dots; an answer tile's side; how long a
+ * trace that locked nothing takes to fade (ms).
+ */
+export const tracedCrosswordLayout = {
+  hitRadius: 0.42,
+  dot: 6,
+  dotGap: 12,
+  tile: 28,
+  missFade: 300,
+} as const;
+
 /** The «Знаю» and «Не знаю» pair: two equal columns across the card's width (XActions). */
 export const knowledgePair = { gap: 10 } as const;

@@ -1153,7 +1153,12 @@
       "solvedMark": "✓ Розв’язано",
       "solved": "Розв’язано!",
       "eraseKey": "Стерти",
-      "cellLabel": "{cell}. {clue}. Рядок {row}, стовпець {column}"
+      "cellLabel": "{cell}. {clue}. Рядок {row}, стовпець {column}",
+      "traceHint": "Ведіть пальцем по сусідніх літерах, зокрема навскіс, щоб скласти слово з підказки. Кожна літера належить одному слову.",
+      "check": "Перевірити",
+      "tracedCellLabel": "{letter}. Рядок {row}, стовпець {column}",
+      "clueHidden": "{clue}. Ще не знайдено",
+      "clueFound": "{clue}. Знайдено: {word}"
     },
     "modes": {
       "guess-word": {
