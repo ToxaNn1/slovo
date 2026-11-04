@@ -324,14 +324,13 @@ describe('the 0.8.13 strings', () => {
     expect(issuesOf(changed)).toEqual(['feedNotices.firstWeek.lastDayText.few']);
   });
 
-  it('the UA Edition carries the agreed texts of Settings, «Збережене», Mood and the widget', () => {
+  it('the UA Edition carries the agreed texts of Settings, «Збережене» and the widget', () => {
     expect(parsed.settings.dailyGoal).toEqual({ title: 'Денна ціль' });
     expect(parsed.wordOfTheDayArchive.title).toBe('Слова дня');
-    expect(parsed.mood.title).toBe('Слово під настрій');
     expect(parsed.settings.howToAddWidget).toBe('Як додати віджет');
   });
 
-  it.each(['search', 'rarityTest', 'feedNotices', 'wordOfTheDayArchive', 'mood'])(
+  it.each(['search', 'rarityTest', 'feedNotices', 'wordOfTheDayArchive'])(
     'every Edition needs %s',
     (key) => {
       const without = Object.fromEntries(Object.entries(strings).filter(([name]) => name !== key));

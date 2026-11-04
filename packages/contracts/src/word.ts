@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { CorrectionIdSchema } from './correction';
-import { MoodSchema, OriginLanguageSchema } from './edition';
+import { OriginLanguageSchema } from './edition';
 import { hasNoRepeats, RaritySchema, SourceSchema, TextSchema } from './shared';
 
 /**
@@ -76,10 +76,6 @@ export { RARITIES, RaritySchema, type Rarity } from './shared';
  * `origin` names the language the Word comes from, a code from the Edition's
  * `originLanguages` list, which the Language Pack build checks (ADR 0052).
  *
- * `moods` lists the moods the Word fits, ids from the Edition's `moods` list,
- * which the Language Pack build checks (ADR 0054). A Word without moods
- * leaves the field out rather than listing none.
- *
  * `illustration` names the Word's Illustration, a PNG file in the Edition's
  * illustrations bundled in the app, not in the Language Pack (ADR 0055). It
  * is a bare file name, never a path, so it can't point outside that folder.
@@ -121,11 +117,6 @@ export const WordSchema = z
     region: TextSchema.optional(),
     history: TextSchema.optional(),
     origin: OriginLanguageSchema.shape.code.optional(),
-    moods: z
-      .array(MoodSchema.shape.id)
-      .min(1, 'Leave moods out of a Word without moods')
-      .refine(hasNoRepeats, 'Moods must not repeat')
-      .optional(),
     illustration: z
       .string()
       .regex(/^[^./\\][^/\\]*$/, 'Expected a file name in the illustrations, not a path')

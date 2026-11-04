@@ -36,7 +36,6 @@ import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
 import { useFirstWeekStreak } from '@/feed/first-week';
 import { TOP_ROW } from '@/edition/feed-loading';
 import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
-import { MoodButtonAndSheet } from '@/mood/mood';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { XpBarToGame } from '@/progress/xp-bar';
 import { useShown } from '@/shown-in-effect';
@@ -145,7 +144,6 @@ function FeedScreen() {
                 }}
               />
             )}
-            <MoodButtonAndSheet />
           </View>
         </View>
       </View>
@@ -309,7 +307,7 @@ const styles = StyleSheet.create({
     gap: space[2],
   },
   headerBackdrop: { flex: 1 },
-  // Under the header: the XP bar at the start, Search and Mood at the end, with the XP bar or without it.
+  // Under the header: the XP bar at the start, Search at the end, with the XP bar or without it.
   tools: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headerButtons: { marginLeft: 'auto', flexDirection: 'row', gap: space[2] },
   page: { flex: 1 },
