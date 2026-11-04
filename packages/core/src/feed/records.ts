@@ -16,7 +16,9 @@ export const feedRecords = {
    */
   feedNoticesClosed: declareRecord(
     'feed.noticesClosed',
-    z.object({ date: z.string(), notices: z.array(z.enum([...FEED_NOTICES, RETIRED_NOTICE])).transform(withoutRetired),
+    z.object({
+      date: z.string(),
+      notices: z.array(z.enum([...FEED_NOTICES, RETIRED_NOTICE])).transform(withoutRetired),
     }),
     { sync: 'device-only' },
   ),
