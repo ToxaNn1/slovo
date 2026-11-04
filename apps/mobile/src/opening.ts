@@ -23,7 +23,12 @@ export type OpeningState<T> =
 export interface Opening<T> extends Source {
   /** Where the opening stands; the first read starts it. */
   readonly state: OpeningState<T>;
-  /** What it opened, once it is ready, after any retries; the first call starts it. */
+  /**
+   * What it opened, once it is ready. The first call starts it, and a call on
+   * an opening that failed opens it again. It rejects when this opening
+   * fails, so what waits on it, such as another opening over it, never waits
+   * for ever.
+   */
   opened(): Promise<T>;
   /**
    * Opens it again, such as the composition over a user state a sync
@@ -65,6 +70,8 @@ export function openOnce<T>(
   const listeners = new Set<() => void>();
   /** The last reopen asked, which the next one waits for. */
   let reopening = Promise.resolve();
+  /** Why the last opening failed, which `opened()` rejects with. */
+  let failure = new Error('The opening failed');
 
   function change(changed: OpeningState<T>): void {
     state = changed;
@@ -88,6 +95,8 @@ export function openOnce<T>(
       },
       (error: unknown) => {
         onError(error);
+        failure =
+          error instanceof Error ? error : new Error('The opening failed', { cause: error });
         const failed: OpeningState<T> = {
           status: 'failed',
           retry() {
@@ -148,11 +157,14 @@ export function openOnce<T>(
     opened() {
       const now = current();
       if (now.status === 'ready') return Promise.resolve(now.value);
-      return new Promise((resolve) => {
+      if (now.status === 'failed') now.retry();
+      return new Promise((resolve, reject) => {
         const unsubscribe = opening.subscribe(() => {
-          if (state?.status !== 'ready') return;
+          const settledState = state;
+          if (settledState?.status === 'loading') return;
           unsubscribe();
-          resolve(state.value);
+          if (settledState?.status === 'ready') resolve(settledState.value);
+          else reject(failure);
         });
       });
     },

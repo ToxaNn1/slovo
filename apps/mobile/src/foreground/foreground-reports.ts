@@ -75,8 +75,8 @@ export function reportForeground({
 
   return {
     listen(opening, hear) {
-      // An opening waits through its failures for a retry, so this never rejects.
-      void opening.opened().then((value) => {
+      // It waits through the opening's failures for a retry, so this never rejects.
+      void ready(opening).then((value) => {
         if (stopped) return;
         listeners.push((moment) => {
           // Once open it stays open; a reopen only swaps what it opened.
@@ -93,4 +93,18 @@ export function reportForeground({
       listeners.length = 0;
     },
   };
+}
+
+/** What the opening opened, once it is ready, waiting through its failures for a retry. */
+function ready<T>(opening: Opening<T>): Promise<T> {
+  return new Promise((resolve) => {
+    const unsubscribe = opening.subscribe(check);
+    function check(): void {
+      const { state } = opening;
+      if (state.status !== 'ready') return;
+      unsubscribe();
+      resolve(state.value);
+    }
+    check();
+  });
 }
