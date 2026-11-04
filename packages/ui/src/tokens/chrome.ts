@@ -1,4 +1,4 @@
-import { shadowColor } from './base';
+import { shadowColor, space } from './base';
 
 /** The tokens of the navigation chrome, sheets, toasts and the shared controls. */
 
@@ -136,3 +136,16 @@ export const actionTile = {
  * between the back tile and the title, and the room under it.
  */
 export const backHeader = { gap: 12, paddingBottom: 14 } as const;
+
+/**
+ * The mistake report's comment field: four lines of `fieldText` show inside
+ * its padding and its 1-point border before it scrolls. Its letters scale with
+ * the text size up to `maxFontScale`, and its cap scales with them, so it
+ * shows four lines at every text size.
+ */
+export const mistakeReportField = {
+  lines: 4,
+  padding: space[3],
+  border: 1,
+  maxFontScale: 1.5,
+} as const;

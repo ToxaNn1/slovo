@@ -1,6 +1,15 @@
 import { REPORT_COMMENT_LENGTH, type MistakeType } from '@slovo/contracts';
 import { useState } from 'react';
-import { Keyboard, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { Button } from '../primitives/Button';
@@ -8,19 +17,17 @@ import { ChoiceMark } from '../primitives/ChoiceMark';
 import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, space, typeRoles, typeStyle } from '../tokens';
+import { minTouchTarget, mistakeReportField, space, typeRoles, typeStyle } from '../tokens';
 
 /** The types of mistake in the order the sheet offers them. */
 const TYPES: readonly MistakeType[] = ['typo', 'stress', 'definition', 'other'];
 
-/** How many lines of the comment show before it scrolls. */
-const COMMENT_LINES = 4;
-
-/** The comment field's vertical padding, inside its border. */
-const FIELD_PADDING = space[3];
-
-/** The comment field stops growing at its four lines and scrolls inside. */
-const FIELD_MAX_HEIGHT = typeRoles.fieldText.lineHeight * COMMENT_LINES + FIELD_PADDING * 2 + 2;
+/** The comment field stops growing at its four lines, at the reader's text size, and scrolls inside. */
+function fieldMaxHeight(fontScale: number): number {
+  const { lines, padding, border, maxFontScale } = mistakeReportField;
+  const scale = fontScale > 1 ? Math.min(fontScale, maxFontScale) : 1;
+  return typeRoles.fieldText.lineHeight * scale * lines + padding * 2 + border * 2;
+}
 
 /** What the reader wrote in the sheet: the type and the comment as typed. */
 export interface MistakeReportSheetDraft {
@@ -53,6 +60,7 @@ export function MistakeReportSheet({
   testID?: string;
 }) {
   const tokens = useTokens();
+  const { fontScale } = useWindowDimensions();
   const { colors, radii } = tokens;
   const { strings, voice } = useEdition();
   const sheet = strings.mistakeReport;
@@ -134,13 +142,15 @@ export function MistakeReportSheet({
             }}
             maxLength={REPORT_COMMENT_LENGTH}
             multiline
-            numberOfLines={COMMENT_LINES}
+            numberOfLines={mistakeReportField.lines}
             scrollEnabled
             returnKeyType="done"
             submitBehavior="blurAndSubmit"
             autoCapitalize="sentences"
             selectionColor={colors.accent}
+            maxFontSizeMultiplier={mistakeReportField.maxFontScale}
             style={[
+              { maxHeight: fieldMaxHeight(fontScale) },
               typeStyle('fieldText', tokens),
               styles.field,
               {
@@ -188,11 +198,10 @@ const styles = StyleSheet.create({
   commentHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
   field: {
     minHeight: minTouchTarget * 2,
-    maxHeight: FIELD_MAX_HEIGHT,
-    borderWidth: 1,
+    borderWidth: mistakeReportField.border,
     paddingHorizontal: space[4],
-    paddingTop: FIELD_PADDING,
-    paddingBottom: FIELD_PADDING,
+    paddingTop: mistakeReportField.padding,
+    paddingBottom: mistakeReportField.padding,
     textAlignVertical: 'top',
   },
   send: { marginTop: space[4] },
