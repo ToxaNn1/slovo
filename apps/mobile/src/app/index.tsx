@@ -132,7 +132,7 @@ function FeedScreen() {
         </View>
         <FeedHeader
           wordmark={edition.displayName}
-          today={todayText(deviceClock, editionStrings)}
+          today={todayText(feed.today, editionStrings)}
           streak={<StatsPillAndSheet />}
         />
         <View pointerEvents="box-none" style={styles.tools}>
