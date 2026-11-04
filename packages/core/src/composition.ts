@@ -420,6 +420,7 @@ export async function openComposition({
     dayTurned,
     analytics,
     history,
+    cycle,
   });
   const activeDays = await openActiveDays({ edition, userState, clock, xpLog, analytics });
   const day = createDayChange({

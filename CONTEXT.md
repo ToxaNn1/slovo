@@ -177,7 +177,7 @@ The longest Streak the reader has ever had, derived like the Streak and never st
 _Avoid_: Top streak, longest chain
 
 **XP**:
-The points a learning action earns: a right answer in a Game (1 per Round), a finished Game with at least half the answers right (+5), a new Best result in a Game Mode (+5), the solved Daily Crossword (15), a Review answer, Known or Unknown (1, at most 10 a day), and a right answer to a Quick Question (2). These are the UA Edition's defaults; the Edition config holds the amounts. Known on a new Entry, Learned, a Streak day, the first visit of the day, sharing and the Word of the Day give 0. A mistake never takes XP away, and a Game has no daily XP cap. Badges give no XP.
+The points a learning action earns: a right answer in a Game (1 per Round), a finished Game with at least half the answers right (+5), a new Best result in a Game Mode (+5), the solved Daily Crossword (15), a Review answer, Known or Unknown (1, at most 10 a day), a right answer to a Quick Question (2), and a Word Seen for the first time, in no earlier Cycle and not in History, on a day with a Daily Goal (1, up to the goal; Games stay uncapped beside it). These are the UA Edition's defaults; the Edition config holds the amounts. Known on a new Entry, Learned, a Streak day, the first visit of the day, sharing and the Word of the Day give 0. A mistake never takes XP away, and a Game has no daily XP cap. Badges give no XP.
 _Avoid_: Points, score, coins, experience
 
 **XP log**:

@@ -30,6 +30,8 @@ export interface Cycle {
   covers(entryId: string): boolean;
   /** Whether the Cycle covers no Entry at all. */
   isEmpty(): boolean;
+  /** Whether it is the first Cycle: no Entry was Seen in an earlier one. */
+  isFirst(): boolean;
   /** The Entries of the Cycle not Seen yet, each kind in the Cycle order. */
   unseen(): EntryIds;
   /** The change that makes the Entry Seen. It changes nothing when the Entry is Seen already. */
@@ -151,6 +153,7 @@ export async function openCycle({
     order: () => order,
     covers: (entryId) => allLists(order).some((list) => list.includes(entryId)),
     isEmpty: () => allLists(order).every((list) => list.length === 0),
+    isFirst: () => cycle.id === 1,
     unseen: () => eachList(order, (list) => list.filter((id) => !seen.has(id))),
     markSeen(entryId) {
       if (seen.has(entryId)) return { changes: new Map(), commit: () => undefined };

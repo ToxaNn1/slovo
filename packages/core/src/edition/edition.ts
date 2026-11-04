@@ -120,6 +120,7 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   badges: ['xpLog'],
   profile: ['xpLog'],
   dailyGoal: ['xpLog'],
+  seenWordXp: ['xpLog', 'dailyGoal'],
   progressShareCards: ['shareCards', 'xpLog'],
   dailyCrosswordShare: ['shareCards', 'dailyCrossword'],
   tracedCrossword: ['dailyCrossword'],
