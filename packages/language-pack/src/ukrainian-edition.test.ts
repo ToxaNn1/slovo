@@ -83,7 +83,6 @@ describe('the UA Edition', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      dailyGoal: 20,
       notificationTimes: ['09:00', '13:00', '19:00'],
       mix: {
         categoryIds: 'all',
