@@ -118,7 +118,12 @@ describe('The later questions', () => {
     );
     records.set(
       'xp.old',
-      JSON.stringify({ kind: 'daily-goal', date: '2026-10-10', at: '2026-10-10T05:00:00.000Z', goal: 20 }),
+      JSON.stringify({
+        kind: 'daily-goal',
+        date: '2026-10-10',
+        at: '2026-10-10T05:00:00.000Z',
+        goal: 20,
+      }),
     );
 
     const app = await run({ records, on: '2026-11-02' });
