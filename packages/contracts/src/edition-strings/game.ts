@@ -87,6 +87,19 @@ export const GameStringsSchema = z.strictObject({
      * that place is in, and `{row}` and `{column}`, counted from 1 at the top left corner.
      */
     cellLabel: templateOf('cell', 'clue', 'row', 'column'),
+    /** The traced Daily Crossword's line over its grid, which says how to play, e.g. «Ведіть пальцем по сусідніх літерах…». */
+    traceHint: TextSchema,
+    /** The traced Daily Crossword's button that checks the cells tapped with VoiceOver on, e.g. «Перевірити». */
+    check: TextSchema,
+    /**
+     * What VoiceOver reads for a cell of the traced Daily Crossword, e.g. «к. Рядок 1, стовпець 1».
+     * Takes `{letter}`, with its Stress mark, and `{row}` and `{column}`, counted from 1 at the top left corner.
+     */
+    tracedCellLabel: templateOf('letter', 'row', 'column'),
+    /** What VoiceOver reads for a clue of the traced Daily Crossword before its Word is found. Takes `{clue}`. */
+    clueHidden: templateOf('clue'),
+    /** What VoiceOver reads for a clue of the traced Daily Crossword once its Word is found. Takes `{clue}` and `{word}`. */
+    clueFound: templateOf('clue', 'word'),
   }),
   /**
    * The texts of each Game Mode on offer, by its id: the Core's own and any
