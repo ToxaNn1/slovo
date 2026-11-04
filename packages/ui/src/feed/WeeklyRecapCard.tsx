@@ -11,7 +11,7 @@ import { FeedNoticeCard } from './FeedNoticeCard';
 const NUMBER_MAX_FONT_SCALE = 1.5;
 
 /**
- * The Weekly Recap card «Ваш тиждень» in the Feed Notice frame: the past
+ * The Weekly Recap card «Твій тиждень» in the Feed Notice frame: the past
  * week's Entries Seen, Favorites added and Known marks, and the current
  * Streak, then the week's XP and goal days, each on a tile three to a row,
  * the Streak's tile red (ADR 0054).

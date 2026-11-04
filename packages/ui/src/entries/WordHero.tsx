@@ -22,7 +22,7 @@ export function firstLetter(lemma: string): string {
 /**
  * The red shout card of the Word of the Day in the Feed (XActions a1–a2),
  * under the halftone raster with a giant cream letter behind it. Closed,
- * while Self-check keeps the meaning, it shouts «Ловіть слово!» over the
+ * while Self-check keeps the meaning, it shouts «Лови слово!» over the
  * Lemma, part of speech and Category, with the shouting Mascot and the
  * «Розкрити» button; the letter is «?». Open, the letter is the Lemma's
  * first and the meaning sits on a cream panel at the bottom, drawn in the

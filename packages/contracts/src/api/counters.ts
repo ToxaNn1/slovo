@@ -146,7 +146,7 @@ export const countersContract = {
       successStatus: 202,
       summary: 'Count one answer of the onboarding questionnaire',
       description:
-        'Adds one to the count of the answer, an option of «Як добре ви знаєте мову?» (`level`) or «Навіщо» (`why`) of the Edition. The backend keeps the totals per answer only: no Account, no device id, no IP address (ADR 0068).',
+        'Adds one to the count of the answer, an option of «Як добре ти знаєш мову?» (`level`) or «Навіщо» (`why`) of the Edition. The backend keeps the totals per answer only: no Account, no device id, no IP address (ADR 0068).',
       tags: ['counters'],
     })
     .errors({
