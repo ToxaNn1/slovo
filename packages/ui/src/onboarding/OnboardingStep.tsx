@@ -167,7 +167,7 @@ export function OnboardingStep({
   return (
     <Animated.View
       testID={testID}
-      style={[styles.step, slide, { backgroundColor: colors.background, paddingBottom: bottom }]}
+      style={[styles.step, slide, { backgroundColor: colors.background }]}
     >
       <View testID="onboarding-hero" style={[styles.hero, { height: hero.height }]}>
         <HalftoneGround
@@ -255,7 +255,14 @@ export function OnboardingStep({
         onLayout={({ nativeEvent }) => {
           setFooterHeight(nativeEvent.layout.height);
         }}
-        style={[styles.footer, { backgroundColor: colors.background }]}
+        style={[
+          styles.footer,
+          // The board's room under the buttons, which holds the home indicator.
+          {
+            backgroundColor: colors.background,
+            paddingBottom: Math.max(bottom, onboardingLayout.bottom),
+          },
+        ]}
       >
         {footer}
       </View>
@@ -322,7 +329,6 @@ const styles = StyleSheet.create({
   footer: {
     paddingHorizontal: side,
     paddingTop: space[3],
-    paddingBottom: onboardingLayout.bottom,
     gap: space[3],
   },
   dots: { flexDirection: 'row', alignItems: 'center', gap: dot.gap },

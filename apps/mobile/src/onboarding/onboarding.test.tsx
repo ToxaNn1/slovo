@@ -9,7 +9,7 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ShellProvider } from '../shell-value';
@@ -139,6 +139,10 @@ describe('the onboarding', () => {
     expect(composition.rarityCeiling.state).toBe(4);
 
     expect(screen.getByText(strings.why.title)).toBeTruthy();
+    // Owner test pass B-003: «Пізніше» sits right under the options, not pinned to the bottom.
+    expect(
+      within(screen.getByTestId('onboarding-content')).getByTestId('onboarding-later'),
+    ).toBeTruthy();
     // «Пізніше» goes on and keeps the Mix kind weights.
     const weights = composition.mix.state;
     await press('onboarding-later');

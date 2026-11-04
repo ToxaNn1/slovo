@@ -193,7 +193,7 @@ function Question({
       shout={shout}
       mascot={mascot}
       onSkip={onSkip}
-      footer={<LaterButton testID="onboarding-later" onPress={onLater} />}
+      footer={null}
     >
       <View style={stepStyles.heading}>
         <Title>{title}</Title>
@@ -211,6 +211,7 @@ function Question({
             }}
           />
         ))}
+        <LaterButton testID="onboarding-later" onPress={onLater} />
       </View>
     </OnboardingStep>
   );
