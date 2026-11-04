@@ -1,10 +1,11 @@
 import type { DailyGoal, XpTable } from '@slovo/contracts';
 
 import { createSubscribers } from '../in-turn';
-import { todayKey } from '../local-date';
+import { todayBounds, todayKey } from '../local-date';
 import type { Clock, Random, UserStateChanges } from '../ports';
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
+import type { History } from '../saved/history';
 import type { XpAction, XpAward } from '../game/game-xp';
 import type { LocalDate } from '../local-date';
 import type { Subject } from '../subject';
@@ -12,21 +13,29 @@ import type { UserState } from '../user-state/user-state';
 import type { XpRecord } from './records';
 import { userStateRecords } from '../user-state-schema';
 import { levelOf, type LevelState } from './levels';
+import { ACTIVE_DAY_XP } from './streak';
 
 const { xpLog: xpRecords } = userStateRecords;
 
-/** The Daily Goal of a local day and whether the day met it (ADR 0066). */
+/** The Daily Goal of a local day and whether the day met it (ADR 0074). */
 export interface DailyGoalState {
+  /** The Words to See on the day: the last goal set on or before it. */
   readonly goal: DailyGoal;
-  /** Whether the day's XP reached the goal in force at some moment of the day: a day met stays met. */
+  /** Whether the day's Words Seen reached the goal in force at some moment of the day: a day met stays met. */
   readonly met: boolean;
+}
+
+/** Today's Daily Goal, with the Words Seen today. */
+export interface TodaysDailyGoal extends DailyGoalState {
+  /** The Words Seen today, in the clock's time zone. */
+  readonly seen: number;
 }
 
 /** One local day as the XP log derives it. */
 export interface XpDay {
   /** The XP earned on the day. */
   readonly xp: number;
-  /** The day's Daily Goal; `null` while the Daily Goal is off. */
+  /** The day's Daily Goal; `null` before the reader set one, or while the Daily Goal is off. */
   readonly dailyGoal: DailyGoalState | null;
 }
 
@@ -38,14 +47,19 @@ export interface XpLogState {
   readonly today: number;
   /** The Level the total reaches, while the Edition's `levels` Feature Switch is on (ADR 0066). */
   readonly level: LevelState | undefined;
-  /** Today's Daily Goal and whether it is met; `null` while the Daily Goal is off. */
-  readonly dailyGoal: DailyGoalState | null;
+  /** Today's Daily Goal and whether it is met; `null` before the reader set one, or while the Daily Goal is off. */
+  readonly dailyGoal: TodaysDailyGoal | null;
 }
 
 /** What the XP log holds by local date `YYYY-MM-DD`, for the Active Days and the Streak. */
 export interface XpLogDays {
   /** The XP earned on each local date that has any. */
   readonly byDate: ReadonlyMap<string, number>;
+  /**
+   * The Active Days the log makes (ADR 0074): a day with a Daily Goal once
+   * it is met, a day without one with at least 5 XP.
+   */
+  readonly active: ReadonlySet<string>;
   /** The missed local dates a consumed Streak freeze covers. */
   readonly frozen: ReadonlySet<string>;
   /** The Breaks started: the length in days by the local date each starts on. */
@@ -174,9 +188,12 @@ export async function openXpLog({
   random,
   dayTurned,
   analytics,
+  history,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels' | 'userSettingDefaults'>;
+  edition: Pick<Edition, 'isFeatureEnabled' | 'xp' | 'levels'>;
   userState: Pick<UserState, 'list' | 'write'>;
+  /** The Entries Seen, whose Words today count toward the Daily Goal. */
+  history: Pick<History, 'list' | 'subscribe'>;
   clock: Clock;
   random: Random;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
@@ -201,32 +218,54 @@ export async function openXpLog({
     return amount;
   }
 
-  function dayOf(date: string): XpDay {
-    // The goal in force when the day starts: the last one set before it, else the Edition's default.
-    let before: Extract<XpRecord, { kind: 'daily-goal' }> | undefined;
-    const ofDay: XpRecord[] = [];
+  /** The goal in force on a local date: the last `word-goal` set on or before it. */
+  function goalOf(date: string): DailyGoal | undefined {
+    if (!goalOn) return undefined;
+    let last: Extract<XpRecord, { kind: 'word-goal' }> | undefined;
     for (const record of records.values()) {
-      if (record.date === date) ofDay.push(record);
-      else if (
-        record.kind === 'daily-goal' &&
-        record.date < date &&
-        (before === undefined ||
-          record.date > before.date ||
-          (record.date === before.date && record.at > before.at))
+      if (
+        record.kind === 'word-goal' &&
+        record.date <= date &&
+        (last === undefined ||
+          record.date > last.date ||
+          (record.date === last.date && record.at > last.at))
       )
-        before = record;
+        last = record;
     }
-    let goal = before?.goal ?? edition.userSettingDefaults.dailyGoal;
+    return last?.goal;
+  }
+
+  const metId = (date: string) => `goal-met-${date}`;
+
+  function dailyGoalOf(date: string): DailyGoalState | null {
+    const goal = goalOf(date);
+    return goal === undefined ? null : { goal, met: records.has(metId(date)) };
+  }
+
+  function dayOf(date: string): XpDay {
     let xp = 0;
-    let met = false;
     const review = new Map<string, number>();
-    // In time order, the day is met once its XP reaches the goal in force at that moment.
+    const ofDay = [...records.values()].filter((record) => record.date === date);
     for (const record of ofDay.sort((one, other) => (one.at < other.at ? -1 : 1))) {
       if (record.kind === 'xp') xp += counted(record, review);
-      else if (record.kind === 'daily-goal') goal = record.goal;
-      if (xp >= goal) met = true;
     }
-    return { xp, dailyGoal: goalOn ? { goal, met } : null };
+    return { xp, dailyGoal: dailyGoalOf(date) };
+  }
+
+  /**
+   * The Words Seen today. History is newest first, so the count stops at the
+   * first Entry Seen before today; an Entry ahead of today, after the clock
+   * moved back, is not today's.
+   */
+  function seenToday(): number {
+    const { start, end } = todayBounds(clock);
+    let seen = 0;
+    for (const { seenAt, row } of history.list) {
+      const time = seenAt.getTime();
+      if (time < start) break;
+      if (time < end && row.kind === 'word') seen += 1;
+    }
+    return seen;
   }
 
   function derive(): XpLogDays & {
@@ -259,6 +298,8 @@ export async function openXpLog({
           breaks.set(record.date, Math.max(breaks.get(record.date) ?? 0, record.days));
           break;
         case 'daily-goal':
+        case 'word-goal':
+        case 'goal-met':
           break;
         case 'xp': {
           const { source, mode, rarity } = record;
@@ -274,17 +315,26 @@ export async function openXpLog({
         }
       }
     }
+    const active = new Set<string>();
+    for (const [day, xp] of byDate) {
+      if (goalOf(day) === undefined ? xp >= ACTIVE_DAY_XP : records.has(metId(day)))
+        active.add(day);
+    }
+    for (const record of records.values()) {
+      if (record.kind === 'goal-met' && goalOf(record.date) !== undefined) active.add(record.date);
+    }
     const { xp, dailyGoal } = dayOf(date);
     return {
       date,
       state: {
         total,
         today: xp,
-        dailyGoal,
+        dailyGoal: dailyGoal === null ? null : { ...dailyGoal, seen: seenToday() },
         level: levelsOn ? levelOf(edition.levels, total) : undefined,
       },
       reviewToday: review.get(date) ?? 0,
       byDate,
+      active,
       frozen,
       breaks,
       milestones: { wins, rightByMode, rightRarities, crosswords, badges },
@@ -409,22 +459,51 @@ export async function openXpLog({
     };
   }
 
+  /** The goal-met record of today, when today's Words Seen reach `goal` and today is not met yet. */
+  function metToday(goal: DailyGoal | undefined): Map<string, XpRecord> {
+    const date = todayKey(clock);
+    if (goal === undefined || records.has(metId(date)) || seenToday() < goal) return new Map();
+    return new Map([[metId(date), { kind: 'goal-met', date, at: clock.now().toISOString() }]]);
+  }
+
+  async function write(added: ReadonlyMap<string, XpRecord>): Promise<void> {
+    await userState.write(
+      new Map([...added].flatMap(([id, record]) => [...xpRecords.record(id).change(record)])),
+    );
+    for (const [id, record] of added) records.set(id, record);
+    change();
+  }
+
   async function setDailyGoal(goal: DailyGoal): Promise<void> {
     if (!goalOn) return;
     const at = clock.now();
-    const id = newId(at);
     const record: XpRecord = {
-      kind: 'daily-goal',
+      kind: 'word-goal',
       date: todayKey(clock),
       at: at.toISOString(),
       goal,
     };
-    await userState.write(xpRecords.record(id).change(record));
-    records.set(id, record);
-    change();
+    await write(new Map([[newId(at), record], ...metToday(goal)]));
     await analytics.track('dailyGoalChanged', { goal }).catch(() => undefined);
   }
 
+  /** Meets today's goal once the Words Seen reach it; one write at a time, so it records once. */
+  let meeting: Promise<void> | undefined;
+  function meetGoal(): void {
+    if (meeting !== undefined) return;
+    const added = metToday(goalOf(todayKey(clock)));
+    if (added.size === 0) {
+      change();
+      return;
+    }
+    meeting = write(added)
+      .catch(() => undefined)
+      .finally(() => {
+        meeting = undefined;
+      });
+  }
+
+  history.subscribe(meetGoal);
   dayTurned.subscribe(change);
 
   return {

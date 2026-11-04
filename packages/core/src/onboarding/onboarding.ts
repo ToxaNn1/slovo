@@ -23,9 +23,6 @@ import {
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
-/** The Daily Goals the reader picks from. */
-const DAILY_GOALS: readonly DailyGoal[] = [10, 20, 30, 50];
-
 /** Where a step stands among the steps, for the progress the UI draws. */
 interface StepPlace {
   /** The step's number, from 1. */
@@ -142,7 +139,7 @@ export async function openOnboarding({
   analytics,
   backend,
 }: {
-  edition: Pick<Edition, 'id' | 'isFeatureEnabled' | 'questionnaire' | 'userSettingDefaults'>;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled' | 'questionnaire' | 'dailyGoals'>;
   userState: UserState;
   clock: Clock;
   entries: Pick<
@@ -179,8 +176,8 @@ export async function openOnboarding({
       return {
         kind,
         ...place,
-        goals: DAILY_GOALS,
-        highlighted: edition.userSettingDefaults.dailyGoal,
+        goals: edition.dailyGoals.options,
+        highlighted: edition.dailyGoals.highlighted,
       };
     }
     if (kind === 'level') {
