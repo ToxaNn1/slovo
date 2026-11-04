@@ -7,7 +7,7 @@ import { editionStrings } from './edition';
 
 /**
  * The Feed's header over the cards: the design's row of the logo, today and
- * the Streak pill (32), a gap (8), and the row of the XP bar, Search and Mood (40).
+ * the Streak pill (32), a gap (8), and the row of the XP bar and Search (40).
  */
 export const TOP_ROW = 80;
 

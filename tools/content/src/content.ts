@@ -47,8 +47,8 @@ export type EntryKind = keyof typeof ENTRY_KINDS;
 /**
  * Drafts an Entry of the given kind with an id no Entry of the Edition has
  * had, in the file the build reads it from, and opens it in the editor. For
- * a Word it first prints the origin codes and the moods the Edition lists,
- * and the Illustrations it has. Once the draft passes the build's checks, the content is recorded as
+ * a Word it first prints the origin codes the Edition lists and the
+ * Illustrations it has. Once the draft passes the build's checks, the content is recorded as
  * `pnpm build:pack --record` records it: the new id joins the id registry
  * and the content version grows. A draft closed unchanged is removed, so
  * nothing is written and no id is issued. Returns the exit code.
@@ -85,7 +85,7 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
  * expression, non-standard form, a Synonym Row's dominant or a Tip's title, with or without stress marks and in any
  * case. When the text matches several Entries, such as homonyms, it lists
  * them and asks which one to open. For a Word it first prints the origin
- * codes and the moods the Edition lists, and the Illustrations it has. After each save the content is checked
+ * codes the Edition lists and the Illustrations it has. After each save the content is checked
  * and recorded as `newEntry` does; an Entry closed unchanged writes nothing.
  * Returns the exit code.
  */
@@ -186,9 +186,9 @@ export function checkEdition({ edition, terminal }: ContentTool): number {
  * owner leaves it. A file closed as it was before the command writes
  * nothing: a draft is removed, an existing Entry kept as it was. A deleted
  * draft is gone; a deleted Entry is written back, since its id stays taken
- * (ADR 0010) and only retiring withdraws it. A Word saved with its last
- * mood removed, or its `illustration` empty, loses the field, since a Word
- * without one leaves it out.
+ * (ADR 0010) and only retiring withdraws it. A Word saved with its
+ * `illustration` empty loses the field, since a Word without one leaves it
+ * out.
  */
 async function editUntilRecorded(
   file: string,
@@ -225,17 +225,12 @@ async function editUntilRecorded(
 
 /**
  * Prints the origin codes the Edition lists, which a Word's optional `origin`
- * takes one of, the moods, which its optional `moods` takes any of, and the
- * files its optional `illustration` may name (ADR 0055).
+ * takes one of, and the files its optional `illustration` may name (ADR 0055).
  */
 function offerWordFields({ edition, terminal }: ContentTool): void {
-  const { originLanguages, moods } = edition.config;
+  const { originLanguages } = edition.config;
   const codes = originLanguages.map(({ code, name }) => `${code} (${name})`);
   terminal.print(`  origin: one of ${codes.join(', ')}, or none`);
-  if (moods.length > 0) {
-    const ids = moods.map(({ id, name }) => `${id} (${name})`);
-    terminal.print(`  moods: any of ${ids.join(', ')}, or none`);
-  }
   const files = edition.illustrations();
   const listed = files.length === 0 ? '' : ` (${files.join(', ')})`;
   terminal.print(
@@ -244,8 +239,7 @@ function offerWordFields({ edition, terminal }: ContentTool): void {
 }
 
 /**
- * Rewrites a Word saved with an empty `moods` list or an empty
- * `illustration` without that field.
+ * Rewrites a Word saved with an empty `illustration` without that field.
  */
 function dropEmptyFields(path: string): void {
   let entry: unknown;
@@ -256,11 +250,7 @@ function dropEmptyFields(path: string): void {
   }
   if (typeof entry !== 'object' || entry === null) return;
   const fields = Object.entries(entry);
-  const kept = fields.filter(
-    ([key, value]) =>
-      !(key === 'moods' && Array.isArray(value) && value.length === 0) &&
-      !(key === 'illustration' && value === ''),
-  );
+  const kept = fields.filter(([key, value]) => !(key === 'illustration' && value === ''));
   if (kept.length === fields.length) return;
   writeFileSync(path, `${JSON.stringify(Object.fromEntries(kept), null, 2)}\n`);
 }
