@@ -4,8 +4,8 @@ import { TextSchema } from '../shared';
 import { templateOf } from './shared';
 
 /**
- * The texts of the onboarding (ADR 0067): the welcome, the first Word, «Хто
- * ви» and «Навіщо», and the Daily Goal.
+ * The texts of the onboarding (ADR 0067): the welcome, the first Word, «Як
+ * добре ти знаєш мову?» and «Навіщо», and the Daily Goal.
  */
 export const OnboardingStringsSchema = z.strictObject({
   /** Ends the onboarding from any step, keeping what was already chosen. */
@@ -38,7 +38,7 @@ export const OnboardingStringsSchema = z.strictObject({
     subtitle: TextSchema,
     next: TextSchema,
   }),
-  /** «Як добре ви знаєте мову?»: its options are the Edition's questionnaire; «Пізніше» goes on without an answer. */
+  /** «Як добре ти знаєш мову?»: its options are the Edition's questionnaire; «Пізніше» goes on without an answer. */
   level: z.strictObject({
     /** The word the step shouts large on its red top. */
     shout: TextSchema,

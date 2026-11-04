@@ -9,7 +9,7 @@ import type { XpLog } from '../progress/xp-log';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
-/** The numbers of the Weekly Recap («Ваш тиждень»): one local Monday–Sunday week and the Streak. */
+/** The numbers of the Weekly Recap («Твій тиждень»): one local Monday–Sunday week and the Streak. */
 export interface WeeklyRecapModel {
   /** The week's Monday. */
   readonly firstDay: LocalDate;

@@ -228,9 +228,9 @@ export const FeatureSwitchesSchema = z.strictObject({
   search: z.boolean(),
   /** The Rarity Test: the short test that sets the Rarity Ceiling (ADR 0054, 0072). */
   rarityTest: z.boolean(),
-  /** The Weekly Recap «Ваш тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
+  /** The Weekly Recap «Твій тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
   weeklyRecap: z.boolean(),
-  /** Yesterday: the Feed Notice «Пам'ятаєте вчорашнє слово?» (ADR 0054). */
+  /** Yesterday: the Feed Notice «Пам'ятаєш вчорашнє слово?» (ADR 0054). */
   yesterday: z.boolean(),
   /** The Word of the Day archive «Слова дня» in Saved (ADR 0054). */
   wordOfTheDayArchive: z.boolean(),
@@ -288,7 +288,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   dailyGoal: z.boolean(),
   /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
   enoughForToday: z.boolean(),
-  /** The onboarding questions «Як добре ви знаєте мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
+  /** The onboarding questions «Як добре ти знаєш мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
   questionnaire: z.boolean(),
   /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
   badges: z.boolean(),
@@ -624,7 +624,7 @@ export const ONBOARDING_STEPS = [
 /** A step of the onboarding. */
 export type OnboardingStepKind = (typeof ONBOARDING_STEPS)[number];
 
-/** The questions the onboarding asks (ADR 0067): «Як добре ви знаєте мову?» and «Навіщо». */
+/** The questions the onboarding asks (ADR 0067): «Як добре ти знаєш мову?» and «Навіщо». */
 export const QuestionnaireQuestionSchema = z.enum(['level', 'why']);
 
 export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;

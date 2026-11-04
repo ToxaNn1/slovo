@@ -8,7 +8,7 @@ import { space } from '../tokens';
 import { FeedNoticeCard } from './FeedNoticeCard';
 
 /**
- * Yesterday («Пам'ятаєте вчорашнє слово?»): the Feed Notice with the card of
+ * Yesterday («Пам'ятаєш вчорашнє слово?»): the Feed Notice with the card of
  * the day before's Word of the Day in Self-check style, whatever the Self-check
  * setting. Until the reader reveals it, the card shows only its Lemma, part of
  * speech and Category, and the Knowledge Mark buttons in `marks` are inactive
