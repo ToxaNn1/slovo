@@ -13,7 +13,7 @@
 <div style="position:relative;width:{{ w }};height:{{ h }};background:{{ bg }};color:{{ fg }};overflow:hidden;border-radius:18px;font-family:'Onest',sans-serif;display:flex;flex-direction:column;padding:{{ pad }};box-shadow:0 14px 40px rgba(20,12,10,.25);flex:none">
   <div style="position:absolute;inset:0;background-image:radial-gradient({{ dot }} 1px,transparent 1.5px);background-size:5px 5px"></div>
   <div style="position:absolute;right:{{ gR }};top:{{ gT }};font:900 {{ gS }}/1 Unbounded,sans-serif;letter-spacing:-8px;color:{{ giant }};white-space:nowrap">{{ g }}</div>
-  <div style="position:relative;display:flex;align-items:center;gap:6px"><span style="width:9px;height:13px;background:{{ acc }};clip-path:polygon(0 0,100% 22%,100% 78%,0 100%)"></span><span style="font:900 12px/1 Unbounded,sans-serif">SLOVO</span></div>
+  <div style="position:relative;display:flex;align-items:center;gap:6px"><span style="display:inline-flex;align-items:center;flex:none;padding:5.0px 6.0px 5.0px 4.3px;background:{{ acc }};color:{{ bandFg }};clip-path:polygon(0 16%,100% 0,100% 100%,0 84%);font:900 12px/1 Unbounded,sans-serif;letter-spacing:-.03em;white-space:nowrap">SLOVO</span></div>
   <span style="position:relative;margin-top:{{ kickTop }};font:800 10px/1.3 Unbounded,sans-serif;letter-spacing:1.5px">{{ kick }}</span>
   <span style="position:relative;margin-top:8px;font:900 {{ tS }}/1 Unbounded,sans-serif;letter-spacing:-1px;text-wrap:balance">{{ t }}</span>
   <sc-if value="{{ showSub }}" hint-placeholder-val="{{ true }}"><span style="position:relative;margin-top:8px;font:500 12px/1.4 Onest;opacity:.9;text-wrap:pretty">{{ sub }}</span></sc-if>
@@ -41,7 +41,7 @@ class Component extends DCLogic {
     const k=K[kind];
     const pat=[1,1,1,0,1, 1,0,1,1,1, 1,1,1,0,1, 0,1,0,1,1, 1,1,1,1,0];
     return {...k,w:sq?'300px':'270px',h:sq?'300px':'480px',pad:sq?'18px':'22px 20px',kickTop:sq?'14px':'60px',tS:sq?(kind==='word'?'30px':'24px'):(kind==='word'?'40px':'32px'),
-      bg:dark?'#140C0A':'#FF3B2F',fg:dark?'#FFF4E6':'#140C0A',acc:dark?'#FF3B2F':'#140C0A',dot:dark?'rgba(255,244,230,.08)':'rgba(20,12,10,.2)',giant:dark?'#FF3B2F':'#FFF4E6',
+      bg:dark?'#140C0A':'#FF3B2F',fg:dark?'#FFF4E6':'#140C0A',acc:dark?'#FF3B2F':'#140C0A',bandFg:dark?'#140C0A':'#FFF4E6',dot:dark?'rgba(255,244,230,.08)':'rgba(20,12,10,.2)',giant:dark?'#FF3B2F':'#FFF4E6',
       gS:sq?'220px':'320px',gR:sq?'-30px':'-50px',gT:sq?'40px':'120px',onRed:!dark,ms:sq?70:96,chip:dark?'rgba(255,244,230,.1)':'rgba(255,244,230,.55)',
       isCw:kind==='cw',cw:pat.map(p=>p?(dark?'#FF3B2F':'#140C0A'):(dark?'rgba(255,244,230,.12)':'rgba(255,244,230,.6)')),
       isWeek:kind==='week',showSub:!(sq&&kind==='week')&&!!k.sub,stCols:sq?4:2,stats:[['48','переглянуто'],['31','знаю'],['23','серія'],['340','XP']].map(([n,l])=>({n,l}))};

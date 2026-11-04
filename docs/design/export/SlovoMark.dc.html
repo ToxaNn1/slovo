@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@800;900&display=swap" rel="stylesheet">
+</helmet>
+<sc-if value="{{ isMark }}" hint-placeholder-val="{{ true }}">
+  <sc-if value="{{ vCur }}" hint-placeholder-val="{{ false }}"><svg width="{{ size }}" height="{{ size }}" viewBox="0 0 100 100" style="display:block;flex:none"><polygon points="34,26 66,37 66,63 34,74" fill="{{ ink }}"></polygon></svg></sc-if>
+  <sc-if value="{{ vA }}" hint-placeholder-val="{{ false }}"><svg width="{{ size }}" height="{{ size }}" viewBox="0 0 100 100" style="display:block;flex:none"><g transform="rotate(-8 50 50)"><polygon points="20,22 62,35 62,65 20,78" fill="{{ ink }}"></polygon><polygon points="71,38 84,34 84,66 71,62" fill="{{ ink }}"></polygon></g></svg></sc-if>
+  <sc-if value="{{ vB }}" hint-placeholder-val="{{ false }}"><svg width="{{ size }}" height="{{ size }}" viewBox="0 0 100 100" style="display:block;flex:none"><polygon points="8,30 44,41 44,59 8,70" fill="{{ ink }}"></polygon><circle cx="70" cy="50" r="18" fill="none" stroke="{{ ink }}" stroke-width="12"></circle></svg></sc-if>
+  <sc-if value="{{ vC }}" hint-placeholder-val="{{ false }}"><svg width="{{ size }}" height="{{ size }}" viewBox="0 0 100 100" style="display:block;flex:none"><polygon points="10,27 90,9 90,91 10,73" fill="{{ ink }}"></polygon><path d="M65.5,40 C65.5,33.5 59.5,30.5 52.5,30.5 C45.5,30.5 40,33.5 40,39.5 C40,46 47,47.2 53,48.8 C59.5,50.5 66,52.5 66,59.8 C66,66.5 60,69.5 52.5,69.5 C44.5,69.5 39,66.2 39,59.5" fill="none" stroke="{{ cut }}" stroke-width="11.5" stroke-linecap="butt"></path></svg></sc-if>
+</sc-if>
+<sc-if value="{{ isWord }}" hint-placeholder-val="{{ false }}">
+  <sc-if value="{{ notC }}" hint-placeholder-val="{{ true }}">
+    <div style="display:inline-flex;align-items:center;gap:{{ gap }};flex:none">
+      <sc-if value="{{ vCur }}" hint-placeholder-val="{{ false }}"><svg width="{{ markS }}" height="{{ markS }}" viewBox="0 0 100 100" style="display:block;flex:none"><polygon points="34,26 66,37 66,63 34,74" fill="{{ acc }}"></polygon></svg></sc-if>
+      <sc-if value="{{ vA }}" hint-placeholder-val="{{ false }}"><svg width="{{ markS }}" height="{{ markS }}" viewBox="0 0 100 100" style="display:block;flex:none"><g transform="rotate(-8 50 50)"><polygon points="20,22 62,35 62,65 20,78" fill="{{ acc }}"></polygon><polygon points="71,38 84,34 84,66 71,62" fill="{{ acc }}"></polygon></g></svg></sc-if>
+      <sc-if value="{{ vB }}" hint-placeholder-val="{{ false }}"><svg width="{{ markS }}" height="{{ markS }}" viewBox="0 0 100 100" style="display:block;flex:none"><polygon points="8,30 44,41 44,59 8,70" fill="{{ acc }}"></polygon><circle cx="70" cy="50" r="18" fill="none" stroke="{{ acc }}" stroke-width="12"></circle></svg></sc-if>
+      <span style="font:900 {{ fs }}/1 Unbounded,sans-serif;letter-spacing:{{ ls }};color:{{ ink }};white-space:nowrap">SLOVO</span>
+    </div>
+  </sc-if>
+  <sc-if value="{{ vC }}" hint-placeholder-val="{{ false }}">
+    <div style="display:inline-flex;align-items:center;padding:{{ bandPad }};background:{{ ink }};clip-path:polygon(0 16%,100% 0,100% 100%,0 84%);flex:none">
+      <span style="font:900 {{ fs }}/1 Unbounded,sans-serif;letter-spacing:-.03em;color:{{ cut }};white-space:nowrap">SLOVO</span>
+    </div>
+  </sc-if>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:200,&quot;height&quot;:120},&quot;v&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cur&quot;,&quot;a&quot;,&quot;b&quot;,&quot;c&quot;],&quot;default&quot;:&quot;cur&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;mode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;mark&quot;,&quot;word&quot;],&quot;default&quot;:&quot;mark&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;size&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:100,&quot;tsType&quot;:&quot;number&quot;},&quot;ink&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#140C0A&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;acc&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FF3B2F&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;cut&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#FFF4E6&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  renderVals(){
+    const v=this.props.v||'cur',size=this.props.size??100,word=this.props.mode==='word';
+    return {v,size,isMark:!word,isWord:word,vCur:v==='cur',vA:v==='a',vB:v==='b',vC:v==='c',notC:v!=='c',
+      ink:this.props.ink||'#140C0A',acc:this.props.acc||'#FF3B2F',cut:this.props.cut||'#FFF4E6',
+      fs:size+'px',ls:v==='cur'?'-.02em':'-.04em',markS:Math.round(size*(v==='cur'?1.45:1.5)),gap:Math.round(size*(v==='cur'?-.1:0.02))+'px',
+      bandPad:Math.round(size*.42)+'px '+Math.round(size*.5)+'px '+Math.round(size*.42)+'px '+Math.round(size*.36)+'px'};
+  }
+}
+</script>
+</body>
+</html>

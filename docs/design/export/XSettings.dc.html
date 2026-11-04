@@ -39,7 +39,7 @@
 </sc-if>
 
 <sc-if value="{{ is_t1 }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;padding:160px 16px 30px;display:flex;flex-direction:column;gap:20px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+<div style="position:absolute;left:0;right:0;top:160px;bottom:0;padding:4px 16px 40px;overflow-y:auto;scrollbar-width:none;display:flex;flex-direction:column;gap:20px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
   <div style="display:flex;flex-direction:column;gap:12px">
     <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">РІДКІСТЬ</span><span style="font:700 14px/1 Onest">від 2 до 4</span></div>
     <div style="position:relative;display:flex;gap:6px;height:54px;align-items:flex-end">
@@ -47,8 +47,8 @@
     </div>
   </div>
   <div style="display:flex;flex-direction:column;gap:10px">
-    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">КАТЕГОРІЇ</span><span style="font:600 13px/1 Onest;color:var(--mute)">9 з 16</span></div>
-    <div style="display:flex;flex-wrap:wrap;gap:6px"><sc-for list="{{ cats }}" as="c" hint-placeholder-count="16"><span style="height:34px;padding:0 11px;border-radius:10px;background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;font:600 13px/1 Onest">{{ c.n }}</span></sc-for></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">КАТЕГОРІЇ</span><span style="font:600 13px/1 Onest;color:var(--mute)">9 з 16 обрано</span></div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px"><sc-for list="{{ cats }}" as="c" hint-placeholder-count="16"><div style="position:relative;min-height:50px;padding:8px 26px 8px 8px;border-radius:13px;background:{{ c.bg }};color:{{ c.fg }};border:1px solid {{ c.bc }};box-shadow:{{ c.sh }};display:flex;align-items:center;gap:10px;overflow:hidden;animation:slCasc .35s {{ c.dl }} both"><span style="flex:none;width:30px;height:30px;border-radius:9px;background:{{ c.tile }};display:flex;align-items:center;justify-content:center"><span style="width:18px;height:18px;background:{{ c.gl }};clip-path:{{ c.shape }}"></span></span><span style="flex:1;min-width:0;font:600 13px/1.2 Onest;text-wrap:balance">{{ c.n }}</span><span style="position:absolute;top:0;right:0;width:26px;height:26px;background:{{ c.ck }};clip-path:polygon(0 0,100% 0,100% 100%);display:flex;justify-content:flex-end;padding:4px 4px 0 0"><svg width="10" height="9" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="{{ c.ckFg }}"></polygon></svg></span></div></sc-for></div>
   </div>
   <div style="display:flex;flex-direction:column;gap:10px">
     <span style="font:800 13px/1 Unbounded,sans-serif;letter-spacing:1px">ТИПИ КАРТОК</span>
@@ -238,6 +238,23 @@
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:406,&quot;height&quot;:860},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;t1&quot;,&quot;t2&quot;,&quot;t3&quot;,&quot;t4&quot;,&quot;t5&quot;,&quot;t6&quot;,&quot;t7&quot;,&quot;t8&quot;,&quot;a1&quot;,&quot;a2&quot;,&quot;a3&quot;,&quot;m1&quot;,&quot;m1b&quot;,&quot;m2&quot;,&quot;m3&quot;,&quot;m4&quot;,&quot;m5&quot;,&quot;m6&quot;,&quot;m7&quot;],&quot;default&quot;:&quot;t1&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;light&quot;,&quot;dark&quot;],&quot;default&quot;:&quot;light&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;reduceMotion&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const CS=[
+ ['polygon(40% 0,60% 0,62% 30%,90% 40%,80% 100%,20% 100%,10% 40%,38% 30%)','circle(50%)'],
+ ['polygon(50% 100%,0 35%,20% 0,50% 20%,80% 0,100% 35%)','polygon(0 0,100% 0,50% 100%)'],
+ ['polygon(0 60%,30% 20%,60% 45%,100% 0,100% 100%,0 100%)','circle(50%)'],
+ ['polygon(50% 0,100% 40%,100% 100%,0 100%,0 40%)','polygon(0 0,100% 0,100% 100%,0 100%)'],
+ ['polygon(40% 0,60% 0,60% 20%,100% 20%,100% 80%,60% 80%,60% 100%,40% 100%,40% 80%,0 80%,0 20%,40% 20%)','circle(50%)'],
+ ['polygon(50% 0,60% 30%,100% 40%,65% 60%,75% 100%,50% 75%,25% 100%,35% 60%,0 40%,40% 30%)','polygon(0 0,100% 50%,0 100%)'],
+ ['polygon(0 30%,30% 30%,60% 0,60% 100%,30% 70%,0 70%)','polygon(0 0,100% 40%,100% 60%,0 100%)'],
+ ['polygon(20% 0,80% 0,100% 100%,0 100%)','polygon(0 0,100% 0,100% 100%)'],
+ ['circle(45%)','polygon(0 0,100% 0,100% 100%)'],
+ ['polygon(0 20%,100% 0,100% 80%,40% 80%,20% 100%,20% 80%,0 80%)','polygon(0 0,100% 50%,0 100%)'],
+ ['polygon(0 40%,100% 40%,85% 100%,15% 100%)','polygon(30% 0,70% 0,60% 100%,40% 100%)'],
+ ['polygon(0 70%,100% 0,70% 100%)','polygon(0 0,100% 30%,100% 100%,0 70%)'],
+ ['polygon(50% 100%,0 40%,25% 0,50% 25%,75% 0,100% 40%)','circle(50%)'],
+ ['polygon(30% 0,70% 0,70% 70%,40% 100%,10% 85%,30% 60%)','polygon(0 0,100% 0,100% 30%,0 30%)'],
+ ['polygon(20% 0,80% 0,80% 100%,20% 100%)','polygon(0 45%,100% 45%,100% 55%,0 55%)'],
+ ['polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)','polygon(40% 0,60% 0,60% 100%,40% 100%)']];
 const NEWCATS=['Людина і тіло','Емоції та характер','Природа і погода','Побут і ремесла','Техніка','Військова справа','Мистецтво і культура','Історія та старовина','Наука','Мова і мовлення','Діалекти','Дотепна лайка','Народні назви','Старі ремесла','Розстріляна лексика','Слова-хамелеони'];
 const TITLE={t1:'Мій Мікс',t2:'Приховане',t3:'Відзнаки',t4:'Перерва',t5:'Опитування ще раз',t6:'Тест рідкості',t7:'Тест рідкості',t8:'Профіль',a1:'Акаунт',a2:'Код із листа',a3:'Акаунт'};
 const FAMS=[
@@ -253,7 +270,7 @@ class Component extends DCLogic {
     v['is_'+s]=true;v.title=TITLE[s];v.setHead=!!TITLE[s];
     v.rar=[1,2,3,4,5].map(n=>{const on=n>=2&&n<=4;return {n:String(n),h:(20+n*7)+'px',bg:on?'#FF3B2F':'var(--sil)',fg:on?'#140C0A':'var(--mute)'};});
     const sel=[0,1,2,6,7,9,10,12,14];
-    v.cats=NEWCATS.map((n,i)=>({n,bg:sel.includes(i)?'var(--ink)':'var(--sf2)',fg:sel.includes(i)?'var(--bg)':'var(--ink)'}));
+    v.cats=NEWCATS.map((n,i)=>{const on=sel.includes(i);return {n,shape:CS[i][0],dl:(i*0.025).toFixed(3)+'s',bg:on?'var(--ink)':'var(--sf)',fg:on?'var(--bg)':'var(--ink)',bc:on?'transparent':'var(--line)',sh:on?'0 4px 0 rgba(0,0,0,.3)':'0 4px 0 var(--edge)',tile:on?'#FF3B2F':'var(--sf2)',gl:on?'#140C0A':'var(--mute)',ck:on?'#FF3B2F':'transparent',ckFg:on?'#140C0A':'transparent'};});
     v.types=[['Слова',1],['Виправлення',1],['Фразеологізми',1],['Синонімічні ряди',0],['Поради',1]].map(([n,on],i)=>({n,bt:i?'1px solid var(--line)':'0',track:on?'#FF3B2F':'var(--sil)',jc:on?'flex-end':'flex-start'}));
     v.hidden=[['Діалекти','категорія'],['Поради','тип карток'],['Бити байдики','запис'],['Шухляда','запис']].map(([n,k],i)=>({n,k,bt:i?'1px solid var(--line)':'0',anim:'slCasc .3s '+(.1+i*.05)+'s both'}));
     let k=0;
