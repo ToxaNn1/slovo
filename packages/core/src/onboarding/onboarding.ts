@@ -1,7 +1,6 @@
 import {
   ONBOARDING_STEPS as STEPS,
   type DailyGoal,
-  type OnboardingStepKind,
   type QuestionnaireQuestion,
 } from '@slovo/contracts';
 
@@ -43,7 +42,7 @@ export type OnboardingStep =
   | (StepPlace & { readonly kind: 'welcome' })
   /** Today's Word of the Day, the reader's first Word, with its Pronunciation on the card. */
   | (StepPlace & { readonly kind: 'firstWord'; readonly word: WordCardModel })
-  /** «Хто ви» or «Навіщо», with the Edition's options; going on without an answer keeps the defaults. */
+  /** «Рівень» or «Навіщо», with the Edition's options; going on without an answer keeps the defaults. */
   | (StepPlace & {
       readonly kind: QuestionnaireQuestion;
       readonly options: readonly QuestionnaireOption[];
@@ -53,7 +52,12 @@ export type OnboardingStep =
       readonly kind: 'dailyGoal';
       readonly goals: readonly DailyGoal[];
       readonly highlighted: DailyGoal;
-    });
+    })
+  /**
+   * The Rarity Test, opened by «Не знаю» on «Рівень» and numbered as that
+   * step; going on from it goes to the step after «Рівень».
+   */
+  | (StepPlace & { readonly kind: 'rarityTest' });
 
 /** Where the onboarding stands. */
 export interface OnboardingState {
@@ -64,8 +68,8 @@ export interface OnboardingState {
 }
 
 /**
- * The onboarding (ADR 0067): the welcome, the first Word, «Хто ви» and
- * «Навіщо», the Daily Goal, then the Feed; and whether the reader finished
+ * The onboarding (ADR 0067): the welcome, the first Word, «Рівень» (whose
+ * «Не знаю» opens the Rarity Test) and «Навіщо», the Daily Goal, then the Feed; and whether the reader finished
  * it, which is also when they skipped it. It opens on launch until then, at
  * the welcome, and never again after, so a reader who finished the old
  * onboarding sees none. The step on screen is not kept: closing the app
@@ -90,8 +94,8 @@ export interface Onboarding {
   next(): Promise<void>;
   /**
    * Answers the question on screen with the option `answerId` and goes on:
-   * «Хто ви» sets the Rarity Ceiling and «Навіщо» the Mix kind weights by the
-   * Edition's mapping. The answer is counted by the backend with no reader id
+   * «Рівень» sets the Rarity Ceiling, or with «Не знаю» opens the Rarity Test,
+   * and «Навіщо» the Mix kind weights by the Edition's mapping. The answer is counted by the backend with no reader id
    * while the reader shares their anonymous statistics; a count that fails is
    * lost. An id that is no option, or another step on screen, does nothing.
    */
@@ -161,7 +165,7 @@ export async function openOnboarding({
   const steps = STEPS.filter(
     (kind) =>
       (kind !== 'firstWord' || firstWord !== undefined) &&
-      ((kind !== 'who' && kind !== 'why') || edition.isFeatureEnabled('questionnaire')) &&
+      ((kind !== 'level' && kind !== 'why') || edition.isFeatureEnabled('questionnaire')) &&
       (kind !== 'dailyGoal' || edition.isFeatureEnabled('dailyGoal')),
   );
 
@@ -179,11 +183,17 @@ export async function openOnboarding({
         highlighted: edition.userSettingDefaults.dailyGoal,
       };
     }
-    if (kind === 'who' || kind === 'why') {
+    if (kind === 'level') {
+      const options = questionnaire.level.filter(
+        (option) => 'rarityCeiling' in option || edition.isFeatureEnabled('rarityTest'),
+      );
+      return { kind, ...place, options: options.map(({ id, label }) => ({ id, label })) };
+    }
+    if (kind === 'why') {
       return {
         kind,
         ...place,
-        options: questionnaire[kind].map(({ id, label }) => ({ id, label })),
+        options: questionnaire.why.map(({ id, label }) => ({ id, label })),
       };
     }
     return undefined;
@@ -234,16 +244,25 @@ export async function openOnboarding({
     analytics.track('onboardingFinished', { skipped }).catch(() => undefined);
   }
 
-  /** Goes on from the step of `kind` to the next one, or finishes past the last. */
-  async function goOn(kind: OnboardingStepKind): Promise<void> {
-    const step = stepAt(steps.indexOf(kind) + 1);
+  function show(step: OnboardingStep): void {
+    change({ ...state, step });
+    viewed(step);
+  }
+
+  /** Goes on from the step of `kind` to the next one, or finishes past the last; the Rarity Test goes on as «Рівень». */
+  async function goOn(kind: OnboardingStep['kind']): Promise<void> {
+    const step = stepAt(steps.indexOf(kind === 'rarityTest' ? 'level' : kind) + 1);
     if (step === undefined) {
       await keepFinished(false);
       return;
     }
-    change({ ...state, step });
-    viewed(step);
+    show(step);
   }
+
+  /** Whether `answerId` is the «Рівень» option that opens the Rarity Test, while the test is on. */
+  const opensRarityTest = (answerId: string): boolean =>
+    edition.isFeatureEnabled('rarityTest') &&
+    questionnaire.level.some((option) => option.id === answerId && 'rarityTest' in option);
 
   /** Counts the answer on the backend with no reader id while the reader shares; a failure is lost. */
   async function count(question: QuestionnaireQuestion, answer: string): Promise<void> {
@@ -259,14 +278,17 @@ export async function openOnboarding({
     },
     next: () => endStep(({ kind }) => goOn(kind)),
     answer: (answerId) =>
-      endStep(async ({ kind }) => {
-        if (kind !== 'who' && kind !== 'why') return;
-        if (!(await applyAnswer({ edition, mix, rarityCeiling }, kind, answerId))) return;
+      endStep(async ({ kind, number, total }) => {
+        if (kind !== 'level' && kind !== 'why') return;
+        const rarityTest = kind === 'level' && opensRarityTest(answerId);
+        if (!rarityTest && !(await applyAnswer({ edition, mix, rarityCeiling }, kind, answerId)))
+          return;
         await count(kind, answerId);
         analytics
           .track('questionnaireAnswered', { question: kind, answer: answerId })
           .catch(() => undefined);
-        await goOn(kind);
+        if (rarityTest) show({ kind: 'rarityTest', number, total });
+        else await goOn(kind);
       }),
     chooseDailyGoal: (goal) =>
       endStep(async ({ kind }) => {

@@ -19,7 +19,7 @@ export interface QuestionnaireOption {
   readonly label: string;
 }
 
-/** A question answered with one of the Edition's options: «Хто ви», «Навіщо» or the self-rating. */
+/** A question answered with one of the Edition's options: «Рівень», «Навіщо» or the self-rating. */
 export type OptionQuestion = QuestionnaireQuestion | 'selfRating';
 
 /**
@@ -29,11 +29,12 @@ export type OptionQuestion = QuestionnaireQuestion | 'selfRating';
  * an Analytics event.
  */
 export interface Questionnaire {
-  /** The Edition's options of each question answered with an option. */
+  /** The Edition's options of each question answered with an option; «Рівень» leaves out «Не знаю». */
   readonly options: Readonly<Record<OptionQuestion, readonly QuestionnaireOption[]>>;
   /**
-   * Answers the question with the option `answerId`: «Хто ви» sets the
-   * Rarity Ceiling, «Навіщо» the Mix kind weights, the self-rating only
+   * Answers the question with the option `answerId`: «Рівень» sets the
+   * Rarity Ceiling (its «Не знаю» option, which opens the Rarity Test in the
+   * onboarding, is no option here), «Навіщо» the Mix kind weights, the self-rating only
    * whether the Rarity Test is offered (ADR 0072). Resolves to whether
    * `answerId` is an option of it.
    */
@@ -67,10 +68,11 @@ export async function applyAnswer(
   question: OptionQuestion,
   answerId: string,
 ): Promise<boolean> {
-  if (question === 'who') {
-    const option = questionnaire.who.find(({ id }) => id === answerId);
-    if (option !== undefined) await rarityCeiling.set(option.rarityCeiling);
-    return option !== undefined;
+  if (question === 'level') {
+    const option = questionnaire.level.find(({ id }) => id === answerId);
+    if (option === undefined || !('rarityCeiling' in option)) return false;
+    await rarityCeiling.set(option.rarityCeiling);
+    return true;
   }
   if (question === 'selfRating') {
     return questionnaire.selfRating.some(({ id }) => id === answerId);
@@ -158,7 +160,9 @@ export function openQuestionnaire({
 
   const questionnaire: Questionnaire = {
     options: {
-      who: options.who.map(({ id, label }) => ({ id, label })),
+      level: options.level.flatMap((option) =>
+        'rarityCeiling' in option ? [{ id: option.id, label: option.label }] : [],
+      ),
       why: options.why.map(({ id, label }) => ({ id, label })),
       selfRating: options.selfRating.map(({ id, label }) => ({ id, label })),
     },
