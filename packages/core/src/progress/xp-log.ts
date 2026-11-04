@@ -19,7 +19,10 @@ const { xpLog: xpRecords } = userStateRecords;
 
 /** The Daily Goal of a local day and whether the day met it (ADR 0074). */
 export interface DailyGoalState {
-  /** The Words to See on the day: the last goal set on or before it. */
+  /**
+   * The Words to See on the day: the last goal set on or before it. A past
+   * day before any goal in Words holds the goal in XP of ADR 0066 instead.
+   */
   readonly goal: DailyGoal;
   /** Whether the day's Words Seen reached the goal in force at some moment of the day: a day met stays met. */
   readonly met: boolean;
@@ -271,14 +274,55 @@ export async function openXpLog({
     return goal === undefined ? null : { goal, met: records.has(metId(date)) };
   }
 
-  function dayOf(date: string): XpDay {
-    let xp = 0;
-    const { count } = counter();
-    const ofDay = [...records.values()].filter((record) => record.date === date);
-    for (const record of ofDay.sort((one, other) => (one.at < other.at ? -1 : 1))) {
-      if (record.kind === 'xp') xp += count(record);
+  /** Whether a `word-goal` record, «Без цілі» included, was set on or before the local date. */
+  const wordGoalSetBy = (date: string) =>
+    [...records.values()].some((record) => record.kind === 'word-goal' && record.date <= date);
+
+  /**
+   * A past day with no goal in Words but a goal in XP from before Words
+   * counted (ADR 0074): met, as it was then, once the day's XP reached the
+   * goal in force at that moment, the last `daily-goal` set before the day
+   * or that day. `undefined` without such a goal.
+   */
+  function xpGoalOf(
+    date: string,
+    ofDay: readonly XpRecord[],
+    count: (record: Extract<XpRecord, { kind: 'xp' }>) => number,
+  ): DailyGoalState | undefined {
+    let before: Extract<XpRecord, { kind: 'daily-goal' }> | undefined;
+    for (const record of records.values()) {
+      if (
+        record.kind === 'daily-goal' &&
+        record.date < date &&
+        (before === undefined ||
+          record.date > before.date ||
+          (record.date === before.date && record.at > before.at))
+      )
+        before = record;
     }
-    return { xp, dailyGoal: dailyGoalOf(date) };
+    let goal = before?.goal;
+    let xp = 0;
+    let met = false;
+    for (const record of ofDay) {
+      if (record.kind === 'xp') xp += count(record);
+      else if (record.kind === 'daily-goal') goal = record.goal;
+      if (goal !== undefined && xp >= goal) met = true;
+    }
+    return goal === undefined ? undefined : { goal, met };
+  }
+
+  function dayOf(date: string): XpDay {
+    const { count } = counter();
+    const ofDay = [...records.values()]
+      .filter((record) => record.date === date)
+      .sort((one, other) => (one.at < other.at ? -1 : 1));
+    const dailyGoal =
+      goalOn && date < todayKey(clock) && !wordGoalSetBy(date)
+        ? (xpGoalOf(date, ofDay, counter().count) ?? null)
+        : dailyGoalOf(date);
+    let xp = 0;
+    for (const record of ofDay) if (record.kind === 'xp') xp += count(record);
+    return { xp, dailyGoal };
   }
 
   /**
@@ -353,7 +397,7 @@ export async function openXpLog({
     }
     for (const record of records.values()) {
       // A day met stays met whatever goal is set later, «Без цілі» included.
-      if (record.kind === 'goal-met' && goalOn) active.add(record.date);
+      if (record.kind === 'goal-met') active.add(record.date);
     }
     const { xp, dailyGoal } = dayOf(date);
     return {
@@ -535,7 +579,6 @@ export async function openXpLog({
     let counted = derived.seenWordsCounted;
     for (const { entryId, seenAt, row } of history.list) {
       if (inHistory.has(entryId)) continue;
-      inHistory.add(entryId);
       const time = seenAt.getTime();
       if (
         !seenWordOn ||
@@ -574,11 +617,18 @@ export async function openXpLog({
     }
     const goal = goalOf(todayKey(clock));
     const added = new Map([...seenWordsToday(goal), ...metToday(goal)]);
+    // Marked once written, so the Words of a write that fails are taken up again.
+    const taken = history.list.map(({ entryId }) => entryId);
+    const markSeen = () => {
+      for (const entryId of taken) inHistory.add(entryId);
+    };
     if (added.size === 0) {
+      markSeen();
       change();
       return;
     }
     meeting = write(added)
+      .then(markSeen)
       .catch(() => undefined)
       .finally(() => {
         meeting = undefined;

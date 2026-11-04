@@ -4,13 +4,21 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
 
+/** Every plural form names itself, so a test reads which form the goal picked. */
+const forms = (text: string) => ({
+  one: `${text} (one)`,
+  few: `${text} (few)`,
+  many: `${text} (many)`,
+  other: `${text} (other)`,
+});
+
 const strings = testStrings({
   stats: {
     xpToday: '{count} XP',
     xpBarLabel: 'Experience: {count} XP today',
     xpBarHint: 'Opens the Game',
-    wordsTowardGoal: '{seen} of {goal} words',
-    wordsTowardGoalLabel: 'Daily Goal: {seen} of {goal} words',
+    wordsTowardGoal: forms('{seen} of {count} words'),
+    wordsTowardGoalLabel: forms('Daily Goal: {seen} of {count} words'),
   },
 });
 
@@ -44,9 +52,20 @@ describe('XpBar', () => {
   it('draws the Words Seen today over the Daily Goal in Words when it has one', async () => {
     await renderBar(12, () => undefined, { seen: 3, goal: 10 });
 
-    expect(screen.getByRole('button', { name: 'Daily Goal: 3 of 10 words' })).toBeOnTheScreen();
-    expect(screen.getByText('3 of 10 words')).toBeOnTheScreen();
+    expect(
+      screen.getByRole('button', { name: 'Daily Goal: 3 of 10 words (many)' }),
+    ).toBeOnTheScreen();
+    expect(screen.getByText('3 of 10 words (many)')).toBeOnTheScreen();
     expect(screen.queryByText('12 XP')).toBeNull();
+  });
+
+  it('picks the plural form by the Daily Goal, not by the Words Seen', async () => {
+    await renderBar(0, () => undefined, { seen: 5, goal: 21 });
+
+    expect(
+      screen.getByRole('button', { name: 'Daily Goal: 5 of 21 words (one)' }),
+    ).toBeOnTheScreen();
+    expect(screen.getByText('5 of 21 words (one)')).toBeOnTheScreen();
   });
 
   it('calls back on a tap', async () => {

@@ -1,6 +1,7 @@
 import {
   EditionConfigSchema,
   type DailyGoals,
+  type OnboardingNotificationTimes,
   type FeatureSwitch,
   type FontSize,
   type LanguageTraits,
@@ -71,6 +72,8 @@ export interface Edition {
   readonly levels: Levels;
   /** The Daily Goals in Words the reader chooses from, and the one highlighted (ADR 0074). */
   readonly dailyGoals: DailyGoals;
+  /** The Notification times «Коли нагадати?» offers, one for each bucket it counts (ADR 0067). */
+  readonly onboardingNotificationTimes: OnboardingNotificationTimes;
   /** The onboarding questions, their options and what each sets (ADR 0067). */
   readonly questionnaire: Questionnaire;
   /** The Badges the Edition chooses and names, in their order (ADR 0066). */
@@ -175,6 +178,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     xp,
     levels,
     dailyGoals,
+    onboardingNotificationTimes,
     questionnaire,
     badges,
     mascot,
@@ -204,6 +208,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     xp,
     levels,
     dailyGoals,
+    onboardingNotificationTimes,
     questionnaire,
     badges,
     mascot,

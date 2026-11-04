@@ -13,6 +13,7 @@ import {
   type CurrentGame,
   type FeatureSwitch,
   type Round,
+  type UserStatePort,
 } from '../index';
 import {
   createFakeAppleSignInSheet,
@@ -64,6 +65,7 @@ async function run({
   xp,
   on = [],
   analytics,
+  port = createMemoryUserStatePort(records),
 }: {
   records?: Map<string, string>;
   off?: readonly FeatureSwitch[];
@@ -72,6 +74,8 @@ async function run({
   /** Feature Switches on beside the Game and the XP log. */
   on?: readonly FeatureSwitch[];
   analytics?: AnalyticsPort;
+  /** The user state port, the memory port over the records unless given. */
+  port?: UserStatePort;
 } = {}) {
   const app = await openComposition({
     content,
@@ -80,7 +84,7 @@ async function run({
         !off.includes(feature) && ['game', 'gameGuessWord', 'xpLog', ...on].includes(feature),
       ...(xp === undefined ? {} : { xp }),
     }),
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState: await openUserState({ port }),
     clock: time.clock,
     random: seededRandom(7),
     ...(analytics === undefined ? {} : { analytics }),
@@ -567,6 +571,19 @@ describe('the Daily Goal', () => {
     ]);
   });
 
+  it('keeps a day met as an Active Day with the Daily Goal off', async () => {
+    const { app } = await run({
+      records: new Map([
+        [
+          'xp.goal-met-2026-10-12',
+          JSON.stringify({ kind: 'goal-met', date: '2026-10-12', at: '2026-10-12T05:00:00.000Z' }),
+        ],
+      ]),
+    });
+
+    expect(app.xpLog.days.active.has('2026-10-12')).toBe(true);
+  });
+
   it('reads a goal in XP set before Words counted as no goal', async () => {
     const { app } = await run({
       on: dailyGoal,
@@ -584,6 +601,54 @@ describe('the Daily Goal', () => {
     });
 
     expect(app.xpLog.state.dailyGoal).toBeNull();
+  });
+
+  it('keeps a past day met under a goal in XP set before Words counted', async () => {
+    const record = (id: string, value: object) => [`xp.${id}`, JSON.stringify(value)] as const;
+    const xp = (date: string, at: string, amount: number) =>
+      record(`${date}-${at}`, { kind: 'xp', date, at, source: 'daily-crossword', amount });
+    const { app } = await run({
+      on: dailyGoal,
+      records: new Map([
+        record('old', {
+          kind: 'daily-goal',
+          date: '2026-10-10',
+          at: '2026-10-10T05:00:00.000Z',
+          goal: 20,
+        }),
+        xp('2026-10-11', '2026-10-11T05:00:00.000Z', 25),
+        xp('2026-10-12', '2026-10-12T05:00:00.000Z', 10),
+        // Lowered once the day's 10 XP were earned: met at that moment.
+        record('lowered', {
+          kind: 'daily-goal',
+          date: '2026-10-12',
+          at: '2026-10-12T06:00:00.000Z',
+          goal: 10,
+        }),
+        record('raised', {
+          kind: 'daily-goal',
+          date: '2026-10-12',
+          at: '2026-10-12T07:00:00.000Z',
+          goal: 30,
+        }),
+        xp('2026-10-13', '2026-10-13T05:00:00.000Z', 20),
+        // «Без цілі» from 10-14: no day from then on reads the goal in XP.
+        record('off', {
+          kind: 'word-goal',
+          date: '2026-10-14',
+          at: '2026-10-14T04:00:00.000Z',
+          goal: null,
+        }),
+      ]),
+      time: fakeClock('2026-10-15T08:00:00+03:00'),
+    });
+
+    expect(app.xpLog.dayOf('2026-10-09').dailyGoal).toBeNull();
+    expect(app.xpLog.dayOf('2026-10-11').dailyGoal?.met).toBe(true);
+    expect(app.xpLog.dayOf('2026-10-12').dailyGoal?.met).toBe(true);
+    expect(app.xpLog.dayOf('2026-10-13').dailyGoal?.met).toBe(false);
+    expect(app.xpLog.dayOf('2026-10-14').dailyGoal).toBeNull();
+    expect(app.xpLog.dayOf('2026-10-15').dailyGoal).toBeNull();
   });
 
   it('has no goal and records none with its Feature Switch off', async () => {
@@ -737,6 +802,33 @@ describe('the Seen-Word XP', () => {
     });
 
     expect(app.xpLog.dayOf('2026-10-14').xp).toBe(6);
+  });
+
+  it('earns the Seen-Word XP of a write that failed with the next Word Seen', async () => {
+    const records = new Map<string, string>();
+    const memory = createMemoryUserStatePort(records);
+    let failures = 1;
+    const port: UserStatePort = {
+      ...memory,
+      write(changes) {
+        const seenWordXp = [...changes.keys()].some((key) => key.startsWith('xp.seen-word-'));
+        if (seenWordXp && failures > 0) {
+          failures -= 1;
+          return Promise.reject(new Error('disk full'));
+        }
+        return memory.write(changes);
+      },
+    };
+    const { app, time } = await run({ on, records, port });
+    await app.xpLog.setDailyGoal(10);
+
+    await look(app, time);
+    expect(app.xpLog.state.today).toBe(0);
+
+    await look(app, time);
+
+    expect(app.xpLog.state.today).toBe(2);
+    expect(xpKeys(records).filter((key) => key.startsWith('xp.seen-word-'))).toHaveLength(2);
   });
 
   it('earns nothing for an Entry that is not a Word', async () => {
