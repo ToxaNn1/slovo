@@ -879,7 +879,7 @@ describe('the Word of the Day in the Feed', () => {
     expect(wordOfTheDayOf(await feed.next())).toBeUndefined();
   });
 
-  it('says the local day the composition turned to, and tells the subscribers when it turns to the next', async () => {
+  it('says the local day the composition turned to, tells the subscribers when it turns to the next, and gives its Word of the Day', async () => {
     const time = fakeClock('2026-10-11T23:58:00+03:00');
     const app = await runApp({ clock: time.clock });
     const { feed } = app;
@@ -887,6 +887,7 @@ describe('the Word of the Day in the Feed', () => {
     const told: unknown[] = [];
     feed.subscribe(() => told.push(feed.today));
     expect(feed.today).toEqual({ year: 2026, month: 10, day: 11 });
+    await feed.next();
 
     // Midnight passes, and nothing tells the composition yet: the Feed keeps the day it turned to.
     time.advance(5 * 60_000);
@@ -895,6 +896,7 @@ describe('the Word of the Day in the Feed', () => {
     await app.resume();
     expect(feed.today).toEqual({ year: 2026, month: 10, day: 12 });
     expect(told).toContainEqual({ year: 2026, month: 10, day: 12 });
+    expect(wordOfTheDayOf(await feed.next())).toEqual({ year: 2026, month: 10, day: 12 });
   });
 
   it('comes next, in place of the card got ready the day before, when the app comes back from the background on a new local day', async () => {

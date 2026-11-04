@@ -94,10 +94,10 @@ export interface Entries {
    */
   eligibleWordsOfAnyRarity(): Promise<readonly Word[]>;
   /**
-   * The Words within the Rarity Ceiling, the Mix aside: every live Word up to
-   * it that is not Hidden, in the Language Pack's order, which the Daily
-   * Crossword picks from, so readers at one Ceiling get the same puzzle (ADR
-   * 0072). Read afresh on every call, as `eligible` reads.
+   * The Words within the Rarity Ceiling, the Mix and the Hidden Entries
+   * aside: every live Word up to it, in the Language Pack's order, which the
+   * Daily Crossword picks from, so readers at one Ceiling get the same puzzle
+   * (ADR 0072, 0073). Read afresh on every call, as `eligible` reads.
    */
   wordsUnderRarityCeiling(): Promise<readonly Word[]>;
   /**
@@ -362,15 +362,10 @@ export function createEntries(
   }
 
   async function wordsUnderRarityCeiling(): Promise<readonly Word[]> {
-    const [ceiling, hidden, words, ids] = await Promise.all([
-      rarityCeiling(),
-      hiddenIds(),
-      live.word(),
-      listIds.word(),
-    ]);
+    const [ceiling, words, ids] = await Promise.all([rarityCeiling(), live.word(), listIds.word()]);
     return ids.flatMap((id) => {
       const word = wordWithinCeiling(words, id, ceiling);
-      return word !== undefined && !hidden.has(id) ? [word] : [];
+      return word === undefined ? [] : [word];
     });
   }
 
