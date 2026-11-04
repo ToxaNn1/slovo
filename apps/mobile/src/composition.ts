@@ -17,7 +17,7 @@ import { deviceNotificationScheduler } from './notifications/device-notification
 import { editionStrings } from './edition/edition';
 import type { LaunchPack } from './content-update/launch-pack';
 import { gameModeStrings } from './game/game-modes';
-import { openOnce, useOpened, type Opening } from './opening';
+import { openOnce, useOpened, type Opening, type OpeningState } from './opening';
 import { useShell, type EditionSwitches } from './shell-value';
 
 /** What the composition opens over. */
@@ -94,33 +94,45 @@ export function useComposition(): Composition {
   return useOpened(useShell().composition);
 }
 
+const loading = { status: 'loading' } as const;
+
 /**
  * Reads one thing from the composition, and again when `read` changes, so
- * keep it in a `useCallback`. Nothing is read while `enabled` is false; a read
- * that fails is logged as `failure`. The last thing read stays until the next
- * one arrives.
+ * keep it in a `useCallback`. Nothing is read while `enabled` is false. A read
+ * that fails is logged as `failure` and ends failed, with a retry that reads
+ * again. The last thing read stays until the next read ends.
  */
 export function useCompositionRead<T>(
   read: (composition: Composition) => Promise<T>,
   failure: string,
   enabled = true,
-): T | undefined {
+): OpeningState<T> {
   const open = useComposition();
-  const [value, setValue] = useState<T>();
+  const [state, setState] = useState<OpeningState<T>>(loading);
+  // A retry counts up, so the effect reads again.
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (!enabled) return;
     let active = true;
     read(open).then(
-      (result) => {
-        if (active) setValue(result);
+      (value) => {
+        if (active) setState({ status: 'ready', value });
       },
       (error: unknown) => {
         logError(failure, error);
+        if (!active) return;
+        setState({
+          status: 'failed',
+          retry() {
+            setState(loading);
+            setAttempt((count) => count + 1);
+          },
+        });
       },
     );
     return () => {
       active = false;
     };
-  }, [open, read, failure, enabled]);
-  return value;
+  }, [open, read, failure, enabled, attempt]);
+  return state;
 }

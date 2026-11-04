@@ -1,5 +1,5 @@
 import type { AnyEntryCard, Composition, EntryLinkSource } from '@slovo/core';
-import { EntryDetails, UndoToastProvider, useTokens } from '@slovo/ui';
+import { BackLink, EntryDetails, FeedError, space, UndoToastProvider, useTokens } from '@slovo/ui';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect } from 'react';
@@ -7,6 +7,8 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useCompositionRead } from '../composition';
+import { editionStrings } from '../edition/edition';
+import { ShippedMascot } from '../mascot/mascot';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { EntryActions } from './entry-actions';
@@ -55,7 +57,8 @@ export function EntryScreen({
     async (open: Composition) => (await openEntry(open, entryId, openedFrom)) ?? null,
     [entryId, openedFrom],
   );
-  const card = useCompositionRead(read, 'Could not open the Entry');
+  const reading = useCompositionRead(read, 'Could not open the Entry');
+  const card = reading.status === 'ready' ? reading.value : undefined;
   useEffect(() => {
     if (card === null) router.replace('/');
   }, [card, router]);
@@ -71,6 +74,9 @@ export function EntryScreen({
       <View testID="entry-screen" style={[styles.screen, { backgroundColor: colors.background }]}>
         {/* The status bar sits on the red panel in both Themes. */}
         <StatusBar style="dark" />
+        {reading.status === 'failed' && (
+          <ReadFailed back={back} topInset={top} onRetry={reading.retry} />
+        )}
         {card?.entryId === entryId && (
           <EntryDetails
             card={card}
@@ -106,6 +112,45 @@ export function EntryScreen({
   );
 }
 
+/**
+ * The error state of an Entry that could not be read: the back link to the
+ * screen before, then the error with its retry, which reads the Entry again;
+ * the Mascot cringes.
+ */
+function ReadFailed({
+  back,
+  topInset,
+  onRetry,
+}: {
+  back: string;
+  topInset: number;
+  onRetry: () => void;
+}) {
+  const router = useRouter();
+  const { title, message, retry } = editionStrings.loadFailed;
+  return (
+    <View style={[styles.failed, { paddingTop: topInset }]}>
+      <View style={styles.bar}>
+        <BackLink
+          testID="entry-back"
+          label={back}
+          onPress={() => {
+            router.back();
+          }}
+        />
+      </View>
+      <FeedError
+        title={title}
+        message={message}
+        retry={retry}
+        onRetry={onRetry}
+        mascot={<ShippedMascot state="cringes" />}
+        testID="entry-error"
+      />
+    </View>
+  );
+}
+
 /** The Entry card, opened through the composition's path for where it opened from. */
 function openEntry(
   composition: Composition,
@@ -128,5 +173,7 @@ function openEntry(
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  failed: { flex: 1 },
+  bar: { paddingLeft: space[3], paddingTop: space[2] },
   statusBand: { position: 'absolute', top: 0, left: 0, right: 0 },
 });
