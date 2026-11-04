@@ -228,7 +228,7 @@ export async function openXpLog({
         record.date <= date &&
         (last === undefined ||
           record.date > last.date ||
-          (record.date === last.date && record.at > last.at))
+          (record.date === last.date && record.at >= last.at))
       )
         last = record;
     }
