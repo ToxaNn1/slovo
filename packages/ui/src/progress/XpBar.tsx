@@ -58,9 +58,7 @@ export function XpBar({
         maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
         style={[typeStyle('textLink', tokens), { color: colors.ink }]}
       >
-        {words
-          ? fill(strings.stats.wordsTowardGoal, words)
-          : fill(strings.stats.xpToday, count)}
+        {words ? fill(strings.stats.wordsTowardGoal, words) : fill(strings.stats.xpToday, count)}
       </Text>
     </Pressable>
   );

@@ -18,7 +18,9 @@ export function XpBarToGame() {
   return (
     <XpBar
       today={today}
-      goal={shown.dailyGoal && dailyGoal ? { seen: dailyGoal.seen, goal: dailyGoal.goal } : undefined}
+      goal={
+        shown.dailyGoal && dailyGoal ? { seen: dailyGoal.seen, goal: dailyGoal.goal } : undefined
+      }
       onPress={() => {
         router.navigate('/game');
       }}

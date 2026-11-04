@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { Composition } from '@slovo/core';
+import { SEEN_DWELL_MS, type Composition } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { act, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -86,12 +86,18 @@ describe('the Mascot’s celebrations', () => {
     });
     expect(shownMascot()).toBeNull();
 
-    // The 20th XP meets the Daily Goal of 20.
-    await playRounds(composition, 15);
+    // The first Word Seen meets a Daily Goal of 1 Word (ADR 0074).
+    await act(async () => {
+      await composition.xpLog.setDailyGoal(1);
+      await composition.feed.show(0);
+      await jest.advanceTimersByTimeAsync(SEEN_DWELL_MS);
+      await composition.feed.show(undefined);
+      await jest.advanceTimersByTimeAsync(0);
+    });
     expect(celebration('dailyGoal')).toHaveTextContent(mascot.dailyGoal);
 
     // The 50th XP reaches Level 1.
-    await playRounds(composition, 30);
+    await playRounds(composition, 45);
     expect(celebration('newLevel')).toHaveTextContent(mascot.newLevel);
   });
 
