@@ -32,7 +32,13 @@ const edition = ({ off = [], ceiling = 5 }: Options) =>
     isFeatureEnabled: (feature) => !off.includes(feature),
     userSettingDefaults: {
       rarityCeiling: ceiling,
-      mix: { categoryIds: 'all', corrections: true, idioms: false, synonymRows: false, tips: false },
+      mix: {
+        categoryIds: 'all',
+        corrections: true,
+        idioms: false,
+        synonymRows: false,
+        tips: false,
+      },
       notificationTimes: ['09:00'],
     },
   });
@@ -49,13 +55,13 @@ async function open(options: Options = {}): Promise<Composition> {
   });
 }
 
-/** The ids of every Entry among the first 40 cards the Feed offers: a Cycle over 10 Words at most, so each eligible one. */
+/** The ids of every Entry among the first 40 cards the Feed offers, past the cards of no Entry (a Quick Question): a Cycle over 11 Entries at most, so each eligible one. */
 async function idsInFeed(app: Composition): Promise<Set<string>> {
   const seen = new Set(app.feed.cards.flatMap((card) => card.entryId ?? []));
   for (let count = 0; count < 40; count += 1) {
-    const id = (await app.feed.next())?.entryId;
-    if (id === undefined) break;
-    seen.add(id);
+    const card = await app.feed.next();
+    if (card === undefined) break;
+    if (card.entryId !== undefined) seen.add(card.entryId);
   }
   return seen;
 }
@@ -169,6 +175,8 @@ describe('the Rarity Ceiling', () => {
     expect(records.get('sync.pending.settings.rarityCeiling')).toBe(
       '{"changedAt":"1970-01-01T00:00:00.000Z","value":"3"}',
     );
+    expect(records.has('mix.rarityFloor')).toBe(false);
+    expect(records.has('mix.rarityCeiling')).toBe(false);
     expect(records.get('schema.version')).toBe('7');
   });
 
@@ -181,6 +189,7 @@ describe('the Rarity Ceiling', () => {
 
       expect(app.rarityCeiling.state, stored).toBe(5);
       expect(records.has('settings.rarityCeiling'), stored).toBe(false);
+      expect(records.has('mix.rarityCeiling'), stored).toBe(false);
     }
   });
 

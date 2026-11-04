@@ -43,7 +43,7 @@ export interface SearchResults {
 
 /**
  * Search («Пошук», ADR 0054): finds Entries by their visible text, over every
- * live Entry that is not Hidden, the Mix and the Rarity Floor aside, so a
+ * live Entry that is not Hidden, the Mix and the Rarity Ceiling aside, so a
  * reader finds anything the app knows.
  */
 export interface Search {

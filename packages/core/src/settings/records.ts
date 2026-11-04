@@ -35,7 +35,7 @@ export const settingsRecords = {
    * The Rarity Ceiling the user chose, 1 to 5, the one «Рідкість» setting
    * every surface obeys (ADR 0072); without it, the Edition's default. It
    * syncs last write wins like the Theme (ADR 0041). Schema version 7 moves
-   * it here from `mix.rarityCeiling`, which stays unread with `mix.rarityFloor`.
+   * it here from `mix.rarityCeiling` and drops that and `mix.rarityFloor`.
    */
   rarityCeiling: declareRecord('settings.rarityCeiling', RaritySchema),
   /**

@@ -157,7 +157,7 @@ describe('The later questions', () => {
     expect(app.mix.state.hiddenCategories.map(({ id }) => id)).toEqual(['nature', 'things']);
   });
 
-  it('sets the Rarity Floor from the self-rating and offers no Rarity Test when it says not to', async () => {
+  it('offers no Rarity Test when the self-rating says not to', async () => {
     const records = await newReader('2026-10-31');
     await laterQuestionsIn(await run({ records, on: '2026-11-01' }));
     const app = await run({ records, on: '2026-11-02' });
@@ -165,19 +165,31 @@ describe('The later questions', () => {
 
     await app.questionnaire.answer('selfRating', 'few');
 
-    expect(app.mix.state.rarityFloor).toBe(1);
     expect(await laterQuestionsIn(await run({ records, on: '2026-11-03' }))).toEqual(['mixReview']);
   });
 
-  it('raises the Rarity Ceiling with a Floor above it', async () => {
+  it('leaves the Rarity Ceiling as it is on a self-rating', async () => {
     const records = await newReader('2026-11-01');
     const app = await run({ records, on: '2026-11-02' });
-    await app.mix.setRarityCeiling(2);
+    await app.rarityCeiling.set(2);
 
-    await app.questionnaire.answer('selfRating', 'many');
+    expect(await app.questionnaire.answer('selfRating', 'many')).toBe(true);
+    await app.questionnaire.answer('selfRating', 'few');
 
-    expect(app.mix.state.rarityFloor).toBe(3);
-    expect(app.mix.state.rarityCeiling).toBe(3);
+    expect(app.rarityCeiling.state).toBe(2);
+  });
+
+  it('asks no self-rating while the Rarity Test is off', async () => {
+    const records = await existingReader();
+
+    const asked = [];
+    for (const on of ['02', '03', '04']) {
+      asked.push(
+        await laterQuestionsIn(await run({ records, on: `2026-11-${on}`, off: ['rarityTest'] })),
+      );
+    }
+
+    expect(asked).toEqual([['dailyGoalChoice'], ['interests'], ['mixReview']]);
   });
 
   it('skips a question whose feature is off', async () => {

@@ -61,7 +61,7 @@ export type ShownKnowledge = KnowledgeMark | 'review';
 /**
  * The Knowledge Marks as they stand on today's local day. A Hidden Entry is
  * left out of `learning` and `due` until it is restored; the Mix and the
- * Rarity Floor leave them as they are, and the Feed and the Game skip what
+ * Rarity Ceiling leave them as they are, and the Feed and the Game skip what
  * is not eligible themselves. All empty and 0 with the `knowledge` Feature
  * Switch off.
  */
