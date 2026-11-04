@@ -1,8 +1,8 @@
-# Learning and habit: Search, the Rarity Test, Feed Notices, the Daily Limit and Mood
+# Learning and habit: Search, the Rarity Test, Feed Notices, the Daily Limit
 
-Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active Days calendar, the Daily Limit (retired in 1.0 for the Daily Goal), the polite pause, notification templates, the first week, the widget hint and Mood help the reader find a word, remember it and come back; the decisions come from spec #832 and the owner's grilling of 2026-10-25.
+Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active Days calendar, the Daily Limit (retired in 1.0 for the Daily Goal), the polite pause, notification templates, the first week, and the widget hint help the reader find a word, remember it and come back; the decisions come from spec #832 and the owner's grilling of 2026-10-25.
 
-**Feature Switches.** Each feature has its own Feature Switch: `search`, `rarityTest`, `weeklyRecap`, `yesterday`, `wordOfTheDayArchive`, `activeDaysCalendar`, `dailyLimit`, `politePause`, `firstWeek`, `widgetHint` and `moods`. They are required of every Edition and all on in the UA Edition. A feature whose switch is off is absent: no header button, no Settings row, no Feed Notice, no list; its records are kept. A remote switch only turns a feature off (ADR 0040).
+**Feature Switches.** Each feature has its own Feature Switch: `search`, `rarityTest`, `weeklyRecap`, `yesterday`, `wordOfTheDayArchive`, `activeDaysCalendar`, `dailyLimit`, `politePause`, `firstWeek` and `widgetHint` (`moods` left the list in ADR 0074). They are required of every Edition and all on in the UA Edition. A feature whose switch is off is absent: no header button, no Settings row, no Feed Notice, no list; its records are kept. A remote switch only turns a feature off (ADR 0040).
 
 **Search** («Пошук») is a Core Search behind a magnifier in the «Стрічка» header, over the open Language Pack and the user state.
 
@@ -48,21 +48,14 @@ Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active D
 
 **The widget hint** is a sheet on the result screen after the reader's first finished Game with at least one Life left, once ever (`device-only`): a guide of 3 animated steps on adding the widget. The Game's state says whether the result on screen offers it: each finished Game with a Life left does until the hint has been on screen, so a lost Game or a Game in a mode without Lives never offers it. The record that it was shown is written once the shell has the sheet on screen, not when the Game ends, so a result left before the hint shows doesn't use it up, and once written no later Game offers it again. `widgetHint` is read together with `widget`. The guide is the widget drawing over its 3 steps, which come in one after another and stand still under Reduce Motion; the sheet closes with «Зрозуміло». Settings → Віджети → «Як додати віджет» opens the same guide as a screen.
 
-**Mood** («настрій»). Mood is paused in the UA Edition in 1.0: its Feature Switch is off, the roulette, the header button and the Settings row are absent, and the code and the Words' `moods` stay so it can return after 1.0.
-
-- **The Edition lists its moods**, each an id, a name and an emoji, so the Core stays language-agnostic. The UA Edition has 😊 Радісний, 😢 Сумний, 😍 Закоханий, ⚡ Бадьорий, 😌 Спокійний and 🤔 Задумливий, and tags 15 existing Words with each.
-- **Words carry `moods`**, an optional array of the Edition's mood ids. The Language Pack build refuses an unknown id, and the content CLI adds, edits and checks `moods`.
-- **The roulette.** 🎲 «Слово під настрій» in the «Стрічка» header opens the six moods as chips; a chip runs a 1–2 second roulette over Lemmas that lands on a random Eligible Word of that mood, drawn with injected randomness (the Mix applies), and opens its card, which makes nothing Seen. A mood with no Eligible Word is disabled with a reason (`no-eligible-word`). The Core's mood draw (`createMoodDraw`) lists the moods with that reason and draws the roulette: 12 Lemmas of the mood's Eligible Words, never one twice in a row, ending on the Word it lands on, which the shell opens with `openedFromMood`. Under Reduce Motion the card opens straight away.
-- **The pack format.** The pack carries each Word's `moods`, which an older app can't read, so they took a new pack format (ADR 0032).
-
-**Not Seen, in one place.** Opening an Entry from Search or from the mood roulette, the Rarity Test and every Feed Notice make nothing Seen; Seen stays the Feed's dwell rule and an Entry opened from a notification or the widget (ADR 0016, 0018). The Core names each way in: an Entry opened from Search (`openedFromSearch`) or from the mood roulette (`openedFromMood`) gets its card and writes nothing, beside the notification and the widget, which make it Seen.
+**Mood** («настрій»). Superseded by ADR 0074: Mood is a set of Feed parameters the reader chooses once a local day on the Dashboard. The roulette, the 🎲 header button, the Words' `moods` and the `moods` Feature Switch are gone. What stays from this ADR: the Edition lists its moods (id, name, emoji), so the Core stays language-agnostic.
 
 ## Considered Options
 
 - **Search through the Mix and the Rarity Floor**: rejected. A reader searching for a word wants the word, not the Feed's choice.
 - **Search with the Game's strict г/ґ and е/ё**: rejected. The Game teaches spelling; Search must find a word however it is typed.
 - **Fuzzy or typo-tolerant search, or full text in Examples and explanations**: rejected for now. A prefix match over visible texts and Definitions answers the stories, and fuzzy results would be hard to rank.
-- **Opening a Search result, or a Word from the roulette, makes it Seen**: rejected. Looking something up would move the reader's Cycle.
+- **Opening a Search result, makes it Seen**: rejected. Looking something up would move the reader's Cycle.
 - **The Rarity Test sets Knowledge Marks**: rejected. A quick «Знаю» on a Lemma alone is not the reader's answer on the card.
 - **Feed Notices take turns like Entries**: rejected. The rhythm of Corrections, Idioms, Synonym Rows, Tips and Review would shift every Monday.
 - **Notices as banners over the Feed**: rejected. A card the reader swipes past keeps the Feed one gesture.
@@ -72,4 +65,4 @@ Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active D
 - **A hard Daily Limit**: rejected. The app asks the reader to stop, it never locks them out. (The soft limit was later replaced by the Daily Goal and the 50-Seen Notice.)
 - **Keep notifying until the reader comes back**: rejected. Two weeks of unopened notifications already say enough.
 - **First-week days by calendar days**: rejected. A reader who skips a day would lose a card.
-- **Moods in the Core**: rejected. Mood names and which words fit them belong to the Edition's language.
+- **Moods in the Core**: rejected. Mood names belong to the Edition's language.
