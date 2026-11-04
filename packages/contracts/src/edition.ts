@@ -302,6 +302,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   notificationFarewell: z.boolean(),
   /** The notification explainer: the sheet before the system permission prompt, after the first met Daily Goal or on day 3, and its one re-ask Feed Notice 7 days after a refusal. */
   notificationExplainer: z.boolean(),
+  /** «Коли нагадати?»: the onboarding step after the Daily Goal that sets the one Notification time or none; off while `notifications` is. */
+  notificationTimeStep: z.boolean(),
   /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings (ADR 0067). */
   laterQuestions: z.boolean(),
   /** The Profile: the screen of the reader's whole progress and the save-progress Feed Notice (ADR 0066). */
@@ -591,9 +593,17 @@ export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a
  * The steps of the onboarding, in order (ADR 0067): the one place that has
  * them, so a step that joins changes the count everywhere. The first Word
  * comes only with a Word of the Day, the two questions only with the
- * `questionnaire` Feature Switch, the Daily Goal only with `dailyGoal`.
+ * `questionnaire` Feature Switch, the Daily Goal only with `dailyGoal`, «Коли
+ * нагадати?» only with `notificationTimeStep`.
  */
-export const ONBOARDING_STEPS = ['welcome', 'firstWord', 'level', 'why', 'dailyGoal'] as const;
+export const ONBOARDING_STEPS = [
+  'welcome',
+  'firstWord',
+  'level',
+  'why',
+  'dailyGoal',
+  'notificationTime',
+] as const;
 
 /** A step of the onboarding. */
 export type OnboardingStepKind = (typeof ONBOARDING_STEPS)[number];

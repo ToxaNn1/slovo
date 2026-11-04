@@ -216,4 +216,24 @@ describe('the Notification times', () => {
     expect(refusals.at(-1)).toBe('limit');
     expect(notifications.state.times).toEqual(['08:00', ...tenTimes.slice(0, 9)]);
   });
+  // Spec #1553, ticket #1559: the onboarding's «Коли нагадати?».
+  it('keep the time chosen on the onboarding as the only one, for the next app run too', async () => {
+    const records = new Map<string, string>();
+    const { notifications } = await run({ records });
+
+    await notifications.chooseOnboardingTime('20:30');
+
+    expect(notifications.state.times).toEqual(['20:30']);
+    expect((await run({ records })).notifications.state.times).toEqual(['20:30']);
+  });
+
+  it('keep no time after «Без нагадувань» on the onboarding, never falling back to the defaults', async () => {
+    const records = new Map<string, string>();
+    const { notifications } = await run({ records });
+
+    await notifications.chooseOnboardingTime(undefined);
+
+    expect(notifications.state.times).toEqual([]);
+    expect((await run({ records })).notifications.state.times).toEqual([]);
+  });
 });

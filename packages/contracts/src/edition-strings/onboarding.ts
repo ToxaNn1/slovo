@@ -52,6 +52,16 @@ export const OnboardingStringsSchema = z.strictObject({
     /** Sets the goal on screen and ends the onboarding. */
     done: TextSchema,
   }),
+  /** «Коли нагадати?»: a chip per time the Core offers, «Інший час» and «Без нагадувань». */
+  notificationTime: z.strictObject({
+    /** The word the step shouts large on its red top. */
+    shout: TextSchema,
+    title: TextSchema,
+    /** Opens the time picker. */
+    otherTime: TextSchema,
+    /** Leaves no Notification time. */
+    none: TextSchema,
+  }),
   /** The Mix, with the chips and the Corrections switch of the Mix screen. */
   mix: z.strictObject({
     title: TextSchema,

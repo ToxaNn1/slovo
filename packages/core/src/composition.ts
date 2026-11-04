@@ -656,6 +656,7 @@ export async function openComposition({
     xpLog,
     analytics,
     backend,
+    notifications,
   });
   async function entryCard(entryId: string): Promise<AnyEntryCard | undefined> {
     const entry = await entries.get(entryId);
