@@ -212,7 +212,15 @@ function RarityTestStep({
     report(onboarding.next());
   };
 
-  const frame = ({ testID, footer, children }: { testID: string; footer: ReactNode; children: ReactNode }) => (
+  const frame = ({
+    testID,
+    footer,
+    children,
+  }: {
+    testID: string;
+    footer: ReactNode;
+    children: ReactNode;
+  }) => (
     <OnboardingStep
       testID={testID}
       step={step.number}
@@ -225,7 +233,8 @@ function RarityTestStep({
       {children}
     </OnboardingStep>
   );
-  if (words === undefined) return frame({ testID: 'onboarding-rarity', footer: null, children: null });
+  if (words === undefined)
+    return frame({ testID: 'onboarding-rarity', footer: null, children: null });
   return (
     <RarityTestQuestions
       testID="onboarding-rarity"
