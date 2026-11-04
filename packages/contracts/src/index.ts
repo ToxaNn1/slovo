@@ -15,6 +15,7 @@ export {
 export {
   CategorySchema,
   DailyGoalSchema,
+  DailyGoalsSchema,
   DistractorRuleSchema,
   EditionConfigSchema,
   FeatureSwitchesSchema,
@@ -37,6 +38,7 @@ export {
   UserSettingDefaultsConfigSchema,
   type Category,
   type DailyGoal,
+  type DailyGoals,
   type DistractorRule,
   type EditionConfig,
   type FeatureSwitch,

@@ -462,17 +462,31 @@ export const FontSizeSchema = z.enum(['S', 'M', 'L', 'XL']);
 export type FontSize = z.infer<typeof FontSizeSchema>;
 
 /**
- * The Daily Goal (ADR 0066): the XP the reader aims for on a local day. It
- * replaces the Daily Limit of ADR 0054.
+ * The Daily Goal (ADR 0074): the Words the reader aims to see on a local day.
+ * It replaces the Daily Limit of ADR 0054.
  */
-export const DailyGoalSchema = z.union([
-  z.literal(10),
-  z.literal(20),
-  z.literal(30),
-  z.literal(50),
-]);
+export const DailyGoalSchema = z.int().positive();
 
 export type DailyGoal = z.infer<typeof DailyGoalSchema>;
+
+/** The Daily Goals the reader chooses from, in rising order, and the one highlighted (ADR 0074). */
+export const DailyGoalsSchema = z
+  .strictObject({
+    options: z
+      .array(DailyGoalSchema)
+      .min(1)
+      .refine(
+        (options) => options.every((goal, index) => index === 0 || goal > (options[index - 1] ?? 0)),
+        'Expected the Daily Goals in rising order, each once',
+      ),
+    highlighted: DailyGoalSchema,
+  })
+  .refine(({ options, highlighted }) => options.includes(highlighted), {
+    path: ['highlighted'],
+    message: 'Expected the highlighted Daily Goal among the options',
+  });
+
+export type DailyGoals = z.infer<typeof DailyGoalsSchema>;
 
 /** A local time of day, `HH:MM` on a 24-hour clock. */
 export const TimeOfDaySchema = z
@@ -527,8 +541,6 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
   fontSize: FontSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
-  /** The Daily Goal of a reader who has not chosen one. */
-  dailyGoal: DailyGoalSchema,
   /** The default notification times, kept in time order. */
   notificationTimes: NotificationTimesSchema.transform((times) => [...times].sort()),
   /** The Rarity Ceiling a new user starts with, «до 1» to «до 5» (ADR 0072). */
@@ -724,6 +736,8 @@ export const EditionConfigSchema = z
     xp: XpTableSchema,
     /** The Level curve and the Level names (ADR 0066). */
     levels: LevelsSchema,
+    /** The Daily Goals in Words the reader chooses from (ADR 0074). */
+    dailyGoals: DailyGoalsSchema,
     /** The onboarding questions, their options and what each sets (ADR 0067). */
     questionnaire: QuestionnaireSchema,
     /** The Badges, in their order, each id once (ADR 0066). */
