@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { openTracedCrossword, type FeatureSwitch, type PuzzleAction, type Word } from '../index';
-import { fakeClock, word } from '../test-support';
+import {
+  openComposition,
+  openTracedCrossword,
+  type FeatureSwitch,
+  type PuzzleAction,
+  type Word,
+} from '../index';
+import { createMemoryContentPort } from '../testing';
+import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const words = [
@@ -91,5 +98,46 @@ describe('the traced Daily Crossword', () => {
     expect((await opened({ records })).state.words.every(({ kind }) => kind === 'found')).toBe(
       true,
     );
+  });
+});
+
+describe('the traced Daily Crossword of the composition', () => {
+  async function app(on: readonly FeatureSwitch[]) {
+    const records = new Map<string, string>();
+    const composition = await openComposition({
+      content: createMemoryContentPort({
+        categories: [{ id: 'test', displayName: 'Test' }],
+        words,
+      }),
+      edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),
+      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+      clock: fakeClock('2026-11-04T09:00:00Z').clock,
+      random: seededRandom(7),
+    });
+    return { composition, records };
+  }
+
+  it('is off while the Edition has it off', async () => {
+    const { composition } = await app(['game', 'dailyCrossword']);
+    expect(await composition.openTracedCrossword()).toEqual({ kind: 'off' });
+  });
+
+  it('opens the puzzle of the Words within the Rarity Ceiling, and solving it earns XP', async () => {
+    const { composition, records } = await app([
+      'game',
+      'dailyCrossword',
+      'tracedCrossword',
+      'xpLog',
+    ]);
+    const opening = await composition.openTracedCrossword();
+    if (opening.kind !== 'open') throw new Error('Expected the puzzle');
+    const { crossword } = opening;
+    const ids = words.map(({ id }) => id);
+    expect(crossword.puzzle.words.length).toBeGreaterThan(0);
+    for (const hidden of crossword.puzzle.words) expect(ids).toContain(hidden.word.id);
+    expect([...records.keys()].some((key) => key.startsWith('xp.'))).toBe(false);
+    for (const { path } of crossword.puzzle.words)
+      for (const action of traceOf(path)) await crossword.play(action);
+    expect([...records.keys()].some((key) => key.startsWith('xp.'))).toBe(true);
   });
 });

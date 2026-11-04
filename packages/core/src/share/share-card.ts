@@ -2,6 +2,7 @@ import { CROSSWORD_SIZE, fill, pluralCount, type EditionStrings } from '@slovo/c
 
 import type { AnyEntryCard } from '../feed/entry-feed-card';
 import { isTodaysWordOfTheDay } from '../feed/feed';
+import type { CrosswordPuzzle } from '../game/crossword-puzzle';
 import type { DailyCrosswordState } from '../game/daily-crossword';
 import { parseLocalDate, type LocalDate } from '../local-date';
 import type { BadgeState } from '../progress/badges';
@@ -40,7 +41,9 @@ export type ShareCardSubject =
   | { readonly level: LevelState; readonly date: string }
   | { readonly badge: Extract<BadgeState, { readonly earned: true }> }
   | { readonly streak: number; readonly date: string }
-  | { readonly crossword: DailyCrosswordState };
+  | { readonly crossword: DailyCrosswordState }
+  /** A solved traced Daily Crossword (ADR 0073), whose every cell a Word reads through. */
+  | { readonly puzzle: CrosswordPuzzle };
 
 /**
  * The blocks of a Share Card, by what it shows, each text final, with its
@@ -174,6 +177,7 @@ export function buildShareCardContent(
     });
   }
   if ('crossword' in subject) return dailyCrosswordContent(subject.crossword, strings);
+  if ('puzzle' in subject) return tracedCrosswordContent(subject.puzzle, strings);
   const { card } = subject;
   const model = card.model;
   const shows = card.entryId;
@@ -369,7 +373,6 @@ function dailyCrosswordContent(
   crossword: DailyCrosswordState,
   strings: ShareCardStrings,
 ): ShareCardContent {
-  const texts = strings.share.dailyCrossword;
   const grid = Array.from({ length: CROSSWORD_SIZE }, () =>
     Array.from({ length: CROSSWORD_SIZE }, () => false),
   );
@@ -381,9 +384,31 @@ function dailyCrosswordContent(
       if (cells !== undefined && column < CROSSWORD_SIZE) cells[column] = true;
     }
   }
-  const overline = dayText(crossword.date, strings);
+  return crosswordGridContent(crossword.date, grid, strings);
+}
+
+/**
+ * A solved traced Daily Crossword's Share Card: its grid, every cell open,
+ * with no letter and no clue.
+ */
+function tracedCrosswordContent(
+  puzzle: CrosswordPuzzle,
+  strings: ShareCardStrings,
+): ShareCardContent {
+  const grid = puzzle.grid.map((line) => line.map(() => true));
+  return crosswordGridContent(puzzle.date, grid, strings);
+}
+
+/** The Share Card of a solved Daily Crossword's grid on its day. */
+function crosswordGridContent(
+  date: string,
+  grid: readonly (readonly boolean[])[],
+  strings: ShareCardStrings,
+): ShareCardContent {
+  const texts = strings.share.dailyCrossword;
+  const overline = dayText(date, strings);
   return {
-    shows: `crossword:${crossword.date}`,
+    shows: `crossword:${date}`,
     overline,
     label: sentences([overline, texts.title, texts.grid]),
     body: { kind: 'dailyCrossword', title: texts.title, grid },

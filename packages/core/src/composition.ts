@@ -14,6 +14,7 @@ import {
   type CrosswordReadPort,
   type DailyCrossword,
 } from './game/daily-crossword';
+import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
 import { openCycle } from './feed/cycle';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
@@ -184,6 +185,13 @@ export interface Composition extends Hiding {
    * `crossword`. Open it again once the next local day starts.
    */
   openDailyCrossword(): Promise<DailyCrossword | undefined>;
+  /**
+   * Opens today's traced Daily Crossword (ADR 0073) with the Words this device
+   * found in it: `off` while the Edition has it off, `no-tiling` when the Words
+   * within the Rarity Ceiling cannot fill the grid, for the screen's fallback
+   * to the printed Daily Crossword. Open it again once the next local day starts.
+   */
+  openTracedCrossword(): Promise<TracedCrosswordOpening>;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry or the Synonym Row a Word card links back to; nothing for an id the Language Pack doesn't have. The card of
@@ -719,6 +727,8 @@ export async function openComposition({
         analytics,
       });
     },
+    openTracedCrossword: () =>
+      openTracedCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,

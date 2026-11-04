@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState, type ComponentProps } from 'react';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
+import { tracedMiniGrid, tracedProgress } from './traced-crossword';
 
 /** What the Daily Crossword's card draws. */
 export type DailyCrosswordCardContent = Omit<
@@ -44,7 +45,9 @@ function miniGrid({ letters, words }: DailyCrosswordState): CrosswordMiniCell[][
  * with the letters typed.
  */
 function dailyCrosswordCard(
-  state: DailyCrosswordState,
+  state: Pick<DailyCrosswordState, 'date' | 'progress'> & {
+    readonly grid: readonly (readonly CrosswordMiniCell[])[];
+  },
   strings: EditionStrings['game']['dailyCrossword'],
   months: EditionStrings['dates']['months'],
 ): DailyCrosswordCardContent {
@@ -56,7 +59,7 @@ function dailyCrosswordCard(
     title: strings.title,
     day: fill(strings.dated, { day: String(day), month: monthName }),
     solved: progress === 'solved',
-    grid: miniGrid(state),
+    grid: state.grid,
     state:
       progress === 'solved'
         ? strings.solvedMark
@@ -64,6 +67,26 @@ function dailyCrosswordCard(
           ? strings.resume
           : strings.start,
   };
+}
+
+type CardState = Parameters<typeof dailyCrosswordCard>[0];
+
+/** What the card shows: today's traced Daily Crossword when it opens (ADR 0073), else the printed one. */
+async function cardState(composition: Composition): Promise<CardState | undefined> {
+  const traced = await composition.openTracedCrossword().catch((error: unknown) => {
+    logError('Could not open the traced Daily Crossword', error);
+    return undefined;
+  });
+  if (traced?.kind === 'open') {
+    const { puzzle, state } = traced.crossword;
+    return {
+      date: puzzle.date,
+      progress: tracedProgress(state),
+      grid: tracedMiniGrid(puzzle, state),
+    };
+  }
+  const crossword = await composition.openDailyCrossword();
+  return crossword && { ...crossword.state, grid: miniGrid(crossword.state) };
 }
 
 /**
@@ -75,13 +98,13 @@ function dailyCrosswordCard(
  */
 export function useDailyCrosswordCard(): DailyCrosswordCardContent | undefined {
   const composition = useComposition();
-  const [read, setRead] = useState<{ in: Composition; state: DailyCrosswordState | undefined }>();
+  const [read, setRead] = useState<{ in: Composition; state: CardState | undefined }>();
   useFocusEffect(
     useCallback(() => {
       let active = true;
-      composition.openDailyCrossword().then(
-        (crossword) => {
-          if (active) setRead({ in: composition, state: crossword?.state });
+      cardState(composition).then(
+        (state) => {
+          if (active) setRead({ in: composition, state });
         },
         (error: unknown) => {
           logError('Could not open the Daily Crossword', error);
