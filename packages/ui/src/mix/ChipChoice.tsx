@@ -6,34 +6,28 @@ import { space, typeStyle } from '../tokens';
 import { Chip } from '../primitives/Chip';
 
 /**
- * The Rarity Floor choice of the Mix screen: one chip per floor, «від 1» to
- * «від 5», the one in the Mix filled. Nothing is drawn while `shown` is false,
- * which is while the rarityFloor Feature Switch is off in effect (ADR 0040).
- * The Rarity Ceiling choice, «до 1» to «до 5», and the Quick Question
- * frequency draw the same with their own `testID`.
+ * One choice of the Mix screen drawn as chips under its title and subtitle,
+ * the chosen one filled: the Quick Question frequency. Each chip's test id
+ * extends the group's `testID` with its value.
  */
-export function RarityFloorChoice<Floor extends number | string>({
-  shown,
+export function ChipChoice<Value extends number | string>({
+  testID,
   title,
   subtitle,
   options,
-  floor,
+  value,
   onChange,
-  testID = 'mix-rarity',
 }: {
-  shown: boolean;
-  /** The group's test id, which each chip's id extends with its value; the Rarity Ceiling's has its own. */
-  testID?: string;
+  testID: string;
   title: string;
   subtitle: string;
-  options: readonly { floor: Floor; label: string }[];
-  floor: Floor;
-  onChange: (floor: Floor) => void;
+  options: readonly { value: Value; label: string }[];
+  value: Value;
+  onChange: (value: Value) => void;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
-  if (!shown) return null;
   return (
     <View testID={testID} style={styles.group}>
       <Text
@@ -49,12 +43,12 @@ export function RarityFloorChoice<Floor extends number | string>({
       <View style={styles.chips}>
         {options.map((option) => (
           <Chip
-            key={String(option.floor)}
-            testID={`${testID}-${String(option.floor)}`}
+            key={String(option.value)}
+            testID={`${testID}-${String(option.value)}`}
             label={option.label}
-            on={option.floor === floor}
+            on={option.value === value}
             onPress={() => {
-              onChange(option.floor);
+              onChange(option.value);
             }}
           />
         ))}

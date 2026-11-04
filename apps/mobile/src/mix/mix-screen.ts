@@ -45,26 +45,14 @@ export interface MixScreenModel extends MixCategoriesModel {
    * is in the Mix; left out while the Edition turns its mixKindWeights switch off.
    */
   readonly kindWeights: MixState['kindWeights'] | undefined;
-  /**
-   * The Rarity Ceiling choice (ADR 0072), «до 1» to «до 5», left out while
-   * the Edition turns its rarityCeiling switch off. It is a setting of its
-   * own, not of the Mix, and is drawn here until its own row (#1545).
-   */
-  readonly ceiling: { readonly ceiling: number; readonly ceilings: readonly number[] } | undefined;
 }
-
-/** The ceilings on offer: every rarity of a Word, 1 to 5. */
-const RARITY_CEILINGS = [1, 2, 3, 4, 5] as const;
 
 export function mixScreenModel({
   edition,
   mix,
-  rarityCeiling,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   mix: MixState;
-  /** The Rarity Ceiling in force. */
-  rarityCeiling: number;
 }): MixScreenModel {
   const kinds = MIX_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind))).map(
     (entryKind) => ({ entryKind, on: mix.kinds[entryKind] }),
@@ -77,9 +65,6 @@ export function mixScreenModel({
       ? categoriesModel(mix.correctionCategories)
       : undefined,
     kindWeights: edition.isFeatureEnabled('mixKindWeights') ? mix.kindWeights : undefined,
-    ceiling: edition.isFeatureEnabled('rarityCeiling')
-      ? { ceiling: rarityCeiling, ceilings: RARITY_CEILINGS }
-      : undefined,
   };
 }
 
