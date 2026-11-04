@@ -9,7 +9,7 @@
  * self-rating, the Rarity Test offer and the Mix review.
  */
 export const LATER_QUESTIONS = [
-  'dailyGoalChoice',
+  'wordGoalChoice',
   'interests',
   'selfRating',
   'rarityTest',
@@ -18,6 +18,20 @@ export const LATER_QUESTIONS = [
 
 /** A later question of the questionnaire. */
 export type LaterQuestion = (typeof LATER_QUESTIONS)[number];
+
+/**
+ * The Feed Notice of the Daily Goal in XP, retired when the goal became Words
+ * Seen and asked again as `wordGoalChoice`; a record kept from before still
+ * names it, and reads without it.
+ */
+export const RETIRED_NOTICE = 'dailyGoalChoice';
+
+/** The notice names without the retired one. */
+export function withoutRetired<T extends string>(
+  names: readonly (T | typeof RETIRED_NOTICE)[],
+): T[] {
+  return names.filter((name): name is T => name !== RETIRED_NOTICE);
+}
 
 /**
  * The Feed Notices, in the order the Feed shows those of one day: the Weekly

@@ -273,7 +273,7 @@ describe('the Feed Notices on the Feed', () => {
     expect(screen.getAllByTestId('word-card', hidden).length).toBeGreaterThan(0);
     expect(
       screen.getAllByTestId(/^feed-notice-/, hidden).map(({ props }) => String(props['testID'])),
-    ).toEqual(['feed-notice-dailyGoalChoice']);
+    ).toEqual(['feed-notice-wordGoalChoice']);
   });
 
   it('shows the notification explainer by day 3, and the device is not asked before «Так»', async () => {

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { declareRecord } from '../user-state/user-state-record';
-import { LATER_QUESTIONS } from '../feed-notice';
+import { LATER_QUESTIONS, RETIRED_NOTICE, withoutRetired } from '../feed-notice';
 
 /** The records of the questionnaire. */
 export const questionnaireRecords = {
@@ -15,7 +15,7 @@ export const questionnaireRecords = {
   laterQuestions: declareRecord(
     'questionnaire.later',
     z.object({
-      asked: z.array(z.enum(LATER_QUESTIONS)),
+      asked: z.array(z.enum([...LATER_QUESTIONS, RETIRED_NOTICE])).transform(withoutRetired),
       date: z.string().optional(),
       offerRarityTest: z.boolean().optional(),
     }),
