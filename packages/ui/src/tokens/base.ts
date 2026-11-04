@@ -174,8 +174,6 @@ export const typeRoles = {
   communityDefinition: role('ui', '500', 16, 22),
   /** The title of the end-of-Cycle card. */
   endOfCycleTitle: role('word', '900', 26, 29),
-  /** The name of a mood on its chip. */
-  moodName: role('ui', '700', 15, 15),
   /** The Games screen's title. */
   gamesTitle: role('word', '900', 36, 36, -1, 'uppercase'),
   /** The title of a group of Game Modes, after its red mark. */
@@ -242,8 +240,6 @@ export const typeRoles = {
   recentClear: role('ui', '600', 15, 18),
   /** The text button that clears the history of the Saved screen. */
   historyClear: role('ui', '600', 17, 20),
-  /** The roulette's Lemma in the mood sheet. */
-  rouletteLemma: role('word', '500', 28, 34),
   /** The line on a solved Daily Crossword. */
   crosswordSolved: role('word', '500', 28, 32),
   /** A segment's label in a segmented control. */
@@ -378,8 +374,6 @@ export const typeRoles = {
   swipeAction: role('ui', '700', 14, 17),
   /** The «Повторити» tag of an Entry due for review. */
   reviewTag: role('word', '800', 11, 11, 1, 'uppercase'),
-  /** The die on the mood button. */
-  moodDie: role('ui', '400', 17, 20),
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
   /** A Correction's non-standard form, struck through. */

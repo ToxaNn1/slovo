@@ -60,7 +60,6 @@ const validConfig = {
     politePause: true,
     firstWeek: true,
     widgetHint: true,
-    moods: true,
     seasonalDecor: true,
     stressAnimation: true,
     illustrations: true,
@@ -210,7 +209,6 @@ const learningSwitches = [
   'politePause',
   'firstWeek',
   'widgetHint',
-  'moods',
 ] as const;
 
 /** The Feature Switches of the features of 0.8.14. */

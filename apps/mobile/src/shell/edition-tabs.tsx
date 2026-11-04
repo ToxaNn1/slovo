@@ -125,8 +125,6 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       <Tabs.Screen name="c/[linkId]" options={offTabs} />
       {/* Search, from the magnifier of the «Стрічка» header; no tab leads to it. */}
       <Tabs.Screen name="search" options={offTabs} />
-      {/* The Word the mood roulette of the «Стрічка» header lands on; no tab leads to it. */}
-      <Tabs.Screen name="mood" options={offTabs} />
     </Tabs>
   );
 }

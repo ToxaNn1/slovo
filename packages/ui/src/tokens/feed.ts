@@ -1,4 +1,4 @@
-/** The tokens of the Feed: its header, Feed Notices and the mood chips. */
+/** The tokens of the Feed: its header and Feed Notices. */
 
 /** The XP bar's side padding. */
 export const xpBarPadding = 14;
@@ -53,6 +53,3 @@ export const endOfCycleCard = {
   gap: 18,
   chevrons: { width: 22, height: 30 },
 } as const;
-
-/** The height of a mood's chip, and the gap between the chips. */
-export const moodChip = { height: 52, gap: 10 } as const;
