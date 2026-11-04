@@ -278,6 +278,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   streakBreak: z.boolean(),
   /** The Quick Question: every Nth Feed card asks one Round from an enabled Game Mode over an Eligible Entry; off, the Feed of 0.9. */
   quickQuestion: z.boolean(),
+  /** The onboarding step «ГРАЙ!» after the first Word, which shows the Games; off while `game` is (ADR 0067). */
+  playStep: z.boolean(),
   /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */
   levels: z.boolean(),
   /** «Без лічильників»: the setting hides XP, Level, Streak, celebrations, level milestones and in-Game XP feedback while counting goes on; off, «Приховати Серію» of 0.9, which hides only the Streak (ADR 0066). */
@@ -590,10 +592,18 @@ export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a
 /**
  * The steps of the onboarding, in order (ADR 0067): the one place that has
  * them, so a step that joins changes the count everywhere. The first Word
- * comes only with a Word of the Day, the two questions only with the
- * `questionnaire` Feature Switch, the Daily Goal only with `dailyGoal`.
+ * comes only with a Word of the Day, «ГРАЙ!» only with `playStep`, the two
+ * questions only with the `questionnaire` Feature Switch, the Daily Goal only
+ * with `dailyGoal`.
  */
-export const ONBOARDING_STEPS = ['welcome', 'firstWord', 'level', 'why', 'dailyGoal'] as const;
+export const ONBOARDING_STEPS = [
+  'welcome',
+  'firstWord',
+  'playStep',
+  'level',
+  'why',
+  'dailyGoal',
+] as const;
 
 /** A step of the onboarding. */
 export type OnboardingStepKind = (typeof ONBOARDING_STEPS)[number];

@@ -78,6 +78,7 @@ const validConfig = {
     streakFreezes: true,
     streakBreak: true,
     quickQuestion: true,
+    playStep: true,
     levels: true,
     noCounters: true,
     dailyGoal: true,
@@ -1128,6 +1129,7 @@ const dependentSwitches = [
   ['dailyCrosswordShare', ['shareCards', 'dailyCrossword', 'game']],
   ['tracedCrossword', ['dailyCrossword', 'game']],
   ['quickQuestion', ['game']],
+  ['playStep', ['game']],
   ['rarityTest', ['rarityCeiling']],
 ] as const;
 

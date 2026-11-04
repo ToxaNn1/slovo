@@ -42,6 +42,8 @@ export type OnboardingStep =
   | (StepPlace & { readonly kind: 'welcome' })
   /** Today's Word of the Day, the reader's first Word, with its Pronunciation on the card. */
   | (StepPlace & { readonly kind: 'firstWord'; readonly word: WordCardModel })
+  /** «ГРАЙ!», which shows the Games; it asks nothing. */
+  | (StepPlace & { readonly kind: 'playStep' })
   /** «Рівень» or «Навіщо», with the Edition's options; going on without an answer keeps the defaults. */
   | (StepPlace & {
       readonly kind: QuestionnaireQuestion;
@@ -68,7 +70,7 @@ export interface OnboardingState {
 }
 
 /**
- * The onboarding (ADR 0067): the welcome, the first Word, «Рівень» (whose
+ * The onboarding (ADR 0067): the welcome, the first Word, «ГРАЙ!», «Рівень» (whose
  * «Не знаю» opens the Rarity Test) and «Навіщо», the Daily Goal, then the Feed; and whether the reader finished
  * it, which is also when they skipped it. It opens on launch until then, at
  * the welcome, and never again after, so a reader who finished the old
@@ -165,6 +167,7 @@ export async function openOnboarding({
   const steps = STEPS.filter(
     (kind) =>
       (kind !== 'firstWord' || firstWord !== undefined) &&
+      (kind !== 'playStep' || edition.isFeatureEnabled('playStep')) &&
       ((kind !== 'level' && kind !== 'why') || edition.isFeatureEnabled('questionnaire')) &&
       (kind !== 'dailyGoal' || edition.isFeatureEnabled('dailyGoal')),
   );
@@ -173,7 +176,7 @@ export async function openOnboarding({
     const place = { number: index + 1, total: steps.length };
     const kind = steps[index];
     if (kind === undefined) return undefined;
-    if (kind === 'welcome') return { kind, ...place };
+    if (kind === 'welcome' || kind === 'playStep') return { kind, ...place };
     if (kind === 'firstWord' && firstWord !== undefined) return { kind, ...place, word: firstWord };
     if (kind === 'dailyGoal') {
       return {
