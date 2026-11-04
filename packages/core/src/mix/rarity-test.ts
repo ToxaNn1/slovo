@@ -5,7 +5,7 @@ import type { Entries } from '../entries/entries';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
 import { shuffled } from '../shuffled';
 import type { Random } from '../ports';
-import type { RarityCeiling } from '../settings/rarity-ceiling';
+import type { RarityCeiling } from '../entries/rarity-ceiling';
 
 /** How many Words of each rarity the Rarity Test asks about. */
 const WORDS_PER_RARITY = 2;

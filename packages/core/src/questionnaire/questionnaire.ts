@@ -4,7 +4,7 @@ import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
 import { MIX_KINDS } from '../entries/entry-kinds';
 import type { Mix } from '../entries/mix';
-import type { RarityCeiling } from '../settings/rarity-ceiling';
+import type { RarityCeiling } from '../entries/rarity-ceiling';
 import { closeNotice, type FeedNotices } from '../feed/feed-notices';
 import { LATER_QUESTIONS, type LaterQuestion } from '../feed-notice';
 import { dateKeyOf, todayKey } from '../local-date';
