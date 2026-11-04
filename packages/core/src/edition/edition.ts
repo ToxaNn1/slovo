@@ -1,6 +1,6 @@
 import {
   EditionConfigSchema,
-  type DailyGoal,
+  type DailyGoals,
   type FeatureSwitch,
   type FontSize,
   type LanguageTraits,
@@ -37,8 +37,6 @@ export interface UserSettingDefaults {
   readonly fontSize: FontSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
-  /** The Daily Goal of a reader who has not chosen one (ADR 0066). */
-  readonly dailyGoal: DailyGoal;
   /** Local times of day, `HH:MM` on a 24-hour clock. */
   readonly notificationTimes: readonly string[];
   /** The Rarity Ceiling a new user starts with, «до 1» to «до 5» (ADR 0072). */
@@ -71,6 +69,8 @@ export interface Edition {
   readonly xp: XpTable;
   /** The Level curve and the Level names (ADR 0066). */
   readonly levels: Levels;
+  /** The Daily Goals in Words the reader chooses from, and the one highlighted (ADR 0074). */
+  readonly dailyGoals: DailyGoals;
   /** The onboarding questions, their options and what each sets (ADR 0067). */
   readonly questionnaire: Questionnaire;
   /** The Badges the Edition chooses and names, in their order (ADR 0066). */
@@ -173,6 +173,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     searchLetters,
     xp,
     levels,
+    dailyGoals,
     questionnaire,
     badges,
     mascot,
@@ -201,6 +202,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     searchLetters,
     xp,
     levels,
+    dailyGoals,
     questionnaire,
     badges,
     mascot,

@@ -1,11 +1,4 @@
-import {
-  DailyGoalSchema,
-  FontSizeSchema,
-  RARITIES,
-  ThemeSchema,
-  fill,
-  type DailyGoal,
-} from '@slovo/contracts';
+import { FontSizeSchema, RARITIES, ThemeSchema, fill, type DailyGoal } from '@slovo/contracts';
 import {
   ChoiceRow,
   FontSizePreview,
@@ -23,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { AccountRow } from '@/account/account-row';
 import { useAccountInEffect } from '@/account/account';
 import { editionStrings } from '@/edition/edition';
+import { useEditionInEffect } from '@/edition/remote-switches';
 import { useHiddenSummary } from '@/mix/hidden';
 import { useMixSummary } from '@/mix/mix';
 import { useRarityCeiling } from '@/mix/rarity-ceiling';
@@ -49,14 +43,14 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
   testID: `settings-font-size-${fontSize}`,
 }));
 
-const dailyGoals: readonly DailyGoal[] = DailyGoalSchema.options.map(({ value }) => value);
-
-// A segment's value is text, so each Daily Goal is drawn by its number of XP.
-const dailyGoalSegments = dailyGoals.map((dailyGoal) => ({
-  value: String(dailyGoal),
-  label: String(dailyGoal),
-  testID: `settings-daily-goal-${String(dailyGoal)}`,
-}));
+// A segment's value is text, so each Daily Goal is drawn by its number of Words.
+function dailyGoalSegments(dailyGoals: readonly DailyGoal[]) {
+  return dailyGoals.map((dailyGoal) => ({
+    value: String(dailyGoal),
+    label: String(dailyGoal),
+    testID: `settings-daily-goal-${String(dailyGoal)}`,
+  }));
+}
 
 // «до 1» to «до 5», each Rarity Ceiling by its rarity.
 const rarityCeilingSegments = RARITIES.map((rarity) => ({
@@ -80,6 +74,8 @@ export default function SettingsScreen() {
   const { colors } = useTokens();
   const openScreen = useOpenScreen();
   const { xpLog } = useComposition();
+  const edition = useEditionInEffect();
+  const dailyGoals = edition.dailyGoals.options;
   const { dailyGoal } = useSubscribed(xpLog, ({ state }) => state);
   const { ceiling, setCeiling } = useRarityCeiling();
   const mixSummary = useMixSummary();
@@ -206,12 +202,13 @@ export default function SettingsScreen() {
         </View>
         <View testID="settings-group-learning" style={styles.section}>
           <SettingsGroup title={strings.groups.learning}>
-            {shown.dailyGoal && dailyGoal !== null && (
+            {shown.dailyGoal && edition.isFeatureEnabled('xpLog') && (
               <ChoiceRow
                 icon="triangle"
                 label={strings.dailyGoal.title}
-                segments={dailyGoalSegments}
-                selected={String(dailyGoal.goal)}
+                segments={dailyGoalSegments(dailyGoals)}
+                // No segment is selected while the reader has set no Daily Goal.
+                selected={dailyGoal === null ? '' : String(dailyGoal.goal)}
                 onSelect={(value) => {
                   const goal = dailyGoals.find((option) => String(option) === value);
                   if (goal === undefined) return;

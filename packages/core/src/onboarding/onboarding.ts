@@ -24,9 +24,6 @@ import {
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
-/** The Daily Goals the reader picks from. */
-const DAILY_GOALS: readonly DailyGoal[] = [10, 20, 30, 50];
-
 /** The times «Коли нагадати?» offers, local times `HH:MM`. */
 const NOTIFICATION_TIMES: readonly string[] = ['09:00', '13:00', '20:30'];
 
@@ -158,7 +155,7 @@ export async function openOnboarding({
   backend,
   notifications,
 }: {
-  edition: Pick<Edition, 'id' | 'isFeatureEnabled' | 'questionnaire' | 'userSettingDefaults'>;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled' | 'questionnaire' | 'dailyGoals'>;
   userState: UserState;
   clock: Clock;
   entries: Pick<
@@ -198,8 +195,8 @@ export async function openOnboarding({
       return {
         kind,
         ...place,
-        goals: DAILY_GOALS,
-        highlighted: edition.userSettingDefaults.dailyGoal,
+        goals: edition.dailyGoals.options,
+        highlighted: edition.dailyGoals.highlighted,
       };
     }
     if (kind === 'notificationTime') return { kind, ...place, times: NOTIFICATION_TIMES };

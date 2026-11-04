@@ -971,6 +971,21 @@ const xpOn = (date: string, amount: number): [string, string] => [
   JSON.stringify({ kind: 'xp', date, at: `${date}T07:00:00.000Z`, source: 'game-round', amount }),
 ];
 
+/** The record of a Daily Goal in Words set on a local date (ADR 0074). */
+const goalFrom = (date: string, goal: number): [string, string] => [
+  `xp.word-goal-${date}`,
+  JSON.stringify({ kind: 'word-goal', date, at: `${date}T06:00:00.000Z`, goal }),
+];
+
+/** The record of the Daily Goal met on a local date. */
+const goalMetOn = (date: string): [string, string] => [
+  `xp.goal-met-${date}`,
+  JSON.stringify({ kind: 'goal-met', date, at: `${date}T07:00:00.000Z` }),
+];
+
+/** A Daily Goal of 10 Words set before the first day of the tests. */
+const goalSet = goalFrom('2026-10-01', 10);
+
 /** The record of a Streak freeze consumed for a missed local date. */
 const frozenOn = (date: string): [string, string] => [
   `xp.freeze-${date}`,
@@ -996,7 +1011,7 @@ const sevenDays = datesFrom('2026-10-07', 7);
 
 describe('the evening notification', () => {
   it('plans the Word of the Day at the earliest time and one evening slot at the latest, never more than 2 a day', async () => {
-    const { scheduler } = await run({ evening: true });
+    const { scheduler } = await run({ evening: true, records: new Map([goalSet]) });
 
     const plan = planOf(scheduler);
     const perDay = new Map<string, number>();
@@ -1015,7 +1030,7 @@ describe('the evening notification', () => {
   });
 
   it('warns of the Streak while it is 7 or more, today is below 5 XP and no freeze is held', async () => {
-    const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 4)]);
+    const records = new Map([goalSet, ...activeOn(sevenDays), xpOn('2026-10-14', 4)]);
     const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
 
     const plan = planOf(scheduler);
@@ -1037,28 +1052,35 @@ describe('the evening notification', () => {
   });
 
   it('reminds of the goal, not the Streak, while a freeze is held', async () => {
-    const records = new Map(activeOn(sevenDays));
+    const records = new Map([goalSet, ...activeOn(sevenDays)]);
     const { scheduler } = await run({ evening: true, records });
 
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
   });
 
   it('reminds of the goal, not the Streak, below a Streak of 7', async () => {
-    const records = new Map(activeOn(sevenDays.slice(1)));
+    const records = new Map([goalSet, ...activeOn(sevenDays.slice(1))]);
     const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
 
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
   });
 
-  it('reminds of the goal, not the Streak, once today has 5 XP', async () => {
+  it('warns of the Streak, not the goal, while a set goal is not met, however much XP today has', async () => {
+    const records = new Map([goalSet, ...activeOn(sevenDays), xpOn('2026-10-14', 50)]);
+    const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
+
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(streakWarning);
+  });
+
+  it('plans no evening notification once today has 5 XP and no goal is set', async () => {
     const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 5)]);
     const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
 
-    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBeUndefined();
   });
 
   it('plans no evening notification today once the goal is met', async () => {
-    const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 20)]);
+    const records = new Map([goalSet, ...activeOn(sevenDays), goalMetOn('2026-10-14')]);
     const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
 
     const plan = planOf(scheduler);
@@ -1085,11 +1107,17 @@ describe('the evening notification', () => {
   });
 
   it("drops today's evening notification once a new goal is met", async () => {
-    const records = new Map([xpOn('2026-10-14', 10)]);
+    const records = new Map([
+      goalSet,
+      [
+        'history.w_000',
+        JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
+      ],
+    ]);
     const { app, scheduler } = await run({ evening: true, records });
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
 
-    await app.xpLog.setDailyGoal(10);
+    await app.xpLog.setDailyGoal(1);
 
     await vi.waitFor(() => {
       expect(eveningOf(planOf(scheduler), '2026-10-14')).toBeUndefined();

@@ -6,6 +6,7 @@ import { InvalidEditionConfigError } from './edition';
 const validConfig = {
   id: 'test',
   locale: 'xx-XX',
+  dailyGoals: { options: [10, 25, 50], highlighted: 10 },
   displayName: 'SLOVO Test',
   accountName: 'Test ID',
   languageTraits: {
@@ -105,7 +106,6 @@ const validConfig = {
     theme: 'system',
     fontSize: 'M',
     vibration: true,
-    dailyGoal: 20,
     notificationTimes: ['09:00'],
     mix: {
       categories: 'all',
@@ -334,7 +334,6 @@ describe('loadEdition', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      dailyGoal: 20,
       notificationTimes: ['09:00'],
       rarityCeiling: 5,
       mix: {
@@ -595,13 +594,12 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.vibration).toBe(false);
   });
 
-  it('reports a Daily Goal default of 30', () => {
-    const edition = loadEdition({
-      ...validConfig,
-      userSettingDefaults: { ...validConfig.userSettingDefaults, dailyGoal: 30 },
-    });
-
-    expect(edition.userSettingDefaults.dailyGoal).toBe(30);
+  it('reports the Daily Goals in Words and refuses a highlighted one not among them', () => {
+    const dailyGoals = { options: [5, 15], highlighted: 15 };
+    expect(loadEdition({ ...validConfig, dailyGoals }).dailyGoals).toEqual(dailyGoals);
+    expect(() =>
+      loadEdition({ ...validConfig, dailyGoals: { ...dailyGoals, highlighted: 10 } }),
+    ).toThrow();
   });
 
   it('refuses hand-written legal page addresses in the config', () => {
@@ -886,14 +884,9 @@ describe('loadEdition', () => {
       'userSettingDefaults.vibration',
     ],
     [
-      'a missing Daily Goal default',
-      { userSettingDefaults: { ...userSettingDefaults, dailyGoal: undefined } },
-      'userSettingDefaults.dailyGoal',
-    ],
-    [
-      'a Daily Goal default the Core does not offer',
-      { userSettingDefaults: { ...userSettingDefaults, dailyGoal: 15 } },
-      'userSettingDefaults.dailyGoal',
+      'Daily Goals out of rising order',
+      { dailyGoals: { options: [25, 10], highlighted: 10 } },
+      'dailyGoals.options',
     ],
     [
       'a notification time that is not HH:MM',
