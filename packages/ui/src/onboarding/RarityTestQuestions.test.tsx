@@ -15,7 +15,7 @@ const strings = testStrings({
   rarityTest: {
     progress: '{n} of {total}',
     announcement: 'Word {n} of {total}: {word}',
-    result: 'Your level: from {n}',
+    result: 'Your rarity: up to {n}',
   },
   knowledge: { known: 'Known', unknown: 'Unknown' },
 });
@@ -35,9 +35,9 @@ function frame({ testID, footer, children }: RarityTestScreen) {
   );
 }
 
-async function renderTest(floor: Rarity | undefined) {
+async function renderTest(ceiling: Rarity | undefined) {
   const handlers = {
-    onApply: jest.fn((): Promise<Rarity | undefined> => Promise.resolve(floor)),
+    onApply: jest.fn((): Promise<Rarity | undefined> => Promise.resolve(ceiling)),
     onDone: jest.fn(),
   };
   await render(
@@ -74,7 +74,7 @@ describe('RarityTestQuestions', () => {
     expect(announce).toHaveBeenCalledWith('Word 2 of 2: second word');
   });
 
-  it('applies all the answers on the last one and shows the floor they set', async () => {
+  it('applies all the answers on the last one and shows the Rarity Ceiling they set', async () => {
     const { onApply, onDone } = await renderTest(2);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Unknown' }));
@@ -85,7 +85,7 @@ describe('RarityTestQuestions', () => {
       { rarity: 3, known: true },
     ]);
     expect(await screen.findByTestId('test-result')).toBeTruthy();
-    expect(screen.getByRole('header', { name: 'Your level: from 2' })).toBeTruthy();
+    expect(screen.getByRole('header', { name: 'Your rarity: up to 2' })).toBeTruthy();
     expect(onDone).not.toHaveBeenCalled();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Next' }));
@@ -93,7 +93,7 @@ describe('RarityTestQuestions', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it('goes on at once when the answers set no floor', async () => {
+  it('goes on at once when the answers set no Rarity Ceiling', async () => {
     const { onApply, onDone } = await renderTest(undefined);
 
     await fireEvent.press(screen.getByRole('button', { name: 'Known' }));

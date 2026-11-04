@@ -143,6 +143,35 @@ beforeEach(async () => {
   await openWith(editionWithout());
 });
 
+describe('Settings › «Рідкість»', () => {
+  it('stores the Rarity Ceiling chosen, and the next Feed picks obey it', async () => {
+    await renderSettings();
+    expect(screen.getByTestId('settings-rarity-5')).toBeSelected();
+
+    await fireEvent.press(screen.getByTestId('settings-rarity-3'));
+    await settle();
+
+    expect(composition.rarityCeiling.state).toBe(3);
+    expect(screen.getByTestId('settings-rarity-3')).toBeSelected();
+    const picked: string[] = [];
+    for (let turn = 0; turn < 6; turn += 1) {
+      const card = await composition.feed.next();
+      const id = card !== undefined && 'entryId' in card ? card.entryId : undefined;
+      if (id !== undefined) picked.push(id);
+    }
+    expect(picked.length).toBeGreaterThan(0);
+    const rarityOf = new Map(words.map(({ id, rarity }) => [id, rarity]));
+    expect(picked.filter((id) => (rarityOf.get(id) ?? 5) > 3)).toEqual([]);
+  });
+
+  it('is not in Settings while the rarityCeiling switch is off', async () => {
+    await openWith(editionWithout('rarityCeiling'));
+    await renderSettings();
+
+    expect(screen.queryByTestId('settings-rarity')).toBeNull();
+  });
+});
+
 describe('Settings › «Пройти тест ще раз»', () => {
   it('takes the Rarity Test again, and its result overwrites the Rarity Ceiling', async () => {
     await composition.rarityCeiling.set(4);
@@ -158,14 +187,13 @@ describe('Settings › «Пройти тест ще раз»', () => {
     }
     await settle();
 
-    expect(screen.getByRole('header', { name: 'Ваш рівень: від 2' })).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Ваша рідкість: до 2' })).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: editionStrings.onboarding.mix.next }));
     await settle();
     expect(screen.getByRole('header', { name: editionStrings.settings.title })).toBeOnTheScreen();
 
-    await open(editionStrings.settings.rows.myMix);
-    expect(screen.getByTestId('mix-rarity-ceiling-2')).toBeSelected();
-    expect(screen.getByTestId('mix-rarity-ceiling-4')).not.toBeSelected();
+    expect(screen.getByTestId('settings-rarity-2')).toBeSelected();
+    expect(screen.getByTestId('settings-rarity-4')).not.toBeSelected();
   });
 
   it('leaves the Rarity Ceiling as it was when the reader goes back halfway', async () => {
