@@ -90,10 +90,13 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   }
   reports.listen(languagePack, ({ contentUpdate }, moment) => {
     if (moment !== 'launch' && moment !== 'return') return;
-    // Neither rejects.
-    void isOnInEffect('contentUpdates').then(async (on) => {
-      if (on) await contentUpdate?.checkForUpdate();
-    });
+    isOnInEffect('contentUpdates')
+      .then(async (on) => {
+        if (on) await contentUpdate?.checkForUpdate();
+      })
+      .catch((error: unknown) => {
+        logError('Could not check for a content update', error);
+      });
   });
   reports.listen(shell.mistakeReports, (mistakeReports, moment) => {
     if (moment === 'launch' || moment === 'return') mistakeReports.foreground();
