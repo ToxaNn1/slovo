@@ -56,10 +56,16 @@ export const StatsStringsSchema = z.strictObject({
   xpBarLabel: templateOf('count'),
   /** What VoiceOver reads after the XP bar: that a tap opens the Game, e.g. «Відкриває Гру». */
   xpBarHint: TextSchema,
-  /** The XP bar's text with a Daily Goal: today's Words Seen over it, e.g. «3 з 10 слів». Takes `{seen}` and `{goal}`. */
-  wordsTowardGoal: templateOf('seen', 'goal'),
-  /** What VoiceOver reads for the XP bar with a Daily Goal, e.g. «Ціль дня: 3 з 10 слів». Takes `{seen}` and `{goal}`. */
-  wordsTowardGoalLabel: templateOf('seen', 'goal'),
+  /**
+   * The XP bar's text with a Daily Goal: today's Words Seen over it, e.g. «3 з 10 слів».
+   * Takes `{count}`, the Daily Goal in Words, which picks the form (ADR 0020), and `{seen}`, today's Words Seen.
+   */
+  wordsTowardGoal: pluralOf('seen'),
+  /**
+   * What VoiceOver reads for the XP bar with a Daily Goal, e.g. «Ціль дня: 3 з 10 слів».
+   * Takes `{count}`, the Daily Goal in Words, which picks the form, and `{seen}`, today's Words Seen.
+   */
+  wordsTowardGoalLabel: pluralOf('seen'),
   /** The Active Days calendar under the counts. */
   calendar: z.strictObject({
     /** What VoiceOver reads for the month control, e.g. «Активні дні». */
