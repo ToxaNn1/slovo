@@ -26,7 +26,7 @@ import {
   readRarityCeiling,
   withinRarityCeiling,
   type RarityCeilingEdition,
-} from '../settings/rarity-ceiling';
+} from './rarity-ceiling';
 import type { ContentReadPort } from '../ports';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';

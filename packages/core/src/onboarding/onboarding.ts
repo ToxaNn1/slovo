@@ -15,7 +15,7 @@ import { createSubscribers } from '../in-turn';
 import { todayKey } from '../local-date';
 import type { Backend, Clock } from '../ports';
 import type { XpLog } from '../progress/xp-log';
-import type { RarityCeiling } from '../settings/rarity-ceiling';
+import type { RarityCeiling } from '../entries/rarity-ceiling';
 import {
   applyAnswer,
   dailyGoalAsked,
