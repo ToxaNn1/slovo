@@ -294,6 +294,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   progressShareCards: z.boolean(),
   /** The Share Card of a solved Daily Crossword, its grid with no letters; off while `shareCards` or `dailyCrossword` is. */
   dailyCrosswordShare: z.boolean(),
+  /** The traced Daily Crossword: a 5 × 5 grid full of letters whose hidden Words the reader traces; off, the typed one (ADR 0073). Off while `dailyCrossword` is. */
+  tracedCrossword: z.boolean(),
   /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
   eveningNotification: z.boolean(),
   /** The farewell: the polite pause ends with the Edition's farewell on the 14th day without an open; off, it ends in silence. */

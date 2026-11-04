@@ -88,6 +88,7 @@ const validConfig = {
     badges: true,
     progressShareCards: true,
     dailyCrosswordShare: true,
+    tracedCrossword: true,
     eveningNotification: true,
     notificationFarewell: true,
     notificationExplainer: true,
@@ -302,6 +303,7 @@ describe('loadEdition', () => {
     'gameReview',
     'progressShareCards',
     'dailyCrosswordShare',
+    'tracedCrossword',
     'fastReveal',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
@@ -1124,6 +1126,7 @@ const dependentSwitches = [
   ['dailyGoal', ['xpLog']],
   ['progressShareCards', ['shareCards', 'xpLog']],
   ['dailyCrosswordShare', ['shareCards', 'dailyCrossword', 'game']],
+  ['tracedCrossword', ['dailyCrossword', 'game']],
   ['quickQuestion', ['game']],
   ['rarityTest', ['rarityCeiling']],
 ] as const;

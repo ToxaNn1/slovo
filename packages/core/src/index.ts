@@ -140,6 +140,29 @@ export {
   type DailyCrosswordState,
   type DailyCrosswordWord,
 } from './game/daily-crossword';
+export {
+  areAdjacent,
+  foundIds,
+  generateCrosswordPuzzle,
+  HIDDEN_WORD_LENGTH,
+  isSolved,
+  playPuzzle,
+  startPuzzle,
+  type CrosswordPuzzle,
+  type HiddenWord,
+  type HiddenWordState,
+  type PuzzleAction,
+  type PuzzleGeneration,
+  type PuzzleLetter,
+  type PuzzlePlace,
+  type PuzzleState,
+} from './game/crossword-puzzle';
+export {
+  openTracedCrossword,
+  seededRandomOf,
+  type TracedCrossword,
+  type TracedCrosswordOpening,
+} from './game/traced-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { loadEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches } from './edition/remote-switches';
