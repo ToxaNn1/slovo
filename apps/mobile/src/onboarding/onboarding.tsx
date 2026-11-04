@@ -1,4 +1,4 @@
-import { DailyGoalSchema, type DailyGoal, type MascotState } from '@slovo/contracts';
+import type { DailyGoal, MascotState } from '@slovo/contracts';
 import type { OnboardingStep as Step, QuestionnaireOption, WordCardModel } from '@slovo/core';
 import {
   EntryCard,
@@ -77,6 +77,7 @@ export function Onboarding() {
         // A new step on screen starts from the goal it highlights.
         key={step.number}
         step={step}
+        goals={step.goals}
         highlighted={step.highlighted}
         mascot={mascot}
         onDone={(goal) => {
@@ -298,17 +299,17 @@ function Question({
   );
 }
 
-const dailyGoals: readonly DailyGoal[] = DailyGoalSchema.options.map(({ value }) => value);
-
-/** The Daily Goal: a tile per goal in XP, the highlighted one picked, and «Готово», which sets it. */
+/** The Daily Goal: a tile per goal in Words, the highlighted one picked, and «Готово», which sets it. */
 function DailyGoalStep({
   step,
+  goals,
   highlighted,
   mascot,
   onDone,
   onSkip,
 }: {
   step: Step;
+  goals: readonly DailyGoal[];
   highlighted: DailyGoal;
   mascot: ReactNode;
   onDone: (goal: DailyGoal) => void;
@@ -347,7 +348,7 @@ function DailyGoalStep({
         </Text>
       </View>
       <View style={styles.goals}>
-        {dailyGoals.map((goal) => {
+        {goals.map((goal) => {
           const selected = goal === picked;
           const ink = selected ? colors.onAccent : colors.ink;
           return (
