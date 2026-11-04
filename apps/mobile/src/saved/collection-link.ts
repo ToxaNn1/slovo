@@ -13,5 +13,6 @@ export function useCollectionLinkPreview(linkId: string): CollectionLinkPreview 
     (composition: Composition) => composition.collectionLinkCopy.preview(linkId),
     [linkId],
   );
-  return useCompositionRead(read, 'Could not read the Collection Link');
+  const preview = useCompositionRead(read, 'Could not read the Collection Link');
+  return preview.status === 'ready' ? preview.value : undefined;
 }
