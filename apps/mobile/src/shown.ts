@@ -104,6 +104,8 @@ export interface Shown {
   readonly moods: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
+  /** The «Рідкість» row of Settings, the Rarity Ceiling (ADR 0072). */
+  readonly rarityCeiling: boolean;
   /** The «Пройти тест ще раз» row of Settings, while the Rarity Ceiling it sets is on as well. */
   readonly rarityTest: boolean;
   /**
@@ -174,6 +176,7 @@ export function shownOf({
     fastReveal: on('fastReveal'),
     moods: on('moods'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
+    rarityCeiling: on('rarityCeiling'),
     rarityTest: on('rarityTest'),
     questionnaire:
       on('questionnaire') || on('rarityTest')

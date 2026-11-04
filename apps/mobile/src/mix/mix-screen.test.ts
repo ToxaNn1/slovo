@@ -35,7 +35,7 @@ describe('the Мій Мікс screen', () => {
   it('offers every Category of the Language Pack in its order, all on in the default Mix', async () => {
     const { mix } = await open(ukrainian);
 
-    const model = mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 });
+    const model = mixScreenModel({ edition: ukrainian, mix: mix.state });
 
     expect(model.chips.map(({ id }) => id)).toEqual(categories.map(({ id }) => id));
     expect(model.chips.map(({ name }) => name)).toEqual(
@@ -51,13 +51,13 @@ describe('the Мій Мікс screen', () => {
     const { mix } = await open(ukrainian);
 
     await mix.takeOut(first.id);
-    const taken = mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 });
+    const taken = mixScreenModel({ edition: ukrainian, mix: mix.state });
     expect(taken.chips.find(({ id }) => id === first.id)?.on).toBe(false);
     expect(taken.chips.filter(({ on }) => on)).toHaveLength(categories.length - 1);
     expect(taken.allOn).toBe(false);
 
     await mix.turnAllOn();
-    const all = mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 });
+    const all = mixScreenModel({ edition: ukrainian, mix: mix.state });
     expect(all.chips.every(({ on }) => on)).toBe(true);
     expect(all.allOn).toBe(true);
   });
@@ -68,7 +68,7 @@ describe('the Мій Мікс screen', () => {
       if (id !== first.id) await mix.takeOut(id);
     }
 
-    const model = mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 });
+    const model = mixScreenModel({ edition: ukrainian, mix: mix.state });
 
     expect(model.chips.filter(({ disabled }) => disabled).map(({ id }) => id)).toEqual([first.id]);
     expect(model.lastCategoryHint).toBe(true);
@@ -88,7 +88,7 @@ describe('the Мій Мікс screen', () => {
       };
       const { mix } = await open(ukrainian);
       const switchOf = (edition: Edition) =>
-        mixScreenModel({ edition, mix: mix.state, rarityCeiling: 5 }).kinds.find(
+        mixScreenModel({ edition, mix: mix.state }).kinds.find(
           (each) => each.entryKind === entryKind,
         );
 
@@ -111,24 +111,20 @@ describe('the Мій Мікс screen', () => {
     await mix.setKindWeight('idiom', 'more');
     await mix.setKindWeight('tip', 'less');
 
-    expect(
-      mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 }).kindWeights,
-    ).toEqual({
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).kindWeights).toEqual({
       correction: 'normal',
       idiom: 'more',
       synonymRow: 'normal',
       tip: 'less',
     });
-    expect(mixScreenModel({ edition: without, mix: mix.state, rarityCeiling: 5 }).kindWeights).toBe(
-      undefined,
-    );
+    expect(mixScreenModel({ edition: without, mix: mix.state }).kindWeights).toBe(undefined);
   });
 
   it('lists the switches in the Mix’s order: Corrections, Idioms, Synonym Rows, then Tips', async () => {
     const { mix } = await open(ukrainian);
 
     expect(
-      mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 }).kinds.map(
+      mixScreenModel({ edition: ukrainian, mix: mix.state }).kinds.map(
         ({ entryKind }) => entryKind,
       ),
     ).toEqual(['correction', 'idiom', 'synonymRow', 'tip']);
@@ -144,9 +140,7 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
   it('offers every Category of Corrections of the Language Pack in its order, all on in the default Mix', async () => {
     const { mix } = await open(ukrainian);
 
-    expect(
-      mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 }).correctionCategories,
-    ).toEqual({
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).correctionCategories).toEqual({
       chips: correctionCategories.map(({ id, displayName }) => ({
         id,
         name: displayName,
@@ -163,14 +157,11 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
       mixScreenModel({
         edition: ukrainian,
         mix: mix.state,
-        rarityCeiling: 5,
       }).correctionCategories?.chips.map(({ on }) => on);
 
     await mix.takeOut('shop', 'correction');
     expect(onOf()).toEqual([true, false, true]);
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 }).allOn).toBe(
-      true,
-    );
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).allOn).toBe(true);
 
     await mix.putBack('shop', 'correction');
     expect(onOf()).toEqual([true, true, true]);
@@ -181,7 +172,7 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
     await mix.takeOut('work', 'correction');
     await mix.takeOut('shop', 'correction');
 
-    const model = mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 });
+    const model = mixScreenModel({ edition: ukrainian, mix: mix.state });
 
     expect(
       model.correctionCategories?.chips.filter(({ disabled }) => disabled).map(({ id }) => id),
@@ -196,16 +187,15 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
     await mix.takeOut('shop', 'correction');
 
     await mix.setKind('correction', false);
-    expect(
-      mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: 5 }).correctionCategories,
-    ).toBe(undefined);
+    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).correctionCategories).toBe(
+      undefined,
+    );
 
     await mix.setKind('correction', true);
     expect(
       mixScreenModel({
         edition: ukrainian,
         mix: mix.state,
-        rarityCeiling: 5,
       }).correctionCategories?.chips.map(({ on }) => on),
     ).toEqual([true, false, true]);
   });
@@ -214,8 +204,7 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
     const { mix } = await open(ukrainian);
 
     expect(
-      mixScreenModel({ edition: withoutCorrections, mix: mix.state, rarityCeiling: 5 })
-        .correctionCategories,
+      mixScreenModel({ edition: withoutCorrections, mix: mix.state }).correctionCategories,
     ).toBe(undefined);
   });
 });
@@ -249,45 +238,5 @@ describe('the «Мій Мікс» row of Settings', () => {
       '2 категорії',
       '1 категорія',
     ]);
-  });
-});
-
-describe('the Rarity Ceiling choice of the Мій Мікс screen', () => {
-  const withoutRarityCeiling: Edition = {
-    ...ukrainian,
-    isFeatureEnabled: (feature) =>
-      feature !== 'rarityCeiling' && ukrainian.isFeatureEnabled(feature),
-  };
-
-  it('offers ceilings from 1 to 5, on «до 5» until the reader chooses one', async () => {
-    const { mix, rarityCeiling } = await open(ukrainian);
-
-    expect(
-      mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: rarityCeiling.state })
-        .ceiling,
-    ).toEqual({ ceiling: 5, ceilings: [1, 2, 3, 4, 5] });
-  });
-
-  it('shows the ceiling the reader chose, still offering every one', async () => {
-    const { mix, rarityCeiling } = await open(ukrainian);
-
-    await rarityCeiling.set(2);
-
-    expect(
-      mixScreenModel({ edition: ukrainian, mix: mix.state, rarityCeiling: rarityCeiling.state })
-        .ceiling,
-    ).toEqual({ ceiling: 2, ceilings: [1, 2, 3, 4, 5] });
-  });
-
-  it('leaves the choice out while the rarityCeiling switch is off', async () => {
-    const { mix, rarityCeiling } = await open(ukrainian);
-
-    expect(
-      mixScreenModel({
-        edition: withoutRarityCeiling,
-        mix: mix.state,
-        rarityCeiling: rarityCeiling.state,
-      }).ceiling,
-    ).toBe(undefined);
   });
 });
