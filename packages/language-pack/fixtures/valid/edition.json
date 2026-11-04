@@ -178,7 +178,7 @@
     "names": ["Seed", "Sprout"]
   },
   "questionnaire": {
-    "who": [
+    "level": [
       {
         "id": "studying",
         "label": "Навчаюсь",
