@@ -687,10 +687,10 @@ describe('the Seen-Word XP', () => {
   const on: readonly FeatureSwitch[] = ['dailyGoal', 'seenWordXp'];
 
   /** An XP log record a device appended for a Word Seen for the first time. */
-  const seenWord = (id: string, date: string, at: string) =>
+  const seenWord = (id: string, date: string, at: string, amount = 1) =>
     [
       `xp.seen-word-${id}`,
-      JSON.stringify({ kind: 'xp', date, at, source: 'seen-word', amount: 1 }),
+      JSON.stringify({ kind: 'xp', date, at, source: 'seen-word', amount }),
     ] as const;
   const goalSet = (goal: number, at: string) =>
     [`xp.goal-${at}`, JSON.stringify({ kind: 'word-goal', date: '2026-10-14', at, goal })] as const;
@@ -714,6 +714,29 @@ describe('the Seen-Word XP', () => {
     await look(app, time);
 
     expect(app.xpLog.state.today).toBe(3);
+  });
+
+  it('stops at the goal in Words, not in XP, when a Word earns more than 1 XP', async () => {
+    const { app, time } = await run({ on, xp: { ...testEdition().xp, seenWord: 3 } });
+    await app.xpLog.setDailyGoal(2);
+
+    for (let card = 0; card < 4; card += 1) await look(app, time);
+
+    expect(app.xpLog.state.today).toBe(6);
+  });
+
+  it('counts merged Words up to the goal in Words, whatever XP each earned', async () => {
+    const { app } = await run({
+      on,
+      records: new Map([
+        goalSet(2, '2026-10-14T03:00:00.000Z'),
+        seenWord('w_00', '2026-10-14', '2026-10-14T04:00:00.000Z', 3),
+        seenWord('w_01', '2026-10-14', '2026-10-14T04:01:00.000Z', 3),
+        seenWord('w_02', '2026-10-14', '2026-10-14T04:02:00.000Z', 3),
+      ]),
+    });
+
+    expect(app.xpLog.dayOf('2026-10-14').xp).toBe(6);
   });
 
   it('earns nothing for an Entry that is not a Word', async () => {
