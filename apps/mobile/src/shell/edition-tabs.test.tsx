@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
+import type { Edition } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
 import { Text } from 'react-native';
@@ -18,12 +19,12 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-/** The app's tabs over the shipped Edition, opened on `url`. */
-async function renderTabs(url: string) {
+/** The app's tabs over `editionInEffect` (the shipped Edition by default), opened on `url`. */
+async function renderTabs(url: string, editionInEffect: Edition = edition) {
   const shell = testShell({
     composition: opened(await testShell().composition.opened()),
     settings: await settingsAt({}),
-    remoteSwitches: switchedTo(edition),
+    remoteSwitches: switchedTo(editionInEffect),
   });
   await renderRouter(
     {
@@ -67,6 +68,11 @@ afterEach(() => {
   screenSettled();
 });
 
+/** The test ids of the tab buttons on screen, in their order. */
+function tabButtons() {
+  return screen.getAllByTestId(/^tab-[a-z]+$/).map((button) => String(button.props['testID']));
+}
+
 /** Runs an action, and lets the navigators finish it. */
 async function settle(action: () => unknown) {
   await act(async () => {
@@ -83,6 +89,22 @@ describe('the tab bar', () => {
     for (const name of [tabs.home, tabs.game, tabs.saved, tabs.profile]) {
       expect(screen.getByText(name)).toBeVisible();
     }
+  });
+
+  it('shows four tabs in order while the Game is on', async () => {
+    await renderTabs('/');
+
+    expect(tabButtons()).toEqual(['tab-home', 'tab-game', 'tab-saved', 'tab-settings']);
+  });
+
+  it('shows three tabs, without «Ігри», while the Game is off', async () => {
+    await renderTabs('/', {
+      ...edition,
+      isFeatureEnabled: (feature) => feature !== 'game' && edition.isFeatureEnabled(feature),
+    });
+
+    expect(tabButtons()).toEqual(['tab-home', 'tab-saved', 'tab-settings']);
+    expect(screen.queryByText(tabs.game)).toBeNull();
   });
 
   it('opens the Profile on the fourth tab', async () => {
