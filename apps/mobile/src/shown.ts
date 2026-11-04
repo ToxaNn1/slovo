@@ -104,12 +104,14 @@ export interface Shown {
   readonly moods: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
-  /** The «Пройти тест ще раз» row of Settings, while the Rarity Floor it sets is on as well. */
+  /** The «Рідкість» row of Settings, the Rarity Ceiling (ADR 0072). */
+  readonly rarityCeiling: boolean;
+  /** The «Пройти тест ще раз» row of Settings, while the Rarity Ceiling it sets is on as well. */
   readonly rarityTest: boolean;
   /**
    * The «Пройти опитування ще раз» row of Settings, while any of its questions
    * is on: «Хто ви» and «Навіщо» under the questionnaire, the self-rating
-   * under the Rarity Floor it sets.
+   * under the Rarity Test it offers.
    */
   readonly questionnaire: { readonly whoWhy: boolean; readonly selfRating: boolean } | undefined;
 }
@@ -174,10 +176,11 @@ export function shownOf({
     fastReveal: on('fastReveal'),
     moods: on('moods'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
+    rarityCeiling: on('rarityCeiling'),
     rarityTest: on('rarityTest'),
     questionnaire:
-      on('questionnaire') || on('rarityFloor')
-        ? { whoWhy: on('questionnaire'), selfRating: on('rarityFloor') }
+      on('questionnaire') || on('rarityTest')
+        ? { whoWhy: on('questionnaire'), selfRating: on('rarityTest') }
         : undefined,
   };
 }

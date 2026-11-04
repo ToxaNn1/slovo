@@ -154,9 +154,10 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
   it('shows a Category of Corrections taken out as off, apart from the Words’ Categories, until it is put back', async () => {
     const { mix } = await open(ukrainian);
     const onOf = () =>
-      mixScreenModel({ edition: ukrainian, mix: mix.state }).correctionCategories?.chips.map(
-        ({ on }) => on,
-      );
+      mixScreenModel({
+        edition: ukrainian,
+        mix: mix.state,
+      }).correctionCategories?.chips.map(({ on }) => on);
 
     await mix.takeOut('shop', 'correction');
     expect(onOf()).toEqual([true, false, true]);
@@ -192,9 +193,10 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
 
     await mix.setKind('correction', true);
     expect(
-      mixScreenModel({ edition: ukrainian, mix: mix.state }).correctionCategories?.chips.map(
-        ({ on }) => on,
-      ),
+      mixScreenModel({
+        edition: ukrainian,
+        mix: mix.state,
+      }).correctionCategories?.chips.map(({ on }) => on),
     ).toEqual([true, false, true]);
   });
 
@@ -204,65 +206,6 @@ describe('the Categories of Corrections on the Мій Мікс screen', () => {
     expect(
       mixScreenModel({ edition: withoutCorrections, mix: mix.state }).correctionCategories,
     ).toBe(undefined);
-  });
-});
-
-describe('the Rarity Floor choice of the Мій Мікс screen', () => {
-  const withoutRarityFloor: Edition = {
-    ...ukrainian,
-    isFeatureEnabled: (feature) => feature !== 'rarityFloor' && ukrainian.isFeatureEnabled(feature),
-  };
-
-  it('offers floors from 1 to 5, on the lowest until the reader chooses one', async () => {
-    const { mix } = await open(ukrainian);
-
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).rarity).toEqual({
-      floor: 1,
-      floors: [1, 2, 3, 4, 5],
-    });
-  });
-
-  it('shows the floor the reader chose', async () => {
-    const { mix } = await open(ukrainian);
-
-    await mix.setRarityFloor(4);
-
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).rarity?.floor).toBe(4);
-  });
-
-  it('offers no floor above the ceiling', async () => {
-    const { mix } = await open(ukrainian);
-
-    await mix.setRarityCeiling(3);
-
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).rarity?.floors).toEqual([
-      1, 2, 3,
-    ]);
-  });
-
-  it('offers every floor while the rarityCeiling switch is off, as the ceiling rises with it', async () => {
-    const withoutRarityCeiling: Edition = {
-      ...ukrainian,
-      isFeatureEnabled: (feature) =>
-        feature !== 'rarityCeiling' && ukrainian.isFeatureEnabled(feature),
-    };
-    const { mix } = await open(withoutRarityCeiling);
-
-    await mix.setRarityFloor(4);
-    await mix.setRarityFloor(2);
-
-    expect(mixScreenModel({ edition: withoutRarityCeiling, mix: mix.state }).rarity).toEqual({
-      floor: 2,
-      floors: [1, 2, 3, 4, 5],
-    });
-  });
-
-  it('leaves the choice out while the rarityFloor switch is off', async () => {
-    const { mix } = await open(ukrainian);
-
-    await mix.setRarityFloor(4);
-
-    expect(mixScreenModel({ edition: withoutRarityFloor, mix: mix.state }).rarity).toBe(undefined);
   });
 });
 
@@ -295,42 +238,5 @@ describe('the «Мій Мікс» row of Settings', () => {
       '2 категорії',
       '1 категорія',
     ]);
-  });
-});
-
-describe('the Rarity Ceiling choice of the Мій Мікс screen', () => {
-  const withoutRarityCeiling: Edition = {
-    ...ukrainian,
-    isFeatureEnabled: (feature) =>
-      feature !== 'rarityCeiling' && ukrainian.isFeatureEnabled(feature),
-  };
-
-  it('offers ceilings from 1 to 5, on «до 5» until the reader chooses one', async () => {
-    const { mix } = await open(ukrainian);
-
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).ceiling).toEqual({
-      ceiling: 5,
-      ceilings: [1, 2, 3, 4, 5],
-    });
-  });
-
-  it('offers no ceiling below the floor and shows the one the reader chose', async () => {
-    const { mix } = await open(ukrainian);
-
-    await mix.setRarityFloor(3);
-    await mix.setRarityCeiling(4);
-
-    expect(mixScreenModel({ edition: ukrainian, mix: mix.state }).ceiling).toEqual({
-      ceiling: 4,
-      ceilings: [3, 4, 5],
-    });
-  });
-
-  it('leaves the choice out while the rarityCeiling switch is off', async () => {
-    const { mix } = await open(ukrainian);
-
-    expect(mixScreenModel({ edition: withoutRarityCeiling, mix: mix.state }).ceiling).toBe(
-      undefined,
-    );
   });
 });

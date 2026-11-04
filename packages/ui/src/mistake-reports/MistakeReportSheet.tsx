@@ -1,6 +1,15 @@
 import { REPORT_COMMENT_LENGTH, type MistakeType } from '@slovo/contracts';
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { Button } from '../primitives/Button';
@@ -8,13 +17,17 @@ import { ChoiceMark } from '../primitives/ChoiceMark';
 import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, space, typeStyle } from '../tokens';
+import { minTouchTarget, mistakeReportField, space, typeRoles, typeStyle } from '../tokens';
 
 /** The types of mistake in the order the sheet offers them. */
 const TYPES: readonly MistakeType[] = ['typo', 'stress', 'definition', 'other'];
 
-/** How many lines of the comment show before it scrolls. */
-const COMMENT_LINES = 4;
+/** The comment field stops growing at its four lines, at the reader's text size, and scrolls inside. */
+function fieldMaxHeight(fontScale: number): number {
+  const { lines, padding, border, maxFontScale } = mistakeReportField;
+  const scale = fontScale > 1 ? Math.min(fontScale, maxFontScale) : 1;
+  return typeRoles.fieldText.lineHeight * scale * lines + padding * 2 + border * 2;
+}
 
 /** What the reader wrote in the sheet: the type and the comment as typed. */
 export interface MistakeReportSheetDraft {
@@ -29,7 +42,10 @@ export interface MistakeReportSheetDraft {
  * and for «Інше» until the comment says something. «Надіслати» hands the
  * draft to `onSend` and the sheet starts afresh; a tap on the scrim, a drag on
  * its top and VoiceOver's escape gesture ask `onClose`, and keep what was
- * written. The caller turns `visible` off in both callbacks. Needs a
+ * written. With the keyboard up the field stops at four lines and scrolls,
+ * its return key «Готово» closes the keyboard, as do a drag of the sheet and
+ * a tap on a type, and «Надіслати» stays below the content that scrolls, so
+ * it is never out of reach. The caller turns `visible` off in both callbacks. Needs a
  * `SafeAreaProvider` above it.
  */
 export function MistakeReportSheet({
@@ -44,6 +60,7 @@ export function MistakeReportSheet({
   testID?: string;
 }) {
   const tokens = useTokens();
+  const { fontScale } = useWindowDimensions();
   const { colors, radii } = tokens;
   const { strings, voice } = useEdition();
   const sheet = strings.mistakeReport;
@@ -53,81 +70,99 @@ export function MistakeReportSheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose} testID={testID}>
-      <View style={styles.header}>
-        <SheetTitle>{sheet.action}</SheetTitle>
-      </View>
-      <View accessibilityRole="radiogroup">
-        {TYPES.map((key, index) => {
-          const chosen = key === type;
-          return (
-            <Pressable
-              key={key}
-              testID={`${testID}-type-${key}`}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: chosen }}
-              accessibilityLabel={sheet.types[key]}
-              {...voice}
-              onPress={() => {
-                setType(key);
-              }}
-              style={[
-                styles.row,
-                index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
-              ]}
-            >
-              <ChoiceMark kind="radio" on={chosen} />
-              <Text
-                {...voice}
-                style={[typeStyle('rowLabel', tokens), styles.type, { color: colors.ink }]}
-              >
-                {sheet.types[key]}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-      <View style={styles.comment}>
-        <View style={styles.commentHeader}>
-          {/* The field below says the same name to VoiceOver, so this line is not read twice. */}
-          <Text
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-            style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}
-          >
-            {sheet.comment}
-          </Text>
-          <Text
-            testID={`${testID}-count`}
-            style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}
-          >
-            {`${String(comment.length)}/${String(REPORT_COMMENT_LENGTH)}`}
-          </Text>
+      <ScrollView
+        testID={`${testID}-content`}
+        bounces={false}
+        keyboardDismissMode="on-drag"
+        keyboardShouldPersistTaps="handled"
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+      >
+        <View style={styles.header}>
+          <SheetTitle>{sheet.action}</SheetTitle>
         </View>
-        <TextInput
-          testID={`${testID}-comment`}
-          accessibilityLabel={sheet.comment}
-          {...voice}
-          value={comment}
-          onChangeText={(text) => {
-            setComment(text.slice(0, REPORT_COMMENT_LENGTH));
-          }}
-          maxLength={REPORT_COMMENT_LENGTH}
-          multiline
-          numberOfLines={COMMENT_LINES}
-          autoCapitalize="sentences"
-          selectionColor={colors.accent}
-          style={[
-            typeStyle('fieldText', tokens),
-            styles.field,
-            {
-              backgroundColor: colors.surface,
-              borderColor: colors.line,
-              borderRadius: radii.button,
-              color: colors.ink,
-            },
-          ]}
-        />
-      </View>
+        <View accessibilityRole="radiogroup">
+          {TYPES.map((key, index) => {
+            const chosen = key === type;
+            return (
+              <Pressable
+                key={key}
+                testID={`${testID}-type-${key}`}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: chosen }}
+                accessibilityLabel={sheet.types[key]}
+                {...voice}
+                onPress={() => {
+                  Keyboard.dismiss();
+                  setType(key);
+                }}
+                style={[
+                  styles.row,
+                  index > 0 && {
+                    borderTopWidth: StyleSheet.hairlineWidth,
+                    borderColor: colors.line,
+                  },
+                ]}
+              >
+                <ChoiceMark kind="radio" on={chosen} />
+                <Text
+                  {...voice}
+                  style={[typeStyle('rowLabel', tokens), styles.type, { color: colors.ink }]}
+                >
+                  {sheet.types[key]}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <View style={styles.comment}>
+          <View style={styles.commentHeader}>
+            {/* The field below says the same name to VoiceOver, so this line is not read twice. */}
+            <Text
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}
+            >
+              {sheet.comment}
+            </Text>
+            <Text
+              testID={`${testID}-count`}
+              style={[typeStyle('fieldLabel', tokens), { color: colors.muted }]}
+            >
+              {`${String(comment.length)}/${String(REPORT_COMMENT_LENGTH)}`}
+            </Text>
+          </View>
+          <TextInput
+            testID={`${testID}-comment`}
+            accessibilityLabel={sheet.comment}
+            {...voice}
+            value={comment}
+            onChangeText={(text) => {
+              setComment(text.slice(0, REPORT_COMMENT_LENGTH));
+            }}
+            maxLength={REPORT_COMMENT_LENGTH}
+            multiline
+            numberOfLines={mistakeReportField.lines}
+            scrollEnabled
+            returnKeyType="done"
+            submitBehavior="blurAndSubmit"
+            autoCapitalize="sentences"
+            selectionColor={colors.accent}
+            maxFontSizeMultiplier={mistakeReportField.maxFontScale}
+            style={[
+              { maxHeight: fieldMaxHeight(fontScale) },
+              typeStyle('fieldText', tokens),
+              styles.field,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.line,
+                borderRadius: radii.button,
+                color: colors.ink,
+              },
+            ]}
+          />
+        </View>
+      </ScrollView>
       <View style={styles.send}>
         <Button
           testID={`${testID}-send`}
@@ -146,6 +181,10 @@ export function MistakeReportSheet({
 }
 
 const styles = StyleSheet.create({
+  // Shrinks to leave «Надіслати» on screen above the keyboard.
+  scroll: { flexGrow: 0, flexShrink: 1 },
+  // The sheet's own gap, which its children had before they scrolled.
+  content: { gap: space[4] },
   header: { paddingBottom: space[3] },
   row: {
     minHeight: SHEET_ROW_HEIGHT,
@@ -159,10 +198,10 @@ const styles = StyleSheet.create({
   commentHeader: { flexDirection: 'row', justifyContent: 'space-between', gap: space[3] },
   field: {
     minHeight: minTouchTarget * 2,
-    borderWidth: 1,
+    borderWidth: mistakeReportField.border,
     paddingHorizontal: space[4],
-    paddingTop: space[3],
-    paddingBottom: space[3],
+    paddingTop: mistakeReportField.padding,
+    paddingBottom: mistakeReportField.padding,
     textAlignVertical: 'top',
   },
   send: { marginTop: space[4] },

@@ -108,6 +108,11 @@
     "dailyGoal": {
       "title": "Денна ціль"
     },
+    "rarity": {
+      "title": "Рідкість",
+      "subtitle": "Лише слова такої рідкості й поширеніші, щоб не траплялися надто рідкісні.",
+      "ceiling": "до {rarity}"
+    },
     "groups": {
       "look": "ВИГЛЯД",
       "sound": "ЗВУК І СПОВІЩЕННЯ",
@@ -663,14 +668,6 @@
       "title": "Поради",
       "subtitle": "Як говорити й писати по-українському"
     },
-    "rarity": {
-      "title": "Рідкість",
-      "subtitle": "Лише слова такої рідкості й рідкісніші. Виправлень це не стосується.",
-      "floor": "від {rarity}",
-      "ceilingTitle": "Найвища рідкість",
-      "ceilingSubtitle": "Лише слова такої рідкості й поширеніші, щоб не траплялися надто рідкісні.",
-      "ceiling": "до {rarity}"
-    },
     "kindWeight": {
       "title": "{kind} у Стрічці",
       "less": "Менше",
@@ -940,7 +937,7 @@
     "progress": "{n} з {total}",
     "announcement": "Слово {n} з {total}: {word}",
     "retake": "Пройти тест ще раз",
-    "result": "Ваш рівень: від {n}"
+    "result": "Ваша рідкість: до {n}"
   },
   "feedNotices": {
     "weeklyRecap": {
@@ -1153,7 +1150,12 @@
       "solvedMark": "✓ Розв’язано",
       "solved": "Розв’язано!",
       "eraseKey": "Стерти",
-      "cellLabel": "{cell}. {clue}. Рядок {row}, стовпець {column}"
+      "cellLabel": "{cell}. {clue}. Рядок {row}, стовпець {column}",
+      "traceHint": "Ведіть пальцем по сусідніх літерах, зокрема навскіс, щоб скласти слово з підказки. Кожна літера належить одному слову.",
+      "check": "Перевірити",
+      "tracedCellLabel": "{letter}. Рядок {row}, стовпець {column}",
+      "clueHidden": "{clue}. Ще не знайдено",
+      "clueFound": "{clue}. Знайдено: {word}"
     },
     "modes": {
       "guess-word": {

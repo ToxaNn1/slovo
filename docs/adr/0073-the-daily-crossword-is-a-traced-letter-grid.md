@@ -1,0 +1,21 @@
+# The Daily Crossword is a traced letter grid
+
+The Daily Crossword of ADR 0052 asks the reader to type letters into empty cells, which is slow and fiddly on a phone. Owner decision 03.11 (spec #1540): a 5×5 grid already full of letters, whose hidden Words the reader finds by dragging a finger across them. This ADR supersedes the crossword part of ADR 0052 (Generation and Play); the card, the XP, the Share Card and «not a Game» stay.
+
+**The puzzle.** Hidden Words tile all 25 cells: every letter belongs to exactly one hidden Word. Each Word's path is a self-avoiding walk over cells that touch by a side or a corner (8-adjacent), turns allowed, read from its first letter to its last. A hidden Word is a Word within the Rarity Ceiling whose Lemma is 3–8 lowercase letters (no space, hyphen or capital), each Lemma at most once a day; its primary Definition is the clue, and its stressed letters carry the Stress mark. Corrections no longer appear.
+
+**Generation on the device.** The Core's `generateCrosswordPuzzle` takes a local date, the Words within the Rarity Ceiling (`wordsUnderRarityCeiling`, ADR 0072) and a random port, and draws only from that port: it picks Words whose lengths add up to 25, finds one random path through every cell (a Warnsdorff walk, the row snake when it takes too long) and cuts it into the Words' paths, each read one way or the other. `openTracedCrossword` seeds the port with the date and the ids of those Words, so the puzzle is the same for every reader with the same Rarity Ceiling and Edition content on a local date, and the Language Pack's recorded days are not read. Hidden Entries stay in that pool: leaving them out of the seed but not the picks, or out of the picks after seeding, would either change the grid per reader or leave letters no hidden Word covers, and the grid is a puzzle, not a surface that shows the Word anew (Hidden Entry: the Feed, notifications, widgets and the Game).
+
+**Typed failure and the fallback rule.** When the eligible Words have no set of lengths that fills 25 cells, the generator returns `{ kind: 'no-tiling' }`. A different seed can't help, as only the lengths decide, so the screen falls back to the previous rule: the typed Daily Crossword of the Language Pack's day for the date (ADR 0052) when there is one; otherwise the card is not shown.
+
+**Play.** One reducer, `playPuzzle`, over a state that holds each hidden Word as a discriminated union (`hidden` | `found`) and the current trace. `extend` starts a trace on any cell outside a found Word and grows it only onto a cell that touches the last one and is not on the trace; extending onto the cell before the last steps back. `stepBack` drops the last cell (the VoiceOver mode selects cells one by one). `release` locks the hidden Word whose path the trace follows from first letter to last, and clears the trace either way. Every Word found solves the day; a solved puzzle takes no more actions.
+
+**Progress.** The ids of the Words found, their local date and the puzzle's fingerprint (its hidden Words' ids and paths) stay on the device in `crossword.traced`, with no Sync; a new local date, or another puzzle the same day (a new Rarity Ceiling or new Edition content), starts with none found, and the trace is never kept. The Word that solves the day appends the Daily Crossword's XP in the same write, once for the date (ADR 0066). It makes nothing Seen and changes no Knowledge Mark.
+
+**Feature Switch.** `tracedCrossword`, off while `dailyCrossword` is; off, the typed Daily Crossword of ADR 0052 stays. The screen has landed (`apps/mobile/src/game/traced-crossword.ts`), and the UA Edition ships it on; the typed Daily Crossword stays the fallback when the switch is off and when the Words cannot tile the grid.
+
+## Considered Options
+
+- **Recorded days in the Language Pack, as before**: rejected. The puzzle depends on the reader's Rarity Ceiling, five grids a day; generating on the device from a seed keeps every reader with the same Ceiling on the same grid without recording them.
+- **Letters must agree where Words cross**: rejected. Words never share a cell, so any Words whose lengths add up to 25 tile the grid.
+- **A trace that spells a Word along another path counts**: rejected. The Word's cells would not be the ones locked.

@@ -16,7 +16,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0012](0012-definitions-come-from-goroh.md) Ukrainian Definitions and Examples come from goroh «Тлумачення», citing СУМ-20 or СУМ-11.
 - [0013](0013-the-core-owns-the-user-state-schema.md) The Core owns the user-state keys, encoding, migrations and sync marks; adapters store text records by key.
 - [0014](0014-editions-supply-decor-as-vector-motifs.md) Decor is vector data in `decor/decor.json` (the Mascot, its Season and Holiday accessories, the Category pictograms); no ornament layer; the native splash is a plain colour.
-- [0015](0015-one-entries-module-decides-which-entries-are-eligible.md) One Entries module decides eligibility and owns the table of Entry kinds; any Entry stays reachable by id.
+- [0015](0015-one-entries-module-decides-which-entries-are-eligible.md) One Entries module decides eligibility, the Rarity Ceiling included (0072), and owns the table of Entry kinds; any Entry stays reachable by id.
 - [0016](0016-the-feed-is-told-which-card-is-on-screen.md) The shell tells the Feed which card is on screen; the Feed owns Seen, the place, the next card and the Feed Notices.
 - [0017](0017-one-entry-card-draws-every-kind-of-entry.md) One Entry card draws every kind; the Core builds the card, Round, Share Card and Entry row models; strings come from `EditionProvider`.
 - [0018](0018-one-core-composition-opens-the-feed-and-the-users-words.md) One Core composition opens the Feed and the user's words, linked through named subjects; it takes the whole Edition.
@@ -53,7 +53,7 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0049](0049-each-edition-publishes-its-legal-pages.md) An Edition's legal pages are Markdown in its folder, published on GitHub Pages at `/<edition>/` on the app's domain.
 - 0050: merged into 0033.
 - [0051](0051-synonym-row-and-tip-are-the-fourth-and-fifth-kinds-of-entry.md) A Synonym Row and a Tip are full kinds of Entry with Feed turns and Mix switches of their own; notifications stay Words.
-- [0052](0052-game-modes-typed-answers-a-best-result-per-mode-and-the-daily-crossword.md) Thirteen Game Modes with their own Lives, limits and answer forms, one typed-answer comparison, a Best result per mode, the Daily Crossword.
+- [0052](0052-game-modes-typed-answers-a-best-result-per-mode-and-the-daily-crossword.md) Thirteen Game Modes with their own Lives, limits and answer forms, one typed-answer comparison, a Best result per mode, the Daily Crossword (its Words within the Rarity Ceiling, 0072; its crossword Generation and Play superseded by 0073).
 - 0053: merged into 0027.
 - [0054](0054-learning-and-habit-search-the-rarity-test-feed-notices-the-daily-limit-and-mood.md) Search, the Rarity Test, the Feed Notices, the Word of the Day archive, the Active Days calendar, the polite pause, the first week, the widget hint and Mood; the Daily Limit is retired for the Daily Goal (0066) and Mood is paused in 1.0.
 - [0055](0055-motion-seasons-and-holidays-the-falling-stress-and-illustrations.md) Animations last 200–300 ms (the Рупор design's peaks may run longer) on the UI thread and become one short fade under Reduce Motion; Decor follows the Season or Holiday (paused in 1.0); the falling Stress; Illustrations.
@@ -73,3 +73,5 @@ Every ADR number in order, one line each, with the decision in force. Read the l
 - [0069](0069-the-owner-admin-is-web-pages-on-the-backend-for-one-account.md) The owner admin at `/admin` signs in one Account (`OWNER_EMAIL`), turns remote switches off only, sums the counters and holds the Mistake Report inbox.
 - [0070](0070-klyn-2-rupor-is-the-apps-design.md) «Клин 2.0: Рупор» is the app's design: palette and fonts are Edition tokens, shapes, type, motion and the Mascot's states are Core; four interface sounds behind the `sounds` switch; Game haptics stay.
 - [0071](0071-the-domain-root-is-the-ua-editions-landing.md) The domain root is the UA Edition's landing: the Astro site `apps/site`, built from the Edition's tokens and Mascot, that `pages.yml` publishes beside the legal pages; placeholders stay visible until decided.
+- [0072](0072-one-rarity-ceiling-for-every-surface.md) One Rarity Ceiling, «до 1»…«до 5», a setting of its own that every surface obeys, the Daily Crossword included; the Rarity Floor is removed (amends 0015, 0040, 0052, 0054, 0067).
+- [0073](0073-the-daily-crossword-is-a-traced-letter-grid.md) The Daily Crossword is a 5×5 grid full of letters whose hidden Words snake through 8-adjacent cells, generated on the device per (local date, Words within the Rarity Ceiling) behind `tracedCrossword`; supersedes the crossword part of 0052.

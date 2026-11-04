@@ -56,7 +56,7 @@ const words = [
   word('w_always', { correctionIds: ['c_always'] }),
   talkative,
   gone,
-  word('w_plain', { categoryId: 'nature' }),
+  word('w_plain', { categoryId: 'nature', rarity: 3 }),
 ];
 
 const idioms = [
@@ -324,8 +324,6 @@ describe('the Entries', () => {
             idioms: false,
             synonymRows: true,
             tips: true,
-            rarityFloor: 1 as const,
-            rarityCeiling: 5 as const,
           },
         },
       };
@@ -334,12 +332,12 @@ describe('the Entries', () => {
       expect(await entries.eligibleOfKind('idiom')).toEqual({ refusal: 'idioms-out-of-mix' });
     });
 
-    it('leave Idioms, Synonym Rows and Tips untouched by the Rarity Floor', async () => {
+    it('hold no Word above the Rarity Ceiling, and leave Corrections, Idioms, Synonym Rows and Tips untouched by it', async () => {
       const edition = { ...editionWith(true), isFeatureEnabled: () => true };
-      const { entries } = await openOver({ 'mix.rarityFloor': 5 }, edition);
+      const { entries } = await openOver({ 'settings.rarityCeiling': 2 }, edition);
 
       expect(await entries.eligible()).toEqual({
-        words: [],
+        words: ['w_always', 'w_talkative'],
         corrections: ['c_always', 'c_chatty'],
         idioms: ['i_lazy', 'i_place'],
         synonymRows: ['r_walk'],

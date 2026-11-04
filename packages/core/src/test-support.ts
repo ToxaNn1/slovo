@@ -48,6 +48,7 @@ const testEditionConfig = {
     vibration: true,
     dailyGoal: 20,
     notificationTimes: [],
+    rarityCeiling: 5,
     mix: {
       categories: ['test'],
       correctionCategories: 'all',
@@ -55,8 +56,6 @@ const testEditionConfig = {
       idioms: true,
       synonymRows: true,
       tips: true,
-      rarityFloor: 1,
-      rarityCeiling: 5,
     },
   },
   wordOfTheDayFont: 'Test-Regular.ttf',
@@ -97,8 +96,8 @@ const testEditionConfig = {
       { id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } },
     ],
     selfRating: [
-      { id: 'few', label: 'Few', rarityFloor: 1, offerRarityTest: false },
-      { id: 'many', label: 'Many', rarityFloor: 3, offerRarityTest: true },
+      { id: 'few', label: 'Few', offerRarityTest: false },
+      { id: 'many', label: 'Many', offerRarityTest: true },
     ],
   },
   badges: [],

@@ -45,17 +45,7 @@ export interface MixScreenModel extends MixCategoriesModel {
    * is in the Mix; left out while the Edition turns its mixKindWeights switch off.
    */
   readonly kindWeights: MixState['kindWeights'] | undefined;
-  /** The Rarity Floor choice, left out while the Edition turns its rarityFloor switch off. */
-  readonly rarity: { readonly floor: number; readonly floors: readonly number[] } | undefined;
-  /**
-   * The Rarity Ceiling choice, left out while the Edition turns its
-   * rarityCeiling switch off: the ceilings on offer are those at the floor or above it.
-   */
-  readonly ceiling: { readonly ceiling: number; readonly ceilings: readonly number[] } | undefined;
 }
-
-/** The floors on offer: every rarity of a Word, 1 to 5. */
-const RARITY_FLOORS = [1, 2, 3, 4, 5] as const;
 
 export function mixScreenModel({
   edition,
@@ -64,7 +54,6 @@ export function mixScreenModel({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   mix: MixState;
 }): MixScreenModel {
-  const ceilingOn = edition.isFeatureEnabled('rarityCeiling');
   const kinds = MIX_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind))).map(
     (entryKind) => ({ entryKind, on: mix.kinds[entryKind] }),
   );
@@ -76,21 +65,6 @@ export function mixScreenModel({
       ? categoriesModel(mix.correctionCategories)
       : undefined,
     kindWeights: edition.isFeatureEnabled('mixKindWeights') ? mix.kindWeights : undefined,
-    rarity: edition.isFeatureEnabled('rarityFloor')
-      ? {
-          floor: mix.rarityFloor,
-          // The Core skips a floor above the ceiling while the ceiling is on; off, the ceiling rises with it.
-          floors: ceilingOn
-            ? RARITY_FLOORS.filter((floor) => floor <= mix.rarityCeiling)
-            : RARITY_FLOORS,
-        }
-      : undefined,
-    ceiling: ceilingOn
-      ? {
-          ceiling: mix.rarityCeiling,
-          ceilings: RARITY_FLOORS.filter((ceiling) => ceiling >= mix.rarityFloor),
-        }
-      : undefined,
   };
 }
 

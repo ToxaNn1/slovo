@@ -29,10 +29,6 @@ export interface DefaultMix {
   readonly idioms: boolean;
   readonly synonymRows: boolean;
   readonly tips: boolean;
-  /** The Rarity Floor a new user starts with. */
-  readonly rarityFloor: Rarity;
-  /** The Rarity Ceiling a new user starts with, never below the Rarity Floor. */
-  readonly rarityCeiling: Rarity;
 }
 
 /** The settings a new user starts with, as declared by the Edition. */
@@ -45,6 +41,8 @@ export interface UserSettingDefaults {
   readonly dailyGoal: DailyGoal;
   /** Local times of day, `HH:MM` on a 24-hour clock. */
   readonly notificationTimes: readonly string[];
+  /** The Rarity Ceiling a new user starts with, «до 1» to «до 5» (ADR 0072). */
+  readonly rarityCeiling: Rarity;
   readonly mix: DefaultMix;
 }
 
@@ -124,9 +122,10 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   dailyGoal: ['xpLog'],
   progressShareCards: ['shareCards', 'xpLog'],
   dailyCrosswordShare: ['shareCards', 'dailyCrossword'],
+  tracedCrossword: ['dailyCrossword'],
   quickQuestion: ['game'],
-  // The Rarity Test sets the Rarity Floor.
-  rarityTest: ['rarityFloor'],
+  // The Rarity Test sets the Rarity Ceiling (ADR 0072).
+  rarityTest: ['rarityCeiling'],
 };
 
 /**
@@ -192,8 +191,6 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
         idioms: mix.idioms,
         synonymRows: mix.synonymRows,
         tips: mix.tips,
-        rarityFloor: mix.rarityFloor,
-        rarityCeiling: mix.rarityCeiling,
       },
     },
     notificationSound,

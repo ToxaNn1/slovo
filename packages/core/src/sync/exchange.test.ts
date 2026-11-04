@@ -25,7 +25,7 @@ const content = createMemoryContentPort({
 });
 
 const edition = testEdition({
-  isFeatureEnabled: (feature) => feature === 'knowledge',
+  isFeatureEnabled: (feature) => feature === 'knowledge' || feature === 'rarityCeiling',
   userSettingDefaults: { mix: { categoryIds: ['test', 'sea'], corrections: false } },
 });
 
@@ -163,22 +163,22 @@ describe('two devices of one Account', () => {
     expect(server.sync.records.get('settings.hideStreak')?.value).toBe(false);
   });
 
-  it('let the newer Rarity Floor win, on either device', async () => {
+  it('let the newer Rarity Ceiling win, on either device', async () => {
     const { device, server, time } = account();
     const phone = await device();
     const tablet = await device();
-    await (await phone.open()).mix.setRarityFloor(4);
+    await (await phone.open()).rarityCeiling.set(4);
     time.advance(HOUR);
-    await (await tablet.open()).mix.setRarityFloor(2);
+    await (await tablet.open()).rarityCeiling.set(2);
     await tablet.sync();
     time.advance(HOUR);
 
     await phone.sync();
     await tablet.sync();
 
-    expect((await phone.open()).mix.state.rarityFloor).toBe(2);
-    expect((await tablet.open()).mix.state.rarityFloor).toBe(2);
-    expect(server.sync.records.get('mix.rarityFloor')?.value).toBe(2);
+    expect((await phone.open()).rarityCeiling.state).toBe(2);
+    expect((await tablet.open()).rarityCeiling.state).toBe(2);
+    expect(server.sync.records.get('settings.rarityCeiling')?.value).toBe(2);
   });
 
   it('let the newer choice of Idioms in the Mix win, on either device', async () => {
@@ -504,7 +504,7 @@ describe('two devices of one Account', () => {
 
     expect(server.sync.records.has('notifications.sound')).toBe(false);
     expect((await tablet.settings.read()).vibration).toBe(true);
-    expect(tablet.records.get('schema.version')).toBe('6');
+    expect(tablet.records.get('schema.version')).toBe('7');
     expect(await tablet.userState.pendingChanges()).toEqual(new Map());
     expect(await tablet.userState.cursor()).not.toBe(999);
   });

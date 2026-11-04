@@ -22,7 +22,7 @@ import { useOnAccent } from './on-accent';
 import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { RevealDetail, useFlyingLetters } from './reveal';
+import { RevealDetail, useFlyingText } from './reveal';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 import { CategoryChip } from './CategoryChip';
 
@@ -123,7 +123,7 @@ export function WordHeadline({
   const { voice, Pronunciation } = edition;
   const strings = edition.strings.wordCard;
   const turnActions = usePageTurnActions();
-  const flying = useFlyingLetters();
+  const flying = useFlyingText();
   const onScreen = useIsPageOnScreen();
   const reduceMotion = useReduceMotionKnown();
   // Until the system answers on Reduce Motion, and while the page is off screen,

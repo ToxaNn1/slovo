@@ -1,4 +1,11 @@
-import { DailyGoalSchema, FontSizeSchema, ThemeSchema, type DailyGoal } from '@slovo/contracts';
+import {
+  DailyGoalSchema,
+  FontSizeSchema,
+  RARITIES,
+  ThemeSchema,
+  fill,
+  type DailyGoal,
+} from '@slovo/contracts';
 import {
   ChoiceRow,
   FontSizePreview,
@@ -18,6 +25,7 @@ import { useAccountInEffect } from '@/account/account';
 import { editionStrings } from '@/edition/edition';
 import { useHiddenSummary } from '@/mix/hidden';
 import { useMixSummary } from '@/mix/mix';
+import { useRarityCeiling } from '@/mix/rarity-ceiling';
 import { useNotificationsSummary } from '@/notifications/notifications';
 import { useShown } from '@/shown-in-effect';
 import { openLegalPage } from '@/settings/legal-page';
@@ -50,9 +58,17 @@ const dailyGoalSegments = dailyGoals.map((dailyGoal) => ({
   testID: `settings-daily-goal-${String(dailyGoal)}`,
 }));
 
+// «до 1» to «до 5», each Rarity Ceiling by its rarity.
+const rarityCeilingSegments = RARITIES.map((rarity) => ({
+  value: String(rarity),
+  label: fill(strings.rarity.ceiling, { rarity: String(rarity) }),
+  testID: `settings-rarity-${String(rarity)}`,
+}));
+
 /**
  * Settings: the Account when the Account is on in effect, the Theme, the font
- * size, the Daily Goal while it is on in effect, «Пройти тест ще раз» while
+ * size, the Daily Goal while it is on in effect, «Рідкість», the Rarity
+ * Ceiling, while its Feature Switch is (ADR 0072), «Пройти тест ще раз» while
  * the Rarity Test is, «Менше руху» under the Theme while its Feature Switch is,
  * «Пройти опитування ще раз» while the later questions are, «Сезонний декор»
  * and «Звуки» while their Feature Switches are,
@@ -65,6 +81,7 @@ export default function SettingsScreen() {
   const openScreen = useOpenScreen();
   const { xpLog } = useComposition();
   const { dailyGoal } = useSubscribed(xpLog, ({ state }) => state);
+  const { ceiling, setCeiling } = useRarityCeiling();
   const mixSummary = useMixSummary();
   const hiddenSummary = useHiddenSummary();
   const notificationsSummary = useNotificationsSummary();
@@ -201,6 +218,19 @@ export default function SettingsScreen() {
                   xpLog.setDailyGoal(goal).catch((error: unknown) => {
                     logError('The Daily Goal could not be set', error);
                   });
+                }}
+              />
+            )}
+            {shown.rarityCeiling && (
+              <ChoiceRow
+                testID="settings-rarity"
+                icon="bar"
+                label={strings.rarity.title}
+                subtitle={strings.rarity.subtitle}
+                segments={rarityCeilingSegments}
+                selected={String(ceiling)}
+                onSelect={(value) => {
+                  setCeiling(Number(value));
                 }}
               />
             )}

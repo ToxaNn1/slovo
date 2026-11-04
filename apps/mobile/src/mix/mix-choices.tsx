@@ -2,7 +2,7 @@ import { fill, type MixKindWeight, type QuickQuestionEvery } from '@slovo/contra
 import { featureOfKind, type MixKind } from '@slovo/core';
 import {
   Chip,
-  RarityFloorChoice,
+  ChipChoice,
   SegmentedControl,
   SettingsGroup,
   SwitchRow,
@@ -24,10 +24,8 @@ const strings = editionStrings.mix;
 /**
  * The choices of the Mix, for Settings › Мій Мікс and the onboarding's Mix
  * step: a chip for «Усі» and every Category of the Edition, the line saying
- * why the last Category's chip is disabled, the Rarity Floor choice while the
- * rarityFloor switch is on, the Rarity Ceiling choice while the rarityCeiling
- * switch is on, and the Corrections and Idioms switches, each when
- * the Edition turns it on, with the chips of the Categories of Corrections
+ * why the last Category's chip is disabled, the Corrections and Idioms
+ * switches, each when the Edition turns it on, with the chips of the Categories of Corrections
  * under the Corrections switch while it is on (ADR 0033), and under each kind
  * in the Mix its Mix kind weight while the mixKindWeights switch is on, and
  * how often the Feed asks a Quick Question while the game and quickQuestion
@@ -35,15 +33,8 @@ const strings = editionStrings.mix;
  */
 export function MixChoices() {
   const state = useMixState();
-  const {
-    toggleCategory,
-    turnAllOn,
-    setKind,
-    setKindWeight,
-    setRarityFloor,
-    setRarityCeiling,
-    setQuickQuestionEvery,
-  } = useMixChanges();
+  const { toggleCategory, turnAllOn, setKind, setKindWeight, setQuickQuestionEvery } =
+    useMixChanges();
   const edition = useEditionInEffect();
   const quickQuestion = edition.isFeatureEnabled('quickQuestion');
 
@@ -68,37 +59,6 @@ export function MixChoices() {
           />
         }
       />
-      {model.rarity !== undefined && (
-        <View style={styles.rarity}>
-          <RarityFloorChoice
-            shown
-            title={strings.rarity.title}
-            subtitle={strings.rarity.subtitle}
-            options={model.rarity.floors.map((floor) => ({
-              floor,
-              label: fill(strings.rarity.floor, { rarity: String(floor) }),
-            }))}
-            floor={model.rarity.floor}
-            onChange={setRarityFloor}
-          />
-        </View>
-      )}
-      {model.ceiling !== undefined && (
-        <View style={styles.rarity}>
-          <RarityFloorChoice
-            shown
-            testID="mix-rarity-ceiling"
-            title={strings.rarity.ceilingTitle}
-            subtitle={strings.rarity.ceilingSubtitle}
-            options={model.ceiling.ceilings.map((ceiling) => ({
-              floor: ceiling,
-              label: fill(strings.rarity.ceiling, { rarity: String(ceiling) }),
-            }))}
-            floor={model.ceiling.ceiling}
-            onChange={setRarityCeiling}
-          />
-        </View>
-      )}
       {model.kinds.length > 0 && (
         <View style={styles.switches}>
           <SettingsGroup>
@@ -149,17 +109,16 @@ export function MixChoices() {
         </View>
       )}
       {quickQuestion && (
-        <View style={styles.rarity}>
-          <RarityFloorChoice
-            shown
+        <View style={styles.quickQuestion}>
+          <ChipChoice
             testID="mix-quick-question"
             title={strings.quickQuestion.title}
             subtitle={strings.quickQuestion.subtitle}
             options={QUICK_QUESTION_EVERY.map(({ every, name }) => ({
-              floor: every,
+              value: every,
               label: strings.quickQuestion[name],
             }))}
-            floor={state.quickQuestionEvery}
+            value={state.quickQuestionEvery}
             onChange={setQuickQuestionEvery}
           />
         </View>
@@ -272,7 +231,7 @@ function CategoryChips({
 const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   hint: { marginTop: space[3] },
-  rarity: { marginTop: space[6] },
+  quickQuestion: { marginTop: space[6] },
   switches: { marginTop: space[6] },
   underSwitch: { paddingHorizontal: space[4], paddingVertical: space[3] },
 });

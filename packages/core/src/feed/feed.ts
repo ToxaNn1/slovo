@@ -22,7 +22,7 @@ import { createInTurn, createSubscribers } from '../in-turn';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { Subject } from '../subject';
 import type { OpenedEntry } from './day-change';
-import { dateKeyOf, todayKey, type LocalDate } from '../local-date';
+import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { MixKindWeights } from '../entries/mix';
 import type { UserState } from '../user-state/user-state';
@@ -103,7 +103,15 @@ export interface Feed {
    * is it one past the last card.
    */
   readonly position: number;
-  /** Calls `listener` after each change of the cards. Returns the call that stops it. */
+  /**
+   * The local day the composition turned to last, the day the Feed's header
+   * says: it follows the day change, never the clock alone, so it turns at
+   * the report of the next local day, with the app open over midnight or on
+   * its return (ADR 0022). Before the composition first turns to a day, today
+   * by the clock. The subscribers are told when it turns.
+   */
+  readonly today: LocalDate;
+  /** Calls `listener` after each change of the cards or of `today`. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
   /**
    * Tells the Feed which card is on screen now, or that none is (the screen
@@ -314,8 +322,8 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * that is no other kind's turn shows one, Seen in this Cycle or not, until
  * the reader answers it (ADR 0043). While Entries of another kind are due,
  * the kind's turn shows one before a new Entry of the kind, in the same way. A
- * due Entry the Cycle doesn't cover (Hidden, out of the Mix, under the
- * Rarity Floor) waits until it does. Its card is Seen and joins History as
+ * due Entry the Cycle doesn't cover (Hidden, out of the Mix, above the
+ * Rarity Ceiling) waits until it does. Its card is Seen and joins History as
  * any card does. Every card whose Entry is due as the Feed adds it, in a
  * Review slot or not, is a Review, labelled «Повторення» (`review`).
  *
@@ -402,6 +410,8 @@ export async function openFeed({
   let dayToOpen: string | undefined;
   /** The local day the composition last turned to, whose Feed Notices the Feed shows. */
   let noticeDay: LocalDate | undefined;
+  /** The local day the composition turned to last (`Feed.today`). */
+  let turnedTo = todayDate(clock);
   /** The local day `YYYY-MM-DD` of the last `show` report. */
   let reportedOn: string | undefined;
 
@@ -824,6 +834,10 @@ export async function openFeed({
   }
 
   async function openDay(day: LocalDate): Promise<void> {
+    if (dateKeyOf(day) !== dateKeyOf(turnedTo)) {
+      turnedTo = day;
+      subscribers.tell();
+    }
     // In turn with the cards, so a card added after it opens the day.
     await inTurn(() => {
       const key = dateKeyOf(day);
@@ -851,6 +865,9 @@ export async function openFeed({
     startPosition,
     get position() {
       return session.position;
+    },
+    get today() {
+      return turnedTo;
     },
     subscribe: subscribers.subscribe,
     show,

@@ -287,5 +287,6 @@ function EntryCollectionSheet({
 /** What the Entry's row leads with, once it is known; read when `enabled`. */
 function useEntryTitle(entryId: string, enabled: boolean): string {
   const read = useCallback((composition: Composition) => composition.entryRow(entryId), [entryId]);
-  return useCompositionRead(read, 'Could not read the Entry', enabled)?.title ?? '';
+  const row = useCompositionRead(read, 'Could not read the Entry', enabled);
+  return row.status === 'ready' ? (row.value?.title ?? '') : '';
 }

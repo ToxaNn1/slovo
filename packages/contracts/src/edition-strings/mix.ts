@@ -32,18 +32,6 @@ export const MixStringsSchema = z.strictObject({
   /** The Tips switch's name and what it shows; also the Hidden screen's section of hidden Tips. */
   tips: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
   /**
-   * The Rarity Floor choice: its name, the line under it, and a floor's chip;
-   * and the Rarity Ceiling choice under it, the same three. The chips take `{rarity}`.
-   */
-  rarity: z.strictObject({
-    title: TextSchema,
-    subtitle: TextSchema,
-    floor: templateOf('rarity'),
-    ceilingTitle: TextSchema,
-    ceilingSubtitle: TextSchema,
-    ceiling: templateOf('rarity'),
-  }),
-  /**
    * The Mix kind weight choice under a kind's switch: its VoiceOver label,
    * which takes `{kind}`, the kind's name, and the names of the three weights.
    */

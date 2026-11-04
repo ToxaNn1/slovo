@@ -14,6 +14,7 @@ import {
   type CrosswordReadPort,
   type DailyCrossword,
 } from './game/daily-crossword';
+import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
 import { openCycle } from './feed/cycle';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
@@ -61,6 +62,7 @@ import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
+import { openRarityCeiling, type RarityCeiling } from './entries/rarity-ceiling';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
 import { createSearch, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
@@ -161,14 +163,16 @@ export interface Composition extends Hiding {
   readonly questionnaire: Questionnaire;
   /**
    * Search, over every live Entry that is not Hidden, the Mix and the Rarity
-   * Floor aside; nothing while the Edition turns it off (ADR 0054). Open what
-   * it finds with `openedFromSearch`.
+   * Ceiling aside; nothing while the Edition turns it off (ADR 0054). Open
+   * what it finds with `openedFromSearch`.
    */
   readonly search: Search;
   /** The last 10 queries a Search result was opened from, kept on this device. */
   readonly recentQueries: RecentQueries;
-  /** The Rarity Test, which draws the Words it asks about and sets the Rarity Floor by the answers. */
+  /** The Rarity Test, which draws the Words it asks about and sets the Rarity Ceiling by the answers. */
   readonly rarityTest: RarityTest;
+  /** The Rarity Ceiling, the one «Рідкість» setting every surface obeys (ADR 0072). */
+  readonly rarityCeiling: RarityCeiling;
   /**
    * «Слово під настрій» (ADR 0054): the Edition's moods and a mood's roulette,
    * which lands on a Word the shell opens with `openedFromMood`.
@@ -181,6 +185,13 @@ export interface Composition extends Hiding {
    * `crossword`. Open it again once the next local day starts.
    */
   openDailyCrossword(): Promise<DailyCrossword | undefined>;
+  /**
+   * Opens today's traced Daily Crossword (ADR 0073) with the Words this device
+   * found in it: `off` while the Edition has it off, `no-tiling` when the Words
+   * within the Rarity Ceiling cannot fill the grid, for the screen's fallback
+   * to the printed Daily Crossword. Open it again once the next local day starts.
+   */
+  openTracedCrossword(): Promise<TracedCrosswordOpening>;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry or the Synonym Row a Word card links back to; nothing for an id the Language Pack doesn't have. The card of
@@ -490,7 +501,16 @@ export async function openComposition({
     entries.correctionCategories(),
   ]);
   const mix = await openMix({ edition, categories: { word, correction }, userState, eligibility });
-  const later = openQuestionnaire({ edition, userState, clock, mix, xpLog, analytics });
+  const rarityCeiling = await openRarityCeiling({ edition, userState, eligibility });
+  const later = openQuestionnaire({
+    edition,
+    userState,
+    clock,
+    mix,
+    rarityCeiling,
+    xpLog,
+    analytics,
+  });
   const feed = await openFeed({
     entries,
     userState,
@@ -624,7 +644,7 @@ export async function openComposition({
   });
   await day.resume();
   // Once the day is turned to, so the welcome shows today's Word of the Day.
-  const rarityTest = createRarityTest({ edition, entries, mix, random });
+  const rarityTest = createRarityTest({ edition, entries, rarityCeiling, random });
   const onboarding = await openOnboarding({
     edition,
     userState,
@@ -632,6 +652,7 @@ export async function openComposition({
     entries,
     wordOfTheDay,
     mix,
+    rarityCeiling,
     xpLog,
     analytics,
     backend,
@@ -693,6 +714,7 @@ export async function openComposition({
     search: createSearch({ content, edition, userState }),
     recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,
+    rarityCeiling,
     moodDraw: createMoodDraw({ edition, entries, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
@@ -705,6 +727,8 @@ export async function openComposition({
         analytics,
       });
     },
+    openTracedCrossword: () =>
+      openTracedCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,

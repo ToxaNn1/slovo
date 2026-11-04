@@ -44,6 +44,12 @@ export { OrderedChips } from './game/OrderedChips';
 export { PairsGrid } from './game/PairsGrid';
 export { GameTimer } from './game/GameTimer';
 export { CrosswordGrid, type CrosswordPlace, type CrosswordWord } from './game/CrosswordGrid';
+export {
+  TracedCrosswordGrid,
+  type TracedLetter,
+  type TracedMiss,
+  type TracedWord,
+} from './game/TracedCrosswordGrid';
 export { HapticsProvider } from './providers/HapticsProvider';
 export { InterfaceSoundsProvider } from './providers/InterfaceSoundsProvider';
 export { HideButton } from './mix/HideButton';
@@ -54,7 +60,7 @@ export { MoodButton } from './mood/MoodButton';
 export { MoodSheet, type MoodChip } from './mood/MoodSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
-export { RarityFloorChoice } from './mix/RarityFloorChoice';
+export { ChipChoice } from './mix/ChipChoice';
 export {
   HEADLINE_MAX_FONT_SCALE,
   LaterButton,

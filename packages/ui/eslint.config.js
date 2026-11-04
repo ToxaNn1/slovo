@@ -49,6 +49,7 @@ export default [
       'src/game/GameRound.tsx',
       'src/game/OrderedChips.tsx',
       'src/game/PairsGrid.tsx',
+      'src/game/TracedCrosswordGrid.tsx',
       'src/game/VowelButtons.tsx',
       'src/onboarding/OnboardingStep.tsx',
       'src/onboarding/SplashOverlay.tsx',

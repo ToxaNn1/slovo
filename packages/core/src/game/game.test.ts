@@ -189,7 +189,7 @@ async function run({
   planned = true,
   schedule,
   analytics,
-  on = ['rarityFloor', 'knowledge'],
+  on = ['rarityCeiling', 'knowledge'],
   off = [],
 }: {
   records?: Map<string, string>;
@@ -286,7 +286,7 @@ async function playGame(app: Composition, wrongIn: readonly number[] = []): Prom
 // Spec #886 story 44, ADR 0060: a Game answer is not the reader's judgement of a word.
 describe('the Game and the Community Counters', () => {
   it('counts nothing for the Unknown mark a wrong answer sets', async () => {
-    const app = await run({ on: ['rarityFloor', 'knowledge', 'communityCounters'] });
+    const app = await run({ on: ['rarityCeiling', 'knowledge', 'communityCounters'] });
 
     const [first] = await playGame(app, [1]);
     if (first === undefined) throw new Error('No Round');
@@ -314,7 +314,7 @@ describe('the Game and Analytics', () => {
     const { port, events } = fakePort();
     const time = fakeClock('2026-10-11T09:00:00+03:00');
     const app = await run({
-      on: ['rarityFloor', 'knowledge', 'analytics'],
+      on: ['rarityCeiling', 'knowledge', 'analytics'],
       analytics: port,
       time: time.clock,
     });
@@ -340,7 +340,7 @@ describe('the Game and Analytics', () => {
     }
     const app = await run({
       records,
-      on: ['rarityFloor', 'knowledge', 'analytics'],
+      on: ['rarityCeiling', 'knowledge', 'analytics'],
       analytics: port,
     });
 
@@ -1438,30 +1438,30 @@ describe('the Words a Game asks about', () => {
     }
   });
 
-  it('never asks about or offers a Word below the Rarity Floor', async () => {
-    // 16 Words of rarity 4 and 5 over the pack's Words, all of rarity 3.
-    const rare = numbered('w_rare', 16).map((id) =>
-      word(id, 'crafts', { rarity: id.endsWith('1') ? 5 : 4 }),
+  it('never asks about or offers a Word above the Rarity Ceiling', async () => {
+    // 16 Words of rarity 1 and 2 over the pack's Words, all of rarity 3.
+    const common = numbered('w_common', 16).map((id) =>
+      word(id, 'crafts', { rarity: id.endsWith('1') ? 1 : 2 }),
     );
-    const pack = createMemoryContentPort({ categories, words: [...words, ...rare] });
-    const rareReading = (text: string) => rare.find((w) => renderStress(w) === text);
+    const pack = createMemoryContentPort({ categories, words: [...words, ...common] });
+    const commonReading = (text: string) => common.find((w) => renderStress(w) === text);
     for (const seed of [1, 2, 3]) {
       const app = await run({ seed, pack });
-      await app.mix.setRarityFloor(4);
+      await app.rarityCeiling.set(2);
 
       await app.game.start('guess-word');
       while (current(app).status === 'playing') {
         const { round } = current(app);
         if (round.form === 'typed') {
-          const asked = rare.find(({ primaryDefinition }) => primaryDefinition === round.prompt);
+          const asked = common.find(({ primaryDefinition }) => primaryDefinition === round.prompt);
           expect(asked).toBeDefined();
           void app.game.answer({ form: 'typed', text: asked?.lemma ?? '' });
           await app.game.next();
           continue;
         }
-        expect(optionsOf(round).every(({ text }) => rareReading(text) !== undefined)).toBe(true);
+        expect(optionsOf(round).every(({ text }) => commonReading(text) !== undefined)).toBe(true);
         const right = optionsOf(round).findIndex(
-          ({ text }) => rareReading(text)?.primaryDefinition === round.prompt,
+          ({ text }) => commonReading(text)?.primaryDefinition === round.prompt,
         );
         expect(right).not.toBe(-1);
         void app.game.answer({ form: 'pick', option: right });
@@ -1497,7 +1497,7 @@ describe('the Words a Game asks about', () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
     // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
-    const app = await run({ port, on: ['rarityFloor'] });
+    const app = await run({ port, on: ['rarityCeiling'] });
     writes.length = 0;
 
     await playGame(app, [3, 4]);
@@ -1562,7 +1562,7 @@ describe('the Rounds about Entries marked «Не знаю» or due', () => {
 
   it('plans the Rounds as before without a mark, with Learned Words only, and with the knowledge Feature Switch off', async () => {
     const before = asked(
-      await playGame(await run({ records: await marked(), on: ['rarityFloor'] })),
+      await playGame(await run({ records: await marked(), on: ['rarityCeiling'] })),
     );
 
     expect(asked(await playGame(await run({ records: await marked() })))).toEqual(before);
@@ -1576,9 +1576,9 @@ describe('the Rounds about Entries marked «Не знаю» or due', () => {
     const unknownOff = await marked(async (app) => {
       for (const id of unknown) await app.knowledge.tap(id, 'unknown');
     });
-    expect(asked(await playGame(await run({ records: unknownOff, on: ['rarityFloor'] })))).toEqual(
-      before,
-    );
+    expect(
+      asked(await playGame(await run({ records: unknownOff, on: ['rarityCeiling'] }))),
+    ).toEqual(before);
   });
 });
 
@@ -1670,7 +1670,7 @@ describe('the Knowledge Marks a Game leaves', () => {
 
   it('marks nothing with the knowledge Feature Switch off, and keeps the records there are', async () => {
     const records = dueOnThreeDays();
-    const app = await run({ records, on: ['rarityFloor'] });
+    const app = await run({ records, on: ['rarityCeiling'] });
 
     await playGame(app, [1, 2, 3, 4, 5]);
     await playWrongOn(app, 'w_cnoun01');
@@ -1710,7 +1710,7 @@ describe('the Best result per mode', () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
     // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
-    const app = await run({ port, on: ['rarityFloor'] });
+    const app = await run({ port, on: ['rarityCeiling'] });
     writes.length = 0;
 
     // Lost in Round 8: 7 Rounds passed.
@@ -1732,7 +1732,7 @@ describe('the Best result per mode', () => {
   it("beats only the Best result of the finished Game's mode", async () => {
     const records = new Map(guessWordBest.change(7) as Map<string, string>);
     const { port, writes } = recordingPort(records);
-    const app = await run({ port, on: ['rarityFloor'], gameModes: [lemmaMode] });
+    const app = await run({ port, on: ['rarityCeiling'], gameModes: [lemmaMode] });
     writes.length = 0;
 
     await app.game.start('test-lemma');
@@ -1785,7 +1785,7 @@ describe('the Best result per mode', () => {
     const records = new Map<string, string>();
     const { port, writes } = recordingPort(records);
     // The knowledge Feature Switch off, so no mistake writes a «Не знаю» mark.
-    const app = await run({ port, on: ['rarityFloor'] });
+    const app = await run({ port, on: ['rarityCeiling'] });
     writes.length = 0;
     await app.game.start('guess-word');
     for (let round = 1; round <= 10; round += 1) await play(app, true);
@@ -2805,7 +2805,7 @@ describe('«Вгадай слово» harder as it goes (L10)', () => {
 
 // Spec #832, "Widget hint": the result of the first finished Game with a Life left offers it, once ever.
 describe('the widget hint', () => {
-  const hintOn: readonly FeatureSwitch[] = ['rarityFloor', 'widget', 'widgetHint'];
+  const hintOn: readonly FeatureSwitch[] = ['rarityCeiling', 'widget', 'widgetHint'];
 
   it('is offered on the result of the first finished Game with a Life left', async () => {
     const app = await run({ on: hintOn });

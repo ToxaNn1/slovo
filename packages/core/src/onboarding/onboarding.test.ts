@@ -99,16 +99,17 @@ describe('the onboarding', () => {
     await app.onboarding.answer('studying');
     expect(kinds(app)).toBe('why');
     await app.onboarding.answer('write-correctly');
-    expect(app.mix.state.rarityCeiling).toBe(4);
+    expect(app.rarityCeiling.state).toBe(4);
     expect(app.mix.state.kindWeights.correction).toBe('more');
   });
 
   it('keeps the defaults when the questions are skipped', async () => {
     const { app } = await run();
     const before = app.mix.state;
+    const ceiling = app.rarityCeiling.state;
     await app.onboarding.finish();
     expect(app.onboarding.state.step).toBeUndefined();
-    expect(app.mix.state.rarityCeiling).toBe(before.rarityCeiling);
+    expect(app.rarityCeiling.state).toBe(ceiling);
     expect(app.mix.state.kindWeights).toEqual(before.kindWeights);
   });
 

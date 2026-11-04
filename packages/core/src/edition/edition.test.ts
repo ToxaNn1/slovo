@@ -34,7 +34,6 @@ const validConfig = {
     statistics: true,
     knowledge: true,
     selfCheck: true,
-    rarityFloor: true,
     rarityCeiling: true,
     gameReview: true,
     gameGuessWord: true,
@@ -89,6 +88,7 @@ const validConfig = {
     badges: true,
     progressShareCards: true,
     dailyCrosswordShare: true,
+    tracedCrossword: true,
     eveningNotification: true,
     notificationFarewell: true,
     notificationExplainer: true,
@@ -112,9 +112,8 @@ const validConfig = {
       idioms: true,
       synonymRows: true,
       tips: true,
-      rarityFloor: 1,
-      rarityCeiling: 5,
     },
+    rarityCeiling: 5,
   },
   wordOfTheDayFont: 'Script-Regular.ttf',
   widgetPalette: {
@@ -156,7 +155,7 @@ const validConfig = {
       { id: 'working', label: 'Working', rarityCeiling: 5 },
     ],
     why: [{ id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } }],
-    selfRating: [{ id: 'few', label: 'Few', rarityFloor: 1, offerRarityTest: false }],
+    selfRating: [{ id: 'few', label: 'Few', offerRarityTest: false }],
   },
   badges: [
     { id: 'week', name: 'Week', symbol: '1', condition: { kind: 'streak', days: 7 } },
@@ -300,10 +299,11 @@ describe('loadEdition', () => {
     'statistics',
     'knowledge',
     'selfCheck',
-    'rarityFloor',
+    'rarityCeiling',
     'gameReview',
     'progressShareCards',
     'dailyCrosswordShare',
+    'tracedCrossword',
     'fastReveal',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
@@ -334,6 +334,7 @@ describe('loadEdition', () => {
       vibration: true,
       dailyGoal: 20,
       notificationTimes: ['09:00'],
+      rarityCeiling: 5,
       mix: {
         categoryIds: 'all',
         correctionCategoryIds: 'all',
@@ -341,8 +342,6 @@ describe('loadEdition', () => {
         idioms: true,
         synonymRows: true,
         tips: true,
-        rarityFloor: 1,
-        rarityCeiling: 5,
       },
     });
   });
@@ -359,8 +358,6 @@ describe('loadEdition', () => {
           idioms: true,
           synonymRows: true,
           tips: true,
-          rarityFloor: 1,
-          rarityCeiling: 5,
         },
       },
     });
@@ -372,8 +369,6 @@ describe('loadEdition', () => {
       idioms: true,
       synonymRows: true,
       tips: true,
-      rarityFloor: 1,
-      rarityCeiling: 5,
     });
   });
 
@@ -472,15 +467,6 @@ describe('loadEdition', () => {
         },
       }),
     ).toThrow(InvalidEditionConfigError);
-    expect(() =>
-      loadEdition({
-        ...validConfig,
-        userSettingDefaults: {
-          ...validConfig.userSettingDefaults,
-          mix: { ...validConfig.userSettingDefaults.mix, rarityFloor: 5, rarityCeiling: 5 },
-        },
-      }),
-    ).toThrow('questionnaire.who.0.rarityCeiling: A Rarity Ceiling below the default Rarity Floor');
   });
 
   it('refuses an Edition without the questionnaire Feature Switch', () => {
@@ -791,9 +777,9 @@ describe('loadEdition', () => {
       'featureSwitches.selfCheck',
     ],
     [
-      'a missing Rarity Floor Feature Switch',
-      withoutSwitch('rarityFloor'),
-      'featureSwitches.rarityFloor',
+      'a missing Rarity Ceiling Feature Switch',
+      withoutSwitch('rarityCeiling'),
+      'featureSwitches.rarityCeiling',
     ],
     [
       'a missing Game Review Feature Switch',
@@ -944,8 +930,6 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
-            rarityFloor: 1,
-            rarityCeiling: 5,
           },
         },
       },
@@ -963,8 +947,6 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
-            rarityFloor: 1,
-            rarityCeiling: 5,
           },
         },
       },
@@ -982,8 +964,6 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
-            rarityFloor: 1,
-            rarityCeiling: 5,
           },
         },
       },
@@ -1001,8 +981,6 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
-            rarityFloor: 1,
-            rarityCeiling: 5,
           },
         },
       },
@@ -1019,32 +997,30 @@ describe('loadEdition', () => {
             idioms: true,
             synonymRows: true,
             tips: true,
-            rarityFloor: 1,
-            rarityCeiling: 5,
           },
         },
       },
       'userSettingDefaults.mix.correctionCategories',
     ],
     [
-      'a default Rarity Floor above the default Rarity Ceiling',
-      {
-        userSettingDefaults: {
-          ...userSettingDefaults,
-          mix: { ...userSettingDefaults.mix, rarityFloor: 4, rarityCeiling: 3 },
-        },
-      },
-      'userSettingDefaults.mix.rarityCeiling',
+      'a default Rarity Ceiling that is not a rarity',
+      { userSettingDefaults: { ...userSettingDefaults, rarityCeiling: 6 } },
+      'userSettingDefaults.rarityCeiling',
     ],
     [
-      'a default Mix without a Rarity Ceiling',
+      'no default Rarity Ceiling',
+      { userSettingDefaults: { ...userSettingDefaults, rarityCeiling: undefined } },
+      'userSettingDefaults.rarityCeiling',
+    ],
+    [
+      'a default Mix that still sets a Rarity Ceiling',
       {
         userSettingDefaults: {
           ...userSettingDefaults,
-          mix: { ...userSettingDefaults.mix, rarityCeiling: undefined },
+          mix: { ...userSettingDefaults.mix, rarityCeiling: 3 },
         },
       },
-      'userSettingDefaults.mix.rarityCeiling',
+      'userSettingDefaults.mix',
     ],
     [
       'a repeated Category id',
@@ -1150,8 +1126,9 @@ const dependentSwitches = [
   ['dailyGoal', ['xpLog']],
   ['progressShareCards', ['shareCards', 'xpLog']],
   ['dailyCrosswordShare', ['shareCards', 'dailyCrossword', 'game']],
+  ['tracedCrossword', ['dailyCrossword', 'game']],
   ['quickQuestion', ['game']],
-  ['rarityTest', ['rarityFloor']],
+  ['rarityTest', ['rarityCeiling']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

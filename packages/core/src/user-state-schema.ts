@@ -1,3 +1,4 @@
+import { RaritySchema } from '@slovo/contracts';
 import { z } from 'zod';
 
 import { accountRecords, INSTALLED_KEY } from './account/records';
@@ -252,6 +253,30 @@ export const userStateMigrations: readonly UserStateMigration[] = [
           JSON.stringify({ changedAt: new Date(0).toISOString(), value }),
         ],
       ]);
+    },
+  },
+  // 1.0: one Rarity Ceiling for every surface (ADR 0072). The Ceiling of the
+  // Mix becomes the `settings.rarityCeiling` setting, with a pending change
+  // from the first-sign-in time so the Account gets it too; a Ceiling that does
+  // not read is dropped, as 1.0 read none from it. The Mix's Rarity Floor and
+  // Ceiling records are dropped.
+  {
+    version: 7,
+    async migrate({ get }) {
+      const changes = new Map<string, string | undefined>();
+      for (const key of ['mix.rarityFloor', 'mix.rarityCeiling']) {
+        if ((await get(key)) !== undefined) changes.set(key, undefined);
+      }
+      const text = await get('mix.rarityCeiling');
+      const ceiling = RaritySchema.safeParse(text === undefined ? undefined : parseJson(text));
+      if (!ceiling.success) return changes;
+      const value = JSON.stringify(ceiling.data);
+      changes.set('settings.rarityCeiling', value);
+      changes.set(
+        'sync.pending.settings.rarityCeiling',
+        JSON.stringify({ changedAt: new Date(0).toISOString(), value }),
+      );
+      return changes;
     },
   },
 ];

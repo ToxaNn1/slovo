@@ -70,7 +70,7 @@ async function run({
   defaultCorrectionCategoryIds = 'all',
   correctionsSwitch = true,
   idiomsSwitch = true,
-  rarityFloorSwitch = true,
+  rarityCeilingSwitch = true,
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -82,7 +82,7 @@ async function run({
   defaultCorrectionCategoryIds?: 'all' | readonly string[];
   correctionsSwitch?: boolean;
   idiomsSwitch?: boolean;
-  rarityFloorSwitch?: boolean;
+  rarityCeilingSwitch?: boolean;
 } = {}): Promise<Composition> {
   return openComposition({
     content: pack,
@@ -90,7 +90,7 @@ async function run({
       isFeatureEnabled: (feature) =>
         (feature === 'corrections' && correctionsSwitch) ||
         (feature === 'idioms' && idiomsSwitch) ||
-        (feature === 'rarityFloor' && rarityFloorSwitch),
+        (feature === 'rarityCeiling' && rarityCeilingSwitch),
       userSettingDefaults: {
         mix: {
           categoryIds: defaultCategoryIds,
@@ -151,8 +151,8 @@ const mixRecordsOf = (records: Map<string, string>) =>
 
 const isWordOf = (category: Category) => (id: string) => wordIdsOf(category).includes(id);
 const isCorrection = (id: string) => id.startsWith('c_');
-/** Whether the id is a Word below the Rarity Floor. */
-const isWordBelow = (floor: number) => (id: string) => (rarityOf.get(id) ?? floor) < floor;
+/** Whether the id is a Word above the Rarity Ceiling. */
+const isWordAbove = (ceiling: number) => (id: string) => (rarityOf.get(id) ?? ceiling) > ceiling;
 
 describe('the Mix', () => {
   it('keeps how often the Quick Question comes across app sessions, every 10th card until chosen', async () => {
@@ -185,8 +185,6 @@ describe('the Mix', () => {
       kindWeights: { correction: 'normal', idiom: 'normal', synonymRow: 'normal', tip: 'normal' },
       hiddenCategories: [],
       lastCategoryId: undefined,
-      rarityFloor: 1,
-      rarityCeiling: 5,
       quickQuestionEvery: 10,
     });
   });
@@ -386,28 +384,6 @@ describe('the Mix', () => {
     },
   );
 
-  it('sets the Rarity Floor with the `mix.rarityFloor` record, and skips one that is no rarity', async () => {
-    const records = new Map<string, string>();
-    const app = await run({ records });
-
-    await app.mix.setRarityFloor(4);
-
-    expect(app.mix.state.rarityFloor).toBe(4);
-    expect(records.get('mix.rarityFloor')).toBe('4');
-
-    await app.mix.setRarityFloor(0);
-    await app.mix.setRarityFloor(6);
-    await app.mix.setRarityFloor(2.5);
-
-    expect(app.mix.state.rarityFloor).toBe(4);
-    expect(records.get('mix.rarityFloor')).toBe('4');
-
-    await app.mix.setRarityFloor(1);
-
-    expect(app.mix.state.rarityFloor).toBe(1);
-    expect(records.get('mix.rarityFloor')).toBe('1');
-  });
-
   it('skips a Category the Language Pack does not have', async () => {
     const records = new Map<string, string>();
     records.set('mix.categories.military', JSON.stringify(true));
@@ -426,7 +402,6 @@ describe('the Mix', () => {
     await first.mix.takeOut('nature');
     await first.mix.setKind('correction', false);
     await first.mix.setKind('idiom', false);
-    await first.mix.setRarityFloor(3);
 
     const app = await run({ records });
 
@@ -434,7 +409,6 @@ describe('the Mix', () => {
     expect(app.mix.state).toMatchObject({
       categoryIds: ['speech', 'crafts'],
       kinds: { correction: false, idiom: false },
-      rarityFloor: 3,
     });
   });
 
@@ -457,7 +431,6 @@ describe('the Mix', () => {
     await expect(app.mix.putBack('nature')).rejects.toThrow('The disk is full');
     await expect(app.mix.turnAllOn()).rejects.toThrow('The disk is full');
     await expect(app.mix.setKind('correction', false)).rejects.toThrow('The disk is full');
-    await expect(app.mix.setRarityFloor(5)).rejects.toThrow('The disk is full');
 
     expect(app.mix.state).toBe(state);
     const offered = await offeredNext(app.feed);
@@ -478,7 +451,6 @@ describe('the Mix', () => {
       await app.mix.putBack('speech');
       await app.mix.turnAllOn();
       await app.mix.setKind('correction', true);
-      await app.mix.setRarityFloor(1);
       expect(app.mix.state).toBe(all);
       expect(told).toBe(0);
 
@@ -492,11 +464,6 @@ describe('the Mix', () => {
       await app.mix.setKind('correction', false);
       expect(app.mix.state).not.toBe(out);
       expect(told).toBe(2);
-
-      const corrections = app.mix.state;
-      await app.mix.setRarityFloor(2);
-      expect(app.mix.state).not.toBe(corrections);
-      expect(told).toBe(3);
     });
 
     it('stops telling a subscriber that unsubscribed', async () => {
@@ -668,25 +635,25 @@ describe('eligibility over the Mix', () => {
     expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
   });
 
-  it('a Rarity Floor of 4 leaves only Words of rarity 4 and 5, and every Correction, in this Cycle, the next one and after reopening', async () => {
+  it('a Rarity Ceiling of 2 leaves only Words of rarity 1 and 2, and every Correction, in this Cycle, the next one and after reopening', async () => {
     const records = new Map<string, string>();
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
 
-    await app.mix.setRarityFloor(4);
+    await app.rarityCeiling.set(2);
 
     const offered = await walk(app.feed);
-    expect(offered.filter(isWordBelow(4))).toEqual([]);
+    expect(offered.filter(isWordAbove(2))).toEqual([]);
     expect(offered.filter((id) => id.startsWith('w_'))).not.toEqual([]);
     expect(offered.filter(isCorrection).sort()).toEqual(correctionIds);
     const next = await readToTheNextCycle(app.feed, time);
-    expect(next.filter(isWordBelow(4))).toEqual([]);
+    expect(next.filter(isWordAbove(2))).toEqual([]);
     expect(next.filter(isCorrection).sort()).toEqual(correctionIds);
     const reopened = await run({ records, clock: time.clock });
-    expect((await walk(reopened.feed)).filter(isWordBelow(4))).toEqual([]);
+    expect((await walk(reopened.feed)).filter(isWordAbove(2))).toEqual([]);
   });
 
-  it('a Rarity Floor change keeps what is Seen, the seed and the order of the Entries that stay', async () => {
+  it('a Rarity Ceiling change keeps what is Seen, the seed and the order of the Entries that stay', async () => {
     const records = new Map<string, string>();
     const time = fakeClock();
     const app = await run({ records, clock: time.clock });
@@ -698,21 +665,21 @@ describe('eligibility over the Mix', () => {
     const cycle = records.get('feed.cycle');
     const held = entryIdsOf(app.feed.cards);
 
-    await app.mix.setRarityFloor(5);
+    await app.rarityCeiling.set(1);
 
     expect(records.get('feed.cycle')).toBe(cycle);
     expect(records.get(`feed.seen.${seen}`)).toBe('1');
     const words = (ids: readonly string[]) =>
       ids.filter((id) => id.startsWith('w_') && !held.includes(id));
-    expect(words(await walk(app.feed))).toEqual(words(twin).filter((id) => !isWordBelow(5)(id)));
+    expect(words(await walk(app.feed))).toEqual(words(twin).filter((id) => !isWordAbove(1)(id)));
   });
 
-  it('a Rarity Floor lowered again gives the Words back their places in the Cycle', async () => {
+  it('a Rarity Ceiling raised again gives the Words back their places in the Cycle', async () => {
     const app = await run();
     const twin = await walk((await run()).feed);
 
-    await app.mix.setRarityFloor(5);
-    await app.mix.setRarityFloor(1);
+    await app.rarityCeiling.set(1);
+    await app.rarityCeiling.set(5);
 
     // The cards the Feed holds stay; the Words after them follow the Cycle order.
     const held = entryIdsOf(app.feed.cards);
@@ -721,13 +688,13 @@ describe('eligibility over the Mix', () => {
     expect(words(await walk(app.feed))).toEqual(words(twin));
   });
 
-  it('a Rarity Floor narrows nothing while the Edition turns its rarityFloor switch off', async () => {
+  it('a Rarity Ceiling the user set narrows nothing while the Edition turns its rarityCeiling switch off', async () => {
     const records = new Map<string, string>();
-    await (await run({ records })).mix.setRarityFloor(5);
+    await (await run({ records })).rarityCeiling.set(1);
 
-    const app = await run({ records, rarityFloorSwitch: false });
+    const app = await run({ records, rarityCeilingSwitch: false });
 
-    expect(app.mix.state.rarityFloor).toBe(5);
+    expect(app.rarityCeiling.state).toBe(5);
     expect(new Set(await walk(app.feed))).toEqual(
       new Set([...categories.flatMap(wordIdsOf), ...correctionIds, ...idiomIds]),
     );

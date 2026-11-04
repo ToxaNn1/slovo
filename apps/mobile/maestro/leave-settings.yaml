@@ -1,0 +1,18 @@
+# Leaves Settings for the tab under it, the Profile, while the Profile is shown:
+# the tab bar shows on tab roots only, and the back tile heads the list.
+# Otherwise Settings is the tab itself and there is nothing to leave.
+appId: ${APP_ID || 'app.slovo.uk'}
+---
+- runFlow:
+    when:
+      notVisible:
+        id: tab-home
+    commands:
+      - scrollUntilVisible:
+          element:
+            id: settings-back
+          direction: UP
+      # A tap on a list still gliding only stops it: let it settle first.
+      - waitForAnimationToEnd
+      - tapOn:
+          id: settings-back

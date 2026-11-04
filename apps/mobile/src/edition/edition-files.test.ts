@@ -253,7 +253,7 @@ describe('the 0.8.13 strings', () => {
       subtitle: '10 слів — і ми підберемо рідкість саме для вас',
       progress: '{n} з {total}',
       retake: 'Пройти тест ще раз',
-      result: 'Ваш рівень: від {n}',
+      result: 'Ваша рідкість: до {n}',
     });
     expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
   });
@@ -1353,10 +1353,13 @@ describe('plural forms of a label beside its number', () => {
 
 describe('UI strings the app fills in', () => {
   const strings = openEdition(EDITIONS_DIR, 'uk').read('strings');
-  const { wordOfTheDay, mix, settings } = strings;
+  const { wordOfTheDay, settings } = strings;
 
   it.each([
-    ['mix.rarity.floor', { ...strings, mix: { ...mix, rarity: { ...mix.rarity, floor: 'від' } } }],
+    [
+      'settings.rarity.ceiling',
+      { ...strings, settings: { ...settings, rarity: { ...settings.rarity, ceiling: 'до' } } },
+    ],
     [
       'wordOfTheDay.badge',
       { ...strings, wordOfTheDay: { ...wordOfTheDay, badge: 'Слово дня · {day}' } },

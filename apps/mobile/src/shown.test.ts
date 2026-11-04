@@ -46,6 +46,7 @@ const everything: Shown = {
   fastReveal: true,
   moods: true,
   wordOfTheDayArchive: true,
+  rarityCeiling: true,
   rarityTest: true,
   questionnaire: { whoWhy: true, selfRating: true },
 };
@@ -112,18 +113,25 @@ describe('what the reader is shown', () => {
     ],
     ['no 🎲 «Слово під настрій» with moods off', { off: ['moods'], shown: { moods: false } }],
     [
-      'no «Пройти тест ще раз» with the Rarity Test off',
-      { off: ['rarityTest'], shown: { rarityTest: false } },
+      'no «Рідкість» with the Rarity Ceiling off',
+      { off: ['rarityCeiling'], shown: { rarityCeiling: false } },
+    ],
+    [
+      'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',
+      {
+        off: ['rarityTest'],
+        shown: { rarityTest: false, questionnaire: { whoWhy: true, selfRating: false } },
+      },
     ],
     [
       'the self-rating alone in «Пройти опитування ще раз» with the questionnaire off',
       { off: ['questionnaire'], shown: { questionnaire: { whoWhy: false, selfRating: true } } },
     ],
     [
-      'no «Пройти опитування ще раз» with the questionnaire and the Rarity Floor off',
+      'no «Пройти опитування ще раз» with the questionnaire and the Rarity Test off',
       {
-        off: ['questionnaire', 'rarityFloor'],
-        shown: { questionnaire: undefined },
+        off: ['questionnaire', 'rarityTest'],
+        shown: { rarityTest: false, questionnaire: undefined },
       },
     ],
     [

@@ -7,6 +7,8 @@ import {
   buildShareCardContent,
   buildWordCard,
   createEntries,
+  generateCrosswordPuzzle,
+  seededRandomOf,
   type AnyEntryCard,
   type ShareCardStrings,
   type WeeklyRecapModel,
@@ -595,6 +597,46 @@ describe('the Share Card of a solved Daily Crossword', () => {
     const shared = JSON.stringify(content);
     for (const answerOrClue of ['кіт', 'тин', 'Свійська', 'лози']) {
       expect(shared).not.toContain(answerOrClue);
+    }
+  });
+});
+
+describe('the Share Card of a solved traced Daily Crossword', () => {
+  const words = [
+    'w_кіт',
+    'w_дім',
+    'w_вовк',
+    'w_сова',
+    'w_річка',
+    'w_весна',
+    'w_яблуко',
+    'w_зоря',
+  ].map((id) => word(id));
+  const generation = generateCrosswordPuzzle({
+    date: '2026-11-01',
+    words,
+    random: seededRandomOf('2026-11-01'),
+  });
+
+  it('shows every cell of the grid open, with no Word and no clue, the day as its overline', () => {
+    if (generation.kind !== 'puzzle') throw new Error('Expected the puzzle');
+    const { puzzle } = generation;
+    const content = buildShareCardContent({ puzzle }, STRINGS, 'uk', clock);
+
+    expect(content).toEqual({
+      shows: 'crossword:2026-11-01',
+      overline: '1 листопада',
+      label: '1 листопада. Кросворд дня розв’язано. Сітка кросворду без літер',
+      body: {
+        kind: 'dailyCrossword',
+        title: 'Кросворд дня розв’язано',
+        grid: Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => true)),
+      },
+    });
+    const shared = JSON.stringify(content);
+    for (const { word: hidden, clue } of puzzle.words) {
+      expect(shared).not.toContain(hidden.lemma);
+      expect(shared).not.toContain(clue);
     }
   });
 });
