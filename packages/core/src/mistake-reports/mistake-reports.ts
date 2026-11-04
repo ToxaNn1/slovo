@@ -21,7 +21,7 @@ export interface MistakeReportDraft {
 /**
  * What a report comes to, for the sheet: `thanked` when the backend took it
  * or it waits in the queue («Дякуємо! Ми перевіримо.»), `too-many-requests`
- * over the daily limit («Забагато повідомлень сьогодні. Спробуйте завтра.»),
+ * over the daily limit («Забагато повідомлень сьогодні. Спробуй завтра.»),
  * `switched-off` while `mistakeReports` is off, and `invalid` for a draft
  * that is no report, such as «Інше» with no comment. Only `thanked` keeps it.
  */

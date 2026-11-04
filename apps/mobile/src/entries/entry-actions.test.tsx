@@ -419,7 +419,7 @@ describe.each([
     await settle();
 
     expect(screen.getByTestId('undo-toast-message')).toHaveTextContent(
-      'Не вдалося надіслати. Спробуйте ще раз.',
+      'Не вдалося надіслати. Спробуй ще раз.',
     );
   });
 
@@ -449,7 +449,7 @@ describe.each([
 
     expect(reportsApi.reports.received).toEqual([]);
     expect(screen.getByTestId('undo-toast-message')).toHaveTextContent(
-      'Забагато повідомлень сьогодні. Спробуйте завтра.',
+      'Забагато повідомлень сьогодні. Спробуй завтра.',
     );
   });
 

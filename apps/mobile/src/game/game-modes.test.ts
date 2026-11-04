@@ -93,12 +93,12 @@ const cardsOf = ({ game }: Composition) =>
 const guessWordCard = {
   glyph: '?',
   title: 'Вгадай слово',
-  description: 'Читаєте визначення — обираєте одне слово чи вислів з чотирьох.',
+  description: 'Читаєш визначення — обираєш одне слово чи вислів з чотирьох.',
 };
 const correctionCard = {
   glyph: '?!',
   title: 'Обери правильне',
-  description: 'У реченні — поширена ненормативна форма. Знайдіть нормативну.',
+  description: 'У реченні — поширена ненормативна форма. Знайди нормативну.',
 };
 
 describe('the card of each Game Mode on offer', () => {
@@ -135,21 +135,20 @@ describe('the card of each Game Mode on offer', () => {
       {
         ...guessWordCard,
         canStart: false,
-        refusal:
-          'Замало слів і висловів у вашому Міксі. Поверніть кілька категорій у Налаштуваннях.',
+        refusal: 'Замало слів і висловів у твоєму Міксі. Поверни кілька категорій у Налаштуваннях.',
         best: undefined,
       },
       {
         ...correctionCard,
         canStart: false,
-        refusal: 'Замало виправлень у вашому Міксі. Поверніть приховані в Налаштуваннях.',
+        refusal: 'Замало виправлень у твоєму Міксі. Поверни приховані в Налаштуваннях.',
         best: undefined,
       },
     ]);
     expect(outOfMix[1]).toEqual({
       ...correctionCard,
       canStart: false,
-      refusal: 'Виправлень немає у вашому Міксі. Увімкніть їх у Налаштуваннях.',
+      refusal: 'Виправлень немає у твоєму Міксі. Увімкни їх у Налаштуваннях.',
       best: undefined,
     });
   });
@@ -181,11 +180,11 @@ describe('the label over a Round', () => {
     ['guess-word', 'Визначення'],
     ['correction', 'Як сказати краще?'],
     ['stress', 'Де наголос?'],
-    ['pairs', 'Знайдіть пари'],
+    ['pairs', 'Знайди пари'],
     ['anagram', 'Визначення'],
     ['by-letters', 'Визначення'],
     ['type-word', 'Як сказати краще?'],
-    ['build-idiom', 'Складіть вислів'],
+    ['build-idiom', 'Склади вислів'],
     ['anglicism', 'Як сказати краще?'],
     ['idiom-meaning', 'Що це означає?'],
     ['origin', 'Звідки це слово?'],

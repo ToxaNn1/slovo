@@ -52,7 +52,7 @@ export function RarityTestTitle({ children }: { children: string }) {
  * The Rarity Test's questions and result, the same in onboarding and from
  * Settings: each Word in turn by its Lemma with Stress under «{n} з {total}»,
  * with «Знаю» and «Не знаю»; the last answer applies them all, and the result
- * says «Ваша рідкість: до {n}» over «Далі». The caller draws each screen in its
+ * says «Твоя рідкість: до {n}» over «Далі». The caller draws each screen in its
  * own frame.
  */
 export function RarityTestQuestions({

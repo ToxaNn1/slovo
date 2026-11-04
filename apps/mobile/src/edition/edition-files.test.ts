@@ -250,10 +250,10 @@ describe('the 0.8.13 strings', () => {
   it('the UA Edition carries the agreed Rarity Test texts verbatim', () => {
     expect(parsed.rarityTest).toMatchObject({
       start: 'Перевірити рівень',
-      subtitle: '10 слів — і ми підберемо рідкість саме для вас',
+      subtitle: '10 слів — і ми підберемо рідкість саме для тебе',
       progress: '{n} з {total}',
       retake: 'Пройти тест ще раз',
-      result: 'Ваша рідкість: до {n}',
+      result: 'Твоя рідкість: до {n}',
     });
     expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
   });
@@ -261,13 +261,13 @@ describe('the 0.8.13 strings', () => {
   it('the UA Edition carries the agreed Feed Notice texts verbatim', () => {
     expect(parsed.feedNotices).toMatchObject({
       weeklyRecap: {
-        title: 'Ваш тиждень',
+        title: 'Твій тиждень',
         seen: 'переглянуто',
         saved: 'збережено',
         known: 'знаю',
         streak: 'серія',
       },
-      yesterday: { title: 'Пам’ятаєте вчорашнє слово?' },
+      yesterday: { title: 'Пам’ятаєш вчорашнє слово?' },
       enoughForToday: { message: 'Може, на сьогодні досить?', keepGoing: 'Гортати далі' },
       firstWeek: { close: 'Зрозуміло', lastDayTitle: 'Тиждень із нами' },
     });
@@ -417,8 +417,8 @@ describe('the 0.8.14 strings', () => {
       comment: 'Коментар (необов’язково)',
       send: 'Надіслати',
       sent: 'Дякуємо! Ми перевіримо.',
-      tooMany: 'Забагато повідомлень сьогодні. Спробуйте завтра.',
-      failed: 'Не вдалося надіслати. Спробуйте ще раз.',
+      tooMany: 'Забагато повідомлень сьогодні. Спробуй завтра.',
+      failed: 'Не вдалося надіслати. Спробуй ще раз.',
     });
   });
 
@@ -544,7 +544,7 @@ describe('the 0.8.15 strings', () => {
     expect(fill(link.message, { name: 'Осінь', url: 'https://slovo.example/c/abc123' })).toBe(
       'Колекція «Осінь» у SLOVO: https://slovo.example/c/abc123',
     );
-    expect(link.offline).toBe('Немає з’єднання. Спробуйте пізніше.');
+    expect(link.offline).toBe('Немає з’єднання. Спробуй пізніше.');
     expect(link.add).toBe('Додати собі');
     expect(link.notFound).not.toBe('');
   });
@@ -853,8 +853,8 @@ describe('the onboarding strings of the «Весь потік» flow', () => {
   });
 });
 
-describe('the UA Edition addresses the reader with «ви»', () => {
-  /** Every text of the UI strings with its path. */
+describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
+  /** Every text of a value with its path. */
   const textsOf = (value: unknown, path: string): [string, string][] =>
     typeof value === 'string'
       ? [[path, value]]
@@ -863,33 +863,42 @@ describe('the UA Edition addresses the reader with «ви»', () => {
             textsOf(inner, path === '' ? key : `${path}.${key}`),
           )
         : [];
-  /** The «ти» pronouns, as whole words. */
-  const ty =
-    /(?<![а-яіїєґʼ'])(ти|тебе|тобі|тобою|твій|твоя|твоє|твої|твого|твоєї|твоїх|твоїм|твоєму|твоїми|твою)(?![а-яіїєґʼ'])/iu;
   /**
-   * The «ти» imperatives the Edition once used, and the exceptions: the Game
-   * Mode names the glossary fixes (CONTEXT.md, ADR 0052) and a Siri phrase,
-   * which the reader says to Siri.
+   * The «ви» forms, as whole words: the pronouns, the plural imperatives
+   * («оберіть», «спробуйте», «торкніться») and the plural present and future
+   * («знаєте», «оберете», «торкнетеся»). No text is an exception; only words
+   * that merely end like a verb («навіть», «відкрите») are not «ви» forms.
    */
-  const imperatives =
-    /(?<![а-яіїєґʼ'])(лови|грай|гортай|збережи|обери|вгадай|впиши|склади|покажи|повернись)(?![а-яіїєґʼ'])/iu;
-  const exceptions = new Set([
-    'game.modes.guess-word.title',
-    'game.modes.type-word.title',
-    'game.modes.correction.title',
-    'game.modes.build-idiom.title',
-    'appIntents.wordOfTheDay.phrases.1',
-  ]);
+  const vyWord =
+    /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;
+  const notVerbs = new Set(['навіть', 'відкрите', 'закрите', 'вкрите', 'сите']);
+  const vy = {
+    test: (text: string) =>
+      [...text.matchAll(vyWord)].some(([word]) => !notVerbs.has(word.toLowerCase())),
+  };
 
-  it('has no «ти» form in its UI strings', () => {
+  it('has no «ви» form in its UI strings', () => {
     const texts = textsOf(readJson('uk', 'strings'), '');
 
     expect(texts.length).toBeGreaterThan(100);
-    expect(
-      texts.filter(
-        ([path, text]) => ty.test(text) || (imperatives.test(text) && !exceptions.has(path)),
-      ),
-    ).toEqual([]);
+    expect(texts.filter(([, text]) => vy.test(text))).toEqual([]);
+  });
+
+  it('has no «ви» form in what the Mascot says', () => {
+    const texts = textsOf(readJson('uk', 'config'), '').filter(([path]) =>
+      path.startsWith('mascot.'),
+    );
+
+    expect(texts.length).toBeGreaterThan(0);
+    expect(texts.filter(([, text]) => vy.test(text))).toEqual([]);
+  });
+
+  it('tells a «ви» form from a «ти» one', () => {
+    const vyTexts = ['Оберіть колекцію', 'Чи знаєте ви?', 'Ваш!', 'Торкніться', 'коли торкнетеся'];
+    const tyTexts = ['Обери колекцію', 'Чи знаєш ти?', 'Твій!', 'Торкнися', 'навіть відкрите'];
+
+    expect(vyTexts.filter((text) => !vy.test(text))).toEqual([]);
+    expect(tyTexts.filter((text) => vy.test(text))).toEqual([]);
   });
 });
 
