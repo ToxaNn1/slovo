@@ -1,10 +1,11 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { CrosswordDaySchema, type Word } from '@slovo/contracts';
+import { CrosswordDaySchema, fill, STRESS_MARK, type Word } from '@slovo/contracts';
 import { openComposition, systemRandom, type AnalyticsPort, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { AccessibilityInfo } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import GameScreen from '../app/game';
@@ -15,6 +16,9 @@ import { ShellProvider, type ShareCard } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { SCREEN_OPEN_TIMEOUT_MS } from '../open-screen';
+
+/** Lemmas of the Edition's alphabet, whose lengths fill the traced grid. */
+const TRACEABLE = ['кіт', 'дім', 'вовк', 'сова', 'річка', 'весна', 'яблуко', 'зоря'];
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
@@ -90,18 +94,32 @@ const sendingShareCard: ShareCard = (_view, _cardId, _format, onShared) => {
  * The Game tab as the app routes it, opened on its mode screen over a fresh
  * composition, with a Share Card capture when the binary has one.
  */
-async function renderGame({ shareCard }: { shareCard?: ShareCard } = {}) {
+async function renderGame({
+  shareCard,
+  traced = false,
+}: { shareCard?: ShareCard; traced?: boolean } = {}) {
   events = [];
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа' }],
-      words: Array.from({ length: 15 }, (_, i) => word(i)),
+      words: [
+        ...Array.from({ length: 15 }, (_, i) => word(i)),
+        // Words of the Edition's alphabet, which can fill the traced grid.
+        ...(traced
+          ? TRACEABLE.map((lemma) => ({ ...word(0), id: `w_${lemma}`, lemma, stress: [0] }))
+          : []),
+      ],
     }),
     crossword: {
       crosswordDay: (date) =>
         Promise.resolve(date === crosswordDay.date ? crosswordDay : undefined),
     },
-    edition,
+    // The printed Daily Crossword: the screen's fallback while the traced one is off (ADR 0073).
+    edition: {
+      ...edition,
+      isFeatureEnabled: (feature) =>
+        (traced || feature !== 'tracedCrossword') && edition.isFeatureEnabled(feature),
+    },
     userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
@@ -278,5 +296,37 @@ describe('the Daily Crossword screen', () => {
     await settle(() => fireEvent.press(screen.getByTestId('share-sheet-share')));
 
     expect(events).toContainEqual(['shareCardShared', { card: 'dailyCrossword' }]);
+  });
+});
+
+describe('the traced Daily Crossword (ADR 0073)', () => {
+  it('opens from its card, and with VoiceOver on locks a Word tapped cell by cell and checked', async () => {
+    jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(true);
+    await renderGame({ traced: true });
+    await openFromCard();
+    expect(await screen.findByTestId('traced-crossword-grid')).toBeOnTheScreen();
+    expect(screen.queryByTestId('daily-crossword-grid')).toBeNull();
+
+    const opening = await composition.openTracedCrossword();
+    if (opening.kind !== 'open') throw new Error('Expected the traced puzzle');
+    const { puzzle } = opening.crossword;
+    const [hidden] = puzzle.words;
+    if (hidden === undefined) throw new Error('Expected a hidden Word');
+    const { tracedCellLabel, clueFound, check } = editionStrings.game.dailyCrossword;
+    for (const { row, column } of hidden.path) {
+      const { letter, stressed } = puzzle.grid[row]?.[column] ?? { letter: '', stressed: false };
+      const label = fill(tracedCellLabel, {
+        letter: stressed ? `${letter}${STRESS_MARK}` : letter,
+        row: String(row + 1),
+        column: String(column + 1),
+      });
+      await settle(() => fireEvent.press(screen.getByLabelText(label)));
+    }
+    await settle(() => fireEvent.press(screen.getByText(check)));
+    expect(
+      screen.getByLabelText(fill(clueFound, { clue: hidden.clue, word: '' }), {
+        exact: false,
+      }),
+    ).toBeOnTheScreen();
   });
 });
