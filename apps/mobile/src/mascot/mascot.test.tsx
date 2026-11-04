@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { SEEN_DWELL_MS, type Composition } from '@slovo/core';
+import type { Word } from '@slovo/contracts';
+import { openComposition, SEEN_DWELL_MS, type Composition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -17,9 +19,35 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-/** The celebrations over the Core's composition of a test Shell, with the Mascot on or off in effect and the counters hidden or not. */
+/** The one Word in the Feed, which a dwell makes Seen. */
+const word: Word = {
+  kind: 'word',
+  id: 'w_test',
+  lemma: 'test',
+  stress: [0],
+  partOfSpeech: 'noun',
+  primaryDefinition: 'The meaning of test.',
+  extraDefinitions: [],
+  examples: [],
+  synonyms: [],
+  antonyms: [],
+  registers: [],
+  categoryId: 'test',
+  rarity: 3,
+  sources: [{ title: 'Test source' }],
+  correctionIds: [],
+  retired: false,
+};
+
+/** The celebrations over a Core composition with one Word, whose clock moves with the fake timers, with the Mascot on or off in effect and the counters hidden or not. */
 async function renderCelebrations({ on = true, noCounters = false } = {}) {
-  const composition = await testShell().composition.opened();
+  const composition = await openComposition({
+    content: createMemoryContentPort({ words: [word] }),
+    edition,
+    userState: await seedUserState(),
+    clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
+    random: { next: () => 0.5 },
+  });
   const shell = testShell({
     composition: opened(composition),
     remoteSwitches: switchedTo({
