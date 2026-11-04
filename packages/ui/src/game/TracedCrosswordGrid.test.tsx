@@ -1,4 +1,5 @@
 import { playPuzzle, startPuzzle, type CrosswordPuzzle, type PuzzleAction } from '@slovo/core';
+import type { Word } from '@slovo/contracts';
 import { describe, expect, it } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
@@ -22,15 +23,39 @@ import { testStrings } from '../test-strings';
  */
 const rows = ['cat', 'dog', 'owl'];
 const clues = ['A pet that purrs', 'A pet that barks', 'A bird of the night'];
-const puzzle = {
+
+/** A Word of the Language Pack with its lemma and its primary Definition, nothing else. */
+const wordOf = (lemma: string, primaryDefinition: string): Word => ({
+  kind: 'word',
+  id: `w_${lemma}`,
+  lemma,
+  stress: [1],
+  partOfSpeech: 'noun',
+  primaryDefinition,
+  extraDefinitions: [],
+  examples: [],
+  synonyms: [],
+  antonyms: [],
+  registers: [],
+  categoryId: 'test',
+  rarity: 3,
+  sources: [{ title: 'Test source' }],
+  correctionIds: [],
+  retired: false,
+});
+
+const puzzle: CrosswordPuzzle = {
   date: '2026-11-04',
   grid: rows.map((row) => Array.from(row, (letter) => ({ letter, stressed: letter === 'a' }))),
-  words: rows.map((row, r) => ({
-    word: { id: row },
-    clue: clues[r] ?? '',
-    path: [0, 1, 2].map((column) => ({ row: r, column })),
-  })),
-} as unknown as CrosswordPuzzle;
+  words: rows.map((row, r) => {
+    const clue = clues[r] ?? '';
+    return {
+      word: wordOf(row, clue),
+      clue,
+      path: [0, 1, 2].map((column) => ({ row: r, column })),
+    };
+  }),
+};
 
 /** The grid as a screen drives it: the Core's reducer over its state, and a miss on a release that locks nothing. */
 function Crossword({ accessibleMode = false }: { accessibleMode?: boolean }) {
