@@ -156,7 +156,8 @@ describe('the day change', () => {
     await app.feed.show(0);
     await app.resume();
 
-    expect(order).toEqual(['knowledge', 'plan', 'feed']);
+    // The Feed tells of the day it turned to, then of today's Word of the Day got ready.
+    expect(order).toEqual(['knowledge', 'plan', 'feed', 'feed']);
     expect(app.knowledge.state.due).toEqual([today]);
   });
 

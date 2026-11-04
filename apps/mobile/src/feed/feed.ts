@@ -1,4 +1,4 @@
-import { isTodaysWordOfTheDay, type Clock, type FeedCard } from '@slovo/core';
+import { isTodaysWordOfTheDay, type Clock, type FeedCard, type LocalDate } from '@slovo/core';
 import type { VerticalPagerHandle } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useState, useSyncExternalStore, type RefObject } from 'react';
@@ -13,6 +13,8 @@ import type { LandingAsked, WordOfTheDayLanding } from './word-of-the-day-landin
 /** The Feed as the pager shows it: a page for each of its cards. */
 export interface FeedState {
   readonly cards: readonly FeedCard[];
+  /** The local day the Feed's header says: the day the composition turned to last. */
+  readonly today: LocalDate;
   /** Whether the Feed is in sight: its tab focused, the app in the foreground and nothing over it. */
   readonly inSight: boolean;
   /** The position of the card the Feed opens on. */
@@ -41,6 +43,7 @@ export function useFeed(
 ): FeedState {
   const { feed, onboarding } = useComposition();
   const cards = useSubscribed(feed, (open) => open.cards);
+  const today = useSubscribed(feed, (open) => open.today);
   /** The card the reader turned to last, by the Feed's position, in the Feed they turned it in. */
   const [turnedTo, setTurnedTo] = useState<TurnedTo>();
   const onCardChange = useCallback(
@@ -137,6 +140,7 @@ export function useFeed(
 
   return {
     cards,
+    today,
     inSight,
     startPosition: feed.startPosition,
     onCardChange,
