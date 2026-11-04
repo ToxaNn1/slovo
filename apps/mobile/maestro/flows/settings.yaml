@@ -1,4 +1,4 @@
-# Settings: the SLOVO ID row, Theme, font size, the rows under them, Vibration
+# Settings: Theme, font size, the rows under them, Vibration, the SLOVO ID row
 # and About, and how the Feed redraws.
 # A subflow of `smoke.yaml`; run it from there.
 appId: ${APP_ID || 'app.slovo.uk'}
@@ -9,17 +9,15 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: word-lemma
 # Settings: Theme Dark and font size L. The preview card shows the Lemma at
 # the chosen size.
-- tapOn:
-    id: tab-settings
+- runFlow:
+    file: ../open-settings-row.yaml
+    env:
+      ROW: settings-theme-system
 # Start from the defaults (Theme System, size M), whatever an earlier run left.
 - tapOn:
     id: settings-theme-system
 - tapOn:
     id: settings-font-size-M
-# SLOVO ID heads the list, read «Увійти» or the email (its own flow).
-- assertVisible:
-    id: settings-row-account
-    text: 'SLOVO ID, .+'
 - tapOn:
     id: settings-theme-dark
 - assertVisible:
@@ -35,16 +33,13 @@ appId: ${APP_ID || 'app.slovo.uk'}
     selected: true
 - assertVisible:
     id: font-size-preview-lemma
-# The rows under the font size: «Сповіщення» opens its screen (its own flow), a
-# row of a later version is dimmed with its "soon" tag, and Vibration is a
-# switch that is on until the reader turns it off.
+# The rows under the font size: «Сповіщення» opens its screen (its own flow),
+# and Vibration is a switch that is on until the reader turns it off.
 - scrollUntilVisible:
     element:
       id: settings-vibration
 - assertVisible:
     id: settings-row-notifications
-- assertVisible:
-    id: settings-row-music
 - assertVisible:
     id: settings-vibration
     checked: true
@@ -64,6 +59,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - scrollUntilVisible:
     element:
       id: settings-row-about
+# SLOVO ID is in the Account group, read «Увійти» or the email (its own flow).
+- assertVisible:
+    id: settings-row-account
+    text: 'Акаунт SLOVO, .+'
 # A double tap opens About once: one back returns to the list.
 - doubleTapOn:
     id: settings-row-about
@@ -86,6 +85,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: about
 # The Feed redraws in the dark Theme at the new size, on the same card. Maestro
 # cannot assert a colour or a size, so the screenshot is the record of it.
+- runFlow: ../leave-settings.yaml
 - tapOn:
     id: tab-home
 - assertVisible:

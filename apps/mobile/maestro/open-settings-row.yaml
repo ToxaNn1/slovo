@@ -1,10 +1,53 @@
 # Opens Settings and scrolls to one of its rows, off the tab bar, which covers
-# the bottom of the list at the largest font size. The caller passes the row's
-# id as `ROW`, e.g. `ROW: settings-row-my-mix`.
+# the bottom of the list at the largest font size. While the Profile is shown,
+# the fourth tab is the Profile and Settings opens from its tile; otherwise the
+# tab is Settings itself. The caller passes the row's id as `ROW`, e.g.
+# `ROW: settings-row-my-mix`, and leaves Settings by `settings-back` before
+# tapping another tab: the tab bar shows on tab roots only.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - tapOn:
     id: tab-settings
+- runFlow:
+    when:
+      visible:
+        id: profile
+    commands:
+      # The development client's floating tools button sits over the tile:
+      # drag it down while the tile is tapped, and back to the top after.
+      - runFlow:
+          when:
+            visible:
+              id: gearshape.fill
+          commands:
+            - swipe:
+                from:
+                  id: gearshape.fill
+                direction: DOWN
+                duration: 600
+            - waitForAnimationToEnd
+            - runFlow:
+                file: dismiss-dev-menu.yaml
+      - scrollUntilVisible:
+          element:
+            id: profile-settings
+          direction: UP
+      - tapOn:
+          id: profile-settings
+      - runFlow:
+          when:
+            visible:
+              id: gearshape.fill
+          commands:
+            - swipe:
+                from:
+                  id: gearshape.fill
+                direction: UP
+                duration: 600
+            # A drag that counts as a tap opens the menu, which slides up.
+            - waitForAnimationToEnd
+            - runFlow:
+                file: dismiss-dev-menu.yaml
 - scrollUntilVisible:
     element:
       id: ${ROW}
