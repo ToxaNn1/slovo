@@ -1,7 +1,8 @@
-# The Rarity Floor: Мій Мікс offers «від 1» to «від 5», «від 1» by default;
-# a higher floor is kept and the Feed still shows a card. A subflow of
-# `smoke.yaml`; run it from there. It starts by putting the floor back to
-# «від 1», whatever an earlier run left, and leaves it there.
+# The Rarity Ceiling (ADR 0072): Мій Мікс offers «до 1» to «до 5», «до 5» by
+# default, until its own Settings row (#1545); a lower ceiling is kept and the
+# Feed still shows a card. A subflow of `smoke.yaml`; run it from there. It
+# starts by putting the ceiling back to «до 5», whatever an earlier run left,
+# and leaves it there.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
 - runFlow:
@@ -14,31 +15,31 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: mix
 - scrollUntilVisible:
     element:
-      id: mix-rarity-5
+      id: mix-rarity-ceiling-1
     centerElement: true
 - runFlow:
     when:
       visible:
-        id: mix-rarity-1
+        id: mix-rarity-ceiling-5
         selected: false
     commands:
       - tapOn:
-          id: mix-rarity-1
+          id: mix-rarity-ceiling-5
 - assertVisible:
-    id: mix-rarity-1
-    text: від 1
+    id: mix-rarity-ceiling-5
+    text: до 5
     selected: true
-# A higher floor applies at once: its chip is filled, the others are not.
+# A lower ceiling applies at once: its chip is filled, the others are not.
 - tapOn:
-    id: mix-rarity-5
+    id: mix-rarity-ceiling-1
 - assertVisible:
-    id: mix-rarity-5
-    text: від 5
+    id: mix-rarity-ceiling-1
+    text: до 1
     selected: true
 - assertVisible:
-    id: mix-rarity-1
+    id: mix-rarity-ceiling-5
     selected: false
-- takeScreenshot: rarity-floor-5
+- takeScreenshot: rarity-ceiling-1
 # The Mix keeps it: the screen opens as it was left.
 - tapOn:
     id: mix-back
@@ -46,20 +47,20 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: settings-row-my-mix
 - scrollUntilVisible:
     element:
-      id: mix-rarity-5
+      id: mix-rarity-ceiling-1
     centerElement: true
 - assertVisible:
-    id: mix-rarity-5
+    id: mix-rarity-ceiling-1
     selected: true
-# The Feed still has a card under the floor: only the rarest Words, and the
-# Corrections, which have no rarity.
+# The Feed still has a card under the ceiling: only the commonest Words, and
+# the Entries of other kinds, which have no rarity.
 - tapOn:
     id: mix-back
 - tapOn:
     id: tab-home
 - assertVisible:
     id: (word|correction|idiom)-card
-# Back to «від 1».
+# Back to «до 5».
 - runFlow:
     file: ../open-settings-row.yaml
     env:
@@ -68,12 +69,12 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: settings-row-my-mix
 - scrollUntilVisible:
     element:
-      id: mix-rarity-1
+      id: mix-rarity-ceiling-5
     centerElement: true
 - tapOn:
-    id: mix-rarity-1
+    id: mix-rarity-ceiling-5
 - assertVisible:
-    id: mix-rarity-1
+    id: mix-rarity-ceiling-5
     selected: true
 - tapOn:
     id: mix-back

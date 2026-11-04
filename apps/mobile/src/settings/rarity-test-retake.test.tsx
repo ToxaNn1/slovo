@@ -144,8 +144,8 @@ beforeEach(async () => {
 });
 
 describe('Settings › «Пройти тест ще раз»', () => {
-  it('takes the Rarity Test again, and its result overwrites the Rarity Floor of the Mix', async () => {
-    await composition.mix.setRarityFloor(4);
+  it('takes the Rarity Test again, and its result overwrites the Rarity Ceiling', async () => {
+    await composition.rarityCeiling.set(4);
     await renderSettings();
 
     await open(rarityTest.retake);
@@ -164,12 +164,12 @@ describe('Settings › «Пройти тест ще раз»', () => {
     expect(screen.getByRole('header', { name: editionStrings.settings.title })).toBeOnTheScreen();
 
     await open(editionStrings.settings.rows.myMix);
-    expect(screen.getByTestId('mix-rarity-2')).toBeSelected();
-    expect(screen.getByTestId('mix-rarity-4')).not.toBeSelected();
+    expect(screen.getByTestId('mix-rarity-ceiling-2')).toBeSelected();
+    expect(screen.getByTestId('mix-rarity-ceiling-4')).not.toBeSelected();
   });
 
-  it('leaves the Rarity Floor as it was when the reader goes back halfway', async () => {
-    await composition.mix.setRarityFloor(4);
+  it('leaves the Rarity Ceiling as it was when the reader goes back halfway', async () => {
+    await composition.rarityCeiling.set(4);
     await renderSettings();
     await open(rarityTest.retake);
     await fireEvent.press(screen.getByRole('button', { name: knowledge.unknown }));
@@ -177,12 +177,12 @@ describe('Settings › «Пройти тест ще раз»', () => {
     await fireEvent.press(screen.getByRole('button', { name: editionStrings.settings.title }));
     await settle();
 
-    expect(composition.mix.state.rarityFloor).toBe(4);
+    expect(composition.rarityCeiling.state).toBe(4);
   });
 
   it.each<[string, FeatureSwitch]>([
     ['the Rarity Test', 'rarityTest'],
-    ['the Rarity Floor it sets', 'rarityFloor'],
+    ['the Rarity Ceiling it sets', 'rarityCeiling'],
   ])('is not in Settings while %s is off', async (_, off) => {
     await openWith(editionWithout(off));
     await renderSettings();

@@ -48,7 +48,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow: flows/knowledge-marks.yaml
 - runFlow: flows/self-check.yaml
 - runFlow: flows/game-review.yaml
-- runFlow: flows/rarity-floor.yaml
+- runFlow: flows/rarity-ceiling.yaml
 # 0.8.7 Corrections and 0.8.8 Phraseology (#620).
 - runFlow: flows/stress-trap.yaml
 - runFlow: flows/idiom.yaml

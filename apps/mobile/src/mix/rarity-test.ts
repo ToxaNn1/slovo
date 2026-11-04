@@ -22,8 +22,8 @@ export function rarityTestQuestionOf({
 
 /**
  * Applies the Rarity Test's answers, in onboarding and from Settings, and
- * resolves to the Rarity Floor they set. A floor that can't be set is logged
- * and leaves the one the Mix has: it resolves to nothing and never rejects.
+ * resolves to the Rarity Ceiling they set. A ceiling that can't be set is
+ * logged and leaves the one in force: it resolves to nothing and never rejects.
  */
 export function useApplyRarityTest(): (
   answers: readonly RarityTestAnswer[],
@@ -32,7 +32,7 @@ export function useApplyRarityTest(): (
   return useCallback(
     (answers) =>
       rarityTest.apply(answers).catch((error: unknown) => {
-        logError('Could not set the Rarity Floor', error);
+        logError('Could not set the Rarity Ceiling', error);
         return undefined;
       }),
     [rarityTest],

@@ -274,16 +274,12 @@ A setting («Перевір себе», off by default) that hides the answer on
 _Avoid_: Quiz mode, test mode
 
 **Mix**:
-The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms, Synonym Rows and Tips each as a whole, that the reader chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Rarity Floor, the Rarity Ceiling, the Mix kind weights and the frequency of the Quick Question.
+The set of Categories of Words, plus Corrections as a whole with their own Categories under it, plus Idioms, Synonym Rows and Tips each as a whole, that the reader chose to see in the Feed, notifications, widgets and the Game. At least one Category of each list always stays in the Mix. The Mix also holds the Mix kind weights and the frequency of the Quick Question; rarity is the Rarity Ceiling, a setting of its own.
 _Avoid_: Filter, preferences
 
-**Rarity Floor**:
-The lowest rarity of Words the reader wants, «від 1» to «від 5», default «від 1». Only Words of that rarity or rarer are eligible, in the Feed and the Game, so a high floor leaves only the rarest Words. Entries of other kinds have no rarity and are not affected. Set in the Mix or by the Rarity Test. Part of the Mix.
-_Avoid_: Difficulty, level
-
 **Rarity Ceiling**:
-The highest rarity of Words the reader wants, «до 1» to «до 5», default «до 5». Only Words up to that rarity are eligible. The Rarity Floor is never above the Rarity Ceiling; a Rarity Test that sets the Floor above the Ceiling raises the Ceiling to it. Part of the Mix.
-_Avoid_: Maximum difficulty
+«Рідкість»: the highest rarity of Words the reader wants, «до 1» to «до 5», default «до 5». Only Words up to that rarity appear anywhere new: the Feed, notifications, widgets, every Game Mode and the Daily Crossword. Entries of other kinds have no rarity and are not affected. A setting of its own, not part of the Mix; set in Settings, by onboarding's «Хто ви» and by the Rarity Test. There is no lower bound.
+_Avoid_: Rarity Floor, difficulty, level, maximum difficulty
 
 **Mix kind weight**:
 «Менше», «Звичайно» or «Більше» for each of Corrections, Idioms, Synonym Rows and Tips in the Mix; Words fill the rest. «Вимкнено» stays a separate switch per kind. The questionnaire's «Навіщо» sets the starting weights.
@@ -294,7 +290,7 @@ A Feed slot that shows one Round from an enabled Game Mode over an Eligible Entr
 _Avoid_: Pop quiz, Feed Game
 
 **Questionnaire**:
-The questions that tune the Feed to the reader. Onboarding asks two: «Хто ви» (sets the Rarity Ceiling: «Навчаюсь» «до 4», the others «до 5») and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (sets the Rarity Floor and whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings. Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.
+The questions that tune the Feed to the reader. Onboarding asks two: «Хто ви» (sets the Rarity Ceiling: «Навчаюсь» «до 4», the others «до 5») and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (decides whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings. Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.
 _Avoid_: Survey, form
 
 **Hidden Entry**:
@@ -306,15 +302,15 @@ A Category, of Words or of Corrections, the user took out of their Mix, whether 
 _Avoid_: Muted topic
 
 **Eligible Entry**:
-An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind the Edition turns on (and not off remotely), in the user's Mix (a Word of a Category in the Mix at the Rarity Floor or rarer; a Correction while Corrections and its Category are in; an Idiom while Idioms are in; a Synonym Row while Synonym Rows are in; a Tip while Tips are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
+An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind the Edition turns on (and not off remotely), in the user's Mix (a Word of a Category in the Mix within the Rarity Ceiling; a Correction while Corrections and its Category are in; an Idiom while Idioms are in; a Synonym Row while Synonym Rows are in; a Tip while Tips are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
 _Avoid_: Available, visible, active entry
 
 **Search**:
-«Пошук»: finding Entries by their visible text, behind a magnifier in the «Стрічка» header. It covers every Entry of a kind the Edition turns on that is neither Retired nor Hidden, the Mix and the Rarity Floor aside, and ignores case, Stress, the kind of apostrophe, г/ґ and е/ё. A text matches from 2 characters when it or one of its words starts with the query; «За значенням», from 3 characters, finds Words by their Definition and the Synonym Rows that contain the query. Opening a result makes nothing Seen. The last 10 queries stay on the device.
+«Пошук»: finding Entries by their visible text, behind a magnifier in the «Стрічка» header. It covers every Entry of a kind the Edition turns on that is neither Retired nor Hidden, the Mix and the Rarity Ceiling aside, and ignores case, Stress, the kind of apostrophe, г/ґ and е/ё. A text matches from 2 characters when it or one of its words starts with the query; «За значенням», from 3 characters, finds Words by their Definition and the Synonym Rows that contain the query. Opening a result makes nothing Seen. The last 10 queries stay on the device.
 _Avoid_: Lookup, filter, dictionary
 
 **Rarity Test**:
-«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the Rarity Floor to the lowest rarity with «Не знаю» («від 5» if all are known). Optional in onboarding after the Mix and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
+«Перевірка рівня»: 10 Words, 2 of each rarity, each shown as its Lemma with Stress for «Знаю» or «Не знаю», which set the Rarity Ceiling to the lowest rarity with «Не знаю» («до 5» if all are known). Optional in onboarding after the Mix and again from Settings. It sets no Knowledge Mark, starts no Review and makes nothing Seen.
 _Avoid_: Level test, placement test, quiz
 
 **Weekly Recap**:
@@ -412,5 +408,5 @@ The result screen's list of every played Round in order, in every Game Mode: its
 _Avoid_: Mistakes list, answer log
 
 **Daily Crossword**:
-«Кросворд дня»: one 5×5 mini crossword a day, the same for every reader on a local date, its clues the Definitions of Words and the explanations of Corrections. It is not a Game: it has no Rounds, no Lives, no Best result and no Game Review, and solving it makes nothing Seen and changes no Knowledge Mark.
+«Кросворд дня»: one 5×5 mini crossword a day, the same for every reader on a local date, its clues the Definitions of Words and the explanations of Corrections, its Words within the Rarity Ceiling. It is not a Game: it has no Rounds, no Lives, no Best result and no Game Review, and solving it makes nothing Seen and changes no Knowledge Mark.
 _Avoid_: Daily puzzle, crossword game, Word of the Day

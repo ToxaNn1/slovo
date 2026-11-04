@@ -6,7 +6,7 @@ Spec #1358 wants a new reader in the Feed within a minute, already knowing what 
 
 **The two questions.** «Хто ви» («Навчаюсь», «Працюю», «Мовний гурман») sets the Rarity Ceiling: «Навчаюсь» «до 4», the others «до 5». «Навіщо» sets the Mix kind weights (more Corrections, more rare Words or more Game). The Edition config holds the options and their mapping, so the Core stays language-agnostic.
 
-**Later, through Feed Notices.** The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (sets the Rarity Floor and whether to offer the Rarity Test), the Mix review, the Rarity Test and the Account offer. The notification explainer comes right after the first met Daily Goal, no later than day 3, and the iOS prompt only after «Так»; a refusal gets one more ask through a Feed Notice 7 days later, never again. The reader can retake the questionnaire and the Rarity Test from Settings.
+**Later, through Feed Notices.** The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (sets the Rarity Floor and whether to offer the Rarity Test; from 1.0 only the latter, ADR 0072), the Mix review, the Rarity Test and the Account offer. The notification explainer comes right after the first met Daily Goal, no later than day 3, and the iOS prompt only after «Так»; a refusal gets one more ask through a Feed Notice 7 days later, never again. The reader can retake the questionnaire and the Rarity Test from Settings.
 
 **Existing readers.** A reader who finished the old onboarding sees no new onboarding. They get the Daily Goal choice once through a Feed Notice and default to 20 until they choose.
 

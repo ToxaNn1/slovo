@@ -491,32 +491,31 @@ export const NotificationTimesSchema = z
   .max(MAX_NOTIFICATION_TIMES)
   .refine((times) => new Set(times).size === times.length, 'Expected unique times');
 
-export const MixConfigSchema = z
-  .strictObject({
-    /** Either every Category of the Language Pack, also one a content update adds, or the listed Category ids. */
-    categories: z.union([
-      z.literal('all'),
-      // At least one Category always stays in the Mix (ADR 0019).
-      z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category'),
-    ]),
-    /**
-     * The Categories of Corrections in the Mix (ADR 0033): every one of the
-     * Language Pack, or the listed ids. They sit under Corrections as a whole.
-     */
-    correctionCategories: z.union([
-      z.literal('all'),
-      // At least one Category of Corrections always stays in the Mix, as of Words (ADR 0019).
-      z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category of Corrections'),
-    ]),
-    /** Whether Corrections, as a whole, are in the Mix. */
-    corrections: z.boolean(),
-    /** Whether Idioms, as a whole, are in the Mix. */
-    idioms: z.boolean(),
-    /** Whether Synonym Rows, as a whole, are in the Mix (ADR 0051). */
-    synonymRows: z.boolean(),
-    /** Whether Tips, as a whole, are in the Mix (ADR 0051). */
-    tips: z.boolean(),
-  });
+export const MixConfigSchema = z.strictObject({
+  /** Either every Category of the Language Pack, also one a content update adds, or the listed Category ids. */
+  categories: z.union([
+    z.literal('all'),
+    // At least one Category always stays in the Mix (ADR 0019).
+    z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category'),
+  ]),
+  /**
+   * The Categories of Corrections in the Mix (ADR 0033): every one of the
+   * Language Pack, or the listed ids. They sit under Corrections as a whole.
+   */
+  correctionCategories: z.union([
+    z.literal('all'),
+    // At least one Category of Corrections always stays in the Mix, as of Words (ADR 0019).
+    z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category of Corrections'),
+  ]),
+  /** Whether Corrections, as a whole, are in the Mix. */
+  corrections: z.boolean(),
+  /** Whether Idioms, as a whole, are in the Mix. */
+  idioms: z.boolean(),
+  /** Whether Synonym Rows, as a whole, are in the Mix (ADR 0051). */
+  synonymRows: z.boolean(),
+  /** Whether Tips, as a whole, are in the Mix (ADR 0051). */
+  tips: z.boolean(),
+});
 
 export type MixConfig = z.infer<typeof MixConfigSchema>;
 

@@ -32,8 +32,10 @@ export const MixStringsSchema = z.strictObject({
   /** The Tips switch's name and what it shows; also the Hidden screen's section of hidden Tips. */
   tips: z.strictObject({ title: TextSchema, subtitle: TextSchema }),
   /**
-   * The Rarity Floor choice: its name, the line under it, and a floor's chip;
-   * and the Rarity Ceiling choice under it, the same three. The chips take `{rarity}`.
+   * The Rarity Ceiling choice (ADR 0072): `ceilingTitle`, `ceilingSubtitle`
+   * and a ceiling's chip `ceiling`. `title`, `subtitle` and `floor` are the
+   * retired lower bound's, unused until #1545 reworks these strings. The chips
+   * take `{rarity}`.
    */
   rarity: z.strictObject({
     title: TextSchema,

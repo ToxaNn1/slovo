@@ -16,6 +16,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
+import { useRarityCeiling } from '../settings/rarity-ceiling';
 import { useMixChanges, useMixState } from './mix';
 import { mixScreenModel, type MixCategoriesModel } from './mix-screen';
 
@@ -24,9 +25,8 @@ const strings = editionStrings.mix;
 /**
  * The choices of the Mix, for Settings › Мій Мікс and the onboarding's Mix
  * step: a chip for «Усі» and every Category of the Edition, the line saying
- * why the last Category's chip is disabled, the Rarity Floor choice while the
- * rarityFloor switch is on, the Rarity Ceiling choice while the rarityCeiling
- * switch is on, and the Corrections and Idioms switches, each when
+ * why the last Category's chip is disabled, the Rarity Ceiling choice while
+ * the rarityCeiling switch is on (a setting of its own, ADR 0072), and the Corrections and Idioms switches, each when
  * the Edition turns it on, with the chips of the Categories of Corrections
  * under the Corrections switch while it is on (ADR 0033), and under each kind
  * in the Mix its Mix kind weight while the mixKindWeights switch is on, and
@@ -35,19 +35,13 @@ const strings = editionStrings.mix;
  */
 export function MixChoices() {
   const state = useMixState();
-  const {
-    toggleCategory,
-    turnAllOn,
-    setKind,
-    setKindWeight,
-    setRarityFloor,
-    setRarityCeiling,
-    setQuickQuestionEvery,
-  } = useMixChanges();
+  const { toggleCategory, turnAllOn, setKind, setKindWeight, setQuickQuestionEvery } =
+    useMixChanges();
+  const { ceiling, setCeiling } = useRarityCeiling();
   const edition = useEditionInEffect();
   const quickQuestion = edition.isFeatureEnabled('quickQuestion');
 
-  const model = mixScreenModel({ edition, mix: state });
+  const model = mixScreenModel({ edition, mix: state, rarityCeiling: ceiling });
 
   return (
     <>
@@ -68,21 +62,6 @@ export function MixChoices() {
           />
         }
       />
-      {model.rarity !== undefined && (
-        <View style={styles.rarity}>
-          <RarityFloorChoice
-            shown
-            title={strings.rarity.title}
-            subtitle={strings.rarity.subtitle}
-            options={model.rarity.floors.map((floor) => ({
-              floor,
-              label: fill(strings.rarity.floor, { rarity: String(floor) }),
-            }))}
-            floor={model.rarity.floor}
-            onChange={setRarityFloor}
-          />
-        </View>
-      )}
       {model.ceiling !== undefined && (
         <View style={styles.rarity}>
           <RarityFloorChoice
@@ -95,7 +74,7 @@ export function MixChoices() {
               label: fill(strings.rarity.ceiling, { rarity: String(ceiling) }),
             }))}
             floor={model.ceiling.ceiling}
-            onChange={setRarityCeiling}
+            onChange={setCeiling}
           />
         </View>
       )}

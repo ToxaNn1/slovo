@@ -15,7 +15,7 @@ const { onboarding, feedNotices, settings } = editionStrings;
 
 /**
  * Settings › Пройти опитування ще раз (ADR 0067): «Хто ви» and «Навіщо» while
- * the questionnaire is on, the self-rating while the Rarity Floor is on, and
+ * the questionnaire is on, the self-rating while the Rarity Test is on, and
  * the interests. Each answer
  * applies at once through the Core's questionnaire, as on the onboarding and
  * the Feed Notices; the Rarity Test has its own row.
