@@ -130,11 +130,11 @@ export interface XpLog {
   /** The XP and the Daily Goal of a local date `YYYY-MM-DD`: a past day keeps the goal it had. */
   dayOf(date: string): XpDay;
   /**
-   * Sets the Daily Goal from today on: today's goal changes, a day already
-   * met stays met, and the earlier days keep theirs. Nothing while the Daily
-   * Goal is off.
+   * Sets the Daily Goal from today on, or turns it off with `null` («Без
+   * цілі»): today's goal changes, a day already met stays met, and the
+   * earlier days keep theirs. Nothing while the Daily Goal is off.
    */
-  setDailyGoal(goal: DailyGoal): Promise<void>;
+  setDailyGoal(goal: DailyGoal | null): Promise<void>;
   /**
    * Calls `listener` once when today's Daily Goal becomes met: the
    * celebration's trigger. Returns the call that stops it.
@@ -218,7 +218,7 @@ export async function openXpLog({
     return amount;
   }
 
-  /** The goal in force on a local date: the last `word-goal` set on or before it. */
+  /** The goal in force on a local date: the last `word-goal` set on or before it, unless that one turned it off. */
   function goalOf(date: string): DailyGoal | undefined {
     if (!goalOn) return undefined;
     let last: Extract<XpRecord, { kind: 'word-goal' }> | undefined;
@@ -232,7 +232,7 @@ export async function openXpLog({
       )
         last = record;
     }
-    return last?.goal;
+    return last?.goal ?? undefined;
   }
 
   const metId = (date: string) => `goal-met-${date}`;
@@ -321,7 +321,8 @@ export async function openXpLog({
         active.add(day);
     }
     for (const record of records.values()) {
-      if (record.kind === 'goal-met' && goalOf(record.date) !== undefined) active.add(record.date);
+      // A day met stays met whatever goal is set later, «Без цілі» included.
+      if (record.kind === 'goal-met' && goalOn) active.add(record.date);
     }
     const { xp, dailyGoal } = dayOf(date);
     return {
@@ -474,7 +475,7 @@ export async function openXpLog({
     change();
   }
 
-  async function setDailyGoal(goal: DailyGoal): Promise<void> {
+  async function setDailyGoal(goal: DailyGoal | null): Promise<void> {
     if (!goalOn) return;
     const at = clock.now();
     const record: XpRecord = {
@@ -483,7 +484,7 @@ export async function openXpLog({
       at: at.toISOString(),
       goal,
     };
-    await write(new Map([[newId(at), record], ...metToday(goal)]));
+    await write(new Map([[newId(at), record], ...metToday(goal ?? undefined)]));
     await analytics.track('dailyGoalChanged', { goal }).catch(() => undefined);
   }
 
