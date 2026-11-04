@@ -257,3 +257,4 @@ export {
   type UserStatePort,
 } from './ports';
 export { openTrackedUserState, type TrackedUserState } from './user-state/tracked-user-state';
+export { type Dashboard, type DashboardBlock, type WordOfTheDayHero } from './dashboard/dashboard';

@@ -149,6 +149,12 @@ export interface Feed {
    * Nothing when no Quick Question not answered yet is there.
    */
   answerQuickQuestion(position: number, option: number): Promise<boolean | undefined>;
+  /**
+   * Makes today's Word of the Day Seen through the Feed's own Seen, as a
+   * dwell on its card would: History, the archive and the Seen subscribers
+   * (ADR 0074). Nothing when today has none chosen or it is Seen already.
+   */
+  seeWordOfTheDay(): Promise<void>;
 }
 
 /**
@@ -875,5 +881,11 @@ export async function openFeed({
     openLinkedCorrection: (position, correctionId) =>
       inTurn(() => insertLinkedCorrection(position, correctionId)),
     answerQuickQuestion: (position, option) => inTurn(() => answerQuickQuestion(position, option)),
+    seeWordOfTheDay: () => {
+      const chosen = wordOfTheDay.chosen();
+      return chosen === undefined
+        ? Promise.resolve()
+        : inTurnTellingSeen(() => markOpenedSeen(chosen.wordId, new Map()));
+    },
   };
 }

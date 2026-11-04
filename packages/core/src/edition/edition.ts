@@ -126,6 +126,8 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   quickQuestion: ['game'],
   // The Rarity Test sets the Rarity Ceiling (ADR 0072).
   rarityTest: ['rarityCeiling'],
+  // The Dashboard's hero is the Word of the Day (ADR 0074).
+  dashboard: ['wordOfTheDay'],
 };
 
 /**
