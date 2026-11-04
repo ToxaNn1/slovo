@@ -865,12 +865,12 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
         : [];
   /**
    * The «ви» forms, as whole words: the pronouns, the plural imperatives
-   * («оберіть», «спробуйте», «торкніться») and the plural present and future
+   * («оберіть», «спробуйте», «торкніться», «позначте», «перевірте») and the plural present and future
    * («знаєте», «оберете», «торкнетеся»). No text is an exception; only words
    * that merely end like a verb («навіть», «відкрите») are not «ви» forms.
    */
   const vyWord =
-    /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;
+    /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте|[бвгґджзклмнпрфхцчшщ]те)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;
   const notVerbs = new Set(['навіть', 'відкрите', 'закрите', 'вкрите', 'сите']);
   const vy = {
     test: (text: string) =>

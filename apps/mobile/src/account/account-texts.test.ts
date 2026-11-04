@@ -61,7 +61,7 @@ describe('the problem line of the Account screen', () => {
 
     await account.requestCode('anna@');
 
-    expect(problemOf(account)).toBe('Перевірте адресу пошти.');
+    expect(problemOf(account)).toBe('Перевір адресу пошти.');
   });
 
   it('counts the tries a wrong code has left, in their plural form', async () => {

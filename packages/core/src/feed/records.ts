@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { declareRecord, declareRecords } from '../user-state/user-state-record';
-import { FEED_NOTICES } from '../feed-notice';
+import { FEED_NOTICES, RETIRED_NOTICE, withoutRetired } from '../feed-notice';
 
 /** A card's Entry and the local date it was on screen. */
 const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
@@ -16,7 +16,10 @@ export const feedRecords = {
    */
   feedNoticesClosed: declareRecord(
     'feed.noticesClosed',
-    z.object({ date: z.string(), notices: z.array(z.enum(FEED_NOTICES)) }),
+    z.object({
+      date: z.string(),
+      notices: z.array(z.enum([...FEED_NOTICES, RETIRED_NOTICE])).transform(withoutRetired),
+    }),
     { sync: 'device-only' },
   ),
   /**
