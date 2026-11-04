@@ -64,10 +64,10 @@ export interface AnalyticsEvents {
   /** Today's Daily Goal was met. */
   readonly dailyGoalMet: { readonly goal: number };
   /** An onboarding step came on screen (ADR 0067). */
-  readonly onboardingStepViewed: { readonly step: OnboardingStepKind };
+  readonly onboardingStepViewed: { readonly step: OnboardingStepKind | 'rarityTest' };
   /** The onboarding finished, past its last step or skipped. */
   readonly onboardingFinished: { readonly skipped: boolean };
-  /** The reader answered «Хто ви» (`who`) or «Навіщо» (`why`) with an option's id. */
+  /** The reader answered «Рівень» (`level`) or «Навіщо» (`why`) with an option's id. */
   readonly questionnaireAnswered: {
     readonly question: QuestionnaireQuestion;
     readonly answer: string;
