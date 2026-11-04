@@ -1079,6 +1079,31 @@ describe('the evening notification', () => {
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBeUndefined();
   });
 
+  it("reminds of the goal while today's Words Seen are below it", async () => {
+    const records = new Map([
+      goalFrom('2026-10-01', 2),
+      [
+        'history.w_000',
+        JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
+      ],
+    ]);
+    const { scheduler } = await run({ evening: true, records });
+
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
+  });
+
+  it('never reminds of the goal a reader who set none, whatever today has', async () => {
+    const records = new Map([
+      [
+        'history.w_000',
+        JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
+      ],
+    ]);
+    const { scheduler } = await run({ evening: true, records });
+
+    expect(planOf(scheduler).filter(({ kind }) => kind === 'evening')).toEqual([]);
+  });
+
   it('plans no evening notification today once the goal is met', async () => {
     const records = new Map([goalSet, ...activeOn(sevenDays), goalMetOn('2026-10-14')]);
     const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
