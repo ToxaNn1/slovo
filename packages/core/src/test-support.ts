@@ -87,9 +87,10 @@ const testEditionConfig = {
     names: ['Seed', 'Sprout', 'Sapling', 'Tree', 'Grove'],
   },
   questionnaire: {
-    who: [
-      { id: 'studying', label: 'Studying', rarityCeiling: 4 },
-      { id: 'working', label: 'Working', rarityCeiling: 5 },
+    level: [
+      { id: 'starting', label: 'Starting', rarityCeiling: 2 },
+      { id: 'good', label: 'Good', rarityCeiling: 4 },
+      { id: 'dont-know', label: 'Not sure', rarityTest: true },
     ],
     why: [
       { id: 'write-correctly', label: 'Write correctly', kindWeights: { correction: 'more' } },

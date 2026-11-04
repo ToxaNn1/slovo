@@ -150,9 +150,9 @@ const validConfig = {
   },
   levels: { first: 50, growth: 0.1, growingUntil: 10, later: 120, names: ['Seed', 'Sprout'] },
   questionnaire: {
-    who: [
-      { id: 'studying', label: 'Studying', rarityCeiling: 4 },
-      { id: 'working', label: 'Working', rarityCeiling: 5 },
+    level: [
+      { id: 'starting', label: 'Starting', rarityCeiling: 2 },
+      { id: 'good', label: 'Good', rarityCeiling: 4 },
     ],
     why: [{ id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } }],
     selfRating: [{ id: 'few', label: 'Few', offerRarityTest: false }],
@@ -441,13 +441,13 @@ describe('loadEdition', () => {
     );
   });
 
-  it('reports the questionnaire: the options of «Хто ви» and «Навіщо» and what each sets (ADR 0067)', () => {
+  it('reports the questionnaire: the options of the level question and «Навіщо» and what each sets (ADR 0067)', () => {
     expect(loadEdition(validConfig).questionnaire).toEqual(validConfig.questionnaire);
   });
 
   it('refuses an Edition without a questionnaire, with no option, a repeated option id, an unknown Mix kind or a Ceiling below the default Floor', () => {
     const { questionnaire, ...withoutQuestionnaire } = validConfig;
-    const [studying, working] = questionnaire.who;
+    const [starting, good] = questionnaire.level;
     expect(() => loadEdition(withoutQuestionnaire)).toThrow(InvalidEditionConfigError);
     expect(() =>
       loadEdition({ ...validConfig, questionnaire: { ...questionnaire, why: [] } }),
@@ -455,9 +455,9 @@ describe('loadEdition', () => {
     expect(() =>
       loadEdition({
         ...validConfig,
-        questionnaire: { ...questionnaire, who: [studying, { ...working, id: 'studying' }] },
+        questionnaire: { ...questionnaire, level: [starting, { ...good, id: 'starting' }] },
       }),
-    ).toThrow('questionnaire.who.1.id: Duplicate option id "studying"');
+    ).toThrow('questionnaire.level.1.id: Duplicate option id "starting"');
     expect(() =>
       loadEdition({
         ...validConfig,

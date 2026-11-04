@@ -164,7 +164,7 @@ export {
   CollectionLinkSchema,
   type CollectionLink,
 } from './collection-link';
-export { type CounterEvent } from './api/counters';
+export { type CountedQuestion, type CounterEvent } from './api/counters';
 export {
   MistakeReportSchema,
   MistakeTypeSchema,

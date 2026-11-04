@@ -29,8 +29,8 @@ export const OnboardingStringsSchema = z.strictObject({
     title: TextSchema,
     next: TextSchema,
   }),
-  /** «Хто ви»: its options are the Edition's questionnaire; «Пізніше» goes on without an answer. */
-  who: z.strictObject({
+  /** «Як добре ви знаєте мову?»: its options are the Edition's questionnaire; «Пізніше» goes on without an answer. */
+  level: z.strictObject({
     /** The word the step shouts large on its red top. */
     shout: TextSchema,
     title: TextSchema,
