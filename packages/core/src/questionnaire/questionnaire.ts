@@ -122,7 +122,7 @@ export function openQuestionnaire({
 
   /** Whether the later question can be offered now, beside the offers before it. */
   function applies(question: LaterQuestion, offerRarityTest: boolean | undefined): boolean {
-    if (question === 'dailyGoalChoice') return on('dailyGoal');
+    if (question === 'wordGoalChoice') return on('dailyGoal');
     if (question === 'selfRating') return on('rarityTest');
     if (question === 'rarityTest') return on('rarityTest') && offerRarityTest === true;
     return true;
@@ -191,7 +191,7 @@ export function openQuestionnaire({
     },
     async chooseDailyGoal(goal) {
       await xpLog.setDailyGoal(goal);
-      await answered('dailyGoalChoice', String(goal));
+      await answered('wordGoalChoice', String(goal));
     },
     open: (question) => answered(question, 'open'),
     later: (question) => answered(question, 'later'),
@@ -202,6 +202,6 @@ export function openQuestionnaire({
 /** The change that marks the Daily Goal as asked, for the onboarding that asks it. */
 export async function dailyGoalAsked(userState: UserState) {
   const record = (await userState.read(laterQuestions)) ?? { asked: [] };
-  const dailyGoal: LaterQuestion = 'dailyGoalChoice';
+  const dailyGoal: LaterQuestion = 'wordGoalChoice';
   return laterQuestions.change({ ...record, asked: [...new Set([...record.asked, dailyGoal])] });
 }
