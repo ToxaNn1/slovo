@@ -189,7 +189,7 @@ A step derived from total XP: 50 XP reach level 1, each level up to 10 costs 10%
 _Avoid_: Rank, tier, grade
 
 **Daily Goal**:
-The number of Words Seen the reader aims for on a local day: one of the Edition's options (10, 25 or 50 in the UA Edition), chosen in onboarding with 10 highlighted, or none when skipped (ADR 0074). Only Words count. It is recorded in the XP log as `word-goal` (the last set on or before a day is in force) and met once by a `goal-met` record, so a past day keeps the goal the reader had then; a change applies from the same local day and a day already met stays met. It replaces the Daily Limit.
+The number of Words Seen the reader aims for on a local day: one of the Edition's options (10, 25 or 50 in the UA Edition), chosen in onboarding with 10 highlighted, or none when skipped (ADR 0074). Only Words count. It is recorded in the XP log as `word-goal` (the last set on or before a day is in force) and met once by a `goal-met` record, so a past day keeps the goal the reader had then; a change applies from the same local day and a day already met stays met. «Без цілі» in Settings turns it off the same way, a `word-goal` with none. It replaces the Daily Limit.
 _Avoid_: Target, quota, Daily Limit
 
 **Streak freeze**:

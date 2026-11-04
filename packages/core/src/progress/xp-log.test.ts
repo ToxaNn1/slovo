@@ -531,6 +531,32 @@ describe('the Daily Goal', () => {
     expect(app.xpLog.dayOf('2026-10-13').dailyGoal).toBeNull();
   });
 
+  it('turns off from the same local day: today and the next days have none, a past day keeps its goal', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    const { app, records } = await run({ on: dailyGoal, time });
+    await app.xpLog.setDailyGoal(25);
+
+    time.set('2026-10-16T08:00:00+03:00');
+    await app.resume();
+    await app.xpLog.setDailyGoal(null);
+
+    expect(app.xpLog.state.dailyGoal).toBeNull();
+    expect(app.xpLog.dayOf('2026-10-16').dailyGoal).toBeNull();
+    expect(app.xpLog.dayOf('2026-10-15').dailyGoal).toEqual({ goal: 25, met: false });
+    expect(recordsOf(records).map(([, record]) => record)).toContainEqual({
+      kind: 'word-goal',
+      date: '2026-10-16',
+      at: '2026-10-16T05:00:00.000Z',
+      goal: null,
+    });
+
+    time.set('2026-10-17T08:00:00+03:00');
+    await app.resume();
+    expect(app.xpLog.dayOf('2026-10-17').dailyGoal).toBeNull();
+    await app.xpLog.setDailyGoal(10);
+    expect(app.xpLog.state.dailyGoal).toEqual({ goal: 10, seen: 0, met: false });
+  });
+
   it('records each goal set in the XP log, so it syncs with the log', async () => {
     const { app, records } = await run({ on: dailyGoal });
     await app.xpLog.setDailyGoal(50);
@@ -581,6 +607,9 @@ describe('the Daily Goal', () => {
       ['dailyGoalMet', { goal: 1 }],
       ['dailyGoalChanged', { goal: 1 }],
     ]);
+    await app.xpLog.setDailyGoal(null);
+    await settle();
+    expect(shared.events.at(-1)).toEqual(['dailyGoalChanged', { goal: null }]);
 
     const silent = fakeAnalytics();
     const off = await run({
@@ -615,6 +644,25 @@ describe('the Active Day with a Daily Goal', () => {
     await look(app, time);
     expect(app.xpLog.days.active).toEqual(new Set(['2026-10-14']));
     expect(app.progress.state.streak).toBe(1);
+  });
+
+  it('is a day with the goal turned off by the 5 XP rule, and a day met before it is turned off stays one', async () => {
+    const time = fakeClock('2026-10-14T08:00:00+03:00');
+    // Its own records: the store writes into the records it is given.
+    const records = earned(['a', '2026-10-14', '2026-10-14T04:00:00.000Z', 5]);
+    const { app } = await run({ on, time, records });
+    await app.xpLog.setDailyGoal(10);
+    expect(app.xpLog.days.active).toEqual(new Set());
+
+    await app.xpLog.setDailyGoal(null);
+    expect(app.xpLog.days.active).toEqual(new Set(['2026-10-14']));
+
+    time.set('2026-10-15T08:00:00+03:00');
+    await app.resume();
+    await app.xpLog.setDailyGoal(1);
+    await look(app, time);
+    await app.xpLog.setDailyGoal(null);
+    expect(app.xpLog.days.active).toEqual(new Set(['2026-10-14', '2026-10-15']));
   });
 
   it('keeps the past days as they were counted when a goal is set', async () => {
