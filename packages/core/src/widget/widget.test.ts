@@ -617,14 +617,13 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
    * XP log records of 5 XP on 14 and 15 October, two Active Days, and 7 XP
    * today, 16 October, unless today is left out.
    */
-  function earned({ today = true }: { today?: boolean } = {}): Map<string, string> {
+  /**
+   * XP on 2026-10-14 and 10-15 before any Daily Goal, Active by 5 XP; a Daily
+   * Goal of 20 Words set today, 2026-10-16, with 3 Words Seen today, met with `met`.
+   */
+  function earned({ today = true, met = false }: { today?: boolean; met?: boolean } = {}) {
     const records = new Map<string, string>();
-    const days = [
-      ['2026-10-14', 5],
-      ['2026-10-15', 5],
-      ['2026-10-16', 7],
-    ] as const;
-    for (const [date, amount] of today ? days : days.slice(0, 2)) {
+    for (const date of ['2026-10-14', '2026-10-15']) {
       records.set(
         `xp.seed-${date}`,
         JSON.stringify({
@@ -632,23 +631,39 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
           date,
           at: `${date}T05:00:00.000Z`,
           source: 'game-round',
-          amount,
+          amount: 5,
         }),
+      );
+    }
+    const at = '2026-10-16T05:00:00.000Z';
+    records.set(
+      'xp.word-goal',
+      JSON.stringify({ kind: 'word-goal', date: '2026-10-16', at, goal: 20 }),
+    );
+    if (today) {
+      for (const id of ['w_nature0', 'w_nature1', 'w_speech0']) {
+        records.set(`history.${id}`, JSON.stringify({ seenAt: at, wordOfTheDay: false }));
+      }
+    }
+    if (met) {
+      records.set(
+        'xp.goal-met-2026-10-16',
+        JSON.stringify({ kind: 'goal-met', date: '2026-10-16', at }),
       );
     }
     return records;
   }
 
-  it("carries today's XP, its Daily Goal and the Streak, dated today", async () => {
+  it("carries today's Words Seen, its Daily Goal and the Streak, dated today", async () => {
     const snapshot = await snapshotOf(await run({ records: earned(), on: ring }));
 
     expect(snapshot.goalRing).toEqual({
       on: '2026-10-16',
-      xp: 7,
+      xp: 3,
       goal: 20,
       met: false,
-      streak: 3,
-      after: { xp: 0, met: false, streak: 3 },
+      streak: 2,
+      after: { xp: 0, met: false, streak: 0 },
     });
     expect(() => serializeWidgetSnapshot(snapshot)).not.toThrow();
   });
@@ -664,7 +679,7 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
 
   // Spec #1358 stories 82-83, ADR 0066: a missed day breaks the Streak only once it ends.
   it('keeps the Streak in the ring after midnight, as the Core counts it the next day', async () => {
-    const records = earned();
+    const records = earned({ met: true });
     const today = await ringAt(records, start);
     const tomorrow = await ringAt(records, '2026-10-17T09:00:00+03:00');
 
@@ -707,12 +722,19 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
     }
   });
 
+  it('carries none while the reader has set no Daily Goal', async () => {
+    const records = earned();
+    records.delete('xp.word-goal');
+
+    expect((await snapshotOf(await run({ records, on: ring }))).goalRing).toBeUndefined();
+  });
+
   it('leaves the Streak out while statistics are off', async () => {
     const app = await run({ records: earned(), on: ring.filter((f) => f !== 'statistics') });
 
     expect((await snapshotOf(app)).goalRing).toEqual({
       on: '2026-10-16',
-      xp: 7,
+      xp: 3,
       goal: 20,
       met: false,
       after: { xp: 0, met: false },
@@ -731,7 +753,7 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
     expect((await snapshotOf(noCounters)).goalRing).toBeUndefined();
     expect((await snapshotOf(hideStreak)).goalRing).toEqual({
       on: '2026-10-16',
-      xp: 7,
+      xp: 3,
       goal: 20,
       met: false,
       after: { xp: 0, met: false },

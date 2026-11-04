@@ -63,26 +63,36 @@ async function renderBar({
 }
 
 describe('the XP bar over the Feed', () => {
-  it('shows today’s XP over the Daily Goal as the Game awards it', async () => {
+  it('shows today’s XP as the Game awards it while no Daily Goal is set', async () => {
     const composition = await renderBar();
-    expect(screen.getByRole('button', { name: 'Досвід: сьогодні 0/20 XP' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Досвід: сьогодні 0 XP' })).toBeOnTheScreen();
 
     await act(async () => {
-      composition.xpLog
-        .award({ source: 'game-round', mode: 'guess-word', rarity: undefined })
-        .commit();
       composition.xpLog
         .award({ source: 'game-round', mode: 'guess-word', rarity: undefined })
         .commit();
       await Promise.resolve();
     });
 
-    expect(screen.getByRole('button', { name: 'Досвід: сьогодні 2/20 XP' })).toBeOnTheScreen();
-    expect(screen.getByText('2/20 XP')).toBeOnTheScreen();
+    expect(screen.getByText('1 XP')).toBeOnTheScreen();
+  });
+
+  it('shows today’s Words Seen over a Daily Goal once one is set', async () => {
+    const composition = await renderBar();
+
+    await act(async () => {
+      await composition.xpLog.setDailyGoal(10);
+    });
+
+    expect(screen.getByRole('button', { name: 'Ціль дня: 0 з 10 слів' })).toBeOnTheScreen();
+    expect(screen.getByText('0 з 10 слів')).toBeOnTheScreen();
   });
 
   it('shows today’s XP alone while the Daily Goal is off in effect', async () => {
-    await renderBar({ dailyGoal: false });
+    const composition = await renderBar({ dailyGoal: false });
+    await act(async () => {
+      await composition.xpLog.setDailyGoal(10);
+    });
 
     expect(screen.getByRole('button', { name: 'Досвід: сьогодні 0 XP' })).toBeOnTheScreen();
   });

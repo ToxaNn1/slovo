@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { DailyGoal } from '@slovo/contracts';
 import {
   loadEdition,
   openComposition,
@@ -29,10 +28,7 @@ const { config } = activeEditionFiles;
  * The UA Edition as it ships, with the Feature Switches `off` given off and,
  * given one, the Daily Goal a reader has until they choose one.
  */
-function shippedEdition({
-  off = [],
-  dailyGoal,
-}: { off?: readonly FeatureSwitch[]; dailyGoal?: DailyGoal } = {}): Edition {
+function shippedEdition({ off = [] }: { off?: readonly FeatureSwitch[] } = {}): Edition {
   const { featureSwitches, userSettingDefaults, ...rest } = config as {
     featureSwitches: Record<string, boolean>;
     userSettingDefaults: Record<string, unknown>;
@@ -44,8 +40,7 @@ function shippedEdition({
       account: false,
       ...Object.fromEntries(off.map((feature) => [feature, false])),
     },
-    userSettingDefaults:
-      dailyGoal === undefined ? userSettingDefaults : { ...userSettingDefaults, dailyGoal },
+    userSettingDefaults,
   });
 }
 
@@ -173,10 +168,10 @@ describe('Settings › «Пройти опитування ще раз»', () =>
 });
 
 describe('The Feed Notice of a later question', () => {
-  it("sets the Daily Goal picked, the Edition's default until the reader picks another", async () => {
-    await openWith(shippedEdition({ dailyGoal: 30 }));
+  it('sets the Daily Goal picked, the Edition’s highlighted goal until the reader picks another', async () => {
+    await openWith(shippedEdition());
     await render('dailyGoalChoice');
-    expect(screen.getByTestId('later-question-daily-goal-30')).toBeSelected();
+    expect(screen.getByTestId('later-question-daily-goal-10')).toBeSelected();
 
     await fireEvent.press(screen.getByTestId('later-question-daily-goal-50'));
     await press(feedNotices.laterQuestions.done);

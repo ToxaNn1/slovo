@@ -125,16 +125,16 @@ describe('the onboarding', () => {
     expect(kinds(app)).toBe('firstWord');
   });
 
-  it('highlights 20 on the Daily Goal step and sets the goal the reader picks', async () => {
+  it('highlights the Edition Daily Goal in Words on its step and sets the goal the reader picks', async () => {
     const { app } = await run({ on: ['dailyGoal', 'xpLog'] });
     while (kinds(app) !== 'dailyGoal') await app.onboarding.next();
     expect(app.onboarding.state.step).toMatchObject({
       kind: 'dailyGoal',
-      goals: [10, 20, 30, 50],
-      highlighted: 20,
+      goals: [10, 25, 50],
+      highlighted: 10,
     });
-    await app.onboarding.chooseDailyGoal(30);
-    expect(app.xpLog.dayOf('2026-11-01').dailyGoal?.goal).toBe(30);
+    await app.onboarding.chooseDailyGoal(25);
+    expect(app.xpLog.dayOf('2026-11-01').dailyGoal?.goal).toBe(25);
     expect(app.onboarding.state.step).toBeUndefined();
   });
 

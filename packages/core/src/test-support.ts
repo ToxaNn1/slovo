@@ -46,7 +46,6 @@ const testEditionConfig = {
     theme: 'system',
     fontSize: 'M',
     vibration: true,
-    dailyGoal: 20,
     notificationTimes: [],
     rarityCeiling: 5,
     mix: {
@@ -79,6 +78,7 @@ const testEditionConfig = {
     reviewDailyCap: 10,
     quickQuestion: 2,
   },
+  dailyGoals: { options: [10, 25, 50], highlighted: 10 },
   levels: {
     first: 50,
     growth: 0.1,
