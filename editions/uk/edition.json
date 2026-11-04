@@ -76,6 +76,7 @@
     "streakFreezes": true,
     "streakBreak": true,
     "quickQuestion": true,
+    "playStep": true,
     "levels": true,
     "noCounters": true,
     "dailyGoal": true,

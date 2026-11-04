@@ -122,7 +122,7 @@ afterEach(() => {
 
 // Spec #1358, ticket #1379: the onboarding of 1.0 (ADR 0067).
 describe('the onboarding', () => {
-  it('goes from the welcome to the first Word, «Рівень», «Навіщо» and the Daily Goal, then the Feed', async () => {
+  it('goes from the welcome to the first Word, «ГРАЙ!», «Рівень», «Навіщо» and the Daily Goal, then the Feed', async () => {
     await renderOnboarding();
     expect(screen.getByText(strings.welcome.title)).toBeTruthy();
 
@@ -131,6 +131,9 @@ describe('the onboarding', () => {
     const firstWord = composition.onboarding.state.step;
     if (firstWord?.kind !== 'firstWord') throw new Error('No first Word');
     expect(screen.getAllByText(firstWord.word.primaryDefinition).length).toBeGreaterThan(0);
+
+    await press('onboarding-next');
+    expect(screen.getByText(strings.playStep.title)).toBeTruthy();
 
     await press('onboarding-next');
     expect(screen.getByText(strings.level.title)).toBeTruthy();
@@ -165,6 +168,7 @@ describe('the onboarding', () => {
   it('opens the Rarity Test with «Не знаю» in the «Рівень» frame, and its result goes on to «Навіщо»', async () => {
     await renderOnboarding();
     await press('onboarding-start');
+    await press('onboarding-next');
     await press('onboarding-next');
     await press('onboarding-answer-dont-know');
 
@@ -202,6 +206,38 @@ describe('the onboarding', () => {
     expect(composition.xpLog.state.dailyGoal).toBeNull();
   });
 
+  // Spec #1553, ticket #1558: «ГРАЙ!» shows the Games after the first Word.
+  it('shows «ГРАЙ!» after the first Word with the happy Mascot, and «Далі» goes on to «Рівень»', async () => {
+    await renderOnboarding();
+    await press('onboarding-start');
+    await press('onboarding-next');
+
+    const play = within(screen.getByTestId('onboarding-play'));
+    expect(play.getByText(strings.playStep.shout)).toBeTruthy();
+    expect(play.getByRole('header', { name: strings.playStep.title })).toBeTruthy();
+    expect(play.getByText(strings.playStep.subtitle)).toBeTruthy();
+    expect(screen.getByTestId('mascot-happy')).toBeTruthy();
+    expect(screen.getByTestId('onboarding-skip')).toBeTruthy();
+
+    await press('onboarding-next');
+    expect(screen.getByText(strings.level.title)).toBeTruthy();
+  });
+
+  it('goes from the first Word straight to «Рівень» with the Game off', async () => {
+    // Through the Edition's own switches, so `playStep` goes off with the Game it depends on.
+    const { featureSwitches, ...rest } = activeEditionFiles.config as {
+      featureSwitches: Record<string, boolean>;
+    };
+    await renderOnboarding(
+      loadEdition({ ...rest, featureSwitches: { ...featureSwitches, game: false } }),
+    );
+    await press('onboarding-start');
+    await press('onboarding-next');
+
+    expect(screen.queryByTestId('onboarding-play')).toBeNull();
+    expect(screen.getByText(strings.level.title)).toBeTruthy();
+  });
+
   it('asks no question while the questionnaire is off', async () => {
     const shipped = loadEdition(activeEditionFiles.config);
     await renderOnboarding({
@@ -209,6 +245,7 @@ describe('the onboarding', () => {
       isFeatureEnabled: (name) => name !== 'questionnaire' && shipped.isFeatureEnabled(name),
     });
     await press('onboarding-start');
+    await press('onboarding-next');
     await press('onboarding-next');
 
     expect(screen.queryByText(strings.level.title)).toBeNull();

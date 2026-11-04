@@ -71,6 +71,8 @@ export function Onboarding() {
     );
   } else if (step.kind === 'firstWord') {
     shown = <FirstWord step={step} word={step.word} mascot={mascot} onNext={next} onSkip={skip} />;
+  } else if (step.kind === 'playStep') {
+    shown = <PlayStep step={step} mascot={mascot} onNext={next} onSkip={skip} />;
   } else if (step.kind === 'dailyGoal') {
     shown = (
       <DailyGoalStep
@@ -117,6 +119,7 @@ export function Onboarding() {
 const mascotState: Readonly<Record<Step['kind'], MascotState>> = {
   welcome: 'shouts',
   firstWord: 'happy',
+  playStep: 'happy',
   level: 'waits',
   rarityTest: 'waits',
   why: 'waits',
@@ -168,6 +171,52 @@ function FirstWord({
         <Title>{strings.firstWord.title}</Title>
       </View>
       <EntryCard card={{ kind: 'word', entryId: word.wordId, model: word }} />
+    </OnboardingStep>
+  );
+}
+
+/** A step's line under its title, in the Edition's voice. */
+function Subtitle({ children }: { children: string }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  return (
+    <Text
+      {...voice}
+      maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+      style={[typeStyle('stepText', tokens), { color: colors.muted }]}
+    >
+      {children}
+    </Text>
+  );
+}
+
+/** «ГРАЙ!»: the Games in one screen, and «Далі». */
+function PlayStep({
+  step,
+  mascot,
+  onNext,
+  onSkip,
+}: {
+  step: Step;
+  mascot: ReactNode;
+  onNext: () => void;
+  onSkip: () => void;
+}) {
+  return (
+    <OnboardingStep
+      testID="onboarding-play"
+      step={step.number}
+      total={step.total}
+      shout={strings.playStep.shout}
+      mascot={mascot}
+      onSkip={onSkip}
+      footer={<Button testID="onboarding-next" label={strings.playStep.next} onPress={onNext} />}
+    >
+      <View style={stepStyles.heading}>
+        <Title>{strings.playStep.title}</Title>
+        <Subtitle>{strings.playStep.subtitle}</Subtitle>
+      </View>
     </OnboardingStep>
   );
 }
@@ -317,7 +366,6 @@ function DailyGoalStep({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { voice } = useEdition();
   const [picked, setPicked] = useState(highlighted);
   return (
     <OnboardingStep
@@ -339,13 +387,7 @@ function DailyGoalStep({
     >
       <View style={stepStyles.heading}>
         <Title>{strings.dailyGoal.title}</Title>
-        <Text
-          {...voice}
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[typeStyle('stepText', tokens), { color: colors.muted }]}
-        >
-          {strings.dailyGoal.subtitle}
-        </Text>
+        <Subtitle>{strings.dailyGoal.subtitle}</Subtitle>
       </View>
       <View style={styles.goals}>
         {goals.map((goal) => {
