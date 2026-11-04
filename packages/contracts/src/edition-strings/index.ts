@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { AccountStringsSchema, EmailStringsSchema } from './account';
+import { DashboardStringsSchema } from './dashboard';
 import { DatesStringsSchema } from './dates';
 import { appStringsShape } from './app';
 import { AppIntentsStringsSchema } from './app-intents';
@@ -74,6 +75,7 @@ export const EditionStringsSchema = z.strictObject({
   rarityTest: RarityTestStringsSchema,
   feedNotices: FeedNoticesStringsSchema,
   wordOfTheDayArchive: WordOfTheDayArchiveStringsSchema,
+  dashboard: DashboardStringsSchema,
   mood: MoodStringsSchema,
   game: GameStringsSchema,
   widget: WidgetStringsSchema,
