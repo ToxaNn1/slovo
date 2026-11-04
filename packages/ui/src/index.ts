@@ -60,7 +60,7 @@ export { MoodButton } from './mood/MoodButton';
 export { MoodSheet, type MoodChip } from './mood/MoodSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
-export { RarityFloorChoice } from './mix/RarityFloorChoice';
+export { ChipChoice } from './mix/ChipChoice';
 export {
   HEADLINE_MAX_FONT_SCALE,
   LaterButton,

@@ -27,10 +27,10 @@ export interface RarityTestScreen {
   readonly children: ReactNode;
 }
 
-/** Where the Rarity Test is: the Word asked about, or the floor it set. */
+/** Where the Rarity Test is: the Word asked about, or the Rarity Ceiling it set. */
 type RarityTestPhase =
   | { readonly kind: 'asking'; readonly answers: readonly { rarity: Rarity; known: boolean }[] }
-  | { readonly kind: 'result'; readonly floor: Rarity };
+  | { readonly kind: 'result'; readonly ceiling: Rarity };
 
 /** A Rarity Test screen's title, as VoiceOver's header. */
 export function RarityTestTitle({ children }: { children: string }) {
@@ -52,7 +52,7 @@ export function RarityTestTitle({ children }: { children: string }) {
  * The Rarity Test's questions and result, the same in onboarding and from
  * Settings: each Word in turn by its Lemma with Stress under «{n} з {total}»,
  * with «Знаю» and «Не знаю»; the last answer applies them all, and the result
- * says «Ваш рівень: від {n}» over «Далі». The caller draws each screen in its
+ * says «Ваша рідкість: до {n}» over «Далі». The caller draws each screen in its
  * own frame.
  */
 export function RarityTestQuestions({
@@ -107,9 +107,9 @@ export function RarityTestQuestions({
     setPhase({ kind: 'asking', answers });
     if (answers.length < words.length || applied.current) return;
     applied.current = true;
-    void onApply(answers).then((floor) => {
-      if (floor === undefined) onDone();
-      else setPhase({ kind: 'result', floor });
+    void onApply(answers).then((ceiling) => {
+      if (ceiling === undefined) onDone();
+      else setPhase({ kind: 'result', ceiling });
     });
   };
 
@@ -121,7 +121,7 @@ export function RarityTestQuestions({
       ),
       children: (
         <RarityTestTitle>
-          {fill(strings.rarityTest.result, { n: String(phase.floor) })}
+          {fill(strings.rarityTest.result, { n: String(phase.ceiling) })}
         </RarityTestTitle>
       ),
     });

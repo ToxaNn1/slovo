@@ -46,6 +46,7 @@ const everything: Shown = {
   fastReveal: true,
   moods: true,
   wordOfTheDayArchive: true,
+  rarityCeiling: true,
   rarityTest: true,
   questionnaire: { whoWhy: true, selfRating: true },
 };
@@ -111,6 +112,10 @@ describe('what the reader is shown', () => {
       { off: ['dailyGoal'], shown: { dailyGoal: false } },
     ],
     ['no 🎲 «Слово під настрій» with moods off', { off: ['moods'], shown: { moods: false } }],
+    [
+      'no «Рідкість» with the Rarity Ceiling off',
+      { off: ['rarityCeiling'], shown: { rarityCeiling: false } },
+    ],
     [
       'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',
       {
