@@ -1,4 +1,4 @@
-import type { Mood, Rarity } from '@slovo/contracts';
+import { RaritySchema, type Mood, type Rarity } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { openComposition, type Composition, type FeatureSwitch, type Feed } from '../index';
@@ -23,7 +23,7 @@ const RARITIES: readonly Rarity[] = [1, 2, 3, 4, 5];
 const words = RARITIES.flatMap((rarity) =>
   many(4, `w${String(rarity)}_`, (id) => word(id, { rarity })),
 );
-const rarityOf = (id: string): Rarity => Number(id[1]) as Rarity;
+const rarityOf = (id: string): Rarity => RaritySchema.parse(Number(id[1]));
 
 const content = createMemoryContentPort({
   words,

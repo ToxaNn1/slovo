@@ -64,7 +64,7 @@ export interface Edition {
   readonly originLanguages: readonly OriginLanguage[];
   /** The Edition's moods, in their order. */
   readonly moods: readonly Mood[];
-  /** The four moods the Dashboard's Mood check-in offers, in display order; none when the Edition has no moods (ADR 0076). */
+  /** The four moods the Dashboard's Mood check-in offers, in display order (ADR 0076). */
   readonly dashboardMoods: readonly Mood[];
   /** The letters Search reads as another, such as ґ as г (ADR 0054). */
   readonly searchLetters: Readonly<Record<string, string>>;

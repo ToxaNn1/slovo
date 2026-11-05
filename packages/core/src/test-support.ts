@@ -26,7 +26,8 @@ import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } fr
  * The config of the test Edition, in the shape of a real Edition's
  * `edition.json`: every Feature Switch on, one Category `test`, the one the
  * test Words carry, in its default Mix with every kind of Entry, the Daily
- * Limit off, and no notification time, mood, origin language or search letter.
+ * Limit off, four moods that shift nothing, and no notification time, origin
+ * language or search letter.
  */
 const testEditionConfig = {
   id: 'test',
@@ -66,8 +67,13 @@ const testEditionConfig = {
   correctionCategories: [{ id: 'everyday', displayName: 'Everyday' }],
   categoriesRequiringHistory: [],
   originLanguages: [],
-  moods: [],
-  dashboardMoods: [],
+  moods: [
+    { id: 'energetic', name: 'Energetic', emoji: '⚡', reply: 'Keep the pace!' },
+    { id: 'thoughtful', name: 'Thoughtful', emoji: '🤔', reply: 'Food for thought.' },
+    { id: 'calm', name: 'Calm', emoji: '😌', reply: 'No hurry.' },
+    { id: 'joyful', name: 'Joyful', emoji: '😊', reply: 'Catch a bright word!' },
+  ],
+  dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful'],
   searchLetters: {},
   xp: {
     round: 1,

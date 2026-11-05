@@ -789,19 +789,16 @@ export const EditionConfigSchema = z
     originLanguages: z.array(OriginLanguageSchema),
     /**
      * The moods, in their order (ADR 0054): the Edition owns the list, so the
-     * Core stays language-agnostic. Empty when the Edition has no moods.
+     * Core stays language-agnostic. It lists at least the four `dashboardMoods` name.
      */
     moods: z.array(MoodSchema),
     /**
      * The four moods the Dashboard's Mood check-in offers, by id among
-     * `moods`, in display order (ADR 0076). Empty when the Edition has no
-     * moods: the check-in asks nothing then.
+     * `moods`, in display order (ADR 0076): exactly four.
      */
     dashboardMoods: z
       .array(KebabCaseIdSchema)
-      .refine((ids) => ids.length === 0 || ids.length === 4, {
-        message: 'The Dashboard lists four moods or none',
-      }),
+      .length(4, { message: 'The Dashboard lists exactly four moods' }),
     /**
      * The letters Search reads as another (ADR 0054), each lower-case letter
      * to the one it reads as, such as ґ to г: the Edition owns them, so the
