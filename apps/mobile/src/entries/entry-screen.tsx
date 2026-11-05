@@ -11,7 +11,7 @@ import { editionStrings } from '../edition/edition';
 import { ShippedMascot } from '../mascot/mascot';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
-import { useEntrySlots } from './entry-actions';
+import { useEntrySlots, useEntrySwipe } from './entry-actions';
 import { useOpenScreen } from '../use-open-screen';
 
 /**
@@ -51,6 +51,7 @@ export function EntryScreen({
   const router = useRouter();
   const openScreen = useOpenScreen();
   const { stressFall } = useShown();
+  const swipe = useEntrySwipe(entryId);
   const slots = useEntrySlots();
   // `null` once read for an id the Language Pack doesn't have.
   const read = useCallback(
@@ -99,6 +100,7 @@ export function EntryScreen({
             }}
             onWordHistoryShown={onWordHistoryShown}
             {...slots(card, 'details')}
+            swipe={swipe}
             stressFalls={stressFall}
           />
         )}

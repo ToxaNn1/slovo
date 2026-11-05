@@ -8,6 +8,7 @@ import { ConcealedProvider, useSelfCheck } from './self-check';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
 import { Button } from '../primitives/Button';
+import { SwipeMarks, type EntrySwipe } from '../knowledge/SwipeMarks';
 import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
 import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
@@ -59,6 +60,11 @@ export interface EntryCardProps {
    * `calligraphy` is on in effect. Any other card keeps the Word font.
    */
   wordOfTheDayFont?: string | undefined;
+  /**
+   * The side swipes that set the Entry's Knowledge Mark, with its stamp and
+   * undo toast: only under the `swipeMarks` Feature Switch (ADR 0077).
+   */
+  swipe?: EntrySwipe | undefined;
 }
 
 /** On the SE the padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
@@ -99,8 +105,46 @@ export function EntryCard({
   selfCheck = false,
   stressFalls = false,
   wordOfTheDayFont,
+  swipe,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
+  const face = (
+    <EntryCardFace
+      card={card}
+      onOpenCorrection={onOpenCorrection}
+      onOpenWord={onOpenWord}
+      onOpenSynonymRow={onOpenSynonymRow}
+      onWordHistoryShown={onWordHistoryShown}
+      actions={actions}
+      corner={corner}
+      stressFalls={stressFalls}
+      wordOfTheDayFont={wordOfTheDayFont}
+      concealed={concealed}
+      reveal={reveal}
+    />
+  );
+  if (swipe === undefined) return face;
+  return (
+    <SwipeMarks swipe={swipe} concealed={concealed} correction={card.kind === 'correction'}>
+      {face}
+    </SwipeMarks>
+  );
+}
+
+/** The card itself, with its Self-check state from `EntryCard`. */
+function EntryCardFace({
+  card,
+  onOpenCorrection,
+  onOpenWord,
+  onOpenSynonymRow,
+  onWordHistoryShown,
+  actions,
+  corner,
+  stressFalls = false,
+  wordOfTheDayFont,
+  concealed,
+  reveal,
+}: Omit<EntryCardProps, 'selfCheck' | 'swipe'> & { concealed: boolean; reveal: () => void }) {
   const { strings } = useEdition();
   const { colors, radii } = useTokens();
   const lemmaSize = useLemmaSize();

@@ -14,6 +14,7 @@ import {
   MistakeReportSheet,
   ShareButton,
   ShareSheet,
+  type EntrySwipe,
   useEdition,
   useUndoToast,
 } from '@slovo/ui';
@@ -254,6 +255,19 @@ interface OpenedAction {
   open: (() => void) | undefined;
   button: ReactNode;
   sheet: ReactNode;
+}
+
+/**
+ * The side swipes of an Entry's card that set its Knowledge Mark, with the
+ * stamp and the undo toast: there only when the Knowledge and Swipe Marks
+ * switches are both on in effect (ADR 0077). Feed Notices take none.
+ */
+export function useEntrySwipe(entryId: string): EntrySwipe | undefined {
+  const shown = useShown();
+  const knowledge = useKnowledgeMark(entryId);
+  return shown.entryButtons.knowledge && shown.swipeMarks
+    ? { mark: knowledge.mark, onMark: knowledge.set, onUndo: knowledge.undo }
+    : undefined;
 }
 
 /**

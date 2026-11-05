@@ -52,6 +52,7 @@ export default [
       'src/game/PairsGrid.tsx',
       'src/game/TracedCrosswordGrid.tsx',
       'src/game/VowelButtons.tsx',
+      'src/knowledge/SwipeMarks.tsx',
       'src/onboarding/OnboardingStep.tsx',
       'src/onboarding/SplashOverlay.tsx',
       'src/progress/ActiveDaysCalendar.tsx',

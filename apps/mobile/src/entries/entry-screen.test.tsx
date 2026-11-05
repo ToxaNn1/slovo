@@ -5,6 +5,8 @@ import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { State } from 'react-native-gesture-handler';
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import EntryLayout from '../app/entry/_layout';
@@ -27,11 +29,23 @@ jest.mock('./entry-actions', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
   return {
     useEntrySlots: () => () => ({ actions: <View testID="entry-actions" /> }),
+    useEntrySwipe:
+      jest.requireActual<typeof import('./entry-actions')>('./entry-actions').useEntrySwipe,
   };
 });
 
 /** The UA Edition as its config file gives it, every Feature Switch as it ships. */
 const shippedEdition = loadEdition(activeEditionFiles.config);
+
+/** Whether the Swipe Marks switch is on in effect: off as the Edition ships it unless a test turns it on. */
+let swipeMarksOn = false;
+
+/** The Edition in effect: as it ships, with the Swipe Marks switch as the test sets it. */
+const editionInEffect = (): typeof shippedEdition => ({
+  ...shippedEdition,
+  isFeatureEnabled: (feature) =>
+    feature === 'swipeMarks' ? swipeMarksOn : shippedEdition.isFeatureEnabled(feature),
+});
 
 const haptics: Haptics = {
   selection: jest.fn(),
@@ -107,7 +121,7 @@ async function settle() {
 async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
   const shell = testShell({
     composition: opened(composition),
-    remoteSwitches: switchedTo(shippedEdition),
+    remoteSwitches: switchedTo(editionInEffect()),
   });
   await renderRouter(
     {
@@ -168,6 +182,39 @@ describe('the Entry screen of a Word', () => {
     expect(within(scroll).getByTestId('word-definition')).toBeOnTheScreen();
     expect(screen.getByTestId('entry-actions')).toBeOnTheScreen();
     expect(within(scroll).queryByTestId('entry-actions')).not.toBeOnTheScreen();
+  });
+});
+
+describe('the Entry screen and the side swipes (ADR 0077)', () => {
+  afterEach(() => {
+    swipeMarksOn = false;
+  });
+
+  it('marks the Word Known on a swipe right with the Swipe Marks switch on, with its stamp', async () => {
+    swipeMarksOn = true;
+    await renderEntry('w_sumyrnyi');
+
+    await act(async () => {
+      fireGestureHandler(getByGestureTestId('entry-card-side-swipe'), [
+        { state: State.BEGAN, translationX: 0 },
+        { state: State.ACTIVE, translationX: 8 },
+        { state: State.ACTIVE, translationX: 120 },
+        { state: State.END, translationX: 120 },
+      ]);
+      await Promise.resolve();
+    });
+    await settle();
+
+    expect(composition.knowledge.state.shown.get('w_sumyrnyi')).toBe('known');
+    expect(screen.getByTestId('swipe-stamp')).toBeOnTheScreen();
+    expect(screen.getByTestId('undo-toast')).toBeOnTheScreen();
+  });
+
+  it('has no side swipes with the Swipe Marks switch off', async () => {
+    await renderEntry('w_sumyrnyi');
+
+    expect(screen.getByTestId('word-card')).toBeOnTheScreen();
+    expect(screen.queryByTestId('swipe-card')).not.toBeOnTheScreen();
   });
 });
 

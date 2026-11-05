@@ -16,18 +16,19 @@ import {
   SearchButton,
   space,
   UndoToastProvider,
+  useCloseUndoToast,
   useTokens,
   VerticalPager,
   YesterdayCard,
   type VerticalPagerHandle,
 } from '@slovo/ui';
 import type { FeedCard, FeedNoticeCard, WordCardModel } from '@slovo/core';
-import { memo, useCallback, useRef } from 'react';
+import { memo, useCallback, useRef, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
-import { useEntrySlots, useYesterdaySlots } from '@/entries/entry-actions';
+import { useEntrySlots, useEntrySwipe, useYesterdaySlots } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
@@ -72,6 +73,7 @@ function FeedScreen() {
   const openScreen = useOpenScreen();
 
   const { cards, onCardChange, openCorrection, answerQuickQuestion } = feed;
+  const closeUndoToast = useCloseUndoToast();
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
   const renderPage = useCallback(
@@ -87,6 +89,14 @@ function FeedScreen() {
     ),
     [openCorrection, answerQuickQuestion],
   );
+  const onIndexChange = useCallback(
+    (position: number) => {
+      onCardChange(position);
+      // The undo toast of a side swipe goes once the reader moves on to another card.
+      closeUndoToast();
+    },
+    [onCardChange, closeUndoToast],
+  );
 
   if (cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
 
@@ -100,7 +110,7 @@ function FeedScreen() {
           items={cards}
           initialIndex={feed.startPosition}
           renderPage={renderPage}
-          onIndexChange={onCardChange}
+          onIndexChange={onIndexChange}
           turnActionLabels={turnActionLabels}
         />
       </RevealPace>
@@ -215,9 +225,9 @@ const FeedPage = memo(function FeedPage({
         {card.kind === 'notice' ? (
           <YesterdayNotice word={card.word} />
         ) : card.kind === 'tip' ? (
-          <EntryCard card={card} selfCheck={selfCheck} {...slots(card)} />
+          <SwipedEntryCard card={card} selfCheck={selfCheck} {...slots(card)} />
         ) : card.kind === 'synonymRow' ? (
-          <EntryCard
+          <SwipedEntryCard
             card={card}
             // A member opens its Word over the Feed, Hidden or out of the Mix alike.
             onOpenWord={(wordId) => {
@@ -227,7 +237,7 @@ const FeedPage = memo(function FeedPage({
             {...slots(card)}
           />
         ) : (
-          <EntryCard
+          <SwipedEntryCard
             card={card}
             onOpenCorrection={(correctionId) => {
               onOpenCorrection(position, correctionId);
@@ -247,6 +257,11 @@ const FeedPage = memo(function FeedPage({
     </View>
   );
 });
+
+/** An Entry's card in the Feed, with the side swipes that set its Knowledge Mark (ADR 0077). */
+function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'swipe'>) {
+  return <EntryCard {...props} swipe={useEntrySwipe(props.card.entryId)} />;
+}
 
 /**
  * A Feed Notice that sits in the middle of its page: the Weekly Recap, the
