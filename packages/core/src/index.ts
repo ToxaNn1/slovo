@@ -257,6 +257,12 @@ export {
 } from './ports';
 export { openTrackedUserState, type TrackedUserState } from './user-state/tracked-user-state';
 export {
+  type CorrectionTypeRow,
+  type CorrectionTypes,
+  type CorrectionTypeTile,
+} from './dashboard/correction-types';
+export {
+  type CorrectionTypesBlock,
   type Dashboard,
   type DashboardBlock,
   type MoodBlock,

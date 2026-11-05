@@ -1,3 +1,4 @@
+import type { CorrectionType } from '@slovo/contracts';
 import type { DashboardBlock } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
 import { useEffect, useSyncExternalStore } from 'react';
@@ -22,6 +23,8 @@ export interface DashboardScreen {
   readonly skipMood: () => void;
   /** A row of «Попередні слова»: opens its Entry card as Search does, making nothing Seen. */
   readonly openPreviousWord: (entryId: string) => void;
+  /** A tile of the Correction Types rail: opens its type's screen. */
+  readonly openCorrectionType: (type: CorrectionType) => void;
 }
 
 const previousWordsTitle = editionStrings.dashboard.previousWords.title;
@@ -54,6 +57,9 @@ export function useDashboardScreen(): DashboardScreen {
     },
     openPreviousWord: (entryId) => {
       openScreen(`/search/${entryId}?back=${encodeURIComponent(previousWordsTitle)}`);
+    },
+    openCorrectionType: (type) => {
+      openScreen(`/correction-type/${type}`);
     },
   };
 }

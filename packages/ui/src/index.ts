@@ -125,6 +125,8 @@ export { BadgeMark } from './progress/BadgeMark';
 export { DashboardHero } from './dashboard/DashboardHero';
 export { MoodCheckIn } from './dashboard/MoodCheckIn';
 export { PreviousWords } from './dashboard/PreviousWords';
+export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
+export { CorrectionTypesRail } from './dashboard/CorrectionTypesRail';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { LevelCard } from './progress/LevelCard';

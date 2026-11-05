@@ -353,6 +353,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   mood: z.boolean(),
   /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `dashboard` or `wordOfTheDayArchive` is. */
   previousWords: z.boolean(),
+  /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `dashboard` or `corrections` is. */
+  correctionTypes: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

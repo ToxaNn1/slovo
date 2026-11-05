@@ -11,6 +11,7 @@ import type { Clock } from '../ports';
 import { createSubscribers } from '../in-turn';
 import type { MoodCheckIns } from '../mood/mood';
 import type { WordOfTheDayArchive, WordOfTheDayArchiveDay } from '../saved/word-of-the-day-archive';
+import type { CorrectionTypeTile, CorrectionTypes } from './correction-types';
 
 /** How many archive days «Попередні слова» shows at most. */
 const PREVIOUS_WORDS = 3;
@@ -39,7 +40,8 @@ export type WordOfTheDayHero =
  * of the union, so a later block (previous Words, Mood, the rails) is one
  * more member and one more line in `blocksOf`.
  */
-export type DashboardBlock = WordOfTheDayBlock | MoodBlock | PreviousWordsBlock;
+export type DashboardBlock =
+  WordOfTheDayBlock | MoodBlock | PreviousWordsBlock | CorrectionTypesBlock;
 
 /** The Word of the Day hero's block, first on the Dashboard. */
 export interface WordOfTheDayBlock {
@@ -72,6 +74,15 @@ export interface PreviousWordsBlock {
 }
 
 /**
+ * The Correction Types rail's block, after Mood: a tile per Correction Type
+ * with live Corrections, with N and X «розібрано». No tile, no block.
+ */
+export interface CorrectionTypesBlock {
+  readonly kind: 'correctionTypes';
+  readonly tiles: readonly CorrectionTypeTile[];
+}
+
+/**
  * The Dashboard (ADR 0076): the home's blocks for the local day the
  * composition turned to last. They follow the day change and Seen; with
  * `dashboard` off there are none.
@@ -94,6 +105,7 @@ export async function openDashboard({
   mood,
   archive,
   clock,
+  correctionTypes,
   seen,
   dayTurned,
 }: {
@@ -106,6 +118,7 @@ export async function openDashboard({
   archive: Pick<WordOfTheDayArchive, 'list'>;
   /** Tells today, whose archive day is the hero's. */
   clock: Clock;
+  correctionTypes: Pick<CorrectionTypes, 'tiles' | 'subscribe'>;
   seen: { subscribe(listener: (entryId: string) => unknown): unknown };
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
 }): Promise<Dashboard> {
@@ -156,6 +169,8 @@ export async function openDashboard({
     if (moodCheckIn !== undefined) blocks.push(moodCheckIn);
     const previous = previousWordsOn ? await previousWords() : undefined;
     if (previous !== undefined) blocks.push(previous);
+    const { tiles } = correctionTypes;
+    if (tiles.length > 0) blocks.push({ kind: 'correctionTypes', tiles });
     return blocks;
   }
 
@@ -173,6 +188,7 @@ export async function openDashboard({
     seen.subscribe(() => refresh());
     dayTurned.subscribe(() => refresh());
     mood.subscribe(() => void refresh());
+    correctionTypes.subscribe(() => void refresh());
   }
 
   return {
@@ -205,6 +221,12 @@ function blockKeyOf(block: DashboardBlock): string {
     case 'previousWords':
       return `previousWords:${block.days
         .map(({ date, row }) => `${dateKeyOf(date)}=${row.entryId}`)
+        .join(',')}`;
+    case 'correctionTypes':
+      return `correctionTypes:${block.tiles
+        .map(
+          ({ type, total, workedThrough }) => `${type}=${String(workedThrough)}/${String(total)}`,
+        )
         .join(',')}`;
   }
 }
