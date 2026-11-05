@@ -38,10 +38,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow:
     when:
       visible:
-        id: gestures-hint-dismiss
+        id: swipe-hint
     commands:
       - tapOn:
-          id: gestures-hint-dismiss
+          id: swipe-hint
 # Heart the card on screen. The heart sits under the card, which may be taller
 # than the screen, then off the tab bar: a short slow drag scrolls the card
 # further, and is too short and slow to turn the page.
