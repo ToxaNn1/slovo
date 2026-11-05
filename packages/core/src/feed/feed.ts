@@ -157,6 +157,13 @@ export interface Feed {
    * (ADR 0076). Nothing when today has none chosen or it is Seen already.
    */
   seeWordOfTheDay(): Promise<void>;
+  /**
+   * Today's Word of the Day, chosen in the Feed's turn as its card would be
+   * when today has none yet: past the cards the Feed showed in this Cycle,
+   * starting the Feed's new Cycle when the choice starts one. The Dashboard's
+   * hero reads it, so the Feed stays the one that chooses (ADR 0076).
+   */
+  wordOfTheDay(): Promise<WordOfTheDayChoice | undefined>;
 }
 
 /**
@@ -620,17 +627,27 @@ export async function openFeed({
   }
 
   /**
+   * Today's Word of the Day, chosen first past the cards shown in this Cycle
+   * but the `replaced` card; a choice that starts a new Cycle starts the
+   * session's too, so the next card added is its first.
+   */
+  async function chooseWordOfTheDay(replaced?: FeedCard): Promise<WordOfTheDayChoice | undefined> {
+    const today = await wordOfTheDay.today({ avoid: session.shownIds(replaced) });
+    if (today?.startedCycle === true) session.startCycle();
+    return today;
+  }
+
+  /**
    * Adds the card of today's Word of the Day at the end, in place of the
    * `replaced` card if given, choosing it first if today has none yet.
    */
   async function addWordOfTheDay(replaced?: FeedCard): Promise<FeedCard | undefined> {
-    const today = await wordOfTheDay.today({ avoid: session.shownIds(replaced) });
+    const today = await chooseWordOfTheDay(replaced);
     if (today === undefined) return undefined;
     const card = await wordOfTheDayCard(today);
     if (card === undefined) return undefined;
     openedDay = dateKeyOf(today.date);
     dayToOpen = undefined;
-    if (today.startedCycle) session.startCycle();
     session.add(card, replaced);
     subscribers.tell();
     return card;
@@ -925,6 +942,7 @@ export async function openFeed({
     openLinkedCorrection: (position, correctionId) =>
       inTurn(() => insertLinkedCorrection(position, correctionId)),
     answerQuickQuestion: (position, option) => inTurn(() => answerQuickQuestion(position, option)),
+    wordOfTheDay: () => inTurn(() => chooseWordOfTheDay()),
     seeWordOfTheDay: () => {
       const chosen = wordOfTheDay.chosen();
       return chosen === undefined

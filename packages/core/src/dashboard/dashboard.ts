@@ -45,8 +45,8 @@ export type DashboardBlock =
   | WordOfTheDayBlock
   | MoodBlock
   | PreviousWordsBlock
-  | CorrectionTypesBlock
-  | CuratedCollectionsBlock;
+  | CuratedCollectionsBlock
+  | CorrectionTypesBlock;
 
 /** The Word of the Day hero's block, first on the Dashboard. */
 export interface WordOfTheDayBlock {
@@ -79,8 +79,9 @@ export interface PreviousWordsBlock {
 }
 
 /**
- * The Correction Types rail's block, after Mood: a tile per Correction Type
- * with live Corrections, with N and X «розібрано». No tile, no block.
+ * The Correction Types rail's block, last, after the Curated Collections: a
+ * tile per Correction Type with live Corrections, with N and X «розібрано».
+ * No tile, no block.
  */
 export interface CorrectionTypesBlock {
   readonly kind: 'correctionTypes';
@@ -88,9 +89,9 @@ export interface CorrectionTypesBlock {
 }
 
 /**
- * The Curated Collections rail's block, «Добірки», after the Correction
- * Types: the collections published by today, the unopened first. No card,
- * no block.
+ * The Curated Collections rail's block, «Добірки», after «Попередні слова»:
+ * the collections published by today, the unopened first. No card, no
+ * block.
  */
 export interface CuratedCollectionsBlock {
   readonly kind: 'curatedCollections';
@@ -128,8 +129,8 @@ export async function openDashboard({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   entries: Entries;
   cycle: Pick<Cycle, 'covers' | 'unseen'>;
-  wordOfTheDay: Pick<WordOfTheDay, 'today'>;
-  feed: Pick<Feed, 'seeWordOfTheDay'>;
+  wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
+  feed: Pick<Feed, 'wordOfTheDay' | 'seeWordOfTheDay'>;
   mood: Pick<MoodCheckIns, 'today' | 'moods' | 'subscribe'>;
   archive: Pick<WordOfTheDayArchive, 'list'>;
   /** Tells today, whose archive day is the hero's. */
@@ -145,7 +146,8 @@ export async function openDashboard({
   const previousWordsOn = edition.isFeatureEnabled('previousWords');
 
   async function hero(): Promise<WordOfTheDayHero | undefined> {
-    const today = await wordOfTheDay.today();
+    // The Feed chooses a day's Word of the Day, past what it showed (ADR 0076).
+    const today = wordOfTheDay.chosen() ?? (await feed.wordOfTheDay());
     if (today === undefined) return undefined;
     const { wordId, date } = today;
     const isSeen = cycle.covers(wordId) && !cycle.unseen().words.includes(wordId);
@@ -186,19 +188,23 @@ export async function openDashboard({
     if (moodCheckIn !== undefined) blocks.push(moodCheckIn);
     const previous = previousWordsOn ? await previousWords() : undefined;
     if (previous !== undefined) blocks.push(previous);
-    const { tiles } = correctionTypes;
-    if (tiles.length > 0) blocks.push({ kind: 'correctionTypes', tiles });
     const { rail } = curatedCollections;
     if (rail.length > 0) blocks.push({ kind: 'curatedCollections', cards: rail });
+    const { tiles } = correctionTypes;
+    if (tiles.length > 0) blocks.push({ kind: 'correctionTypes', tiles });
     return blocks;
   }
 
   let blocks = await blocksOf();
   let shownKey = keyOf(blocks);
+  // The refreshes started, so one that ends after a newer one never puts back what it read.
+  let started = 0;
   async function refresh(): Promise<void> {
+    started += 1;
+    const mine = started;
     const next = await blocksOf();
     const key = keyOf(next);
-    if (key === shownKey) return;
+    if (mine !== started || key === shownKey) return;
     blocks = next;
     shownKey = key;
     subscribers.tell();

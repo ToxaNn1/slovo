@@ -133,6 +133,21 @@ describe('The Dashboard', () => {
     expect(hero.state).toBe('unrevealed');
     expect(hero.wordId).not.toBe(yesterdays);
   });
+
+  it("leaves the Feed to choose the next day's Word of the Day, past the cards it showed", async () => {
+    const time = fakeClock('2026-11-04T23:58:00+02:00');
+    const { app } = await run({ clock: time.clock });
+    await app.feed.next();
+    const shown = app.feed.cards.map(({ entryId }) => entryId);
+
+    time.advance(5 * 60 * 1000);
+    await app.resume();
+    const hero = heroOf(app.dashboard.blocks);
+    const card = await app.feed.next();
+
+    expect(shown).not.toContain(hero.wordId);
+    expect(card?.entryId).toBe(hero.wordId);
+  });
 });
 
 describe('«Попередні слова» on the Dashboard', () => {
