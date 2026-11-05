@@ -46,7 +46,7 @@ export default [
     // 'use no memo' (ADR 0059), so its rules do not apply to them.
     files: [
       'src/dashboard/MoodCheckIn.tsx',
-      'src/feed/FeedStates.tsx',
+      'src/feed/GesturesHintSheet.tsx',
       'src/game/GameRound.tsx',
       'src/game/OrderedChips.tsx',
       'src/game/PairsGrid.tsx',
