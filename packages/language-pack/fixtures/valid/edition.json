@@ -100,6 +100,7 @@
     "dashboard": true,
     "mood": true,
     "curatedCollections": true,
+    "swipeMarks": true,
     "previousWords": true,
     "correctionTypes": true
   },
