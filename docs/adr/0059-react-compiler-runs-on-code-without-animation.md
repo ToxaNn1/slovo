@@ -9,6 +9,7 @@ The app and `@slovo/ui` memoise by hand with `useMemo`, `useCallback` and `React
 - `dashboard/MoodCheckIn.tsx`
 - `feed/FeedStates.tsx`
 - `game/GameRound.tsx`, `game/OrderedChips.tsx`, `game/PairsGrid.tsx`, `game/TracedCrosswordGrid.tsx`, `game/VowelButtons.tsx`
+- `knowledge/SwipeMarks.tsx`
 - `onboarding/OnboardingStep.tsx`, `onboarding/SplashOverlay.tsx`
 - `progress/ActiveDaysCalendar.tsx`
 - `primitives/BottomSheet.tsx`, `primitives/Chip.tsx`, `primitives/FallingMarks.tsx`, `primitives/Mascot.tsx`, `primitives/PressedTile.tsx`, `primitives/ScreenEnter.tsx`, `primitives/SwipeableRow.tsx`, `primitives/Switch.tsx`, `primitives/TabBarButton.tsx`, `primitives/UndoToast.tsx`, `primitives/VerticalPager.tsx`
