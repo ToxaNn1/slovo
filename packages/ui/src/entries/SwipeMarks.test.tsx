@@ -156,6 +156,13 @@ async function sideSwipe(distance: number, velocity = 0, { settle = true } = {})
   });
 }
 
+function scaleOf(testID: string): number | undefined {
+  const { transform = [] } = getAnimatedStyle(
+    screen.getByTestId(testID, { includeHiddenElements: true }),
+  ) as { transform?: { scale?: number }[] };
+  return transform.find((step) => step.scale !== undefined)?.scale;
+}
+
 function opacityOf(testID: string): number {
   const style = getAnimatedStyle(screen.getByTestId(testID, { includeHiddenElements: true })) as {
     opacity?: number;
@@ -261,6 +268,37 @@ describe('SwipeMarks', () => {
     expect(onMark).not.toHaveBeenCalled();
   });
 
+  it('lands the stamp in 0.45 s', async () => {
+    await show();
+
+    await sideSwipe(120, 0, { settle: false });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(300);
+    });
+    const landing = scaleOf('swipe-stamp');
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(200);
+    });
+
+    expect(landing).not.toBe(1);
+    expect(scaleOf('swipe-stamp')).toBe(1);
+  });
+
+  it("shows the stamp of a mark set from the card's menu", async () => {
+    const swipe = { onMark: jest.fn(), onUndo: jest.fn() };
+    await render(providers(<EntryCard card={correction} swipe={{ ...swipe, mark: undefined }} />));
+
+    await screen.rerender(
+      providers(<EntryCard card={correction} swipe={{ ...swipe, mark: 'unknown' }} />),
+    );
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+
+    expect(screen.getByText('✗ NEW')).toBeTruthy();
+    expect(opacityOf('swipe-stamp')).toBe(1);
+  });
+
   it('fades the stamp in place under Reduce Motion', async () => {
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
     const { onMark } = await show();
@@ -294,6 +332,24 @@ function Actions() {
   );
 }
 
+/** The card on the first of two pages of a `VerticalPager`, laid out. */
+async function renderPaged(onMark: (mark: KnowledgeMark) => void) {
+  await render(
+    providers(
+      <VerticalPager
+        testID="pager"
+        items={['c1', 'c2']}
+        onIndexChange={jest.fn()}
+        turnActionLabels={{ next: 'Next card', previous: 'Previous card' }}
+        renderPage={(page) => (page === 'c1' ? <PagedCard onMark={onMark} /> : <Actions />)}
+      />,
+    ),
+  );
+  await fireEvent(screen.getByTestId('pager'), 'layout', {
+    nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 800 } },
+  });
+}
+
 describe('SwipeMarks in a VerticalPager', () => {
   beforeEach(() => {
     jest.useFakeTimers();
@@ -304,22 +360,33 @@ describe('SwipeMarks in a VerticalPager', () => {
     jest.restoreAllMocks();
   });
 
+  it('fades the undo toast and the next chip in under Reduce Motion', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
+    jest.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(false);
+    await renderPaged(jest.fn());
+
+    await fireEvent(screen.getByTestId('correction-non-standard'), 'accessibilityAction', {
+      nativeEvent: { actionName: 'known' },
+    });
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(48);
+    });
+    const early = { toast: opacityOf('undo-toast'), chip: opacityOf('swipe-next-chip-fade') };
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
+
+    expect(early.toast).toBeGreaterThan(0);
+    expect(early.toast).toBeLessThan(1);
+    expect(early.chip).toBeGreaterThan(0);
+    expect(early.chip).toBeLessThan(1);
+    expect(opacityOf('undo-toast')).toBe(1);
+    expect(opacityOf('swipe-next-chip-fade')).toBe(1);
+  });
+
   it('gives VoiceOver the marks beside the page turns, and points to the next Entry after a mark', async () => {
     const onMark = jest.fn<(mark: KnowledgeMark) => void>();
-    await render(
-      providers(
-        <VerticalPager
-          testID="pager"
-          items={['c1', 'c2']}
-          onIndexChange={jest.fn()}
-          turnActionLabels={{ next: 'Next card', previous: 'Previous card' }}
-          renderPage={(page) => (page === 'c1' ? <PagedCard onMark={onMark} /> : <Actions />)}
-        />,
-      ),
-    );
-    await fireEvent(screen.getByTestId('pager'), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 800 } },
-    });
+    await renderPaged(onMark);
 
     const form = screen.getByTestId('correction-non-standard');
     expect(form.props['accessibilityActions']).toEqual([
