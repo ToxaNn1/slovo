@@ -37,6 +37,9 @@ import { Wedge } from './Wedge';
 /** How long the toast stays, from the design. */
 const TOAST_MS = 4000;
 
+/** How long a brief message toast stays, such as one after an item of an Entry's «⋯» sheet (XSwipe). */
+const BRIEF_TOAST_MS = 2200;
+
 /** The design's `slToast`: in from the left, straightening as it comes. */
 const SLIDE_IN = {
   duration: motion.toast.duration,
@@ -76,6 +79,8 @@ export interface UndoToastContent {
 /** A toast that only says something, in the Edition's language, such as the thanks for a Mistake Report. */
 export interface MessageToastContent {
   readonly message: string;
+  /** The toast stays 2.2 s instead of 4 s. */
+  readonly brief?: true;
 }
 
 /** What one toast says: with an undo, or a message alone. */
@@ -169,6 +174,7 @@ function UndoToast({
     shown.value = withTiming(1, reduceMotion ? FADE_IN : SLIDE_IN);
   });
   const hasUndo = 'onUndo' in content;
+  const lasts = 'brief' in content ? BRIEF_TOAST_MS : TOAST_MS;
 
   useEffect(() => {
     if (!ready) return;
@@ -179,7 +185,7 @@ function UndoToast({
       if (!screenReader || !hasUndo) {
         timer = setTimeout(() => {
           timeOut();
-        }, TOAST_MS);
+        }, lasts);
       }
       if (!screenReader) {
         comeIn();
@@ -194,7 +200,7 @@ function UndoToast({
       active = false;
       clearTimeout(timer);
     };
-  }, [ready, shown, hasUndo]);
+  }, [ready, shown, hasUndo, lasts]);
 
   const inStyle = useAnimatedStyle(() => {
     // Under Reduce Motion it fades in place; otherwise it slides, fully opaque.

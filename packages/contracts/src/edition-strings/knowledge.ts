@@ -31,6 +31,8 @@ const SwipeStringsSchema = z.strictObject({
   next: TextSchema,
   /** The «⋯» sheet of an Entry card. */
   menu: z.strictObject({
+    /** The accessibility label of the card's «⋯» button that opens the sheet. */
+    open: TextSchema,
     /** The mark items of an Entry with no mark. */
     marks: ByMarkSchema,
     /** Turns a Known mark into Unknown. */

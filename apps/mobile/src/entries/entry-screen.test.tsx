@@ -28,8 +28,7 @@ import { screenSettled } from '../use-open-screen';
 jest.mock('./entry-actions', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
   return {
-    EntryActions: () => <View testID="entry-actions" />,
-    useKnowledgeButtons: () => null,
+    useEntrySlots: () => () => ({ actions: <View testID="entry-actions" /> }),
     useEntrySwipe:
       jest.requireActual<typeof import('./entry-actions')>('./entry-actions').useEntrySwipe,
   };

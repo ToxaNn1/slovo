@@ -4,6 +4,8 @@ import {
   CollectionButton,
   CollectionSheet,
   CommunityCountersLine,
+  CornerActions,
+  EntryMenuSheet,
   FavoriteButton,
   HideButton,
   HideChoiceSheet,
@@ -38,10 +40,9 @@ import { useShown } from '../shown-in-effect';
  * Feed (its Word of the Day too) and Entry details, the screen a list opens.
  * Each action fills its own slot: raised tiles with labels under a Word, with
  * the line that says where the Entry is kept under them, and bare icons
- * under the other kinds (XActions). The «Знаю» and «Не знаю» buttons are
- * there only when the Knowledge switch is on in effect and the Swipe Marks
- * switch off, and inactive while Self-check conceals the card's meaning (the
- * card tells them); the «Повідомити про помилку» flag only
+ * under the other kinds (XActions). The «Знаю» and «Не знаю» buttons are there only when the
+ * Knowledge switch is on in effect, and inactive while Self-check conceals the
+ * card's meaning (the card tells them); the «Повідомити про помилку» flag only
  * while Mistake Reports are on in effect, disabled while the meaning is concealed.
  * The «Знаю» and «Не знаю» buttons go above the actions in the Feed and below
  * them on Entry details (`place`). Its screen gives it an
@@ -59,8 +60,7 @@ export function EntryActions({
   const hide = useHide(card);
   const collection = useCollectionAction(entryId);
   const share = useShareAction(card);
-  // With the side swipes on, the card's swipes set the mark in place of the buttons (ADR 0077).
-  const marks = useKnowledgeButtons(card, useEntrySwipe(entryId) === undefined);
+  const marks = useKnowledgeButtons(card);
   const report = useMistakeReportAction(entryId);
   const { count } = useEdition();
   return (
@@ -89,26 +89,172 @@ export function EntryActions({
   );
 }
 
+/** What an Entry card carries: its action row, or the actions in its corner while marks are swiped. */
+export type EntrySlots = { actions: ReactNode } | { corner: ReactNode };
+
+/**
+ * The slots of an Entry card, wherever the card appears: its action row
+ * (`EntryActions`) while the Swipe Marks switch is off in effect, and its
+ * corner (`EntryCorner`) with no action row while it is on (ADR 0077), the
+ * Community Counters line and the line that says where the Entry is kept
+ * gone with the row.
+ */
+export function useEntrySlots(): (card: AnyEntryCard, place?: 'feed' | 'details') => EntrySlots {
+  const swiped = useShown().swipeMarks;
+  return (card, place = 'feed') =>
+    swiped
+      ? { corner: <EntryCorner card={card} /> }
+      : { actions: <EntryActions card={card} place={place} /> };
+}
+
+/**
+ * The «Знаю» and «Не знаю» buttons of Yesterday's Word, or while marks are
+ * swiped its corner: the «⋯» button alone, whose sheet has the mark items.
+ */
+export function useYesterdaySlots(wordId: string): { marks: ReactNode } | { corner: ReactNode } {
+  const marks = useKnowledgeButtons({ kind: 'word', entryId: wordId });
+  return useShown().swipeMarks
+    ? { corner: <MenuCorner entryId={wordId} entryKind="word" /> }
+    : { marks };
+}
+
+/**
+ * The corner of an Entry card while marks are swiped (XSwipe): the heart, the
+ * «До колекції» bookmark and the «⋯» button, whose sheet also shares, hides
+ * and reports the Entry as the action row did, each while it is on.
+ */
+function EntryCorner({ card }: { card: AnyEntryCard }) {
+  const { entryId } = card;
+  const favorite = useFavorite(entryId);
+  const hide = useHide(card);
+  const collection = useCollectionAction(entryId);
+  const share = useShareAction(card);
+  const report = useMistakeReportAction(entryId);
+  return (
+    <>
+      <MenuCorner
+        entryId={entryId}
+        entryKind={card.kind}
+        favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
+        collection={collection.button}
+        onShare={share.open}
+        onHide={hide.open}
+        onReport={report.open}
+      />
+      <HideChoiceSheet {...hide.choice} />
+      {collection.sheet}
+      {share.sheet}
+      {report.sheet}
+    </>
+  );
+}
+
+/**
+ * The corner's buttons and the «⋯» sheet they open. The sheet's mark items
+ * set or clear the Knowledge Mark, only while the Knowledge switch is on in
+ * effect, and say so in a 2.2 s toast with no undo. «Поділитися», «Сховати»
+ * and «Повідомити про помилку» open their own sheet once the «⋯» sheet has
+ * slid away, as one modal at a time is presented.
+ */
+function MenuCorner({
+  entryId,
+  entryKind,
+  favorite,
+  collection,
+  onShare,
+  onHide,
+  onReport,
+}: {
+  entryId: string;
+  entryKind: AnyEntryCard['kind'];
+  favorite?: ReactNode;
+  collection?: ReactNode;
+  onShare?: (() => void) | undefined;
+  onHide?: (() => void) | undefined;
+  onReport?: (() => void) | undefined;
+}) {
+  const [open, setOpen] = useState(false);
+  const [followUp, setFollowUp] = useState<{ open: () => void }>();
+  const knowledge = useKnowledgeMark(entryId);
+  const marksShown = useShown().entryButtons.knowledge;
+  const showToast = useUndoToast();
+  const title = useEntryTitle(entryId, open);
+  const toasts = editionStrings.knowledge.swipe.menu.toasts;
+  const close = () => {
+    setOpen(false);
+  };
+  const after = (next: (() => void) | undefined) =>
+    next === undefined
+      ? undefined
+      : () => {
+          setFollowUp({ open: next });
+          close();
+        };
+  return (
+    <>
+      <CornerActions
+        favorite={favorite}
+        collection={collection}
+        onMore={() => {
+          setOpen(true);
+        }}
+      />
+      <EntryMenuSheet
+        visible={open}
+        entryTitle={title}
+        entryKind={entryKind}
+        marks={
+          marksShown
+            ? {
+                mark: knowledge.mark,
+                onSet: (mark) => {
+                  close();
+                  knowledge.set(mark);
+                  showToast({ message: toasts[mark], brief: true });
+                },
+                onClear: () => {
+                  close();
+                  knowledge.clear();
+                  showToast({ message: toasts.cleared, brief: true });
+                },
+              }
+            : undefined
+        }
+        onShare={after(onShare)}
+        onHide={after(onHide)}
+        onReport={after(onReport)}
+        onClose={close}
+        onDismissed={() => {
+          followUp?.open();
+          setFollowUp(undefined);
+        }}
+      />
+    </>
+  );
+}
+
 /**
  * The «Знаю» and «Не знаю» buttons of an Entry's card, wherever the card
  * appears, Yesterday's too, with the Community Counters line under them
  * (ADR 0060): there only when the Knowledge switch is on in effect.
  */
-export function useKnowledgeButtons(
-  card: Pick<AnyEntryCard, 'entryId' | 'kind'>,
-  buttons = true,
-): ReactNode {
+export function useKnowledgeButtons(card: Pick<AnyEntryCard, 'entryId' | 'kind'>): ReactNode {
   const shown = useShown().entryButtons.knowledge;
   const knowledge = useKnowledgeMark(card.entryId);
   const line = useCounterLine(card.entryId, shown);
   return shown ? (
     <>
-      {buttons && (
-        <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
-      )}
+      <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
       <CommunityCountersLine line={line} />
     </>
   ) : undefined;
+}
+
+/** An action that opens a sheet, from its button or from the «⋯» sheet: all undefined while it is off. */
+interface OpenedAction {
+  open: (() => void) | undefined;
+  button: ReactNode;
+  sheet: ReactNode;
 }
 
 /**
@@ -129,12 +275,15 @@ export function useEntrySwipe(entryId: string): EntrySwipe | undefined {
  * there only when the binary can capture the Share Card and the Share Cards
  * switch is on in effect.
  */
-function useShareAction(card: AnyEntryCard): { button: ReactNode; sheet: ReactNode } {
+function useShareAction(card: AnyEntryCard): OpenedAction {
   const [open, setOpen] = useState(false);
   const { shareCard } = useShell();
   const share = useShown().entryButtons.shareCard ? shareCard : undefined;
-  if (share === undefined) return { button: undefined, sheet: undefined };
+  if (share === undefined) return { open: undefined, button: undefined, sheet: undefined };
   return {
+    open: () => {
+      setOpen(true);
+    },
     button: (
       <ShareButton
         onPress={() => {
@@ -198,16 +347,19 @@ function EntryShareSheet({
  * sends it now or later; if the Core then says the daily limit is spent, or
  * keeps no report, a toast in its place says so.
  */
-function useMistakeReportAction(entryId: string): { button: ReactNode; sheet: ReactNode } {
+function useMistakeReportAction(entryId: string): OpenedAction {
   const [open, setOpen] = useState(false);
   const showToast = useUndoToast();
   const { mistakeReports } = useShell();
   const shown = useShown().entryButtons.mistakeReport;
-  if (!shown) return { button: undefined, sheet: undefined };
+  if (!shown) return { open: undefined, button: undefined, sheet: undefined };
   const close = () => {
     setOpen(false);
   };
   return {
+    open: () => {
+      setOpen(true);
+    },
     button: (
       <MistakeReportButton
         onPress={() => {

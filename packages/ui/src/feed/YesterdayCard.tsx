@@ -12,15 +12,18 @@ import { FeedNoticeCard } from './FeedNoticeCard';
  * the day before's Word of the Day in Self-check style, whatever the Self-check
  * setting. Until the reader reveals it, the card shows only its Lemma, part of
  * speech and Category, and the Knowledge Mark buttons in `marks` are inactive
- * (ADR 0054).
+ * (ADR 0054). While marks are swiped the card carries its `corner` instead.
  */
 export function YesterdayCard({
   word,
   marks,
+  corner,
 }: {
   word: WordCardModel;
   /** The «Знаю» and «Не знаю» buttons of the Word, if the Knowledge switch is on. */
   marks?: ReactNode;
+  /** The actions in the card's top-right corner, while marks are swiped. */
+  corner?: ReactNode;
 }) {
   const { strings } = useEdition();
   return (
@@ -29,6 +32,7 @@ export function YesterdayCard({
         <EntryCard
           card={{ kind: 'word', entryId: word.wordId, model: word }}
           selfCheck
+          corner={corner}
           actions={marks === undefined ? undefined : <View style={styles.marks}>{marks}</View>}
         />
       </View>
