@@ -179,7 +179,7 @@ export {
   type RarityCeiling,
 } from './entries/rarity-ceiling';
 export { renderStress, STRESS_MARK, withoutStress } from './entries/stress';
-export { createGesturesHint, createSwipeHint, type SwipeHint } from './feed/swipe-hint';
+export { createGesturesHint, type SwipeHint } from './feed/swipe-hint';
 export { buildWordCard, type WordCardModel } from './entries/word-card';
 export { createContentUpdate, type ContentUpdate } from './content-update/content-update';
 export type { PackFiles, PackVersion } from './ports';
