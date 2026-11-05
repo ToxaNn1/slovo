@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { Word } from '@slovo/contracts';
+import type { Correction, Word } from '@slovo/contracts';
 import {
   loadEdition,
   openComposition,
@@ -15,6 +15,7 @@ import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testi
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/index';
+import CorrectionTypeScreen from '../app/correction-type/[type]';
 import FeedScreen from '../app/feed';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
@@ -63,6 +64,26 @@ function word(id: string, lemma: string): Word {
   };
 }
 
+function correction(
+  id: string,
+  nonStandardForm: string,
+  standardEquivalents: string[],
+): Correction {
+  return {
+    kind: 'correction',
+    id,
+    nonStandardForm,
+    correctionType: 'surzhyk',
+    standardEquivalents,
+    explanation: `Пояснення до ${nonStandardForm}.`,
+    examplePair: { nonStandard: 'Так кажуть.', standard: 'Так краще.' },
+    categoryId: 'everyday',
+    sources: [{ title: 'Словник' }],
+    literaryUses: [],
+    retired: false,
+  };
+}
+
 let editionInEffect: Edition;
 let userState: TrackedUserState;
 let composition: Composition;
@@ -96,6 +117,11 @@ async function open(dashboard: boolean) {
         word('w_sumyrnyi', 'сумирний'),
         word('w_lahidnyi', 'лагідний'),
         word('w_tykhyi', 'тихий'),
+      ],
+      correctionCategories: [{ id: 'everyday', displayName: 'Щоденне' }],
+      corrections: [
+        correction('c_shoby', 'шоби', ['щоб', 'аби']),
+        correction('c_tipa', 'типу', ['ніби']),
       ],
     }),
     edition: editionInEffect,
@@ -150,6 +176,7 @@ async function renderApp() {
       ),
       index: HomeScreen,
       feed: FeedScreen,
+      'correction-type/[type]': CorrectionTypeScreen,
     },
     { initialUrl: '/' },
   );
@@ -243,5 +270,40 @@ describe('the Mood check-in', () => {
 
     expect(screen.queryByTestId('dashboard-mood')).toBeNull();
     expect(screen.getByTestId('dashboard-hero')).toBeTruthy();
+  });
+});
+
+describe('the Correction Types rail', () => {
+  it('a tile counts the type\u2019s Corrections «розібрано» and opens the type\u2019s screen', async () => {
+    await open(true);
+    await renderApp();
+
+    const { correctionTypes: words } = editionStrings.dashboard;
+    expect(screen.getByText(words.title)).toBeTruthy();
+    expect(screen.getByText('Розібрано 0 з 2')).toBeTruthy();
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-correction-type-surzhyk')));
+
+    expect(screen.getByTestId('correction-type')).toBeTruthy();
+    expect(screen.getByText(words.tiles.surzhyk)).toBeTruthy();
+    expect(screen.getByText('шоби')).toBeTruthy();
+    expect(screen.getByText('типу')).toBeTruthy();
+  });
+
+  it('«Як правильно?» shows the standard form and the explanation, and the tile counts it', async () => {
+    await open(true);
+    await renderApp();
+
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-correction-type-surzhyk')));
+    expect(screen.queryByText('щоб')).toBeNull();
+    await settle(() => fireEvent.press(screen.getByTestId('correction-type-reveal-c_shoby')));
+
+    expect(screen.getByText('щоб')).toBeTruthy();
+    expect(screen.getByText(/аби/)).toBeTruthy();
+    expect(screen.getByText('Пояснення до шоби.')).toBeTruthy();
+    expect(screen.queryByTestId('correction-type-reveal-c_shoby')).toBeNull();
+    expect(screen.getByTestId('correction-type-reveal-c_tipa')).toBeTruthy();
+    expect(composition.correctionTypes.tiles).toEqual([
+      { type: 'surzhyk', total: 2, workedThrough: 1 },
+    ]);
   });
 });

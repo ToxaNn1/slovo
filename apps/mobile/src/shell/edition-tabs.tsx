@@ -128,6 +128,8 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
         name="feed"
         options={{ href: null, ...barShown(true, screenOptions.tabBarStyle) }}
       />
+      {/* A Correction Type's screen, from its tile on the Dashboard; no tab leads to it. */}
+      <Tabs.Screen name="correction-type/[type]" options={offTabs} />
       {/* Search, from the magnifier of the «Стрічка» header; no tab leads to it. */}
       <Tabs.Screen name="search" options={offTabs} />
     </Tabs>
