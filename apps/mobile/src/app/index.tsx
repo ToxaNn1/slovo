@@ -1,4 +1,4 @@
-import { DashboardHero, space, useTokens } from '@slovo/ui';
+import { DashboardHero, MoodCheckIn, space, useTokens } from '@slovo/ui';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -17,7 +17,7 @@ export default function HomeScreen() {
 
 /** The Dashboard's blocks of the local day, in display order. */
 function DashboardScreen() {
-  const { blocks, reveal, toCard } = useDashboardScreen();
+  const { blocks, reveal, toCard, chooseMood, skipMood } = useDashboardScreen();
   const { colors } = useTokens();
   return (
     <SafeAreaView
@@ -26,9 +26,28 @@ function DashboardScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        {blocks.map((block) => (
-          <DashboardHero key={block.kind} hero={block.hero} onReveal={reveal} onToCard={toCard} />
-        ))}
+        {blocks.map((block) => {
+          switch (block.kind) {
+            case 'wordOfTheDay':
+              return (
+                <DashboardHero
+                  key={block.kind}
+                  hero={block.hero}
+                  onReveal={reveal}
+                  onToCard={toCard}
+                />
+              );
+            case 'mood':
+              return (
+                <MoodCheckIn
+                  key={block.kind}
+                  block={block}
+                  onChoose={chooseMood}
+                  onSkip={skipMood}
+                />
+              );
+          }
+        })}
       </ScrollView>
     </SafeAreaView>
   );

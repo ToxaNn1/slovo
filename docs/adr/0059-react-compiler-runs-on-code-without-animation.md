@@ -6,6 +6,7 @@ The app and `@slovo/ui` memoise by hand with `useMemo`, `useCallback` and `React
 
 **Animated modules opt out.** Every module with Reanimated, Worklets or gesture-handler code starts with the directive `'use no memo'`, which keeps the compiler off the whole file. These are, in `packages/ui/src`:
 
+- `dashboard/MoodCheckIn.tsx`
 - `feed/FeedStates.tsx`
 - `game/GameRound.tsx`, `game/OrderedChips.tsx`, `game/PairsGrid.tsx`, `game/TracedCrosswordGrid.tsx`, `game/VowelButtons.tsx`
 - `onboarding/OnboardingStep.tsx`, `onboarding/SplashOverlay.tsx`

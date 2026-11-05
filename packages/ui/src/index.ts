@@ -123,10 +123,12 @@ export { HeaderFade } from './feed/HeaderFade';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
 export { BadgeMark } from './progress/BadgeMark';
 export { DashboardHero } from './dashboard/DashboardHero';
+export { MoodCheckIn } from './dashboard/MoodCheckIn';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { LevelCard } from './progress/LevelCard';
 export { StatsSheet } from './progress/StatsSheet';
+export type { MoodDays } from './progress/mood-line';
 export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
