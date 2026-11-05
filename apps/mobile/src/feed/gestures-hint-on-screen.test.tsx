@@ -183,7 +183,7 @@ describe('the gestures hint sheet on the Feed', () => {
     await waitFor(() => {
       expect(screen.queryByTestId('gestures-hint')).toBeNull();
     });
-    screen.unmount();
+    await screen.unmount();
     screenSettled();
     await reopen();
     await renderApp();
@@ -195,7 +195,7 @@ describe('the gestures hint sheet on the Feed', () => {
     await open(true);
     await renderApp();
     expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
-    screen.unmount();
+    await screen.unmount();
     screenSettled();
     await reopen();
     await renderApp();

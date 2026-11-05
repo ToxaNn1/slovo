@@ -40,7 +40,7 @@ describe('GesturesHintSheet', () => {
     expect(screen.getByTestId('gestures-hint-next')).toHaveTextContent(/Up.*Next card/);
   });
 
-  it('asks onDismiss on «ЗРОЗУМІЛО»', async () => {
+  it('asks onDismiss on its dismiss button', async () => {
     const onDismiss = jest.fn();
     await draw({ onDismiss });
     expect(onDismiss).not.toHaveBeenCalled();
