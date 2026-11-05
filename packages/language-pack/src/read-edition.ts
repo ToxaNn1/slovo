@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type {
   Correction,
   CrosswordDay,
+  CuratedCollection,
   Entry,
   Idiom,
   SynonymRow,
@@ -14,6 +15,7 @@ import type {
 import type { BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
 import { checkContent, type Authored } from './check-content';
+import { checkCuratedCollections } from './check-curated-collections';
 import { checkSynonymRows } from './check-synonym-rows';
 import { checkTips } from './check-tips';
 import type { ContentManifest } from './content-manifest';
@@ -35,6 +37,7 @@ export interface EditionSource {
   readonly idioms: readonly Authored<Idiom>[];
   readonly synonymRows: readonly Authored<SynonymRow>[];
   readonly tips: readonly Authored<Tip>[];
+  readonly curatedCollections: readonly Authored<CuratedCollection>[];
   /** The known ids: none when the registry is optional and missing, unset when it can't be read. */
   readonly registry?: readonly string[];
   /** Set when there are no errors. */
@@ -72,7 +75,15 @@ export function readEdition(
 
   const config = readOrCollect(() => folder.read('config'));
   const manifest = readOrCollect(() => folder.read('manifest'));
-  const { words, corrections, idioms, synonymRows, tips, errors: entryErrors } = folder.entries();
+  const {
+    words,
+    corrections,
+    idioms,
+    synonymRows,
+    tips,
+    curatedCollections,
+    errors: entryErrors,
+  } = folder.entries();
   errors.push(...entryErrors);
   const targets = readOrCollect(() => folder.readIfPresent('targets') ?? {});
   const crosswordDays = readOrCollect(() => folder.readIfPresent('crosswordDays'));
@@ -91,6 +102,15 @@ export function readEdition(
     );
   }
   errors.push(...illustrationErrors(words, (name) => folder.illustration(name)));
+  errors.push(
+    ...checkCuratedCollections(curatedCollections, [
+      ...words,
+      ...corrections,
+      ...idioms,
+      ...synonymRows,
+      ...tips,
+    ]),
+  );
   errors.push(
     ...unknownCrosswordEntries(crosswordDays ?? [], [...words, ...corrections]),
     ...crosswordDayErrors(crosswordDays, manifest, config?.id),
@@ -112,6 +132,7 @@ export function readEdition(
     idioms,
     synonymRows,
     tips,
+    curatedCollections,
     ...(config === undefined ? {} : { editionId: config.id }),
     ...(registry === undefined ? {} : { registry }),
   };
@@ -134,6 +155,9 @@ export function readEdition(
     synonymRows: sortedById(synonymRows),
     tips: sortedById(tips),
     ...(crosswordDays === undefined ? {} : { crosswordDays }),
+    ...(curatedCollections.length === 0
+      ? {}
+      : { curatedCollections: sortedById(curatedCollections) }),
   };
   return { ...source, valid: { content, manifest, targets } };
 }
@@ -162,7 +186,7 @@ function unknownCrosswordEntries(
   );
 }
 
-function sortedById<T extends Entry>(authored: readonly Authored<T>[]): T[] {
+function sortedById<T extends { readonly id: string }>(authored: readonly Authored<T>[]): T[] {
   return authored.map(({ entry }) => entry).toSorted((a, b) => compare(a.id, b.id));
 }
 

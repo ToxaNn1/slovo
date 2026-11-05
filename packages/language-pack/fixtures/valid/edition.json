@@ -98,7 +98,8 @@
     "reduceMotion": true,
     "fastReveal": true,
     "dashboard": true,
-    "mood": true
+    "mood": true,
+    "curatedCollections": true
   },
   "userSettingDefaults": {
     "theme": "system",
