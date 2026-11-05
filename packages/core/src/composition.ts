@@ -514,6 +514,8 @@ export async function openComposition({
     xpLog,
     analytics,
   });
+  // The Feed reads the day's Mood for each card it adds (ADR 0076); the check-in follows the day change.
+  const mood = await openMoodCheckIns({ edition, userState, clock, dayTurned, analytics });
   const feed = await openFeed({
     entries,
     userState,
@@ -557,6 +559,8 @@ export async function openComposition({
     }),
     kindWeights: () =>
       edition.isFeatureEnabled('mixKindWeights') ? mix.state.kindWeights : NORMAL_KIND_WEIGHTS,
+    mood: () => (mood.today.state === 'chosen' ? mood.today.mood : undefined),
+    rarityCeiling,
     eligibility,
     seen,
     dayTurned,
@@ -646,8 +650,6 @@ export async function openComposition({
     xpLog,
   });
   await day.resume();
-  // Once the day is turned to, so the check-in is today's.
-  const mood = await openMoodCheckIns({ edition, userState, clock, dayTurned, analytics });
   // Once the day is turned to, so its hero is today's Word of the Day.
   const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   const dashboard = await openDashboard({
