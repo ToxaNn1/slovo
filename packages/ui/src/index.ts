@@ -6,7 +6,8 @@ export { ActionRow } from './primitives/ActionRow';
 export { DeleteAccountButton } from './account/DeleteAccountButton';
 export { ResendButton } from './account/ResendButton';
 export { BackLink } from './primitives/BackLink';
-export { FeedError, FeedLoading, SwipeHint } from './feed/FeedStates';
+export { FeedError, FeedLoading } from './feed/FeedStates';
+export { GesturesHintSheet, type GesturesHintTexts } from './feed/GesturesHintSheet';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
 export { FontSizeProvider } from './providers/FontSizeProvider';
@@ -23,8 +24,8 @@ export {
 } from './feed/FeedNoticeCard';
 export { WeeklyRecapCard } from './feed/WeeklyRecapCard';
 export { CommunityWordCard } from './feed/CommunityWordCard';
-export { YesterdayCard } from './feed/YesterdayCard';
-export { EntryCard } from './entries/EntryCard';
+export { YesterdayCard, type YesterdaySlots } from './feed/YesterdayCard';
+export { EntryCard, type EntryCardSlots } from './entries/EntryCard';
 export { RevealPace } from './entries/reveal';
 export { EntryDetails } from './entries/EntryDetails';
 export { ConfirmationDialog } from './primitives/ConfirmationDialog';
@@ -55,6 +56,9 @@ export { InterfaceSoundsProvider } from './providers/InterfaceSoundsProvider';
 export { HideButton } from './mix/HideButton';
 export { CommunityCountersLine } from './community-counters/CommunityCountersLine';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
+export { CornerActions } from './knowledge/CornerActions';
+export { EntryMenuSheet, type EntryMenuMarks } from './knowledge/EntryMenuSheet';
+export { type EntrySwipe } from './entries/SwipeMarks';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
@@ -163,12 +167,14 @@ export { useReduceMotion } from './providers/useReduceMotion';
 export { WedgeLoader } from './primitives/WedgeLoader';
 export {
   UndoToastProvider,
+  useCloseUndoToast,
   useUndoToast,
   type MessageToastContent,
   type ToastContent,
   type UndoToastContent,
 } from './primitives/UndoToast';
 export {
+  PageActionsProvider,
   PagerScrollView,
   usePageTurnActions,
   useTurnToNextPage,

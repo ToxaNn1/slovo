@@ -60,7 +60,7 @@ async function renderCard(reduceMotion: boolean, lemma = card.model.lemma) {
       <ReduceMotionProvider reduceMotion={reduceMotion}>
         <EntryCard
           card={{ ...card, model: { ...card.model, lemma } }}
-          actions={<Text>Actions</Text>}
+          slots={{ slot: 'actions', actions: <Text>Actions</Text> }}
         />
       </ReduceMotionProvider>
     </EditionProvider>,
@@ -184,7 +184,11 @@ function feed({ fast, visiting, card: entryId, reduceMotion = false }: FeedVisit
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
       <ReduceMotionProvider reduceMotion={reduceMotion}>
         <RevealPace fast={fast} visiting={visiting}>
-          <EntryCard key={entryId} card={{ ...card, entryId }} actions={<Text>Actions</Text>} />
+          <EntryCard
+            key={entryId}
+            card={{ ...card, entryId }}
+            slots={{ slot: 'actions', actions: <Text>Actions</Text> }}
+          />
         </RevealPace>
       </ReduceMotionProvider>
     </EditionProvider>
@@ -282,7 +286,7 @@ async function renderPager(reduceMotion = false) {
             renderPage={(lemma) => (
               <EntryCard
                 card={{ ...card, entryId: lemma, model: { ...card.model, lemma } }}
-                actions={<Text>{`Actions of ${lemma}`}</Text>}
+                slots={{ slot: 'actions', actions: <Text>{`Actions of ${lemma}`}</Text> }}
               />
             )}
           />

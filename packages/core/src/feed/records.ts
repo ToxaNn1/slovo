@@ -8,8 +8,16 @@ const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
 
 /** The records of the Feed. The Cycle and the Word of the Day keep the `feed.` keys from 0.2, when the Feed held them. */
 export const feedRecords = {
-  /** That the Feed's swipe hint was shown on this device. */
+  /** That the Feed's retired swipe hint was shown on this device; kept so the key stays known, read by nothing. */
   swipeHintShown: declareRecord('feed.swipeHintShown', z.literal(true), { sync: 'device-only' }),
+  /**
+   * That the Feed's gestures hint sheet, which shows the swipe marks, was
+   * shown on this device. A new key, so a reader who saw the swipe hint sees
+   * the sheet once too.
+   */
+  gesturesHintShown: declareRecord('feed.gesturesHintShown', z.literal(true), {
+    sync: 'device-only',
+  }),
   /**
    * The Feed Notices the reader swiped past on this device and the local
    * date they are closed for; on another date none is closed (ADR 0054).

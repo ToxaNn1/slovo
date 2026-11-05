@@ -140,10 +140,16 @@ export const typeRoles = {
   tabLabel: role('ui', '600', 11, 11),
   /** The rotated black title of a bottom sheet. */
   sheetTitle: role('word', '900', 18, 18, 0.5, 'uppercase'),
+  /** The title of a row of the gestures hint sheet, «Вправо — знаю». */
+  hintRowTitle: role('word', '900', 15, 17),
   /** A toast's message. */
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
+  /** The mark's label at the edge a swiped Entry card leaves. */
+  swipeEdge: role('word', '800', 12, 12, 1, 'uppercase'),
+  /** The stamp a swipe leaves on a marked Entry card. */
+  swipeStamp: role('word', '800', 18, 22, 2, 'uppercase'),
   /** The app's name beside the wedge at the top of the Feed. */
   logo: role('word', '900', 22, 22, -0.5),
   /** Today in the Feed's header. */

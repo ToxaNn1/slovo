@@ -145,11 +145,14 @@ describe('Self-check on a Synonym Row card', () => {
         <EntryCard
           card={card}
           selfCheck
-          actions={
-            <ActionRow
-              marks={<KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />}
-            />
-          }
+          slots={{
+            slot: 'actions',
+            actions: (
+              <ActionRow
+                marks={<KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />}
+              />
+            ),
+          }}
         />,
       ),
     );

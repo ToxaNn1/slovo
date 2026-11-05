@@ -100,7 +100,8 @@
     "mood": true,
     "previousWords": true,
     "correctionTypes": true,
-    "curatedCollections": true
+    "curatedCollections": true,
+    "swipeMarks": true
   },
   "userSettingDefaults": {
     "theme": "system",

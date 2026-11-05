@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import {
   loadEdition,
@@ -18,15 +18,23 @@ import {
   type FakeBackend,
   seedUserState,
 } from '@slovo/core/testing';
-import { EditionProvider, EntryCard, HapticsProvider, UndoToastProvider } from '@slovo/ui';
+import {
+  EditionProvider,
+  EntryCard,
+  HapticsProvider,
+  UndoToastProvider,
+  YesterdayCard,
+} from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
+import { State } from 'react-native-gesture-handler';
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
-import { EntryActions } from './entry-actions';
+import { EntryActions, useEntrySlots, useYesterdaySlots } from './entry-actions';
 
 const { config } = activeEditionFiles;
 
@@ -40,6 +48,8 @@ let composition: Composition;
 let mistakeReportsOn: boolean;
 /** Whether the Knowledge switch is on in effect, as the Edition ships it unless a test turns it off. */
 let knowledgeOn: boolean;
+/** Whether the Swipe Marks switch is on in effect: off unless a test turns it on. */
+let swipeMarksOn: boolean;
 
 /** The Edition in effect: as it ships, with Mistake Reports or the Knowledge switch off when a test turns them off. */
 const editionInEffect = (): typeof shippedEdition => ({
@@ -47,6 +57,7 @@ const editionInEffect = (): typeof shippedEdition => ({
   isFeatureEnabled: (feature) => {
     if (feature === 'mistakeReports') return mistakeReportsOn;
     if (feature === 'knowledge') return knowledgeOn;
+    if (feature === 'swipeMarks') return swipeMarksOn;
     return shippedEdition.isFeatureEnabled(feature);
   },
 });
@@ -191,6 +202,7 @@ beforeEach(async () => {
   mistakeReportsOn = true;
   mockReportsOpening = undefined;
   knowledgeOn = true;
+  swipeMarksOn = false;
   settings = await settingsAt();
   reportsApi = createFakeBackend();
   mistakeReports = openMistakeReports({
@@ -216,6 +228,24 @@ async function settle() {
   });
 }
 
+/** An Entry's card as the Feed draws it: its slots, and its side swipes when they are on. */
+function SwipedCard({ card }: { card: AnyEntryCard }) {
+  return <EntryCard card={card} slots={useEntrySlots(card)} />;
+}
+
+/** Swipes the card sideways by `distance` points and lets it land. */
+async function swipeBy(distance: number) {
+  await act(() => {
+    fireGestureHandler(getByGestureTestId('entry-card-side-swipe'), [
+      { state: State.BEGAN, translationX: 0, velocityX: 0 },
+      { state: State.ACTIVE, translationX: Math.sign(distance) * 8, velocityX: 0 },
+      { state: State.ACTIVE, translationX: distance, velocityX: 0 },
+      { state: State.END, translationX: distance, velocityX: 0 },
+    ]);
+  });
+  await settle();
+}
+
 /** The card of the Entry, as the Entry screen a list opens draws it, with its action row. */
 async function renderCard(entryId: string): Promise<AnyEntryCard> {
   const card = await composition.entryCard(entryId);
@@ -227,7 +257,7 @@ async function renderCard(entryId: string): Promise<AnyEntryCard> {
           <HapticsProvider haptics={haptics}>
             <SettingsProvider>
               <UndoToastProvider>
-                <EntryCard card={card} actions={<EntryActions card={card} />} />
+                <SwipedCard card={card} />
               </UndoToastProvider>
             </SettingsProvider>
           </HapticsProvider>
@@ -306,7 +336,11 @@ describe.each([
             <HapticsProvider haptics={haptics}>
               <SettingsProvider>
                 <UndoToastProvider>
-                  <EntryCard card={card} actions={<EntryActions card={card} />} selfCheck />
+                  <EntryCard
+                    card={card}
+                    slots={{ slot: 'actions', actions: <EntryActions card={card} /> }}
+                    selfCheck
+                  />
                 </UndoToastProvider>
               </SettingsProvider>
             </HapticsProvider>
@@ -536,5 +570,266 @@ describe.each([
     expect(screen.queryByTestId('knowledge-known')).toBeNull();
     expect(screen.queryByTestId('community-counters')).toBeNull();
     expect(countersApi.counters.asked).toEqual([]);
+  });
+});
+
+describe('the side swipes of an Entry card (ADR 0077)', () => {
+  it('mark the Word Known on a swipe right, in place of the buttons, and the toast undoes it', async () => {
+    swipeMarksOn = true;
+    await renderCard(word.id);
+    expect(screen.queryByTestId('knowledge-known')).not.toBeOnTheScreen();
+
+    await swipeBy(120);
+
+    expect(composition.knowledge.state.shown.get(word.id)).toBe('known');
+    expect(screen.getByTestId('swipe-stamp')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('undo-toast-undo'));
+    await settle();
+    expect(composition.knowledge.state.shown.get(word.id)).toBeUndefined();
+  });
+
+  it('mark the Word Unknown on a swipe left', async () => {
+    swipeMarksOn = true;
+    await renderCard(word.id);
+
+    await swipeBy(-120);
+
+    expect(composition.knowledge.state.shown.get(word.id)).toBe('unknown');
+  });
+
+  it.each([
+    ['the Swipe Marks switch is off', false, true],
+    ['the Knowledge switch is off', true, false],
+  ])('are not there while %s', async (_, swipe, knowledge) => {
+    swipeMarksOn = swipe;
+    knowledgeOn = knowledge;
+    await renderCard(word.id);
+
+    expect(screen.queryByTestId('swipe-card')).not.toBeOnTheScreen();
+    if (knowledge) expect(screen.getByTestId('knowledge-known')).toBeOnTheScreen();
+  });
+});
+
+/** The Shell and providers a card draws under. */
+function underShell(children: React.ReactNode) {
+  return (
+    <SafeAreaProvider initialMetrics={metrics}>
+      <ShellProvider shell={shell()}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <HapticsProvider haptics={haptics}>
+            <SettingsProvider>
+              <UndoToastProvider>{children}</UndoToastProvider>
+            </SettingsProvider>
+          </HapticsProvider>
+        </EditionProvider>
+      </ShellProvider>
+    </SafeAreaProvider>
+  );
+}
+
+/** An Entry card with the slots the feed gives it. */
+function SlottedCard({ card, selfCheck = false }: { card: AnyEntryCard; selfCheck?: boolean }) {
+  return <EntryCard card={card} slots={useEntrySlots(card)} selfCheck={selfCheck} />;
+}
+
+/** The card of the Entry with the slots the feed gives it. */
+async function renderSlotted(entryId: string, selfCheck = false): Promise<AnyEntryCard> {
+  const card = await composition.entryCard(entryId);
+  if (card === undefined) throw new Error(`No card for ${entryId}`);
+  await render(underShell(<SlottedCard card={card} selfCheck={selfCheck} />));
+  return card;
+}
+
+/** Lets the given milliseconds pass on the faked timers. */
+async function pass(ms: number) {
+  await act(async () => {
+    await jest.advanceTimersByTimeAsync(ms);
+  });
+}
+
+/** Opens the «⋯» sheet of the card's corner. */
+async function openMenu() {
+  await fireEvent.press(screen.getByRole('button', { name: 'Більше дій' }));
+  await settle();
+}
+
+/** Presses an item of the «⋯» sheet. */
+async function pressItem(name: string) {
+  await fireEvent.press(within(screen.getByTestId('entry-menu')).getByRole('button', { name }));
+  await settle();
+}
+
+/** Waits for the «⋯» sheet to slide away. */
+async function menuGone() {
+  await waitFor(() => {
+    expect(screen.queryByTestId('entry-menu')).toBeNull();
+  });
+}
+
+describe('the corner of an Entry card while marks are swiped', () => {
+  beforeEach(() => {
+    swipeMarksOn = true;
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  it('has the corner and no action row, Counters line or mark buttons', async () => {
+    await renderSlotted('w_test');
+
+    expect(screen.getByTestId('word-corner')).toBeOnTheScreen();
+    expect(screen.getByTestId('favorite-button')).toBeOnTheScreen();
+    expect(screen.getByTestId('collection-button')).toBeOnTheScreen();
+    expect(screen.queryByTestId('word-actions')).toBeNull();
+    expect(screen.queryByTestId('community-counters')).toBeNull();
+    expect(screen.queryByTestId('knowledge-known')).toBeNull();
+  });
+
+  it('keeps the action row while the Swipe Marks switch is off in effect', async () => {
+    swipeMarksOn = false;
+    await renderSlotted('w_test');
+
+    expect(screen.getByTestId('word-actions')).toBeOnTheScreen();
+    expect(screen.getByTestId('knowledge-known')).toBeOnTheScreen();
+    expect(screen.queryByTestId('word-corner')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Більше дій' })).toBeNull();
+  });
+
+  it('titles the sheet with the Entry and offers «Знаю» and «Не знаю» with no mark', async () => {
+    await renderSlotted('w_test');
+    await openMenu();
+
+    const menu = within(screen.getByTestId('entry-menu'));
+    await waitFor(() => {
+      expect(screen.getByTestId('entry-menu-title')).toHaveTextContent(/сло/);
+    });
+    expect(menu.getByRole('button', { name: 'Знаю' })).toBeOnTheScreen();
+    expect(menu.getByRole('button', { name: 'Не знаю' })).toBeOnTheScreen();
+    expect(menu.queryByRole('button', { name: 'Зняти позначку' })).toBeNull();
+    for (const name of ['Поділитися', 'Сховати', 'Повідомити про помилку', 'Закрити'])
+      expect(menu.getByRole('button', { name })).toBeOnTheScreen();
+  });
+
+  it('says «Я й так кажу правильно» for a Correction', async () => {
+    await renderSlotted('c_test');
+    await openMenu();
+
+    const menu = within(screen.getByTestId('entry-menu'));
+    expect(menu.getByRole('button', { name: 'Я й так кажу правильно' })).toBeOnTheScreen();
+    expect(menu.queryByRole('button', { name: 'Знаю' })).toBeNull();
+  });
+
+  it('marks it Known from the sheet, and a 2.2 s toast says so', async () => {
+    await renderSlotted('w_test');
+    await openMenu();
+    jest.useFakeTimers();
+    await pressItem('Знаю');
+
+    expect(composition.knowledge.state.shown.get('w_test')).toBe('known');
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Позначено: знаю');
+    await pass(2100);
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Позначено: знаю');
+    await pass(100);
+    expect(screen.queryByTestId('undo-toast')).toBeNull();
+  });
+
+  it('changes a Known mark to Unknown, then clears it', async () => {
+    await renderSlotted('w_test');
+    await openMenu();
+    await pressItem('Знаю');
+    await menuGone();
+
+    await openMenu();
+    const menu = within(screen.getByTestId('entry-menu'));
+    expect(menu.queryByRole('button', { name: 'Знаю' })).toBeNull();
+    await pressItem('Змінити на «Не знаю»');
+    await menuGone();
+    expect(composition.knowledge.state.shown.get('w_test')).toBe('unknown');
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Позначено: не знаю');
+
+    await openMenu();
+    expect(
+      within(screen.getByTestId('entry-menu')).getByRole('button', { name: 'Змінити на «Знаю»' }),
+    ).toBeOnTheScreen();
+    await pressItem('Зняти позначку');
+    expect(composition.knowledge.state.shown.get('w_test')).toBeUndefined();
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Позначку знято');
+  });
+
+  it('opens the Share Card once the sheet has slid away', async () => {
+    await renderSlotted('w_test');
+    await openMenu();
+    await fireEvent.press(
+      within(screen.getByTestId('entry-menu')).getByRole('button', { name: 'Поділитися' }),
+    );
+    expect(screen.queryByTestId('share-preview')).toBeNull();
+    await menuGone();
+
+    expect(await screen.findByTestId('share-preview')).toBeOnTheScreen();
+  });
+
+  it('hides it from the sheet with the hide choice', async () => {
+    await renderSlotted('w_test');
+    await openMenu();
+    await pressItem('Сховати');
+    await menuGone();
+
+    expect((await screen.findAllByTestId(/^hide-choice/)).length).toBeGreaterThan(0);
+  });
+
+  it('reports a mistake from the sheet', async () => {
+    await renderSlotted('w_test');
+    await openMenu();
+    await pressItem('Повідомити про помилку');
+    await menuGone();
+
+    expect(await screen.findByRole('radio', { name: 'Наголос' })).toBeOnTheScreen();
+  });
+
+  it('has no mark items on a concealed card', async () => {
+    await renderSlotted('w_test', true);
+    await openMenu();
+
+    const menu = within(screen.getByTestId('entry-menu'));
+    expect(menu.getByRole('button', { name: 'Поділитися' })).toBeOnTheScreen();
+    expect(menu.queryByRole('button', { name: 'Знаю' })).toBeNull();
+    expect(menu.queryByRole('button', { name: 'Не знаю' })).toBeNull();
+  });
+});
+
+describe('Yesterday’s Word', () => {
+  /** Yesterday's card with the slots the feed gives it. */
+  function Yesterday({ card }: { card: AnyEntryCard }) {
+    if (card.kind !== 'word') throw new Error('Yesterday’s card is a Word');
+    return <YesterdayCard word={card.model} slots={useYesterdaySlots(card.entryId)} />;
+  }
+
+  async function renderYesterday() {
+    const card = await composition.entryCard('w_test');
+    if (card === undefined) throw new Error('No card for w_test');
+    await render(underShell(<Yesterday card={card} />));
+  }
+
+  it('has «Знаю» and «Не знаю» while marks are not swiped', async () => {
+    await renderYesterday();
+
+    expect(screen.getByTestId('knowledge-known')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Більше дій' })).toBeNull();
+  });
+
+  it('has the «⋯» button alone while marks are swiped, and marks it from the sheet', async () => {
+    swipeMarksOn = true;
+    await renderYesterday();
+
+    expect(screen.queryByTestId('knowledge-known')).toBeNull();
+    expect(screen.queryByTestId('favorite-button')).toBeNull();
+    await fireEvent.press(screen.getByTestId('word-reveal'));
+    await openMenu();
+    const menu = within(screen.getByTestId('entry-menu'));
+    expect(menu.queryByRole('button', { name: 'Поділитися' })).toBeNull();
+    await pressItem('Не знаю');
+
+    expect(composition.knowledge.state.shown.get('w_test')).toBe('unknown');
   });
 });

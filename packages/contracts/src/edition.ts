@@ -357,6 +357,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   correctionTypes: z.boolean(),
   /** Curated Collections: the Dashboard's «Добірки» rail of editorial Entry sets from the Language Pack (ADR 0076). Off while `dashboard` is. */
   curatedCollections: z.boolean(),
+  /** Swipe marks: the reader swipes an Entry card right for Known and left for Unknown, with an undo; off, the card's mark buttons stay. Off while `knowledge` is. */
+  swipeMarks: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

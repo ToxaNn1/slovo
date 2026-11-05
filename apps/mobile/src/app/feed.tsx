@@ -7,6 +7,7 @@ import {
   EntryCard,
   FeedHeader,
   FirstWeekCard,
+  GesturesHintSheet,
   HeaderFade,
   PagerScrollView,
   RevealPace,
@@ -14,20 +15,20 @@ import {
   QuickQuestionRound,
   SearchButton,
   space,
-  SwipeHint,
   UndoToastProvider,
+  useCloseUndoToast,
   useTokens,
   VerticalPager,
   YesterdayCard,
   type VerticalPagerHandle,
 } from '@slovo/ui';
 import type { FeedCard, FeedNoticeCard, WordCardModel } from '@slovo/core';
-import { memo, useCallback, useRef } from 'react';
+import { memo, useCallback, useRef, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
-import { EntryActions, useKnowledgeButtons } from '@/entries/entry-actions';
+import { useEntrySlots, useYesterdaySlots } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
@@ -39,7 +40,7 @@ import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { XpBarToGame } from '@/progress/xp-bar';
 import { useShown } from '@/shown-in-effect';
-import { useSwipeHint } from '@/feed/swipe-hint';
+import { useGesturesHint } from '@/feed/gestures-hint';
 import { todayText } from '@/feed/today-text';
 import { WeeklyRecapNotice } from '@/feed/weekly-recap-notice';
 import { CommunityWordNotice } from '@/feed/community-word-notice';
@@ -65,14 +66,14 @@ export default function FeedRoute() {
 function FeedScreen() {
   const pager = useRef<VerticalPagerHandle>(null);
   const feed = useFeed(pager, { clock: deviceClock, landing: wordOfTheDayLanding });
-  const swipeHint = useSwipeHint();
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();
   const shown = useShown();
+  const gesturesHint = useGesturesHint(shown.swipeMarks);
   const openScreen = useOpenScreen();
 
   const { cards, onCardChange, openCorrection, answerQuickQuestion } = feed;
-  const { dismiss: dismissSwipeHint } = swipeHint;
+  const closeUndoToast = useCloseUndoToast();
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
   const renderPage = useCallback(
@@ -91,9 +92,10 @@ function FeedScreen() {
   const onIndexChange = useCallback(
     (position: number) => {
       onCardChange(position);
-      dismissSwipeHint();
+      // The undo toast of a side swipe goes once the reader moves on to another card.
+      closeUndoToast();
     },
-    [onCardChange, dismissSwipeHint],
+    [onCardChange, closeUndoToast],
   );
 
   if (cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
@@ -147,13 +149,12 @@ function FeedScreen() {
           </View>
         </View>
       </View>
-      {swipeHint.visible ? (
-        <SwipeHint
-          text={feedStrings.swipeHint}
-          onShown={swipeHint.markShown}
-          onDismiss={swipeHint.dismiss}
-        />
-      ) : null}
+      <GesturesHintSheet
+        visible={gesturesHint.visible}
+        texts={editionStrings.knowledge.swipe.hint}
+        onShown={gesturesHint.markShown}
+        onDismiss={gesturesHint.dismiss}
+      />
     </View>
   );
 }
@@ -223,19 +224,18 @@ const FeedPage = memo(function FeedPage({
         {card.kind === 'notice' ? (
           <YesterdayNotice word={card.word} />
         ) : card.kind === 'tip' ? (
-          <EntryCard card={card} selfCheck={selfCheck} actions={<EntryActions card={card} />} />
+          <SwipedEntryCard card={card} selfCheck={selfCheck} />
         ) : card.kind === 'synonymRow' ? (
-          <EntryCard
+          <SwipedEntryCard
             card={card}
             // A member opens its Word over the Feed, Hidden or out of the Mix alike.
             onOpenWord={(wordId) => {
               openScreen(`/entry/${wordId}`);
             }}
             selfCheck={selfCheck}
-            actions={<EntryActions card={card} />}
           />
         ) : (
-          <EntryCard
+          <SwipedEntryCard
             card={card}
             onOpenCorrection={(correctionId) => {
               onOpenCorrection(position, correctionId);
@@ -248,13 +248,17 @@ const FeedPage = memo(function FeedPage({
             stressFalls={stressFall}
             // Only here, on the Word of the Day card; in the Word font with the switch off.
             wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
-            actions={<EntryActions card={card} />}
           />
         )}
       </PagerScrollView>
     </View>
   );
 });
+
+/** An Entry's card in the Feed, with its action row or its corner and side swipes (ADR 0077). */
+function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
+  return <EntryCard {...props} slots={useEntrySlots(props.card)} />;
+}
 
 /**
  * A Feed Notice that sits in the middle of its page: the Weekly Recap, the
@@ -291,8 +295,7 @@ function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterd
 
 /** Yesterday's Word in Self-check style, with its Knowledge Marks as on any card. */
 function YesterdayNotice({ word }: { word: WordCardModel }) {
-  const marks = useKnowledgeButtons({ kind: 'word', entryId: word.wordId });
-  return <YesterdayCard word={word} marks={marks} />;
+  return <YesterdayCard word={word} slots={useYesterdaySlots(word.wordId)} />;
 }
 
 const styles = StyleSheet.create({

@@ -117,6 +117,7 @@ describe('the 0.8 sync marks', () => {
       'schema.version',
       'feed.position',
       'feed.swipeHintShown',
+      'feed.gesturesHintShown',
       'feed.wordOfTheDay',
       'settings.vibration',
       'settings.reduceMotion',
@@ -236,6 +237,7 @@ const storedIn1_0: readonly (readonly [
   ['reduceMotion', undefined, 'settings.reduceMotion', 'true'],
   ['dailyLimit', undefined, 'settings.dailyLimit', '20'],
   ['swipeHintShown', undefined, 'feed.swipeHintShown', 'true'],
+  ['gesturesHintShown', undefined, 'feed.gesturesHintShown', 'true'],
   [
     'feedNoticesClosed',
     undefined,
@@ -273,6 +275,7 @@ const storedIn1_0: readonly (readonly [
     '{"mark":"known","step":7,"reviewDay":"2026-11-06","learned":false,"markedAt":"2026-10-30T08:15:00.000Z"}',
   ],
   ['confirmed', 'w-1', 'confirmed.w-1', '"2026-10-30T08:15:00.000Z"'],
+  ['reviewAnswered', 'w-1', 'reviewAnswered.w-1', '"2026-10-30"'],
   ['mixCategories', 'nature', 'mix.categories.nature', 'false'],
   ['mixCorrectionCategories', 'stress', 'mix.correctionCategories.stress', 'true'],
   ['mixCorrections', undefined, 'mix.corrections', 'true'],

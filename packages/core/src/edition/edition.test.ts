@@ -107,6 +107,7 @@ const validConfig = {
     previousWords: true,
     correctionTypes: true,
     curatedCollections: true,
+    swipeMarks: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -778,6 +779,11 @@ describe('loadEdition', () => {
     ],
     ['a missing widget Feature Switch', withoutSwitch('widget'), 'featureSwitches.widget'],
     [
+      'a missing swipe marks Feature Switch',
+      withoutSwitch('swipeMarks'),
+      'featureSwitches.swipeMarks',
+    ],
+    [
       'a missing Share Cards Feature Switch',
       withoutSwitch('shareCards'),
       'featureSwitches.shareCards',
@@ -1205,6 +1211,7 @@ const dependentSwitches = [
   ['mood', ['dashboard', 'wordOfTheDay']],
   ['previousWords', ['dashboard', 'wordOfTheDayArchive', 'wordOfTheDay']],
   ['correctionTypes', ['dashboard', 'wordOfTheDay', 'corrections']],
+  ['swipeMarks', ['knowledge']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

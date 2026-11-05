@@ -177,12 +177,16 @@ function amountOf(table: XpTable, action: XpAction, reviewToday: number): number
 }
 
 /**
- * The id of the action's record. The Daily Crossword of a date has one, so
- * two devices that solve it merge into one record; any other action's id is
- * new, made by `newId`.
+ * The id of the action's record. The Daily Crossword of a date has one, and
+ * so has the Review answer of an Entry on `today`, so a second award is
+ * refused, after a restart too, and two devices' awards merge into one
+ * record; any other action's id is new, made by `newId`.
  */
-const fixedIdOf = (action: XpAction): string | undefined =>
-  action.source === 'daily-crossword' ? `daily-crossword-${action.date}` : undefined;
+function fixedIdOf(action: XpAction, today: string): string | undefined {
+  if (action.source === 'daily-crossword') return `daily-crossword-${action.date}`;
+  if (action.source === 'review-answer') return `review-answer-${today}-${action.entryId}`;
+  return undefined;
+}
 
 /** Opens the XP log over the user state, for the Core composition. */
 export async function openXpLog({
@@ -459,7 +463,7 @@ export async function openXpLog({
   }
 
   function award(action: XpAction): XpAward {
-    const fixedId = fixedIdOf(action);
+    const fixedId = fixedIdOf(action, todayKey(clock));
     if (!on || (fixedId !== undefined && records.has(fixedId))) return NOTHING_EARNED;
     const amount = amountOf(edition.xp, action, derived.reviewToday);
     if (amount === 0) return NOTHING_EARNED;

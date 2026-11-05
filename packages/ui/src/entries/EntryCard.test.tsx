@@ -323,14 +323,17 @@ function correctionWithMarks({
   return inEdition(
     <EntryCard
       card={card}
-      actions={
-        <ActionRow
-          marks={<KnowledgeButtons entryKind="correction" mark={mark} onTap={onTap} />}
-          favorite={<Text>♡</Text>}
-          collection={<Text>+</Text>}
-          hide={<Text>×</Text>}
-        />
-      }
+      slots={{
+        slot: 'actions',
+        actions: (
+          <ActionRow
+            marks={<KnowledgeButtons entryKind="correction" mark={mark} onTap={onTap} />}
+            favorite={<Text>♡</Text>}
+            collection={<Text>+</Text>}
+            hide={<Text>×</Text>}
+          />
+        ),
+      }}
     />,
   );
 }
@@ -896,5 +899,52 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
       'He beat the bushes all day.',
     );
     expect(screen.getByText('From the húnt.')).toHaveProp('accessibilityLabel', 'From the hunt.');
+  });
+});
+
+describe('the corner of an Entry card', () => {
+  /** Mark buttons stand in the corner, as they read whether the card is concealed. */
+  const cornerMarks = (
+    <KnowledgeButtons entryKind="word" mark={undefined} onTap={() => undefined} />
+  );
+
+  it('draws the corner in the card, with no action row', async () => {
+    await render(
+      inEdition(
+        <EntryCard
+          card={wordWithEverything}
+          slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+        />,
+      ),
+    );
+
+    expect(
+      within(screen.getByTestId('word-corner')).getByRole('button', { name: 'Known' }),
+    ).toBeEnabled();
+    expect(screen.queryByTestId('word-actions')).toBeNull();
+  });
+
+  it('has no corner when none is given', async () => {
+    await render(inEdition(<EntryCard card={wordWithEverything} />));
+
+    expect(screen.queryByTestId('word-corner')).toBeNull();
+  });
+
+  it('keeps the corner concealed under Self-check until the reader reveals the card', async () => {
+    await render(
+      inEdition(
+        <EntryCard
+          card={wordWithEverything}
+          slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+          selfCheck
+        />,
+      ),
+    );
+
+    const known = () =>
+      within(screen.getByTestId('word-corner')).getByRole('button', { name: 'Known' });
+    expect(known()).toBeDisabled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Show the meaning' }));
+    expect(known()).toBeEnabled();
   });
 });

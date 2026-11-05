@@ -138,7 +138,7 @@ A rule of good speech with its standard form, a short explanation and its own Ga
 _Avoid_: Hack, advice, lifehack
 
 **Entry card**:
-How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. The Feed and every screen that opens a kept Entry show the same Entry card.
+How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). The Feed and every screen that opens a kept Entry show the same Entry card.
 _Avoid_: Item, tile (for a card; a tile is the pressed button of the design)
 
 ### User's words
@@ -263,7 +263,7 @@ One pass through all eligible Entries. When every Entry is Seen, the user is tol
 _Avoid_: Round (that is a Game term), loop
 
 **Knowledge Mark**:
-What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). Tapping the other mark changes it, tapping the same one again removes it. A mark set from 0.8.13 on keeps the time it was set; only marks with a time count in a Weekly Recap. On a Correction, Known means "I already say it right". A mistake in any Game Mode is an Unknown mark; there is no separate list of hard words.
+What the reader says about an Entry on its card: Known («Знаю») or Unknown («Не знаю»). Tapping the other mark changes it, tapping the same one again removes it. With `swipeMarks` on, a side swipe sets it instead (right Known, left Unknown) or the «⋯» sheet does; a repeated swipe to the same side changes nothing, only «Зняти позначку» removes it, and undo within 4 s restores the previous state (ADR 0077). A mark set from 0.8.13 on keeps the time it was set; only marks with a time count in a Weekly Recap. On a Correction, Known means "I already say it right". A mistake in any Game Mode is an Unknown mark; there is no separate list of hard words.
 _Avoid_: Rating, grade
 
 **Review**:

@@ -1,6 +1,6 @@
 import type { EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from '@slovo/core';
 import type { ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
@@ -8,6 +8,7 @@ import { ConcealedProvider, useSelfCheck } from './self-check';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
 import { Button } from '../primitives/Button';
+import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
 import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
@@ -32,8 +33,8 @@ export interface EntryCardProps {
    * stable across renders, as it is called again when it changes.
    */
   onWordHistoryShown?: (() => void) | undefined;
-  /** The action row: under a Word's card, at the bottom inside the card of every other kind. */
-  actions?: ReactNode;
+  /** The action row or, while marks are swiped, the corner and the swipes; none on a bare card. */
+  slots?: EntryCardSlots | undefined;
   /**
    * Self-check applies to the card: until the reader reveals it, a Word card
    * shows only its Lemma, part of speech and Category, a Correction card only
@@ -55,6 +56,18 @@ export interface EntryCardProps {
    */
   wordOfTheDayFont?: string | undefined;
 }
+
+/**
+ * What an Entry card carries beside its content. With the `swipeMarks`
+ * Feature Switch off, the action row: under a Word's card, at the bottom
+ * inside the card of every other kind. With it on (ADR 0077, XSwipe), the
+ * actions in the frame's top-right corner and the side swipes that set the
+ * Entry's Knowledge Mark, with its stamp and undo toast, while the Knowledge
+ * switch is on. Self-check conceals either as it conceals the card.
+ */
+export type EntryCardSlots =
+  | { slot: 'actions'; actions: ReactNode }
+  | { slot: 'corner'; corner: ReactNode; swipe: EntrySwipe | undefined };
 
 /** On the SE the padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
 const COMPACT_PADDING = 0.75;
@@ -89,12 +102,47 @@ export function EntryCard({
   onOpenWord,
   onOpenSynonymRow,
   onWordHistoryShown,
-  actions,
+  slots,
   selfCheck = false,
   stressFalls = false,
   wordOfTheDayFont,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
+  const face = (
+    <EntryCardFace
+      card={card}
+      onOpenCorrection={onOpenCorrection}
+      onOpenWord={onOpenWord}
+      onOpenSynonymRow={onOpenSynonymRow}
+      onWordHistoryShown={onWordHistoryShown}
+      slots={slots}
+      stressFalls={stressFalls}
+      wordOfTheDayFont={wordOfTheDayFont}
+      concealed={concealed}
+      reveal={reveal}
+    />
+  );
+  if (slots?.slot !== 'corner' || slots.swipe === undefined) return face;
+  return (
+    <SwipeMarks swipe={slots.swipe} concealed={concealed} correction={card.kind === 'correction'}>
+      {face}
+    </SwipeMarks>
+  );
+}
+
+/** The card itself, with its Self-check state from `EntryCard`. */
+function EntryCardFace({
+  card,
+  onOpenCorrection,
+  onOpenWord,
+  onOpenSynonymRow,
+  onWordHistoryShown,
+  slots,
+  stressFalls = false,
+  wordOfTheDayFont,
+  concealed,
+  reveal,
+}: Omit<EntryCardProps, 'selfCheck'> & { concealed: boolean; reveal: () => void }) {
   const { strings } = useEdition();
   const { colors, radii } = useTokens();
   const lemmaSize = useLemmaSize();
@@ -102,11 +150,18 @@ export function EntryCard({
   const padding = compact ? COMPACT_PADDING : 1;
   const spacing = SPACING[card.kind];
   // A Word's raised tiles stand under its card; the icons of the other kinds sit in theirs (XActions a10).
-  const actionsOf = (kind: typeof card.kind) => (
-    <RevealDetail step={3} testID={`${kind}-actions`}>
-      <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
-    </RevealDetail>
-  );
+  const actionsOf = (kind: typeof card.kind) =>
+    slots?.slot === 'actions' && (
+      <RevealDetail step={3} testID={`${kind}-actions`}>
+        <ConcealedProvider value={concealed}>{slots.actions}</ConcealedProvider>
+      </RevealDetail>
+    );
+  const cornerOf = (kind: typeof card.kind) =>
+    slots?.slot === 'corner' && (
+      <View style={styles.corner} testID={`${kind}-corner`}>
+        <ConcealedProvider value={concealed}>{slots.corner}</ConcealedProvider>
+      </View>
+    );
 
   // The Word of the Day is the red shout card, which draws its own reveal button.
   if (card.kind === 'word' && card.wordOfTheDay !== undefined)
@@ -127,10 +182,9 @@ export function EntryCard({
             onOpenSynonymRow={onOpenSynonymRow}
             onHistoryShown={onWordHistoryShown}
           />
+          {cornerOf(card.kind)}
         </RevealFrame>
-        <RevealDetail step={3} testID="word-actions">
-          <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
-        </RevealDetail>
+        {actionsOf(card.kind)}
       </EntryReveal>
     );
 
@@ -195,6 +249,7 @@ export function EntryCard({
           />
         )}
         {card.kind !== 'word' && actionsOf(card.kind)}
+        {cornerOf(card.kind)}
       </RevealFrame>
       {card.kind === 'word' && actionsOf(card.kind)}
     </EntryReveal>
@@ -205,4 +260,6 @@ const styles = StyleSheet.create({
   // The border is the card's only elevation.
   card: { borderWidth: 1 },
   hero: { borderRadius: wordHero.radius, overflow: 'hidden' },
+  // Drawn last so it stays over the card's headline and takes its taps.
+  corner: { position: 'absolute', top: space[2], right: space[2] },
 });

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSettings, createSwipeHint, type UserStateChanges } from '../index';
+import { createSettings, type UserStateChanges } from '../index';
 import { openCycle } from '../feed/cycle';
 import { openWordOfTheDay } from '../feed/word-of-the-day';
 import { userStateRecords } from '../user-state-schema';
@@ -116,7 +116,7 @@ describe('openUserState', () => {
       shareCounters: true,
       reduceMotion: false,
     });
-    expect(await createSwipeHint({ userState }).isDue()).toBe(false);
+    expect(await userState.read(userStateRecords.swipeHintShown)).toBe(true);
     expect(new Set(cycle.unseen().words)).toEqual(new Set(['w_0', 'w_3', 'w_4']));
     expect(wordOfTheDay.chosen()?.wordId).toBe('w_3');
   });
