@@ -257,38 +257,40 @@ describe('the Word of the Day hero', () => {
 });
 
 describe('the Mood check-in', () => {
-  it('a Mood chip folds the block to «Сьогодні: …» with its reply', async () => {
+  it('a Mood tile chooses today’s Mood, turns chosen and says its reply in a toast', async () => {
     await open(true);
     await renderApp();
 
     expect(screen.getByText(editionStrings.dashboard.mood.question)).toBeTruthy();
+    expect(screen.getByText(editionStrings.dashboard.mood.note)).toBeTruthy();
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-energetic')));
 
-    expect(screen.getByText('Сьогодні: ⚡ Бадьорий')).toBeTruthy();
-    expect(screen.getByText('Тримай темп!')).toBeTruthy();
-    expect(screen.queryByTestId('dashboard-mood-energetic')).toBeNull();
-    expect(screen.queryByText(editionStrings.dashboard.mood.question)).toBeNull();
+    expect(composition.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'energetic' } });
+    expect(screen.getByText('Бадьоро? Тоді доженемо ціль ще до обіду.')).toBeTruthy();
+    expect(
+      screen.getByTestId('dashboard-mood-energetic').props['accessibilityState'],
+    ).toMatchObject({
+      selected: true,
+    });
+    expect(screen.getByTestId('dashboard-mood-sleepy').props['accessibilityState']).toMatchObject({
+      selected: false,
+    });
   });
 
-  it('«змінити» opens the chips again and changes today’s Mood', async () => {
+  it('another tile changes today’s Mood', async () => {
     await open(true);
     await renderApp();
 
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-energetic')));
-    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-change')));
-    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-calm')));
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-sleepy')));
 
-    expect(screen.getByText('Сьогодні: 😌 Спокійний')).toBeTruthy();
-  });
-
-  it('«Не сьогодні» hides the block', async () => {
-    await open(true);
-    await renderApp();
-
-    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-skip')));
-
-    expect(screen.queryByTestId('dashboard-mood')).toBeNull();
-    expect(screen.getByTestId('dashboard-hero')).toBeTruthy();
+    expect(composition.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'sleepy' } });
+    expect(screen.getByText('«Сонно» — теж слово. Але, на жаль, не рідкісне.')).toBeTruthy();
+    expect(
+      screen.getByTestId('dashboard-mood-energetic').props['accessibilityState'],
+    ).toMatchObject({
+      selected: false,
+    });
   });
 });
 

@@ -1,140 +1,123 @@
-'use no memo';
-
-import { fill, type Mood } from '@slovo/contracts';
+import type { Mood } from '@slovo/contracts';
 import type { MoodBlock } from '@slovo/core';
-import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  ReduceMotion,
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
-} from 'react-native-reanimated';
 
-import { Button } from '../primitives/Button';
-import { Chip } from '../primitives/Chip';
+import { PressedTile } from '../primitives/PressedTile';
+import { useUndoToast } from '../primitives/UndoToast';
+import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
-import { useTokens } from '../providers/TokensProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
-import { motion, space, typeStyle } from '../tokens';
-
-const moodLabel = (mood: Mood) => `${mood.emoji} ${mood.name}`;
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { dashboard, moodTile, typeStyle } from '../tokens';
+import { BlockTitle } from './BlockTitle';
 
 /**
- * The Mood check-in of the Dashboard (ADR 0076). Asking, it puts «Як настрій?»
- * over a chip for each of the four moods and «Не сьогодні»; once a Mood is
- * chosen it folds to «Сьогодні: …» with the Mood's reply and «змінити», which
- * opens the chips again. Each fold rises in; with Reduce Motion it fades.
+ * The Mood check-in of the Dashboard (ADR 0076), from the board: «Як
+ * настрій?» with «Mood дня» at the end, over a tile for each Mood, two to a
+ * row, each with its own red mark. A tap chooses the Mood, or changes it, and
+ * a toast says its reply; the chosen tile turns red. It needs an
+ * `UndoToastProvider` above it.
  */
 export function MoodCheckIn({
   block,
   onChoose,
-  onSkip,
 }: {
   block: MoodBlock;
   onChoose: (moodId: string) => void;
-  onSkip: () => void;
 }) {
-  const tokens = useTokens();
-  const { colors, radii } = tokens;
-  const { strings, voice } = useEdition();
+  const { strings } = useEdition();
   const words = strings.dashboard.mood;
-  const [changing, setChanging] = useState(false);
+  const showToast = useUndoToast();
   const { check } = block;
-  const folded = check.state === 'chosen' && !changing;
-  const shown = useFoldIn(folded ? 'chosen' : 'asking');
+  const chosenId = check.state === 'chosen' ? check.mood.id : undefined;
+  const rows = inRows(block.moods.map((mood, index) => ({ mood, index })));
   return (
-    <View
-      testID="dashboard-mood"
-      style={[styles.block, { backgroundColor: colors.surface, borderRadius: radii.card }]}
-    >
-      <Animated.View style={[styles.fold, shown]}>
-        {folded ? (
-          <>
-            <View style={styles.today}>
-              <Text
-                testID="dashboard-mood-today"
-                {...voice}
-                style={[styles.todayText, typeStyle('rowLabel', tokens), { color: colors.ink }]}
-              >
-                {fill(words.today, { mood: moodLabel(check.mood) })}
-              </Text>
-              <Button
-                variant="ghost"
-                testID="dashboard-mood-change"
-                label={words.change}
+    <View testID="dashboard-mood" style={styles.block}>
+      <BlockTitle title={words.question} note={words.note} />
+      <View style={styles.grid}>
+        {rows.map((row) => (
+          <View key={row[0]?.mood.id} style={styles.row}>
+            {row.map(({ mood, index }) => (
+              <MoodTile
+                key={mood.id}
+                mood={mood}
+                index={index}
+                chosen={mood.id === chosenId}
                 onPress={() => {
-                  setChanging(true);
+                  onChoose(mood.id);
+                  showToast({ message: mood.reply });
                 }}
               />
-            </View>
-            <Text {...voice} style={[typeStyle('sub', tokens), { color: colors.muted }]}>
-              {check.mood.reply}
-            </Text>
-          </>
-        ) : (
-          <>
-            <Text
-              {...voice}
-              accessibilityRole="header"
-              style={[typeStyle('heading', tokens), { color: colors.ink }]}
-            >
-              {words.question}
-            </Text>
-            <View style={styles.chips}>
-              {block.moods.map((mood) => (
-                <Chip
-                  key={mood.id}
-                  testID={`dashboard-mood-${mood.id}`}
-                  label={moodLabel(mood)}
-                  accessibilityLabel={mood.name}
-                  on={check.state === 'chosen' && check.mood.id === mood.id}
-                  onPress={() => {
-                    setChanging(false);
-                    onChoose(mood.id);
-                  }}
-                />
-              ))}
-            </View>
-            {check.state === 'asking' && (
-              <Button
-                variant="ghost"
-                testID="dashboard-mood-skip"
-                label={words.skip}
-                onPress={onSkip}
-              />
-            )}
-          </>
-        )}
-      </Animated.View>
+            ))}
+          </View>
+        ))}
+      </View>
     </View>
   );
 }
 
-/** The style that rises the check-in's part in each time `fold` changes, or fades it with Reduce Motion. */
-function useFoldIn(fold: 'asking' | 'chosen') {
-  const reduceMotion = useReduceMotion();
-  const progress = useSharedValue(1);
-  useEffect(() => {
-    progress.value = 0;
-    const { duration, easing } = reduceMotion ? motion.reduceMotion : motion.collapse;
-    progress.value = withTiming(1, {
-      duration,
-      easing: Easing.bezier(...easing),
-      reduceMotion: ReduceMotion.Never,
-    });
-  }, [fold, reduceMotion, progress]);
-  return useAnimatedStyle(() => ({
-    opacity: progress.value,
-    transform: [{ translateY: reduceMotion ? 0 : (1 - progress.value) * motion.collapse.rise }],
-  }));
+/** One Mood's tile: its mark and name, red with the key ink once chosen. */
+function MoodTile({
+  mood,
+  index,
+  chosen,
+  onPress,
+}: {
+  mood: Mood;
+  index: number;
+  chosen: boolean;
+  onPress: () => void;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const keyInk = useSchemeColors('light').ink;
+  const { voice } = useEdition();
+  const ink = chosen ? keyInk : colors.ink;
+  const mark = moodTile.marks[index % moodTile.marks.length] ?? moodTile.marks[0];
+  return (
+    <View style={styles.cell}>
+      <PressedTile
+        testID={`dashboard-mood-${mood.id}`}
+        tone={chosen ? 'accent' : 'tile'}
+        depth="action"
+        radius={moodTile.radius}
+        accessibilityLabel={mood.name}
+        accessibilityLanguage={voice.accessibilityLanguage}
+        accessibilityState={{ selected: chosen }}
+        faceStyle={styles.face}
+        onPress={onPress}
+      >
+        <Wedge
+          points={mark}
+          color={chosen ? keyInk : colors.accent}
+          width={moodTile.mark.width}
+          height={moodTile.mark.height}
+        />
+        <Text {...voice} style={[typeStyle('moodName', tokens), { color: ink }]}>
+          {mood.name}
+        </Text>
+      </PressedTile>
+    </View>
+  );
+}
+
+/** The tiles cut into rows of `moodTile.columns`. */
+function inRows<T>(items: readonly T[]): T[][] {
+  const rows: T[][] = [];
+  for (let start = 0; start < items.length; start += moodTile.columns)
+    rows.push(items.slice(start, start + moodTile.columns));
+  return rows;
 }
 
 const styles = StyleSheet.create({
-  block: { padding: space[4] },
-  fold: { gap: space[3] },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
-  today: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  todayText: { flex: 1 },
+  block: { gap: dashboard.titleGap },
+  grid: { gap: moodTile.gap },
+  row: { flexDirection: 'row', gap: moodTile.gap },
+  cell: { flex: 1 },
+  face: {
+    height: moodTile.height,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: moodTile.markGap,
+  },
 });
