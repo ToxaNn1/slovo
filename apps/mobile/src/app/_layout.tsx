@@ -41,11 +41,15 @@ import { LemmaPronunciation } from '@/entries/pronunciation-button';
 import { SettingsProvider, useColorSchemeInEffect, useSettings } from '@/settings/settings';
 import { useShown } from '@/shown-in-effect';
 import { EditionTabs } from '@/shell/edition-tabs';
+import { useEditionFontsReady } from '@/shell/expo-go-fonts';
 
 // Before the first screen, so a crash at launch is reported too.
 startCrashReports(process.env.EXPO_PUBLIC_SENTRY_DSN);
 
 export default function RootLayout() {
+  // In Expo Go only: nothing draws until the Edition's fonts have loaded.
+  if (!useEditionFontsReady()) return null;
+
   return (
     // The one gesture root of the app: swipe rows, sheets and the pager rely on it.
     <GestureHandlerRootView style={{ flex: 1 }}>

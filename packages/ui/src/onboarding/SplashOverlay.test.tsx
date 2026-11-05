@@ -36,7 +36,7 @@ describe('SplashOverlay', () => {
   it('draws the wordmark and the tagline on the cut', async () => {
     await renderSplash('first', false);
     expect(screen.getByTestId('splash')).toBeTruthy();
-    expect(screen.getByText('RARE WORDS')).toBeTruthy();
+    expect(screen.getByText('rare words')).toBeTruthy();
     expect(screen.getAllByText(/^[SLOV]$/)).toHaveLength(5);
   });
 
@@ -52,8 +52,8 @@ describe('SplashOverlay', () => {
   });
 
   it.each<[LaunchKind, boolean, number]>([
-    ['first', false, 2050],
-    ['daily', false, 560],
+    ['first', false, 2000],
+    ['daily', false, 500],
     ['first', true, 800],
     ['daily', true, 350],
   ])(
@@ -67,7 +67,7 @@ describe('SplashOverlay', () => {
     },
   );
 
-  it('draws the letters in ink and the tagline in cream in the dark Theme, as the board', async () => {
+  it("draws the cut in the dark Theme's own background and ink", async () => {
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
     await render(
       <TokensProvider tokens={coreTokens} colorScheme="dark">
@@ -77,13 +77,23 @@ describe('SplashOverlay', () => {
       </TokensProvider>,
     );
     await pass(0);
-    // The board's band is fixed: #140C0A ink letters and band, #FFF4E6 cream tagline in both Themes.
-    const light = coreTokens.colors.light;
-    expect(screen.getAllByText('S')[0]).toHaveStyle({ color: light.ink });
-    expect(screen.getByText('RARE WORDS')).toHaveStyle({ color: light.background });
+    const dark = coreTokens.colors.dark;
+    expect(screen.getByTestId('splash')).toHaveStyle({ backgroundColor: dark.background });
+    expect(screen.getAllByText('S')[0]).toHaveStyle({ color: dark.ink });
+    expect(screen.getByText('rare words')).toHaveStyle({ color: dark.muted });
   });
 
-  it('shows the shouting Mascot on the red', async () => {
+  it('wipes the screen to the app', async () => {
+    await renderSplash('first', false);
+    expect(screen.getByTestId('splash-wipe')).toBeTruthy();
+  });
+
+  it('draws no wipe under Reduce Motion', async () => {
+    await renderSplash('first', true);
+    expect(screen.queryByTestId('splash-wipe')).toBeNull();
+  });
+
+  it('shows the shouting Mascot', async () => {
     await renderSplash('daily', false);
     expect(screen.getByTestId('mascot-shouts')).toBeTruthy();
   });

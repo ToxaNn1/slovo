@@ -290,10 +290,10 @@ export const typeRoles = {
   crosswordCellNumber: role('ui', '700', 10, 10),
   /** A letter on a key of the Daily Crossword's keyboard. */
   crosswordKey: role('ui', '700', 15, 18, 0, 'uppercase'),
-  /** A letter of the wordmark flying in on the splash, on its 390-wide frame; the splash scales it. */
-  splashLetter: role('word', '900', 250, 250, -10),
-  /** The tagline on the splash's ink band. */
-  splashTagline: role('word', '800', 15, 15, 4, 'uppercase'),
+  /** A letter of the wordmark popping up on the splash, on its 390-wide frame; the splash scales it. */
+  splashLetter: role('word', '900', 58, 58, -2),
+  /** The tagline under the splash's wordmark, on its 390-wide frame; the splash scales it. */
+  splashTagline: role('ui', '500', 17, 17),
   /** The Category's name on its filled chip of a Word card. */
   categoryChip: role('ui', '600', 12.5, 15),
   /** A chip's label: a Category of the Mix, a tab of the Saved screen. */

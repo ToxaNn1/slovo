@@ -1,5 +1,5 @@
 const { existsSync, mkdirSync, writeFileSync } = require('node:fs');
-const { dirname, join } = require('node:path');
+const { basename, dirname, extname, join } = require('node:path');
 
 const { getDefaultConfig } = require('expo/metro-config');
 const { require: tsxRequire } = require('tsx/cjs/api');
@@ -131,10 +131,24 @@ const pluralRulesModule = () =>
     editions.map((edition) => `${required(pluralRulesData(edition))};\n`).join(''),
   );
 
+/**
+ * The fonts of every bundled Edition by file name without the extension, for
+ * Expo Go, which lacks the fonts the `expo-font` plugin embeds in a build.
+ */
+const fontsModule = () =>
+  generated(
+    'fonts.js',
+    `module.exports = {\n${editions
+      .flatMap((edition) => edition.fonts())
+      .map((font) => `  ${JSON.stringify(basename(font, extname(font)))}: ${required(font)},`)
+      .join('\n')}\n};\n`,
+  );
+
 /** The generated modules, written once when Metro starts. */
 const generatedModules = {
   'slovo-editions': registryModule(),
   'slovo-editions/plural-rules': pluralRulesModule(),
+  'slovo-editions/fonts': fontsModule(),
 };
 
 const config = getDefaultConfig(__dirname);

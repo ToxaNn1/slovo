@@ -199,7 +199,7 @@ export default {
         pathNot: [
           '\\.d\\.ts$',
           '(^|/)[^/]+\\.config\\.(js|cjs|mjs|ts)$',
-          '(^|/)jest\\.(setup|resolver|glass-effect|language-pack)\\.(js|cjs)$',
+          '(^|/)jest\\.(setup|resolver|glass-effect|language-pack|fonts)\\.(js|cjs)$',
           '^apps/mobile/src/app/',
           '^apps/mobile/maestro/',
           '^apps/site/src/components/[^/]+\\.tsx$',
