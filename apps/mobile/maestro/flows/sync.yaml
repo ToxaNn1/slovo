@@ -49,10 +49,10 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - runFlow:
     when:
       visible:
-        id: swipe-hint
+        id: gestures-hint-dismiss
     commands:
       - tapOn:
-          id: swipe-hint
+          id: gestures-hint-dismiss
 - scrollUntilVisible:
     element:
       id: favorite-button

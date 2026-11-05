@@ -22,7 +22,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertNotVisible:
     id: word-of-the-day-badge
 - assertNotVisible:
-    id: swipe-hint
+    id: gestures-hint
 # Back down to the first card.
 - repeat:
     while:
