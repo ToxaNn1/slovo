@@ -127,6 +127,7 @@ export { HeaderFade } from './feed/HeaderFade';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
 export { BadgeMark } from './progress/BadgeMark';
 export { DashboardHero } from './dashboard/DashboardHero';
+export { BlockTitle } from './dashboard/BlockTitle';
 export { MoodCheckIn } from './dashboard/MoodCheckIn';
 export { PreviousWords } from './dashboard/PreviousWords';
 export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
@@ -143,6 +144,7 @@ export {
   cardSpace,
   collectionCard,
   coreTokens,
+  dashboard,
   designTokens,
   feedHeader,
   disabledOpacity,

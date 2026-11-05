@@ -281,6 +281,18 @@
   ],
   "moods": [
     {
+      "id": "sleepy",
+      "name": "Сонно",
+      "emoji": "😴",
+      "reply": "«Сонно» — теж слово. Але, на жаль, не рідкісне."
+    },
+    {
+      "id": "curious",
+      "name": "Допитливо",
+      "emoji": "🧐",
+      "reply": "Для допитливих я відкладаю найрідкісніше."
+    },
+    {
       "id": "joyful",
       "name": "Радісний",
       "emoji": "😊",
@@ -305,9 +317,9 @@
     },
     {
       "id": "energetic",
-      "name": "Бадьорий",
+      "name": "Бадьоро",
       "emoji": "⚡",
-      "reply": "Тримай темп!",
+      "reply": "Бадьоро? Тоді доженемо ціль ще до обіду.",
       "rarityBand": "upper",
       "shifts": {
         "correction": "more"
@@ -326,16 +338,16 @@
     },
     {
       "id": "thoughtful",
-      "name": "Задумливий",
+      "name": "Задумливо",
       "emoji": "🤔",
-      "reply": "Є над чим подумати.",
+      "reply": "Задумливо — ідеальний стан для кросворду.",
       "rarityBand": "upper",
       "shifts": {
         "idiom": "more"
       }
     }
   ],
-  "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
+  "dashboardMoods": ["energetic", "sleepy", "curious", "thoughtful"],
   "searchLetters": {
     "ґ": "г",
     "ё": "е"

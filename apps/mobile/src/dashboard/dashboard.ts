@@ -17,10 +17,8 @@ export interface DashboardScreen {
   readonly reveal: () => void;
   /** «До картки →»: opens the Feed on the Word of the Day card. */
   readonly toCard: () => void;
-  /** A Mood chip: chooses today's Mood, or changes it. */
+  /** A Mood tile: chooses today's Mood, or changes it. */
   readonly chooseMood: (moodId: string) => void;
-  /** «Не сьогодні»: skips the Mood check-in till tomorrow. */
-  readonly skipMood: () => void;
   /** A row of «Попередні слова»: opens its Entry card as Search does, making nothing Seen. */
   readonly openPreviousWord: (entryId: string) => void;
   /** A tile of the Correction Types rail: opens its type's screen. */
@@ -53,9 +51,6 @@ export function useDashboardScreen(): DashboardScreen {
     toCard: wordOfTheDayLanding.ask,
     chooseMood: (moodId) => {
       void mood.choose(moodId);
-    },
-    skipMood: () => {
-      void mood.skip();
     },
     openPreviousWord: (entryId) => {
       openScreen(`/search/${entryId}?back=${encodeURIComponent(previousWordsTitle)}`);

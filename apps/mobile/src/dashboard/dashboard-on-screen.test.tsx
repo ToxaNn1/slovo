@@ -243,10 +243,12 @@ describe('the Word of the Day hero', () => {
     expect(composition.history.list.map(({ entryId }) => entryId)).toContain('w_sumyrnyi');
   });
 
-  it('«До картки →» opens the Feed on the Word of the Day card', async () => {
+  it('«До картки →», once revealed, opens the Feed on the Word of the Day card', async () => {
     await open(true);
     await renderApp();
 
+    expect(screen.queryByText(editionStrings.dashboard.toCard)).toBeNull();
+    await settle(() => fireEvent.press(screen.getByText(editionStrings.wordOfTheDay.reveal)));
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));
     await layOutFeed();
 
@@ -257,38 +259,40 @@ describe('the Word of the Day hero', () => {
 });
 
 describe('the Mood check-in', () => {
-  it('a Mood chip folds the block to «Сьогодні: …» with its reply', async () => {
+  it('a Mood tile chooses today’s Mood, turns chosen and says its reply in a toast', async () => {
     await open(true);
     await renderApp();
 
     expect(screen.getByText(editionStrings.dashboard.mood.question)).toBeTruthy();
+    expect(screen.getByText(editionStrings.dashboard.mood.note)).toBeTruthy();
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-energetic')));
 
-    expect(screen.getByText('Сьогодні: ⚡ Бадьорий')).toBeTruthy();
-    expect(screen.getByText('Тримай темп!')).toBeTruthy();
-    expect(screen.queryByTestId('dashboard-mood-energetic')).toBeNull();
-    expect(screen.queryByText(editionStrings.dashboard.mood.question)).toBeNull();
+    expect(composition.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'energetic' } });
+    expect(screen.getByText('Бадьоро? Тоді доженемо ціль ще до обіду.')).toBeTruthy();
+    expect(
+      screen.getByTestId('dashboard-mood-energetic').props['accessibilityState'],
+    ).toMatchObject({
+      selected: true,
+    });
+    expect(screen.getByTestId('dashboard-mood-sleepy').props['accessibilityState']).toMatchObject({
+      selected: false,
+    });
   });
 
-  it('«змінити» opens the chips again and changes today’s Mood', async () => {
+  it('another tile changes today’s Mood', async () => {
     await open(true);
     await renderApp();
 
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-energetic')));
-    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-change')));
-    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-calm')));
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-sleepy')));
 
-    expect(screen.getByText('Сьогодні: 😌 Спокійний')).toBeTruthy();
-  });
-
-  it('«Не сьогодні» hides the block', async () => {
-    await open(true);
-    await renderApp();
-
-    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-skip')));
-
-    expect(screen.queryByTestId('dashboard-mood')).toBeNull();
-    expect(screen.getByTestId('dashboard-hero')).toBeTruthy();
+    expect(composition.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'sleepy' } });
+    expect(screen.getByText('«Сонно» — теж слово. Але, на жаль, не рідкісне.')).toBeTruthy();
+    expect(
+      screen.getByTestId('dashboard-mood-energetic').props['accessibilityState'],
+    ).toMatchObject({
+      selected: false,
+    });
   });
 });
 
@@ -298,7 +302,10 @@ describe('«Попередні слова»', () => {
     await renderApp();
 
     expect(screen.getByText(editionStrings.dashboard.previousWords.title)).toBeTruthy();
-    await settle(() => fireEvent.press(screen.getByTestId('dashboard-previous-word-2026-10-27')));
+    const row = screen.getByTestId('dashboard-previous-word-2026-10-27');
+    expect(within(row).getByText('27\nжов')).toBeTruthy();
+    expect(within(row).getByText('Значення слова лагідний.')).toBeTruthy();
+    await settle(() => fireEvent.press(row));
 
     expect(screen.getByText('Значення слова лагідний.')).toBeTruthy();
     expect(composition.history.list).toEqual([]);
@@ -314,13 +321,20 @@ describe('«Попередні слова»', () => {
 });
 
 describe('the Correction Types rail', () => {
-  it('a tile counts the type\u2019s Corrections «розібрано» and opens the type\u2019s screen', async () => {
+  it('the title counts the tiles, a tile names its type and opens the type\u2019s screen', async () => {
     await open(true);
     await renderApp();
 
     const { correctionTypes: words } = editionStrings.dashboard;
-    expect(screen.getByText(words.title)).toBeTruthy();
-    expect(screen.getByText('Розібрано 0 з 2')).toBeTruthy();
+    const title = screen.getByTestId('dashboard-correction-types-title');
+    expect(within(title).getByText(words.title)).toBeTruthy();
+    expect(within(title).getByText('1')).toBeTruthy();
+    expect(
+      within(screen.getByTestId('dashboard-correction-type-surzhyk')).getByText(
+        words.tiles.surzhyk,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Розібрано/)).toBeNull();
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-correction-type-surzhyk')));
 
     expect(screen.getByTestId('correction-type')).toBeTruthy();
@@ -329,7 +343,7 @@ describe('the Correction Types rail', () => {
     expect(screen.getByText('типу')).toBeTruthy();
   });
 
-  it('«Як правильно?» shows the standard form and the explanation, and the tile counts it', async () => {
+  it('«Як правильно?» shows the standard form and the explanation, and counts it «розібрано»', async () => {
     await open(true);
     await renderApp();
 
@@ -353,8 +367,12 @@ describe('the Curated Collections rail', () => {
     await open(true);
     await renderApp();
 
-    expect(screen.getByText(editionStrings.dashboard.curatedCollectionsTitle)).toBeTruthy();
-    expect(screen.getByText('Лагідні слова')).toBeTruthy();
+    const title = screen.getByTestId('dashboard-curated-collections-title');
+    expect(within(title).getByText(editionStrings.dashboard.curatedCollectionsTitle)).toBeTruthy();
+    expect(within(title).getByText('1')).toBeTruthy();
+    const tile = screen.getByTestId('dashboard-curated-collection-cc_lahidni');
+    expect(within(tile).getByText('Лагідні слова')).toBeTruthy();
+    expect(within(tile).getByText('2 слова')).toBeTruthy();
     expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();
 
     await settle(() =>

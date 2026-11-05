@@ -215,11 +215,10 @@ describe('the whole Dashboard', () => {
     expect(screen.getByText('Значення слова сумирний.')).toBeTruthy();
     expect(composition.history.list.map(({ entryId }) => entryId)).toEqual(['w_sumyrnyi']);
 
-    // The Mood check-in folds to today's Mood and its reply.
+    // A Mood tile chooses today's Mood, and a toast says its reply.
     await press('dashboard-mood-energetic');
-    expect(screen.getByText('Сьогодні: ⚡ Бадьорий')).toBeTruthy();
-    expect(screen.getByText('Тримай темп!')).toBeTruthy();
-    expect(screen.queryByText(editionStrings.dashboard.mood.question)).toBeNull();
+    expect(composition.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'energetic' } });
+    expect(screen.getByText('Бадьоро? Тоді доженемо ціль ще до обіду.')).toBeTruthy();
 
     // «Попередні слова»: yesterday's Word opens its Entry, making nothing more Seen.
     await press('dashboard-previous-word-2026-10-27');
@@ -229,13 +228,17 @@ describe('the whole Dashboard', () => {
     expect(screen.getByTestId('dashboard')).toBeTruthy();
 
     // A Correction Type: its screen lists the type's Corrections, and «Як правильно?» counts one.
-    expect(screen.getByText('Розібрано 0 з 2')).toBeTruthy();
+    expect(composition.correctionTypes.tiles).toEqual([
+      { type: 'surzhyk', total: 2, workedThrough: 0 },
+    ]);
     await press('dashboard-correction-type-surzhyk');
     expect(screen.getByTestId('correction-type')).toBeTruthy();
     await press('correction-type-reveal-c_shoby');
     expect(screen.getByText('Пояснення до шоби.')).toBeTruthy();
     await back('correction-type-back');
-    expect(screen.getByText('Розібрано 1 з 2')).toBeTruthy();
+    expect(composition.correctionTypes.tiles).toEqual([
+      { type: 'surzhyk', total: 2, workedThrough: 1 },
+    ]);
 
     // A Curated Collection: «Нова» goes, and its screen shows its Entries and «Знаю X з N».
     expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();

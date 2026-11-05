@@ -83,7 +83,7 @@ describe('The Dashboard', () => {
     expect(app.dashboard.blocks).toEqual([]);
   });
 
-  it('reveals the Lemma with its Stress and the short Definition, and makes the Word Seen and archived', async () => {
+  it('reveals the Lemma with its Stress, part of speech, Rarity and short Definition, and makes the Word Seen and archived', async () => {
     const { app } = await run();
     const wordId = heroOf(app.dashboard.blocks).wordId;
     let told = 0;
@@ -97,6 +97,8 @@ describe('The Dashboard', () => {
     expect(hero.lemmaWithStress.normalize('NFD').replace(/\u0301/g, '')).toBe(lemma);
     expect(hero.lemmaWithStress).not.toBe(lemma);
     expect(hero.definition).toBe(`The meaning of ${lemma}.`);
+    const { partOfSpeech, gender, rarity } = word(wordId);
+    expect(hero).toMatchObject({ partOfSpeech, gender, rarity });
     expect(told).toBeGreaterThan(0);
     expect(app.history.list.map(({ entryId }) => entryId)).toEqual([wordId]);
     expect((await app.wordOfTheDayArchive.list()).map(({ row }) => row.entryId)).toEqual([wordId]);
