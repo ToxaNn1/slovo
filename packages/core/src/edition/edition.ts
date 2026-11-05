@@ -143,6 +143,8 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   correctionTypes: ['dashboard', 'corrections'],
   // The Curated Collections rail is a Dashboard block (ADR 0076).
   curatedCollections: ['dashboard'],
+  // A swipe sets a Knowledge Mark.
+  swipeMarks: ['knowledge'],
   notificationTimeStep: ['notifications'],
 };
 
