@@ -106,6 +106,7 @@ const validConfig = {
     mood: true,
     previousWords: true,
     correctionTypes: true,
+    curatedCollections: true,
   },
   userSettingDefaults: {
     theme: 'system',

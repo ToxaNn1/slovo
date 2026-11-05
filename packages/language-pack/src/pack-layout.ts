@@ -3,6 +3,7 @@ import {
   type Category,
   type Correction,
   type CrosswordDay,
+  type CuratedCollection,
   type Idiom,
   type PackMetadata,
   type SynonymRow,
@@ -226,6 +227,22 @@ CREATE TABLE crossword_words (
   PRIMARY KEY (date, position)
 ) WITHOUT ROWID;
 
+-- The Curated Collections of the Dashboard's «Добірки» rail (ADR 0076).
+CREATE TABLE curated_collections (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  published_on TEXT NOT NULL
+) WITHOUT ROWID;
+
+-- The Entries of a Curated Collection, in its order.
+CREATE TABLE curated_collection_entries (
+  collection_id TEXT NOT NULL REFERENCES curated_collections (id),
+  position INTEGER NOT NULL,
+  entry_id TEXT NOT NULL REFERENCES entries (id),
+  PRIMARY KEY (collection_id, position)
+) WITHOUT ROWID;
+
 -- Keyed by Entry id, so every kind of Entry records its sources here.
 CREATE TABLE sources (
   entry_id TEXT NOT NULL REFERENCES entries (id),
@@ -263,7 +280,9 @@ CREATE TABLE sources (
  * admits the Word's Illustration of 0.8.14 (ADR 0055); format 9 keeps format
  * 8's layout, adding only the source's short name column, and admits the
  * short names of the «Джерело:» line (ADR 0032); format 10 drops the table
- * `word_moods` and the Word's moods, which a Mood no longer tags (spec #1564).
+ * `word_moods` and the Word's moods, which a Mood no longer tags, and adds the
+ * Curated Collection tables (`curated_collections` and
+ * `curated_collection_entries`) of the Dashboard's rail (spec #1564, ADR 0076).
  */
 export const PACK_FORMAT = 10;
 
@@ -320,4 +339,9 @@ export interface PackContent {
    * it was.
    */
   readonly crosswordDays?: readonly CrosswordDay[];
+  /**
+   * The Curated Collections in id order; unset when the Edition authors none,
+   * so the content checksum of an Edition without them stays as it was.
+   */
+  readonly curatedCollections?: readonly CuratedCollection[];
 }

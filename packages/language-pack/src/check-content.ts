@@ -29,7 +29,7 @@ export function checkStress(
 }
 
 /** An Entry that passed the schema, with the file it was authored in. */
-export interface Authored<T extends Entry> {
+export interface Authored<T extends { readonly id: string }> {
   readonly file: string;
   readonly entry: T;
 }

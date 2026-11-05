@@ -1,4 +1,11 @@
-import type { Category, Entry, EntryKind, PackMetadata, Word } from '@slovo/contracts';
+import type {
+  Category,
+  CuratedCollection,
+  Entry,
+  EntryKind,
+  PackMetadata,
+  Word,
+} from '@slovo/contracts';
 import type { ApiClient } from '@slovo/contracts/api';
 
 import type { CategoryKind } from './entries/entry-kinds';
@@ -54,6 +61,8 @@ export interface ContentReadPort {
    * only as plain text, doesn't link it.
    */
   listLinkingSynonymRowIds(wordId: string): Promise<readonly string[]>;
+  /** Every Curated Collection of the pack, in id order, whatever its publication date (ADR 0076). */
+  listCuratedCollections(): Promise<readonly CuratedCollection[]>;
 }
 
 /**
