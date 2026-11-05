@@ -1102,13 +1102,21 @@
   },
   "dashboard": {
     "toCard": "До картки →",
+    "kicker": "Слово дня · {day}.{month}",
+    "subtitle": "Рідкісне. Свіже. Твоє на 24 години.",
+    "wordLine": "{stress} · {partOfSpeech}",
+    "rarity": "Рідкість {rarity}/5",
     "mood": {
       "question": "Як настрій?",
-      "skip": "Не сьогодні",
-      "today": "Сьогодні: {mood}",
-      "change": "змінити"
+      "note": "Mood дня"
     },
-    "curatedCollectionsTitle": "Добірки",
+    "curatedCollectionsTitle": "Категорії",
+    "curatedCollectionCount": {
+      "one": "{count} слово",
+      "few": "{count} слова",
+      "many": "{count} слів",
+      "other": "{count} слова"
+    },
     "curatedCollectionNew": "Нова",
     "curatedCollection": {
       "known": "Знаю {x} з {n}",
@@ -1116,7 +1124,8 @@
       "added": "Додано ✓"
     },
     "previousWords": {
-      "title": "Попередні слова"
+      "title": "Попередні слова",
+      "months": ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру"]
     },
     "correctionTypes": {
       "title": "Виправлення",

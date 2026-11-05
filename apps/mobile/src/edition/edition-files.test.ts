@@ -1077,8 +1077,24 @@ describe('the moods', () => {
     ).toEqual(['moods']);
   });
 
-  it('the UA Edition lists six moods', () => {
+  it('the UA Edition lists eight moods', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).moods).toEqual([
+      {
+        id: 'sleepy',
+        name: 'Сонно',
+        emoji: '😴',
+        reply: '«Сонно» — теж слово. Але, на жаль, не рідкісне.',
+        rarityBand: 'whole',
+        shifts: {},
+      },
+      {
+        id: 'curious',
+        name: 'Допитливо',
+        emoji: '🧐',
+        reply: 'Для допитливих я відкладаю найрідкісніше.',
+        rarityBand: 'whole',
+        shifts: {},
+      },
       {
         id: 'joyful',
         name: 'Радісний',
@@ -1105,9 +1121,9 @@ describe('the moods', () => {
       },
       {
         id: 'energetic',
-        name: 'Бадьорий',
+        name: 'Бадьоро',
         emoji: '⚡',
-        reply: 'Тримай темп!',
+        reply: 'Бадьоро? Тоді доженемо ціль ще до обіду.',
         rarityBand: 'upper',
         shifts: { correction: 'more' },
       },
@@ -1121,9 +1137,9 @@ describe('the moods', () => {
       },
       {
         id: 'thoughtful',
-        name: 'Задумливий',
+        name: 'Задумливо',
         emoji: '🤔',
-        reply: 'Є над чим подумати.',
+        reply: 'Задумливо — ідеальний стан для кросворду.',
         rarityBand: 'upper',
         shifts: { idiom: 'more' },
       },

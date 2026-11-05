@@ -2,27 +2,33 @@ import { z } from 'zod';
 
 import { CorrectionTypeSchema } from '../correction';
 import { TextSchema } from '../shared';
-import { templateOf } from './shared';
+import { PluralSchema, templateOf } from './shared';
 
 /** The Dashboard, the home behind «Стрічка» (ADR 0076). The hero's «Розкрити» is `wordOfTheDay.reveal`. */
 export const DashboardStringsSchema = z.strictObject({
-  /** The hero's link that opens the Feed on the Word of the Day card, «До картки →». */
+  /** The hero's button that opens the Feed on the Word of the Day card, «До картки →». */
   toCard: TextSchema,
+  /** The hero's kicker, «Слово дня · {day}.{month}». Takes `{day}` and `{month}`, both numbers. */
+  kicker: templateOf('day', 'month'),
+  /** The line under the closed hero's shout, «Рідкісне. Свіже. Твоє на 24 години.». */
+  subtitle: TextSchema,
+  /** The line under the open hero's Lemma, «{stress} · {partOfSpeech}». Takes the Lemma with its Stress and the short part of speech. */
+  wordLine: templateOf('stress', 'partOfSpeech'),
+  /** The label beside the open hero's rarity bars, «Рідкість {rarity}/5». */
+  rarity: templateOf('rarity'),
   /** The Mood check-in block under the hero. */
   mood: z.strictObject({
-    /** The question over the Mood chips, «Як настрій?». */
+    /** The block's title over the Mood tiles, «Як настрій?». */
     question: TextSchema,
-    /** The button that skips the check-in for today, «Не сьогодні». */
-    skip: TextSchema,
-    /** The collapsed line after a choice, «Сьогодні: {mood}». Takes `{mood}`, its emoji and name. */
-    today: templateOf('mood'),
-    /** The link that opens the chips again to change today's Mood, «змінити». */
-    change: TextSchema,
+    /** The note at the end of the title, «Mood дня». */
+    note: TextSchema,
   }),
   /** The block «Попередні слова» under the Mood check-in: the Word of the Day archive's newest days before today. */
   previousWords: z.strictObject({
     /** The block's title, «Попередні слова». */
     title: TextSchema,
+    /** Each month as a row's date column says it under the day, from January, «жов». */
+    months: z.array(TextSchema).length(12),
   }),
   /** The Correction Types rail and each type's screen. */
   correctionTypes: z.strictObject({
@@ -35,8 +41,10 @@ export const DashboardStringsSchema = z.strictObject({
     /** Each Correction Type's tile name and screen title, in the plural, «Суржик». */
     tiles: z.record(CorrectionTypeSchema, TextSchema),
   }),
-  /** The title over the Curated Collections rail, «Добірки». */
+  /** The title over the Curated Collections rail, «Категорії». */
   curatedCollectionsTitle: TextSchema,
+  /** A Curated Collection's count of Entries on its tile, «{count} слів». */
+  curatedCollectionCount: PluralSchema,
   /** The badge on a Curated Collection card not yet opened, «Нова». */
   curatedCollectionNew: TextSchema,
   /** A Curated Collection's screen and its copy into the reader's Collections. */

@@ -1,4 +1,4 @@
-import type { Mood } from '@slovo/contracts';
+import type { Mood, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
@@ -34,6 +34,9 @@ export type WordOfTheDayHero =
       readonly stressedVowels: readonly string[];
       /** The short Definition: the Word's primary Definition. */
       readonly definition: string;
+      readonly partOfSpeech: Word['partOfSpeech'];
+      readonly gender: Word['gender'];
+      readonly rarity: Word['rarity'];
     };
 
 /**
@@ -160,6 +163,9 @@ export async function openDashboard({
       lemmaWithStress: renderStress(word),
       stressedVowels: stressedVowelsOf(word),
       definition: word.primaryDefinition,
+      partOfSpeech: word.partOfSpeech,
+      gender: word.gender,
+      rarity: word.rarity,
     };
   }
 
