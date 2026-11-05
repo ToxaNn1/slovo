@@ -150,8 +150,33 @@
   ],
   "categoriesRequiringHistory": [],
   "originLanguages": [],
-  "moods": [],
-  "dashboardMoods": [],
+  "moods": [
+    {
+      "id": "energetic",
+      "name": "бадьорий",
+      "emoji": "⚡",
+      "reply": "Тримай темп!"
+    },
+    {
+      "id": "thoughtful",
+      "name": "задумливий",
+      "emoji": "🤔",
+      "reply": "Є над чим подумати."
+    },
+    {
+      "id": "calm",
+      "name": "спокійний",
+      "emoji": "😌",
+      "reply": "Без поспіху."
+    },
+    {
+      "id": "joyful",
+      "name": "радісний",
+      "emoji": "😊",
+      "reply": "Лови світле слово!"
+    }
+  ],
+  "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
   "searchLetters": {
     "ґ": "г"
   },
