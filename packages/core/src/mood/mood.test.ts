@@ -9,10 +9,38 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two')] });
 
 const MOODS: readonly Mood[] = [
-  { id: 'energetic', name: 'Бадьорий', emoji: '⚡', reply: 'Тримай темп!', rarityBand: 'whole', shifts: {} },
-  { id: 'thoughtful', name: 'Задумливий', emoji: '🤔', reply: 'Є над чим подумати.', rarityBand: 'whole', shifts: {} },
-  { id: 'calm', name: 'Спокійний', emoji: '😌', reply: 'Без поспіху.', rarityBand: 'whole', shifts: {} },
-  { id: 'joyful', name: 'Радісний', emoji: '😊', reply: 'Лови світле слово!', rarityBand: 'whole', shifts: {} },
+  {
+    id: 'energetic',
+    name: 'Бадьорий',
+    emoji: '⚡',
+    reply: 'Тримай темп!',
+    rarityBand: 'whole',
+    shifts: {},
+  },
+  {
+    id: 'thoughtful',
+    name: 'Задумливий',
+    emoji: '🤔',
+    reply: 'Є над чим подумати.',
+    rarityBand: 'whole',
+    shifts: {},
+  },
+  {
+    id: 'calm',
+    name: 'Спокійний',
+    emoji: '😌',
+    reply: 'Без поспіху.',
+    rarityBand: 'whole',
+    shifts: {},
+  },
+  {
+    id: 'joyful',
+    name: 'Радісний',
+    emoji: '😊',
+    reply: 'Лови світле слово!',
+    rarityBand: 'whole',
+    shifts: {},
+  },
 ];
 
 /** The Core composition of one app run over the records, the Mood check-in on unless said otherwise. */
