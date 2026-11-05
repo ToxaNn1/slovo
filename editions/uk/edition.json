@@ -101,6 +101,7 @@
     "dashboard": true,
     "mood": true,
     "curatedCollections": false,
+    "swipeMarks": false,
     "previousWords": true,
     "correctionTypes": true
   },
