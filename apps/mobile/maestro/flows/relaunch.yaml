@@ -56,7 +56,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     id: word-lemma
     text: ${maestro.copiedText}
 - assertNotVisible:
-    id: gestures-hint
+    id: swipe-hint
 - tapOn:
     id: tab-settings
 - assertVisible:
