@@ -206,6 +206,21 @@ describe('setting, clearing and undoing a Knowledge Mark', () => {
     expect(reviewXpOf(records)).toBe(2);
   });
 
+  it('earns Review XP once per Entry on a local day across a restart, under a cap that allows more', async () => {
+    const records = await recordsWith({ ...dueAtStepSeven, step: 1 });
+    const first = await run({ records });
+    await first.knowledge.set('w_one', 'known');
+    await first.knowledge.undo();
+    expect(reviewXpOf(records)).toBe(1);
+
+    // An hour later, so the new record's id differs from the first one's.
+    const second = await run({ records, clock: fakeClock('2026-10-19T10:00:00.000Z').clock });
+    expect(second.knowledge.state.shown.get('w_one')).toBe('review');
+    await second.knowledge.set('w_one', 'known');
+
+    expect(reviewXpOf(records)).toBe(1);
+  });
+
   it('marks nothing with the knowledge switch off', async () => {
     const records = new Map<string, string>();
     const app = await run({ records, on: [] });

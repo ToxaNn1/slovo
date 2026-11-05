@@ -23,7 +23,7 @@ export type XpAction =
     }
   | { readonly source: 'game-best' }
   | { readonly source: 'daily-crossword'; readonly date: string }
-  | { readonly source: 'review-answer' }
+  | { readonly source: 'review-answer'; readonly entryId: string }
   | { readonly source: 'quick-question' };
 
 /**
