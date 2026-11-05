@@ -103,6 +103,7 @@ const validConfig = {
     reduceMotion: true,
     fastReveal: true,
     dashboard: true,
+    mood: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -138,9 +139,13 @@ const validConfig = {
     { code: 'other', name: 'Other' },
   ],
   moods: [
-    { id: 'joyful', name: 'Joyful', emoji: '😊' },
-    { id: 'calm', name: 'Calm', emoji: '😌' },
+    { id: 'joyful', name: 'Joyful', emoji: '😊', reply: 'Catch a bright word!' },
+    { id: 'calm', name: 'Calm', emoji: '😌', reply: 'No hurry.' },
+    { id: 'sad', name: 'Sad', emoji: '😢', reply: 'A word warms.' },
+    { id: 'energetic', name: 'Energetic', emoji: '⚡', reply: 'Keep the pace!' },
+    { id: 'thoughtful', name: 'Thoughtful', emoji: '🤔', reply: 'Food for thought.' },
   ],
+  dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful'],
   searchLetters: { b: 'a' },
   xp: {
     round: 1,
@@ -652,11 +657,28 @@ describe('loadEdition', () => {
   });
 
   it('reports the moods in their order', () => {
-    expect(loadEdition(validConfig).moods.map(({ id }) => id)).toEqual(['joyful', 'calm']);
+    expect(loadEdition(validConfig).moods.map(({ id }) => id)).toEqual([
+      'joyful',
+      'calm',
+      'sad',
+      'energetic',
+      'thoughtful',
+    ]);
   });
 
-  it('accepts an Edition that lists no moods', () => {
-    expect(() => loadEdition({ ...validConfig, moods: [] })).not.toThrow();
+  it('resolves the four Dashboard moods, in their order', () => {
+    expect(loadEdition(validConfig).dashboardMoods).toEqual([
+      validConfig.moods[3],
+      validConfig.moods[4],
+      validConfig.moods[1],
+      validConfig.moods[0],
+    ]);
+  });
+
+  it('accepts an Edition that lists no moods, with no Dashboard moods', () => {
+    expect(loadEdition({ ...validConfig, moods: [], dashboardMoods: [] }).dashboardMoods).toEqual(
+      [],
+    );
   });
 
   it('accepts an Edition whose Categories require no history', () => {
@@ -1102,22 +1124,47 @@ describe('loadEdition', () => {
       'a repeated mood id',
       {
         moods: [
-          { id: 'joyful', name: 'Joyful', emoji: '😊' },
-          { id: 'joyful', name: 'Glad', emoji: '😀' },
+          { id: 'joyful', name: 'Joyful', emoji: '😊', reply: 'Catch a bright word!' },
+          { id: 'joyful', name: 'Glad', emoji: '😀', reply: 'Glad words.' },
         ],
+        dashboardMoods: [],
       },
       'moods.1.id',
     ],
-    ['a mood without a name', { moods: [{ id: 'calm', name: '', emoji: '😌' }] }, 'moods.0.name'],
+    [
+      'a mood without a name',
+      { moods: [{ id: 'calm', name: '', emoji: '😌', reply: 'No hurry.' }], dashboardMoods: [] },
+      'moods.0.name',
+    ],
     [
       'a mood without an emoji',
-      { moods: [{ id: 'calm', name: 'Calm', emoji: '' }] },
+      { moods: [{ id: 'calm', name: 'Calm', emoji: '', reply: 'No hurry.' }], dashboardMoods: [] },
       'moods.0.emoji',
     ],
     [
+      'a mood without a reply',
+      { moods: [{ id: 'calm', name: 'Calm', emoji: '😌', reply: '' }], dashboardMoods: [] },
+      'moods.0.reply',
+    ],
+    [
       'a mood id not in kebab case',
-      { moods: [{ id: 'In Love', name: 'In love', emoji: '😍' }] },
+      {
+        moods: [{ id: 'In Love', name: 'In love', emoji: '😍', reply: 'Tender words.' }],
+        dashboardMoods: [],
+      },
       'moods.0.id',
+    ],
+    ['no Dashboard moods', { dashboardMoods: undefined }, 'dashboardMoods'],
+    ['three Dashboard moods', { dashboardMoods: ['joyful', 'calm', 'sad'] }, 'dashboardMoods'],
+    [
+      'a Dashboard mood the Edition does not list',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'angry'] },
+      'dashboardMoods.3',
+    ],
+    [
+      'a repeated Dashboard mood',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'calm'] },
+      'dashboardMoods.3',
     ],
     ['no Search letters', { searchLetters: undefined }, 'searchLetters'],
     ['a Search letter of two letters', { searchLetters: { ab: 'a' } }, 'searchLetters.ab'],
@@ -1154,6 +1201,8 @@ const dependentSwitches = [
   ['quickQuestion', ['game']],
   ['playStep', ['game']],
   ['rarityTest', ['rarityCeiling']],
+  ['dashboard', ['wordOfTheDay']],
+  ['mood', ['dashboard', 'wordOfTheDay']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

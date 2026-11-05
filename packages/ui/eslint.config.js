@@ -45,6 +45,7 @@ export default [
     // Modules with Reanimated or gesture code opt out of the compiler with
     // 'use no memo' (ADR 0059), so its rules do not apply to them.
     files: [
+      'src/dashboard/MoodCheckIn.tsx',
       'src/feed/FeedStates.tsx',
       'src/game/GameRound.tsx',
       'src/game/OrderedChips.tsx',

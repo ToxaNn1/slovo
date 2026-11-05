@@ -38,6 +38,8 @@ const strings = testStrings({
       tip: forms('tip'),
     },
     dueToday: 'due today: {count}',
+    moods: 'moods: {counts}',
+    moodDays: forms('day'),
   },
 });
 
@@ -254,5 +256,39 @@ describe('StatsSheet', () => {
     expect(screen.queryByTestId('stats-known')).not.toBeOnTheScreen();
     expect(screen.queryByTestId('stats-due-today')).not.toBeOnTheScreen();
     expect(screen.getByTestId('stats-favorites')).toBeOnTheScreen();
+  });
+
+  it('counts the days by Mood in the order of the moods, leaving out a Mood never chosen', async () => {
+    await renderInEdition(
+      <StatsSheet
+        visible
+        stats={progress}
+        moodDays={[
+          { mood: { id: 'calm', name: 'calm', emoji: '🌿', reply: 'Rest.' }, days: 1 },
+          { mood: { id: 'joyful', name: 'joyful', emoji: '☀️', reply: 'Shine.' }, days: 0 },
+          { mood: { id: 'energetic', name: 'energetic', emoji: '⚡', reply: 'Go.' }, days: 3 },
+        ]}
+        onClose={() => undefined}
+      />,
+      'uk',
+    );
+
+    expect(screen.getByTestId('stats-moods')).toHaveTextContent(
+      'moods: 🌿 1 day (one) · ⚡ 3 day (few)',
+    );
+  });
+
+  it('draws no row of the days by Mood before a Mood is chosen', async () => {
+    await renderInEdition(
+      <StatsSheet
+        visible
+        stats={progress}
+        moodDays={[{ mood: { id: 'calm', name: 'calm', emoji: '🌿', reply: 'Rest.' }, days: 0 }]}
+        onClose={() => undefined}
+      />,
+      'uk',
+    );
+
+    expect(screen.queryByTestId('stats-moods')).not.toBeOnTheScreen();
   });
 });

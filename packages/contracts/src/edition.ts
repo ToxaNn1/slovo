@@ -39,12 +39,14 @@ export type OriginLanguage = z.infer<typeof OriginLanguageSchema>;
 
 /**
  * A Mood («настрій») the Edition lists: its id, its name in the Edition's
- * language and its emoji.
+ * language, its emoji and the reply the Dashboard's Mood check-in answers it
+ * with, in the Edition's language (ADR 0076).
  */
 export const MoodSchema = z.strictObject({
   id: KebabCaseIdSchema,
   name: z.string().min(1),
   emoji: z.string().min(1),
+  reply: TextSchema,
 });
 
 export type Mood = z.infer<typeof MoodSchema>;
@@ -320,6 +322,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   fastReveal: z.boolean(),
   /** The Dashboard: the home behind the «Стрічка» tab, with the Word of the Day hero; off, the Feed is the home (ADR 0076). Off while `wordOfTheDay` is. */
   dashboard: z.boolean(),
+  /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). Off while `dashboard` is. */
+  mood: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -757,6 +761,16 @@ export const EditionConfigSchema = z
      */
     moods: z.array(MoodSchema),
     /**
+     * The four moods the Dashboard's Mood check-in offers, by id among
+     * `moods`, in display order (ADR 0076). Empty when the Edition has no
+     * moods: the check-in asks nothing then.
+     */
+    dashboardMoods: z
+      .array(KebabCaseIdSchema)
+      .refine((ids) => ids.length === 0 || ids.length === 4, {
+        message: 'The Dashboard lists four moods or none',
+      }),
+    /**
      * The letters Search reads as another (ADR 0054), each lower-case letter
      * to the one it reads as, such as ґ to г: the Edition owns them, so the
      * Core stays language-agnostic. Empty when Search reads each letter as
@@ -791,6 +805,7 @@ export const EditionConfigSchema = z
         categoriesRequiringHistory,
         originLanguages,
         moods,
+        dashboardMoods,
         userSettingDefaults,
         questionnaire,
       },
@@ -857,6 +872,17 @@ export const EditionConfigSchema = z
           });
         }
         moodIds.add(id);
+      });
+      const dashboardMoodIds = new Set<string>();
+      dashboardMoods.forEach((id, index) => {
+        if (!moodIds.has(id) || dashboardMoodIds.has(id)) {
+          context.addIssue({
+            code: 'custom',
+            path: ['dashboardMoods', index],
+            message: moodIds.has(id) ? `Duplicate mood id "${id}"` : `Unknown mood id "${id}"`,
+          });
+        }
+        dashboardMoodIds.add(id);
       });
       for (const field of ['categories', 'correctionCategories'] as const) {
         const inMix = userSettingDefaults.mix[field];

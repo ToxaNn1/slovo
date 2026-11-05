@@ -67,6 +67,7 @@ const testEditionConfig = {
   categoriesRequiringHistory: [],
   originLanguages: [],
   moods: [],
+  dashboardMoods: [],
   searchLetters: {},
   xp: {
     round: 1,

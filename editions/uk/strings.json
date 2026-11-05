@@ -769,6 +769,13 @@
     },
     "known": "знаю {counts}",
     "knownJoiner": " · ",
+    "moods": "Настрої: {counts}",
+    "moodDays": {
+      "one": "{count} день",
+      "few": "{count} дні",
+      "many": "{count} днів",
+      "other": "{count} дня"
+    },
     "knownByKind": {
       "word": {
         "one": "{count} слово",
@@ -1094,7 +1101,13 @@
     }
   },
   "dashboard": {
-    "toCard": "До картки →"
+    "toCard": "До картки →",
+    "mood": {
+      "question": "Як настрій?",
+      "skip": "Не сьогодні",
+      "today": "Сьогодні: {mood}",
+      "change": "змінити"
+    }
   },
   "wordOfTheDayArchive": {
     "title": "Слова дня",

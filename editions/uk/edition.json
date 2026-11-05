@@ -98,7 +98,8 @@
     "sounds": false,
     "reduceMotion": true,
     "fastReveal": true,
-    "dashboard": true
+    "dashboard": true,
+    "mood": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -278,34 +279,41 @@
     {
       "id": "joyful",
       "name": "Радісний",
-      "emoji": "😊"
+      "emoji": "😊",
+      "reply": "Лови світле слово!"
     },
     {
       "id": "sad",
       "name": "Сумний",
-      "emoji": "😢"
+      "emoji": "😢",
+      "reply": "Слово зігріє."
     },
     {
       "id": "in-love",
       "name": "Закоханий",
-      "emoji": "😍"
+      "emoji": "😍",
+      "reply": "Ніжні слова поруч."
     },
     {
       "id": "energetic",
       "name": "Бадьорий",
-      "emoji": "⚡"
+      "emoji": "⚡",
+      "reply": "Тримай темп!"
     },
     {
       "id": "calm",
       "name": "Спокійний",
-      "emoji": "😌"
+      "emoji": "😌",
+      "reply": "Без поспіху."
     },
     {
       "id": "thoughtful",
       "name": "Задумливий",
-      "emoji": "🤔"
+      "emoji": "🤔",
+      "reply": "Є над чим подумати."
     }
   ],
+  "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
   "searchLetters": {
     "ґ": "г",
     "ё": "е"

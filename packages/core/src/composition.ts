@@ -17,6 +17,7 @@ import {
 import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
 import { openCycle } from './feed/cycle';
 import { openDashboard, type Dashboard } from './dashboard/dashboard';
+import { openMoodCheckIns, type MoodCheckIns } from './mood/mood';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
 import { createEntries } from './entries/entries';
@@ -91,6 +92,8 @@ export interface Composition extends Hiding {
   readonly feed: Feed;
   /** The Dashboard, the home's blocks for the local day (ADR 0076); none with `dashboard` off. */
   readonly dashboard: Dashboard;
+  /** The daily Mood check-in the Dashboard asks (ADR 0076); asking and asking nothing with `mood` off. */
+  readonly mood: MoodCheckIns;
   /** Favorites, which a heart tapped anywhere changes. */
   readonly favorites: Favorites;
   /** Collections, which the sheet and the Collections screens change. */
@@ -643,6 +646,8 @@ export async function openComposition({
     xpLog,
   });
   await day.resume();
+  // Once the day is turned to, so the check-in is today's.
+  const mood = await openMoodCheckIns({ edition, userState, clock, dayTurned, analytics });
   // Once the day is turned to, so its hero is today's Word of the Day.
   const dashboard = await openDashboard({
     edition,
@@ -650,6 +655,7 @@ export async function openComposition({
     cycle,
     wordOfTheDay,
     feed,
+    mood,
     seen,
     dayTurned,
   });
@@ -689,6 +695,7 @@ export async function openComposition({
   return {
     feed,
     dashboard,
+    mood,
     favorites,
     collections,
     collectionLinkCopy: createCollectionLinkCopy({
