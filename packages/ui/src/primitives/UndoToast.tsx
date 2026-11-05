@@ -156,7 +156,7 @@ function UndoToast({
     shown.value = withTiming(1, reduceMotion ? FADE_IN : SLIDE_IN);
   });
   const hasUndo = 'onUndo' in content;
-  const lasts = 'brief' in content && content.brief === true ? BRIEF_TOAST_MS : TOAST_MS;
+  const lasts = 'brief' in content ? BRIEF_TOAST_MS : TOAST_MS;
 
   useEffect(() => {
     if (!ready) return;
