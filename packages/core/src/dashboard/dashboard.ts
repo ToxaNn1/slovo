@@ -250,7 +250,7 @@ function blockKeyOf(block: DashboardBlock): string {
         .join(',')}`;
     case 'curatedCollections':
       return `curatedCollections:${block.cards
-        .map(({ collection: { id }, state }) => `${id}=${state}`)
+        .map(({ collection: { id }, state, added }) => `${id}=${state}${added ? '+added' : ''}`)
         .join(',')}`;
   }
 }
