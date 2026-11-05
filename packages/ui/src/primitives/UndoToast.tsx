@@ -82,6 +82,7 @@ export interface MessageToastContent {
 export type ToastContent = UndoToastContent | MessageToastContent;
 
 const UndoToastContext = createContext<((toast: ToastContent) => void) | undefined>(undefined);
+const CloseUndoToastContext = createContext<(() => void) | undefined>(undefined);
 
 /**
  * Shows toasts at the bottom of the screen it wraps, one at a time: a new
@@ -98,14 +99,19 @@ export function UndoToastProvider({ children }: { children: ReactNode }) {
   const dismiss = useCallback((id: number) => {
     setToast((shown) => (shown?.id === id ? undefined : shown));
   }, []);
+  const close = useCallback(() => {
+    setToast(undefined);
+  }, []);
   return (
     <UndoToastContext value={show}>
-      <View style={styles.fill}>
-        {children}
-        {toast !== undefined && (
-          <UndoToast key={toast.id} id={toast.id} content={toast.content} onDismiss={dismiss} />
-        )}
-      </View>
+      <CloseUndoToastContext value={close}>
+        <View style={styles.fill}>
+          {children}
+          {toast !== undefined && (
+            <UndoToast key={toast.id} id={toast.id} content={toast.content} onDismiss={dismiss} />
+          )}
+        </View>
+      </CloseUndoToastContext>
     </UndoToastContext>
   );
 }
@@ -116,6 +122,16 @@ export function useUndoToast(): (toast: ToastContent) => void {
   if (show === undefined) throw new Error('useUndoToast needs an UndoToastProvider above it');
   return show;
 }
+
+/**
+ * Closes the toast shown on the screen of the nearest `UndoToastProvider`, if
+ * any, such as when the reader swipes on to the next Entry; nothing outside one.
+ */
+export function useCloseUndoToast(): () => void {
+  return useContext(CloseUndoToastContext) ?? noClose;
+}
+
+function noClose() {}
 
 /**
  * The ink wedge toast from the design, for 4 s: a red mark, the message in

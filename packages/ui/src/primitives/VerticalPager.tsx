@@ -476,6 +476,35 @@ export function usePageTurnActions(): Partial<TurnActions> {
 }
 
 /**
+ * Adds a card's own VoiceOver actions, such as its Knowledge Marks, to the
+ * page-turn actions that `usePageTurnActions` gives the elements under it,
+ * ahead of "next" and "previous". Outside a pager the card's actions stand alone.
+ */
+export function PageActionsProvider({
+  actions,
+  onAction,
+  children,
+}: {
+  actions: readonly AccessibilityActionInfo[];
+  onAction: (name: string) => void;
+  children: ReactNode;
+}) {
+  const outer = useContext(PageTurnActionsContext);
+  const merged = useMemo((): TurnActions | undefined => {
+    if (actions.length === 0) return outer;
+    return {
+      accessibilityActions: [...actions, ...(outer?.accessibilityActions ?? [])],
+      onAccessibilityAction(event) {
+        const { actionName } = event.nativeEvent;
+        if (actions.some((action) => action.name === actionName)) onAction(actionName);
+        else outer?.onAccessibilityAction(event);
+      },
+    };
+  }, [actions, onAction, outer]);
+  return <PageTurnActionsContext value={merged}>{children}</PageTurnActionsContext>;
+}
+
+/**
  * Turns a `VerticalPager` from its current page to the next in 300 ms, as
  * `turnTo` does, such as a card's button that leads on. None outside a
  * pager, on a page that isn't current or on the last page.
