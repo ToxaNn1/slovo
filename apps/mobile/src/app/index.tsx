@@ -1,5 +1,6 @@
 import {
   CorrectionTypesRail,
+  CuratedCollectionsRail,
   DashboardHero,
   MoodCheckIn,
   PreviousWords,
@@ -24,8 +25,16 @@ export default function HomeScreen() {
 
 /** The Dashboard's blocks of the local day, in display order. */
 function DashboardScreen() {
-  const { blocks, reveal, toCard, chooseMood, skipMood, openPreviousWord, openCorrectionType } =
-    useDashboardScreen();
+  const {
+    blocks,
+    reveal,
+    toCard,
+    chooseMood,
+    skipMood,
+    openPreviousWord,
+    openCorrectionType,
+    openCuratedCollection,
+  } = useDashboardScreen();
   const { colors } = useTokens();
   return (
     <SafeAreaView
@@ -62,6 +71,14 @@ function DashboardScreen() {
                   key={block.kind}
                   tiles={block.tiles}
                   onOpen={openCorrectionType}
+                />
+              );
+            case 'curatedCollections':
+              return (
+                <CuratedCollectionsRail
+                  key={block.kind}
+                  cards={block.cards}
+                  onOpen={openCuratedCollection}
                 />
               );
           }

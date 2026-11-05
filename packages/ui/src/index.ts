@@ -127,6 +127,7 @@ export { MoodCheckIn } from './dashboard/MoodCheckIn';
 export { PreviousWords } from './dashboard/PreviousWords';
 export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
 export { CorrectionTypesRail } from './dashboard/CorrectionTypesRail';
+export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { LevelCard } from './progress/LevelCard';
