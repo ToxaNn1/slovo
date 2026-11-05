@@ -324,6 +324,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   dashboard: z.boolean(),
   /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). Off while `dashboard` is. */
   mood: z.boolean(),
+  /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `dashboard` or `wordOfTheDayArchive` is. */
+  previousWords: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
