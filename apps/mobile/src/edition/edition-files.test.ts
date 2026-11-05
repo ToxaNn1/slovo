@@ -865,8 +865,9 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
   /**
    * The «ви» forms, as whole words: the pronouns, the plural imperatives
    * («оберіть», «спробуйте», «торкніться», «позначте», «перевірте») and the plural present and future
-   * («знаєте», «оберете», «торкнетеся»). No text is an exception; only words
-   * that merely end like a verb («навіть», «відкрите») are not «ви» forms.
+   * («знаєте», «оберете», «торкнетеся»). Only words that merely end like a verb
+   * («навіть», «відкрите») are not «ви» forms, and the swipe hint sheet keeps the
+   * board's «ви», exactly these texts (ADR 0075, amended by ADR 0077).
    */
   const vyWord =
     /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте|[бвгґджзклмнпрфхцчшщ]те)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;
@@ -876,11 +877,16 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
       [...text.matchAll(vyWord)].some(([word]) => !notVerbs.has(word.toLowerCase())),
   };
 
-  it('has no «ви» form in its UI strings', () => {
+  const boardVy: [string, string][] = [
+    ['knowledge.swipe.hint.title', 'ГОРТАЙТЕ ПАЛЬЦЕМ'],
+    ['knowledge.swipe.hint.rows.next.body', 'Нове слово тільки коли ви готові.'],
+  ];
+
+  it('has no «ви» form in its UI strings but the swipe hint sheet', () => {
     const texts = textsOf(readJson('uk', 'strings'), '');
 
     expect(texts.length).toBeGreaterThan(100);
-    expect(texts.filter(([, text]) => vy.test(text))).toEqual([]);
+    expect(texts.filter(([, text]) => vy.test(text))).toEqual(boardVy);
   });
 
   it('has no «ви» form in what the Mascot says', () => {
