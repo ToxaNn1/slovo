@@ -130,6 +130,8 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       />
       {/* A Correction Type's screen, from its tile on the Dashboard; no tab leads to it. */}
       <Tabs.Screen name="correction-type/[type]" options={offTabs} />
+      {/* A Curated Collection's screen, from its card on the Dashboard; no tab leads to it. */}
+      <Tabs.Screen name="curated-collection/[collectionId]" options={offTabs} />
       {/* Search, from the magnifier of the «Стрічка» header; no tab leads to it. */}
       <Tabs.Screen name="search" options={offTabs} />
     </Tabs>
