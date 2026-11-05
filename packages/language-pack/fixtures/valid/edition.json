@@ -97,7 +97,8 @@
     "sounds": true,
     "reduceMotion": true,
     "fastReveal": true,
-    "dashboard": true
+    "dashboard": true,
+    "mood": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -156,9 +157,11 @@
     {
       "id": "calm",
       "name": "спокійний",
-      "emoji": "😌"
+      "emoji": "😌",
+      "reply": "Без поспіху."
     }
   ],
+  "dashboardMoods": [],
   "searchLetters": {
     "ґ": "г"
   },

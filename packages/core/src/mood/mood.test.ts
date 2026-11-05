@@ -34,7 +34,10 @@ async function run({
     clock,
     random: { next: () => 0.25 },
     analytics: {
-      track: (event, properties) => void events.push({ event, properties }),
+      // The Mood events alone: the onboarding tracks its welcome step on open.
+      track: (event, properties) => {
+        if (event.startsWith('mood')) events.push({ event, properties });
+      },
       stop: () => undefined,
     },
   });

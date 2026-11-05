@@ -1,3 +1,5 @@
+import type { Mood } from '@slovo/contracts';
+
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
@@ -6,6 +8,7 @@ import type { Feed } from '../feed/feed';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 import { dateKeyOf, type LocalDate } from '../local-date';
 import { createSubscribers } from '../in-turn';
+import type { MoodCheckIns } from '../mood/mood';
 
 /**
  * The Word of the Day hero: unrevealed until «Розкрити», revealed with its
@@ -31,12 +34,24 @@ export type WordOfTheDayHero =
  * of the union, so a later block (previous Words, Mood, the rails) is one
  * more member and one more line in `blocksOf`.
  */
-export type DashboardBlock = WordOfTheDayBlock;
+export type DashboardBlock = WordOfTheDayBlock | MoodBlock;
 
 /** The Word of the Day hero's block, first on the Dashboard. */
 export interface WordOfTheDayBlock {
   readonly kind: 'wordOfTheDay';
   readonly hero: WordOfTheDayHero;
+}
+
+/**
+ * The Mood check-in's block, after the hero: asking «Як настрій?» with the
+ * four moods, or today's chosen Mood with its reply. A skipped day has no
+ * block till tomorrow (ADR 0076).
+ */
+export interface MoodBlock {
+  readonly kind: 'mood';
+  /** The four moods to choose from, in display order. */
+  readonly moods: readonly Mood[];
+  readonly check: { readonly state: 'asking' } | { readonly state: 'chosen'; readonly mood: Mood };
 }
 
 /**
@@ -59,6 +74,7 @@ export async function openDashboard({
   cycle,
   wordOfTheDay,
   feed,
+  mood,
   seen,
   dayTurned,
 }: {
@@ -67,11 +83,13 @@ export async function openDashboard({
   cycle: Pick<Cycle, 'covers' | 'unseen'>;
   wordOfTheDay: Pick<WordOfTheDay, 'today'>;
   feed: Pick<Feed, 'seeWordOfTheDay'>;
+  mood: Pick<MoodCheckIns, 'today' | 'moods' | 'subscribe'>;
   seen: { subscribe(listener: (entryId: string) => unknown): unknown };
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
 }): Promise<Dashboard> {
   const subscribers = createSubscribers();
   const on = edition.isFeatureEnabled('dashboard');
+  const moodOn = edition.isFeatureEnabled('mood');
 
   async function hero(): Promise<WordOfTheDayHero | undefined> {
     const today = await wordOfTheDay.today();
@@ -90,10 +108,21 @@ export async function openDashboard({
     };
   }
 
+  function moodBlock(): MoodBlock | undefined {
+    const check = mood.today;
+    if (!moodOn || check.state === 'skipped') return undefined;
+    return { kind: 'mood', moods: mood.moods, check };
+  }
+
   async function blocksOf(): Promise<readonly DashboardBlock[]> {
     if (!on) return [];
+    const blocks: DashboardBlock[] = [];
     const wordOfTheDayHero = await hero();
-    return wordOfTheDayHero === undefined ? [] : [{ kind: 'wordOfTheDay', hero: wordOfTheDayHero }];
+    if (wordOfTheDayHero !== undefined)
+      blocks.push({ kind: 'wordOfTheDay', hero: wordOfTheDayHero });
+    const moodCheckIn = moodBlock();
+    if (moodCheckIn !== undefined) blocks.push(moodCheckIn);
+    return blocks;
   }
 
   let blocks = await blocksOf();
@@ -109,6 +138,7 @@ export async function openDashboard({
   if (on) {
     seen.subscribe(() => refresh());
     dayTurned.subscribe(() => refresh());
+    mood.subscribe(() => void refresh());
   }
 
   return {
@@ -125,5 +155,18 @@ export async function openDashboard({
 
 /** What a reader sees of the blocks, so an unchanged day tells no one. */
 function keyOf(blocks: readonly DashboardBlock[]): string {
-  return blocks.map(({ hero }) => `${hero.state}:${hero.wordId}:${dateKeyOf(hero.date)}`).join('|');
+  return blocks.map(blockKeyOf).join('|');
+}
+
+function blockKeyOf(block: DashboardBlock): string {
+  switch (block.kind) {
+    case 'wordOfTheDay': {
+      const { hero } = block;
+      return `${hero.state}:${hero.wordId}:${dateKeyOf(hero.date)}`;
+    }
+    case 'mood': {
+      const { check } = block;
+      return check.state === 'chosen' ? `mood:chosen:${check.mood.id}` : 'mood:asking';
+    }
+  }
 }
