@@ -124,6 +124,7 @@ export {
 export {
   dateKeyOf,
   formatTimeOfDay,
+  localDateAfter,
   localDayOf,
   localTimeOf,
   parseLocalDate,
@@ -188,7 +189,7 @@ export type { XpAction, XpAward } from './game/game-xp';
 export type { XpLog, XpLogState } from './progress/xp-log';
 export type { BadgeProgress, BadgeState, Badges } from './progress/badges';
 export type { BreakState, StreakBreak } from './progress/streak-break';
-export type { LevelMilestone, LevelState } from './progress/levels';
+export { totalFor, type LevelMilestone, type LevelState } from './progress/levels';
 export type { XpRecord, XpSource } from './progress/records';
 export type { CalendarDay, CalendarMonth } from './progress/calendar';
 export { type WeeklyRecapModel } from './feed/weekly-recap';
@@ -256,6 +257,12 @@ export {
   type UserStatePort,
 } from './ports';
 export { openTrackedUserState, type TrackedUserState } from './user-state/tracked-user-state';
+export {
+  changesOfFacts,
+  type UserStateFact,
+  type UserStateFactName,
+  type UserStateFacts,
+} from './user-state/user-state-facts';
 export {
   type CorrectionTypeRow,
   type CorrectionTypes,

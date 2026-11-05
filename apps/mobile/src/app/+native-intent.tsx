@@ -11,7 +11,7 @@ async function on(feature: 'appIntents' | 'replaceOpenEntry'): Promise<boolean> 
 }
 
 /** Each link from outside the app, as `createOutsideLinks` lets it open. */
-export const redirectSystemPath = createOutsideLinks({
+const outsideLinks = createOutsideLinks({
   domain: appDomain,
   editionId: activeEditionId,
   widgetLinkKey: deviceWidgetLinkKey,
@@ -19,3 +19,20 @@ export const redirectSystemPath = createOutsideLinks({
   appIntents: { on: () => on('appIntents'), landOnWordOfTheDay: wordOfTheDayLanding.ask },
   widgetEntries: { replaceOpenEntry: () => on('replaceOpenEntry'), open: widgetEntryLinks.open },
 });
+
+/**
+ * Each link from outside the app. In a development build a test state link
+ * loads its state first (spec #1551, the list in docs/agents); a
+ * production build drops that branch, the module behind it included.
+ */
+export async function redirectSystemPath(link: {
+  path: string;
+  initial: boolean;
+}): Promise<string | null> {
+  if (__DEV__) {
+    const { openTestStateLink } = await import('@/shell/test-state-link');
+    const opened = openTestStateLink(link.path);
+    if (opened !== undefined) return opened;
+  }
+  return outsideLinks(link);
+}

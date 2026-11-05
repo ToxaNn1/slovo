@@ -17,7 +17,7 @@ The short map. `README.md` is for people; grep it for one section when you need 
 | `tools/sourcing`         | Drafts Words for review (`pnpm source:words`).                |
 | `tools/content`          | Drafts and checks Entries (`pnpm content`).                   |
 | `docs/adr/`              | Decisions; `docs/adr/README.md` has one line per ADR.         |
-| `docs/agents/`           | This map, the ticket brief and how spec waves run.            |
+| `docs/agents/`           | This map, the ticket brief, spec waves and the test states.   |
 
 Truth: `CONTEXT.md` (glossary) and `docs/adr/` override everything. Read both with `grep -n`, never whole.
 
