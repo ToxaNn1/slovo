@@ -8,7 +8,7 @@ import { ConcealedProvider, useSelfCheck } from './self-check';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
 import { Button } from '../primitives/Button';
-import { SwipeMarks, type EntrySwipe } from '../knowledge/SwipeMarks';
+import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
 import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
