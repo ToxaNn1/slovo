@@ -369,13 +369,12 @@ export async function openKnowledge({
    * the time it had (or none, for a mark set before 0.8.13). A tap `counts`
    * for the Community Counters; a Game answer doesn't. Known on a Review of
    * 7 days or later confirms the Entry. `same` changes nothing; a set that
-   * changes the record can be undone.
+   * changes the record can be undone when `canUndo`.
    */
   const change = (
     entryId: string,
-    counts: boolean,
     next: (record: KnowledgeRecord | undefined) => KnowledgeRecord | undefined | 'same',
-    undoes = false,
+    { counts, canUndo }: { counts: boolean; canUndo: boolean },
   ) =>
     inTurn(async () => {
       if (!edition.isFeatureEnabled('knowledge')) return;
@@ -406,7 +405,7 @@ export async function openKnowledge({
         confirms ? 'add' : 'none',
         review ? xp.award({ source: 'review-answer', entryId }) : undefined,
       );
-      if (undoes) undoable = { entryId, previous, confirmed: confirms };
+      if (canUndo) undoable = { entryId, previous, confirmed: confirms };
       if (review) await reviewAnswered(entryId, mark);
     });
 
@@ -449,24 +448,32 @@ export async function openKnowledge({
       return [...new Set([...unknown, ...state.due])];
     },
     tap: (entryId, mark) =>
-      change(entryId, true, (record) => {
-        const today = todayDate(clock);
-        return shownMark(record, today) === mark ? undefined : answerKnowledge(record, mark, today);
-      }),
+      change(
+        entryId,
+        (record) => {
+          const today = todayDate(clock);
+          return shownMark(record, today) === mark
+            ? undefined
+            : answerKnowledge(record, mark, today);
+        },
+        { counts: true, canUndo: false },
+      ),
     set: (entryId, mark) =>
       change(
         entryId,
-        true,
         (record) => {
           const today = todayDate(clock);
           return shownMark(record, today) === mark ? 'same' : answerKnowledge(record, mark, today);
         },
-        true,
+        { counts: true, canUndo: true },
       ),
-    clear: (entryId) => change(entryId, true, () => undefined),
+    clear: (entryId) => change(entryId, () => undefined, { counts: true, canUndo: false }),
     undo,
     answer: (entryId, mark) =>
-      change(entryId, false, (record) => answerKnowledge(record, mark, todayDate(clock))),
+      change(entryId, (record) => answerKnowledge(record, mark, todayDate(clock)), {
+        counts: false,
+        canUndo: false,
+      }),
     confirm,
     subscribe: subscribers.subscribe,
   };

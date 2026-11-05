@@ -1,4 +1,4 @@
-import { createGesturesHint, type SwipeHint } from '@slovo/core';
+import { createGesturesHint, type GesturesHint } from '@slovo/core';
 import { useCallback, useEffect, useState } from 'react';
 
 import { logError } from '../diagnostics/log';
@@ -18,7 +18,7 @@ export function useGesturesHint(on: boolean): {
   dismiss: () => void;
 } {
   /** The hint, once it is known to be due. */
-  const [due, setDue] = useState<SwipeHint>();
+  const [due, setDue] = useState<GesturesHint>();
   const [dismissed, setDismissed] = useState(false);
   const { userState } = useShell();
 
