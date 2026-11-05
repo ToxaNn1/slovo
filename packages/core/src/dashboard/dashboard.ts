@@ -9,6 +9,7 @@ import type { WordOfTheDay } from '../feed/word-of-the-day';
 import { dateKeyOf, type LocalDate } from '../local-date';
 import { createSubscribers } from '../in-turn';
 import type { MoodCheckIns } from '../mood/mood';
+import type { CorrectionTypeTile, CorrectionTypes } from './correction-types';
 
 /**
  * The Word of the Day hero: unrevealed until «Розкрити», revealed with its
@@ -34,7 +35,7 @@ export type WordOfTheDayHero =
  * of the union, so a later block (previous Words, Mood, the rails) is one
  * more member and one more line in `blocksOf`.
  */
-export type DashboardBlock = WordOfTheDayBlock | MoodBlock;
+export type DashboardBlock = WordOfTheDayBlock | MoodBlock | CorrectionTypesBlock;
 
 /** The Word of the Day hero's block, first on the Dashboard. */
 export interface WordOfTheDayBlock {
@@ -52,6 +53,15 @@ export interface MoodBlock {
   /** The four moods to choose from, in display order. */
   readonly moods: readonly Mood[];
   readonly check: { readonly state: 'asking' } | { readonly state: 'chosen'; readonly mood: Mood };
+}
+
+/**
+ * The Correction Types rail's block, after Mood: a tile per Correction Type
+ * with live Corrections, with N and X «розібрано». No tile, no block.
+ */
+export interface CorrectionTypesBlock {
+  readonly kind: 'correctionTypes';
+  readonly tiles: readonly CorrectionTypeTile[];
 }
 
 /**
@@ -75,6 +85,7 @@ export async function openDashboard({
   wordOfTheDay,
   feed,
   mood,
+  correctionTypes,
   seen,
   dayTurned,
 }: {
@@ -84,6 +95,7 @@ export async function openDashboard({
   wordOfTheDay: Pick<WordOfTheDay, 'today'>;
   feed: Pick<Feed, 'seeWordOfTheDay'>;
   mood: Pick<MoodCheckIns, 'today' | 'moods' | 'subscribe'>;
+  correctionTypes: Pick<CorrectionTypes, 'tiles' | 'subscribe'>;
   seen: { subscribe(listener: (entryId: string) => unknown): unknown };
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
 }): Promise<Dashboard> {
@@ -122,6 +134,8 @@ export async function openDashboard({
       blocks.push({ kind: 'wordOfTheDay', hero: wordOfTheDayHero });
     const moodCheckIn = moodBlock();
     if (moodCheckIn !== undefined) blocks.push(moodCheckIn);
+    const { tiles } = correctionTypes;
+    if (tiles.length > 0) blocks.push({ kind: 'correctionTypes', tiles });
     return blocks;
   }
 
@@ -139,6 +153,7 @@ export async function openDashboard({
     seen.subscribe(() => refresh());
     dayTurned.subscribe(() => refresh());
     mood.subscribe(() => void refresh());
+    correctionTypes.subscribe(() => void refresh());
   }
 
   return {
@@ -168,5 +183,11 @@ function blockKeyOf(block: DashboardBlock): string {
       const { check } = block;
       return check.state === 'chosen' ? `mood:chosen:${check.mood.id}` : 'mood:asking';
     }
+    case 'correctionTypes':
+      return `correctionTypes:${block.tiles
+        .map(
+          ({ type, total, workedThrough }) => `${type}=${String(workedThrough)}/${String(total)}`,
+        )
+        .join(',')}`;
   }
 }

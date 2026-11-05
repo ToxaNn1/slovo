@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { accountRecords, INSTALLED_KEY } from './account/records';
 import { communityCounterRecords } from './community-counters/records';
 import { contentUpdateRecords } from './content-update/records';
+import { dashboardRecords } from './dashboard/records';
 import { editionRecords } from './edition/records';
 import { feedRecords } from './feed/records';
 import { gameRecords } from './game/records';
@@ -110,6 +111,7 @@ const domains = [
   communityCounterRecords,
   mistakeReportRecords,
   moodRecords,
+  dashboardRecords,
 ] as const;
 
 checkUserStateRecords(domains);
