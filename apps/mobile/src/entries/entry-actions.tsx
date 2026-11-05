@@ -14,7 +14,9 @@ import {
   MistakeReportSheet,
   ShareButton,
   ShareSheet,
+  type EntryCardSlots,
   type EntrySwipe,
+  type YesterdaySlots,
   useEdition,
   useUndoToast,
 } from '@slovo/ui';
@@ -89,33 +91,32 @@ export function EntryActions({
   );
 }
 
-/** What an Entry card carries: its action row, or the actions in its corner while marks are swiped. */
-export type EntrySlots = { actions: ReactNode } | { corner: ReactNode };
-
 /**
  * The slots of an Entry card, wherever the card appears: its action row
  * (`EntryActions`) while the Swipe Marks switch is off in effect, and its
  * corner (`EntryCorner`) with no action row while it is on (ADR 0077), the
  * Community Counters line and the line that says where the Entry is kept
- * gone with the row.
+ * gone with the row, and its side swipes with the corner.
  */
-export function useEntrySlots(): (card: AnyEntryCard, place?: 'feed' | 'details') => EntrySlots {
-  const swiped = useShown().swipeMarks;
-  return (card, place = 'feed') =>
-    swiped
-      ? { corner: <EntryCorner card={card} /> }
-      : { actions: <EntryActions card={card} place={place} /> };
+export function useEntrySlots(
+  card: AnyEntryCard,
+  place: 'feed' | 'details' = 'feed',
+): EntryCardSlots {
+  const swipe = useEntrySwipe(card.entryId);
+  return useShown().swipeMarks
+    ? { slot: 'corner', corner: <EntryCorner card={card} />, swipe }
+    : { slot: 'actions', actions: <EntryActions card={card} place={place} /> };
 }
 
 /**
  * The «Знаю» and «Не знаю» buttons of Yesterday's Word, or while marks are
  * swiped its corner: the «⋯» button alone, whose sheet has the mark items.
  */
-export function useYesterdaySlots(wordId: string): { marks: ReactNode } | { corner: ReactNode } {
+export function useYesterdaySlots(wordId: string): YesterdaySlots | undefined {
   const marks = useKnowledgeButtons({ kind: 'word', entryId: wordId });
-  return useShown().swipeMarks
-    ? { corner: <MenuCorner entryId={wordId} entryKind="word" /> }
-    : { marks };
+  if (useShown().swipeMarks)
+    return { slot: 'corner', corner: <MenuCorner entryId={wordId} entryKind="word" /> };
+  return marks === undefined ? undefined : { slot: 'marks', marks };
 }
 
 /**

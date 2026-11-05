@@ -24,13 +24,19 @@ import {
 } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 
-// The Entry card's action row has its own tests; here it is a stand-in to find on the screen.
+// The Entry card's action row and corner have their own tests; here they are stand-ins to find on the screen.
 jest.mock('./entry-actions', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
+  const { useShown } =
+    jest.requireActual<typeof import('../shown-in-effect')>('../shown-in-effect');
+  const { useEntrySwipe } = jest.requireActual<typeof import('./entry-actions')>('./entry-actions');
   return {
-    useEntrySlots: () => () => ({ actions: <View testID="entry-actions" /> }),
-    useEntrySwipe:
-      jest.requireActual<typeof import('./entry-actions')>('./entry-actions').useEntrySwipe,
+    useEntrySlots: (card: { entryId: string }) => {
+      const swipe = useEntrySwipe(card.entryId);
+      return useShown().swipeMarks
+        ? { slot: 'corner', corner: <View testID="entry-corner" />, swipe }
+        : { slot: 'actions', actions: <View testID="entry-actions" /> };
+    },
   };
 });
 
@@ -208,6 +214,14 @@ describe('the Entry screen and the side swipes (ADR 0077)', () => {
     expect(composition.knowledge.state.shown.get('w_sumyrnyi')).toBe('known');
     expect(screen.getByTestId('swipe-stamp')).toBeOnTheScreen();
     expect(screen.getByTestId('undo-toast')).toBeOnTheScreen();
+  });
+
+  it('keeps the Word’s corner at the panel’s top right with the Swipe Marks switch on', async () => {
+    swipeMarksOn = true;
+    await renderEntry('w_sumyrnyi');
+
+    expect(within(screen.getByTestId('entry-panel')).getByTestId('entry-corner')).toBeOnTheScreen();
+    expect(screen.queryByTestId('entry-actions')).not.toBeOnTheScreen();
   });
 
   it('has no side swipes with the Swipe Marks switch off', async () => {

@@ -34,7 +34,7 @@ import { activeEditionFiles, edition, editionStrings } from '../edition/edition'
 import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
-import { EntryActions, useEntrySlots, useEntrySwipe, useYesterdaySlots } from './entry-actions';
+import { EntryActions, useEntrySlots, useYesterdaySlots } from './entry-actions';
 
 const { config } = activeEditionFiles;
 
@@ -230,7 +230,7 @@ async function settle() {
 
 /** An Entry's card as the Feed draws it: its slots, and its side swipes when they are on. */
 function SwipedCard({ card }: { card: AnyEntryCard }) {
-  return <EntryCard card={card} {...useEntrySlots()(card)} swipe={useEntrySwipe(card.entryId)} />;
+  return <EntryCard card={card} slots={useEntrySlots(card)} />;
 }
 
 /** Swipes the card sideways by `distance` points and lets it land. */
@@ -336,7 +336,11 @@ describe.each([
             <HapticsProvider haptics={haptics}>
               <SettingsProvider>
                 <UndoToastProvider>
-                  <EntryCard card={card} actions={<EntryActions card={card} />} selfCheck />
+                  <EntryCard
+                    card={card}
+                    slots={{ slot: 'actions', actions: <EntryActions card={card} /> }}
+                    selfCheck
+                  />
                 </UndoToastProvider>
               </SettingsProvider>
             </HapticsProvider>
@@ -625,7 +629,7 @@ function underShell(children: React.ReactNode) {
 
 /** An Entry card with the slots the feed gives it. */
 function SlottedCard({ card, selfCheck = false }: { card: AnyEntryCard; selfCheck?: boolean }) {
-  return <EntryCard card={card} {...useEntrySlots()(card)} selfCheck={selfCheck} />;
+  return <EntryCard card={card} slots={useEntrySlots(card)} selfCheck={selfCheck} />;
 }
 
 /** The card of the Entry with the slots the feed gives it. */
@@ -798,7 +802,7 @@ describe('Yesterday’s Word', () => {
   /** Yesterday's card with the slots the feed gives it. */
   function Yesterday({ card }: { card: AnyEntryCard }) {
     if (card.kind !== 'word') throw new Error('Yesterday’s card is a Word');
-    return <YesterdayCard word={card.model} {...useYesterdaySlots(card.entryId)} />;
+    return <YesterdayCard word={card.model} slots={useYesterdaySlots(card.entryId)} />;
   }
 
   async function renderYesterday() {
