@@ -180,7 +180,7 @@ export function SwipeMarks({
     transform: [
       { translateX: offset.value },
       { translateY: Math.abs(offset.value) * 0.04 + lift.value },
-      { rotate: `${offset.value / 16}deg` },
+      { rotate: `${String(offset.value / 16)}deg` },
     ],
   }));
   const knownEdgeStyle = useAnimatedStyle(() => ({
@@ -196,7 +196,7 @@ export function SwipeMarks({
     const scale = progress < 0.5 ? 1.6 - progress * 2 * 0.66 : 0.94 + (progress - 0.5) * 2 * 0.06;
     return {
       opacity: Math.min(1, progress * 2),
-      transform: [{ scale }, { rotate: `${-14 + progress * 8}deg` }],
+      transform: [{ scale }, { rotate: `${String(-14 + progress * 8)}deg` }],
     };
   });
 
@@ -217,7 +217,7 @@ export function SwipeMarks({
     [setMark],
   );
 
-  const edgeText = [typeStyle('toastAction', tokens), styles.edgeText];
+  const edgeText = typeStyle('swipeEdge', tokens);
 
   return (
     <PageActionsProvider actions={markActions} onAction={onAction}>
@@ -227,7 +227,12 @@ export function SwipeMarks({
           importantForAccessibility="no-hide-descendants"
           pointerEvents="none"
           testID="swipe-edge-known"
-          style={[styles.edge, styles.edgeLeft, { backgroundColor: colors.ink }, knownEdgeStyle]}
+          style={[
+            styles.edge,
+            { backgroundColor: colors.ink, borderRadius: radii.chip },
+            styles.edgeLeft,
+            knownEdgeStyle,
+          ]}
         >
           <Text style={[edgeText, { color: colors.background }]}>{texts.edges.known}</Text>
         </Animated.View>
@@ -238,15 +243,19 @@ export function SwipeMarks({
           testID="swipe-edge-unknown"
           style={[
             styles.edge,
+            {
+              backgroundColor: colors.surfaceSunken,
+              borderColor: colors.ink,
+              borderRadius: radii.chip,
+            },
             styles.edgeRight,
-            { backgroundColor: colors.surfaceSunken, borderColor: colors.ink },
             unknownEdgeStyle,
           ]}
         >
           <Text style={[edgeText, { color: colors.ink }]}>{texts.edges.unknown}</Text>
         </Animated.View>
         <GestureDetector gesture={pan}>
-          <Animated.View style={cardStyle}>
+          <Animated.View testID="swipe-card" style={cardStyle}>
             {children}
             {mark !== undefined && (
               <Animated.View
@@ -262,13 +271,7 @@ export function SwipeMarks({
                   stampStyle,
                 ]}
               >
-                <Text
-                  style={[
-                    typeStyle('toastAction', tokens),
-                    styles.stampText,
-                    { color: colors.ink },
-                  ]}
-                >
+                <Text style={[typeStyle('swipeStamp', tokens), { color: colors.ink }]}>
                   {textOf(texts.stamps, mark)}
                 </Text>
               </Animated.View>
@@ -306,16 +309,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: space[4],
   },
   // The ink wedge at the left edge, which a swipe right uncovers.
-  edgeLeft: { left: 0, borderTopRightRadius: 14, borderBottomRightRadius: 14 },
+  edgeLeft: { left: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
   // The light inset wedge at the right edge, which a swipe left uncovers.
   edgeRight: {
     right: 0,
     borderWidth: 1,
     borderRightWidth: 0,
-    borderTopLeftRadius: 14,
-    borderBottomLeftRadius: 14,
+    borderTopRightRadius: 0,
+    borderBottomRightRadius: 0,
   },
-  edgeText: { letterSpacing: 1 },
   stamp: {
     position: 'absolute',
     top: '38%',
@@ -324,11 +326,10 @@ const styles = StyleSheet.create({
     paddingVertical: space[2],
     paddingHorizontal: space[4],
   },
-  stampText: { fontSize: 18, lineHeight: 22, letterSpacing: 2 },
   chip: {
     alignSelf: 'center',
     marginTop: space[3],
-    minHeight: 32,
+    minHeight: space[8],
     justifyContent: 'center',
     paddingHorizontal: space[4],
   },

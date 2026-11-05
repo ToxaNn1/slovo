@@ -18,7 +18,7 @@ import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
-  wordCard: { stress: 'stress on {vowels}', stressOr: 'or' },
+  wordCard: { stress: 'stress on {vowels}', stressOr: 'or', category: 'Category: {category}' },
   correctionCard: {
     title: 'Correction',
     correctionType: 'Type: {type}',
@@ -137,18 +137,22 @@ async function show(props: Partial<Parameters<typeof MarkedCard>[0]> = {}) {
   return { onMark, onUndo };
 }
 
-/** A side drag by `distance` points (right is positive), let go at `velocity` points per second. */
-async function sideSwipe(distance: number, velocity = 0, { release = true } = {}) {
+/**
+ * A side drag by `distance` points (right is positive), let go at `velocity` points per second.
+ * The gesture test utilities always end the drag; `settle: false` reads the styles one frame
+ * after release, before the card settles.
+ */
+async function sideSwipe(distance: number, velocity = 0, { settle = true } = {}) {
   await act(() => {
     fireGestureHandler(getByGestureTestId('entry-card-side-swipe'), [
       { state: State.BEGAN, translationX: 0, velocityX: 0 },
       { state: State.ACTIVE, translationX: Math.sign(distance) * 8, velocityX: velocity },
       { state: State.ACTIVE, translationX: distance, velocityX: velocity },
-      ...(release ? [{ state: State.END, translationX: distance, velocityX: velocity }] : []),
+      { state: State.END, translationX: distance, velocityX: velocity },
     ]);
   });
   await act(async () => {
-    await jest.advanceTimersByTimeAsync(500);
+    await jest.advanceTimersByTimeAsync(settle ? 500 : 16);
   });
 }
 
@@ -210,12 +214,12 @@ describe('SwipeMarks', () => {
     expect(onMark.mock.calls).toEqual([['unknown']]);
   });
 
-  it('shows the edge label of the side the card leaves while it is dragged', async () => {
+  it('shows the edge label of the side the card leaves as it is let go', async () => {
     await show();
 
-    await sideSwipe(90, 0, { release: false });
+    await sideSwipe(90, 0, { settle: false });
 
-    expect(opacityOf('swipe-edge-known')).toBe(1);
+    expect(opacityOf('swipe-edge-known')).toBeGreaterThan(0.9);
     expect(opacityOf('swipe-edge-unknown')).toBe(0);
   });
 
@@ -233,9 +237,7 @@ describe('SwipeMarks', () => {
     const { onUndo } = await show();
     await sideSwipe(120);
 
-    await act(() => {
-      fireEvent.press(screen.getByText('Undo'));
-    });
+    await fireEvent.press(screen.getByText('Undo'));
 
     expect(onUndo).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('swipe-stamp')).toBeNull();
@@ -266,11 +268,15 @@ describe('SwipeMarks', () => {
       await jest.advanceTimersByTimeAsync(0);
     });
 
-    await sideSwipe(120, 0, { release: false });
-    const style = getAnimatedStyle(screen.getByTestId('correction-card').parent!) as object;
-    await sideSwipe(120);
+    await sideSwipe(120, 0, { settle: false });
+    const { transform } = getAnimatedStyle(screen.getByTestId('swipe-card')) as {
+      transform: { translateX?: number }[];
+    };
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(500);
+    });
 
-    expect(JSON.stringify(style)).not.toContain('"translateX":120');
+    expect(transform).toContainEqual({ translateX: 0 });
     expect(onMark.mock.calls).toEqual([['known']]);
     expect(opacityOf('swipe-stamp')).toBe(1);
   });
@@ -305,19 +311,23 @@ describe('SwipeMarks in a VerticalPager', () => {
         <VerticalPager
           testID="pager"
           items={['c1', 'c2']}
+          onIndexChange={jest.fn()}
           turnActionLabels={{ next: 'Next card', previous: 'Previous card' }}
           renderPage={(page) => (page === 'c1' ? <PagedCard onMark={onMark} /> : <Actions />)}
         />,
       ),
     );
+    await fireEvent(screen.getByTestId('pager'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 400, height: 800 } },
+    });
 
     const form = screen.getByTestId('correction-non-standard');
-    expect(form.props.accessibilityActions.map((action: { name: string }) => action.name)).toEqual([
-      'known',
-      'unknown',
-      'next',
+    expect(form.props['accessibilityActions']).toEqual([
+      expect.objectContaining({ name: 'known' }),
+      expect.objectContaining({ name: 'unknown' }),
+      expect.objectContaining({ name: 'next' }),
     ]);
-    fireEvent(form, 'accessibilityAction', {
+    await fireEvent(form, 'accessibilityAction', {
       nativeEvent: { actionName: 'unknown' },
     });
     await act(async () => {

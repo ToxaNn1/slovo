@@ -131,7 +131,9 @@ export function useCloseUndoToast(): () => void {
   return useContext(CloseUndoToastContext) ?? noClose;
 }
 
-function noClose() {}
+function noClose() {
+  // No toast to close outside an UndoToastProvider.
+}
 
 /**
  * The ink wedge toast from the design, for 4 s: a red mark, the message in
