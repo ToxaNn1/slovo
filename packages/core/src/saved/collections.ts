@@ -18,6 +18,8 @@ export interface Collection {
    * Word, and for a Correction the standard equivalent.
    */
   readonly newestLemmas: readonly string[];
+  /** The id of the Curated Collection it is a copy of (ADR 0076); absent for any other. */
+  readonly source?: string;
 }
 
 /** Why a name is refused, for the UI to say in the Edition's words. */
@@ -79,9 +81,10 @@ export interface Collections {
    * write: the copy of a Collection Link (ADR 0058). It takes the name, cut to
    * the longest a name may be, or, when another Collection has it in any
    * letter case, the first free of «{name} (2)», «{name} (3)»…, cut so the
-   * number fits.
+   * number fits. A copy of a Curated Collection records its `source`, the
+   * Curated Collection's id (ADR 0076).
    */
-  createCopy(name: string, entryIds: readonly string[]): Promise<Collection>;
+  createCopy(name: string, entryIds: readonly string[], source?: string): Promise<Collection>;
   /**
    * Gives the Collection a new name, by the same rules as `create`; its own
    * name, in any letter case, is not a duplicate. The time it was created, its
@@ -129,6 +132,7 @@ interface Stored {
   readonly name: string;
   readonly createdAt: Date;
   readonly filed: ReadonlyMap<string, Filed>;
+  readonly source?: string;
 }
 
 const NONE: readonly Collection[] = [];
@@ -144,7 +148,7 @@ const newestEntry = newestFirst<Filed>(
   (item) => item.row.entryId,
 );
 
-function viewOf({ id, name, createdAt, filed }: Stored): Collection {
+function viewOf({ id, name, createdAt, filed, source }: Stored): Collection {
   const newest = [...filed.values()].sort(newestEntry);
   return {
     id,
@@ -152,6 +156,7 @@ function viewOf({ id, name, createdAt, filed }: Stored): Collection {
     createdAt,
     count: filed.size,
     newestLemmas: newest.slice(0, NEWEST_LEMMAS).map((item) => item.row.title),
+    ...(source === undefined ? {} : { source }),
   };
 }
 
@@ -199,10 +204,11 @@ export async function openCollections({
   }
   const collections = new Map<string, Stored>();
   const views = new Map<string, Collection>();
-  for (const [id, { name, createdAt }] of storedCollections) {
+  for (const [id, { name, createdAt, source }] of storedCollections) {
     const stored = {
       id,
       name,
+      ...(source === undefined ? {} : { source }),
       createdAt: new Date(createdAt),
       filed: filedByCollection.get(id) ?? new Map<string, Filed>(),
     };
@@ -312,13 +318,21 @@ export async function openCollections({
     }
   }
 
-  async function createCopy(untrimmed: string, entryIds: readonly string[]): Promise<Collection> {
+  async function createCopy(
+    untrimmed: string,
+    entryIds: readonly string[],
+    source?: string,
+  ): Promise<Collection> {
     const name = freeName(untrimmed.trim());
     const id = newId();
     const createdAt = clock.now();
     const rowOf = await rows.rows(entryIds);
     const changes = new Map<string, string | undefined>(
-      collectionRecords.record(id).change({ name, createdAt: createdAt.toISOString() }),
+      collectionRecords.record(id).change({
+        name,
+        createdAt: createdAt.toISOString(),
+        ...(source === undefined ? {} : { source }),
+      }),
     );
     const filed = new Map<string, Filed>();
     for (const entryId of entryIds) {
@@ -330,7 +344,7 @@ export async function openCollections({
       mergeInto(changes, entryRecord(id, entryId).change(addedAt.toISOString()));
     }
     await write(changes);
-    return change({ id, name, createdAt, filed });
+    return change({ id, name, createdAt, filed, ...(source === undefined ? {} : { source }) });
   }
 
   async function rename(
@@ -346,9 +360,11 @@ export async function openCollections({
     const view = views.get(collectionId);
     if (name === collection.name && view !== undefined) return { ok: true, collection: view };
     await write(
-      collectionRecords
-        .record(collectionId)
-        .change({ name, createdAt: collection.createdAt.toISOString() }),
+      collectionRecords.record(collectionId).change({
+        name,
+        createdAt: collection.createdAt.toISOString(),
+        ...(collection.source === undefined ? {} : { source: collection.source }),
+      }),
     );
     return { ok: true, collection: change({ ...collection, name }) };
   }
@@ -402,7 +418,7 @@ export async function openCollections({
     entries,
     has,
     create: (name, entryId) => inTurn(() => create(name, entryId)),
-    createCopy: (name, entryIds) => inTurn(() => createCopy(name, entryIds)),
+    createCopy: (name, entryIds, source) => inTurn(() => createCopy(name, entryIds, source)),
     rename: (collectionId, name) => inTurn(() => rename(collectionId, name)),
     delete: (collectionId) => inTurn(() => deleteCollection(collectionId)),
     add: (collectionId, entryId) => inTurn(() => add(collectionId, entryId)),
