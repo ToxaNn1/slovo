@@ -649,6 +649,7 @@ export async function openComposition({
   // Once the day is turned to, so the check-in is today's.
   const mood = await openMoodCheckIns({ edition, userState, clock, dayTurned, analytics });
   // Once the day is turned to, so its hero is today's Word of the Day.
+  const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   const dashboard = await openDashboard({
     edition,
     entries,
@@ -656,6 +657,8 @@ export async function openComposition({
     wordOfTheDay,
     feed,
     mood,
+    archive: wordOfTheDayArchive,
+    clock,
     seen,
     dayTurned,
   });
@@ -691,7 +694,6 @@ export async function openComposition({
     await day.opened(entryId);
     return entryCard(entryId);
   }
-  const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   return {
     feed,
     dashboard,

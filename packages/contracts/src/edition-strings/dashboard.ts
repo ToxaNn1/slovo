@@ -18,4 +18,9 @@ export const DashboardStringsSchema = z.strictObject({
     /** The link that opens the chips again to change today's Mood, «змінити». */
     change: TextSchema,
   }),
+  /** The block «Попередні слова» under the Mood check-in: the Word of the Day archive's newest days before today. */
+  previousWords: z.strictObject({
+    /** The block's title, «Попередні слова». */
+    title: TextSchema,
+  }),
 });

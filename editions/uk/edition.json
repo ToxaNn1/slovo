@@ -99,7 +99,8 @@
     "reduceMotion": true,
     "fastReveal": true,
     "dashboard": true,
-    "mood": true
+    "mood": true,
+    "previousWords": true
   },
   "userSettingDefaults": {
     "theme": "system",

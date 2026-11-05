@@ -260,6 +260,7 @@ export {
   type Dashboard,
   type DashboardBlock,
   type MoodBlock,
+  type PreviousWordsBlock,
   type WordOfTheDayHero,
 } from './dashboard/dashboard';
 export { type MoodCheckIn, type MoodCheckIns } from './mood/mood';
