@@ -99,7 +99,8 @@
     "fastReveal": true,
     "dashboard": true,
     "mood": true,
-    "previousWords": true
+    "previousWords": true,
+    "correctionTypes": true
   },
   "userSettingDefaults": {
     "theme": "system",

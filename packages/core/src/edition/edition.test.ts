@@ -105,6 +105,7 @@ const validConfig = {
     dashboard: true,
     mood: true,
     previousWords: true,
+    correctionTypes: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -316,6 +317,7 @@ describe('loadEdition', () => {
     'tracedCrossword',
     'fastReveal',
     'dashboard',
+    'correctionTypes',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({
@@ -1201,6 +1203,7 @@ const dependentSwitches = [
   ['dashboard', ['wordOfTheDay']],
   ['mood', ['dashboard', 'wordOfTheDay']],
   ['previousWords', ['dashboard', 'wordOfTheDayArchive', 'wordOfTheDay']],
+  ['correctionTypes', ['dashboard', 'wordOfTheDay', 'corrections']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {
