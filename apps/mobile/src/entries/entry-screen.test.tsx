@@ -195,13 +195,14 @@ describe('the Entry screen and the side swipes (ADR 0077)', () => {
     swipeMarksOn = true;
     await renderEntry('w_sumyrnyi');
 
-    await act(() => {
+    await act(async () => {
       fireGestureHandler(getByGestureTestId('entry-card-side-swipe'), [
         { state: State.BEGAN, translationX: 0 },
         { state: State.ACTIVE, translationX: 8 },
         { state: State.ACTIVE, translationX: 120 },
         { state: State.END, translationX: 120 },
       ]);
+      await Promise.resolve();
     });
     await settle();
 
