@@ -2,7 +2,7 @@
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
 import type { KnowledgeMark } from '@slovo/core';
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
@@ -22,7 +22,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { useHaptics } from '../providers/HapticsProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { minTouchTarget, space, typeStyle } from '../tokens';
+import { minTouchTarget, motion, space, typeStyle } from '../tokens';
 
 /** The side swipes of an Entry card, under the `swipeMarks` Feature Switch (ADR 0077). */
 export interface EntrySwipe {
@@ -48,9 +48,16 @@ const BACK = {
   reduceMotion: ReduceMotion.Never,
 };
 const FADE = { duration: 200, easing: Easing.linear, reduceMotion: ReduceMotion.Never };
-const STAMP_STEP = {
-  duration: 150,
+/** The stamp lands in 0.45 s (#1578), one of the Рупор peaks ADR 0055 allows. */
+const STAMP_LANDS = {
+  duration: 450,
   easing: Easing.out(Easing.quad),
+  reduceMotion: ReduceMotion.Never,
+};
+/** Under Reduce Motion the chip comes in as the one short fade of ADR 0055. */
+const CHIP_FADE = {
+  duration: motion.reduceMotion.duration,
+  easing: Easing.bezier(...motion.reduceMotion.easing),
   reduceMotion: ReduceMotion.Never,
 };
 const NUDGE_STEP = {
@@ -101,6 +108,20 @@ export function SwipeMarks({
   const latest = useRef({ mark, onMark, onUndo, turnToNext });
   latest.current = { mark, onMark, onUndo, turnToNext };
 
+  // The stamp lands each time the card's mark changes, from a swipe, a VoiceOver action or its «⋯» sheet.
+  const stamped = useRef(mark);
+  useEffect(() => {
+    if (stamped.current === mark) return;
+    stamped.current = mark;
+    stamp.value =
+      mark === undefined
+        ? 0
+        : withSequence(
+            withTiming(0, { duration: 0 }),
+            withTiming(1, reduceMotion ? FADE : STAMP_LANDS),
+          );
+  }, [mark, reduceMotion, stamp]);
+
   const textOf = useCallback(
     (byMark: { known: string; unknown: string; correctionKnown: string }, to: KnowledgeMark) =>
       to === 'known' && correction ? byMark.correctionKnown : byMark[to],
@@ -113,13 +134,6 @@ export function SwipeMarks({
       if (current.mark === to) return;
       haptics.selection();
       current.onMark(to);
-      stamp.value = reduceMotion
-        ? withTiming(1, FADE)
-        : withSequence(
-            withTiming(0, { duration: 0 }),
-            withTiming(1, STAMP_STEP),
-            withTiming(1, { ...STAMP_STEP, duration: 300 }),
-          );
       if (current.turnToNext !== undefined) {
         setMarkedOn(() => current.turnToNext);
         if (!reduceMotion)
@@ -148,7 +162,7 @@ export function SwipeMarks({
         },
       });
     },
-    [haptics, lift, offset, reduceMotion, showToast, stamp, textOf, texts],
+    [haptics, lift, offset, reduceMotion, showToast, textOf, texts],
   );
 
   const pan = useMemo(
@@ -279,24 +293,44 @@ export function SwipeMarks({
           </Animated.View>
         </GestureDetector>
         {markedOn !== undefined && markedOn === turnToNext && (
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={texts.next}
-            testID="swipe-next-chip"
-            hitSlop={(minTouchTarget - 32) / 2}
-            onPress={turnToNext}
-            style={({ pressed }) => [
-              styles.chip,
-              { backgroundColor: colors.ink, borderRadius: radii.chip, opacity: pressed ? 0.7 : 1 },
-            ]}
-          >
-            <Text style={[typeStyle('toastAction', tokens), { color: colors.background }]}>
-              {texts.next}
-            </Text>
-          </Pressable>
+          <ChipFade fades={reduceMotion}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={texts.next}
+              testID="swipe-next-chip"
+              hitSlop={(minTouchTarget - 32) / 2}
+              onPress={turnToNext}
+              style={({ pressed }) => [
+                styles.chip,
+                {
+                  backgroundColor: colors.ink,
+                  borderRadius: radii.chip,
+                  opacity: pressed ? 0.7 : 1,
+                },
+              ]}
+            >
+              <Text style={[typeStyle('toastAction', tokens), { color: colors.background }]}>
+                {texts.next}
+              </Text>
+            </Pressable>
+          </ChipFade>
         )}
       </View>
     </PageActionsProvider>
+  );
+}
+
+/** The «ВГОРУ — НАСТУПНЕ» chip, which fades in under Reduce Motion and is simply there otherwise. */
+function ChipFade({ fades, children }: { fades: boolean; children: ReactNode }) {
+  const shown = useSharedValue(fades ? 0 : 1);
+  useEffect(() => {
+    if (fades) shown.value = withTiming(1, CHIP_FADE);
+  }, [fades, shown]);
+  const style = useAnimatedStyle(() => ({ opacity: shown.value }));
+  return (
+    <Animated.View testID="swipe-next-chip-fade" style={[styles.chipFade, style]}>
+      {children}
+    </Animated.View>
   );
 }
 
@@ -326,6 +360,7 @@ const styles = StyleSheet.create({
     paddingVertical: space[2],
     paddingHorizontal: space[4],
   },
+  chipFade: { alignSelf: 'center' },
   chip: {
     alignSelf: 'center',
     marginTop: space[3],
