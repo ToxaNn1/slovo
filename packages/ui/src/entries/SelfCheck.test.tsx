@@ -138,7 +138,10 @@ async function renderFeed(
             <EntryCard
               card={card}
               selfCheck={on}
-              actions={<KnowledgeButtons entryKind={card.kind} mark={undefined} onTap={onMark} />}
+              slots={{
+                slot: 'actions',
+                actions: <KnowledgeButtons entryKind={card.kind} mark={undefined} onTap={onMark} />,
+              }}
             />
           )}
           turnActionLabels={TURN_LABELS}

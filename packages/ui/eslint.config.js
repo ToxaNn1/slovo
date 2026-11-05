@@ -47,6 +47,7 @@ export default [
     files: [
       'src/dashboard/MoodCheckIn.tsx',
       'src/entries/SwipeMarks.tsx',
+      'src/entries/reveal.tsx',
       'src/feed/GesturesHintSheet.tsx',
       'src/game/GameRound.tsx',
       'src/game/OrderedChips.tsx',
@@ -61,6 +62,7 @@ export default [
       'src/primitives/BottomSheet.tsx',
       'src/primitives/Chip.tsx',
       'src/primitives/FallingMarks.tsx',
+      'src/primitives/FlyingText.tsx',
       'src/primitives/Mascot.tsx',
       'src/primitives/ScreenEnter.tsx',
       'src/primitives/PressedTile.tsx',
@@ -69,6 +71,7 @@ export default [
       'src/primitives/TabBarButton.tsx',
       'src/primitives/UndoToast.tsx',
       'src/primitives/VerticalPager.tsx',
+      'src/primitives/WedgeLoader.tsx',
       'src/saved/FavoriteButton.tsx',
       'src/settings/WidgetGuide.tsx',
       'src/share/ShareSheet.tsx',

@@ -28,7 +28,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
-import { useEntrySlots, useEntrySwipe, useYesterdaySlots } from '@/entries/entry-actions';
+import { useEntrySlots, useYesterdaySlots } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
@@ -181,7 +181,6 @@ const FeedPage = memo(function FeedPage({
 }) {
   const { top } = useSafeAreaInsets();
   const { selfCheck, stressFall, calligraphicLemma } = useShown();
-  const slots = useEntrySlots();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
     return (
@@ -225,7 +224,7 @@ const FeedPage = memo(function FeedPage({
         {card.kind === 'notice' ? (
           <YesterdayNotice word={card.word} />
         ) : card.kind === 'tip' ? (
-          <SwipedEntryCard card={card} selfCheck={selfCheck} {...slots(card)} />
+          <SwipedEntryCard card={card} selfCheck={selfCheck} />
         ) : card.kind === 'synonymRow' ? (
           <SwipedEntryCard
             card={card}
@@ -234,7 +233,6 @@ const FeedPage = memo(function FeedPage({
               openScreen(`/entry/${wordId}`);
             }}
             selfCheck={selfCheck}
-            {...slots(card)}
           />
         ) : (
           <SwipedEntryCard
@@ -250,7 +248,6 @@ const FeedPage = memo(function FeedPage({
             stressFalls={stressFall}
             // Only here, on the Word of the Day card; in the Word font with the switch off.
             wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
-            {...slots(card)}
           />
         )}
       </PagerScrollView>
@@ -258,9 +255,9 @@ const FeedPage = memo(function FeedPage({
   );
 });
 
-/** An Entry's card in the Feed, with the side swipes that set its Knowledge Mark (ADR 0077). */
-function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'swipe'>) {
-  return <EntryCard {...props} swipe={useEntrySwipe(props.card.entryId)} />;
+/** An Entry's card in the Feed, with its action row or its corner and side swipes (ADR 0077). */
+function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
+  return <EntryCard {...props} slots={useEntrySlots(props.card)} />;
 }
 
 /**
@@ -298,7 +295,7 @@ function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterd
 
 /** Yesterday's Word in Self-check style, with its Knowledge Marks as on any card. */
 function YesterdayNotice({ word }: { word: WordCardModel }) {
-  return <YesterdayCard word={word} {...useYesterdaySlots(word.wordId)} />;
+  return <YesterdayCard word={word} slots={useYesterdaySlots(word.wordId)} />;
 }
 
 const styles = StyleSheet.create({

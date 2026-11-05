@@ -2,7 +2,7 @@ import type { AnyEntryCard, Composition, EntryLinkSource } from '@slovo/core';
 import { BackLink, EntryDetails, FeedError, space, UndoToastProvider, useTokens } from '@slovo/ui';
 import { StatusBar } from 'expo-status-bar';
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,7 +11,7 @@ import { editionStrings } from '../edition/edition';
 import { ShippedMascot } from '../mascot/mascot';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
-import { useEntrySlots, useEntrySwipe } from './entry-actions';
+import { useEntrySlots } from './entry-actions';
 import { useOpenScreen } from '../use-open-screen';
 
 /**
@@ -51,8 +51,6 @@ export function EntryScreen({
   const router = useRouter();
   const openScreen = useOpenScreen();
   const { stressFall } = useShown();
-  const swipe = useEntrySwipe(entryId);
-  const slots = useEntrySlots();
   // `null` once read for an id the Language Pack doesn't have.
   const read = useCallback(
     async (open: Composition) => (await openEntry(open, entryId, openedFrom)) ?? null,
@@ -79,7 +77,7 @@ export function EntryScreen({
           <ReadFailed back={back} topInset={top} onRetry={reading.retry} />
         )}
         {card?.entryId === entryId && (
-          <EntryDetails
+          <SlottedEntryDetails
             card={card}
             back={back}
             onBack={() => {
@@ -99,8 +97,6 @@ export function EntryScreen({
               openScreen(`${route}/${synonymRowId}?back=${encodeURIComponent(word)}`);
             }}
             onWordHistoryShown={onWordHistoryShown}
-            {...slots(card, 'details')}
-            swipe={swipe}
             stressFalls={stressFall}
           />
         )}
@@ -112,6 +108,11 @@ export function EntryScreen({
       </View>
     </UndoToastProvider>
   );
+}
+
+/** Entry details with the Entry's action row, or its corner and side swipes (ADR 0077). */
+function SlottedEntryDetails(props: Omit<ComponentProps<typeof EntryDetails>, 'slots'>) {
+  return <EntryDetails {...props} slots={useEntrySlots(props.card, 'details')} />;
 }
 
 /**

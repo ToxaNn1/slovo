@@ -24,8 +24,8 @@ export {
 } from './feed/FeedNoticeCard';
 export { WeeklyRecapCard } from './feed/WeeklyRecapCard';
 export { CommunityWordCard } from './feed/CommunityWordCard';
-export { YesterdayCard } from './feed/YesterdayCard';
-export { EntryCard } from './entries/EntryCard';
+export { YesterdayCard, type YesterdaySlots } from './feed/YesterdayCard';
+export { EntryCard, type EntryCardSlots } from './entries/EntryCard';
 export { RevealPace } from './entries/reveal';
 export { EntryDetails } from './entries/EntryDetails';
 export { ConfirmationDialog } from './primitives/ConfirmationDialog';
