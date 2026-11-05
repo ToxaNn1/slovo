@@ -1,42 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createGesturesHint, createSwipeHint } from '../index';
+import { createGesturesHint } from '../index';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
-
-/** The swipe hint over user-state records that survive between app runs. */
-async function swipeHintOver(records: Map<string, string>) {
-  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  return createSwipeHint({ userState });
-}
-
-describe('the swipe hint', () => {
-  it('is due on the first launch', async () => {
-    const hint = await swipeHintOver(new Map());
-
-    expect(await hint.isDue()).toBe(true);
-  });
-
-  it('is no longer due once it was shown', async () => {
-    const hint = await swipeHintOver(new Map());
-    await hint.markShown();
-
-    expect(await hint.isDue()).toBe(false);
-  });
-
-  it('stays shown across a restart, so it shows only once', async () => {
-    const records = new Map<string, string>();
-    await (await swipeHintOver(records)).markShown();
-
-    expect(await (await swipeHintOver(records)).isDue()).toBe(false);
-  });
-
-  it('leaves the other user state untouched', async () => {
-    const records = new Map([['feed.seen.w_1', '1']]);
-    await (await swipeHintOver(records)).markShown();
-
-    expect(records.get('feed.seen.w_1')).toBe('1');
-  });
-});
 
 /** The gestures hint sheet over user-state records that survive between app runs. */
 async function gesturesHintOver(records: Map<string, string>) {
@@ -45,9 +10,12 @@ async function gesturesHintOver(records: Map<string, string>) {
 }
 
 describe('the gestures hint sheet', () => {
-  it('is due for a reader who saw the swipe hint', async () => {
-    const records = new Map<string, string>();
-    await (await swipeHintOver(records)).markShown();
+  it('is due on the first launch', async () => {
+    expect(await (await gesturesHintOver(new Map())).isDue()).toBe(true);
+  });
+
+  it('is due for a reader who saw the retired swipe hint', async () => {
+    const records = new Map([['feed.swipeHintShown', 'true']]);
 
     expect(await (await gesturesHintOver(records)).isDue()).toBe(true);
   });
@@ -59,5 +27,12 @@ describe('the gestures hint sheet', () => {
 
     expect(await hint.isDue()).toBe(false);
     expect(await (await gesturesHintOver(records)).isDue()).toBe(false);
+  });
+
+  it('leaves the other user state untouched', async () => {
+    const records = new Map([['feed.seen.w_1', '1']]);
+    await (await gesturesHintOver(records)).markShown();
+
+    expect(records.get('feed.seen.w_1')).toBe('1');
   });
 });

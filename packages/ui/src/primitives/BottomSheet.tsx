@@ -157,7 +157,9 @@ export function BottomSheet({
           );
       wasVisible.current = true;
     } else {
-      const wasOpen = wasVisible.current;
+      // Nothing to slide out unless it was open: a slide-out started on mount
+      // would unmount a sheet that opens before it ends.
+      if (!wasVisible.current) return;
       wasVisible.current = false;
       const velocity = flick.current;
       flick.current = undefined;
@@ -165,7 +167,7 @@ export function BottomSheet({
         'worklet';
         if (finished !== true) return;
         scheduleOnRN(setMounted, false);
-        if (wasOpen) scheduleOnRN(dismissed);
+        scheduleOnRN(dismissed);
       };
       // A drag that closed it carries on down from where the finger left it,
       // and leaves it away, so the next open slides up again.

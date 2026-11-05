@@ -7,6 +7,7 @@ import {
   EntryCard,
   FeedHeader,
   FirstWeekCard,
+  GesturesHintSheet,
   HeaderFade,
   PagerScrollView,
   RevealPace,
@@ -14,7 +15,6 @@ import {
   QuickQuestionRound,
   SearchButton,
   space,
-  SwipeHint,
   UndoToastProvider,
   useTokens,
   VerticalPager,
@@ -39,7 +39,7 @@ import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { XpBarToGame } from '@/progress/xp-bar';
 import { useShown } from '@/shown-in-effect';
-import { useSwipeHint } from '@/feed/swipe-hint';
+import { useGesturesHint } from '@/feed/gestures-hint';
 import { todayText } from '@/feed/today-text';
 import { WeeklyRecapNotice } from '@/feed/weekly-recap-notice';
 import { CommunityWordNotice } from '@/feed/community-word-notice';
@@ -65,14 +65,13 @@ export default function FeedRoute() {
 function FeedScreen() {
   const pager = useRef<VerticalPagerHandle>(null);
   const feed = useFeed(pager, { clock: deviceClock, landing: wordOfTheDayLanding });
-  const swipeHint = useSwipeHint();
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();
   const shown = useShown();
+  const gesturesHint = useGesturesHint(shown.swipeMarks);
   const openScreen = useOpenScreen();
 
   const { cards, onCardChange, openCorrection, answerQuickQuestion } = feed;
-  const { dismiss: dismissSwipeHint } = swipeHint;
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
   const renderPage = useCallback(
@@ -88,13 +87,6 @@ function FeedScreen() {
     ),
     [openCorrection, answerQuickQuestion],
   );
-  const onIndexChange = useCallback(
-    (position: number) => {
-      onCardChange(position);
-      dismissSwipeHint();
-    },
-    [onCardChange, dismissSwipeHint],
-  );
 
   if (cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
 
@@ -108,7 +100,7 @@ function FeedScreen() {
           items={cards}
           initialIndex={feed.startPosition}
           renderPage={renderPage}
-          onIndexChange={onIndexChange}
+          onIndexChange={onCardChange}
           turnActionLabels={turnActionLabels}
         />
       </RevealPace>
@@ -147,13 +139,12 @@ function FeedScreen() {
           </View>
         </View>
       </View>
-      {swipeHint.visible ? (
-        <SwipeHint
-          text={feedStrings.swipeHint}
-          onShown={swipeHint.markShown}
-          onDismiss={swipeHint.dismiss}
-        />
-      ) : null}
+      <GesturesHintSheet
+        visible={gesturesHint.visible}
+        texts={editionStrings.knowledge.swipe.hint}
+        onShown={gesturesHint.markShown}
+        onDismiss={gesturesHint.dismiss}
+      />
     </View>
   );
 }
