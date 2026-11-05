@@ -9,12 +9,20 @@ import { typeStyle } from '../tokens';
  * start, read by VoiceOver as a header, and a muted note or count at the
  * end, on one baseline.
  */
-export function BlockTitle({ title, note }: { title: string; note?: string | undefined }) {
+export function BlockTitle({
+  title,
+  note,
+  testID,
+}: {
+  title: string;
+  note?: string | undefined;
+  testID?: string | undefined;
+}) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
   return (
-    <View style={styles.row}>
+    <View testID={testID} style={styles.row}>
       <Text
         {...voice}
         accessibilityRole="header"

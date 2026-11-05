@@ -480,6 +480,8 @@ export const typeRoles = {
   moodName: role('ui', '700', 15, 15),
   /** The date column of «Попередні слова», «31» over «жов». */
   previousDate: role('ui', '600', 12, 14.4),
+  /** The Lemma of a row of «Попередні слова». */
+  previousWord: role('word', '800', 17, 18.7),
   /** The short Definition of a row of «Попередні слова». */
   previousDefinition: role('ui', '400', 14, 18.2),
   /** A Curated Collection's name on its tile of the Categories rail. */

@@ -107,6 +107,7 @@ const blockStyles = StyleSheet.create({
   wordOfTheDay: { marginHorizontal: heroMargin },
   mood: { paddingTop: blockTop.mood, paddingHorizontal: side },
   previousWords: { paddingTop: blockTop.previousWords, paddingHorizontal: side },
-  curatedCollections: { paddingTop: blockTop.curatedCollections, paddingHorizontal: side },
-  correctionTypes: { paddingTop: blockTop.correctionTypes, paddingHorizontal: side },
+  // A rail runs to the screen's edges and keeps the side room inside.
+  curatedCollections: { paddingTop: blockTop.curatedCollections },
+  correctionTypes: { paddingTop: blockTop.correctionTypes },
 } satisfies Record<DashboardBlock['kind'], object>);

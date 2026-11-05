@@ -72,6 +72,8 @@ export const dashboard = {
   blockTop: { mood: 22, previousWords: 26, curatedCollections: 26, correctionTypes: 18 },
   titleGap: 12,
   previousTitleGap: 6,
+  /** The room under a rail's tiles. */
+  railBottom: 8,
   bottom: 32,
   hero: {
     height: 470,
@@ -144,14 +146,29 @@ export const moodTile = {
   ],
 } as const satisfies { marks: readonly Shape[] } & Record<string, unknown>;
 
-/** A row of «Попередні слова»: its padding, the date column's width, the gaps and the chevron. */
+/** A row of «Попередні слова»: its padding, the line under it, the date column's width, the gaps and the chevron. */
 export const previousWordRow = {
   padding: 14,
+  border: 1,
   gap: 14,
   textGap: 4,
   dateWidth: 38,
-  chevron: { width: 10, height: 16 },
-} as const;
+  chevron: {
+    width: 10,
+    height: 16,
+    points: [
+      [0, 0],
+      [0.4, 0],
+      [1, 0.5],
+      [0.4, 1],
+      [0, 1],
+      [0.6, 0.5],
+    ],
+  },
+} as const satisfies { chevron: { points: Shape } & Record<string, unknown> } & Record<
+  string,
+  unknown
+>;
 
 /**
  * A tile of the Categories rail (Curated Collections): its box, corner

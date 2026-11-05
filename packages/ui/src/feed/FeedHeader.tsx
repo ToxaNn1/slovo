@@ -55,13 +55,9 @@ export function FeedHeader({
           </>
         ) : (
           <View style={styles.plate}>
-            <Wedge
-              points={wedges.logoPlate}
-              color={colors.ink}
-              width="100%"
-              height="100%"
-              style={StyleSheet.absoluteFill}
-            />
+            <View style={StyleSheet.absoluteFill}>
+              <Wedge points={wedges.logoPlate} color={colors.ink} width="100%" height="100%" />
+            </View>
             <Text
               maxFontSizeMultiplier={HEADER_MAX_FONT_SCALE}
               style={[typeStyle('logo', tokens), { color: colors.background }]}

@@ -228,13 +228,17 @@ describe('the whole Dashboard', () => {
     expect(screen.getByTestId('dashboard')).toBeTruthy();
 
     // A Correction Type: its screen lists the type's Corrections, and «Як правильно?» counts one.
-    expect(screen.getByText('Розібрано 0 з 2')).toBeTruthy();
+    expect(composition.correctionTypes.tiles).toEqual([
+      { type: 'surzhyk', total: 2, workedThrough: 0 },
+    ]);
     await press('dashboard-correction-type-surzhyk');
     expect(screen.getByTestId('correction-type')).toBeTruthy();
     await press('correction-type-reveal-c_shoby');
     expect(screen.getByText('Пояснення до шоби.')).toBeTruthy();
     await back('correction-type-back');
-    expect(screen.getByText('Розібрано 1 з 2')).toBeTruthy();
+    expect(composition.correctionTypes.tiles).toEqual([
+      { type: 'surzhyk', total: 2, workedThrough: 1 },
+    ]);
 
     // A Curated Collection: «Нова» goes, and its screen shows its Entries and «Знаю X з N».
     expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();

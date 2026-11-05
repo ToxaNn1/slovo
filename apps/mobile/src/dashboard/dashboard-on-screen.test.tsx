@@ -302,7 +302,10 @@ describe('«Попередні слова»', () => {
     await renderApp();
 
     expect(screen.getByText(editionStrings.dashboard.previousWords.title)).toBeTruthy();
-    await settle(() => fireEvent.press(screen.getByTestId('dashboard-previous-word-2026-10-27')));
+    const row = screen.getByTestId('dashboard-previous-word-2026-10-27');
+    expect(within(row).getByText('27\nжов')).toBeTruthy();
+    expect(within(row).getByText('Значення слова лагідний.')).toBeTruthy();
+    await settle(() => fireEvent.press(row));
 
     expect(screen.getByText('Значення слова лагідний.')).toBeTruthy();
     expect(composition.history.list).toEqual([]);
@@ -318,13 +321,20 @@ describe('«Попередні слова»', () => {
 });
 
 describe('the Correction Types rail', () => {
-  it('a tile counts the type\u2019s Corrections «розібрано» and opens the type\u2019s screen', async () => {
+  it('the title counts the tiles, a tile names its type and opens the type\u2019s screen', async () => {
     await open(true);
     await renderApp();
 
     const { correctionTypes: words } = editionStrings.dashboard;
-    expect(screen.getByText(words.title)).toBeTruthy();
-    expect(screen.getByText('Розібрано 0 з 2')).toBeTruthy();
+    const title = screen.getByTestId('dashboard-correction-types-title');
+    expect(within(title).getByText(words.title)).toBeTruthy();
+    expect(within(title).getByText('1')).toBeTruthy();
+    expect(
+      within(screen.getByTestId('dashboard-correction-type-surzhyk')).getByText(
+        words.tiles.surzhyk,
+      ),
+    ).toBeTruthy();
+    expect(screen.queryByText(/Розібрано/)).toBeNull();
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-correction-type-surzhyk')));
 
     expect(screen.getByTestId('correction-type')).toBeTruthy();
@@ -333,7 +343,7 @@ describe('the Correction Types rail', () => {
     expect(screen.getByText('типу')).toBeTruthy();
   });
 
-  it('«Як правильно?» shows the standard form and the explanation, and the tile counts it', async () => {
+  it('«Як правильно?» shows the standard form and the explanation, and counts it «розібрано»', async () => {
     await open(true);
     await renderApp();
 
@@ -357,8 +367,12 @@ describe('the Curated Collections rail', () => {
     await open(true);
     await renderApp();
 
-    expect(screen.getByText(editionStrings.dashboard.curatedCollectionsTitle)).toBeTruthy();
-    expect(screen.getByText('Лагідні слова')).toBeTruthy();
+    const title = screen.getByTestId('dashboard-curated-collections-title');
+    expect(within(title).getByText(editionStrings.dashboard.curatedCollectionsTitle)).toBeTruthy();
+    expect(within(title).getByText('1')).toBeTruthy();
+    const tile = screen.getByTestId('dashboard-curated-collection-cc_lahidni');
+    expect(within(tile).getByText('Лагідні слова')).toBeTruthy();
+    expect(within(tile).getByText('2 слова')).toBeTruthy();
     expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();
 
     await settle(() =>

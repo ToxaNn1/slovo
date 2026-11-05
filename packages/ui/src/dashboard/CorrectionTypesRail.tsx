@@ -1,17 +1,19 @@
-import { fill, type CorrectionType } from '@slovo/contracts';
+import type { CorrectionType } from '@slovo/contracts';
 import type { CorrectionTypeTile } from '@slovo/core';
-import { ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
-import { SectionLabel } from '../primitives/headings';
+import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { railTileWidth, space, typeStyle } from '../tokens';
+import { correctionTile, dashboard, typeStyle } from '../tokens';
+import { BlockTitle } from './BlockTitle';
 
 /**
- * The Correction Types rail of the Dashboard (ADR 0076): «Виправлення» over a
- * horizontal row of tiles, one per Correction Type with live Corrections, each
- * its type's name and «Розібрано X з N». A tile opens its type's screen.
+ * The Correction Types rail of the Dashboard (ADR 0076): «Виправлення» with
+ * the count of tiles over a horizontal row that runs to the screen's edges,
+ * one tile per Correction Type with live Corrections, each its type's name
+ * under a red glyph. A tile opens its type's screen.
  */
 export function CorrectionTypesRail({
   tiles,
@@ -26,31 +28,45 @@ export function CorrectionTypesRail({
   const words = strings.dashboard.correctionTypes;
   return (
     <>
-      <SectionLabel>{words.title}</SectionLabel>
+      <View style={styles.title}>
+        <BlockTitle
+          title={words.title}
+          note={String(tiles.length)}
+          testID="dashboard-correction-types-title"
+        />
+      </View>
       <ScrollView
         testID="dashboard-correction-types"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.rail}
       >
-        {tiles.map(({ type, total, workedThrough }) => {
-          const count = fill(words.workedThrough, { x: String(workedThrough), n: String(total) });
+        {tiles.map(({ type }, index) => {
+          const glyph = correctionTile.glyphs[index % correctionTile.glyphs.length];
           return (
             <PressedTile
               key={type}
               testID={`dashboard-correction-type-${type}`}
-              accessibilityLabel={`${words.tiles[type]}, ${count}`}
+              tone="none"
+              radius={correctionTile.radius}
+              accessibilityLabel={words.tiles[type]}
               accessibilityLanguage={voice.accessibilityLanguage}
               onPress={() => {
                 onOpen(type);
               }}
-              faceStyle={styles.face}
+              faceStyle={[styles.face, { backgroundColor: colors.surfaceSunken }]}
             >
-              <Text {...voice} style={[typeStyle('rowLabel', tokens), { color: colors.ink }]}>
+              {glyph !== undefined && (
+                <Wedge
+                  points={glyph}
+                  color={colors.accent}
+                  width={correctionTile.glyph.side}
+                  height={correctionTile.glyph.side}
+                  style={styles.glyph}
+                />
+              )}
+              <Text {...voice} style={[typeStyle('correctionName', tokens), { color: colors.ink }]}>
                 {words.tiles[type]}
-              </Text>
-              <Text {...voice} style={[typeStyle('meta', tokens), { color: colors.muted }]}>
-                {count}
               </Text>
             </PressedTile>
           );
@@ -61,6 +77,22 @@ export function CorrectionTypesRail({
 }
 
 const styles = StyleSheet.create({
-  rail: { gap: space[3], paddingBottom: space[2] },
-  face: { width: railTileWidth, padding: space[4], gap: space[1] },
+  title: { paddingHorizontal: dashboard.side, paddingBottom: dashboard.titleGap },
+  rail: {
+    gap: correctionTile.gap,
+    paddingHorizontal: dashboard.side,
+    paddingBottom: dashboard.railBottom,
+  },
+  face: {
+    width: correctionTile.width,
+    height: correctionTile.height,
+    padding: correctionTile.padding,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  glyph: {
+    position: 'absolute',
+    right: correctionTile.glyph.right,
+    top: correctionTile.glyph.top,
+  },
 });
