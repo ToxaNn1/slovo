@@ -10,7 +10,7 @@ import { createSubscribers } from '../in-turn';
 /**
  * The Word of the Day hero: unrevealed until «Розкрити», revealed with its
  * Lemma, Stress and short Definition once the Word is Seen in the current
- * Cycle (ADR 0074). Revealed is derived from Seen, never stored.
+ * Cycle (ADR 0076). Revealed is derived from Seen, never stored.
  */
 export type WordOfTheDayHero =
   | { readonly state: 'unrevealed'; readonly wordId: string; readonly date: LocalDate }
@@ -40,7 +40,7 @@ export interface WordOfTheDayBlock {
 }
 
 /**
- * The Dashboard (ADR 0074): the home's blocks for the local day the
+ * The Dashboard (ADR 0076): the home's blocks for the local day the
  * composition turned to last. They follow the day change and Seen; with
  * `dashboard` off there are none.
  */

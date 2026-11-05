@@ -15,6 +15,8 @@ export {
 export {
   CategorySchema,
   DailyGoalSchema,
+  DailyGoalsSchema,
+  OnboardingNotificationTimesSchema,
   DistractorRuleSchema,
   EditionConfigSchema,
   FeatureSwitchesSchema,
@@ -37,6 +39,8 @@ export {
   UserSettingDefaultsConfigSchema,
   type Category,
   type DailyGoal,
+  type DailyGoals,
+  type OnboardingNotificationTimes,
   type DistractorRule,
   type EditionConfig,
   type FeatureSwitch,
@@ -164,7 +168,12 @@ export {
   CollectionLinkSchema,
   type CollectionLink,
 } from './collection-link';
-export { type CounterEvent } from './api/counters';
+export {
+  NotificationTimeBucketSchema,
+  type CountedQuestion,
+  type CounterEvent,
+  type NotificationTimeBucket,
+} from './api/counters';
 export {
   MistakeReportSchema,
   MistakeTypeSchema,

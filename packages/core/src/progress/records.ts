@@ -14,6 +14,7 @@ export const XpSourceSchema = z.literal([
   'daily-crossword',
   'review-answer',
   'quick-question',
+  'seen-word',
 ]);
 
 /**
@@ -44,12 +45,25 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     /** The length in days, 1 to 7 (ADR 0066): a longer record, from Sync or storage, is dropped. */
     days: z.number().int().min(1).max(BREAK_DAYS_AT_MOST),
   }),
+  /**
+   * A Daily Goal in XP, set before the Daily Goal counted Words (ADR 0074):
+   * kept so the log still reads, and counted for nothing.
+   */
   z.object({
     kind: z.literal('daily-goal'),
     date: z.string(),
     at: InstantSchema,
-    goal: DailyGoalSchema,
+    goal: z.number(),
   }),
+  /** The Daily Goal in Words set from a local day on, or `null` where «Без цілі» turned it off (ADR 0074). */
+  z.object({
+    kind: z.literal('word-goal'),
+    date: z.string(),
+    at: InstantSchema,
+    goal: DailyGoalSchema.nullable(),
+  }),
+  /** The day's Seen Words reached its Daily Goal; one per local date by its id (ADR 0074). */
+  z.object({ kind: z.literal('goal-met'), date: z.string(), at: InstantSchema }),
   z.object({ kind: z.literal('badge'), date: z.string(), at: InstantSchema, badge: z.string() }),
 ]);
 

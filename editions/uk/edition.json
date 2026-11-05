@@ -75,6 +75,8 @@
     "streakFreezes": true,
     "streakBreak": true,
     "quickQuestion": true,
+    "playStep": true,
+    "seenWordXp": true,
     "levels": true,
     "noCounters": true,
     "dailyGoal": true,
@@ -89,6 +91,7 @@
     "eveningNotification": true,
     "notificationFarewell": true,
     "notificationExplainer": true,
+    "notificationTimeStep": true,
     "laterQuestions": true,
     "profile": true,
     "mascot": true,
@@ -101,7 +104,6 @@
     "theme": "system",
     "fontSize": "M",
     "vibration": true,
-    "dailyGoal": 20,
     "notificationTimes": ["09:00", "13:00", "19:00"],
     "rarityCeiling": 5,
     "mix": {
@@ -316,8 +318,11 @@
     "dailyCrossword": 15,
     "reviewAnswer": 1,
     "reviewDailyCap": 10,
-    "quickQuestion": 2
+    "quickQuestion": 2,
+    "seenWord": 1
   },
+  "dailyGoals": { "options": [10, 25, 50], "highlighted": 10 },
+  "onboardingNotificationTimes": { "morning": "09:00", "midday": "13:00", "evening": "20:30" },
   "levels": {
     "first": 50,
     "growth": 0.1,
@@ -326,21 +331,31 @@
     "names": ["Початківець", "Читач", "Знавець", "Книжник", "Словолюб", "Мовознавець"]
   },
   "questionnaire": {
-    "who": [
+    "level": [
       {
-        "id": "studying",
-        "label": "Навчаюсь",
-        "rarityCeiling": 4
+        "id": "only-starting",
+        "label": "Тільки починаю",
+        "rarityCeiling": 2
       },
       {
-        "id": "working",
-        "label": "Працюю",
-        "rarityCeiling": 5
+        "id": "fair",
+        "label": "Непогано",
+        "rarityCeiling": 3
+      },
+      {
+        "id": "good",
+        "label": "Добре",
+        "rarityCeiling": 4
       },
       {
         "id": "gourmet",
         "label": "Мовний гурман",
         "rarityCeiling": 5
+      },
+      {
+        "id": "dont-know",
+        "label": "Не знаю",
+        "rarityTest": true
       }
     ],
     "why": [
@@ -580,9 +595,9 @@
     }
   ],
   "mascot": {
-    "onboarding": "Вітаю! Я буду поруч, поки ви збираєте рідкісні слова.",
+    "onboarding": "Вітаю! Я буду поруч, поки ти збираєш рідкісні слова.",
     "newLevel": "Новий рівень! Так тримати.",
-    "badge": "Нова відзнака — тепер вона ваша назавжди.",
+    "badge": "Нова відзнака — тепер вона твоя назавжди.",
     "dailyGoal": "Денну ціль виконано!",
     "streakMilestone": "Серія росте — ще один день поспіль!",
     "gameRight": "Влучно!",

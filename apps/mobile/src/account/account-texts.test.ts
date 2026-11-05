@@ -61,7 +61,7 @@ describe('the problem line of the Account screen', () => {
 
     await account.requestCode('anna@');
 
-    expect(problemOf(account)).toBe('Перевірте адресу пошти.');
+    expect(problemOf(account)).toBe('Перевір адресу пошти.');
   });
 
   it('counts the tries a wrong code has left, in their plural form', async () => {
@@ -83,10 +83,10 @@ describe('the problem line of the Account screen', () => {
 
     api.account.expireCodes();
     await account.verifyCode(api.account.sentCodes[0]?.code ?? '');
-    expect(problemOf(account)).toBe('Код більше не діє. Надішліть новий.');
+    expect(problemOf(account)).toBe('Код більше не діє. Надішли новий.');
     api.failNext('offline', 'offline', 'offline', 'offline');
     await account.verifyCode(api.account.sentCodes[0]?.code ?? '');
 
-    expect(problemOf(account)).toBe('Немає з’єднання з інтернетом. Спробуйте ще раз.');
+    expect(problemOf(account)).toBe('Немає з’єднання з інтернетом. Спробуй ще раз.');
   });
 });

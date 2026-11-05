@@ -20,7 +20,7 @@ export interface DashboardScreen {
 /**
  * The Dashboard's blocks and actions. A landing on the Word of the Day card,
  * asked by «До картки →» or by the «Слово дня» App Intent, opens the Feed
- * over the Dashboard, where the Feed lands it (ADR 0074).
+ * over the Dashboard, where the Feed lands it (ADR 0076).
  */
 export function useDashboardScreen(): DashboardScreen {
   const { dashboard } = useComposition();

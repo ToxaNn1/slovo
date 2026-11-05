@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { DailyGoal } from '@slovo/contracts';
 import {
   loadEdition,
   openComposition,
@@ -29,10 +28,7 @@ const { config } = activeEditionFiles;
  * The UA Edition as it ships, with the Feature Switches `off` given off and,
  * given one, the Daily Goal a reader has until they choose one.
  */
-function shippedEdition({
-  off = [],
-  dailyGoal,
-}: { off?: readonly FeatureSwitch[]; dailyGoal?: DailyGoal } = {}): Edition {
+function shippedEdition({ off = [] }: { off?: readonly FeatureSwitch[] } = {}): Edition {
   const { featureSwitches, userSettingDefaults, ...rest } = config as {
     featureSwitches: Record<string, boolean>;
     userSettingDefaults: Record<string, unknown>;
@@ -44,8 +40,7 @@ function shippedEdition({
       account: false,
       ...Object.fromEntries(off.map((feature) => [feature, false])),
     },
-    userSettingDefaults:
-      dailyGoal === undefined ? userSettingDefaults : { ...userSettingDefaults, dailyGoal },
+    userSettingDefaults,
   });
 }
 
@@ -133,12 +128,13 @@ beforeEach(async () => {
 });
 
 describe('Settings › «Пройти опитування ще раз»', () => {
-  it('retakes «Хто ви», the self-rating and the interests, each applied to the Mix', async () => {
+  it('retakes «Рівень», with no «Не знаю», the self-rating and the interests, each applied to the Mix', async () => {
     await render();
     screenSettled();
     await press(settings.rows.questionnaire);
 
-    expect(screen.getByTestId('questionnaire-who-studying')).toBeTruthy();
+    expect(screen.getByTestId('questionnaire-level-good')).toBeTruthy();
+    expect(screen.queryByTestId('questionnaire-level-dont-know')).toBeNull();
     expect(screen.getByTestId('questionnaire-why-rare-words')).toBeTruthy();
     // The self-rating only decides whether to offer the Rarity Test (ADR 0072).
     await press('Знаю дуже багато');
@@ -150,13 +146,13 @@ describe('Settings › «Пройти опитування ще раз»', () =>
     expect(composition.mix.state.hiddenCategories.map(({ id }) => id)).toEqual(['food']);
   });
 
-  it('has no «Хто ви» and «Навіщо» while the questionnaire is off, and the self-rating still', async () => {
+  it('has no «Рівень» and «Навіщо» while the questionnaire is off, and the self-rating still', async () => {
     await openWith(editionWithout('questionnaire'));
     await render();
     screenSettled();
     await press(settings.rows.questionnaire);
 
-    expect(screen.queryByTestId('questionnaire-who-studying')).toBeNull();
+    expect(screen.queryByTestId('questionnaire-level-good')).toBeNull();
     expect(screen.queryByTestId('questionnaire-why-rare-words')).toBeNull();
     expect(screen.getByTestId('questionnaire-selfRating-many')).toBeTruthy();
   });
@@ -172,10 +168,10 @@ describe('Settings › «Пройти опитування ще раз»', () =>
 });
 
 describe('The Feed Notice of a later question', () => {
-  it("sets the Daily Goal picked, the Edition's default until the reader picks another", async () => {
-    await openWith(shippedEdition({ dailyGoal: 30 }));
-    await render('dailyGoalChoice');
-    expect(screen.getByTestId('later-question-daily-goal-30')).toBeSelected();
+  it('sets the Daily Goal picked, the Edition’s highlighted goal until the reader picks another', async () => {
+    await openWith(shippedEdition());
+    await render('wordGoalChoice');
+    expect(screen.getByTestId('later-question-daily-goal-10')).toBeSelected();
 
     await fireEvent.press(screen.getByTestId('later-question-daily-goal-50'));
     await press(feedNotices.laterQuestions.done);

@@ -10,7 +10,7 @@ import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { typeStyle, wordHero } from '../tokens';
 
 /**
- * The Word of the Day hero of the Dashboard (ADR 0074). Unrevealed, it shouts
+ * The Word of the Day hero of the Dashboard (ADR 0076). Unrevealed, it shouts
  * «Лови слово!» under a «?» with «Розкрити»; revealed, it shows the Lemma with
  * its Stress and the short Definition in place. «До картки →» opens the Feed
  * on the Word of the Day card in both states.

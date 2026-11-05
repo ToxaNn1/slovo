@@ -93,7 +93,7 @@ export const FeedNoticesStringsSchema = z.strictObject({
     open: TextSchema,
     /** Sets the Daily Goal or the interests picked. */
     done: TextSchema,
-    dailyGoalChoice: z.strictObject({ title: TextSchema, text: TextSchema }),
+    wordGoalChoice: z.strictObject({ title: TextSchema, text: TextSchema }),
     /** The Word Categories not picked become Hidden Categories. */
     interests: z.strictObject({ title: TextSchema, text: TextSchema }),
     selfRating: z.strictObject({ title: TextSchema }),

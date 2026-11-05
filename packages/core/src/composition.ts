@@ -89,7 +89,7 @@ import { openWordOfTheDay } from './feed/word-of-the-day';
 export interface Composition extends Hiding {
   /** The Feed of the app session. */
   readonly feed: Feed;
-  /** The Dashboard, the home's blocks for the local day (ADR 0074); none with `dashboard` off. */
+  /** The Dashboard, the home's blocks for the local day (ADR 0076); none with `dashboard` off. */
   readonly dashboard: Dashboard;
   /** Favorites, which a heart tapped anywhere changes. */
   readonly favorites: Favorites;
@@ -402,7 +402,17 @@ export async function openComposition({
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const analytics = createAnalytics({ edition, userState, port: analyticsPort });
-  const xpLog = await openXpLog({ edition, userState, clock, random, dayTurned, analytics });
+  const { history, recorder } = await openHistory({ rows, userState });
+  const xpLog = await openXpLog({
+    edition,
+    userState,
+    clock,
+    random,
+    dayTurned,
+    analytics,
+    history,
+    isFirstCycle: () => cycle.isFirst(),
+  });
   const activeDays = await openActiveDays({ edition, userState, clock, xpLog, analytics });
   const day = createDayChange({
     clock,
@@ -413,7 +423,6 @@ export async function openComposition({
     dayTurned,
     returned,
   });
-  const { history, recorder } = await openHistory({ rows, userState });
   const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const communityCounters = openCommunityCounters({ edition, userState });
   /** Emits an event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
@@ -657,6 +666,7 @@ export async function openComposition({
     xpLog,
     analytics,
     backend,
+    notifications,
   });
   async function entryCard(entryId: string): Promise<AnyEntryCard | undefined> {
     const entry = await entries.get(entryId);

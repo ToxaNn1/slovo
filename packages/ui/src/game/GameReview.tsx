@@ -14,8 +14,8 @@ const TEXT_MAX_FONT_SCALE = 1.5;
  * order, as the Core's Game Review items, led by a red ✓ or an ink ✗ and, on a mistake, the
  * reader's answer in the Round's form: the option picked, the form stressed on
  * the vowel tapped, the Definition matched to a pair's Word, the chips tapped
- * as one Word or expression, or the text typed, which reads «Ви ввели» where a
- * pick reads «Ваш вибір». A Round of «Звідки слово» leads with the Word, its
+ * as one Word or expression, or the text typed, which reads «Твоя відповідь» where a
+ * pick reads «Твій вибір». A Round of «Звідки слово» leads with the Word, its
  * right language beside it. VoiceOver reads a stressed
  * answer without its marks, then where the Stress falls. A tap expands a
  * Round: a Word's or an idiom's Definition, Example and etymology, a

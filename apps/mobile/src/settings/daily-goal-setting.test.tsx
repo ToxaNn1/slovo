@@ -96,28 +96,57 @@ async function keptDailyGoal() {
   return (await openOver(editionInEffect)).xpLog.state.dailyGoal?.goal;
 }
 
-// Ticket #1369, ADR 0066: the Daily Goal picker of Settings.
+// Tickets #1369 and #1557, ADR 0074: the Daily Goal picker of Settings.
 describe('the Daily Goal setting', () => {
-  it('offers 10, 20, 30 and 50 under «Денна ціль», the Edition’s 20 to start with', async () => {
+  it('offers the Edition’s 10, 25 and 50 and «Без цілі» under «Денна ціль», «Без цілі» chosen to start with', async () => {
     await renderSettings();
 
     expect(screen.getByText(strings.title)).toBeOnTheScreen();
-    for (const label of ['10', '20', '30', '50']) {
-      expect(screen.getByRole('button', { name: `${strings.title}: ${label}` })).toBeOnTheScreen();
+    for (const label of ['10', '25', '50']) {
+      const option = screen.getByRole('button', { name: `${strings.title}: ${label}` });
+      expect(option).toBeOnTheScreen();
+      expect(option).not.toBeSelected();
     }
-    expect(screen.getByRole('button', { name: `${strings.title}: 20` })).toBeSelected();
+    expect(
+      screen.getByRole('button', { name: `${strings.title}: ${strings.none}` }),
+    ).toBeSelected();
   });
 
   it('keeps the goal the reader chooses in the XP log', async () => {
     await renderSettings();
 
-    await fireEvent.press(screen.getByRole('button', { name: `${strings.title}: 30` }));
+    await fireEvent.press(screen.getByRole('button', { name: `${strings.title}: 25` }));
     await act(async () => {
       await Promise.resolve();
     });
 
-    expect(screen.getByRole('button', { name: `${strings.title}: 30` })).toBeSelected();
-    expect(await keptDailyGoal()).toBe(30);
+    expect(screen.getByRole('button', { name: `${strings.title}: 25` })).toBeSelected();
+    expect(await keptDailyGoal()).toBe(25);
+  });
+
+  it('turns the goal off from today with «Без цілі», and on again with a number', async () => {
+    await renderSettings();
+    const none = `${strings.title}: ${strings.none}`;
+
+    await fireEvent.press(screen.getByRole('button', { name: `${strings.title}: 10` }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+    await fireEvent.press(screen.getByRole('button', { name: none }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole('button', { name: none })).toBeSelected();
+    expect(await keptDailyGoal()).toBeUndefined();
+
+    await fireEvent.press(screen.getByRole('button', { name: `${strings.title}: 50` }));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(screen.getByRole('button', { name: none })).not.toBeSelected();
+    expect(await keptDailyGoal()).toBe(50);
   });
 
   it('is left out while the Daily Goal is off in effect', async () => {

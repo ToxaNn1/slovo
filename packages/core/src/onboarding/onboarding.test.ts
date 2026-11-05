@@ -1,8 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { createSettings, openComposition, type AnalyticsPort, type FeatureSwitch } from '../index';
-import { createFakeBackend, createMemoryContentPort, type FakeBackend } from '../testing';
-import { fakeClock, testEdition, word } from '../test-support';
+import { switchedOn } from '../edition/edition';
+import {
+  createFakeBackend,
+  createFakeNotificationScheduler,
+  createMemoryContentPort,
+  type FakeBackend,
+} from '../testing';
+import { fakeClock, testEdition, word, type TestEditionOverrides } from '../test-support';
+import type { NotificationSchedulerPort } from '../ports';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const content = createMemoryContentPort({
@@ -16,6 +23,9 @@ const ALL_ON: readonly FeatureSwitch[] = [
   'rarityCeiling',
   'analytics',
   'xpLog',
+  'rarityTest',
+  'notifications',
+  'notificationTimeStep',
 ];
 
 /** One app run over the records, so the user state survives between runs. */
@@ -23,14 +33,26 @@ async function run({
   records = new Map<string, string>(),
   on = ALL_ON,
   api = createFakeBackend(),
-}: { records?: Map<string, string>; on?: readonly FeatureSwitch[]; api?: FakeBackend } = {}) {
+  overrides = {},
+  scheduler,
+}: {
+  records?: Map<string, string>;
+  on?: readonly FeatureSwitch[];
+  api?: FakeBackend;
+  overrides?: TestEditionOverrides;
+  scheduler?: NotificationSchedulerPort;
+} = {}) {
   const events: unknown[][] = [];
   const analytics: AnalyticsPort = {
     track: (event, properties) => void events.push([event, properties]),
     stop: () => undefined,
   };
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
-  const edition = testEdition({ isFeatureEnabled: (feature) => on.includes(feature) });
+  // The switches in effect as the Edition reads them, with what each depends on.
+  const edition = testEdition({
+    ...overrides,
+    isFeatureEnabled: switchedOn((feature) => on.includes(feature)),
+  });
   const settings = createSettings({ userState, defaults: edition.userSettingDefaults });
   const app = await openComposition({
     content,
@@ -40,6 +62,18 @@ async function run({
     random: { next: () => 0.25 },
     analytics,
     backend: api.backend,
+    ...(scheduler === undefined
+      ? {}
+      : {
+          scheduling: {
+            scheduler,
+            ellipsis: '…',
+            titles: ['{word}'],
+            farewell: 'Farewell',
+            streakWarning: 'Streak warning',
+            goalNotMet: 'Goal not met',
+          },
+        }),
   });
   return { app, events, api, settings };
 }
@@ -47,17 +81,57 @@ async function run({
 const kinds = (app: Awaited<ReturnType<typeof run>>['app']) => app.onboarding.state.step?.kind;
 
 describe('the onboarding', () => {
-  it('runs welcome, the first Word, «Хто ви», «Навіщо», the Daily Goal, then the Feed', async () => {
+  it('runs welcome, the first Word, «Рівень», «Навіщо», the Daily Goal, «Коли нагадати?», then the Feed', async () => {
     const { app } = await run();
     const seen = [];
-    for (let i = 0; i < 6 && app.onboarding.state.step !== undefined; i += 1) {
+    for (let i = 0; i < 7 && app.onboarding.state.step !== undefined; i += 1) {
       const { kind, number, total } = app.onboarding.state.step;
       seen.push(`${kind} ${String(number)}/${String(total)}`);
       await app.onboarding.next();
     }
-    expect(seen).toEqual(['welcome 1/5', 'firstWord 2/5', 'who 3/5', 'why 4/5', 'dailyGoal 5/5']);
+    expect(seen).toEqual([
+      'welcome 1/6',
+      'firstWord 2/6',
+      'level 3/6',
+      'why 4/6',
+      'dailyGoal 5/6',
+      'notificationTime 6/6',
+    ]);
     expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
   });
+
+  // Spec #1553, ticket #1558: «ГРАЙ!» shows the Games after the first Word.
+  it('shows «ГРАЙ!» after the first Word while the Game and `playStep` are on, counted in the steps', async () => {
+    const { app } = await run({ on: [...ALL_ON, 'game', 'playStep'] });
+    const seen = [];
+    for (let i = 0; i < 8 && app.onboarding.state.step !== undefined; i += 1) {
+      const { kind, number, total } = app.onboarding.state.step;
+      seen.push(`${kind} ${String(number)}/${String(total)}`);
+      await app.onboarding.next();
+    }
+    expect(seen).toEqual([
+      'welcome 1/7',
+      'firstWord 2/7',
+      'playStep 3/7',
+      'level 4/7',
+      'why 5/7',
+      'dailyGoal 6/7',
+      'notificationTime 7/7',
+    ]);
+  });
+
+  it.each([
+    ['the Game', ['playStep']],
+    ['`playStep`', ['game']],
+  ] as const)(
+    'leaves out «ГРАЙ!» with %s off, and the step numbers stay right',
+    async (_, more) => {
+      const { app } = await run({ on: [...ALL_ON, ...more] });
+      await app.onboarding.next();
+      await app.onboarding.next();
+      expect(app.onboarding.state.step).toMatchObject({ kind: 'level', number: 3, total: 6 });
+    },
+  );
 
   it('shows the Word of the Day as the first Word, and the Edition options of the questions', async () => {
     const { app } = await run();
@@ -65,10 +139,11 @@ describe('the onboarding', () => {
     const first = app.onboarding.state.step;
     expect(first?.kind === 'firstWord' && first.word.wordId).toMatch(/^w_/);
     await app.onboarding.next();
-    const who = app.onboarding.state.step;
-    expect(who?.kind === 'who' && who.options).toEqual([
-      { id: 'studying', label: 'Studying' },
-      { id: 'working', label: 'Working' },
+    const level = app.onboarding.state.step;
+    expect(level?.kind === 'level' && level.options).toEqual([
+      { id: 'starting', label: 'Starting' },
+      { id: 'good', label: 'Good' },
+      { id: 'dont-know', label: 'Not sure' },
     ]);
   });
 
@@ -79,28 +154,63 @@ describe('the onboarding', () => {
     expect(kinds(app)).toBe('firstWord');
   });
 
-  it('highlights 20 on the Daily Goal step and sets the goal the reader picks', async () => {
+  it('highlights the Edition Daily Goal in Words on its step and sets the goal the reader picks', async () => {
     const { app } = await run({ on: ['dailyGoal', 'xpLog'] });
     while (kinds(app) !== 'dailyGoal') await app.onboarding.next();
     expect(app.onboarding.state.step).toMatchObject({
       kind: 'dailyGoal',
-      goals: [10, 20, 30, 50],
-      highlighted: 20,
+      goals: [10, 25, 50],
+      highlighted: 10,
     });
-    await app.onboarding.chooseDailyGoal(30);
-    expect(app.xpLog.dayOf('2026-11-01').dailyGoal?.goal).toBe(30);
+    await app.onboarding.chooseDailyGoal(25);
+    expect(app.xpLog.dayOf('2026-11-01').dailyGoal?.goal).toBe(25);
     expect(app.onboarding.state.step).toBeUndefined();
   });
 
-  it('sets the Rarity Ceiling by «Хто ви» and the kind weights by «Навіщо»', async () => {
+  it('sets the Rarity Ceiling by «Рівень» and the kind weights by «Навіщо»', async () => {
     const { app } = await run();
     await app.onboarding.next();
     await app.onboarding.next();
-    await app.onboarding.answer('studying');
+    await app.onboarding.answer('good');
     expect(kinds(app)).toBe('why');
     await app.onboarding.answer('write-correctly');
     expect(app.rarityCeiling.state).toBe(4);
     expect(app.mix.state.kindWeights.correction).toBe('more');
+  });
+
+  it('opens the Rarity Test with «Не знаю», numbered as «Рівень», then goes on to «Навіщо»', async () => {
+    const { app, events, api } = await run();
+    await app.onboarding.next();
+    await app.onboarding.next();
+    const ceiling = app.rarityCeiling.state;
+    await app.onboarding.answer('dont-know');
+    expect(app.onboarding.state.step).toEqual({ kind: 'rarityTest', number: 3, total: 6 });
+    expect(app.rarityCeiling.state).toBe(ceiling);
+    await vi.waitFor(() => {
+      expect(api.counters.answers).toEqual([
+        { editionId: 'test', question: 'level', answer: 'dont-know' },
+      ]);
+    });
+    expect(events).toContainEqual(['onboardingStepViewed', { step: 'rarityTest' }]);
+    expect(events).toContainEqual([
+      'questionnaireAnswered',
+      { question: 'level', answer: 'dont-know' },
+    ]);
+    await app.onboarding.next();
+    expect(app.onboarding.state.step).toMatchObject({ kind: 'why', number: 4 });
+  });
+
+  it('leaves out «Не знаю» and ignores it with the Rarity Test switch off', async () => {
+    const { app } = await run({ on: ALL_ON.filter((feature) => feature !== 'rarityTest') });
+    await app.onboarding.next();
+    await app.onboarding.next();
+    const level = app.onboarding.state.step;
+    expect(level?.kind === 'level' && level.options.map(({ id }) => id)).toEqual([
+      'starting',
+      'good',
+    ]);
+    await app.onboarding.answer('dont-know');
+    expect(kinds(app)).toBe('level');
   });
 
   it('keeps the defaults when the questions are skipped', async () => {
@@ -118,17 +228,17 @@ describe('the onboarding', () => {
     await app.onboarding.next();
     await app.onboarding.next();
     await app.onboarding.answer('nobody');
-    expect(kinds(app)).toBe('who');
+    expect(kinds(app)).toBe('level');
   });
 
   it('counts each answer on the backend with no reader id, and none when sharing is off', async () => {
     const shared = await run();
     await shared.app.onboarding.next();
     await shared.app.onboarding.next();
-    await shared.app.onboarding.answer('working');
+    await shared.app.onboarding.answer('starting');
     await vi.waitFor(() => {
       expect(shared.api.counters.answers).toEqual([
-        { editionId: 'test', question: 'who', answer: 'working' },
+        { editionId: 'test', question: 'level', answer: 'starting' },
       ]);
     });
 
@@ -137,7 +247,7 @@ describe('the onboarding', () => {
     await quiet.settings.update({ shareCounters: false });
     await quiet.app.onboarding.next();
     await quiet.app.onboarding.next();
-    await quiet.app.onboarding.answer('working');
+    await quiet.app.onboarding.answer('starting');
     // Long enough for a count that was sent to arrive.
     for (let turn = 0; turn < 50; turn += 1) await Promise.resolve();
     expect(quiet.api.counters.answers).toEqual([]);
@@ -149,21 +259,98 @@ describe('the onboarding', () => {
     const { app } = await run({ api });
     await app.onboarding.next();
     await app.onboarding.next();
-    await app.onboarding.answer('working');
+    await app.onboarding.answer('starting');
     expect(kinds(app)).toBe('why');
+  });
+
+  describe('counts the Daily Goal and the bucket of the Notification time on the backend with no reader id', () => {
+    const counted = (api: FakeBackend) =>
+      api.counters.answers.filter(({ question }) => question !== 'level' && question !== 'why');
+    async function goTo(app: Awaited<ReturnType<typeof run>>['app'], kind: string) {
+      while (app.onboarding.state.step !== undefined && kinds(app) !== kind) {
+        await app.onboarding.next();
+      }
+    }
+
+    it('counts the goal picked and the time chosen', async () => {
+      const { app, api } = await run();
+      await goTo(app, 'dailyGoal');
+      await app.onboarding.chooseDailyGoal(25);
+      await app.onboarding.chooseNotificationTime('20:30');
+
+      await vi.waitFor(() => {
+        expect(counted(api)).toEqual([
+          { editionId: 'test', question: 'dailyGoal', answer: '25' },
+          { editionId: 'test', question: 'notificationTime', answer: 'evening' },
+        ]);
+      });
+    });
+
+    it.each([
+      ['09:00', 'morning'],
+      ['13:00', 'midday'],
+      ['20:30', 'evening'],
+      ['07:45', 'other'],
+      [undefined, 'none'],
+    ] as const)('counts %s as %s', async (time, bucket) => {
+      const { app, api } = await run();
+      await goTo(app, 'notificationTime');
+      await app.onboarding.chooseNotificationTime(time);
+
+      await vi.waitFor(() => {
+        expect(counted(api).filter(({ question }) => question === 'notificationTime')).toEqual([
+          { editionId: 'test', question: 'notificationTime', answer: bucket },
+        ]);
+      });
+    });
+
+    it('counts `none` for a step skipped, by going on or by the skip on it', async () => {
+      const goneOn = await run();
+      await goTo(goneOn.app, 'notificationTime');
+      await goneOn.app.onboarding.next();
+      const skipped = await run();
+      await goTo(skipped.app, 'dailyGoal');
+      await skipped.app.onboarding.finish();
+
+      await vi.waitFor(() => {
+        expect(counted(goneOn.api)).toEqual([
+          { editionId: 'test', question: 'dailyGoal', answer: 'none' },
+          { editionId: 'test', question: 'notificationTime', answer: 'none' },
+        ]);
+        expect(counted(skipped.api)).toEqual([
+          { editionId: 'test', question: 'dailyGoal', answer: 'none' },
+        ]);
+      });
+    });
+
+    it('counts nothing for steps never shown, and nothing when sharing is off', async () => {
+      const early = await run();
+      await early.app.onboarding.finish();
+      const quiet = await run();
+      await quiet.settings.update({ shareCounters: false });
+      await goTo(quiet.app, 'dailyGoal');
+      await quiet.app.onboarding.chooseDailyGoal(10);
+      await quiet.app.onboarding.chooseNotificationTime('09:00');
+
+      // Long enough for a count that was sent to arrive.
+      for (let turn = 0; turn < 50; turn += 1) await Promise.resolve();
+      expect(counted(early.api)).toEqual([]);
+      expect(quiet.api.counters.answers).toEqual([]);
+      expect(quiet.app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+    });
   });
 
   it('emits its Analytics events, and none with sharing off', async () => {
     const { app, events } = await run();
     await app.onboarding.next();
     await app.onboarding.next();
-    await app.onboarding.answer('working');
+    await app.onboarding.answer('starting');
     await app.onboarding.finish();
     expect(events.filter(([event]) => /onboarding|questionnaire/.exec(String(event)))).toEqual([
       ['onboardingStepViewed', { step: 'welcome' }],
       ['onboardingStepViewed', { step: 'firstWord' }],
-      ['onboardingStepViewed', { step: 'who' }],
-      ['questionnaireAnswered', { question: 'who', answer: 'working' }],
+      ['onboardingStepViewed', { step: 'level' }],
+      ['questionnaireAnswered', { question: 'level', answer: 'starting' }],
       ['onboardingStepViewed', { step: 'why' }],
       ['onboardingFinished', { skipped: true }],
     ]);
@@ -181,5 +368,96 @@ describe('the onboarding', () => {
     const again = await run({ records });
     expect(again.app.onboarding.state.step).toBeUndefined();
     expect(again.events.filter(([event]) => event === 'onboardingStepViewed')).toEqual([]);
+  });
+  // Spec #1553, ticket #1559.
+  describe('«Коли нагадати?»', () => {
+    /** Goes on to the step of `kind`. */
+    async function goTo(app: Awaited<ReturnType<typeof run>>['app'], kind: string) {
+      while (app.onboarding.state.step !== undefined && kinds(app) !== kind) {
+        await app.onboarding.next();
+      }
+    }
+
+    it('offers 09:00, 13:00 and 20:30, and a chosen time becomes the only Notification time', async () => {
+      const { app } = await run();
+      await goTo(app, 'notificationTime');
+      const step = app.onboarding.state.step;
+      expect(step?.kind === 'notificationTime' && step.times).toEqual(['09:00', '13:00', '20:30']);
+
+      await app.onboarding.chooseNotificationTime('07:45');
+
+      expect(app.notifications.state.times).toEqual(['07:45']);
+      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+    });
+
+    it('offers the Edition times and counts each by its bucket', async () => {
+      const { app, api } = await run({
+        overrides: {
+          onboardingNotificationTimes: { morning: '08:15', midday: '12:00', evening: '21:00' },
+        },
+      });
+      await goTo(app, 'notificationTime');
+      const step = app.onboarding.state.step;
+      expect(step?.kind === 'notificationTime' && step.times).toEqual(['08:15', '12:00', '21:00']);
+
+      await app.onboarding.chooseNotificationTime('21:00');
+
+      await vi.waitFor(() => {
+        expect(
+          api.counters.answers.filter(({ question }) => question === 'notificationTime'),
+        ).toEqual([{ editionId: 'test', question: 'notificationTime', answer: 'evening' }]);
+      });
+    });
+
+    it('keeps the time and goes on when asking the permission fails', async () => {
+      const fake = createFakeNotificationScheduler();
+      const scheduler: NotificationSchedulerPort = {
+        ...fake,
+        permission: () => Promise.resolve('not-asked'),
+        askPermission: () => Promise.reject(new Error('no device')),
+      };
+      const { app } = await run({ scheduler });
+      await goTo(app, 'notificationTime');
+
+      await app.onboarding.chooseNotificationTime('09:00');
+
+      expect(app.notifications.state.times).toEqual(['09:00']);
+      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+    });
+
+    it('leaves no Notification time after «Без нагадувань»', async () => {
+      const { app } = await run();
+      await goTo(app, 'notificationTime');
+
+      await app.onboarding.chooseNotificationTime(undefined);
+
+      expect(app.notifications.state.times).toEqual([]);
+      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+    });
+
+    it('keeps the default Notification times and the later explainer when skipped', async () => {
+      const records = new Map<string, string>();
+      const { app } = await run({ records });
+      const defaults = app.notifications.state.times;
+      await goTo(app, 'notificationTime');
+
+      await app.onboarding.next();
+
+      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+      expect(app.notifications.state.times).toEqual(defaults);
+      expect(records.has('notifications.ask')).toBe(false);
+    });
+
+    it('is absent with notifications or its switch off, and ignores a time on another step', async () => {
+      for (const off of ['notifications', 'notificationTimeStep'] as const) {
+        const { app } = await run({ on: ALL_ON.filter((feature) => feature !== off) });
+        const before = app.notifications.state.times;
+        await app.onboarding.chooseNotificationTime('07:45');
+        expect(kinds(app)).toBe('welcome');
+        await goTo(app, 'notificationTime');
+        expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+        expect(app.notifications.state.times).toEqual(before);
+      }
+    });
   });
 });

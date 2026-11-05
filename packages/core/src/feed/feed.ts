@@ -152,7 +152,7 @@ export interface Feed {
   /**
    * Makes today's Word of the Day Seen through the Feed's own Seen, as a
    * dwell on its card would: History, the archive and the Seen subscribers
-   * (ADR 0074). Nothing when today has none chosen or it is Seen already.
+   * (ADR 0076). Nothing when today has none chosen or it is Seen already.
    */
   seeWordOfTheDay(): Promise<void>;
 }

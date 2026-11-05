@@ -173,7 +173,7 @@ _Avoid_: Recent, log
 ### Progress
 
 **Active Day**:
-A local calendar day on which the reader earned at least 5 XP from learning actions, counted separately from the Daily Goal. Active Days recorded before 1.0, when a day on which the app was opened was an Active Day, stay Active Days. Derived from the XP log and the kept earlier days, never stored on its own.
+A local calendar day on which the reader met the Daily Goal set for it (a `goal-met` record) or, on a day with no Daily Goal, earned at least 5 XP from learning actions (ADR 0074). Active Days recorded before 1.0, when a day on which the app was opened was an Active Day, stay Active Days. Derived from the XP log and the kept earlier days, never stored on its own.
 _Avoid_: Opened day, visit day
 
 **Streak**:
@@ -185,11 +185,11 @@ The longest Streak the reader has ever had, derived like the Streak and never st
 _Avoid_: Top streak, longest chain
 
 **XP**:
-The points a learning action earns: a right answer in a Game (1 per Round), a finished Game with at least half the answers right (+5), a new Best result in a Game Mode (+5), the solved Daily Crossword (15), a Review answer, Known or Unknown (1, at most 10 a day), and a right answer to a Quick Question (2). These are the UA Edition's defaults; the Edition config holds the amounts. Known on a new Entry, Learned, a Streak day, the first visit of the day, sharing and the Word of the Day give 0. A mistake never takes XP away, and a Game has no daily XP cap. Badges give no XP.
+The points a learning action earns: a right answer in a Game (1 per Round), a finished Game with at least half the answers right (+5), a new Best result in a Game Mode (+5), the solved Daily Crossword (15), a Review answer, Known or Unknown (1, at most 10 a day), a right answer to a Quick Question (2), and a Word Seen for the first time, in no earlier Cycle and not in History, on a day with a Daily Goal (1, up to the goal; Games stay uncapped beside it). These are the UA Edition's defaults; the Edition config holds the amounts. Known on a new Entry, Learned, a Streak day, the first visit of the day, sharing and the Word of the Day give 0. A mistake never takes XP away, and a Game has no daily XP cap. Badges give no XP.
 _Avoid_: Points, score, coins, experience
 
 **XP log**:
-The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set for a day, a freeze consumed, a Break started and a Badge earned. Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
+The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started and a Badge earned. Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
 _Avoid_: XP history, score table, ledger
 
 **Level**:
@@ -197,7 +197,7 @@ A step derived from total XP: 50 XP reach level 1, each level up to 10 costs 10%
 _Avoid_: Rank, tier, grade
 
 **Daily Goal**:
-The XP the reader aims for on a local day: 10, 20, 30 or 50, chosen in onboarding with 20 highlighted. It is recorded per day in the XP log, so a past day keeps the goal the reader had then; a change applies from the same local day and a day already met stays met. It is separate from the Active Day threshold of 5 XP. It replaces the Daily Limit.
+The number of Words Seen the reader aims for on a local day: one of the Edition's options (10, 25 or 50 in the UA Edition), chosen in onboarding with 10 highlighted, or none when skipped (ADR 0074). Only Words count. It is recorded in the XP log as `word-goal` (the last set on or before a day is in force) and met once by a `goal-met` record, so a past day keeps the goal the reader had then; a change applies from the same local day and a day already met stays met. «Без цілі» in Settings turns it off the same way, a `word-goal` with none. It replaces the Daily Limit.
 _Avoid_: Target, quota, Daily Limit
 
 **Streak freeze**:
@@ -251,7 +251,7 @@ The vertical stream of Entries the user swipes through, opened from the Dashboar
 _Avoid_: Timeline, home list, home screen
 
 **Feed Notice**:
-A Feed card that is not an Entry, shown one at a time. The 1.0 list: the Weekly Recap, the Community Word, a first-week card, «Пам'ятаєте вчорашнє слово?» (yesterday's Word of the Day in Self-check style), «Може, на сьогодні досить?», a Level milestone at Levels 5, 10 and 20 that suggests a wider rarity or a new Category, the offer to save progress, the later onboarding questions and the notification re-ask. «Може, на сьогодні досить?» comes once a local day after 50 distinct Seen Entries, has no setting and never locks the Feed. The save-progress Notice comes without an Account on day 3 of the Streak and after the first new Level, at most twice in all; the notification re-ask comes 7 days after a refusal, once. A reader who finished the old onboarding gets the Daily Goal choice once through a Feed Notice. In the Feed a Feed Notice comes before a due Review, a due Review before a Quick Question and a Quick Question before the rest. It counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
+A Feed card that is not an Entry, shown one at a time. The 1.0 list: the Weekly Recap, the Community Word, a first-week card, «Пам’ятаєш вчорашнє слово?» (yesterday's Word of the Day in Self-check style), «Може, на сьогодні досить?», a Level milestone at Levels 5, 10 and 20 that suggests a wider rarity or a new Category, the offer to save progress, the later onboarding questions and the notification re-ask. «Може, на сьогодні досить?» comes once a local day after 50 distinct Seen Entries, has no setting and never locks the Feed. The save-progress Notice comes without an Account on day 3 of the Streak and after the first new Level, at most twice in all; the notification explainer and its re-ask, 7 days after a refusal, once, come only to a reader who did not answer «Коли нагадати?» in onboarding (ADR 0074). A reader who finished the old onboarding gets the Daily Goal choice once through a Feed Notice. In the Feed a Feed Notice comes before a due Review, a due Review before a Quick Question and a Quick Question before the rest. It counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
 _Avoid_: Banner, tip (a Tip is an Entry)
 
 **Seen**:
@@ -298,7 +298,7 @@ A Feed slot that shows one Round from an enabled Game Mode over an Eligible Entr
 _Avoid_: Pop quiz, Feed Game
 
 **Questionnaire**:
-The questions that tune the Feed to the reader. Onboarding asks two: «Хто ви» (sets the Rarity Ceiling: «Навчаюсь» «до 4», the others «до 5») and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (decides whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings. Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.
+The questions that tune the Feed to the reader. Onboarding asks two: «Рівень», how well the reader knows the language (sets the Rarity Ceiling, «Тільки починаю» «до 2» to «Мовний гурман» «до 5»; «Не знаю» opens the Rarity Test, whose result sets it) and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (decides whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings, «Рівень» there without «Не знаю». Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.
 _Avoid_: Survey, form
 
 **Hidden Entry**:
@@ -348,6 +348,13 @@ _Avoid_: use Daily Goal or the 50-Seen Notice
 **Mood**:
 «настрій»: a set of Feed parameters the reader chooses once a local day on the Dashboard: a rarity band inside the Rarity Ceiling (never crossing or lowering it) and a shift of each Mix kind weight. The Edition lists its moods (id, name, emoji) and names the four the Dashboard shows. The choice can be skipped or changed, ends with the local day and syncs; no Mood means the Feed as before.
 _Avoid_: Emotion, feeling, vibe, roulette
+
+**Reserved**:
+A Word already promised to a scheduled notification, so no other notification picks it. Reserved is not Seen.
+
+**Notification time**:
+One of the user's local times of day at which a notification comes, such as 09:00. A new user has the Edition's default times; in onboarding «Коли нагадати?» offers the three times of the Edition config, morning, midday and evening (UA 09:00 / 13:00 / 20:30), «Інший час» and «Без нагадувань», and the answer replaces them (ADR 0074). The user may keep up to 10, no two equal, always in time order. With none left, notifications are off. Notification times stay on the device. Notifications come at most 14 days after the user last opened the app: the last one of the 14th day is a farewell with no Word, and nothing comes after it until the next open. From 1.0 the morning notification is the Word of the Day and one evening notification chooses between the Streak warning (Streak of 7 days or more, today below 5 XP, no freeze held) and «Ціль ще не виконана» (while the Daily Goal is not met), or nothing; at most 2 a day and the polite pause cover all of them, and the farewell «Ми зупиняємо нагадування» comes on the 14th day without opening.
+_Avoid_: Reminder, alarm, schedule
 
 **Word of the Day**:
 One unseen Word fixed for the user's local calendar day; it is revealed on the Dashboard, opens the Feed and is the morning notification. Each day its card was Seen joins the reader's archive «Слова дня» in Saved, synced, newest first; a Retired Word stays there.

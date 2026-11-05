@@ -186,8 +186,8 @@ describe('Settings › «Пройти тест ще раз»', () => {
     }
     await settle();
 
-    expect(screen.getByRole('header', { name: 'Ваша рідкість: до 2' })).toBeOnTheScreen();
-    await fireEvent.press(screen.getByRole('button', { name: editionStrings.onboarding.mix.next }));
+    expect(screen.getByRole('header', { name: 'Твоя рідкість: до 2' })).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: editionStrings.rarityTest.next }));
     await settle();
     expect(screen.getByRole('header', { name: editionStrings.settings.title })).toBeOnTheScreen();
 

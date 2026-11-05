@@ -48,7 +48,7 @@ const everything: Shown = {
   wordOfTheDayArchive: true,
   rarityCeiling: true,
   rarityTest: true,
-  questionnaire: { whoWhy: true, selfRating: true },
+  questionnaire: { levelWhy: true, selfRating: true },
 };
 
 interface Case {
@@ -119,12 +119,12 @@ describe('what the reader is shown', () => {
       'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',
       {
         off: ['rarityTest'],
-        shown: { rarityTest: false, questionnaire: { whoWhy: true, selfRating: false } },
+        shown: { rarityTest: false, questionnaire: { levelWhy: true, selfRating: false } },
       },
     ],
     [
       'the self-rating alone in «Пройти опитування ще раз» with the questionnaire off',
-      { off: ['questionnaire'], shown: { questionnaire: { whoWhy: false, selfRating: true } } },
+      { off: ['questionnaire'], shown: { questionnaire: { levelWhy: false, selfRating: true } } },
     ],
     [
       'no «Пройти опитування ще раз» with the questionnaire and the Rarity Test off',

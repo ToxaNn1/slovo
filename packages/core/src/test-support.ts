@@ -46,7 +46,6 @@ const testEditionConfig = {
     theme: 'system',
     fontSize: 'M',
     vibration: true,
-    dailyGoal: 20,
     notificationTimes: [],
     rarityCeiling: 5,
     mix: {
@@ -78,7 +77,10 @@ const testEditionConfig = {
     reviewAnswer: 1,
     reviewDailyCap: 10,
     quickQuestion: 2,
+    seenWord: 1,
   },
+  dailyGoals: { options: [10, 25, 50], highlighted: 10 },
+  onboardingNotificationTimes: { morning: '09:00', midday: '13:00', evening: '20:30' },
   levels: {
     first: 50,
     growth: 0.1,
@@ -87,9 +89,10 @@ const testEditionConfig = {
     names: ['Seed', 'Sprout', 'Sapling', 'Tree', 'Grove'],
   },
   questionnaire: {
-    who: [
-      { id: 'studying', label: 'Studying', rarityCeiling: 4 },
-      { id: 'working', label: 'Working', rarityCeiling: 5 },
+    level: [
+      { id: 'starting', label: 'Starting', rarityCeiling: 2 },
+      { id: 'good', label: 'Good', rarityCeiling: 4 },
+      { id: 'dont-know', label: 'Not sure', rarityTest: true },
     ],
     why: [
       { id: 'write-correctly', label: 'Write correctly', kindWeights: { correction: 'more' } },

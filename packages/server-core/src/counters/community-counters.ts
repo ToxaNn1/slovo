@@ -1,4 +1,10 @@
-import type { CounterEvent, QuestionnaireQuestion } from '@slovo/contracts';
+import {
+  NotificationTimeBucketSchema,
+  type CountedQuestion,
+  type CounterEvent,
+  type EditionConfig,
+  type FeatureSwitch,
+} from '@slovo/contracts';
 
 import type { EditionRegistry, NotServing } from '../edition/edition-registry';
 import type { Clock, CommunityWord, CounterStore, EntryCounts, RateLimits } from '../ports';
@@ -10,6 +16,30 @@ const EVENTS_PER_IP = { requests: 500, windowSeconds: 24 * 60 * 60 } as const;
 
 /** The questionnaire answers one IP address may send in a day (ADR 0068). */
 const ANSWERS_PER_IP = { requests: 100, windowSeconds: 24 * 60 * 60 } as const;
+
+/** The Feature Switch that serves each counted question. */
+const SWITCH_OF = {
+  level: 'questionnaire',
+  why: 'questionnaire',
+  who: 'questionnaire',
+  dailyGoal: 'dailyGoal',
+  notificationTime: 'notificationTimeStep',
+} as const satisfies Record<CountedQuestion, FeatureSwitch>;
+
+/** The answers counted for the Edition's question. */
+function optionsOf(config: EditionConfig, question: CountedQuestion): readonly string[] {
+  switch (question) {
+    // «Хто ви» is no longer asked, so no answer is its option; older builds still send it (ADR 0031).
+    case 'who':
+      return [];
+    case 'dailyGoal':
+      return [...config.dailyGoals.options.map(String), 'none'];
+    case 'notificationTime':
+      return NotificationTimeBucketSchema.options;
+    default:
+      return config.questionnaire[question].map(({ id }) => id);
+  }
+}
 
 /** What an answer that is not an option of the Edition's question gets. */
 export interface UnknownAnswer {
@@ -62,7 +92,7 @@ export interface CommunityCounters {
   answer(
     request: {
       readonly editionId: string;
-      readonly question: QuestionnaireQuestion;
+      readonly question: CountedQuestion;
       readonly answer: string;
     },
     ip: string,
@@ -119,10 +149,10 @@ export function createCommunityCounters({
     },
 
     async answer({ editionId, question, answer }, ip) {
-      const serving = await editions.serving(editionId, 'questionnaire');
+      const serving = await editions.serving(editionId, SWITCH_OF[question]);
       if (!serving.ok) return serving;
-      const options = serving.edition.config.questionnaire[question];
-      if (!options.some(({ id }) => id === answer)) return { ok: false, reason: 'unknown-answer' };
+      if (!optionsOf(serving.edition.config, question).includes(answer))
+        return { ok: false, reason: 'unknown-answer' };
       const refused = await countRequest(
         rateLimits,
         `questionnaireAnswersPerIp:${ipSubject(ip)}`,

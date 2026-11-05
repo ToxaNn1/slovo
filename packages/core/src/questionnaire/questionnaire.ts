@@ -19,7 +19,7 @@ export interface QuestionnaireOption {
   readonly label: string;
 }
 
-/** A question answered with one of the Edition's options: «Хто ви», «Навіщо» or the self-rating. */
+/** A question answered with one of the Edition's options: «Рівень», «Навіщо» or the self-rating. */
 export type OptionQuestion = QuestionnaireQuestion | 'selfRating';
 
 /**
@@ -29,11 +29,12 @@ export type OptionQuestion = QuestionnaireQuestion | 'selfRating';
  * an Analytics event.
  */
 export interface Questionnaire {
-  /** The Edition's options of each question answered with an option. */
+  /** The Edition's options of each question answered with an option; «Рівень» leaves out «Не знаю». */
   readonly options: Readonly<Record<OptionQuestion, readonly QuestionnaireOption[]>>;
   /**
-   * Answers the question with the option `answerId`: «Хто ви» sets the
-   * Rarity Ceiling, «Навіщо» the Mix kind weights, the self-rating only
+   * Answers the question with the option `answerId`: «Рівень» sets the
+   * Rarity Ceiling (its «Не знаю» option, which opens the Rarity Test in the
+   * onboarding, is no option here), «Навіщо» the Mix kind weights, the self-rating only
    * whether the Rarity Test is offered (ADR 0072). Resolves to whether
    * `answerId` is an option of it.
    */
@@ -67,10 +68,11 @@ export async function applyAnswer(
   question: OptionQuestion,
   answerId: string,
 ): Promise<boolean> {
-  if (question === 'who') {
-    const option = questionnaire.who.find(({ id }) => id === answerId);
-    if (option !== undefined) await rarityCeiling.set(option.rarityCeiling);
-    return option !== undefined;
+  if (question === 'level') {
+    const option = questionnaire.level.find(({ id }) => id === answerId);
+    if (option === undefined || !('rarityCeiling' in option)) return false;
+    await rarityCeiling.set(option.rarityCeiling);
+    return true;
   }
   if (question === 'selfRating') {
     return questionnaire.selfRating.some(({ id }) => id === answerId);
@@ -120,7 +122,7 @@ export function openQuestionnaire({
 
   /** Whether the later question can be offered now, beside the offers before it. */
   function applies(question: LaterQuestion, offerRarityTest: boolean | undefined): boolean {
-    if (question === 'dailyGoalChoice') return on('dailyGoal');
+    if (question === 'wordGoalChoice') return on('dailyGoal');
     if (question === 'selfRating') return on('rarityTest');
     if (question === 'rarityTest') return on('rarityTest') && offerRarityTest === true;
     return true;
@@ -158,7 +160,9 @@ export function openQuestionnaire({
 
   const questionnaire: Questionnaire = {
     options: {
-      who: options.who.map(({ id, label }) => ({ id, label })),
+      level: options.level.flatMap((option) =>
+        'rarityCeiling' in option ? [{ id: option.id, label: option.label }] : [],
+      ),
       why: options.why.map(({ id, label }) => ({ id, label })),
       selfRating: options.selfRating.map(({ id, label }) => ({ id, label })),
     },
@@ -187,7 +191,7 @@ export function openQuestionnaire({
     },
     async chooseDailyGoal(goal) {
       await xpLog.setDailyGoal(goal);
-      await answered('dailyGoalChoice', String(goal));
+      await answered('wordGoalChoice', String(goal));
     },
     open: (question) => answered(question, 'open'),
     later: (question) => answered(question, 'later'),
@@ -198,6 +202,6 @@ export function openQuestionnaire({
 /** The change that marks the Daily Goal as asked, for the onboarding that asks it. */
 export async function dailyGoalAsked(userState: UserState) {
   const record = (await userState.read(laterQuestions)) ?? { asked: [] };
-  const dailyGoal: LaterQuestion = 'dailyGoalChoice';
+  const dailyGoal: LaterQuestion = 'wordGoalChoice';
   return laterQuestions.change({ ...record, asked: [...new Set([...record.asked, dailyGoal])] });
 }

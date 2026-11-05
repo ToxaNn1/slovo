@@ -5,7 +5,7 @@ import type { Clock, UserStateChanges } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-import { ACTIVE_DAY_XP, deriveStreak, type DerivedStreak, type StreakState } from './streak';
+import { deriveStreak, type DerivedStreak, type StreakState } from './streak';
 import type { XpLog } from './xp-log';
 
 const { activeDays: activeDayRecords, streakBrokenReported } = userStateRecords;
@@ -76,7 +76,7 @@ export async function openActiveDays({
 
   function daysOf(): ReadonlySet<string> {
     const days = new Set(recorded);
-    for (const [date, xp] of xpLog.days.byDate) if (xp >= ACTIVE_DAY_XP) days.add(date);
+    for (const date of xpLog.days.active) days.add(date);
     return days;
   }
   let days = daysOf();

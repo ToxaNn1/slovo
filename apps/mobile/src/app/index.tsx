@@ -9,7 +9,7 @@ import FeedRoute from './feed';
 
 /**
  * The home behind «Стрічка»: the Dashboard, which opens the Feed; with
- * `dashboard` off the Feed itself (ADR 0074).
+ * `dashboard` off the Feed itself (ADR 0076).
  */
 export default function HomeScreen() {
   return useShown().dashboard ? <DashboardScreen /> : <FeedRoute />;

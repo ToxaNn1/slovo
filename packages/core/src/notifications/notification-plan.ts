@@ -36,7 +36,7 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
 import type { ActiveDays } from '../progress/active-days';
-import { ACTIVE_DAY_XP, deriveStreak } from '../progress/streak';
+import { deriveStreak } from '../progress/streak';
 import type { XpLog } from '../progress/xp-log';
 
 /** The most notifications the plan holds: the most iOS keeps pending for one app. */
@@ -402,7 +402,7 @@ export function createNotificationPlanner({
       return day >= from && day < from + days;
     });
     if (onBreak) return undefined;
-    const { xp, dailyGoal } = xpLog.dayOf(date);
+    const { dailyGoal } = xpLog.dayOf(date);
     const xpOn = edition.isFeatureEnabled('xpLog');
     const { streak, freezesHeld } = deriveStreak({
       activeDays: activeDays.days,
@@ -411,7 +411,7 @@ export function createNotificationPlanner({
       today: date,
       freezes: xpOn && edition.isFeatureEnabled('streakFreezes'),
     });
-    if (xpOn && streak >= STREAK_WARNING_AT && xp < ACTIVE_DAY_XP && freezesHeld === 0) {
+    if (xpOn && streak >= STREAK_WARNING_AT && !xpLog.days.active.has(date) && freezesHeld === 0) {
       return 'streakWarning';
     }
     return dailyGoal !== null && !dailyGoal.met ? 'goalNotMet' : undefined;

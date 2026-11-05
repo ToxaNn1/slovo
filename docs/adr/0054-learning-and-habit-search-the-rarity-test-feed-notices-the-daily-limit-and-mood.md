@@ -2,7 +2,7 @@
 
 Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active Days calendar, the Daily Limit (retired in 1.0 for the Daily Goal), the polite pause, notification templates, the first week, and the widget hint help the reader find a word, remember it and come back; the decisions come from spec #832 and the owner's grilling of 2026-10-25.
 
-**Feature Switches.** Each feature has its own Feature Switch: `search`, `rarityTest`, `weeklyRecap`, `yesterday`, `wordOfTheDayArchive`, `activeDaysCalendar`, `dailyLimit`, `politePause`, `firstWeek` and `widgetHint` (`moods` left the list in ADR 0074). They are required of every Edition and all on in the UA Edition. A feature whose switch is off is absent: no header button, no Settings row, no Feed Notice, no list; its records are kept. A remote switch only turns a feature off (ADR 0040).
+**Feature Switches.** Each feature has its own Feature Switch: `search`, `rarityTest`, `weeklyRecap`, `yesterday`, `wordOfTheDayArchive`, `activeDaysCalendar`, `dailyLimit`, `politePause`, `firstWeek` and `widgetHint` (`moods` left the list in ADR 0076). They are required of every Edition and all on in the UA Edition. A feature whose switch is off is absent: no header button, no Settings row, no Feed Notice, no list; its records are kept. A remote switch only turns a feature off (ADR 0040).
 
 **Search** («Пошук») is a Core Search behind a magnifier in the «Стрічка» header, over the open Language Pack and the user state.
 
@@ -48,7 +48,7 @@ Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active D
 
 **The widget hint** is a sheet on the result screen after the reader's first finished Game with at least one Life left, once ever (`device-only`): a guide of 3 animated steps on adding the widget. The Game's state says whether the result on screen offers it: each finished Game with a Life left does until the hint has been on screen, so a lost Game or a Game in a mode without Lives never offers it. The record that it was shown is written once the shell has the sheet on screen, not when the Game ends, so a result left before the hint shows doesn't use it up, and once written no later Game offers it again. `widgetHint` is read together with `widget`. The guide is the widget drawing over its 3 steps, which come in one after another and stand still under Reduce Motion; the sheet closes with «Зрозуміло». Settings → Віджети → «Як додати віджет» opens the same guide as a screen.
 
-**Mood** («настрій»). Superseded by ADR 0074: Mood is a set of Feed parameters the reader chooses once a local day on the Dashboard. The roulette, the 🎲 header button, the Words' `moods` and the `moods` Feature Switch are gone. What stays from this ADR: the Edition lists its moods (id, name, emoji), so the Core stays language-agnostic.
+**Mood** («настрій»). Superseded by ADR 0076: Mood is a set of Feed parameters the reader chooses once a local day on the Dashboard. The roulette, the 🎲 header button, the Words' `moods` and the `moods` Feature Switch are gone. What stays from this ADR: the Edition lists its moods (id, name, emoji), so the Core stays language-agnostic.
 
 ## Considered Options
 
