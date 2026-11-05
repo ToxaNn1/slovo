@@ -1,6 +1,6 @@
 import type { EntryFeedCard, SynonymRowFeedCard, TipFeedCard } from '@slovo/core';
 import type { ReactNode } from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
@@ -34,6 +34,11 @@ export interface EntryCardProps {
   onWordHistoryShown?: (() => void) | undefined;
   /** The action row: under a Word's card, at the bottom inside the card of every other kind. */
   actions?: ReactNode;
+  /**
+   * The actions in the frame's top-right corner, while marks are swiped
+   * (XSwipe): concealed by Self-check as `actions` are.
+   */
+  corner?: ReactNode;
   /**
    * Self-check applies to the card: until the reader reveals it, a Word card
    * shows only its Lemma, part of speech and Category, a Correction card only
@@ -90,6 +95,7 @@ export function EntryCard({
   onOpenSynonymRow,
   onWordHistoryShown,
   actions,
+  corner,
   selfCheck = false,
   stressFalls = false,
   wordOfTheDayFont,
@@ -102,11 +108,18 @@ export function EntryCard({
   const padding = compact ? COMPACT_PADDING : 1;
   const spacing = SPACING[card.kind];
   // A Word's raised tiles stand under its card; the icons of the other kinds sit in theirs (XActions a10).
-  const actionsOf = (kind: typeof card.kind) => (
-    <RevealDetail step={3} testID={`${kind}-actions`}>
-      <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
-    </RevealDetail>
-  );
+  const actionsOf = (kind: typeof card.kind) =>
+    actions !== undefined && (
+      <RevealDetail step={3} testID={`${kind}-actions`}>
+        <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
+      </RevealDetail>
+    );
+  const cornerOf = (kind: typeof card.kind) =>
+    corner !== undefined && (
+      <View style={styles.corner} testID={`${kind}-corner`}>
+        <ConcealedProvider value={concealed}>{corner}</ConcealedProvider>
+      </View>
+    );
 
   // The Word of the Day is the red shout card, which draws its own reveal button.
   if (card.kind === 'word' && card.wordOfTheDay !== undefined)
@@ -127,10 +140,9 @@ export function EntryCard({
             onOpenSynonymRow={onOpenSynonymRow}
             onHistoryShown={onWordHistoryShown}
           />
+          {cornerOf(card.kind)}
         </RevealFrame>
-        <RevealDetail step={3} testID="word-actions">
-          <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
-        </RevealDetail>
+        {actionsOf(card.kind)}
       </EntryReveal>
     );
 
@@ -195,6 +207,7 @@ export function EntryCard({
           />
         )}
         {card.kind !== 'word' && actionsOf(card.kind)}
+        {cornerOf(card.kind)}
       </RevealFrame>
       {card.kind === 'word' && actionsOf(card.kind)}
     </EntryReveal>
@@ -205,4 +218,6 @@ const styles = StyleSheet.create({
   // The border is the card's only elevation.
   card: { borderWidth: 1 },
   hero: { borderRadius: wordHero.radius, overflow: 'hidden' },
+  // Drawn last so it stays over the card's headline and takes its taps.
+  corner: { position: 'absolute', top: space[2], right: space[2] },
 });
