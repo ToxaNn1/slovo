@@ -48,7 +48,7 @@ function marksOf(mark: KnowledgeMark | undefined) {
 }
 
 function labels(): string[] {
-  return screen.getAllByRole('button').map((button) => button.props.accessibilityLabel as string);
+  return screen.getAllByRole('button').map((button) => String(button.props['accessibilityLabel']));
 }
 
 describe('EntryMenuSheet', () => {
@@ -57,14 +57,14 @@ describe('EntryMenuSheet', () => {
     await renderIn(
       <EntryMenuSheet
         visible
-        entryTitle="кулі́ш"
+        entryTitle="Lemma"
         entryKind="word"
         marks={marks}
         onClose={jest.fn()}
       />,
     );
 
-    expect(screen.getByText('кулі́ш')).toBeOnTheScreen();
+    expect(screen.getByText('Lemma')).toBeOnTheScreen();
     expect(labels()).toEqual(['Know', 'Don’t know', 'Close']);
     await fireEvent.press(screen.getByRole('button', { name: 'Don’t know' }));
     expect(onSet).toHaveBeenCalledWith('unknown');

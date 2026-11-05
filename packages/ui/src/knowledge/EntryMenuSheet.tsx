@@ -122,18 +122,41 @@ function itemsOf(
   const clear = { key: 'clear', label: menu.clear, onPress: onClear };
   if (mark === 'known')
     return [
-      { key: 'unknown', label: menu.changeToUnknown, onPress: () => onSet('unknown') },
+      {
+        key: 'unknown',
+        label: menu.changeToUnknown,
+        onPress: () => {
+          onSet('unknown');
+        },
+      },
       clear,
     ];
   if (mark === 'unknown')
-    return [{ key: 'known', label: menu.changeToKnown, onPress: () => onSet('known') }, clear];
+    return [
+      {
+        key: 'known',
+        label: menu.changeToKnown,
+        onPress: () => {
+          onSet('known');
+        },
+      },
+      clear,
+    ];
   return [
     {
       key: 'known',
       label: entryKind === 'correction' ? menu.marks.correctionKnown : menu.marks.known,
-      onPress: () => onSet('known'),
+      onPress: () => {
+        onSet('known');
+      },
     },
-    { key: 'unknown', label: menu.marks.unknown, onPress: () => onSet('unknown') },
+    {
+      key: 'unknown',
+      label: menu.marks.unknown,
+      onPress: () => {
+        onSet('unknown');
+      },
+    },
   ];
 }
 
