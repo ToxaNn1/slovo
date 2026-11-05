@@ -26,7 +26,7 @@ interface ReviewXpAward {
 
 /** What Knowledge needs of the XP log (ADR 0066): the XP of a Review answer. */
 export interface ReviewXp {
-  award(action: { readonly source: 'review-answer' }): ReviewXpAward;
+  award(action: { readonly source: 'review-answer'; readonly entryId: string }): ReviewXpAward;
 }
 
 /** An Entry the reader is learning, in the «Вчу» list. */
@@ -404,7 +404,7 @@ export async function openKnowledge({
           : { mark, step, reviewDay, learned, markedAt },
         counts,
         confirms ? 'add' : 'none',
-        review ? xp.award({ source: 'review-answer' }) : undefined,
+        review ? xp.award({ source: 'review-answer', entryId }) : undefined,
       );
       if (undoes) undoable = { entryId, previous, confirmed: confirms };
       if (review) await reviewAnswered(entryId, mark);
