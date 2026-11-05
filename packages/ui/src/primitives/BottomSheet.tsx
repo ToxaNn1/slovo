@@ -157,6 +157,9 @@ export function BottomSheet({
           );
       wasVisible.current = true;
     } else {
+      // Nothing to slide out unless it was open: a slide-out started on mount
+      // would unmount a sheet that opens before it ends.
+      if (!wasVisible.current) return;
       const wasOpen = wasVisible.current;
       wasVisible.current = false;
       const velocity = flick.current;
