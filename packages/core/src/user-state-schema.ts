@@ -10,6 +10,7 @@ import { gameRecords } from './game/records';
 import { knowledgeRecords } from './knowledge/records';
 import { mistakeReportRecords } from './mistake-reports/records';
 import { mixRecords } from './mix/records';
+import { moodRecords } from './mood/records';
 import { notificationRecords } from './notifications/records';
 import { onboardingRecords } from './onboarding/records';
 import { progressRecords } from './progress/records';
@@ -108,6 +109,7 @@ const domains = [
   syncRecords,
   communityCounterRecords,
   mistakeReportRecords,
+  moodRecords,
 ] as const;
 
 checkUserStateRecords(domains);

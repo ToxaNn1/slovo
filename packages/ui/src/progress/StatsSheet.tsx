@@ -5,6 +5,7 @@ import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-n
 import { BottomSheet } from '../primitives/BottomSheet';
 import { ActiveDaysCalendar } from './ActiveDaysCalendar';
 import { knownLine } from './known-line';
+import { moodLine, type MoodDays } from './mood-line';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { space, STACK_AT_FONT_SCALE, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
@@ -56,7 +57,8 @@ function Count({
  * today, the Favorites count, the Entries in Collections and the best Game
  * result once a Game has finished, each in the Edition's plural form, and
  * under them the Known count of each kind of Entry shown, and the Entries
- * due for Review today, unless the knowledge rows are hidden, and last the
+ * due for Review today, unless the knowledge rows are hidden, then the days
+ * by Mood once a Mood was chosen, and last the
  * Active Days calendar, with its months, unless it has none. It
  * closes with a swipe down, a tap outside or VoiceOver's escape gesture, and
  * with Reduce Motion it appears without sliding. While the reader hides the
@@ -69,6 +71,7 @@ export function StatsSheet({
   hideStreak = false,
   knowledge = ['word', 'correction', 'idiom'],
   calendar = [],
+  moodDays = [],
   onClose,
 }: {
   visible: boolean;
@@ -78,6 +81,8 @@ export function StatsSheet({
   knowledge?: readonly EntryKind[] | 'none';
   /** The months of the Active Days calendar, oldest first; none leaves it out. */
   calendar?: readonly CalendarMonth[];
+  /** The days each Mood was chosen on, in display order; without a chosen day the row is left out. */
+  moodDays?: readonly MoodDays[];
   onClose: () => void;
 }) {
   const tokens = useTokens();
@@ -88,6 +93,7 @@ export function StatsSheet({
   const streak = count(words.streak, stats.streak);
   const bestStreak = fill(words.bestStreak, { count: String(stats.bestStreak) });
   const { bestResult } = stats;
+  const moods = moodLine(words, moodDays, count);
   return (
     <BottomSheet visible={visible} onClose={onClose} testID="stats-sheet">
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content}>
@@ -169,6 +175,15 @@ export function StatsSheet({
             </Text>
           </View>
         )}
+        {moods !== undefined && (
+          <Text
+            testID="stats-moods"
+            {...voice}
+            style={[styles.moods, typeStyle('statsLine', tokens), { color: colors.ink }]}
+          >
+            {moods}
+          </Text>
+        )}
         <ActiveDaysCalendar months={calendar} />
       </ScrollView>
     </BottomSheet>
@@ -194,5 +209,6 @@ const styles = StyleSheet.create({
     marginTop: space[6],
   },
   knowledge: { marginTop: space[6], gap: space[2] },
+  moods: { marginTop: space[2] },
   count: { paddingRight: space[3], gap: space[1] },
 });

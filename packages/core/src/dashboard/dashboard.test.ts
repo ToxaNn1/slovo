@@ -37,7 +37,7 @@ async function run({
 /** The Word of the Day hero among the blocks. */
 function heroOf(blocks: readonly DashboardBlock[]): WordOfTheDayHero {
   const [block] = blocks;
-  if (block === undefined) throw new Error('No Word of the Day block');
+  if (block?.kind !== 'wordOfTheDay') throw new Error('No Word of the Day block');
   return block.hero;
 }
 

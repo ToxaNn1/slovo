@@ -684,6 +684,8 @@ export const motion = {
   tab: { duration: 300, easing: [0.3, 1.6, 0.5, 1] },
   /** The red band sweeping over a screen as it enters. */
   sweep: { duration: 500, easing: [0.6, 0, 0.3, 1] },
+  /** The Mood check-in folds to today's line, or opens its chips again, and the new part rises in. */
+  collapse: { duration: 250, easing: ease, rise: 8 },
   /** Under Reduce Motion every motion is this one fade. */
   reduceMotion: { duration: 300, easing: ease },
 } as const satisfies Record<
