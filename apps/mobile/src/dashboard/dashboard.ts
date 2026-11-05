@@ -25,6 +25,8 @@ export interface DashboardScreen {
   readonly openPreviousWord: (entryId: string) => void;
   /** A tile of the Correction Types rail: opens its type's screen. */
   readonly openCorrectionType: (type: CorrectionType) => void;
+  /** A card of the Curated Collections rail: marks the collection opened, so «Нова» goes. */
+  readonly openCuratedCollection: (collectionId: string) => void;
 }
 
 const previousWordsTitle = editionStrings.dashboard.previousWords.title;
@@ -35,7 +37,7 @@ const previousWordsTitle = editionStrings.dashboard.previousWords.title;
  * over the Dashboard, where the Feed lands it (ADR 0076).
  */
 export function useDashboardScreen(): DashboardScreen {
-  const { dashboard, mood } = useComposition();
+  const { dashboard, mood, curatedCollections } = useComposition();
   const blocks = useSubscribed(dashboard, (source) => source.blocks);
   const openScreen = useOpenScreen();
   const focused = useIsFocused();
@@ -60,6 +62,9 @@ export function useDashboardScreen(): DashboardScreen {
     },
     openCorrectionType: (type) => {
       openScreen(`/correction-type/${type}`);
+    },
+    openCuratedCollection: (collectionId) => {
+      void curatedCollections.open(collectionId);
     },
   };
 }
