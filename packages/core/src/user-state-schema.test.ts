@@ -117,6 +117,7 @@ describe('the 0.8 sync marks', () => {
       'schema.version',
       'feed.position',
       'feed.swipeHintShown',
+      'feed.gesturesHintShown',
       'feed.wordOfTheDay',
       'settings.vibration',
       'settings.reduceMotion',
@@ -236,6 +237,7 @@ const storedIn1_0: readonly (readonly [
   ['reduceMotion', undefined, 'settings.reduceMotion', 'true'],
   ['dailyLimit', undefined, 'settings.dailyLimit', '20'],
   ['swipeHintShown', undefined, 'feed.swipeHintShown', 'true'],
+  ['gesturesHintShown', undefined, 'feed.gesturesHintShown', 'true'],
   [
     'feedNoticesClosed',
     undefined,

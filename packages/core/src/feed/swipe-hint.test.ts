@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSwipeHint } from '../index';
+import { createGesturesHint, createSwipeHint } from '../index';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The swipe hint over user-state records that survive between app runs. */
@@ -35,5 +35,29 @@ describe('the swipe hint', () => {
     await (await swipeHintOver(records)).markShown();
 
     expect(records.get('feed.seen.w_1')).toBe('1');
+  });
+});
+
+/** The gestures hint sheet over user-state records that survive between app runs. */
+async function gesturesHintOver(records: Map<string, string>) {
+  const userState = await openUserState({ port: createMemoryUserStatePort(records) });
+  return createGesturesHint({ userState });
+}
+
+describe('the gestures hint sheet', () => {
+  it('is due for a reader who saw the swipe hint', async () => {
+    const records = new Map<string, string>();
+    await (await swipeHintOver(records)).markShown();
+
+    expect(await (await gesturesHintOver(records)).isDue()).toBe(true);
+  });
+
+  it('is no longer due once it was shown, and stays shown across a restart', async () => {
+    const records = new Map<string, string>();
+    const hint = await gesturesHintOver(records);
+    await hint.markShown();
+
+    expect(await hint.isDue()).toBe(false);
+    expect(await (await gesturesHintOver(records)).isDue()).toBe(false);
   });
 });
