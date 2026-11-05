@@ -65,6 +65,7 @@ export function useDashboardScreen(): DashboardScreen {
     },
     openCuratedCollection: (collectionId) => {
       void curatedCollections.open(collectionId);
+      openScreen(`/curated-collection/${collectionId}`);
     },
   };
 }

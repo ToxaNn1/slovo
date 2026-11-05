@@ -11,11 +11,12 @@ import {
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
+import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/index';
 import CorrectionTypeScreen from '../app/correction-type/[type]';
+import CuratedCollectionScreen from '../app/curated-collection/[collectionId]';
 import FeedScreen from '../app/feed';
 import EntryFromSearchScreen from '../app/search/[entryId]';
 import { ShellProvider } from '../shell-value';
@@ -194,6 +195,7 @@ async function renderApp() {
       feed: FeedScreen,
       'search/[entryId]': EntryFromSearchScreen,
       'correction-type/[type]': CorrectionTypeScreen,
+      'curated-collection/[collectionId]': CuratedCollectionScreen,
     },
     { initialUrl: '/' },
   );
@@ -361,6 +363,72 @@ describe('the Curated Collections rail', () => {
 
     expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeNull();
     expect(composition.curatedCollections.rail.map(({ state }) => state)).toEqual(['opened']);
+  });
+
+  it('a card opens the collection\u2019s screen: its name, description, «Знаю X з N» and Entries', async () => {
+    await open(true);
+    await renderApp();
+
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
+
+    expect(screen.getByTestId('curated-collection')).toBeTruthy();
+    expect(screen.getByText('Лагідні слова')).toBeTruthy();
+    expect(screen.getByText('Слова, що звучать м’яко.')).toBeTruthy();
+    expect(screen.getByText('Знаю 0 з 2')).toBeTruthy();
+    expect(screen.getByTestId('curated-collection-entry-w_lahidnyi')).toBeTruthy();
+    expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
+    expect(screen.getByText(editionStrings.dashboard.curatedCollection.add)).toBeTruthy();
+  });
+
+  it('a Known mark counts at once and shows on its row', async () => {
+    await open(true);
+    await renderApp();
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
+
+    await settle(() => composition.knowledge.tap('w_tykhyi', 'known'));
+
+    expect(screen.getByText('Знаю 1 з 2')).toBeTruthy();
+    const { known } = editionStrings.knowledge;
+    expect(
+      within(screen.getByTestId('curated-collection-entry-w_tykhyi')).getByText(known),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByTestId('curated-collection-entry-w_lahidnyi')).queryByText(known),
+    ).toBeNull();
+  });
+
+  it('a tap on a row opens its Entry without making it Seen', async () => {
+    await open(true);
+    await renderApp();
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
+
+    await settle(() => fireEvent.press(screen.getByTestId('curated-collection-entry-w_tykhyi')));
+
+    expect(screen.getByText('Значення слова тихий.')).toBeTruthy();
+    expect(composition.history.list).toEqual([]);
+  });
+
+  it('«+ Додати» copies it into the Collections and shows «Додано ✓» on the screen and the card', async () => {
+    await open(true);
+    await renderApp();
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
+    const { add, added } = editionStrings.dashboard.curatedCollection;
+
+    await settle(() => fireEvent.press(screen.getByTestId('curated-collection-add')));
+
+    expect(screen.queryByText(add)).toBeNull();
+    expect(screen.getByText(added)).toBeTruthy();
+    await settle(() => fireEvent.press(screen.getByTestId('curated-collection-back')));
+    expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-added')).toBeTruthy();
+    expect(composition.curatedCollections.rail.map((card) => card.added)).toEqual([true]);
   });
 
   it('is absent with `curatedCollections` off', async () => {
