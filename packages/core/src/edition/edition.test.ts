@@ -104,6 +104,7 @@ const validConfig = {
     fastReveal: true,
     dashboard: true,
     mood: true,
+    previousWords: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -1203,6 +1204,7 @@ const dependentSwitches = [
   ['rarityTest', ['rarityCeiling']],
   ['dashboard', ['wordOfTheDay']],
   ['mood', ['dashboard', 'wordOfTheDay']],
+  ['previousWords', ['dashboard', 'wordOfTheDayArchive', 'wordOfTheDay']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

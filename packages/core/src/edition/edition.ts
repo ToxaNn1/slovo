@@ -137,6 +137,8 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   dashboard: ['wordOfTheDay'],
   // The Mood check-in is a Dashboard block (ADR 0076).
   mood: ['dashboard'],
+  // «Попередні слова» is a Dashboard block over the Word of the Day archive (ADR 0076).
+  previousWords: ['dashboard', 'wordOfTheDayArchive'],
   notificationTimeStep: ['notifications'],
 };
 
