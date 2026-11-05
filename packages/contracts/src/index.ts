@@ -169,6 +169,11 @@ export {
   type CollectionLink,
 } from './collection-link';
 export {
+  CuratedCollectionIdSchema,
+  CuratedCollectionSchema,
+  type CuratedCollection,
+} from './curated-collection';
+export {
   NotificationTimeBucketSchema,
   type CountedQuestion,
   type CounterEvent,

@@ -18,4 +18,8 @@ export const DashboardStringsSchema = z.strictObject({
     /** The link that opens the chips again to change today's Mood, «змінити». */
     change: TextSchema,
   }),
+  /** The title over the Curated Collections rail, «Добірки». */
+  curatedCollectionsTitle: TextSchema,
+  /** The badge on a Curated Collection card not yet opened, «Нова». */
+  curatedCollectionNew: TextSchema,
 });
