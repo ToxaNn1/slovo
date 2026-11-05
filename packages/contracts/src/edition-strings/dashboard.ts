@@ -35,4 +35,8 @@ export const DashboardStringsSchema = z.strictObject({
     /** Each Correction Type's tile name and screen title, in the plural, «Суржик». */
     tiles: z.record(CorrectionTypeSchema, TextSchema),
   }),
+  /** The title over the Curated Collections rail, «Добірки». */
+  curatedCollectionsTitle: TextSchema,
+  /** The badge on a Curated Collection card not yet opened, «Нова». */
+  curatedCollectionNew: TextSchema,
 });

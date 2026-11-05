@@ -17,6 +17,7 @@ import {
 import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
 import { openCycle } from './feed/cycle';
 import { openCorrectionTypes, type CorrectionTypes } from './dashboard/correction-types';
+import { openCuratedCollections, type CuratedCollections } from './dashboard/curated-collections';
 import { openDashboard, type Dashboard } from './dashboard/dashboard';
 import { openMoodCheckIns, type MoodCheckIns } from './mood/mood';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
@@ -95,6 +96,8 @@ export interface Composition extends Hiding {
   readonly dashboard: Dashboard;
   /** The Correction Types, the rail's tiles and each type's Corrections (ADR 0076); none with `correctionTypes` off. */
   readonly correctionTypes: CorrectionTypes;
+  /** The Curated Collections, the «Добірки» rail's cards (ADR 0076); none with `curatedCollections` off. */
+  readonly curatedCollections: CuratedCollections;
   /** The daily Mood check-in the Dashboard asks (ADR 0076); asking and asking nothing with `mood` off. */
   readonly mood: MoodCheckIns;
   /** Favorites, which a heart tapped anywhere changes. */
@@ -656,6 +659,13 @@ export async function openComposition({
   // Once the day is turned to, so its hero is today's Word of the Day.
   const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   const correctionTypes = await openCorrectionTypes({ edition, entries, userState, seen });
+  const curatedCollections = await openCuratedCollections({
+    edition,
+    content,
+    userState,
+    clock,
+    dayTurned,
+  });
   const dashboard = await openDashboard({
     edition,
     entries,
@@ -666,6 +676,7 @@ export async function openComposition({
     archive: wordOfTheDayArchive,
     clock,
     correctionTypes,
+    curatedCollections,
     seen,
     dayTurned,
   });
@@ -705,6 +716,7 @@ export async function openComposition({
     feed,
     dashboard,
     correctionTypes,
+    curatedCollections,
     mood,
     favorites,
     collections,

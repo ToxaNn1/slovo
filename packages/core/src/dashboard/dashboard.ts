@@ -12,6 +12,7 @@ import { createSubscribers } from '../in-turn';
 import type { MoodCheckIns } from '../mood/mood';
 import type { WordOfTheDayArchive, WordOfTheDayArchiveDay } from '../saved/word-of-the-day-archive';
 import type { CorrectionTypeTile, CorrectionTypes } from './correction-types';
+import type { CuratedCollectionCard, CuratedCollections } from './curated-collections';
 
 /** How many archive days «Попередні слова» shows at most. */
 const PREVIOUS_WORDS = 3;
@@ -41,7 +42,11 @@ export type WordOfTheDayHero =
  * more member and one more line in `blocksOf`.
  */
 export type DashboardBlock =
-  WordOfTheDayBlock | MoodBlock | PreviousWordsBlock | CorrectionTypesBlock;
+  | WordOfTheDayBlock
+  | MoodBlock
+  | PreviousWordsBlock
+  | CorrectionTypesBlock
+  | CuratedCollectionsBlock;
 
 /** The Word of the Day hero's block, first on the Dashboard. */
 export interface WordOfTheDayBlock {
@@ -83,6 +88,16 @@ export interface CorrectionTypesBlock {
 }
 
 /**
+ * The Curated Collections rail's block, «Добірки», after the Correction
+ * Types: the collections published by today, the unopened first. No card,
+ * no block.
+ */
+export interface CuratedCollectionsBlock {
+  readonly kind: 'curatedCollections';
+  readonly cards: readonly CuratedCollectionCard[];
+}
+
+/**
  * The Dashboard (ADR 0076): the home's blocks for the local day the
  * composition turned to last. They follow the day change and Seen; with
  * `dashboard` off there are none.
@@ -106,6 +121,7 @@ export async function openDashboard({
   archive,
   clock,
   correctionTypes,
+  curatedCollections,
   seen,
   dayTurned,
 }: {
@@ -119,6 +135,7 @@ export async function openDashboard({
   /** Tells today, whose archive day is the hero's. */
   clock: Clock;
   correctionTypes: Pick<CorrectionTypes, 'tiles' | 'subscribe'>;
+  curatedCollections: Pick<CuratedCollections, 'rail' | 'subscribe'>;
   seen: { subscribe(listener: (entryId: string) => unknown): unknown };
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
 }): Promise<Dashboard> {
@@ -171,6 +188,8 @@ export async function openDashboard({
     if (previous !== undefined) blocks.push(previous);
     const { tiles } = correctionTypes;
     if (tiles.length > 0) blocks.push({ kind: 'correctionTypes', tiles });
+    const { rail } = curatedCollections;
+    if (rail.length > 0) blocks.push({ kind: 'curatedCollections', cards: rail });
     return blocks;
   }
 
@@ -189,6 +208,7 @@ export async function openDashboard({
     dayTurned.subscribe(() => refresh());
     mood.subscribe(() => void refresh());
     correctionTypes.subscribe(() => void refresh());
+    curatedCollections.subscribe(() => void refresh());
   }
 
   return {
@@ -227,6 +247,10 @@ function blockKeyOf(block: DashboardBlock): string {
         .map(
           ({ type, total, workedThrough }) => `${type}=${String(workedThrough)}/${String(total)}`,
         )
+        .join(',')}`;
+    case 'curatedCollections':
+      return `curatedCollections:${block.cards
+        .map(({ collection: { id }, state }) => `${id}=${state}`)
         .join(',')}`;
   }
 }

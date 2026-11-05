@@ -73,6 +73,7 @@ export function recordContent({
       ...source.idioms,
       ...source.synonymRows,
       ...source.tips,
+      ...source.curatedCollections,
     ],
     registry,
   )

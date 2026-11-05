@@ -355,6 +355,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   previousWords: z.boolean(),
   /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `dashboard` or `corrections` is. */
   correctionTypes: z.boolean(),
+  /** Curated Collections: the Dashboard's «Добірки» rail of editorial Entry sets from the Language Pack (ADR 0076). Off while `dashboard` is. */
+  curatedCollections: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

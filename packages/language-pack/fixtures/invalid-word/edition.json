@@ -98,6 +98,7 @@
     "fastReveal": true,
     "dashboard": true,
     "mood": true,
+    "curatedCollections": true,
     "previousWords": true,
     "correctionTypes": true
   },

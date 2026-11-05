@@ -93,7 +93,7 @@ let composition: Composition;
  * Opens the composition over three Words, with `dashboard` on or off. Today's
  * Word of the Day is сумирний, and the reader was on a later card of the Feed.
  */
-async function open(dashboard: boolean, { previousWords = true } = {}) {
+async function open(dashboard: boolean, { previousWords = true, curatedCollections = true } = {}) {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
@@ -102,8 +102,11 @@ async function open(dashboard: boolean, { previousWords = true } = {}) {
         ? dashboard
         : feature === 'previousWords'
           ? previousWords && shipped.isFeatureEnabled(feature)
-          : // No later question takes the Word of the Day's place in the Feed.
-            feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+          : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
+            feature === 'curatedCollections'
+            ? curatedCollections
+            : // No later question takes the Word of the Day's place in the Feed.
+              feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   userState = await seedUserState(
     {
@@ -126,6 +129,15 @@ async function open(dashboard: boolean, { previousWords = true } = {}) {
       corrections: [
         correction('c_shoby', 'шоби', ['щоб', 'аби']),
         correction('c_tipa', 'типу', ['ніби']),
+      ],
+      curatedCollections: [
+        {
+          id: 'cc_lahidni',
+          name: 'Лагідні слова',
+          description: 'Слова, що звучать м’яко.',
+          publishedOn: '2026-10-20',
+          entryIds: ['w_lahidnyi', 'w_tykhyi'],
+        },
       ],
     }),
     edition: editionInEffect,
@@ -331,5 +343,31 @@ describe('the Correction Types rail', () => {
     expect(composition.correctionTypes.tiles).toEqual([
       { type: 'surzhyk', total: 2, workedThrough: 1 },
     ]);
+  });
+});
+
+describe('the Curated Collections rail', () => {
+  it('shows a published collection as «Нова» till a tap opens it', async () => {
+    await open(true);
+    await renderApp();
+
+    expect(screen.getByText(editionStrings.dashboard.curatedCollectionsTitle)).toBeTruthy();
+    expect(screen.getByText('Лагідні слова')).toBeTruthy();
+    expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();
+
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
+
+    expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeNull();
+    expect(composition.curatedCollections.rail.map(({ state }) => state)).toEqual(['opened']);
+  });
+
+  it('is absent with `curatedCollections` off', async () => {
+    await open(true, { curatedCollections: false });
+    await renderApp();
+
+    expect(screen.getByTestId('dashboard-hero')).toBeTruthy();
+    expect(screen.queryByTestId('dashboard-curated-collections')).toBeNull();
   });
 });

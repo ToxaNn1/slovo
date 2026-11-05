@@ -141,6 +141,8 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   previousWords: ['dashboard', 'wordOfTheDayArchive'],
   // The Correction Types rail is a Dashboard block over the Corrections (ADR 0076).
   correctionTypes: ['dashboard', 'corrections'],
+  // The Curated Collections rail is a Dashboard block (ADR 0076).
+  curatedCollections: ['dashboard'],
   notificationTimeStep: ['notifications'],
 };
 

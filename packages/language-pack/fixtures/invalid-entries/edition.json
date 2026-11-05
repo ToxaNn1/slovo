@@ -99,7 +99,8 @@
     "dashboard": true,
     "mood": true,
     "previousWords": true,
-    "correctionTypes": true
+    "correctionTypes": true,
+    "curatedCollections": true
   },
   "userSettingDefaults": {
     "theme": "system",

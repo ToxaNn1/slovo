@@ -46,6 +46,7 @@ const everything: Shown = {
   fastReveal: true,
   dashboard: true,
   mood: true,
+  curatedCollections: true,
   wordOfTheDayArchive: true,
   rarityCeiling: true,
   rarityTest: true,
