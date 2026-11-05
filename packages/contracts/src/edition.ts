@@ -37,16 +37,43 @@ export const OriginLanguageSchema = z.strictObject({
 
 export type OriginLanguage = z.infer<typeof OriginLanguageSchema>;
 
+/** The kinds of Entry beside Words, each with a Mix kind weight. */
+export const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
+
+export type WeightedKind = z.infer<typeof WeightedKindSchema>;
+
+/**
+ * The band of rarities a Mood puts first in the Feed (ADR 0076): `upper` is
+ * the Rarity Ceiling's rarity and the one below it, `lower` rarities 1 and 2,
+ * `whole` every rarity; the bands clip to the Ceiling.
+ */
+export const RarityBandSchema = z.enum(['upper', 'lower', 'whole']);
+
+export type RarityBand = z.infer<typeof RarityBandSchema>;
+
+/**
+ * How a Mood shifts the reader's Mix kind weight of a kind (ADR 0076): one
+ * step towards «Менше», none, or one step towards «Більше», clamped to the
+ * weights; a kind turned off in the Mix stays off.
+ */
+export const MoodShiftSchema = z.enum(['less', 'same', 'more']);
+
+export type MoodShift = z.infer<typeof MoodShiftSchema>;
+
 /**
  * A Mood («настрій») the Edition lists: its id, its name in the Edition's
- * language, its emoji and the reply the Dashboard's Mood check-in answers it
- * with, in the Edition's language (ADR 0076).
+ * language, its emoji, the reply the Dashboard's Mood check-in answers it
+ * with, in the Edition's language, and its Feed parameters (ADR 0076): the
+ * rarity band put first and a shift per kind. A mood that names neither
+ * leaves the Feed as it is.
  */
 export const MoodSchema = z.strictObject({
   id: KebabCaseIdSchema,
   name: z.string().min(1),
   emoji: z.string().min(1),
   reply: TextSchema,
+  rarityBand: RarityBandSchema.default('whole'),
+  shifts: z.partialRecord(WeightedKindSchema, MoodShiftSchema).default({}),
 });
 
 export type Mood = z.infer<typeof MoodSchema>;
@@ -653,8 +680,6 @@ export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;
 /** The id of an option of a questionnaire question, e.g. `studying`. */
 export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 
-/** The kinds of Entry beside Words, each with a Mix kind weight. */
-const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
 
 /**
  * The Edition's questionnaire (ADR 0067): the options of the level
