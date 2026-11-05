@@ -323,14 +323,17 @@ function correctionWithMarks({
   return inEdition(
     <EntryCard
       card={card}
-      actions={
-        <ActionRow
-          marks={<KnowledgeButtons entryKind="correction" mark={mark} onTap={onTap} />}
-          favorite={<Text>♡</Text>}
-          collection={<Text>+</Text>}
-          hide={<Text>×</Text>}
-        />
-      }
+      slots={{
+        slot: 'actions',
+        actions: (
+          <ActionRow
+            marks={<KnowledgeButtons entryKind="correction" mark={mark} onTap={onTap} />}
+            favorite={<Text>♡</Text>}
+            collection={<Text>+</Text>}
+            hide={<Text>×</Text>}
+          />
+        ),
+      }}
     />,
   );
 }
@@ -906,7 +909,14 @@ describe('the corner of an Entry card', () => {
   );
 
   it('draws the corner in the card, with no action row', async () => {
-    await render(inEdition(<EntryCard card={wordWithEverything} corner={cornerMarks} />));
+    await render(
+      inEdition(
+        <EntryCard
+          card={wordWithEverything}
+          slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+        />,
+      ),
+    );
 
     expect(
       within(screen.getByTestId('word-corner')).getByRole('button', { name: 'Known' }),
@@ -921,7 +931,15 @@ describe('the corner of an Entry card', () => {
   });
 
   it('keeps the corner concealed under Self-check until the reader reveals the card', async () => {
-    await render(inEdition(<EntryCard card={wordWithEverything} corner={cornerMarks} selfCheck />));
+    await render(
+      inEdition(
+        <EntryCard
+          card={wordWithEverything}
+          slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+          selfCheck
+        />,
+      ),
+    );
 
     const known = () =>
       within(screen.getByTestId('word-corner')).getByRole('button', { name: 'Known' });

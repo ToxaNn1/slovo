@@ -105,15 +105,19 @@ function MarkedCard({
     <EntryCard
       card={correction}
       selfCheck={selfCheck}
-      swipe={{
-        mark,
-        onMark: (to) => {
-          onMark(to);
-          setMark(to);
-        },
-        onUndo: () => {
-          onUndo();
-          setMark(initial);
+      slots={{
+        slot: 'corner',
+        corner: undefined,
+        swipe: {
+          mark,
+          onMark: (to) => {
+            onMark(to);
+            setMark(to);
+          },
+          onUndo: () => {
+            onUndo();
+            setMark(initial);
+          },
         },
       }}
     />
@@ -286,10 +290,22 @@ describe('SwipeMarks', () => {
 
   it("shows the stamp of a mark set from the card's menu", async () => {
     const swipe = { onMark: jest.fn(), onUndo: jest.fn() };
-    await render(providers(<EntryCard card={correction} swipe={{ ...swipe, mark: undefined }} />));
+    await render(
+      providers(
+        <EntryCard
+          card={correction}
+          slots={{ slot: 'corner', corner: undefined, swipe: { ...swipe, mark: undefined } }}
+        />,
+      ),
+    );
 
     await screen.rerender(
-      providers(<EntryCard card={correction} swipe={{ ...swipe, mark: 'unknown' }} />),
+      providers(
+        <EntryCard
+          card={correction}
+          slots={{ slot: 'corner', corner: undefined, swipe: { ...swipe, mark: 'unknown' } }}
+        />,
+      ),
     );
     await act(async () => {
       await jest.advanceTimersByTimeAsync(500);
@@ -322,7 +338,16 @@ describe('SwipeMarks', () => {
 
 /** A page whose card names its VoiceOver actions and takes them. */
 function PagedCard({ onMark }: { onMark: (mark: KnowledgeMark) => void }) {
-  return <EntryCard card={correction} swipe={{ mark: undefined, onMark, onUndo: jest.fn() }} />;
+  return (
+    <EntryCard
+      card={correction}
+      slots={{
+        slot: 'corner',
+        corner: undefined,
+        swipe: { mark: undefined, onMark, onUndo: jest.fn() },
+      }}
+    />
+  );
 }
 
 function Actions() {

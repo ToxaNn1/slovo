@@ -72,10 +72,15 @@ async function renderFeed({ withMarks }: { withMarks: boolean }) {
             page === 'yesterday' ? (
               <YesterdayCard
                 word={word}
-                marks={
-                  withMarks ? (
-                    <KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />
-                  ) : undefined
+                slots={
+                  withMarks
+                    ? {
+                        slot: 'marks',
+                        marks: (
+                          <KnowledgeButtons entryKind="word" mark={undefined} onTap={onMark} />
+                        ),
+                      }
+                    : undefined
                 }
               />
             ) : (

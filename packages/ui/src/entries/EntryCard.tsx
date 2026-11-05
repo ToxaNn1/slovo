@@ -33,13 +33,8 @@ export interface EntryCardProps {
    * stable across renders, as it is called again when it changes.
    */
   onWordHistoryShown?: (() => void) | undefined;
-  /** The action row: under a Word's card, at the bottom inside the card of every other kind. */
-  actions?: ReactNode;
-  /**
-   * The actions in the frame's top-right corner, while marks are swiped
-   * (XSwipe): concealed by Self-check as `actions` are.
-   */
-  corner?: ReactNode;
+  /** The action row or, while marks are swiped, the corner and the swipes; none on a bare card. */
+  slots?: EntryCardSlots | undefined;
   /**
    * Self-check applies to the card: until the reader reveals it, a Word card
    * shows only its Lemma, part of speech and Category, a Correction card only
@@ -60,12 +55,19 @@ export interface EntryCardProps {
    * `calligraphy` is on in effect. Any other card keeps the Word font.
    */
   wordOfTheDayFont?: string | undefined;
-  /**
-   * The side swipes that set the Entry's Knowledge Mark, with its stamp and
-   * undo toast: only under the `swipeMarks` Feature Switch (ADR 0077).
-   */
-  swipe?: EntrySwipe | undefined;
 }
+
+/**
+ * What an Entry card carries beside its content. With the `swipeMarks`
+ * Feature Switch off, the action row: under a Word's card, at the bottom
+ * inside the card of every other kind. With it on (ADR 0077, XSwipe), the
+ * actions in the frame's top-right corner and the side swipes that set the
+ * Entry's Knowledge Mark, with its stamp and undo toast, while the Knowledge
+ * switch is on. Self-check conceals either as it conceals the card.
+ */
+export type EntryCardSlots =
+  | { slot: 'actions'; actions: ReactNode }
+  | { slot: 'corner'; corner: ReactNode; swipe: EntrySwipe | undefined };
 
 /** On the SE the padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
 const COMPACT_PADDING = 0.75;
@@ -100,12 +102,10 @@ export function EntryCard({
   onOpenWord,
   onOpenSynonymRow,
   onWordHistoryShown,
-  actions,
-  corner,
+  slots,
   selfCheck = false,
   stressFalls = false,
   wordOfTheDayFont,
-  swipe,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
   const face = (
@@ -115,17 +115,16 @@ export function EntryCard({
       onOpenWord={onOpenWord}
       onOpenSynonymRow={onOpenSynonymRow}
       onWordHistoryShown={onWordHistoryShown}
-      actions={actions}
-      corner={corner}
+      slots={slots}
       stressFalls={stressFalls}
       wordOfTheDayFont={wordOfTheDayFont}
       concealed={concealed}
       reveal={reveal}
     />
   );
-  if (swipe === undefined) return face;
+  if (slots?.slot !== 'corner' || slots.swipe === undefined) return face;
   return (
-    <SwipeMarks swipe={swipe} concealed={concealed} correction={card.kind === 'correction'}>
+    <SwipeMarks swipe={slots.swipe} concealed={concealed} correction={card.kind === 'correction'}>
       {face}
     </SwipeMarks>
   );
@@ -138,13 +137,12 @@ function EntryCardFace({
   onOpenWord,
   onOpenSynonymRow,
   onWordHistoryShown,
-  actions,
-  corner,
+  slots,
   stressFalls = false,
   wordOfTheDayFont,
   concealed,
   reveal,
-}: Omit<EntryCardProps, 'selfCheck' | 'swipe'> & { concealed: boolean; reveal: () => void }) {
+}: Omit<EntryCardProps, 'selfCheck'> & { concealed: boolean; reveal: () => void }) {
   const { strings } = useEdition();
   const { colors, radii } = useTokens();
   const lemmaSize = useLemmaSize();
@@ -153,15 +151,15 @@ function EntryCardFace({
   const spacing = SPACING[card.kind];
   // A Word's raised tiles stand under its card; the icons of the other kinds sit in theirs (XActions a10).
   const actionsOf = (kind: typeof card.kind) =>
-    actions !== undefined && (
+    slots?.slot === 'actions' && (
       <RevealDetail step={3} testID={`${kind}-actions`}>
-        <ConcealedProvider value={concealed}>{actions}</ConcealedProvider>
+        <ConcealedProvider value={concealed}>{slots.actions}</ConcealedProvider>
       </RevealDetail>
     );
   const cornerOf = (kind: typeof card.kind) =>
-    corner !== undefined && (
+    slots?.slot === 'corner' && (
       <View style={styles.corner} testID={`${kind}-corner`}>
-        <ConcealedProvider value={concealed}>{corner}</ConcealedProvider>
+        <ConcealedProvider value={concealed}>{slots.corner}</ConcealedProvider>
       </View>
     );
 

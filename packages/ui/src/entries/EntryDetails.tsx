@@ -21,8 +21,9 @@ import { WordOfTheDayBadge } from './WordOfTheDayBadge';
  * carries the giant first letter of its Lemma, the Word of the Day's kicker
  * when it is one, the Lemma, part of speech and the Pronunciation button;
  * its meaning follows on the screen's ground and its action row is docked at
- * the screen's foot. Any other kind keeps its Entry card under the panel.
- * It never conceals the meaning.
+ * the screen's foot, or while marks are swiped its corner sits at the
+ * panel's top right. Any other kind keeps its Entry card, with its row or
+ * corner, under the panel. It never conceals the meaning.
  */
 export function EntryDetails({
   card,
@@ -35,8 +36,7 @@ export function EntryDetails({
   onOpenWord,
   onOpenSynonymRow,
   onWordHistoryShown,
-  actions,
-  swipe,
+  slots,
 }: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
   back: string;
@@ -50,6 +50,7 @@ export function EntryDetails({
   const lemmaSize = useLemmaSize();
   const compact = useCompactLayout();
   const word = card.kind === 'word' ? card : undefined;
+  const swipe = slots?.slot === 'corner' ? slots.swipe : undefined;
   return (
     <EntryReveal>
       <ScrollView
@@ -71,6 +72,11 @@ export function EntryDetails({
             style={[styles.panel, { paddingTop: topInset + space[3] }]}
           >
             <BackTile label={back} onPress={onBack} />
+            {word !== undefined && slots?.slot === 'corner' && (
+              <View style={[styles.corner, { top: topInset + space[3] }]} testID="word-corner">
+                {slots.corner}
+              </View>
+            )}
             {word !== undefined && (
               <View style={styles.panelText}>
                 {word.wordOfTheDay !== undefined && <WordOfTheDayBadge day={word.wordOfTheDay} />}
@@ -92,7 +98,8 @@ export function EntryDetails({
                 onOpenWord={onOpenWord}
                 onOpenSynonymRow={onOpenSynonymRow}
                 onWordHistoryShown={onWordHistoryShown}
-                actions={actions}
+                // The swipes take the whole of Entry details, so the card keeps only its corner.
+                slots={slots?.slot === 'corner' ? { ...slots, swipe: undefined } : slots}
                 stressFalls={stressFalls}
               />
             </View>
@@ -109,7 +116,7 @@ export function EntryDetails({
           )}
         </Swiped>
       </ScrollView>
-      {word !== undefined && (
+      {word !== undefined && slots?.slot === 'actions' && (
         <View
           style={[
             styles.dock,
@@ -121,7 +128,7 @@ export function EntryDetails({
           ]}
         >
           <RevealDetail step={3} testID="word-actions">
-            {actions}
+            {slots.actions}
           </RevealDetail>
         </View>
       )}
@@ -186,6 +193,8 @@ const styles = StyleSheet.create({
   },
   panelText: { paddingHorizontal: space[1], gap: space[3] },
   backTile: { alignSelf: 'flex-start' },
+  // Level with the back tile, over the panel's top right (XSwipe).
+  corner: { position: 'absolute', right: space[4] },
   backFace: {
     width: iconButton.side,
     height: iconButton.side,
