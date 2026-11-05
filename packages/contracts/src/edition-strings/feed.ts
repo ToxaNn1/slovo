@@ -19,8 +19,6 @@ export const feedStringsShape = {
     loading: TextSchema,
     /** What VoiceOver says while the Feed loads. */
     loadingLabel: TextSchema,
-    /** The first-launch hint that shows how to reach the next card. */
-    swipeHint: TextSchema,
     /** The VoiceOver actions that stand in for swiping up and down. */
     nextEntry: TextSchema,
     previousEntry: TextSchema,

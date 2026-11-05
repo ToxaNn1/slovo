@@ -140,6 +140,8 @@ export const typeRoles = {
   tabLabel: role('ui', '600', 11, 11),
   /** The rotated black title of a bottom sheet. */
   sheetTitle: role('word', '900', 18, 18, 0.5, 'uppercase'),
+  /** The title of a row of the gestures hint sheet, «Вправо — знаю». */
+  hintRowTitle: role('word', '900', 15, 17),
   /** A toast's message. */
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */

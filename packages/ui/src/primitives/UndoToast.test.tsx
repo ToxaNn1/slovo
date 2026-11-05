@@ -6,13 +6,27 @@ import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
 /** Opens a toast with the message, and an undo when it has `onUndo`. */
-function Opener({ message, onUndo }: { message: string; onUndo?: () => void }) {
+function Opener({
+  message,
+  onUndo,
+  brief,
+}: {
+  message: string;
+  onUndo?: () => void;
+  brief?: true;
+}) {
   const show = useUndoToast();
   return (
     <Pressable
       testID={`open-${message}`}
       onPress={() => {
-        show(onUndo === undefined ? { message } : { message, undoLabel: 'Undo', onUndo });
+        show(
+          onUndo !== undefined
+            ? { message, undoLabel: 'Undo', onUndo }
+            : brief === undefined
+              ? { message }
+              : { message, brief },
+        );
       }}
     >
       <Text>{message}</Text>
@@ -20,7 +34,9 @@ function Opener({ message, onUndo }: { message: string; onUndo?: () => void }) {
   );
 }
 
-async function renderOpeners(...openers: readonly { message: string; onUndo?: () => void }[]) {
+async function renderOpeners(
+  ...openers: readonly { message: string; onUndo?: () => void; brief?: true }[]
+) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       <UndoToastProvider>
@@ -156,6 +172,17 @@ describe('UndoToast', () => {
     expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Thanks');
     expect(screen.queryByRole('button')).toBeNull();
     await passTime(4000);
+
+    expect(screen.queryByTestId('undo-toast')).toBeNull();
+  });
+
+  it('leaves after 2.2 s when its message is brief', async () => {
+    await renderOpeners({ message: 'Marked', brief: true });
+
+    await fireEvent.press(screen.getByTestId('open-Marked'));
+    await passTime(2100);
+    expect(screen.getByTestId('undo-toast-message')).toHaveTextContent('Marked');
+    await passTime(100);
 
     expect(screen.queryByTestId('undo-toast')).toBeNull();
   });
