@@ -125,3 +125,122 @@ describe('The Curated Collections rail', () => {
     expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual(['wordOfTheDay']);
   });
 });
+
+describe('A Curated Collection screen', () => {
+  const picks: CuratedCollection = {
+    id: 'cc_picks',
+    name: 'Добірка',
+    description: 'Про добірку',
+    publishedOn: '2026-11-01',
+    entryIds: ['w_three', 'w_old', 'w_one', 'w_two'],
+  };
+
+  async function runPicks(records = new Map<string, string>()) {
+    let draws = 0;
+    const time = fakeClock('2026-11-04T09:00:00+02:00');
+    const app = await openComposition({
+      content: createMemoryContentPort({
+        words: [word('w_one'), word('w_two'), word('w_three'), word('w_old', { retired: true })],
+        curatedCollections: [picks],
+      }),
+      edition: testEdition({
+        isFeatureEnabled: (feature) =>
+          ['wordOfTheDay', 'dashboard', 'curatedCollections', 'knowledge'].includes(feature),
+      }),
+      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+      clock: time.clock,
+      // A new value each call, so a second Collection gets a free id.
+      random: { next: () => (draws = (draws + 0.37) % 1) },
+    });
+    return { app, records };
+  }
+
+  it('shows the name, the description and the live Entries in order, «Знаю 0 з 3»', async () => {
+    const { app } = await runPicks();
+    const screen = await app.curatedCollections.screen('cc_picks');
+
+    expect(screen?.collection.name).toBe('Добірка');
+    expect(screen?.collection.description).toBe('Про добірку');
+    expect(screen?.entries.map(({ entryId, known }) => `${entryId}:${String(known)}`)).toEqual([
+      'w_three:false',
+      'w_one:false',
+      'w_two:false',
+    ]);
+    expect(screen && { known: screen.known, total: screen.total }).toEqual({ known: 0, total: 3 });
+    expect(screen?.added).toBe(false);
+  });
+
+  it('counts a Known tap at once, and leaves a Hidden Entry out of N', async () => {
+    const { app } = await runPicks();
+    let told = 0;
+    app.curatedCollections.subscribe(() => (told += 1));
+
+    await app.knowledge.tap('w_one', 'known');
+    await app.knowledge.tap('w_two', 'unknown');
+    await settle();
+    expect(told).toBeGreaterThan(0);
+    const marked = await app.curatedCollections.screen('cc_picks');
+    expect(marked && { known: marked.known, total: marked.total }).toEqual({ known: 1, total: 3 });
+
+    await app.hiddenEntries.hide('w_three');
+    await settle();
+    const hidden = await app.curatedCollections.screen('cc_picks');
+    expect(hidden?.entries.map(({ entryId }) => entryId)).toEqual(['w_one', 'w_two']);
+    expect(hidden && { known: hidden.known, total: hidden.total }).toEqual({ known: 1, total: 2 });
+  });
+
+  it('is nothing for an unknown or unpublished id', async () => {
+    const { app } = await runPicks();
+    expect(await app.curatedCollections.screen('cc_none')).toBeUndefined();
+  });
+
+  it('opening an Entry from it makes nothing Seen and writes nothing', async () => {
+    const { app, records } = await runPicks();
+    const before = new Map(records);
+    const history = app.history.list;
+    const screen = await app.curatedCollections.screen('cc_picks');
+    const entryId = screen?.entries[0]?.entryId ?? '';
+
+    expect((await app.entryCard(entryId))?.entryId).toBe(entryId);
+    expect(app.history.list).toBe(history);
+    expect(records).toEqual(before);
+  });
+
+  it('«+ Додати» copies it into Collections with its source, Retired skipped, then «Додано ✓»', async () => {
+    const { app, records } = await runPicks();
+
+    const copy = await app.curatedCollections.add('cc_picks');
+
+    expect(copy?.name).toBe('Добірка');
+    expect(copy?.source).toBe('cc_picks');
+    expect(app.collections.list).toContainEqual(copy);
+    expect(app.collections.entries(copy?.id ?? '').map(({ entryId }) => entryId)).toEqual([
+      'w_three',
+      'w_one',
+      'w_two',
+    ]);
+    expect((await app.curatedCollections.screen('cc_picks'))?.added).toBe(true);
+    expect(app.curatedCollections.rail.map(({ added }) => added)).toEqual([true]);
+
+    // Again, it makes no second copy.
+    expect(await app.curatedCollections.add('cc_picks')).toBeUndefined();
+    expect(app.collections.list).toHaveLength(1);
+
+    // The source is kept: the next app run still shows «Додано ✓».
+    const next = await runPicks(records);
+    expect(next.app.curatedCollections.rail[0]?.added).toBe(true);
+  });
+
+  it('copies under the duplicate-name rule, and is «Додати» again once the copy is deleted', async () => {
+    const { app } = await runPicks();
+    await app.collections.create('Добірка');
+
+    const copy = await app.curatedCollections.add('cc_picks');
+    expect(copy?.name).toBe('Добірка (2)');
+
+    await app.collections.delete(copy?.id ?? '');
+    await settle();
+    expect(app.curatedCollections.rail[0]?.added).toBe(false);
+    expect((await app.curatedCollections.screen('cc_picks'))?.added).toBe(false);
+  });
+});

@@ -263,6 +263,8 @@ export {
 } from './dashboard/correction-types';
 export {
   type CuratedCollectionCard,
+  type CuratedCollectionEntry,
+  type CuratedCollectionScreen,
   type CuratedCollections,
 } from './dashboard/curated-collections';
 export {
