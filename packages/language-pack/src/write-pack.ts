@@ -270,6 +270,20 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       });
     }
 
+    const insertCollection = db.prepare(`
+      INSERT INTO curated_collections (id, name, description, published_on) VALUES (?, ?, ?, ?)
+    `);
+    const insertCollectionEntry = db.prepare(
+      'INSERT INTO curated_collection_entries (collection_id, position, entry_id) VALUES (?, ?, ?)',
+    );
+    for (const { id, name, description, publishedOn, entryIds } of content.curatedCollections ??
+      []) {
+      insertCollection.run(id, name, description, publishedOn);
+      entryIds.forEach((entryId, position) => {
+        insertCollectionEntry.run(id, position, entryId);
+      });
+    }
+
     db.exec('COMMIT');
   } catch (error) {
     db.close();

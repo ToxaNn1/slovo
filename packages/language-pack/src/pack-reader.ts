@@ -2,6 +2,7 @@ import {
   CategorySchema,
   CorrectionSchema,
   CrosswordDaySchema,
+  CuratedCollectionSchema,
   IdiomSchema,
   SynonymRowSchema,
   TipSchema,
@@ -43,6 +44,18 @@ export interface PackReader extends ContentReadPort {
   metadata(): Promise<PackMetadata>;
   /** The Daily Crossword of a date, `YYYY-MM-DD`, or undefined when the pack has no such day. */
   crosswordDay(date: string): Promise<CrosswordDay | undefined>;
+}
+
+interface CuratedCollectionRow {
+  id: string;
+  name: string;
+  description: string;
+  published_on: string;
+}
+
+interface CuratedCollectionEntryRow {
+  collection_id: string;
+  entry_id: string;
 }
 
 interface CrosswordWordRow {
@@ -163,6 +176,10 @@ const SQL = {
     ORDER BY synonym_rows.id
   `,
   metadata: 'SELECT key, value FROM metadata',
+  curatedCollections:
+    'SELECT id, name, description, published_on FROM curated_collections ORDER BY id',
+  curatedCollectionEntries:
+    'SELECT collection_id, entry_id FROM curated_collection_entries ORDER BY collection_id, position',
   crosswordDay:
     'SELECT entry_id, answer, clue, start_row, start_column, direction FROM crossword_words WHERE date = ? ORDER BY position',
 };
@@ -568,6 +585,22 @@ export function createPackReader(db: PackDatabase): PackReader {
     getEntries: readEntries,
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
     listLinkingSynonymRowIds: (wordId) => column(SQL.linkingSynonymRowIds, [wordId], 'id'),
+    listCuratedCollections: async () => {
+      const [collections, entries] = await Promise.all([
+        db.getAllAsync<CuratedCollectionRow>(SQL.curatedCollections, []),
+        db.getAllAsync<CuratedCollectionEntryRow>(SQL.curatedCollectionEntries, []),
+      ]);
+      const entryIds = grouped(entries, (row) => row.collection_id);
+      return collections.map((row) =>
+        CuratedCollectionSchema.parse({
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          publishedOn: row.published_on,
+          entryIds: (entryIds.get(row.id) ?? []).map((entry) => entry.entry_id),
+        }),
+      );
+    },
     metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
     crosswordDay: async (date) => {
       const rows = await db.getAllAsync<CrosswordWordRow>(SQL.crosswordDay, [date]);

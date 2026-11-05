@@ -1820,7 +1820,7 @@ describe('buildLanguagePack', () => {
     expect(b.ids).toEqual(a.ids);
     expect(a.metadata).toEqual({
       editionId: 'fixture',
-      contentVersion: 7,
+      contentVersion: 8,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
       packFormat: 10,
     });
@@ -1851,7 +1851,7 @@ describe('buildLanguagePack', () => {
           file: 'content/manifest.json',
           field: 'contentChecksum',
           message: expect.stringMatching(
-            /content changed since content version 7.*pnpm build:pack fixture --record/i,
+            /content changed since content version 8.*pnpm build:pack fixture --record/i,
           ) as string,
         },
       ]);
@@ -1864,7 +1864,7 @@ describe('buildLanguagePack', () => {
     record(editionDir);
     editJson(editionDir, 'content/manifest.json', (manifest) => ({
       ...manifest,
-      contentVersion: 7,
+      contentVersion: 8,
     }));
 
     expect(buildErrors(editionDir)).toEqual([
@@ -2191,6 +2191,102 @@ describe('the fonts of the word and UI families', () => {
   });
 });
 
+describe('Curated Collections', () => {
+  const collectionsDir = 'content/curated-collections';
+
+  function writeCollection(editionDir: string, name: string, collection: Json): void {
+    writeFileSync(join(editionDir, collectionsDir, name), JSON.stringify(collection));
+  }
+
+  it('writes the collections to the pack and reads them back in id order, their Entries in order', async () => {
+    const outFile = packPath();
+    const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
+    expect(result.ok).toBe(true);
+
+    const pack = openLanguagePack(outFile);
+    try {
+      expect(await pack.listCuratedCollections()).toEqual([
+        {
+          id: 'cc_fx0001',
+          name: 'Тестова добірка',
+          description: 'Два слова і виправлення для тестів.',
+          publishedOn: '2026-01-01',
+          entryIds: ['w_fx0003', 'c_fx0003'],
+        },
+        {
+          id: 'cc_fx0002',
+          name: 'Пізніша добірка',
+          description: 'Виходить на рейку влітку.',
+          publishedOn: '2026-06-01',
+          entryIds: ['c_fx0004', 'w_fx0003'],
+        },
+      ]);
+    } finally {
+      pack.close();
+    }
+  });
+
+  it('builds an Edition without the folder, with no collections in its pack', async () => {
+    const editionDir = copyFixture('valid');
+    rmSync(join(editionDir, collectionsDir), { recursive: true });
+    editJson(
+      editionDir,
+      'content/ids.json',
+      (ids) =>
+        (ids as unknown as string[]).filter((id) => !id.startsWith('cc_')) as unknown as Json,
+    );
+    record(editionDir);
+    const outFile = packPath();
+    expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);
+
+    const pack = openLanguagePack(outFile);
+    try {
+      expect(await pack.listCuratedCollections()).toEqual([]);
+    } finally {
+      pack.close();
+    }
+  });
+
+  it.each([
+    [
+      'an Entry the Edition does not have',
+      { entryIds: ['w_fx0003', 'w_fx9999'] },
+      'entryIds.1',
+      /no entry w_fx9999/i,
+    ],
+    ['a Retired Entry', { entryIds: ['w_fx0001'] }, 'entryIds.0', /w_fx0001 is a retired entry/i],
+    [
+      'a duplicate collection id',
+      { id: 'cc_fx0001' },
+      'id',
+      /duplicate curated collection id.*cc_fx0001\.json/i,
+    ],
+    ['an unreadable date', { publishedOn: '2026-13-01' }, 'publishedOn', /./],
+    ['a repeated Entry', { entryIds: ['w_fx0003', 'w_fx0003'] }, 'entryIds', /at most once/i],
+  ])('refuses %s', (_name, change, field, message) => {
+    const editionDir = copyFixture('valid');
+    const collection = {
+      id: 'cc_fx0003',
+      name: 'Зламана добірка',
+      description: 'Для тесту відмови.',
+      publishedOn: '2026-02-01',
+      entryIds: ['w_fx0003'],
+      ...change,
+    };
+    writeCollection(editionDir, 'cc_fx0003.json', collection);
+
+    const errors = buildErrors(editionDir);
+
+    expect(errors).toContainEqual(
+      expect.objectContaining({
+        file: `${collectionsDir}/cc_fx0003.json`,
+        field,
+        message: expect.stringMatching(message) as string,
+      }),
+    );
+  });
+});
+
 describe('the id registry', () => {
   const registryOf = (editionDir: string) =>
     JSON.parse(readFileSync(join(editionDir, 'content/ids.json'), 'utf8')) as string[];
@@ -2259,8 +2355,8 @@ describe('recordContent', () => {
 
     expect(recordContent({ editionDir })).toEqual({
       ok: true,
-      previousContentVersion: 7,
-      contentVersion: 7,
+      previousContentVersion: 8,
+      contentVersion: 8,
       contentChecksum: manifestOf(editionDir)['contentChecksum'],
       newIds: [],
       newCrosswordDays: [],
@@ -2279,12 +2375,12 @@ describe('recordContent', () => {
     const recorded = recordContent({ editionDir });
     const result = buildLanguagePack({ editionDir, outFile: edited });
 
-    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 7, contentVersion: 8 });
+    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 8, contentVersion: 9 });
     expect(result.ok).toBe(true);
     const { metadata } = await readBack(edited);
-    expect(metadata).toMatchObject({ contentVersion: 8 });
+    expect(metadata).toMatchObject({ contentVersion: 9 });
     expect(manifestOf(editionDir)).toEqual({
-      contentVersion: 8,
+      contentVersion: 9,
       contentChecksum: metadata.contentChecksum,
     });
     expect(metadata.contentChecksum).not.toBe((await readBack(original)).metadata.contentChecksum);
@@ -2339,7 +2435,7 @@ describe('recordContent', () => {
       ok: false,
       errors: [expect.objectContaining({ entryId: 'w_fx0002', field: 'rarity' })],
     });
-    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 7 });
+    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 8 });
   });
 
   it('records nothing while a literary use is not yet in the public domain, as the build refuses it', () => {
@@ -2383,6 +2479,8 @@ describe('recordContent', () => {
       'c_fx0002',
       'c_fx0003',
       'c_fx0004',
+      'cc_fx0001',
+      'cc_fx0002',
       'i_fx0001',
       'i_fx0002',
       'w_fx0001',
