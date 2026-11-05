@@ -106,6 +106,8 @@ export interface Shown {
   readonly mood: boolean;
   /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
   readonly curatedCollections: boolean;
+  /** Side swipes mark an Entry Known or Unknown; the card corner holds the heart, Collections and «⋯» in place of the action row (ADR 0077). */
+  readonly swipeMarks: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
   /** The «Рідкість» row of Settings, the Rarity Ceiling (ADR 0072). */
@@ -181,6 +183,7 @@ export function shownOf({
     dashboard: on('dashboard'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
+    swipeMarks: on('swipeMarks'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarityCeiling: on('rarityCeiling'),
     rarityTest: on('rarityTest'),
