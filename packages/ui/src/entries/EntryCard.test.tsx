@@ -901,7 +901,9 @@ describe('VoiceOver on Entry texts with a Stress mark', () => {
 
 describe('the corner of an Entry card', () => {
   /** Mark buttons stand in the corner, as they read whether the card is concealed. */
-  const cornerMarks = <KnowledgeButtons entryKind="word" onTap={() => undefined} />;
+  const cornerMarks = (
+    <KnowledgeButtons entryKind="word" mark={undefined} onTap={() => undefined} />
+  );
 
   it('draws the corner in the card, with no action row', async () => {
     await render(inEdition(<EntryCard card={wordWithEverything} corner={cornerMarks} />));
