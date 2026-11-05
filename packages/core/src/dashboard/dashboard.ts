@@ -6,9 +6,14 @@ import { renderStress, stressedVowelsOf } from '../entries/stress';
 import type { Cycle } from '../feed/cycle';
 import type { Feed } from '../feed/feed';
 import type { WordOfTheDay } from '../feed/word-of-the-day';
-import { dateKeyOf, type LocalDate } from '../local-date';
+import { dateKeyOf, todayDate, type LocalDate } from '../local-date';
+import type { Clock } from '../ports';
 import { createSubscribers } from '../in-turn';
 import type { MoodCheckIns } from '../mood/mood';
+import type { WordOfTheDayArchive, WordOfTheDayArchiveDay } from '../saved/word-of-the-day-archive';
+
+/** How many archive days «Попередні слова» shows at most. */
+const PREVIOUS_WORDS = 3;
 
 /**
  * The Word of the Day hero: unrevealed until «Розкрити», revealed with its
@@ -34,7 +39,7 @@ export type WordOfTheDayHero =
  * of the union, so a later block (previous Words, Mood, the rails) is one
  * more member and one more line in `blocksOf`.
  */
-export type DashboardBlock = WordOfTheDayBlock | MoodBlock;
+export type DashboardBlock = WordOfTheDayBlock | MoodBlock | PreviousWordsBlock;
 
 /** The Word of the Day hero's block, first on the Dashboard. */
 export interface WordOfTheDayBlock {
@@ -52,6 +57,18 @@ export interface MoodBlock {
   /** The four moods to choose from, in display order. */
   readonly moods: readonly Mood[];
   readonly check: { readonly state: 'asking' } | { readonly state: 'chosen'; readonly mood: Mood };
+}
+
+/**
+ * «Попередні слова», after the Mood check-in: the three newest days of the
+ * Word of the Day archive before today, newest first. A Retired Word stays;
+ * with no such day there is no block (ADR 0076). A tap opens the Entry card
+ * as Search does, making nothing Seen.
+ */
+export interface PreviousWordsBlock {
+  readonly kind: 'previousWords';
+  /** One to three days, newest first. */
+  readonly days: readonly WordOfTheDayArchiveDay[];
 }
 
 /**
@@ -75,6 +92,8 @@ export async function openDashboard({
   wordOfTheDay,
   feed,
   mood,
+  archive,
+  clock,
   seen,
   dayTurned,
 }: {
@@ -84,12 +103,16 @@ export async function openDashboard({
   wordOfTheDay: Pick<WordOfTheDay, 'today'>;
   feed: Pick<Feed, 'seeWordOfTheDay'>;
   mood: Pick<MoodCheckIns, 'today' | 'moods' | 'subscribe'>;
+  archive: Pick<WordOfTheDayArchive, 'list'>;
+  /** Tells today, whose archive day is the hero's. */
+  clock: Clock;
   seen: { subscribe(listener: (entryId: string) => unknown): unknown };
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
 }): Promise<Dashboard> {
   const subscribers = createSubscribers();
   const on = edition.isFeatureEnabled('dashboard');
   const moodOn = edition.isFeatureEnabled('mood');
+  const previousWordsOn = edition.isFeatureEnabled('previousWords');
 
   async function hero(): Promise<WordOfTheDayHero | undefined> {
     const today = await wordOfTheDay.today();
@@ -114,6 +137,15 @@ export async function openDashboard({
     return { kind: 'mood', moods: mood.moods, check };
   }
 
+  async function previousWords(): Promise<PreviousWordsBlock | undefined> {
+    // Today's day is the hero's, so it is left out.
+    const todayKey = dateKeyOf(todayDate(clock));
+    const days = (await archive.list())
+      .filter(({ date }) => dateKeyOf(date) < todayKey)
+      .slice(0, PREVIOUS_WORDS);
+    return days.length === 0 ? undefined : { kind: 'previousWords', days };
+  }
+
   async function blocksOf(): Promise<readonly DashboardBlock[]> {
     if (!on) return [];
     const blocks: DashboardBlock[] = [];
@@ -122,6 +154,8 @@ export async function openDashboard({
       blocks.push({ kind: 'wordOfTheDay', hero: wordOfTheDayHero });
     const moodCheckIn = moodBlock();
     if (moodCheckIn !== undefined) blocks.push(moodCheckIn);
+    const previous = previousWordsOn ? await previousWords() : undefined;
+    if (previous !== undefined) blocks.push(previous);
     return blocks;
   }
 
@@ -168,5 +202,9 @@ function blockKeyOf(block: DashboardBlock): string {
       const { check } = block;
       return check.state === 'chosen' ? `mood:chosen:${check.mood.id}` : 'mood:asking';
     }
+    case 'previousWords':
+      return `previousWords:${block.days
+        .map(({ date, row }) => `${dateKeyOf(date)}=${row.entryId}`)
+        .join(',')}`;
   }
 }

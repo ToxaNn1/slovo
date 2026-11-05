@@ -1107,6 +1107,9 @@
       "skip": "Не сьогодні",
       "today": "Сьогодні: {mood}",
       "change": "змінити"
+    },
+    "previousWords": {
+      "title": "Попередні слова"
     }
   },
   "wordOfTheDayArchive": {
