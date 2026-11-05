@@ -12,6 +12,7 @@ import {
   MistakeReportSheet,
   ShareButton,
   ShareSheet,
+  type EntrySwipe,
   useEdition,
   useUndoToast,
 } from '@slovo/ui';
@@ -37,9 +38,10 @@ import { useShown } from '../shown-in-effect';
  * Feed (its Word of the Day too) and Entry details, the screen a list opens.
  * Each action fills its own slot: raised tiles with labels under a Word, with
  * the line that says where the Entry is kept under them, and bare icons
- * under the other kinds (XActions). The «Знаю» and «Не знаю» buttons are there only when the
- * Knowledge switch is on in effect, and inactive while Self-check conceals the
- * card's meaning (the card tells them); the «Повідомити про помилку» flag only
+ * under the other kinds (XActions). The «Знаю» and «Не знаю» buttons are
+ * there only when the Knowledge switch is on in effect and the Swipe Marks
+ * switch off, and inactive while Self-check conceals the card's meaning (the
+ * card tells them); the «Повідомити про помилку» flag only
  * while Mistake Reports are on in effect, disabled while the meaning is concealed.
  * The «Знаю» and «Не знаю» buttons go above the actions in the Feed and below
  * them on Entry details (`place`). Its screen gives it an
@@ -57,7 +59,8 @@ export function EntryActions({
   const hide = useHide(card);
   const collection = useCollectionAction(entryId);
   const share = useShareAction(card);
-  const marks = useKnowledgeButtons(card);
+  // With the side swipes on, the card's swipes set the mark in place of the buttons (ADR 0077).
+  const marks = useKnowledgeButtons(card, useEntrySwipe(entryId) === undefined);
   const report = useMistakeReportAction(entryId);
   const { count } = useEdition();
   return (
@@ -91,16 +94,34 @@ export function EntryActions({
  * appears, Yesterday's too, with the Community Counters line under them
  * (ADR 0060): there only when the Knowledge switch is on in effect.
  */
-export function useKnowledgeButtons(card: Pick<AnyEntryCard, 'entryId' | 'kind'>): ReactNode {
+export function useKnowledgeButtons(
+  card: Pick<AnyEntryCard, 'entryId' | 'kind'>,
+  buttons = true,
+): ReactNode {
   const shown = useShown().entryButtons.knowledge;
   const knowledge = useKnowledgeMark(card.entryId);
   const line = useCounterLine(card.entryId, shown);
   return shown ? (
     <>
-      <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
+      {buttons && (
+        <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
+      )}
       <CommunityCountersLine line={line} />
     </>
   ) : undefined;
+}
+
+/**
+ * The side swipes of an Entry's card that set its Knowledge Mark, with the
+ * stamp and the undo toast: there only when the Knowledge and Swipe Marks
+ * switches are both on in effect (ADR 0077). Feed Notices take none.
+ */
+export function useEntrySwipe(entryId: string): EntrySwipe | undefined {
+  const shown = useShown();
+  const knowledge = useKnowledgeMark(entryId);
+  return shown.entryButtons.knowledge && shown.swipeMarks
+    ? { mark: knowledge.mark, onMark: knowledge.set, onUndo: knowledge.undo }
+    : undefined;
 }
 
 /**

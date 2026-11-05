@@ -16,18 +16,19 @@ import {
   space,
   SwipeHint,
   UndoToastProvider,
+  useCloseUndoToast,
   useTokens,
   VerticalPager,
   YesterdayCard,
   type VerticalPagerHandle,
 } from '@slovo/ui';
 import type { FeedCard, FeedNoticeCard, WordCardModel } from '@slovo/core';
-import { memo, useCallback, useRef } from 'react';
+import { memo, useCallback, useRef, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
-import { EntryActions, useKnowledgeButtons } from '@/entries/entry-actions';
+import { EntryActions, useEntrySwipe, useKnowledgeButtons } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
@@ -73,6 +74,7 @@ function FeedScreen() {
 
   const { cards, onCardChange, openCorrection, answerQuickQuestion } = feed;
   const { dismiss: dismissSwipeHint } = swipeHint;
+  const closeUndoToast = useCloseUndoToast();
   // Kept from render to render: a swipe re-renders the pager, and its pages
   // re-render only when their card changes.
   const renderPage = useCallback(
@@ -92,8 +94,10 @@ function FeedScreen() {
     (position: number) => {
       onCardChange(position);
       dismissSwipeHint();
+      // The undo toast of a side swipe goes once the reader moves on to another card.
+      closeUndoToast();
     },
-    [onCardChange, dismissSwipeHint],
+    [onCardChange, dismissSwipeHint, closeUndoToast],
   );
 
   if (cards.length === 0) return <Placeholder message={editionStrings.noWords} />;
@@ -223,9 +227,13 @@ const FeedPage = memo(function FeedPage({
         {card.kind === 'notice' ? (
           <YesterdayNotice word={card.word} />
         ) : card.kind === 'tip' ? (
-          <EntryCard card={card} selfCheck={selfCheck} actions={<EntryActions card={card} />} />
+          <SwipedEntryCard
+            card={card}
+            selfCheck={selfCheck}
+            actions={<EntryActions card={card} />}
+          />
         ) : card.kind === 'synonymRow' ? (
-          <EntryCard
+          <SwipedEntryCard
             card={card}
             // A member opens its Word over the Feed, Hidden or out of the Mix alike.
             onOpenWord={(wordId) => {
@@ -235,7 +243,7 @@ const FeedPage = memo(function FeedPage({
             actions={<EntryActions card={card} />}
           />
         ) : (
-          <EntryCard
+          <SwipedEntryCard
             card={card}
             onOpenCorrection={(correctionId) => {
               onOpenCorrection(position, correctionId);
@@ -255,6 +263,11 @@ const FeedPage = memo(function FeedPage({
     </View>
   );
 });
+
+/** An Entry's card in the Feed, with the side swipes that set its Knowledge Mark (ADR 0077). */
+function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'swipe'>) {
+  return <EntryCard {...props} swipe={useEntrySwipe(props.card.entryId)} />;
+}
 
 /**
  * A Feed Notice that sits in the middle of its page: the Weekly Recap, the
