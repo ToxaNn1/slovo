@@ -1107,7 +1107,9 @@
       "skip": "Не сьогодні",
       "today": "Сьогодні: {mood}",
       "change": "змінити"
-    }
+    },
+    "curatedCollectionsTitle": "Добірки",
+    "curatedCollectionNew": "Нова"
   },
   "wordOfTheDayArchive": {
     "title": "Слова дня",

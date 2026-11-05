@@ -104,6 +104,7 @@ const validConfig = {
     fastReveal: true,
     dashboard: true,
     mood: true,
+    curatedCollections: true,
   },
   userSettingDefaults: {
     theme: 'system',
