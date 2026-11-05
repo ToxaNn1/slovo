@@ -33,7 +33,10 @@ const SHIFTED: Readonly<Record<MoodShift, Readonly<Record<MixKindWeight, MixKind
  * as they are without a Mood. A kind turned off in the Mix has no Entries in
  * the Cycle, so its weight turns nothing on.
  */
-export function shiftedKindWeights(weights: MixKindWeights, mood: Mood | undefined): MixKindWeights {
+export function shiftedKindWeights(
+  weights: MixKindWeights,
+  mood: Mood | undefined,
+): MixKindWeights {
   if (mood === undefined) return weights;
   return Object.fromEntries(
     MIX_KINDS.map((kind) => [kind, SHIFTED[mood.shifts[kind] ?? 'same'][weights[kind]]]),

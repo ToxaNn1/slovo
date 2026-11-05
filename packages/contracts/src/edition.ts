@@ -680,7 +680,6 @@ export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;
 /** The id of an option of a questionnaire question, e.g. `studying`. */
 export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 
-
 /**
  * The Edition's questionnaire (ADR 0067): the options of the level
  * question, each setting the Rarity Ceiling or opening the Rarity Test, of

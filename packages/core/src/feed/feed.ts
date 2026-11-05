@@ -560,7 +560,10 @@ export async function openFeed({
       const rarity = known.get(id);
       return rarity !== undefined && inRarityBand(rarity, today.rarityBand, rarityCeiling.state);
     };
-    return { ...unseen, words: [...unseen.words.filter(inBand), ...unseen.words.filter((id) => !inBand(id))] };
+    return {
+      ...unseen,
+      words: [...unseen.words.filter(inBand), ...unseen.words.filter((id) => !inBand(id))],
+    };
   }
 
   async function addQuickQuestion(): Promise<FeedCard | undefined> {
