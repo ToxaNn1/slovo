@@ -209,3 +209,39 @@ describe('the Word of the Day hero', () => {
     });
   });
 });
+
+describe('the Mood check-in', () => {
+  it('a Mood chip folds the block to «Сьогодні: …» with its reply', async () => {
+    await open(true);
+    await renderApp();
+
+    expect(screen.getByText(editionStrings.dashboard.mood.question)).toBeTruthy();
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-energetic')));
+
+    expect(screen.getByText('Сьогодні: ⚡ Бадьорий')).toBeTruthy();
+    expect(screen.getByText('Тримай темп!')).toBeTruthy();
+    expect(screen.queryByTestId('dashboard-mood-energetic')).toBeNull();
+    expect(screen.queryByText(editionStrings.dashboard.mood.question)).toBeNull();
+  });
+
+  it('«змінити» opens the chips again and changes today’s Mood', async () => {
+    await open(true);
+    await renderApp();
+
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-energetic')));
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-change')));
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-calm')));
+
+    expect(screen.getByText('Сьогодні: 😌 Спокійний')).toBeTruthy();
+  });
+
+  it('«Не сьогодні» hides the block', async () => {
+    await open(true);
+    await renderApp();
+
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-mood-skip')));
+
+    expect(screen.queryByTestId('dashboard-mood')).toBeNull();
+    expect(screen.getByTestId('dashboard-hero')).toBeTruthy();
+  });
+});

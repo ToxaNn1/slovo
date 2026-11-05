@@ -15,6 +15,10 @@ export interface DashboardScreen {
   readonly reveal: () => void;
   /** «До картки →»: opens the Feed on the Word of the Day card. */
   readonly toCard: () => void;
+  /** A Mood chip: chooses today's Mood, or changes it. */
+  readonly chooseMood: (moodId: string) => void;
+  /** «Не сьогодні»: skips the Mood check-in till tomorrow. */
+  readonly skipMood: () => void;
 }
 
 /**
@@ -23,7 +27,7 @@ export interface DashboardScreen {
  * over the Dashboard, where the Feed lands it (ADR 0076).
  */
 export function useDashboardScreen(): DashboardScreen {
-  const { dashboard } = useComposition();
+  const { dashboard, mood } = useComposition();
   const blocks = useSubscribed(dashboard, (source) => source.blocks);
   const openScreen = useOpenScreen();
   const focused = useIsFocused();
@@ -37,5 +41,11 @@ export function useDashboardScreen(): DashboardScreen {
       void dashboard.reveal();
     },
     toCard: wordOfTheDayLanding.ask,
+    chooseMood: (moodId) => {
+      void mood.choose(moodId);
+    },
+    skipMood: () => {
+      void mood.skip();
+    },
   };
 }

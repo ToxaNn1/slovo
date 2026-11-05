@@ -1079,12 +1079,12 @@ describe('the moods', () => {
 
   it('the UA Edition lists six moods', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).moods).toEqual([
-      { id: 'joyful', name: 'Радісний', emoji: '😊' },
-      { id: 'sad', name: 'Сумний', emoji: '😢' },
-      { id: 'in-love', name: 'Закоханий', emoji: '😍' },
-      { id: 'energetic', name: 'Бадьорий', emoji: '⚡' },
-      { id: 'calm', name: 'Спокійний', emoji: '😌' },
-      { id: 'thoughtful', name: 'Задумливий', emoji: '🤔' },
+      { id: 'joyful', name: 'Радісний', emoji: '😊', reply: 'Лови світле слово!' },
+      { id: 'sad', name: 'Сумний', emoji: '😢', reply: 'Слово зігріє.' },
+      { id: 'in-love', name: 'Закоханий', emoji: '😍', reply: 'Ніжні слова поруч.' },
+      { id: 'energetic', name: 'Бадьорий', emoji: '⚡', reply: 'Тримай темп!' },
+      { id: 'calm', name: 'Спокійний', emoji: '😌', reply: 'Без поспіху.' },
+      { id: 'thoughtful', name: 'Задумливий', emoji: '🤔', reply: 'Є над чим подумати.' },
     ]);
   });
 });
