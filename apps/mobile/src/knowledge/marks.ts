@@ -7,11 +7,15 @@ import { useSubscribed } from '../opening';
 /**
  * The mark an Entry's card shows, read from the Knowledge snapshot and kept up
  * to date (none while the Entry is due, as its card is a Review), and the call
- * a tap on a mark button makes.
+ * a tap on a mark button makes, and the calls a swipe and the card's «⋯»
+ * menu make (ADR 0077).
  */
 export function useKnowledgeMark(entryId: string): {
   mark: KnowledgeMark | undefined;
   tap: (mark: KnowledgeMark) => void;
+  set: (mark: KnowledgeMark) => void;
+  clear: () => void;
+  undo: () => void;
 } {
   const { knowledge } = useComposition();
   const shown = useSubscribed(knowledge, (open) => open.state.shown.get(entryId));
@@ -19,6 +23,15 @@ export function useKnowledgeMark(entryId: string): {
     mark: shown === 'review' ? undefined : shown,
     tap: (tapped) => {
       void keep('the Knowledge Mark', knowledge.tap(entryId, tapped), undefined);
+    },
+    set: (mark) => {
+      void keep('the Knowledge Mark', knowledge.set(entryId, mark), undefined);
+    },
+    clear: () => {
+      void keep('the Knowledge Mark', knowledge.clear(entryId), undefined);
+    },
+    undo: () => {
+      void keep('the Knowledge Mark', knowledge.undo(), undefined);
     },
   };
 }
