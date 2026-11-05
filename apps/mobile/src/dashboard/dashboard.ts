@@ -1,3 +1,4 @@
+import type { CorrectionType } from '@slovo/contracts';
 import type { DashboardBlock } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
 import { useEffect, useSyncExternalStore } from 'react';
@@ -19,6 +20,8 @@ export interface DashboardScreen {
   readonly chooseMood: (moodId: string) => void;
   /** «Не сьогодні»: skips the Mood check-in till tomorrow. */
   readonly skipMood: () => void;
+  /** A tile of the Correction Types rail: opens its type's screen. */
+  readonly openCorrectionType: (type: CorrectionType) => void;
 }
 
 /**
@@ -46,6 +49,9 @@ export function useDashboardScreen(): DashboardScreen {
     },
     skipMood: () => {
       void mood.skip();
+    },
+    openCorrectionType: (type) => {
+      openScreen(`/correction-type/${type}`);
     },
   };
 }

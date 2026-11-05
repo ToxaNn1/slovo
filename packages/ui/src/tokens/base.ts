@@ -844,6 +844,9 @@ export const emptyStatePaddingTop = 80;
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;
 
+/** The width of a tile of the Dashboard's Correction Types rail, so two and a part show on a phone. */
+export const railTileWidth = 152;
+
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;
 
