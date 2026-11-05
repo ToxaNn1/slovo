@@ -10,6 +10,38 @@ import { EntryIdSchema } from '../entry';
 import { hasNoRepeats } from '../shared';
 import { procedure } from './procedure';
 
+/**
+ * The questions an answer is counted for: the questionnaire's; the Daily Goal
+ * chosen in the onboarding (`dailyGoal`), an Edition goal or `none` when
+ * skipped; the Notification time chosen there (`notificationTime`), by its
+ * bucket; and «Хто ви» (`who`), which builds before the level question still
+ * send. The API only grows within `/v1` (ADR 0031), so `who` stays, and the
+ * backend refuses it as an answer that is no option.
+ */
+export const CountedQuestionSchema = z.enum([
+  ...QuestionnaireQuestionSchema.options,
+  'who',
+  'dailyGoal',
+  'notificationTime',
+]);
+
+export type CountedQuestion = z.infer<typeof CountedQuestionSchema>;
+
+/**
+ * The bucket a Notification time chosen in the onboarding is counted in: one
+ * of the three times «Коли нагадати?» offers, any other time, or none («Без
+ * нагадувань», or the step skipped).
+ */
+export const NotificationTimeBucketSchema = z.enum([
+  'morning',
+  'midday',
+  'evening',
+  'other',
+  'none',
+]);
+
+export type NotificationTimeBucket = z.infer<typeof NotificationTimeBucketSchema>;
+
 /** A change of one count: one taken away, none or one added. */
 const DeltaSchema = z.literal([-1, 0, 1]);
 
@@ -136,11 +168,11 @@ export const countersContract = {
       successStatus: 202,
       summary: 'Count one answer of the onboarding questionnaire',
       description:
-        'Adds one to the count of the answer, an option of «Хто ви» (`who`) or «Навіщо» (`why`) of the Edition. The backend keeps the totals per answer only: no Account, no device id, no IP address (ADR 0068).',
+        'Adds one to the count of the answer, an option of «Як добре ти знаєш мову?» (`level`) or «Навіщо» (`why`) of the Edition, the Daily Goal chosen (`dailyGoal`: an Edition goal or `none`), or the bucket of the Notification time chosen (`notificationTime`: `morning`, `midday`, `evening`, `other` or `none`). The backend keeps the totals per answer only: no Account, no device id, no IP address (ADR 0068).',
       tags: ['counters'],
     })
     .errors({
-      /** An Edition the backend doesn't serve, one with the questionnaire switched off, or an answer that is not an option of the question. */
+      /** An Edition the backend doesn't serve, one with the question's Feature Switch off (`questionnaire`, `dailyGoal` or `notificationTimeStep`), or an answer that is not an option of the question. */
       NOT_FOUND: { message: 'Not found' },
       /**
        * Over the limit of 100 answers from one IP address in a day;
@@ -151,7 +183,7 @@ export const countersContract = {
     .input(
       z.strictObject({
         editionId: EditionIdSchema,
-        question: QuestionnaireQuestionSchema,
+        question: CountedQuestionSchema,
         answer: QuestionnaireAnswerIdSchema,
       }),
     )

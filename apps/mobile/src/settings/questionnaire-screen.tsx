@@ -14,7 +14,7 @@ import { useShown } from '../shown-in-effect';
 const { onboarding, feedNotices, settings } = editionStrings;
 
 /**
- * Settings › Пройти опитування ще раз (ADR 0067): «Хто ви» and «Навіщо» while
+ * Settings › Пройти опитування ще раз (ADR 0067): «Рівень» and «Навіщо» while
  * the questionnaire is on, the self-rating while the Rarity Test is on, and
  * the interests. Each answer
  * applies at once through the Core's questionnaire, as on the onboarding and
@@ -29,9 +29,9 @@ export function QuestionnaireScreen() {
   if (shown === undefined) return <Redirect href="/settings" />;
 
   const questions: readonly { question: OptionQuestion; title: string }[] = [
-    ...(shown.whoWhy
+    ...(shown.levelWhy
       ? [
-          { question: 'who' as const, title: onboarding.who.title },
+          { question: 'level' as const, title: onboarding.level.title },
           { question: 'why' as const, title: onboarding.why.title },
         ]
       : []),

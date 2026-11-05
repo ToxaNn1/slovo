@@ -12,7 +12,7 @@ import {
   type NotificationScheduling,
   type PlanEdition,
 } from './notification-plan';
-import type { Clock, NotificationPermission, Random } from '../ports';
+import type { Clock, NotificationPermission, Random, UserStateChanges } from '../ports';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -76,6 +76,14 @@ export interface Notifications {
    * nothing when it is kept. A `replacing` not in the list changes nothing.
    */
   keepTime(time: string, replacing?: string): Promise<NotificationTimeRefusal | undefined>;
+  /**
+   * The reader's answer to the onboarding's «Коли нагадати?»: `time` becomes
+   * the only Notification time, or with nothing («Без нагадувань») none is
+   * left. Either answer is the ask, so the Feed's explainer never comes; a
+   * time then asks for permission to notify, as `askPermission` does; a
+   * device that fails to ask leaves the time kept and the ask unanswered.
+   */
+  chooseOnboardingTime(time: string | undefined): Promise<void>;
   /** Removes the time. A time not in the list is skipped. */
   removeTime(time: string): Promise<void>;
   /** Switches the notification sound on or off. */
@@ -99,7 +107,11 @@ export interface Notifications {
   subscribe(listener: () => void): () => void;
 }
 
-const { notificationTimes: timesRecord, notificationSound: soundRecord } = userStateRecords;
+const {
+  notificationTimes: timesRecord,
+  notificationSound: soundRecord,
+  notificationAsk,
+} = userStateRecords;
 
 function stateOf(
   times: readonly string[],
@@ -201,10 +213,16 @@ export async function openNotifications({
     await planner.plan({ ...state, times: planTimes() });
   }
 
-  /** Writes the times, an empty list included, then makes the change in memory and plans again. */
-  async function writeTimes(times: readonly string[]): Promise<void> {
+  /**
+   * Writes the times, an empty list included, with the `also` records, then
+   * makes the change in memory and plans again.
+   */
+  async function writeTimes(
+    times: readonly string[],
+    also: UserStateChanges = new Map(),
+  ): Promise<void> {
     const next = stateOf(times, state.sound, state.permission);
-    await userState.write(timesRecord.change([...next.times]));
+    await userState.write(new Map([...timesRecord.change([...next.times]), ...also]));
     state = next;
     subscribers.tell();
     await plan();
@@ -225,6 +243,16 @@ export async function openNotifications({
         : state.times.map((kept) => (kept === replacing ? time : kept)),
     );
     return undefined;
+  }
+
+  async function chooseOnboardingTime(time: string | undefined): Promise<void> {
+    if (time !== undefined) TimeOfDaySchema.parse(time);
+    await writeTimes(
+      time === undefined ? [] : [time],
+      notificationAsk.change({ step: 'onboarding' }),
+    );
+    // A device that fails to ask keeps the time and the reader going on.
+    if (time !== undefined) await askPermission().catch(() => undefined);
   }
 
   async function removeTime(time: string): Promise<void> {
@@ -270,6 +298,7 @@ export async function openNotifications({
       return state;
     },
     keepTime: (time, replacing) => inTurn(() => keepTime(time, replacing)),
+    chooseOnboardingTime: (time) => inTurn(() => chooseOnboardingTime(time)),
     removeTime: (time) => inTurn(() => removeTime(time)),
     setSound: (on) => inTurn(() => setSound(on)),
     askPermission: () => inTurn(askPermission),

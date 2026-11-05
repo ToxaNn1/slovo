@@ -210,6 +210,24 @@ describe('An onboarding step', () => {
     expect(shoutOnScreen().scale).toBe(1);
   });
 
+  // Owner test pass B-002: the main button sat the home indicator's height above the board's place.
+  it("puts its buttons as far from the screen's bottom edge as the board", async () => {
+    await renderWelcome(notched);
+    expect(styleOf('onboarding')['paddingBottom'] ?? 0).toBe(0);
+    expect(styleOf('onboarding-footer')['paddingBottom']).toBe(40);
+  });
+
+  it('keeps its buttons above the home indicator when it is taller than the board leaves', async () => {
+    await renderWelcome({ ...notched, insets: { ...notched.insets, bottom: 48 } });
+    expect(styleOf('onboarding-footer')['paddingBottom']).toBe(48);
+  });
+
+  // Owner test pass B-001: the shout word ran into the screen's left edge and was cut.
+  it("insets its shout word from the screen's left edge", async () => {
+    await renderWelcome(notched);
+    expect(Number(styleOf('onboarding-shout')['left'])).toBeGreaterThan(0);
+  });
+
   // Shot pass on #1512: on iPhone SE the full red top left room for the title alone.
   it("leaves the content the board's room on the smallest phone, its red top drawn smaller", async () => {
     await renderWelcome(small);

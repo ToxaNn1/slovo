@@ -65,14 +65,19 @@ export const onboardingLayout = {
    * shows its content: it still holds «Пропустити», the shout word and the Mascot.
    */
   minHeroHeight: 260,
-  /** Where the shout word sits on the red top, its turn in degrees, and where it flies in from. */
-  shout: { left: -14, top: 96, turn: -8, flyFrom: -120 },
+  /**
+   * Where the shout word sits on the red top, its turn in degrees, and where
+   * it flies in from. Inset by the boards' side, as their glyphs' own bearing
+   * puts it there, so its turned left end is never cut by the screen's edge.
+   */
+  shout: { left: 24, top: 96, turn: -8, flyFrom: -120 },
   /** The Mascot's corner, less its own padding, and its figure's width. */
   mascot: { right: 10, top: 270, width: 140 },
   dot: { height: 8, width: 14, currentWidth: 34, gap: 6, skew: '-20deg' },
   side: 24,
   contentTop: 6,
   gap: 14,
+  /** The room under a step's buttons to the screen's bottom edge, the home indicator in it. */
   bottom: 40,
   goalTile: { height: 78, gap: 10, radius: 16, lineGap: 2 },
 } as const;

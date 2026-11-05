@@ -310,7 +310,7 @@ const storedIn1_0: readonly (readonly [
     'laterQuestions',
     undefined,
     'questionnaire.later',
-    '{"asked":["dailyGoalChoice"],"date":"2026-10-30","offerRarityTest":true}',
+    '{"asked":["wordGoalChoice"],"date":"2026-10-30","offerRarityTest":true}',
   ],
   ['firstWeekFrom', undefined, 'firstWeek.from', '"2026-10-24"'],
   ['contentUpdateCheckedAt', undefined, 'contentUpdate.checkedAt', '"2026-10-30T08:15:00.000Z"'],

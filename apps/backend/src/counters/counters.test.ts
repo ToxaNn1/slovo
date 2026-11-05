@@ -703,6 +703,16 @@ describe('counters.communityWord', () => {
     });
   });
 
+  it('answers NOT_FOUND for `who`, the old name of «Рівень», and counts nothing', async () => {
+    const { client, database } = testApp({ editions: testEditions(['qwho']).read() });
+
+    await expect(
+      client.counters.questionnaire({ editionId: 'qwho', question: 'who', answer: 'studying' }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+    await expect(answersOf(database, 'qwho', 'who')).resolves.toEqual([]);
+    await expect(answersOf(database, 'qwho')).resolves.toEqual([]);
+  });
+
   it('answers NOT_FOUND for an Edition it does not serve, or with the Community Word or the Community Counters switched off, locally or remotely', async () => {
     const locallyOff = new Map([
       ['off', 'communityWord'],
@@ -732,7 +742,7 @@ describe('counters.communityWord', () => {
 });
 
 /** What the database keeps of the answers to the Edition's question: each answer with its count. */
-async function answersOf({ db }: Database, editionId: string, question = 'who') {
+async function answersOf({ db }: Database, editionId: string, question = 'level') {
   const rows = await db
     .select()
     .from(questionnaireCounters)
@@ -754,36 +764,36 @@ describe('counters.questionnaire', () => {
 
     const response = await request(
       '/v1/counters/questionnaire',
-      post({ editionId: 'qa', question: 'who', answer: 'studying' }),
+      post({ editionId: 'qa', question: 'level', answer: 'fair' }),
     );
-    await client.counters.questionnaire({ editionId: 'qa', question: 'who', answer: 'studying' });
-    await client.counters.questionnaire({ editionId: 'qa', question: 'who', answer: 'gourmet' });
+    await client.counters.questionnaire({ editionId: 'qa', question: 'level', answer: 'fair' });
+    await client.counters.questionnaire({ editionId: 'qa', question: 'level', answer: 'gourmet' });
     await client.counters.questionnaire({ editionId: 'qa', question: 'why', answer: 'play' });
-    await client.counters.questionnaire({ editionId: 'qb', question: 'who', answer: 'working' });
+    await client.counters.questionnaire({ editionId: 'qb', question: 'level', answer: 'good' });
 
     expect(response.status).toBe(202);
     await expect(response.text()).resolves.toBe('');
     await expect(answersOf(database, 'qa')).resolves.toEqual([
+      { answer: 'fair', count: 2 },
       { answer: 'gourmet', count: 1 },
-      { answer: 'studying', count: 2 },
     ]);
     await expect(answersOf(database, 'qa', 'why')).resolves.toEqual([{ answer: 'play', count: 1 }]);
-    await expect(answersOf(database, 'qb')).resolves.toEqual([{ answer: 'working', count: 1 }]);
+    await expect(answersOf(database, 'qb')).resolves.toEqual([{ answer: 'good', count: 1 }]);
   });
 
   it('keeps totals only: no column names a reader, a device or an IP address', async () => {
     const { clientFrom, database } = testApp({ editions: testEditions(['qid']).read() });
     await clientFrom('2001:db8:7:6::15').counters.questionnaire({
       editionId: 'qid',
-      question: 'who',
-      answer: 'working',
+      question: 'level',
+      answer: 'good',
     });
 
     const rows = await database.db
       .select()
       .from(questionnaireCounters)
       .where(eq(questionnaireCounters.editionId, 'qid'));
-    expect(rows).toEqual([{ editionId: 'qid', question: 'who', answer: 'working', count: 1 }]);
+    expect(rows).toEqual([{ editionId: 'qid', question: 'level', answer: 'good', count: 1 }]);
     const keys = (await database.db.select({ key: rateLimits.key }).from(rateLimits)).map(
       (row) => row.key,
     );
@@ -795,7 +805,7 @@ describe('counters.questionnaire', () => {
 
     const response = await request(
       '/v1/counters/questionnaire',
-      post({ editionId: 'uk', question: 'who', answer: 'studying', deviceId: 'd1' }),
+      post({ editionId: 'uk', question: 'level', answer: 'fair', deviceId: 'd1' }),
     );
 
     expect(response.status).toBe(400);
@@ -822,9 +832,67 @@ describe('counters.questionnaire', () => {
 
     for (const editionId of ['xx', 'qoff', 'qremote']) {
       await expect(
-        client.counters.questionnaire({ editionId, question: 'who', answer: 'studying' }),
+        client.counters.questionnaire({ editionId, question: 'level', answer: 'fair' }),
       ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
       await expect(answersOf(database, editionId)).resolves.toEqual([]);
+    }
+  });
+
+  it('counts the Daily Goal chosen, an Edition goal or `none`, and the bucket of the Notification time', async () => {
+    const { client, database } = testApp({ editions: testEditions(['qgoal']).read() });
+    const count = (question: 'dailyGoal' | 'notificationTime', answer: string) =>
+      client.counters.questionnaire({ editionId: 'qgoal', question, answer });
+
+    await count('dailyGoal', '25');
+    await count('dailyGoal', '25');
+    await count('dailyGoal', 'none');
+    for (const bucket of ['morning', 'midday', 'evening', 'other', 'none', 'evening'])
+      await count('notificationTime', bucket);
+
+    await expect(answersOf(database, 'qgoal', 'dailyGoal')).resolves.toEqual([
+      { answer: '25', count: 2 },
+      { answer: 'none', count: 1 },
+    ]);
+    await expect(answersOf(database, 'qgoal', 'notificationTime')).resolves.toEqual([
+      { answer: 'evening', count: 2 },
+      { answer: 'midday', count: 1 },
+      { answer: 'morning', count: 1 },
+      { answer: 'none', count: 1 },
+      { answer: 'other', count: 1 },
+    ]);
+  });
+
+  it('answers NOT_FOUND for a goal the Edition does not offer or a bucket there is not, and counts nothing', async () => {
+    const { client, database } = testApp({ editions: testEditions(['qbad']).read() });
+
+    for (const [question, answer] of [
+      ['dailyGoal', '30'],
+      ['dailyGoal', 'morning'],
+      ['notificationTime', 'night'],
+      ['notificationTime', '25'],
+    ] as const) {
+      await expect(
+        client.counters.questionnaire({ editionId: 'qbad', question, answer }),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+      await expect(answersOf(database, 'qbad', question)).resolves.toEqual([]);
+    }
+  });
+
+  it('answers NOT_FOUND for the goal with the Daily Goal switched off, and the time with its step switched off', async () => {
+    const folder = testEditions(['qsteps'], (config) => ({
+      ...config,
+      featureSwitches: { ...config.featureSwitches, dailyGoal: false, notificationTimeStep: false },
+    }));
+    const { client, database } = testApp({ editions: folder.read() });
+
+    for (const [question, answer] of [
+      ['dailyGoal', '10'],
+      ['notificationTime', 'morning'],
+    ] as const) {
+      await expect(
+        client.counters.questionnaire({ editionId: 'qsteps', question, answer }),
+      ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+      await expect(answersOf(database, 'qsteps', question)).resolves.toEqual([]);
     }
   });
 
@@ -832,7 +900,7 @@ describe('counters.questionnaire', () => {
     const { request, client, clientFrom, database } = testApp({
       editions: testEditions(['qlimit']).read(),
     });
-    const answer = { editionId: 'qlimit', question: 'who', answer: 'studying' } as const;
+    const answer = { editionId: 'qlimit', question: 'level', answer: 'fair' } as const;
     for (let sent = 0; sent < 100; sent++) await client.counters.questionnaire(answer);
     passTime(DAY / 2);
 
@@ -841,9 +909,7 @@ describe('counters.questionnaire', () => {
     expect(next.status).toBe(429);
     await expect(next.json()).resolves.toMatchObject({ code: 'TOO_MANY_REQUESTS' });
     expect(next.headers.get('retry-after')).toBe(String(DAY / 2 / 1000));
-    await expect(answersOf(database, 'qlimit')).resolves.toEqual([
-      { answer: 'studying', count: 100 },
-    ]);
+    await expect(answersOf(database, 'qlimit')).resolves.toEqual([{ answer: 'fair', count: 100 }]);
     await expect(clientFrom(newIp()).counters.questionnaire(answer)).resolves.toBeUndefined();
     passTime(DAY / 2);
     await expect(client.counters.questionnaire(answer)).resolves.toBeUndefined();

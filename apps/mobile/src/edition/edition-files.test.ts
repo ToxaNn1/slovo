@@ -250,10 +250,10 @@ describe('the 0.8.13 strings', () => {
   it('the UA Edition carries the agreed Rarity Test texts verbatim', () => {
     expect(parsed.rarityTest).toMatchObject({
       start: 'Перевірити рівень',
-      subtitle: '10 слів — і ми підберемо рідкість саме для вас',
+      subtitle: '10 слів — і ми підберемо рідкість саме для тебе',
       progress: '{n} з {total}',
       retake: 'Пройти тест ще раз',
-      result: 'Ваша рідкість: до {n}',
+      result: 'Твоя рідкість: до {n}',
     });
     expect(parsed.knowledge).toMatchObject({ known: 'Знаю', unknown: 'Не знаю' });
   });
@@ -261,13 +261,13 @@ describe('the 0.8.13 strings', () => {
   it('the UA Edition carries the agreed Feed Notice texts verbatim', () => {
     expect(parsed.feedNotices).toMatchObject({
       weeklyRecap: {
-        title: 'Ваш тиждень',
+        title: 'Твій тиждень',
         seen: 'переглянуто',
         saved: 'збережено',
         known: 'знаю',
         streak: 'серія',
       },
-      yesterday: { title: 'Пам’ятаєте вчорашнє слово?' },
+      yesterday: { title: 'Пам’ятаєш вчорашнє слово?' },
       enoughForToday: { message: 'Може, на сьогодні досить?', keepGoing: 'Гортати далі' },
       firstWeek: { close: 'Зрозуміло', lastDayTitle: 'Тиждень із нами' },
     });
@@ -325,7 +325,7 @@ describe('the 0.8.13 strings', () => {
   });
 
   it('the UA Edition carries the agreed texts of Settings, «Збережене», Mood and the widget', () => {
-    expect(parsed.settings.dailyGoal).toEqual({ title: 'Денна ціль' });
+    expect(parsed.settings.dailyGoal).toEqual({ title: 'Денна ціль', none: 'Без цілі' });
     expect(parsed.wordOfTheDayArchive.title).toBe('Слова дня');
     expect(parsed.mood.title).toBe('Слово під настрій');
     expect(parsed.settings.howToAddWidget).toBe('Як додати віджет');
@@ -417,8 +417,8 @@ describe('the 0.8.14 strings', () => {
       comment: 'Коментар (необов’язково)',
       send: 'Надіслати',
       sent: 'Дякуємо! Ми перевіримо.',
-      tooMany: 'Забагато повідомлень сьогодні. Спробуйте завтра.',
-      failed: 'Не вдалося надіслати. Спробуйте ще раз.',
+      tooMany: 'Забагато повідомлень сьогодні. Спробуй завтра.',
+      failed: 'Не вдалося надіслати. Спробуй ще раз.',
     });
   });
 
@@ -544,7 +544,7 @@ describe('the 0.8.15 strings', () => {
     expect(fill(link.message, { name: 'Осінь', url: 'https://slovo.example/c/abc123' })).toBe(
       'Колекція «Осінь» у SLOVO: https://slovo.example/c/abc123',
     );
-    expect(link.offline).toBe('Немає з’єднання. Спробуйте пізніше.');
+    expect(link.offline).toBe('Немає з’єднання. Спробуй пізніше.');
     expect(link.add).toBe('Додати собі');
     expect(link.notFound).not.toBe('');
   });
@@ -776,8 +776,6 @@ describe('the 0.8 Sync strings', () => {
   const strings = readJson('uk', 'strings') as Record<string, unknown>;
   const account = strings['account'] as Record<string, unknown>;
   const sync = account['sync'] as Record<string, unknown>;
-  const onboarding = strings['onboarding'] as Record<string, unknown>;
-  const onboardingAccount = onboarding['account'] as Record<string, unknown>;
   /** The strings schema's issues as paths. */
   const issuesOf = (changed: unknown) =>
     EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
@@ -816,33 +814,91 @@ describe('the 0.8 Sync strings', () => {
 
     expect(issuesOf(changed)).toEqual([`dates.${key}`]);
   });
+});
 
-  it("the UA Edition needs the onboarding's SLOVO ID step", () => {
-    const changed = { ...strings, onboarding: without(onboarding, 'account') };
+describe('the onboarding strings of the «Весь потік» flow', () => {
+  const strings = readJson('uk', 'strings') as Record<string, Record<string, unknown>>;
+  const onboarding = strings['onboarding'] ?? {};
+  const rarityTest = strings['rarityTest'] ?? {};
+  /** The strings schema's issues as paths. */
+  const issuesOf = (changed: unknown) =>
+    EditionStringsSchema.safeParse(changed).error?.issues.map((issue) => issue.path.join('.'));
+  /** The group without the key. */
+  const without = (group: Record<string, unknown>, key: string) =>
+    Object.fromEntries(Object.entries(group).filter(([name]) => name !== key));
 
-    expect(issuesOf(changed)).toEqual(['onboarding.account']);
-  });
-
-  it.each(['title', 'subtitle', 'signIn', 'continueWithout'])(
-    'the UA Edition needs onboarding.account.%s',
+  it.each(['mix', 'notifications', 'account'])(
+    'refuses onboarding.%s, a step the onboarding no longer has',
     (key) => {
-      const changed = {
-        ...strings,
-        onboarding: { ...onboarding, account: without(onboardingAccount, key) },
-      };
+      const changed = { ...strings, onboarding: { ...onboarding, [key]: { title: 'Крок' } } };
 
-      expect(issuesOf(changed)).toEqual([`onboarding.account.${key}`]);
+      expect(EditionStringsSchema.safeParse(changed).error?.issues).toEqual([
+        expect.objectContaining({ code: 'unrecognized_keys', keys: [key] }),
+      ]);
     },
   );
 
-  it.each(['subtitle', 'signIn'])('needs onboarding.account.%s to name the Account', (key) => {
-    const text = (onboardingAccount[key] as string).replace('{name}', 'SLOVO ID');
-    const changed = {
-      ...strings,
-      onboarding: { ...onboarding, account: { ...onboardingAccount, [key]: text } },
-    };
+  it('the UA Edition gives the quiet «Пізніше» of the onboarding steps', () => {
+    expect(EditionStringsSchema.parse(strings).onboarding.later).toBe('Пізніше');
+    expect(issuesOf({ ...strings, onboarding: without(onboarding, 'later') })).toEqual([
+      'onboarding.later',
+    ]);
+  });
 
-    expect(issuesOf(changed)).toEqual([`onboarding.account.${key}`]);
+  it("the UA Edition gives the button under the Rarity Test's result", () => {
+    expect(EditionStringsSchema.parse(strings).rarityTest.next).toBe('Далі');
+    expect(issuesOf({ ...strings, rarityTest: without(rarityTest, 'next') })).toEqual([
+      'rarityTest.next',
+    ]);
+  });
+});
+
+describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
+  /** Every text of a value with its path. */
+  const textsOf = (value: unknown, path: string): [string, string][] =>
+    typeof value === 'string'
+      ? [[path, value]]
+      : typeof value === 'object' && value !== null
+        ? Object.entries(value).flatMap(([key, inner]) =>
+            textsOf(inner, path === '' ? key : `${path}.${key}`),
+          )
+        : [];
+  /**
+   * The «ви» forms, as whole words: the pronouns, the plural imperatives
+   * («оберіть», «спробуйте», «торкніться», «позначте», «перевірте») and the plural present and future
+   * («знаєте», «оберете», «торкнетеся»). No text is an exception; only words
+   * that merely end like a verb («навіть», «відкрите») are not «ви» forms.
+   */
+  const vyWord =
+    /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте|[бвгґджзклмнпрфхцчшщ]те)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;
+  const notVerbs = new Set(['навіть', 'відкрите', 'закрите', 'вкрите', 'сите']);
+  const vy = {
+    test: (text: string) =>
+      [...text.matchAll(vyWord)].some(([word]) => !notVerbs.has(word.toLowerCase())),
+  };
+
+  it('has no «ви» form in its UI strings', () => {
+    const texts = textsOf(readJson('uk', 'strings'), '');
+
+    expect(texts.length).toBeGreaterThan(100);
+    expect(texts.filter(([, text]) => vy.test(text))).toEqual([]);
+  });
+
+  it('has no «ви» form in what the Mascot says', () => {
+    const texts = textsOf(readJson('uk', 'config'), '').filter(([path]) =>
+      path.startsWith('mascot.'),
+    );
+
+    expect(texts.length).toBeGreaterThan(0);
+    expect(texts.filter(([, text]) => vy.test(text))).toEqual([]);
+  });
+
+  it('tells a «ви» form from a «ти» one', () => {
+    const vyTexts = ['Оберіть колекцію', 'Чи знаєте ви?', 'Ваш!', 'Торкніться', 'коли торкнетеся'];
+    const tyTexts = ['Обери колекцію', 'Чи знаєш ти?', 'Твій!', 'Торкнися', 'навіть відкрите'];
+
+    expect(vyTexts.filter((text) => !vy.test(text))).toEqual([]);
+    expect(tyTexts.filter((text) => vy.test(text))).toEqual([]);
   });
 });
 

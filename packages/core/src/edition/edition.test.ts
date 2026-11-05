@@ -6,6 +6,8 @@ import { InvalidEditionConfigError } from './edition';
 const validConfig = {
   id: 'test',
   locale: 'xx-XX',
+  dailyGoals: { options: [10, 25, 50], highlighted: 10 },
+  onboardingNotificationTimes: { morning: '09:00', midday: '13:00', evening: '20:30' },
   displayName: 'SLOVO Test',
   accountName: 'Test ID',
   languageTraits: {
@@ -78,6 +80,8 @@ const validConfig = {
     streakFreezes: true,
     streakBreak: true,
     quickQuestion: true,
+    playStep: true,
+    seenWordXp: true,
     levels: true,
     noCounters: true,
     dailyGoal: true,
@@ -92,6 +96,7 @@ const validConfig = {
     eveningNotification: true,
     notificationFarewell: true,
     notificationExplainer: true,
+    notificationTimeStep: true,
     laterQuestions: true,
     profile: true,
     mascot: true,
@@ -103,7 +108,6 @@ const validConfig = {
     theme: 'system',
     fontSize: 'M',
     vibration: true,
-    dailyGoal: 20,
     notificationTimes: ['09:00'],
     mix: {
       categories: 'all',
@@ -147,12 +151,13 @@ const validConfig = {
     reviewAnswer: 1,
     reviewDailyCap: 10,
     quickQuestion: 2,
+    seenWord: 1,
   },
   levels: { first: 50, growth: 0.1, growingUntil: 10, later: 120, names: ['Seed', 'Sprout'] },
   questionnaire: {
-    who: [
-      { id: 'studying', label: 'Studying', rarityCeiling: 4 },
-      { id: 'working', label: 'Working', rarityCeiling: 5 },
+    level: [
+      { id: 'starting', label: 'Starting', rarityCeiling: 2 },
+      { id: 'good', label: 'Good', rarityCeiling: 4 },
     ],
     why: [{ id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } }],
     selfRating: [{ id: 'few', label: 'Few', offerRarityTest: false }],
@@ -332,7 +337,6 @@ describe('loadEdition', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      dailyGoal: 20,
       notificationTimes: ['09:00'],
       rarityCeiling: 5,
       mix: {
@@ -399,6 +403,7 @@ describe('loadEdition', () => {
       reviewAnswer: 1,
       quickQuestion: 2,
       reviewDailyCap: 10,
+      seenWord: 1,
     });
   });
 
@@ -441,13 +446,13 @@ describe('loadEdition', () => {
     );
   });
 
-  it('reports the questionnaire: the options of «Хто ви» and «Навіщо» and what each sets (ADR 0067)', () => {
+  it('reports the questionnaire: the options of the level question and «Навіщо» and what each sets (ADR 0067)', () => {
     expect(loadEdition(validConfig).questionnaire).toEqual(validConfig.questionnaire);
   });
 
   it('refuses an Edition without a questionnaire, with no option, a repeated option id, an unknown Mix kind or a Ceiling below the default Floor', () => {
     const { questionnaire, ...withoutQuestionnaire } = validConfig;
-    const [studying, working] = questionnaire.who;
+    const [starting, good] = questionnaire.level;
     expect(() => loadEdition(withoutQuestionnaire)).toThrow(InvalidEditionConfigError);
     expect(() =>
       loadEdition({ ...validConfig, questionnaire: { ...questionnaire, why: [] } }),
@@ -455,9 +460,9 @@ describe('loadEdition', () => {
     expect(() =>
       loadEdition({
         ...validConfig,
-        questionnaire: { ...questionnaire, who: [studying, { ...working, id: 'studying' }] },
+        questionnaire: { ...questionnaire, level: [starting, { ...good, id: 'starting' }] },
       }),
-    ).toThrow('questionnaire.who.1.id: Duplicate option id "studying"');
+    ).toThrow('questionnaire.level.1.id: Duplicate option id "starting"');
     expect(() =>
       loadEdition({
         ...validConfig,
@@ -593,13 +598,19 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.vibration).toBe(false);
   });
 
-  it('reports a Daily Goal default of 30', () => {
-    const edition = loadEdition({
-      ...validConfig,
-      userSettingDefaults: { ...validConfig.userSettingDefaults, dailyGoal: 30 },
-    });
+  it('reports the Daily Goals in Words and refuses a highlighted one not among them', () => {
+    const dailyGoals = { options: [5, 15], highlighted: 15 };
+    expect(loadEdition({ ...validConfig, dailyGoals }).dailyGoals).toEqual(dailyGoals);
+    expect(() =>
+      loadEdition({ ...validConfig, dailyGoals: { ...dailyGoals, highlighted: 10 } }),
+    ).toThrow();
+  });
 
-    expect(edition.userSettingDefaults.dailyGoal).toBe(30);
+  it('reports the Notification times «Коли нагадати?» offers, one for each bucket', () => {
+    const onboardingNotificationTimes = { morning: '08:15', midday: '12:00', evening: '21:00' };
+    expect(
+      loadEdition({ ...validConfig, onboardingNotificationTimes }).onboardingNotificationTimes,
+    ).toEqual(onboardingNotificationTimes);
   });
 
   it('refuses hand-written legal page addresses in the config', () => {
@@ -884,14 +895,26 @@ describe('loadEdition', () => {
       'userSettingDefaults.vibration',
     ],
     [
-      'a missing Daily Goal default',
-      { userSettingDefaults: { ...userSettingDefaults, dailyGoal: undefined } },
-      'userSettingDefaults.dailyGoal',
+      'Daily Goals out of rising order',
+      { dailyGoals: { options: [25, 10], highlighted: 10 } },
+      'dailyGoals.options',
     ],
     [
-      'a Daily Goal default the Core does not offer',
-      { userSettingDefaults: { ...userSettingDefaults, dailyGoal: 15 } },
-      'userSettingDefaults.dailyGoal',
+      'onboarding Notification times out of time order',
+      { onboardingNotificationTimes: { morning: '13:00', midday: '09:00', evening: '20:30' } },
+      'onboardingNotificationTimes',
+    ],
+    [
+      'an onboarding Notification time for a fourth bucket',
+      {
+        onboardingNotificationTimes: {
+          morning: '09:00',
+          midday: '13:00',
+          evening: '20:30',
+          night: '23:00',
+        },
+      },
+      'onboardingNotificationTimes',
     ],
     [
       'a notification time that is not HH:MM',
@@ -1124,10 +1147,12 @@ const dependentSwitches = [
   ['badges', ['xpLog']],
   ['profile', ['xpLog']],
   ['dailyGoal', ['xpLog']],
+  ['seenWordXp', ['xpLog', 'dailyGoal']],
   ['progressShareCards', ['shareCards', 'xpLog']],
   ['dailyCrosswordShare', ['shareCards', 'dailyCrossword', 'game']],
   ['tracedCrossword', ['dailyCrossword', 'game']],
   ['quickQuestion', ['game']],
+  ['playStep', ['game']],
   ['rarityTest', ['rarityCeiling']],
 ] as const;
 

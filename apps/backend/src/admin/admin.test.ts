@@ -221,22 +221,25 @@ describe('the summary of the owner admin', () => {
         { entryId: second, known: 0, unknown: 1, saved: 0 },
       ],
     });
-    await client.counters.questionnaire({
-      editionId: 'summed',
-      question: 'who',
-      answer: 'studying',
-    });
-    await client.counters.questionnaire({
-      editionId: 'summed',
-      question: 'who',
-      answer: 'studying',
-    });
+    for (const [question, answer] of [
+      ['level', 'fair'],
+      ['level', 'fair'],
+      ['dailyGoal', '25'],
+      ['notificationTime', 'evening'],
+      ['notificationTime', 'evening'],
+      ['notificationTime', 'none'],
+    ] as const) {
+      await client.counters.questionnaire({ editionId: 'summed', question, answer });
+    }
 
     const text = await textOf(await page());
 
     expect(await accountsShown()).toBe(before + 1);
     expect(text).toContain('summed 2 1 1 1');
-    expect(text).toContain('summed who studying 2');
+    expect(text).toContain('summed level fair 2');
+    expect(text).toContain('summed dailyGoal 25 1');
+    expect(text).toContain('summed notificationTime evening 2');
+    expect(text).toContain('summed notificationTime none 1');
     expect(text).toContain('PostHog');
     expect(text).toContain('App Store Connect');
   });

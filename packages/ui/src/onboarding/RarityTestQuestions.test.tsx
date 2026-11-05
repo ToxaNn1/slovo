@@ -11,11 +11,11 @@ import { AccessibilityInfo, View } from 'react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
-  onboarding: { mix: { next: 'Next' } },
   rarityTest: {
     progress: '{n} of {total}',
     announcement: 'Word {n} of {total}: {word}',
     result: 'Your rarity: up to {n}',
+    next: 'Next',
   },
   knowledge: { known: 'Known', unknown: 'Unknown' },
 });

@@ -149,7 +149,7 @@ export function openFeedNotices({
 }): FeedNoticeQueue {
   const on = (feature: FeatureSwitch) => edition.isFeatureEnabled(feature);
 
-  /** «Ваш тиждень» on the first open of a local Monday, when the week before has one (ADR 0054). */
+  /** «Твій тиждень» on the first open of a local Monday, when the week before has one (ADR 0054). */
   const weeklyRecapRule: NoticeRule = async (day) =>
     (await weeklyRecap().of(day)) === undefined ? undefined : { notice: 'weeklyRecap' };
 
@@ -170,7 +170,7 @@ export function openFeedNotices({
   };
 
   /**
-   * Yesterday («Пам'ятаєте вчорашнє слово?»): the card of the Word of the Day
+   * Yesterday («Пам'ятаєш вчорашнє слово?»): the card of the Word of the Day
    * the archive keeps for the day before, while that Word is neither Hidden
    * nor Retired. The archive keeps a Word only once its card was Seen. It
    * reads the archive, so it needs the Feature Switches `yesterday` and
