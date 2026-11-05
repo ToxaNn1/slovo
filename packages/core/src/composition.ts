@@ -665,6 +665,10 @@ export async function openComposition({
     userState,
     clock,
     dayTurned,
+    entries,
+    collections,
+    hiddenEntries,
+    knowledge,
   });
   const dashboard = await openDashboard({
     edition,
