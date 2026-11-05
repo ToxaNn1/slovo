@@ -15,7 +15,7 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 import { ukrainian } from '../test-support';
 import { nodeDriver, type NodeDriver } from './node-sqlite-driver';
-import { loadTestState, type TestStateName } from './test-states';
+import { loadTestState, reopenedByTestState, type TestStateName } from './test-states';
 import { openSqliteUserState } from './user-state-sqlite';
 
 /** A Monday morning in Kyiv, so the Weekly Recap of the week before is due. */
@@ -210,5 +210,35 @@ describe('a test state loaded from its link', () => {
 
     expect((await app.openDailyCrossword())?.state.progress).toBe('solved');
     expect(app.xpLog.milestones.crosswords.size).toBe(7);
+  });
+});
+
+describe('the app reopened by the reload a test state asks for', () => {
+  const sources = { clock, edition: ukrainian, content, crossword };
+
+  it('knows it was, once, so the link it reopens with loads nothing again', async () => {
+    const port = await storedPort();
+    await loadTestState('day-3-streak', port, sources);
+
+    expect(await reopenedByTestState(port)).toBe(true);
+    expect(await reopenedByTestState(port)).toBe(false);
+  });
+
+  it('was not, when no test state was loaded', async () => {
+    expect(await reopenedByTestState(await storedPort())).toBe(false);
+  });
+
+  it('leaves the test state as loaded', async () => {
+    const port = await storedPort();
+    await loadTestState('day-3-streak', port, sources);
+    await reopenedByTestState(port);
+    const app = await openComposition({
+      ...sources,
+      userState: await openTrackedUserState({ port, clock }),
+      random: { next: () => 0.25 },
+    });
+
+    expect(app.progress.state.streak).toBe(3);
+    expect(await reopenedByTestState(port)).toBe(false);
   });
 });

@@ -41,10 +41,12 @@ export function isTestStateName(name: string): name is TestStateName {
   return testStateNames.some((each) => each === name);
 }
 
-const testStateLink = /^(?:[a-z][a-z0-9+.-]*:\/\/)?\/*dev\/state(?:\/([^/?#]*))?\/?(?:[?#].*)?$/i;
+const testStateLink =
+  /^(?:[a-z][a-z0-9+.-]*:\/\/(?:[^/?#]*\/+--(?=\/))?)?\/*(?:--\/+)?dev\/state(?:\/([^/?#]*))?\/?(?:[?#].*)?$/i;
 
 /**
- * What a link names: a test state (`<scheme>://dev/state/<name>`), a name
+ * What a link names: a test state (`<scheme>://dev/state/<name>`, or behind
+ * Expo Go's `/--/`, as `exp://<host>:<port>/--/dev/state/<name>`), a name
  * that is none (`unknown`, the bare `dev/state` included), or nothing when
  * it is no test state link.
  */
@@ -306,10 +308,17 @@ async function factsOf(name: TestStateName, sources: TestStateSources): Promise<
 const KEPT_KEYS: ReadonlySet<string> = new Set(['schema.version', 'app.installed']);
 
 /**
+ * Marks the reload a loaded test state asks for. The app reopens with the
+ * link it was opened by, so the link would load the state and reload again,
+ * without end; the mark lets it load nothing that once.
+ */
+const REOPENING_KEY = 'dev.testState.reopening';
+
+/**
  * Replaces every record of the stored user state with the test state's, the
  * schema version and the installed marker aside, as kept from before: nothing
  * of it waits to sync. The app reloads after it, so nothing open holds the
- * records it replaced.
+ * records it replaced; the reload is marked, for `reopenedByTestState`.
  */
 export async function loadTestState(
   name: TestStateName,
@@ -321,5 +330,17 @@ export async function loadTestState(
     if (!KEPT_KEYS.has(key)) changes.set(key, undefined);
   }
   for (const [key, text] of changesOfFacts(await factsOf(name, sources))) changes.set(key, text);
+  changes.set(REOPENING_KEY, JSON.stringify(name));
   await port.write(changes);
+}
+
+/**
+ * Whether the app opened from the reload a loaded test state asked for, so
+ * the link it reopens with must load nothing. Answers it once: the next link
+ * loads again.
+ */
+export async function reopenedByTestState(port: UserStatePort): Promise<boolean> {
+  if ((await port.get(REOPENING_KEY)) === undefined) return false;
+  await port.write(new Map([[REOPENING_KEY, undefined]]));
+  return true;
 }

@@ -31,7 +31,7 @@ export async function redirectSystemPath(link: {
 }): Promise<string | null> {
   if (__DEV__) {
     const { openTestStateLink } = await import('@/shell/test-state-link');
-    const opened = openTestStateLink(link.path);
+    const opened = openTestStateLink(link);
     if (opened !== undefined) return opened;
   }
   return outsideLinks(link);
