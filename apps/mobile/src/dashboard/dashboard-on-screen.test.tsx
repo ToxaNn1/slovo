@@ -16,6 +16,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/index';
 import FeedScreen from '../app/feed';
+import EntryFromSearchScreen from '../app/search/[entryId]';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
@@ -71,21 +72,24 @@ let composition: Composition;
  * Opens the composition over three Words, with `dashboard` on or off. Today's
  * Word of the Day is сумирний, and the reader was on a later card of the Feed.
  */
-async function open(dashboard: boolean) {
+async function open(dashboard: boolean, { previousWords = true } = {}) {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
       feature === 'dashboard'
         ? dashboard
-        : // No later question takes the Word of the Day's place in the Feed.
-          feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+        : feature === 'previousWords'
+          ? previousWords && shipped.isFeatureEnabled(feature)
+          : // No later question takes the Word of the Day's place in the Feed.
+            feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   userState = await seedUserState(
     {
       onboardingFinished: '2026-09-01T09:00:00.000Z',
       wordOfTheDay: { entryId: 'w_sumyrnyi', date: '2026-10-28' },
       feedPosition: { entryId: 'w_tykhyi', date: '2026-10-28' },
+      wordOfTheDayArchive: { '2026-10-27': 'w_lahidnyi' },
     },
     { clock },
   );
@@ -150,6 +154,7 @@ async function renderApp() {
       ),
       index: HomeScreen,
       feed: FeedScreen,
+      'search/[entryId]': EntryFromSearchScreen,
     },
     { initialUrl: '/' },
   );
@@ -243,5 +248,26 @@ describe('the Mood check-in', () => {
 
     expect(screen.queryByTestId('dashboard-mood')).toBeNull();
     expect(screen.getByTestId('dashboard-hero')).toBeTruthy();
+  });
+});
+
+describe('«Попередні слова»', () => {
+  it('lists yesterday’s Word, and a tap opens its Entry without making it Seen', async () => {
+    await open(true);
+    await renderApp();
+
+    expect(screen.getByText(editionStrings.dashboard.previousWords.title)).toBeTruthy();
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-previous-word-2026-10-27')));
+
+    expect(screen.getByText('Значення слова лагідний.')).toBeTruthy();
+    expect(composition.history.list).toEqual([]);
+  });
+
+  it('is absent with `previousWords` off', async () => {
+    await open(true, { previousWords: false });
+    await renderApp();
+
+    expect(screen.getByTestId('dashboard-hero')).toBeTruthy();
+    expect(screen.queryByTestId('dashboard-previous-words')).toBeNull();
   });
 });
