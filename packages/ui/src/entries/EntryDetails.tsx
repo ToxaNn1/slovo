@@ -8,7 +8,7 @@ import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { entryPanel, iconButton, space, wedges, wordCardSide } from '../tokens';
 import { AccentGround } from './AccentGround';
-import { SwipeMarks, type EntrySwipe } from '../knowledge/SwipeMarks';
+import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import { EntryCard, type EntryCardProps } from './EntryCard';
 import { EntryReveal, RevealDetail } from './reveal';
 import { WordHeadline, WordSections } from './WordCard';

@@ -58,7 +58,7 @@ export { CommunityCountersLine } from './community-counters/CommunityCountersLin
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
 export { CornerActions } from './knowledge/CornerActions';
 export { EntryMenuSheet, type EntryMenuMarks } from './knowledge/EntryMenuSheet';
-export { type EntrySwipe } from './knowledge/SwipeMarks';
+export { type EntrySwipe } from './entries/SwipeMarks';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
