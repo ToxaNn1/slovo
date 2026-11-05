@@ -17,7 +17,7 @@ import { OnAccentProvider } from './on-accent';
  * The design's red ground under its halftone raster, with a giant cream
  * letter overhanging its top right corner, behind the content. Cut to
  * `points` when given; the letter then stops where the cut starts on the
- * right edge (`letterStopsAt`, a fraction of the height). Everything in it
+ * right edge (`letterStopsAt`, a fraction of the height); `letterOpacity` fades it. Everything in it
  * knows it sits on red (`useOnAccent`). VoiceOver skips the ground and the
  * letter.
  */
@@ -28,6 +28,7 @@ export function AccentGround({
   letterAt,
   points,
   letterStopsAt = 1,
+  letterOpacity = 1,
   style,
   testID,
   children,
@@ -35,11 +36,16 @@ export function AccentGround({
   /** Unique on the screen: it names the raster. */
   id: string;
   letter: string;
-  letterRole: Extract<TypeRole, 'giantLetter' | 'panelLetter'>;
+  letterRole: Extract<
+    TypeRole,
+    'giantLetter' | 'panelLetter' | 'dashboardQuestion' | 'dashboardLetter'
+  >;
   /** How far the letter overhangs the top right corner. */
   letterAt: { right: number; top: number };
   points?: Wedge;
   letterStopsAt?: number;
+  /** How opaque the letter is; whole by default. */
+  letterOpacity?: number;
   style?: StyleProp<ViewStyle>;
   testID?: string;
   children: ReactNode;
@@ -67,7 +73,7 @@ export function AccentGround({
               style={[
                 typeStyle(letterRole, tokens),
                 styles.letter,
-                { color: cream, right: letterAt.right, top: letterAt.top },
+                { color: cream, opacity: letterOpacity, right: letterAt.right, top: letterAt.top },
               ]}
             >
               {letter}

@@ -468,8 +468,10 @@ export const typeRoles = {
   dashboardRarity: role('word', '700', 12, 12, 1, 'uppercase'),
   /** The short Definition on the open Dashboard hero. */
   dashboardDefinition: role('ui', '600', 16, 21.6),
-  /** The ink button on the Dashboard hero, «РОЗКРИТИ» and «ДО КАРТКИ →». */
+  /** The closed Dashboard hero's ink button, «РОЗКРИТИ». */
   dashboardButton: role('word', '900', 16, 16, 0.5, 'uppercase'),
+  /** The open Dashboard hero's «ДО КАРТКИ →», a size under «РОЗКРИТИ». */
+  dashboardToCardButton: role('word', '900', 15, 15, 0.5, 'uppercase'),
   /** A block's title on the Dashboard, such as «Як настрій?». */
   blockTitle: role('word', '800', 15, 15),
   /** The count or note at the end of a block's title on the Dashboard. */

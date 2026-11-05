@@ -243,10 +243,12 @@ describe('the Word of the Day hero', () => {
     expect(composition.history.list.map(({ entryId }) => entryId)).toContain('w_sumyrnyi');
   });
 
-  it('«До картки →» opens the Feed on the Word of the Day card', async () => {
+  it('«До картки →», once revealed, opens the Feed on the Word of the Day card', async () => {
     await open(true);
     await renderApp();
 
+    expect(screen.queryByText(editionStrings.dashboard.toCard)).toBeNull();
+    await settle(() => fireEvent.press(screen.getByText(editionStrings.wordOfTheDay.reveal)));
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));
     await layOutFeed();
 
