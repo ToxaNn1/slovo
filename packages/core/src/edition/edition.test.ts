@@ -668,12 +668,8 @@ describe('loadEdition', () => {
   });
 
   it('resolves the four Dashboard moods, in their order', () => {
-    expect(loadEdition(validConfig).dashboardMoods).toEqual([
-      validConfig.moods[3],
-      validConfig.moods[4],
-      validConfig.moods[1],
-      validConfig.moods[0],
-    ]);
+    const { moods, dashboardMoods } = loadEdition(validConfig);
+    expect(dashboardMoods).toEqual([moods[3], moods[4], moods[1], moods[0]]);
   });
 
   it('accepts an Edition that lists no moods, with no Dashboard moods', () => {
