@@ -55,6 +55,8 @@ export { InterfaceSoundsProvider } from './providers/InterfaceSoundsProvider';
 export { HideButton } from './mix/HideButton';
 export { CommunityCountersLine } from './community-counters/CommunityCountersLine';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
+export { CornerActions } from './knowledge/CornerActions';
+export { EntryMenuSheet, type EntryMenuMarks } from './knowledge/EntryMenuSheet';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';

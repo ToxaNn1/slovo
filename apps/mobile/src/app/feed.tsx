@@ -27,7 +27,7 @@ import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '@/edition/edition';
-import { EntryActions, useKnowledgeButtons } from '@/entries/entry-actions';
+import { useEntrySlots, useYesterdaySlots } from '@/entries/entry-actions';
 import { useOpenScreen } from '@/use-open-screen';
 import { deviceClock } from '@/device/device-clock';
 import { useFeed } from '@/feed/feed';
@@ -180,6 +180,7 @@ const FeedPage = memo(function FeedPage({
 }) {
   const { top } = useSafeAreaInsets();
   const { selfCheck, stressFall, calligraphicLemma } = useShown();
+  const slots = useEntrySlots();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
     return (
@@ -223,7 +224,7 @@ const FeedPage = memo(function FeedPage({
         {card.kind === 'notice' ? (
           <YesterdayNotice word={card.word} />
         ) : card.kind === 'tip' ? (
-          <EntryCard card={card} selfCheck={selfCheck} actions={<EntryActions card={card} />} />
+          <EntryCard card={card} selfCheck={selfCheck} {...slots(card)} />
         ) : card.kind === 'synonymRow' ? (
           <EntryCard
             card={card}
@@ -232,7 +233,7 @@ const FeedPage = memo(function FeedPage({
               openScreen(`/entry/${wordId}`);
             }}
             selfCheck={selfCheck}
-            actions={<EntryActions card={card} />}
+            {...slots(card)}
           />
         ) : (
           <EntryCard
@@ -248,7 +249,7 @@ const FeedPage = memo(function FeedPage({
             stressFalls={stressFall}
             // Only here, on the Word of the Day card; in the Word font with the switch off.
             wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
-            actions={<EntryActions card={card} />}
+            {...slots(card)}
           />
         )}
       </PagerScrollView>
@@ -291,8 +292,7 @@ function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterd
 
 /** Yesterday's Word in Self-check style, with its Knowledge Marks as on any card. */
 function YesterdayNotice({ word }: { word: WordCardModel }) {
-  const marks = useKnowledgeButtons({ kind: 'word', entryId: word.wordId });
-  return <YesterdayCard word={word} marks={marks} />;
+  return <YesterdayCard word={word} {...useYesterdaySlots(word.wordId)} />;
 }
 
 const styles = StyleSheet.create({
