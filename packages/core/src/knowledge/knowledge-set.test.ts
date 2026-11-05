@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { openComposition, type Clock, type Composition, type FeatureSwitch } from '../index';
+import {
+  openComposition,
+  type AnalyticsPort,
+  type Clock,
+  type Composition,
+  type FeatureSwitch,
+} from '../index';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -14,10 +20,12 @@ async function run({
   records = new Map<string, string>(),
   clock = fakeClock('2026-10-19T09:00:00.000Z').clock,
   on = ['knowledge', 'confirmedEntries', 'communityCounters', 'xpLog'],
+  analytics,
 }: {
   records?: Map<string, string>;
   clock?: Clock;
   on?: readonly FeatureSwitch[];
+  analytics?: AnalyticsPort;
 } = {}): Promise<Composition> {
   return openComposition({
     content,
@@ -30,6 +38,7 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },
+    ...(analytics === undefined ? {} : { analytics }),
   });
 }
 
@@ -219,6 +228,30 @@ describe('setting, clearing and undoing a Knowledge Mark', () => {
     await second.knowledge.set('w_one', 'known');
 
     expect(reviewXpOf(records)).toBe(1);
+  });
+
+  it('emits the Review answer event once per Entry on a local day across a restart', async () => {
+    const records = await recordsWith({ ...dueAtStepSeven, step: 1 });
+    const answered: unknown[] = [];
+    const analytics: AnalyticsPort = {
+      track: (event, properties) => {
+        if (event === 'reviewAnswered') answered.push(properties);
+      },
+      stop: () => undefined,
+    };
+    const on: readonly FeatureSwitch[] = ['knowledge', 'xpLog', 'analytics'];
+    const first = await run({ records, on, analytics });
+    await first.knowledge.set('w_one', 'known');
+    await first.knowledge.undo();
+    expect(answered).toHaveLength(1);
+
+    // An hour later, a second app on the same user state.
+    const clock = fakeClock('2026-10-19T10:00:00.000Z').clock;
+    const second = await run({ records, clock, on, analytics });
+    expect(second.knowledge.state.shown.get('w_one')).toBe('review');
+    await second.knowledge.set('w_one', 'unknown');
+
+    expect(answered).toEqual([{ mark: 'known', entryKind: 'word', rarity: 3, categoryId: 'test' }]);
   });
 
   it('marks nothing with the knowledge switch off', async () => {

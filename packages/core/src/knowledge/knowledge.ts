@@ -4,7 +4,7 @@ import type { Edition } from '../edition/edition';
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import type { HiddenEntries } from '../mix/hidden-entries';
 import { createInTurn, createSubscribers } from '../in-turn';
-import { dayNumber, parseLocalDate, todayDate, type LocalDate } from '../local-date';
+import { dayNumber, parseLocalDate, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
@@ -226,7 +226,7 @@ export async function openKnowledge({
   /** Tells of the reader's answer to an Entry due for Review; it never throws. */
   reviewAnswered: (entryId: string, mark: KnowledgeMark) => Promise<void>;
 }): Promise<Knowledge> {
-  const { knowledge, confirmed: confirmedRecords } = userStateRecords;
+  const { knowledge, confirmed: confirmedRecords, reviewAnswered: reviewDays } = userStateRecords;
   let records: ReadonlyMap<string, KnowledgeRecord> = await userState.list(knowledge);
   /** The confirmed Entries' ids; the instant of each is kept for the Badges' dates. */
   let confirmed: ReadonlySet<string> = new Set((await userState.list(confirmedRecords)).keys());
@@ -234,8 +234,8 @@ export async function openKnowledge({
   /** The last set, while it can be undone: the Entry, its record before and whether the set confirmed it. */
   let undoable:
     { entryId: string; previous: KnowledgeRecord | undefined; confirmed: boolean } | undefined;
-  /** The Entries whose Review answer earned XP on the local day numbered `day`. */
-  let reviewed = { day: -1, entries: new Set<string>() };
+  /** The local day (`YYYY-MM-DD`) of each Entry's last Review answer, as kept. */
+  let reviewedOn: ReadonlyMap<string, string> = await userState.list(reviewDays);
   const subscribers = createSubscribers();
   /** The row of each marked or confirmed Entry the Language Pack has, so the state needs no read. */
   const rowOf = new Map(await rows.rows([...records.keys(), ...confirmed]));
@@ -311,22 +311,15 @@ export async function openKnowledge({
       ? new Map()
       : confirmedRecords.record(entryId).change(clock.now().toISOString());
 
-  /**
-   * Whether the Entry's Review answer is its first on today's local day, and
-   * keeps that it was answered.
-   */
-  function firstReviewToday(entryId: string): boolean {
-    const day = dayNumber(todayDate(clock));
-    if (reviewed.day !== day) reviewed = { day, entries: new Set() };
-    if (reviewed.entries.has(entryId)) return false;
-    reviewed.entries.add(entryId);
-    return true;
-  }
+  /** Whether the Entry's Review answer is its first on today's local day, after a restart too. */
+  const firstReviewToday = (entryId: string): boolean =>
+    reviewedOn.get(entryId) !== todayKey(clock);
 
   /**
    * Keeps the Entry's next record, or deletes it for nothing, with the
    * Community Counters' changes when it counts, the confirmation the answer
-   * adds or the undo removes and the XP of a Review answer, then follows it.
+   * adds or the undo removes and, for a Review answer, its XP and its local
+   * day, then follows it.
    * Any change of a mark ends the set that could be undone.
    */
   async function keep(
@@ -334,10 +327,12 @@ export async function openKnowledge({
     record: KnowledgeRecord | undefined,
     counts: boolean,
     confirming: 'add' | 'remove' | 'none',
-    reviewXp?: ReviewXpAward,
+    review = false,
   ): Promise<void> {
     undoable = undefined;
     const counted = counts ? await countMark(entryId, record?.mark) : new Map();
+    const today = todayKey(clock);
+    const reviewXp = review ? xp.award({ source: 'review-answer', entryId }) : undefined;
     const confirmationChange =
       confirming === 'add'
         ? confirmation(entryId)
@@ -350,9 +345,11 @@ export async function openKnowledge({
         ...counted,
         ...confirmationChange,
         ...(reviewXp?.changes ?? []),
+        ...(review ? reviewDays.record(entryId).change(today) : []),
       ]),
     );
     reviewXp?.commit();
+    if (review) reviewedOn = new Map([...reviewedOn, [entryId, today]]);
     const changed = new Map(records);
     if (record === undefined) changed.delete(entryId);
     else changed.set(entryId, record);
@@ -403,7 +400,7 @@ export async function openKnowledge({
           : { mark, step, reviewDay, learned, markedAt },
         counts,
         confirms ? 'add' : 'none',
-        review ? xp.award({ source: 'review-answer', entryId }) : undefined,
+        review,
       );
       if (canUndo) undoable = { entryId, previous, confirmed: confirms };
       if (review) await reviewAnswered(entryId, mark);

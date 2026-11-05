@@ -28,4 +28,10 @@ export const knowledgeRecords = {
    * removed: a confirmed Entry stays confirmed whatever its mark does.
    */
   confirmed: declareRecords('confirmed.', InstantSchema),
+  /**
+   * The local day (`YYYY-MM-DD`) of each Entry's last Review answer, one
+   * record per Entry, by Entry id, so a Review answer counts once per Entry on
+   * a local day, after a restart too: its XP and its analytics event alike.
+   */
+  reviewAnswered: declareRecords('reviewAnswered.', z.iso.date()),
 };
