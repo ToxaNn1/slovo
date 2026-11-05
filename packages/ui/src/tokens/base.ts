@@ -146,6 +146,10 @@ export const typeRoles = {
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
+  /** The mark's label at the edge a swiped Entry card leaves. */
+  swipeEdge: role('word', '800', 12, 12, 1, 'uppercase'),
+  /** The stamp a swipe leaves on a marked Entry card. */
+  swipeStamp: role('word', '800', 18, 22, 2, 'uppercase'),
   /** The app's name beside the wedge at the top of the Feed. */
   logo: role('word', '900', 22, 22, -0.5),
   /** Today in the Feed's header. */

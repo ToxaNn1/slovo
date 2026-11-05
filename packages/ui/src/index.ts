@@ -58,6 +58,7 @@ export { CommunityCountersLine } from './community-counters/CommunityCountersLin
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
 export { CornerActions } from './knowledge/CornerActions';
 export { EntryMenuSheet, type EntryMenuMarks } from './knowledge/EntryMenuSheet';
+export { type EntrySwipe } from './knowledge/SwipeMarks';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
@@ -164,12 +165,14 @@ export { useReduceMotion } from './providers/useReduceMotion';
 export { WedgeLoader } from './primitives/WedgeLoader';
 export {
   UndoToastProvider,
+  useCloseUndoToast,
   useUndoToast,
   type MessageToastContent,
   type ToastContent,
   type UndoToastContent,
 } from './primitives/UndoToast';
 export {
+  PageActionsProvider,
   PagerScrollView,
   usePageTurnActions,
   useTurnToNextPage,

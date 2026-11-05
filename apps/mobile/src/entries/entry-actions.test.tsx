@@ -26,13 +26,15 @@ import {
   YesterdayCard,
 } from '@slovo/ui';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
+import { State } from 'react-native-gesture-handler';
+import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
-import { EntryActions, useEntrySlots, useYesterdaySlots } from './entry-actions';
+import { EntryActions, useEntrySlots, useEntrySwipe, useYesterdaySlots } from './entry-actions';
 
 const { config } = activeEditionFiles;
 
@@ -226,6 +228,24 @@ async function settle() {
   });
 }
 
+/** An Entry's card as the Feed draws it: its slots, and its side swipes when they are on. */
+function SwipedCard({ card }: { card: AnyEntryCard }) {
+  return <EntryCard card={card} {...useEntrySlots()(card)} swipe={useEntrySwipe(card.entryId)} />;
+}
+
+/** Swipes the card sideways by `distance` points and lets it land. */
+async function swipeBy(distance: number) {
+  await act(() => {
+    fireGestureHandler(getByGestureTestId('entry-card-side-swipe'), [
+      { state: State.BEGAN, translationX: 0, velocityX: 0 },
+      { state: State.ACTIVE, translationX: Math.sign(distance) * 8, velocityX: 0 },
+      { state: State.ACTIVE, translationX: distance, velocityX: 0 },
+      { state: State.END, translationX: distance, velocityX: 0 },
+    ]);
+  });
+  await settle();
+}
+
 /** The card of the Entry, as the Entry screen a list opens draws it, with its action row. */
 async function renderCard(entryId: string): Promise<AnyEntryCard> {
   const card = await composition.entryCard(entryId);
@@ -237,7 +257,7 @@ async function renderCard(entryId: string): Promise<AnyEntryCard> {
           <HapticsProvider haptics={haptics}>
             <SettingsProvider>
               <UndoToastProvider>
-                <EntryCard card={card} actions={<EntryActions card={card} />} />
+                <SwipedCard card={card} />
               </UndoToastProvider>
             </SettingsProvider>
           </HapticsProvider>
@@ -546,6 +566,43 @@ describe.each([
     expect(screen.queryByTestId('knowledge-known')).toBeNull();
     expect(screen.queryByTestId('community-counters')).toBeNull();
     expect(countersApi.counters.asked).toEqual([]);
+  });
+});
+
+describe('the side swipes of an Entry card (ADR 0077)', () => {
+  it('mark the Word Known on a swipe right, in place of the buttons, and the toast undoes it', async () => {
+    swipeMarksOn = true;
+    await renderCard(word.id);
+    expect(screen.queryByTestId('knowledge-known')).not.toBeOnTheScreen();
+
+    await swipeBy(120);
+
+    expect(composition.knowledge.state.shown.get(word.id)).toBe('known');
+    expect(screen.getByTestId('swipe-stamp')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('undo-toast-undo'));
+    await settle();
+    expect(composition.knowledge.state.shown.get(word.id)).toBeUndefined();
+  });
+
+  it('mark the Word Unknown on a swipe left', async () => {
+    swipeMarksOn = true;
+    await renderCard(word.id);
+
+    await swipeBy(-120);
+
+    expect(composition.knowledge.state.shown.get(word.id)).toBe('unknown');
+  });
+
+  it.each([
+    ['the Swipe Marks switch is off', false, true],
+    ['the Knowledge switch is off', true, false],
+  ])('are not there while %s', async (_, swipe, knowledge) => {
+    swipeMarksOn = swipe;
+    knowledgeOn = knowledge;
+    await renderCard(word.id);
+
+    expect(screen.queryByTestId('swipe-card')).not.toBeOnTheScreen();
+    if (knowledge) expect(screen.getByTestId('knowledge-known')).toBeOnTheScreen();
   });
 });
 
