@@ -57,6 +57,10 @@ export interface AnalyticsEvents {
   readonly reviewAnswered: EntryEventProperties & { readonly mark: 'known' | 'unknown' };
   /** The reader answered a Quick Question in the Feed, right or not, about the Entry it asked. */
   readonly quickQuestionAnswered: EntryEventProperties & { readonly right: boolean };
+  /** The reader chose a Mood in the Dashboard's Mood check-in, or changed it (ADR 0076). */
+  readonly moodChosen: { readonly mood: string };
+  /** The reader skipped the Mood check-in with «Не сьогодні». */
+  readonly moodSkipped: Record<string, never>;
   /** The reader reached a new Level (ADR 0066). */
   readonly levelReached: { readonly level: number };
   /** The reader changed the Daily Goal (ADR 0074): `null` where «Без цілі» turned it off. */

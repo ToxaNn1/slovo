@@ -96,7 +96,8 @@
     "sounds": true,
     "reduceMotion": true,
     "fastReveal": true,
-    "dashboard": true
+    "dashboard": true,
+    "mood": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -147,6 +148,7 @@
   "categoriesRequiringHistory": [],
   "originLanguages": [],
   "moods": [],
+  "dashboardMoods": [],
   "searchLetters": {
     "ґ": "г"
   },

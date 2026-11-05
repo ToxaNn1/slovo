@@ -102,6 +102,8 @@ export interface Shown {
   readonly fastReveal: boolean;
   /** Whether the home is the Dashboard, which opens the Feed; else the Feed is the home (ADR 0076). */
   readonly dashboard: boolean;
+  /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
+  readonly mood: boolean;
   /** The «Слова дня» card of the Saved tab and the Word of the Day archive it opens. */
   readonly wordOfTheDayArchive: boolean;
   /** The «Рідкість» row of Settings, the Rarity Ceiling (ADR 0072). */
@@ -175,6 +177,7 @@ export function shownOf({
     search: on('search'),
     fastReveal: on('fastReveal'),
     dashboard: on('dashboard'),
+    mood: on('mood'),
     wordOfTheDayArchive: on('wordOfTheDayArchive'),
     rarityCeiling: on('rarityCeiling'),
     rarityTest: on('rarityTest'),

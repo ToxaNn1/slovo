@@ -64,6 +64,8 @@ export interface Edition {
   readonly originLanguages: readonly OriginLanguage[];
   /** The Edition's moods, in their order. */
   readonly moods: readonly Mood[];
+  /** The four moods the Dashboard's Mood check-in offers, in display order; none when the Edition has no moods (ADR 0076). */
+  readonly dashboardMoods: readonly Mood[];
   /** The letters Search reads as another, such as ґ as г (ADR 0054). */
   readonly searchLetters: Readonly<Record<string, string>>;
   /** The XP table: what each Game learning action earns (ADR 0066). */
@@ -133,6 +135,8 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   rarityTest: ['rarityCeiling'],
   // The Dashboard's hero is the Word of the Day (ADR 0076).
   dashboard: ['wordOfTheDay'],
+  // The Mood check-in is a Dashboard block (ADR 0076).
+  mood: ['dashboard'],
   notificationTimeStep: ['notifications'],
 };
 
@@ -176,6 +180,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     notificationSound,
     originLanguages,
     moods,
+    dashboardMoods,
     searchLetters,
     xp,
     levels,
@@ -185,6 +190,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     badges,
     mascot,
   } = result.data;
+  const moodOf = (id: string) => moods.find((mood) => mood.id === id);
   const { mix, ...settings } = userSettingDefaults;
   return {
     id,
@@ -206,6 +212,8 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     notificationSound,
     originLanguages,
     moods,
+    // Each id is one of `moods`: the schema checked it.
+    dashboardMoods: dashboardMoods.flatMap((id) => moodOf(id) ?? []),
     searchLetters,
     xp,
     levels,
