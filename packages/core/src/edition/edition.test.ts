@@ -6,6 +6,8 @@ import { InvalidEditionConfigError } from './edition';
 const validConfig = {
   id: 'test',
   locale: 'xx-XX',
+  dailyGoals: { options: [10, 25, 50], highlighted: 10 },
+  onboardingNotificationTimes: { morning: '09:00', midday: '13:00', evening: '20:30' },
   displayName: 'SLOVO Test',
   accountName: 'Test ID',
   languageTraits: {
@@ -60,7 +62,6 @@ const validConfig = {
     politePause: true,
     firstWeek: true,
     widgetHint: true,
-    moods: true,
     seasonalDecor: true,
     stressAnimation: true,
     illustrations: true,
@@ -78,6 +79,8 @@ const validConfig = {
     streakFreezes: true,
     streakBreak: true,
     quickQuestion: true,
+    playStep: true,
+    seenWordXp: true,
     levels: true,
     noCounters: true,
     dailyGoal: true,
@@ -92,18 +95,23 @@ const validConfig = {
     eveningNotification: true,
     notificationFarewell: true,
     notificationExplainer: true,
+    notificationTimeStep: true,
     laterQuestions: true,
     profile: true,
     mascot: true,
     sounds: true,
     reduceMotion: true,
     fastReveal: true,
+    dashboard: true,
+    mood: true,
+    previousWords: true,
+    correctionTypes: true,
+    curatedCollections: true,
   },
   userSettingDefaults: {
     theme: 'system',
     fontSize: 'M',
     vibration: true,
-    dailyGoal: 20,
     notificationTimes: ['09:00'],
     mix: {
       categories: 'all',
@@ -134,9 +142,13 @@ const validConfig = {
     { code: 'other', name: 'Other' },
   ],
   moods: [
-    { id: 'joyful', name: 'Joyful', emoji: '😊' },
-    { id: 'calm', name: 'Calm', emoji: '😌' },
+    { id: 'joyful', name: 'Joyful', emoji: '😊', reply: 'Catch a bright word!' },
+    { id: 'calm', name: 'Calm', emoji: '😌', reply: 'No hurry.' },
+    { id: 'sad', name: 'Sad', emoji: '😢', reply: 'A word warms.' },
+    { id: 'energetic', name: 'Energetic', emoji: '⚡', reply: 'Keep the pace!' },
+    { id: 'thoughtful', name: 'Thoughtful', emoji: '🤔', reply: 'Food for thought.' },
   ],
+  dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful'],
   searchLetters: { b: 'a' },
   xp: {
     round: 1,
@@ -147,12 +159,13 @@ const validConfig = {
     reviewAnswer: 1,
     reviewDailyCap: 10,
     quickQuestion: 2,
+    seenWord: 1,
   },
   levels: { first: 50, growth: 0.1, growingUntil: 10, later: 120, names: ['Seed', 'Sprout'] },
   questionnaire: {
-    who: [
-      { id: 'studying', label: 'Studying', rarityCeiling: 4 },
-      { id: 'working', label: 'Working', rarityCeiling: 5 },
+    level: [
+      { id: 'starting', label: 'Starting', rarityCeiling: 2 },
+      { id: 'good', label: 'Good', rarityCeiling: 4 },
     ],
     why: [{ id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } }],
     selfRating: [{ id: 'few', label: 'Few', offerRarityTest: false }],
@@ -210,7 +223,6 @@ const learningSwitches = [
   'politePause',
   'firstWeek',
   'widgetHint',
-  'moods',
 ] as const;
 
 /** The Feature Switches of the features of 0.8.14. */
@@ -305,6 +317,8 @@ describe('loadEdition', () => {
     'dailyCrosswordShare',
     'tracedCrossword',
     'fastReveal',
+    'dashboard',
+    'correctionTypes',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({
@@ -332,7 +346,6 @@ describe('loadEdition', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
-      dailyGoal: 20,
       notificationTimes: ['09:00'],
       rarityCeiling: 5,
       mix: {
@@ -399,6 +412,7 @@ describe('loadEdition', () => {
       reviewAnswer: 1,
       quickQuestion: 2,
       reviewDailyCap: 10,
+      seenWord: 1,
     });
   });
 
@@ -441,13 +455,13 @@ describe('loadEdition', () => {
     );
   });
 
-  it('reports the questionnaire: the options of «Хто ви» and «Навіщо» and what each sets (ADR 0067)', () => {
+  it('reports the questionnaire: the options of the level question and «Навіщо» and what each sets (ADR 0067)', () => {
     expect(loadEdition(validConfig).questionnaire).toEqual(validConfig.questionnaire);
   });
 
   it('refuses an Edition without a questionnaire, with no option, a repeated option id, an unknown Mix kind or a Ceiling below the default Floor', () => {
     const { questionnaire, ...withoutQuestionnaire } = validConfig;
-    const [studying, working] = questionnaire.who;
+    const [starting, good] = questionnaire.level;
     expect(() => loadEdition(withoutQuestionnaire)).toThrow(InvalidEditionConfigError);
     expect(() =>
       loadEdition({ ...validConfig, questionnaire: { ...questionnaire, why: [] } }),
@@ -455,9 +469,9 @@ describe('loadEdition', () => {
     expect(() =>
       loadEdition({
         ...validConfig,
-        questionnaire: { ...questionnaire, who: [studying, { ...working, id: 'studying' }] },
+        questionnaire: { ...questionnaire, level: [starting, { ...good, id: 'starting' }] },
       }),
-    ).toThrow('questionnaire.who.1.id: Duplicate option id "studying"');
+    ).toThrow('questionnaire.level.1.id: Duplicate option id "starting"');
     expect(() =>
       loadEdition({
         ...validConfig,
@@ -593,13 +607,19 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.vibration).toBe(false);
   });
 
-  it('reports a Daily Goal default of 30', () => {
-    const edition = loadEdition({
-      ...validConfig,
-      userSettingDefaults: { ...validConfig.userSettingDefaults, dailyGoal: 30 },
-    });
+  it('reports the Daily Goals in Words and refuses a highlighted one not among them', () => {
+    const dailyGoals = { options: [5, 15], highlighted: 15 };
+    expect(loadEdition({ ...validConfig, dailyGoals }).dailyGoals).toEqual(dailyGoals);
+    expect(() =>
+      loadEdition({ ...validConfig, dailyGoals: { ...dailyGoals, highlighted: 10 } }),
+    ).toThrow();
+  });
 
-    expect(edition.userSettingDefaults.dailyGoal).toBe(30);
+  it('reports the Notification times «Коли нагадати?» offers, one for each bucket', () => {
+    const onboardingNotificationTimes = { morning: '08:15', midday: '12:00', evening: '21:00' };
+    expect(
+      loadEdition({ ...validConfig, onboardingNotificationTimes }).onboardingNotificationTimes,
+    ).toEqual(onboardingNotificationTimes);
   });
 
   it('refuses hand-written legal page addresses in the config', () => {
@@ -641,11 +661,18 @@ describe('loadEdition', () => {
   });
 
   it('reports the moods in their order', () => {
-    expect(loadEdition(validConfig).moods.map(({ id }) => id)).toEqual(['joyful', 'calm']);
+    expect(loadEdition(validConfig).moods.map(({ id }) => id)).toEqual([
+      'joyful',
+      'calm',
+      'sad',
+      'energetic',
+      'thoughtful',
+    ]);
   });
 
-  it('accepts an Edition that lists no moods', () => {
-    expect(() => loadEdition({ ...validConfig, moods: [] })).not.toThrow();
+  it('resolves the four Dashboard moods, in their order', () => {
+    const { moods, dashboardMoods } = loadEdition(validConfig);
+    expect(dashboardMoods).toEqual([moods[3], moods[4], moods[1], moods[0]]);
   });
 
   it('accepts an Edition whose Categories require no history', () => {
@@ -884,14 +911,26 @@ describe('loadEdition', () => {
       'userSettingDefaults.vibration',
     ],
     [
-      'a missing Daily Goal default',
-      { userSettingDefaults: { ...userSettingDefaults, dailyGoal: undefined } },
-      'userSettingDefaults.dailyGoal',
+      'Daily Goals out of rising order',
+      { dailyGoals: { options: [25, 10], highlighted: 10 } },
+      'dailyGoals.options',
     ],
     [
-      'a Daily Goal default the Core does not offer',
-      { userSettingDefaults: { ...userSettingDefaults, dailyGoal: 15 } },
-      'userSettingDefaults.dailyGoal',
+      'onboarding Notification times out of time order',
+      { onboardingNotificationTimes: { morning: '13:00', midday: '09:00', evening: '20:30' } },
+      'onboardingNotificationTimes',
+    ],
+    [
+      'an onboarding Notification time for a fourth bucket',
+      {
+        onboardingNotificationTimes: {
+          morning: '09:00',
+          midday: '13:00',
+          evening: '20:30',
+          night: '23:00',
+        },
+      },
+      'onboardingNotificationTimes',
     ],
     [
       'a notification time that is not HH:MM',
@@ -1079,22 +1118,53 @@ describe('loadEdition', () => {
       'a repeated mood id',
       {
         moods: [
-          { id: 'joyful', name: 'Joyful', emoji: '😊' },
-          { id: 'joyful', name: 'Glad', emoji: '😀' },
+          { id: 'joyful', name: 'Joyful', emoji: '😊', reply: 'Catch a bright word!' },
+          { id: 'joyful', name: 'Glad', emoji: '😀', reply: 'Glad words.' },
         ],
+        dashboardMoods: [],
       },
       'moods.1.id',
     ],
-    ['a mood without a name', { moods: [{ id: 'calm', name: '', emoji: '😌' }] }, 'moods.0.name'],
+    [
+      'a mood without a name',
+      { moods: [{ id: 'calm', name: '', emoji: '😌', reply: 'No hurry.' }], dashboardMoods: [] },
+      'moods.0.name',
+    ],
     [
       'a mood without an emoji',
-      { moods: [{ id: 'calm', name: 'Calm', emoji: '' }] },
+      { moods: [{ id: 'calm', name: 'Calm', emoji: '', reply: 'No hurry.' }], dashboardMoods: [] },
       'moods.0.emoji',
     ],
     [
+      'a mood without a reply',
+      { moods: [{ id: 'calm', name: 'Calm', emoji: '😌', reply: '' }], dashboardMoods: [] },
+      'moods.0.reply',
+    ],
+    [
       'a mood id not in kebab case',
-      { moods: [{ id: 'In Love', name: 'In love', emoji: '😍' }] },
+      {
+        moods: [{ id: 'In Love', name: 'In love', emoji: '😍', reply: 'Tender words.' }],
+        dashboardMoods: [],
+      },
       'moods.0.id',
+    ],
+    ['no `dashboardMoods`', { dashboardMoods: undefined }, 'dashboardMoods'],
+    ['no Dashboard moods', { moods: [], dashboardMoods: [] }, 'dashboardMoods'],
+    ['three Dashboard moods', { dashboardMoods: ['joyful', 'calm', 'sad'] }, 'dashboardMoods'],
+    [
+      'five Dashboard moods',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'energetic', 'thoughtful'] },
+      'dashboardMoods',
+    ],
+    [
+      'a Dashboard mood the Edition does not list',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'angry'] },
+      'dashboardMoods.3',
+    ],
+    [
+      'a repeated Dashboard mood',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'calm'] },
+      'dashboardMoods.3',
     ],
     ['no Search letters', { searchLetters: undefined }, 'searchLetters'],
     ['a Search letter of two letters', { searchLetters: { ab: 'a' } }, 'searchLetters.ab'],
@@ -1124,11 +1194,17 @@ const dependentSwitches = [
   ['badges', ['xpLog']],
   ['profile', ['xpLog']],
   ['dailyGoal', ['xpLog']],
+  ['seenWordXp', ['xpLog', 'dailyGoal']],
   ['progressShareCards', ['shareCards', 'xpLog']],
   ['dailyCrosswordShare', ['shareCards', 'dailyCrossword', 'game']],
   ['tracedCrossword', ['dailyCrossword', 'game']],
   ['quickQuestion', ['game']],
+  ['playStep', ['game']],
   ['rarityTest', ['rarityCeiling']],
+  ['dashboard', ['wordOfTheDay']],
+  ['mood', ['dashboard', 'wordOfTheDay']],
+  ['previousWords', ['dashboard', 'wordOfTheDayArchive', 'wordOfTheDay']],
+  ['correctionTypes', ['dashboard', 'wordOfTheDay', 'corrections']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

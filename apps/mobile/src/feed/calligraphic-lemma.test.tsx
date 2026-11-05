@@ -14,7 +14,7 @@ import { router, Slot } from 'expo-router';
 import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import HomeScreen from '../app/index';
+import HomeScreen from '../app/feed';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import EntryLayout from '../app/entry/_layout';

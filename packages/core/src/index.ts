@@ -89,7 +89,6 @@ export {
 } from './game/game-mode';
 export { buildGameReview, type GameReviewItem } from './game/game-review';
 export { GAME_ROUNDS } from './game/round-plan';
-export { type MoodChoice } from './mood/mood-draw';
 export { type SearchResults } from './search/search';
 export { createGameHaptics, LIFE_LOST_DELAY, type GameHaptics } from './game/game-haptics';
 export { createHaptics, type HapticEngine, type Haptics } from './game/haptics';
@@ -264,3 +263,24 @@ export {
   type UserStateFactName,
   type UserStateFacts,
 } from './user-state/user-state-facts';
+export {
+  type CorrectionTypeRow,
+  type CorrectionTypes,
+  type CorrectionTypeTile,
+} from './dashboard/correction-types';
+export {
+  type CuratedCollectionCard,
+  type CuratedCollectionEntry,
+  type CuratedCollectionScreen,
+  type CuratedCollections,
+} from './dashboard/curated-collections';
+export {
+  type CorrectionTypesBlock,
+  type CuratedCollectionsBlock,
+  type Dashboard,
+  type DashboardBlock,
+  type MoodBlock,
+  type PreviousWordsBlock,
+  type WordOfTheDayHero,
+} from './dashboard/dashboard';
+export { type MoodCheckIn, type MoodCheckIns } from './mood/mood';

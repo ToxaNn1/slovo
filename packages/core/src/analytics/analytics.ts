@@ -57,17 +57,21 @@ export interface AnalyticsEvents {
   readonly reviewAnswered: EntryEventProperties & { readonly mark: 'known' | 'unknown' };
   /** The reader answered a Quick Question in the Feed, right or not, about the Entry it asked. */
   readonly quickQuestionAnswered: EntryEventProperties & { readonly right: boolean };
+  /** The reader chose a Mood in the Dashboard's Mood check-in, or changed it (ADR 0076). */
+  readonly moodChosen: { readonly mood: string };
+  /** The reader skipped the Mood check-in with «Не сьогодні». */
+  readonly moodSkipped: Record<string, never>;
   /** The reader reached a new Level (ADR 0066). */
   readonly levelReached: { readonly level: number };
-  /** The reader changed the Daily Goal (ADR 0066). */
-  readonly dailyGoalChanged: { readonly goal: number };
+  /** The reader changed the Daily Goal (ADR 0074): `null` where «Без цілі» turned it off. */
+  readonly dailyGoalChanged: { readonly goal: number | null };
   /** Today's Daily Goal was met. */
   readonly dailyGoalMet: { readonly goal: number };
   /** An onboarding step came on screen (ADR 0067). */
-  readonly onboardingStepViewed: { readonly step: OnboardingStepKind };
+  readonly onboardingStepViewed: { readonly step: OnboardingStepKind | 'rarityTest' };
   /** The onboarding finished, past its last step or skipped. */
   readonly onboardingFinished: { readonly skipped: boolean };
-  /** The reader answered «Хто ви» (`who`) or «Навіщо» (`why`) with an option's id. */
+  /** The reader answered «Рівень» (`level`) or «Навіщо» (`why`) with an option's id. */
   readonly questionnaireAnswered: {
     readonly question: QuestionnaireQuestion;
     readonly answer: string;

@@ -1,4 +1,4 @@
-import { DailyGoalSchema, type DailyGoal } from '@slovo/contracts';
+import type { DailyGoal } from '@slovo/contracts';
 import type { LaterQuestion } from '@slovo/core';
 import {
   FeedNoticeCard,
@@ -19,8 +19,6 @@ import { useOpenScreen } from '../use-open-screen';
 import { useMixState } from '../mix/mix';
 
 const strings = editionStrings.feedNotices.laterQuestions;
-
-const dailyGoals: readonly DailyGoal[] = DailyGoalSchema.options.map(({ value }) => value);
 
 /**
  * The Feed Notice of a later question of the questionnaire (ADR 0067): the
@@ -57,7 +55,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
     />
   );
 
-  if (question === 'dailyGoalChoice')
+  if (question === 'wordGoalChoice')
     return (
       <DailyGoalQuestion
         later={later}
@@ -114,7 +112,7 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
   );
 }
 
-/** The goals in XP, the Edition's default picked until the reader picks another (ADR 0067), and «Готово», which sets it. */
+/** The Daily Goals in Words, the Edition's highlighted one picked until the reader picks another (ADR 0067), and «Готово», which sets it. */
 function DailyGoalQuestion({
   later,
   onDone,
@@ -122,14 +120,15 @@ function DailyGoalQuestion({
   later: ReactNode;
   onDone: (goal: DailyGoal) => void;
 }) {
-  const [picked, setPicked] = useState(useEditionInEffect().userSettingDefaults.dailyGoal);
-  const { title, text } = strings.dailyGoalChoice;
+  const { options: dailyGoals, highlighted } = useEditionInEffect().dailyGoals;
+  const [picked, setPicked] = useState(highlighted);
+  const { title, text } = strings.wordGoalChoice;
   return (
-    <FeedNoticeCard notice="dailyGoalChoice" title={title} message={text}>
+    <FeedNoticeCard notice="wordGoalChoice" title={title} message={text}>
       <View style={styles.block}>
         <SegmentedControl
           accessibilityLabel={title}
-          // A segment's value is text, so each Daily Goal is drawn by its number of XP.
+          // A segment's value is text, so each Daily Goal is drawn by its number of Words.
           segments={dailyGoals.map((goal) => ({
             value: String(goal),
             label: String(goal),
@@ -142,7 +141,7 @@ function DailyGoalQuestion({
           }}
         />
         <Button
-          testID="later-question-dailyGoalChoice-done"
+          testID="later-question-wordGoalChoice-done"
           label={strings.done}
           onPress={() => {
             onDone(picked);

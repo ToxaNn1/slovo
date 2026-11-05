@@ -44,11 +44,13 @@ const everything: Shown = {
   dailyGoal: true,
   search: true,
   fastReveal: true,
-  moods: true,
+  dashboard: true,
+  mood: true,
+  curatedCollections: true,
   wordOfTheDayArchive: true,
   rarityCeiling: true,
   rarityTest: true,
-  questionnaire: { whoWhy: true, selfRating: true },
+  questionnaire: { levelWhy: true, selfRating: true },
 };
 
 interface Case {
@@ -111,7 +113,6 @@ describe('what the reader is shown', () => {
       'no Daily Goal choice with the Daily Goal off',
       { off: ['dailyGoal'], shown: { dailyGoal: false } },
     ],
-    ['no 🎲 «Слово під настрій» with moods off', { off: ['moods'], shown: { moods: false } }],
     [
       'no «Рідкість» with the Rarity Ceiling off',
       { off: ['rarityCeiling'], shown: { rarityCeiling: false } },
@@ -120,12 +121,12 @@ describe('what the reader is shown', () => {
       'no «Пройти тест ще раз» and no self-rating with the Rarity Test off',
       {
         off: ['rarityTest'],
-        shown: { rarityTest: false, questionnaire: { whoWhy: true, selfRating: false } },
+        shown: { rarityTest: false, questionnaire: { levelWhy: true, selfRating: false } },
       },
     ],
     [
       'the self-rating alone in «Пройти опитування ще раз» with the questionnaire off',
-      { off: ['questionnaire'], shown: { questionnaire: { whoWhy: false, selfRating: true } } },
+      { off: ['questionnaire'], shown: { questionnaire: { levelWhy: false, selfRating: true } } },
     ],
     [
       'no «Пройти опитування ще раз» with the questionnaire and the Rarity Test off',

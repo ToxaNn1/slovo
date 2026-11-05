@@ -58,7 +58,6 @@
     "politePause": true,
     "firstWeek": true,
     "widgetHint": true,
-    "moods": false,
     "seasonalDecor": false,
     "stressAnimation": true,
     "illustrations": true,
@@ -76,6 +75,8 @@
     "streakFreezes": true,
     "streakBreak": true,
     "quickQuestion": true,
+    "playStep": true,
+    "seenWordXp": true,
     "levels": true,
     "noCounters": true,
     "dailyGoal": true,
@@ -90,18 +91,23 @@
     "eveningNotification": true,
     "notificationFarewell": true,
     "notificationExplainer": true,
+    "notificationTimeStep": true,
     "laterQuestions": true,
     "profile": true,
     "mascot": true,
     "sounds": false,
     "reduceMotion": true,
-    "fastReveal": true
+    "fastReveal": true,
+    "dashboard": true,
+    "mood": true,
+    "curatedCollections": false,
+    "previousWords": true,
+    "correctionTypes": true
   },
   "userSettingDefaults": {
     "theme": "system",
     "fontSize": "M",
     "vibration": true,
-    "dailyGoal": 20,
     "notificationTimes": ["09:00", "13:00", "19:00"],
     "rarityCeiling": 5,
     "mix": {
@@ -274,36 +280,73 @@
   ],
   "moods": [
     {
+      "id": "sleepy",
+      "name": "Сонно",
+      "emoji": "😴",
+      "reply": "«Сонно» — теж слово. Але, на жаль, не рідкісне."
+    },
+    {
+      "id": "curious",
+      "name": "Допитливо",
+      "emoji": "🧐",
+      "reply": "Для допитливих я відкладаю найрідкісніше."
+    },
+    {
       "id": "joyful",
       "name": "Радісний",
-      "emoji": "😊"
+      "emoji": "😊",
+      "reply": "Лови світле слово!",
+      "rarityBand": "whole",
+      "shifts": {
+        "synonymRow": "more",
+        "idiom": "more"
+      }
     },
     {
       "id": "sad",
       "name": "Сумний",
-      "emoji": "😢"
+      "emoji": "😢",
+      "reply": "Слово зігріє."
     },
     {
       "id": "in-love",
       "name": "Закоханий",
-      "emoji": "😍"
+      "emoji": "😍",
+      "reply": "Ніжні слова поруч."
     },
     {
       "id": "energetic",
-      "name": "Бадьорий",
-      "emoji": "⚡"
+      "name": "Бадьоро",
+      "emoji": "⚡",
+      "reply": "Бадьоро? Тоді доженемо ціль ще до обіду.",
+      "rarityBand": "upper",
+      "shifts": {
+        "correction": "more"
+      }
     },
     {
       "id": "calm",
       "name": "Спокійний",
-      "emoji": "😌"
+      "emoji": "😌",
+      "reply": "Без поспіху.",
+      "rarityBand": "lower",
+      "shifts": {
+        "tip": "more",
+        "correction": "less"
+      }
     },
     {
       "id": "thoughtful",
-      "name": "Задумливий",
-      "emoji": "🤔"
+      "name": "Задумливо",
+      "emoji": "🤔",
+      "reply": "Задумливо — ідеальний стан для кросворду.",
+      "rarityBand": "upper",
+      "shifts": {
+        "idiom": "more"
+      }
     }
   ],
+  "dashboardMoods": ["energetic", "sleepy", "curious", "thoughtful"],
   "searchLetters": {
     "ґ": "г",
     "ё": "е"
@@ -316,8 +359,11 @@
     "dailyCrossword": 15,
     "reviewAnswer": 1,
     "reviewDailyCap": 10,
-    "quickQuestion": 2
+    "quickQuestion": 2,
+    "seenWord": 1
   },
+  "dailyGoals": { "options": [10, 25, 50], "highlighted": 10 },
+  "onboardingNotificationTimes": { "morning": "09:00", "midday": "13:00", "evening": "20:30" },
   "levels": {
     "first": 50,
     "growth": 0.1,
@@ -326,21 +372,31 @@
     "names": ["Початківець", "Читач", "Знавець", "Книжник", "Словолюб", "Мовознавець"]
   },
   "questionnaire": {
-    "who": [
+    "level": [
       {
-        "id": "studying",
-        "label": "Навчаюсь",
-        "rarityCeiling": 4
+        "id": "only-starting",
+        "label": "Тільки починаю",
+        "rarityCeiling": 2
       },
       {
-        "id": "working",
-        "label": "Працюю",
-        "rarityCeiling": 5
+        "id": "fair",
+        "label": "Непогано",
+        "rarityCeiling": 3
+      },
+      {
+        "id": "good",
+        "label": "Добре",
+        "rarityCeiling": 4
       },
       {
         "id": "gourmet",
         "label": "Мовний гурман",
         "rarityCeiling": 5
+      },
+      {
+        "id": "dont-know",
+        "label": "Не знаю",
+        "rarityTest": true
       }
     ],
     "why": [
@@ -580,9 +636,9 @@
     }
   ],
   "mascot": {
-    "onboarding": "Вітаю! Я буду поруч, поки ви збираєте рідкісні слова.",
+    "onboarding": "Вітаю! Я буду поруч, поки ти збираєш рідкісні слова.",
     "newLevel": "Новий рівень! Так тримати.",
-    "badge": "Нова відзнака — тепер вона ваша назавжди.",
+    "badge": "Нова відзнака — тепер вона твоя назавжди.",
     "dailyGoal": "Денну ціль виконано!",
     "streakMilestone": "Серія росте — ще один день поспіль!",
     "gameRight": "Влучно!",

@@ -23,4 +23,6 @@ export const RarityTestStringsSchema = z.strictObject({
   retake: TextSchema,
   /** The result screen. Takes `{n}`, the Rarity Ceiling it set (ADR 0072). */
   result: templateOf('n'),
+  /** The button under the result, which goes on. */
+  next: TextSchema,
 });

@@ -16,7 +16,8 @@ export const savedRecords = {
   /** The Collections, one record per Collection, by Collection id: its name and the instant it was created. */
   collections: declareRecords(
     'collections.',
-    z.object({ name: z.string(), createdAt: InstantSchema }),
+    // `source`: the Curated Collection a copy was made of (ADR 0076).
+    z.object({ name: z.string(), createdAt: InstantSchema, source: z.string().optional() }),
   ),
   /**
    * The Entries in Collections, one record per Entry in a Collection, by

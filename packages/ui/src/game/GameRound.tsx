@@ -864,7 +864,7 @@ function RoundLabel({ label }: { label: string }) {
  * stamp of a tick; a wrong choice sinks, mutes, drops and is struck through
  * with a red slash; the others fade. Under Reduce Motion nothing pops,
  * drops or slides: the stamp and the slash appear in place. Nothing shakes.
- * VoiceOver reads the option with its Stress, then «Правильно» or «Ваш
+ * VoiceOver reads the option with its Stress, then «Правильно» or «Твій
  * вибір», and the faded ones as dimmed.
  */
 function AnswerOption({

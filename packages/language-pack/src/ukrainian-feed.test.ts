@@ -182,8 +182,8 @@ const today = '2026-10-11T09:00:00+03:00';
 const WALK_TIMEOUT_MS = 20_000;
 
 describe('the Feed over the Ukrainian Language Pack', () => {
-  it('opens a pack the build writes in pack format 9 and shows its first card', async () => {
-    expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 9 });
+  it('opens a pack the build writes in pack format 10 and shows its first card', async () => {
+    expect(await pack.metadata()).toMatchObject({ editionId: 'uk', packFormat: 10 });
 
     const feed = await run(await seedUserState(), fakeClock(today).clock);
 
@@ -410,7 +410,17 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
     await openComposition({
       content,
       edition: ukrainian,
-      userState: await seedUserState(),
+      // The evening reminds of a Daily Goal set (ADR 0074).
+      userState: await seedUserState({
+        xpLog: {
+          'word-goal-2026-10-13': {
+            kind: 'word-goal',
+            date: '2026-10-13',
+            at: '2026-10-13T06:00:00.000Z',
+            goal: 10,
+          },
+        },
+      }),
       clock: fakeClock('2026-10-14T08:00:00+03:00').clock,
       random: seededRandom(7),
       scheduling: {
@@ -422,7 +432,6 @@ describe('the notification plan over the Ukrainian Language Pack', () => {
         goalNotMet: 'Goal not met',
       },
     });
-
     // The polite pause and the 1.0 plan are on: up to the 14th day, a morning Word and one
     // evening notification a day, and the 14th day's last time is the farewell.
     const all = scheduler.plan ?? [];

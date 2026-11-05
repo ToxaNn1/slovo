@@ -18,9 +18,13 @@ const onboarded: [string, string] = [
 ];
 
 /** The record of XP earned on a local date. */
-const xpOn = (date: string, amount: number): [string, string] => [
-  `xp.xp-${date}-${String(amount)}`,
-  JSON.stringify({ kind: 'xp', date, at: `${date}T07:00:00.000Z`, source: 'game-round', amount }),
+/** The records of a Daily Goal in Words set and met on a local date (ADR 0074). */
+const goalMetOn = (date: string): [string, string][] => [
+  [
+    `xp.word-goal-${date}`,
+    JSON.stringify({ kind: 'word-goal', date, at: `${date}T06:00:00.000Z`, goal: 10 }),
+  ],
+  [`xp.goal-met-${date}`, JSON.stringify({ kind: 'goal-met', date, at: `${date}T07:00:00.000Z` })],
 ];
 
 const switches: readonly FeatureSwitch[] = [
@@ -91,7 +95,7 @@ async function asksOn(
 // Spec #1358, ticket #1381, ADR 0067: the explainer right after the first met Daily Goal, no later than day 3.
 describe('the notification explainer', () => {
   it('comes on the day the Daily Goal is first met', async () => {
-    const records = new Map([onboarded, xpOn('2026-10-11', 20)]);
+    const records = new Map([onboarded, ...goalMetOn('2026-10-11')]);
 
     expect(await askIn(await run({ records, date: '2026-10-11' }))).toBe('notificationExplainer');
   });
@@ -107,15 +111,15 @@ describe('the notification explainer', () => {
   });
 
   it('comes before the onboarding is finished never, nor to a reader the device asked already', async () => {
-    const goal = xpOn('2026-10-13', 20);
-    const before = await run({ records: new Map([goal]), date: '2026-10-13' });
+    const goal = goalMetOn('2026-10-13');
+    const before = await run({ records: new Map(goal), date: '2026-10-13' });
     const allowed = await run({
-      records: new Map([onboarded, goal]),
+      records: new Map([onboarded, ...goal]),
       date: '2026-10-13',
       permission: 'allowed',
     });
     const denied = await run({
-      records: new Map([onboarded, goal]),
+      records: new Map([onboarded, ...goal]),
       date: '2026-10-13',
       permission: 'denied',
     });
@@ -125,7 +129,7 @@ describe('the notification explainer', () => {
 
   it('never comes while its Feature Switch is off', async () => {
     const app = await run({
-      records: new Map([onboarded, xpOn('2026-10-13', 20)]),
+      records: new Map([onboarded, ...goalMetOn('2026-10-13')]),
       date: '2026-10-13',
       on: switches.filter((feature) => feature !== 'notificationExplainer'),
     });
@@ -177,5 +181,28 @@ describe('the notification explainer', () => {
 
     const later = await run({ records, date: '2026-10-20', permission: 'denied' });
     expect(await askIn(later)).toBeUndefined();
+  });
+  // Spec #1553, ticket #1559: any answer to «Коли нагадати?» is the ask.
+  it('never comes after «Без нагадувань» on the onboarding, and asks the device nothing', async () => {
+    const records = new Map([onboarded]);
+    const app = await run({ records, date: '2026-10-11' });
+    await app.notifications.chooseOnboardingTime(undefined);
+    expect(app.notifications.state.permission).toBe('not-asked');
+
+    expect(await asksOn(records, ['2026-10-13', '2026-10-20', '2026-10-21'])).toEqual([
+      undefined,
+      undefined,
+      undefined,
+    ]);
+  });
+
+  it('never comes after a time chosen on the onboarding, which asks the device, a refusal too', async () => {
+    const records = new Map([onboarded]);
+    const app = await run({ records, date: '2026-10-11', answer: 'denied' });
+
+    await app.notifications.chooseOnboardingTime('09:00');
+
+    expect(app.notifications.state.permission).toBe('denied');
+    expect(await askIn(await run({ records, date: '2026-10-13' }))).toBeUndefined();
   });
 });

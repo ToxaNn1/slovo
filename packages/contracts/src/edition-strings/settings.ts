@@ -37,8 +37,8 @@ export const SettingsStringsSchema = z.strictObject({
   reduceMotion: z.strictObject({ title: TextSchema, explanation: TextSchema }),
   /** The switch that shares the Community Counters, and the explanation under it. */
   anonymousStats: z.strictObject({ title: TextSchema, explanation: TextSchema }),
-  /** The Daily Goal choice; its numbers of XP are drawn as they are. */
-  dailyGoal: z.strictObject({ title: TextSchema }),
+  /** The Daily Goal choice, its numbers of Words drawn as they are, and «Без цілі», which turns the Daily Goal off from today (ADR 0074). */
+  dailyGoal: z.strictObject({ title: TextSchema, none: TextSchema }),
   /**
    * «Рідкість», the Rarity Ceiling row (ADR 0072): its label, the line under
    * it, and a ceiling's segment, which takes `{rarity}`, e.g. «до 3».

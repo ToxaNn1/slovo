@@ -1,4 +1,4 @@
-import type { MixKindWeight, Word } from '@slovo/contracts';
+import type { MixKindWeight, Mood, Rarity, Word } from '@slovo/contracts';
 
 import { buildCorrectionCard } from '../entries/correction-card';
 import { buildIdiomCard } from '../entries/idiom-card';
@@ -25,6 +25,8 @@ import type { OpenedEntry } from './day-change';
 import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { MixKindWeights } from '../entries/mix';
+import { inRarityBand, shiftedKindWeights } from '../mood/feed-parameters';
+import type { RarityCeiling } from '../entries/rarity-ceiling';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import { buildWordCard } from '../entries/word-card';
@@ -149,6 +151,19 @@ export interface Feed {
    * Nothing when no Quick Question not answered yet is there.
    */
   answerQuickQuestion(position: number, option: number): Promise<boolean | undefined>;
+  /**
+   * Makes today's Word of the Day Seen through the Feed's own Seen, as a
+   * dwell on its card would: History, the archive and the Seen subscribers
+   * (ADR 0076). Nothing when today has none chosen or it is Seen already.
+   */
+  seeWordOfTheDay(): Promise<void>;
+  /**
+   * Today's Word of the Day, chosen in the Feed's turn as its card would be
+   * when today has none yet: past the cards the Feed showed in this Cycle,
+   * starting the Feed's new Cycle when the choice starts one. The Dashboard's
+   * hero reads it, so the Feed stays the one that chooses (ADR 0076).
+   */
+  wordOfTheDay(): Promise<WordOfTheDayChoice | undefined>;
 }
 
 /**
@@ -364,6 +379,8 @@ export async function openFeed({
   archive,
   notices,
   kindWeights,
+  mood,
+  rarityCeiling,
   eligibility,
   seen,
   dayTurned,
@@ -381,6 +398,10 @@ export async function openFeed({
   notices: FeedNoticeQueue;
   /** The Mix kind weights the turns follow now, read for each card. */
   kindWeights: () => MixKindWeights;
+  /** Today's Mood, whose Feed parameters the next card follows (ADR 0076), read for each card; none chosen leaves the Feed as it is. */
+  mood: () => Mood | undefined;
+  /** The Rarity Ceiling the Mood's rarity band clips to. */
+  rarityCeiling: Pick<RarityCeiling, 'state'>;
   eligibility: Pick<Subject<void>, 'subscribe'>;
   seen: Pick<Subject<string>, 'publish'>;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
@@ -493,7 +514,13 @@ export async function openFeed({
       started.commit();
       session.startCycle();
     }
-    const id = nextEntryId(cycle.unseen(), session, eligibleDue(cycle, knowledge), kindWeights());
+    const today = mood();
+    const id = nextEntryId(
+      await bandFirst(cycle.unseen(), today),
+      session,
+      eligibleDue(cycle, knowledge),
+      shiftedKindWeights(kindWeights(), today),
+    );
     // A due Review goes before the Quick Question (ADR 0066), and the card
     // after the end-of-Cycle card, which starts the new Cycle, is an Entry's.
     const due = id !== undefined && knowledge.state.shown.get(id) === 'review';
@@ -516,6 +543,36 @@ export async function openFeed({
    * Adds a Quick Question when it is its turn: `every - 1` cards that take
    * turns came since the last one, or since the session opened.
    */
+  /** The rarity of each Word, read once per session: a Word's rarity never changes while the app runs. */
+  const rarities = new Map<string, Rarity>();
+  async function raritiesOf(ids: readonly string[]): Promise<ReadonlyMap<string, Rarity>> {
+    const missing = ids.filter((id) => !rarities.has(id));
+    if (missing.length > 0) {
+      for (const [id, entry] of await entries.getMany(missing)) {
+        if (entry.kind === 'word') rarities.set(id, entry.rarity);
+      }
+    }
+    return rarities;
+  }
+
+  /**
+   * The unseen Entries with the Mood's rarity band applied (ADR 0076): the
+   * Words of the band first, in the Cycle order, then the rest, so the Cycle
+   * still ends. The other kinds stay as they are.
+   */
+  async function bandFirst(unseen: EntryIds, today: Mood | undefined): Promise<EntryIds> {
+    if (today === undefined || today.rarityBand === 'whole') return unseen;
+    const known = await raritiesOf(unseen.words);
+    const inBand = (id: string) => {
+      const rarity = known.get(id);
+      return rarity !== undefined && inRarityBand(rarity, today.rarityBand, rarityCeiling.state);
+    };
+    return {
+      ...unseen,
+      words: [...unseen.words.filter(inBand), ...unseen.words.filter((id) => !inBand(id))],
+    };
+  }
+
   async function addQuickQuestion(): Promise<FeedCard | undefined> {
     const every = quickQuestion?.every();
     if (quickQuestion === undefined || every === undefined) return undefined;
@@ -570,17 +627,27 @@ export async function openFeed({
   }
 
   /**
+   * Today's Word of the Day, chosen first past the cards shown in this Cycle
+   * but the `replaced` card; a choice that starts a new Cycle starts the
+   * session's too, so the next card added is its first.
+   */
+  async function chooseWordOfTheDay(replaced?: FeedCard): Promise<WordOfTheDayChoice | undefined> {
+    const today = await wordOfTheDay.today({ avoid: session.shownIds(replaced) });
+    if (today?.startedCycle === true) session.startCycle();
+    return today;
+  }
+
+  /**
    * Adds the card of today's Word of the Day at the end, in place of the
    * `replaced` card if given, choosing it first if today has none yet.
    */
   async function addWordOfTheDay(replaced?: FeedCard): Promise<FeedCard | undefined> {
-    const today = await wordOfTheDay.today({ avoid: session.shownIds(replaced) });
+    const today = await chooseWordOfTheDay(replaced);
     if (today === undefined) return undefined;
     const card = await wordOfTheDayCard(today);
     if (card === undefined) return undefined;
     openedDay = dateKeyOf(today.date);
     dayToOpen = undefined;
-    if (today.startedCycle) session.startCycle();
     session.add(card, replaced);
     subscribers.tell();
     return card;
@@ -875,5 +942,12 @@ export async function openFeed({
     openLinkedCorrection: (position, correctionId) =>
       inTurn(() => insertLinkedCorrection(position, correctionId)),
     answerQuickQuestion: (position, option) => inTurn(() => answerQuickQuestion(position, option)),
+    wordOfTheDay: () => inTurn(() => chooseWordOfTheDay()),
+    seeWordOfTheDay: () => {
+      const chosen = wordOfTheDay.chosen();
+      return chosen === undefined
+        ? Promise.resolve()
+        : inTurnTellingSeen(() => markOpenedSeen(chosen.wordId, new Map()));
+    },
   };
 }

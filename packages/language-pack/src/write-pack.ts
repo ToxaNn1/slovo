@@ -64,9 +64,6 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     const insertRegister = db.prepare(
       'INSERT INTO word_registers (word_id, position, register) VALUES (?, ?, ?)',
     );
-    const insertMood = db.prepare(
-      'INSERT INTO word_moods (word_id, position, mood) VALUES (?, ?, ?)',
-    );
     const insertSource = db.prepare(
       'INSERT INTO sources (entry_id, position, title, short_name, url, archived_url) VALUES (?, ?, ?, ?, ?, ?)',
     );
@@ -189,9 +186,6 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       word.registers.forEach((register, position) => {
         insertRegister.run(word.id, position, register);
       });
-      word.moods?.forEach((mood, position) => {
-        insertMood.run(word.id, position, mood);
-      });
       word.correctionIds.forEach((correctionId, position) => {
         insertCorrectionLink.run(word.id, position, correctionId);
       });
@@ -273,6 +267,20 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     for (const { date, words } of content.crosswordDays ?? []) {
       words.forEach(({ entryId, answer, clue, row, column, direction }, position) => {
         insertCrosswordWord.run(date, position, entryId, answer, clue, row, column, direction);
+      });
+    }
+
+    const insertCollection = db.prepare(`
+      INSERT INTO curated_collections (id, name, description, published_on) VALUES (?, ?, ?, ?)
+    `);
+    const insertCollectionEntry = db.prepare(
+      'INSERT INTO curated_collection_entries (collection_id, position, entry_id) VALUES (?, ?, ?)',
+    );
+    for (const { id, name, description, publishedOn, entryIds } of content.curatedCollections ??
+      []) {
+      insertCollection.run(id, name, description, publishedOn);
+      entryIds.forEach((entryId, position) => {
+        insertCollectionEntry.run(id, position, entryId);
       });
     }
 

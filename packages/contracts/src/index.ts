@@ -15,6 +15,8 @@ export {
 export {
   CategorySchema,
   DailyGoalSchema,
+  DailyGoalsSchema,
+  OnboardingNotificationTimesSchema,
   DistractorRuleSchema,
   EditionConfigSchema,
   FeatureSwitchesSchema,
@@ -37,6 +39,8 @@ export {
   UserSettingDefaultsConfigSchema,
   type Category,
   type DailyGoal,
+  type DailyGoals,
+  type OnboardingNotificationTimes,
   type DistractorRule,
   type EditionConfig,
   type FeatureSwitch,
@@ -54,6 +58,12 @@ export {
   type LanguageTraits,
   type MixConfig,
   type Mood,
+  MoodShiftSchema,
+  type MoodShift,
+  RarityBandSchema,
+  type RarityBand,
+  WeightedKindSchema,
+  type WeightedKind,
   type OriginLanguage,
   type Theme,
   type UserSettingDefaultsConfig,
@@ -164,7 +174,17 @@ export {
   CollectionLinkSchema,
   type CollectionLink,
 } from './collection-link';
-export { type CounterEvent } from './api/counters';
+export {
+  CuratedCollectionIdSchema,
+  CuratedCollectionSchema,
+  type CuratedCollection,
+} from './curated-collection';
+export {
+  NotificationTimeBucketSchema,
+  type CountedQuestion,
+  type CounterEvent,
+  type NotificationTimeBucket,
+} from './api/counters';
 export {
   MistakeReportSchema,
   MistakeTypeSchema,

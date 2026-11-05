@@ -1,11 +1,4 @@
-import {
-  DailyGoalSchema,
-  FontSizeSchema,
-  RARITIES,
-  ThemeSchema,
-  fill,
-  type DailyGoal,
-} from '@slovo/contracts';
+import { FontSizeSchema, RARITIES, ThemeSchema, fill, type DailyGoal } from '@slovo/contracts';
 import {
   ChoiceRow,
   FontSizePreview,
@@ -23,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { AccountRow } from '@/account/account-row';
 import { useAccountInEffect } from '@/account/account';
 import { editionStrings } from '@/edition/edition';
+import { useEditionInEffect } from '@/edition/remote-switches';
 import { useHiddenSummary } from '@/mix/hidden';
 import { useMixSummary } from '@/mix/mix';
 import { useRarityCeiling } from '@/mix/rarity-ceiling';
@@ -49,14 +43,20 @@ const fontSizeSegments = FontSizeSchema.options.map((fontSize) => ({
   testID: `settings-font-size-${fontSize}`,
 }));
 
-const dailyGoals: readonly DailyGoal[] = DailyGoalSchema.options.map(({ value }) => value);
+/** The segment of «Без цілі», which turns the Daily Goal off from today (ADR 0074). */
+const NO_DAILY_GOAL = 'none';
 
-// A segment's value is text, so each Daily Goal is drawn by its number of XP.
-const dailyGoalSegments = dailyGoals.map((dailyGoal) => ({
-  value: String(dailyGoal),
-  label: String(dailyGoal),
-  testID: `settings-daily-goal-${String(dailyGoal)}`,
-}));
+// A segment's value is text, so each Daily Goal is drawn by its number of Words, and «Без цілі» comes last.
+function dailyGoalSegments(dailyGoals: readonly DailyGoal[]) {
+  return [
+    ...dailyGoals.map((dailyGoal) => ({
+      value: String(dailyGoal),
+      label: String(dailyGoal),
+      testID: `settings-daily-goal-${String(dailyGoal)}`,
+    })),
+    { value: NO_DAILY_GOAL, label: strings.dailyGoal.none, testID: 'settings-daily-goal-none' },
+  ];
+}
 
 // «до 1» to «до 5», each Rarity Ceiling by its rarity.
 const rarityCeilingSegments = RARITIES.map((rarity) => ({
@@ -80,6 +80,8 @@ export default function SettingsScreen() {
   const { colors } = useTokens();
   const openScreen = useOpenScreen();
   const { xpLog } = useComposition();
+  const edition = useEditionInEffect();
+  const dailyGoals = edition.dailyGoals.options;
   const { dailyGoal } = useSubscribed(xpLog, ({ state }) => state);
   const { ceiling, setCeiling } = useRarityCeiling();
   const mixSummary = useMixSummary();
@@ -206,14 +208,18 @@ export default function SettingsScreen() {
         </View>
         <View testID="settings-group-learning" style={styles.section}>
           <SettingsGroup title={strings.groups.learning}>
-            {shown.dailyGoal && dailyGoal !== null && (
+            {shown.dailyGoal && edition.isFeatureEnabled('xpLog') && (
               <ChoiceRow
                 icon="triangle"
                 label={strings.dailyGoal.title}
-                segments={dailyGoalSegments}
-                selected={String(dailyGoal.goal)}
+                segments={dailyGoalSegments(dailyGoals)}
+                // «Без цілі» is selected while today has no Daily Goal.
+                selected={dailyGoal === null ? NO_DAILY_GOAL : String(dailyGoal.goal)}
                 onSelect={(value) => {
-                  const goal = dailyGoals.find((option) => String(option) === value);
+                  const goal =
+                    value === NO_DAILY_GOAL
+                      ? null
+                      : dailyGoals.find((option) => String(option) === value);
                   if (goal === undefined) return;
                   xpLog.setDailyGoal(goal).catch((error: unknown) => {
                     logError('The Daily Goal could not be set', error);

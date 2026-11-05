@@ -16,6 +16,10 @@ import {
 } from './game/daily-crossword';
 import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
 import { openCycle } from './feed/cycle';
+import { openCorrectionTypes, type CorrectionTypes } from './dashboard/correction-types';
+import { openCuratedCollections, type CuratedCollections } from './dashboard/curated-collections';
+import { openDashboard, type Dashboard } from './dashboard/dashboard';
+import { openMoodCheckIns, type MoodCheckIns } from './mood/mood';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
 import { createEntries } from './entries/entries';
@@ -60,7 +64,6 @@ import { openXpLog, type XpLog } from './progress/xp-log';
 import { openStreakBreak, type StreakBreak } from './progress/streak-break';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
-import { createMoodDraw, type MoodDraw } from './mood/mood-draw';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
 import { openRarityCeiling, type RarityCeiling } from './entries/rarity-ceiling';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
@@ -89,6 +92,14 @@ import { openWordOfTheDay } from './feed/word-of-the-day';
 export interface Composition extends Hiding {
   /** The Feed of the app session. */
   readonly feed: Feed;
+  /** The Dashboard, the home's blocks for the local day (ADR 0076); none with `dashboard` off. */
+  readonly dashboard: Dashboard;
+  /** The Correction Types, the rail's tiles and each type's Corrections (ADR 0076); none with `correctionTypes` off. */
+  readonly correctionTypes: CorrectionTypes;
+  /** The Curated Collections, the «Добірки» rail's cards (ADR 0076); none with `curatedCollections` off. */
+  readonly curatedCollections: CuratedCollections;
+  /** The daily Mood check-in the Dashboard asks (ADR 0076); asking and asking nothing with `mood` off. */
+  readonly mood: MoodCheckIns;
   /** Favorites, which a heart tapped anywhere changes. */
   readonly favorites: Favorites;
   /** Collections, which the sheet and the Collections screens change. */
@@ -174,11 +185,6 @@ export interface Composition extends Hiding {
   /** The Rarity Ceiling, the one «Рідкість» setting every surface obeys (ADR 0072). */
   readonly rarityCeiling: RarityCeiling;
   /**
-   * «Слово під настрій» (ADR 0054): the Edition's moods and a mood's roulette,
-   * which lands on a Word the shell opens with `openedFromMood`.
-   */
-  readonly moodDraw: MoodDraw;
-  /**
    * Opens today's Daily Crossword with the letters this device kept for it,
    * for its card and its screen; nothing when the Edition has it off, the pack
    * has no day for the local date or the composition was opened without
@@ -198,7 +204,7 @@ export interface Composition extends Hiding {
    * today's Word of the Day carries its day, and the card of an Entry due for
    * Review is a Review (`review`), as in the Feed. Opening it never
    * makes the Entry Seen: Seen comes from the Feed, a notification or the
-   * widget, never from Search or the mood roulette.
+   * widget, never from Search.
    */
   entryCard(entryId: string): Promise<AnyEntryCard | undefined>;
   /**
@@ -219,12 +225,6 @@ export interface Composition extends Hiding {
    * (ADR 0054).
    */
   openedFromSearch(entryId: string): Promise<AnyEntryCard | undefined>;
-  /**
-   * Opens the Word the mood roulette landed on: its Entry card, like
-   * `entryCard`. It writes nothing, so the Word is not Seen and History stays
-   * as it was (ADR 0054).
-   */
-  openedFromMood(entryId: string): Promise<AnyEntryCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
   entryRow(entryId: string): Promise<EntryRowModel | undefined>;
   /**
@@ -411,7 +411,17 @@ export async function openComposition({
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const analytics = createAnalytics({ edition, userState, port: analyticsPort });
-  const xpLog = await openXpLog({ edition, userState, clock, random, dayTurned, analytics });
+  const { history, recorder } = await openHistory({ rows, userState });
+  const xpLog = await openXpLog({
+    edition,
+    userState,
+    clock,
+    random,
+    dayTurned,
+    analytics,
+    history,
+    isFirstCycle: () => cycle.isFirst(),
+  });
   const activeDays = await openActiveDays({ edition, userState, clock, xpLog, analytics });
   const day = createDayChange({
     clock,
@@ -422,7 +432,6 @@ export async function openComposition({
     dayTurned,
     returned,
   });
-  const { history, recorder } = await openHistory({ rows, userState });
   const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const communityCounters = openCommunityCounters({ edition, userState });
   /** Emits an event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
@@ -511,6 +520,8 @@ export async function openComposition({
     xpLog,
     analytics,
   });
+  // The Feed reads the day's Mood for each card it adds (ADR 0076); the check-in follows the day change.
+  const mood = await openMoodCheckIns({ edition, userState, clock, dayTurned, analytics });
   const feed = await openFeed({
     entries,
     userState,
@@ -554,6 +565,8 @@ export async function openComposition({
     }),
     kindWeights: () =>
       edition.isFeatureEnabled('mixKindWeights') ? mix.state.kindWeights : NORMAL_KIND_WEIGHTS,
+    mood: () => (mood.today.state === 'chosen' ? mood.today.mood : undefined),
+    rarityCeiling,
     eligibility,
     seen,
     dayTurned,
@@ -643,6 +656,34 @@ export async function openComposition({
     xpLog,
   });
   await day.resume();
+  // Once the day is turned to, so its hero is today's Word of the Day.
+  const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
+  const correctionTypes = await openCorrectionTypes({ edition, entries, userState, seen });
+  const curatedCollections = await openCuratedCollections({
+    edition,
+    content,
+    userState,
+    clock,
+    dayTurned,
+    entries,
+    collections,
+    hiddenEntries,
+    knowledge,
+  });
+  const dashboard = await openDashboard({
+    edition,
+    entries,
+    cycle,
+    wordOfTheDay,
+    feed,
+    mood,
+    archive: wordOfTheDayArchive,
+    clock,
+    correctionTypes,
+    curatedCollections,
+    seen,
+    dayTurned,
+  });
   // Once the day is turned to, so the welcome shows today's Word of the Day.
   const rarityTest = createRarityTest({ edition, entries, rarityCeiling, random });
   const onboarding = await openOnboarding({
@@ -656,6 +697,7 @@ export async function openComposition({
     xpLog,
     analytics,
     backend,
+    notifications,
   });
   async function entryCard(entryId: string): Promise<AnyEntryCard | undefined> {
     const entry = await entries.get(entryId);
@@ -674,9 +716,12 @@ export async function openComposition({
     await day.opened(entryId);
     return entryCard(entryId);
   }
-  const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   return {
     feed,
+    dashboard,
+    correctionTypes,
+    curatedCollections,
+    mood,
     favorites,
     collections,
     collectionLinkCopy: createCollectionLinkCopy({
@@ -715,7 +760,6 @@ export async function openComposition({
     recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,
     rarityCeiling,
-    moodDraw: createMoodDraw({ edition, entries, random }),
     async openDailyCrossword() {
       if (crossword === undefined) return undefined;
       return openDailyCrossword({
@@ -732,9 +776,8 @@ export async function openComposition({
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,
-    // Opened from inside the app: one rule for both, nothing Seen (ADR 0054).
+    // Opened from inside the app: nothing Seen (ADR 0054).
     openedFromSearch: entryCard,
-    openedFromMood: entryCard,
     entryRow: (entryId) => rows.row(entryId),
     widget: createWidget({
       edition,

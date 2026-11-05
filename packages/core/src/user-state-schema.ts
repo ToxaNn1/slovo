@@ -4,12 +4,14 @@ import { z } from 'zod';
 import { accountRecords, INSTALLED_KEY } from './account/records';
 import { communityCounterRecords } from './community-counters/records';
 import { contentUpdateRecords } from './content-update/records';
+import { dashboardRecords } from './dashboard/records';
 import { editionRecords } from './edition/records';
 import { feedRecords } from './feed/records';
 import { gameRecords } from './game/records';
 import { knowledgeRecords } from './knowledge/records';
 import { mistakeReportRecords } from './mistake-reports/records';
 import { mixRecords } from './mix/records';
+import { moodRecords } from './mood/records';
 import { notificationRecords } from './notifications/records';
 import { onboardingRecords } from './onboarding/records';
 import { progressRecords } from './progress/records';
@@ -108,6 +110,8 @@ const domains = [
   syncRecords,
   communityCounterRecords,
   mistakeReportRecords,
+  moodRecords,
+  dashboardRecords,
 ] as const;
 
 checkUserStateRecords(domains);

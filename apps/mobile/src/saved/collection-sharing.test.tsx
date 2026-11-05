@@ -177,12 +177,12 @@ describe('«Поділитися посиланням» in the menu a long press
     expect(share).not.toHaveBeenCalled();
   });
 
-  it('says «Немає з’єднання. Спробуйте пізніше.» offline and shares nothing', async () => {
+  it('says «Немає з’єднання. Спробуй пізніше.» offline and shares nothing', async () => {
     const autumn = await collection('Осінь', ['w_kvasha']);
     api.online = false;
     await openMenuOf(autumn);
 
-    expect(await toast()).toHaveTextContent('Немає з’єднання. Спробуйте пізніше.');
+    expect(await toast()).toHaveTextContent('Немає з’єднання. Спробуй пізніше.');
     expect(api.collectionLinks.made).toEqual([]);
     expect(share).not.toHaveBeenCalled();
   });

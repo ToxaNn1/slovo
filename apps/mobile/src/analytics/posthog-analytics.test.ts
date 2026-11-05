@@ -55,15 +55,15 @@ describe('The PostHog adapter', () => {
     const { client, captured, personProperties } = fakeClient();
     const analytics = postHogAnalytics('phc_test', () => client);
 
-    analytics.track('questionnaireAnswered', { question: 'who', answer: 'student' });
+    analytics.track('questionnaireAnswered', { question: 'level', answer: 'good' });
     analytics.track('questionnaireAnswered', { question: 'why', answer: 'curiosity' });
 
     expect(captured).toEqual([
-      ['questionnaireAnswered', { question: 'who', answer: 'student' }],
+      ['questionnaireAnswered', { question: 'level', answer: 'good' }],
       ['questionnaireAnswered', { question: 'why', answer: 'curiosity' }],
     ]);
     expect(personProperties).toEqual([
-      [{ questionnaire_who: 'student' }, undefined, false],
+      [{ questionnaire_level: 'good' }, undefined, false],
       [{ questionnaire_why: 'curiosity' }, undefined, false],
     ]);
   });
@@ -73,7 +73,7 @@ describe('The PostHog adapter', () => {
     const analytics = postHogAnalytics('phc_test', () => client);
 
     analytics.track('seen', seen);
-    analytics.track('laterQuestionAnswered', { question: 'dailyGoalChoice', answer: '10' });
+    analytics.track('laterQuestionAnswered', { question: 'wordGoalChoice', answer: '10' });
 
     expect(personProperties).toEqual([]);
   });

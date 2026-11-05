@@ -26,7 +26,8 @@ import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } fr
  * The config of the test Edition, in the shape of a real Edition's
  * `edition.json`: every Feature Switch on, one Category `test`, the one the
  * test Words carry, in its default Mix with every kind of Entry, the Daily
- * Limit off, and no notification time, mood, origin language or search letter.
+ * Limit off, four moods that shift nothing, and no notification time, origin
+ * language or search letter.
  */
 const testEditionConfig = {
   id: 'test',
@@ -46,7 +47,6 @@ const testEditionConfig = {
     theme: 'system',
     fontSize: 'M',
     vibration: true,
-    dailyGoal: 20,
     notificationTimes: [],
     rarityCeiling: 5,
     mix: {
@@ -67,7 +67,13 @@ const testEditionConfig = {
   correctionCategories: [{ id: 'everyday', displayName: 'Everyday' }],
   categoriesRequiringHistory: [],
   originLanguages: [],
-  moods: [],
+  moods: [
+    { id: 'energetic', name: 'Energetic', emoji: '⚡', reply: 'Keep the pace!' },
+    { id: 'thoughtful', name: 'Thoughtful', emoji: '🤔', reply: 'Food for thought.' },
+    { id: 'calm', name: 'Calm', emoji: '😌', reply: 'No hurry.' },
+    { id: 'joyful', name: 'Joyful', emoji: '😊', reply: 'Catch a bright word!' },
+  ],
+  dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful'],
   searchLetters: {},
   xp: {
     round: 1,
@@ -78,7 +84,10 @@ const testEditionConfig = {
     reviewAnswer: 1,
     reviewDailyCap: 10,
     quickQuestion: 2,
+    seenWord: 1,
   },
+  dailyGoals: { options: [10, 25, 50], highlighted: 10 },
+  onboardingNotificationTimes: { morning: '09:00', midday: '13:00', evening: '20:30' },
   levels: {
     first: 50,
     growth: 0.1,
@@ -87,9 +96,10 @@ const testEditionConfig = {
     names: ['Seed', 'Sprout', 'Sapling', 'Tree', 'Grove'],
   },
   questionnaire: {
-    who: [
-      { id: 'studying', label: 'Studying', rarityCeiling: 4 },
-      { id: 'working', label: 'Working', rarityCeiling: 5 },
+    level: [
+      { id: 'starting', label: 'Starting', rarityCeiling: 2 },
+      { id: 'good', label: 'Good', rarityCeiling: 4 },
+      { id: 'dont-know', label: 'Not sure', rarityTest: true },
     ],
     why: [
       { id: 'write-correctly', label: 'Write correctly', kindWeights: { correction: 'more' } },

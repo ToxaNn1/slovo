@@ -94,20 +94,44 @@ async function newReader(on: string): Promise<Map<string, string>> {
 
 // Ticket #1380, ADR 0067: the later questions come through Feed Notices, one a local day, each once.
 describe('The later questions', () => {
-  it('gives an existing reader the Daily Goal choice once, with 20 until they choose', async () => {
+  it('gives an existing reader the Daily Goal choice once, with no goal until they choose', async () => {
     const records = await existingReader();
 
     const first = await run({ records, on: '2026-11-02' });
 
-    expect(await laterQuestionsIn(first)).toEqual(['dailyGoalChoice']);
-    expect(first.xpLog.state.dailyGoal?.goal).toBe(20);
-    await first.questionnaire.chooseDailyGoal(30);
-    expect(first.xpLog.state.dailyGoal?.goal).toBe(30);
+    expect(await laterQuestionsIn(first)).toEqual(['wordGoalChoice']);
+    expect(first.xpLog.state.dailyGoal).toBeNull();
+    await first.questionnaire.chooseDailyGoal(25);
+    expect(first.xpLog.state.dailyGoal?.goal).toBe(25);
 
     const sameDay = await run({ records, on: '2026-11-02' });
     expect(await laterQuestionsIn(sameDay)).toEqual([]);
     const nextDay = await run({ records, on: '2026-11-03' });
     expect(await laterQuestionsIn(nextDay)).toEqual(['interests']);
+  });
+
+  it('offers the Daily Goal in Words to a reader who answered the old Daily Goal in XP', async () => {
+    const records = await existingReader();
+    records.set(
+      'questionnaire.later',
+      JSON.stringify({ asked: ['dailyGoalChoice', 'interests'], date: '2026-10-20' }),
+    );
+    records.set(
+      'xp.old',
+      JSON.stringify({
+        kind: 'daily-goal',
+        date: '2026-10-10',
+        at: '2026-10-10T05:00:00.000Z',
+        goal: 20,
+      }),
+    );
+
+    const app = await run({ records, on: '2026-11-02' });
+
+    expect(await laterQuestionsIn(app)).toEqual(['wordGoalChoice']);
+    expect(app.xpLog.state.dailyGoal).toBeNull();
+    const nextDay = await run({ records, on: '2026-11-03' });
+    expect(await laterQuestionsIn(nextDay)).toEqual(['selfRating']);
   });
 
   it('asks each question once, one a local day, in order, even one swiped past', async () => {
@@ -121,7 +145,7 @@ describe('The later questions', () => {
     }
 
     expect(asked).toEqual([
-      ['dailyGoalChoice'],
+      ['wordGoalChoice'],
       ['interests'],
       ['selfRating'],
       ['rarityTest'],
@@ -136,7 +160,7 @@ describe('The later questions', () => {
     await laterQuestionsIn(await run({ records, on: '2026-11-02' }));
 
     expect(await laterQuestionsIn(await run({ records, on: '2026-11-02' }))).toEqual([
-      'dailyGoalChoice',
+      'wordGoalChoice',
     ]);
   });
 
@@ -179,6 +203,16 @@ describe('The later questions', () => {
     expect(app.rarityCeiling.state).toBe(2);
   });
 
+  it('sets the Rarity Ceiling by a «Рівень» option and has no «Не знаю» on its retake', async () => {
+    const app = await run({ records: await existingReader(), on: '2026-11-02' });
+    expect(app.questionnaire.options.level.map(({ id }) => id)).toEqual(['starting', 'good']);
+
+    expect(await app.questionnaire.answer('level', 'dont-know')).toBe(false);
+    expect(await app.questionnaire.answer('level', 'starting')).toBe(true);
+
+    expect(app.rarityCeiling.state).toBe(2);
+  });
+
   it('asks no self-rating while the Rarity Test is off', async () => {
     const records = await existingReader();
 
@@ -189,7 +223,7 @@ describe('The later questions', () => {
       );
     }
 
-    expect(asked).toEqual([['dailyGoalChoice'], ['interests'], ['mixReview']]);
+    expect(asked).toEqual([['wordGoalChoice'], ['interests'], ['mixReview']]);
   });
 
   it('skips a question whose feature is off', async () => {
@@ -213,9 +247,9 @@ describe('The later questions', () => {
     const app = await run({ records, on: '2026-11-02' });
     await laterQuestionsIn(app);
 
-    await app.questionnaire.later('dailyGoalChoice');
+    await app.questionnaire.later('wordGoalChoice');
 
-    expect(app.xpLog.state.dailyGoal?.goal).toBe(20);
+    expect(app.xpLog.state.dailyGoal).toBeNull();
     expect(await laterQuestionsIn(await run({ records, on: '2026-11-02' }))).toEqual([]);
   });
 
@@ -233,7 +267,7 @@ describe('The later questions', () => {
     await app.questionnaire.open('mixReview');
 
     expect(events).toEqual([
-      ['laterQuestionAnswered', { question: 'dailyGoalChoice', answer: '50' }],
+      ['laterQuestionAnswered', { question: 'wordGoalChoice', answer: '50' }],
       ['laterQuestionAnswered', { question: 'interests', answer: 'nature,things' }],
       ['laterQuestionAnswered', { question: 'selfRating', answer: 'many' }],
       ['laterQuestionAnswered', { question: 'rarityTest', answer: 'open' }],

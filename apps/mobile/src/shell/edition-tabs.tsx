@@ -123,10 +123,17 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       <Tabs.Screen name="entry" options={offTabs} />
       {/* The recipient sheet of a Collection Link opened from outside; no tab leads to it. */}
       <Tabs.Screen name="c/[linkId]" options={offTabs} />
+      {/* The Feed, from the Dashboard; with `dashboard` off the home is the Feed itself. */}
+      <Tabs.Screen
+        name="feed"
+        options={{ href: null, ...barShown(true, screenOptions.tabBarStyle) }}
+      />
+      {/* A Correction Type's screen, from its tile on the Dashboard; no tab leads to it. */}
+      <Tabs.Screen name="correction-type/[type]" options={offTabs} />
+      {/* A Curated Collection's screen, from its card on the Dashboard; no tab leads to it. */}
+      <Tabs.Screen name="curated-collection/[collectionId]" options={offTabs} />
       {/* Search, from the magnifier of the «Стрічка» header; no tab leads to it. */}
       <Tabs.Screen name="search" options={offTabs} />
-      {/* The Word the mood roulette of the «Стрічка» header lands on; no tab leads to it. */}
-      <Tabs.Screen name="mood" options={offTabs} />
     </Tabs>
   );
 }

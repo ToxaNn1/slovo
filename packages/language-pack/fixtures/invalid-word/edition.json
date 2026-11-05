@@ -56,7 +56,6 @@
     "politePause": true,
     "firstWeek": true,
     "widgetHint": true,
-    "moods": true,
     "seasonalDecor": true,
     "stressAnimation": true,
     "illustrations": true,
@@ -74,6 +73,8 @@
     "streakFreezes": true,
     "streakBreak": true,
     "quickQuestion": true,
+    "playStep": true,
+    "seenWordXp": true,
     "levels": true,
     "noCounters": true,
     "dailyGoal": true,
@@ -88,18 +89,23 @@
     "eveningNotification": true,
     "notificationFarewell": true,
     "notificationExplainer": true,
+    "notificationTimeStep": true,
     "laterQuestions": true,
     "profile": true,
     "mascot": true,
     "sounds": true,
     "reduceMotion": true,
-    "fastReveal": true
+    "fastReveal": true,
+    "dashboard": true,
+    "mood": true,
+    "curatedCollections": true,
+    "previousWords": true,
+    "correctionTypes": true
   },
   "userSettingDefaults": {
     "theme": "system",
     "fontSize": "M",
     "vibration": true,
-    "dailyGoal": 20,
     "notificationTimes": ["09:00"],
     "rarityCeiling": 5,
     "mix": {
@@ -144,7 +150,33 @@
   ],
   "categoriesRequiringHistory": [],
   "originLanguages": [],
-  "moods": [],
+  "moods": [
+    {
+      "id": "energetic",
+      "name": "бадьорий",
+      "emoji": "⚡",
+      "reply": "Тримай темп!"
+    },
+    {
+      "id": "thoughtful",
+      "name": "задумливий",
+      "emoji": "🤔",
+      "reply": "Є над чим подумати."
+    },
+    {
+      "id": "calm",
+      "name": "спокійний",
+      "emoji": "😌",
+      "reply": "Без поспіху."
+    },
+    {
+      "id": "joyful",
+      "name": "радісний",
+      "emoji": "😊",
+      "reply": "Лови світле слово!"
+    }
+  ],
+  "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
   "searchLetters": {
     "ґ": "г"
   },
@@ -156,8 +188,11 @@
     "dailyCrossword": 15,
     "reviewAnswer": 1,
     "reviewDailyCap": 10,
-    "quickQuestion": 2
+    "quickQuestion": 2,
+    "seenWord": 1
   },
+  "dailyGoals": { "options": [10, 25, 50], "highlighted": 10 },
+  "onboardingNotificationTimes": { "morning": "09:00", "midday": "13:00", "evening": "20:30" },
   "levels": {
     "first": 50,
     "growth": 0.1,
@@ -166,7 +201,7 @@
     "names": ["Seed", "Sprout"]
   },
   "questionnaire": {
-    "who": [
+    "level": [
       {
         "id": "studying",
         "label": "Навчаюсь",

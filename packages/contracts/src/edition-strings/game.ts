@@ -87,7 +87,7 @@ export const GameStringsSchema = z.strictObject({
      * that place is in, and `{row}` and `{column}`, counted from 1 at the top left corner.
      */
     cellLabel: templateOf('cell', 'clue', 'row', 'column'),
-    /** The traced Daily Crossword's line over its grid, which says how to play, e.g. «Ведіть пальцем по сусідніх літерах…». */
+    /** The traced Daily Crossword's line over its grid, which says how to play, e.g. «Веди пальцем по сусідніх літерах…». */
     traceHint: TextSchema,
     /** The traced Daily Crossword's button that checks the cells tapped with VoiceOver on, e.g. «Перевірити». */
     check: TextSchema,
@@ -142,7 +142,7 @@ export const GameStringsSchema = z.strictObject({
     gap: z.strictObject({ label: TextSchema, voiceOver: TextSchema }),
     /**
      * A Round the reader answers by typing: the field's placeholder, which
-     * VoiceOver reads as its name, e.g. «Ваша відповідь», and its submit button, e.g. «Перевірити».
+     * VoiceOver reads as its name, e.g. «Твоя відповідь», and its submit button, e.g. «Перевірити».
      */
     typed: z.strictObject({ label: TextSchema, submit: TextSchema }),
     /** What VoiceOver reads of the timer of a mode with a time limit, e.g. «лишилось 40 секунд». Takes `{count}`, the seconds left. */
@@ -172,7 +172,7 @@ export const GameStringsSchema = z.strictObject({
   }),
   /** The Game Review under the result: a row per Round played. */
   review: z.strictObject({
-    /** The heading over the rows, e.g. «Ваші раунди». */
+    /** The heading over the rows, e.g. «Твої раунди». */
     title: TextSchema,
     /** What VoiceOver reads for ✓, e.g. «правильно». */
     right: TextSchema,
@@ -180,7 +180,7 @@ export const GameStringsSchema = z.strictObject({
     wrong: TextSchema,
     /** The reader's wrong pick under the row, e.g. «Ваш вибір: шпаркий». Takes `{text}`. */
     picked: templateOf('text'),
-    /** The text the reader typed instead of the right one, e.g. «Ви ввели: шпаркий». Takes `{text}`. */
+    /** The text the reader typed instead of the right one, e.g. «Твоя відповідь: шпаркий». Takes `{text}`. */
     typed: templateOf('text'),
     /**
      * A row whose right answer names something other than its Entry, the row's

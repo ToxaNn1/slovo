@@ -1,4 +1,4 @@
-import { DailyGoalSchema, type DailyGoal, type MascotState } from '@slovo/contracts';
+import type { DailyGoal, MascotState } from '@slovo/contracts';
 import type { OnboardingStep as Step, QuestionnaireOption, WordCardModel } from '@slovo/core';
 import {
   EntryCard,
@@ -9,14 +9,16 @@ import {
   Button,
   onboardingLayout,
   PressedTile,
+  RarityTestQuestions,
   space,
   stepStyles,
   TEXT_MAX_FONT_SCALE,
   typeStyle,
   useEdition,
   useTokens,
+  type RarityTestQuestion,
 } from '@slovo/ui';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { MascotAs } from '../mascot/mascot';
@@ -24,6 +26,10 @@ import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
+import { rarityTestQuestionOf, useApplyRarityTest } from '../mix/rarity-test';
+import { deviceClock } from '../device/device-clock';
+import { timeOfDay } from '../notifications/notification-scheduler';
+import { TimePickerSheet, timePickerAvailable } from '../notifications/time-picker';
 
 const { onboarding: strings } = editionStrings;
 
@@ -68,12 +74,15 @@ export function Onboarding() {
     );
   } else if (step.kind === 'firstWord') {
     shown = <FirstWord step={step} word={step.word} mascot={mascot} onNext={next} onSkip={skip} />;
+  } else if (step.kind === 'playStep') {
+    shown = <PlayStep step={step} mascot={mascot} onNext={next} onSkip={skip} />;
   } else if (step.kind === 'dailyGoal') {
     shown = (
       <DailyGoalStep
         // A new step on screen starts from the goal it highlights.
         key={step.number}
         step={step}
+        goals={step.goals}
         highlighted={step.highlighted}
         mascot={mascot}
         onDone={(goal) => {
@@ -82,6 +91,20 @@ export function Onboarding() {
         onSkip={skip}
       />
     );
+  } else if (step.kind === 'notificationTime') {
+    shown = (
+      <NotificationTimeStep
+        step={step}
+        times={step.times}
+        mascot={mascot}
+        onChoose={(time) => {
+          report(onboarding.chooseNotificationTime(time));
+        }}
+        onSkip={skip}
+      />
+    );
+  } else if (step.kind === 'rarityTest') {
+    shown = <RarityTestStep step={step} mascot={mascot} onSkip={skip} />;
   } else {
     shown = (
       <Question
@@ -111,9 +134,12 @@ export function Onboarding() {
 const mascotState: Readonly<Record<Step['kind'], MascotState>> = {
   welcome: 'shouts',
   firstWord: 'happy',
-  who: 'waits',
+  playStep: 'happy',
+  level: 'waits',
+  rarityTest: 'waits',
   why: 'waits',
   dailyGoal: 'waits',
+  notificationTime: 'waits',
 };
 
 /** A step's title, read as its header. */
@@ -165,7 +191,128 @@ function FirstWord({
   );
 }
 
-/** «Хто ви» or «Навіщо»: one button per option, and «Пізніше», which keeps the defaults. */
+/** A step's line under its title, in the Edition's voice. */
+function Subtitle({ children }: { children: string }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { voice } = useEdition();
+  return (
+    <Text
+      {...voice}
+      maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+      style={[typeStyle('stepText', tokens), { color: colors.muted }]}
+    >
+      {children}
+    </Text>
+  );
+}
+
+/** «ГРАЙ!»: the Games in one screen, and «Далі». */
+function PlayStep({
+  step,
+  mascot,
+  onNext,
+  onSkip,
+}: {
+  step: Step;
+  mascot: ReactNode;
+  onNext: () => void;
+  onSkip: () => void;
+}) {
+  return (
+    <OnboardingStep
+      testID="onboarding-play"
+      step={step.number}
+      total={step.total}
+      shout={strings.playStep.shout}
+      mascot={mascot}
+      onSkip={onSkip}
+      footer={<Button testID="onboarding-next" label={strings.playStep.next} onPress={onNext} />}
+    >
+      <View style={stepStyles.heading}>
+        <Title>{strings.playStep.title}</Title>
+        <Subtitle>{strings.playStep.subtitle}</Subtitle>
+      </View>
+    </OnboardingStep>
+  );
+}
+
+/**
+ * The Rarity Test that «Не знаю» on «Рівень» opens, in the frame of that
+ * step: drawn afresh from the Mix, its result sets the Rarity Ceiling and
+ * «Далі» goes on. A draw with no Word, or one that fails, goes on at once.
+ */
+function RarityTestStep({
+  step,
+  mascot,
+  onSkip,
+}: {
+  step: Step;
+  mascot: ReactNode;
+  onSkip: () => void;
+}) {
+  const { rarityTest, onboarding } = useComposition();
+  const applyRarityTest = useApplyRarityTest();
+  const [words, setWords] = useState<readonly RarityTestQuestion[]>();
+  useEffect(() => {
+    let open = true;
+    const onDone = () => {
+      report(onboarding.next());
+    };
+    rarityTest
+      .draw()
+      .then((drawn) => {
+        if (!open) return;
+        if (drawn.length === 0) onDone();
+        else setWords(drawn.map(rarityTestQuestionOf));
+      })
+      .catch((error: unknown) => {
+        logError('Could not draw the Rarity Test', error);
+        if (open) onDone();
+      });
+    return () => {
+      open = false;
+    };
+  }, [rarityTest, onboarding]);
+  const done = () => {
+    report(onboarding.next());
+  };
+
+  const frame = ({
+    testID,
+    footer,
+    children,
+  }: {
+    testID: string;
+    footer: ReactNode;
+    children: ReactNode;
+  }) => (
+    <OnboardingStep
+      testID={testID}
+      step={step.number}
+      total={step.total}
+      shout={strings.level.shout}
+      mascot={mascot}
+      onSkip={onSkip}
+      footer={footer}
+    >
+      {children}
+    </OnboardingStep>
+  );
+  if (words === undefined)
+    return frame({ testID: 'onboarding-rarity', footer: null, children: null });
+  return (
+    <RarityTestQuestions
+      testID="onboarding-rarity"
+      words={words}
+      onApply={applyRarityTest}
+      onDone={done}
+      frame={frame}
+    />
+  );
+}
+
+/** «Рівень» or «Навіщо»: one button per option, and «Пізніше», which keeps the defaults. */
 function Question({
   step,
   title,
@@ -193,7 +340,7 @@ function Question({
       shout={shout}
       mascot={mascot}
       onSkip={onSkip}
-      footer={<LaterButton testID="onboarding-later" onPress={onLater} />}
+      footer={null}
     >
       <View style={stepStyles.heading}>
         <Title>{title}</Title>
@@ -211,22 +358,96 @@ function Question({
             }}
           />
         ))}
+        <LaterButton testID="onboarding-later" onPress={onLater} />
       </View>
     </OnboardingStep>
   );
 }
 
-const dailyGoals: readonly DailyGoal[] = DailyGoalSchema.options.map(({ value }) => value);
+/** A local time `HH:MM` as the chip says it: `09:00` as 9:00. */
+const chipTime = (time: string): string => time.replace(/^0/, '');
 
-/** The Daily Goal: a tile per goal in XP, the highlighted one picked, and «Готово», which sets it. */
+/**
+ * «Коли нагадати?»: a chip per time, «Інший час», which opens the time picker
+ * while the binary has it, and «Без нагадувань». Each answer goes on.
+ */
+function NotificationTimeStep({
+  step,
+  times,
+  mascot,
+  onChoose,
+  onSkip,
+}: {
+  step: Step;
+  times: readonly string[];
+  mascot: ReactNode;
+  onChoose: (time: string | undefined) => void;
+  onSkip: () => void;
+}) {
+  const [picking, setPicking] = useState(false);
+  const chip = (testID: string, label: string, onPress: () => void) => (
+    <Button
+      size="small"
+      variant="neutral"
+      key={testID}
+      testID={testID}
+      label={label}
+      onPress={onPress}
+    />
+  );
+  return (
+    <OnboardingStep
+      testID="onboarding-notification-time"
+      step={step.number}
+      total={step.total}
+      shout={strings.notificationTime.shout}
+      mascot={mascot}
+      onSkip={onSkip}
+      footer={null}
+    >
+      <View style={stepStyles.heading}>
+        <Title>{strings.notificationTime.title}</Title>
+      </View>
+      <View style={styles.options}>
+        {times.map((time) =>
+          chip(`onboarding-time-${time}`, chipTime(time), () => {
+            onChoose(time);
+          }),
+        )}
+        {timePickerAvailable() &&
+          chip('onboarding-time-other', strings.notificationTime.otherTime, () => {
+            setPicking(true);
+          })}
+        {chip('onboarding-time-none', strings.notificationTime.none, () => {
+          onChoose(undefined);
+        })}
+      </View>
+      <TimePickerSheet
+        visible={picking}
+        value={deviceClock.now()}
+        onPick={(picked) => {
+          setPicking(false);
+          onChoose(timeOfDay(picked));
+        }}
+        onClose={() => {
+          setPicking(false);
+        }}
+      />
+    </OnboardingStep>
+  );
+}
+
+/** The Daily Goal: a tile per goal in Words, the highlighted one picked, and «Готово», which sets it. */
 function DailyGoalStep({
   step,
+  goals,
   highlighted,
   mascot,
   onDone,
   onSkip,
 }: {
   step: Step;
+  goals: readonly DailyGoal[];
   highlighted: DailyGoal;
   mascot: ReactNode;
   onDone: (goal: DailyGoal) => void;
@@ -234,7 +455,6 @@ function DailyGoalStep({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { voice } = useEdition();
   const [picked, setPicked] = useState(highlighted);
   return (
     <OnboardingStep
@@ -256,16 +476,10 @@ function DailyGoalStep({
     >
       <View style={stepStyles.heading}>
         <Title>{strings.dailyGoal.title}</Title>
-        <Text
-          {...voice}
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[typeStyle('stepText', tokens), { color: colors.muted }]}
-        >
-          {strings.dailyGoal.subtitle}
-        </Text>
+        <Subtitle>{strings.dailyGoal.subtitle}</Subtitle>
       </View>
       <View style={styles.goals}>
-        {dailyGoals.map((goal) => {
+        {goals.map((goal) => {
           const selected = goal === picked;
           const ink = selected ? colors.onAccent : colors.ink;
           return (

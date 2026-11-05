@@ -37,14 +37,43 @@ export const OriginLanguageSchema = z.strictObject({
 
 export type OriginLanguage = z.infer<typeof OriginLanguageSchema>;
 
+/** The kinds of Entry beside Words, each with a Mix kind weight. */
+export const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
+
+export type WeightedKind = z.infer<typeof WeightedKindSchema>;
+
 /**
- * A Mood («настрій») a Word may carry (ADR 0054): its id, its name in the
- * Edition's language and its emoji.
+ * The band of rarities a Mood puts first in the Feed (ADR 0076): `upper` is
+ * the Rarity Ceiling's rarity and the one below it, `lower` rarities 1 and 2,
+ * `whole` every rarity; the bands clip to the Ceiling.
+ */
+export const RarityBandSchema = z.enum(['upper', 'lower', 'whole']);
+
+export type RarityBand = z.infer<typeof RarityBandSchema>;
+
+/**
+ * How a Mood shifts the reader's Mix kind weight of a kind (ADR 0076): one
+ * step towards «Менше», none, or one step towards «Більше», clamped to the
+ * weights; a kind turned off in the Mix stays off.
+ */
+export const MoodShiftSchema = z.enum(['less', 'same', 'more']);
+
+export type MoodShift = z.infer<typeof MoodShiftSchema>;
+
+/**
+ * A Mood («настрій») the Edition lists: its id, its name in the Edition's
+ * language, its emoji, the reply the Dashboard's Mood check-in answers it
+ * with, in the Edition's language, and its Feed parameters (ADR 0076): the
+ * rarity band put first and a shift per kind. A mood that names neither
+ * leaves the Feed as it is.
  */
 export const MoodSchema = z.strictObject({
   id: KebabCaseIdSchema,
   name: z.string().min(1),
   emoji: z.string().min(1),
+  reply: TextSchema,
+  rarityBand: RarityBandSchema.default('whole'),
+  shifts: z.partialRecord(WeightedKindSchema, MoodShiftSchema).default({}),
 });
 
 export type Mood = z.infer<typeof MoodSchema>;
@@ -228,9 +257,9 @@ export const FeatureSwitchesSchema = z.strictObject({
   search: z.boolean(),
   /** The Rarity Test: the short test that sets the Rarity Ceiling (ADR 0054, 0072). */
   rarityTest: z.boolean(),
-  /** The Weekly Recap «Ваш тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
+  /** The Weekly Recap «Твій тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
   weeklyRecap: z.boolean(),
-  /** Yesterday: the Feed Notice «Пам'ятаєте вчорашнє слово?» (ADR 0054). */
+  /** Yesterday: the Feed Notice «Пам'ятаєш вчорашнє слово?» (ADR 0054). */
   yesterday: z.boolean(),
   /** The Word of the Day archive «Слова дня» in Saved (ADR 0054). */
   wordOfTheDayArchive: z.boolean(),
@@ -242,8 +271,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   firstWeek: z.boolean(),
   /** The widget hint: the sheet after the first finished Game and the guide to adding the widget (ADR 0054). */
   widgetHint: z.boolean(),
-  /** Mood: the moods a Word may carry and «Слово під настрій» (ADR 0054). */
-  moods: z.boolean(),
   /** «Сезонний декор»: the Decor motif of the local date's Holiday or Season, and its setting (ADR 0055). */
   seasonalDecor: z.boolean(),
   /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel (ADR 0055). */
@@ -266,7 +293,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   appIntents: z.boolean(),
   /** Collection Links: «Поділитися посиланням» on a Collection and the `c/<id>` links that open its copy (ADR 0058). */
   collectionLinks: z.boolean(),
-  /** A Word from the mood roulette or the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
+  /** A Word from the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
   replaceOpenEntry: z.boolean(),
   /** The Mix kind weights: «Менше», «Звичайно» or «Більше» for each kind beside Words, which space its Feed turns; off, every kind keeps its turn of 0.9. */
   mixKindWeights: z.boolean(),
@@ -278,15 +305,19 @@ export const FeatureSwitchesSchema = z.strictObject({
   streakBreak: z.boolean(),
   /** The Quick Question: every Nth Feed card asks one Round from an enabled Game Mode over an Eligible Entry; off, the Feed of 0.9. */
   quickQuestion: z.boolean(),
+  /** The onboarding step «ГРАЙ!» after the first Word, which shows the Games; off while `game` is (ADR 0067). */
+  playStep: z.boolean(),
   /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */
   levels: z.boolean(),
   /** «Без лічильників»: the setting hides XP, Level, Streak, celebrations, level milestones and in-Game XP feedback while counting goes on; off, «Приховати Серію» of 0.9, which hides only the Streak (ADR 0066). */
   noCounters: z.boolean(),
   /** The Daily Goal: its Settings row, its progress on the XP bar and its celebration trigger (ADR 0066). */
   dailyGoal: z.boolean(),
+  /** The Seen-Word XP: 1 XP for each Word Seen for the first time, up to the day's Daily Goal; off, viewing earns nothing. */
+  seenWordXp: z.boolean(),
   /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
   enoughForToday: z.boolean(),
-  /** The onboarding questions «Хто ви» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
+  /** The onboarding questions «Як добре ти знаєш мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
   questionnaire: z.boolean(),
   /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
   badges: z.boolean(),
@@ -302,6 +333,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   notificationFarewell: z.boolean(),
   /** The notification explainer: the sheet before the system permission prompt, after the first met Daily Goal or on day 3, and its one re-ask Feed Notice 7 days after a refusal. */
   notificationExplainer: z.boolean(),
+  /** «Коли нагадати?»: the onboarding step after the Daily Goal that sets the one Notification time or none; off while `notifications` is. */
+  notificationTimeStep: z.boolean(),
   /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings (ADR 0067). */
   laterQuestions: z.boolean(),
   /** The Profile: the screen of the reader's whole progress and the save-progress Feed Notice (ADR 0066). */
@@ -314,6 +347,16 @@ export const FeatureSwitchesSchema = z.strictObject({
   reduceMotion: z.boolean(),
   /** The fast reveal: in one visit to the Feed the first Entry card plays the full reveal and every next card a fast one; off, every card plays the full reveal. */
   fastReveal: z.boolean(),
+  /** The Dashboard: the home behind the «Стрічка» tab, with the Word of the Day hero; off, the Feed is the home (ADR 0076). Off while `wordOfTheDay` is. */
+  dashboard: z.boolean(),
+  /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). Off while `dashboard` is. */
+  mood: z.boolean(),
+  /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `dashboard` or `wordOfTheDayArchive` is. */
+  previousWords: z.boolean(),
+  /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `dashboard` or `corrections` is. */
+  correctionTypes: z.boolean(),
+  /** Curated Collections: the Dashboard's «Добірки» rail of editorial Entry sets from the Language Pack (ADR 0076). Off while `dashboard` is. */
+  curatedCollections: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -343,6 +386,8 @@ export const XpTableSchema = z.strictObject({
   reviewDailyCap: XpAmountSchema,
   /** A Quick Question answered right in the Feed. */
   quickQuestion: XpAmountSchema,
+  /** A Word Seen for the first time, up to the day's Daily Goal. */
+  seenWord: XpAmountSchema,
 });
 
 export type XpTable = z.infer<typeof XpTableSchema>;
@@ -462,22 +507,50 @@ export const FontSizeSchema = z.enum(['S', 'M', 'L', 'XL']);
 export type FontSize = z.infer<typeof FontSizeSchema>;
 
 /**
- * The Daily Goal (ADR 0066): the XP the reader aims for on a local day. It
- * replaces the Daily Limit of ADR 0054.
+ * The Daily Goal (ADR 0074): the Words the reader aims to see on a local day.
+ * It replaces the Daily Limit of ADR 0054.
  */
-export const DailyGoalSchema = z.union([
-  z.literal(10),
-  z.literal(20),
-  z.literal(30),
-  z.literal(50),
-]);
+export const DailyGoalSchema = z.int().positive();
 
 export type DailyGoal = z.infer<typeof DailyGoalSchema>;
+
+/** The Daily Goals the reader chooses from, in rising order, and the one highlighted (ADR 0074). */
+export const DailyGoalsSchema = z
+  .strictObject({
+    options: z
+      .array(DailyGoalSchema)
+      .min(1)
+      .refine(
+        (options) =>
+          options.every((goal, index) => index === 0 || goal > (options[index - 1] ?? 0)),
+        'Expected the Daily Goals in rising order, each once',
+      ),
+    highlighted: DailyGoalSchema,
+  })
+  .refine(({ options, highlighted }) => options.includes(highlighted), {
+    path: ['highlighted'],
+    message: 'Expected the highlighted Daily Goal among the options',
+  });
+
+export type DailyGoals = z.infer<typeof DailyGoalsSchema>;
 
 /** A local time of day, `HH:MM` on a 24-hour clock. */
 export const TimeOfDaySchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Expected a 24-hour time such as 09:00');
+
+/**
+ * The three Notification times «Коли нагадати?» offers, one for each bucket
+ * it is counted in, in time order (ADR 0067).
+ */
+export const OnboardingNotificationTimesSchema = z
+  .strictObject({ morning: TimeOfDaySchema, midday: TimeOfDaySchema, evening: TimeOfDaySchema })
+  .refine(
+    ({ morning, midday, evening }) => morning < midday && midday < evening,
+    'Expected the morning, midday and evening times in time order',
+  );
+
+export type OnboardingNotificationTimes = z.infer<typeof OnboardingNotificationTimesSchema>;
 
 /** The most notification times a user may have. */
 export const MAX_NOTIFICATION_TIMES = 10;
@@ -527,8 +600,6 @@ export const UserSettingDefaultsConfigSchema = z.strictObject({
   fontSize: FontSizeSchema,
   /** Whether haptics are on for a new user. */
   vibration: z.boolean(),
-  /** The Daily Goal of a reader who has not chosen one. */
-  dailyGoal: DailyGoalSchema,
   /** The default notification times, kept in time order. */
   notificationTimes: NotificationTimesSchema.transform((times) => [...times].sort()),
   /** The Rarity Ceiling a new user starts with, «до 1» to «до 5» (ADR 0072). */
@@ -590,39 +661,53 @@ export const EditionIdSchema = z.string().regex(/^[a-z][a-z0-9-]*$/, 'Expected a
 /**
  * The steps of the onboarding, in order (ADR 0067): the one place that has
  * them, so a step that joins changes the count everywhere. The first Word
- * comes only with a Word of the Day, the two questions only with the
- * `questionnaire` Feature Switch, the Daily Goal only with `dailyGoal`.
+ * comes only with a Word of the Day, «ГРАЙ!» only with `playStep`, the two
+ * questions only with the `questionnaire` Feature Switch, the Daily Goal only
+ * with `dailyGoal`, «Коли нагадати?» only with `notificationTimeStep`.
  */
-export const ONBOARDING_STEPS = ['welcome', 'firstWord', 'who', 'why', 'dailyGoal'] as const;
+export const ONBOARDING_STEPS = [
+  'welcome',
+  'firstWord',
+  'playStep',
+  'level',
+  'why',
+  'dailyGoal',
+  'notificationTime',
+] as const;
 
 /** A step of the onboarding. */
 export type OnboardingStepKind = (typeof ONBOARDING_STEPS)[number];
 
-/** The questions the onboarding asks (ADR 0067): «Хто ви» and «Навіщо». */
-export const QuestionnaireQuestionSchema = z.enum(['who', 'why']);
+/** The questions the onboarding asks (ADR 0067): «Як добре ти знаєш мову?» and «Навіщо». */
+export const QuestionnaireQuestionSchema = z.enum(['level', 'why']);
 
 export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;
 
 /** The id of an option of a questionnaire question, e.g. `studying`. */
 export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 
-/** The kinds of Entry beside Words, each with a Mix kind weight. */
-const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
-
 /**
- * The Edition's questionnaire (ADR 0067): the options of «Хто ви», each
- * setting the Rarity Ceiling, of «Навіщо», each setting the Mix kind
- * weights it names (the others stay), and of the self-rating. Ids are unique
- * within a question.
+ * The Edition's questionnaire (ADR 0067): the options of the level
+ * question, each setting the Rarity Ceiling or opening the Rarity Test, of
+ * «Навіщо», each setting the Mix kind weights it names (the others stay), and
+ * of the self-rating. Ids are unique within a question.
  */
 export const QuestionnaireSchema = z.strictObject({
-  who: z
+  level: z
     .array(
-      z.strictObject({
-        id: QuestionnaireAnswerIdSchema,
-        label: TextSchema,
-        rarityCeiling: RaritySchema,
-      }),
+      z.union([
+        z.strictObject({
+          id: QuestionnaireAnswerIdSchema,
+          label: TextSchema,
+          rarityCeiling: RaritySchema,
+        }),
+        /** «Не знаю»: the onboarding opens the Rarity Test, whose result sets the Rarity Ceiling. */
+        z.strictObject({
+          id: QuestionnaireAnswerIdSchema,
+          label: TextSchema,
+          rarityTest: z.literal(true),
+        }),
+      ]),
     )
     .min(1),
   why: z
@@ -702,9 +787,16 @@ export const EditionConfigSchema = z
     originLanguages: z.array(OriginLanguageSchema),
     /**
      * The moods, in their order (ADR 0054): the Edition owns the list, so the
-     * Core stays language-agnostic. Empty when the Edition has no moods.
+     * Core stays language-agnostic. It lists at least the four `dashboardMoods` name.
      */
     moods: z.array(MoodSchema),
+    /**
+     * The four moods the Dashboard's Mood check-in offers, by id among
+     * `moods`, in display order (ADR 0076): exactly four.
+     */
+    dashboardMoods: z
+      .array(KebabCaseIdSchema)
+      .length(4, { message: 'The Dashboard lists exactly four moods' }),
     /**
      * The letters Search reads as another (ADR 0054), each lower-case letter
      * to the one it reads as, such as ґ to г: the Edition owns them, so the
@@ -716,6 +808,10 @@ export const EditionConfigSchema = z
     xp: XpTableSchema,
     /** The Level curve and the Level names (ADR 0066). */
     levels: LevelsSchema,
+    /** The Daily Goals in Words the reader chooses from (ADR 0074). */
+    dailyGoals: DailyGoalsSchema,
+    /** The Notification times «Коли нагадати?» offers (ADR 0067). */
+    onboardingNotificationTimes: OnboardingNotificationTimesSchema,
     /** The onboarding questions, their options and what each sets (ADR 0067). */
     questionnaire: QuestionnaireSchema,
     /** The Badges, in their order, each id once (ADR 0066). */
@@ -736,6 +832,7 @@ export const EditionConfigSchema = z
         categoriesRequiringHistory,
         originLanguages,
         moods,
+        dashboardMoods,
         userSettingDefaults,
         questionnaire,
       },
@@ -802,6 +899,17 @@ export const EditionConfigSchema = z
           });
         }
         moodIds.add(id);
+      });
+      const dashboardMoodIds = new Set<string>();
+      dashboardMoods.forEach((id, index) => {
+        if (!moodIds.has(id) || dashboardMoodIds.has(id)) {
+          context.addIssue({
+            code: 'custom',
+            path: ['dashboardMoods', index],
+            message: moodIds.has(id) ? `Duplicate mood id "${id}"` : `Unknown mood id "${id}"`,
+          });
+        }
+        dashboardMoodIds.add(id);
       });
       for (const field of ['categories', 'correctionCategories'] as const) {
         const inMix = userSettingDefaults.mix[field];

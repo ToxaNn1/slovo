@@ -23,7 +23,7 @@ import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import HomeScreen from '../app/index';
+import HomeScreen from '../app/feed';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import EntryLayout from '../app/entry/_layout';
@@ -273,7 +273,7 @@ describe('the Feed Notices on the Feed', () => {
     expect(screen.getAllByTestId('word-card', hidden).length).toBeGreaterThan(0);
     expect(
       screen.getAllByTestId(/^feed-notice-/, hidden).map(({ props }) => String(props['testID'])),
-    ).toEqual(['feed-notice-dailyGoalChoice']);
+    ).toEqual(['feed-notice-wordGoalChoice']);
   });
 
   it('shows the notification explainer by day 3, and the device is not asked before «Так»', async () => {

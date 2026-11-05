@@ -174,8 +174,6 @@ export const typeRoles = {
   communityDefinition: role('ui', '500', 16, 22),
   /** The title of the end-of-Cycle card. */
   endOfCycleTitle: role('word', '900', 26, 29),
-  /** The name of a mood on its chip. */
-  moodName: role('ui', '700', 15, 15),
   /** The Games screen's title. */
   gamesTitle: role('word', '900', 36, 36, -1, 'uppercase'),
   /** The title of a group of Game Modes, after its red mark. */
@@ -242,8 +240,6 @@ export const typeRoles = {
   recentClear: role('ui', '600', 15, 18),
   /** The text button that clears the history of the Saved screen. */
   historyClear: role('ui', '600', 17, 20),
-  /** The roulette's Lemma in the mood sheet. */
-  rouletteLemma: role('word', '500', 28, 34),
   /** The line on a solved Daily Crossword. */
   crosswordSolved: role('word', '500', 28, 32),
   /** A segment's label in a segmented control. */
@@ -378,8 +374,6 @@ export const typeRoles = {
   swipeAction: role('ui', '700', 14, 17),
   /** The «Повторити» tag of an Entry due for review. */
   reviewTag: role('word', '800', 11, 11, 1, 'uppercase'),
-  /** The die on the mood button. */
-  moodDie: role('ui', '400', 17, 20),
   /** The label over a form of a Correction: «Так часто кажуть», «Українською краще». */
   formLabel: role('ui', '600', 12, 12, 0.5),
   /** A Correction's non-standard form, struck through. */
@@ -456,6 +450,46 @@ export const typeRoles = {
   giantLetter: role('word', '900', 360, 360),
   /** The giant letter behind the red panel on top of Entry details. */
   panelLetter: role('word', '900', 420, 420),
+  /** The Dashboard's giant «?» behind the hero while it is closed. */
+  dashboardQuestion: role('word', '900', 560, 560),
+  /** The Dashboard's giant first letter behind the open hero. */
+  dashboardLetter: role('word', '900', 520, 520),
+  /** The Dashboard hero's kicker, such as «СЛОВО ДНЯ · 2.11». */
+  dashboardKicker: role('word', '800', 12, 12, 2, 'uppercase'),
+  /** The Dashboard hero's shout, «ЛОВИ СЛОВО!», on two lines. */
+  dashboardShout: role('word', '900', 50, 47.5, -2, 'uppercase'),
+  /** The Lemma in capitals on the open Dashboard hero. */
+  dashboardLemma: role('word', '900', 50, 50, -1.5, 'uppercase'),
+  /** The line under the shout or the Lemma on the Dashboard hero. */
+  dashboardSubtitle: role('ui', '600', 15, 20.25),
+  /** The Stress and part of speech under the Lemma on the Dashboard hero. */
+  dashboardWordLine: role('ui', '600', 15, 15),
+  /** «РІДКІСТЬ 3/5» beside the rarity bars on the Dashboard hero. */
+  dashboardRarity: role('word', '700', 12, 12, 1, 'uppercase'),
+  /** The short Definition on the open Dashboard hero. */
+  dashboardDefinition: role('ui', '600', 16, 21.6),
+  /** The closed Dashboard hero's ink button, «РОЗКРИТИ». */
+  dashboardButton: role('word', '900', 16, 16, 0.5, 'uppercase'),
+  /** The open Dashboard hero's «ДО КАРТКИ →», a size under «РОЗКРИТИ». */
+  dashboardToCardButton: role('word', '900', 15, 15, 0.5, 'uppercase'),
+  /** A block's title on the Dashboard, such as «Як настрій?». */
+  blockTitle: role('word', '800', 15, 15),
+  /** The count or note at the end of a block's title on the Dashboard. */
+  blockNote: role('ui', '500', 13, 13),
+  /** A Mood's name on its tile. */
+  moodName: role('ui', '700', 15, 15),
+  /** The date column of «Попередні слова», «31» over «жов». */
+  previousDate: role('ui', '600', 12, 14.4),
+  /** The Lemma of a row of «Попередні слова». */
+  previousWord: role('word', '800', 17, 18.7),
+  /** The short Definition of a row of «Попередні слова». */
+  previousDefinition: role('ui', '400', 14, 18.2),
+  /** A Curated Collection's name on its tile of the Categories rail. */
+  categoryName: role('word', '800', 12, 13.8),
+  /** «24 слова» on a tile of the Categories rail. */
+  categoryCount: role('ui', '500', 12, 12),
+  /** A Correction Type's name on its tile of the Corrections rail. */
+  correctionName: role('word', '800', 13, 15),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -654,6 +688,29 @@ export const wedges = {
     [1, 0.86],
     [0, 1],
   ],
+  /** The Dashboard hero's red ground: its bottom edge falls to the left from 90% of the right edge. */
+  dashboardHero: [
+    [0, 0],
+    [1, 0],
+    [1, 0.9],
+    [0, 1],
+  ],
+  /** The ink plate under the Dashboard's logo: a left edge shorter than the right. */
+  logoPlate: [
+    [0, 0.16],
+    [1, 0],
+    [1, 1],
+    [0, 0.84],
+  ],
+  /** The chevron at the end of a row of «Попередні слова». */
+  chevron: [
+    [0, 0],
+    [0.4, 0],
+    [1, 0.5],
+    [0.4, 1],
+    [0, 1],
+    [0.6, 0.5],
+  ],
   /** A diamond standing on its point: the Level Badges. */
   diamond: [
     [0.5, 0],
@@ -690,6 +747,8 @@ export const motion = {
   tab: { duration: 300, easing: [0.3, 1.6, 0.5, 1] },
   /** The red band sweeping over a screen as it enters. */
   sweep: { duration: 500, easing: [0.6, 0, 0.3, 1] },
+  /** The Mood check-in folds to today's line, or opens its chips again, and the new part rises in. */
+  collapse: { duration: 250, easing: ease, rise: 8 },
   /** Under Reduce Motion every motion is this one fade. */
   reduceMotion: { duration: 300, easing: ease },
 } as const satisfies Record<
@@ -847,6 +906,9 @@ export const emptyStatePaddingTop = 80;
 
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;
+
+/** The width of a tile of the Dashboard's Correction Types rail, so two and a part show on a phone. */
+export const railTileWidth = 152;
 
 /** The smallest side of anything the user taps. */
 export const minTouchTarget = 44;

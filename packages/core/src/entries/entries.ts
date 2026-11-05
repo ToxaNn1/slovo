@@ -101,6 +101,12 @@ export interface Entries {
    */
   wordsUnderRarityCeiling(): Promise<readonly Word[]>;
   /**
+   * Every live Correction that is not Hidden, in the Language Pack's order,
+   * the Mix aside, for the Correction Types rail (ADR 0076). Read afresh on
+   * every call, as `eligible` reads.
+   */
+  liveCorrections(): Promise<readonly Correction[]>;
+  /**
    * The eligible Entries of one kind themselves, in the order `eligible` gives
    * their ids, for a feature that weighs them all at once, such as the Game;
    * or, for Corrections or Idioms out of the Mix, whether or not the Edition
@@ -369,10 +375,23 @@ export function createEntries(
     });
   }
 
+  async function liveCorrections(): Promise<readonly Correction[]> {
+    const [hidden, corrections, ids] = await Promise.all([
+      hiddenIds(),
+      live.correction(),
+      listIds.correction(),
+    ]);
+    return ids.flatMap((id) => {
+      const entry = corrections.get(id);
+      return entry?.kind === 'correction' && !hidden.has(id) ? [entry] : [];
+    });
+  }
+
   return {
     eligible,
     eligibleWordsOfAnyRarity,
     wordsUnderRarityCeiling,
+    liveCorrections,
     // The kinds asked for pick the Entries returned, as the generic signature says.
     eligibleOfKind: eligibleOfKind as Entries['eligibleOfKind'],
     async get(id) {

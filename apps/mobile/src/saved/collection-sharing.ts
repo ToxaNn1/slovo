@@ -29,7 +29,7 @@ function refusalText(reason: CollectionShareRefusal): string {
  * offers it, while `collectionLinks` is on in effect, and the share, which
  * asks the backend for a link and opens the system share sheet with the
  * message, or shows a toast that says why not, such as «Немає з'єднання.
- * Спробуйте пізніше.». `share` stays the same from render to render and
+ * Спробуй пізніше.». `share` stays the same from render to render and
  * shares over the composition open at the tap. It needs an `UndoToastProvider`
  * above it.
  */

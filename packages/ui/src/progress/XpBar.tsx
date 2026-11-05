@@ -1,10 +1,11 @@
+import type { Plural } from '@slovo/contracts';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { minTouchTarget, space, typeStyle, withAlpha, xpBarPadding } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
-/** The bar's height, the Search and Mood buttons' beside it. */
+/** The bar's height, the Search button's beside it. */
 const BAR_HEIGHT = 40;
 
 /** How far the largest text sizes of iOS may scale the number, so it stays inside the 40 pt bar. */
@@ -13,9 +14,10 @@ const NUMBER_MAX_FONT_SCALE = 1.3;
 /**
  * The XP bar under the Feed's header: today's XP from the XP log, on the
  * surface fill with an accent border. A tap opens the
- * Game, where XP is earned. With a Daily Goal it draws today's XP over the
- * goal, such as «12/20 XP». VoiceOver reads it whole as a button, such as
- * «Досвід: сьогодні 12 XP», then that it opens the Game.
+ * Game, where XP is earned. With a Daily Goal it draws today's Words Seen
+ * over the goal in Words instead, such as «3 з 10 слів» (ADR 0074). VoiceOver
+ * reads it whole as a button, such as «Досвід: сьогодні 12 XP», then that it
+ * opens the Game.
  */
 export function XpBar({
   today,
@@ -23,19 +25,24 @@ export function XpBar({
   onPress,
 }: {
   today: number;
-  /** Today's Daily Goal; left out while the Daily Goal is off. */
-  goal?: number | undefined;
+  /** Today's Words Seen over today's Daily Goal; left out while no Daily Goal is set or it is off. */
+  goal?: { readonly seen: number; readonly goal: number } | undefined;
   onPress: () => void;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings, voice } = useEdition();
-  const count = goal === undefined ? String(today) : `${String(today)}/${String(goal)}`;
+  const { strings, voice, count: plural } = useEdition();
+  const count = { count: String(today) };
+  // The goal picks the plural form: «з 21 слова», «з 10 слів» (ADR 0020).
+  const words =
+    goal && ((forms: Plural) => fill(plural(forms, goal.goal), { seen: String(goal.seen) }));
   return (
     <Pressable
       testID="xp-bar"
       accessibilityRole="button"
-      accessibilityLabel={fill(strings.stats.xpBarLabel, { count })}
+      accessibilityLabel={
+        words ? words(strings.stats.wordsTowardGoalLabel) : fill(strings.stats.xpBarLabel, count)
+      }
       accessibilityHint={strings.stats.xpBarHint}
       {...voice}
       onPress={onPress}
@@ -52,7 +59,7 @@ export function XpBar({
         maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
         style={[typeStyle('textLink', tokens), { color: colors.ink }]}
       >
-        {fill(strings.stats.xpToday, { count })}
+        {words ? words(strings.stats.wordsTowardGoal) : fill(strings.stats.xpToday, count)}
       </Text>
     </Pressable>
   );
