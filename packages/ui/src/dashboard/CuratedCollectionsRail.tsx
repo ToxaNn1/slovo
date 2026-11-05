@@ -10,7 +10,8 @@ import { railTileWidth, space, typeStyle } from '../tokens';
 /**
  * The Curated Collections rail of the Dashboard (ADR 0076): «Добірки» over a
  * horizontal row of cards, one per collection published by today, each its
- * name and description, with «Нова» on one not opened yet. A card opens it.
+ * name and description, with «Нова» on one not opened yet and «Додано ✓» on
+ * one copied into the reader's Collections. A card opens its screen.
  */
 export function CuratedCollectionsRail({
   cards,
@@ -22,7 +23,7 @@ export function CuratedCollectionsRail({
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
-  const { curatedCollectionsTitle, curatedCollectionNew } = strings.dashboard;
+  const { curatedCollectionsTitle, curatedCollectionNew, curatedCollection } = strings.dashboard;
   return (
     <>
       <SectionLabel>{curatedCollectionsTitle}</SectionLabel>
@@ -32,13 +33,19 @@ export function CuratedCollectionsRail({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.rail}
       >
-        {cards.map(({ collection: { id, name, description }, state }) => {
+        {cards.map(({ collection: { id, name, description }, state, added }) => {
           const isNew = state === 'new';
           return (
             <PressedTile
               key={id}
               testID={`dashboard-curated-collection-${id}`}
-              accessibilityLabel={isNew ? `${curatedCollectionNew}. ${name}` : name}
+              accessibilityLabel={[
+                isNew ? curatedCollectionNew : '',
+                name,
+                added ? curatedCollection.added : '',
+              ]
+                .filter((part) => part !== '')
+                .join('. ')}
               accessibilityLanguage={voice.accessibilityLanguage}
               onPress={() => {
                 onOpen(id);
@@ -66,6 +73,15 @@ export function CuratedCollectionsRail({
               >
                 {description}
               </Text>
+              {added && (
+                <Text
+                  {...voice}
+                  testID={`dashboard-curated-collection-${id}-added`}
+                  style={[typeStyle('meta', tokens), { color: colors.accent }]}
+                >
+                  {curatedCollection.added}
+                </Text>
+              )}
             </PressedTile>
           );
         })}
