@@ -1079,12 +1079,54 @@ describe('the moods', () => {
 
   it('the UA Edition lists six moods', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).moods).toEqual([
-      { id: 'joyful', name: 'Радісний', emoji: '😊', reply: 'Лови світле слово!' },
-      { id: 'sad', name: 'Сумний', emoji: '😢', reply: 'Слово зігріє.' },
-      { id: 'in-love', name: 'Закоханий', emoji: '😍', reply: 'Ніжні слова поруч.' },
-      { id: 'energetic', name: 'Бадьорий', emoji: '⚡', reply: 'Тримай темп!' },
-      { id: 'calm', name: 'Спокійний', emoji: '😌', reply: 'Без поспіху.' },
-      { id: 'thoughtful', name: 'Задумливий', emoji: '🤔', reply: 'Є над чим подумати.' },
+      {
+        id: 'joyful',
+        name: 'Радісний',
+        emoji: '😊',
+        reply: 'Лови світле слово!',
+        rarityBand: 'whole',
+        shifts: { synonymRow: 'more', idiom: 'more' },
+      },
+      {
+        id: 'sad',
+        name: 'Сумний',
+        emoji: '😢',
+        reply: 'Слово зігріє.',
+        rarityBand: 'whole',
+        shifts: {},
+      },
+      {
+        id: 'in-love',
+        name: 'Закоханий',
+        emoji: '😍',
+        reply: 'Ніжні слова поруч.',
+        rarityBand: 'whole',
+        shifts: {},
+      },
+      {
+        id: 'energetic',
+        name: 'Бадьорий',
+        emoji: '⚡',
+        reply: 'Тримай темп!',
+        rarityBand: 'upper',
+        shifts: { correction: 'more' },
+      },
+      {
+        id: 'calm',
+        name: 'Спокійний',
+        emoji: '😌',
+        reply: 'Без поспіху.',
+        rarityBand: 'lower',
+        shifts: { tip: 'more', correction: 'less' },
+      },
+      {
+        id: 'thoughtful',
+        name: 'Задумливий',
+        emoji: '🤔',
+        reply: 'Є над чим подумати.',
+        rarityBand: 'upper',
+        shifts: { idiom: 'more' },
+      },
     ]);
   });
 });
