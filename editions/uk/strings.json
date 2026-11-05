@@ -769,6 +769,13 @@
     },
     "known": "знаю {counts}",
     "knownJoiner": " · ",
+    "moods": "Настрої: {counts}",
+    "moodDays": {
+      "one": "{count} день",
+      "few": "{count} дні",
+      "many": "{count} днів",
+      "other": "{count} дня"
+    },
     "knownByKind": {
       "word": {
         "one": "{count} слово",
@@ -1093,6 +1100,48 @@
       }
     }
   },
+  "dashboard": {
+    "toCard": "До картки →",
+    "kicker": "Слово дня · {day}.{month}",
+    "subtitle": "Рідкісне. Свіже. Твоє на 24 години.",
+    "wordLine": "{stress} · {partOfSpeech}",
+    "rarity": "Рідкість {rarity}/5",
+    "mood": {
+      "question": "Як настрій?",
+      "note": "Mood дня"
+    },
+    "curatedCollectionsTitle": "Категорії",
+    "curatedCollectionCount": {
+      "one": "{count} слово",
+      "few": "{count} слова",
+      "many": "{count} слів",
+      "other": "{count} слова"
+    },
+    "curatedCollectionNew": "Нова",
+    "curatedCollection": {
+      "known": "Знаю {x} з {n}",
+      "add": "+ Додати",
+      "added": "Додано ✓"
+    },
+    "previousWords": {
+      "title": "Попередні слова",
+      "months": ["січ", "лют", "бер", "кві", "тра", "чер", "лип", "сер", "вер", "жов", "лис", "гру"]
+    },
+    "correctionTypes": {
+      "title": "Виправлення",
+      "workedThrough": "Розібрано {x} з {n}",
+      "reveal": "Як правильно?",
+      "tiles": {
+        "russianism": "Росіянізми",
+        "calque": "Кальки",
+        "surzhyk": "Суржик",
+        "officialese": "Канцелярит",
+        "anglicism": "Англіцизми",
+        "wrongStress": "Наголоси",
+        "paronym": "Пароніми"
+      }
+    }
+  },
   "wordOfTheDayArchive": {
     "title": "Слова дня",
     "count": {
@@ -1106,10 +1155,6 @@
       "title": "Слів дня ще немає",
       "message": "Слово дня з’явиться тут, щойно ти його побачиш."
     }
-  },
-  "mood": {
-    "title": "Слово під настрій",
-    "noEligibleWord": "Немає слів у твоєму Міксі"
   },
   "game": {
     "title": "Ігри",

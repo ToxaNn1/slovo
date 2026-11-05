@@ -62,8 +62,10 @@ export interface Edition {
   readonly notificationSound: string | undefined;
   /** The languages Words come from, in their order, which «Звідки слово» offers (ADR 0052). */
   readonly originLanguages: readonly OriginLanguage[];
-  /** The moods a Word may carry, in their order, which «Слово під настрій» offers (ADR 0054). */
+  /** The Edition's moods, in their order. */
   readonly moods: readonly Mood[];
+  /** The four moods the Dashboard's Mood check-in offers, in display order (ADR 0076). */
+  readonly dashboardMoods: readonly Mood[];
   /** The letters Search reads as another, such as ґ as г (ADR 0054). */
   readonly searchLetters: Readonly<Record<string, string>>;
   /** The XP table: what each Game learning action earns (ADR 0066). */
@@ -131,6 +133,16 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   playStep: ['game'],
   // The Rarity Test sets the Rarity Ceiling (ADR 0072).
   rarityTest: ['rarityCeiling'],
+  // The Dashboard's hero is the Word of the Day (ADR 0076).
+  dashboard: ['wordOfTheDay'],
+  // The Mood check-in is a Dashboard block (ADR 0076).
+  mood: ['dashboard'],
+  // «Попередні слова» is a Dashboard block over the Word of the Day archive (ADR 0076).
+  previousWords: ['dashboard', 'wordOfTheDayArchive'],
+  // The Correction Types rail is a Dashboard block over the Corrections (ADR 0076).
+  correctionTypes: ['dashboard', 'corrections'],
+  // The Curated Collections rail is a Dashboard block (ADR 0076).
+  curatedCollections: ['dashboard'],
   notificationTimeStep: ['notifications'],
 };
 
@@ -174,6 +186,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     notificationSound,
     originLanguages,
     moods,
+    dashboardMoods,
     searchLetters,
     xp,
     levels,
@@ -183,6 +196,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     badges,
     mascot,
   } = result.data;
+  const moodOf = (id: string) => moods.find((mood) => mood.id === id);
   const { mix, ...settings } = userSettingDefaults;
   return {
     id,
@@ -204,6 +218,8 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     notificationSound,
     originLanguages,
     moods,
+    // Each id is one of `moods`: the schema checked it.
+    dashboardMoods: dashboardMoods.flatMap((id) => moodOf(id) ?? []),
     searchLetters,
     xp,
     levels,

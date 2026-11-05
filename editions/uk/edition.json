@@ -58,7 +58,6 @@
     "politePause": true,
     "firstWeek": true,
     "widgetHint": true,
-    "moods": false,
     "seasonalDecor": false,
     "stressAnimation": true,
     "illustrations": true,
@@ -98,7 +97,12 @@
     "mascot": true,
     "sounds": false,
     "reduceMotion": true,
-    "fastReveal": true
+    "fastReveal": true,
+    "dashboard": true,
+    "mood": true,
+    "curatedCollections": false,
+    "previousWords": true,
+    "correctionTypes": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -276,36 +280,73 @@
   ],
   "moods": [
     {
+      "id": "sleepy",
+      "name": "Сонно",
+      "emoji": "😴",
+      "reply": "«Сонно» — теж слово. Але, на жаль, не рідкісне."
+    },
+    {
+      "id": "curious",
+      "name": "Допитливо",
+      "emoji": "🧐",
+      "reply": "Для допитливих я відкладаю найрідкісніше."
+    },
+    {
       "id": "joyful",
       "name": "Радісний",
-      "emoji": "😊"
+      "emoji": "😊",
+      "reply": "Лови світле слово!",
+      "rarityBand": "whole",
+      "shifts": {
+        "synonymRow": "more",
+        "idiom": "more"
+      }
     },
     {
       "id": "sad",
       "name": "Сумний",
-      "emoji": "😢"
+      "emoji": "😢",
+      "reply": "Слово зігріє."
     },
     {
       "id": "in-love",
       "name": "Закоханий",
-      "emoji": "😍"
+      "emoji": "😍",
+      "reply": "Ніжні слова поруч."
     },
     {
       "id": "energetic",
-      "name": "Бадьорий",
-      "emoji": "⚡"
+      "name": "Бадьоро",
+      "emoji": "⚡",
+      "reply": "Бадьоро? Тоді доженемо ціль ще до обіду.",
+      "rarityBand": "upper",
+      "shifts": {
+        "correction": "more"
+      }
     },
     {
       "id": "calm",
       "name": "Спокійний",
-      "emoji": "😌"
+      "emoji": "😌",
+      "reply": "Без поспіху.",
+      "rarityBand": "lower",
+      "shifts": {
+        "tip": "more",
+        "correction": "less"
+      }
     },
     {
       "id": "thoughtful",
-      "name": "Задумливий",
-      "emoji": "🤔"
+      "name": "Задумливо",
+      "emoji": "🤔",
+      "reply": "Задумливо — ідеальний стан для кросворду.",
+      "rarityBand": "upper",
+      "shifts": {
+        "idiom": "more"
+      }
     }
   ],
+  "dashboardMoods": ["energetic", "sleepy", "curious", "thoughtful"],
   "searchLetters": {
     "ґ": "г",
     "ё": "е"

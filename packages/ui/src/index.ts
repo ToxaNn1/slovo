@@ -56,8 +56,6 @@ export { HideButton } from './mix/HideButton';
 export { CommunityCountersLine } from './community-counters/CommunityCountersLine';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
 export { HideChoiceSheet } from './mix/HideChoiceSheet';
-export { MoodButton } from './mood/MoodButton';
-export { MoodSheet, type MoodChip } from './mood/MoodSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
 export { ChipChoice } from './mix/ChipChoice';
@@ -124,16 +122,25 @@ export { FeedHeader } from './feed/FeedHeader';
 export { HeaderFade } from './feed/HeaderFade';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
 export { BadgeMark } from './progress/BadgeMark';
+export { DashboardHero } from './dashboard/DashboardHero';
+export { BlockTitle } from './dashboard/BlockTitle';
+export { MoodCheckIn } from './dashboard/MoodCheckIn';
+export { PreviousWords } from './dashboard/PreviousWords';
+export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
+export { CorrectionTypesRail } from './dashboard/CorrectionTypesRail';
+export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { LevelCard } from './progress/LevelCard';
 export { StatsSheet } from './progress/StatsSheet';
+export type { MoodDays } from './progress/mood-line';
 export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
   cardSpace,
   collectionCard,
   coreTokens,
+  dashboard,
   designTokens,
   feedHeader,
   disabledOpacity,

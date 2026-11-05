@@ -115,7 +115,7 @@ A Correction withdrawn from the Language Pack. Like a Retired Word, it never app
 _Avoid_: Deleted correction
 
 **Correction Type**:
-Why the form is non-standard: russianism, calque, surzhyk, officialese (канцелярит), anglicism (англіцизм), an English borrowing where a dictionary word of the Edition's language serves, wrong stress (`wrongStress`, «наголос»: a stress trap, the right word said with the wrong Stress), or a paronym (`paronym`, «пароніми»: a word swapped for its look-alike of another meaning, e.g. «ефективна сукня» → «ефектна сукня»).
+Why the form is non-standard: russianism, calque, surzhyk, officialese (канцелярит), anglicism (англіцизм), an English borrowing where a dictionary word of the Edition's language serves, wrong stress (`wrongStress`, «наголос»: a stress trap, the right word said with the wrong Stress), or a paronym (`paronym`, «пароніми»: a word swapped for its look-alike of another meaning, e.g. «ефективна сукня» → «ефектна сукня»). The Dashboard shows a tile per Correction Type the Language Pack has Corrections for, with a screen listing its Corrections; a Correction is «розібрано» once Seen in any Cycle or revealed with «Як правильно?» on that screen.
 
 **Idiom**:
 A fixed expression whose meaning is not the sum of its words, with its Definitions, Examples and, where known, its origin, e.g. «бити байдики» → «ледарювати». The third kind of Entry (ADR 0046); a Core concept, each Edition supplies its own. An Idiom has an expression instead of a Lemma, and no Stress, part of speech, Category, rarity or Pronunciation. Its Ukrainian name is «фразеологізм».
@@ -147,8 +147,16 @@ _Avoid_: Item, tile (for a card; a tile is the pressed button of the design)
 The single built-in list of Entries the user marked with the heart ("save word").
 _Avoid_: Saved words, likes
 
+**Dashboard**:
+The home behind «Стрічка»: the Word of the Day hero, the Mood check-in, «Попередні слова», the Curated Collections rail and the Correction Types rail. Each block has its own Feature Switch; with `dashboard` off the Feed is the home.
+_Avoid_: Home, start screen, overview
+
+**Curated Collection**:
+«Добірка»: an editorial list of Entries shipped in the Language Pack with a publish date, unlocking on it; not a Collection, though «+ Додати» copies it into one.
+_Avoid_: Playlist, featured, set
+
 **Collection**:
-A list of Entries the user created and named; an Entry may be in many Collections. A Collection can be shared by a Collection Link, and «Додати собі» on a Collection Link copies it as the reader's own Collection, which syncs like any other.
+A list of Entries the user created and named; an Entry may be in many Collections. A Collection can be shared by a Collection Link, and «Додати собі» on a Collection Link, and «+ Додати» on a Curated Collection, copy it as the reader's own Collection, which syncs like any other; a copy of a Curated Collection remembers its source.
 _Avoid_: Folder, playlist, list
 
 **Collection Link**:
@@ -239,15 +247,15 @@ _Avoid_: Provider, login type, auth method
 ### Discovery
 
 **Feed**:
-The vertical stream of Entries the user swipes through on the home screen; Corrections, Idioms, Synonym Rows and Tips are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, every 7th an Idiom's turn while it has unseen Idioms, every 9th a Synonym Row's turn while it has unseen Synonym Rows and every 11th a Tip's turn while it has unseen Tips, each counted from its kind's last card, at the Mix kind weight «Звичайно» («Менше» spaces a kind's turns twice as far apart, «Більше» twice as close). When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. While Entries are due for Review, every 3rd card that is no other kind's turn is a Word due for Review, labelled «Повторення», and a Correction, an Idiom, a Synonym Row or a Tip due for Review takes the next turn of its kind before a new one, Seen in this Cycle or not. The Word of the Day and the Review slot stay Words only. Beside Entry cards the Feed shows Feed Notices, which take no turn.
-_Avoid_: Timeline, home list
+The vertical stream of Entries the user swipes through, opened from the Dashboard (the home screen when `dashboard` is off); Corrections, Idioms, Synonym Rows and Tips are mixed in among Words. Every 5th card of the Cycle is a Correction's turn while the Cycle has unseen Corrections, every 7th an Idiom's turn while it has unseen Idioms, every 9th a Synonym Row's turn while it has unseen Synonym Rows and every 11th a Tip's turn while it has unseen Tips, each counted from its kind's last card, at the Mix kind weight «Звичайно» («Менше» spaces a kind's turns twice as far apart, «Більше» twice as close). When turns fall on one card the order is Correction, Idiom, Synonym Row, Tip, and each loser takes the next card. While Entries are due for Review, every 3rd card that is no other kind's turn is a Word due for Review, labelled «Повторення», and a Correction, an Idiom, a Synonym Row or a Tip due for Review takes the next turn of its kind before a new one, Seen in this Cycle or not. The Word of the Day and the Review slot stay Words only. Beside Entry cards the Feed shows Feed Notices, which take no turn.
+_Avoid_: Timeline, home list, home screen
 
 **Feed Notice**:
 A Feed card that is not an Entry, shown one at a time. The 1.0 list: the Weekly Recap, the Community Word, a first-week card, «Пам’ятаєш вчорашнє слово?» (yesterday's Word of the Day in Self-check style), «Може, на сьогодні досить?», a Level milestone at Levels 5, 10 and 20 that suggests a wider rarity or a new Category, the offer to save progress, the later onboarding questions and the notification re-ask. «Може, на сьогодні досить?» comes once a local day after 50 distinct Seen Entries, has no setting and never locks the Feed. The save-progress Notice comes without an Account on day 3 of the Streak and after the first new Level, at most twice in all; the notification explainer and its re-ask, 7 days after a refusal, once, come only to a reader who did not answer «Коли нагадати?» in onboarding (ADR 0074). A reader who finished the old onboarding gets the Daily Goal choice once through a Feed Notice. In the Feed a Feed Notice comes before a due Review, a due Review before a Quick Question and a Quick Question before the rest. It counts in no turn and no Review slot and makes nothing Seen; swiping past it closes it for the local day.
 _Avoid_: Banner, tip (a Tip is an Entry)
 
 **Seen**:
-An Entry is Seen in the current Cycle once its card stayed on screen for a minimum dwell time in the Feed, or the user opened it from a notification or widget. Opening an Entry from Search or the mood roulette, the Rarity Test and Feed Notices make nothing Seen.
+An Entry is Seen in the current Cycle once its card stayed on screen for a minimum dwell time in the Feed, or the user opened it from a notification or widget. The Dashboard's reveal of the Word of the Day makes it Seen, through the Feed's own Seen. Opening an Entry from Search, «Попередні слова», a Curated Collection or a Correction Type, the Rarity Test and Feed Notices make nothing Seen.
 _Avoid_: Viewed, read
 
 **Cycle**:
@@ -338,8 +346,8 @@ Retired in 1.0. The old setting «Ліміт на день» is replaced by the 
 _Avoid_: use Daily Goal or the 50-Seen Notice
 
 **Mood**:
-«настрій»: one of the moods an Edition lists (id, name, emoji) that a Word may carry. «Слово під настрій» opens a mood's roulette, which lands on a random Eligible Word of that mood and opens its card without making it Seen. Paused in the UA Edition in 1.0 behind its Feature Switch; the code stays.
-_Avoid_: Emotion, feeling, vibe
+«настрій»: a set of Feed parameters the reader chooses once a local day on the Dashboard: a rarity band inside the Rarity Ceiling (never crossing or lowering it) and a shift of each Mix kind weight. The Edition lists its moods (id, name, emoji) and names the four the Dashboard shows. The choice can be skipped or changed, ends with the local day and syncs; no Mood means the Feed as before.
+_Avoid_: Emotion, feeling, vibe, roulette
 
 **Reserved**:
 A Word already promised to a scheduled notification, so no other notification picks it. Reserved is not Seen.
@@ -349,7 +357,7 @@ One of the user's local times of day at which a notification comes, such as 09:0
 _Avoid_: Reminder, alarm, schedule
 
 **Word of the Day**:
-One unseen Word fixed for the user's local calendar day; it opens the Feed and is the morning notification. Each day its card was Seen joins the reader's archive «Слова дня» in Saved, synced, newest first; a Retired Word stays there.
+One unseen Word fixed for the user's local calendar day; it is revealed on the Dashboard, opens the Feed and is the morning notification. Each day its card was Seen joins the reader's archive «Слова дня» in Saved, synced, newest first; a Retired Word stays there.
 _Avoid_: Daily word
 
 **Pronunciation**:

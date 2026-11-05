@@ -18,7 +18,7 @@ import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import HomeScreen from '../app/index';
+import HomeScreen from '../app/feed';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider, type Shell } from '../shell-value';

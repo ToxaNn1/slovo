@@ -1,10 +1,10 @@
 import {
   CorrectionIdSchema,
+  CuratedCollectionIdSchema,
   IdiomIdSchema,
   SynonymRowIdSchema,
   TipIdSchema,
   WordIdSchema,
-  type Entry,
 } from '@slovo/contracts';
 import { z } from 'zod';
 
@@ -21,7 +21,14 @@ export const ID_REGISTRY_FILE = 'content/ids.json';
  */
 export const IdRegistrySchema = z
   .array(
-    z.union([WordIdSchema, CorrectionIdSchema, IdiomIdSchema, SynonymRowIdSchema, TipIdSchema]),
+    z.union([
+      WordIdSchema,
+      CorrectionIdSchema,
+      IdiomIdSchema,
+      SynonymRowIdSchema,
+      TipIdSchema,
+      CuratedCollectionIdSchema,
+    ]),
   )
   .refine((ids) => new Set(ids).size === ids.length, 'Ids must not repeat');
 
@@ -50,9 +57,9 @@ export function missingEntryErrors(
  * already an error.
  */
 export function unregisteredEntries(
-  entries: readonly Authored<Entry>[],
+  entries: readonly Authored<{ readonly id: string }>[],
   registry: readonly string[],
-): Authored<Entry>[] {
+): Authored<{ readonly id: string }>[] {
   const known = new Set(registry);
   return entries.filter(
     ({ file, entry }) => file.endsWith(`/${entry.id}.json`) && !known.has(entry.id),

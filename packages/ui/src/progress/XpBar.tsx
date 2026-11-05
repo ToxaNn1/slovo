@@ -5,7 +5,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { minTouchTarget, space, typeStyle, withAlpha, xpBarPadding } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
-/** The bar's height, the Search and Mood buttons' beside it. */
+/** The bar's height, the Search button's beside it. */
 const BAR_HEIGHT = 40;
 
 /** How far the largest text sizes of iOS may scale the number, so it stays inside the 40 pt bar. */

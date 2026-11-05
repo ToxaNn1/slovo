@@ -6,7 +6,7 @@ SLOVO helps people discover, learn and share rare words of a single language. Th
 >
 > - the monorepo with the Core, the shared contracts, the Language Pack build and a UI package;
 > - the mobile shell: one Expo app that builds the UA Edition, with the final four tabs;
-> - Home is the Feed: the Word of the Day, Word cards with Pronunciation, Corrections and Idioms mixed in, Seen and Cycles kept on the device, in the Ukrainian Decor;
+> - Home is the Dashboard, and the Feed opens from it: the Word of the Day, Word cards with Pronunciation, Corrections and Idioms mixed in, Seen and Cycles kept on the device, in the Ukrainian Decor;
 > - Settings with the Theme and the font size;
 > - the UA Edition's content (Words, Corrections and Idioms) and a content quality gate that CI runs on every change;
 > - CI with lint, typecheck, tests and secret scanning on every change, and a daily dependency audit and Knip report.

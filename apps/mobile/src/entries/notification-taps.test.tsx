@@ -5,10 +5,8 @@ import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-librar
 import { Linking, Pressable, Text } from 'react-native';
 
 import EntryLayout from '../app/entry/_layout';
-import MoodLayout from '../app/mood/_layout';
 import { createOutsideLinks } from './entry-link';
 import { NotificationTaps } from './notification-taps';
-import { useReplaceOpenEntry } from './replace-open-entry';
 import { createLinkRelay } from './widget-entry-links';
 
 /** The key of the snapshot the widget reads now, which its links carry. */
@@ -79,27 +77,13 @@ function EntryScreenStandIn() {
   );
 }
 
-/** The Feed's place: a 🎲 that opens the Word the mood roulette lands on, as `MoodButtonAndSheet` does. */
+/** The Feed's place. */
 function FeedStandIn() {
-  const replaceOpenEntry = useReplaceOpenEntry();
-  return (
-    <Pressable
-      accessibilityRole="button"
-      testID="mood-roulette"
-      onPress={() => {
-        replaceOpenEntry(`/mood/w_${String((landings += 1))}`);
-      }}
-    >
-      <Text>Feed</Text>
-    </Pressable>
-  );
+  return <Text>Feed</Text>;
 }
 
-/** How many Words the roulette has landed on, which names the next. */
-let landings = 0;
-
 /**
- * The app's tabs, its Entry stack and the mood roulette's stack, with the
+ * The app's tabs and its Entry stack, with the
  * notification taps at the root and the outside links of `+native-intent`
  * as in the app, opened on the Feed, with `replaceOpenEntry` on or off.
  * `openFromWidget` hands it the widget's link to an Entry as iOS hands it
@@ -112,7 +96,6 @@ async function renderApp(
     onOpened,
   }: { replaceOpenEntry?: boolean; onOpened?: (kind: NotificationKind) => void } = {},
 ) {
-  landings = 0;
   const listeners: ((event: { url: string }) => void)[] = [];
   jest.spyOn(Linking, 'addEventListener').mockImplementation((_type, listener) => {
     listeners.push(listener);
@@ -131,7 +114,6 @@ async function renderApp(
           <Tabs screenOptions={{ headerShown: false }}>
             <Tabs.Screen name="index" />
             <Tabs.Screen name="entry" options={{ href: null }} />
-            <Tabs.Screen name="mood" options={{ href: null }} />
           </Tabs>
         </>
       ),
@@ -150,8 +132,6 @@ async function renderApp(
       index: FeedStandIn,
       'entry/_layout': EntryLayout,
       'entry/[entryId]': EntryScreenStandIn,
-      'mood/_layout': MoodLayout,
-      'mood/[entryId]': EntryScreenStandIn,
     },
     { initialUrl: '/' },
   );
@@ -166,17 +146,12 @@ async function renderApp(
   return {
     pathname: () => app.getPathname(),
     entryStack: () => stack('entry'),
-    moodStack: () => stack('mood'),
     openFromWidget: (entryId: string) =>
       settle(() => {
         for (const listener of listeners) {
           listener({ url: `slovo-uk://entry/${entryId}?from=widget&key=${WIDGET_LINK_KEY}` });
         }
       }),
-    spinRoulette: async () => {
-      await fireEvent.press(screen.getByTestId('mood-roulette'));
-      await settle();
-    },
   };
 }
 
@@ -316,21 +291,5 @@ describe("the widget's link while the app runs", () => {
     expect(app.entryStack()).toEqual(['w_bevz', 'w_khalamydnyk']);
     await back('w_khalamydnyk');
     expect(app.pathname()).toBe('/entry/w_bevz');
-  });
-});
-
-describe('a second Word from the mood roulette', () => {
-  it('replaces the first, so «Назад» returns to «Стрічка»', async () => {
-    const app = await renderApp(fakeNotificationTaps());
-
-    await app.spinRoulette();
-    expect(app.pathname()).toBe('/mood/w_1');
-    await back('w_1');
-    await app.spinRoulette();
-
-    expect(app.pathname()).toBe('/mood/w_2');
-    expect(app.moodStack()).toEqual(['w_2']);
-    await back('w_2');
-    expect(app.pathname()).toBe('/');
   });
 });

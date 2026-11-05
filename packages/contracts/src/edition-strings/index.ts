@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { AccountStringsSchema, EmailStringsSchema } from './account';
+import { DashboardStringsSchema } from './dashboard';
 import { DatesStringsSchema } from './dates';
 import { appStringsShape } from './app';
 import { AppIntentsStringsSchema } from './app-intents';
@@ -18,7 +19,6 @@ import { KnowledgeStringsSchema } from './knowledge';
 import { LearningStringsSchema } from './learning';
 import { MistakeReportStringsSchema } from './mistake-report';
 import { MixStringsSchema } from './mix';
-import { MoodStringsSchema } from './mood';
 import { NotificationBodyStringsSchema } from './notification-body';
 import { NotificationTemplatesStringsSchema } from './notification-templates';
 import { NotificationsStringsSchema } from './notifications';
@@ -74,7 +74,7 @@ export const EditionStringsSchema = z.strictObject({
   rarityTest: RarityTestStringsSchema,
   feedNotices: FeedNoticesStringsSchema,
   wordOfTheDayArchive: WordOfTheDayArchiveStringsSchema,
-  mood: MoodStringsSchema,
+  dashboard: DashboardStringsSchema,
   game: GameStringsSchema,
   widget: WidgetStringsSchema,
   spotlight: SpotlightStringsSchema,

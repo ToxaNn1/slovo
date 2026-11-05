@@ -14,13 +14,14 @@ import {
   SplashDecorSchema,
   SynonymRowSchema,
   TipSchema,
+  CuratedCollectionSchema,
   WidgetSnapshotSchema,
   WordSchema,
   appReleaseProblems,
   type AppConfig,
   type Correction,
+  type CuratedCollection,
   type EditionConfig,
-  type Entry,
   type Idiom,
   type SplashDecor,
   type SynonymRow,
@@ -73,6 +74,8 @@ const CORRECTIONS_DIR = 'content/corrections';
 const IDIOMS_DIR = 'content/idioms';
 const SYNONYM_ROWS_DIR = 'content/synonym-rows';
 const TIPS_DIR = 'content/tips';
+/** The Curated Collections of the Edition, one `<id>.json` each (ADR 0076); the folder is optional. */
+const CURATED_COLLECTIONS_DIR = 'content/curated-collections';
 
 /** The folder each kind of Entry is authored in, by the prefix of its id. */
 const ENTRY_DIRS: Record<string, string> = {
@@ -81,6 +84,7 @@ const ENTRY_DIRS: Record<string, string> = {
   i_: IDIOMS_DIR,
   r_: SYNONYM_ROWS_DIR,
   t_: TIPS_DIR,
+  cc: CURATED_COLLECTIONS_DIR,
 };
 
 /** The contract each JSON file of an Edition is checked against. */
@@ -182,6 +186,8 @@ export interface AuthoredContent {
   readonly idioms: readonly Authored<Idiom>[];
   readonly synonymRows: readonly Authored<SynonymRow>[];
   readonly tips: readonly Authored<Tip>[];
+  /** The Curated Collections, each with its file; none when the Edition has no such folder (ADR 0076). */
+  readonly curatedCollections: readonly Authored<CuratedCollection>[];
   /** The Entry files that couldn't be read or broke the schema; the other Entries are kept. */
   readonly errors: readonly BuildError[];
 }
@@ -338,7 +344,10 @@ export function editionFiles(dir: string): EditionFiles {
       const idioms = readEntries(dir, IDIOMS_DIR, IdiomSchema, errors);
       const synonymRows = readEntries(dir, SYNONYM_ROWS_DIR, SynonymRowSchema, errors);
       const tips = readEntries(dir, TIPS_DIR, TipSchema, errors);
-      return { words, corrections, idioms, synonymRows, tips, errors };
+      const curatedCollections = existsSync(join(dir, CURATED_COLLECTIONS_DIR))
+        ? readEntries(dir, CURATED_COLLECTIONS_DIR, CuratedCollectionSchema, errors)
+        : [];
+      return { words, corrections, idioms, synonymRows, tips, curatedCollections, errors };
     },
     entryFile: (id) => `${ENTRY_DIRS[id.slice(0, 2)] ?? CORRECTIONS_DIR}/${id}.json`,
   };
@@ -360,7 +369,7 @@ function invalid(dir: string, errors: readonly BuildError[]): EditionFolderError
  * and hold `<id>.json` files only, each named after the id of its Entry;
  * hidden files such as `.DS_Store` are skipped.
  */
-function readEntries<T extends Entry>(
+function readEntries<T extends { readonly id: string }>(
   editionDir: string,
   entryDir: string,
   schema: z.ZodType<T>,
@@ -376,7 +385,7 @@ function readEntries<T extends Entry>(
     if (name.startsWith('.')) continue;
     const file = `${entryDir}/${name}`;
     if (!lstatSync(join(path, name)).isFile() || !name.endsWith('.json')) {
-      errors.push({ file, message: 'Expected only Entry files named <id>.json here' });
+      errors.push({ file, message: 'Expected only files named <id>.json here' });
       continue;
     }
     const result = parseFile(editionDir, file, schema, true);

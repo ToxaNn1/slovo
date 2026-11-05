@@ -37,14 +37,43 @@ export const OriginLanguageSchema = z.strictObject({
 
 export type OriginLanguage = z.infer<typeof OriginLanguageSchema>;
 
+/** The kinds of Entry beside Words, each with a Mix kind weight. */
+export const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
+
+export type WeightedKind = z.infer<typeof WeightedKindSchema>;
+
 /**
- * A Mood («настрій») a Word may carry (ADR 0054): its id, its name in the
- * Edition's language and its emoji.
+ * The band of rarities a Mood puts first in the Feed (ADR 0076): `upper` is
+ * the Rarity Ceiling's rarity and the one below it, `lower` rarities 1 and 2,
+ * `whole` every rarity; the bands clip to the Ceiling.
+ */
+export const RarityBandSchema = z.enum(['upper', 'lower', 'whole']);
+
+export type RarityBand = z.infer<typeof RarityBandSchema>;
+
+/**
+ * How a Mood shifts the reader's Mix kind weight of a kind (ADR 0076): one
+ * step towards «Менше», none, or one step towards «Більше», clamped to the
+ * weights; a kind turned off in the Mix stays off.
+ */
+export const MoodShiftSchema = z.enum(['less', 'same', 'more']);
+
+export type MoodShift = z.infer<typeof MoodShiftSchema>;
+
+/**
+ * A Mood («настрій») the Edition lists: its id, its name in the Edition's
+ * language, its emoji, the reply the Dashboard's Mood check-in answers it
+ * with, in the Edition's language, and its Feed parameters (ADR 0076): the
+ * rarity band put first and a shift per kind. A mood that names neither
+ * leaves the Feed as it is.
  */
 export const MoodSchema = z.strictObject({
   id: KebabCaseIdSchema,
   name: z.string().min(1),
   emoji: z.string().min(1),
+  reply: TextSchema,
+  rarityBand: RarityBandSchema.default('whole'),
+  shifts: z.partialRecord(WeightedKindSchema, MoodShiftSchema).default({}),
 });
 
 export type Mood = z.infer<typeof MoodSchema>;
@@ -242,8 +271,6 @@ export const FeatureSwitchesSchema = z.strictObject({
   firstWeek: z.boolean(),
   /** The widget hint: the sheet after the first finished Game and the guide to adding the widget (ADR 0054). */
   widgetHint: z.boolean(),
-  /** Mood: the moods a Word may carry and «Слово під настрій» (ADR 0054). */
-  moods: z.boolean(),
   /** «Сезонний декор»: the Decor motif of the local date's Holiday or Season, and its setting (ADR 0055). */
   seasonalDecor: z.boolean(),
   /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel (ADR 0055). */
@@ -266,7 +293,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   appIntents: z.boolean(),
   /** Collection Links: «Поділитися посиланням» on a Collection and the `c/<id>` links that open its copy (ADR 0058). */
   collectionLinks: z.boolean(),
-  /** A Word from the mood roulette or the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
+  /** A Word from the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
   replaceOpenEntry: z.boolean(),
   /** The Mix kind weights: «Менше», «Звичайно» or «Більше» for each kind beside Words, which space its Feed turns; off, every kind keeps its turn of 0.9. */
   mixKindWeights: z.boolean(),
@@ -320,6 +347,16 @@ export const FeatureSwitchesSchema = z.strictObject({
   reduceMotion: z.boolean(),
   /** The fast reveal: in one visit to the Feed the first Entry card plays the full reveal and every next card a fast one; off, every card plays the full reveal. */
   fastReveal: z.boolean(),
+  /** The Dashboard: the home behind the «Стрічка» tab, with the Word of the Day hero; off, the Feed is the home (ADR 0076). Off while `wordOfTheDay` is. */
+  dashboard: z.boolean(),
+  /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). Off while `dashboard` is. */
+  mood: z.boolean(),
+  /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `dashboard` or `wordOfTheDayArchive` is. */
+  previousWords: z.boolean(),
+  /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `dashboard` or `corrections` is. */
+  correctionTypes: z.boolean(),
+  /** Curated Collections: the Dashboard's «Добірки» rail of editorial Entry sets from the Language Pack (ADR 0076). Off while `dashboard` is. */
+  curatedCollections: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -649,9 +686,6 @@ export type QuestionnaireQuestion = z.infer<typeof QuestionnaireQuestionSchema>;
 /** The id of an option of a questionnaire question, e.g. `studying`. */
 export const QuestionnaireAnswerIdSchema = KebabCaseIdSchema;
 
-/** The kinds of Entry beside Words, each with a Mix kind weight. */
-const WeightedKindSchema = z.enum(['correction', 'idiom', 'synonymRow', 'tip']);
-
 /**
  * The Edition's questionnaire (ADR 0067): the options of the level
  * question, each setting the Rarity Ceiling or opening the Rarity Test, of
@@ -753,9 +787,16 @@ export const EditionConfigSchema = z
     originLanguages: z.array(OriginLanguageSchema),
     /**
      * The moods, in their order (ADR 0054): the Edition owns the list, so the
-     * Core stays language-agnostic. Empty when the Edition has no moods.
+     * Core stays language-agnostic. It lists at least the four `dashboardMoods` name.
      */
     moods: z.array(MoodSchema),
+    /**
+     * The four moods the Dashboard's Mood check-in offers, by id among
+     * `moods`, in display order (ADR 0076): exactly four.
+     */
+    dashboardMoods: z
+      .array(KebabCaseIdSchema)
+      .length(4, { message: 'The Dashboard lists exactly four moods' }),
     /**
      * The letters Search reads as another (ADR 0054), each lower-case letter
      * to the one it reads as, such as ґ to г: the Edition owns them, so the
@@ -791,6 +832,7 @@ export const EditionConfigSchema = z
         categoriesRequiringHistory,
         originLanguages,
         moods,
+        dashboardMoods,
         userSettingDefaults,
         questionnaire,
       },
@@ -857,6 +899,17 @@ export const EditionConfigSchema = z
           });
         }
         moodIds.add(id);
+      });
+      const dashboardMoodIds = new Set<string>();
+      dashboardMoods.forEach((id, index) => {
+        if (!moodIds.has(id) || dashboardMoodIds.has(id)) {
+          context.addIssue({
+            code: 'custom',
+            path: ['dashboardMoods', index],
+            message: moodIds.has(id) ? `Duplicate mood id "${id}"` : `Unknown mood id "${id}"`,
+          });
+        }
+        dashboardMoodIds.add(id);
       });
       for (const field of ['categories', 'correctionCategories'] as const) {
         const inMix = userSettingDefaults.mix[field];

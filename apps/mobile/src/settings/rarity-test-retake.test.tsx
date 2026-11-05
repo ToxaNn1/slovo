@@ -73,7 +73,6 @@ function word(index: number, rarity: Rarity): Word {
     sources: [{ title: 'Словник' }],
     correctionIds: [],
     retired: false,
-    moods: [],
   };
 }
 

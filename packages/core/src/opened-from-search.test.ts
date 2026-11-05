@@ -48,10 +48,9 @@ const historyIdsOf = ({ history }: Composition) => history.list.map(({ entryId }
 
 /** Today's Word of the Day: the card the Feed opens on. */
 const wordOfTheDayOf = ({ feed }: Composition) => feed.cards[feed.startPosition]?.entryId;
-describe.each([
-  ['Search', (app: Composition, entryId: string) => app.openedFromSearch(entryId)],
-  ['the mood roulette', (app: Composition, entryId: string) => app.openedFromMood(entryId)],
-])('opening an Entry from %s', (_source, open) => {
+describe('opening an Entry from Search', () => {
+  const open = (app: Composition, entryId: string) => app.openedFromSearch(entryId);
+
   it('gives its card and leaves Seen, History and the Feed unchanged, writing nothing', async () => {
     const time = fakeClock();
     const { app, records, writes } = await run({ clock: time.clock });
@@ -106,7 +105,6 @@ describe('opening the same Entry from a notification after Search', () => {
   it('still makes it Seen and adds it to History', async () => {
     const { app, records } = await run();
     await app.openedFromSearch('w_three');
-    await app.openedFromMood('w_three');
 
     await app.openedFromNotification('w_three');
 

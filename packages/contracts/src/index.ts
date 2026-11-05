@@ -58,6 +58,12 @@ export {
   type LanguageTraits,
   type MixConfig,
   type Mood,
+  MoodShiftSchema,
+  type MoodShift,
+  RarityBandSchema,
+  type RarityBand,
+  WeightedKindSchema,
+  type WeightedKind,
   type OriginLanguage,
   type Theme,
   type UserSettingDefaultsConfig,
@@ -168,6 +174,11 @@ export {
   CollectionLinkSchema,
   type CollectionLink,
 } from './collection-link';
+export {
+  CuratedCollectionIdSchema,
+  CuratedCollectionSchema,
+  type CuratedCollection,
+} from './curated-collection';
 export {
   NotificationTimeBucketSchema,
   type CountedQuestion,

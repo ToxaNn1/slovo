@@ -44,7 +44,9 @@ const everything: Shown = {
   dailyGoal: true,
   search: true,
   fastReveal: true,
-  moods: true,
+  dashboard: true,
+  mood: true,
+  curatedCollections: true,
   wordOfTheDayArchive: true,
   rarityCeiling: true,
   rarityTest: true,
@@ -111,7 +113,6 @@ describe('what the reader is shown', () => {
       'no Daily Goal choice with the Daily Goal off',
       { off: ['dailyGoal'], shown: { dailyGoal: false } },
     ],
-    ['no 🎲 «Слово під настрій» with moods off', { off: ['moods'], shown: { moods: false } }],
     [
       'no «Рідкість» with the Rarity Ceiling off',
       { off: ['rarityCeiling'], shown: { rarityCeiling: false } },

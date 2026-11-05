@@ -2,6 +2,7 @@ import {
   CategorySchema,
   CorrectionSchema,
   CrosswordDaySchema,
+  CuratedCollectionSchema,
   IdiomSchema,
   SynonymRowSchema,
   TipSchema,
@@ -43,6 +44,18 @@ export interface PackReader extends ContentReadPort {
   metadata(): Promise<PackMetadata>;
   /** The Daily Crossword of a date, `YYYY-MM-DD`, or undefined when the pack has no such day. */
   crosswordDay(date: string): Promise<CrosswordDay | undefined>;
+}
+
+interface CuratedCollectionRow {
+  id: string;
+  name: string;
+  description: string;
+  published_on: string;
+}
+
+interface CuratedCollectionEntryRow {
+  collection_id: string;
+  entry_id: string;
 }
 
 interface CrosswordWordRow {
@@ -163,6 +176,10 @@ const SQL = {
     ORDER BY synonym_rows.id
   `,
   metadata: 'SELECT key, value FROM metadata',
+  curatedCollections:
+    'SELECT id, name, description, published_on FROM curated_collections ORDER BY id',
+  curatedCollectionEntries:
+    'SELECT collection_id, entry_id FROM curated_collection_entries ORDER BY collection_id, position',
   crosswordDay:
     'SELECT entry_id, answer, clue, start_row, start_column, direction FROM crossword_words WHERE date = ? ORDER BY position',
 };
@@ -247,7 +264,6 @@ const wordParts = (where: string) => {
     examples: `SELECT word_id, text, author FROM examples WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
     relatedWords: `SELECT word_id, relation, text FROM related_words WHERE word_id ${ofTheWords} ORDER BY word_id, relation, position`,
     registers: `SELECT word_id, register FROM word_registers WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
-    moods: `SELECT word_id, mood FROM word_moods WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
     sources: `SELECT entry_id AS word_id, title, short_name, url, archived_url FROM sources WHERE entry_id ${ofTheWords} ORDER BY entry_id, position`,
     links: `SELECT word_id, correction_id FROM word_corrections WHERE word_id ${ofTheWords} ORDER BY word_id, position`,
   };
@@ -304,7 +320,7 @@ export function createPackReader(db: PackDatabase): PackReader {
   async function readWords({ where, params }: WordFilter): Promise<Word[]> {
     const sql = wordParts(where);
     type WithWordId<T> = T & { word_id: string };
-    const [rows, stress, definitions, examples, related, registers, moods, wordSources, links] =
+    const [rows, stress, definitions, examples, related, registers, wordSources, links] =
       await Promise.all([
         db.getAllAsync<WordRow>(sql.words, params),
         db.getAllAsync<WithWordId<{ position: number }>>(sql.stress, params).then(byWord),
@@ -316,7 +332,6 @@ export function createPackReader(db: PackDatabase): PackReader {
           .getAllAsync<WithWordId<{ relation: string; text: string }>>(sql.relatedWords, params)
           .then(byWord),
         db.getAllAsync<WithWordId<{ register: string }>>(sql.registers, params).then(byWord),
-        db.getAllAsync<WithWordId<{ mood: string }>>(sql.moods, params).then(byWord),
         db.getAllAsync<WithWordId<SourceRow>>(sql.sources, params).then(byWord),
         db.getAllAsync<WithWordId<{ correction_id: string }>>(sql.links, params).then(byWord),
       ]);
@@ -346,7 +361,6 @@ export function createPackReader(db: PackDatabase): PackReader {
         ...(row.history === null ? {} : { history: row.history }),
         ...(row.origin === null ? {} : { origin: row.origin }),
         ...(row.illustration === null ? {} : { illustration: row.illustration }),
-        ...(moods.has(row.id) ? { moods: (moods.get(row.id) ?? []).map((r) => r.mood) } : {}),
         categoryId: row.category_id,
         rarity: row.rarity,
         sources: (wordSources.get(row.id) ?? []).map(sourceOf),
@@ -571,6 +585,22 @@ export function createPackReader(db: PackDatabase): PackReader {
     getEntries: readEntries,
     listLinkedWordIds: (correctionId) => column(SQL.linkedWordIds, [correctionId], 'id'),
     listLinkingSynonymRowIds: (wordId) => column(SQL.linkingSynonymRowIds, [wordId], 'id'),
+    listCuratedCollections: async () => {
+      const [collections, entries] = await Promise.all([
+        db.getAllAsync<CuratedCollectionRow>(SQL.curatedCollections, []),
+        db.getAllAsync<CuratedCollectionEntryRow>(SQL.curatedCollectionEntries, []),
+      ]);
+      const entryIds = grouped(entries, (row) => row.collection_id);
+      return collections.map((row) =>
+        CuratedCollectionSchema.parse({
+          id: row.id,
+          name: row.name,
+          description: row.description,
+          publishedOn: row.published_on,
+          entryIds: (entryIds.get(row.id) ?? []).map((entry) => entry.entry_id),
+        }),
+      );
+    },
     metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
     crosswordDay: async (date) => {
       const rows = await db.getAllAsync<CrosswordWordRow>(SQL.crosswordDay, [date]);

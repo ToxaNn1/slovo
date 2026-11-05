@@ -324,14 +324,13 @@ describe('the 0.8.13 strings', () => {
     expect(issuesOf(changed)).toEqual(['feedNotices.firstWeek.lastDayText.few']);
   });
 
-  it('the UA Edition carries the agreed texts of Settings, «Збережене», Mood and the widget', () => {
+  it('the UA Edition carries the agreed texts of Settings, «Збережене» and the widget', () => {
     expect(parsed.settings.dailyGoal).toEqual({ title: 'Денна ціль', none: 'Без цілі' });
     expect(parsed.wordOfTheDayArchive.title).toBe('Слова дня');
-    expect(parsed.mood.title).toBe('Слово під настрій');
     expect(parsed.settings.howToAddWidget).toBe('Як додати віджет');
   });
 
-  it.each(['search', 'rarityTest', 'feedNotices', 'wordOfTheDayArchive', 'mood'])(
+  it.each(['search', 'rarityTest', 'feedNotices', 'wordOfTheDayArchive'])(
     'every Edition needs %s',
     (key) => {
       const without = Object.fromEntries(Object.entries(strings).filter(([name]) => name !== key));
@@ -1078,14 +1077,72 @@ describe('the moods', () => {
     ).toEqual(['moods']);
   });
 
-  it('the UA Edition lists six moods', () => {
+  it('the UA Edition lists eight moods', () => {
     expect(EditionConfigSchema.parse(readJson('uk', 'config')).moods).toEqual([
-      { id: 'joyful', name: 'Радісний', emoji: '😊' },
-      { id: 'sad', name: 'Сумний', emoji: '😢' },
-      { id: 'in-love', name: 'Закоханий', emoji: '😍' },
-      { id: 'energetic', name: 'Бадьорий', emoji: '⚡' },
-      { id: 'calm', name: 'Спокійний', emoji: '😌' },
-      { id: 'thoughtful', name: 'Задумливий', emoji: '🤔' },
+      {
+        id: 'sleepy',
+        name: 'Сонно',
+        emoji: '😴',
+        reply: '«Сонно» — теж слово. Але, на жаль, не рідкісне.',
+        rarityBand: 'whole',
+        shifts: {},
+      },
+      {
+        id: 'curious',
+        name: 'Допитливо',
+        emoji: '🧐',
+        reply: 'Для допитливих я відкладаю найрідкісніше.',
+        rarityBand: 'whole',
+        shifts: {},
+      },
+      {
+        id: 'joyful',
+        name: 'Радісний',
+        emoji: '😊',
+        reply: 'Лови світле слово!',
+        rarityBand: 'whole',
+        shifts: { synonymRow: 'more', idiom: 'more' },
+      },
+      {
+        id: 'sad',
+        name: 'Сумний',
+        emoji: '😢',
+        reply: 'Слово зігріє.',
+        rarityBand: 'whole',
+        shifts: {},
+      },
+      {
+        id: 'in-love',
+        name: 'Закоханий',
+        emoji: '😍',
+        reply: 'Ніжні слова поруч.',
+        rarityBand: 'whole',
+        shifts: {},
+      },
+      {
+        id: 'energetic',
+        name: 'Бадьоро',
+        emoji: '⚡',
+        reply: 'Бадьоро? Тоді доженемо ціль ще до обіду.',
+        rarityBand: 'upper',
+        shifts: { correction: 'more' },
+      },
+      {
+        id: 'calm',
+        name: 'Спокійний',
+        emoji: '😌',
+        reply: 'Без поспіху.',
+        rarityBand: 'lower',
+        shifts: { tip: 'more', correction: 'less' },
+      },
+      {
+        id: 'thoughtful',
+        name: 'Задумливо',
+        emoji: '🤔',
+        reply: 'Задумливо — ідеальний стан для кросворду.',
+        rarityBand: 'upper',
+        shifts: { idiom: 'more' },
+      },
     ]);
   });
 });

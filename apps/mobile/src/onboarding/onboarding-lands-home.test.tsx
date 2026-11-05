@@ -60,7 +60,7 @@ function word(id: string, lemma: string): Word {
 
 let composition: Composition;
 
-/** The app of a new reader on 2026-11-04 in Kyiv: the Feed, with the Onboarding over it as the root layout draws it. */
+/** The app of a new reader on 2026-11-04 in Kyiv: the home, with the Onboarding over it as the root layout draws it. */
 async function renderApp() {
   const shipped = loadEdition(activeEditionFiles.config);
   const userState = await seedUserState({}, { clock });
@@ -106,15 +106,6 @@ async function renderApp() {
   await settle();
 }
 
-/** Lays the Feed's pager out, as the device does once it knows its height. */
-async function layOutFeed() {
-  await settle(() =>
-    fireEvent(screen.getByTestId('feed'), 'layout', {
-      nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } },
-    }),
-  );
-}
-
 async function settle(action: () => unknown = () => undefined) {
   await act(async () => {
     await action();
@@ -154,12 +145,12 @@ afterEach(() => {
   screenSettled();
 });
 
-// Spec #1553, ticket #1562: the whole onboarding flow lands in the Feed.
+// Spec #1553, ticket #1562: the whole onboarding flow lands on the home, the Dashboard (ADR 0076).
 describe('the whole onboarding flow', () => {
-  it('walks СЛОВО → ПЕРШЕ → ГРАЙ! → РІВЕНЬ? → НАВІЩО? → ЦІЛЬ → НАГАДУВАННЯ and lands in the Feed', async () => {
+  it('walks СЛОВО → ПЕРШЕ → ГРАЙ! → РІВЕНЬ? → НАВІЩО? → ЦІЛЬ → НАГАДУВАННЯ and lands on the Dashboard', async () => {
     await renderApp();
-    // The Onboarding covers the Feed: a modal over it hides it from the reader.
-    expect(screen.queryByTestId('feed')).toBeNull();
+    // The Onboarding covers the home: a modal over it hides it from the reader.
+    expect(screen.queryByTestId('dashboard')).toBeNull();
     expect(shouts).toEqual([
       'СЛОВО',
       'ПЕРШЕ',
@@ -198,12 +189,10 @@ describe('the whole onboarding flow', () => {
     expect(screen.getByTestId('onboarding-notification-time')).toBeTruthy();
     await press('onboarding-time-20:30');
 
-    // The Feed: nothing covers it, and its first Word is on screen.
+    // The Dashboard: nothing covers it.
     expect(composition.onboarding.state.finishedAt).toEqual(clock.now());
     for (const shout of shouts) expect(screen.queryByText(shout)).toBeNull();
     expect(screen.queryByTestId('onboarding-notification-time')).toBeNull();
-    await layOutFeed();
-    expect(screen.getByTestId('feed-card-0')).toBeTruthy();
-    expect(screen.getAllByText(/слово\d/).length).toBeGreaterThan(0);
+    expect(screen.getByTestId('dashboard')).toBeTruthy();
   });
 });

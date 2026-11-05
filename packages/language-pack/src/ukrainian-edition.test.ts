@@ -20,7 +20,7 @@ describe('the UA Edition', () => {
     });
   });
 
-  it('turns every Feature Switch on but the paused Mood, Seasonal Decor and calligraphy', () => {
+  it('turns every Feature Switch on but the paused Seasonal Decor and calligraphy', () => {
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
     expect(edition.isFeatureEnabled('synonymRows')).toBe(true);
@@ -63,7 +63,6 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('politePause')).toBe(true);
     expect(edition.isFeatureEnabled('firstWeek')).toBe(true);
     expect(edition.isFeatureEnabled('widgetHint')).toBe(true);
-    expect(edition.isFeatureEnabled('moods')).toBe(false);
     expect(edition.isFeatureEnabled('seasonalDecor')).toBe(false);
     expect(edition.isFeatureEnabled('stressAnimation')).toBe(true);
     expect(edition.isFeatureEnabled('illustrations')).toBe(true);

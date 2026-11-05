@@ -1,4 +1,5 @@
 import type {
+  CuratedCollection,
   Category,
   Correction,
   Entry,
@@ -27,6 +28,7 @@ export function createMemoryContentPort({
   idioms = [],
   synonymRows = [],
   tips = [],
+  curatedCollections = [],
 }: {
   categories?: readonly Category[];
   correctionCategories?: readonly Category[];
@@ -35,6 +37,7 @@ export function createMemoryContentPort({
   idioms?: readonly Idiom[];
   synonymRows?: readonly SynonymRow[];
   tips?: readonly Tip[];
+  curatedCollections?: readonly CuratedCollection[];
 } = {}): ContentReadPort {
   const liveWords = words.filter((word) => !word.retired);
   const ofKind: Readonly<Record<EntryKind, readonly Entry[]>> = {
@@ -71,6 +74,7 @@ export function createMemoryContentPort({
           .filter((word) => word.correctionIds.includes(correctionId))
           .map((word) => word.id),
       ),
+    listCuratedCollections: () => Promise.resolve(curatedCollections),
     listLinkingSynonymRowIds: (wordId) =>
       Promise.resolve(
         liveWords.some((word) => word.id === wordId)

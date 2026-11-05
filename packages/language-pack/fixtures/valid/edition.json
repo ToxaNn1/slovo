@@ -57,7 +57,6 @@
     "politePause": true,
     "firstWeek": true,
     "widgetHint": true,
-    "moods": true,
     "seasonalDecor": true,
     "stressAnimation": true,
     "illustrations": true,
@@ -97,7 +96,12 @@
     "mascot": true,
     "sounds": true,
     "reduceMotion": true,
-    "fastReveal": true
+    "fastReveal": true,
+    "dashboard": true,
+    "mood": true,
+    "curatedCollections": true,
+    "previousWords": true,
+    "correctionTypes": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -154,11 +158,31 @@
   ],
   "moods": [
     {
+      "id": "energetic",
+      "name": "бадьорий",
+      "emoji": "⚡",
+      "reply": "Тримай темп!"
+    },
+    {
+      "id": "thoughtful",
+      "name": "задумливий",
+      "emoji": "🤔",
+      "reply": "Є над чим подумати."
+    },
+    {
       "id": "calm",
       "name": "спокійний",
-      "emoji": "😌"
+      "emoji": "😌",
+      "reply": "Без поспіху."
+    },
+    {
+      "id": "joyful",
+      "name": "радісний",
+      "emoji": "😊",
+      "reply": "Лови світле слово!"
     }
   ],
+  "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
   "searchLetters": {
     "ґ": "г"
   },

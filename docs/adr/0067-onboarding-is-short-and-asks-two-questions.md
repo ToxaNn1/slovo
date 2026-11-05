@@ -1,8 +1,8 @@
-# Onboarding is short: welcome, the first Word, two questions, the Daily Goal, the Notification time, the Feed
+# Onboarding is short: welcome, the first Word, two questions, the Daily Goal, the Notification time, the home
 
 Spec #1358 wants a new reader in the Feed within a minute, already knowing what SLOVO is and with a Feed in their taste.
 
-**The order.** СЛОВО (welcome), ПЕРШЕ (the first Word with its Pronunciation), ГРАЙ!, the two questions РІВЕНЬ? and НАВІЩО? (with the Rarity Test, when the reader does not know their level), ЦІЛЬ (the Daily Goal in Words, ADR 0074, 10 highlighted, the reader picks), НАГАДУВАННЯ (the Notification time, ADR 0074), then the Feed. Every step can be skipped; skipping the questions keeps the defaults.
+**The order.** СЛОВО (welcome), ПЕРШЕ (the first Word with its Pronunciation), ГРАЙ!, the two questions РІВЕНЬ? and НАВІЩО? (with the Rarity Test, when the reader does not know their level), ЦІЛЬ (the Daily Goal in Words, ADR 0074, 10 highlighted, the reader picks), НАГАДУВАННЯ (the Notification time, ADR 0074), then the home: the Dashboard, or the Feed with `dashboard` off (ADR 0076). Every step can be skipped; skipping the questions keeps the defaults.
 
 **The two questions.** «Рівень» («Як добре ти знаєш мову?») sets the Rarity Ceiling (ADR 0072): «Тільки починаю» «до 2», «Непогано» «до 3», «Добре» «до 4», «Мовний гурман» «до 5». Its fifth option, «Не знаю», sets no Ceiling: it opens the Rarity Test right there, in the frame and step number of «Рівень», and the test's result sets the Ceiling; going on from the test, or a draw with no Word, leads to the next step. While the Rarity Test is switched off, «Не знаю» is not shown. «Навіщо» sets the Mix kind weights (more Corrections, more rare Words or more Game). The Edition config holds the options and their mapping, so the Core stays language-agnostic. The question was «Хто ти» («Навчаюсь», «Працюю», «Мовний гурман») before: a reader's occupation said little about how many rare Words they know, so the owner replaced it with the level asked outright. The backend no longer counts answers to `who`; the counts it holds stay.
 

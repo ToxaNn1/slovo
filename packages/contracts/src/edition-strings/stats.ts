@@ -48,6 +48,13 @@ export const StatsStringsSchema = z.strictObject({
     synonymRow: PluralSchema,
     tip: PluralSchema,
   }),
+  /**
+   * The row of the days by Mood, e.g. «Настрої: ⚡ 3 дні · 🌿 1 день».
+   * Takes `{counts}`: the days of each Mood chosen, joined by `knownJoiner`.
+   */
+  moods: templateOf('counts'),
+  /** The days of one Mood in the row of the days by Mood, e.g. «3 дні». Takes `{count}`. */
+  moodDays: PluralSchema,
   /** The row of the Entries due for Review today, e.g. «На повторення сьогодні: 4». Takes `{count}`. */
   dueToday: templateOf('count'),
   /** The XP bar's text, today's XP from the XP log, e.g. «12 XP». Takes `{count}`. */
