@@ -39,4 +39,13 @@ export const DashboardStringsSchema = z.strictObject({
   curatedCollectionsTitle: TextSchema,
   /** The badge on a Curated Collection card not yet opened, «Нова». */
   curatedCollectionNew: TextSchema,
+  /** A Curated Collection's screen and its copy into the reader's Collections. */
+  curatedCollection: z.strictObject({
+    /** The screen's count, «Знаю {x} з {n}». Takes `{x}`, the Entries marked Known, and `{n}`, those neither Retired nor Hidden. */
+    known: templateOf('x', 'n'),
+    /** The button that copies it into the reader's Collections, «+ Додати». */
+    add: TextSchema,
+    /** What the rail and the screen show once a copy is kept, «Додано ✓». */
+    added: TextSchema,
+  }),
 });

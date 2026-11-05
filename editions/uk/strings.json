@@ -1110,6 +1110,11 @@
     },
     "curatedCollectionsTitle": "Добірки",
     "curatedCollectionNew": "Нова",
+    "curatedCollection": {
+      "known": "Знаю {x} з {n}",
+      "add": "+ Додати",
+      "added": "Додано ✓"
+    },
     "previousWords": {
       "title": "Попередні слова"
     },
