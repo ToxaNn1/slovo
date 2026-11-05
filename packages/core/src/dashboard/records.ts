@@ -13,4 +13,12 @@ export const dashboardRecords = {
   correctionsWorkedThrough: declareRecords('correctionsWorkedThrough.', z.literal(true), {
     sync: 'union',
   }),
+  /**
+   * The Curated Collections opened, one record per collection by its id
+   * (ADR 0076). They sync as a union, so a collection opened on one device
+   * loses its «Нова» badge on all.
+   */
+  curatedCollectionsOpened: declareRecords('curatedCollections.opened.', z.literal(true), {
+    sync: 'union',
+  }),
 };

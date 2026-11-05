@@ -262,7 +262,12 @@ export {
   type CorrectionTypeTile,
 } from './dashboard/correction-types';
 export {
+  type CuratedCollectionCard,
+  type CuratedCollections,
+} from './dashboard/curated-collections';
+export {
   type CorrectionTypesBlock,
+  type CuratedCollectionsBlock,
   type Dashboard,
   type DashboardBlock,
   type MoodBlock,
