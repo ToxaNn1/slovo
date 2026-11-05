@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { Icon } from '../primitives/Icon';
@@ -7,6 +8,7 @@ import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { entryPanel, iconButton, space, wedges, wordCardSide } from '../tokens';
 import { AccentGround } from './AccentGround';
+import { SwipeMarks, type EntrySwipe } from '../knowledge/SwipeMarks';
 import { EntryCard, type EntryCardProps } from './EntryCard';
 import { EntryReveal, RevealDetail } from './reveal';
 import { WordHeadline, WordSections } from './WordCard';
@@ -34,6 +36,7 @@ export function EntryDetails({
   onOpenSynonymRow,
   onWordHistoryShown,
   actions,
+  swipe,
 }: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
   back: string;
@@ -56,53 +59,55 @@ export function EntryDetails({
         // name field must not be swallowed to put the keyboard away.
         keyboardShouldPersistTaps="handled"
       >
-        <AccentGround
-          id="entry-panel"
-          testID="entry-panel"
-          letter={word === undefined ? '' : firstLetter(word.model.lemma)}
-          letterRole="panelLetter"
-          letterAt={entryPanel.letter}
-          points={wedges.panel}
-          letterStopsAt={entryPanel.cutAt}
-          style={[styles.panel, { paddingTop: topInset + space[3] }]}
-        >
-          <BackTile label={back} onPress={onBack} />
-          {word !== undefined && (
-            <View style={styles.panelText}>
-              {word.wordOfTheDay !== undefined && <WordOfTheDayBadge day={word.wordOfTheDay} />}
-              <WordHeadline
-                card={word.model}
-                lemmaSize={lemmaSize}
-                concealed={false}
+        <Swiped swipe={swipe} correction={card.kind === 'correction'}>
+          <AccentGround
+            id="entry-panel"
+            testID="entry-panel"
+            letter={word === undefined ? '' : firstLetter(word.model.lemma)}
+            letterRole="panelLetter"
+            letterAt={entryPanel.letter}
+            points={wedges.panel}
+            letterStopsAt={entryPanel.cutAt}
+            style={[styles.panel, { paddingTop: topInset + space[3] }]}
+          >
+            <BackTile label={back} onPress={onBack} />
+            {word !== undefined && (
+              <View style={styles.panelText}>
+                {word.wordOfTheDay !== undefined && <WordOfTheDayBadge day={word.wordOfTheDay} />}
+                <WordHeadline
+                  card={word.model}
+                  lemmaSize={lemmaSize}
+                  concealed={false}
+                  stressFalls={stressFalls}
+                  lemmaFont={undefined}
+                />
+              </View>
+            )}
+          </AccentGround>
+          {word === undefined ? (
+            <View style={styles.otherKind}>
+              <EntryCard
+                card={card}
+                onOpenCorrection={onOpenCorrection}
+                onOpenWord={onOpenWord}
+                onOpenSynonymRow={onOpenSynonymRow}
+                onWordHistoryShown={onWordHistoryShown}
+                actions={actions}
                 stressFalls={stressFalls}
-                lemmaFont={undefined}
+              />
+            </View>
+          ) : (
+            <View testID="word-card" style={styles.body}>
+              <WordSections
+                card={word.model}
+                compact={compact}
+                onOpenCorrection={onOpenCorrection}
+                onOpenSynonymRow={onOpenSynonymRow}
+                onHistoryShown={onWordHistoryShown}
               />
             </View>
           )}
-        </AccentGround>
-        {word === undefined ? (
-          <View style={styles.otherKind}>
-            <EntryCard
-              card={card}
-              onOpenCorrection={onOpenCorrection}
-              onOpenWord={onOpenWord}
-              onOpenSynonymRow={onOpenSynonymRow}
-              onWordHistoryShown={onWordHistoryShown}
-              actions={actions}
-              stressFalls={stressFalls}
-            />
-          </View>
-        ) : (
-          <View testID="word-card" style={styles.body}>
-            <WordSections
-              card={word.model}
-              compact={compact}
-              onOpenCorrection={onOpenCorrection}
-              onOpenSynonymRow={onOpenSynonymRow}
-              onHistoryShown={onWordHistoryShown}
-            />
-          </View>
-        )}
+        </Swiped>
       </ScrollView>
       {word !== undefined && (
         <View
@@ -121,6 +126,28 @@ export function EntryDetails({
         </View>
       )}
     </EntryReveal>
+  );
+}
+
+/**
+ * The whole content of Entry details, panel and meaning, under the side
+ * swipes that set the Knowledge Mark when the screen has them (ADR 0077).
+ * Entry details never conceals the meaning, so the swipes are always on.
+ */
+function Swiped({
+  swipe,
+  correction,
+  children,
+}: {
+  swipe: EntrySwipe | undefined;
+  correction: boolean;
+  children: ReactNode;
+}) {
+  if (swipe === undefined) return <>{children}</>;
+  return (
+    <SwipeMarks swipe={swipe} concealed={false} correction={correction}>
+      {children}
+    </SwipeMarks>
   );
 }
 
