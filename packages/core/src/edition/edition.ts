@@ -137,6 +137,8 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   dashboard: ['wordOfTheDay'],
   // The Mood check-in is a Dashboard block (ADR 0076).
   mood: ['dashboard'],
+  // The Correction Types rail is a Dashboard block over the Corrections (ADR 0076).
+  correctionTypes: ['dashboard', 'corrections'],
   notificationTimeStep: ['notifications'],
 };
 

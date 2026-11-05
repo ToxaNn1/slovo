@@ -1107,6 +1107,20 @@
       "skip": "Не сьогодні",
       "today": "Сьогодні: {mood}",
       "change": "змінити"
+    },
+    "correctionTypes": {
+      "title": "Виправлення",
+      "workedThrough": "Розібрано {x} з {n}",
+      "reveal": "Як правильно?",
+      "tiles": {
+        "russianism": "Росіянізми",
+        "calque": "Кальки",
+        "surzhyk": "Суржик",
+        "officialese": "Канцелярит",
+        "anglicism": "Англіцизми",
+        "wrongStress": "Наголоси",
+        "paronym": "Пароніми"
+      }
     }
   },
   "wordOfTheDayArchive": {

@@ -324,6 +324,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   dashboard: z.boolean(),
   /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). Off while `dashboard` is. */
   mood: z.boolean(),
+  /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `dashboard` or `corrections` is. */
+  correctionTypes: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
