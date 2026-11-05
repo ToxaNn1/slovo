@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { openComposition, type Clock, type FeatureSwitch } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, testEdition, word } from '../test-support';
+import { fakeClock, settle, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two')] });
@@ -104,6 +104,49 @@ describe('The Mood check-in', () => {
       choice: 'calm',
     });
     expect(events).toEqual([{ event: 'moodChosen', properties: { mood: 'calm' } }]);
+  });
+
+  it('shows the hero revealed after «Розкрити» while a change before it is still read', async () => {
+    const port = createMemoryUserStatePort();
+    // Holds the next read of the Word of the Day archive until released.
+    let hold: Promise<void> | undefined;
+    let release: () => void = () => undefined;
+    const app = await openComposition({
+      content,
+      edition: testEdition({
+        isFeatureEnabled: (feature) =>
+          ['wordOfTheDay', 'wordOfTheDayArchive', 'previousWords', 'dashboard', 'mood'].includes(
+            feature,
+          ),
+        moods: MOODS,
+        dashboardMoods: MOODS,
+        userSettingDefaults: { mix: { corrections: false } },
+      }),
+      userState: await openUserState({
+        port: {
+          ...port,
+          async list(prefix) {
+            const held = hold;
+            hold = undefined;
+            if (held !== undefined && prefix.startsWith('wordOfTheDayArchive')) await held;
+            return port.list(prefix);
+          },
+        },
+      }),
+      clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
+      random: { next: () => 0.25 },
+    });
+    hold = new Promise<void>((resolve) => (release = resolve));
+
+    await app.mood.choose('calm');
+    const revealing = app.dashboard.reveal();
+    await settle();
+    release();
+    await revealing;
+    await settle();
+
+    expect(app.dashboard.blocks[0]).toMatchObject({ hero: { state: 'revealed' } });
+    expect(moodBlock(app)).toMatchObject({ check: { state: 'chosen', mood: { id: 'calm' } } });
   });
 
   it('skips the day, which hides the block till tomorrow', async () => {

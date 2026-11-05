@@ -2229,12 +2229,9 @@ describe('Curated Collections', () => {
   it('builds an Edition without the folder, with no collections in its pack', async () => {
     const editionDir = copyFixture('valid');
     rmSync(join(editionDir, collectionsDir), { recursive: true });
-    editJson(
-      editionDir,
-      'content/ids.json',
-      (ids) =>
-        (ids as unknown as string[]).filter((id) => !id.startsWith('cc_')) as unknown as Json,
-    );
+    const idsPath = join(editionDir, 'content/ids.json');
+    const ids = JSON.parse(readFileSync(idsPath, 'utf8')) as string[];
+    writeFileSync(idsPath, JSON.stringify(ids.filter((id) => !id.startsWith('cc_'))));
     record(editionDir);
     const outFile = packPath();
     expect(buildLanguagePack({ editionDir, outFile }).ok).toBe(true);

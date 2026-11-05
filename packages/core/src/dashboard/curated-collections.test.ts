@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { openComposition, type FeatureSwitch } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, settle, testEdition, word } from '../test-support';
+import { correction, fakeClock, settle, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 function collection(id: string, publishedOn: string): CuratedCollection {
@@ -55,6 +55,29 @@ describe('The Curated Collections rail', () => {
     expect(block?.kind === 'curatedCollections' && block.cards).toEqual(
       app.curatedCollections.rail,
     );
+  });
+
+  it('comes before the Correction Types rail on the Dashboard', async () => {
+    const app = await openComposition({
+      content: createMemoryContentPort({
+        words: [word('w_one'), word('w_two')],
+        corrections: [correction('c_one', { correctionType: 'calque' })],
+        curatedCollections: collections,
+      }),
+      edition: testEdition({
+        isFeatureEnabled: (feature) =>
+          ['dashboard', 'curatedCollections', 'corrections', 'correctionTypes'].includes(feature),
+      }),
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
+      random: { next: () => 0.25 },
+    });
+
+    expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual([
+      'wordOfTheDay',
+      'curatedCollections',
+      'correctionTypes',
+    ]);
   });
 
   it('is unlocked by the local date: a collection appears the day it is published', async () => {

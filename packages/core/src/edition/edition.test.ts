@@ -676,12 +676,6 @@ describe('loadEdition', () => {
     expect(dashboardMoods).toEqual([moods[3], moods[4], moods[1], moods[0]]);
   });
 
-  it('accepts an Edition that lists no moods, with no Dashboard moods', () => {
-    expect(loadEdition({ ...validConfig, moods: [], dashboardMoods: [] }).dashboardMoods).toEqual(
-      [],
-    );
-  });
-
   it('accepts an Edition whose Categories require no history', () => {
     expect(() => loadEdition({ ...validConfig, categoriesRequiringHistory: [] })).not.toThrow();
   });
@@ -1160,8 +1154,14 @@ describe('loadEdition', () => {
       },
       'moods.0.id',
     ],
-    ['no Dashboard moods', { dashboardMoods: undefined }, 'dashboardMoods'],
+    ['no `dashboardMoods`', { dashboardMoods: undefined }, 'dashboardMoods'],
+    ['no Dashboard moods', { moods: [], dashboardMoods: [] }, 'dashboardMoods'],
     ['three Dashboard moods', { dashboardMoods: ['joyful', 'calm', 'sad'] }, 'dashboardMoods'],
+    [
+      'five Dashboard moods',
+      { dashboardMoods: ['joyful', 'calm', 'sad', 'energetic', 'thoughtful'] },
+      'dashboardMoods',
+    ],
     [
       'a Dashboard mood the Edition does not list',
       { dashboardMoods: ['joyful', 'calm', 'sad', 'angry'] },

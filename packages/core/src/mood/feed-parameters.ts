@@ -1,6 +1,5 @@
 import type { MixKindWeight, Mood, MoodShift, Rarity, RarityBand } from '@slovo/contracts';
 
-import { MIX_KINDS } from '../entries/entry-kinds';
 import type { MixKindWeights } from '../entries/mix';
 
 /**
@@ -38,7 +37,12 @@ export function shiftedKindWeights(
   mood: Mood | undefined,
 ): MixKindWeights {
   if (mood === undefined) return weights;
-  return Object.fromEntries(
-    MIX_KINDS.map((kind) => [kind, SHIFTED[mood.shifts[kind] ?? 'same'][weights[kind]]]),
-  ) as Record<keyof MixKindWeights, MixKindWeight>;
+  const shifted = (kind: keyof MixKindWeights) =>
+    SHIFTED[mood.shifts[kind] ?? 'same'][weights[kind]];
+  return {
+    correction: shifted('correction'),
+    idiom: shifted('idiom'),
+    synonymRow: shifted('synonymRow'),
+    tip: shifted('tip'),
+  };
 }

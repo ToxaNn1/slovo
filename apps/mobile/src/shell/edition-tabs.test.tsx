@@ -52,6 +52,8 @@ async function renderTabs(url: string, editionInEffect: Edition = edition) {
       'entry/[entryId]': () => <Text>Entry</Text>,
       'search/_layout': () => <ScreenStack />,
       'search/index': () => <Text>Search</Text>,
+      'correction-type/[type]': () => <Text>Correction Type</Text>,
+      'curated-collection/[collectionId]': () => <Text>Curated Collection</Text>,
     },
     { initialUrl: url },
   );
@@ -126,6 +128,8 @@ describe('the tab bar', () => {
   it.each([
     ['/entry/w_one', 'Entry'],
     ['/search', 'Search'],
+    ['/correction-type/surzhyk', 'Correction Type'],
+    ['/curated-collection/cc_one', 'Curated Collection'],
     ['/game/crossword', 'Crossword'],
     ['/settings', 'Settings'],
   ])('hides over a screen pushed off the tabs: %s', async (url, shown) => {
