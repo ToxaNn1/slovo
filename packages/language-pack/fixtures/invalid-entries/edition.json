@@ -98,6 +98,8 @@
     "fastReveal": true,
     "dashboard": true,
     "mood": true,
+    "previousWords": true,
+    "correctionTypes": true,
     "curatedCollections": true
   },
   "userSettingDefaults": {

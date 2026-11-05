@@ -1,5 +1,6 @@
 import { z } from 'zod';
 
+import { CorrectionTypeSchema } from '../correction';
 import { TextSchema } from '../shared';
 import { templateOf } from './shared';
 
@@ -17,6 +18,22 @@ export const DashboardStringsSchema = z.strictObject({
     today: templateOf('mood'),
     /** The link that opens the chips again to change today's Mood, «змінити». */
     change: TextSchema,
+  }),
+  /** The block «Попередні слова» under the Mood check-in: the Word of the Day archive's newest days before today. */
+  previousWords: z.strictObject({
+    /** The block's title, «Попередні слова». */
+    title: TextSchema,
+  }),
+  /** The Correction Types rail and each type's screen. */
+  correctionTypes: z.strictObject({
+    /** The rail's title, «Виправлення». */
+    title: TextSchema,
+    /** A tile's count, «Розібрано {x} з {n}». Takes `{x}`, the Corrections «розібрано», and `{n}`, all of the type. */
+    workedThrough: templateOf('x', 'n'),
+    /** The button that reveals a Correction's standard form and explanation in place, «Як правильно?». */
+    reveal: TextSchema,
+    /** Each Correction Type's tile name and screen title, in the plural, «Суржик». */
+    tiles: z.record(CorrectionTypeSchema, TextSchema),
   }),
   /** The title over the Curated Collections rail, «Добірки». */
   curatedCollectionsTitle: TextSchema,

@@ -98,7 +98,9 @@
     "fastReveal": true,
     "dashboard": true,
     "mood": true,
-    "curatedCollections": true
+    "curatedCollections": true,
+    "previousWords": true,
+    "correctionTypes": true
   },
   "userSettingDefaults": {
     "theme": "system",

@@ -100,7 +100,9 @@
     "fastReveal": true,
     "dashboard": true,
     "mood": true,
-    "curatedCollections": false
+    "curatedCollections": false,
+    "previousWords": true,
+    "correctionTypes": true
   },
   "userSettingDefaults": {
     "theme": "system",
@@ -281,7 +283,12 @@
       "id": "joyful",
       "name": "Радісний",
       "emoji": "😊",
-      "reply": "Лови світле слово!"
+      "reply": "Лови світле слово!",
+      "rarityBand": "whole",
+      "shifts": {
+        "synonymRow": "more",
+        "idiom": "more"
+      }
     },
     {
       "id": "sad",
@@ -299,19 +306,32 @@
       "id": "energetic",
       "name": "Бадьорий",
       "emoji": "⚡",
-      "reply": "Тримай темп!"
+      "reply": "Тримай темп!",
+      "rarityBand": "upper",
+      "shifts": {
+        "correction": "more"
+      }
     },
     {
       "id": "calm",
       "name": "Спокійний",
       "emoji": "😌",
-      "reply": "Без поспіху."
+      "reply": "Без поспіху.",
+      "rarityBand": "lower",
+      "shifts": {
+        "tip": "more",
+        "correction": "less"
+      }
     },
     {
       "id": "thoughtful",
       "name": "Задумливий",
       "emoji": "🤔",
-      "reply": "Є над чим подумати."
+      "reply": "Є над чим подумати.",
+      "rarityBand": "upper",
+      "shifts": {
+        "idiom": "more"
+      }
     }
   ],
   "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
