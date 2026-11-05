@@ -25,6 +25,8 @@ export default {
     // The app imports its Editions as `slovo-editions`, which Metro writes
     // from the Edition folders; the tests run with the UA Edition alone.
     '^slovo-editions$': '<rootDir>/jest.editions.cjs',
+    // The fonts load in Expo Go only, so the tests need none.
+    '^slovo-editions/fonts$': '<rootDir>/jest.fonts.cjs',
     // The AppConfig and the splash it names (ADR 0065).
     '^slovo-app/config$': '<rootDir>/../../app/app.json',
     '^slovo-app/splash$': `${EDITION}/decor/splash.json`,

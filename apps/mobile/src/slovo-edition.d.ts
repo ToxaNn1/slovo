@@ -42,3 +42,9 @@ declare module 'slovo-app/splash' {
   const splash: unknown;
   export default splash;
 }
+
+/** The asset id of every bundled Edition's font, by file name without the extension. */
+declare module 'slovo-editions/fonts' {
+  const fonts: Readonly<Record<string, number>>;
+  export default fonts;
+}
