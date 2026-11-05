@@ -5,14 +5,22 @@ import {
   type Clock,
   type DashboardBlock,
   type FeatureSwitch,
+  type PreviousWordsBlock,
   type WordOfTheDayHero,
 } from '../index';
+import { dateKeyOf } from '../local-date';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const content = createMemoryContentPort({
-  words: [word('w_one'), word('w_two'), word('w_three')],
+  words: [
+    word('w_one'),
+    word('w_two'),
+    word('w_three'),
+    word('w_four'),
+    { ...word('w_five'), retired: true },
+  ],
 });
 
 /** The Core composition of one app run over the records, the Dashboard on unless said otherwise. */
@@ -39,6 +47,21 @@ function heroOf(blocks: readonly DashboardBlock[]): WordOfTheDayHero {
   const [block] = blocks;
   if (block?.kind !== 'wordOfTheDay') throw new Error('No Word of the Day block');
   return block.hero;
+}
+
+/** The Word of the Day archive's records, one Word under each date. */
+function archived(days: Record<string, string>): Map<string, string> {
+  return new Map(
+    Object.entries(days).map(([date, wordId]) => [
+      `wordOfTheDayArchive.${date}`,
+      JSON.stringify(wordId),
+    ]),
+  );
+}
+
+/** The block «Попередні слова» among the blocks, if there is one. */
+function previousWordsOf(blocks: readonly DashboardBlock[]): PreviousWordsBlock | undefined {
+  return blocks.find((block): block is PreviousWordsBlock => block.kind === 'previousWords');
 }
 
 describe('The Dashboard', () => {
@@ -109,5 +132,81 @@ describe('The Dashboard', () => {
     const hero = heroOf(app.dashboard.blocks);
     expect(hero.state).toBe('unrevealed');
     expect(hero.wordId).not.toBe(yesterdays);
+  });
+});
+
+describe('«Попередні слова» on the Dashboard', () => {
+  const on: FeatureSwitch[] = ['wordOfTheDay', 'wordOfTheDayArchive', 'dashboard', 'previousWords'];
+
+  it('shows the three newest archive days before today, newest first, a Retired Word kept', async () => {
+    const { app } = await run({
+      on,
+      records: archived({
+        '2026-11-04': 'w_one',
+        '2026-11-03': 'w_five',
+        '2026-11-01': 'w_two',
+        '2026-10-31': 'w_three',
+        '2026-10-30': 'w_four',
+      }),
+    });
+
+    const block = previousWordsOf(app.dashboard.blocks);
+
+    expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual(['wordOfTheDay', 'previousWords']);
+    expect(block?.days.map(({ date, row }) => [dateKeyOf(date), row.entryId])).toEqual([
+      ['2026-11-03', 'w_five'],
+      ['2026-11-01', 'w_two'],
+      ['2026-10-31', 'w_three'],
+    ]);
+    expect(block?.days[0]?.dateLabel).toBe('November 3');
+  });
+
+  it('shows the one archive day there is', async () => {
+    const { app } = await run({ on, records: archived({ '2026-11-02': 'w_two' }) });
+
+    expect(previousWordsOf(app.dashboard.blocks)?.days.map(({ row }) => row.entryId)).toEqual([
+      'w_two',
+    ]);
+  });
+
+  it('has no block without an archive day before today', async () => {
+    const { app } = await run({ on });
+    await app.dashboard.reveal();
+
+    expect(app.dashboard.blocks.map(({ kind }) => kind)).toEqual(['wordOfTheDay']);
+  });
+
+  it('shows yesterday once the day turns', async () => {
+    const time = fakeClock('2026-11-04T23:59:00+02:00');
+    const { app } = await run({ on, clock: time.clock });
+    await app.dashboard.reveal();
+    const yesterdays = heroOf(app.dashboard.blocks).wordId;
+
+    time.advance(2 * 60 * 1000);
+    await app.resume();
+
+    expect(previousWordsOf(app.dashboard.blocks)?.days.map(({ row }) => row.entryId)).toEqual([
+      yesterdays,
+    ]);
+  });
+
+  it('opens a previous Word without making anything Seen', async () => {
+    const { app, records } = await run({ on, records: archived({ '2026-11-02': 'w_two' }) });
+    const before = new Map(records);
+    const [day] = previousWordsOf(app.dashboard.blocks)?.days ?? [];
+    if (day === undefined) throw new Error('No previous Word');
+
+    const card = await app.openedFromSearch(day.row.entryId);
+
+    expect(card?.entryId).toBe('w_two');
+    expect(app.history.list).toEqual([]);
+    expect(heroOf(app.dashboard.blocks).state).toBe('unrevealed');
+    expect(records).toEqual(before);
+  });
+
+  it('has no block with `previousWords` off', async () => {
+    const { app } = await run({ records: archived({ '2026-11-02': 'w_two' }) });
+
+    expect(previousWordsOf(app.dashboard.blocks)).toBeUndefined();
   });
 });

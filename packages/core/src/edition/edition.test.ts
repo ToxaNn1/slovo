@@ -104,6 +104,8 @@ const validConfig = {
     fastReveal: true,
     dashboard: true,
     mood: true,
+    previousWords: true,
+    correctionTypes: true,
     curatedCollections: true,
   },
   userSettingDefaults: {
@@ -316,6 +318,7 @@ describe('loadEdition', () => {
     'tracedCrossword',
     'fastReveal',
     'dashboard',
+    'correctionTypes',
   ] as const)('reports the %s Feature Switch, which an Edition may turn off', (feature) => {
     const on = loadEdition(validConfig);
     const off = loadEdition({
@@ -668,12 +671,8 @@ describe('loadEdition', () => {
   });
 
   it('resolves the four Dashboard moods, in their order', () => {
-    expect(loadEdition(validConfig).dashboardMoods).toEqual([
-      validConfig.moods[3],
-      validConfig.moods[4],
-      validConfig.moods[1],
-      validConfig.moods[0],
-    ]);
+    const { moods, dashboardMoods } = loadEdition(validConfig);
+    expect(dashboardMoods).toEqual([moods[3], moods[4], moods[1], moods[0]]);
   });
 
   it('accepts an Edition that lists no moods, with no Dashboard moods', () => {
@@ -1204,6 +1203,8 @@ const dependentSwitches = [
   ['rarityTest', ['rarityCeiling']],
   ['dashboard', ['wordOfTheDay']],
   ['mood', ['dashboard', 'wordOfTheDay']],
+  ['previousWords', ['dashboard', 'wordOfTheDayArchive', 'wordOfTheDay']],
+  ['correctionTypes', ['dashboard', 'wordOfTheDay', 'corrections']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

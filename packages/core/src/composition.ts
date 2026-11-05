@@ -16,6 +16,7 @@ import {
 } from './game/daily-crossword';
 import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
 import { openCycle } from './feed/cycle';
+import { openCorrectionTypes, type CorrectionTypes } from './dashboard/correction-types';
 import { openDashboard, type Dashboard } from './dashboard/dashboard';
 import { openMoodCheckIns, type MoodCheckIns } from './mood/mood';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
@@ -92,6 +93,8 @@ export interface Composition extends Hiding {
   readonly feed: Feed;
   /** The Dashboard, the home's blocks for the local day (ADR 0076); none with `dashboard` off. */
   readonly dashboard: Dashboard;
+  /** The Correction Types, the rail's tiles and each type's Corrections (ADR 0076); none with `correctionTypes` off. */
+  readonly correctionTypes: CorrectionTypes;
   /** The daily Mood check-in the Dashboard asks (ADR 0076); asking and asking nothing with `mood` off. */
   readonly mood: MoodCheckIns;
   /** Favorites, which a heart tapped anywhere changes. */
@@ -514,6 +517,8 @@ export async function openComposition({
     xpLog,
     analytics,
   });
+  // The Feed reads the day's Mood for each card it adds (ADR 0076); the check-in follows the day change.
+  const mood = await openMoodCheckIns({ edition, userState, clock, dayTurned, analytics });
   const feed = await openFeed({
     entries,
     userState,
@@ -557,6 +562,8 @@ export async function openComposition({
     }),
     kindWeights: () =>
       edition.isFeatureEnabled('mixKindWeights') ? mix.state.kindWeights : NORMAL_KIND_WEIGHTS,
+    mood: () => (mood.today.state === 'chosen' ? mood.today.mood : undefined),
+    rarityCeiling,
     eligibility,
     seen,
     dayTurned,
@@ -646,9 +653,9 @@ export async function openComposition({
     xpLog,
   });
   await day.resume();
-  // Once the day is turned to, so the check-in is today's.
-  const mood = await openMoodCheckIns({ edition, userState, clock, dayTurned, analytics });
   // Once the day is turned to, so its hero is today's Word of the Day.
+  const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
+  const correctionTypes = await openCorrectionTypes({ edition, entries, userState, seen });
   const dashboard = await openDashboard({
     edition,
     entries,
@@ -656,6 +663,9 @@ export async function openComposition({
     wordOfTheDay,
     feed,
     mood,
+    archive: wordOfTheDayArchive,
+    clock,
+    correctionTypes,
     seen,
     dayTurned,
   });
@@ -691,10 +701,10 @@ export async function openComposition({
     await day.opened(entryId);
     return entryCard(entryId);
   }
-  const wordOfTheDayArchive = createWordOfTheDayArchive({ content, edition, userState, clock });
   return {
     feed,
     dashboard,
+    correctionTypes,
     mood,
     favorites,
     collections,

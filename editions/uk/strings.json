@@ -1109,7 +1109,24 @@
       "change": "змінити"
     },
     "curatedCollectionsTitle": "Добірки",
-    "curatedCollectionNew": "Нова"
+    "curatedCollectionNew": "Нова",
+    "previousWords": {
+      "title": "Попередні слова"
+    },
+    "correctionTypes": {
+      "title": "Виправлення",
+      "workedThrough": "Розібрано {x} з {n}",
+      "reveal": "Як правильно?",
+      "tiles": {
+        "russianism": "Росіянізми",
+        "calque": "Кальки",
+        "surzhyk": "Суржик",
+        "officialese": "Канцелярит",
+        "anglicism": "Англіцизми",
+        "wrongStress": "Наголоси",
+        "paronym": "Пароніми"
+      }
+    }
   },
   "wordOfTheDayArchive": {
     "title": "Слова дня",

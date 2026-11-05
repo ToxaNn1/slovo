@@ -257,9 +257,16 @@ export {
 } from './ports';
 export { openTrackedUserState, type TrackedUserState } from './user-state/tracked-user-state';
 export {
+  type CorrectionTypeRow,
+  type CorrectionTypes,
+  type CorrectionTypeTile,
+} from './dashboard/correction-types';
+export {
+  type CorrectionTypesBlock,
   type Dashboard,
   type DashboardBlock,
   type MoodBlock,
+  type PreviousWordsBlock,
   type WordOfTheDayHero,
 } from './dashboard/dashboard';
 export { type MoodCheckIn, type MoodCheckIns } from './mood/mood';

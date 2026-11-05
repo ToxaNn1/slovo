@@ -1,8 +1,10 @@
+import type { CorrectionType } from '@slovo/contracts';
 import type { DashboardBlock } from '@slovo/core';
 import { useIsFocused } from 'expo-router';
 import { useEffect, useSyncExternalStore } from 'react';
 
 import { useComposition } from '../composition';
+import { editionStrings } from '../edition/edition';
 import { wordOfTheDayLanding } from '../feed/word-of-the-day-landing';
 import { useSubscribed } from '../opening';
 import { useOpenScreen } from '../use-open-screen';
@@ -19,7 +21,13 @@ export interface DashboardScreen {
   readonly chooseMood: (moodId: string) => void;
   /** «Не сьогодні»: skips the Mood check-in till tomorrow. */
   readonly skipMood: () => void;
+  /** A row of «Попередні слова»: opens its Entry card as Search does, making nothing Seen. */
+  readonly openPreviousWord: (entryId: string) => void;
+  /** A tile of the Correction Types rail: opens its type's screen. */
+  readonly openCorrectionType: (type: CorrectionType) => void;
 }
+
+const previousWordsTitle = editionStrings.dashboard.previousWords.title;
 
 /**
  * The Dashboard's blocks and actions. A landing on the Word of the Day card,
@@ -46,6 +54,12 @@ export function useDashboardScreen(): DashboardScreen {
     },
     skipMood: () => {
       void mood.skip();
+    },
+    openPreviousWord: (entryId) => {
+      openScreen(`/search/${entryId}?back=${encodeURIComponent(previousWordsTitle)}`);
+    },
+    openCorrectionType: (type) => {
+      openScreen(`/correction-type/${type}`);
     },
   };
 }

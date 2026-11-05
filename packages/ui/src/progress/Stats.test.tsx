@@ -264,9 +264,39 @@ describe('StatsSheet', () => {
         visible
         stats={progress}
         moodDays={[
-          { mood: { id: 'calm', name: 'calm', emoji: '🌿', reply: 'Rest.' }, days: 1 },
-          { mood: { id: 'joyful', name: 'joyful', emoji: '☀️', reply: 'Shine.' }, days: 0 },
-          { mood: { id: 'energetic', name: 'energetic', emoji: '⚡', reply: 'Go.' }, days: 3 },
+          {
+            mood: {
+              id: 'calm',
+              name: 'calm',
+              emoji: '🌿',
+              reply: 'Rest.',
+              rarityBand: 'whole',
+              shifts: {},
+            },
+            days: 1,
+          },
+          {
+            mood: {
+              id: 'joyful',
+              name: 'joyful',
+              emoji: '☀️',
+              reply: 'Shine.',
+              rarityBand: 'whole',
+              shifts: {},
+            },
+            days: 0,
+          },
+          {
+            mood: {
+              id: 'energetic',
+              name: 'energetic',
+              emoji: '⚡',
+              reply: 'Go.',
+              rarityBand: 'whole',
+              shifts: {},
+            },
+            days: 3,
+          },
         ]}
         onClose={() => undefined}
       />,
@@ -283,7 +313,19 @@ describe('StatsSheet', () => {
       <StatsSheet
         visible
         stats={progress}
-        moodDays={[{ mood: { id: 'calm', name: 'calm', emoji: '🌿', reply: 'Rest.' }, days: 0 }]}
+        moodDays={[
+          {
+            mood: {
+              id: 'calm',
+              name: 'calm',
+              emoji: '🌿',
+              reply: 'Rest.',
+              rarityBand: 'whole',
+              shifts: {},
+            },
+            days: 0,
+          },
+        ]}
         onClose={() => undefined}
       />,
       'uk',
