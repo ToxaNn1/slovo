@@ -290,7 +290,7 @@ A Feed slot that shows one Round from an enabled Game Mode over an Eligible Entr
 _Avoid_: Pop quiz, Feed Game
 
 **Questionnaire**:
-The questions that tune the Feed to the reader. Onboarding asks two: «Рівень», how well the reader knows the language (sets the Rarity Ceiling, «Тільки починаю» «до 2» to «Я мовний гурман» «до 5»; «Не знаю» opens the Rarity Test, whose result sets it) and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (decides whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings, «Рівень» there without «Не знаю». Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.
+The questions that tune the Feed to the reader. Onboarding asks two: «Рівень», how well the reader knows the language (sets the Rarity Ceiling, «Тільки починаю» «до 2» to «Мовний гурман» «до 5»; «Не знаю» opens the Rarity Test, whose result sets it) and «Навіщо» (sets the Mix kind weights); skipping them keeps the defaults. The interests question (unselected Categories become Hidden Categories), the vocabulary self-rating (decides whether to offer the Rarity Test) and the Mix review come later through Feed Notices. The reader can retake it from Settings, «Рівень» there without «Не знаю». Its answers reach the owner only as anonymous counters and as properties of the anonymous Analytics id.
 _Avoid_: Survey, form
 
 **Hidden Entry**:

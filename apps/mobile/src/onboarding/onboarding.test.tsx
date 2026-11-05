@@ -137,7 +137,7 @@ describe('the onboarding', () => {
 
     await press('onboarding-next');
     expect(screen.getByText(strings.level.title)).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Я мовний гурман' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Мовний гурман' })).toBeTruthy();
     await press('onboarding-answer-good');
     expect(composition.rarityCeiling.state).toBe(4);
 
