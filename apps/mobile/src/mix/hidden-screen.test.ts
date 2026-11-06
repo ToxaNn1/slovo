@@ -121,7 +121,12 @@ async function open(
 }
 
 const modelOf = (app: Composition) =>
-  hiddenScreenModel({ hiddenEntries: app.hiddenEntries.list, mix: app.mix, strings });
+  hiddenScreenModel({
+    hiddenEntries: app.hiddenEntries.list,
+    outOfMix: app.mix.outOfMix(),
+    kindsOn: app.mix.kindsOn(),
+    strings,
+  });
 
 /** The Ukrainian Edition with the feature turned off. */
 const without = (feature: string): Edition => ({

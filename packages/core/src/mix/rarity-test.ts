@@ -5,7 +5,7 @@ import type { Entries } from '../entries/entries';
 import { renderStress, stressedVowelsOf } from '../entries/stress';
 import { shuffled } from '../shuffled';
 import type { Random } from '../ports';
-import type { RarityCeiling } from '../entries/rarity-ceiling';
+import { HIGHEST_RARITY, type RarityCeiling } from '../entries/rarity-ceiling';
 
 /** How many Words of each rarity the Rarity Test asks about. */
 const WORDS_PER_RARITY = 2;
@@ -81,7 +81,7 @@ export function createRarityTest({
     async apply(answers) {
       if (!isOn() || answers.length === 0) return undefined;
       const unknown = answers.filter((answer) => !answer.known).map((answer) => answer.rarity);
-      const ceiling = RARITIES.find((rarity) => unknown.includes(rarity)) ?? 5;
+      const ceiling = RARITIES.find((rarity) => unknown.includes(rarity)) ?? HIGHEST_RARITY;
       await rarityCeiling.set(ceiling);
       return ceiling;
     },

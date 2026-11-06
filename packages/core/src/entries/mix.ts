@@ -94,6 +94,14 @@ export type HideTarget =
   | { readonly kind: 'category'; readonly categoryId: string; readonly of?: CategoryKind }
   | { readonly kind: 'whole-kind'; readonly entryKind: MixKind };
 
+/** The target of a hide or an unhide of the Category of the kind's list, in its one form for each list. */
+export function categoryTarget(
+  categoryId: string,
+  of: CategoryKind,
+): Extract<HideTarget, { readonly kind: 'category' }> {
+  return of === 'word' ? { kind: 'category', categoryId } : { kind: 'category', categoryId, of };
+}
+
 /** The Entry a card's hide button is for: its kind, and the Category of a Word or a Correction. */
 export type EntryToHide =
   | { readonly kind: CategoryKind; readonly entryId: string; readonly categoryId: string }
@@ -207,6 +215,8 @@ export interface Mix {
   outOfMix(): OutOfMix;
   /** What the Mix screen shows of the Mix as it stands, as the Edition in effect shows it. */
   screen(): MixScreen;
+  /** The kinds of Entry beside Words the Edition in effect turns on, in the Mix order, in the Mix or out. */
+  kindsOn(): readonly MixKind[];
   /** The Mix kind weights the Feed follows: the reader's while the mixKindWeights switch is on, «Звичайно» for every kind while it is off. */
   kindWeightsInEffect(): MixKindWeights;
   /** How often the Feed asks a Quick Question: every this many cards, none while the Game, the Quick Question or the reader's choice is off. */
@@ -266,6 +276,11 @@ function eachList<T>(of: (kind: CategoryKind) => T): Readonly<Record<CategoryKin
   >;
 }
 
+/** Whether the Edition in effect turns the kind of Entry on: the Edition does and no remote Feature Switch turns it off. */
+function kindOn(edition: Pick<Edition, 'isFeatureEnabled'>, kind: MixKind): boolean {
+  return edition.isFeatureEnabled(featureOfKind(kind));
+}
+
 /**
  * Whether the reader is shown the kind of Entry as a whole: the Edition turns
  * it on, no remote Feature Switch turns it off and the user has it in the Mix.
@@ -276,7 +291,7 @@ export function kindShown(
   kinds: KindsInMix,
   kind: MixKind,
 ): boolean {
-  return edition.isFeatureEnabled(featureOfKind(kind)) && kinds[kind];
+  return kindOn(edition, kind) && kinds[kind];
 }
 
 /**
@@ -330,8 +345,7 @@ function categoryOption(state: MixState, of: CategoryKind, categoryId: string): 
   if (category === undefined || place === undefined || place === 'out') return [];
   // The last Category of Words is left out; the last of Corrections is offered, as Corrections as a whole can go (ADR 0019).
   if (place === 'last' && of === 'word') return [];
-  const target: Extract<HideTarget, { readonly kind: 'category' }> =
-    of === 'word' ? { kind: 'category', categoryId } : { kind: 'category', categoryId, of };
+  const target = categoryTarget(categoryId, of);
   return [{ kind: place === 'last' ? 'last-category' : 'category', target, category }];
 }
 
@@ -364,9 +378,7 @@ function outOfMixOf(edition: Pick<Edition, 'isFeatureEnabled'>, state: MixState)
       ...hiddenOf('word'),
       ...(kindShown(edition, state.kinds, 'correction') ? hiddenOf('correction') : []),
     ],
-    kinds: MIX_KINDS.filter(
-      (kind) => edition.isFeatureEnabled(featureOfKind(kind)) && !state.kinds[kind],
-    ),
+    kinds: MIX_KINDS.filter((kind) => kindOn(edition, kind) && !state.kinds[kind]),
   };
 }
 
@@ -379,9 +391,10 @@ function screenOf(edition: Pick<Edition, 'isFeatureEnabled'>, state: MixState): 
   return {
     categories: chips('word'),
     allOn: state.hiddenCategories.length === 0,
-    kinds: MIX_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind))).map(
-      (entryKind) => ({ entryKind, on: state.kinds[entryKind] }),
-    ),
+    kinds: MIX_KINDS.filter((kind) => kindOn(edition, kind)).map((entryKind) => ({
+      entryKind,
+      on: state.kinds[entryKind],
+    })),
     correctionCategories: kindShown(edition, state.kinds, 'correction')
       ? chips('correction')
       : undefined,
@@ -627,6 +640,7 @@ export async function openMix({
     hideOptions: (entry) => hideOptionsOf(edition, state, entry),
     outOfMix: () => outOfMixOf(edition, state),
     screen: () => screenOf(edition, state),
+    kindsOn: () => MIX_KINDS.filter((kind) => kindOn(edition, kind)),
     kindWeightsInEffect: () =>
       edition.isFeatureEnabled('mixKindWeights') ? state.kindWeights : NORMAL_KIND_WEIGHTS,
     quickQuestionEveryInEffect: () =>

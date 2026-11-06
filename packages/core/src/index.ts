@@ -206,6 +206,7 @@ export {
 } from './entries/entry-kinds';
 export {
   categoriesInMix,
+  categoryTarget,
   categoryPlace,
   kindsShown,
   type CategoriesInMix,

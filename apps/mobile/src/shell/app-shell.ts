@@ -5,6 +5,7 @@ import {
   openRemoteSwitches,
   openSync,
   systemRandom,
+  type Edition,
 } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 import Constants from 'expo-constants';
@@ -33,13 +34,13 @@ function deviceSources(editionId: string): DeviceSources {
   };
 }
 
-/** Opens `open` over the device ports on its first read, once per app run; a failure is logged as `failure`. */
-function over<T>(
-  ports: Opening<DevicePorts>,
+/** Opens `open` over what `base` opened, on its first read, once per app run; a failure is logged as `failure`. */
+function over<S, T>(
+  base: Opening<S>,
   failure: string,
-  open: (ports: DevicePorts) => Promise<T> | T,
+  open: (opened: S) => Promise<T> | T,
 ): Opening<T> {
-  return openOnce(async () => open(await ports.opened()), {
+  return openOnce(async () => open(await base.opened()), {
     onError(error) {
       logError(failure, error);
     },
@@ -49,37 +50,35 @@ function over<T>(
 /**
  * The Shell of the device for one Edition: every opening over that
  * Edition's user state, in the order they wait for each other. Nothing opens
- * until something reads it. The remote Feature Switches open first, over the
+ * until something reads it. The remote Feature Switches open over the
  * answer the device kept (ADR 0040); every other opening opens over the one
- * set of device ports, the Edition in effect among them, so a remote switch
- * reaches each. The Account and Sync open apart from the composition (ADR
- * 0037); Sync, Mistake Reports and the Community Counters apart from it too,
- * and nothing waits for them.
+ * set of device ports, which waits for the user state alone. Their Edition
+ * in effect takes the remote switches once they are open, and the Edition's
+ * own until then or when they fail, so a slow or failed answer holds nothing
+ * back. The Account and Sync open apart from the composition (ADR 0037);
+ * Sync, Mistake Reports and the Community Counters apart from it too, and
+ * nothing waits for them.
  */
 export function createShell(
   editionId: string,
   sources: DeviceSources = deviceSources(editionId),
 ): Shell {
   const { userState } = sources;
-  const remoteSwitches = openOnce(
-    async () => openRemoteSwitches({ ...sources, edition, userState: await userState.opened() }),
-    {
-      onError(error) {
-        logError('Could not open the remote Feature Switches', error);
-      },
-    },
+  const remoteSwitches = over(userState, 'Could not open the remote Feature Switches', (opened) =>
+    openRemoteSwitches({ ...sources, edition, userState: opened }),
   );
-  const ports = openOnce<DevicePorts>(
-    async () => {
-      const [opened, switches] = await Promise.all([userState.opened(), remoteSwitches.opened()]);
-      return {
-        ...sources,
-        userState: opened,
-        get edition() {
-          return switches.edition;
-        },
-      };
+  // One Edition whose every read of a switch takes the remote ones as they stand.
+  const editionInEffect: Edition = {
+    ...edition,
+    isFeatureEnabled(feature) {
+      const switches = remoteSwitches.state;
+      return (switches.status === 'ready' ? switches.value.edition : edition).isFeatureEnabled(
+        feature,
+      );
     },
+  };
+  const ports = openOnce<DevicePorts>(
+    async () => ({ ...sources, userState: await userState.opened(), edition: editionInEffect }),
     // The opening that failed under it has logged why.
     { onError: () => undefined },
   );

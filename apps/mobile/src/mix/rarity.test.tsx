@@ -1,4 +1,5 @@
 import { describe, expect, it } from '@jest/globals';
+import { RARITIES, type Rarity } from '@slovo/contracts';
 
 import { renderOverComposition, settled } from '../hook-test/test-support';
 import { useRarityCeiling } from './rarity-ceiling';
@@ -23,17 +24,17 @@ describe('the Rarity hooks', () => {
 
   it("apply the Rarity Test's answers and resolve to the Rarity Ceiling they set", async () => {
     const { hook } = await renderRarity();
+    const target: Rarity = hook.result.current.ceiling === 3 ? 2 : 3;
     let set: unknown;
 
     await settled(async () => {
       set = await hook.result.current.apply([
-        { rarity: 1, known: true },
-        { rarity: 2, known: true },
-        { rarity: 3, known: false },
+        ...RARITIES.filter((rarity) => rarity < target).map((rarity) => ({ rarity, known: true })),
+        { rarity: target, known: false },
       ]);
     });
 
-    expect(set).toBe(hook.result.current.ceiling);
-    expect(set).not.toBeUndefined();
+    expect(set).toBe(target);
+    expect(hook.result.current.ceiling).toBe(target);
   });
 });

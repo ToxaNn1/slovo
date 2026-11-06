@@ -9,7 +9,7 @@ import { userStateRecords } from '../user-state-schema';
 const { rarityCeiling: record } = userStateRecords;
 
 /** The highest rarity, at which every Word is within the Rarity Ceiling. */
-const HIGHEST: Rarity = 5;
+export const HIGHEST_RARITY: Rarity = 5;
 
 /** What the Rarity Ceiling needs of the Edition: its switch and its default. */
 export type RarityCeilingEdition = Pick<Edition, 'isFeatureEnabled' | 'userSettingDefaults'>;
@@ -55,7 +55,7 @@ export async function openRarityCeiling({
   // «до 5», so every Word is within it, while the Edition turns the switch off, as before 1.0.
   let state = edition.isFeatureEnabled('rarityCeiling')
     ? ((await userState.read(record)) ?? edition.userSettingDefaults.rarityCeiling)
-    : HIGHEST;
+    : HIGHEST_RARITY;
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
 
