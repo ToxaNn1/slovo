@@ -23,6 +23,7 @@ import type { ContentTargets } from './content-targets';
 import { crosswordDayErrors } from './crossword-days';
 import { CROSSWORD_DAYS_FILE, editionFiles, EditionFolderError } from './edition-folder';
 import { illustrationErrors } from './illustrations';
+import { missingRecordings, recordingErrors, type MissingRecordings } from './recordings';
 import { missingEntryErrors } from './id-registry';
 import type { PackContent } from './pack-layout';
 import { editionFontErrors } from './edition-fonts';
@@ -38,6 +39,8 @@ export interface EditionSource {
   readonly synonymRows: readonly Authored<SynonymRow>[];
   readonly tips: readonly Authored<Tip>[];
   readonly curatedCollections: readonly Authored<CuratedCollection>[];
+  /** How many Words each Narrator Voice has no Recording of; none when the config can't be read. */
+  readonly missingRecordings: readonly MissingRecordings[];
   /** The known ids: none when the registry is optional and missing, unset when it can't be read. */
   readonly registry?: readonly string[];
   /** Set when there are no errors. */
@@ -99,6 +102,9 @@ export function readEdition(
       ...checkTips(config, tips),
       ...editionFontErrors(config, tokens, folder.fonts()),
       ...categoryArtErrors(config, decor),
+      ...recordingErrors(config, words, folder.recordings(), (voice, name) =>
+        folder.recording(voice, name),
+      ),
     );
   }
   errors.push(...illustrationErrors(words, (name) => folder.illustration(name)));
@@ -133,6 +139,8 @@ export function readEdition(
     synonymRows,
     tips,
     curatedCollections,
+    missingRecordings:
+      config === undefined ? [] : missingRecordings(config, words, folder.recordings()),
     ...(config === undefined ? {} : { editionId: config.id }),
     ...(registry === undefined ? {} : { registry }),
   };
