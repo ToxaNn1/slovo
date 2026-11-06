@@ -661,6 +661,22 @@ describe('the Game screen', () => {
     });
   });
 
+  it('draws the 28 poster mark on the Share Card of a Badge earned today', async () => {
+    await open();
+    await renderScreen({ shareCard: sendingShareCard });
+    // The first win in a Game Mode group earns a Badge.
+    await act(() => {
+      composition.xpLog
+        .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+        .commit();
+    });
+
+    await fireEvent.press(await screen.findByTestId('progress-share-badge'));
+    expect(
+      within(screen.getByTestId('share-preview')).getByTestId('share-card-badge'),
+    ).toBeOnTheScreen();
+  });
+
   it('offers no progress Share Card for a Level reached on another day', async () => {
     await open({ xp: [{ date: '2026-10-25', amount: 60 }] });
     await renderScreen({ shareCard: sendingShareCard });

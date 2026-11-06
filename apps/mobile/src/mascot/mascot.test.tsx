@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import type { Word } from '@slovo/contracts';
 import { openComposition, SEEN_DWELL_MS, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
+import { EditionProvider, RouteProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -41,7 +41,13 @@ const word: Word = {
 };
 
 /** The celebrations over a Core composition with one Word, whose clock moves with the fake timers, with the Mascot and the new Level screen on or off in effect and the counters hidden or not. */
-async function renderCelebrations({ on = true, levelScreen = false, noCounters = false } = {}) {
+async function renderCelebrations({
+  on = true,
+  levelScreen = false,
+  noCounters = false,
+  badgeToast = false,
+  route = '/feed',
+} = {}) {
   const composition = await openComposition({
     content: createMemoryContentPort({ words: [word] }),
     edition,
@@ -58,7 +64,9 @@ async function renderCelebrations({ on = true, levelScreen = false, noCounters =
           ? on
           : feature === 'newLevelScreen'
             ? levelScreen
-            : edition.isFeatureEnabled(feature),
+            : feature === 'badgeToast'
+              ? badgeToast
+              : edition.isFeatureEnabled(feature),
     }),
     settings: await settingsAt({ noCounters }),
   });
@@ -67,13 +75,26 @@ async function renderCelebrations({ on = true, levelScreen = false, noCounters =
       <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>
           <SettingsProvider>
-            <MascotCelebrations />
+            <RouteProvider route={route}>
+              <MascotCelebrations />
+            </RouteProvider>
           </SettingsProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,
   );
   return composition;
+}
+
+/** Wins a Game for the first time, which earns a Badge. */
+async function winGame(composition: Composition) {
+  await act(async () => {
+    composition.xpLog
+      .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+      .commit();
+    // Settles the writes without running the celebration's timer out.
+    await jest.advanceTimersByTimeAsync(0);
+  });
 }
 
 /** Awards XP for `rounds` right Game Rounds, as the Game does. */
@@ -167,6 +188,47 @@ describe('the Mascot’s celebrations', () => {
 });
 
 // Ticket #1649: the new Level screen (p6) replaces the Mascot's overlay for a new Level.
+// Ticket #1647: a Badge earned during a Game toasts; elsewhere it is stamped (board 10.7).
+describe('a Badge earned with the badge toast on', () => {
+  const stamp = editionStrings.settings.profile.badgeStamp;
+  const hidden = { includeHiddenElements: true };
+
+  it('toasts in a Game, with the line, and goes after a while', async () => {
+    const composition = await renderCelebrations({ badgeToast: true, route: '/game/guess-word' });
+
+    await winGame(composition);
+
+    expect(screen.getByTestId('badge-toast', hidden)).toBeOnTheScreen();
+    expect(screen.getByText(stamp.line, hidden)).toBeOnTheScreen();
+    expect(screen.queryByText(stamp.kicker, hidden)).toBeNull();
+    await act(async () => {
+      await jest.advanceTimersByTimeAsync(CELEBRATION_MS);
+    });
+    expect(screen.queryByTestId('badge-toast', hidden)).toBeNull();
+  });
+
+  it('is stamped outside a Game, and «ГОТОВО» closes the stamp', async () => {
+    const composition = await renderCelebrations({ badgeToast: true });
+
+    await winGame(composition);
+
+    expect(screen.getByText(stamp.kicker)).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-toast', hidden)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: stamp.done }));
+    expect(screen.queryByText(stamp.kicker)).toBeNull();
+  });
+
+  it('only celebrates with the Mascot with the badge toast off, in a Game too', async () => {
+    const composition = await renderCelebrations({ route: '/game/guess-word' });
+
+    await winGame(composition);
+
+    expect(celebration('badge')).toHaveTextContent(mascot.badge);
+    expect(screen.queryByTestId('badge-toast', hidden)).toBeNull();
+    expect(screen.queryByText(stamp.kicker, hidden)).toBeNull();
+  });
+});
+
 describe('the new Level screen', () => {
   const strings = editionStrings.settings.profile.newLevel;
   const title = fill(strings.title, { level: '1', name: edition.levels.names[0] ?? '' });

@@ -148,7 +148,7 @@ describe('the Badges screen', () => {
     );
 
     await fireEvent.press(screen.getByTestId('badge-win-words'));
-    expect(screen.getByText(editionStrings.settings.profile.badgeStamp.title)).toBeOnTheScreen();
+    expect(screen.getByText(editionStrings.settings.profile.badgeStamp.line)).toBeOnTheScreen();
   });
 
   it('with the sheet off, shows nothing at a tap on a Badge not yet earned', async () => {
@@ -156,7 +156,7 @@ describe('the Badges screen', () => {
 
     await fireEvent.press(screen.getByTestId('badge-streak-3'));
     expect(
-      screen.queryByText(editionStrings.settings.profile.badgeStamp.title),
+      screen.queryByText(editionStrings.settings.profile.badgeStamp.line),
     ).not.toBeOnTheScreen();
     expect(screen.queryByTestId('badge-sheet')).not.toBeOnTheScreen();
     expect(screen.queryByText(fill(strings.lockedToast, { name: nameOf('streak-3') }))).toBeNull();
@@ -177,7 +177,7 @@ describe('the Badges screen', () => {
       screen.getByText(fill(strings.lockedToast, { name: nameOf('streak-3') })),
     ).toBeOnTheScreen();
     expect(played).toEqual([]);
-    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.title)).toBeNull();
+    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.line)).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: strings.sheet.done }));
     await waitFor(() => {
@@ -200,7 +200,7 @@ describe('the Badges screen', () => {
     expect(screen.getByTestId('badge-sheet-mark-symbol')).toHaveTextContent('Сл');
     expect(played).toEqual(['shout']);
     expect(screen.queryByText(fill(strings.lockedToast, { name: nameOf('win-words') }))).toBeNull();
-    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.title)).toBeNull();
+    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.line)).toBeNull();
   });
 
   it('drops the «НОВА» mark once the sheet opens the Badge', async () => {
@@ -237,7 +237,7 @@ describe('the Badges screen', () => {
     expect(screen.queryByTestId('badge-win-words-mark-new')).toBeNull();
     expect(composition.xpLog.milestones.opened.has('win-words')).toBe(true);
 
-    await fireEvent.press(screen.getByTestId('badge-stamp-take'));
+    await fireEvent.press(screen.getByTestId('badge-stamp-done'));
     await fireEvent.press(screen.getByTestId('badge-win-words'));
     expect(screen.queryByTestId('badge-stamp-mark-new')).toBeNull();
   });

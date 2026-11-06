@@ -202,7 +202,7 @@ export const SettingsStringsSchema = z.strictObject({
       /** The days the freezes saved in the current Streak, e.g. «1 день врятовано». */
       saved: PluralSchema,
     }),
-    /** An earned Badge stamped on red after a tap on its mark. */
+    /** An earned Badge stamped on red (board 10.7). */
     badgeStamp: z.strictObject({
       /** The giant cream word behind the mark, e.g. «ВІДЗНАКА» (10.7, ADR 0085). */
       kicker: TextSchema,
@@ -210,10 +210,8 @@ export const SettingsStringsSchema = z.strictObject({
       ribbon: TextSchema,
       /** The button that closes the stamp, e.g. «ГОТОВО». */
       done: TextSchema,
-      /** The cry under the mark, e.g. «Твій!». */
-      title: TextSchema,
-      /** The button that closes the stamp, e.g. «Забрати». */
-      take: TextSchema,
+      /** The line under the Badge's name, also on the in-Game toast, e.g. «Нова відзнака — тепер вона твоя назавжди.». */
+      line: TextSchema,
     }),
   }),
   /** The Break screen: what a Break does, its length and whether one can start today (ADR 0066). */

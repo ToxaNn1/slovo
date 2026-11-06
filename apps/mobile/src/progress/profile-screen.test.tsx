@@ -318,7 +318,7 @@ describe('the Profile', () => {
 
     await fireEvent.press(screen.getByLabelText(edition.badges[0]?.name ?? ''));
     expect(screen.queryByTestId('badge-stamp')).not.toBeOnTheScreen();
-    expect(screen.queryByText(strings.badgeStamp.title)).not.toBeOnTheScreen();
+    expect(screen.queryByText(strings.badgeStamp.line)).not.toBeOnTheScreen();
     expect(screen.queryByTestId('badge-sheet')).not.toBeOnTheScreen();
     // Only the sheet goes: the Badges stay.
     for (const { name } of edition.badges) expect(screen.getByLabelText(name)).toBeOnTheScreen();

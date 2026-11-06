@@ -132,8 +132,10 @@ export function useBadgeOpening(): {
           shape={shapeOf(opened.badge)}
           symbol={opened.badge.symbol}
           name={opened.badge.name}
-          title={stamp.title}
-          takeLabel={stamp.take}
+          kicker={stamp.kicker}
+          line={stamp.line}
+          ribbon={stamp.ribbon}
+          doneLabel={stamp.done}
           mascot={<MascotAs state="celebrates" onRed />}
           isNew={opened.badge.isNew}
           onClose={close}
