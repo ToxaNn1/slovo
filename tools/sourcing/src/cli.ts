@@ -13,7 +13,6 @@
  * Definitions, each tried once per run (`--sum off` skips them).
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -25,22 +24,19 @@ import {
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 
-import { sourceWords, type Fetch, type SumAccess } from './index';
+import {
+  defaultCacheDir,
+  fetchPage,
+  sourceWords,
+  systemClock,
+  type SumAccess,
+} from './index';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
 const USAGE =
   'Usage: pnpm source:words <lemma-list> --edition <id> [--out <dir>] [--cache <dir>] [--sum auto|direct|wayback|off]';
 const SUM_ACCESS: readonly SumAccess[] = ['auto', 'direct', 'wayback', 'off'];
-
-const fetchPage: Fetch = async (url, { timeoutMs }) => {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': 'slovo-sourcing/0.1 (dev tool; one request every 2 s)' },
-    redirect: 'follow',
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  return { status: response.status, body: await response.text() };
-};
 
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
@@ -86,13 +82,7 @@ async function main(): Promise<number> {
     outDir,
     cacheDir: values.cache === undefined ? defaultCacheDir() : resolve(cwd, values.cache),
     fetch: fetchPage,
-    clock: {
-      now: () => Date.now(),
-      sleep: (ms) =>
-        new Promise((done) => {
-          setTimeout(done, ms);
-        }),
-    },
+    clock: systemClock,
     random: Math.random,
     sumAccess,
     log: (message) => {
@@ -124,17 +114,6 @@ async function main(): Promise<number> {
   }
   console.log(`Review report: ${displayPath(result.reportFile)}`);
   return 0;
-}
-
-/** The cache every worktree and run on the machine shares. */
-function defaultCacheDir(): string {
-  const configured = process.env['SLOVO_SOURCING_CACHE'];
-  if (configured !== undefined && configured !== '') return resolve(configured);
-  const cacheHome = process.env['XDG_CACHE_HOME'];
-  return join(
-    cacheHome === undefined || cacheHome === '' ? join(homedir(), '.cache') : cacheHome,
-    'slovo-sourcing',
-  );
 }
 
 /** A path relative to the repo root when it lies inside the repo, absolute otherwise. */
