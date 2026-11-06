@@ -1,0 +1,36 @@
+{
+  "kind": "word",
+  "id": "w_mp7pmr",
+  "lemma": "смиренність",
+  "stress": [
+    4
+  ],
+  "partOfSpeech": "noun",
+  "gender": "feminine",
+  "primaryDefinition": "Властивість за знач. смире́нний.",
+  "examples": [
+    {
+      "text": "Ти ще не знаєш, яку вагу має доброта і смиренність.",
+      "author": "О. Кобилянська"
+    }
+  ],
+  "synonyms": [
+    "покора"
+  ],
+  "categoryId": "emotions-character",
+  "rarity": 3,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови в 11-ти томах",
+      "url": "https://goroh.pp.ua/Тлумачення/смиренність"
+    },
+    {
+      "title": "Горох: словозміна",
+      "url": "https://goroh.pp.ua/Словозміна/смиренність"
+    },
+    {
+      "title": "Горох: синонімія (Словник синонімів Караванського)",
+      "url": "https://goroh.pp.ua/Синонімія/смиренність"
+    }
+  ]
+}
