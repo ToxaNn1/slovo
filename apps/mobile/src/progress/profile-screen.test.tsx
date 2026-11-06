@@ -392,10 +392,10 @@ describe('the Profile', () => {
     const words = strings.breakCard;
     /** Active 9 to 11 October, then a Break of 3 days from 12 October: today, 13 October, is its second day. */
     const xp = (date: string) => ({
-      kind: 'xp',
+      kind: 'xp' as const,
       date,
       at: `${date}T05:00:00.000Z`,
-      source: 'game-round',
+      source: 'game-round' as const,
       amount: 5,
     });
     const running: Seed = {
