@@ -47,6 +47,18 @@ pnpm content check --edition uk
 
 Checks the whole Edition with the build's rules and writes nothing: every problem the build would refuse, such as a Word's `origin` the Edition does not list, or an `illustration` whose file is missing, not a PNG, over 150 KB or not square, including content not recorded since the last edit, and every content target the content misses (`content/targets.json`, ADR 0009). It exits non-zero when there is any. Run it before you open a pull request.
 
+## What the Edition has: `have` and `counts`
+
+<!-- #1625 fills this section. -->
+
+## Verify quotes: `verify`
+
+<!-- #1626 fills this section. -->
+
+## Import Entries: `import`
+
+<!-- #1627 fills this section. -->
+
 ## Tests
 
 The tests run the CLI as a process over a copy of the UA Edition, with a fake editor in `$EDITOR`; `$SLOVO_EDITIONS_DIR` points the tool at the copy.
