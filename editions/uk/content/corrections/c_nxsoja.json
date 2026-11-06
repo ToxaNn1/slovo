@@ -1,0 +1,21 @@
+{
+  "kind": "correction",
+  "id": "c_nxsoja",
+  "nonStandardForm": "готувати",
+  "correctionType": "calque",
+  "standardEquivalents": [
+    "вести підготовку"
+  ],
+  "explanation": "Замініть нехарактерний для української мови вислів вести підготовку на стилістично кращий варіант: готувати(ся).",
+  "examplePair": {
+    "nonStandard": "Ведемо підготовку до акції «Збережи рідну мову».",
+    "standard": "Готуємося до акції «Збережи рідну мову»."
+  },
+  "categoryId": "home",
+  "sources": [
+    {
+      "title": "OnlineCorrector. Стилістичні помилки та помилки у слововживанні.",
+      "url": "https://goroh.pp.ua/Слововживання/готувати"
+    }
+  ]
+}
