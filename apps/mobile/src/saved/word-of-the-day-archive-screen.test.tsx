@@ -65,7 +65,7 @@ const kept = (days: Record<string, string>): UserStateFacts => ({ wordOfTheDayAr
 async function open(facts: UserStateFacts) {
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words: [
         word('w_quiet', 'сумирний', 3),
         word('w_gentle', 'лагідний', 3),

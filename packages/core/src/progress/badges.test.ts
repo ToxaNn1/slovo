@@ -12,7 +12,7 @@ import { userStateRecords } from '../user-state-schema';
 // conditions, chosen and named by the Edition, kept with their date.
 
 const content = createMemoryContentPort({
-  categories: [{ id: 'test', displayName: 'Test' }],
+  categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
   words: Array.from({ length: 20 }, (_, index) => word(`w_${String(index)}`)),
 });
 const ALL_ON: readonly FeatureSwitch[] = [

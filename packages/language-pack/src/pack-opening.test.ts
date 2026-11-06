@@ -61,9 +61,9 @@ describe('openPack', () => {
     if (!opening.ok) throw new Error(opening.reason);
     const metadata = {
       editionId: 'fixture',
-      contentVersion: 8,
+      contentVersion: 9,
       contentChecksum: recordedChecksum,
-      packFormat: 10,
+      packFormat: 11,
     };
     expect(opening.metadata).toEqual(metadata);
     expect(await opening.reader.metadata()).toEqual(metadata);

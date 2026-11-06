@@ -135,7 +135,16 @@ const entries = (content: Parameters<typeof createMemoryContentPort>[0] = {}) =>
 async function wordCard(shown: Word): Promise<AnyEntryCard> {
   const model = await buildWordCard({
     word: shown,
-    entries: entries({ categories: [{ id: 'household-crafts', displayName: 'Побут і ремесла' }] }),
+    entries: entries({
+      categories: [
+        {
+          id: 'household-crafts',
+          displayName: 'Побут і ремесла',
+          description: 'Побут і ремесла.',
+          tone: 'loud',
+        },
+      ],
+    }),
   });
   return { kind: 'word', entryId: shown.id, model };
 }

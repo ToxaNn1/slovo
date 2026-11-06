@@ -12,15 +12,23 @@ const LanguageTagSchema = z
   .string()
   .regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, 'Expected a BCP 47 tag such as uk-UA');
 
-/**
- * A thematic group of Words, or of Corrections, with its display name in the
- * Edition's language. The Words and the Corrections each have their own list
- * (ADR 0033).
- */
-export const CategorySchema = z.strictObject({
+const categoryFields = {
   id: KebabCaseIdSchema,
   displayName: z.string().min(1),
-});
+  /** One line under the name on the Category's screen, in the Edition's language. */
+  description: z.string().min(1),
+};
+
+/**
+ * A thematic group of Words, or of Corrections, with its display name and
+ * one-line description in the Edition's language, and its tone: a `loud`
+ * Category is shown in full, a `quiet` one held back (spec #1604). The Words
+ * and the Corrections each have their own list (ADR 0033).
+ */
+export const CategorySchema = z.discriminatedUnion('tone', [
+  z.strictObject({ ...categoryFields, tone: z.literal('loud') }),
+  z.strictObject({ ...categoryFields, tone: z.literal('quiet') }),
+]);
 
 export type Category = z.infer<typeof CategorySchema>;
 

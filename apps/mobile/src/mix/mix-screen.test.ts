@@ -1,3 +1,4 @@
+import { type Category } from '@slovo/contracts';
 import { openComposition, systemRandom, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
@@ -6,16 +7,18 @@ import { mixScreenModel, mixSummary } from './mix-screen';
 import { count, strings, ukrainian } from '../test-support';
 
 /** The Language Pack's ten Categories, in its order. */
-const categories = Array.from({ length: 10 }, (_, index) => ({
+const categories = Array.from({ length: 10 }, (_, index): Category => ({
   id: `category-${String(index)}`,
   displayName: `Категорія ${String(index)}`,
+  description: `Опис ${String(index)}.`,
+  tone: 'loud',
 }));
 
 /** The Language Pack's three Categories of Corrections, in its order. */
-const correctionCategories = [
-  { id: 'work', displayName: 'На роботі' },
-  { id: 'shop', displayName: 'У магазині' },
-  { id: 'transport', displayName: 'Транспорт' },
+const correctionCategories: Category[] = [
+  { id: 'work', displayName: 'На роботі', description: 'На роботі.', tone: 'loud' },
+  { id: 'shop', displayName: 'У магазині', description: 'У магазині.', tone: 'loud' },
+  { id: 'transport', displayName: 'Транспорт', description: 'Транспорт.', tone: 'loud' },
 ];
 
 async function open(edition: Edition): Promise<Composition> {

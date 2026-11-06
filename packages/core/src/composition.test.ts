@@ -9,7 +9,7 @@ const SECOND = 1000;
 
 /** Twenty Words of the Category in the Mix. */
 const content = createMemoryContentPort({
-  categories: [{ id: 'test', displayName: 'Test' }],
+  categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
   words: Array.from({ length: 20 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`)),
 });
 
@@ -175,7 +175,7 @@ describe('a hidden Entry', () => {
 describe('an Entry opened by id', () => {
   /** A pack with a Word, a Synonym Row that links it as a member and a Tip. */
   const withRowAndTip = createMemoryContentPort({
-    categories: [{ id: 'test', displayName: 'Test' }],
+    categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
     words: [word('w_ity'), word('w_prostuvaty')],
     synonymRows: [
       {

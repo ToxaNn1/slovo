@@ -123,13 +123,17 @@ async function open(dashboard: boolean, { previousWords = true, curatedCollectio
   );
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
+      categories: [
+        { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
+      ],
       words: [
         word('w_sumyrnyi', 'сумирний'),
         word('w_lahidnyi', 'лагідний'),
         word('w_tykhyi', 'тихий'),
       ],
-      correctionCategories: [{ id: 'everyday', displayName: 'Щоденне' }],
+      correctionCategories: [
+        { id: 'everyday', displayName: 'Щоденне', description: 'Щоденне.', tone: 'loud' },
+      ],
       corrections: [
         correction('c_shoby', 'шоби', ['щоб', 'аби']),
         correction('c_tipa', 'типу', ['ніби']),

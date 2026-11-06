@@ -132,12 +132,12 @@ const validConfig = {
     blue: { background: '#1F3A5F', text: '#F3EEE2' },
   },
   categories: [
-    { id: 'nature', displayName: 'Nature' },
-    { id: 'speech', displayName: 'Speech' },
+    { id: 'nature', displayName: 'Nature', description: 'Nature.', tone: 'loud' },
+    { id: 'speech', displayName: 'Speech', description: 'Speech.', tone: 'loud' },
   ],
   correctionCategories: [
-    { id: 'work', displayName: 'At work' },
-    { id: 'shop', displayName: 'In the shop' },
+    { id: 'work', displayName: 'At work', description: 'At work.', tone: 'loud' },
+    { id: 'shop', displayName: 'In the shop', description: 'In the shop.', tone: 'loud' },
   ],
   categoriesRequiringHistory: ['speech'],
   originLanguages: [
@@ -1083,8 +1083,8 @@ describe('loadEdition', () => {
       'a repeated Category id',
       {
         categories: [
-          { id: 'nature', displayName: 'Nature' },
-          { id: 'nature', displayName: 'Weather' },
+          { id: 'nature', displayName: 'Nature', description: 'Nature.', tone: 'loud' },
+          { id: 'nature', displayName: 'Weather', description: 'Weather.', tone: 'loud' },
         ],
       },
       'categories.1.id',
@@ -1099,8 +1099,8 @@ describe('loadEdition', () => {
       'a repeated Correction Category id',
       {
         correctionCategories: [
-          { id: 'work', displayName: 'At work' },
-          { id: 'work', displayName: 'At the office' },
+          { id: 'work', displayName: 'At work', description: 'At work.', tone: 'loud' },
+          { id: 'work', displayName: 'At the office', description: 'At the office.', tone: 'loud' },
         ],
       },
       'correctionCategories.1.id',
