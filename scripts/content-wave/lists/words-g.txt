@@ -13,3 +13,8 @@
 щедрівка arts-culture 1
 кобза arts-culture 2
 колядник arts-culture 2
+мортира 3 military 
+гаубиця 2 military 
+шанець 4 military 
+контрескарп military 5
+ескадрон 2 military 

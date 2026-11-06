@@ -19,3 +19,13 @@
 хрящ human-body 2
 жовч human-body 2
 мозоля human-body 2
+стегно 1 human-body 
+пупок 1 human-body 
+чуб 1 human-body 
+тім'ячко 3 human-body 
+гортань 2 human-body 
+стравохід 2 human-body 
+селезінка 2 human-body 
+надбрів'я 3 human-body 
+передпліччя 2 human-body 
+плюсна 3 human-body 
