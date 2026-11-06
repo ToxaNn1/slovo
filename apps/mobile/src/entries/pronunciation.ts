@@ -1,4 +1,5 @@
 import { logError } from '../diagnostics/log';
+import type { RecordingPlayer } from '../sounds/recording-player';
 
 /** A voice the device can speak with, as `expo-speech` lists it. */
 export interface SpeechVoice {
@@ -23,15 +24,6 @@ export interface Speech {
   getAvailableVoicesAsync(): Promise<readonly SpeechVoice[]>;
   speak(text: string, options: SpokenLemmaOptions): void;
   stop(): Promise<void>;
-}
-
-/**
- * The device's player of Recordings: plays one Recording at a time, reports
- * when it plays to its end, and `stop` ends it without that report.
- */
-export interface RecordingPlayer {
-  play(source: number, onEnd: () => void): void;
-  stop(): void;
 }
 
 /** The Word a Pronunciation button reads: its id finds its Recording. */

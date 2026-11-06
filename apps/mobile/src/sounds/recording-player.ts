@@ -1,6 +1,13 @@
-import type { RecordingPlayer } from '@/entries/pronunciation';
-
 import type { AudioModule } from './sound-engine';
+
+/**
+ * The device's player of Recordings: plays one Recording at a time, reports
+ * when it plays to its end, and `stop` ends it without that report.
+ */
+export interface RecordingPlayer {
+  play(source: number, onEnd: () => void): void;
+  stop(): void;
+}
 
 /** One loaded Recording of `expo-audio`, as far as the player plays it. */
 export interface RecordingAudioPlayer {
