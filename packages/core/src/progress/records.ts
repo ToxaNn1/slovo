@@ -22,8 +22,8 @@ export const XpSourceSchema = z.literal([
  * it records: XP a learning action earned on its date, a Streak freeze
  * consumed for its date, a missed day it covers, a Break started on its
  * date, with its length in days, the Daily Goal the reader set from that
- * day on, a Badge earned on its date, or a Badge the reader first opened
- * (ADR 0085). The kinds the ADR names besides these come with their own
+ * day on, a Badge earned on its date, a Badge the reader first opened, or a
+ * Game Round answered wrong (ADR 0085). The kinds the ADR names besides these come with their own
  * tickets.
  */
 const XpRecordSchema = z.discriminatedUnion('kind', [
@@ -37,6 +37,9 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     mode: z.string().optional(),
     /** The rarity of the Word a Round answered right asked about, for the Badges; left out for other Entries. */
     rarity: RaritySchema.optional(),
+    /** A finished Game's right answers and Rounds played, for the Badges (ADR 0085); left out before them. */
+    right: z.number().int().nonnegative().optional(),
+    played: z.number().int().nonnegative().optional(),
   }),
   z.object({ kind: z.literal('freeze'), date: z.string(), at: InstantSchema }),
   z.object({
@@ -72,6 +75,13 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     date: z.string(),
     at: InstantSchema,
     badge: z.string(),
+  }),
+  /** A Game Round answered wrong in its Game Mode, which earns no XP and breaks a run of right answers (ADR 0085). */
+  z.object({
+    kind: z.literal('wrong-answer'),
+    date: z.string(),
+    at: InstantSchema,
+    mode: z.string(),
   }),
 ]);
 
