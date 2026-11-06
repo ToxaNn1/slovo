@@ -126,7 +126,7 @@ export const SettingsStringsSchema = z.strictObject({
       /** The button that closes the sheet, e.g. «ГОТОВО». */
       done: TextSchema,
     }),
-    /** The toast after a tap on an unearned Badge, e.g. ««Тиждень поспіль» ще не ваша. Поки що.» Takes `{name}`. */
+    /** The toast after a tap on an unearned Badge, e.g. ««Тиждень поспіль» ще не твоя. Поки що.» Takes `{name}`. */
     lockedToast: templateOf('name'),
   }),
   /** The Profile: the reader's whole progress, with its Badges as the Badges screen words them. */
@@ -213,7 +213,7 @@ export const SettingsStringsSchema = z.strictObject({
     badgeStamp: z.strictObject({
       /** The giant cream word behind the mark, e.g. «ВІДЗНАКА» (10.7, ADR 0085). */
       kicker: TextSchema,
-      /** The ribbon of the last frame, e.g. «ТЕПЕР ВАША». */
+      /** The ribbon of the last frame, e.g. «ТЕПЕР ТВОЯ». */
       ribbon: TextSchema,
       /** The button that closes the stamp, e.g. «ГОТОВО». */
       done: TextSchema,

@@ -561,6 +561,7 @@ describe('loadEdition', () => {
 
   it('refuses a Badge without a family or of a family the Edition does not declare', () => {
     const [week] = validConfig.badges;
+    if (week === undefined) throw new Error('the fixture declares no Badge');
     const { family: _removed, ...withoutFamily } = week;
     expect(() => loadEdition({ ...validConfig, badges: [withoutFamily] })).toThrow(
       InvalidEditionConfigError,

@@ -192,7 +192,7 @@
         "title": "Твій!",
         "take": "Забрати",
         "kicker": "ВІДЗНАКА",
-        "ribbon": "ТЕПЕР ВАША",
+        "ribbon": "ТЕПЕР ТВОЯ",
         "done": "ГОТОВО"
       }
     },
@@ -283,7 +283,7 @@
         "notYet": "Ще ні · {progress}",
         "done": "ГОТОВО"
       },
-      "lockedToast": "«{name}» ще не ваша. Поки що."
+      "lockedToast": "«{name}» ще не твоя. Поки що."
     },
     "sounds": {
       "sounds": "Звуки",
