@@ -43,7 +43,7 @@ export {
   type EntryLinkSource,
   type ParsedEntryLink,
 } from './entries/entry-links';
-export type { EntryRowModel } from './entries/entry-row';
+export { buildEntryRow, type EntryRowModel } from './entries/entry-row';
 export { type Favorite } from './saved/favorites';
 export { buildEntryCard, isTodaysWordOfTheDay, SEEN_DWELL_MS, type Feed } from './feed/feed';
 export {
