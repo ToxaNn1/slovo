@@ -5,8 +5,8 @@
  *                     [--sum auto|direct|wayback|off]
  *
  * The list has one Lemma per line, `<lemma> <category id> <rarity>`, with
- * `#` comments. Drafts and `review-report.md` go to `tools/sourcing/review/`
- * (git-ignored). Fetched pages go to one cache shared by every worktree and
+ * `#` comments. Drafts, incomplete drafts and `review-report.md` go to the
+ * `words/` folder of the review folder, `tools/sourcing/review/` (git-ignored). Fetched pages go to one cache shared by every worktree and
  * run on the machine: `--cache`, else `$SLOVO_SOURCING_CACHE`, else
  * `$XDG_CACHE_HOME/slovo-sourcing` or `~/.cache/slovo-sourcing`. goroh.pp.ua
  * is the main source; sum.in.ua and the Wayback Machine are fallbacks for
@@ -25,7 +25,7 @@ import {
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 
-import { REPORT_FILE, sourceWords, type Fetch, type SumAccess } from './index';
+import { sourceWords, type Fetch, type SumAccess } from './index';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
@@ -122,7 +122,7 @@ async function main(): Promise<number> {
   for (const [host, reason] of Object.entries(requests.unreachable)) {
     console.log(`Skipped for this run: ${host} (${reason})`);
   }
-  console.log(`Review report: ${displayPath(join(outDir, REPORT_FILE))}`);
+  console.log(`Review report: ${displayPath(result.reportFile)}`);
   return 0;
 }
 

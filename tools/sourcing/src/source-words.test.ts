@@ -932,7 +932,10 @@ describe('the review report', () => {
 
     await sourceWords(options);
 
-    const ready = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
+    // In list order: мжичка, then ножиці.
+    const ready = readDrafts(options.outDir)
+      .map((draft) => WordSchema.parse(draft))
+      .sort((a, b) => a.lemma.localeCompare(b.lemma, 'uk'));
     expect(ready.length).toBeGreaterThan(0);
     const report = readFileSync(join(options.outDir, 'words', 'review-report.md'), 'utf8');
     const list = report.slice(report.indexOf('## Ready drafts'));
