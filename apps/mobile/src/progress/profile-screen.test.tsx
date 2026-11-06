@@ -313,12 +313,33 @@ describe('the Profile', () => {
     expect(screen.queryByRole('button', { name: strings.shareLevel })).not.toBeOnTheScreen();
   });
 
-  it('stamps no Badge at a tap on one not yet earned', async () => {
-    await renderScreen();
+  it('with the sheet off, shows nothing at a tap on a Badge not yet earned', async () => {
+    await renderScreen({ switchedOff: 'badgeSheet' });
 
     await fireEvent.press(screen.getByLabelText(edition.badges[0]?.name ?? ''));
     expect(screen.queryByTestId('badge-stamp')).not.toBeOnTheScreen();
     expect(screen.queryByText(strings.badgeStamp.title)).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-sheet')).not.toBeOnTheScreen();
+    // Only the sheet goes: the Badges stay.
+    for (const { name } of edition.badges) expect(screen.getByLabelText(name)).toBeOnTheScreen();
+  });
+
+  // Ticket #1646: board 10 p3/p4.
+  it('opens the sheet and the toast at a tap on a Badge not yet earned', async () => {
+    await renderScreen();
+    const badge = edition.badges[0];
+    const badges = editionStrings.settings.badges;
+
+    await fireEvent.press(screen.getByLabelText(badge?.name ?? ''));
+
+    const sheet = screen.getByTestId('badge-sheet');
+    expect(within(sheet).getByText(badges.sheet.kicker)).toBeOnTheScreen();
+    expect(within(sheet).getByRole('header')).toHaveTextContent(badge?.name ?? '');
+    expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent(/^Ще ні · /);
+    expect(
+      screen.getByText(fill(badges.lockedToast, { name: badge?.name ?? '' })),
+    ).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-stamp')).not.toBeOnTheScreen();
   });
 
   it('has no offer to save progress without an Account', async () => {
