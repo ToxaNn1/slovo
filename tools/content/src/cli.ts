@@ -138,11 +138,17 @@ async function main(): Promise<number> {
         systemClock,
         values.cache === undefined ? defaultCacheDir() : resolve(cwd, values.cache),
         POLITE_INTERVAL_MS,
-        terminal.problem,
+        (line) => {
+          terminal.problem(line);
+        },
       ),
       cwd,
-      print: terminal.print,
-      problem: terminal.problem,
+      print: (line) => {
+        terminal.print(line);
+      },
+      problem: (line) => {
+        terminal.problem(line);
+      },
     });
   }
   if (kind !== undefined) return newEntry(kind, tool);
