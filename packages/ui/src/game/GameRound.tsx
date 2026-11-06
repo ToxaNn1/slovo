@@ -152,7 +152,9 @@ export function GameRound({
           setAsking(true);
         }}
       />
-      <ScrollView contentContainerStyle={styles.round}>
+      <ScrollView
+        contentContainerStyle={[styles.round, round.form !== 'pick' && styles.roundWithoutOptions]}
+      >
         <RoundHead
           label={asked.label}
           number={round.number}
@@ -709,6 +711,8 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
+  // A Round of a form without options keeps one gap more under its content than a pick Round.
+  roundWithoutOptions: { paddingBottom: space[6] + space[5] },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
