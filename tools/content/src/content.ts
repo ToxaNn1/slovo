@@ -6,6 +6,7 @@ import {
   EditionFolderError,
   ILLUSTRATIONS_DIR,
   type EditionFolder,
+  type EntryKind as EditionEntryKind,
 } from '@slovo/language-pack/edition';
 
 /** Opens a file for the owner and returns once they close it. */
@@ -43,6 +44,20 @@ export const ENTRY_KINDS = {
 } as const;
 
 export type EntryKind = keyof typeof ENTRY_KINDS;
+
+/** The kind of Entry as the commands name it, for each kind as the Entry names its own. */
+export const KIND_NAMES: Readonly<Record<EditionEntryKind, EntryKind>> = {
+  word: 'word',
+  correction: 'correction',
+  idiom: 'idiom',
+  synonymRow: 'synonym-row',
+  tip: 'tip',
+};
+
+/** The kind a command names; undefined for any other name. */
+export function entryKind(name: string | undefined): EntryKind | undefined {
+  return Object.keys(ENTRY_KINDS).find((kind): kind is EntryKind => kind === name);
+}
 
 /**
  * Drafts an Entry of the given kind with an id no Entry of the Edition has

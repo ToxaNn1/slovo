@@ -11,7 +11,7 @@
  */
 import { parseArgs } from 'node:util';
 
-import type { ContentTargets } from '@slovo/language-pack';
+import { rarityFloor, wordFloor, type ContentTargets } from '@slovo/language-pack';
 import {
   EDITIONS_DIR,
   EditionFolderError,
@@ -19,7 +19,7 @@ import {
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 
-import { ENTRY_KINDS, type EntryKind } from './content';
+import { entryKind, KIND_NAMES, type EntryKind } from './content';
 
 const USAGE = [
   'Usage: pnpm content have --edition <id> [--kind word|correction|idiom|synonym-row|tip]',
@@ -66,9 +66,9 @@ export function listContent(args: readonly string[]): number {
 }
 
 function have(edition: EditionFolder, only: EntryKind | undefined): string[] {
-  return edition.entryTexts().flatMap(({ id, group, text, forms, retired }) => {
-    const kind = kindOf(id);
-    if (kind === undefined || (only !== undefined && kind !== only)) return [];
+  return edition.entryTexts().flatMap(({ kind: entryKindOf, group, text, forms, retired }) => {
+    const kind = KIND_NAMES[entryKindOf];
+    if (only !== undefined && kind !== only) return [];
     const shown = forms.length === 0 ? text : `${text} -> ${forms.join(', ')}`;
     return [[kind, group ?? '-', shown, ...(retired ? ['retired'] : [])].join('\t')];
   });
@@ -83,11 +83,11 @@ function counts(edition: EditionFolder): string[] {
   const liveCorrections = corrections
     .map(({ entry }) => entry)
     .filter((correction) => !correction.retired);
-  const rarityFloor = targets.everyRarity === true ? 1 : undefined;
+  const perRarity = rarityFloor(targets);
 
   const wordRows = categories.map(({ id }) => {
     const inCategory = liveWords.filter((word) => word.categoryId === id);
-    const floor = targets.minWordsByCategory?.[id] ?? targets.minWordsPerCategory;
+    const floor = wordFloor(targets, id)?.min;
     return [
       id,
       ...RARITIES.map((rarity) => cell(inCategory.filter((word) => word.rarity === rarity).length)),
@@ -97,7 +97,7 @@ function counts(edition: EditionFolder): string[] {
   const wordTotals = [
     'total',
     ...RARITIES.map((rarity) =>
-      cell(liveWords.filter((word) => word.rarity === rarity).length, rarityFloor),
+      cell(liveWords.filter((word) => word.rarity === rarity).length, perRarity),
     ),
     cell(liveWords.length, targets.minWords),
   ];
@@ -140,16 +140,4 @@ function table(rows: readonly (readonly string[])[]): string[] {
       .join('  ')
       .trimEnd(),
   );
-}
-
-function kindOf(id: string): EntryKind | undefined {
-  return entryKinds().find((kind) => id.startsWith(ENTRY_KINDS[kind]));
-}
-
-function entryKind(name: string): EntryKind | undefined {
-  return entryKinds().find((kind) => kind === name);
-}
-
-function entryKinds(): EntryKind[] {
-  return Object.keys(ENTRY_KINDS).filter((kind): kind is EntryKind => kind in ENTRY_KINDS);
 }

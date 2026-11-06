@@ -45,12 +45,11 @@ import {
 import {
   checkEdition,
   editEntry,
-  ENTRY_KINDS,
+  entryKind,
   newEntry,
   retireEntry,
   type ContentTool,
   type Editor,
-  type EntryKind,
   type Terminal,
 } from './content';
 import { listContent } from './have';
@@ -174,10 +173,6 @@ async function main(): Promise<number> {
   if (command === 'edit') return editEntry(argument ?? '', tool);
   if (command === 'retire') return retireEntry(argument ?? '', tool);
   return checkEdition(tool);
-}
-
-function entryKind(name: string | undefined): EntryKind | undefined {
-  return Object.keys(ENTRY_KINDS).find((kind): kind is EntryKind => kind === name);
 }
 
 process.exitCode = await main();
