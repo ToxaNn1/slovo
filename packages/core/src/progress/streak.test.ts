@@ -188,6 +188,40 @@ describe('the Streak and its freezes', () => {
     expect(today.events).toEqual([]);
   });
 
+  it('counts the days freezes saved in the current Streak', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(8, 9));
+    await openOn(records, '2026-10-11');
+    earned(records, 5, ...october(11, 12));
+    const { app } = await openOn(records, '2026-10-14');
+
+    // 2026-10-10 and 2026-10-13 were each covered by a freeze.
+    expect(app.progress.state).toMatchObject({ streak: 4, freezesHeld: 0, freezesUsed: 2 });
+    const again = await openOn(records, '2026-10-14');
+    expect(again.app.progress.state).toMatchObject({ freezesUsed: 2 });
+  });
+
+  it('counts no day a freeze saved before the Streak broke', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(1, 3), ...october(10, 13));
+    records.set(
+      'xp.freeze-2026-10-04',
+      JSON.stringify({ kind: 'freeze', date: '2026-10-04', at: '2026-10-04T07:00:00.000Z' }),
+    );
+    const { app } = await openOn(records, '2026-10-14');
+
+    expect(app.progress.state).toMatchObject({ streak: 4, freezesUsed: 0 });
+  });
+
+  it('counts no saved day with the freezes off, though a recorded freeze keeps the Streak', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(10, 12));
+    records.set(
+      'xp.freeze-2026-10-13',
+      JSON.stringify({ kind: 'freeze', date: '2026-10-13', at: '2026-10-13T07:00:00.000Z' }),
+    );
+    const { app } = await openOn(records, '2026-10-14', ['xpLog']);
+
+    expect(app.progress.state).toMatchObject({ streak: 3, freezesHeld: 0, freezesUsed: 0 });
+  });
+
   it('covers two missed days with the 2 freezes of the start', async () => {
     const records = earned(new Map<string, string>(), 5, ...october(10, 11));
     const { app } = await openOn(records, '2026-10-14');
