@@ -11,6 +11,7 @@ import type {
   Tip,
   Word,
 } from '@slovo/contracts';
+import { WordIdSchema } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
@@ -95,6 +96,11 @@ export function readEdition(
   const registry = readOrCollect(() =>
     registryRequired ? folder.read('idRegistry') : (folder.readIfPresent('idRegistry') ?? []),
   );
+  const wordIds = new Set(words.map(({ entry }) => entry.id));
+  /** Whether the Edition has a Word of this id: a valid one, or a Word file that fails its checks. */
+  const isWord = (id: string) =>
+    wordIds.has(id) ||
+    (WordIdSchema.safeParse(id).success && existsSync(join(editionDir, folder.entryFile(id))));
   if (config !== undefined) {
     errors.push(
       ...checkContent(config, words, corrections, idioms),
@@ -102,7 +108,7 @@ export function readEdition(
       ...checkTips(config, tips),
       ...editionFontErrors(config, tokens, folder.fonts()),
       ...categoryArtErrors(config, decor),
-      ...recordingErrors(config, words, folder.recordings(), (voice, name) =>
+      ...recordingErrors(config, isWord, folder.recordings(), (voice, name) =>
         folder.recording(voice, name),
       ),
     );
