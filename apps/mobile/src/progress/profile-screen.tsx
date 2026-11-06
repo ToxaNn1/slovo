@@ -174,11 +174,7 @@ export function ProfileScreen() {
         )}
         {streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />}
         <View style={styles.section}>
-          <ActiveDaysCalendar
-            weeks={weeks}
-            lines={shown.calendarDayLines}
-            todayWord={todayWord}
-          />
+          <ActiveDaysCalendar weeks={weeks} lines={shown.calendarDayLines} todayWord={todayWord} />
         </View>
         <View style={styles.section}>
           <View style={styles.badgesHead}>
