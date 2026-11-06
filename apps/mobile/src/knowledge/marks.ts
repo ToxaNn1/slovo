@@ -3,6 +3,7 @@ import type { KnowledgeMark } from '@slovo/core';
 import { useComposition } from '../composition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
+import { useUndo } from '../undo';
 
 /**
  * The mark an Entry's card shows, read from the Knowledge snapshot and kept up
@@ -18,6 +19,7 @@ export function useKnowledgeMark(entryId: string): {
   undo: () => void;
 } {
   const { knowledge } = useComposition();
+  const undo = useUndo();
   const shown = useSubscribed(knowledge, (open) => open.state.shown.get(entryId));
   return {
     mark: shown === 'review' ? undefined : shown,
@@ -31,7 +33,7 @@ export function useKnowledgeMark(entryId: string): {
       void keep('the Knowledge Mark', knowledge.clear(entryId));
     },
     undo: () => {
-      void keep('the Knowledge Mark', knowledge.undo());
+      undo('the Knowledge Mark', (open) => open.knowledge.undo());
     },
   };
 }

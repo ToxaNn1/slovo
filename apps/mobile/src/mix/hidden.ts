@@ -6,9 +6,8 @@ import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useSubscribed } from '../opening';
-import { useShell } from '../shell-value';
+import { useUndo } from '../undo';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
-import { undoRestore } from './hiding-undo';
 import { useMixInEffect } from './mix';
 
 const strings = editionStrings.hidden;
@@ -51,22 +50,18 @@ export function useHiddenChanges(): {
   turnKindOn: (entryKind: MixKind) => void;
 } {
   const composition = useComposition();
-  const compositionOpening = useShell().composition;
+  const undo = useUndo();
   const showToast = useUndoToast();
 
   function unhide(target: HideTarget): void {
     void keep('the hidden change', composition.unhide(target)).then((result) => {
-      if (result?.changed.kind !== 'entry' || result.hiddenAt === undefined) return;
-      const { hiddenAt } = result;
-      const { entryId } = result.changed;
+      if (result?.changed.kind !== 'entry' || result.undo === undefined) return;
+      const { undo: restoreUndo } = result;
       showToast({
         message: fill(strings.entryRestored, { title: result.changed.row.title }),
         undoLabel: strings.undo,
         onUndo() {
-          void keep(
-            'the undo of bringing the Entry back',
-            compositionOpening.opened().then((current) => undoRestore(current, entryId, hiddenAt)),
-          );
+          undo('the undo of bringing the Entry back', restoreUndo);
         },
       });
     });
