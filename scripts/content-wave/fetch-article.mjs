@@ -4,7 +4,7 @@
 //   filter: only blocks (goroh) or lines (other pages) containing this text, case-insensitive
 //   skip:   skip this many output characters (to page through a long article)
 // goroh.pp.ua: one line per article block, prefixed by its source; blocks from
-// «Велика мовна модель» are marked [LLM] and must not be quoted (ADR 0012).
+// «Велика мовна модель» are hidden and only counted: they must not be quoted (ADR 0012).
 // Other pages (ukrlib.com.ua, cp1251): plain text of the page body.
 import { execFileSync } from "node:child_process";
 
@@ -42,6 +42,7 @@ const text = (s) =>
 
 const wanted = (s) => !filter || s.toLowerCase().includes(filter.toLowerCase());
 let out = [];
+const llm = [];
 
 if (html.includes('class="article-block"')) {
   // Each source section ends with a source-info div naming the source.
@@ -62,9 +63,10 @@ if (html.includes('class="article-block"')) {
         });
       const body = senses.length ? senses.join(" | ") : text(block.replace(/<h2[\s\S]*?<\/h2>/, "")).replace(/\n/g, " ");
       const line = `${tag}{${source}} ${header} :: ${body}`;
-      if (wanted(line)) out.push(line);
+      if (wanted(line)) (tag ? llm : out).push(line);
     }
   }
+  if (llm.length) out.push(`[${llm.length} [LLM] blocks hidden]`);
   // Pages without blocks (Синонімія, Словозміна) fall through below.
 }
 if (!out.length) {
