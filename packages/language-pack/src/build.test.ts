@@ -1986,6 +1986,16 @@ describe('the Recordings of the Narrator Voices', () => {
     ]);
   });
 
+  it("reports a broken Word's own problem, not its Recordings as of an unknown Word", () => {
+    const editionDir = withRecordings();
+    writeFileSync(join(editionDir, 'content/words/w_fx0001.json'), '{');
+
+    const errors = buildErrors(editionDir);
+
+    expect(errors).toContainEqual(expect.objectContaining({ file: 'content/words/w_fx0001.json' }));
+    expect(errors.filter(({ file }) => file.startsWith('assets/recordings'))).toEqual([]);
+  });
+
   it('refuses a sample Word of the voice screen the Edition does not have', () => {
     const editionDir = withRecordings();
     editJson(editionDir, 'edition.json', (config) => ({
@@ -2033,13 +2043,17 @@ describe('the Recordings of the Narrator Voices', () => {
 });
 
 describe('checkLanguagePack', () => {
-  it('passes valid content with the targets it misses, as the build does', () => {
+  it('passes valid content with the targets it misses and the Recordings it lacks, as the build does', () => {
     const editionDir = copyFixture('valid');
     writeFileSync(join(editionDir, 'content/targets.json'), JSON.stringify({ minWords: 3 }));
 
     expect(checkLanguagePack({ editionDir })).toEqual({
       ok: true,
       missedTargets: [{ target: 'minWords', message: '2 Words, below the target of 3' }],
+      missingRecordings: [
+        { voice: 'anna', count: 3 },
+        { voice: 'boris', count: 3 },
+      ],
     });
   });
 
