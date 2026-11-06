@@ -39,22 +39,6 @@ export function withinRarityCeiling(rarity: Rarity, ceiling: Rarity): boolean {
 }
 
 /**
- * The Rarity Ceiling in force, read afresh: the user's record, or the
- * Edition's default without one; «до 5», so every Word is within it, while
- * the Edition turns the rarityCeiling switch off, as before 1.0.
- */
-export async function readRarityCeiling({
-  edition,
-  userState,
-}: {
-  edition: RarityCeilingEdition;
-  userState: Pick<UserState, 'read'>;
-}): Promise<Rarity> {
-  if (!edition.isFeatureEnabled('rarityCeiling')) return HIGHEST;
-  return (await userState.read(record)) ?? edition.userSettingDefaults.rarityCeiling;
-}
-
-/**
  * Opens the Rarity Ceiling over the user state for the Core composition:
  * each change publishes `eligibility`, so the Cycle reads the eligible
  * Entries again and the Feed, the plan and the Game follow.
@@ -68,7 +52,10 @@ export async function openRarityCeiling({
   userState: Pick<UserState, 'read' | 'write'>;
   eligibility: Pick<Subject<void>, 'publish'>;
 }): Promise<RarityCeiling> {
-  let state = await readRarityCeiling({ edition, userState });
+  // «до 5», so every Word is within it, while the Edition turns the switch off, as before 1.0.
+  let state = edition.isFeatureEnabled('rarityCeiling')
+    ? ((await userState.read(record)) ?? edition.userSettingDefaults.rarityCeiling)
+    : HIGHEST;
   const subscribers = createSubscribers();
   const inTurn = createInTurn();
 

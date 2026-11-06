@@ -10,9 +10,9 @@ import type {
   Word,
 } from '@slovo/contracts';
 
-import { createEntries, openRemoteSwitches } from '../index';
+import { createEntries, EVERYTHING_IN, openRemoteSwitches } from '../index';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
-import { countingReads, idiom, randomOf, testEdition } from '../test-support';
+import { countingReads, idiom, openLiveEntries, randomOf, testEdition } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
@@ -140,22 +140,23 @@ const open = ({ correctionsSwitch = true, idiomsSwitch = true } = {}) =>
   createEntries({
     content: openContent(),
     edition: editionWith(correctionsSwitch, idiomsSwitch),
+    choices: EVERYTHING_IN,
   });
 
-/** The Entries over the user state's records, written as the user state keeps them. */
+/**
+ * The Entries over the live Mix, Rarity Ceiling and Hidden Entries opened over
+ * the user state's records, written as the user state keeps them.
+ */
 async function openOver(records: Record<string, unknown>, edition = editionWith(true)) {
   const port = createMemoryUserStatePort();
   await port.write(
     new Map(Object.entries(records).map(([key, value]) => [key, JSON.stringify(value)])),
   );
-  return {
-    port,
-    entries: createEntries({
-      content: openContent(),
-      edition,
-      userState: await openUserState({ port }),
-    }),
-  };
+  return openLiveEntries({
+    content: openContent(),
+    edition,
+    userState: await openUserState({ port }),
+  });
 }
 
 const ids = (entries: readonly { id: string }[]) => entries.map(({ id }) => id);
@@ -205,26 +206,21 @@ describe('the Entries', () => {
         },
         random: randomOf(0),
       });
-      const entries = createEntries({ content: openContent(), edition: remote.edition, userState });
+      const { entries } = await openLiveEntries({
+        content: openContent(),
+        edition: remote.edition,
+        userState,
+      });
 
       expect((await entries.eligible()).idioms).toEqual([]);
       expect(await entries.eligibleOfKind('idiom')).toEqual({ entries: [] });
     });
 
     it('leave out every Hidden Entry, read afresh on every call', async () => {
-      const port = createMemoryUserStatePort();
-      const entries = createEntries({
-        content: openContent(),
-        edition: editionWith(true),
-        userState: await openUserState({ port }),
-      });
-      await port.write(
-        new Map([
-          ['hidden.w_talkative', JSON.stringify('2026-10-11T06:00:00.000Z')],
-          ['hidden.c_chatty', JSON.stringify('2026-10-11T06:00:00.000Z')],
-          ['hidden.i_lazy', JSON.stringify('2026-10-11T06:00:00.000Z')],
-        ]),
-      );
+      const { entries, hiddenEntries } = await openOver({});
+      await hiddenEntries.hide('w_talkative');
+      await hiddenEntries.hide('c_chatty');
+      await hiddenEntries.hide('i_lazy');
 
       expect(await entries.eligible()).toEqual({
         words: ['w_always', 'w_plain'],
@@ -235,7 +231,7 @@ describe('the Entries', () => {
       });
       expect(await entries.eligibleOfKind('idiom')).toEqual({ entries: [idioms[1]] });
 
-      await port.write(new Map([['hidden.w_talkative', undefined]]));
+      await hiddenEntries.restore('w_talkative');
 
       expect(await entries.eligible()).toEqual({
         words: ['w_always', 'w_talkative', 'w_plain'],
@@ -262,7 +258,7 @@ describe('the Entries', () => {
         synonymRows,
         tips,
       });
-      const entries = createEntries({
+      const { entries, mix } = await openLiveEntries({
         content: {
           ...content,
           listIds(kind: EntryKind, categoryId?: string) {
@@ -286,12 +282,8 @@ describe('the Entries', () => {
       });
       expect(asked).toEqual(['word nature', 'word speech', 'correction everyday']);
 
-      await port.write(
-        new Map([
-          ['mix.categories.nature', JSON.stringify(false)],
-          ['mix.corrections', JSON.stringify(false)],
-        ]),
-      );
+      await mix.takeOut('nature');
+      await mix.setKind('correction', false);
 
       expect(await entries.eligible()).toEqual({
         words: ['w_always', 'w_talkative'],
@@ -303,12 +295,12 @@ describe('the Entries', () => {
     });
 
     it('hold the Idioms only while they are in the Mix, and say when they are out', async () => {
-      const { port, entries } = await openOver({ 'mix.idioms': false });
+      const { mix, entries } = await openOver({ 'mix.idioms': false });
 
       expect((await entries.eligible()).idioms).toEqual([]);
       expect(await entries.eligibleOfKind('idiom')).toEqual({ refusal: 'idioms-out-of-mix' });
 
-      await port.write(new Map([['mix.idioms', JSON.stringify(true)]]));
+      await mix.setKind('idiom', true);
 
       expect((await entries.eligible()).idioms).toEqual(['i_lazy', 'i_place']);
       expect(await entries.eligibleOfKind('idiom')).toEqual({ entries: idioms.slice(0, 2) });
@@ -354,22 +346,22 @@ describe('the Entries', () => {
     });
 
     describe.each([
-      { feature: 'synonymRows', record: 'mix.synonymRows', id: 'r_walk' },
-      { feature: 'tips', record: 'mix.tips', id: 't_comma' },
-    ] as const)('of the kind $feature', ({ feature, record, id }) => {
+      { feature: 'synonymRows', kind: 'synonymRow', record: 'mix.synonymRows', id: 'r_walk' },
+      { feature: 'tips', kind: 'tip', record: 'mix.tips', id: 't_comma' },
+    ] as const)('of the kind $feature', ({ feature, kind, record, id }) => {
       it('hold the live ones while the kind is in the Mix, and none while it is out', async () => {
-        const { port, entries } = await openOver({ [record]: false });
+        const { mix, entries } = await openOver({ [record]: false });
 
         expect((await entries.eligible())[feature]).toEqual([]);
 
-        await port.write(new Map([[record, JSON.stringify(true)]]));
+        await mix.setKind(kind, true);
 
         expect((await entries.eligible())[feature]).toEqual([id]);
       });
 
       it('hold none by the Edition default Mix until the user chooses, then follow the choice', async () => {
         const edition = editionWith(true);
-        const { port, entries } = await openOver(
+        const { mix, entries } = await openOver(
           {},
           {
             ...edition,
@@ -382,7 +374,7 @@ describe('the Entries', () => {
 
         expect((await entries.eligible())[feature]).toEqual([]);
 
-        await port.write(new Map([[record, JSON.stringify(true)]]));
+        await mix.setKind(kind, true);
 
         expect((await entries.eligible())[feature]).toEqual([id]);
       });
@@ -409,7 +401,7 @@ describe('the Entries', () => {
           },
           random: randomOf(0),
         });
-        const entries = createEntries({
+        const { entries } = await openLiveEntries({
           content: openContent(),
           edition: remote.edition,
           userState,
@@ -419,11 +411,13 @@ describe('the Entries', () => {
       });
 
       it('leave out a Hidden one, and hold it again once unhidden', async () => {
-        const { port, entries } = await openOver({ [`hidden.${id}`]: '2026-10-26T06:00:00.000Z' });
+        const { hiddenEntries, entries } = await openOver({
+          [`hidden.${id}`]: '2026-10-26T06:00:00.000Z',
+        });
 
         expect((await entries.eligible())[feature]).toEqual([]);
 
-        await port.write(new Map([[`hidden.${id}`, undefined]]));
+        await hiddenEntries.restore(id);
 
         expect((await entries.eligible())[feature]).toEqual([id]);
       });
@@ -433,6 +427,7 @@ describe('the Entries', () => {
       const entries = createEntries({
         content: createMemoryContentPort(),
         edition: editionWith(true),
+        choices: EVERYTHING_IN,
       });
 
       expect(await entries.eligible()).toEqual({
@@ -492,7 +487,11 @@ describe('the Entries', () => {
 
     it('reads one Entry of any kind, or many, in one read of the Language Pack', async () => {
       const counted = countingReads(openContent());
-      const entries = createEntries({ content: counted.content, edition: editionWith(true) });
+      const entries = createEntries({
+        content: counted.content,
+        edition: editionWith(true),
+        choices: EVERYTHING_IN,
+      });
 
       await entries.get('i_lazy');
       expect(counted.reads()).toBe(1);
@@ -514,18 +513,17 @@ describe('the Entries', () => {
     });
 
     it('lead from a Word to no Correction while Corrections are out of the Mix, and back when they return', async () => {
-      const port = createMemoryUserStatePort();
-      const entries = createEntries({
+      const { entries, mix } = await openLiveEntries({
         content: createMemoryContentPort({ words: [talkative], corrections: [chatty, always] }),
         edition: editionWith(true),
-        userState: await openUserState({ port }),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
       });
       expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
 
-      await port.write(new Map([['mix.corrections', JSON.stringify(false)]]));
+      await mix.setKind('correction', false);
       expect(await entries.linkedCorrections(talkative)).toEqual([]);
 
-      await port.write(new Map([['mix.corrections', JSON.stringify(true)]]));
+      await mix.setKind('correction', true);
       expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
     });
 
@@ -535,18 +533,17 @@ describe('the Entries', () => {
         ...row,
         members: [{ text: 'балакучий', stress: [3], wordId: 'w_talkative' }, ...row.members],
       };
-      const port = createMemoryUserStatePort();
-      const entries = createEntries({
+      const { entries, mix } = await openLiveEntries({
         content: createMemoryContentPort({ words: [talkative], synonymRows: [linking] }),
         edition: editionWith(true),
-        userState: await openUserState({ port }),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
       });
       expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
 
-      await port.write(new Map([['mix.synonymRows', JSON.stringify(false)]]));
+      await mix.setKind('synonymRow', false);
       expect(await entries.linkingSynonymRow(talkative)).toBeUndefined();
 
-      await port.write(new Map([['mix.synonymRows', JSON.stringify(true)]]));
+      await mix.setKind('synonymRow', true);
       expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
     });
 
