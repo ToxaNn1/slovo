@@ -1,4 +1,10 @@
-import { buildShareCardContent, type AnyEntryCard, type Composition } from '@slovo/core';
+import {
+  buildShareCardContent,
+  entryCardTitle,
+  type AnyEntryCard,
+  type CounterLine,
+  type WordCardModel,
+} from '@slovo/core';
 import {
   ActionRow,
   CollectionButton,
@@ -20,14 +26,14 @@ import {
   useEdition,
   useUndoToast,
 } from '@slovo/ui';
-import { useCallback, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import { refusalText } from '../saved/collection-refusal';
 import { deviceClock } from '../device/device-clock';
 import { edition, editionStrings } from '../edition/edition';
 import { useEntryCollections } from '../saved/collections';
 import { keptHint } from '../saved/kept-hint';
-import { useComposition, useCompositionRead } from '../composition';
+import { useComposition } from '../composition';
 import { useCounterLine } from '../community-counters/counter-line';
 import { useFavorite } from '../saved/favorites';
 import { useKnowledgeMark } from '../knowledge/marks';
@@ -36,6 +42,148 @@ import { logError } from '../diagnostics/log';
 import { sessionShareFormat } from '../share/share-card';
 import { useShell, type ShareCard } from '../shell-value';
 import { useShown } from '../shown-in-effect';
+
+/** The Knowledge Mark of an Entry's card, as state plus callbacks. */
+type Knowledge = ReturnType<typeof useKnowledgeMark>;
+
+/**
+ * The marks of an Entry's card: its Knowledge Mark while the Knowledge
+ * switch is on in effect, and whether marks are swiped, the Swipe Marks
+ * switch on in effect (ADR 0077).
+ */
+export interface EntryMarks {
+  knowledge: Knowledge | undefined;
+  swiped: boolean;
+}
+
+/** The marks of the card of an Entry: its Knowledge Mark read once. */
+export function useEntryMarks(entryId: string): EntryMarks {
+  const shown = useShown();
+  const knowledge = useKnowledgeMark(entryId);
+  return {
+    knowledge: shown.entryButtons.knowledge ? knowledge : undefined,
+    swiped: shown.swipeMarks,
+  };
+}
+
+/**
+ * The side swipes of an Entry's card that set its Knowledge Mark, with the
+ * stamp and the undo toast: there only when the Knowledge and Swipe Marks
+ * switches are both on in effect (ADR 0077). Feed Notices take none.
+ */
+export function entrySwipe({ knowledge, swiped }: EntryMarks): EntrySwipe | undefined {
+  return knowledge !== undefined && swiped
+    ? { mark: knowledge.mark, onMark: knowledge.set, onUndo: knowledge.undo }
+    : undefined;
+}
+
+/**
+ * Everything an Entry's card can do, each action read once: Favorite, its
+ * Collections, share, hide, the Mistake Report and the marks, as state plus
+ * callbacks, the line that says where the Entry is kept, the Community
+ * Counters line (read only while the action row shows it, ADR 0060) and the
+ * sheets the actions open. The action row and the corner lay them out.
+ */
+interface EntryCardActions {
+  card: AnyEntryCard;
+  title: string;
+  marks: EntryMarks;
+  favorite: ReactNode;
+  collection: ReactNode;
+  hint: string | undefined;
+  line: CounterLine | undefined;
+  share: OpenedAction;
+  report: OpenedAction;
+  onHide: () => void;
+  sheets: ReactNode;
+}
+
+/** The actions of the card of an Entry, wherever the card appears. */
+function useEntryCardActions(card: AnyEntryCard): EntryCardActions {
+  const { entryId } = card;
+  const title = entryCardTitle(card);
+  const marks = useEntryMarks(entryId);
+  const favorite = useFavorite(entryId);
+  const hide = useHide(card);
+  const collection = useCollectionAction(entryId, title);
+  const share = useShareAction(card);
+  const report = useMistakeReportAction(entryId);
+  const line = useCounterLine(entryId, marks.knowledge !== undefined && !marks.swiped, {
+    mark: marks.knowledge?.mark,
+    inFavorites: favorite.inFavorites,
+  });
+  const { count } = useEdition();
+  return {
+    card,
+    title,
+    marks,
+    favorite: <FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />,
+    collection: collection.button,
+    hint: keptHint({
+      collectionNames: collection.filedNames,
+      inFavorites: favorite.inFavorites,
+      strings: editionStrings,
+      count,
+    }),
+    line,
+    share,
+    report,
+    onHide: hide.open,
+    sheets: (
+      <>
+        <HideChoiceSheet {...hide.choice} />
+        {collection.sheet}
+        {share.sheet}
+        {report.sheet}
+      </>
+    ),
+  };
+}
+
+/**
+ * The slots of an Entry card, wherever the card appears: its action row
+ * (`EntryActions`) while the Swipe Marks switch is off in effect, and its
+ * corner (`EntryCorner`) with no action row while it is on (ADR 0077), the
+ * Community Counters line and the line that says where the Entry is kept
+ * gone with the row, and its side swipes with the corner.
+ */
+export function useEntrySlots(
+  card: AnyEntryCard,
+  place: 'feed' | 'details' = 'feed',
+): EntryCardSlots {
+  const actions = useEntryCardActions(card);
+  return actions.marks.swiped
+    ? {
+        slot: 'corner',
+        corner: <EntryCorner actions={actions} />,
+        swipe: entrySwipe(actions.marks),
+      }
+    : { slot: 'actions', actions: <EntryActions actions={actions} place={place} /> };
+}
+
+/**
+ * The «Знаю» and «Не знаю» buttons of Yesterday's Word, or while marks are
+ * swiped its corner: the «⋯» button alone, whose sheet has the mark items.
+ */
+export function useYesterdaySlots(word: WordCardModel): YesterdaySlots | undefined {
+  const marks = useEntryMarks(word.wordId);
+  const { inFavorites } = useFavorite(word.wordId);
+  const line = useCounterLine(word.wordId, marks.knowledge !== undefined && !marks.swiped, {
+    mark: marks.knowledge?.mark,
+    inFavorites,
+  });
+  if (marks.swiped)
+    return {
+      slot: 'corner',
+      corner: <MenuCorner title={word.lemma} entryKind="word" knowledge={marks.knowledge} />,
+    };
+  return marks.knowledge === undefined
+    ? undefined
+    : {
+        slot: 'marks',
+        marks: <MarkButtons entryKind="word" knowledge={marks.knowledge} line={line} />,
+      };
+}
 
 /**
  * The action row of an Entry card of any kind, wherever the card appears: the
@@ -50,73 +198,34 @@ import { useShown } from '../shown-in-effect';
  * them on Entry details (`place`). Its screen gives it an
  * `UndoToastProvider` for the toasts after a hide and a Mistake Report.
  */
-export function EntryActions({
-  card,
-  place = 'feed',
+function EntryActions({
+  actions,
+  place,
 }: {
-  card: AnyEntryCard;
-  place?: 'feed' | 'details';
+  actions: EntryCardActions;
+  place: 'feed' | 'details';
 }) {
-  const { entryId } = card;
-  const favorite = useFavorite(entryId);
-  const hide = useHide(card);
-  const collection = useCollectionAction(entryId);
-  const share = useShareAction(card);
-  const marks = useKnowledgeButtons(card);
-  const report = useMistakeReportAction(entryId);
-  const { count } = useEdition();
+  const { card, marks } = actions;
   return (
     <>
       <ActionRow
         look={card.kind === 'word' ? 'tiles' : 'icons'}
-        marks={marks}
+        marks={
+          marks.knowledge && (
+            <MarkButtons entryKind={card.kind} knowledge={marks.knowledge} line={actions.line} />
+          )
+        }
         marksAt={place === 'details' ? 'below' : 'above'}
-        hint={keptHint({
-          collectionNames: collection.filedNames,
-          inFavorites: favorite.inFavorites,
-          strings: editionStrings,
-          count,
-        })}
-        favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
-        share={share.button}
-        collection={collection.button}
-        hide={<HideButton onPress={hide.open} />}
-        report={report.button}
+        hint={actions.hint}
+        favorite={actions.favorite}
+        share={actions.share.button}
+        collection={actions.collection}
+        hide={<HideButton onPress={actions.onHide} />}
+        report={actions.report.button}
       />
-      <HideChoiceSheet {...hide.choice} />
-      {collection.sheet}
-      {share.sheet}
-      {report.sheet}
+      {actions.sheets}
     </>
   );
-}
-
-/**
- * The slots of an Entry card, wherever the card appears: its action row
- * (`EntryActions`) while the Swipe Marks switch is off in effect, and its
- * corner (`EntryCorner`) with no action row while it is on (ADR 0077), the
- * Community Counters line and the line that says where the Entry is kept
- * gone with the row, and its side swipes with the corner.
- */
-export function useEntrySlots(
-  card: AnyEntryCard,
-  place: 'feed' | 'details' = 'feed',
-): EntryCardSlots {
-  const swipe = useEntrySwipe(card.entryId);
-  return useShown().swipeMarks
-    ? { slot: 'corner', corner: <EntryCorner card={card} />, swipe }
-    : { slot: 'actions', actions: <EntryActions card={card} place={place} /> };
-}
-
-/**
- * The «Знаю» and «Не знаю» buttons of Yesterday's Word, or while marks are
- * swiped its corner: the «⋯» button alone, whose sheet has the mark items.
- */
-export function useYesterdaySlots(wordId: string): YesterdaySlots | undefined {
-  const marks = useKnowledgeButtons({ kind: 'word', entryId: wordId });
-  if (useShown().swipeMarks)
-    return { slot: 'corner', corner: <MenuCorner entryId={wordId} entryKind="word" /> };
-  return marks === undefined ? undefined : { slot: 'marks', marks };
 }
 
 /**
@@ -124,50 +233,66 @@ export function useYesterdaySlots(wordId: string): YesterdaySlots | undefined {
  * «До колекції» bookmark and the «⋯» button, whose sheet also shares, hides
  * and reports the Entry as the action row did, each while it is on.
  */
-function EntryCorner({ card }: { card: AnyEntryCard }) {
-  const { entryId } = card;
-  const favorite = useFavorite(entryId);
-  const hide = useHide(card);
-  const collection = useCollectionAction(entryId);
-  const share = useShareAction(card);
-  const report = useMistakeReportAction(entryId);
+function EntryCorner({ actions }: { actions: EntryCardActions }) {
   return (
     <>
       <MenuCorner
-        entryId={entryId}
-        entryKind={card.kind}
-        favorite={<FavoriteButton inFavorites={favorite.inFavorites} onToggle={favorite.toggle} />}
-        collection={collection.button}
-        onShare={share.open}
-        onHide={hide.open}
-        onReport={report.open}
+        title={actions.title}
+        entryKind={actions.card.kind}
+        knowledge={actions.marks.knowledge}
+        favorite={actions.favorite}
+        collection={actions.collection}
+        onShare={actions.share.open}
+        onHide={actions.onHide}
+        onReport={actions.report.open}
       />
-      <HideChoiceSheet {...hide.choice} />
-      {collection.sheet}
-      {share.sheet}
-      {report.sheet}
+      {actions.sheets}
     </>
   );
 }
 
 /**
- * The corner's buttons and the «⋯» sheet they open. The sheet's mark items
- * set or clear the Knowledge Mark, only while the Knowledge switch is on in
- * effect, and say so in a 2.2 s toast with no undo. «Поділитися», «Сховати»
- * and «Повідомити про помилку» open their own sheet once the «⋯» sheet has
- * slid away, as one modal at a time is presented.
+ * The «Знаю» and «Не знаю» buttons of an Entry's card, wherever the card
+ * appears, Yesterday's too, with the Community Counters line under them
+ * (ADR 0060).
+ */
+function MarkButtons({
+  entryKind,
+  knowledge,
+  line,
+}: {
+  entryKind: AnyEntryCard['kind'];
+  knowledge: Knowledge;
+  line: CounterLine | undefined;
+}) {
+  return (
+    <>
+      <KnowledgeButtons entryKind={entryKind} mark={knowledge.mark} onTap={knowledge.tap} />
+      <CommunityCountersLine line={line} />
+    </>
+  );
+}
+
+/**
+ * The corner's buttons and the «⋯» sheet they open, titled with the Entry.
+ * The sheet's mark items set or clear the Knowledge Mark, only while the
+ * Knowledge switch is on in effect, and say so in a 2.2 s toast with no undo.
+ * «Поділитися», «Сховати» and «Повідомити про помилку» open their own sheet
+ * once the «⋯» sheet has slid away, as one modal at a time is presented.
  */
 function MenuCorner({
-  entryId,
+  title,
   entryKind,
+  knowledge,
   favorite,
   collection,
   onShare,
   onHide,
   onReport,
 }: {
-  entryId: string;
+  title: string;
   entryKind: AnyEntryCard['kind'];
+  knowledge: Knowledge | undefined;
   favorite?: ReactNode;
   collection?: ReactNode;
   onShare?: (() => void) | undefined;
@@ -176,10 +301,7 @@ function MenuCorner({
 }) {
   const [open, setOpen] = useState(false);
   const [followUp, setFollowUp] = useState<{ open: () => void }>();
-  const knowledge = useKnowledgeMark(entryId);
-  const marksShown = useShown().entryButtons.knowledge;
   const showToast = useUndoToast();
-  const title = useEntryTitle(entryId, open);
   const toasts = editionStrings.knowledge.swipe.menu.toasts;
   const close = () => {
     setOpen(false);
@@ -205,21 +327,19 @@ function MenuCorner({
         entryTitle={title}
         entryKind={entryKind}
         marks={
-          marksShown
-            ? {
-                mark: knowledge.mark,
-                onSet: (mark) => {
-                  close();
-                  knowledge.set(mark);
-                  showToast({ message: toasts[mark], brief: true });
-                },
-                onClear: () => {
-                  close();
-                  knowledge.clear();
-                  showToast({ message: toasts.cleared, brief: true });
-                },
-              }
-            : undefined
+          knowledge && {
+            mark: knowledge.mark,
+            onSet: (mark) => {
+              close();
+              knowledge.set(mark);
+              showToast({ message: toasts[mark], brief: true });
+            },
+            onClear: () => {
+              close();
+              knowledge.clear();
+              showToast({ message: toasts.cleared, brief: true });
+            },
+          }
         }
         onShare={after(onShare)}
         onHide={after(onHide)}
@@ -234,41 +354,11 @@ function MenuCorner({
   );
 }
 
-/**
- * The «Знаю» and «Не знаю» buttons of an Entry's card, wherever the card
- * appears, Yesterday's too, with the Community Counters line under them
- * (ADR 0060): there only when the Knowledge switch is on in effect.
- */
-export function useKnowledgeButtons(card: Pick<AnyEntryCard, 'entryId' | 'kind'>): ReactNode {
-  const shown = useShown().entryButtons.knowledge;
-  const knowledge = useKnowledgeMark(card.entryId);
-  const line = useCounterLine(card.entryId, shown);
-  return shown ? (
-    <>
-      <KnowledgeButtons entryKind={card.kind} mark={knowledge.mark} onTap={knowledge.tap} />
-      <CommunityCountersLine line={line} />
-    </>
-  ) : undefined;
-}
-
 /** An action that opens a sheet, from its button or from the «⋯» sheet: all undefined while it is off. */
 interface OpenedAction {
   open: (() => void) | undefined;
   button: ReactNode;
   sheet: ReactNode;
-}
-
-/**
- * The side swipes of an Entry's card that set its Knowledge Mark, with the
- * stamp and the undo toast: there only when the Knowledge and Swipe Marks
- * switches are both on in effect (ADR 0077). Feed Notices take none.
- */
-export function useEntrySwipe(entryId: string): EntrySwipe | undefined {
-  const shown = useShown();
-  const knowledge = useKnowledgeMark(entryId);
-  return shown.entryButtons.knowledge && shown.swipeMarks
-    ? { mark: knowledge.mark, onMark: knowledge.set, onUndo: knowledge.undo }
-    : undefined;
 }
 
 /**
@@ -395,17 +485,22 @@ function useMistakeReportAction(entryId: string): OpenedAction {
 
 /**
  * The «До колекції» button of an Entry's action row, filled once the Entry is
- * in a Collection, the sheet it opens, and the names of the Collections the
- * Entry is in.
+ * in a Collection, the sheet it opens, titled with the Entry, and the names
+ * of the Collections the Entry is in.
  */
-function useCollectionAction(entryId: string): {
+function useCollectionAction(
+  entryId: string,
+  title: string,
+): {
   button: ReactNode;
   sheet: ReactNode;
   filedNames: readonly string[];
 } {
   const [open, setOpen] = useState(false);
-  const { collections, isFiled } = useEntryCollections(entryId);
-  const filedNames = collections.filter(({ id }) => isFiled(id)).map(({ name }) => name);
+  const filing = useEntryCollections(entryId);
+  const filedNames = filing.collections
+    .filter(({ id }) => filing.isFiled(id))
+    .map(({ name }) => name);
   return {
     filedNames,
     button: (
@@ -417,50 +512,22 @@ function useCollectionAction(entryId: string): {
       />
     ),
     sheet: (
-      <EntryCollectionSheet
-        entryId={entryId}
+      <CollectionSheet
         visible={open}
+        entryTitle={title}
+        collections={filing.collections}
+        isFiled={filing.isFiled}
+        onToggle={filing.setFiled}
         onClose={() => {
           setOpen(false);
+        }}
+        onCreate={async (name) => {
+          const result = await filing.create(name);
+          return result.ok
+            ? undefined
+            : refusalText(editionStrings.collections.sheet.refusal, result.reason);
         }}
       />
     ),
   };
-}
-
-/** The «До колекції» sheet of one Entry, over the Core's Collections. */
-function EntryCollectionSheet({
-  entryId,
-  visible,
-  onClose,
-}: {
-  entryId: string;
-  visible: boolean;
-  onClose: () => void;
-}) {
-  const filing = useEntryCollections(entryId);
-  const title = useEntryTitle(entryId, visible);
-  return (
-    <CollectionSheet
-      visible={visible}
-      entryTitle={title}
-      collections={filing.collections}
-      isFiled={filing.isFiled}
-      onToggle={filing.setFiled}
-      onClose={onClose}
-      onCreate={async (name) => {
-        const result = await filing.create(name);
-        return result.ok
-          ? undefined
-          : refusalText(editionStrings.collections.sheet.refusal, result.reason);
-      }}
-    />
-  );
-}
-
-/** What the Entry's row leads with, once it is known; read when `enabled`. */
-function useEntryTitle(entryId: string, enabled: boolean): string {
-  const read = useCallback((composition: Composition) => composition.entryRow(entryId), [entryId]);
-  const row = useCompositionRead(read, 'Could not read the Entry', enabled);
-  return row.status === 'ready' ? (row.value?.title ?? '') : '';
 }
