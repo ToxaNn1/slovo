@@ -41,6 +41,7 @@ export interface CategoryTileBox {
  */
 export function CategoryTile({
   name,
+  accessibilityLabel = name,
   tone,
   shapes: [big, small],
   box,
@@ -48,6 +49,8 @@ export function CategoryTile({
   testID,
 }: {
   name: string;
+  /** What VoiceOver reads for the tile; its name unless given. */
+  accessibilityLabel?: string;
   tone: CategoryTone;
   shapes: readonly [CategoryShape, CategoryShape];
   box: CategoryTileBox;
@@ -74,7 +77,7 @@ export function CategoryTile({
         testID={testID}
         tone="none"
         radius={box.radius}
-        accessibilityLabel={name}
+        accessibilityLabel={accessibilityLabel}
         accessibilityLanguage={voice.accessibilityLanguage}
         onPress={onPress}
         faceStyle={[
