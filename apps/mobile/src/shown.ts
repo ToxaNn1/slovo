@@ -39,6 +39,8 @@ export interface Shown {
   readonly selfCheckSetting: boolean;
   /** The Settings switch «Звуки». */
   readonly soundsSetting: boolean;
+  /** The Settings row «Голос диктора» and its screen, where the reader chooses the Narrator Voice (ADR 0083). */
+  readonly narratorVoiceSetting: boolean;
   /** The Settings switch for «Сезонний декор» (ADR 0055). */
   readonly seasonalDecorSetting: boolean;
   /** The Settings switch «Менше руху», which joins the system's Reduce Motion. */
@@ -159,6 +161,7 @@ export function shownOf({
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),
     soundsSetting: on('sounds'),
+    narratorVoiceSetting: on('narratorVoice'),
     seasonalDecorSetting: on('seasonalDecor'),
     reduceMotionSetting: on('reduceMotion'),
     shareCountersSetting: on('communityCounters') || on('analytics'),

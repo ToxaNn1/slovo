@@ -150,6 +150,25 @@ export const SettingsStringsSchema = z.strictObject({
     sounds: TextSchema,
     vibration: TextSchema,
   }),
+  /** The «Голос диктора» row and the Narrator Voice screen (ADR 0083). */
+  narratorVoice: z.strictObject({
+    /** The row's title. */
+    row: TextSchema,
+    /** The row's line under the title. */
+    rowSub: TextSchema,
+    /** The screen's title. */
+    title: TextSchema,
+    /** The line under the title. */
+    lead: TextSchema,
+    /** Over the sample Word. Takes `{name}`, the voice that reads it, in capitals. */
+    reading: templateOf('name'),
+    /** The label over the voices. */
+    choose: TextSchema,
+    /** The button that reads the sample Word in the chosen voice. */
+    play: TextSchema,
+    /** The same button while the voice reads. */
+    pause: TextSchema,
+  }),
   /** The About screen. */
   about: z.strictObject({
     /** The giant letter on the red panel. */

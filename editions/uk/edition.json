@@ -28,6 +28,7 @@
     "widget": true,
     "shareCards": true,
     "pronunciation": true,
+    "narratorVoice": true,
     "wordOfTheDay": true,
     "statistics": true,
     "knowledge": true,
@@ -357,7 +358,13 @@
       { "id": "taras", "name": "Тарас", "description": "Чоловічий · низький" },
       { "id": "marta", "name": "Марта", "description": "Жіночий · жвавий" },
       { "id": "ostap", "name": "Остап", "description": "Чоловічий · теплий" }
-    ]
+    ],
+    "sample": {
+      "word": "w_0l24ku",
+      "syllables": ["за", "гра", "ва"],
+      "stressed": 1,
+      "caption": "за-гра́-ва · ім., ж. р."
+    }
   },
   "searchLetters": {
     "ґ": "г",
