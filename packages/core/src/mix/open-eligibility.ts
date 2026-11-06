@@ -1,11 +1,15 @@
-import { openHiddenEntries, type HiddenEntries } from '../mix/hidden-entries';
+import { openHiddenEntries, type HiddenEntries } from './hidden-entries';
 import type { Clock, ContentReadPort } from '../ports';
 import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
-import { createEntries, type Entries } from './entries';
-import { createEntryRows, type EntryRows } from './entry-row';
-import { openMix, type Mix, type MixEdition } from './mix';
-import { openRarityCeiling, type RarityCeiling, type RarityCeilingEdition } from './rarity-ceiling';
+import { createEntries, type Entries } from '../entries/entries';
+import { createEntryRows, type EntryRows } from '../entries/entry-row';
+import { openMix, type Mix, type MixEdition } from '../entries/mix';
+import {
+  openRarityCeiling,
+  type RarityCeiling,
+  type RarityCeilingEdition,
+} from '../entries/rarity-ceiling';
 
 /** What decides which Entries are eligible: the Entries and the reader's choices they read. */
 export interface Eligibility {

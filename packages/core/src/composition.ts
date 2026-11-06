@@ -53,7 +53,7 @@ import { openCommunityCounters, type CommunityCounters } from './community-count
 import type { HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
 import type { Mix } from './entries/mix';
-import { openEligibility } from './entries/open-eligibility';
+import { openEligibility } from './mix/open-eligibility';
 import type { NotificationScheduling } from './notifications/notification-plan';
 import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';

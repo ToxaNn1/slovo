@@ -18,7 +18,7 @@ import type { PlayedRound, Round, RoundAnswer } from './game/game';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
 import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } from './ports';
-import { openEligibility } from './entries/open-eligibility';
+import { openEligibility } from './mix/open-eligibility';
 import { createSubject } from './subject';
 import type { UserState } from './user-state/user-state';
 
