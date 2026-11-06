@@ -36,7 +36,7 @@ const text = (s) =>
       .replace(/<br\s*\/?>|<\/(p|div|li|h\d|tr)>/gi, "\n")
       .replace(/<[^>]+>/g, ""),
   )
-    .replace(/[ \t\r\f\v]+/g, " ")
+    .replace(/[ \t\r\f\v\u00a0]+/g, " ")
     .replace(/ *\n[\s]*/g, "\n")
     .trim();
 
