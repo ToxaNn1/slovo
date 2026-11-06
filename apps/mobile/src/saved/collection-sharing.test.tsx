@@ -21,7 +21,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import CollectionsScreen from '../app/saved/collections/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
 
@@ -122,9 +122,19 @@ async function settle() {
 }
 
 async function openMenuOf(collectionId: string) {
+  // The cards' menu: the board style's grid has none, its menu is the Collection screen's.
+  const cards: Edition = {
+    ...edition,
+    isFeatureEnabled: (feature) =>
+      feature !== 'collectionBoardStyle' &&
+      !(feature === 'collectionLinks' && collectionLinksOff) &&
+      edition.isFeatureEnabled(feature),
+  };
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+      <ShellProvider
+        shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(cards) })}
+      >
         <EditionProvider edition={edition} strings={editionStrings}>
           <CollectionsScreen />
         </EditionProvider>

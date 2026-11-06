@@ -41,7 +41,7 @@ export interface GridTile {
  * gives its position and the shape pair at its position, wrapping past the
  * set. The tiles cascade in one after another; under Reduce Motion they only
  * fade in (ADR 0055). A tile opens its id. A `header` goes over the title,
- * and `empty` shows in place of the tiles while there are none.
+ * across the whole width from the top, as a list's header would, and `empty` shows in place of the tiles while there are none.
  */
 export function CategoryGrid({
   title,
@@ -70,7 +70,7 @@ export function CategoryGrid({
   /** What goes over the title, such as the screen's back link and its tool. */
   header?: ReactElement;
   /** What shows while there are no tiles. */
-  empty?: ReactElement;
+  empty?: ReactElement | null;
   onOpen: (id: string) => void;
   testID: string;
 }) {
@@ -88,7 +88,7 @@ export function CategoryGrid({
       key={columns}
       ListHeaderComponent={
         <>
-          {header}
+          {header !== undefined && <View style={styles.header}>{header}</View>}
           <View
             testID={`${testID}-title`}
             accessible
@@ -193,4 +193,10 @@ const styles = StyleSheet.create({
     paddingBottom: place.titleGap,
   },
   cell: { padding: place.gap / 2 },
+  // Out of the grid's own padding: a header spans the screen as over a list.
+  header: {
+    marginTop: -place.padding.top,
+    marginHorizontal: -(place.padding.side - place.gap / 2),
+    paddingBottom: place.titleGap,
+  },
 });

@@ -4,17 +4,9 @@ import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useCategories } from '@/categories/categories';
+import { gridBox } from '@/categories/grid-box';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
-
-const box = {
-  height: categoryGrid.height,
-  radius: categoryGrid.radius,
-  padding: categoryGrid.tilePadding,
-  big: categoryGrid.big,
-  small: categoryGrid.small,
-  name: 'gridTileName',
-} as const;
 
 /**
  * k1, the grid of every Category of Words, opened from the Dashboard rail's
@@ -34,7 +26,7 @@ export default function CategoriesRoute() {
         count={String(categories.length)}
         tiles={categories.map(({ id, displayName }) => ({ id, name: displayName }))}
         columns={3}
-        box={box}
+        box={gridBox}
         shapes={categoryGrid.shapes}
         onOpen={(categoryId) => {
           openScreen(`/category/${categoryId}`);
