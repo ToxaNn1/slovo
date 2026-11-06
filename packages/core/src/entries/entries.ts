@@ -152,6 +152,17 @@ export interface Entries {
   /** Every Category of Corrections of the Language Pack, as `categories` gives the Words'. */
   correctionCategories(): Promise<readonly Category[]>;
   /**
+   * The live Entries of one Category of the kind's list, the Words' or the
+   * Corrections', in the Language Pack's order: a Retired one left out, the
+   * Mix, the Rarity Ceiling and the Feature Switches aside, for the Category
+   * screens. None for a Category the list doesn't have. Read from the
+   * Language Pack once per Category; nothing becomes Seen.
+   */
+  ofCategory<Kind extends CategoryKind>(
+    of: Kind,
+    categoryId: string,
+  ): Promise<readonly EntryOfKind<Kind>[]>;
+  /**
    * The live Corrections the Word is the standard form for, in the order the
    * Word links them, or none when the Edition turns Corrections off or the
    * user took Corrections out of the Mix. A Correction missing from the
@@ -375,6 +386,18 @@ export function createEntries(
     });
   }
 
+  async function ofCategory<Kind extends CategoryKind>(
+    of: Kind,
+    categoryId: string,
+  ): Promise<readonly EntryOfKind<Kind>[]> {
+    const [entries, ids] = await Promise.all([live[of](), idsOfCategory(of, categoryId)]);
+    const ofKind = (entry: Entry | undefined): entry is EntryOfKind<Kind> => entry?.kind === of;
+    return ids.flatMap((id) => {
+      const entry = entries.get(id);
+      return ofKind(entry) ? [entry] : [];
+    });
+  }
+
   async function liveCorrections(): Promise<readonly Correction[]> {
     const [hidden, corrections, ids] = await Promise.all([
       hiddenIds(),
@@ -392,6 +415,7 @@ export function createEntries(
     eligibleWordsOfAnyRarity,
     wordsUnderRarityCeiling,
     liveCorrections,
+    ofCategory,
     // The kinds asked for pick the Entries returned, as the generic signature says.
     eligibleOfKind: eligibleOfKind as Entries['eligibleOfKind'],
     async get(id) {
