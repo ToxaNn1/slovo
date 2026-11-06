@@ -81,6 +81,8 @@ export interface XpLogMilestones {
   readonly crosswords: ReadonlySet<string>;
   /** The Badges earned: the local date each was earned on, by Badge id. */
   readonly badges: ReadonlyMap<string, string>;
+  /** The Badges the reader has opened, which ends their «НОВА» mark (ADR 0085), by Badge id. */
+  readonly opened: ReadonlySet<string>;
 }
 
 /** Records to append for another write, and the step that makes them in memory once written. */
@@ -127,6 +129,11 @@ export interface XpLog {
    * earned Badge is never earned again or removed.
    */
   earn(badges: readonly string[]): XpLogAppend;
+  /**
+   * The Badge-opened record of a Badge (ADR 0085), for another write. A Badge
+   * has one such record by its id, so two devices that open it merge into one.
+   */
+  open(badge: string): XpLogAppend;
   /** The local date (`YYYY-MM-DD`) the total XP first reached `total`, if it has. */
   reachedOn(total: number): string | undefined;
   /** Calls `listener` after each change of the XP. Returns the call that stops it. */
@@ -365,6 +372,7 @@ export async function openXpLog({
     const rightRarities = new Set<number>();
     const crosswords = new Set<string>();
     const badges = new Map<string, string>();
+    const opened = new Set<string>();
     for (const record of records.values()) {
       switch (record.kind) {
         case 'badge':
@@ -379,7 +387,9 @@ export async function openXpLog({
         case 'daily-goal':
         case 'word-goal':
         case 'goal-met':
+          break;
         case 'badge-opened':
+          opened.add(record.badge);
           break;
         case 'xp': {
           const { source, mode, rarity } = record;
@@ -419,7 +429,7 @@ export async function openXpLog({
       active,
       frozen,
       breaks,
-      milestones: { wins, rightByMode, rightRarities, crosswords, badges },
+      milestones: { wins, rightByMode, rightRarities, crosswords, badges, opened },
     };
   }
   let derived = derive();
@@ -523,6 +533,23 @@ export async function openXpLog({
       commit() {
         if (added.size === 0) return;
         for (const [id, record] of added) records.set(id, record);
+        change();
+      },
+    };
+  }
+
+  function open(badge: string): XpLogAppend {
+    const id = `badge-opened-${badge}`;
+    const record: XpRecord = {
+      kind: 'badge-opened',
+      date: todayKey(clock),
+      at: clock.now().toISOString(),
+      badge,
+    };
+    return {
+      changes: xpRecords.record(id).change(record),
+      commit() {
+        records.set(id, record);
         change();
       },
     };
@@ -658,6 +685,7 @@ export async function openXpLog({
     },
     award,
     earn,
+    open,
     freeze,
     startBreak,
     reachedOn,
