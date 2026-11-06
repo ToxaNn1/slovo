@@ -51,7 +51,7 @@ describe('the Badges screen', () => {
       text: '0 з 10 записів',
     });
     expect(screen.getByTestId('badge-true-stress')).toHaveAccessibilityValue({
-      text: '0 з 100 правильних відповідей',
+      text: '0 з 10 правильних відповідей',
     });
     expect(screen.getByTestId('badge-win-stress')).toHaveAccessibilityValue({
       text: 'Ще не отримано',
@@ -76,7 +76,7 @@ describe('the Badges screen', () => {
       text: 'Отримано 13 жовтня',
     });
     expect(screen.getByTestId('badge-win-words-status')).toHaveTextContent('Отримано 13 жовтня');
-    expect(screen.getByTestId('badge-win-words-mark-symbol')).toHaveTextContent('АЯ');
+    expect(screen.getByTestId('badge-win-words-mark-symbol')).toHaveTextContent('Сл');
     expect(screen.queryByTestId('badge-streak-3-mark-symbol')).toBeNull();
     expect(screen.getByTestId('badges-count')).toHaveTextContent(
       `1 з ${String(edition.badges.length)}`,

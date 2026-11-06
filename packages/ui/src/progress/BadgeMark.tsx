@@ -21,6 +21,8 @@ export function familyOf(kind: BadgeCondition['kind']): BadgeFamily {
     case 'dailyCrosswordRun':
     case 'rightAnswers':
     case 'rightOnRarity':
+    case 'flawlessGame':
+    case 'rightRun':
       return 'games';
   }
 }
