@@ -105,7 +105,9 @@ async function open(calligraphy: boolean) {
   );
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
+      categories: [
+        { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
+      ],
       words: [word('w_sumyrnyi', 'сумирний'), word('w_lahidnyi', 'лагідний')],
     }),
     edition: editionInEffect,

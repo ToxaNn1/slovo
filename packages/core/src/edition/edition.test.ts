@@ -111,6 +111,10 @@ const validConfig = {
     swipeMarks: true,
     searchButton: true,
     dashboardWordmark: true,
+    categoryScreens: true,
+    correctionCategoryScreens: true,
+    quietCategories: true,
+    collectionBoardStyle: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -133,12 +137,12 @@ const validConfig = {
     blue: { background: '#1F3A5F', text: '#F3EEE2' },
   },
   categories: [
-    { id: 'nature', displayName: 'Nature' },
-    { id: 'speech', displayName: 'Speech' },
+    { id: 'nature', displayName: 'Nature', description: 'Nature.', tone: 'loud' },
+    { id: 'speech', displayName: 'Speech', description: 'Speech.', tone: 'loud' },
   ],
   correctionCategories: [
-    { id: 'work', displayName: 'At work' },
-    { id: 'shop', displayName: 'In the shop' },
+    { id: 'work', displayName: 'At work', description: 'At work.', tone: 'loud' },
+    { id: 'shop', displayName: 'In the shop', description: 'In the shop.', tone: 'loud' },
   ],
   categoriesRequiringHistory: ['speech'],
   originLanguages: [
@@ -828,6 +832,26 @@ describe('loadEdition', () => {
     ],
     ['a missing widget Feature Switch', withoutSwitch('widget'), 'featureSwitches.widget'],
     [
+      'a missing categoryScreens Feature Switch',
+      withoutSwitch('categoryScreens'),
+      'featureSwitches.categoryScreens',
+    ],
+    [
+      'a missing correctionCategoryScreens Feature Switch',
+      withoutSwitch('correctionCategoryScreens'),
+      'featureSwitches.correctionCategoryScreens',
+    ],
+    [
+      'a missing quietCategories Feature Switch',
+      withoutSwitch('quietCategories'),
+      'featureSwitches.quietCategories',
+    ],
+    [
+      'a missing collectionBoardStyle Feature Switch',
+      withoutSwitch('collectionBoardStyle'),
+      'featureSwitches.collectionBoardStyle',
+    ],
+    [
       'a missing Dashboard wordmark Feature Switch',
       withoutSwitch('dashboardWordmark'),
       'featureSwitches.dashboardWordmark',
@@ -1130,8 +1154,8 @@ describe('loadEdition', () => {
       'a repeated Category id',
       {
         categories: [
-          { id: 'nature', displayName: 'Nature' },
-          { id: 'nature', displayName: 'Weather' },
+          { id: 'nature', displayName: 'Nature', description: 'Nature.', tone: 'loud' },
+          { id: 'nature', displayName: 'Weather', description: 'Weather.', tone: 'loud' },
         ],
       },
       'categories.1.id',
@@ -1146,8 +1170,8 @@ describe('loadEdition', () => {
       'a repeated Correction Category id',
       {
         correctionCategories: [
-          { id: 'work', displayName: 'At work' },
-          { id: 'work', displayName: 'At the office' },
+          { id: 'work', displayName: 'At work', description: 'At work.', tone: 'loud' },
+          { id: 'work', displayName: 'At the office', description: 'At the office.', tone: 'loud' },
         ],
       },
       'correctionCategories.1.id',
@@ -1335,6 +1359,9 @@ const dependentSwitches = [
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
   ['narratorVoice', ['pronunciation']],
+  ['categoryScreens', ['dashboard', 'wordOfTheDay']],
+  ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
+  ['quietCategories', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {
@@ -1348,6 +1375,16 @@ describe('the Feature Switches a feature depends on', () => {
 
       expect(edition.isFeatureEnabled(feature)).toBe(false);
     }
+  });
+
+  it('keep the Collection board style on while the Dashboard is off', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, dashboard: false },
+    });
+
+    expect(edition.isFeatureEnabled('categoryScreens')).toBe(false);
+    expect(edition.isFeatureEnabled('collectionBoardStyle')).toBe(true);
   });
 
   it('keep a feature on while only a feature that depends on it is off', () => {

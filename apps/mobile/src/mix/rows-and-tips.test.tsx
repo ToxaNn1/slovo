@@ -76,7 +76,7 @@ async function open(on: boolean, mixKindWeights = true) {
   editionInEffect = editionWith(on, mixKindWeights);
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       synonymRows: [row],
       tips: [tip],
     }),

@@ -10,7 +10,7 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 
 const words = Array.from({ length: 14 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`));
 const content = createMemoryContentPort({
-  categories: [{ id: 'test', displayName: 'Test' }],
+  categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
   words,
 });
 

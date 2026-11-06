@@ -31,6 +31,10 @@ export const CollectionsStringsSchema = z.strictObject({
   }),
   /** The Collections screen: its rows, its swipe actions, the name fields, the delete confirmation and the empty list. */
   screen: z.strictObject({
+    /** The kicker of a Collection's screen in the board style, «КОЛЕКЦІЯ · {count}» (ADR 0082). Takes `{count}`, the `wordCount` phrase. */
+    kicker: templateOf('count'),
+    /** How many Entries the kicker of a Collection's screen counts, «{count} слів». */
+    wordCount: PluralSchema,
     /** The «+» that opens the field for a new Collection, as VoiceOver reads it. */
     add: TextSchema,
     /** The small capitals over the field for a new Collection. */

@@ -17,9 +17,24 @@ import { correction, fakeClock, idiom, testEdition, word } from '../test-support
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Language Pack's Categories, in its order. */
-const nature: Category = { id: 'nature', displayName: 'Nature' };
-const speech: Category = { id: 'speech', displayName: 'Speech' };
-const crafts: Category = { id: 'crafts', displayName: 'Crafts' };
+const nature: Category = {
+  id: 'nature',
+  displayName: 'Nature',
+  description: 'Nature.',
+  tone: 'loud',
+};
+const speech: Category = {
+  id: 'speech',
+  displayName: 'Speech',
+  description: 'Speech.',
+  tone: 'loud',
+};
+const crafts: Category = {
+  id: 'crafts',
+  displayName: 'Crafts',
+  description: 'Crafts.',
+  tone: 'loud',
+};
 const categories = [nature, speech, crafts];
 
 /**
@@ -29,8 +44,18 @@ const categories = [nature, speech, crafts];
 const wordIdsOf = (category: Category) =>
   [0, 1, 2].map((index) => `w_${category.id}${String(index)}`);
 /** The Language Pack's Categories of Corrections, in its order (ADR 0033). */
-const work: Category = { id: 'work', displayName: 'At work' };
-const shop: Category = { id: 'shop', displayName: 'In the shop' };
+const work: Category = {
+  id: 'work',
+  displayName: 'At work',
+  description: 'At work.',
+  tone: 'loud',
+};
+const shop: Category = {
+  id: 'shop',
+  displayName: 'In the shop',
+  description: 'In the shop.',
+  tone: 'loud',
+};
 const correctionCategories = [work, shop];
 /** The live Corrections: the first at work, the second in the shop. */
 const correctionIds = ['c_one', 'c_two'];
@@ -294,7 +319,12 @@ describe('the Mix', () => {
   });
 
   describe('over a Language Pack with a new Category', () => {
-    const military: Category = { id: 'military', displayName: 'Military' };
+    const military: Category = {
+      id: 'military',
+      displayName: 'Military',
+      description: 'Military.',
+      tone: 'loud',
+    };
     const updated = createMemoryContentPort({
       categories: [...categories, military],
       words: [...categories, military].flatMap((category) =>
@@ -883,7 +913,12 @@ describe('the Categories of Corrections in the Mix', () => {
   });
 
   it('keeps the two lists apart: a Word Category and a Category of Corrections may share an id', async () => {
-    const twin: Category = { id: 'work', displayName: 'Work words' };
+    const twin: Category = {
+      id: 'work',
+      displayName: 'Work words',
+      description: 'Work words.',
+      tone: 'loud',
+    };
     const pack = createMemoryContentPort({
       categories: [twin, nature],
       correctionCategories,

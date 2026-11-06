@@ -88,7 +88,14 @@ const build = (
     word: from,
     entries: createEntries({
       content: createMemoryContentPort({
-        categories: [{ id: 'household-crafts', displayName: 'Побут і ремесла' }],
+        categories: [
+          {
+            id: 'household-crafts',
+            displayName: 'Побут і ремесла',
+            description: 'Побут і ремесла.',
+            tone: 'loud',
+          },
+        ],
         words: [from, ...words],
         corrections,
         synonymRows,

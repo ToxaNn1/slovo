@@ -22,7 +22,7 @@
 [data-rm="1"] *{animation-name:slRm!important;animation-duration:.3s!important;animation-delay:0s!important;animation-iteration-count:1!important;animation-timing-function:ease!important}
 @keyframes slRm{from{opacity:0}}
 @keyframes slScr{from{clip-path:polygon(100% 0,140% 0,140% 100%,125% 100%);transform:translateX(30px)}to{clip-path:polygon(-40% 0,140% 0,140% 100%,-25% 100%);transform:none}}
-@keyframes slSweep{from{transform:translateX(-170%) skewX(-18deg)}to{transform:translateX(280%) skewX(-18deg)}}
+@keyframes slSweep{from{transform:translateX(-170%) skewX(-18deg)}to{transform:translateX(360%) skewX(-18deg)}}
 @keyframes slCasc{from{opacity:0;transform:translateY(16px)}}
 @keyframes slPop{0%{transform:scale(.6)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
 @keyframes slFly{from{opacity:0;transform:translate(var(--fx,0),var(--fy,40px)) scale(.15) rotate(-30deg)}}
@@ -35,6 +35,20 @@
 @keyframes slBars{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}
 @keyframes slRing{from{stroke-dashoffset:339}}
 @keyframes slLeaf{0%{opacity:0;transform:translate(0,0) rotate(0)}15%{opacity:1}100%{opacity:0;transform:translate(var(--lx),var(--ly)) rotate(320deg)}}
+@keyframes spRupIn{0%{transform:translateY(300px) rotate(8deg)}45%{transform:translateY(-18px) rotate(-3deg)}62%{transform:translateY(0) scale(1.12,.86) rotate(4deg)}74%{transform:scale(.9,1.14) rotate(-6deg)}86%{transform:scale(1.04,.97) rotate(-2deg)}100%{transform:none}}
+@keyframes spShot{0%{opacity:0;transform:translate(var(--fx),var(--fy)) scale(.1) rotate(-18deg)}15%{opacity:1}70%{transform:translate(0,0) scale(1.08) rotate(var(--r))}86%{transform:scale(.97,1.02) rotate(var(--r))}100%{opacity:1;transform:rotate(var(--r))}}
+@keyframes spRing{0%{opacity:0;transform:translate(-50%,-50%) scale(.1)}15%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(7)}}
+@keyframes spShake{0%,100%{transform:none}15%{transform:translate(-3px,2px)}30%{transform:translate(3px,-2px)}45%{transform:translate(-2px,1px)}60%{transform:translate(2px,1px)}80%{transform:translate(-1px,0)}}
+@keyframes spLine{0%{opacity:0;transform:rotate(var(--a)) translateX(30px) scaleX(.1)}30%{opacity:1}100%{opacity:0;transform:rotate(var(--a)) translateX(260px) scaleX(1)}}
+@keyframes spTag{0%{opacity:0;transform:translateX(-110%) rotate(-12.5deg) skewX(-20deg)}70%{opacity:1;transform:translateX(4%) rotate(-12.5deg) skewX(4deg)}100%{opacity:1;transform:rotate(-12.5deg)}}
+@keyframes sxLogo{0%,5%{transform:scale(.7) rotate(-10deg);opacity:0}9%{opacity:1}20%{transform:scale(1.04) rotate(2deg)}26%{transform:scale(1) rotate(0)}38%{transform:scale(1)}41%{transform:scale(1.07)}45%,88%{transform:scale(1);opacity:1}92%,100%{transform:scale(1);opacity:0}}
+@keyframes sxWedge{0%,6%{transform:scaleX(0)}18%{transform:scaleX(1.08)}24%,100%{transform:scaleX(1)}}
+@keyframes sxS{0%,20%{stroke-dashoffset:150}38%,100%{stroke-dashoffset:0}}
+@keyframes sxLet{0%,38%{transform:translateY(105%)}47%{transform:translateY(-6%)}51%,88%{transform:none;opacity:1}92%,100%{transform:none;opacity:0}}
+@keyframes sxTag{0%,52%{opacity:0;transform:translateY(12px)}60%,88%{opacity:1;transform:none}92%,100%{opacity:0}}
+@keyframes sxRup{0%,56%{transform:translateY(220px) rotate(12deg)}66%{transform:translateY(-14px) rotate(-5deg)}71%{transform:translateY(0) scale(1.08,.9) rotate(0)}75%{transform:scale(.95,1.06)}79%,88%{transform:none;opacity:1}92%,100%{transform:none;opacity:0}}
+@keyframes sxShout{0%,73%{opacity:0;transform:scale(.4)}76%{opacity:1;transform:scale(1.1)}80%,86%{opacity:1;transform:scale(1)}89%,100%{opacity:0;transform:scale(1)}}
+@keyframes sxWipe{0%,85%{transform:translateX(-130%) skewX(-14deg)}93%{transform:translateX(0) skewX(-14deg)}100%{transform:translateX(130%) skewX(-14deg)}}
 @keyframes slCut{from{clip-path:polygon(0 58%,0 58%,0 74%,0 74%)}}
 @keyframes slUp{from{transform:translateY(110%)}}
 @keyframes slXp{0%{opacity:0;transform:translateY(10px) scale(.6)}20%{opacity:1;transform:translateY(0) scale(1.15)}100%{opacity:0;transform:translateY(-80px)}}
@@ -51,17 +65,24 @@
 <div data-slovo="1" data-th="{{ th }}" data-rm="{{ rmAttr }}" style="width:406px;height:860px;padding:8px;background:#0B0706;border-radius:62px;box-shadow:0 0 0 1.5px #3A2C27,0 30px 70px rgba(20,12,10,.35);font-family:'Onest',sans-serif;flex:none">
 <div style="position:relative;width:390px;height:844px;border-radius:54px;overflow:hidden;background:var(--bg,#FFF4E6);color:var(--ink,#140C0A);transition:background-color .35s,color .35s">
 
+<sc-if value="{{ isBlank }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;background:#FFF4E6;z-index:5"></div></sc-if>
 <sc-if value="{{ isSplash }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;background:#FF3B2F;overflow:hidden;color:#140C0A;z-index:5">
-  <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
-  <sc-for list="{{ spLetters }}" as="l" hint-placeholder-count="0">
-    <div style="position:absolute;left:{{ l.x }};top:{{ l.y }};font:900 250px/1 Unbounded,sans-serif;letter-spacing:-10px;--fx:{{ l.fx }};--fy:{{ l.fy }};transform:rotate({{ l.rot }});animation:{{ l.anim }}">{{ l.ch }}</div>
-  </sc-for>
-  <div style="position:absolute;inset:0;background:#140C0A;clip-path:polygon(0 58%,100% 36%,100% 52%,0 74%);animation:{{ spCut }}"></div>
-  <div style="position:absolute;left:0;right:0;top:50%;transform:rotate(-12.5deg);display:flex;justify-content:center;color:#FFF4E6;font:800 15px/1 Unbounded,sans-serif;letter-spacing:4px;animation:{{ spCut }}">ЩОДНЯ ОДНЕ СЛОВО</div>
-  <div style="position:absolute;left:110px;top:640px">
-    <dc-import name="Rupor" state="shout" on-red="{{ true }}" size="{{ 180 }}" motion="roll" decor="{{ decorName }}" hint-size="180px,135px"></dc-import>
+<div style="position:absolute;inset:0;background:#FFF4E6;color:#140C0A;overflow:hidden;z-index:5">
+  <div style="position:absolute;left:50%;top:216px;width:200px;height:200px;margin-left:-100px;animation:{{ sxLogo }}">
+    <svg width="200" height="200" viewBox="0 0 100 100" style="display:block;overflow:visible">
+      <polygon points="10,27 90,9 90,91 10,73" fill="#FF3B2F" style="transform-origin:10px 50px;animation:{{ sxWedge }}"></polygon>
+      <path d="M65.5,40 C65.5,33.5 59.5,30.5 52.5,30.5 C45.5,30.5 40,33.5 40,39.5 C40,46 47,47.2 53,48.8 C59.5,50.5 66,52.5 66,59.8 C66,66.5 60,69.5 52.5,69.5 C44.5,69.5 39,66.2 39,59.5" fill="none" stroke="#FFF4E6" stroke-width="11.5" stroke-dasharray="150" style="animation:{{ sxS }}"></path>
+    </svg>
   </div>
+  <div style="position:absolute;left:0;right:0;top:450px;display:flex;justify-content:center;overflow:hidden;padding:4px 0;font:900 58px/1 Unbounded,sans-serif;letter-spacing:-2px">
+    <sc-for list="{{ sxLetters }}" as="l" hint-placeholder-count="5"><span style="display:inline-block;animation:{{ l.anim }}">{{ l.ch }}</span></sc-for>
+  </div>
+  <div style="position:absolute;left:0;right:0;top:534px;display:flex;justify-content:center;color:#4A3E38;font:500 17px/1 Onest,sans-serif;animation:{{ sxTag }}">Щодня одне рідкісне слово</div>
+  <div style="position:absolute;left:96px;bottom:60px;width:200px;display:flex;justify-content:center;transform-origin:50% 100%;animation:{{ sxRup }}">
+    <dc-import name="Rupor" state="shout" size="{{ 150 }}" decor="{{ decorName }}" hint-size="150px,113px"></dc-import>
+    <svg width="46" height="70" viewBox="0 0 46 70" style="position:absolute;right:-6px;top:6px;transform-origin:0 50%;animation:{{ sxShout }}"><polygon points="4,14 40,2 36,12" fill="#FF3B2F"></polygon><polygon points="6,35 44,33 42,41 6,39" fill="#140C0A"></polygon><polygon points="4,56 36,58 40,68" fill="#FF3B2F"></polygon></svg>
+  </div>
+  <div style="position:absolute;top:-40px;bottom:-40px;left:-30%;width:160%;background:#FF3B2F;z-index:8;animation:{{ sxWipe }}"></div>
 </div>
 </sc-if>
 
@@ -69,10 +90,10 @@
 <div style="position:absolute;inset:0;display:flex;flex-direction:column;animation:slScr .55s cubic-bezier(.2,.8,.2,1)">
   <div style="position:relative;height:440px;flex:none;background:#FF3B2F;clip-path:polygon(0 0,100% 0,100% 80%,0 100%);overflow:hidden;color:#140C0A">
     <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
-    <div style="position:absolute;left:-14px;top:96px;font:900 168px/.9 Unbounded,sans-serif;letter-spacing:-8px;white-space:nowrap;transform:rotate(-8deg);animation:slFly .6s cubic-bezier(.2,.9,.25,1.15) both;--fx:-120px;--fy:0px">{{ ob.big }}</div>
-    <div style="position:absolute;right:26px;top:286px">
-      <dc-import name="Rupor" state="{{ ob.m }}" on-red="{{ true }}" size="{{ 140 }}" decor="{{ decorName }}" hint-size="140px,105px"></dc-import>
-    </div>
+    <div style="position:absolute;left:10px;top:120px;font:900 80px/.9 Unbounded,sans-serif;letter-spacing:-4px;white-space:nowrap;transform:rotate(-8deg);animation:slFly .6s cubic-bezier(.2,.9,.25,1.15) both;--fx:-120px;--fy:0px">{{ ob.big }}</div>
+  </div>
+  <div style="position:absolute;right:40px;top:282px;z-index:2;animation:slFly .6s .15s cubic-bezier(.2,.9,.25,1.15) both;--fx:120px;--fy:0px">
+    <dc-import name="Rupor" state="{{ ob.m }}" on-red="{{ true }}" size="{{ 140 }}" decor="{{ decorName }}" hint-size="140px,105px"></dc-import>
   </div>
   <div style="flex:1;display:flex;flex-direction:column;padding:6px 24px 40px;gap:14px">
     <div style="display:flex;gap:6px">
@@ -118,17 +139,18 @@
       <button onClick="{{ reveal }}" style="position:absolute;right:20px;bottom:76px;height:58px;padding:0 24px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 16px/1 Unbounded,sans-serif;letter-spacing:.5px;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)">РОЗКРИТИ</button>
     </sc-if>
     <sc-if value="{{ heroOpen }}" hint-placeholder-val="{{ false }}">
-      <div style="position:absolute;right:-60px;top:-70px;font:900 520px/1 Unbounded,sans-serif;color:#FFF4E6;animation:slFly .7s cubic-bezier(.2,.9,.25,1.1) both;--fx:200px;--fy:-100px">{{ heroGiant }}</div>
       <div style="position:absolute;left:22px;top:24px;font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px">СЛОВО ДНЯ · 2.11</div>
       <div style="position:absolute;left:18px;top:52px;display:flex;font:900 50px/1 Unbounded,sans-serif;letter-spacing:-1.5px">
         <sc-for list="{{ heroLetters }}" as="l" hint-placeholder-count="7"><span style="display:inline-block;--fx:{{ l.fx }};--fy:{{ l.fy }};animation:{{ l.anim }}">{{ l.ch }}</span></sc-for>
       </div>
-      <div style="position:absolute;left:22px;top:118px;font:600 15px/1 Onest;animation:slCasc .4s .65s both">{{ w.stress }} · {{ w.posShort }}</div>
-      <div style="position:absolute;left:22px;top:150px;display:flex;align-items:center;gap:4px;animation:slCasc .4s .72s both">
-        <sc-for list="{{ rarBars }}" as="b" hint-placeholder-count="5"><span style="width:16px;height:12px;background:{{ b.bg }};transform:skewX(-20deg)"></span></sc-for>
-        <span style="margin-left:8px;font:700 12px/1 Unbounded,sans-serif;letter-spacing:1px">РІДКІСТЬ {{ w.rar }}/5</span>
+      <div style="position:absolute;left:14px;right:14px;top:116px;padding:30px 18px 20px;background:#FFF4E6;color:#140C0A;clip-path:polygon(0 14px,100% 0,100% 100%,0 100%);display:flex;flex-direction:column;gap:12px;animation:slCasc .45s .6s both">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span style="font:600 15px/1 Onest">{{ hw.stress }} · {{ hw.posShort }}</span>
+          <span style="display:flex;align-items:center;gap:3px"><sc-for list="{{ rarBars }}" as="b" hint-placeholder-count="5"><span style="width:12px;height:10px;background:{{ b.bg }};transform:skewX(-20deg)"></span></sc-for></span>
+        </div>
+        <span style="font:600 18px/1.4 Onest;text-wrap:pretty">{{ hw.mean }}</span>
+        <span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:#C4271D">РІДКІСТЬ {{ hw.rar }}/5</span>
       </div>
-      <div style="position:absolute;left:22px;top:182px;width:220px;font:600 16px/1.35 Onest;text-wrap:pretty;animation:slCasc .4s .8s both">{{ w.mean }}</div>
       <button onClick="{{ openWord }}" style="position:absolute;right:20px;bottom:76px;height:58px;padding:0 22px;border-radius:16px;background:#140C0A;color:#FFF4E6;box-shadow:0 5px 0 rgba(20,12,10,.45);font:900 15px/1 Unbounded,sans-serif;letter-spacing:.5px;animation:slCasc .4s .9s both;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 rgba(20,12,10,.45)">ДО КАРТКИ →</button>
     </sc-if>
     <sc-for list="{{ leaves }}" as="lf" hint-placeholder-count="0">
@@ -186,88 +208,85 @@
 </div>
 </sc-if>
 
-<sc-if value="{{ isWord }}" hint-placeholder-val="{{ false }}">
-<div style="position:absolute;inset:0;overflow:hidden;background:{{ swBg }};transition:background .2s">
-<div onPointerDown="{{ swDown }}" onPointerMove="{{ swMove }}" onPointerUp="{{ swUp }}" onPointerCancel="{{ swUp }}" style="position:absolute;inset:0;overflow-y:auto;padding-bottom:40px;background:var(--bg);touch-action:pan-y;transform:{{ swTf }};transition:{{ swT }};box-shadow:0 0 40px rgba(20,12,10,{{ swSh }});animation:{{ swAnim }}">
-  <div style="position:relative;height:330px;background:#FF3B2F;clip-path:polygon(0 0,100% 0,100% 84%,0 100%);overflow:hidden;color:#140C0A">
+<sc-if value="{{ isFix }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;overflow-y:auto;padding-bottom:40px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <div style="position:relative;height:392px;background:#FF3B2F;color:#140C0A;clip-path:polygon(0 0,100% 0,100% 88%,0 100%);overflow:hidden">
     <div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div>
-    <div style="position:absolute;right:-80px;top:10px;font:900 440px/1 Unbounded,sans-serif;color:#FFF4E6">{{ w.last }}</div>
-    <div style="position:absolute;left:12px;right:12px;top:54px;display:flex;justify-content:space-between">
-      <button onClick="{{ back }}" style="width:44px;height:44px;border-radius:14px;background:#140C0A;color:#FFF4E6;display:flex;align-items:center;justify-content:center" style-active="transform:scale(.92)"><svg width="18" height="18" viewBox="0 0 24 24"><polygon points="15,2 19,6 12,12 19,18 15,22 4,12" fill="currentColor"></polygon></svg></button>
-      <div style="display:flex;gap:8px">
-        <button onClick="{{ toggleFav }}" aria-label="Улюблене" style="width:44px;height:44px;border-radius:14px;background:#140C0A;color:{{ favFg }};display:flex;align-items:center;justify-content:center;transition:color .2s" style-active="transform:scale(.88)"><span style="display:flex;animation:{{ favAnim }}"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.7c0 5.6-7.5 10.2-7.5 10.2z" fill="{{ favFill }}"></path></svg></span></button>
-        <button onClick="{{ openCollect }}" aria-label="До колекції" style="width:44px;height:44px;border-radius:14px;background:#140C0A;color:#FFF4E6;display:flex;align-items:center;justify-content:center" style-active="transform:scale(.88)"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M6 3h12v18l-6-4.5L6 21z" fill="{{ colFill }}"></path><path d="{{ colD2 }}" stroke="{{ colS2 }}"></path></svg></button>
-        <button onClick="{{ openMenu }}" aria-label="Ще" style="width:44px;height:44px;border-radius:14px;background:{{ dotsBg }};display:flex;align-items:center;justify-content:center;gap:4px" style-active="transform:scale(.88)"><span style="width:5px;height:5px;background:{{ dotsFg }}"></span><span style="width:5px;height:5px;background:{{ dotsFg }}"></span><span style="width:5px;height:5px;background:{{ dotsFg }}"></span></button>
+    <button onClick="{{ back }}" style="position:absolute;left:12px;top:54px;width:44px;height:44px;border-radius:14px;background:#140C0A;color:#FFF4E6;display:flex;align-items:center;justify-content:center" style-active="transform:scale(.92)"><svg width="18" height="18" viewBox="0 0 24 24"><polygon points="15,2 19,6 12,12 19,18 15,22 4,12" fill="currentColor"></polygon></svg></button>
+    <div style="position:absolute;left:22px;top:116px;right:22px;display:flex;flex-direction:column;gap:12px;animation:slCasc .45s .1s both">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:34px;height:34px;border-radius:10px;background:#140C0A;display:flex;align-items:center;justify-content:center"><span style="width:18px;height:18px;background:#FF3B2F;clip-path:{{ fixV.s1 }}"></span></span>
+        <span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:2px">ВИПРАВЛЕННЯ · {{ fixV.cnt }}</span>
       </div>
+      <span style="font:900 36px/1.02 Unbounded,sans-serif;letter-spacing:-1px;text-wrap:balance">{{ fixV.n }}</span>
+      <span style="font:500 15px/1.4 Onest;max-width:220px;text-wrap:pretty">{{ fixV.d }}</span>
     </div>
-    <div style="position:absolute;left:22px;top:124px;font:800 12px/1 Unbounded,sans-serif;letter-spacing:2px">{{ w.label }}</div>
-    <div style="position:absolute;left:18px;top:146px;font:900 50px/1 Unbounded,sans-serif;letter-spacing:-1.5px;animation:slFly .55s cubic-bezier(.2,.9,.25,1.15) both;--fx:-60px;--fy:20px">{{ w.up }}</div>
-    <div style="position:absolute;left:22px;top:210px;font:600 16px/1 Onest">{{ w.stress }}</div>
+    <div style="position:absolute;left:22px;top:292px;width:170px;display:flex;flex-direction:column;gap:8px;animation:slCasc .45s .2s both">
+      <span style="font:800 11px/1 Unbounded,sans-serif;letter-spacing:1.5px">РОЗІБРАНО {{ fixV.prog }}</span>
+      <span style="height:8px;background:rgba(20,12,10,.2);transform:skewX(-20deg)"><span style="display:block;height:100%;width:{{ fixV.pw }};background:#140C0A;transition:width .5s"></span></span>
+    </div>
+    <div style="position:absolute;right:20px;top:238px;animation:slFly .6s .2s cubic-bezier(.2,.9,.25,1.15) both;--fx:100px;--fy:0px"><dc-import name="Rupor" state="shout" on-red="{{ true }}" size="{{ 124 }}" decor="{{ decorName }}" hint-size="124px,93px"></dc-import></div>
   </div>
-  <div style="padding:0 20px;display:flex;flex-direction:column;gap:22px">
-    <div style="display:flex;align-items:center;gap:14px">
-      <button onClick="{{ play }}" style="width:58px;height:58px;border-radius:18px;background:#FF3B2F;color:#140C0A;box-shadow:0 5px 0 #C4271D;display:flex;align-items:center;justify-content:center;flex:none;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(4px);box-shadow:0 1px 0 #C4271D"><svg width="20" height="22" viewBox="0 0 20 22"><polygon points="2,0 20,11 2,22" fill="currentColor"></polygon></svg></button>
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:6px">
-        <span style="font:700 15px/1 Onest">Вимова</span>
-        <div style="display:flex;gap:3px;height:20px;align-items:center">
-          <sc-for list="{{ bars }}" as="b" hint-placeholder-count="14"><span style="width:4px;height:{{ b.h }};background:{{ b.c }};transform-origin:center;animation:{{ b.anim }}"></span></sc-for>
+  <div style="padding:4px 16px 0;display:flex;flex-direction:column;gap:12px">
+    <sc-for list="{{ fixItems }}" as="f" hint-placeholder-count="4">
+      <div style="display:flex;flex-direction:column;gap:12px;padding:16px;border-radius:18px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);animation:{{ f.anim }}">
+        <span style="align-self:flex-start;padding:5px 9px;border-radius:8px;background:var(--sf2);font:700 11px/1 Unbounded,sans-serif;letter-spacing:.5px">{{ f.t }}</span>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <span style="font:700 10px/1 Unbounded,sans-serif;letter-spacing:1.5px;color:var(--mute)">ТАК ЧАСТО КАЖУТЬ</span>
+          <span style="font:600 18px/1.3 Onest;text-decoration:line-through;text-decoration-color:#FF3B2F;text-decoration-thickness:3px">{{ f.wr }}</span>
         </div>
+        <sc-if value="{{ f.off }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ f.show }}" style="height:52px;border-radius:14px;background:var(--ink);color:var(--bg);box-shadow:0 4px 0 rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;padding:0 18px;font:900 13px/1 Unbounded,sans-serif;transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35)">ЯК ПРАВИЛЬНО?</button>
+        </sc-if>
+        <sc-if value="{{ f.on }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-direction:column;gap:8px;padding:14px;margin:0 -4px;background:#FF3B2F;color:#140C0A;clip-path:polygon(0 8px,100% 0,100% 100%,0 100%);padding-top:20px;animation:slPop .35s both">
+            <span style="font:700 10px/1 Unbounded,sans-serif;letter-spacing:1.5px">УКРАЇНСЬКОЮ КРАЩЕ</span>
+            <span style="font:900 19px/1.2 Unbounded,sans-serif;letter-spacing:-.3px">{{ f.ok }}</span>
+            <span style="font:500 14px/1.4 Onest;text-wrap:pretty">{{ f.note }}</span>
+          </div>
+        </sc-if>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
-        <div style="display:flex;gap:3px"><sc-for list="{{ rarBars2 }}" as="b" hint-placeholder-count="5"><span style="width:12px;height:12px;background:{{ b.bg }};transform:skewX(-20deg)"></span></sc-for></div>
-        <span style="font:600 12px/1 Onest;color:var(--mute)">рідкість {{ w.rar }}/5</span>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:8px">
-      <span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:2px;color:var(--mute)">ЗНАЧЕННЯ · {{ w.pos }}</span>
-      <span style="font:500 19px/1.4 Onest;text-wrap:pretty">{{ w.mean }}</span>
-    </div>
-    <div style="display:flex;gap:12px">
-      <span style="flex:none;width:14px;height:22px;background:#FF3B2F;clip-path:polygon(0 0,100% 25%,100% 100%,0 75%);margin-top:4px"></span>
-      <span style="font:400 17px/1.45 Onest;color:var(--ink);text-wrap:pretty">{{ w.ex }}</span>
-    </div>
-    <sc-if value="{{ answered }}" hint-placeholder-val="{{ false }}">
-      <div style="position:relative;display:flex;align-items:center;gap:14px;height:64px;padding:0 18px;border-radius:16px;background:var(--ink);color:var(--bg);animation:slPop .4s both">
-        <span style="font:900 22px/1 Unbounded,sans-serif;color:#FF3B2F">+{{ ansXp }}</span>
-        <span style="font:600 15px/1.3 Onest;flex:1;min-width:0">{{ ansText }}</span>
-        <div style="position:absolute;right:24px;top:-6px;font:900 24px/1 Unbounded,sans-serif;color:#FF3B2F;opacity:0;animation:slXp 1.2s ease-out">+{{ ansXp }} XP</div>
-      </div>
-    </sc-if>
+    </sc-for>
   </div>
 </div>
-<div style="position:absolute;left:0;top:236px;z-index:5;padding:14px 26px 14px 20px;background:#140C0A;color:#FFF4E6;clip-path:polygon(0 0,100% 18%,100% 82%,0 100%);display:flex;align-items:center;gap:10px;font:900 26px/1 Unbounded,sans-serif;letter-spacing:-.02em;opacity:{{ swKOp }};transform:translateX({{ swKX }});animation:{{ swKAnim }};pointer-events:none"><svg width="24" height="20" viewBox="0 0 26 22"><polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill="#FF3B2F"></polygon></svg>ЗНАЮ</div>
-<div style="position:absolute;right:0;top:236px;z-index:5;padding:14px 20px 14px 26px;background:#FFF4E6;color:#140C0A;clip-path:polygon(0 18%,100% 0,100% 100%,0 82%);box-shadow:inset 0 0 0 4px #140C0A;display:flex;align-items:center;gap:10px;font:900 26px/1 Unbounded,sans-serif;letter-spacing:-.02em;opacity:{{ swLOp }};transform:translateX({{ swLX }});animation:{{ swLAnim }};pointer-events:none">НЕ ЗНАЮ<svg width="20" height="22" viewBox="0 0 24 24"><path d="M6 3h12v18l-6-4.5L6 21z" fill="#140C0A"></path></svg></div>
-<sc-if value="{{ swTut }}" hint-placeholder-val="{{ false }}">
-  <div style="position:absolute;inset:0;z-index:60;background:rgba(20,12,10,.45);animation:slFade .3s both;pointer-events:none"></div>
-  <div style="position:absolute;left:0;right:0;bottom:0;z-index:61;padding:58px 16px 34px;background:var(--sf);clip-path:polygon(0 28px,100% 0,100% 100%,0 100%);animation:slSheet .5s .15s cubic-bezier(.2,.9,.3,1) both;display:flex;flex-direction:column;gap:10px">
-    <div style="position:absolute;left:18px;top:26px;padding:10px 16px;background:#140C0A;color:#FFF4E6;font:900 17px/1 Unbounded,sans-serif;transform:rotate(-4.1deg);transform-origin:left">ГОРТАЙТЕ ПАЛЬЦЕМ</div>
-    <div style="height:6px"></div>
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;animation:tuRowR 5.6s infinite"><span style="flex:none;width:40px;height:40px;border-radius:11px;background:#140C0A;color:#FFF4E6;display:flex;align-items:center;justify-content:center"><svg width="18" height="14" viewBox="0 0 18 14"><polygon points="18,7 11,0 11,4 0,4 0,10 11,10 11,14" fill="currentColor"></polygon></svg></span><span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 15px/1.1 Unbounded,sans-serif">Вправо — знаю</span><span style="font:500 13px/1.3 Onest">Слово піде в підтверджені.</span></span></div>
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;animation:tuRowL 5.6s infinite"><span style="flex:none;width:40px;height:40px;border-radius:11px;background:#FFF4E6;color:#140C0A;border:2px solid #140C0A;display:flex;align-items:center;justify-content:center"><svg width="18" height="14" viewBox="0 0 18 14"><polygon points="0,7 7,0 7,4 18,4 18,10 7,10 7,14" fill="currentColor"></polygon></svg></span><span style="display:flex;flex-direction:column;gap:3px"><span style="font:900 15px/1.1 Unbounded,sans-serif">Вліво — не знаю</span><span style="font:500 13px/1.3 Onest">Додам у «Вчу» з днем повторення.</span></span></div>
-    <button onClick="{{ swTutDone }}" style="margin-top:6px;height:60px;border-radius:16px;background:var(--ink);color:var(--bg);box-shadow:0 5px 0 rgba(0,0,0,.35);font:900 15px/1 Unbounded,sans-serif;display:flex;align-items:center;justify-content:center;width:100%">ЗРОЗУМІЛО</button>
-  </div>
 </sc-if>
+
+<sc-if value="{{ isWord }}" hint-placeholder-val="{{ false }}">
+<div style="position:absolute;inset:0;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
+  <dc-import name="XSwipeV" bare="{{ true }}" key="{{ pgKey }}" words="{{ pgWords }}" screen="{{ pgScreen }}" theme="{{ thName }}" reduce-motion="{{ rmOn }}" on-back="{{ back }}" on-tut-done="{{ swTutDone }}" on-mark="{{ pgMark }}" style="position:absolute;inset:0" hint-size="100%,100%"></dc-import>
 </div>
 </sc-if>
 
 <sc-if value="{{ isCat }}" hint-placeholder-val="{{ false }}">
 <div style="position:absolute;inset:0;overflow-y:auto;padding-bottom:40px;animation:slScr .5s cubic-bezier(.2,.8,.2,1)">
-  <div style="position:relative;height:340px;background:{{ catV.bg }};color:{{ catV.fg }};overflow:hidden;--ink:{{ catV.ink }}">
-    <sc-if value="{{ catV.loud }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div><div style="position:absolute;right:-30px;top:40px;width:240px;height:240px;background:#140C0A;clip-path:{{ catV.s1 }}"></div></sc-if>
+  <div style="position:relative;height:392px;background:{{ catV.bg }};color:{{ catV.fg }};clip-path:polygon(0 0,100% 0,100% 88%,0 100%);overflow:hidden">
+    <sc-if value="{{ catV.loud }}" hint-placeholder-val="{{ true }}"><div style="position:absolute;inset:0;background-image:radial-gradient(rgba(20,12,10,.22) 1.1px,transparent 1.6px);background-size:6px 6px"></div></sc-if>
     <button onClick="{{ back }}" style="position:absolute;left:12px;top:54px;width:44px;height:44px;border-radius:14px;background:{{ catV.btn }};color:{{ catV.btnFg }};display:flex;align-items:center;justify-content:center" style-active="transform:scale(.92)"><svg width="18" height="18" viewBox="0 0 24 24"><polygon points="15,2 19,6 12,12 19,18 15,22 4,12" fill="currentColor"></polygon></svg></button>
-    <div style="position:absolute;left:22px;top:120px;right:22px;display:flex;flex-direction:column;gap:10px">
-      <span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:2px">КАТЕГОРІЯ · {{ catV.cnt }}</span>
-      <span style="font:900 32px/1.05 Unbounded,sans-serif;letter-spacing:-.5px;text-wrap:balance;max-width:260px">{{ catV.n }}</span>
-      <span style="font:500 15px/1.4 Onest;max-width:230px;text-wrap:pretty">{{ catV.d }}</span>
-    </div>
-    <div style="position:absolute;right:18px;bottom:16px"><dc-import name="Rupor" state="{{ catV.m }}" on-red="{{ catV.loud }}" size="{{ 120 }}" decor="{{ catV.decor }}" hint-size="120px,90px"></dc-import></div>
-  </div>
-  <div style="padding:8px 20px 0">
-    <sc-for list="{{ catWords }}" as="r" hint-placeholder-count="3">
-      <div style="display:flex;flex-direction:column;gap:4px;padding:16px 0;border-bottom:1px solid var(--line);animation:{{ r.anim }}">
-        <span style="font:800 18px/1.1 Unbounded,sans-serif">{{ r.w }}</span>
-        <span style="font:400 15px/1.35 Onest;color:var(--mute)">{{ r.m }}</span>
+    <button onClick="{{ catV.toggleMix }}" style="position:absolute;right:12px;top:54px;height:44px;padding:0 16px;border-radius:14px;background:{{ catV.mixBg }};color:{{ catV.mixFg }};box-shadow:{{ catV.mixSh }};display:flex;align-items:center;gap:8px;font:900 12px/1 Unbounded,sans-serif;letter-spacing:.5px;transition:background .2s,color .2s" style-active="transform:translateY(3px);box-shadow:none"><span style="display:flex;animation:{{ catV.mixAnim }}"><svg width="14" height="14" viewBox="0 0 26 22"><polygon points="{{ catV.mixIc }}" fill="currentColor"></polygon></svg></span>{{ catV.mixT }}</button>
+    <div style="position:absolute;left:22px;top:116px;right:22px;display:flex;flex-direction:column;gap:12px;animation:slCasc .45s .1s both">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="width:34px;height:34px;border-radius:10px;background:{{ catV.tile }};display:flex;align-items:center;justify-content:center"><span style="width:18px;height:18px;background:{{ catV.tileFg }};clip-path:{{ catV.s1 }}"></span></span>
+        <span style="font:700 11px/1 Unbounded,sans-serif;letter-spacing:2px">КАТЕГОРІЯ · {{ catV.cnt }}</span>
       </div>
+      <span style="font:900 36px/1.02 Unbounded,sans-serif;letter-spacing:-1px;text-wrap:balance">{{ catV.n }}</span>
+      <span style="font:500 15px/1.4 Onest;max-width:220px;text-wrap:pretty">{{ catV.d }}</span>
+    </div>
+    <div style="position:absolute;left:22px;top:292px;width:170px;display:flex;flex-direction:column;gap:8px;animation:slCasc .45s .2s both">
+      <span style="font:800 11px/1 Unbounded,sans-serif;letter-spacing:1.5px">ЗНАЮ {{ catV.prog }}</span>
+      <span style="height:8px;background:{{ catV.barBg }};transform:skewX(-20deg)"><span style="display:block;height:100%;width:{{ catV.pw }};background:{{ catV.bar }};transition:width .5s"></span></span>
+    </div>
+    <div style="position:absolute;right:20px;top:238px;animation:slFly .6s .2s cubic-bezier(.2,.9,.25,1.15) both;--fx:100px;--fy:0px"><dc-import name="Rupor" state="{{ catV.m }}" on-red="{{ catV.loud }}" size="{{ 124 }}" decor="{{ catV.decor }}" hint-size="124px,93px"></dc-import></div>
+  </div>
+  <div style="padding:4px 16px 0;display:flex;flex-direction:column;gap:10px">
+    <sc-for list="{{ catWords }}" as="r" hint-placeholder-count="4">
+      <button onClick="{{ r.onClick }}" style="display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:16px;border-radius:18px;background:var(--tile);box-shadow:0 4px 0 var(--edge);border:1px solid var(--line);text-align:left;animation:{{ r.anim }};transition:transform .08s,box-shadow .08s" style-active="transform:translateY(3px);box-shadow:0 1px 0 var(--edge)">
+        <span style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <span style="font:800 19px/1.1 Unbounded,sans-serif">{{ r.w }}</span>
+          <sc-if value="{{ r.known }}" hint-placeholder-val="{{ false }}"><span style="padding:5px 8px;background:var(--ink);color:var(--bg);font:800 10px/1 Unbounded,sans-serif;letter-spacing:1px;transform:rotate(-3deg)">ЗНАЮ</span></sc-if>
+        </span>
+        <span style="display:flex;align-items:center;gap:10px"><span style="font:500 13px/1 Onest;color:var(--mute)">{{ r.stress }} · {{ r.posShort }}</span><span style="display:flex;gap:2px"><sc-for list="{{ r.bars }}" as="b" hint-placeholder-count="5"><span style="width:9px;height:8px;background:{{ b.bg }};transform:skewX(-20deg)"></span></sc-for></span></span>
+        <span style="font:400 15px/1.4 Onest;text-wrap:pretty">{{ r.mean }}</span>
+      </button>
     </sc-for>
   </div>
 </div>
@@ -788,6 +807,36 @@ const OB=[{big:'СЛОВО',t:'Щодня одне рідкісне слово',
 const GOALS=[{n:'1',l:'слово'},{n:'3',l:'слова'},{n:'5',l:'слів'}];
 const COLS=[{n:'Осінні слова',c:'6 слів',t:'20:30'},{n:'Для листа колезі, яка обожнює канцелярит',c:'12 слів',t:'вчора'},{n:'Карпатські діалекти',c:'14 слів',t:'28 жов'}];
 const SAVEDCOLS=[{n:'Осінні слова',c:'6 слів',t:'20:30'},{n:'Для листа колезі, яка обожнює канцелярит',c:'12 слів',t:'вчора'},{n:'Карпатські діалекти',c:'14 слів',t:'28 жов'},{n:'Смішні',c:'3 слова',t:'25 жов'}];
+const FIX_RAW=[
+ ['суржик','Слова, що прослизають у мову непомітно.',[['Скіко коштує?','Скільки коштує?','«Скіко» — суржикова форма, у літературній мові лише «скільки».'],['Він на мене обіжається','Він на мене ображається','Дієслово «ображатися» має корінь «образ-».'],['Получилося','Вийшло / вдалося','«Получитися» — пряме запозичення.'],['Ладно, давай','Гаразд, давай','«Ладно» — росіянізм; кажіть «гаразд» або «добре».']]],
+ ['наголос','Де ставити наголос, щоб не різало вухо.',[['дОговір','до́говір → догові́р','Правильно — догові́р.'],['кУхонний','ку́хонний → кухо́нний','Наголос на другому складі: кухо́нний.'],['вИпадок','ви́падок','Тут правильно саме ви́падок — перевірте себе.'],['фенОмен','фено́мен','Наголос на «о»: фено́мен.']]],
+ ['калька','Дослівні переклади, що звучать не по-нашому.',[['Приймати участь','Брати участь','Участь беруть, а не приймають.'],['Самий кращий','Найкращий','Найвищий ступінь утворюємо через «най-».'],['Співпадати','Збігатися','«Співпадати» — калька з російської.'],['Вірна відповідь','Правильна відповідь','«Вірний» — це про друга, а не про відповідь.']]],
+ ['канцелярит','Коли людина пише, як довідка з ЖЕКу.',[['Здійснити оплату','Оплатити','Одне дієслово замість двох слів.'],['У зв’язку з тим, що','Бо, оскільки','Коротше — і зрозуміліше.'],['Провести зустріч','Зустрітися','Дія краща за процес.'],['Надати допомогу','Допомогти','Не надавайте — просто допомагайте.']]],
+ ['пароніми','Схожі слова з різним змістом.',[['Ефектна знижка','Ефективна знижка','Ефектна — та, що вражає; ефективна — та, що діє.'],['Дільниця лікаря','Ділянка лікаря','Дільниця — адміністративна; ділянка — частина площі.'],['Уява про справу','Уявлення про справу','Уява — фантазія; уявлення — розуміння.'],['Особистий рахунок','Особовий рахунок','Особовий — закріплений за особою.']]],
+ ['відмінок','Закінчення, що видають неуважність.',[['Пане Олег!','Пане Олегу!','Кличний відмінок: Олегу.'],['Немає часа','Немає часу','Родовий відмінок: часу.'],['Дякую вас','Дякую вам','«Дякувати» — кому? Вам.'],['Згідно наказу','Згідно з наказом','Після «згідно» — «з» і орудний відмінок.']]],
+ ['правопис','Літери, через які сперечаються в чатах.',[['Пів-яблука','Пів яблука','«Пів» пишемо окремо перед іменником.'],['Будь ласка у Києві','Будь ласка, у Києві','Звертання виокремлюємо комами.'],['Проект','Проєкт','З 2019 року — через «є».'],['Ії','її','Займенник пишемо з «ї» двічі.']]]
+];
+const CW_RAW=[
+ ['Слова, якими небо говорить із землею.',[['Мжичка','мжи́ч-ка','ім., ж. р.',3,'Дрібний густий дощ, що ніби висить у повітрі.','Зранку сіялася мжичка, і місто стояло сіре.'],['Паморозь','па́-мо-розь','ім., ж. р.',3,'Іній на гілках і дротах після туману.','Паморозь обсипала верби, наче цукром.'],['Сльота','сльо-та́','ім., ж. р.',2,'Мокра негода з дощем і снігом.','У сльоту ніхто не поспішав надвір.'],['Хурделиця','хур-де́-ли-ця','ім., ж. р.',3,'Сильна заметіль, снігова буря з вітром.','Хурделиця замела дорогу до самого лісу.']]],
+ ['Для всього, що відчуваєш, але не можеш назвати.',[['Млість','млість','ім., ж. р.',4,'Солодка знемога, приємна слабкість.','Після бані тілом розлилася млість.'],['Жура','жу-ра́','ім., ж. р.',2,'Смуток, журба.','Не давай журі взяти гору.'],['Острах','о́ст-рах','ім., ч. р.',3,'Раптовий страх, тривога.','Острах минув, щойно засвітилося вікно.'],['Захват','за́х-ват','ім., ч. р.',2,'Сильне захоплення.','Діти дивилися на салют у захваті.']]],
+ ['Речі з бабусиної хати, які варто пам’ятати.',[['Мисник','ми́с-ник','ім., ч. р.',4,'Полиця для посуду на стіні.','На миснику блищали розмальовані миски.'],['Рядно','ряд-но́','ім., с. р.',4,'Груба домоткана тканина, покривало.','Яблука сушили на рядні під сонцем.'],['Ослін','о́с-лін','ім., ч. р.',3,'Довга лава без спинки.','Гості посідали рядком на ослоні.'],['Глечик','гле́-чик','ім., ч. р.',2,'Глиняний посуд для молока.','У глечику ще було холодне молоко.']]],
+ null,
+ ['Майстри, чиї назви пережили їхні цехи.',[['Бондар','бо́н-дар','ім., ч. р.',3,'Майстер, що робить діжки й бочки.','Бондар набивав обручі на нову діжку.'],['Лимар','ли-ма́р','ім., ч. р.',4,'Майстер кінської збруї.','Лимар полагодив хомут до ярмарку.'],['Кушнір','куш-ні́р','ім., ч. р.',4,'Майстер хутряного одягу.','Кушнір пошив кожух на всю зиму.'],['Гончар','гон-ча́р','ім., ч. р.',1,'Майстер глиняного посуду.','Гончар крутив коло й співав.']]],
+ ['Смачні слова, від яких хочеться їсти.',[['Пундик','пун-ди́к','ім., ч. р.',4,'Пухкий пиріжок, пампушка.','До чаю спекли пундиків із маком.'],['Затірка','за-ті́р-ка','ім., ж. р.',3,'Суп із дрібних грудочок тіста.','Бабуся варила затірку на молоці.'],['Куліш','ку-лі́ш','ім., ч. р.',2,'Густа пшоняна каша із салом.','Куліш варили просто на вогнищі.'],['Узвар','уз-ва́р','ім., ч. р.',2,'Напій із сушених фруктів.','На Святвечір узвар стояв на покуті.']]],
+ ['Поля, луги й обрії, назви яких ми забули.',[['Оболонь','о-бо-ло́нь','ім., ж. р.',4,'Низинний луг біля річки, який навесні заливає повінь.','Навесні оболонь ставала морем.'],['Левада','ле-ва́-да','ім., ж. р.',3,'Луг біля хати, часто з деревами.','За хатою починалася левада.'],['Видноколо','вид-но-ко́-ло','ім., с. р.',3,'Лінія, де небо ніби торкається землі; обрій.','Аж до видноколу тяглися поля.'],['Заграва','за-гра́-ва','ім., ж. р.',4,'Червоне світло на небі під час сходу чи заходу сонця.','Над лісом палала заграва.']]],
+ ['Як звучить світ, якщо слухати уважно.',[['Шемріт','ше́м-ріт','ім., ч. р.',4,'Тихий шелест, шепіт.','З очерету долинав шемріт.'],['Гомін','го́-мін','ім., ч. р.',2,'Неголосний гул багатьох голосів.','На майдані стояв гомін.'],['Дзенькіт','дзе́нь-кіт','ім., ч. р.',2,'Тонкий брязкіт скла чи металу.','Дзенькіт келихів розбудив кота.'],['Гамір','га́-мір','ім., ч. р.',2,'Галас, шум.','У класі здійнявся гамір.']]],
+ ['Дієслова, що рухаються самі.',[['Метлятися','мет-ля́-ти-ся','дієсл.',4,'Швидко рухатися туди-сюди.','Хвіст метлявся від радості.'],['Шугати','шу-га́-ти','дієсл.',3,'Швидко й легко злітати.','Ластівки шугали над ставом.'],['Чвалати','чва-ла́-ти','дієсл.',3,'Іти повільно, неохоче.','Він чвалав додому під дощем.'],['Дріботіти','дрі-бо-ті́-ти','дієсл.',3,'Іти дрібними кроками.','Дитина дріботіла за мамою.']]],
+ ['Ніжні слова для найближчих.',[['Любас','лю-ба́с','ім., ч. р.',4,'Коханий, милий.','Чекала любаса з далекої дороги.'],['Ладо','ла́-до','ім., ч. р.',4,'Коханий чи кохана (поет.).','Ой ти, ладо моє.'],['Залицятися','за-ли-ця́-ти-ся','дієсл.',2,'Упадати за кимось.','Він довго залицявся до сусідки.'],['Сватання','сва́-тан-ня','ім., с. р.',2,'Обряд, коли просять руки.','На сватання прийшли з хлібом.']]],
+ ['Інструменти й звуки, що грали до радіо.',[['Дримба','дри́м-ба','ім., ж. р.',4,'Губний музичний інструмент, варган.','Пастух грав на дримбі.'],['Трембіта','трем-бі́-та','ім., ж. р.',2,'Довга гуцульська дерев’яна труба.','Трембіта сповістила про свято.'],['Кобза','ко́б-за','ім., ж. р.',2,'Старовинний струнний інструмент.','Кобзар заграв на кобзі.'],['Ліра','лі́-ра','ім., ж. р.',2,'Струнний інструмент із колесом.','Лірник крутив ручку ліри.']]],
+ ['Як кажуть у різних куточках країни.',[['Бамбетель','бам-бе́-тель','ім., ч. р.',5,'Лава-скриня, на якій сплять (зах.).','Діти спали на бамбетелі.'],['Ґазда','ґа́з-да','ім., ч. р.',3,'Господар (гуц.).','Ґазда вийшов зустріти гостей.'],['Бараболя','ба-ра-бо́-ля','ім., ж. р.',3,'Картопля (зах.).','На вечерю зварили бараболю.'],['Файний','фа́й-ний','прикм.',2,'Гарний (зах.).','Який файний день!']]],
+ ['Слова, що пам’ятають князів і літописи.',[['Десниця','дес-ни́-ця','ім., ж. р.',4,'Права рука.','Підняв десницю на знак миру.'],['Вої','во́-ї','ім., мн.',4,'Воїни, військо.','Вої стали під стінами міста.'],['Перст','перст','ім., ч. р.',3,'Палець.','Вказав перстом на північ.'],['Чоло','чо-ло́','ім., с. р.',2,'Лоб.','Витер піт із чола.']]],
+ ['Нові слова, що вже прижилися.',[['Вподобайка','впо-до-ба́й-ка','ім., ж. р.',2,'Позначка «подобається» в мережі.','Допис зібрав сто вподобайок.'],['Застосунок','за-сто-су́-нок','ім., ч. р.',1,'Програма для телефона.','Встановив новий застосунок.'],['Світлина','світ-ли́-на','ім., ж. р.',1,'Фотографія.','Надіслав світлину з моря.'],['Мапа','ма́-па','ім., ж. р.',1,'Карта.','Розгорнули мапу на столі.']]],
+ ['Як говорять, коли ніхто не перевіряє.',[['Шара','ша́-ра','ім., ж. р.',3,'Щось безкоштовне (розм.).','На концерт пройшли на шару.'],['Хавчик','ха́в-чик','ім., ч. р.',2,'Їжа (розм.).','Хто взяв хавчик у дорогу?'],['Тусити','ту-си́-ти','дієсл.',2,'Проводити час у компанії.','Ми тусили до ранку.'],['Кринж','кринж','ім., ч. р.',2,'Сором за когось (розм.).','Це був повний кринж.']]],
+ ['Точні слова для точних речей.',[['Тяжіння','тя-жі́н-ня','ім., с. р.',2,'Сила, що притягує тіла одне до одного.','Тяжіння тримає Місяць біля Землі.'],['Сузір’я','су-зі́р-’я','ім., с. р.',1,'Група зір на небі.','Знайшли сузір’я Великого Воза.'],['Вісь','вісь','ім., ж. р.',1,'Пряма, навколо якої щось обертається.','Земля обертається навколо осі.'],['Летючість','ле-тю́-чість','ім., ж. р.',3,'Здатність речовини випаровуватися.','Спирт має високу летючість.']]]
+];
+const MOURN_FULL=[['Надвечір’я','над-ве́-чір-’я','ім., с. р.',4,'Час перед вечором, коли сонце вже низько.','Надвечір’ям село притихло.'],['Сутінь','су́-тінь','ім., ж. р.',3,'Напівтемрява, присмерк.','У сутіні ледь видніли хати.'],['Пломінь','пло́-мінь','ім., ч. р.',4,'Полум’я, вогонь.','Пломінь освітив обличчя.'],['Мрево','мре́-во','ім., с. р.',4,'Тремтливе марево над землею в спеку.','Над степом тремтіло мрево.']];
+const POS={'ім., ж. р.':'іменник, жін. рід','ім., ч. р.':'іменник, чол. рід','ім., с. р.':'іменник, сер. рід','ім., мн.':'іменник, множина','дієсл.':'дієслово','прикм.':'прикметник'};
+const mkW=a=>({w:a[0],stress:a[1],posShort:a[2],pos:POS[a[2]]||a[2],rar:a[3],mean:a[4],ex:a[5],d:''});
 const MOURN_W=[{w:'Надвечір’я',m:'Час перед вечором, коли сонце вже низько.'},{w:'Сутінь',m:'Напівтемрява, присмерк.'},{w:'Пломінь',m:'Полум’я, вогонь.'}];
 const ICON={tri:'polygon(0 0,100% 50%,0 100%)',sq:'polygon(0 0,100% 15%,100% 100%,0 85%)',dia:'polygon(50% 0,100% 50%,50% 100%,0 50%)',hex:'polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)',wedge:'polygon(0 0,100% 30%,100% 70%,0 100%)',bar:'polygon(0 30%,100% 0,100% 70%,0 100%)'};
 const TABI={feed:'polygon(0 10%,100% 0,100% 38%,0 46%,0 56%,100% 50%,100% 100%,0 100%)',games:'polygon(50% 0,100% 50%,50% 100%,0 50%,22% 50%,50% 78%,78% 50%,50% 22%,22% 50%,0 50%)',saved:'polygon(12% 8%,88% 0,88% 100%,50% 74%,12% 100%)',profile:'polygon(30% 0,70% 0,74% 40%,50% 48%,26% 40%,30% 0,30% 0,0 100%,8% 58%,92% 54%,100% 100%,0 100%)'};
@@ -805,7 +854,7 @@ class Component extends DCLogic {
   later(fn,ms){this._tm.push(setTimeout(fn,ms));}
   componentDidMount(){
     try{ if(matchMedia('(prefers-reduced-motion: reduce)').matches) this.setState({rm:true}); }catch(e){}
-    if(this.state.screen==='splash') this.startSplash('first');
+    if(this.state.screen==='splash') this.startSplash((this.props.start||'').split(':')[1]==='daily'?'daily':'first');
     const [a,arg]=(this.props.start||'').split(':');
     if(a==='cat') this.setState({cat:+arg||0});
     if(a==='sub') this.setState({sub:arg});
@@ -831,13 +880,15 @@ class Component extends DCLogic {
       g.gain.setValueAtTime(.08,t);g.gain.exponentialRampToValueAtTime(.001,t+s[3]);o.start(t);o.stop(t+s[3]+.02);
     }catch(e){}
   }
-  go(screen,extra){this.setState(s=>({screen,prev:s.screen,sweepK:s.sweepK+1,...(extra||{})}));}
+  go(screen,extra){this.setState(s=>({screen,prev:s.screen,sweepK:s.sweepK+1,...(screen==='word'?{catWord:null}:{}),...(extra||{})}));}
   toast(text){clearTimeout(this._toastT);this.setState({toast:null});this.later(()=>this.setState({toast:{text}}),30);this._toastT=setTimeout(()=>this.setState({toast:null}),2800);}
   startSplash(kind){
     this.setState({screen:'splash',splash:kind});
     const rm=this.state.rm;
     this.later(()=>this.snd('shout'),kind==='first'?550:100);
-    this.later(()=>this.go(kind==='first'?'ob':'feed'),kind==='first'?(rm?800:2050):(rm?350:560));
+    if(this.props.loop)return;
+    const dur=kind==='first'?(rm?800:2050):(rm?350:560);
+    this.later(()=>this.go(kind==='first'?'ob':'feed'),dur);
   }
   // games
   rounds(m){return m==='stress'?STRESS:m==='anagram'?ANA:m==='pairs'?PAIRS:(m==='time'||m==='blitz')?TIMEQ:m==='marathon'?[...CHOOSE,...TIMEQ.slice(5),...EXTRAQ.surzh,...EXTRAQ.syn]:EXTRAQ[m]||CHOOSE;}
@@ -931,16 +982,19 @@ class Component extends DCLogic {
     const decorName=s.decor?(this.props.season||'autumn'):'none';
     const v={th,rmAttr:rm?'1':'0',decorName,xp:s.xp,xpLeft:Math.max(0,1000-s.xp)};
     ['splash','ob','feed','word','cat','games','game','over','cw','saved','profile','settings','sub'].forEach(k=>v['is'+k[0].toUpperCase()+k.slice(1)]=scr===k);
-    v.isOb=scr==='ob';v.isCw=scr==='cw';
-    const red=scr==='splash'||!!s.stamp;
-    v.sbColor=red?K:(['word','over','ob','cat'].includes(scr)?(scr==='cat'&&CATS[s.cat]==='Розстріляна лексика'?C:K):'var(--ink)');
+    v.isOb=scr==='ob';v.isBlank=scr==='blank';v.isCw=scr==='cw';
+    const red=!!s.stamp;
+    v.sbColor=red?K:(['word','over','ob','cat','fix'].includes(scr)?(scr==='cat'&&CATS[s.cat]==='Розстріляна лексика'?C:K):'var(--ink)');
     if(scr==='cw'&&s.cw.solved) v.sbColor=K;
-    v.sweep=(s.sweepK&&!rm)?React.createElement('div',{key:'sw'+s.sweepK,style:{position:'absolute',top:0,bottom:0,left:0,width:'45%',zIndex:60,pointerEvents:'none',background:R,transform:'translateX(280%) skewX(-18deg)',animation:'slSweep .5s cubic-bezier(.6,0,.3,1) both'}}):null;
+    v.sweep=(s.sweepK&&!rm)?React.createElement('div',{key:'sw'+s.sweepK,style:{position:'absolute',top:0,bottom:0,left:0,width:'45%',zIndex:60,pointerEvents:'none',background:R,transform:'translateX(360%) skewX(-18deg)',animation:'slSweep .5s cubic-bezier(.6,0,.3,1) both'}}):null;
     // splash
     const f=s.splash==='daily'?.28:1;
-    const L=[['С','-40px','70px','-4deg'],['Л','178px','110px','6deg'],['О','-56px','300px','3deg'],['В','190px','330px','-7deg'],['О','40px','520px','-10deg']];
-    v.spLetters=L.map((l,i)=>({ch:l[0],x:l[1],y:l[2],rot:l[3],fx:(200-parseInt(l[1])-110)+'px',fy:(700-parseInt(l[2])-120)+'px',anim:`slFly ${.5*f}s ${(.5+i*.08)*f}s cubic-bezier(.2,.9,.25,1.15) both`}));
-    v.spCut=`slCut ${.35*f}s ${1.25*f}s cubic-bezier(.7,0,.3,1) both`;
+    const L=[['С','14px','64px','-5deg'],['Л','198px','92px','5deg'],['О','10px','250px','4deg'],['В','200px','276px','-6deg'],['О','96px','540px','-8deg']];
+    {const lp=!!this.props.loop,D=(lp?4.2:s.splash==='daily'?.6:2.2)+'s',it=lp?' infinite':'';
+     const an=(k,e,d)=>rm?'slFade .4s both':`${k} ${D} ${e} ${d||'0s'}${it} both`;
+     v.sxLogo=an('sxLogo','cubic-bezier(.3,1,.4,1)');v.sxWedge=an('sxWedge','cubic-bezier(.7,0,.2,1)');v.sxS=an('sxS','cubic-bezier(.5,0,.3,1)');
+     v.sxTag=an('sxTag','ease-out');v.sxRup=an('sxRup','cubic-bezier(.3,1,.4,1)');v.sxShout=an('sxShout','ease-out');v.sxWipe=rm?'none;display:none':an('sxWipe','cubic-bezier(.7,0,.3,1)');
+     v.sxLetters='SLOVO'.split('').map((ch,i)=>({ch,anim:rm?'none':an('sxLet','cubic-bezier(.2,.9,.3,1.2)',(lp?i*.07:i*.04*(s.splash==='daily'?.3:1))+'s')}));}
     // onboarding
     const ob=OB[s.ob];v.ob=ob;v.obGoal=s.ob===2;
     v.obDots=OB.map((_,i)=>({w:i===s.ob?'34px':'14px',bg:i<=s.ob?R:'var(--sil)'}));
@@ -950,7 +1004,7 @@ class Component extends DCLogic {
     // feed
     v.heroIdle=!s.revealed&&!s.revealing;v.heroOpen=s.revealed||s.revealing;
     v.heroMascot=s.revealing?'shout':s.revealed?'happy':'wait';
-    const W=WORDS[0];
+    const W=WORDS[0];v.hw=W;
     v.heroGiant='З';
     v.heroLetters=W.w.toUpperCase().split('').map((ch,i)=>({ch,fx:(60-20-i*44)+'px',fy:'240px',anim:`slFly .55s ${.12+i*.06}s cubic-bezier(.2,.9,.25,1.2) both`}));
     v.leaves=s.decor?[0,1,2,3,4].map(i=>({clip:decorName==='winter'?'polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)':'polygon(0 50%,45% 0,100% 50%,45% 100%)',sz:decorName==='winter'?'12px':'9px',c:decorName==='winter'?C:(i%2?C:K),lx:(90+i*40)+'px',ly:(40+i*14)+'px',anim:`slLeaf ${3+i*.4}s ${i*.7}s linear infinite`})):[];
@@ -961,10 +1015,10 @@ class Component extends DCLogic {
     v.recent=WORDS.slice(1).map((r,i)=>({w:r.w,m:r.mean,d:r.d,anim:`slCasc .45s ${.15+i*.06}s both`,onClick:()=>this.go('word',{wordIdx:i+1,answered:null})}));
     const cv=i=>{const n=CATS[i];if(n==='Розстріляна лексика')return {bg:K,fg:C,p1:'rgba(255,244,230,.16)',p2:'transparent'};const t=i%3;return t===0?{bg:R,fg:K,p1:K,p2:C}:t===1?{bg:'var(--ink)',fg:'var(--bg)',p1:R,p2:'var(--bg)'}:{bg:'var(--sf2)',fg:'var(--ink)',p1:R,p2:'var(--ink)'};};
     v.cats=CATS.map((n,i)=>({n,cnt:(12+i*3)+' слів',...cv(i),s1:CS[i][0],s2:CS[i][1],onClick:()=>this.go('cat',{cat:i})}));
-    v.fixes=FIXES.map((n,i)=>({n,s1:FS[i],onClick:()=>this.toast('«'+n+'»: 20 типових помилок. Почнімо з найпідступнішої.')}));
+    v.fixes=FIXES.map((n,i)=>({n,s1:FS[i],onClick:()=>{this.snd('tap');this.go('fix',{fixCat:i});}}));
     // word
-    const w=WORDS[s.wordIdx];
-    v.w={...w,up:w.w.toUpperCase(),last:w.w.slice(-1).toUpperCase(),label:s.wordIdx===0?'СЛОВО ДНЯ · 2 ЛИСТОПАДА':'СЛОВО ДНЯ · '+w.d.toUpperCase()};
+    const w=s.catWord||WORDS[s.wordIdx];
+    v.w={...w,up:w.w.toUpperCase(),last:w.w.slice(-1).toUpperCase(),label:s.catWord?'КАТЕГОРІЯ · '+CATS[s.cat].toUpperCase():s.wordIdx===0?'СЛОВО ДНЯ · 2 ЛИСТОПАДА':'СЛОВО ДНЯ · '+w.d.toUpperCase()};
     v.rarBars=[1,2,3,4,5].map(i=>({bg:i<=W.rar?K:'rgba(20,12,10,.2)'}));
     v.rarBars2=[1,2,3,4,5].map(i=>({bg:i<=w.rar?R:'var(--sil)'}));
     v.bars=[...Array(14)].map((_,i)=>({h:(6+((i*7)%14))+'px',c:s.playing?R:'var(--sil)',anim:s.playing?`slBars .5s ${i*.05}s ease-in-out infinite`:'none'}));
@@ -972,34 +1026,43 @@ class Component extends DCLogic {
     v.notAnswered=!s.answered;v.answered=!!s.answered;
     v.ansXp=s.answered==='know'?15:5;
     v.ansText=s.answered==='know'?'Зараховано. Слово в «Знаю».':'Додав у «Вчу». Повторимо завтра.';
-    v.know=()=>{this.snd('ok');this.setState(x=>({answered:'know',xp:x.xp+15}));};
+    v.know=()=>{this.snd('ok');this.setState(x=>({answered:'know',xp:x.xp+15,catKnown:x.catWord?{...(x.catKnown||{}),[x.catWord.w]:1}:x.catKnown}));};
     v.dontKnow=()=>{this.snd('tap');this.setState(x=>({answered:'learn',xp:x.xp+5}));};
-    v.back=()=>this.go(s.prev==='word'||s.prev==='cat'?'feed':(['feed','saved'].includes(s.prev)?s.prev:'feed'));
+    v.back=()=>(scr==='word'&&s.catWord)?this.go('cat'):this.go(s.prev==='word'||s.prev==='cat'?'feed':(['feed','saved'].includes(s.prev)?s.prev:'feed'));
     v.favFg=s.fav?R:C;v.favFill=s.fav?'currentColor':'none';v.favAnim=s.fav?'slPop .35s both':'none';
     {const anyCol=s.cols.some(Boolean);v.colFill=anyCol?'currentColor':'none';v.colD2=anyCol?'M9 10.5l2.2 2.2L15.5 8':'M12 7v6M9 10h6';v.colS2=anyCol?'#140C0A':'currentColor';}
     v.dotsBg=s.sheet==='menu'?R:K;v.dotsFg=s.sheet==='menu'?K:C;
     v.openMenu=()=>this.setState({sheet:'menu'});
     const MI={share:['Поділитися','M12 3v12M7.5 7.5 12 3l4.5 4.5','M5 12v8h14v-8'],hide:['Сховати…','M4 4h4v10H4zM8 14l3.5 6.5c1.4 0 2.6-1.1 2.2-2.6L13 15h5.5a2 2 0 0 0 2-2.3l-1.1-6.6A2.5 2.5 0 0 0 16.9 4H8',''],flag:['Повідомити про помилку','M5 21V4','M5 4h12l-2.5 4.5L17 13H5']};
     v.menuRows=['share','hide','flag'].map((k,i)=>({n:MI[k][0],d1:MI[k][1],d2:MI[k][2],bt:i?'1px solid var(--line)':'0',onClick:()=>{this.setState({sheet:null});this.toast(k==='share'?'Картку слова скопійовано — лови друзів на гачок.':k==='hide'?'«'+(w&&w.up?w.up:'Слово')+'» приховано.':'Дякуємо! Ми перевіримо.');}}));
-    {const rm=!!(this.props.reduceMotion||s.rm),dx=s.swDx||0,T=90,kO=dx>0?Math.min(1,dx/T):0,lO=dx<0?Math.min(1,-dx/T):0,tut=!s.swTutSeen&&!s.answered&&scr==='word';
-     v.swTut=tut;v.swTutDone=()=>this.setState({swTutSeen:true});
-     v.swTf=rm?'translateX('+(dx*.35)+'px)':'translateX('+dx+'px) rotate('+(dx/60)+'deg)';
-     v.swT=s.swDrag?'none':'transform .45s cubic-bezier(.2,1.4,.4,1)';v.swSh=Math.min(.3,Math.abs(dx)/300).toFixed(2);
-     v.swBg=dx>0?K:(dx<0?R:'var(--bg)');
-     v.swAnim=tut?'tuPage 5.6s cubic-bezier(.45,0,.25,1) infinite':'slScr .5s cubic-bezier(.2,.8,.2,1)';
-     v.swKOp=tut?0:kO;v.swLOp=tut?0:lO;v.swKX=((1-kO)*-100)+'%';v.swLX=((1-lO)*100)+'%';
-     v.swKAnim=tut?'tuKnow 5.6s infinite':'none';v.swLAnim=tut?'tuLearn 5.6s infinite':'none';
-     v.swDown=e=>{if(s.answered||tut)return;this._sx=e.clientX;this._sy=e.clientY;this._lock=null;this.setState({swDrag:true,swDx:0});};
-     v.swMove=e=>{if(this._sx==null)return;const ddx=e.clientX-this._sx,ddy=e.clientY-this._sy;if(this._lock==null&&(Math.abs(ddx)>8||Math.abs(ddy)>8)){this._lock=Math.abs(ddx)>Math.abs(ddy)?'x':'y';if(this._lock==='x'){try{e.currentTarget.setPointerCapture(e.pointerId);}catch(_){}}}if(this._lock==='x')this.setState({swDx:ddx});};
-     v.swUp=()=>{if(this._sx==null)return;this._sx=null;const d=this.state.swDx||0;this.setState({swDrag:false,swDx:0});if(d>T)v.know();else if(d<-T)v.dontKnow();};}
+    {const cur=s.catWord||w,base=s.catWord?(()=>{const craw=CATS[s.cat]==='Розстріляна лексика'?MOURN_FULL:((CW_RAW[s.cat]||CW_RAW[0])[1]);return craw.map(mkW);})():WORDS;
+     const i0=Math.max(0,base.findIndex(b=>b.w===cur.w)),lst=base.slice(i0).concat(base.slice(0,i0));
+     const catN=s.catWord?CATS[s.cat]:null;
+     v.pgWords=lst.map((b,k)=>({w:b.stress&&b.stress.includes('\u0301')?b.w:b.w,g:b.w[0].toUpperCase(),gr:b.posShort||b.pos,d:b.mean,ex:b.ex,cat:(catN||b.cat||'Природа і погода')+' · рідкість '+b.rar,kick:k===0&&!catN&&s.wordIdx===0?'СЛОВО ДНЯ · 2 ЛИСТОПАДА':(catN?'КАТЕГОРІЯ · '+catN.toUpperCase():'СТРІЧКА')+' · '+(k+1)+' З '+lst.length}));
+     v.pgKey=(s.catWord?'c'+s.cat:'w')+':'+cur.w;v.pgScreen=(!s.swTutSeen&&!this.props.freeze)?'tut':'live';
+     v.thName=th==='dark'?'dark':'light';v.rmOn=!!(this.props.reduceMotion||s.rm);
+     v.swTutDone=()=>this.setState({swTutSeen:true});
+     v.pgMark=(wd,d)=>{this.snd(d>0?'ok':'tap');this.setState(x=>({xp:x.xp+(d>0?15:5),catKnown:x.catWord&&d>0?{...(x.catKnown||{}),[wd.w]:1}:x.catKnown}));};}
     v.toggleFav=()=>{this.snd('tap');this.setState({fav:!s.fav});this.toast(s.fav?'Прибрав з улюбленого.':'В улюбленому. Гарний смак!');};
     v.shareWord=()=>this.toast('Картку слова скопійовано — лови друзів на гачок.');
     v.openCollect=()=>this.setState({sheet:'collect'});
+    // fix category
+    v.isFix=scr==='fix';
+    {const fr=FIX_RAW[s.fixCat||0],shown=s.fixShown||{},key=(s.fixCat||0)+':';const n=fr[2].filter((_,i)=>shown[key+i]).length;
+     v.fixV={n:FIXES[s.fixCat||0],t:fr[0],d:fr[1],s1:FS[s.fixCat||0],cnt:fr[2].length+' приклади',prog:n+' З '+fr[2].length,pw:Math.round(n/fr[2].length*100)+'%'};
+     v.fixItems=fr[2].map((it,i)=>{const on=!!shown[key+i];return {wr:it[0],ok:it[1],note:it[2],on,off:!on,t:fr[0],anim:`slCasc .45s ${.2+i*.07}s both`,show:()=>{this.snd('ok');this.setState(x=>({fixShown:{...(x.fixShown||{}),[key+i]:1}}));}};});}
     // category
     const cn=CATS[s.cat],mourn=cn==='Розстріляна лексика';
-    v.catV=mourn?{n:cn,bg:K,fg:C,ink:C,loud:false,btn:'rgba(255,244,230,.14)',btnFg:C,cnt:'21 слово',d:'Лексика письменників Розстріляного відродження. Тут ми говоримо тихо.',m:'mourn',decor:'none',s1:SH[0]}
-      :{n:cn,bg:R,fg:K,ink:K,loud:true,btn:K,btnFg:C,cnt:(12+s.cat*3)+' слів',d:'Слова, яких бракує, коли хочеться сказати точно.',m:'wait',decor:decorName,s1:CS[s.cat][0]};
-    v.catWords=(mourn?MOURN_W:WORDS.map(x=>({w:x.w,m:x.mean}))).map((r,i)=>({...r,anim:`slCasc .45s ${.15+i*.06}s both`}));
+    const craw=mourn?['Лексика письменників Розстріляного відродження. Тут ми говоримо тихо.',MOURN_FULL]:(CW_RAW[s.cat]||CW_RAW[0]);
+    const cws=craw[1].map(mkW),known=s.catKnown||{},nk=cws.filter(x=>known[x.w]).length;
+    v.catV=mourn?{n:cn,bg:K,fg:C,loud:false,btn:'rgba(255,244,230,.14)',btnFg:C,cnt:cws.length+' слова',d:craw[0],m:'mourn',decor:'none',tile:'rgba(255,244,230,.14)',tileFg:C,bar:C,barBg:'rgba(255,244,230,.18)'}
+      :{n:cn,bg:R,fg:K,loud:true,btn:K,btnFg:C,cnt:cws.length+' слова',d:craw[0],m:'wait',decor:decorName,tile:K,tileFg:R,bar:K,barBg:'rgba(20,12,10,.2)'};
+    v.catV.s1=CS[s.cat][0];
+    {const mix=s.catMix||{},on=!!mix[s.cat];
+     Object.assign(v.catV,{mixT:on?'У МІКСІ':'ДОДАТИ',mixIc:on?'0,12 4,8 10,14 22,0 26,4 10,22':'11,0 15,0 15,9 26,9 26,13 15,13 15,22 11,22 11,13 0,13 0,9 11,9',
+      mixBg:on?(mourn?C:K):(mourn?'rgba(255,244,230,.14)':C),mixFg:on?(mourn?K:C):(mourn?C:K),mixSh:on?'none':(mourn?'none':'0 3px 0 rgba(20,12,10,.35)'),mixAnim:on?'slPop .35s both':'none',
+      toggleMix:()=>{this.snd(on?'tap':'ok');this.setState(x=>({catMix:{...(x.catMix||{}),[x.cat]:!on}}));this.toast(on?'«'+cn+'» прибрано з Міксу.':'«'+cn+'» тепер у вашому Міксі.');}});}v.catV.prog=nk+' З '+cws.length;v.catV.pw=Math.round(nk/cws.length*100)+'%';
+    v.catWords=cws.map((r,i)=>({...r,bars:[1,2,3,4,5].map(j=>({bg:j<=r.rar?(mourn?'var(--ink)':R):'var(--sil)'})),known:!!known[r.w],anim:`slCasc .45s ${.2+i*.07}s both`,onClick:()=>{this.snd('tap');this.go('word',{catWord:r,answered:known[r.w]?'know':null,catBack:true});}}));
     // games hub
     v.cwStatus=s.cw.solved?'РОЗГАДАНО ✓':'ГРАТИ →';
     v.cwMini=SOL.map((c,i)=>({bg:c==='#'?K:C,sh:c==='#'?'transparent':RE,ch:s.cw.solved?c.replace('#',''):(PRE[i]||'')}));
@@ -1131,7 +1194,7 @@ class Component extends DCLogic {
     v.wgBg=ws===3?'var(--ink)':R;v.wgFg=ws===3?'var(--bg)':K;v.wgGiant=ws===3?'transparent':C;
     const fz=s.sub==='font'?sel:0;v.fsW=['22px','26px','30px'][fz];v.fsT=['15px','17px','20px'][fz];
     // tabs
-    const tabOf=['feed','word','cat'].includes(scr)?'feed':['games','game','over','cw'].includes(scr)?'games':scr==='saved'?'saved':'profile';
+    const tabOf=['feed','word','cat','fix'].includes(scr)?'feed':['games','game','over','cw'].includes(scr)?'games':scr==='saved'?'saved':'profile';
     v.tabs=[['feed','Стрічка'],['games','Ігри'],['saved','Збережене'],['profile','Профіль']].map(([id,n])=>({n,ic:TABI[id],c:tabOf===id?'var(--ink)':'var(--mute)',on:tabOf===id?'1':'0',onClick:()=>{if(scr!==id)this.go(id);}}));
     v.showTabs=['feed','games','saved','profile'].includes(scr);
     // overlays

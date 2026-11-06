@@ -1,4 +1,5 @@
 import {
+  CategoriesRail,
   CorrectionTypesRail,
   CuratedCollectionsRail,
   dashboard,
@@ -13,6 +14,7 @@ import { todayDate, type DashboardBlock } from '@slovo/core';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useTonesOf } from '@/categories/categories';
 import { useDashboardScreen } from '@/dashboard/dashboard';
 import { deviceClock } from '@/device/device-clock';
 import { edition, editionStrings } from '@/edition/edition';
@@ -52,7 +54,11 @@ function DashboardBlocks() {
     openPreviousWord,
     openCorrectionType,
     openCuratedCollection,
+    openCategories,
+    openCategory,
+    openCorrectionCategories,
   } = useDashboardScreen();
+  const tonesOf = useTonesOf('quietRail');
   const { colors } = useTokens();
   return (
     <SafeAreaView
@@ -87,7 +93,26 @@ function DashboardBlocks() {
       case 'previousWords':
         return <PreviousWords block={block} onOpen={openPreviousWord} />;
       case 'correctionTypes':
-        return <CorrectionTypesRail tiles={block.tiles} onOpen={openCorrectionType} />;
+        return (
+          <CorrectionTypesRail
+            tiles={block.tiles}
+            categories={
+              block.categories.length > 0
+                ? { count: block.categories.length, onOpenAll: openCorrectionCategories }
+                : undefined
+            }
+            onOpen={openCorrectionType}
+          />
+        );
+      case 'categories':
+        return (
+          <CategoriesRail
+            tiles={block.categories.map(({ id, displayName }) => ({ id, name: displayName }))}
+            toneAt={tonesOf(block.categories)}
+            onOpenAll={openCategories}
+            onOpen={openCategory}
+          />
+        );
       case 'curatedCollections':
         return <CuratedCollectionsRail cards={block.cards} onOpen={openCuratedCollection} />;
     }
@@ -108,6 +133,7 @@ const blockStyles = StyleSheet.create({
   mood: { paddingTop: blockTop.mood, paddingHorizontal: side },
   previousWords: { paddingTop: blockTop.previousWords, paddingHorizontal: side },
   // A rail runs to the screen's edges and keeps the side room inside.
+  categories: { paddingTop: blockTop.categories },
   curatedCollections: { paddingTop: blockTop.curatedCollections },
   correctionTypes: { paddingTop: blockTop.correctionTypes },
 } satisfies Record<DashboardBlock['kind'], object>);

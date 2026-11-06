@@ -105,6 +105,10 @@
     "swipeMarks": true,
     "searchButton": false,
     "dashboardWordmark": true,
+    "categoryScreens": true,
+    "correctionCategoryScreens": true,
+    "quietCategories": true,
+    "collectionBoardStyle": true,
     "previousWords": true,
     "correctionTypes": true
   },
@@ -138,97 +142,143 @@
   "categories": [
     {
       "id": "human-body",
-      "displayName": "Людина і тіло"
+      "displayName": "Людина і тіло",
+      "description": "Як колись називали руки, очі й усе, що між ними.",
+      "tone": "loud"
     },
     {
       "id": "emotions-character",
-      "displayName": "Емоції та характер"
+      "displayName": "Емоції та характер",
+      "description": "Слова для того, що відчуваєш, і для тих, хто тебе бісить.",
+      "tone": "loud"
     },
     {
       "id": "nature-weather",
-      "displayName": "Природа і погода"
+      "displayName": "Природа і погода",
+      "description": "Як наші предки називали дощ, вітер, ліс і поле.",
+      "tone": "loud"
     },
     {
       "id": "household-crafts",
-      "displayName": "Побут і ремесла"
+      "displayName": "Побут і ремесла",
+      "description": "Речі зі старої хати і справи, якими в ній жили.",
+      "tone": "loud"
     },
     {
       "id": "technology",
-      "displayName": "Техніка"
+      "displayName": "Техніка",
+      "description": "Рідні назви для машин, механізмів і всього, що крутиться.",
+      "tone": "loud"
     },
     {
       "id": "military",
-      "displayName": "Військова справа"
+      "displayName": "Військова справа",
+      "description": "Слова війська — від козацької шаблі до сучасного фронту.",
+      "tone": "loud"
     },
     {
       "id": "arts-culture",
-      "displayName": "Мистецтво і культура"
+      "displayName": "Мистецтво і культура",
+      "description": "Слова сцени, полотна й книжки, які варто знати.",
+      "tone": "loud"
     },
     {
       "id": "history-antiquity",
-      "displayName": "Історія та старовина"
+      "displayName": "Історія та старовина",
+      "description": "Слова, що пам’ятають гетьманів, ярмарки й чумацькі шляхи.",
+      "tone": "loud"
     },
     {
       "id": "science",
-      "displayName": "Наука"
+      "displayName": "Наука",
+      "description": "Українські наукові терміни, які варто повернути в ужиток.",
+      "tone": "loud"
     },
     {
       "id": "language-speech",
-      "displayName": "Мова і мовлення"
+      "displayName": "Мова і мовлення",
+      "description": "Слова про слова: як ми говоримо, шепочемо й сперечаємося.",
+      "tone": "loud"
     },
     {
       "id": "dialects",
-      "displayName": "Діалекти"
+      "displayName": "Діалекти",
+      "description": "Говірки від Карпат до Слобожанщини — слова, яких не вчать у школі.",
+      "tone": "loud"
     },
     {
       "id": "witty-insults",
-      "displayName": "Дотепна лайка"
+      "displayName": "Дотепна лайка",
+      "description": "Як влучно й без матюків назвати того, хто дістав.",
+      "tone": "loud"
     },
     {
       "id": "folk-names",
-      "displayName": "Народні назви"
+      "displayName": "Народні назви",
+      "description": "Як у селах називають рослини, птахів і зорі.",
+      "tone": "loud"
     },
     {
       "id": "old-crafts",
-      "displayName": "Старі ремесла"
+      "displayName": "Старі ремесла",
+      "description": "Ремесла, яких майже не лишилося, і слова, що їх зберегли.",
+      "tone": "loud"
     },
     {
       "id": "repressed-words",
-      "displayName": "Розстріляна лексика"
+      "displayName": "Розстріляна лексика",
+      "description": "Слова, які вилучали зі словників у 1930-х. Повертаємо їх тихо.",
+      "tone": "quiet"
     },
     {
       "id": "chameleon-words",
-      "displayName": "Слова-хамелеони"
+      "displayName": "Слова-хамелеони",
+      "description": "Слова, що звучать знайомо, а значать зовсім інше.",
+      "tone": "loud"
     }
   ],
   "correctionCategories": [
     {
       "id": "conversation",
-      "displayName": "У розмові"
+      "displayName": "У розмові",
+      "description": "Звороти, які щодня чуєш у розмові, — і як сказати їх правильно.",
+      "tone": "loud"
     },
     {
       "id": "home",
-      "displayName": "Вдома"
+      "displayName": "Вдома",
+      "description": "Кухня, ремонт і родинні справи — без суржику.",
+      "tone": "loud"
     },
     {
       "id": "work",
-      "displayName": "На роботі"
+      "displayName": "На роботі",
+      "description": "Наради, листи й дедлайни — правильною українською.",
+      "tone": "loud"
     },
     {
       "id": "shop",
-      "displayName": "У магазині"
+      "displayName": "У магазині",
+      "description": "Каса, знижки й черга — як сказати правильно.",
+      "tone": "loud"
     },
     {
       "id": "transport",
-      "displayName": "Транспорт"
+      "displayName": "Транспорт",
+      "description": "Зупинки, квитки й пересадки — без кальок.",
+      "tone": "loud"
     },
     {
       "id": "school",
-      "displayName": "У школі"
+      "displayName": "У школі",
+      "description": "Уроки, оцінки й перерви — слова, які плутають навіть учителі.",
+      "tone": "loud"
     },
     {
       "id": "leisure-media",
-      "displayName": "Дозвілля і медіа"
+      "displayName": "Дозвілля і медіа",
+      "description": "Кіно, спорт і соцмережі — без кальок і суржику.",
+      "tone": "loud"
     }
   ],
   "categoriesRequiringHistory": ["repressed-words", "chameleon-words"],

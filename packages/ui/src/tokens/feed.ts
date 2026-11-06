@@ -69,8 +69,16 @@ export const dashboard = {
   logoPlate: { top: 9.2, right: 11, bottom: 9.2, left: 7.9 },
   side: 20,
   heroMargin: 12,
-  blockTop: { mood: 22, previousWords: 26, curatedCollections: 26, correctionTypes: 18 },
+  blockTop: {
+    mood: 22,
+    previousWords: 26,
+    categories: 26,
+    curatedCollections: 26,
+    correctionTypes: 18,
+  },
   titleGap: 12,
+  /** How far above a rail's title button its tap area reaches, so it is a full touch target. */
+  titleSlop: 14,
   previousTitleGap: 6,
   /** The room under a rail's tiles. */
   railBottom: 8,
@@ -174,10 +182,12 @@ export const previousWordRow = {
  * A tile of the Categories rail (Curated Collections): its box, corner
  * radius and padding, the gap between tiles, the two shapes of its
  * pictogram (a big one at the top right, a small one under it), the gap
- * over its count and its count's opacity. A shape is a polygon or a
+ * over its count and its count's opacity, and the opacity of a quiet
+ * tile's big shape on the rail (ADR 0081). A shape is a polygon or a
  * `circle`; the tiles take the shapes in turn.
  */
 export const categoryTile = {
+  quietShapeAlpha: 0.16,
   width: 124,
   height: 156,
   radius: 18,
@@ -421,6 +431,369 @@ export const categoryTile = {
 >;
 
 /**
+ * The grid of Categories (board 05.2 «XCats», k1): the screen's padding,
+ * the gap between tiles, and a tile's height, corner radius and padding,
+ * the two shapes of its pictogram (a big one at the top right, a small one
+ * under it), its entrance (each tile rises in 0.3 s after the one before
+ * by `stagger`), and the board's 16 shape pairs, which the tiles take by
+ * position and wrap past (spec #1604). A shape is a polygon or a `circle`.
+ */
+export const categoryGrid = {
+  padding: { top: 60, side: 14, bottom: 30 },
+  titleGap: 18,
+  gap: 8,
+  height: 112,
+  radius: 16,
+  tilePadding: 10,
+  big: { side: 58, right: -4, top: -2 },
+  small: { side: 22, right: 38, top: 34 },
+  cascade: { duration: 300, stagger: 25 },
+  shapes: [
+    [
+      [
+        [0.4, 0],
+        [0.6, 0],
+        [0.62, 0.3],
+        [0.9, 0.4],
+        [0.8, 1],
+        [0.2, 1],
+        [0.1, 0.4],
+        [0.38, 0.3],
+      ],
+      'circle',
+    ],
+    [
+      [
+        [0.5, 1],
+        [0, 0.35],
+        [0.2, 0],
+        [0.5, 0.2],
+        [0.8, 0],
+        [1, 0.35],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [0.5, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0.6],
+        [0.3, 0.2],
+        [0.6, 0.45],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+      ],
+      'circle',
+    ],
+    [
+      [
+        [0.5, 0],
+        [1, 0.4],
+        [1, 1],
+        [0, 1],
+        [0, 0.4],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0.4, 0],
+        [0.6, 0],
+        [0.6, 0.2],
+        [1, 0.2],
+        [1, 0.8],
+        [0.6, 0.8],
+        [0.6, 1],
+        [0.4, 1],
+        [0.4, 0.8],
+        [0, 0.8],
+        [0, 0.2],
+        [0.4, 0.2],
+      ],
+      'circle',
+    ],
+    [
+      [
+        [0.5, 0],
+        [0.6, 0.3],
+        [1, 0.4],
+        [0.65, 0.6],
+        [0.75, 1],
+        [0.5, 0.75],
+        [0.25, 1],
+        [0.35, 0.6],
+        [0, 0.4],
+        [0.4, 0.3],
+      ],
+      [
+        [0, 0],
+        [1, 0.5],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0.3],
+        [0.3, 0.3],
+        [0.6, 0],
+        [0.6, 1],
+        [0.3, 0.7],
+        [0, 0.7],
+      ],
+      [
+        [0, 0],
+        [1, 0.4],
+        [1, 0.6],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0.2, 0],
+        [0.8, 0],
+        [1, 1],
+        [0, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+      ],
+    ],
+    [
+      'circle',
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0.2],
+        [1, 0],
+        [1, 0.8],
+        [0.4, 0.8],
+        [0.2, 1],
+        [0.2, 0.8],
+        [0, 0.8],
+      ],
+      [
+        [0, 0],
+        [1, 0.5],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0.4],
+        [1, 0.4],
+        [0.85, 1],
+        [0.15, 1],
+      ],
+      [
+        [0.3, 0],
+        [0.7, 0],
+        [0.6, 1],
+        [0.4, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0.7],
+        [1, 0],
+        [0.7, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0.3],
+        [1, 1],
+        [0, 0.7],
+      ],
+    ],
+    [
+      [
+        [0.5, 1],
+        [0, 0.4],
+        [0.25, 0],
+        [0.5, 0.25],
+        [0.75, 0],
+        [1, 0.4],
+      ],
+      'circle',
+    ],
+    [
+      [
+        [0.3, 0],
+        [0.7, 0],
+        [0.7, 0.7],
+        [0.4, 1],
+        [0.1, 0.85],
+        [0.3, 0.6],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [1, 0.3],
+        [0, 0.3],
+      ],
+    ],
+    [
+      [
+        [0.2, 0],
+        [0.8, 0],
+        [0.8, 1],
+        [0.2, 1],
+      ],
+      [
+        [0, 0.45],
+        [1, 0.45],
+        [1, 0.55],
+        [0, 0.55],
+      ],
+    ],
+    [
+      [
+        [0.5, 0],
+        [1, 0.25],
+        [1, 0.75],
+        [0.5, 1],
+        [0, 0.75],
+        [0, 0.25],
+      ],
+      [
+        [0.4, 0],
+        [0.6, 0],
+        [0.6, 1],
+        [0.4, 1],
+      ],
+    ],
+  ],
+} as const satisfies {
+  shapes: readonly (readonly [Shape | 'circle', Shape | 'circle'])[];
+} & Record<string, unknown>;
+
+/**
+ * The grid of Categories of Corrections (board 05.2 «XCats», k2): the k1
+ * grid's padding, gap, radius and tile padding, with taller tiles, a bigger
+ * big shape, the small one at 60/60, a slower cascade (40 ms apart) and the
+ * board's 7 shape pairs, which the tiles take by position and wrap past
+ * (spec #1604).
+ */
+export const correctionGrid = {
+  height: 150,
+  big: { side: 84, right: -4, top: -2 },
+  small: { side: 22, right: 60, top: 60 },
+  stagger: 40,
+  shapes: [
+    [
+      [
+        [0, 0],
+        [1, 0],
+        [1, 0.7],
+        [0.4, 0.7],
+        [0.2, 1],
+        [0.2, 0.7],
+        [0, 0.7],
+      ],
+      'circle',
+    ],
+    [
+      [
+        [0.5, 0],
+        [1, 0.45],
+        [0.85, 0.45],
+        [0.85, 1],
+        [0.15, 1],
+        [0.15, 0.45],
+        [0, 0.45],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0.25],
+        [1, 0.25],
+        [1, 1],
+        [0, 1],
+      ],
+      [
+        [0.3, 0],
+        [0.7, 0],
+        [0.7, 0.3],
+        [0.3, 0.3],
+      ],
+    ],
+    [
+      [
+        [0.1, 0.3],
+        [0.9, 0.3],
+        [0.8, 1],
+        [0.2, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0.5],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0.2],
+        [1, 0.2],
+        [1, 0.75],
+        [0, 0.75],
+      ],
+      'circle',
+    ],
+    [
+      [
+        [0, 0.15],
+        [0.5, 0],
+        [1, 0.15],
+        [1, 1],
+        [0.5, 0.85],
+        [0, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0.3],
+        [1, 0.7],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0],
+        [1, 0.5],
+        [0, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+      ],
+    ],
+  ],
+} as const satisfies {
+  shapes: readonly (readonly [Shape | 'circle', Shape | 'circle'])[];
+} & Record<string, unknown>;
+
+/**
  * A tile of the Corrections rail (Correction Types): its box, corner radius
  * and padding, the gap between tiles, and the red glyph at its top right,
  * one shape per tile in turn.
@@ -529,6 +902,8 @@ export const railScreen = {
     icon: 14,
     edge: 3,
     edgeAlpha: 0.35,
+    /** The tick's pop once the button turns on, the board's `slPop .35s`, in ms. */
+    popDuration: 350,
   },
   /** The add button's plus and the tick it turns into, in a 26 × 22 box. */
   addIcons: {
@@ -566,7 +941,10 @@ export const railScreen = {
   bottom: 73,
   mascot: { right: 20, top: 238, width: 124 },
   list: { top: 4, side: 16, gap: 12, wordGap: 10, bottom: 40 },
-  card: { radius: 18, padding: 16, gap: 12, wordGap: 8, edge: 4, labelGap: 6 },
+  /** A card's box; `line` is the 1-point border round its face. */
+  card: { radius: 18, padding: 16, gap: 12, wordGap: 8, edge: 4, labelGap: 6, line: 1 },
+  /** The cards rise in one after another (the board's `slCasc`): each lasts `duration`, `stagger` after the one before. */
+  cascade: { duration: 450, stagger: 70 },
   chip: { paddingHorizontal: 9, paddingVertical: 5, radius: 8 },
   strike: { thickness: 3, at: 0.55 },
   button: { height: 52, radius: 14, paddingHorizontal: 18 },
@@ -586,4 +964,61 @@ export const railScreen = {
   },
   known: { paddingHorizontal: 8, paddingVertical: 5, turn: '-3deg' },
   bars: { width: 9, height: 8, gap: 2, skew: '-20deg' },
+} as const;
+
+/**
+ * The quiet variant (k3) of a Category's screen, for a quiet Category (spec
+ * #1604): the hero on the sunken surface with no halftone, cut at the
+ * bottom as the loud one, its padding, back tile, name and description
+ * widths and the mourning Mascot's place; the plain rows under it, each
+ * fading in `fade.duration`, `fade.stagger` after the one before.
+ */
+export const quietScreen = {
+  height: 360,
+  cut: railScreen.cut,
+  padding: { top: 110, side: 22 },
+  back: { left: 16, top: 58, side: 40, radius: 12, icon: 16 },
+  gap: 10,
+  titleWidth: 260,
+  descriptionWidth: 250,
+  mascot: { right: 14, bottom: 56, width: 130 },
+  row: { paddingVertical: 14, gap: 4 },
+  fade: { duration: 600, stagger: 120 },
+} as const;
+
+/** The box of a tile on the Dashboard's Categories rail. */
+export const categoryRailBox = {
+  width: categoryTile.width,
+  height: categoryTile.height,
+  radius: categoryTile.radius,
+  padding: categoryTile.padding,
+  big: categoryTile.big,
+  small: categoryTile.small,
+  name: 'categoryName',
+} as const;
+
+/**
+ * The box of a k1 grid tile (board 05.2), for the Categories and the
+ * Collections in their style; its width is the column's.
+ */
+export const categoryGridBox = {
+  height: categoryGrid.height,
+  radius: categoryGrid.radius,
+  padding: categoryGrid.tilePadding,
+  big: categoryGrid.big,
+  small: categoryGrid.small,
+  name: 'gridTileName',
+} as const;
+
+/**
+ * The box of a k2 grid tile (board 05.2): the k1 tile's corners and padding,
+ * taller, with its own shapes' places; its width is the column's.
+ */
+export const correctionGridBox = {
+  height: correctionGrid.height,
+  radius: categoryGrid.radius,
+  padding: categoryGrid.tilePadding,
+  big: correctionGrid.big,
+  small: correctionGrid.small,
+  name: 'gridTileName',
 } as const;
