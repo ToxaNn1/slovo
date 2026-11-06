@@ -895,17 +895,20 @@ describe('the strings of the Category screens and the board style (spec #1604)',
     [3, 'КАТЕГОРІЯ · 3 слова', 'ДОБІРКА · 3 слова', 'КОЛЕКЦІЯ · 3 слова'],
     [12, 'КАТЕГОРІЯ · 12 слів', 'ДОБІРКА · 12 слів', 'КОЛЕКЦІЯ · 12 слів'],
     [21, 'КАТЕГОРІЯ · 21 слово', 'ДОБІРКА · 21 слово', 'КОЛЕКЦІЯ · 21 слово'],
-  ])('the kickers of %i Words read «%s», «%s» and «%s»', (count, ofCategory, ofCurated, ofCollection) => {
-    const { screen } = parsed.collections;
+  ])(
+    'the kickers of %i Words read «%s», «%s» and «%s»',
+    (count, ofCategory, ofCurated, ofCollection) => {
+      const { screen } = parsed.collections;
 
-    expect([
-      fill(categories.kicker, { count: countText(categories.count, count) }),
-      fill(curatedCollection.kicker, {
-        count: countText(parsed.dashboard.curatedCollectionCount, count),
-      }),
-      fill(screen.kicker, { count: countText(screen.wordCount, count) }),
-    ]).toEqual([ofCategory, ofCurated, ofCollection]);
-  });
+      expect([
+        fill(categories.kicker, { count: countText(categories.count, count) }),
+        fill(curatedCollection.kicker, {
+          count: countText(parsed.dashboard.curatedCollectionCount, count),
+        }),
+        fill(screen.kicker, { count: countText(screen.wordCount, count) }),
+      ]).toEqual([ofCategory, ofCurated, ofCollection]);
+    },
+  );
 
   it.each([
     [1, 'КАТЕГОРІЯ · 1 виправлення'],
@@ -923,7 +926,10 @@ describe('the strings of the Category screens and the board style (spec #1604)',
     const issuesOf = (changed: object) =>
       EditionStringsSchema.safeParse({
         ...strings,
-        dashboard: { ...strings.dashboard, category: { ...strings.dashboard.category, ...changed } },
+        dashboard: {
+          ...strings.dashboard,
+          category: { ...strings.dashboard.category, ...changed },
+        },
       }).error?.issues.map((issue) => issue.path.join('.'));
 
     expect(issuesOf({ known: 'ЗНАЮ' })).toEqual(['dashboard.category.known']);

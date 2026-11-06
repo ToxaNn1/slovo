@@ -793,7 +793,11 @@ describe('loadEdition', () => {
       ] as const
     ).map(
       (name) =>
-        [`a missing ${name} Feature Switch`, withoutSwitch(name), `featureSwitches.${name}`] as const,
+        [
+          `a missing ${name} Feature Switch`,
+          withoutSwitch(name),
+          `featureSwitches.${name}`,
+        ] as const,
     ),
     [
       'a missing Dashboard wordmark Feature Switch',
