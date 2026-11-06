@@ -226,7 +226,7 @@ function checkBook(
   entry: Quoted,
   book: readonly Paragraph[],
 ): { outcome: Outcome; detail: string } {
-  const whole = book.map((paragraph) => paragraph.text).join('');
+  const whole = book.map((paragraph) => paragraph.text).join('\n');
   const missing = entry.bookFields
     .filter(([, text]) => !whole.includes(squash(withoutFinalPeriod(text))))
     .map(([name]) => name);
