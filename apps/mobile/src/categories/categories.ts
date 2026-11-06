@@ -35,7 +35,7 @@ export function useCorrectionCategories(): readonly Category[] {
 }
 
 /**
- * Whether a Category draws quiet, its k3 screen and muted tile: its tone is
+ * Whether a Category draws quiet, its k3 screen and quiet tile: its tone is
  * `quiet` and the Edition in effect has `quietCategories` on; off, it draws
  * loud (ADR 0081).
  */

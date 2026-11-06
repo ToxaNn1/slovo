@@ -96,7 +96,7 @@ Where a dialect Word is said (e.g. Гуцульщина), a short text in the Ed
 _Avoid_: Area, dialect, location
 
 **Category**:
-A thematic group a Word or a Correction belongs to. Words and Corrections each have the Edition's own list: Words by what they name (e.g. human body, emotions, military), Corrections by where a reader meets them (e.g. at work, in a shop, transport). Every Word and every Correction has one Category of its list. Every Category carries a one-line description and a tone, loud or quiet; a quiet Category (e.g. the Words removed from dictionaries in the 1930s) has a muted tile and a quiet screen without the Mix button or progress. A Category has a screen of its live Entries, opened from its grid (ADR 0081).
+A thematic group a Word or a Correction belongs to. Words and Corrections each have the Edition's own list: Words by what they name (e.g. human body, emotions, military), Corrections by where a reader meets them (e.g. at work, in a shop, transport). Every Word and every Correction has one Category of its list. Every Category carries a one-line description and a tone, loud or quiet; a quiet Category (e.g. the Words removed from dictionaries in the 1930s) has a quiet tile and a quiet screen without the Mix button or progress. A Category has a screen of its live Entries, opened from its grid (ADR 0081).
 _Avoid_: Topic, tag, theme
 
 **Rare Word**:

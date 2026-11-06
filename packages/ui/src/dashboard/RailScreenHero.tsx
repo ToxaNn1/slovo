@@ -1,4 +1,5 @@
 'use no memo';
+// Reanimated code: the React Compiler skips this module (ADR 0059).
 
 import type { MascotState } from '@slovo/contracts';
 import { useEffect, useRef, useState } from 'react';
@@ -22,6 +23,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import {
+  motion,
   pressedFade,
   railScreen as place,
   space,
@@ -226,7 +228,7 @@ function HeroActionButton({ id, action, top }: { id: string; action: HeroAction;
 const TICK_POP = [0.6, 1.12, 1];
 const TICK_POP_TIMING = {
   duration: place.add.popDuration,
-  easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+  easing: Easing.bezier(...motion.pop.easing),
   reduceMotion: ReduceMotion.Never,
 };
 
@@ -251,11 +253,11 @@ function ToggleIcon({ testID, on, color }: { testID: string; on: boolean; color:
     // The shared value is stable, so only a change of `on` pops the tick.
   }, [on, reduceMotion, popped]);
 
-  const motion = useAnimatedStyle(() => ({
+  const pop = useAnimatedStyle(() => ({
     transform: [{ scale: interpolate(popped.value, [0, 0.6, 1], TICK_POP) }],
   }));
   return (
-    <Animated.View testID={testID} style={motion}>
+    <Animated.View testID={testID} style={pop}>
       <Wedge
         points={on ? place.addIcons.tick : place.addIcons.plus}
         color={color}

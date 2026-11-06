@@ -122,6 +122,8 @@ export interface Knowledge {
    * `knowledge` Feature Switch off.
    */
   knownAmong(entryIds: readonly string[]): number;
+  /** Whether the Entry is marked Known, for its card's «ЗНАЮ» stamp. False with the `knowledge` Feature Switch off. */
+  isKnown(entryId: string): boolean;
   /**
    * The reader taps a mark on the Entry's card: the mark the card shows
    * removes it, deleting the record; any other tap answers the Entry today,
@@ -454,6 +456,9 @@ export async function openKnowledge({
       if (!edition.isFeatureEnabled('knowledge')) return 0;
       return [...new Set(entryIds)].filter((entryId) => records.get(entryId)?.mark === 'known')
         .length;
+    },
+    isKnown(entryId) {
+      return edition.isFeatureEnabled('knowledge') && records.get(entryId)?.mark === 'known';
     },
     tap: (entryId, mark) =>
       change(

@@ -543,7 +543,7 @@ describe('the Curated Collections rail', () => {
     await settle(() => composition.knowledge.tap('w_tykhyi', 'known'));
 
     expect(screen.getByText('Знаю 1 з 2')).toBeTruthy();
-    const { known } = editionStrings.knowledge;
+    const { knownStamp: known } = editionStrings.dashboard.category;
     expect(
       within(screen.getByTestId('curated-collection-entry-w_tykhyi')).getByText(known),
     ).toBeTruthy();

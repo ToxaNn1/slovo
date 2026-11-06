@@ -5,16 +5,17 @@ import {
   CollectionMenuSheet,
   CollectionNameField,
   DeleteCollectionDialog,
+  knownShare,
+  RailBoard,
   railScreen,
-  RailScreenCard,
   RailScreenHero,
+  shapeAt,
   UndoToastProvider,
   useEdition,
-  useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { useComposition } from '@/composition';
 import { editionStrings } from '@/edition/edition';
@@ -27,7 +28,7 @@ import { useOpenScreen } from '@/use-open-screen';
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.screen;
 const { known: knownText } = editionStrings.dashboard.category;
-const [glyph] = categoryTile.shapes[0];
+const [glyph] = shapeAt(categoryTile.shapes, 0);
 
 /**
  * A Collection in the board style (board 05.1, ADR 0082): the red hero with
@@ -52,7 +53,6 @@ function Board({ collectionId }: { collectionId: string }) {
   const { knowledge } = useComposition();
   // Read again on every Knowledge Mark, so «ЗНАЮ» and the stamps follow at once.
   useSubscribed(knowledge, (open) => open.state);
-  const { colors } = useTokens();
   const { count } = useEdition();
   const router = useRouter();
   const openScreen = useOpenScreen();
@@ -75,8 +75,20 @@ function Board({ collectionId }: { collectionId: string }) {
   );
 
   const name = collection?.name ?? '';
-  const total = entries.length;
-  const known = knowledge.knownAmong(entries.map(({ entryId }) => entryId));
+  const cards =
+    collection === undefined
+      ? []
+      : entries.map(({ entryId, row }) => ({ entryId, row, known: knowledge.isKnown(entryId) }));
+  // DESIGN-05: not on the board, owner decides — the swipe (and its VoiceOver action) that takes
+  // the Entry out of this Collection, and the kind and the date added, «слово · 3 лист.». A card
+  // would carry both, with `const { collection, entries, remove: removeEntry } =
+  // useCollectionEntries(collectionId)` above, `import { addedOn } from '@/saved/added-on'`, and
+  // RailBoard passing `added` and `onRemove` on to RailScreenCard, which gains the two props:
+  // entries.map(({ entryId, row, addedAt }) => ({
+  //   entryId, row, known: knowledge.isKnown(entryId),
+  //   added: addedOn(addedAt), onRemove: () => { removeEntry(entryId); },
+  // }))
+  const { known, total, done } = knownShare(cards);
   const leave = () => {
     if (router.canDismiss()) router.back();
     else router.replace('/saved/collections');
@@ -87,26 +99,17 @@ function Board({ collectionId }: { collectionId: string }) {
   };
 
   return (
-    <View testID="collection" style={[styles.screen, { backgroundColor: colors.background }]}>
-      <FlatList
-        data={collection === undefined ? [] : entries}
-        keyExtractor={({ entryId }) => entryId}
-        renderItem={({ item: { entryId, row }, index }) => (
-          // DESIGN-05: not on the board, owner decides — the swipe (and its VoiceOver action) that takes the Entry out of this Collection:
-          // onRemove={() => { remove(entryId); }}
-          // DESIGN-05: not on the board, owner decides — the kind and the date added, «слово · 3 лист.»:
-          // added={addedOn(addedAt)}
-          <RailScreenCard
-            testID={`collection-entry-${entryId}`}
-            row={row}
-            known={knowledge.knownAmong([entryId]) === 1}
-            index={index}
-            onPress={() => {
-              openScreen(`/saved/collections/${collectionId}/${entryId}`);
-            }}
-          />
-        )}
-        ListHeaderComponent={
+    <>
+      <RailBoard
+        testID="collection"
+        cards={cards}
+        onOpen={(entryId) => {
+          openScreen(`/saved/collections/${collectionId}/${entryId}`);
+        }}
+        // DESIGN-05: not on the board, owner decides — the footer «Найновіші — першими. Тап
+        // відкриває повну картку.», which RailBoard would take as a `footer` for its list:
+        // footer={cards.length > 0 ? <Text>{collectionStrings.entries.footer}</Text> : null}
+        hero={
           <>
             <RailScreenHero
               id="collection-hero"
@@ -114,7 +117,7 @@ function Board({ collectionId }: { collectionId: string }) {
               kicker={fill(strings.kicker, { count: count(strings.wordCount, total) })}
               title={name}
               progress={fill(knownText, { x: String(known), n: String(total) })}
-              done={total === 0 ? 0 : known / total}
+              done={done}
               mascot="waits"
               back={{
                 testID: 'collection-back',
@@ -153,13 +156,6 @@ function Board({ collectionId }: { collectionId: string }) {
             )}
           </>
         }
-        // DESIGN-05: not on the board, owner decides — the footer «Найновіші — першими. Тап відкриває повну картку.»:
-        // ListFooterComponent={entries.length > 0 ? <Text>{collectionStrings.entries.footer}</Text> : null}
-        ListHeaderComponentStyle={styles.hero}
-        ItemSeparatorComponent={Gap}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
-        contentContainerStyle={styles.content}
       />
       <CollectionMenuSheet
         testID="collection-menu"
@@ -195,18 +191,10 @@ function Board({ collectionId }: { collectionId: string }) {
           setDeleting(false);
         }}
       />
-    </View>
+    </>
   );
 }
 
-function Gap() {
-  return <View style={styles.gap} />;
-}
-
 const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  hero: { marginHorizontal: -railScreen.list.side, marginBottom: railScreen.list.top },
-  content: { paddingHorizontal: railScreen.list.side, paddingBottom: railScreen.list.bottom },
   field: { marginBottom: railScreen.list.top },
-  gap: { height: railScreen.list.wordGap },
 });

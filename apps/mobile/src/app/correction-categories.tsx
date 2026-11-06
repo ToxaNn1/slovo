@@ -10,7 +10,7 @@ import { useOpenScreen } from '@/use-open-screen';
 /**
  * k2, the grid of every Category of Corrections, opened from the header of
  * the Dashboard's «Виправлення» rail, its only door: two columns of tiles,
- * a tile opening its Category. With none to show it returns home.
+ * a tile opening its Category. With none to show it returns to the Dashboard.
  */
 export default function CorrectionCategoriesRoute() {
   const categories = useCorrectionCategories();
@@ -21,7 +21,7 @@ export default function CorrectionCategoriesRoute() {
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
       <CorrectionCategoryGrid
         testID="correction-categories"
-        title={editionStrings.dashboard.correctionTypes.title}
+        title={editionStrings.dashboard.correctionCategories.title}
         tiles={categories.map(({ id, displayName }) => ({ id, name: displayName }))}
         onOpen={(categoryId) => {
           openScreen(`/correction-category/${categoryId}`);

@@ -109,6 +109,15 @@ describe('the Known counts of a set of Entries', () => {
     expect(app.knowledge.knownAmong(['w_one', 'c_two', 'w_one', 'w_other', 'w_missing'])).toBe(2);
   });
 
+  it('tells whether one Entry is marked Known', async () => {
+    const { app } = await run();
+    await app.knowledge.set('w_one', 'known');
+    await app.knowledge.set('w_two', 'unknown');
+    expect(app.knowledge.isKnown('w_one')).toBe(true);
+    expect(app.knowledge.isKnown('w_two')).toBe(false);
+    expect(app.knowledge.isKnown('w_other')).toBe(false);
+  });
+
   it('counts none with the knowledge Feature Switch off', async () => {
     const { app: before, records } = await run();
     await before.knowledge.set('w_one', 'known');
@@ -122,6 +131,7 @@ describe('the Known counts of a set of Entries', () => {
       random: { next: () => 0.25 },
     });
     expect(app.knowledge.knownAmong(['w_one'])).toBe(0);
+    expect(app.knowledge.isKnown('w_one')).toBe(false);
   });
 });
 

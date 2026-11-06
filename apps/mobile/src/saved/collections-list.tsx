@@ -2,6 +2,7 @@ import { MascotIn } from '@/mascot/mascot';
 import {
   CategoryGrid,
   categoryGrid,
+  categoryGridBox,
   CollectionCard,
   collectionCard,
   CollectionMenuSheet,
@@ -15,7 +16,6 @@ import {
 import { memo, useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { gridBox } from '@/categories/grid-box';
 import { editionStrings } from '@/edition/edition';
 import { useEditionInEffect } from '@/edition/remote-switches';
 import { useOpenScreen } from '@/use-open-screen';
@@ -165,13 +165,18 @@ function Collections({ header }: { header: ListHeader }) {
   return (
     <>
       {boardStyle ? (
+        // DESIGN-05: not on the board, owner decides — a Collection's card in the old list
+        // carries its count of Entries, its first Lemmas and its actions (the «⋯» menu,
+        // rename and delete through `onMenu`, `onRename`, `onDelete`); the board's tile
+        // shows the name alone, so the grid leaves them out. The Collection's screen keeps
+        // the menu with rename, share and delete.
         <CategoryGrid
           testID="collections"
           title={collectionStrings.title}
           count={String(rows.length)}
           tiles={rows.map(({ id, name, accessibilityLabel }) => ({ id, name, accessibilityLabel }))}
           columns={3}
-          box={gridBox}
+          box={categoryGridBox}
           shapes={categoryGrid.shapes}
           header={listHeader}
           empty={listEmpty}

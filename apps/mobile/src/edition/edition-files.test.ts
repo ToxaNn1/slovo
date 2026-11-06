@@ -922,7 +922,7 @@ describe('the strings of the Category screens and the board style (spec #1604)',
   });
 
   it('needs {x} and {n} in «ЗНАЮ {x} З {n}» and {name} in both Mix toasts', () => {
-    const strings = readJson('uk', 'strings') as { dashboard: { category: object } };
+    const strings = parsed;
     const issuesOf = (changed: object) =>
       EditionStringsSchema.safeParse({
         ...strings,

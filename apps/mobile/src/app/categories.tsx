@@ -1,17 +1,17 @@
-import { CategoryGrid, categoryGrid, useTokens } from '@slovo/ui';
+import { CategoryGrid, categoryGrid, categoryGridBox, useTokens } from '@slovo/ui';
 import { Redirect } from 'expo-router';
 import { StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useCategories, useTonesOf } from '@/categories/categories';
-import { gridBox } from '@/categories/grid-box';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 
 /**
  * k1, the grid of every Category of Words, opened from the Dashboard rail's
  * header, its only door: «Категорії» with their number, three columns of
- * tiles, a quiet Category's muted, a tile opening its Category. With none to show it returns home.
+ * tiles, a quiet Category's in its quiet tone, a tile opening its Category.
+ * With none to show it returns to the Dashboard.
  */
 export default function CategoriesRoute() {
   const categories = useCategories();
@@ -27,7 +27,7 @@ export default function CategoriesRoute() {
         count={String(categories.length)}
         tiles={categories.map(({ id, displayName }) => ({ id, name: displayName }))}
         columns={3}
-        box={gridBox}
+        box={categoryGridBox}
         shapes={categoryGrid.shapes}
         toneAt={tonesOf(categories)}
         onOpen={(categoryId) => {
