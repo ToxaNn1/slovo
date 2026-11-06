@@ -65,6 +65,22 @@ Each kind of Entry writes into its own folder of the review folder; Words go to 
 | `existing-entry`    | The Lemma is already a Word of the Edition (its ids are listed, Retired ones marked); the draft goes to `incomplete/`.           |
 | `check`             | Something worth a glance, e.g. an etymology taken from the ЕСУМ article of a related word (the source title names that article). |
 
+## Filters of `source:words`
+
+<!-- #1624 fills this section. -->
+
+## Idioms: `source:idioms`
+
+<!-- #1628 fills this section. -->
+
+## Corrections: `source:corrections`
+
+<!-- #1629 fills this section. -->
+
+## Synonym Rows: `source:synonyms`
+
+<!-- #1630 fills this section. -->
+
 ## Extending it
 
 `runSourcing(list, options, kind)` is the one sourcing run every kind shares: it reads the list file (`#` comments, a repeated line refused), refuses an Edition in another language, fetches through the polite client, sends a draft whose text is already an Entry of the kind to `incomplete/`, and writes the kind's folder and review report. A kind (`SourcingKind`) only reads one list line and drafts it. The entry point also exports `PoliteClient` and `readArticleBlocks`, which reads every article block of a goroh page with the dictionary it cites and whether a language model wrote it, so the Content CLI needs no deep import.
