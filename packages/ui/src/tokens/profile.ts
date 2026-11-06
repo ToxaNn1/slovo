@@ -133,3 +133,20 @@ export const calendarDay = {
   edge: 4,
   futureBorder: 2,
 } as const;
+
+/**
+ * The new Level screen (p6), from the design: the giant «РІВЕНЬ» with the
+ * Level's number stamped into it on red, as the Badge stamp lands.
+ */
+export const newLevelStamp = {
+  padding: { top: 110, horizontal: 28, bottom: 40 },
+  /** The number lands from this scale and turn to its rest. */
+  from: { scale: 3, turn: -26 },
+  turn: -8,
+  /** The number overlaps the giant word's foot. */
+  numberTop: -18,
+  /** The ink frame of the stamped number. */
+  frame: 6,
+  framePadding: { vertical: 4, horizontal: 22 },
+  titleTop: 30,
+} as const;
