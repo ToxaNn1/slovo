@@ -1,0 +1,21 @@
+# human-body
+гомілка human-body 2
+скроня human-body 2
+вилиця human-body 2
+щиколотка human-body 2
+жовно human-body 4
+потилиця human-body 1
+ніздря human-body 1
+литка human-body 1
+ключиця human-body 2
+зіниця human-body 2
+повіка human-body 1
+підребер'я human-body 3
+лядвія human-body 5
+міжбрів'я human-body 3
+утроба human-body 3
+сідниця human-body 2
+пахва human-body 2
+хрящ human-body 2
+жовч human-body 2
+мозоля human-body 2

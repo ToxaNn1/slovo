@@ -1,0 +1,21 @@
+# emotions-character
+гонористий emotions-character 2
+чванливий emotions-character 2
+зарозумілий emotions-character 1
+понурий emotions-character 2
+запопадливий emotions-character 2
+зажерливий emotions-character 3
+бахвальство emotions-character 3
+затурканий emotions-character 3
+сторопілий emotions-character 3
+шанолюбний emotions-character 4
+марнославство emotions-character 2
+самохвальство emotions-character 3
+жадоба emotions-character 2
+пожадливий emotions-character 3
+уїдливий emotions-character 2
+ущипливий emotions-character 3
+в'їдливий emotions-character 2
+мрійливий emotions-character 1
+примхливий emotions-character 2
+сварливий emotions-character 1

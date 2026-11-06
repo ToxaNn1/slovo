@@ -1,0 +1,21 @@
+# technology
+лебідка technology 2
+домкрат technology 1
+шестірня technology 2
+маховик technology 2
+свердло technology 1
+фреза technology 2
+напилок technology 2
+рубанок technology 2
+шпиндель technology 3
+втулка technology 2
+храповик technology 4
+ковадло technology 2
+кліщі technology 1
+сопло technology 2
+штангенциркуль technology 3
+ножівка technology 1
+буравчик technology 3
+пантограф technology 4
+теодоліт technology 4
+гальванометр technology 4

@@ -1,0 +1,15 @@
+# military, arts-culture
+бомбарда military 4
+пірнач military 4
+хоругва military 3
+фальконет military 4
+люнет military 5
+кончар military 5
+кольчуга military 2
+аркебуза military 4
+кулеврина military 5
+бармиця military 5
+гуслі arts-culture 2
+щедрівка arts-culture 1
+кобза arts-culture 2
+колядник arts-culture 2
