@@ -784,21 +784,26 @@ describe('loadEdition', () => {
       'featureSwitches.notifications',
     ],
     ['a missing widget Feature Switch', withoutSwitch('widget'), 'featureSwitches.widget'],
-    ...(
-      [
-        'categoryScreens',
-        'correctionCategoryScreens',
-        'quietCategories',
-        'collectionBoardStyle',
-      ] as const
-    ).map(
-      (name) =>
-        [
-          `a missing ${name} Feature Switch`,
-          withoutSwitch(name),
-          `featureSwitches.${name}`,
-        ] as const,
-    ),
+    [
+      'a missing categoryScreens Feature Switch',
+      withoutSwitch('categoryScreens'),
+      'featureSwitches.categoryScreens',
+    ],
+    [
+      'a missing correctionCategoryScreens Feature Switch',
+      withoutSwitch('correctionCategoryScreens'),
+      'featureSwitches.correctionCategoryScreens',
+    ],
+    [
+      'a missing quietCategories Feature Switch',
+      withoutSwitch('quietCategories'),
+      'featureSwitches.quietCategories',
+    ],
+    [
+      'a missing collectionBoardStyle Feature Switch',
+      withoutSwitch('collectionBoardStyle'),
+      'featureSwitches.collectionBoardStyle',
+    ],
     [
       'a missing Dashboard wordmark Feature Switch',
       withoutSwitch('dashboardWordmark'),
