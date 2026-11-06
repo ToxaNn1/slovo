@@ -70,6 +70,7 @@ export function BadgeStamp({
   title,
   takeLabel,
   mascot,
+  isNew = false,
   onClose,
   testID = 'badge-stamp',
 }: {
@@ -80,6 +81,8 @@ export function BadgeStamp({
   title: string;
   takeLabel: string;
   mascot?: ReactNode;
+  /** The Badge is opened for the first time: its mark carries the cream «НОВА» tag. */
+  isNew?: boolean;
   onClose: () => void;
   testID?: string;
 }) {
@@ -116,7 +119,7 @@ export function BadgeStamp({
             shape={shape}
             tone="cream"
             symbol={symbol}
-            earned
+            state={{ kind: 'earned', isNew }}
             onRed
             size={badgeStamp.markSide}
           />

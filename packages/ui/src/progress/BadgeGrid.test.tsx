@@ -11,6 +11,7 @@ const badges: readonly BadgeGridItem[] = [
     family: 'streak',
     symbol: '3',
     earned: true,
+    isNew: false,
   },
   {
     id: 'level-5',
@@ -18,6 +19,7 @@ const badges: readonly BadgeGridItem[] = [
     family: 'levels',
     symbol: '5',
     earned: false,
+    progress: { current: 0, target: 5 },
   },
   {
     id: 'streak-7',
@@ -25,6 +27,7 @@ const badges: readonly BadgeGridItem[] = [
     family: 'streak',
     symbol: '7',
     earned: false,
+    progress: { current: 3, target: 7 },
   },
 ];
 
@@ -56,12 +59,13 @@ async function draw(onPress: (badge: BadgeGridItem) => void) {
 }
 
 describe('BadgeGrid', () => {
-  it('names each Badge with its status and shows the symbol of an earned one only', async () => {
+  it('names each Badge with its status and hides the symbol of one not started', async () => {
     await draw(() => undefined);
     expect(screen.getByLabelText('Three days')).toHaveAccessibilityValue({ text: 'Earned' });
     expect(screen.getByLabelText('Level five')).toHaveAccessibilityValue({ text: 'Not yet' });
     expect(screen.getByTestId('badge-streak-3-mark-symbol')).toHaveTextContent('3');
     expect(screen.queryByTestId('badge-level-5-mark-symbol')).toBeNull();
+    expect(screen.getByTestId('badge-streak-7-mark-symbol')).toHaveTextContent('7');
   });
 
   it("heads each family with a Badge, in the Edition's order, with how many of it are earned", async () => {

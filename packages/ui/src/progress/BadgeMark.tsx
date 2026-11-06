@@ -2,8 +2,18 @@ import type { BadgeShape, BadgeTone, ColorTokens } from '@slovo/contracts';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Polygon } from 'react-native-svg';
 
+import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { badgeMark, badgeStamp, badgeTile, roleAt, typeStyle, wedges, type Wedge } from '../tokens';
+import {
+  badgeMark,
+  badgeNewTag,
+  badgeStamp,
+  badgeTile,
+  roleAt,
+  typeStyle,
+  wedges,
+  type Wedge,
+} from '../tokens';
 
 /** The outline of each Badge family shape; `circle` is drawn as a circle. */
 const outlines: Record<Exclude<BadgeShape, 'circle'>, Wedge> = {
@@ -55,18 +65,30 @@ function toneColors(tone: BadgeTone, colors: ColorTokens, key: ColorTokens) {
 }
 
 /**
- * A Badge as its family's mark: earned, its `shape` in the ring of its
- * `tone` with the face set inside and its symbol, over a drop shadow (4 deep
- * above a side of 40, 2 at 40 and below); not yet, a dark silhouette of the
- * shape with no symbol. `onRed` draws an earned Badge for a red ground:
- * cream in an ink ring over a deeper ink drop. The symbol carries the test ID
- * `${testID}-symbol`.
+ * The state a Badge's mark draws (board 10.5, 10.6): not started, a
+ * silhouette; in progress, the silhouette filled from the bottom by
+ * `fraction` (above 0, below 1); earned, new («НОВА») until the reader opens it.
+ */
+export type BadgeMarkState =
+  | { readonly kind: 'locked' }
+  | { readonly kind: 'progress'; readonly fraction: number }
+  | { readonly kind: 'earned'; readonly isNew: boolean };
+
+/**
+ * A Badge as its family's mark. Locked: a dark silhouette of its `shape` with
+ * no symbol. In progress: the silhouette fills from the bottom in red by its
+ * fraction, the symbol muted. Earned: the shape in the ring of its `tone` with
+ * the face set inside and its symbol, over a drop shadow (4 deep above a side
+ * of 40, 2 at 40 and below), and while new the ink «НОВА» tag turned over its
+ * corner. `onRed` draws an earned Badge for a red ground: cream in an ink ring
+ * over a deeper ink drop, its tag cream. The symbol carries the test ID
+ * `${testID}-symbol`, the tag `${testID}-new`.
  */
 export function BadgeMark({
   shape,
   tone,
   symbol,
-  earned,
+  state,
   size,
   onRed = false,
   testID,
@@ -74,7 +96,7 @@ export function BadgeMark({
   shape: BadgeShape;
   tone: BadgeTone;
   symbol: string;
-  earned: boolean;
+  state: BadgeMarkState;
   /** The side of the square the shape fills. */
   size: number;
   onRed?: boolean;
@@ -82,8 +104,11 @@ export function BadgeMark({
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
+  const { strings, voice } = useEdition();
   const symbolSize = size / 3;
   const key = useSchemeColors('light');
+  const keyInk = key.ink;
+  const earned = state.kind === 'earned';
   const drop = onRed
     ? badgeStamp.drop
     : size > badgeMark.drop.over
@@ -94,8 +119,9 @@ export function BadgeMark({
     face,
     symbol: symbolColor,
   } = onRed
-    ? { ring: key.ink, face: key.background, symbol: key.ink }
+    ? { ring: keyInk, face: key.background, symbol: keyInk }
     : toneColors(tone, colors, key);
+  const filled = state.kind === 'progress' ? Math.round(size * state.fraction) : 0;
   return (
     <View
       testID={testID}
@@ -103,7 +129,7 @@ export function BadgeMark({
     >
       {earned && (
         <View style={[styles.layer, { top: drop }]}>
-          <Shape shape={shape} size={size} fill={key.ink} />
+          <Shape shape={shape} size={size} fill={keyInk} />
         </View>
       )}
       <View style={styles.layer}>
@@ -114,7 +140,14 @@ export function BadgeMark({
           <Shape shape={shape} size={size} fill={face} inset={badgeMark.ring} />
         </View>
       )}
-      {earned && (
+      {filled > 0 && (
+        <View style={[styles.fill, { top: size - filled, width: size, height: filled }]}>
+          <View style={[styles.layer, { top: filled - size }]}>
+            <Shape shape={shape} size={size} fill={colors.accent} />
+          </View>
+        </View>
+      )}
+      {state.kind !== 'locked' && (
         <View style={[styles.symbol, { width: size, height: size }]}>
           <Text
             testID={testID === undefined ? undefined : `${testID}-symbol`}
@@ -123,7 +156,7 @@ export function BadgeMark({
             style={[
               typeStyle('badgeSymbol', tokens),
               {
-                color: symbolColor,
+                color: earned ? symbolColor : colors.muted,
                 ...roleAt('badgeSymbol', symbolSize),
               },
             ]}
@@ -132,6 +165,21 @@ export function BadgeMark({
           </Text>
         </View>
       )}
+      {earned && state.isNew && (
+        <Text
+          testID={testID === undefined ? undefined : `${testID}-new`}
+          {...voice}
+          style={[
+            typeStyle('badgeNewTag', tokens),
+            styles.tag,
+            onRed
+              ? { backgroundColor: key.background, color: keyInk }
+              : { backgroundColor: colors.ink, color: colors.background },
+          ]}
+        >
+          {strings.settings.badges.newTag}
+        </Text>
+      )}
     </View>
   );
 }
@@ -139,5 +187,16 @@ export function BadgeMark({
 const styles = StyleSheet.create({
   mark: { position: 'relative' },
   layer: { position: 'absolute', left: 0, top: 0 },
+  fill: { position: 'absolute', left: 0, overflow: 'hidden' },
   symbol: { position: 'absolute', left: 0, top: 0, alignItems: 'center', justifyContent: 'center' },
+  tag: {
+    position: 'absolute',
+    top: badgeNewTag.top,
+    right: badgeNewTag.right,
+    paddingHorizontal: badgeNewTag.paddingHorizontal,
+    paddingVertical: badgeNewTag.paddingVertical,
+    borderRadius: badgeNewTag.radius,
+    overflow: 'hidden',
+    transform: [{ rotate: `${String(badgeNewTag.turn)}deg` }],
+  },
 });
