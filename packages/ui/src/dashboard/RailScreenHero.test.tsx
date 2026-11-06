@@ -14,7 +14,8 @@ const metrics = {
 
 type Hero = ComponentProps<typeof RailScreenHero>;
 
-function heroTree(props: Partial<Hero>, back: Hero['back']) {
+/** The hero tree with a description unless `withDescription` is false. */
+function heroTree(props: Partial<Hero>, back: Hero['back'], withDescription = true) {
   return (
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
@@ -23,7 +24,7 @@ function heroTree(props: Partial<Hero>, back: Hero['back']) {
           glyph="circle"
           kicker="Category · 4 words"
           title="Gentle words"
-          description="Words that sound soft."
+          {...(withDescription && { description: 'Words that sound soft.' })}
           progress="Known 1 of 4"
           done={0.25}
           mascot="waits"
@@ -35,9 +36,9 @@ function heroTree(props: Partial<Hero>, back: Hero['back']) {
   );
 }
 
-async function renderHero(props: Partial<Hero> = {}) {
+async function renderHero(props: Partial<Hero> = {}, withDescription = true) {
   const back = { label: 'Home', onPress: jest.fn() };
-  await render(heroTree(props, back));
+  await render(heroTree(props, back, withDescription));
   return back;
 }
 
@@ -47,13 +48,20 @@ describe('RailScreenHero', () => {
 
     expect(screen.getByText('Category · 4 words')).toBeTruthy();
     expect(screen.getByRole('header', { name: 'Gentle words' })).toBeTruthy();
-    expect(screen.getByText('Words that sound soft.')).toBeTruthy();
+    expect(screen.getByTestId('hero-description')).toHaveTextContent('Words that sound soft.');
     expect(screen.getByTestId('hero-progress')).toHaveTextContent('Known 1 of 4');
     expect(screen.queryByTestId('hero-action')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Home' }));
 
     expect(back.onPress).toHaveBeenCalledTimes(1);
+  });
+
+  it('draws no description when the screen has none, as a Collection’s', async () => {
+    await renderHero({}, false);
+
+    expect(screen.getByRole('header', { name: 'Gentle words' })).toBeTruthy();
+    expect(screen.queryByTestId('hero-description')).toBeNull();
   });
 
   it('draws the add button not yet pressed, and its press adds', async () => {

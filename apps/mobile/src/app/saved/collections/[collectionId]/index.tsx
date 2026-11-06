@@ -15,13 +15,28 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { addedOn } from '@/saved/added-on';
-import { useCollectionEntries } from '@/saved/collections';
 import { editionStrings } from '@/edition/edition';
+import { useEditionInEffect } from '@/edition/remote-switches';
+import { addedOn } from '@/saved/added-on';
+import { CollectionBoardScreen } from '@/saved/collection-board';
+import { useCollectionEntries } from '@/saved/collections';
 import { useOpenScreen } from '@/use-open-screen';
 
 const { collections: collectionStrings } = editionStrings;
 const strings = collectionStrings.entries;
+
+/**
+ * A Collection: in the board style while `collectionBoardStyle` is on
+ * (ADR 0082), today's screen while it is off.
+ */
+export default function CollectionScreen() {
+  const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
+  return useEditionInEffect().isFeatureEnabled('collectionBoardStyle') ? (
+    <CollectionBoardScreen collectionId={collectionId} />
+  ) : (
+    <CollectionListScreen collectionId={collectionId} />
+  );
+}
 
 /**
  * A Collection: its Entries newest first, each row with its kind and when it
@@ -31,8 +46,7 @@ const strings = collectionStrings.entries;
  * Collection came first in the Saved tab, as a Collection Link's copy or a
  * Spotlight result does.
  */
-export default function CollectionScreen() {
-  const { collectionId } = useLocalSearchParams<{ collectionId: string }>();
+function CollectionListScreen({ collectionId }: { collectionId: string }) {
   const { collection, entries, remove } = useCollectionEntries(collectionId);
   const tokens = useTokens();
   const { colors } = tokens;
