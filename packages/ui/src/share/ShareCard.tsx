@@ -1,13 +1,15 @@
-import type { MascotState } from '@slovo/contracts';
+import type { BadgeShape, BadgeTone, MascotState } from '@slovo/contracts';
 import type { ShareCardBody, ShareCardContent } from '@slovo/core';
 import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, Pattern, Polygon, Rect } from 'react-native-svg';
 
 import { Mascot } from '../primitives/Mascot';
+import { BadgeMark } from '../progress/BadgeMark';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import {
+  badgeShareMark,
   halftone,
   roleAt,
   shareCardDrawing,
@@ -64,6 +66,8 @@ export interface ShareCardProps {
   content: ShareCardContent;
   /** The watermark: the Edition's display name. */
   watermark: string;
+  /** The Badge of a Badge's card: its poster mark over the title (board 10.7). */
+  badge?: { shape: BadgeShape; tone: BadgeTone; symbol: string } | undefined;
 }
 
 /** The colours of the card in the current Theme: red in the light one, the dark ground in the dark one. */
@@ -141,6 +145,7 @@ export function ShareCard(props: ShareCardProps & { format: ShareCardFormat; wid
 function FittedCard({
   content: { overline, label, body },
   watermark,
+  badge,
   format,
   width,
 }: ShareCardProps & { format: ShareCardFormat; width: number }) {
@@ -258,6 +263,16 @@ function FittedCard({
             >
               {overline}
             </Text>
+          )}
+          {badge !== undefined && body.kind === 'milestone' && (
+            <BadgeMark
+              testID="share-card-badge"
+              shape={badge.shape}
+              tone={badge.tone}
+              symbol={badge.symbol}
+              state={{ kind: 'earned', isNew: false }}
+              size={badgeShareMark.side * unit}
+            />
           )}
           <Blocks body={body} headline={headline} text={text} format={format} paint={paint} />
         </View>

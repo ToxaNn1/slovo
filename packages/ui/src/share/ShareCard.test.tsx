@@ -3,7 +3,7 @@ import { coreTokens, EditionProvider, TokensProvider, type ColorScheme } from '@
 import { describe, expect, it } from '@jest/globals';
 import { render, screen, within } from '@testing-library/react-native';
 
-import { ShareCard } from './ShareCard';
+import { ShareCard, type ShareCardProps } from './ShareCard';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -15,11 +15,18 @@ async function renderCard(
   content: ShareCardContent,
   format: 'story' | 'square',
   colorScheme: ColorScheme = 'light',
+  badge?: ShareCardProps['badge'],
 ) {
   await render(
     <TokensProvider tokens={coreTokens} colorScheme={colorScheme}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <ShareCard content={content} watermark="SLOVO" format={format} width={300} />
+        <ShareCard
+          content={content}
+          watermark="SLOVO"
+          badge={badge}
+          format={format}
+          width={300}
+        />
       </EditionProvider>
     </TokensProvider>,
   );
@@ -145,6 +152,29 @@ describe('ShareCard', () => {
 
     expect(within(card).getByTestId('share-card-giant')).toHaveTextContent('23');
     expect(within(card).getByTestId('mascot-celebrates')).toBeOnTheScreen();
+  });
+
+  const badgeCard: ShareCardContent = {
+    shows: 'badge:week',
+    overline: '2 November',
+    label: 'Badge earned. A week',
+    body: { kind: 'milestone', title: 'Badge earned', headline: 'A week', detail: undefined },
+  };
+
+  it("carries a Badge's poster mark over its title", async () => {
+    const card = await renderCard(badgeCard, 'square', 'light', {
+      shape: 'hexagon',
+      tone: 'ink',
+      symbol: '7',
+    });
+
+    expect(within(card).getByTestId('share-card-badge-symbol')).toHaveTextContent('7');
+  });
+
+  it('carries no mark on a milestone that is not a Badge', async () => {
+    const card = await renderCard(badgeCard, 'square');
+
+    expect(within(card).queryByTestId('share-card-badge')).toBeNull();
   });
 
   it("draws a Weekly Recap's numbers with no giant glyph, and the Mascot happy", async () => {
