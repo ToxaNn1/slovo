@@ -2413,19 +2413,18 @@ describe('a failed planning of the offers', () => {
     });
     let failed = false;
     let starting = false;
-    /** For each read of the Hidden Entries by the start, whether the offers were planned by then. */
+    /** For each read of the clock by the start, whether the offers were planned by then. */
     const plannedAtRead: boolean[] = [];
     const later = handSchedule();
-    const port = createMemoryUserStatePort(new Map());
     const app = await run({
-      port: {
-        ...port,
-        list(prefix) {
-          if (starting && prefix === userStateRecords.hiddenEntries.prefix)
+      time: {
+        ...clock,
+        now() {
+          if (starting)
             plannedAtRead.push(
               app.game.state.modes.every((offer) => 'canStart' in offer && !('planning' in offer)),
             );
-          return port.list(prefix);
+          return clock.now();
         },
       },
       pack: {
@@ -2450,8 +2449,8 @@ describe('a failed planning of the offers', () => {
     release();
     await start;
 
-    // The try read the eligible Entries before the start; the start, only once the offers were planned.
-    expect(plannedAtRead).toEqual([true]);
+    // The start read the clock only once the offers were planned.
+    expect(new Set(plannedAtRead)).toEqual(new Set([true]));
     expect(app.game.state.modes).toEqual(ready);
     expect(current(app)).toMatchObject({ modeId: 'guess-word', status: 'playing' });
   });
