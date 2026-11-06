@@ -1,5 +1,5 @@
 import { type Word, type Category } from '@slovo/contracts';
-import { openComposition, type Composition, type Edition } from '@slovo/core';
+import { featureOfKind, openComposition, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
@@ -68,7 +68,7 @@ const content = createMemoryContentPort({
   correctionCategories: [everyday, work],
   words: [
     word('w_one', first.id, { registers: ['archaic'] }),
-    word('w_two', second.id, { partOfSpeech: 'noun', gender: 'feminine' }),
+    word('w_two', second.id, { partOfSpeech: 'noun', gender: 'feminine', stress: [2] }),
     word('w_three', second.id),
   ],
   corrections: [
@@ -101,11 +101,13 @@ const content = createMemoryContentPort({
   ],
 });
 
-async function open(): Promise<{ app: Composition; advance: () => void }> {
+async function open(
+  edition: Edition = ukrainian,
+): Promise<{ app: Composition; advance: () => void }> {
   const time = fakeClock();
   const app = await openComposition({
     content,
-    edition: ukrainian,
+    edition,
     userState: await seedUserState(),
     clock: time.clock,
     random: { next: () => 0.25 },
@@ -118,13 +120,14 @@ async function open(): Promise<{ app: Composition; advance: () => void }> {
   };
 }
 
-const modelOf = (app: Composition, edition: Pick<Edition, 'isFeatureEnabled'> = ukrainian) =>
-  hiddenScreenModel({
-    edition,
-    hiddenEntries: app.hiddenEntries.list,
-    mix: app.mix.state,
-    strings,
-  });
+const modelOf = (app: Composition) =>
+  hiddenScreenModel({ hiddenEntries: app.hiddenEntries.list, mix: app.mix, strings });
+
+/** The Ukrainian Edition with the feature turned off. */
+const without = (feature: string): Edition => ({
+  ...ukrainian,
+  isFeatureEnabled: (each) => each !== feature && ukrainian.isFeatureEnabled(each),
+});
 
 describe('the «Приховане» screen', () => {
   it('is empty while nothing is hidden', async () => {
@@ -166,6 +169,16 @@ describe('the «Приховане» screen', () => {
       'виправлення, росіянізм',
       'слово, прислівник, застаріле',
     ]);
+  });
+
+  it('names the Entry for VoiceOver on its «Повернути» button, without the stress mark', async () => {
+    const { app } = await open();
+    await app.hiddenEntries.hide('w_two');
+
+    const [entry] = modelOf(app).entries;
+
+    expect(entry?.row.title).not.toBe('two');
+    expect(entry?.restoreLabel).toBe('Повернути «two»');
   });
 
   it('lists the Hidden Categories by name, in the Language Pack’s order', async () => {
@@ -219,10 +232,10 @@ describe('the «Приховане» screen', () => {
   });
 
   it('leaves the Hidden Categories of Corrections out while the Edition turns Corrections off', async () => {
-    const { app } = await open();
+    const { app } = await open(without('corrections'));
     await app.hide({ kind: 'category', categoryId: work.id, of: 'correction' });
 
-    const model = modelOf(app, { isFeatureEnabled: (each) => each !== 'corrections' });
+    const model = modelOf(app);
 
     expect(model.categories).toEqual([]);
     expect(model.empty).toBe(true);
@@ -239,7 +252,9 @@ describe('the «Приховане» screen', () => {
 
       await app.hide({ kind: 'whole-kind', entryKind });
 
-      expect(modelOf(app).kinds).toEqual([{ entryKind, name, turnOnLabel }]);
+      expect(modelOf(app).kinds).toEqual([
+        { entryKind, testID: `hidden-${featureOfKind(entryKind)}`, name, turnOnLabel },
+      ]);
       expect(modelOf(app).empty).toBe(false);
 
       await app.unhide({ kind: 'whole-kind', entryKind });
@@ -264,10 +279,10 @@ describe('the «Приховане» screen', () => {
   ] as const)(
     'leaves the kind %s out of the screen when the Edition does not turn it on',
     async (entryKind, feature) => {
-      const { app } = await open();
+      const { app } = await open(without(feature));
       await app.mix.setKind(entryKind, false);
 
-      const model = modelOf(app, { isFeatureEnabled: (each) => each !== feature });
+      const model = modelOf(app);
 
       expect(model.kinds).toEqual([]);
       expect(model.empty).toBe(true);

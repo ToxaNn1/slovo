@@ -1,15 +1,13 @@
 import { fill, type EditionStrings, type Plural } from '@slovo/contracts';
 import {
   featureOfKind,
-  kindsShown,
-  MIX_KINDS,
+  withoutStress,
   type CategoryKind,
-  type Edition,
+  type Composition,
   type EntryRowModel,
   type HiddenEntry,
   type MixKind,
   type MixKindName,
-  type MixState,
 } from '@slovo/core';
 import { entryLabel } from '@slovo/ui/entry-row-text';
 
@@ -19,6 +17,8 @@ export interface HiddenEntryModel {
   readonly row: EntryRowModel;
   /** The line under the Lemma, and as VoiceOver reads it in whole words. */
   readonly labels: { readonly text: string; readonly spoken: string };
+  /** What VoiceOver reads for its «Повернути» button. */
+  readonly restoreLabel: string;
 }
 
 /** A Hidden Category's row on the Hidden screen. */
@@ -33,6 +33,8 @@ export interface HiddenCategoryModel {
 /** The row of a kind of Entry out of the Mix as a whole on the Hidden screen. */
 export interface HiddenKindModel {
   readonly entryKind: MixKind;
+  /** Its row's test ID, e.g. `hidden-corrections`. */
+  readonly testID: string;
   readonly name: string;
   /** What VoiceOver reads for its «Увімкнути» button. */
   readonly turnOnLabel: string;
@@ -113,6 +115,7 @@ function kindModel(entryKind: MixKind, strings: EditionStrings): HiddenKindModel
   };
   return {
     entryKind,
+    testID: `hidden-${featureOfKind(entryKind)}`,
     name: mix[featureOfKind(entryKind)].title,
     turnOnLabel: turnOnLabels[entryKind],
   };
@@ -132,24 +135,25 @@ function entryModel({ entryId, row }: HiddenEntry, strings: EditionStrings): Hid
       text: label(hidden.rowLabels, parts.short),
       spoken: label(hidden.rowLabelsSpoken, parts.full),
     },
+    restoreLabel: fill(hidden.restoreLabel, { title: withoutStress(row.title) }),
   };
 }
 
+/** What the Hidden screen draws, from the Hidden Entries and what the Mix in effect has out of it (`Mix.outOfMix`). */
 export function hiddenScreenModel({
-  edition,
   hiddenEntries,
   mix,
   strings,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled'>;
   hiddenEntries: readonly HiddenEntry[];
-  mix: MixState;
+  mix: Pick<Composition['mix'], 'outOfMix' | 'screen'>;
   strings: EditionStrings;
 }): HiddenScreenModel {
   const entries = hiddenEntries
     .filter(({ row }) => row.kind !== 'synonymRow' && row.kind !== 'tip')
     .map((hiddenEntry) => entryModel(hiddenEntry, strings));
-  const sections = SECTION_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind)))
+  const kindsOn = mix.screen().kinds.map(({ entryKind }) => entryKind);
+  const sections = SECTION_KINDS.filter((kind) => kindsOn.includes(kind))
     .map((kind) => ({
       name: featureOfKind(kind),
       title: strings.mix[featureOfKind(kind)].title,
@@ -158,24 +162,16 @@ export function hiddenScreenModel({
         .map((hiddenEntry) => entryModel(hiddenEntry, strings)),
     }))
     .filter((section) => section.entries.length > 0);
-  const correctionsIn = kindsShown({ edition, mix }).includes('correction');
-  const categories: HiddenCategoryModel[] = [
-    ...mix.hiddenCategories.map(({ id, displayName }) => ({
-      id,
-      of: 'word' as const,
-      name: displayName,
-    })),
-    ...(correctionsIn ? mix.correctionCategories.hiddenCategories : []).map(
-      ({ id, displayName }) => ({
-        id,
-        of: 'correction' as const,
-        name: fill(strings.mix.corrections.category, { category: displayName }),
-      }),
-    ),
-  ];
-  const kinds = MIX_KINDS.filter(
-    (kind) => edition.isFeatureEnabled(featureOfKind(kind)) && !mix.kinds[kind],
-  ).map((kind) => kindModel(kind, strings));
+  const outOfMix = mix.outOfMix();
+  const categories = outOfMix.categories.map(({ of, category: { id, displayName } }) => ({
+    id,
+    of,
+    name:
+      of === 'word'
+        ? displayName
+        : fill(strings.mix.corrections.category, { category: displayName }),
+  }));
+  const kinds = outOfMix.kinds.map((kind) => kindModel(kind, strings));
   return {
     entries,
     sections,
