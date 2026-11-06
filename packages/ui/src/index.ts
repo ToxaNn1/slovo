@@ -132,6 +132,8 @@ export { MoodCheckIn } from './dashboard/MoodCheckIn';
 export { PreviousWords } from './dashboard/PreviousWords';
 export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
 export { CorrectionTypesRail } from './dashboard/CorrectionTypesRail';
+export { QuietScreenHero } from './dashboard/QuietScreenHero';
+export { QuietScreenRow } from './dashboard/QuietScreenRow';
 export { RailScreenCard } from './dashboard/RailScreenCard';
 export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
 export { RailScreenHero, type HeroAction } from './dashboard/RailScreenHero';
