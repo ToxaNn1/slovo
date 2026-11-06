@@ -247,6 +247,7 @@ describe('The stats sheet’s numbers', () => {
       streak: 1,
       bestStreak: 1,
       freezesHeld: 0,
+      freezesUsed: 0,
       seenToday: 0,
       favorites: 0,
       inCollections: 0,
@@ -611,6 +612,26 @@ describe('The Active Days calendar', () => {
     const app = await openWithCalendar(records, ['2026-11-03'], ['activeDaysCalendar', 'xpLog']);
 
     expect(shown(app).slice(3)).toEqual(['26a 27a 28z 29m 30m 31m 1z', '2b 3t 4b 5b 6f 7f 8f']);
+  });
+
+  it('gives the 7 days ending today for the Streak freeze card, frozen and Break days from the records', async () => {
+    const records = new Map([
+      frozenOn('2026-10-28'),
+      breakFrom('2026-11-02', 4),
+      frozenOn('2026-11-01'),
+    ]);
+    await openWithCalendar(records, ['2026-10-26', '2026-10-27']);
+    const app = await openWithCalendar(records, ['2026-11-03'], ['xpLog']);
+
+    expect(app.progress.lastWeek().map((day) => `${String(day.day)}${letters[day.state]}`)).toEqual(
+      ['28z', '29m', '30m', '31m', '1z', '2b', '3t'],
+    );
+    expect(app.progress.lastWeek()[0]).toEqual({
+      date: '2026-10-28',
+      day: 28,
+      month: 10,
+      state: 'frozen',
+    });
   });
 
   it('shows no future week, even for an Active Day kept ahead of a clock moved back', async () => {
