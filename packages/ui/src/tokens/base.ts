@@ -809,6 +809,8 @@ export const motion = {
   fly: { duration: 600, easing: [0.2, 0.9, 0.25, 1.15] },
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
+  /** The five frames of a Badge's stamp (board 10.7), after a short wait. */
+  badgeStamp: { duration: 550, easing: ease, delay: 150 },
   /** The Level ring fills to the reader's progress. */
   ring: { duration: 1100, easing: [0.2, 0.8, 0.2, 1] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
@@ -829,7 +831,12 @@ export const motion = {
   reduceMotion: { duration: 300, easing: ease },
 } as const satisfies Record<
   string,
-  { readonly duration: number; readonly easing: Easing; readonly rise?: number }
+  {
+    readonly duration: number;
+    readonly easing: Easing;
+    readonly rise?: number;
+    readonly delay?: number;
+  }
 >;
 
 /**
