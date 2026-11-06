@@ -277,6 +277,7 @@ export {
 } from './dashboard/curated-collections';
 export {
   type CorrectionTypesBlock,
+  type CategoriesBlock,
   type CuratedCollectionsBlock,
   type Dashboard,
   type DashboardBlock,
