@@ -17,3 +17,17 @@ export function useCategories(): readonly Category[] {
     ({ blocks }) => blocks.find((block) => block.kind === 'categories')?.categories ?? none,
   );
 }
+
+/**
+ * The Categories of Corrections in the Language Pack's order, as the
+ * Dashboard's Correction Types block carries them: none with
+ * `correctionCategoryScreens` off, so k2 and a Category's screen of
+ * Corrections draw nothing then (spec #1604).
+ */
+export function useCorrectionCategories(): readonly Category[] {
+  const { dashboard } = useComposition();
+  return useSubscribed(
+    dashboard,
+    ({ blocks }) => blocks.find((block) => block.kind === 'correctionTypes')?.categories ?? none,
+  );
+}

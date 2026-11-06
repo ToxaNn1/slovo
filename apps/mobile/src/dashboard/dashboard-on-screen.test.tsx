@@ -17,6 +17,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import HomeScreen from '../app/index';
 import CategoriesScreen from '../app/categories';
 import CategoryScreen from '../app/category/[categoryId]';
+import CorrectionCategoriesScreen from '../app/correction-categories';
+import CorrectionCategoryScreen from '../app/correction-category/[categoryId]';
 import CorrectionTypeScreen from '../app/correction-type/[type]';
 import CuratedCollectionScreen from '../app/curated-collection/[collectionId]';
 import FeedScreen from '../app/feed';
@@ -98,7 +100,12 @@ let composition: Composition;
  */
 async function open(
   dashboard: boolean,
-  { previousWords = true, curatedCollections = true, categoryScreens = true } = {},
+  {
+    previousWords = true,
+    curatedCollections = true,
+    categoryScreens = true,
+    correctionCategoryScreens = true,
+  } = {},
 ) {
   const shipped = loadEdition(config);
   editionInEffect = {
@@ -108,13 +115,15 @@ async function open(
         ? dashboard
         : feature === 'categoryScreens'
           ? categoryScreens
-          : feature === 'previousWords'
-            ? previousWords && shipped.isFeatureEnabled(feature)
-            : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
-              feature === 'curatedCollections'
-              ? curatedCollections
-              : // No later question takes the Word of the Day's place in the Feed.
-                feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+          : feature === 'correctionCategoryScreens'
+            ? correctionCategoryScreens
+            : feature === 'previousWords'
+              ? previousWords && shipped.isFeatureEnabled(feature)
+              : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
+                feature === 'curatedCollections'
+                ? curatedCollections
+                : // No later question takes the Word of the Day's place in the Feed.
+                  feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   userState = await seedUserState(
     {
@@ -212,6 +221,8 @@ async function renderApp() {
       'curated-collection/[collectionId]': CuratedCollectionScreen,
       categories: CategoriesScreen,
       'category/[categoryId]': CategoryScreen,
+      'correction-categories': CorrectionCategoriesScreen,
+      'correction-category/[categoryId]': CorrectionCategoryScreen,
     },
     { initialUrl: '/' },
   );
@@ -357,6 +368,37 @@ describe('the Correction Types rail', () => {
     expect(screen.getByText(words.tiles.surzhyk)).toBeTruthy();
     expect(screen.getByText('шоби')).toBeTruthy();
     expect(screen.getByText('типу')).toBeTruthy();
+  });
+
+  it('its header opens k2, the grid of the Categories of Corrections, and a tile there opens the Category', async () => {
+    await open(true);
+    await renderApp();
+
+    const header = screen.getByRole('button', {
+      name: `${editionStrings.dashboard.correctionTypes.title}, 1`,
+    });
+    await settle(() => fireEvent.press(header));
+
+    expect(
+      screen.getByRole('header', { name: `${editionStrings.dashboard.correctionTypes.title}, 1` }),
+    ).toBeTruthy();
+    expect(screen.getByTestId('correction-categories-everyday-name')).toHaveTextContent('Щоденне');
+
+    // The Stack's transition end settles the opener in the app.
+    screenSettled();
+    await settle(() => fireEvent.press(screen.getByTestId('correction-categories-everyday')));
+
+    expect(screen.getByTestId('correction-category')).toHaveTextContent(/Щоденне/);
+    expect(screen.getByText('Щоденне.')).toBeTruthy();
+  });
+
+  it('its header is a plain title with `correctionCategoryScreens` off', async () => {
+    await open(true, { correctionCategoryScreens: false });
+    await renderApp();
+
+    const title = screen.getByTestId('dashboard-correction-types-title');
+    expect(within(title).getByText(editionStrings.dashboard.correctionTypes.title)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Виправлення/ })).toBeNull();
   });
 
   it('«Як правильно?» shows the standard form and the explanation, and counts it «розібрано»', async () => {
