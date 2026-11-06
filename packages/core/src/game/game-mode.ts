@@ -1,11 +1,13 @@
-import type { Example, LanguageTraits } from '@slovo/contracts';
+import type { LanguageTraits } from '@slovo/contracts';
 
+import type { AnswerSheet, RoundOption } from './answer-form';
+import { pickForm, type PickContent } from './pick-form';
+import { vowelForm, type VowelContent } from './vowel-form';
 import type { Edition } from '../edition/edition';
 import type { AskableEntry, AskableKind, KindRefusal, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
 
-/** How many options a Round offers, exactly one of them correct. */
-export const ROUND_OPTIONS = 4;
+export { ROUND_OPTIONS, type AnswerSheet, type RoundOption } from './answer-form';
 
 /**
  * What the Game needs to know of the Edition: its Feature Switches, its
@@ -19,31 +21,6 @@ export type GameEdition = Pick<Edition, 'isFeatureEnabled'> &
     readonly languageTraits: Pick<LanguageTraits, 'distractorRule'> &
       Partial<Pick<LanguageTraits, 'marksStress' | 'vowels' | 'expressionPunctuation'>>;
   };
-
-/** One option of a Round, or the answer its sheet names. */
-export interface RoundOption {
-  /** The text as shown, such as a Lemma with its Stress marks. */
-  readonly text: string;
-  /** The stressed vowels of the text, in order, which VoiceOver names; empty without Stress. */
-  readonly stressedVowels: readonly string[];
-}
-
-/**
- * What the sheet after an answer shows: the right answer, and an Example of
- * it or an explanation of why it is right, if any.
- */
-export interface AnswerSheet {
-  readonly answer: RoundOption;
-  readonly example: Example | undefined;
-  /** Why the answer is right, such as a Correction's explanation. */
-  readonly explanation?: string;
-  /**
-   * The Entry the Round asked about, when the answer names something else:
-   * the Word of «Звідки слово», whose origin language is the answer. Left out
-   * when the answer is the Entry itself.
-   */
-  readonly asked?: RoundOption;
-}
 
 /**
  * The groups of the mode screen, in their agreed order: what a mode trains,
@@ -88,26 +65,12 @@ export interface GridPair {
 /**
  * The form of a Round's answer, which the Game Mode decides (ADR 0052): a
  * pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in
- * order, or typed text. Each form but the pairs grid carries the sheet shown
- * after the answer; a grid carries one per pair.
+ * order, or typed text, each its own Answer Form. Each form but the pairs
+ * grid carries the sheet shown after the answer; a grid carries one per pair.
  */
 export type RoundForm =
-  | {
-      readonly form: 'pick';
-      /** The `ROUND_OPTIONS` options, in the order shown. */
-      readonly options: readonly RoundOption[];
-      /** The place of the right option among them. */
-      readonly correct: number;
-      readonly sheet: AnswerSheet;
-    }
-  | {
-      readonly form: 'vowel';
-      /** Where in the prompt each vowel to tap stands, in order. */
-      readonly vowels: readonly number[];
-      /** The vowels among them that are stressed, any of which is right. */
-      readonly stressed: readonly number[];
-      readonly sheet: AnswerSheet;
-    }
+  | PickContent
+  | VowelContent
   | {
       readonly form: 'pairs';
       /** Up to `ROUND_OPTIONS` pairs, each a Round of its own. */
@@ -160,12 +123,34 @@ export type RoundContent = RoundForm & {
 };
 
 /** How many Rounds the content holds: one, or one per pair of a pairs grid. */
-export const roundsIn = (content: RoundContent): number =>
-  content.form === 'pairs' ? content.pairs.length : 1;
+export function roundsIn(content: RoundContent): number {
+  switch (content.form) {
+    case 'pick':
+      return pickForm.roundsIn(content);
+    case 'vowel':
+      return vowelForm.roundsIn(content);
+    case 'pairs':
+      return content.pairs.length;
+    case 'chips':
+    case 'typed':
+      return 1;
+  }
+}
 
 /** The ids of the Entries a pairs grid asks about besides the Round's own; none in another form. */
-export const entriesIn = (content: RoundContent): string[] =>
-  content.form === 'pairs' ? content.pairs.map(({ entry }) => entry.id) : [];
+export function entriesIn(content: RoundContent): readonly string[] {
+  switch (content.form) {
+    case 'pick':
+      return pickForm.entriesIn(content);
+    case 'vowel':
+      return vowelForm.entriesIn(content);
+    case 'pairs':
+      return content.pairs.map(({ entry }) => entry.id);
+    case 'chips':
+    case 'typed':
+      return [];
+  }
+}
 
 /** What a Game Mode builds a Round from. */
 export interface RoundInput {

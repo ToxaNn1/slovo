@@ -3,8 +3,9 @@ import type { Example, Idiom, Word } from '@slovo/contracts';
 import type { PlayedRound, RoundAnswer } from './game';
 import type { FixedChip, RoundOption } from './game-mode';
 import { rowWordOption } from './guess-word';
+import { pickForm } from './pick-form';
+import { vowelForm } from './vowel-form';
 import { byKind } from '../entries/entry-kinds';
-import { renderStress, stressedVowelsOf } from '../entries/stress';
 
 /** What an item of the Game Review expands into, by the kind of the Entry the Round asked about. */
 export type GameReviewDetails =
@@ -129,11 +130,9 @@ function pickedOptionOf(round: PlayedRound): RoundOption | undefined {
   const { answer } = round;
   switch (answer.form) {
     case 'pick':
-      return round.form === 'pick' ? round.options[answer.chosen] : undefined;
-    case 'vowel': {
-      const tapped = { lemma: round.prompt, stress: [answer.chosen] };
-      return { text: renderStress(tapped), stressedVowels: stressedVowelsOf(tapped) };
-    }
+      return round.form === 'pick' ? pickForm.reviewAnswer(round, answer) : undefined;
+    case 'vowel':
+      return round.form === 'vowel' ? vowelForm.reviewAnswer(round, answer) : undefined;
     case 'pairs': {
       const cell = round.form === 'pairs' ? round.definitions[answer.definition] : undefined;
       return cell === undefined ? undefined : plain(cell.shown);
