@@ -1,0 +1,5 @@
+кульгавість human-body 3
+сухорлявий human-body 3
+шульга human-body 3
+рябий human-body 3
+вилицюватий human-body 3

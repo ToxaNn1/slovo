@@ -1,0 +1,4 @@
+# book: Б. Антоненко-Давидович. Як ми говоримо (онлайн-видання на osvita.ua) — https://osvita.ua/school/literature/a/79209/ ; last page 58
+# source title per Tip: «Б. Антоненко-Давидович. Як ми говоримо (онлайн-видання на osvita.ua, сторінка N)», shortName «Антоненко-Давидович. Як ми говоримо», url https://osvita.ua/school/literature/a/79209/list-N.html
+# pages already taken by the Edition (skip advices already there, check titles in have.txt): 10 12 19 20 22 26 30 31 32 35 39 56 8 
+pages 31-45
