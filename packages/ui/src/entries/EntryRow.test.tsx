@@ -28,6 +28,7 @@ const correction: EntryRowModel = {
   labelKey: 'correction',
   spoken: 'right, wrong',
   correctionType: 'calque',
+  standardForms: ['right'],
 };
 
 const idiom: EntryRowModel = {

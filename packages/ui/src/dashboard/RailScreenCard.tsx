@@ -1,6 +1,7 @@
 'use no memo';
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
+import type { EditionStrings } from '@slovo/contracts';
 import { partOfSpeechText, withoutStress, type EntryRowModel } from '@slovo/core';
 import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -13,7 +14,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { entryLabel, entryRowSubtitle } from '../entries/entry-row-text';
+import { entryLabel } from '../entries/entry-row-text';
 import { PressedTile } from '../primitives/PressedTile';
 import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
@@ -28,7 +29,9 @@ const fadeEasing = Easing.bezier(...motion.reduceMotion.easing);
  * One Entry on a Category-style screen (board 05.1), a card as the board
  * draws it: the Lemma with the ink «ЗНАЮ» stamp once it is Known; a Word's
  * Stress and part of speech beside its five rarity bars, or another Entry's
- * label without bars; and its meaning. The cards rise in one after another
+ * label without bars; and its meaning. A Correction, which the board leaves
+ * out, takes the same slots: its non-standard form, its Correction Type's
+ * name and its standard forms, « · » between several. The cards rise in one after another
  * by `index`; under Reduce Motion each only fades in. A tap opens the Entry.
  */
 export function RailScreenCard({
@@ -49,14 +52,7 @@ export function RailScreenCard({
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
-  const meta =
-    row.kind === 'word'
-      ? `${row.title} · ${partOfSpeechText(
-          strings.wordCard,
-          { partOfSpeech: row.partOfSpeech, gender: row.gender },
-          'short',
-        )}`
-      : entryLabel(strings.history.kinds, row);
+  const { title, meta, meaning } = cardText(strings, row);
   return (
     <Animated.View testID={testID && `${testID}-cascade`} style={shown}>
       <PressedTile
@@ -76,7 +72,7 @@ export function RailScreenCard({
             {...voice}
             style={[styles.word, typeStyle('railWord', tokens), { color: colors.ink }]}
           >
-            {withoutStress(row.title)}
+            {title}
           </Text>
           {known && (
             <View
@@ -114,11 +110,36 @@ export function RailScreenCard({
           )}
         </View>
         <Text {...voice} style={[typeStyle('railMeaning', tokens), { color: colors.ink }]}>
-          {entryRowSubtitle(strings.correctionCard, row)}
+          {meaning}
         </Text>
       </PressedTile>
     </Animated.View>
   );
+}
+
+/** The texts of a card's three slots: its word, the line of its label and its meaning. */
+function cardText(strings: EditionStrings, row: EntryRowModel) {
+  if (row.kind === 'word')
+    return {
+      title: withoutStress(row.title),
+      meta: `${row.title} · ${partOfSpeechText(
+        strings.wordCard,
+        { partOfSpeech: row.partOfSpeech, gender: row.gender },
+        'short',
+      )}`,
+      meaning: row.secondLine,
+    };
+  if (row.kind === 'correction')
+    return {
+      title: row.secondLine,
+      meta: strings.correctionCard.correctionTypes[row.correctionType],
+      meaning: row.standardForms.join(' · '),
+    };
+  return {
+    title: withoutStress(row.title),
+    meta: entryLabel(strings.history.kinds, row),
+    meaning: row.secondLine,
+  };
 }
 
 /** The card's entrance: it rises in after `index` cards, or under Reduce Motion fades in at once. */

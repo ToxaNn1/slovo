@@ -36,6 +36,7 @@ const correction: EntryRowModel = {
   labelKey: 'correction',
   spoken: 'in the meantime, in the meantimes',
   correctionType: 'calque',
+  standardForms: ['in the meantime'],
 };
 
 const idiom = (labelKey: 'idiom' | 'placeName'): EntryRowModel => ({
