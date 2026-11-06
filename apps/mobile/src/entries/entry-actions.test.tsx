@@ -34,7 +34,7 @@ import { activeEditionFiles, edition, editionStrings } from '../edition/edition'
 import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
-import { EntryActions, useEntrySlots, useYesterdaySlots } from './entry-actions';
+import { useEntrySlots, useYesterdaySlots } from './entry-actions';
 
 const { config } = activeEditionFiles;
 
@@ -229,8 +229,8 @@ async function settle() {
 }
 
 /** An Entry's card as the Feed draws it: its slots, and its side swipes when they are on. */
-function SwipedCard({ card }: { card: AnyEntryCard }) {
-  return <EntryCard card={card} slots={useEntrySlots(card)} />;
+function SwipedCard({ card, selfCheck = false }: { card: AnyEntryCard; selfCheck?: boolean }) {
+  return <EntryCard card={card} slots={useEntrySlots(card)} selfCheck={selfCheck} />;
 }
 
 /** Swipes the card sideways by `distance` points and lets it land; a mark takes past 40% of the unmeasured 360 pt card. */
@@ -301,10 +301,13 @@ describe.each([
     expect(composition.favorites.list.map((favorite) => favorite.row.title)).toEqual([title]);
   });
 
-  it('files it in a new Collection from the «До колекції» sheet', async () => {
+  it('files it in a new Collection from the «До колекції» sheet, titled with it', async () => {
     await renderCard(entryId);
 
+    const onCard = screen.getAllByText(title).length;
     await fireEvent.press(screen.getByTestId('collection-button'));
+    // The sheet leads with the Entry, under the card that does too.
+    expect(screen.getAllByText(title)).toHaveLength(onCard + 1);
     await fireEvent.changeText(screen.getByTestId('collection-name'), 'Мої');
     await fireEvent.press(screen.getByTestId('collection-create'));
     await settle();
@@ -336,11 +339,7 @@ describe.each([
             <HapticsProvider haptics={haptics}>
               <SettingsProvider>
                 <UndoToastProvider>
-                  <EntryCard
-                    card={card}
-                    slots={{ slot: 'actions', actions: <EntryActions card={card} /> }}
-                    selfCheck
-                  />
+                  <SwipedCard card={card} selfCheck />
                 </UndoToastProvider>
               </SettingsProvider>
             </HapticsProvider>
@@ -401,6 +400,11 @@ describe.each([
       },
     ]);
   });
+});
+
+describe('«Повідомити про помилку»', () => {
+  const entryId = 'w_test';
+  const send = () => screen.getByRole('button', { name: 'Надіслати' });
 
   /** Reports a typo in the Entry from its flag, with no comment. */
   async function reportTypo() {
@@ -516,6 +520,19 @@ describe.each([
 ])('the Community Counters line on %s', (_, entryId) => {
   const line = () => screen.getByTestId('community-counters');
 
+  it('shows the zeros of an Entry nobody counted, read as one sentence', async () => {
+    await renderCard(entryId);
+    await settle();
+
+    expect(line()).toHaveTextContent('Знають 0 з 0 читачів · зберегли 0');
+    expect(line()).toHaveAccessibleName('Знають 0 з 0 читачів, зберегли 0');
+  });
+});
+
+describe('the Community Counters line', () => {
+  const entryId = 'w_test';
+  const line = () => screen.getByTestId('community-counters');
+
   it.each([
     [{ known: 1, unknown: 0, saved: 4 }, 'Знають 1 з 1 читача · зберегли 4'],
     [{ known: 1, unknown: 1, saved: 1 }, 'Знають 1 з 2 читачів · зберегли 1'],
@@ -527,14 +544,6 @@ describe.each([
     await settle();
 
     expect(line()).toHaveTextContent(text);
-  });
-
-  it('shows the zeros of an Entry nobody counted, read as one sentence', async () => {
-    await renderCard(entryId);
-    await settle();
-
-    expect(line()).toHaveTextContent('Знають 0 з 0 читачів · зберегли 0');
-    expect(line()).toHaveAccessibleName('Знають 0 з 0 читачів, зберегли 0');
   });
 
   it('has no line offline with nothing kept', async () => {
@@ -802,7 +811,7 @@ describe('Yesterday’s Word', () => {
   /** Yesterday's card with the slots the feed gives it. */
   function Yesterday({ card }: { card: AnyEntryCard }) {
     if (card.kind !== 'word') throw new Error('Yesterday’s card is a Word');
-    return <YesterdayCard word={card.model} slots={useYesterdaySlots(card.entryId)} />;
+    return <YesterdayCard word={card.model} slots={useYesterdaySlots(card.model)} />;
   }
 
   async function renderYesterday() {

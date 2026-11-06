@@ -27,14 +27,13 @@ import { screenSettled } from '../use-open-screen';
 // The Entry card's action row and corner have their own tests; here they are stand-ins to find on the screen.
 jest.mock('./entry-actions', () => {
   const { View } = jest.requireActual<typeof import('react-native')>('react-native');
-  const { useShown } =
-    jest.requireActual<typeof import('../shown-in-effect')>('../shown-in-effect');
-  const { useEntrySwipe } = jest.requireActual<typeof import('./entry-actions')>('./entry-actions');
+  const { entrySwipe, useEntryMarks } =
+    jest.requireActual<typeof import('./entry-actions')>('./entry-actions');
   return {
     useEntrySlots: (card: { entryId: string }) => {
-      const swipe = useEntrySwipe(card.entryId);
-      return useShown().swipeMarks
-        ? { slot: 'corner', corner: <View testID="entry-corner" />, swipe }
+      const marks = useEntryMarks(card.entryId);
+      return marks.swiped
+        ? { slot: 'corner', corner: <View testID="entry-corner" />, swipe: entrySwipe(marks) }
         : { slot: 'actions', actions: <View testID="entry-actions" /> };
     },
   };
