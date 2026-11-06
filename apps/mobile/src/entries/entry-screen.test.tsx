@@ -199,7 +199,11 @@ async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
 }
 
 /** The back tile of the Entry screen on top of the stack. */
-const backOnTop = () => screen.getAllByTestId('entry-screen-back').at(-1);
+function backOnTop() {
+  const top = screen.getAllByTestId('entry-screen-back').at(-1);
+  if (top === undefined) throw new Error('No Entry screen is open');
+  return top;
+}
 
 /** The Word History events the port got. */
 const historyOpened = () => analytics.events.filter(({ event }) => event === 'wordHistoryOpened');

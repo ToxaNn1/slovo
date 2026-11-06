@@ -1,8 +1,4 @@
-import { linkSourceOf } from '@slovo/core';
-import { useLocalSearchParams } from 'expo-router';
-
-import { editionStrings } from '@/edition/edition';
-import { EntryScreen } from '@/entries/entry-screen';
+import { entryRoute } from '@/entries/entry-route';
 
 /**
  * An Entry opened from a link, `slovo-<edition id>://entry/<id>`, or from the
@@ -11,18 +7,4 @@ import { EntryScreen } from '@/entries/entry-screen';
  * over it without. A notification tapped or a widget link opened over any of
  * them takes the place of the whole stack (`NotificationTaps`).
  */
-export default function EntryFromLinkScreen() {
-  const { entryId, back, ...params } = useLocalSearchParams<{
-    entryId: string;
-    back?: string;
-    from?: string;
-  }>();
-  return (
-    <EntryScreen
-      entryId={entryId}
-      back={back ?? editionStrings.tabs.home}
-      route="/entry"
-      openedFrom={linkSourceOf(params)}
-    />
-  );
-}
+export default entryRoute('link');
