@@ -96,6 +96,20 @@ export const StatsStringsSchema = z.strictObject({
       today: templateOf('day', 'month'),
       todayActive: templateOf('day', 'month'),
       future: templateOf('day', 'month'),
+      /** A Break day (ADR 0085). */
+      break: templateOf('day', 'month'),
+      /** A missed day a Streak freeze covered (ADR 0085). */
+      frozen: templateOf('day', 'month'),
+    }),
+    /**
+     * The line a tap on a day shows (ADR 0085): an Active Day, today once
+     * active with the Word opened (`{word}`), a day missed and a day to come.
+     */
+    lines: z.strictObject({
+      active: templateOf('day', 'month'),
+      today: templateOf('word'),
+      missed: templateOf('day', 'month'),
+      future: TextSchema,
     }),
   }),
 });

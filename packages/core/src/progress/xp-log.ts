@@ -379,6 +379,7 @@ export async function openXpLog({
         case 'daily-goal':
         case 'word-goal':
         case 'goal-met':
+        case 'badge-opened':
           break;
         case 'xp': {
           const { source, mode, rarity } = record;

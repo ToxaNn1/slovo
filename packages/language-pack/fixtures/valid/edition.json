@@ -84,6 +84,13 @@
     "lockScreenWidget": true,
     "questionnaire": true,
     "badges": true,
+    "levelLadder": false,
+    "newLevelScreen": false,
+    "badgeSheet": false,
+    "badgeToast": false,
+    "streakFreezeCard": false,
+    "breakCard": false,
+    "calendarDayLines": false,
     "progressShareCards": true,
     "dailyCrosswordShare": true,
     "tracedCrossword": true,
@@ -282,6 +289,15 @@
       }
     ]
   },
+  "badgeFamilies": [
+    {
+      "id": "streak",
+      "name": "Серія",
+      "description": "Дні поспіль, коли слово відкрито й ціль виконано.",
+      "shape": "hexagon",
+      "tone": "red"
+    }
+  ],
   "badges": [],
   "mascot": {
     "onboarding": "Mascot onboarding",
