@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { WordSchema, type Word } from '@slovo/contracts';
+import { IdiomSchema, WordSchema, type Idiom, type Word } from '@slovo/contracts';
 
 import { EditionFolderError, listEditions, openEdition } from './edition-folder';
 
@@ -509,5 +509,52 @@ describe('entryTexts', () => {
         retired: false,
       },
     ]);
+  });
+});
+
+describe('checkNewIdioms', () => {
+  const draft = (changes: Json = {}): Idiom =>
+    IdiomSchema.parse({
+      id: 'i_draft1',
+      expression: 'кури не клює',
+      idiomType: 'idiom',
+      primaryDefinition: 'Тестове значення: має багато грошей.',
+      sources: [{ title: 'Тестове джерело', url: 'https://example.org/kury' }],
+      ...changes,
+    });
+  const draftFile = 'content/idioms/i_draft1.json';
+
+  it('accepts a draft the build would accept', () => {
+    expect(openEdition(editionsWith(), 'fixture').checkNewIdioms([draft()])).toEqual([]);
+  });
+
+  it.each([
+    ['a letter outside the alphabet', { expression: 'кури нe клює' }, /"e" \(U\+0065\)/],
+    ['the expression of an existing Idiom', { expression: 'Бити байдики' }, /same expression as i_fx0001/i],
+  ])('reports %s as the build does', (_name, changes, message) => {
+    expect(openEdition(editionsWith(), 'fixture').checkNewIdioms([draft(changes)])).toEqual([
+      {
+        file: draftFile,
+        entryId: 'i_draft1',
+        field: 'expression',
+        message: expect.stringMatching(message) as string,
+      },
+    ]);
+  });
+
+  it('leaves out the errors of the existing content', () => {
+    const edition = openEdition(
+      editionsWith({
+        change: (dir) => {
+          editJson(join(dir, 'content/idioms/i_fx0001.json'), (idiom) => ({
+            ...idiom,
+            expression: 'бити bайдики',
+          }));
+        },
+      }),
+      'fixture',
+    );
+
+    expect(edition.checkNewIdioms([draft()])).toEqual([]);
   });
 });
