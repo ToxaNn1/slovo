@@ -1,0 +1,21 @@
+{
+  "kind": "correction",
+  "id": "c_osn8n4",
+  "nonStandardForm": "гривна",
+  "correctionType": "russianism",
+  "standardEquivalents": [
+    "гривня"
+  ],
+  "explanation": "Замініть іменник гривна, якщо мовиться про грошову одиницю, на правильний варіант: гривня.АЛЕ:гривна — металева прикраса у вигляді обруча, яку носили на шиї.",
+  "examplePair": {
+    "nonStandard": "немає гривни",
+    "standard": "немає гривні"
+  },
+  "categoryId": "shop",
+  "sources": [
+    {
+      "title": "OnlineCorrector. Правописні помилки.",
+      "url": "https://goroh.pp.ua/Слововживання/гривна"
+    }
+  ]
+}
