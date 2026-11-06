@@ -11,12 +11,13 @@ import { BlockTitle } from './BlockTitle';
 type Pictogram = (typeof categoryTile.shapes)[number][number];
 
 /**
- * The Curated Collections rail of the Dashboard (ADR 0076): «Категорії» with
- * the count of cards over a horizontal row of tiles that runs to the screen's
- * edges, one per collection published by today. A tile shows its name and
- * its count of Entries under a two-shape pictogram, on red, ink or the sunken
- * surface in turn, with «Нова» on one not opened yet and «Додано ✓» on one
- * copied into the reader's Collections. A tile opens its screen.
+ * The Curated Collections rail of the Dashboard (ADR 0076, 0081): «Добірки»
+ * with the count of cards over a horizontal row of tiles that runs to the
+ * screen's edges, one per collection published by today. A tile shows its
+ * name under a two-shape pictogram, on red, ink or the sunken surface in turn,
+ * and opens its screen. Its count of Entries, «Нова» on one not opened yet and
+ * «Додано ✓» on one copied are not on board 05 and stay commented out with
+ * the DESIGN-05 marker till the owner decides.
  */
 export function CuratedCollectionsRail({
   cards,
@@ -59,8 +60,9 @@ export function CuratedCollectionsRail({
 function CategoryTile({
   card: {
     collection: { id, name, entryIds },
-    state,
-    added,
+    // DESIGN-05: not on the board, owner decides
+    // state,
+    // added,
   },
   index,
   onPress,
@@ -73,7 +75,9 @@ function CategoryTile({
   const { colors } = tokens;
   const light = useSchemeColors('light');
   const { strings, voice, count } = useEdition();
-  const { curatedCollectionNew, curatedCollection, curatedCollectionCount } = strings.dashboard;
+  // DESIGN-05: not on the board, owner decides
+  // const { curatedCollectionNew, curatedCollection } = strings.dashboard;
+  const { curatedCollectionCount } = strings.dashboard;
   // The board's three tones in turn: red, ink, the sunken surface.
   const tone = [
     { ground: colors.accent, text: light.ink, big: light.ink, small: light.background },
@@ -81,7 +85,8 @@ function CategoryTile({
     { ground: colors.surfaceSunken, text: colors.ink, big: colors.accent, small: colors.ink },
   ][index % 3];
   const [big, small] = categoryTile.shapes[index % categoryTile.shapes.length] ?? [];
-  const isNew = state === 'new';
+  // DESIGN-05: not on the board, owner decides
+  // const isNew = state === 'new';
   const entries = count(curatedCollectionCount, entryIds.length);
   if (tone === undefined || big === undefined || small === undefined) return null;
   return (
@@ -90,10 +95,12 @@ function CategoryTile({
       tone="none"
       radius={categoryTile.radius}
       accessibilityLabel={[
-        isNew ? curatedCollectionNew : '',
+        // DESIGN-05: not on the board, owner decides
+        // isNew ? curatedCollectionNew : '',
         name,
         entries,
-        added ? curatedCollection.added : '',
+        // DESIGN-05: not on the board, owner decides
+        // added ? curatedCollection.added : '',
       ]
         .filter((part) => part !== '')
         .join('. ')}
@@ -103,32 +110,33 @@ function CategoryTile({
     >
       <Shape shape={big} color={tone.big} place={categoryTile.big} />
       <Shape shape={small} color={tone.small} place={categoryTile.small} />
-      {isNew ? (
-        <Text
-          {...voice}
-          testID={`dashboard-curated-collection-${id}-new`}
-          style={[styles.mark, typeStyle('labelChip', tokens), { color: tone.text }]}
-        >
-          {curatedCollectionNew}
-        </Text>
-      ) : added ? (
-        <Text
-          {...voice}
-          testID={`dashboard-curated-collection-${id}-added`}
-          style={[styles.mark, typeStyle('labelChip', tokens), { color: tone.text }]}
-        >
-          {curatedCollection.added}
-        </Text>
-      ) : null}
+      {
+        // DESIGN-05: not on the board, owner decides
+        // {isNew ? (
+        //   <Text
+        //     {...voice}
+        //     testID={`dashboard-curated-collection-${id}-new`}
+        //     style={[styles.mark, typeStyle('labelChip', tokens), { color: tone.text }]}
+        //   >
+        //     {curatedCollectionNew}
+        //   </Text>
+        // ) : added ? (
+        //   <Text
+        //     {...voice}
+        //     testID={`dashboard-curated-collection-${id}-added`}
+        //     style={[styles.mark, typeStyle('labelChip', tokens), { color: tone.text }]}
+        //   >
+        //     {curatedCollection.added}
+        //   </Text>
+        // ) : null}
+      }
       <Text {...voice} style={[typeStyle('categoryName', tokens), { color: tone.text }]}>
         {name}
       </Text>
-      <Text
-        {...voice}
-        style={[styles.count, typeStyle('categoryCount', tokens), { color: tone.text }]}
-      >
-        {entries}
-      </Text>
+      {
+        // DESIGN-05: not on the board, owner decides
+        // <Text {...voice} style={[styles.count, typeStyle('categoryCount', tokens), { color: tone.text }]}>{entries}</Text>
+      }
     </PressedTile>
   );
 }
