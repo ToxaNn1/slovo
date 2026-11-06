@@ -33,7 +33,12 @@ export { partOfSpeechText, registerText, wordGrammarText } from './entries/part-
 export { stressLabel } from './entries/stress-label';
 export { sentences } from './sentences';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
-export { createEntries, type Entries } from './entries/entries';
+export {
+  createEntries,
+  EVERYTHING_IN,
+  type EligibilityChoices,
+  type Entries,
+} from './entries/entries';
 export {
   linkFromOutside,
   linkSourceOf,
@@ -175,11 +180,7 @@ export {
   type SettingsDefaults,
   type UserSettings,
 } from './settings/settings';
-export {
-  readRarityCeiling,
-  withinRarityCeiling,
-  type RarityCeiling,
-} from './entries/rarity-ceiling';
+export { withinRarityCeiling, type RarityCeiling } from './entries/rarity-ceiling';
 export { renderStress, STRESS_MARK, withoutStress } from './entries/stress';
 export { createGesturesHint, type GesturesHint } from './feed/gestures-hint';
 export { buildWordCard, type WordCardModel } from './entries/word-card';

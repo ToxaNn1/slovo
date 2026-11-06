@@ -411,8 +411,27 @@ export async function openComposition({
   const opened: Subject<OpenedEntry> = createSubject();
   const dayTurned: Subject<LocalDate> = createSubject();
   const returned: Subject<void> = createSubject();
-  const entries = createEntries({ content, edition, userState });
+  // The Entries read the reader's choices live from the Mix, the Rarity
+  // Ceiling and the Hidden Entries, which open next, before the Cycle reads
+  // any eligible Entry.
+  const entries = createEntries({
+    content,
+    edition,
+    choices: {
+      mix: () => mix.state,
+      rarityCeiling: () => rarityCeiling.state,
+      isHidden: (entryId) => hiddenEntries.has(entryId),
+    },
+  });
   const rows = createEntryRows(entries);
+  // The Mix opens before the Feed, whose turns follow its kind weights.
+  const [word, correction] = await Promise.all([
+    entries.categories(),
+    entries.correctionCategories(),
+  ]);
+  const mix = await openMix({ edition, categories: { word, correction }, userState, eligibility });
+  const rarityCeiling = await openRarityCeiling({ edition, userState, eligibility });
+  const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const cycle = await openCycle({ entries, userState, random });
   // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.
   eligibility.subscribe(() => cycle.readEligibleAgain());
@@ -439,7 +458,6 @@ export async function openComposition({
     dayTurned,
     returned,
   });
-  const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const communityCounters = openCommunityCounters({ edition, userState });
   /** Emits an event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
   async function withEntryProperties(
@@ -511,13 +529,6 @@ export async function openComposition({
     xpLog,
     activeDays,
   });
-  // The Mix opens before the Feed, whose turns follow its kind weights.
-  const [word, correction] = await Promise.all([
-    entries.categories(),
-    entries.correctionCategories(),
-  ]);
-  const mix = await openMix({ edition, categories: { word, correction }, userState, eligibility });
-  const rarityCeiling = await openRarityCeiling({ edition, userState, eligibility });
   const later = openQuestionnaire({
     edition,
     userState,

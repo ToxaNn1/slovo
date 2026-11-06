@@ -18,6 +18,13 @@ import type { PlayedRound, Round, RoundAnswer } from './game/game';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
 import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } from './ports';
+import { createEntries, type Entries } from './entries/entries';
+import { createEntryRows } from './entries/entry-row';
+import { openMix, type MixEdition } from './entries/mix';
+import { openRarityCeiling, type RarityCeilingEdition } from './entries/rarity-ceiling';
+import { openHiddenEntries } from './mix/hidden-entries';
+import { createSubject, type Subject } from './subject';
+import type { UserState } from './user-state/user-state';
 
 // Helpers the Core's tests share. They are not part of the public `index.ts`;
 // `testing.ts` exports `testEdition` to the tests of other packages.
@@ -403,4 +410,43 @@ export function wordIdOf(notification: PlannedNotification | undefined): string 
 /** The title of a planned notification; none for the farewell. */
 export function titleOf(notification: PlannedNotification | undefined): string | undefined {
   return notification?.kind === 'word' ? notification.title : undefined;
+}
+
+/**
+ * The Entries over the live Mix, Rarity Ceiling and Hidden Entries opened
+ * over the user state, wired as the Core composition wires them, for the
+ * tests of the Entries without the whole composition.
+ */
+export async function openLiveEntries({
+  content,
+  edition,
+  userState,
+}: {
+  content: ContentReadPort;
+  edition: Parameters<typeof createEntries>[0]['edition'] & MixEdition & RarityCeilingEdition;
+  userState: UserState;
+}) {
+  const eligibility: Subject<void> = createSubject();
+  const entries: Entries = createEntries({
+    content,
+    edition,
+    choices: {
+      mix: () => mix.state,
+      rarityCeiling: () => rarityCeiling.state,
+      isHidden: (entryId) => hiddenEntries.has(entryId),
+    },
+  });
+  const [word, correction] = await Promise.all([
+    entries.categories(),
+    entries.correctionCategories(),
+  ]);
+  const mix = await openMix({ edition, categories: { word, correction }, userState, eligibility });
+  const rarityCeiling = await openRarityCeiling({ edition, userState, eligibility });
+  const hiddenEntries = await openHiddenEntries({
+    rows: createEntryRows(entries),
+    userState,
+    clock: fakeClock().clock,
+    eligibility,
+  });
+  return { entries, mix, rarityCeiling, hiddenEntries };
 }

@@ -1,9 +1,16 @@
 import { RARITIES, type FeatureSwitch, type Rarity, type Word } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { createEntries, openComposition, type Composition, type UserStatePort } from '../index';
+import { openComposition, type Composition, type UserStatePort } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { correction, fakeClock, seededRandom, testEdition, word } from '../test-support';
+import {
+  correction,
+  fakeClock,
+  openLiveEntries,
+  seededRandom,
+  testEdition,
+  word,
+} from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** Two Words of each rarity 1–5 in the Category `test`, ids like `w_r3_1`. */
@@ -123,7 +130,7 @@ describe('the Rarity Ceiling', () => {
     const app = await open({ port });
     await app.rarityCeiling.set(2);
     await app.hide({ kind: 'entry', entryId: 'w_r1_1' });
-    const entries = createEntries({
+    const { entries } = await openLiveEntries({
       content: content(),
       edition: edition({}),
       userState: await openUserState({ port }),

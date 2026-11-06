@@ -1,4 +1,4 @@
-import { createEntries, type Entries, type TrackedUserState } from '@slovo/core';
+import { createEntries, EVERYTHING_IN, type Entries, type TrackedUserState } from '@slovo/core';
 import { openPack, type PackReader } from '@slovo/language-pack/reader';
 import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import { useMemo } from 'react';
@@ -99,5 +99,8 @@ export function languagePackOpening({
 export function useEntries(): Entries {
   const content = useOpened(useShell().languagePack).reader;
   const inEffect = useEditionInEffect();
-  return useMemo(() => createEntries({ content, edition: inEffect }), [content, inEffect]);
+  return useMemo(
+    () => createEntries({ content, edition: inEffect, choices: EVERYTHING_IN }),
+    [content, inEffect],
+  );
 }

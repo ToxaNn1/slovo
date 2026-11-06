@@ -5,6 +5,7 @@ import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts'
 import {
   buildEntryCard,
   createEntries,
+  EVERYTHING_IN,
   isTodaysWordOfTheDay,
   openComposition,
   SEEN_DWELL_MS,
@@ -1211,6 +1212,7 @@ describe('buildEntryCard', () => {
   const entries = createEntries({
     content: createMemoryContentPort({ words: pack, corrections: [correction('c_calque')] }),
     edition: editionWith(true),
+    choices: EVERYTHING_IN,
   });
 
   it('builds the card of a Word, or of a Correction, from the Entries', async () => {
