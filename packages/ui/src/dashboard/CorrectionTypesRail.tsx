@@ -1,13 +1,13 @@
 import type { CorrectionType } from '@slovo/contracts';
 import type { CorrectionTypeTile } from '@slovo/core';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { correctionTile, dashboard, typeStyle } from '../tokens';
-import { BlockTitle } from './BlockTitle';
+import { RailHeader } from './RailHeader';
 
 /**
  * The Correction Types rail of the Dashboard (ADR 0076): «Виправлення» with
@@ -33,29 +33,12 @@ export function CorrectionTypesRail({
   const words = strings.dashboard.correctionTypes;
   return (
     <>
-      {categories === undefined ? (
-        <View style={styles.title}>
-          <BlockTitle
-            title={words.title}
-            note={String(tiles.length)}
-            testID="dashboard-correction-types-title"
-          />
-        </View>
-      ) : (
-        <Pressable
-          testID="dashboard-correction-types-title"
-          accessibilityRole="button"
-          accessibilityLabel={`${words.title}, ${String(categories.count)}`}
-          accessibilityLanguage={voice.accessibilityLanguage}
-          onPress={categories.onOpenAll}
-          hitSlop={{ top: 14 }}
-          style={styles.title}
-        >
-          <View pointerEvents="none">
-            <BlockTitle title={words.title} note={String(categories.count)} />
-          </View>
-        </Pressable>
-      )}
+      <RailHeader
+        testID="dashboard-correction-types-title"
+        title={words.title}
+        note={String(categories?.count ?? tiles.length)}
+        onPress={categories?.onOpenAll}
+      />
       <ScrollView
         testID="dashboard-correction-types"
         horizontal
@@ -98,7 +81,6 @@ export function CorrectionTypesRail({
 }
 
 const styles = StyleSheet.create({
-  title: { paddingHorizontal: dashboard.side, paddingBottom: dashboard.titleGap },
   rail: {
     gap: correctionTile.gap,
     paddingHorizontal: dashboard.side,

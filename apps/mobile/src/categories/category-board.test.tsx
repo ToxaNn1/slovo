@@ -220,7 +220,7 @@ describe('the Category screen', () => {
     });
     // The stamp reads «ЗНАЮ»: the Edition's «Знаю» in the stamp's capitals.
     expect(screen.getByTestId('category-entry-w_tykhyi-known')).toHaveTextContent(
-      editionStrings.knowledge.known,
+      editionStrings.dashboard.category.knownStamp,
     );
     expect(
       within(screen.getByTestId('category-entry-w_tykhyi')).getByText('Значення слова тихий.'),

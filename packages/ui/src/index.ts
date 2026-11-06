@@ -134,6 +134,7 @@ export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
 export { CorrectionTypesRail } from './dashboard/CorrectionTypesRail';
 export { QuietScreenHero } from './dashboard/QuietScreenHero';
 export { QuietScreenRow } from './dashboard/QuietScreenRow';
+export { RailBoard, knownShare, type RailBoardCard } from './dashboard/RailBoard';
 export { RailScreenCard } from './dashboard/RailScreenCard';
 export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
 export { RailScreenHero, type HeroAction } from './dashboard/RailScreenHero';
@@ -142,8 +143,10 @@ export { CategoryGrid, type GridColumns, type GridTile } from './categories/Cate
 export { CorrectionCategoryGrid } from './categories/CorrectionCategoryGrid';
 export {
   CategoryTile,
+  shapeAt,
   toneByPosition,
   type CategoryShape,
+  type CategoryShapes,
   type CategoryTileBox,
   type CategoryTone,
 } from './categories/CategoryTile';
@@ -157,7 +160,10 @@ export { systemSchedule } from './providers/system-schedule';
 export {
   cardSpace,
   categoryGrid,
+  categoryGridBox,
+  categoryRailBox,
   correctionGrid,
+  correctionGridBox,
   categoryTile,
   collectionCard,
   coreTokens,

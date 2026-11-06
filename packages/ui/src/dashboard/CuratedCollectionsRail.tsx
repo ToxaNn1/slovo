@@ -1,6 +1,7 @@
 import type { CuratedCollectionCard } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { shapeAt } from '../categories/CategoryTile';
 import { PressedTile } from '../primitives/PressedTile';
 import { TileShape } from '../primitives/TileShape';
 import { useEdition } from '../providers/EditionProvider';
@@ -41,7 +42,7 @@ export function CuratedCollectionsRail({
         contentContainerStyle={styles.rail}
       >
         {cards.map((card, index) => (
-          <CategoryTile
+          <CuratedCollectionTile
             key={card.collection.id}
             card={card}
             index={index}
@@ -55,7 +56,13 @@ export function CuratedCollectionsRail({
   );
 }
 
-function CategoryTile({
+/**
+ * One Curated Collection's tile on the rail: its name over the shape pair at
+ * its place, in the board's three tones in turn. Its red keeps the Добірки
+ * rail's own shapes, an ink big one and a cream small one, the other way round
+ * from a Category tile's red; VoiceOver reads its name and number of Entries.
+ */
+function CuratedCollectionTile({
   card: {
     collection: { id, name, entryIds },
     // DESIGN-05: not on the board, owner decides
@@ -82,11 +89,11 @@ function CategoryTile({
     { ground: colors.ink, text: colors.background, big: colors.accent, small: colors.background },
     { ground: colors.surfaceSunken, text: colors.ink, big: colors.accent, small: colors.ink },
   ][index % 3];
-  const [big, small] = categoryTile.shapes[index % categoryTile.shapes.length] ?? [];
+  const [big, small] = shapeAt(categoryTile.shapes, index);
   // DESIGN-05: not on the board, owner decides
   // const isNew = state === 'new';
   const entries = count(curatedCollectionCount, entryIds.length);
-  if (tone === undefined || big === undefined || small === undefined) return null;
+  if (tone === undefined) return null;
   return (
     <PressedTile
       testID={`dashboard-curated-collection-${id}`}

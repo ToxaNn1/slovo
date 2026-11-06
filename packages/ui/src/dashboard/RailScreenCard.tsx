@@ -3,33 +3,25 @@
 
 import type { EditionStrings } from '@slovo/contracts';
 import { partOfSpeechText, withoutStress, type EntryRowModel } from '@slovo/core';
-import { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  ReduceMotion,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
 import { entryLabel } from '../entries/entry-row-text';
 import { PressedTile } from '../primitives/PressedTile';
+import { useCascade, type Cascade } from '../primitives/useCascade';
 import { useEdition } from '../providers/EditionProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
 import { useTokens } from '../providers/TokensProvider';
-import { motion, railScreen as place, typeStyle } from '../tokens';
+import { railScreen as place, typeStyle } from '../tokens';
 
 const RARITY_BARS = [1, 2, 3, 4, 5] as const;
-const cascadeEasing = Easing.bezier(...motion.cascade.easing);
-const fadeEasing = Easing.bezier(...motion.reduceMotion.easing);
+/** The cards rise in one after another. */
+const cascade: Cascade = { variant: 'rise', ...place.cascade };
 
 /**
  * One Entry on a Category-style screen (board 05.1), a card as the board
  * draws it: the Lemma with the ink «ЗНАЮ» stamp once it is Known; a Word's
  * Stress and part of speech beside its five rarity bars, or another Entry's
- * label without bars; and its meaning. A Correction, which the board leaves
+ * label without bars; and its Definition. A Correction, which the board leaves
  * out, takes the same slots: its non-standard form, its Correction Type's
  * name and its standard forms, « · » between several. The cards rise in one after another
  * by `index`; under Reduce Motion each only fades in. A tap opens the Entry.
@@ -48,11 +40,11 @@ export function RailScreenCard({
   onPress: () => void;
   testID?: string;
 }) {
-  const shown = useCascade(index);
+  const shown = useCascade(index, cascade);
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
-  const { title, meta, meaning } = cardText(strings, row);
+  const { title, meta, definition } = cardText(strings, row);
   return (
     <Animated.View testID={testID && `${testID}-cascade`} style={shown}>
       <PressedTile
@@ -83,7 +75,7 @@ export function RailScreenCard({
                 {...voice}
                 style={[typeStyle('railKnown', tokens), { color: colors.background }]}
               >
-                {strings.knowledge.known}
+                {strings.dashboard.category.knownStamp}
               </Text>
             </View>
           )}
@@ -110,14 +102,14 @@ export function RailScreenCard({
           )}
         </View>
         <Text {...voice} style={[typeStyle('railMeaning', tokens), { color: colors.ink }]}>
-          {meaning}
+          {definition}
         </Text>
       </PressedTile>
     </Animated.View>
   );
 }
 
-/** The texts of a card's three slots: its word, the line of its label and its meaning. */
+/** The texts of a card's three slots: its word, the line of its label and its Definition. */
 function cardText(strings: EditionStrings, row: EntryRowModel) {
   if (row.kind === 'word')
     return {
@@ -127,54 +119,26 @@ function cardText(strings: EditionStrings, row: EntryRowModel) {
         { partOfSpeech: row.partOfSpeech, gender: row.gender },
         'short',
       )}`,
-      meaning: row.secondLine,
+      definition: row.secondLine,
     };
   if (row.kind === 'correction')
     return {
       title: row.secondLine,
       meta: strings.correctionCard.correctionTypes[row.correctionType],
-      meaning: row.standardForms.join(' · '),
+      definition: row.standardForms.join(' · '),
     };
   return {
     title: withoutStress(row.title),
     meta: entryLabel(strings.history.kinds, row),
-    meaning: row.secondLine,
+    definition: row.secondLine,
   };
-}
-
-/** The card's entrance: it rises in after `index` cards, or under Reduce Motion fades in at once. */
-function useCascade(index: number) {
-  const reduceMotion = useReduceMotion();
-  // 1 once the card has entered.
-  const entered = useSharedValue(0);
-  useEffect(() => {
-    entered.value = reduceMotion
-      ? withTiming(1, {
-          duration: motion.reduceMotion.duration,
-          easing: fadeEasing,
-          reduceMotion: ReduceMotion.Never,
-        })
-      : withDelay(
-          index * place.cascade.stagger,
-          withTiming(1, {
-            duration: place.cascade.duration,
-            easing: cascadeEasing,
-            reduceMotion: ReduceMotion.Never,
-          }),
-          ReduceMotion.Never,
-        );
-  }, [entered, index, reduceMotion]);
-  return useAnimatedStyle(() => ({
-    opacity: entered.value,
-    transform: [{ translateY: reduceMotion ? 0 : (1 - entered.value) * motion.cascade.rise }],
-  }));
 }
 
 const styles = StyleSheet.create({
   face: {
     padding: place.card.padding,
     gap: place.card.wordGap,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: place.card.line,
   },
   head: {
     flexDirection: 'row',

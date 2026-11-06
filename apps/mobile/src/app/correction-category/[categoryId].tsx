@@ -6,7 +6,7 @@ import { CategoryBoardScreen } from '@/categories/category-board';
 /**
  * A Category of Corrections' screen, from its tile in k2 (board 05.1, with
  * our Correction card). An id the Language Pack doesn't have, or
- * `correctionCategoryScreens` off, returns home.
+ * `correctionCategoryScreens` off, returns to the Dashboard.
  */
 export default function CorrectionCategoryRoute() {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();

@@ -8,6 +8,7 @@ import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   knowledge: { known: 'Known' },
+  dashboard: { category: { knownStamp: 'Known' } },
   history: {
     kinds: {
       word: 'word',

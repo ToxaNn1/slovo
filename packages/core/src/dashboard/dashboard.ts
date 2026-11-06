@@ -215,6 +215,9 @@ export async function openDashboard({
     const { rail } = curatedCollections;
     if (rail.length > 0) blocks.push({ kind: 'curatedCollections', cards: rail });
     const { tiles } = correctionTypes;
+    // The Categories of Corrections ride only on the Correction Types block: with no
+    // Correction Type tile there is no door to k2, which then returns to the Dashboard,
+    // even with `correctionCategoryScreens` on.
     if (tiles.length > 0) {
       const categories = correctionCategoriesOn ? await entries.correctionCategories() : [];
       blocks.push({ kind: 'correctionTypes', tiles, categories });

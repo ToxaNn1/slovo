@@ -3,10 +3,11 @@ import {
   buildEntryRow,
   categoryPlace,
   type CategoryKind,
+  type CategoryPlace,
   type Composition,
   type EntryRowModel,
 } from '@slovo/core';
-import { useUndoToast } from '@slovo/ui';
+import { useUndoToast, type RailBoardCard } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 
 import { useComposition } from '../composition';
@@ -23,19 +24,13 @@ const lastCategoryHint: Record<CategoryKind, string> = {
   correction: editionStrings.mix.corrections.lastCategoryHint,
 };
 
-/** One card of a Category's screen. */
-export interface CategoryCard {
-  readonly entryId: string;
-  readonly row: EntryRowModel;
-  readonly known: boolean;
-}
-
 /** What a Category's screen draws and does. */
 export interface CategoryScreen {
-  /** A card per live Entry of the Category, in the Language Pack's order; none till the first read ends. */
-  readonly cards: readonly CategoryCard[];
-  /** How many of them are Known, for «ЗНАЮ x З n». */
-  readonly known: number;
+  /**
+   * A card per live Entry of the Category, in the Language Pack's order;
+   * `undefined` till the first read ends, so nothing counts the Entries before.
+   */
+  readonly cards: readonly RailBoardCard[] | undefined;
   /** Whether the Category is in the Mix, which reads «У МІКСІ». */
   readonly inMix: boolean;
   /**
@@ -73,7 +68,7 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
         if (active)
           setRead({
             in: composition,
-            key: `${of}:${category.id}`,
+            key,
             rows: entries.map(buildEntryRow),
           });
       },
@@ -84,20 +79,20 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
     return () => {
       active = false;
     };
-  }, [composition, of, category.id]);
+  }, [composition, of, category.id, key]);
 
   // A read of a composition since reopened, or of another Category, is not shown.
-  const rows = read?.in === composition && read.key === key ? read.rows : [];
-  const cards = rows.map((row) => ({
+  const rows = read?.in === composition && read.key === key ? read.rows : undefined;
+  const cards = rows?.map((row) => ({
     entryId: row.entryId,
     row,
-    known: knowledge.knownAmong([row.entryId]) === 1,
+    known: knowledge.isKnown(row.entryId),
   }));
-  const inMix = categoryPlace(mixState, of, category.id) !== 'out';
+  const place: CategoryPlace = categoryPlace(mixState, of, category.id);
+  const inMix = place === 'in' || place === 'last';
   const name = category.displayName;
   return {
     cards,
-    known: knowledge.knownAmong(rows.map(({ entryId }) => entryId)),
     inMix,
     toggleMix: () => {
       mix.setCategory(category.id, !inMix, of).then(

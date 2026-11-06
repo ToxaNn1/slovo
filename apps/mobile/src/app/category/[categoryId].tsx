@@ -6,7 +6,7 @@ import { useCategories } from '@/categories/categories';
 /**
  * A Category of Words' screen, from its tile on the rail or in k1 (board
  * 05.1). An id the Language Pack doesn't have, or `categoryScreens` off,
- * returns home.
+ * returns to the Dashboard.
  */
 export default function CategoryRoute() {
   const { categoryId } = useLocalSearchParams<{ categoryId: string }>();

@@ -217,4 +217,15 @@ describe('CategoryGrid with a header, an empty state and its own tile labels', (
 
     expect(screen.getByText('Nothing here yet')).toBeOnTheScreen();
   });
+
+  it('lets a tap in the header land while the keyboard is up, and moves the header over the keyboard', async () => {
+    await renderWith([]);
+
+    // A header may hold a text field and its submit (the Collections' name field):
+    // the first tap must submit, not only hide the keyboard.
+    expect(screen.getByTestId('grid').props).toMatchObject({
+      keyboardShouldPersistTaps: 'handled',
+      automaticallyAdjustKeyboardInsets: true,
+    });
+  });
 });

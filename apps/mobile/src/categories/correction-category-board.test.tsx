@@ -208,7 +208,7 @@ describe('the Category screen of Corrections', () => {
     expect(shoby.getByText(editionStrings.correctionCard.correctionTypes.surzhyk)).toBeTruthy();
     expect(shoby.getByText('щоб · аби')).toBeTruthy();
     expect(screen.getByTestId('category-entry-c_shoby-known')).toHaveTextContent(
-      editionStrings.knowledge.known,
+      editionStrings.dashboard.category.knownStamp,
     );
     expect(
       within(screen.getByTestId('category-entry-c_protiahom')).getByText('протягом'),

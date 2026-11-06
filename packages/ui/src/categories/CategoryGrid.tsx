@@ -1,31 +1,22 @@
 'use no memo';
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
-import { useEffect, type ReactElement, type ReactNode } from 'react';
+import type { ReactElement, ReactNode } from 'react';
 import { FlatList, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  ReduceMotion,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withTiming,
-} from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
 
+import { useCascade } from '../primitives/useCascade';
 import { useEdition } from '../providers/EditionProvider';
-import { useReduceMotion } from '../providers/useReduceMotion';
 import { useTokens } from '../providers/TokensProvider';
-import { categoryGrid as place, motion, typeStyle } from '../tokens';
+import { categoryGrid as place, typeStyle } from '../tokens';
 import {
   CategoryTile,
+  shapeAt,
   toneByPosition,
-  type CategoryShape,
+  type CategoryShapes,
   type CategoryTileBox,
   type CategoryTone,
 } from './CategoryTile';
-
-const cascadeEasing = Easing.bezier(...motion.cascade.easing);
-const fadeEasing = Easing.bezier(...motion.reduceMotion.easing);
 
 /** One tile of a grid: what it opens and the name it shows. */
 export interface GridTile {
@@ -41,7 +32,8 @@ export interface GridTile {
  * gives its position and the shape pair at its position, wrapping past the
  * set. The tiles cascade in one after another; under Reduce Motion they only
  * fade in (ADR 0055). A tile opens its id. A `header` goes over the title,
- * across the whole width from the top, as a list's header would, and `empty` shows in place of the tiles while there are none.
+ * across the whole width from the top, as a list's header would, and `empty`
+ * shows in place of the tiles while there are none.
  */
 export function CategoryGrid({
   title,
@@ -63,7 +55,7 @@ export function CategoryGrid({
   columns: GridColumns;
   /** The tile's box; its width is the column's. */
   box: Omit<CategoryTileBox, 'width'>;
-  shapes: readonly (readonly [CategoryShape, CategoryShape])[];
+  shapes: readonly CategoryShapes[];
   toneAt?: (index: number) => CategoryTone;
   /** How long after the one before a tile starts to rise in, in ms. */
   stagger?: number;
@@ -107,6 +99,10 @@ export function CategoryGrid({
         </>
       }
       ListEmptyComponent={empty}
+      // A header may hold a text field and its submit: a tap lands on the first
+      // try, and the header moves over the keyboard.
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
       renderItem={({ item: { id, name, accessibilityLabel }, index }) => (
         <Cascade testID={`${testID}-${id}-cascade`} index={index} stagger={stagger} width={width}>
           <CategoryTile
@@ -114,7 +110,7 @@ export function CategoryGrid({
             name={name}
             accessibilityLabel={accessibilityLabel ?? name}
             tone={toneAt(index)}
-            shapes={shapes[index % shapes.length] ?? ['circle', 'circle']}
+            shapes={shapeAt(shapes, index)}
             box={box}
             onPress={() => {
               onOpen(id);
@@ -148,30 +144,11 @@ function Cascade({
   testID: string;
   children: ReactNode;
 }) {
-  const reduceMotion = useReduceMotion();
-  // 1 once the tile has entered.
-  const entered = useSharedValue(0);
-  useEffect(() => {
-    entered.value = reduceMotion
-      ? withTiming(1, {
-          duration: motion.reduceMotion.duration,
-          easing: fadeEasing,
-          reduceMotion: ReduceMotion.Never,
-        })
-      : withDelay(
-          index * stagger,
-          withTiming(1, {
-            duration: place.cascade.duration,
-            easing: cascadeEasing,
-            reduceMotion: ReduceMotion.Never,
-          }),
-          ReduceMotion.Never,
-        );
-  }, [entered, index, stagger, reduceMotion]);
-  const shown = useAnimatedStyle(() => ({
-    opacity: entered.value,
-    transform: [{ translateY: reduceMotion ? 0 : (1 - entered.value) * motion.cascade.rise }],
-  }));
+  const shown = useCascade(index, {
+    variant: 'rise',
+    stagger,
+    duration: place.cascade.duration,
+  });
   return (
     <Animated.View testID={testID} style={[styles.cell, { width }, shown]}>
       {children}

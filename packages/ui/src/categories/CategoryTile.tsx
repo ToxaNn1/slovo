@@ -13,9 +13,9 @@ export type CategoryShape = TileShapeKind;
  * A Category tile's tone, from the boards: `red` (ink name, cream big shape,
  * ink small one), `ink` (background name, red big shape, background small
  * one) or `tile`, the sunken surface (ink name, red big shape, ink small one).
- * A quiet Category's tile is muted (ADR 0081): `quietGrid` in k1, the sunken
+ * A quiet Category has a quiet tile (ADR 0081): `quietGrid` in k1, the sunken
  * surface with its name and both shapes in muted ink, and `quietRail` on the
- * home board's rail, the light theme's ink in both themes with its name in the
+ * Dashboard's rail, the light theme's ink in both themes with its name in the
  * light background, a faint big shape and no small one.
  */
 export type CategoryTone = 'red' | 'ink' | 'tile' | 'quietGrid' | 'quietRail';
@@ -24,6 +24,14 @@ export type CategoryTone = 'red' | 'ink' | 'tile' | 'quietGrid' | 'quietRail';
 export function toneByPosition(index: number): CategoryTone {
   const tones = ['red', 'ink', 'tile'] as const;
   return tones[index % tones.length] ?? 'red';
+}
+
+/** A tile's pair of shapes, its big one and its small one. */
+export type CategoryShapes = readonly [CategoryShape, CategoryShape];
+
+/** The shape pair of the tile at `index`: the board's pairs in turn, wrapping past the set. */
+export function shapeAt(shapes: readonly CategoryShapes[], index: number): CategoryShapes {
+  return shapes[index % shapes.length] ?? ['circle', 'circle'];
 }
 
 /** A tile's box from the board it is drawn on: the rail's or a grid's. */
@@ -39,7 +47,7 @@ export interface CategoryTileBox {
 }
 
 /**
- * A Category's tile, as the home board's rail and the k1 grid draw it: its
+ * A Category's tile, as the Dashboard's rail and the k1 grid draw it: its
  * name at the bottom under a two-shape pictogram, in its tone. A tap opens
  * the Category; VoiceOver reads its name.
  */

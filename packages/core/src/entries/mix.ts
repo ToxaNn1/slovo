@@ -207,15 +207,18 @@ export function categoriesInMix(state: MixState, of: CategoryKind): CategoriesIn
 }
 
 /**
- * Where the Category of the kind's list stands in the Mix: in, in as the
- * last Category of its list, which can't be taken out (ADR 0019), or out;
- * nothing for a Category the list doesn't have in the Language Pack.
+ * Where a Category of a list stands in the Mix: in, in as the last Category
+ * of its list, which can't be taken out (ADR 0019), or out; nothing for a
+ * Category the list doesn't have in the Language Pack.
  */
+export type CategoryPlace = 'in' | 'last' | 'out' | undefined;
+
+/** Where the Category of the kind's list stands in the Mix (`CategoryPlace`). */
 export function categoryPlace(
   state: MixState,
   of: CategoryKind,
   categoryId: string,
-): 'in' | 'last' | 'out' | undefined {
+): CategoryPlace {
   const list = categoriesInMix(state, of);
   if (!list.allCategories.some(({ id }) => id === categoryId)) return undefined;
   if (list.lastCategoryId === categoryId) return 'last';

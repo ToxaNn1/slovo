@@ -77,6 +77,8 @@ export const dashboard = {
     correctionTypes: 18,
   },
   titleGap: 12,
+  /** How far above a rail's title button its tap area reaches, so it is a full touch target. */
+  titleSlop: 14,
   previousTitleGap: 6,
   /** The room under a rail's tiles. */
   railBottom: 8,
@@ -939,7 +941,8 @@ export const railScreen = {
   bottom: 73,
   mascot: { right: 20, top: 238, width: 124 },
   list: { top: 4, side: 16, gap: 12, wordGap: 10, bottom: 40 },
-  card: { radius: 18, padding: 16, gap: 12, wordGap: 8, edge: 4, labelGap: 6 },
+  /** A card's box; `line` is the 1-point border round its face. */
+  card: { radius: 18, padding: 16, gap: 12, wordGap: 8, edge: 4, labelGap: 6, line: 1 },
   /** The cards rise in one after another (the board's `slCasc`): each lasts `duration`, `stagger` after the one before. */
   cascade: { duration: 450, stagger: 70 },
   chip: { paddingHorizontal: 9, paddingVertical: 5, radius: 8 },
@@ -981,4 +984,41 @@ export const quietScreen = {
   mascot: { right: 14, bottom: 56, width: 130 },
   row: { paddingVertical: 14, gap: 4 },
   fade: { duration: 600, stagger: 120 },
+} as const;
+
+/** The box of a tile on the Dashboard's Categories rail. */
+export const categoryRailBox = {
+  width: categoryTile.width,
+  height: categoryTile.height,
+  radius: categoryTile.radius,
+  padding: categoryTile.padding,
+  big: categoryTile.big,
+  small: categoryTile.small,
+  name: 'categoryName',
+} as const;
+
+/**
+ * The box of a k1 grid tile (board 05.2), for the Categories and the
+ * Collections in their style; its width is the column's.
+ */
+export const categoryGridBox = {
+  height: categoryGrid.height,
+  radius: categoryGrid.radius,
+  padding: categoryGrid.tilePadding,
+  big: categoryGrid.big,
+  small: categoryGrid.small,
+  name: 'gridTileName',
+} as const;
+
+/**
+ * The box of a k2 grid tile (board 05.2): the k1 tile's corners and padding,
+ * taller, with its own shapes' places; its width is the column's.
+ */
+export const correctionGridBox = {
+  height: correctionGrid.height,
+  radius: categoryGrid.radius,
+  padding: categoryGrid.tilePadding,
+  big: correctionGrid.big,
+  small: correctionGrid.small,
+  name: 'gridTileName',
 } as const;

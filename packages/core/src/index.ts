@@ -207,6 +207,7 @@ export {
   categoryPlace,
   kindsShown,
   type CategoriesInMix,
+  type CategoryPlace,
   type MixKindWeights,
   type MixState,
 } from './entries/mix';
