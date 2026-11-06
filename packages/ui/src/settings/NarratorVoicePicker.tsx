@@ -57,6 +57,12 @@ export function NarratorVoicePicker({
   const texts = strings.settings.narratorVoice;
   const reading = voices.find(({ id }) => id === chosen) ?? voices[0];
   const moving = playing && !reduceMotion;
+  // Each voice draws its own bars; the pattern goes by the voice's place in the Edition.
+  const place = Math.max(
+    0,
+    voices.findIndex(({ id }) => id === chosen),
+  );
+  const shares = drawing.barShares[place % drawing.barShares.length] ?? drawing.barShares[0];
   const rows = pairs(voices);
   return (
     <View testID={testID}>
@@ -105,13 +111,14 @@ export function NarratorVoicePicker({
             />
           </PressedTile>
           <View
+            testID={testID === undefined ? undefined : `${testID}-bars`}
             style={styles.bars}
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           >
             {Array.from({ length: drawing.bars }, (_, index) => (
               // The bars are a fixed drawing; their order never changes.
-              <Bar key={index} index={index} moving={moving} color={light.ink} />
+              <Bar key={index} index={index} shares={shares} moving={moving} color={light.ink} />
             ))}
           </View>
         </View>
@@ -242,8 +249,18 @@ function Syllable({
 }
 
 /** One bar beside the play button: it swings while the voice reads and stands at full height otherwise. */
-function Bar({ index, moving, color }: { index: number; moving: boolean; color: string }) {
-  const share = drawing.barShares[index % drawing.barShares.length] ?? 1;
+function Bar({
+  index,
+  shares,
+  moving,
+  color,
+}: {
+  index: number;
+  shares: readonly number[];
+  moving: boolean;
+  color: string;
+}) {
+  const share = shares[index % shares.length] ?? 1;
   const scale = useSharedValue(1);
   useEffect(() => {
     if (!moving) {

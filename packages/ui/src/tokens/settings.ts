@@ -66,8 +66,8 @@ export const widgetDrawing = {
 /**
  * The Narrator Voice screen (design `XVoice`): the red scene of the sample
  * Word, its play button and the 16 bars beside it, and the 2×2 voice tiles.
- * The bars take their heights, as shares of `barsHeight`, from `barShares`
- * in turn; while the voice reads, each swings between `barRest` and its full
+ * The bars take their heights, as shares of `barsHeight`, in turn from the
+ * pattern in `barShares` at the chosen voice's position (the board's seeds); while the voice reads, each swings between `barRest` and its full
  * height in `barSwing` ms plus `barSwingStep` for every third bar, a bar
  * `barDelay` ms after the one before it. Each syllable lifts by
  * `syllableLift` for `syllableLiftDuration` ms, `syllableStep` ms after the
@@ -87,7 +87,12 @@ export const narratorVoiceDrawing = {
   bars: 16,
   barsGap: 4,
   barsHeight: 40,
-  barShares: [0.58, 0.79, 0.69, 0.93, 0.72, 0.86, 0.65, 0.76, 0.62],
+  barShares: [
+    [0.58, 0.79, 0.69, 0.93, 0.72, 0.86, 0.65, 0.76, 0.62],
+    [0.86, 0.965, 0.79, 1, 0.895, 0.72, 0.93, 0.825, 0.79],
+    [0.51, 0.93, 0.58, 1, 0.545, 0.895, 0.65, 0.965, 0.58],
+    [0.72, 0.825, 0.895, 0.79, 0.93, 0.86, 0.755, 0.825, 0.72],
+  ],
   barRest: 0.3,
   barSwing: 420,
   barSwingStep: 80,
