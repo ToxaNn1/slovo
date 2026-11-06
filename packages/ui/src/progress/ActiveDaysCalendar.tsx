@@ -9,11 +9,19 @@ import { calendarDay, space, typeStyle } from '../tokens';
 
 /**
  * One day of the grid as a tile over its edge: an Active Day red, today in
- * ink over a red edge, a missed day plain, a frozen day and a Break day in
- * their own faces, and a day to come no tile, only a dashed outline. With
- * `onPress` it is a button whose tile presses down onto its edge.
+ * ink over a red edge, a missed day plain, a frozen day cream under frost, a
+ * Break day sunken, pressed into its place with the edge inside its top, and
+ * a day to come no tile, only a dashed outline (board 10). With `onPress` it
+ * is a button whose tile presses down onto its edge. The Break card's strip
+ * draws its days with it too.
  */
-function Day({ day, onPress }: { day: CalendarDay; onPress: (() => void) | undefined }) {
+export function CalendarDayTile({
+  day,
+  onPress,
+}: {
+  day: CalendarDay;
+  onPress: (() => void) | undefined;
+}) {
   const tokens = useTokens();
   const { colors } = tokens;
   // The number on red is the ink of the light Theme in both Themes, as on every red face.
@@ -25,8 +33,10 @@ function Day({ day, onPress }: { day: CalendarDay; onPress: (() => void) | undef
     active: { face: colors.accent, edge: colors.accentEdge, number: keyInk },
     today: { face: colors.ink, edge: colors.accent, number: colors.background },
     missed: { face: colors.tile, edge: colors.tileEdge, number: colors.muted },
-    frozen: { face: colors.highlight, edge: colors.tileEdge, number: colors.ink },
-    break: { face: colors.surfaceSunken, edge: colors.line, number: colors.muted },
+    // Cream is the same in both Themes, so its number is the light Theme's ink.
+    frozen: { face: colors.onAccent, edge: colors.tileEdge, number: keyInk },
+    // Pressed in: no edge under it, the edge drawn inside its top instead.
+    break: { face: colors.surfaceSunken, edge: undefined, number: colors.ink },
     future: { face: 'transparent', edge: undefined, number: colors.muted },
   }[day.state];
   const tile = (pressed: boolean) => (
@@ -40,9 +50,15 @@ function Day({ day, onPress }: { day: CalendarDay; onPress: (() => void) | undef
           styles.tile,
           { backgroundColor: look.face },
           day.state === 'future' && [styles.future, { borderColor: colors.line }],
+          day.state === 'break' && [
+            styles.pressed,
+            styles.sunken,
+            { borderTopColor: colors.tileEdge },
+          ],
           pressed && styles.pressed,
         ]}
       >
+        {day.state === 'frozen' && <Frost />}
         <Text style={[typeStyle('calendarDay', tokens), { color: look.number }]}>{day.day}</Text>
       </View>
     </>
@@ -63,6 +79,21 @@ function Day({ day, onPress }: { day: CalendarDay; onPress: (() => void) | undef
     <Pressable {...shared} accessibilityRole="button" onPress={onPress}>
       {({ pressed }) => tile(pressed)}
     </Pressable>
+  );
+}
+
+/** The frost over a frozen day: diagonal stripes across the tile, as board 10 draws it. */
+function Frost() {
+  const count = Math.ceil((calendarDay.height * 3) / calendarDay.frost.step);
+  return (
+    <View style={styles.frost} pointerEvents="none">
+      {Array.from({ length: count }, (_, index) => (
+        <View
+          key={index}
+          style={[styles.stripe, { left: index * calendarDay.frost.step - calendarDay.height }]}
+        />
+      ))}
+    </View>
   );
 }
 
@@ -135,7 +166,7 @@ export function ActiveDaysCalendar({
       {weeks.map((week) => (
         <View key={week[0]?.date} style={styles.week}>
           {week.map((day) => (
-            <Day
+            <CalendarDayTile
               key={day.date}
               day={day}
               onPress={
@@ -183,6 +214,16 @@ const styles = StyleSheet.create({
   },
   edge: { top: calendarDay.edge },
   pressed: { top: calendarDay.edge },
+  sunken: { borderTopWidth: calendarDay.edge, overflow: 'hidden' },
+  frost: { ...StyleSheet.absoluteFill, overflow: 'hidden', borderRadius: calendarDay.radius },
+  stripe: {
+    position: 'absolute',
+    top: -calendarDay.height,
+    width: calendarDay.frost.stripe,
+    height: calendarDay.height * 3,
+    backgroundColor: calendarDay.frost.color,
+    transform: [{ rotate: '45deg' }],
+  },
   future: { borderWidth: calendarDay.futureBorder, borderStyle: 'dashed' },
   line: { marginTop: space[1] },
 });
