@@ -121,26 +121,34 @@ export function importEntries(
     return 1;
   }
 
-  const written = incoming.map(({ id, fields }) => {
-    const file = edition.entryFile(id);
-    const path = join(edition.dir, file);
-    mkdirSync(dirname(path), { recursive: true });
-    writeFileSync(path, `${JSON.stringify(shaped(kind, id, fields, edition), null, 2)}\n`);
-    return { file, path };
-  });
+  const read = (path: string) => (existsSync(path) ? readFileSync(path, 'utf8') : undefined);
   const recordFiles = RECORD_FILES.map((name) => {
     const path = edition.path(name);
-    return { path, before: existsSync(path) ? readFileSync(path, 'utf8') : undefined };
+    return { path, before: read(path) };
   });
-  const recorded = recordContent({ editionDir: edition.dir });
-  if (!record) {
-    for (const { path, before } of recordFiles) {
-      if (before === undefined) rmSync(path, { force: true });
-      else writeFileSync(path, before);
+  const written: { file: string; path: string }[] = [];
+  // Failed until recorded, so that a throw on the way cleans up as a refusal does.
+  let recorded: ReturnType<typeof recordContent> = { ok: false, errors: [] };
+  try {
+    for (const { id, fields } of incoming) {
+      const file = edition.entryFile(id);
+      const path = join(edition.dir, file);
+      mkdirSync(dirname(path), { recursive: true });
+      writeFileSync(path, `${JSON.stringify(shaped(kind, id, fields, edition), null, 2)}\n`);
+      written.push({ file, path });
     }
+    recorded = recordContent({ editionDir: edition.dir });
+  } finally {
+    if (!record || !recorded.ok) {
+      for (const { path, before } of recordFiles) {
+        if (read(path) === before) continue;
+        if (before === undefined) rmSync(path, { force: true });
+        else writeFileSync(path, before);
+      }
+    }
+    if (!recorded.ok) for (const { path } of written) rmSync(path, { force: true });
   }
   if (!recorded.ok) {
-    for (const { path } of written) rmSync(path, { force: true });
     reportProblems(terminal, 'Nothing imported', recorded.errors.map(formatBuildError));
     return 1;
   }

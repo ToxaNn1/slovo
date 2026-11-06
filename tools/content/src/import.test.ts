@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import {
+  chmodSync,
   cpSync,
   mkdirSync,
   mkdtempSync,
@@ -190,6 +191,16 @@ describe('pnpm content import', () => {
     expect(run.stderr).toMatch(
       /content\/words\/w_[a-z0-9]{6}\.json › Entry w_[a-z0-9]{6} › primaryDefinition: /,
     );
+    expect(snapshot()).toEqual(before);
+  });
+
+  it('removes every file it wrote when recording fails', () => {
+    const before = snapshot();
+    chmodSync(join(editionDir, 'content/ids.json'), 0o444);
+
+    const run = content(['import', 'word', array([word('тестонезаписано')]), '--edition', 'uk']);
+
+    expect(run.status).not.toBe(0);
     expect(snapshot()).toEqual(before);
   });
 
