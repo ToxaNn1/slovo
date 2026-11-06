@@ -11,7 +11,7 @@ import {
 } from '@slovo/ui';
 import { categoryGrid } from '@slovo/ui/tokens';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
@@ -145,5 +145,42 @@ describe('CategoryGrid', () => {
 
     await wait(300);
     expect(cascade('war')).toEqual({ opacity: 1, rise: 0 });
+  });
+});
+
+describe('CategoryGrid with a header, an empty state and its own tile labels', () => {
+  async function renderWith(gridTiles: readonly GridTile[]) {
+    await render(
+      <TokensProvider tokens={editionTokens} colorScheme="light">
+        <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+          <CategoryGrid
+            testID="grid"
+            title="Collections"
+            count={String(gridTiles.length)}
+            tiles={gridTiles}
+            columns={3}
+            box={box}
+            shapes={categoryGrid.shapes}
+            header={<Text>Back</Text>}
+            empty={<Text>Nothing here yet</Text>}
+            onOpen={jest.fn()}
+          />
+        </EditionProvider>
+      </TokensProvider>,
+    );
+  }
+
+  it('draws the header over the title and reads a tile by its own label', async () => {
+    await renderWith([{ id: 'autumn', name: 'Autumn', accessibilityLabel: 'Autumn, 3 entries' }]);
+
+    expect(screen.getByText('Back')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Autumn, 3 entries' })).toBeOnTheScreen();
+    expect(screen.queryByText('Nothing here yet')).not.toBeOnTheScreen();
+  });
+
+  it('shows the empty state with no tiles', async () => {
+    await renderWith([]);
+
+    expect(screen.getByText('Nothing here yet')).toBeOnTheScreen();
   });
 });
