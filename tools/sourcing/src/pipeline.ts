@@ -9,7 +9,7 @@ import {
   type EntryText,
 } from '@slovo/language-pack/edition';
 
-import { PoliteClient, type Clock, type Fetch } from './polite-client';
+import { POLITE_INTERVAL_MS, PoliteClient, type Clock, type Fetch } from './polite-client';
 import { formatReviewReport } from './report';
 import type { DraftOutcome, DraftSummary, Flag, LemmaOutcome, ReviewReport } from './review-report';
 import { matchKey, SOURCE_LANGUAGE } from './text';
@@ -98,7 +98,6 @@ export interface SourcingKind<R> {
 export const REPORT_FILE = 'review-report.md';
 const DRAFTS_DIR = 'drafts';
 const INCOMPLETE_DIR = 'incomplete';
-const DEFAULT_MIN_INTERVAL_MS = 2000;
 
 /**
  * One sourcing run: refuses an Edition the Ukrainian sources can't serve and a
@@ -130,7 +129,7 @@ export async function runSourcing<R>(
     options.fetch,
     options.clock,
     options.cacheDir,
-    options.minIntervalMs ?? DEFAULT_MIN_INTERVAL_MS,
+    options.minIntervalMs ?? POLITE_INTERVAL_MS,
     options.log,
   );
   const draft = kind.start({

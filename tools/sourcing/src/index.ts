@@ -20,7 +20,9 @@ export {
   type SourcingKind,
   type SourcingResult,
 } from './pipeline';
+export { defaultCacheDir, fetchPage, systemClock } from './node-ports';
 export {
+  POLITE_INTERVAL_MS,
   PoliteClient,
   type Clock,
   type Fetch,
