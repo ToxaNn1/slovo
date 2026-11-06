@@ -365,7 +365,7 @@ The Word read aloud by a recorded narrator voice; the device's voice when a Word
 _Avoid_: Audio, TTS
 
 **Narrator Voice**:
-One of the Edition's recorded voices that read Words; the reader picks one. The Edition config declares each with a display name and a description, and one as the default (UA: Оксана).
+One of the Edition's recorded voices that read Words. The reader chooses one in Settings › «Голос диктора», behind the `narratorVoice` Feature Switch; a tap on a voice chooses it and reads the Edition's sample Word in it (UA: заграва). The Edition config declares each with a display name and a description, and one as the default (UA: Оксана), which reads while the switch is off.
 
 **Recording**:
 A Narrator Voice reading one Word, made ahead of time and keyed by Word id. The app bundles every voice's Recordings; Corrections, Idioms and Synonym Row members have none.
