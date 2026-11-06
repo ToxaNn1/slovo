@@ -6,7 +6,7 @@ import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
 import { useUndo, type Undo } from '../undo';
-import { hideChoice, hideToast, type HideOption } from './hide-choice';
+import { hideChoice, hideToast, type HideChoiceOption } from './hide-choice';
 
 const { hiding: strings } = editionStrings;
 
@@ -39,7 +39,7 @@ export function useHide(card: AnyEntryCard): { open: () => void; choice: HideCho
   const undo = useUndo();
   const showToast = useUndoToast();
   const [visible, setVisible] = useState(false);
-  const [options, setOptions] = useState<readonly HideOption[]>([]);
+  const [options, setOptions] = useState<readonly HideChoiceOption[]>([]);
 
   return {
     open() {
@@ -50,18 +50,17 @@ export function useHide(card: AnyEntryCard): { open: () => void; choice: HideCho
     choice: {
       visible,
       options: options.map((option) => ({
-        key: option.kind,
+        key: keyOf(option),
         label: option.label,
-        ...(option.kind === 'category' &&
-          option.disabledHint !== undefined && { disabledHint: option.disabledHint }),
+        ...(option.kind === 'last-category' && { disabledHint: option.disabledHint }),
       })),
       cancelLabel: strings.choice.cancel,
       onChoose(key) {
         // The sheet is still on screen while it slides out: a second tap hides nothing more.
         if (!visible) return;
         setVisible(false);
-        const option = options.find(({ kind }) => kind === key);
-        if (option === undefined || (option.kind === 'category' && option.disabledHint)) return;
+        const option = options.find((offered) => keyOf(offered) === key);
+        if (option === undefined || option.kind === 'last-category') return;
         void keep('the hide from the card', hide(composition, option, showToast, undo));
       },
       onCancel() {
@@ -71,10 +70,15 @@ export function useHide(card: AnyEntryCard): { open: () => void; choice: HideCho
   };
 }
 
+/** The sheet's key of an option: the last Category is offered in the place of a Category. */
+function keyOf(option: HideChoiceOption): string {
+  return option.kind === 'last-category' ? 'category' : option.kind;
+}
+
 /** Hides what the option names and shows its undo toast, unless nothing changed. */
 async function hide(
   composition: Composition,
-  option: HideOption,
+  option: Exclude<HideChoiceOption, { readonly kind: 'last-category' }>,
   showToast: (toast: UndoToastContent) => void,
   /** Runs the undo in the composition open at the tap (ADR 0018). */
   undo: (subject: string, undo: Undo) => void,

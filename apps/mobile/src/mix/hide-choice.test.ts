@@ -158,7 +158,7 @@ describe('the hide choice', () => {
 
     const choice = choiceOn(app, await cardOf(app, correction.id));
 
-    expect(choice.map(({ kind }) => kind)).toEqual(['entry', 'category', 'whole-kind']);
+    expect(choice.map(({ kind }) => kind)).toEqual(['entry', 'last-category', 'whole-kind']);
     expect(choice[1]).toMatchObject({
       label: `Не показувати категорію «${everyday.displayName}»`,
       disabledHint: strings.mix.corrections.lastCategoryHint,
@@ -189,7 +189,8 @@ describe('the hide choice', () => {
 describe('the toast of a hide', () => {
   const toastAfter = async (app: Composition, entryId: string, index: number) => {
     const option = choiceOn(app, await cardOf(app, entryId))[index];
-    if (option === undefined) throw new Error(`No option ${String(index)}`);
+    if (option === undefined || option.kind === 'last-category')
+      throw new Error(`No option to choose at ${String(index)}`);
     const result = await app.hide(option.target);
     if (result === undefined) throw new Error('Nothing was hidden');
     return hideToast({ option, changed: result.changed, strings: strings.hiding });
