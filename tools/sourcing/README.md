@@ -80,7 +80,46 @@ A Lemma list line whose Category is one of the Edition's `categoriesRequiringHis
 
 ## Idioms: `source:idioms`
 
-<!-- #1628 fills this section. -->
+<!-- #1628 -->
+
+```sh
+pnpm source:idioms <idiom-list> --edition <id> [--out <dir>] [--cache <dir>]
+```
+
+The list has one Lemma per line, `<lemma> [idiom|proverb]`; the Idiom Type is `idiom` when left out, and every draft of the line gets it. `#` starts a comment. For each Lemma the tool reads its goroh «Фразеологія» page (`https://goroh.pp.ua/Фразеологія/<lemma>`) and drafts one Idiom per phraseologism on it: the expression as printed, the first meaning as the primary Definition, further meanings as extra Definitions, the Examples with their authors, and as source the dictionary goroh names for the block with the page address. Drafts, incomplete drafts and `review-report.md` go to `<review>/idioms/`, on the same cache and throttle as `source:words`. A ready draft passes the Idiom schema and the Language Pack build's checks against the Edition.
+
+What is left out, each with a flag in the report:
+
+- a block, or a whole page, goroh attributes to «Велика мовна модель», or whose remark is only a grammar label: refused with `check` (ADR 0012, never a source);
+- a proper name, such as a place name: not drafted, since its story is its etymology;
+- a block no dictionary is cited for: `check`;
+- a Lemma with no «Фразеологія» page: `no-entry`; a page that cannot be fetched: `fetch-failed`;
+- an expression the Edition already has: the draft goes to `incomplete/` with `existing-entry`.
+
+Example, from the tests (`fixtures/`): the line `лити` yields 14 drafts, among them
+
+```json
+{
+  "expression": "Лити воду",
+  "idiomType": "idiom",
+  "primaryDefinition": "Говорити або писати неконкретно, беззмістовно, нецікаво і т. ін.; вести розмови замість того, щоб робити що-небудь.",
+  "examples": [
+    {
+      "text": "Сподіваюся, що в новому році письменники будуть менше “лити воду”, а більше писати."
+    }
+  ],
+  "sources": [
+    {
+      "title": "Словник прислів'їв та приказок з поясненнями. / Єфімова І. В., 2011",
+      "url": "https://goroh.pp.ua/Фразеологія/лити"
+    }
+  ]
+}
+```
+
+while the line `Дніпро` yields none: goroh attributes that page to a language model.
+
+<!-- /#1628 -->
 
 ## Corrections: `source:corrections`
 

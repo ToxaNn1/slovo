@@ -253,6 +253,8 @@ export interface EditionFolder extends EditionFiles {
    * left out: `pnpm build:pack` reports those.
    */
   checkNewWords(words: readonly Word[]): BuildError[];
+  /** Checks new Idioms the way `checkNewWords` checks new Words. The Idioms must have passed the Idiom schema. */
+  checkNewIdioms(idioms: readonly Idiom[]): BuildError[];
 }
 
 /** The ids of the Editions in an editions folder: each sub-folder holding an Edition config, in code-unit order. */
@@ -311,6 +313,15 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
         content.corrections,
         content.idioms,
       ).filter(({ file }) => draftFiles.has(file));
+    },
+    checkNewIdioms(idioms) {
+      content ??= files.entries();
+      const drafts = idioms.map((idiom) => ({ file: files.entryFile(idiom.id), entry: idiom }));
+      const draftFiles = new Set(drafts.map(({ file }) => file));
+      return checkContent(config, content.words, content.corrections, [
+        ...content.idioms,
+        ...drafts,
+      ]).filter(({ file }) => draftFiles.has(file));
     },
   };
 }

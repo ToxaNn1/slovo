@@ -786,7 +786,7 @@ function tagValues<T>(tags: readonly string[], values: Readonly<Record<string, T
  * `В. Кучер`, `Іван Ле` or `Б.-І. Антонич`: its first part when that reads as
  * a person's name (initials allowed), not a book, a paper or `із журналу`.
  */
-function authorOf(citation: string | undefined): string | undefined {
+export function authorOf(citation: string | undefined): string | undefined {
   const first = citation?.split(',')[0]?.trim();
   if (first === undefined || first === '') return undefined;
   const words = first.split(/\s+/);
