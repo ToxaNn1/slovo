@@ -3,7 +3,7 @@ import type { EntryKind } from '@slovo/contracts';
 import type { Analytics } from '../analytics/analytics';
 import type { AskableEntry, AskableKind, EligibleOfKind, Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
-import type { GameXp, XpAward } from './game-xp';
+import type { GameRecords, XpAward } from './game-xp';
 import type { History } from '../saved/history';
 import { createInTurn, createSubscribers } from '../in-turn';
 import type { LocalDate } from '../local-date';
@@ -521,8 +521,11 @@ export async function openGame({
   entries: Pick<Entries, 'eligibleOfKind'>;
   history: Pick<History, 'list'>;
   knowledge: Pick<Knowledge, 'weak' | 'answer' | 'confirm'>;
-  /** The XP log, which a right Round, a finished Game and a new Best result earn XP in. */
-  xp: GameXp;
+  /**
+   * The XP log, which a right Round, a finished Game and a new Best result
+   * earn XP in, and which keeps each Round answered wrong.
+   */
+  xp: GameRecords;
   userState: Pick<UserState, 'read' | 'write'>;
   /** What a timed Game's play time is told by. */
   clock: Pick<Clock, 'now'>;
@@ -714,16 +717,20 @@ export async function openGame({
     const answered = game && played?.answer(game, given);
     if (game === undefined || answered === undefined) return;
     const round = answered.played.at(-1);
-    const roundXp = round?.right
-      ? xp.award({
-          source: 'game-round',
-          mode: game.modeId,
-          rarity: round.entry.kind === 'word' ? round.entry.rarity : undefined,
-        })
-      : undefined;
+    const roundXp =
+      round === undefined
+        ? undefined
+        : round.right
+          ? xp.award({
+              source: 'game-round',
+              mode: game.modeId,
+              rarity: round.entry.kind === 'word' ? round.entry.rarity : undefined,
+            })
+          : xp.answeredWrong(game.modeId);
     if (inPlay(answered)) {
       changeCurrent(answered);
-      if (roundXp !== undefined) await inTurn(() => writeAwards([roundXp]));
+      if (roundXp !== undefined && roundXp.changes.size > 0)
+        await inTurn(() => writeAwards([roundXp]));
     } else await inTurn(() => finish(game, answered, roundXp));
     if (round === undefined) return;
     await inTurn(() =>
@@ -740,7 +747,10 @@ export async function openGame({
   }
 
   /** Writes the XP the awards append, at once, then makes them in memory. */
-  async function writeAwards(awards: readonly XpAward[], own: UserStateChanges = new Map()) {
+  async function writeAwards(
+    awards: readonly Omit<XpAward, 'amount'>[],
+    own: UserStateChanges = new Map(),
+  ) {
     const changes = new Map([...own, ...awards.flatMap((award) => [...award.changes])]);
     if (changes.size > 0) await userState.write(changes);
     for (const award of awards) award.commit();
@@ -753,7 +763,11 @@ export async function openGame({
    * nothing, and offers the widget hint when it is due and a Life is left. A
    * Game left during the write stays left.
    */
-  async function finish(game: CurrentGame, over: CurrentGame, roundXp?: XpAward): Promise<void> {
+  async function finish(
+    game: CurrentGame,
+    over: CurrentGame,
+    roundXp?: Omit<XpAward, 'amount'>,
+  ): Promise<void> {
     const result = resultOf(over);
     const best = state.bestResults[over.modeId];
     const beaten = best === undefined || result > best;
