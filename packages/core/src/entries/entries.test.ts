@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, EntryKind, FeatureSwitch, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type {
+  Category,
+  Correction,
+  EntryKind,
+  FeatureSwitch,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 
 import { createEntries, openRemoteSwitches } from '../index';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
@@ -97,9 +105,9 @@ const synonymRows = [synonymRow('r_walk'), synonymRow('r_old', true)];
 const tips = [tip('t_comma'), tip('t_old', true)];
 
 /** The Language Pack's Categories, in its order. */
-const categories = [
-  { id: 'speech', displayName: 'Speech' },
-  { id: 'nature', displayName: 'Nature' },
+const categories: Category[] = [
+  { id: 'speech', displayName: 'Speech', description: 'Speech.', tone: 'loud' },
+  { id: 'nature', displayName: 'Nature', description: 'Nature.', tone: 'loud' },
 ];
 
 /**
@@ -244,9 +252,9 @@ describe('the Entries', () => {
       const asked: string[] = [];
       const content = createMemoryContentPort({
         categories: [
-          { id: 'nature', displayName: 'Nature' },
-          { id: 'speech', displayName: 'Speech' },
-          { id: 'crafts', displayName: 'Crafts' },
+          { id: 'nature', displayName: 'Nature', description: 'Nature.', tone: 'loud' },
+          { id: 'speech', displayName: 'Speech', description: 'Speech.', tone: 'loud' },
+          { id: 'crafts', displayName: 'Crafts', description: 'Crafts.', tone: 'loud' },
         ],
         words,
         corrections,

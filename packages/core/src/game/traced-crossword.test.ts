@@ -117,7 +117,7 @@ describe('the traced Daily Crossword of the composition', () => {
     const records = new Map<string, string>();
     const composition = await openComposition({
       content: createMemoryContentPort({
-        categories: [{ id: 'test', displayName: 'Test' }],
+        categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
         words,
       }),
       edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),

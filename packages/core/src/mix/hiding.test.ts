@@ -14,9 +14,24 @@ import { correction, fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** The Language Pack's Categories, in its order. */
-const nature: Category = { id: 'nature', displayName: 'Nature' };
-const speech: Category = { id: 'speech', displayName: 'Speech' };
-const crafts: Category = { id: 'crafts', displayName: 'Crafts' };
+const nature: Category = {
+  id: 'nature',
+  displayName: 'Nature',
+  description: 'Nature.',
+  tone: 'loud',
+};
+const speech: Category = {
+  id: 'speech',
+  displayName: 'Speech',
+  description: 'Speech.',
+  tone: 'loud',
+};
+const crafts: Category = {
+  id: 'crafts',
+  displayName: 'Crafts',
+  description: 'Crafts.',
+  tone: 'loud',
+};
 const categories = [nature, speech, crafts];
 
 /** A small pack: three live Words in each Category, and two live Corrections. */

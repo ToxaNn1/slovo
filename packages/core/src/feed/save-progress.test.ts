@@ -17,7 +17,7 @@ import { userStateRecords } from '../user-state-schema';
 // twice in total, only to a reader with no Account.
 
 const content = createMemoryContentPort({
-  categories: [{ id: 'test', displayName: 'Test' }],
+  categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
   words: Array.from({ length: 20 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`)),
 });
 

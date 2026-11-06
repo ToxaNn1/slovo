@@ -125,17 +125,17 @@ describe.each(adapters)('the content read port %s', (_, open) => {
     close();
   });
 
-  it('lists every Category in the Edition order with its display name, one of Retired Words only included', async () => {
+  it('lists every Category in the Edition order with its display name, description and tone, one of Retired Words only included', async () => {
     expect(await content.listCategories()).toEqual([
-      { id: 'nature', displayName: 'Природа' },
-      { id: 'speech', displayName: 'Мовлення' },
+      { id: 'nature', displayName: 'Природа', description: 'Ліс, поле й небо.', tone: 'loud' },
+      { id: 'speech', displayName: 'Мовлення', description: 'Як говорили колись.', tone: 'quiet' },
     ]);
   });
 
-  it("lists every Category of Corrections in the Edition order, apart from the Words' Categories", async () => {
+  it("lists every Category of Corrections in the Edition order with its description and tone, apart from the Words' Categories", async () => {
     expect(await content.listCorrectionCategories()).toEqual([
-      { id: 'work', displayName: 'На роботі' },
-      { id: 'shop', displayName: 'У магазині' },
+      { id: 'work', displayName: 'На роботі', description: 'Слова для наради.', tone: 'loud' },
+      { id: 'shop', displayName: 'У магазині', description: 'Слова біля каси.', tone: 'quiet' },
     ]);
   });
 
