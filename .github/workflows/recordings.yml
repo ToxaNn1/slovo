@@ -1,6 +1,7 @@
 # Generates the Recordings of an Edition's Words in its Narrator Voices and
 # commits them to the branch it ran on (ADR 0083). Start it by hand, or push
-# a change of tools/recordings/request.json to a branch. It never runs on, or
+# a change of tools/recordings/request.json to a branch (a content wave writes
+# its branch into `wave`: docs/agents/content-wave.md). It never runs on, or
 # pushes to, main.
 name: Recordings
 
