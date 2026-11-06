@@ -70,3 +70,11 @@ content/1107w4-synonyms-aa synonyms scripts/content-wave/lists/synonyms-aa.txt 1
 content/1107w4-synonyms-ab synonyms scripts/content-wave/lists/synonyms-ab.txt 15
 content/1107w4-synonyms-ac synonyms scripts/content-wave/lists/synonyms-ac.txt 15
 content/1107w4-synonyms-ad synonyms scripts/content-wave/lists/synonyms-ad.txt 15
+content/1107w4-corrections-aa corrections scripts/content-wave/lists/corrections-aa.txt 15
+content/1107w4-corrections-ab corrections scripts/content-wave/lists/corrections-ab.txt 15
+content/1107w4-corrections-ac corrections scripts/content-wave/lists/corrections-ac.txt 15
+content/1107w4-corrections-ad corrections scripts/content-wave/lists/corrections-ad.txt 15
+content/1107w4-corrections-ae corrections scripts/content-wave/lists/corrections-ae.txt 15
+content/1107w4-corrections-af corrections scripts/content-wave/lists/corrections-af.txt 15
+content/1107w4-corrections-ag corrections scripts/content-wave/lists/corrections-ag.txt 15
+content/1107w4-corrections-ah corrections scripts/content-wave/lists/corrections-ah.txt 15
