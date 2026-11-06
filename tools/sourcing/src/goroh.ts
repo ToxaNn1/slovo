@@ -12,7 +12,12 @@ import { matchKey, squeeze, unstressed } from './text';
 
 const SITE = 'https://goroh.pp.ua/';
 
-export type GorohSection = 'Тлумачення' | 'Словозміна' | 'Синонімія' | 'Етимологія';
+export type GorohSection =
+  | 'Тлумачення'
+  | 'Словозміна'
+  | 'Синонімія'
+  | 'Етимологія'
+  | 'Слововживання';
 
 /** The readable address of a goroh page, as recorded in sources. */
 export function gorohUrl(section: GorohSection, lemma: string): string {
@@ -39,7 +44,7 @@ export async function fetchGoroh(
 const EXPLANATORY_DICTIONARY = 'Тлумачний словник української мови';
 
 /** goroh's name for text a language model wrote; it is never quoted (ADR 0012). */
-const LANGUAGE_MODEL = 'Велика мовна модель';
+export const LANGUAGE_MODEL = 'Велика мовна модель';
 
 /** One article block of a goroh page. */
 export interface ArticleBlock {
