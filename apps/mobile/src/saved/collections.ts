@@ -43,7 +43,6 @@ export function useEntryCollections(entryId: string): {
       void keep(
         'Collections',
         filed ? collections.add(collectionId, entryId) : collections.remove(collectionId, entryId),
-        undefined,
       );
     },
     // A Collection that could not be kept rejects: the sheet keeps its name field open.
@@ -77,7 +76,7 @@ export function useCollectionChanges(): {
       create: (name) => refusalOf(collections.create(name)),
       rename: (collectionId, name) => refusalOf(collections.rename(collectionId, name)),
       remove(collectionId) {
-        void keep('Collections', collections.delete(collectionId), undefined);
+        void keep('Collections', collections.delete(collectionId));
       },
     }),
     [collections],
@@ -98,7 +97,7 @@ export function useCollectionEntries(collectionId: string): {
     collection: list.find((collection) => collection.id === collectionId),
     entries,
     remove(entryId) {
-      void keep('Collections', collections.remove(collectionId, entryId), undefined);
+      void keep('Collections', collections.remove(collectionId, entryId));
     },
   };
 }

@@ -1,7 +1,7 @@
 import type { Rarity } from '@slovo/contracts';
 
 import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 
 /**
@@ -14,9 +14,7 @@ export function useRarityCeiling(): { ceiling: Rarity; setCeiling: (ceiling: num
   return {
     ceiling,
     setCeiling: (next) => {
-      rarityCeiling.set(next).catch((error: unknown) => {
-        logError('Could not keep the Rarity Ceiling', error);
-      });
+      void keep('the Rarity Ceiling', rarityCeiling.set(next));
     },
   };
 }

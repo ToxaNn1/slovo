@@ -51,16 +51,15 @@ export function useNotificationsChanges(): {
   const { notifications } = useComposition();
   const subject = 'the notifications';
   return {
-    keepTime: (time, replacing) =>
-      keep(subject, notifications.keepTime(time, replacing), undefined),
+    keepTime: (time, replacing) => keep(subject, notifications.keepTime(time, replacing)),
     removeTime: (time) => {
-      void keep(subject, notifications.removeTime(time), undefined);
+      void keep(subject, notifications.removeTime(time));
     },
     setSound: (on) => {
-      void keep(subject, notifications.setSound(on), undefined);
+      void keep(subject, notifications.setSound(on));
     },
     askPermission: () => {
-      void keep(subject, notifications.askPermission(), undefined);
+      void keep(subject, notifications.askPermission());
     },
   };
 }
