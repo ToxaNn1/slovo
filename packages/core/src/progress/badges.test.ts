@@ -26,25 +26,46 @@ const ALL_ON: readonly FeatureSwitch[] = [
 ];
 
 const badges: readonly Badge[] = [
-  { id: 'streak-3', name: 'Three days', symbol: '1', condition: { kind: 'streak', days: 3 } },
+  {
+    id: 'streak-3',
+    name: 'Three days',
+    symbol: '1',
+    family: 'f',
+    condition: { kind: 'streak', days: 3 },
+  },
   {
     id: 'win-words',
     name: 'First win',
     symbol: '1',
+    family: 'f',
     condition: { kind: 'gameWin', modes: ['guess-word'] },
   },
   {
     id: 'crossword-2',
     name: 'Two crosswords',
     symbol: '1',
+    family: 'f',
     condition: { kind: 'dailyCrosswordRun', days: 2 },
   },
-  { id: 'rare', name: 'Rare', symbol: '1', condition: { kind: 'rightOnRarity', rarity: 5 } },
-  { id: 'level-1', name: 'Level 1', symbol: '1', condition: { kind: 'level', level: 1 } },
+  {
+    id: 'rare',
+    name: 'Rare',
+    symbol: '1',
+    family: 'f',
+    condition: { kind: 'rightOnRarity', rarity: 5 },
+  },
+  {
+    id: 'level-1',
+    name: 'Level 1',
+    symbol: '1',
+    family: 'f',
+    condition: { kind: 'level', level: 1 },
+  },
   {
     id: 'confirmed-3',
     name: 'Three confirmed',
     symbol: '1',
+    family: 'f',
     condition: { kind: 'confirmedEntries', entries: 3 },
   },
   // An Edition's own Badge from a parameterised kind.
@@ -52,6 +73,7 @@ const badges: readonly Badge[] = [
     id: 'clean',
     name: 'Clean language',
     symbol: '1',
+    family: 'f',
     condition: { kind: 'rightAnswers', modes: ['correction', 'anglicism'], count: 3 },
   },
 ];

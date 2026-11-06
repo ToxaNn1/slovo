@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { FontSizeSchema, ThemeSchema } from '../edition';
 import { TextSchema } from '../shared';
-import { pluralOf, templateOf } from './shared';
+import { PluralSchema, pluralOf, templateOf } from './shared';
 
 export const SettingsStringsSchema = z.strictObject({
   /** The Settings screen title. */
@@ -99,6 +99,35 @@ export const SettingsStringsSchema = z.strictObject({
       rightAnswers: pluralOf('current'),
       level: pluralOf('current'),
     }),
+    /** The ink tag on an earned Badge the reader has not opened yet, e.g. «НОВА» (ADR 0085). */
+    newTag: TextSchema,
+    /**
+     * Each Badge's condition under its mark on the Badges screen, by the kind
+     * of its condition (ADR 0085). `{modes}` is the names of its Game Modes,
+     * joined by the list's commas.
+     */
+    conditions: z.strictObject({
+      streak: PluralSchema,
+      confirmedEntries: PluralSchema,
+      gameWin: templateOf('modes'),
+      dailyCrosswordRun: PluralSchema,
+      rightAnswers: pluralOf('modes'),
+      rightOnRarity: templateOf('rarity'),
+      level: templateOf('level'),
+      flawlessGame: templateOf('modes'),
+      rightRun: pluralOf('modes'),
+    }),
+    /** The sheet a tap on any Badge opens (p3, p4). */
+    sheet: z.strictObject({
+      /** The kicker over the mark, e.g. «ВІДЗНАКА». */
+      kicker: TextSchema,
+      /** An unearned Badge's line, e.g. «Ще ні · 23 з 30 днів». Takes `{progress}`, one of the `progress` forms. */
+      notYet: templateOf('progress'),
+      /** The button that closes the sheet, e.g. «ГОТОВО». */
+      done: TextSchema,
+    }),
+    /** The toast after a tap on an unearned Badge, e.g. ««Тиждень поспіль» ще не твоя. Поки що.» Takes `{name}`. */
+    lockedToast: templateOf('name'),
   }),
   /** The Profile: the reader's whole progress, with its Badges as the Badges screen words them. */
   profile: z.strictObject({
@@ -123,8 +152,71 @@ export const SettingsStringsSchema = z.strictObject({
     shareLevel: TextSchema,
     /** The text the Level is shared with, e.g. «Мій рівень — 3 · Читач». */
     shareMessage: templateOf('level', 'name'),
+    /** The Level card's title, e.g. «7 · Читач». Takes `{level}` and `{name}`, the Level's Edition name (ADR 0085). */
+    level: templateOf('level', 'name'),
+    /** The Level card's XP into the Level, e.g. «40 / 120 XP». */
+    levelProgress: templateOf('progress', 'toNext'),
+    /** The Level card's XP still to go, e.g. «ще 80 XP до рівня 8». Takes `{left}` and `{next}`, the next Level. */
+    levelLeft: templateOf('left', 'next'),
+    /** The Best Streak beside the Streak, e.g. «найдовша 12 днів». */
+    bestStreak: PluralSchema,
+    /** The Level ladder (10.8): one card per Level name (ADR 0085). */
+    ladder: z.strictObject({
+      /** A name's range of Levels, e.g. «Рівні 15–19». */
+      range: templateOf('from', 'to'),
+      /** The last name's range, which has no top, e.g. «Рівні 25+». */
+      rangeFrom: templateOf('from'),
+      /** A name already passed, e.g. «ПРОЙДЕНО». */
+      passed: TextSchema,
+      /** The current name, e.g. «ЗАРАЗ». */
+      current: TextSchema,
+      /** A name still ahead, e.g. «ПОПЕРЕДУ». */
+      ahead: TextSchema,
+      /** The bar over the cards, e.g. «РІВЕНЬ 7 · ЧИТАЧ». Takes `{level}` and `{name}`. */
+      bar: templateOf('level', 'name'),
+      /** The XP to the next name's first Level, e.g. «ДО ЗНАВЦЯ 340 XP». Takes `{name}` and `{xp}`. */
+      toNext: templateOf('name', 'xp'),
+    }),
+    /** The new Level screen (p6); the Mascot says the Edition's `newLevel` line (ADR 0085). */
+    newLevel: z.strictObject({
+      /** The giant word the number is stamped into, e.g. «РІВЕНЬ». */
+      kicker: TextSchema,
+      /** The line under the number, e.g. «Рівень 8 — Читач». Takes `{level}` and `{name}`. */
+      title: templateOf('level', 'name'),
+      /** The button that closes the screen, e.g. «ГОТОВО». */
+      done: TextSchema,
+    }),
+    /** The Break card while a Break runs (p1, ADR 0085). */
+    breakCard: z.strictObject({
+      /** The kicker, e.g. «ПЕРЕРВА». */
+      kicker: TextSchema,
+      /** The paused Streak, e.g. «Серія 12 на паузі». */
+      paused: templateOf('count'),
+      /** The Break's last day, e.g. «Перерва триває до 12 листопада включно.» */
+      until: templateOf('date'),
+      /** The first day the next Break may start, e.g. «Наступну перерву можна почати з 12 грудня.» */
+      next: templateOf('date'),
+    }),
+    /** The Streak freeze card (p2, ADR 0085). */
+    freezeCard: z.strictObject({
+      title: TextSchema,
+      /** The chip of the freezes held, e.g. «2 У ЗАПАСІ». */
+      held: templateOf('count'),
+      /** What a freeze does. */
+      explanation: TextSchema,
+      /** The Streak tile, e.g. «12 днів поспіль». */
+      streakDays: PluralSchema,
+      /** The days the freezes saved in the current Streak, e.g. «1 день врятовано». */
+      saved: PluralSchema,
+    }),
     /** An earned Badge stamped on red after a tap on its mark. */
     badgeStamp: z.strictObject({
+      /** The giant cream word behind the mark, e.g. «ВІДЗНАКА» (10.7, ADR 0085). */
+      kicker: TextSchema,
+      /** The ribbon of the last frame, e.g. «ТЕПЕР ТВОЯ». */
+      ribbon: TextSchema,
+      /** The button that closes the stamp, e.g. «ГОТОВО». */
+      done: TextSchema,
       /** The cry under the mark, e.g. «Твій!». */
       title: TextSchema,
       /** The button that closes the stamp, e.g. «Забрати». */
