@@ -36,5 +36,6 @@ export type {
   LemmaOutcome,
   ReviewReport,
 } from './review-report';
+export { sourceIdioms, type IdiomSourcingOptions } from './idioms';
 export { sourceWords, type SourcingOptions } from './source-words';
 export type { SumAccess } from './sum';

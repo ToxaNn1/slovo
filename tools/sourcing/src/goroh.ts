@@ -12,7 +12,7 @@ import { matchKey, squeeze, unstressed } from './text';
 
 const SITE = 'https://goroh.pp.ua/';
 
-export type GorohSection = 'Тлумачення' | 'Словозміна' | 'Синонімія' | 'Етимологія';
+export type GorohSection = 'Тлумачення' | 'Словозміна' | 'Синонімія' | 'Етимологія' | 'Фразеологія';
 
 /** The readable address of a goroh page, as recorded in sources. */
 export function gorohUrl(section: GorohSection, lemma: string): string {
@@ -101,17 +101,7 @@ export function parseDefinitions(html: string, lemma: string): GorohDefinitions 
             }))
             .filter((definition) => definition.text !== ''),
           examples: senses.flatMap((sense) =>
-            sense.querySelectorAll('.examples li').flatMap((item) => {
-              const text = squeeze(item.querySelector('.example-text')?.text ?? '').replace(
-                EXAMPLE_MARKERS,
-                '',
-              );
-              if (text === '') return [];
-              const citation = squeeze(item.querySelector('.example-source')?.text ?? '')
-                .replace(/^\(/, '')
-                .replace(/\)$/, '');
-              return [citation === '' ? { text } : { text, citation }];
-            }),
+            sense.querySelectorAll('.examples li').flatMap(exampleIn),
           ),
           unmarkedExamples: false,
           source: { title: dictionary, url: gorohUrl('Тлумачення', lemma) },
@@ -123,6 +113,90 @@ export function parseDefinitions(html: string, lemma: string): GorohDefinitions 
     matching.length > 1 ? { ...article, homonymNumber: index + 1 } : article,
   );
   return { articles, leftOut };
+}
+
+/** One phraseologism of a «Фразеологія» page. */
+export interface GorohPhraseologism {
+  /** The expression as printed, with Stress marks. */
+  readonly expression: string;
+  /** Whether goroh marks it as a proper name: a place name or another name. */
+  readonly properName: boolean;
+  /** Its meanings in order. */
+  readonly definitions: readonly string[];
+  readonly examples: readonly { readonly text: string; readonly citation?: string }[];
+  /** The dictionary goroh cites for it; empty when it cites none. */
+  readonly dictionary: string;
+  /**
+   * Whether a language model wrote it: goroh cites the language model for it,
+   * or marks it the way it marks the language model's blocks, with grammar
+   * spelled out in plain words (`чоловічий рід`, `множина`, `фразеологізм`)
+   * where a dictionary prints abbreviations.
+   */
+  readonly languageModel: boolean;
+}
+
+/** The plain-word remarks goroh prints on the blocks a language model wrote. */
+const MODEL_REMARKS = new Set([
+  'чоловічий рід',
+  'жіночий рід',
+  'середній рід',
+  'множина',
+  'фразеологізм',
+]);
+
+/**
+ * Reads the phraseologisms of a «Фразеологія» page. goroh prints a run of
+ * article blocks and then one source note for the run, so each block cites the
+ * first source note after it.
+ */
+export function parsePhraseology(html: string): GorohPhraseologism[] {
+  const phraseologisms: GorohPhraseologism[] = [];
+  let run: (Omit<GorohPhraseologism, 'dictionary' | 'languageModel'> & { modelRemark: boolean })[] =
+    [];
+  const close = (dictionary: string) => {
+    const cited = dictionary.startsWith(LANGUAGE_MODEL);
+    phraseologisms.push(
+      ...run.map(({ modelRemark, ...block }) => ({
+        ...block,
+        dictionary,
+        languageModel: cited || modelRemark,
+      })),
+    );
+    run = [];
+  };
+  for (const element of parse(html).querySelectorAll('div.article-block, div.source-info')) {
+    if (element.classList.contains('source-info')) {
+      close(squeeze(element.text));
+      continue;
+    }
+    const senses = element.querySelectorAll('.interpret.list-item');
+    const remarks = (element.querySelector('h2 .block-remark')?.text ?? '').split(',').map(squeeze);
+    run.push({
+      expression: squeeze(element.querySelector('h2 > span')?.text ?? ''),
+      properName: remarks.includes('власна назва'),
+      modelRemark: remarks.some((remark) => MODEL_REMARKS.has(remark)),
+      definitions: senses
+        .map((sense) => squeeze(sense.querySelector('.interpret-formula')?.text ?? ''))
+        .filter((text) => text !== ''),
+      examples: senses.flatMap((sense) =>
+        sense.querySelectorAll('.examples li').flatMap(exampleIn),
+      ),
+    });
+  }
+  close('');
+  return phraseologisms.filter(({ expression }) => expression !== '');
+}
+
+function exampleIn(item: HTMLElement): { text: string; citation?: string }[] {
+  const text = squeeze(item.querySelector('.example-text')?.text ?? '').replace(
+    EXAMPLE_MARKERS,
+    '',
+  );
+  if (text === '') return [];
+  const citation = squeeze(item.querySelector('.example-source')?.text ?? '')
+    .replace(/^\(/, '')
+    .replace(/\)$/, '');
+  return [citation === '' ? { text } : { text, citation }];
 }
 
 /**
