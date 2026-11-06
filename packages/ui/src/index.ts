@@ -137,6 +137,7 @@ export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
 export { RailScreenHero, type HeroAction } from './dashboard/RailScreenHero';
 export { CategoriesRail } from './categories/CategoriesRail';
 export { CategoryGrid, type GridColumns, type GridTile } from './categories/CategoryGrid';
+export { CorrectionCategoryGrid } from './categories/CorrectionCategoryGrid';
 export {
   CategoryTile,
   toneByPosition,
@@ -154,6 +155,7 @@ export { systemSchedule } from './providers/system-schedule';
 export {
   cardSpace,
   categoryGrid,
+  correctionGrid,
   categoryTile,
   collectionCard,
   coreTokens,

@@ -29,6 +29,8 @@ export interface DashboardScreen {
   readonly openCategories: () => void;
   /** A tile of the Categories rail or of k1: opens its Category's screen. */
   readonly openCategory: (categoryId: string) => void;
+  /** The Correction Types rail's header: opens the grid of the Categories of Corrections, k2. */
+  readonly openCorrectionCategories: () => void;
 }
 
 const previousWordsTitle = editionStrings.dashboard.previousWords.title;
@@ -71,6 +73,9 @@ export function useDashboardScreen(): DashboardScreen {
     },
     openCategory: (categoryId) => {
       openScreen(`/category/${categoryId}`);
+    },
+    openCorrectionCategories: () => {
+      openScreen('/correction-categories');
     },
   };
 }

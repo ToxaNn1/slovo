@@ -55,6 +55,7 @@ function DashboardBlocks() {
     openCuratedCollection,
     openCategories,
     openCategory,
+    openCorrectionCategories,
   } = useDashboardScreen();
   const { colors } = useTokens();
   return (
@@ -90,7 +91,17 @@ function DashboardBlocks() {
       case 'previousWords':
         return <PreviousWords block={block} onOpen={openPreviousWord} />;
       case 'correctionTypes':
-        return <CorrectionTypesRail tiles={block.tiles} onOpen={openCorrectionType} />;
+        return (
+          <CorrectionTypesRail
+            tiles={block.tiles}
+            categories={
+              block.categories.length > 0
+                ? { count: block.categories.length, onOpenAll: openCorrectionCategories }
+                : undefined
+            }
+            onOpen={openCorrectionType}
+          />
+        );
       case 'categories':
         return (
           <CategoriesRail
