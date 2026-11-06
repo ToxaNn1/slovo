@@ -2,19 +2,13 @@ import type { AskableEntry, EligibleOfKind } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { Random } from '../ports';
 import type { History } from '../saved/history';
+import { entriesIn, roundsIn, wellFormed } from './answer-forms';
 import {
-  entriesIn,
-  ROUND_OPTIONS,
-  roundsIn,
   type GameEdition,
   type GameMode,
   type GameModeRefusal,
   type RoundContent,
 } from './game-mode';
-import { chipsForm } from './chips-form';
-import { pickForm } from './pick-form';
-import { typedForm } from './typed-form';
-import { vowelForm } from './vowel-form';
 import { shuffled } from '../shuffled';
 
 /** How many Rounds a Game has, in a Game Mode that sets no Round limit of its own. */
@@ -88,30 +82,6 @@ function inTurns(answers: readonly AskableEntry[]): AskableEntry[] {
     }
   }
   return turns;
-}
-
-/** Whether the Round as a Game Mode built it has exactly one right answer in its form. */
-function wellFormed(round: RoundContent): boolean {
-  switch (round.form) {
-    case 'pick':
-      return pickForm.wellFormed(round);
-    case 'vowel':
-      return vowelForm.wellFormed(round);
-    case 'pairs': {
-      const places = round.pairs.map((_, place) => place).sort();
-      const sorted = (order: readonly number[]) => [...order].sort();
-      return (
-        round.pairs.length > 0 &&
-        round.pairs.length <= ROUND_OPTIONS &&
-        sorted(round.wordOrder).join() === places.join() &&
-        sorted(round.definitionOrder).join() === places.join()
-      );
-    }
-    case 'chips':
-      return chipsForm.wellFormed(round);
-    case 'typed':
-      return typedForm.wellFormed(round);
-  }
 }
 
 /** A Round as a Game Mode built it, checked to have exactly one right answer in its form and no more than `upTo` Rounds. */
