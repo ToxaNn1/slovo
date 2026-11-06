@@ -150,3 +150,12 @@ export const newLevelStamp = {
   framePadding: { vertical: 4, horizontal: 22 },
   titleTop: 30,
 } as const;
+
+/** The Profile's Level ladder, from board 10.8: a card per Level name in two columns, and the bar to the next name. */
+export const levelLadder = {
+  gap: 10,
+  card: { padding: 14, radius: 16, border: 2, gap: 4 },
+  /** The wedge mark in a card's top right corner, one of the Collection marks in turn. */
+  mark: { side: 26, top: 12, right: 12 },
+  bar: { padding: 16, radius: 16, gap: 4 },
+} as const;

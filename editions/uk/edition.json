@@ -85,7 +85,7 @@
     "lockScreenWidget": true,
     "questionnaire": true,
     "badges": true,
-    "levelLadder": false,
+    "levelLadder": true,
     "newLevelScreen": false,
     "badgeSheet": false,
     "badgeToast": false,
