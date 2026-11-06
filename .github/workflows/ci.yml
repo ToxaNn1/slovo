@@ -116,6 +116,15 @@ jobs:
             cat "$RUNNER_TEMP/content-report.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+      # The sourcing cache, so that a re-run or a later pull request verifies
+      # a page it fetched before without asking goroh again.
+      - name: Restore the sourcing cache
+        if: ${{ github.event_name == 'pull_request' }}
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/slovo-sourcing
+          key: sourcing-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: sourcing-
       # Every Entry a pull request adds or changes must quote the page its
       # first source cites (ADR 0012, 0080); content verify fetches the pages.
       - name: Verify the quotes of the Entries the pull request changes
