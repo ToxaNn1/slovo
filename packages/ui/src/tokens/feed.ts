@@ -180,10 +180,12 @@ export const previousWordRow = {
  * A tile of the Categories rail (Curated Collections): its box, corner
  * radius and padding, the gap between tiles, the two shapes of its
  * pictogram (a big one at the top right, a small one under it), the gap
- * over its count and its count's opacity. A shape is a polygon or a
+ * over its count and its count's opacity, and the opacity of a quiet
+ * tile's big shape on the rail (ADR 0081). A shape is a polygon or a
  * `circle`; the tiles take the shapes in turn.
  */
 export const categoryTile = {
+  quietShapeAlpha: 0.16,
   width: 124,
   height: 156,
   radius: 18,

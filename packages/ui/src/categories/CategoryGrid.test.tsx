@@ -148,6 +148,40 @@ describe('CategoryGrid', () => {
   });
 });
 
+describe('CategoryGrid with a quiet Category', () => {
+  const nameColor = (id: string) =>
+    (StyleSheet.flatten(screen.getByTestId(`grid-${id}-name`).props['style']) as { color?: string })
+      .color;
+
+  it.each(['light', 'dark'] as const)(
+    'mutes the quiet tile in the %s theme: the sunken ground, the name in muted ink',
+    async (scheme) => {
+      await render(
+        <TokensProvider tokens={editionTokens} colorScheme={scheme}>
+          <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+            <CategoryGrid
+              testID="grid"
+              title="Categories"
+              count="4"
+              tiles={tiles}
+              columns={3}
+              box={box}
+              shapes={categoryGrid.shapes}
+              toneAt={(index) => (index === 3 ? 'quietGrid' : 'red')}
+              onOpen={() => undefined}
+            />
+          </EditionProvider>
+        </TokensProvider>,
+      );
+
+      const colors = editionTokens.colors[scheme];
+      expect(groundOf('war')).toBe(colors.surfaceSunken);
+      expect(nameColor('war')).toBe(colors.muted);
+      expect(groundOf('nature')).toBe(colors.accent);
+    },
+  );
+});
+
 describe('CategoryGrid with a header, an empty state and its own tile labels', () => {
   async function renderWith(gridTiles: readonly GridTile[]) {
     await render(
