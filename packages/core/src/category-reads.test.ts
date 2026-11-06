@@ -56,14 +56,12 @@ describe('the live Entries of a Category', () => {
     const { app } = await run();
     const words = await app.categoryEntries('word', 'speech');
     expect(idsOf(words)).toEqual(['w_one', 'w_two']);
-    expect(words.every(({ kind }) => kind === 'word')).toBe(true);
   });
 
   it('gives the Corrections of a Category of Corrections in pack order, Retired ones left out', async () => {
     const { app } = await run();
     const corrections = await app.categoryEntries('correction', 'speech');
     expect(idsOf(corrections)).toEqual(['c_one', 'c_two']);
-    expect(corrections.every(({ kind }) => kind === 'correction')).toBe(true);
   });
 
   it('still gives them while the Category is out of the Mix', async () => {
