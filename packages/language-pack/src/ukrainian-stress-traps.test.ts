@@ -5,7 +5,12 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Correction } from '@slovo/contracts';
-import { buildCorrectionCard, createEntries, type CorrectionCardModel } from '@slovo/core';
+import {
+  buildCorrectionCard,
+  createEntries,
+  EVERYTHING_IN,
+  type CorrectionCardModel,
+} from '@slovo/core';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainianFolder } from './test-support';
@@ -31,7 +36,11 @@ beforeAll(async () => {
     (entry): entry is Correction => entry.kind === 'correction',
   );
   stressTraps = corrections.filter((correction) => correction.correctionType === 'wrongStress');
-  const entries = createEntries({ content: pack, edition: { isFeatureEnabled: () => true } });
+  const entries = createEntries({
+    content: pack,
+    edition: { isFeatureEnabled: () => true },
+    choices: EVERYTHING_IN,
+  });
   cardOf = (correction) => buildCorrectionCard({ correction, entries });
 });
 

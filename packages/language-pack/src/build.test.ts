@@ -16,7 +16,13 @@ import { crc32, deflateSync } from 'node:zlib';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CorrectionSchema, WordSchema } from '@slovo/contracts';
-import { buildEntryCard, buildWordCard, createEntries, type Entries } from '@slovo/core';
+import {
+  buildEntryCard,
+  buildWordCard,
+  createEntries,
+  EVERYTHING_IN,
+  type Entries,
+} from '@slovo/core';
 
 import {
   buildLanguagePack,
@@ -80,7 +86,13 @@ async function readBack(outFile: string) {
 async function withEntries<T>(outFile: string, use: (entries: Entries) => Promise<T>): Promise<T> {
   const pack = openLanguagePack(outFile);
   try {
-    return await use(createEntries({ content: pack, edition: { isFeatureEnabled: () => true } }));
+    return await use(
+      createEntries({
+        content: pack,
+        edition: { isFeatureEnabled: () => true },
+        choices: EVERYTHING_IN,
+      }),
+    );
   } finally {
     pack.close();
   }
