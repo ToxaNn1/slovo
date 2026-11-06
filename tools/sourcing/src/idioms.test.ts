@@ -13,6 +13,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import { sourceIdioms, type Fetch, type IdiomSourcingOptions, type SourcingResult } from './index';
+import { seededRandom } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
 const ukrainian = openEdition(EDITIONS_DIR, 'uk');
@@ -52,14 +53,6 @@ function fakeClock() {
       time += ms;
       return Promise.resolve();
     },
-  };
-}
-
-function seededRandom(seed = 7) {
-  let state = seed;
-  return () => {
-    state = (state * 1_103_515_245 + 12_345) % 2_147_483_648;
-    return state / 2_147_483_648;
   };
 }
 

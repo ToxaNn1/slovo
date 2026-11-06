@@ -13,6 +13,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import { sourceCorrections, type CorrectionSourcingOptions, type Fetch } from './index';
+import { seededRandom } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
 const ukrainian = openEdition(EDITIONS_DIR, 'uk');
@@ -85,7 +86,7 @@ function setup(list: string, edition = editionWith()) {
     cacheDir: join(workDir, 'cache'),
     fetch: net.fetch,
     clock: fakeClock(),
-    random: Math.random,
+    random: seededRandom(),
   };
   return { options, net };
 }
@@ -113,7 +114,7 @@ describe('sourceCorrections', () => {
     expect(others).toEqual([]);
     const correction = CorrectionSchema.parse(draft);
     expect(correction).toMatchObject({
-      id: expect.stringMatching(/^c_[a-z0-9]{6}$/) as string,
+      id: 'c_vkt9yt',
       nonStandardForm: 'співставляти',
       correctionType: 'calque',
       categoryId: 'school',

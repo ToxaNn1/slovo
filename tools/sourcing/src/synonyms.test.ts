@@ -13,6 +13,7 @@ import {
 import { describe, expect, it } from 'vitest';
 
 import { sourceSynonyms, type Fetch, type LemmaOutcome, type SourcingResult } from './index';
+import { seededRandom } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
 const ukrainianConfigFile = openEdition(EDITIONS_DIR, 'uk').path('config');
@@ -96,7 +97,7 @@ async function run(list: string, edition = editionWith()) {
     cacheDir: join(workDir, 'cache'),
     fetch: fakeFetch(requests),
     clock: fakeClock(),
-    random: Math.random,
+    random: seededRandom(),
   });
   return { result, requests, edition, dir: join(outDir, 'synonyms') };
 }
@@ -117,7 +118,7 @@ describe('sourceSynonyms', () => {
     const [lemma] = lemmasOf(result);
     expect(lemma?.lemma).toBe('мжичка:1');
     const [draft] = lemma?.drafts ?? [];
-    expect(draft).toMatchObject({ ready: true, issues: [], flags: [] });
+    expect(draft).toMatchObject({ id: 'r_vkt9yt', ready: true, issues: [], flags: [] });
     const row = readDraft(dir, draft?.file ?? '');
     expect(row).toEqual({
       id: draft?.id,

@@ -27,6 +27,7 @@ import {
   type SourcingOptions,
   type SourcingResult,
 } from './index';
+import { seededRandom } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
 const ukrainianConfigFile = openEdition(EDITIONS_DIR, 'uk').path('config');
@@ -179,15 +180,6 @@ function fakeClock() {
         timers.push({ at: time + ms, order: (order += 1), wake });
         setImmediate(fireEarliest);
       }),
-  };
-}
-
-/** A repeatable stand-in for Math.random. */
-function seededRandom(seed = 7) {
-  let state = seed;
-  return () => {
-    state = (state * 1_103_515_245 + 12_345) % 2_147_483_648;
-    return state / 2_147_483_648;
   };
 }
 
