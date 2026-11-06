@@ -14,7 +14,7 @@ import SavedLayout from '../app/saved/_layout';
 import CollectionScreen from '../app/saved/collections/[collectionId]';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 
 const { config } = activeEditionFiles;
@@ -86,7 +86,9 @@ async function renderApp(url: string) {
       _layout: () => (
         <GestureHandlerRootView>
           <SafeAreaProvider initialMetrics={metrics}>
-            <ShellProvider shell={testShell({ composition: opened(composition) })}>
+            <ShellProvider
+              shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}
+            >
               <EditionProvider edition={edition} strings={editionStrings}>
                 <Tabs screenOptions={{ headerShown: false }} />
               </EditionProvider>
