@@ -45,6 +45,7 @@ const everything: Shown = {
   search: true,
   fastReveal: true,
   dashboard: true,
+  dashboardWordmark: true,
   mood: true,
   curatedCollections: true,
   swipeMarks: true,
@@ -83,7 +84,14 @@ describe('what the reader is shown', () => {
       'the Word of the Day Lemma in the Word font with the calligraphic Lemma off',
       { off: ['calligraphy'], shown: { calligraphicLemma: false } },
     ],
-    ['no Search button with Search off', { off: ['search'], shown: { search: false } }],
+    [
+      'a plain wordmark with the Dashboard wordmark off',
+      { off: ['dashboardWordmark'], shown: { dashboardWordmark: false } },
+    ],
+    [
+      'no Search button with the Search button off',
+      { off: ['searchButton'], shown: { search: false } },
+    ],
     [
       'the full reveal on every Feed card with the fast reveal off',
       { off: ['fastReveal'], shown: { fastReveal: false } },

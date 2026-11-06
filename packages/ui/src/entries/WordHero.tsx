@@ -1,4 +1,5 @@
 import { withoutStress, type LocalDate, type WordCardModel } from '@slovo/core';
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../primitives/Button';
@@ -9,6 +10,7 @@ import { SchemeTokens, useSchemeColors, useTokens } from '../providers/TokensPro
 import { typeStyle, wordHero } from '../tokens';
 import { AccentGround } from './AccentGround';
 import { CategoryChip } from './CategoryChip';
+import { KickerRow } from './KickerRow';
 import { OnAccentProvider } from './on-accent';
 import { RevealDetail } from './reveal';
 import { WordHeadline, WordSections } from './WordCard';
@@ -40,6 +42,7 @@ export function WordHero({
   onOpenCorrection,
   onOpenSynonymRow,
   onHistoryShown,
+  corner,
 }: {
   card: WordCardModel;
   day: LocalDate;
@@ -52,6 +55,8 @@ export function WordHero({
   onOpenCorrection: ((correctionId: string) => void) | undefined;
   onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
   onHistoryShown: (() => void) | undefined;
+  /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
+  corner: ReactNode | undefined;
 }) {
   const tokens = useTokens();
   const key = useSchemeColors('light');
@@ -74,7 +79,9 @@ export function WordHero({
       letterAt={concealed ? wordHero.letter.closed : wordHero.letter.open}
       style={styles.hero}
     >
-      <WordOfTheDayBadge day={day} />
+      <KickerRow testID="word-kicker-row" corner={corner}>
+        <WordOfTheDayBadge day={day} />
+      </KickerRow>
       {concealed ? (
         <>
           <RevealDetail step={0}>

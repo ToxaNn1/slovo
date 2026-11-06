@@ -145,6 +145,10 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   curatedCollections: ['dashboard'],
   // A swipe sets a Knowledge Mark.
   swipeMarks: ['knowledge'],
+  // The Feed header's Search button opens the Search screen.
+  searchButton: ['search'],
+  // The wordmark leads to the Dashboard (ADR 0079).
+  dashboardWordmark: ['dashboard'],
   notificationTimeStep: ['notifications'],
 };
 

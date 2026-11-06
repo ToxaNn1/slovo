@@ -27,7 +27,7 @@ const SwipeStringsSchema = z.strictObject({
   toasts: ByMarkSchema,
   /** The toast's undo button. */
   undo: TextSchema,
-  /** The chip that points to the next Entry after a mark. */
+  /** The chip that points to the next Entry after a mark; hidden: not on board 04, owner 05.11. */
   next: TextSchema,
   /** The «⋯» sheet of an Entry card. */
   menu: z.strictObject({

@@ -498,3 +498,92 @@ export const correctionTile = {
     ],
   ],
 } as const satisfies { glyphs: readonly Shape[] } & Record<string, unknown>;
+
+/**
+ * The screen a rail's tile opens, a Correction Type's or a Curated
+ * Collection's (board `SlovoApp`, «fix» and «cat»): the red halftone hero,
+ * its height under the board's status bar and its bottom cut, the back tile,
+ * the add button, the icon tile with its glyph, the column of kicker, title
+ * and description, the progress label and skewed bar, the Mascot, and the
+ * cards under it with their chip, struck form, button and revealed block.
+ */
+export const railScreen = {
+  /** The board's status bar: the hero's places are measured from the screen's top. */
+  statusBar: 54,
+  height: 392,
+  /** The hero's bottom: the left corner at the bottom, the right one at 88%. */
+  cut: [
+    [0, 0],
+    [1, 0],
+    [1, 0.88],
+    [0, 1],
+  ],
+  back: { left: 12, top: 54, side: 44, radius: 14, icon: 18 },
+  add: {
+    right: 12,
+    top: 54,
+    height: 44,
+    paddingHorizontal: 16,
+    radius: 14,
+    gap: 8,
+    icon: 14,
+    edge: 3,
+    edgeAlpha: 0.35,
+  },
+  /** The add button's plus and the tick it turns into, in a 26 × 22 box. */
+  addIcons: {
+    plus: [
+      [11 / 26, 0],
+      [15 / 26, 0],
+      [15 / 26, 9 / 22],
+      [1, 9 / 22],
+      [1, 13 / 22],
+      [15 / 26, 13 / 22],
+      [15 / 26, 1],
+      [11 / 26, 1],
+      [11 / 26, 13 / 22],
+      [0, 13 / 22],
+      [0, 9 / 22],
+      [11 / 26, 9 / 22],
+    ],
+    tick: [
+      [0, 12 / 22],
+      [4 / 26, 8 / 22],
+      [10 / 26, 14 / 22],
+      [22 / 26, 0],
+      [1, 4 / 22],
+      [10 / 26, 1],
+    ],
+  },
+  column: { left: 22, top: 116, right: 22, gap: 12, kickerGap: 10, descriptionWidth: 220 },
+  icon: { side: 34, radius: 10, glyph: 18 },
+  progress: { left: 22, top: 292, width: 170, gap: 8, bar: 8, skew: '-20deg', empty: 0.2 },
+  /**
+   * The room under the progress bar to the hero's bottom: 392 − (292 + 11 + 8 + 8).
+   * A title or description longer than the board's pushes the bar and the
+   * hero's bottom down by as much, so they flow instead of overlapping.
+   */
+  bottom: 73,
+  mascot: { right: 20, top: 238, width: 124 },
+  list: { top: 4, side: 16, gap: 12, wordGap: 10, bottom: 40 },
+  card: { radius: 18, padding: 16, gap: 12, wordGap: 8, edge: 4, labelGap: 6 },
+  chip: { paddingHorizontal: 9, paddingVertical: 5, radius: 8 },
+  strike: { thickness: 3, at: 0.55 },
+  button: { height: 52, radius: 14, paddingHorizontal: 18 },
+  /** The revealed block: red, its top falling 8 points to the left, a little wider than the card. */
+  revealed: {
+    padding: 14,
+    paddingTop: 20,
+    gap: 8,
+    overhang: 4,
+    slant: 8,
+    /** The slanted top strip: its left end `slant` lower than its right. */
+    topCut: [
+      [0, 1],
+      [1, 0],
+      [1, 1],
+    ],
+  },
+  known: { paddingHorizontal: 8, paddingVertical: 5, turn: '-3deg' },
+  bars: { width: 9, height: 8, gap: 2, skew: '-20deg' },
+} as const;

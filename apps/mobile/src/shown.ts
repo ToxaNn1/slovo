@@ -102,6 +102,8 @@ export interface Shown {
   readonly fastReveal: boolean;
   /** Whether the home is the Dashboard, which opens the Feed; else the Feed is the home (ADR 0076). */
   readonly dashboard: boolean;
+  /** The Feed header's wordmark opens the Dashboard (ADR 0079). */
+  readonly dashboardWordmark: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;
   /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
@@ -178,9 +180,10 @@ export function shownOf({
     quickQuestion: on('quickQuestion'),
     sync: on('sync'),
     dailyGoal: on('dailyGoal'),
-    search: on('search'),
+    search: on('searchButton'),
     fastReveal: on('fastReveal'),
     dashboard: on('dashboard'),
+    dashboardWordmark: on('dashboardWordmark'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
     swipeMarks: on('swipeMarks'),

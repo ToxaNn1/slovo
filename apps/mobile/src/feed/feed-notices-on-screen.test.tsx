@@ -126,6 +126,9 @@ async function open(
   userState = await seedUserState(
     {
       ...facts,
+      // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
+      // the sheet is open, which settling every timer would never finish. It has its own test.
+      gesturesHintShown: true,
       xpLog: Object.fromEntries(earned.map((record, index) => [`seeded-${String(index)}`, record])),
     },
     { clock },

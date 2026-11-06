@@ -204,8 +204,8 @@ describe('the Entry screen and the side swipes (ADR 0077)', () => {
       fireGestureHandler(getByGestureTestId('entry-card-side-swipe'), [
         { state: State.BEGAN, translationX: 0 },
         { state: State.ACTIVE, translationX: 8 },
-        { state: State.ACTIVE, translationX: 120 },
-        { state: State.END, translationX: 120 },
+        { state: State.ACTIVE, translationX: 200 },
+        { state: State.END, translationX: 200 },
       ]);
       await Promise.resolve();
     });

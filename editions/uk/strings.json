@@ -1141,6 +1141,7 @@
   },
   "dashboard": {
     "toCard": "До картки →",
+    "open": "SLOVO, на головну",
     "kicker": "Слово дня · {day}.{month}",
     "subtitle": "Рідкісне. Свіже. Твоє на 24 години.",
     "wordLine": "{stress} · {partOfSpeech}",
@@ -1160,7 +1161,10 @@
     "curatedCollection": {
       "known": "Знаю {x} з {n}",
       "add": "+ Додати",
-      "added": "Додано ✓"
+      "added": "Додано ✓",
+      "kicker": "КАТЕГОРІЯ · {count}",
+      "addButton": "Додати",
+      "addedButton": "У міксі"
     },
     "previousWords": {
       "title": "Попередні слова",
@@ -1178,6 +1182,22 @@
         "anglicism": "Англіцизми",
         "wrongStress": "Наголоси",
         "paronym": "Пароніми"
+      },
+      "kicker": "ВИПРАВЛЕННЯ · {count}",
+      "examples": {
+        "one": "{count} приклад",
+        "few": "{count} приклади",
+        "many": "{count} прикладів",
+        "other": "{count} приклади"
+      },
+      "descriptions": {
+        "russianism": "Слова, що зайшли з російської й пустили коріння.",
+        "calque": "Дослівні переклади, що звучать не по-нашому.",
+        "surzhyk": "Слова, що прослизають у мову непомітно.",
+        "officialese": "Коли людина пише, як довідка з ЖЕКу.",
+        "anglicism": "Англійські слова там, де є свої.",
+        "wrongStress": "Де ставити наголос, щоб не різало вухо.",
+        "paronym": "Схожі слова з різним змістом."
       }
     }
   },

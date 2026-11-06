@@ -142,6 +142,8 @@ interface PagerContextValue {
   readonly turnedTo: SharedValue<number>;
   /** The page the screen last came to rest on, alone on screen, on the UI thread. */
   readonly settled: SharedValue<number>;
+  /** Turns to a page as `turnTo` does; the same function for the pager's whole life. */
+  readonly turnTo: (index: number) => void;
 }
 
 /** The props that give an accessible element the page-turn actions. */
@@ -165,6 +167,8 @@ const PageOnScreenContext = createContext(true);
 const PageTurnActionsContext = createContext<TurnActions | undefined>(undefined);
 /** Turns the pager to the page after the current one; none on another page or the last. */
 const TurnToNextPageContext = createContext<(() => void) | undefined>(undefined);
+/** `TurnToNextPageContext`'s turn as a worklet, which starts on the UI thread at once. */
+const TurnToNextPageOnUIContext = createContext<(() => void) | undefined>(undefined);
 
 /**
  * Full-screen pages stacked vertically: swipe up for the next page, down for
@@ -265,6 +269,16 @@ export function VerticalPager<Item>({
 
   useImperativeHandle(ref, () => ({ turnTo, showPage }));
 
+  // The pages turn back to themselves through one lasting function, so a turn
+  // re-renders no page that reads it.
+  const latestTurnTo = useRef(turnTo);
+  useEffect(() => {
+    latestTurnTo.current = turnTo;
+  }, [turnTo]);
+  const turnToLasting = useCallback((target: number) => {
+    latestTurnTo.current(target);
+  }, []);
+
   // The current page and those after it left, and the owner showed none
   // in its place: the last page left is shown, rather than none.
   useEffect(() => {
@@ -300,9 +314,20 @@ export function VerticalPager<Item>({
         : undefined,
     [index, items.length, turnTo],
   );
+  const turnToNextOnUI = useMemo(() => {
+    if (index >= items.length - 1) return undefined;
+    const target = index + 1;
+    return () => {
+      'worklet';
+      if (turnedTo.value === target) return;
+      turnedTo.value = target;
+      position.value = withTiming(target, motion);
+      scheduleOnRN(turn, target);
+    };
+  }, [index, items.length, motion, position, turn, turnedTo]);
   const pager = useMemo(
-    () => ({ panRef, scrolls, turning, turnedTo, settled }),
-    [scrolls, turning, turnedTo, settled],
+    () => ({ panRef, scrolls, turning, turnedTo, settled, turnTo: turnToLasting }),
+    [scrolls, turning, turnedTo, settled, turnToLasting],
   );
 
   // Gesture Handler asks for a memoised gesture: a new one on each render
@@ -404,6 +429,7 @@ export function VerticalPager<Item>({
                   onScreen={first + offset === index || first + offset === rested}
                   turnActions={first + offset === index ? turnActions : undefined}
                   turnToNext={first + offset === index ? turnToNext : undefined}
+                  turnToNextOnUI={first + offset === index ? turnToNextOnUI : undefined}
                   position={position}
                   height={height}
                   crossFade={reduceMotion}
@@ -424,6 +450,7 @@ function Page({
   onScreen,
   turnActions,
   turnToNext,
+  turnToNextOnUI,
   position,
   height,
   crossFade,
@@ -435,6 +462,7 @@ function Page({
   onScreen: boolean;
   turnActions: TurnActions | undefined;
   turnToNext: (() => void) | undefined;
+  turnToNextOnUI: (() => void) | undefined;
   position: SharedValue<number>;
   height: number;
   /** Reduce Motion: the page stays in place and fades in and out instead of moving. */
@@ -458,7 +486,11 @@ function Page({
       <PageIndexContext value={index}>
         <PageOnScreenContext value={onScreen}>
           <PageTurnActionsContext value={turnActions}>
-            <TurnToNextPageContext value={turnToNext}>{children}</TurnToNextPageContext>
+            <TurnToNextPageContext value={turnToNext}>
+              <TurnToNextPageOnUIContext value={turnToNextOnUI}>
+                {children}
+              </TurnToNextPageOnUIContext>
+            </TurnToNextPageContext>
           </PageTurnActionsContext>
         </PageOnScreenContext>
       </PageIndexContext>
@@ -511,6 +543,34 @@ export function PageActionsProvider({
  */
 export function useTurnToNextPage(): (() => void) | undefined {
   return useContext(TurnToNextPageContext);
+}
+
+/**
+ * `useTurnToNextPage` as a worklet, for a gesture that turns the page on the
+ * UI thread in the same frame as its own motion starts, without waiting for
+ * the JS thread. None outside a pager, on a page that isn't current or on the last page.
+ */
+export function useTurnToNextPageOnUI(): (() => void) | undefined {
+  return useContext(TurnToNextPageOnUIContext);
+}
+
+/**
+ * Turns a `VerticalPager` back to this page in 300 ms, from whichever page is
+ * current, such as an undo that brings back a card the reader left. None
+ * outside a pager.
+ */
+export function useTurnToThisPage(): (() => void) | undefined {
+  const pager = useContext(PagerContext);
+  const page = useContext(PageIndexContext);
+  return useMemo(
+    () =>
+      pager === undefined
+        ? undefined
+        : () => {
+            pager.turnTo(page);
+          },
+    [pager, page],
+  );
 }
 
 /**

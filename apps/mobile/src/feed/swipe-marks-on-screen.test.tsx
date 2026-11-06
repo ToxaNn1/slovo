@@ -200,14 +200,14 @@ async function pass(ms: number, action: () => unknown = () => undefined) {
   });
 }
 
-/** Swipes the current card right, which marks it Known with the side swipes on. */
+/** Swipes the current card right, which marks it Known with the side swipes on. 200 pt is past 40% of the unmeasured 360 pt card. */
 async function swipeRight() {
   await pass(500, () => {
     fireGestureHandler(getByGestureTestId('entry-card-side-swipe'), [
       { state: State.BEGAN, translationX: 0, velocityX: 0 },
       { state: State.ACTIVE, translationX: 8, velocityX: 0 },
-      { state: State.ACTIVE, translationX: 120, velocityX: 0 },
-      { state: State.END, translationX: 120, velocityX: 0 },
+      { state: State.ACTIVE, translationX: 200, velocityX: 0 },
+      { state: State.END, translationX: 200, velocityX: 0 },
     ]);
   });
 }

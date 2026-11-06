@@ -3,6 +3,7 @@ import { DashboardHero, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
+import { typeRoles } from '../tokens';
 
 const strings = testStrings({
   wordOfTheDay: { shout: 'Catch the word!', reveal: 'Reveal' },
@@ -80,5 +81,22 @@ describe('DashboardHero', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'To the card →' }));
 
     expect(onToCard).toHaveBeenCalledTimes(1);
+  });
+  // SLOVO-60: «ВЕРБОЛІЗ» ran past the hero's right edge.
+  it('draws a Lemma wider than the hero smaller, so it fits its line', async () => {
+    await renderHero(revealed);
+    const lemma = screen.getByTestId('dashboard-hero-lemma');
+    const line = lemma.parent;
+    if (line === null) throw new Error('The Lemma has no line around it');
+    await fireEvent(line, 'layout', { nativeEvent: { layout: { width: 151 } } });
+    // The word measured at full size: twice as wide as the line has room for, less a point.
+    const measured = screen
+      .getAllByText('harbour', { includeHiddenElements: true })
+      .find((text) => text !== lemma);
+    if (measured === undefined) throw new Error('The Lemma is not measured');
+    await fireEvent(measured, 'textLayout', { nativeEvent: { lines: [{ width: 300 }] } });
+
+    expect(lemma).toHaveStyle({ fontSize: typeRoles.dashboardLemma.size / 2 });
+    expect(lemma).not.toHaveStyle({ opacity: 0 });
   });
 });

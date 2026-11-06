@@ -132,6 +132,22 @@ export const actionTile = {
 } as const;
 
 /**
+ * The actions in an Entry card's top-right corner (XSwipe bar 6, XActions):
+ * dark tiles `side` square with this `radius`, an `icon` of that side, `gap`
+ * between the tiles and `kickerGap` from the kicker beside them; each stands
+ * on a hard shadow `shadowDepth` below it at `shadowOpacity` of the ink.
+ */
+export const cornerTile = {
+  side: 44,
+  radius: 13,
+  icon: 20,
+  gap: 6,
+  kickerGap: 10,
+  shadowDepth: 4,
+  shadowOpacity: 0.4,
+} as const;
+
+/**
  * A screen's header with a back tile (design `SlovoApp`, Settings): the gap
  * between the back tile and the title, and the room under it.
  */

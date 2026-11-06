@@ -359,6 +359,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   curatedCollections: z.boolean(),
   /** Swipe marks: the reader swipes an Entry card right for Known and left for Unknown, with an undo; off, the card's mark buttons stay. Off while `knowledge` is. */
   swipeMarks: z.boolean(),
+  /** The Search button of the Feed's header, which opens the Search screen; Search itself stays under `search`. Off while `search` is. */
+  searchButton: z.boolean(),
+  /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). Off while `dashboard` is. */
+  dashboardWordmark: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

@@ -8,6 +8,8 @@ import { PluralSchema, templateOf } from './shared';
 export const DashboardStringsSchema = z.strictObject({
   /** The hero's button that opens the Feed on the Word of the Day card, «До картки →». */
   toCard: TextSchema,
+  /** What VoiceOver reads for the Feed header's wordmark, which opens the Dashboard (ADR 0079), «SLOVO, на головну». */
+  open: TextSchema,
   /** The hero's kicker, «Слово дня · {day}.{month}». Takes `{day}` and `{month}`, both numbers. */
   kicker: templateOf('day', 'month'),
   /** The line under the closed hero's shout, «Рідкісне. Свіже. Твоє на 24 години.». */
@@ -40,6 +42,12 @@ export const DashboardStringsSchema = z.strictObject({
     reveal: TextSchema,
     /** Each Correction Type's tile name and screen title, in the plural, «Суржик». */
     tiles: z.record(CorrectionTypeSchema, TextSchema),
+    /** The kicker of a type's screen, «ВИПРАВЛЕННЯ · {count}». Takes `{count}`, the `examples` phrase. */
+    kicker: templateOf('count'),
+    /** How many Corrections a type's screen holds, «{count} приклади». */
+    examples: PluralSchema,
+    /** Each Correction Type's line under its title on its screen, «Слова, що прослизають у мову непомітно.». */
+    descriptions: z.record(CorrectionTypeSchema, TextSchema),
   }),
   /** The title over the Curated Collections rail, «Категорії». */
   curatedCollectionsTitle: TextSchema,
@@ -55,5 +63,11 @@ export const DashboardStringsSchema = z.strictObject({
     add: TextSchema,
     /** What the rail and the screen show once a copy is kept, «Додано ✓». */
     added: TextSchema,
+    /** The kicker of a collection's screen, «КАТЕГОРІЯ · {count}». Takes `{count}`, the `curatedCollectionCount` phrase. */
+    kicker: templateOf('count'),
+    /** The screen's button beside its plus icon, «Додати». */
+    addButton: TextSchema,
+    /** The screen's button beside its tick once a copy is kept, «У міксі» (board «cat»). */
+    addedButton: TextSchema,
   }),
 });

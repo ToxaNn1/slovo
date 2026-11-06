@@ -97,7 +97,12 @@ async function open(calligraphy: boolean) {
           feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
-  userState = await seedUserState({ onboardingFinished: '2026-09-01T09:00:00.000Z' }, { clock });
+  // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
+  // the sheet is open, which settling every timer would never finish. It has its own test.
+  userState = await seedUserState(
+    { onboardingFinished: '2026-09-01T09:00:00.000Z', gesturesHintShown: true },
+    { clock },
+  );
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],

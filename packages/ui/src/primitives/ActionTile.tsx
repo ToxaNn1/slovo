@@ -1,18 +1,18 @@
 import { createContext, useContext, type ReactNode } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { actionTile, typeStyle } from '../tokens';
+import { actionTile, cornerTile, pressedFade, typeStyle } from '../tokens';
 import { PressedTile, type TileTone } from './PressedTile';
 
 /**
  * How an action row draws its actions: raised `tiles` with a label under
- * each icon, under a Word card, or bare `icons`, under a Correction, Idiom,
- * Synonym Row or Tip card.
+ * each icon, under a Word card, bare `icons`, under a Correction, Idiom,
+ * Synonym Row or Tip card, or dark `corner` tiles in the card's corner.
  */
-export type ActionRowLook = 'tiles' | 'icons';
+export type ActionRowLook = 'tiles' | 'icons' | 'corner';
 
 const ActionRowLookContext = createContext<ActionRowLook>('tiles');
 
@@ -100,7 +100,7 @@ export function ActionTile({
   const look = useContext(ActionRowLookContext);
   const tokens = useTokens();
   const { colors } = tokens;
-  const keyInk = useSchemeColors('light').ink;
+  const { ink: keyInk, background: keyBackground } = useSchemeColors('light');
   const { voice } = useEdition();
   const color = { none: colors.ink, favorite: keyInk, filed: colors.background }[mark];
   const common = {
@@ -111,6 +111,29 @@ export function ActionTile({
     accessibilityState: { selected: mark !== 'none' },
     ...voice,
   };
+  if (look === 'corner') {
+    // The board draws the corner's tiles in the key ink with a cream icon on every card, in either Theme.
+    const cream = keyBackground;
+    const iconColor = mark === 'favorite' ? colors.heart : cream;
+    return (
+      <Pressable
+        {...common}
+        accessibilityRole="button"
+        style={({ pressed }) => [
+          styles.corner,
+          { backgroundColor: keyInk, shadowColor: keyInk, opacity: pressed ? pressedFade : 1 },
+        ]}
+      >
+        {icon({
+          size: cornerTile.icon,
+          color: iconColor,
+          filled: mark !== 'none',
+          // A filed bookmark is cream with its check cut in the ink.
+          innerColor: mark === 'filed' ? keyInk : iconColor,
+        })}
+      </Pressable>
+    );
+  }
   if (look === 'icons') {
     const iconColor = mark === 'favorite' ? keyInk : colors.ink;
     return (
@@ -169,6 +192,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  corner: {
+    width: cornerTile.side,
+    height: cornerTile.side,
+    borderRadius: cornerTile.radius,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOffset: { width: 0, height: cornerTile.shadowDepth },
+    shadowOpacity: cornerTile.shadowOpacity,
+    shadowRadius: 0,
   },
   compact: {
     width: actionTile.compact.width,
