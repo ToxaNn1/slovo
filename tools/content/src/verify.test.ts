@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -172,6 +172,28 @@ describe('verify', () => {
     const file = writeEntry(word('w_vrf001', definition, `${GOROH}перевірка001`));
 
     expect(verify(['w_vrf001']).lines).toEqual([`ok\tw_vrf001\t${file}`, '1 ok']);
+  });
+
+  it('picks every Entry of a folder, and no Entry outside it', async () => {
+    const tipsDir = join(editionDir, 'content', 'tips');
+    const tipFiles = readdirSync(tipsDir).filter((name) => name.endsWith('.json'));
+    const pages: Record<string, { body: string }> = {};
+    for (const name of tipFiles) {
+      const tip = JSON.parse(readFileSync(join(tipsDir, name), 'utf8')) as {
+        sources: { url?: string }[];
+      };
+      const url = tip.sources[0]?.url;
+      if (url !== undefined) pages[decodeURI(url)] = { body: '' };
+    }
+    await seed(pages);
+
+    const files = verify([join('content', 'tips')])
+      .lines.slice(0, -1)
+      .map((line) => line.split('\t')[2]);
+
+    expect(files.toSorted()).toEqual(
+      tipFiles.map((name) => join('content', 'tips', name)).toSorted(),
+    );
   });
 
   it('refuses a name that is no Entry of the Edition', () => {
