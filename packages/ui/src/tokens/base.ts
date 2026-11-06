@@ -144,7 +144,7 @@ export const typeRoles = {
   voiceName: role('word', '900', 15, 15),
   /** What a Narrator Voice sounds like, under its name. */
   voiceDescription: role('ui', '500', 12, 12),
-  /** The «ЧИТАЄ · …» and «ОБЕРІТЬ ГОЛОС» labels of the voice screen. */
+  /** The «ЧИТАЄ · …» and «ОБЕРИ ГОЛОС» labels of the voice screen. */
   voiceLabel: role('word', '700', 11, 11, 1.5, 'uppercase'),
   /** A tab's label under its icon. */
   tabLabel: role('ui', '600', 11, 11),
