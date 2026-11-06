@@ -49,7 +49,28 @@ Checks the whole Edition with the build's rules and writes nothing: every proble
 
 ## What the Edition has: `have` and `counts`
 
-<!-- #1625 fills this section. -->
+```sh
+pnpm content have --edition uk
+pnpm content have --edition uk --kind idiom
+pnpm content counts --edition uk
+```
+
+`have` prints every Entry of the Edition to stdout, one line each, tab-separated: its kind (`word`, `correction`, `idiom`, `synonym-row`, `tip`), its Category or type (`-` for a Synonym Row or a Tip), its text with its forms after `->` (a Correction's standard equivalents, a Synonym Row's members, a Tip's forms), and `retired` for a Retired Entry, whose text stays taken. `--kind` keeps one kind. Read it before drafting a batch, so no Entry repeats one the Edition has:
+
+```text
+idiom	proverb	силу той має, хто правду мовляє
+word	technology	заклепка	retired
+```
+
+`counts` prints the Words per Category and rarity, the Corrections per Category, and their totals. Retired Entries are left out, as the content targets count. A cell or a row under a target in `content/targets.json` (read as `check` reads it) shows its gap, so with a floor of 18 Words a Category, `15 (-3)` is three short:
+
+```text
+Words     r1  r2   r3   r4   r5   total
+dialects  0   0    4    6    5    15 (-3)
+total     88  152  174  174  123  711
+```
+
+Neither writes a file; both work for any Edition through `--edition`.
 
 ## Verify quotes: `verify`
 
