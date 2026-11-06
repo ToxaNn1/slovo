@@ -15,7 +15,7 @@ const metrics = {
 function tree(children: ReactNode) {
   return (
     <SafeAreaProvider initialMetrics={metrics}>
-      <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
         {children}
       </EditionProvider>
     </SafeAreaProvider>
@@ -25,10 +25,10 @@ function tree(children: ReactNode) {
 const row: EntryRowModel = {
   kind: 'word',
   entryId: 'w1',
-  title: 'ле́тьмище',
-  secondLine: 'Темрява, морок.',
+  title: 'du\u0301sk',
+  secondLine: 'Darkness, gloom.',
   labelKey: 'word',
-  spoken: 'летьмище. Темрява, морок.',
+  spoken: 'dusk. Darkness, gloom.',
   partOfSpeech: 'noun',
   gender: 'neuter',
   registers: [],
@@ -42,17 +42,17 @@ describe('QuietScreenHero', () => {
       tree(
         <QuietScreenHero
           id="hero"
-          label="Категорія"
-          title="Розстріляна лексика"
-          description="Повертаємо їх тихо."
+          label="Category"
+          title="Silenced words"
+          description="We bring them back quietly."
           back={back}
         />,
       ),
     );
 
-    expect(screen.getByTestId('hero-label')).toHaveTextContent('Категорія');
-    expect(screen.getByRole('header', { name: 'Розстріляна лексика' })).toBeTruthy();
-    expect(screen.getByTestId('hero-description')).toHaveTextContent('Повертаємо їх тихо.');
+    expect(screen.getByTestId('hero-label')).toHaveTextContent('Category');
+    expect(screen.getByRole('header', { name: 'Silenced words' })).toBeTruthy();
+    expect(screen.getByTestId('hero-description')).toHaveTextContent('We bring them back quietly.');
     expect(screen.getByTestId('mascot-hatOff')).toBeTruthy();
     // No right button and no progress: the back button is the hero's only one.
     expect(screen.getAllByRole('button')).toHaveLength(1);
@@ -96,10 +96,10 @@ describe('QuietScreenRow', () => {
   it('shows the word without its Stress and the short Definition, and opens the Entry', async () => {
     const onPress = await renderRow(0);
 
-    expect(screen.getByText('летьмище')).toBeTruthy();
-    expect(screen.getByText('Темрява, морок.')).toBeTruthy();
+    expect(screen.getByText('dusk')).toBeTruthy();
+    expect(screen.getByText('Darkness, gloom.')).toBeTruthy();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'летьмище. Темрява, морок.' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'dusk. Darkness, gloom.' }));
 
     expect(onPress).toHaveBeenCalledTimes(1);
   });
