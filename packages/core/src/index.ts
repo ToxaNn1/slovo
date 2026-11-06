@@ -106,7 +106,7 @@ export {
   type SoundEngine,
 } from './sounds/interface-sounds';
 export { type HiddenEntry } from './mix/hidden-entries';
-export { type HideTarget, type HidingChange } from './mix/hiding';
+export { type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
 export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';
@@ -210,8 +210,14 @@ export {
   kindsShown,
   type CategoriesInMix,
   type CategoryPlace,
+  type EntryToHide,
+  type HideOption,
+  type HideTarget,
+  type MixChip,
+  type MixScreen,
   type MixKindWeights,
   type MixState,
+  type OutOfMix,
 } from './entries/mix';
 export { launchKind, type LaunchKind, type OnboardingStep } from './onboarding/onboarding';
 export type {
