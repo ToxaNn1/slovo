@@ -494,6 +494,12 @@ export const typeRoles = {
   categoryName: role('word', '800', 12, 13.8),
   /** «24 слова» on a tile of the Categories rail. */
   categoryCount: role('ui', '500', 12, 12),
+  /** A grid screen's title, «Категорії» (board 05.2 k1). */
+  gridTitle: role('word', '900', 28, 28, -1),
+  /** The count on a grid screen title's baseline, «16». */
+  gridCount: role('ui', '600', 14, 14),
+  /** A Category's name on its tile of the k1 grid, hyphenated. */
+  gridTileName: role('word', '800', 11, 12.65),
   /** A Correction Type's name on its tile of the Corrections rail. */
   correctionName: role('word', '800', 13, 15),
   /** The kicker beside the icon tile on a rail screen's hero, «ВИПРАВЛЕННЯ · 4 приклади». */
