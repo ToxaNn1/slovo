@@ -16,8 +16,13 @@ import { createMemoryContentPort } from '../testing';
 import { seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
-const test: Category = { id: 'test', displayName: 'Test' };
-const crafts: Category = { id: 'crafts', displayName: 'Crafts' };
+const test: Category = { id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' };
+const crafts: Category = {
+  id: 'crafts',
+  displayName: 'Crafts',
+  description: 'Crafts.',
+  tone: 'loud',
+};
 
 /**
  * The 16 Words that play, one with an apostrophe and one with a hyphen, the

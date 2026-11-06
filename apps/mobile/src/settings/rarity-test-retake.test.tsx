@@ -92,7 +92,7 @@ async function openWith(edition: Edition) {
   editionInEffect = edition;
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words,
     }),
     edition,

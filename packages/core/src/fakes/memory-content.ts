@@ -16,8 +16,8 @@ import type { ContentReadPort } from '../ports';
  * A content read port over Entries held in memory, for tests. It lists them
  * in the order given, and holds to the same contract as the pack reader.
  * Without `categories` it lists the Categories of the Words, in the order
- * they first appear, each named by its id, so every Word has its Category as
- * in a pack. Without `correctionCategories` it lists those of the
+ * they first appear, each named and described by its id and loud, so every
+ * Word has its Category as in a pack. Without `correctionCategories` it lists those of the
  * Corrections the same way.
  */
 export function createMemoryContentPort({
@@ -49,7 +49,12 @@ export function createMemoryContentPort({
   };
   const entries = [...words, ...corrections, ...idioms, ...synonymRows, ...tips];
   const categoriesOf = (entries: readonly (Word | Correction)[]) =>
-    [...new Set(entries.map((entry) => entry.categoryId))].map((id) => ({ id, displayName: id }));
+    [...new Set(entries.map((entry) => entry.categoryId))].map((id): Category => ({
+      id,
+      displayName: id,
+      description: id,
+      tone: 'loud',
+    }));
   const packCategories = categories ?? categoriesOf(words);
   const packCorrectionCategories = correctionCategories ?? categoriesOf(corrections);
   return {

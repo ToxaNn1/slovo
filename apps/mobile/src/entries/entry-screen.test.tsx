@@ -98,7 +98,9 @@ beforeEach(async () => {
   analytics = recordedAnalytics();
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
+      categories: [
+        { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
+      ],
       words: [
         word('w_sumyrnyi', 'сумирний', 'Колись означало лише «покірний».'),
         word('w_lahidnyi', 'лагідний'),
