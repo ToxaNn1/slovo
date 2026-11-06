@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { WordSchema, type Word } from '@slovo/contracts';
+import { CorrectionSchema, WordSchema, type Correction, type Word } from '@slovo/contracts';
 
 import { EditionFolderError, listEditions, openEdition } from './edition-folder';
 
@@ -392,6 +392,45 @@ describe('checkNewWords', () => {
 
     expect(edition.checkNewWords([draft()])).toEqual([]);
   });
+});
+
+describe('checkNewCorrections', () => {
+  const draft = (changes: Json = {}): Correction =>
+    CorrectionSchema.parse({
+      ...(JSON.parse(
+        readFileSync(join(validFixture, 'content/corrections/c_fx0001.json'), 'utf8'),
+      ) as Json),
+      id: 'c_draft1',
+      nonStandardForm: 'тимбільше',
+      standardEquivalents: ['тим паче'],
+      ...changes,
+    });
+
+  it('accepts a draft the build would accept', () => {
+    expect(openEdition(editionsWith(), 'fixture').checkNewCorrections([draft()])).toEqual([]);
+  });
+
+  it.each([
+    ['an unknown Category', { categoryId: 'nowhere' }, 'categoryId', /unknown category.*nowhere/i],
+    [
+      'a Stress mark in a Correction that is not about Stress',
+      { standardEquivalents: ['тим па́че'] },
+      'standardEquivalents.0',
+      /only a wrong-stress Correction/i,
+    ],
+  ])(
+    'reports %s as the build does, in the file it would be authored in',
+    (_name, changes, field, message) => {
+      expect(openEdition(editionsWith(), 'fixture').checkNewCorrections([draft(changes)])).toEqual([
+        {
+          file: 'content/corrections/c_draft1.json',
+          entryId: 'c_draft1',
+          field,
+          message: expect.stringMatching(message) as string,
+        },
+      ]);
+    },
+  );
 });
 
 describe('entryTexts', () => {
