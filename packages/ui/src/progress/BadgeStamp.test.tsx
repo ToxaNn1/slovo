@@ -39,10 +39,12 @@ describe('BadgeStamp', () => {
     },
   );
 
-  it('strikes with an ink burst, and under Reduce Motion only fades in', async () => {
+  it('strikes with an ink burst', async () => {
     await draw(false, () => undefined);
     expect(screen.getByTestId('badge-stamp-burst')).toBeOnTheScreen();
-    screen.unmount();
+  });
+
+  it('under Reduce Motion only fades in, with no burst', async () => {
     await draw(true, () => undefined);
     expect(screen.queryByTestId('badge-stamp-burst')).toBeNull();
   });
@@ -50,8 +52,7 @@ describe('BadgeStamp', () => {
   it('closes on «ГОТОВО», which comes in after the ribbon', async () => {
     const onClose = jest.fn();
     await draw(false, onClose);
-    // Jest runs no frames, and the query reads the button's opacity before them.
-    await fireEvent.press(screen.getByTestId('badge-stamp-done', { includeHiddenElements: true }));
+    await fireEvent.press(screen.getByRole('button', { name: 'DONE' }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
