@@ -106,7 +106,7 @@ export {
   type SoundEngine,
 } from './sounds/interface-sounds';
 export { type HiddenEntry } from './mix/hidden-entries';
-export { type HidingChange } from './mix/hiding';
+export { type HidingChange, type HidingUndo } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
 export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';

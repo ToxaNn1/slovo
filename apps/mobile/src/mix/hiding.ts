@@ -5,10 +5,8 @@ import { useState } from 'react';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { keep } from '../keep';
-import type { Opening } from '../opening';
-import { useShell } from '../shell-value';
+import { useUndo, type Undo } from '../undo';
 import { hideChoice, hideToast, type HideOption } from './hide-choice';
-import { undoHide } from './hiding-undo';
 
 const { hiding: strings } = editionStrings;
 
@@ -38,7 +36,7 @@ export interface HideChoiceProps {
  */
 export function useHide(card: AnyEntryCard): { open: () => void; choice: HideChoiceProps } {
   const composition = useComposition();
-  const compositionOpening = useShell().composition;
+  const undo = useUndo();
   const showToast = useUndoToast();
   const [visible, setVisible] = useState(false);
   const [options, setOptions] = useState<readonly HideOption[]>([]);
@@ -64,10 +62,7 @@ export function useHide(card: AnyEntryCard): { open: () => void; choice: HideCho
         setVisible(false);
         const option = options.find(({ kind }) => kind === key);
         if (option === undefined || (option.kind === 'category' && option.disabledHint)) return;
-        void keep(
-          'the hide from the card',
-          hide(composition, option, showToast, compositionOpening),
-        );
+        void keep('the hide from the card', hide(composition, option, showToast, undo));
       },
       onCancel() {
         setVisible(false);
@@ -81,8 +76,8 @@ async function hide(
   composition: Composition,
   option: HideOption,
   showToast: (toast: UndoToastContent) => void,
-  /** The composition open at the undo tap (ADR 0018). */
-  compositionOpening: Opening<Composition>,
+  /** Runs the undo in the composition open at the tap (ADR 0018). */
+  undo: (subject: string, undo: Undo) => void,
 ): Promise<void> {
   const result = await composition.hide(option.target);
   if (result === undefined) return;
@@ -92,10 +87,7 @@ async function hide(
     message,
     undoLabel: strings.undo,
     onUndo() {
-      void keep(
-        'the undo of the hide',
-        compositionOpening.opened().then((current) => undoHide(current, result.changed)),
-      );
+      undo('the undo of the hide', result.undo);
     },
   });
 }
