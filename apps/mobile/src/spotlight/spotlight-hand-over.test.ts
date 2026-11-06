@@ -1,3 +1,4 @@
+import { type Category } from '@slovo/contracts';
 import { openComposition, SEEN_DWELL_MS, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import type { AppStateStatus } from 'react-native';
@@ -9,7 +10,12 @@ import { fakeClock, strings, ukrainian } from '../test-support';
 import { handOverSpotlight } from './spotlight-hand-over';
 import { createSpotlightIndex, type SpotlightItem } from './spotlight-index';
 
-const nature = { id: 'nature-weather', displayName: 'Природа і погода' };
+const nature: Category = {
+  id: 'nature-weather',
+  displayName: 'Природа і погода',
+  description: 'Природа і погода.',
+  tone: 'loud',
+};
 
 const content = createMemoryContentPort({
   categories: [nature],

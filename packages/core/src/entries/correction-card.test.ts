@@ -31,7 +31,9 @@ const build = (from: Correction) =>
     correction: from,
     entries: createEntries({
       content: createMemoryContentPort({
-        correctionCategories: [{ id: 'everyday', displayName: 'Побут' }],
+        correctionCategories: [
+          { id: 'everyday', displayName: 'Побут', description: 'Побут.', tone: 'loud' },
+        ],
       }),
       edition: { isFeatureEnabled: () => true },
     }),

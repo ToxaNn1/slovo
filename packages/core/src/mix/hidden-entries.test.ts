@@ -149,6 +149,7 @@ describe('Hidden Entries', () => {
       labelKey: 'correction',
       spoken: 'one, not one',
       correctionType: 'calque',
+      standardForms: ['one', 'also one'],
     });
   });
 
@@ -176,6 +177,7 @@ describe('Hidden Entries', () => {
     expect(await app.entryRow('c_one')).toMatchObject({
       kind: 'correction',
       correctionType: 'calque',
+      standardForms: ['one', 'also one'],
     });
   });
 

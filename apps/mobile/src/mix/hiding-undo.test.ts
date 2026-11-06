@@ -1,3 +1,4 @@
+import { type Category } from '@slovo/contracts';
 import { openComposition, type Clock, type Composition, type TrackedUserState } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
@@ -5,8 +6,18 @@ import { describe, expect, it } from 'vitest';
 import { undoHide, undoRestore } from './hiding-undo';
 import { fakeClock, ukrainian } from '../test-support';
 
-const nature = { id: 'nature-weather', displayName: 'Природа і погода' };
-const crafts = { id: 'household-crafts', displayName: 'Побут і ремесла' };
+const nature: Category = {
+  id: 'nature-weather',
+  displayName: 'Природа і погода',
+  description: 'Природа і погода.',
+  tone: 'loud',
+};
+const crafts: Category = {
+  id: 'household-crafts',
+  displayName: 'Побут і ремесла',
+  description: 'Побут і ремесла.',
+  tone: 'loud',
+};
 
 const content = createMemoryContentPort({
   categories: [nature, crafts],

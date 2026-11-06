@@ -49,7 +49,7 @@ export const DashboardStringsSchema = z.strictObject({
     /** Each Correction Type's line under its title on its screen, «Слова, що прослизають у мову непомітно.». */
     descriptions: z.record(CorrectionTypeSchema, TextSchema),
   }),
-  /** The title over the Curated Collections rail, «Категорії». */
+  /** The title over the Curated Collections rail, «Добірки» (ADR 0081). */
   curatedCollectionsTitle: TextSchema,
   /** A Curated Collection's count of Entries on its tile, «{count} слів». */
   curatedCollectionCount: PluralSchema,
@@ -63,11 +63,49 @@ export const DashboardStringsSchema = z.strictObject({
     add: TextSchema,
     /** What the rail and the screen show once a copy is kept, «Додано ✓». */
     added: TextSchema,
-    /** The kicker of a collection's screen, «КАТЕГОРІЯ · {count}». Takes `{count}`, the `curatedCollectionCount` phrase. */
+    /** The kicker of a collection's screen, «ДОБІРКА · {count}». Takes `{count}`, the `curatedCollectionCount` phrase. */
     kicker: templateOf('count'),
-    /** The screen's button beside its plus icon, «Додати». */
+    /** The screen's button beside its plus icon, «ДОДАТИ». */
     addButton: TextSchema,
-    /** The screen's button beside its tick once a copy is kept, «У міксі» (board «cat»). */
+    /** The screen's button beside its tick once a copy is kept, «ДОДАНО». */
     addedButton: TextSchema,
+  }),
+  /** The Categories of Words: the Dashboard rail, the grid and the kicker of a Category screen (ADR 0081). */
+  categories: z.strictObject({
+    /** The rail's and the grid's title, «Категорії»; the count beside it is the bare number. */
+    title: TextSchema,
+    /** The kicker of a Category screen, «КАТЕГОРІЯ · {count}». Takes `{count}`, the `count` phrase. */
+    kicker: templateOf('count'),
+    /** How many live Words a Category holds, «{count} слів». */
+    count: PluralSchema,
+  }),
+  /** The Categories of Corrections: the grid and the kicker of a Category screen (ADR 0081). */
+  correctionCategories: z.strictObject({
+    /** The grid's title, «Виправлення»; the count beside it is the bare number. */
+    title: TextSchema,
+    /** The kicker of a Category screen, «КАТЕГОРІЯ · {count}». Takes `{count}`, the `count` phrase. */
+    kicker: templateOf('count'),
+    /** How many live Corrections a Category holds, «{count} виправлень». */
+    count: PluralSchema,
+  }),
+  /** A Category screen of either list (ADR 0081, 0082). */
+  category: z.strictObject({
+    /** The line over a quiet Category's name, «Категорія». */
+    quiet: TextSchema,
+    /** The right button while the Category is out of the Mix, «ДОДАТИ». */
+    add: TextSchema,
+    /** The right button while the Category is in the Mix, «У МІКСІ». */
+    inMix: TextSchema,
+    /** The hero's progress, «ЗНАЮ {x} З {n}». Takes `{x}`, the Entries marked Known, and `{n}`, the live ones. */
+    known: templateOf('x', 'n'),
+    /** The stamp on a card marked Known, «ЗНАЮ». */
+    knownStamp: TextSchema,
+    /** The toasts of the right button. Each takes `{name}`, the Category's display name. */
+    toasts: z.strictObject({
+      /** «„{name}“ тепер у твоєму Міксі.» */
+      added: templateOf('name'),
+      /** «„{name}“ прибрано з Міксу.» */
+      removed: templateOf('name'),
+    }),
   }),
 });

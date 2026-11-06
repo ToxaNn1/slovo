@@ -63,7 +63,7 @@ beforeEach(async () => {
   screenSettled();
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words: [
         word('w_quiet', 'сумирний', 3),
         word('w_sad', 'сумовитий', 3),
