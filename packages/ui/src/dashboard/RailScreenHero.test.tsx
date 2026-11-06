@@ -43,7 +43,7 @@ describe('RailScreenHero', () => {
     expect(screen.getByRole('header', { name: 'Gentle words' })).toBeTruthy();
     expect(screen.getByText('Words that sound soft.')).toBeTruthy();
     expect(screen.getByTestId('hero-progress')).toHaveTextContent('Known 1 of 4');
-    expect(screen.queryByTestId('hero-add')).toBeNull();
+    expect(screen.queryByTestId('hero-action')).toBeNull();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Home' }));
 
@@ -52,7 +52,7 @@ describe('RailScreenHero', () => {
 
   it('draws the add button not yet pressed, and its press adds', async () => {
     const onPress = jest.fn();
-    await renderHero({ add: { label: 'Add', added: false, onPress } });
+    await renderHero({ action: { kind: 'toggle', label: 'Add', on: false, onPress } });
 
     const add = screen.getByRole('button', { name: 'Add' });
     expect(add).not.toBeSelected();
@@ -63,9 +63,24 @@ describe('RailScreenHero', () => {
   });
 
   it('draws the add button pressed once the copy is kept', async () => {
-    await renderHero({ add: { label: 'In the mix', added: true, onPress: jest.fn() } });
+    await renderHero({
+      action: { kind: 'toggle', label: 'In the mix', on: true, onPress: jest.fn() },
+    });
 
     expect(screen.getByRole('button', { name: 'In the mix' })).toBeSelected();
     expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
+  });
+
+  it('draws the Collection menu button in the right slot, and its press opens the menu', async () => {
+    const onPress = jest.fn();
+    await renderHero({ action: { kind: 'menu', label: 'Collection menu', onPress } });
+
+    const menu = screen.getByRole('button', { name: 'Collection menu' });
+    expect(menu).not.toBeSelected();
+    expect(screen.queryByText('Collection menu')).toBeNull();
+
+    await fireEvent.press(menu);
+
+    expect(onPress).toHaveBeenCalledTimes(1);
   });
 });

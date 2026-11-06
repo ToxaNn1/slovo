@@ -567,6 +567,8 @@ export const railScreen = {
   mascot: { right: 20, top: 238, width: 124 },
   list: { top: 4, side: 16, gap: 12, wordGap: 10, bottom: 40 },
   card: { radius: 18, padding: 16, gap: 12, wordGap: 8, edge: 4, labelGap: 6 },
+  /** The cards rise in one after another (the board's `slCasc`): each lasts `duration`, `stagger` after the one before. */
+  cascade: { duration: 450, stagger: 70 },
   chip: { paddingHorizontal: 9, paddingVertical: 5, radius: 8 },
   strike: { thickness: 3, at: 0.55 },
   button: { height: 52, radius: 14, paddingHorizontal: 18 },
