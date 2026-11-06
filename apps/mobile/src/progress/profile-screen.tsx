@@ -31,6 +31,7 @@ import { useWordOfTheDayArchive } from '../saved/word-of-the-day-archive';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { MascotAs } from '../mascot/mascot';
+import { shapeOf } from './badges-screen';
 
 const strings = editionStrings.settings.profile;
 
@@ -202,6 +203,7 @@ export function ProfileScreen() {
             </Text>
           </View>
           <BadgeGrid
+            families={edition.badgeFamilies}
             badges={badges}
             onPress={(badge) => {
               if (!badge.earned) return;
@@ -211,7 +213,7 @@ export function ProfileScreen() {
           />
           {stamped !== undefined && (
             <BadgeStamp
-              condition={stamped.condition}
+              shape={shapeOf(stamped)}
               symbol={stamped.symbol}
               name={stamped.name}
               title={strings.badgeStamp.title}
