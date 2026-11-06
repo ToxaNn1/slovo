@@ -36,7 +36,7 @@ export function prepareRun(input: CliInput): CliRun {
   const cwd = process.env['INIT_CWD'] ?? process.cwd();
   const listPath = resolve(cwd, input.listFile);
   if (!existsSync(listPath)) {
-    console.error(`No Lemma list at ${listPath}`);
+    console.error(`No list at ${listPath}`);
     return { ok: false, exitCode: 2 };
   }
   try {

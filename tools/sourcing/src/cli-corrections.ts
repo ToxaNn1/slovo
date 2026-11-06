@@ -9,34 +9,13 @@
  * `tools/sourcing/review/` (git-ignored). The source is goroh.pp.ua
  * «Слововживання»; fetched pages go to the cache `source:words` uses.
  */
-import { existsSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
-import { join, relative, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import {
-  EDITIONS_DIR,
-  EditionFolderError,
-  openEdition,
-  type EditionFolder,
-} from '@slovo/language-pack/edition';
+import { prepareRun, printSummary } from './cli-common';
+import { sourceCorrections } from './index';
 
-import { sourceCorrections, type Fetch } from './index';
-
-const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
-const toolDir = fileURLToPath(new URL('../', import.meta.url));
 const USAGE =
   'Usage: pnpm source:corrections <form-list> --edition <id> [--out <dir>] [--cache <dir>]';
-
-const fetchPage: Fetch = async (url, { timeoutMs }) => {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': 'slovo-sourcing/0.1 (dev tool; one request every 2 s)' },
-    redirect: 'follow',
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  return { status: response.status, body: await response.text() };
-};
 
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
@@ -53,82 +32,9 @@ async function main(): Promise<number> {
     console.error(USAGE);
     return 2;
   }
-  const cwd = process.env['INIT_CWD'] ?? process.cwd();
-  const listPath = resolve(cwd, listFile);
-  if (!existsSync(listPath)) {
-    console.error(`No form list at ${listPath}`);
-    return 2;
-  }
-  const outDir = values.out === undefined ? join(toolDir, 'review') : resolve(cwd, values.out);
-  let editionFolder: EditionFolder;
-  try {
-    editionFolder = openEdition(EDITIONS_DIR, edition);
-  } catch (error) {
-    if (!(error instanceof EditionFolderError)) throw error;
-    console.error(error.message);
-    return 2;
-  }
-
-  const result = await sourceCorrections({
-    formList: readFileSync(listPath, 'utf8'),
-    edition: editionFolder,
-    outDir,
-    cacheDir: values.cache === undefined ? defaultCacheDir() : resolve(cwd, values.cache),
-    fetch: fetchPage,
-    clock: {
-      now: () => Date.now(),
-      sleep: (ms) =>
-        new Promise((done) => {
-          setTimeout(done, ms);
-        }),
-    },
-    random: Math.random,
-    log: (message) => {
-      console.error(message);
-    },
-  });
-  if (!result.ok) {
-    console.error('Nothing fetched; fix the input first:');
-    for (const error of result.errors) console.error(`  ${error}`);
-    return 1;
-  }
-
-  const { lemmas: forms, requests } = result.report;
-  for (const form of forms) {
-    const ready = form.drafts.filter((draft) => draft.ready).length;
-    const kinds = new Set(
-      [...form.flags, ...form.drafts.flatMap((draft) => draft.flags)].map((flag) => flag.kind),
-    );
-    console.log(
-      `${form.lemma}: ${String(form.drafts.length)} draft(s), ${String(ready)} ready` +
-        (kinds.size > 0 ? `; flags: ${[...kinds].join(', ')}` : ''),
-    );
-  }
-  console.log(
-    `Requests: ${String(requests.network)} to the network, ${String(requests.cached)} from the cache, ${String(requests.backoffs)} back-off(s)`,
-  );
-  for (const [host, reason] of Object.entries(requests.unreachable)) {
-    console.log(`Skipped for this run: ${host} (${reason})`);
-  }
-  console.log(`Review report: ${displayPath(result.reportFile)}`);
-  return 0;
-}
-
-/** The cache every worktree and run on the machine shares. */
-function defaultCacheDir(): string {
-  const configured = process.env['SLOVO_SOURCING_CACHE'];
-  if (configured !== undefined && configured !== '') return resolve(configured);
-  const cacheHome = process.env['XDG_CACHE_HOME'];
-  return join(
-    cacheHome === undefined || cacheHome === '' ? join(homedir(), '.cache') : cacheHome,
-    'slovo-sourcing',
-  );
-}
-
-/** A path relative to the repo root when it lies inside the repo, absolute otherwise. */
-function displayPath(path: string): string {
-  const fromRoot = relative(repoRoot, path);
-  return fromRoot.startsWith('..') ? path : fromRoot;
+  const run = prepareRun({ listFile, edition, out: values.out, cache: values.cache });
+  if (!run.ok) return run.exitCode;
+  return printSummary(await sourceCorrections({ ...run.options, formList: run.list }));
 }
 
 process.exitCode = await main();
