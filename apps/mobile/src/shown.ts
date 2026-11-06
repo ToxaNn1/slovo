@@ -78,6 +78,8 @@ export interface Shown {
   readonly celebrations: boolean;
   /** The Profile's ladder of Level names, while its switch is on and the reader has not hidden the counters. */
   readonly levelLadder: boolean;
+  /** The Profile's Break card while a Break runs, while its switch is on and the reader has not hidden the counters. */
+  readonly breakCard: boolean;
   /** The Settings row of the Break and its screen. */
   readonly streakBreak: boolean;
   /** The line a tap on a day of the Active Days calendar on the Profile shows. */
@@ -179,6 +181,7 @@ export function shownOf({
     xpBar: on('xpLog') && !noCounters,
     celebrations: on('xpLog') && !noCounters,
     levelLadder: on('levelLadder') && !noCounters,
+    breakCard: on('breakCard') && !noCounters,
     streakBreak: on('streakBreak'),
     calendarDayLines: on('calendarDayLines'),
     streakFreezeCard: on('streakFreezeCard') && on('streakFreezes') && !noCounters,
