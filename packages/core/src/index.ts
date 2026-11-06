@@ -189,7 +189,14 @@ export type { XpAction, XpAward } from './game/game-xp';
 export type { XpLog, XpLogState } from './progress/xp-log';
 export type { BadgeProgress, BadgeState, Badges } from './progress/badges';
 export type { BreakState, StreakBreak } from './progress/streak-break';
-export { totalFor, type LevelMilestone, type LevelState } from './progress/levels';
+export {
+  totalFor,
+  type LadderRung,
+  type LevelBand,
+  type LevelMilestone,
+  type LevelState,
+  type NextName,
+} from './progress/levels';
 export type { XpRecord, XpSource } from './progress/records';
 export type { CalendarDay, CalendarMonth } from './progress/calendar';
 export { type WeeklyRecapModel } from './feed/weekly-recap';
