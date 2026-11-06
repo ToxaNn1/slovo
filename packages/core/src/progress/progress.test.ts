@@ -610,10 +610,7 @@ describe('The Active Days calendar', () => {
     // The XP log holds the freeze and Break records.
     const app = await openWithCalendar(records, ['2026-11-03'], ['activeDaysCalendar', 'xpLog']);
 
-    expect(shown(app).slice(3)).toEqual([
-      '26a 27a 28z 29m 30m 31m 1z',
-      '2b 3t 4b 5b 6f 7f 8f',
-    ]);
+    expect(shown(app).slice(3)).toEqual(['26a 27a 28z 29m 30m 31m 1z', '2b 3t 4b 5b 6f 7f 8f']);
   });
 
   it('shows no future week, even for an Active Day kept ahead of a clock moved back', async () => {
