@@ -1,9 +1,8 @@
 import type { CuratedCollectionCard } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { shapeAt } from '../primitives/TileShape';
 import { PressedTile } from '../primitives/PressedTile';
-import { TileShape } from '../primitives/TileShape';
+import { shapeAt, TileShape } from '../primitives/TileShape';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { categoryTile, dashboard, typeStyle } from '../tokens';
