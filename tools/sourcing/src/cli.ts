@@ -24,13 +24,7 @@ import {
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 
-import {
-  defaultCacheDir,
-  fetchPage,
-  sourceWords,
-  systemClock,
-  type SumAccess,
-} from './index';
+import { defaultCacheDir, fetchPage, sourceWords, systemClock, type SumAccess } from './index';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
