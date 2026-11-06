@@ -11,9 +11,9 @@ import { dirname, join } from 'node:path';
 
 import { formatBuildError, recordContent, type BuildError } from '@slovo/language-pack';
 import { EditionFolderError, type EditionFile } from '@slovo/language-pack/edition';
+import { entriesByText, matchKey } from '@slovo/sourcing';
 
 import {
-  comparable,
   draftEntry,
   ENTRY_KINDS,
   freshId,
@@ -100,25 +100,21 @@ export function importEntries(
     });
   }
 
-  const known = new Map<string, string[]>();
-  for (const { text, id, retired } of texts) {
-    const key = comparable(text);
-    known.set(key, [...(known.get(key) ?? []), retired ? `${id} (retired)` : id]);
-  }
+  const known = entriesByText(texts);
   const imported = new Set<string>();
   for (const { fields, origin } of incoming) {
     const text = textOf(kind, fields);
     if (text === undefined) continue;
-    const ids = known.get(comparable(text));
-    if (ids !== undefined) {
+    const ids = known(text).map(({ id, retired }) => (retired ? `${id} (retired)` : id));
+    if (ids.length > 0) {
       problems.push({
         ...origin,
         message: `"${text}" is already an Entry of the Edition: ${ids.join(', ')}`,
       });
-    } else if (imported.has(comparable(text))) {
+    } else if (imported.has(matchKey(text))) {
       problems.push({ ...origin, message: `"${text}" is imported twice` });
     }
-    imported.add(comparable(text));
+    imported.add(matchKey(text));
   }
   if (problems.length > 0) {
     reportProblems(terminal, `Nothing imported`, problems.map(formatBuildError));

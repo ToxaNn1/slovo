@@ -159,6 +159,22 @@ describe('pnpm content import', () => {
     expect(snapshot()).toEqual(before);
   });
 
+  it('refuses a text repeated in another spelling of the apostrophe', () => {
+    const before = snapshot();
+
+    const run = content([
+      'import',
+      'word',
+      array([word("тест'апостроф"), word('тест’апостроф')]),
+      '--edition',
+      'uk',
+    ]);
+
+    expect(run.status).toBe(1);
+    expect(run.stderr).toContain('"тест’апостроф" is imported twice');
+    expect(snapshot()).toEqual(before);
+  });
+
   it('removes every file it wrote and records nothing when an Entry is broken', () => {
     const before = snapshot();
 
