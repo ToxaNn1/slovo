@@ -9,6 +9,9 @@
   },
   "scripts": {
     "source-words": "tsx --disable-warning=ExperimentalWarning src/cli.ts",
+    "source-idioms": "tsx --disable-warning=ExperimentalWarning src/cli-idioms.ts",
+    "source-corrections": "tsx --disable-warning=ExperimentalWarning src/cli-corrections.ts",
+    "source-synonyms": "tsx --disable-warning=ExperimentalWarning src/cli-synonyms.ts",
     "lint": "eslint .",
     "typecheck": "tsc --build",
     "test": "vitest run"
