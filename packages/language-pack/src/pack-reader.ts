@@ -156,8 +156,9 @@ const TABLE_OF_KIND: Readonly<Record<EntryKind, string>> = {
 };
 
 const SQL = {
-  categories: 'SELECT id, display_name FROM categories ORDER BY position',
-  correctionCategories: 'SELECT id, display_name FROM correction_categories ORDER BY position',
+  categories: 'SELECT id, display_name, description, tone FROM categories ORDER BY position',
+  correctionCategories:
+    'SELECT id, display_name, description, tone FROM correction_categories ORDER BY position',
   ids: (kind: EntryKind) => `SELECT id FROM ${TABLE_OF_KIND[kind]} WHERE retired = 0 ORDER BY id`,
   /** Only the tables of the kinds with Categories have the column; the port's signature admits only those kinds. */
   idsInCategory: (kind: EntryKind) =>
@@ -567,10 +568,15 @@ export function createPackReader(db: PackDatabase): PackReader {
 
   /** The Categories of one list, in the pack's order. */
   async function readCategories(sql: string) {
-    const rows = await db.getAllAsync<{ id: string; display_name: string }>(sql, []);
+    const rows = await db.getAllAsync<{
+      id: string;
+      display_name: string;
+      description: string;
+      tone: string;
+    }>(sql, []);
     // Parsing checks the pack against the contracts and types the Category.
-    return rows.map(({ id, display_name }) =>
-      CategorySchema.parse({ id, displayName: display_name }),
+    return rows.map(({ id, display_name, description, tone }) =>
+      CategorySchema.parse({ id, displayName: display_name, description, tone }),
     );
   }
 

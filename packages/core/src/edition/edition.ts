@@ -149,6 +149,12 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   searchButton: ['search'],
   // The wordmark leads to the Dashboard (ADR 0079).
   dashboardWordmark: ['dashboard'],
+  // The Categories rail and its grid are Dashboard blocks (ADR 0081).
+  categoryScreens: ['dashboard'],
+  // The grid of the Categories of Corrections opens from the Dashboard's Corrections rail (ADR 0081).
+  correctionCategoryScreens: ['dashboard', 'corrections'],
+  // The quiet variant is a variant of a Category screen (ADR 0081).
+  quietCategories: ['categoryScreens'],
   notificationTimeStep: ['notifications'],
 };
 

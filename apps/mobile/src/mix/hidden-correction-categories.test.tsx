@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
-import { type Correction } from '@slovo/contracts';
+import { type Correction, type Category } from '@slovo/contracts';
 import {
   loadEdition,
   openComposition,
@@ -29,8 +29,18 @@ const shippedEdition = loadEdition(config);
 let composition: Composition;
 
 /** The Language Pack's Categories of Corrections, in its order. */
-const work = { id: 'work', displayName: 'На роботі' };
-const shop = { id: 'shop', displayName: 'У магазині' };
+const work: Category = {
+  id: 'work',
+  displayName: 'На роботі',
+  description: 'На роботі.',
+  tone: 'loud',
+};
+const shop: Category = {
+  id: 'shop',
+  displayName: 'У магазині',
+  description: 'У магазині.',
+  tone: 'loud',
+};
 
 function correction(id: string, categoryId: string): Correction {
   return {
@@ -56,7 +66,7 @@ const metrics = {
 beforeEach(async () => {
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       correctionCategories: [work, shop],
       corrections: [correction('c_work', work.id), correction('c_shop', shop.id)],
     }),

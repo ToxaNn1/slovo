@@ -62,6 +62,7 @@ const correction: EntryRowModel = {
   labelKey: 'correction',
   spoken: 'right, wrong',
   correctionType: 'calque',
+  standardForms: ['right'],
 };
 
 /** The Entry of the «Вчу» list with its row, `days` local days from its next Review. */

@@ -10,9 +10,9 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 import { userStateRecords } from '../user-state-schema';
 
 const categories: readonly Category[] = [
-  { id: 'nature', displayName: 'Nature' },
-  { id: 'people', displayName: 'People' },
-  { id: 'things', displayName: 'Things' },
+  { id: 'nature', displayName: 'Nature', description: 'Nature.', tone: 'loud' },
+  { id: 'people', displayName: 'People', description: 'People.', tone: 'loud' },
+  { id: 'things', displayName: 'Things', description: 'Things.', tone: 'loud' },
 ];
 
 const content = createMemoryContentPort({

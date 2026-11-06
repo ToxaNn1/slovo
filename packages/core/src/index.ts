@@ -43,7 +43,7 @@ export {
   type EntryLinkSource,
   type ParsedEntryLink,
 } from './entries/entry-links';
-export type { EntryRowModel } from './entries/entry-row';
+export { buildEntryRow, type EntryRowModel } from './entries/entry-row';
 export { type Favorite } from './saved/favorites';
 export { buildEntryCard, isTodaysWordOfTheDay, SEEN_DWELL_MS, type Feed } from './feed/feed';
 export {
@@ -204,8 +204,10 @@ export {
 } from './entries/entry-kinds';
 export {
   categoriesInMix,
+  categoryPlace,
   kindsShown,
   type CategoriesInMix,
+  type CategoryPlace,
   type MixKindWeights,
   type MixState,
 } from './entries/mix';
@@ -276,6 +278,7 @@ export {
 } from './dashboard/curated-collections';
 export {
   type CorrectionTypesBlock,
+  type CategoriesBlock,
   type CuratedCollectionsBlock,
   type Dashboard,
   type DashboardBlock,

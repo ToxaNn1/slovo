@@ -57,6 +57,26 @@ describe('The Correction Types', () => {
     expect(await app.correctionTypes.corrections('calque')).toEqual([]);
   });
 
+  it('carries the Categories of Corrections in pack order with `correctionCategoryScreens` on', async () => {
+    const { app } = await run({
+      on: ['dashboard', 'corrections', 'correctionTypes', 'correctionCategoryScreens'],
+    });
+    const categories = await content.listCorrectionCategories();
+
+    expect(categories.length).toBeGreaterThan(0);
+    expect(app.dashboard.blocks.find(({ kind }) => kind === 'correctionTypes')).toMatchObject({
+      categories,
+    });
+  });
+
+  it('carries no Categories of Corrections with `correctionCategoryScreens` off', async () => {
+    const { app } = await run();
+
+    expect(app.dashboard.blocks.find(({ kind }) => kind === 'correctionTypes')).toMatchObject({
+      categories: [],
+    });
+  });
+
   it('lists the Corrections of a type in pack order, each with whether it is worked through', async () => {
     const { app } = await run();
 

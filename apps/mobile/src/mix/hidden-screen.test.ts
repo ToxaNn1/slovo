@@ -1,4 +1,4 @@
-import { type Word } from '@slovo/contracts';
+import { type Word, type Category } from '@slovo/contracts';
 import { openComposition, type Composition, type Edition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
@@ -7,10 +7,25 @@ import { hiddenScreenModel, hiddenSummary } from './hidden-screen';
 import { count, fakeClock, strings, ukrainian } from '../test-support';
 
 /** The Language Pack's Categories, in its order. */
-const first = { id: 'nature-weather', displayName: 'Природа і погода' };
-const second = { id: 'household-crafts', displayName: 'Побут і ремесла' };
+const first: Category = {
+  id: 'nature-weather',
+  displayName: 'Природа і погода',
+  description: 'Природа і погода.',
+  tone: 'loud',
+};
+const second: Category = {
+  id: 'household-crafts',
+  displayName: 'Побут і ремесла',
+  description: 'Побут і ремесла.',
+  tone: 'loud',
+};
 /** A Category that stays in the Mix while the other two are taken out. */
-const third = { id: 'language-speech', displayName: 'Мова і мовлення' };
+const third: Category = {
+  id: 'language-speech',
+  displayName: 'Мова і мовлення',
+  description: 'Мова і мовлення.',
+  tone: 'loud',
+};
 
 function word(id: string, categoryId: string, extra: Partial<Word> = {}): Word {
   return {
@@ -35,8 +50,18 @@ function word(id: string, categoryId: string, extra: Partial<Word> = {}): Word {
 }
 
 /** The Language Pack's Categories of Corrections, a list of their own (ADR 0033). */
-const everyday = { id: 'everyday', displayName: 'Щодня' };
-const work = { id: 'work', displayName: 'На роботі' };
+const everyday: Category = {
+  id: 'everyday',
+  displayName: 'Щодня',
+  description: 'Щодня.',
+  tone: 'loud',
+};
+const work: Category = {
+  id: 'work',
+  displayName: 'На роботі',
+  description: 'На роботі.',
+  tone: 'loud',
+};
 
 const content = createMemoryContentPort({
   categories: [first, second, third],

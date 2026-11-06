@@ -46,6 +46,10 @@ export default [
     // 'use no memo' (ADR 0059), so its rules do not apply to them.
     files: [
       'src/dashboard/MoodCheckIn.tsx',
+      'src/dashboard/QuietScreenRow.tsx',
+      'src/dashboard/RailScreenCard.tsx',
+      'src/dashboard/RailScreenHero.tsx',
+      'src/categories/CategoryGrid.tsx',
       'src/entries/SwipeMarks.tsx',
       'src/entries/reveal.tsx',
       'src/feed/GesturesHintSheet.tsx',
@@ -76,6 +80,7 @@ export default [
       'src/primitives/Switch.tsx',
       'src/primitives/TabBarButton.tsx',
       'src/primitives/UndoToast.tsx',
+      'src/primitives/useCascade.ts',
       'src/primitives/VerticalPager.tsx',
       'src/primitives/WedgeLoader.tsx',
       'src/saved/FavoriteButton.tsx',

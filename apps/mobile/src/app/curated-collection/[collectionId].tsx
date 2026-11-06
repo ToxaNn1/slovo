@@ -2,8 +2,8 @@ import { fill } from '@slovo/contracts';
 import type { CuratedCollectionEntry } from '@slovo/core';
 import {
   categoryTile,
-  CuratedCollectionRow,
   railScreen,
+  RailScreenCard,
   RailScreenHero,
   useEdition,
   useTokens,
@@ -37,11 +37,12 @@ export default function CuratedCollectionRoute() {
       <FlatList<CuratedCollectionEntry>
         data={screen?.entries ?? []}
         keyExtractor={({ entryId }) => entryId}
-        renderItem={({ item: { entryId, row, known } }) => (
-          <CuratedCollectionRow
+        renderItem={({ item: { entryId, row, known }, index }) => (
+          <RailScreenCard
             testID={`curated-collection-entry-${entryId}`}
             row={row}
             known={known}
+            index={index}
             onPress={() => {
               openEntry(entryId);
             }}
@@ -70,10 +71,11 @@ export default function CuratedCollectionRoute() {
               },
             }}
             {...(screen !== undefined && {
-              add: {
+              action: {
+                kind: 'toggle',
                 testID: 'curated-collection-add',
                 label: screen.added ? words.addedButton : words.addButton,
-                added: screen.added,
+                on: screen.added,
                 onPress: () => {
                   if (!screen.added) add();
                 },

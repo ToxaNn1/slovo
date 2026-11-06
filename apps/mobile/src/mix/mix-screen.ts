@@ -1,8 +1,10 @@
 import type { EditionStrings, Plural } from '@slovo/contracts';
 import {
+  categoryPlace,
   featureOfKind,
   MIX_KINDS,
-  type CategoriesInMix,
+  categoriesInMix,
+  type CategoryKind,
   type Edition,
   type MixKind,
   type MixState,
@@ -58,25 +60,24 @@ export function mixScreenModel({
     (entryKind) => ({ entryKind, on: mix.kinds[entryKind] }),
   );
   return {
-    ...categoriesModel(mix),
+    ...categoriesModel(mix, 'word'),
     allOn: mix.hiddenCategories.length === 0,
     kinds,
     correctionCategories: kinds.some(({ entryKind, on }) => entryKind === 'correction' && on)
-      ? categoriesModel(mix.correctionCategories)
+      ? categoriesModel(mix, 'correction')
       : undefined,
     kindWeights: edition.isFeatureEnabled('mixKindWeights') ? mix.kindWeights : undefined,
   };
 }
 
 /** The chips of one list of Categories, the Words' or the Corrections'. */
-function categoriesModel(list: CategoriesInMix): MixCategoriesModel {
+function categoriesModel(mix: MixState, of: CategoryKind): MixCategoriesModel {
+  const list = categoriesInMix(mix, of);
   return {
-    chips: list.allCategories.map(({ id, displayName }) => ({
-      id,
-      name: displayName,
-      on: list.categoryIds.includes(id),
-      disabled: list.lastCategoryId === id,
-    })),
+    chips: list.allCategories.map(({ id, displayName }) => {
+      const place = categoryPlace(mix, of, id);
+      return { id, name: displayName, on: place !== 'out', disabled: place === 'last' };
+    }),
     lastCategoryHint: list.lastCategoryId !== undefined,
   };
 }

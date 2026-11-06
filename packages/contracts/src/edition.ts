@@ -12,15 +12,23 @@ const LanguageTagSchema = z
   .string()
   .regex(/^[a-z]{2,3}(-[A-Z]{2})?$/, 'Expected a BCP 47 tag such as uk-UA');
 
-/**
- * A thematic group of Words, or of Corrections, with its display name in the
- * Edition's language. The Words and the Corrections each have their own list
- * (ADR 0033).
- */
-export const CategorySchema = z.strictObject({
+const categoryFields = {
   id: KebabCaseIdSchema,
   displayName: z.string().min(1),
-});
+  /** One line under the name on the Category's screen, in the Edition's language. */
+  description: z.string().min(1),
+};
+
+/**
+ * A thematic group of Words, or of Corrections, with its display name and
+ * one-line description in the Edition's language, and its tone: a `loud`
+ * Category is shown in full, a `quiet` one held back (spec #1604). The Words
+ * and the Corrections each have their own list (ADR 0033).
+ */
+export const CategorySchema = z.discriminatedUnion('tone', [
+  z.strictObject({ ...categoryFields, tone: z.literal('loud') }),
+  z.strictObject({ ...categoryFields, tone: z.literal('quiet') }),
+]);
 
 export type Category = z.infer<typeof CategorySchema>;
 
@@ -363,6 +371,14 @@ export const FeatureSwitchesSchema = z.strictObject({
   searchButton: z.boolean(),
   /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). Off while `dashboard` is. */
   dashboardWordmark: z.boolean(),
+  /** Category screens: the Dashboard's «Категорії» rail of Categories of Words, their grid and each one's screen (ADR 0081). Off while `dashboard` is. */
+  categoryScreens: z.boolean(),
+  /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen (ADR 0081); off, the header is a plain title. Off while `dashboard` or `corrections` is. */
+  correctionCategoryScreens: z.boolean(),
+  /** Quiet Categories: the quiet variant of a Category screen and the muted tile for a Category whose tone is `quiet` (ADR 0081); off, a quiet Category draws loud. Off while `categoryScreens` is. */
+  quietCategories: z.boolean(),
+  /** The board style of the Collections: their list as the Category grid and a Collection's screen as a Category screen (ADR 0082); off, today's list and screen. */
+  collectionBoardStyle: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

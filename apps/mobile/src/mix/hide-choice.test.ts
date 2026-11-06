@@ -1,4 +1,4 @@
-import { type Correction, type Idiom, type Word } from '@slovo/contracts';
+import { type Correction, type Idiom, type Word, type Category } from '@slovo/contracts';
 import {
   featureOfKind,
   openComposition,
@@ -13,11 +13,32 @@ import { hideChoice, hideToast } from './hide-choice';
 import { strings, ukrainian } from '../test-support';
 
 /** The Language Pack's Categories, in its order. */
-const first = { id: 'nature-weather', displayName: 'Природа і погода' };
-const categories = [first, { id: 'household-crafts', displayName: 'Побут і ремесла' }];
+const first: Category = {
+  id: 'nature-weather',
+  displayName: 'Природа і погода',
+  description: 'Природа і погода.',
+  tone: 'loud',
+};
+const categories: Category[] = [
+  first,
+  {
+    id: 'household-crafts',
+    displayName: 'Побут і ремесла',
+    description: 'Побут і ремесла.',
+    tone: 'loud',
+  },
+];
 /** The Language Pack's Categories of Corrections, a list of their own (ADR 0033). */
-const everyday = { id: 'everyday', displayName: 'Щодня' };
-const correctionCategories = [everyday, { id: 'work', displayName: 'На роботі' }];
+const everyday: Category = {
+  id: 'everyday',
+  displayName: 'Щодня',
+  description: 'Щодня.',
+  tone: 'loud',
+};
+const correctionCategories: Category[] = [
+  everyday,
+  { id: 'work', displayName: 'На роботі', description: 'На роботі.', tone: 'loud' },
+];
 
 const word: Word = {
   kind: 'word',

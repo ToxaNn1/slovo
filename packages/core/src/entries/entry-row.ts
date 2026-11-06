@@ -66,6 +66,8 @@ export type EntryRowModel =
       readonly kind: 'correction';
       /** Why the form is non-standard, a key the UI turns into the Edition's word (the Hidden screen shows it). */
       readonly correctionType: CorrectionType;
+      /** Every standard equivalent of the form, the main one first. */
+      readonly standardForms: readonly string[];
     })
   | (EntryRowText & { readonly kind: 'idiom' })
   | (EntryRowText & { readonly kind: 'synonymRow' })
@@ -125,6 +127,7 @@ export function buildEntryRow(entry: AskableEntry): EntryRowModel {
       'correction',
     ),
     correctionType: entry.correctionType,
+    standardForms: entry.standardEquivalents,
   };
 }
 
