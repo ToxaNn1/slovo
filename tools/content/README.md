@@ -47,6 +47,74 @@ pnpm content check --edition uk
 
 Checks the whole Edition with the build's rules and writes nothing: every problem the build would refuse, such as a Word's `origin` the Edition does not list, or an `illustration` whose file is missing, not a PNG, over 150 KB or not square, including content not recorded since the last edit, and every content target the content misses (`content/targets.json`, ADR 0009). It exits non-zero when there is any. Run it before you open a pull request.
 
+## What the Edition has: `have` and `counts`
+
+```sh
+pnpm content have --edition uk
+pnpm content have --edition uk --kind idiom
+pnpm content counts --edition uk
+```
+
+`have` prints every Entry of the Edition to stdout, one line each, tab-separated: its kind (`word`, `correction`, `idiom`, `synonym-row`, `tip`), its Category or type (`-` for a Synonym Row or a Tip), its text with its forms after `->` (a Correction's standard equivalents, a Synonym Row's members, a Tip's forms), and `retired` for a Retired Entry, whose text stays taken. `--kind` keeps one kind. Read it before drafting a batch, so no Entry repeats one the Edition has:
+
+```text
+idiom	proverb	силу той має, хто правду мовляє
+word	technology	заклепка	retired
+```
+
+`counts` prints the Words per Category and rarity, the Corrections per Category, and their totals. Retired Entries are left out, as the content targets count. A cell or a row under a target in `content/targets.json` (read as `check` reads it) shows its gap, so with a floor of 18 Words a Category, `15 (-3)` is three short:
+
+```text
+Words     r1  r2   r3   r4   r5   total
+dialects  0   0    4    6    5    15 (-3)
+total     88  152  174  174  123  711
+```
+
+Neither writes a file; both work for any Edition through `--edition`.
+
+## Verify quotes: `verify`
+
+<!-- #1626 -->
+
+```sh
+pnpm content verify w_k3x9qa content/words/w_m2p7rd.json --edition uk
+pnpm content verify content/tips --edition uk
+pnpm content verify --changed origin/main --edition uk
+pnpm content verify content/tips --book osvita.txt --edition uk
+```
+
+Checks that the quoted text of each Entry is on the page its first source cites (ADR 0012, 0080): a Word's or an Idiom's primary definition, a Correction's explanation, a Synonym Row's meaning, a Tip's explanation. Name Entries by id, by Entry file or by a folder of them; `--changed <ref>` takes every Entry file that differs from the ref or is new to git. A goroh page is read block by block as the sourcing tool reads it; any other page is its plain text. Pages come through the sourcing tool's polite client and its cache folder (`--cache` names another), so a page is fetched once across runs. The comparison ignores case, spaces, quotation marks, apostrophes and dashes.
+
+It prints one line per Entry, `<outcome>\t<id>\t<file>[\t<detail>]`, then the count per outcome, such as `158 ok, 2 miss`:
+
+- `ok`: the quote is in a dictionary block of the page.
+- `miss`: the page does not hold the quote; the detail is the quote.
+- `llm`: only a language model's block of the page holds the quote.
+- `fetch-failed`: the page could not be fetched, such as `HTTP 404`.
+- `unverified`: the first source has no page.
+
+`--book <file>` checks an Entry without a page against a book as the osvita downloader writes it, one paragraph per line, `<page>\t<text>`: every field the Entry quotes, for a Tip its title, forms, explanation and example, must be in the book, and `ok` prints the page, such as `page 112`. It exits 1 on any `miss`, `llm` or `fetch-failed`, and with `--book` also on any `unverified`; an unknown name exits 2. CI runs `--changed` against the pull request's base whenever a pull request changes Entry files, and prints the lines in the job summary.
+
+<!-- /#1626 -->
+
+## Import Entries: `import`
+
+```sh
+pnpm content import word new-words.json --edition uk
+pnpm content import idiom review/idioms/drafts --edition uk
+pnpm content import correction new-corrections.json --edition uk --no-record
+```
+
+Takes the Entries of one kind (`word`, `correction`, `idiom`, `synonym-row` or `tip`) from either:
+
+- **a JSON array** of new Entries without ids, each issued an id no Entry of the Edition has had (ADR 0010); an `id` an item carries is replaced;
+- **a folder of ready drafts**, such as the `drafts/` folder `pnpm source:words` writes, each keeping its own id, which must be of the kind and not taken in the Edition.
+
+Before writing anything it refuses an Entry whose text the Edition already has in any kind, Retired or not (the Lemma, expression, non-standard form, dominant or title, in any case and with or without stress marks), a text imported twice, and a draft whose id the Edition or another draft already has. It then writes one file per Entry in the kind's folder, such as `content/words/w_k3x9qa.json`, with the kind and id first and the fields in the order `new` drafts them, and checks the whole Edition as `new` does:
+
+- **It passes:** the content is recorded as `pnpm build:pack uk --record` records it, and the files written print with the new content version. With `--no-record` it writes and checks only, for a wave's implementers whose coordinator records once (ADR 0080).
+- **It has problems:** each prints as the build prints them (file, Entry, field, what is wrong); every file it wrote is removed and nothing is recorded.
+
 ## Tests
 
 The tests run the CLI as a process over a copy of the UA Edition, with a fake editor in `$EDITOR`; `$SLOVO_EDITIONS_DIR` points the tool at the copy.

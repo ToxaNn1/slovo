@@ -32,6 +32,7 @@ import type { z } from 'zod';
 
 import { formatBuildError, type BuildError } from './build-error';
 import { checkContent, type Authored } from './check-content';
+import { checkSynonymRows } from './check-synonym-rows';
 import { ContentManifestSchema, MANIFEST_FILE } from './content-manifest';
 import { ContentTargetsSchema } from './content-targets';
 import { ID_REGISTRY_FILE, IdRegistrySchema } from './id-registry';
@@ -192,6 +193,26 @@ export interface AuthoredContent {
   readonly errors: readonly BuildError[];
 }
 
+/** The kinds of Entry, as each Entry names its own kind. */
+export type EntryKind = 'word' | 'correction' | 'idiom' | 'synonymRow' | 'tip';
+
+/**
+ * The text an Entry is known by, so that a new Entry of the same text can be
+ * told apart: a Word's Lemma, an Idiom's expression, a Correction's
+ * non-standard form, a Synonym Row's dominant, a Tip's title.
+ */
+export interface EntryText {
+  readonly kind: EntryKind;
+  readonly id: string;
+  /** The Word's Category, the Idiom Type or the Correction Type; none for Synonym Rows and Tips. */
+  readonly group: string | undefined;
+  readonly text: string;
+  /** A Correction's standard equivalents, a Synonym Row's members, a Tip's forms. */
+  readonly forms: readonly string[];
+  /** A Retired Entry no user sees, but its text is taken. */
+  readonly retired: boolean;
+}
+
 /** The files of an Edition folder, read checked against their contracts. */
 export interface EditionFiles {
   /** The folder, as given. */
@@ -214,6 +235,8 @@ export interface EditionFiles {
   legalPages(): string[];
   /** Every Word, Correction, Idiom, Synonym Row and Tip the Edition authors, in a stable order. */
   entries(): AuthoredContent;
+  /** The text of every Entry `entries` reads, kind by kind; Entries that break their schema are left out. */
+  entryTexts(): EntryText[];
   /** The file an Entry with this id is authored in, relative to the folder. */
   entryFile(id: string): string;
 }
@@ -231,6 +254,12 @@ export interface EditionFolder extends EditionFiles {
    * left out: `pnpm build:pack` reports those.
    */
   checkNewWords(words: readonly Word[]): BuildError[];
+  /** Checks new Idioms the way `checkNewWords` checks new Words. The Idioms must have passed the Idiom schema. */
+  checkNewIdioms(idioms: readonly Idiom[]): BuildError[];
+  /** Checks Corrections that are not in the Edition yet, as `checkNewWords` checks Words. */
+  checkNewCorrections(corrections: readonly Correction[]): BuildError[];
+  /** Checks new Synonym Rows the way `checkNewWords` checks new Words. The rows must have passed the Synonym Row schema. */
+  checkNewSynonymRows(rows: readonly SynonymRow[]): BuildError[];
 }
 
 /** The ids of the Editions in an editions folder: each sub-folder holding an Edition config, in code-unit order. */
@@ -281,16 +310,46 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
     config,
     checkNewWords(words) {
       content ??= files.entries();
-      const drafts = words.map((word) => ({ file: files.entryFile(word.id), entry: word }));
+      const drafts = authored(words);
+      return onlyIn(
+        drafts,
+        checkContent(config, [...content.words, ...drafts], content.corrections, content.idioms),
+      );
+    },
+    checkNewCorrections(corrections) {
+      content ??= files.entries();
+      const drafts = authored(corrections);
+      return onlyIn(
+        drafts,
+        checkContent(config, content.words, [...content.corrections, ...drafts], content.idioms),
+      );
+    },
+    checkNewIdioms(idioms) {
+      content ??= files.entries();
+      const drafts = idioms.map((idiom) => ({ file: files.entryFile(idiom.id), entry: idiom }));
       const draftFiles = new Set(drafts.map(({ file }) => file));
-      return checkContent(
-        config,
-        [...content.words, ...drafts],
-        content.corrections,
-        content.idioms,
-      ).filter(({ file }) => draftFiles.has(file));
+      return checkContent(config, content.words, content.corrections, [
+        ...content.idioms,
+        ...drafts,
+      ]).filter(({ file }) => draftFiles.has(file));
+    },
+    checkNewSynonymRows(rows) {
+      content ??= files.entries();
+      const drafts = rows.map((row) => ({ file: files.entryFile(row.id), entry: row }));
+      return checkSynonymRows(config, content.words, drafts);
     },
   };
+
+  /** New Entries, each located in the file it would be authored in. */
+  function authored<E extends { readonly id: string }>(entries: readonly E[]): Authored<E>[] {
+    return entries.map((entry) => ({ file: files.entryFile(entry.id), entry }));
+  }
+}
+
+/** The errors that belong to the given Entries' files. */
+function onlyIn(drafts: readonly { readonly file: string }[], errors: BuildError[]): BuildError[] {
+  const draftFiles = new Set(drafts.map(({ file }) => file));
+  return errors.filter(({ file }) => draftFiles.has(file));
 }
 
 /**
@@ -337,20 +396,73 @@ export function editionFiles(dir: string): EditionFiles {
         .toSorted()
         .map((file) => join(legalDir, file));
     },
-    entries() {
-      const errors: BuildError[] = [];
-      const words = readEntries(dir, WORDS_DIR, WordSchema, errors);
-      const corrections = readEntries(dir, CORRECTIONS_DIR, CorrectionSchema, errors);
-      const idioms = readEntries(dir, IDIOMS_DIR, IdiomSchema, errors);
-      const synonymRows = readEntries(dir, SYNONYM_ROWS_DIR, SynonymRowSchema, errors);
-      const tips = readEntries(dir, TIPS_DIR, TipSchema, errors);
-      const curatedCollections = existsSync(join(dir, CURATED_COLLECTIONS_DIR))
-        ? readEntries(dir, CURATED_COLLECTIONS_DIR, CuratedCollectionSchema, errors)
-        : [];
-      return { words, corrections, idioms, synonymRows, tips, curatedCollections, errors };
-    },
+    entries,
+    entryTexts: () => entryTextsOf(entries()),
     entryFile: (id) => `${ENTRY_DIRS[id.slice(0, 2)] ?? CORRECTIONS_DIR}/${id}.json`,
   };
+
+  function entries(): AuthoredContent {
+    const errors: BuildError[] = [];
+    const words = readEntries(dir, WORDS_DIR, WordSchema, errors);
+    const corrections = readEntries(dir, CORRECTIONS_DIR, CorrectionSchema, errors);
+    const idioms = readEntries(dir, IDIOMS_DIR, IdiomSchema, errors);
+    const synonymRows = readEntries(dir, SYNONYM_ROWS_DIR, SynonymRowSchema, errors);
+    const tips = readEntries(dir, TIPS_DIR, TipSchema, errors);
+    const curatedCollections = existsSync(join(dir, CURATED_COLLECTIONS_DIR))
+      ? readEntries(dir, CURATED_COLLECTIONS_DIR, CuratedCollectionSchema, errors)
+      : [];
+    return { words, corrections, idioms, synonymRows, tips, curatedCollections, errors };
+  }
+}
+
+/** The texts of the Entries, kind by kind in the order `entries` reads them. */
+function entryTextsOf({
+  words,
+  corrections,
+  idioms,
+  synonymRows,
+  tips,
+}: AuthoredContent): EntryText[] {
+  const text = (
+    kind: EntryKind,
+    entry: { readonly id: string; readonly retired: boolean },
+    group: string | undefined,
+    main: string,
+    forms: readonly string[] = [],
+  ): EntryText => ({ kind, id: entry.id, group, text: main, forms, retired: entry.retired });
+  return [
+    ...words.map(({ entry }) => text('word', entry, entry.categoryId, entry.lemma)),
+    ...corrections.map(({ entry }) =>
+      text(
+        'correction',
+        entry,
+        entry.correctionType,
+        entry.nonStandardForm,
+        entry.standardEquivalents,
+      ),
+    ),
+    ...idioms.map(({ entry }) => text('idiom', entry, entry.idiomType, entry.expression)),
+    ...synonymRows.map(({ entry }) =>
+      text(
+        'synonymRow',
+        entry,
+        undefined,
+        entry.dominant.text,
+        entry.members.map((member) => member.text),
+      ),
+    ),
+    ...tips.map(({ entry }) =>
+      text(
+        'tip',
+        entry,
+        undefined,
+        entry.title,
+        entry.nonStandardForm === undefined
+          ? [entry.standardForm]
+          : [entry.nonStandardForm, entry.standardForm],
+      ),
+    ),
+  ];
 }
 
 function invalid(dir: string, errors: readonly BuildError[]): EditionFolderError {
