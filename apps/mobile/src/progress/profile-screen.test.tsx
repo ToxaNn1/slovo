@@ -311,9 +311,7 @@ describe('the Profile', () => {
 
     // The Lemma reads as its row in «Слова дня» does, with its Stress mark.
     it('shows today with its Word of the Day once today is active', async () => {
-      expect(await tapped('2026-10-13')).toHaveTextContent(
-        fill(lines.today, { word: 'су́мирний' }),
-      );
+      expect(await tapped('2026-10-13')).toHaveTextContent(fill(lines.today, { word: 'су́мирний' }));
     });
 
     it('shows the line of a day missed', async () => {
