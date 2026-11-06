@@ -6,9 +6,12 @@ import { useEffect, type ReactNode } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
+  Extrapolation,
+  interpolate,
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
+  withDelay,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -20,31 +23,38 @@ import { badgeStamp, capitalMarkRoom, motion, typeStyle } from '../tokens';
 import { BadgeMark } from './BadgeMark';
 import { StampHalftone } from './StampHalftone';
 
-/** The stamp lands with the design's `slStamp`. */
-const LAND = {
-  duration: motion.stamp.duration,
-  easing: Easing.bezier(...motion.stamp.easing),
+/** The five frames run once, after a short wait (board 10.7). */
+const FRAMES = {
+  duration: motion.badgeStamp.duration,
+  easing: Easing.bezier(...motion.badgeStamp.easing),
   reduceMotion: ReduceMotion.Never,
 };
-/** Under Reduce Motion the stamp fades in place. */
+/** Under Reduce Motion the stamp fades in at rest. */
 const FADE = {
   duration: motion.reduceMotion.duration,
   easing: Easing.bezier(...motion.reduceMotion.easing),
   reduceMotion: ReduceMotion.Never,
 };
 
+const { fly, blow, bounce, rest } = badgeStamp.frames;
+const turned = (degrees: number) => `${String(degrees)}deg`;
+
 /**
- * An earned Badge stamped on red, over the whole screen: its mark lands big
- * and turned, then `title`, the Badge's `name`, the `mascot` and a button
- * labelled `takeLabel` that closes it. Under Reduce Motion the mark fades in
- * at rest.
+ * An earned Badge stamped on red, over the whole screen (board 10.7): the
+ * giant cream `kicker` turned, the Badge's mark in its ring, its `name`, the
+ * `line`, the `mascot`, then the `ribbon` and a button labelled `doneLabel`
+ * that closes it. The mark flies in, strikes with an ink burst and a light
+ * shake, springs back and rests turned; then the ribbon and the button come
+ * in. Under Reduce Motion the whole stamp fades in at rest, with no burst.
  */
 export function BadgeStamp({
   shape,
   symbol,
   name,
-  title,
-  takeLabel,
+  kicker,
+  line,
+  ribbon,
+  doneLabel,
   mascot,
   isNew = false,
   onClose,
@@ -54,8 +64,10 @@ export function BadgeStamp({
   shape: BadgeShape;
   symbol: string;
   name: string;
-  title: string;
-  takeLabel: string;
+  kicker: string;
+  line: string;
+  ribbon: string;
+  doneLabel: string;
   mascot?: ReactNode;
   /** The Badge is opened for the first time: its mark carries the cream «НОВА» tag. */
   isNew?: boolean;
@@ -64,63 +76,136 @@ export function BadgeStamp({
 }) {
   const tokens = useTokens();
   const { voice } = useEdition();
-  // Every red face carries the ink of the light Theme, in both Themes.
-  const keyInk = useSchemeColors('light').ink;
+  // Every red face carries the light Theme's ink and cream, in both Themes.
+  const key = useSchemeColors('light');
   const reduceMotion = useReduceMotion();
-  const landed = useSharedValue(0);
+  const t = useSharedValue(0);
   useEffect(() => {
-    landed.value = withTiming(1, reduceMotion ? FADE : LAND);
-  }, [landed, reduceMotion]);
-  const markStyle = useAnimatedStyle(() => {
-    const t = landed.value;
-    if (reduceMotion)
-      return { opacity: t, transform: [{ rotate: `${String(badgeStamp.turn)}deg` }] };
-    const { scale, turn } = badgeStamp.from;
+    t.value = reduceMotion
+      ? withTiming(1, FADE)
+      : withDelay(motion.badgeStamp.delay, withTiming(1, FRAMES));
+  }, [t, reduceMotion]);
+  const faded = useAnimatedStyle(() => ({ opacity: reduceMotion ? t.value : 1 }));
+  const shaken = useAnimatedStyle(() => {
+    if (reduceMotion) return {};
+    const step = (blow - fly) / 3;
+    const { shake } = badgeStamp;
     return {
-      opacity: Math.min(t * 2, 1),
       transform: [
-        { scale: scale + (1 - scale) * t },
-        { rotate: `${String(turn + (badgeStamp.turn - turn) * t)}deg` },
+        {
+          translateX: interpolate(
+            t.value,
+            [fly, fly + step, fly + 2 * step, blow],
+            [0, shake, -shake, 0],
+            Extrapolation.CLAMP,
+          ),
+        },
       ],
     };
   });
+  const markStyle = useAnimatedStyle(() => {
+    if (reduceMotion) return { transform: [{ rotate: turned(badgeStamp.turn) }] };
+    const { from } = badgeStamp;
+    return {
+      opacity: interpolate(t.value, [0, fly / 2], [0, 1], Extrapolation.CLAMP),
+      transform: [
+        {
+          scale: interpolate(
+            t.value,
+            [0, fly, blow, bounce, rest],
+            [from.scale, 1, 1, badgeStamp.bounce, 1],
+            Extrapolation.CLAMP,
+          ),
+        },
+        {
+          rotate: turned(
+            interpolate(t.value, [0, fly], [from.turn, badgeStamp.turn], Extrapolation.CLAMP),
+          ),
+        },
+      ],
+    };
+  });
+  const burstStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(t.value, [fly, (fly + blow) / 2, bounce], [0, 1, 0], Extrapolation.CLAMP),
+    transform: [
+      { scale: interpolate(t.value, [fly, bounce], [0.6, badgeStamp.burst], Extrapolation.CLAMP) },
+    ],
+  }));
+  const lastFrame = useAnimatedStyle(() => ({
+    opacity: reduceMotion ? 1 : interpolate(t.value, [rest, 1], [0, 1], Extrapolation.CLAMP),
+  }));
 
   return (
     <Modal transparent animationType="fade" onRequestClose={onClose}>
-      <View testID={testID} style={[styles.ground, { backgroundColor: tokens.colors.accent }]}>
-        <StampHalftone id="badge-stamp-halftone" />
-        <Animated.View style={[styles.mark, markStyle]}>
-          <BadgeMark
-            testID={`${testID}-mark`}
-            shape={shape}
-            tone="cream"
-            symbol={symbol}
-            state={{ kind: 'earned', isNew }}
-            onRed
-            size={badgeStamp.markSide}
-          />
+      <Animated.View
+        testID={testID}
+        style={[styles.ground, { backgroundColor: tokens.colors.accent }, faded]}
+      >
+        <StampHalftone id={`${testID}-halftone`} />
+        <Animated.View style={[styles.content, shaken]}>
+          <Text
+            {...voice}
+            adjustsFontSizeToFit
+            numberOfLines={1}
+            style={[typeStyle('shout', tokens), styles.kicker, { color: key.background }]}
+          >
+            {kicker}
+          </Text>
+          <View style={styles.mark}>
+            {!reduceMotion && (
+              <Animated.View
+                testID={`${testID}-burst`}
+                pointerEvents="none"
+                style={[styles.burst, { backgroundColor: key.ink }, burstStyle]}
+              />
+            )}
+            <Animated.View style={markStyle}>
+              <BadgeMark
+                testID={`${testID}-mark`}
+                shape={shape}
+                tone="cream"
+                symbol={symbol}
+                state={{ kind: 'earned', isNew }}
+                onRed
+                size={badgeStamp.markSide}
+              />
+            </Animated.View>
+          </View>
+          <Text
+            {...voice}
+            accessibilityRole="header"
+            style={[typeStyle('screenTitle', tokens), styles.name, { color: key.ink }]}
+          >
+            {name}
+          </Text>
+          <Text
+            {...voice}
+            style={[typeStyle('stampName', tokens), styles.line, { color: key.ink }]}
+          >
+            {line}
+          </Text>
+          <View style={styles.spring} />
+          {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
+          <Animated.View style={[styles.last, lastFrame]}>
+            <View style={[styles.ribbon, { backgroundColor: key.ink }]}>
+              <Text
+                {...voice}
+                style={[typeStyle('sectionLabel', tokens), { color: key.background }]}
+              >
+                {ribbon}
+              </Text>
+            </View>
+            <View style={styles.done}>
+              <Button
+                variant="onAccent"
+                testID={`${testID}-done`}
+                label={doneLabel}
+                onPress={onClose}
+              />
+            </View>
+          </Animated.View>
         </Animated.View>
-        <Text
-          {...voice}
-          accessibilityRole="header"
-          style={[typeStyle('screenTitle', tokens), styles.title, { color: keyInk }]}
-        >
-          {title}
-        </Text>
-        <Text {...voice} style={[typeStyle('stampName', tokens), styles.name, { color: keyInk }]}>
-          {name}
-        </Text>
-        <View style={styles.spring} />
-        {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
-        <View style={styles.take}>
-          <Button
-            variant="onAccent"
-            testID={`${testID}-take`}
-            label={takeLabel}
-            onPress={onClose}
-          />
-        </View>
-      </View>
+      </Animated.View>
     </Modal>
   );
 }
@@ -128,20 +213,37 @@ export function BadgeStamp({
 const styles = StyleSheet.create({
   ground: {
     flex: 1,
-    alignItems: 'center',
     paddingTop: badgeStamp.padding.top,
     paddingHorizontal: badgeStamp.padding.horizontal,
     paddingBottom: badgeStamp.padding.bottom,
     overflow: 'hidden',
   },
-  mark: { marginTop: badgeStamp.markTop },
-  title: {
-    marginTop: badgeStamp.titleTop - capitalMarkRoom('screenTitle'),
+  content: { flex: 1, alignItems: 'center' },
+  kicker: {
+    alignSelf: 'stretch',
+    textAlign: 'center',
+    transform: [{ rotate: turned(badgeStamp.turn) }],
+  },
+  mark: { marginTop: badgeStamp.markTop, alignItems: 'center', justifyContent: 'center' },
+  burst: {
+    position: 'absolute',
+    width: badgeStamp.markSide,
+    height: badgeStamp.markSide,
+    borderRadius: badgeStamp.markSide / 2,
+  },
+  name: {
+    marginTop: badgeStamp.nameTop - capitalMarkRoom('screenTitle'),
     textAlign: 'center',
     textTransform: 'uppercase',
   },
-  name: { marginTop: badgeStamp.nameTop, textAlign: 'center' },
+  line: { marginTop: badgeStamp.lineTop, textAlign: 'center' },
   spring: { flex: 1 },
   mascot: { alignSelf: 'flex-start' },
-  take: { alignSelf: 'stretch' },
+  last: { alignSelf: 'stretch', alignItems: 'center' },
+  ribbon: {
+    paddingVertical: badgeStamp.ribbon.padding.vertical,
+    paddingHorizontal: badgeStamp.ribbon.padding.horizontal,
+    transform: [{ rotate: turned(badgeStamp.ribbon.turn) }],
+  },
+  done: { alignSelf: 'stretch', marginTop: badgeStamp.ribbon.top },
 });

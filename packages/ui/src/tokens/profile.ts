@@ -59,19 +59,48 @@ export const levelCard = {
   linesGap: 6,
 } as const;
 
-/** The Badge stamp, from the design: the earned Badge's mark lands on red. */
+/**
+ * The Badge stamp, from board 10.7: under the giant cream kicker the earned
+ * Badge's mark lands on red in five frames, Підліт (it flies in), Удар (an
+ * ink burst and a light shake), Відскок (it springs to `bounce`), Відбиток
+ * (it rests at `turn`), then the ribbon and the button.
+ */
 export const badgeStamp = {
   markSide: 210,
-  /** The mark lands from this scale and turn to its rest. */
+  /** The mark flies in from this scale and turn. */
   from: { scale: 3, turn: -26 },
+  /** The turn of the kicker and of the mark at rest. */
   turn: -8,
+  bounce: 1.06,
+  /** The ink burst behind the mark at the blow grows to this share of the mark's side. */
+  burst: 1.5,
+  /** The light shake at the blow, in points. */
+  shake: 6,
+  /** Where each frame ends, as a share of the motion; the ribbon and the button come in after `rest`. */
+  frames: { fly: 0.35, blow: 0.5, bounce: 0.7, rest: 0.85 },
   /** The depth of the hard ink edge under the stamped mark. */
   drop: 8,
-  padding: { top: 110, horizontal: 28, bottom: 40 },
-  markTop: 70,
-  titleTop: 34,
-  nameTop: 10,
+  padding: { top: 90, horizontal: 28, bottom: 40 },
+  /** The mark overlaps the giant word's foot. */
+  markTop: -18,
+  nameTop: 16,
+  lineTop: 6,
+  ribbon: { top: 18, turn: -3, padding: { vertical: 6, horizontal: 18 } },
 } as const;
+
+/** The toast of a Badge earned during a Game: the mark, its name and the stamp's line on ink. */
+export const badgeToast = {
+  markSide: 40,
+  gap: 12,
+  padding: 12,
+  radius: 16,
+  /** Over the bottom of the screen, clear of the Game's buttons. */
+  bottom: 96,
+  horizontal: 16,
+} as const;
+
+/** The Badge's mark on its Share Card, as on the poster. */
+export const badgeShareMark = { side: 28 } as const;
 
 /**
  * The Badge grid, from the design (board 10): marks in rows of their Badge
