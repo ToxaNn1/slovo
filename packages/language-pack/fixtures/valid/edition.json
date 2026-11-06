@@ -103,6 +103,10 @@
     "swipeMarks": true,
     "searchButton": true,
     "dashboardWordmark": true,
+    "categoryScreens": true,
+    "correctionCategoryScreens": true,
+    "quietCategories": true,
+    "collectionBoardStyle": true,
     "previousWords": true,
     "correctionTypes": true
   },
