@@ -85,11 +85,14 @@ export interface PreviousWordsBlock {
 /**
  * The Correction Types rail's block, last, after the Curated Collections: a
  * tile per Correction Type with live Corrections, with N and X «розібрано».
- * No tile, no block.
+ * No tile, no block. With `correctionCategoryScreens` on it carries the
+ * Categories of Corrections in pack order, whose grid, k2, its header opens;
+ * off, none, and the header is a plain title (spec #1604).
  */
 export interface CorrectionTypesBlock {
   readonly kind: 'correctionTypes';
   readonly tiles: readonly CorrectionTypeTile[];
+  readonly categories: readonly Category[];
 }
 
 /**
@@ -159,6 +162,7 @@ export async function openDashboard({
   const moodOn = edition.isFeatureEnabled('mood');
   const previousWordsOn = edition.isFeatureEnabled('previousWords');
   const categoriesOn = edition.isFeatureEnabled('categoryScreens');
+  const correctionCategoriesOn = edition.isFeatureEnabled('correctionCategoryScreens');
 
   async function hero(): Promise<WordOfTheDayHero | undefined> {
     // The Feed chooses a day's Word of the Day, past what it showed (ADR 0076).
@@ -211,7 +215,10 @@ export async function openDashboard({
     const { rail } = curatedCollections;
     if (rail.length > 0) blocks.push({ kind: 'curatedCollections', cards: rail });
     const { tiles } = correctionTypes;
-    if (tiles.length > 0) blocks.push({ kind: 'correctionTypes', tiles });
+    if (tiles.length > 0) {
+      const categories = correctionCategoriesOn ? await entries.correctionCategories() : [];
+      blocks.push({ kind: 'correctionTypes', tiles, categories });
+    }
     return blocks;
   }
 
