@@ -29,9 +29,7 @@ describe('the Rarity hooks', () => {
 
     await settled(async () => {
       set = await hook.result.current.apply([
-        ...RARITIES
-          .filter((rarity) => rarity < target)
-          .map((rarity) => ({ rarity, known: true })),
+        ...RARITIES.filter((rarity) => rarity < target).map((rarity) => ({ rarity, known: true })),
         { rarity: target, known: false },
       ]);
     });

@@ -3,7 +3,7 @@ import {
   featureOfKind,
   withoutStress,
   type CategoryKind,
-  type Composition,
+  type OutOfMix,
   type EntryRowModel,
   type HiddenEntry,
   type MixKind,
@@ -139,20 +139,25 @@ function entryModel({ entryId, row }: HiddenEntry, strings: EditionStrings): Hid
   };
 }
 
-/** What the Hidden screen draws, from the Hidden Entries and what the Mix in effect has out of it (`Mix.outOfMix`). */
+/**
+ * What the Hidden screen draws, from the Hidden Entries, what the Mix in
+ * effect has out of it (`Mix.outOfMix`) and the kinds the Edition in effect
+ * turns on (`Mix.kindsOn`).
+ */
 export function hiddenScreenModel({
   hiddenEntries,
-  mix,
+  outOfMix,
+  kindsOn,
   strings,
 }: {
   hiddenEntries: readonly HiddenEntry[];
-  mix: Pick<Composition['mix'], 'outOfMix' | 'screen'>;
+  outOfMix: OutOfMix;
+  kindsOn: readonly MixKind[];
   strings: EditionStrings;
 }): HiddenScreenModel {
   const entries = hiddenEntries
     .filter(({ row }) => row.kind !== 'synonymRow' && row.kind !== 'tip')
     .map((hiddenEntry) => entryModel(hiddenEntry, strings));
-  const kindsOn = mix.screen().kinds.map(({ entryKind }) => entryKind);
   const sections = SECTION_KINDS.filter((kind) => kindsOn.includes(kind))
     .map((kind) => ({
       name: featureOfKind(kind),
@@ -162,7 +167,6 @@ export function hiddenScreenModel({
         .map((hiddenEntry) => entryModel(hiddenEntry, strings)),
     }))
     .filter((section) => section.entries.length > 0);
-  const outOfMix = mix.outOfMix();
   const categories = outOfMix.categories.map(({ of, category: { id, displayName } }) => ({
     id,
     of,
