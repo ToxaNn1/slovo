@@ -1,5 +1,5 @@
 import { RARITIES } from '@slovo/contracts';
-import type { Account, BadgeState } from '@slovo/core';
+import type { Account, BadgeState, LevelState } from '@slovo/core';
 import {
   ActiveDaysCalendar,
   IconButton,
@@ -7,6 +7,7 @@ import {
   BadgeStamp,
   fill,
   LevelCard,
+  LevelLadder,
   ScreenTitle,
   SettingsGroup,
   Button,
@@ -22,7 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAccountInEffect, useSignedOut } from '../account/account';
 import { useComposition } from '../composition';
-import { editionStrings } from '../edition/edition';
+import { edition, editionStrings } from '../edition/edition';
 import { bestText, gameModeStrings } from '../game/game-modes';
 import { type Opening, useSubscribed } from '../opening';
 import { ShareCardSheet } from '../share/share-card-sheet';
@@ -117,23 +118,27 @@ export function ProfileScreen() {
               testID="profile-level"
               level={level.level}
               label={strings.levelLabel}
-              name={level.name}
+              name={fill(strings.level, { level: String(level.level), name: level.name })}
               progress={level.progress}
               toNext={level.toNext}
               lines={[
                 {
-                  testID: 'profile-to-next',
-                  text: fill(strings.toNext, {
+                  testID: 'profile-level-progress',
+                  text: fill(strings.levelProgress, {
                     progress: String(level.progress),
                     toNext: String(level.toNext),
                   }),
                 },
                 {
-                  testID: 'profile-total-xp',
-                  text: fill(strings.totalXp, { count: String(xp.total) }),
+                  testID: 'profile-level-left',
+                  text: fill(strings.levelLeft, {
+                    left: String(level.toNext - level.progress),
+                    next: String(level.level + 1),
+                  }),
                 },
               ]}
             />
+            {shown.levelLadder && <ProfileLadder level={level} />}
             {share !== undefined && reachedOn !== undefined && (
               <>
                 <Button
@@ -294,6 +299,32 @@ function SaveProgressOffer({ opening, onSave }: { opening: Opening<Account>; onS
       </Text>
       <Button testID="profile-save-progress-button" label={save} onPress={onSave} />
     </View>
+  );
+}
+
+/** The ladder of the Level names under the Level card, captioned by range of Levels (board 10.8). */
+function ProfileLadder({ level }: { level: LevelState }) {
+  const { ladder } = strings;
+  const upper = (text: string) => text.toLocaleUpperCase(edition.locale);
+  return (
+    <LevelLadder
+      testID="profile-ladder"
+      rungs={level.ladder.map(({ name, band, state }) => ({
+        name,
+        state,
+        caption:
+          band.last === undefined
+            ? fill(ladder.rangeFrom, { from: String(band.first) })
+            : fill(ladder.range, { from: String(band.first), to: String(band.last) }),
+      }))}
+      tags={{ passed: ladder.passed, current: ladder.current, ahead: ladder.ahead }}
+      bar={fill(ladder.bar, { level: String(level.level), name: upper(level.name) })}
+      toNext={
+        level.next === undefined
+          ? undefined
+          : fill(ladder.toNext, { name: upper(level.next.name), xp: String(level.next.xp) })
+      }
+    />
   );
 }
 
