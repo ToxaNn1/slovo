@@ -10,6 +10,7 @@ import {
   LevelLadder,
   ScreenTitle,
   SettingsGroup,
+  StreakFreezeCard,
   Button,
   space,
   typeStyle,
@@ -179,6 +180,17 @@ export function ProfileScreen() {
           </View>
         )}
         {streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />}
+        {shown.streakFreezeCard && (
+          <View style={styles.section}>
+            <StreakFreezeCard
+              testID="profile-freeze-card"
+              held={progress.freezesHeld}
+              streak={progress.streak}
+              saved={progress.freezesUsed}
+              days={composition.progress.lastWeek()}
+            />
+          </View>
+        )}
         <View style={styles.section}>
           <ActiveDaysCalendar weeks={weeks} lines={shown.calendarDayLines} todayWord={todayWord} />
         </View>
