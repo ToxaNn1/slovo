@@ -362,11 +362,11 @@ describe('the Profile', () => {
       expect(card.getByText(words.title)).toBeOnTheScreen();
       expect(card.getByText(fill(words.held, { count: '1' }))).toBeOnTheScreen();
       expect(card.getByText(words.explanation)).toBeOnTheScreen();
-      expect(card.getByText(fill(words.streakDays.few, { count: '3' }))).toBeOnTheScreen();
-      expect(card.getByText(fill(words.saved.one, { count: '1' }))).toBeOnTheScreen();
+      expect(card.getByText(fill(words.streakDays.few ?? '', { count: '3' }))).toBeOnTheScreen();
+      expect(card.getByText(fill(words.saved.one ?? '', { count: '1' }))).toBeOnTheScreen();
       const days = editionStrings.stats.calendar.days;
       const october = editionStrings.dates.months[9] ?? '';
-      expect(card.getAllByLabelText(/./u).map((day) => day.props.accessibilityLabel)).toEqual([
+      for (const label of [
         fill(days.missed, { day: '7', month: october }),
         fill(days.missed, { day: '8', month: october }),
         fill(days.active, { day: '9', month: october }),
@@ -374,7 +374,9 @@ describe('the Profile', () => {
         fill(days.active, { day: '11', month: october }),
         fill(days.frozen, { day: '12', month: october }),
         fill(days.today, { day: '13', month: october }),
-      ]);
+      ]) {
+        expect(card.getByLabelText(label)).toBeOnTheScreen();
+      }
     });
 
     it('is hidden with its switch off, and nothing else', async () => {

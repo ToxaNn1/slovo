@@ -47,6 +47,7 @@ const progress: ProgressState = {
   streak: 12,
   bestStreak: 30,
   freezesHeld: 0,
+  freezesUsed: 0,
   seenToday: 4,
   favorites: 7,
   inCollections: 3,
