@@ -1,10 +1,6 @@
 import type { LanguageTraits } from '@slovo/contracts';
 
-import type { AnswerSheet, RoundOption } from './answer-form';
-import { chipsForm, type ChipsContent } from './chips-form';
-import { pickForm, type PickContent } from './pick-form';
-import { typedForm, type TypedContent } from './typed-form';
-import { vowelForm, type VowelContent } from './vowel-form';
+import type { RoundForm } from './answer-forms';
 import type { Edition } from '../edition/edition';
 import type { AskableEntry, AskableKind, KindRefusal, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
@@ -46,35 +42,14 @@ export interface TextRange {
   readonly end: number;
 }
 
-/** A Word of a pairs grid with its Definition: one Round of the grid. */
-export interface GridPair {
-  /** The Entry the pair asks about, marked Unknown on a wrong match. */
-  readonly entry: AskableEntry;
-  readonly word: RoundOption;
-  readonly definition: string;
-  readonly sheet: AnswerSheet;
-}
-
 /**
  * The form of a Round's answer, which the Game Mode decides (ADR 0052): a
  * pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in
  * order, or typed text, each its own Answer Form. Each form but the pairs
  * grid carries the sheet shown after the answer; a grid carries one per pair.
  */
-export type RoundForm =
-  | PickContent
-  | VowelContent
-  | {
-      readonly form: 'pairs';
-      /** Up to `ROUND_OPTIONS` pairs, each a Round of its own. */
-      readonly pairs: readonly GridPair[];
-      /** The places of the pairs whose Words show, in the order shown. */
-      readonly wordOrder: readonly number[];
-      /** The places of the pairs whose Definitions show, in the order shown. */
-      readonly definitionOrder: readonly number[];
-    }
-  | ChipsContent
-  | TypedContent;
+export type { RoundForm } from './answer-forms';
+export type { GridPair } from './pairs-form';
 
 /** A Round as a Game Mode builds it: one prompt with exactly one right answer, in the mode's answer form. */
 export type RoundContent = RoundForm & {
@@ -93,37 +68,6 @@ export type RoundContent = RoundForm & {
   readonly definition?: string;
 };
 
-/** How many Rounds the content holds: one, or one per pair of a pairs grid. */
-export function roundsIn(content: RoundContent): number {
-  switch (content.form) {
-    case 'pick':
-      return pickForm.roundsIn(content);
-    case 'vowel':
-      return vowelForm.roundsIn(content);
-    case 'pairs':
-      return content.pairs.length;
-    case 'chips':
-      return chipsForm.roundsIn(content);
-    case 'typed':
-      return typedForm.roundsIn(content);
-  }
-}
-
-/** The ids of the Entries a pairs grid asks about besides the Round's own; none in another form. */
-export function entriesIn(content: RoundContent): readonly string[] {
-  switch (content.form) {
-    case 'pick':
-      return pickForm.entriesIn(content);
-    case 'vowel':
-      return vowelForm.entriesIn(content);
-    case 'pairs':
-      return content.pairs.map(({ entry }) => entry.id);
-    case 'chips':
-      return chipsForm.entriesIn(content);
-    case 'typed':
-      return typedForm.entriesIn(content);
-  }
-}
 
 /** What a Game Mode builds a Round from. */
 export interface RoundInput {

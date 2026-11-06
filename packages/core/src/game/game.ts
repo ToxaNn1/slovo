@@ -12,20 +12,22 @@ import type { Subject } from '../subject';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import type {
-  AnswerSheet,
   GameEdition,
   GameMode,
   GameModeGroup,
   GameModeRefusal,
   RoundLabelKind,
-  RoundOption,
   TextRange,
 } from './game-mode';
-import type { Judged } from './answer-form';
-import { chipsForm, type ChipsAnswer, type ChipsGiven, type ChipsRound } from './chips-form';
-import { entriesIn, roundsIn } from './game-mode';
-import { pickForm, type PickAnswer, type PickGiven, type PickRound } from './pick-form';
-import { vowelForm, type VowelAnswer, type VowelGiven, type VowelRound } from './vowel-form';
+import {
+  entriesIn,
+  judge,
+  roundsIn,
+  shownRound,
+  type GivenAnswer,
+  type RoundAnswer,
+  type ShownRound,
+} from './answer-forms';
 import { LIFE_LOST_DELAY } from './game-haptics';
 import {
   createRoundPlanner,
@@ -35,9 +37,11 @@ import {
   type RoundPlan,
   type RoundPlanner,
 } from './round-plan';
-import { typedForm, type TypedAnswer, type TypedGiven, type TypedRound } from './typed-form';
+import { typedForm } from './typed-form';
 
 export type { RoundBlank } from './typed-form';
+export type { GivenAnswer, RoundAnswer } from './answer-forms';
+export type { GridCell } from './pairs-form';
 
 /** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own. */
 export const GAME_LIVES = 5;
@@ -45,42 +49,6 @@ export const GAME_LIVES = 5;
 /** The Lives a Game in the mode starts with; none in a mode without Lives. */
 const livesOf = ({ lives = GAME_LIVES }: GameMode): number | undefined =>
   lives === 'none' ? undefined : lives;
-
-/** The answer the reader gives a Round, in the Round's form. */
-export type GivenAnswer =
-  | PickGiven
-  | VowelGiven
-  | {
-      readonly form: 'pairs';
-      /** The place of the Word tapped among the grid's Words, then of the Definition among its Definitions. */
-      readonly word: number;
-      readonly definition: number;
-    }
-  | ChipsGiven
-  | TypedGiven;
-
-/** The answer given to a Round, judged: whether it is right, and the sheet to show. */
-export type RoundAnswer =
-  | PickAnswer
-  | VowelAnswer
-  | {
-      readonly form: 'pairs';
-      /** The place of the Word tapped among the grid's Words, then of the Definition among its Definitions. */
-      readonly word: number;
-      readonly definition: number;
-      /** The place of the Word's own Definition. */
-      readonly correct: number;
-      readonly right: boolean;
-      readonly sheet: AnswerSheet;
-    }
-  | ChipsAnswer
-  | TypedAnswer;
-
-/** A cell of a pairs grid as the reader sees it: a Word or a Definition; one of a pair answered is gone. */
-export interface GridCell<T> {
-  readonly shown: T;
-  readonly gone: boolean;
-}
 
 /**
  * A Round as the reader plays it, in its answer form, the right answer kept
@@ -112,18 +80,7 @@ export type Round = {
   readonly lifeLostAfter: number;
   /** The answer, once given; a Round is answered once. */
   readonly answer: RoundAnswer | undefined;
-} & (
-  | PickRound
-  | VowelRound
-  | {
-      readonly form: 'pairs';
-      /** The grid's Words in the order shown, then its Definitions; a pair answered is gone from both. */
-      readonly words: readonly GridCell<RoundOption>[];
-      readonly definitions: readonly GridCell<string>[];
-    }
-  | ChipsRound
-  | TypedRound
-);
+} & ShownRound;
 
 /** A Round the reader answered: what the Game Review lists. */
 export type PlayedRound = Round & {
@@ -216,22 +173,7 @@ interface GameInPlay {
   replan(game: CurrentGame, eligible: EligibleOfKind<AskableEntry>): void;
 }
 
-/** The pairs of a grid answered so far, by the Rounds played in it: the places of their Words and Definitions. */
-function pairsGone(
-  played: readonly PlayedRound[],
-  inGrid: number,
-): { words: Set<number>; definitions: Set<number> } {
-  const words = new Set<number>();
-  const definitions = new Set<number>();
-  for (const { answer } of played.slice(played.length - inGrid)) {
-    if (answer.form !== 'pairs') continue;
-    words.add(answer.word);
-    definitions.add(answer.correct);
-  }
-  return { words, definitions };
-}
-
-/** The Round as the reader sees it, its right answer kept out; of a pairs grid, with the pairs played in it gone. */
+/** The Round as the reader sees it, its right answer kept out, after the answers given in its earlier Rounds, such as the pairs played in a grid. */
 function roundOf(
   { entry, content }: PlannedRound,
   number: number,
@@ -249,97 +191,8 @@ function roundOf(
     lifeLostAfter: LIFE_LOST_DELAY,
     answer: undefined,
   };
-  switch (content.form) {
-    case 'pick':
-      return { ...base, ...pickForm.shown(content, []) };
-    case 'vowel':
-      return { ...base, ...vowelForm.shown(content, []) };
-    case 'pairs': {
-      const gone = pairsGone(played, inGrid);
-      const pairAt = (place: number) => {
-        const pair = content.pairs[place];
-        if (pair === undefined) throw new Error(`The pairs grid has no pair at ${String(place)}`);
-        return pair;
-      };
-      return {
-        ...base,
-        form: 'pairs',
-        words: content.wordOrder.map((pair, place) => ({
-          shown: pairAt(pair).word,
-          gone: gone.words.has(place),
-        })),
-        definitions: content.definitionOrder.map((pair, place) => ({
-          shown: pairAt(pair).definition,
-          gone: gone.definitions.has(place),
-        })),
-      };
-    }
-    case 'chips':
-      return { ...base, ...chipsForm.shown(content, []) };
-    case 'typed':
-      return { ...base, ...typedForm.shown(content, []) };
-  }
-}
-
-/** An Answer Form's judgement with the Entry it is about: the Round's own unless the form names another. */
-const withEntry = (
-  judged: Judged<RoundAnswer> | undefined,
-  own: AskableEntry,
-): { answer: RoundAnswer; entry: AskableEntry } | undefined =>
-  judged && { answer: judged.answer, entry: judged.about ?? own };
-
-/**
- * The answer judged against the Round's content, with the Entry it asked
- * about; nothing when the answer is of another form or names something the
- * Round doesn't have, such as a pair already gone.
- */
-function judge(
-  { entry, content }: PlannedRound,
-  round: Round,
-  given: GivenAnswer,
-): { answer: RoundAnswer; entry: AskableEntry } | undefined {
-  if (content.form !== given.form) return undefined;
-  switch (content.form) {
-    case 'pick': {
-      if (given.form !== 'pick' || round.form !== 'pick') return undefined;
-      return withEntry(pickForm.judge(content, round, given), entry);
-    }
-    case 'vowel': {
-      if (given.form !== 'vowel' || round.form !== 'vowel') return undefined;
-      return withEntry(vowelForm.judge(content, round, given), entry);
-    }
-    case 'pairs': {
-      if (given.form !== 'pairs' || round.form !== 'pairs') return undefined;
-      const { word, definition } = given;
-      const wordCell = round.words[word];
-      const definitionCell = round.definitions[definition];
-      if (wordCell === undefined || definitionCell === undefined) return undefined;
-      if (wordCell.gone || definitionCell.gone) return undefined;
-      const pairPlace = content.wordOrder[word];
-      const pair = pairPlace === undefined ? undefined : content.pairs[pairPlace];
-      if (pairPlace === undefined || pair === undefined) return undefined;
-      const correct = content.definitionOrder.indexOf(pairPlace);
-      return {
-        entry: pair.entry,
-        answer: {
-          form: 'pairs',
-          word,
-          definition,
-          correct,
-          right: definition === correct,
-          sheet: pair.sheet,
-        },
-      };
-    }
-    case 'chips': {
-      if (given.form !== 'chips' || round.form !== 'chips') return undefined;
-      return withEntry(chipsForm.judge(content, round, given), entry);
-    }
-    case 'typed': {
-      if (given.form !== 'typed' || round.form !== 'typed') return undefined;
-      return withEntry(typedForm.judge(content, round, given), entry);
-    }
-  }
+  const answered = played.slice(played.length - inGrid).map(({ answer }) => answer);
+  return { ...base, ...shownRound(content, answered) };
 }
 
 /**
@@ -424,7 +277,7 @@ function createGameInPlay({
     answer(game, given) {
       if (game.status !== 'playing') return undefined;
       const at = plannedAt(game.round.number);
-      const judged = at && judge(at.planned, game.round, given);
+      const judged = at && judge(at.planned.content, game.round, given, at.planned.entry);
       if (judged === undefined) return undefined;
       const { answer, entry } = judged;
       const answered: CurrentGame = {

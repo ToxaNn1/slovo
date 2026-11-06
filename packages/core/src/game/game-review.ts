@@ -2,11 +2,8 @@ import type { Example, Idiom, Word } from '@slovo/contracts';
 
 import type { PlayedRound, RoundAnswer } from './game';
 import type { RoundOption } from './game-mode';
-import { chipsForm } from './chips-form';
+import { reviewAnswer } from './answer-forms';
 import { rowWordOption } from './guess-word';
-import { pickForm } from './pick-form';
-import { typedForm } from './typed-form';
-import { vowelForm } from './vowel-form';
 import { byKind } from '../entries/entry-kinds';
 
 /** What an item of the Game Review expands into, by the kind of the Entry the Round asked about. */
@@ -117,21 +114,7 @@ function pickedOf(round: PlayedRound): GameReviewAnswer | undefined {
 
 function pickedOptionOf(round: PlayedRound): RoundOption | undefined {
   if (round.right) return undefined;
-  const { answer } = round;
-  switch (answer.form) {
-    case 'pick':
-      return round.form === 'pick' ? pickForm.reviewAnswer(round, answer) : undefined;
-    case 'vowel':
-      return round.form === 'vowel' ? vowelForm.reviewAnswer(round, answer) : undefined;
-    case 'pairs': {
-      const cell = round.form === 'pairs' ? round.definitions[answer.definition] : undefined;
-      return cell === undefined ? undefined : plain(cell.shown);
-    }
-    case 'chips':
-      return round.form === 'chips' ? chipsForm.reviewAnswer(round, answer) : undefined;
-    case 'typed':
-      return round.form === 'typed' ? typedForm.reviewAnswer(round, answer) : undefined;
-  }
+  return reviewAnswer(round, round.answer);
 }
 
 /** The Game Review of the Rounds played: one item for each, in their order. */
