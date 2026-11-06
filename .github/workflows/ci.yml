@@ -116,6 +116,29 @@ jobs:
             cat "$RUNNER_TEMP/content-report.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+      # Every Entry a pull request adds or changes must quote the page its
+      # first source cites (ADR 0012, 0080); content verify fetches the pages.
+      - name: Verify the quotes of the Entries the pull request changes
+        if: ${{ github.event_name == 'pull_request' }}
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git fetch --depth=1 origin "$BASE_SHA"
+          if git diff --quiet "$BASE_SHA" HEAD -- editions/uk/content; then
+            echo 'No Entry changed.'
+            exit 0
+          fi
+          status=0
+          pnpm content verify --changed "$BASE_SHA" --edition uk \
+            | tee "$RUNNER_TEMP/verify-report.txt" || status=$?
+          {
+            echo '## Quotes of the changed Entries'
+            echo '```text'
+            cat "$RUNNER_TEMP/verify-report.txt"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
 
   checks:
     # The check ruleset 26239313 requires: keep this name.
