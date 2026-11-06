@@ -69,7 +69,13 @@ export const dashboard = {
   logoPlate: { top: 9.2, right: 11, bottom: 9.2, left: 7.9 },
   side: 20,
   heroMargin: 12,
-  blockTop: { mood: 22, previousWords: 26, curatedCollections: 26, correctionTypes: 18 },
+  blockTop: {
+    mood: 22,
+    previousWords: 26,
+    categories: 26,
+    curatedCollections: 26,
+    correctionTypes: 18,
+  },
   titleGap: 12,
   previousTitleGap: 6,
   /** The room under a rail's tiles. */

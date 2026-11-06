@@ -1,4 +1,5 @@
 import {
+  CategoriesRail,
   CorrectionTypesRail,
   CuratedCollectionsRail,
   dashboard,
@@ -52,6 +53,8 @@ function DashboardBlocks() {
     openPreviousWord,
     openCorrectionType,
     openCuratedCollection,
+    openCategories,
+    openCategory,
   } = useDashboardScreen();
   const { colors } = useTokens();
   return (
@@ -88,6 +91,14 @@ function DashboardBlocks() {
         return <PreviousWords block={block} onOpen={openPreviousWord} />;
       case 'correctionTypes':
         return <CorrectionTypesRail tiles={block.tiles} onOpen={openCorrectionType} />;
+      case 'categories':
+        return (
+          <CategoriesRail
+            tiles={block.categories.map(({ id, displayName }) => ({ id, name: displayName }))}
+            onOpenAll={openCategories}
+            onOpen={openCategory}
+          />
+        );
       case 'curatedCollections':
         return <CuratedCollectionsRail cards={block.cards} onOpen={openCuratedCollection} />;
     }
@@ -108,6 +119,7 @@ const blockStyles = StyleSheet.create({
   mood: { paddingTop: blockTop.mood, paddingHorizontal: side },
   previousWords: { paddingTop: blockTop.previousWords, paddingHorizontal: side },
   // A rail runs to the screen's edges and keeps the side room inside.
+  categories: { paddingTop: blockTop.categories },
   curatedCollections: { paddingTop: blockTop.curatedCollections },
   correctionTypes: { paddingTop: blockTop.correctionTypes },
 } satisfies Record<DashboardBlock['kind'], object>);
