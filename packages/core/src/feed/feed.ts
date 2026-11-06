@@ -217,12 +217,8 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * Word of the Day always opens the day.
  *
  * The Cycle covers the eligible Entries; the card order (`nextEntryId` in
- * `card-order.ts`) gives each card's Entry. When they hold Corrections, every
- * 5th card is a Correction's while the Cycle has unseen Corrections, and
- * likewise every 7th an Idiom's, every 9th a Synonym Row's and every 11th a
- * Tip's, spaced by their Mix kind weights;
- * when turns fall on one card, the Correction goes first, then the Idiom,
- * the Synonym Row and the Tip, and each loser takes the next card (ADR 0046,
+ * `card-order.ts`) gives each card's Entry: each kind's turn, spaced by its
+ * Mix kind weight, and the Review slots are set out there (ADR 0046,
  * 0051). Every kind is shuffled and Seen like Words, and the Cycle ends only
  * once every eligible Entry is Seen. The Word of the Day is always a Word.
  *
@@ -405,11 +401,16 @@ export async function openFeed({
     // Read again: the card after the end-of-Cycle card started a new Cycle above.
     const unseenNow = cycle.unseen();
     const id = nextEntryId({
-      session,
+      session: {
+        cards: session.cards,
+        all: session.all,
+        cycleCards: session.cycleCards(),
+        shownIds: session.shownIds(),
+      },
       unseen: unseenNow,
       due: eligibleDue(cycle, knowledge),
       weights: today.kindWeights(mix.kindWeightsInEffect()),
-      inBand: await inBandOf(unseenNow.words, today.inBand),
+      wordInBand: await inBandOf(unseenNow.words, today.inBand),
     });
     // A due Review goes before the Quick Question (ADR 0066), and the card
     // after the end-of-Cycle card, which starts the new Cycle, is an Entry's.

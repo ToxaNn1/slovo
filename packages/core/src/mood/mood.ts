@@ -40,13 +40,12 @@ export interface MoodFeedParameters {
  * which the Dashboard asks, the Feed reads (#1571) and the Profile counts.
  */
 export interface MoodCheckIns {
-  /** Today's check-in; `asking` with `mood` off, since nothing asks. */
-  readonly today: MoodCheckIn;
   /**
-   * Today's Mood, or none: a Mood chosen on another local day answers
-   * nothing, even before the day change reaches the check-in.
+   * Today's check-in; `asking` with `mood` off, since nothing asks. A
+   * check-in of another local day reads `asking`, even before the day
+   * change reaches it, so the Dashboard and the Feed give one answer.
    */
-  todaysMood(): Mood | undefined;
+  readonly today: MoodCheckIn;
   /** What today's Mood asks of the next Feed card, read for each card. */
   feedParameters(): MoodFeedParameters;
   /** The four moods of the Dashboard, in display order. */
@@ -104,8 +103,15 @@ export async function openMoodCheckIns({
     subscribers.tell();
   }
 
+  /** Today's check-in, `asking` once the local day it was made on is over. */
+  function todaysCheckIn(): MoodCheckIn {
+    return day === todayKey(clock) ? today : { state: 'asking' };
+  }
+
+  /** Today's Mood, or none. */
   function todaysMood(): Mood | undefined {
-    return today.state === 'chosen' && day === todayKey(clock) ? today.mood : undefined;
+    const checkIn = todaysCheckIn();
+    return checkIn.state === 'chosen' ? checkIn.mood : undefined;
   }
 
   async function record(choice: string): Promise<void> {
@@ -119,9 +125,8 @@ export async function openMoodCheckIns({
 
   return {
     get today() {
-      return today;
+      return todaysCheckIn();
     },
-    todaysMood,
     feedParameters() {
       const mood = todaysMood();
       const band = mood?.rarityBand ?? 'whole';
