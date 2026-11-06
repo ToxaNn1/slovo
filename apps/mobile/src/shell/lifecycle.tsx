@@ -7,7 +7,6 @@ import { deviceClock } from '../device/device-clock';
 import type { AppStateSource } from '../foreground/foreground';
 import { reportForeground } from '../foreground/foreground-reports';
 import { logError } from '../diagnostics/log';
-import { keep } from '../keep';
 import { deviceSpotlight } from '../spotlight/device-spotlight';
 import { handOverSpotlight } from '../spotlight/spotlight-hand-over';
 import type { SpotlightIndex } from '../spotlight/spotlight-index';
@@ -58,7 +57,9 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   const reports = reportForeground({ clock: device.clock, appState: device.appState });
   reports.listen(composition, (opened, moment) => {
     if (moment !== 'return' && moment !== 'new-day') return;
-    void keep('the app in the foreground', opened.resume());
+    opened.resume().catch((error: unknown) => {
+      logError('Could not follow the app into the foreground', error);
+    });
   });
   reports.listen(composition, (opened, moment) => {
     if (moment === 'launch' || moment === 'background') writeWidgetSnapshot(opened.widget);
@@ -107,12 +108,13 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   if (account !== undefined) {
     reports.listen(account, (opened, moment) => {
       if (moment !== 'launch' && moment !== 'return') return;
-      void keep(
-        'the Account',
-        isOnInEffect('account').then(async (on) => {
+      isOnInEffect('account')
+        .then(async (on) => {
           if (on) await opened.refresh();
-        }),
-      );
+        })
+        .catch((error: unknown) => {
+          logError('Could not refresh the Account', error);
+        });
     });
   }
   return () => {
