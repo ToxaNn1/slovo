@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { renderOverComposition, settled } from '../hook-test-support';
+import { renderOverComposition, settled } from '../hook-test/test-support';
 import { useCollectionChanges, useCollectionList, useEntryCollections } from './collections';
 
 /** The Collections hooks for one Entry, over the test Language Pack. */

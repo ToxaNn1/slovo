@@ -6,9 +6,9 @@ import { act, renderHook } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { edition, editionStrings } from './edition/edition';
-import { ShellProvider } from './shell-value';
-import { opened, testShell } from './shell/test-support';
+import { edition, editionStrings } from '../edition/edition';
+import { ShellProvider } from '../shell-value';
+import { opened, testShell } from '../shell/test-support';
 
 // Helpers of the app's hook tests. No screen or module of the app imports them.
 

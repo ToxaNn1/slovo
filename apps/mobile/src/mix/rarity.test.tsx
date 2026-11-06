@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { renderOverComposition, settled } from '../hook-test-support';
+import { renderOverComposition, settled } from '../hook-test/test-support';
 import { useRarityCeiling } from './rarity-ceiling';
 import { useApplyRarityTest } from './rarity-test';
 

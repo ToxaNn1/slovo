@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { nature, renderOverComposition, settled } from '../hook-test-support';
+import { nature, renderOverComposition, settled } from '../hook-test/test-support';
 import { useHiddenChanges } from './hidden';
 import { useMixState } from './mix';
 
