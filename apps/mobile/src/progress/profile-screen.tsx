@@ -195,7 +195,9 @@ export function ProfileScreen() {
             families={edition.badgeFamilies}
             badges={badges}
             onPress={(badge) => {
-              if (badge.earned) setStamped(badge);
+              if (!badge.earned) return;
+              setStamped(badge);
+              void composition.badges.open(badge.id).catch(() => undefined);
             }}
           />
           {stamped !== undefined && (
@@ -206,6 +208,7 @@ export function ProfileScreen() {
               title={strings.badgeStamp.title}
               takeLabel={strings.badgeStamp.take}
               mascot={<MascotAs state="celebrates" onRed />}
+              isNew={stamped.earned && stamped.isNew}
               onClose={() => {
                 setStamped(undefined);
               }}

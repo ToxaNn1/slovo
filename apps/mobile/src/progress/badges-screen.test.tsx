@@ -112,7 +112,7 @@ describe('the Badges screen', () => {
     });
     expect(screen.getByTestId('badge-win-words-status')).toHaveTextContent('Отримано 13 жовтня');
     expect(screen.getByTestId('badge-win-words-mark-symbol')).toHaveTextContent('Сл');
-    expect(screen.queryByTestId('badge-streak-3-mark-symbol')).toBeNull();
+    expect(screen.queryByTestId('badge-win-stress-mark-symbol')).toBeNull();
     expect(screen.getByTestId('badges-count')).toHaveTextContent(
       `1 з ${String(edition.badges.length)}`,
     );
@@ -128,5 +128,44 @@ describe('the Badges screen', () => {
     expect(
       screen.queryByText(editionStrings.settings.profile.badgeStamp.title),
     ).not.toBeOnTheScreen();
+  });
+
+  // Ticket #1645: board 10.5/10.6, a new Badge carries «НОВА» until it is opened.
+  it('marks a new Badge «НОВА», cream on its stamp, and drops the mark once the stamp opens it', async () => {
+    const composition = await renderScreen();
+    await act(async () => {
+      composition.xpLog
+        .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+        .commit();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.getByTestId('badge-win-words-mark-new')).toHaveTextContent(strings.newTag);
+    expect(screen.queryByTestId('badge-win-stress-mark-new')).toBeNull();
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('badge-win-words'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.getByTestId('badge-stamp-mark-new')).toHaveTextContent(strings.newTag);
+    expect(screen.queryByTestId('badge-win-words-mark-new')).toBeNull();
+    expect(composition.xpLog.milestones.opened.has('win-words')).toBe(true);
+
+    await fireEvent.press(screen.getByTestId('badge-stamp-take'));
+    await fireEvent.press(screen.getByTestId('badge-win-words'));
+    expect(screen.queryByTestId('badge-stamp-mark-new')).toBeNull();
+  });
+
+  it('shows the symbol of a Badge in progress and none of one not started', async () => {
+    const composition = await renderScreen();
+    await act(async () => {
+      composition.xpLog
+        .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+        .commit();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    expect(screen.getByTestId('badge-streak-3')).toHaveAccessibilityValue({ text: '1 з 3 днів' });
+    expect(screen.getByTestId('badge-streak-3-mark-symbol')).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-streak-3-mark-new')).toBeNull();
+    expect(screen.queryByTestId('badge-win-stress-mark-symbol')).toBeNull();
   });
 });

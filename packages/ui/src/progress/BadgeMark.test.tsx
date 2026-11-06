@@ -1,26 +1,40 @@
 import { BadgeMark, EditionProvider } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
 import { render, screen } from '@testing-library/react-native';
+import type { ComponentProps } from 'react';
 import { testStrings } from '../test-strings';
 
-async function draw(earned: boolean) {
+async function draw(state: ComponentProps<typeof BadgeMark>['state']) {
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
-      <BadgeMark testID="badge" shape="hexagon" tone="red" symbol="7" earned={earned} size={48} />
+    <EditionProvider
+      edition={{ locale: 'en' }}
+      strings={testStrings({ settings: { badges: { newTag: 'NEW' } } })}
+    >
+      <BadgeMark testID="badge" shape="hexagon" tone="red" symbol="7" state={state} size={48} />
     </EditionProvider>,
   );
 }
 
 describe('BadgeMark', () => {
-  it('shows an earned Badge with its symbol', async () => {
-    await draw(true);
+  it('shows an earned Badge with its symbol, and the new tag only while it is new', async () => {
+    await draw({ kind: 'earned', isNew: true });
     expect(screen.getByTestId('badge-symbol')).toHaveTextContent('7');
+    expect(screen.getByTestId('badge-new')).toHaveTextContent('NEW');
+
+    await draw({ kind: 'earned', isNew: false });
+    expect(screen.queryByTestId('badge-new')).toBeNull();
   });
 
-  it('shows a Badge not yet earned as a silhouette with no symbol', async () => {
-    await draw(false);
+  it('shows a Badge not started as a silhouette with no symbol', async () => {
+    await draw({ kind: 'locked' });
     expect(screen.getByTestId('badge')).toBeOnTheScreen();
     expect(screen.queryByTestId('badge-symbol')).toBeNull();
     expect(screen.queryByText('7')).toBeNull();
+  });
+
+  it('shows a Badge in progress with its symbol and no new tag', async () => {
+    await draw({ kind: 'progress', fraction: 0.5 });
+    expect(screen.getByTestId('badge-symbol')).toHaveTextContent('7');
+    expect(screen.queryByTestId('badge-new')).toBeNull();
   });
 });

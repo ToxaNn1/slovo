@@ -115,6 +115,16 @@ export const badgeTile = [
   [0, 0.14],
 ] as const satisfies Wedge;
 
+/** The «НОВА» tag over an earned Badge's top right corner, turned as on board 10.5. */
+export const badgeNewTag = {
+  turn: 8,
+  top: -4,
+  right: -8,
+  paddingHorizontal: 5,
+  paddingVertical: 2,
+  radius: 3,
+} as const;
+
 /** Spacing the design draws between the steps of the 4-pt grid on the field that names a Collection. */
 export const cardSpace = {
   /** Around the content of the field that names a Collection. */

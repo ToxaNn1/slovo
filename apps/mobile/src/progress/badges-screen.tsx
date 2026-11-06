@@ -83,13 +83,15 @@ function conditionText({ condition }: BadgeState, count: (forms: Plural, n: numb
  * Every Badge of the Edition as its mark, in a grid by the Edition's Badge
  * families under how many of all are earned; each shows its condition and
  * shows, and VoiceOver reads, its date or, while not earned, how far its
- * condition has come. A tap on an earned one stamps it on red.
+ * condition has come. A tap on an earned one stamps it on red and opens it,
+ * which ends its «НОВА» mark (ADR 0085).
  */
 function Badges() {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice, count } = useEdition();
-  const badges = useSubscribed(useComposition().badges, ({ state }) => state);
+  const composed = useComposition().badges;
+  const badges = useSubscribed(composed, ({ state }) => state);
   /** The earned Badge stamped over the screen after a tap on its mark. */
   const [stamped, setStamped] = useState<BadgeState | undefined>(undefined);
 
@@ -120,7 +122,9 @@ function Badges() {
         statusOf={statusOf}
         conditionOf={(badge) => conditionText(badge, count)}
         onPress={(badge) => {
-          if (badge.earned) setStamped(badge);
+          if (!badge.earned) return;
+          setStamped(badge);
+          void composed.open(badge.id).catch(() => undefined);
         }}
       />
       {stamped !== undefined && (
@@ -131,6 +135,7 @@ function Badges() {
           title={editionStrings.settings.profile.badgeStamp.title}
           takeLabel={editionStrings.settings.profile.badgeStamp.take}
           mascot={<MascotAs state="celebrates" onRed />}
+          isNew={stamped.earned && stamped.isNew}
           onClose={() => {
             setStamped(undefined);
           }}

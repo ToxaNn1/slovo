@@ -516,6 +516,7 @@ describe('the Share Card of progress', () => {
           condition: { kind: 'streak', days: 7 },
           earned: true,
           date: '2026-10-30',
+          isNew: false,
         },
       },
       STRINGS,
