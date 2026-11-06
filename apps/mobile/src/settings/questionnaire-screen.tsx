@@ -6,7 +6,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 import { InterestsChoice } from '../feed/later-question-notice';
 import { useShown } from '../shown-in-effect';
@@ -69,14 +69,10 @@ export function QuestionnaireScreen() {
                 label={label}
                 selected={answered[question] === id}
                 onPress={() => {
-                  questionnaire.answer(question, id).then(
-                    () => {
-                      setAnswered((before) => ({ ...before, [question]: id }));
-                    },
-                    (error: unknown) => {
-                      logError('Could not retake a question', error);
-                    },
-                  );
+                  const answering = questionnaire.answer(question, id).then(() => true);
+                  void keep('the answer to a question', answering, false).then((kept) => {
+                    if (kept) setAnswered((before) => ({ ...before, [question]: id }));
+                  });
                 }}
               />
             ))}
@@ -87,9 +83,7 @@ export function QuestionnaireScreen() {
           <InterestsChoice
             testIDPrefix="questionnaire"
             onDone={(categoryIds) => {
-              questionnaire.chooseInterests(categoryIds).catch((error: unknown) => {
-                logError('Could not retake the interests', error);
-              });
+              void keep('the interests', questionnaire.chooseInterests(categoryIds));
             }}
           />
         </View>

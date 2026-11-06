@@ -84,7 +84,7 @@ export default {
         'or a test-support module imports it, and no app or backend module ships oRPC server code.',
       severity: 'error',
       from: {
-        pathNot: ['\\.test\\.tsx?$', '(^|/)test-support\\.ts$', '^packages/core/src/fakes/'],
+        pathNot: ['\\.test\\.tsx?$', '(^|/)test-support\\.tsx?$', '^packages/core/src/fakes/'],
       },
       to: { path: '^packages/contracts/src/api/test-support\\.ts$' },
     },
@@ -94,7 +94,7 @@ export default {
         "ADR 0027: the fakes of the Core's ports are test doubles, so only a test or a " +
         'test-support module imports `@slovo/core/testing`, and no app or package ships them.',
       severity: 'error',
-      from: { pathNot: ['\\.test\\.tsx?$', '(^|/)test-support\\.ts$'] },
+      from: { pathNot: ['\\.test\\.tsx?$', '(^|/)test-support\\.tsx?$'] },
       to: { path: '^packages/core/src/testing\\.ts$' },
     },
     {

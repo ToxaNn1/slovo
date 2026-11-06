@@ -1,11 +1,15 @@
 import type {
   Account,
+  Backend,
+  Clock,
   Composition,
   CounterReads,
   Edition,
   MistakeReports,
   openCounterSending,
   openRemoteSwitches,
+  Random,
+  Schedule,
   Settings,
   Sync,
   TrackedUserState,
@@ -24,6 +28,30 @@ export type EditionSwitches = Awaited<ReturnType<typeof openRemoteSwitches<Editi
 
 /** The Core's sending of the Community Counters. */
 export type CounterSending = Awaited<ReturnType<typeof openCounterSending>>;
+
+/** What the Shell opens the device ports over: the device's own, or a test's fakes. */
+export interface DeviceSources {
+  readonly backend: Backend;
+  readonly clock: Clock;
+  readonly schedule: Schedule;
+  readonly random: Random;
+  readonly userState: Opening<TrackedUserState>;
+}
+
+/**
+ * The one set of device ports every opening apart from the remote Feature
+ * Switches opens over, built once by the Shell and named as the Core's
+ * openings name them, so each takes it as it is.
+ */
+export interface DevicePorts extends Omit<DeviceSources, 'userState'> {
+  readonly userState: TrackedUserState;
+  /**
+   * The Edition in effect, remote switches included (ADR 0040): the one of
+   * the last change when read, and each of them reads the last answer
+   * whenever it is asked.
+   */
+  readonly edition: Edition;
+}
 
 /** The settings and those in effect when they opened. */
 export interface OpenedSettings {

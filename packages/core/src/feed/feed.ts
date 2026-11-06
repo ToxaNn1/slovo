@@ -1,4 +1,4 @@
-import type { MixKindWeight, Mood, Rarity, Word } from '@slovo/contracts';
+import type { Rarity, Word } from '@slovo/contracts';
 
 import { buildCorrectionCard } from '../entries/correction-card';
 import { buildIdiomCard } from '../entries/idiom-card';
@@ -6,7 +6,7 @@ import { buildSynonymRowCard } from '../entries/synonym-row-card';
 import { buildTipCard } from '../entries/tip-card';
 import type { Cycle } from './cycle';
 import type { Entries, EntryIds, ShownEntry } from '../entries/entries';
-import { ENTRY_KINDS, MIX_KINDS } from '../entries/entry-kinds';
+import { nextEntryId, takesTurns } from './card-order';
 import {
   asReviewIfDue,
   type AnyEntryCard,
@@ -15,7 +15,7 @@ import {
   type WordFeedCard,
 } from './feed-card';
 import type { FeedNoticeQueue } from './feed-notices';
-import { createFeedSession, type FeedSession } from './feed-session';
+import { createFeedSession } from './feed-session';
 import type { HistoryRecorder, Seen } from '../saved/history';
 import type { WordOfTheDayArchiveRecorder } from '../saved/word-of-the-day-archive';
 import { createInTurn, createSubscribers } from '../in-turn';
@@ -24,9 +24,8 @@ import type { Subject } from '../subject';
 import type { OpenedEntry } from './day-change';
 import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
-import type { MixKindWeights } from '../entries/mix';
-import { inRarityBand, shiftedKindWeights } from '../mood/feed-parameters';
-import type { RarityCeiling } from '../entries/rarity-ceiling';
+import type { Mix } from '../entries/mix';
+import type { MoodCheckIns, MoodFeedParameters } from '../mood/mood';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import { buildWordCard } from '../entries/word-card';
@@ -35,45 +34,6 @@ import type { QuickQuestion } from '../game/quick-question';
 
 /** How long a card must stay on screen before its Entry counts as Seen. */
 export const SEEN_DWELL_MS = 500;
-
-/**
- * The kinds that take turns, from the kind table, in the order they take a
- * card their turns fall on together: each with its Entries' list and how
- * often its turn comes (every 5th card a Correction's, every 7th an Idiom's,
- * every 9th a Synonym Row's, every 11th a Tip's), while the Cycle has unseen
- * Entries of it. When a turn falls on an earlier kind's, that kind takes the
- * card and the loser the next (ADR 0046, 0051). These are the turns at
- * «Звичайно»; `SPACING` turns them by the kind's Mix kind weight.
- */
-const TURNS = MIX_KINDS.map((kind) => ({
-  kind,
-  ids: ENTRY_KINDS[kind].name,
-  every: ENTRY_KINDS[kind].feedTurn,
-}));
-
-/**
- * How a Mix kind weight spaces a kind's turn of `every` cards: «Менше» twice
- * as far apart, «Більше» twice as close, rounded up, so a Correction comes
- * every 10th or every 3rd card; Words fill the rest (ADR 0051).
- */
-const SPACING: Readonly<Record<MixKindWeight, (every: number) => number>> = {
-  less: (every) => every * 2,
-  normal: (every) => every,
-  more: (every) => Math.ceil(every / 2),
-};
-
-/**
- * One card in this many is a Word's due for Review, while any is due and it
- * isn't another kind's turn. An Entry of another kind due for Review takes
- * its kind's turn itself.
- */
-const REVIEW_EVERY = 3;
-
-/**
- * Whether the card is no Feed Notice and no Quick Question, so it counts in
- * the turns and the Review slots (ADR 0054).
- */
-const takesTurns = (card: FeedCard) => card.kind !== 'notice' && card.kind !== 'quick-question';
 
 /**
  * The Feed of one app session. Its cards are the ones shown so far, oldest
@@ -221,74 +181,6 @@ export async function buildFeedCard(
 
 const { feedPosition } = userStateRecords;
 
-/**
- * The next Entry in the Cycle order: one not shown in this session yet, else
- * one the reader swiped past too quickly to be Seen. Never the Entry of the
- * last card, which the reader is on while the app gets the next card ready:
- * when it is the only unseen Entry left, the Cycle ends after it. A
- * Correction takes its turn every `CORRECTION_EVERY`th card of the Cycle, an
- * Idiom every `IDIOM_EVERY`th, a Synonym Row every `SYNONYM_ROW_EVERY`th and
- * a Tip every `TIP_EVERY`th, each counted from its kind's last card; when
- * turns fall on one card they take it in the order of `TURNS` and each loser
- * the next (ADR 0046, 0051). Any kind fills in for another when it has none
- * left. A kind's turn goes to an Entry of the kind due for Review before a
- * new one, and every `REVIEW_EVERY`th card of the session that is no other
- * kind's turn goes to a Word due for Review, if any (ADR 0043).
- */
-function nextEntryId(
-  unseen: EntryIds,
-  session: FeedSession,
-  due: EntryIds,
-  weights: MixKindWeights,
-): string | undefined {
-  const shown = session.shownIds();
-  const last = session.cards.findLast(takesTurns)?.entryId;
-  const inCycle = session.cycleCards().filter(takesTurns);
-  /** Whether the next card is the turn of the kind that comes every `every`th card. */
-  function turnOf(kind: FeedCard['kind'], every: number): boolean {
-    const since = [...inCycle].reverse().findIndex((card) => card.kind === kind);
-    return (since === -1 ? inCycle.length : since) >= every - 1;
-  }
-  const turns = TURNS.filter(({ kind, every }) => turnOf(kind, SPACING[weights[kind]](every)));
-  // The kinds in the order the next card goes to them: the turns first, then Words.
-  const kinds: readonly (keyof EntryIds)[] = [
-    ...turns.map(({ ids }) => ids),
-    'words',
-    ...TURNS.map(({ ids }) => ids),
-  ];
-  function pick(fits: (id: string) => boolean): string | undefined {
-    for (const kind of kinds) {
-      const id = unseen[kind].find(fits);
-      if (id !== undefined) return id;
-    }
-    return undefined;
-  }
-  const id = pick((id) => !shown.has(id)) ?? pick((id) => id !== last);
-  for (const { ids } of turns) {
-    const dueOfKind = reviewEntryId(due[ids], session);
-    if (dueOfKind !== undefined) return dueOfKind;
-    if (id !== undefined && unseen[ids].includes(id)) return id;
-  }
-  // Counting every card of the session, also the dropped ones, so a hide never moves the slots.
-  const reviewSlot = (session.all.filter(takesTurns).length + 1) % REVIEW_EVERY === 0;
-  return (reviewSlot ? reviewEntryId(due.words, session) : undefined) ?? id;
-}
-
-/**
- * The due Entry a Review slot goes to: of the Entries `due`, in the Cycle
- * order, the one not shown in this session or shown longest ago. Never the
- * Entry of the last card. A due Entry so comes back slot after slot until
- * the reader answers it, Seen or not.
- */
-function reviewEntryId(due: readonly string[], session: FeedSession): string | undefined {
-  const last = session.cards.findLast(takesTurns)?.entryId;
-  // Each Entry's last place in the session.
-  const shownAt = new Map(session.cards.map((card, place) => [card.entryId, place]));
-  return due
-    .filter((id) => id !== last)
-    .sort((a, b) => (shownAt.get(a) ?? -1) - (shownAt.get(b) ?? -1))[0];
-}
-
 /** The Entries due for Review that the Cycle covers, so neither Hidden nor out of the Mix, in its order. */
 function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryIds {
   const due = new Set(knowledge.state.due);
@@ -324,16 +216,13 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * itself, with its Word of the Day and no end-of-Cycle card, because the
  * Word of the Day always opens the day.
  *
- * The Cycle covers the eligible Entries. When they hold Corrections, every
- * `CORRECTION_EVERY`th card is a Correction's while the Cycle has unseen
- * Corrections, and likewise every `IDIOM_EVERY`th an Idiom's, every
- * `SYNONYM_ROW_EVERY`th a Synonym Row's and every `TIP_EVERY`th a Tip's;
- * when turns fall on one card, the Correction goes first, then the Idiom,
- * the Synonym Row and the Tip, and each loser takes the next card (ADR 0046,
+ * The Cycle covers the eligible Entries; the card order (`nextEntryId` in
+ * `card-order.ts`) gives each card's Entry: each kind's turn, spaced by its
+ * Mix kind weight, and the Review slots are set out there (ADR 0046,
  * 0051). Every kind is shuffled and Seen like Words, and the Cycle ends only
  * once every eligible Entry is Seen. The Word of the Day is always a Word.
  *
- * While Words are due for Review, every `REVIEW_EVERY`th card of the session
+ * While Words are due for Review, every 3rd card of the session
  * that is no other kind's turn shows one, Seen in this Cycle or not, until
  * the reader answers it (ADR 0043). While Entries of another kind are due,
  * the kind's turn shows one before a new Entry of the kind, in the same way. A
@@ -378,9 +267,8 @@ export async function openFeed({
   history,
   archive,
   notices,
-  kindWeights,
+  mix,
   mood,
-  rarityCeiling,
   eligibility,
   seen,
   dayTurned,
@@ -396,24 +284,19 @@ export async function openFeed({
   history: HistoryRecorder;
   archive: WordOfTheDayArchiveRecorder;
   notices: FeedNoticeQueue;
-  /** The Mix kind weights the turns follow now, read for each card. */
-  kindWeights: () => MixKindWeights;
-  /** Today's Mood, whose Feed parameters the next card follows (ADR 0076), read for each card; none chosen leaves the Feed as it is. */
-  mood: () => Mood | undefined;
-  /** The Rarity Ceiling the Mood's rarity band clips to. */
-  rarityCeiling: Pick<RarityCeiling, 'state'>;
+  /** The Mix, whose kind weights and Quick Question frequency in effect the next card follows, read for each card. */
+  mix: Pick<Mix, 'kindWeightsInEffect' | 'quickQuestionEveryInEffect'>;
+  /** The Mood check-in, whose Feed parameters for today the next card follows (ADR 0076), read for each card. */
+  mood: Pick<MoodCheckIns, 'feedParameters'>;
   eligibility: Pick<Subject<void>, 'subscribe'>;
   seen: Pick<Subject<string>, 'publish'>;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
   opened: Pick<Subject<OpenedEntry>, 'subscribe'>;
   /**
-   * The Quick Question and how often it comes, read for each card: one card
-   * in `every()` that is no Feed Notice, nothing while it is off.
+   * The Quick Question: one card in the Mix's frequency in effect that is no
+   * Feed Notice, nothing while it is off.
    */
-  quickQuestion?: {
-    every(): number | undefined;
-    questions: Pick<QuickQuestion, 'build' | 'answer'>;
-  };
+  quickQuestion?: Pick<QuickQuestion, 'build' | 'answer'>;
 }): Promise<Feed> {
   /** The cards of the session and the reader's place among them. */
   const session = createFeedSession();
@@ -514,13 +397,21 @@ export async function openFeed({
       started.commit();
       session.startCycle();
     }
-    const today = mood();
-    const id = nextEntryId(
-      await bandFirst(cycle.unseen(), today),
-      session,
-      eligibleDue(cycle, knowledge),
-      shiftedKindWeights(kindWeights(), today),
-    );
+    const today = mood.feedParameters();
+    // Read again: the card after the end-of-Cycle card started a new Cycle above.
+    const unseenNow = cycle.unseen();
+    const id = nextEntryId({
+      session: {
+        cards: session.cards,
+        all: session.all,
+        cycleCards: session.cycleCards(),
+        shownIds: session.shownIds(),
+      },
+      unseen: unseenNow,
+      due: eligibleDue(cycle, knowledge),
+      weights: today.kindWeights(mix.kindWeightsInEffect()),
+      wordInBand: await inBandOf(unseenNow.words, today.inBand),
+    });
     // A due Review goes before the Quick Question (ADR 0066), and the card
     // after the end-of-Cycle card, which starts the new Cycle, is an Entry's.
     const due = id !== undefined && knowledge.state.shown.get(id) === 'review';
@@ -556,30 +447,28 @@ export async function openFeed({
   }
 
   /**
-   * The unseen Entries with the Mood's rarity band applied (ADR 0076): the
-   * Words of the band first, in the Cycle order, then the rest, so the Cycle
-   * still ends. The other kinds stay as they are.
+   * Whether a Word of `words` is in the Mood's rarity band (ADR 0076), or
+   * nothing without a band.
    */
-  async function bandFirst(unseen: EntryIds, today: Mood | undefined): Promise<EntryIds> {
-    if (today === undefined || today.rarityBand === 'whole') return unseen;
-    const known = await raritiesOf(unseen.words);
-    const inBand = (id: string) => {
+  async function inBandOf(
+    words: readonly string[],
+    inRarityBand: MoodFeedParameters['inBand'],
+  ): Promise<((wordId: string) => boolean) | undefined> {
+    if (inRarityBand === undefined) return undefined;
+    const known = await raritiesOf(words);
+    return (id) => {
       const rarity = known.get(id);
-      return rarity !== undefined && inRarityBand(rarity, today.rarityBand, rarityCeiling.state);
-    };
-    return {
-      ...unseen,
-      words: [...unseen.words.filter(inBand), ...unseen.words.filter((id) => !inBand(id))],
+      return rarity !== undefined && inRarityBand(rarity);
     };
   }
 
   async function addQuickQuestion(): Promise<FeedCard | undefined> {
-    const every = quickQuestion?.every();
+    const every = mix.quickQuestionEveryInEffect();
     if (quickQuestion === undefined || every === undefined) return undefined;
     const lastAsked = session.cards.findLastIndex((card) => card.kind === 'quick-question');
     const since = session.cards.slice(lastAsked + 1).filter(takesTurns);
     if (since.length < every - 1) return undefined;
-    const content = await quickQuestion.questions.build(since.at(-1)?.entryId);
+    const content = await quickQuestion.build(since.at(-1)?.entryId);
     if (content === undefined) return undefined;
     const card: FeedCard = { ...content, kind: 'quick-question' };
     session.add(card);
@@ -594,7 +483,7 @@ export async function openFeed({
     const card = session.cards[position];
     if (quickQuestion === undefined || card?.kind !== 'quick-question') return undefined;
     if (card.answered !== undefined) return undefined;
-    const right = await quickQuestion.questions.answer(card, option);
+    const right = await quickQuestion.answer(card, option);
     const answered: FeedCard = { ...card, answered: option };
     session.renew((each) => (each === card ? answered : each));
     subscribers.tell();

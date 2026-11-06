@@ -22,7 +22,7 @@ export function useFavorite(entryId: string): {
     inFavorites,
     toggle: () => keep('Favorites', favorites.toggle(entryId), favorites.has(entryId)),
     remove: () => {
-      void keep('Favorites', favorites.remove(entryId), undefined);
+      void keep('Favorites', favorites.remove(entryId));
     },
   };
 }

@@ -102,9 +102,20 @@ describe('the Quick Question frequency', () => {
     async (off) => {
       const { app } = await run({ on: ALL_ON.filter((feature) => feature !== off) });
 
+      expect(app.mix.quickQuestionEveryInEffect()).toBeUndefined();
       expect(await askedAt(app, 25)).toEqual([]);
     },
   );
+
+  it("comes as often as the reader's choice in the Mix, which off stops it", async () => {
+    const { app } = await run();
+    await app.mix.setQuickQuestionEvery(6);
+    expect(app.mix.quickQuestionEveryInEffect()).toBe(6);
+
+    await app.mix.setQuickQuestionEvery('off');
+
+    expect(app.mix.quickQuestionEveryInEffect()).toBeUndefined();
+  });
 
   it('gives its slot to a Word due for Review first and comes right after it', async () => {
     const due = new Map(

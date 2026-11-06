@@ -174,6 +174,33 @@ describe('the Feed under a Mood', () => {
     expect(await kindsOf(slow.feed, 30)).toBe(await kindsOf(less.feed, 30));
   });
 
+  it('leaves today’s Feed as it is under yesterday’s Mood, before the day change reaches the check-in', async () => {
+    const openDay = async (choose: boolean) => {
+      const time = fakeClock('2026-11-05T23:50:00+02:00');
+      const app = await openComposition({
+        content,
+        edition: testEdition({
+          isFeatureEnabled: (feature) => ['mood', 'rarityCeiling'].includes(feature),
+          moods: MOODS,
+          dashboardMoods: MOODS,
+        }),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+        clock: time.clock,
+        random: seededRandom(1376),
+      });
+      if (choose) await app.mood.choose('upper');
+      time.set('2026-11-06T00:10:00+02:00');
+      return app;
+    };
+    const plain = await openDay(false);
+    const yesterday = await openDay(true);
+
+    const ids = await cycleIds(yesterday.feed);
+
+    expect(ids).toEqual(await cycleIds(plain.feed));
+    expect(ids).toHaveLength(words.length);
+  });
+
   it('without a Mood shows today’s Feed card for card, asked or skipped', async () => {
     const off = await openComposition({
       content,

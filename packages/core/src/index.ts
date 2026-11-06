@@ -33,7 +33,12 @@ export { partOfSpeechText, registerText, wordGrammarText } from './entries/part-
 export { stressLabel } from './entries/stress-label';
 export { sentences } from './sentences';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
-export { createEntries, type Entries } from './entries/entries';
+export {
+  createEntries,
+  EVERYTHING_IN,
+  type EligibilityChoices,
+  type Entries,
+} from './entries/entries';
 export {
   linkFromOutside,
   linkSourceOf,
@@ -56,6 +61,7 @@ export {
   type TipFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
+export { entryCardTitle } from './feed/entry-feed-card';
 export { LATER_QUESTIONS, type FeedNotice, type LaterQuestion } from './feed-notice';
 export { type FirstWeekDay } from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
@@ -100,7 +106,7 @@ export {
   type SoundEngine,
 } from './sounds/interface-sounds';
 export { type HiddenEntry } from './mix/hidden-entries';
-export { type HideTarget, type HidingChange } from './mix/hiding';
+export { type HidingChange, type HidingUndo } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
 export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';
@@ -174,11 +180,7 @@ export {
   type SettingsDefaults,
   type UserSettings,
 } from './settings/settings';
-export {
-  readRarityCeiling,
-  withinRarityCeiling,
-  type RarityCeiling,
-} from './entries/rarity-ceiling';
+export { withinRarityCeiling, type RarityCeiling } from './entries/rarity-ceiling';
 export { renderStress, STRESS_MARK, withoutStress } from './entries/stress';
 export { createGesturesHint, type GesturesHint } from './feed/gestures-hint';
 export { buildWordCard, type WordCardModel } from './entries/word-card';
@@ -204,12 +206,19 @@ export {
 } from './entries/entry-kinds';
 export {
   categoriesInMix,
+  categoryTarget,
   categoryPlace,
   kindsShown,
   type CategoriesInMix,
   type CategoryPlace,
+  type EntryToHide,
+  type HideOption,
+  type HideTarget,
+  type MixChip,
+  type MixScreen,
   type MixKindWeights,
   type MixState,
+  type OutOfMix,
 } from './entries/mix';
 export { launchKind, type LaunchKind, type OnboardingStep } from './onboarding/onboarding';
 export type {

@@ -303,7 +303,7 @@ function NoticeCard({ card }: { card: Exclude<FeedNoticeCard, { notice: 'yesterd
 
 /** Yesterday's Word in Self-check style, with its Knowledge Marks as on any card. */
 function YesterdayNotice({ word }: { word: WordCardModel }) {
-  return <YesterdayCard word={word} slots={useYesterdaySlots(word.wordId)} />;
+  return <YesterdayCard word={word} slots={useYesterdaySlots(word)} />;
 }
 
 const styles = StyleSheet.create({

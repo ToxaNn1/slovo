@@ -4,12 +4,9 @@ import { useState } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
-import { logError } from '../diagnostics/log';
-import type { Opening } from '../opening';
-import { useShell } from '../shell-value';
-import { hideChoice, hideToast, type HideOption } from './hide-choice';
-import { undoHide } from './hiding-undo';
+import { keep } from '../keep';
+import { useUndo, type Undo } from '../undo';
+import { hideChoice, hideToast, type HideChoiceOption } from './hide-choice';
 
 const { hiding: strings } = editionStrings;
 
@@ -39,38 +36,32 @@ export interface HideChoiceProps {
  */
 export function useHide(card: AnyEntryCard): { open: () => void; choice: HideChoiceProps } {
   const composition = useComposition();
-  const compositionOpening = useShell().composition;
-  const edition = useEditionInEffect();
+  const undo = useUndo();
   const showToast = useUndoToast();
   const [visible, setVisible] = useState(false);
-  const [options, setOptions] = useState<readonly HideOption[]>([]);
+  const [options, setOptions] = useState<readonly HideChoiceOption[]>([]);
 
   return {
     open() {
       // Read when the sheet opens, so it follows every change of the Mix.
-      setOptions(
-        hideChoice({ card, mix: composition.mix.state, edition, strings: editionStrings }),
-      );
+      setOptions(hideChoice({ card, mix: composition.mix, strings: editionStrings }));
       setVisible(true);
     },
     choice: {
       visible,
       options: options.map((option) => ({
-        key: option.kind,
+        key: keyOf(option),
         label: option.label,
-        ...(option.kind === 'category' &&
-          option.disabledHint !== undefined && { disabledHint: option.disabledHint }),
+        ...(option.kind === 'last-category' && { disabledHint: option.disabledHint }),
       })),
       cancelLabel: strings.choice.cancel,
       onChoose(key) {
         // The sheet is still on screen while it slides out: a second tap hides nothing more.
         if (!visible) return;
         setVisible(false);
-        const option = options.find(({ kind }) => kind === key);
-        if (option === undefined || (option.kind === 'category' && option.disabledHint)) return;
-        hide(composition, option, showToast, compositionOpening).catch((error: unknown) => {
-          logError('Could not hide from the card', error);
-        });
+        const option = options.find((offered) => keyOf(offered) === key);
+        if (option === undefined || option.kind === 'last-category') return;
+        void keep('the hide from the card', hide(composition, option, showToast, undo));
       },
       onCancel() {
         setVisible(false);
@@ -79,13 +70,18 @@ export function useHide(card: AnyEntryCard): { open: () => void; choice: HideCho
   };
 }
 
+/** The sheet's key of an option: the last Category is offered in the place of a Category. */
+function keyOf(option: HideChoiceOption): string {
+  return option.kind === 'last-category' ? 'category' : option.kind;
+}
+
 /** Hides what the option names and shows its undo toast, unless nothing changed. */
 async function hide(
   composition: Composition,
-  option: HideOption,
+  option: Exclude<HideChoiceOption, { readonly kind: 'last-category' }>,
   showToast: (toast: UndoToastContent) => void,
-  /** The composition open at the undo tap (ADR 0018). */
-  compositionOpening: Opening<Composition>,
+  /** Runs the undo in the composition open at the tap (ADR 0018). */
+  undo: (subject: string, undo: Undo) => void,
 ): Promise<void> {
   const result = await composition.hide(option.target);
   if (result === undefined) return;
@@ -95,12 +91,7 @@ async function hide(
     message,
     undoLabel: strings.undo,
     onUndo() {
-      compositionOpening
-        .opened()
-        .then((current) => undoHide(current, result.changed))
-        .catch((error: unknown) => {
-          logError('Could not undo the hide', error);
-        });
+      undo('the undo of the hide', result.undo);
     },
   });
 }
