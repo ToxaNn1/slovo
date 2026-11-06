@@ -95,7 +95,7 @@ describe('a closed composition', () => {
     const plan = scheduler.plan;
 
     await app.close();
-    await hidden?.undo();
+    await hidden?.undo(app);
 
     expect(records).toEqual(kept);
     expect(scheduler.plan).toBe(plan);
@@ -307,5 +307,80 @@ describe('an Entry opened by id', () => {
       kind: 'tip',
       entryId: 't_kotrahodyna',
     });
+  });
+});
+
+describe('the undo of a toast', () => {
+  /** The composition of the same app run opened again over the records, the one before closed (ADR 0018). */
+  async function reopen(before: Awaited<ReturnType<typeof run>>) {
+    const { app } = await run({ records: before.records });
+    await before.app.close();
+    return app;
+  }
+
+  /**
+   * What the user keeps, the Notification plan aside: the plan is made again
+   * after each change of what is eligible, as of the time it is made.
+   */
+  const kept = (records: ReadonlyMap<string, string>) =>
+    new Map([...records].filter(([key]) => !key.startsWith('notifications.plan.')));
+
+  it('takes a hide of an Entry back to exactly the records before', async () => {
+    const { app, records } = await run();
+    const before = kept(records);
+    const hidden = await app.hide({ kind: 'entry', entryId: 'w_05' });
+    expect(kept(records)).not.toEqual(before);
+
+    await hidden?.undo(app);
+
+    expect(kept(records)).toEqual(before);
+    expect(app.hiddenEntries.has('w_05')).toBe(false);
+  });
+
+  it('takes a hide back in the composition open at the tap, after a reopen', async () => {
+    const before = await run({ categories: ['test', 'other'] });
+    const keptBefore = kept(before.records);
+    const entry = await before.app.hide({ kind: 'entry', entryId: 'w_05' });
+    const category = await before.app.hide({ kind: 'category', categoryId: 'test' });
+    const after = await reopen(before);
+
+    await category?.undo(after);
+    await entry?.undo(after);
+
+    expect(kept(before.records)).toEqual(keptBefore);
+    expect(after.hiddenEntries.list).toEqual([]);
+    expect(after.mix.state.hiddenCategories).toEqual([]);
+  });
+
+  it('takes a restore back in the composition open at the tap, after a reopen: the Entry is hidden again at its old place', async () => {
+    const before = await run();
+    await before.app.hide({ kind: 'entry', entryId: 'w_01' });
+    before.time.advance(60 * SECOND);
+    await before.app.hide({ kind: 'entry', entryId: 'w_02' });
+    before.time.advance(60 * SECOND);
+    await before.app.hide({ kind: 'entry', entryId: 'w_03' });
+    const keptBefore = kept(before.records);
+    const hiddenList = before.app.hiddenEntries.list;
+    const restored = await before.app.unhide({ kind: 'entry', entryId: 'w_02' });
+    const after = await reopen(before);
+    before.time.advance(60 * SECOND);
+
+    await restored?.undo?.(after);
+
+    expect(kept(before.records)).toEqual(keptBefore);
+    expect(after.hiddenEntries.list).toEqual(hiddenList);
+  });
+
+  it('takes a set Knowledge Mark back to exactly the records before', async () => {
+    const { app, records } = await run();
+    await app.knowledge.set('w_04', 'unknown');
+    const before = kept(records);
+    await app.knowledge.set('w_04', 'known');
+    expect(kept(records)).not.toEqual(before);
+
+    await app.knowledge.undo();
+
+    expect(kept(records)).toEqual(before);
+    expect(app.knowledge.state.shown.get('w_04')).toBe('unknown');
   });
 });
