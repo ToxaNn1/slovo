@@ -1,6 +1,16 @@
+'use no memo';
+
 import type { MascotState } from '@slovo/contracts';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated, {
+  Easing,
+  interpolate,
+  ReduceMotion,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OnAccentProvider } from '../entries/on-accent';
@@ -10,6 +20,7 @@ import { Mascot } from '../primitives/Mascot';
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { useReduceMotion } from '../providers/useReduceMotion';
 import {
   pressedFade,
   railScreen as place,
@@ -23,7 +34,7 @@ import {
  * The hero of a screen a Dashboard rail's tile opens (board `SlovoApp`,
  * «fix» and «cat»): the red halftone ground cut at the bottom, the ink back
  * tile, the ink icon tile with the tile's red glyph beside the kicker, the
- * title, the description, the progress label over its skewed bar, and the
+ * title, the description if the screen has one, the progress label over its skewed bar, and the
  * Mascot. Its right slot holds the button of the screen's kind: the toggle
  * of the Mix or of a Curated Collection's copy, or the Collection menu.
  */
@@ -45,7 +56,8 @@ export function RailScreenHero({
   glyph: WedgePoints | 'circle';
   kicker: string;
   title: string;
-  description: string;
+  /** What the screen gathers; none on a Collection's screen. */
+  description?: string;
   /** «Розібрано 0 з 4», drawn in capitals. */
   progress: string;
   /** How much of the bar is filled, from 0 to 1. */
@@ -118,9 +130,15 @@ export function RailScreenHero({
             <Text {...voice} accessibilityRole="header" style={text('railTitle')}>
               {title}
             </Text>
-            <Text {...voice} style={[text('railDescription'), styles.description]}>
-              {description}
-            </Text>
+            {description !== undefined && (
+              <Text
+                {...voice}
+                testID={`${id}-description`}
+                style={[text('railDescription'), styles.description]}
+              >
+                {description}
+              </Text>
+            )}
           </View>
         </View>
         <View style={styles.progressRow}>
@@ -196,16 +214,55 @@ function HeroActionButton({ id, action, top }: { id: string; action: HeroAction;
         pressed && styles.pressed,
       ]}
     >
-      <Wedge
-        points={on ? place.addIcons.tick : place.addIcons.plus}
-        color={on ? cream : keyInk}
-        width={place.add.icon}
-        height={place.add.icon}
-      />
+      <ToggleIcon testID={`${common.testID}-icon`} on={on} color={on ? cream : keyInk} />
       <Text {...voice} style={[typeStyle('railAdd', tokens), { color: on ? cream : keyInk }]}>
         {action.label}
       </Text>
     </Pressable>
+  );
+}
+
+/** The board's `slPop`: the tick swells past its size and settles, in the canvas's `ease`. */
+const TICK_POP = [0.6, 1.12, 1];
+const TICK_POP_TIMING = {
+  duration: place.add.popDuration,
+  easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+  reduceMotion: ReduceMotion.Never,
+};
+
+/**
+ * The toggle's plus, or its tick once on. The tick pops in when the toggle
+ * turns on while the screen is open, not when it opens already on; with
+ * Reduce Motion it appears still.
+ */
+function ToggleIcon({ testID, on, color }: { testID: string; on: boolean; color: string }) {
+  const reduceMotion = useReduceMotion();
+  /** 0 as the tick appears, 1 once it rests. */
+  const popped = useSharedValue(1);
+  // Whether the toggle was on before, so only the press made now pops the tick.
+  const wasOn = useRef(on);
+
+  useEffect(() => {
+    if (on && !wasOn.current && !reduceMotion) {
+      popped.value = 0;
+      popped.value = withTiming(1, TICK_POP_TIMING);
+    }
+    wasOn.current = on;
+    // The shared value is stable, so only a change of `on` pops the tick.
+  }, [on, reduceMotion, popped]);
+
+  const motion = useAnimatedStyle(() => ({
+    transform: [{ scale: interpolate(popped.value, [0, 0.6, 1], TICK_POP) }],
+  }));
+  return (
+    <Animated.View testID={testID} style={motion}>
+      <Wedge
+        points={on ? place.addIcons.tick : place.addIcons.plus}
+        color={color}
+        width={place.add.icon}
+        height={place.add.icon}
+      />
+    </Animated.View>
   );
 }
 
