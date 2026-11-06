@@ -35,6 +35,7 @@ const everything: Shown = {
   xpBar: true,
   celebrations: true,
   levelLadder: true,
+  breakCard: true,
   streakBreak: true,
   calendarDayLines: true,
   streakFreezeCard: true,
@@ -223,6 +224,7 @@ describe('what the reader is shown', () => {
           celebrations: false,
           levelLadder: false,
           streakFreezeCard: false,
+          breakCard: false,
           progressShareCards: false,
         },
       },
@@ -250,6 +252,7 @@ describe('what the reader is shown', () => {
       'no Level ladder with its switch off',
       { off: ['levelLadder'], shown: { levelLadder: false } },
     ],
+    ['no Break card with its switch off', { off: ['breakCard'], shown: { breakCard: false } }],
     ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
     [
       'no calendar day lines with their switch off',

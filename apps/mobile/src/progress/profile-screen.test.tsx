@@ -445,4 +445,85 @@ describe('the Profile', () => {
     expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
     expect(screen.queryByTestId('stats-calendar-line')).toBeNull();
   });
+  describe('with the Break card on', () => {
+    const months = editionStrings.dates.months;
+    const words = strings.breakCard;
+    /** Active 9 to 11 October, then a Break of 3 days from 12 October: today, 13 October, is its second day. */
+    const xp = (date: string) => ({
+      kind: 'xp' as const,
+      date,
+      at: `${date}T05:00:00.000Z`,
+      source: 'game-round' as const,
+      amount: 5,
+    });
+    const running: Seed = {
+      xpLog: {
+        a: xp('2026-10-09'),
+        b: xp('2026-10-10'),
+        c: xp('2026-10-11'),
+        pause: { kind: 'break', date: '2026-10-12', at: '2026-10-12T05:00:00.000Z', days: 3 },
+      },
+    };
+
+    it("shows the paused Streak, the Break's last day, its 14 days and the next Break's date", async () => {
+      await renderScreen({ switchedOn: 'breakCard', seed: running });
+
+      const card = within(screen.getByTestId('profile-break'));
+      expect(card.getByText(words.kicker)).toBeOnTheScreen();
+      expect(card.getByText(fill(words.paused, { count: '3' }))).toBeOnTheScreen();
+      expect(
+        card.getByText(
+          fill(words.until, {
+            date: fill(editionStrings.share.day, { day: '14', month: months[9] ?? '' }),
+          }),
+        ),
+      ).toBeOnTheScreen();
+      expect(
+        card.getByText(
+          fill(words.next, {
+            date: fill(editionStrings.share.day, { day: '11', month: months[10] ?? '' }),
+          }),
+        ),
+      ).toBeOnTheScreen();
+      // The 14 days end the day after the Break: 2 to 15 October, today among the Break days.
+      const days = editionStrings.stats.calendar.days;
+      const label = (key: keyof typeof days, day: number) =>
+        fill(days[key], { day: String(day), month: months[9] ?? '' });
+      expect(card.getAllByLabelText(/./)).toHaveLength(14);
+      expect(card.getByLabelText(label('missed', 2))).toBeOnTheScreen();
+      expect(card.getByLabelText(label('active', 11))).toBeOnTheScreen();
+      for (const day of [12, 13, 14])
+        expect(card.getByLabelText(label('break', day))).toBeOnTheScreen();
+      expect(card.getByLabelText(label('future', 15))).toBeOnTheScreen();
+      // The card stands in place of the Streak line, and the Best Streak with it.
+      expect(screen.queryByTestId('profile-streak')).not.toBeOnTheScreen();
+    });
+
+    it('shows no card while no Break runs, the Streak line in its place', async () => {
+      await renderScreen({ switchedOn: 'breakCard', rounds: 5 });
+
+      expect(screen.queryByTestId('profile-break')).not.toBeOnTheScreen();
+      expect(screen.getByTestId('profile-streak')).toBeOnTheScreen();
+    });
+
+    it('shows no card while the reader hides the counters («Без лічильників»)', async () => {
+      await renderScreen({ switchedOn: 'breakCard', seed: running, noCounters: true });
+
+      expect(screen.queryByTestId('profile-break')).not.toBeOnTheScreen();
+    });
+  });
+
+  it('shows no Break card with its switch off, the Streak line still there', async () => {
+    await renderScreen({
+      switchedOff: 'breakCard',
+      seed: {
+        xpLog: {
+          pause: { kind: 'break', date: '2026-10-12', at: '2026-10-12T05:00:00.000Z', days: 3 },
+        },
+      },
+    });
+
+    expect(screen.queryByTestId('profile-break')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('profile-streak')).toBeOnTheScreen();
+  });
 });
