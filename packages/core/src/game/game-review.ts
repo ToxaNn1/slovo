@@ -5,16 +5,16 @@ import type { RoundOption } from './game-mode';
 import { reviewAnswer } from './answer-forms';
 import { rowWordOption } from './guess-word';
 import { byKind } from '../entries/entry-kinds';
+import { renderStress } from '../entries/stress';
 
 /** What an item of the Game Review expands into, by the kind of the Entry the Round asked about. */
 export type GameReviewDetails =
-  | {
-      readonly kind: 'word' | 'idiom';
-      /** The primary Definition. */
-      readonly definition: string;
-      readonly example: Example | undefined;
-      readonly etymology: string | undefined;
-    }
+  | (DefinedDetails & {
+      readonly kind: 'word';
+      /** The Lemma with its Stress, to hear by its Pronunciation. */
+      readonly lemma: string;
+    })
+  | (DefinedDetails & { readonly kind: 'idiom' })
   | {
       readonly kind: 'correction';
       /** The standard form the Round's answer named. */
@@ -81,9 +81,16 @@ const titleOf = ({ entry, answer }: PlayedRound): RoundOption =>
     tip: ({ title }) => plain(title),
   });
 
+/** What a Word and an Idiom expand into alike. */
+interface DefinedDetails {
+  /** The primary Definition. */
+  readonly definition: string;
+  readonly example: Example | undefined;
+  readonly etymology: string | undefined;
+}
+
 /** The details of a Word or an Idiom: its primary Definition, first Example and etymology. */
-const definedDetails = (entry: Word | Idiom): GameReviewDetails => ({
-  kind: entry.kind,
+const definedDetails = (entry: Word | Idiom): DefinedDetails => ({
   definition: entry.primaryDefinition,
   example: entry.examples[0],
   etymology: entry.etymology,
@@ -91,13 +98,13 @@ const definedDetails = (entry: Word | Idiom): GameReviewDetails => ({
 
 const detailsOf = ({ entry, answer }: PlayedRound): GameReviewDetails =>
   byKind<GameReviewDetails>(entry, {
-    word: definedDetails,
+    word: (word) => ({ kind: 'word', lemma: renderStress(word), ...definedDetails(word) }),
     correction: ({ explanation }) => ({
       kind: 'correction',
       standardForm: answer.sheet.answer.text,
       explanation,
     }),
-    idiom: definedDetails,
+    idiom: (idiom) => ({ kind: 'idiom', ...definedDetails(idiom) }),
     synonymRow: ({ members }) => ({ kind: 'synonymRow', members: members.map(rowWordOption) }),
     tip: ({ explanation }) => ({ kind: 'tip', explanation }),
   });
