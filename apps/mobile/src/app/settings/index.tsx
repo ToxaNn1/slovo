@@ -178,6 +178,17 @@ export default function SettingsScreen() {
                 }}
               />
             )}
+            {shown.narratorVoiceSetting && (
+              <NavigationRow
+                testID="settings-row-narrator-voice"
+                icon="bar"
+                label={strings.narratorVoice.row}
+                subtitle={strings.narratorVoice.rowSub}
+                onPress={() => {
+                  openScreen('/settings/narrator-voice');
+                }}
+              />
+            )}
             <SwitchRow
               testID="settings-vibration"
               icon="wedge"

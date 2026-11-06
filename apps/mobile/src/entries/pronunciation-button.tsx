@@ -9,11 +9,11 @@ import { useShown } from '../shown-in-effect';
 import { recordingPlayer } from '../sounds/interface-sounds';
 import { createPronunciation } from './pronunciation';
 
-/** The Recordings of the default Narrator Voice, by Word id (ADR 0083). */
-const recordings = activeEditionFiles.recordings[edition.narratorVoiceOf(undefined).id] ?? {};
-
 /** «Звуки» as the cards last drew them. */
 let soundsOn = true;
+
+/** The id of the Narrator Voice the last tap read in (ADR 0083). */
+let narratorVoice = edition.narratorVoiceOf(undefined).id;
 
 /**
  * One for the whole app: one Word read at a time, by its Recording or, with
@@ -24,11 +24,24 @@ const pronunciation = createPronunciation({
   locale: edition.locale,
   ...(recordingPlayer === undefined
     ? { player: { play: () => undefined, stop: () => undefined }, recordingOf: () => undefined }
-    : { player: recordingPlayer, recordingOf: (id: string) => recordings[id] }),
+    : {
+        player: recordingPlayer,
+        recordingOf: (id: string) => activeEditionFiles.recordings[narratorVoice]?.[id],
+      }),
   soundsOn: () => soundsOn,
 });
 
 const subscribe = (listener: () => void) => pronunciation.subscribe(listener);
+
+/**
+ * The id of the Narrator Voice that reads the Words: the reader's choice
+ * while its switch is on in effect, else the Edition's default (ADR 0083).
+ */
+function useNarratorVoice(): string {
+  const chosen = useSettings().current.narratorVoice;
+  return edition.narratorVoiceOf(useShown().narratorVoiceSetting ? chosen : undefined).id;
+}
+
 const dismiss = () => {
   pronunciation.dismiss();
 };
@@ -48,6 +61,7 @@ export function LemmaPronunciation({ lemma, entryId }: { lemma: string; entryId:
 function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
   const composition = useShell().composition;
   const sounds = useSettings().current.sounds;
+  const voice = useNarratorVoice();
   const state = useSyncExternalStore(subscribe, () => pronunciation.stateOf(entryId));
 
   useEffect(() => {
@@ -69,8 +83,55 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
     const opened = composition.state;
     if (sounds && pronunciation.stateOf(entryId) !== 'playing' && opened.status === 'ready')
       void opened.value.analytics.pronunciationPlayed(entryId);
+    narratorVoice = voice;
     void pronunciation.toggle({ id: entryId, lemma });
-  }, [composition, sounds, lemma, entryId]);
+  }, [composition, sounds, voice, lemma, entryId]);
 
   return <PronunciationButton state={state} onPress={toggle} onDismissMessage={dismiss} />;
+}
+
+/** What the voice screen needs to read the sample Word. */
+export interface SampleReading {
+  /** Whether the chosen voice reads the sample Word now. */
+  readonly playing: boolean;
+  /** Reads the sample Word in the chosen voice, or stops it while it reads. */
+  readonly toggle: () => void;
+  /** Reads the sample Word from its start in the voice with this id, just chosen. */
+  readonly readIn: (voice: string) => void;
+}
+
+/**
+ * The sample Word of the voice screen, read by the Narrator Voice's
+ * Recording like a card's Word; it stops when the screen closes.
+ */
+export function useSampleReading(): SampleReading {
+  const sounds = useSettings().current.sounds;
+  const voice = useNarratorVoice();
+  const { word, syllables } = edition.narratorVoiceSample;
+  const state = useSyncExternalStore(subscribe, () => pronunciation.stateOf(word));
+
+  useEffect(
+    () => () => {
+      const left = pronunciation.stateOf(word);
+      if (left === 'playing') void pronunciation.stop();
+      if (left === 'no-voice') pronunciation.dismiss();
+    },
+    [word],
+  );
+
+  const read = useCallback(
+    async (reader: string, fromStart: boolean) => {
+      soundsOn = sounds;
+      narratorVoice = reader;
+      if (fromStart) await pronunciation.stop();
+      await pronunciation.toggle({ id: word, lemma: syllables.join('') });
+    },
+    [sounds, word, syllables],
+  );
+
+  return {
+    playing: state === 'playing',
+    toggle: () => void read(voice, false),
+    readIn: (chosen) => void read(chosen, true),
+  };
 }
