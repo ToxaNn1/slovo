@@ -15,8 +15,17 @@
  * as the tests do.
  */
 import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
+
+import {
+  defaultCacheDir,
+  fetchPage,
+  POLITE_INTERVAL_MS,
+  PoliteClient,
+  systemClock,
+} from '@slovo/sourcing';
 
 import {
   EDITIONS_DIR,
@@ -36,12 +45,14 @@ import {
   type EntryKind,
   type Terminal,
 } from './content';
+import { verifyEntries } from './verify';
 
 const USAGE = [
   'Usage: pnpm content new word|correction|idiom|synonym-row|tip --edition <id>',
   '       pnpm content edit <id or text> --edition <id>',
   '       pnpm content retire <id> --edition <id>',
   '       pnpm content check --edition <id>',
+  '       pnpm content verify <files, ids or folder> | --changed <ref> --edition <id> [--book <text file>] [--cache <dir>]',
 ].join('\n');
 
 const editor: Editor = {
@@ -84,7 +95,12 @@ const terminal: Terminal = {
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: { edition: { type: 'string' } },
+    options: {
+      edition: { type: 'string' },
+      changed: { type: 'string' },
+      book: { type: 'string' },
+      cache: { type: 'string' },
+    },
   });
   const [command, ...rest] = positionals;
   const [argument] = rest;
@@ -92,7 +108,8 @@ async function main(): Promise<number> {
   const known =
     (command === 'new' && kind !== undefined) ||
     ((command === 'edit' || command === 'retire') && rest.length === 1) ||
-    (command === 'check' && rest.length === 0);
+    (command === 'check' && rest.length === 0) ||
+    (command === 'verify' && rest.length > 0 !== (values.changed !== undefined));
   if (!known || values.edition === undefined) {
     console.error(USAGE);
     return 2;
@@ -107,6 +124,27 @@ async function main(): Promise<number> {
     return error.reason === 'unknown' ? 2 : 1;
   }
   const tool: ContentTool = { edition, editor, terminal, random: Math.random };
+  const cwd = process.env['INIT_CWD'] ?? process.cwd();
+  if (command === 'verify') {
+    return verifyEntries({
+      edition,
+      targets:
+        values.changed === undefined
+          ? { kind: 'named', names: rest }
+          : { kind: 'changed', ref: values.changed },
+      bookFile: values.book === undefined ? undefined : resolve(cwd, values.book),
+      client: new PoliteClient(
+        fetchPage,
+        systemClock,
+        values.cache === undefined ? defaultCacheDir() : resolve(cwd, values.cache),
+        POLITE_INTERVAL_MS,
+        terminal.problem,
+      ),
+      cwd,
+      print: terminal.print,
+      problem: terminal.problem,
+    });
+  }
   if (kind !== undefined) return newEntry(kind, tool);
   if (command === 'edit') return editEntry(argument ?? '', tool);
   if (command === 'retire') return retireEntry(argument ?? '', tool);
