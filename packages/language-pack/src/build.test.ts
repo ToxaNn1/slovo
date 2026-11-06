@@ -1968,7 +1968,38 @@ describe('the Recordings of the Narrator Voices', () => {
     const result = buildLanguagePack({ editionDir, outFile: packPath() });
 
     if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-    expect(result.missingRecordings).toContainEqual({ voice: 'boris', count: 3 });
+    expect(result.missingRecordings).toContainEqual({ voice: 'boris', count: 2 });
+  });
+
+  it('reports a Recording made from another text than the Word reads now as missing', () => {
+    const editionDir = withRecordings();
+    writeFileSync(join(recordingsDir(editionDir), 'anna/texts.json'), '{"w_fx0002": "бала́кучий"}');
+
+    const result = buildLanguagePack({ editionDir, outFile: packPath() });
+
+    if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
+    expect(result.missingRecordings).toContainEqual({ voice: 'anna', count: 2 });
+  });
+
+  it('refuses a texts file that is not a map of Word id to text', () => {
+    const editionDir = withRecordings();
+    writeFileSync(join(recordingsDir(editionDir), 'anna/texts.json'), '["заметі́ль"]');
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'assets/recordings/anna/texts.json',
+        message: 'Not a map of Word id to the text its Recording was made from',
+      },
+    ]);
+  });
+
+  it('refuses a folder inside a Narrator Voice folder', () => {
+    const editionDir = withRecordings();
+    mkdirSync(join(recordingsDir(editionDir), 'anna/old'));
+
+    expect(buildErrors(editionDir)).toEqual([
+      { file: 'assets/recordings/anna/old', message: 'Not an mp3' },
+    ]);
   });
 
   it('refuses a Recording of a Word id the Edition does not have', () => {
@@ -2051,8 +2082,8 @@ describe('checkLanguagePack', () => {
       ok: true,
       missedTargets: [{ target: 'minWords', message: '2 Words, below the target of 3' }],
       missingRecordings: [
-        { voice: 'anna', count: 3 },
-        { voice: 'boris', count: 3 },
+        { voice: 'anna', count: 2 },
+        { voice: 'boris', count: 2 },
       ],
     });
   });
