@@ -16,7 +16,6 @@ export default function HistoryScreen() {
       aside={{
         kind: 'note',
         text: fill(strings.limit, { count: String(HISTORY_CAP) }),
-        testID: 'history-limit',
       }}
       list={(header) => <HistoryList header={header} />}
     />
