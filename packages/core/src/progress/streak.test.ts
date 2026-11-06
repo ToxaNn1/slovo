@@ -271,7 +271,7 @@ describe('the Break', () => {
 
     expect(await app.streakBreak.start(7)).toBe('started');
     expect(breaks(records)).toEqual([{ date: '2026-10-14', days: 7 }]);
-    expect(app.streakBreak.state).toEqual({ kind: 'running', lastDay: '2026-10-20' });
+    expect(app.streakBreak.state).toMatchObject({ kind: 'running', lastDay: '2026-10-20' });
     expect(events).toEqual([['breakStarted', { days: 7 }]]);
 
     // The 7 Break days, 14 to 20 October, keep the 4 Streak days and add none.
@@ -301,6 +301,40 @@ describe('the Break', () => {
     const after = await openOn(records, '2026-10-21', BREAK_ON);
     await earnRounds(after.app, 5, records);
     expect(after.app.progress.state).toMatchObject({ streak: 5, bestStreak: 5 });
+  });
+
+  it('gives both dates and the 14-day strip at once while it runs, across a month', async () => {
+    // Active 24 to 26 October, 27 covered by a freeze, then a 5-day Break from 28 October to 1 November.
+    const records = earned(new Map<string, string>(), 5, ...october(24, 26));
+    const { app } = await openOn(records, '2026-10-28', BREAK_ON);
+    await app.streakBreak.start(5);
+
+    const inside = await openOn(records, '2026-10-30', BREAK_ON);
+    const state = inside.app.streakBreak.state;
+    expect(state).toMatchObject({
+      kind: 'running',
+      firstDay: '2026-10-28',
+      lastDay: '2026-11-01',
+      nextStart: '2026-11-27',
+    });
+    if (state.kind !== 'running') throw new Error('The Break does not run');
+    // The 14 days ending the day after the Break's last day: 20 October to 2 November.
+    expect(state.strip.map(({ day, month, state }) => [month, day, state])).toEqual([
+      [10, 20, 'missed'],
+      [10, 21, 'missed'],
+      [10, 22, 'missed'],
+      [10, 23, 'missed'],
+      [10, 24, 'active'],
+      [10, 25, 'active'],
+      [10, 26, 'active'],
+      [10, 27, 'frozen'],
+      [10, 28, 'break'],
+      [10, 29, 'break'],
+      [10, 30, 'break'],
+      [10, 31, 'break'],
+      [11, 1, 'break'],
+      [11, 2, 'future'],
+    ]);
   });
 
   it('drops a record of over 7 days from storage or Sync: it bridges nothing and runs not', async () => {
@@ -343,7 +377,7 @@ describe('the Break', () => {
     expect(breaks(records)).toEqual([{ date: '2026-10-14', days: 3 }]);
 
     const running = await openOn(records, '2026-10-15', BREAK_ON);
-    expect(running.app.streakBreak.state).toEqual({ kind: 'running', lastDay: '2026-10-16' });
+    expect(running.app.streakBreak.state).toMatchObject({ kind: 'running', lastDay: '2026-10-16' });
     expect(await running.app.streakBreak.start(1)).toBe('refused');
 
     const later = await openOn(records, '2026-11-13', BREAK_ON);

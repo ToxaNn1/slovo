@@ -4,6 +4,7 @@ import type { Analytics } from '../analytics/analytics';
 import type { Clock } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
+import { breakStrip, type CalendarDay } from './calendar';
 import { BREAK_DAYS_AT_MOST, BREAK_INTERVAL_DAYS } from './streak';
 import type { XpLog } from './xp-log';
 
@@ -13,8 +14,18 @@ export type BreakState =
   | { readonly kind: 'off' }
   /** A Break of 1 to `longest` days can start today. */
   | { readonly kind: 'available'; readonly longest: number }
-  /** A Break runs up to and with `lastDay`, `YYYY-MM-DD`. */
-  | { readonly kind: 'running'; readonly lastDay: string }
+  /**
+   * A Break runs from `firstDay` up to and with `lastDay`, and the next one
+   * can start on `nextStart`, all `YYYY-MM-DD`; `strip` holds the 14 days
+   * ending the day after it (board 10, p1).
+   */
+  | {
+      readonly kind: 'running';
+      readonly firstDay: string;
+      readonly lastDay: string;
+      readonly nextStart: string;
+      readonly strip: readonly CalendarDay[];
+    }
   /** The last Break is over; the next one can start on `nextStart`, `YYYY-MM-DD`. */
   | { readonly kind: 'waiting'; readonly nextStart: string };
 
@@ -70,10 +81,25 @@ export function openStreakBreak({
       return { kind: 'available', longest: BREAK_DAYS_AT_MOST };
     }
     const lastDay = latest.start + latest.days - 1;
+    const nextStart = after(latest.start + BREAK_INTERVAL_DAYS - todayNumber);
     if (todayNumber >= latest.start && todayNumber <= lastDay) {
-      return { kind: 'running', lastDay: after(lastDay - todayNumber) };
+      const { active, frozen, breaks } = xpLog.days;
+      const last = after(lastDay - todayNumber);
+      return {
+        kind: 'running',
+        firstDay: after(latest.start - todayNumber),
+        lastDay: last,
+        nextStart,
+        strip: breakStrip({
+          activeDays: active,
+          frozen,
+          breaks,
+          today: todayKey(clock),
+          lastDay: last,
+        }),
+      };
     }
-    return { kind: 'waiting', nextStart: after(latest.start + BREAK_INTERVAL_DAYS - todayNumber) };
+    return { kind: 'waiting', nextStart };
   }
 
   async function start(days: number): Promise<'started' | 'refused'> {

@@ -125,6 +125,7 @@ export { XpPill } from './progress/XpPill';
 export { FeedHeader } from './feed/FeedHeader';
 export { HeaderFade } from './feed/HeaderFade';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
+export { BreakCard } from './progress/BreakCard';
 export { BadgeMark } from './progress/BadgeMark';
 export { DashboardHero } from './dashboard/DashboardHero';
 export { BlockTitle } from './dashboard/BlockTitle';
