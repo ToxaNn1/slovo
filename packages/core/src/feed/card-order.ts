@@ -57,9 +57,9 @@ export interface CardOrder {
     /** Every card of the session, also the dropped ones. */
     readonly all: readonly OrderedCard[];
     /** The cards shown in the current Cycle. */
-    cycleCards(): readonly OrderedCard[];
+    readonly cycleCards: readonly OrderedCard[];
     /** The ids of the Entries shown in the current Cycle, also the dropped ones. */
-    shownIds(): ReadonlySet<string>;
+    readonly shownIds: ReadonlySet<string>;
   };
   /** The Cycle's unseen Entries of each kind, in the Cycle order. */
   readonly unseen: EntryIds;
@@ -68,7 +68,7 @@ export interface CardOrder {
   /** The Mix kind weights in effect, today's Mood applied. */
   readonly weights: MixKindWeights;
   /** Whether a Word is in today's Mood rarity band, or nothing without one (ADR 0076). */
-  readonly inBand: ((wordId: string) => boolean) | undefined;
+  readonly wordInBand: ((wordId: string) => boolean) | undefined;
 }
 
 /**
@@ -91,12 +91,12 @@ export function nextEntryId({
   unseen,
   due,
   weights,
-  inBand,
+  wordInBand,
 }: CardOrder): string | undefined {
-  const ordered = inBand === undefined ? unseen : bandFirst(unseen, inBand);
-  const shown = session.shownIds();
+  const ordered = wordInBand === undefined ? unseen : bandFirst(unseen, wordInBand);
+  const shown = session.shownIds;
   const last = session.cards.findLast(takesTurns)?.entryId;
-  const inCycle = session.cycleCards().filter(takesTurns);
+  const inCycle = session.cycleCards.filter(takesTurns);
   /** Whether the next card is the turn of the kind that comes every `every`th card. */
   function turnOf(kind: FeedCard['kind'], every: number): boolean {
     const since = [...inCycle].reverse().findIndex((card) => card.kind === kind);
@@ -147,9 +147,9 @@ function reviewEntryId(due: readonly string[], cards: readonly OrderedCard[]): s
  * band first, in the Cycle order, then the rest, so the Cycle still ends.
  * The other kinds stay as they are.
  */
-function bandFirst(unseen: EntryIds, inBand: (wordId: string) => boolean): EntryIds {
+function bandFirst(unseen: EntryIds, wordInBand: (wordId: string) => boolean): EntryIds {
   return {
     ...unseen,
-    words: [...unseen.words.filter(inBand), ...unseen.words.filter((id) => !inBand(id))],
+    words: [...unseen.words.filter(wordInBand), ...unseen.words.filter((id) => !wordInBand(id))],
   };
 }

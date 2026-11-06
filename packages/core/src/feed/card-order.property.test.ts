@@ -54,8 +54,8 @@ function sessionOf(cards: readonly OrderedCard[]): CardOrder['session'] {
   return {
     cards,
     all: cards,
-    cycleCards: () => cards,
-    shownIds: () => new Set(cards.flatMap((card) => card.entryId ?? [])),
+    cycleCards: cards,
+    shownIds: new Set(cards.flatMap((card) => card.entryId ?? [])),
   };
 }
 
@@ -152,7 +152,7 @@ describe("the Feed's card order, for every Cycle size", () => {
           unseen: cycleOf(cycle),
           due: none,
           weights: NORMAL_KIND_WEIGHTS,
-          inBand: undefined,
+          wordInBand: undefined,
         });
         expect(shown.map(letterOf).join('')).toBe(kindsByTheRule(cycle, NORMAL_KIND_WEIGHTS));
       }),
@@ -167,7 +167,7 @@ describe("the Feed's card order, for every Cycle size", () => {
           unseen: cycleOf(cycle),
           due: none,
           weights: kindWeights,
-          inBand: undefined,
+          wordInBand: undefined,
         });
         expect(shown.map(letterOf).join('')).toBe(kindsByTheRule(cycle, kindWeights));
       }),
@@ -182,7 +182,7 @@ describe("the Feed's card order, for every Cycle size", () => {
           unseen: cycleOf(cycle),
           due: none,
           weights: NORMAL_KIND_WEIGHTS,
-          inBand: undefined,
+          wordInBand: undefined,
           between: (card) => (after[card] === true ? [notice, quickQuestion] : []),
         });
         expect(shown.map(letterOf).join('')).toBe(kindsByTheRule(cycle, NORMAL_KIND_WEIGHTS));
@@ -195,7 +195,7 @@ describe("the Feed's card order, for every Cycle size", () => {
     fc.assert(
       fc.property(sizes, weights, (cycle, kindWeights) => {
         const unseen = cycleOf(cycle);
-        const shown = order({ unseen, due: none, weights: kindWeights, inBand: undefined });
+        const shown = order({ unseen, due: none, weights: kindWeights, wordInBand: undefined });
         expect([...shown].sort()).toEqual(Object.values(unseen).flat().sort());
       }),
       runs,
@@ -218,7 +218,7 @@ describe("the Feed's card order, for every Review", () => {
           unseen: { ...none, words: ids(fresh, 'w_new_') },
           due: { ...none, words: dueIds },
           weights: NORMAL_KIND_WEIGHTS,
-          inBand: undefined,
+          wordInBand: undefined,
           between: (card) => (between[card] === true ? [notice] : []),
         });
         // Each Review slot, every 3rd card, goes to the due Words in turn; the rest to new Words.
@@ -243,7 +243,7 @@ describe("the Feed's card order, for every Review", () => {
           unseen: { ...none, words: ids(30, 'w_'), corrections: corrections.slice(dueCount) },
           due: { ...none, corrections: corrections.slice(0, dueCount) },
           weights: NORMAL_KIND_WEIGHTS,
-          inBand: undefined,
+          wordInBand: undefined,
           count: 12,
         });
         // The Correction's turns, the 5th and 10th cards, go to the due ones first.
@@ -264,7 +264,7 @@ describe("the Feed's card order, in a Mood's rarity band", () => {
           unseen: { ...none, words },
           due: none,
           weights: NORMAL_KIND_WEIGHTS,
-          inBand: (id) => band.has(id),
+          wordInBand: (id) => band.has(id),
         });
         expect(shown).toEqual([
           ...words.filter((id) => band.has(id)),

@@ -22,7 +22,7 @@ import {
   type ShownKind,
 } from './entry-kinds';
 import { kindShown, type KindsInMix, type MixState } from './mix';
-import { withinRarityCeiling } from './rarity-ceiling';
+import { HIGHEST_RARITY, withinRarityCeiling } from './rarity-ceiling';
 import type { ContentReadPort } from '../ports';
 
 export type { ShownKind } from './entry-kinds';
@@ -205,7 +205,7 @@ export interface EligibilityChoices {
  */
 export const EVERYTHING_IN: EligibilityChoices = {
   mix: () => 'everything-in',
-  rarityCeiling: () => 5,
+  rarityCeiling: () => HIGHEST_RARITY,
   isHidden: () => false,
 };
 
@@ -325,7 +325,7 @@ export function createEntries({
    */
   async function underRarityCeiling(ids: readonly string[]): Promise<readonly string[]> {
     const ceiling = choices.rarityCeiling();
-    if (ceiling >= 5) return ids;
+    if (ceiling >= HIGHEST_RARITY) return ids;
     const words = await live.word();
     return ids.filter((id) => wordWithinCeiling(words, id, ceiling) !== undefined);
   }
