@@ -87,7 +87,10 @@ export async function verifyEntries(request: VerifyRequest): Promise<number> {
 function quotedEntries(edition: EditionFolder): Quoted[] {
   const content = edition.entries();
   const quoted = (
-    { file, entry }: { file: string; entry: { id: string; sources: readonly { url?: string | undefined }[] } },
+    {
+      file,
+      entry,
+    }: { file: string; entry: { id: string; sources: readonly { url?: string | undefined }[] } },
     text: string,
     bookFields: readonly (readonly [string, string | undefined])[] = [['quote', text]],
   ): Quoted => ({
