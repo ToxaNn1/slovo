@@ -852,6 +852,88 @@ describe('the onboarding strings of the «Весь потік» flow', () => {
   });
 });
 
+describe('the strings of the Category screens and the board style (spec #1604)', () => {
+  const parsed = EditionStringsSchema.parse(readJson('uk', 'strings'));
+  const pluralRules = new Intl.PluralRules('uk');
+  /** A count text as the app fills it: the form of `count`. */
+  const countText = (forms: Record<string, string | undefined>, count: number) =>
+    fill(forms[pluralRules.select(count)] ?? forms['other'] ?? '', { count: String(count) });
+  const { categories, correctionCategories, category, curatedCollection } = parsed.dashboard;
+
+  it('the UA Edition carries the board 05 texts verbatim', () => {
+    expect({
+      categories: categories.title,
+      correctionCategories: correctionCategories.title,
+      curatedCollections: parsed.dashboard.curatedCollectionsTitle,
+      quiet: category.quiet,
+      add: category.add,
+      inMix: category.inMix,
+      known: fill(category.known, { x: '3', n: '12' }),
+      knownStamp: category.knownStamp,
+      addedToMix: fill(category.toasts.added, { name: 'Емоції' }),
+      removedFromMix: fill(category.toasts.removed, { name: 'Емоції' }),
+      curatedAdd: curatedCollection.addButton,
+      curatedAdded: curatedCollection.addedButton,
+    }).toEqual({
+      categories: 'Категорії',
+      correctionCategories: 'Виправлення',
+      curatedCollections: 'Добірки',
+      quiet: 'Категорія',
+      add: 'ДОДАТИ',
+      inMix: 'У МІКСІ',
+      known: 'ЗНАЮ 3 З 12',
+      knownStamp: 'ЗНАЮ',
+      addedToMix: '„Емоції“ тепер у твоєму Міксі.',
+      removedFromMix: '„Емоції“ прибрано з Міксу.',
+      curatedAdd: 'ДОДАТИ',
+      curatedAdded: 'ДОДАНО',
+    });
+  });
+
+  it.each([
+    [1, 'КАТЕГОРІЯ · 1 слово', 'ДОБІРКА · 1 слово', 'КОЛЕКЦІЯ · 1 слово'],
+    [3, 'КАТЕГОРІЯ · 3 слова', 'ДОБІРКА · 3 слова', 'КОЛЕКЦІЯ · 3 слова'],
+    [12, 'КАТЕГОРІЯ · 12 слів', 'ДОБІРКА · 12 слів', 'КОЛЕКЦІЯ · 12 слів'],
+    [21, 'КАТЕГОРІЯ · 21 слово', 'ДОБІРКА · 21 слово', 'КОЛЕКЦІЯ · 21 слово'],
+  ])('the kickers of %i Words read «%s», «%s» and «%s»', (count, ofCategory, ofCurated, ofCollection) => {
+    const { screen } = parsed.collections;
+
+    expect([
+      fill(categories.kicker, { count: countText(categories.count, count) }),
+      fill(curatedCollection.kicker, {
+        count: countText(parsed.dashboard.curatedCollectionCount, count),
+      }),
+      fill(screen.kicker, { count: countText(screen.wordCount, count) }),
+    ]).toEqual([ofCategory, ofCurated, ofCollection]);
+  });
+
+  it.each([
+    [1, 'КАТЕГОРІЯ · 1 виправлення'],
+    [4, 'КАТЕГОРІЯ · 4 виправлення'],
+    [7, 'КАТЕГОРІЯ · 7 виправлень'],
+    [21, 'КАТЕГОРІЯ · 21 виправлення'],
+  ])('the kicker of a Category of %i Corrections reads «%s»', (count, text) => {
+    expect(
+      fill(correctionCategories.kicker, { count: countText(correctionCategories.count, count) }),
+    ).toBe(text);
+  });
+
+  it('needs {x} and {n} in «ЗНАЮ {x} З {n}» and {name} in both Mix toasts', () => {
+    const strings = readJson('uk', 'strings') as { dashboard: { category: object } };
+    const issuesOf = (changed: object) =>
+      EditionStringsSchema.safeParse({
+        ...strings,
+        dashboard: { ...strings.dashboard, category: { ...strings.dashboard.category, ...changed } },
+      }).error?.issues.map((issue) => issue.path.join('.'));
+
+    expect(issuesOf({ known: 'ЗНАЮ' })).toEqual(['dashboard.category.known']);
+    expect(issuesOf({ toasts: { added: 'Додано.', removed: 'Прибрано.' } })).toEqual([
+      'dashboard.category.toasts.added',
+      'dashboard.category.toasts.removed',
+    ]);
+  });
+});
+
 describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
   /** Every text of a value with its path. */
   const textsOf = (value: unknown, path: string): [string, string][] =>
