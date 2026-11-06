@@ -1,0 +1,134 @@
+import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
+
+import { PressedTile } from '../primitives/PressedTile';
+import { Wedge } from '../primitives/Wedge';
+import { useEdition } from '../providers/EditionProvider';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { typeStyle, type TypeRole, type Wedge as WedgePoints } from '../tokens';
+
+/** One shape of a tile's pictogram: a polygon in fractions of its box, or a circle. */
+export type CategoryShape = WedgePoints | 'circle';
+
+/**
+ * A Category tile's tone, from the boards: `red` (ink name, cream big shape,
+ * ink small one), `ink` (background name, red big shape, background small
+ * one) or `tile`, the sunken surface (ink name, red big shape, ink small one).
+ */
+export type CategoryTone = 'red' | 'ink' | 'tile';
+
+/** The boards' tones by position: red, ink and the sunken surface in turn. */
+export function toneByPosition(index: number): CategoryTone {
+  const tones = ['red', 'ink', 'tile'] as const;
+  return tones[index % tones.length] ?? 'red';
+}
+
+/** Where a shape sits on its tile: its side, from the right and from the top. */
+interface ShapePlace {
+  readonly side: number;
+  readonly right: number;
+  readonly top: number;
+}
+
+/** A tile's box from the board it is drawn on: the rail's or a grid's. */
+export interface CategoryTileBox {
+  readonly width?: DimensionValue;
+  readonly height: number;
+  readonly radius: number;
+  readonly padding: number;
+  readonly big: ShapePlace;
+  readonly small: ShapePlace;
+  /** The type role of the name. */
+  readonly name: TypeRole;
+}
+
+/**
+ * A Category's tile, as the home board's rail and the k1 grid draw it: its
+ * name at the bottom under a two-shape pictogram, in its tone. A tap opens
+ * the Category; VoiceOver reads its name.
+ */
+export function CategoryTile({
+  name,
+  tone,
+  shapes: [big, small],
+  box,
+  onPress,
+  testID,
+}: {
+  name: string;
+  tone: CategoryTone;
+  shapes: readonly [CategoryShape, CategoryShape];
+  box: CategoryTileBox;
+  onPress: () => void;
+  testID: string;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const light = useSchemeColors('light');
+  const { voice } = useEdition();
+  const look = {
+    red: { ground: colors.accent, text: light.ink, big: light.background, small: light.ink },
+    ink: {
+      ground: colors.ink,
+      text: colors.background,
+      big: colors.accent,
+      small: colors.background,
+    },
+    tile: { ground: colors.surfaceSunken, text: colors.ink, big: colors.accent, small: colors.ink },
+  }[tone];
+  return (
+    <View style={{ width: box.width }}>
+      <PressedTile
+        testID={testID}
+        tone="none"
+        radius={box.radius}
+        accessibilityLabel={name}
+        accessibilityLanguage={voice.accessibilityLanguage}
+        onPress={onPress}
+        faceStyle={[
+          styles.face,
+          { height: box.height, padding: box.padding, backgroundColor: look.ground },
+        ]}
+      >
+        <Shape testID={`${testID}-big`} shape={big} color={look.big} place={box.big} />
+        <Shape testID={`${testID}-small`} shape={small} color={look.small} place={box.small} />
+        <Text
+          {...voice}
+          testID={`${testID}-name`}
+          android_hyphenationFrequency="full"
+          style={[typeStyle(box.name, tokens), { color: look.text }]}
+        >
+          {name}
+        </Text>
+      </PressedTile>
+    </View>
+  );
+}
+
+/** One shape of a tile's pictogram, a polygon or a circle, at its place. */
+function Shape({
+  shape,
+  color,
+  place: { side, right, top },
+  testID,
+}: {
+  shape: CategoryShape;
+  color: string;
+  place: ShapePlace;
+  testID: string;
+}) {
+  const at = { position: 'absolute', right, top } as const;
+  return shape === 'circle' ? (
+    <View
+      testID={testID}
+      style={[at, { width: side, height: side, borderRadius: side / 2, backgroundColor: color }]}
+    />
+  ) : (
+    <View testID={testID} style={at}>
+      <Wedge points={shape} color={color} width={side} height={side} />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  face: { justifyContent: 'flex-end', overflow: 'hidden' },
+});

@@ -135,6 +135,15 @@ export { CorrectionTypesRail } from './dashboard/CorrectionTypesRail';
 export { RailScreenCard } from './dashboard/RailScreenCard';
 export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
 export { RailScreenHero, type HeroAction } from './dashboard/RailScreenHero';
+export { CategoriesRail } from './categories/CategoriesRail';
+export { CategoryGrid, type GridTile } from './categories/CategoryGrid';
+export {
+  CategoryTile,
+  toneByPosition,
+  type CategoryShape,
+  type CategoryTileBox,
+  type CategoryTone,
+} from './categories/CategoryTile';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { LevelCard } from './progress/LevelCard';
