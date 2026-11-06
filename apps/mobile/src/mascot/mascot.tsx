@@ -1,13 +1,6 @@
 import type { MascotMoment, MascotState } from '@slovo/contracts';
 import type { BadgeState } from '@slovo/core';
-import {
-  BadgeStamp,
-  BadgeToast,
-  fill,
-  Mascot,
-  NewLevelScreen,
-  useRouteOnScreen,
-} from '@slovo/ui';
+import { BadgeStamp, BadgeToast, fill, Mascot, NewLevelScreen, useRouteOnScreen } from '@slovo/ui';
 import { useEffect, useEffectEvent, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -25,7 +18,8 @@ type Earned =
   | { readonly kind: 'stamp'; readonly badge: BadgeState };
 
 /** A route of a Game, where a Badge earned toasts so the Game goes on. */
-const inGame = (route: string | undefined) => route === '/game' || route?.startsWith('/game/') === true;
+const inGame = (route: string | undefined) =>
+  route === '/game' || route?.startsWith('/game/') === true;
 
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
