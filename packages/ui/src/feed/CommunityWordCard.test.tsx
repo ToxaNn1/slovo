@@ -36,6 +36,7 @@ const correction: EntryRowModel = {
   labelKey: 'correction',
   spoken: 'take into account, take into consideration',
   correctionType: 'calque',
+  standardForms: ['take into account'],
 };
 
 const haptics: Haptics = {

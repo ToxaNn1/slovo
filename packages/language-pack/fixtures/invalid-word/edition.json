@@ -102,6 +102,10 @@
     "swipeMarks": true,
     "searchButton": true,
     "dashboardWordmark": true,
+    "categoryScreens": true,
+    "correctionCategoryScreens": true,
+    "quietCategories": true,
+    "collectionBoardStyle": true,
     "previousWords": true,
     "correctionTypes": true
   },
@@ -134,21 +138,29 @@
   "categories": [
     {
       "id": "nature",
-      "displayName": "Природа"
+      "displayName": "Природа",
+      "description": "Ліс, поле й небо.",
+      "tone": "loud"
     },
     {
       "id": "speech",
-      "displayName": "Мовлення"
+      "displayName": "Мовлення",
+      "description": "Як говорили колись.",
+      "tone": "quiet"
     }
   ],
   "correctionCategories": [
     {
       "id": "work",
-      "displayName": "На роботі"
+      "displayName": "На роботі",
+      "description": "Слова для наради.",
+      "tone": "loud"
     },
     {
       "id": "shop",
-      "displayName": "У магазині"
+      "displayName": "У магазині",
+      "description": "Слова біля каси.",
+      "tone": "quiet"
     }
   ],
   "categoriesRequiringHistory": [],

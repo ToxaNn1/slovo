@@ -49,7 +49,7 @@ beforeEach(async () => {
   jest.useFakeTimers();
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words: [word('w_tykhyi', 'тихий')],
     }),
     edition: shippedEdition,

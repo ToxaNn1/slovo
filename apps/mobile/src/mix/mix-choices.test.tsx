@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { fill } from '@slovo/contracts';
+import { fill, type Category } from '@slovo/contracts';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
@@ -23,9 +23,9 @@ const shippedEdition = loadEdition(config);
 let composition: Composition;
 
 /** The Language Pack's Categories of Corrections, in its order. */
-const correctionCategories = [
-  { id: 'work', displayName: 'На роботі' },
-  { id: 'shop', displayName: 'У магазині' },
+const correctionCategories: Category[] = [
+  { id: 'work', displayName: 'На роботі', description: 'На роботі.', tone: 'loud' },
+  { id: 'shop', displayName: 'У магазині', description: 'У магазині.', tone: 'loud' },
 ];
 
 /** Lets the Mix's writes and the renders after them finish. */
@@ -51,8 +51,8 @@ beforeEach(async () => {
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [
-        { id: 'nature', displayName: 'Природа' },
-        { id: 'crafts', displayName: 'Ремесла' },
+        { id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' },
+        { id: 'crafts', displayName: 'Ремесла', description: 'Ремесла.', tone: 'loud' },
       ],
       correctionCategories,
     }),

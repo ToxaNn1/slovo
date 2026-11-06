@@ -96,7 +96,7 @@ Where a dialect Word is said (e.g. Гуцульщина), a short text in the Ed
 _Avoid_: Area, dialect, location
 
 **Category**:
-A thematic group a Word or a Correction belongs to. Words and Corrections each have the Edition's own list: Words by what they name (e.g. human body, emotions, military), Corrections by where a reader meets them (e.g. at work, in a shop, transport). Every Word and every Correction has one Category of its list.
+A thematic group a Word or a Correction belongs to. Words and Corrections each have the Edition's own list: Words by what they name (e.g. human body, emotions, military), Corrections by where a reader meets them (e.g. at work, in a shop, transport). Every Word and every Correction has one Category of its list. Every Category carries a one-line description and a tone, loud or quiet; a quiet Category (e.g. the Words removed from dictionaries in the 1930s) has a quiet tile and a quiet screen without the Mix button or progress. A Category has a screen of its live Entries, opened from its grid (ADR 0081).
 _Avoid_: Topic, tag, theme
 
 **Rare Word**:
@@ -148,11 +148,11 @@ The single built-in list of Entries the user marked with the heart ("save word")
 _Avoid_: Saved words, likes
 
 **Dashboard**:
-The home behind «Стрічка»: the Word of the Day hero, the Mood check-in, «Попередні слова», the Curated Collections rail and the Correction Types rail. Each block has its own Feature Switch; with `dashboard` off the Feed is the home.
+The home behind «Стрічка»: the Word of the Day hero, the Mood check-in, «Попередні слова», the «Категорії» rail of Categories of Words, the «Добірки» rail of Curated Collections and the Correction Types rail, whose header opens the grid of the Categories of Corrections. Each block has its own Feature Switch; with `dashboard` off the Feed is the home.
 _Avoid_: Home, start screen, overview
 
 **Curated Collection**:
-«Добірка»: an editorial list of Entries shipped in the Language Pack with a publish date, unlocking on it; not a Collection, though «+ Додати» copies it into one.
+«Добірка»: an editorial list of Entries shipped in the Language Pack with a publish date, unlocking on it, shown on the Dashboard's «Добірки» rail; not a Collection, though «ДОДАТИ» copies it into one.
 _Avoid_: Playlist, featured, set
 
 **Collection**:
@@ -399,6 +399,10 @@ Editions may add modes through an Extension Point.
 **Round**:
 One prompt with exactly one right answer. The number and form of its options depend on the Game Mode: a pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in order, or typed text.
 _Avoid_: Level, question
+
+**Answer Form**:
+The form a Round's answer takes, which the Game Mode decides: a pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in order, or typed text. Each Answer Form owns what a Round in it holds, the Round the reader sees, how an answer is judged, what the Game Review shows of a wrong answer and how many Rounds and Entries it spans; the Game keeps only Lives, Rounds passed, the Best result and the timer.
+_Avoid_: Question type, answer type, input mode
 
 **Life**:
 One allowed mistake in a Game Mode with Lives; a wrong answer costs a Life, losing all Lives ends the Game.

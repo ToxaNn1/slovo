@@ -1,25 +1,30 @@
 import type { CorrectionType } from '@slovo/contracts';
 import type { CorrectionTypeTile } from '@slovo/core';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { correctionTile, dashboard, typeStyle } from '../tokens';
-import { BlockTitle } from './BlockTitle';
+import { RailHeader } from './RailHeader';
 
 /**
  * The Correction Types rail of the Dashboard (ADR 0076): «Виправлення» with
  * the count of tiles over a horizontal row that runs to the screen's edges,
  * one tile per Correction Type with live Corrections, each its type's name
- * under a red glyph. A tile opens its type's screen.
+ * under a red glyph. A tile opens its type's screen. Given `categories`, the
+ * header reads their number instead and is a button that opens the grid of
+ * the Categories of Corrections, k2 (spec #1604); without, a plain title.
  */
 export function CorrectionTypesRail({
   tiles,
+  categories,
   onOpen,
 }: {
   tiles: readonly CorrectionTypeTile[];
+  /** The Categories of Corrections' number and the opener of their grid. */
+  categories?: { readonly count: number; readonly onOpenAll: () => void } | undefined;
   onOpen: (type: CorrectionType) => void;
 }) {
   const tokens = useTokens();
@@ -28,13 +33,12 @@ export function CorrectionTypesRail({
   const words = strings.dashboard.correctionTypes;
   return (
     <>
-      <View style={styles.title}>
-        <BlockTitle
-          title={words.title}
-          note={String(tiles.length)}
-          testID="dashboard-correction-types-title"
-        />
-      </View>
+      <RailHeader
+        testID="dashboard-correction-types-title"
+        title={words.title}
+        note={String(categories?.count ?? tiles.length)}
+        onPress={categories?.onOpenAll}
+      />
       <ScrollView
         testID="dashboard-correction-types"
         horizontal
@@ -77,7 +81,6 @@ export function CorrectionTypesRail({
 }
 
 const styles = StyleSheet.create({
-  title: { paddingHorizontal: dashboard.side, paddingBottom: dashboard.titleGap },
   rail: {
     gap: correctionTile.gap,
     paddingHorizontal: dashboard.side,

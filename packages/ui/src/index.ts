@@ -132,9 +132,24 @@ export { MoodCheckIn } from './dashboard/MoodCheckIn';
 export { PreviousWords } from './dashboard/PreviousWords';
 export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
 export { CorrectionTypesRail } from './dashboard/CorrectionTypesRail';
-export { CuratedCollectionRow } from './dashboard/CuratedCollectionRow';
+export { QuietScreenHero } from './dashboard/QuietScreenHero';
+export { QuietScreenRow } from './dashboard/QuietScreenRow';
+export { RailBoard, knownShare, type RailBoardCard } from './dashboard/RailBoard';
+export { RailScreenCard } from './dashboard/RailScreenCard';
 export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
-export { RailScreenHero } from './dashboard/RailScreenHero';
+export { RailScreenHero, type HeroAction } from './dashboard/RailScreenHero';
+export { CategoriesRail } from './categories/CategoriesRail';
+export { CategoryGrid, type GridColumns, type GridTile } from './categories/CategoryGrid';
+export { CorrectionCategoryGrid } from './categories/CorrectionCategoryGrid';
+export {
+  CategoryTile,
+  shapeAt,
+  toneByPosition,
+  type CategoryShape,
+  type CategoryShapes,
+  type CategoryTileBox,
+  type CategoryTone,
+} from './categories/CategoryTile';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { LevelCard } from './progress/LevelCard';
@@ -144,6 +159,11 @@ export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
   cardSpace,
+  categoryGrid,
+  categoryGridBox,
+  categoryRailBox,
+  correctionGrid,
+  correctionGridBox,
   categoryTile,
   collectionCard,
   coreTokens,

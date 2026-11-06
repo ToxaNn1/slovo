@@ -77,7 +77,9 @@ beforeEach(async () => {
   userState = await seedUserState({}, { clock });
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
+      categories: [
+        { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
+      ],
       words: [word('w_sumyrnyi', 'сумирний')],
     }),
     edition: shippedEdition,

@@ -8,8 +8,10 @@ import type { PackContent } from './pack-layout';
 const contentAt = (contentVersion: number, displayName = 'Мовлення'): PackContent => ({
   editionId: 'fixture',
   contentVersion,
-  categories: [{ id: 'speech', displayName }],
-  correctionCategories: [{ id: 'work', displayName: 'На роботі' }],
+  categories: [{ id: 'speech', displayName, description: 'Опис.', tone: 'loud' }],
+  correctionCategories: [
+    { id: 'work', displayName: 'На роботі', description: 'Опис.', tone: 'loud' },
+  ],
   words: [],
   corrections: [],
   idioms: [],
@@ -82,8 +84,10 @@ describe('checkContentVersion', () => {
       idioms: [],
       corrections: [],
       words: [],
-      categories: [{ displayName: 'Мовлення', id: 'speech' }],
-      correctionCategories: [{ displayName: 'На роботі', id: 'work' }],
+      categories: [{ tone: 'loud', description: 'Опис.', displayName: 'Мовлення', id: 'speech' }],
+      correctionCategories: [
+        { tone: 'loud', description: 'Опис.', displayName: 'На роботі', id: 'work' },
+      ],
       contentVersion: 4,
       editionId: 'fixture',
     };

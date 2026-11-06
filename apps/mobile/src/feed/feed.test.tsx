@@ -73,8 +73,10 @@ async function openFeed() {
   const clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
   mockComposition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
-      correctionCategories: [{ id: 'everyday', displayName: 'Щоденне' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
+      correctionCategories: [
+        { id: 'everyday', displayName: 'Щоденне', description: 'Щоденне.', tone: 'loud' },
+      ],
       words: Array.from({ length: 10 }, (_, i) => word(i)),
       corrections: [correction],
     }),

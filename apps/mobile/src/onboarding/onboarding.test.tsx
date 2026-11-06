@@ -67,7 +67,9 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
   const userState = await seedUserState({}, { clock });
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
+      categories: [
+        { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
+      ],
       words: Array.from({ length: 8 }, (_, index) =>
         word(`w_${String(index)}`, `слово${String(index)}`),
       ),

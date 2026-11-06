@@ -104,7 +104,7 @@ function fakePager() {
 async function openFeed(clock: Clock, kept: UserStateFacts = {}) {
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words: Array.from({ length: 10 }, (_, i) => word(i)),
     }),
     edition: loadEdition(config),

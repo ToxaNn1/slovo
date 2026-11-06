@@ -41,7 +41,7 @@ import { userStateRecords } from '../user-state-schema';
 
 const words = Array.from({ length: 20 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`));
 const content = createMemoryContentPort({
-  categories: [{ id: 'test', displayName: 'Test' }],
+  categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
   words,
   corrections: [correction('c_00')],
 });

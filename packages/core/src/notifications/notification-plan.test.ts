@@ -78,8 +78,8 @@ async function run({
   const { content, reads } = countingReads(
     createMemoryContentPort({
       categories: [
-        { id: 'test', displayName: 'Test' },
-        { id: 'other', displayName: 'Other' },
+        { id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' },
+        { id: 'other', displayName: 'Other', description: 'Other.', tone: 'loud' },
       ],
       words,
       corrections,
