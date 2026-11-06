@@ -1,6 +1,8 @@
 import type { Category } from '@slovo/contracts';
+import { toneByPosition, type CategoryTone } from '@slovo/ui';
 
 import { useComposition } from '../composition';
+import { useEditionInEffect } from '../edition/remote-switches';
 import { useSubscribed } from '../opening';
 
 const none: readonly Category[] = [];
@@ -30,4 +32,28 @@ export function useCorrectionCategories(): readonly Category[] {
     dashboard,
     ({ blocks }) => blocks.find((block) => block.kind === 'correctionTypes')?.categories ?? none,
   );
+}
+
+/**
+ * Whether a Category draws quiet, its k3 screen and muted tile: its tone is
+ * `quiet` and the Edition in effect has `quietCategories` on; off, it draws
+ * loud (ADR 0081).
+ */
+export function useIsQuiet(): (category: Category) => boolean {
+  const quiet = useEditionInEffect().isFeatureEnabled('quietCategories');
+  return (category) => quiet && category.tone === 'quiet';
+}
+
+/**
+ * The tones of a row of Category tiles: the boards' tones by position, and
+ * `quietTone` for a quiet Category's tile (k1's or the rail's).
+ */
+export function useTonesOf(
+  quietTone: Extract<CategoryTone, 'quietGrid' | 'quietRail'>,
+): (categories: readonly Category[]) => (index: number) => CategoryTone {
+  const isQuiet = useIsQuiet();
+  return (categories) => (index) => {
+    const category = categories[index];
+    return category !== undefined && isQuiet(category) ? quietTone : toneByPosition(index);
+  };
 }

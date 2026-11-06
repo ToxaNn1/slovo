@@ -3,6 +3,8 @@ import type { CategoryKind } from '@slovo/core';
 import {
   categoryGrid,
   correctionGrid,
+  QuietScreenHero,
+  QuietScreenRow,
   railScreen,
   RailScreenCard,
   RailScreenHero,
@@ -14,6 +16,7 @@ import { useRouter } from 'expo-router';
 import type { ComponentProps } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
+import { useIsQuiet } from '@/categories/categories';
 import { useCategoryScreen } from '@/categories/category-screen';
 import { editionStrings } from '@/edition/edition';
 
@@ -41,16 +44,19 @@ const backOf: Record<CategoryKind, string> = {
  * description, «ЗНАЮ x З n» and «ДОДАТИ» / «У МІКСІ», its live Entries as
  * cards under it in the Language Pack's order. `place` is the Category's
  * place in its list, which picks its shape. An empty Category shows the hero
- * alone.
+ * alone. A quiet Category draws its quiet screen instead (board 05.2 k3,
+ * ADR 0081): «Категорія», its name and description, no right button and no
+ * progress, its Entries as plain rows.
  */
 export function CategoryBoardScreen(props: {
   of: CategoryKind;
   category: Category;
   place: number;
 }) {
+  const quiet = useIsQuiet()(props.category);
   return (
     <UndoToastProvider>
-      <Board {...props} />
+      {quiet ? <QuietBoard {...props} /> : <Board {...props} />}
     </UndoToastProvider>
   );
 }
@@ -107,6 +113,47 @@ function Board({ of, category, place }: { of: CategoryKind; category: Category; 
         }
         ListHeaderComponentStyle={styles.hero}
         ItemSeparatorComponent={Gap}
+        contentContainerStyle={styles.content}
+      />
+    </View>
+  );
+}
+
+function QuietBoard({ of, category }: { of: CategoryKind; category: Category }) {
+  const { cards, openEntry } = useCategoryScreen(of, category);
+  const { colors } = useTokens();
+  const router = useRouter();
+  return (
+    <View testID="category" style={[styles.screen, { backgroundColor: colors.background }]}>
+      <FlatList
+        data={cards}
+        keyExtractor={({ entryId }) => entryId}
+        renderItem={({ item: { entryId, row }, index }) => (
+          <QuietScreenRow
+            testID={`category-entry-${entryId}`}
+            row={row}
+            index={index}
+            onPress={() => {
+              openEntry(entryId);
+            }}
+          />
+        )}
+        ListHeaderComponent={
+          <QuietScreenHero
+            id="category-quiet"
+            label={dashboard.category.quiet}
+            title={category.displayName}
+            description={category.description}
+            back={{
+              testID: 'category-back',
+              label: backOf[of],
+              onPress: () => {
+                router.back();
+              },
+            }}
+          />
+        }
+        ListHeaderComponentStyle={styles.hero}
         contentContainerStyle={styles.content}
       />
     </View>

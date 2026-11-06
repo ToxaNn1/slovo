@@ -14,6 +14,7 @@ import { todayDate, type DashboardBlock } from '@slovo/core';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { useTonesOf } from '@/categories/categories';
 import { useDashboardScreen } from '@/dashboard/dashboard';
 import { deviceClock } from '@/device/device-clock';
 import { edition, editionStrings } from '@/edition/edition';
@@ -57,6 +58,7 @@ function DashboardBlocks() {
     openCategory,
     openCorrectionCategories,
   } = useDashboardScreen();
+  const tonesOf = useTonesOf('quietRail');
   const { colors } = useTokens();
   return (
     <SafeAreaView
@@ -106,6 +108,7 @@ function DashboardBlocks() {
         return (
           <CategoriesRail
             tiles={block.categories.map(({ id, displayName }) => ({ id, name: displayName }))}
+            toneAt={tonesOf(block.categories)}
             onOpenAll={openCategories}
             onOpen={openCategory}
           />

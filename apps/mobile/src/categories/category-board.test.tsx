@@ -62,12 +62,16 @@ let composition: Composition;
 let shellOf: () => ReturnType<typeof testShell>;
 
 /** Opens the composition over two Categories of Words, «Емоції» with three live Words and a Retired one, «Порожня» with none. */
-async function open() {
+async function open({ quietCategories = true }: { quietCategories?: boolean } = {}) {
   const shipped = loadEdition(activeEditionFiles.config);
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
-      feature === 'dashboard' || feature === 'categoryScreens' || shipped.isFeatureEnabled(feature),
+      feature === 'quietCategories'
+        ? quietCategories
+        : feature === 'dashboard' ||
+          feature === 'categoryScreens' ||
+          shipped.isFeatureEnabled(feature),
   };
   const userState = await seedUserState(
     { onboardingFinished: '2026-09-01T09:00:00.000Z' },
@@ -84,6 +88,7 @@ async function open() {
         },
         { id: 'empty', displayName: 'Порожня', description: 'Тут ще нічого.', tone: 'loud' },
         { id: 'nature', displayName: 'Природа', description: 'Ліс і поле.', tone: 'loud' },
+        { id: 'war', displayName: 'Війна', description: 'Слова, що болять.', tone: 'quiet' },
       ],
       words: [
         word('w_sumyrnyi', 'сумирний', 'emotions-character'),
@@ -91,6 +96,7 @@ async function open() {
         word('w_lahidnyi', 'лагідний', 'emotions-character'),
         word('w_tykhyi', 'тихий', 'emotions-character'),
         word('w_lis', 'гайовий', 'nature'),
+        word('w_vtrata', 'втрата', 'war'),
       ],
     }),
     edition: editionInEffect,
@@ -193,10 +199,11 @@ describe('the Category screen', () => {
     await open();
     await composition.mix.setCategory('empty', false);
     await composition.mix.setCategory('nature', false);
+    await composition.mix.setCategory('war', false);
     await renderCategory('emotions-character');
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: 'У МІКСІ' })));
-    expect(hiddenIds()).toEqual(['empty', 'nature']);
+    expect(hiddenIds()).toEqual(['empty', 'nature', 'war']);
     expect(screen.getByRole('button', { name: 'У МІКСІ' })).toBeTruthy();
     expect(screen.getByText(editionStrings.mix.lastCategoryHint)).toBeTruthy();
   });
@@ -237,5 +244,36 @@ describe('the Category screen', () => {
     expect(within(hero).getByText('Порожня')).toBeTruthy();
     expect(within(hero).getByText('ЗНАЮ 0 З 0')).toBeTruthy();
     expect(screen.queryAllByTestId(/^category-entry-/)).toEqual([]);
+  });
+});
+
+describe('the quiet Category screen (k3)', () => {
+  it('shows «Категорія», the name and description, no right button, no progress and plain rows', async () => {
+    await open();
+    await renderCategory('war');
+
+    expect(screen.getByText(editionStrings.dashboard.category.quiet)).toBeTruthy();
+    expect(screen.getByText('Війна')).toBeTruthy();
+    expect(screen.getByText('Слова, що болять.')).toBeTruthy();
+    expect(screen.queryByTestId('category-hero')).toBeNull();
+    expect(screen.queryByTestId('category-mix')).toBeNull();
+    expect(screen.queryByText(/^ЗНАЮ/)).toBeNull();
+    expect(screen.queryByTestId('category-entry-w_vtrata-bar-3')).toBeNull();
+    expect(screen.getByText('втрата')).toBeTruthy();
+
+    await settle(() => fireEvent.press(screen.getByTestId('category-entry-w_vtrata')));
+    expect(screen.queryByText(editionStrings.dashboard.category.quiet)).toBeNull();
+    expect(screen.getByText('Значення слова втрата.')).toBeTruthy();
+  });
+
+  it('opens the loud screen for the quiet Category with quietCategories off', async () => {
+    await open({ quietCategories: false });
+    await renderCategory('war');
+
+    const hero = screen.getByTestId('category-hero');
+    expect(within(hero).getByText('Війна')).toBeTruthy();
+    expect(within(hero).getByText('ЗНАЮ 0 З 1')).toBeTruthy();
+    expect(screen.getByTestId('category-mix')).toBeTruthy();
+    expect(screen.queryByText(editionStrings.dashboard.category.quiet)).toBeNull();
   });
 });
