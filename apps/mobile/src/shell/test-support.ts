@@ -9,7 +9,6 @@ import {
   type AnalyticsPort,
   type Clock,
   type Edition,
-  type FeatureSwitch,
   type Random,
   type Schedule,
   type UserSettings,
@@ -146,14 +145,6 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       version: { contentVersion: 1, packFormat: 1 },
       contentUpdate: undefined,
     });
-  /** The Edition in effect each time it is asked, as the shell hands it to the modules apart from the composition. */
-  const switchedEdition = async () => {
-    const switches = await remoteSwitches.opened();
-    return {
-      id: edition.id,
-      isFeatureEnabled: (feature: FeatureSwitch) => switches.edition.isFeatureEnabled(feature),
-    };
-  };
   return {
     userState,
     settings: openOnce(
@@ -190,7 +181,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
         openMistakeReports({
           userState: await userState.opened(),
           backend: createFakeBackend().backend,
-          edition: await switchedEdition(),
+          edition: (await remoteSwitches.opened()).edition,
           appVersion: 'test',
           contentVersion: (await languagePack.opened()).version.contentVersion,
           clock,
@@ -202,7 +193,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
     counterReads: openOnce(
       async () =>
         openCounterReads({
-          edition: await switchedEdition(),
+          edition: (await remoteSwitches.opened()).edition,
           backend: createFakeBackend().backend,
           userState: await userState.opened(),
           clock,
@@ -212,7 +203,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
     counterSending: openOnce(
       async () =>
         openCounterSending({
-          edition: await switchedEdition(),
+          edition: (await remoteSwitches.opened()).edition,
           backend: createFakeBackend().backend,
           userState: await userState.opened(),
           clock,
