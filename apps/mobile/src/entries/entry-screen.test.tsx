@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { Word } from '@slovo/contracts';
+import type { Correction, Word } from '@slovo/contracts';
 import { loadEdition, openComposition, type Composition, type Haptics } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
@@ -11,7 +11,16 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
+import GameLayout from '../app/game/_layout';
+import GameEntryScreen from '../app/game/[entryId]';
+import SavedLayout from '../app/saved/_layout';
+import CollectionEntryScreen from '../app/saved/collections/[collectionId]/[entryId]';
+import FavoriteEntryScreen from '../app/saved/favorites/[entryId]';
 import HistoryEntryScreen from '../app/saved/history/[entryId]';
+import LearningEntryScreen from '../app/saved/learning/[entryId]';
+import WordOfTheDayEntryScreen from '../app/saved/words-of-the-day/[entryId]';
+import SearchLayout from '../app/search/_layout';
+import EntryFromSearchScreen from '../app/search/[entryId]';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
 import { SettingsProvider } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
@@ -88,6 +97,23 @@ function word(id: string, lemma: string, history?: string): Word {
   };
 }
 
+/** A Correction of the Edition's first Correction Category. */
+function correction(id: string, nonStandardForm: string): Correction {
+  return {
+    kind: 'correction',
+    id,
+    nonStandardForm,
+    correctionType: 'surzhyk',
+    standardEquivalents: ['чемний'],
+    explanation: `Чому не «${nonStandardForm}».`,
+    examplePair: { nonStandard: `Кажуть ${nonStandardForm}.`, standard: 'Кажи чемний.' },
+    categoryId: 'everyday',
+    sources: [{ title: 'Словник' }],
+    literaryUses: [],
+    retired: false,
+  };
+}
+
 /** The Analytics port the composition sends to, afresh for each test. */
 let analytics: RecordedAnalytics;
 let composition: Composition;
@@ -100,10 +126,15 @@ beforeEach(async () => {
       categories: [
         { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
       ],
+      correctionCategories: [
+        { id: 'everyday', displayName: 'Щоденне', description: 'Як кажуть щодня.', tone: 'loud' },
+      ],
       words: [
         word('w_sumyrnyi', 'сумирний', 'Колись означало лише «покірний».'),
         word('w_lahidnyi', 'лагідний'),
+        { ...word('w_chemnyi', 'чемний'), correctionIds: ['c_vezhlyvyi'] },
       ],
+      corrections: [correction('c_vezhlyvyi', 'вежливий')],
     }),
     edition: shippedEdition,
     userState: await seedUserState(),
@@ -130,7 +161,7 @@ async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
     composition: opened(composition),
     remoteSwitches: switchedTo(editionInEffect()),
   });
-  await renderRouter(
+  const app = renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
@@ -149,12 +180,26 @@ async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
       ),
       'entry/_layout': EntryLayout,
       'entry/[entryId]': EntryFromLinkScreen,
+      'search/_layout': SearchLayout,
+      'search/[entryId]': EntryFromSearchScreen,
+      'game/_layout': GameLayout,
+      'game/[entryId]': GameEntryScreen,
+      'saved/_layout': SavedLayout,
       'saved/history/[entryId]': HistoryEntryScreen,
+      'saved/favorites/[entryId]': FavoriteEntryScreen,
+      'saved/learning/[entryId]': LearningEntryScreen,
+      'saved/words-of-the-day/[entryId]': WordOfTheDayEntryScreen,
+      'saved/collections/[collectionId]/[entryId]': CollectionEntryScreen,
     },
     { initialUrl: url },
   );
+  await app;
   await settle();
+  return { pathname: () => app.getPathname() };
 }
+
+/** The back tile of the Entry screen on top of the stack. */
+const backOnTop = () => screen.getAllByTestId('entry-screen-back').at(-1);
 
 /** The Word History events the port got. */
 const historyOpened = () => analytics.events.filter(({ event }) => event === 'wordHistoryOpened');
@@ -251,5 +296,52 @@ describe('an Entry opened from History', () => {
 
     expect(screen.queryByTestId('entry-error')).not.toBeOnTheScreen();
     expect(screen.getByTestId('word-card')).toHaveTextContent(/сумирний/);
+  });
+});
+
+describe('the Entry screen of each stack', () => {
+  const stacks: readonly (readonly [string, string])[] = [
+    ['/entry', editionStrings.tabs.home],
+    ['/search', editionStrings.search.title],
+    ['/game', editionStrings.game.title],
+    ['/saved/history', editionStrings.history.title],
+    ['/saved/favorites', editionStrings.favorites.title],
+    ['/saved/learning', editionStrings.learning.title],
+    ['/saved/words-of-the-day', editionStrings.wordOfTheDayArchive.title],
+    ['/saved/collections/none', editionStrings.collections.title],
+  ];
+
+  it.each(stacks)(
+    'at %s names its Back, opens a linked Correction on the same stack and goes back to the Word',
+    async (route, back) => {
+      const app = await renderEntry('w_chemnyi', `${route}/w_chemnyi`);
+      expect(backOnTop()).toHaveProp('accessibilityLabel', back);
+
+      await act(async () => {
+        await fireEvent.press(screen.getByTestId('word-often-said-c_vezhlyvyi'));
+        await jest.runAllTimersAsync();
+      });
+
+      expect(app.pathname()).toBe(`${route}/c_vezhlyvyi`);
+      // The Word's lemma with its stress mark.
+      expect(backOnTop()).toHaveProp('accessibilityLabel', 'че\u0301мний');
+
+      await act(async () => {
+        await fireEvent.press(backOnTop());
+        await jest.runAllTimersAsync();
+      });
+
+      expect(app.pathname()).toBe(`${route}/w_chemnyi`);
+      expect(backOnTop()).toHaveProp('accessibilityLabel', back);
+    },
+  );
+
+  it('names the Back of a Collection’s Entry after the Collection', async () => {
+    const created = await composition.collections.create('Ввічливі', 'w_chemnyi');
+    if (!created.ok) throw new Error(`The Collection was refused: ${created.reason}`);
+
+    await renderEntry('w_chemnyi', `/saved/collections/${created.collection.id}/w_chemnyi`);
+
+    expect(backOnTop()).toHaveProp('accessibilityLabel', 'Ввічливі');
   });
 });
