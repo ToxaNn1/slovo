@@ -665,8 +665,8 @@ describe('the Game screen', () => {
     await open();
     await renderScreen({ shareCard: sendingShareCard });
     // The first win in a Game Mode group earns a Badge.
-    await act(async () => {
-      await composition.xpLog
+    await act(() => {
+      composition.xpLog
         .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
         .commit();
     });

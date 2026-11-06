@@ -20,13 +20,7 @@ async function renderCard(
   await render(
     <TokensProvider tokens={coreTokens} colorScheme={colorScheme}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-        <ShareCard
-          content={content}
-          watermark="SLOVO"
-          badge={badge}
-          format={format}
-          width={300}
-        />
+        <ShareCard content={content} watermark="SLOVO" badge={badge} format={format} width={300} />
       </EditionProvider>
     </TokensProvider>,
   );
