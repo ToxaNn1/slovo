@@ -49,7 +49,28 @@ Checks the whole Edition with the build's rules and writes nothing: every proble
 
 ## What the Edition has: `have` and `counts`
 
-<!-- #1625 fills this section. -->
+```sh
+pnpm content have --edition uk
+pnpm content have --edition uk --kind idiom
+pnpm content counts --edition uk
+```
+
+`have` prints every Entry of the Edition to stdout, one line each, tab-separated: its kind (`word`, `correction`, `idiom`, `synonym-row`, `tip`), its Category or type (`-` for a Synonym Row or a Tip), its text with its forms after `->` (a Correction's standard equivalents, a Synonym Row's members, a Tip's forms), and `retired` for a Retired Entry, whose text stays taken. `--kind` keeps one kind. Read it before drafting a batch, so no Entry repeats one the Edition has:
+
+```text
+idiom	proverb	силу той має, хто правду мовляє
+word	technology	заклепка	retired
+```
+
+`counts` prints the Words per Category and rarity, the Corrections per Category, and their totals. Retired Entries are left out, as the content targets count. A cell or a row under a target in `content/targets.json` (read as `check` reads it) shows its gap, so with a floor of 18 Words a Category, `15 (-3)` is three short:
+
+```text
+Words     r1  r2   r3   r4   r5   total
+dialects  0   0    4    6    5    15 (-3)
+total     88  152  174  174  123  711
+```
+
+Neither writes a file; both work for any Edition through `--edition`.
 
 ## Verify quotes: `verify`
 
@@ -78,7 +99,21 @@ It prints one line per Entry, `<outcome>\t<id>\t<file>[\t<detail>]`, then the co
 
 ## Import Entries: `import`
 
-<!-- #1627 fills this section. -->
+```sh
+pnpm content import word new-words.json --edition uk
+pnpm content import idiom review/idioms/drafts --edition uk
+pnpm content import correction new-corrections.json --edition uk --no-record
+```
+
+Takes the Entries of one kind (`word`, `correction`, `idiom`, `synonym-row` or `tip`) from either:
+
+- **a JSON array** of new Entries without ids, each issued an id no Entry of the Edition has had (ADR 0010); an `id` an item carries is replaced;
+- **a folder of ready drafts**, such as the `drafts/` folder `pnpm source:words` writes, each keeping its own id, which must be of the kind and not taken in the Edition.
+
+Before writing anything it refuses an Entry whose text the Edition already has in any kind, Retired or not (the Lemma, expression, non-standard form, dominant or title, in any case and with or without stress marks), a text imported twice, and a draft whose id the Edition or another draft already has. It then writes one file per Entry in the kind's folder, such as `content/words/w_k3x9qa.json`, with the kind and id first and the fields in the order `new` drafts them, and checks the whole Edition as `new` does:
+
+- **It passes:** the content is recorded as `pnpm build:pack uk --record` records it, and the files written print with the new content version. With `--no-record` it writes and checks only, for a wave's implementers whose coordinator records once (ADR 0080).
+- **It has problems:** each prints as the build prints them (file, Entry, field, what is wrong); every file it wrote is removed and nothing is recorded.
 
 ## Tests
 
