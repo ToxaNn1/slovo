@@ -53,6 +53,8 @@ export type FlagKind =
   | 'other-labels'
   | 'spelling-differs'
   | 'existing-entry'
+  | 'cross-reference'
+  | 'region-missing'
   | 'check';
 
 export interface Flag {
