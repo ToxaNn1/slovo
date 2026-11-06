@@ -57,7 +57,21 @@ Checks the whole Edition with the build's rules and writes nothing: every proble
 
 ## Import Entries: `import`
 
-<!-- #1627 fills this section. -->
+```sh
+pnpm content import word new-words.json --edition uk
+pnpm content import idiom review/idioms/drafts --edition uk
+pnpm content import correction new-corrections.json --edition uk --no-record
+```
+
+Takes the Entries of one kind (`word`, `correction`, `idiom`, `synonym-row` or `tip`) from either:
+
+- **a JSON array** of new Entries without ids, each issued an id no Entry of the Edition has had (ADR 0010); an `id` an item carries is replaced;
+- **a folder of ready drafts**, such as the `drafts/` folder `pnpm source:words` writes, each keeping its own id, which must be of the kind and not taken in the Edition.
+
+Before writing anything it refuses an Entry whose text the Edition already has in any kind, Retired or not (the Lemma, expression, non-standard form, dominant or title, in any case and with or without stress marks), a text imported twice, and a draft whose id the Edition or another draft already has. It then writes one file per Entry in the kind's folder, such as `content/words/w_k3x9qa.json`, with the kind and id first and the fields in the order `new` drafts them, and checks the whole Edition as `new` does:
+
+- **It passes:** the content is recorded as `pnpm build:pack uk --record` records it, and the files written print with the new content version. With `--no-record` it writes and checks only, for a wave's implementers whose coordinator records once (ADR 0080).
+- **It has problems:** each prints as the build prints them (file, Entry, field, what is wrong); every file it wrote is removed and nothing is recorded.
 
 ## Tests
 
