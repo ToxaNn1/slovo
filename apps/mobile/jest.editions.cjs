@@ -30,17 +30,21 @@ module.exports = {
         ]),
       ),
       recordings: Object.fromEntries(
-        (existsSync(recordings) ? readdirSync(recordings) : []).map((voice) => [
-          voice,
-          Object.fromEntries(
-            readdirSync(join(recordings, voice))
-              .filter((file) => file.endsWith('.mp3'))
-              .map((file) => [
-                file.slice(0, -'.mp3'.length),
-                require(join(recordings, voice, file)),
-              ]),
-          ),
-        ]),
+        // A voice is a folder and a Recording an mp3 file in it; anything else, such as .DS_Store, is skipped.
+        (existsSync(recordings) ? readdirSync(recordings, { withFileTypes: true }) : [])
+          .filter((entry) => entry.isDirectory())
+          .map(({ name: voice }) => [
+            voice,
+            Object.fromEntries(
+              readdirSync(join(recordings, voice), { withFileTypes: true })
+                .filter((entry) => entry.isFile() && entry.name.endsWith('.mp3'))
+                .map(({ name: file }) => file)
+                .map((file) => [
+                  file.slice(0, -'.mp3'.length),
+                  require(join(recordings, voice, file)),
+                ]),
+            ),
+          ]),
       ),
       languagePack: 1,
     },
