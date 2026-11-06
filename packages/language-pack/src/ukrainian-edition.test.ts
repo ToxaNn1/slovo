@@ -97,6 +97,22 @@ describe('the UA Edition', () => {
     });
   });
 
+  it('describes every Category in one line and holds «Розстріляна лексика» alone quiet, with the board text', () => {
+    const { categories, correctionCategories } = ukrainianFolder.read('config');
+    const all = [...categories, ...correctionCategories];
+
+    expect(all).toHaveLength(23);
+    expect(
+      all.every(({ description }) => description.length > 0 && !description.includes('\n')),
+    ).toBe(true);
+    expect(all.filter(({ tone }) => tone === 'quiet')).toEqual([
+      expect.objectContaining({
+        id: 'repressed-words',
+        description: 'Слова, які вилучали зі словників у 1930-х. Повертаємо їх тихо.',
+      }),
+    ]);
+  });
+
   it('draws a pictogram and a cover for every Category and Correction Category, «Розстріляна лексика» quiet', () => {
     const art = loadDecor(ukrainianFolder.read('decor')).categories ?? {};
     const { categories, correctionCategories } = ukrainianFolder.read('config');
