@@ -1,49 +1,36 @@
-import {
-  openComposition,
-  systemRandom,
-  type Account,
-  type Composition,
-  type TrackedUserState,
-} from '@slovo/core';
+import { openComposition, type Account, type Composition } from '@slovo/core';
 import type { PackReader } from '@slovo/language-pack/reader';
-import { systemSchedule } from '@slovo/ui';
 import { useEffect, useState } from 'react';
 
 import { deviceAnalytics } from './analytics/posthog-analytics';
-import { backend } from './api';
-import { deviceClock } from './device/device-clock';
 import { logError } from './diagnostics/log';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
 import { editionStrings } from './edition/edition';
 import type { LaunchPack } from './content-update/launch-pack';
 import { gameModeStrings } from './game/game-modes';
 import { openOnce, useOpened, type Opening, type OpeningState } from './opening';
-import { useShell, type EditionSwitches } from './shell-value';
+import { useShell, type DevicePorts } from './shell-value';
 
 /** What the composition opens over. */
 interface CompositionSources {
   languagePack: Opening<LaunchPack<PackReader>>;
-  remoteSwitches: Opening<EditionSwitches>;
-  userState: Opening<TrackedUserState>;
+  /** The device ports, the Edition in effect among them. */
+  ports: Opening<DevicePorts>;
   /** The Account, which opens apart (ADR 0037); undefined when the Edition has none. */
   account: Opening<Account> | undefined;
 }
 
 async function openOver({
   languagePack,
-  remoteSwitches,
-  userState,
+  ports,
   account,
 }: CompositionSources): Promise<Composition> {
   const content = (await languagePack.opened()).reader;
   const composition = await openComposition({
+    // Read at each opening, so a reopen opens over the Edition in effect now.
+    ...(await ports.opened()),
     content,
     crossword: content,
-    edition: (await remoteSwitches.opened()).edition,
-    userState: await userState.opened(),
-    clock: deviceClock,
-    random: systemRandom,
-    schedule: systemSchedule,
     analytics: deviceAnalytics,
     scheduling: {
       scheduler: deviceNotificationScheduler,
@@ -53,7 +40,6 @@ async function openOver({
       streakWarning: editionStrings.notificationTemplates.streakWarning,
       goalNotMet: editionStrings.notificationTemplates.goalNotMet,
     },
-    backend,
     // Until the Account is open the reader counts as signed in, so no offer to save comes too early.
     signedIn: () =>
       account === undefined
