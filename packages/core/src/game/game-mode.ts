@@ -1,13 +1,16 @@
 import type { LanguageTraits } from '@slovo/contracts';
 
 import type { AnswerSheet, RoundOption } from './answer-form';
+import { chipsForm, type ChipsContent } from './chips-form';
 import { pickForm, type PickContent } from './pick-form';
+import { typedForm, type TypedContent } from './typed-form';
 import { vowelForm, type VowelContent } from './vowel-form';
 import type { Edition } from '../edition/edition';
 import type { AskableEntry, AskableKind, KindRefusal, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
 
 export { ROUND_OPTIONS, type AnswerSheet, type RoundOption } from './answer-form';
+export type { ChipKind, FixedChip } from './chips-form';
 
 /**
  * What the Game needs to know of the Edition: its Feature Switches, its
@@ -31,9 +34,6 @@ export const GAME_MODE_GROUPS = ['words', 'corrections', 'idioms', 'challenge'] 
 /** The group of the mode screen a Game Mode's card stands in. */
 export type GameModeGroup = (typeof GAME_MODE_GROUPS)[number];
 
-/** What a chips Round's chips are: a Word's letters or an expression's words. */
-export type ChipKind = 'letter' | 'word';
-
 /**
  * Which label a Round shows over its prompt: the Game Mode's, a Synonym
  * Row's question on its dominant, a Tip's, or an Example's with a gap.
@@ -44,13 +44,6 @@ export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap';
 export interface TextRange {
   readonly start: number;
   readonly end: number;
-}
-
-/** A character of a chips answer that stays in place and is no chip, such as an apostrophe. */
-export interface FixedChip {
-  /** How many chips the answer has before it. */
-  readonly at: number;
-  readonly text: string;
 }
 
 /** A Word of a pairs grid with its Definition: one Round of the grid. */
@@ -80,30 +73,8 @@ export type RoundForm =
       /** The places of the pairs whose Definitions show, in the order shown. */
       readonly definitionOrder: readonly number[];
     }
-  | {
-      readonly form: 'chips';
-      /** What the chips are, a Word's letters or an expression's words. */
-      readonly chipKind: ChipKind;
-      /** The chips, in the order shown. */
-      readonly chips: readonly string[];
-      /** The chips in the right order; equal chips are interchangeable. */
-      readonly expected: readonly string[];
-      /** The characters of the answer that stay in place among the chips; none when left out. */
-      readonly fixed?: readonly FixedChip[];
-      readonly sheet: AnswerSheet;
-    }
-  | {
-      readonly form: 'typed';
-      /** The text to type, compared the way `typedAnswerMatches` does. */
-      readonly expected: string;
-      /**
-       * Whether the text shows as blanks, one per character, which «Відкрити
-       * літеру» opens; the places of the characters that stay in place, such
-       * as an apostrophe, show them from the start. No blanks when left out.
-       */
-      readonly blanks?: { readonly inPlace: readonly number[] };
-      readonly sheet: AnswerSheet;
-    };
+  | ChipsContent
+  | TypedContent;
 
 /** A Round as a Game Mode builds it: one prompt with exactly one right answer, in the mode's answer form. */
 export type RoundContent = RoundForm & {
@@ -132,8 +103,9 @@ export function roundsIn(content: RoundContent): number {
     case 'pairs':
       return content.pairs.length;
     case 'chips':
+      return chipsForm.roundsIn(content);
     case 'typed':
-      return 1;
+      return typedForm.roundsIn(content);
   }
 }
 
@@ -147,8 +119,9 @@ export function entriesIn(content: RoundContent): readonly string[] {
     case 'pairs':
       return content.pairs.map(({ entry }) => entry.id);
     case 'chips':
+      return chipsForm.entriesIn(content);
     case 'typed':
-      return [];
+      return typedForm.entriesIn(content);
   }
 }
 
@@ -232,19 +205,3 @@ export interface GameMode {
  * out of the Mix.
  */
 export type GameModeRefusal = 'too-few-entries' | KindRefusal;
-
-/** Whether the chips stand in the right order, equal chips interchangeable and case ignored. */
-export const chipsMatch = (chips: readonly string[], right: readonly string[]): boolean =>
-  chips.length === right.length &&
-  chips.every((chip, place) => chip.toLowerCase() === right[place]?.toLowerCase());
-
-/**
- * The chips of a shuffle, never in the right order: when the shuffle left
- * them so, they move one place on, which leaves chips of at least two
- * different texts out of order.
- */
-export const outOfOrder = (
-  right: readonly string[],
-  chips: readonly string[],
-): readonly string[] =>
-  chipsMatch(chips, right) ? [...chips.slice(1), ...chips.slice(0, 1)] : chips;

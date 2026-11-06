@@ -1,4 +1,5 @@
-import { outOfOrder, type GameMode } from './game-mode';
+import { outOfOrder } from './chips-form';
+import type { GameMode } from './game-mode';
 import { shuffled } from '../shuffled';
 
 /** How many words an expression that plays has, at least and at most. */

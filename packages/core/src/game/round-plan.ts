@@ -11,7 +11,9 @@ import {
   type GameModeRefusal,
   type RoundContent,
 } from './game-mode';
+import { chipsForm } from './chips-form';
 import { pickForm } from './pick-form';
+import { typedForm } from './typed-form';
 import { vowelForm } from './vowel-form';
 import { shuffled } from '../shuffled';
 
@@ -106,12 +108,9 @@ function wellFormed(round: RoundContent): boolean {
       );
     }
     case 'chips':
-      return (
-        round.chips.length > 0 &&
-        [...round.chips].sort().join('\u0000') === [...round.expected].sort().join('\u0000')
-      );
+      return chipsForm.wellFormed(round);
     case 'typed':
-      return round.expected.length > 0;
+      return typedForm.wellFormed(round);
   }
 }
 
