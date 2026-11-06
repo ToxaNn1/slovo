@@ -1,6 +1,13 @@
 import type { DraftOutcome, Flag, ReviewReport } from './review-report';
 
-/** The review report as Markdown: what was drafted, and what a human must decide. */
+/** How much of a ready draft's Definition the «Ready drafts» list shows. */
+const DEFINITION_START = 55;
+
+/**
+ * The review report as Markdown: what was drafted, and what a human must
+ * decide. It ends with the «Ready drafts» list, one line per ready draft, so a
+ * human picks without opening files.
+ */
 export function formatReviewReport(report: ReviewReport): string {
   const drafts = report.lemmas.flatMap((lemma) => lemma.drafts);
   const ready = drafts.filter((draft) => draft.ready).length;
@@ -23,6 +30,12 @@ export function formatReviewReport(report: ReviewReport): string {
     for (const flag of lemma.flags) lines.push(formatFlag(flag));
     if (lemma.flags.length > 0 && lemma.drafts.length > 0) lines.push('');
     for (const draft of lemma.drafts) lines.push(...formatDraft(draft));
+  }
+  lines.push('', '## Ready drafts', '');
+  for (const { id, summary } of drafts.filter((draft) => draft.ready)) {
+    lines.push(
+      `- \`${id}\` | ${summary.text} | ${summary.group} | Examples: ${String(summary.examples)} | ${summary.definition.slice(0, DEFINITION_START)}`,
+    );
   }
   return `${lines.join('\n')}\n`;
 }
