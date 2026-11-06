@@ -4,12 +4,17 @@ import { StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { editionStrings } from '@/edition/edition';
+import { useEditionInEffect } from '@/edition/remote-switches';
 import { CollectionsList } from '@/saved/collections-list';
 
-/** Collections on their own screen: a back link to Saved and «+», the title, then the list. */
+/**
+ * Collections on their own screen: a back link to Saved and «+», the title,
+ * then the list; in the board style the grid carries the title, with the count.
+ */
 export default function CollectionsScreen() {
   const { colors } = useTokens();
   const router = useRouter();
+  const boardStyle = useEditionInEffect().isFeatureEnabled('collectionBoardStyle');
 
   return (
     <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -26,9 +31,11 @@ export default function CollectionsScreen() {
               />
               {add}
             </View>
-            <View style={styles.header}>
-              <ScreenTitle>{editionStrings.collections.title}</ScreenTitle>
-            </View>
+            {!boardStyle && (
+              <View style={styles.header}>
+                <ScreenTitle>{editionStrings.collections.title}</ScreenTitle>
+              </View>
+            )}
           </>
         )}
       />
