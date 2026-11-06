@@ -24,7 +24,7 @@ function Learning() {
     <SavedListScreen
       name="learning"
       title={strings.title}
-      aside={{ kind: 'count', value: list.length, forms: strings.count, testID: 'learning-count' }}
+      aside={{ kind: 'count', value: list.length, forms: strings.count }}
       list={(header) => <LearningList header={header} />}
     />
   );

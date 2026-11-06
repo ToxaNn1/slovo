@@ -124,7 +124,7 @@ describe('a Saved list screen', () => {
 
     const strings = editionStrings.history;
     expect(screen.getByText(strings.title)).toBeOnTheScreen();
-    expect(screen.getByTestId('history-limit')).toHaveTextContent(
+    expect(screen.getByTestId('history-note')).toHaveTextContent(
       fill(strings.limit, { count: String(HISTORY_CAP) }),
     );
   });

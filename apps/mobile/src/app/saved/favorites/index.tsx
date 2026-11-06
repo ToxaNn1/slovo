@@ -12,7 +12,7 @@ export default function FavoritesScreen() {
     <SavedListScreen
       name="favorites"
       title={strings.title}
-      aside={{ kind: 'count', value: list.length, forms: strings.count, testID: 'favorites-count' }}
+      aside={{ kind: 'count', value: list.length, forms: strings.count }}
       list={(header) => <FavoritesList header={header} />}
     />
   );
