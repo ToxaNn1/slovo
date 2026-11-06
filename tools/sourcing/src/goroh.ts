@@ -13,12 +13,7 @@ import { matchKey, squeeze, unstressed } from './text';
 const SITE = 'https://goroh.pp.ua/';
 
 export type GorohSection =
-  | 'Тлумачення'
-  | 'Словозміна'
-  | 'Синонімія'
-  | 'Етимологія'
-  | 'Фразеологія'
-  | 'Слововживання';
+  'Тлумачення' | 'Словозміна' | 'Синонімія' | 'Етимологія' | 'Фразеологія' | 'Слововживання';
 
 /** The readable address of a goroh page, as recorded in sources. */
 export function gorohUrl(section: GorohSection, lemma: string): string {
