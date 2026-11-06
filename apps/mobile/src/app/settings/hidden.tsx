@@ -1,4 +1,4 @@
-import { featureOfKind, withoutStress, type CategoryKind, type MixKind } from '@slovo/core';
+import type { CategoryKind, MixKind } from '@slovo/core';
 import {
   BackLink,
   EntryRow,
@@ -65,7 +65,7 @@ function HiddenList() {
             <SectionLabel style={styles.sectionLabel}>{title}</SectionLabel>
           </View>
         )}
-        renderItem={({ item: { entryId, row, labels } }) => (
+        renderItem={({ item: { entryId, row, labels, restoreLabel } }) => (
           <EntryRow
             testID={`hidden-entry-${entryId}`}
             row={row}
@@ -77,7 +77,7 @@ function HiddenList() {
                 variant="neutral"
                 testID={`hidden-entry-${entryId}-restore`}
                 label={strings.restore}
-                accessibilityLabel={fill(strings.restoreLabel, { title: withoutStress(row.title) })}
+                accessibilityLabel={restoreLabel}
                 onPress={() => {
                   restoreEntry(entryId);
                 }}
@@ -181,10 +181,10 @@ function CategoriesSection({
           }}
         />
       ))}
-      {model.kinds.map(({ entryKind, name, turnOnLabel }) => (
+      {model.kinds.map(({ entryKind, testID, name, turnOnLabel }) => (
         <TurnOnRow
           key={entryKind}
-          testID={`hidden-${featureOfKind(entryKind)}`}
+          testID={testID}
           name={name}
           accessibilityLabel={turnOnLabel}
           onTurnOn={() => {

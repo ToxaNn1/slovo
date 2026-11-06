@@ -4,13 +4,12 @@ import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
 import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 import { useShell } from '../shell-value';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
 import { undoRestore } from './hiding-undo';
-import { useMixState } from './mix';
+import { useMixInEffect } from './mix';
 
 const strings = editionStrings.hidden;
 
@@ -29,11 +28,10 @@ export function useHiddenSummary(): string {
 /** What the Hidden screen draws, kept up to date. */
 export function useHiddenScreenModel(): HiddenScreenModel {
   const list = useHiddenList();
-  const mix = useMixState();
-  const edition = useEditionInEffect();
+  const mix = useMixInEffect();
   return useMemo(
-    () => hiddenScreenModel({ edition, hiddenEntries: list, mix, strings: editionStrings }),
-    [edition, list, mix],
+    () => hiddenScreenModel({ hiddenEntries: list, mix, strings: editionStrings }),
+    [list, mix],
   );
 }
 
