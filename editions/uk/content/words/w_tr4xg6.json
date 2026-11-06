@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_tr4xg6",
   "lemma": "ланець",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Одягнена в лахміття людина; старець (у 3 знач.).",
@@ -59,9 +57,7 @@
       "author": "О. Гончар"
     }
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 4,
   "sources": [

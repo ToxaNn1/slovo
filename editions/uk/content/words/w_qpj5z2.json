@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_qpj5z2",
   "lemma": "стратосфера",
-  "stress": [
-    8
-  ],
+  "stress": [8],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Шар атмосфери, розміщений на висоті від 8–16 до 45–55 км над рівнем моря.",
@@ -21,10 +19,7 @@
       "author": "В. Собко"
     }
   ],
-  "synonyms": [
-    "піднебесся",
-    "атмосфера"
-  ],
+  "synonyms": ["піднебесся", "атмосфера"],
   "categoryId": "science",
   "rarity": 3,
   "sources": [

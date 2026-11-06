@@ -2,10 +2,7 @@
   "kind": "word",
   "id": "w_8i90p4",
   "lemma": "сулія",
-  "stress": [
-    3,
-    4
-  ],
+  "stress": [3, 4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Велика пляшка; бутель.",
@@ -23,10 +20,7 @@
       "author": "С. Голованівський"
     }
   ],
-  "synonyms": [
-    "бутель",
-    "пляшка"
-  ],
+  "synonyms": ["бутель", "пляшка"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

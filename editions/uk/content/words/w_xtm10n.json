@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_xtm10n",
   "lemma": "березка",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Багаторічна бур'янова витка рослина родини берізкових; повійка.",
-  "extraDefinitions": [
-    "Дереза."
-  ],
+  "extraDefinitions": ["Дереза."],
   "examples": [
     {
       "text": "Личинки бурякового довгоносика живляться корінцями осоту, будяка, берізки і багатьох інших бур'янів."

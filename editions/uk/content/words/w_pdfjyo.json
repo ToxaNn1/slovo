@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_pdfjyo",
   "lemma": "ховрах",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Невелика тварина родини білячих, поширена в Європі, Азії та Північній Америці; завдає великої шкоди посівам.",
@@ -30,10 +28,7 @@
       "author": "С. Журахович"
     }
   ],
-  "synonyms": [
-    "шкідник",
-    "миша"
-  ],
+  "synonyms": ["шкідник", "миша"],
   "categoryId": "folk-names",
   "rarity": 3,
   "sources": [

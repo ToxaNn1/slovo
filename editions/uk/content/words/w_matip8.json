@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_matip8",
   "lemma": "точильник",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Той, хто займається гострінням різальних інструментів; гострильник.",
-  "extraDefinitions": [
-    "Жук, шкідник деревини́."
-  ],
+  "extraDefinitions": ["Жук, шкідник деревини́."],
   "examples": [
     {
       "text": "Мічурін ішов містом і вигукував деренчливим голосом, наслідуючи точильників ножів.",

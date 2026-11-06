@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_kt6kro",
   "lemma": "пустомолот",
-  "stress": [
-    8
-  ],
+  "stress": [8],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Людина, яка говорить багато і беззмістовно; базіка.",
@@ -44,9 +42,7 @@
     "фанфарон",
     "цокотун"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 4,
   "sources": [

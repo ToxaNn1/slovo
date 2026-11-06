@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_5bsoku",
   "lemma": "смушок",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Шкурка, хутро новонародженого ягняти деяких цінних порід.",
@@ -33,11 +31,7 @@
       "author": "Л. Костенко"
     }
   ],
-  "synonyms": [
-    "бирка",
-    "смух",
-    "каракуль"
-  ],
+  "synonyms": ["бирка", "смух", "каракуль"],
   "categoryId": "old-crafts",
   "rarity": 4,
   "sources": [

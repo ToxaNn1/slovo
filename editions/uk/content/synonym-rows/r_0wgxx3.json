@@ -3,57 +3,40 @@
   "id": "r_0wgxx3",
   "dominant": {
     "text": "вогонь",
-    "stress": [
-      3
-    ]
+    "stress": [3]
   },
   "meaning": "Купа дров, хмизу і т. ін., що горить.",
   "members": [
     {
       "text": "багаття",
-      "stress": [
-        3
-      ],
+      "stress": [3],
       "shadeNote": "купа дров, хмизу, ломаччя і т. ін., що горить; вогнище"
     },
     {
       "text": "ватра",
-      "stress": [
-        1
-      ],
+      "stress": [1],
       "shadeNote": "вогнище, багаття"
     },
     {
       "text": "ватрище",
-      "stress": [
-        1
-      ]
+      "stress": [1]
     },
     {
       "text": "вогнисько",
-      "stress": [
-        1,
-        4
-      ]
+      "stress": [1, 4]
     },
     {
       "text": "вогнище",
-      "stress": [
-        1
-      ],
+      "stress": [1],
       "shadeNote": "купа дров, хмизу і т. ін., що горить"
     },
     {
       "text": "огнище",
-      "stress": [
-        0
-      ]
+      "stress": [0]
     },
     {
       "text": "огонь",
-      "stress": [
-        2
-      ]
+      "stress": [2]
     }
   ],
   "sources": [

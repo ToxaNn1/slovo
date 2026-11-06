@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_u33zx6",
   "lemma": "стрепет",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Степовий птах родини дрохвових, який під час польоту створює крильми різкий шум; хохітва.",
@@ -25,9 +23,7 @@
       "author": "В. Малик"
     }
   ],
-  "synonyms": [
-    "хохітва"
-  ],
+  "synonyms": ["хохітва"],
   "categoryId": "folk-names",
   "rarity": 4,
   "sources": [

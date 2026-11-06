@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_izrher",
   "lemma": "ключиця",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Парна трубчаста кістка плечового пояса людини та хребетних тварин, що з'єднує лопатку з грудною кісткою.",
@@ -25,9 +23,7 @@
       "text": "Ключиця передає фізичні сигнали від верхньої кінцівки до осьового скелета."
     }
   ],
-  "synonyms": [
-    "перепело"
-  ],
+  "synonyms": ["перепело"],
   "categoryId": "human-body",
   "rarity": 2,
   "sources": [

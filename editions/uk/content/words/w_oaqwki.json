@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_oaqwki",
   "lemma": "горностай",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Невеликий хутровий звір родини куницевих.",
-  "extraDefinitions": [
-    "Хутро цього звіра."
-  ],
+  "extraDefinitions": ["Хутро цього звіра."],
   "examples": [
     {
       "text": "У минулому горностай був об'єктом інтенсивного промислу."

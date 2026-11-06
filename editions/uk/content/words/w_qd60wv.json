@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_qd60wv",
   "lemma": "генеалогія",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Історія роду; родовід.",
@@ -32,9 +30,7 @@
       "text": "При дослідженні генеалогії рисаків було встановлено, що найбільше рисаків класу 2.05 отримано в лініях жеребців американського походження."
     }
   ],
-  "synonyms": [
-    "родовід"
-  ],
+  "synonyms": ["родовід"],
   "categoryId": "history-antiquity",
   "rarity": 3,
   "sources": [

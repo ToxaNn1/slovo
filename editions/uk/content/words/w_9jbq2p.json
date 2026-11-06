@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_9jbq2p",
   "lemma": "сентенція",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Вислів повчального характеру.",
@@ -26,9 +24,7 @@
       "author": "Н. Рибак"
     }
   ],
-  "synonyms": [
-    "вислів"
-  ],
+  "synonyms": ["вислів"],
   "categoryId": "language-speech",
   "rarity": 3,
   "sources": [

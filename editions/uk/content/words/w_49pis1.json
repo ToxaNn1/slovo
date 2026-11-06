@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_49pis1",
   "lemma": "півники",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Багаторічні трав'янисті рослини родини півникових з великими квітками різних кольорів і вузьким мечоподібним або лінійним листям; ірис (див. і́рис1).",
@@ -37,9 +35,7 @@
       "author": "Дніпрова Чайка"
     }
   ],
-  "synonyms": [
-    "ірис"
-  ],
+  "synonyms": ["ірис"],
   "categoryId": "folk-names",
   "rarity": 3,
   "sources": [

@@ -3,72 +3,50 @@
   "id": "r_czwv83",
   "dominant": {
     "text": "лінуватися",
-    "stress": [
-      5
-    ]
+    "stress": [5]
   },
   "meaning": "Не займатися корисною працею.",
   "members": [
     {
       "text": "байдикувати",
-      "stress": [
-        8
-      ]
+      "stress": [8]
     },
     {
       "text": "дармувати",
-      "stress": [
-        6
-      ]
+      "stress": [6]
     },
     {
       "text": "ледарювати",
-      "stress": [
-        7
-      ]
+      "stress": [7]
     },
     {
       "text": "лежати",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "лінитися",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "паніти",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "попасувати",
-      "stress": [
-        3
-      ],
+      "stress": [3],
       "shadeNote": "перебуваючи де-небудь, нічого не робити, гайнувати час"
     },
     {
       "text": "попасати",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "празникувати",
-      "stress": [
-        9
-      ]
+      "stress": [9]
     },
     {
       "text": "припухати",
-      "stress": [
-        6
-      ],
+      "stress": [6],
       "shadeNote": "проводячи час у спанні"
     }
   ],

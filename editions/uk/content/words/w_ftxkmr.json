@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ftxkmr",
   "lemma": "селезінка",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Кровотворний орган людини і хребетних тварин, який бере участь також в обміні речовин і виконує різноманітні захисні функції; міститься в черевній порожнині.",
@@ -17,9 +15,7 @@
       "author": "Григорій Тютюнник"
     }
   ],
-  "synonyms": [
-    "коса"
-  ],
+  "synonyms": ["коса"],
   "categoryId": "human-body",
   "rarity": 2,
   "sources": [

@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_csit4q",
   "lemma": "невіглас",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Неосвічена, необізнана людина; неук.",
-  "extraDefinitions": [
-    "Уживається як лайливе слово."
-  ],
+  "extraDefinitions": ["Уживається як лайливе слово."],
   "examples": [
     {
       "text": "Йосифові відразу якось не сподобалося, як цей молокосос став повчати його, наче якогось невігласа.",

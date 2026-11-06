@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_1gsfgu",
   "lemma": "скриня",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Великий ящик з кришкою і замком для зберігання одягу, коштовних предметів і т. ін.",
@@ -22,11 +20,7 @@
       "author": "О. Гончар"
     }
   ],
-  "synonyms": [
-    "рундук",
-    "сундук",
-    "шафарня"
-  ],
+  "synonyms": ["рундук", "сундук", "шафарня"],
   "categoryId": "household-crafts",
   "rarity": 2,
   "sources": [

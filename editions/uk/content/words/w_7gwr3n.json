@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_7gwr3n",
   "lemma": "плотар",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Робітник, який збиває, зв'язує і сплавляє плоти.",
@@ -22,10 +20,7 @@
       "author": "О. Десняк"
     }
   ],
-  "synonyms": [
-    "бокораш",
-    "оснач"
-  ],
+  "synonyms": ["бокораш", "оснач"],
   "categoryId": "old-crafts",
   "rarity": 4,
   "sources": [

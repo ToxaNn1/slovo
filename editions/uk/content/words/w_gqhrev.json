@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_gqhrev",
   "lemma": "нахлібник",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Той, хто живе чужим коштом.",
@@ -26,14 +24,7 @@
       "author": "І. Франко"
     }
   ],
-  "synonyms": [
-    "дармоїд",
-    "галапас",
-    "захребетник",
-    "паразит",
-    "трут",
-    "трутень"
-  ],
+  "synonyms": ["дармоїд", "галапас", "захребетник", "паразит", "трут", "трутень"],
   "categoryId": "witty-insults",
   "rarity": 3,
   "sources": [

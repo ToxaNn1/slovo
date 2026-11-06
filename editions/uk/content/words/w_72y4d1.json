@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_72y4d1",
   "lemma": "махляр",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Людина, яка займається махлярством; шахрай.",
@@ -40,9 +38,7 @@
     "шарлатан",
     "шельма"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 3,
   "sources": [

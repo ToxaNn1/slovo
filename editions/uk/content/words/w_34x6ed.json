@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_34x6ed",
   "lemma": "овід",
-  "stress": [
-    0
-  ],
+  "stress": [0],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Двокрила комаха, личинки якої паразитують в організмі різних тварин; ґедзь.",
@@ -22,13 +20,7 @@
       "author": "В. Винниченко"
     }
   ],
-  "synonyms": [
-    "ґедз",
-    "ґедзь",
-    "дзиз",
-    "дрік",
-    "сліпак"
-  ],
+  "synonyms": ["ґедз", "ґедзь", "дзиз", "дрік", "сліпак"],
   "categoryId": "folk-names",
   "rarity": 3,
   "sources": [

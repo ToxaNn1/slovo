@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_95fy23",
   "lemma": "ножівка",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Невелика ручна пилка з однією ручкою.",
-  "extraDefinitions": [
-    "Пилка для різання металу."
-  ],
+  "extraDefinitions": ["Пилка для різання металу."],
   "examples": [
     {
       "text": "На зручність і точність роботи ножівкою із дрібним зубом довжина полотна практично не впливає."

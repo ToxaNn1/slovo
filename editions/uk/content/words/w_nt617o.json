@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_nt617o",
   "lemma": "прядка",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Домашній верстат, признач. для ручного прядіння, який приводиться в рух ножним або ручним приводом.",
-  "extraDefinitions": [
-    "Те саме, що па́смо 1."
-  ],
+  "extraDefinitions": ["Те саме, що па́смо 1."],
   "examples": [
     {
       "text": "Яка прядка, така й нитка."

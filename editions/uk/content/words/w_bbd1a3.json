@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_bbd1a3",
   "lemma": "гобелен",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Килим із художньо витканою картиною, зображенням.",
@@ -36,10 +34,7 @@
       "text": "Гобелен широко використовують як елітну оббивну тканину для меблів."
     }
   ],
-  "synonyms": [
-    "килим",
-    "мат"
-  ],
+  "synonyms": ["килим", "мат"],
   "categoryId": "arts-culture",
   "rarity": 3,
   "sources": [

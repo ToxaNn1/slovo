@@ -3,61 +3,43 @@
   "id": "r_x2qjtf",
   "dominant": {
     "text": "жінка",
-    "stress": [
-      1
-    ]
+    "stress": [1]
   },
   "meaning": "Одружена жінка стосовно свого чоловіка.",
   "members": [
     {
       "text": "баба",
-      "stress": [
-        1
-      ]
+      "stress": [1]
     },
     {
       "text": "дружина",
-      "stress": [
-        4
-      ]
+      "stress": [4]
     },
     {
       "text": "пані",
-      "stress": [
-        1
-      ]
+      "stress": [1]
     },
     {
       "text": "пара",
-      "stress": [
-        1
-      ]
+      "stress": [1]
     },
     {
       "text": "подружжя",
-      "stress": [
-        4
-      ],
+      "stress": [4],
       "shadeNote": "як один із членів шлюбної пари"
     },
     {
       "text": "половина",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "стара",
-      "stress": [
-        4
-      ],
+      "stress": [4],
       "shadeNote": "та, з якою чоловік прожив досить довго, до старості"
     },
     {
       "text": "хазяйка",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     }
   ],
   "sources": [

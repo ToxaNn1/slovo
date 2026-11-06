@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_vvazni",
   "lemma": "улан",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "У царській і деяких іноземних арміях – солдат або офіцер легкої кінноти.",
@@ -22,12 +20,7 @@
       "author": "Д. Бедзик"
     }
   ],
-  "synonyms": [
-    "кавалерист",
-    "комонник",
-    "кінний",
-    "кіннотник"
-  ],
+  "synonyms": ["кавалерист", "комонник", "кінний", "кіннотник"],
   "categoryId": "military",
   "rarity": 3,
   "sources": [

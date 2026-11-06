@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_kxggkm",
   "lemma": "гицель",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Той, хто займається відловлюванням бездоглядних собак.",
-  "extraDefinitions": [
-    "Уживається як лайливе слово."
-  ],
+  "extraDefinitions": ["Уживається як лайливе слово."],
   "examples": [
     {
       "text": "– Штани на вас, гей би в найліпшого капітана, а лаєтесь, як той вибачте, гицель...",
@@ -70,9 +66,7 @@
     "ірод",
     "шкуродер"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 4,
   "sources": [

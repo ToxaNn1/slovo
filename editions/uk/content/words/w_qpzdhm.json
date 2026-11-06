@@ -2,16 +2,11 @@
   "kind": "word",
   "id": "w_qpzdhm",
   "lemma": "опецьок",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Товста, незграбна дитина.",
-  "extraDefinitions": [
-    "Зовсім мала дитина.",
-    "Невисока на зріст товста, незграбна людина."
-  ],
+  "extraDefinitions": ["Зовсім мала дитина.", "Невисока на зріст товста, незграбна людина."],
   "examples": [
     {
       "text": "Шестирічний опецьок випнув груденята: – Я нікого не страхаюся, бо мій отець найдужчий за всіх!",
@@ -69,9 +64,7 @@
     "гладун",
     "товпига"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 3,
   "sources": [

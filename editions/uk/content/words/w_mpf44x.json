@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_mpf44x",
   "lemma": "ландскнехт",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "У Західній Європі XV–XVII ст. – найманий солдат.",
-  "extraDefinitions": [
-    "Продажний вояк."
-  ],
+  "extraDefinitions": ["Продажний вояк."],
   "examples": [
     {
       "text": "Протягом XVIII ст. Австрійська імперія успішно використовувала як своїх вірних ландскнехтів сербських вояків.",
@@ -37,10 +33,7 @@
       "author": "О. Гончар"
     }
   ],
-  "synonyms": [
-    "найманець",
-    "наємник"
-  ],
+  "synonyms": ["найманець", "наємник"],
   "categoryId": "military",
   "rarity": 4,
   "sources": [

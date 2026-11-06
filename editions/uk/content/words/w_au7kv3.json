@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_au7kv3",
   "lemma": "губернія",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "У Росії з початку XVIII ст. і в СРСР до районування 1929 р. – основна адміністративно-територіальна одиниця.",
-  "extraDefinitions": [
-    "Губернське місто."
-  ],
+  "extraDefinitions": ["Губернське місто."],
   "examples": [
     {
       "text": "Заробітчани валом валили з північних губерній.",
@@ -37,10 +33,7 @@
       "author": "А. Шиян"
     }
   ],
-  "synonyms": [
-    "губерня",
-    "губернаторство"
-  ],
+  "synonyms": ["губерня", "губернаторство"],
   "categoryId": "history-antiquity",
   "rarity": 3,
   "sources": [

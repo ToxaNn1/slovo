@@ -3,53 +3,37 @@
   "id": "r_3bzsmd",
   "dominant": {
     "text": "гордий",
-    "stress": [
-      1
-    ]
+    "stress": [1]
   },
   "meaning": "Сповнений самоповаги; який виражає особисту гідність.",
   "members": [
     {
       "text": "амбітний",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "гордливий",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "гордовитий",
-      "stress": [
-        6
-      ]
+      "stress": [6]
     },
     {
       "text": "гордівливий",
-      "stress": [
-        7
-      ]
+      "stress": [7]
     },
     {
       "text": "думний",
-      "stress": [
-        1
-      ]
+      "stress": [1]
     },
     {
       "text": "думливий",
-      "stress": [
-        4
-      ]
+      "stress": [4]
     },
     {
       "text": "чинний",
-      "stress": [
-        1
-      ],
+      "stress": [1],
       "shadeNote": "сповнений почуття власної гідності"
     }
   ],

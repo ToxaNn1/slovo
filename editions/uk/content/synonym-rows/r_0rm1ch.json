@@ -3,51 +3,37 @@
   "id": "r_0rm1ch",
   "dominant": {
     "text": "мілкий",
-    "stress": [
-      4
-    ]
+    "stress": [4]
   },
   "meaning": "Який має невелику глибину.",
   "members": [
     {
       "text": "мілинний",
-      "stress": [
-        3
-      ],
+      "stress": [3],
       "shadeNote": "з мілинами - про водойму"
     },
     {
       "text": "мілководий",
-      "stress": [
-        6
-      ],
+      "stress": [6],
       "shadeNote": "про водойму"
     },
     {
       "text": "мілководний",
-      "stress": [
-        6
-      ],
+      "stress": [6],
       "shadeNote": "про водойму"
     },
     {
       "text": "мілкодонний",
-      "stress": [
-        6
-      ],
+      "stress": [6],
       "shadeNote": "який має неглибоке дно - про човен тощо"
     },
     {
       "text": "неглибокий",
-      "stress": [
-        6
-      ]
+      "stress": [6]
     },
     {
       "text": "плиткий",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     }
   ],
   "sources": [

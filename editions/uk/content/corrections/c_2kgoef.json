@@ -3,9 +3,7 @@
   "id": "c_2kgoef",
   "nonStandardForm": "справка",
   "correctionType": "russianism",
-  "standardEquivalents": [
-    "довідка"
-  ],
+  "standardEquivalents": ["довідка"],
   "explanation": "Замініть скалькований іменник справка на стилістично кращий варіант: довідка.",
   "examplePair": {
     "nonStandard": "Мені потрібна від вас медична справка.",

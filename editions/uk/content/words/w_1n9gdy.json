@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_1n9gdy",
   "lemma": "скроня",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Бокова частина черепа від вуха до лоба.",
-  "extraDefinitions": [
-    "Волосся, що росте на цих частинах черепа."
-  ],
+  "extraDefinitions": ["Волосся, що росте на цих частинах черепа."],
   "examples": [
     {
       "text": "Дивлюсь на панну Анелю. Бліда, зігнулась .. Стискає долонями скроні.",
@@ -29,10 +25,7 @@
       "author": "О. Гончар"
     }
   ],
-  "synonyms": [
-    "висок",
-    "скрань"
-  ],
+  "synonyms": ["висок", "скрань"],
   "categoryId": "human-body",
   "rarity": 2,
   "sources": [

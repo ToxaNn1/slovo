@@ -3,53 +3,37 @@
   "id": "r_z0c2lh",
   "dominant": {
     "text": "нахаба",
-    "stress": [
-      3
-    ]
+    "stress": [3]
   },
   "meaning": "Той, хто діє, поводиться зухвало, безцеремонно.",
   "members": [
     {
       "text": "безчельник",
-      "stress": [
-        4
-      ]
+      "stress": [4]
     },
     {
       "text": "зухвалець",
-      "stress": [
-        4
-      ]
+      "stress": [4]
     },
     {
       "text": "нахабник",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "хам",
-      "stress": [
-        1
-      ]
+      "stress": [1]
     },
     {
       "text": "хамло",
-      "stress": [
-        4
-      ]
+      "stress": [4]
     },
     {
       "text": "хамлюга",
-      "stress": [
-        4
-      ]
+      "stress": [4]
     },
     {
       "text": "хамула",
-      "stress": [
-        3
-      ],
+      "stress": [3],
       "shadeNote": "той, хто поводиться безцеремонно, з викликом, грубо"
     }
   ],

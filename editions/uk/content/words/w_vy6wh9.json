@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_vy6wh9",
   "lemma": "живодер",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Той, хто жорстоко поводиться з тваринами (перев. собаками); гицель.",
-  "extraDefinitions": [
-    "Те саме, що живої́д."
-  ],
+  "extraDefinitions": ["Те саме, що живої́д."],
   "examples": [
     {
       "text": "Суд у справі живодера, який із особливою жорстокістю вбив понад 100 безпритульних тварин, постановив направити обвинуваченого на психіатричну експертизу."
@@ -51,9 +47,7 @@
     "мучитель",
     "інквізитор"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 3,
   "sources": [

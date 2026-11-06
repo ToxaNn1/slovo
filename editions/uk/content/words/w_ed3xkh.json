@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ed3xkh",
   "lemma": "дійниця",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Посудина, відро, в яке доять молоко.",
@@ -22,9 +20,7 @@
       "author": "М. Коцюбинський"
     }
   ],
-  "synonyms": [
-    "скопець"
-  ],
+  "synonyms": ["скопець"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

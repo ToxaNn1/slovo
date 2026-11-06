@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_yts7d8",
   "lemma": "вагани",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "plural-only",
   "primaryDefinition": "Довгаста дерев'яна миска для їжі.",
-  "extraDefinitions": [
-    "Ночви."
-  ],
+  "extraDefinitions": ["Ночви."],
   "examples": [
     {
       "text": "Високий таранькуватий кухар їв з одних ваганів із отаманом.",
@@ -32,11 +28,7 @@
       "author": "В. Нестайко"
     }
   ],
-  "synonyms": [
-    "корито",
-    "нецьки",
-    "ночви"
-  ],
+  "synonyms": ["корито", "нецьки", "ночви"],
   "categoryId": "household-crafts",
   "rarity": 5,
   "sources": [

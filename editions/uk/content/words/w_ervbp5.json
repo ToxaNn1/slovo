@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ervbp5",
   "lemma": "ливарник",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Робітник, який відливає металеві вироби; фахівець ливарної справи.",
@@ -22,10 +20,7 @@
       "author": "Д. Міщенко"
     }
   ],
-  "synonyms": [
-    "гамарник",
-    "ливар"
-  ],
+  "synonyms": ["гамарник", "ливар"],
   "categoryId": "old-crafts",
   "rarity": 2,
   "sources": [

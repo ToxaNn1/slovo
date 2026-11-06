@@ -2,10 +2,7 @@
   "kind": "word",
   "id": "w_u4xvio",
   "lemma": "бецман",
-  "stress": [
-    1,
-    4
-  ],
+  "stress": [1, 4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Велика, але неповоротка і ледача людина; здоровило, вайло, ледащо.",
@@ -19,12 +16,7 @@
       "author": "Панас Мирний"
     }
   ],
-  "synonyms": [
-    "опецьок",
-    "кардупель",
-    "куцак",
-    "оклецьок"
-  ],
+  "synonyms": ["опецьок", "кардупель", "куцак", "оклецьок"],
   "categoryId": "witty-insults",
   "rarity": 5,
   "sources": [

@@ -2,16 +2,11 @@
   "kind": "word",
   "id": "w_ygl0yk",
   "lemma": "жевжик",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Вертлява, рухлива людина легковажної вдачі, що любить похизуватися; фат, ферт, фертик.",
-  "extraDefinitions": [
-    "Молода, недосвідчена людина.",
-    "Те саме, що горобе́ць."
-  ],
+  "extraDefinitions": ["Молода, недосвідчена людина.", "Те саме, що горобе́ць."],
   "examples": [
     {
       "text": "Він .. справляв враження такого випещеного, добре пахнучого, я хотів сказати, жевжика, і зупинився. Ні, Олег не був жевжиком.",
@@ -85,9 +80,7 @@
     "чистьоха",
     "чистюк"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 4,
   "sources": [

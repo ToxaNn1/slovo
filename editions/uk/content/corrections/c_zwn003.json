@@ -3,9 +3,7 @@
   "id": "c_zwn003",
   "nonStandardForm": "учбовий",
   "correctionType": "russianism",
-  "standardEquivalents": [
-    "навчальний"
-  ],
+  "standardEquivalents": ["навчальний"],
   "explanation": "Замініть скалькований прикметник учбовий на стилістично кращий варіант: навчальний.",
   "examplePair": {
     "nonStandard": "Учбовий заклад на Сумщині змусили заплатити студентці-сироті 14 тисяч гривень заборгованої стипендії.",

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_khj97x",
   "lemma": "рейтар",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Солдат (перев. найманий) важкої кавалерії в Західній Європі XVI–XVII ст. та Росії XVII ст.",
@@ -18,9 +16,7 @@
       "author": "П. Панч"
     }
   ],
-  "synonyms": [
-    "кірасир"
-  ],
+  "synonyms": ["кірасир"],
   "categoryId": "military",
   "rarity": 4,
   "sources": [

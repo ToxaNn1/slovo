@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_95rst9",
   "lemma": "литка",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Округлий м'яз на задній частині гомілки людини.",
@@ -30,10 +28,7 @@
       "author": "В. Винниченко"
     }
   ],
-  "synonyms": [
-    "гала",
-    "жижка"
-  ],
+  "synonyms": ["гала", "жижка"],
   "categoryId": "human-body",
   "rarity": 1,
   "sources": [

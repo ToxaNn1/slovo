@@ -3,9 +3,7 @@
   "id": "c_tp7ahu",
   "nonStandardForm": "об'ява",
   "correctionType": "russianism",
-  "standardEquivalents": [
-    "оголошення"
-  ],
+  "standardEquivalents": ["оголошення"],
   "explanation": "Замініть іменник об'ява, який має обмежене вживання, на стилістично нейтральний варіант: оголошення.",
   "examplePair": {
     "nonStandard": "Ми дали об'яву в газету.",

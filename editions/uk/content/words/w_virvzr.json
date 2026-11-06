@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_virvzr",
   "lemma": "каламбур",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Дотеп, в основі якого лежить використання різних значень якого-небудь одного слова або кількох різних слів, схожих звучанням; гра слів.",
@@ -22,11 +20,7 @@
       "author": "Леся Українка"
     }
   ],
-  "synonyms": [
-    "калямбур",
-    "гра слів",
-    "дотеп"
-  ],
+  "synonyms": ["калямбур", "гра слів", "дотеп"],
   "categoryId": "language-speech",
   "rarity": 3,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_7nb3mq",
   "lemma": "сплюшка",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Невеликий птах родини совиних рудуватого або сіруватого забарвлення; совка.",
@@ -14,10 +12,7 @@
       "author": "М. Коцюбинський"
     }
   ],
-  "synonyms": [
-    "совка",
-    "сплюха"
-  ],
+  "synonyms": ["совка", "сплюха"],
   "categoryId": "folk-names",
   "rarity": 4,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_lh0d9f",
   "lemma": "різьбяр",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Майстер різьблення (у 1 знач.).",
@@ -21,10 +19,7 @@
       "text": "Непогано було б мати в нашій літературі більше таких різьбярів, як Марко Вовчок або Коцюбинський."
     }
   ],
-  "synonyms": [
-    "ґравер",
-    "ритівник"
-  ],
+  "synonyms": ["ґравер", "ритівник"],
   "categoryId": "old-crafts",
   "rarity": 3,
   "sources": [

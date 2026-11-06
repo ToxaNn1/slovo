@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_dpr7r3",
   "lemma": "макогін",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Дерев'яний стрижень із потовщеним заокругленим кінцем, яким розтирають у макітрі мак, пшоно і т. ін.",
@@ -26,10 +24,7 @@
       "author": "П. Гулак-Артемовський"
     }
   ],
-  "synonyms": [
-    "м'яло",
-    "товкач"
-  ],
+  "synonyms": ["м'яло", "товкач"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

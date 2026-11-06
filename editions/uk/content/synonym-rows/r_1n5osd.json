@@ -3,68 +3,48 @@
   "id": "r_1n5osd",
   "dominant": {
     "text": "жувати",
-    "stress": [
-      3
-    ]
+    "stress": [3]
   },
   "meaning": "Роздрібнювати їжу, корм у роті.",
   "members": [
     {
       "text": "жвакати",
-      "stress": [
-        2
-      ]
+      "stress": [2]
     },
     {
       "text": "жвакувати",
-      "stress": [
-        6
-      ],
+      "stress": [6],
       "shadeNote": "перев. утворюючи певні звуки"
     },
     {
       "text": "жмакати",
-      "stress": [
-        2
-      ]
+      "stress": [2]
     },
     {
       "text": "жмакувати",
-      "stress": [
-        6
-      ]
+      "stress": [6]
     },
     {
       "text": "кутуляти",
-      "stress": [
-        5
-      ],
+      "stress": [5],
       "shadeNote": "через силу, повільно"
     },
     {
       "text": "пережовувати",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "переминати",
-      "stress": [
-        7
-      ]
+      "stress": [7]
     },
     {
       "text": "перетирати",
-      "stress": [
-        7
-      ],
+      "stress": [7],
       "shadeNote": "старанно"
     },
     {
       "text": "розжовувати",
-      "stress": [
-        4
-      ]
+      "stress": [4]
     }
   ],
   "sources": [

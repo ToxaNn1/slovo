@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_1guwak",
   "lemma": "знахар",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Людина, що лікує різними народними засобами, часто чаклуванням, замовляннями і т. ін.",
@@ -34,18 +32,8 @@
       "author": "О. Стороженко"
     }
   ],
-  "synonyms": [
-    "знахор",
-    "знахур",
-    "шептун",
-    "ворожбит",
-    "знатник",
-    "чаклун",
-    "шаман"
-  ],
-  "registers": [
-    "archaic"
-  ],
+  "synonyms": ["знахор", "знахур", "шептун", "ворожбит", "знатник", "чаклун", "шаман"],
+  "registers": ["archaic"],
   "categoryId": "old-crafts",
   "rarity": 2,
   "sources": [

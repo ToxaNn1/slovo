@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_3105i1",
   "lemma": "пустослів'я",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Беззмістовні розмови, беззмістовне розумування; базікання.",
@@ -18,9 +16,7 @@
       "author": "Л. Костенко"
     }
   ],
-  "synonyms": [
-    "пустомолотство"
-  ],
+  "synonyms": ["пустомолотство"],
   "categoryId": "language-speech",
   "rarity": 4,
   "sources": [

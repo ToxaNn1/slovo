@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_3bi3t4",
   "lemma": "обірванець",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Людина, що ходить у поганому, подертому одязі; обідранець.",
-  "extraDefinitions": [
-    "Про бідну, незаможну людину."
-  ],
+  "extraDefinitions": ["Про бідну, незаможну людину."],
   "examples": [
     {
       "text": "Довго сидів старий з якимсь обірванцем у маленькій затоці біля Карадагу.",
@@ -74,9 +70,7 @@
     "ракло",
     "хуліган"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 3,
   "sources": [

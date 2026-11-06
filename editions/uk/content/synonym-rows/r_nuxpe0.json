@@ -3,89 +3,63 @@
   "id": "r_nuxpe0",
   "dominant": {
     "text": "рано",
-    "stress": [
-      1
-    ]
+    "stress": [1]
   },
   "meaning": "У ранковий час.",
   "members": [
     {
       "text": "вранці",
-      "stress": [
-        2
-      ],
+      "stress": [2],
       "shadeNote": "у ранковий час"
     },
     {
       "text": "зарана",
-      "stress": [
-        3
-      ],
+      "stress": [3],
       "shadeNote": "рано-вранці"
     },
     {
       "text": "зарання",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "зарані",
-      "stress": [
-        3
-      ],
+      "stress": [3],
       "shadeNote": "рано-вранці"
     },
     {
       "text": "зранку",
-      "stress": [
-        2
-      ],
+      "stress": [2],
       "shadeNote": "у ранковий час; вранці"
     },
     {
       "text": "зрання",
-      "stress": [
-        2
-      ]
+      "stress": [2]
     },
     {
       "text": "пораненьку",
-      "stress": [
-        5
-      ],
+      "stress": [5],
       "shadeNote": "рано вранці; раненько"
     },
     {
       "text": "ранком",
-      "stress": [
-        1
-      ]
+      "stress": [1]
     },
     {
       "text": "спозарана",
-      "stress": [
-        6
-      ]
+      "stress": [6]
     },
     {
       "text": "спозаранку",
-      "stress": [
-        6
-      ],
+      "stress": [6],
       "shadeNote": "дуже рано, на світанні, з раннього ранку"
     },
     {
       "text": "спозарання",
-      "stress": [
-        6
-      ]
+      "stress": [6]
     },
     {
       "text": "уранці",
-      "stress": [
-        2
-      ],
+      "stress": [2],
       "shadeNote": "у ранковий час"
     }
   ],

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_4ursn0",
   "lemma": "папірус",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Тропічна багаторічна трав'яниста рослина родини осокових, широко використовувана в побуті.",
@@ -52,12 +50,7 @@
       "author": "Леся Українка"
     }
   ],
-  "synonyms": [
-    "рукопис",
-    "манускрипт",
-    "палімпсест",
-    "пергамен"
-  ],
+  "synonyms": ["рукопис", "манускрипт", "палімпсест", "пергамен"],
   "categoryId": "history-antiquity",
   "rarity": 3,
   "sources": [

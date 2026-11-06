@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_6hczon",
   "lemma": "запічок",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Місце на печі, відгороджене комином, або за піччю.",
@@ -40,11 +38,7 @@
       "author": "М. Кропивницький"
     }
   ],
-  "synonyms": [
-    "закапелок",
-    "закомірок",
-    "закуток"
-  ],
+  "synonyms": ["закапелок", "закомірок", "закуток"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [
