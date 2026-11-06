@@ -27,19 +27,31 @@ export function recordingErrors(
 ): BuildError[] {
   const voices = new Set(config.narratorVoices.voices.map(({ id }) => id));
   const wordIds = new Set(words.map(({ entry }) => entry.id));
-  return folder.flatMap((entry): BuildError[] => {
-    const shown = `${RECORDINGS_DIR}/${entry.name}`;
-    if (entry.kind === 'file') return [{ file: shown, message: 'Not a Narrator Voice folder' }];
-    if (!voices.has(entry.name))
-      return [{ file: shown, message: `No Narrator Voice ${entry.name} in the Edition config` }];
-    return entry.files.flatMap((name): BuildError[] => {
-      const file = `${shown}/${name}`;
-      if (!name.endsWith('.mp3') || !isMp3(readFileSync(pathOf(entry.name, name))))
-        return [{ file, message: 'Not an mp3' }];
-      const wordId = name.slice(0, -'.mp3'.length);
-      return wordIds.has(wordId) ? [] : [{ file, message: `No Word ${wordId} in the Edition` }];
-    });
-  });
+  const sample = config.narratorVoices.sample.word;
+  const sampleErrors: BuildError[] = wordIds.has(sample)
+    ? []
+    : [
+        {
+          file: 'edition.json',
+          field: 'narratorVoices.sample.word',
+          message: `No Word ${sample} in the Edition`,
+        },
+      ];
+  return sampleErrors.concat(
+    folder.flatMap((entry): BuildError[] => {
+      const shown = `${RECORDINGS_DIR}/${entry.name}`;
+      if (entry.kind === 'file') return [{ file: shown, message: 'Not a Narrator Voice folder' }];
+      if (!voices.has(entry.name))
+        return [{ file: shown, message: `No Narrator Voice ${entry.name} in the Edition config` }];
+      return entry.files.flatMap((name): BuildError[] => {
+        const file = `${shown}/${name}`;
+        if (!name.endsWith('.mp3') || !isMp3(readFileSync(pathOf(entry.name, name))))
+          return [{ file, message: 'Not an mp3' }];
+        const wordId = name.slice(0, -'.mp3'.length);
+        return wordIds.has(wordId) ? [] : [{ file, message: `No Word ${wordId} in the Edition` }];
+      });
+    }),
+  );
 }
 
 /** For each Narrator Voice, in the config's order, how many Words it has no Recording of. */

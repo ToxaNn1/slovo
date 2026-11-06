@@ -233,6 +233,7 @@ const storedIn1_0: readonly (readonly [
   ['noCounters', undefined, 'settings.hideStreak', 'true'],
   ['selfCheck', undefined, 'settings.selfCheck', 'true'],
   ['seasonalDecor', undefined, 'settings.seasonalDecor', 'false'],
+  ['narratorVoice', undefined, 'settings.narratorVoice', '"taras"'],
   ['shareCounters', undefined, 'settings.shareCounters', 'false'],
   ['reduceMotion', undefined, 'settings.reduceMotion', 'true'],
   ['dailyLimit', undefined, 'settings.dailyLimit', '20'],

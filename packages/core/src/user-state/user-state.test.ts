@@ -93,7 +93,7 @@ describe('openUserState', () => {
     const userState = await openUserState({ port: createMemoryUserStatePort(records) });
     const settings = createSettings({
       userState,
-      defaults: { theme: 'system', fontSize: 'M', vibration: true },
+      defaults: { theme: 'system', fontSize: 'M', vibration: true, narratorVoice: 'anna' },
     });
     const cycle = await openCycle({
       entries: {
@@ -115,6 +115,7 @@ describe('openUserState', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
     expect(await userState.read(userStateRecords.swipeHintShown)).toBe(true);
     expect(new Set(cycle.unseen().words)).toEqual(new Set(['w_0', 'w_3', 'w_4']));

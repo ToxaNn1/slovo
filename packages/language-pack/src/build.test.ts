@@ -1941,6 +1941,25 @@ describe('the Recordings of the Narrator Voices', () => {
     ]);
   });
 
+  it('refuses a sample Word of the voice screen the Edition does not have', () => {
+    const editionDir = withRecordings();
+    editJson(editionDir, 'edition.json', (config) => ({
+      ...config,
+      narratorVoices: {
+        ...(config['narratorVoices'] as Record<string, Json>),
+        sample: { word: 'w_fx0099', syllables: ['ab'], stressed: 0, caption: 'ab' },
+      },
+    }));
+
+    expect(buildErrors(editionDir)).toEqual([
+      {
+        file: 'edition.json',
+        field: 'narratorVoices.sample.word',
+        message: 'No Word w_fx0099 in the Edition',
+      },
+    ]);
+  });
+
   it('refuses a folder of a Narrator Voice the Edition does not declare', () => {
     const editionDir = withRecordings();
     cpSync(join(recordingsDir(editionDir), 'anna'), join(recordingsDir(editionDir), 'olga'), {
