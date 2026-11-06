@@ -204,6 +204,7 @@ export {
 } from './entries/entry-kinds';
 export {
   categoriesInMix,
+  categoryPlace,
   kindsShown,
   type CategoriesInMix,
   type MixKindWeights,

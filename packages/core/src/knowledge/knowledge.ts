@@ -117,6 +117,12 @@ export interface Knowledge {
    */
   weak(): readonly string[];
   /**
+   * How many of the Entries are marked Known, Learned or not, each id once,
+   * for a set such as a Category's or a Collection's Entries. 0 with the
+   * `knowledge` Feature Switch off.
+   */
+  knownAmong(entryIds: readonly string[]): number;
+  /**
    * The reader taps a mark on the Entry's card: the mark the card shows
    * removes it, deleting the record; any other tap answers the Entry today,
    * as `answer` does. The change counts for the Community Counters (ADR 0060).
@@ -443,6 +449,11 @@ export async function openKnowledge({
         record.mark === 'unknown' && !hiddenEntries.has(entryId) ? [entryId] : [],
       );
       return [...new Set([...unknown, ...state.due])];
+    },
+    knownAmong(entryIds) {
+      if (!edition.isFeatureEnabled('knowledge')) return 0;
+      return [...new Set(entryIds)].filter((entryId) => records.get(entryId)?.mark === 'known')
+        .length;
     },
     tap: (entryId, mark) =>
       change(
