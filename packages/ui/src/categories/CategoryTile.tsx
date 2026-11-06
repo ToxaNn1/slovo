@@ -4,7 +4,7 @@ import { PressedTile } from '../primitives/PressedTile';
 import { TileShape, type TileShapeKind, type TileShapePlace } from '../primitives/TileShape';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { typeStyle, type TypeRole } from '../tokens';
+import { categoryTile, typeStyle, withAlpha, type TypeRole } from '../tokens';
 
 /** One shape of a Category tile's pictogram. */
 export type CategoryShape = TileShapeKind;
@@ -13,8 +13,12 @@ export type CategoryShape = TileShapeKind;
  * A Category tile's tone, from the boards: `red` (ink name, cream big shape,
  * ink small one), `ink` (background name, red big shape, background small
  * one) or `tile`, the sunken surface (ink name, red big shape, ink small one).
+ * A quiet Category's tile is muted (ADR 0081): `quietGrid` in k1, the sunken
+ * surface with its name and both shapes in muted ink, and `quietRail` on the
+ * home board's rail, the light theme's ink in both themes with its name in the
+ * light background, a faint big shape and no small one.
  */
-export type CategoryTone = 'red' | 'ink' | 'tile';
+export type CategoryTone = 'red' | 'ink' | 'tile' | 'quietGrid' | 'quietRail';
 
 /** The boards' tones by position: red, ink and the sunken surface in turn. */
 export function toneByPosition(index: number): CategoryTone {
@@ -70,6 +74,18 @@ export function CategoryTile({
       small: colors.background,
     },
     tile: { ground: colors.surfaceSunken, text: colors.ink, big: colors.accent, small: colors.ink },
+    quietGrid: {
+      ground: colors.surfaceSunken,
+      text: colors.muted,
+      big: colors.muted,
+      small: colors.muted,
+    },
+    quietRail: {
+      ground: light.ink,
+      text: light.background,
+      big: withAlpha(light.background, categoryTile.quietShapeAlpha),
+      small: 'transparent',
+    },
   }[tone];
   return (
     <View style={{ width: box.width }}>
