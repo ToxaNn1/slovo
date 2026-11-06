@@ -2,6 +2,7 @@ import { EditionProvider, NarratorVoicePicker } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { ComponentProps } from 'react';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import { testStrings } from '../test-strings';
 import { coreTokens } from '../tokens';
@@ -58,6 +59,25 @@ describe('NarratorVoicePicker', () => {
     expect(screen.getByText('Female · calm')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Anna' })).not.toBeSelected();
     expect(screen.getByRole('button', { name: 'Ben' })).toBeSelected();
+  });
+
+  it("draws the bars in the chosen voice's own height pattern", async () => {
+    const heights = () =>
+      screen
+        .getByTestId('narrator-voice-bars', { includeHiddenElements: true })
+        .children.map((bar) => {
+          const style = StyleSheet.flatten(
+            (bar as { props: { style?: StyleProp<ViewStyle> } }).props.style,
+          );
+          return style.height;
+        });
+    const first = await draw({ chosen: 'anna' });
+    const anna = heights();
+    await first.unmount();
+    await draw({ chosen: 'ben' });
+
+    expect(anna).toHaveLength(16);
+    expect(heights()).not.toEqual(anna);
   });
 
   it('chooses the voice of the tile tapped', async () => {
