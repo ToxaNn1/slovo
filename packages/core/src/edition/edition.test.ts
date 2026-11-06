@@ -110,6 +110,10 @@ const validConfig = {
     swipeMarks: true,
     searchButton: true,
     dashboardWordmark: true,
+    categoryScreens: true,
+    correctionCategoryScreens: true,
+    quietCategories: true,
+    collectionBoardStyle: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -780,6 +784,17 @@ describe('loadEdition', () => {
       'featureSwitches.notifications',
     ],
     ['a missing widget Feature Switch', withoutSwitch('widget'), 'featureSwitches.widget'],
+    ...(
+      [
+        'categoryScreens',
+        'correctionCategoryScreens',
+        'quietCategories',
+        'collectionBoardStyle',
+      ] as const
+    ).map(
+      (name) =>
+        [`a missing ${name} Feature Switch`, withoutSwitch(name), `featureSwitches.${name}`] as const,
+    ),
     [
       'a missing Dashboard wordmark Feature Switch',
       withoutSwitch('dashboardWordmark'),
@@ -1226,6 +1241,9 @@ const dependentSwitches = [
   ['swipeMarks', ['knowledge']],
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
+  ['categoryScreens', ['dashboard', 'wordOfTheDay']],
+  ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
+  ['quietCategories', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {
@@ -1239,6 +1257,16 @@ describe('the Feature Switches a feature depends on', () => {
 
       expect(edition.isFeatureEnabled(feature)).toBe(false);
     }
+  });
+
+  it('keep the Collection board style on while the Dashboard is off', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, dashboard: false },
+    });
+
+    expect(edition.isFeatureEnabled('categoryScreens')).toBe(false);
+    expect(edition.isFeatureEnabled('collectionBoardStyle')).toBe(true);
   });
 
   it('keep a feature on while only a feature that depends on it is off', () => {

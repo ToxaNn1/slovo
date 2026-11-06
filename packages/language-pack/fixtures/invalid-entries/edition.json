@@ -103,7 +103,11 @@
     "curatedCollections": true,
     "swipeMarks": true,
     "searchButton": true,
-    "dashboardWordmark": true
+    "dashboardWordmark": true,
+    "categoryScreens": true,
+    "correctionCategoryScreens": true,
+    "quietCategories": true,
+    "collectionBoardStyle": true
   },
   "userSettingDefaults": {
     "theme": "system",
