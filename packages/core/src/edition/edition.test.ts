@@ -32,6 +32,7 @@ const validConfig = {
     widget: true,
     shareCards: true,
     pronunciation: true,
+    narratorVoice: true,
     wordOfTheDay: true,
     statistics: true,
     knowledge: true,
@@ -158,6 +159,12 @@ const validConfig = {
       { id: 'boris', name: 'Boris', description: 'Male · low' },
       { id: 'anna', name: 'Anna', description: 'Female · calm' },
     ],
+    sample: {
+      word: 'w_000001',
+      syllables: ['ab', 'ra', 'ka'],
+      stressed: 1,
+      caption: 'ab-rá-ka · n.',
+    },
   },
   searchLetters: { b: 'a' },
   xp: {
@@ -356,6 +363,7 @@ describe('loadEdition', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
+      narratorVoice: 'anna',
       notificationTimes: ['09:00'],
       rarityCeiling: 5,
       mix: {
@@ -697,6 +705,15 @@ describe('loadEdition', () => {
 
   it('reads the chosen Narrator Voice', () => {
     expect(loadEdition(validConfig).narratorVoiceOf('boris').name).toBe('Boris');
+  });
+
+  it('gives the sample Word its voice screen reads in every Narrator Voice', () => {
+    expect(loadEdition(validConfig).narratorVoiceSample).toEqual({
+      word: 'w_000001',
+      syllables: ['ab', 'ra', 'ka'],
+      stressed: 1,
+      caption: 'ab-rá-ka · n.',
+    });
   });
 
   it('reads a Narrator Voice it no longer declares as the default', () => {
@@ -1224,6 +1241,7 @@ describe('loadEdition', () => {
       'a repeated Narrator Voice id',
       {
         narratorVoices: {
+          ...validConfig.narratorVoices,
           default: 'anna',
           voices: [
             { id: 'anna', name: 'Anna', description: 'Female · calm' },
@@ -1237,11 +1255,32 @@ describe('loadEdition', () => {
       'a default Narrator Voice it does not declare',
       {
         narratorVoices: {
+          ...validConfig.narratorVoices,
           default: 'olga',
           voices: [{ id: 'anna', name: 'Anna', description: 'Female · calm' }],
         },
       },
       'narratorVoices.default',
+    ],
+    [
+      'a sample stressed past its syllables',
+      {
+        narratorVoices: {
+          ...validConfig.narratorVoices,
+          sample: { word: 'w_000001', syllables: ['ab', 'ra'], stressed: 2, caption: 'ab-ra' },
+        },
+      },
+      'narratorVoices.sample.stressed',
+    ],
+    [
+      'a sample without syllables',
+      {
+        narratorVoices: {
+          ...validConfig.narratorVoices,
+          sample: { word: 'w_000001', syllables: [], stressed: 0, caption: 'ab' },
+        },
+      },
+      'narratorVoices.sample.syllables',
     ],
     [
       'a Narrator Voice without a name',
@@ -1295,6 +1334,7 @@ const dependentSwitches = [
   ['swipeMarks', ['knowledge']],
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
+  ['narratorVoice', ['pronunciation']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

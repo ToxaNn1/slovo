@@ -77,6 +77,7 @@ const testEditionConfig = {
   narratorVoices: {
     default: 'anna',
     voices: [{ id: 'anna', name: 'Anna', description: 'Female · calm' }],
+    sample: { word: 'w_000001', syllables: ['ab', 'ra', 'ka'], stressed: 1, caption: 'ab-rá-ka' },
   },
   searchLetters: {},
   xp: {
