@@ -388,7 +388,9 @@ describe('the Correction Types rail', () => {
     screenSettled();
     await settle(() => fireEvent.press(screen.getByTestId('correction-categories-everyday')));
 
-    expect(screen.getByTestId('correction-category')).toHaveTextContent(/Щоденне/);
+    const hero = screen.getByTestId('category-hero');
+    expect(hero).toHaveTextContent(/Щоденне/);
+    expect(hero).toHaveTextContent(/КАТЕГОРІЯ · \d+ виправлен/);
     expect(screen.getByText('Щоденне.')).toBeTruthy();
   });
 

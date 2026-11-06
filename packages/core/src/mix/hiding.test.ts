@@ -323,6 +323,7 @@ describe('an unhide', () => {
         labelKey: 'correction',
         spoken: 'one, not one',
         correctionType: 'calque',
+        standardForms: ['one', 'also one'],
       },
     });
     expect(hiddenIdsOf(app)).toEqual(['w_crafts2', 'w_nature0']);
