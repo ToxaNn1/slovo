@@ -184,9 +184,22 @@ function eachList<T>(of: (kind: CategoryKind) => T): Readonly<Record<CategoryKin
 }
 
 /**
+ * Whether the reader is shown the kind of Entry as a whole: the Edition turns
+ * it on, no remote Feature Switch turns it off and the user has it in the Mix.
+ * The one rule of the kinds: the Entries, the screens and the statistics follow it.
+ */
+export function kindShown(
+  edition: Pick<Edition, 'isFeatureEnabled'>,
+  kinds: KindsInMix,
+  kind: MixKind,
+): boolean {
+  return edition.isFeatureEnabled(featureOfKind(kind)) && kinds[kind];
+}
+
+/**
  * The kinds of Entry the reader is shown as a whole, in the Mix order: the
- * Words always, and each other kind while the Edition turns it on and the
- * user has it in the Mix. The Known counts of the statistics join these.
+ * Words always, and each other kind `kindShown` shows. The Known counts of
+ * the statistics join these.
  */
 export function kindsShown({
   edition,
@@ -195,10 +208,7 @@ export function kindsShown({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   mix: Pick<MixState, 'kinds'>;
 }): readonly EntryKind[] {
-  return [
-    'word',
-    ...MIX_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind)) && mix.kinds[kind]),
-  ];
+  return ['word', ...MIX_KINDS.filter((kind) => kindShown(edition, mix.kinds, kind))];
 }
 
 /** The list of Categories of the kind in the Mix as it stands: the Words' are the Mix's own fields. */
@@ -302,22 +312,6 @@ async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise
 }
 
 /**
- * Reads the Mix from the user state over the Edition's default Mix, for the
- * Entries, which read the Language Pack's Categories, the Words' and the Corrections'.
- */
-export async function readMix({
-  categories,
-  edition,
-  userState,
-}: {
-  categories: CategoryLists;
-  edition: MixEdition;
-  userState: Pick<UserState, 'list' | 'read'>;
-}): Promise<MixState> {
-  return mixStateOf(categories, edition, await readChoices(userState));
-}
-
-/**
  * Opens the Mix over the user state and the Language Pack's Categories, which
  * the Entries read once, as the pack never changes while it is open. For the
  * Core composition: each change publishes `eligibility`, so the Cycle reads
@@ -342,8 +336,9 @@ export async function openMix({
     categories[of].some(({ id }) => id === categoryId);
 
   /**
-   * Writes the new places in the Mix, then makes the change in memory:
-   * eligibility first, so a subscriber told of the new state finds it read
+   * Writes the new places in the Mix, then makes the change in memory before
+   * eligibility is read again, so the Entries read the new state, and tells
+   * the subscribers last, so one told of the new state finds eligibility read
    * again. The state follows the written change even when reading
    * eligibility again fails; the next change or the next app session reads
    * it again.
@@ -410,11 +405,11 @@ export async function openMix({
           ? choices.quickQuestionEvery
           : quickQuestionEvery,
     };
+    choices = next;
+    state = mixStateOf(categories, edition, next);
     try {
       if (eligibilityChanged) await eligibility.publish();
     } finally {
-      choices = next;
-      state = mixStateOf(categories, edition, next);
       subscribers.tell();
     }
   }

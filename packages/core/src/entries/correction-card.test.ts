@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction } from '@slovo/contracts';
 
-import { buildCorrectionCard, createEntries } from '../index';
+import { buildCorrectionCard, createEntries, EVERYTHING_IN } from '../index';
 import { createMemoryContentPort } from '../testing';
 
 /** A Correction with one standard equivalent; each test adds what it needs. */
@@ -36,6 +36,7 @@ const build = (from: Correction) =>
         ],
       }),
       edition: { isFeatureEnabled: () => true },
+      choices: EVERYTHING_IN,
     }),
   });
 
