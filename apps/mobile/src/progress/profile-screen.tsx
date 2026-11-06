@@ -168,7 +168,7 @@ export function ProfileScreen() {
         )}
         {streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />}
         <View style={styles.section}>
-          <ActiveDaysCalendar months={composition.progress.calendar()} />
+          <ActiveDaysCalendar weeks={composition.progress.calendar()} />
         </View>
         <View style={styles.section}>
           <View style={styles.badgesHead}>
