@@ -2,11 +2,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createPronunciation,
-  type RecordingPlayer,
   type Speech,
   type SpeechVoice,
   type SpokenLemmaOptions,
 } from './pronunciation';
+import type { RecordingPlayer } from '../sounds/recording-player';
 
 interface Utterance {
   readonly text: string;

@@ -119,14 +119,19 @@ function Chevron() {
   );
 }
 
-/** A row that opens a screen, with the setting's value on its right. */
+/**
+ * A row that opens a screen, with the setting's value on its right and an
+ * optional line of muted text under its label, which VoiceOver reads as the
+ * row's hint.
+ */
 export function NavigationRow({
   label,
+  subtitle,
   value,
   onPress,
   testID,
   icon,
-}: RowProps & { value?: string | undefined; onPress: () => void }) {
+}: RowProps & { subtitle?: string; value?: string | undefined; onPress: () => void }) {
   const look = useRowLook();
   // At the largest text sizes the value drops under the label instead of squeezing it.
   const stacked = useWindowDimensions().fontScale > STACK_AT_FONT_SCALE;
@@ -135,6 +140,7 @@ export function NavigationRow({
       testID={testID}
       accessibilityRole="button"
       accessibilityLabel={value === undefined ? label : `${label}, ${value}`}
+      accessibilityHint={subtitle}
       {...look.voice}
       onPress={onPress}
       style={({ pressed }) => [
@@ -146,11 +152,12 @@ export function NavigationRow({
       {stacked ? (
         <View style={styles.grow}>
           <Text style={look.label}>{label}</Text>
+          {subtitle !== undefined && <Text style={look.value}>{subtitle}</Text>}
           {value !== undefined && <Text style={look.value}>{value}</Text>}
         </View>
       ) : (
         <>
-          <Text style={[look.label, styles.grow]}>{label}</Text>
+          <RowText look={look} label={label} subtitle={subtitle} />
           {value !== undefined && <Text style={[look.value, styles.trailing]}>{value}</Text>}
         </>
       )}

@@ -104,6 +104,7 @@ describe('the UA Edition', () => {
         tips: true,
       },
       rarityCeiling: 5,
+      narratorVoice: 'oksana',
     });
   });
 

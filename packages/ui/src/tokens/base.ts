@@ -136,6 +136,16 @@ export const typeRoles = {
   rowLabel: role('ui', '600', 16, 19),
   /** The muted line under a Settings row's label, and its value. */
   rowSub: role('ui', '400', 13, 17),
+  /** The Narrator Voice screen's sample Word, syllable by syllable. */
+  voiceSample: role('word', '900', 40, 40, -1.5),
+  /** The caption under the sample Word: its syllables and part of speech. */
+  voiceCaption: role('ui', '600', 14, 14),
+  /** A Narrator Voice's name on its tile. */
+  voiceName: role('word', '900', 15, 15),
+  /** What a Narrator Voice sounds like, under its name. */
+  voiceDescription: role('ui', '500', 12, 12),
+  /** The «ЧИТАЄ · …» and «ОБЕРИ ГОЛОС» labels of the voice screen. */
+  voiceLabel: role('word', '700', 11, 11, 1.5, 'uppercase'),
   /** A tab's label under its icon. */
   tabLabel: role('ui', '600', 11, 11),
   /** The rotated black title of a bottom sheet. */
