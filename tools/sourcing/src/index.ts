@@ -2,6 +2,7 @@
  * The content sourcing tool: dev-only, never shipped. It drafts Entries from
  * dictionary sources for a human to review before they enter an Edition.
  */
+export { sourceCorrections, type CorrectionSourcingOptions } from './corrections';
 export {
   fetchGoroh,
   gorohUrl,

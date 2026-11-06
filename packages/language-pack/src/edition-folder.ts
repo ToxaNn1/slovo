@@ -255,6 +255,8 @@ export interface EditionFolder extends EditionFiles {
   checkNewWords(words: readonly Word[]): BuildError[];
   /** Checks new Idioms the way `checkNewWords` checks new Words. The Idioms must have passed the Idiom schema. */
   checkNewIdioms(idioms: readonly Idiom[]): BuildError[];
+  /** Checks Corrections that are not in the Edition yet, as `checkNewWords` checks Words. */
+  checkNewCorrections(corrections: readonly Correction[]): BuildError[];
 }
 
 /** The ids of the Editions in an editions folder: each sub-folder holding an Edition config, in code-unit order. */
@@ -305,14 +307,19 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
     config,
     checkNewWords(words) {
       content ??= files.entries();
-      const drafts = words.map((word) => ({ file: files.entryFile(word.id), entry: word }));
-      const draftFiles = new Set(drafts.map(({ file }) => file));
-      return checkContent(
-        config,
-        [...content.words, ...drafts],
-        content.corrections,
-        content.idioms,
-      ).filter(({ file }) => draftFiles.has(file));
+      const drafts = authored(words);
+      return onlyIn(
+        drafts,
+        checkContent(config, [...content.words, ...drafts], content.corrections, content.idioms),
+      );
+    },
+    checkNewCorrections(corrections) {
+      content ??= files.entries();
+      const drafts = authored(corrections);
+      return onlyIn(
+        drafts,
+        checkContent(config, content.words, [...content.corrections, ...drafts], content.idioms),
+      );
     },
     checkNewIdioms(idioms) {
       content ??= files.entries();
@@ -324,6 +331,17 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
       ]).filter(({ file }) => draftFiles.has(file));
     },
   };
+
+  /** New Entries, each located in the file it would be authored in. */
+  function authored<E extends { readonly id: string }>(entries: readonly E[]): Authored<E>[] {
+    return entries.map((entry) => ({ file: files.entryFile(entry.id), entry }));
+  }
+}
+
+/** The errors that belong to the given Entries' files. */
+function onlyIn(drafts: readonly { readonly file: string }[], errors: BuildError[]): BuildError[] {
+  const draftFiles = new Set(drafts.map(({ file }) => file));
+  return errors.filter(({ file }) => draftFiles.has(file));
 }
 
 /**
