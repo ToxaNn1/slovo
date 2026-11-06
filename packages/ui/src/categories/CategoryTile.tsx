@@ -1,13 +1,13 @@
 import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
-import { Wedge } from '../primitives/Wedge';
+import { TileShape, type TileShapeKind, type TileShapePlace } from '../primitives/TileShape';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { typeStyle, type TypeRole, type Wedge as WedgePoints } from '../tokens';
+import { typeStyle, type TypeRole } from '../tokens';
 
-/** One shape of a tile's pictogram: a polygon in fractions of its box, or a circle. */
-export type CategoryShape = WedgePoints | 'circle';
+/** One shape of a Category tile's pictogram. */
+export type CategoryShape = TileShapeKind;
 
 /**
  * A Category tile's tone, from the boards: `red` (ink name, cream big shape,
@@ -22,21 +22,14 @@ export function toneByPosition(index: number): CategoryTone {
   return tones[index % tones.length] ?? 'red';
 }
 
-/** Where a shape sits on its tile: its side, from the right and from the top. */
-interface ShapePlace {
-  readonly side: number;
-  readonly right: number;
-  readonly top: number;
-}
-
 /** A tile's box from the board it is drawn on: the rail's or a grid's. */
 export interface CategoryTileBox {
   readonly width?: DimensionValue;
   readonly height: number;
   readonly radius: number;
   readonly padding: number;
-  readonly big: ShapePlace;
-  readonly small: ShapePlace;
+  readonly big: TileShapePlace;
+  readonly small: TileShapePlace;
   /** The type role of the name. */
   readonly name: TypeRole;
 }
@@ -89,8 +82,8 @@ export function CategoryTile({
           { height: box.height, padding: box.padding, backgroundColor: look.ground },
         ]}
       >
-        <Shape testID={`${testID}-big`} shape={big} color={look.big} place={box.big} />
-        <Shape testID={`${testID}-small`} shape={small} color={look.small} place={box.small} />
+        <TileShape shape={big} color={look.big} place={box.big} />
+        <TileShape shape={small} color={look.small} place={box.small} />
         <Text
           {...voice}
           testID={`${testID}-name`}
@@ -100,31 +93,6 @@ export function CategoryTile({
           {name}
         </Text>
       </PressedTile>
-    </View>
-  );
-}
-
-/** One shape of a tile's pictogram, a polygon or a circle, at its place. */
-function Shape({
-  shape,
-  color,
-  place: { side, right, top },
-  testID,
-}: {
-  shape: CategoryShape;
-  color: string;
-  place: ShapePlace;
-  testID: string;
-}) {
-  const at = { position: 'absolute', right, top } as const;
-  return shape === 'circle' ? (
-    <View
-      testID={testID}
-      style={[at, { width: side, height: side, borderRadius: side / 2, backgroundColor: color }]}
-    />
-  ) : (
-    <View testID={testID} style={at}>
-      <Wedge points={shape} color={color} width={side} height={side} />
     </View>
   );
 }

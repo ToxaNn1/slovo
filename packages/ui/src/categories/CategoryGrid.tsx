@@ -55,7 +55,7 @@ export function CategoryGrid({
   title: string;
   count: string;
   tiles: readonly GridTile[];
-  columns: number;
+  columns: GridColumns;
   /** The tile's box; its width is the column's. */
   box: Omit<CategoryTileBox, 'width'>;
   shapes: readonly (readonly [CategoryShape, CategoryShape])[];
@@ -68,7 +68,7 @@ export function CategoryGrid({
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
-  const width = `${String(100 / columns)}%` as const;
+  const width = columnWidth[columns];
   return (
     <FlatList<GridTile>
       testID={testID}
@@ -114,6 +114,12 @@ export function CategoryGrid({
   );
 }
 
+/** A column's share of the grid's width, by the number of columns. */
+const columnWidth = { 2: '50%', 3: '33.3333%', 4: '25%' } as const;
+
+/** How many columns a grid of Category tiles takes. */
+export type GridColumns = keyof typeof columnWidth;
+
 /** A tile's entrance: it rises in after `index` tiles, or under Reduce Motion fades in at once. */
 function Cascade({
   index,
@@ -124,7 +130,7 @@ function Cascade({
 }: {
   index: number;
   stagger: number;
-  width: `${string}%`;
+  width: `${number}%`;
   testID: string;
   children: ReactNode;
 }) {

@@ -2,13 +2,11 @@ import type { CuratedCollectionCard } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
-import { Wedge } from '../primitives/Wedge';
+import { TileShape } from '../primitives/TileShape';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { categoryTile, dashboard, typeStyle } from '../tokens';
 import { BlockTitle } from './BlockTitle';
-
-type Pictogram = (typeof categoryTile.shapes)[number][number];
 
 /**
  * The Curated Collections rail of the Dashboard (ADR 0076, 0081): «Добірки»
@@ -108,8 +106,8 @@ function CategoryTile({
       onPress={onPress}
       faceStyle={[styles.face, { backgroundColor: tone.ground }]}
     >
-      <Shape shape={big} color={tone.big} place={categoryTile.big} />
-      <Shape shape={small} color={tone.small} place={categoryTile.small} />
+      <TileShape shape={big} color={tone.big} place={categoryTile.big} />
+      <TileShape shape={small} color={tone.small} place={categoryTile.small} />
       {
         // DESIGN-05: not on the board, owner decides
         // {isNew ? (
@@ -138,26 +136,6 @@ function CategoryTile({
         // <Text {...voice} style={[styles.count, typeStyle('categoryCount', tokens), { color: tone.text }]}>{entries}</Text>
       }
     </PressedTile>
-  );
-}
-
-/** One shape of a tile's pictogram, a polygon or a circle, at its place. */
-function Shape({
-  shape,
-  color,
-  place: { side, right, top },
-}: {
-  shape: Pictogram;
-  color: string;
-  place: { side: number; right: number; top: number };
-}) {
-  const at = { position: 'absolute', right, top } as const;
-  return shape === 'circle' ? (
-    <View
-      style={[at, { width: side, height: side, borderRadius: side / 2, backgroundColor: color }]}
-    />
-  ) : (
-    <Wedge points={shape} color={color} width={side} height={side} style={at} />
   );
 }
 
