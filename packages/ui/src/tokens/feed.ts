@@ -678,6 +678,118 @@ export const categoryGrid = {
 } & Record<string, unknown>;
 
 /**
+ * The grid of Categories of Corrections (board 05.2 «XCats», k2): the k1
+ * grid's padding, gap, radius and tile padding, with taller tiles, a bigger
+ * big shape, the small one at 60/60, a slower cascade (40 ms apart) and the
+ * board's 7 shape pairs, which the tiles take by position and wrap past
+ * (spec #1604).
+ */
+export const correctionGrid = {
+  height: 150,
+  big: { side: 84, right: -4, top: -2 },
+  small: { side: 22, right: 60, top: 60 },
+  stagger: 40,
+  shapes: [
+    [
+      [
+        [0, 0],
+        [1, 0],
+        [1, 0.7],
+        [0.4, 0.7],
+        [0.2, 1],
+        [0.2, 0.7],
+        [0, 0.7],
+      ],
+      'circle',
+    ],
+    [
+      [
+        [0.5, 0],
+        [1, 0.45],
+        [0.85, 0.45],
+        [0.85, 1],
+        [0.15, 1],
+        [0.15, 0.45],
+        [0, 0.45],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0.25],
+        [1, 0.25],
+        [1, 1],
+        [0, 1],
+      ],
+      [
+        [0.3, 0],
+        [0.7, 0],
+        [0.7, 0.3],
+        [0.3, 0.3],
+      ],
+    ],
+    [
+      [
+        [0.1, 0.3],
+        [0.9, 0.3],
+        [0.8, 1],
+        [0.2, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0.5],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0.2],
+        [1, 0.2],
+        [1, 0.75],
+        [0, 0.75],
+      ],
+      'circle',
+    ],
+    [
+      [
+        [0, 0.15],
+        [0.5, 0],
+        [1, 0.15],
+        [1, 1],
+        [0.5, 0.85],
+        [0, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0.3],
+        [1, 0.7],
+        [0, 1],
+      ],
+    ],
+    [
+      [
+        [0, 0],
+        [1, 0.5],
+        [0, 1],
+      ],
+      [
+        [0, 0],
+        [1, 0],
+        [1, 1],
+        [0, 1],
+      ],
+    ],
+  ],
+} as const satisfies {
+  shapes: readonly (readonly [Shape | 'circle', Shape | 'circle'])[];
+} & Record<string, unknown>;
+
+/**
  * A tile of the Corrections rail (Correction Types): its box, corner radius
  * and padding, the gap between tiles, and the red glyph at its top right,
  * one shape per tile in turn.
