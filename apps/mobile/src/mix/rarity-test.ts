@@ -4,7 +4,7 @@ import type { RarityTestQuestion } from '@slovo/ui';
 import { useCallback } from 'react';
 
 import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 
 /** A drawn Word as the Rarity Test asks about it: its Lemma with Stress, and what VoiceOver reads for it. */
@@ -30,11 +30,7 @@ export function useApplyRarityTest(): (
 ) => Promise<Rarity | undefined> {
   const { rarityTest } = useComposition();
   return useCallback(
-    (answers) =>
-      rarityTest.apply(answers).catch((error: unknown) => {
-        logError('Could not set the Rarity Ceiling', error);
-        return undefined;
-      }),
+    (answers) => keep('the Rarity Ceiling', rarityTest.apply(answers)),
     [rarityTest],
   );
 }

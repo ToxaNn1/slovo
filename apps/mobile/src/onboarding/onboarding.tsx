@@ -25,6 +25,7 @@ import { MascotAs } from '../mascot/mascot';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { rarityTestQuestionOf, useApplyRarityTest } from '../mix/rarity-test';
 import { deviceClock } from '../device/device-clock';
@@ -32,13 +33,6 @@ import { timeOfDay } from '../notifications/notification-scheduler';
 import { TimePickerSheet, timePickerAvailable } from '../notifications/time-picker';
 
 const { onboarding: strings } = editionStrings;
-
-/** Logs what the onboarding could not do on a tap. */
-function report(done: Promise<void>): void {
-  done.catch((error: unknown) => {
-    logError('Could not go on with the onboarding', error);
-  });
-}
 
 /**
  * The onboarding adapter (ADR 0067): it draws the step the Core onboarding is
@@ -50,10 +44,10 @@ export function Onboarding() {
   const step = useSubscribed(onboarding, ({ state }) => state.step);
   if (step === undefined) return null;
   const skip = () => {
-    report(onboarding.finish());
+    void keep('the onboarding', onboarding.finish());
   };
   const next = () => {
-    report(onboarding.next());
+    void keep('the onboarding', onboarding.next());
   };
   const { number, total } = step;
   // The design draws the Mascot without a line, in each step's own state.
@@ -86,7 +80,7 @@ export function Onboarding() {
         highlighted={step.highlighted}
         mascot={mascot}
         onDone={(goal) => {
-          report(onboarding.chooseDailyGoal(goal));
+          void keep('the onboarding', onboarding.chooseDailyGoal(goal));
         }}
         onSkip={skip}
       />
@@ -98,7 +92,7 @@ export function Onboarding() {
         times={step.times}
         mascot={mascot}
         onChoose={(time) => {
-          report(onboarding.chooseNotificationTime(time));
+          void keep('the onboarding', onboarding.chooseNotificationTime(time));
         }}
         onSkip={skip}
       />
@@ -115,7 +109,7 @@ export function Onboarding() {
         options={step.options}
         mascot={mascot}
         onAnswer={(answerId) => {
-          report(onboarding.answer(answerId));
+          void keep('the onboarding', onboarding.answer(answerId));
         }}
         onLater={next}
         onSkip={skip}
@@ -257,7 +251,7 @@ function RarityTestStep({
   useEffect(() => {
     let open = true;
     const onDone = () => {
-      report(onboarding.next());
+      void keep('the onboarding', onboarding.next());
     };
     rarityTest
       .draw()
@@ -275,7 +269,7 @@ function RarityTestStep({
     };
   }, [rarityTest, onboarding]);
   const done = () => {
-    report(onboarding.next());
+    void keep('the onboarding', onboarding.next());
   };
 
   const frame = ({
