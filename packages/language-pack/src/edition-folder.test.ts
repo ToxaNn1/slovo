@@ -530,7 +530,11 @@ describe('checkNewIdioms', () => {
 
   it.each([
     ['a letter outside the alphabet', { expression: 'кури нe клює' }, /"e" \(U\+0065\)/],
-    ['the expression of an existing Idiom', { expression: 'Бити байдики' }, /same expression as i_fx0001/i],
+    [
+      'the expression of an existing Idiom',
+      { expression: 'Бити байдики' },
+      /same expression as i_fx0001/i,
+    ],
   ])('reports %s as the build does', (_name, changes, message) => {
     expect(openEdition(editionsWith(), 'fixture').checkNewIdioms([draft(changes)])).toEqual([
       {
