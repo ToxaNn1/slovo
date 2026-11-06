@@ -57,13 +57,7 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
   const { edition, terminal } = tool;
   let taken: Set<string>;
   try {
-    const { words, corrections, idioms, synonymRows, tips } = edition.entries();
-    taken = new Set([
-      ...(edition.readIfPresent('idRegistry') ?? []),
-      ...[...words, ...corrections, ...idioms, ...synonymRows, ...tips].map(
-        ({ entry }) => entry.id,
-      ),
-    ]);
+    taken = takenIds(edition);
   } catch (error) {
     if (!(error instanceof EditionFolderError)) throw error;
     reportProblems(terminal, `Edition "${edition.id}"`, error.errors.map(formatBuildError));
@@ -78,6 +72,19 @@ export async function newEntry(kind: EntryKind, tool: ContentTool): Promise<numb
   terminal.print(`Drafted ${file}`);
   if (kind === 'word') offerWordFields(tool);
   return editUntilRecorded(file, draft, tool);
+}
+
+/**
+ * Every id the Edition has issued: the recorded ones and those of its
+ * Entries not recorded yet. Throws an EditionFolderError when the Entries
+ * cannot be read.
+ */
+export function takenIds(edition: EditionFolder): Set<string> {
+  const { words, corrections, idioms, synonymRows, tips } = edition.entries();
+  return new Set([
+    ...(edition.readIfPresent('idRegistry') ?? []),
+    ...[...words, ...corrections, ...idioms, ...synonymRows, ...tips].map(({ entry }) => entry.id),
+  ]);
 }
 
 /**
@@ -255,7 +262,7 @@ function dropEmptyFields(path: string): void {
   writeFileSync(path, `${JSON.stringify(Object.fromEntries(kept), null, 2)}\n`);
 }
 
-function printContentVersion(
+export function printContentVersion(
   terminal: Terminal,
   {
     contentVersion,
@@ -311,7 +318,7 @@ async function pick(matches: readonly Match[], terminal: Terminal): Promise<Matc
 }
 
 /** A text as the owner may type it: stress marks dropped, in lower case. */
-function comparable(text: string): string {
+export function comparable(text: string): string {
   return text
     .normalize('NFD')
     .replace(/\u0301/g, '')
@@ -328,7 +335,7 @@ function short(text: string): string {
   return text.length > 60 ? `${text.slice(0, 59)}…` : text;
 }
 
-function reportProblems(
+export function reportProblems(
   terminal: Terminal,
   subject: string,
   problems: readonly string[],
@@ -339,7 +346,7 @@ function reportProblems(
 }
 
 /** A new opaque id with the given prefix that no id taken so far has. */
-function freshId(prefix: string, taken: ReadonlySet<string>, random: () => number): string {
+export function freshId(prefix: string, taken: ReadonlySet<string>, random: () => number): string {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
   for (;;) {
     let id = prefix;
@@ -353,7 +360,11 @@ function freshId(prefix: string, taken: ReadonlySet<string>, random: () => numbe
  * Entries fill, with sample values where the schema takes one of a few.
  * Texts are left empty, so an untouched draft never passes.
  */
-function draftEntry(kind: EntryKind, id: string, edition: EditionFolder): Record<string, unknown> {
+export function draftEntry(
+  kind: EntryKind,
+  id: string,
+  edition: EditionFolder,
+): Record<string, unknown> {
   const sources = [{ title: '' }];
   const rowWord = () => ({ text: '', stress: [] });
   switch (kind) {

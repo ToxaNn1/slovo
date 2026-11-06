@@ -5,13 +5,16 @@
  *   pnpm content edit <id or text> --edition <id>
  *   pnpm content retire <id> --edition <id>
  *   pnpm content check --edition <id>
+ *   pnpm content import <kind> <array.json | drafts folder> --edition <id> [--no-record]
  *
  * `new` drafts an Entry with a fresh id and `edit` finds an existing one;
  * either opens it in `$VISUAL`, else `$EDITOR`, else `vi`, and after each
  * save checks the content with the Language Pack build's rules and records
  * it, or prints the problems and offers to reopen the file. `retire` marks
  * an Entry retired and records the content. `check` checks the whole
- * Edition and writes nothing. `$SLOVO_EDITIONS_DIR` points the tool at another editions folder,
+ * Edition and writes nothing. `import` writes a JSON array of new Entries,
+ * or a folder of ready drafts, one file per Entry, then checks and records
+ * the content as `new` does. `$SLOVO_EDITIONS_DIR` points the tool at another editions folder,
  * as the tests do.
  */
 import { spawnSync } from 'node:child_process';
@@ -36,12 +39,14 @@ import {
   type EntryKind,
   type Terminal,
 } from './content';
+import { importEntries } from './import';
 
 const USAGE = [
   'Usage: pnpm content new word|correction|idiom|synonym-row|tip --edition <id>',
   '       pnpm content edit <id or text> --edition <id>',
   '       pnpm content retire <id> --edition <id>',
   '       pnpm content check --edition <id>',
+  '       pnpm content import word|correction|idiom|synonym-row|tip <array.json | drafts folder> --edition <id> [--no-record]',
 ].join('\n');
 
 const editor: Editor = {
@@ -84,13 +89,15 @@ const terminal: Terminal = {
 async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: { edition: { type: 'string' } },
+    options: { edition: { type: 'string' }, 'no-record': { type: 'boolean' } },
   });
   const [command, ...rest] = positionals;
   const [argument] = rest;
   const kind = command === 'new' && rest.length === 1 ? entryKind(argument) : undefined;
+  const importKind = command === 'import' && rest.length === 2 ? entryKind(argument) : undefined;
   const known =
     (command === 'new' && kind !== undefined) ||
+    importKind !== undefined ||
     ((command === 'edit' || command === 'retire') && rest.length === 1) ||
     (command === 'check' && rest.length === 0);
   if (!known || values.edition === undefined) {
@@ -108,6 +115,8 @@ async function main(): Promise<number> {
   }
   const tool: ContentTool = { edition, editor, terminal, random: Math.random };
   if (kind !== undefined) return newEntry(kind, tool);
+  if (importKind !== undefined)
+    return importEntries(importKind, rest[1] ?? '', tool, { record: values['no-record'] !== true });
   if (command === 'edit') return editEntry(argument ?? '', tool);
   if (command === 'retire') return retireEntry(argument ?? '', tool);
   return checkEdition(tool);
