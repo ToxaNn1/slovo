@@ -278,6 +278,49 @@ export function parseSynonymGroups(html: string, lemma: string): GorohSynonymGro
     });
 }
 
+/** One member of a goroh synonym article: its headword with Stress marks and its gloss, if any. */
+export interface GorohSynonymMember {
+  readonly headword: string;
+  readonly note: string;
+}
+
+/** One goroh synonym article: a sense of its headword and the synonyms listed under it. */
+export interface GorohSynonymArticle {
+  /** The headword with Stress marks, as goroh shows it. */
+  readonly headword: string;
+  readonly sense: string;
+  readonly dictionary: string;
+  readonly members: readonly GorohSynonymMember[];
+}
+
+/** The synonym articles of a «Синонімія» page whose headword is the lemma, from goroh's synonym dictionaries, in page order. */
+export function readSynonymArticles(html: string, lemma: string): GorohSynonymArticle[] {
+  return parse(html)
+    .querySelectorAll('div.article-block')
+    .flatMap((block): GorohSynonymArticle[] => {
+      // A related word's articles show its headword as a link rather than in bold.
+      const heading = block.querySelector('h2 b') ?? block.querySelector('h2 a');
+      const headword = squeeze(heading?.text ?? '');
+      const dictionary = squeeze(block.querySelector('.source-info')?.text ?? '');
+      if (!isSameWord(headword, lemma) || !isSynonymDictionary(dictionary)) return [];
+      const members = block
+        .querySelectorAll('.article-block__body .list-item')
+        .map((item) => ({
+          headword: squeeze(item.querySelector('a')?.text ?? ''),
+          note: squeeze(unstressed(item.querySelector('.short-interpret')?.text ?? '')),
+        }))
+        .filter((member) => member.headword !== '');
+      return [
+        {
+          headword,
+          sense: squeeze(block.querySelector('h2 .short-interpret')?.text ?? ''),
+          dictionary,
+          members,
+        },
+      ];
+    });
+}
+
 /** One ЕСУМ article: its headword, gloss, the etymology and the related words listed under it. */
 export interface GorohEtymology {
   readonly headword: string;
