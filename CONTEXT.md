@@ -406,6 +406,10 @@ Editions may add modes through an Extension Point.
 One prompt with exactly one right answer. The number and form of its options depend on the Game Mode: a pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in order, or typed text.
 _Avoid_: Level, question
 
+**Answer Form**:
+The form a Round's answer takes, which the Game Mode decides: a pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in order, or typed text. Each Answer Form owns what a Round in it holds, the Round the reader sees, how an answer is judged, what the Game Review shows of a wrong answer and how many Rounds and Entries it spans; the Game keeps only Lives, Rounds passed, the Best result and the timer.
+_Avoid_: Question type, answer type, input mode
+
 **Life**:
 One allowed mistake in a Game Mode with Lives; a wrong answer costs a Life, losing all Lives ends the Game.
 _Avoid_: Heart, attempt

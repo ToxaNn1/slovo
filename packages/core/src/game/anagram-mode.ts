@@ -1,5 +1,6 @@
 import { renderStress, stressedVowelsOf } from '../entries/stress';
-import { outOfOrder, type FixedChip, type GameMode } from './game-mode';
+import { outOfOrder, type FixedChip } from './chips-form';
+import type { GameMode } from './game-mode';
 import { shuffled } from '../shuffled';
 
 /** How many letters a Word that plays has, at least and at most. */

@@ -25,9 +25,7 @@ import { useShown } from '@/shown-in-effect';
 import { openLegalPage } from '@/settings/legal-page';
 import { useSettings } from '@/settings/settings';
 import { useOpenScreen } from '@/use-open-screen';
-import { useComposition } from '@/composition';
-import { logError } from '@/diagnostics/log';
-import { useSubscribed } from '@/opening';
+import { useSetDailyGoal, useXpLogState } from '@/progress/xp-log';
 
 const strings = editionStrings.settings;
 
@@ -79,10 +77,10 @@ export default function SettingsScreen() {
   const { current, update } = useSettings();
   const { colors } = useTokens();
   const openScreen = useOpenScreen();
-  const { xpLog } = useComposition();
   const edition = useEditionInEffect();
   const dailyGoals = edition.dailyGoals.options;
-  const { dailyGoal } = useSubscribed(xpLog, ({ state }) => state);
+  const { dailyGoal } = useXpLogState();
+  const setDailyGoal = useSetDailyGoal();
   const { ceiling, setCeiling } = useRarityCeiling();
   const mixSummary = useMixSummary();
   const hiddenSummary = useHiddenSummary();
@@ -232,9 +230,7 @@ export default function SettingsScreen() {
                       ? null
                       : dailyGoals.find((option) => String(option) === value);
                   if (goal === undefined) return;
-                  xpLog.setDailyGoal(goal).catch((error: unknown) => {
-                    logError('The Daily Goal could not be set', error);
-                  });
+                  setDailyGoal(goal);
                 }}
               />
             )}
