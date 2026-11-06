@@ -153,6 +153,7 @@ export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
   cardSpace,
+  categoryGrid,
   categoryTile,
   collectionCard,
   coreTokens,

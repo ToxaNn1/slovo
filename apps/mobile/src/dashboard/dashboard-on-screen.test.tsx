@@ -15,6 +15,8 @@ import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-rout
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/index';
+import CategoriesScreen from '../app/categories';
+import CategoryScreen from '../app/category/[categoryId]';
 import CorrectionTypeScreen from '../app/correction-type/[type]';
 import CuratedCollectionScreen from '../app/curated-collection/[collectionId]';
 import FeedScreen from '../app/feed';
@@ -94,20 +96,25 @@ let composition: Composition;
  * Opens the composition over three Words, with `dashboard` on or off. Today's
  * Word of the Day is сумирний, and the reader was on a later card of the Feed.
  */
-async function open(dashboard: boolean, { previousWords = true, curatedCollections = true } = {}) {
+async function open(
+  dashboard: boolean,
+  { previousWords = true, curatedCollections = true, categoryScreens = true } = {},
+) {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
       feature === 'dashboard'
         ? dashboard
-        : feature === 'previousWords'
-          ? previousWords && shipped.isFeatureEnabled(feature)
-          : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
-            feature === 'curatedCollections'
-            ? curatedCollections
-            : // No later question takes the Word of the Day's place in the Feed.
-              feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+        : feature === 'categoryScreens'
+          ? categoryScreens
+          : feature === 'previousWords'
+            ? previousWords && shipped.isFeatureEnabled(feature)
+            : // The UA Edition ships the rail off till a content spec (ADR 0076); the test turns it on.
+              feature === 'curatedCollections'
+              ? curatedCollections
+              : // No later question takes the Word of the Day's place in the Feed.
+                feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   userState = await seedUserState(
     {
@@ -203,6 +210,8 @@ async function renderApp() {
       'search/[entryId]': EntryFromSearchScreen,
       'correction-type/[type]': CorrectionTypeScreen,
       'curated-collection/[collectionId]': CuratedCollectionScreen,
+      categories: CategoriesScreen,
+      'category/[categoryId]': CategoryScreen,
     },
     { initialUrl: '/' },
   );
@@ -373,6 +382,58 @@ describe('the Correction Types rail', () => {
     expect(composition.correctionTypes.tiles).toEqual([
       { type: 'surzhyk', total: 2, workedThrough: 1 },
     ]);
+  });
+});
+
+describe('the Categories rail', () => {
+  it('reads «Категорії» with their number, a tile with a Category’s name and no count', async () => {
+    await open(true);
+    await renderApp();
+
+    const title = screen.getByTestId('dashboard-categories-title');
+    expect(within(title).getByText('Категорії')).toBeTruthy();
+    expect(within(title).getByText('1')).toBeTruthy();
+    expect(screen.getByLabelText('Категорії, 1')).toBeTruthy();
+    const tile = screen.getByTestId('dashboard-category-emotions-character');
+    expect(within(tile).getByText('Емоції')).toBeTruthy();
+    expect(within(tile).queryByText('1')).toBeNull();
+  });
+
+  it('is absent with `categoryScreens` off, the other blocks as today', async () => {
+    await open(true, { categoryScreens: false });
+    await renderApp();
+
+    expect(screen.queryByTestId('dashboard-categories')).toBeNull();
+    expect(screen.queryByText('Категорії')).toBeNull();
+    expect(screen.getByTestId('dashboard-curated-collections-title')).toBeTruthy();
+  });
+
+  it('its header opens k1, the grid of every Category, and a tile there opens the Category', async () => {
+    await open(true);
+    await renderApp();
+
+    await settle(() => fireEvent.press(screen.getByTestId('dashboard-categories-title')));
+
+    expect(screen.getByRole('header', { name: 'Категорії, 1' })).toBeTruthy();
+    expect(screen.getByTestId('categories-emotions-character-name')).toHaveTextContent('Емоції');
+
+    // The Stack's transition end settles the opener in the app.
+    screenSettled();
+    await settle(() => fireEvent.press(screen.getByTestId('categories-emotions-character')));
+
+    expect(screen.getByTestId('category')).toHaveTextContent(/Емоції/);
+    expect(screen.getByText('Емоції.')).toBeTruthy();
+  });
+
+  it('a tile on the rail opens its Category’s screen', async () => {
+    await open(true);
+    await renderApp();
+
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-category-emotions-character')),
+    );
+
+    expect(screen.getByTestId('category')).toHaveTextContent(/Емоції/);
   });
 });
 
