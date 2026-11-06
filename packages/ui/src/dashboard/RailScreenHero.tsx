@@ -23,7 +23,7 @@ import {
  * The hero of a screen a Dashboard rail's tile opens (board `SlovoApp`,
  * «fix» and «cat»): the red halftone ground cut at the bottom, the ink back
  * tile, the ink icon tile with the tile's red glyph beside the kicker, the
- * title, the description, the progress label over its skewed bar, and the
+ * title, the description if the screen has one, the progress label over its skewed bar, and the
  * Mascot. Its right slot holds the button of the screen's kind: the toggle
  * of the Mix or of a Curated Collection's copy, or the Collection menu.
  */
@@ -45,7 +45,8 @@ export function RailScreenHero({
   glyph: WedgePoints | 'circle';
   kicker: string;
   title: string;
-  description: string;
+  /** What the screen gathers; none on a Collection's screen. */
+  description?: string;
   /** «Розібрано 0 з 4», drawn in capitals. */
   progress: string;
   /** How much of the bar is filled, from 0 to 1. */
@@ -118,9 +119,15 @@ export function RailScreenHero({
             <Text {...voice} accessibilityRole="header" style={text('railTitle')}>
               {title}
             </Text>
-            <Text {...voice} style={[text('railDescription'), styles.description]}>
-              {description}
-            </Text>
+            {description !== undefined && (
+              <Text
+                {...voice}
+                testID={`${id}-description`}
+                style={[text('railDescription'), styles.description]}
+              >
+                {description}
+              </Text>
+            )}
           </View>
         </View>
         <View style={styles.progressRow}>
