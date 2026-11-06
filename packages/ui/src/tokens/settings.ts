@@ -62,3 +62,45 @@ export const widgetDrawing = {
   /** The medium widget's width over its height, from the design's 364 × 170. */
   mediumAspectRatio: 364 / 170,
 } as const;
+
+/**
+ * The Narrator Voice screen (design `XVoice`): the red scene of the sample
+ * Word, its play button and the 16 bars beside it, and the 2×2 voice tiles.
+ * The bars take their heights, as shares of `barsHeight`, from `barShares`
+ * in turn; while the voice reads, each swings between `barRest` and its full
+ * height in `barSwing` ms plus `barSwingStep` for every third bar, a bar
+ * `barDelay` ms after the one before it. Each syllable lifts by
+ * `syllableLift` for `syllableLiftDuration` ms, `syllableStep` ms after the
+ * one before it.
+ */
+export const narratorVoiceDrawing = {
+  sceneRadius: 26,
+  scenePaddingTop: 22,
+  scenePaddingHorizontal: 20,
+  scenePaddingBottom: 20,
+  sceneGap: 16,
+  syllableGap: 2,
+  play: 64,
+  playRadius: 18,
+  playIcon: 22,
+  playGap: 14,
+  bars: 16,
+  barsGap: 4,
+  barsHeight: 40,
+  barShares: [0.58, 0.79, 0.69, 0.93, 0.72, 0.86, 0.65, 0.76, 0.62],
+  barRest: 0.3,
+  barSwing: 420,
+  barSwingStep: 80,
+  barDelay: 40,
+  syllableLift: 5,
+  syllableLiftDuration: 500,
+  syllableStep: 450,
+  choosePaddingTop: 22,
+  choosePaddingBottom: 10,
+  tile: 64,
+  tileRadius: 16,
+  tileGap: 10,
+  tilePaddingHorizontal: 14,
+  tileLineGap: 5,
+  descriptionOpacity: 0.75,
+} as const;
