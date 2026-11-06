@@ -24,7 +24,8 @@ import {
  * «fix» and «cat»): the red halftone ground cut at the bottom, the ink back
  * tile, the ink icon tile with the tile's red glyph beside the kicker, the
  * title, the description, the progress label over its skewed bar, and the
- * Mascot. A Curated Collection's hero adds its add button at the top right.
+ * Mascot. Its right slot holds the button of the screen's kind: the toggle
+ * of the Mix or of a Curated Collection's copy, or the Collection menu.
  */
 export function RailScreenHero({
   id,
@@ -36,7 +37,7 @@ export function RailScreenHero({
   done,
   mascot,
   back,
-  add,
+  action,
 }: {
   /** Unique on the screen: it names the raster and the test IDs. */
   id: string;
@@ -51,7 +52,8 @@ export function RailScreenHero({
   done: number;
   mascot: MascotState;
   back: { label: string; onPress: () => void; testID?: string };
-  add?: { label: string; added: boolean; onPress: () => void; testID?: string };
+  /** The button at the top right, if the screen's kind has one. */
+  action?: HeroAction;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -90,39 +92,8 @@ export function RailScreenHero({
         >
           <Icon name="back" size={place.back.icon} color={cream} />
         </Pressable>
-        {add !== undefined && (
-          <Pressable
-            testID={add.testID ?? `${id}-add`}
-            accessibilityRole="button"
-            accessibilityLabel={add.label}
-            accessibilityState={{ selected: add.added }}
-            {...voice}
-            onPress={add.onPress}
-            style={({ pressed }) => [
-              styles.add,
-              {
-                top: place.add.top + shift,
-                backgroundColor: add.added ? keyInk : cream,
-                // The board's hard edge under the button not yet pressed.
-                borderBottomWidth: add.added ? 0 : place.add.edge,
-                borderBottomColor: withAlpha(keyInk, place.add.edgeAlpha),
-              },
-              pressed && styles.pressed,
-            ]}
-          >
-            <Wedge
-              points={add.added ? place.addIcons.tick : place.addIcons.plus}
-              color={add.added ? cream : keyInk}
-              width={place.add.icon}
-              height={place.add.icon}
-            />
-            <Text
-              {...voice}
-              style={[typeStyle('railAdd', tokens), { color: add.added ? cream : keyInk }]}
-            >
-              {add.label}
-            </Text>
-          </Pressable>
+        {action !== undefined && (
+          <HeroActionButton id={id} action={action} top={place.add.top + shift} />
         )}
         {/* The column and the bar flow: the bar keeps the board's place unless the column reaches it. */}
         <View style={styles.columnRoom}>
@@ -175,6 +146,69 @@ export function RailScreenHero({
   );
 }
 
+/**
+ * The hero's right button: a toggle reads its label beside a plus, and once
+ * on, beside a tick in reverse; the menu is an ink tile with the «more» glyph.
+ */
+export type HeroAction =
+  | { kind: 'toggle'; label: string; on: boolean; onPress: () => void; testID?: string }
+  | { kind: 'menu'; label: string; onPress: () => void; testID?: string };
+
+function HeroActionButton({ id, action, top }: { id: string; action: HeroAction; top: number }) {
+  const tokens = useTokens();
+  const { ink: keyInk, background: cream } = useSchemeColors('light');
+  const { voice } = useEdition();
+  const common = {
+    testID: action.testID ?? `${id}-action`,
+    accessibilityRole: 'button',
+    accessibilityLabel: action.label,
+    ...voice,
+    onPress: action.onPress,
+  } as const;
+  if (action.kind === 'menu') {
+    return (
+      <Pressable
+        {...common}
+        style={({ pressed }) => [
+          styles.menu,
+          { top, backgroundColor: keyInk },
+          pressed && styles.pressed,
+        ]}
+      >
+        <Icon name="more" size={place.back.icon} color={cream} />
+      </Pressable>
+    );
+  }
+  const { on } = action;
+  return (
+    <Pressable
+      {...common}
+      accessibilityState={{ selected: on }}
+      style={({ pressed }) => [
+        styles.add,
+        {
+          top,
+          backgroundColor: on ? keyInk : cream,
+          // The board's hard edge under the button not yet pressed.
+          borderBottomWidth: on ? 0 : place.add.edge,
+          borderBottomColor: withAlpha(keyInk, place.add.edgeAlpha),
+        },
+        pressed && styles.pressed,
+      ]}
+    >
+      <Wedge
+        points={on ? place.addIcons.tick : place.addIcons.plus}
+        color={on ? cream : keyInk}
+        width={place.add.icon}
+        height={place.add.icon}
+      />
+      <Text {...voice} style={[typeStyle('railAdd', tokens), { color: on ? cream : keyInk }]}>
+        {action.label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   back: {
     position: 'absolute',
@@ -194,6 +228,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: place.add.gap,
+  },
+  menu: {
+    position: 'absolute',
+    right: place.add.right,
+    width: place.back.side,
+    height: place.back.side,
+    borderRadius: place.back.radius,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   pressed: { opacity: pressedFade },
   // From the column's top to the bar's on the board; a taller column grows it.
