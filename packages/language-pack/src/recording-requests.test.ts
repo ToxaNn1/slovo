@@ -16,7 +16,10 @@ afterEach(() => {
   for (const dir of workDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
 });
 
-/** A copy of the valid fixture (voices anna and boris, three Words) with the fixture Recordings. */
+/**
+ * A copy of the valid fixture (voices anna and boris, three Words, w_fx0001
+ * Retired) with the fixture Recordings and the texts they were made from.
+ */
 function withRecordings(): string {
   const dir = mkdtempSync(join(tmpdir(), 'slovo-requests-'));
   workDirs.push(dir);
@@ -27,17 +30,43 @@ function withRecordings(): string {
 }
 
 describe('the Recordings to make for an Edition', () => {
-  it('asks for every Word in every Narrator Voice, the Lemma with its Stress marked', () => {
+  it('asks for every live Word in every Narrator Voice, the Lemma with its first Stress marked', () => {
     const requests = recordingRequests(editionFiles(withRecordings()), 'all');
 
     expect(requests).toEqual([
-      { voice: 'anna', wordId: 'w_fx0001', text: 'заметі́ль' },
       { voice: 'anna', wordId: 'w_fx0002', text: 'балаку́чий' },
-      { voice: 'anna', wordId: 'w_fx0003', text: 'за́вжди́' },
-      { voice: 'boris', wordId: 'w_fx0001', text: 'заметі́ль' },
+      { voice: 'anna', wordId: 'w_fx0003', text: 'за́вжди' },
       { voice: 'boris', wordId: 'w_fx0002', text: 'балаку́чий' },
-      { voice: 'boris', wordId: 'w_fx0003', text: 'за́вжди́' },
+      { voice: 'boris', wordId: 'w_fx0003', text: 'за́вжди' },
     ]);
+  });
+
+  it('never asks for a Retired Word', () => {
+    const editionDir = withRecordings();
+    rmSync(join(editionDir, 'assets/recordings/anna'), { recursive: true });
+
+    const requests = recordingRequests(editionFiles(editionDir), 'missing');
+
+    expect(requests.map(({ wordId }) => wordId)).not.toContain('w_fx0001');
+  });
+
+  it('asks again for a Recording made from another text than the Word reads now', () => {
+    const editionDir = withRecordings();
+    const texts = join(editionDir, 'assets/recordings/anna/texts.json');
+    writeFileSync(texts, readFileSync(texts, 'utf8').replace('балаку́чий', 'бала́кучий'));
+
+    const requests = recordingRequests(editionFiles(editionDir), 'missing');
+
+    expect(requests).toContainEqual({ voice: 'anna', wordId: 'w_fx0002', text: 'балаку́чий' });
+  });
+
+  it('asks again for a Recording without the text it was made from', () => {
+    const editionDir = withRecordings();
+    rmSync(join(editionDir, 'assets/recordings/anna/texts.json'));
+
+    const requests = recordingRequests(editionFiles(editionDir), 'missing');
+
+    expect(requests.filter(({ voice }) => voice === 'anna')).toHaveLength(2);
   });
 
   it('asks only for the Recordings a Narrator Voice lacks', () => {
@@ -56,7 +85,7 @@ describe('the Recordings to make for an Edition', () => {
 
     const requests = recordingRequests(editionFiles(editionDir), 'missing');
 
-    expect(requests.filter(({ voice }) => voice === 'boris')).toHaveLength(3);
+    expect(requests.filter(({ voice }) => voice === 'boris')).toHaveLength(2);
   });
 
   it('sends a Word without Stress positions as its Lemma', () => {

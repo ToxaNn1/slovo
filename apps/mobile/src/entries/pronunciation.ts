@@ -120,7 +120,11 @@ export function createPronunciation({
 
       const recording = recordingOf(id);
       if (recording !== undefined) {
-        if (state?.state === 'playing') await silence();
+        if (state?.state === 'playing') {
+          await silence();
+          // A later tap came while the voice stopped; it reads instead.
+          if (latestTap !== tap) return;
+        }
         player.play(recording, start(id));
         return;
       }

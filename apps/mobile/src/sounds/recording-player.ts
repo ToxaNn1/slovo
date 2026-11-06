@@ -9,15 +9,30 @@ export interface RecordingPlayer {
   stop(): void;
 }
 
+/**
+ * A status update of `expo-audio`, as far as the player reads it. A failure
+ * comes as `error` (on Android alone, with no other field) or as the
+ * `failed` playback state (iOS).
+ */
+export interface RecordingStatus {
+  readonly didJustFinish?: boolean;
+  readonly playbackState?: string;
+  readonly error?: string;
+}
+
+/** Whether a status update ends the reading: the Recording played to its end or failed. */
+function ends(status: RecordingStatus): boolean {
+  return (
+    status.didJustFinish === true || status.error !== undefined || status.playbackState === 'failed'
+  );
+}
+
 /** One loaded Recording of `expo-audio`, as far as the player plays it. */
 export interface RecordingAudioPlayer {
   play(): void;
   pause(): void;
   remove(): void;
-  addListener(
-    event: 'playbackStatusUpdate',
-    listener: (status: { readonly didJustFinish: boolean }) => void,
-  ): unknown;
+  addListener(event: 'playbackStatusUpdate', listener: (status: RecordingStatus) => void): unknown;
 }
 
 /** The part of `expo-audio` the Recording player uses. */
@@ -32,7 +47,7 @@ export interface RecordingAudioModule {
  * switch off, mixes with the reader's music and never plays in the
  * background. With no audio module (a binary built before the 1.0 batch)
  * there is none, and the device voice reads every Word. A Recording that
- * fails to play ends at once.
+ * fails to load or play, at once or later, ends at once.
  */
 export function createRecordingPlayer(
   module: RecordingAudioModule | undefined,
@@ -70,7 +85,7 @@ export function createRecordingPlayer(
         const player = audio.createAudioPlayer(source);
         current = player;
         player.addListener('playbackStatusUpdate', (status) => {
-          if (!status.didJustFinish || current !== player) return;
+          if (!ends(status) || current !== player) return;
           stop();
           onEnd();
         });

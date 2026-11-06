@@ -182,6 +182,7 @@ export default function SettingsScreen() {
                 icon="bar"
                 label={strings.narratorVoice.row}
                 subtitle={strings.narratorVoice.rowSub}
+                value={edition.narratorVoiceOf(current.narratorVoice).name}
                 onPress={() => {
                   openScreen('/settings/narrator-voice');
                 }}
