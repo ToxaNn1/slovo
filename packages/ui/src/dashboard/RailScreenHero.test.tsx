@@ -1,6 +1,8 @@
 import { EditionProvider, RailScreenHero } from '@slovo/ui';
-import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { afterEach, describe, expect, it, jest } from '@jest/globals';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import type { ComponentProps } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
@@ -12,9 +14,8 @@ const metrics = {
 
 type Hero = ComponentProps<typeof RailScreenHero>;
 
-async function renderHero(props: Partial<Hero> = {}) {
-  const back = { label: 'Home', onPress: jest.fn() };
-  await render(
+function heroTree(props: Partial<Hero>, back: Hero['back']) {
+  return (
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
         <RailScreenHero
@@ -30,8 +31,13 @@ async function renderHero(props: Partial<Hero> = {}) {
           {...props}
         />
       </EditionProvider>
-    </SafeAreaProvider>,
+    </SafeAreaProvider>
   );
+}
+
+async function renderHero(props: Partial<Hero> = {}) {
+  const back = { label: 'Home', onPress: jest.fn() };
+  await render(heroTree(props, back));
   return back;
 }
 
@@ -69,6 +75,65 @@ describe('RailScreenHero', () => {
 
     expect(screen.getByRole('button', { name: 'In the mix' })).toBeSelected();
     expect(screen.queryByRole('button', { name: 'Add' })).toBeNull();
+  });
+
+  describe('the tick of the toggle', () => {
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    /** Renders the toggle off, then on, with Reduce Motion as given, and lets 100 ms pass. */
+    async function toggleOn(reduceMotion: boolean) {
+      jest.useFakeTimers();
+      jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(reduceMotion);
+      const action = { kind: 'toggle', label: 'Add', on: false, onPress: jest.fn() } as const;
+      const back = await renderHero({ action });
+      await act(async () => {
+        await Promise.resolve();
+      });
+      await screen.rerender(heroTree({ action: { ...action, label: 'Added', on: true } }, back));
+      await act(() => {
+        jest.advanceTimersByTime(100);
+      });
+    }
+
+    /** The scale of the toggle's icon, 1 when it rests. */
+    function iconScale(): number {
+      const { transform } = getAnimatedStyle(screen.getByTestId('hero-action-icon')) as {
+        transform: { scale?: number }[];
+      };
+      return transform.find((step) => step.scale !== undefined)?.scale ?? 1;
+    }
+
+    it('pops in once the toggle turns on, and comes to rest', async () => {
+      await toggleOn(false);
+
+      expect(screen.getByRole('button', { name: 'Added' })).toBeSelected();
+      expect(iconScale()).not.toBe(1);
+      await act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(iconScale()).toBe(1);
+    });
+
+    it('stays still with Reduce Motion', async () => {
+      await toggleOn(true);
+
+      expect(screen.getByRole('button', { name: 'Added' })).toBeSelected();
+      expect(iconScale()).toBe(1);
+    });
+
+    it('does not pop when the screen opens with the copy already kept', async () => {
+      jest.useFakeTimers();
+      await renderHero({
+        action: { kind: 'toggle', label: 'Added', on: true, onPress: jest.fn() },
+      });
+      await act(() => {
+        jest.advanceTimersByTime(100);
+      });
+
+      expect(iconScale()).toBe(1);
+    });
   });
 
   it('draws the Collection menu button in the right slot, and its press opens the menu', async () => {
