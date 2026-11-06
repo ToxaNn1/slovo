@@ -47,6 +47,7 @@ export default [
     files: [
       'src/dashboard/MoodCheckIn.tsx',
       'src/dashboard/RailScreenCard.tsx',
+      'src/dashboard/RailScreenHero.tsx',
       'src/entries/SwipeMarks.tsx',
       'src/entries/reveal.tsx',
       'src/feed/GesturesHintSheet.tsx',
