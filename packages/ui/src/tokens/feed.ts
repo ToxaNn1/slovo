@@ -780,6 +780,8 @@ export const railScreen = {
     icon: 14,
     edge: 3,
     edgeAlpha: 0.35,
+    /** The tick's pop once the button turns on, the board's `slPop .35s`, in ms. */
+    popDuration: 350,
   },
   /** The add button's plus and the tick it turns into, in a 26 × 22 box. */
   addIcons: {
