@@ -102,13 +102,20 @@ export interface SampleReading {
 
 /**
  * The sample Word of the voice screen, read by the Narrator Voice's
- * Recording like a card's Word; it stops when the screen closes.
+ * Recording like a card's Word; it stops when the screen closes or «Звуки»
+ * go off.
  */
 export function useSampleReading(): SampleReading {
   const sounds = useSettings().current.sounds;
   const voice = useNarratorVoice();
   const { word, syllables } = edition.narratorVoiceSample;
   const state = useSyncExternalStore(subscribe, () => pronunciation.stateOf(word));
+
+  // «Звуки» going off stop the sample, as they stop a card's Word.
+  useEffect(() => {
+    soundsOn = sounds;
+    if (!sounds && pronunciation.stateOf(word) === 'playing') void pronunciation.stop();
+  }, [sounds, word]);
 
   useEffect(
     () => () => {

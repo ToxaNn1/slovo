@@ -1,13 +1,14 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { loadEdition, type Edition, type FeatureSwitch, type UserSettings } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
+import { Pressable, Text } from 'react-native';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
-import { SettingsProvider } from '../settings/settings';
+import { SettingsProvider, useSettings } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
 import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
-import { LemmaPronunciation } from './pronunciation-button';
+import { LemmaPronunciation, useSampleReading } from './pronunciation-button';
 
 const { config } = activeEditionFiles;
 
@@ -16,7 +17,7 @@ const word = 'w_card';
 /** The Recording of the card's Word in each Narrator Voice, as the audio module gets it. */
 const cardRecordings: Record<string, number> = { oksana: 201, taras: 202 };
 
-/** The Recordings the audio module was given, each with the call that ends its reading. */
+/** The Recordings the audio module plays, each with the call that ends its reading; a stop clears them. */
 const played: { recording: number; end: () => void }[] = [];
 
 jest.mock('../edition/edition', () => {
@@ -25,7 +26,10 @@ jest.mock('../edition/edition', () => {
     ...actual,
     activeEditionFiles: {
       ...actual.activeEditionFiles,
-      recordings: { oksana: { w_card: 201 }, taras: { w_card: 202 } },
+      recordings: {
+        oksana: { w_card: 201, [actual.edition.narratorVoiceSample.word]: 301 },
+        taras: { w_card: 202 },
+      },
     },
   };
 });
@@ -35,7 +39,9 @@ jest.mock('../sounds/interface-sounds', () => ({
     play: (recording: number, end: () => void) => {
       played.push({ recording, end });
     },
-    stop: () => undefined,
+    stop: () => {
+      played.length = 0;
+    },
   },
 }));
 
@@ -87,5 +93,52 @@ describe('A Word card › Narrator Voice', () => {
 
   it("reads its Word in the Edition's default voice for a voice the Edition does not have", async () => {
     expect(await tapCard({ narratorVoice: 'nobody' })).toBe(cardRecordings['oksana']);
+  });
+});
+
+/** The voice screen's sample, read from one button, beside a «Звуки» switch. */
+function SampleWithSounds() {
+  const sample = useSampleReading();
+  const { update } = useSettings();
+  return (
+    <>
+      <Pressable testID="sample" onPress={sample.toggle}>
+        <Text>{sample.playing ? 'playing' : 'idle'}</Text>
+      </Pressable>
+      <Pressable
+        testID="sounds-off"
+        onPress={() => {
+          update({ sounds: false });
+        }}
+      />
+    </>
+  );
+}
+
+describe('The voice screen › «Звуки»', () => {
+  it('stops the sample Word when «Звуки» go off while it reads', async () => {
+    const shell = testShell({
+      composition: opened(await testShell().composition.opened()),
+      remoteSwitches: switchedTo(editionWith({})),
+      settings: await settingsAt({}),
+    });
+    await render(
+      <ShellProvider shell={shell}>
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <SettingsProvider>
+            <SampleWithSounds />
+          </SettingsProvider>
+        </EditionProvider>
+      </ShellProvider>,
+    );
+    played.length = 0;
+    await fireEvent.press(await screen.findByTestId('sample'));
+    expect(screen.getByText('playing')).toBeOnTheScreen();
+    expect(played.map(({ recording }) => recording)).toEqual([301]);
+
+    await fireEvent.press(screen.getByTestId('sounds-off'));
+
+    expect(await screen.findByText('idle')).toBeOnTheScreen();
+    expect(played).toEqual([]);
   });
 });
