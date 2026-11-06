@@ -211,13 +211,13 @@ describe('the Language Pack the app opens at launch', () => {
     expect(app.errors).toHaveLength(1);
   });
 
-  it('asks the backend for the newest pack of format 10, the one the app reads', async () => {
+  it('asks the backend for the newest pack of format 11, the one the app reads', async () => {
     const app = device();
 
     const { contentUpdate } = await app.launch();
     await contentUpdate?.checkForUpdate();
 
-    expect(app.contentApi.content.asked).toEqual([10]);
+    expect(app.contentApi.content.asked).toEqual([11]);
   });
 
   it('opens a pack downloaded in one run from the next launch, never in the run that kept it', async () => {

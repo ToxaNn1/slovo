@@ -109,6 +109,15 @@ export interface Mix {
    * and so is a Category the list doesn't have in the Language Pack.
    */
   takeOut(categoryId: string, of?: CategoryKind): Promise<boolean>;
+  /**
+   * Puts the Category of the kind's list, the Words' unless given, in the Mix
+   * (`inMix`) or takes it out: the one change of a Category's place the Mix
+   * screen and the Category screens make. Resolves to whether it stands as
+   * asked now. At least one Category of each list always stays in the Mix
+   * (ADR 0019), so taking out the last one is refused, as is a Category the
+   * list doesn't have in the Language Pack.
+   */
+  setCategory(categoryId: string, inMix: boolean, of?: CategoryKind): Promise<boolean>;
   /** Puts the Category of the kind's list, the Words' unless given, back in the Mix. One the list doesn't have is skipped. */
   putBack(categoryId: string, of?: CategoryKind): Promise<void>;
   /** Puts every Category, of Words and of Corrections, in the Mix at once. The kinds as a whole stay as they are. */
@@ -195,6 +204,25 @@ export function kindsShown({
 /** The list of Categories of the kind in the Mix as it stands: the Words' are the Mix's own fields. */
 export function categoriesInMix(state: MixState, of: CategoryKind): CategoriesInMix {
   return of === 'word' ? state : state.correctionCategories;
+}
+
+/**
+ * Where a Category of a list stands in the Mix: in, in as the last Category
+ * of its list, which can't be taken out (ADR 0019), or out; nothing for a
+ * Category the list doesn't have in the Language Pack.
+ */
+export type CategoryPlace = 'in' | 'last' | 'out' | undefined;
+
+/** Where the Category of the kind's list stands in the Mix (`CategoryPlace`). */
+export function categoryPlace(
+  state: MixState,
+  of: CategoryKind,
+  categoryId: string,
+): CategoryPlace {
+  const list = categoriesInMix(state, of);
+  if (!list.allCategories.some(({ id }) => id === categoryId)) return undefined;
+  if (list.lastCategoryId === categoryId) return 'last';
+  return list.categoryIds.includes(categoryId) ? 'in' : 'out';
 }
 
 /** Whether the Category is in the Edition's default Mix of its list: always when the default is all. */
@@ -400,6 +428,17 @@ export async function openMix({
     return true;
   }
 
+  async function setCategory(
+    categoryId: string,
+    inMix: boolean,
+    of: CategoryKind,
+  ): Promise<boolean> {
+    if (!inMix) return takeOut(categoryId, of);
+    if (!isCategory(categoryId, of)) return false;
+    await putBack(categoryId, of);
+    return true;
+  }
+
   async function putBack(categoryId: string, of: CategoryKind): Promise<void> {
     if (
       !isCategory(categoryId, of) ||
@@ -429,6 +468,8 @@ export async function openMix({
       return state;
     },
     takeOut: (categoryId, of = 'word') => inTurn(() => takeOut(categoryId, of)),
+    setCategory: (categoryId, inMix, of = 'word') =>
+      inTurn(() => setCategory(categoryId, inMix, of)),
     putBack: (categoryId, of = 'word') => inTurn(() => putBack(categoryId, of)),
     turnAllOn: () => inTurn(turnAllOn),
     setKind: (kind, inMix) => inTurn(() => setKind(kind, inMix)),

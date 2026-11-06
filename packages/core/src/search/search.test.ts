@@ -114,8 +114,8 @@ describe('Search over Word Lemmas', () => {
     const search = createSearch({
       content: createMemoryContentPort({
         categories: [
-          { id: 'speech', displayName: 'Мова' },
-          { id: 'nature', displayName: 'Природа' },
+          { id: 'speech', displayName: 'Мова', description: 'Мова.', tone: 'loud' },
+          { id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' },
         ],
         words: [word('w_nature', { lemma: 'сумирний', categoryId: 'nature', rarity: 5 })],
       }),

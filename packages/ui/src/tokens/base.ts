@@ -504,6 +504,12 @@ export const typeRoles = {
   categoryName: role('word', '800', 12, 13.8),
   /** «24 слова» on a tile of the Categories rail. */
   categoryCount: role('ui', '500', 12, 12),
+  /** A grid screen's title, «Категорії» (board 05.2 k1). */
+  gridTitle: role('word', '900', 28, 28, -1),
+  /** The count on a grid screen title's baseline, «16». */
+  gridCount: role('ui', '600', 14, 14),
+  /** A Category's name on its tile of the k1 grid, hyphenated. */
+  gridTileName: role('word', '800', 11, 12.65),
   /** A Correction Type's name on its tile of the Corrections rail. */
   correctionName: role('word', '800', 13, 15),
   /** The kicker beside the icon tile on a rail screen's hero, «ВИПРАВЛЕННЯ · 4 приклади». */
@@ -528,6 +534,16 @@ export const typeRoles = {
   railStandard: role('word', '900', 19, 22.8, -0.3),
   /** The explanation in a Correction card's revealed block. */
   railNote: role('ui', '500', 14, 19.6),
+  /** «Категорія» over a quiet Category's name on its hero (k3). */
+  quietLabel: role('ui', '600', 13, 17.55),
+  /** A quiet Category's name on its hero (k3). */
+  quietTitle: role('word', '800', 30, 32.4, -0.5),
+  /** The line under a quiet Category's name (k3). */
+  quietDescription: role('ui', '400', 15, 21.75),
+  /** The Lemma of a plain row on a quiet Category's screen (k3). */
+  quietWord: role('word', '800', 17, 18.7),
+  /** The short Definition under it, the gloss. */
+  quietGloss: role('ui', '400', 14, 18.2),
   /** The Lemma on a word card of a Curated Collection's screen. */
   railWord: role('word', '800', 19, 20.9),
   /** The «ЗНАЮ» stamp on a known word's card. */

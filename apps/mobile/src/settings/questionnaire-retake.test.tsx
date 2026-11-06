@@ -77,8 +77,8 @@ async function openWith(edition: Edition) {
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [
-        { id: 'nature', displayName: 'Природа' },
-        { id: 'food', displayName: 'Їжа' },
+        { id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' },
+        { id: 'food', displayName: 'Їжа', description: 'Їжа.', tone: 'loud' },
       ],
       words: [],
     }),

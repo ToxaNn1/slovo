@@ -29,10 +29,16 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       ['correction_categories', content.correctionCategories],
     ] as const) {
       const insertCategory = db.prepare(
-        `INSERT INTO ${table} (id, display_name, position) VALUES (?, ?, ?)`,
+        `INSERT INTO ${table} (id, display_name, description, tone, position) VALUES (?, ?, ?, ?, ?)`,
       );
       categories.forEach((category, position) => {
-        insertCategory.run(category.id, category.displayName, position);
+        insertCategory.run(
+          category.id,
+          category.displayName,
+          category.description,
+          category.tone,
+          position,
+        );
       });
     }
 

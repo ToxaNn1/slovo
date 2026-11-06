@@ -121,6 +121,7 @@ describe('the row of an Entry', () => {
       secondLine: 'на протязі року',
       labelKey: 'correction',
       spoken: 'протягом року, на протязі року',
+      standardForms: ['протягом року', 'упродовж року'],
     });
   });
 

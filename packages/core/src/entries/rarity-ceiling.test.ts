@@ -22,7 +22,7 @@ interface Options {
 /** The Language Pack: the Words and one Correction, which has no rarity. */
 const content = () =>
   createMemoryContentPort({
-    categories: [{ id: 'test', displayName: 'Test' }],
+    categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
     words: twoOfEachRarity,
     corrections: [correction('c_1')],
   });

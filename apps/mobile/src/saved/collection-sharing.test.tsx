@@ -21,7 +21,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import CollectionsScreen from '../app/saved/collections/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
 
 const { config } = activeEditionFiles;
 
@@ -85,7 +85,7 @@ beforeEach(async () => {
   now = Date.parse('2026-10-28T09:00:00Z');
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words: [word('w_kvasha', 'кваша'), word('w_buzok', 'бузок')],
     }),
     edition: inEffect,
@@ -122,9 +122,19 @@ async function settle() {
 }
 
 async function openMenuOf(collectionId: string) {
+  // The cards' menu: the board style's grid has none, its menu is the Collection screen's.
+  const cards: Edition = {
+    ...edition,
+    isFeatureEnabled: (feature) =>
+      feature !== 'collectionBoardStyle' &&
+      !(feature === 'collectionLinks' && collectionLinksOff) &&
+      edition.isFeatureEnabled(feature),
+  };
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+      <ShellProvider
+        shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(cards) })}
+      >
         <EditionProvider edition={edition} strings={editionStrings}>
           <CollectionsScreen />
         </EditionProvider>
