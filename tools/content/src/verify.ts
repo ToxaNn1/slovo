@@ -8,7 +8,7 @@
  * verifies it.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 
 import type { EditionFolder } from '@slovo/language-pack/edition';
@@ -143,7 +143,8 @@ function matching(all: readonly Quoted[], name: string, request: VerifyRequest):
   if (byId.length > 0) return byId;
   const path = resolve(request.cwd, name);
   if (!existsSync(path)) return [];
-  const inEdition = relative(request.edition.dir, path);
+  // Both sides resolved through symlinks: macOS's /var is /private/var.
+  const inEdition = relative(realpathSync(request.edition.dir), realpathSync(path));
   if (statSync(path).isDirectory()) {
     const folder = inEdition === '' ? '' : `${inEdition}${sep}`;
     return all.filter((entry) => entry.file.startsWith(folder));
