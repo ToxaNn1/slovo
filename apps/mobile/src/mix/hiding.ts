@@ -4,7 +4,6 @@ import { useState } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
 import { logError } from '../diagnostics/log';
 import type { Opening } from '../opening';
 import { useShell } from '../shell-value';
@@ -40,7 +39,6 @@ export interface HideChoiceProps {
 export function useHide(card: AnyEntryCard): { open: () => void; choice: HideChoiceProps } {
   const composition = useComposition();
   const compositionOpening = useShell().composition;
-  const edition = useEditionInEffect();
   const showToast = useUndoToast();
   const [visible, setVisible] = useState(false);
   const [options, setOptions] = useState<readonly HideOption[]>([]);
@@ -48,9 +46,7 @@ export function useHide(card: AnyEntryCard): { open: () => void; choice: HideCho
   return {
     open() {
       // Read when the sheet opens, so it follows every change of the Mix.
-      setOptions(
-        hideChoice({ card, mix: composition.mix.state, edition, strings: editionStrings }),
-      );
+      setOptions(hideChoice({ card, mix: composition.mix, strings: editionStrings }));
       setVisible(true);
     },
     choice: {
