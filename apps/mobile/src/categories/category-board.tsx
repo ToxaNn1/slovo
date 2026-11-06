@@ -2,6 +2,7 @@ import { fill, type Category } from '@slovo/contracts';
 import type { CategoryKind } from '@slovo/core';
 import {
   categoryGrid,
+  correctionGrid,
   railScreen,
   RailScreenCard,
   RailScreenHero,
@@ -10,6 +11,7 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
+import type { ComponentProps } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { useCategoryScreen } from '@/categories/category-screen';
@@ -20,6 +22,17 @@ const { dashboard } = editionStrings;
 const kickerOf: Record<CategoryKind, typeof dashboard.categories> = {
   word: dashboard.categories,
   correction: dashboard.correctionCategories,
+};
+/** The hero's glyph: the big shape of the Category's tile in k1 or k2, by its place there. */
+function glyphOf(of: CategoryKind, place: number): ComponentProps<typeof RailScreenHero>['glyph'] {
+  const { shapes } = of === 'word' ? categoryGrid : correctionGrid;
+  const [glyph] = shapes[place % shapes.length] ?? shapes[0];
+  return glyph;
+}
+/** Where the way back leads: home, or k2 «Виправлення». */
+const backOf: Record<CategoryKind, string> = {
+  word: editionStrings.tabs.home,
+  correction: dashboard.correctionTypes.title,
 };
 
 /**
@@ -47,8 +60,7 @@ function Board({ of, category, place }: { of: CategoryKind; category: Category; 
   const { colors } = useTokens();
   const { count } = useEdition();
   const router = useRouter();
-  const { shapes } = categoryGrid;
-  const [glyph] = shapes[place % shapes.length] ?? shapes[0];
+  const glyph = glyphOf(of, place);
   const strings = dashboard.category;
   const total = cards.length;
   return (
@@ -79,7 +91,7 @@ function Board({ of, category, place }: { of: CategoryKind; category: Category; 
             mascot="waits"
             back={{
               testID: 'category-back',
-              label: editionStrings.tabs.home,
+              label: backOf[of],
               onPress: () => {
                 router.back();
               },

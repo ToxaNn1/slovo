@@ -20,7 +20,7 @@ const strings = testStrings({
       tip: 'tip',
     },
   },
-  correctionCard: { insteadOf: 'instead of {form}' },
+  correctionCard: { insteadOf: 'instead of {form}', correctionTypes: { surzhyk: 'Surzhyk' } },
   wordCard: {
     partsOfSpeech: { noun: { short: 'n.', full: 'noun' } },
     genders: { feminine: { short: 'f.', full: 'feminine' } },
@@ -49,6 +49,7 @@ const correction: EntryRowModel = {
   labelKey: 'correction',
   spoken: 'shchob, instead of shoby',
   correctionType: 'surzhyk',
+  standardForms: ['shchob', 'aby'],
 };
 
 const idiom: EntryRowModel = {
@@ -127,11 +128,27 @@ describe('RailScreenCard', () => {
     expect(screen.getByLabelText(/^harbour, A safe place for ships\..* Known$/)).toBeTruthy();
   });
 
-  it('labels another Entry by its kind, with what it replaces', async () => {
+  it('draws a Correction as its non-standard form, its Correction Type without bars and its standard forms', async () => {
     await renderRow(correction, false);
 
-    expect(screen.getByText('correction')).toBeTruthy();
-    expect(screen.getByText('instead of shoby')).toBeTruthy();
+    expect(screen.getByText('shoby')).toBeTruthy();
+    expect(screen.getByText('Surzhyk')).toBeTruthy();
+    expect(screen.getByText('shchob · aby')).toBeTruthy();
+    expect(screen.queryAllByTestId(/^row-bar-/)).toEqual([]);
+    expect(screen.queryByTestId('row-known')).toBeNull();
+  });
+
+  it('stamps a Known Correction «Known»', async () => {
+    await renderRow(correction, true);
+
+    expect(screen.getByTestId('row-known')).toHaveTextContent('Known');
+  });
+
+  it('shows a Correction’s one standard form alone', async () => {
+    await renderRow({ ...correction, standardForms: ['aby'] }, false);
+
+    expect(screen.getByText('aby')).toBeTruthy();
+    expect(screen.queryByText(/ · /)).toBeNull();
   });
 
   it('draws a Word’s five rarity bars, as many filled as its rarity', async () => {
