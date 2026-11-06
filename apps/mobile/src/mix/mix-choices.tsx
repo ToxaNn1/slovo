@@ -16,9 +16,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
-import { useComposition } from '../composition';
-import { useMixChanges, useMixState } from './mix';
-import { mixScreenModel, type MixCategoriesModel } from './mix-screen';
+import { useMixChanges, useMixScreenModel, useMixState } from './mix';
+import type { MixCategoriesModel } from './mix-screen';
 
 const strings = editionStrings.mix;
 
@@ -39,7 +38,7 @@ export function MixChoices() {
   const edition = useEditionInEffect();
   const quickQuestion = edition.isFeatureEnabled('quickQuestion');
 
-  const model = mixScreenModel({ mix: useComposition().mix });
+  const model = useMixScreenModel();
 
   return (
     <>
