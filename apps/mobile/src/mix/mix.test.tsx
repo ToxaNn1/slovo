@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { crafts, nature, renderOverComposition, settled } from '../hook-test-support';
+import { crafts, nature, renderOverComposition, settled } from '../hook-test/test-support';
 import { useMixChanges, useMixState } from './mix';
 
 /** The Mix hooks over a composition of the test Language Pack. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { renderOverComposition, settled } from '../hook-test-support';
+import { renderOverComposition, settled } from '../hook-test/test-support';
 import { useClearHistory, useHistoryCount } from './history';
 
 const seen = { seenAt: '2026-10-13T08:00:00.000Z', wordOfTheDay: false };

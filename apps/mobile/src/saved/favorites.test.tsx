@@ -1,6 +1,6 @@
 import { describe, expect, it } from '@jest/globals';
 
-import { renderOverComposition, settled } from '../hook-test-support';
+import { renderOverComposition, settled } from '../hook-test/test-support';
 import { useFavorite, useFavoriteList } from './favorites';
 
 /** One Entry's Favorites calls and the Favorites list, over the test Language Pack. */
