@@ -4,25 +4,21 @@
  * prints after the run.
  */
 import { existsSync, readFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { EDITIONS_DIR, EditionFolderError, openEdition } from '@slovo/language-pack/edition';
 
-import type { Fetch, PipelineOptions, SourcingResult } from './index';
+import {
+  defaultCacheDir,
+  fetchPage,
+  systemClock,
+  type PipelineOptions,
+  type SourcingResult,
+} from './index';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
-
-const fetchPage: Fetch = async (url, { timeoutMs }) => {
-  const response = await fetch(url, {
-    headers: { 'User-Agent': 'slovo-sourcing/0.1 (dev tool; one request every 2 s)' },
-    redirect: 'follow',
-    signal: AbortSignal.timeout(timeoutMs),
-  });
-  return { status: response.status, body: await response.text() };
-};
 
 export interface CliInput {
   readonly listFile: string;
@@ -53,13 +49,7 @@ export function prepareRun(input: CliInput): CliRun {
         outDir: input.out === undefined ? join(toolDir, 'review') : resolve(cwd, input.out),
         cacheDir: input.cache === undefined ? defaultCacheDir() : resolve(cwd, input.cache),
         fetch: fetchPage,
-        clock: {
-          now: () => Date.now(),
-          sleep: (ms) =>
-            new Promise((done) => {
-              setTimeout(done, ms);
-            }),
-        },
+        clock: systemClock,
         random: Math.random,
         log: (message) => {
           console.error(message);
@@ -99,17 +89,6 @@ export function printSummary(result: SourcingResult): number {
   }
   console.log(`Review report: ${displayPath(result.reportFile)}`);
   return 0;
-}
-
-/** The cache every worktree and run on the machine shares. */
-function defaultCacheDir(): string {
-  const configured = process.env['SLOVO_SOURCING_CACHE'];
-  if (configured !== undefined && configured !== '') return resolve(configured);
-  const cacheHome = process.env['XDG_CACHE_HOME'];
-  return join(
-    cacheHome === undefined || cacheHome === '' ? join(homedir(), '.cache') : cacheHome,
-    'slovo-sourcing',
-  );
 }
 
 /** A path relative to the repo root when it lies inside the repo, absolute otherwise. */

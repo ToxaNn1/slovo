@@ -74,7 +74,28 @@ Neither writes a file; both work for any Edition through `--edition`.
 
 ## Verify quotes: `verify`
 
-<!-- #1626 fills this section. -->
+<!-- #1626 -->
+
+```sh
+pnpm content verify w_k3x9qa content/words/w_m2p7rd.json --edition uk
+pnpm content verify content/tips --edition uk
+pnpm content verify --changed origin/main --edition uk
+pnpm content verify content/tips --book osvita.txt --edition uk
+```
+
+Checks that the quoted text of each Entry is on the page its first source cites (ADR 0012, 0080): a Word's or an Idiom's primary definition, a Correction's explanation, a Synonym Row's meaning, a Tip's explanation. Name Entries by id, by Entry file or by a folder of them; `--changed <ref>` takes every Entry file that differs from the ref or is new to git. A goroh page is read block by block as the sourcing tool reads it; any other page is its plain text. Pages come through the sourcing tool's polite client and its cache folder (`--cache` names another), so a page is fetched once across runs. The comparison ignores case, spaces, quotation marks, apostrophes and dashes.
+
+It prints one line per Entry, `<outcome>\t<id>\t<file>[\t<detail>]`, then the count per outcome, such as `158 ok, 2 miss`:
+
+- `ok`: the quote is in a dictionary block of the page.
+- `miss`: the page does not hold the quote; the detail is the quote.
+- `llm`: only a language model's block of the page holds the quote.
+- `fetch-failed`: the page could not be fetched, such as `HTTP 404`.
+- `unverified`: the first source has no page.
+
+`--book <file>` checks an Entry without a page against a book as the osvita downloader writes it, one paragraph per line, `<page>\t<text>`: every field the Entry quotes, for a Tip its title, forms, explanation and example, must be in the book, and `ok` prints the page, such as `page 112`. It exits 1 on any `miss`, `llm` or `fetch-failed`, and with `--book` also on any `unverified`; an unknown name exits 2. CI runs `--changed` against the pull request's base whenever a pull request changes Entry files, and prints the lines in the job summary.
+
+<!-- /#1626 -->
 
 ## Import Entries: `import`
 
