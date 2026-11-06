@@ -16,6 +16,8 @@ declare module 'slovo-editions' {
     readonly illustrations: Readonly<Record<string, number>>;
     /** The asset ids of the Interface sounds the Edition brings, by sound. */
     readonly sounds: Readonly<Partial<Record<'shout' | 'right' | 'wrong' | 'tap', number>>>;
+    /** The asset ids of the Recordings the Edition brings, by Narrator Voice id and then Word id. */
+    readonly recordings: Readonly<Record<string, Readonly<Record<string, number>>>>;
     /** The asset id of the compiled Language Pack. */
     readonly languagePack: number;
   }

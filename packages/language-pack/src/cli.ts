@@ -95,7 +95,7 @@ function main(): number {
     return 1;
   }
 
-  const { metadata, report, missedTargets } = result;
+  const { metadata, report, missedTargets, missingRecordings } = result;
   console.log(`Built the Language Pack for "${metadata.editionId}"`);
   console.log(`  file:            ${displayPath(outFile)}`);
   console.log(`  content version: ${String(metadata.contentVersion)}`);
@@ -103,6 +103,10 @@ function main(): number {
   console.log(`  checksum:        ${metadata.contentChecksum}`);
   console.log('');
   console.log(formatContentReport(report));
+  console.log('');
+  // A Word without a Recording is read by the device's voice (ADR 0083).
+  console.log('Words without a Recording:');
+  for (const { voice, count } of missingRecordings) console.log(`  ${voice}: ${String(count)}`);
   console.log('');
   if (missedTargets.length === 0) {
     console.log('Content targets: none missed');

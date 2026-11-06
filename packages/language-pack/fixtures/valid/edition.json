@@ -186,6 +186,13 @@
     }
   ],
   "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
+  "narratorVoices": {
+    "default": "anna",
+    "voices": [
+      { "id": "anna", "name": "Anna", "description": "Female · calm" },
+      { "id": "boris", "name": "Boris", "description": "Male · low" }
+    ]
+  },
   "searchLetters": {
     "ґ": "г"
   },

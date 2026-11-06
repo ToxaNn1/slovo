@@ -7,19 +7,25 @@ import { activeEditionFiles } from '@/edition/edition';
 import { useEditionInEffect } from '@/edition/remote-switches';
 import { useSettings } from '@/settings/settings';
 
+import { createRecordingPlayer, type RecordingAudioModule } from './recording-player';
 import { createSoundEngine, type AudioModule } from './sound-engine';
 
 /**
- * The device's audio for the Interface sounds: `expo-audio` playing the
- * active Edition's sounds, or nothing when the installed binary lacks it. The
- * module is required here and nowhere else: a static import would stop the
- * app at start.
+ * The device's `expo-audio`, or undefined when the installed binary lacks it.
+ * The module is required here and nowhere else: a static import would stop
+ * the app at start.
  */
-export const soundEngine: SoundEngine = createSoundEngine(
+const audio = nativeModules.load(
+  'audio',
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  nativeModules.load('audio', () => require('expo-audio') as AudioModule),
-  activeEditionFiles.sounds,
+  () => require('expo-audio') as AudioModule & RecordingAudioModule,
 );
+
+/** The device's audio for the Interface sounds: the active Edition's sounds. */
+export const soundEngine: SoundEngine = createSoundEngine(audio, activeEditionFiles.sounds);
+
+/** The device's player of Recordings, for Pronunciation (ADR 0083). */
+export const recordingPlayer = createRecordingPlayer(audio);
 
 /**
  * The Interface sounds below it, behind the `sounds` switch in effect and

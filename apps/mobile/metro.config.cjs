@@ -81,6 +81,27 @@ function sounds(edition) {
   return `{\n${lines.join('\n')}\n    }`;
 }
 
+/**
+ * The Recordings of an Edition (ADR 0083): for each Narrator Voice folder of
+ * its `assets/recordings/`, each mp3 by Word id. The Edition build has
+ * refused any other file.
+ */
+function recordings(edition) {
+  const voices = edition
+    .recordings()
+    .filter((entry) => entry.kind === 'folder')
+    .map((folder) => {
+      const lines = folder.files
+        .filter((file) => file.endsWith('.mp3'))
+        .map(
+          (file) =>
+            `        ${JSON.stringify(basename(file, '.mp3'))}: ${required(edition.recording(folder.name, file))},`,
+        );
+      return `      ${JSON.stringify(folder.name)}: {\n${lines.join('\n')}\n      },`;
+    });
+  return `{\n${voices.join('\n')}\n    }`;
+}
+
 /** The files of one bundled Edition, which the app validates at startup. */
 function bundledEdition(edition) {
   const id = edition.config.id;
@@ -91,6 +112,7 @@ function bundledEdition(edition) {
     decor: ${optional(edition, 'decor')},
     illustrations: ${illustrations(edition)},
     sounds: ${sounds(edition)},
+    recordings: ${recordings(edition)},
     languagePack: ${mandatory(edition, 'languagePack', `Run \`pnpm build:pack ${id}\` to build the Language Pack first.`)},
   },`;
 }

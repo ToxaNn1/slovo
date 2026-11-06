@@ -67,6 +67,13 @@ const ASSETS_DIR = 'assets';
 export const FONTS_DIR = 'assets/fonts';
 /** Where an Edition keeps the Illustrations its Words name (ADR 0055). */
 export const ILLUSTRATIONS_DIR = 'assets/illustrations';
+/** An entry of the Recordings folder: a folder of one Narrator Voice, or a stray file. */
+export type RecordingFolderEntry =
+  | { readonly kind: 'folder'; readonly name: string; readonly files: readonly string[] }
+  | { readonly kind: 'file'; readonly name: string };
+
+/** Where an Edition keeps its Recordings, a folder per Narrator Voice (ADR 0083). */
+export const RECORDINGS_DIR = 'assets/recordings';
 /** Where an Edition keeps its legal pages, one Markdown file per page (ADR 0049). */
 const LEGAL_DIR = 'legal';
 const WORDS_DIR = 'content/words';
@@ -208,6 +215,13 @@ export interface EditionFiles {
   illustration(name: string): string;
   /** The file names of the Illustrations the Edition brings (its PNGs), in code-unit order. */
   illustrations(): string[];
+  /**
+   * What the Edition's Recordings folder holds: each entry by name, in
+   * code-unit order, and for a folder the names of its files, also in order.
+   */
+  recordings(): RecordingFolderEntry[];
+  /** Where a Recording lies, whether or not it is there. */
+  recording(voice: string, name: string): string;
   /** Every font file the Edition brings, in code-unit order. */
   fonts(): string[];
   /** Every legal page the Edition brings, its Markdown files, in code-unit order (ADR 0049). */
@@ -321,6 +335,22 @@ export function editionFiles(dir: string): EditionFiles {
         .filter((file) => file.endsWith('.png'))
         .toSorted();
     },
+    recordings() {
+      const recordingsDir = join(dir, RECORDINGS_DIR);
+      if (!existsSync(recordingsDir)) return [];
+      return readdirSync(recordingsDir, { withFileTypes: true })
+        .toSorted((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+        .map((entry) =>
+          entry.isDirectory()
+            ? {
+                kind: 'folder',
+                name: entry.name,
+                files: readdirSync(join(recordingsDir, entry.name)).toSorted(),
+              }
+            : { kind: 'file', name: entry.name },
+        );
+    },
+    recording: (voice, name) => join(dir, RECORDINGS_DIR, voice, name),
     fonts() {
       const fontsDir = join(dir, FONTS_DIR);
       if (!existsSync(fontsDir)) return [];
