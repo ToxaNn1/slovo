@@ -11,6 +11,7 @@
   },
   "scripts": {
     "build-pack": "tsx --disable-warning=ExperimentalWarning src/cli.ts",
+    "recording-requests": "tsx --disable-warning=ExperimentalWarning src/recording-requests-cli.ts",
     "lint": "eslint .",
     "typecheck": "tsc --build",
     "test": "vitest run"
