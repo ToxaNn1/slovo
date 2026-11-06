@@ -2,7 +2,7 @@ import type { DailyGoal } from '@slovo/contracts';
 import type { XpLogState } from '@slovo/core';
 
 import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 
 export type { XpLogState };
@@ -16,8 +16,6 @@ export function useXpLogState(): XpLogState {
 export function useSetDailyGoal(): (goal: DailyGoal | null) => void {
   const { xpLog } = useComposition();
   return (goal) => {
-    xpLog.setDailyGoal(goal).catch((error: unknown) => {
-      logError('The Daily Goal could not be set', error);
-    });
+    void keep('the Daily Goal', xpLog.setDailyGoal(goal));
   };
 }

@@ -18,6 +18,9 @@ import type { PlayedRound, Round, RoundAnswer } from './game/game';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
 import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } from './ports';
+import { openEligibility } from './mix/open-eligibility';
+import { createSubject } from './subject';
+import type { UserState } from './user-state/user-state';
 
 // Helpers the Core's tests share. They are not part of the public `index.ts`;
 // `testing.ts` exports `testEdition` to the tests of other packages.
@@ -403,4 +406,28 @@ export function wordIdOf(notification: PlannedNotification | undefined): string 
 /** The title of a planned notification; none for the farewell. */
 export function titleOf(notification: PlannedNotification | undefined): string | undefined {
   return notification?.kind === 'word' ? notification.title : undefined;
+}
+
+/**
+ * The Entries over the live Mix, Rarity Ceiling and Hidden Entries opened
+ * over the user state, wired as the Core composition wires them, for the
+ * tests of the Entries without the whole composition.
+ */
+export async function openLiveEntries({
+  content,
+  edition,
+  userState,
+}: {
+  content: ContentReadPort;
+  edition: Parameters<typeof openEligibility>[0]['edition'];
+  userState: UserState;
+}) {
+  const { entries, mix, rarityCeiling, hiddenEntries } = await openEligibility({
+    content,
+    edition,
+    userState,
+    clock: fakeClock().clock,
+    eligibility: createSubject(),
+  });
+  return { entries, mix, rarityCeiling, hiddenEntries };
 }

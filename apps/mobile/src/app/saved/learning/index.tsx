@@ -1,19 +1,9 @@
-import {
-  BackLink,
-  rowPadding,
-  ScreenTitle,
-  space,
-  typeStyle,
-  useEdition,
-  useTokens,
-} from '@slovo/ui';
-import { Redirect, useRouter } from 'expo-router';
-import { StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect } from 'expo-router';
 
 import { editionStrings } from '@/edition/edition';
 import { useLearningList } from '@/saved/learning';
 import { LearningList } from '@/saved/learning-list';
+import { SavedListScreen } from '@/saved/saved-list-screen';
 import { useShown } from '@/shown-in-effect';
 
 const { learning: strings } = editionStrings;
@@ -30,58 +20,12 @@ export default function LearningScreen() {
 
 function Learning() {
   const list = useLearningList();
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const { count, voice } = useEdition();
-  const router = useRouter();
-
   return (
-    <SafeAreaView edges={['top']} style={[styles.screen, { backgroundColor: colors.background }]}>
-      <LearningList
-        header={() => (
-          <>
-            <View style={styles.back}>
-              <BackLink
-                testID="learning-back"
-                label={editionStrings.tabs.saved}
-                onPress={() => {
-                  router.back();
-                }}
-              />
-            </View>
-            <View
-              style={[
-                styles.header,
-                list.length > 0 && { borderBottomWidth: 1, borderColor: colors.line },
-              ]}
-            >
-              <ScreenTitle>{strings.title}</ScreenTitle>
-              <Text
-                testID="learning-count"
-                accessibilityLabel={count(strings.count, list.length)}
-                {...voice}
-                style={[typeStyle('collectionCount', tokens), { color: colors.accent }]}
-              >
-                {String(list.length)}
-              </Text>
-            </View>
-          </>
-        )}
-      />
-    </SafeAreaView>
+    <SavedListScreen
+      name="learning"
+      title={strings.title}
+      aside={{ kind: 'count', value: list.length, forms: strings.count }}
+      list={(header) => <LearningList header={header} />}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  screen: { flex: 1 },
-  back: { paddingHorizontal: space[3], paddingTop: space[2] },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
-    gap: space[3],
-    paddingHorizontal: space[6],
-    paddingTop: space[2],
-    paddingBottom: rowPadding,
-  },
-});

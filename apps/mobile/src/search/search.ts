@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 import { useOpenScreen } from '../use-open-screen';
 
@@ -111,9 +112,7 @@ export function useOpenSearchResult(query: string): (entryId: string) => void {
   const openScreen = useOpenScreen();
   return useCallback(
     (entryId: string) => {
-      composition.recentQueries.resultOpened(query).catch((error: unknown) => {
-        logError('Could not keep the recent query', error);
-      });
+      void keep('the recent queries', composition.recentQueries.resultOpened(query));
       openScreen(`/search/${entryId}?back=${encodeURIComponent(editionStrings.search.title)}`);
     },
     [composition, openScreen, query],
@@ -152,9 +151,7 @@ export function useRecentQueries(fieldEmpty: boolean): RecentQueriesModel {
   }, [composition, fieldEmpty]);
   const clear = useCallback(() => {
     setQueries([]);
-    composition.recentQueries.clear().catch((error: unknown) => {
-      logError('Could not clear the recent queries', error);
-    });
+    void keep('the recent queries', composition.recentQueries.clear());
   }, [composition]);
   return { queries, clear };
 }

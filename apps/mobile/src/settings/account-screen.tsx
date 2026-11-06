@@ -28,7 +28,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { deviceClock } from '../device/device-clock';
 import { edition, editionStrings } from '../edition/edition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { Opened } from '../opened';
 import { useOpened, type Opening } from '../opening';
 import { SyncStatusLine } from '../sync/sync-status-line';
@@ -42,17 +42,6 @@ const strings = editionStrings.account;
 
 /** The time the resend countdown counts by, one function for every render. */
 const now = () => deviceClock.now();
-
-/**
- * Runs a request of the Account, which answers every failure of the backend
- * by its own rules; one that fails outside them, such as a Session the device
- * can't keep, is logged.
- */
-function run(request: Promise<void>): void {
-  request.catch((error: unknown) => {
-    logError('The Account could not do what the reader asked', error);
-  });
-}
 
 /** Where the SLOVO ID screen's back link leads: the screen under it, by name. */
 export interface AccountScreenBack {
@@ -171,7 +160,7 @@ function SignIn({
 
   if (state.status === 'signed-out') {
     const send = () => {
-      run(account.requestCode(email));
+      void keep('the Account', account.requestCode(email));
     };
     return (
       <View style={styles.form}>
@@ -182,7 +171,7 @@ function SignIn({
             busy={state.inFlight === 'signInWithGoogle'}
             disabled={state.inFlight !== undefined}
             onPress={() => {
-              run(account.signInWithGoogle());
+              void keep('the Account', account.signInWithGoogle());
             }}
           />
         )}
@@ -193,7 +182,7 @@ function SignIn({
             busy={state.inFlight === 'signInWithApple'}
             disabled={state.inFlight !== undefined}
             onPress={() => {
-              run(account.signInWithApple());
+              void keep('the Account', account.signInWithApple());
             }}
           />
         )}
@@ -236,7 +225,7 @@ function SignIn({
         onChangeText={(typed) => {
           setCode(typed);
           // The Account sends only a code of six digits.
-          run(account.verifyCode(typed));
+          void keep('the Account', account.verifyCode(typed));
         }}
         problem={problem}
         problemCause={state}
@@ -254,7 +243,7 @@ function SignIn({
         busy={state.inFlight === 'resendCode'}
         onPress={() => {
           setCode('');
-          run(account.resendCode());
+          void keep('the Account', account.resendCode());
         }}
       />
       <Button
@@ -361,7 +350,7 @@ function SignedIn({
         testID="account-sign-out"
         label={strings.signOut}
         onPress={() => {
-          run(account.signOut());
+          void keep('the Account', account.signOut());
         }}
       />
       <Button
@@ -371,7 +360,7 @@ function SignedIn({
         busy={state.inFlight === 'signOutEverywhere'}
         disabled={state.inFlight !== undefined}
         onPress={() => {
-          run(account.signOutEverywhere());
+          void keep('the Account', account.signOutEverywhere());
         }}
       />
       <DeleteAccountButton
@@ -386,7 +375,7 @@ function SignedIn({
         busy={state.inFlight === 'delete'}
         disabled={state.inFlight !== undefined}
         onDelete={() => {
-          run(account.delete());
+          void keep('the Account', account.delete());
         }}
       />
       <ProblemLine testID="account-problem" problem={problem} cause={state} />

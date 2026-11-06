@@ -46,8 +46,9 @@ export interface EntryList<TimeKey extends string> {
 
 /**
  * Opens the list over its records. `afterWrite`, when given, runs after each
- * change is written and before the list changes in memory and its subscribers
- * hear of it, so a subscriber finds what it changed done. The list follows
+ * change is written and made in memory, so what it reads finds the new list,
+ * and before the subscribers hear of it, so a subscriber finds what it
+ * changed done. The list follows
  * the written change even when `afterWrite` fails. `changesWith`, when given,
  * gives the changes to write together with the Entry going in or out.
  */
@@ -86,10 +87,10 @@ export async function openEntryList<TimeKey extends string>({
   const subscribers = createSubscribers();
 
   async function changeList(changed: readonly ListedEntry<TimeKey>[]): Promise<void> {
+    list = changed;
     try {
       await afterWrite?.();
     } finally {
-      list = changed;
       subscribers.tell();
     }
   }

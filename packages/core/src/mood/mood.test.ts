@@ -190,6 +190,18 @@ describe('The Mood check-in', () => {
     expect(moodBlock(app)).toMatchObject({ check: { state: 'asking' } });
   });
 
+  it('gives today’s Mood, and none once the day is over, before the day change reaches it', async () => {
+    const time = fakeClock('2026-11-04T23:59:00+02:00');
+    const { app } = await run({ clock: time.clock });
+    expect(app.mood.today).toEqual({ state: 'asking' });
+    await app.mood.choose('calm');
+    expect(app.mood.today).toEqual({ state: 'chosen', mood: MOODS[2] });
+
+    time.advance(2 * 60 * 1000);
+
+    expect(app.mood.today).toEqual({ state: 'asking' });
+  });
+
   it('reads a record synced from another device as the choice of the day', async () => {
     const records = new Map([
       ['mood.2026-11-04', JSON.stringify({ date: '2026-11-04', choice: 'energetic' })],

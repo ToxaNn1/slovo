@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { openComposition } from '../index';
+import { entryCardTitle, openComposition } from '../index';
 import { createMemoryContentPort } from '../testing';
 import {
   correction,
@@ -207,5 +207,34 @@ describe('the card of an Entry a list opens', () => {
       entryId: 't_hour',
       model: { title: 'What time is it?' },
     });
+  });
+});
+
+describe('the title of an Entry card', () => {
+  it('is what its row leads with, for every kind', async () => {
+    const app = await openComposition({
+      content: createMemoryContentPort({
+        words: [word('w_test')],
+        corrections: [correction('c_test')],
+        idioms: [idiom('i_test')],
+        synonymRows: [synonymRow('r_walk')],
+        tips: [tip('t_hour')],
+      }),
+      edition: testEdition({
+        isFeatureEnabled: (feature) =>
+          ['corrections', 'idioms', 'synonymRows', 'tips'].includes(feature),
+      }),
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      clock: fakeClock().clock,
+      random: { next: () => 0.25 },
+    });
+
+    for (const entryId of ['w_test', 'c_test', 'i_test', 'r_walk', 't_hour']) {
+      const card = await app.entryCard(entryId);
+      const row = await app.entryRow(entryId);
+      if (card === undefined || row === undefined) throw new Error(`No Entry ${entryId}`);
+      expect(row.title).not.toBe('');
+      expect(entryCardTitle(card)).toBe(row.title);
+    }
   });
 });

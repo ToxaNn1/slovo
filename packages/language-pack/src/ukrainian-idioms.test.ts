@@ -4,7 +4,13 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { createEntries, type Idiom, openComposition, type Entries } from '@slovo/core';
+import {
+  createEntries,
+  EVERYTHING_IN,
+  type Idiom,
+  openComposition,
+  type Entries,
+} from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
@@ -24,7 +30,7 @@ beforeAll(() => {
   const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
-  entries = createEntries({ content: pack, edition: ukrainian });
+  entries = createEntries({ content: pack, edition: ukrainian, choices: EVERYTHING_IN });
 });
 
 afterAll(() => {

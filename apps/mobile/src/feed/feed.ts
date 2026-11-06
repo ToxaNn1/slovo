@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore, type RefObject 
 
 import { useComposition } from '../composition';
 import { useInForeground } from '../foreground/in-foreground';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { cardOnScreen, type TurnedTo } from './feed-screen';
 import type { LandingAsked, WordOfTheDayLanding } from './word-of-the-day-landing';
@@ -62,12 +62,9 @@ export function useFeed(
   // Kept from render to render, so the Feed's pages re-render only when their card changes.
   const openCorrection = useCallback(
     (position: number, correctionId: string) => {
-      feed.openLinkedCorrection(position, correctionId).then(
+      void keep('the Feed state', feed.openLinkedCorrection(position, correctionId)).then(
         (opened) => {
           if (opened !== undefined) setTurnTo({ page: opened });
-        },
-        (error: unknown) => {
-          logError('Could not open the linked Correction', error);
         },
       );
     },
@@ -76,9 +73,7 @@ export function useFeed(
 
   const answerQuickQuestion = useCallback(
     (position: number, option: number) => {
-      feed.answerQuickQuestion(position, option).catch((error: unknown) => {
-        logError('Could not keep the answer to the Quick Question', error);
-      });
+      void keep('the answer to the Quick Question', feed.answerQuickQuestion(position, option));
     },
     [feed],
   );
@@ -89,12 +84,12 @@ export function useFeed(
   // cleanup keeps nothing, and the new Feed opens on the reader's card.
   useEffect(() => {
     if (onScreen === undefined) return;
-    report(feed.show(onScreen));
+    void keep('the Feed state', feed.show(onScreen));
   }, [feed, onScreen]);
   useEffect(() => {
     if (!inSight) return;
     return () => {
-      report(feed.show(undefined));
+      void keep('the Feed state', feed.show(undefined));
     };
   }, [feed, inSight]);
 
@@ -147,10 +142,4 @@ export function useFeed(
     openCorrection,
     answerQuickQuestion,
   };
-}
-
-function report(done: Promise<void>): void {
-  done.catch((error: unknown) => {
-    logError('Could not keep the Feed state or get the next card ready', error);
-  });
 }

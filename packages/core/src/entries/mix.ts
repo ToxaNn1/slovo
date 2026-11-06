@@ -87,6 +87,80 @@ export interface MixState extends CategoriesInMix {
   readonly quickQuestionEvery: QuickQuestionEvery;
 }
 
+/** What a hide or an unhide is for: one Entry, one Category, or a kind of Entry (Corrections, Idioms, Synonym Rows, Tips) as a whole. */
+export type HideTarget =
+  | { readonly kind: 'entry'; readonly entryId: string }
+  /** A Category of the Words' list, or of the Corrections' when `of` says so (ADR 0033). */
+  | { readonly kind: 'category'; readonly categoryId: string; readonly of?: CategoryKind }
+  | { readonly kind: 'whole-kind'; readonly entryKind: MixKind };
+
+/** The target of a hide or an unhide of the Category of the kind's list, in its one form for each list. */
+export function categoryTarget(
+  categoryId: string,
+  of: CategoryKind,
+): Extract<HideTarget, { readonly kind: 'category' }> {
+  return of === 'word' ? { kind: 'category', categoryId } : { kind: 'category', categoryId, of };
+}
+
+/** The Entry a card's hide button is for: its kind, and the Category of a Word or a Correction. */
+export type EntryToHide =
+  | { readonly kind: CategoryKind; readonly entryId: string; readonly categoryId: string }
+  | { readonly kind: Exclude<MixKind, CategoryKind>; readonly entryId: string };
+
+/** One option of the hide choice, with what it hides. */
+export type HideOption =
+  | { readonly kind: 'entry'; readonly target: Extract<HideTarget, { readonly kind: 'entry' }> }
+  | {
+      readonly kind: 'category';
+      readonly target: Extract<HideTarget, { readonly kind: 'category' }>;
+      readonly category: Category;
+    }
+  /**
+   * The last Category of Corrections in the Mix: offered, as Corrections as
+   * a whole can still be hidden beside it, but it can't be chosen (ADR 0019).
+   */
+  | {
+      readonly kind: 'last-category';
+      readonly target: Extract<HideTarget, { readonly kind: 'category' }>;
+      readonly category: Category;
+    }
+  | {
+      readonly kind: 'whole-kind';
+      readonly target: Extract<HideTarget, { readonly kind: 'whole-kind' }>;
+    };
+
+/** What is out of the Mix, for the Hidden screen. */
+export interface OutOfMix {
+  /**
+   * The Hidden Categories, the Words' and then the Corrections' (ADR 0033),
+   * each in the Language Pack's order. The Corrections' are left out while
+   * Corrections as a whole are not shown.
+   */
+  readonly categories: readonly { readonly of: CategoryKind; readonly category: Category }[];
+  /** Each kind of Entry out of the Mix as a whole while the Edition turns it on, in the Mix's order. */
+  readonly kinds: readonly MixKind[];
+}
+
+/** A Category's chip on the Mix screen: where it stands, the last one's chip being the one that can't be turned off (ADR 0019). */
+export interface MixChip {
+  readonly category: Category;
+  readonly place: Exclude<CategoryPlace, undefined>;
+}
+
+/** What the Mix screen shows. */
+export interface MixScreen {
+  /** The chip of every Category of Words in the Language Pack, in its order. */
+  readonly categories: readonly MixChip[];
+  /** Whether every Category of Words is in the Mix, which is when «Усі» is on. */
+  readonly allOn: boolean;
+  /** The switch of each kind of Entry as a whole the Edition turns on, in the Mix's order. */
+  readonly kinds: readonly { readonly entryKind: MixKind; readonly on: boolean }[];
+  /** The chips of the Categories of Corrections (ADR 0033), left out while Corrections are not shown. */
+  readonly correctionCategories: readonly MixChip[] | undefined;
+  /** The Mix kind weight of each kind, left out while the Edition turns its mixKindWeights switch off. */
+  readonly kindWeights: MixKindWeights | undefined;
+}
+
 /**
  * The Mix: the Categories, plus each other kind of Entry as a whole, the
  * user chose to see in everything new; the Rarity Ceiling is a setting apart
@@ -128,6 +202,25 @@ export interface Mix {
   setKindWeight(kind: MixKind, weight: MixKindWeight): Promise<void>;
   /** Sets how often the Feed asks a Quick Question. It changes nothing eligible. */
   setQuickQuestionEvery(every: QuickQuestionEvery): Promise<void>;
+  /**
+   * The options of the hide choice for the Entry, as the Mix stands and the
+   * Edition in effect turns its kind on: always the Entry; for a Word or a
+   * Correction its Category while in the Mix and in the Language Pack; for
+   * any kind but Words the kind as a whole. The last Category of Words is
+   * left out; the last of Corrections is a `last-category` (ADR 0019). A
+   * kind not shown (`kindShown`) offers the Entry alone.
+   */
+  hideOptions(entry: EntryToHide): readonly HideOption[];
+  /** What is out of the Mix as it stands, as the Edition in effect shows it, for the Hidden screen. */
+  outOfMix(): OutOfMix;
+  /** What the Mix screen shows of the Mix as it stands, as the Edition in effect shows it. */
+  screen(): MixScreen;
+  /** The kinds of Entry beside Words the Edition in effect turns on, in the Mix order, in the Mix or out. */
+  kindsOn(): readonly MixKind[];
+  /** The Mix kind weights the Feed follows: the reader's while the mixKindWeights switch is on, «Звичайно» for every kind while it is off. */
+  kindWeightsInEffect(): MixKindWeights;
+  /** How often the Feed asks a Quick Question: every this many cards, none while the Game, the Quick Question or the reader's choice is off. */
+  quickQuestionEveryInEffect(): number | undefined;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -183,10 +276,28 @@ function eachList<T>(of: (kind: CategoryKind) => T): Readonly<Record<CategoryKin
   >;
 }
 
+/** Whether the Edition in effect turns the kind of Entry on: the Edition does and no remote Feature Switch turns it off. */
+function kindOn(edition: Pick<Edition, 'isFeatureEnabled'>, kind: MixKind): boolean {
+  return edition.isFeatureEnabled(featureOfKind(kind));
+}
+
+/**
+ * Whether the reader is shown the kind of Entry as a whole: the Edition turns
+ * it on, no remote Feature Switch turns it off and the user has it in the Mix.
+ * The one rule of the kinds: the Entries, the screens and the statistics follow it.
+ */
+export function kindShown(
+  edition: Pick<Edition, 'isFeatureEnabled'>,
+  kinds: KindsInMix,
+  kind: MixKind,
+): boolean {
+  return kindOn(edition, kind) && kinds[kind];
+}
+
 /**
  * The kinds of Entry the reader is shown as a whole, in the Mix order: the
- * Words always, and each other kind while the Edition turns it on and the
- * user has it in the Mix. The Known counts of the statistics join these.
+ * Words always, and each other kind `kindShown` shows. The Known counts of
+ * the statistics join these.
  */
 export function kindsShown({
   edition,
@@ -195,10 +306,7 @@ export function kindsShown({
   edition: Pick<Edition, 'isFeatureEnabled'>;
   mix: Pick<MixState, 'kinds'>;
 }): readonly EntryKind[] {
-  return [
-    'word',
-    ...MIX_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind)) && mix.kinds[kind]),
-  ];
+  return ['word', ...MIX_KINDS.filter((kind) => kindShown(edition, mix.kinds, kind))];
 }
 
 /** The list of Categories of the kind in the Mix as it stands: the Words' are the Mix's own fields. */
@@ -221,8 +329,77 @@ export function categoryPlace(
 ): CategoryPlace {
   const list = categoriesInMix(state, of);
   if (!list.allCategories.some(({ id }) => id === categoryId)) return undefined;
+  return placeIn(list, categoryId);
+}
+
+/** Where a Category the list has stands in it. */
+function placeIn(list: CategoriesInMix, categoryId: string): Exclude<CategoryPlace, undefined> {
   if (list.lastCategoryId === categoryId) return 'last';
   return list.categoryIds.includes(categoryId) ? 'in' : 'out';
+}
+
+/** The option that hides the Category of the kind's list, or nothing while it is out of the Mix or the Language Pack doesn't have it. */
+function categoryOption(state: MixState, of: CategoryKind, categoryId: string): HideOption[] {
+  const place = categoryPlace(state, of, categoryId);
+  const category = categoriesInMix(state, of).allCategories.find(({ id }) => id === categoryId);
+  if (category === undefined || place === undefined || place === 'out') return [];
+  // The last Category of Words is left out; the last of Corrections is offered, as Corrections as a whole can go (ADR 0019).
+  if (place === 'last' && of === 'word') return [];
+  const target = categoryTarget(categoryId, of);
+  return [{ kind: place === 'last' ? 'last-category' : 'category', target, category }];
+}
+
+function hideOptionsOf(
+  edition: Pick<Edition, 'isFeatureEnabled'>,
+  state: MixState,
+  entry: EntryToHide,
+): readonly HideOption[] {
+  const entryOption: HideOption = {
+    kind: 'entry',
+    target: { kind: 'entry', entryId: entry.entryId },
+  };
+  if (entry.kind === 'word')
+    return [entryOption, ...categoryOption(state, 'word', entry.categoryId)];
+  if (!kindShown(edition, state.kinds, entry.kind)) return [entryOption];
+  const wholeKind: HideOption = {
+    kind: 'whole-kind',
+    target: { kind: 'whole-kind', entryKind: entry.kind },
+  };
+  return entry.kind === 'correction'
+    ? [entryOption, ...categoryOption(state, 'correction', entry.categoryId), wholeKind]
+    : [entryOption, wholeKind];
+}
+
+function outOfMixOf(edition: Pick<Edition, 'isFeatureEnabled'>, state: MixState): OutOfMix {
+  const hiddenOf = (of: CategoryKind) =>
+    categoriesInMix(state, of).hiddenCategories.map((category) => ({ of, category }));
+  return {
+    categories: [
+      ...hiddenOf('word'),
+      ...(kindShown(edition, state.kinds, 'correction') ? hiddenOf('correction') : []),
+    ],
+    kinds: MIX_KINDS.filter((kind) => kindOn(edition, kind) && !state.kinds[kind]),
+  };
+}
+
+function screenOf(edition: Pick<Edition, 'isFeatureEnabled'>, state: MixState): MixScreen {
+  const chips = (of: CategoryKind): MixChip[] =>
+    categoriesInMix(state, of).allCategories.map((category) => ({
+      category,
+      place: placeIn(categoriesInMix(state, of), category.id),
+    }));
+  return {
+    categories: chips('word'),
+    allOn: state.hiddenCategories.length === 0,
+    kinds: MIX_KINDS.filter((kind) => kindOn(edition, kind)).map((entryKind) => ({
+      entryKind,
+      on: state.kinds[entryKind],
+    })),
+    correctionCategories: kindShown(edition, state.kinds, 'correction')
+      ? chips('correction')
+      : undefined,
+    kindWeights: edition.isFeatureEnabled('mixKindWeights') ? state.kindWeights : undefined,
+  };
 }
 
 /** Whether the Category is in the Edition's default Mix of its list: always when the default is all. */
@@ -302,22 +479,6 @@ async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise
 }
 
 /**
- * Reads the Mix from the user state over the Edition's default Mix, for the
- * Entries, which read the Language Pack's Categories, the Words' and the Corrections'.
- */
-export async function readMix({
-  categories,
-  edition,
-  userState,
-}: {
-  categories: CategoryLists;
-  edition: MixEdition;
-  userState: Pick<UserState, 'list' | 'read'>;
-}): Promise<MixState> {
-  return mixStateOf(categories, edition, await readChoices(userState));
-}
-
-/**
  * Opens the Mix over the user state and the Language Pack's Categories, which
  * the Entries read once, as the pack never changes while it is open. For the
  * Core composition: each change publishes `eligibility`, so the Cycle reads
@@ -342,8 +503,9 @@ export async function openMix({
     categories[of].some(({ id }) => id === categoryId);
 
   /**
-   * Writes the new places in the Mix, then makes the change in memory:
-   * eligibility first, so a subscriber told of the new state finds it read
+   * Writes the new places in the Mix, then makes the change in memory before
+   * eligibility is read again, so the Entries read the new state, and tells
+   * the subscribers last, so one told of the new state finds eligibility read
    * again. The state follows the written change even when reading
    * eligibility again fails; the next change or the next app session reads
    * it again.
@@ -410,11 +572,11 @@ export async function openMix({
           ? choices.quickQuestionEvery
           : quickQuestionEvery,
     };
+    choices = next;
+    state = mixStateOf(categories, edition, next);
     try {
       if (eligibilityChanged) await eligibility.publish();
     } finally {
-      choices = next;
-      state = mixStateOf(categories, edition, next);
       subscribers.tell();
     }
   }
@@ -475,6 +637,18 @@ export async function openMix({
     setKind: (kind, inMix) => inTurn(() => setKind(kind, inMix)),
     setKindWeight: (kind, weight) => inTurn(() => setKindWeight(kind, weight)),
     setQuickQuestionEvery: (quickQuestionEvery) => inTurn(() => change({}, { quickQuestionEvery })),
+    hideOptions: (entry) => hideOptionsOf(edition, state, entry),
+    outOfMix: () => outOfMixOf(edition, state),
+    screen: () => screenOf(edition, state),
+    kindsOn: () => MIX_KINDS.filter((kind) => kindOn(edition, kind)),
+    kindWeightsInEffect: () =>
+      edition.isFeatureEnabled('mixKindWeights') ? state.kindWeights : NORMAL_KIND_WEIGHTS,
+    quickQuestionEveryInEffect: () =>
+      edition.isFeatureEnabled('game') &&
+      edition.isFeatureEnabled('quickQuestion') &&
+      state.quickQuestionEvery !== 'off'
+        ? state.quickQuestionEvery
+        : undefined,
     subscribe: subscribers.subscribe,
   };
 }

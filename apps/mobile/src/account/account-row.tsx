@@ -4,7 +4,7 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback } from 'react';
 
 import { useOpenScreen } from '../use-open-screen';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { edition } from '../edition/edition';
 import type { Opening } from '../opening';
 import { useAccountSummary } from './account';
@@ -19,12 +19,10 @@ export function AccountRow({ opening }: { opening: Opening<Account> }) {
   useFocusEffect(
     useCallback(() => {
       // The Account checks its Session with the server at most once an hour.
-      opening
-        .opened()
-        .then((account) => account.refresh())
-        .catch((error: unknown) => {
-          logError('Could not refresh the Account', error);
-        });
+      void keep(
+        'the Account',
+        opening.opened().then((account) => account.refresh()),
+      );
     }, [opening]),
   );
   return (
