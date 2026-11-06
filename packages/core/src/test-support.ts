@@ -74,6 +74,10 @@ const testEditionConfig = {
     { id: 'joyful', name: 'Joyful', emoji: '😊', reply: 'Catch a bright word!' },
   ],
   dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful'],
+  narratorVoices: {
+    default: 'anna',
+    voices: [{ id: 'anna', name: 'Anna', description: 'Female · calm' }],
+  },
   searchLetters: {},
   xp: {
     round: 1,

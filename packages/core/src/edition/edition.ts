@@ -6,6 +6,7 @@ import {
   type FontSize,
   type LanguageTraits,
   type Mood,
+  type NarratorVoice,
   type OriginLanguage,
   type Rarity,
   type Theme,
@@ -66,6 +67,13 @@ export interface Edition {
   readonly moods: readonly Mood[];
   /** The four moods the Dashboard's Mood check-in offers, in display order (ADR 0076). */
   readonly dashboardMoods: readonly Mood[];
+  /** The Narrator Voices that read Words, in their order (ADR 0083). */
+  readonly narratorVoices: readonly NarratorVoice[];
+  /**
+   * The Narrator Voice that reads: the chosen one, or the Edition's default
+   * without a choice or for a voice the Edition no longer declares.
+   */
+  narratorVoiceOf(chosen: string | undefined): NarratorVoice;
   /** The letters Search reads as another, such as ґ as г (ADR 0054). */
   readonly searchLetters: Readonly<Record<string, string>>;
   /** The XP table: what each Game learning action earns (ADR 0066). */
@@ -193,6 +201,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     originLanguages,
     moods,
     dashboardMoods,
+    narratorVoices,
     searchLetters,
     xp,
     levels,
@@ -203,6 +212,12 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     mascot,
   } = result.data;
   const moodOf = (id: string) => moods.find((mood) => mood.id === id);
+  const voiceOf = (id: string | undefined) =>
+    narratorVoices.voices.find((voice) => voice.id === id);
+  const defaultVoice = voiceOf(narratorVoices.default);
+  // The schema checks the default is declared; this keeps the type honest.
+  if (defaultVoice === undefined)
+    throw new InvalidEditionConfigError('Invalid Edition config:\nnarratorVoices.default');
   const { mix, ...settings } = userSettingDefaults;
   return {
     id,
@@ -226,6 +241,8 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     moods,
     // Each id is one of `moods`: the schema checked it.
     dashboardMoods: dashboardMoods.flatMap((id) => moodOf(id) ?? []),
+    narratorVoices: narratorVoices.voices,
+    narratorVoiceOf: (chosen) => voiceOf(chosen) ?? defaultVoice,
     searchLetters,
     xp,
     levels,
