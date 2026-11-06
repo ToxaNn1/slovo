@@ -30,12 +30,16 @@ jobs:
     if: github.ref != 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 180
-    env:
-      MODEL_DIR: ${{ runner.temp }}/model
-      VENV_DIR: ${{ runner.temp }}/venv
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
+      - name: Name the model and venv folders
+        run: |
+          echo "MODEL_DIR=$RUNNER_TEMP/model" >> "$GITHUB_ENV"
+          echo "VENV_DIR=$RUNNER_TEMP/venv" >> "$GITHUB_ENV"
       - name: Read the request
         id: request
         env:
@@ -62,14 +66,14 @@ jobs:
       - name: Stress spot-check
         run: |
           "$VENV_DIR/bin/python" -I "$PWD/tools/recordings/generate.py" \
-            --model "$MODEL_DIR" --requests "$RUNNER_TEMP/all.json" --check | grep -v '^RTF'
+            --model "$MODEL_DIR" --requests "$RUNNER_TEMP/all.json" --check | { grep -v '^RTF' || true; }
       - name: Generate
         env:
           EDITION: ${{ steps.request.outputs.edition }}
         run: |
           "$VENV_DIR/bin/python" -I "$PWD/tools/recordings/generate.py" \
             --model "$MODEL_DIR" --requests "$RUNNER_TEMP/requests.json" \
-            --edition-dir "$PWD/editions/$EDITION" | grep -v '^RTF'
+            --edition-dir "$PWD/editions/$EDITION" | { grep -v '^RTF' || true; }
       - name: Commit the Recordings
         env:
           EDITION: ${{ steps.request.outputs.edition }}
