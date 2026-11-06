@@ -5,13 +5,16 @@
  *   pnpm content edit <id or text> --edition <id>
  *   pnpm content retire <id> --edition <id>
  *   pnpm content check --edition <id>
+ *   pnpm content have --edition <id> [--kind <kind>]
+ *   pnpm content counts --edition <id>
  *
  * `new` drafts an Entry with a fresh id and `edit` finds an existing one;
  * either opens it in `$VISUAL`, else `$EDITOR`, else `vi`, and after each
  * save checks the content with the Language Pack build's rules and records
  * it, or prints the problems and offers to reopen the file. `retire` marks
  * an Entry retired and records the content. `check` checks the whole
- * Edition and writes nothing. `$SLOVO_EDITIONS_DIR` points the tool at another editions folder,
+ * Edition and writes nothing. `have` and `counts` print what the Edition
+ * has (./have.ts). `$SLOVO_EDITIONS_DIR` points the tool at another editions folder,
  * as the tests do.
  */
 import { spawnSync } from 'node:child_process';
@@ -36,12 +39,15 @@ import {
   type EntryKind,
   type Terminal,
 } from './content';
+import { listContent } from './have';
 
 const USAGE = [
   'Usage: pnpm content new word|correction|idiom|synonym-row|tip --edition <id>',
   '       pnpm content edit <id or text> --edition <id>',
   '       pnpm content retire <id> --edition <id>',
   '       pnpm content check --edition <id>',
+  '       pnpm content have --edition <id> [--kind <kind>]',
+  '       pnpm content counts --edition <id>',
 ].join('\n');
 
 const editor: Editor = {
@@ -82,6 +88,7 @@ const terminal: Terminal = {
 };
 
 async function main(): Promise<number> {
+  if (['have', 'counts'].includes(process.argv[2] ?? '')) return listContent(process.argv.slice(2));
   const { positionals, values } = parseArgs({
     allowPositionals: true,
     options: { edition: { type: 'string' } },
