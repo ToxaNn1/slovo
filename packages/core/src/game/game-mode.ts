@@ -68,7 +68,6 @@ export type RoundContent = RoundForm & {
   readonly definition?: string;
 };
 
-
 /** What a Game Mode builds a Round from. */
 export interface RoundInput {
   /** The Entry the Round asks about, of the mode's kind. */
