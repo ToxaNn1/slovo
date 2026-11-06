@@ -110,6 +110,10 @@ const validConfig = {
     swipeMarks: true,
     searchButton: true,
     dashboardWordmark: true,
+    categoryScreens: true,
+    correctionCategoryScreens: true,
+    quietCategories: true,
+    collectionBoardStyle: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -781,6 +785,26 @@ describe('loadEdition', () => {
     ],
     ['a missing widget Feature Switch', withoutSwitch('widget'), 'featureSwitches.widget'],
     [
+      'a missing categoryScreens Feature Switch',
+      withoutSwitch('categoryScreens'),
+      'featureSwitches.categoryScreens',
+    ],
+    [
+      'a missing correctionCategoryScreens Feature Switch',
+      withoutSwitch('correctionCategoryScreens'),
+      'featureSwitches.correctionCategoryScreens',
+    ],
+    [
+      'a missing quietCategories Feature Switch',
+      withoutSwitch('quietCategories'),
+      'featureSwitches.quietCategories',
+    ],
+    [
+      'a missing collectionBoardStyle Feature Switch',
+      withoutSwitch('collectionBoardStyle'),
+      'featureSwitches.collectionBoardStyle',
+    ],
+    [
       'a missing Dashboard wordmark Feature Switch',
       withoutSwitch('dashboardWordmark'),
       'featureSwitches.dashboardWordmark',
@@ -1226,6 +1250,9 @@ const dependentSwitches = [
   ['swipeMarks', ['knowledge']],
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
+  ['categoryScreens', ['dashboard', 'wordOfTheDay']],
+  ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
+  ['quietCategories', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {
@@ -1239,6 +1266,16 @@ describe('the Feature Switches a feature depends on', () => {
 
       expect(edition.isFeatureEnabled(feature)).toBe(false);
     }
+  });
+
+  it('keep the Collection board style on while the Dashboard is off', () => {
+    const edition = loadEdition({
+      ...validConfig,
+      featureSwitches: { ...validConfig.featureSwitches, dashboard: false },
+    });
+
+    expect(edition.isFeatureEnabled('categoryScreens')).toBe(false);
+    expect(edition.isFeatureEnabled('collectionBoardStyle')).toBe(true);
   });
 
   it('keep a feature on while only a feature that depends on it is off', () => {
