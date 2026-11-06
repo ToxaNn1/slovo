@@ -231,7 +231,7 @@ function editionWith(
 }
 
 function readDrafts(outDir: string, folder = 'drafts'): unknown[] {
-  const dir = join(outDir, folder);
+  const dir = join(outDir, 'words', folder);
   return readdirSync(dir)
     .sort()
     .map((name) => JSON.parse(readFileSync(join(dir, name), 'utf8')) as unknown);
@@ -445,7 +445,7 @@ describe('sourceWords', () => {
     expect(etymologies?.message).not.toContain('ко́сий');
     // КОСА 2 prints its Examples without italics.
     expect(outcome.drafts[1]?.flags.map((flag) => flag.kind)).toContain('unmarked-examples');
-    const report = readFileSync(join(options.outDir, 'review-report.md'), 'utf8');
+    const report = readFileSync(join(options.outDir, 'words', 'review-report.md'), 'utf8');
     expect(report).toContain('The dictionary has 4 homonyms');
   });
 
@@ -780,7 +780,7 @@ describe('sourceWords', () => {
       'sum.in.ua',
       'web.archive.org',
     ]);
-    const report = readFileSync(join(options.outDir, 'review-report.md'), 'utf8');
+    const report = readFileSync(join(options.outDir, 'words', 'review-report.md'), 'utf8');
     expect(report).toContain('Skipped for this run: web.archive.org');
   });
 
@@ -923,3 +923,61 @@ function flagsOf(result: SourcingResult, lemma: string): Flag[] {
   const outcome = lemmaOutcome(result, lemma);
   return [...outcome.flags, ...outcome.drafts.flatMap((draft) => draft.flags)];
 }
+
+describe('the review report', () => {
+  it('ends with one line per ready draft: id, text, Category, Example count, Definition start', async () => {
+    const { options } = setup({
+      lemmaList: 'мжичка nature-weather 2\nножиці household-crafts 1\n',
+    });
+
+    await sourceWords(options);
+
+    // In list order: мжичка, then ножиці.
+    const ready = readDrafts(options.outDir)
+      .map((draft) => WordSchema.parse(draft))
+      .sort((a, b) => a.lemma.localeCompare(b.lemma, 'uk'));
+    expect(ready.length).toBeGreaterThan(0);
+    const report = readFileSync(join(options.outDir, 'words', 'review-report.md'), 'utf8');
+    const list = report.slice(report.indexOf('## Ready drafts'));
+    expect(list.trimEnd().split('\n')).toEqual([
+      '## Ready drafts',
+      '',
+      ...ready.map(
+        (word) =>
+          `- \`${word.id}\` | ${word.lemma} | ${word.categoryId} | Examples: ${String(word.examples.length)} | ${word.primaryDefinition.slice(0, 55)}`,
+      ),
+    ]);
+    expect(ready.map((word) => word.lemma)).toContain('мжичка');
+  });
+});
+
+describe('a Lemma the Edition already has', () => {
+  it('lands in incomplete/ with a flag naming the Entry, even when it is Retired', async () => {
+    const edition = editionWith((config) => config, {
+      w_exist1: {
+        id: 'w_exist1',
+        lemma: 'мжичка',
+        stress: [2],
+        partOfSpeech: 'noun',
+        gender: 'feminine',
+        primaryDefinition: 'Тестове значення, якого немає в словнику.',
+        categoryId: 'nature-weather',
+        rarity: 2,
+        sources: [{ title: 'Тестове джерело' }],
+        retired: true,
+      },
+    });
+    const { options } = setup({ lemmaList: 'мжичка nature-weather 2\n', edition });
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toEqual([]);
+    expect(readDrafts(options.outDir, 'incomplete')).toHaveLength(1);
+    const [draft] = lemmaOutcome(result, 'мжичка').drafts;
+    expect(draft?.ready).toBe(false);
+    expect(draft?.flags).toContainEqual({
+      kind: 'existing-entry',
+      message: '"мжичка" is already a Word of the Edition: w_exist1 (Retired)',
+    });
+  });
+});

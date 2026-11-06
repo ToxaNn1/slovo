@@ -42,9 +42,11 @@ Every run on the machine shares one cache: `--cache`, else `$SLOVO_SOURCING_CACH
 
 ## What comes out
 
-- `review/drafts/<id>.json`: drafts that pass the Word schema and the Language Pack build's own checks (Stress, alphabet, Category, Correction links, duplicate Lemma) against the Edition's existing content. Each has a new opaque `w_` id that the Edition doesn't use yet.
-- `review/incomplete/<id>.json`: drafts that lack required data (for example, no source marks the Stress). The report says what is missing.
-- `review/review-report.md`: everything a human must decide, per Lemma and per draft:
+Each kind of Entry writes into its own folder of the review folder; Words go to `review/words/`.
+
+- `review/words/drafts/<id>.json`: drafts that pass the Word schema and the Language Pack build's own checks (Stress, alphabet, Category, Correction links, duplicate Lemma) against the Edition's existing content. Each has a new opaque `w_` id that the Edition doesn't use yet.
+- `review/words/incomplete/<id>.json`: drafts that lack required data (for example, no source marks the Stress), and drafts whose Lemma is already a Word of the Edition, Retired or not. The report says what is missing.
+- `review/words/review-report.md`: everything a human must decide, per Lemma and per draft. It ends with the «Ready drafts» list, one line per ready draft: id, Lemma, Category, Example count and the first 55 characters of the primary Definition.
 
 | Flag                | Meaning                                                                                                                          |
 | ------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
@@ -60,7 +62,12 @@ Every run on the machine shares one cache: `--cache`, else `$SLOVO_SOURCING_CACH
 | `unmarked-examples` | СУМ prints the Examples without italics; they are left out and the Definition is cut.                                            |
 | `other-labels`      | СУМ labels with no register to map to, and labels of the other meanings, listed so nothing is lost silently.                     |
 | `spelling-differs`  | СУМ-11 spells the headword differently (it predates the letter ґ).                                                               |
+| `existing-entry`    | The Lemma is already a Word of the Edition (its ids are listed, Retired ones marked); the draft goes to `incomplete/`.           |
 | `check`             | Something worth a glance, e.g. an etymology taken from the ЕСУМ article of a related word (the source title names that article). |
+
+## Extending it
+
+`runSourcing(list, options, kind)` is the one sourcing run every kind shares: it reads the list file (`#` comments, a repeated line refused), refuses an Edition in another language, fetches through the polite client, sends a draft whose text is already an Entry of the kind to `incomplete/`, and writes the kind's folder and review report. A kind (`SourcingKind`) only reads one list line and drafts it. The entry point also exports `PoliteClient` and `readArticleBlocks`, which reads every article block of a goroh page with the dictionary it cites and whether a language model wrote it, so the Content CLI needs no deep import.
 
 ## Tests
 

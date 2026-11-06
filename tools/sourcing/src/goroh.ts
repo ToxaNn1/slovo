@@ -38,6 +38,41 @@ export async function fetchGoroh(
  */
 const EXPLANATORY_DICTIONARY = 'Тлумачний словник української мови';
 
+/** goroh's name for text a language model wrote; it is never quoted (ADR 0012). */
+const LANGUAGE_MODEL = 'Велика мовна модель';
+
+/** One article block of a goroh page. */
+export interface ArticleBlock {
+  /** The headword as goroh shows it, with Stress marks. */
+  readonly headword: string;
+  /** The dictionary the block cites; empty when it cites none. */
+  readonly dictionary: string;
+  /** Whether a language model wrote the block rather than a dictionary. */
+  readonly languageModel: boolean;
+  /** The block's text, whitespace squeezed. */
+  readonly text: string;
+}
+
+/** Reads every article block of a goroh page, each with the dictionary it cites. */
+export function readArticleBlocks(html: string): ArticleBlock[] {
+  return blocksOf(html).map(({ element, headword, dictionary }) => ({
+    headword,
+    dictionary,
+    languageModel: dictionary.startsWith(LANGUAGE_MODEL),
+    text: squeeze(element.text),
+  }));
+}
+
+function blocksOf(html: string): { element: HTMLElement; headword: string; dictionary: string }[] {
+  return parse(html)
+    .querySelectorAll('div.article-block')
+    .map((element) => ({
+      element,
+      headword: squeeze(element.querySelector('h2 .uppercase')?.text ?? ''),
+      dictionary: squeeze(element.querySelector('.source-info')?.text ?? ''),
+    }));
+}
+
 export interface GorohDefinitions {
   readonly articles: readonly DictionaryArticle[];
   /** Articles for the Lemma from sources that are not drafted from, as `dictionary: headword`. */
@@ -47,12 +82,9 @@ export interface GorohDefinitions {
 /** Reads the articles for the Lemma on a «Тлумачення» page, each with the dictionary it cites. */
 export function parseDefinitions(html: string, lemma: string): GorohDefinitions {
   const leftOut: string[] = [];
-  const matching = parse(html)
-    .querySelectorAll('div.article-block')
-    .flatMap((block): Omit<DictionaryArticle, 'homonymNumber'>[] => {
-      const headword = squeeze(block.querySelector('h2 .uppercase')?.text ?? '');
+  const matching = blocksOf(html).flatMap(
+    ({ element: block, headword, dictionary }): Omit<DictionaryArticle, 'homonymNumber'>[] => {
       if (headword === '' || matchKey(headword) !== matchKey(lemma)) return [];
-      const dictionary = squeeze(block.querySelector('.source-info')?.text ?? '');
       if (!dictionary.startsWith(EXPLANATORY_DICTIONARY)) {
         leftOut.push(`${dictionary === '' ? '(no source)' : dictionary}: ${headword}`);
         return [];
@@ -85,7 +117,8 @@ export function parseDefinitions(html: string, lemma: string): GorohDefinitions 
           source: { title: dictionary, url: gorohUrl('Тлумачення', lemma) },
         },
       ];
-    });
+    },
+  );
   const articles = matching.map((article, index) =>
     matching.length > 1 ? { ...article, homonymNumber: index + 1 } : article,
   );
