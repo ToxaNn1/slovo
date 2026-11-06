@@ -67,7 +67,16 @@ Each kind of Entry writes into its own folder of the review folder; Words go to 
 
 ## Filters of `source:words`
 
-<!-- #1624 fills this section. -->
+`source:words` keeps out of `drafts/` what passes the build but a human would refuse. Each such draft goes to `incomplete/` with an issue and one of these flags:
+
+| Flag              | Meaning                                                                                                                                                                                 |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `cross-reference` | The primary Definition only points at another article («Зменш. до вікно», «Див.…», «Те саме, що…»), with or without a register label in front, so it explains nothing on an Entry card. |
+| `region-missing`  | A dialect Word (the dialectal register label) with no Region. The tool does not source a Region: add one from a cited source, or drop the Word.                                         |
+
+The reference markers live in one list, `REFERENCE_MARKERS` in `src/word-filters.ts`; the next marker is one more line. They match case-insensitive at the start of the Definition.
+
+A Lemma list line whose Category is one of the Edition's `categoriesRequiringHistory` (in the UA Edition `repressed-words` and `chameleon-words`) is refused like an unknown Category, naming the line, before anything is fetched: the tool does not source a Word History, so such a Word cannot pass the build.
 
 ## Idioms: `source:idioms`
 
