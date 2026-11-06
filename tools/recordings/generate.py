@@ -5,8 +5,10 @@
 
 The requests are the list `pnpm recording-requests <edition-id>` prints:
 `{ voice, wordId, text }`, the text being the Lemma with a combining acute
-after each stressed vowel. Each Recording goes to
-`<edition-dir>/assets/recordings/<voice>/<wordId>.mp3`, mono 24 kHz 48 kbps.
+after its first stressed vowel. Each Recording goes to
+`<edition-dir>/assets/recordings/<voice>/<wordId>.mp3`, mono 24 kHz 48 kbps,
+and its text to `texts.json` in the same folder, Word id to text, so the
+build asks again for a Recording whose Word's text has changed since.
 
 `--check` is the Stress spot-check: it reads the Words of `CHECK_LEMMAS`
 from the requests, once in each voice, writes nothing to the Edition, and
@@ -37,7 +39,8 @@ ENGINE_VOICES = {
 }
 
 # The Words of the Stress spot-check: their Stress is known and easy to misplace.
-CHECK_LEMMAS = ("кромлех", "антаблемент", "кракелюр")
+CHECK_LEMMAS = ("кромлех", "антаблемент", "кракелюр", "заграва", "заплава")
+TEXTS_FILE = "texts.json"
 
 ACUTE = "́"
 VOWELS = set("аеєиіїоуюяАЕЄИІЇОУЮЯ")
@@ -113,11 +116,29 @@ def generate(engine: Engine, requests: list[dict[str, str]], edition_dir: Path) 
     recordings = edition_dir / "assets" / "recordings"
     with tempfile.TemporaryDirectory() as work:
         wav = Path(work) / "recording.wav"
+        texts: dict[str, dict[str, str]] = {}
         for done, request in enumerate(requests, start=1):
+            voice_dir = recordings / request["voice"]
             engine.read(request["voice"], request["text"], wav)
-            to_mp3(wav, recordings / request["voice"] / f"{request['wordId']}.mp3")
+            to_mp3(wav, voice_dir / f"{request['wordId']}.mp3")
+            voice_texts = texts.setdefault(request["voice"], read_texts(voice_dir))
+            voice_texts[request["wordId"]] = request["text"]
+            write_texts(voice_dir, voice_texts)
             if done % 50 == 0 or done == len(requests):
                 print(f"{done}/{len(requests)}", flush=True)
+
+
+def read_texts(voice_dir: Path) -> dict[str, str]:
+    file = voice_dir / TEXTS_FILE
+    return json.loads(file.read_text(encoding="utf-8")) if file.exists() else {}
+
+
+def write_texts(voice_dir: Path, texts: dict[str, str]) -> None:
+    partial = voice_dir / f"{TEXTS_FILE}.partial"
+    partial.write_text(
+        json.dumps(texts, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    os.replace(partial, voice_dir / TEXTS_FILE)
 
 
 def check(engine: Engine, requests: list[dict[str, str]]) -> bool:
