@@ -1,5 +1,5 @@
 import { RARITIES } from '@slovo/contracts';
-import type { Account, BadgeState } from '@slovo/core';
+import { dateKeyOf, type Account, type BadgeState } from '@slovo/core';
 import {
   ActiveDaysCalendar,
   IconButton,
@@ -26,6 +26,7 @@ import { editionStrings } from '../edition/edition';
 import { bestText, gameModeStrings } from '../game/game-modes';
 import { type Opening, useSubscribed } from '../opening';
 import { ShareCardSheet } from '../share/share-card-sheet';
+import { useWordOfTheDayArchive } from '../saved/word-of-the-day-archive';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { MascotAs } from '../mascot/mascot';
@@ -57,6 +58,7 @@ export function ProfileScreen() {
   // A change of the Active Days may leave every number as it was, so any change draws the calendar again.
   const [, changed] = useReducer((version: number) => version + 1, 0);
   useEffect(() => composition.progress.subscribe(changed), [composition.progress]);
+  const archive = useWordOfTheDayArchive();
   const account = useAccountInEffect();
   const shown = useShown();
   const { shareCard } = useShell();
@@ -83,6 +85,10 @@ export function ProfileScreen() {
     level !== undefined && level.level > 0
       ? composition.xpLog.reachedOn(xp.total - level.progress)
       : undefined;
+  const weeks = composition.progress.calendar();
+  const today = weeks.flat().find(({ state }) => state === 'today');
+  /** The Lemma of today's Word of the Day, once the archive keeps it. */
+  const todayWord = archive?.find(({ date }) => dateKeyOf(date) === today?.date)?.row.title;
 
   return (
     <SafeAreaView
@@ -168,7 +174,11 @@ export function ProfileScreen() {
         )}
         {streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />}
         <View style={styles.section}>
-          <ActiveDaysCalendar weeks={composition.progress.calendar()} />
+          <ActiveDaysCalendar
+            weeks={weeks}
+            lines={shown.calendarDayLines}
+            todayWord={todayWord}
+          />
         </View>
         <View style={styles.section}>
           <View style={styles.badgesHead}>
