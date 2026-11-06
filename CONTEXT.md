@@ -361,8 +361,14 @@ One unseen Word fixed for the user's local calendar day; it is revealed on the D
 _Avoid_: Daily word
 
 **Pronunciation**:
-The Word read aloud by the device's voice for the Edition's language.
+The Word read aloud by a recorded narrator voice; the device's voice when a Word has no recording (ADR 0083).
 _Avoid_: Audio, TTS
+
+**Narrator Voice**:
+One of the Edition's recorded voices that read Words. The reader chooses one in Settings › «Голос диктора», behind the `narratorVoice` Feature Switch; a tap on a voice chooses it and reads the Edition's sample Word in it (UA: заграва). The Edition config declares each with a display name and a description, and one as the default (UA: Оксана), which reads while the switch is off.
+
+**Recording**:
+A Narrator Voice reading one Word, made ahead of time and keyed by Word id. The app bundles every voice's Recordings; Corrections, Idioms and Synonym Row members have none.
 
 **Share Card**:
 A branded image of an Entry, of the reader's Weekly Recap («Мій тиждень у SLOVO»), of their progress on the day it happens (a Level reached, a Badge earned, a Streak milestone), or of a solved Daily Crossword's grid without its letters, made for sharing outside the app.

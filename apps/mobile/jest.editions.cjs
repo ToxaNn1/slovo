@@ -1,12 +1,14 @@
 // The bundled Editions in place of the module Metro writes (see
 // metro.config.cjs): the UA Edition alone, its Illustrations each PNG by file
-// name and its Interface sounds by sound, as jest-expo stubs them. A test that
+// name, its Interface sounds by sound and its Recordings by voice and Word id,
+// as jest-expo stubs them. A test that
 // renders a screen opens no Language Pack, so its asset id is never read.
-const { readdirSync } = require('node:fs');
+const { existsSync, readdirSync } = require('node:fs');
 const { join } = require('node:path');
 
 const dir = join(__dirname, '../../editions/uk');
 const illustrations = join(dir, 'assets/illustrations');
+const recordings = join(dir, 'assets/recordings');
 
 module.exports = {
   defaultId: 'uk',
@@ -26,6 +28,23 @@ module.exports = {
           sound,
           require(join(dir, 'assets/sounds', `${sound}.wav`)),
         ]),
+      ),
+      recordings: Object.fromEntries(
+        // A voice is a folder and a Recording an mp3 file in it; anything else, such as .DS_Store, is skipped.
+        (existsSync(recordings) ? readdirSync(recordings, { withFileTypes: true }) : [])
+          .filter((entry) => entry.isDirectory())
+          .map(({ name: voice }) => [
+            voice,
+            Object.fromEntries(
+              readdirSync(join(recordings, voice), { withFileTypes: true })
+                .filter((entry) => entry.isFile() && entry.name.endsWith('.mp3'))
+                .map(({ name: file }) => file)
+                .map((file) => [
+                  file.slice(0, -'.mp3'.length),
+                  require(join(recordings, voice, file)),
+                ]),
+            ),
+          ]),
       ),
       languagePack: 1,
     },

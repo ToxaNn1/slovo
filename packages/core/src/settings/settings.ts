@@ -35,6 +35,12 @@ export interface UserSettings {
    * animation, as it does when the system's Reduce Motion is on (ADR 0055).
    */
   readonly reduceMotion: boolean;
+  /**
+   * The id of the Narrator Voice that reads: the reader's choice, else the
+   * Edition's default. The Edition reads an id it no longer declares as its
+   * default (ADR 0083).
+   */
+  readonly narratorVoice: string;
 }
 
 /**
@@ -105,6 +111,7 @@ export function createSettings({
       seasonalDecor: (await userState.read(userStateRecords.seasonalDecor)) ?? all.seasonalDecor,
       shareCounters: (await userState.read(userStateRecords.shareCounters)) ?? all.shareCounters,
       reduceMotion: (await userState.read(userStateRecords.reduceMotion)) ?? all.reduceMotion,
+      narratorVoice: (await userState.read(userStateRecords.narratorVoice)) ?? all.narratorVoice,
     };
   }
 
@@ -130,6 +137,9 @@ export function createSettings({
             : []),
           ...('reduceMotion' in changes
             ? userStateRecords.reduceMotion.change(changes.reduceMotion)
+            : []),
+          ...('narratorVoice' in changes
+            ? userStateRecords.narratorVoice.change(changes.narratorVoice)
             : []),
           ...(changes.shareCounters === false ? await forgetUnsentCounters(userState) : []),
         ]),

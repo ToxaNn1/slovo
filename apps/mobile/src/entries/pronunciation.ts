@@ -1,4 +1,5 @@
 import { logError } from '../diagnostics/log';
+import type { RecordingPlayer } from '../sounds/recording-player';
 
 /** A voice the device can speak with, as `expo-speech` lists it. */
 export interface SpeechVoice {
@@ -25,18 +26,25 @@ export interface Speech {
   stop(): Promise<void>;
 }
 
+/** The Word a Pronunciation button reads: its id finds its Recording. */
+export interface PronouncedWord {
+  readonly id: string;
+  readonly lemma: string;
+}
+
 /**
- * What a Pronunciation button shows for its Lemma: nothing special, the Lemma
- * being spoken, or the message that the device has no voice for the Edition's
- * language.
+ * What a Pronunciation button shows for its Word: nothing special, the Word
+ * being read, or the message that the Word has no Recording and the device no
+ * voice for the Edition's language.
  */
 export type PronunciationState = 'idle' | 'playing' | 'no-voice';
 
 export interface Pronunciation {
-  /** Speaks the Lemma, or stops it when it is already being spoken. */
-  toggle(lemma: string): Promise<void>;
-  stateOf(lemma: string): PronunciationState;
-  /** Stops whatever is being spoken. */
+  /** Reads the Word, or stops it when it is already being read. */
+  toggle(word: PronouncedWord): Promise<void>;
+  /** The state of the Word with this id. */
+  stateOf(id: string): PronunciationState;
+  /** Stops whatever is being read. */
   stop(): Promise<void>;
   /** Hides the missing-voice message. */
   dismiss(): void;
@@ -48,21 +56,31 @@ export interface Pronunciation {
 const STRESS_MARK = /́/g;
 
 /**
- * Pronunciation: the Lemma read aloud by the device's voice for the Edition's
- * language. One Lemma is spoken at a time. When the device has no voice for
- * the language, the tapped Lemma shows the missing-voice message instead.
+ * Pronunciation (ADR 0083): the Word read aloud by its Recording in the
+ * Narrator Voice, or by the device's voice for the Edition's language when it
+ * has none. One Word is read at a time, and nothing with «Звуки» off. When
+ * the Word has no Recording and the device no voice for the language, the
+ * tapped Word shows the missing-voice message instead.
  */
 export function createPronunciation({
   speech,
   locale,
+  player,
+  recordingOf,
+  soundsOn,
 }: {
   speech: Speech;
   /** The Edition's locale (BCP 47), e.g. "uk-UA". */
   locale: string;
+  player: RecordingPlayer;
+  /** The Recording of the Word with this id in the Narrator Voice, if it has one. */
+  recordingOf: (id: string) => number | undefined;
+  /** Whether «Звуки» are on now. */
+  soundsOn: () => boolean;
 }): Pronunciation {
   const listeners = new Set<() => void>();
-  let state: { readonly lemma: string; readonly state: PronunciationState } | undefined;
-  /** The utterance whose end clears the playing state; older ones no longer do. */
+  let state: { readonly id: string; readonly state: PronunciationState } | undefined;
+  /** The reading whose end clears the playing state; older ones no longer do. */
   let current: object | undefined;
   /** The last tap, so only it speaks when several wait for the voice list. */
   let latestTap: object | undefined;
@@ -75,15 +93,39 @@ export function createPronunciation({
   function silence() {
     current = undefined;
     if (state?.state === 'playing') set(undefined);
+    player.stop();
     return speech.stop();
   }
 
+  /** Marks the Word playing; the returned function ends this reading alone. */
+  function start(id: string): () => void {
+    const reading = {};
+    current = reading;
+    set({ id, state: 'playing' });
+    return () => {
+      if (current !== reading) return;
+      current = undefined;
+      set(undefined);
+    };
+  }
+
   return {
-    async toggle(lemma) {
+    async toggle({ id, lemma }) {
       const tap = {};
       latestTap = tap;
-      if (state?.lemma === lemma && state.state === 'playing') {
+      if ((state?.id === id && state.state === 'playing') || !soundsOn()) {
         await silence();
+        return;
+      }
+
+      const recording = recordingOf(id);
+      if (recording !== undefined) {
+        if (state?.state === 'playing') {
+          await silence();
+          // A later tap came while the voice stopped; it reads instead.
+          if (latestTap !== tap) return;
+        }
+        player.play(recording, start(id));
         return;
       }
 
@@ -99,20 +141,13 @@ export function createPronunciation({
       const voice = voiceFor(locale, voices);
       if (voice === undefined) {
         if (state?.state === 'playing') await silence();
-        set({ lemma, state: 'no-voice' });
+        set({ id, state: 'no-voice' });
         return;
       }
 
       // The engine would queue the new Lemma behind the one it is saying.
       if (state?.state === 'playing') await silence();
-      const utterance = {};
-      current = utterance;
-      const finish = () => {
-        if (current !== utterance) return;
-        current = undefined;
-        set(undefined);
-      };
-      set({ lemma, state: 'playing' });
+      const finish = start(id);
       speech.speak(lemma.replace(STRESS_MARK, ''), {
         language: voice.language,
         onDone: finish,
@@ -124,8 +159,8 @@ export function createPronunciation({
       });
     },
 
-    stateOf(lemma) {
-      return state?.lemma === lemma ? state.state : 'idle';
+    stateOf(id) {
+      return state?.id === id ? state.state : 'idle';
     },
 
     stop: silence,

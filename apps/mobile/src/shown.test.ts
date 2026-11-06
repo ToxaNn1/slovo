@@ -26,6 +26,7 @@ const everything: Shown = {
   selfCheck: false,
   selfCheckSetting: true,
   soundsSetting: true,
+  narratorVoiceSetting: true,
   seasonalDecorSetting: true,
   reduceMotionSetting: true,
   shareCountersSetting: true,
@@ -101,6 +102,10 @@ describe('what the reader is shown', () => {
       { off: ['seasonalDecor'], shown: { seasonalDecorSetting: false } },
     ],
     ['no «Звуки» switch with the sounds off', { off: ['sounds'], shown: { soundsSetting: false } }],
+    [
+      'no «Голос диктора» row with its Feature Switch off',
+      { off: ['narratorVoice'], shown: { narratorVoiceSetting: false } },
+    ],
     [
       'no «Менше руху» switch with its Feature Switch off',
       { off: ['reduceMotion'], shown: { reduceMotionSetting: false } },

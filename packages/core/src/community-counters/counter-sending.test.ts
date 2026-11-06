@@ -40,7 +40,7 @@ async function device() {
   });
   const settings = createSettings({
     userState,
-    defaults: { theme: 'system', fontSize: 'M', vibration: true },
+    defaults: { theme: 'system', fontSize: 'M', vibration: true, narratorVoice: 'anna' },
   });
   const sending = openCounterSending({
     edition,
