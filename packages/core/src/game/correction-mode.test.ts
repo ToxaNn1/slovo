@@ -465,7 +465,7 @@ describe('the Knowledge Marks «Обери правильне» leaves', () => {
     await app.game.start('correction');
     const { round } = current(app);
 
-    void app.game.answer({ form: 'pick', option: (rightOf(round) + 1) % optionsOf(round).length });
+    await app.game.answer({ form: 'pick', option: (rightOf(round) + 1) % optionsOf(round).length });
     await app.game.next();
 
     expect(app.knowledge.state.shown.get(askedOf(round).id)).toBe('unknown');
