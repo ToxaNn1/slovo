@@ -80,6 +80,8 @@ export interface Shown {
   readonly levelLadder: boolean;
   /** The Settings row of the Break and its screen. */
   readonly streakBreak: boolean;
+  /** The line a tap on a day of the Active Days calendar on the Profile shows. */
+  readonly calendarDayLines: boolean;
   /** The Settings row that opens the Badges (ADR 0066). */
   readonly badges: boolean;
   /**
@@ -176,6 +178,7 @@ export function shownOf({
     celebrations: on('xpLog') && !noCounters,
     levelLadder: on('levelLadder') && !noCounters,
     streakBreak: on('streakBreak'),
+    calendarDayLines: on('calendarDayLines'),
     badges: on('badges'),
     progressShareCards: on('progressShareCards') && !noCounters,
     dailyCrosswordShare: on('dailyCrosswordShare'),

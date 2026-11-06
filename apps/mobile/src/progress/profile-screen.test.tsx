@@ -4,14 +4,16 @@ import {
   openAccount,
   systemRandom,
   type FeatureSwitch,
+  type Word,
 } from '@slovo/core';
 import {
   createFakeAppleSignInSheet,
   createFakeBackend,
   createFakeGoogleSignInSheet,
+  createMemoryContentPort,
   seedUserState,
 } from '@slovo/core/testing';
-import { EditionProvider } from '@slovo/ui';
+import { EditionProvider, fill } from '@slovo/ui';
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -23,7 +25,13 @@ import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support
 import { ProfileScreen } from './profile-screen';
 
 const mockPush = jest.fn();
-jest.mock('expo-router', () => ({ useRouter: () => ({ back: jest.fn(), push: mockPush }) }));
+jest.mock('expo-router', () => ({
+  useRouter: () => ({ back: jest.fn(), push: mockPush }),
+  // The screen comes into view as it renders.
+  useFocusEffect: (effect: () => () => void) => {
+    jest.requireActual<typeof import('react')>('react').useEffect(effect, [effect]);
+  },
+}));
 
 const strings = editionStrings.settings.profile;
 
@@ -62,25 +70,72 @@ const sendingShareCard: ShareCard = (_view, _cardId, _format, onShared) => {
   return Promise.resolve('closed');
 };
 
+/** «сумирний», a Word of the test Language Pack. */
+const sumyrnyi: Word = {
+  kind: 'word',
+  id: 'w_sumyrnyi',
+  lemma: 'сумирний',
+  stress: [1],
+  partOfSpeech: 'adjective',
+  primaryDefinition: 'Тихий, лагідний.',
+  extraDefinitions: [],
+  examples: [],
+  synonyms: [],
+  antonyms: [],
+  registers: [],
+  categoryId: 'emotions-character',
+  rarity: 3,
+  sources: [{ title: 'Словник' }],
+  correctionIds: [],
+  retired: false,
+};
+
+/** The facts of the user state a test seeds: yesterday's XP and today's Word of the Day. */
+type Seed = Parameters<typeof seedUserState>[0];
+
 /**
  * The Profile over the Core's composition of a test Shell, as the UA Edition
- * ships it unless a switch is turned off, after `rounds` right Game Rounds of
- * 1 XP each, with the counters hidden or not.
+ * ships it unless a switch is turned off or on, after `rounds` right Game
+ * Rounds of 1 XP each, with the counters hidden or not, over the user state
+ * `seed` and a Language Pack of «сумирний».
  */
 async function renderScreen({
   withAccount = false,
   rounds = 0,
   noCounters = false,
   switchedOff,
+  switchedOn,
+  seed = {},
   shareCard,
 }: {
   withAccount?: boolean;
   rounds?: number;
   noCounters?: boolean;
   switchedOff?: FeatureSwitch;
+  switchedOn?: FeatureSwitch;
+  seed?: Seed;
   shareCard?: ShareCard;
 } = {}) {
-  const composition = await testShell().composition.opened();
+  const userState = opened(
+    await seedUserState(seed, {
+      clock: { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
+    }),
+  );
+  const languagePack = opened({
+    reader: {
+      ...createMemoryContentPort({
+        categories: [
+          { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
+        ],
+        words: [sumyrnyi],
+      }),
+      metadata: () => Promise.reject(new Error('A test pack has no metadata')),
+      crosswordDay: () => Promise.resolve(undefined),
+    },
+    version: { contentVersion: 1, packFormat: 1 },
+    contentUpdate: undefined,
+  });
+  const composition = await testShell({ userState, languagePack }).composition.opened();
   for (let round = 0; round < rounds; round += 1) {
     composition.xpLog
       .award({ source: 'game-round', mode: 'guess-word', rarity: undefined })
@@ -92,11 +147,14 @@ async function renderScreen({
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({
+          userState,
           composition: opened(composition),
           remoteSwitches: switchedTo({
             ...edition,
             isFeatureEnabled: (feature) =>
-              feature === switchedOff ? false : edition.isFeatureEnabled(feature),
+              feature === switchedOff
+                ? false
+                : feature === switchedOn || edition.isFeatureEnabled(feature),
           }),
           settings: await settingsAt({ noCounters }),
           account,
@@ -265,5 +323,57 @@ describe('the Profile', () => {
     expect(screen.getByText(title)).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: save }));
     expect(mockPush).toHaveBeenCalledWith('/settings/account');
+  });
+
+  describe('with the calendar day lines on', () => {
+    const months = editionStrings.dates.months;
+    const lines = editionStrings.stats.calendar.lines;
+    /** Yesterday an Active Day; today, active after 5 XP, with «сумирний» kept as its Word of the Day. */
+    const seed: Seed = {
+      xpLog: {
+        yesterday: {
+          kind: 'xp',
+          date: '2026-10-12',
+          at: '2026-10-12T05:00:00.000Z',
+          source: 'game-round',
+          amount: 5,
+        },
+      },
+      wordOfTheDayArchive: { '2026-10-13': 'w_sumyrnyi' },
+    };
+    const tapped = async (date: string) => {
+      await renderScreen({ switchedOn: 'calendarDayLines', rounds: 5, seed });
+      await fireEvent.press(screen.getByTestId(`stats-calendar-${date}`));
+      // The Word of the Day archive is read as the screen comes into view.
+      return screen.findByTestId('stats-calendar-line');
+    };
+
+    it('shows the line of an Active Day at a tap on it', async () => {
+      expect(await tapped('2026-10-12')).toHaveTextContent(
+        fill(lines.active, { day: '12', month: months[9] ?? '' }),
+      );
+    });
+
+    // The Lemma reads as its row in «Слова дня» does, with its Stress mark.
+    it('shows today with its Word of the Day once today is active', async () => {
+      expect(await tapped('2026-10-13')).toHaveTextContent(fill(lines.today, { word: 'су́мирний' }));
+    });
+
+    it('shows the line of a day missed', async () => {
+      expect(await tapped('2026-10-11')).toHaveTextContent(
+        fill(lines.missed, { day: '11', month: months[9] ?? '' }),
+      );
+    });
+
+    it('shows the line of a day to come', async () => {
+      expect(await tapped('2026-10-18')).toHaveTextContent(lines.future);
+    });
+  });
+
+  it('shows no line at a tap on a day with the calendar day lines off, the calendar still there', async () => {
+    await renderScreen({ switchedOff: 'calendarDayLines', rounds: 1 });
+    await fireEvent.press(screen.getByTestId('stats-calendar-2026-10-11'));
+    expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
+    expect(screen.queryByTestId('stats-calendar-line')).toBeNull();
   });
 });
