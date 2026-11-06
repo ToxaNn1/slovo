@@ -87,7 +87,10 @@ async function renderApp(url: string) {
         <GestureHandlerRootView>
           <SafeAreaProvider initialMetrics={metrics}>
             <ShellProvider
-              shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}
+              shell={testShell({
+                composition: opened(composition),
+                remoteSwitches: switchedTo(edition),
+              })}
             >
               <EditionProvider edition={edition} strings={editionStrings}>
                 <Tabs screenOptions={{ headerShown: false }} />
