@@ -3,7 +3,6 @@ import type { BadgeState } from '@slovo/core';
 import {
   BackLink,
   BadgeGrid,
-  BadgeStamp,
   fill,
   ScreenTitle,
   space,
@@ -12,41 +11,15 @@ import {
   useTokens,
 } from '@slovo/ui';
 import { useRouter } from 'expo-router';
-import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
+import { useBadgeOpening, useBadgeStatus } from './badge-opening';
 import { edition, editionStrings } from '../edition/edition';
-import { MascotAs } from '../mascot/mascot';
 import { useSubscribed } from '../opening';
-import { dayText } from './day-text';
 
 const strings = editionStrings.settings.badges;
-
-/** The shape of a Badge's family. */
-export const shapeOf = ({ family }: BadgeState) =>
-  edition.badgeFamilies.find(({ id }) => id === family)?.shape ?? 'circle';
-
-/** The progress forms of an unearned Badge's condition; none for a condition of one first time. */
-function progressForms({ condition }: BadgeState) {
-  switch (condition.kind) {
-    case 'streak':
-    case 'dailyCrosswordRun':
-      return strings.progress.days;
-    case 'confirmedEntries':
-      return strings.progress.entries;
-    case 'rightAnswers':
-    case 'rightRun':
-      return strings.progress.rightAnswers;
-    case 'level':
-      return strings.progress.level;
-    case 'gameWin':
-    case 'rightOnRarity':
-    case 'flawlessGame':
-      return undefined;
-  }
-}
 
 /** The names of `modes`, joined by the list's commas. */
 const modeNames = (modes: readonly string[]) =>
@@ -83,25 +56,15 @@ function conditionText({ condition }: BadgeState, count: (forms: Plural, n: numb
  * Every Badge of the Edition as its mark, in a grid by the Edition's Badge
  * families under how many of all are earned; each shows its condition and
  * shows, and VoiceOver reads, its date or, while not earned, how far its
- * condition has come. A tap on an earned one stamps it on red and opens it,
- * which ends its «НОВА» mark (ADR 0085).
+ * condition has come. A tap opens it (`useBadgeOpening`).
  */
 function Badges() {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice, count } = useEdition();
-  const composed = useComposition().badges;
-  const badges = useSubscribed(composed, ({ state }) => state);
-  /** The earned Badge stamped over the screen after a tap on its mark. */
-  const [stamped, setStamped] = useState<BadgeState | undefined>(undefined);
-
-  const statusOf = (badge: BadgeState) => {
-    if (badge.earned) return fill(strings.earned, { date: dayText(badge.date) });
-    const forms = progressForms(badge);
-    if (forms === undefined) return strings.notYet;
-    const { current, target } = badge.progress;
-    return fill(count(forms, target), { current: String(current) });
-  };
+  const badges = useSubscribed(useComposition().badges, ({ state }) => state);
+  const { statusOf } = useBadgeStatus();
+  const { onPress, opening } = useBadgeOpening();
 
   return (
     <>
@@ -121,26 +84,9 @@ function Badges() {
         size="screen"
         statusOf={statusOf}
         conditionOf={(badge) => conditionText(badge, count)}
-        onPress={(badge) => {
-          if (!badge.earned) return;
-          setStamped(badge);
-          void composed.open(badge.id).catch(() => undefined);
-        }}
+        onPress={onPress}
       />
-      {stamped !== undefined && (
-        <BadgeStamp
-          shape={shapeOf(stamped)}
-          symbol={stamped.symbol}
-          name={stamped.name}
-          title={editionStrings.settings.profile.badgeStamp.title}
-          takeLabel={editionStrings.settings.profile.badgeStamp.take}
-          mascot={<MascotAs state="celebrates" onRed />}
-          isNew={stamped.earned && stamped.isNew}
-          onClose={() => {
-            setStamped(undefined);
-          }}
-        />
-      )}
+      {opening}
     </>
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import type { FeatureSwitch, InterfaceSound } from '@slovo/core';
+import { EditionProvider, fill, InterfaceSoundsProvider } from '@slovo/ui';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
@@ -15,22 +16,51 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
-/** The Badges screen over the Core's composition of a test Shell, as the UA Edition ships it. */
-async function renderScreen() {
+/** The Interface sounds the screen played, in order. */
+let played: InterfaceSound[] = [];
+
+/**
+ * The Badges screen over the Core's composition of a test Shell, as the UA
+ * Edition ships it, or with one Feature Switch off.
+ */
+async function renderScreen({ switchedOff }: { switchedOff?: FeatureSwitch } = {}) {
+  played = [];
   const composition = await testShell().composition.opened();
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
-        shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}
+        shell={testShell({
+          composition: opened(composition),
+          remoteSwitches: switchedTo({
+            ...edition,
+            isFeatureEnabled: (feature) =>
+              feature !== switchedOff && edition.isFeatureEnabled(feature),
+          }),
+        })}
       >
         <EditionProvider edition={edition} strings={editionStrings}>
-          <BadgesScreen />
+          <InterfaceSoundsProvider sounds={{ play: (sound) => played.push(sound) }}>
+            <BadgesScreen />
+          </InterfaceSoundsProvider>
         </EditionProvider>
       </ShellProvider>
     </SafeAreaProvider>,
   );
   return composition;
 }
+
+/** Earns «Слово» (`win-words`) with a flawless Guess the Word Game. */
+async function earnWinWords(composition: Awaited<ReturnType<typeof renderScreen>>) {
+  await act(async () => {
+    composition.xpLog
+      .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+      .commit();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  });
+}
+
+/** The name of the UA Edition's Badge `id`. */
+const nameOf = (id: string) => edition.badges.find((badge) => badge.id === id)?.name ?? id;
 
 const strings = editionStrings.settings.badges;
 
@@ -97,8 +127,8 @@ describe('the Badges screen', () => {
     );
   });
 
-  it("says the day a Badge was earned in the Edition's words and stamps it at a tap", async () => {
-    const composition = await renderScreen();
+  it("says the day a Badge was earned in the Edition's words and, with the sheet off, stamps it at a tap", async () => {
+    const composition = await renderScreen({ switchedOff: 'badgeSheet' });
 
     await act(async () => {
       composition.xpLog
@@ -121,18 +151,75 @@ describe('the Badges screen', () => {
     expect(screen.getByText(editionStrings.settings.profile.badgeStamp.title)).toBeOnTheScreen();
   });
 
-  it('stamps no Badge at a tap on one not yet earned', async () => {
-    await renderScreen();
+  it('with the sheet off, shows nothing at a tap on a Badge not yet earned', async () => {
+    await renderScreen({ switchedOff: 'badgeSheet' });
 
     await fireEvent.press(screen.getByTestId('badge-streak-3'));
     expect(
       screen.queryByText(editionStrings.settings.profile.badgeStamp.title),
     ).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-sheet')).not.toBeOnTheScreen();
+    expect(screen.queryByText(fill(strings.lockedToast, { name: nameOf('streak-3') }))).toBeNull();
+    expect(played).toEqual([]);
+  });
+
+  // Ticket #1646: board 10 p3/p4, the sheet at every tap on a Badge.
+  it('opens the sheet at a tap on a Badge not yet earned, with its progress and the toast, and no shout', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('badge-streak-3'));
+
+    const sheet = screen.getByTestId('badge-sheet');
+    expect(within(sheet).getByText(strings.sheet.kicker)).toBeOnTheScreen();
+    expect(within(sheet).getByRole('header')).toHaveTextContent(nameOf('streak-3'));
+    expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Ще ні · 0 з 3 днів');
+    expect(
+      screen.getByText(fill(strings.lockedToast, { name: nameOf('streak-3') })),
+    ).toBeOnTheScreen();
+    expect(played).toEqual([]);
+    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.title)).toBeNull();
+
+    await fireEvent.press(screen.getByRole('button', { name: strings.sheet.done }));
+    await waitFor(() => {
+      expect(screen.queryByTestId('badge-sheet')).not.toBeOnTheScreen();
+    });
+  });
+
+  it('opens the sheet with its date and the shout at a tap on an earned Badge, and no toast', async () => {
+    const composition = await renderScreen();
+    await earnWinWords(composition);
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('badge-win-words'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const sheet = screen.getByTestId('badge-sheet');
+    expect(within(sheet).getByRole('header')).toHaveTextContent(nameOf('win-words'));
+    expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Отримано 13 жовтня');
+    expect(screen.getByTestId('badge-sheet-mark-symbol')).toHaveTextContent('Сл');
+    expect(played).toEqual(['shout']);
+    expect(screen.queryByText(fill(strings.lockedToast, { name: nameOf('win-words') }))).toBeNull();
+    expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.title)).toBeNull();
+  });
+
+  it('drops the «НОВА» mark once the sheet opens the Badge', async () => {
+    const composition = await renderScreen();
+    await earnWinWords(composition);
+    expect(screen.getByTestId('badge-win-words-mark-new')).toHaveTextContent(strings.newTag);
+
+    await act(async () => {
+      await fireEvent.press(screen.getByTestId('badge-win-words'));
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    expect(screen.queryByTestId('badge-win-words-mark-new')).toBeNull();
+    expect(composition.xpLog.milestones.opened.has('win-words')).toBe(true);
   });
 
   // Ticket #1645: board 10.5/10.6, a new Badge carries «НОВА» until it is opened.
   it('marks a new Badge «НОВА», cream on its stamp, and drops the mark once the stamp opens it', async () => {
-    const composition = await renderScreen();
+    const composition = await renderScreen({ switchedOff: 'badgeSheet' });
     await act(async () => {
       composition.xpLog
         .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })

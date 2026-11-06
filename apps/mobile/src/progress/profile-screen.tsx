@@ -1,10 +1,9 @@
 import { RARITIES } from '@slovo/contracts';
-import { dateKeyOf, type Account, type BadgeState, type LevelState } from '@slovo/core';
+import { dateKeyOf, type Account, type LevelState } from '@slovo/core';
 import {
   ActiveDaysCalendar,
   IconButton,
   BadgeGrid,
-  BadgeStamp,
   BreakCard,
   fill,
   LevelCard,
@@ -32,8 +31,7 @@ import { ShareCardSheet } from '../share/share-card-sheet';
 import { useWordOfTheDayArchive } from '../saved/word-of-the-day-archive';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
-import { MascotAs } from '../mascot/mascot';
-import { shapeOf } from './badges-screen';
+import { useBadgeOpening } from './badge-opening';
 import { dayText } from './day-text';
 
 const strings = editionStrings.settings.profile;
@@ -42,7 +40,7 @@ const strings = editionStrings.settings.profile;
  * The Profile tab, as the board: the reader's whole progress in one place:
  * the Level card (its ring, its name, the XP to the next and all XP), the
  * giant Streak and the Best Streak, the Active Days calendar, the Badges as
- * marks by family (an earned one stamped on red at a tap), the confirmed
+ * marks by family (each opened at a tap), the confirmed
  * Entries by rarity and each Game Mode's Best result, with a button that
  * shares the Level. A reader with an Account to offer and none signed in sees
  * the offer to save progress at the top.
@@ -58,8 +56,7 @@ export function ProfileScreen() {
   const progress = useSubscribed(composition.progress, ({ state }) => state);
   const confirmed = useSubscribed(composition.knowledge, ({ state }) => state.confirmed);
   const badges = useSubscribed(composition.badges, ({ state }) => state);
-  /** The earned Badge stamped over the screen after a tap on its mark. */
-  const [stamped, setStamped] = useState<BadgeState | undefined>(undefined);
+  const { onPress, opening } = useBadgeOpening();
   const modes = useSubscribed(composition.game, ({ state }) => state.modes);
   // A change of the Active Days may leave every number as it was, so any change draws the calendar again.
   const [, changed] = useReducer((version: number) => version + 1, 0);
@@ -232,29 +229,8 @@ export function ProfileScreen() {
               })}
             </Text>
           </View>
-          <BadgeGrid
-            families={edition.badgeFamilies}
-            badges={badges}
-            onPress={(badge) => {
-              if (!badge.earned) return;
-              setStamped(badge);
-              void composition.badges.open(badge.id).catch(() => undefined);
-            }}
-          />
-          {stamped !== undefined && (
-            <BadgeStamp
-              shape={shapeOf(stamped)}
-              symbol={stamped.symbol}
-              name={stamped.name}
-              title={strings.badgeStamp.title}
-              takeLabel={strings.badgeStamp.take}
-              mascot={<MascotAs state="celebrates" onRed />}
-              isNew={stamped.earned && stamped.isNew}
-              onClose={() => {
-                setStamped(undefined);
-              }}
-            />
-          )}
+          <BadgeGrid families={edition.badgeFamilies} badges={badges} onPress={onPress} />
+          {opening}
         </View>
         <View style={styles.section}>
           <SettingsGroup title={strings.confirmed}>

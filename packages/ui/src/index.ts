@@ -52,7 +52,7 @@ export {
   type TracedWord,
 } from './game/TracedCrosswordGrid';
 export { HapticsProvider } from './providers/HapticsProvider';
-export { InterfaceSoundsProvider } from './providers/InterfaceSoundsProvider';
+export { InterfaceSoundsProvider, useInterfaceSounds } from './providers/InterfaceSoundsProvider';
 export { HideButton } from './mix/HideButton';
 export { CommunityCountersLine } from './community-counters/CommunityCountersLine';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
@@ -152,6 +152,7 @@ export {
   type CategoryTone,
 } from './categories/CategoryTile';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
+export { BadgeSheet, type BadgeSheetBadge } from './progress/BadgeSheet';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { NewLevelScreen } from './progress/NewLevelScreen';
 export { LevelCard } from './progress/LevelCard';

@@ -87,7 +87,7 @@
     "badges": true,
     "levelLadder": true,
     "newLevelScreen": false,
-    "badgeSheet": false,
+    "badgeSheet": true,
     "badgeToast": false,
     "streakFreezeCard": false,
     "breakCard": false,
