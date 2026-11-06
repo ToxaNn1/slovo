@@ -59,21 +59,31 @@ const metrics = {
 /**
  * Renders `hook` in a test Shell over a composition of the test Language Pack
  * and the user state `facts` give, under the Edition and an undo toast. Gives
- * back the composition, so a test reads what the hook changed.
+ * back the composition, so a test reads what the hook changed, and `reopen`,
+ * which opens the composition again over the same user state and closes the
+ * one before, as a sync does (ADR 0018): the Shell's opening gives the new
+ * one from then on, while what is drawn keeps the one it was drawn with.
  */
 export async function renderOverComposition<T>(hook: () => T, facts: UserStateFacts = {}) {
   const clock: Clock = {
     now: () => new Date('2026-10-13T09:00:00Z'),
     timeZone: () => 'Europe/Kyiv',
   };
-  const composition: Composition = await openComposition({
-    content,
-    edition,
-    userState: await seedUserState(facts, { clock }),
-    clock,
-    random: { next: () => 0.25 },
+  const userState = await seedUserState(facts, { clock });
+  const open = (): Promise<Composition> =>
+    openComposition({ content, edition, userState, clock, random: { next: () => 0.25 } });
+  const composition = await open();
+  let current = opened(composition);
+  const shell = testShell({
+    composition: {
+      get state() {
+        return current.state;
+      },
+      opened: () => current.opened(),
+      reopen: () => Promise.resolve(),
+      subscribe: () => () => undefined,
+    },
   });
-  const shell = testShell({ composition: opened(composition) });
   const wrapper = ({ children }: { children: ReactNode }) => (
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell}>
@@ -84,7 +94,17 @@ export async function renderOverComposition<T>(hook: () => T, facts: UserStateFa
     </SafeAreaProvider>
   );
   const rendered = await renderHook(hook, { wrapper });
-  return { composition, hook: rendered };
+  return {
+    composition,
+    hook: rendered,
+    reopen: async (): Promise<Composition> => {
+      const before = await current.opened();
+      const after = await open();
+      current = opened(after);
+      await before.close();
+      return after;
+    },
+  };
 }
 
 /** Runs `change` and lets the writes it fires and the renders after them finish. */
