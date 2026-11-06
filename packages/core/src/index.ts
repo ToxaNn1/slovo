@@ -56,6 +56,7 @@ export {
   type TipFeedCard,
   type WordFeedCard,
 } from './feed/feed-card';
+export { entryCardTitle } from './feed/entry-feed-card';
 export { LATER_QUESTIONS, type FeedNotice, type LaterQuestion } from './feed-notice';
 export { type FirstWeekDay } from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
