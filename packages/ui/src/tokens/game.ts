@@ -37,16 +37,54 @@ export const roundProgress = { height: 8, gap: 4, skew: '-20deg' } as const;
  * Gaps and paddings of the Game's Round off the 4-pt grid, from the design:
  * between the options and between the header's parts, a tight one (the
  * progress label over its bar, «Далі» under the sheet), the sheet's own and
- * the vertical padding of the Round's card; and the most of the Round's
- * head the Mascot and its line take, so the label keeps room for its whole
- * words.
+ * the vertical padding and least height of the Round's card; the most of
+ * the Round's head the Mascot and its line take, so the label keeps room for
+ * its whole words; and how far the largest text sizes of iOS may scale the
+ * Round's smaller text, so it never breaks a word.
  */
 export const roundLayout = {
   gap: 10,
   tightGap: 6,
   sheetGap: 14,
   cardPaddingVertical: 30,
+  cardMinHeight: 220,
   mascotShare: '40%',
+  textMaxFontScale: 1.5,
+} as const;
+
+/**
+ * The Round's header, from the design: a Life's shield and the gap between
+ * Lives, the ✕'s glyph (its touch target is `minTouchTarget`) and the
+ * corners of its sunken square; a lost Life jumps to `lostPop` (the design's
+ * `slLifeOut`) as its «−1» rises `lostMarkRise` (`slXp`).
+ */
+export const roundHeader = {
+  life: { width: 18, height: 20 },
+  lifeGap: 5,
+  exitGlyph: 16,
+  exitRadius: 14,
+  lostPop: { scale: 1.6, rotate: -25 },
+  lostMarkRise: 80,
+} as const;
+
+/**
+ * A pick Round's option, the board's answer tile: its least height, corners
+ * and side padding; how much an answered Round's other options fade, how far
+ * a wrong choice drops and how a right one pops (`slPop`: its scale at the
+ * start, 60 % and the end); the stamp on a right option, a ring of this side
+ * and border this far off the corner round a tick; the slash on a wrong
+ * choice, its thickness, side inset and turn (`slSlash`).
+ */
+export const answerOption = {
+  minHeight: 84,
+  radius: 18,
+  paddingLeft: 22,
+  dimmedOpacity: 0.5,
+  drop: 8,
+  pop: [0.6, 1.12, 1],
+  stamp: { side: 56, border: 4, right: 16, top: 14 },
+  tick: { width: 26, height: 22 },
+  slash: { thickness: 5, inset: 12, turn: -4 },
 } as const;
 
 /**
