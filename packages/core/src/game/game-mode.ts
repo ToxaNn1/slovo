@@ -1,11 +1,12 @@
-import type { Example, LanguageTraits } from '@slovo/contracts';
+import type { LanguageTraits } from '@slovo/contracts';
 
+import type { RoundForm } from './answer-forms';
 import type { Edition } from '../edition/edition';
 import type { AskableEntry, AskableKind, KindRefusal, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
 
-/** How many options a Round offers, exactly one of them correct. */
-export const ROUND_OPTIONS = 4;
+export { ROUND_OPTIONS, type AnswerSheet, type RoundOption } from './answer-form';
+export type { ChipKind, FixedChip } from './chips-form';
 
 /**
  * What the Game needs to know of the Edition: its Feature Switches, its
@@ -20,31 +21,6 @@ export type GameEdition = Pick<Edition, 'isFeatureEnabled'> &
       Partial<Pick<LanguageTraits, 'marksStress' | 'vowels' | 'expressionPunctuation'>>;
   };
 
-/** One option of a Round, or the answer its sheet names. */
-export interface RoundOption {
-  /** The text as shown, such as a Lemma with its Stress marks. */
-  readonly text: string;
-  /** The stressed vowels of the text, in order, which VoiceOver names; empty without Stress. */
-  readonly stressedVowels: readonly string[];
-}
-
-/**
- * What the sheet after an answer shows: the right answer, and an Example of
- * it or an explanation of why it is right, if any.
- */
-export interface AnswerSheet {
-  readonly answer: RoundOption;
-  readonly example: Example | undefined;
-  /** Why the answer is right, such as a Correction's explanation. */
-  readonly explanation?: string;
-  /**
-   * The Entry the Round asked about, when the answer names something else:
-   * the Word of «Звідки слово», whose origin language is the answer. Left out
-   * when the answer is the Entry itself.
-   */
-  readonly asked?: RoundOption;
-}
-
 /**
  * The groups of the mode screen, in their agreed order: what a mode trains,
  * then the modes with a Lives, Round or time challenge of their own.
@@ -53,9 +29,6 @@ export const GAME_MODE_GROUPS = ['words', 'corrections', 'idioms', 'challenge'] 
 
 /** The group of the mode screen a Game Mode's card stands in. */
 export type GameModeGroup = (typeof GAME_MODE_GROUPS)[number];
-
-/** What a chips Round's chips are: a Word's letters or an expression's words. */
-export type ChipKind = 'letter' | 'word';
 
 /**
  * Which label a Round shows over its prompt: the Game Mode's, a Synonym
@@ -69,78 +42,14 @@ export interface TextRange {
   readonly end: number;
 }
 
-/** A character of a chips answer that stays in place and is no chip, such as an apostrophe. */
-export interface FixedChip {
-  /** How many chips the answer has before it. */
-  readonly at: number;
-  readonly text: string;
-}
-
-/** A Word of a pairs grid with its Definition: one Round of the grid. */
-export interface GridPair {
-  /** The Entry the pair asks about, marked Unknown on a wrong match. */
-  readonly entry: AskableEntry;
-  readonly word: RoundOption;
-  readonly definition: string;
-  readonly sheet: AnswerSheet;
-}
-
 /**
  * The form of a Round's answer, which the Game Mode decides (ADR 0052): a
  * pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in
- * order, or typed text. Each form but the pairs grid carries the sheet shown
- * after the answer; a grid carries one per pair.
+ * order, or typed text, each its own Answer Form. Each form but the pairs
+ * grid carries the sheet shown after the answer; a grid carries one per pair.
  */
-export type RoundForm =
-  | {
-      readonly form: 'pick';
-      /** The `ROUND_OPTIONS` options, in the order shown. */
-      readonly options: readonly RoundOption[];
-      /** The place of the right option among them. */
-      readonly correct: number;
-      readonly sheet: AnswerSheet;
-    }
-  | {
-      readonly form: 'vowel';
-      /** Where in the prompt each vowel to tap stands, in order. */
-      readonly vowels: readonly number[];
-      /** The vowels among them that are stressed, any of which is right. */
-      readonly stressed: readonly number[];
-      readonly sheet: AnswerSheet;
-    }
-  | {
-      readonly form: 'pairs';
-      /** Up to `ROUND_OPTIONS` pairs, each a Round of its own. */
-      readonly pairs: readonly GridPair[];
-      /** The places of the pairs whose Words show, in the order shown. */
-      readonly wordOrder: readonly number[];
-      /** The places of the pairs whose Definitions show, in the order shown. */
-      readonly definitionOrder: readonly number[];
-    }
-  | {
-      readonly form: 'chips';
-      /** What the chips are, a Word's letters or an expression's words. */
-      readonly chipKind: ChipKind;
-      /** The chips, in the order shown. */
-      readonly chips: readonly string[];
-      /** The chips in the right order; equal chips are interchangeable. */
-      readonly expected: readonly string[];
-      /** The characters of the answer that stay in place among the chips; none when left out. */
-      readonly fixed?: readonly FixedChip[];
-      readonly sheet: AnswerSheet;
-    }
-  | {
-      readonly form: 'typed';
-      /** The text to type, compared the way `typedAnswerMatches` does. */
-      readonly expected: string;
-      /**
-       * Whether the text shows as blanks, one per character, which «Відкрити
-       * літеру» opens; the places of the characters that stay in place, such
-       * as an apostrophe, show them from the start. No blanks when left out.
-       */
-      readonly blanks?: { readonly inPlace: readonly number[] };
-      readonly sheet: AnswerSheet;
-    };
+export type { RoundForm } from './answer-forms';
+export type { GridPair } from './pairs-form';
 
 /** A Round as a Game Mode builds it: one prompt with exactly one right answer, in the mode's answer form. */
 export type RoundContent = RoundForm & {
@@ -158,14 +67,6 @@ export type RoundContent = RoundForm & {
   /** The Definition shown under the prompt, such as a Word's in «Звідки слово»; none when left out. */
   readonly definition?: string;
 };
-
-/** How many Rounds the content holds: one, or one per pair of a pairs grid. */
-export const roundsIn = (content: RoundContent): number =>
-  content.form === 'pairs' ? content.pairs.length : 1;
-
-/** The ids of the Entries a pairs grid asks about besides the Round's own; none in another form. */
-export const entriesIn = (content: RoundContent): string[] =>
-  content.form === 'pairs' ? content.pairs.map(({ entry }) => entry.id) : [];
 
 /** What a Game Mode builds a Round from. */
 export interface RoundInput {
@@ -247,19 +148,3 @@ export interface GameMode {
  * out of the Mix.
  */
 export type GameModeRefusal = 'too-few-entries' | KindRefusal;
-
-/** Whether the chips stand in the right order, equal chips interchangeable and case ignored. */
-export const chipsMatch = (chips: readonly string[], right: readonly string[]): boolean =>
-  chips.length === right.length &&
-  chips.every((chip, place) => chip.toLowerCase() === right[place]?.toLowerCase());
-
-/**
- * The chips of a shuffle, never in the right order: when the shuffle left
- * them so, they move one place on, which leaves chips of at least two
- * different texts out of order.
- */
-export const outOfOrder = (
-  right: readonly string[],
-  chips: readonly string[],
-): readonly string[] =>
-  chipsMatch(chips, right) ? [...chips.slice(1), ...chips.slice(0, 1)] : chips;

@@ -18,7 +18,6 @@ import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useComposition } from '@/composition';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 import { useDailyCrosswordCard } from '@/game/daily-crossword';
@@ -32,7 +31,7 @@ import {
 } from '@/game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
 import { MascotAs, MascotIn } from '@/mascot/mascot';
-import { useSubscribed } from '@/opening';
+import { useXpLogState } from '@/progress/xp-log';
 import { useShown } from '@/shown-in-effect';
 
 const { game: strings, widget: widgetStrings, settings: settingsStrings } = editionStrings;
@@ -196,7 +195,7 @@ function ModeScreen({
  * reader has not hidden the counters.
  */
 function TotalXp() {
-  const { total } = useSubscribed(useComposition().xpLog, ({ state }) => state);
+  const { total } = useXpLogState();
   if (!useShown().xpBar) return null;
   const count = String(total);
   return (

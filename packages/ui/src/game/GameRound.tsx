@@ -8,96 +8,52 @@ import {
   type GivenAnswer,
   type Round,
   type RoundAnswer,
-  type RoundBlank,
   type RoundContent,
-  type RoundOption,
-  type TextRange,
 } from '@slovo/core';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Keyboard, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
-  Extrapolation,
-  interpolate,
   ReduceMotion,
-  type SharedValue,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Path, Polygon } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { ConfirmationDialog } from '../primitives/ConfirmationDialog';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Wedge } from '../primitives/Wedge';
 import { Button } from '../primitives/Button';
-import { PressedTile } from '../primitives/PressedTile';
 import {
-  badgeStamp,
+  capitalMarkRoom,
   minTouchTarget,
-  motion,
+  roundHeader,
   roundLayout,
   roundProgress,
   space,
-  capitalMarkRoom,
   typeStyle,
   wedges,
 } from '../tokens';
-import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { ease, RIGHT_FILL, WRONG_FILL } from './round-motion';
-import { OrderedChips } from './OrderedChips';
+import { useTokens } from '../providers/TokensProvider';
+import { ease } from './round-motion';
+import { ChipsRound } from './ChipsRound';
 import { GameTimer } from './GameTimer';
-import { PairsGrid } from './PairsGrid';
-import { TypedAnswer } from './TypedAnswer';
+import { PairsRound } from './PairsRound';
+import { AnswerOptions, PickRound } from './PickRound';
+import { RoundCard } from './RoundCard';
+import { TypedRound } from './TypedRound';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useGameHaptics } from './useGameHaptics';
-import { VowelButtons } from './VowelButtons';
+import { VowelRound } from './VowelRound';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
-/** A Life's shield and the gap between Lives, from the design. */
-const LIFE_SIZE = { width: 18, height: 20 };
-const LIFE_GAP = 5;
 /** The «−1» that flies up off the Lives when one is lost. */
 const LIFE_LOST_MARK = '\u22121';
-/** The ✕'s glyph size; its touch target is `minTouchTarget`. */
-const EXIT_SIZE = 16;
-/** The corners of the ✕'s sunken square. */
-const EXIT_RADIUS = 14;
-/** An answer option's least height and its corners, the board's answer tile. */
-const OPTION_HEIGHT = 84;
-const OPTION_RADIUS = 18;
-/** An option's side padding, the board's. */
-const OPTION_PADDING = 22;
-/** How much an answered Round's other options fade. */
-const DIMMED_OPACITY = 0.5;
-/** How far a wrong choice drops. */
-const OPTION_DROP = 8;
-/** How a right option pops, the board's `slPop`: its scale at the start, 60 % and the end. */
-const OPTION_POP = [0.6, 1.12, 1];
-/** The stamp on a right option: a ring of this side and border, this far off the corner, round a tick. */
-const STAMP = { side: 56, border: 4, right: 16, top: 14 };
-const STAMP_TICK = { width: 26, height: 22 };
-/** The stamp lands as the Badge's does (`motion.stamp`). */
-const STAMP_LANDING = {
-  duration: motion.stamp.duration,
-  easing: Easing.bezier(...motion.stamp.easing),
-  reduceMotion: ReduceMotion.Never,
-};
-/** The slash on a wrong choice: its thickness, side inset and turn, drawn in 300 ms, the board's `slSlash`. */
-const SLASH = { thickness: 5, inset: 12, turn: -4 };
-const SLASH_DRAWING = {
-  duration: 300,
-  easing: Easing.out(Easing.ease),
-  reduceMotion: ReduceMotion.Never,
-};
-/** How far the largest text sizes of iOS may scale the smaller text, so it never breaks a word. */
-const TEXT_MAX_FONT_SCALE = 1.5;
-/** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
-const ENDS_IN_PUNCTUATION = /\p{P}$/u;
 
 /**
  * A lost Life (the design's `slLifeOut`) jumps to 1.6 and −25° in the red and
@@ -105,18 +61,14 @@ const ENDS_IN_PUNCTUATION = /\p{P}$/u;
  * in 1.1 s (`slXp`). It comes once the wrong choice has filled, when the
  * Round says the Life is lost, as its haptic does.
  */
-const LIFE_POP = { scale: 1.6, rotate: -25 };
 const LIFE_OUT = {
   duration: 600,
   easing: Easing.out(Easing.ease),
   reduceMotion: ReduceMotion.Never,
 };
-const LIFE_MARK = { rise: 80, duration: 1100, reduceMotion: ReduceMotion.Never } as const;
+const LIFE_MARK = { duration: 1100, reduceMotion: ReduceMotion.Never } as const;
 /** With Reduce Motion a lost Life's fill and its «−1» only fade (the design's `slRm`). */
 const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Never };
-
-/** The answer to a Round of the pick form. */
-type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
 
 /**
  * A Round of the Game in play (`game-round-dark`): the header with the ✕, the
@@ -180,8 +132,6 @@ export function GameRound({
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;
   const asked = askedAs(round, label, strings.game.round);
-  const options = round.form === 'pick' ? round.options : [];
-  const pickAnswer = answer?.form === 'pick' ? answer : undefined;
 
   return (
     <View testID="game-round" style={styles.screen}>
@@ -202,7 +152,9 @@ export function GameRound({
           setAsking(true);
         }}
       />
-      <ScrollView contentContainerStyle={styles.round}>
+      <ScrollView
+        contentContainerStyle={[styles.round, round.form !== 'pick' && styles.roundWithoutOptions]}
+      >
         <RoundHead
           label={asked.label}
           number={round.number}
@@ -211,83 +163,13 @@ export function GameRound({
           testID={round.form === 'pairs' ? 'game-prompt' : undefined}
           mascot={mascot}
         />
-        {round.form === 'vowel' ? (
-          <RoundCard
-            label={asked.label}
-            prompt={asked.prompt}
-            highlight={undefined}
-            gap={undefined}
-          >
-            <VowelButtons
-              key={round.number}
-              text={round.prompt}
-              vowels={round.vowels}
-              answer={answer?.form === 'vowel' ? answer : undefined}
-              onAnswer={(position) => {
-                onAnswer({ form: 'vowel', position });
-              }}
-              texts={{
-                vowelLabel: (letter, place) => letterLabel(strings.game.letters, letter, place),
-                correct: strings.game.round.correct,
-                chosen: strings.game.round.chosen,
-              }}
-              testID="game-vowels"
-            />
-          </RoundCard>
-        ) : round.form === 'pairs' ? (
-          <PairsGrid
-            key={round.number}
-            words={round.words}
-            definitions={round.definitions}
-            answer={answer?.form === 'pairs' ? answer : undefined}
-            onAnswer={(word, definition) => {
-              onAnswer({ form: 'pairs', word, definition });
-            }}
-          />
-        ) : (
-          <RoundCard
-            label={asked.label}
-            prompt={asked.prompt}
-            highlight={round.highlight}
-            gap={round.gap}
-            definition={round.definition}
-          />
-        )}
-        {round.form === 'chips' && (
-          <OrderedChips
-            key={round.number}
-            chips={round.chips}
-            kind={round.chipKind}
-            fixed={round.fixed}
-            answer={answer?.form === 'chips' ? answer : undefined}
-            onAnswer={(chips) => {
-              onAnswer({ form: 'chips', chips });
-            }}
-          />
-        )}
-        {round.form === 'typed' && (
-          <TypedRoundAnswer
-            key={round.number}
-            blanks={round.blanks}
-            onAnswer={(text) => {
-              onAnswer({ form: 'typed', text });
-            }}
-            onOpenLetter={onOpenLetter}
-          />
-        )}
-        <View style={styles.options}>
-          {options.map((option, place) => (
-            <AnswerOption
-              key={`${String(round.number)}-${String(place)}`}
-              option={option}
-              place={place}
-              answer={pickAnswer}
-              onPress={() => {
-                onAnswer({ form: 'pick', option: place });
-              }}
-            />
-          ))}
-        </View>
+        <FormRound
+          round={round}
+          label={asked.label}
+          prompt={asked.prompt}
+          onAnswer={onAnswer}
+          onOpenLetter={onOpenLetter}
+        />
       </ScrollView>
       <AnswerSheet answer={round.answer} onNext={onNext} />
       <ConfirmationDialog
@@ -336,6 +218,46 @@ function askedAs(
 }
 
 /**
+ * The part of a Round its Answer Form draws under the Round's head: the card
+ * and the options, the vowel buttons in the card, the pairs grid, the chips
+ * or the typed field under the card.
+ */
+function FormRound({
+  round,
+  label,
+  prompt,
+  onAnswer,
+  onOpenLetter,
+}: {
+  round: Round;
+  label: string;
+  prompt: string;
+  onAnswer: (given: GivenAnswer) => void;
+  onOpenLetter: () => void;
+}) {
+  switch (round.form) {
+    case 'pick':
+      return <PickRound round={round} label={label} prompt={prompt} onAnswer={onAnswer} />;
+    case 'vowel':
+      return <VowelRound round={round} label={label} prompt={prompt} onAnswer={onAnswer} />;
+    case 'pairs':
+      return <PairsRound round={round} onAnswer={onAnswer} />;
+    case 'chips':
+      return <ChipsRound round={round} label={label} prompt={prompt} onAnswer={onAnswer} />;
+    case 'typed':
+      return (
+        <TypedRound
+          round={round}
+          label={label}
+          prompt={prompt}
+          onAnswer={onAnswer}
+          onOpenLetter={onOpenLetter}
+        />
+      );
+  }
+}
+
+/**
  * A Quick Question in the Feed: its title, then one pick Round as the Game
  * draws it, the prompt under the mode's label and the four options. Once
  * answered, the options show the right one and the one picked, with no
@@ -369,78 +291,16 @@ export function QuickQuestionRound({
         definition={round.definition}
         labelShown
       />
-      <View style={styles.options}>
-        {round.options.map((option, place) => (
-          <AnswerOption
-            key={String(place)}
-            option={option}
-            place={place}
-            answer={answer}
-            onPress={() => {
-              if (place === round.correct) gameHaptics.rightAnswer();
-              else gameHaptics.wrongAnswer();
-              onAnswer(place);
-            }}
-          />
-        ))}
-      </View>
+      <AnswerOptions
+        options={round.options}
+        answer={answer}
+        onPick={(option) => {
+          if (option === round.correct) gameHaptics.rightAnswer();
+          else gameHaptics.wrongAnswer();
+          onAnswer(option);
+        }}
+      />
     </View>
-  );
-}
-
-/**
- * What VoiceOver reads for a letter at its place among a Word's letters from
- * 0, «а, третя літера»; past the Edition's ordinals, the place's number.
- */
-function letterLabel(
-  texts: EditionStrings['game']['letters'],
-  letter: string,
-  place: number,
-): string {
-  return fill(texts.label, { letter, place: texts.ordinals[place] ?? String(place + 1) });
-}
-
-/**
- * A typed Round's answer under its card: the Word's blanks, if the Round
- * shows them, with «Відкрити літеру», and the field, which keeps what the
- * reader typed until the Round is answered. VoiceOver reads each blank by its
- * place among the letters. The keyboard goes as the answer is given, so the
- * sheet shows whole.
- */
-function TypedRoundAnswer({
-  blanks,
-  onAnswer,
-  onOpenLetter,
-}: {
-  /** The Word's blanks, as the Core opens them; none in a Round that shows none. */
-  blanks: readonly RoundBlank[] | undefined;
-  onAnswer: (text: string) => void;
-  onOpenLetter: () => void;
-}) {
-  const { strings } = useEdition();
-  const { letters, openLetter, round } = strings.game;
-  const [text, setText] = useState('');
-  return (
-    <TypedAnswer
-      value={text}
-      onChangeText={setText}
-      onSubmit={() => {
-        Keyboard.dismiss();
-        onAnswer(text);
-      }}
-      blanks={blanks}
-      onOpenLetter={blanks === undefined ? undefined : onOpenLetter}
-      texts={{
-        label: round.typed.label,
-        submit: round.typed.submit,
-        openLetter,
-        blankLabel: (place, letter) =>
-          letter === undefined
-            ? fill(letters.empty, { place: letters.ordinals[place] ?? String(place + 1) })
-            : letterLabel(letters, letter, place),
-      }}
-      testID="game-typed"
-    />
   );
 }
 
@@ -500,7 +360,7 @@ function GameHeader({
         >
           {roundLimit === undefined ? (
             <Text
-              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={roundLayout.textMaxFontScale}
               style={[typeStyle('roundPassed', tokens), { color: colors.ink }]}
             >
               {fill(words.passed, progress)}
@@ -579,7 +439,7 @@ function ExitButton({ onPress }: { onPress: () => void }) {
       onPress={onPress}
       style={[styles.exit, { backgroundColor: colors.surfaceSunken }]}
     >
-      <Svg width={EXIT_SIZE} height={EXIT_SIZE} viewBox="0 0 20 20">
+      <Svg width={roundHeader.exitGlyph} height={roundHeader.exitGlyph} viewBox="0 0 20 20">
         <Path
           d="M0 3L3 0L10 7L17 0L20 3L13 10L20 17L17 20L10 13L3 20L0 17L7 10Z"
           fill={colors.ink}
@@ -643,19 +503,24 @@ function Life({
 
   const popStyle = useAnimatedStyle(() => ({
     transform: [
-      { scale: 1 + (LIFE_POP.scale - 1) * pop.value },
-      { rotate: `${String(LIFE_POP.rotate * pop.value)}deg` },
+      { scale: 1 + (roundHeader.lostPop.scale - 1) * pop.value },
+      { rotate: `${String(roundHeader.lostPop.rotate * pop.value)}deg` },
     ],
   }));
   const fillStyle = useAnimatedStyle(() => ({ opacity: fullness.value }));
   // The «−1» shows from the loss to the end of its flight; with Reduce Motion it fades in place.
   const markStyle = useAnimatedStyle(() => ({
     opacity: mark.value === 0 || mark.value === 1 ? 0 : 1 - mark.value,
-    transform: [{ translateY: reduceMotion ? 0 : -LIFE_MARK.rise * mark.value }],
+    transform: [{ translateY: reduceMotion ? 0 : -roundHeader.lostMarkRise * mark.value }],
   }));
 
   const shield = (color: string) => (
-    <Wedge points={wedges.shield} color={color} width={LIFE_SIZE.width} height={LIFE_SIZE.height} />
+    <Wedge
+      points={wedges.shield}
+      color={color}
+      width={roundHeader.life.width}
+      height={roundHeader.life.height}
+    />
   );
   return (
     <Animated.View testID={`game-life-${String(place)}`} style={popStyle}>
@@ -675,113 +540,6 @@ function Life({
         </Text>
       </Animated.View>
     </Animated.View>
-  );
-}
-
-/**
- * The Round's prompt (`game-round-dark`, `game-round-correction-answered-light`):
- * its label over the prompt on a surface card with the Edition's corners, the
- * highlight, such as a non-standard form, on the sunken fill and underlined in
- * the accent. VoiceOver reads it before the options, then names the highlight;
- * a gap it reads in its place, as the Edition calls it.
- * A Definition, such as a Word's in «Звідки слово», stands under the prompt,
- * and VoiceOver reads it after the prompt.
- * An answer drawn in the prompt's place, such as the vowel buttons, stands in
- * for the prompt, and VoiceOver reads the label, then each of its buttons.
- */
-function RoundCard({
-  label,
-  prompt,
-  highlight,
-  gap,
-  definition,
-  labelShown = false,
-  children,
-}: {
-  label: string;
-  /** Whether the card shows its label over the prompt, as in the Feed; a Game's Round shows it in its head. */
-  labelShown?: boolean;
-  prompt: string;
-  /** The part of the prompt to mark; nothing to mark. */
-  highlight: TextRange | undefined;
-  /** The gap in the prompt, which VoiceOver reads as one and which is no highlight to name; none. */
-  gap: TextRange | undefined;
-  /** The Definition under the prompt; none to show. */
-  definition?: string | undefined;
-  /** What the card shows for the prompt, the answer drawn in it; the prompt's text if nothing. */
-  children?: ReactNode;
-}) {
-  const tokens = useTokens();
-  const { colors, radii } = tokens;
-  const { strings, voice } = useEdition();
-  const read =
-    gap === undefined
-      ? prompt
-      : `${prompt.slice(0, gap.start)}${strings.game.round.gap.voiceOver}${prompt.slice(gap.end)}`;
-  const marked =
-    highlight === undefined || gap !== undefined
-      ? undefined
-      : fill(strings.game.round.highlight, {
-          text: prompt.slice(highlight.start, highlight.end),
-        });
-  const defined =
-    definition === undefined ? '' : `${ENDS_IN_PUNCTUATION.test(read) ? '' : '.'} ${definition}`;
-  return (
-    <View
-      testID="game-prompt"
-      accessible={children === undefined}
-      accessibilityLabel={
-        children === undefined
-          ? [`${label}${ENDS_IN_PUNCTUATION.test(label) ? '' : '.'} ${read}${defined}`, marked]
-              .filter(Boolean)
-              .join(' ')
-          : undefined
-      }
-      {...voice}
-      style={[
-        styles.card,
-        { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
-      ]}
-    >
-      {labelShown && (
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          {...voice}
-          style={[typeStyle('roundLabel', tokens), { color: colors.muted }]}
-        >
-          {label}
-        </Text>
-      )}
-      {children ?? (
-        <WholeWordsText
-          text={prompt}
-          typeRole="roundPrompt"
-          style={[typeStyle('roundPrompt', tokens), { color: colors.ink }]}
-          highlight={
-            highlight === undefined
-              ? undefined
-              : {
-                  range: highlight,
-                  style: {
-                    backgroundColor: colors.surfaceSunken,
-                    textDecorationLine: 'underline',
-                    textDecorationColor: colors.accent,
-                  },
-                }
-          }
-        />
-      )}
-      {definition !== undefined && (
-        <Text
-          testID="game-definition"
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          {...voice}
-          style={[typeStyle('roundExplanation', tokens), { color: colors.ink }]}
-        >
-          {definition}
-        </Text>
-      )}
-    </View>
   );
 }
 
@@ -825,7 +583,7 @@ function RoundHead({
     <View style={styles.head}>
       <Text
         testID={testID}
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
         {...(heading
           ? { accessibilityRole: 'header', accessibilityLabel: label }
           : { accessibilityElementsHidden: true, importantForAccessibility: 'no' })}
@@ -849,196 +607,12 @@ function RoundLabel({ label }: { label: string }) {
     <Text
       testID="game-prompt"
       accessibilityRole="header"
-      maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+      maxFontSizeMultiplier={roundLayout.textMaxFontScale}
       {...voice}
       style={[typeStyle('roundLabel', tokens), styles.label, { color: tokens.colors.muted }]}
     >
       {label}
     </Text>
-  );
-}
-
-/**
- * One option of a Round, the design's answer tile, 84 pt tall. Once the
- * Round is answered, the right option turns red, pops and takes the ink
- * stamp of a tick; a wrong choice sinks, mutes, drops and is struck through
- * with a red slash; the others fade. Under Reduce Motion nothing pops,
- * drops or slides: the stamp and the slash appear in place. Nothing shakes.
- * VoiceOver reads the option with its Stress, then «Правильно» or «Твій
- * вибір», and the faded ones as dimmed.
- */
-function AnswerOption({
-  option,
-  place,
-  answer,
-  onPress,
-}: {
-  option: RoundOption;
-  /** Its place among the options. */
-  place: number;
-  /** The Round's answer, once given. */
-  answer: Pick<PickAnswer, 'chosen' | 'correct'> | undefined;
-  onPress: () => void;
-}) {
-  const tokens = useTokens();
-  const { colors } = tokens;
-  const keyInk = useSchemeColors('light').ink;
-  const { strings, voice } = useEdition();
-  const look =
-    answer === undefined
-      ? 'rest'
-      : place === answer.correct
-        ? 'right'
-        : place === answer.chosen
-          ? 'wrong'
-          : 'dimmed';
-  const reduceMotion = useReduceMotion();
-  /** 0 before the answer, 1 once the option has popped, dropped or faded. */
-  const answered = useSharedValue(answer === undefined ? 0 : 1);
-  /** 0 before the answer, 1 once the stamp has landed or the slash is drawn. */
-  const marked = useSharedValue(answer === undefined ? 0 : 1);
-  // Whether the option showed an answer before, so only the answer given now moves.
-  const shownAnswered = useRef(answer !== undefined);
-
-  useEffect(() => {
-    if (look === 'rest' || shownAnswered.current) return;
-    shownAnswered.current = true;
-    answered.value = withTiming(1, look === 'right' ? RIGHT_FILL : WRONG_FILL);
-    marked.value = withTiming(1, look === 'right' ? STAMP_LANDING : SLASH_DRAWING);
-    // The shared values are stable, so only the answer given moves the option.
-  }, [look, answered, marked]);
-
-  const still = reduceMotion || look === 'rest';
-  const motion = useAnimatedStyle(() => {
-    if (look === 'dimmed')
-      return { opacity: 1 - (1 - DIMMED_OPACITY) * answered.value, transform: [] };
-    if (look === 'wrong')
-      return {
-        opacity: 1,
-        transform: still ? [] : [{ translateY: OPTION_DROP * answered.value }],
-      };
-    return {
-      opacity: 1,
-      transform: still ? [] : [{ scale: interpolate(answered.value, [0, 0.6, 1], OPTION_POP) }],
-    };
-  });
-  const testID = `game-option-${String(place)}`;
-  return (
-    <Animated.View testID={`${testID}-motion`} style={motion} {...voice}>
-      <PressedTile
-        testID={testID}
-        tone={look === 'right' ? 'accent' : look === 'wrong' ? 'none' : 'tile'}
-        radius={OPTION_RADIUS}
-        accessibilityLabel={[
-          stressLabel(strings.wordCard, option.text, option.stressedVowels),
-          look === 'right'
-            ? strings.game.round.correct
-            : look === 'wrong'
-              ? strings.game.round.chosen
-              : undefined,
-        ]
-          .filter(Boolean)
-          .join(', ')}
-        accessibilityState={{ disabled: look === 'dimmed' }}
-        inert={answer !== undefined}
-        onPress={onPress}
-        faceStyle={[styles.option, look === 'wrong' && { backgroundColor: colors.surfaceSunken }]}
-      >
-        <View style={styles.optionText}>
-          <WholeWordsText
-            text={option.text}
-            typeRole="roundOption"
-            style={[
-              typeStyle('roundOption', tokens),
-              { color: look === 'right' ? keyInk : look === 'wrong' ? colors.muted : colors.ink },
-            ]}
-          />
-        </View>
-        {look === 'right' && (
-          <Stamp landed={marked} still={reduceMotion} ink={keyInk} testID={testID} />
-        )}
-        {look === 'wrong' && (
-          <Slash drawn={marked} still={reduceMotion} color={colors.accent} testID={testID} />
-        )}
-      </PressedTile>
-    </Animated.View>
-  );
-}
-
-/**
- * The ink stamp on a right option: a tick in a ring, turned, that lands from
- * large and turned further (the Badge stamp's landing); under Reduce Motion
- * it fades in at rest. It carries `${testID}-stamp`.
- */
-function Stamp({
-  landed,
-  still,
-  ink,
-  testID,
-}: {
-  landed: SharedValue<number>;
-  still: boolean;
-  ink: string;
-  testID: string;
-}) {
-  const motion = useAnimatedStyle(() => {
-    const opacity = interpolate(landed.value, [0, 0.7], [0, 1], Extrapolation.CLAMP);
-    if (still) return { opacity, transform: [{ rotate: `${String(badgeStamp.turn)}deg` }] };
-    const scale = interpolate(landed.value, [0, 0.7, 1], [badgeStamp.from.scale, 0.92, 1]);
-    const turn = interpolate(
-      landed.value,
-      [0, 0.7],
-      [badgeStamp.from.turn, badgeStamp.turn],
-      Extrapolation.CLAMP,
-    );
-    return { opacity, transform: [{ scale }, { rotate: `${String(turn)}deg` }] };
-  });
-  return (
-    <Animated.View
-      testID={`${testID}-stamp`}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={[styles.stamp, { borderColor: ink }, motion]}
-    >
-      <Svg width={STAMP_TICK.width} height={STAMP_TICK.height} viewBox="0 0 26 22">
-        <Polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill={ink} />
-      </Svg>
-    </Animated.View>
-  );
-}
-
-/**
- * The red slash across a wrong choice, a little turned, drawn from the left;
- * under Reduce Motion it fades in whole. Its line carries `${testID}-slash`.
- */
-function Slash({
-  drawn,
-  still,
-  color,
-  testID,
-}: {
-  drawn: SharedValue<number>;
-  still: boolean;
-  color: string;
-  testID: string;
-}) {
-  const motion = useAnimatedStyle(() =>
-    still
-      ? { opacity: drawn.value, transform: [{ scaleX: 1 }] }
-      : { opacity: 1, transform: [{ scaleX: Math.min(drawn.value, 1) }] },
-  );
-  return (
-    <View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      pointerEvents="none"
-      style={styles.slashTrack}
-    >
-      <Animated.View
-        testID={`${testID}-slash`}
-        style={[styles.slash, { backgroundColor: color }, motion]}
-      />
-    </View>
   );
 }
 
@@ -1077,7 +651,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
       <Text
         testID="game-sheet-title"
         accessibilityRole="header"
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
         {...voice}
         style={[typeStyle('roundVerdict', tokens), styles.sheetTitle, { color: colors.ink }]}
       >
@@ -1097,14 +671,14 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
       {example === undefined ? null : (
         <View accessible {...voice}>
           <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={roundLayout.textMaxFontScale}
             style={[typeStyle('example', tokens), styles.example, { color: colors.ink }]}
           >
             {fill(strings.wordCard.example, { text: example.text })}
           </Text>
           {example.author === undefined ? null : (
             <Text
-              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={roundLayout.textMaxFontScale}
               style={[typeStyle('meta', tokens), styles.author, { color: colors.muted }]}
             >
               {fill(strings.wordCard.exampleAuthor, { author: example.author })}
@@ -1115,7 +689,7 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
       {explanation === undefined ? null : (
         <Text
           testID="game-sheet-explanation"
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
           {...voice}
           style={[typeStyle('roundExplanation', tokens), { color: colors.ink }]}
         >
@@ -1137,7 +711,8 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
-  options: { gap: roundLayout.gap },
+  // A Round of a form without options keeps one gap more under its content than a pick Round.
+  roundWithoutOptions: { paddingBottom: space[6] + space[5] },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1149,13 +724,13 @@ const styles = StyleSheet.create({
   progress: { flex: 1, gap: roundLayout.tightGap },
   segments: { flexDirection: 'row', gap: roundProgress.gap },
   segment: { flex: 1, height: roundProgress.height, transform: [{ skewX: roundProgress.skew }] },
-  lives: { flexDirection: 'row', gap: LIFE_GAP },
+  lives: { flexDirection: 'row', gap: roundHeader.lifeGap },
   timer: { marginTop: space[3], paddingHorizontal: space[4] },
   lifeLost: { position: 'absolute', top: -space[1], right: 0 },
   exit: {
     width: minTouchTarget,
     height: minTouchTarget,
-    borderRadius: EXIT_RADIUS,
+    borderRadius: roundHeader.exitRadius,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1167,46 +742,7 @@ const styles = StyleSheet.create({
   },
   headLabel: { flexShrink: 1 },
   headMascot: { flexShrink: 1, maxWidth: roundLayout.mascotShare, alignItems: 'flex-end' },
-  card: {
-    minHeight: 220,
-    justifyContent: 'center',
-    gap: space[4],
-    paddingVertical: roundLayout.cardPaddingVertical,
-    paddingHorizontal: space[6],
-    borderWidth: 1,
-  },
   label: { marginHorizontal: space[1] },
-  option: {
-    minHeight: OPTION_HEIGHT,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: space[2],
-    paddingLeft: OPTION_PADDING,
-    paddingRight: STAMP.side + STAMP.right + space[2],
-  },
-  optionText: { flex: 1 },
-  stamp: {
-    position: 'absolute',
-    right: STAMP.right,
-    top: STAMP.top,
-    width: STAMP.side,
-    height: STAMP.side,
-    borderWidth: STAMP.border,
-    borderRadius: STAMP.side / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  slashTrack: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    justifyContent: 'center',
-    paddingHorizontal: SLASH.inset,
-    transform: [{ rotate: `${String(SLASH.turn)}deg` }],
-  },
-  slash: { height: SLASH.thickness, transformOrigin: 'left' },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   // The board's banner title sits clear of the slant over the sheet, not on its low edge.
   sheetTitle: { marginTop: space[3] - capitalMarkRoom('roundVerdict') },

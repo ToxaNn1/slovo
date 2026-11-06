@@ -1,10 +1,10 @@
 import type { Example, Idiom, Word } from '@slovo/contracts';
 
 import type { PlayedRound, RoundAnswer } from './game';
-import type { FixedChip, RoundOption } from './game-mode';
+import type { RoundOption } from './game-mode';
+import { reviewAnswer } from './answer-forms';
 import { rowWordOption } from './guess-word';
 import { byKind } from '../entries/entry-kinds';
-import { renderStress, stressedVowelsOf } from '../entries/stress';
 
 /** What an item of the Game Review expands into, by the kind of the Entry the Round asked about. */
 export type GameReviewDetails =
@@ -102,18 +102,6 @@ const detailsOf = ({ entry, answer }: PlayedRound): GameReviewDetails =>
     tip: ({ explanation }) => ({ kind: 'tip', explanation }),
   });
 
-/** A chip that is one character, such as a letter of «Анаграми»; the words of «Склади вислів» are longer. */
-const isLetter = (chip: string) => Array.from(chip).length === 1;
-
-/** The letters tapped as one Word, each character that stays in place before the chip it precedes. */
-const lettersJoined = (tapped: readonly string[], fixed: readonly FixedChip[] = []) =>
-  tapped
-    .map(
-      (letter, place) =>
-        fixed.flatMap(({ at, text }) => (at === place ? [text] : [])).join('') + letter,
-    )
-    .join('');
-
 /**
  * The reader's answer instead of the right one, in the Round's form; nothing
  * on a right answer. Letter chips join into one Word, the characters that
@@ -126,26 +114,7 @@ function pickedOf(round: PlayedRound): GameReviewAnswer | undefined {
 
 function pickedOptionOf(round: PlayedRound): RoundOption | undefined {
   if (round.right) return undefined;
-  const { answer } = round;
-  switch (answer.form) {
-    case 'pick':
-      return round.form === 'pick' ? round.options[answer.chosen] : undefined;
-    case 'vowel': {
-      const tapped = { lemma: round.prompt, stress: [answer.chosen] };
-      return { text: renderStress(tapped), stressedVowels: stressedVowelsOf(tapped) };
-    }
-    case 'pairs': {
-      const cell = round.form === 'pairs' ? round.definitions[answer.definition] : undefined;
-      return cell === undefined ? undefined : plain(cell.shown);
-    }
-    case 'chips': {
-      if (round.form !== 'chips') return undefined;
-      const tapped = answer.chosen.flatMap((place) => round.chips[place] ?? []);
-      return plain(tapped.every(isLetter) ? lettersJoined(tapped, round.fixed) : tapped.join(' '));
-    }
-    case 'typed':
-      return plain(answer.typed.trim());
-  }
+  return reviewAnswer(round, round.answer);
 }
 
 /** The Game Review of the Rounds played: one item for each, in their order. */
