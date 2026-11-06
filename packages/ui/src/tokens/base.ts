@@ -146,8 +146,8 @@ export const typeRoles = {
   toast: role('ui', '600', 14, 19),
   /** The label of a toast's button. */
   toastAction: role('word', '800', 12, 12, 0, 'uppercase'),
-  /** The mark's label at the edge a swiped Entry card leaves. */
-  swipeEdge: role('word', '800', 12, 12, 1, 'uppercase'),
+  /** The mark's label in the wedge at the edge a swiped Entry card leaves (board 04). */
+  swipeEdge: role('word', '900', 26, 26, -0.5, 'uppercase'),
   /** The stamp a swipe leaves on a marked Entry card. */
   swipeStamp: role('word', '800', 18, 22, 2, 'uppercase'),
   /** The app's name beside the wedge at the top of the Feed. */
@@ -496,6 +496,36 @@ export const typeRoles = {
   categoryCount: role('ui', '500', 12, 12),
   /** A Correction Type's name on its tile of the Corrections rail. */
   correctionName: role('word', '800', 13, 15),
+  /** The kicker beside the icon tile on a rail screen's hero, «ВИПРАВЛЕННЯ · 4 приклади». */
+  railKicker: role('word', '700', 11, 11, 2),
+  /** A rail screen's title on its hero, «Суржик». */
+  railTitle: role('word', '900', 36, 36.7, -1),
+  /** The line under a rail screen's title. */
+  railDescription: role('ui', '500', 15, 21),
+  /** «РОЗІБРАНО 0 З 4» over a rail screen's progress bar. */
+  railProgress: role('word', '800', 11, 11, 1.5, 'uppercase'),
+  /** The add button on a Curated Collection's hero, «ДОДАТИ». */
+  railAdd: role('word', '900', 12, 12, 0.5, 'uppercase'),
+  /** The type chip on a Correction's card, «суржик». */
+  railChip: role('word', '700', 11, 11, 0.5),
+  /** A small label on a card: «ТАК ЧАСТО КАЖУТЬ», «УКРАЇНСЬКОЮ КРАЩЕ». */
+  railLabel: role('word', '700', 10, 10, 1.5, 'uppercase'),
+  /** The struck non-standard form on a Correction's card. */
+  railStruck: role('ui', '600', 18, 23.4),
+  /** The ink button on a Correction's card, «ЯК ПРАВИЛЬНО?». */
+  railButton: role('word', '900', 13, 13, 0, 'uppercase'),
+  /** The standard form in a Correction card's revealed block. */
+  railStandard: role('word', '900', 19, 22.8, -0.3),
+  /** The explanation in a Correction card's revealed block. */
+  railNote: role('ui', '500', 14, 19.6),
+  /** The Lemma on a word card of a Curated Collection's screen. */
+  railWord: role('word', '800', 19, 20.9),
+  /** The «ЗНАЮ» stamp on a known word's card. */
+  railKnown: role('word', '800', 10, 10, 1, 'uppercase'),
+  /** The Stress and part of speech on a word card. */
+  railMeta: role('ui', '500', 13, 13),
+  /** The Definition on a word card. */
+  railMeaning: role('ui', '400', 15, 21),
 } as const satisfies Record<string, TypeRoleSpec>;
 
 export type TypeRole = keyof typeof typeRoles;
@@ -615,6 +645,20 @@ export const wedges = {
     [1, 0.22],
     [1, 0.78],
     [0, 1],
+  ],
+  /** The ink «ЗНАЮ» wedge at a swiped card's left edge: its right edge narrower. */
+  swipeKnown: [
+    [0, 0],
+    [1, 0.18],
+    [1, 0.82],
+    [0, 1],
+  ],
+  /** The light «НЕ ЗНАЮ» wedge at a swiped card's right edge: its left edge narrower. */
+  swipeUnknown: [
+    [0, 0.18],
+    [1, 0],
+    [1, 1],
+    [0, 0.82],
   ],
   /** The Streak's mark in its pill: a cut gem, pointed at the top. */
   streak: [

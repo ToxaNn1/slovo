@@ -61,7 +61,7 @@ export interface EntryCardProps {
  * What an Entry card carries beside its content. With the `swipeMarks`
  * Feature Switch off, the action row: under a Word's card, at the bottom
  * inside the card of every other kind. With it on (ADR 0077, XSwipe), the
- * actions in the frame's top-right corner and the side swipes that set the
+ * actions in the card's top row, beside its kicker, and the side swipes that set the
  * Entry's Knowledge Mark, with its stamp and undo toast, while the Knowledge
  * switch is on. Self-check conceals either as it conceals the card.
  */
@@ -156,12 +156,13 @@ function EntryCardFace({
         <ConcealedProvider value={concealed}>{slots.actions}</ConcealedProvider>
       </RevealDetail>
     );
-  const cornerOf = (kind: typeof card.kind) =>
-    slots?.slot === 'corner' && (
-      <View style={styles.corner} testID={`${kind}-corner`}>
+  // The corner actions share the top row with the card's kicker (XSwipe bar 6), which its body draws.
+  const corner =
+    slots?.slot === 'corner' ? (
+      <View testID={`${card.kind}-corner`}>
         <ConcealedProvider value={concealed}>{slots.corner}</ConcealedProvider>
       </View>
-    );
+    ) : undefined;
 
   // The Word of the Day is the red shout card, which draws its own reveal button.
   if (card.kind === 'word' && card.wordOfTheDay !== undefined)
@@ -181,8 +182,8 @@ function EntryCardFace({
             onOpenCorrection={onOpenCorrection}
             onOpenSynonymRow={onOpenSynonymRow}
             onHistoryShown={onWordHistoryShown}
+            corner={corner}
           />
-          {cornerOf(card.kind)}
         </RevealFrame>
         {actionsOf(card.kind)}
       </EntryReveal>
@@ -218,20 +219,37 @@ function EntryCardFace({
             concealed={concealed}
             stressFalls={stressFalls}
             wordOfTheDayFont={wordOfTheDayFont}
+            corner={corner}
           />
         ) : card.kind === 'correction' ? (
-          <CorrectionCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
+          <CorrectionCardBody
+            card={card.model}
+            lemmaSize={lemmaSize}
+            concealed={concealed}
+            corner={corner}
+          />
         ) : card.kind === 'idiom' ? (
-          <IdiomCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
+          <IdiomCardBody
+            card={card.model}
+            lemmaSize={lemmaSize}
+            concealed={concealed}
+            corner={corner}
+          />
         ) : card.kind === 'synonymRow' ? (
           <SynonymRowCardBody
             card={card.model}
             lemmaSize={lemmaSize}
             concealed={concealed}
             onOpenWord={onOpenWord}
+            corner={corner}
           />
         ) : (
-          <TipCardBody card={card.model} lemmaSize={lemmaSize} concealed={concealed} />
+          <TipCardBody
+            card={card.model}
+            lemmaSize={lemmaSize}
+            concealed={concealed}
+            corner={corner}
+          />
         )}
         {concealed && (
           <Button
@@ -249,7 +267,6 @@ function EntryCardFace({
           />
         )}
         {card.kind !== 'word' && actionsOf(card.kind)}
-        {cornerOf(card.kind)}
       </RevealFrame>
       {card.kind === 'word' && actionsOf(card.kind)}
     </EntryReveal>
@@ -260,6 +277,4 @@ const styles = StyleSheet.create({
   // The border is the card's only elevation.
   card: { borderWidth: 1 },
   hero: { borderRadius: wordHero.radius, overflow: 'hidden' },
-  // Drawn last so it stays over the card's headline and takes its taps.
-  corner: { position: 'absolute', top: space[2], right: space[2] },
 });

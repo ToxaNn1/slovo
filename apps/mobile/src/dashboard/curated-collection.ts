@@ -12,6 +12,8 @@ export interface CuratedCollectionScreen {
    * read ends, `null` for an id with no screen (not on the rail, or the switch off).
    */
   readonly screen: Screen | null | undefined;
+  /** Its tile's place on the rail, which picks its pictogram; 0 once it left the rail. */
+  readonly place: number;
   /** «+ Додати»: copies it into the reader's Collections. */
   readonly add: () => void;
   /** Opens an Entry's card, which makes nothing Seen (ADR 0076). */
@@ -50,6 +52,10 @@ export function useCuratedCollectionScreen(collectionId: string): CuratedCollect
   return {
     // A read of a composition since reopened, or of another collection, is not shown.
     screen: read?.in === composition && read.id === collectionId ? read.screen : undefined,
+    place: Math.max(
+      0,
+      curatedCollections.rail.findIndex(({ collection }) => collection.id === collectionId),
+    ),
     add: () => {
       curatedCollections.add(collectionId).catch((error: unknown) => {
         logError('Could not copy a Curated Collection', error);

@@ -105,6 +105,36 @@ export const entryPanel = {
  */
 export const correctionCardLayout = { paddingTop: 28, exampleMark: 18 } as const;
 
+/**
+ * The mark's wedge at the edge a swiped Entry card leaves (board 04, XSwipe):
+ * how far down the card it sits, its padding at the card's edge and inside,
+ * the gap to its icon, the width of the light wedge's ink inset, and its icons' sides.
+ */
+export const swipeEdgeLayout = {
+  top: 160,
+  paddingVertical: 14,
+  paddingEdge: 20,
+  paddingInner: 26,
+  gap: 10,
+  inset: 4,
+  check: { width: 24, height: 20 },
+  bookmark: { width: 20, height: 22 },
+} as const;
+
+/**
+ * The stamp on a marked Entry card: it is pressed onto the card's bottom edge
+ * at the right, its lower part hanging below the card, so its upper part
+ * stays within the card's bottom padding and covers no text; its padding and
+ * its border.
+ */
+export const swipeStampLayout = {
+  right: 16,
+  bottom: -20,
+  paddingVertical: 4,
+  paddingHorizontal: 12,
+  border: 3,
+} as const;
+
 /** The side of each button of the action row under the Entry card, from the design. */
 export const actionButtonSize = 52;
 

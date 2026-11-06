@@ -132,7 +132,9 @@ export { MoodCheckIn } from './dashboard/MoodCheckIn';
 export { PreviousWords } from './dashboard/PreviousWords';
 export { CorrectionTypeRow } from './dashboard/CorrectionTypeRow';
 export { CorrectionTypesRail } from './dashboard/CorrectionTypesRail';
+export { CuratedCollectionRow } from './dashboard/CuratedCollectionRow';
 export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
+export { RailScreenHero } from './dashboard/RailScreenHero';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { LevelCard } from './progress/LevelCard';
@@ -142,14 +144,17 @@ export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
 export {
   cardSpace,
+  categoryTile,
   collectionCard,
   coreTokens,
+  correctionTile,
   dashboard,
   designTokens,
   feedHeader,
   disabledOpacity,
   minTouchTarget,
   onboardingLayout,
+  railScreen,
   rowPadding,
   signInButtonHeight,
   space,
@@ -178,6 +183,7 @@ export {
   PagerScrollView,
   usePageTurnActions,
   useTurnToNextPage,
+  useTurnToThisPage,
   VerticalPager,
   type VerticalPagerHandle,
 } from './primitives/VerticalPager';

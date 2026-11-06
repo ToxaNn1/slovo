@@ -38,9 +38,12 @@ export function ScreenTitle({ children }: { children: string }) {
 export function SectionLabel({
   children,
   style,
+  oneLine = false,
 }: {
   children: string;
   style?: StyleProp<TextStyle>;
+  /** Kept on one line, shrunk to fit rather than broken inside a word, where the room is short. */
+  oneLine?: boolean;
 }) {
   const tokens = useTokens();
   const { voice } = useEdition();
@@ -48,6 +51,7 @@ export function SectionLabel({
     <Text
       accessibilityRole="header"
       {...voice}
+      {...(oneLine ? { numberOfLines: 1, adjustsFontSizeToFit: true } : {})}
       style={[typeStyle('sectionLabel', tokens), { color: tokens.colors.muted }, style]}
     >
       {children}

@@ -25,6 +25,7 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 import { RevealDetail, useFlyingText } from './reveal';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 import { CategoryChip } from './CategoryChip';
+import { KickerRow } from './KickerRow';
 
 /**
  * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
@@ -48,6 +49,7 @@ export function WordCardBody({
   concealed,
   stressFalls,
   wordOfTheDayFont,
+  corner,
 }: {
   card: WordCardModel;
   /** On the card of the Word of the Day: the local day it is the Word of. */
@@ -66,10 +68,14 @@ export function WordCardBody({
   stressFalls: boolean;
   /** The calligraphic font family the Lemma is set in on the card of the Word of the Day. */
   wordOfTheDayFont: string | undefined;
+  /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
+  corner: ReactNode | undefined;
 }) {
   return (
     <>
-      {wordOfTheDay === undefined ? null : <WordOfTheDayBadge day={wordOfTheDay} />}
+      <KickerRow testID="word-kicker-row" corner={corner}>
+        {wordOfTheDay === undefined ? null : <WordOfTheDayBadge day={wordOfTheDay} />}
+      </KickerRow>
       <WordHeadline
         card={card}
         lemmaSize={lemmaSize}

@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import { selfCheckTipCard, withoutStress, type TipCardModel } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { KickerRow } from './KickerRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
@@ -25,12 +27,15 @@ export function TipCardBody({
   card,
   lemmaSize,
   concealed,
+  corner,
 }: {
   card: TipCardModel;
   /** The Lemma's size at the user's font size, which the standard form takes. */
   lemmaSize: TextSize;
   /** Self-check: only the title, its chip and the non-standard form. */
   concealed: boolean;
+  /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
+  corner: ReactNode | undefined;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -45,6 +50,7 @@ export function TipCardBody({
 
   return (
     <>
+      <KickerRow testID="tip-kicker-row" corner={corner} />
       <View
         accessible
         accessibilityRole="header"

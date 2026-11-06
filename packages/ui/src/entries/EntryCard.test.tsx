@@ -924,6 +924,67 @@ describe('the corner of an Entry card', () => {
     expect(screen.queryByTestId('word-actions')).toBeNull();
   });
 
+  it('sets the corner in one row beside the kicker of the Word of the Day, never over it', async () => {
+    await render(
+      inEdition(
+        <EntryCard
+          card={{ ...wordWithEverything, wordOfTheDay: { year: 2026, month: 11, day: 5 } }}
+          slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+        />,
+      ),
+    );
+
+    const row = screen.getByTestId('word-kicker-row');
+    expect(within(row).getByTestId('word-of-the-day-badge')).toBeOnTheScreen();
+    expect(within(row).getByTestId('word-corner')).not.toHaveStyle({ position: 'absolute' });
+    expect(within(row).queryByTestId('word-lemma')).toBeNull();
+  });
+
+  it('keeps the Correction kicker whole on one line beside the corner, its type chip going under it when short of room', async () => {
+    await render(
+      inEdition(
+        <EntryCard card={card} slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }} />,
+      ),
+    );
+
+    // Squeezed by the chip and the corner tiles, the kicker shrinks to fit rather than break inside its word.
+    const title = within(screen.getByTestId('correction-kicker-row')).getByText('Correction');
+    expect(title).toHaveProp('numberOfLines', 1);
+    expect(title).toHaveProp('adjustsFontSizeToFit', true);
+    expect(screen.getByTestId('correction-kicker')).toHaveStyle({ flexWrap: 'wrap' });
+    expect(
+      within(screen.getByTestId('correction-kicker')).getByTestId('correction-type'),
+    ).toBeOnTheScreen();
+  });
+
+  it.each<[string, EntryFeedCard, string | null]>([
+    ['correction', card, 'Correction'],
+    ['idiom', { kind: 'idiom', entryId: 'i1', model: idiomCard() }, null],
+    ['word', wordWithEverything, null],
+  ])(
+    'gives the corner of the %s card a row of its own over the headline, beside its kicker if any',
+    async (kind, entry, kicker) => {
+      await render(
+        inEdition(
+          <EntryCard
+            card={entry}
+            slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+          />,
+        ),
+      );
+
+      const row = screen.getByTestId(`${kind}-kicker-row`);
+      expect(within(row).getByTestId(`${kind}-corner`)).not.toHaveStyle({ position: 'absolute' });
+      if (kicker !== null) expect(within(row).getByText(kicker)).toBeOnTheScreen();
+    },
+  );
+
+  it('draws no kicker row without a corner', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    expect(screen.queryByTestId('correction-kicker-row')).toBeNull();
+  });
+
   it('has no corner when none is given', async () => {
     await render(inEdition(<EntryCard card={wordWithEverything} />));
 

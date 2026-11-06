@@ -1,0 +1,13 @@
+# A marked card flies off and the Feed turns on
+
+The owner's test pass of spec #1578 (2026-11-05) found the side swipe of ADR 0077 felt frozen: after a mark the card sprang back to its place, nudged up and showed a «ВГОРУ — НАСТУПНЕ» chip beside the undo toast, and its stamp landed over the Definition. Board 04 (`XSwipe.dc.html`) draws none of that: the marked card flies off and the next one comes up. This amends ADR 0077.
+
+**Fly-off.** A release past 40% of the card's width, or a fling of at least 800 points per second the way the card goes, sets the mark. Short of that the card springs back with no mark, a drag brought back under the threshold and a flick back towards the middle included. The owner's test pass of 2026-11-06 found the first rule, 90 points or a fling either way, set a mark when the reader only dragged the card to look at «ЗНАЮ». When the card's page has a next page, the card flies off its side to ±520 points in 0.3 s on the board's curve, `cubic-bezier(.4, 0, 1, 1)`, and the pager turns to the next Entry. Anything less springs back as before. On the last page, or outside a pager, a mark springs the card back, since there is nothing to turn to. A swipe to the mark already shown still writes nothing, but the card flies off and the pager turns on all the same: the swipe also means "next". Under Reduce Motion the card stays in place and the pager turns at once with its own cross-fade, the one short fade of ADR 0055. A VoiceOver mark action does not turn the page; VoiceOver has its own "next" action.
+
+**No chip, no nudge.** The «ВГОРУ — НАСТУПНЕ» chip, its string `knowledge.swipe.next` and the nudge go: no board draws them, and the card moving on does their work.
+
+**Undo toast.** The toast of a mark that turns the pager shows once the next Entry comes in, so the Feed's rule that a page turn closes the toast leaves it alone. Its undo turns the pager back to the marked card, brings the card in from the side it left by, and restores the record as ADR 0077 says.
+
+**Edge wedges.** The «ЗНАЮ» and «НЕ ЗНАЮ» labels are the board's wedges, drawn inside the card 160 points from its top, so they move and tilt with it and slide in from the edge as the drag nears the threshold, fully in at it, so a wedge fully in means a release sets the mark.
+
+**Stamp placement.** ADR 0077 keeps the stamp, but the board gives it no place. It is pressed onto the card's bottom edge at the right, its lower part hanging below the card: there it covers no text on any kind of card, since the card's bottom padding (24 to 26 points) holds its upper part. The top edge was rejected because the Feed's header lies right above the card, and the kicker row because the corner buttons and the kicker fill it.

@@ -86,7 +86,7 @@ let composition: Composition;
 /**
  * The app of a new reader on 2026-10-28 in Kyiv, with the Onboarding over the
  * home as the root layout draws it. Today's Word of the Day is сумирний,
- * yesterday's лагідний, and the Edition turns the Curated Collections rail on,
+ * yesterday's лагідний, the gestures hint has been shown, and the Edition turns the Curated Collections rail on,
  * which the UA Edition ships off till a content spec (ADR 0076).
  */
 async function renderApp() {
@@ -102,6 +102,9 @@ async function renderApp() {
     {
       wordOfTheDay: { entryId: 'w_sumyrnyi', date: '2026-10-28' },
       wordOfTheDayArchive: { '2026-10-27': 'w_lahidnyi' },
+      // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
+      // the sheet is open, which settling every timer would never finish. It has its own test.
+      gesturesHintShown: true,
     },
     { clock },
   );
@@ -138,7 +141,7 @@ async function renderApp() {
     remoteSwitches: switchedTo(editionInEffect),
     composition: opened(composition),
   });
-  await renderRouter(
+  const app = renderRouter(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
@@ -164,7 +167,9 @@ async function renderApp() {
     },
     { initialUrl: '/' },
   );
+  await app;
   await settle();
+  return { pathname: () => app.getPathname() };
 }
 
 beforeEach(() => {
@@ -194,8 +199,8 @@ async function back(testID: string) {
 
 // Spec #1564, ticket #1575: one walk over every block of the Dashboard (ADR 0076).
 describe('the whole Dashboard', () => {
-  it('walks onboarding → hero → Mood → «Попередні слова» → Correction Type → Curated Collection → «До картки →» Feed', async () => {
-    await renderApp();
+  it('walks onboarding → hero → Mood → «Попередні слова» → Correction Type → Curated Collection → «До картки →» Feed → wordmark → Dashboard', async () => {
+    const app = await renderApp();
 
     // Onboarding, the quickest way through: it lands on the Dashboard.
     expect(screen.getByText(steps.welcome.title)).toBeTruthy();
@@ -258,5 +263,13 @@ describe('the whole Dashboard', () => {
     await waitFor(() => {
       expect(composition.feed.cards[composition.feed.position]?.entryId).toBe('w_sumyrnyi');
     });
-  });
+
+    // The wordmark of the Feed's header leads back to the Dashboard (ADR 0079).
+    screenSettled();
+    await settle(() =>
+      fireEvent.press(screen.getByRole('button', { name: editionStrings.dashboard.open })),
+    );
+    expect(app.pathname()).toBe('/');
+    // The whole app, walked screen by screen: longer than one screen's test on a busy machine.
+  }, 20_000);
 });

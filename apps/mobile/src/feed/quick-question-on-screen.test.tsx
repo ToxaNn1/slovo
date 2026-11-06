@@ -84,7 +84,9 @@ function word(id: string, lemma: string): Word {
  * onboarding with the facts given, on 2026-10-28 in Kyiv.
  */
 async function open(facts: UserStateFacts) {
-  userState = await seedUserState(facts, { clock });
+  // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
+  // the sheet is open, which settling every timer would never finish. It has its own test.
+  userState = await seedUserState({ ...facts, gesturesHintShown: true }, { clock });
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'emotions-character', displayName: 'Емоції' }],

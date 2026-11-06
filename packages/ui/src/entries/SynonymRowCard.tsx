@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import {
   selfCheckSynonymRowCard,
   stressLabel,
@@ -7,6 +8,7 @@ import {
 } from '@slovo/core';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { KickerRow } from './KickerRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
@@ -33,6 +35,7 @@ export function SynonymRowCardBody({
   lemmaSize,
   concealed,
   onOpenWord,
+  corner,
 }: {
   card: SynonymRowCardModel;
   /** The Lemma's size at the user's font size, which the dominant takes. */
@@ -41,6 +44,8 @@ export function SynonymRowCardBody({
   concealed: boolean;
   /** Opens the Word a linked member names, Hidden or out of the Mix alike. */
   onOpenWord: ((wordId: string) => void) | undefined;
+  /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
+  corner: ReactNode | undefined;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -57,6 +62,7 @@ export function SynonymRowCardBody({
 
   return (
     <>
+      <KickerRow testID="synonymRow-kicker-row" corner={corner} />
       <View
         accessible
         accessibilityRole="header"

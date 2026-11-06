@@ -1,6 +1,8 @@
+import type { ReactNode } from 'react';
 import { withoutStress, type IdiomCardModel } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { KickerRow } from './KickerRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
@@ -25,12 +27,15 @@ export function IdiomCardBody({
   card,
   lemmaSize,
   concealed,
+  corner,
 }: {
   card: IdiomCardModel;
   /** The Lemma's size at the user's font size, which the expression takes. */
   lemmaSize: TextSize;
   /** Self-check: only the expression and its chip. */
   concealed: boolean;
+  /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
+  corner: ReactNode | undefined;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -47,6 +52,7 @@ export function IdiomCardBody({
 
   return (
     <>
+      <KickerRow testID="idiom-kicker-row" corner={corner} />
       <View
         accessible
         accessibilityRole="header"

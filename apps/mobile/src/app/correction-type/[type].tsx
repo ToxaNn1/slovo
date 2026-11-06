@@ -1,12 +1,20 @@
-import { CorrectionTypeSchema, type CorrectionType } from '@slovo/contracts';
+import { CorrectionTypeSchema, fill, type CorrectionType } from '@slovo/contracts';
 import type { CorrectionTypeRow as Row } from '@slovo/core';
-import { BackLink, CorrectionTypeRow, ScreenTitle, space, useTokens } from '@slovo/ui';
+import {
+  correctionTile,
+  CorrectionTypeRow,
+  railScreen,
+  RailScreenHero,
+  useEdition,
+  useTokens,
+} from '@slovo/ui';
 import { Redirect, useLocalSearchParams, useRouter } from 'expo-router';
 import { FlatList, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useCorrectionTypeScreen } from '@/dashboard/correction-type';
 import { editionStrings } from '@/edition/edition';
+
+const words = editionStrings.dashboard.correctionTypes;
 
 /** A Correction Type's screen, from its tile on the Dashboard; an unknown type returns home. */
 export default function CorrectionTypeRoute() {
@@ -14,17 +22,21 @@ export default function CorrectionTypeRoute() {
   return parsed.success ? <CorrectionTypeScreen type={parsed.data} /> : <Redirect href="/" />;
 }
 
-/** The type's name over its Corrections, each revealed in place with «Як правильно?» (ADR 0076). */
+/**
+ * The type's red hero over its Corrections, each revealed in place with
+ * «Як правильно?» (ADR 0076), as the board's «fix» screen draws it.
+ */
 function CorrectionTypeScreen({ type }: { type: CorrectionType }) {
-  const { title, rows, reveal } = useCorrectionTypeScreen(type);
+  const { title, description, place, rows, reveal } = useCorrectionTypeScreen(type);
   const { colors } = useTokens();
+  const { count } = useEdition();
   const router = useRouter();
+  const total = rows?.length ?? 0;
+  const done = rows?.filter(({ workedThrough }) => workedThrough).length ?? 0;
+  const glyph =
+    correctionTile.glyphs[place % correctionTile.glyphs.length] ?? correctionTile.glyphs[0];
   return (
-    <SafeAreaView
-      testID="correction-type"
-      edges={['top']}
-      style={[styles.screen, { backgroundColor: colors.background }]}
-    >
+    <View testID="correction-type" style={[styles.screen, { backgroundColor: colors.background }]}>
       <FlatList<Row>
         data={rows}
         keyExtractor={({ correction }) => correction.id}
@@ -38,30 +50,39 @@ function CorrectionTypeScreen({ type }: { type: CorrectionType }) {
           />
         )}
         ListHeaderComponent={
-          <>
-            <View style={styles.bar}>
-              <BackLink
-                testID="correction-type-back"
-                label={editionStrings.tabs.home}
-                onPress={() => {
-                  router.back();
-                }}
-              />
-            </View>
-            <View style={styles.header}>
-              <ScreenTitle>{title}</ScreenTitle>
-            </View>
-          </>
+          <RailScreenHero
+            id="correction-type-hero"
+            glyph={glyph}
+            kicker={fill(words.kicker, { count: count(words.examples, total) })}
+            title={title}
+            description={description}
+            progress={fill(words.workedThrough, { x: String(done), n: String(total) })}
+            done={total === 0 ? 0 : done / total}
+            mascot="shouts"
+            back={{
+              testID: 'correction-type-back',
+              label: editionStrings.tabs.home,
+              onPress: () => {
+                router.back();
+              },
+            }}
+          />
         }
+        ListHeaderComponentStyle={styles.hero}
+        ItemSeparatorComponent={Gap}
         contentContainerStyle={styles.content}
       />
-    </SafeAreaView>
+    </View>
   );
+}
+
+function Gap() {
+  return <View style={styles.gap} />;
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  bar: { paddingLeft: space[3], paddingTop: space[2] },
-  header: { paddingHorizontal: space[6], paddingTop: space[2], paddingBottom: space[2] },
-  content: { paddingBottom: space[8] },
+  hero: { marginHorizontal: -railScreen.list.side, marginBottom: railScreen.list.top },
+  content: { paddingHorizontal: railScreen.list.side, paddingBottom: railScreen.list.bottom },
+  gap: { height: railScreen.list.gap },
 });

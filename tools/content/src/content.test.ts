@@ -284,14 +284,20 @@ const unstressed = (text: string) =>
     .normalize('NFD')
     .replace(/\u0301/g, '')
     .normalize('NFC');
-/** The first of the Entries whose text no other Entry of the list shares. */
+/** The Entries a Curated Collection names, which a test that retires or breaks one leaves alone. */
+const inCuratedCollections = new Set(
+  authored.curatedCollections.flatMap(({ entry }) => entry.entryIds),
+);
+/** The first of the Entries whose text no other Entry of the list shares, named by no Curated Collection. */
 function single<E extends { id: string }>(
   authoredEntries: readonly { entry: E }[],
   text: (entry: E) => string,
 ): E {
   const entries = authoredEntries.map(({ entry }) => entry);
   const found = entries.find(
-    (one) => entries.filter((other) => text(other) === text(one)).length === 1,
+    (one) =>
+      !inCuratedCollections.has(one.id) &&
+      entries.filter((other) => text(other) === text(one)).length === 1,
   );
   if (found === undefined) throw new Error('No Entry with a text of its own');
   return found;
@@ -467,8 +473,11 @@ describe('pnpm content check', () => {
   });
 
   it('reports every problem of the Edition, each in its file and field', () => {
-    const wordFile = ukrainian.entryFile(registry().find((id) => id.startsWith('w_')) ?? '');
-    const correctionFile = ukrainian.entryFile(registry().find((id) => id.startsWith('c_')) ?? '');
+    // Entries no Curated Collection names, whose breaking would add the collection's own problem.
+    const free = (prefix: string) =>
+      registry().find((id) => id.startsWith(prefix) && !inCuratedCollections.has(id)) ?? '';
+    const wordFile = ukrainian.entryFile(free('w_'));
+    const correctionFile = ukrainian.entryFile(free('c_'));
     const word = readJson(wordFile) as Record<string, unknown>;
     writeFileSync(join(editionDir, wordFile), JSON.stringify({ ...word, rarity: 9 }));
     writeFileSync(join(editionDir, correctionFile), '{');

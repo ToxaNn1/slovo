@@ -11,6 +11,7 @@ import { AccentGround } from '../entries/AccentGround';
 import { firstLetter } from '../entries/WordHero';
 import { Mascot } from '../primitives/Mascot';
 import { PressedTile } from '../primitives/PressedTile';
+import { WholeWordsText } from '../primitives/WholeWordsText';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
@@ -95,20 +96,22 @@ function RevealedWord({ hero }: { hero: Extract<WordOfTheDayHero, { state: 'reve
   const rarity = fill(strings.dashboard.rarity, { rarity: String(hero.rarity) });
   return (
     <>
-      <Text
-        testID="dashboard-hero-lemma"
-        {...voice}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        accessibilityLabel={stressLabel(
-          strings.wordCard,
-          hero.lemmaWithStress,
-          hero.stressedVowels,
-        )}
-        style={[typeStyle('dashboardLemma', tokens), styles.lemma, { color: keyInk }]}
-      >
-        {withoutStress(hero.lemmaWithStress)}
-      </Text>
+      {/* Measured to fit the line: `adjustsFontSizeToFit` alone let a long Lemma such as «ВЕРБОЛІЗ» run past the edge on iOS. */}
+      <View style={styles.lemma}>
+        <WholeWordsText
+          testID="dashboard-hero-lemma"
+          {...voice}
+          text={withoutStress(hero.lemmaWithStress)}
+          typeRole="dashboardLemma"
+          numberOfLines={1}
+          accessibilityLabel={stressLabel(
+            strings.wordCard,
+            hero.lemmaWithStress,
+            hero.stressedVowels,
+          )}
+          style={[typeStyle('dashboardLemma', tokens), { color: keyInk }]}
+        />
+      </View>
       <HeroText role="dashboardWordLine" style={styles.line}>
         {fill(strings.dashboard.wordLine, {
           stress: hero.lemmaWithStress,

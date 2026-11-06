@@ -135,6 +135,14 @@ function FeedScreen() {
           wordmark={edition.displayName}
           today={todayText(feed.today, editionStrings)}
           streak={<StatsPillAndSheet />}
+          // The Feed opened from the Dashboard leads back to it by its wordmark (ADR 0079).
+          onOpenDashboard={
+            shown.dashboardWordmark
+              ? () => {
+                  openScreen('/');
+                }
+              : undefined
+          }
         />
         <View pointerEvents="box-none" style={styles.tools}>
           <XpBarToGame />

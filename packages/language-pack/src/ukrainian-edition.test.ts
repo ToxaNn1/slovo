@@ -20,7 +20,7 @@ describe('the UA Edition', () => {
     });
   });
 
-  it('turns every Feature Switch on but the paused Seasonal Decor and calligraphy', () => {
+  it('turns every Feature Switch on but the paused Seasonal Decor, calligraphy, Pronunciation and Search button', () => {
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
     expect(edition.isFeatureEnabled('synonymRows')).toBe(true);
@@ -32,7 +32,9 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('notifications')).toBe(true);
     expect(edition.isFeatureEnabled('widget')).toBe(true);
     expect(edition.isFeatureEnabled('shareCards')).toBe(true);
-    expect(edition.isFeatureEnabled('pronunciation')).toBe(true);
+    // Paused for the owner's test pass: the Pronunciation button and the Feed's Search button.
+    expect(edition.isFeatureEnabled('pronunciation')).toBe(false);
+    expect(edition.isFeatureEnabled('searchButton')).toBe(false);
     expect(edition.isFeatureEnabled('wordOfTheDay')).toBe(true);
     expect(edition.isFeatureEnabled('statistics')).toBe(true);
     expect(edition.isFeatureEnabled('knowledge')).toBe(true);

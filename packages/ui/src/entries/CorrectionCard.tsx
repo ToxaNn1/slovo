@@ -13,6 +13,7 @@ import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { CategoryChip } from './CategoryChip';
+import { KickerRow } from './KickerRow';
 import { DetailSection, ExampleText } from './WordCard';
 
 /**
@@ -32,12 +33,15 @@ export function CorrectionCardBody({
   card,
   lemmaSize: mainSize,
   concealed,
+  corner,
 }: {
   card: CorrectionCardModel;
   /** The Lemma's size at the user's font size, which the main standard equivalent takes. */
   lemmaSize: TextSize;
   /** Self-check: only the non-standard form and the question. */
   concealed: boolean;
+  /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
+  corner: ReactNode | undefined;
 }) {
   const tokens = useTokens();
   const { colors, radii } = tokens;
@@ -53,17 +57,22 @@ export function CorrectionCardBody({
 
   return (
     <>
-      <View style={styles.header}>
-        <SectionLabel style={styles.title}>{strings.title}</SectionLabel>
-        {concealed ? null : (
-          <LabelChip
-            testID="correction-type"
-            text={correctionType}
-            accessibilityLabel={fill(strings.correctionType, { type: correctionType })}
-            size="roomy"
-          />
-        )}
-      </View>
+      <KickerRow testID="correction-kicker-row" corner={corner}>
+        {/* The kicker never breaks inside its word: it keeps one line, and the chip goes under it when short of room. */}
+        <View testID="correction-kicker" style={styles.header}>
+          <SectionLabel oneLine style={styles.title}>
+            {strings.title}
+          </SectionLabel>
+          {concealed ? null : (
+            <LabelChip
+              testID="correction-type"
+              text={correctionType}
+              accessibilityLabel={fill(strings.correctionType, { type: correctionType })}
+              size="roomy"
+            />
+          )}
+        </View>
+      </KickerRow>
       <NonStandardForm
         testID="correction-non-standard"
         form={card.nonStandardForm}
@@ -307,6 +316,7 @@ const SOURCE_SEPARATOR = '; ';
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: space[3],

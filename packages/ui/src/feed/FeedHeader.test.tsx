@@ -9,9 +9,13 @@ const strings = testStrings({
     pillLabel: { one: 'Stats: {count} day', other: 'Stats: {count} days' },
     pillLabelWithoutStreak: 'Stats',
   },
+  dashboard: { open: 'SLOVO, home' },
 });
 
-async function renderHeader({ hideStreak = false } = {}) {
+async function renderHeader({
+  hideStreak = false,
+  onOpenDashboard,
+}: { hideStreak?: boolean; onOpenDashboard?: () => void } = {}) {
   const onPress = jest.fn();
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
@@ -19,6 +23,7 @@ async function renderHeader({ hideStreak = false } = {}) {
         wordmark="SLOVO"
         today="Mon, 2 November"
         streak={<StatsPill streak={12} hideStreak={hideStreak} onPress={onPress} />}
+        onOpenDashboard={onOpenDashboard}
       />
     </EditionProvider>,
   );
@@ -44,5 +49,18 @@ describe('FeedHeader', () => {
     await renderHeader({ hideStreak: true });
     expect(screen.getByRole('button', { name: 'Stats' })).toBeTruthy();
     expect(screen.queryByText('12')).toBeNull();
+  });
+
+  it('opens the Dashboard from the wordmark when it is given a way there', async () => {
+    const onOpenDashboard = jest.fn();
+    await renderHeader({ onOpenDashboard });
+    expect(screen.queryByRole('header', { name: 'SLOVO' })).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: 'SLOVO, home' }));
+    expect(onOpenDashboard).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the wordmark a plain header without a way to the Dashboard', async () => {
+    await renderHeader();
+    expect(screen.queryByRole('button', { name: 'SLOVO, home' })).toBeNull();
   });
 });

@@ -2,27 +2,34 @@
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
 import type { KnowledgeMark } from '@slovo/core';
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
-  withDelay,
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
+import Svg, { Path, Polygon } from 'react-native-svg';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { PageActionsProvider, useTurnToNextPage } from '../primitives/VerticalPager';
+import {
+  PageActionsProvider,
+  useIsPageOnScreen,
+  useTurnToNextPage,
+  useTurnToNextPageOnUI,
+  useTurnToThisPage,
+} from '../primitives/VerticalPager';
 import { useUndoToast } from '../primitives/UndoToast';
+import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useHaptics } from '../providers/HapticsProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { minTouchTarget, motion, space, typeStyle } from '../tokens';
+import { swipeEdgeLayout, swipeStampLayout, typeStyle, wedges } from '../tokens';
 
 /** The side swipes of an Entry card, under the `swipeMarks` Feature Switch (ADR 0077). */
 export interface EntrySwipe {
@@ -34,17 +41,28 @@ export interface EntrySwipe {
   readonly onUndo: () => void;
 }
 
-/** How far, in points, the card goes before a release sets the mark. */
-export const MARK_DISTANCE = 90;
-/** How fast, in points per second, a fling towards a side sets the mark from any distance. */
+/**
+ * The share of the card's width it goes before a release sets the mark (owner 06.11):
+ * short of it the reader is only looking at the edge label, and the card springs back.
+ */
+export const MARK_SHARE = 0.4;
+/** The card's width until its first layout, a phone's card. */
+const UNMEASURED_WIDTH = 360;
+/** How fast, in points per second, a fling the way the card goes sets the mark from any distance. */
 export const MARK_VELOCITY = 800;
-/** Where an undone card comes back from, in points. */
-const UNDO_FROM = 420;
+/** Where a marked card flies to, off screen, and where an undone one comes back from (board 04). */
+const OFF_SCREEN = 520;
 
 /** The card springs back to its place on the design's curve. */
 const BACK = {
   duration: 420,
   easing: Easing.bezier(0.2, 1, 0.3, 1),
+  reduceMotion: ReduceMotion.Never,
+};
+/** A marked card flies off in 0.3 s, gathering speed as it leaves (board 04, ADR 0078). */
+const FLY = {
+  duration: 300,
+  easing: Easing.bezier(0.4, 0, 1, 1),
   reduceMotion: ReduceMotion.Never,
 };
 const FADE = { duration: 200, easing: Easing.linear, reduceMotion: ReduceMotion.Never };
@@ -54,28 +72,34 @@ const STAMP_LANDS = {
   easing: Easing.out(Easing.quad),
   reduceMotion: ReduceMotion.Never,
 };
-/** Under Reduce Motion the chip comes in as the one short fade of ADR 0055. */
-const CHIP_FADE = {
-  duration: motion.reduceMotion.duration,
-  easing: Easing.bezier(...motion.reduceMotion.easing),
-  reduceMotion: ReduceMotion.Never,
-};
-const NUDGE_STEP = {
-  duration: 275,
-  easing: Easing.inOut(Easing.quad),
-  reduceMotion: ReduceMotion.Never,
-};
+// hidden: not on board 04, owner 05.11. The «ВГОРУ — НАСТУПНЕ» chip's fade and the card's nudge.
+// /** Under Reduce Motion the chip comes in as the one short fade of ADR 0055. */
+// const CHIP_FADE = {
+//   duration: motion.reduceMotion.duration,
+//   easing: Easing.bezier(...motion.reduceMotion.easing),
+//   reduceMotion: ReduceMotion.Never,
+// };
+// const NUDGE_STEP = {
+//   duration: 275,
+//   easing: Easing.inOut(Easing.quad),
+//   reduceMotion: ReduceMotion.Never,
+// };
 
 /**
  * Wraps an Entry card in its side swipes: right marks the Entry Known, left
- * Unknown. The card follows the finger and tilts, with the mark's label at
- * the edge it leaves; a release past 90 points or a fling sets the mark,
- * anything less springs back. A marked card carries its stamp, an undo toast
- * shows for 4 s, and while a next Entry waits the card nudges up once and a
- * chip points to it. A swipe to the mark the card already shows changes
- * nothing. Concealed under Self-check, the card takes no side swipe. Under
- * Reduce Motion the card stays in place and the labels and stamp only fade.
- * VoiceOver reads both marks as actions of the card, beside its page turns.
+ * Unknown. The card follows the finger and tilts, and the mark's wedge slides
+ * in from the edge it leaves, fully in where a release sets the mark: past
+ * 40% of the card's width, or a fling the way the card goes. In a pager with
+ * a next page the card then flies off its side in 0.3 s and the pager turns
+ * to the next Entry, elsewhere it springs back, as it does on anything less,
+ * a drag brought back short of the threshold or flicked back towards the
+ * middle included (ADR 0078). The undo toast shows for 4 s; its undo turns
+ * back to the card and brings it in from its side. A marked card carries its
+ * stamp on its bottom edge. A swipe to the mark the card already shows
+ * changes nothing. Concealed under Self-check, the card takes no side swipe.
+ * Under Reduce Motion the card stays in place, the wedges and stamp only fade
+ * and the pager's own cross-fade turns the page. VoiceOver reads both marks
+ * as actions of the card, beside its page turns.
  */
 export function SwipeMarks({
   swipe,
@@ -97,16 +121,36 @@ export function SwipeMarks({
   const haptics = useHaptics();
   const showToast = useUndoToast();
   const turnToNext = useTurnToNextPage();
+  const turnToNextOnUI = useTurnToNextPageOnUI();
+  const turnBackHere = useTurnToThisPage();
+  const onScreen = useIsPageOnScreen();
   const { mark, onMark, onUndo } = swipe;
 
   const offset = useSharedValue(0);
   const drag = useSharedValue(0);
-  const lift = useSharedValue(0);
+  /** How far the card goes before a release sets the mark: 40% of its width. */
+  const markDistance = useSharedValue(UNMEASURED_WIDTH * MARK_SHARE);
+  /** The card is flying off after a mark, and takes no drag until it is back. */
+  const flying = useSharedValue(false);
+  /** The wedges' widths, which they slide by to come in from beyond the card's edges. */
+  const knownWidth = useSharedValue(0);
+  const unknownWidth = useSharedValue(0);
   const stamp = useSharedValue(mark === undefined ? 0 : 1);
-  // The chip shows on the page the mark was set on, until that page stops being current.
-  const [markedOn, setMarkedOn] = useState<(() => void) | undefined>(undefined);
-  const latest = useRef({ mark, onMark, onUndo, turnToNext });
-  latest.current = { mark, onMark, onUndo, turnToNext };
+  // hidden: not on board 04, owner 05.11. The nudge's lift and the page the chip shows on.
+  // const lift = useSharedValue(0);
+  // const [markedOn, setMarkedOn] = useState<(() => void) | undefined>(undefined);
+  const latest = useRef({ mark, onMark, onUndo, turnToNext, turnBackHere });
+  latest.current = { mark, onMark, onUndo, turnToNext, turnBackHere };
+  /** The mark whose toast waits for the next Entry to come in. */
+  const toastAfterTurn = useRef<KnowledgeMark | undefined>(undefined);
+
+  // A card that flew off is back in its place, unseen, once its page leaves the screen.
+  useEffect(() => {
+    if (onScreen) return;
+    flying.value = false;
+    offset.value = 0;
+    drag.value = 0;
+  }, [drag, flying, offset, onScreen]);
 
   // The stamp lands each time the card's mark changes, from a swipe, a VoiceOver action or its «⋯» sheet.
   const stamped = useRef(mark);
@@ -128,41 +172,80 @@ export function SwipeMarks({
     [correction],
   );
 
-  const setMark = useCallback(
+  const showMarkToast = useCallback(
     (to: KnowledgeMark) => {
-      const current = latest.current;
-      if (current.mark === to) return;
-      haptics.selection();
-      current.onMark(to);
-      if (current.turnToNext !== undefined) {
-        setMarkedOn(() => current.turnToNext);
-        if (!reduceMotion)
-          lift.value = withDelay(
-            550,
-            withSequence(
-              withTiming(-22, NUDGE_STEP),
-              withTiming(0, NUDGE_STEP),
-              withTiming(-9, NUDGE_STEP),
-              withTiming(0, NUDGE_STEP),
-            ),
-          );
-      }
       showToast({
         message: textOf(texts.toasts, to),
         undoLabel: texts.undo,
         onUndo: () => {
-          if (!reduceMotion) {
-            offset.value = withSequence(
-              withTiming(to === 'known' ? UNDO_FROM : -UNDO_FROM, { duration: 0 }),
-              withTiming(0, BACK),
-            );
-          }
-          setMarkedOn(undefined);
-          latest.current.onUndo();
+          const { turnBackHere: turnBack, onUndo: undo } = latest.current;
+          turnBack?.();
+          flying.value = false;
+          drag.value = 0;
+          offset.value = reduceMotion
+            ? 0
+            : withSequence(
+                withTiming(to === 'known' ? OFF_SCREEN : -OFF_SCREEN, { duration: 0 }),
+                withTiming(0, BACK),
+              );
+          undo();
         },
       });
     },
-    [haptics, lift, offset, reduceMotion, showToast, textOf, texts],
+    [drag, flying, offset, reduceMotion, showToast, textOf, texts],
+  );
+
+  /**
+   * Sets the mark a swipe or a VoiceOver action went to. When the pager turns
+   * on after it, the toast waits for the next Entry, so the turn doesn't close it.
+   */
+  const setMark = useCallback(
+    (to: KnowledgeMark, turnsOn: boolean) => {
+      const current = latest.current;
+      if (current.mark === to) return;
+      haptics.selection();
+      current.onMark(to);
+      // hidden: not on board 04, owner 05.11. While a next Entry waits, the card nudged up once and the chip showed.
+      // if (current.turnToNext !== undefined) {
+      //   setMarkedOn(() => current.turnToNext);
+      //   if (!reduceMotion)
+      //     lift.value = withDelay(
+      //       550,
+      //       withSequence(
+      //         withTiming(-22, NUDGE_STEP),
+      //         withTiming(0, NUDGE_STEP),
+      //         withTiming(-9, NUDGE_STEP),
+      //         withTiming(0, NUDGE_STEP),
+      //       ),
+      //     );
+      // }
+      if (turnsOn) toastAfterTurn.current = to;
+      else showMarkToast(to);
+    },
+    [haptics, showMarkToast],
+  );
+
+  /** Shows the toast that waited for the next Entry to come in. */
+  const showToastAfterTurn = useCallback(() => {
+    const to = toastAfterTurn.current;
+    toastAfterTurn.current = undefined;
+    if (to !== undefined) showMarkToast(to);
+  }, [showMarkToast]);
+
+  /**
+   * A release set the mark; under Reduce Motion the pager turns on at once.
+   * A card that flies off has turned the pager already, on the UI thread.
+   */
+  const release = useCallback(
+    (to: KnowledgeMark, flew: boolean) => {
+      const turnsOn = flew || (reduceMotion && latest.current.turnToNext !== undefined);
+      setMark(to, turnsOn);
+      if (turnsOn && !flew) {
+        latest.current.turnToNext?.();
+        showToastAfterTurn();
+      }
+    },
+    [reduceMotion, setMark, showToastAfterTurn],
   );
 
   const pan = useMemo(
@@ -172,37 +255,73 @@ export function SwipeMarks({
         .activeOffsetX([-8, 8])
         .failOffsetY([-8, 8])
         .onUpdate(({ translationX }) => {
+          if (flying.value) return;
           drag.value = translationX;
           if (!reduceMotion) offset.value = translationX;
         })
         .onEnd(({ translationX, velocityX }) => {
+          if (flying.value) return;
+          // A fling counts only the way the card goes: a flick back towards the middle cancels.
           const to =
-            translationX >= MARK_DISTANCE || velocityX >= MARK_VELOCITY
+            translationX >= markDistance.value || (translationX > 0 && velocityX >= MARK_VELOCITY)
               ? 'known'
-              : translationX <= -MARK_DISTANCE || velocityX <= -MARK_VELOCITY
+              : translationX <= -markDistance.value ||
+                  (translationX < 0 && velocityX <= -MARK_VELOCITY)
                 ? 'unknown'
                 : undefined;
-          if (to !== undefined) scheduleOnRN(setMark, to);
+          // A swipe past the threshold flies the card off when the pager has a next page and motion is on.
+          const flew = to !== undefined && !reduceMotion && turnToNextOnUI !== undefined;
+          if (to !== undefined) scheduleOnRN(release, to, flew);
+          if (flew) {
+            flying.value = true;
+            // The next Entry comes in under the card as it flies, in the same frame,
+            // rather than after the fly and a busy JS thread (board XSwipe).
+            turnToNextOnUI();
+            offset.value = withTiming(to === 'known' ? OFF_SCREEN : -OFF_SCREEN, FLY, () => {
+              scheduleOnRN(showToastAfterTurn);
+            });
+            return;
+          }
           drag.value = withTiming(0, FADE);
           offset.value = withTiming(0, BACK);
         })
         .withTestId('entry-card-side-swipe'),
-    [concealed, drag, offset, reduceMotion, setMark],
+    [
+      concealed,
+      drag,
+      flying,
+      markDistance,
+      offset,
+      reduceMotion,
+      release,
+      showToastAfterTurn,
+      turnToNextOnUI,
+    ],
   );
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: offset.value },
-      { translateY: Math.abs(offset.value) * 0.04 + lift.value },
+      // hidden: not on board 04, owner 05.11. The nudge added `+ lift.value` here.
+      { translateY: Math.abs(offset.value) * 0.04 },
       { rotate: `${String(offset.value / 16)}deg` },
     ],
   }));
-  const knownEdgeStyle = useAnimatedStyle(() => ({
-    opacity: Math.min(1, Math.max(0, drag.value) / MARK_DISTANCE),
-  }));
-  const unknownEdgeStyle = useAnimatedStyle(() => ({
-    opacity: Math.min(1, Math.max(0, -drag.value) / MARK_DISTANCE),
-  }));
+  // Each wedge slides in from its edge as the drag nears the threshold, fully in at it; under Reduce Motion it only fades.
+  const knownEdgeStyle = useAnimatedStyle(() => {
+    const progress = Math.min(1, Math.max(0, drag.value) / markDistance.value);
+    return {
+      opacity: progress,
+      transform: [{ translateX: reduceMotion ? 0 : (progress - 1) * knownWidth.value }],
+    };
+  });
+  const unknownEdgeStyle = useAnimatedStyle(() => {
+    const progress = Math.min(1, Math.max(0, -drag.value) / markDistance.value);
+    return {
+      opacity: progress,
+      transform: [{ translateX: reduceMotion ? 0 : (1 - progress) * unknownWidth.value }],
+    };
+  });
   const stampStyle = useAnimatedStyle(() => {
     const progress = stamp.value;
     if (reduceMotion) return { opacity: progress, transform: [{ rotate: '-6deg' }] };
@@ -226,7 +345,7 @@ export function SwipeMarks({
   );
   const onAction = useCallback(
     (name: string) => {
-      if (name === 'known' || name === 'unknown') setMark(name);
+      if (name === 'known' || name === 'unknown') setMark(name, false);
     },
     [setMark],
   );
@@ -236,41 +355,77 @@ export function SwipeMarks({
   return (
     <PageActionsProvider actions={markActions} onAction={onAction}>
       <View style={styles.frame}>
-        <Animated.View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
-          testID="swipe-edge-known"
-          style={[
-            styles.edge,
-            { backgroundColor: colors.ink, borderRadius: radii.chip },
-            styles.edgeLeft,
-            knownEdgeStyle,
-          ]}
-        >
-          <Text style={[edgeText, { color: colors.background }]}>{texts.edges.known}</Text>
-        </Animated.View>
-        <Animated.View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          pointerEvents="none"
-          testID="swipe-edge-unknown"
-          style={[
-            styles.edge,
-            {
-              backgroundColor: colors.surfaceSunken,
-              borderColor: colors.ink,
-              borderRadius: radii.chip,
-            },
-            styles.edgeRight,
-            unknownEdgeStyle,
-          ]}
-        >
-          <Text style={[edgeText, { color: colors.ink }]}>{texts.edges.unknown}</Text>
-        </Animated.View>
         <GestureDetector gesture={pan}>
-          <Animated.View testID="swipe-card" style={cardStyle}>
+          <Animated.View
+            testID="swipe-card"
+            onLayout={({ nativeEvent }) => {
+              if (nativeEvent.layout.width > 0)
+                markDistance.value = nativeEvent.layout.width * MARK_SHARE;
+            }}
+            style={cardStyle}
+          >
             {children}
+            {/* The wedges are the card's own, so they move and tilt with it, cut at its edges. */}
+            <View
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              pointerEvents="none"
+              style={styles.edges}
+            >
+              <Animated.View
+                testID="swipe-edge-known"
+                onLayout={({ nativeEvent }) => {
+                  knownWidth.value = nativeEvent.layout.width;
+                }}
+                style={[styles.edge, styles.edgeKnown, knownEdgeStyle]}
+              >
+                {/* The wedge fills a view laid out over the label's box: an Svg sized in % by itself draws short on iOS. */}
+                <View style={StyleSheet.absoluteFill}>
+                  <Wedge points={wedges.swipeKnown} color={colors.ink} width="100%" height="100%" />
+                </View>
+                <Svg
+                  width={swipeEdgeLayout.check.width}
+                  height={swipeEdgeLayout.check.height}
+                  viewBox="0 0 26 22"
+                >
+                  <Polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill={colors.accent} />
+                </Svg>
+                <Text style={[edgeText, { color: colors.background }]}>{texts.edges.known}</Text>
+              </Animated.View>
+              <Animated.View
+                testID="swipe-edge-unknown"
+                onLayout={({ nativeEvent }) => {
+                  unknownWidth.value = nativeEvent.layout.width;
+                }}
+                style={[styles.edge, styles.edgeUnknown, unknownEdgeStyle]}
+              >
+                {/* The board's 4-point ink inset: an ink wedge under a light one cut 4 points smaller. */}
+                <View style={StyleSheet.absoluteFill}>
+                  <Wedge
+                    points={wedges.swipeUnknown}
+                    color={colors.ink}
+                    width="100%"
+                    height="100%"
+                  />
+                </View>
+                <View style={styles.inset}>
+                  <Wedge
+                    points={wedges.swipeUnknown}
+                    color={colors.background}
+                    width="100%"
+                    height="100%"
+                  />
+                </View>
+                <Text style={[edgeText, { color: colors.ink }]}>{texts.edges.unknown}</Text>
+                <Svg
+                  width={swipeEdgeLayout.bookmark.width}
+                  height={swipeEdgeLayout.bookmark.height}
+                  viewBox="0 0 24 24"
+                >
+                  <Path d="M6 3h12v18l-6-4.5L6 21z" fill={colors.ink} />
+                </Svg>
+              </Animated.View>
+            </View>
             {mark !== undefined && (
               <Animated.View
                 pointerEvents="none"
@@ -292,6 +447,7 @@ export function SwipeMarks({
             )}
           </Animated.View>
         </GestureDetector>
+        {/* hidden: not on board 04, owner 05.11. The «ВГОРУ — НАСТУПНЕ» chip under the card.
         {markedOn !== undefined && markedOn === turnToNext && (
           <ChipFade fades={reduceMotion}>
             <Pressable
@@ -314,58 +470,65 @@ export function SwipeMarks({
               </Text>
             </Pressable>
           </ChipFade>
-        )}
+        )} */}
       </View>
     </PageActionsProvider>
   );
 }
 
-/** The «ВГОРУ — НАСТУПНЕ» chip, which fades in under Reduce Motion and is simply there otherwise. */
-function ChipFade({ fades, children }: { fades: boolean; children: ReactNode }) {
-  const shown = useSharedValue(fades ? 0 : 1);
-  useEffect(() => {
-    if (fades) shown.value = withTiming(1, CHIP_FADE);
-  }, [fades, shown]);
-  const style = useAnimatedStyle(() => ({ opacity: shown.value }));
-  return (
-    <Animated.View testID="swipe-next-chip-fade" style={[styles.chipFade, style]}>
-      {children}
-    </Animated.View>
-  );
-}
+// hidden: not on board 04, owner 05.11. The «ВГОРУ — НАСТУПНЕ» chip, which faded in under Reduce Motion.
+// function ChipFade({ fades, children }: { fades: boolean; children: ReactNode }) {
+//   const shown = useSharedValue(fades ? 0 : 1);
+//   useEffect(() => {
+//     if (fades) shown.value = withTiming(1, CHIP_FADE);
+//   }, [fades, shown]);
+//   const style = useAnimatedStyle(() => ({ opacity: shown.value }));
+//   return (
+//     <Animated.View testID="swipe-next-chip-fade" style={[styles.chipFade, style]}>
+//       {children}
+//     </Animated.View>
+//   );
+// }
 
 const styles = StyleSheet.create({
   frame: { flexShrink: 1 },
+  edges: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   edge: {
     position: 'absolute',
-    top: space[8],
-    paddingVertical: space[2],
-    paddingHorizontal: space[4],
+    top: swipeEdgeLayout.top,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: swipeEdgeLayout.gap,
+    paddingVertical: swipeEdgeLayout.paddingVertical,
   },
   // The ink wedge at the left edge, which a swipe right uncovers.
-  edgeLeft: { left: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 },
-  // The light inset wedge at the right edge, which a swipe left uncovers.
-  edgeRight: {
-    right: 0,
-    borderWidth: 1,
-    borderRightWidth: 0,
-    borderTopRightRadius: 0,
-    borderBottomRightRadius: 0,
+  edgeKnown: {
+    left: 0,
+    paddingLeft: swipeEdgeLayout.paddingEdge,
+    paddingRight: swipeEdgeLayout.paddingInner,
   },
+  // The light inset wedge at the right edge, which a swipe left uncovers.
+  edgeUnknown: {
+    right: 0,
+    paddingLeft: swipeEdgeLayout.paddingInner,
+    paddingRight: swipeEdgeLayout.paddingEdge,
+  },
+  inset: { position: 'absolute', inset: swipeEdgeLayout.inset },
   stamp: {
     position: 'absolute',
-    top: '38%',
-    alignSelf: 'center',
-    borderWidth: 3,
-    paddingVertical: space[2],
-    paddingHorizontal: space[4],
+    right: swipeStampLayout.right,
+    bottom: swipeStampLayout.bottom,
+    borderWidth: swipeStampLayout.border,
+    paddingVertical: swipeStampLayout.paddingVertical,
+    paddingHorizontal: swipeStampLayout.paddingHorizontal,
   },
-  chipFade: { alignSelf: 'center' },
-  chip: {
-    alignSelf: 'center',
-    marginTop: space[3],
-    minHeight: space[8],
-    justifyContent: 'center',
-    paddingHorizontal: space[4],
-  },
+  // hidden: not on board 04, owner 05.11. The «ВГОРУ — НАСТУПНЕ» chip's styles.
+  // chipFade: { alignSelf: 'center' },
+  // chip: {
+  //   alignSelf: 'center',
+  //   marginTop: space[3],
+  //   minHeight: space[8],
+  //   justifyContent: 'center',
+  //   paddingHorizontal: space[4],
+  // },
 });

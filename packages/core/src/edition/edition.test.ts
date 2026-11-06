@@ -108,6 +108,8 @@ const validConfig = {
     correctionTypes: true,
     curatedCollections: true,
     swipeMarks: true,
+    searchButton: true,
+    dashboardWordmark: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -779,6 +781,16 @@ describe('loadEdition', () => {
     ],
     ['a missing widget Feature Switch', withoutSwitch('widget'), 'featureSwitches.widget'],
     [
+      'a missing Dashboard wordmark Feature Switch',
+      withoutSwitch('dashboardWordmark'),
+      'featureSwitches.dashboardWordmark',
+    ],
+    [
+      'a missing Search button Feature Switch',
+      withoutSwitch('searchButton'),
+      'featureSwitches.searchButton',
+    ],
+    [
       'a missing swipe marks Feature Switch',
       withoutSwitch('swipeMarks'),
       'featureSwitches.swipeMarks',
@@ -1212,6 +1224,8 @@ const dependentSwitches = [
   ['previousWords', ['dashboard', 'wordOfTheDayArchive', 'wordOfTheDay']],
   ['correctionTypes', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['swipeMarks', ['knowledge']],
+  ['searchButton', ['search']],
+  ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

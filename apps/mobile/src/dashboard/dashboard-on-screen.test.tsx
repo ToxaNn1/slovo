@@ -115,6 +115,9 @@ async function open(dashboard: boolean, { previousWords = true, curatedCollectio
       wordOfTheDay: { entryId: 'w_sumyrnyi', date: '2026-10-28' },
       feedPosition: { entryId: 'w_tykhyi', date: '2026-10-28' },
       wordOfTheDayArchive: { '2026-10-27': 'w_lahidnyi' },
+      // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
+      // the sheet is open, which settling every timer would never finish. It has its own test.
+      gesturesHintShown: true,
     },
     { clock },
   );
@@ -349,7 +352,14 @@ describe('the Correction Types rail', () => {
 
     await settle(() => fireEvent.press(screen.getByTestId('dashboard-correction-type-surzhyk')));
     expect(screen.queryByText('щоб')).toBeNull();
+    expect(screen.getByTestId('correction-type-hero-progress')).toHaveTextContent(
+      'Розібрано 0 з 2',
+    );
     await settle(() => fireEvent.press(screen.getByTestId('correction-type-reveal-c_shoby')));
+
+    expect(screen.getByTestId('correction-type-hero-progress')).toHaveTextContent(
+      'Розібрано 1 з 2',
+    );
 
     expect(screen.getByText('щоб')).toBeTruthy();
     expect(screen.getByText(/аби/)).toBeTruthy();
@@ -397,7 +407,7 @@ describe('the Curated Collections rail', () => {
     expect(screen.getByText('Знаю 0 з 2')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_lahidnyi')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
-    expect(screen.getByText(editionStrings.dashboard.curatedCollection.add)).toBeTruthy();
+    expect(screen.getByText(editionStrings.dashboard.curatedCollection.addButton)).toBeTruthy();
   });
 
   it('a Known mark counts at once and shows on its row', async () => {
@@ -432,18 +442,18 @@ describe('the Curated Collections rail', () => {
     expect(composition.history.list).toEqual([]);
   });
 
-  it('«+ Додати» copies it into the Collections and shows «Додано ✓» on the screen and the card', async () => {
+  it('«Додати» copies it into the Collections and shows «У міксі» on the screen and «Додано ✓» on the card', async () => {
     await open(true);
     await renderApp();
     await settle(() =>
       fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
     );
-    const { add, added } = editionStrings.dashboard.curatedCollection;
+    const { addButton, addedButton } = editionStrings.dashboard.curatedCollection;
 
     await settle(() => fireEvent.press(screen.getByTestId('curated-collection-add')));
 
-    expect(screen.queryByText(add)).toBeNull();
-    expect(screen.getByText(added)).toBeTruthy();
+    expect(screen.queryByText(addButton)).toBeNull();
+    expect(screen.getByText(addedButton)).toBeTruthy();
     await settle(() => fireEvent.press(screen.getByTestId('curated-collection-back')));
     expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-added')).toBeTruthy();
     expect(composition.curatedCollections.rail.map((card) => card.added)).toEqual([true]);

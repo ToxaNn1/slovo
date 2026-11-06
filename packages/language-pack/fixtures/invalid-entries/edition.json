@@ -101,7 +101,9 @@
     "previousWords": true,
     "correctionTypes": true,
     "curatedCollections": true,
-    "swipeMarks": true
+    "swipeMarks": true,
+    "searchButton": true,
+    "dashboardWordmark": true
   },
   "userSettingDefaults": {
     "theme": "system",
