@@ -4,14 +4,14 @@ import {
   type AnyEntryCard,
   type Composition,
   type EntryToHide,
-  type HideOption as CoreHideOption,
+  type HideOption,
   type HideTarget,
   type HidingChange,
   type MixKind,
 } from '@slovo/core';
 
 /** One option of the hide choice, with what it hides and the undo toast it shows when it hides something of the Mix. */
-export type HideOption =
+export type HideChoiceOption =
   | {
       readonly kind: 'entry';
       readonly target: Extract<HideTarget, { readonly kind: 'entry' }>;
@@ -22,8 +22,13 @@ export type HideOption =
       readonly target: Extract<HideTarget, { readonly kind: 'category' }>;
       readonly label: string;
       readonly toast: string;
-      /** Why the option is offered but can't be chosen: the last Category of Corrections in the Mix. */
-      readonly disabledHint?: string;
+    }
+  | {
+      /** Offered but can't be chosen: the last Category of Corrections in the Mix, with why. */
+      readonly kind: 'last-category';
+      readonly target: Extract<HideTarget, { readonly kind: 'category' }>;
+      readonly label: string;
+      readonly disabledHint: string;
     }
   | {
       readonly kind: 'whole-kind';
@@ -58,23 +63,26 @@ function entryToHide(card: AnyEntryCard): EntryToHide {
 }
 
 /** The option of the hide choice in the Edition's words. */
-function optionOf(option: CoreHideOption, strings: EditionStrings): HideOption {
+function optionOf(option: HideOption, strings: EditionStrings): HideChoiceOption {
   switch (option.kind) {
     case 'entry':
       return { kind: 'entry', target: option.target, label: strings.hiding.choice.entry };
-    case 'category':
-    case 'last-category': {
+    case 'category': {
       const name = { category: option.category.displayName };
       return {
         kind: 'category',
         target: option.target,
         label: fill(strings.hiding.choice.category, name),
         toast: fill(strings.hiding.categoryHidden, name),
-        ...(option.kind === 'last-category' && {
-          disabledHint: strings.mix.corrections.lastCategoryHint,
-        }),
       };
     }
+    case 'last-category':
+      return {
+        kind: 'last-category',
+        target: option.target,
+        label: fill(strings.hiding.choice.category, { category: option.category.displayName }),
+        disabledHint: strings.mix.corrections.lastCategoryHint,
+      };
     case 'whole-kind':
       return {
         kind: 'whole-kind',
@@ -97,7 +105,7 @@ export function hideChoice({
   card: AnyEntryCard;
   mix: Pick<Composition['mix'], 'hideOptions'>;
   strings: EditionStrings;
-}): readonly HideOption[] {
+}): readonly HideChoiceOption[] {
   return mix.hideOptions(entryToHide(card)).map((option) => optionOf(option, strings));
 }
 
@@ -111,7 +119,7 @@ export function hideToast({
   changed,
   strings,
 }: {
-  option: HideOption;
+  option: Exclude<HideChoiceOption, { readonly kind: 'last-category' }>;
   changed: HidingChange;
   strings: EditionStrings['hiding'];
 }): string | undefined {
