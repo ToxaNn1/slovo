@@ -1,7 +1,6 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { HISTORY_CAP } from '@slovo/core';
 import { fill, pluralCount, type Word } from '@slovo/contracts';
-import { loadEdition, openComposition, type Composition } from '@slovo/core';
+import { HISTORY_CAP, loadEdition, openComposition, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
