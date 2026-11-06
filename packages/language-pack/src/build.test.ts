@@ -2043,13 +2043,17 @@ describe('the Recordings of the Narrator Voices', () => {
 });
 
 describe('checkLanguagePack', () => {
-  it('passes valid content with the targets it misses, as the build does', () => {
+  it('passes valid content with the targets it misses and the Recordings it lacks, as the build does', () => {
     const editionDir = copyFixture('valid');
     writeFileSync(join(editionDir, 'content/targets.json'), JSON.stringify({ minWords: 3 }));
 
     expect(checkLanguagePack({ editionDir })).toEqual({
       ok: true,
       missedTargets: [{ target: 'minWords', message: '2 Words, below the target of 3' }],
+      missingRecordings: [
+        { voice: 'anna', count: 3 },
+        { voice: 'boris', count: 3 },
+      ],
     });
   });
 
