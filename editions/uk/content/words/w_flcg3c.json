@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_flcg3c",
   "lemma": "бенефіс",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Вистава або концерт, кошти від яких повністю або частково надходять одному чи кільком акторам.",
@@ -27,9 +25,7 @@
       "text": "Фінальний матч став справжнім бенефісом форварда гостей, який забив три м'ячі."
     }
   ],
-  "synonyms": [
-    "вистава"
-  ],
+  "synonyms": ["вистава"],
   "categoryId": "arts-culture",
   "rarity": 1,
   "sources": [

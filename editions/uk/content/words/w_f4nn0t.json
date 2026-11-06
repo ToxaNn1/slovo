@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_f4nn0t",
   "lemma": "прядиво",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Волокно конопель, льону, бавовни, вовни і т. ін., пригот. для прядіння.",
@@ -71,13 +69,7 @@
       "author": "Валерій Шевчук"
     }
   ],
-  "synonyms": [
-    "волічка",
-    "гарус",
-    "заволічка",
-    "починок",
-    "пряжа"
-  ],
+  "synonyms": ["волічка", "гарус", "заволічка", "починок", "пряжа"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

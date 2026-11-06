@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_n5jqb6",
   "lemma": "терлиця",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Знаряддя для тіпання, тертя льону, конопель і т. ін.",
@@ -26,11 +24,7 @@
       "author": "А. Головко"
     }
   ],
-  "synonyms": [
-    "бительниця",
-    "бительня",
-    "терниця"
-  ],
+  "synonyms": ["бительниця", "бительня", "терниця"],
   "categoryId": "household-crafts",
   "rarity": 5,
   "sources": [

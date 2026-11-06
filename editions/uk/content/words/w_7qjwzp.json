@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_7qjwzp",
   "lemma": "ефес",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Держак холодної зброї (шаблі, шпаги і т. ін.), перев. із захисним пристосуванням; руків'я.",
@@ -22,9 +20,7 @@
       "author": "М. Стельмах"
     }
   ],
-  "synonyms": [
-    "держак"
-  ],
+  "synonyms": ["держак"],
   "categoryId": "military",
   "rarity": 2,
   "sources": [

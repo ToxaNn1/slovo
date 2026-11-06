@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_av9anj",
   "lemma": "гаївка",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Українська народна обрядова пісня; веснянка.",
@@ -24,10 +22,7 @@
       "author": "О. Кониський"
     }
   ],
-  "synonyms": [
-    "веснянка",
-    "веснівка"
-  ],
+  "synonyms": ["веснянка", "веснівка"],
   "categoryId": "arts-culture",
   "rarity": 3,
   "sources": [

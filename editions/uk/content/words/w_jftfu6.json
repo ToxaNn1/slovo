@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_jftfu6",
   "lemma": "стодола",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Будівля для зберігання снопів, сіна, полови тощо, а також для молотьби, віяння і т. ін.; клуня.",
@@ -25,10 +23,7 @@
       "author": "М. Томчаній"
     }
   ],
-  "synonyms": [
-    "клуня",
-    "шпихлір"
-  ],
+  "synonyms": ["клуня", "шпихлір"],
   "categoryId": "household-crafts",
   "rarity": 2,
   "sources": [

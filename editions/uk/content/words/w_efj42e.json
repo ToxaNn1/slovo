@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_efj42e",
   "lemma": "мазанка",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Хата, зроблена з глини, сирцевої цегли або хмизу, обмазаного глиною.",
@@ -26,11 +24,7 @@
       "author": "О. Стороженко"
     }
   ],
-  "synonyms": [
-    "ліплянка",
-    "хата",
-    "хворостянка"
-  ],
+  "synonyms": ["ліплянка", "хата", "хворостянка"],
   "categoryId": "household-crafts",
   "rarity": 2,
   "sources": [

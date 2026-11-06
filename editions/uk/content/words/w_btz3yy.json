@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_btz3yy",
   "lemma": "суходіл",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Безводна долина, яку зволожують тільки дощові та снігові води.",
-  "extraDefinitions": [
-    "Материк, суша."
-  ],
+  "extraDefinitions": ["Материк, суша."],
   "examples": [
     {
       "text": "На суходолі простяглися баштани та кукурудзяні поля.",

@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_an572j",
   "lemma": "рало",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Примітивне знаряддя для оранки землі.",
-  "extraDefinitions": [
-    "У стародавній Русі – одиниця оподаткування."
-  ],
+  "extraDefinitions": ["У стародавній Русі – одиниця оподаткування."],
   "examples": [
     {
       "text": "Поширення землеробства привело до виникнення рала – первісного знаряддя для оранки."
@@ -24,10 +20,7 @@
       "author": "Т. Масенко"
     }
   ],
-  "synonyms": [
-    "орало",
-    "плуг"
-  ],
+  "synonyms": ["орало", "плуг"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

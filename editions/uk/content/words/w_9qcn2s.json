@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_9qcn2s",
   "lemma": "затірка",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Страва, зварена на воді або молоці з розтертого в дрібні кульки борошна з водою.",
@@ -30,9 +28,7 @@
       "author": "Леся Українка"
     }
   ],
-  "synonyms": [
-    "стиранка"
-  ],
+  "synonyms": ["стиранка"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

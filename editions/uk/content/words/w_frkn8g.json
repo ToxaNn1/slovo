@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_frkn8g",
   "lemma": "корифей",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "У давньогрецькій трагедії – керівник і заспівувач хору.",
@@ -33,10 +31,7 @@
       "author": "Д. Ткач"
     }
   ],
-  "synonyms": [
-    "ветеран",
-    "патріярх"
-  ],
+  "synonyms": ["ветеран", "патріярх"],
   "categoryId": "arts-culture",
   "rarity": 3,
   "sources": [

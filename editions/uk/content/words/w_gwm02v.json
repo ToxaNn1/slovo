@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_gwm02v",
   "lemma": "узгір'я",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Невисока гора, невелика височина тощо.",
-  "extraDefinitions": [
-    "Схил гори, височини тощо."
-  ],
+  "extraDefinitions": ["Схил гори, височини тощо."],
   "examples": [
     {
       "text": "Скоро виїхали [козаки] з гаю, зараз загледіли на узгір'ї наших рубак.",

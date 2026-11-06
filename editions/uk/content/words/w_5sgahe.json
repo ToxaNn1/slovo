@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_5sgahe",
   "lemma": "узвар",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Солодка рідка страва із сушених фруктів і ягід, зварених у воді; компот.",
-  "extraDefinitions": [
-    "Сушені фрукти і ягоди."
-  ],
+  "extraDefinitions": ["Сушені фрукти і ягоди."],
   "examples": [
     {
       "text": "Після печені молодиці подали узвар.",
@@ -36,11 +32,7 @@
       "author": "Г. Косинка"
     }
   ],
-  "synonyms": [
-    "компот",
-    "кулага",
-    "юшка"
-  ],
+  "synonyms": ["компот", "кулага", "юшка"],
   "categoryId": "household-crafts",
   "rarity": 2,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_vwsv64",
   "lemma": "ряжанка",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Топлене незбиране молоко, заквашене сметаною.",
@@ -25,10 +23,7 @@
       "author": "П. Запаренко"
     }
   ],
-  "synonyms": [
-    "колотуха",
-    "пряжанка"
-  ],
+  "synonyms": ["колотуха", "пряжанка"],
   "categoryId": "household-crafts",
   "rarity": 1,
   "sources": [

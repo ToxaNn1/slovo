@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_wlv3xw",
   "lemma": "перелісок",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Невеликий рідкий лісок.",
-  "extraDefinitions": [
-    "Ділянка молодого лісу, звичайно серед старого, високого."
-  ],
+  "extraDefinitions": ["Ділянка молодого лісу, звичайно серед старого, високого."],
   "examples": [
     {
       "text": "Ягідники в перелісках задухмяніли цвітом, забриніли перші бджоли.",

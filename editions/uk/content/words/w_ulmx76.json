@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ulmx76",
   "lemma": "гарапник",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Довгий батіг, сплетений з тонких ремінців.",
@@ -22,15 +20,7 @@
       "author": "І. Нечуй-Левицький"
     }
   ],
-  "synonyms": [
-    "байбара",
-    "бич",
-    "малахай",
-    "батіг",
-    "канчук",
-    "нагай",
-    "пуга"
-  ],
+  "synonyms": ["байбара", "бич", "малахай", "батіг", "канчук", "нагай", "пуга"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

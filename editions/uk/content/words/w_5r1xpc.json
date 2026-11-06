@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_5r1xpc",
   "lemma": "канонір",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Рядовий солдат артилерії; гармаш.",
@@ -22,11 +20,7 @@
       "author": "Б. Лепкий"
     }
   ],
-  "synonyms": [
-    "артилерист",
-    "гармаш",
-    "пушкар"
-  ],
+  "synonyms": ["артилерист", "гармаш", "пушкар"],
   "categoryId": "military",
   "rarity": 2,
   "sources": [

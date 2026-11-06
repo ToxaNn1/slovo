@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_0z42q1",
   "lemma": "затон",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Місце, затоплене водою річки, озера, що розлилися; спокійна, тиха затока річки, озера.",
@@ -33,13 +31,7 @@
       "author": "О. Гуреїв"
     }
   ],
-  "synonyms": [
-    "заводь",
-    "покал",
-    "заводок",
-    "бухточка",
-    "затін"
-  ],
+  "synonyms": ["заводь", "покал", "заводок", "бухточка", "затін"],
   "categoryId": "nature-weather",
   "rarity": 2,
   "sources": [

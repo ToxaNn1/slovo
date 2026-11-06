@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_lwncaa",
   "lemma": "сурмач",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Той, хто подає сигнал сурмою (див. су́рма́.).",
-  "extraDefinitions": [
-    "Музикант, який грає на сурмі; трубач."
-  ],
+  "extraDefinitions": ["Музикант, який грає на сурмі; трубач."],
   "examples": [
     {
       "text": "Хай в литаври вдаре [вдарить] довбиш, Хай заграють сурмачі; Сутим золотом засяють Корогви і пірначі.",
@@ -33,10 +29,7 @@
       "author": "М. Рильський"
     }
   ],
-  "synonyms": [
-    "горніст",
-    "трубач"
-  ],
+  "synonyms": ["горніст", "трубач"],
   "categoryId": "military",
   "rarity": 2,
   "sources": [

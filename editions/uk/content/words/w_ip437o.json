@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ip437o",
   "lemma": "топорище",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Держак сокири.",
@@ -18,10 +16,7 @@
       "author": "В. Гжицький"
     }
   ],
-  "synonyms": [
-    "сокирище",
-    "топорисько"
-  ],
+  "synonyms": ["сокирище", "топорисько"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

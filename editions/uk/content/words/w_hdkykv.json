@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_hdkykv",
   "lemma": "контрибуція",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Грошова сума, яку накладає держава-переможець на підкорену державу.",
@@ -28,10 +26,7 @@
       "author": "І. Франко"
     }
   ],
-  "synonyms": [
-    "данина",
-    "репарація"
-  ],
+  "synonyms": ["данина", "репарація"],
   "categoryId": "military",
   "rarity": 1,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_b6dtea",
   "lemma": "розсіл",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Спеціально приготовлений солоний (перев. з прянощами) розчин для засолювання овочів, риби і т. ін.",
@@ -51,10 +49,7 @@
       "text": "Зовнішній циліндр охолоджується ззовні розсолом, а внутрішній – обертається."
     }
   ],
-  "synonyms": [
-    "ропа",
-    "тузлук"
-  ],
+  "synonyms": ["ропа", "тузлук"],
   "categoryId": "household-crafts",
   "rarity": 2,
   "sources": [

@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_856hit",
   "lemma": "стріха",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Нижній край солом'яної покрівлі, який звисає над стіною.",
-  "extraDefinitions": [
-    "Приміщення для проживання; житло, оселя."
-  ],
+  "extraDefinitions": ["Приміщення для проживання; житло, оселя."],
   "examples": [
     {
       "text": "Дощ іде, як відром ілле [ллє], а з стріх біжить, як цівкою."

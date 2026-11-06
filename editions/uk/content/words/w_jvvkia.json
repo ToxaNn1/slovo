@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_jvvkia",
   "lemma": "ялівець",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Вічнозелений чагарник, рідше дерево родини кипарисових з лускоподібною або короткоголчастою хвоєю та ягодоподібними шишками, вживаними в медицині.",
@@ -25,10 +23,7 @@
       "author": "Л. Первомайський"
     }
   ],
-  "synonyms": [
-    "жереп",
-    "ялівник"
-  ],
+  "synonyms": ["жереп", "ялівник"],
   "categoryId": "nature-weather",
   "rarity": 3,
   "sources": [

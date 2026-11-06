@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_9h3eda",
   "lemma": "сіни",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "plural-only",
   "primaryDefinition": "Нежила частина селянських хат і невеликих міських будинків, яка з'єднує жиле приміщення з ґанком, рундуком або ділить хату, будинок на дві половини.",
@@ -22,9 +20,7 @@
       "author": "Григорій Тютюнник"
     }
   ],
-  "synonyms": [
-    "хороми"
-  ],
+  "synonyms": ["хороми"],
   "categoryId": "household-crafts",
   "rarity": 1,
   "sources": [

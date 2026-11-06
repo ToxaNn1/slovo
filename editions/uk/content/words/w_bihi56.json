@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_bihi56",
   "lemma": "опанча",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Старовинний верхній одяг у формі широкого плаща.",
@@ -26,13 +24,7 @@
       "author": "Я. Щоголів"
     }
   ],
-  "synonyms": [
-    "кирея",
-    "бурка",
-    "кобеняк",
-    "плащ",
-    "шинеля"
-  ],
+  "synonyms": ["кирея", "бурка", "кобеняк", "плащ", "шинеля"],
   "categoryId": "household-crafts",
   "rarity": 4,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_4w5du5",
   "lemma": "узлісся",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Смуга на краю лісу.",
@@ -26,11 +24,7 @@
       "author": "І. Білик"
     }
   ],
-  "synonyms": [
-    "возлісся",
-    "залісок",
-    "узлісок"
-  ],
+  "synonyms": ["возлісся", "залісок", "узлісок"],
   "categoryId": "nature-weather",
   "rarity": 1,
   "sources": [

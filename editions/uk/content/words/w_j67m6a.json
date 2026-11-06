@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_j67m6a",
   "lemma": "бівуак",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Зупинка військ для відпочинку або ночівлі в польових умовах.",
@@ -37,13 +35,7 @@
       "author": "І. Франко"
     }
   ],
-  "synonyms": [
-    "бівак",
-    "обоз",
-    "стан",
-    "табір",
-    "стоянка"
-  ],
+  "synonyms": ["бівак", "обоз", "стан", "табір", "стоянка"],
   "categoryId": "military",
   "rarity": 3,
   "sources": [

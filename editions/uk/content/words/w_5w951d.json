@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_5w951d",
   "lemma": "дуплянка",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Колодка з видовбаною діркою, що використовується як житло для бджіл, птахів.",
@@ -21,14 +19,7 @@
       "author": "М. Стельмах"
     }
   ],
-  "synonyms": [
-    "колода",
-    "колодка",
-    "пень",
-    "вулик",
-    "вулень",
-    "вулій"
-  ],
+  "synonyms": ["колода", "колодка", "пень", "вулик", "вулень", "вулій"],
   "categoryId": "household-crafts",
   "rarity": 4,
   "sources": [

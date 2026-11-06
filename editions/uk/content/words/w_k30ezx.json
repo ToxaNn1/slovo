@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_k30ezx",
   "lemma": "бруслина",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Перев. кущова рослина родини бруслинових з отруйними ягодами.",
-  "extraDefinitions": [
-    "Ягоди цієї рослини."
-  ],
+  "extraDefinitions": ["Ягоди цієї рослини."],
   "examples": [
     {
       "text": "Вже горлиця аврукає в бруслині, стоять в заплавах золоті лини.",
@@ -25,10 +21,7 @@
       "author": "О. Іваненко"
     }
   ],
-  "synonyms": [
-    "бересклет",
-    "саклак"
-  ],
+  "synonyms": ["бересклет", "саклак"],
   "categoryId": "nature-weather",
   "rarity": 5,
   "sources": [

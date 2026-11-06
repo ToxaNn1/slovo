@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_tz6skc",
   "lemma": "самопал",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Старовинна зброя – ґнотова рушниця, що не має замка і заряджається з дула.",
@@ -40,10 +38,7 @@
       "author": "П. Загребельний"
     }
   ],
-  "synonyms": [
-    "рушниця",
-    "мушкет"
-  ],
+  "synonyms": ["рушниця", "мушкет"],
   "categoryId": "military",
   "rarity": 2,
   "sources": [

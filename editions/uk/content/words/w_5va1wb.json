@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_5va1wb",
   "lemma": "бригантина",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Двощоглове вітрильне судно XVIII–XIX ст. з прямими вітрилами на передній і з косими на задній щоглах.",
@@ -20,9 +18,7 @@
       "author": "Ю. Яновський"
     }
   ],
-  "synonyms": [
-    "бриг"
-  ],
+  "synonyms": ["бриг"],
   "categoryId": "military",
   "rarity": 2,
   "sources": [

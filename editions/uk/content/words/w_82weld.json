@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_82weld",
   "lemma": "пуща",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Великий, густий, дрімучий ліс.",
-  "extraDefinitions": [
-    "Глушина, відлюдне місце."
-  ],
+  "extraDefinitions": ["Глушина, відлюдне місце."],
   "examples": [
     {
       "text": "Пущі такі кругом села були, що не продерешся, пальця не просунеш.",

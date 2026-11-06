@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_35njso",
   "lemma": "латаття",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Рід водяних рослин родини лататтєвих з великим листям та білими або жовтими квітками.",
@@ -30,12 +28,7 @@
       "author": "Леся Українка"
     }
   ],
-  "synonyms": [
-    "глечики",
-    "купава",
-    "купавка",
-    "лілея"
-  ],
+  "synonyms": ["глечики", "купава", "купавка", "лілея"],
   "categoryId": "nature-weather",
   "rarity": 3,
   "sources": [

@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_ksrndr",
   "lemma": "теракота",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Випалена кольорова високоякісна гончарна глина.",
-  "extraDefinitions": [
-    "Неглазурований керамічний виріб з такої глини."
-  ],
+  "extraDefinitions": ["Неглазурований керамічний виріб з такої глини."],
   "examples": [
     {
       "text": "Деякі хліви пофарбовані теракотою майже під стріху.",

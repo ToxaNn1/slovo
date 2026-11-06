@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_6pyghy",
   "lemma": "кирея",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Старовинний довгий верхній одяг із відлогою; кобеняк (у 1 знач.).",
@@ -38,18 +36,8 @@
       "author": "С. Васильченко"
     }
   ],
-  "synonyms": [
-    "бурка",
-    "кобеняк",
-    "опанча",
-    "плащ",
-    "шинеля",
-    "каптан",
-    "сіряк"
-  ],
-  "registers": [
-    "archaic"
-  ],
+  "synonyms": ["бурка", "кобеняк", "опанча", "плащ", "шинеля", "каптан", "сіряк"],
+  "registers": ["archaic"],
   "categoryId": "household-crafts",
   "rarity": 4,
   "sources": [

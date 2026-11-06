@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_b628is",
   "lemma": "одвірок",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Боковий або верхній брус рами дверей.",
-  "extraDefinitions": [
-    "Рама дверей."
-  ],
+  "extraDefinitions": ["Рама дверей."],
   "examples": [
     {
       "text": "Всі четверо ввійшли з сіней у світлицю з низеньким одвірком.",
@@ -41,11 +37,7 @@
       "author": "Панас Мирний"
     }
   ],
-  "synonyms": [
-    "варцаби",
-    "відвірок",
-    "косяк"
-  ],
+  "synonyms": ["варцаби", "відвірок", "косяк"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_bep99f",
   "lemma": "заслінка",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Бляшаний лист або дерев'яний щит певної форми з ручкою, яким закривають отвір кухонної печі.",
@@ -55,11 +53,7 @@
       "author": "І. Росоховатський"
     }
   ],
-  "synonyms": [
-    "затулка",
-    "заслона",
-    "заслін"
-  ],
+  "synonyms": ["затулка", "заслона", "заслін"],
   "categoryId": "household-crafts",
   "rarity": 2,
   "sources": [

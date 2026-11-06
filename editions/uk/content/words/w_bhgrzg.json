@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_bhgrzg",
   "lemma": "бурелом",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Сильний вітер (ураган), що ламає дерева в лісі.",
-  "extraDefinitions": [
-    "Повалені бурею дерева."
-  ],
+  "extraDefinitions": ["Повалені бурею дерева."],
   "examples": [
     {
       "text": "Гучно б'ють об скелю громи, Ходять лісом буреломи.",
@@ -39,10 +35,7 @@
       "author": "О. Гончар"
     }
   ],
-  "synonyms": [
-    "вітровал",
-    "вітролом"
-  ],
+  "synonyms": ["вітровал", "вітролом"],
   "categoryId": "nature-weather",
   "rarity": 3,
   "sources": [

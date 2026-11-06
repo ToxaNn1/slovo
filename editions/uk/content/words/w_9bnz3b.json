@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_9bnz3b",
   "lemma": "куліш",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Густа юшка (перев. з пшона).",
@@ -34,9 +32,7 @@
       "author": "Леся Українка"
     }
   ],
-  "synonyms": [
-    "кандьор"
-  ],
+  "synonyms": ["кандьор"],
   "categoryId": "household-crafts",
   "rarity": 2,
   "sources": [

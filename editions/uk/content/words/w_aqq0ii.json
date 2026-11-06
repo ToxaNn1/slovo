@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_aqq0ii",
   "lemma": "бирючина",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Кущова рослина родини маслинових, яка культивується для декоративних насаджень; вовчі ягоди.",
-  "extraDefinitions": [
-    "Ягоди цієї рослини."
-  ],
+  "extraDefinitions": ["Ягоди цієї рослини."],
   "examples": [
     {
       "text": "Парки прикрашають бирючина, туя, срібні ялини."

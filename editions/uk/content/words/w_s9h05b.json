@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_s9h05b",
   "lemma": "узвіз",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Крутий підйом; вулиця, дорога та ін., що мають підйом.",
@@ -26,10 +24,7 @@
       "author": "Ю. Шовкопляс"
     }
   ],
-  "synonyms": [
-    "підйом",
-    "з'їзд"
-  ],
+  "synonyms": ["підйом", "з'їзд"],
   "categoryId": "nature-weather",
   "rarity": 2,
   "sources": [

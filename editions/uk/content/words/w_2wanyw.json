@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_2wanyw",
   "lemma": "печеня",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "М'ясна страва – запечене або смажене м'ясо, іноді – з картоплею чи грибами із додаванням спецій.",
@@ -34,9 +32,7 @@
       "author": "І. Нечуй-Левицький"
     }
   ],
-  "synonyms": [
-    "печиво"
-  ],
+  "synonyms": ["печиво"],
   "categoryId": "household-crafts",
   "rarity": 2,
   "sources": [

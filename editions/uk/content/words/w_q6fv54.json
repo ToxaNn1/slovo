@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_q6fv54",
   "lemma": "памфлет",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Публіцистичний твір сатиричного характеру, спрямований проти якого-небудь політичного або суспільного явища чи окремої особи.",
@@ -22,9 +20,7 @@
       "author": "М. Хвильовий"
     }
   ],
-  "synonyms": [
-    "сатира"
-  ],
+  "synonyms": ["сатира"],
   "categoryId": "arts-culture",
   "rarity": 1,
   "sources": [

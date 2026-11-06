@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_0mcloy",
   "lemma": "абордаж",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Старовинний спосіб морського бою – зближення з ворожим кораблем і зчеплення з ним для рукопашного бою.",
@@ -14,9 +12,7 @@
       "author": "З. Тулуб"
     }
   ],
-  "registers": [
-    "archaic"
-  ],
+  "registers": ["archaic"],
   "categoryId": "military",
   "rarity": 2,
   "sources": [

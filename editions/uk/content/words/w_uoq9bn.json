@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_uoq9bn",
   "lemma": "веретільниця",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Безнога, схожа на змію ящірка родини веретільницевих.",
@@ -27,10 +25,7 @@
       "author": "О. Маковей"
     }
   ],
-  "synonyms": [
-    "мідяниця",
-    "ящірка"
-  ],
+  "synonyms": ["мідяниця", "ящірка"],
   "categoryId": "nature-weather",
   "rarity": 4,
   "sources": [

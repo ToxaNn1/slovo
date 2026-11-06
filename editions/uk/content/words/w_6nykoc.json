@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_6nykoc",
   "lemma": "маслянка",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Рідина, що залишається після збивання масла з вершків, сметани; сколотини.",
@@ -55,13 +53,7 @@
       "author": "А. Головко"
     }
   ],
-  "synonyms": [
-    "сколотини",
-    "масельничка",
-    "раква",
-    "мастильниця",
-    "масничка"
-  ],
+  "synonyms": ["сколотини", "масельничка", "раква", "мастильниця", "масничка"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

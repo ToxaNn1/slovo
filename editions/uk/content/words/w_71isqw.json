@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_71isqw",
   "lemma": "спотикач",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Горілка або спирт, настояний на мускатному горісі і прянощах.",
-  "extraDefinitions": [
-    "Місце, де спотикаються."
-  ],
+  "extraDefinitions": ["Місце, де спотикаються."],
   "examples": [
     {
       "text": "[Михайло:] Оставалась пляшка спотикачу. Піди ж [Тетяно], принеси.",

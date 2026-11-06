@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_r4jmn6",
   "lemma": "бантина",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Поперечна балка між кроквами.",
-  "extraDefinitions": [
-    "Взагалі поперечина."
-  ],
+  "extraDefinitions": ["Взагалі поперечина."],
   "examples": [
     {
       "text": "На товстелезних бантинах прилипли люди й щось кричали звідти.",

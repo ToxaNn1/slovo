@@ -2,16 +2,11 @@
   "kind": "word",
   "id": "w_ec5vti",
   "lemma": "колиска",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Невеличке ліжечко для спання і колисання дитини.",
-  "extraDefinitions": [
-    "Місце виникнення і розвитку чого-небудь.",
-    "Гойдалка."
-  ],
+  "extraDefinitions": ["Місце виникнення і розвитку чого-небудь.", "Гойдалка."],
   "examples": [
     {
       "text": "Човен гойдався, як колиска, легко і плавно.",

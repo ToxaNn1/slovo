@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_oswk5y",
   "lemma": "ласка",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Невелика хижа тварина родини куницевих з тонким і гнучким тілом.",
-  "extraDefinitions": [
-    "Крадучись, спритно."
-  ],
+  "extraDefinitions": ["Крадучись, спритно."],
   "examples": [
     {
       "text": "Пінчерів використовують для відлову пацюків, ласок."

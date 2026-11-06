@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_dd0tsz",
   "lemma": "кокарда",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Металевий значок установленого зразка на форменому головному уборі.",
-  "extraDefinitions": [
-    "Вид банта на платті, капелюсі і т. ін."
-  ],
+  "extraDefinitions": ["Вид банта на платті, капелюсі і т. ін."],
   "examples": [
     {
       "text": "На городі стовбичило пугало в картузі без кокарди.",

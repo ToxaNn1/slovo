@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_w07bua",
   "lemma": "типчак",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Багаторічна пасовищно-кормова рослина родини злакових із щетинястим сіро-зеленим листям і вузькою волоттю; вівсяниця борозниста.",
@@ -17,10 +15,7 @@
       "author": "О. Гончар"
     }
   ],
-  "synonyms": [
-    "типець",
-    "типчина"
-  ],
+  "synonyms": ["типець", "типчина"],
   "categoryId": "nature-weather",
   "rarity": 5,
   "sources": [

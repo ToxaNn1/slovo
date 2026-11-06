@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_349a3j",
   "lemma": "патронташ",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Сумка або пояс з футлярами (гніздами) для рушничних і пістолетних патронів.",
@@ -22,11 +20,7 @@
       "author": "С. Васильченко"
     }
   ],
-  "synonyms": [
-    "ладівниця",
-    "лядунка",
-    "ладунка"
-  ],
+  "synonyms": ["ладівниця", "лядунка", "ладунка"],
   "categoryId": "military",
   "rarity": 1,
   "sources": [

@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_s3zszc",
   "lemma": "кобеняк",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Суконний довгий і широкий чоловічий верхній одяг з відлогою; кирея.",
-  "extraDefinitions": [
-    "Різновид чоловічого плаща з відлогою."
-  ],
+  "extraDefinitions": ["Різновид чоловічого плаща з відлогою."],
   "examples": [
     {
       "text": "Темно зробилося, як під кобеняком.",
@@ -41,18 +37,8 @@
       "author": "Л. Смілянський"
     }
   ],
-  "synonyms": [
-    "бурка",
-    "каптан",
-    "кирея",
-    "сіряк",
-    "опанча",
-    "плащ",
-    "шинеля"
-  ],
-  "registers": [
-    "archaic"
-  ],
+  "synonyms": ["бурка", "каптан", "кирея", "сіряк", "опанча", "плащ", "шинеля"],
+  "registers": ["archaic"],
   "categoryId": "household-crafts",
   "rarity": 4,
   "sources": [

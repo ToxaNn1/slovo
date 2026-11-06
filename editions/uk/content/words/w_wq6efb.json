@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_wq6efb",
   "lemma": "агіографія",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Різновид церковної літератури – оповіді про життя осіб, яких церква оголосила святими.",
@@ -16,9 +14,7 @@
       "text": "Темі святості присвячувалися численні “Патерики”, “Житія” святих, які утворюють самостійний шар у давньоруській літературі – агіографію."
     }
   ],
-  "registers": [
-    "bookish"
-  ],
+  "registers": ["bookish"],
   "categoryId": "arts-culture",
   "rarity": 4,
   "sources": [

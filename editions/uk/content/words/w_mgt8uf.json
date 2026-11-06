@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_mgt8uf",
   "lemma": "речитатив",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Форма вокально-музичного твору, яка інтонаційно та ритмічно наближається до декламації; наспівне декламування.",
-  "extraDefinitions": [
-    "Наспівно, протяжно."
-  ],
+  "extraDefinitions": ["Наспівно, протяжно."],
   "examples": [
     {
       "text": "В опері [“Різдвяна ніч”] занадто багато речитативу."
