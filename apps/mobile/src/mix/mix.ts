@@ -47,7 +47,7 @@ export function useMixChanges(): {
   };
   return {
     toggleCategory: (categoryId, inMix, of) => {
-      keep(inMix ? mix.putBack(categoryId, of) : mix.takeOut(categoryId, of));
+      keep(mix.setCategory(categoryId, inMix, of));
     },
     turnAllOn: () => {
       keep(mix.turnAllOn());

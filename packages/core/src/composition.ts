@@ -22,7 +22,7 @@ import { openDashboard, type Dashboard } from './dashboard/dashboard';
 import { openMoodCheckIns, type MoodCheckIns } from './mood/mood';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
-import { createEntries } from './entries/entries';
+import { createEntries, type Entries } from './entries/entries';
 import { createEntryRows, type EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
 import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed';
@@ -227,6 +227,13 @@ export interface Composition extends Hiding {
   openedFromSearch(entryId: string): Promise<AnyEntryCard | undefined>;
   /** The row model of any Entry, Retired or not, for a list; nothing for an id the Language Pack doesn't have. */
   entryRow(entryId: string): Promise<EntryRowModel | undefined>;
+  /**
+   * The live Entries of one Category of the kind's list, Words or
+   * Corrections, in the Language Pack's order, a Retired one left out and the
+   * Mix aside, for the Category screens. Like Search, it makes nothing Seen
+   * and writes nothing (ADR 0076).
+   */
+  categoryEntries: Entries['ofCategory'];
   /**
    * The home-screen widget: the Widget Snapshot the app writes for it, and an
    * Entry opened from it (ADR 0026).
@@ -779,6 +786,7 @@ export async function openComposition({
     // Opened from inside the app: nothing Seen (ADR 0054).
     openedFromSearch: entryCard,
     entryRow: (entryId) => rows.row(entryId),
+    categoryEntries: (of, categoryId) => entries.ofCategory(of, categoryId),
     widget: createWidget({
       edition,
       entries,
