@@ -38,7 +38,7 @@ export type ShareCardSubject =
       /** Whether the reader hides the Streak, which the card then leaves out as the recap's card does. */
       readonly hideStreak: boolean;
     }
-  | { readonly level: LevelState; readonly date: string }
+  | { readonly level: Pick<LevelState, 'level' | 'name'>; readonly date: string }
   | { readonly badge: Extract<BadgeState, { readonly earned: true }> }
   | { readonly streak: number; readonly date: string }
   | { readonly crossword: DailyCrosswordState }
