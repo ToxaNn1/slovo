@@ -1,6 +1,6 @@
 # Spec waves
 
-How the coordinator builds a spec. The owner's scheme since 2026-11-03: `/mattpocock-skills:implement-spec`, with the SLOVO rules below. Implementers follow [ticket-brief.md](ticket-brief.md).
+How the coordinator builds a spec. The owner's scheme since 2026-11-03: `/mattpocock-skills:implement-spec`, with the SLOVO rules below. Implementers follow [ticket-brief.md](ticket-brief.md). A content wave (new Entries from the sourcing tool) runs by [content-wave.md](content-wave.md).
 
 ## Shape
 
