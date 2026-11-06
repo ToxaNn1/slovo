@@ -38,7 +38,7 @@ import { useCounterLine } from '../community-counters/counter-line';
 import { useFavorite } from '../saved/favorites';
 import { useKnowledgeMark } from '../knowledge/marks';
 import { useHide } from '../mix/hiding';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { sessionShareFormat } from '../share/share-card';
 import { useShell, type ShareCard } from '../shell-value';
 import { useShown } from '../shown-in-effect';
@@ -92,8 +92,8 @@ interface EntryCardActions {
   collection: ReactNode;
   hint: string | undefined;
   line: CounterLine | undefined;
-  share: OpenedAction;
-  report: OpenedAction;
+  share: OpenedAction | undefined;
+  report: OpenedAction | undefined;
   onHide: () => void;
   sheets: ReactNode;
 }
@@ -108,10 +108,7 @@ function useEntryCardActions(card: AnyEntryCard): EntryCardActions {
   const collection = useCollectionAction(entryId, title);
   const share = useShareAction(card);
   const report = useMistakeReportAction(entryId);
-  const line = useCounterLine(entryId, marks.knowledge !== undefined && !marks.swiped, {
-    mark: marks.knowledge?.mark,
-    inFavorites: favorite.inFavorites,
-  });
+  const line = useEntryCounterLine(entryId, marks, favorite.inFavorites);
   const { count } = useEdition();
   return {
     card,
@@ -133,8 +130,8 @@ function useEntryCardActions(card: AnyEntryCard): EntryCardActions {
       <>
         <HideChoiceSheet {...hide.choice} />
         {collection.sheet}
-        {share.sheet}
-        {report.sheet}
+        {share?.sheet}
+        {report?.sheet}
       </>
     ),
   };
@@ -168,10 +165,7 @@ export function useEntrySlots(
 export function useYesterdaySlots(word: WordCardModel): YesterdaySlots | undefined {
   const marks = useEntryMarks(word.wordId);
   const { inFavorites } = useFavorite(word.wordId);
-  const line = useCounterLine(word.wordId, marks.knowledge !== undefined && !marks.swiped, {
-    mark: marks.knowledge?.mark,
-    inFavorites,
-  });
+  const line = useEntryCounterLine(word.wordId, marks, inFavorites);
   if (marks.swiped)
     return {
       slot: 'corner',
@@ -183,6 +177,21 @@ export function useYesterdaySlots(word: WordCardModel): YesterdaySlots | undefin
         slot: 'marks',
         marks: <MarkButtons entryKind="word" knowledge={marks.knowledge} line={line} />,
       };
+}
+
+/**
+ * The Community Counters line under an Entry's marks, while the Entry is
+ * marked and its marks are not swiped.
+ */
+function useEntryCounterLine(
+  entryId: string,
+  marks: EntryMarks,
+  inFavorites: boolean,
+): CounterLine | undefined {
+  return useCounterLine(entryId, marks.knowledge !== undefined && !marks.swiped, {
+    mark: marks.knowledge?.mark,
+    inFavorites,
+  });
 }
 
 /**
@@ -218,10 +227,10 @@ function EntryActions({
         marksAt={place === 'details' ? 'below' : 'above'}
         hint={actions.hint}
         favorite={actions.favorite}
-        share={actions.share.button}
+        share={actions.share?.button}
         collection={actions.collection}
         hide={<HideButton onPress={actions.onHide} />}
-        report={actions.report.button}
+        report={actions.report?.button}
       />
       {actions.sheets}
     </>
@@ -242,9 +251,9 @@ function EntryCorner({ actions }: { actions: EntryCardActions }) {
         knowledge={actions.marks.knowledge}
         favorite={actions.favorite}
         collection={actions.collection}
-        onShare={actions.share.open}
+        onShare={actions.share?.open}
         onHide={actions.onHide}
-        onReport={actions.report.open}
+        onReport={actions.report?.open}
       />
       {actions.sheets}
     </>
@@ -354,9 +363,9 @@ function MenuCorner({
   );
 }
 
-/** An action that opens a sheet, from its button or from the «⋯» sheet: all undefined while it is off. */
+/** An action that opens a sheet, from its button or from the «⋯» sheet; none while it is off. */
 interface OpenedAction {
-  open: (() => void) | undefined;
+  open: () => void;
   button: ReactNode;
   sheet: ReactNode;
 }
@@ -366,11 +375,11 @@ interface OpenedAction {
  * there only when the binary can capture the Share Card and the Share Cards
  * switch is on in effect.
  */
-function useShareAction(card: AnyEntryCard): OpenedAction {
+function useShareAction(card: AnyEntryCard): OpenedAction | undefined {
   const [open, setOpen] = useState(false);
   const { shareCard } = useShell();
   const share = useShown().entryButtons.shareCard ? shareCard : undefined;
-  if (share === undefined) return { open: undefined, button: undefined, sheet: undefined };
+  if (share === undefined) return undefined;
   return {
     open: () => {
       setOpen(true);
@@ -438,12 +447,12 @@ function EntryShareSheet({
  * sends it now or later; if the Core then says the daily limit is spent, or
  * keeps no report, a toast in its place says so.
  */
-function useMistakeReportAction(entryId: string): OpenedAction {
+function useMistakeReportAction(entryId: string): OpenedAction | undefined {
   const [open, setOpen] = useState(false);
   const showToast = useUndoToast();
   const { mistakeReports } = useShell();
   const shown = useShown().entryButtons.mistakeReport;
-  if (!shown) return { open: undefined, button: undefined, sheet: undefined };
+  if (!shown) return undefined;
   const close = () => {
     setOpen(false);
   };
@@ -466,17 +475,14 @@ function useMistakeReportAction(entryId: string): OpenedAction {
           const toasts = editionStrings.mistakeReport;
           close();
           showToast({ message: toasts.sent });
-          mistakeReports
-            .opened()
-            .then((reports) => reports.report({ entryId, type, comment }))
-            .then((answer) => {
-              if (answer === 'too-many-requests') showToast({ message: toasts.tooMany });
-              else if (answer !== 'thanked') showToast({ message: toasts.failed });
-            })
-            .catch((error: unknown) => {
-              logError('Could not report the mistake', error);
-              showToast({ message: toasts.failed });
-            });
+          // One that could not be kept answers nothing, and the toast says it failed.
+          void keep(
+            'the Mistake Report',
+            mistakeReports.opened().then((reports) => reports.report({ entryId, type, comment })),
+          ).then((answer) => {
+            if (answer === 'too-many-requests') showToast({ message: toasts.tooMany });
+            else if (answer !== 'thanked') showToast({ message: toasts.failed });
+          });
         }}
       />
     ),
