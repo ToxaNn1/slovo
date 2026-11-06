@@ -179,6 +179,45 @@ export const LanguageTraitsSchema = z
 
 export type LanguageTraits = z.infer<typeof LanguageTraitsSchema>;
 
+/** One of the Edition's recorded voices that read Words; the reader picks one. */
+export const NarratorVoiceSchema = z.strictObject({
+  id: KebabCaseIdSchema,
+  /** What the reader calls the voice, such as «Оксана». */
+  name: z.string().min(1),
+  /** What the voice sounds like, such as «Жіночий · спокійний». */
+  description: z.string().min(1),
+});
+
+export type NarratorVoice = z.infer<typeof NarratorVoiceSchema>;
+
+/**
+ * The Edition's Narrator Voices, in their order, each id once, and the one
+ * that reads without the reader's choice (ADR 0083).
+ */
+export const NarratorVoicesSchema = z
+  .strictObject({
+    default: KebabCaseIdSchema,
+    voices: z.array(NarratorVoiceSchema).min(1),
+  })
+  .superRefine(({ default: chosen, voices }, context) => {
+    const ids = new Set<string>();
+    voices.forEach(({ id }, index) => {
+      if (ids.has(id))
+        context.addIssue({
+          code: 'custom',
+          path: ['voices', index, 'id'],
+          message: `Expected each Narrator Voice id once, got ${id} again`,
+        });
+      ids.add(id);
+    });
+    if (!ids.has(chosen))
+      context.addIssue({
+        code: 'custom',
+        path: ['default'],
+        message: `Expected one of the Narrator Voices, got ${chosen}`,
+      });
+  });
+
 /** Per-Edition on/off settings for Core features. */
 export const FeatureSwitchesSchema = z.strictObject({
   game: z.boolean(),
@@ -810,6 +849,8 @@ export const EditionConfigSchema = z
      * itself.
      */
     searchLetters: z.record(LowerCaseLetterSchema, LowerCaseLetterSchema),
+    /** The Narrator Voices that read Words (ADR 0083). */
+    narratorVoices: NarratorVoicesSchema,
     /** The XP table: what each Game learning action earns (ADR 0066). */
     xp: XpTableSchema,
     /** The Level curve and the Level names (ADR 0066). */

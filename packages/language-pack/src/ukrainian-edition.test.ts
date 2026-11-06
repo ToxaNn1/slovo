@@ -20,7 +20,7 @@ describe('the UA Edition', () => {
     });
   });
 
-  it('turns every Feature Switch on but the paused Seasonal Decor, calligraphy, Pronunciation and Search button', () => {
+  it('turns every Feature Switch on but the paused Seasonal Decor, calligraphy and Search button', () => {
     expect(edition.isFeatureEnabled('game')).toBe(true);
     expect(edition.isFeatureEnabled('corrections')).toBe(true);
     expect(edition.isFeatureEnabled('synonymRows')).toBe(true);
@@ -32,8 +32,8 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('notifications')).toBe(true);
     expect(edition.isFeatureEnabled('widget')).toBe(true);
     expect(edition.isFeatureEnabled('shareCards')).toBe(true);
-    // Paused for the owner's test pass: the Pronunciation button and the Feed's Search button.
-    expect(edition.isFeatureEnabled('pronunciation')).toBe(false);
+    expect(edition.isFeatureEnabled('pronunciation')).toBe(true);
+    // Paused for the owner's test pass: the Feed's Search button.
     expect(edition.isFeatureEnabled('searchButton')).toBe(false);
     expect(edition.isFeatureEnabled('wordOfTheDay')).toBe(true);
     expect(edition.isFeatureEnabled('statistics')).toBe(true);
@@ -77,6 +77,16 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('collectionLinks')).toBe(true);
     expect(edition.isFeatureEnabled('replaceOpenEntry')).toBe(true);
     expect(edition.isFeatureEnabled('analytics')).toBe(true);
+  });
+
+  it('reads Words in four Narrator Voices, Оксана by default', () => {
+    expect(edition.narratorVoices.map(({ name }) => name)).toEqual([
+      'Оксана',
+      'Тарас',
+      'Марта',
+      'Остап',
+    ]);
+    expect(edition.narratorVoiceOf(undefined).name).toBe('Оксана');
   });
 
   it('starts new users on the agreed defaults', () => {
