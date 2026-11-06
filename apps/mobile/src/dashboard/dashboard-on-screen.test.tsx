@@ -377,15 +377,29 @@ describe('the Correction Types rail', () => {
 });
 
 describe('the Curated Collections rail', () => {
-  it('shows a published collection as «Нова» till a tap opens it', async () => {
+  it('reads «Добірки» with the count of cards, a tile with its name, and a tap opens it', async () => {
     await open(true);
     await renderApp();
 
     const title = screen.getByTestId('dashboard-curated-collections-title');
-    expect(within(title).getByText(editionStrings.dashboard.curatedCollectionsTitle)).toBeTruthy();
+    expect(within(title).getByText('Добірки')).toBeTruthy();
     expect(within(title).getByText('1')).toBeTruthy();
     const tile = screen.getByTestId('dashboard-curated-collection-cc_lahidni');
     expect(within(tile).getByText('Лагідні слова')).toBeTruthy();
+
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
+
+    expect(composition.curatedCollections.rail.map(({ state }) => state)).toEqual(['opened']);
+  });
+
+  // DESIGN-05: not on the board, owner decides
+  it.skip('shows a tile\u2019s count of Entries and «Нова» till a tap opens it', async () => {
+    await open(true);
+    await renderApp();
+
+    const tile = screen.getByTestId('dashboard-curated-collection-cc_lahidni');
     expect(within(tile).getByText('2 слова')).toBeTruthy();
     expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();
 
@@ -394,7 +408,6 @@ describe('the Curated Collections rail', () => {
     );
 
     expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeNull();
-    expect(composition.curatedCollections.rail.map(({ state }) => state)).toEqual(['opened']);
   });
 
   it('a card opens the collection\u2019s screen: its name, description, «Знаю X з N» and Entries', async () => {
@@ -406,12 +419,13 @@ describe('the Curated Collections rail', () => {
     );
 
     expect(screen.getByTestId('curated-collection')).toBeTruthy();
+    expect(screen.getByText('ДОБІРКА · 2 слова')).toBeTruthy();
     expect(screen.getByText('Лагідні слова')).toBeTruthy();
     expect(screen.getByText('Слова, що звучать м’яко.')).toBeTruthy();
     expect(screen.getByText('Знаю 0 з 2')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_lahidnyi')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
-    expect(screen.getByText(editionStrings.dashboard.curatedCollection.addButton)).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'ДОДАТИ' })).not.toBeSelected();
   });
 
   it('a Known mark counts at once and shows on its row', async () => {
@@ -446,21 +460,33 @@ describe('the Curated Collections rail', () => {
     expect(composition.history.list).toEqual([]);
   });
 
-  it('«Додати» copies it into the Collections and shows «У міксі» on the screen and «Додано ✓» on the card', async () => {
+  it('«ДОДАТИ» copies it into the Collections and turns to «ДОДАНО» with the tick', async () => {
     await open(true);
     await renderApp();
     await settle(() =>
       fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
     );
-    const { addButton, addedButton } = editionStrings.dashboard.curatedCollection;
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'ДОДАТИ' })));
+
+    expect(screen.queryByText('ДОДАТИ')).toBeNull();
+    expect(screen.getByRole('button', { name: 'ДОДАНО' })).toBeSelected();
+    expect(screen.getByTestId('curated-collection-add-icon')).toBeTruthy();
+    expect(composition.curatedCollections.rail.map((card) => card.added)).toEqual([true]);
+  });
+
+  // DESIGN-05: not on the board, owner decides
+  it.skip('shows «Додано ✓» on the card once copied', async () => {
+    await open(true);
+    await renderApp();
+    await settle(() =>
+      fireEvent.press(screen.getByTestId('dashboard-curated-collection-cc_lahidni')),
+    );
 
     await settle(() => fireEvent.press(screen.getByTestId('curated-collection-add')));
-
-    expect(screen.queryByText(addButton)).toBeNull();
-    expect(screen.getByText(addedButton)).toBeTruthy();
     await settle(() => fireEvent.press(screen.getByTestId('curated-collection-back')));
+
     expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-added')).toBeTruthy();
-    expect(composition.curatedCollections.rail.map((card) => card.added)).toEqual([true]);
   });
 
   it('is absent with `curatedCollections` off', async () => {
