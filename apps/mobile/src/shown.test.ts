@@ -36,6 +36,7 @@ const everything: Shown = {
   celebrations: true,
   levelLadder: true,
   streakBreak: true,
+  calendarDayLines: true,
   badges: true,
   progressShareCards: true,
   dailyCrosswordShare: true,
@@ -248,6 +249,10 @@ describe('what the reader is shown', () => {
       { off: ['levelLadder'], shown: { levelLadder: false } },
     ],
     ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
+    [
+      'no calendar day lines with their switch off',
+      { off: ['calendarDayLines'], shown: { calendarDayLines: false } },
+    ],
     ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
     ['no Profile with its switch off', { off: ['profile'], shown: { profile: false } }],
     [

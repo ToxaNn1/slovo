@@ -8,7 +8,7 @@ import { todayBounds, todayKey } from '../local-date';
 import type { Clock } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { ActiveDays } from './active-days';
-import { calendarMonths, type CalendarMonth } from './calendar';
+import { calendarWeeks, type CalendarWeek } from './calendar';
 import { STREAK_MILESTONES } from './streak';
 
 /**
@@ -59,12 +59,12 @@ export interface Progress {
    */
   readonly state: ProgressState;
   /**
-   * The months of the Active Days calendar as of now, oldest first, from the
-   * month of the first Active Day to the current one; none with the
+   * The weeks of the Active Days calendar as of now: the 35 days ending with
+   * the current week, with the Break and frozen days; none with the
    * `activeDaysCalendar` Feature Switch off. A change of the Active Days tells
    * the subscribers, so read it again then.
    */
-  calendar(): readonly CalendarMonth[];
+  calendar(): readonly CalendarWeek[];
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
   /**
@@ -96,7 +96,7 @@ export function openProgress({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   clock: Clock;
-  activeDays: Pick<ActiveDays, 'days' | 'streak' | 'subscribe'>;
+  activeDays: Pick<ActiveDays, 'days' | 'frozen' | 'breaks' | 'streak' | 'subscribe'>;
   history: History;
   favorites: Favorites;
   collections: Collections;
@@ -164,7 +164,12 @@ export function openProgress({
     },
     calendar: () =>
       edition.isFeatureEnabled('activeDaysCalendar')
-        ? calendarMonths(activeDays.days, todayKey(clock))
+        ? calendarWeeks({
+            activeDays: activeDays.days,
+            frozen: activeDays.frozen,
+            breaks: activeDays.breaks,
+            today: todayKey(clock),
+          })
         : [],
     subscribe: subscribers.subscribe,
     onStreakMilestone(listener) {

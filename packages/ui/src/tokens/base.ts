@@ -430,8 +430,6 @@ export const typeRoles = {
   settingsSubTitle: role('word', '800', 20, 22),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
   heroDefinition: role('word', '500', 22, 29),
-  /** The title over the Active Days calendar. */
-  calendarTitle: role('ui', '600', 17, 20),
   /** A weekday's letters over a column of the Active Days calendar. */
   calendarWeekday: role('ui', '700', 11, 13),
   /** A day's number on its tile of the Active Days calendar. */
