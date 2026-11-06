@@ -6,13 +6,7 @@ import { testStrings } from '../test-strings';
 async function draw(earned: boolean) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
-      <BadgeMark
-        testID="badge"
-        condition={{ kind: 'streak', days: 7 }}
-        symbol="7"
-        earned={earned}
-        size={48}
-      />
+      <BadgeMark testID="badge" shape="hexagon" tone="red" symbol="7" earned={earned} size={48} />
     </EditionProvider>,
   );
 }
