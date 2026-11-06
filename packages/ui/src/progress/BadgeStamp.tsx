@@ -11,14 +11,14 @@ import Animated, {
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import Svg, { Circle, Defs, Pattern, Rect } from 'react-native-svg';
 
 import { Button } from '../primitives/Button';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { badgeStamp, capitalMarkRoom, halftone, motion, typeStyle } from '../tokens';
+import { badgeStamp, capitalMarkRoom, motion, typeStyle } from '../tokens';
 import { BadgeMark } from './BadgeMark';
+import { StampHalftone } from './StampHalftone';
 
 /** The stamp lands with the design's `slStamp`. */
 const LAND = {
@@ -32,30 +32,6 @@ const FADE = {
   easing: Easing.bezier(...motion.reduceMotion.easing),
   reduceMotion: ReduceMotion.Never,
 };
-
-/** The halftone raster over the red ground. */
-function Halftone() {
-  return (
-    <Svg style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Defs>
-        <Pattern
-          id="badge-stamp-halftone"
-          width={halftone.cell}
-          height={halftone.cell}
-          patternUnits="userSpaceOnUse"
-        >
-          <Circle
-            cx={halftone.cell / 2}
-            cy={halftone.cell / 2}
-            r={halftone.radius}
-            fill={halftone.dot}
-          />
-        </Pattern>
-      </Defs>
-      <Rect width="100%" height="100%" fill="url(#badge-stamp-halftone)" />
-    </Svg>
-  );
-}
 
 /**
  * An earned Badge stamped on red, over the whole screen: its mark lands big
@@ -112,7 +88,7 @@ export function BadgeStamp({
   return (
     <Modal transparent animationType="fade" onRequestClose={onClose}>
       <View testID={testID} style={[styles.ground, { backgroundColor: tokens.colors.accent }]}>
-        <Halftone />
+        <StampHalftone id="badge-stamp-halftone" />
         <Animated.View style={[styles.mark, markStyle]}>
           <BadgeMark
             testID={`${testID}-mark`}
