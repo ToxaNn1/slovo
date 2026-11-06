@@ -22,7 +22,7 @@ export type BadgeGridItem = {
 );
 
 /** The mark's state of a Badge: earned, in progress by its fraction, or not started. */
-function markStateOf(badge: BadgeGridItem): BadgeMarkState {
+export function markStateOf(badge: BadgeGridItem): BadgeMarkState {
   if (badge.earned) return { kind: 'earned', isNew: badge.isNew };
   const { current, target } = badge.progress;
   return current > 0 && current < target
