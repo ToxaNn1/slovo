@@ -1,4 +1,4 @@
-import { describe, expect, it, jest } from '@jest/globals';
+import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import type { Clock, FeatureSwitch, Random, Schedule } from '@slovo/core';
 import { createFakeBackend, seedUserState } from '@slovo/core/testing';
 
@@ -16,6 +16,25 @@ jest.mock('../content-update/language-pack', () => {
         version: { contentVersion: 7, packFormat: 1 },
         contentUpdate: undefined,
       }),
+  };
+});
+
+/** How the remote Feature Switches open in a test: as the Core opens them, or failing, or never. */
+let mockRemoteSwitches: 'open' | 'fails' | 'hangs' = 'open';
+jest.mock('@slovo/core', () => {
+  const core = jest.requireActual<typeof import('@slovo/core')>('@slovo/core');
+  return {
+    ...core,
+    openRemoteSwitches: (...args: Parameters<typeof core.openRemoteSwitches>) => {
+      switch (mockRemoteSwitches) {
+        case 'open':
+          return core.openRemoteSwitches(...args);
+        case 'fails':
+          return Promise.reject(new Error('The remote Feature Switches failed'));
+        case 'hangs':
+          return new Promise<never>(() => undefined);
+      }
+    },
   };
 });
 
@@ -54,6 +73,10 @@ function shellOverFakes() {
 }
 
 describe('the Shell of the device', () => {
+  afterEach(() => {
+    mockRemoteSwitches = 'open';
+  });
+
   it('reads the Community Counters from its backend until they are switched off remotely', async () => {
     const { fake, shell, turnOffRemotely } = shellOverFakes();
     const reads = await shell.counterReads.opened();
@@ -94,4 +117,34 @@ describe('the Shell of the device', () => {
     const sync = await shell.sync?.opened();
     expect(sync?.state.running).toBe(false);
   });
+
+  it('opens the Account while the Account is switched off remotely, for the screens to hide', async () => {
+    const { shell, turnOffRemotely } = shellOverFakes();
+
+    await turnOffRemotely('account');
+    const account = await shell.account?.opened();
+
+    expect(account?.state.status).toBe('signed-out');
+  });
+
+  it.each(['fails', 'hangs'] as const)(
+    'opens the Account, Sync, Mistake Reports and the Community Counters when the remote Feature Switches %s',
+    async (opening) => {
+      mockRemoteSwitches = opening;
+      const { shell } = shellOverFakes();
+
+      const account = await shell.account?.opened();
+      expect(account?.state.status).toBe('signed-out');
+      const sync = await shell.sync?.opened();
+      expect(sync?.state.running).toBe(false);
+      const reports = await shell.mistakeReports.opened();
+      expect(reports.available()).toBe(true);
+      await expect(shell.counterReads.opened()).resolves.toEqual(
+        expect.objectContaining({ lines: expect.any(Function) }),
+      );
+      await expect(shell.counterSending.opened()).resolves.toEqual(
+        expect.objectContaining({ foreground: expect.any(Function) }),
+      );
+    },
+  );
 });
