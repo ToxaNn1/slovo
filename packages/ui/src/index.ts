@@ -136,7 +136,7 @@ export { RailScreenCard } from './dashboard/RailScreenCard';
 export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
 export { RailScreenHero, type HeroAction } from './dashboard/RailScreenHero';
 export { CategoriesRail } from './categories/CategoriesRail';
-export { CategoryGrid, type GridTile } from './categories/CategoryGrid';
+export { CategoryGrid, type GridColumns, type GridTile } from './categories/CategoryGrid';
 export {
   CategoryTile,
   toneByPosition,
