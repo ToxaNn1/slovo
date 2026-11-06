@@ -152,6 +152,13 @@ const validConfig = {
     { id: 'thoughtful', name: 'Thoughtful', emoji: '🤔', reply: 'Food for thought.' },
   ],
   dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful'],
+  narratorVoices: {
+    default: 'anna',
+    voices: [
+      { id: 'boris', name: 'Boris', description: 'Male · low' },
+      { id: 'anna', name: 'Anna', description: 'Female · calm' },
+    ],
+  },
   searchLetters: { b: 'a' },
   xp: {
     round: 1,
@@ -673,6 +680,29 @@ describe('loadEdition', () => {
     ]);
   });
 
+  it('declares its Narrator Voices in their order', () => {
+    expect(loadEdition(validConfig).narratorVoices).toEqual([
+      { id: 'boris', name: 'Boris', description: 'Male · low' },
+      { id: 'anna', name: 'Anna', description: 'Female · calm' },
+    ]);
+  });
+
+  it('reads the default Narrator Voice without a choice', () => {
+    expect(loadEdition(validConfig).narratorVoiceOf(undefined)).toEqual({
+      id: 'anna',
+      name: 'Anna',
+      description: 'Female · calm',
+    });
+  });
+
+  it('reads the chosen Narrator Voice', () => {
+    expect(loadEdition(validConfig).narratorVoiceOf('boris').name).toBe('Boris');
+  });
+
+  it('reads a Narrator Voice it no longer declares as the default', () => {
+    expect(loadEdition(validConfig).narratorVoiceOf('olga').id).toBe('anna');
+  });
+
   it('resolves the four Dashboard moods, in their order', () => {
     const { moods, dashboardMoods } = loadEdition(validConfig);
     expect(dashboardMoods).toEqual([moods[3], moods[4], moods[1], moods[0]]);
@@ -1183,6 +1213,45 @@ describe('loadEdition', () => {
       'a repeated Dashboard mood',
       { dashboardMoods: ['joyful', 'calm', 'sad', 'calm'] },
       'dashboardMoods.3',
+    ],
+    ['no Narrator Voices', { narratorVoices: undefined }, 'narratorVoices'],
+    [
+      'no Narrator Voice at all',
+      { narratorVoices: { default: 'anna', voices: [] } },
+      'narratorVoices.voices',
+    ],
+    [
+      'a repeated Narrator Voice id',
+      {
+        narratorVoices: {
+          default: 'anna',
+          voices: [
+            { id: 'anna', name: 'Anna', description: 'Female · calm' },
+            { id: 'anna', name: 'Ann', description: 'Female · lively' },
+          ],
+        },
+      },
+      'narratorVoices.voices.1.id',
+    ],
+    [
+      'a default Narrator Voice it does not declare',
+      {
+        narratorVoices: {
+          default: 'olga',
+          voices: [{ id: 'anna', name: 'Anna', description: 'Female · calm' }],
+        },
+      },
+      'narratorVoices.default',
+    ],
+    [
+      'a Narrator Voice without a name',
+      {
+        narratorVoices: {
+          default: 'anna',
+          voices: [{ id: 'anna', name: '', description: 'Female · calm' }],
+        },
+      },
+      'narratorVoices.voices.0.name',
     ],
     ['no Search letters', { searchLetters: undefined }, 'searchLetters'],
     ['a Search letter of two letters', { searchLetters: { ab: 'a' } }, 'searchLetters.ab'],
