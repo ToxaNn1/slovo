@@ -115,6 +115,12 @@ export async function openBadges({
           ? undefined
           : { current: level, best: level, target: condition.level };
       }
+      // Not reached yet: the XP log does not carry each Round's result, which
+      // a flawless Game and a run need (spec #1641).
+      case 'flawlessGame':
+        return once(false);
+      case 'rightRun':
+        return { current: 0, best: 0, target: condition.count };
     }
   }
 

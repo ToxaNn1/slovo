@@ -32,11 +32,13 @@ function progressForms({ condition }: BadgeState) {
     case 'confirmedEntries':
       return strings.progress.entries;
     case 'rightAnswers':
+    case 'rightRun':
       return strings.progress.rightAnswers;
     case 'level':
       return strings.progress.level;
     case 'gameWin':
     case 'rightOnRarity':
+    case 'flawlessGame':
       return undefined;
   }
 }

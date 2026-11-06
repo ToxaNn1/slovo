@@ -89,6 +89,13 @@ const validConfig = {
     lockScreenWidget: true,
     questionnaire: true,
     badges: true,
+    levelLadder: true,
+    newLevelScreen: true,
+    badgeSheet: true,
+    badgeToast: true,
+    streakFreezeCard: true,
+    breakCard: true,
+    calendarDayLines: true,
     progressShareCards: true,
     dailyCrosswordShare: true,
     tracedCrossword: true,
@@ -177,12 +184,23 @@ const validConfig = {
     why: [{ id: 'play', label: 'Play', kindWeights: { idiom: 'more', synonymRow: 'more' } }],
     selfRating: [{ id: 'few', label: 'Few', offerRarityTest: false }],
   },
+  badgeFamilies: [
+    { id: 'run', name: 'Run', description: 'Days in a row', shape: 'hexagon', tone: 'red' },
+    { id: 'skill', name: 'Skill', description: 'Clean play', shape: 'diamond', tone: 'ink' },
+  ],
   badges: [
-    { id: 'week', name: 'Week', symbol: '1', condition: { kind: 'streak', days: 7 } },
+    {
+      id: 'week',
+      name: 'Week',
+      symbol: '1',
+      family: 'run',
+      condition: { kind: 'streak', days: 7 },
+    },
     {
       id: 'sharp-stress',
       name: 'Sharp stress',
       symbol: '1',
+      family: 'skill',
       condition: { kind: 'rightAnswers', modes: ['stress'], count: 100 },
     },
   ],
@@ -230,6 +248,13 @@ const learningSwitches = [
   'politePause',
   'firstWeek',
   'widgetHint',
+  'levelLadder',
+  'newLevelScreen',
+  'badgeSheet',
+  'badgeToast',
+  'streakFreezeCard',
+  'breakCard',
+  'calendarDayLines',
 ] as const;
 
 /** The Feature Switches of the features of 0.8.14. */
@@ -505,15 +530,59 @@ describe('loadEdition', () => {
   });
 
   it('reports the Badges the Edition chooses, their names and conditions, in order (ADR 0066)', () => {
-    expect(loadEdition(validConfig).badges).toEqual([
-      { id: 'week', name: 'Week', symbol: '1', condition: { kind: 'streak', days: 7 } },
-      {
-        id: 'sharp-stress',
-        name: 'Sharp stress',
-        symbol: '1',
-        condition: { kind: 'rightAnswers', modes: ['stress'], count: 100 },
-      },
-    ]);
+    expect(loadEdition(validConfig).badges).toEqual(validConfig.badges);
+  });
+
+  it('reports the Badge families in their order, each with its name, description, shape and tone', () => {
+    expect(loadEdition(validConfig).badgeFamilies).toEqual(validConfig.badgeFamilies);
+  });
+
+  it('reads a flawless Game and a run of right answers as Badge conditions', () => {
+    const [week, sharpStress] = validConfig.badges;
+    const badges = [
+      { ...week, condition: { kind: 'flawlessGame', modes: ['correction', 'anglicism'] } },
+      { ...sharpStress, condition: { kind: 'rightRun', modes: ['stress'], count: 10 } },
+    ];
+
+    expect(loadEdition({ ...validConfig, badges }).badges).toEqual(badges);
+  });
+
+  it('refuses a flawless Game or a run with no mode, and a run of 0', () => {
+    const [week] = validConfig.badges;
+    for (const condition of [
+      { kind: 'flawlessGame', modes: [] },
+      { kind: 'rightRun', modes: [], count: 10 },
+      { kind: 'rightRun', modes: ['stress'], count: 0 },
+    ])
+      expect(() => loadEdition({ ...validConfig, badges: [{ ...week, condition }] })).toThrow(
+        InvalidEditionConfigError,
+      );
+  });
+
+  it('refuses a Badge without a family or of a family the Edition does not declare', () => {
+    const [week] = validConfig.badges;
+    const { family: _removed, ...withoutFamily } = week;
+    expect(() => loadEdition({ ...validConfig, badges: [withoutFamily] })).toThrow(
+      InvalidEditionConfigError,
+    );
+    const load = () => loadEdition({ ...validConfig, badges: [{ ...week, family: 'crossword' }] });
+    expect(load).toThrow(InvalidEditionConfigError);
+    expect(load).toThrow('\nbadges.0.family: ');
+  });
+
+  it('refuses Badge families left out, a family id twice, an unknown shape or tone', () => {
+    const { badgeFamilies, ...withoutFamilies } = validConfig;
+    const [run, skill] = badgeFamilies;
+    expect(() => loadEdition(withoutFamilies)).toThrow(InvalidEditionConfigError);
+    for (const families of [
+      [run, { ...skill, id: 'run' }],
+      [run, { ...skill, shape: 'star' }],
+      [run, { ...skill, tone: 'blue' }],
+      [run, { ...skill, description: '' }],
+    ])
+      expect(() => loadEdition({ ...validConfig, badgeFamilies: families })).toThrow(
+        InvalidEditionConfigError,
+      );
   });
 
   it('refuses an Edition without Badges, with a Badge id twice, an unknown condition or a threshold of 0', () => {
@@ -1234,6 +1303,13 @@ describe('loadEdition', () => {
 const dependentSwitches = [
   ['streakBreak', ['xpLog']],
   ['badges', ['xpLog']],
+  ['levelLadder', ['xpLog']],
+  ['newLevelScreen', ['xpLog']],
+  ['streakFreezeCard', ['xpLog']],
+  ['breakCard', ['xpLog']],
+  ['calendarDayLines', ['xpLog']],
+  ['badgeSheet', ['xpLog', 'badges']],
+  ['badgeToast', ['xpLog', 'badges']],
   ['profile', ['xpLog']],
   ['dailyGoal', ['xpLog']],
   ['seenWordXp', ['xpLog', 'dailyGoal']],

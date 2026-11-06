@@ -11,6 +11,7 @@ import {
   type Theme,
   type XpTable,
   type Badge,
+  type BadgeFamily,
   type MascotLines,
   type Levels,
   type Questionnaire,
@@ -78,7 +79,9 @@ export interface Edition {
   readonly onboardingNotificationTimes: OnboardingNotificationTimes;
   /** The onboarding questions, their options and what each sets (ADR 0067). */
   readonly questionnaire: Questionnaire;
-  /** The Badges the Edition chooses and names, in their order (ADR 0066). */
+  /** The Badge families the Edition declares, in their order (ADR 0085). */
+  readonly badgeFamilies: readonly BadgeFamily[];
+  /** The Badges the Edition chooses and names, in their order, each of a family (ADR 0066, 0085). */
   readonly badges: readonly Badge[];
   /** The Mascot's short line for each moment it shows in. */
   readonly mascot: MascotLines;
@@ -123,6 +126,14 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   // The 1.0 progress features all stand on the XP log (ADR 0066).
   streakBreak: ['xpLog'],
   badges: ['xpLog'],
+  // The board 10 parts of the Profile and the Badges (ADR 0085).
+  levelLadder: ['xpLog'],
+  newLevelScreen: ['xpLog'],
+  streakFreezeCard: ['xpLog'],
+  breakCard: ['xpLog'],
+  calendarDayLines: ['xpLog'],
+  badgeSheet: ['xpLog', 'badges'],
+  badgeToast: ['xpLog', 'badges'],
   profile: ['xpLog'],
   dailyGoal: ['xpLog'],
   seenWordXp: ['xpLog', 'dailyGoal'],
@@ -205,6 +216,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     dailyGoals,
     onboardingNotificationTimes,
     questionnaire,
+    badgeFamilies,
     badges,
     mascot,
   } = result.data;
@@ -238,6 +250,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     dailyGoals,
     onboardingNotificationTimes,
     questionnaire,
+    badgeFamilies,
     badges,
     mascot,
     illustrations: new Set(illustrations),
