@@ -5,6 +5,7 @@ import {
   IconButton,
   BadgeGrid,
   BadgeStamp,
+  BreakCard,
   fill,
   LevelCard,
   LevelLadder,
@@ -32,6 +33,7 @@ import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { MascotAs } from '../mascot/mascot';
 import { shapeOf } from './badges-screen';
+import { dayText } from './day-text';
 
 const strings = editionStrings.settings.profile;
 
@@ -51,6 +53,7 @@ export function ProfileScreen() {
   const router = useRouter();
   const composition = useComposition();
   const xp = useSubscribed(composition.xpLog, ({ state }) => state);
+  const pause = useSubscribed(composition.streakBreak, ({ state }) => state);
   const progress = useSubscribed(composition.progress, ({ state }) => state);
   const confirmed = useSubscribed(composition.knowledge, ({ state }) => state.confirmed);
   const badges = useSubscribed(composition.badges, ({ state }) => state);
@@ -178,7 +181,22 @@ export function ProfileScreen() {
             </Text>
           </View>
         )}
-        {streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />}
+        {/* While a Break runs, its card (p1) stands in place of the Streak line. */}
+        {shown.breakCard && pause.kind === 'running' ? (
+          <View style={styles.section}>
+            <BreakCard
+              testID="profile-break"
+              streak={progress.streak}
+              kicker={strings.breakCard.kicker}
+              paused={fill(strings.breakCard.paused, { count: String(progress.streak) })}
+              until={fill(strings.breakCard.until, { date: dayText(pause.lastDay) })}
+              strip={pause.strip}
+              next={fill(strings.breakCard.next, { date: dayText(pause.nextStart) })}
+            />
+          </View>
+        ) : (
+          streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />
+        )}
         <View style={styles.section}>
           <ActiveDaysCalendar weeks={weeks} lines={shown.calendarDayLines} todayWord={todayWord} />
         </View>

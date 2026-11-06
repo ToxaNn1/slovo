@@ -154,6 +154,27 @@ export const calendarDay = {
   gap: 7,
   edge: 4,
   futureBorder: 2,
+  /** The frost over a frozen day: diagonal stripes this wide, this far apart, in this ink. */
+  frost: { stripe: 2, step: 7, color: 'rgba(20, 12, 10, 0.25)' },
+} as const;
+
+/**
+ * The Profile's Break card (p1), from board 10: the card's padding, corner
+ * and gap, the ghost number's place and opacity, the two slanted bars before
+ * «ПЕРЕРВА», the width the paused line wraps in, the strip's card and the
+ * inset of the next Break's line.
+ */
+export const breakCard = {
+  padding: { vertical: 22, horizontal: 20 },
+  radius: 24,
+  gap: 12,
+  ghost: { right: -6, top: -30, opacity: 0.35 },
+  bar: { width: 7, height: 24, gap: 4, skew: '-14deg' },
+  kickerGap: 10,
+  pausedWidth: 230,
+  strip: { padding: 16, radius: 20, gap: 6 },
+  /** The next Break's line sits this far in from the card's sides. */
+  nextInset: 4,
 } as const;
 
 /**

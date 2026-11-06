@@ -376,6 +376,16 @@ export const typeRoles = {
   profileStreak: role('word', '900', 60, 60, -2),
   /** The words beside the Profile's giant Streak. */
   profileStreakLabel: role('word', '800', 16, 18),
+  /** The paused Streak's ghost number in the corner of the Profile's Break card (p1). */
+  breakGhost: role('word', '900', 170, 170),
+  /** «ПЕРЕРВА» on the Break card. */
+  breakKicker: role('word', '800', 13, 13, 1.5),
+  /** «Серія N на паузі» on the Break card. */
+  breakPaused: role('word', '900', 26, 27),
+  /** The Break's last day on the Break card. */
+  breakUntil: role('ui', '500', 15, 21),
+  /** The next Break's date under the Break card's strip. */
+  breakNext: role('ui', '500', 13, 18),
   /** The name of the screen before, beside the back tile that returns to it. */
   backLink: role('ui', '500', 14, 17),
   /** The label of an action a list row's swipe shows. */
