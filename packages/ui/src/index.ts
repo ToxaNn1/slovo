@@ -156,6 +156,7 @@ export { NewLevelScreen } from './progress/NewLevelScreen';
 export { LevelCard } from './progress/LevelCard';
 export { LevelLadder, type LadderState, type LevelLadderRung } from './progress/LevelLadder';
 export { StatsSheet } from './progress/StatsSheet';
+export { StreakFreezeCard } from './progress/StreakFreezeCard';
 export type { MoodDays } from './progress/mood-line';
 export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
