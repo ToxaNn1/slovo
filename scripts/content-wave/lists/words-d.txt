@@ -19,3 +19,13 @@
 пантограф technology 4
 теодоліт technology 4
 гальванометр technology 4
+клупп 5 technology 
+плашка 4 technology 
+розвертка 4 technology 
+зенкер 5 technology 
+кернер 4 technology 
+штихель 4 technology 
+бородок 4 technology 
+киянка 3 technology 
+лобзик 1 technology 
+шпатель 2 technology 

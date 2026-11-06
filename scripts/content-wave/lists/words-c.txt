@@ -19,3 +19,13 @@
 винокур old-crafts 3
 плотар old-crafts 4
 обручник old-crafts 5
+сап'янник 5 old-crafts 
+ткацтво 3 old-crafts 
+гончарство 2 old-crafts 
+ковальство 2 old-crafts 
+бондарство 3 old-crafts 
+кравецтво 3 old-crafts 
+лимарство 4 old-crafts 
+килимарство 3 old-crafts 
+вишивальниця 2 old-crafts 
+мережка 3 old-crafts 
