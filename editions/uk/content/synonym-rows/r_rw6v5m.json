@@ -3,53 +3,37 @@
   "id": "r_rw6v5m",
   "dominant": {
     "text": "смішний",
-    "stress": [
-      5
-    ]
+    "stress": [5]
   },
   "meaning": "Здатний викликати сміх.",
   "members": [
     {
       "text": "анекдотичний",
-      "stress": [
-        7
-      ]
+      "stress": [7]
     },
     {
       "text": "забавний",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "комічний",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "кумедний",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "курйозний",
-      "stress": [
-        4
-      ]
+      "stress": [4]
     },
     {
       "text": "потішний",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "сміховинний",
-      "stress": [
-        6
-      ]
+      "stress": [6]
     }
   ],
   "sources": [
