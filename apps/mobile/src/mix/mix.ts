@@ -1,5 +1,12 @@
 import type { MixKindWeight, QuickQuestionEvery } from '@slovo/contracts';
-import type { CategoryKind, Composition, MixKind, MixState } from '@slovo/core';
+import type {
+  CategoryKind,
+  Composition,
+  MixKind,
+  MixScreen,
+  MixState,
+  OutOfMix,
+} from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -15,7 +22,11 @@ export function useMixState(): MixState {
 }
 
 /** What the screens read of the Mix in effect, as it stands at one state. */
-export type MixInEffect = Pick<Composition['mix'], 'screen' | 'outOfMix'>;
+export interface MixInEffect {
+  readonly screen: MixScreen;
+  readonly outOfMix: OutOfMix;
+  readonly kindsOn: readonly MixKind[];
+}
 
 /** One view per state of the Mix, so it stays the same object until the Mix changes. */
 const views = new WeakMap<MixState, MixInEffect>();
@@ -24,9 +35,7 @@ function inEffect(mix: Composition['mix']): MixInEffect {
   const { state } = mix;
   let view = views.get(state);
   if (view === undefined) {
-    const screen = mix.screen();
-    const outOfMix = mix.outOfMix();
-    view = { screen: () => screen, outOfMix: () => outOfMix };
+    view = { screen: mix.screen(), outOfMix: mix.outOfMix(), kindsOn: mix.kindsOn() };
     views.set(state, view);
   }
   return view;
@@ -39,8 +48,8 @@ export function useMixInEffect(): MixInEffect {
 
 /** What the Mix screen draws, kept up to date. */
 export function useMixScreenModel(): MixScreenModel {
-  const mix = useMixInEffect();
-  return useMemo(() => mixScreenModel({ mix }), [mix]);
+  const { screen } = useMixInEffect();
+  return useMemo(() => mixScreenModel({ screen }), [screen]);
 }
 
 /** The value of the «Мій Мікс» row of Settings. */

@@ -1,4 +1,10 @@
-import type { CategoryKind, HiddenEntry, HideTarget, MixKind } from '@slovo/core';
+import {
+  categoryTarget,
+  type CategoryKind,
+  type HiddenEntry,
+  type HideTarget,
+  type MixKind,
+} from '@slovo/core';
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useMemo } from 'react';
 
@@ -27,10 +33,10 @@ export function useHiddenSummary(): string {
 /** What the Hidden screen draws, kept up to date. */
 export function useHiddenScreenModel(): HiddenScreenModel {
   const list = useHiddenList();
-  const mix = useMixInEffect();
+  const { outOfMix, kindsOn } = useMixInEffect();
   return useMemo(
-    () => hiddenScreenModel({ hiddenEntries: list, mix, strings: editionStrings }),
-    [list, mix],
+    () => hiddenScreenModel({ hiddenEntries: list, outOfMix, kindsOn, strings: editionStrings }),
+    [list, outOfMix, kindsOn],
   );
 }
 
@@ -72,9 +78,7 @@ export function useHiddenChanges(): {
       unhide({ kind: 'entry', entryId });
     },
     turnCategoryOn: (categoryId, of) => {
-      unhide(
-        of === 'word' ? { kind: 'category', categoryId } : { kind: 'category', categoryId, of },
-      );
+      unhide(categoryTarget(categoryId, of));
     },
     turnKindOn: (entryKind) => {
       unhide({ kind: 'whole-kind', entryKind });

@@ -1,7 +1,7 @@
 import type { EditionStrings, Plural } from '@slovo/contracts';
 import {
   featureOfKind,
-  type Composition,
+  type MixScreen,
   type MixChip,
   type MixKind,
   type MixKindName,
@@ -53,12 +53,7 @@ export interface MixScreenModel extends MixCategoriesModel {
 }
 
 /** What the Mix screen draws, from what the Mix in effect shows (`Mix.screen`). */
-export function mixScreenModel({
-  mix,
-}: {
-  mix: Pick<Composition['mix'], 'screen'>;
-}): MixScreenModel {
-  const screen = mix.screen();
+export function mixScreenModel({ screen }: { screen: MixScreen }): MixScreenModel {
   return {
     ...categoriesModel(screen.categories),
     allOn: screen.allOn,
