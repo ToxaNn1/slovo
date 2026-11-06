@@ -22,16 +22,16 @@ export function useKnowledgeMark(entryId: string): {
   return {
     mark: shown === 'review' ? undefined : shown,
     tap: (tapped) => {
-      void keep('the Knowledge Mark', knowledge.tap(entryId, tapped), undefined);
+      void keep('the Knowledge Mark', knowledge.tap(entryId, tapped));
     },
     set: (mark) => {
-      void keep('the Knowledge Mark', knowledge.set(entryId, mark), undefined);
+      void keep('the Knowledge Mark', knowledge.set(entryId, mark));
     },
     clear: () => {
-      void keep('the Knowledge Mark', knowledge.clear(entryId), undefined);
+      void keep('the Knowledge Mark', knowledge.clear(entryId));
     },
     undo: () => {
-      void keep('the Knowledge Mark', knowledge.undo(), undefined);
+      void keep('the Knowledge Mark', knowledge.undo());
     },
   };
 }

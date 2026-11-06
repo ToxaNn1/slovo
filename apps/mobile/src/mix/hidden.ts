@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { useShell } from '../shell-value';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
@@ -55,28 +55,21 @@ export function useHiddenChanges(): {
   const showToast = useUndoToast();
 
   function unhide(target: HideTarget): void {
-    composition.unhide(target).then(
-      (result) => {
-        if (result?.changed.kind !== 'entry' || result.hiddenAt === undefined) return;
-        const { hiddenAt } = result;
-        const { entryId } = result.changed;
-        showToast({
-          message: fill(strings.entryRestored, { title: result.changed.row.title }),
-          undoLabel: strings.undo,
-          onUndo() {
-            compositionOpening
-              .opened()
-              .then((current) => undoRestore(current, entryId, hiddenAt))
-              .catch((error: unknown) => {
-                logError('Could not hide the Entry again', error);
-              });
-          },
-        });
-      },
-      (error: unknown) => {
-        logError('Could not bring the hidden change back', error);
-      },
-    );
+    void keep('the hidden change', composition.unhide(target)).then((result) => {
+      if (result?.changed.kind !== 'entry' || result.hiddenAt === undefined) return;
+      const { hiddenAt } = result;
+      const { entryId } = result.changed;
+      showToast({
+        message: fill(strings.entryRestored, { title: result.changed.row.title }),
+        undoLabel: strings.undo,
+        onUndo() {
+          void keep(
+            'the undo of bringing the Entry back',
+            compositionOpening.opened().then((current) => undoRestore(current, entryId, hiddenAt)),
+          );
+        },
+      });
+    });
   }
 
   return {
