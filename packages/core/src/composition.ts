@@ -539,7 +539,14 @@ export async function openComposition({
     analytics,
   });
   // The Feed reads the day's Mood for each card it adds (ADR 0076); the check-in follows the day change.
-  const mood = await openMoodCheckIns({ edition, userState, clock, dayTurned, analytics });
+  const mood = await openMoodCheckIns({
+    edition,
+    userState,
+    clock,
+    dayTurned,
+    analytics,
+    rarityCeiling,
+  });
   const feed = await openFeed({
     entries,
     userState,
@@ -582,8 +589,7 @@ export async function openComposition({
       ],
     }),
     mix,
-    mood: () => (mood.today.state === 'chosen' ? mood.today.mood : undefined),
-    rarityCeiling,
+    mood,
     eligibility,
     seen,
     dayTurned,
