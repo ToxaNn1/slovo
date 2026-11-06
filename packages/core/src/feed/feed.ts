@@ -24,7 +24,7 @@ import type { Subject } from '../subject';
 import type { OpenedEntry } from './day-change';
 import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
-import type { MixKindWeights } from '../entries/mix';
+import type { Mix, MixKindWeights } from '../entries/mix';
 import { inRarityBand, shiftedKindWeights } from '../mood/feed-parameters';
 import type { RarityCeiling } from '../entries/rarity-ceiling';
 import type { UserState } from '../user-state/user-state';
@@ -378,7 +378,7 @@ export async function openFeed({
   history,
   archive,
   notices,
-  kindWeights,
+  mix,
   mood,
   rarityCeiling,
   eligibility,
@@ -396,8 +396,8 @@ export async function openFeed({
   history: HistoryRecorder;
   archive: WordOfTheDayArchiveRecorder;
   notices: FeedNoticeQueue;
-  /** The Mix kind weights the turns follow now, read for each card. */
-  kindWeights: () => MixKindWeights;
+  /** The Mix, whose kind weights and Quick Question frequency in effect the next card follows, read for each card. */
+  mix: Pick<Mix, 'kindWeightsInEffect' | 'quickQuestionEveryInEffect'>;
   /** Today's Mood, whose Feed parameters the next card follows (ADR 0076), read for each card; none chosen leaves the Feed as it is. */
   mood: () => Mood | undefined;
   /** The Rarity Ceiling the Mood's rarity band clips to. */
@@ -407,13 +407,10 @@ export async function openFeed({
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
   opened: Pick<Subject<OpenedEntry>, 'subscribe'>;
   /**
-   * The Quick Question and how often it comes, read for each card: one card
-   * in `every()` that is no Feed Notice, nothing while it is off.
+   * The Quick Question: one card in the Mix's frequency in effect that is no
+   * Feed Notice, nothing while it is off.
    */
-  quickQuestion?: {
-    every(): number | undefined;
-    questions: Pick<QuickQuestion, 'build' | 'answer'>;
-  };
+  quickQuestion?: Pick<QuickQuestion, 'build' | 'answer'>;
 }): Promise<Feed> {
   /** The cards of the session and the reader's place among them. */
   const session = createFeedSession();
@@ -519,7 +516,7 @@ export async function openFeed({
       await bandFirst(cycle.unseen(), today),
       session,
       eligibleDue(cycle, knowledge),
-      shiftedKindWeights(kindWeights(), today),
+      shiftedKindWeights(mix.kindWeightsInEffect(), today),
     );
     // A due Review goes before the Quick Question (ADR 0066), and the card
     // after the end-of-Cycle card, which starts the new Cycle, is an Entry's.
@@ -574,12 +571,12 @@ export async function openFeed({
   }
 
   async function addQuickQuestion(): Promise<FeedCard | undefined> {
-    const every = quickQuestion?.every();
+    const every = mix.quickQuestionEveryInEffect();
     if (quickQuestion === undefined || every === undefined) return undefined;
     const lastAsked = session.cards.findLastIndex((card) => card.kind === 'quick-question');
     const since = session.cards.slice(lastAsked + 1).filter(takesTurns);
     if (since.length < every - 1) return undefined;
-    const content = await quickQuestion.questions.build(since.at(-1)?.entryId);
+    const content = await quickQuestion.build(since.at(-1)?.entryId);
     if (content === undefined) return undefined;
     const card: FeedCard = { ...content, kind: 'quick-question' };
     session.add(card);
@@ -594,7 +591,7 @@ export async function openFeed({
     const card = session.cards[position];
     if (quickQuestion === undefined || card?.kind !== 'quick-question') return undefined;
     if (card.answered !== undefined) return undefined;
-    const right = await quickQuestion.questions.answer(card, option);
+    const right = await quickQuestion.answer(card, option);
     const answered: FeedCard = { ...card, answered: option };
     session.renew((each) => (each === card ? answered : each));
     subscribers.tell();

@@ -52,7 +52,7 @@ import { openBadges, type Badges } from './progress/badges';
 import { openCommunityCounters, type CommunityCounters } from './community-counters/counter-deltas';
 import { openHiddenEntries, type HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
-import { NORMAL_KIND_WEIGHTS, openMix, type Mix } from './entries/mix';
+import { openMix, type Mix } from './entries/mix';
 import type { NotificationScheduling } from './notifications/notification-plan';
 import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
@@ -581,34 +581,26 @@ export async function openComposition({
             }),
       ],
     }),
-    kindWeights: () =>
-      edition.isFeatureEnabled('mixKindWeights') ? mix.state.kindWeights : NORMAL_KIND_WEIGHTS,
+    mix,
     mood: () => (mood.today.state === 'chosen' ? mood.today.mood : undefined),
     rarityCeiling,
     eligibility,
     seen,
     dayTurned,
     opened,
-    quickQuestion: {
-      every: () => {
-        const on = edition.isFeatureEnabled('game') && edition.isFeatureEnabled('quickQuestion');
-        const every = mix.state.quickQuestionEvery;
-        return on && every !== 'off' ? every : undefined;
-      },
-      questions: createQuickQuestion({
-        edition,
-        entries,
-        knowledge,
-        xp: xpLog,
-        userState,
-        random,
-        modes: [...coreGameModes, ...gameModes],
-        answered: (askedId, right) =>
-          withEntryProperties(askedId, (properties) =>
-            analytics.track('quickQuestionAnswered', { ...properties, right }),
-          ),
-      }),
-    },
+    quickQuestion: createQuickQuestion({
+      edition,
+      entries,
+      knowledge,
+      xp: xpLog,
+      userState,
+      random,
+      modes: [...coreGameModes, ...gameModes],
+      answered: (askedId, right) =>
+        withEntryProperties(askedId, (properties) =>
+          analytics.track('quickQuestionAnswered', { ...properties, right }),
+        ),
+    }),
   });
   // The Game Modes are planned once the day is turned to, last of what follows
   // it: planning reads the whole pack, so the launch never waits for it. A
