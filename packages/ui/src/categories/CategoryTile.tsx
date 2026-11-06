@@ -1,7 +1,13 @@
 import { StyleSheet, Text, View, type DimensionValue } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
-import { TileShape, type TileShapeKind, type TileShapePlace } from '../primitives/TileShape';
+import {
+  shapeAt,
+  TileShape,
+  type TileShapeKind,
+  type TileShapePair,
+  type TileShapePlace,
+} from '../primitives/TileShape';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { categoryTile, typeStyle, withAlpha, type TypeRole } from '../tokens';
@@ -27,12 +33,9 @@ export function toneByPosition(index: number): CategoryTone {
 }
 
 /** A tile's pair of shapes, its big one and its small one. */
-export type CategoryShapes = readonly [CategoryShape, CategoryShape];
+export type CategoryShapes = TileShapePair;
 
-/** The shape pair of the tile at `index`: the board's pairs in turn, wrapping past the set. */
-export function shapeAt(shapes: readonly CategoryShapes[], index: number): CategoryShapes {
-  return shapes[index % shapes.length] ?? ['circle', 'circle'];
-}
+export { shapeAt };
 
 /** A tile's box from the board it is drawn on: the rail's or a grid's. */
 export interface CategoryTileBox {

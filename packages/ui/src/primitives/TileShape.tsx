@@ -7,6 +7,14 @@ import { Wedge } from './Wedge';
 export type TileShapeKind = WedgePoints | 'circle';
 
 /** Where a shape sits on its tile: its side, from the right and from the top. */
+/** A tile's pair of shapes, its big one and its small one. */
+export type TileShapePair = readonly [TileShapeKind, TileShapeKind];
+
+/** The shape pair of the tile at `index`: the board's pairs in turn, wrapping past the set. */
+export function shapeAt(shapes: readonly TileShapePair[], index: number): TileShapePair {
+  return shapes[index % shapes.length] ?? ['circle', 'circle'];
+}
+
 export interface TileShapePlace {
   readonly side: number;
   readonly right: number;
