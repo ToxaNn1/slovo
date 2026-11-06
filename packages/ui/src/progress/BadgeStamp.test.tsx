@@ -49,10 +49,10 @@ describe('BadgeStamp', () => {
     expect(screen.queryByTestId('badge-stamp-burst')).toBeNull();
   });
 
-  it('closes on «ГОТОВО», which comes in after the ribbon', async () => {
+  it('closes on its done button, which comes in after the ribbon', async () => {
     const onClose = jest.fn();
     await draw(false, onClose);
-    await fireEvent.press(screen.getByRole('button', { name: 'DONE' }));
+    await fireEvent.press(screen.getByTestId('badge-stamp-done'));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
