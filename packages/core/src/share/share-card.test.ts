@@ -486,7 +486,7 @@ describe('the Share Card of a Weekly Recap', () => {
 describe('the Share Card of progress', () => {
   it('shows a Level reached with its number and name, the day as its overline', () => {
     const content = buildShareCardContent(
-      { level: { level: 5, name: 'Знавець', progress: 0, toNext: 300 }, date: '2026-11-01' },
+      { level: { level: 5, name: 'Знавець' }, date: '2026-11-01' },
       STRINGS,
       'uk',
       clock,

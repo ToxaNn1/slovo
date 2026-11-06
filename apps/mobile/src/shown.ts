@@ -76,6 +76,8 @@ export interface Shown {
   readonly xpBar: boolean;
   /** The Mascot's celebrations, while the XP log is on and the reader has not hidden the counters (ADR 0066). */
   readonly celebrations: boolean;
+  /** The Profile's ladder of Level names, while its switch is on and the reader has not hidden the counters. */
+  readonly levelLadder: boolean;
   /** The Settings row of the Break and its screen. */
   readonly streakBreak: boolean;
   /** The Settings row that opens the Badges (ADR 0066). */
@@ -172,6 +174,7 @@ export function shownOf({
       : undefined,
     xpBar: on('xpLog') && !noCounters,
     celebrations: on('xpLog') && !noCounters,
+    levelLadder: on('levelLadder') && !noCounters,
     streakBreak: on('streakBreak'),
     badges: on('badges'),
     progressShareCards: on('progressShareCards') && !noCounters,

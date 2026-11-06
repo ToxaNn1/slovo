@@ -154,6 +154,7 @@ export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
 export { NewLevelScreen } from './progress/NewLevelScreen';
 export { LevelCard } from './progress/LevelCard';
+export { LevelLadder, type LadderState, type LevelLadderRung } from './progress/LevelLadder';
 export { StatsSheet } from './progress/StatsSheet';
 export type { MoodDays } from './progress/mood-line';
 export { XpBar } from './progress/XpBar';

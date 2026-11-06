@@ -154,33 +154,81 @@ async function earnOneXp(app: Composition): Promise<void> {
 describe('the Level curve', () => {
   it('starts at level 0 with 50 XP to level 1', async () => {
     const { app } = await run();
-    expect(app.xpLog.state.level).toEqual({ level: 0, name: 'Seed', progress: 0, toNext: 50 });
+    expect(app.xpLog.state.level).toMatchObject({
+      level: 0,
+      name: 'Seed',
+      progress: 0,
+      toNext: 50,
+    });
   });
 
   it('reaches level 1 at 50 XP, and level 2 costs 10% more', async () => {
-    expect(await levelAt(49)).toEqual({ level: 0, name: 'Seed', progress: 49, toNext: 50 });
-    expect(await levelAt(50)).toEqual({ level: 1, name: 'Seed', progress: 0, toNext: 55 });
+    expect(await levelAt(49)).toMatchObject({ level: 0, name: 'Seed', progress: 49, toNext: 50 });
+    expect(await levelAt(50)).toMatchObject({ level: 1, name: 'Seed', progress: 0, toNext: 55 });
     expect(await levelAt(104)).toMatchObject({ level: 1, progress: 54 });
-    expect(await levelAt(105)).toEqual({ level: 2, name: 'Seed', progress: 0, toNext: 61 });
+    expect(await levelAt(105)).toMatchObject({ level: 2, name: 'Seed', progress: 0, toNext: 61 });
   });
 
   it('reaches level 5 at 306 XP and level 10 at 798 XP, each level rounded to whole XP', async () => {
     expect(await levelAt(305)).toMatchObject({ level: 4, progress: 72, toNext: 73 });
-    expect(await levelAt(306)).toEqual({ level: 5, name: 'Sprout', progress: 0, toNext: 81 });
+    expect(await levelAt(306)).toMatchObject({ level: 5, name: 'Sprout', progress: 0, toNext: 81 });
     expect(await levelAt(797)).toMatchObject({ level: 9, progress: 117, toNext: 118 });
-    expect(await levelAt(798)).toEqual({ level: 10, name: 'Sapling', progress: 0, toNext: 120 });
+    expect(await levelAt(798)).toMatchObject({
+      level: 10,
+      name: 'Sapling',
+      progress: 0,
+      toNext: 120,
+    });
   });
 
   it('costs 120 XP for every level after 10, with no top', async () => {
     expect(await levelAt(917)).toMatchObject({ level: 10, progress: 119, toNext: 120 });
     expect(await levelAt(918)).toMatchObject({ level: 11, progress: 0, toNext: 120 });
-    expect(await levelAt(1998)).toEqual({ level: 20, name: 'Grove', progress: 0, toNext: 120 });
+    expect(await levelAt(1998)).toMatchObject({
+      level: 20,
+      name: 'Grove',
+      progress: 0,
+      toNext: 120,
+    });
     expect(await levelAt(100_000)).toMatchObject({ level: 836, progress: 82, toNext: 120 });
   });
 
   it('names one name per five levels and keeps the last name above them', async () => {
     expect((await levelAt(1478))?.name).toBe('Tree'); // level 15
     expect((await levelAt(100_000))?.name).toBe('Grove');
+  });
+
+  // Ticket #1648: the name's band, the next name and the XP to its first Level, and the ladder.
+  it.each([
+    [0, 0, { first: 0, last: 4 }, { name: 'Sprout', level: 5, xp: 306 }],
+    [4, 305, { first: 0, last: 4 }, { name: 'Sprout', level: 5, xp: 1 }],
+    [5, 306, { first: 5, last: 9 }, { name: 'Sapling', level: 10, xp: 492 }],
+    [19, 1878, { first: 15, last: 19 }, { name: 'Grove', level: 20, xp: 120 }],
+    [25, 2598, { first: 20, last: undefined }, undefined],
+    [40, 4398, { first: 20, last: undefined }, undefined],
+  ])(
+    'at level %i gives the band of its name and the XP left to the next name',
+    async (level, total, band, next) => {
+      expect(await levelAt(total)).toMatchObject({ level, band, next });
+    },
+  );
+
+  it('lays the names out as a ladder of passed, current and ahead rungs', async () => {
+    expect((await levelAt(1878))?.ladder).toEqual([
+      { name: 'Seed', band: { first: 0, last: 4 }, state: 'passed' },
+      { name: 'Sprout', band: { first: 5, last: 9 }, state: 'passed' },
+      { name: 'Sapling', band: { first: 10, last: 14 }, state: 'passed' },
+      { name: 'Tree', band: { first: 15, last: 19 }, state: 'current' },
+      { name: 'Grove', band: { first: 20, last: undefined }, state: 'ahead' },
+    ]);
+    expect((await levelAt(0))?.ladder.map(({ state }) => state)).toEqual([
+      'current',
+      'ahead',
+      'ahead',
+      'ahead',
+      'ahead',
+    ]);
+    expect((await levelAt(4398))?.ladder.at(-1)?.state).toBe('current');
   });
 
   it('derives the Level from the XP log as it grows, and stores no Level', async () => {

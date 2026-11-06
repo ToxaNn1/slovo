@@ -120,8 +120,10 @@ async function renderScreen({
 const counterLines = [
   'profile-level',
   'profile-level-name',
-  'profile-to-next',
+  'profile-level-progress',
+  'profile-level-left',
   'profile-total-xp',
+  'profile-ladder',
   'profile-streak',
   'profile-streak-words',
   'profile-best-streak',
@@ -132,13 +134,12 @@ describe('the Profile', () => {
     await renderScreen();
 
     expect(screen.getByText(strings.title)).toBeOnTheScreen();
-    expect(screen.getByTestId('profile-total-xp')).toHaveTextContent('Усього XP: 0');
     expect(screen.getByTestId('profile-streak')).toHaveTextContent('0');
     expect(screen.getByTestId('profile-streak-words')).toHaveTextContent('днів поспіль');
     expect(screen.getByTestId('profile-best-streak')).toHaveTextContent('найкраща серія — 0');
     expect(screen.getByTestId('profile-level-number')).toHaveTextContent('0');
     expect(screen.getByText(strings.levelLabel)).toBeOnTheScreen();
-    expect(screen.getByTestId('profile-to-next')).toHaveTextContent(/XP до наступного рівня/);
+    expect(screen.getByTestId('profile-level-name')).toHaveTextContent('0 · Початківець');
     expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
     expect(screen.getByTestId('profile-badges-count')).toHaveTextContent(
       `0 з ${String(edition.badges.length)}`,
@@ -152,6 +153,50 @@ describe('the Profile', () => {
     expect(screen.getByTestId('profile-best-guess-word')).toHaveTextContent(
       `Вгадай слово — ${strings.noGameBest}`,
     );
+  });
+
+  it('reads the Level card as «N · name», its XP in the Level and the XP left to the next', async () => {
+    await renderScreen({ rounds: 60 });
+
+    expect(screen.getByTestId('profile-level-number')).toHaveTextContent('1');
+    expect(screen.getByTestId('profile-level-name')).toHaveTextContent('1 · Початківець');
+    expect(screen.getByTestId('profile-level-progress')).toHaveTextContent('10 / 55 XP');
+    expect(screen.getByTestId('profile-level-left')).toHaveTextContent('ще 45 XP до рівня 2');
+  });
+
+  it('shows the ladder of Level names by range, passed, current and ahead, and the bar to the next name', async () => {
+    await renderScreen({ rounds: 60 });
+    const { ladder } = strings;
+
+    const captions = ['Рівні 0–4', 'Рівні 5–9', 'Рівні 10–14', 'Рівні 15–19', 'Рівні 20–24'];
+    for (const [index, caption] of [...captions, 'Рівні 25+'].entries()) {
+      const name = edition.levels.names[index] ?? '';
+      const state = index === 0 ? ladder.current : ladder.ahead;
+      expect(screen.getByTestId(`profile-ladder-${String(index)}`)).toHaveAccessibleName(
+        `${caption}, ${name}, ${state}`,
+      );
+    }
+    expect(screen.queryByTestId('profile-ladder-6')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('profile-ladder-bar')).toHaveTextContent(/^РІВЕНЬ 1 · ПОЧАТКІВЕЦЬ/);
+    expect(screen.getByTestId('profile-ladder-to-next')).toHaveTextContent('ДО ЧИТАЧ 246 XP');
+  });
+
+  it('tags the names below the Level as passed', async () => {
+    await renderScreen({ rounds: 306 });
+
+    expect(screen.getByTestId('profile-ladder-0')).toHaveAccessibleName(
+      `Рівні 0–4, ${edition.levels.names[0] ?? ''}, ${strings.ladder.passed}`,
+    );
+    expect(screen.getByTestId('profile-ladder-1')).toHaveAccessibleName(
+      `Рівні 5–9, ${edition.levels.names[1] ?? ''}, ${strings.ladder.current}`,
+    );
+  });
+
+  it('hides the ladder with its switch off, and nothing else', async () => {
+    await renderScreen({ rounds: 60, switchedOff: 'levelLadder' });
+
+    expect(screen.queryByTestId('profile-ladder')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('profile-level-left')).toBeOnTheScreen();
   });
 
   it('draws its lists without the React warning of a missing key', async () => {

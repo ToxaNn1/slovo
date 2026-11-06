@@ -34,6 +34,7 @@ const everything: Shown = {
   stats: { streak: true, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
   xpBar: true,
   celebrations: true,
+  levelLadder: true,
   streakBreak: true,
   badges: true,
   progressShareCards: true,
@@ -218,6 +219,7 @@ describe('what the reader is shown', () => {
           stats: { streak: false, knowledge: ['word', 'correction', 'idiom', 'synonymRow', 'tip'] },
           xpBar: false,
           celebrations: false,
+          levelLadder: false,
           progressShareCards: false,
         },
       },
@@ -240,6 +242,10 @@ describe('what the reader is shown', () => {
     [
       'no XP bar and no celebrations with the XP log off',
       { off: ['xpLog'], shown: { xpBar: false, celebrations: false } },
+    ],
+    [
+      'no Level ladder with its switch off',
+      { off: ['levelLadder'], shown: { levelLadder: false } },
     ],
     ['no Break with its switch off', { off: ['streakBreak'], shown: { streakBreak: false } }],
     ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
