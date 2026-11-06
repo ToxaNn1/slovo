@@ -233,7 +233,7 @@ function SwipedCard({ card }: { card: AnyEntryCard }) {
   return <EntryCard card={card} slots={useEntrySlots(card)} />;
 }
 
-/** Swipes the card sideways by `distance` points and lets it land. */
+/** Swipes the card sideways by `distance` points and lets it land; a mark takes past 40% of the unmeasured 360 pt card. */
 async function swipeBy(distance: number) {
   await act(() => {
     fireGestureHandler(getByGestureTestId('entry-card-side-swipe'), [
@@ -579,7 +579,7 @@ describe('the side swipes of an Entry card (ADR 0077)', () => {
     await renderCard(word.id);
     expect(screen.queryByTestId('knowledge-known')).not.toBeOnTheScreen();
 
-    await swipeBy(120);
+    await swipeBy(200);
 
     expect(composition.knowledge.state.shown.get(word.id)).toBe('known');
     expect(screen.getByTestId('swipe-stamp')).toBeOnTheScreen();
@@ -592,7 +592,7 @@ describe('the side swipes of an Entry card (ADR 0077)', () => {
     swipeMarksOn = true;
     await renderCard(word.id);
 
-    await swipeBy(-120);
+    await swipeBy(-200);
 
     expect(composition.knowledge.state.shown.get(word.id)).toBe('unknown');
   });
