@@ -84,7 +84,30 @@ A Lemma list line whose Category is one of the Edition's `categoriesRequiringHis
 
 ## Corrections: `source:corrections`
 
-<!-- #1629 fills this section. -->
+<!-- #1629 -->
+
+```sh
+pnpm source:corrections <form-list> --edition <id> [--out <dir>] [--cache <dir>]
+```
+
+The form list has one non-standard form per line, `<non-standard form> <correction type> <category id>`, with `#` comments; the form may be several words. The Correction Type and the Category are checked against the Edition before anything is fetched: an unknown one is refused with its line number, and nothing is fetched. The tool reads the goroh «Слововживання» page of the form, with the same cache and throttle as `source:words`.
+
+Each article about the form becomes a draft:
+
+- the article text is the explanation;
+- the standard forms the article names are the standard equivalents;
+- the article's example pair is the example pair;
+- the source is the citation goroh prints under the article, with the page address.
+
+Articles goroh marks as written by a language model are left out with a `check` flag; they are never a source. Output goes to `review/corrections/`, laid out as for Words: `drafts/` holds drafts that pass the Correction schema and the Language Pack build's checks against the Edition, `incomplete/` the rest, and `review-report.md` the decisions.
+
+| Flag             | Meaning                                                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `no-entry`       | goroh has no «Слововживання» article for the form. No draft is written.                                          |
+| `fetch-failed`   | goroh kept refusing or rate-limiting after the last back-off; run again later.                                   |
+| `missing-data`   | The article prints no example pair or names no standard equivalent, or no article on the page is about the form. |
+| `existing-entry` | The form is already a Correction of the Edition; the draft goes to `incomplete/`.                                |
+| `check`          | goroh articles written by a language model were left out; the message names them.                                |
 
 ## Synonym Rows: `source:synonyms`
 
