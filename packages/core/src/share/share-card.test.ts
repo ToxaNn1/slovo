@@ -512,6 +512,7 @@ describe('the Share Card of progress', () => {
           id: 'week',
           name: 'Тиждень поспіль',
           symbol: '1',
+          family: 'streak',
           condition: { kind: 'streak', days: 7 },
           earned: true,
           date: '2026-10-30',

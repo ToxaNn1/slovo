@@ -149,6 +149,17 @@ describe('the Profile', () => {
       );
     }
     for (const { name } of edition.badges) expect(screen.getByLabelText(name)).toBeOnTheScreen();
+    const heads = screen.getAllByRole('header');
+    const places = edition.badgeFamilies.map(({ name }) =>
+      heads.indexOf(screen.getByRole('header', { name })),
+    );
+    expect(places).toEqual([...places].sort((a, b) => a - b));
+    for (const { id } of edition.badgeFamilies) {
+      const members = edition.badges.filter(({ family }) => family === id).length;
+      expect(screen.getByTestId(`badge-family-${id}-count`)).toHaveTextContent(
+        `0 з ${String(members)}`,
+      );
+    }
     expect(screen.getByTestId('profile-best-guess-word')).toHaveTextContent(
       `Вгадай слово — ${strings.noGameBest}`,
     );

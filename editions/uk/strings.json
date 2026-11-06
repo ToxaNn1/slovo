@@ -207,12 +207,6 @@
     "badges": {
       "title": "Відзнаки",
       "earnedOf": "{earned} з {total}",
-      "families": {
-        "streak": "Серія",
-        "games": "Ігри",
-        "entries": "Слова",
-        "levels": "Рівні"
-      },
       "earned": "Отримано {date}",
       "notYet": "Ще не отримано",
       "progress": {

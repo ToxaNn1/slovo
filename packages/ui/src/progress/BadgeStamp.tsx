@@ -1,7 +1,7 @@
 'use no memo';
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
-import type { BadgeCondition } from '@slovo/contracts';
+import type { BadgeShape } from '@slovo/contracts';
 import { useEffect, type ReactNode } from 'react';
 import { Modal, StyleSheet, Text, View } from 'react-native';
 import Animated, {
@@ -64,7 +64,7 @@ function Halftone() {
  * at rest.
  */
 export function BadgeStamp({
-  condition,
+  shape,
   symbol,
   name,
   title,
@@ -73,7 +73,8 @@ export function BadgeStamp({
   onClose,
   testID = 'badge-stamp',
 }: {
-  condition: BadgeCondition;
+  /** The shape of the Badge's family. */
+  shape: BadgeShape;
   symbol: string;
   name: string;
   title: string;
@@ -112,7 +113,8 @@ export function BadgeStamp({
         <Animated.View style={[styles.mark, markStyle]}>
           <BadgeMark
             testID={`${testID}-mark`}
-            condition={condition}
+            shape={shape}
+            tone="cream"
             symbol={symbol}
             earned
             onRed

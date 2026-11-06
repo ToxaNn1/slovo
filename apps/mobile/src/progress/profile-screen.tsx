@@ -22,13 +22,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAccountInEffect, useSignedOut } from '../account/account';
 import { useComposition } from '../composition';
-import { editionStrings } from '../edition/edition';
+import { edition, editionStrings } from '../edition/edition';
 import { bestText, gameModeStrings } from '../game/game-modes';
 import { type Opening, useSubscribed } from '../opening';
 import { ShareCardSheet } from '../share/share-card-sheet';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { MascotAs } from '../mascot/mascot';
+import { shapeOf } from './badges-screen';
 
 const strings = editionStrings.settings.profile;
 
@@ -191,6 +192,7 @@ export function ProfileScreen() {
             </Text>
           </View>
           <BadgeGrid
+            families={edition.badgeFamilies}
             badges={badges}
             onPress={(badge) => {
               if (badge.earned) setStamped(badge);
@@ -198,7 +200,7 @@ export function ProfileScreen() {
           />
           {stamped !== undefined && (
             <BadgeStamp
-              condition={stamped.condition}
+              shape={shapeOf(stamped)}
               symbol={stamped.symbol}
               name={stamped.name}
               title={strings.badgeStamp.title}
