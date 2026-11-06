@@ -524,6 +524,16 @@ export const typeRoles = {
   railStandard: role('word', '900', 19, 22.8, -0.3),
   /** The explanation in a Correction card's revealed block. */
   railNote: role('ui', '500', 14, 19.6),
+  /** «Категорія» over a quiet Category's name on its hero (k3). */
+  quietLabel: role('ui', '600', 13, 17.55),
+  /** A quiet Category's name on its hero (k3). */
+  quietTitle: role('word', '800', 30, 32.4, -0.5),
+  /** The line under a quiet Category's name (k3). */
+  quietDescription: role('ui', '400', 15, 21.75),
+  /** The Lemma of a plain row on a quiet Category's screen (k3). */
+  quietWord: role('word', '800', 17, 18.7),
+  /** The short Definition under it, the gloss. */
+  quietGloss: role('ui', '400', 14, 18.2),
   /** The Lemma on a word card of a Curated Collection's screen. */
   railWord: role('word', '800', 19, 20.9),
   /** The «ЗНАЮ» stamp on a known word's card. */

@@ -960,3 +960,23 @@ export const railScreen = {
   known: { paddingHorizontal: 8, paddingVertical: 5, turn: '-3deg' },
   bars: { width: 9, height: 8, gap: 2, skew: '-20deg' },
 } as const;
+
+/**
+ * The quiet variant (k3) of a Category's screen, for a quiet Category (spec
+ * #1604): the hero on the sunken surface with no halftone, cut at the
+ * bottom as the loud one, its padding, back tile, name and description
+ * widths and the mourning Mascot's place; the plain rows under it, each
+ * fading in `fade.duration`, `fade.stagger` after the one before.
+ */
+export const quietScreen = {
+  height: 360,
+  cut: railScreen.cut,
+  padding: { top: 110, side: 22 },
+  back: { left: 16, top: 58, side: 40, radius: 12, icon: 16 },
+  gap: 10,
+  titleWidth: 260,
+  descriptionWidth: 250,
+  mascot: { right: 14, bottom: 56, width: 130 },
+  row: { paddingVertical: 14, gap: 4 },
+  fade: { duration: 600, stagger: 120 },
+} as const;
