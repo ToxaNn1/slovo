@@ -243,6 +243,19 @@ export interface GorohSynonymGroup {
   readonly dictionary?: string;
 }
 
+/**
+ * The synonym dictionaries goroh draws on. Its other dictionaries list
+ * replacements for foreign words or calques, often next to the forms to avoid.
+ */
+const SYNONYM_DICTIONARIES = new Set([
+  'Словник синонімів Караванського',
+  'Цифрові лексикографічні системи української мови',
+]);
+
+export function isSynonymDictionary(dictionary: string | undefined): boolean {
+  return dictionary !== undefined && SYNONYM_DICTIONARIES.has(dictionary);
+}
+
 export function parseSynonymGroups(html: string, lemma: string): GorohSynonymGroup[] {
   return parse(html)
     .querySelectorAll('div.article-block')
