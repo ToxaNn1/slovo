@@ -25,6 +25,10 @@ export interface DashboardScreen {
   readonly openCorrectionType: (type: CorrectionType) => void;
   /** A card of the Curated Collections rail: marks the collection opened, so «Нова» goes. */
   readonly openCuratedCollection: (collectionId: string) => void;
+  /** The Categories rail's header: opens the grid of them all, k1. */
+  readonly openCategories: () => void;
+  /** A tile of the Categories rail or of k1: opens its Category's screen. */
+  readonly openCategory: (categoryId: string) => void;
 }
 
 const previousWordsTitle = editionStrings.dashboard.previousWords.title;
@@ -61,6 +65,12 @@ export function useDashboardScreen(): DashboardScreen {
     openCuratedCollection: (collectionId) => {
       void curatedCollections.open(collectionId);
       openScreen(`/curated-collection/${collectionId}`);
+    },
+    openCategories: () => {
+      openScreen('/categories');
+    },
+    openCategory: (categoryId) => {
+      openScreen(`/category/${categoryId}`);
     },
   };
 }

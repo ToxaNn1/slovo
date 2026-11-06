@@ -227,3 +227,22 @@ describe('«Попередні слова» on the Dashboard', () => {
     expect(previousWordsOf(app.dashboard.blocks)).toBeUndefined();
   });
 });
+
+describe('The Categories rail on the Dashboard', () => {
+  const categoriesOf = (blocks: readonly DashboardBlock[]) =>
+    blocks.find((block) => block.kind === 'categories');
+
+  it('lists the Categories of Words of the Language Pack in its order', async () => {
+    const { app } = await run({ on: ['dashboard', 'categoryScreens'] });
+    const categories = await content.listCategories();
+
+    expect(categories.length).toBeGreaterThan(0);
+    expect(categoriesOf(app.dashboard.blocks)).toEqual({ kind: 'categories', categories });
+  });
+
+  it('has no block with `categoryScreens` off', async () => {
+    const { app } = await run();
+
+    expect(categoriesOf(app.dashboard.blocks)).toBeUndefined();
+  });
+});

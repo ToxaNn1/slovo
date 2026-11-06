@@ -1,4 +1,4 @@
-import type { Mood, Word } from '@slovo/contracts';
+import type { Category, Mood, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
@@ -48,6 +48,7 @@ export type DashboardBlock =
   | WordOfTheDayBlock
   | MoodBlock
   | PreviousWordsBlock
+  | CategoriesBlock
   | CuratedCollectionsBlock
   | CorrectionTypesBlock;
 
@@ -89,6 +90,16 @@ export interface PreviousWordsBlock {
 export interface CorrectionTypesBlock {
   readonly kind: 'correctionTypes';
   readonly tiles: readonly CorrectionTypeTile[];
+}
+
+/**
+ * The Categories rail's block, «Категорії», after «Попередні слова»: every
+ * Category of Words of the Language Pack, in its order, with
+ * `categoryScreens` on (ADR 0081). Its header opens the grid of them all.
+ */
+export interface CategoriesBlock {
+  readonly kind: 'categories';
+  readonly categories: readonly Category[];
 }
 
 /**
@@ -147,6 +158,7 @@ export async function openDashboard({
   const on = edition.isFeatureEnabled('dashboard');
   const moodOn = edition.isFeatureEnabled('mood');
   const previousWordsOn = edition.isFeatureEnabled('previousWords');
+  const categoriesOn = edition.isFeatureEnabled('categoryScreens');
 
   async function hero(): Promise<WordOfTheDayHero | undefined> {
     // The Feed chooses a day's Word of the Day, past what it showed (ADR 0076).
@@ -194,6 +206,8 @@ export async function openDashboard({
     if (moodCheckIn !== undefined) blocks.push(moodCheckIn);
     const previous = previousWordsOn ? await previousWords() : undefined;
     if (previous !== undefined) blocks.push(previous);
+    const categories = categoriesOn ? await entries.categories() : [];
+    if (categories.length > 0) blocks.push({ kind: 'categories', categories });
     const { rail } = curatedCollections;
     if (rail.length > 0) blocks.push({ kind: 'curatedCollections', cards: rail });
     const { tiles } = correctionTypes;
@@ -254,6 +268,8 @@ function blockKeyOf(block: DashboardBlock): string {
       return `previousWords:${block.days
         .map(({ date, row }) => `${dateKeyOf(date)}=${row.entryId}`)
         .join(',')}`;
+    case 'categories':
+      return `categories:${block.categories.map(({ id }) => id).join(',')}`;
     case 'correctionTypes':
       return `correctionTypes:${block.tiles
         .map(
