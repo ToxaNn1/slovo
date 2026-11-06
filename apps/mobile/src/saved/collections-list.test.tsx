@@ -9,7 +9,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import CollectionsScreen from '../app/saved/collections/index';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
-import { opened, testShell } from '../shell/test-support';
+import { opened, switchedTo, testShell } from '../shell/test-support';
+import { screenSettled } from '../use-open-screen';
 
 /** The composition the screen reads, opened afresh for each test. */
 let composition: Composition;
@@ -47,12 +48,16 @@ const metrics = {
   insets: { top: 0, left: 0, right: 0, bottom: 0 },
 };
 
+/** Whether the Collection board style is on in effect, as a remote switch leaves it. */
+let boardStyleOn: boolean;
+
 /** The device's time, which moves a minute on with each Collection a test makes. */
 let now: number;
 
 beforeEach(async () => {
   jest.useFakeTimers();
   mockPush.mockClear();
+  boardStyleOn = false;
   now = Date.parse('2026-10-28T09:00:00Z');
   composition = await openComposition({
     content: createMemoryContentPort({
@@ -69,6 +74,8 @@ beforeEach(async () => {
 
 afterEach(() => {
   jest.useRealTimers();
+  // A tap opened a screen that no transition settles here: the next test may open one again.
+  screenSettled();
 });
 
 /** Makes a Collection and answers its id. */
@@ -87,9 +94,19 @@ async function settle() {
 }
 
 async function renderScreen() {
+  const editionInEffect: typeof edition = {
+    ...edition,
+    isFeatureEnabled: (feature) =>
+      feature === 'collectionBoardStyle' ? boardStyleOn : edition.isFeatureEnabled(feature),
+  };
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
-      <ShellProvider shell={testShell({ composition: opened(composition) })}>
+      <ShellProvider
+        shell={testShell({
+          composition: opened(composition),
+          remoteSwitches: switchedTo(editionInEffect),
+        })}
+      >
         <EditionProvider edition={edition} strings={editionStrings}>
           <CollectionsScreen />
         </EditionProvider>
@@ -187,5 +204,69 @@ describe('Collections as cards', () => {
     await voiceOverAction(autumn, 'menu');
     expect(screen.getByTestId('collections-menu-rename')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: strings.menu.delete })).toBeOnTheScreen();
+  });
+});
+
+describe('Collections in the board style', () => {
+  beforeEach(() => {
+    boardStyleOn = true;
+  });
+
+  it('shows the Collections as the grid, titled with their number, a tile for each', async () => {
+    await collection('Осінь');
+    await collection('Зима');
+    await renderScreen();
+
+    expect(
+      screen.getByRole('header', { name: `${editionStrings.collections.title}, 2` }),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Зима, 0 записів' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Осінь, 0 записів' })).toBeOnTheScreen();
+    expect(screen.queryByText('0 записів')).not.toBeOnTheScreen();
+  });
+
+  it('opens the Collection from its tile', async () => {
+    const autumn = await collection('Осінь');
+    await renderScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Осінь, 0 записів' }));
+
+    expect(mockPush).toHaveBeenCalledWith(`/saved/collections/${autumn}`);
+  });
+
+  it('still makes a new Collection with «+», which joins the grid', async () => {
+    await collection('Осінь');
+    await renderScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: strings.add }));
+    await settle();
+    const input = screen.getByTestId('collections-new-input');
+    await fireEvent.changeText(input, 'Весна');
+    await fireEvent(input, 'submitEditing');
+    await settle();
+
+    expect(screen.getByRole('button', { name: 'Весна, 0 записів' })).toBeOnTheScreen();
+    expect(
+      screen.getByRole('header', { name: `${editionStrings.collections.title}, 2` }),
+    ).toBeOnTheScreen();
+  });
+
+  it('shows the empty state with no Collections', async () => {
+    await renderScreen();
+
+    expect(screen.getByTestId('collections-empty')).toBeOnTheScreen();
+  });
+});
+
+describe('Collections with the board style off', () => {
+  it('shows today’s cards under the screen title, without the grid', async () => {
+    const autumn = await collection('Осінь');
+    await renderScreen();
+
+    expect(card(autumn)).toBeOnTheScreen();
+    expect(screen.getByText('0 записів')).toBeOnTheScreen();
+    expect(
+      screen.queryByRole('header', { name: `${editionStrings.collections.title}, 1` }),
+    ).not.toBeOnTheScreen();
   });
 });
