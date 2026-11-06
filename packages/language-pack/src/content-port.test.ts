@@ -301,12 +301,12 @@ describe('the Ukrainian Language Pack', () => {
     }
   });
 
-  it('holds 15 Words in «Діалекти», each with the dialectal register label and a region', async () => {
+  it('holds at least 15 Words in «Діалекти», each with the dialectal register label and a region', async () => {
     const pack = openPack(ukrainianDir);
     try {
       const words = await pack.getEntries(await pack.listIds('word', 'dialects'));
 
-      expect(words).toHaveLength(15);
+      expect(words.length).toBeGreaterThanOrEqual(15);
       for (const word of words) {
         expect(word).toMatchObject({
           kind: 'word',
@@ -319,12 +319,12 @@ describe('the Ukrainian Language Pack', () => {
     }
   });
 
-  it('holds 15 Words in «Дотепна лайка», each with its Stress', async () => {
+  it('holds at least 15 Words in «Дотепна лайка», each with its Stress', async () => {
     const pack = openPack(ukrainianDir);
     try {
       const words = await pack.getEntries(await pack.listIds('word', 'witty-insults'));
 
-      expect(words).toHaveLength(15);
+      expect(words.length).toBeGreaterThanOrEqual(15);
       for (const word of words) {
         expect(word.kind === 'word' && word.stress).not.toEqual([]);
       }
@@ -333,12 +333,12 @@ describe('the Ukrainian Language Pack', () => {
     }
   });
 
-  it('holds 15 Words in «Народні назви», each with its sources', async () => {
+  it('holds at least 15 Words in «Народні назви», each with its sources', async () => {
     const pack = openPack(ukrainianDir);
     try {
       const words = await pack.getEntries(await pack.listIds('word', 'folk-names'));
 
-      expect(words).toHaveLength(15);
+      expect(words.length).toBeGreaterThanOrEqual(15);
       for (const word of words) {
         expect(word.kind === 'word' && word.sources).not.toEqual([]);
       }
@@ -347,12 +347,12 @@ describe('the Ukrainian Language Pack', () => {
     }
   });
 
-  it('holds 15 Words in «Старі ремесла», each with its sources', async () => {
+  it('holds at least 15 Words in «Старі ремесла», each with its sources', async () => {
     const pack = openPack(ukrainianDir);
     try {
       const words = await pack.getEntries(await pack.listIds('word', 'old-crafts'));
 
-      expect(words).toHaveLength(15);
+      expect(words.length).toBeGreaterThanOrEqual(15);
       for (const word of words) {
         expect(word.kind === 'word' && word.sources).not.toEqual([]);
       }

@@ -15848,5 +15848,50 @@
         "direction": "across"
       }
     ]
+  },
+  {
+    "date": "2027-12-11",
+    "words": [
+      {
+        "entryId": "c_dl6nld",
+        "answer": "щоб",
+        "clue": "Замініть нехарактерний для української мови вислів з ціллю на стилістично кращий варіант: (для того,) …; для.",
+        "row": 0,
+        "column": 0,
+        "direction": "across"
+      },
+      {
+        "entryId": "w_c3hin9",
+        "answer": "бугай",
+        "clue": "Нічний болотяний птах родини чаплевих.",
+        "row": 0,
+        "column": 2,
+        "direction": "down"
+      },
+      {
+        "entryId": "w_fv6ct9",
+        "answer": "єство",
+        "clue": "Сукупність усіх фізичних і душевних сил та властивостей людини.",
+        "row": 0,
+        "column": 4,
+        "direction": "down"
+      },
+      {
+        "entryId": "w_q8ot2t",
+        "answer": "легіт",
+        "clue": "Легкий приємний вітерець.",
+        "row": 2,
+        "column": 0,
+        "direction": "across"
+      },
+      {
+        "entryId": "w_lqvdan",
+        "answer": "вайло",
+        "clue": "Неповоротка, незграбна людина; тюхтій.",
+        "row": 4,
+        "column": 0,
+        "direction": "across"
+      }
+    ]
   }
 ]
