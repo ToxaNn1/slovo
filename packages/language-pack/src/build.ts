@@ -29,6 +29,8 @@ export type CheckResult =
       readonly ok: true;
       /** The content targets the Edition declares and the content misses. */
       readonly missedTargets: readonly MissedTarget[];
+      /** For each Narrator Voice, how many Words it has no Recording of (ADR 0083). */
+      readonly missingRecordings: readonly MissingRecordings[];
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
@@ -47,7 +49,8 @@ export function checkLanguagePack({
 }): CheckResult {
   const checked = checkEdition(editionDir, today);
   if (!checked.ok) return checked;
-  return { ok: true, missedTargets: checked.missedTargets };
+  const { missedTargets, missingRecordings } = checked;
+  return { ok: true, missedTargets, missingRecordings };
 }
 
 /**

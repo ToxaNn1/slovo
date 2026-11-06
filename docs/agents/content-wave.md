@@ -53,8 +53,9 @@ If the wave branch was force-pushed after an implementer branched from it, its o
 
 1. After the last merge, once, on the wave branch: `pnpm build:pack uk --record` writes `ids.json` and `manifest.json` for the whole wave (ADR 0080).
 2. `pnpm content verify --changed origin/main --edition uk` and `pnpm content check --edition uk`; fix or drop every Entry they refuse.
-3. Remove `scripts/content-wave/lists/`, `pnpm format`, push, open the PR against `main`. CI runs `verify --changed` over the Entries the PR adds or changes and fails on any `miss`, `llm` or `fetch-failed`; after a `fetch-failed`, re-run the job.
-4. PR body: Entries added per kind and Category, dropped lines and why, the `verify` and `check` lines, «Questions for the owner». Auto-merge on green, as in `waves.md`.
+3. Recordings of the wave's new Words (ADR 0083), once the Entries are final: write the wave branch into a `wave` field of `tools/recordings/request.json` (the workflow reads only `edition` and `only`; the new value is what starts it) (`edition` the wave's Edition, `only` `missing`), commit `chore: Recordings of <branch>`, push. The push starts the `Recordings` workflow on the wave branch: it records only the Words without a Recording, in every Narrator Voice, and commits them to that branch. Wait in one blocking command, `gh run watch --exit-status $(gh run list --workflow recordings.yml --branch <branch> --limit 1 --json databaseId -q '.[0].databaseId')`, then `git pull`. A failed run blocks nothing: a Word without a Recording passes `pnpm content check`, which counts it per voice, and the device's voice reads it; push a new `wave` value to run it again. A Word dropped after this step leaves Recordings of an unknown Word, which the build refuses: delete them.
+4. Remove `scripts/content-wave/lists/`, `pnpm format`, push, open the PR against `main`. The workflow's own commit starts no CI, so this push is the one CI checks. CI runs `verify --changed` over the Entries the PR adds or changes and fails on any `miss`, `llm` or `fetch-failed`; after a `fetch-failed`, re-run the job.
+5. PR body: Entries added per kind and Category, dropped lines and why, the `verify` and `check` lines with the «Words without a Recording» counts, «Questions for the owner». Auto-merge on green, as in `waves.md`.
 
 ## Lessons of the 06.11 wave
 

@@ -15,20 +15,20 @@ export interface MissingRecordings {
 /**
  * The Recordings that would break in the app (ADR 0083): a folder of a
  * Narrator Voice the Edition does not declare, a file that is not an mp3,
- * and a Recording of a Word id the Edition does not have. A Word without a
- * Recording is no error: the device's voice reads it, and `missingRecordings`
- * counts it.
+ * and a Recording of a Word id the Edition does not have. `isWord` tells
+ * whether the Edition has a Word of that id, broken or not, so a broken Word
+ * reports its own problem only. A Word without a Recording is no error: the
+ * device's voice reads it, and `missingRecordings` counts it.
  */
 export function recordingErrors(
   config: EditionConfig,
-  words: readonly Authored<Word>[],
+  isWord: (id: string) => boolean,
   folder: readonly RecordingFolderEntry[],
   pathOf: (voice: string, name: string) => string,
 ): BuildError[] {
   const voices = new Set(config.narratorVoices.voices.map(({ id }) => id));
-  const wordIds = new Set(words.map(({ entry }) => entry.id));
   const sample = config.narratorVoices.sample.word;
-  const sampleErrors: BuildError[] = wordIds.has(sample)
+  const sampleErrors: BuildError[] = isWord(sample)
     ? []
     : [
         {
@@ -48,7 +48,7 @@ export function recordingErrors(
         if (!name.endsWith('.mp3') || !isMp3(readFileSync(pathOf(entry.name, name))))
           return [{ file, message: 'Not an mp3' }];
         const wordId = name.slice(0, -'.mp3'.length);
-        return wordIds.has(wordId) ? [] : [{ file, message: `No Word ${wordId} in the Edition` }];
+        return isWord(wordId) ? [] : [{ file, message: `No Word ${wordId} in the Edition` }];
       });
     }),
   );

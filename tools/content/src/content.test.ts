@@ -490,6 +490,22 @@ describe('pnpm content check', () => {
     expect(run.stderr).toContain(`${correctionFile}: Invalid JSON`);
   });
 
+  it('passes with Words that have no Recording and reports how many each Narrator Voice lacks', () => {
+    const recordings = join(editionDir, 'assets', 'recordings');
+    const [first, second] = readdirSync(join(recordings, 'oksana'));
+    rmSync(join(recordings, 'oksana', first ?? ''));
+    rmSync(join(recordings, 'oksana', second ?? ''));
+    rmSync(join(recordings, 'taras', first ?? ''));
+
+    const run = content(['check', '--edition', 'uk']);
+
+    expect(run.stderr).toBe('');
+    expect(run.stdout).toContain(
+      'Words without a Recording:\n  oksana: 2\n  taras: 1\n  marta: 0\n  ostap: 0',
+    );
+    expect(run.status).toBe(0);
+  });
+
   it('reports content unrecorded since the last edit', () => {
     const file = ukrainian.entryFile(registry().find((id) => id.startsWith('i_')) ?? '');
     const idiom = readJson(file) as Record<string, unknown>;
