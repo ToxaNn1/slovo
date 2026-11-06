@@ -450,6 +450,20 @@ describe('Pronunciation', () => {
       expect(pronunciation.stateOf('w_0002')).toBe('playing');
     });
 
+    it('plays only the last Word tapped while the one before it stops', async () => {
+      const { player, pronunciation } = setUp();
+      await pronunciation.toggle({ id: 'w_0003', lemma: 'загра́ва' });
+
+      const first = pronunciation.toggle(VEREMIIA_WORD);
+      const last = pronunciation.toggle(SHPARKYI_WORD);
+      await Promise.all([first, last]);
+
+      expect(player.playing()).toBe(12);
+      expect(player.played).toEqual([12]);
+      expect(pronunciation.stateOf('w_0001')).toBe('idle');
+      expect(pronunciation.stateOf('w_0002')).toBe('playing');
+    });
+
     it('stops the device voice to play a Recording, and the Recording to speak', async () => {
       const { fake, player, pronunciation } = setUp();
 
