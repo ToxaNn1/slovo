@@ -1,0 +1,21 @@
+{
+  "kind": "correction",
+  "id": "c_13wkhj",
+  "nonStandardForm": "більше всього",
+  "correctionType": "calque",
+  "standardEquivalents": [
+    "найбільше, (най)імовірніше"
+  ],
+  "explanation": "Замініть конструкцію більше всього на правильно утворений найвищий ступінь порівняння: найбільше, (най)імовірніше тощо.",
+  "examplePair": {
+    "nonStandard": "Більше всього він не хотів іти до школи.",
+    "standard": "Найбільше він не хотів іти до школи."
+  },
+  "categoryId": "conversation",
+  "sources": [
+    {
+      "title": "OnlineCorrector. Граматичні помилки.",
+      "url": "https://goroh.pp.ua/Слововживання/більше всього"
+    }
+  ]
+}
