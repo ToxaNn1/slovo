@@ -16,10 +16,13 @@ export interface BadgeProgress {
   readonly target: number;
 }
 
-/** One Badge as the badges screen shows it: earned on its local date, or not yet, with its progress. */
+/**
+ * One Badge as the badges screen shows it: earned on its local date, new
+ * («НОВА») until the reader opens it (ADR 0085), or not yet, with its progress.
+ */
 export type BadgeState = Pick<Badge, 'id' | 'name' | 'symbol' | 'condition'> &
   (
-    | { readonly earned: true; readonly date: string }
+    | { readonly earned: true; readonly date: string; readonly isNew: boolean }
     | { readonly earned: false; readonly progress: BadgeProgress }
   );
 
@@ -34,6 +37,12 @@ export type BadgeState = Pick<Badge, 'id' | 'name' | 'symbol' | 'condition'> &
 export interface Badges {
   /** The Badges in the Edition's order, earned or with their progress. */
   readonly state: readonly BadgeState[];
+  /**
+   * Marks an earned Badge opened, its sheet or its stamp seen, with a record
+   * in the XP log that ends its «НОВА» mark on every device (ADR 0085).
+   * Nothing for a Badge not earned or already opened.
+   */
+  open(badge: string): Promise<void>;
   /** Calls `listener` after each change of the Badges. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -92,7 +101,7 @@ export async function openBadges({
   edition: Pick<Edition, 'isFeatureEnabled' | 'badges'>;
   userState: Pick<UserState, 'write'>;
   clock: Clock;
-  xpLog: Pick<XpLog, 'state' | 'milestones' | 'earn' | 'subscribe'>;
+  xpLog: Pick<XpLog, 'state' | 'milestones' | 'earn' | 'open' | 'subscribe'>;
   knowledge: Pick<Knowledge, 'state' | 'subscribe'>;
   activeDays: Pick<ActiveDays, 'streak' | 'subscribe'>;
   analytics: Pick<Analytics, 'track'>;
@@ -149,7 +158,8 @@ export async function openBadges({
     for (const { id, name, symbol, condition } of edition.badges) {
       const date = milestones.badges.get(id);
       if (date !== undefined) {
-        state.push({ id, name, symbol, condition, earned: true, date });
+        const isNew = !milestones.opened.has(id);
+        state.push({ id, name, symbol, condition, earned: true, date, isNew });
         continue;
       }
       const reach = reachOf(condition, milestones);
@@ -187,10 +197,21 @@ export async function openBadges({
     await inTurn(check).catch(() => undefined);
   }
 
+  /** Writes the Badge-opened record of an earned, new Badge; the XP log's change re-derives the state. */
+  async function open(badge: string): Promise<void> {
+    const shown = state.find(({ id }) => id === badge);
+    if (shown === undefined || !shown.earned || !shown.isNew) return;
+    const append = xpLog.open(badge);
+    await userState.write(append.changes);
+    append.commit();
+    state = derive().state;
+  }
+
   return {
     get state() {
       return state;
     },
+    open: (badge) => inTurn(() => open(badge)),
     subscribe: subscribers.subscribe,
   };
 }

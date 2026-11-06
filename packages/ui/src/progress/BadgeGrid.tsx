@@ -4,21 +4,36 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { badgeGrid, typeStyle } from '../tokens';
-import { BadgeMark, familyOf, type BadgeFamily } from './BadgeMark';
+import { BadgeMark, familyOf, type BadgeFamily, type BadgeMarkState } from './BadgeMark';
 
-/** What the grid shows of one Badge. */
-export interface BadgeGridItem {
+/** What the grid shows of one Badge: earned and maybe new, or not yet, with its progress. */
+export type BadgeGridItem = {
   readonly id: string;
   readonly name: string;
   readonly condition: BadgeCondition;
   readonly symbol: string;
-  readonly earned: boolean;
+} & (
+  | { readonly earned: true; readonly isNew: boolean }
+  | {
+      readonly earned: false;
+      readonly progress: { readonly current: number; readonly target: number };
+    }
+);
+
+/** The mark's state of a Badge: earned, in progress by its fraction, or not started. */
+function markStateOf(badge: BadgeGridItem): BadgeMarkState {
+  if (badge.earned) return { kind: 'earned', isNew: badge.isNew };
+  const { current, target } = badge.progress;
+  return current > 0 && current < target
+    ? { kind: 'progress', fraction: current / target }
+    : { kind: 'locked' };
 }
 
 /**
  * The Badges as marks in rows, one row for each family in the order the
  * families first come, each Badge in its order, under the family's name and
- * how many of it are earned («3 з 5»). A mark not yet earned is a silhouette.
+ * how many of it are earned («3 з 5»). A mark not yet earned is a silhouette,
+ * filled by its progress; an earned one not yet opened carries «НОВА».
  * A mark is announced by the Badge's name, with `statusOf` as its value, and
  * pressing it calls `onPress`. The marks take the Profile's size, or the
  * larger one of the Badges screen, where `statusOf` is also written under
@@ -93,7 +108,7 @@ export function BadgeGrid<B extends BadgeGridItem>({
                   testID={`badge-${badge.id}-mark`}
                   condition={badge.condition}
                   symbol={badge.symbol}
-                  earned={badge.earned}
+                  state={markStateOf(badge)}
                   size={side}
                 />
                 {size === 'screen' && statusOf !== undefined && (
