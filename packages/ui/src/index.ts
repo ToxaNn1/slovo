@@ -154,6 +154,7 @@ export {
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeSheet, type BadgeSheetBadge } from './progress/BadgeSheet';
 export { BadgeStamp } from './progress/BadgeStamp';
+export { BadgeToast } from './progress/BadgeToast';
 export { NewLevelScreen } from './progress/NewLevelScreen';
 export { LevelCard } from './progress/LevelCard';
 export { LevelLadder, type LadderState, type LevelLadderRung } from './progress/LevelLadder';
@@ -192,7 +193,7 @@ export {
 } from './tokens';
 export { TokensProvider, useTokens } from './providers/TokensProvider';
 export { ReduceMotionProvider } from './providers/ReduceMotionProvider';
-export { RouteProvider } from './providers/RouteProvider';
+export { RouteProvider, useRouteOnScreen } from './providers/RouteProvider';
 export { useReduceMotion } from './providers/useReduceMotion';
 export { WedgeLoader } from './primitives/WedgeLoader';
 export {
