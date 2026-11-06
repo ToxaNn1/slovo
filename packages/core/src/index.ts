@@ -191,7 +191,7 @@ export type { BadgeProgress, BadgeState, Badges } from './progress/badges';
 export type { BreakState, StreakBreak } from './progress/streak-break';
 export { totalFor, type LevelMilestone, type LevelState } from './progress/levels';
 export type { XpRecord, XpSource } from './progress/records';
-export type { CalendarDay, CalendarMonth } from './progress/calendar';
+export type { CalendarDay, CalendarWeek } from './progress/calendar';
 export { type WeeklyRecapModel } from './feed/weekly-recap';
 export {
   ALL_KINDS,
