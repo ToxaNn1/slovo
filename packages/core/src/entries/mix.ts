@@ -207,6 +207,10 @@ export interface Mix {
   outOfMix(): OutOfMix;
   /** What the Mix screen shows of the Mix as it stands, as the Edition in effect shows it. */
   screen(): MixScreen;
+  /** The Mix kind weights the Feed follows: the reader's while the mixKindWeights switch is on, «Звичайно» for every kind while it is off. */
+  kindWeightsInEffect(): MixKindWeights;
+  /** How often the Feed asks a Quick Question: every this many cards, none while the Game, the Quick Question or the reader's choice is off. */
+  quickQuestionEveryInEffect(): number | undefined;
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
 }
@@ -623,6 +627,14 @@ export async function openMix({
     hideOptions: (entry) => hideOptionsOf(edition, state, entry),
     outOfMix: () => outOfMixOf(edition, state),
     screen: () => screenOf(edition, state),
+    kindWeightsInEffect: () =>
+      edition.isFeatureEnabled('mixKindWeights') ? state.kindWeights : NORMAL_KIND_WEIGHTS,
+    quickQuestionEveryInEffect: () =>
+      edition.isFeatureEnabled('game') &&
+      edition.isFeatureEnabled('quickQuestion') &&
+      state.quickQuestionEvery !== 'off'
+        ? state.quickQuestionEvery
+        : undefined,
     subscribe: subscribers.subscribe,
   };
 }
