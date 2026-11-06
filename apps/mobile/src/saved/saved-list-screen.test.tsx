@@ -137,17 +137,17 @@ describe('a Saved list screen', () => {
     expect(screen.queryByTestId('words-of-the-day-count')).not.toBeOnTheScreen();
   });
 
-  it.each([
+  it.each<[string, ComponentType]>([
     ['favorites', FavoritesScreen],
     ['learning', LearningScreen],
     ['history', HistoryScreen],
     ['words-of-the-day', WordOfTheDayArchiveScreen],
-  ] as const)('%s: the back link, named after Saved, goes back', async (name, Screen) => {
+  ])('%s: the back link, named after Saved, goes back', async (name, Screen) => {
     await renderScreen(Screen);
 
     const back = screen.getByTestId(`${name}-back`);
     expect(back).toHaveTextContent(editionStrings.tabs.saved);
-    fireEvent.press(back);
+    await fireEvent.press(back);
     expect(mockBacks).toBe(1);
   });
 });
