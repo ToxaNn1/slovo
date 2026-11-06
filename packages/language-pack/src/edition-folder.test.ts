@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { WordSchema, type Word } from '@slovo/contracts';
+import { SynonymRowSchema, WordSchema, type SynonymRow, type Word } from '@slovo/contracts';
 
 import { EditionFolderError, listEditions, openEdition } from './edition-folder';
 
@@ -391,6 +391,44 @@ describe('checkNewWords', () => {
     );
 
     expect(edition.checkNewWords([draft()])).toEqual([]);
+  });
+});
+
+describe('checkNewSynonymRows', () => {
+  const member = (text: string, stress: number[]) => ({ text, stress });
+  const row = (changes: Json = {}): SynonymRow =>
+    SynonymRowSchema.parse({
+      id: 'r_draft1',
+      dominant: { text: 'балакучий', stress: [5], wordId: 'w_fx0002' },
+      meaning: 'Який любить багато говорити.',
+      members: [
+        member('говіркий', [3]),
+        member('язикатий', [4]),
+        member('багатослівний', [8]),
+        member('словоохочий', [7]),
+        member('гомінкий', [6]),
+      ],
+      sources: [{ title: 'Тестове джерело' }],
+      ...changes,
+    });
+
+  it('accepts a row the build would accept', () => {
+    expect(openEdition(editionsWith(), 'fixture').checkNewSynonymRows([row()])).toEqual([]);
+  });
+
+  it('reports a link to a Word the Edition does not have, as the build does', () => {
+    const errors = openEdition(editionsWith(), 'fixture').checkNewSynonymRows([
+      row({ dominant: { text: 'балакучий', stress: [5], wordId: 'w_nowhere' } }),
+    ]);
+
+    expect(errors).toEqual([
+      {
+        file: 'content/synonym-rows/r_draft1.json',
+        entryId: 'r_draft1',
+        field: 'dominant.wordId',
+        message: 'Unknown Word "w_nowhere"',
+      },
+    ]);
   });
 });
 
