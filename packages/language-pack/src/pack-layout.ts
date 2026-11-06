@@ -24,6 +24,8 @@ CREATE TABLE metadata (
 CREATE TABLE categories (
   id TEXT PRIMARY KEY,
   display_name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  tone TEXT NOT NULL CHECK (tone IN ('loud', 'quiet')),
   position INTEGER NOT NULL
 ) WITHOUT ROWID;
 
@@ -31,6 +33,8 @@ CREATE TABLE categories (
 CREATE TABLE correction_categories (
   id TEXT PRIMARY KEY,
   display_name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  tone TEXT NOT NULL CHECK (tone IN ('loud', 'quiet')),
   position INTEGER NOT NULL
 ) WITHOUT ROWID;
 
@@ -282,9 +286,11 @@ CREATE TABLE sources (
  * short names of the «Джерело:» line (ADR 0032); format 10 drops the table
  * `word_moods` and the Word's moods, which a Mood no longer tags, and adds the
  * Curated Collection tables (`curated_collections` and
- * `curated_collection_entries`) of the Dashboard's rail (spec #1564, ADR 0076).
+ * `curated_collection_entries`) of the Dashboard's rail (spec #1564, ADR 0076);
+ * format 11 adds the columns `description` and `tone` to both Category tables
+ * (spec #1604).
  */
-export const PACK_FORMAT = 10;
+export const PACK_FORMAT = 11;
 
 /**
  * Where each field of the pack metadata lies in the `metadata` table, and how

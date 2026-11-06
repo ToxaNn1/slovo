@@ -5,7 +5,16 @@ import { fileURLToPath } from 'node:url';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { WordSchema, type Word } from '@slovo/contracts';
+import {
+  CorrectionSchema,
+  IdiomSchema,
+  SynonymRowSchema,
+  WordSchema,
+  type Correction,
+  type Idiom,
+  type SynonymRow,
+  type Word,
+} from '@slovo/contracts';
 
 import { EditionFolderError, listEditions, openEdition } from './edition-folder';
 
@@ -391,5 +400,251 @@ describe('checkNewWords', () => {
     );
 
     expect(edition.checkNewWords([draft()])).toEqual([]);
+  });
+});
+
+describe('checkNewCorrections', () => {
+  const draft = (changes: Json = {}): Correction =>
+    CorrectionSchema.parse({
+      ...(JSON.parse(
+        readFileSync(join(validFixture, 'content/corrections/c_fx0001.json'), 'utf8'),
+      ) as Json),
+      id: 'c_draft1',
+      nonStandardForm: 'тимбільше',
+      standardEquivalents: ['тим паче'],
+      ...changes,
+    });
+
+  it('accepts a draft the build would accept', () => {
+    expect(openEdition(editionsWith(), 'fixture').checkNewCorrections([draft()])).toEqual([]);
+  });
+
+  it.each([
+    ['an unknown Category', { categoryId: 'nowhere' }, 'categoryId', /unknown category.*nowhere/i],
+    [
+      'a Stress mark in a Correction that is not about Stress',
+      { standardEquivalents: ['тим па́че'] },
+      'standardEquivalents.0',
+      /only a wrong-stress Correction/i,
+    ],
+  ])(
+    'reports %s as the build does, in the file it would be authored in',
+    (_name, changes, field, message) => {
+      expect(openEdition(editionsWith(), 'fixture').checkNewCorrections([draft(changes)])).toEqual([
+        {
+          file: 'content/corrections/c_draft1.json',
+          entryId: 'c_draft1',
+          field,
+          message: expect.stringMatching(message) as string,
+        },
+      ]);
+    },
+  );
+});
+
+describe('checkNewSynonymRows', () => {
+  const member = (text: string, stress: number[]) => ({ text, stress });
+  const row = (changes: Json = {}): SynonymRow =>
+    SynonymRowSchema.parse({
+      id: 'r_draft1',
+      dominant: { text: 'балакучий', stress: [5], wordId: 'w_fx0002' },
+      meaning: 'Який любить багато говорити.',
+      members: [
+        member('говіркий', [3]),
+        member('язикатий', [4]),
+        member('багатослівний', [8]),
+        member('словоохочий', [7]),
+        member('гомінкий', [6]),
+      ],
+      sources: [{ title: 'Тестове джерело' }],
+      ...changes,
+    });
+
+  it('accepts a row the build would accept', () => {
+    expect(openEdition(editionsWith(), 'fixture').checkNewSynonymRows([row()])).toEqual([]);
+  });
+
+  it('reports a link to a Word the Edition does not have, as the build does', () => {
+    const errors = openEdition(editionsWith(), 'fixture').checkNewSynonymRows([
+      row({ dominant: { text: 'балакучий', stress: [5], wordId: 'w_nowhere' } }),
+    ]);
+
+    expect(errors).toEqual([
+      {
+        file: 'content/synonym-rows/r_draft1.json',
+        entryId: 'r_draft1',
+        field: 'dominant.wordId',
+        message: 'Unknown Word "w_nowhere"',
+      },
+    ]);
+  });
+});
+
+describe('entryTexts', () => {
+  const member = (text: string) => ({ text, stress: [1] });
+
+  it('lists the text of every Entry of the five kinds, with its group and forms, Retired ones marked', () => {
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        writeFileSync(
+          join(dir, 'content/synonym-rows/r_fx0001.json'),
+          JSON.stringify({
+            id: 'r_fx0001',
+            dominant: { text: 'тихо', stress: [1] },
+            meaning: 'Без розмов, мовчки.',
+            members: ['глухо', 'мовчки', 'неголосно', 'негучно', 'слабко'].map(member),
+            sources: [{ title: 'Тестове джерело' }],
+            retired: true,
+          }),
+        );
+        writeFileSync(
+          join(dir, 'content/tips/t_fx0001.json'),
+          JSON.stringify({
+            id: 't_fx0001',
+            title: 'Два студенти',
+            nonStandardForm: 'два студента',
+            standardForm: 'два студенти',
+            explanation: 'Після «два» іменник стоїть у називному відмінку множини.',
+            example: { text: 'У групі лише три студенти.' },
+            sources: [{ title: 'Тестове джерело' }],
+            gameQuestion: {
+              prompt: 'Як правильно?',
+              rightAnswer: 'три олівці',
+              wrongAnswers: ['три олівця', 'три олівців', 'три олівцями'],
+            },
+          }),
+        );
+      },
+    });
+
+    const texts = openEdition(editionsDir, 'fixture').entryTexts();
+
+    expect(texts).toEqual([
+      { kind: 'word', id: 'w_fx0001', group: 'nature', text: 'заметіль', forms: [], retired: true },
+      {
+        kind: 'word',
+        id: 'w_fx0002',
+        group: 'speech',
+        text: 'балакучий',
+        forms: [],
+        retired: false,
+      },
+      { kind: 'word', id: 'w_fx0003', group: 'speech', text: 'завжди', forms: [], retired: false },
+      {
+        kind: 'correction',
+        id: 'c_fx0001',
+        group: 'surzhyk',
+        text: 'всігда',
+        forms: ['завжди'],
+        retired: false,
+      },
+      {
+        kind: 'correction',
+        id: 'c_fx0002',
+        group: 'russianism',
+        text: 'разговорчивий',
+        forms: ['балакучий', 'говіркий'],
+        retired: false,
+      },
+      {
+        kind: 'correction',
+        id: 'c_fx0003',
+        group: 'russianism',
+        text: 'метель',
+        forms: ['заметіль', 'хуртовина'],
+        retired: false,
+      },
+      {
+        kind: 'correction',
+        id: 'c_fx0004',
+        group: 'officialese',
+        text: 'на сьогоднішній день',
+        forms: ['сьогодні', 'нині'],
+        retired: false,
+      },
+      {
+        kind: 'idiom',
+        id: 'i_fx0001',
+        group: 'idiom',
+        text: 'бити байдики',
+        forms: [],
+        retired: false,
+      },
+      {
+        kind: 'idiom',
+        id: 'i_fx0002',
+        group: 'placeName',
+        text: 'Бердичів',
+        forms: [],
+        retired: false,
+      },
+      {
+        kind: 'synonymRow',
+        id: 'r_fx0001',
+        group: undefined,
+        text: 'тихо',
+        forms: ['глухо', 'мовчки', 'неголосно', 'негучно', 'слабко'],
+        retired: true,
+      },
+      {
+        kind: 'tip',
+        id: 't_fx0001',
+        group: undefined,
+        text: 'Два студенти',
+        forms: ['два студента', 'два студенти'],
+        retired: false,
+      },
+    ]);
+  });
+});
+
+describe('checkNewIdioms', () => {
+  const draft = (changes: Json = {}): Idiom =>
+    IdiomSchema.parse({
+      id: 'i_draft1',
+      expression: 'кури не клює',
+      idiomType: 'idiom',
+      primaryDefinition: 'Тестове значення: має багато грошей.',
+      sources: [{ title: 'Тестове джерело', url: 'https://example.org/kury' }],
+      ...changes,
+    });
+  const draftFile = 'content/idioms/i_draft1.json';
+
+  it('accepts a draft the build would accept', () => {
+    expect(openEdition(editionsWith(), 'fixture').checkNewIdioms([draft()])).toEqual([]);
+  });
+
+  it.each([
+    ['a letter outside the alphabet', { expression: 'кури нe клює' }, /"e" \(U\+0065\)/],
+    [
+      'the expression of an existing Idiom',
+      { expression: 'Бити байдики' },
+      /same expression as i_fx0001/i,
+    ],
+  ])('reports %s as the build does', (_name, changes, message) => {
+    expect(openEdition(editionsWith(), 'fixture').checkNewIdioms([draft(changes)])).toEqual([
+      {
+        file: draftFile,
+        entryId: 'i_draft1',
+        field: 'expression',
+        message: expect.stringMatching(message) as string,
+      },
+    ]);
+  });
+
+  it('leaves out the errors of the existing content', () => {
+    const edition = openEdition(
+      editionsWith({
+        change: (dir) => {
+          editJson(join(dir, 'content/idioms/i_fx0001.json'), (idiom) => ({
+            ...idiom,
+            expression: 'бити bайдики',
+          }));
+        },
+      }),
+      'fixture',
+    );
+
+    expect(edition.checkNewIdioms([draft()])).toEqual([]);
   });
 });

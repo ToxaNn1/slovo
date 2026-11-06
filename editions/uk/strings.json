@@ -436,6 +436,13 @@
       "withFavorites": "{place} · в Улюбленому"
     },
     "screen": {
+      "kicker": "КОЛЕКЦІЯ · {count}",
+      "wordCount": {
+        "one": "{count} слово",
+        "few": "{count} слова",
+        "many": "{count} слів",
+        "other": "{count} слова"
+      },
       "add": "Нова колекція",
       "newOverline": "Нова колекція",
       "renameOverline": "Перейменування",
@@ -1160,7 +1167,7 @@
       "question": "Як настрій?",
       "note": "Mood дня"
     },
-    "curatedCollectionsTitle": "Категорії",
+    "curatedCollectionsTitle": "Добірки",
     "curatedCollectionCount": {
       "one": "{count} слово",
       "few": "{count} слова",
@@ -1172,9 +1179,40 @@
       "known": "Знаю {x} з {n}",
       "add": "+ Додати",
       "added": "Додано ✓",
+      "kicker": "ДОБІРКА · {count}",
+      "addButton": "ДОДАТИ",
+      "addedButton": "ДОДАНО"
+    },
+    "categories": {
+      "title": "Категорії",
       "kicker": "КАТЕГОРІЯ · {count}",
-      "addButton": "Додати",
-      "addedButton": "У міксі"
+      "count": {
+        "one": "{count} слово",
+        "few": "{count} слова",
+        "many": "{count} слів",
+        "other": "{count} слова"
+      }
+    },
+    "correctionCategories": {
+      "title": "Виправлення",
+      "kicker": "КАТЕГОРІЯ · {count}",
+      "count": {
+        "one": "{count} виправлення",
+        "few": "{count} виправлення",
+        "many": "{count} виправлень",
+        "other": "{count} виправлення"
+      }
+    },
+    "category": {
+      "quiet": "Категорія",
+      "add": "ДОДАТИ",
+      "inMix": "У МІКСІ",
+      "known": "ЗНАЮ {x} З {n}",
+      "knownStamp": "ЗНАЮ",
+      "toasts": {
+        "added": "„{name}“ тепер у твоєму Міксі.",
+        "removed": "„{name}“ прибрано з Міксу."
+      }
     },
     "previousWords": {
       "title": "Попередні слова",

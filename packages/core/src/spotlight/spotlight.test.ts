@@ -9,8 +9,18 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 /** The instant these tests start at. */
 const start = '2026-10-28T09:00:00+03:00';
 
-const nature: Category = { id: 'nature', displayName: 'Nature' };
-const speech: Category = { id: 'speech', displayName: 'Speech' };
+const nature: Category = {
+  id: 'nature',
+  displayName: 'Nature',
+  description: 'Nature.',
+  tone: 'loud',
+};
+const speech: Category = {
+  id: 'speech',
+  displayName: 'Speech',
+  description: 'Speech.',
+  tone: 'loud',
+};
 const categories = [nature, speech];
 
 /** A small pack: live Words in two Categories, a Retired Word, a Correction and an Idiom. */

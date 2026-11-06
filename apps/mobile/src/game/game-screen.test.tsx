@@ -248,7 +248,7 @@ async function open({
   });
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words: Array.from({ length: 15 }, (_, i) => (i < origins ? withOrigin(i) : word(i))),
       corrections: [
         ...Array.from({ length: corrections }, (_, i) => correction(i)),

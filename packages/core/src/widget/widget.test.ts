@@ -24,8 +24,18 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 const start = '2026-10-16T09:00:00+03:00';
 
 /** The Language Pack's Categories, in its order. */
-const nature: Category = { id: 'nature', displayName: 'Nature' };
-const speech: Category = { id: 'speech', displayName: 'Speech' };
+const nature: Category = {
+  id: 'nature',
+  displayName: 'Nature',
+  description: 'Nature.',
+  tone: 'loud',
+};
+const speech: Category = {
+  id: 'speech',
+  displayName: 'Speech',
+  description: 'Speech.',
+  tone: 'loud',
+};
 const categories = [nature, speech];
 
 /** A small pack: two live Words in each Category, a Retired Word and two live Corrections. */

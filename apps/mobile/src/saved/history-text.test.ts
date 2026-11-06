@@ -70,7 +70,14 @@ describe('the History texts', () => {
               rarity: 3,
             }
           : labelKey === 'correction'
-            ? { kind: 'correction', entryId: 'c_a', ...text, labelKey, correctionType: 'calque' }
+            ? {
+                kind: 'correction',
+                entryId: 'c_a',
+                ...text,
+                labelKey,
+                correctionType: 'calque',
+                standardForms: ['a'],
+              }
             : labelKey === 'synonymRow' || labelKey === 'tip'
               ? { kind: labelKey, entryId: 'r_a', ...text, labelKey }
               : { kind: 'idiom', entryId: 'i_a', ...text, labelKey };

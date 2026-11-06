@@ -1,10 +1,6 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
-
 import {
   RaritySchema,
   WordSchema,
-  type EditionConfig,
   type Example,
   type Gender,
   type PartOfSpeech,
@@ -13,13 +9,13 @@ import {
   type Source,
   type WordInput,
 } from '@slovo/contracts';
-import { formatBuildError } from '@slovo/language-pack';
-import { EditionFolderError, type EditionFolder } from '@slovo/language-pack/edition';
+import type { EditionFolder } from '@slovo/language-pack/edition';
 
 import {
   fetchGoroh,
   gorohUrl,
   isSameWord,
+  isSynonymDictionary,
   parseDefinitions,
   parseEtymologies,
   parseInflections,
@@ -29,186 +25,90 @@ import {
   type GorohSynonymGroup,
 } from './goroh';
 import { errorMessage } from './error-message';
-import { PoliteClient, type Clock, type Fetch } from './polite-client';
-import { formatReviewReport } from './report';
-import type { DraftOutcome, Flag, FlagKind, LemmaOutcome, ReviewReport } from './review-report';
+import {
+  runSourcing,
+  type DraftContext,
+  type KindDraft,
+  type KindOutcome,
+  type ParsedLine,
+  type PipelineOptions,
+  type SourcingKind,
+  type SourcingResult,
+} from './pipeline';
+import type { Flag, FlagKind } from './review-report';
 import type { DictionaryArticle } from './article';
 import { SumDictionary, type SumAccess } from './sum';
-import { matchKey, readStress, SOURCE_LANGUAGE, unstressed } from './text';
+import { matchKey, readStress, unstressed } from './text';
+import { filterWord } from './word-filters';
 
-export interface SourcingOptions {
+export type SourcingOptions = PipelineOptions & {
   /** The Lemmas to draft, one per line: `<lemma> <category id> <rarity>`; `#` starts a comment. */
   readonly lemmaList: string;
-  /** The Edition the drafts are for: its Categories, language traits, id registry and content. */
-  readonly edition: EditionFolder;
-  /** The review folder: drafts, incomplete drafts and the review report go here. */
-  readonly outDir: string;
-  /**
-   * Where fetched pages and each host's request schedule are kept. Runs that
-   * share it never fetch a page twice and share the throttle.
-   */
-  readonly cacheDir: string;
-  readonly fetch: Fetch;
-  readonly clock: Clock;
-  /** A source of numbers in [0, 1), for new Word ids. */
-  readonly random: () => number;
   readonly sumAccess?: SumAccess;
-  /** The least time between two requests to one host, across every process sharing the cache. */
-  readonly minIntervalMs?: number;
-  /** Hears about back-offs and hosts taken out of the run. */
-  readonly log?: (message: string) => void;
-}
-
-export type SourcingResult =
-  | { readonly ok: true; readonly report: ReviewReport }
-  | { readonly ok: false; readonly errors: readonly string[] };
-
-export const REPORT_FILE = 'review-report.md';
-const DRAFTS_DIR = 'drafts';
-const INCOMPLETE_DIR = 'incomplete';
-const DEFAULT_MIN_INTERVAL_MS = 2000;
+};
 
 /**
  * Drafts Words for a list of Lemmas from goroh.pp.ua (its explanatory
  * dictionaries, inflection, synonym and etymological dictionaries), with
  * СУМ-11 on sum.in.ua or its Wayback Machine copies as a fallback for
- * Definitions, and writes them with a review report to
+ * Definitions, and writes them with a review report to the `words` folder of
  * the review folder. Every field comes from a source; what the sources leave
  * open stays empty and is flagged for a human.
  */
-export async function sourceWords(options: SourcingOptions): Promise<SourcingResult> {
-  const { edition } = options;
-  const takenIds = readTakenIds(edition);
-  if (!takenIds.ok) return { ok: false, errors: takenIds.errors };
-  const { locale } = edition.config;
-  if (new Intl.Locale(locale).language !== SOURCE_LANGUAGE) {
-    return {
-      ok: false,
-      errors: [`The sources are Ukrainian dictionaries, but the Edition is in ${locale}`],
-    };
-  }
-  const list = parseLemmaList(options.lemmaList, edition.config);
-  if (!list.ok) return { ok: false, errors: list.errors };
-
-  const client = new PoliteClient(
-    options.fetch,
-    options.clock,
-    options.cacheDir,
-    options.minIntervalMs ?? DEFAULT_MIN_INTERVAL_MS,
-    options.log,
-  );
-  const sum = new SumDictionary(client, options.sumAccess ?? 'auto');
-  const newId = idMaker(options.random, takenIds.ids);
-
-  for (const dir of [DRAFTS_DIR, INCOMPLETE_DIR]) {
-    rmSync(join(options.outDir, dir), { recursive: true, force: true });
-    mkdirSync(join(options.outDir, dir), { recursive: true });
-  }
-
-  const lemmas: LemmaOutcome[] = [];
-  for (const request of list.requests) {
-    const outcome = await draftLemma(request, {
-      client,
-      sum,
-      newId,
-      edition,
-    });
-    for (const draft of outcome.drafts) {
-      writeFileSync(
-        join(options.outDir, draft.outcome.file),
-        `${JSON.stringify(draft.word, null, 2)}\n`,
-      );
-    }
-    lemmas.push({ ...outcome, drafts: outcome.drafts.map((draft) => draft.outcome) });
-  }
-
-  const report: ReviewReport = {
-    lemmas,
-    requests: { ...client.stats, unreachable: { ...client.stats.unreachable } },
-  };
-  writeFileSync(join(options.outDir, REPORT_FILE), formatReviewReport(report));
-  return { ok: true, report };
+export function sourceWords(options: SourcingOptions): Promise<SourcingResult> {
+  return runSourcing(options.lemmaList, options, wordsKind(options.sumAccess ?? 'auto'));
 }
 
 interface WordRequest {
   readonly lemma: string;
   readonly categoryId: string;
   readonly rarity: Rarity;
-  readonly line: number;
 }
 
-function parseLemmaList(
-  text: string,
-  config: EditionConfig,
-): { ok: true; requests: WordRequest[] } | { ok: false; errors: string[] } {
-  const categoryIds = new Set(config.categories.map((category) => category.id));
-  const requests: WordRequest[] = [];
-  const errors: string[] = [];
-  const lineOf = new Map<string, number>();
-
-  text.split('\n').forEach((raw, index) => {
-    const line = index + 1;
-    const content = raw.replace(/#.*/, '').trim();
-    if (content === '') return;
-    const fail = (message: string) => errors.push(`Line ${String(line)}: ${message}`);
-    const fields = content.split(/\s+/);
-    const [lemma, categoryId, rarityText] = fields;
-    if (
-      fields.length !== 3 ||
-      lemma === undefined ||
-      categoryId === undefined ||
-      rarityText === undefined
-    ) {
-      fail('Expected "<lemma> <category id> <rarity>"');
-      return;
-    }
-    if (lemma !== unstressed(lemma)) fail(`Write the Lemma "${lemma}" without stress marks`);
-    if (!categoryIds.has(categoryId)) fail(`Unknown Category "${categoryId}"`);
-    const rarity = RaritySchema.safeParse(Number(rarityText));
-    if (!rarity.success) fail(`Rarity "${rarityText}" is not a whole number from 1 to 5`);
-    const key = matchKey(lemma);
-    const firstLine = lineOf.get(key);
-    if (firstLine !== undefined) fail(`"${lemma}" is already listed on line ${String(firstLine)}`);
-    lineOf.set(key, line);
-    if (rarity.success) {
-      requests.push({ lemma: lemma.normalize('NFC'), categoryId, rarity: rarity.data, line });
-    }
-  });
-  return errors.length > 0 ? { ok: false, errors } : { ok: true, requests };
-}
-
-/** The ids the Edition's id registry lists; none when it has no registry yet. */
-function readTakenIds(
-  edition: EditionFolder,
-): { ok: true; ids: Set<string> } | { ok: false; errors: string[] } {
-  try {
-    return { ok: true, ids: new Set(edition.readIfPresent('idRegistry')) };
-  } catch (error) {
-    if (!(error instanceof EditionFolderError)) throw error;
-    return { ok: false, errors: error.errors.map(formatBuildError) };
-  }
-}
-
-/** New opaque Word ids that the Edition's id registry doesn't list, and no draft of this run has. */
-function idMaker(random: () => number, takenIds: Set<string>): () => string {
-  const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
-  return () => {
-    for (;;) {
-      let id = 'w_';
-      for (let i = 0; i < 6; i += 1) id += alphabet.charAt(Math.floor(random() * alphabet.length));
-      if (!takenIds.has(id)) {
-        takenIds.add(id);
-        return id;
-      }
-    }
+/** Words as a kind of the sourcing run. */
+function wordsKind(sumAccess: SumAccess): SourcingKind<WordRequest> {
+  return {
+    folder: 'words',
+    idPrefix: 'w_',
+    parseLine: parseLemmaLine,
+    start: (draftContext) => {
+      const context: Context = {
+        ...draftContext,
+        sum: new SumDictionary(draftContext.client, sumAccess),
+      };
+      return (request) => draftLemma(request, context);
+    },
   };
 }
 
-interface Context {
-  readonly client: PoliteClient;
+/** Reads `<lemma> <category id> <rarity>`. */
+function parseLemmaLine(content: string, edition: EditionFolder): ParsedLine<WordRequest> {
+  const fields = content.split(/\s+/);
+  const [lemma, categoryId, rarityText] = fields;
+  if (
+    fields.length !== 3 ||
+    lemma === undefined ||
+    categoryId === undefined ||
+    rarityText === undefined
+  ) {
+    return { ok: false, text: undefined, errors: ['Expected "<lemma> <category id> <rarity>"'] };
+  }
+  const errors: string[] = [];
+  if (lemma !== unstressed(lemma)) errors.push(`Write the Lemma "${lemma}" without stress marks`);
+  if (!edition.config.categories.some((category) => category.id === categoryId)) {
+    errors.push(`Unknown Category "${categoryId}"`);
+  } else if (edition.config.categoriesRequiringHistory.includes(categoryId)) {
+    errors.push(`Category "${categoryId}" requires a Word History, which the tool does not source`);
+  }
+  const rarity = RaritySchema.safeParse(Number(rarityText));
+  if (!rarity.success) errors.push(`Rarity "${rarityText}" is not a whole number from 1 to 5`);
+  const text = lemma.normalize('NFC');
+  if (!rarity.success || errors.length > 0) return { ok: false, text, errors };
+  return { ok: true, text, request: { lemma: text, categoryId, rarity: rarity.data } };
+}
+
+interface Context extends DraftContext {
   readonly sum: SumDictionary;
-  readonly newId: () => string;
-  readonly edition: EditionFolder;
 }
 
 /**
@@ -219,11 +119,6 @@ interface Context {
 type WordDraft = Omit<WordInput, 'partOfSpeech' | 'primaryDefinition'> &
   Partial<Pick<WordInput, 'partOfSpeech' | 'primaryDefinition'>>;
 
-interface Draft {
-  readonly word: WordDraft;
-  readonly outcome: DraftOutcome;
-}
-
 /** What goroh says about a Lemma; each part is empty when goroh has no page. */
 interface GorohEntry {
   readonly inflections: readonly GorohInflection[];
@@ -231,11 +126,8 @@ interface GorohEntry {
   readonly etymologies: readonly GorohEtymology[];
 }
 
-async function draftLemma(
-  request: WordRequest,
-  context: Context,
-): Promise<{ lemma: string; line: number; drafts: Draft[]; flags: Flag[] }> {
-  const { lemma, line } = request;
+async function draftLemma(request: WordRequest, context: Context): Promise<KindOutcome> {
+  const { lemma } = request;
   const flags: Flag[] = [];
   let articles: readonly DictionaryArticle[];
   let goroh: GorohEntry;
@@ -261,7 +153,7 @@ async function draftLemma(
           kind: 'no-entry',
           message: `No dictionary entry found; tried ${tried.join(', ')}`,
         });
-        return { lemma, line, drafts: [], flags };
+        return { drafts: [], flags };
       }
       articles = lookup.articles.filter((article) => sumKey(article.headword) === sumKey(lemma));
       if (articles.length === 0) {
@@ -269,7 +161,7 @@ async function draftLemma(
           kind: 'no-entry',
           message: `${lookup.articles[0]?.source.url ?? 'sum.in.ua'} has no article for "${lemma}" (it has ${lookup.articles.map((article) => article.headword).join(', ')})`,
         });
-        return { lemma, line, drafts: [], flags };
+        return { drafts: [], flags };
       }
     }
 
@@ -301,7 +193,7 @@ async function draftLemma(
     }
   } catch (error) {
     flags.push({ kind: 'fetch-failed', message: errorMessage(error) });
-    return { lemma, line, drafts: [], flags };
+    return { drafts: [], flags };
   }
 
   const isHomonym = articles.length > 1;
@@ -330,7 +222,7 @@ async function draftLemma(
   const drafts = articles.map((article) =>
     draftArticle(article, { request, goroh, isHomonym, context }),
   );
-  return { lemma, line, drafts, flags };
+  return { drafts, flags };
 }
 
 function draftArticle(
@@ -346,7 +238,7 @@ function draftArticle(
     isHomonym: boolean;
     context: Context;
   },
-): Draft {
+): KindDraft {
   const { lemma } = request;
   const headword = [article.headword, article.homonymNumber]
     .filter((part) => part !== undefined)
@@ -389,20 +281,21 @@ function draftArticle(
     ...synonyms.flags,
     ...etymology.flags,
   ];
+  const filtered = filterWord(word);
+  flags.push(...filtered.flags);
   if (grammar.gender === 'plural-only') {
     flags.push({ kind: 'plural-only', message: 'A plural-only noun' });
   }
-  const issues = checkDraft(word, context.edition);
-  const ready = issues.length === 0;
   return {
-    word,
-    outcome: {
-      id: word.id,
-      file: `${ready ? DRAFTS_DIR : INCOMPLETE_DIR}/${word.id}.json`,
-      ready,
-      headword,
-      issues,
-      flags,
+    entry: word,
+    headword,
+    issues: [...checkDraft(word, context.edition), ...filtered.issues],
+    flags,
+    summary: {
+      text: lemma,
+      group: request.categoryId,
+      examples: examples.examples.length,
+      definition: word.primaryDefinition ?? '',
     },
   };
 }
@@ -787,19 +680,6 @@ function uniqueStresses(
   return [...seen.values()];
 }
 
-/**
- * The synonym dictionaries goroh draws on. Its other dictionaries list
- * replacements for foreign words or calques, often next to the forms to avoid.
- */
-const SYNONYM_DICTIONARIES = new Set([
-  'Словник синонімів Караванського',
-  'Цифрові лексикографічні системи української мови',
-]);
-
-function isSynonymDictionary(dictionary: string | undefined): boolean {
-  return dictionary !== undefined && SYNONYM_DICTIONARIES.has(dictionary);
-}
-
 const PARTS_OF_SPEECH: Readonly<Record<string, PartOfSpeech>> = {
   іменник: 'noun',
   дієслово: 'verb',
@@ -892,7 +772,7 @@ function tagValues<T>(tags: readonly string[], values: Readonly<Record<string, T
  * `В. Кучер`, `Іван Ле` or `Б.-І. Антонич`: its first part when that reads as
  * a person's name (initials allowed), not a book, a paper or `із журналу`.
  */
-function authorOf(citation: string | undefined): string | undefined {
+export function authorOf(citation: string | undefined): string | undefined {
   const first = citation?.split(',')[0]?.trim();
   if (first === undefined || first === '') return undefined;
   const words = first.split(/\s+/);

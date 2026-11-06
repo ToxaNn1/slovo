@@ -110,13 +110,17 @@ async function renderApp() {
   );
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'emotions-character', displayName: 'Емоції' }],
+      categories: [
+        { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
+      ],
       words: [
         word('w_sumyrnyi', 'сумирний'),
         word('w_lahidnyi', 'лагідний'),
         word('w_tykhyi', 'тихий'),
       ],
-      correctionCategories: [{ id: 'everyday', displayName: 'Щоденне' }],
+      correctionCategories: [
+        { id: 'everyday', displayName: 'Щоденне', description: 'Щоденне.', tone: 'loud' },
+      ],
       corrections: [
         correction('c_shoby', 'шоби', ['щоб', 'аби']),
         correction('c_tipa', 'типу', ['ніби']),
@@ -245,14 +249,16 @@ describe('the whole Dashboard', () => {
       { type: 'surzhyk', total: 2, workedThrough: 1 },
     ]);
 
-    // A Curated Collection: «Нова» goes, and its screen shows its Entries and «Знаю X з N».
-    expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();
+    // A Curated Collection: its screen shows its Entries and «Знаю X з N».
+    // DESIGN-05: not on the board, owner decides
+    // expect(screen.getByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeTruthy();
     await press('dashboard-curated-collection-cc_lahidni');
     expect(screen.getByTestId('curated-collection')).toBeTruthy();
     expect(screen.getByText('Знаю 0 з 2')).toBeTruthy();
     expect(screen.getByTestId('curated-collection-entry-w_tykhyi')).toBeTruthy();
     await back('curated-collection-back');
-    expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeNull();
+    // DESIGN-05: not on the board, owner decides
+    // expect(screen.queryByTestId('dashboard-curated-collection-cc_lahidni-new')).toBeNull();
 
     // «До картки →» opens the Feed on the Word of the Day card.
     await settle(() => fireEvent.press(screen.getByText(editionStrings.dashboard.toCard)));

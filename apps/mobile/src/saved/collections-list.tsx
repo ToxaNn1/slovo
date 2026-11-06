@@ -1,5 +1,8 @@
 import { MascotIn } from '@/mascot/mascot';
 import {
+  CategoryGrid,
+  categoryGrid,
+  categoryGridBox,
   CollectionCard,
   collectionCard,
   CollectionMenuSheet,
@@ -14,6 +17,7 @@ import { memo, useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View } from 'react-native';
 
 import { editionStrings } from '@/edition/edition';
+import { useEditionInEffect } from '@/edition/remote-switches';
 import { useOpenScreen } from '@/use-open-screen';
 import { useCollectionSharing } from '@/saved/collection-sharing';
 import { useCollectionChanges, useCollectionRows } from '@/saved/collections';
@@ -35,6 +39,9 @@ type Editing = { readonly kind: 'new' } | { readonly kind: 'rename'; readonly id
  * dialog that says the Entries stay), and the same actions go to VoiceOver. The
  * list's tool is «+». The menu also offers «Поділитися посиланням» while Collection Links
  * are on, disabled for an empty Collection; a share that fails says why in a toast.
+ * With `collectionBoardStyle` on (ADR 0082) the Collections are the k1 grid of
+ * the Categories instead: «Колекції» with their number, three columns of tiles
+ * in the tones by position, a tile opening its Collection; «+» stays.
  */
 export function CollectionsList({ header }: { header: ListHeader }) {
   return (
@@ -46,6 +53,7 @@ export function CollectionsList({ header }: { header: ListHeader }) {
 
 function Collections({ header }: { header: ListHeader }) {
   const rows = useCollectionRows();
+  const boardStyle = useEditionInEffect().isFeatureEnabled('collectionBoardStyle');
   const { create, rename, remove } = useCollectionChanges();
   const { available: sharingAvailable, share } = useCollectionSharing();
   const openScreen = useOpenScreen();
@@ -100,85 +108,107 @@ function Collections({ header }: { header: ListHeader }) {
       ? rows.find((collection) => collection.id === editing.id)
       : undefined;
 
+  const listHeader = (
+    <>
+      {header(
+        <NewCollectionButton
+          testID="collections-add"
+          accessibilityLabel={strings.add}
+          onPress={() => {
+            setEditing({ kind: 'new' });
+          }}
+        />,
+      )}
+      {renaming !== undefined && (
+        <View style={[styles.item, styles.newField]}>
+          <CollectionNameField
+            key={renaming.id}
+            testID="collections-rename"
+            overline={strings.renameOverline}
+            placeholder={collectionStrings.sheet.namePlaceholder}
+            initialName={renaming.name}
+            onSubmit={(name) => keepName(rename(renaming.id, name))}
+            onCancel={stopEditing}
+          />
+        </View>
+      )}
+      {editing?.kind === 'new' && (
+        <View style={[styles.item, styles.newField]}>
+          <CollectionNameField
+            testID="collections-new"
+            overline={strings.newOverline}
+            placeholder={collectionStrings.sheet.namePlaceholder}
+            onSubmit={(name) => keepName(create(name))}
+            onCancel={stopEditing}
+          />
+        </View>
+      )}
+    </>
+  );
+  const listEmpty =
+    editing?.kind !== 'new' ? (
+      <EmptyState
+        mascot={<MascotIn state="empty" />}
+        testID="collections-empty"
+        title={strings.empty.title}
+        message={strings.empty.message}
+        action={{
+          label: strings.empty.create,
+          testID: 'collections-empty-create',
+          onPress: () => {
+            setEditing({ kind: 'new' });
+          },
+        }}
+      />
+    ) : null;
+
   return (
     <>
-      <FlatList
-        testID="collections"
-        data={rows}
-        keyExtractor={(collection) => collection.id}
-        numColumns={2}
-        columnWrapperStyle={styles.cardsRow}
-        renderItem={({ item, index }) => (
-          <View style={[styles.cell, index % 2 === 0 ? styles.leftCell : styles.rightCell]}>
-            <Card
-              index={index}
-              collection={item}
-              onOpen={openCollection}
-              onRename={startRename}
-              onDelete={confirmDelete}
-              onMenu={openMenu}
-            />
-          </View>
-        )}
-        ItemSeparatorComponent={Separator}
-        keyboardShouldPersistTaps="handled"
-        automaticallyAdjustKeyboardInsets
-        ListHeaderComponent={
-          <>
-            {header(
-              <NewCollectionButton
-                testID="collections-add"
-                accessibilityLabel={strings.add}
-                onPress={() => {
-                  setEditing({ kind: 'new' });
-                }}
-              />,
-            )}
-            {renaming !== undefined && (
-              <View style={[styles.item, styles.newField]}>
-                <CollectionNameField
-                  key={renaming.id}
-                  testID="collections-rename"
-                  overline={strings.renameOverline}
-                  placeholder={collectionStrings.sheet.namePlaceholder}
-                  initialName={renaming.name}
-                  onSubmit={(name) => keepName(rename(renaming.id, name))}
-                  onCancel={stopEditing}
-                />
-              </View>
-            )}
-            {editing?.kind === 'new' && (
-              <View style={[styles.item, styles.newField]}>
-                <CollectionNameField
-                  testID="collections-new"
-                  overline={strings.newOverline}
-                  placeholder={collectionStrings.sheet.namePlaceholder}
-                  onSubmit={(name) => keepName(create(name))}
-                  onCancel={stopEditing}
-                />
-              </View>
-            )}
-          </>
-        }
-        ListEmptyComponent={
-          editing?.kind !== 'new' ? (
-            <EmptyState
-              mascot={<MascotIn state="empty" />}
-              testID="collections-empty"
-              title={strings.empty.title}
-              message={strings.empty.message}
-              action={{
-                label: strings.empty.create,
-                testID: 'collections-empty-create',
-                onPress: () => {
-                  setEditing({ kind: 'new' });
-                },
-              }}
-            />
-          ) : null
-        }
-        contentContainerStyle={styles.content}
-      />
+      {boardStyle ? (
+        // DESIGN-05: not on the board, owner decides — a Collection's card in the old list
+        // carries its count of Entries, its first Lemmas and its actions (the «⋯» menu,
+        // rename and delete through `onMenu`, `onRename`, `onDelete`); the board's tile
+        // shows the name alone, so the grid leaves them out. The Collection's screen keeps
+        // the menu with rename, share and delete.
+        <CategoryGrid
+          testID="collections"
+          title={collectionStrings.title}
+          count={String(rows.length)}
+          tiles={rows.map(({ id, name, accessibilityLabel }) => ({ id, name, accessibilityLabel }))}
+          columns={3}
+          box={categoryGridBox}
+          shapes={categoryGrid.shapes}
+          header={listHeader}
+          empty={listEmpty}
+          onOpen={openCollection}
+        />
+      ) : (
+        <FlatList
+          testID="collections"
+          data={rows}
+          keyExtractor={(collection) => collection.id}
+          numColumns={2}
+          columnWrapperStyle={styles.cardsRow}
+          renderItem={({ item, index }) => (
+            <View style={[styles.cell, index % 2 === 0 ? styles.leftCell : styles.rightCell]}>
+              <Card
+                index={index}
+                collection={item}
+                onOpen={openCollection}
+                onRename={startRename}
+                onDelete={confirmDelete}
+                onMenu={openMenu}
+              />
+            </View>
+          )}
+          ItemSeparatorComponent={Separator}
+          keyboardShouldPersistTaps="handled"
+          automaticallyAdjustKeyboardInsets
+          ListHeaderComponent={listHeader}
+          ListEmptyComponent={listEmpty}
+          contentContainerStyle={styles.content}
+        />
+      )}
       <CollectionMenuSheet
         testID="collections-menu"
         visible={menu !== undefined}

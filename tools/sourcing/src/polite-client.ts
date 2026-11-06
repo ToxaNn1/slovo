@@ -57,6 +57,9 @@ export interface GetOptions {
 /** Raised for a host taken out of the run; nothing is sent to it. */
 export class HostUnreachableError extends Error {}
 
+/** The least time between two requests to one host that every tool keeps by default. */
+export const POLITE_INTERVAL_MS = 2000;
+
 /** Only answers that will be the same next time are cached. */
 const CACHEABLE_STATUSES = new Set([200, 404]);
 /** Answers that mean "slow down". */

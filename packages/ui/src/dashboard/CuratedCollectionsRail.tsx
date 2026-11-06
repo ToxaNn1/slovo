@@ -2,21 +2,20 @@ import type { CuratedCollectionCard } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
-import { Wedge } from '../primitives/Wedge';
+import { shapeAt, TileShape } from '../primitives/TileShape';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { categoryTile, dashboard, typeStyle } from '../tokens';
 import { BlockTitle } from './BlockTitle';
 
-type Pictogram = (typeof categoryTile.shapes)[number][number];
-
 /**
- * The Curated Collections rail of the Dashboard (ADR 0076): «Категорії» with
- * the count of cards over a horizontal row of tiles that runs to the screen's
- * edges, one per collection published by today. A tile shows its name and
- * its count of Entries under a two-shape pictogram, on red, ink or the sunken
- * surface in turn, with «Нова» on one not opened yet and «Додано ✓» on one
- * copied into the reader's Collections. A tile opens its screen.
+ * The Curated Collections rail of the Dashboard (ADR 0076, 0081): «Добірки»
+ * with the count of cards over a horizontal row of tiles that runs to the
+ * screen's edges, one per collection published by today. A tile shows its
+ * name under a two-shape pictogram, on red, ink or the sunken surface in turn,
+ * and opens its screen. Its count of Entries, «Нова» on one not opened yet and
+ * «Додано ✓» on one copied are not on board 05 and stay commented out with
+ * the DESIGN-05 marker till the owner decides.
  */
 export function CuratedCollectionsRail({
   cards,
@@ -42,7 +41,7 @@ export function CuratedCollectionsRail({
         contentContainerStyle={styles.rail}
       >
         {cards.map((card, index) => (
-          <CategoryTile
+          <CuratedCollectionTile
             key={card.collection.id}
             card={card}
             index={index}
@@ -56,11 +55,18 @@ export function CuratedCollectionsRail({
   );
 }
 
-function CategoryTile({
+/**
+ * One Curated Collection's tile on the rail: its name over the shape pair at
+ * its place, in the board's three tones in turn. Its red keeps the Добірки
+ * rail's own shapes, an ink big one and a cream small one, the other way round
+ * from a Category tile's red; VoiceOver reads its name and number of Entries.
+ */
+function CuratedCollectionTile({
   card: {
     collection: { id, name, entryIds },
-    state,
-    added,
+    // DESIGN-05: not on the board, owner decides
+    // state,
+    // added,
   },
   index,
   onPress,
@@ -73,27 +79,32 @@ function CategoryTile({
   const { colors } = tokens;
   const light = useSchemeColors('light');
   const { strings, voice, count } = useEdition();
-  const { curatedCollectionNew, curatedCollection, curatedCollectionCount } = strings.dashboard;
+  // DESIGN-05: not on the board, owner decides
+  // const { curatedCollectionNew, curatedCollection } = strings.dashboard;
+  const { curatedCollectionCount } = strings.dashboard;
   // The board's three tones in turn: red, ink, the sunken surface.
   const tone = [
     { ground: colors.accent, text: light.ink, big: light.ink, small: light.background },
     { ground: colors.ink, text: colors.background, big: colors.accent, small: colors.background },
     { ground: colors.surfaceSunken, text: colors.ink, big: colors.accent, small: colors.ink },
   ][index % 3];
-  const [big, small] = categoryTile.shapes[index % categoryTile.shapes.length] ?? [];
-  const isNew = state === 'new';
+  const [big, small] = shapeAt(categoryTile.shapes, index);
+  // DESIGN-05: not on the board, owner decides
+  // const isNew = state === 'new';
   const entries = count(curatedCollectionCount, entryIds.length);
-  if (tone === undefined || big === undefined || small === undefined) return null;
+  if (tone === undefined) return null;
   return (
     <PressedTile
       testID={`dashboard-curated-collection-${id}`}
       tone="none"
       radius={categoryTile.radius}
       accessibilityLabel={[
-        isNew ? curatedCollectionNew : '',
+        // DESIGN-05: not on the board, owner decides
+        // isNew ? curatedCollectionNew : '',
         name,
         entries,
-        added ? curatedCollection.added : '',
+        // DESIGN-05: not on the board, owner decides
+        // added ? curatedCollection.added : '',
       ]
         .filter((part) => part !== '')
         .join('. ')}
@@ -101,55 +112,36 @@ function CategoryTile({
       onPress={onPress}
       faceStyle={[styles.face, { backgroundColor: tone.ground }]}
     >
-      <Shape shape={big} color={tone.big} place={categoryTile.big} />
-      <Shape shape={small} color={tone.small} place={categoryTile.small} />
-      {isNew ? (
-        <Text
-          {...voice}
-          testID={`dashboard-curated-collection-${id}-new`}
-          style={[styles.mark, typeStyle('labelChip', tokens), { color: tone.text }]}
-        >
-          {curatedCollectionNew}
-        </Text>
-      ) : added ? (
-        <Text
-          {...voice}
-          testID={`dashboard-curated-collection-${id}-added`}
-          style={[styles.mark, typeStyle('labelChip', tokens), { color: tone.text }]}
-        >
-          {curatedCollection.added}
-        </Text>
-      ) : null}
+      <TileShape shape={big} color={tone.big} place={categoryTile.big} />
+      <TileShape shape={small} color={tone.small} place={categoryTile.small} />
+      {
+        // DESIGN-05: not on the board, owner decides
+        // {isNew ? (
+        //   <Text
+        //     {...voice}
+        //     testID={`dashboard-curated-collection-${id}-new`}
+        //     style={[styles.mark, typeStyle('labelChip', tokens), { color: tone.text }]}
+        //   >
+        //     {curatedCollectionNew}
+        //   </Text>
+        // ) : added ? (
+        //   <Text
+        //     {...voice}
+        //     testID={`dashboard-curated-collection-${id}-added`}
+        //     style={[styles.mark, typeStyle('labelChip', tokens), { color: tone.text }]}
+        //   >
+        //     {curatedCollection.added}
+        //   </Text>
+        // ) : null}
+      }
       <Text {...voice} style={[typeStyle('categoryName', tokens), { color: tone.text }]}>
         {name}
       </Text>
-      <Text
-        {...voice}
-        style={[styles.count, typeStyle('categoryCount', tokens), { color: tone.text }]}
-      >
-        {entries}
-      </Text>
+      {
+        // DESIGN-05: not on the board, owner decides
+        // <Text {...voice} style={[styles.count, typeStyle('categoryCount', tokens), { color: tone.text }]}>{entries}</Text>
+      }
     </PressedTile>
-  );
-}
-
-/** One shape of a tile's pictogram, a polygon or a circle, at its place. */
-function Shape({
-  shape,
-  color,
-  place: { side, right, top },
-}: {
-  shape: Pictogram;
-  color: string;
-  place: { side: number; right: number; top: number };
-}) {
-  const at = { position: 'absolute', right, top } as const;
-  return shape === 'circle' ? (
-    <View
-      style={[at, { width: side, height: side, borderRadius: side / 2, backgroundColor: color }]}
-    />
-  ) : (
-    <Wedge points={shape} color={color} width={side} height={side} style={at} />
   );
 }
 

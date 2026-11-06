@@ -18,8 +18,8 @@ const edition = (off: readonly FeatureSwitch[] = []) =>
 
 const content = createMemoryContentPort({
   categories: [
-    { id: 'test', displayName: 'Тест' },
-    { id: 'other', displayName: 'Інше' },
+    { id: 'test', displayName: 'Тест', description: 'Тест.', tone: 'loud' },
+    { id: 'other', displayName: 'Інше', description: 'Інше.', tone: 'loud' },
   ],
   words: [
     word('w_quiet', { lemma: 'сумирний' }),
