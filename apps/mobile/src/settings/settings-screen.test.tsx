@@ -194,7 +194,7 @@ describe('Settings › «Голос диктора»', () => {
       .map((row): unknown => row.props['testID']);
     expect(rows.indexOf('settings-row-narrator-voice')).toBe(rows.indexOf('settings-sounds') + 1);
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Голос диктора' }));
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
 
     const voiceScreen = await screen.findByTestId('narrator-voice-screen');
     expect(within(voiceScreen).getByRole('header', { name: 'Голос диктора' })).toBeOnTheScreen();
@@ -206,7 +206,7 @@ describe('Settings › «Голос диктора»', () => {
 
   it('chooses a voice from its tile and reads the sample Word in it at once', async () => {
     const settings = await renderSettings();
-    await fireEvent.press(screen.getByRole('button', { name: 'Голос диктора' }));
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
     playedRecordings.length = 0;
 
     await fireEvent.press(await screen.findByTestId('narrator-voice-voice-taras'));
@@ -218,7 +218,7 @@ describe('Settings › «Голос диктора»', () => {
 
   it('reads the sample Word in the chosen voice from the play button', async () => {
     await renderSettings();
-    await fireEvent.press(screen.getByRole('button', { name: 'Голос диктора' }));
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
     await fireEvent.press(await screen.findByTestId('narrator-voice-voice-marta'));
     playedRecordings.length = 0;
     // The tap read the sample; the button stops it, then reads it again.
@@ -226,6 +226,17 @@ describe('Settings › «Голос диктора»', () => {
     await fireEvent.press(screen.getByTestId('narrator-voice-play'));
 
     expect(playedRecordings).toEqual([sampleRecordings['marta']]);
+  });
+
+  it('names the chosen voice on its row: «Оксана» as it ships, «Тарас» once chosen', async () => {
+    await renderSettings();
+    expect(screen.getByRole('button', { name: 'Голос диктора, Оксана' })).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
+    await fireEvent.press(await screen.findByTestId('narrator-voice-voice-taras'));
+    await fireEvent.press(screen.getByTestId('narrator-voice-back'));
+
+    expect(await screen.findByRole('button', { name: 'Голос диктора, Тарас' })).toBeOnTheScreen();
   });
 
   it('leaves the row out while its Feature Switch is off', async () => {
