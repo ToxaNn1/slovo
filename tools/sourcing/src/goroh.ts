@@ -318,6 +318,19 @@ export interface GorohSynonymGroup {
   readonly dictionary?: string;
 }
 
+/**
+ * The synonym dictionaries goroh draws on. Its other dictionaries list
+ * replacements for foreign words or calques, often next to the forms to avoid.
+ */
+const SYNONYM_DICTIONARIES = new Set([
+  'Словник синонімів Караванського',
+  'Цифрові лексикографічні системи української мови',
+]);
+
+export function isSynonymDictionary(dictionary: string | undefined): boolean {
+  return dictionary !== undefined && SYNONYM_DICTIONARIES.has(dictionary);
+}
+
 export function parseSynonymGroups(html: string, lemma: string): GorohSynonymGroup[] {
   return parse(html)
     .querySelectorAll('div.article-block')
@@ -335,6 +348,49 @@ export function parseSynonymGroups(html: string, lemma: string): GorohSynonymGro
           ...(sense === '' ? {} : { sense }),
           synonyms,
           ...(dictionary === '' ? {} : { dictionary }),
+        },
+      ];
+    });
+}
+
+/** One member of a goroh synonym article: its headword with Stress marks and its gloss, if any. */
+export interface GorohSynonymMember {
+  readonly headword: string;
+  readonly note: string;
+}
+
+/** One goroh synonym article: a sense of its headword and the synonyms listed under it. */
+export interface GorohSynonymArticle {
+  /** The headword with Stress marks, as goroh shows it. */
+  readonly headword: string;
+  readonly sense: string;
+  readonly dictionary: string;
+  readonly members: readonly GorohSynonymMember[];
+}
+
+/** The synonym articles of a «Синонімія» page whose headword is the lemma, from goroh's synonym dictionaries, in page order. */
+export function readSynonymArticles(html: string, lemma: string): GorohSynonymArticle[] {
+  return parse(html)
+    .querySelectorAll('div.article-block')
+    .flatMap((block): GorohSynonymArticle[] => {
+      // A related word's articles show its headword as a link rather than in bold.
+      const heading = block.querySelector('h2 b') ?? block.querySelector('h2 a');
+      const headword = squeeze(heading?.text ?? '');
+      const dictionary = squeeze(block.querySelector('.source-info')?.text ?? '');
+      if (!isSameWord(headword, lemma) || !isSynonymDictionary(dictionary)) return [];
+      const members = block
+        .querySelectorAll('.article-block__body .list-item')
+        .map((item) => ({
+          headword: squeeze(item.querySelector('a')?.text ?? ''),
+          note: squeeze(unstressed(item.querySelector('.short-interpret')?.text ?? '')),
+        }))
+        .filter((member) => member.headword !== '');
+      return [
+        {
+          headword,
+          sense: squeeze(block.querySelector('h2 .short-interpret')?.text ?? ''),
+          dictionary,
+          members,
         },
       ];
     });

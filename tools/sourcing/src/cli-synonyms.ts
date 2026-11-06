@@ -1,0 +1,133 @@
+/**
+ * Drafts Synonym Rows for a list of dominants, for human review:
+ *
+ *   pnpm source:synonyms <list> --edition <id> [--out <dir>] [--cache <dir>]
+ *
+ * The list has one dominant per line, `<dominant>[:<sense number>]`, with `#`
+ * comments; the sense number picks one of goroh's synonym articles for the
+ * dominant, counted from 1. Drafts, incomplete drafts and `review-report.md`
+ * go to the `synonyms/` folder of the review folder, `tools/sourcing/review/`
+ * (git-ignored). Fetched pages go to the cache `pnpm source:words` uses.
+ */
+import { existsSync, readFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join, relative, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { parseArgs } from 'node:util';
+
+import {
+  EDITIONS_DIR,
+  EditionFolderError,
+  openEdition,
+  type EditionFolder,
+} from '@slovo/language-pack/edition';
+
+import { sourceSynonyms, type Fetch } from './index';
+
+const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
+const toolDir = fileURLToPath(new URL('../', import.meta.url));
+const USAGE = 'Usage: pnpm source:synonyms <list> --edition <id> [--out <dir>] [--cache <dir>]';
+
+const fetchPage: Fetch = async (url, { timeoutMs }) => {
+  const response = await fetch(url, {
+    headers: { 'User-Agent': 'slovo-sourcing/0.1 (dev tool; one request every 2 s)' },
+    redirect: 'follow',
+    signal: AbortSignal.timeout(timeoutMs),
+  });
+  return { status: response.status, body: await response.text() };
+};
+
+async function main(): Promise<number> {
+  const { positionals, values } = parseArgs({
+    allowPositionals: true,
+    options: {
+      edition: { type: 'string' },
+      out: { type: 'string' },
+      cache: { type: 'string' },
+    },
+  });
+  const [listFile] = positionals;
+  const { edition } = values;
+  if (listFile === undefined || positionals.length > 1 || edition === undefined) {
+    console.error(USAGE);
+    return 2;
+  }
+  const cwd = process.env['INIT_CWD'] ?? process.cwd();
+  const listPath = resolve(cwd, listFile);
+  if (!existsSync(listPath)) {
+    console.error(`No dominant list at ${listPath}`);
+    return 2;
+  }
+  const outDir = values.out === undefined ? join(toolDir, 'review') : resolve(cwd, values.out);
+  let editionFolder: EditionFolder;
+  try {
+    editionFolder = openEdition(EDITIONS_DIR, edition);
+  } catch (error) {
+    if (!(error instanceof EditionFolderError)) throw error;
+    console.error(error.message);
+    return 2;
+  }
+
+  const result = await sourceSynonyms({
+    list: readFileSync(listPath, 'utf8'),
+    edition: editionFolder,
+    outDir,
+    cacheDir: values.cache === undefined ? defaultCacheDir() : resolve(cwd, values.cache),
+    fetch: fetchPage,
+    clock: {
+      now: () => Date.now(),
+      sleep: (ms) =>
+        new Promise((done) => {
+          setTimeout(done, ms);
+        }),
+    },
+    random: Math.random,
+    log: (message) => {
+      console.error(message);
+    },
+  });
+  if (!result.ok) {
+    console.error('Nothing fetched; fix the input first:');
+    for (const error of result.errors) console.error(`  ${error}`);
+    return 1;
+  }
+
+  const { lemmas, requests } = result.report;
+  for (const lemma of lemmas) {
+    const ready = lemma.drafts.filter((draft) => draft.ready).length;
+    const kinds = new Set(
+      [...lemma.flags, ...lemma.drafts.flatMap((draft) => draft.flags)].map((flag) => flag.kind),
+    );
+    console.log(
+      `${lemma.lemma}: ${String(lemma.drafts.length)} draft(s), ${String(ready)} ready` +
+        (kinds.size > 0 ? `; flags: ${[...kinds].join(', ')}` : ''),
+    );
+  }
+  console.log(
+    `Requests: ${String(requests.network)} to the network, ${String(requests.cached)} from the cache, ${String(requests.backoffs)} back-off(s)`,
+  );
+  for (const [host, reason] of Object.entries(requests.unreachable)) {
+    console.log(`Skipped for this run: ${host} (${reason})`);
+  }
+  console.log(`Review report: ${displayPath(result.reportFile)}`);
+  return 0;
+}
+
+/** The cache every worktree and run on the machine shares. */
+function defaultCacheDir(): string {
+  const configured = process.env['SLOVO_SOURCING_CACHE'];
+  if (configured !== undefined && configured !== '') return resolve(configured);
+  const cacheHome = process.env['XDG_CACHE_HOME'];
+  return join(
+    cacheHome === undefined || cacheHome === '' ? join(homedir(), '.cache') : cacheHome,
+    'slovo-sourcing',
+  );
+}
+
+/** A path relative to the repo root when it lies inside the repo, absolute otherwise. */
+function displayPath(path: string): string {
+  const fromRoot = relative(repoRoot, path);
+  return fromRoot.startsWith('..') ? path : fromRoot;
+}
+
+process.exitCode = await main();

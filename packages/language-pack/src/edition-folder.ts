@@ -32,6 +32,7 @@ import type { z } from 'zod';
 
 import { formatBuildError, type BuildError } from './build-error';
 import { checkContent, type Authored } from './check-content';
+import { checkSynonymRows } from './check-synonym-rows';
 import { ContentManifestSchema, MANIFEST_FILE } from './content-manifest';
 import { ContentTargetsSchema } from './content-targets';
 import { ID_REGISTRY_FILE, IdRegistrySchema } from './id-registry';
@@ -257,6 +258,8 @@ export interface EditionFolder extends EditionFiles {
   checkNewIdioms(idioms: readonly Idiom[]): BuildError[];
   /** Checks Corrections that are not in the Edition yet, as `checkNewWords` checks Words. */
   checkNewCorrections(corrections: readonly Correction[]): BuildError[];
+  /** Checks new Synonym Rows the way `checkNewWords` checks new Words. The rows must have passed the Synonym Row schema. */
+  checkNewSynonymRows(rows: readonly SynonymRow[]): BuildError[];
 }
 
 /** The ids of the Editions in an editions folder: each sub-folder holding an Edition config, in code-unit order. */
@@ -329,6 +332,11 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
         ...content.idioms,
         ...drafts,
       ]).filter(({ file }) => draftFiles.has(file));
+    },
+    checkNewSynonymRows(rows) {
+      content ??= files.entries();
+      const drafts = rows.map((row) => ({ file: files.entryFile(row.id), entry: row }));
+      return checkSynonymRows(config, content.words, drafts);
     },
   };
 

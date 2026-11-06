@@ -15,6 +15,7 @@ import {
   fetchGoroh,
   gorohUrl,
   isSameWord,
+  isSynonymDictionary,
   parseDefinitions,
   parseEtymologies,
   parseInflections,
@@ -679,19 +680,6 @@ function uniqueStresses(
     }
   }
   return [...seen.values()];
-}
-
-/**
- * The synonym dictionaries goroh draws on. Its other dictionaries list
- * replacements for foreign words or calques, often next to the forms to avoid.
- */
-const SYNONYM_DICTIONARIES = new Set([
-  'Словник синонімів Караванського',
-  'Цифрові лексикографічні системи української мови',
-]);
-
-function isSynonymDictionary(dictionary: string | undefined): boolean {
-  return dictionary !== undefined && SYNONYM_DICTIONARIES.has(dictionary);
 }
 
 const PARTS_OF_SPEECH: Readonly<Record<string, PartOfSpeech>> = {
