@@ -40,7 +40,10 @@ export function QuietScreenHero({
   return (
     <View
       testID={id}
-      style={[styles.hero, { minHeight: place.height + shift, paddingTop: place.padding.top + shift }]}
+      style={[
+        styles.hero,
+        { minHeight: place.height + shift, paddingTop: place.padding.top + shift },
+      ]}
       onLayout={(event) => {
         setHeight(event.nativeEvent.layout.height);
       }}
