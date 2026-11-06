@@ -49,8 +49,6 @@ const LINE_TYPES: readonly IdiomType[] = ['idiom', 'proverb'];
 
 const idiomsKind: SourcingKind<IdiomRequest> = {
   folder: 'idioms',
-  entryKind: 'idiom',
-  entryName: 'Idiom',
   idPrefix: 'i_',
   parseLine,
   start: (context) => (request) => draftLemma(request, context),

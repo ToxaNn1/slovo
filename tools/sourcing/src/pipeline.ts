@@ -83,10 +83,6 @@ export interface KindOutcome {
 export interface SourcingKind<R> {
   /** Its folder in the review folder, e.g. `words`. */
   readonly folder: string;
-  /** The Entries of the Edition a draft's text must not repeat. */
-  readonly entryKind: EntryKind;
-  /** The Entry as messages name it, e.g. `Word`. */
-  readonly entryName: string;
   /** The prefix of its ids, e.g. `w_`. */
   readonly idPrefix: string;
   /** Reads one line of the list, its `#` comment and blanks already taken out. */
@@ -104,8 +100,8 @@ const INCOMPLETE_DIR = 'incomplete';
  * list with any bad line before anything is fetched, drafts every line, and
  * writes the ready drafts to `drafts/`, the others to `incomplete/` and the
  * review report, all in the kind's folder of the review folder. A draft whose
- * text is already an Entry of the kind in the Edition, Retired or not, is
- * incomplete and flagged.
+ * text is already an Entry of the Edition, of any kind and Retired or not, or
+ * the text of a ready draft before it in the run, is incomplete and flagged.
  */
 export async function runSourcing<R>(
   list: string,
@@ -137,7 +133,8 @@ export async function runSourcing<R>(
     edition,
     newId: idMaker(kind.idPrefix, options.random, takenIds.ids),
   });
-  const existing = existingTexts(edition, kind.entryKind);
+  const existing = entriesByText(edition.entryTexts());
+  const readyIds = new Map<string, string>();
 
   const dir = join(options.outDir, kind.folder);
   for (const folder of [DRAFTS_DIR, INCOMPLETE_DIR]) {
@@ -149,12 +146,23 @@ export async function runSourcing<R>(
   for (const { text, line, request } of parsed.lines) {
     const outcome = await draft(request);
     const drafts = outcome.drafts.map((kindDraft): DraftOutcome => {
-      const taken = existing.get(matchKey(kindDraft.summary.text)) ?? [];
-      const flags =
-        taken.length === 0
-          ? kindDraft.flags
-          : [...kindDraft.flags, existingEntryFlag(kindDraft.summary.text, kind.entryName, taken)];
-      const ready = kindDraft.issues.length === 0 && taken.length === 0;
+      const { text: draftText } = kindDraft.summary;
+      const taken = existing(draftText);
+      const twin = readyIds.get(matchKey(draftText));
+      const repeatFlags: Flag[] = [
+        ...(taken.length > 0 ? [existingEntryFlag(draftText, taken)] : []),
+        ...(twin === undefined
+          ? []
+          : [
+              {
+                kind: 'existing-entry' as const,
+                message: `"${draftText}" is already drafted in this run: ${twin}`,
+              },
+            ]),
+      ];
+      const flags = [...kindDraft.flags, ...repeatFlags];
+      const ready = kindDraft.issues.length === 0 && repeatFlags.length === 0;
+      if (ready) readyIds.set(matchKey(draftText), kindDraft.entry.id);
       const file = `${ready ? DRAFTS_DIR : INCOMPLETE_DIR}/${kindDraft.entry.id}.json`;
       writeFileSync(join(dir, file), `${JSON.stringify(kindDraft.entry, null, 2)}\n`);
       return {
@@ -238,21 +246,35 @@ function idMaker(prefix: string, random: () => number, takenIds: Set<string>): (
   };
 }
 
-/** The Edition's Entries of one kind by the match key of their text. */
-function existingTexts(edition: EditionFolder, kind: EntryKind): Map<string, EntryText[]> {
+/**
+ * The Entries of an Edition that have a text, of any kind and Retired or not,
+ * matched by `matchKey`: a sourcing run and `content import` both refuse a
+ * new Entry whose text has one.
+ */
+export function entriesByText(texts: readonly EntryText[]): (text: string) => readonly EntryText[] {
   const byText = new Map<string, EntryText[]>();
-  for (const entry of edition.entryTexts()) {
-    if (entry.kind !== kind) continue;
+  for (const entry of texts) {
     const key = matchKey(entry.text);
     byText.set(key, [...(byText.get(key) ?? []), entry]);
   }
-  return byText;
+  return (text) => byText.get(matchKey(text)) ?? [];
 }
 
-function existingEntryFlag(text: string, entryName: string, taken: readonly EntryText[]): Flag {
+const ENTRY_NAMES: Readonly<Record<EntryKind, string>> = {
+  word: 'a Word',
+  correction: 'a Correction',
+  idiom: 'an Idiom',
+  synonymRow: 'a Synonym Row',
+  tip: 'a Tip',
+};
+
+function existingEntryFlag(text: string, taken: readonly EntryText[]): Flag {
+  const kinds = new Set(taken.map((entry) => entry.kind));
+  const [only] = kinds;
+  const name = kinds.size === 1 && only !== undefined ? ENTRY_NAMES[only] : 'an Entry';
   const ids = taken.map((entry) => (entry.retired ? `${entry.id} (Retired)` : entry.id));
   return {
     kind: 'existing-entry',
-    message: `"${text}" is already a ${entryName} of the Edition: ${ids.join(', ')}`,
+    message: `"${text}" is already ${name} of the Edition: ${ids.join(', ')}`,
   };
 }

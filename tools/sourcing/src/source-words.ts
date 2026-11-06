@@ -69,8 +69,6 @@ interface WordRequest {
 function wordsKind(sumAccess: SumAccess): SourcingKind<WordRequest> {
   return {
     folder: 'words',
-    entryKind: 'word',
-    entryName: 'Word',
     idPrefix: 'w_',
     parseLine: parseLemmaLine,
     start: (draftContext) => {

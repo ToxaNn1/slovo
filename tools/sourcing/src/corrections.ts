@@ -40,8 +40,6 @@ export type CorrectionSourcingOptions = PipelineOptions & {
 export function sourceCorrections(options: CorrectionSourcingOptions): Promise<SourcingResult> {
   return runSourcing(options.formList, options, {
     folder: 'corrections',
-    entryKind: 'correction',
-    entryName: 'Correction',
     idPrefix: 'c_',
     parseLine: parseFormLine,
     start: (context) => (request) => draftCorrection(request, context),

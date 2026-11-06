@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { IdiomSchema } from '@slovo/contracts';
+import { CorrectionSchema, IdiomSchema } from '@slovo/contracts';
 import {
   EDITIONS_DIR,
   editionFiles,
@@ -15,7 +15,8 @@ import { describe, expect, it } from 'vitest';
 import { sourceIdioms, type Fetch, type IdiomSourcingOptions, type SourcingResult } from './index';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
-const ukrainianConfigFile = openEdition(EDITIONS_DIR, 'uk').path('config');
+const ukrainian = openEdition(EDITIONS_DIR, 'uk');
+const ukrainianConfigFile = ukrainian.path('config');
 const PHRASEOLOGY = 'https://goroh.pp.ua/Фразеологія/';
 const EFIMOVA = "Словник прислів'їв та приказок з поясненнями. / Єфімова І. В., 2011";
 
@@ -240,6 +241,47 @@ describe('sourceIdioms', () => {
     const draft = report.lemmas[0]?.drafts.find(({ summary }) => summary.text === 'Лити воду');
     expect(draft?.ready).toBe(false);
     expect(draft?.flags.map((flag) => flag.kind)).toContain('existing-entry');
+  });
+
+  it('sends an expression an Entry of another kind has to incomplete', async () => {
+    const correction = JSON.parse(
+      readFileSync(join(ukrainian.dir, ukrainian.entryFile('c_0bppof')), 'utf8'),
+    ) as unknown;
+    const edition = editionWith({
+      c_0bppof: { ...CorrectionSchema.parse(correction), nonStandardForm: 'лити воду' },
+    });
+    const { result } = run('лити\n', { edition });
+    const { report } = ok(await result);
+
+    const draft = report.lemmas[0]?.drafts.find(({ summary }) => summary.text === 'Лити воду');
+    expect(draft?.ready).toBe(false);
+    expect(draft?.flags).toContainEqual({
+      kind: 'existing-entry',
+      message: '"Лити воду" is already a Correction of the Edition: c_0bppof',
+    });
+  });
+
+  it('keeps one ready draft of an expression two pages of the run list', async () => {
+    const { outDir, result } = run('лити\nлляти\n', {
+      fetch: (url, fetchOptions) =>
+        fakeFetch(
+          decodeURI(url) === `${PHRASEOLOGY}лляти` ? encodeURI(`${PHRASEOLOGY}лити`) : url,
+          fetchOptions,
+        ),
+    });
+    const { report } = ok(await result);
+
+    const [first, second] = report.lemmas;
+    const firstReady = first?.drafts.filter(({ ready }) => ready) ?? [];
+    expect(firstReady.length).toBeGreaterThan(0);
+    expect(second?.drafts.filter(({ ready }) => ready)).toEqual([]);
+    const repeat = second?.drafts.find(({ summary }) => summary.text === 'Лити воду');
+    const original = firstReady.find(({ summary }) => summary.text === 'Лити воду');
+    expect(repeat?.flags).toContainEqual({
+      kind: 'existing-entry',
+      message: `"Лити воду" is already drafted in this run: ${original?.id ?? ''}`,
+    });
+    expect(readDrafts(outDir, 'drafts')).toHaveLength(firstReady.length);
   });
 
   it('flags a page that cannot be fetched', async () => {
