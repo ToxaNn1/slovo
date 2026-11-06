@@ -682,7 +682,6 @@ function uniqueStresses(
   return [...seen.values()];
 }
 
-
 const PARTS_OF_SPEECH: Readonly<Record<string, PartOfSpeech>> = {
   іменник: 'noun',
   дієслово: 'verb',

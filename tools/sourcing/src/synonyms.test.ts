@@ -136,8 +136,7 @@ describe('sourceSynonyms', () => {
       ],
       sources: [
         {
-          title:
-            'Горох: синонімія (Цифрові лексикографічні системи української мови), «мжичка»',
+          title: 'Горох: синонімія (Цифрові лексикографічні системи української мови), «мжичка»',
           url: 'https://goroh.pp.ua/Синонімія/мжичка',
         },
       ],
@@ -163,7 +162,7 @@ describe('sourceSynonyms', () => {
   });
 
   it('flags an unstressed member of several vowels and a row of 4 members, and keeps them incomplete', async () => {
-    const { result, dir } = await run('мжичка:2\n');
+    const { result } = await run('мжичка:2\n');
 
     const draft = lemmasOf(result)[0]?.drafts[0];
     expect(draft?.ready).toBe(false);
@@ -171,9 +170,7 @@ describe('sourceSynonyms', () => {
     const kinds = draft?.flags.map((flag) => flag.kind);
     expect(kinds).toContain('stress-unresolved');
     expect(kinds).toContain('missing-data');
-    expect(draft?.flags.find((flag) => flag.kind === 'missing-data')?.message).toMatch(
-      /4 members/,
-    );
+    expect(draft?.flags.find((flag) => flag.kind === 'missing-data')?.message).toMatch(/4 members/);
   });
 
   it('keeps a row of 13 members incomplete', async () => {

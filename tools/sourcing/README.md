@@ -88,7 +88,23 @@ A Lemma list line whose Category is one of the Edition's `categoriesRequiringHis
 
 ## Synonym Rows: `source:synonyms`
 
-<!-- #1630 fills this section. -->
+<!-- #1630 -->
+
+```sh
+pnpm source:synonyms <list> --edition uk [--out <dir>] [--cache <dir>]
+```
+
+The list has one dominant per line, `<dominant>[:<sense number>]`, with `#` comments. The dominant is written without stress marks; the sense number (1 when left out) picks one of goroh's «Синонімія» articles for the dominant, counted from 1 in page order, among the articles of its synonym dictionaries (Караванський and «Цифрові лексикографічні системи української мови»). A line without a whole sense number of 1 or more is refused before anything is fetched. Drafts go to `review/synonyms/`.
+
+Each draft is one Synonym Row, the article as goroh shows it:
+
+- **Dominant and members** with the Stress goroh marks. A word goroh leaves unmarked takes the Stress on its only vowel; with several vowels it is flagged `stress-unresolved`. Repeats of the dominant or of a member are dropped.
+- **Meaning**: the article's sense line, as a sentence.
+- **Shade note**: a member's gloss, cut at a word to 60 characters; none when the gloss only points at another word (the `source:words` reference markers) or names the dominant.
+- **Word links**: a member or dominant that is the Lemma of exactly one Word of the Edition that is not Retired gets its `wordId`.
+- **Source**: `Горох: синонімія (<dictionary>), «<dominant>»` with the page address.
+
+The draft is checked with the schema and the build's checks against the Edition (`EditionFolder.checkNewSynonymRows`). A row of fewer than 5 or more than 12 members is flagged `missing-data` and goes to `incomplete/`. goroh's articles a language model wrote are never quoted: a page with only those is `no-entry`, as is a missing page or sense.
 
 ## Extending it
 
