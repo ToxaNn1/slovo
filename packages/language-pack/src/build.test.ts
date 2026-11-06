@@ -886,14 +886,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Tip and reads it back with every field, in pack format 10', async () => {
+    it('builds a Tip and reads it back with every field, in pack format 11', async () => {
       const editionDir = withTips([fullTip]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 10 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 11 } });
       expect(await readTips(outFile, ['t_fx0001'])).toEqual([
         { ...fullTip, kind: 'tip', retired: false },
       ]);
@@ -1068,14 +1068,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Synonym Row and reads it back with every field, in pack format 10', async () => {
+    it('builds a Synonym Row and reads it back with every field, in pack format 11', async () => {
       const editionDir = withRows([fullRow]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 10 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 11 } });
       expect(await readRows(outFile, ['r_fx0001'])).toEqual([
         { ...fullRow, kind: 'synonymRow', retired: false },
       ]);
@@ -1538,7 +1538,7 @@ describe('buildLanguagePack', () => {
       return editionDir;
     }
 
-    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 10", async () => {
+    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 11", async () => {
       const editionDir = withOriginLanguages();
       editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, origin: 'la' }));
       record(editionDir);
@@ -1547,7 +1547,7 @@ describe('buildLanguagePack', () => {
       const result = buildLanguagePack({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(10);
+      expect(result.metadata.packFormat).toBe(11);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -1644,7 +1644,7 @@ describe('buildLanguagePack', () => {
       message,
     });
 
-    it('builds a Word that names an Illustration and reads the name back, in pack format 10', async () => {
+    it('builds a Word that names an Illustration and reads the name back, in pack format 11', async () => {
       const editionDir = withIllustration('w_fx0002.png', png(320, 320));
       record(editionDir);
       const outFile = packPath();
@@ -1652,7 +1652,7 @@ describe('buildLanguagePack', () => {
       const result = buildLanguagePack({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(10);
+      expect(result.metadata.packFormat).toBe(11);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -1791,6 +1791,51 @@ describe('buildLanguagePack', () => {
     ]);
   });
 
+  describe.each(['categories', 'correctionCategories'])(
+    'the tone and description of a Category in %s',
+    (list) => {
+      const editFirstCategory = (edit: (category: Json) => Json) => {
+        const editionDir = copyFixture('valid');
+        editJson(editionDir, 'edition.json', (config) => {
+          const [first, ...rest] = config[list] as Json[];
+          return { ...config, [list]: [edit(first ?? {}), ...rest] };
+        });
+        return editionDir;
+      };
+
+      it.each([
+        ['without a tone', 'tone'],
+        ['without a description', 'description'],
+      ])('refuses a Category %s', (_, field) => {
+        const editionDir = editFirstCategory(({ [field]: _dropped, ...category }) => category);
+
+        expect(buildErrors(editionDir)).toEqual([
+          expect.objectContaining({ file: 'edition.json', field: `${list}.0.${field}` }),
+        ]);
+      });
+
+      it('refuses an unknown tone and an empty description', () => {
+        expect(buildErrors(editFirstCategory((c) => ({ ...c, tone: 'bright' })))).toEqual([
+          expect.objectContaining({ file: 'edition.json', field: `${list}.0.tone` }),
+        ]);
+        expect(buildErrors(editFirstCategory((c) => ({ ...c, description: '' })))).toEqual([
+          expect.objectContaining({ file: 'edition.json', field: `${list}.0.description` }),
+        ]);
+      });
+
+      it.each([
+        ['description', { description: 'Інший опис.' }],
+        ['tone', { tone: 'quiet' }],
+      ])('fails when a Category changed its %s and the version was not raised', (_, change) => {
+        const editionDir = editFirstCategory((category) => ({ ...category, ...change }));
+
+        expect(buildErrors(editionDir)).toEqual([
+          expect.objectContaining({ file: 'content/manifest.json', field: 'contentChecksum' }),
+        ]);
+      });
+    },
+  );
+
   it('rounds coverage down in the printed report, so 100% means every Word', () => {
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile: packPath() });
     if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
@@ -1820,9 +1865,9 @@ describe('buildLanguagePack', () => {
     expect(b.ids).toEqual(a.ids);
     expect(a.metadata).toEqual({
       editionId: 'fixture',
-      contentVersion: 8,
+      contentVersion: 9,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
-      packFormat: 10,
+      packFormat: 11,
     });
     expect(b.metadata).toEqual(a.metadata);
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
@@ -1833,8 +1878,8 @@ describe('buildLanguagePack', () => {
 
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 10 } });
-    expect((await readBack(outFile)).metadata.packFormat).toBe(10);
+    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 11 } });
+    expect((await readBack(outFile)).metadata.packFormat).toBe(11);
   });
 
   it.each([
@@ -1851,7 +1896,7 @@ describe('buildLanguagePack', () => {
           file: 'content/manifest.json',
           field: 'contentChecksum',
           message: expect.stringMatching(
-            /content changed since content version 8.*pnpm build:pack fixture --record/i,
+            /content changed since content version 9.*pnpm build:pack fixture --record/i,
           ) as string,
         },
       ]);
@@ -1864,7 +1909,7 @@ describe('buildLanguagePack', () => {
     record(editionDir);
     editJson(editionDir, 'content/manifest.json', (manifest) => ({
       ...manifest,
-      contentVersion: 8,
+      contentVersion: 9,
     }));
 
     expect(buildErrors(editionDir)).toEqual([
@@ -2352,8 +2397,8 @@ describe('recordContent', () => {
 
     expect(recordContent({ editionDir })).toEqual({
       ok: true,
-      previousContentVersion: 8,
-      contentVersion: 8,
+      previousContentVersion: 9,
+      contentVersion: 9,
       contentChecksum: manifestOf(editionDir)['contentChecksum'],
       newIds: [],
       newCrosswordDays: [],
@@ -2372,12 +2417,12 @@ describe('recordContent', () => {
     const recorded = recordContent({ editionDir });
     const result = buildLanguagePack({ editionDir, outFile: edited });
 
-    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 8, contentVersion: 9 });
+    expect(recorded).toMatchObject({ ok: true, previousContentVersion: 9, contentVersion: 10 });
     expect(result.ok).toBe(true);
     const { metadata } = await readBack(edited);
-    expect(metadata).toMatchObject({ contentVersion: 9 });
+    expect(metadata).toMatchObject({ contentVersion: 10 });
     expect(manifestOf(editionDir)).toEqual({
-      contentVersion: 9,
+      contentVersion: 10,
       contentChecksum: metadata.contentChecksum,
     });
     expect(metadata.contentChecksum).not.toBe((await readBack(original)).metadata.contentChecksum);
@@ -2432,7 +2477,7 @@ describe('recordContent', () => {
       ok: false,
       errors: [expect.objectContaining({ entryId: 'w_fx0002', field: 'rarity' })],
     });
-    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 8 });
+    expect(manifestOf(editionDir)).toMatchObject({ contentVersion: 9 });
   });
 
   it('records nothing while a literary use is not yet in the public domain, as the build refuses it', () => {

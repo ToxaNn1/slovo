@@ -85,7 +85,7 @@ beforeEach(async () => {
   now = Date.parse('2026-10-28T09:00:00Z');
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words: [word('w_kvasha', 'кваша'), word('w_buzok', 'бузок')],
     }),
     edition: inEffect,

@@ -14,8 +14,13 @@ import { createMemoryContentPort } from '../testing';
 import { seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
-const test: Category = { id: 'test', displayName: 'Test' };
-const crafts: Category = { id: 'crafts', displayName: 'Crafts' };
+const test: Category = { id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' };
+const crafts: Category = {
+  id: 'crafts',
+  displayName: 'Crafts',
+  description: 'Crafts.',
+  tone: 'loud',
+};
 
 const numbered = (prefix: string, count: number) =>
   Array.from({ length: count }, (_, index) => `${prefix}${String(index + 1).padStart(2, '0')}`);

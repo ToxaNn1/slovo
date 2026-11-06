@@ -101,7 +101,7 @@ async function renderGame({
   events = [];
   composition = await openComposition({
     content: createMemoryContentPort({
-      categories: [{ id: 'nature', displayName: 'Природа' }],
+      categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
       words: [
         ...Array.from({ length: 15 }, (_, i) => word(i)),
         // Words of the Edition's alphabet, which can fill the traced grid.

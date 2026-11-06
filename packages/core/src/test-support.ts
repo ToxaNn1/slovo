@@ -63,8 +63,10 @@ const testEditionConfig = {
     parchment: { background: '#F3E9D2', text: '#3B2A1A' },
     blue: { background: '#1F3A5F', text: '#F3EEE2' },
   },
-  categories: [{ id: 'test', displayName: 'Test' }],
-  correctionCategories: [{ id: 'everyday', displayName: 'Everyday' }],
+  categories: [{ id: 'test', displayName: 'Test', description: 'Test Words.', tone: 'loud' }],
+  correctionCategories: [
+    { id: 'everyday', displayName: 'Everyday', description: 'Everyday Corrections.', tone: 'loud' },
+  ],
   categoriesRequiringHistory: [],
   originLanguages: [],
   moods: [

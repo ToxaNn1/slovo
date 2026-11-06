@@ -12,7 +12,7 @@ import { userStateRecords } from '../user-state-schema';
 // reached, a Badge earned and a Streak milestone, each on its own day only.
 
 const content = createMemoryContentPort({
-  categories: [{ id: 'test', displayName: 'Test' }],
+  categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
   words: Array.from({ length: 20 }, (_, index) => word(`w_${String(index)}`)),
 });
 const ALL_ON: readonly FeatureSwitch[] = [
