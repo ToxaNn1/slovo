@@ -27,6 +27,7 @@ import {
   type SourcingOptions,
   type SourcingResult,
 } from './index';
+import { seededRandom } from './test-support';
 
 const fixturesDir = fileURLToPath(new URL('../fixtures/', import.meta.url));
 const ukrainianConfigFile = openEdition(EDITIONS_DIR, 'uk').path('config');
@@ -55,6 +56,9 @@ const savedPages: Record<string, { status: number; file: string }> = {
   [`${GOROH}Тлумачення/плесо`]: { status: 200, file: 'goroh/definitions-pleso.html' },
   // A verb whose endings give the plural form: «влю, виш; мн. гарка́влять; недок.».
   [`${GOROH}Тлумачення/гаркавити`]: { status: 200, file: 'goroh/definitions-harkavyty.html' },
+  // СУМ-11: віконце only points at вікно; фіра is a dialect Word.
+  [`${GOROH}Тлумачення/віконце`]: { status: 200, file: 'goroh/definitions-vikontse.html' },
+  [`${GOROH}Тлумачення/фіра`]: { status: 200, file: 'goroh/definitions-fira.html' },
 };
 
 function savedLemma(
@@ -179,15 +183,6 @@ function fakeClock() {
   };
 }
 
-/** A repeatable stand-in for Math.random. */
-function seededRandom(seed = 7) {
-  let state = seed;
-  return () => {
-    state = (state * 1_103_515_245 + 12_345) % 2_147_483_648;
-    return state / 2_147_483_648;
-  };
-}
-
 function setup(overrides: Partial<SourcingOptions> = {}, network?: NetworkOptions) {
   const clock = fakeClock();
   const net = fakeNetwork(clock, network);
@@ -231,7 +226,7 @@ function editionWith(
 }
 
 function readDrafts(outDir: string, folder = 'drafts'): unknown[] {
-  const dir = join(outDir, folder);
+  const dir = join(outDir, 'words', folder);
   return readdirSync(dir)
     .sort()
     .map((name) => JSON.parse(readFileSync(join(dir, name), 'utf8')) as unknown);
@@ -410,7 +405,12 @@ describe('sourceWords', () => {
 
     const result = await sourceWords(options);
 
-    const words = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
+    // The dialect homonym has no Region, so it waits in incomplete/.
+    const ready = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
+    expect(ready.map((word) => word.primaryDefinition)).not.toContain('Селезінка.');
+    const words = [...ready, ...readDrafts(options.outDir, 'incomplete')].map((draft) =>
+      WordSchema.parse(draft),
+    );
     expect(words.map((word) => word.primaryDefinition).sort()).toEqual([
       'Вузька намивна смуга суходолу в морі, річці тощо, сполучена одним кінцем із берегом; мис.',
       'Заплетене волосся.',
@@ -445,7 +445,7 @@ describe('sourceWords', () => {
     expect(etymologies?.message).not.toContain('ко́сий');
     // КОСА 2 prints its Examples without italics.
     expect(outcome.drafts[1]?.flags.map((flag) => flag.kind)).toContain('unmarked-examples');
-    const report = readFileSync(join(options.outDir, 'review-report.md'), 'utf8');
+    const report = readFileSync(join(options.outDir, 'words', 'review-report.md'), 'utf8');
     expect(report).toContain('The dictionary has 4 homonyms');
   });
 
@@ -752,9 +752,13 @@ describe('sourceWords', () => {
       );
     }
     // КО́СА, the people, is masculine and feminine at once: a human picks.
-    const [kosa] = readDrafts(options.outDir, 'incomplete');
-    expect(kosa).toMatchObject({ stress: [1], partOfSpeech: 'noun' });
-    expect(kosa).not.toHaveProperty('gender');
+    const incomplete = readDrafts(options.outDir, 'incomplete');
+    expect(incomplete).toContainEqual(
+      expect.objectContaining({ stress: [1], partOfSpeech: 'noun' }),
+    );
+    expect(incomplete).not.toContainEqual(
+      expect.objectContaining({ stress: [1], gender: expect.anything() as unknown }),
+    );
     // The page also carries articles written by a language model and from ВТС; none is drafted.
     const all = [...ready, ...readDrafts(options.outDir, 'incomplete')] as {
       sources: { title: string }[];
@@ -780,7 +784,7 @@ describe('sourceWords', () => {
       'sum.in.ua',
       'web.archive.org',
     ]);
-    const report = readFileSync(join(options.outDir, 'review-report.md'), 'utf8');
+    const report = readFileSync(join(options.outDir, 'words', 'review-report.md'), 'utf8');
     expect(report).toContain('Skipped for this run: web.archive.org');
   });
 
@@ -923,3 +927,119 @@ function flagsOf(result: SourcingResult, lemma: string): Flag[] {
   const outcome = lemmaOutcome(result, lemma);
   return [...outcome.flags, ...outcome.drafts.flatMap((draft) => draft.flags)];
 }
+
+describe('the review report', () => {
+  it('ends with one line per ready draft: id, text, Category, Example count, Definition start', async () => {
+    const { options } = setup({
+      lemmaList: 'мжичка nature-weather 2\nножиці household-crafts 1\n',
+    });
+
+    await sourceWords(options);
+
+    // In list order: мжичка, then ножиці.
+    const ready = readDrafts(options.outDir)
+      .map((draft) => WordSchema.parse(draft))
+      .sort((a, b) => a.lemma.localeCompare(b.lemma, 'uk'));
+    expect(ready.length).toBeGreaterThan(0);
+    const report = readFileSync(join(options.outDir, 'words', 'review-report.md'), 'utf8');
+    const list = report.slice(report.indexOf('## Ready drafts'));
+    expect(list.trimEnd().split('\n')).toEqual([
+      '## Ready drafts',
+      '',
+      ...ready.map(
+        (word) =>
+          `- \`${word.id}\` | ${word.lemma} | ${word.categoryId} | Examples: ${String(word.examples.length)} | ${word.primaryDefinition.slice(0, 55)}`,
+      ),
+    ]);
+    expect(ready.map((word) => word.lemma)).toContain('мжичка');
+  });
+});
+
+describe('a Lemma the Edition already has', () => {
+  it('lands in incomplete/ with a flag naming the Entry, even when it is Retired', async () => {
+    const edition = editionWith((config) => config, {
+      w_exist1: {
+        id: 'w_exist1',
+        lemma: 'мжичка',
+        stress: [2],
+        partOfSpeech: 'noun',
+        gender: 'feminine',
+        primaryDefinition: 'Тестове значення, якого немає в словнику.',
+        categoryId: 'nature-weather',
+        rarity: 2,
+        sources: [{ title: 'Тестове джерело' }],
+        retired: true,
+      },
+    });
+    const { options } = setup({ lemmaList: 'мжичка nature-weather 2\n', edition });
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toEqual([]);
+    expect(readDrafts(options.outDir, 'incomplete')).toHaveLength(1);
+    const [draft] = lemmaOutcome(result, 'мжичка').drafts;
+    expect(draft?.ready).toBe(false);
+    expect(draft?.flags).toContainEqual({
+      kind: 'existing-entry',
+      message: '"мжичка" is already a Word of the Edition: w_exist1 (Retired)',
+    });
+  });
+});
+
+describe('the filters of source:words', () => {
+  it('sends a draft whose primary Definition is a cross-reference to incomplete/, flagged', async () => {
+    const { options } = setup({ lemmaList: 'віконце household-crafts 2\n' });
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toEqual([]);
+    const [file] = readDrafts(options.outDir, 'incomplete');
+    expect(file).toMatchObject({ lemma: 'віконце', primaryDefinition: 'Зменш. до вікно́.' });
+    const [draft] = lemmaOutcome(result, 'віконце').drafts;
+    expect(draft?.ready).toBe(false);
+    expect(draft?.issues).toEqual([
+      'primaryDefinition: a cross-reference to another article, which explains nothing on an Entry card',
+    ]);
+    expect(draft?.flags).toContainEqual({
+      kind: 'cross-reference',
+      message: 'The primary Definition points at another article: «Зменш. до вікно́.»',
+    });
+  });
+
+  it('sends a dialect Word without a Region to incomplete/, flagged', async () => {
+    const { options } = setup({ lemmaList: 'фіра household-crafts 3\n' });
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toEqual([]);
+    const [file] = readDrafts(options.outDir, 'incomplete');
+    expect(file).toMatchObject({ lemma: 'фіра', registers: ['dialectal'] });
+    expect(file).not.toHaveProperty('region');
+    const [draft] = lemmaOutcome(result, 'фіра').drafts;
+    expect(draft?.ready).toBe(false);
+    expect(draft?.issues).toEqual([
+      'region: a dialect Word needs a Region, which the tool does not source',
+    ]);
+    expect(draft?.flags).toContainEqual({
+      kind: 'region-missing',
+      message: 'A dialect Word with no Region: add where it is said from a cited source',
+    });
+  });
+
+  it('refuses a line whose Category requires a Word History, naming the line, before fetching', async () => {
+    const { options, net } = setup({
+      lemmaList: 'мжичка nature-weather 2\nпідсобник repressed-words 4\nфіра chameleon-words 3\n',
+    });
+
+    const result = await sourceWords(options);
+
+    expect(result).toEqual({
+      ok: false,
+      errors: [
+        'Line 2: Category "repressed-words" requires a Word History, which the tool does not source',
+        'Line 3: Category "chameleon-words" requires a Word History, which the tool does not source',
+      ],
+    });
+    expect(net.requests).toEqual([]);
+  });
+});
