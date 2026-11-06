@@ -9,7 +9,7 @@ async function draw(reduceMotion: boolean, onClose: () => void) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
       <BadgeStamp
-        condition={{ kind: 'streak', days: 7 }}
+        shape="hexagon"
         symbol="7"
         name="A week"
         title="Yours!"

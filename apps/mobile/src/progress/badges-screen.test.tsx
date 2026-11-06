@@ -42,9 +42,16 @@ describe('the Badges screen', () => {
     expect(screen.getByTestId('badges-count')).toHaveTextContent(
       `0 з ${String(edition.badges.length)}`,
     );
-    for (const name of Object.values(strings.families))
-      expect(screen.getByText(name)).toBeOnTheScreen();
-    expect(screen.getByTestId('badge-family-streak-count')).toHaveTextContent('0 з 5');
+    const heads = screen.getAllByRole('header').slice(-edition.badgeFamilies.length);
+    edition.badgeFamilies.forEach(({ name }, index) => {
+      expect(heads[index]).toHaveTextContent(name);
+    });
+    for (const { id } of edition.badgeFamilies) {
+      const members = edition.badges.filter(({ family }) => family === id).length;
+      expect(screen.getByTestId(`badge-family-${id}-count`)).toHaveTextContent(
+        `0 з ${String(members)}`,
+      );
+    }
     for (const { name } of edition.badges) expect(screen.getByLabelText(name)).toBeOnTheScreen();
     expect(screen.getByTestId('badge-streak-3')).toHaveAccessibilityValue({ text: '0 з 3 днів' });
     expect(screen.getByTestId('badge-confirmed-10')).toHaveAccessibilityValue({
@@ -60,6 +67,34 @@ describe('the Badges screen', () => {
     expect(screen.getByTestId('badge-streak-3-status')).toHaveTextContent('0 з 3 днів');
     expect(screen.getByTestId('badge-streak-3-status')).toBeVisible();
     expect(screen.getByTestId('badge-win-stress-status')).toHaveTextContent('Ще не отримано');
+  });
+
+  it("writes each Badge's condition under its mark in the Edition's words", async () => {
+    await renderScreen();
+
+    for (const { id } of edition.badges)
+      expect(screen.getByTestId(`badge-${id}-condition`)).toBeVisible();
+    expect(screen.getByTestId('badge-streak-7-condition')).toHaveTextContent('7 днів поспіль');
+    expect(screen.getByTestId('badge-confirmed-50-condition')).toHaveTextContent(
+      '50 підтверджених записів',
+    );
+    expect(screen.getByTestId('badge-crossword-7-condition')).toHaveTextContent(
+      '7 щоденних кросвордів поспіль',
+    );
+    expect(screen.getByTestId('badge-level-10-condition')).toHaveTextContent('Рівень 10');
+    expect(screen.getByTestId('badge-rarity-5-condition')).toHaveTextContent(
+      'Правильна відповідь на слово рідкості 5',
+    );
+    const title = (mode: string) => editionStrings.game.modes[mode]?.title ?? '';
+    expect(screen.getByTestId('badge-win-corrections-condition')).toHaveTextContent(
+      `Перша перемога: ${title('correction')}, ${title('anglicism')}`,
+    );
+    expect(screen.getByTestId('badge-clean-language-condition')).toHaveTextContent(
+      `Гра без жодної помилки: ${title('correction')}, ${title('anglicism')}`,
+    );
+    expect(screen.getByTestId('badge-true-stress-condition')).toHaveTextContent(
+      `10 правильних відповідей поспіль: ${title('stress')}`,
+    );
   });
 
   it("says the day a Badge was earned in the Edition's words and stamps it at a tap", async () => {

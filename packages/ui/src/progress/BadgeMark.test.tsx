@@ -10,13 +10,7 @@ async function draw(state: ComponentProps<typeof BadgeMark>['state']) {
       edition={{ locale: 'en' }}
       strings={testStrings({ settings: { badges: { newTag: 'NEW' } } })}
     >
-      <BadgeMark
-        testID="badge"
-        condition={{ kind: 'streak', days: 7 }}
-        symbol="7"
-        state={state}
-        size={48}
-      />
+      <BadgeMark testID="badge" shape="hexagon" tone="red" symbol="7" state={state} size={48} />
     </EditionProvider>,
   );
 }

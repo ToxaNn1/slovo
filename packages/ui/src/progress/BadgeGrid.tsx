@@ -1,16 +1,17 @@
-import type { BadgeCondition } from '@slovo/contracts';
+import type { BadgeFamily } from '@slovo/contracts';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { badgeGrid, typeStyle } from '../tokens';
-import { BadgeMark, familyOf, type BadgeFamily, type BadgeMarkState } from './BadgeMark';
+import { BadgeMark, type BadgeMarkState } from './BadgeMark';
 
 /** What the grid shows of one Badge: earned and maybe new, or not yet, with its progress. */
 export type BadgeGridItem = {
   readonly id: string;
   readonly name: string;
-  readonly condition: BadgeCondition;
+  /** The id of the Badge's family. */
+  readonly family: string;
   readonly symbol: string;
 } & (
   | { readonly earned: true; readonly isNew: boolean }
@@ -30,27 +31,34 @@ function markStateOf(badge: BadgeGridItem): BadgeMarkState {
 }
 
 /**
- * The Badges as marks in rows, one row for each family in the order the
- * families first come, each Badge in its order, under the family's name and
- * how many of it are earned («3 з 5»). A mark not yet earned is a silhouette,
- * filled by its progress; an earned one not yet opened carries «НОВА».
- * A mark is announced by the Badge's name, with `statusOf` as its value, and
- * pressing it calls `onPress`. The marks take the Profile's size, or the
- * larger one of the Badges screen, where `statusOf` is also written under
- * each mark (`badge-<id>-status`).
+ * The Badges as marks in rows, one row for each of the Edition's `families`
+ * in its order, each Badge in its order, under the family's name and how
+ * many of it are earned («3 з 5»); a family with no Badge shown is left out.
+ * A mark takes its family's shape and tone; one not yet earned is a
+ * silhouette, filled by its progress; an earned one not yet opened carries
+ * «НОВА». A mark is announced by the Badge's name, with `statusOf` as its
+ * value, and pressing it calls `onPress`. The marks take the Profile's size,
+ * five to a row, or the larger one of the Badges screen, where `conditionOf`
+ * and `statusOf` are also written under each mark (`badge-<id>-condition`,
+ * `badge-<id>-status`).
  * The marks carry the test IDs `badge-<id>-mark`, a family's count
  * `badge-family-<family>-count`.
  */
 export function BadgeGrid<B extends BadgeGridItem>({
+  families,
   badges,
   onPress,
   statusOf,
+  conditionOf,
   size = 'profile',
 }: {
+  families: readonly BadgeFamily[];
   badges: readonly B[];
   onPress: (badge: B) => void;
   /** What VoiceOver reads after a Badge's name, such as how far its condition has come. */
   statusOf?: (badge: B) => string;
+  /** What a Badge's condition asks, written under its mark on the Badges screen. */
+  conditionOf?: (badge: B) => string;
   size?: 'profile' | 'screen';
 }) {
   const side = size === 'profile' ? badgeGrid.side : badgeGrid.screenSide;
@@ -58,25 +66,24 @@ export function BadgeGrid<B extends BadgeGridItem>({
   const { colors } = tokens;
   const { strings, voice } = useEdition();
   const words = strings.settings.badges;
-  const families = new Map<BadgeFamily, B[]>();
-  for (const badge of badges) {
-    const family = familyOf(badge.condition.kind);
-    families.set(family, [...(families.get(family) ?? []), badge]);
-  }
+  const rows = families.flatMap((family) => {
+    const members = badges.filter((badge) => badge.family === family.id);
+    return members.length === 0 ? [] : [{ family, members }];
+  });
   return (
     <View style={styles.grid}>
-      {[...families].map(([family, members]) => (
-        <View key={family} style={styles.family}>
+      {rows.map(({ family, members }) => (
+        <View key={family.id} style={styles.family}>
           <View style={styles.head}>
             <Text
               accessibilityRole="header"
               {...voice}
               style={[typeStyle('badgeFamily', tokens), { color: colors.ink }]}
             >
-              {words.families[family]}
+              {family.name}
             </Text>
             <Text
-              testID={`badge-family-${family}-count`}
+              testID={`badge-family-${family.id}-count`}
               {...voice}
               style={[typeStyle('progressCount', tokens), { color: colors.muted }]}
             >
@@ -86,7 +93,7 @@ export function BadgeGrid<B extends BadgeGridItem>({
               })}
             </Text>
           </View>
-          <View style={styles.marks}>
+          <View style={size === 'profile' ? styles.marks : styles.screenMarks}>
             {members.map((badge) => (
               <Pressable
                 key={badge.id}
@@ -106,11 +113,25 @@ export function BadgeGrid<B extends BadgeGridItem>({
               >
                 <BadgeMark
                   testID={`badge-${badge.id}-mark`}
-                  condition={badge.condition}
+                  shape={family.shape}
+                  tone={family.tone}
                   symbol={badge.symbol}
                   state={markStateOf(badge)}
                   size={side}
                 />
+                {size === 'screen' && conditionOf !== undefined && (
+                  <Text
+                    testID={`badge-${badge.id}-condition`}
+                    {...voice}
+                    style={[
+                      typeStyle('badgeProgress', tokens),
+                      styles.caption,
+                      { color: colors.ink },
+                    ]}
+                  >
+                    {conditionOf(badge)}
+                  </Text>
+                )}
                 {size === 'screen' && statusOf !== undefined && (
                   <Text
                     testID={`badge-${badge.id}-status`}
@@ -137,7 +158,13 @@ const styles = StyleSheet.create({
   grid: { gap: badgeGrid.familyGap },
   family: { gap: badgeGrid.headGap },
   head: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between' },
-  marks: { flexDirection: 'row', flexWrap: 'wrap', gap: badgeGrid.gap },
+  marks: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: badgeGrid.gap,
+    maxWidth: badgeGrid.columns * badgeGrid.side + (badgeGrid.columns - 1) * badgeGrid.gap,
+  },
+  screenMarks: { flexDirection: 'row', flexWrap: 'wrap', gap: badgeGrid.screenGap },
   cell: { width: badgeGrid.screenCell, alignItems: 'center', gap: badgeGrid.captionGap },
   caption: { textAlign: 'center' },
   pressed: { transform: [{ scale: badgeGrid.pressedScale }] },

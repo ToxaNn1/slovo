@@ -44,7 +44,7 @@ const badges: readonly Badge[] = [
     id: 'crossword-2',
     name: 'Two crosswords',
     symbol: '1',
-    family: 'f',
+    family: 'crossword',
     condition: { kind: 'dailyCrosswordRun', days: 2 },
   },
   {
@@ -145,6 +145,13 @@ describe('the Badges', () => {
       earned: false,
       progress: { current: 0, target: 3 },
     });
+  });
+
+  it("tells each Badge's family, earned or not, for the screens to group by", async () => {
+    const three = await readerWith(xp('2026-10-12', 5), xp('2026-10-13', 5), xp('2026-10-14', 5));
+    const { app } = await run({ records: three });
+    expect(progressOf(app, 'streak-3')).toMatchObject({ earned: true, family: 'f' });
+    expect(progressOf(app, 'crossword-2')).toMatchObject({ earned: false, family: 'crossword' });
   });
 
   it('earns the Streak Badge at 3 Active Days in a row, not at 2', async () => {

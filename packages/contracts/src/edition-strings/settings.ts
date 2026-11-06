@@ -81,13 +81,6 @@ export const SettingsStringsSchema = z.strictObject({
     title: TextSchema,
     /** How many Badges of a family, or of all, are earned, e.g. «10 з 21». */
     earnedOf: templateOf('earned', 'total'),
-    /** The name over each Badge family's row. */
-    families: z.strictObject({
-      streak: TextSchema,
-      games: TextSchema,
-      entries: TextSchema,
-      levels: TextSchema,
-    }),
     /** An earned Badge. Takes `{date}`, the day it was earned, e.g. «20.10.2026». */
     earned: templateOf('date'),
     /** A Badge of one first time (a win, a right answer on a rarity) not earned yet. */

@@ -1,3 +1,4 @@
+import type { Plural } from '@slovo/contracts';
 import type { BadgeState } from '@slovo/core';
 import {
   BackLink,
@@ -16,12 +17,16 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
-import { editionStrings } from '../edition/edition';
+import { edition, editionStrings } from '../edition/edition';
 import { MascotAs } from '../mascot/mascot';
 import { useSubscribed } from '../opening';
 import { dayText } from './day-text';
 
 const strings = editionStrings.settings.badges;
+
+/** The shape of a Badge's family. */
+export const shapeOf = ({ family }: BadgeState) =>
+  edition.badgeFamilies.find(({ id }) => id === family)?.shape ?? 'circle';
 
 /** The progress forms of an unearned Badge's condition; none for a condition of one first time. */
 function progressForms({ condition }: BadgeState) {
@@ -43,11 +48,43 @@ function progressForms({ condition }: BadgeState) {
   }
 }
 
+/** The names of `modes`, joined by the list's commas. */
+const modeNames = (modes: readonly string[]) =>
+  modes.map((mode) => editionStrings.game.modes[mode]?.title ?? mode).join(', ');
+
+/** What a Badge's condition asks, in the Edition's words (ADR 0085). */
+function conditionText({ condition }: BadgeState, count: (forms: Plural, n: number) => string) {
+  const words = strings.conditions;
+  switch (condition.kind) {
+    case 'streak':
+      return count(words.streak, condition.days);
+    case 'confirmedEntries':
+      return count(words.confirmedEntries, condition.entries);
+    case 'gameWin':
+      return fill(words.gameWin, { modes: modeNames(condition.modes) });
+    case 'dailyCrosswordRun':
+      return count(words.dailyCrosswordRun, condition.days);
+    case 'rightAnswers':
+      return fill(count(words.rightAnswers, condition.count), {
+        modes: modeNames(condition.modes),
+      });
+    case 'rightOnRarity':
+      return fill(words.rightOnRarity, { rarity: String(condition.rarity) });
+    case 'level':
+      return fill(words.level, { level: String(condition.level) });
+    case 'flawlessGame':
+      return fill(words.flawlessGame, { modes: modeNames(condition.modes) });
+    case 'rightRun':
+      return fill(count(words.rightRun, condition.count), { modes: modeNames(condition.modes) });
+  }
+}
+
 /**
- * Every Badge of the Edition as its mark, in a grid by family under how many
- * of all are earned; each shows, and VoiceOver reads, its date or, while not earned,
- * how far its condition has come. A tap on an earned one stamps it on red
- * and opens it, which ends its «НОВА» mark (ADR 0085).
+ * Every Badge of the Edition as its mark, in a grid by the Edition's Badge
+ * families under how many of all are earned; each shows its condition and
+ * shows, and VoiceOver reads, its date or, while not earned, how far its
+ * condition has come. A tap on an earned one stamps it on red and opens it,
+ * which ends its «НОВА» mark (ADR 0085).
  */
 function Badges() {
   const tokens = useTokens();
@@ -79,9 +116,11 @@ function Badges() {
         })}
       </Text>
       <BadgeGrid
+        families={edition.badgeFamilies}
         badges={badges}
         size="screen"
         statusOf={statusOf}
+        conditionOf={(badge) => conditionText(badge, count)}
         onPress={(badge) => {
           if (!badge.earned) return;
           setStamped(badge);
@@ -90,7 +129,7 @@ function Badges() {
       />
       {stamped !== undefined && (
         <BadgeStamp
-          condition={stamped.condition}
+          shape={shapeOf(stamped)}
           symbol={stamped.symbol}
           name={stamped.name}
           title={editionStrings.settings.profile.badgeStamp.title}

@@ -74,24 +74,46 @@ export const badgeStamp = {
 } as const;
 
 /**
- * The Badge grid, from the design: marks in rows of their family under its
- * name, seven to a row of the Profile (`side`), larger on the Badges screen
- * (`screenSide`).
+ * The Badge grid, from the design (board 10): marks in rows of their Badge
+ * family under its name, five to a row of the Profile (`side`), larger on
+ * the Badges screen (`screenSide`) with each Badge's condition and date or
+ * progress under its mark.
  */
 export const badgeGrid = {
-  side: 44,
-  screenSide: 58,
-  /** The Badges screen's cell: the mark with its date or progress under it. */
-  screenCell: 80,
+  side: 48,
+  columns: 5,
+  gap: 10,
+  screenSide: 72,
+  /** The Badges screen's cell: the mark with its condition and its date or progress under it. */
+  screenCell: 100,
+  screenGap: 12,
   captionGap: 6,
-  gap: 6,
   familyGap: 14,
   headGap: 10,
   pressedScale: 0.88,
 } as const;
 
-/** The depth of the hard edge under an earned Badge's shape. */
-export const badgeEdge = 4;
+/**
+ * An earned Badge's mark, from the design (board 10): the family's shape in
+ * its tone's ring, the face set inside it by `ring` of the side, over a drop
+ * shadow `drop.large` deep above `drop.over` and `drop.small` at it and below.
+ */
+export const badgeMark = {
+  ring: 0.09,
+  drop: { over: 40, large: 4, small: 2 },
+} as const;
+
+/** The square tile shape of a Badge family, its corners cut. */
+export const badgeTile = [
+  [0.14, 0],
+  [0.86, 0],
+  [1, 0.14],
+  [1, 0.86],
+  [0.86, 1],
+  [0.14, 1],
+  [0, 0.86],
+  [0, 0.14],
+] as const satisfies Wedge;
 
 /** The «НОВА» tag over an earned Badge's top right corner, turned as on board 10.5. */
 export const badgeNewTag = {
