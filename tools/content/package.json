@@ -11,7 +11,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@slovo/language-pack": "workspace:*"
+    "@slovo/language-pack": "workspace:*",
+    "@slovo/sourcing": "workspace:*"
   },
   "devDependencies": {
     "@slovo/config": "workspace:*",

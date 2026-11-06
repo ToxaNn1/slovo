@@ -177,6 +177,19 @@ export default {
       },
     },
     {
+      name: 'tools-import-tools-through-the-entry-point',
+      comment:
+        'ADR 0065: a dev tool may use another (the Content CLI fetches pages through the ' +
+        "sourcing tool's polite client), but only through its entry point, so each tool owns " +
+        'what is public. Neither is shipped.',
+      severity: 'error',
+      from: { path: '^tools/([^/]+)/' },
+      to: {
+        path: '^tools/([^/]+)/',
+        pathNot: ['^tools/$1/', '^tools/[^/]+/package\\.json$', '^tools/[^/]+/src/index\\.ts$'],
+      },
+    },
+    {
       name: 'no-circular',
       comment:
         'ADR 0018: the modules of the Core depend on each other in one direction (the ' +

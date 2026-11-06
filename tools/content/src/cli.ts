@@ -8,6 +8,7 @@
  *   pnpm content have --edition <id> [--kind <kind>]
  *   pnpm content counts --edition <id>
  *   pnpm content import <kind> <array.json | drafts folder> --edition <id> [--no-record]
+ *   pnpm content verify <files, ids or folders> | --changed <ref> --edition <id> [--book <file>]
  *
  * `new` drafts an Entry with a fresh id and `edit` finds an existing one;
  * either opens it in `$VISUAL`, else `$EDITOR`, else `vi`, and after each
@@ -17,12 +18,22 @@
  * Edition and writes nothing. `have` and `counts` print what the Edition
  * has (./have.ts). `import` writes a JSON array of new Entries, or a folder of
  * ready drafts, one file per Entry, then checks and records the content as
- * `new` does. `$SLOVO_EDITIONS_DIR` points the tool at another editions folder,
+ * `new` does. `verify` checks quotes against their source pages (./verify.ts).
+ * `$SLOVO_EDITIONS_DIR` points the tool at another editions folder,
  * as the tests do.
  */
 import { spawnSync } from 'node:child_process';
+import { resolve } from 'node:path';
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
+
+import {
+  defaultCacheDir,
+  fetchPage,
+  POLITE_INTERVAL_MS,
+  PoliteClient,
+  systemClock,
+} from '@slovo/sourcing';
 
 import {
   EDITIONS_DIR,
@@ -44,6 +55,7 @@ import {
 } from './content';
 import { listContent } from './have';
 import { importEntries } from './import';
+import { verifyEntries } from './verify';
 
 const USAGE = [
   'Usage: pnpm content new word|correction|idiom|synonym-row|tip --edition <id>',
@@ -53,6 +65,7 @@ const USAGE = [
   '       pnpm content have --edition <id> [--kind <kind>]',
   '       pnpm content counts --edition <id>',
   '       pnpm content import word|correction|idiom|synonym-row|tip <array.json | drafts folder> --edition <id> [--no-record]',
+  '       pnpm content verify <files, ids or folder> | --changed <ref> --edition <id> [--book <text file>] [--cache <dir>]',
 ].join('\n');
 
 const editor: Editor = {
@@ -96,7 +109,13 @@ async function main(): Promise<number> {
   if (['have', 'counts'].includes(process.argv[2] ?? '')) return listContent(process.argv.slice(2));
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: { edition: { type: 'string' }, 'no-record': { type: 'boolean' } },
+    options: {
+      edition: { type: 'string' },
+      'no-record': { type: 'boolean' },
+      changed: { type: 'string' },
+      book: { type: 'string' },
+      cache: { type: 'string' },
+    },
   });
   const [command, ...rest] = positionals;
   const [argument] = rest;
@@ -106,7 +125,8 @@ async function main(): Promise<number> {
     (command === 'new' && kind !== undefined) ||
     importKind !== undefined ||
     ((command === 'edit' || command === 'retire') && rest.length === 1) ||
-    (command === 'check' && rest.length === 0);
+    (command === 'check' && rest.length === 0) ||
+    (command === 'verify' && rest.length > 0 !== (values.changed !== undefined));
   if (!known || values.edition === undefined) {
     console.error(USAGE);
     return 2;
@@ -121,6 +141,33 @@ async function main(): Promise<number> {
     return error.reason === 'unknown' ? 2 : 1;
   }
   const tool: ContentTool = { edition, editor, terminal, random: Math.random };
+  const cwd = process.env['INIT_CWD'] ?? process.cwd();
+  if (command === 'verify') {
+    return verifyEntries({
+      edition,
+      targets:
+        values.changed === undefined
+          ? { kind: 'named', names: rest }
+          : { kind: 'changed', ref: values.changed },
+      bookFile: values.book === undefined ? undefined : resolve(cwd, values.book),
+      client: new PoliteClient(
+        fetchPage,
+        systemClock,
+        values.cache === undefined ? defaultCacheDir() : resolve(cwd, values.cache),
+        POLITE_INTERVAL_MS,
+        (line) => {
+          terminal.problem(line);
+        },
+      ),
+      cwd,
+      print: (line) => {
+        terminal.print(line);
+      },
+      problem: (line) => {
+        terminal.problem(line);
+      },
+    });
+  }
   if (kind !== undefined) return newEntry(kind, tool);
   if (importKind !== undefined)
     return importEntries(importKind, rest[1] ?? '', tool, { record: values['no-record'] !== true });
