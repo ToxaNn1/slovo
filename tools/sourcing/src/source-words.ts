@@ -38,6 +38,7 @@ import type { Flag, FlagKind } from './review-report';
 import type { DictionaryArticle } from './article';
 import { SumDictionary, type SumAccess } from './sum';
 import { matchKey, readStress, unstressed } from './text';
+import { filterWord } from './word-filters';
 
 export type SourcingOptions = PipelineOptions & {
   /** The Lemmas to draft, one per line: `<lemma> <category id> <rarity>`; `#` starts a comment. */
@@ -97,6 +98,8 @@ function parseLemmaLine(content: string, edition: EditionFolder): ParsedLine<Wor
   if (lemma !== unstressed(lemma)) errors.push(`Write the Lemma "${lemma}" without stress marks`);
   if (!edition.config.categories.some((category) => category.id === categoryId)) {
     errors.push(`Unknown Category "${categoryId}"`);
+  } else if (edition.config.categoriesRequiringHistory.includes(categoryId)) {
+    errors.push(`Category "${categoryId}" requires a Word History, which the tool does not source`);
   }
   const rarity = RaritySchema.safeParse(Number(rarityText));
   if (!rarity.success) errors.push(`Rarity "${rarityText}" is not a whole number from 1 to 5`);
@@ -279,13 +282,15 @@ function draftArticle(
     ...synonyms.flags,
     ...etymology.flags,
   ];
+  const filtered = filterWord(word);
+  flags.push(...filtered.flags);
   if (grammar.gender === 'plural-only') {
     flags.push({ kind: 'plural-only', message: 'A plural-only noun' });
   }
   return {
     entry: word,
     headword,
-    issues: checkDraft(word, context.edition),
+    issues: [...checkDraft(word, context.edition), ...filtered.issues],
     flags,
     summary: {
       text: lemma,
