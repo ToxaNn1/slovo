@@ -1,4 +1,4 @@
-import type { MixKindWeight, Mood, Rarity, Word } from '@slovo/contracts';
+import type { MixKindWeight, Rarity, Word } from '@slovo/contracts';
 
 import { buildCorrectionCard } from '../entries/correction-card';
 import { buildIdiomCard } from '../entries/idiom-card';
@@ -25,8 +25,7 @@ import type { OpenedEntry } from './day-change';
 import { dateKeyOf, todayDate, todayKey, type LocalDate } from '../local-date';
 import type { Clock, UserStateChanges } from '../ports';
 import type { Mix, MixKindWeights } from '../entries/mix';
-import { inRarityBand, shiftedKindWeights } from '../mood/feed-parameters';
-import type { RarityCeiling } from '../entries/rarity-ceiling';
+import type { MoodCheckIns, MoodFeedParameters } from '../mood/mood';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import { buildWordCard } from '../entries/word-card';
@@ -380,7 +379,6 @@ export async function openFeed({
   notices,
   mix,
   mood,
-  rarityCeiling,
   eligibility,
   seen,
   dayTurned,
@@ -398,10 +396,8 @@ export async function openFeed({
   notices: FeedNoticeQueue;
   /** The Mix, whose kind weights and Quick Question frequency in effect the next card follows, read for each card. */
   mix: Pick<Mix, 'kindWeightsInEffect' | 'quickQuestionEveryInEffect'>;
-  /** Today's Mood, whose Feed parameters the next card follows (ADR 0076), read for each card; none chosen leaves the Feed as it is. */
-  mood: () => Mood | undefined;
-  /** The Rarity Ceiling the Mood's rarity band clips to. */
-  rarityCeiling: Pick<RarityCeiling, 'state'>;
+  /** The Mood check-in, whose Feed parameters for today the next card follows (ADR 0076), read for each card. */
+  mood: Pick<MoodCheckIns, 'feedParameters'>;
   eligibility: Pick<Subject<void>, 'subscribe'>;
   seen: Pick<Subject<string>, 'publish'>;
   dayTurned: Pick<Subject<LocalDate>, 'subscribe'>;
@@ -511,12 +507,12 @@ export async function openFeed({
       started.commit();
       session.startCycle();
     }
-    const today = mood();
+    const today = mood.feedParameters();
     const id = nextEntryId(
-      await bandFirst(cycle.unseen(), today),
+      await bandFirst(cycle.unseen(), today.inBand),
       session,
       eligibleDue(cycle, knowledge),
-      shiftedKindWeights(mix.kindWeightsInEffect(), today),
+      today.kindWeights(mix.kindWeightsInEffect()),
     );
     // A due Review goes before the Quick Question (ADR 0066), and the card
     // after the end-of-Cycle card, which starts the new Cycle, is an Entry's.
@@ -557,12 +553,15 @@ export async function openFeed({
    * Words of the band first, in the Cycle order, then the rest, so the Cycle
    * still ends. The other kinds stay as they are.
    */
-  async function bandFirst(unseen: EntryIds, today: Mood | undefined): Promise<EntryIds> {
-    if (today === undefined || today.rarityBand === 'whole') return unseen;
+  async function bandFirst(
+    unseen: EntryIds,
+    inRarityBand: MoodFeedParameters['inBand'],
+  ): Promise<EntryIds> {
+    if (inRarityBand === undefined) return unseen;
     const known = await raritiesOf(unseen.words);
     const inBand = (id: string) => {
       const rarity = known.get(id);
-      return rarity !== undefined && inRarityBand(rarity, today.rarityBand, rarityCeiling.state);
+      return rarity !== undefined && inRarityBand(rarity);
     };
     return {
       ...unseen,
