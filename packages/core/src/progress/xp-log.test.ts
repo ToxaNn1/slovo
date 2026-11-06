@@ -142,6 +142,11 @@ async function playGame(
 
 const xpKeys = (records: Map<string, string>) =>
   [...records.keys()].filter((key) => key.startsWith('xp.'));
+/** The kinds of the XP log records written, in the order written. */
+const kindsOf = (records: Map<string, string>) =>
+  [...records]
+    .filter(([key]) => key.startsWith('xp.'))
+    .map(([, value]) => (JSON.parse(value) as { kind: string }).kind);
 
 describe('the XP log and the Game', () => {
   it('starts at 0 XP and earns 1 XP for each Round answered right, none for a wrong one', async () => {
@@ -156,8 +161,9 @@ describe('the XP log and the Game', () => {
     await play(app, true);
 
     expect(app.xpLog.state).toMatchObject({ total: 2, today: 2 });
-    expect(heard).toEqual([1, 2]);
-    expect(xpKeys(records)).toHaveLength(2);
+    // The wrong answer's record earns nothing (ADR 0085).
+    expect(heard).toEqual([1, 1, 2]);
+    expect(kindsOf(records)).toEqual(['xp', 'wrong-answer', 'xp']);
   });
 
   it('adds 5 XP for a finished Game with half its answers right and 5 for its first Best result', async () => {
@@ -194,7 +200,7 @@ describe('the XP log and the Game', () => {
     expect(right).toBe(0);
     expect(played).toBeGreaterThan(0);
     expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
-    expect(xpKeys(records)).toHaveLength(0);
+    expect(kindsOf(records)).toEqual(Array.from({ length: played }, () => 'wrong-answer'));
   });
 
   it('appends nothing for an action the Edition sets at 0 XP', async () => {

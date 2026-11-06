@@ -60,6 +60,25 @@ function runsOf(dates: ReadonlySet<string>, today: string): { current: number; l
   return { current: last >= todayNumber - 1 ? run : 0, longest };
 }
 
+/**
+ * The right answers in a row in the modes at the end of the answers
+ * (`current`) and at their longest (`best`): a wrong answer in the modes
+ * breaks a run, an answer in another mode neither adds to it nor breaks it.
+ */
+function runOf(
+  answers: XpLogMilestones['answers'],
+  modes: readonly string[],
+): { current: number; best: number } {
+  let current = 0;
+  let best = 0;
+  for (const { mode, right } of answers) {
+    if (!modes.includes(mode)) continue;
+    current = right ? current + 1 : 0;
+    best = Math.max(best, current);
+  }
+  return { current, best };
+}
+
 /** Opens the Badges over the XP log, the Knowledge Marks and the Active Days, for the Core composition. */
 export async function openBadges({
   edition,
@@ -115,12 +134,10 @@ export async function openBadges({
           ? undefined
           : { current: level, best: level, target: condition.level };
       }
-      // Not reached yet: the XP log does not carry each Round's result, which
-      // a flawless Game and a run need (spec #1641).
       case 'flawlessGame':
-        return once(false);
+        return once(condition.modes.some((mode) => milestones.flawless.has(mode)));
       case 'rightRun':
-        return { current: 0, best: 0, target: condition.count };
+        return { ...runOf(milestones.answers, condition.modes), target: condition.count };
     }
   }
 
