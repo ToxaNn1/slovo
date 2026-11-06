@@ -173,9 +173,7 @@ describe('a Collection in the board style', () => {
     await settle(() => fireEvent.press(screen.getByTestId('collection-menu-rename')));
     // The menu slides away first, then what it chose opens.
     await settle();
-    await settle(() => {
-      fireEvent.changeText(screen.getByDisplayValue('Осінь'), 'Зима');
-    });
+    await settle(() => fireEvent.changeText(screen.getByDisplayValue('Осінь'), 'Зима'));
     await settle(() => fireEvent(screen.getByDisplayValue('Зима'), 'submitEditing'));
 
     expect(screen.getByRole('header', { name: 'Зима' })).toBeOnTheScreen();
