@@ -99,11 +99,14 @@ class Engine:
 
 def to_mp3(wav: Path, mp3: Path) -> None:
     mp3.parent.mkdir(parents=True, exist_ok=True)
+    partial = mp3.with_suffix(".partial")
     subprocess.run(
         ["ffmpeg", "-y", "-loglevel", "error", "-i", str(wav),
-         "-ac", "1", "-ar", "24000", "-b:a", "48k", str(mp3)],
+         "-ac", "1", "-ar", "24000", "-b:a", "48k", "-f", "mp3", str(partial)],
         check=True,
     )
+    # A run stopped midway leaves no broken Recording behind.
+    os.replace(partial, mp3)
 
 
 def generate(engine: Engine, requests: list[dict[str, str]], edition_dir: Path) -> None:
