@@ -13,8 +13,6 @@ import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import type {
   AnswerSheet,
-  ChipKind,
-  FixedChip,
   GameEdition,
   GameMode,
   GameModeGroup,
@@ -24,7 +22,8 @@ import type {
   TextRange,
 } from './game-mode';
 import type { Judged } from './answer-form';
-import { chipsMatch, entriesIn, roundsIn } from './game-mode';
+import { chipsForm, type ChipsAnswer, type ChipsGiven, type ChipsRound } from './chips-form';
+import { entriesIn, roundsIn } from './game-mode';
 import { pickForm, type PickAnswer, type PickGiven, type PickRound } from './pick-form';
 import { vowelForm, type VowelAnswer, type VowelGiven, type VowelRound } from './vowel-form';
 import { LIFE_LOST_DELAY } from './game-haptics';
@@ -36,7 +35,9 @@ import {
   type RoundPlan,
   type RoundPlanner,
 } from './round-plan';
-import { typedAnswerMatches } from './typed-answer';
+import { typedForm, type TypedAnswer, type TypedGiven, type TypedRound } from './typed-form';
+
+export type { RoundBlank } from './typed-form';
 
 /** How many Lives a Game starts with, in a Game Mode that sets no Lives of its own. */
 export const GAME_LIVES = 5;
@@ -55,56 +56,31 @@ export type GivenAnswer =
       readonly word: number;
       readonly definition: number;
     }
-  | {
-      readonly form: 'chips';
-      /** The places of the chips tapped, in the order tapped. */
-      readonly chips: readonly number[];
-    }
-  | { readonly form: 'typed'; readonly text: string };
+  | ChipsGiven
+  | TypedGiven;
 
 /** The answer given to a Round, judged: whether it is right, and the sheet to show. */
 export type RoundAnswer =
   | PickAnswer
   | VowelAnswer
-  | ({
+  | {
+      readonly form: 'pairs';
+      /** The place of the Word tapped among the grid's Words, then of the Definition among its Definitions. */
+      readonly word: number;
+      readonly definition: number;
+      /** The place of the Word's own Definition. */
+      readonly correct: number;
       readonly right: boolean;
       readonly sheet: AnswerSheet;
-    } & (
-      | {
-          readonly form: 'pairs';
-          /** The place of the Word tapped among the grid's Words, then of the Definition among its Definitions. */
-          readonly word: number;
-          readonly definition: number;
-          /** The place of the Word's own Definition. */
-          readonly correct: number;
-        }
-      | {
-          readonly form: 'chips';
-          /** The places of the chips tapped, in the order tapped. */
-          readonly chosen: readonly number[];
-          /** The chips in the right order. */
-          readonly expected: readonly string[];
-        }
-      | {
-          readonly form: 'typed';
-          readonly typed: string;
-          /** The text to type. */
-          readonly expected: string;
-        }
-    ));
+    }
+  | ChipsAnswer
+  | TypedAnswer;
 
 /** A cell of a pairs grid as the reader sees it: a Word or a Definition; one of a pair answered is gone. */
 export interface GridCell<T> {
   readonly shown: T;
   readonly gone: boolean;
 }
-
-/**
- * One character of a typed Round's text shown as blanks: a mark that stays in
- * place, such as an apostrophe, a letter «Відкрити літеру» opened, or a blank
- * with no letter yet.
- */
-export type RoundBlank = { readonly mark: string } | { readonly letter?: string };
 
 /**
  * A Round as the reader plays it, in its answer form, the right answer kept
@@ -145,21 +121,8 @@ export type Round = {
       readonly words: readonly GridCell<RoundOption>[];
       readonly definitions: readonly GridCell<string>[];
     }
-  | {
-      readonly form: 'chips';
-      /** What the chips are, a Word's letters or an expression's words. */
-      readonly chipKind: ChipKind;
-      readonly chips: readonly string[];
-      /** The characters of the answer that stay in place among the chips. */
-      readonly fixed: readonly FixedChip[];
-    }
-  | {
-      readonly form: 'typed';
-      /** The text to type as blanks, one per character; no blanks in a Round that shows none. */
-      readonly blanks: readonly RoundBlank[] | undefined;
-      /** Whether «Відкрити літеру» opens a letter: while more than one blank is left. */
-      readonly canOpenLetter: boolean;
-    }
+  | ChipsRound
+  | TypedRound
 );
 
 /** A Round the reader answered: what the Game Review lists. */
@@ -312,31 +275,11 @@ function roundOf(
       };
     }
     case 'chips':
-      return {
-        ...base,
-        form: 'chips',
-        chipKind: content.chipKind,
-        chips: content.chips,
-        fixed: content.fixed ?? [],
-      };
-    case 'typed': {
-      const inPlace = content.blanks?.inPlace;
-      const blanks =
-        inPlace &&
-        Array.from(content.expected, (character, place): RoundBlank =>
-          inPlace.includes(place) ? { mark: character } : {},
-        );
-      return { ...base, form: 'typed', blanks, canOpenLetter: canOpenLetterIn(blanks) };
-    }
+      return { ...base, ...chipsForm.shown(content, []) };
+    case 'typed':
+      return { ...base, ...typedForm.shown(content, []) };
   }
 }
-
-/** Whether a blank shows no letter or mark yet. */
-const isEmpty = (blank: RoundBlank) => !('mark' in blank) && blank.letter === undefined;
-
-/** Whether more than one blank is left, so that «Відкрити літеру» may open one. */
-const canOpenLetterIn = (blanks: readonly RoundBlank[] | undefined) =>
-  blanks !== undefined && blanks.filter(isEmpty).length > 1;
 
 /** An Answer Form's judgement with the Entry it is about: the Round's own unless the form names another. */
 const withEntry = (
@@ -389,38 +332,12 @@ function judge(
       };
     }
     case 'chips': {
-      if (given.form !== 'chips') return undefined;
-      const tapped: string[] = [];
-      for (const place of given.chips) {
-        const chip = content.chips[place];
-        if (chip === undefined) return undefined;
-        tapped.push(chip);
-      }
-      const { expected, sheet } = content;
-      return {
-        entry,
-        answer: {
-          form: 'chips',
-          chosen: given.chips,
-          expected,
-          right: chipsMatch(tapped, expected),
-          sheet,
-        },
-      };
+      if (given.form !== 'chips' || round.form !== 'chips') return undefined;
+      return withEntry(chipsForm.judge(content, round, given), entry);
     }
     case 'typed': {
-      if (given.form !== 'typed') return undefined;
-      const { expected, sheet } = content;
-      return {
-        entry,
-        answer: {
-          form: 'typed',
-          typed: given.text,
-          expected,
-          right: typedAnswerMatches(given.text, expected),
-          sheet,
-        },
-      };
+      if (given.form !== 'typed' || round.form !== 'typed') return undefined;
+      return withEntry(typedForm.judge(content, round, given), entry);
     }
   }
 }
@@ -522,18 +439,11 @@ function createGameInPlay({
     next,
     openLetter(game) {
       const { round } = game;
-      if (game.status !== 'playing' || round.form !== 'typed' || !round.canOpenLetter) {
-        return undefined;
-      }
+      if (game.status !== 'playing' || round.form !== 'typed') return undefined;
       const at = plannedAt(round.number);
       if (at?.planned.content.form !== 'typed') return undefined;
-      const letters = Array.from(at.planned.content.expected);
-      const first = round.blanks?.findIndex(isEmpty) ?? -1;
-      const opened = letters[first];
-      const blanks = round.blanks?.map((blank, place) =>
-        place === first && opened !== undefined ? { letter: opened } : blank,
-      );
-      return { ...game, round: { ...round, blanks, canOpenLetter: canOpenLetterIn(blanks) } };
+      const opened = typedForm.openLetter(at.planned.content, round);
+      return opened && { ...game, round: { ...round, ...opened } };
     },
     replan(game, eligibleNow) {
       if (game.status !== 'playing' && game.status !== 'answered') return;

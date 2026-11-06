@@ -1,9 +1,11 @@
 import type { Example, Idiom, Word } from '@slovo/contracts';
 
 import type { PlayedRound, RoundAnswer } from './game';
-import type { FixedChip, RoundOption } from './game-mode';
+import type { RoundOption } from './game-mode';
+import { chipsForm } from './chips-form';
 import { rowWordOption } from './guess-word';
 import { pickForm } from './pick-form';
+import { typedForm } from './typed-form';
 import { vowelForm } from './vowel-form';
 import { byKind } from '../entries/entry-kinds';
 
@@ -103,18 +105,6 @@ const detailsOf = ({ entry, answer }: PlayedRound): GameReviewDetails =>
     tip: ({ explanation }) => ({ kind: 'tip', explanation }),
   });
 
-/** A chip that is one character, such as a letter of «Анаграми»; the words of «Склади вислів» are longer. */
-const isLetter = (chip: string) => Array.from(chip).length === 1;
-
-/** The letters tapped as one Word, each character that stays in place before the chip it precedes. */
-const lettersJoined = (tapped: readonly string[], fixed: readonly FixedChip[] = []) =>
-  tapped
-    .map(
-      (letter, place) =>
-        fixed.flatMap(({ at, text }) => (at === place ? [text] : [])).join('') + letter,
-    )
-    .join('');
-
 /**
  * The reader's answer instead of the right one, in the Round's form; nothing
  * on a right answer. Letter chips join into one Word, the characters that
@@ -137,13 +127,10 @@ function pickedOptionOf(round: PlayedRound): RoundOption | undefined {
       const cell = round.form === 'pairs' ? round.definitions[answer.definition] : undefined;
       return cell === undefined ? undefined : plain(cell.shown);
     }
-    case 'chips': {
-      if (round.form !== 'chips') return undefined;
-      const tapped = answer.chosen.flatMap((place) => round.chips[place] ?? []);
-      return plain(tapped.every(isLetter) ? lettersJoined(tapped, round.fixed) : tapped.join(' '));
-    }
+    case 'chips':
+      return round.form === 'chips' ? chipsForm.reviewAnswer(round, answer) : undefined;
     case 'typed':
-      return plain(answer.typed.trim());
+      return round.form === 'typed' ? typedForm.reviewAnswer(round, answer) : undefined;
   }
 }
 
