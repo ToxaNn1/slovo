@@ -1,12 +1,14 @@
 import type { MascotMoment, MascotState } from '@slovo/contracts';
-import { Mascot } from '@slovo/ui';
-import { useEffect, useState } from 'react';
+import { fill, Mascot, NewLevelScreen } from '@slovo/ui';
+import { useEffect, useEffectEvent, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useComposition } from '../composition';
-import { edition as shippedEdition } from '../edition/edition';
+import { editionStrings, edition as shippedEdition } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useShown } from '../shown-in-effect';
+
+const newLevelStrings = editionStrings.settings.profile.newLevel;
 
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
@@ -90,13 +92,19 @@ export function ShippedMascot({ state }: { state: MascotState }) {
  * The Mascot's celebrations: a new Level, a Badge earned, the Daily Goal met
  * and a Streak milestone each show it for a while over the bottom of the
  * screen. It takes no touch and VoiceOver skips it, so it never interrupts
- * the Feed. Nothing while the reader hides the counters («Без лічильників»,
- * ADR 0066).
+ * the Feed. While its Feature Switch is on, a new Level shows the new Level
+ * screen instead, until the reader closes it. Nothing while the reader hides
+ * the counters («Без лічильників», ADR 0066).
  */
 export function MascotCelebrations() {
   const { xpLog, badges, progress } = useComposition();
   const { celebrations } = useShown();
+  const edition = useEditionInEffect();
   const [shown, setShown] = useState<MascotMoment | undefined>(undefined);
+  const [reached, setReached] = useState<{ level: number; name: string } | undefined>(undefined);
+  const screensNewLevel = useEffectEvent(
+    () => celebrations && edition.isFeatureEnabled('newLevelScreen'),
+  );
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const celebrate = (state: MascotMoment) => {
@@ -110,9 +118,12 @@ export function MascotCelebrations() {
     let earned = new Set(badges.state.filter((badge) => badge.earned).map(({ id }) => id));
     const stops = [
       xpLog.subscribe(() => {
-        const next = xpLog.state.level?.level ?? 0;
-        if (next > level) celebrate('newLevel');
-        level = next;
+        const next = xpLog.state.level;
+        if (next !== undefined && next.level > level) {
+          if (screensNewLevel()) setReached({ level: next.level, name: next.name });
+          else celebrate('newLevel');
+        }
+        level = next?.level ?? 0;
       }),
       xpLog.subscribeGoalMet(() => {
         celebrate('dailyGoal');
@@ -131,7 +142,21 @@ export function MascotCelebrations() {
       for (const stop of stops) stop();
     };
   }, [xpLog, badges, progress]);
-  if (shown === undefined || !celebrations) return null;
+  if (!celebrations) return null;
+  if (reached !== undefined)
+    return (
+      <NewLevelScreen
+        level={reached.level}
+        kicker={newLevelStrings.kicker}
+        title={fill(newLevelStrings.title, { level: String(reached.level), name: reached.name })}
+        doneLabel={newLevelStrings.done}
+        mascot={<MascotIn state="newLevel" onRed />}
+        onClose={() => {
+          setReached(undefined);
+        }}
+      />
+    );
+  if (shown === undefined) return null;
   return (
     <View
       pointerEvents="none"

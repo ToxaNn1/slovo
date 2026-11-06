@@ -152,6 +152,7 @@ export {
 } from './categories/CategoryTile';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
 export { BadgeStamp } from './progress/BadgeStamp';
+export { NewLevelScreen } from './progress/NewLevelScreen';
 export { LevelCard } from './progress/LevelCard';
 export { StatsSheet } from './progress/StatsSheet';
 export type { MoodDays } from './progress/mood-line';
