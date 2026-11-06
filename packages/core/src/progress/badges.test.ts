@@ -232,3 +232,55 @@ describe('the Badges', () => {
     expect(progressOf(later, 'confirmed-3')).toMatchObject({ earned: true, date: '2026-10-14' });
   });
 });
+
+// Ticket #1645, ADR 0085: an earned Badge is new («НОВА») until a
+// `badge-opened` record exists, and that record merges by id across devices.
+describe('the new Badges', () => {
+  const level1 = (app: Awaited<ReturnType<typeof run>>['app']) => progressOf(app, 'level-1');
+  const openedRecords = (records: ReadonlyMap<string, string>) =>
+    [...records.values()]
+      .map((value) => JSON.parse(value) as { kind?: string })
+      .filter(({ kind }) => kind === 'badge-opened');
+
+  it('holds «НОВА» on an earned Badge until it is opened, then on no later launch', async () => {
+    const records = await readerWith(xp('2026-10-14', 50));
+    const { app } = await run({ records });
+    expect(level1(app)).toMatchObject({ earned: true, isNew: true });
+
+    await app.badges.open('level-1');
+    expect(level1(app)).toMatchObject({ earned: true, isNew: false });
+    expect(level1((await run({ records, on: '2026-10-15' })).app)).toMatchObject({
+      isNew: false,
+    });
+  });
+
+  it('writes one badge-opened record however often the Badge is opened, and none for an unearned one', async () => {
+    const records = await readerWith(xp('2026-10-14', 50));
+    const { app } = await run({ records });
+    await app.badges.open('level-1');
+    await app.badges.open('level-1');
+    await app.badges.open('streak-3');
+    expect(openedRecords(records)).toEqual([
+      expect.objectContaining({ kind: 'badge-opened', badge: 'level-1', date: '2026-10-14' }),
+    ]);
+    expect(progressOf(app, 'streak-3')).toMatchObject({ earned: false });
+  });
+
+  it('merges the badge-opened records of two devices by id without doubling, with «НОВА» gone on both', async () => {
+    const phone = await readerWith(xp('2026-10-14', 50));
+    const tablet = new Map(phone);
+    await (await run({ records: phone })).app.badges.open('level-1');
+    const other = (await run({ records: tablet, on: '2026-10-15' })).app;
+    expect(level1(other)).toMatchObject({ isNew: true });
+    await other.badges.open('level-1');
+
+    // Sync merges the XP logs as a union by record id.
+    const merged = new Map([...phone, ...tablet]);
+    expect(openedRecords(merged)).toHaveLength(1);
+    const { app } = await run({ records: merged, on: '2026-10-16' });
+    expect(level1(app)).toMatchObject({ isNew: false });
+
+    const synced = (await run({ records: new Map([...tablet, ...phone]) })).app;
+    expect(level1(synced)).toMatchObject({ isNew: false });
+  });
+});
