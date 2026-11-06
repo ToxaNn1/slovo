@@ -38,6 +38,7 @@ const everything: Shown = {
   breakCard: true,
   streakBreak: true,
   calendarDayLines: true,
+  streakFreezeCard: true,
   badges: true,
   progressShareCards: true,
   dailyCrosswordShare: true,
@@ -222,6 +223,7 @@ describe('what the reader is shown', () => {
           xpBar: false,
           celebrations: false,
           levelLadder: false,
+          streakFreezeCard: false,
           breakCard: false,
           progressShareCards: false,
         },
@@ -255,6 +257,14 @@ describe('what the reader is shown', () => {
     [
       'no calendar day lines with their switch off',
       { off: ['calendarDayLines'], shown: { calendarDayLines: false } },
+    ],
+    [
+      'no Streak freeze card with its switch off',
+      { off: ['streakFreezeCard'], shown: { streakFreezeCard: false } },
+    ],
+    [
+      'no Streak freeze card with the freezes off',
+      { off: ['streakFreezes'], shown: { streakFreezeCard: false } },
     ],
     ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
     ['no Profile with its switch off', { off: ['profile'], shown: { profile: false } }],

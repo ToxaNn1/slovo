@@ -84,6 +84,8 @@ export interface Shown {
   readonly streakBreak: boolean;
   /** The line a tap on a day of the Active Days calendar on the Profile shows. */
   readonly calendarDayLines: boolean;
+  /** The Profile's Streak freeze card, while the freezes are on and the reader has not hidden the counters. */
+  readonly streakFreezeCard: boolean;
   /** The Settings row that opens the Badges (ADR 0066). */
   readonly badges: boolean;
   /**
@@ -182,6 +184,7 @@ export function shownOf({
     breakCard: on('breakCard') && !noCounters,
     streakBreak: on('streakBreak'),
     calendarDayLines: on('calendarDayLines'),
+    streakFreezeCard: on('streakFreezeCard') && on('streakFreezes') && !noCounters,
     badges: on('badges'),
     progressShareCards: on('progressShareCards') && !noCounters,
     dailyCrosswordShare: on('dailyCrosswordShare'),

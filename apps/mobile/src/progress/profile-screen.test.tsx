@@ -336,6 +336,64 @@ describe('the Profile', () => {
     expect(mockPush).toHaveBeenCalledWith('/settings/account');
   });
 
+  describe('the Streak freeze card', () => {
+    const words = editionStrings.settings.profile.freezeCard;
+    const xpOn = (date: string) => ({
+      kind: 'xp' as const,
+      date,
+      at: `${date}T05:00:00.000Z`,
+      source: 'game-round' as const,
+      amount: 5,
+    });
+    /** Three Active Days, then yesterday, 2026-10-12, covered by a freeze. */
+    const seed: Seed = {
+      xpLog: {
+        a: xpOn('2026-10-09'),
+        b: xpOn('2026-10-10'),
+        c: xpOn('2026-10-11'),
+        freeze: { kind: 'freeze', date: '2026-10-12', at: '2026-10-12T21:30:00.000Z' },
+      },
+    };
+
+    it('shows the freezes held, the Streak, the days saved and the last 7 days', async () => {
+      await renderScreen({ switchedOn: 'streakFreezeCard', seed });
+
+      const card = within(screen.getByTestId('profile-freeze-card'));
+      expect(card.getByText(words.title)).toBeOnTheScreen();
+      expect(card.getByText(fill(words.held, { count: '1' }))).toBeOnTheScreen();
+      expect(card.getByText(words.explanation)).toBeOnTheScreen();
+      expect(card.getByText(fill(words.streakDays.few ?? '', { count: '3' }))).toBeOnTheScreen();
+      expect(card.getByText(fill(words.saved.one ?? '', { count: '1' }))).toBeOnTheScreen();
+      const days = editionStrings.stats.calendar.days;
+      const october = editionStrings.dates.months[9] ?? '';
+      for (const label of [
+        fill(days.missed, { day: '7', month: october }),
+        fill(days.missed, { day: '8', month: october }),
+        fill(days.active, { day: '9', month: october }),
+        fill(days.active, { day: '10', month: october }),
+        fill(days.active, { day: '11', month: october }),
+        fill(days.frozen, { day: '12', month: october }),
+        fill(days.today, { day: '13', month: october }),
+      ]) {
+        expect(card.getByLabelText(label)).toBeOnTheScreen();
+      }
+    });
+
+    it('is hidden with its switch off, and nothing else', async () => {
+      await renderScreen({ seed });
+
+      expect(screen.queryByTestId('profile-freeze-card')).toBeNull();
+      expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
+      expect(screen.getByTestId('profile-streak')).toBeOnTheScreen();
+    });
+
+    it('is hidden while the reader hides the counters («Без лічильників»)', async () => {
+      await renderScreen({ switchedOn: 'streakFreezeCard', seed, noCounters: true });
+
+      expect(screen.queryByTestId('profile-freeze-card')).toBeNull();
+    });
+  });
+
   describe('with the calendar day lines on', () => {
     const months = editionStrings.dates.months;
     const lines = editionStrings.stats.calendar.lines;

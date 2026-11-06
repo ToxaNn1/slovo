@@ -96,3 +96,15 @@ export function breakStrip({
   const day = dayOf(days, 'break');
   return Array.from({ length: STRIP_DAYS }, (_, index) => day(end - STRIP_DAYS + 1 + index));
 }
+
+/**
+ * The 7 days ending with today, as the Streak freeze card shows them, in the
+ * calendar's states (ADR 0085).
+ */
+export function lastWeek(days: CalendarDays): readonly CalendarDay[] {
+  const todayNumber = dayNumber(parseLocalDate(days.today));
+  const day = dayOf(days, 'today');
+  return Array.from({ length: DAYS_IN_WEEK }, (_, slot) =>
+    day(todayNumber - DAYS_IN_WEEK + 1 + slot),
+  );
+}
