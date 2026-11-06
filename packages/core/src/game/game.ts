@@ -23,7 +23,10 @@ import type {
   RoundOption,
   TextRange,
 } from './game-mode';
+import type { Judged } from './answer-form';
 import { chipsMatch, entriesIn, roundsIn } from './game-mode';
+import { pickForm, type PickAnswer, type PickGiven, type PickRound } from './pick-form';
+import { vowelForm, type VowelAnswer, type VowelGiven, type VowelRound } from './vowel-form';
 import { LIFE_LOST_DELAY } from './game-haptics';
 import {
   createRoundPlanner,
@@ -44,12 +47,8 @@ const livesOf = ({ lives = GAME_LIVES }: GameMode): number | undefined =>
 
 /** The answer the reader gives a Round, in the Round's form. */
 export type GivenAnswer =
-  | { readonly form: 'pick'; readonly option: number }
-  | {
-      readonly form: 'vowel';
-      /** Where in the prompt the vowel tapped stands. */
-      readonly position: number;
-    }
+  | PickGiven
+  | VowelGiven
   | {
       readonly form: 'pairs';
       /** The place of the Word tapped among the grid's Words, then of the Definition among its Definitions. */
@@ -64,46 +63,35 @@ export type GivenAnswer =
   | { readonly form: 'typed'; readonly text: string };
 
 /** The answer given to a Round, judged: whether it is right, and the sheet to show. */
-export type RoundAnswer = {
-  readonly right: boolean;
-  readonly sheet: AnswerSheet;
-} & (
-  | {
-      readonly form: 'pick';
-      /** The place of the option the reader chose. */
-      readonly chosen: number;
-      /** The place of the right option. */
-      readonly correct: number;
-    }
-  | {
-      readonly form: 'vowel';
-      /** Where in the prompt the vowel tapped stands. */
-      readonly chosen: number;
-      /** Where the stressed vowels stand. */
-      readonly stressed: readonly number[];
-    }
-  | {
-      readonly form: 'pairs';
-      /** The place of the Word tapped among the grid's Words, then of the Definition among its Definitions. */
-      readonly word: number;
-      readonly definition: number;
-      /** The place of the Word's own Definition. */
-      readonly correct: number;
-    }
-  | {
-      readonly form: 'chips';
-      /** The places of the chips tapped, in the order tapped. */
-      readonly chosen: readonly number[];
-      /** The chips in the right order. */
-      readonly expected: readonly string[];
-    }
-  | {
-      readonly form: 'typed';
-      readonly typed: string;
-      /** The text to type. */
-      readonly expected: string;
-    }
-);
+export type RoundAnswer =
+  | PickAnswer
+  | VowelAnswer
+  | ({
+      readonly right: boolean;
+      readonly sheet: AnswerSheet;
+    } & (
+      | {
+          readonly form: 'pairs';
+          /** The place of the Word tapped among the grid's Words, then of the Definition among its Definitions. */
+          readonly word: number;
+          readonly definition: number;
+          /** The place of the Word's own Definition. */
+          readonly correct: number;
+        }
+      | {
+          readonly form: 'chips';
+          /** The places of the chips tapped, in the order tapped. */
+          readonly chosen: readonly number[];
+          /** The chips in the right order. */
+          readonly expected: readonly string[];
+        }
+      | {
+          readonly form: 'typed';
+          readonly typed: string;
+          /** The text to type. */
+          readonly expected: string;
+        }
+    ));
 
 /** A cell of a pairs grid as the reader sees it: a Word or a Definition; one of a pair answered is gone. */
 export interface GridCell<T> {
@@ -149,8 +137,8 @@ export type Round = {
   /** The answer, once given; a Round is answered once. */
   readonly answer: RoundAnswer | undefined;
 } & (
-  | { readonly form: 'pick'; readonly options: readonly RoundOption[] }
-  | { readonly form: 'vowel'; readonly vowels: readonly number[] }
+  | PickRound
+  | VowelRound
   | {
       readonly form: 'pairs';
       /** The grid's Words in the order shown, then its Definitions; a pair answered is gone from both. */
@@ -300,9 +288,9 @@ function roundOf(
   };
   switch (content.form) {
     case 'pick':
-      return { ...base, form: 'pick', options: content.options };
+      return { ...base, ...pickForm.shown(content, []) };
     case 'vowel':
-      return { ...base, form: 'vowel', vowels: content.vowels };
+      return { ...base, ...vowelForm.shown(content, []) };
     case 'pairs': {
       const gone = pairsGone(played, inGrid);
       const pairAt = (place: number) => {
@@ -350,6 +338,13 @@ const isEmpty = (blank: RoundBlank) => !('mark' in blank) && blank.letter === un
 const canOpenLetterIn = (blanks: readonly RoundBlank[] | undefined) =>
   blanks !== undefined && blanks.filter(isEmpty).length > 1;
 
+/** An Answer Form's judgement with the Entry it is about: the Round's own unless the form names another. */
+const withEntry = (
+  judged: Judged<RoundAnswer> | undefined,
+  own: AskableEntry,
+): { answer: RoundAnswer; entry: AskableEntry } | undefined =>
+  judged && { answer: judged.answer, entry: judged.about ?? own };
+
 /**
  * The answer judged against the Round's content, with the Entry it asked
  * about; nothing when the answer is of another form or names something the
@@ -363,19 +358,12 @@ function judge(
   if (content.form !== given.form) return undefined;
   switch (content.form) {
     case 'pick': {
-      if (given.form !== 'pick' || content.options[given.option] === undefined) return undefined;
-      const { correct, sheet } = content;
-      const chosen = given.option;
-      return { entry, answer: { form: 'pick', chosen, correct, right: chosen === correct, sheet } };
+      if (given.form !== 'pick' || round.form !== 'pick') return undefined;
+      return withEntry(pickForm.judge(content, round, given), entry);
     }
     case 'vowel': {
-      if (given.form !== 'vowel' || !content.vowels.includes(given.position)) return undefined;
-      const { stressed, sheet } = content;
-      const chosen = given.position;
-      return {
-        entry,
-        answer: { form: 'vowel', chosen, stressed, right: stressed.includes(chosen), sheet },
-      };
+      if (given.form !== 'vowel' || round.form !== 'vowel') return undefined;
+      return withEntry(vowelForm.judge(content, round, given), entry);
     }
     case 'pairs': {
       if (given.form !== 'pairs' || round.form !== 'pairs') return undefined;

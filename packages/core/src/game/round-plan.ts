@@ -11,6 +11,8 @@ import {
   type GameModeRefusal,
   type RoundContent,
 } from './game-mode';
+import { pickForm } from './pick-form';
+import { vowelForm } from './vowel-form';
 import { shuffled } from '../shuffled';
 
 /** How many Rounds a Game has, in a Game Mode that sets no Round limit of its own. */
@@ -90,11 +92,9 @@ function inTurns(answers: readonly AskableEntry[]): AskableEntry[] {
 function wellFormed(round: RoundContent): boolean {
   switch (round.form) {
     case 'pick':
-      return round.options.length === ROUND_OPTIONS && round.options[round.correct] !== undefined;
+      return pickForm.wellFormed(round);
     case 'vowel':
-      return (
-        round.stressed.length > 0 && round.stressed.every((vowel) => round.vowels.includes(vowel))
-      );
+      return vowelForm.wellFormed(round);
     case 'pairs': {
       const places = round.pairs.map((_, place) => place).sort();
       const sorted = (order: readonly number[]) => [...order].sort();
