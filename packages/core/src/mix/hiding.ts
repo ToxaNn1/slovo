@@ -8,28 +8,40 @@ export type HidingChange =
   | (Extract<HideTarget, { kind: 'entry' }> & { readonly row: EntryRowModel })
   | Exclude<HideTarget, { kind: 'entry' }>;
 
+/**
+ * The undo a toast offers, run in the composition open when the reader taps
+ * it: a reopen in the toast's seconds replaces the composition that changed
+ * something, and closes it (ADR 0018).
+ */
+export type HidingUndo = (open: {
+  readonly unhide: Hiding['unhide'];
+  readonly hiddenEntries: Pick<HiddenEntries, 'hide'>;
+}) => Promise<void>;
+
 /** A hide that changed something, with the undo its toast offers. */
 export interface HideResult {
   readonly changed: HidingChange;
   /** Takes the hide back: restores the Entry, or puts the Category or the kind back in the Mix. */
-  readonly undo: () => Promise<void>;
+  readonly undo: HidingUndo;
 }
 
 /** An unhide that changed something, with the undo its toast offers, if any. */
 export interface UnhideResult {
   readonly changed: HidingChange;
   /**
-   * When the restored Entry was hidden, for its undo in a composition opened
-   * again since (ADR 0018); nothing for a Category or a kind.
-   */
-  readonly hiddenAt: Date | undefined;
-  /**
    * Hides the Entry again at the time it was hidden before, so it returns to
    * its old place in the Hidden list. Nothing for a Category or a kind, which
    * come back with no toast.
    */
-  readonly undo: (() => Promise<void>) | undefined;
+  readonly undo: HidingUndo | undefined;
 }
+
+/** The undo of a hide: the composition open at the tap unhides the target. */
+const unhiding =
+  (target: HideTarget): HidingUndo =>
+  async (open) => {
+    await open.unhide(target);
+  };
 
 /** The hide action of a card and the unhide of the Hidden screen, over the Hidden Entries and the Mix. */
 export interface Hiding {
@@ -69,24 +81,19 @@ export function createHiding({
       const row = await rows.row(entryId);
       if (row === undefined) return undefined;
       await hiddenEntries.hide(entryId);
-      return {
-        changed: { kind: 'entry', entryId, row },
-        undo: async () => {
-          await hiddenEntries.restore(entryId);
-        },
-      };
+      return { changed: { kind: 'entry', entryId, row }, undo: unhiding(target) };
     }
     if (target.kind === 'category') {
       const { categoryId, of = 'word' } = target;
       // `takeOut` resolves to true for a Category out already, so that is checked first.
       if (!categoriesInMix(mix.state, of).categoryIds.includes(categoryId)) return undefined;
       if (!(await mix.takeOut(categoryId, of))) return undefined;
-      return { changed: target, undo: () => mix.putBack(categoryId, of) };
+      return { changed: target, undo: unhiding(target) };
     }
     const { entryKind } = target;
     if (!mix.state.kinds[entryKind]) return undefined;
     await mix.setKind(entryKind, false);
-    return { changed: target, undo: () => mix.setKind(entryKind, true) };
+    return { changed: target, undo: unhiding(target) };
   }
 
   async function unhide(target: HideTarget): Promise<UnhideResult | undefined> {
@@ -99,8 +106,7 @@ export function createHiding({
       if (hiddenAt === undefined) return undefined;
       return {
         changed: { kind: 'entry', entryId, row: hidden.row },
-        hiddenAt,
-        undo: () => hiddenEntries.hide(entryId, hiddenAt),
+        undo: (open) => open.hiddenEntries.hide(entryId, hiddenAt),
       };
     }
     if (target.kind === 'category') {
@@ -109,12 +115,12 @@ export function createHiding({
         return undefined;
       }
       await mix.putBack(categoryId, of);
-      return { changed: target, hiddenAt: undefined, undo: undefined };
+      return { changed: target, undo: undefined };
     }
     const { entryKind } = target;
     if (mix.state.kinds[entryKind]) return undefined;
     await mix.setKind(entryKind, true);
-    return { changed: target, hiddenAt: undefined, undo: undefined };
+    return { changed: target, undo: undefined };
   }
 
   return {
