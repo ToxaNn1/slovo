@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { mixScreenModel, mixSummary, type MixScreenModel } from './mix-screen';
 
@@ -69,26 +69,21 @@ export function useMixChanges(): {
   setQuickQuestionEvery: (every: QuickQuestionEvery) => void;
 } {
   const { mix } = useComposition();
-  const keep = (change: Promise<unknown>) => {
-    change.catch((error: unknown) => {
-      logError('Could not keep the change of the Mix', error);
-    });
-  };
   return {
     toggleCategory: (categoryId, inMix, of) => {
-      keep(mix.setCategory(categoryId, inMix, of));
+      void keep('the Mix', mix.setCategory(categoryId, inMix, of));
     },
     turnAllOn: () => {
-      keep(mix.turnAllOn());
+      void keep('the Mix', mix.turnAllOn());
     },
     setKind: (kind, inMix) => {
-      keep(mix.setKind(kind, inMix));
+      void keep('the Mix', mix.setKind(kind, inMix));
     },
     setKindWeight: (kind, weight) => {
-      keep(mix.setKindWeight(kind, weight));
+      void keep('the Mix', mix.setKindWeight(kind, weight));
     },
     setQuickQuestionEvery: (every) => {
-      keep(mix.setQuickQuestionEvery(every));
+      void keep('the Mix', mix.setQuickQuestionEvery(every));
     },
   };
 }

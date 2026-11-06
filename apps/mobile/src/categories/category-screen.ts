@@ -12,6 +12,7 @@ import { useEffect, useState } from 'react';
 
 import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 import { useMixState } from '../mix/mix';
 import { useSubscribed } from '../opening';
@@ -95,19 +96,15 @@ export function useCategoryScreen(of: CategoryKind, category: Category): Categor
     cards,
     inMix,
     toggleMix: () => {
-      mix.setCategory(category.id, !inMix, of).then(
-        (done) => {
-          if (!done) showToast({ message: lastCategoryHint[of] });
-          else
-            showToast({
-              message: fill(inMix ? toasts.removed : toasts.added, { name }),
-              brief: true,
-            });
-        },
-        (error: unknown) => {
-          logError('Could not keep the change of the Mix', error);
-        },
-      );
+      void keep('the Mix', mix.setCategory(category.id, !inMix, of)).then((done) => {
+        if (done === undefined) return;
+        if (!done) showToast({ message: lastCategoryHint[of] });
+        else
+          showToast({
+            message: fill(inMix ? toasts.removed : toasts.added, { name }),
+            brief: true,
+          });
+      });
     },
     // The Entry route of Search opens the card through `entryCard`, with the way back named.
     openEntry: (entryId) => {

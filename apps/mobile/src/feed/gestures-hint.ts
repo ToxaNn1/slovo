@@ -2,6 +2,7 @@ import { createGesturesHint, type GesturesHint } from '@slovo/core';
 import { useCallback, useEffect, useState } from 'react';
 
 import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useShell } from '../shell-value';
 
 /**
@@ -40,9 +41,7 @@ export function useGesturesHint(on: boolean): {
   }, [on, userState]);
 
   const markShown = useCallback(() => {
-    due?.markShown().catch((error: unknown) => {
-      logError('Could not keep the gestures hint', error);
-    });
+    if (due !== undefined) void keep('the gestures hint', due.markShown());
   }, [due]);
   const dismiss = useCallback(() => {
     setDismissed(true);
