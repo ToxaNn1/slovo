@@ -393,3 +393,121 @@ describe('checkNewWords', () => {
     expect(edition.checkNewWords([draft()])).toEqual([]);
   });
 });
+
+describe('entryTexts', () => {
+  const member = (text: string) => ({ text, stress: [1] });
+
+  it('lists the text of every Entry of the five kinds, with its group and forms, Retired ones marked', () => {
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        writeFileSync(
+          join(dir, 'content/synonym-rows/r_fx0001.json'),
+          JSON.stringify({
+            id: 'r_fx0001',
+            dominant: { text: 'тихо', stress: [1] },
+            meaning: 'Без розмов, мовчки.',
+            members: ['глухо', 'мовчки', 'неголосно', 'негучно', 'слабко'].map(member),
+            sources: [{ title: 'Тестове джерело' }],
+            retired: true,
+          }),
+        );
+        writeFileSync(
+          join(dir, 'content/tips/t_fx0001.json'),
+          JSON.stringify({
+            id: 't_fx0001',
+            title: 'Два студенти',
+            nonStandardForm: 'два студента',
+            standardForm: 'два студенти',
+            explanation: 'Після «два» іменник стоїть у називному відмінку множини.',
+            example: { text: 'У групі лише три студенти.' },
+            sources: [{ title: 'Тестове джерело' }],
+            gameQuestion: {
+              prompt: 'Як правильно?',
+              rightAnswer: 'три олівці',
+              wrongAnswers: ['три олівця', 'три олівців', 'три олівцями'],
+            },
+          }),
+        );
+      },
+    });
+
+    const texts = openEdition(editionsDir, 'fixture').entryTexts();
+
+    expect(texts).toEqual([
+      { kind: 'word', id: 'w_fx0001', group: 'nature', text: 'заметіль', forms: [], retired: true },
+      {
+        kind: 'word',
+        id: 'w_fx0002',
+        group: 'speech',
+        text: 'балакучий',
+        forms: [],
+        retired: false,
+      },
+      { kind: 'word', id: 'w_fx0003', group: 'speech', text: 'завжди', forms: [], retired: false },
+      {
+        kind: 'correction',
+        id: 'c_fx0001',
+        group: 'surzhyk',
+        text: 'всігда',
+        forms: ['завжди'],
+        retired: false,
+      },
+      {
+        kind: 'correction',
+        id: 'c_fx0002',
+        group: 'russianism',
+        text: 'разговорчивий',
+        forms: ['балакучий', 'говіркий'],
+        retired: false,
+      },
+      {
+        kind: 'correction',
+        id: 'c_fx0003',
+        group: 'russianism',
+        text: 'метель',
+        forms: ['заметіль', 'хуртовина'],
+        retired: false,
+      },
+      {
+        kind: 'correction',
+        id: 'c_fx0004',
+        group: 'officialese',
+        text: 'на сьогоднішній день',
+        forms: ['сьогодні', 'нині'],
+        retired: false,
+      },
+      {
+        kind: 'idiom',
+        id: 'i_fx0001',
+        group: 'idiom',
+        text: 'бити байдики',
+        forms: [],
+        retired: false,
+      },
+      {
+        kind: 'idiom',
+        id: 'i_fx0002',
+        group: 'placeName',
+        text: 'Бердичів',
+        forms: [],
+        retired: false,
+      },
+      {
+        kind: 'synonymRow',
+        id: 'r_fx0001',
+        group: undefined,
+        text: 'тихо',
+        forms: ['глухо', 'мовчки', 'неголосно', 'негучно', 'слабко'],
+        retired: true,
+      },
+      {
+        kind: 'tip',
+        id: 't_fx0001',
+        group: undefined,
+        text: 'Два студенти',
+        forms: ['два студента', 'два студенти'],
+        retired: false,
+      },
+    ]);
+  });
+});
