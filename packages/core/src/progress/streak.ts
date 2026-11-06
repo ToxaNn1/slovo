@@ -32,6 +32,8 @@ export interface StreakState {
   readonly bestStreak: number;
   /** The Streak freezes held now; none with freezes off. */
   readonly freezesHeld: number;
+  /** The missed days freezes covered in the current Streak, recorded or to be; none with freezes off. */
+  readonly freezesUsed: number;
 }
 
 /** The Streak, with what the day change makes of it. */
@@ -82,6 +84,7 @@ export function deriveStreak({
   let streak = 0;
   let bestStreak = 0;
   let held = FREEZES_AT_START;
+  let used = 0;
   let lastKept = Number.NaN;
   const toFreeze: string[] = [];
   let broken: DerivedStreak['broken'];
@@ -102,6 +105,7 @@ export function deriveStreak({
       activeDay(day);
     } else if (covered.has(day)) {
       held = Math.max(0, held - 1);
+      if (streak > 0) used += 1;
       lastKept = day;
     } else {
       let end = day;
@@ -111,10 +115,12 @@ export function deriveStreak({
       if (freezes && upToYesterday && streak > 0 && missed <= held) {
         for (let gap = day; gap <= end; gap += 1) toFreeze.push(dateOf(gap));
         held -= missed;
+        used += missed;
         lastKept = end;
       } else {
         if (upToYesterday && streak > 0) broken = { lastDay: dateOf(lastKept), streak };
         streak = 0;
+        used = 0;
       }
       day = end;
     }
@@ -125,6 +131,7 @@ export function deriveStreak({
     streak,
     bestStreak,
     freezesHeld: freezes ? held : 0,
+    freezesUsed: freezes ? used : 0,
     toFreeze,
     broken,
   };

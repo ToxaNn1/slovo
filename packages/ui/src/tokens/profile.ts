@@ -177,6 +177,19 @@ export const breakCard = {
   nextInset: 4,
 } as const;
 
+/** The Profile's Streak freeze card (p2), an ink card: its chip, its 7-day strip and the frost on a frozen day. */
+export const freezeCard = {
+  padding: 20,
+  radius: 24,
+  gap: 14,
+  chip: { paddingX: 10, paddingY: 4, radius: 999 },
+  tilesGap: 10,
+  tilePadding: 12,
+  tileRadius: 16,
+  /** The frost mark of a frozen day: its box and its stroke. */
+  frost: { box: 14, stroke: 1.6 },
+} as const;
+
 /**
  * The new Level screen (p6), from the design: the giant «РІВЕНЬ» with the
  * Level's number stamped into it on red, as the Badge stamp lands.

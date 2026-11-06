@@ -37,7 +37,7 @@ export interface ActiveDays {
   readonly frozen: ReadonlySet<string>;
   /** The Breaks started, from the XP log: the length in days by the local date each starts on. */
   readonly breaks: ReadonlyMap<string, number>;
-  /** The Streak, the Best Streak and the freezes held, derived on today's local date. */
+  /** The Streak, the Best Streak, the freezes held and those used, derived on today's local date. */
   readonly streak: StreakState;
   /**
    * The Streak as it stands on tomorrow's local date, before tomorrow is
@@ -149,8 +149,8 @@ export async function openActiveDays({
       return xpLog.days.breaks;
     },
     get streak() {
-      const { streak, bestStreak, freezesHeld } = derive();
-      return { streak, bestStreak, freezesHeld };
+      const { streak, bestStreak, freezesHeld, freezesUsed } = derive();
+      return { streak, bestStreak, freezesHeld, freezesUsed };
     },
     get streakTomorrow() {
       return derive(dateKeyOf(localDateAfter(todayDate(clock), 1))).streak;
