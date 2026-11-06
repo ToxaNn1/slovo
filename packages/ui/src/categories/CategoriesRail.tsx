@@ -3,7 +3,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { BlockTitle } from '../dashboard/BlockTitle';
 import { useEdition } from '../providers/EditionProvider';
 import { categoryTile, dashboard } from '../tokens';
-import { CategoryTile, toneByPosition } from './CategoryTile';
+import { CategoryTile, toneByPosition, type CategoryTone } from './CategoryTile';
 import type { GridTile } from './CategoryGrid';
 
 const box = {
@@ -20,14 +20,18 @@ const box = {
  * The Categories rail of the Dashboard (spec #1604): «Категорії» with the
  * number of Categories, a button that opens the grid of them all, over a
  * horizontal row of the home board's tiles, one per Category, the tones and
- * shape pairs by position. A tile opens its Category; it shows no count.
+ * shape pairs by position unless `toneAt` gives a tile's tone (a quiet
+ * Category's muted one). A tile opens its Category; it shows no count.
  */
 export function CategoriesRail({
   tiles,
+  toneAt = toneByPosition,
   onOpenAll,
   onOpen,
 }: {
   tiles: readonly GridTile[];
+  /** A tile's tone by its place; the boards' tones by position unless given. */
+  toneAt?: (index: number) => CategoryTone;
   onOpenAll: () => void;
   onOpen: (id: string) => void;
 }) {
@@ -60,7 +64,7 @@ export function CategoriesRail({
             key={id}
             testID={`dashboard-category-${id}`}
             name={name}
-            tone={toneByPosition(index)}
+            tone={toneAt(index)}
             shapes={categoryTile.shapes[index % categoryTile.shapes.length] ?? ['circle', 'circle']}
             box={box}
             onPress={() => {
