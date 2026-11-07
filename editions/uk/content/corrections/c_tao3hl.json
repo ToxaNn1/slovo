@@ -3,9 +3,7 @@
   "id": "c_tao3hl",
   "nonStandardForm": "ярмарка",
   "correctionType": "russianism",
-  "standardEquivalents": [
-    "ярмарок"
-  ],
+  "standardEquivalents": ["ярмарок"],
   "explanation": "Замініть іменник ярмарка, якщо його вжито у формі жіночого роду, на правильний варіант: ярмарок - чоловічого роду.",
   "examplePair": {
     "nonStandard": "Велика ярмарка відкрилася на майдані.",

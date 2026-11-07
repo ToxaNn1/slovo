@@ -3,9 +3,7 @@
   "id": "c_egidyz",
   "nonStandardForm": "корзина",
   "correctionType": "russianism",
-  "standardEquivalents": [
-    "кошик, кошіль"
-  ],
+  "standardEquivalents": ["кошик, кошіль"],
   "explanation": "Замініть скалькований іменник корзина на стилістично кращий варіант: кошик, кошіль.",
   "examplePair": {
     "nonStandard": "Жеребкування ЛЧ — «Динамо» потрапить у третю корзину.",
