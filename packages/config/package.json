@@ -16,12 +16,12 @@
   },
   "dependencies": {
     "@eslint/js": "^10.0.1",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-oxlint": "~1.89.0",
-    "globals": "^17.13.0",
+    "eslint-plugin-oxlint": "~1.90.0",
+    "globals": "^17.14.0",
     "prettier-plugin-astro": "^1.1.2",
     "typescript": "~6.0.3",
-    "typescript-eslint": "^8.72.0"
+    "typescript-eslint": "^8.72.1"
   }
 }
