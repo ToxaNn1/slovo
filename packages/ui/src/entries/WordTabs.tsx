@@ -241,7 +241,6 @@ const styles = StyleSheet.create({
     minHeight: minTouchTarget,
     justifyContent: 'center',
     borderBottomWidth: 2,
-    marginBottom: -1,
   },
   room: { flexGrow: 1, flexBasis: 0, overflow: 'hidden' },
   content: { gap: blockGap },

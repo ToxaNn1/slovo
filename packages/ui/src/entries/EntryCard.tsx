@@ -15,7 +15,7 @@ import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
 import { blockGap, correctionCardLayout, space, wordCardSide, wordHero } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { WordCardBody } from './WordCard';
+import { WordCardBody } from './WordCardBody';
 import { WordHero } from './WordHero';
 
 export interface EntryCardProps {
