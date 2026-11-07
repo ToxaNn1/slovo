@@ -13,7 +13,7 @@ import {
   type XpRecord,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, systemSchedule } from '@slovo/ui';
+import { coreTokens, EditionProvider, HapticsProvider, systemSchedule, typeStyle } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -135,12 +135,14 @@ const correction = (
  * «друге» and «третє» after a comma and a dash, which are no chips, its
  * Definition «The sense of idiom{n}.».
  */
-const idiom = (index: number): Idiom => ({
+const idiom = (index: number, longSense = false): Idiom => ({
   kind: 'idiom',
   id: `i_test${String(index)}`,
   expression: `перше${String(index)}, друге — третє`,
   idiomType: 'idiom',
-  primaryDefinition: `The sense of idiom${String(index)}.`,
+  primaryDefinition: longSense
+    ? `The sense of idiom${String(index)}, told at such length that it runs well past a sentence.`
+    : `The sense of idiom${String(index)}.`,
   extraDefinitions: [],
   examples: [],
   sources: [{ title: 'Test source' }],
@@ -219,6 +221,7 @@ async function open({
   corrections = 0,
   anglicisms = 0,
   idioms = 0,
+  longSenses = false,
   origins = 0,
   switchedOff = [],
   switchedOn = [],
@@ -234,6 +237,8 @@ async function open({
   corrections?: number;
   anglicisms?: number;
   idioms?: number;
+  /** Whether each Idiom's sense runs past a sentence. */
+  longSenses?: boolean;
   switchedOff?: readonly string[];
   /** Feature Switches the UA Edition ships off, turned on. */
   switchedOn?: readonly string[];
@@ -263,7 +268,7 @@ async function open({
         ...Array.from({ length: corrections }, (_, i) => correction(i)),
         ...Array.from({ length: anglicisms }, (_, i) => correction(corrections + i, 'anglicism')),
       ],
-      idioms: Array.from({ length: idioms }, (_, i) => idiom(i)),
+      idioms: Array.from({ length: idioms }, (_, i) => idiom(i, longSenses)),
     }),
     crossword: {
       crosswordDay: (date) =>
@@ -1156,6 +1161,53 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
+
+  it('keys the options А–Г and marks a wrong pick with ✕ on its key', async () => {
+    await open({ anglicisms: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-anglicism'));
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+    });
+    const options = screen.getAllByTestId(/^game-option-\d+$/);
+    options.forEach((option, place) => {
+      expect(within(option).getByText(['А', 'Б', 'В', 'Г'][place] ?? '')).toBeTruthy();
+    });
+    expect(screen.queryByText('✕')).toBeNull();
+
+    const standard = `добре${String(theNumberOfThePrompt())}`;
+    const wrong = options.findIndex((option) => option.props['accessibilityLabel'] !== standard);
+    const picked = options[wrong];
+    if (picked === undefined) throw new Error('No wrong option');
+    await fireEvent.press(picked);
+
+    expect(within(screen.getByTestId(`game-option-${String(wrong)}`)).getByText('✕')).toBeTruthy();
+    expect(screen.getAllByText('✕')).toHaveLength(1);
+    expect(theOption(`${standard}, Правильно`)).toBeTruthy();
+  });
+
+  it.each([
+    ['a Word', { anglicisms: 15 }, 'game-mode-anglicism', 'roundOptionWord'],
+    ['a sentence', { idioms: 15 }, 'game-mode-idiom-meaning', 'roundOptionSentence'],
+    ['a long text', { idioms: 15, longSenses: true }, 'game-mode-idiom-meaning', 'roundOptionLong'],
+  ] as const)(
+    'sizes the options for their text when each is %s',
+    async (_, content, mode, role) => {
+      await open(content);
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId(mode));
+      await waitFor(() => {
+        expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+      });
+      const { fontSize } = typeStyle(role, coreTokens);
+      screen.getAllByTestId(/^game-option-\d+$/).forEach((option) => {
+        const text = String(option.props['accessibilityLabel']);
+        expect(within(option).getByText(text)).toHaveStyle({ fontSize });
+      });
+    },
+  );
 
   it('starts «Фразеологізми» from its card and plays a whole Game, picking each meaning, to the result screen', async () => {
     await open({ idioms: 15 });

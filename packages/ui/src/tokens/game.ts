@@ -75,20 +75,20 @@ export const roundHeader = {
  * A pick Round's option, the board's answer tile: its least height, corners
  * and side padding; how much an answered Round's other options fade, how far
  * a wrong choice drops and how a right one pops (`slPop`: its scale at the
- * start, 60 % and the end); the stamp on a right option, a ring of this side
- * and border this far off the corner round a tick; the slash on a wrong
- * choice, its thickness, side inset and turn (`slSlash`).
+ * start, 60 % and the end); the key at its left (side, corners, border and
+ * the gap to the text); and the most characters a sentence option has before
+ * it is a long text.
  */
 export const answerOption = {
   minHeight: 84,
   radius: 18,
-  paddingLeft: 22,
+  paddingLeft: 16,
+  paddingRight: 18,
   dimmedOpacity: 0.5,
   drop: 8,
   pop: [0.6, 1.12, 1],
-  stamp: { side: 56, border: 4, right: 16, top: 14 },
-  tick: { width: 26, height: 22 },
-  slash: { thickness: 5, inset: 12, turn: -4 },
+  key: { side: 36, radius: 10, border: 2, gap: 14 },
+  sentenceMost: 60,
 } as const;
 
 /**

@@ -1625,6 +1625,7 @@
       "highlight": "Виділено: {text}",
       "correct": "Правильно",
       "chosen": "Твій вибір",
+      "optionKeys": "АБВГ",
       "synonymRow": {
         "label": "Синоніми",
         "prompt": "Що є синонімом до „{dominant}“?"

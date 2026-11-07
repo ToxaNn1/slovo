@@ -199,6 +199,14 @@ export const GameStringsSchema = z.strictObject({
     /** The tag of the reader's wrong choice. */
     chosen: TextSchema,
     /**
+     * The keys of a pick Round's options, one letter per option in order,
+     * each letter once, e.g. «АБВГ» (spec #1674).
+     */
+    optionKeys: TextSchema.refine(
+      (keys) => new Set(keys).size === Array.from(keys).length,
+      'Expected each key once',
+    ),
+    /**
      * A Synonym Row's Round, in any Game Mode that asks about rows: the label
      * over its question, e.g. «СИНОНІМИ», and the question, e.g. «Що є
      * синонімом до „іти“?». Takes `{dominant}`, the row's dominant with its Stress.
