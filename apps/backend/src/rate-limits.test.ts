@@ -2,6 +2,7 @@ import { lte } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
 import { rateLimits } from './database/schema';
+import { createRateLimits } from './rate-limits';
 import { newIp, passTime, testApp } from './test-support';
 
 const MINUTE = 60 * 1000;
@@ -34,5 +35,20 @@ describe('the ended windows of the rate limits', () => {
     passTime(50 * MINUTE);
     await requestCode();
     expect(await ended()).toBe(0);
+  });
+});
+
+describe('a request heavier than the limit', () => {
+  it('is refused whole, in a fresh window and in one that ended alike', async () => {
+    const backend = testApp();
+    const limits = createRateLimits(backend.database, { secret: 'a-secret-of-this-test' });
+    const limit = { requests: 5, windowSeconds: 60 };
+    const now = new Date();
+    expect((await limits.take('heavy', limit, now, 6)).taken).toBe(false);
+    // The refused request counted nothing: the whole limit is still free.
+    expect((await limits.take('heavy', limit, now, 5)).taken).toBe(true);
+    const later = new Date(now.getTime() + 61 * 1000);
+    expect((await limits.take('heavy', limit, later, 6)).taken).toBe(false);
+    expect((await limits.take('heavy', limit, later, 5)).taken).toBe(true);
   });
 });
