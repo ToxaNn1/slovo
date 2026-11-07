@@ -9,6 +9,7 @@ import {
   type Round,
   type RoundAnswer,
   type RoundContent,
+  type Streak,
 } from '@slovo/core';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -94,8 +95,11 @@ export function GameRound({
   onOpenLetter,
   title,
   timeLeft,
+  streak,
 }: {
   game: CurrentGame;
+  /** The streak of «Виживання» and its record, which the header shows in place of the Rounds passed; none in another mode or with the streak switched off. */
+  streak?: Streak | undefined;
   /** The Game Mode's title, which the Round's header shows in caps. */
   title: string;
   /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
@@ -143,6 +147,7 @@ export function GameRound({
         lives={game.lives}
         livesAtStart={game.livesAtStart}
         lifeLostAfter={round.lifeLostAfter}
+        streak={streak}
         time={
           game.time === undefined || game.timeLimit === undefined
             ? undefined
@@ -319,6 +324,7 @@ function GameHeader({
   lives,
   livesAtStart,
   lifeLostAfter,
+  streak,
   time,
   onExit,
 }: {
@@ -334,6 +340,8 @@ function GameHeader({
   livesAtStart: number | undefined;
   /** How long after a wrong answer its Life is lost, in milliseconds. */
   lifeLostAfter: number;
+  /** The streak and its record, shown in place of the Rounds passed in a mode with no Round limit. */
+  streak: Streak | undefined;
   /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
   time: { left: number; limit: number } | undefined;
   onExit: () => void;
@@ -378,7 +386,9 @@ function GameHeader({
           </View>
         )}
       </View>
-      {roundLimit === undefined ? (
+      {roundLimit === undefined && streak !== undefined ? (
+        <StreakCounter streak={streak} />
+      ) : roundLimit === undefined ? (
         <Text
           testID="game-progress"
           accessibilityLabel={fill(words.passedLabel, progress)}
@@ -694,7 +704,47 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
   );
 }
 
+/**
+ * The streak of «Виживання» (spec #1674): a big counter of the Rounds passed
+ * and «{n} поспіль · рекорд {best}» beside it, read by VoiceOver as that line.
+ */
+function StreakCounter({ streak }: { streak: Streak }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { strings, voice } = useEdition();
+  const line = fill(strings.game.round.survivalStreak, {
+    n: String(streak.rounds),
+    best: String(streak.record),
+  });
+  return (
+    <View
+      testID="game-streak"
+      accessible
+      accessibilityLabel={line}
+      {...voice}
+      style={styles.streak}
+    >
+      <Text
+        testID="game-streak-rounds"
+        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+        style={[typeStyle('roundStreak', tokens), { color: colors.accent }]}
+      >
+        {streak.rounds}
+      </Text>
+      <Text
+        testID="game-streak-line"
+        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+        style={[typeStyle('roundStreakLine', tokens), styles.streakLine, { color: colors.ink }]}
+      >
+        {line}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  streak: { flexDirection: 'row', alignItems: 'baseline', gap: roundLayout.gap },
+  streakLine: { flexShrink: 1 },
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
   // A Round of a form without options keeps one gap more under its content than a pick Round.

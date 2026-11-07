@@ -16,6 +16,7 @@ const everything: Shown = {
   tabs: ['home', 'game', 'saved', 'settings'],
   gameReview: true,
   finishPoster: true,
+  survivalStreak: true,
   entryButtons: {
     shareCard: true,
     pronunciation: true,
@@ -131,6 +132,10 @@ describe('what the reader is shown', () => {
     [
       'the old result screen with the end poster off',
       { off: ['finishPoster'], shown: { finishPoster: false } },
+    ],
+    [
+      'the Rounds passed in place of the streak with its switch off',
+      { off: ['survivalStreak'], shown: { survivalStreak: false } },
     ],
     [
       'no Daily Goal choice with the Daily Goal off',

@@ -1335,6 +1335,32 @@ describe('the Game screen', () => {
     expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
   });
 
+  it('shows the streak of «Виживання» with its switch on, a big counter and «{n} поспіль · рекорд {best}» from the Best result, in place of the Rounds passed', async () => {
+    await open({ corrections: 15, best: { survival: 2 }, switchedOn: ['survivalStreak'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-survival'));
+
+    const lines: string[] = [];
+    for (let round = 1; round <= 4; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-streak-rounds')).toHaveTextContent(String(round - 1));
+      });
+      lines.push(String(screen.getByTestId('game-streak').props['accessibilityLabel']));
+      expect(screen.queryByTestId('game-progress')).toBeNull();
+      await answerSurvivalRound(round !== 2);
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    expect(lines).toEqual([
+      '0 поспіль · рекорд 2',
+      '1 поспіль · рекорд 2',
+      '2 поспіль · рекорд 2',
+      '3 поспіль · рекорд 3',
+    ]);
+    expect(screen.getByTestId('game-streak-line')).toHaveTextContent('4 поспіль · рекорд 4');
+  });
+
   describe('the end posters', () => {
     it('ends a whole «Наголос» on the «Фініш» poster, «Влучно!», with its XP and a new record, and «До ігор» opens the Games hub', async () => {
       await open({ switchedOn: ['finishPoster'] });
@@ -1413,6 +1439,7 @@ describe('the Game screen', () => {
       await waitFor(() => {
         expect(timerLabel()).toBe('лишилось 60 секунд');
       });
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('60 с');
       expect(screen.getByTestId('game-progress')).toHaveTextContent('Пройдено: 0');
       expect(screen.queryByTestId('game-lives')).toBeNull();
       expect(screen.queryByTestId('game-life-0', { includeHiddenElements: true })).toBeNull();
@@ -1435,6 +1462,7 @@ describe('the Game screen', () => {
       await pass(10_000);
 
       expect(timerLabel()).toBe('лишилось 50 секунд');
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('50 с');
 
       await pass(50_000);
 
