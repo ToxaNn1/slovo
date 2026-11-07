@@ -76,8 +76,8 @@ export type BadgeMarkState =
 
 /**
  * A Badge as its family's mark. Locked: a dark silhouette of its `shape` with
- * no symbol. In progress: the silhouette fills from the bottom in red by its
- * fraction, the symbol muted. Earned: the shape in the ring of its `tone` with
+ * its symbol muted, so the shape is never empty. In progress: the silhouette
+ * fills from the bottom in red by its fraction, the symbol muted. Earned: the shape in the ring of its `tone` with
  * the face set inside and its symbol, over a drop shadow (4 deep above a side
  * of 40, 2 at 40 and below), and while new the ink «НОВА» tag turned over its
  * corner. `onRed` draws an earned Badge for a red ground: cream in an ink ring
@@ -147,24 +147,22 @@ export function BadgeMark({
           </View>
         </View>
       )}
-      {state.kind !== 'locked' && (
-        <View style={[styles.symbol, { width: size, height: size }]}>
-          <Text
-            testID={testID === undefined ? undefined : `${testID}-symbol`}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            style={[
-              typeStyle('badgeSymbol', tokens),
-              {
-                color: earned ? symbolColor : colors.muted,
-                ...roleAt('badgeSymbol', symbolSize),
-              },
-            ]}
-          >
-            {symbol}
-          </Text>
-        </View>
-      )}
+      <View style={[styles.symbol, { width: size, height: size }]}>
+        <Text
+          testID={testID === undefined ? undefined : `${testID}-symbol`}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          style={[
+            typeStyle('badgeSymbol', tokens),
+            {
+              color: earned ? symbolColor : colors.muted,
+              ...roleAt('badgeSymbol', symbolSize),
+            },
+          ]}
+        >
+          {symbol}
+        </Text>
+      </View>
       {earned && state.isNew && (
         <Text
           testID={testID === undefined ? undefined : `${testID}-new`}
