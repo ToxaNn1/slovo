@@ -50,7 +50,7 @@ async function open({
       isFeatureEnabled: (feature) => on.includes(feature),
       languageTraits: testEdition().languageTraits,
     },
-    xp,
+    ...(xp ? { xp } : {}),
   });
 }
 
