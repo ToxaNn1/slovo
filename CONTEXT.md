@@ -138,7 +138,7 @@ A rule of good speech with its standard form, a short explanation and its own Ga
 _Avoid_: Hack, advice, lifehack
 
 **Entry card**:
-How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). The Feed and every screen that opens a kept Entry show the same Entry card.
+How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). With `wordTabs` on, a Word card is a fixed frame with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, empty ones left out (ADR 0088). The Feed and every screen that opens a kept Entry show the same Entry card.
 _Avoid_: Item, tile (for a card; a tile is the pressed button of the design)
 
 ### User's words

@@ -5,7 +5,6 @@ import {
   stressLabel,
   withoutStress,
   type Example,
-  type LocalDate,
   type WordCardModel,
 } from '@slovo/core';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -23,82 +22,7 @@ import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPag
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { RevealDetail, useFlyingText } from './reveal';
-import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 import { CategoryChip } from './CategoryChip';
-import { KickerRow } from './KickerRow';
-
-/**
- * The Word card's blocks inside the Entry card's frame: the Lemma with Stress,
- * part of speech and register chips, the dialectal one with the region, the primary Definition, the first
- * Example, the Illustration above the Definition, the Word History under its heading, Synonyms and antonyms, the Category chip, the details behind
- * "more", the Synonym Row the Word is a member of and the linked Corrections. It draws only the sections the Core put
- * in the card, at the user's font size. Under Self-check it keeps the Lemma,
- * part of speech and Category; the Entry card draws the button that reveals
- * the rest under them. Where the Stress falls, the Lemma's Stress mark falls
- * onto its vowel each time the card comes on screen, unless the reader turned
- * on Reduce Motion (ADR 0055).
- */
-export function WordCardBody({
-  card,
-  wordOfTheDay,
-  compact,
-  lemmaSize,
-  onOpenCorrection,
-  onOpenSynonymRow,
-  onHistoryShown,
-  concealed,
-  stressFalls,
-  wordOfTheDayFont,
-  corner,
-}: {
-  card: WordCardModel;
-  /** On the card of the Word of the Day: the local day it is the Word of. */
-  wordOfTheDay: LocalDate | undefined;
-  /** The design's compact iPhone SE layout. */
-  compact: boolean;
-  /** The Lemma's size at the user's font size, smaller in the compact layout. */
-  lemmaSize: TextSize;
-  onOpenCorrection: ((correctionId: string) => void) | undefined;
-  onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
-  /** Called once the Word History is drawn, as the Entry screen tells Analytics (ADR 0068). */
-  onHistoryShown: (() => void) | undefined;
-  /** Self-check: only the Lemma, part of speech and Category. */
-  concealed: boolean;
-  /** The falling Stress: on a Word card in the Feed and on the Entry screen, while its Feature Switch is on. */
-  stressFalls: boolean;
-  /** The calligraphic font family the Lemma is set in on the card of the Word of the Day. */
-  wordOfTheDayFont: string | undefined;
-  /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
-  corner: ReactNode | undefined;
-}) {
-  return (
-    <>
-      <KickerRow testID="word-kicker-row" corner={corner}>
-        {wordOfTheDay === undefined ? null : <WordOfTheDayBadge day={wordOfTheDay} />}
-      </KickerRow>
-      <WordHeadline
-        card={card}
-        lemmaSize={lemmaSize}
-        concealed={concealed}
-        stressFalls={stressFalls}
-        lemmaFont={wordOfTheDay === undefined ? undefined : wordOfTheDayFont}
-      />
-      {concealed ? (
-        card.categoryName === undefined ? null : (
-          <CategoryChip testID="word-category" name={card.categoryName} />
-        )
-      ) : (
-        <WordSections
-          card={card}
-          compact={compact}
-          onOpenCorrection={onOpenCorrection}
-          onOpenSynonymRow={onOpenSynonymRow}
-          onHistoryShown={onHistoryShown}
-        />
-      )}
-    </>
-  );
-}
 
 /**
  * The Word's headline: the Lemma with its falling Stress, part of speech and
@@ -220,11 +144,6 @@ export function WordSections({
   const { voice } = edition;
   const strings = edition.strings.wordCard;
   const { categoryName } = card;
-  // The same Illustration in light and dark mode; a file the app lacks shows none (ADR 0055).
-  const illustration =
-    card.illustration === undefined ? undefined : edition.illustrations[card.illustration];
-  // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
-  const turnActions = usePageTurnActions();
   const categoryChip =
     categoryName === undefined ? null : <CategoryChip testID="word-category" name={categoryName} />;
   const relations = [
@@ -233,29 +152,8 @@ export function WordSections({
   ].filter(({ words }) => words.length > 0);
   return (
     <>
-      {illustration === undefined ? null : (
-        <Image
-          testID="word-illustration"
-          source={illustration}
-          accessible
-          accessibilityRole="image"
-          accessibilityLabel={fill(strings.illustration, { lemma: withoutStress(card.lemma) })}
-          {...voice}
-          {...turnActions}
-          resizeMode="contain"
-          style={styles.illustration}
-        />
-      )}
-      <Text
-        testID="word-definition"
-        // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
-        accessibilityLabel={withoutStress(card.primaryDefinition)}
-        {...voice}
-        {...turnActions}
-        style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
-      >
-        {card.primaryDefinition}
-      </Text>
+      <WordIllustration card={card} />
+      <WordDefinition card={card} />
       {card.example === undefined ? null : (
         <ExampleText testID="word-example" example={card.example} size={sizes.example} />
       )}
@@ -290,59 +188,119 @@ export function WordSections({
       {card.synonymRow === undefined ? null : (
         <SynonymRowLine synonymRow={card.synonymRow} onOpen={onOpenSynonymRow} />
       )}
-      {card.linkedCorrections.length === 0 ? null : (
-        <View
-          testID="word-often-said"
-          {...voice}
-          style={[styles.oftenSaid, { borderTopColor: colors.line }]}
-        >
-          <Svg
-            width={wordCardControls.oftenSaidIcon}
-            height={wordCardControls.oftenSaidIcon}
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <Path
-              d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"
-              stroke={colors.accent}
-              strokeWidth={1.8}
-            />
-          </Svg>
-          <View style={styles.oftenSaidLine}>
-            {/* Each form below says the label for VoiceOver. */}
-            <Text
-              accessibilityElementsHidden
-              importantForAccessibility="no"
-              style={[typeStyle('meta', tokens), { color: colors.muted }]}
-            >
-              {strings.oftenSaid}
-            </Text>
-            {card.linkedCorrections.map(({ correctionId, nonStandardForm }, index) => (
-              <Pressable
-                key={correctionId}
-                testID={`word-often-said-${correctionId}`}
-                accessibilityRole="button"
-                accessibilityLabel={`${strings.oftenSaid} ${withoutStress(nonStandardForm)}`}
-                accessibilityHint={strings.oftenSaidHint}
-                {...voice}
-                disabled={onOpenCorrection === undefined}
-                // The 14 pt line grows to a full touch target.
-                hitSlop={{ top: space[4], bottom: space[4], left: space[1], right: space[1] }}
-                onPress={() => onOpenCorrection?.(correctionId)}
-              >
-                <Text
-                  style={[typeStyle('oftenSaidForm', tokens), styles.italic, { color: colors.ink }]}
-                >
-                  {index < card.linkedCorrections.length - 1
-                    ? `${nonStandardForm},`
-                    : nonStandardForm}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      )}
+      <OftenSaid card={card} onOpenCorrection={onOpenCorrection} />
     </>
+  );
+}
+
+/** The Word's Illustration above its Definition, the same in both Themes; a file the app lacks shows none (ADR 0055). */
+export function WordIllustration({ card }: { card: WordCardModel }) {
+  const edition = useEdition();
+  const { voice } = edition;
+  const strings = edition.strings.wordCard;
+  // In the Feed, VoiceOver turns to the next or previous card from the Lemma and the Definition.
+  const turnActions = usePageTurnActions();
+  const illustration =
+    card.illustration === undefined ? undefined : edition.illustrations[card.illustration];
+  if (illustration === undefined) return null;
+  return (
+    <Image
+      testID="word-illustration"
+      source={illustration}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={fill(strings.illustration, { lemma: withoutStress(card.lemma) })}
+      {...voice}
+      {...turnActions}
+      resizeMode="contain"
+      style={styles.illustration}
+    />
+  );
+}
+
+/** The Word's primary Definition at the user's font size. */
+export function WordDefinition({ card }: { card: WordCardModel }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const sizes = useWordTextSizes();
+  const { voice } = useEdition();
+  const turnActions = usePageTurnActions();
+  return (
+    <Text
+      testID="word-definition"
+      // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
+      accessibilityLabel={withoutStress(card.primaryDefinition)}
+      {...voice}
+      {...turnActions}
+      style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
+    >
+      {card.primaryDefinition}
+    </Text>
+  );
+}
+
+/** «Часто кажуть:» and the non-standard forms of the linked Corrections, each opening its Correction. */
+export function OftenSaid({
+  card,
+  onOpenCorrection,
+}: {
+  card: WordCardModel;
+  onOpenCorrection: ((correctionId: string) => void) | undefined;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { strings: editionStrings, voice } = useEdition();
+  const strings = editionStrings.wordCard;
+  if (card.linkedCorrections.length === 0) return null;
+  return (
+    <View
+      testID="word-often-said"
+      {...voice}
+      style={[styles.oftenSaid, { borderTopColor: colors.line }]}
+    >
+      <Svg
+        width={wordCardControls.oftenSaidIcon}
+        height={wordCardControls.oftenSaidIcon}
+        viewBox="0 0 24 24"
+        fill="none"
+      >
+        <Path
+          d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"
+          stroke={colors.accent}
+          strokeWidth={1.8}
+        />
+      </Svg>
+      <View style={styles.oftenSaidLine}>
+        {/* Each form below says the label for VoiceOver. */}
+        <Text
+          accessibilityElementsHidden
+          importantForAccessibility="no"
+          style={[typeStyle('meta', tokens), { color: colors.muted }]}
+        >
+          {strings.oftenSaid}
+        </Text>
+        {card.linkedCorrections.map(({ correctionId, nonStandardForm }, index) => (
+          <Pressable
+            key={correctionId}
+            testID={`word-often-said-${correctionId}`}
+            accessibilityRole="button"
+            accessibilityLabel={`${strings.oftenSaid} ${withoutStress(nonStandardForm)}`}
+            accessibilityHint={strings.oftenSaidHint}
+            {...voice}
+            disabled={onOpenCorrection === undefined}
+            // The 14 pt line grows to a full touch target.
+            hitSlop={{ top: space[4], bottom: space[4], left: space[1], right: space[1] }}
+            onPress={() => onOpenCorrection?.(correctionId)}
+          >
+            <Text
+              style={[typeStyle('oftenSaidForm', tokens), styles.italic, { color: colors.ink }]}
+            >
+              {index < card.linkedCorrections.length - 1 ? `${nonStandardForm},` : nonStandardForm}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
   );
 }
 
@@ -351,7 +309,13 @@ export function WordSections({
  * changed its meaning. The reader reaches it by scrolling, so `onShown` is
  * called once it is drawn, and the caller counts that as the history opened.
  */
-function WordHistory({ history, onShown }: { history: string; onShown: (() => void) | undefined }) {
+export function WordHistory({
+  history,
+  onShown,
+}: {
+  history: string;
+  onShown: (() => void) | undefined;
+}) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
@@ -375,7 +339,7 @@ function WordHistory({ history, onShown }: { history: string; onShown: (() => vo
  * «У синонімічному ряду: {домінанта}», the row the Word is a member of, as a
  * button that opens the row (ADR 0051).
  */
-function SynonymRowLine({
+export function SynonymRowLine({
   synonymRow: { synonymRowId, dominant },
   onOpen,
 }: {

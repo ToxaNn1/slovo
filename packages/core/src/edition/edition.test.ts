@@ -116,6 +116,7 @@ const validConfig = {
     correctionTypes: true,
     curatedCollections: true,
     swipeMarks: true,
+    wordTabs: true,
     searchButton: true,
     dashboardWordmark: true,
     categoryScreens: true,

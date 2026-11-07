@@ -31,6 +31,8 @@ export interface Shown {
   };
   /** Whether the Stress mark of a Word card's Lemma falls onto its vowel in the Feed and on the Entry screen. */
   readonly stressFall: boolean;
+  /** Whether a Word's Entry card, in the Feed and on the Entry screen, is the fixed-height card with tabs (ADR 0088). */
+  readonly wordTabs: boolean;
   /** Whether the Lemma on the Word of the Day card in the Feed is set in the Edition's calligraphic font. */
   readonly calligraphicLemma: boolean;
   /** Whether an Entry card is in Self-check. */
@@ -165,6 +167,7 @@ export function shownOf({
       mistakeReport: on('mistakeReports'),
     },
     stressFall: on('stressAnimation'),
+    wordTabs: on('wordTabs'),
     calligraphicLemma: on('calligraphy'),
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),

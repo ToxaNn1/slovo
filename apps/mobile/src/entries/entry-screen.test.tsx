@@ -211,6 +211,10 @@ const historyOpened = () => analytics.events.filter(({ event }) => event === 'wo
 describe('the Entry screen and the Word History', () => {
   it('tells Analytics the Word History opened once, with the Entry, when the section is drawn', async () => {
     await renderEntry('w_sumyrnyi');
+    // With `wordTabs` on, the Word History is drawn on «Історія» alone (ADR 0088).
+    expect(historyOpened()).toEqual([]);
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    await settle();
 
     expect(screen.getByTestId('word-history')).toBeOnTheScreen();
     expect(historyOpened()).toEqual([
