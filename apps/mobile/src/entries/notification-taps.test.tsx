@@ -1,10 +1,12 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { NotificationKind } from '@slovo/core';
 import { router, Tabs, useLocalSearchParams, useRouter } from 'expo-router';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
-import { Linking, Pressable, Text } from 'react-native';
+import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { renderRoutes, sendLink } from '../shell/test-render';
+import { Pressable, Text } from 'react-native';
 
 import EntryLayout from '../app/entry/_layout';
+import { noTabButton } from '../shell/edition-tabs';
 import { createOutsideLinks } from './entry-link';
 import { NotificationTaps } from './notification-taps';
 import { createLinkRelay } from './widget-entry-links';
@@ -96,13 +98,8 @@ async function renderApp(
     onOpened,
   }: { replaceOpenEntry?: boolean; onOpened?: (kind: NotificationKind) => void } = {},
 ) {
-  const listeners: ((event: { url: string }) => void)[] = [];
-  jest.spyOn(Linking, 'addEventListener').mockImplementation((_type, listener) => {
-    listeners.push(listener);
-    return { remove: () => undefined } as ReturnType<typeof Linking.addEventListener>;
-  });
   const widgetLinks = createLinkRelay();
-  const app = renderRouter(
+  const app = await renderRoutes(
     {
       _layout: () => (
         <>
@@ -113,7 +110,7 @@ async function renderApp(
           />
           <Tabs screenOptions={{ headerShown: false }}>
             <Tabs.Screen name="index" />
-            <Tabs.Screen name="entry" options={{ href: null }} />
+            <Tabs.Screen name="entry" options={noTabButton} />
           </Tabs>
         </>
       ),
@@ -135,7 +132,6 @@ async function renderApp(
     },
     { initialUrl: '/' },
   );
-  await app;
   await settle();
   /** The ids of the Entries on a stack of links, bottom first. */
   const stack = (name: string) => {
@@ -148,9 +144,7 @@ async function renderApp(
     entryStack: () => stack('entry'),
     openFromWidget: (entryId: string) =>
       settle(() => {
-        for (const listener of listeners) {
-          listener({ url: `slovo-uk://entry/${entryId}?from=widget&key=${WIDGET_LINK_KEY}` });
-        }
+        sendLink(`slovo-uk://entry/${entryId}?from=widget&key=${WIDGET_LINK_KEY}`);
       }),
   };
 }
@@ -288,8 +282,8 @@ describe("the widget's link while the app runs", () => {
     await push('/entry/c_0a1b2c');
     await app.openFromWidget('w_khalamydnyk');
 
-    expect(app.entryStack()).toEqual(['w_bevz', 'w_khalamydnyk']);
+    expect(app.entryStack()).toEqual(['w_bevz', 'c_0a1b2c', 'w_khalamydnyk']);
     await back('w_khalamydnyk');
-    expect(app.pathname()).toBe('/entry/w_bevz');
+    expect(app.pathname()).toBe('/entry/c_0a1b2c');
   });
 });
