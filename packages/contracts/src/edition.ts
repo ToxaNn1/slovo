@@ -443,7 +443,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   curatedCollections: z.boolean(),
   /** Swipe marks: the reader swipes an Entry card right for Known and left for Unknown, with an undo; off, the card's mark buttons stay. Off while `knowledge` is. */
   swipeMarks: z.boolean(),
-  /** Word tabs: a Word's Entry card in a fixed-height frame with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma (ADR 0088); off, the card is one column with «Детальніше». */
+  /** Word tabs: a Word's Entry card in a fixed-height frame with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, and a Correction's card with «Як краще», «Чому» and «Приклади» under its struck non-standard form (ADR 0088); off, the cards are one column, the Word's with «Детальніше». */
   wordTabs: z.boolean(),
   /** The Search button of the Feed's header, which opens the Search screen; Search itself stays under `search`. Off while `search` is. */
   searchButton: z.boolean(),
