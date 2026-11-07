@@ -85,7 +85,7 @@ const {
 } = userStateRecords;
 
 /** The distinct Entries Seen on a local day after which the Feed asks «Може, на сьогодні досить?». */
-const ENOUGH_FOR_TODAY_SEEN = 50;
+export const ENOUGH_FOR_TODAY_SEEN = 50;
 
 const FIRST_WEEK_DAYS = 7;
 

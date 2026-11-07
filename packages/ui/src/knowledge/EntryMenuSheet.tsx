@@ -22,8 +22,8 @@ export interface EntryMenuMarks {
  * «Знаю» says «Я й так кажу правильно»), «Змінити на «Не знаю»» or «Змінити на
  * «Знаю»» and «Зняти позначку» with one; they are left out while Self-check
  * conceals the card, and when `marks` is not given. Then «Поділитися»,
- * «Сховати» and «Повідомити про помилку», each when given, and «Закрити» last.
- * An item asks for its action; the caller closes the sheet. «Закрити», a tap on
+ * «Сховати» and «Повідомити про помилку», each when given, and «Скасувати» last.
+ * An item asks for its action; the caller closes the sheet. «Скасувати», a tap on
  * the scrim and a drag on its top ask `onClose`; `onDismissed` runs once the
  * sheet has slid away, for a sheet an item opens next.
  */
