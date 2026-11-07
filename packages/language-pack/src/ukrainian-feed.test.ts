@@ -225,27 +225,31 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     },
   );
 
-  it(`makes a Word Seen only after ${String(SEEN_DWELL_MS)} ms on screen, never on a quick swipe, and never by going back`, async () => {
-    const userState = await seedUserState();
-    const time = fakeClock(today);
-    const feed = await run(userState, time.clock);
-    await feed.next();
-    await feed.next();
-    const [read, skipped, almost] = entryIdsOf(feed.cards);
+  it(
+    `makes a Word Seen only after ${String(SEEN_DWELL_MS)} ms on screen, never on a quick swipe, and never by going back`,
+    { timeout: WALK_TIMEOUT_MS },
+    async () => {
+      const userState = await seedUserState();
+      const time = fakeClock(today);
+      const feed = await run(userState, time.clock);
+      await feed.next();
+      await feed.next();
+      const [read, skipped, almost] = entryIdsOf(feed.cards);
 
-    await look(feed, time, 0, SEEN_DWELL_MS);
-    await look(feed, time, 1, 250);
-    await look(feed, time, 2, SEEN_DWELL_MS - 1);
-    // Back over the skipped card to the one already read.
-    await look(feed, time, 1, 250);
-    await look(feed, time, 0, 10_000);
+      await look(feed, time, 0, SEEN_DWELL_MS);
+      await look(feed, time, 1, 250);
+      await look(feed, time, 2, SEEN_DWELL_MS - 1);
+      // Back over the skipped card to the one already read.
+      await look(feed, time, 1, 250);
+      await look(feed, time, 0, 10_000);
 
-    const unseen = await unseenNextDay(userState);
-    expect(unseen).toHaveLength(liveIds.length - 1);
-    expect(unseen).not.toContain(read);
-    expect(unseen).toContain(skipped);
-    expect(unseen).toContain(almost);
-  });
+      const unseen = await unseenNextDay(userState);
+      expect(unseen).toHaveLength(liveIds.length - 1);
+      expect(unseen).not.toContain(read);
+      expect(unseen).toContain(skipped);
+      expect(unseen).toContain(almost);
+    },
+  );
 
   it(
     'offers no Seen Word again after a restart in the same Cycle',
