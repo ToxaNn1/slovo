@@ -1,5 +1,5 @@
 import { fill } from '@slovo/contracts';
-import type { GameModeOffer } from '@slovo/core';
+import { streakOf, type GameModeOffer } from '@slovo/core';
 import {
   DailyCrosswordCard,
   GameEndPoster,
@@ -58,7 +58,7 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const { gameReview, finishPoster } = useShown();
+  const { gameReview, finishPoster, survivalStreak } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
@@ -136,6 +136,7 @@ function Game() {
         <GameRound
           game={current}
           timeLeft={timeLeft}
+          streak={survivalStreak ? streakOf(state) : undefined}
           title={gameModeStrings(strings.modes, current.modeId).title}
           label={gameModeStrings(strings.modes, current.modeId).roundLabel}
           onAnswer={actions.answer}
