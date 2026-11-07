@@ -55,7 +55,7 @@ const POP_UP = {
 };
 
 /**
- * The crossing Daily Crossword's grid (ADR 0087, board 08): blocks in ink,
+ * The crossing Daily Crossword's grid (ADR 0087, board 08): blocks as silhouettes,
  * white cells with their numbers and letters, the current Word's cells
  * highlighted and a solved Word's cells red, with a short pop as they turn,
  * calmed under Reduce Motion. A tap on a white cell asks `onSelect`; the grid
@@ -82,7 +82,10 @@ export function CrossingGrid({
                 testID={`${testID}-${String(r)}-${String(c)}-block`}
                 accessibilityElementsHidden
                 importantForAccessibility="no-hide-descendants"
-                style={[styles.cell, { backgroundColor: colors.ink, borderRadius: radii.tile }]}
+                style={[
+                  styles.cell,
+                  { backgroundColor: colors.silhouette, borderRadius: radii.tile },
+                ]}
               />
             ) : (
               <Cell

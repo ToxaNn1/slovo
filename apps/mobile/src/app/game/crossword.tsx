@@ -190,9 +190,9 @@ function TracedCrosswordScreen({ crossword }: { crossword: TracedCrosswordPlay }
 }
 
 /**
- * The crossing Daily Crossword (ADR 0087): the current Word's clue bar with
- * «next», the grid, the line on how to trace, long until a Word is solved,
- * and the Letter Wheel; a trace that spells no Word shakes in ink under
+ * The crossing Daily Crossword (ADR 0087), as board 08 orders it: the grid,
+ * the current Word's clue bar with «next» under it, the line on how to trace,
+ * long until a Word is solved, and the Letter Wheel at the foot; a trace that spells no Word shakes in ink under
  * «Десь закралася помилка. Шукай уважніше!»; «Розв’язано!» once every Word is solved.
  */
 function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPlay }) {
@@ -235,7 +235,15 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
           : { label: texts.hint, onPress: crossword.hint }
       }
     >
-      <ScrollView contentContainerStyle={styles.content} scrollEnabled={accessibleMode || solved}>
+      <ScrollView
+        contentContainerStyle={[styles.content, styles.fill]}
+        scrollEnabled={accessibleMode || solved}
+      >
+        <CrossingGrid
+          testID="crossing-crossword-grid"
+          cells={crossword.cells}
+          onSelect={crossword.select}
+        />
         {!solved && (
           <CrossingClueBar
             testID="crossing-crossword-clue"
@@ -246,11 +254,6 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
             onNext={crossword.next}
           />
         )}
-        <CrossingGrid
-          testID="crossing-crossword-grid"
-          cells={crossword.cells}
-          onSelect={crossword.select}
-        />
         {solved ? (
           <Text
             testID="daily-crossword-solved"
@@ -277,6 +280,7 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
                 {texts.miss}
               </Text>
             )}
+            <View style={styles.fill} />
             <LetterWheel
               testID="crossing-crossword-wheel"
               letters={crossword.wheel}
@@ -349,4 +353,5 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: space[4], paddingTop: space[2] },
   content: { gap: space[4], paddingHorizontal: space[5], paddingBottom: space[8] },
   solved: { textAlign: 'center' },
+  fill: { flexGrow: 1 },
 });
