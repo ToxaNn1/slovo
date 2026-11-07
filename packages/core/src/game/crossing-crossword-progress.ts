@@ -25,10 +25,12 @@ const { crossingCrosswordProgress } = userStateRecords;
 export interface CrossingCrossword {
   readonly puzzle: CrossingPuzzle;
   readonly state: CrossingPlay;
+  /** Whether the Edition offers the Crossword Hint (`crosswordHint`); while it does not, a hint changes nothing. */
+  readonly hint: boolean;
   /**
-   * Plays the reader's action. A release that solves a Word keeps the
-   * progress on this device first, so a failed write changes nothing; the
-   * solve of the day appends its XP in the same write.
+   * Plays the reader's action. A hint, or a release that solves a Word,
+   * keeps the progress on this device first, so a failed write changes
+   * nothing; the solve of the day appends its XP in the same write.
    */
   play(action: CrossingAction): Promise<CrossingPlay>;
   /** Keeps the progress with the seconds so far: for when the time pauses, as the screen leaves or the app goes to the background. */
@@ -115,15 +117,19 @@ export async function openCrossingCrossword({
       seconds: play.seconds,
     });
 
+  const hint = edition.isFeatureEnabled('crosswordHint');
   const crossword: CrossingCrossword = {
     puzzle,
+    hint,
     get state() {
       return state;
     },
     play: (action) =>
       inTurn(async () => {
+        if (action.type === 'hint' && !hint) return state;
         const next = playCrossing(puzzle, state, action);
-        if (solvedIds(puzzle, next).length === solvedIds(puzzle, state).length) {
+        const hinted = action.type === 'hint' && next !== state;
+        if (!hinted && solvedIds(puzzle, next).length === solvedIds(puzzle, state).length) {
           state = next;
           return state;
         }

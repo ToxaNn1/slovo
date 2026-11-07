@@ -258,6 +258,42 @@ describe('the crossing Daily Crossword play', () => {
     });
   });
 
+  describe('hint', () => {
+    const hint: CrossingAction = { type: 'hint' };
+
+    it('fills the first empty cell of the current Word with its letter, sets hinted and drops the trace', () => {
+      const before = play(startCrossingPlay(puzzle), { type: 'extend', tile: 0 });
+      const state = play(before, hint);
+      expect(state.cells[crossingCellKey({ row: 0, column: 0 })]).toEqual({
+        kind: 'filled',
+        letter: 'c',
+      });
+      expect(state.cells[crossingCellKey({ row: 0, column: 1 })]).toEqual({ kind: 'empty' });
+      expect(state).toMatchObject({ current: CAT, hinted: true, trace: [] });
+      expect(state.words[CAT]).toEqual({ kind: 'open' });
+    });
+
+    it('solves a Word with no empty cell left and moves on to the next open Word', () => {
+      const state = play(startCrossingPlay(puzzle), hint, hint);
+      expect(state.cells[crossingCellKey({ row: 0, column: 1 })]).toEqual({
+        kind: 'filled',
+        letter: 'a',
+      });
+      expect(state.words[CAT]).toEqual({ kind: 'solved' });
+      expect(state.current).toBe(COW);
+      expect(play(state, hint).cells[crossingCellKey({ row: 1, column: 0 })]).toEqual({
+        kind: 'filled',
+        letter: 'o',
+      });
+    });
+
+    it('changes nothing on a solved Word', () => {
+      const state = play(solved(CAT), select(0, 2));
+      expect(state.current).toBe(CAT);
+      expect(play(state, hint)).toEqual(state);
+    });
+  });
+
   describe('tick', () => {
     it('adds the seconds given', () => {
       const state = play(

@@ -32,8 +32,9 @@ export interface CrossingPlay {
  * crossing a second tap switches direction), move to the next open Word,
  * extend the trace onto a wheel tile (onto the tile before the last, it
  * steps back), step back one tile, release the trace, which fills and
- * solves the current Word it spells or misses, and tick the on-screen
- * seconds.
+ * solves the current Word it spells or misses, ask the Crossword Hint, which
+ * fills the first empty cell of the current Word and marks the play hinted,
+ * and tick the on-screen seconds.
  */
 export type CrossingAction =
   | { readonly type: 'select'; readonly place: PuzzlePlace }
@@ -41,6 +42,7 @@ export type CrossingAction =
   | { readonly type: 'extend'; readonly tile: number }
   | { readonly type: 'stepBack' }
   | { readonly type: 'release' }
+  | { readonly type: 'hint' }
   | { readonly type: 'tick'; readonly seconds: number };
 
 /** The progress of a day kept between openings: the letters filled by cell key, the ids of the Words solved, `hinted` and the seconds. */
@@ -192,6 +194,26 @@ export function playCrossing(
         words: state.words.map((word, i) => (i === state.current ? { kind: 'solved' } : word)),
       });
       return { ...state, cells, words, current: nextOpen(words, state.current), trace: [] };
+    }
+    case 'hint': {
+      const empty = crossingPlacesOf(current).findIndex(
+        (place) => state.cells[crossingCellKey(place)]?.kind === 'empty',
+      );
+      const place = crossingPlacesOf(current)[empty];
+      const letter = current.letters[empty];
+      if (place === undefined || letter === undefined) return state;
+      const filled: CrossingCell = { kind: 'filled', letter };
+      const cells = { ...state.cells, [crossingCellKey(place)]: filled };
+      const words = settled(puzzle, { ...state, cells });
+      const moved = words[state.current]?.kind === 'solved';
+      return {
+        ...state,
+        cells,
+        words,
+        current: moved ? nextOpen(words, state.current) : state.current,
+        trace: [],
+        hinted: true,
+      };
     }
     case 'tick':
       return { ...state, seconds: state.seconds + action.seconds };

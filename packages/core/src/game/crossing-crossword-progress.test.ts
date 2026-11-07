@@ -123,6 +123,28 @@ describe('the crossing Daily Crossword', () => {
     expect(again.state).toMatchObject({ seconds: 12, hinted: false, trace: [] });
   });
 
+  it('keeps a hint, its letter and `hinted` as it is asked, for the reader coming back the same day', async () => {
+    const records = new Map<string, string>();
+    const crossword = await opened({
+      records,
+      on: ['game', 'dailyCrossword', 'crossingCrossword', 'crosswordHint'],
+    });
+    expect(crossword.hint).toBe(true);
+    await crossword.play({ type: 'hint' });
+    expect(crossword.state.hinted).toBe(true);
+
+    const again = await opened({ records, start: '2026-11-04T20:00:00Z' });
+    expect(again.state.hinted).toBe(true);
+    expect(again.state.cells).toEqual(crossword.state.cells);
+  });
+
+  it('takes no hint while the Crossword Hint is off', async () => {
+    const crossword = await opened();
+    expect(crossword.hint).toBe(false);
+    const before = crossword.state;
+    expect(await crossword.play({ type: 'hint' })).toBe(before);
+  });
+
   it('keeps the seconds of a solve on the next tick-free reload, not the ticks after', async () => {
     const records = new Map<string, string>();
     const crossword = await opened({ records });
