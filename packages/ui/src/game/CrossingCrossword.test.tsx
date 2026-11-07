@@ -77,10 +77,9 @@ const renderIn = async (ui: ReactElement) => {
 
 /** The centre of a tile, as the wheel lays tiles out on its circle. */
 const centreOf = (index: number) => {
-  const { wheel, tile } = crossingCrosswordLayout;
+  const { wheel, orbit } = crossingCrosswordLayout;
   const angle = -Math.PI / 2 + (index * 2 * Math.PI) / wheelLetters.length;
-  const radius = (wheel - tile) / 2;
-  return { x: wheel / 2 + radius * Math.cos(angle), y: wheel / 2 + radius * Math.sin(angle) };
+  return { x: wheel / 2 + orbit * Math.cos(angle), y: wheel / 2 + orbit * Math.sin(angle) };
 };
 
 const drag = async (tiles: number[]) => {

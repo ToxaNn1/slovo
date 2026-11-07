@@ -15,6 +15,8 @@ import {
 } from '@slovo/core';
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 
+import type { FeatureSwitch } from '@slovo/contracts';
+
 import { edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
 import type { EditionSwitches, OpenedSettings, Shell } from '../shell-value';
@@ -37,6 +39,23 @@ export function opened<T>(value: T): Opening<T> {
     subscribe: () => () => undefined,
   };
 }
+
+/**
+ * The Feature Switches of the Games boards (spec #1674). A test of the Game tab
+ * starts with each of them off and turns on the ones it needs, so it does not
+ * hang on whether the UA Edition ships them.
+ */
+export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
+  'crossingCrossword',
+  'crosswordHint',
+  'crosswordSolveTime',
+  'crosswordSolvedScreen',
+  'crosswordBadgeStamp',
+  'gameAnswerCard',
+  'letterTiles',
+  'survivalStreak',
+  'finishPoster',
+];
 
 /**
  * The remote Feature Switches already open, with the Edition in effect as

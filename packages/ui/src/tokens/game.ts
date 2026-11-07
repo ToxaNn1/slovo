@@ -164,19 +164,30 @@ export const tracedCrosswordLayout = {
 } as const;
 
 /**
- * The crossing Daily Crossword (ADR 0087): a grid cell's side; how far a
- * solved cell pops; the Letter Wheel's side, its tiles' side and how much of
- * a tile, from its centre, catches the finger; the red trace's width; a path
- * chip's side; how far a miss shakes and how long each beat takes (ms); the
- * hand coach's fingertip and how long one sweep between two tiles takes (ms).
+ * The crossing Daily Crossword (ADR 0087, board 08): a grid cell's side and
+ * the gap between cells; how far a solved cell pops; the room above the clue
+ * bar and above the path slot, and the slot's height, where the path chips or
+ * the line on how to trace show; the Letter Wheel's side, the depth of its
+ * disc's inner top edge, its tiles' side and corner radius, how far their
+ * centres sit from the wheel's and how much of a tile, from its centre,
+ * catches the finger; the red trace's width; a path chip's side; how far a
+ * miss shakes and how long each beat takes (ms); the hand coach's fingertip
+ * and how long one sweep between two tiles takes (ms).
  */
 export const crossingCrosswordLayout = {
-  cell: 56,
+  cell: 54,
+  cellGap: 7,
   pop: 1.12,
-  wheel: 248,
-  tile: 58,
+  clueGap: 14,
+  slotGap: 8,
+  slot: 48,
+  wheel: 260,
+  discEdge: 6,
+  tile: 62,
+  tileRadius: 18,
+  orbit: 88,
   hitRadius: 0.5,
-  trace: 8,
+  trace: 12,
   chip: 34,
   shake: 8,
   shakeBeat: 60,

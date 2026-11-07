@@ -1,5 +1,5 @@
 'use no memo';
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import {
   GestureDetector,
@@ -35,22 +35,22 @@ export interface WheelMiss {
   readonly letters: readonly string[];
 }
 
-const { wheel, tile, chip } = crossingCrosswordLayout;
-const radius = (wheel - tile) / 2;
+const { wheel, tile, chip, orbit } = crossingCrosswordLayout;
 
 /** The centre of each of `count` tiles on the circle, the first at the top, clockwise. */
 const centresOf = (count: number) =>
   Array.from({ length: count }, (_, i) => {
     const angle = -Math.PI / 2 + (i * 2 * Math.PI) / Math.max(count, 1);
-    return { x: wheel / 2 + radius * Math.cos(angle), y: wheel / 2 + radius * Math.sin(angle) };
+    return { x: wheel / 2 + orbit * Math.cos(angle), y: wheel / 2 + orbit * Math.sin(angle) };
   });
 
 const STEP = { easing: ease, reduceMotion: ReduceMotion.Never } as const;
 
 /**
  * The Letter Wheel of the crossing Daily Crossword (ADR 0087, board 08): the
- * current Word's letters on tiles round a circle, traced by finger with a red
- * line, and the path chips over it spelling the trace. The drag runs on the UI
+ * current Word's letters on square tiles round a sunken disc, traced by finger
+ * with a red line, and, at the top of the room it fills, the slot where the
+ * path chips spell the trace and `help` shows while there is no trace. The drag runs on the UI
  * thread and hit-tests the tile under the finger; the wheel holds no rules: it
  * asks `onExtend` for each tile the finger reaches and `onRelease` when it
  * lifts. A trace that spelled nothing (`miss`) shows its letters in ink and
@@ -68,6 +68,7 @@ export function LetterWheel({
   onExtend,
   onStepBack,
   onRelease,
+  help,
   texts,
   testID,
 }: {
@@ -83,6 +84,8 @@ export function LetterWheel({
   onExtend: (tile: number) => void;
   onStepBack: () => void;
   onRelease: () => void;
+  /** What the path slot shows while there is no trace, such as the line on how to trace. */
+  help?: ReactNode;
   texts: {
     /** What VoiceOver reads for a tile. */
     tileLabel: (letter: string) => string;
@@ -173,39 +176,51 @@ export function LetterWheel({
 
   return (
     <View style={styles.wheelArea}>
-      <Animated.View
-        testID={`${testID}-path`}
-        accessible={chips.length > 0}
-        accessibilityLabel={chips.join('')}
-        style={[styles.path, shaking]}
-      >
-        {chips.map((letter, i) => (
-          <View
-            key={i}
-            testID={`${testID}-chip-${String(i)}`}
-            style={[
-              styles.chip,
-              {
-                borderRadius: radii.tile,
-                backgroundColor: missed ? colors.ink : colors.accent,
-              },
-            ]}
-          >
-            <Text
-              {...voice}
-              maxFontSizeMultiplier={TILE_MAX_FONT_SCALE}
+      <View style={styles.slot}>
+        <Animated.View
+          testID={`${testID}-path`}
+          accessible={chips.length > 0}
+          accessibilityLabel={chips.join('')}
+          style={[styles.path, shaking]}
+        >
+          {chips.map((letter, i) => (
+            <View
+              key={i}
+              testID={`${testID}-chip-${String(i)}`}
               style={[
-                typeStyle('crosswordClueNumber', tokens),
-                { color: missed ? colors.background : colors.onAccent },
+                styles.chip,
+                {
+                  borderRadius: radii.tile,
+                  backgroundColor: missed ? colors.ink : colors.accent,
+                },
               ]}
             >
-              {letter}
-            </Text>
-          </View>
-        ))}
-      </Animated.View>
+              <Text
+                {...voice}
+                maxFontSizeMultiplier={TILE_MAX_FONT_SCALE}
+                style={[
+                  typeStyle('crosswordClueNumber', tokens),
+                  { color: missed ? colors.background : colors.onAccent },
+                ]}
+              >
+                {letter}
+              </Text>
+            </View>
+          ))}
+        </Animated.View>
+        {trace.length === 0 && help}
+      </View>
       <GestureDetector gesture={drag}>
         <View testID={testID} style={styles.wheel}>
+          <View
+            style={[
+              styles.disc,
+              {
+                backgroundColor: colors.surfaceSunken,
+                boxShadow: `inset 0 ${String(crossingCrosswordLayout.discEdge)}px 0 ${colors.tileEdge}`,
+              },
+            ]}
+          />
           {trace.length > 1 && (
             <Svg
               pointerEvents="none"
@@ -238,11 +253,12 @@ export function LetterWheel({
                   accessibilityLabel={texts.tileLabel(letter)}
                   accessibilityState={{ selected: traced }}
                   inert={!accessibleMode}
+                  radius={crossingCrosswordLayout.tileRadius}
                   onPress={() => {
                     if (trace[trace.length - 1] === index) onStepBack();
                     else onExtend(index);
                   }}
-                  faceStyle={[styles.tileFace, { borderRadius: tile / 2 }]}
+                  faceStyle={styles.tileFace}
                 >
                   <Text
                     {...voice}
@@ -324,10 +340,19 @@ function Coach({
 }
 
 const styles = StyleSheet.create({
-  wheelArea: { alignItems: 'center', gap: crossingCrosswordLayout.chip / 2 },
-  path: { flexDirection: 'row', gap: crossingCrosswordLayout.pathGap, minHeight: chip },
+  wheelArea: { flexGrow: 1, alignItems: 'center', justifyContent: 'space-between' },
+  slot: {
+    alignSelf: 'stretch',
+    minHeight: crossingCrosswordLayout.slot,
+    marginTop: crossingCrosswordLayout.slotGap,
+    gap: crossingCrosswordLayout.pathGap,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  path: { flexDirection: 'row', gap: crossingCrosswordLayout.pathGap },
   chip: { minWidth: chip, height: chip, alignItems: 'center', justifyContent: 'center' },
   wheel: { width: wheel, height: wheel },
+  disc: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, borderRadius: wheel / 2 },
   tile: { position: 'absolute', width: tile, height: tile },
   tileFace: { width: tile, height: tile, alignItems: 'center', justifyContent: 'center' },
   coach: {

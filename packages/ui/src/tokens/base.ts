@@ -206,6 +206,8 @@ export const typeRoles = {
   crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
   /** The Daily Crossword's name in its screen's header, beside the back tile. */
   crosswordHeader: role('word', '900', 18, 18, 0, 'uppercase'),
+  /** A screen's own action at the far end of its header, as the Daily Crossword's «Підказка». */
+  headerAction: role('ui', '700', 13, 13),
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The day under the Daily Crossword's name on its red card. */

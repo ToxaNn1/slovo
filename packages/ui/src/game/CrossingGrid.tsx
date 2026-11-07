@@ -240,8 +240,8 @@ export function CrossingClueBar({
 }
 
 const styles = StyleSheet.create({
-  grid: { gap: crosswordLayout.cellGap, alignSelf: 'center' },
-  row: { flexDirection: 'row', gap: crosswordLayout.cellGap },
+  grid: { gap: crossingCrosswordLayout.cellGap, alignSelf: 'center' },
+  row: { flexDirection: 'row', gap: crossingCrosswordLayout.cellGap },
   cell: {
     width: crossingCrosswordLayout.cell,
     height: crossingCrosswordLayout.cell,
@@ -255,6 +255,7 @@ const styles = StyleSheet.create({
   },
   clueBar: {
     alignSelf: 'stretch',
+    marginTop: crossingCrosswordLayout.clueGap,
     flexDirection: 'row',
     alignItems: 'center',
     gap: crosswordLayout.clueGap,

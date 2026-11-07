@@ -22,12 +22,21 @@ import GameScreen from '../app/game';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider, type ShareCard } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
-import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import {
+  GAMES_BOARD_SWITCHES,
+  opened,
+  settingsAt,
+  switchedTo,
+  testShell,
+} from '../shell/test-support';
 import { CROSSING_LEMMAS, solveCrossingWord } from './crossing-crossword.test-support';
 
 const { config } = activeEditionFiles;
 
-/** The UA Edition with the given Feature Switches turned off, and the others given turned on. */
+/**
+ * The UA Edition with the Games boards' switches and the given Feature Switches
+ * turned off, and the others given turned on.
+ */
 function editionWithout(
   switchedOff: readonly string[],
   switchedOn: readonly string[] = [],
@@ -37,6 +46,7 @@ function editionWithout(
     ...rest,
     featureSwitches: {
       ...featureSwitches,
+      ...Object.fromEntries(GAMES_BOARD_SWITCHES.map((name) => [name, false])),
       ...Object.fromEntries(switchedOff.map((name) => [name, false])),
       ...Object.fromEntries(switchedOn.map((name) => [name, true])),
     },
@@ -211,7 +221,7 @@ async function open({
   /** Whether each Idiom's sense runs past a sentence. */
   longSenses?: boolean;
   switchedOff?: readonly string[];
-  /** Feature Switches the UA Edition ships off, turned on. */
+  /** Feature Switches turned on, such as the Games boards' ones. */
   switchedOn?: readonly string[];
   /** Lemmas that fill the crossing Daily Crossword, with it switched on. */
   crossing?: boolean;
