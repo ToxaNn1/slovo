@@ -143,5 +143,26 @@ export const tracedCrosswordLayout = {
   missFade: 300,
 } as const;
 
+/**
+ * The crossing Daily Crossword (ADR 0087): a grid cell's side; how far a
+ * solved cell pops; the Letter Wheel's side, its tiles' side and how much of
+ * a tile, from its centre, catches the finger; the red trace's width; a path
+ * chip's side; how far a miss shakes and how long each beat takes (ms); the
+ * hand coach's fingertip and how long one sweep between two tiles takes (ms).
+ */
+export const crossingCrosswordLayout = {
+  cell: 56,
+  pop: 1.12,
+  wheel: 248,
+  tile: 58,
+  hitRadius: 0.5,
+  trace: 8,
+  chip: 34,
+  shake: 8,
+  shakeBeat: 60,
+  coach: 30,
+  coachSweep: 1100,
+} as const;
+
 /** The «Знаю» and «Не знаю» pair: two equal columns across the card's width (XActions). */
 export const knowledgePair = { gap: 10 } as const;

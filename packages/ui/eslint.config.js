@@ -54,6 +54,7 @@ export default [
       'src/entries/reveal.tsx',
       'src/feed/GesturesHintSheet.tsx',
       'src/game/ChipsRound.tsx',
+      'src/game/CrossingGrid.tsx',
       'src/game/GameRound.tsx',
       'src/game/OrderedChips.tsx',
       'src/game/PairsGrid.tsx',
