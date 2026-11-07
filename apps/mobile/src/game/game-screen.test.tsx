@@ -26,14 +26,18 @@ import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support
 
 const { config } = activeEditionFiles;
 
-/** The UA Edition with the given Feature Switches turned off. */
-function editionWithout(switchedOff: readonly string[]): Edition {
+/** The UA Edition with the given Feature Switches turned off, and the others given turned on. */
+function editionWithout(
+  switchedOff: readonly string[],
+  switchedOn: readonly string[] = [],
+): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({
     ...rest,
     featureSwitches: {
       ...featureSwitches,
       ...Object.fromEntries(switchedOff.map((name) => [name, false])),
+      ...Object.fromEntries(switchedOn.map((name) => [name, true])),
     },
   });
 }
@@ -207,7 +211,8 @@ const withOrigin = (index: number): Word => ({
  * an origin, the given numbers of calque
  * Corrections, anglicisms (numbered after the calques) and Idioms and the
  * Daily Crossword of the day, with the given Best results by mode id and the
- * crossword's letters, typed on the given date, kept from before.
+ * crossword's letters, typed on the given date, kept from before, and the
+ * given Feature Switches off or on.
  */
 async function open({
   best = {},
@@ -216,6 +221,7 @@ async function open({
   idioms = 0,
   origins = 0,
   switchedOff = [],
+  switchedOn = [],
   crossword,
   clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
   schedule,
@@ -229,13 +235,15 @@ async function open({
   anglicisms?: number;
   idioms?: number;
   switchedOff?: readonly string[];
+  /** Feature Switches the UA Edition ships off, turned on. */
+  switchedOn?: readonly string[];
   crossword?: { date: string; letters: Record<string, string> };
   /** The clock the Core reads; a stopped one on the morning of 26 October by default. */
   clock?: Clock;
   /** What the Core runs something later by; nothing by default. */
   schedule?: Schedule;
 } = {}) {
-  editionInEffect = editionWithout(switchedOff);
+  editionInEffect = editionWithout(switchedOff, switchedOn);
   const xpLog = Object.fromEntries(
     xp.map(({ date, amount }, index): [string, XpRecord] => [
       `seeded-${String(index)}`,
@@ -1183,6 +1191,62 @@ describe('the Game screen', () => {
     expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
   });
 
+  describe('the end posters', () => {
+    it('ends a whole «Наголос» on the «Фініш» poster, «Влучно!», with its XP and a new record, and «До ігор» opens the Games hub', async () => {
+      await open({ switchedOn: ['finishPoster'] });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-stress'));
+      for (let round = 1; round <= 15; round += 1) {
+        await waitFor(() => {
+          expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
+        });
+        await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
+        await fireEvent.press(screen.getByTestId('game-next'));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Фініш')).toBeOnTheScreen();
+      expect(screen.getByText('Влучно!')).toBeOnTheScreen();
+      expect(screen.getByText('15 з 15 влучань')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-new-best')).toHaveTextContent('Новий рекорд!');
+      expect(screen.getByTestId('game-end-xp')).toHaveTextContent(/^Досвід\d+ XP$/);
+      expect(screen.queryByTestId('game-end-time-up')).toBeNull();
+      expect(screen.getByTestId('game-end-best')).toHaveTextContent('Рекорд15');
+      expect(screen.queryByText('Перемога!')).toBeNull();
+      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+
+      await fireEvent.press(screen.getByTestId('game-to-games'));
+
+      expect(screen.getByTestId('game-modes')).toBeOnTheScreen();
+    });
+
+    it('ends «Виживання» on its third mistake on the Lives-over poster, with the mode and the score', async () => {
+      await open({ corrections: 15, switchedOn: ['finishPoster'] });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-survival'));
+      for (const right of [false, true, true, false, false]) {
+        await waitFor(() => {
+          expect(screen.getByTestId('game-lives')).toBeOnTheScreen();
+        });
+        await answerSurvivalRound(right);
+        await fireEvent.press(screen.getByTestId('game-next'));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId('game-end-lives-over')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
+      expect(screen.getByText('ВИЖИВАННЯ · 2/5')).toBeOnTheScreen();
+      expect(screen.queryByTestId('game-end-xp')).toBeNull();
+      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз!');
+      expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
+    });
+  });
+
   describe('«На час»', () => {
     beforeEach(async () => {
       jest.useFakeTimers({ now: new Date('2026-10-26T09:00:00Z') });
@@ -1237,6 +1301,32 @@ describe('the Game screen', () => {
       expect(screen.queryByTestId('game-result-rounds')).toBeNull();
       expect(screen.queryByTestId('game-result-lives')).toBeNull();
       expect(screen.getByTestId('game-result-best')).toHaveTextContent('3', { exact: false });
+    });
+
+    it('ends on the «Фініш» poster headed «Час!», «Ще раунд!» for fewer than half right', async () => {
+      await open({
+        clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
+        schedule: systemSchedule,
+        switchedOn: ['finishPoster'],
+      });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-timed'));
+      await waitFor(() => {
+        expect(timerLabel()).toBe('лишилось 60 секунд');
+      });
+      await pickTheWordOfThePrompt();
+      await pickAnotherWord();
+      await pickAnotherWord();
+      await pass(60_000);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Час!')).toBeOnTheScreen();
+      expect(screen.getByText('Ще раунд!')).toBeOnTheScreen();
+      expect(screen.getByText('1 з 3 влучання')).toBeOnTheScreen();
+      expect(screen.queryByText('Час вийшов!')).toBeNull();
     });
 
     it('stops the timer while the app is in the background, and runs it on from there on return', async () => {
