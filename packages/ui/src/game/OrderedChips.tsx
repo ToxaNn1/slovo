@@ -13,6 +13,7 @@ import Animated, {
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { Button } from '../primitives/Button';
 import { PressedTile } from '../primitives/PressedTile';
 import { space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
@@ -50,13 +51,16 @@ type Judged = 'right' | 'wrong' | undefined;
  * haptic. VoiceOver reads every chip by its text, the line's in the order
  * placed, and skips the empty places. A character that stays in place, such
  * as an apostrophe, is no chip: it shows in the line once the chips before
- * it are there. Key it by the Round, so a new Round starts with an empty
- * line.
+ * it are there. With an erase label, a key under the chips takes back the
+ * last chip placed, as «Анаграми» does (spec #1674); it takes nothing from
+ * an empty line or a given answer. Key it by the Round, so a new Round
+ * starts with an empty line.
  */
 export function OrderedChips({
   chips,
   kind,
   fixed = [],
+  eraseLabel,
   answer,
   onAnswer,
 }: {
@@ -66,6 +70,8 @@ export function OrderedChips({
   kind: 'letter' | 'word';
   /** The characters that stay in place among the chips; none when left out. */
   fixed?: readonly FixedChip[] | undefined;
+  /** The key that takes back the last chip placed, e.g. «← Стерти літеру»; no key when left out. */
+  eraseLabel?: string | undefined;
   /** The Round's answer, once given. */
   answer: ChipsAnswer | undefined;
   /** The places of the chips, in the order tapped, once every chip is in the line. */
@@ -129,6 +135,18 @@ export function OrderedChips({
           );
         })}
       </View>
+      {eraseLabel !== undefined && (
+        <Button
+          variant="ghost"
+          size="small"
+          label={eraseLabel}
+          disabled={line.length === 0 || answer !== undefined}
+          testID="chips-erase"
+          onPress={() => {
+            setTapped(tapped.slice(0, -1));
+          }}
+        />
+      )}
     </View>
   );
 }
