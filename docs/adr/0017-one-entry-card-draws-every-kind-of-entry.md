@@ -16,6 +16,8 @@ What the card needs from the Edition comes from an `EditionProvider`, as the tok
 
 **The Entry row** (`buildEntryRow` in the Core) names and reads an Entry wherever it is listed: Favorites, Collections, History, the Hidden screen, the «Вчу» list and the widget. For every kind it gives the title (a Word's Lemma with Stress, a Correction's main standard equivalent, an Idiom's expression), the second line (the primary Definition, or the non-standard form a Correction replaces), `labelKey` (`word`, `correction`, or the Idiom Type `idiom`, `placeName` or `proverb`, indexing the Edition's `history.kinds`) and the kind-specific VoiceOver text without the Stress mark. The widget reads the row's `spoken` as it stands (ADR 0026). Lists build their VoiceOver label from the Edition's words: `EntryRow` joins the title, the subtitle `entryRowSubtitle` makes (a Correction's «замість …») and the trailing text, and drops the Stress mark. One helper of the UI package (`@slovo/ui/entry-row-text`, `entryLabel`) turns the key into the Edition's word, so no screen branches on the kind for these texts and the Core stays language-agnostic. The Game Review is the one exception: it lists the Rounds just played, so a Correction's row leads with the non-standard form the Round asked about (`titleOf` in `GameReview.tsx`).
 
+**The Word card's tabs.** Behind `wordTabs` a Word card shows its sections in tabs in a fixed frame instead of one column with «Детальніше» (ADR 0088). The card still picks its sections itself from the Word card model; a screen only passes the switch.
+
 ## Considered Options
 
 - **A card per kind sharing a frame component**: rejected. Every screen would branch on the kind and pass each card its parts, and the action row would be added once per kind.
