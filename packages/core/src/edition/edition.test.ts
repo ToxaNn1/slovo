@@ -122,6 +122,8 @@ const validConfig = {
     correctionCategoryScreens: true,
     quietCategories: true,
     collectionBoardStyle: true,
+    profileConfirmedByRarity: true,
+    profileGameBest: true,
   },
   userSettingDefaults: {
     theme: 'system',
@@ -922,6 +924,16 @@ describe('loadEdition', () => {
       'featureSwitches.collectionBoardStyle',
     ],
     [
+      'a missing profileConfirmedByRarity Feature Switch',
+      withoutSwitch('profileConfirmedByRarity'),
+      'featureSwitches.profileConfirmedByRarity',
+    ],
+    [
+      'a missing profileGameBest Feature Switch',
+      withoutSwitch('profileGameBest'),
+      'featureSwitches.profileGameBest',
+    ],
+    [
       'a missing Dashboard wordmark Feature Switch',
       withoutSwitch('dashboardWordmark'),
       'featureSwitches.dashboardWordmark',
@@ -1420,6 +1432,8 @@ const dependentSwitches = [
   ['badgeSheet', ['xpLog', 'badges']],
   ['badgeToast', ['xpLog', 'badges']],
   ['profile', ['xpLog']],
+  ['profileConfirmedByRarity', ['profile', 'xpLog', 'confirmedEntries']],
+  ['profileGameBest', ['profile', 'xpLog', 'game']],
   ['dailyGoal', ['xpLog']],
   ['seenWordXp', ['xpLog', 'dailyGoal']],
   ['progressShareCards', ['shareCards', 'xpLog']],

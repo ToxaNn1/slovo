@@ -44,6 +44,8 @@ const everything: Shown = {
   progressShareCards: true,
   dailyCrosswordShare: true,
   profile: true,
+  profileConfirmedByRarity: true,
+  profileGameBest: true,
   quickQuestion: true,
   sync: true,
   dailyGoal: true,
@@ -273,6 +275,14 @@ describe('what the reader is shown', () => {
     ],
     ['no Badges with their switch off', { off: ['badges'], shown: { badges: false } }],
     ['no Profile with its switch off', { off: ['profile'], shown: { profile: false } }],
+    [
+      'no confirmed Entries by rarity on the Profile with their switch off',
+      { off: ['profileConfirmedByRarity'], shown: { profileConfirmedByRarity: false } },
+    ],
+    [
+      'no Game Modes on the Profile with their switch off',
+      { off: ['profileGameBest'], shown: { profileGameBest: false } },
+    ],
     [
       'no progress Share Cards with their switch off',
       { off: ['progressShareCards'], shown: { progressShareCards: false } },

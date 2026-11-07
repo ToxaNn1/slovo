@@ -8,6 +8,7 @@ Board 10 «Профіль і відзнаки» groups Badges in six families wi
 - **The calendar's day states gain `break` and `frozen`,** derived from the Break and freeze records already in the XP log.
 - **The Active Days calendar is a rolling window of 35 days** ending with the current week, not a calendar month, so a run is never cut at a month's edge.
 - Each new part of board 10 is behind its own Feature Switch, off until its ticket ships: `levelLadder`, `newLevelScreen`, `badgeSheet`, `badgeToast`, `streakFreezeCard`, `breakCard`, `calendarDayLines`. Each needs `xpLog`; `badgeSheet` and `badgeToast` also need `badges`.
+- The Profile's confirmed Entries by rarity and its Best result of each Game Mode have a Feature Switch each, `profileConfirmedByRarity` (needs `profile` and `confirmedEntries`) and `profileGameBest` (needs `profile` and `game`). The UA Edition turns both off (owner, 07.11).
 
 ## Considered options
 
