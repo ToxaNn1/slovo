@@ -177,6 +177,24 @@ export {
   type CrossingWord,
 } from './game/crossing-crossword';
 export {
+  crossingCellKey,
+  filledLetters,
+  isCrossingSolved,
+  playCrossing,
+  solvedIds,
+  startCrossingPlay,
+  type CrossingAction,
+  type CrossingCell,
+  type CrossingPlay,
+  type CrossingWordState,
+  type KeptCrossingPlay,
+} from './game/crossing-play';
+export {
+  openCrossingCrossword,
+  type CrossingCrossword,
+  type CrossingCrosswordOpening,
+} from './game/crossing-crossword-progress';
+export {
   openTracedCrossword,
   seededRandomOf,
   type TracedCrossword,
