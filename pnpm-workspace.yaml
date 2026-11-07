@@ -6,17 +6,19 @@ packages:
 
 # Dependencies allowed to run install scripts. esbuild (used by tsx) ships its
 # binary in a platform package, so its postinstall check isn't needed.
+# @parcel/watcher (Jest 30's file watcher) ships its binary the same way.
 # @sentry/cli (via @sentry/react-native) downloads its binary to upload source
 # maps and debug files, which the app's builds don't do.
 allowBuilds:
   esbuild: false
+  '@parcel/watcher': false
   '@sentry/cli': false
 
-# Peers that pnpm installs on its own, pinned to the versions Expo SDK 57
+# Peers that pnpm installs on its own, pinned to the versions Expo SDK 58
 # expects (see expo/bundledNativeModules.json).
 overrides:
-  '@react-native/metro-config': 0.86.3
-  react-dom: 19.2.3
+  '@react-native/metro-config': 0.88.1
+  react-dom: 19.3.0
   # drizzle-orm's optional expo-sqlite peer: only the backend uses drizzle,
   # but pnpm fills the peer from the app's expo-sqlite and the backend image
   # then carries expo and react-native.
@@ -46,6 +48,3 @@ auditConfig:
     # zod 3 has no patched release; SLOVO's own zod is 4.6.7+, so this only
     # covers zod 3.25 inside @expo/cli (build-time). Reviewed 2026-10-24.
     - GHSA-mrhx-c7xc-m3w5 # zod 3, via @expo/cli; reviewed 2026-10-24
-
-patchedDependencies:
-  query-string@7.1.3: patches/query-string@7.1.3.patch
