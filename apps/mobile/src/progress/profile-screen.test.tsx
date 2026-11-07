@@ -482,7 +482,7 @@ describe('the Profile', () => {
         a: xp('2026-10-09'),
         b: xp('2026-10-10'),
         c: xp('2026-10-11'),
-        pause: { kind: 'break', date: '2026-10-12', at: '2026-10-12T05:00:00.000Z', days: 3 },
+        breakRecord: { kind: 'break', date: '2026-10-12', at: '2026-10-12T05:00:00.000Z', days: 3 },
       },
     };
 
@@ -539,7 +539,12 @@ describe('the Profile', () => {
       switchedOff: 'breakCard',
       seed: {
         xpLog: {
-          pause: { kind: 'break', date: '2026-10-12', at: '2026-10-12T05:00:00.000Z', days: 3 },
+          breakRecord: {
+            kind: 'break',
+            date: '2026-10-12',
+            at: '2026-10-12T05:00:00.000Z',
+            days: 3,
+          },
         },
       },
     });

@@ -52,7 +52,7 @@ export function ProfileScreen() {
   const router = useRouter();
   const composition = useComposition();
   const xp = useSubscribed(composition.xpLog, ({ state }) => state);
-  const pause = useSubscribed(composition.streakBreak, ({ state }) => state);
+  const streakBreak = useSubscribed(composition.streakBreak, ({ state }) => state);
   const progress = useSubscribed(composition.progress, ({ state }) => state);
   const confirmed = useSubscribed(composition.knowledge, ({ state }) => state.confirmed);
   const badges = useSubscribed(composition.badges, ({ state }) => state);
@@ -180,16 +180,16 @@ export function ProfileScreen() {
           </View>
         )}
         {/* While a Break runs, its card (p1) stands in place of the Streak line. */}
-        {shown.breakCard && pause.kind === 'running' ? (
+        {shown.breakCard && streakBreak.kind === 'running' ? (
           <View style={styles.section}>
             <BreakCard
               testID="profile-break"
               streak={progress.streak}
               kicker={strings.breakCard.kicker}
               paused={fill(strings.breakCard.paused, { count: String(progress.streak) })}
-              until={fill(strings.breakCard.until, { date: dayText(pause.lastDay) })}
-              strip={pause.strip}
-              next={fill(strings.breakCard.next, { date: dayText(pause.nextStart) })}
+              until={fill(strings.breakCard.until, { date: dayText(streakBreak.lastDay) })}
+              strip={streakBreak.strip}
+              next={fill(strings.breakCard.next, { date: dayText(streakBreak.nextStart) })}
             />
           </View>
         ) : (
