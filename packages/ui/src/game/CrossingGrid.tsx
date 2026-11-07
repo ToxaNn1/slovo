@@ -20,7 +20,6 @@ import {
   motion,
   typeStyle,
 } from '../tokens';
-import type { CrosswordPlace } from './CrosswordGrid';
 import { ease } from './round-motion';
 
 /** How far the largest text sizes of iOS may scale a cell's letter or number, so it stays inside its cell. */
@@ -32,6 +31,12 @@ const CELL_MAX_FONT_SCALE = 1.3;
  * there, whether it is in the current Word or in a solved one, and what
  * VoiceOver reads for it.
  */
+/** A cell of the grid, by its row and column from 0, from the top left corner. */
+export interface CrosswordPlace {
+  readonly row: number;
+  readonly column: number;
+}
+
 export type CrossingGridCell =
   | { readonly kind: 'block' }
   | {
