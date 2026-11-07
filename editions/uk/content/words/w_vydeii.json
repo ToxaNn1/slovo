@@ -1,0 +1,25 @@
+{
+  "kind": "word",
+  "id": "w_vydeii",
+  "lemma": "барограф",
+  "stress": [
+    3
+  ],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Прилад для автоматичного запису змін атмосферного тиску.",
+  "examples": [
+    {
+      "text": "[Градов:] Кіро Павлівно, гляньте, як там барографи встановили.",
+      "author": "В. Собко"
+    }
+  ],
+  "categoryId": "technology",
+  "rarity": 4,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+      "url": "https://goroh.pp.ua/Тлумачення/барограф"
+    }
+  ]
+}
