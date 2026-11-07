@@ -307,8 +307,8 @@ export function QuickQuestionRound({
  * The Round's header (board 07), one for every Game Mode: a row of the ✕,
  * the mode's title in caps with the Round in play out of the Round limit,
  * and the Lives as flags; under it the 10 segments that fill as the Rounds
- * pass towards the limit, or with no limit the Rounds passed, or in a timed
- * Game the timer; then «Життів: 4 з 5» on its red label. A mode without
+ * pass towards the limit, or with no limit the Rounds passed, and in a timed
+ * Game the timer under them; then «Життів: 4 з 5» on its red label. A mode without
  * Lives shows no flags and no Lives line.
  */
 function GameHeader({
@@ -378,17 +378,7 @@ function GameHeader({
           </View>
         )}
       </View>
-      {time !== undefined ? (
-        <GameTimer
-          remainingMs={time.left}
-          totalMs={time.limit}
-          texts={{
-            remaining: (seconds) => count(words.timer, seconds),
-            shown: (seconds) => fill(words.timerShown, { seconds: String(seconds) }),
-          }}
-          testID="game-timer"
-        />
-      ) : roundLimit === undefined ? (
+      {roundLimit === undefined ? (
         <Text
           testID="game-progress"
           accessibilityLabel={fill(words.passedLabel, progress)}
@@ -424,6 +414,17 @@ function GameHeader({
             />
           ))}
         </View>
+      )}
+      {time !== undefined && (
+        <GameTimer
+          remainingMs={time.left}
+          totalMs={time.limit}
+          texts={{
+            remaining: (seconds) => count(words.timer, seconds),
+            shown: (seconds) => fill(words.timerShown, { seconds: String(seconds) }),
+          }}
+          testID="game-timer"
+        />
       )}
       {hasLives && (
         <View style={[styles.livesLabel, { backgroundColor: colors.accent }]}>
