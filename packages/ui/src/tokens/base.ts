@@ -228,8 +228,14 @@ export const typeRoles = {
   roundHead: role('word', '800', 12, 12, 2, 'uppercase'),
   /** A Round's prompt on its card. */
   roundPrompt: role('word', '800', 24, 30),
-  /** A Round's option on its tile. */
-  roundOption: role('word', '800', 18, 22),
+  /** A Round's option on its tile when it is a Word. */
+  roundOptionWord: role('word', '800', 22, 26),
+  /** A Round's option on its tile when it is a sentence. */
+  roundOptionSentence: role('word', '700', 18, 23),
+  /** A Round's option on its tile when it is a long text. */
+  roundOptionLong: role('ui', '500', 15, 20),
+  /** The key of a Round's option, such as «А», and the ✕ on a wrong pick's key. */
+  roundOptionKey: role('word', '900', 16, 16),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
   roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
   /** The right answer on the Round's answer sheet. */
