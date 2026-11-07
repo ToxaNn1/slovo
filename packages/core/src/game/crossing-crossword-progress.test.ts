@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
+import { openComposition } from '../composition';
 import type { FeatureSwitch, Word } from '../index';
-import { fakeClock, testEdition, word } from '../test-support';
+import { createMemoryContentPort } from '../testing';
+import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { openCrossingCrossword, type CrossingCrossword } from './crossing-crossword-progress';
 import { vocabulary } from './crossing-crossword.test-support';
@@ -191,5 +193,38 @@ describe('the crossing Daily Crossword', () => {
     expect(again.state.words.every(({ kind }) => kind === 'solved')).toBe(true);
     await again.play({ type: 'release' });
     expect(awards).toHaveLength(1);
+  });
+});
+
+describe('the crossing Daily Crossword of the composition', () => {
+  async function app(on: readonly FeatureSwitch[]) {
+    return openComposition({
+      content: createMemoryContentPort({
+        categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
+        words: vocabulary,
+      }),
+      edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      clock: fakeClock('2026-11-04T09:00:00Z').clock,
+      random: seededRandom(7),
+    });
+  }
+
+  it('is off while the Edition has it off', async () => {
+    const composition = await app(['game', 'dailyCrossword']);
+    expect(await composition.openCrossingCrossword()).toEqual({ kind: 'off' });
+  });
+
+  it('opens the puzzle of the Words within the Rarity Ceiling, which a solve plays', async () => {
+    const composition = await app(['game', 'dailyCrossword', 'crossingCrossword']);
+    const opening = await composition.openCrossingCrossword();
+    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    const ids = vocabulary.map(({ id }) => id);
+    for (const { word: placed } of opening.crossword.puzzle.words) expect(ids).toContain(placed.id);
+    const before = opening.crossword.state.words.filter(({ kind }) => kind === 'solved').length;
+    await solve(opening.crossword, opening.crossword.state.current);
+    expect(opening.crossword.state.words.filter(({ kind }) => kind === 'solved').length).toBe(
+      before + 1,
+    );
   });
 });
