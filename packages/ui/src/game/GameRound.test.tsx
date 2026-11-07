@@ -5,6 +5,7 @@ import type {
   PlayedRound,
   RoundAnswer,
   RoundBlank,
+  Streak,
 } from '@slovo/core';
 import {
   coreTokens,
@@ -13,13 +14,14 @@ import {
   HapticsProvider,
   InterfaceSoundsProvider,
   TokensProvider,
+  typeStyle,
   type ColorScheme,
   type DesignTokens,
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { useState } from 'react';
-import { AccessibilityInfo, StyleSheet, View, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
@@ -27,15 +29,18 @@ import { testStrings } from '../test-strings';
 const strings = testStrings({
   game: {
     round: {
+      header: '{mode} · {n}/{total}',
       progress: '{passed} / {total}',
       progressLabel: 'Rounds passed: {passed} of {total}',
       passed: 'Passed: {passed}',
       passedLabel: 'Rounds passed: {passed}',
+      survivalStreak: '{n} in a row · best {best}',
       lives: 'Lives: {count} of {total}',
       highlight: 'Marked: {text}',
       gap: { label: 'Which word is missing?', voiceOver: 'gap' },
       correct: 'Right',
       chosen: 'Your choice',
+      optionKeys: 'ABCD',
       synonymRow: { label: 'Synonyms', prompt: 'What is a synonym of “{dominant}”?' },
       tip: { label: 'Tip' },
       typed: { label: 'Your answer', submit: 'Check' },
@@ -373,6 +378,8 @@ const chipsRound: CurrentGame = {
     chipKind: 'letter',
     chips: CHIPS,
     fixed: [{ at: 1, text: "'" }],
+    layout: 'line',
+    slots: CHIPS.length,
     answer: undefined,
   },
 };
@@ -411,16 +418,20 @@ function Game({
   onAnswer,
   onLeave,
   onOpenLetter,
+  streak,
 }: {
   start: CurrentGame;
   onAnswer: (given: GivenAnswer) => void;
   onLeave: () => void;
   onOpenLetter: () => void;
+  streak?: Streak | undefined;
 }) {
   const [game, setGame] = useState(start);
   return (
     <GameRound
       game={game}
+      streak={streak}
+      title="Definitions"
       label={LABELS[game.round.form] ?? 'Definition'}
       onAnswer={(given) => {
         onAnswer(given);
@@ -444,13 +455,20 @@ async function renderRound(
   onLeave: () => void = jest.fn(),
   start: CurrentGame = first,
   onOpenLetter: () => void = jest.fn(),
+  streak?: Streak,
 ) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
           <InterfaceSoundsProvider sounds={{ play }}>
-            <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
+            <Game
+              start={start}
+              onAnswer={onAnswer}
+              onLeave={onLeave}
+              onOpenLetter={onOpenLetter}
+              streak={streak}
+            />
           </InterfaceSoundsProvider>
         </HapticsProvider>
       </EditionProvider>
@@ -468,10 +486,21 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
       'Rounds passed: 7 of 15',
     );
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Lives: 4 of 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Lives: 4 of 5');
   });
 
-  it('fills the progress by each Round played, then the current one, then the rest', async () => {
+  it('heads the Round with the mode’s title and the Round in play out of the Round limit', async () => {
+    await renderRound(jest.fn(), jest.fn(), {
+      ...first,
+      round: { ...first.round, number: 3 },
+      roundsPassed: 2,
+    });
+
+    expect(screen.getByRole('header', { name: 'Definitions · 3/15' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Leave the Game' })).toBeOnTheScreen();
+  });
+
+  it('fills the 10 segments by the Rounds passed out of the Round limit, then the current one, then the rest', async () => {
     const played = (right: boolean): PlayedRound => {
       const { round } = answeredPick(first, { form: 'pick', option: right ? CORRECT : 0 });
       if (round.answer === undefined) throw new Error('No answer');
@@ -480,45 +509,29 @@ describe('GameRound', () => {
     };
     await renderRound(jest.fn(), jest.fn(), {
       ...first,
-      round: { ...first.round, number: 3 },
-      roundsPassed: 2,
-      played: [played(true), played(false)],
+      round: { ...first.round, number: 7 },
+      roundsPassed: 6,
+      played: [
+        played(true),
+        played(false),
+        played(true),
+        played(true),
+        played(false),
+        played(true),
+      ],
     });
     const fillOf = (place: number): unknown => {
       const style: unknown = screen.getByTestId(`game-progress-${String(place)}`).props['style'];
       return (StyleSheet.flatten(style as ViewStyle) as ViewStyle | undefined)?.backgroundColor;
     };
 
-    expect(screen.getAllByTestId(/^game-progress-\d+$/)).toHaveLength(15);
-    expect(fillOf(2)).not.toBe(fillOf(3));
-    expect(fillOf(0)).not.toBe(fillOf(2));
-    expect(fillOf(1)).not.toBe(fillOf(3));
-    expect(fillOf(14)).toBe(fillOf(3));
-  });
-
-  it('shows the Mascot it is given on the right of the Round’s head', async () => {
-    await render(
-      <SafeAreaProvider initialMetrics={metrics}>
-        <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-          <HapticsProvider haptics={haptics}>
-            <GameRound
-              game={first}
-              label="Definition"
-              mascot={<View testID="round-mascot" />}
-              onAnswer={jest.fn()}
-              onNext={jest.fn()}
-              onLeave={jest.fn()}
-              onOpenLetter={jest.fn()}
-            />
-          </HapticsProvider>
-        </EditionProvider>
-      </SafeAreaProvider>,
-    );
-
-    expect(screen.getByTestId('round-mascot')).toBeOnTheScreen();
-    expect(
-      screen.getByText('Definition · 1 / 15', { includeHiddenElements: true }),
-    ).toBeOnTheScreen();
+    expect(screen.getAllByTestId(/^game-progress-\d+$/)).toHaveLength(10);
+    // 6 of 15 Rounds passed fill 4 of the 10 segments; the 5th is the current one.
+    expect(fillOf(3)).toBe(fillOf(0));
+    expect(fillOf(4)).not.toBe(fillOf(3));
+    expect(fillOf(5)).not.toBe(fillOf(4));
+    expect(fillOf(5)).not.toBe(fillOf(3));
+    expect(fillOf(9)).toBe(fillOf(5));
   });
 
   it('counts the Rounds passed with no limit in a mode without one, and its own Lives', async () => {
@@ -536,7 +549,78 @@ describe('GameRound', () => {
     );
     expect(screen.getByText('Passed: 23')).toBeTruthy();
     expect(screen.queryByTestId('game-progress-bar')).toBeNull();
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Lives: 2 of 3');
+    expect(screen.getByRole('header', { name: 'Definitions' })).toBeOnTheScreen();
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Lives: 2 of 3');
+  });
+
+  it('shows the streak, a big counter of the Rounds passed and its line with the record, in place of the passed line', async () => {
+    const survival: CurrentGame = {
+      ...first,
+      modeId: 'survival',
+      roundsPassed: 4,
+      roundLimit: undefined,
+      lives: 2,
+      livesAtStart: 3,
+    };
+    await renderRound(jest.fn(), jest.fn(), survival, jest.fn(), { rounds: 4, record: 9 });
+
+    expect(screen.getByTestId('game-streak-rounds')).toHaveTextContent('4');
+    expect(screen.getByTestId('game-streak-line')).toHaveTextContent('4 in a row · best 9');
+    expect(screen.getByTestId('game-streak')).toHaveAccessibleName('4 in a row · best 9');
+    expect(screen.queryByText('Passed: 4')).toBeNull();
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Lives: 2 of 3');
+  });
+
+  it('keys the options in order with the Edition’s keys', async () => {
+    await renderRound();
+
+    ['A', 'B', 'C', 'D'].forEach((key, place) => {
+      expect(
+        within(screen.getByTestId(`game-option-${String(place)}`)).getByText(key),
+      ).toBeTruthy();
+    });
+  });
+
+  it('marks a wrong pick with ✕ on its key and leaves the other keys as they are', async () => {
+    await renderRound();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
+
+    const wrong = within(screen.getByTestId('game-option-1'));
+    expect(wrong.getByText('✕')).toBeTruthy();
+    expect(wrong.queryByText('B')).toBeNull();
+    expect(screen.getByRole('button', { name: 'brittle, Your choice' })).toBeTruthy();
+    expect(within(screen.getByTestId('game-option-0')).getByText('A')).toBeTruthy();
+    expect(
+      within(screen.getByTestId(`game-option-${String(CORRECT)}`)).getByText('C'),
+    ).toBeTruthy();
+    expect(screen.getAllByText('✕')).toHaveLength(1);
+  });
+
+  it('sizes each option for its text: a Word, a sentence or a long text', async () => {
+    const texts = [
+      'candid',
+      'open and honest',
+      'speaking openly and honestly about what one thinks, even when it is unwelcome',
+      'dour',
+    ];
+    const { round } = first;
+    if (round.form !== 'pick') throw new Error('The first Round is a pick Round');
+    await renderRound(jest.fn(), jest.fn(), {
+      ...first,
+      round: { ...round, options: texts.map((text) => ({ text, stressedVowels: [] })) },
+    });
+
+    /** The text on the option at that place. */
+    const textOf = (place: number) =>
+      within(screen.getByTestId(`game-option-${String(place)}`)).getByText(texts[place] ?? '');
+    const sizes = (['roundOptionWord', 'roundOptionSentence', 'roundOptionLong'] as const).map(
+      (role) => typeStyle(role, coreTokens).fontSize,
+    );
+    expect(new Set(sizes).size).toBe(3);
+    sizes.forEach((fontSize, place) => {
+      expect(textOf(place)).toHaveStyle({ fontSize });
+    });
   });
 
   it('shows a right answer as right', async () => {
@@ -732,7 +816,7 @@ describe('GameRound', () => {
       expect(onAnswer).toHaveBeenCalledWith({ form: 'pairs', word: 1, definition: 0 });
       expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
       expect(screen.getByText('An ardent reader.')).toBeOnTheScreen();
-      expect(screen.getByLabelText('Lives: 5 of 5')).toBeOnTheScreen();
+      expect(screen.getByText('Lives: 5 of 5')).toBeOnTheScreen();
     });
 
     it('takes a Life for a wrong pair', async () => {
@@ -742,7 +826,7 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'open and honest' }));
 
       expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
-      expect(screen.getByLabelText('Lives: 4 of 5')).toBeOnTheScreen();
+      expect(screen.getByText('Lives: 4 of 5')).toBeOnTheScreen();
     });
   });
 
@@ -780,7 +864,7 @@ describe('GameRound', () => {
 
       expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
       expect(screen.getByTestId('game-sheet')).toHaveTextContent("o'brok", { exact: false });
-      expect(screen.getByLabelText('Lives: 4 of 5')).toBeOnTheScreen();
+      expect(screen.getByText('Lives: 4 of 5')).toBeOnTheScreen();
     });
   });
 
@@ -811,7 +895,7 @@ describe('GameRound', () => {
       expect(screen.getByLabelText('w, first letter')).toBeOnTheScreen();
       expect(screen.getByLabelText('e, second letter')).toBeOnTheScreen();
       expect(screen.getByLabelText('third letter, empty')).toBeOnTheScreen();
-      expect(screen.getByLabelText('Lives: 5 of 5')).toBeOnTheScreen();
+      expect(screen.getByText('Lives: 5 of 5')).toBeOnTheScreen();
     });
 
     it('answers with the text typed and shows the Word with its Example', async () => {
@@ -834,7 +918,7 @@ describe('GameRound', () => {
 
       expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
       expect(screen.getByTestId('game-sheet')).toHaveTextContent(TYPED, { exact: false });
-      expect(screen.getByLabelText('Lives: 4 of 5')).toBeOnTheScreen();
+      expect(screen.getByText('Lives: 4 of 5')).toBeOnTheScreen();
     });
   });
 
@@ -859,6 +943,7 @@ describe('GameRound', () => {
               <GameRound
                 game={game}
                 timeLeft={timeLeft}
+                title="Against the clock"
                 label="Definition"
                 onAnswer={jest.fn()}
                 onNext={jest.fn()}
@@ -891,6 +976,8 @@ describe('GameRound', () => {
       expect(screen.getByRole('timer', { name: '40 seconds left' })).toHaveTextContent('40 s');
       expect(screen.getByTestId('game-progress')).toHaveTextContent('Passed: 0');
       expect(screen.queryByTestId('game-lives')).not.toBeOnTheScreen();
+      expect(screen.queryByTestId('game-life-0')).not.toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'Against the clock' })).toBeOnTheScreen();
     });
 
     it('plays the haptic of each answer as the next Round comes at once, with no sheet', async () => {
@@ -947,10 +1034,10 @@ describe('GameRound', () => {
     const step = (element: Shown, key: 'translateX' | 'scale') =>
       styleOf(element).transform?.find((one) => one[key] !== undefined)?.[key];
     /** The Life at that place, which pops when lost, and its fill, which fades. */
-    const life = (place: number) => screen.getByTestId(`game-life-${String(place)}`);
-    const lifeFill = (place: number) => screen.getByTestId(`game-life-${String(place)}-fill`);
-    /** The «−1» over the Life at that place. */
-    const lifeLost = (place: number) => screen.getByTestId(`game-life-${String(place)}-lost`);
+    const life = (place: number) =>
+      screen.getByTestId(`game-life-${String(place)}`, { includeHiddenElements: true });
+    const lifeFill = (place: number) =>
+      screen.getByTestId(`game-life-${String(place)}-fill`, { includeHiddenElements: true });
 
     async function wait(ms: number) {
       await act(() => {
@@ -958,7 +1045,7 @@ describe('GameRound', () => {
       });
     }
 
-    it('turns a right answer red, pops it and stamps it with a tick', async () => {
+    it('turns a right answer red and pops it', async () => {
       await renderRound();
       expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: tile });
 
@@ -969,17 +1056,10 @@ describe('GameRound', () => {
 
       expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
       expect(step(optionMotion(CORRECT), 'scale')).toBe(1);
-      expect(
-        styleOf(
-          screen.getByTestId(`game-option-${String(CORRECT)}-stamp`, {
-            includeHiddenElements: true,
-          }),
-        ).opacity,
-      ).toBe(1);
       expect(step(optionMotion(CORRECT), 'translateX')).toBeUndefined();
     });
 
-    it('sinks a wrong choice, drops it, strikes it through and fades the others', async () => {
+    it('sinks a wrong choice, drops it and fades the others', async () => {
       await renderRound();
 
       await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
@@ -987,18 +1067,12 @@ describe('GameRound', () => {
 
       expect(optionFace(1)).toHaveStyle({ backgroundColor: surfaceSunken });
       expect(styleOf(optionMotion(1)).translateY).toBe(8);
-      expect(
-        step(
-          screen.getByTestId('game-option-1-slash', { includeHiddenElements: true }),
-          'scaleX' as 'scale',
-        ),
-      ).toBe(1);
       expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
       expect(styleOf(optionMotion(0)).opacity).toBe(0.5);
       expect(optionFace(0)).toHaveStyle({ backgroundColor: tile });
     });
 
-    it('moves no wrong choice and, once it has filled, knocks the lost Life out with a rising «−1»', async () => {
+    it('moves no wrong choice and, once it has filled, pops the lost Life and empties it', async () => {
       await renderRound();
 
       await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
@@ -1009,15 +1083,11 @@ describe('GameRound', () => {
 
       // The Life jumps once the choice has filled, 200 ms after the answer.
       await wait(100);
-      expect(step(life(4), 'scale')).toBeGreaterThan(1);
-      expect(styleOf(lifeLost(4)).opacity).toBeGreaterThan(0);
-      expect(styleOf(lifeLost(4)).translateY).toBeLessThan(0);
+      expect(step(life(4), 'scale')).not.toBe(1);
       await wait(600);
       expect(step(life(4), 'scale')).toBe(1);
       expect(styleOf(lifeFill(4)).opacity).toBe(0);
-      await wait(600);
-      expect(styleOf(lifeLost(4)).opacity).toBe(0);
-      expect(styleOf(lifeLost(3)).opacity).toBe(0);
+      expect(styleOf(lifeFill(3)).opacity).toBe(1);
     });
 
     it('pops the lost Life when the Round says the Life is lost', async () => {
@@ -1030,7 +1100,7 @@ describe('GameRound', () => {
       await wait(350);
       expect(step(life(4), 'scale')).toBe(1);
       await wait(100);
-      expect(step(life(4), 'scale')).toBeGreaterThan(1);
+      expect(step(life(4), 'scale')).not.toBe(1);
     });
 
     describe('with Reduce Motion', () => {
@@ -1038,7 +1108,7 @@ describe('GameRound', () => {
         jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
       });
 
-      it('turns a right answer red and stamps it in place, popping nothing', async () => {
+      it('turns a right answer red in place, popping nothing', async () => {
         await renderRound();
 
         await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
@@ -1048,16 +1118,9 @@ describe('GameRound', () => {
         }
 
         expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
-        expect(
-          styleOf(
-            screen.getByTestId(`game-option-${String(CORRECT)}-stamp`, {
-              includeHiddenElements: true,
-            }),
-          ).transform,
-        ).toEqual([{ rotate: '-8deg' }]);
       });
 
-      it('sinks a wrong choice in place and fades the lost Life and its «−1» without a jump', async () => {
+      it('sinks a wrong choice in place and fades the lost Life without a pop', async () => {
         await renderRound();
 
         await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
@@ -1070,7 +1133,6 @@ describe('GameRound', () => {
         for (const ms of [100, 100, 100]) {
           await wait(ms);
           expect(step(life(4), 'scale')).toBe(1);
-          expect(styleOf(lifeLost(4)).translateY).toBe(0);
         }
         expect(styleOf(lifeFill(4)).opacity).toBe(0);
       });

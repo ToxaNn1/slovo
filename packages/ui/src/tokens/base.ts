@@ -214,18 +214,28 @@ export const typeRoles = {
   crosswordMiniLetter: role('word', '800', 11, 13, 0, 'uppercase'),
   /** The XP earned in all, in its pill beside the Games screen's title. */
   xpPill: role('word', '800', 13, 13),
-  /** How many Rounds have passed, in a Game's header when it has no Round limit. */
-  roundPassed: role('word', '800', 13, 13),
-  /** The «−1» that rises from a lost Life. */
-  lifeLost: role('word', '900', 13, 13),
+  /** The mode's title in the Round's header (board 07), such as «ВГАДАЙ СЛОВО · 3/15». */
+  roundTitle: role('word', '800', 14, 14, 1, 'uppercase'),
+  /** «Життів: 4 з 5» in its red label under the Round's header (board 07). */
+  roundLives: role('ui', '600', 13, 13),
+  /** The big streak counter of «Виживання» under the Round's header (spec #1674), the Rounds passed. */
+  roundStreak: role('word', '800', 48, 52),
+  /** «4 поспіль · рекорд 9» beside the big streak counter of «Виживання» (spec #1674). */
+  roundStreakLine: role('ui', '600', 13, 17),
   /** The label over a Round's prompt, and a Quick Question's title. */
   roundLabel: role('word', '800', 12, 12, 1.5, 'uppercase'),
   /** A Round's head: its label and place, such as «НАГОЛОС · 6/10». */
   roundHead: role('word', '800', 12, 12, 2, 'uppercase'),
   /** A Round's prompt on its card. */
   roundPrompt: role('word', '800', 24, 30),
-  /** A Round's option on its tile. */
-  roundOption: role('word', '800', 18, 22),
+  /** A Round's option on its tile when it is a Word. */
+  roundOptionWord: role('word', '800', 22, 26),
+  /** A Round's option on its tile when it is a sentence. */
+  roundOptionSentence: role('word', '700', 18, 23),
+  /** A Round's option on its tile when it is a long text. */
+  roundOptionLong: role('ui', '500', 15, 20),
+  /** The key of a Round's option, such as «А», and the ✕ on a wrong pick's key. */
+  roundOptionKey: role('word', '900', 16, 16),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
   roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
   /** The right answer on the Round's answer sheet. */
@@ -749,6 +759,13 @@ export const wedges = {
     [1, 0],
     [1, 1],
     [0, 1],
+  ],
+  /** A Life in the Round's header (board 07): a flag whose right edge sits lower. */
+  lifeFlag: [
+    [0, 0],
+    [1, 0.25],
+    [1, 1],
+    [0, 0.75],
   ],
   /** A shield, pointed at the bottom. */
   shield: [

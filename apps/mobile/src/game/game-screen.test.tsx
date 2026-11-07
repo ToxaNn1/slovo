@@ -13,7 +13,7 @@ import {
   type XpRecord,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, systemSchedule } from '@slovo/ui';
+import { coreTokens, EditionProvider, HapticsProvider, systemSchedule, typeStyle } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -26,14 +26,18 @@ import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support
 
 const { config } = activeEditionFiles;
 
-/** The UA Edition with the given Feature Switches turned off. */
-function editionWithout(switchedOff: readonly string[]): Edition {
+/** The UA Edition with the given Feature Switches turned off, and the others given turned on. */
+function editionWithout(
+  switchedOff: readonly string[],
+  switchedOn: readonly string[] = [],
+): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({
     ...rest,
     featureSwitches: {
       ...featureSwitches,
       ...Object.fromEntries(switchedOff.map((name) => [name, false])),
+      ...Object.fromEntries(switchedOn.map((name) => [name, true])),
     },
   });
 }
@@ -131,12 +135,14 @@ const correction = (
  * «друге» and «третє» after a comma and a dash, which are no chips, its
  * Definition «The sense of idiom{n}.».
  */
-const idiom = (index: number): Idiom => ({
+const idiom = (index: number, longSense = false): Idiom => ({
   kind: 'idiom',
   id: `i_test${String(index)}`,
   expression: `перше${String(index)}, друге — третє`,
   idiomType: 'idiom',
-  primaryDefinition: `The sense of idiom${String(index)}.`,
+  primaryDefinition: longSense
+    ? `The sense of idiom${String(index)}, told at such length that it runs well past a sentence.`
+    : `The sense of idiom${String(index)}.`,
   extraDefinitions: [],
   examples: [],
   sources: [{ title: 'Test source' }],
@@ -207,15 +213,18 @@ const withOrigin = (index: number): Word => ({
  * an origin, the given numbers of calque
  * Corrections, anglicisms (numbered after the calques) and Idioms and the
  * Daily Crossword of the day, with the given Best results by mode id and the
- * crossword's letters, typed on the given date, kept from before.
+ * crossword's letters, typed on the given date, kept from before, and the
+ * given Feature Switches off or on.
  */
 async function open({
   best = {},
   corrections = 0,
   anglicisms = 0,
   idioms = 0,
+  longSenses = false,
   origins = 0,
   switchedOff = [],
+  switchedOn = [],
   crossword,
   clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
   schedule,
@@ -228,14 +237,18 @@ async function open({
   corrections?: number;
   anglicisms?: number;
   idioms?: number;
+  /** Whether each Idiom's sense runs past a sentence. */
+  longSenses?: boolean;
   switchedOff?: readonly string[];
+  /** Feature Switches the UA Edition ships off, turned on. */
+  switchedOn?: readonly string[];
   crossword?: { date: string; letters: Record<string, string> };
   /** The clock the Core reads; a stopped one on the morning of 26 October by default. */
   clock?: Clock;
   /** What the Core runs something later by; nothing by default. */
   schedule?: Schedule;
 } = {}) {
-  editionInEffect = editionWithout(switchedOff);
+  editionInEffect = editionWithout(switchedOff, switchedOn);
   const xpLog = Object.fromEntries(
     xp.map(({ date, amount }, index): [string, XpRecord] => [
       `seeded-${String(index)}`,
@@ -255,7 +268,7 @@ async function open({
         ...Array.from({ length: corrections }, (_, i) => correction(i)),
         ...Array.from({ length: anglicisms }, (_, i) => correction(corrections + i, 'anglicism')),
       ],
-      idioms: Array.from({ length: idioms }, (_, i) => idiom(i)),
+      idioms: Array.from({ length: idioms }, (_, i) => idiom(i, longSenses)),
     }),
     crossword: {
       crosswordDay: (date) =>
@@ -502,33 +515,53 @@ describe('the Game screen', () => {
     ]);
   });
 
-  it('shows each mode’s own Best result on its card, out of its Round limit', async () => {
-    await open({ best: { 'guess-word': 12, correction: 7, survival: 23 } });
+  it('shows every mode row with its one-liner and «★ n» for its Best result or «—» before', async () => {
+    await open({
+      best: { 'guess-word': 12, correction: 7, survival: 23 },
+      corrections: 15,
+      anglicisms: 15,
+      idioms: 15,
+      origins: 15,
+    });
     await renderScreen();
 
-    expect(
-      within(screen.getByTestId('game-mode-guess-word')).getByText('Найкраще: 12 з 15'),
-    ).toBeTruthy();
-    expect(
-      within(screen.getByTestId('game-mode-correction')).getByText('Найкраще: 7 з 15'),
-    ).toBeTruthy();
+    const rows: readonly (readonly [string, string, string])[] = [
+      ['guess-word', 'Обери слово за визначенням', '★ 12'],
+      ['stress', 'Влуч у правильний склад', '—'],
+      ['pairs', 'З’єднай слово і його значення', '—'],
+      ['anagram', 'Збери слово з перемішаних літер', '—'],
+      ['by-letters', 'Склади слово з плиток за визначенням', '—'],
+      ['type-word', 'Виправ помилку — впиши як треба', '—'],
+      ['origin', 'Вгадай, з якої мови прийшло слово', '—'],
+      ['correction', 'Обери, як кажуть українською', '★ 7'],
+      ['anglicism', 'Заміни англіцизм українським словом', '—'],
+      ['idiom-meaning', 'Вгадай, що означає вислів', '—'],
+      ['build-idiom', 'Склади вислів слово за словом', '—'],
+      ['survival', 'Грай, доки не схибиш. Далеко зайдеш?', '★ 23'],
+      ['timed', 'Хвилина, щоб угадати якнайбільше', '—'],
+    ];
+    for (const [modeId, line, mark] of rows) {
+      const row = within(screen.getByTestId(`game-mode-${modeId}`));
+      expect(row.getByText(line)).toBeTruthy();
+      expect(row.getByText(mark)).toBeTruthy();
+    }
+    expect(screen.queryByText(/Найкраще/)).toBeNull();
+  });
+
+  it('reads a row’s Best result in words, out of its Round limit, and no dash', async () => {
+    await open({ best: { 'guess-word': 12, survival: 23 } });
+    await renderScreen();
+
+    expect(screen.getByTestId('game-mode-guess-word')).toHaveAccessibleName(
+      'Вгадай слово. Обери слово за визначенням. Найкраще: 12 з 15',
+    );
     // «Виживання» has no Round limit, so its Best result stands alone.
-    expect(within(screen.getByTestId('game-mode-survival')).getByText('Найкраще: 23')).toBeTruthy();
-  });
-
-  it('shows no rules line under the title, so a Best result shows on its card alone', async () => {
-    await open({ best: { 'guess-word': 12 } });
-    await renderScreen();
-
-    expect(screen.queryByText(/15 раундів, 5 життів/)).toBeNull();
-    expect(screen.getAllByText(/Найкраще/)).toHaveLength(1);
-  });
-
-  it('shows no Best result on a mode without a finished Game', async () => {
-    await open({ best: { 'guess-word': 12 } });
-    await renderScreen();
-
-    expect(within(screen.getByTestId('game-mode-correction')).queryByText(/Найкраще/)).toBeNull();
+    expect(screen.getByTestId('game-mode-survival')).toHaveAccessibleName(
+      'Виживання. Грай, доки не схибиш. Далеко зайдеш? Найкраще: 23',
+    );
+    expect(screen.getByTestId('game-mode-stress')).toHaveAccessibleName(
+      'Наголос. Влуч у правильний склад',
+    );
   });
 
   it('leaves out a switched-off mode and its group', async () => {
@@ -645,52 +678,62 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-mode-guess-word')).toBeOnTheScreen();
   });
 
-  it('offers the Level reached today as a Share Card and tells Analytics once it is shared', async () => {
+  it('offers no progress Share Card on the hub, even for a Level reached today', async () => {
     await open({ xp: [{ date: '2026-10-26', amount: 60 }] });
     await renderScreen({ shareCard: sendingShareCard });
-
-    await fireEvent.press(
-      await screen.findByRole('button', { name: 'Новий рівень у SLOVO · Рівень 1' }),
-    );
-    expect(
-      within(screen.getByTestId('share-preview')).getByTestId('share-card'),
-    ).toHaveAccessibleName(/Рівень 1/);
-    await fireEvent.press(screen.getByTestId('share-sheet-share'));
-
-    await waitFor(() => {
-      expect(events).toContainEqual(['shareCardShared', { card: 'level' }]);
-    });
-  });
-
-  it('draws the 28 poster mark on the Share Card of a Badge earned today', async () => {
-    await open();
-    await renderScreen({ shareCard: sendingShareCard });
-    // The first win in a Game Mode group earns a Badge.
-    await act(() => {
-      composition.xpLog
-        .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
-        .commit();
-    });
-
-    await fireEvent.press(await screen.findByTestId('progress-share-badge'));
-    expect(
-      within(screen.getByTestId('share-preview')).getByTestId('share-card-badge'),
-    ).toBeOnTheScreen();
-  });
-
-  it('offers no progress Share Card for a Level reached on another day', async () => {
-    await open({ xp: [{ date: '2026-10-25', amount: 60 }] });
-    await renderScreen({ shareCard: sendingShareCard });
+    await screen.findByTestId('game-mode-guess-word');
 
     expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
+    expect(screen.queryByRole('button', { name: /Новий рівень/ })).toBeNull();
   });
 
-  it('offers no progress Share Card with its Feature Switch off', async () => {
-    await open({ xp: [{ date: '2026-10-26', amount: 60 }], switchedOff: ['progressShareCards'] });
-    await renderScreen({ shareCard: sendingShareCard });
-
-    expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
-  });
+  // DESIGN-06: no progress share offers on the board's hub, kept for the owner
+  // it('offers the Level reached today as a Share Card and tells Analytics once it is shared', async () => {
+  //   await open({ xp: [{ date: '2026-10-26', amount: 60 }] });
+  //   await renderScreen({ shareCard: sendingShareCard });
+  //
+  //   await fireEvent.press(
+  //     await screen.findByRole('button', { name: 'Новий рівень у SLOVO · Рівень 1' }),
+  //   );
+  //   expect(
+  //     within(screen.getByTestId('share-preview')).getByTestId('share-card'),
+  //   ).toHaveAccessibleName(/Рівень 1/);
+  //   await fireEvent.press(screen.getByTestId('share-sheet-share'));
+  //
+  //   await waitFor(() => {
+  //     expect(events).toContainEqual(['shareCardShared', { card: 'level' }]);
+  //   });
+  // });
+  //
+  // it('draws the 28 poster mark on the Share Card of a Badge earned today', async () => {
+  //   await open();
+  //   await renderScreen({ shareCard: sendingShareCard });
+  //   // The first win in a Game Mode group earns a Badge.
+  //   await act(() => {
+  //     composition.xpLog
+  //       .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+  //       .commit();
+  //   });
+  //
+  //   await fireEvent.press(await screen.findByTestId('progress-share-badge'));
+  //   expect(
+  //     within(screen.getByTestId('share-preview')).getByTestId('share-card-badge'),
+  //   ).toBeOnTheScreen();
+  // });
+  //
+  // it('offers no progress Share Card for a Level reached on another day', async () => {
+  //   await open({ xp: [{ date: '2026-10-25', amount: 60 }] });
+  //   await renderScreen({ shareCard: sendingShareCard });
+  //
+  //   expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
+  // });
+  //
+  // it('offers no progress Share Card with its Feature Switch off', async () => {
+  //   await open({ xp: [{ date: '2026-10-26', amount: 60 }], switchedOff: ['progressShareCards'] });
+  //   await renderScreen({ shareCard: sendingShareCard });
+  //
+  //   expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
+  // });
 
   it('starts «Наголос» from its card and plays a whole Game to the result screen', async () => {
     await renderScreen();
@@ -782,7 +825,37 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
+  });
+
+  it('heads a Round with its mode’s title, the Round in play and the Lives, and loses a Life to a wrong answer', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
+    await waitFor(() => {
+      expect(screen.getByRole('header', { name: 'Вгадай слово · 1/15' })).toBeOnTheScreen();
+    });
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 5 з 5');
+    expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(
+      5,
+    );
+
+    const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+    const n = /\d+/.exec(prompt)?.[0] ?? '';
+    const wrong = screen
+      .getAllByRole('button', { name: /^слово\d+,/ })
+      .find((one) => !String(one.props['accessibilityLabel']).startsWith(`слово${n},`));
+    if (wrong === undefined) throw new Error(`No wrong option for «${prompt}»`);
+    await fireEvent.press(wrong);
+
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
+    expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(
+      5,
+    );
+    await fireEvent.press(screen.getByTestId('game-next'));
+    await waitFor(() => {
+      expect(screen.getByRole('header', { name: 'Вгадай слово · 2/15' })).toBeOnTheScreen();
+    });
   });
 
   it('starts «Пари» from its card and plays four grids of 4, 4, 4 and 3 pairs to the result screen', async () => {
@@ -829,7 +902,7 @@ describe('the Game screen', () => {
     await fireEvent.press(screen.getByTestId(`pairs-definition-${String((definition + 1) % 4)}`));
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
   });
 
   it('starts «За буквами» from its card and plays a whole Game, typing each Word, to the result screen', async () => {
@@ -874,14 +947,48 @@ describe('the Game screen', () => {
     expect(screen.getByLabelText('с, перша літера')).toBeOnTheScreen();
     expect(screen.getByLabelText('л, друга літера')).toBeOnTheScreen();
     expect(screen.getByLabelText('третя літера, порожня')).toBeOnTheScreen();
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 5 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 5 з 5');
 
     await fireEvent.changeText(screen.getByLabelText('Твоя відповідь'), 'слово');
     await fireEvent(screen.getByLabelText('Твоя відповідь'), 'submitEditing');
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(/слово\d+/);
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
+  });
+
+  it('plays «За буквами» as letter tiles in rows of 4 with letterTiles on, no text field', async () => {
+    await open({ switchedOn: ['letterTiles'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
+    await waitFor(() => {
+      expect(screen.getByTestId('chips')).toBeOnTheScreen();
+    });
+    const word = theWordOfThePrompt();
+    const tiles = screen.getAllByTestId(/^chips-\d+$/);
+    expect(tiles.length).toBe(Math.max(8, Math.ceil(word.length / 4) * 4));
+    for (const row of screen.getAllByTestId(/^chips-row-\d+$/)) {
+      expect(within(row).getAllByRole('button')).toHaveLength(4);
+    }
+    expect(screen.queryByLabelText('Твоя відповідь')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Відкрити літеру' })).toBeNull();
+
+    await assemble(word);
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+  });
+
+  it('keeps the text field of «За буквами» with letterTiles off', async () => {
+    await open({ switchedOff: ['letterTiles'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Твоя відповідь')).toBeOnTheScreen();
+    });
+    expect(screen.queryByTestId('chips')).toBeNull();
   });
 
   it('starts «Анаграми» from its card and plays a whole Game, assembling each Word, to the result screen', async () => {
@@ -923,7 +1030,7 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
   });
 
   it('starts «Впиши слово» from its card and plays a whole Game, typing each standard form, to the result screen', async () => {
@@ -975,7 +1082,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
       `Чому ${standard} краще.`,
     );
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
   });
 
   it('starts «Склади вислів» from its card and plays a whole Game, assembling each expression, to the result screen', async () => {
@@ -1030,7 +1137,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(`${words[0] ?? ''}, друге — третє`, {
       exact: false,
     });
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -1085,9 +1192,56 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
       `Чому ${standard} краще.`,
     );
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
+
+  it('keys the options А–Г and marks a wrong pick with ✕ on its key', async () => {
+    await open({ anglicisms: 15 });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-anglicism'));
+    await waitFor(() => {
+      expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+    });
+    const options = screen.getAllByTestId(/^game-option-\d+$/);
+    options.forEach((option, place) => {
+      expect(within(option).getByText(['А', 'Б', 'В', 'Г'][place] ?? '')).toBeTruthy();
+    });
+    expect(screen.queryByText('✕')).toBeNull();
+
+    const standard = `добре${String(theNumberOfThePrompt())}`;
+    const wrong = options.findIndex((option) => option.props['accessibilityLabel'] !== standard);
+    const picked = options[wrong];
+    if (picked === undefined) throw new Error('No wrong option');
+    await fireEvent.press(picked);
+
+    expect(within(screen.getByTestId(`game-option-${String(wrong)}`)).getByText('✕')).toBeTruthy();
+    expect(screen.getAllByText('✕')).toHaveLength(1);
+    expect(theOption(`${standard}, Правильно`)).toBeTruthy();
+  });
+
+  it.each([
+    ['a Word', { anglicisms: 15 }, 'game-mode-anglicism', 'roundOptionWord'],
+    ['a sentence', { idioms: 15 }, 'game-mode-idiom-meaning', 'roundOptionSentence'],
+    ['a long text', { idioms: 15, longSenses: true }, 'game-mode-idiom-meaning', 'roundOptionLong'],
+  ] as const)(
+    'sizes the options for their text when each is %s',
+    async (_, content, mode, role) => {
+      await open(content);
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId(mode));
+      await waitFor(() => {
+        expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
+      });
+      const { fontSize } = typeStyle(role, coreTokens);
+      screen.getAllByTestId(/^game-option-\d+$/).forEach((option) => {
+        const text = String(option.props['accessibilityLabel']);
+        expect(within(option).getByText(text)).toHaveStyle({ fontSize });
+      });
+    },
+  );
 
   it('starts «Фразеологізми» from its card and plays a whole Game, picking each meaning, to the result screen', async () => {
     await open({ idioms: 15 });
@@ -1134,7 +1288,7 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(meaning, { exact: false });
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -1164,9 +1318,7 @@ describe('the Game screen', () => {
         right ? 'Правильно!' : 'Не цього разу',
       );
       const lives = 3 - mistakes.filter((at) => at <= round).length;
-      expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe(
-        `Життів: ${String(lives)} з 3`,
-      );
+      expect(screen.getByTestId('game-lives')).toHaveTextContent(`Життів: ${String(lives)} з 3`);
       await fireEvent.press(screen.getByTestId('game-next'));
     }
 
@@ -1181,6 +1333,88 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-result-best')).toHaveTextContent(/11$/);
     // A Game with no Life left offers no widget hint.
     expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+  });
+
+  it('shows the streak of «Виживання» with its switch on, a big counter and «{n} поспіль · рекорд {best}» from the Best result, in place of the Rounds passed', async () => {
+    await open({ corrections: 15, best: { survival: 2 }, switchedOn: ['survivalStreak'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-survival'));
+
+    const lines: string[] = [];
+    for (let round = 1; round <= 4; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-streak-rounds')).toHaveTextContent(String(round - 1));
+      });
+      lines.push(String(screen.getByTestId('game-streak').props['accessibilityLabel']));
+      expect(screen.queryByTestId('game-progress')).toBeNull();
+      await answerSurvivalRound(round !== 2);
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    expect(lines).toEqual([
+      '0 поспіль · рекорд 2',
+      '1 поспіль · рекорд 2',
+      '2 поспіль · рекорд 2',
+      '3 поспіль · рекорд 3',
+    ]);
+    expect(screen.getByTestId('game-streak-line')).toHaveTextContent('4 поспіль · рекорд 4');
+  });
+
+  describe('the end posters', () => {
+    it('ends a whole «Наголос» on the «Фініш» poster, «Влучно!», with its XP and a new record, and «До ігор» opens the Games hub', async () => {
+      await open({ switchedOn: ['finishPoster'] });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-stress'));
+      for (let round = 1; round <= 15; round += 1) {
+        await waitFor(() => {
+          expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
+        });
+        await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
+        await fireEvent.press(screen.getByTestId('game-next'));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Фініш')).toBeOnTheScreen();
+      expect(screen.getByText('Влучно!')).toBeOnTheScreen();
+      expect(screen.getByText('15 з 15 влучань')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-new-best')).toHaveTextContent('Новий рекорд!');
+      expect(screen.getByTestId('game-end-xp')).toHaveTextContent(/^Досвід\d+ XP$/);
+      expect(screen.queryByTestId('game-end-time-up')).toBeNull();
+      expect(screen.getByTestId('game-end-best')).toHaveTextContent('Рекорд15');
+      expect(screen.queryByText('Перемога!')).toBeNull();
+      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+
+      await fireEvent.press(screen.getByTestId('game-to-games'));
+
+      expect(screen.getByTestId('game-modes')).toBeOnTheScreen();
+    });
+
+    it('ends «Виживання» on its third mistake on the Lives-over poster, with the mode and the score', async () => {
+      await open({ corrections: 15, switchedOn: ['finishPoster'] });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-survival'));
+      for (const right of [false, true, true, false, false]) {
+        await waitFor(() => {
+          expect(screen.getByTestId('game-lives')).toBeOnTheScreen();
+        });
+        await answerSurvivalRound(right);
+        await fireEvent.press(screen.getByTestId('game-next'));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId('game-end-lives-over')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
+      expect(screen.getByText('ВИЖИВАННЯ · 2/5')).toBeOnTheScreen();
+      expect(screen.queryByTestId('game-end-xp')).toBeNull();
+      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз!');
+      expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
+    });
   });
 
   describe('«На час»', () => {
@@ -1205,8 +1439,11 @@ describe('the Game screen', () => {
       await waitFor(() => {
         expect(timerLabel()).toBe('лишилось 60 секунд');
       });
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('60 с');
       expect(screen.getByTestId('game-progress')).toHaveTextContent('Пройдено: 0');
       expect(screen.queryByTestId('game-lives')).toBeNull();
+      expect(screen.queryByTestId('game-life-0', { includeHiddenElements: true })).toBeNull();
+      expect(screen.getByRole('header', { name: 'На час' })).toBeOnTheScreen();
       expect(
         screen.getByText(/^Визначення( · |$)/, { includeHiddenElements: true }),
       ).toBeOnTheScreen();
@@ -1225,6 +1462,7 @@ describe('the Game screen', () => {
       await pass(10_000);
 
       expect(timerLabel()).toBe('лишилось 50 секунд');
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('50 с');
 
       await pass(50_000);
 
@@ -1237,6 +1475,32 @@ describe('the Game screen', () => {
       expect(screen.queryByTestId('game-result-rounds')).toBeNull();
       expect(screen.queryByTestId('game-result-lives')).toBeNull();
       expect(screen.getByTestId('game-result-best')).toHaveTextContent('3', { exact: false });
+    });
+
+    it('ends on the «Фініш» poster headed «Час!», «Ще раунд!» for fewer than half right', async () => {
+      await open({
+        clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
+        schedule: systemSchedule,
+        switchedOn: ['finishPoster'],
+      });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-timed'));
+      await waitFor(() => {
+        expect(timerLabel()).toBe('лишилось 60 секунд');
+      });
+      await pickTheWordOfThePrompt();
+      await pickAnotherWord();
+      await pickAnotherWord();
+      await pass(60_000);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Час!')).toBeOnTheScreen();
+      expect(screen.getByText('Ще раунд!')).toBeOnTheScreen();
+      expect(screen.getByText('1 з 3 влучання')).toBeOnTheScreen();
+      expect(screen.queryByText('Час вийшов!')).toBeNull();
     });
 
     it('stops the timer while the app is in the background, and runs it on from there on return', async () => {
@@ -1332,7 +1596,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(language, { exact: false });
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(`Від test${String(n)}.`);
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -1399,23 +1663,23 @@ describe('the Game screen', () => {
   describe('the Mascot (#1386)', () => {
     const { mascot } = edition;
 
-    it('reacts to a right and a wrong answer and to the Game’s end with the Edition’s lines', async () => {
+    it('stays out of the Round, which board 07 draws without it, and meets the Game’s end with the Edition’s line', async () => {
       await open({ corrections: 15 });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-survival'));
-      expect(screen.getByTestId('mascot-waits')).toBeTruthy();
+      expect(screen.getByRole('header', { name: 'Виживання' })).toBeOnTheScreen();
+      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
 
       await answerSurvivalRound(true);
-      expect(screen.getByTestId('mascot-gameRight')).toHaveTextContent(mascot.gameRight);
+      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
       await fireEvent.press(screen.getByTestId('game-next'));
-      expect(screen.getByTestId('mascot-waits')).toBeTruthy();
 
       for (let mistake = 1; mistake <= 3; mistake += 1) {
         await waitFor(() => {
           expect(screen.getByTestId('game-prompt')).toBeTruthy();
         });
         await answerSurvivalRound(false);
-        expect(screen.getByTestId('mascot-gameWrong')).toHaveTextContent(mascot.gameWrong);
+        expect(screen.queryByTestId(/^mascot-/)).toBeNull();
         await fireEvent.press(screen.getByTestId('game-next'));
       }
 

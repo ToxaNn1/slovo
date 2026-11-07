@@ -9,8 +9,9 @@ import {
   type Round,
   type RoundAnswer,
   type RoundContent,
+  type Streak,
 } from '@slovo/core';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   Easing,
@@ -52,22 +53,22 @@ import { VowelRound } from './VowelRound';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
-/** The «−1» that flies up off the Lives when one is lost. */
-const LIFE_LOST_MARK = '\u22121';
-
 /**
- * A lost Life (the design's `slLifeOut`) jumps to 1.6 and −25° in the red and
- * settles back to the silhouette in 600 ms, while «−1» rises 80 pt and fades
- * in 1.1 s (`slXp`). It comes once the wrong choice has filled, when the
- * Round says the Life is lost, as its haptic does.
+ * A lost Life (board 07's `slPop`) turns to the silhouette as it pops from
+ * 0.6 past full size and settles, once the wrong choice has filled, when the
+ * Round says the Life is lost, as its haptic does. With Reduce Motion it only
+ * fades.
  */
-const LIFE_OUT = {
-  duration: 600,
+const LIFE_POP_UP = {
+  duration: roundHeader.lostPop.duration * 0.6,
   easing: Easing.out(Easing.ease),
   reduceMotion: ReduceMotion.Never,
 };
-const LIFE_MARK = { duration: 1100, reduceMotion: ReduceMotion.Never } as const;
-/** With Reduce Motion a lost Life's fill and its «−1» only fade (the design's `slRm`). */
+const LIFE_POP_DOWN = {
+  duration: roundHeader.lostPop.duration * 0.4,
+  easing: ease,
+  reduceMotion: ReduceMotion.Never,
+};
 const LIFE_FADE = { duration: 300, easing: ease, reduceMotion: ReduceMotion.Never };
 
 /**
@@ -92,10 +93,15 @@ export function GameRound({
   onNext,
   onLeave,
   onOpenLetter,
+  title,
   timeLeft,
-  mascot,
+  streak,
 }: {
   game: CurrentGame;
+  /** The streak of «Виживання» and its record, which the header shows in place of the Rounds passed; none in another mode or with the streak switched off. */
+  streak?: Streak | undefined;
+  /** The Game Mode's title, which the Round's header shows in caps. */
+  title: string;
   /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
   label: string;
   onAnswer: (given: GivenAnswer) => void;
@@ -106,8 +112,6 @@ export function GameRound({
   onOpenLetter: () => void;
   /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
   timeLeft?: number | undefined;
-  /** The Mascot on the right of the Round's head, as the Round leaves it; none. */
-  mascot?: ReactNode;
 }) {
   const { strings } = useEdition();
   const { round } = game;
@@ -136,13 +140,14 @@ export function GameRound({
   return (
     <View testID="game-round" style={styles.screen}>
       <GameHeader
+        title={title}
+        number={round.number}
         roundsPassed={game.roundsPassed}
         roundLimit={game.roundLimit}
         lives={game.lives}
         livesAtStart={game.livesAtStart}
         lifeLostAfter={round.lifeLostAfter}
-        results={game.played.map((played) => played.right)}
-        current={answer === undefined ? game.played.length : undefined}
+        streak={streak}
         time={
           game.time === undefined || game.timeLimit === undefined
             ? undefined
@@ -161,7 +166,6 @@ export function GameRound({
           roundLimit={game.roundLimit}
           heading={round.form === 'vowel' || round.form === 'pairs'}
           testID={round.form === 'pairs' ? 'game-prompt' : undefined}
-          mascot={mascot}
         />
         <FormRound
           round={round}
@@ -305,28 +309,29 @@ export function QuickQuestionRound({
 }
 
 /**
- * The Round's header (`game-round-dark`): the ✕ at its start, the Rounds
- * passed over a bar that grows as they pass towards the mode's Round limit,
- * or with no limit just the Rounds passed, or in a timed Game the timer in
- * their place, and the Lives on the right, full in the heart colour, lost as
- * an outline.
+ * The Round's header (board 07), one for every Game Mode: a row of the ✕,
+ * the mode's title in caps with the Round in play out of the Round limit,
+ * and the Lives as flags; under it the 10 segments that fill as the Rounds
+ * pass towards the limit, or with no limit the Rounds passed, and in a timed
+ * Game the timer under them; then «Життів: 4 з 5» on its red label. A mode without
+ * Lives shows no flags and no Lives line.
  */
 function GameHeader({
+  title,
+  number,
   roundsPassed,
   roundLimit,
   lives,
   livesAtStart,
   lifeLostAfter,
-  results,
-  current,
+  streak,
   time,
   onExit,
 }: {
+  title: string;
+  /** Which Round of the Game is in play, from 1. */
+  number: number;
   roundsPassed: number;
-  /** Whether each Round played was answered right, in order. */
-  results: readonly boolean[];
-  /** The place of the Round still to answer; none once it is answered. */
-  current: number | undefined;
   /** The mode's Round limit; none in a mode without one, which shows no bar. */
   roundLimit: number | undefined;
   /** The Lives left; none in a mode without Lives, which shows none. */
@@ -335,6 +340,8 @@ function GameHeader({
   livesAtStart: number | undefined;
   /** How long after a wrong answer its Life is lost, in milliseconds. */
   lifeLostAfter: number;
+  /** The streak and its record, shown in place of the Rounds passed in a mode with no Round limit. */
+  streak: Streak | undefined;
   /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
   time: { left: number; limit: number } | undefined;
   onExit: () => void;
@@ -344,60 +351,33 @@ function GameHeader({
   const { strings, voice, count } = useEdition();
   const words = strings.game.round;
   const progress = { passed: String(roundsPassed), total: String(roundLimit ?? '') };
+  const heading =
+    roundLimit === undefined
+      ? title
+      : fill(words.header, { mode: title, n: String(number), total: String(roundLimit) });
+  const filled =
+    roundLimit === undefined
+      ? 0
+      : Math.floor((Math.min(roundsPassed, roundLimit) * roundProgress.segments) / roundLimit);
+  const hasLives = lives !== undefined && livesAtStart !== undefined;
   return (
-    <>
-      <View style={styles.header}>
+    <View style={styles.header}>
+      <View style={styles.headerRow}>
         <ExitButton onPress={onExit} />
-        <View
-          testID="game-progress"
-          accessible
-          accessibilityLabel={fill(
-            roundLimit === undefined ? words.passedLabel : words.progressLabel,
-            progress,
-          )}
+        <Text
+          testID="game-title"
+          accessibilityRole="header"
+          numberOfLines={1}
+          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
           {...voice}
-          style={styles.progress}
+          style={[typeStyle('roundTitle', tokens), styles.title, { color: colors.ink }]}
         >
-          {roundLimit === undefined ? (
-            <Text
-              maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-              style={[typeStyle('roundPassed', tokens), { color: colors.ink }]}
-            >
-              {fill(words.passed, progress)}
-            </Text>
-          ) : (
-            <View testID="game-progress-bar" style={styles.segments}>
-              {Array.from({ length: roundLimit }, (_, place) => (
-                <View
-                  key={place}
-                  testID={`game-progress-${String(place)}`}
-                  style={[
-                    styles.segment,
-                    {
-                      backgroundColor:
-                        place < results.length
-                          ? results[place]
-                            ? colors.accent
-                            : colors.ink
-                          : place === current
-                            ? colors.muted
-                            : colors.silhouette,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-          )}
-        </View>
-        {lives !== undefined && livesAtStart !== undefined && (
+          {heading}
+        </Text>
+        {hasLives && (
           <View
-            testID="game-lives"
-            accessible
-            accessibilityLabel={fill(words.lives, {
-              count: String(lives),
-              total: String(livesAtStart),
-            })}
-            {...voice}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
             style={styles.lives}
           >
             {Array.from({ length: livesAtStart }, (_, life) => (
@@ -406,25 +386,74 @@ function GameHeader({
           </View>
         )}
       </View>
-      {time !== undefined && (
-        <View style={styles.timer}>
-          <GameTimer
-            remainingMs={time.left}
-            totalMs={time.limit}
-            texts={{
-              remaining: (seconds) => count(words.timer, seconds),
-              shown: (seconds) => fill(words.timerShown, { seconds: String(seconds) }),
-            }}
-            testID="game-timer"
-          />
+      {roundLimit === undefined && streak !== undefined ? (
+        <StreakCounter streak={streak} />
+      ) : roundLimit === undefined ? (
+        <Text
+          testID="game-progress"
+          accessibilityLabel={fill(words.passedLabel, progress)}
+          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+          {...voice}
+          style={[typeStyle('roundLives', tokens), { color: colors.ink }]}
+        >
+          {fill(words.passed, progress)}
+        </Text>
+      ) : (
+        <View
+          testID="game-progress"
+          accessible
+          accessibilityLabel={fill(words.progressLabel, progress)}
+          {...voice}
+          style={styles.segments}
+        >
+          {Array.from({ length: roundProgress.segments }, (_, place) => (
+            <View
+              key={place}
+              testID={`game-progress-${String(place)}`}
+              style={[
+                styles.segment,
+                {
+                  backgroundColor:
+                    place < filled
+                      ? colors.accent
+                      : place === filled
+                        ? colors.muted
+                        : colors.silhouette,
+                },
+              ]}
+            />
+          ))}
         </View>
       )}
-    </>
+      {time !== undefined && (
+        <GameTimer
+          remainingMs={time.left}
+          totalMs={time.limit}
+          texts={{
+            remaining: (seconds) => count(words.timer, seconds),
+            shown: (seconds) => fill(words.timerShown, { seconds: String(seconds) }),
+          }}
+          testID="game-timer"
+        />
+      )}
+      {hasLives && (
+        <View style={[styles.livesLabel, { backgroundColor: colors.accent }]}>
+          <Text
+            testID="game-lives"
+            maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+            {...voice}
+            style={[typeStyle('roundLives', tokens), { color: colors.onAccent }]}
+          >
+            {fill(words.lives, { count: String(lives), total: String(livesAtStart) })}
+          </Text>
+        </View>
+      )}
+    </View>
   );
 }
 
 /**
- * The ✕ at the start of the Round's header (`game-round-dark`), 44 pt, which
+ * The ✕ at the start of the Round's header (board 07), a 40-pt square, which
  * VoiceOver reads as the Edition's «Вийти з гри».
  */
 function ExitButton({ onPress }: { onPress: () => void }) {
@@ -437,23 +466,20 @@ function ExitButton({ onPress }: { onPress: () => void }) {
       accessibilityLabel={strings.game.exit.label}
       {...voice}
       onPress={onPress}
+      hitSlop={(minTouchTarget - roundHeader.exit) / 2}
       style={[styles.exit, { backgroundColor: colors.surfaceSunken }]}
     >
-      <Svg width={roundHeader.exitGlyph} height={roundHeader.exitGlyph} viewBox="0 0 20 20">
-        <Path
-          d="M0 3L3 0L10 7L17 0L20 3L13 10L20 17L17 20L10 13L3 20L0 17L7 10Z"
-          fill={colors.ink}
-        />
+      <Svg width={roundHeader.exitGlyph} height={roundHeader.exitGlyph} viewBox="0 0 14 14">
+        <Path d="M0 2L2 0L7 5L12 0L14 2L9 7L14 12L12 14L7 9L2 14L0 12L5 7Z" fill={colors.ink} />
       </Svg>
     </Pressable>
   );
 }
 
 /**
- * One Life, a shield: red while full, the silhouette once lost. A Life lost
- * meanwhile jumps out in the red and settles to the silhouette as «−1» flies
- * up off it; with Reduce Motion its fill and the «−1» only fade. Its haptic
- * comes with the wrong answer that cost it.
+ * One Life, a flag: red while full, the silhouette once lost. A Life lost
+ * meanwhile turns grey as it pops; with Reduce Motion its fill only fades.
+ * Its haptic comes with the wrong answer that cost it.
  */
 function Life({
   place,
@@ -462,19 +488,15 @@ function Life({
 }: {
   place: number;
   full: boolean;
-  /** How long after the wrong answer the Life is lost, in milliseconds: when it jumps. */
+  /** How long after the wrong answer the Life is lost, in milliseconds: when it pops. */
   lostAfter: number;
 }) {
-  const tokens = useTokens();
-  const { colors } = tokens;
+  const { colors } = useTokens();
   const reduceMotion = useReduceMotion();
   /** 1 while full, 0 once lost. */
   const fullness = useSharedValue(full ? 1 : 0);
-  /** 1 at the jump's height, 0 at rest. */
-  const pop = useSharedValue(0);
-  /** 0 before the «−1» shows, 1 once it has risen and faded. */
-  const mark = useSharedValue(1);
-  // Whether the Life showed full before, so only losing it now jumps.
+  const scale = useSharedValue(1);
+  // Whether the Life showed full before, so only losing it now pops.
   const shownFull = useRef(full);
 
   useEffect(() => {
@@ -485,38 +507,27 @@ function Life({
     }
     if (!shownFull.current) return;
     shownFull.current = false;
-    mark.value = 0;
-    mark.value = withDelay(
-      lostAfter,
-      withTiming(1, reduceMotion ? LIFE_FADE : { ...LIFE_MARK, easing: Easing.out(Easing.ease) }),
-    );
-    fullness.value = withDelay(lostAfter, withTiming(0, reduceMotion ? LIFE_FADE : LIFE_OUT));
+    fullness.value = withDelay(lostAfter, withTiming(0, reduceMotion ? LIFE_FADE : LIFE_POP_UP));
     if (!reduceMotion) {
-      pop.value = withDelay(
+      scale.value = withDelay(
         lostAfter,
-        withSequence(withTiming(1, { duration: 0 }), withTiming(0, LIFE_OUT)),
+        withSequence(
+          withTiming(roundHeader.lostPop.from, { duration: 0 }),
+          withTiming(roundHeader.lostPop.peak, LIFE_POP_UP),
+          withTiming(1, LIFE_POP_DOWN),
+        ),
       );
     }
     // The shared values are stable, and a change of Reduce Motion finds the
     // Life already lost.
-  }, [full, reduceMotion, lostAfter, fullness, pop, mark]);
+  }, [full, reduceMotion, lostAfter, fullness, scale]);
 
-  const popStyle = useAnimatedStyle(() => ({
-    transform: [
-      { scale: 1 + (roundHeader.lostPop.scale - 1) * pop.value },
-      { rotate: `${String(roundHeader.lostPop.rotate * pop.value)}deg` },
-    ],
-  }));
+  const popStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
   const fillStyle = useAnimatedStyle(() => ({ opacity: fullness.value }));
-  // The «−1» shows from the loss to the end of its flight; with Reduce Motion it fades in place.
-  const markStyle = useAnimatedStyle(() => ({
-    opacity: mark.value === 0 || mark.value === 1 ? 0 : 1 - mark.value,
-    transform: [{ translateY: reduceMotion ? 0 : -roundHeader.lostMarkRise * mark.value }],
-  }));
 
-  const shield = (color: string) => (
+  const flag = (color: string) => (
     <Wedge
-      points={wedges.shield}
+      points={wedges.lifeFlag}
       color={color}
       width={roundHeader.life.width}
       height={roundHeader.life.height}
@@ -524,20 +535,12 @@ function Life({
   );
   return (
     <Animated.View testID={`game-life-${String(place)}`} style={popStyle}>
-      {shield(colors.silhouette)}
+      {flag(colors.silhouette)}
       <Animated.View
         testID={`game-life-${String(place)}-fill`}
         style={[StyleSheet.absoluteFill, fillStyle]}
       >
-        {shield(colors.accent)}
-      </Animated.View>
-      <Animated.View
-        testID={`game-life-${String(place)}-lost`}
-        style={[styles.lifeLost, markStyle]}
-      >
-        <Text accessible={false} style={[typeStyle('lifeLost', tokens), { color: colors.accent }]}>
-          {LIFE_LOST_MARK}
-        </Text>
+        {flag(colors.accent)}
       </Animated.View>
     </Animated.View>
   );
@@ -545,10 +548,8 @@ function Life({
 
 /**
  * The Round's head (`game-round-dark`): its label and place, such as
- * «ВИЗНАЧЕННЯ · 3 / 15», in the muted Unbounded, and the Mascot on the
- * right, which takes at most `roundLayout.mascotShare` of the row, so a long
- * Mascot line wraps under the figure and the label keeps room to break only
- * between whole words. The label is the Round's heading for VoiceOver where its card does
+ * «ВИЗНАЧЕННЯ · 3 / 15», in the muted Unbounded, broken only between whole
+ * words. The label is the Round's heading for VoiceOver where its card does
  * not read it, a vowel or a pairs Round; the place is the header's to read.
  */
 function RoundHead({
@@ -557,7 +558,6 @@ function RoundHead({
   roundLimit,
   heading,
   testID,
-  mascot,
 }: {
   label: string;
   /** Which Round of the Game it is, from 1. */
@@ -567,7 +567,6 @@ function RoundHead({
   /** Whether VoiceOver reads the label as the Round's heading; else the card reads it. */
   heading: boolean;
   testID: string | undefined;
-  mascot: ReactNode;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
@@ -580,20 +579,17 @@ function RoundHead({
           total: String(roundLimit),
         });
   return (
-    <View style={styles.head}>
-      <Text
-        testID={testID}
-        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-        {...(heading
-          ? { accessibilityRole: 'header', accessibilityLabel: label }
-          : { accessibilityElementsHidden: true, importantForAccessibility: 'no' })}
-        {...voice}
-        style={[typeStyle('roundHead', tokens), styles.headLabel, { color: colors.muted }]}
-      >
-        {place === undefined ? label : `${label} · ${place}`}
-      </Text>
-      <View style={styles.headMascot}>{mascot}</View>
-    </View>
+    <Text
+      testID={testID}
+      maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+      {...(heading
+        ? { accessibilityRole: 'header', accessibilityLabel: label }
+        : { accessibilityElementsHidden: true, importantForAccessibility: 'no' })}
+      {...voice}
+      style={[typeStyle('roundHead', tokens), { color: colors.muted }]}
+    >
+      {place === undefined ? label : `${label} · ${place}`}
+    </Text>
   );
 }
 
@@ -708,40 +704,65 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
   );
 }
 
+/**
+ * The streak of «Виживання» (spec #1674): a big counter of the Rounds passed
+ * and «{n} поспіль · рекорд {best}» beside it, read by VoiceOver as that line.
+ */
+function StreakCounter({ streak }: { streak: Streak }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { strings, voice } = useEdition();
+  const line = fill(strings.game.round.survivalStreak, {
+    n: String(streak.rounds),
+    best: String(streak.record),
+  });
+  return (
+    <View
+      testID="game-streak"
+      accessible
+      accessibilityLabel={line}
+      {...voice}
+      style={styles.streak}
+    >
+      <Text
+        testID="game-streak-rounds"
+        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+        style={[typeStyle('roundStreak', tokens), { color: colors.accent }]}
+      >
+        {streak.rounds}
+      </Text>
+      <Text
+        testID="game-streak-line"
+        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+        style={[typeStyle('roundStreakLine', tokens), styles.streakLine, { color: colors.ink }]}
+      >
+        {line}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  streak: { flexDirection: 'row', alignItems: 'baseline', gap: roundLayout.gap },
+  streakLine: { flexShrink: 1 },
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
   // A Round of a form without options keeps one gap more under its content than a pick Round.
   roundWithoutOptions: { paddingBottom: space[6] + space[5] },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: roundLayout.gap,
-    minHeight: minTouchTarget,
-    paddingLeft: space[3],
-    paddingRight: space[4],
-  },
-  progress: { flex: 1, gap: roundLayout.tightGap },
+  header: { gap: roundHeader.gap, paddingHorizontal: space[4] },
+  headerRow: { flexDirection: 'row', alignItems: 'center', gap: roundHeader.rowGap },
+  title: { flex: 1 },
   segments: { flexDirection: 'row', gap: roundProgress.gap },
   segment: { flex: 1, height: roundProgress.height, transform: [{ skewX: roundProgress.skew }] },
   lives: { flexDirection: 'row', gap: roundHeader.lifeGap },
-  timer: { marginTop: space[3], paddingHorizontal: space[4] },
-  lifeLost: { position: 'absolute', top: -space[1], right: 0 },
+  livesLabel: { alignSelf: 'flex-start', paddingHorizontal: space[2], paddingVertical: space[1] },
   exit: {
-    width: minTouchTarget,
-    height: minTouchTarget,
+    width: roundHeader.exit,
+    height: roundHeader.exit,
     borderRadius: roundHeader.exitRadius,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  head: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
-    gap: roundLayout.gap,
-  },
-  headLabel: { flexShrink: 1 },
-  headMascot: { flexShrink: 1, maxWidth: roundLayout.mascotShare, alignItems: 'flex-end' },
   label: { marginHorizontal: space[1] },
   sheetScroll: { flexGrow: 0, flexShrink: 1 },
   // The board's banner title sits clear of the slant over the sheet, not on its low edge.

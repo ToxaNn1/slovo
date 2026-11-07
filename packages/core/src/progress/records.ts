@@ -40,6 +40,10 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     /** A finished Game's right answers and Rounds played, for the Badges (ADR 0085); left out before them. */
     right: z.number().int().nonnegative().optional(),
     played: z.number().int().nonnegative().optional(),
+    /** A Daily Crossword solve's Solve time in seconds (ADR 0087); left out before it, read as no time. */
+    solveSeconds: z.number().int().nonnegative().optional(),
+    /** Whether a Daily Crossword solve used the Crossword Hint (ADR 0087); left out, no hint. */
+    hinted: z.boolean().optional(),
   }),
   z.object({ kind: z.literal('freeze'), date: z.string(), at: InstantSchema }),
   z.object({

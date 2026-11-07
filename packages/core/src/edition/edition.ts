@@ -153,6 +153,17 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   progressShareCards: ['shareCards', 'xpLog'],
   dailyCrosswordShare: ['shareCards', 'dailyCrossword'],
   tracedCrossword: ['dailyCrossword'],
+  // The crossing Daily Crossword and its parts (ADR 0087).
+  crossingCrossword: ['dailyCrossword'],
+  crosswordHint: ['crossingCrossword'],
+  crosswordSolveTime: ['crossingCrossword'],
+  crosswordSolvedScreen: ['crossingCrossword'],
+  crosswordBadgeStamp: ['crossingCrossword', 'badges'],
+  // The board 07 parts of a Game (spec #1674).
+  gameAnswerCard: ['game'],
+  letterTiles: ['gameByLetters'],
+  survivalStreak: ['gameSurvival'],
+  finishPoster: ['game'],
   quickQuestion: ['game'],
   playStep: ['game'],
   // The Rarity Test sets the Rarity Ceiling (ADR 0072).

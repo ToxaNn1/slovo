@@ -22,7 +22,14 @@ export type XpAction =
       readonly played: number;
     }
   | { readonly source: 'game-best' }
-  | { readonly source: 'daily-crossword'; readonly date: string }
+  | {
+      readonly source: 'daily-crossword';
+      readonly date: string;
+      /** The Solve time in seconds, left out where it is not measured (ADR 0087). */
+      readonly solveSeconds?: number;
+      /** Whether the Crossword Hint was used; left out, no hint (ADR 0087). */
+      readonly hinted?: boolean;
+    }
   | { readonly source: 'review-answer'; readonly entryId: string }
   | { readonly source: 'quick-question' };
 

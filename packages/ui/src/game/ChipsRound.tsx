@@ -36,6 +36,8 @@ export function ChipsRound({
         chips={round.chips}
         kind={round.chipKind}
         fixed={round.fixed}
+        layout={round.layout}
+        slots={round.slots}
         answer={round.answer?.form === 'chips' ? round.answer : undefined}
         onAnswer={(chips) => {
           onAnswer({ form: 'chips', chips });

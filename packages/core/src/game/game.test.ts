@@ -34,7 +34,7 @@ import {
   type UserStateChanges,
   type UserStatePort,
 } from '../index';
-import { GAME_LIVES } from './game';
+import { GAME_LIVES, streakOf } from './game';
 import { createMemoryContentPort } from '../testing';
 import {
   fakeClock,
@@ -1908,6 +1908,47 @@ describe('the Best result per mode', () => {
     expect(app.game.state.modes[0]).toMatchObject({ best: { result: 12, of: 15 } });
   });
 
+  it("gives the streak of a mode with Lives and no Round limit, its record the mode's Best result until the streak passes it", async () => {
+    const survival: GameMode = { ...lemmaMode, lives: 3, roundLimit: 'none' };
+    const app = await run({
+      records: gameBest.record('test-lemma').change(2) as Map<string, string>,
+      gameModes: [survival],
+    });
+
+    expect(streakOf(app.game.state)).toBeUndefined();
+    await app.game.start('test-lemma');
+    // «0 поспіль · рекорд 2».
+    expect(streakOf(app.game.state)).toEqual({ rounds: 0, record: 2 });
+
+    const seen: unknown[] = [];
+    for (const right of [true, false, true, true, false, false]) {
+      await play(app, right, () => 0);
+      seen.push(streakOf(app.game.state));
+    }
+
+    // A wrong answer passes its Round too; the record follows the streak once past it, and the one that cost the last Life passes none.
+    expect(seen).toEqual([
+      { rounds: 1, record: 2 },
+      { rounds: 2, record: 2 },
+      { rounds: 3, record: 3 },
+      { rounds: 4, record: 4 },
+      { rounds: 5, record: 5 },
+      { rounds: 5, record: 5 },
+    ]);
+    expect(app.game.state.bestResults['test-lemma']).toBe(5);
+  });
+
+  it('gives no streak in a mode with a Round limit or with no Lives', async () => {
+    const timed: GameMode = { ...lemmaMode, lives: 'none', roundLimit: 'none' };
+    const app = await run({ gameModes: [timed] });
+
+    await app.game.start('guess-word');
+    expect(streakOf(app.game.state)).toBeUndefined();
+    app.game.leave();
+    await app.game.start('test-lemma');
+    expect(streakOf(app.game.state)).toBeUndefined();
+  });
+
   it('rides on the offer while the modes are still planned', async () => {
     // The Game alone reads the Words in full, so only its planning waits.
     const pack: ContentReadPort = {
@@ -2964,5 +3005,68 @@ describe('the Game and the Badges', () => {
     const clean = await played([run14]);
     await playGame(clean);
     expect(earnedOf(clean)).toEqual(['run-14']);
+  });
+});
+
+// Spec #1674, «End of a Game»: how a Game ended, for the «Фініш» and Lives-over posters.
+describe('the end of a Game', () => {
+  it('is none while the Game is in play', async () => {
+    const app = await run();
+    await app.game.start('guess-word');
+
+    expect(current(app).end).toBeUndefined();
+  });
+
+  it('is `finished` at the Round limit, with the Rounds played, right answers, the XP the Game earned and a new Best result', async () => {
+    const app = await run({ on: ['rarityCeiling', 'knowledge', 'xpLog'] });
+    const before = app.xpLog.state.total;
+
+    await playGame(app, [3, 7]);
+
+    expect(current(app).end).toEqual({
+      kind: 'finished',
+      played: 15,
+      right: 13,
+      xp: app.xpLog.state.total - before,
+      newBest: true,
+      onTarget: true,
+    });
+    expect(current(app).end?.xp).toBeGreaterThan(0);
+  });
+
+  it('is `lives-over` once the last Life is lost', async () => {
+    const app = await run();
+
+    await playGame(app, [1, 2, 4, 6, 8]);
+
+    expect(current(app).end).toMatchObject({ kind: 'lives-over', played: 8, right: 3 });
+  });
+
+  it('says a new Best result only when the Game beats the one before', async () => {
+    const app = await run();
+
+    await playGame(app, [1, 2, 3, 4, 5]);
+    expect(current(app).end?.newBest).toBe(true);
+
+    await playGame(app, [1, 2, 3, 4, 5]);
+    expect(current(app).end?.newBest).toBe(false);
+
+    await playGame(app, [2, 3, 4, 5, 6]);
+    expect(current(app).end?.newBest).toBe(true);
+  });
+
+  it('says no new Best result for a first Game with no Round passed', async () => {
+    const app = await run({ gameModes: [{ ...lemmaMode, lives: 1 }] });
+    await app.game.start('test-lemma');
+
+    await app.game.answer({ form: 'pick', option: 1 });
+    await app.game.next();
+
+    expect(current(app).end).toMatchObject({
+      kind: 'lives-over',
+      played: 1,
+      right: 0,
+      newBest: false,
+    });
   });
 });

@@ -96,6 +96,15 @@
     "progressShareCards": true,
     "dailyCrosswordShare": true,
     "tracedCrossword": true,
+    "crossingCrossword": false,
+    "crosswordHint": false,
+    "crosswordSolveTime": false,
+    "crosswordSolvedScreen": false,
+    "crosswordBadgeStamp": false,
+    "gameAnswerCard": false,
+    "letterTiles": false,
+    "survivalStreak": false,
+    "finishPoster": false,
     "eveningNotification": true,
     "notificationFarewell": true,
     "notificationExplainer": true,
@@ -544,7 +553,7 @@
       "id": "crossword",
       "name": "Кросворд",
       "description": "Щоденні кросворди без пропусків.",
-      "shape": "tile",
+      "shape": "checker",
       "tone": "cream"
     },
     {
@@ -708,6 +717,7 @@
       "name": "Сім кросвордів поспіль",
       "symbol": "7×",
       "family": "crossword",
+      "stampKicker": "7 ПОСПІЛЬ",
       "condition": {
         "kind": "dailyCrosswordRun",
         "days": 7
