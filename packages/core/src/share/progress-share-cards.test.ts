@@ -25,7 +25,13 @@ const ALL_ON: readonly FeatureSwitch[] = [
   'analytics',
 ];
 const badges: readonly Badge[] = [
-  { id: 'streak-3', name: 'Three days', symbol: '1', condition: { kind: 'streak', days: 3 } },
+  {
+    id: 'streak-3',
+    name: 'Three days',
+    symbol: '1',
+    family: 'f',
+    condition: { kind: 'streak', days: 3 },
+  },
 ];
 const TODAY = '2026-10-14';
 

@@ -53,7 +53,7 @@ export {
   type TracedWord,
 } from './game/TracedCrosswordGrid';
 export { HapticsProvider } from './providers/HapticsProvider';
-export { InterfaceSoundsProvider } from './providers/InterfaceSoundsProvider';
+export { InterfaceSoundsProvider, useInterfaceSounds } from './providers/InterfaceSoundsProvider';
 export { HideButton } from './mix/HideButton';
 export { CommunityCountersLine } from './community-counters/CommunityCountersLine';
 export { KnowledgeButtons } from './knowledge/KnowledgeButtons';
@@ -126,6 +126,7 @@ export { XpPill } from './progress/XpPill';
 export { FeedHeader } from './feed/FeedHeader';
 export { HeaderFade } from './feed/HeaderFade';
 export { ActiveDaysCalendar } from './progress/ActiveDaysCalendar';
+export { BreakCard } from './progress/BreakCard';
 export { BadgeMark } from './progress/BadgeMark';
 export { DashboardHero } from './dashboard/DashboardHero';
 export { BlockTitle } from './dashboard/BlockTitle';
@@ -152,9 +153,14 @@ export {
   type CategoryTone,
 } from './categories/CategoryTile';
 export { BadgeGrid, type BadgeGridItem } from './progress/BadgeGrid';
+export { BadgeSheet, type BadgeSheetBadge } from './progress/BadgeSheet';
 export { BadgeStamp } from './progress/BadgeStamp';
+export { BadgeToast } from './progress/BadgeToast';
+export { NewLevelScreen } from './progress/NewLevelScreen';
 export { LevelCard } from './progress/LevelCard';
+export { LevelLadder, type LadderState, type LevelLadderRung } from './progress/LevelLadder';
 export { StatsSheet } from './progress/StatsSheet';
+export { StreakFreezeCard } from './progress/StreakFreezeCard';
 export type { MoodDays } from './progress/mood-line';
 export { XpBar } from './progress/XpBar';
 export { systemSchedule } from './providers/system-schedule';
@@ -188,7 +194,7 @@ export {
 } from './tokens';
 export { TokensProvider, useTokens } from './providers/TokensProvider';
 export { ReduceMotionProvider } from './providers/ReduceMotionProvider';
-export { RouteProvider } from './providers/RouteProvider';
+export { RouteProvider, useRouteOnScreen } from './providers/RouteProvider';
 export { useReduceMotion } from './providers/useReduceMotion';
 export { WedgeLoader } from './primitives/WedgeLoader';
 export {

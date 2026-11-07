@@ -1,5 +1,5 @@
 import type { EntryKind } from '@slovo/contracts';
-import { GAME_ROUNDS, type CalendarMonth, type ProgressState } from '@slovo/core';
+import { GAME_ROUNDS, type CalendarWeek, type ProgressState } from '@slovo/core';
 import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
@@ -59,7 +59,7 @@ function Count({
  * under them the Known count of each kind of Entry shown, and the Entries
  * due for Review today, unless the knowledge rows are hidden, then the days
  * by Mood once a Mood was chosen, and last the
- * Active Days calendar, with its months, unless it has none. It
+ * Active Days calendar, with its weeks, unless it has none. It
  * closes with a swipe down, a tap outside or VoiceOver's escape gesture, and
  * with Reduce Motion it appears without sliding. While the reader hides the
  * Streak, the Streak with its Best Streak is left out. Needs a
@@ -79,8 +79,8 @@ export function StatsSheet({
   hideStreak?: boolean;
   /** The knowledge rows, with the kinds of Entry whose Known count shows, in order, or none. */
   knowledge?: readonly EntryKind[] | 'none';
-  /** The months of the Active Days calendar, oldest first; none leaves it out. */
-  calendar?: readonly CalendarMonth[];
+  /** The weeks of the Active Days calendar; none leaves it out. */
+  calendar?: readonly CalendarWeek[];
   /** The days each Mood was chosen on, in display order; without a chosen day the row is left out. */
   moodDays?: readonly MoodDays[];
   onClose: () => void;
@@ -184,7 +184,7 @@ export function StatsSheet({
             {moods}
           </Text>
         )}
-        <ActiveDaysCalendar months={calendar} />
+        <ActiveDaysCalendar weeks={calendar} />
       </ScrollView>
     </BottomSheet>
   );

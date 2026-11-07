@@ -27,11 +27,23 @@ export function ShareCardSheet({
 }) {
   const composition = useComposition();
   const content = buildShareCardContent(subject, editionStrings, edition.locale, deviceClock);
+  const badge = 'badge' in subject ? subject.badge : undefined;
+  const family =
+    badge === undefined ? undefined : edition.badgeFamilies.find(({ id }) => id === badge.family);
   return (
     <ShareSheet
       visible={visible}
       content={content}
       watermark={edition.displayName}
+      badge={
+        badge === undefined
+          ? undefined
+          : {
+              shape: family?.shape ?? 'circle',
+              tone: family?.tone ?? 'ink',
+              symbol: badge.symbol,
+            }
+      }
       initialFormat={sessionShareFormat.format}
       onFormatChange={(format) => {
         sessionShareFormat.choose(format);

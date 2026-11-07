@@ -22,8 +22,9 @@ export const XpSourceSchema = z.literal([
  * it records: XP a learning action earned on its date, a Streak freeze
  * consumed for its date, a missed day it covers, a Break started on its
  * date, with its length in days, the Daily Goal the reader set from that
- * day on, or a Badge earned on its date. The kinds the ADR names besides
- * these come with their own tickets.
+ * day on, a Badge earned on its date, a Badge the reader first opened, or a
+ * Game Round answered wrong (ADR 0085). The kinds the ADR names besides these come with their own
+ * tickets.
  */
 const XpRecordSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -36,6 +37,9 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     mode: z.string().optional(),
     /** The rarity of the Word a Round answered right asked about, for the Badges; left out for other Entries. */
     rarity: RaritySchema.optional(),
+    /** A finished Game's right answers and Rounds played, for the Badges (ADR 0085); left out before them. */
+    right: z.number().int().nonnegative().optional(),
+    played: z.number().int().nonnegative().optional(),
   }),
   z.object({ kind: z.literal('freeze'), date: z.string(), at: InstantSchema }),
   z.object({
@@ -65,6 +69,20 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
   /** The day's Seen Words reached its Daily Goal; one per local date by its id (ADR 0074). */
   z.object({ kind: z.literal('goal-met'), date: z.string(), at: InstantSchema }),
   z.object({ kind: z.literal('badge'), date: z.string(), at: InstantSchema, badge: z.string() }),
+  /** The reader opened an earned Badge's sheet or stamp, which ends its «НОВА» mark; one per Badge by its id (ADR 0085). */
+  z.object({
+    kind: z.literal('badge-opened'),
+    date: z.string(),
+    at: InstantSchema,
+    badge: z.string(),
+  }),
+  /** A Game Round answered wrong in its Game Mode, which earns no XP and breaks a run of right answers (ADR 0085). */
+  z.object({
+    kind: z.literal('wrong-answer'),
+    date: z.string(),
+    at: InstantSchema,
+    mode: z.string(),
+  }),
 ]);
 
 export type XpRecord = z.infer<typeof XpRecordSchema>;

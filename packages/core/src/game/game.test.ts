@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type {
+  Badge,
   Category,
   Example,
   Idiom,
@@ -206,6 +207,7 @@ async function run({
   analytics,
   on = ['rarityCeiling', 'knowledge'],
   off = [],
+  badges,
 }: {
   records?: Map<string, string>;
   port?: UserStatePort;
@@ -222,6 +224,7 @@ async function run({
   planned?: boolean;
   schedule?: Schedule;
   analytics?: AnalyticsPort;
+  badges?: readonly Badge[];
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: pack,
@@ -232,6 +235,7 @@ async function run({
       userSettingDefaults: {
         mix: { categoryIds: categories.map(({ id }) => id), corrections: false },
       },
+      ...(badges === undefined ? {} : { badges }),
     }),
     userState: await openUserState({ port }),
     clock: time,
@@ -2912,4 +2916,53 @@ describe('the widget hint', () => {
       expect(app.game.state.widgetHint).toBe(false);
     },
   );
+});
+
+// Spec #1641, ticket #1644, ADR 0085: a played Game leaves in the XP log what
+// a flawless Game and a run of right answers read.
+describe('the Game and the Badges', () => {
+  const flawless: Badge = {
+    id: 'flawless',
+    name: 'Flawless',
+    symbol: '1',
+    family: 'f',
+    condition: { kind: 'flawlessGame', modes: ['guess-word'] },
+  };
+  const run14: Badge = {
+    id: 'run-14',
+    name: 'Fourteen in a row',
+    symbol: '1',
+    family: 'f',
+    condition: { kind: 'rightRun', modes: ['guess-word'], count: 14 },
+  };
+  /** A clock a second on at each reading, so the answers come in order. */
+  const ticking = (): Clock => {
+    let time = clock.now().getTime();
+    return { now: () => new Date((time += 1000)), timeZone: () => clock.timeZone() };
+  };
+  const played = (badges: readonly Badge[]) =>
+    run({ on: ['rarityCeiling', 'knowledge', 'xpLog', 'badges'], badges, time: ticking() });
+  const earnedOf = (app: Composition) =>
+    app.badges.state.filter((badge) => badge.earned).map(({ id }) => id);
+
+  it('earns flawlessGame with every Round right, not with one mistake', async () => {
+    const clean = await played([flawless]);
+    await playGame(clean);
+    expect(earnedOf(clean)).toEqual(['flawless']);
+
+    const mistake = await played([flawless]);
+    await playGame(mistake, [GAME_ROUNDS]);
+    expect(earnedOf(mistake)).toEqual([]);
+  });
+
+  it('breaks a run of right answers at a wrong Round', async () => {
+    const app = await played([run14]);
+    await playGame(app, [2]);
+    expect(earnedOf(app)).toEqual([]);
+    expect(app.badges.state[0]).toMatchObject({ progress: { current: 13, target: 14 } });
+
+    const clean = await played([run14]);
+    await playGame(clean);
+    expect(earnedOf(clean)).toEqual(['run-14']);
+  });
 });

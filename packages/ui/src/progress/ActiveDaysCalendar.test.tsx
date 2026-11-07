@@ -1,10 +1,8 @@
-import type { CalendarDay, CalendarMonth, ProgressState } from '@slovo/core';
+import type { CalendarDay, CalendarWeek, ProgressState } from '@slovo/core';
 import { coreTokens, EditionProvider, StatsSheet, TokensProvider } from '@slovo/ui';
 import { describe, expect, it } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { render, screen } from '@testing-library/react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { State } from 'react-native-gesture-handler';
-import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { testStrings } from '../test-strings';
 
 const plural = (text: string) => ({ one: text, few: text, many: text, other: text });
@@ -24,16 +22,15 @@ const strings = testStrings({
     inCollections: plural('in collections'),
     calendar: {
       label: 'Active days',
-      title: '{month} {year}',
-      months: monthNames(''),
       weekdays: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'],
-      hint: 'Swipe up or down to change the month',
       days: {
         active: '{day} {month}, active',
         missed: '{day} {month}, missed',
         today: 'Today, {day} {month}',
         todayActive: 'Today, {day} {month}, active',
         future: '{day} {month}, to come',
+        break: '{day} {month}, break',
+        frozen: '{day} {month}, frozen',
       },
     },
   },
@@ -44,6 +41,7 @@ const progress: ProgressState = {
   streak: 1,
   bestStreak: 1,
   freezesHeld: 0,
+  freezesUsed: 0,
   seenToday: 0,
   favorites: 0,
   inCollections: 0,
@@ -52,44 +50,34 @@ const progress: ProgressState = {
   dueToday: 0,
 };
 
-/** A month starting on the weekday slot `leading` (Monday 0), each day in the state `stateOf` gives. */
-function month(
-  year: number,
-  number: number,
-  leading: number,
-  length: number,
-  stateOf: (day: number) => CalendarDay,
-): CalendarMonth {
-  const slots: (CalendarDay | undefined)[] = Array.from({ length: leading }, () => undefined);
-  for (let day = 1; day <= length; day += 1) slots.push(stateOf(day));
-  while (slots.length % 7 !== 0) slots.push(undefined);
-  const weeks = Array.from({ length: slots.length / 7 }, (_, week) =>
-    slots.slice(week * 7, week * 7 + 7),
-  );
-  return { year, month: number, weeks };
+/** 35 days from Monday 28 September 2026, today 28 October, each in the state `stateOf` gives. */
+function weeksOf(stateOf: (month: number, day: number) => CalendarDay['state']): CalendarWeek[] {
+  const days: CalendarDay[] = Array.from({ length: 35 }, (_, index) => {
+    const at = new Date(Date.UTC(2026, 8, 28 + index));
+    const month = at.getUTCMonth() + 1;
+    const day = at.getUTCDate();
+    const date = `2026-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+    const state = stateOf(month, day);
+    return state === 'today'
+      ? { date, day, month, state, active: false }
+      : { date, day, month, state };
+  });
+  return Array.from({ length: 5 }, (_, week) => days.slice(week * 7, week * 7 + 7));
 }
 
-const date = (m: number, day: number) =>
-  `2026-${String(m).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-
-// Today is 27 October 2026; the first Active Day is 29 September.
-const september = month(2026, 9, 1, 30, (day) => ({
-  date: date(9, day),
-  day,
-  state: day >= 29 ? 'active' : 'missed',
-}));
-const october = month(2026, 10, 3, 31, (day): CalendarDay => {
-  const base = { date: date(10, day), day };
-  if (day === 27) return { ...base, state: 'today', active: false };
-  if (day > 27) return { ...base, state: 'future' };
-  return { ...base, state: day === 1 || day === 26 ? 'active' : 'missed' };
+const weeks = weeksOf((month, day) => {
+  if (month === 10 && day === 28) return 'today';
+  if (month === 11 || (month === 10 && day > 28)) return 'future';
+  if (month === 10 && day === 5) return 'frozen';
+  if (month === 10 && day === 12) return 'break';
+  return day === 1 || day === 30 ? 'active' : 'missed';
 });
 
 // A red accent, as in the Ukrainian Edition, so that each day state has its own face.
 const light = { ...coreTokens.colors.light, accent: '#E0301E' };
 const tokens = { ...coreTokens, colors: { ...coreTokens.colors, light } };
 
-async function renderSheet(calendar: readonly CalendarMonth[]) {
+async function renderSheet(calendar: readonly CalendarWeek[]) {
   await render(
     <SafeAreaProvider
       initialMetrics={{
@@ -112,100 +100,36 @@ async function renderSheet(calendar: readonly CalendarMonth[]) {
   );
 }
 
-/** A horizontal swipe across the calendar by `distance` points: negative to the left. */
-async function swipe(distance: number) {
-  await act(() => {
-    fireGestureHandler(getByGestureTestId('stats-calendar-swipe'), [
-      { state: State.BEGAN, translationX: 0 },
-      { state: State.ACTIVE, translationX: distance / 2 },
-      { state: State.END, translationX: distance },
-    ]);
-  });
-}
+describe('the Active Days calendar on the stats sheet (ADR 0085)', () => {
+  it('shows the 35 days across months under the weekday names, with no month title', async () => {
+    await renderSheet(weeks);
 
-const monthControl = () => screen.getByRole('adjustable', { name: 'Active days' });
-
-/** VoiceOver's swipe up (`increment`) or down (`decrement`) on the month's name. */
-async function adjust(actionName: 'increment' | 'decrement') {
-  await fireEvent(monthControl(), 'accessibilityAction', { nativeEvent: { actionName } });
-}
-
-describe('the Active Days calendar on the stats sheet (spec #832)', () => {
-  it('opens on the current month, Monday first, with each day read by VoiceOver', async () => {
-    await renderSheet([september, october]);
-
-    expect(monthControl()).toHaveAccessibilityValue({ text: 'Oct 2026' });
-    expect(screen.getByText('Oct 2026')).toBeOnTheScreen();
     expect(screen.getByText('Mo', { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.queryByText(/2026/)).not.toBeOnTheScreen();
+    expect(screen.getByLabelText('28 Sep., missed')).toBeOnTheScreen();
+    expect(screen.getByLabelText('30 Sep., active')).toBeOnTheScreen();
     expect(screen.getByLabelText('1 Oct., active')).toBeOnTheScreen();
-    expect(screen.getByLabelText('2 Oct., missed')).toBeOnTheScreen();
-    expect(screen.getByLabelText('26 Oct., active')).toBeOnTheScreen();
-    expect(screen.getByLabelText('Today, 27 Oct.')).toBeOnTheScreen();
-    expect(screen.getByLabelText('31 Oct., to come')).toBeOnTheScreen();
+    expect(screen.getByLabelText('5 Oct., frozen')).toBeOnTheScreen();
+    expect(screen.getByLabelText('12 Oct., break')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Today, 28 Oct.')).toBeOnTheScreen();
+    expect(screen.getByLabelText('1 Nov., to come')).toBeOnTheScreen();
   });
 
   it('draws each day as a tile in its state: active red, today ink, missed plain, to come none', async () => {
-    await renderSheet([september, october]);
+    await renderSheet(weeks);
 
     const { accent, ink, tile } = light;
-    const face = (day: number) => screen.getByTestId(`stats-calendar-${date(10, day)}-face`);
-    expect(face(1)).toHaveStyle({ backgroundColor: accent });
-    expect(face(27)).toHaveStyle({ backgroundColor: ink });
-    expect(face(2)).toHaveStyle({ backgroundColor: tile });
-    expect(face(31)).toHaveStyle({ backgroundColor: 'transparent', borderStyle: 'dashed' });
-  });
-
-  it('reads today as an Active Day once it is one', async () => {
-    const recorded = month(2026, 10, 3, 31, (day): CalendarDay => {
-      const base = { date: date(10, day), day };
-      if (day === 27) return { ...base, state: 'today', active: true };
-      return day > 27 ? { ...base, state: 'future' } : { ...base, state: 'missed' };
+    const face = (date: string) => screen.getByTestId(`stats-calendar-${date}-face`);
+    expect(face('2026-10-01')).toHaveStyle({ backgroundColor: accent });
+    expect(face('2026-10-28')).toHaveStyle({ backgroundColor: ink });
+    expect(face('2026-10-02')).toHaveStyle({ backgroundColor: tile });
+    expect(face('2026-11-01')).toHaveStyle({
+      backgroundColor: 'transparent',
+      borderStyle: 'dashed',
     });
-
-    await renderSheet([recorded]);
-
-    expect(screen.getByLabelText('Today, 27 Oct., active')).toBeOnTheScreen();
   });
 
-  it('swipes back to the first Active Day’s month and no further', async () => {
-    await renderSheet([september, october]);
-
-    await swipe(120);
-    expect(monthControl()).toHaveAccessibilityValue({ text: 'Sep 2026' });
-    expect(screen.getByLabelText('28 Sep., missed')).toBeOnTheScreen();
-    expect(screen.getByLabelText('29 Sep., active')).toBeOnTheScreen();
-
-    await swipe(120);
-    expect(monthControl()).toHaveAccessibilityValue({ text: 'Sep 2026' });
-  });
-
-  it('swipes forward to the current month and no further, and a short drag turns nothing', async () => {
-    await renderSheet([september, october]);
-
-    await swipe(-120);
-    expect(monthControl()).toHaveAccessibilityValue({ text: 'Oct 2026' });
-
-    await swipe(120);
-    await swipe(10);
-    expect(monthControl()).toHaveAccessibilityValue({ text: 'Sep 2026' });
-
-    await swipe(-120);
-    expect(monthControl()).toHaveAccessibilityValue({ text: 'Oct 2026' });
-  });
-
-  it('turns the month with VoiceOver’s swipe up and down, within the same limits', async () => {
-    await renderSheet([september, october]);
-
-    expect(monthControl()).toHaveProp('accessibilityHint', 'Swipe up or down to change the month');
-    await adjust('increment');
-    expect(monthControl()).toHaveAccessibilityValue({ text: 'Oct 2026' });
-    await adjust('decrement');
-    expect(monthControl()).toHaveAccessibilityValue({ text: 'Sep 2026' });
-    await adjust('decrement');
-    expect(monthControl()).toHaveAccessibilityValue({ text: 'Sep 2026' });
-  });
-
-  it('is left out with no months, as with its Feature Switch off', async () => {
+  it('is left out with no weeks, as with its Feature Switch off', async () => {
     await renderSheet([]);
 
     expect(screen.queryByTestId('stats-calendar')).not.toBeOnTheScreen();

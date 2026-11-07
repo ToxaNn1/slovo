@@ -8,7 +8,7 @@ import { todayBounds, todayKey } from '../local-date';
 import type { Clock } from '../ports';
 import type { Edition } from '../edition/edition';
 import type { ActiveDays } from './active-days';
-import { calendarMonths, type CalendarMonth } from './calendar';
+import { calendarWeeks, lastWeek, type CalendarDay, type CalendarWeek } from './calendar';
 import { STREAK_MILESTONES } from './streak';
 
 /**
@@ -28,6 +28,8 @@ export interface ProgressState {
   readonly bestStreak: number;
   /** The Streak freezes held, 0 to 2; 0 with freezes off. */
   readonly freezesHeld: number;
+  /** The missed days the Streak freezes covered in the current Streak; 0 with freezes off. */
+  readonly freezesUsed: number;
   /** The Entries Seen today: the History entries whose time falls on today's local date. */
   readonly seenToday: number;
   /** The Entries in Favorites. */
@@ -59,12 +61,17 @@ export interface Progress {
    */
   readonly state: ProgressState;
   /**
-   * The months of the Active Days calendar as of now, oldest first, from the
-   * month of the first Active Day to the current one; none with the
+   * The weeks of the Active Days calendar as of now: the 35 days ending with
+   * the current week, with the Break and frozen days; none with the
    * `activeDaysCalendar` Feature Switch off. A change of the Active Days tells
    * the subscribers, so read it again then.
    */
-  calendar(): readonly CalendarMonth[];
+  calendar(): readonly CalendarWeek[];
+  /**
+   * The 7 days ending with today, as the Streak freeze card shows them, with
+   * the Break and frozen days. Read it again after a change, as the calendar.
+   */
+  lastWeek(): readonly CalendarDay[];
   /** Calls `listener` after each change of the state. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
   /**
@@ -96,7 +103,7 @@ export function openProgress({
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   clock: Clock;
-  activeDays: Pick<ActiveDays, 'days' | 'streak' | 'subscribe'>;
+  activeDays: Pick<ActiveDays, 'days' | 'frozen' | 'breaks' | 'streak' | 'subscribe'>;
   history: History;
   favorites: Favorites;
   collections: Collections;
@@ -141,6 +148,14 @@ export function openProgress({
 
   let state = stateOf();
 
+  /** The records the calendar's days are read from, as of now. */
+  const records = () => ({
+    activeDays: activeDays.days,
+    frozen: activeDays.frozen,
+    breaks: activeDays.breaks,
+    today: todayKey(clock),
+  });
+
   /** Makes the state again on today's local date, and tells the subscribers when a number changed. */
   function follow(): void {
     const next = stateOf();
@@ -163,9 +178,8 @@ export function openProgress({
       return state;
     },
     calendar: () =>
-      edition.isFeatureEnabled('activeDaysCalendar')
-        ? calendarMonths(activeDays.days, todayKey(clock))
-        : [],
+      edition.isFeatureEnabled('activeDaysCalendar') ? calendarWeeks(records()) : [],
+    lastWeek: () => lastWeek(records()),
     subscribe: subscribers.subscribe,
     onStreakMilestone(listener) {
       milestones.add(listener);

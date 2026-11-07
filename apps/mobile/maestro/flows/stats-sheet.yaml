@@ -22,7 +22,7 @@ appId: ${APP_ID || 'app.slovo.uk'}
     text: 0, записів у Колекціях
 - assertNotVisible:
     id: stats-game-best
-# The Active Days calendar opens on the current month, with today, the first Active Day.
+# The Active Days calendar shows the rolling 35 days, with today, the first Active Day.
 - scrollUntilVisible:
     element:
       id: stats-calendar

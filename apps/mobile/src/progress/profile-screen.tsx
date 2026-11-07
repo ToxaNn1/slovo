@@ -1,14 +1,16 @@
 import { RARITIES } from '@slovo/contracts';
-import type { Account, BadgeState } from '@slovo/core';
+import { dateKeyOf, type Account, type LevelState } from '@slovo/core';
 import {
   ActiveDaysCalendar,
   IconButton,
   BadgeGrid,
-  BadgeStamp,
+  BreakCard,
   fill,
   LevelCard,
+  LevelLadder,
   ScreenTitle,
   SettingsGroup,
+  StreakFreezeCard,
   Button,
   space,
   typeStyle,
@@ -22,13 +24,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAccountInEffect, useSignedOut } from '../account/account';
 import { useComposition } from '../composition';
-import { editionStrings } from '../edition/edition';
+import { edition, editionStrings } from '../edition/edition';
 import { bestText, gameModeStrings } from '../game/game-modes';
 import { type Opening, useSubscribed } from '../opening';
 import { ShareCardSheet } from '../share/share-card-sheet';
+import { useWordOfTheDayArchive } from '../saved/word-of-the-day-archive';
 import { useShell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
-import { MascotAs } from '../mascot/mascot';
+import { useBadgeOpening } from './badge-opening';
+import { dayText } from './day-text';
 
 const strings = editionStrings.settings.profile;
 
@@ -36,7 +40,7 @@ const strings = editionStrings.settings.profile;
  * The Profile tab, as the board: the reader's whole progress in one place:
  * the Level card (its ring, its name, the XP to the next and all XP), the
  * giant Streak and the Best Streak, the Active Days calendar, the Badges as
- * marks by family (an earned one stamped on red at a tap), the confirmed
+ * marks by family (each opened at a tap), the confirmed
  * Entries by rarity and each Game Mode's Best result, with a button that
  * shares the Level. A reader with an Account to offer and none signed in sees
  * the offer to save progress at the top.
@@ -48,15 +52,16 @@ export function ProfileScreen() {
   const router = useRouter();
   const composition = useComposition();
   const xp = useSubscribed(composition.xpLog, ({ state }) => state);
+  const streakBreak = useSubscribed(composition.streakBreak, ({ state }) => state);
   const progress = useSubscribed(composition.progress, ({ state }) => state);
   const confirmed = useSubscribed(composition.knowledge, ({ state }) => state.confirmed);
   const badges = useSubscribed(composition.badges, ({ state }) => state);
-  /** The earned Badge stamped over the screen after a tap on its mark. */
-  const [stamped, setStamped] = useState<BadgeState | undefined>(undefined);
+  const { onPress, opening } = useBadgeOpening();
   const modes = useSubscribed(composition.game, ({ state }) => state.modes);
   // A change of the Active Days may leave every number as it was, so any change draws the calendar again.
   const [, changed] = useReducer((version: number) => version + 1, 0);
   useEffect(() => composition.progress.subscribe(changed), [composition.progress]);
+  const archive = useWordOfTheDayArchive();
   const account = useAccountInEffect();
   const shown = useShown();
   const { shareCard } = useShell();
@@ -83,6 +88,10 @@ export function ProfileScreen() {
     level !== undefined && level.level > 0
       ? composition.xpLog.reachedOn(xp.total - level.progress)
       : undefined;
+  const weeks = composition.progress.calendar();
+  const today = weeks.flat().find(({ state }) => state === 'today');
+  /** The Lemma of today's Word of the Day, once the archive keeps it. */
+  const todayWord = archive?.find(({ date }) => dateKeyOf(date) === today?.date)?.row.title;
 
   return (
     <SafeAreaView
@@ -117,23 +126,27 @@ export function ProfileScreen() {
               testID="profile-level"
               level={level.level}
               label={strings.levelLabel}
-              name={level.name}
+              name={fill(strings.level, { level: String(level.level), name: level.name })}
               progress={level.progress}
               toNext={level.toNext}
               lines={[
                 {
-                  testID: 'profile-to-next',
-                  text: fill(strings.toNext, {
+                  testID: 'profile-level-progress',
+                  text: fill(strings.levelProgress, {
                     progress: String(level.progress),
                     toNext: String(level.toNext),
                   }),
                 },
                 {
-                  testID: 'profile-total-xp',
-                  text: fill(strings.totalXp, { count: String(xp.total) }),
+                  testID: 'profile-level-left',
+                  text: fill(strings.levelLeft, {
+                    left: String(level.toNext - level.progress),
+                    next: String(level.level + 1),
+                  }),
                 },
               ]}
             />
+            {shown.levelLadder && <ProfileLadder level={level} />}
             {share !== undefined && reachedOn !== undefined && (
               <>
                 <Button
@@ -166,9 +179,35 @@ export function ProfileScreen() {
             </Text>
           </View>
         )}
-        {streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />}
+        {/* While a Break runs, its card (p1) stands in place of the Streak line. */}
+        {shown.breakCard && streakBreak.kind === 'running' ? (
+          <View style={styles.section}>
+            <BreakCard
+              testID="profile-break"
+              streak={progress.streak}
+              kicker={strings.breakCard.kicker}
+              paused={fill(strings.breakCard.paused, { count: String(progress.streak) })}
+              until={fill(strings.breakCard.until, { date: dayText(streakBreak.lastDay) })}
+              strip={streakBreak.strip}
+              next={fill(strings.breakCard.next, { date: dayText(streakBreak.nextStart) })}
+            />
+          </View>
+        ) : (
+          streakShown && <StreakLine streak={progress.streak} bestStreak={progress.bestStreak} />
+        )}
+        {shown.streakFreezeCard && (
+          <View style={styles.section}>
+            <StreakFreezeCard
+              testID="profile-freeze-card"
+              held={progress.freezesHeld}
+              streak={progress.streak}
+              saved={progress.freezesUsed}
+              days={composition.progress.lastWeek()}
+            />
+          </View>
+        )}
         <View style={styles.section}>
-          <ActiveDaysCalendar months={composition.progress.calendar()} />
+          <ActiveDaysCalendar weeks={weeks} lines={shown.calendarDayLines} todayWord={todayWord} />
         </View>
         <View style={styles.section}>
           <View style={styles.badgesHead}>
@@ -190,25 +229,8 @@ export function ProfileScreen() {
               })}
             </Text>
           </View>
-          <BadgeGrid
-            badges={badges}
-            onPress={(badge) => {
-              if (badge.earned) setStamped(badge);
-            }}
-          />
-          {stamped !== undefined && (
-            <BadgeStamp
-              condition={stamped.condition}
-              symbol={stamped.symbol}
-              name={stamped.name}
-              title={strings.badgeStamp.title}
-              takeLabel={strings.badgeStamp.take}
-              mascot={<MascotAs state="celebrates" onRed />}
-              onClose={() => {
-                setStamped(undefined);
-              }}
-            />
-          )}
+          <BadgeGrid families={edition.badgeFamilies} badges={badges} onPress={onPress} />
+          {opening}
         </View>
         <View style={styles.section}>
           <SettingsGroup title={strings.confirmed}>
@@ -294,6 +316,32 @@ function SaveProgressOffer({ opening, onSave }: { opening: Opening<Account>; onS
       </Text>
       <Button testID="profile-save-progress-button" label={save} onPress={onSave} />
     </View>
+  );
+}
+
+/** The ladder of the Level names under the Level card, captioned by range of Levels (board 10.8). */
+function ProfileLadder({ level }: { level: LevelState }) {
+  const { ladder } = strings;
+  const upper = (text: string) => text.toLocaleUpperCase(edition.locale);
+  return (
+    <LevelLadder
+      testID="profile-ladder"
+      rungs={level.ladder.map(({ name, band, state }) => ({
+        name,
+        state,
+        caption:
+          band.last === undefined
+            ? fill(ladder.rangeFrom, { from: String(band.first) })
+            : fill(ladder.range, { from: String(band.first), to: String(band.last) }),
+      }))}
+      tags={{ passed: ladder.passed, current: ladder.current, ahead: ladder.ahead }}
+      bar={fill(ladder.bar, { level: String(level.level), name: upper(level.name) })}
+      toNext={
+        level.next === undefined
+          ? undefined
+          : fill(ladder.toNext, { name: upper(level.next.name), xp: String(level.next.xp) })
+      }
+    />
   );
 }
 

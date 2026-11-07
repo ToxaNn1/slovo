@@ -78,8 +78,16 @@ export interface Shown {
   readonly xpBar: boolean;
   /** The Mascot's celebrations, while the XP log is on and the reader has not hidden the counters (ADR 0066). */
   readonly celebrations: boolean;
+  /** The Profile's ladder of Level names, while its switch is on and the reader has not hidden the counters. */
+  readonly levelLadder: boolean;
+  /** The Profile's Break card while a Break runs, while its switch is on and the reader has not hidden the counters. */
+  readonly breakCard: boolean;
   /** The Settings row of the Break and its screen. */
   readonly streakBreak: boolean;
+  /** The line a tap on a day of the Active Days calendar on the Profile shows. */
+  readonly calendarDayLines: boolean;
+  /** The Profile's Streak freeze card, while the freezes are on and the reader has not hidden the counters. */
+  readonly streakFreezeCard: boolean;
   /** The Settings row that opens the Badges (ADR 0066). */
   readonly badges: boolean;
   /**
@@ -175,7 +183,11 @@ export function shownOf({
       : undefined,
     xpBar: on('xpLog') && !noCounters,
     celebrations: on('xpLog') && !noCounters,
+    levelLadder: on('levelLadder') && !noCounters,
+    breakCard: on('breakCard') && !noCounters,
     streakBreak: on('streakBreak'),
+    calendarDayLines: on('calendarDayLines'),
+    streakFreezeCard: on('streakFreezeCard') && on('streakFreezes') && !noCounters,
     badges: on('badges'),
     progressShareCards: on('progressShareCards') && !noCounters,
     dailyCrosswordShare: on('dailyCrosswordShare'),

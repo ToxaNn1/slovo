@@ -12,7 +12,7 @@ The app and `@slovo/ui` memoise by hand with `useMemo`, `useCallback` and `React
 - `feed/GesturesHintSheet.tsx`
 - `game/ChipsRound.tsx`, `game/GameRound.tsx`, `game/OrderedChips.tsx`, `game/PairsGrid.tsx`, `game/PairsRound.tsx`, `game/PickRound.tsx`, `game/RoundCard.tsx`, `game/TracedCrosswordGrid.tsx`, `game/TypedRound.tsx`, `game/VowelButtons.tsx`, `game/VowelRound.tsx` (the Game Round's form modules, split from `GameRound.tsx`, keep its opt-out)
 - `onboarding/OnboardingStep.tsx`, `onboarding/SplashOverlay.tsx`
-- `progress/ActiveDaysCalendar.tsx`, `progress/BadgeStamp.tsx`, `progress/LevelCard.tsx`
+- `progress/ActiveDaysCalendar.tsx`, `progress/BadgeStamp.tsx`, `progress/BadgeToast.tsx`, `progress/NewLevelScreen.tsx`, `progress/LevelCard.tsx`
 - `primitives/BottomSheet.tsx`, `primitives/Chip.tsx`, `primitives/FallingMarks.tsx`, `primitives/FlyingText.tsx`, `primitives/Mascot.tsx`, `primitives/PressedTile.tsx`, `primitives/ScreenEnter.tsx`, `primitives/SwipeableRow.tsx`, `primitives/Switch.tsx`, `primitives/TabBarButton.tsx`, `primitives/UndoToast.tsx`, `primitives/useCascade.ts`, `primitives/VerticalPager.tsx`, `primitives/WedgeLoader.tsx`
 - `saved/FavoriteButton.tsx`
 - `settings/NarratorVoicePicker.tsx`

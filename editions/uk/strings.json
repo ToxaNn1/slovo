@@ -142,7 +142,58 @@
       "noGameBest": "Ще не грали",
       "shareLevel": "Поділитися рівнем",
       "shareMessage": "Мій рівень — {level} · {name}",
-      "badgeStamp": { "title": "Твій!", "take": "Забрати" }
+      "level": "{level} · {name}",
+      "levelProgress": "{progress} / {toNext} XP",
+      "levelLeft": "ще {left} XP до рівня {next}",
+      "bestStreak": {
+        "one": "найдовша {count} день",
+        "few": "найдовша {count} дні",
+        "many": "найдовша {count} днів",
+        "other": "найдовша {count} дні"
+      },
+      "ladder": {
+        "range": "Рівні {from}–{to}",
+        "rangeFrom": "Рівні {from}+",
+        "passed": "ПРОЙДЕНО",
+        "current": "ЗАРАЗ",
+        "ahead": "ПОПЕРЕДУ",
+        "bar": "РІВЕНЬ {level} · {name}",
+        "toNext": "ДО {name} {xp} XP"
+      },
+      "newLevel": {
+        "kicker": "РІВЕНЬ",
+        "title": "Рівень {level} — {name}",
+        "done": "ГОТОВО"
+      },
+      "breakCard": {
+        "kicker": "ПЕРЕРВА",
+        "paused": "Серія {count} на паузі",
+        "until": "Перерва триває до {date} включно.",
+        "next": "Наступну перерву можна почати з {date}."
+      },
+      "freezeCard": {
+        "title": "Заморозка серії",
+        "held": "{count} У ЗАПАСІ",
+        "explanation": "Пропустили день — заморозка спрацює сама, і серія не обнулиться.",
+        "streakDays": {
+          "one": "{count} день поспіль",
+          "few": "{count} дні поспіль",
+          "many": "{count} днів поспіль",
+          "other": "{count} дні поспіль"
+        },
+        "saved": {
+          "one": "{count} день врятовано",
+          "few": "{count} дні врятовано",
+          "many": "{count} днів врятовано",
+          "other": "{count} дні врятовано"
+        }
+      },
+      "badgeStamp": {
+        "kicker": "ВІДЗНАКА",
+        "ribbon": "ТЕПЕР ТВОЯ",
+        "line": "Нова відзнака — тепер вона твоя назавжди.",
+        "done": "ГОТОВО"
+      }
     },
     "streakBreak": {
       "title": "Перерва",
@@ -155,7 +206,6 @@
     "badges": {
       "title": "Відзнаки",
       "earnedOf": "{earned} з {total}",
-      "families": { "streak": "Серія", "games": "Ігри", "entries": "Слова", "levels": "Рівні" },
       "earned": "Отримано {date}",
       "notYet": "Ще не отримано",
       "progress": {
@@ -183,7 +233,50 @@
           "many": "Рівень {current} з {count}",
           "other": "Рівень {current} з {count}"
         }
-      }
+      },
+      "newTag": "НОВА",
+      "conditions": {
+        "streak": {
+          "one": "{count} день поспіль",
+          "few": "{count} дні поспіль",
+          "many": "{count} днів поспіль",
+          "other": "{count} дні поспіль"
+        },
+        "confirmedEntries": {
+          "one": "{count} підтверджений запис",
+          "few": "{count} підтверджені записи",
+          "many": "{count} підтверджених записів",
+          "other": "{count} підтверджені записи"
+        },
+        "gameWin": "Перша перемога: {modes}",
+        "dailyCrosswordRun": {
+          "one": "{count} щоденний кросворд поспіль",
+          "few": "{count} щоденні кросворди поспіль",
+          "many": "{count} щоденних кросвордів поспіль",
+          "other": "{count} щоденні кросворди поспіль"
+        },
+        "rightAnswers": {
+          "one": "{count} правильна відповідь: {modes}",
+          "few": "{count} правильні відповіді: {modes}",
+          "many": "{count} правильних відповідей: {modes}",
+          "other": "{count} правильні відповіді: {modes}"
+        },
+        "rightOnRarity": "Правильна відповідь на слово рідкості {rarity}",
+        "level": "Рівень {level}",
+        "flawlessGame": "Гра без жодної помилки: {modes}",
+        "rightRun": {
+          "one": "{count} правильна відповідь поспіль: {modes}",
+          "few": "{count} правильні відповіді поспіль: {modes}",
+          "many": "{count} правильних відповідей поспіль: {modes}",
+          "other": "{count} правильні відповіді поспіль: {modes}"
+        }
+      },
+      "sheet": {
+        "kicker": "ВІДЗНАКА",
+        "notYet": "Ще ні · {progress}",
+        "done": "ГОТОВО"
+      },
+      "lockedToast": "«{name}» ще не твоя. Поки що."
     },
     "sounds": {
       "sounds": "Звуки",
@@ -585,8 +678,15 @@
     "correctionKnownHint": "Я й так кажу правильно",
     "unknown": "Не знаю",
     "swipe": {
-      "edges": { "known": "ЗНАЮ", "unknown": "НЕ ЗНАЮ" },
-      "stamps": { "known": "✓ ЗНАЮ", "unknown": "НЕ ЗНАЮ", "correctionKnown": "✓ КАЖУ ПРАВИЛЬНО" },
+      "edges": {
+        "known": "ЗНАЮ",
+        "unknown": "НЕ ЗНАЮ"
+      },
+      "stamps": {
+        "known": "✓ ЗНАЮ",
+        "unknown": "НЕ ЗНАЮ",
+        "correctionKnown": "✓ КАЖУ ПРАВИЛЬНО"
+      },
       "toasts": {
         "known": "Позначено: знаю",
         "unknown": "Позначено: не знаю. Повторимо завтра",
@@ -617,9 +717,18 @@
       "hint": {
         "title": "ГОРТАЙТЕ ПАЛЬЦЕМ",
         "rows": {
-          "known": { "title": "Вправо — знаю", "body": "Слово піде в підтверджені." },
-          "unknown": { "title": "Вліво — не знаю", "body": "Додам у «Вчу» з днем повторення." },
-          "next": { "title": "Вгору — наступне слово", "body": "Нове слово тільки коли ви готові." }
+          "known": {
+            "title": "Вправо — знаю",
+            "body": "Слово піде в підтверджені."
+          },
+          "unknown": {
+            "title": "Вліво — не знаю",
+            "body": "Додам у «Вчу» з днем повторення."
+          },
+          "next": {
+            "title": "Вгору — наступне слово",
+            "body": "Нове слово тільки коли ви готові."
+          }
         },
         "dismiss": "ЗРОЗУМІЛО"
       }
@@ -882,14 +991,22 @@
         "Листопад",
         "Грудень"
       ],
-      "weekdays": ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Нд"],
+      "weekdays": ["пн", "вт", "ср", "чт", "пт", "сб", "нд"],
       "hint": "Проведи угору або вниз, щоб змінити місяць",
       "days": {
         "active": "{day} {month}, активний день",
         "missed": "{day} {month}, неактивний день",
         "today": "Сьогодні, {day} {month}",
         "todayActive": "Сьогодні, {day} {month}, активний день",
-        "future": "{day} {month}, ще попереду"
+        "future": "{day} {month}, ще попереду",
+        "break": "{day} {month}, перерва",
+        "frozen": "{day} {month}, день врятовано заморозкою"
+      },
+      "lines": {
+        "active": "{day} {month}: слово відкрито, ціль виконано.",
+        "today": "Сьогодні. {word} вже твоя!",
+        "missed": "{day} {month}: тут серія спіткнулась. Але ж піднялась!",
+        "future": "Це ще попереду. Не підглядай."
       }
     }
   },
