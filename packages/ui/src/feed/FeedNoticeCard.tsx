@@ -1,7 +1,10 @@
 import {
   ENOUGH_FOR_TODAY_SEEN,
   sentences,
-  type FeedNotice, type FirstWeekDay, type LevelMilestone } from '@slovo/core';
+  type FeedNotice,
+  type FirstWeekDay,
+  type LevelMilestone,
+} from '@slovo/core';
 import type { MascotState } from '@slovo/contracts';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
