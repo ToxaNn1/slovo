@@ -46,6 +46,8 @@ const everything: Shown = {
   badges: true,
   progressShareCards: true,
   dailyCrosswordShare: true,
+  crosswordSolvedScreen: true,
+  crosswordSolveTime: true,
   profile: true,
   quickQuestion: true,
   sync: true,
@@ -295,6 +297,14 @@ describe('what the reader is shown', () => {
     [
       'no Daily Crossword Share Card with its switch off',
       { off: ['dailyCrosswordShare'], shown: { dailyCrosswordShare: false } },
+    ],
+    [
+      'no «Розгадано!» screen with its switch off',
+      { off: ['crosswordSolvedScreen'], shown: { crosswordSolvedScreen: false } },
+    ],
+    [
+      'no Solve time with its switch off',
+      { off: ['crosswordSolveTime'], shown: { crosswordSolveTime: false } },
     ],
     [
       'no Quick Question with its switch off',

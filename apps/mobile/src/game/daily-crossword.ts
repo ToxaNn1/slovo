@@ -1,5 +1,11 @@
 import { fill, pluralCount, type EditionStrings } from '@slovo/contracts';
-import type { Composition, CrossingPlay, CrossingPuzzle, DailyCrosswordState } from '@slovo/core';
+import type {
+  Composition,
+  CrossingPlay,
+  CrossingPuzzle,
+  CrosswordSolve,
+  DailyCrosswordState,
+} from '@slovo/core';
 import type { CrosswordDayCardState, CrosswordMiniCell, DailyCrosswordCard } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useState, type ComponentProps } from 'react';
@@ -7,7 +13,8 @@ import { useCallback, useState, type ComponentProps } from 'react';
 import { useComposition } from '../composition';
 import { edition, editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
-import { crossingMiniGrid, crossingProgress } from './crossing-crossword';
+import { crossingMiniGrid, crossingProgress, crossingSolveOf } from './crossing-crossword';
+import { solveTimeText } from './crossword-share';
 import { tracedMiniGrid, tracedProgress } from './traced-crossword';
 
 /**
@@ -26,9 +33,6 @@ export type DailyCrosswordCardContent =
       'testID' | 'onPress'
     >);
 
-/** A solve of the day as the XP log records it. */
-type CrosswordSolve = ReturnType<Composition['xpLog']['crosswordSolveOn']>;
-
 type Strings = EditionStrings['game']['dailyCrossword'];
 type Months = EditionStrings['dates']['months'];
 
@@ -40,14 +44,10 @@ function dayOf(date: string, strings: Strings, months: Months): string {
   return fill(strings.dated, { day: String(day), month: monthName });
 }
 
-/** A Solve time as minutes and seconds, such as «4:12». */
-const clockTime = (seconds: number) =>
-  `${String(Math.floor(seconds / 60))}:${String(seconds % 60).padStart(2, '0')}`;
-
 /** The solved card's time line: «за {time} · без підказок», «за {time}» after a hint, none for a record with no time. */
 function resultOf(solve: CrosswordSolve, strings: Strings): string | undefined {
-  if (solve?.solveSeconds === undefined) return undefined;
-  const time = fill(strings.solvedIn, { time: clockTime(solve.solveSeconds) });
+  if (solve.solveSeconds === undefined) return undefined;
+  const time = fill(strings.solvedIn, { time: solveTimeText(solve.solveSeconds) });
   return solve.hinted ? time : `${time} · ${strings.noHints}`;
 }
 
@@ -58,8 +58,8 @@ function crossingCard(
   months: Months,
 ): DailyCrosswordCardContent {
   const title = `${strings.title} · ${dayOf(puzzle.date, strings, months)}`;
-  const progress = crossingProgress(state);
-  if (progress === 'solved')
+  const progress = crossingProgress(state, solve);
+  if (solve !== undefined)
     return {
       kind: 'crossing',
       title,
@@ -122,11 +122,11 @@ function dailyCrosswordCard(
 
 type TracedCardState = Parameters<typeof dailyCrosswordCard>[0];
 
-/** Today's crossing Daily Crossword, the play kept and its solve as the XP log records it. */
+/** Today's crossing Daily Crossword, the play kept and its solve, synced in the XP log. */
 interface CrossingCardState {
   readonly puzzle: CrossingPuzzle;
   readonly state: CrossingPlay;
-  readonly solve: CrosswordSolve;
+  readonly solve: CrosswordSolve | undefined;
 }
 
 type CardState =
@@ -135,24 +135,16 @@ type CardState =
 
 /**
  * What the card shows: today's crossing Daily Crossword (ADR 0087), none on a
- * day no pattern fills, and while it is off the traced one when it opens
- * (ADR 0073).
+ * day no pattern fills or when it cannot open, and while it is off the traced
+ * one when it opens (ADR 0073).
  */
 async function cardState(composition: Composition): Promise<CardState | undefined> {
-  const crossing = await composition.openCrossingCrossword().catch((error: unknown) => {
-    logError('Could not open the crossing Daily Crossword', error);
-    return undefined;
-  });
-  if (crossing?.kind === 'open') {
+  const crossing = await composition.openCrossingCrossword();
+  if (crossing.kind === 'open') {
     const { puzzle, state } = crossing.crossword;
-    return {
-      kind: 'crossing',
-      puzzle,
-      state,
-      solve: composition.xpLog.crosswordSolveOn(puzzle.date),
-    };
+    return { kind: 'crossing', puzzle, state, solve: crossingSolveOf(composition, puzzle, state) };
   }
-  if (crossing?.kind === 'no-fill') return undefined;
+  if (crossing.kind === 'no-fill') return undefined;
   const traced = await composition.openTracedCrossword();
   if (traced.kind !== 'open') return undefined;
   const { puzzle, state } = traced.crossword;
@@ -183,6 +175,7 @@ export function useDailyCrosswordCard(): DailyCrosswordCardContent | undefined {
         },
         (error: unknown) => {
           logError('Could not open the Daily Crossword', error);
+          if (active) setRead({ in: composition, state: undefined });
         },
       );
       return () => {

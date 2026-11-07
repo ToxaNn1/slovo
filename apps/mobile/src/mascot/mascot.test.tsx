@@ -316,6 +316,19 @@ describe('a Badge earned with the crossword Badge stamp on', () => {
     expect(screen.queryByTestId('badge-stamp', hidden)).toBeNull();
   });
 
+  it('toasts a Badge of another family earned on the crossword’s screen', async () => {
+    const composition = await renderCelebrations({
+      badgeToast: true,
+      crosswordStamp: true,
+      route: '/game/crossword',
+    });
+
+    await winGame(composition);
+
+    expect(screen.getByTestId('badge-toast', hidden)).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-stamp', hidden)).toBeNull();
+  });
+
   it('toasts the 7th solve as before with its Feature Switch off', async () => {
     const composition = await renderCelebrations({
       badgeToast: true,

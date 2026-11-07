@@ -1,5 +1,5 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
-import { parseLocalDate } from '@slovo/core';
+import { parseLocalDate, type CrosswordSolve } from '@slovo/core';
 
 import type { CrossingCrosswordPlay } from './crossing-crossword';
 
@@ -39,13 +39,14 @@ export interface CrosswordShare {
   readonly message: string;
 }
 
-/** The solved screen's grid, share line and shared text (ADR 0087). */
+/** The solved screen's grid, share line and shared text of today's solve (ADR 0087). */
 export function crosswordShare(
-  { puzzle, cells, seconds, hinted }: CrossingCrosswordPlay,
+  { puzzle, cells }: Pick<CrossingCrosswordPlay, 'puzzle' | 'cells'>,
+  { solveSeconds, hinted }: CrosswordSolve,
   strings: Strings,
   withTime: boolean,
 ): CrosswordShare {
-  const time = withTime ? solveTimeText(seconds) : undefined;
+  const time = withTime && solveSeconds !== undefined ? solveTimeText(solveSeconds) : undefined;
   const grid = cells.map((row) => row.map(({ kind }) => kind === 'cell'));
   const title = fill(strings.share.title, {
     n: String(daysOf(puzzle.date) - FIRST_DAY + 1),

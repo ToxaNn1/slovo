@@ -26,7 +26,7 @@ type Earned =
 const inGame = (route: string | undefined) =>
   route === '/game' || route?.startsWith('/game/') === true;
 
-/** The route of the Daily Crossword, where a Badge earned by a solve is stamped. */
+/** The route of the Daily Crossword, where a Badge of its solves in a row is stamped. */
 const CROSSWORD_ROUTE = '/game/crossword';
 
 /** How long a celebration keeps the Mascot on screen. */
@@ -129,10 +129,18 @@ export function MascotCelebrations() {
   const screensNewLevel = useEffectEvent(
     () => celebrations && edition.isFeatureEnabled('newLevelScreen'),
   );
-  /** How a Badge just earned shows: toasted or stamped, or with the Mascot alone. */
-  const badgeShownAs = useEffectEvent((): Earned['kind'] | undefined => {
+  /**
+   * How a Badge just earned shows: toasted or stamped, or with the Mascot
+   * alone; a Badge of Daily Crosswords in a row earned on the crossword's
+   * screen gets board 08's stamp.
+   */
+  const badgeShownAs = useEffectEvent((badge: BadgeState): Earned['kind'] | undefined => {
     if (!edition.isFeatureEnabled('badgeToast')) return undefined;
-    if (route === CROSSWORD_ROUTE && edition.isFeatureEnabled('crosswordBadgeStamp'))
+    if (
+      route === CROSSWORD_ROUTE &&
+      badge.condition.kind === 'dailyCrosswordRun' &&
+      edition.isFeatureEnabled('crosswordBadgeStamp')
+    )
       return 'crosswordStamp';
     return inGame(route) ? 'toast' : 'stamp';
   });
@@ -147,7 +155,7 @@ export function MascotCelebrations() {
       }, CELEBRATION_MS);
     };
     const showBadge = (badge: BadgeState) => {
-      const kind = badgeShownAs();
+      const kind = badgeShownAs(badge);
       if (kind === undefined) {
         celebrate('badge');
         return;

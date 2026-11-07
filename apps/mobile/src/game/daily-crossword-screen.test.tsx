@@ -10,7 +10,7 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { Slot } from 'expo-router';
+import { router, Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { AccessibilityInfo, Share } from 'react-native';
@@ -28,6 +28,9 @@ import { CROSSING_LEMMAS } from './crossing-crossword.test-support';
 
 /** Lemmas of the Edition's alphabet, whose lengths fill the traced grid. */
 const TRACEABLE = ['кіт', 'дім', 'вовк', 'сова', 'річка', 'весна', 'яблуко', 'зоря'];
+
+/** The local date the tests' clock reads. */
+const TODAY = '2026-10-26';
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
@@ -115,10 +118,16 @@ const analytics: AnalyticsPort = {
 async function renderGame({
   crossing = false,
   on = [],
+  solvedElsewhere,
+  failsToOpen = false,
 }: {
   crossing?: boolean;
   /** Feature Switches on over the Edition's, such as `crosswordSolveTime`. */
   on?: readonly FeatureSwitch[];
+  /** Today's solve another device synced in the XP log, with no progress on this device. */
+  solvedElsewhere?: { readonly solveSeconds?: number; readonly hinted?: boolean };
+  /** Whether opening the crossing Daily Crossword throws. */
+  failsToOpen?: boolean;
 } = {}) {
   events = [];
   mockInForeground = true;
@@ -145,11 +154,30 @@ async function renderGame({
       ],
     }),
     edition: switched,
-    userState: await seedUserState(),
+    userState: await seedUserState(
+      solvedElsewhere === undefined
+        ? {}
+        : {
+            xpLog: {
+              [`daily-crossword-${TODAY}`]: {
+                kind: 'xp',
+                date: TODAY,
+                at: `${TODAY}T07:00:00.000Z`,
+                source: 'daily-crossword',
+                amount: 20,
+                ...solvedElsewhere,
+              },
+            },
+          },
+    ),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
     analytics,
   });
+  if (failsToOpen)
+    jest
+      .spyOn(composition, 'openCrossingCrossword')
+      .mockRejectedValue(new Error('The Language Pack could not be read'));
   const shell = testShell({
     composition: opened(composition),
     remoteSwitches: switchedTo(switched),
@@ -401,6 +429,50 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     await settle(() => fireEvent.press(screen.getByRole('button', { name: 'До ігор' })));
     expect(app.pathname()).toBe('/game');
     expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано. за 0:33 · без підказок');
+  });
+
+  it('shows today solved on another device from the synced XP log: the card, «Розгадано!» and its time', async () => {
+    await renderGame({
+      crossing: true,
+      on: ['crosswordSolvedScreen', 'crosswordSolveTime'],
+      solvedElsewhere: { solveSeconds: 222 },
+    });
+    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано. за 3:42 · без підказок');
+
+    await openFromCard();
+
+    expect(screen.getByText('Розгадано!')).toBeOnTheScreen();
+    expect(screen.queryByTestId('crossing-crossword-wheel')).toBeNull();
+    expect(screen.getByTestId('crossword-solved-share-line')).toHaveTextContent(
+      /^SLOVO · Кросворд №\d+3:42 · без підказок$/,
+    );
+  });
+
+  it('shows «Розв’язано!» and every letter for today solved on another device, with the solved screen off', async () => {
+    await renderGame({ crossing: true, solvedElsewhere: { hinted: true } });
+    await openFromCard();
+    const { words } = await crossingPuzzle();
+
+    expect(screen.getByTestId('daily-crossword-solved')).toHaveTextContent('Розв’язано!');
+    const [first] = words;
+    if (first === undefined) throw new Error('Expected a Word');
+    const { row, column } = first.start;
+    expect(
+      screen.getByTestId(`crossing-crossword-grid-${String(row)}-${String(column)}`),
+    ).toHaveTextContent(first.letters[0] ?? '', { exact: false });
+  });
+
+  it('shows no card and sends the screen back to the Game when it cannot open, never the traced one', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const app = await renderGame({ crossing: true, failsToOpen: true });
+
+    expect(screen.queryByTestId('daily-crossword')).toBeNull();
+    await settle(() => {
+      router.push('/game/crossword');
+    });
+
+    expect(app.pathname()).toBe('/game');
+    expect(screen.queryByTestId('traced-crossword-grid')).toBeNull();
   });
 
   it('drops «без підказок» from the share line once «Підказка» filled a letter', async () => {

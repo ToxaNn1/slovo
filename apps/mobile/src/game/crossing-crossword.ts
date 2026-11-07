@@ -5,6 +5,7 @@ import {
   isCrossingSolved,
   type Composition,
   type CrossingAction,
+  type CrosswordSolve,
   type CrossingCrossword,
   type CrossingPlay,
   type CrossingPuzzle,
@@ -54,15 +55,46 @@ const letterAt = (state: CrossingPlay, place: PuzzlePlace) => {
   return cell === undefined || cell.kind === 'empty' ? undefined : cell.letter;
 };
 
+/** The puzzle's own letter at a place: a letter of a Word through it. */
+const answerAt = (puzzle: CrossingPuzzle, place: PuzzlePlace) =>
+  puzzle.words
+    .map((word) => {
+      const index = crossingPlacesOf(word).findIndex(
+        ({ row, column }) => row === place.row && column === place.column,
+      );
+      return index < 0 ? undefined : word.letters[index];
+    })
+    .find((letter) => letter !== undefined);
+
+/**
+ * Today's solve: the one the XP log records, which Sync brings from every
+ * device (ADR 0087), or the one this device's play made while the log keeps
+ * none, with no Solve time; `undefined` until it is solved.
+ */
+export function crossingSolveOf(
+  composition: Composition,
+  puzzle: CrossingPuzzle,
+  state: CrossingPlay,
+): CrosswordSolve | undefined {
+  const recorded = composition.xpLog.crosswordSolveOn(puzzle.date);
+  if (recorded !== undefined) return recorded;
+  return isCrossingSolved(state) ? { solveSeconds: undefined, hinted: state.hinted } : undefined;
+}
+
 /** A Word by its number and direction, as VoiceOver reads it, e.g. «1 по горизонталі». */
 export const crossingWordName = ({ number, direction }: CrossingWord, strings: Strings) =>
   fill(strings.wordName, { number: String(number), direction: strings[direction] });
 
-/** The grid as the crossing grid draws it: blocks, letters, numbers, the current and the solved Words. */
+/**
+ * The grid as the crossing grid draws it: blocks, letters, numbers, the
+ * current and the solved Words; every letter once it is solved, on another
+ * device too.
+ */
 export function crossingCells(
   puzzle: CrossingPuzzle,
   state: CrossingPlay,
   strings: Strings,
+  solved: boolean,
 ): CrossingGridCell[][] {
   const size = sizeOf(puzzle);
   const current = puzzle.words[state.current];
@@ -71,7 +103,7 @@ export function crossingCells(
       const place = { row, column };
       if (isBlock(puzzle, place)) return { kind: 'block' };
       const words = through(puzzle, place);
-      const letter = letterAt(state, place);
+      const letter = solved ? answerAt(puzzle, place) : letterAt(state, place);
       const starting = words.find(
         ({ start }) => start.row === row && start.column === column,
       )?.number;
@@ -80,7 +112,9 @@ export function crossingCells(
         letter,
         number: starting,
         current: current !== undefined && words.includes(current),
-        solved: words.some((word) => state.words[puzzle.words.indexOf(word)]?.kind === 'solved'),
+        solved:
+          solved ||
+          words.some((word) => state.words[puzzle.words.indexOf(word)]?.kind === 'solved'),
         label: fill(strings.crossingCellLabel, {
           cell: letter ?? strings.emptyCell,
           words: words.map((word) => crossingWordName(word, strings)).join(', '),
@@ -107,9 +141,12 @@ export function crossingMiniGrid(
   );
 }
 
-/** How far the reader is in the crossing Daily Crossword, as its card says it. */
-export function crossingProgress(state: CrossingPlay): DailyCrosswordState['progress'] {
-  if (isCrossingSolved(state)) return 'solved';
+/** How far the reader is in the crossing Daily Crossword, as its card says it, given today's solve. */
+export function crossingProgress(
+  state: CrossingPlay,
+  solve: CrosswordSolve | undefined,
+): DailyCrosswordState['progress'] {
+  if (solve !== undefined) return 'solved';
   return Object.values(state.cells).some(({ kind }) => kind === 'filled') ? 'started' : 'untouched';
 }
 
@@ -128,11 +165,13 @@ export interface CrossingCrosswordPlay {
   readonly entered: boolean;
   /** Whether the hand coach shows: until the reader's first touch on this screen. */
   readonly coach: boolean;
-  readonly solved: boolean;
-  /** The Solve time so far, in seconds. */
-  readonly seconds: number;
-  /** Whether the Crossword Hint filled a letter today. */
-  readonly hinted: boolean;
+  /**
+   * Today's solve as {@link crossingSolveOf} reads it, with its Solve time and
+   * whether the Crossword Hint filled a letter; `undefined` until it is solved.
+   * The time counting on screen is the Core's to keep: the view is not drawn
+   * again each second.
+   */
+  readonly solve: CrosswordSolve | undefined;
   readonly select: (place: PuzzlePlace) => void;
   readonly next: () => void;
   readonly extend: (tile: number) => void;
@@ -145,13 +184,17 @@ export interface CrossingCrosswordPlay {
 /**
  * What the Daily Crossword's screen shows of the crossing one: `off` while
  * the Edition has it off, so the traced Daily Crossword shows (ADR 0073),
- * `no-fill` on a day no pattern fills, or the puzzle.
+ * `no-fill` on a day no pattern fills, `failed` when it could not open, or
+ * the puzzle.
  */
 export type CrossingCrosswordView =
-  { readonly kind: 'off' } | { readonly kind: 'no-fill' } | CrossingCrosswordPlay;
+  | { readonly kind: 'off' }
+  | { readonly kind: 'no-fill' }
+  | { readonly kind: 'failed' }
+  | CrossingCrosswordPlay;
 
 type Opened =
-  | { readonly in: Composition; readonly kind: 'off' | 'no-fill' }
+  | { readonly in: Composition; readonly kind: 'off' | 'no-fill' | 'failed' }
   | {
       readonly in: Composition;
       readonly kind: 'open';
@@ -172,7 +215,7 @@ const DIRECTION_MARK = { across: '→', down: '↓' } as const;
  * foreground (ADR 0087); as the screen leaves or the app goes to the
  * background the progress is kept and the time pauses, until the reader comes
  * back. A move that fails is logged and changes nothing; an opening that
- * fails falls back to the traced Daily Crossword.
+ * fails is logged and `failed`, never the traced Daily Crossword.
  */
 export function useCrossingCrossword(): CrossingCrosswordView | undefined {
   const composition = useComposition();
@@ -197,7 +240,7 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
       },
       (error: unknown) => {
         logError('Could not open the crossing Daily Crossword', error);
-        if (active) setOpened({ in: composition, kind: 'off' });
+        if (active) setOpened({ in: composition, kind: 'failed' });
       },
     );
     return () => {
@@ -214,7 +257,7 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
       // The clock's time counted so far: a tick adds the whole seconds since.
       let counted = deviceClock.now().getTime();
       const tick = () => {
-        if (isCrossingSolved(crossword.state)) return;
+        if (crossingSolveOf(composition, crossword.puzzle, crossword.state) !== undefined) return;
         const seconds = Math.floor((deviceClock.now().getTime() - counted) / 1000);
         if (seconds <= 0) return;
         counted += seconds * 1000;
@@ -225,7 +268,7 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
         clearInterval(ticking);
         void keep('the crossing Daily Crossword', crossword.keep());
       };
-    }, [crossword, inForeground]),
+    }, [composition, crossword, inForeground]),
   );
 
   if (opened?.in !== composition) return undefined;
@@ -259,10 +302,11 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
     });
   };
   const current = puzzle.words[state.current];
+  const solve = crossingSolveOf(composition, puzzle, state);
   return {
     kind: 'play',
     puzzle,
-    cells: crossingCells(puzzle, state, strings),
+    cells: crossingCells(puzzle, state, strings, solve !== undefined),
     clue: {
       number:
         current === undefined
@@ -282,9 +326,7 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
     miss,
     entered: solvedCount(state) > 0,
     coach: !touched,
-    solved: isCrossingSolved(state),
-    seconds: state.seconds,
-    hinted: state.hinted,
+    solve,
     select: (place) => {
       play({ type: 'select', place });
     },
