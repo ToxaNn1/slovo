@@ -5,6 +5,8 @@ import Svg, { Circle, Polygon } from 'react-native-svg';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import {
+  badgeChecker,
+  badgeCheckerFace,
   badgeMark,
   badgeNewTag,
   badgeStamp,
@@ -22,6 +24,7 @@ const outlines: Record<Exclude<BadgeShape, 'circle'>, Wedge> = {
   tile: badgeTile,
   wedge: wedges.wedge,
   diamond: wedges.diamond,
+  checker: badgeChecker,
 };
 
 /** The shape drawn in `fill` over a box of `size`, shrunk about its centre by `inset` of the side on each edge. */
@@ -49,6 +52,55 @@ function Shape({
         />
       )}
     </Svg>
+  );
+}
+
+/** The corners of the square of `side` whose top left corner is at `left`, `top`, as SVG points. */
+function cellCorners(left: number, top: number, side: number) {
+  return [
+    [left, top],
+    [left + side, top],
+    [left + side, top + side],
+    [left, top + side],
+  ]
+    .map(([x, y]) => `${String(x)},${String(y)}`)
+    .join(' ');
+}
+
+/**
+ * The `cells` by `cells` checker a `checker` Badge shows in place of its
+ * symbol, its corner cells in `lead` and the others in `other`.
+ */
+function Checker({
+  size,
+  lead,
+  other,
+  testID,
+}: {
+  size: number;
+  lead: string;
+  other: string;
+  testID: string | undefined;
+}) {
+  const { cells, side } = badgeCheckerFace;
+  const cell = side / cells;
+  const start = (1 - side) / 2;
+  const squares = Array.from({ length: cells * cells }, (_, index) => ({
+    row: Math.floor(index / cells),
+    column: index % cells,
+  }));
+  return (
+    <View testID={testID} style={styles.layer}>
+      <Svg width={size} height={size} viewBox="0 0 1 1">
+        {squares.map(({ row, column }) => (
+          <Polygon
+            key={`${String(row)}-${String(column)}`}
+            points={cellCorners(start + column * cell, start + row * cell, cell)}
+            fill={(row + column) % 2 === 0 ? lead : other}
+          />
+        ))}
+      </Svg>
+    </View>
   );
 }
 
@@ -80,7 +132,8 @@ export type BadgeMarkState =
  * fills from the bottom in red by its fraction, the symbol muted. Earned: the shape in the ring of its `tone` with
  * the face set inside and its symbol, over a drop shadow (4 deep above a side
  * of 40, 2 at 40 and below), and while new the ink «НОВА» tag turned over its
- * corner. `onRed` draws an earned Badge for a red ground: cream in an ink ring
+ * corner. A `checker` Badge shows its red and ink checker (muted in
+ * progress) in place of the symbol, test ID `${testID}-checker`. `onRed` draws an earned Badge for a red ground: cream in an ink ring
  * over a deeper ink drop, its tag cream. The symbol carries the test ID
  * `${testID}-symbol`, the tag `${testID}-new`.
  */
@@ -147,22 +200,32 @@ export function BadgeMark({
           </View>
         </View>
       )}
-      <View style={[styles.symbol, { width: size, height: size }]}>
-        <Text
-          testID={testID === undefined ? undefined : `${testID}-symbol`}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          style={[
-            typeStyle('badgeSymbol', tokens),
-            {
-              color: earned ? symbolColor : colors.muted,
-              ...roleAt('badgeSymbol', symbolSize),
-            },
-          ]}
-        >
-          {symbol}
-        </Text>
-      </View>
+      {shape === 'checker' && (
+        <Checker
+          size={size}
+          lead={earned ? colors.accent : colors.muted}
+          other={earned ? keyInk : 'transparent'}
+          testID={testID === undefined ? undefined : `${testID}-checker`}
+        />
+      )}
+      {shape !== 'checker' && (
+        <View style={[styles.symbol, { width: size, height: size }]}>
+          <Text
+            testID={testID === undefined ? undefined : `${testID}-symbol`}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            style={[
+              typeStyle('badgeSymbol', tokens),
+              {
+                color: earned ? symbolColor : colors.muted,
+                ...roleAt('badgeSymbol', symbolSize),
+              },
+            ]}
+          >
+            {symbol}
+          </Text>
+        </View>
+      )}
       {earned && state.isNew && (
         <Text
           testID={testID === undefined ? undefined : `${testID}-new`}

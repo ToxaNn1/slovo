@@ -30,17 +30,19 @@ export const resultLayout = {
 /** The mark that leads a Round of the Game Review: a square with ✓ or ✗. */
 export const reviewMark = { side: 28, radius: 8 } as const;
 
-/** The Round's progress (design `SlovoApp`): a skewed segment per Round. */
-export const roundProgress = { height: 8, gap: 4, skew: '-20deg' } as const;
+/**
+ * The Round's progress (board 07): 10 skewed segments under the header's
+ * row, filled as the Rounds pass towards the mode's Round limit.
+ */
+export const roundProgress = { height: 6, gap: 4, skew: '-20deg', segments: 10 } as const;
 
 /**
  * Gaps and paddings of the Game's Round off the 4-pt grid, from the design:
  * between the options and between the header's parts, a tight one (the
  * progress label over its bar, «Далі» under the sheet), the sheet's own and
- * the vertical padding and least height of the Round's card; the most of
- * the Round's head the Mascot and its line take, so the label keeps room for
- * its whole words; and how far the largest text sizes of iOS may scale the
- * Round's smaller text, so it never breaks a word.
+ * the vertical padding and least height of the Round's card; and how far
+ * the largest text sizes of iOS may scale the Round's smaller text, so it
+ * never breaks a word.
  */
 export const roundLayout = {
   gap: 10,
@@ -48,43 +50,45 @@ export const roundLayout = {
   sheetGap: 14,
   cardPaddingVertical: 30,
   cardMinHeight: 220,
-  mascotShare: '40%',
   textMaxFontScale: 1.5,
 } as const;
 
 /**
- * The Round's header, from the design: a Life's shield and the gap between
- * Lives, the ✕'s glyph (its touch target is `minTouchTarget`) and the
- * corners of its sunken square; a lost Life jumps to `lostPop` (the design's
- * `slLifeOut`) as its «−1» rises `lostMarkRise` (`slXp`).
+ * The Round's header (board 07): the gap between its row and the bar and
+ * label under it, between the row's parts and between Lives; a Life's flag;
+ * the ✕'s 40-pt sunken square, its corners and glyph; the pop of a Life as
+ * it is lost (`slPop`: its scale at the start, at 60 % and the end, and how
+ * long it takes).
  */
 export const roundHeader = {
-  life: { width: 18, height: 20 },
-  lifeGap: 5,
-  exitGlyph: 16,
-  exitRadius: 14,
-  lostPop: { scale: 1.6, rotate: -25 },
-  lostMarkRise: 80,
+  gap: 14,
+  rowGap: 12,
+  lifeGap: 4,
+  life: { width: 16, height: 22 },
+  exit: 40,
+  exitRadius: 12,
+  exitGlyph: 14,
+  lostPop: { from: 0.6, peak: 1.12, duration: 400 },
 } as const;
 
 /**
  * A pick Round's option, the board's answer tile: its least height, corners
  * and side padding; how much an answered Round's other options fade, how far
  * a wrong choice drops and how a right one pops (`slPop`: its scale at the
- * start, 60 % and the end); the stamp on a right option, a ring of this side
- * and border this far off the corner round a tick; the slash on a wrong
- * choice, its thickness, side inset and turn (`slSlash`).
+ * start, 60 % and the end); the key at its left (side, corners, border and
+ * the gap to the text); and the most characters a sentence option has before
+ * it is a long text.
  */
 export const answerOption = {
   minHeight: 84,
   radius: 18,
-  paddingLeft: 22,
+  paddingLeft: 16,
+  paddingRight: 18,
   dimmedOpacity: 0.5,
   drop: 8,
   pop: [0.6, 1.12, 1],
-  stamp: { side: 56, border: 4, right: 16, top: 14 },
-  tick: { width: 26, height: 22 },
-  slash: { thickness: 5, inset: 12, turn: -4 },
+  key: { side: 36, radius: 10, border: 2, gap: 14 },
+  sentenceMost: 60,
 } as const;
 
 /**
@@ -98,6 +102,26 @@ export const dailyCrosswordCard = {
   lineGap: 6,
   stateGap: 4,
   mini: { cell: 22, radius: 5, depth: 2, gap: 4 },
+} as const;
+
+/**
+ * The crossing Daily Crossword's card on the hub, board 08's three states
+ * (ADR 0087): its padding and the gaps between its parts, its button's
+ * height and side padding, the progress bar's height and slant, and the
+ * solved card's small grid: a cell's side, corner and gap, how faint a block
+ * shows on the ink, and how faint the time line is.
+ */
+export const crosswordDayCard = {
+  padding: 18,
+  gap: 14,
+  lineGap: 6,
+  barGap: 8,
+  button: { height: 46, paddingHorizontal: 18, depth: 4 },
+  bar: { height: 8, skew: '-20deg' },
+  mini: { cell: 22, radius: 5, gap: 3 },
+  solvedGap: 16,
+  blockOpacity: 0.12,
+  resultOpacity: 0.75,
 } as const;
 
 /**
@@ -137,6 +161,40 @@ export const tracedCrosswordLayout = {
   dotGap: 12,
   tile: 28,
   missFade: 300,
+} as const;
+
+/**
+ * The crossing Daily Crossword (ADR 0087, board 08): a grid cell's side and
+ * the gap between cells; how far a solved cell pops; the room above the clue
+ * bar and above the path slot, and the slot's height, where the path chips or
+ * the line on how to trace show; the Letter Wheel's side, the depth of its
+ * disc's inner top edge, its tiles' side and corner radius, how far their
+ * centres sit from the wheel's and how much of a tile, from its centre,
+ * catches the finger; the red trace's width; a path chip's side; how far a
+ * miss shakes and how long each beat takes (ms); the hand coach's fingertip
+ * and how long one sweep between two tiles takes (ms).
+ */
+export const crossingCrosswordLayout = {
+  cell: 54,
+  cellGap: 7,
+  pop: 1.12,
+  clueGap: 14,
+  slotGap: 8,
+  slot: 48,
+  wheel: 260,
+  discEdge: 6,
+  tile: 62,
+  tileRadius: 18,
+  orbit: 88,
+  hitRadius: 0.5,
+  trace: 12,
+  chip: 34,
+  shake: 8,
+  shakeBeat: 60,
+  coach: 30,
+  coachRing: 3,
+  pathGap: 4,
+  coachSweep: 1100,
 } as const;
 
 /** The «Знаю» and «Не знаю» pair: two equal columns across the card's width (XActions). */

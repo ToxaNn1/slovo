@@ -411,6 +411,24 @@ export const FeatureSwitchesSchema = z.strictObject({
   dailyCrosswordShare: z.boolean(),
   /** The traced Daily Crossword: a 5 × 5 grid full of letters whose hidden Words the reader traces; off, the typed one (ADR 0073). Off while `dailyCrossword` is. */
   tracedCrossword: z.boolean(),
+  /** The crossing Daily Crossword: a 5 × 5 crossword with blocks, numbered cells and pre-filled letters, played one clue at a time on the Letter Wheel (ADR 0087); off, the traced one stays. Off while `dailyCrossword` is. */
+  crossingCrossword: z.boolean(),
+  /** «Підказка»: the Crossword Hint, which fills one letter of the current Word, costs nothing and marks the day as hinted (ADR 0087); off while `crossingCrossword` is. */
+  crosswordHint: z.boolean(),
+  /** The Solve time: the on-screen seconds of the Daily Crossword, kept with its XP log record and shown on the solved card (ADR 0087); off while `crossingCrossword` is. */
+  crosswordSolveTime: z.boolean(),
+  /** The solved screen of the Daily Crossword, «Розгадано!» with its share buttons (ADR 0087); off while `crossingCrossword` is. */
+  crosswordSolvedScreen: z.boolean(),
+  /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge (ADR 0087); off while `crossingCrossword` or `badges` is. */
+  crosswordBadgeStamp: z.boolean(),
+  /** The inline answer card of a Game Round, in place of the bottom sheet (spec #1674); off while `game` is. */
+  gameAnswerCard: z.boolean(),
+  /** The letter tiles of «За буквами»: tiles with decoys tapped into the slots, in place of the text field (spec #1674); off while `gameByLetters` is. */
+  letterTiles: z.boolean(),
+  /** The streak counter of «Виживання»: the right answers in a row and the record (spec #1674); off while `gameSurvival` is. */
+  survivalStreak: z.boolean(),
+  /** The «Фініш» poster at the end of a Game and a time-up (spec #1674); off while `game` is. */
+  finishPoster: z.boolean(),
   /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
   eveningNotification: z.boolean(),
   /** The farewell: the polite pause ends with the Edition's farewell on the 14th day without an open; off, it ends in silence. */
@@ -551,8 +569,16 @@ export const BadgeConditionSchema = z.discriminatedUnion('kind', [
 
 export type BadgeCondition = z.infer<typeof BadgeConditionSchema>;
 
-/** The shape of a Badge family's mark (ADR 0085). */
-export const BadgeShapeSchema = z.enum(['hexagon', 'shield', 'circle', 'tile', 'wedge', 'diamond']);
+/** The shape of a Badge family's mark (ADR 0085; `checker`, ADR 0087). */
+export const BadgeShapeSchema = z.enum([
+  'hexagon',
+  'shield',
+  'circle',
+  'tile',
+  'wedge',
+  'diamond',
+  'checker',
+]);
 
 export type BadgeShape = z.infer<typeof BadgeShapeSchema>;
 
@@ -579,7 +605,8 @@ export type BadgeFamily = z.infer<typeof BadgeFamilySchema>;
 /**
  * A Badge the Edition chooses (ADR 0066): its id, its name, the short symbol
  * its mark shows (at most three characters), the id of its Badge family
- * (ADR 0085) and its condition from the catalogue.
+ * (ADR 0085), its condition from the catalogue and, optionally, its stamp's
+ * kicker (ADR 0087).
  */
 export const BadgeSchema = z.strictObject({
   id: KebabCaseIdSchema,
@@ -587,6 +614,8 @@ export const BadgeSchema = z.strictObject({
   symbol: TextSchema.max(3),
   family: KebabCaseIdSchema,
   condition: BadgeConditionSchema,
+  /** The line over the Badge's name on its full-screen stamp, e.g. «7 ПОСПІЛЬ»; left out, none (ADR 0087). */
+  stampKicker: TextSchema.optional(),
 });
 
 export type Badge = z.infer<typeof BadgeSchema>;

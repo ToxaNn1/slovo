@@ -103,6 +103,12 @@ export interface XpLogAppend {
   commit(): void;
 }
 
+/** A solved Daily Crossword as its XP log record keeps it (ADR 0087). */
+export interface CrosswordSolve {
+  readonly solveSeconds: number | undefined;
+  readonly hinted: boolean;
+}
+
 /**
  * The XP log (ADR 0066): an append-only log of the XP each learning action
  * earned and of the Daily Goals set, kept per Edition, which the total,
@@ -149,6 +155,13 @@ export interface XpLog {
   open(badge: string): XpLogAppend;
   /** The local date (`YYYY-MM-DD`) the total XP first reached `total`, if it has. */
   reachedOn(total: number): string | undefined;
+  /**
+   * The Daily Crossword solve of a local date `YYYY-MM-DD`, if it is solved:
+   * its Solve time in seconds, if one was kept, and whether the Crossword
+   * Hint was used. A solve recorded before them reads as no time and no
+   * hint (ADR 0087).
+   */
+  crosswordSolveOn(date: string): CrosswordSolve | undefined;
   /** Calls `listener` after each change of the XP, with what it came from. Returns the call that stops it. */
   subscribe(listener: (change: XpLogChange) => void): () => void;
   /** The XP and the Daily Goal of a local date `YYYY-MM-DD`: a past day keeps the goal it had. */
@@ -199,6 +212,9 @@ function amountOf(table: XpTable, action: XpAction, reviewToday: number): number
   }
 }
 
+/** The id of the Daily Crossword's record of a date: one solve a day. */
+const crosswordIdOf = (date: string) => `daily-crossword-${date}`;
+
 /**
  * The id of the action's record. The Daily Crossword of a date has one, and
  * so has the Review answer of an Entry on `today`, so a second award is
@@ -206,7 +222,7 @@ function amountOf(table: XpTable, action: XpAction, reviewToday: number): number
  * record; any other action's id is new, made by `newId`.
  */
 function fixedIdOf(action: XpAction, today: string): string | undefined {
-  if (action.source === 'daily-crossword') return `daily-crossword-${action.date}`;
+  if (action.source === 'daily-crossword') return crosswordIdOf(action.date);
   if (action.source === 'review-answer') return `review-answer-${today}-${action.entryId}`;
   return undefined;
 }
@@ -501,6 +517,12 @@ export async function openXpLog({
     }
   }
 
+  function crosswordSolveOn(date: string): CrosswordSolve | undefined {
+    const record = records.get(crosswordIdOf(date));
+    if (record?.kind !== 'xp' || record.source !== 'daily-crossword') return undefined;
+    return { solveSeconds: record.solveSeconds, hinted: record.hinted ?? false };
+  }
+
   function reachedOn(total: number): string | undefined {
     let sum = 0;
     // Each record counts what `derive` counts it, so a Review answer past the cap reaches nothing.
@@ -543,6 +565,12 @@ export async function openXpLog({
         ? { rarity: action.rarity }
         : {}),
       ...(action.source === 'game-finished' ? { right: action.right, played: action.played } : {}),
+      ...(action.source === 'daily-crossword' && action.solveSeconds !== undefined
+        ? { solveSeconds: action.solveSeconds }
+        : {}),
+      ...(action.source === 'daily-crossword' && action.hinted !== undefined
+        ? { hinted: action.hinted }
+        : {}),
     };
     return {
       changes: xpRecords.record(id).change(record),
@@ -767,6 +795,7 @@ export async function openXpLog({
     freeze,
     startBreak,
     reachedOn,
+    crosswordSolveOn,
     subscribe: subscribers.subscribe,
     dayOf,
     setDailyGoal,

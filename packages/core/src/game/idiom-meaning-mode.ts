@@ -13,7 +13,8 @@ const plays = (idiom: Idiom): boolean => idiom.idiomType !== 'placeName';
 /**
  * «Фразеологізми», the Core's Idiom meaning mode (ADR 0052), on while the
  * Edition turns Idioms on: a Round shows an idiom's or a proverb's expression
- * and four meanings, its primary Definition among them. The three
+ * and four meanings, its primary Definition among them, asked by its
+ * meaning (`labelKind` `meaning`). The three
  * Distractors are the primary Definitions of other eligible Idioms that
  * play, of the same Idiom Type first, never one of this Idiom's own
  * Definitions, no two options alike. A place name is never asked or offered.
@@ -55,6 +56,7 @@ export const idiomMeaningMode: GameMode = {
     return {
       form: 'pick',
       prompt: answer.expression,
+      labelKind: 'meaning',
       options: options.map(optionOf),
       correct: options.indexOf(right),
       sheet: { answer: optionOf(right), example: answer.examples[0] },

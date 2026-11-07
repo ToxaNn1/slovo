@@ -1,13 +1,13 @@
 'use no memo';
 // Split from the Game Round, whose modules the React Compiler skips (ADR 0059).
 
-import type { GivenAnswer, Round, RoundBlank } from '@slovo/core';
+import type { GivenAnswer, Round, RoundBlank, TextRange } from '@slovo/core';
 import { useState } from 'react';
 import { Keyboard } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { letterLabel } from './letter-label';
-import { RoundCard } from './RoundCard';
+import { RoundCard, type RoundFace } from './RoundCard';
 import { TypedAnswer } from './TypedAnswer';
 
 /**
@@ -19,6 +19,8 @@ export function TypedRound({
   round,
   label,
   prompt,
+  highlight,
+  face,
   onAnswer,
   onOpenLetter,
 }: {
@@ -26,6 +28,10 @@ export function TypedRound({
   /** The label the card reads over the prompt. */
   label: string;
   prompt: string;
+  /** The part of the prompt to mark, the Round's own unless its look moves it. */
+  highlight: TextRange | undefined;
+  /** The restyled look of the Round's card; the plain prompt if none. */
+  face: RoundFace | undefined;
   onAnswer: (given: Extract<GivenAnswer, { form: 'typed' }>) => void;
   /** «Відкрити літеру» in a Round with blanks. */
   onOpenLetter: () => void;
@@ -35,9 +41,10 @@ export function TypedRound({
       <RoundCard
         label={label}
         prompt={prompt}
-        highlight={round.highlight}
+        highlight={highlight}
         gap={round.gap}
         definition={round.definition}
+        face={face}
       />
       <TypedRoundAnswer
         key={round.number}

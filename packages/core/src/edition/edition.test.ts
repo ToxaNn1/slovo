@@ -100,6 +100,15 @@ const validConfig = {
     progressShareCards: true,
     dailyCrosswordShare: true,
     tracedCrossword: true,
+    crossingCrossword: true,
+    crosswordHint: true,
+    crosswordSolveTime: true,
+    crosswordSolvedScreen: true,
+    crosswordBadgeStamp: true,
+    gameAnswerCard: true,
+    letterTiles: true,
+    survivalStreak: true,
+    finishPoster: true,
     eveningNotification: true,
     notificationFarewell: true,
     notificationExplainer: true,
@@ -364,6 +373,15 @@ describe('loadEdition', () => {
     'progressShareCards',
     'dailyCrosswordShare',
     'tracedCrossword',
+    'crossingCrossword',
+    'crosswordHint',
+    'crosswordSolveTime',
+    'crosswordSolvedScreen',
+    'crosswordBadgeStamp',
+    'gameAnswerCard',
+    'letterTiles',
+    'survivalStreak',
+    'finishPoster',
     'fastReveal',
     'dashboard',
     'correctionTypes',
@@ -586,6 +604,25 @@ describe('loadEdition', () => {
     const load = () => loadEdition({ ...validConfig, badges: [{ ...week, family: 'crossword' }] });
     expect(load).toThrow(InvalidEditionConfigError);
     expect(load).toThrow('\nbadges.0.family: ');
+  });
+
+  it('reads the checker shape of a Badge family and a Badge stamp kicker (ADR 0087)', () => {
+    const [run, skill] = validConfig.badgeFamilies;
+    const [week, sharpStress] = validConfig.badges;
+    const badgeFamilies = [run, { ...skill, shape: 'checker' }];
+    const badges = [{ ...week, stampKicker: '7 IN A ROW' }, sharpStress];
+    const edition = loadEdition({ ...validConfig, badgeFamilies, badges });
+
+    expect(edition.badgeFamilies).toEqual(badgeFamilies);
+    expect(edition.badges).toEqual(badges);
+  });
+
+  it('refuses an empty Badge stamp kicker', () => {
+    const [week, sharpStress] = validConfig.badges;
+    const load = () =>
+      loadEdition({ ...validConfig, badges: [{ ...week, stampKicker: '' }, sharpStress] });
+
+    expect(load).toThrow('\nbadges.0.stampKicker: ');
   });
 
   it('refuses Badge families left out, a family id twice, an unknown shape or tone', () => {
@@ -1439,6 +1476,15 @@ const dependentSwitches = [
   ['progressShareCards', ['shareCards', 'xpLog']],
   ['dailyCrosswordShare', ['shareCards', 'dailyCrossword', 'game']],
   ['tracedCrossword', ['dailyCrossword', 'game']],
+  ['crossingCrossword', ['dailyCrossword', 'game']],
+  ['crosswordHint', ['crossingCrossword', 'dailyCrossword', 'game']],
+  ['crosswordSolveTime', ['crossingCrossword', 'dailyCrossword', 'game']],
+  ['crosswordSolvedScreen', ['crossingCrossword', 'dailyCrossword', 'game']],
+  ['crosswordBadgeStamp', ['crossingCrossword', 'badges', 'xpLog', 'dailyCrossword', 'game']],
+  ['gameAnswerCard', ['game']],
+  ['letterTiles', ['gameByLetters', 'game']],
+  ['survivalStreak', ['gameSurvival', 'game']],
+  ['finishPoster', ['game']],
   ['quickQuestion', ['game']],
   ['playStep', ['game']],
   ['rarityTest', ['rarityCeiling']],

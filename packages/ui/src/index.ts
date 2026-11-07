@@ -37,21 +37,31 @@ export { ClearHistoryButton } from './saved/ClearHistoryButton';
 export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
 export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
 export { DailyCrosswordCard, type CrosswordMiniCell } from './game/DailyCrosswordCard';
+export { CrosswordDayCard, type CrosswordDayCardState } from './game/CrosswordDayCard';
 export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCard';
+export { CrosswordSolvedPoster } from './game/CrosswordSolvedPoster';
+export { GameEndPoster } from './game/GameEndPoster';
 export { GameResult } from './game/GameResult';
+export { AnswerCard } from './game/AnswerCard';
 export { GameReview } from './game/GameReview';
 export { GameRound, QuickQuestionRound } from './game/GameRound';
 export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
 export { OrderedChips } from './game/OrderedChips';
 export { PairsGrid } from './game/PairsGrid';
 export { GameTimer } from './game/GameTimer';
-export { CrosswordGrid, type CrosswordPlace, type CrosswordWord } from './game/CrosswordGrid';
 export {
   TracedCrosswordGrid,
   type TracedLetter,
   type TracedMiss,
   type TracedWord,
 } from './game/TracedCrosswordGrid';
+export {
+  CrossingClueBar,
+  CrossingGrid,
+  type CrossingGridCell,
+  type CrosswordPlace,
+} from './game/CrossingGrid';
+export { LetterWheel, type WheelMiss } from './game/LetterWheel';
 export { HapticsProvider } from './providers/HapticsProvider';
 export { InterfaceSoundsProvider, useInterfaceSounds } from './providers/InterfaceSoundsProvider';
 export { HideButton } from './mix/HideButton';

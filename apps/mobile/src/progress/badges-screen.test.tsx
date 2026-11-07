@@ -256,4 +256,24 @@ describe('the Badges screen', () => {
     expect(screen.queryByTestId('badge-streak-3-mark-new')).toBeNull();
     expect(screen.getByTestId('badge-win-stress-status')).not.toHaveTextContent(/Отримано/);
   });
+
+  it('draws a «Кросворд» Badge as the checker under its name, and other families with their symbol', async () => {
+    const composition = await renderScreen();
+    expect(screen.getByTestId('badge-crossword-7-mark-checker')).toBeOnTheScreen();
+
+    await act(async () => {
+      composition.xpLog.award({ source: 'daily-crossword', date: '2026-10-13' }).commit();
+      composition.xpLog
+        .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+        .commit();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const crossword = screen.getByRole('button', { name: nameOf('crossword-7') });
+    expect(within(crossword).getByTestId('badge-crossword-7-mark-checker')).toBeOnTheScreen();
+    expect(within(crossword).queryByTestId('badge-crossword-7-mark-symbol')).toBeNull();
+    const words = screen.getByRole('button', { name: nameOf('win-words') });
+    expect(within(words).getByTestId('badge-win-words-mark-symbol')).toHaveTextContent('Сл');
+    expect(within(words).queryByTestId('badge-win-words-mark-checker')).toBeNull();
+  });
 });

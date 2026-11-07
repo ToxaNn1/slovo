@@ -38,4 +38,19 @@ describe('BackHeader', () => {
     expect(screen.getByRole('header', { name: 'About' })).toBeTruthy();
     expect(screen.queryByRole('button')).toBeNull();
   });
+
+  it('takes a press on the screen’s own action at the far end', async () => {
+    const onPress = jest.fn();
+    await render(
+      <Providers>
+        <BackHeader
+          titleRole="crosswordHeader"
+          title="Crossword"
+          action={{ label: 'Hint', onPress, testID: 'crossword-hint' }}
+        />
+      </Providers>,
+    );
+    await fireEvent.press(screen.getByRole('button', { name: 'Hint' }));
+    expect(onPress).toHaveBeenCalledTimes(1);
+  });
 });

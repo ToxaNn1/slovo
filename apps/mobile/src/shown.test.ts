@@ -15,6 +15,9 @@ function editionWithout(...off: FeatureSwitch[]) {
 const everything: Shown = {
   tabs: ['home', 'game', 'saved', 'settings'],
   gameReview: true,
+  finishPoster: true,
+  survivalStreak: true,
+  answerCard: true,
   entryButtons: {
     shareCard: true,
     pronunciation: true,
@@ -43,6 +46,8 @@ const everything: Shown = {
   badges: true,
   progressShareCards: true,
   dailyCrosswordShare: true,
+  crosswordSolvedScreen: true,
+  crosswordSolveTime: true,
   profile: true,
   profileConfirmedByRarity: true,
   profileGameBest: true,
@@ -129,6 +134,18 @@ describe('what the reader is shown', () => {
       { off: ['wordOfTheDayArchive'], shown: { wordOfTheDayArchive: false } },
     ],
     ['no Game Review with its switch off', { off: ['gameReview'], shown: { gameReview: false } }],
+    [
+      'the old result screen with the end poster off',
+      { off: ['finishPoster'], shown: { finishPoster: false } },
+    ],
+    [
+      'the Rounds passed in place of the streak with its switch off',
+      { off: ['survivalStreak'], shown: { survivalStreak: false } },
+    ],
+    [
+      'the answer sheet with the answer card off',
+      { off: ['gameAnswerCard'], shown: { answerCard: false } },
+    ],
     [
       'no Daily Goal choice with the Daily Goal off',
       { off: ['dailyGoal'], shown: { dailyGoal: false } },
@@ -290,6 +307,14 @@ describe('what the reader is shown', () => {
     [
       'no Daily Crossword Share Card with its switch off',
       { off: ['dailyCrosswordShare'], shown: { dailyCrosswordShare: false } },
+    ],
+    [
+      'no «Розгадано!» screen with its switch off',
+      { off: ['crosswordSolvedScreen'], shown: { crosswordSolvedScreen: false } },
+    ],
+    [
+      'no Solve time with its switch off',
+      { off: ['crosswordSolveTime'], shown: { crosswordSolveTime: false } },
     ],
     [
       'no Quick Question with its switch off',

@@ -64,9 +64,16 @@ export {
 export { entryCardTitle } from './feed/entry-feed-card';
 export { LATER_QUESTIONS, type FeedNotice, type LaterQuestion } from './feed-notice';
 export { type FirstWeekDay } from './feed/feed-notices';
-export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
+export {
+  streakOf,
+  type GameModeOffer,
+  type GameState,
+  type OfferedBest,
+  type Streak,
+} from './game/game';
 export {
   type CurrentGame,
+  type GameEnd,
   type GameTime,
   type GivenAnswer,
   type GridCell,
@@ -80,6 +87,7 @@ export {
   ROUND_OPTIONS,
   type AnswerSheet,
   type ChipKind,
+  type ChipLayout,
   type FixedChip,
   type GameEdition,
   type GameMode,
@@ -164,6 +172,36 @@ export {
   type PuzzleState,
 } from './game/crossword-puzzle';
 export {
+  CROSSING_PATTERNS,
+  CROSSING_WORD_LENGTH,
+  crossingPlacesOf,
+  generateCrossingCrossword,
+  type BlockPattern,
+  type CrossingDirection,
+  type CrossingGeneration,
+  type CrossingPrefill,
+  type CrossingPuzzle,
+  type CrossingWord,
+} from './game/crossing-crossword';
+export {
+  crossingCellKey,
+  filledLetters,
+  isCrossingSolved,
+  playCrossing,
+  solvedIds,
+  startCrossingPlay,
+  type CrossingAction,
+  type CrossingCell,
+  type CrossingPlay,
+  type CrossingWordState,
+  type KeptCrossingPlay,
+} from './game/crossing-play';
+export {
+  openCrossingCrossword,
+  type CrossingCrossword,
+  type CrossingCrosswordOpening,
+} from './game/crossing-crossword-progress';
+export {
   openTracedCrossword,
   seededRandomOf,
   type TracedCrossword,
@@ -188,7 +226,7 @@ export { createContentUpdate, type ContentUpdate } from './content-update/conten
 export type { PackFiles, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
 export type { XpAction, XpAward } from './game/game-xp';
-export type { XpLog, XpLogState } from './progress/xp-log';
+export type { CrosswordSolve, XpLog, XpLogState } from './progress/xp-log';
 export type { BadgeProgress, BadgeState, Badges } from './progress/badges';
 export type { BreakState, StreakBreak } from './progress/streak-break';
 export {

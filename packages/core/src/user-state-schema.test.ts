@@ -334,6 +334,12 @@ const storedIn1_0: readonly (readonly [
     '{"date":"2026-10-30","puzzle":"w_кіт 0.0 0.1 0.2","found":["w_кіт"]}',
   ],
   [
+    'crossingCrosswordProgress',
+    undefined,
+    'crossword.crossing',
+    '{"date":"2026-10-30","puzzle":"w_кіт across 0.0","filled":{"0,1":"і"},"solved":["w_кіт"],"hinted":false,"seconds":42}',
+  ],
+  [
     'syncPending',
     'settings.theme',
     'sync.pending.settings.theme',
