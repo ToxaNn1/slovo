@@ -217,7 +217,7 @@ A group of Badges an Edition declares, with a name, a description, a shape and a
 _Avoid_: Badge category, Badge group, tier
 
 **Profile**:
-The screen of the reader's whole progress: Level and progress to the next, total XP, Streak, Best Streak, the Active Days calendar (the last 35 days across months, with Break and frozen days), confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress.
+The screen of the reader's whole progress: Level and progress to the next, Streak, Best Streak, the Active Days calendar (the last 35 days across months, with Break and frozen days), confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress.
 _Avoid_: Account (the identity that syncs), dashboard, stats screen
 
 **Mascot**:
