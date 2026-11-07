@@ -91,7 +91,7 @@ export default function SearchScreen() {
             )}
           </>
         }
-        ListEmptyComponent={nothingFound ? <NothingFound /> : null}
+        ListEmptyComponent={nothingFound ? <NothingFound /> : undefined}
       />
     </SafeAreaView>
   );

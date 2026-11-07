@@ -19,6 +19,7 @@ import {
   Text,
   useWindowDimensions,
   View,
+  type HostInstance,
 } from 'react-native';
 import Animated, {
   Easing,
@@ -162,7 +163,7 @@ function UndoToast({
   const reduceMotionKnown = useReduceMotionKnown();
   const reduceMotion = reduceMotionKnown === true;
   const ready = reduceMotionKnown !== undefined;
-  const messageRef = useRef<Text>(null);
+  const messageRef = useRef<HostInstance>(null);
   /** 0 before it shows, 1 once it is in place. */
   const shown = useSharedValue(0);
   function close() {
@@ -238,7 +239,7 @@ export function ToastFace({
   children,
 }: {
   message: string;
-  messageRef?: Ref<Text> | undefined;
+  messageRef?: Ref<HostInstance> | undefined;
   children?: ReactNode;
 }) {
   const tokens = useTokens();

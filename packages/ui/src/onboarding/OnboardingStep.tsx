@@ -4,12 +4,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import {
   AccessibilityInfo,
-  findNodeHandle,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  type HostInstance,
 } from 'react-native';
 import Animated, {
   Easing,
@@ -146,11 +146,10 @@ export function OnboardingStep({
     });
   }, [progress, fly, reduceMotion]);
   // A step after the welcome replaces the one VoiceOver was on: start at its number.
-  const dots = useRef<View>(null);
+  const dots = useRef<HostInstance>(null);
   useEffect(() => {
     if (step === 1) return;
-    const node = findNodeHandle(dots.current);
-    if (node !== null) AccessibilityInfo.setAccessibilityFocus(node);
+    if (dots.current !== null) AccessibilityInfo.sendAccessibilityEvent(dots.current, 'focus');
   }, [step]);
   const slide = useAnimatedStyle(() => ({
     opacity: progress.value,

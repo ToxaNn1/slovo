@@ -86,7 +86,7 @@ export function FallingMarks({
     }),
     [height],
   );
-  const { color } = StyleSheet.flatten(style);
+  const color = StyleSheet.flatten(style)?.color;
 
   return (
     <Animated.View

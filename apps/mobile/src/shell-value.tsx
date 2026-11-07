@@ -18,7 +18,7 @@ import type {
 import type { PackReader } from '@slovo/language-pack/reader';
 import type { ShareCardFormat, ShareSheetOutcome } from '@slovo/ui';
 import { createContext, useContext, type ReactNode } from 'react';
-import type { View } from 'react-native';
+import type { HostInstance } from 'react-native';
 
 import type { LaunchPack } from './content-update/launch-pack';
 import type { Opening } from './opening';
@@ -61,7 +61,7 @@ export interface OpenedSettings {
 
 /** Shares a Share Card drawn in `view`, named by what it shows, through the iOS share sheet. */
 export type ShareCard = (
-  view: View,
+  view: HostInstance,
   cardId: string,
   format: ShareCardFormat,
   onShared: () => void,
