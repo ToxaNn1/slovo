@@ -1,11 +1,12 @@
 import type { BadgeShape, BadgeTone, ColorTokens } from '@slovo/contracts';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Polygon } from 'react-native-svg';
+import Svg, { Circle, Polygon, Rect } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import {
   badgeChecker,
+  badgeCheckerFace,
   badgeMark,
   badgeNewTag,
   badgeStamp,
@@ -54,6 +55,46 @@ function Shape({
   );
 }
 
+/**
+ * The `cells` by `cells` checker a `checker` Badge shows in place of its
+ * symbol, its corner cells in `lead` and the others in `other`.
+ */
+function Checker({
+  size,
+  lead,
+  other,
+  testID,
+}: {
+  size: number;
+  lead: string;
+  other: string;
+  testID?: string;
+}) {
+  const { cells, side } = badgeCheckerFace;
+  const cell = side / cells;
+  const start = (1 - side) / 2;
+  const squares = Array.from({ length: cells * cells }, (_, index) => ({
+    row: Math.floor(index / cells),
+    column: index % cells,
+  }));
+  return (
+    <View testID={testID} style={styles.layer}>
+      <Svg width={size} height={size} viewBox="0 0 1 1">
+        {squares.map(({ row, column }) => (
+          <Rect
+            key={`${String(row)}-${String(column)}`}
+            x={start + column * cell}
+            y={start + row * cell}
+            width={cell}
+            height={cell}
+            fill={(row + column) % 2 === 0 ? lead : other}
+          />
+        ))}
+      </Svg>
+    </View>
+  );
+}
+
 /** The ring, face and symbol colours of an earned mark in each tone; red faces carry the light Theme's ink in both Themes. */
 function toneColors(tone: BadgeTone, colors: ColorTokens, key: ColorTokens) {
   switch (tone) {
@@ -82,7 +123,8 @@ export type BadgeMarkState =
  * fraction, the symbol muted. Earned: the shape in the ring of its `tone` with
  * the face set inside and its symbol, over a drop shadow (4 deep above a side
  * of 40, 2 at 40 and below), and while new the ink «НОВА» tag turned over its
- * corner. `onRed` draws an earned Badge for a red ground: cream in an ink ring
+ * corner. A `checker` Badge shows its red and ink checker (muted in
+ * progress) in place of the symbol, test ID `${testID}-checker`. `onRed` draws an earned Badge for a red ground: cream in an ink ring
  * over a deeper ink drop, its tag cream. The symbol carries the test ID
  * `${testID}-symbol`, the tag `${testID}-new`.
  */
@@ -149,7 +191,15 @@ export function BadgeMark({
           </View>
         </View>
       )}
-      {state.kind !== 'locked' && (
+      {state.kind !== 'locked' && shape === 'checker' && (
+        <Checker
+          size={size}
+          lead={earned ? colors.accent : colors.muted}
+          other={earned ? keyInk : 'transparent'}
+          testID={testID === undefined ? undefined : `${testID}-checker`}
+        />
+      )}
+      {state.kind !== 'locked' && shape !== 'checker' && (
         <View style={[styles.symbol, { width: size, height: size }]}>
           <Text
             testID={testID === undefined ? undefined : `${testID}-symbol`}
