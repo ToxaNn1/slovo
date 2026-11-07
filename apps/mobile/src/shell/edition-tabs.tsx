@@ -1,5 +1,5 @@
 import { fill, ScreenEnter, TabBarButton, type IconName } from '@slovo/ui';
-import { Tabs, useIsFocused } from 'expo-router';
+import { router, Tabs, useIsFocused } from 'expo-router';
 import { getFocusedRouteNameFromRoute } from 'expo-router/react-navigation';
 import type { ComponentProps } from 'react';
 
@@ -137,6 +137,17 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       <Tabs.Screen
         name="settings"
         options={({ route }) => tab('settings', atRoot(route, shown.profile ? 'profile' : 'index'))}
+        listeners={({ route }) => ({
+          tabPress: (event) => {
+            // Expo Router 58 builds a tab's stack from the route files alone, before the
+            // layout's `initialRouteName` is read, so the first press on the tab would open
+            // Settings under no Profile. While the Profile is shown it opens the Profile.
+            const stackBuilt = getFocusedRouteNameFromRoute(route) !== undefined;
+            if (!shown.profile || stackBuilt) return;
+            event.preventDefault();
+            router.navigate('/settings/profile');
+          },
+        })}
       />
       {/* An Entry opened from a link, such as a notification's; no tab leads to it. */}
       <Tabs.Screen name="entry" options={offTabs} />
