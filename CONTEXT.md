@@ -189,7 +189,7 @@ The points a learning action earns: a right answer in a Game (1 per Round), a fi
 _Avoid_: Points, score, coins, experience
 
 **XP log**:
-The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started, a Badge earned and a Badge opened (`badge-opened`, which ends its «НОВА» mark on every device). Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
+The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started, a Badge earned, a Badge opened (`badge-opened`, which ends its «НОВА» mark on every device) and a wrong answer in a Game (`wrong-answer`, which earns no XP and feeds the `rightRun` Badge). Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
 _Avoid_: XP history, score table, ledger
 
 **Level**:
