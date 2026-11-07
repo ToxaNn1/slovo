@@ -237,7 +237,14 @@ describe.each(adapters)('the content read port %s', (_, open) => {
   });
 });
 
-describe('the Ukrainian Language Pack', () => {
+/**
+ * Every test here builds or opens the whole Ukrainian Edition, about 1.6 s on an
+ * idle machine since content wave 4. On a busy machine that comes close to
+ * Vitest's 5 s default, so these tests get the Feed walk's 20 s.
+ */
+const PACK_TIMEOUT_MS = 20_000;
+
+describe('the Ukrainian Language Pack', { timeout: PACK_TIMEOUT_MS }, () => {
   it('builds and meets every content target, the floors of «Діалекти», «Дотепна лайка», Idioms and Corrections per Category included', () => {
     const result = buildLanguagePack({
       editionDir: ukrainianDir,
