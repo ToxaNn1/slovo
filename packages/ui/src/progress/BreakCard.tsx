@@ -1,4 +1,3 @@
-'use no memo';
 import type { CalendarDay } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 

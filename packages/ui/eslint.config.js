@@ -68,6 +68,7 @@ export default [
       'src/onboarding/SplashOverlay.tsx',
       'src/progress/ActiveDaysCalendar.tsx',
       'src/progress/BadgeStamp.tsx',
+      'src/progress/BadgeToast.tsx',
       'src/progress/NewLevelScreen.tsx',
       'src/progress/LevelCard.tsx',
       'src/primitives/BottomSheet.tsx',
