@@ -151,7 +151,12 @@ export const cornerTile = {
  * A screen's header with a back tile (design `SlovoApp`, Settings): the gap
  * between the back tile and the title, and the room under it.
  */
-export const backHeader = { gap: 12, paddingBottom: 14 } as const;
+export const backHeader = {
+  gap: 12,
+  paddingBottom: 14,
+  /** The screen's own action: an ink plate with no edge, a little smaller while pressed (board 08). */
+  action: { height: 40, radius: 12, paddingHorizontal: 14, pressedScale: 0.95 },
+} as const;
 
 /**
  * The mistake report's comment field: four lines of `fieldText` show inside

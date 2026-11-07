@@ -236,7 +236,7 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
       }
     >
       <ScrollView
-        contentContainerStyle={[styles.content, styles.fill]}
+        contentContainerStyle={[styles.crossing, styles.fill]}
         scrollEnabled={accessibleMode || solved}
       >
         <CrossingGrid
@@ -259,41 +259,47 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
             testID="daily-crossword-solved"
             {...voice}
             maxFontSizeMultiplier={SOLVED_MAX_FONT_SCALE}
-            style={[typeStyle('crosswordSolved', tokens), styles.solved, { color: colors.correct }]}
+            style={[
+              typeStyle('crosswordSolved', tokens),
+              styles.solved,
+              styles.crossingSolved,
+              { color: colors.correct },
+            ]}
           >
             {texts.solved}
           </Text>
         ) : (
-          <>
-            <Text
-              {...voice}
-              style={[typeStyle('hint', tokens), styles.solved, { color: colors.muted }]}
-            >
-              {crossword.entered ? texts.wheelHintShort : texts.wheelHint}
-            </Text>
-            {miss !== undefined && crossword.trace.length === 0 && (
-              <Text
-                testID="crossing-crossword-miss"
-                {...voice}
-                style={[typeStyle('hint', tokens), styles.solved, { color: colors.ink }]}
-              >
-                {texts.miss}
-              </Text>
-            )}
-            <View style={styles.fill} />
-            <LetterWheel
-              testID="crossing-crossword-wheel"
-              letters={crossword.wheel}
-              trace={crossword.trace}
-              miss={miss}
-              coach={crossword.coach}
-              accessibleMode={accessibleMode}
-              onExtend={crossword.extend}
-              onStepBack={crossword.stepBack}
-              onRelease={crossword.release}
-              texts={wheelTexts}
-            />
-          </>
+          <LetterWheel
+            testID="crossing-crossword-wheel"
+            letters={crossword.wheel}
+            trace={crossword.trace}
+            miss={miss}
+            coach={crossword.coach}
+            accessibleMode={accessibleMode}
+            onExtend={crossword.extend}
+            onStepBack={crossword.stepBack}
+            onRelease={crossword.release}
+            help={
+              <>
+                <Text
+                  {...voice}
+                  style={[typeStyle('hint', tokens), styles.solved, { color: colors.muted }]}
+                >
+                  {crossword.entered ? texts.wheelHintShort : texts.wheelHint}
+                </Text>
+                {miss !== undefined && (
+                  <Text
+                    testID="crossing-crossword-miss"
+                    {...voice}
+                    style={[typeStyle('hint', tokens), styles.solved, { color: colors.ink }]}
+                  >
+                    {texts.miss}
+                  </Text>
+                )}
+              </>
+            }
+            texts={wheelTexts}
+          />
         )}
       </ScrollView>
     </CrosswordFrame>
@@ -352,6 +358,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { paddingHorizontal: space[4], paddingTop: space[2] },
   content: { gap: space[4], paddingHorizontal: space[5], paddingBottom: space[8] },
+  // Board 08's spacing, so the grid, the clue bar and the Letter Wheel fit an iPhone's screen.
+  crossing: { paddingHorizontal: space[4], paddingBottom: space[2] },
+  crossingSolved: { marginTop: space[4] },
   solved: { textAlign: 'center' },
   fill: { flexGrow: 1 },
 });
