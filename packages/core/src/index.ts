@@ -64,7 +64,13 @@ export {
 export { entryCardTitle } from './feed/entry-feed-card';
 export { LATER_QUESTIONS, type FeedNotice, type LaterQuestion } from './feed-notice';
 export { type FirstWeekDay } from './feed/feed-notices';
-export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
+export {
+  streakOf,
+  type GameModeOffer,
+  type GameState,
+  type OfferedBest,
+  type Streak,
+} from './game/game';
 export {
   type CurrentGame,
   type GameEnd,
