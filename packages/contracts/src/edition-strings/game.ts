@@ -121,6 +121,21 @@ export const GameStringsSchema = z.strictObject({
     hint: TextSchema,
     /** What VoiceOver reads for the button that moves to the next open Word, e.g. «Наступне слово». */
     nextWord: TextSchema,
+    /** How the crossing Daily Crossword names a Word running left to right, e.g. «по горизонталі». */
+    across: TextSchema,
+    /** How it names a Word running top to bottom, e.g. «по вертикалі». */
+    down: TextSchema,
+    /** A Word of the crossing Daily Crossword by its number and direction, e.g. «1 по горизонталі». Takes `{number}` and `{direction}`, `across` or `down`. */
+    wordName: templateOf('number', 'direction'),
+    /** What VoiceOver reads for an empty cell of the crossing Daily Crossword, e.g. «порожня». */
+    emptyCell: TextSchema,
+    /**
+     * What VoiceOver reads for a cell of the crossing Daily Crossword, e.g. «к. 1 по горизонталі, 2 по вертикалі. Рядок 1, стовпець 1».
+     * Takes `{cell}`, its letter or `emptyCell`, `{words}`, the `wordName` of each Word through it, and `{row}` and `{column}`, counted from 1 at the top left corner.
+     */
+    crossingCellLabel: templateOf('cell', 'words', 'row', 'column'),
+    /** What VoiceOver reads for the crossing Daily Crossword's clue bar, e.g. «1 по горизонталі. Звір». Takes `{word}`, its `wordName`, and `{clue}`. */
+    crossingClueLabel: templateOf('word', 'clue'),
     /** The line over the Letter Wheel before the first Word is entered, e.g. «Веди пальцем по літерах, щоб скласти слово». */
     wheelHint: TextSchema,
     /** The same line once a Word is entered, e.g. «Веди пальцем по літерах». */
