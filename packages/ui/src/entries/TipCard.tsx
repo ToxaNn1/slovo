@@ -84,15 +84,16 @@ export function TipCardBody({
           spoken={withoutStress(nonStandardForm)}
         />
       )}
-      {shown.concealed ? null : tabs ? (
+      {tabs ? (
         <CardTabs
           testID="tip"
-          tabs={tipTabsOf(shown.card)}
+          tabs={tipTabsOf(card)}
           nameOf={({ key }) => edition.strings.wordCard.tabs[key]}
+          disabled={shown.concealed}
         >
           {(tab) => <TipTabContent tab={tab} />}
         </CardTabs>
-      ) : (
+      ) : shown.concealed ? null : (
         <>
           <TipEssence
             standardForm={shown.card.standardForm}

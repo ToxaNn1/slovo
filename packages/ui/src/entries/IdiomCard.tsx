@@ -96,11 +96,16 @@ export function IdiomCardBody({
           />
         </View>
       </View>
-      {concealed ? null : tabs ? (
-        <CardTabs testID="idiom" tabs={idiomTabsOf(card)} nameOf={({ key }) => strings.tabs[key]}>
+      {tabs ? (
+        <CardTabs
+          testID="idiom"
+          tabs={idiomTabsOf(card)}
+          nameOf={({ key }) => strings.tabs[key]}
+          disabled={concealed}
+        >
           {(tab) => <IdiomTabContent tab={tab} />}
         </CardTabs>
-      ) : (
+      ) : concealed ? null : (
         <>
           <Text
             testID="idiom-definition"

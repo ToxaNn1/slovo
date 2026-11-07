@@ -29,12 +29,14 @@ type Fit = FontSize | 'scrolls';
  * An Entry card's tabs under its head (ADR 0088): a `tablist` of `tab`s by
  * their names, the first selected on opening, and the selected tab's content
  * in a `FitPanel`. A card with one tab draws no tab bar. Nothing moves between
- * tabs, so Reduce Motion has nothing to stop.
+ * tabs, so Reduce Motion has nothing to stop. Under Self-check the tabs are
+ * there but disabled, and the panel shows nothing, until the reveal.
  */
 export function CardTabs<Tab extends { readonly key: string }>({
   testID,
   tabs,
   nameOf,
+  disabled = false,
   children,
 }: {
   /** The kind of the Entry, which names each tab `<testID>-tab-<key>`. */
@@ -42,6 +44,8 @@ export function CardTabs<Tab extends { readonly key: string }>({
   tabs: readonly [Tab, ...Tab[]];
   /** The tab's name from the Edition's strings. */
   nameOf: (tab: Tab) => string;
+  /** Self-check conceals the card: the tabs take no tap and the panel stays empty. */
+  disabled?: boolean;
   /** What the selected tab shows. */
   children: (tab: Tab) => ReactNode;
 }) {
@@ -62,6 +66,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
                 testID={`${testID}-tab-${tab.key}`}
                 role="tab"
                 aria-selected={on}
+                disabled={disabled}
                 accessibilityLabel={nameOf(tab)}
                 {...voice}
                 onPress={() => {
@@ -72,7 +77,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
                 <Text
                   style={[
                     typeStyle('chipLabel', tokens),
-                    { color: on ? colors.ink : colors.muted },
+                    { color: on && !disabled ? colors.ink : colors.muted },
                   ]}
                 >
                   {nameOf(tab)}
@@ -83,7 +88,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
         </View>
       )}
       <FitPanel testID={testID} fitKey={selected.key}>
-        {children(selected)}
+        {disabled ? null : children(selected)}
       </FitPanel>
     </View>
   );
