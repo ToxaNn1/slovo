@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_c48seg",
   "lemma": "сонько",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Людина, яка любить спати, багато спить.",
@@ -18,14 +16,7 @@
       "author": "М. Стельмах"
     }
   ],
-  "synonyms": [
-    "дрімайло",
-    "соня",
-    "сонюга",
-    "спанько",
-    "сплюха",
-    "сплюх"
-  ],
+  "synonyms": ["дрімайло", "соня", "сонюга", "спанько", "сплюха", "сплюх"],
   "categoryId": "witty-insults",
   "rarity": 2,
   "sources": [

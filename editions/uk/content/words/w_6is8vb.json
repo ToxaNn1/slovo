@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_6is8vb",
   "lemma": "оракул",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "У стародавніх греків, римлян, єгиптян та інших народів – жрець, який пророкував майбутнє від імені божества.",
@@ -63,11 +61,7 @@
       "author": "Ю. Мокрієв"
     }
   ],
-  "synonyms": [
-    "жрець-віщун",
-    "провісник",
-    "віщун"
-  ],
+  "synonyms": ["жрець-віщун", "провісник", "віщун"],
   "categoryId": "history-antiquity",
   "rarity": 1,
   "sources": [

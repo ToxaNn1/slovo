@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_r0m898",
   "lemma": "веснянкуватий",
-  "stress": [
-    9
-  ],
+  "stress": [9],
   "partOfSpeech": "adjective",
   "primaryDefinition": "Укритий веснянками; з веснянками.",
   "examples": [
@@ -21,13 +19,7 @@
       "author": "М. Чабанівський"
     }
   ],
-  "synonyms": [
-    "ластатий",
-    "ластовинчатий",
-    "піганистий",
-    "рудий",
-    "рябий"
-  ],
+  "synonyms": ["ластатий", "ластовинчатий", "піганистий", "рудий", "рябий"],
   "categoryId": "human-body",
   "rarity": 4,
   "sources": [

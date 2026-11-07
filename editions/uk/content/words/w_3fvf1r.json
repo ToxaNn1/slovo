@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_3fvf1r",
   "lemma": "тральщик",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Риболовецьке судно, оснащене тралами (у 1 знач.).",
@@ -23,12 +21,7 @@
       "author": "В. Кучер"
     }
   ],
-  "synonyms": [
-    "тральник",
-    "тралмейстер",
-    "тралер",
-    "траулер"
-  ],
+  "synonyms": ["тральник", "тралмейстер", "тралер", "траулер"],
   "categoryId": "military",
   "rarity": 3,
   "sources": [

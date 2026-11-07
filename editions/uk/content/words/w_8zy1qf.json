@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_8zy1qf",
   "lemma": "садно",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Невелика, неглибока ранка або місце, де зідрана чи натерта шкіра.",
@@ -18,10 +16,7 @@
       "author": "Г. Хоткевич"
     }
   ],
-  "synonyms": [
-    "пошморг",
-    "рана"
-  ],
+  "synonyms": ["пошморг", "рана"],
   "categoryId": "human-body",
   "rarity": 4,
   "sources": [

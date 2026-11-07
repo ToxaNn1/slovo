@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_aivxp4",
   "lemma": "ступня",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Нижня опорна частина ноги; стопа.",
-  "extraDefinitions": [
-    "Хода."
-  ],
+  "extraDefinitions": ["Хода."],
   "examples": [
     {
       "text": "Про колишню ще недавню недолугість нагадував тільки надто тонкий стан та тонкі, хоч і міцні, немов сталеві, ноги з вузькими довгими ступнями.",

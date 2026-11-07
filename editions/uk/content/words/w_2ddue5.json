@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_2ddue5",
   "lemma": "розчина",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Закваска для тіста.",
@@ -25,16 +23,7 @@
       "author": "М. Коцюбинський"
     }
   ],
-  "synonyms": [
-    "запара",
-    "запарка",
-    "опара",
-    "рощина",
-    "цід",
-    "квас",
-    "кислота",
-    "сирівець"
-  ],
+  "synonyms": ["запара", "запарка", "опара", "рощина", "цід", "квас", "кислота", "сирівець"],
   "categoryId": "household-crafts",
   "rarity": 4,
   "sources": [

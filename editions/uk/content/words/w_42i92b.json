@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_42i92b",
   "lemma": "кузня",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Майстерня (або цех), де обробляють метал куванням.",
@@ -44,13 +42,7 @@
       "author": "О. Стороженко"
     }
   ],
-  "synonyms": [
-    "ковальня",
-    "горнило",
-    "школа",
-    "гартувальня",
-    "гартівня"
-  ],
+  "synonyms": ["ковальня", "горнило", "школа", "гартувальня", "гартівня"],
   "categoryId": "old-crafts",
   "rarity": 3,
   "sources": [

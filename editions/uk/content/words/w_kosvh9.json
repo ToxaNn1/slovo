@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_kosvh9",
   "lemma": "осцилограф",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Прилад для записів і спостереження змін у часі будь-яких фізичних величин після перетворення їх на зміни електричної напруги.",

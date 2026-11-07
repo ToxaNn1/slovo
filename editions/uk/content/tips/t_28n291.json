@@ -14,11 +14,7 @@
   "gameQuestion": {
     "prompt": "Як правильно?",
     "rightAnswer": "лицар",
-    "wrongAnswers": [
-      "рицар",
-      "рицарство",
-      "рицарський"
-    ]
+    "wrongAnswers": ["рицар", "рицарство", "рицарський"]
   },
   "nonStandardForm": "рицар",
   "example": {

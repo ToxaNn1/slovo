@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_ammsx2",
   "lemma": "льодостав",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Утворення на поверхні водойм нерухомого шару льоду.",
-  "extraDefinitions": [
-    "Суцільний шар льоду на поверхні водойми."
-  ],
+  "extraDefinitions": ["Суцільний шар льоду на поверхні водойми."],
   "examples": [
     {
       "text": "Донний лід утворюється на ділянках, де ще немає льодоставу."

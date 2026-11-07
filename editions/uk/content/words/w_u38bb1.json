@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_u38bb1",
   "lemma": "віхоть",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Жмут соломи, сіна і т. ін.",
@@ -88,13 +86,7 @@
       "author": "І. Франко"
     }
   ],
-  "synonyms": [
-    "жмут",
-    "пук",
-    "пасмо",
-    "верчик",
-    "віхтик"
-  ],
+  "synonyms": ["жмут", "пук", "пасмо", "верчик", "віхтик"],
   "categoryId": "household-crafts",
   "rarity": 5,
   "sources": [

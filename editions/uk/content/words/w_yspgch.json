@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_yspgch",
   "lemma": "гордій",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Гордовита людина.",
@@ -18,16 +16,8 @@
       "author": "Марко Вовчок"
     }
   ],
-  "synonyms": [
-    "гордун",
-    "гордяк",
-    "гордівник",
-    "пава",
-    "пишак"
-  ],
-  "registers": [
-    "colloquial"
-  ],
+  "synonyms": ["гордун", "гордяк", "гордівник", "пава", "пишак"],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 5,
   "sources": [

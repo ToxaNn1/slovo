@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_wg6zmp",
   "lemma": "плебей",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "У Стародавньому Римі – представник нижчого стану вільного населення.",
@@ -53,15 +51,7 @@
       "author": "У. Самчук"
     }
   ],
-  "synonyms": [
-    "гречкосій",
-    "хам",
-    "гевал",
-    "мужик",
-    "раб",
-    "слуга",
-    "хлоп"
-  ],
+  "synonyms": ["гречкосій", "хам", "гевал", "мужик", "раб", "слуга", "хлоп"],
   "categoryId": "history-antiquity",
   "rarity": 1,
   "sources": [

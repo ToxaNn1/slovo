@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_g6gbg7",
   "lemma": "гарбарня",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Майстерня, завод, де вичиняли шкіри.",
@@ -22,9 +20,7 @@
       "author": "І. Франко"
     }
   ],
-  "registers": [
-    "archaic"
-  ],
+  "registers": ["archaic"],
   "categoryId": "old-crafts",
   "rarity": 5,
   "sources": [

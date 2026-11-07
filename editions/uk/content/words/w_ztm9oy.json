@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_ztm9oy",
   "lemma": "полонез",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Урочистий бальний танець із тридольним розміром, що походить від польського народного танцю.",
-  "extraDefinitions": [
-    "Музика до цього танцю."
-  ],
+  "extraDefinitions": ["Музика до цього танцю."],
   "examples": [
     {
       "text": "Вінчалося кілька пар – молоді й підстарші, йшли, як у полонезі.",

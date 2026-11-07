@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ls5omp",
   "lemma": "клямка",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Пластинка з важільцем, якою зачиняють і відчиняють двері, хвіртку і т. ін.",
@@ -30,10 +28,7 @@
       "author": "Панас Мирний"
     }
   ],
-  "synonyms": [
-    "замок",
-    "колодка"
-  ],
+  "synonyms": ["замок", "колодка"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

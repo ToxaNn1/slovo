@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_xf8e6f",
   "lemma": "наголінник",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Частина металевої збруї, що накладалася на голінку.",
-  "extraDefinitions": [
-    "Що-небудь, що накладалося, надягалося на голінку."
-  ],
+  "extraDefinitions": ["Що-небудь, що накладалося, надягалося на голінку."],
   "examples": [
     {
       "text": "То наголінники візьме [Еней], .. То розглядає списа, то щита незрівнянну роботу.",
@@ -28,9 +24,7 @@
       "author": "Борис Тен"
     }
   ],
-  "registers": [
-    "archaic"
-  ],
+  "registers": ["archaic"],
   "categoryId": "military",
   "rarity": 4,
   "sources": [

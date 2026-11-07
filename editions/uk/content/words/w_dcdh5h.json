@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_dcdh5h",
   "lemma": "гарбар",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Чинбар.",
@@ -14,13 +12,8 @@
       "author": "Юліан Опільський"
     }
   ],
-  "synonyms": [
-    "кушнір",
-    "чинбар"
-  ],
-  "registers": [
-    "archaic"
-  ],
+  "synonyms": ["кушнір", "чинбар"],
+  "registers": ["archaic"],
   "categoryId": "old-crafts",
   "rarity": 5,
   "sources": [

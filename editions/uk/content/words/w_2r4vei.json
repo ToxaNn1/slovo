@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_2r4vei",
   "lemma": "елегія",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Ліричний вірш задумливого, сумного характеру.",
@@ -45,10 +43,7 @@
       "author": "І. Нечуй-Левицький"
     }
   ],
-  "synonyms": [
-    "меланхолія",
-    "смуток"
-  ],
+  "synonyms": ["меланхолія", "смуток"],
   "categoryId": "arts-culture",
   "rarity": 2,
   "sources": [

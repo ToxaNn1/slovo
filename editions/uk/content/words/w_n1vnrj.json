@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_n1vnrj",
   "lemma": "стилет",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Невеликий кинджал з дуже тонким і гострим клинком (звичайно тригранним).",
@@ -22,9 +20,7 @@
       "author": "П. Тичина"
     }
   ],
-  "synonyms": [
-    "кинджал"
-  ],
+  "synonyms": ["кинджал"],
   "categoryId": "military",
   "rarity": 3,
   "sources": [

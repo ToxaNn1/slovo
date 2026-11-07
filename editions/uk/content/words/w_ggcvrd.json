@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_ggcvrd",
   "lemma": "шелюга",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Верба гостролиста.",
-  "extraDefinitions": [
-    "Зарості верби гостролистої."
-  ],
+  "extraDefinitions": ["Зарості верби гостролистої."],
   "examples": [
     {
       "text": "Гріло сонце, пахло рікою, розпареним листям шелюги і молоденьких осичок.",

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ic92qn",
   "lemma": "гладущик",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Широкогорлий глек для молока, сметани і т. ін.",
@@ -22,15 +20,7 @@
       "author": "М. Кропивницький"
     }
   ],
-  "synonyms": [
-    "глек",
-    "амфора",
-    "гладун",
-    "глечик",
-    "глиняник",
-    "дзбан",
-    "тиква"
-  ],
+  "synonyms": ["глек", "амфора", "гладун", "глечик", "глиняник", "дзбан", "тиква"],
   "categoryId": "household-crafts",
   "rarity": 4,
   "sources": [

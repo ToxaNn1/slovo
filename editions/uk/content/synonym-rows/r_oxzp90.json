@@ -3,61 +3,43 @@
   "id": "r_oxzp90",
   "dominant": {
     "text": "вмирати",
-    "stress": [
-      4
-    ]
+    "stress": [4]
   },
   "meaning": "Почувати, виявляти глибоку сердечну прихильність до особи іншої статі.",
   "members": [
     {
       "text": "влюбляти",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "кохати",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "любити",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "навидіти",
-      "stress": [
-        1
-      ]
+      "stress": [1]
     },
     {
       "text": "пропадати",
-      "stress": [
-        6
-      ],
+      "stress": [6],
       "shadeNote": "дуже сильно"
     },
     {
       "text": "сохнути",
-      "stress": [
-        1
-      ],
+      "stress": [1],
       "shadeNote": "страждаючи"
     },
     {
       "text": "улюбляти",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "умирати",
-      "stress": [
-        4
-      ]
+      "stress": [4]
     }
   ],
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_5oeavd",
   "lemma": "броварня",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Пивоварний завод.",
@@ -21,9 +19,7 @@
       "author": "Панас Мирний"
     }
   ],
-  "registers": [
-    "archaic"
-  ],
+  "registers": ["archaic"],
   "categoryId": "old-crafts",
   "rarity": 4,
   "sources": [

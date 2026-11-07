@@ -14,11 +14,7 @@
   "gameQuestion": {
     "prompt": "Як правильно?",
     "rightAnswer": "барва",
-    "wrongAnswers": [
-      "фарба",
-      "пофарбовані",
-      "фарби"
-    ]
+    "wrongAnswers": ["фарба", "пофарбовані", "фарби"]
   },
   "nonStandardForm": "фарба",
   "example": {

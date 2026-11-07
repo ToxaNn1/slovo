@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_w2g6sw",
   "lemma": "іконопис",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Галузь релігійного живопису.",
-  "extraDefinitions": [
-    "Мистецтво малювання ікон."
-  ],
+  "extraDefinitions": ["Мистецтво малювання ікон."],
   "examples": [
     {
       "text": "Іконопис характерний і розвинений у православній традиції, поширений в Україні, Росії, Румунії, Греції, Сербії, Грузії."

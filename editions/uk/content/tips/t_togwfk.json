@@ -14,11 +14,7 @@
   "gameQuestion": {
     "prompt": "Як правильно?",
     "rightAnswer": "будова тіла",
-    "wrongAnswers": [
-      "побудова тіла",
-      "побудова",
-      "будівля"
-    ]
+    "wrongAnswers": ["побудова тіла", "побудова", "будівля"]
   },
   "nonStandardForm": "побудова",
   "example": {

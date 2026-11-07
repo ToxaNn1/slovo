@@ -14,11 +14,7 @@
   "gameQuestion": {
     "prompt": "Як правильно?",
     "rightAnswer": "надісь",
-    "wrongAnswers": [
-      "не бійсь",
-      "небось",
-      "не бійся"
-    ]
+    "wrongAnswers": ["не бійсь", "небось", "не бійся"]
   },
   "nonStandardForm": "Не бійсь",
   "example": {

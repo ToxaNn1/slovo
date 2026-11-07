@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_ucf7lm",
   "lemma": "бузина",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Кущ або деревце родини жимолостевих з чорними або червоними ягодами.",
-  "extraDefinitions": [
-    "Ягоди цієї рослини."
-  ],
+  "extraDefinitions": ["Ягоди цієї рослини."],
   "examples": [
     {
       "text": "А вздовж тину, за старою повіткою, росли великі кущі смородини, бузини і ще якихось невідомих рослин.",

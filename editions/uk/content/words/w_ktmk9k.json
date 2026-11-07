@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ktmk9k",
   "lemma": "логарифм",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Показник степеня, до якого потрібно піднести число-основу, щоб одержати дане число.",

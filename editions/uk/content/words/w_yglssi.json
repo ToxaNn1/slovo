@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_yglssi",
   "lemma": "галька",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Обкатані й відшліфовані водою дрібні уламки гірських порід.",
@@ -22,15 +20,7 @@
       "author": "М. Коцюбинський"
     }
   ],
-  "synonyms": [
-    "гравій",
-    "жорства",
-    "ринь",
-    "ріння",
-    "рінь",
-    "шутер",
-    "щебінь"
-  ],
+  "synonyms": ["гравій", "жорства", "ринь", "ріння", "рінь", "шутер", "щебінь"],
   "categoryId": "nature-weather",
   "rarity": 2,
   "sources": [

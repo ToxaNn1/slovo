@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_miqbv7",
   "lemma": "крижень",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Велика дика качка родини качачих.",
@@ -33,11 +31,7 @@
       "author": "Є. Гребінка"
     }
   ],
-  "synonyms": [
-    "качиний",
-    "крижак",
-    "кряква"
-  ],
+  "synonyms": ["качиний", "крижак", "кряква"],
   "categoryId": "folk-names",
   "rarity": 4,
   "sources": [

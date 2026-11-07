@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ev5728",
   "lemma": "сакви",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "plural-only",
   "primaryDefinition": "Дві з'єднані одним полотнищем торби, які перекидають через плече (на груди й спину) або через спину коня, осла і т. ін.",
@@ -22,12 +20,7 @@
       "author": "А. Головко"
     }
   ],
-  "synonyms": [
-    "бесаги",
-    "бисаги",
-    "торба",
-    "торби"
-  ],
+  "synonyms": ["бесаги", "бисаги", "торба", "торби"],
   "categoryId": "household-crafts",
   "rarity": 4,
   "sources": [

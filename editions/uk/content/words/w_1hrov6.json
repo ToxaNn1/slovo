@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_1hrov6",
   "lemma": "асемблер",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Система програмування, яка включає мову програмування низького рівня і транслятор з цієї мови.",

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_yfppka",
   "lemma": "плацдарм",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Місцевість, район для підготовки та розгортання військової операції.",
@@ -50,9 +48,7 @@
       "author": "М. Дашкієв"
     }
   ],
-  "synonyms": [
-    "пляцдарм"
-  ],
+  "synonyms": ["пляцдарм"],
   "categoryId": "military",
   "rarity": 1,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_safnqd",
   "lemma": "глузливість",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Властивість за знач. глузли́вий.",
@@ -18,9 +16,7 @@
       "author": "В. Малик"
     }
   ],
-  "synonyms": [
-    "глузувати"
-  ],
+  "synonyms": ["глузувати"],
   "categoryId": "emotions-character",
   "rarity": 3,
   "sources": [

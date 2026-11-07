@@ -3,43 +3,31 @@
   "id": "r_q2119f",
   "dominant": {
     "text": "голодний",
-    "stress": [
-      3
-    ]
+    "stress": [3]
   },
   "meaning": "Який відчуває голод.",
   "members": [
     {
       "text": "безхлібний",
-      "stress": [
-        5
-      ],
+      "stress": [5],
       "shadeNote": "який не має хліба"
     },
     {
       "text": "зголоднілий",
-      "stress": [
-        7
-      ]
+      "stress": [7]
     },
     {
       "text": "негодований",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "ненагодований",
-      "stress": [
-        7
-      ],
+      "stress": [7],
       "shadeNote": "якого не погодували"
     },
     {
       "text": "неситий",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     }
   ],
   "sources": [

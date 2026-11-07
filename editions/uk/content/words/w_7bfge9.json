@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_7bfge9",
   "lemma": "рекрутчина",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Рекрутський набір.",
@@ -28,11 +26,7 @@
       "author": "Н. Рибак"
     }
   ],
-  "synonyms": [
-    "бранка",
-    "побір",
-    "рекрутство"
-  ],
+  "synonyms": ["бранка", "побір", "рекрутство"],
   "categoryId": "military",
   "rarity": 4,
   "sources": [

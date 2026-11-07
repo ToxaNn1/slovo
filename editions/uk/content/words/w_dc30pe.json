@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_dc30pe",
   "lemma": "донощик",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Той, хто доніс або любить доно́сити (у 3 знач.).",
@@ -60,9 +58,7 @@
     "набреха",
     "наклепник"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "emotions-character",
   "rarity": 3,
   "sources": [

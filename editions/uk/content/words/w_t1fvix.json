@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_t1fvix",
   "lemma": "ґуральня",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Спирто-горілчаний завод.",
@@ -22,15 +20,8 @@
       "author": "І. Нечуй-Левицький"
     }
   ],
-  "synonyms": [
-    "винниця",
-    "винокурня",
-    "караван",
-    "спиртзавод"
-  ],
-  "registers": [
-    "archaic"
-  ],
+  "synonyms": ["винниця", "винокурня", "караван", "спиртзавод"],
+  "registers": ["archaic"],
   "categoryId": "old-crafts",
   "rarity": 4,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_is5iit",
   "lemma": "суфікс",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Значуща частина слова, що стоїть між коренем і закінченням і служить для творення нових слів або окремих форм.",
@@ -13,9 +11,7 @@
       "text": "Словотворчий суфікс – суфікс, за допомогою якого творяться нові слова."
     }
   ],
-  "synonyms": [
-    "наросток"
-  ],
+  "synonyms": ["наросток"],
   "categoryId": "language-speech",
   "rarity": 2,
   "sources": [

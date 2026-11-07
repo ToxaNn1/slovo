@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_ygiv61",
   "lemma": "клинопис",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Тип письма стародавніх народів Близького Сходу, клиноподібні знаки якого наносили на глину або камінь.",
-  "extraDefinitions": [
-    "Текст, написаний таким письмом."
-  ],
+  "extraDefinitions": ["Текст, написаний таким письмом."],
   "examples": [
     {
       "text": "Спочатку урарти зображали слова малюнками. Потім вони перейняли в ассирійців клинопис."
@@ -32,9 +28,7 @@
       "author": "І. Білик"
     }
   ],
-  "synonyms": [
-    "письмо"
-  ],
+  "synonyms": ["письмо"],
   "categoryId": "history-antiquity",
   "rarity": 3,
   "sources": [

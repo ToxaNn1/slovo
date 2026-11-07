@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_3pb5ks",
   "lemma": "безсмертник",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Народна назва рослин із сухими квітками родини складноцвітих, переважно безсмертків і тмину.",
@@ -25,10 +23,7 @@
       "author": "Панас Мирний"
     }
   ],
-  "synonyms": [
-    "безсмертка",
-    "сухоцвіт"
-  ],
+  "synonyms": ["безсмертка", "сухоцвіт"],
   "categoryId": "folk-names",
   "rarity": 2,
   "sources": [

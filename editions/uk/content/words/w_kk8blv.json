@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_kk8blv",
   "lemma": "кушнірство",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Ремесло кушніра.",
-  "extraDefinitions": [
-    "Галузь виробництва."
-  ],
+  "extraDefinitions": ["Галузь виробництва."],
   "examples": [
     {
       "text": "Кушнірство в середні віки перетворилося на одне з найпоширеніших ремесел."

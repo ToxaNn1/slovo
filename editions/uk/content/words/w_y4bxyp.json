@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_y4bxyp",
   "lemma": "гравітація",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Властивість усіх тіл взаємно притягатися; всесвітнє тяжіння.",
@@ -17,10 +15,7 @@
       "author": "О. Бердник"
     }
   ],
-  "synonyms": [
-    "тяжіння",
-    "притягання"
-  ],
+  "synonyms": ["тяжіння", "притягання"],
   "categoryId": "science",
   "rarity": 1,
   "sources": [

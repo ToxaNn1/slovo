@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ewv6rn",
   "lemma": "хмаровиння",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Збірн. до хма́ра.",
@@ -26,10 +24,7 @@
       "author": "М. Рудь"
     }
   ],
-  "synonyms": [
-    "хмара",
-    "хмарина"
-  ],
+  "synonyms": ["хмара", "хмарина"],
   "categoryId": "nature-weather",
   "rarity": 4,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_qpvmdr",
   "lemma": "червінець",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Загальна назва іноземних золотих монет, що були в обігу в Росії до царя Петра І.",
@@ -44,12 +42,7 @@
       "author": "О. Гончар"
     }
   ],
-  "synonyms": [
-    "золотий",
-    "червоний",
-    "червінчик",
-    "десятка"
-  ],
+  "synonyms": ["золотий", "червоний", "червінчик", "десятка"],
   "categoryId": "history-antiquity",
   "rarity": 2,
   "sources": [

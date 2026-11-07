@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_rn28pr",
   "lemma": "ешелон",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Поїзд, автоколона або група літаків певного призначення з людьми та вантажем.",
@@ -37,11 +35,7 @@
       "author": "І. Карпа"
     }
   ],
-  "synonyms": [
-    "потяг",
-    "поїзд",
-    "щабель"
-  ],
+  "synonyms": ["потяг", "поїзд", "щабель"],
   "categoryId": "military",
   "rarity": 2,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_j3hi79",
   "lemma": "жаровня",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Металева, перев. невелика посудина для розжареного вугілля, що використовується замість печі.",
@@ -46,9 +44,7 @@
       "author": "І. Микитенко"
     }
   ],
-  "synonyms": [
-    "деко"
-  ],
+  "synonyms": ["деко"],
   "categoryId": "household-crafts",
   "rarity": 4,
   "sources": [

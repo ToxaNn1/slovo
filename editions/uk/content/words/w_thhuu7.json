@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_thhuu7",
   "lemma": "палітра",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Чотирикутна або овальна дощечка, пластинка, на якій живописець змішує і розтирає фарби.",
@@ -68,10 +66,7 @@
       "author": "О. Довженко"
     }
   ],
-  "synonyms": [
-    "палета",
-    "засоби"
-  ],
+  "synonyms": ["палета", "засоби"],
   "categoryId": "arts-culture",
   "rarity": 1,
   "sources": [

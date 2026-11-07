@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_mwxg43",
   "lemma": "ескіз",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Попередній начерк малюнка, картини або її частини.",
@@ -51,15 +49,7 @@
       "author": "В. Владко"
     }
   ],
-  "synonyms": [
-    "етюд",
-    "зарисовка",
-    "крокі",
-    "начерк",
-    "шкіц",
-    "нарис",
-    "зарис"
-  ],
+  "synonyms": ["етюд", "зарисовка", "крокі", "начерк", "шкіц", "нарис", "зарис"],
   "categoryId": "arts-culture",
   "rarity": 1,
   "sources": [

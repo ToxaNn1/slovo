@@ -1,5 +1,0 @@
-льодостав nature-weather 4
-торос nature-weather 4
-сніговиця nature-weather 4
-зазимок nature-weather 4
-бездощів'я nature-weather 4

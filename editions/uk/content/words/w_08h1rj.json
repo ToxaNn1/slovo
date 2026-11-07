@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_08h1rj",
   "lemma": "сукровиця",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Жовтувата рідина, яка витікає разом із кров'ю з уражених тканин тіла, сочиться з гнійних ран.",
@@ -18,10 +16,7 @@
       "author": "М. Стельмах"
     }
   ],
-  "synonyms": [
-    "пасока",
-    "ропа"
-  ],
+  "synonyms": ["пасока", "ропа"],
   "categoryId": "human-body",
   "rarity": 3,
   "sources": [

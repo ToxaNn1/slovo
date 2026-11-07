@@ -14,11 +14,7 @@
   "gameQuestion": {
     "prompt": "Як правильно?",
     "rightAnswer": "копальня",
-    "wrongAnswers": [
-      "копалина",
-      "копалинах",
-      "копалини"
-    ]
+    "wrongAnswers": ["копалина", "копалинах", "копалини"]
   },
   "nonStandardForm": "копалина"
 }

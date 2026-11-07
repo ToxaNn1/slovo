@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_yla6u6",
   "lemma": "звитяга",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Перемога в бою, у війні.",
@@ -42,14 +40,7 @@
       "author": "І. Кочерга"
     }
   ],
-  "synonyms": [
-    "геройство",
-    "героїзм",
-    "доблесть",
-    "звитяжність",
-    "перемога",
-    "побіда"
-  ],
+  "synonyms": ["геройство", "героїзм", "доблесть", "звитяжність", "перемога", "побіда"],
   "categoryId": "emotions-character",
   "rarity": 3,
   "sources": [

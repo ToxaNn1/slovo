@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_kaxll6",
   "lemma": "фрамуга",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Верхня частина віконної рами або дверей, яка звичайно відчиняється.",
-  "extraDefinitions": [
-    "Ніша."
-  ],
+  "extraDefinitions": ["Ніша."],
   "examples": [
     {
       "text": "Катя рвучко відчинила на себе знайомі двері зі скляною фрамугою.",

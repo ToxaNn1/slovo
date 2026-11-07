@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_fg5cpt",
   "lemma": "васал",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "У середні віки в Західній Європі – феодал, який одержував від заможнішого феодала-сюзерена земельні ділянки й заступництво, за що виконував для нього ряд повинностей.",
@@ -35,10 +33,7 @@
       "author": "Ю. Мушкетик"
     }
   ],
-  "synonyms": [
-    "маріонетка",
-    "сателіт"
-  ],
+  "synonyms": ["маріонетка", "сателіт"],
   "categoryId": "history-antiquity",
   "rarity": 3,
   "sources": [

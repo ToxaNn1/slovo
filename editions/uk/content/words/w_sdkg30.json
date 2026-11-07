@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_sdkg30",
   "lemma": "злостивість",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Властивість і стан за знач. злости́вий.",
@@ -33,12 +31,7 @@
       "author": "Б. Антоненко-Давидович"
     }
   ],
-  "synonyms": [
-    "жовч",
-    "досада",
-    "злоба",
-    "злість"
-  ],
+  "synonyms": ["жовч", "досада", "злоба", "злість"],
   "categoryId": "emotions-character",
   "rarity": 5,
   "sources": [

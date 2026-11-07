@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_iotdto",
   "lemma": "печаль",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Те, що засмучує кого-небудь, завдає комусь горя, журби; сум, смуток.",
-  "extraDefinitions": [
-    "Те саме, що кло́піт."
-  ],
+  "extraDefinitions": ["Те саме, що кло́піт."],
   "examples": [
     {
       "text": "Щось встигло помінятися в Гоці. Легка печаль торкнулась її губ.",

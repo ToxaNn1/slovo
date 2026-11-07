@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ursegw",
   "lemma": "беркут",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Великий хижий птах родини яструбових, який має темно-буре оперення.",
@@ -21,10 +19,7 @@
       "author": "Я. Щоголів"
     }
   ],
-  "synonyms": [
-    "орел",
-    "орлан"
-  ],
+  "synonyms": ["орел", "орлан"],
   "categoryId": "folk-names",
   "rarity": 5,
   "sources": [

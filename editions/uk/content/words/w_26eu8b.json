@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_26eu8b",
   "lemma": "наличник",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Накладна планка, що обрамляє вікна або двері; лиштва.",
@@ -22,9 +20,7 @@
       "author": "О. Стороженко"
     }
   ],
-  "synonyms": [
-    "лиштва"
-  ],
+  "synonyms": ["лиштва"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_h9vjg3",
   "lemma": "пірует",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "У танці, балеті – повний круговий поворот усім тілом на носку однієї ноги.",
@@ -70,10 +68,7 @@
       "author": "В. Винниченко"
     }
   ],
-  "synonyms": [
-    "оберт",
-    "оборот"
-  ],
+  "synonyms": ["оберт", "оборот"],
   "categoryId": "arts-culture",
   "rarity": 3,
   "sources": [

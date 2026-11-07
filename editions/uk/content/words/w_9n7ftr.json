@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_9n7ftr",
   "lemma": "комин",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Передня (нижня) частина димоходу варистої печі.",
@@ -58,14 +56,7 @@
       "author": "Леся Українка"
     }
   ],
-  "synonyms": [
-    "бовдур",
-    "верх",
-    "вивід",
-    "димар",
-    "димохід",
-    "коминок"
-  ],
+  "synonyms": ["бовдур", "верх", "вивід", "димар", "димохід", "коминок"],
   "categoryId": "household-crafts",
   "rarity": 3,
   "sources": [

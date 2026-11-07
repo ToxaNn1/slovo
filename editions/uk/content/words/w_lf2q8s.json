@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_lf2q8s",
   "lemma": "кравець",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Фахівець із пошиття одягу.",
@@ -26,11 +24,7 @@
       "author": "І. Нечуй-Левицький"
     }
   ],
-  "synonyms": [
-    "кравчиня",
-    "кравчиха",
-    "модистка"
-  ],
+  "synonyms": ["кравчиня", "кравчиха", "модистка"],
   "categoryId": "old-crafts",
   "rarity": 1,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_1d68xj",
   "lemma": "іконописець",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Художник, що малює ікони.",
@@ -28,11 +26,7 @@
       "author": "Г. Квітка-Основ'яненко"
     }
   ],
-  "synonyms": [
-    "богомаз",
-    "іконник",
-    "маляр"
-  ],
+  "synonyms": ["богомаз", "іконник", "маляр"],
   "categoryId": "old-crafts",
   "rarity": 2,
   "sources": [

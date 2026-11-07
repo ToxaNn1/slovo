@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_y1usvg",
   "lemma": "провіант",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Запас продовольства для армії, експедиції і т. ін.",
-  "extraDefinitions": [
-    "Продукти харчування взагалі."
-  ],
+  "extraDefinitions": ["Продукти харчування взагалі."],
   "examples": [
     {
       "text": "– Дамо вам війська в підпомогу, І провіанту на дорогу, І грошеняток з якийсь міх.",

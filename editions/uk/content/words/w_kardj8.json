@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_kardj8",
   "lemma": "зажерливість",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Властивість за знач. заже́рливий.",
@@ -22,11 +20,7 @@
       "author": "Е. Андієвська"
     }
   ],
-  "synonyms": [
-    "мамона",
-    "жадоба",
-    "ненасить"
-  ],
+  "synonyms": ["мамона", "жадоба", "ненасить"],
   "categoryId": "emotions-character",
   "rarity": 3,
   "sources": [

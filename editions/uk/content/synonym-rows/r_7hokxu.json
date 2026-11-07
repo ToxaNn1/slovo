@@ -3,47 +3,33 @@
   "id": "r_7hokxu",
   "dominant": {
     "text": "заважати",
-    "stress": [
-      5
-    ]
+    "stress": [5]
   },
   "meaning": "Бути на перешкоді кому-, чому-небудь, ставати перешкодою в чомусь.",
   "members": [
     {
       "text": "перечити",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     },
     {
       "text": "перебаранчати",
-      "stress": [
-        10
-      ]
+      "stress": [10]
     },
     {
       "text": "перебивати",
-      "stress": [
-        7
-      ]
+      "stress": [7]
     },
     {
       "text": "перешкоджати",
-      "stress": [
-        9
-      ]
+      "stress": [9]
     },
     {
       "text": "суперечити",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "шкодити",
-      "stress": [
-        2
-      ]
+      "stress": [2]
     }
   ],
   "sources": [

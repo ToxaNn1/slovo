@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_cf7rin",
   "lemma": "моторність",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Властивість за знач. мото́рний2 1.",
@@ -22,15 +20,7 @@
       "author": "В. Речмедін"
     }
   ],
-  "synonyms": [
-    "спір",
-    "вправність",
-    "спритність",
-    "спіх",
-    "умілість",
-    "хист",
-    "швидкість"
-  ],
+  "synonyms": ["спір", "вправність", "спритність", "спіх", "умілість", "хист", "швидкість"],
   "categoryId": "emotions-character",
   "rarity": 4,
   "sources": [

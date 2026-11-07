@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_mkkjwj",
   "lemma": "інтерлюдія",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Невелика музична п'єса, виконувана між частинами іншого музичного твору.",
-  "extraDefinitions": [
-    "Те саме, що інтерме́дія 1."
-  ],
+  "extraDefinitions": ["Те саме, що інтерме́дія 1."],
   "examples": [
     {
       "text": "Хорова інтерлюдія."
@@ -32,9 +28,7 @@
       "author": "І. Франко"
     }
   ],
-  "synonyms": [
-    "інтермедія"
-  ],
+  "synonyms": ["інтермедія"],
   "categoryId": "arts-culture",
   "rarity": 4,
   "sources": [

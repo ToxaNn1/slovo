@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_0zvbl1",
   "lemma": "ломота",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Тупий біль у кістках, суглобах, м'язах і т. ін.",
@@ -22,11 +20,7 @@
       "author": "Б. Харчук"
     }
   ],
-  "synonyms": [
-    "гризь",
-    "ниття",
-    "біль"
-  ],
+  "synonyms": ["гризь", "ниття", "біль"],
   "categoryId": "human-body",
   "rarity": 3,
   "sources": [

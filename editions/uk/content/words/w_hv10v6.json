@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_hv10v6",
   "lemma": "гевал",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Висока на зріст, неповоротка, незграбна людина.",
-  "extraDefinitions": [
-    "Груба некультурна людина."
-  ],
+  "extraDefinitions": ["Груба некультурна людина."],
   "examples": [
     {
       "text": "В уяві склався образ здоровенного гевала, грубого і самозакоханого.",

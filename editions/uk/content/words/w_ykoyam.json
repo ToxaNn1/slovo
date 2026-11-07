@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ykoyam",
   "lemma": "пастель",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "М'який кольоровий олівець (без оправи), вигот. із спресованих стертих у порошок фарб з домішкою клейких та білильних речовин (клею, крейди і т. ін.).",
@@ -31,10 +29,7 @@
       "author": "Олекса Ізарський"
     }
   ],
-  "synonyms": [
-    "картина",
-    "пастеля"
-  ],
+  "synonyms": ["картина", "пастеля"],
   "categoryId": "arts-culture",
   "rarity": 2,
   "sources": [

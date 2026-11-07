@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_6hc4nd",
   "lemma": "захланність",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Абстрактний іменник до захла́нний.",
@@ -26,9 +24,7 @@
       "author": "О. Гончар"
     }
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "emotions-character",
   "rarity": 3,
   "sources": [

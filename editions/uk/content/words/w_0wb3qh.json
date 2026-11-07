@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_0wb3qh",
   "lemma": "галера",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Старовинне вітрильне багатовеслове військове судно.",
@@ -25,12 +23,7 @@
       "author": "О. Бердник"
     }
   ],
-  "synonyms": [
-    "вітрильник",
-    "дубок",
-    "фінка",
-    "яхта"
-  ],
+  "synonyms": ["вітрильник", "дубок", "фінка", "яхта"],
   "categoryId": "military",
   "rarity": 2,
   "sources": [

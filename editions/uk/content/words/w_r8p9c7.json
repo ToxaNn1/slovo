@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_r8p9c7",
   "lemma": "хвіртка",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Невеликі вхідні двері в огорожі двору або в воротах.",
@@ -34,11 +32,7 @@
       "author": "Г. Косинка"
     }
   ],
-  "synonyms": [
-    "ворітця",
-    "дверцята",
-    "вхід"
-  ],
+  "synonyms": ["ворітця", "дверцята", "вхід"],
   "categoryId": "household-crafts",
   "rarity": 1,
   "sources": [

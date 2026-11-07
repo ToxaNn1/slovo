@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_y5gttv",
   "lemma": "відчай",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Почуття сильного душевного болю, безвиході; розпач.",
@@ -34,13 +32,7 @@
       "author": "І. Нечуй-Левицький"
     }
   ],
-  "synonyms": [
-    "безнадія",
-    "розпач",
-    "розпука",
-    "безвихідь",
-    "безнадійність"
-  ],
+  "synonyms": ["безнадія", "розпач", "розпука", "безвихідь", "безнадійність"],
   "categoryId": "emotions-character",
   "rarity": 1,
   "sources": [

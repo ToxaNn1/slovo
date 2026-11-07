@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_9jrn7z",
   "lemma": "пияк",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Той, хто постійно і надмірно п'є спиртні напої, має хворобливу пристрасть до них; алкоголік, п'яниця.",
@@ -52,9 +50,7 @@
     "пропоєць",
     "пропій"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 2,
   "sources": [

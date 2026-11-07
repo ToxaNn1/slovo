@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_t919lp",
   "lemma": "боярин",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "У Київській Русі – великий землевласник, що належав до князівського двору і входив до складу військової дружини князя.",
@@ -36,11 +34,7 @@
       "author": "Леся Українка"
     }
   ],
-  "synonyms": [
-    "дружба",
-    "шафер",
-    "дружко"
-  ],
+  "synonyms": ["дружба", "шафер", "дружко"],
   "categoryId": "history-antiquity",
   "rarity": 2,
   "sources": [

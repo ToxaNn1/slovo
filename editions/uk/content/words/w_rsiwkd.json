@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_rsiwkd",
   "lemma": "сема",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Смислова одиниця мовних знаків.",
-  "extraDefinitions": [
-    "Варіант семеми."
-  ],
+  "extraDefinitions": ["Варіант семеми."],
   "examples": [
     {
       "text": "Окремі терміносистеми можуть різнитися семою."

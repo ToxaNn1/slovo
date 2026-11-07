@@ -1,5 +1,0 @@
-праля household-crafts 4
-жаровня household-crafts 4
-луг household-crafts 3
-перечниця household-crafts 3
-опара household-crafts 3

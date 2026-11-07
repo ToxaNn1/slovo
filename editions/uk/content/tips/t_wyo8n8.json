@@ -14,11 +14,7 @@
   "gameQuestion": {
     "prompt": "Як правильно?",
     "rightAnswer": "відступник",
-    "wrongAnswers": [
-      "відщепенець",
-      "отщепенец",
-      "відщепенців"
-    ]
+    "wrongAnswers": ["відщепенець", "отщепенец", "відщепенців"]
   },
   "nonStandardForm": "відщепенець",
   "example": {

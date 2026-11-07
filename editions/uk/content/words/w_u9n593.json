@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_u9n593",
   "lemma": "родимка",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Темна пляма на шкірі.",
@@ -21,9 +19,7 @@
       "author": "І. Сенченко"
     }
   ],
-  "synonyms": [
-    "мушка"
-  ],
+  "synonyms": ["мушка"],
   "categoryId": "human-body",
   "rarity": 2,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_ek7nts",
   "lemma": "дисиміляція",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Процес розщеплення в організмі складних органічних сполук.",
@@ -25,9 +23,7 @@
       "text": "При регресивній дисиміляції впливаючим звуком є наступний, при прогресивній – попередній."
     }
   ],
-  "synonyms": [
-    "розподібнення"
-  ],
+  "synonyms": ["розподібнення"],
   "categoryId": "language-speech",
   "rarity": 2,
   "sources": [

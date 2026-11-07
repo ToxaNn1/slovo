@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_fvyxpq",
   "lemma": "крейсер",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Великий швидкохідний військовий корабель з потужним озброєнням.",
@@ -30,9 +28,7 @@
       "author": "Ю. Яновський"
     }
   ],
-  "synonyms": [
-    "судно"
-  ],
+  "synonyms": ["судно"],
   "categoryId": "military",
   "rarity": 1,
   "sources": [

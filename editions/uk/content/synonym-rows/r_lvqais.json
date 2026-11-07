@@ -3,41 +3,29 @@
   "id": "r_lvqais",
   "dominant": {
     "text": "лікувати",
-    "stress": [
-      5
-    ]
+    "stress": [5]
   },
   "meaning": "Застосовувати будь-які медичні засоби для припинення захворювання.",
   "members": [
     {
       "text": "гоїти",
-      "stress": [
-        1
-      ]
+      "stress": [1]
     },
     {
       "text": "корувати",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "курувати",
-      "stress": [
-        5
-      ]
+      "stress": [5]
     },
     {
       "text": "лікарювати",
-      "stress": [
-        7
-      ]
+      "stress": [7]
     },
     {
       "text": "лічити",
-      "stress": [
-        3
-      ]
+      "stress": [3]
     }
   ],
   "sources": [

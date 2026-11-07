@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_o3fti7",
   "lemma": "тога",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Чоловічий верхній одяг громадян у стародавньому Римі.",
@@ -22,12 +20,7 @@
       "author": "В. Чумак"
     }
   ],
-  "synonyms": [
-    "хламида",
-    "мантія",
-    "плащ",
-    "халамида"
-  ],
+  "synonyms": ["хламида", "мантія", "плащ", "халамида"],
   "categoryId": "history-antiquity",
   "rarity": 1,
   "sources": [

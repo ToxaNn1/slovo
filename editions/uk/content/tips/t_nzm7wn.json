@@ -14,11 +14,7 @@
   "gameQuestion": {
     "prompt": "Як правильно?",
     "rightAnswer": "образ нашого сучасника",
-    "wrongAnswers": [
-      "облік нашого сучасника",
-      "облик",
-      "облік"
-    ]
+    "wrongAnswers": ["облік нашого сучасника", "облик", "облік"]
   },
   "nonStandardForm": "облік",
   "example": {

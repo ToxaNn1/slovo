@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_c5c07g",
   "lemma": "норовистість",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Властивість за знач. норови́стий.",
@@ -24,14 +22,8 @@
       "text": "Гарячковість та норовистість коня списували на молодість."
     }
   ],
-  "synonyms": [
-    "непокора",
-    "непокірливість",
-    "непокірність"
-  ],
-  "registers": [
-    "colloquial"
-  ],
+  "synonyms": ["непокора", "непокірливість", "непокірність"],
+  "registers": ["colloquial"],
   "categoryId": "emotions-character",
   "rarity": 4,
   "sources": [

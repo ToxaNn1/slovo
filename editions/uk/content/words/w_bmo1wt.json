@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_bmo1wt",
   "lemma": "фальцет",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Один з високих регістрів співацького голосу, переважно чоловічого, що вимагає особливого виконавського прийому.",
@@ -22,13 +20,7 @@
       "author": "З. Тулуб"
     }
   ],
-  "synonyms": [
-    "фістула",
-    "голос",
-    "альт",
-    "бас",
-    "тенор"
-  ],
+  "synonyms": ["фістула", "голос", "альт", "бас", "тенор"],
   "categoryId": "arts-culture",
   "rarity": 1,
   "sources": [

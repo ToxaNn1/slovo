@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_sfbo4a",
   "lemma": "підборіддя",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Виступ нижньої частини обличчя, утворюваний щелепою.",
-  "extraDefinitions": [
-    "Те саме, що підго́рля 2."
-  ],
+  "extraDefinitions": ["Те саме, що підго́рля 2."],
   "examples": [
     {
       "text": "Він провів рукою по підборіддю і згадав, що сьогодні так і не поголився.",
@@ -33,10 +29,7 @@
       "author": "І. Микитенко"
     }
   ],
-  "synonyms": [
-    "воло",
-    "підгорля"
-  ],
+  "synonyms": ["воло", "підгорля"],
   "categoryId": "human-body",
   "rarity": 1,
   "sources": [

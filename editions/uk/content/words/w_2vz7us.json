@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_2vz7us",
   "lemma": "літопис",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Хронологічний запис історичних подій давнини, зробл. їх сучасником.",
@@ -36,13 +34,7 @@
       "author": "А. Малишко"
     }
   ],
-  "synonyms": [
-    "аннали",
-    "хроніка",
-    "біографія",
-    "життєпис",
-    "історія"
-  ],
+  "synonyms": ["аннали", "хроніка", "біографія", "життєпис", "історія"],
   "categoryId": "history-antiquity",
   "rarity": 1,
   "sources": [

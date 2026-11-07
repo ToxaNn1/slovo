@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_mp7pmr",
   "lemma": "смиренність",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Властивість за знач. смире́нний.",
@@ -14,9 +12,7 @@
       "author": "О. Кобилянська"
     }
   ],
-  "synonyms": [
-    "покора"
-  ],
+  "synonyms": ["покора"],
   "categoryId": "emotions-character",
   "rarity": 3,
   "sources": [

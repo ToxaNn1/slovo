@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_603lx8",
   "lemma": "судома",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Мимовільне скорочення м'язів (від болю, холоду, при деяких захворюваннях і т. ін.); судорога, корчі.",
-  "extraDefinitions": [
-    "Горе, біда."
-  ],
+  "extraDefinitions": ["Горе, біда."],
   "examples": [
     {
       "text": "Маруся відчувала, що все її обличчя пересмикує нервова судома.",

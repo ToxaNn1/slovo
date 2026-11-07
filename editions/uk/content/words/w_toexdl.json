@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_toexdl",
   "lemma": "гайдамака",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Учасник народно-визвольної боротьби XVIII ст. на Правобережній Україні проти польсько-шляхетського гніту.",
@@ -48,9 +46,7 @@
       "author": "Панас Мирний"
     }
   ],
-  "synonyms": [
-    "левенець"
-  ],
+  "synonyms": ["левенець"],
   "categoryId": "history-antiquity",
   "rarity": 2,
   "sources": [

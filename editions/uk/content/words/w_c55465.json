@@ -2,16 +2,11 @@
   "kind": "word",
   "id": "w_c55465",
   "lemma": "гущавина",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Місце, де дерева або кущі ростуть дуже густо.",
-  "extraDefinitions": [
-    "Густі зарості чого-небудь.",
-    "Те саме, що гу́ща 1, 3."
-  ],
+  "extraDefinitions": ["Густі зарості чого-небудь.", "Те саме, що гу́ща 1, 3."],
   "examples": [
     {
       "text": "Вузенька стежка вела в саму гущавину.",

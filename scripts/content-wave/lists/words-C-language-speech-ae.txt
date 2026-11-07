@@ -1,5 +1,0 @@
-артикуляція language-speech 5
-просодія language-speech 5
-катрен language-speech 5
-ямб language-speech 5
-хорей language-speech 5

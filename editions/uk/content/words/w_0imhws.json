@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_0imhws",
   "lemma": "кляузник",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Той, хто пише кляузи; наклепник.",
@@ -38,9 +36,7 @@
     "набреха",
     "обмовник"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 3,
   "sources": [

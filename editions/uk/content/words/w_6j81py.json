@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_6j81py",
   "lemma": "досвітки",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "plural-only",
   "primaryDefinition": "Зібрання сільської молоді для спільної праці й розваг в осінній та зимовий час.",
@@ -37,9 +35,7 @@
     "передсвітання",
     "передсвітанок"
   ],
-  "registers": [
-    "archaic"
-  ],
+  "registers": ["archaic"],
   "categoryId": "nature-weather",
   "rarity": 4,
   "sources": [

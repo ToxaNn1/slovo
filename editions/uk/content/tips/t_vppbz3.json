@@ -14,11 +14,7 @@
   "gameQuestion": {
     "prompt": "Як правильно?",
     "rightAnswer": "завдовжки",
-    "wrongAnswers": [
-      "довжиною",
-      "у довжину",
-      "по довжині"
-    ]
+    "wrongAnswers": ["довжиною", "у довжину", "по довжині"]
   },
   "nonStandardForm": "довжиною",
   "example": {

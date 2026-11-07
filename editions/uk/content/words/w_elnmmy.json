@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_elnmmy",
   "lemma": "похіть",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Грубо-хтивий статевий потяг; хтивість.",
-  "extraDefinitions": [
-    "Бажання."
-  ],
+  "extraDefinitions": ["Бажання."],
   "examples": [
     {
       "text": "Зрада там, де діють не святі почуття кохання, а зваба, похіть розбещеного тіла й дотліваючих бажань.",
@@ -29,10 +25,7 @@
       "author": "І. Франко"
     }
   ],
-  "synonyms": [
-    "сласність",
-    "сластолюбство"
-  ],
+  "synonyms": ["сласність", "сластолюбство"],
   "categoryId": "emotions-character",
   "rarity": 4,
   "sources": [

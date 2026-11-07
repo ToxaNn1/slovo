@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_11d18k",
   "lemma": "зухвалість",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Властивість і стан за знач. зухва́лий.",
-  "extraDefinitions": [
-    "Зухвалий учинок."
-  ],
+  "extraDefinitions": ["Зухвалий учинок."],
   "examples": [
     {
       "text": "Маестро обводить братів Коклюшів зміїним поглядом, і ті посміхаються зухвалості його мислі.",

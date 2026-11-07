@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_e8ndwj",
   "lemma": "фураж",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Сухі корми (сіно, солома), а також овес, ячмінь, картопля і т. ін. для свійських тварин і птиці.",
-  "extraDefinitions": [
-    "Недобір."
-  ],
+  "extraDefinitions": ["Недобір."],
   "examples": [
     {
       "text": "– Чого це ти так пізно?.. Я вже й бичків напоїв, і фураж одержав, а тебе все нема та й нема.",

@@ -2,16 +2,11 @@
   "kind": "word",
   "id": "w_bcutlw",
   "lemma": "баюра",
-  "stress": [
-    2
-  ],
+  "stress": [2],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Велика глибока калюжа.",
-  "extraDefinitions": [
-    "Яма, вибій.",
-    "Ямка в земляній підлозі."
-  ],
+  "extraDefinitions": ["Яма, вибій.", "Ямка в земляній підлозі."],
   "examples": [
     {
       "text": "Тонка плівка криги затягувала баюри у лісових хащах.",

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_pnwcxf",
   "lemma": "ґуральник",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Робітник на ґуральні.",
@@ -13,9 +11,7 @@
       "text": "Особливою активністю і непримиренністю серед повстанців у XVII ст. відзначалась найбільш гноблена частина селян і міська біднота: будники, ґуральники."
     }
   ],
-  "registers": [
-    "archaic"
-  ],
+  "registers": ["archaic"],
   "categoryId": "old-crafts",
   "rarity": 5,
   "sources": [

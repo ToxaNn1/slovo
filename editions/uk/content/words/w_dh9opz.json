@@ -2,16 +2,11 @@
   "kind": "word",
   "id": "w_dh9opz",
   "lemma": "недоумок",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Розумово обмежена, нерозвинена людина.",
-  "extraDefinitions": [
-    "Уживається як лайливе слово.",
-    "Розумово недорозвинена людина."
-  ],
+  "extraDefinitions": ["Уживається як лайливе слово.", "Розумово недорозвинена людина."],
   "examples": [
     {
       "text": "Ось уже другу добу ти нудишся в цьому поїзді, кинувши на поталу недоумкам свої псевдонаукові розробки.",
@@ -87,9 +82,7 @@
     "глупак",
     "телепень"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 4,
   "sources": [

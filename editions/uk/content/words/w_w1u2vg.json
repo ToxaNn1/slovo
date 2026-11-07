@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_w1u2vg",
   "lemma": "жабуриння",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Водорості, що ростуть у стоячих водах і мають вигляд зелених ниток.",
@@ -38,13 +36,7 @@
       "author": "М. Рудь"
     }
   ],
-  "synonyms": [
-    "баговиння",
-    "жабур",
-    "водорості",
-    "твань",
-    "слиз"
-  ],
+  "synonyms": ["баговиння", "жабур", "водорості", "твань", "слиз"],
   "categoryId": "nature-weather",
   "rarity": 4,
   "sources": [

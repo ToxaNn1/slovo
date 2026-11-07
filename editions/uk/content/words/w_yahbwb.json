@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_yahbwb",
   "lemma": "брусниця",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Напівкущова вічнозелена рослина родини брусничних з ягодами червоного кольору.",
-  "extraDefinitions": [
-    "Ягоди цієї рослини."
-  ],
+  "extraDefinitions": ["Ягоди цієї рослини."],
   "examples": [
     {
       "text": "У нижчих частинах гір ростуть на вирубках кущі малини, ожини, брусниці."

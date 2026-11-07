@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_62wrvn",
   "lemma": "гомілка",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Частина ноги від коліна до ступні; голінка.",
@@ -21,9 +19,7 @@
       "author": "І. Нечуй-Левицький"
     }
   ],
-  "synonyms": [
-    "голінка"
-  ],
+  "synonyms": ["голінка"],
   "categoryId": "human-body",
   "rarity": 2,
   "sources": [

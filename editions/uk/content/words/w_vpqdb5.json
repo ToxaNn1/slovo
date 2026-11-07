@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_vpqdb5",
   "lemma": "вельможа",
-  "stress": [
-    5
-  ],
+  "stress": [5],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Знатна й багата особа, яка обіймала високу державну або придворну посаду.",
-  "extraDefinitions": [
-    "Пихата, чванлива людина."
-  ],
+  "extraDefinitions": ["Пихата, чванлива людина."],
   "examples": [
     {
       "text": "Ти б на Олексу глянув! Аристократ, вельможа. Весь у шовках та золоті.",

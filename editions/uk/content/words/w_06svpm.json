@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_06svpm",
   "lemma": "метикуватість",
-  "stress": [
-    7
-  ],
+  "stress": [7],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Властивість за знач. метикува́тий.",
@@ -18,9 +16,7 @@
       "author": "Ю. Смолич"
     }
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "emotions-character",
   "rarity": 4,
   "sources": [

@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_y45wyn",
   "lemma": "муляр",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Будівельник, який виконує роботи з мурування або ремонту конструкцій зі штучних і природних будівельних матеріалів.",
@@ -30,9 +28,7 @@
       "author": "В. Домонтович"
     }
   ],
-  "synonyms": [
-    "каменяр"
-  ],
+  "synonyms": ["каменяр"],
   "categoryId": "old-crafts",
   "rarity": 1,
   "sources": [

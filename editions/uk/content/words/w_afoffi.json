@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_afoffi",
   "lemma": "кислиця",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Дика яблуня, яку використовують як підщепу для культурних сортів; лісова яблуня.",
@@ -57,9 +55,7 @@
       "author": "П. Гулак-Артемовський"
     }
   ],
-  "synonyms": [
-    "квасниця"
-  ],
+  "synonyms": ["квасниця"],
   "categoryId": "folk-names",
   "rarity": 2,
   "sources": [

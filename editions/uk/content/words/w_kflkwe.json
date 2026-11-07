@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_kflkwe",
   "lemma": "веретка",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Зменшувальна форма до вере́та.",
@@ -26,13 +24,7 @@
       "author": "Л. Мартович"
     }
   ],
-  "synonyms": [
-    "верета",
-    "веретище",
-    "вереття",
-    "верітчина",
-    "верітка"
-  ],
+  "synonyms": ["верета", "веретище", "вереття", "верітчина", "верітка"],
   "categoryId": "household-crafts",
   "rarity": 4,
   "sources": [

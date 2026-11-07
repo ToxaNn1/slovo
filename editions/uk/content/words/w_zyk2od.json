@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_zyk2od",
   "lemma": "ідіома",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Притаманний лише певній мові стійкий зворот, що виражає цілісне поняття.",
@@ -21,12 +19,7 @@
       "author": "І. Нечуй-Левицький"
     }
   ],
-  "synonyms": [
-    "вираз",
-    "вислів",
-    "зворот",
-    "конструкція"
-  ],
+  "synonyms": ["вираз", "вислів", "зворот", "конструкція"],
   "categoryId": "language-speech",
   "rarity": 3,
   "sources": [

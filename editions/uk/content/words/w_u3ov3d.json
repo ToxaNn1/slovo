@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_u3ov3d",
   "lemma": "лайдак",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "masculine",
   "primaryDefinition": "Убога лінива людина; нероба.",
-  "extraDefinitions": [
-    "Уживається як лайливе слово."
-  ],
+  "extraDefinitions": ["Уживається як лайливе слово."],
   "examples": [
     {
       "text": "Де воно на нашу голову взялося – лайдак лайдаком, тільки що при шаблі та королівській грамоті.",
@@ -89,9 +85,7 @@
     "поганець",
     "плюгавець"
   ],
-  "registers": [
-    "colloquial"
-  ],
+  "registers": ["colloquial"],
   "categoryId": "witty-insults",
   "rarity": 5,
   "sources": [

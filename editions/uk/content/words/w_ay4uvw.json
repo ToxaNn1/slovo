@@ -2,15 +2,11 @@
   "kind": "word",
   "id": "w_ay4uvw",
   "lemma": "гряда",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Витягнута в довжину височина; ряд невеликих гір, пагорбів, підводних каменів і т. ін.",
-  "extraDefinitions": [
-    "Смуга, ряд однорідних предметів."
-  ],
+  "extraDefinitions": ["Смуга, ряд однорідних предметів."],
   "examples": [
     {
       "text": "Це було за далекими гонами, За крутою грядою років.",

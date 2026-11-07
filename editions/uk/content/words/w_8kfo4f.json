@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_8kfo4f",
   "lemma": "бездощів'я",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Відсутність дощів.",
@@ -17,13 +15,7 @@
       "author": "Б. Олійник"
     }
   ],
-  "synonyms": [
-    "засуха",
-    "посуха",
-    "суша",
-    "сухота",
-    "суш"
-  ],
+  "synonyms": ["засуха", "посуха", "суша", "сухота", "суш"],
   "categoryId": "nature-weather",
   "rarity": 4,
   "sources": [

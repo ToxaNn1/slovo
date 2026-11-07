@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_qcdco3",
   "lemma": "бійниця",
-  "stress": [
-    4
-  ],
+  "stress": [4],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Отвір для стрільби у стіні оборонної споруди, бронепоїзді і т. ін.",
@@ -21,10 +19,7 @@
       "author": "Панас Мирний"
     }
   ],
-  "synonyms": [
-    "амбразура",
-    "стрільниця"
-  ],
+  "synonyms": ["амбразура", "стрільниця"],
   "categoryId": "military",
   "rarity": 2,
   "sources": [

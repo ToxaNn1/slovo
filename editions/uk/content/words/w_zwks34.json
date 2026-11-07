@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_zwks34",
   "lemma": "підвіконня",
-  "stress": [
-    6
-  ],
+  "stress": [6],
   "partOfSpeech": "noun",
   "gender": "neuter",
   "primaryDefinition": "Нижня частина віконного отвору (дошка, плита і т. ін.).",
@@ -26,9 +24,7 @@
       "author": "І. Сенченко"
     }
   ],
-  "synonyms": [
-    "лутка"
-  ],
+  "synonyms": ["лутка"],
   "categoryId": "household-crafts",
   "rarity": 1,
   "sources": [

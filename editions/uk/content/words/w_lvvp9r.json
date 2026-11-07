@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_lvvp9r",
   "lemma": "потилиця",
-  "stress": [
-    3
-  ],
+  "stress": [3],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Задня частина голови над шиєю.",
@@ -22,13 +20,7 @@
       "author": "Номис"
     }
   ],
-  "synonyms": [
-    "шия",
-    "загривок",
-    "карк",
-    "гамалик",
-    "зашийок"
-  ],
+  "synonyms": ["шия", "загривок", "карк", "гамалик", "зашийок"],
   "categoryId": "human-body",
   "rarity": 1,
   "sources": [

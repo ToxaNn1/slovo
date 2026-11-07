@@ -2,9 +2,7 @@
   "kind": "word",
   "id": "w_2dmzi4",
   "lemma": "гикавка",
-  "stress": [
-    1
-  ],
+  "stress": [1],
   "partOfSpeech": "noun",
   "gender": "feminine",
   "primaryDefinition": "Мимовільні вдихальні рухи, викликані судорожним скороченням діафрагми, а також короткі уривчасті звуки, що їх супроводять.",
@@ -22,11 +20,7 @@
       "author": "В. Винниченко"
     }
   ],
-  "synonyms": [
-    "гикання",
-    "ікавка",
-    "ікання"
-  ],
+  "synonyms": ["гикання", "ікавка", "ікання"],
   "categoryId": "human-body",
   "rarity": 2,
   "sources": [
