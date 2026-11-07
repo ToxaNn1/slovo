@@ -22,7 +22,6 @@ import { useMixSummary } from '@/mix/mix';
 import { useRarityCeiling } from '@/mix/rarity-ceiling';
 import { useNotificationsSummary } from '@/notifications/notifications';
 import { useShown } from '@/shown-in-effect';
-import { openLegalPage } from '@/settings/legal-page';
 import { useSettings } from '@/settings/settings';
 import { useOpenScreen } from '@/use-open-screen';
 import { useSetDailyGoal, useXpLogState } from '@/progress/xp-log';
@@ -70,8 +69,8 @@ const rarityCeilingSegments = RARITIES.map((rarity) => ({
  * the Rarity Test is, «Менше руху» under the Theme while its Feature Switch is,
  * «Пройти опитування ще раз» while the later questions are, «Сезонний декор»
  * and «Звуки» while their Feature Switches are,
- * «Ділитися анонімною статистикою» with its privacy policy link while the
- * Community Counters are, and the rows of the design.
+ * «Ділитися анонімною статистикою» while the Community Counters are (the
+ * privacy policy link lives in «Про застосунок»), and the rows of the design.
  */
 export default function SettingsScreen() {
   const { current, update } = useSettings();
@@ -355,16 +354,6 @@ export default function SettingsScreen() {
                 value={current.shareCounters}
                 onChange={(shareCounters) => {
                   update({ shareCounters });
-                }}
-              />
-            )}
-            {shown.shareCountersSetting && (
-              <NavigationRow
-                testID="settings-row-privacy"
-                icon="hex"
-                label={strings.about.privacyPolicy}
-                onPress={() => {
-                  openLegalPage('privacy');
                 }}
               />
             )}
