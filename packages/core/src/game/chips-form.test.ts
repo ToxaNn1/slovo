@@ -24,7 +24,23 @@ describe('the chips form', () => {
       chipKind: 'letter',
       chips: ['д', 'з', 'з', 'ї'],
       fixed: [{ at: 1, text: 'ʼ' }],
+      layout: 'line',
+      slots: 4,
     });
+  });
+
+  it('takes decoys among letter tiles only, the answer drawn from the tiles', () => {
+    const tiles: ChipsContent = { ...content, chips: ['д', 'з', 'х', 'з', 'ї', 'к'] };
+
+    expect(chipsForm.wellFormed({ ...tiles, layout: 'tiles' })).toBe(true);
+    expect(chipsForm.shown({ ...tiles, layout: 'tiles' }, [])).toMatchObject({
+      layout: 'tiles',
+      slots: 4,
+    });
+    expect(chipsForm.wellFormed(tiles)).toBe(false);
+    expect(chipsForm.wellFormed({ ...tiles, layout: 'tiles', expected: ['з', 'з', 'з'] })).toBe(
+      false,
+    );
   });
 
   it('shows no fixed characters when the content has none', () => {
