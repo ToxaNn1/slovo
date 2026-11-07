@@ -1,6 +1,7 @@
 import { fill } from '@slovo/contracts';
 import { streakOf, type GameModeOffer } from '@slovo/core';
 import {
+  CrosswordDayCard,
   DailyCrosswordCard,
   GameEndPoster,
   GameModeCard,
@@ -174,7 +175,16 @@ function ModeScreen({
         </View>
         {/* DESIGN-06: no progress share offers on the board's hub, kept for the owner */}
         {/* <ProgressShareOffers /> */}
-        {crossword === undefined ? null : (
+        {crossword === undefined ? null : crossword.kind === 'crossing' ? (
+          <CrosswordDayCard
+            testID="daily-crossword"
+            title={crossword.title}
+            state={crossword.state}
+            onPress={() => {
+              openScreen('/game/crossword');
+            }}
+          />
+        ) : (
           <DailyCrosswordCard
             testID="daily-crossword"
             {...crossword}
