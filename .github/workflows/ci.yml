@@ -84,7 +84,8 @@ jobs:
   pack:
     name: Contract and Language Pack
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    # content verify asks goroh politely; a content wave of ~500 Entries takes about 15 minutes.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
