@@ -22,7 +22,13 @@ import DailyCrosswordScreen from '../app/game/crossword';
 import { edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
 import { SettingsProvider } from '../settings/settings';
-import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import {
+  GAMES_BOARD_SWITCHES,
+  opened,
+  settingsAt,
+  switchedTo,
+  testShell,
+} from '../shell/test-support';
 import { SCREEN_OPEN_TIMEOUT_MS } from '../open-screen';
 import { CROSSING_LEMMAS } from './crossing-crossword.test-support';
 
@@ -117,18 +123,19 @@ async function renderGame({
   on = [],
 }: {
   crossing?: boolean;
-  /** Feature Switches on over the Edition's, such as `crosswordSolveTime`. */
+  /** Feature Switches turned on, such as the Games boards' `crosswordSolveTime`. */
   on?: readonly FeatureSwitch[];
 } = {}) {
   events = [];
   mockInForeground = true;
-  // The UA Edition ships the crossing Daily Crossword off, so the traced one shows (ADR 0073).
+  // The Games boards' switches start off, so the traced crossword shows unless
+  // `crossing` turns the crossing one on (ADR 0073, 0087).
   const switched: Edition = {
     ...edition,
     isFeatureEnabled: (feature) =>
       (crossing && feature === 'crossingCrossword') ||
       on.includes(feature) ||
-      edition.isFeatureEnabled(feature),
+      (!GAMES_BOARD_SWITCHES.includes(feature) && edition.isFeatureEnabled(feature)),
   };
   composition = await openComposition({
     content: createMemoryContentPort({
