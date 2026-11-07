@@ -12,7 +12,7 @@ import Animated, {
 import { PressedTile } from '../primitives/PressedTile';
 import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { useTokens } from '../providers/TokensProvider';
+import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import {
   crosswordLayout,
   crossingCrosswordLayout,
@@ -197,10 +197,12 @@ export function CrossingClueBar({
   const tokens = useTokens();
   const { colors, radii } = tokens;
   const { voice } = useEdition();
+  // The clue bar is the key ink plate in both Themes, as board 08 draws it.
+  const plate = useSchemeColors('light');
   return (
     <View
       testID={testID}
-      style={[styles.clueBar, { backgroundColor: colors.ink, borderRadius: radii.tile }]}
+      style={[styles.clueBar, { backgroundColor: plate.ink, borderRadius: radii.tile }]}
     >
       <View
         accessible
@@ -219,7 +221,7 @@ export function CrossingClueBar({
         </View>
         <Text
           testID={`${testID}-clue`}
-          style={[typeStyle('crosswordClue', tokens), styles.clue, { color: colors.background }]}
+          style={[typeStyle('crosswordClue', tokens), styles.clue, { color: plate.background }]}
         >
           {clue}
         </Text>
@@ -231,7 +233,7 @@ export function CrossingClueBar({
         onPress={onNext}
         faceStyle={styles.next}
       >
-        <Text style={[typeStyle('crosswordClueNumber', tokens), { color: colors.background }]}>
+        <Text style={[typeStyle('crosswordClueNumber', tokens), { color: plate.background }]}>
           →
         </Text>
       </PressedTile>

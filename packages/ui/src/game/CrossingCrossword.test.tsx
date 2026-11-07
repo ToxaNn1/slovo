@@ -63,10 +63,10 @@ function Wheel({ accessibleMode = false }: { accessibleMode?: boolean }) {
   );
 }
 
-const renderIn = async (ui: ReactElement) => {
+const renderIn = async (ui: ReactElement, colorScheme: 'light' | 'dark' = 'light') => {
   await render(
     <GestureHandlerRootView>
-      <TokensProvider tokens={coreTokens} colorScheme="light">
+      <TokensProvider tokens={coreTokens} colorScheme={colorScheme}>
         <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
           {ui}
         </EditionProvider>
@@ -164,5 +164,24 @@ describe('CrossingGrid and CrossingClueBar', () => {
     expect(screen.getByLabelText('1 across. A pet that purrs')).toBeTruthy();
     await fireEvent.press(screen.getByLabelText('Next word'));
     expect(onNext).toHaveBeenCalled();
+  });
+
+  it('draws the clue bar as the dark plate in both Themes', async () => {
+    const { light } = coreTokens.colors;
+    for (const scheme of ['light', 'dark'] as const) {
+      await renderIn(
+        <CrossingClueBar
+          number="1"
+          clue="A pet that purrs"
+          label="1 across. A pet that purrs"
+          next="Next word"
+          onNext={jest.fn()}
+          testID="bar"
+        />,
+        scheme,
+      );
+      expect(screen.getByTestId('bar')).toHaveStyle({ backgroundColor: light.ink });
+      expect(screen.getByTestId('bar-clue')).toHaveStyle({ color: light.background });
+    }
   });
 });
