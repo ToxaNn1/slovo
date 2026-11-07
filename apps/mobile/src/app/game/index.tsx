@@ -30,7 +30,7 @@ import {
   useWidgetHintShown,
 } from '@/game/game';
 import { gameModeCard, gameModeGroups, gameModeStrings } from '@/game/game-modes';
-import { MascotAs, MascotIn } from '@/mascot/mascot';
+import { MascotIn } from '@/mascot/mascot';
 import { useXpLogState } from '@/progress/xp-log';
 import { useShown } from '@/shown-in-effect';
 
@@ -44,9 +44,6 @@ const { game: strings, widget: widgetStrings, settings: settingsStrings } = edit
  * background. The Game stays in the Core composition, so another tab and back,
  * or an Entry the Game Review opens and back, finds it where it was.
  */
-/** The Mascot's width in the Round's head, from the design. */
-const ROUND_MASCOT_WIDTH = 88;
-
 export default function GameScreen() {
   // Turned off remotely while the reader is on it: its tab goes, and so does the screen.
   if (!useShown().tabs.includes('game')) return <Redirect href="/" />;
@@ -115,21 +112,12 @@ function Game() {
         <GameRound
           game={current}
           timeLeft={timeLeft}
+          title={gameModeStrings(strings.modes, current.modeId).title}
           label={gameModeStrings(strings.modes, current.modeId).roundLabel}
           onAnswer={actions.answer}
           onNext={actions.next}
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
-          mascot={
-            current.status === 'answered' ? (
-              <MascotIn
-                state={current.played.at(-1)?.right === true ? 'gameRight' : 'gameWrong'}
-                width={ROUND_MASCOT_WIDTH}
-              />
-            ) : (
-              <MascotAs state="waits" width={ROUND_MASCOT_WIDTH} />
-            )
-          }
         />
       )}
     </SafeAreaView>
