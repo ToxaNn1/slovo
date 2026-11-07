@@ -502,7 +502,7 @@ export interface Streak {
 
 /** The streak of the Game in play or just over; none on the mode screen, or in a mode with a Round limit or with no Lives. */
 export function streakOf({ current, bestResults }: GameState): Streak | undefined {
-  if (current === undefined || current.lives === undefined || current.roundLimit !== undefined) {
+  if (current?.lives === undefined || current.roundLimit !== undefined) {
     return undefined;
   }
   const rounds = current.roundsPassed;
