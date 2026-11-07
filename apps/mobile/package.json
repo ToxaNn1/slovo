@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@bacons/apple-targets": "^5.0.0",
-    "@formatjs/intl-pluralrules": "^6.3.16",
+    "@formatjs/intl-pluralrules": "^7.0.2",
     "@react-native-community/datetimepicker": "9.2.1",
     "@react-native-google-signin/google-signin": "^16.1.5",
     "@sentry/react-native": "~8.28.0",
