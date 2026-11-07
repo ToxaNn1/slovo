@@ -43,4 +43,24 @@ export const gameRecords = {
     z.object({ date: z.iso.date(), puzzle: z.string(), found: z.array(z.string()) }),
     { sync: 'device-only' },
   ),
+  /**
+   * The progress of the crossing Daily Crossword: the local date of its day,
+   * the fingerprint of its puzzle, the letters the reader filled by cell
+   * (`row,column`), the ids of the Words solved, whether the Crossword Hint
+   * was used and the seconds it was on screen. Only today's puzzle counts; a
+   * new day, or another puzzle the same day, starts empty. It stays on the
+   * device, with no Sync (ADR 0087).
+   */
+  crossingCrosswordProgress: declareRecord(
+    'crossword.crossing',
+    z.object({
+      date: z.iso.date(),
+      puzzle: z.string(),
+      filled: z.record(z.string(), z.string()),
+      solved: z.array(z.string()),
+      hinted: z.boolean(),
+      seconds: z.number().int().nonnegative(),
+    }),
+    { sync: 'device-only' },
+  ),
 };
