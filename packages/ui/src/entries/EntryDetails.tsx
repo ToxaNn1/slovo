@@ -12,6 +12,7 @@ import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import { EntryCard, type EntryCardProps } from './EntryCard';
 import { EntryReveal, RevealDetail } from './reveal';
 import { WordHeadline, WordSections } from './WordCard';
+import { WordTabs } from './WordTabs';
 import { firstLetter } from './WordHero';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 
@@ -37,6 +38,7 @@ export function EntryDetails({
   onOpenSynonymRow,
   onWordHistoryShown,
   slots,
+  tabs = false,
 }: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
   back: string;
@@ -56,6 +58,8 @@ export function EntryDetails({
       <ScrollView
         testID="entry-scroll"
         style={styles.scroll}
+        // The tabs fill the rest of the screen under the panel (ADR 0088).
+        contentContainerStyle={tabs && word !== undefined ? styles.fill : undefined}
         // The sheet of the action row is a child in React's tree, so a tap in its
         // name field must not be swallowed to put the keyboard away.
         keyboardShouldPersistTaps="handled"
@@ -104,14 +108,23 @@ export function EntryDetails({
               />
             </View>
           ) : (
-            <View testID="word-card" style={styles.body}>
-              <WordSections
-                card={word.model}
-                compact={compact}
-                onOpenCorrection={onOpenCorrection}
-                onOpenSynonymRow={onOpenSynonymRow}
-                onHistoryShown={onWordHistoryShown}
-              />
+            <View testID="word-card" style={[styles.body, tabs && styles.fill]}>
+              {tabs ? (
+                <WordTabs
+                  card={word.model}
+                  onOpenCorrection={onOpenCorrection}
+                  onOpenSynonymRow={onOpenSynonymRow}
+                  onHistoryShown={onWordHistoryShown}
+                />
+              ) : (
+                <WordSections
+                  card={word.model}
+                  compact={compact}
+                  onOpenCorrection={onOpenCorrection}
+                  onOpenSynonymRow={onOpenSynonymRow}
+                  onHistoryShown={onWordHistoryShown}
+                />
+              )}
             </View>
           )}
         </Swiped>
@@ -181,6 +194,7 @@ function BackTile({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
+  fill: { flexGrow: 1 },
   // A Word's action row stays at the screen's foot over the scrolling text (XActions a4).
   dock: {
     paddingHorizontal: space[3],

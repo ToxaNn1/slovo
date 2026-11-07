@@ -110,6 +110,7 @@
     "mood": true,
     "curatedCollections": true,
     "swipeMarks": true,
+    "wordTabs": true,
     "searchButton": false,
     "dashboardWordmark": true,
     "categoryScreens": true,

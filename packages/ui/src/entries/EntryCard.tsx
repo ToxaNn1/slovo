@@ -55,6 +55,12 @@ export interface EntryCardProps {
    * `calligraphy` is on in effect. Any other card keeps the Word font.
    */
   wordOfTheDayFont?: string | undefined;
+  /**
+   * A Word's card in a fixed-height frame with tabs under its Lemma, while
+   * the Edition's `wordTabs` is on in effect (ADR 0088); the Word of the Day's
+   * red card keeps its column.
+   */
+  tabs?: boolean | undefined;
 }
 
 /**
@@ -106,6 +112,7 @@ export function EntryCard({
   selfCheck = false,
   stressFalls = false,
   wordOfTheDayFont,
+  tabs = false,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
   const face = (
@@ -118,6 +125,7 @@ export function EntryCard({
       slots={slots}
       stressFalls={stressFalls}
       wordOfTheDayFont={wordOfTheDayFont}
+      tabs={tabs}
       concealed={concealed}
       reveal={reveal}
     />
@@ -140,6 +148,7 @@ function EntryCardFace({
   slots,
   stressFalls = false,
   wordOfTheDayFont,
+  tabs = false,
   concealed,
   reveal,
 }: Omit<EntryCardProps, 'selfCheck'> & { concealed: boolean; reveal: () => void }) {
@@ -195,6 +204,8 @@ function EntryCardFace({
         testID={`${card.kind}-card`}
         style={[
           styles.card,
+          // The tabbed Word card takes the page's height, whatever its tab holds (ADR 0088).
+          tabs && card.kind === 'word' && styles.fixed,
           {
             backgroundColor: colors.surface,
             borderColor: colors.line,
@@ -220,6 +231,7 @@ function EntryCardFace({
             stressFalls={stressFalls}
             wordOfTheDayFont={wordOfTheDayFont}
             corner={corner}
+            tabs={tabs}
           />
         ) : card.kind === 'correction' ? (
           <CorrectionCardBody
@@ -276,5 +288,6 @@ function EntryCardFace({
 const styles = StyleSheet.create({
   // The border is the card's only elevation.
   card: { borderWidth: 1 },
+  fixed: { flexGrow: 1 },
   hero: { borderRadius: wordHero.radius, overflow: 'hidden' },
 });
