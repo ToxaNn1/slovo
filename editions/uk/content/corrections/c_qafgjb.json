@@ -1,0 +1,21 @@
+{
+  "kind": "correction",
+  "id": "c_qafgjb",
+  "nonStandardForm": "на днях",
+  "correctionType": "calque",
+  "standardEquivalents": [
+    "(цими) днями"
+  ],
+  "explanation": "Конструкцію на днях, що вказує на час дії, замініть стилістично кращим варіантом: (цими) днями.АЛЕ:Понад сорок колекцій одягу покажуть на днях моди у Тернополі.",
+  "examplePair": {
+    "nonStandard": "Я зустрів на днях товариша.",
+    "standard": "Я зустрів днями товариша."
+  },
+  "categoryId": "conversation",
+  "sources": [
+    {
+      "title": "OnlineCorrector. Стилістичні помилки та помилки у слововживанні.",
+      "url": "https://goroh.pp.ua/Слововживання/на днях"
+    }
+  ]
+}
