@@ -9,6 +9,7 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
+  type HostInstance,
 } from 'react-native';
 import Animated, {
   ReduceMotion,
@@ -63,7 +64,7 @@ export function ShareSheet({
   initialFormat: ShareCardFormat;
   onFormatChange: (format: ShareCardFormat) => void;
   /** Captures the card in the view, drawn in the format, and shares it; resolves once sharing is over. */
-  onShare: (cardView: View, format: ShareCardFormat) => Promise<ShareSheetOutcome>;
+  onShare: (cardView: HostInstance, format: ShareCardFormat) => Promise<ShareSheetOutcome>;
   onClose: () => void;
 }) {
   return (
@@ -90,13 +91,13 @@ function ShareSheetContent({
   card: ShareCardProps;
   initialFormat: ShareCardFormat;
   onFormatChange: (format: ShareCardFormat) => void;
-  onShare: (cardView: View, format: ShareCardFormat) => Promise<ShareSheetOutcome>;
+  onShare: (cardView: HostInstance, format: ShareCardFormat) => Promise<ShareSheetOutcome>;
   onClose: () => void;
 }) {
   const { radii } = useTokens();
   const { strings } = useEdition();
   const { width, height } = useWindowDimensions();
-  const captured = useRef<View>(null);
+  const captured = useRef<HostInstance>(null);
   const sharing = useRef(false);
   // Each failure shows a toast of its own.
   const [failures, setFailures] = useState(0);

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Edition } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { renderRoutes } from './test-render';
 import { Text } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -26,7 +27,7 @@ async function renderTabs(url: string, editionInEffect: Edition = edition) {
     settings: await settingsAt({}),
     remoteSwitches: switchedTo(editionInEffect),
   });
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>

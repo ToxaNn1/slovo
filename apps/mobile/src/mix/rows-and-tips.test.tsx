@@ -9,7 +9,8 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HideButton, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HiddenScreen from '../app/settings/hidden';
@@ -99,7 +100,7 @@ async function settle() {
 }
 
 async function renderInApp(children: React.ReactNode) {
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({

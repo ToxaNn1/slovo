@@ -14,7 +14,8 @@ import {
   seedUserState,
 } from '@slovo/core/testing';
 import { EditionProvider, systemSchedule } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { Share } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -72,7 +73,9 @@ let now: number;
 
 beforeEach(async () => {
   jest.useFakeTimers();
-  share = jest.spyOn(Share, 'share').mockResolvedValue({ action: Share.sharedAction });
+  share = jest
+    .spyOn(Share, 'share')
+    .mockResolvedValue({ action: Share.sharedAction, activityType: undefined });
   api = createFakeBackend({ domain: 'slovo.example' });
   collectionLinksOff = false;
   const loaded = loadEdition(config);
@@ -130,7 +133,7 @@ async function openMenuOf(collectionId: string) {
       !(feature === 'collectionLinks' && collectionLinksOff) &&
       edition.isFeatureEnabled(feature),
   };
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(cards) })}

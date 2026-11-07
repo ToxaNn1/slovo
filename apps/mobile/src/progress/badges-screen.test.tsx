@@ -1,7 +1,8 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { FeatureSwitch, InterfaceSound } from '@slovo/core';
 import { EditionProvider, fill, InterfaceSoundsProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
@@ -26,7 +27,7 @@ let played: InterfaceSound[] = [];
 async function renderScreen({ switchedOff }: { switchedOff?: FeatureSwitch } = {}) {
   played = [];
   const composition = await testShell().composition.opened();
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({

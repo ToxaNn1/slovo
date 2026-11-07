@@ -2,7 +2,11 @@
 import { STRESS_MARK } from '@slovo/contracts';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  GestureDetector,
+  usePanGesture,
+  type PanGestureConfig,
+} from 'react-native-gesture-handler';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -117,9 +121,11 @@ export function TracedCrosswordGrid({
     words.some((word) => word.kind === 'found' && word.path.some((at) => samePlace(at, place)));
   const traced = (place: CrosswordPlace) => trace.some((at) => samePlace(at, place));
 
-  // Gesture Handler asks for a memoised gesture: a new one on each render
-  // sends its worklets to the UI thread again, for every cell a trace crosses.
-  const drag = useMemo(() => {
+  // Gesture Handler asks for a memoised config: a new one on each render
+  // sends the gesture's worklets to the UI thread again, for every cell a trace
+  // crosses. A config built outside the hook's call is not workletized for us,
+  // so each callback says so.
+  const dragConfig = useMemo((): PanGestureConfig => {
     const hit = (x: number, y: number) => {
       'worklet';
       const across = columnStep.value;
@@ -137,28 +143,32 @@ export function TracedCrosswordGrid({
       last.value = index;
       scheduleOnRN(extend, { row, column });
     };
-    return (
-      Gesture.Pan()
-        .enabled(!accessibleMode)
-        .minDistance(0)
-        .onBegin(({ x, y }) => {
-          last.value = -1;
-          hit(x, y);
-        })
-        .onStart(({ x, y }) => {
-          hit(x, y);
-        })
-        .onUpdate(({ x, y }) => {
-          hit(x, y);
-        })
-        .onFinalize(() => {
-          last.value = -1;
-          scheduleOnRN(release);
-        })
-        // How a component test finds the drag; Gesture Handler reads it in Jest only.
-        .withTestId(`${testID}-trace`)
-    );
+    return {
+      enabled: !accessibleMode,
+      minDistance: 0,
+      onBegin: ({ x, y }) => {
+        'worklet';
+        last.value = -1;
+        hit(x, y);
+      },
+      onActivate: ({ x, y }) => {
+        'worklet';
+        hit(x, y);
+      },
+      onUpdate: ({ x, y }) => {
+        'worklet';
+        hit(x, y);
+      },
+      onFinalize: () => {
+        'worklet';
+        last.value = -1;
+        scheduleOnRN(release);
+      },
+      // How a component test finds the drag; Gesture Handler reads it in Jest only.
+      testID: `${testID}-trace`,
+    };
   }, [accessibleMode, size, testID, gap, columnStep, rowStep, last, extend, release]);
+  const drag = usePanGesture(dragConfig);
 
   const layout = ({ nativeEvent }: LayoutChangeEvent) => {
     const { width, height } = nativeEvent.layout;

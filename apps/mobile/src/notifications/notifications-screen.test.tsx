@@ -12,7 +12,8 @@ import {
 } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { Linking } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -69,7 +70,7 @@ async function render(permission: NotificationPermission): Promise<{
     composition: opened(composition),
     remoteSwitches: switchedTo(edition),
   });
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>

@@ -1,7 +1,8 @@
 import { describe, expect, it } from '@jest/globals';
 import type { WeeklyRecapModel } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
@@ -49,7 +50,7 @@ async function renderNotice({ shareCards = true, noCounters = false } = {}) {
     settings: await settingsAt({ noCounters }),
     shareCard: () => Promise.resolve('closed'),
   });
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>

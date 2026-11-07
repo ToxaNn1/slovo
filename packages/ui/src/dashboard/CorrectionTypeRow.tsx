@@ -1,7 +1,7 @@
 import { fill, type Correction } from '@slovo/contracts';
 import { withoutStress } from '@slovo/core';
 import { useState } from 'react';
-import { StyleSheet, Text, View, type TextLayoutLine } from 'react-native';
+import { StyleSheet, Text, View, type TextLayoutEvent } from 'react-native';
 
 import { PressedTile } from '../primitives/PressedTile';
 import { Wedge } from '../primitives/Wedge';
@@ -105,6 +105,9 @@ export function CorrectionTypeRow({
     </View>
   );
 }
+
+/** One line of laid-out text, as `onTextLayout` reports it. */
+type TextLayoutLine = TextLayoutEvent['nativeEvent']['lines'][number];
 
 /** The non-standard form with the board's thick red line through each of its lines. */
 function Struck({ label, children }: { label: string; children: string }) {

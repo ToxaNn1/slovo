@@ -4,6 +4,15 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
+const levelFive: BadgeGridItem = {
+  id: 'level-5',
+  name: 'Level five',
+  family: 'levels',
+  symbol: '5',
+  earned: false,
+  progress: { current: 0, target: 5 },
+};
+
 const badges: readonly BadgeGridItem[] = [
   {
     id: 'streak-3',
@@ -13,14 +22,7 @@ const badges: readonly BadgeGridItem[] = [
     earned: true,
     isNew: false,
   },
-  {
-    id: 'level-5',
-    name: 'Level five',
-    family: 'levels',
-    symbol: '5',
-    earned: false,
-    progress: { current: 0, target: 5 },
-  },
+  levelFive,
   {
     id: 'streak-7',
     name: 'A week',
@@ -82,6 +84,6 @@ describe('BadgeGrid', () => {
     const onPress = jest.fn<(badge: BadgeGridItem) => void>();
     await draw(onPress);
     await fireEvent.press(screen.getByLabelText('Level five'));
-    expect(onPress).toHaveBeenCalledWith(badges[1]);
+    expect(onPress).toHaveBeenCalledWith(levelFive);
   });
 });

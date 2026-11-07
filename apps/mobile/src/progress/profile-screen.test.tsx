@@ -14,7 +14,8 @@ import {
   seedUserState,
 } from '@slovo/core/testing';
 import { EditionProvider, fill } from '@slovo/ui';
-import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, within } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
@@ -143,7 +144,7 @@ async function renderScreen({
   }
   await new Promise((resolve) => setTimeout(resolve, 0));
   const account = withAccount ? await signedOutAccount() : undefined;
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({

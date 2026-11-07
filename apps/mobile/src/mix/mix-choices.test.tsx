@@ -4,7 +4,8 @@ import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { fill, type Category } from '@slovo/contracts';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import MixScreen from '../app/settings/mix';
@@ -74,7 +75,7 @@ async function renderChoices() {
     composition: opened(composition),
     remoteSwitches: switchedTo(shippedEdition),
   });
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>

@@ -2,7 +2,8 @@ import { describe, expect, it, jest } from '@jest/globals';
 import { loadEdition, type Edition, type FeatureSwitch, type UserSettings } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { Pressable, Text } from 'react-native';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { SettingsProvider, useSettings } from '../settings/settings';
@@ -61,7 +62,7 @@ async function tapCard(
     remoteSwitches: switchedTo(editionWith(switches)),
     settings: await settingsAt(changes),
   });
-  await render(
+  await renderInGestureRoot(
     <ShellProvider shell={shell}>
       <EditionProvider edition={edition} strings={editionStrings}>
         <SettingsProvider>
@@ -122,7 +123,7 @@ describe('The voice screen › «Звуки»', () => {
       remoteSwitches: switchedTo(editionWith({})),
       settings: await settingsAt({}),
     });
-    await render(
+    await renderInGestureRoot(
       <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>
           <SettingsProvider>

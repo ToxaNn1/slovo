@@ -56,6 +56,9 @@ export function startCrashReports(dsn: string | undefined, load = loadSentry): v
   load().init({
     dsn,
     environment: __DEV__ ? 'development' : 'production',
+    // The React Native SDK takes `sendDefaultPii` and leaves out `dataCollection`; the
+    // deprecation is the one of `@sentry/core`'s option, which its options extend.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated
     sendDefaultPii: false,
     maxBreadcrumbs: 0,
     beforeBreadcrumb: () => null,

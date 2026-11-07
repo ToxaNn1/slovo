@@ -50,9 +50,12 @@ export function useReplaceOpenEntry(): (link: string) => void {
         ...Object.fromEntries(new URLSearchParams(search)),
         entryId: decodeURIComponent(entryId),
       };
+      // The stack's first screen gives way to the new Entry: a reset would
+      // have to spell out the whole navigation state.
+      navigation.dispatch({ type: 'POP_TO_TOP', target: stack.key });
       navigation.dispatch({
-        type: 'RESET',
-        payload: { index: 0, routes: [{ name: entryRoute, params }] },
+        type: 'REPLACE',
+        payload: { name: entryRoute, params },
         target: stack.key,
       });
       navigation.dispatch({ type: 'NAVIGATE', payload: { name: stackName }, target: tabs.key });

@@ -1,12 +1,10 @@
-import type { AppStateStatus, NativeEventSubscription } from 'react-native';
+import type { AppStateStatus, EventSubscription } from 'react-native';
 
 /** The device's app state, as React Native's `AppState` gives it. */
 export interface AppStateSource {
-  readonly currentState: AppStateStatus;
-  addEventListener(
-    type: 'change',
-    listener: (state: AppStateStatus) => void,
-  ): NativeEventSubscription;
+  /** The state now; unknown (`null` or `undefined`) until React Native reads it. */
+  readonly currentState: string | null | undefined;
+  addEventListener(type: 'change', listener: (state: AppStateStatus) => void): EventSubscription;
 }
 
 /**
@@ -30,7 +28,7 @@ export interface Foreground {
  */
 export function createForeground(source: AppStateSource): Foreground {
   const listeners = new Set<() => void>();
-  let subscription: NativeEventSubscription | undefined;
+  let subscription: EventSubscription | undefined;
   let active = false;
   return {
     active: () => (subscription === undefined ? source.currentState === 'active' : active),

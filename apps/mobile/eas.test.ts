@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
 
 import { openAppConfig, REPO_DIR } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';

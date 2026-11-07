@@ -1,7 +1,8 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { router, Slot } from 'expo-router';
-import { act, renderRouter, screen } from 'expo-router/testing-library';
-import { Linking, Text } from 'react-native';
+import { act, screen } from 'expo-router/testing-library';
+import { renderRoutes, sendLink } from '../shell/test-render';
+import { Text } from 'react-native';
 
 import EntryLayout from '../app/entry/_layout';
 import EntryFromLinkScreen from '../app/entry/[entryId]';
@@ -69,14 +70,9 @@ async function renderApp({
   appIntents = true,
 }: { initialUrl?: string; appIntents?: boolean } = {}) {
   let landings = 0;
-  const listeners: ((event: { url: string }) => void)[] = [];
-  jest.spyOn(Linking, 'addEventListener').mockImplementation((_type, listener) => {
-    listeners.push(listener);
-    return { remove: () => undefined } as ReturnType<typeof Linking.addEventListener>;
-  });
   const taps = fakeNotificationTaps();
   const widgetLinks = createLinkRelay();
-  const app = renderRouter(
+  const app = await renderRoutes(
     {
       _layout: () => (
         <>
@@ -114,7 +110,6 @@ async function renderApp({
     },
     { initialUrl },
   );
-  await app;
   await settle();
   return {
     pathname: () => app.getPathname(),
@@ -122,7 +117,7 @@ async function renderApp({
     taps,
     open: (url: string) =>
       settle(() => {
-        for (const listener of listeners) listener({ url });
+        sendLink(url);
       }),
   };
 }

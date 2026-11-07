@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
 
 import { EditionTokensSchema } from '@slovo/contracts';
 import {

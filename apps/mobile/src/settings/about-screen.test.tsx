@@ -1,7 +1,8 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { fireEvent, screen, within } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { Linking } from 'react-native';
 
 import AboutScreen from '../app/settings/about';
@@ -45,7 +46,7 @@ jest.mock('expo-updates', () => ({
 
 /** About as the app routes to it, under the Edition's strings. */
 async function renderAbout() {
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <EditionProvider edition={edition} strings={editionStrings}>

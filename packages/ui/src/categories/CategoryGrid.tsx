@@ -62,7 +62,7 @@ export function CategoryGrid({
   /** What goes over the title, such as the screen's back link and its tool. */
   header?: ReactElement;
   /** What shows while there are no tiles. */
-  empty?: ReactElement | null;
+  empty?: ReactElement | undefined;
   onOpen: (id: string) => void;
   testID: string;
 }) {

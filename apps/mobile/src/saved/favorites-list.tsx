@@ -64,7 +64,7 @@ export function FavoritesList({ header }: { header: ListHeader }) {
           >
             {strings.footer}
           </Text>
-        ) : null
+        ) : undefined
       }
       ListEmptyComponent={
         <EmptyState

@@ -100,7 +100,7 @@ function HiddenList() {
               onTurnCategoryOn={turnCategoryOn}
               onTurnKindOn={turnKindOn}
             />
-          ) : null
+          ) : undefined
         }
       />
     </SafeAreaView>

@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals
 import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo, Text } from 'react-native';
-import { State } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { getAnimatedStyle } from 'react-native-reanimated';
 
@@ -148,13 +148,16 @@ function MarkedCard({
   );
 }
 
+/** The app's providers, under the `GestureHandlerRootView` the app's layout puts at its root. */
 function providers(children: React.ReactNode) {
   return (
-    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <HapticsProvider haptics={haptics}>
-        <UndoToastProvider>{children}</UndoToastProvider>
-      </HapticsProvider>
-    </EditionProvider>
+    <GestureHandlerRootView>
+      <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+        <HapticsProvider haptics={haptics}>
+          <UndoToastProvider>{children}</UndoToastProvider>
+        </HapticsProvider>
+      </EditionProvider>
+    </GestureHandlerRootView>
   );
 }
 

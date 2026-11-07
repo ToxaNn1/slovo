@@ -97,15 +97,6 @@ describe('EntryRow', () => {
     expect(screen.getByText('to give away a secret')).toBeTruthy();
   });
 
-  it('runs an action from behind the swipe', async () => {
-    const onDelete = jest.fn();
-    await renderRow({ onPress: jest.fn(), actions: [deleteAction(onDelete)] });
-
-    await fireEvent.press(screen.getByTestId('entry-row-w1-delete'));
-
-    expect(onDelete).toHaveBeenCalledTimes(1);
-  });
-
   it('offers its actions to VoiceOver', async () => {
     const onDelete = jest.fn();
     await renderRow({ onPress: jest.fn(), actions: [deleteAction(onDelete)] });

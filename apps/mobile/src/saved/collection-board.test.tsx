@@ -4,9 +4,9 @@ import { loadEdition, openComposition, systemRandom, type Composition } from '@s
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Tabs } from 'expo-router';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { Text } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionScreen from '../app/saved/collections/[collectionId]';
@@ -109,23 +109,26 @@ async function renderCollection(collectionId: string) {
     isFeatureEnabled: (feature) =>
       feature === 'collectionBoardStyle' ? boardStyleOn : edition.isFeatureEnabled(feature),
   };
-  const app = renderRouter(
+  const app = await renderRoutes(
     {
       _layout: () => (
-        <GestureHandlerRootView>
-          <SafeAreaProvider initialMetrics={metrics}>
-            <ShellProvider
-              shell={testShell({
-                composition: opened(composition),
-                remoteSwitches: switchedTo(editionInEffect),
-              })}
-            >
-              <EditionProvider edition={edition} strings={editionStrings}>
-                <Tabs screenOptions={{ headerShown: false }} />
-              </EditionProvider>
-            </ShellProvider>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
+        <SafeAreaProvider initialMetrics={metrics}>
+          <ShellProvider
+            shell={testShell({
+              composition: opened(composition),
+              remoteSwitches: switchedTo(editionInEffect),
+            })}
+          >
+            <EditionProvider edition={edition} strings={editionStrings}>
+              {/* Expo Router 58 draws only the screens a Tabs layout declares. */}
+              <Tabs screenOptions={{ headerShown: false }}>
+                <Tabs.Screen name="index" />
+                <Tabs.Screen name="saved/collections/index" />
+                <Tabs.Screen name="saved/collections/[collectionId]/index" />
+              </Tabs>
+            </EditionProvider>
+          </ShellProvider>
+        </SafeAreaProvider>
       ),
       index: () => <Text>Feed</Text>,
       'saved/collections/index': () => <Text>Collections</Text>,
@@ -133,7 +136,6 @@ async function renderCollection(collectionId: string) {
     },
     { initialUrl: `/saved/collections/${collectionId}` },
   );
-  await app;
   await settle();
   return { pathname: () => app.getPathname() };
 }

@@ -25,7 +25,8 @@ import {
   UndoToastProvider,
   YesterdayCard,
 } from '@slovo/ui';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -250,7 +251,7 @@ async function swipeBy(distance: number) {
 async function renderCard(entryId: string): Promise<AnyEntryCard> {
   const card = await composition.entryCard(entryId);
   if (card === undefined) throw new Error(`No card for ${entryId}`);
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell()}>
         <EditionProvider edition={edition} strings={editionStrings}>
@@ -332,7 +333,7 @@ describe.each([
   it('keeps «Знаю» and «Не знаю» inactive until Self-check is revealed', async () => {
     const card = await composition.entryCard(entryId);
     if (card === undefined) throw new Error(`No card for ${entryId}`);
-    await render(
+    await renderInGestureRoot(
       <SafeAreaProvider initialMetrics={metrics}>
         <ShellProvider shell={shell()}>
           <EditionProvider edition={edition} strings={editionStrings}>
@@ -645,7 +646,7 @@ function SlottedCard({ card, selfCheck = false }: { card: AnyEntryCard; selfChec
 async function renderSlotted(entryId: string, selfCheck = false): Promise<AnyEntryCard> {
   const card = await composition.entryCard(entryId);
   if (card === undefined) throw new Error(`No card for ${entryId}`);
-  await render(underShell(<SlottedCard card={card} selfCheck={selfCheck} />));
+  await renderInGestureRoot(underShell(<SlottedCard card={card} selfCheck={selfCheck} />));
   return card;
 }
 
@@ -817,7 +818,7 @@ describe('Yesterday’s Word', () => {
   async function renderYesterday() {
     const card = await composition.entryCard('w_test');
     if (card === undefined) throw new Error('No card for w_test');
-    await render(underShell(<Yesterday card={card} />));
+    await renderInGestureRoot(underShell(<Yesterday card={card} />));
   }
 
   it('has «Знаю» and «Не знаю» while marks are not swiped', async () => {

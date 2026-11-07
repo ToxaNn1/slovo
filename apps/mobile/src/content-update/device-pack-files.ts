@@ -46,12 +46,11 @@ export const devicePackFiles = nativeModules.load('contentUpdates', (): DevicePa
   }
 
   return {
-    keep(version, bytes) {
+    async keep(version, bytes) {
       folder.create({ intermediates: true, idempotent: true });
       // The file first, so a record always names a whole file.
-      packFile(version).write(bytes);
-      record.write(JSON.stringify(KeptVersionSchema.parse(version)));
-      return Promise.resolve();
+      await packFile(version).write(bytes);
+      await record.write(JSON.stringify(KeptVersionSchema.parse(version)));
     },
     read() {
       if (!record.exists) return Promise.resolve(undefined);

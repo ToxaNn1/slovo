@@ -124,10 +124,10 @@ function CollectionListScreen({ collectionId }: { collectionId: string }) {
             >
               {strings.footer}
             </Text>
-          ) : null
+          ) : undefined
         }
         ListEmptyComponent={
-          collection === undefined ? null : (
+          collection === undefined ? undefined : (
             <EmptyState
               mascot={<MascotIn state="empty" />}
               testID="collection-empty"

@@ -10,8 +10,16 @@ import {
   StyleSheet,
   useWindowDimensions,
   View,
+  type ViewStyle,
 } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import {
+  GestureDetector,
+  GestureHandlerRootView,
+  useCompetingGestures,
+  usePanGesture,
+  useTapGesture,
+  type ComposedGesture,
+} from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -20,6 +28,7 @@ import Animated, {
   withSequence,
   withSpring,
   withTiming,
+  type AnimatedStyle,
 } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
@@ -191,11 +200,11 @@ export function BottomSheet({
   };
 
   // Only a sheet with `onClose` has the top strip that takes the drag.
-  const pan = Gesture.Pan()
-    .onUpdate(({ translationY }) => {
+  const pan = usePanGesture({
+    onUpdate: ({ translationY }) => {
       drag.value = Math.max(translationY, 0);
-    })
-    .onEnd(({ translationY, velocityY }) => {
+    },
+    onDeactivate: ({ translationY, velocityY }) => {
       if (onClose !== undefined && (translationY > CLOSE_DISTANCE || velocityY > CLOSE_VELOCITY)) {
         scheduleOnRN(closeByDrag, velocityY);
       } else if (reduceMotion) {
@@ -204,15 +213,18 @@ export function BottomSheet({
       } else {
         drag.value = withSpring(0, { ...DRAG_SPRING, velocity: velocityY });
       }
-    });
-  if (testID !== undefined) pan.withTestId(`${testID}-drag`);
+    },
+    testID: testID === undefined ? undefined : `${testID}-drag`,
+  });
   // A tall sheet leaves the scrim little more than the corner over its slant,
   // which the strip covers: a tap there closes the sheet, as on the scrim.
-  const tap = Gesture.Tap().onEnd((_event, success) => {
-    if (success && onClose !== undefined) scheduleOnRN(onClose);
+  const tap = useTapGesture({
+    onDeactivate: ({ canceled }) => {
+      if (!canceled && onClose !== undefined) scheduleOnRN(onClose);
+    },
+    testID: testID === undefined ? undefined : `${testID}-tap`,
   });
-  if (testID !== undefined) tap.withTestId(`${testID}-tap`);
-  const strip = Gesture.Race(pan, tap);
+  const strip = useCompetingGestures(pan, tap);
 
   const sheetStyle = useAnimatedStyle(() => ({
     transform: [
@@ -287,8 +299,8 @@ function SheetPanel({
   onClose: (() => void) | undefined;
   testID: string | undefined;
   onHeight: (height: number) => void;
-  sheetStyle: ReturnType<typeof useAnimatedStyle>;
-  strip: ReturnType<typeof Gesture.Race>;
+  sheetStyle: AnimatedStyle<ViewStyle>;
+  strip: ComposedGesture;
   tone: SheetTone;
   children: ReactNode;
 }) {

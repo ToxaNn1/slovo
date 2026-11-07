@@ -7,6 +7,8 @@
     "emitDeclarationOnly": false,
     "noEmit": true,
     "jsx": "react-jsx",
+    // Resolve platform files the way Metro does for the native app.
+    "moduleSuffixes": [".ios", ".native", ""],
     "types": ["node"],
     // The routes import the app's modules as `@/…` (ADR 0027); Metro reads this too.
     "paths": { "@/*": ["./src/*"] }

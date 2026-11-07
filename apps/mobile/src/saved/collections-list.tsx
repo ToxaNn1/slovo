@@ -160,7 +160,7 @@ function Collections({ header }: { header: ListHeader }) {
           },
         }}
       />
-    ) : null;
+    ) : undefined;
 
   return (
     <>

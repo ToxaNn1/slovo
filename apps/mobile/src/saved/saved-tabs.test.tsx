@@ -4,9 +4,9 @@ import { loadEdition, openComposition, systemRandom, type Composition } from '@s
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Tabs } from 'expo-router';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { Text } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SavedLayout from '../app/saved/_layout';
@@ -79,25 +79,28 @@ async function settle(action: () => unknown = () => undefined) {
 
 /** The app's tabs with the Saved tab's stack, on `url`. */
 async function renderApp(url: string) {
-  const app = renderRouter(
+  const app = await renderRoutes(
     {
       _layout: () => (
-        <GestureHandlerRootView>
-          <SafeAreaProvider initialMetrics={metrics}>
-            <ShellProvider
-              shell={testShell({
-                composition: opened(composition),
-                remoteSwitches: switchedTo(edition),
-              })}
-            >
-              <SettingsProvider>
-                <EditionProvider edition={edition} strings={editionStrings}>
-                  <Tabs screenOptions={{ headerShown: false }} />
-                </EditionProvider>
-              </SettingsProvider>
-            </ShellProvider>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
+        <SafeAreaProvider initialMetrics={metrics}>
+          <ShellProvider
+            shell={testShell({
+              composition: opened(composition),
+              remoteSwitches: switchedTo(edition),
+            })}
+          >
+            <SettingsProvider>
+              <EditionProvider edition={edition} strings={editionStrings}>
+                {/* Expo Router 58 draws only the screens a Tabs layout declares. */}
+                <Tabs screenOptions={{ headerShown: false }}>
+                  <Tabs.Screen name="index" />
+                  <Tabs.Screen name="search/index" />
+                  <Tabs.Screen name="saved" />
+                </Tabs>
+              </EditionProvider>
+            </SettingsProvider>
+          </ShellProvider>
+        </SafeAreaProvider>
       ),
       index: () => <Text>Feed</Text>,
       'search/index': () => <Text>Search</Text>,
@@ -106,7 +109,6 @@ async function renderApp(url: string) {
     },
     { initialUrl: url },
   );
-  await app;
   await settle();
   return { pathname: () => app.getPathname() };
 }

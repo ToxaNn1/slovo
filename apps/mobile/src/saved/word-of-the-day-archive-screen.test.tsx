@@ -3,7 +3,8 @@ import { loadEdition, openComposition, systemRandom, type Composition } from '@s
 import type { Word } from '@slovo/contracts';
 import { createMemoryContentPort, type UserStateFacts, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import WordOfTheDayArchiveScreen from '../app/saved/words-of-the-day/index';
@@ -87,7 +88,7 @@ async function settle() {
 }
 
 async function renderArchive() {
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({ composition: opened(composition), remoteSwitches: switchedTo(edition) })}

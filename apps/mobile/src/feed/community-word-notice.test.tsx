@@ -3,7 +3,8 @@ import type { Correction } from '@slovo/contracts';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
@@ -54,7 +55,7 @@ beforeEach(async () => {
 });
 
 async function renderNotice(adds: number) {
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={testShell({ composition: opened(composition) })}>
         <EditionProvider edition={edition} strings={editionStrings}>

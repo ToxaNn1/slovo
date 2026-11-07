@@ -43,7 +43,7 @@ export function LearningList({ header }: { header: ListHeader }) {
           >
             {strings.footer}
           </Text>
-        ) : null
+        ) : undefined
       }
       ListEmptyComponent={
         <EmptyState

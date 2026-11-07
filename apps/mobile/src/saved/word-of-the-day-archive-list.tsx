@@ -37,7 +37,7 @@ export function WordOfTheDayArchiveList({ header }: { header: ListHeader }) {
       )}
       ListHeaderComponent={header(null)}
       ListEmptyComponent={
-        days === undefined ? null : (
+        days === undefined ? undefined : (
           <EmptyState
             mascot={<MascotIn state="empty" />}
             testID="words-of-the-day-empty"

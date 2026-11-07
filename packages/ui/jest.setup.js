@@ -5,6 +5,12 @@ import * as ReactNative from 'react-native';
 import * as ReactNativePrivate from 'react-native/Libraries/ReactPrivate/ReactNativePrivateInterface';
 import { setUpTests } from 'react-native-reanimated';
 
+// Worklets' own test double: its web build throws where Gesture Handler 3
+// asks for the UI runtime.
+jest.mock('react-native-worklets', () =>
+  jest.requireActual('react-native-worklets/lib/module/mock'),
+);
+
 setUpTests();
 
 // React Native requires most of its modules on first use, so a test file's

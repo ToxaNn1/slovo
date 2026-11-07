@@ -4,7 +4,8 @@ import { openComposition, systemRandom, type AnalyticsPort, type Composition } f
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { AccessibilityInfo } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -131,7 +132,7 @@ async function renderGame({
     settings: await settingsAt(),
     shareCard,
   });
-  const app = renderRouter(
+  const app = await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
@@ -150,7 +151,6 @@ async function renderGame({
     },
     { initialUrl: '/game' },
   );
-  await app;
   await settle();
   return { pathname: () => app.getPathname() };
 }

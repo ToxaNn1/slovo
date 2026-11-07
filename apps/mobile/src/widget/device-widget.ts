@@ -27,9 +27,8 @@ export const deviceWidget = nativeModules.load('widget', (): WidgetDevice => {
 
   return {
     container: {
-      write(name, text) {
-        file(name).write(text);
-        return Promise.resolve();
+      async write(name, text) {
+        await file(name).write(text);
       },
       async replace(from, to) {
         await file(from).move(file(to), { overwrite: true });

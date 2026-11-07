@@ -10,8 +10,9 @@ import {
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, renderRouter, screen } from 'expo-router/testing-library';
-import { Linking, Text } from 'react-native';
+import { act, screen } from 'expo-router/testing-library';
+import { renderRoutes, sendLink } from '../shell/test-render';
+import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionScreen from '../app/saved/collections/[collectionId]';
@@ -109,18 +110,13 @@ async function settle(action: () => unknown = () => undefined) {
  * module does: the link of its route, the Edition's scheme + the route.
  */
 async function renderApp() {
-  const listeners: ((event: { url: string }) => void)[] = [];
-  jest.spyOn(Linking, 'addEventListener').mockImplementation((_type, listener) => {
-    listeners.push(listener);
-    return { remove: () => undefined } as ReturnType<typeof Linking.addEventListener>;
-  });
   // The settings and the screens open over this test's user state and composition.
   const shell = testShell({
     userState: opened(userState),
     remoteSwitches: switchedTo(shippedEdition),
     composition: opened(composition),
   });
-  const app = renderRouter(
+  const app = await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
@@ -152,13 +148,12 @@ async function renderApp() {
     },
     { initialUrl: '/' },
   );
-  await app;
   await settle();
   return {
     pathname: () => app.getPathname(),
     tap: (route: string) =>
       settle(() => {
-        for (const listener of listeners) listener({ url: `slovo-uk://${route}` });
+        sendLink(`slovo-uk://${route}`);
       }),
   };
 }

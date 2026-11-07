@@ -11,7 +11,8 @@ import {
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, feedHeader, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import type { ColorScheme } from '@slovo/ui';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -125,7 +126,7 @@ const shell = () =>
 
 /** The app on the Feed, in the Theme `colorScheme`. */
 async function renderApp(colorScheme: ColorScheme) {
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>

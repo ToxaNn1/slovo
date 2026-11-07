@@ -4,7 +4,8 @@ import { loadEdition, openComposition, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HistoryScreen from '../app/saved/history';
@@ -89,7 +90,7 @@ function compositionOver(dependency: () => Promise<void>): Opening<Composition> 
 /** The History screen under the composition's gate. */
 async function renderHistory(opening: Opening<Composition>) {
   const shell = testShell({ composition: opening, remoteSwitches: switchedTo(shippedEdition) });
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
