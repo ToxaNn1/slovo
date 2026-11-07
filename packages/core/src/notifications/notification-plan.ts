@@ -319,10 +319,10 @@ export function createNotificationPlanner({
   async function chooseTemplates(planned: readonly PlannedWord[]): Promise<number[]> {
     const stored = (await userState.read(titlesRecord)) ?? { planned: {} };
     const now = slotId({ date: todayDate(clock), time: localTimeOf(clock.now(), clock) });
-    const [cameLast] = Object.keys(stored.planned)
-      .filter((id) => id <= now)
-      .sort()
-      .reverse();
+    const cameLast = Object.keys(stored.planned).reduce<string | undefined>(
+      (greatest, id) => (id <= now && (greatest === undefined || id > greatest) ? id : greatest),
+      undefined,
+    );
     const last = cameLast === undefined ? stored.last : stored.planned[cameLast];
     let previous = last;
     const templates = new Map<string, number>();
