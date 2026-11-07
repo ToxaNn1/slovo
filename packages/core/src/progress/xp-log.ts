@@ -160,6 +160,8 @@ export interface XpLog {
 }
 
 /** The award of an action that earns nothing: no change to write, nothing to make in memory. */
+type WordGoalRecord = Extract<XpRecord, { kind: 'word-goal' }>;
+
 const NOTHING_EARNED: XpAward = {
   changes: new Map(),
   amount: 0,
@@ -229,6 +231,23 @@ export async function openXpLog({
   const goalOn = on && edition.isFeatureEnabled('dailyGoal');
   const seenWordOn = goalOn && edition.isFeatureEnabled('seenWordXp');
   const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
+  /** The `word-goal` records by date and instant, so a goal is looked up among them and not in the whole log; made anew after one is added. */
+  let wordGoals: WordGoalRecord[] | undefined;
+  function wordGoalsInOrder(): readonly WordGoalRecord[] {
+    wordGoals ??= [...records.values()]
+      .filter((record): record is WordGoalRecord => record.kind === 'word-goal')
+      .sort((one, other) =>
+        one.date === other.date
+          ? one.at.localeCompare(other.at)
+          : one.date.localeCompare(other.date),
+      );
+    return wordGoals;
+  }
+  /** Keeps a record in the log, and forgets the goals' order when it is a goal. */
+  function keep(id: string, record: XpRecord): void {
+    records.set(id, record);
+    if (record.kind === 'word-goal') wordGoals = undefined;
+  }
   const subscribers = createSubscribers();
   const goalMetSubscribers = createSubscribers();
   /** Tells the records of one session apart when the clock and the random source stand still. */
@@ -270,16 +289,10 @@ export async function openXpLog({
   /** The goal in force on a local date: the last `word-goal` set on or before it, unless that one turned it off. */
   function goalOf(date: string): DailyGoal | undefined {
     if (!goalOn) return undefined;
-    let last: Extract<XpRecord, { kind: 'word-goal' }> | undefined;
-    for (const record of records.values()) {
-      if (
-        record.kind === 'word-goal' &&
-        record.date <= date &&
-        (last === undefined ||
-          record.date > last.date ||
-          (record.date === last.date && record.at >= last.at))
-      )
-        last = record;
+    let last: WordGoalRecord | undefined;
+    for (const record of wordGoalsInOrder()) {
+      if (record.date > date) break;
+      last = record;
     }
     return last?.goal ?? undefined;
   }
@@ -292,8 +305,10 @@ export async function openXpLog({
   }
 
   /** Whether a `word-goal` record, «Без цілі» included, was set on or before the local date. */
-  const wordGoalSetBy = (date: string) =>
-    [...records.values()].some((record) => record.kind === 'word-goal' && record.date <= date);
+  const wordGoalSetBy = (date: string) => {
+    const first = wordGoalsInOrder()[0];
+    return first !== undefined && first.date <= date;
+  };
 
   /**
    * A past day with no goal in Words but a goal in XP from before Words
@@ -468,7 +483,7 @@ export async function openXpLog({
     const { state } = derived;
     const after = state.level?.level;
     if (before !== undefined && after !== undefined && after > before) {
-      void analytics.track('levelReached', { level: after });
+      void analytics.track('levelReached', { level: after }).catch(() => undefined);
     }
     subscribers.tell();
     if (state.dailyGoal?.met === true && !wasMet && derived.date === previousDate) {
@@ -524,7 +539,7 @@ export async function openXpLog({
       changes: xpRecords.record(id).change(record),
       amount,
       commit() {
-        records.set(id, record);
+        keep(id, record);
         change();
       },
     };
@@ -541,7 +556,7 @@ export async function openXpLog({
       ),
       commit() {
         if (added.size === 0) return;
-        for (const [id, record] of added) records.set(id, record);
+        for (const [id, record] of added) keep(id, record);
         change();
       },
     };
@@ -559,7 +574,7 @@ export async function openXpLog({
       ),
       commit() {
         if (added.size === 0) return;
-        for (const [id, record] of added) records.set(id, record);
+        for (const [id, record] of added) keep(id, record);
         change();
       },
     };
@@ -610,7 +625,7 @@ export async function openXpLog({
     return {
       changes: xpRecords.record(id).change(record),
       commit() {
-        records.set(id, record);
+        keep(id, record);
         change();
       },
     };
@@ -627,7 +642,7 @@ export async function openXpLog({
     await userState.write(
       new Map([...added].flatMap(([id, record]) => [...xpRecords.record(id).change(record)])),
     );
-    for (const [id, record] of added) records.set(id, record);
+    for (const [id, record] of added) keep(id, record);
     change();
   }
 
