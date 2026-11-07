@@ -12,7 +12,7 @@ import { useState, type ReactNode } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
 import { useOpenScreen } from '../use-open-screen';
@@ -33,15 +33,15 @@ export function LaterQuestionNotice({ question }: { question: LaterQuestion }) {
   const openScreen = useOpenScreen();
 
   function settle(answer: Promise<unknown>, then?: () => void) {
-    answer.then(
-      () => {
-        turnToNext?.();
-        then?.();
-      },
-      (error: unknown) => {
-        logError('Could not answer a later question', error);
-      },
-    );
+    void keep(
+      'the answer to a later question',
+      answer.then(() => true),
+      false,
+    ).then((kept) => {
+      if (!kept) return;
+      turnToNext?.();
+      then?.();
+    });
   }
 
   const later = (

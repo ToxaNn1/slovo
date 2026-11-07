@@ -56,7 +56,7 @@ function account(start = '2026-10-18T09:00:00.000Z') {
         openComposition({ content, edition, userState, clock: time.clock, random: randomOf(0.25) }),
       settings: createSettings({
         userState,
-        defaults: { theme: 'system', fontSize: 'M', vibration: true },
+        defaults: { theme: 'system', fontSize: 'M', vibration: true, narratorVoice: 'anna' },
       }),
       write: (changes: UserStateChanges) => userState.write(changes),
     };
@@ -285,6 +285,24 @@ describe('two devices of one Account', () => {
     expect((await phone.settings.read()).seasonalDecor).toBe(false);
     expect((await tablet.settings.read()).seasonalDecor).toBe(false);
     expect(server.sync.records.get('settings.seasonalDecor')?.value).toBe(false);
+  });
+
+  it('let the newer choice of Narrator Voice win, on either device', async () => {
+    const { device, server, time } = account();
+    const phone = await device();
+    const tablet = await device();
+    await phone.settings.update({ narratorVoice: 'boris' });
+    time.advance(HOUR);
+    await tablet.settings.update({ narratorVoice: 'olga' });
+    await tablet.sync();
+    time.advance(HOUR);
+
+    await phone.sync();
+    await tablet.sync();
+
+    expect((await phone.settings.read()).narratorVoice).toBe('olga');
+    expect((await tablet.settings.read()).narratorVoice).toBe('olga');
+    expect(server.sync.records.get('settings.narratorVoice')?.value).toBe('olga');
   });
 
   it('let the newer Word of the Day of a date win in the archive, on either device', async () => {

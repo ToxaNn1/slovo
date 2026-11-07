@@ -1,5 +1,5 @@
 import type { Edition } from '../edition/edition';
-import { createEntries } from '../entries/entries';
+import { createEntries, EVERYTHING_IN } from '../entries/entries';
 import { createEntryRows, type EntryRowModel } from '../entries/entry-row';
 import { dateKeyOf, parseLocalDate, todayDate, type LocalDate } from '../local-date';
 import type { Clock, ContentReadPort, UserStateChanges } from '../ports';
@@ -89,7 +89,7 @@ export function createWordOfTheDayArchive({
   /** Tells the current year, whose dates go without it. */
   clock: Clock;
 }): WordOfTheDayArchive {
-  const rows = createEntryRows(createEntries({ content, edition }));
+  const rows = createEntryRows(createEntries({ content, edition, choices: EVERYTHING_IN }));
   // The date as a calendar day, the same in every time zone.
   const thisYearFormat = new Intl.DateTimeFormat(edition.locale, {
     day: 'numeric',

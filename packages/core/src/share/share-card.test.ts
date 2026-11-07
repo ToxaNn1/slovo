@@ -9,6 +9,7 @@ import {
   createEntries,
   generateCrosswordPuzzle,
   seededRandomOf,
+  EVERYTHING_IN,
   type AnyEntryCard,
   type ShareCardStrings,
   type WeeklyRecapModel,
@@ -130,6 +131,7 @@ const entries = (content: Parameters<typeof createMemoryContentPort>[0] = {}) =>
   createEntries({
     content: createMemoryContentPort(content),
     edition: { isFeatureEnabled: () => true },
+    choices: EVERYTHING_IN,
   });
 
 async function wordCard(shown: Word): Promise<AnyEntryCard> {

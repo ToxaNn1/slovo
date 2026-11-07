@@ -10,6 +10,7 @@ export { FeedError, FeedLoading } from './feed/FeedStates';
 export { GesturesHintSheet, type GesturesHintTexts } from './feed/GesturesHintSheet';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
+export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
 export { FontSizeProvider } from './providers/FontSizeProvider';
 export { DecorProvider } from './decor/DecorProvider';
 export { EditionProvider, fill, useEdition } from './providers/EditionProvider';

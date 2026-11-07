@@ -183,8 +183,8 @@ export function retireEntry(id: string, { edition, terminal }: ContentTool): num
 
 /**
  * Checks the whole Edition with the build's own rules, writing nothing, and
- * reports every problem and every content target it misses. Returns the
- * exit code.
+ * reports every problem, every content target it misses and how many Words
+ * each Narrator Voice has no Recording of. Returns the exit code.
  */
 export function checkEdition({ edition, terminal }: ContentTool): number {
   const result = checkLanguagePack({ editionDir: edition.dir });
@@ -193,6 +193,10 @@ export function checkEdition({ edition, terminal }: ContentTool): number {
     return 1;
   }
   terminal.print(`Edition "${edition.id}": no problems`);
+  // A Word without a Recording is read by the device's voice (ADR 0083): counted, never a problem.
+  terminal.print('Words without a Recording:');
+  for (const { voice, count } of result.missingRecordings)
+    terminal.print(`  ${voice}: ${String(count)}`);
   if (result.missedTargets.length === 0) return 0;
   reportProblems(
     terminal,

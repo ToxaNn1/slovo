@@ -1,11 +1,14 @@
-import type { Mood } from '@slovo/contracts';
+import type { Mood, Rarity } from '@slovo/contracts';
 
 import type { Analytics } from '../analytics/analytics';
 import type { Edition } from '../edition/edition';
+import type { MixKindWeights } from '../entries/mix';
 import { createSubscribers } from '../in-turn';
 import { todayKey, type LocalDate } from '../local-date';
 import type { Clock } from '../ports';
+import type { RarityCeiling } from '../entries/rarity-ceiling';
 import type { UserState } from '../user-state/user-state';
+import { inRarityBand, shiftedKindWeights } from './feed-parameters';
 import { moodRecords } from './records';
 
 /** The choice a skipped day keeps. */
@@ -21,13 +24,30 @@ export type MoodCheckIn =
   | { readonly state: 'chosen'; readonly mood: Mood }
   | { readonly state: 'skipped' };
 
+/** What today's Mood asks of the Feed (ADR 0076); the Feed as it is without one. */
+export interface MoodFeedParameters {
+  /**
+   * Whether a Word of the rarity is in today's rarity band, clipped to the
+   * Rarity Ceiling; nothing when the band is every rarity.
+   */
+  readonly inBand: ((rarity: Rarity) => boolean) | undefined;
+  /** The reader's Mix kind weights shifted by today's Mood. */
+  kindWeights(weights: MixKindWeights): MixKindWeights;
+}
+
 /**
  * The daily Mood check-in: one record per local day, synced last write wins,
  * which the Dashboard asks, the Feed reads (#1571) and the Profile counts.
  */
 export interface MoodCheckIns {
-  /** Today's check-in; `asking` with `mood` off, since nothing asks. */
+  /**
+   * Today's check-in; `asking` with `mood` off, since nothing asks. A
+   * check-in of another local day reads `asking`, even before the day
+   * change reaches it, so the Dashboard and the Feed give one answer.
+   */
   readonly today: MoodCheckIn;
+  /** What today's Mood asks of the next Feed card, read for each card. */
+  feedParameters(): MoodFeedParameters;
   /** The four moods of the Dashboard, in display order. */
   readonly moods: readonly Mood[];
   /** Chooses the mood for today, or changes it; an id not among `moods` is ignored. */
@@ -46,34 +66,52 @@ export async function openMoodCheckIns({
   clock,
   dayTurned,
   analytics,
+  rarityCeiling,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled' | 'dashboardMoods'>;
   userState: Pick<UserState, 'read' | 'list' | 'write'>;
   clock: Clock;
   dayTurned: { subscribe(listener: (day: LocalDate) => unknown): unknown };
   analytics: Pick<Analytics, 'track'>;
+  /** The Rarity Ceiling the Mood's rarity band clips to. */
+  rarityCeiling: Pick<RarityCeiling, 'state'>;
 }): Promise<MoodCheckIns> {
   const subscribers = createSubscribers();
   const on = edition.isFeatureEnabled('mood');
   const moods = edition.dashboardMoods;
   const moodOf = (id: string) => moods.find((mood) => mood.id === id);
 
-  async function todayOf(): Promise<MoodCheckIn> {
+  async function checkInOn(date: string): Promise<MoodCheckIn> {
     if (!on) return { state: 'asking' };
-    const record = await userState.read(moodRecords.checkIns.record(todayKey(clock)));
+    const record = await userState.read(moodRecords.checkIns.record(date));
     if (record === undefined) return { state: 'asking' };
     if (record.choice === SKIPPED) return { state: 'skipped' };
     const mood = moodOf(record.choice);
     return mood === undefined ? { state: 'asking' } : { state: 'chosen', mood };
   }
 
-  let today = await todayOf();
+  /** The local day `today` was read for. */
+  let day = todayKey(clock);
+  let today = await checkInOn(day);
 
   async function refresh(): Promise<void> {
-    const next = await todayOf();
+    const date = todayKey(clock);
+    const next = await checkInOn(date);
+    day = date;
     if (keyOf(next) === keyOf(today)) return;
     today = next;
     subscribers.tell();
+  }
+
+  /** Today's check-in, `asking` once the local day it was made on is over. */
+  function todaysCheckIn(): MoodCheckIn {
+    return day === todayKey(clock) ? today : { state: 'asking' };
+  }
+
+  /** Today's Mood, or none. */
+  function todaysMood(): Mood | undefined {
+    const checkIn = todaysCheckIn();
+    return checkIn.state === 'chosen' ? checkIn.mood : undefined;
   }
 
   async function record(choice: string): Promise<void> {
@@ -87,7 +125,18 @@ export async function openMoodCheckIns({
 
   return {
     get today() {
-      return today;
+      return todaysCheckIn();
+    },
+    feedParameters() {
+      const mood = todaysMood();
+      const band = mood?.rarityBand ?? 'whole';
+      return {
+        inBand:
+          band === 'whole'
+            ? undefined
+            : (rarity) => inRarityBand(rarity, band, rarityCeiling.state),
+        kindWeights: (weights) => shiftedKindWeights(weights, mood),
+      };
     },
     moods,
     async choose(moodId) {

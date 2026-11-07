@@ -1,12 +1,10 @@
 import type { EditionStrings, Plural } from '@slovo/contracts';
 import {
-  categoryPlace,
   featureOfKind,
-  MIX_KINDS,
-  categoriesInMix,
-  type CategoryKind,
-  type Edition,
+  type MixScreen,
+  type MixChip,
   type MixKind,
+  type MixKindName,
   type MixState,
 } from '@slovo/core';
 
@@ -35,7 +33,12 @@ export interface MixScreenModel extends MixCategoriesModel {
    * The switch of each kind of Entry in the Mix as a whole (Corrections,
    * Idioms), in the Mix's order, leaving out a kind the Edition doesn't turn on.
    */
-  readonly kinds: readonly { readonly entryKind: MixKind; readonly on: boolean }[];
+  readonly kinds: readonly {
+    readonly entryKind: MixKind;
+    /** The kind's name as a whole, e.g. `corrections`, which names its strings. */
+    readonly name: MixKindName;
+    readonly on: boolean;
+  }[];
   /**
    * The chips of the Categories of Corrections, under the Corrections switch
    * (ADR 0033), left out while Corrections are out of the Mix or the Edition
@@ -49,36 +52,34 @@ export interface MixScreenModel extends MixCategoriesModel {
   readonly kindWeights: MixState['kindWeights'] | undefined;
 }
 
-export function mixScreenModel({
-  edition,
-  mix,
-}: {
-  edition: Pick<Edition, 'isFeatureEnabled'>;
-  mix: MixState;
-}): MixScreenModel {
-  const kinds = MIX_KINDS.filter((kind) => edition.isFeatureEnabled(featureOfKind(kind))).map(
-    (entryKind) => ({ entryKind, on: mix.kinds[entryKind] }),
-  );
+/** What the Mix screen draws, from what the Mix in effect shows (`Mix.screen`). */
+export function mixScreenModel({ screen }: { screen: MixScreen }): MixScreenModel {
   return {
-    ...categoriesModel(mix, 'word'),
-    allOn: mix.hiddenCategories.length === 0,
-    kinds,
-    correctionCategories: kinds.some(({ entryKind, on }) => entryKind === 'correction' && on)
-      ? categoriesModel(mix, 'correction')
-      : undefined,
-    kindWeights: edition.isFeatureEnabled('mixKindWeights') ? mix.kindWeights : undefined,
+    ...categoriesModel(screen.categories),
+    allOn: screen.allOn,
+    kinds: screen.kinds.map(({ entryKind, on }) => ({
+      entryKind,
+      name: featureOfKind(entryKind),
+      on,
+    })),
+    correctionCategories:
+      screen.correctionCategories === undefined
+        ? undefined
+        : categoriesModel(screen.correctionCategories),
+    kindWeights: screen.kindWeights,
   };
 }
 
 /** The chips of one list of Categories, the Words' or the Corrections'. */
-function categoriesModel(mix: MixState, of: CategoryKind): MixCategoriesModel {
-  const list = categoriesInMix(mix, of);
+function categoriesModel(chips: readonly MixChip[]): MixCategoriesModel {
   return {
-    chips: list.allCategories.map(({ id, displayName }) => {
-      const place = categoryPlace(mix, of, id);
-      return { id, name: displayName, on: place !== 'out', disabled: place === 'last' };
-    }),
-    lastCategoryHint: list.lastCategoryId !== undefined,
+    chips: chips.map(({ category: { id, displayName }, place }) => ({
+      id,
+      name: displayName,
+      on: place !== 'out',
+      disabled: place === 'last',
+    })),
+    lastCategoryHint: chips.some(({ place }) => place === 'last'),
   };
 }
 

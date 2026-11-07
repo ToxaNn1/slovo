@@ -62,7 +62,7 @@ export function GameReview({
 }
 
 function ReviewRow({
-  item: { number, title, answer, right, picked: pickedOption, details },
+  item: { number, entryId, title, answer, right, picked: pickedOption, details },
   expanded,
   onPress,
 }: {
@@ -132,16 +132,22 @@ function ReviewRow({
           )}
         </View>
       </Pressable>
-      {expanded ? <ReviewDetails details={details} /> : null}
+      {expanded ? <ReviewDetails entryId={entryId} details={details} /> : null}
     </View>
   );
 }
 
 /** What an expanded Round shows of its Entry. */
-function ReviewDetails({ details }: { details: GameReviewItem['details'] }) {
+function ReviewDetails({
+  entryId,
+  details,
+}: {
+  entryId: string;
+  details: GameReviewItem['details'];
+}) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings, voice } = useEdition();
+  const { strings, voice, Pronunciation } = useEdition();
   const body = [typeStyle('explanation', tokens), { color: colors.ink }];
   const heading = [typeStyle('reviewHeading', tokens), { color: colors.muted }];
   if (details.kind === 'correction') {
@@ -183,6 +189,9 @@ function ReviewDetails({ details }: { details: GameReviewItem['details'] }) {
   const { definition, example, etymology } = details;
   return (
     <View testID="game-review-details" {...voice} style={styles.details}>
+      {details.kind === 'word' && Pronunciation !== undefined ? (
+        <Pronunciation lemma={details.lemma} entryId={entryId} />
+      ) : null}
       <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
         {definition}
       </Text>

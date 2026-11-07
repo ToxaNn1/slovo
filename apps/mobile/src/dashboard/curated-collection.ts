@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 
 import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useOpenScreen } from '../use-open-screen';
 
 /** What a Curated Collection's screen draws and does. */
@@ -57,9 +58,7 @@ export function useCuratedCollectionScreen(collectionId: string): CuratedCollect
       curatedCollections.rail.findIndex(({ collection }) => collection.id === collectionId),
     ),
     add: () => {
-      curatedCollections.add(collectionId).catch((error: unknown) => {
-        logError('Could not copy a Curated Collection', error);
-      });
+      void keep('the copy of a Curated Collection', curatedCollections.add(collectionId));
     },
     // The Entry route of Search opens the card through `entryCard`, with the way back named.
     openEntry: (entryId) => {

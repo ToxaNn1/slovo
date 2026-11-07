@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { NotificationSoundFileSchema } from './notification-sound';
-import { HexColorSchema, RaritySchema, TextSchema } from './shared';
+import { HexColorSchema, RaritySchema, TextSchema, WordIdSchema } from './shared';
 
 const KebabCaseIdSchema = z
   .string()
@@ -187,6 +187,66 @@ export const LanguageTraitsSchema = z
 
 export type LanguageTraits = z.infer<typeof LanguageTraitsSchema>;
 
+/** One of the Edition's recorded voices that read Words; the reader picks one. */
+export const NarratorVoiceSchema = z.strictObject({
+  id: KebabCaseIdSchema,
+  /** What the reader calls the voice, such as «Оксана». */
+  name: z.string().min(1),
+  /** What the voice sounds like, such as «Жіночий · спокійний». */
+  description: z.string().min(1),
+});
+
+export type NarratorVoice = z.infer<typeof NarratorVoiceSchema>;
+
+/**
+ * The Word the voice screen reads in every Narrator Voice, by its Recording,
+ * as the screen shows it: its syllables, the one that takes the Stress and
+ * the caption under them, such as «за-гра́-ва · ім., ж. р.».
+ */
+export const NarratorVoiceSampleSchema = z
+  .strictObject({
+    word: WordIdSchema,
+    syllables: z.array(z.string().min(1)).min(1),
+    /** The index of the stressed syllable. */
+    stressed: z.number().int().nonnegative(),
+    caption: z.string().min(1),
+  })
+  .refine(({ syllables, stressed }) => stressed < syllables.length, {
+    path: ['stressed'],
+    message: 'Expected the stressed syllable to be one of the syllables',
+  });
+
+export type NarratorVoiceSample = z.infer<typeof NarratorVoiceSampleSchema>;
+
+/**
+ * The Edition's Narrator Voices, in their order, each id once, and the one
+ * that reads without the reader's choice (ADR 0083).
+ */
+export const NarratorVoicesSchema = z
+  .strictObject({
+    default: KebabCaseIdSchema,
+    voices: z.array(NarratorVoiceSchema).min(1),
+    sample: NarratorVoiceSampleSchema,
+  })
+  .superRefine(({ default: chosen, voices }, context) => {
+    const ids = new Set<string>();
+    voices.forEach(({ id }, index) => {
+      if (ids.has(id))
+        context.addIssue({
+          code: 'custom',
+          path: ['voices', index, 'id'],
+          message: `Expected each Narrator Voice id once, got ${id} again`,
+        });
+      ids.add(id);
+    });
+    if (!ids.has(chosen))
+      context.addIssue({
+        code: 'custom',
+        path: ['default'],
+        message: `Expected one of the Narrator Voices, got ${chosen}`,
+      });
+  });
+
 /** Per-Edition on/off settings for Core features. */
 export const FeatureSwitchesSchema = z.strictObject({
   game: z.boolean(),
@@ -219,6 +279,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   shareCards: z.boolean(),
   /** Pronunciation: the buttons that play a Word's audio. */
   pronunciation: z.boolean(),
+  /** «Голос диктора»: the reader's choice of the Narrator Voice that reads; off while `pronunciation` is, and off the default voice reads (ADR 0083). */
+  narratorVoice: z.boolean(),
   /** The Word of the Day: its pick, its notification and its widget. */
   wordOfTheDay: z.boolean(),
   /** The statistics screens and the Streak. */
@@ -874,6 +936,8 @@ export const EditionConfigSchema = z
      * itself.
      */
     searchLetters: z.record(LowerCaseLetterSchema, LowerCaseLetterSchema),
+    /** The Narrator Voices that read Words (ADR 0083). */
+    narratorVoices: NarratorVoicesSchema,
     /** The XP table: what each Game learning action earns (ADR 0066). */
     xp: XpTableSchema,
     /** The Level curve and the Level names (ADR 0066). */
