@@ -232,7 +232,7 @@ const FeedPage = memo(function FeedPage({
         {card.kind === 'notice' ? (
           <YesterdayNotice word={card.word} />
         ) : card.kind === 'tip' ? (
-          <SwipedEntryCard card={card} selfCheck={selfCheck} />
+          <SwipedEntryCard card={card} selfCheck={selfCheck} tabs={wordTabs} />
         ) : card.kind === 'synonymRow' ? (
           <SwipedEntryCard
             card={card}
@@ -241,6 +241,7 @@ const FeedPage = memo(function FeedPage({
               openScreen(`/entry/${wordId}`);
             }}
             selfCheck={selfCheck}
+            tabs={wordTabs}
           />
         ) : (
           <SwipedEntryCard

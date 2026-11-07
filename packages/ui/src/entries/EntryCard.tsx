@@ -56,9 +56,9 @@ export interface EntryCardProps {
    */
   wordOfTheDayFont?: string | undefined;
   /**
-   * A Word's card in a fixed-height frame with tabs under its Lemma, while
-   * the Edition's `wordTabs` is on in effect (ADR 0088); the Word of the Day's
-   * red card keeps its column.
+   * A Word's, a Tip's or a Synonym Row's card in a fixed-height frame, with
+   * tabs under its head, while the Edition's `wordTabs` is on in effect
+   * (ADR 0088); the Word of the Day's red card keeps its column.
    */
   tabs?: boolean | undefined;
 }
@@ -204,8 +204,8 @@ function EntryCardFace({
         testID={`${card.kind}-card`}
         style={[
           styles.card,
-          // The tabbed Word card takes the page's height, whatever its tab holds (ADR 0088).
-          tabs && card.kind === 'word' && styles.fixed,
+          // The tabbed card takes the page's height, whatever its tab holds (ADR 0088).
+          tabs && FIXED_KINDS.has(card.kind) && styles.fixed,
           {
             backgroundColor: colors.surface,
             borderColor: colors.line,
@@ -254,6 +254,7 @@ function EntryCardFace({
             concealed={concealed}
             onOpenWord={onOpenWord}
             corner={corner}
+            tabs={tabs}
           />
         ) : (
           <TipCardBody
@@ -261,6 +262,7 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             corner={corner}
+            tabs={tabs}
           />
         )}
         {concealed && (
@@ -284,6 +286,13 @@ function EntryCardFace({
     </EntryReveal>
   );
 }
+
+/** The kinds of Entry whose card is a fixed frame while `wordTabs` is on (ADR 0088). */
+const FIXED_KINDS: ReadonlySet<EntryCardProps['card']['kind']> = new Set([
+  'word',
+  'tip',
+  'synonymRow',
+]);
 
 const styles = StyleSheet.create({
   // The border is the card's only elevation.
