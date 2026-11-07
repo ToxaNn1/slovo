@@ -9,6 +9,7 @@ import {
   type Round,
   type RoundAnswer,
   type RoundContent,
+  type TextRange,
 } from '@slovo/core';
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -44,7 +45,7 @@ import { ChipsRound } from './ChipsRound';
 import { GameTimer } from './GameTimer';
 import { PairsRound } from './PairsRound';
 import { AnswerOptions, PickRound } from './PickRound';
-import { RoundCard } from './RoundCard';
+import { RoundCard, type RoundFace } from './RoundCard';
 import { TypedRound } from './TypedRound';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useGameHaptics } from './useGameHaptics';
@@ -132,6 +133,7 @@ export function GameRound({
   const [asking, setAsking] = useState(false);
   const exit = strings.game.exit;
   const asked = askedAs(round, label, strings.game.round);
+  const card = cardOf(game.modeId, round, asked.prompt, strings.game.round.prompts);
 
   return (
     <View testID="game-round" style={styles.screen}>
@@ -165,7 +167,7 @@ export function GameRound({
         <FormRound
           round={round}
           label={asked.label}
-          prompt={asked.prompt}
+          card={card}
           onAnswer={onAnswer}
           onOpenLetter={onOpenLetter}
         />
@@ -216,6 +218,53 @@ function askedAs(
   }
 }
 
+/** What a Round's card shows: its prompt, the part of it to mark and its restyled look. */
+interface CardText {
+  readonly prompt: string;
+  readonly highlight: TextRange | undefined;
+  readonly face: RoundFace | undefined;
+}
+
+/**
+ * The card a Round shows by its Game Mode (board 07 g3, g4, spec #1674):
+ * «Впиши слово» names the wrong form over its sentence, «замість «вірогідно»»;
+ * «Англіцизм» asks «Чим замінити «{word}»: «{sentence}»?» with the
+ * anglicism still marked in the sentence; «Звідки слово» shows its Word on a
+ * sunken tile. Any other Round shows its prompt as it is.
+ */
+function cardOf(
+  modeId: string,
+  round: Round,
+  prompt: string,
+  prompts: { readonly instead: string; readonly replace: string },
+): CardText {
+  const highlight = round.form === 'pick' || round.form === 'typed' ? round.highlight : undefined;
+  const plain = { prompt, highlight, face: undefined };
+  if (modeId === 'origin' && round.form === 'pick') {
+    return { prompt, highlight: undefined, face: { look: 'word' } };
+  }
+  if (highlight === undefined) return plain;
+  const marked = prompt.slice(highlight.start, highlight.end);
+  if (modeId === 'type-word' && round.form === 'typed') {
+    return {
+      prompt,
+      highlight,
+      face: { look: 'instead', instead: fill(prompts.instead, { wrong: marked }) },
+    };
+  }
+  if (modeId === 'anglicism' && round.form === 'pick') {
+    const asked = fill(prompts.replace, { word: marked, sentence: prompt });
+    const at = asked.indexOf(prompt);
+    if (at < 0) return plain;
+    return {
+      prompt: asked,
+      highlight: { start: at + highlight.start, end: at + highlight.end },
+      face: undefined,
+    };
+  }
+  return plain;
+}
+
 /**
  * The part of a Round its Answer Form draws under the Round's head: the card
  * and the options, the vowel buttons in the card, the pairs grid, the chips
@@ -224,19 +273,20 @@ function askedAs(
 function FormRound({
   round,
   label,
-  prompt,
+  card,
   onAnswer,
   onOpenLetter,
 }: {
   round: Round;
   label: string;
-  prompt: string;
+  card: CardText;
   onAnswer: (given: GivenAnswer) => void;
   onOpenLetter: () => void;
 }) {
+  const { prompt } = card;
   switch (round.form) {
     case 'pick':
-      return <PickRound round={round} label={label} prompt={prompt} onAnswer={onAnswer} />;
+      return <PickRound round={round} label={label} {...card} onAnswer={onAnswer} />;
     case 'vowel':
       return <VowelRound round={round} label={label} prompt={prompt} onAnswer={onAnswer} />;
     case 'pairs':
@@ -248,7 +298,7 @@ function FormRound({
         <TypedRound
           round={round}
           label={label}
-          prompt={prompt}
+          {...card}
           onAnswer={onAnswer}
           onOpenLetter={onOpenLetter}
         />

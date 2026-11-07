@@ -224,6 +224,8 @@ export const typeRoles = {
   roundHead: role('word', '800', 12, 12, 2, 'uppercase'),
   /** A Round's prompt on its card. */
   roundPrompt: role('word', '800', 24, 30),
+  /** A restyled Round's ask on its card (board 07 g3, g4), such as «замість «вірогідно»» or the Word in «Звідки слово». */
+  roundAsk: role('word', '900', 24, 30),
   /** A Round's option on its tile when it is a Word. */
   roundOptionWord: role('word', '800', 22, 26),
   /** A Round's option on its tile when it is a sentence. */

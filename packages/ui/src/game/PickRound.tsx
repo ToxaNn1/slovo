@@ -7,6 +7,7 @@ import {
   type Round,
   type RoundAnswer,
   type RoundOption,
+  type TextRange,
 } from '@slovo/core';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -23,7 +24,7 @@ import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { PressedTile } from '../primitives/PressedTile';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { answerOption, roundLayout, space, typeStyle, type TypeRole } from '../tokens';
-import { RoundCard } from './RoundCard';
+import { RoundCard, type RoundFace } from './RoundCard';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** The answer to a Round of the pick form. */
@@ -52,12 +53,18 @@ export function PickRound({
   round,
   label,
   prompt,
+  highlight,
+  face,
   onAnswer,
 }: {
   round: Extract<Round, { form: 'pick' }>;
   /** The label the card reads over the prompt. */
   label: string;
   prompt: string;
+  /** The part of the prompt to mark, the Round's own unless its look moves it. */
+  highlight: TextRange | undefined;
+  /** The restyled look of the Round's card; the plain prompt if none. */
+  face: RoundFace | undefined;
   onAnswer: (given: Extract<GivenAnswer, { form: 'pick' }>) => void;
 }) {
   return (
@@ -65,9 +72,10 @@ export function PickRound({
       <RoundCard
         label={label}
         prompt={prompt}
-        highlight={round.highlight}
+        highlight={highlight}
         gap={round.gap}
         definition={round.definition}
+        face={face}
       />
       <AnswerOptions
         key={round.number}
