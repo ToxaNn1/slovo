@@ -143,7 +143,7 @@ describe('the Badges screen', () => {
     });
     expect(screen.getByTestId('badge-win-words-status')).toHaveTextContent('Отримано 13 жовтня');
     expect(screen.getByTestId('badge-win-words-mark-symbol')).toHaveTextContent('Сл');
-    expect(screen.queryByTestId('badge-win-stress-mark-symbol')).toBeNull();
+    expect(screen.getByTestId('badge-win-stress-status')).not.toHaveTextContent(/Отримано/);
     expect(screen.getByTestId('badges-count')).toHaveTextContent(
       `1 з ${String(edition.badges.length)}`,
     );
@@ -254,12 +254,12 @@ describe('the Badges screen', () => {
     expect(screen.getByTestId('badge-streak-3')).toHaveAccessibilityValue({ text: '1 з 3 днів' });
     expect(screen.getByTestId('badge-streak-3-mark-symbol')).toBeOnTheScreen();
     expect(screen.queryByTestId('badge-streak-3-mark-new')).toBeNull();
-    expect(screen.queryByTestId('badge-win-stress-mark-symbol')).toBeNull();
+    expect(screen.getByTestId('badge-win-stress-status')).not.toHaveTextContent(/Отримано/);
   });
 
   it('draws a «Кросворд» Badge as the checker under its name, and other families with their symbol', async () => {
     const composition = await renderScreen();
-    expect(screen.queryByTestId('badge-crossword-7-mark-checker')).toBeNull();
+    expect(screen.getByTestId('badge-crossword-7-mark-checker')).toBeOnTheScreen();
 
     await act(async () => {
       composition.xpLog.award({ source: 'daily-crossword', date: '2026-10-13' }).commit();

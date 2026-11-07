@@ -125,6 +125,17 @@ describe('the Saved tab', () => {
     expect(screen.queryByTestId('favorites')).not.toBeOnTheScreen();
   });
 
+  it('keeps the row of tabs, and where it was scrolled to, when a tab is tapped', async () => {
+    await renderApp('/saved');
+    const row = screen.getByTestId('saved-row');
+
+    await settle(() => fireEvent.press(screen.getByTestId('saved-collections')));
+
+    expect(screen.getByTestId('collections-empty')).toBeOnTheScreen();
+    // The same row, never drawn afresh at its start.
+    expect(screen.getByTestId('saved-row')).toBe(row);
+  });
+
   it('opens on the list its `list` parameter names', async () => {
     await renderApp('/saved?list=collections');
 

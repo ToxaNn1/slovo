@@ -5,6 +5,7 @@ import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, RouteProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
+import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
@@ -180,6 +181,11 @@ describe('the Mascot’s celebrations', () => {
     // The 5th XP makes today an Active Day, the first day of the Streak.
     await playRounds(composition, 5);
     expect(celebration('streakMilestone')).toHaveTextContent(mascot.streakMilestone);
+    // Over any screen, the line stands on a plate of its own (owner bug 07.11).
+    const plate = screen.getByTestId('mascot-streakMilestone-line', {
+      includeHiddenElements: true,
+    });
+    expect(StyleSheet.flatten(plate.props['style'])).toHaveProperty('backgroundColor');
     // VoiceOver skips the line, which takes no touch either.
     expect(screen.queryByText(mascot.streakMilestone)).toBeNull();
 

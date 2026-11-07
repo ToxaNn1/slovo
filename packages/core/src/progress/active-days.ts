@@ -6,7 +6,7 @@ import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import { deriveStreak, type DerivedStreak, type StreakState } from './streak';
-import type { XpLog } from './xp-log';
+import type { XpLog, XpLogChange } from './xp-log';
 
 const { activeDays: activeDayRecords, streakBrokenReported } = userStateRecords;
 
@@ -54,8 +54,11 @@ export interface ActiveDays {
   recordToday(): Promise<void>;
   /** Today's change for another write; none once there is nothing to write. */
   todayChange(): ActiveDayChange;
-  /** Calls `listener` after each change of the days. Returns the call that stops it. */
-  subscribe(listener: () => void): () => void;
+  /**
+   * Calls `listener` after each change of the days, with what it came from:
+   * the XP log's change, or `other` for today's own. Returns the call that stops it.
+   */
+  subscribe(listener: (change: XpLogChange) => void): () => void;
 }
 
 /** Opens the Active Days over the user state and the XP log, for the Core composition. */
@@ -75,7 +78,7 @@ export async function openActiveDays({
   const xpOn = edition.isFeatureEnabled('xpLog');
   const recorded = new Set((await userState.list(activeDayRecords)).keys());
   let reported = await userState.read(streakBrokenReported);
-  const subscribers = createSubscribers();
+  const subscribers = createSubscribers<XpLogChange>();
   const inTurn = createInTurn();
 
   function daysOf(): ReadonlySet<string> {
@@ -94,9 +97,9 @@ export async function openActiveDays({
       freezes: xpOn && edition.isFeatureEnabled('streakFreezes'),
     });
 
-  function tell(): void {
+  function tell(change: XpLogChange = 'other'): void {
     days = daysOf();
-    subscribers.tell();
+    subscribers.tell(change);
   }
   xpLog.subscribe(tell);
 
@@ -132,7 +135,7 @@ export async function openActiveDays({
     try {
       if (change.changes.size > 0) await userState.write(change.changes);
     } catch (error) {
-      subscribers.tell();
+      subscribers.tell('other');
       throw error;
     }
     change.commit();

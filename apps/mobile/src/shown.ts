@@ -110,6 +110,10 @@ export interface Shown {
   readonly crosswordSolveTime: boolean;
   /** The Settings row that opens the Profile, with the reader's whole progress. */
   readonly profile: boolean;
+  /** The Profile's confirmed Entries by rarity. */
+  readonly profileConfirmedByRarity: boolean;
+  /** The Profile's Best result of each Game Mode. */
+  readonly profileGameBest: boolean;
   /** The Quick Question in the Feed and its «Швидкі питання» row in the Mix; it asks the Game's Modes. */
   readonly quickQuestion: boolean;
   /** The Sync status line of the SLOVO ID screen. */
@@ -207,6 +211,8 @@ export function shownOf({
     crosswordSolvedScreen: on('crosswordSolvedScreen'),
     crosswordSolveTime: on('crosswordSolveTime'),
     profile: on('profile'),
+    profileConfirmedByRarity: on('profileConfirmedByRarity'),
+    profileGameBest: on('profileGameBest'),
     quickQuestion: on('quickQuestion'),
     sync: on('sync'),
     dailyGoal: on('dailyGoal'),

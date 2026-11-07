@@ -28,11 +28,11 @@ describe('BadgeMark', () => {
     expect(screen.queryByTestId('badge-new')).toBeNull();
   });
 
-  it('shows a Badge not started as a silhouette with no symbol', async () => {
+  it('shows a Badge not started as a silhouette with its symbol, so the shape is never empty', async () => {
     await draw({ kind: 'locked' });
     expect(screen.getByTestId('badge')).toBeOnTheScreen();
-    expect(screen.queryByTestId('badge-symbol')).toBeNull();
-    expect(screen.queryByText('7')).toBeNull();
+    expect(screen.getByTestId('badge-symbol')).toHaveTextContent('7');
+    expect(screen.queryByTestId('badge-new')).toBeNull();
   });
 
   it('shows a Badge in progress with its symbol and no new tag', async () => {
@@ -41,7 +41,7 @@ describe('BadgeMark', () => {
     expect(screen.queryByTestId('badge-new')).toBeNull();
   });
 
-  it('draws a checker Badge with its checker in place of the symbol, except as a silhouette', async () => {
+  it('draws a checker Badge with its checker in place of the symbol, a silhouette too', async () => {
     await draw({ kind: 'earned', isNew: false }, 'checker');
     expect(screen.getByTestId('badge-checker')).toBeOnTheScreen();
     expect(screen.queryByTestId('badge-symbol')).toBeNull();
@@ -51,7 +51,8 @@ describe('BadgeMark', () => {
     expect(screen.queryByText('7')).toBeNull();
 
     await draw({ kind: 'locked' }, 'checker');
-    expect(screen.queryByTestId('badge-checker')).toBeNull();
+    expect(screen.getByTestId('badge-checker')).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-symbol')).toBeNull();
   });
 
   it('draws no checker on a Badge of another shape', async () => {

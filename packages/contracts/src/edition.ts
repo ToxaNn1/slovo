@@ -473,6 +473,10 @@ export const FeatureSwitchesSchema = z.strictObject({
   quietCategories: z.boolean(),
   /** The board style of the Collections: their list as the Category grid and a Collection's screen as a Category screen (ADR 0082); off, today's list and screen. */
   collectionBoardStyle: z.boolean(),
+  /** The Profile's confirmed Entries by rarity («Підтверджені записи за рідкістю»); off while `profile` or `confirmedEntries` is. */
+  profileConfirmedByRarity: z.boolean(),
+  /** The Profile's Best result of each Game Mode («Найкраще в грі»); off while `profile` or `game` is. */
+  profileGameBest: z.boolean(),
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */

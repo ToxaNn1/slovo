@@ -124,7 +124,9 @@
     "categoryScreens": true,
     "correctionCategoryScreens": true,
     "quietCategories": true,
-    "collectionBoardStyle": true
+    "collectionBoardStyle": true,
+    "profileConfirmedByRarity": true,
+    "profileGameBest": true
   },
   "userSettingDefaults": {
     "theme": "system",

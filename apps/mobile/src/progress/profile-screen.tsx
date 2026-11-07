@@ -41,7 +41,8 @@ const strings = editionStrings.settings.profile;
  * the Level card (its ring, its name, the XP to the next and all XP), the
  * giant Streak and the Best Streak, the Active Days calendar, the Badges as
  * marks by family (each opened at a tap), the confirmed
- * Entries by rarity and each Game Mode's Best result, with a button that
+ * Entries by rarity and each Game Mode's Best result while their Feature
+ * Switches are, with a button that
  * shares the Level. A reader with an Account to offer and none signed in sees
  * the offer to save progress at the top.
  */
@@ -232,20 +233,22 @@ export function ProfileScreen() {
           <BadgeGrid families={edition.badgeFamilies} badges={badges} onPress={onPress} />
           {opening}
         </View>
-        <View style={styles.section}>
-          <SettingsGroup title={strings.confirmed}>
-            {RARITIES.map((rarity) =>
-              line(
-                `profile-confirmed-${String(rarity)}`,
-                fill(strings.confirmedOfRarity, {
-                  rarity: String(rarity),
-                  count: String(confirmed.byRarity[rarity]),
-                }),
-              ),
-            )}
-          </SettingsGroup>
-        </View>
-        {modes.length > 0 && (
+        {shown.profileConfirmedByRarity && (
+          <View style={styles.section}>
+            <SettingsGroup title={strings.confirmed}>
+              {RARITIES.map((rarity) =>
+                line(
+                  `profile-confirmed-${String(rarity)}`,
+                  fill(strings.confirmedOfRarity, {
+                    rarity: String(rarity),
+                    count: String(confirmed.byRarity[rarity]),
+                  }),
+                ),
+              )}
+            </SettingsGroup>
+          </View>
+        )}
+        {shown.profileGameBest && modes.length > 0 && (
           <View style={styles.section}>
             <SettingsGroup title={strings.gameBest}>
               {modes.map(({ modeId, best }) =>
