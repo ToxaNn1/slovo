@@ -1,0 +1,26 @@
+{
+  "kind": "word",
+  "id": "w_1dhpom",
+  "lemma": "ферміон",
+  "stress": [5],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Квантова частинка з напівцілим спіном.",
+  "examples": [
+    {
+      "text": "Електрони та протони є ферміонами."
+    }
+  ],
+  "categoryId": "science",
+  "rarity": 5,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови в 11-ти томах",
+      "url": "https://goroh.pp.ua/Тлумачення/ферміон"
+    },
+    {
+      "title": "Горох: словозміна",
+      "url": "https://goroh.pp.ua/Словозміна/ферміон"
+    }
+  ]
+}

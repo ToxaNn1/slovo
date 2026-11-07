@@ -225,44 +225,52 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     },
   );
 
-  it(`makes a Word Seen only after ${String(SEEN_DWELL_MS)} ms on screen, never on a quick swipe, and never by going back`, async () => {
-    const userState = await seedUserState();
-    const time = fakeClock(today);
-    const feed = await run(userState, time.clock);
-    await feed.next();
-    await feed.next();
-    const [read, skipped, almost] = entryIdsOf(feed.cards);
+  it(
+    `makes a Word Seen only after ${String(SEEN_DWELL_MS)} ms on screen, never on a quick swipe, and never by going back`,
+    { timeout: WALK_TIMEOUT_MS },
+    async () => {
+      const userState = await seedUserState();
+      const time = fakeClock(today);
+      const feed = await run(userState, time.clock);
+      await feed.next();
+      await feed.next();
+      const [read, skipped, almost] = entryIdsOf(feed.cards);
 
-    await look(feed, time, 0, SEEN_DWELL_MS);
-    await look(feed, time, 1, 250);
-    await look(feed, time, 2, SEEN_DWELL_MS - 1);
-    // Back over the skipped card to the one already read.
-    await look(feed, time, 1, 250);
-    await look(feed, time, 0, 10_000);
+      await look(feed, time, 0, SEEN_DWELL_MS);
+      await look(feed, time, 1, 250);
+      await look(feed, time, 2, SEEN_DWELL_MS - 1);
+      // Back over the skipped card to the one already read.
+      await look(feed, time, 1, 250);
+      await look(feed, time, 0, 10_000);
 
-    const unseen = await unseenNextDay(userState);
-    expect(unseen).toHaveLength(liveIds.length - 1);
-    expect(unseen).not.toContain(read);
-    expect(unseen).toContain(skipped);
-    expect(unseen).toContain(almost);
-  });
+      const unseen = await unseenNextDay(userState);
+      expect(unseen).toHaveLength(liveIds.length - 1);
+      expect(unseen).not.toContain(read);
+      expect(unseen).toContain(skipped);
+      expect(unseen).toContain(almost);
+    },
+  );
 
-  it('offers no Seen Word again after a restart in the same Cycle', async () => {
-    const userState = await seedUserState();
-    const time = fakeClock(today);
-    const feed = await run(userState, time.clock);
-    // The Feed gets each next card ready while the one before it is on screen.
-    for (let position = 0; position < 5; position++) await look(feed, time, position, 2000);
-    const read = entryIdsOf(feed.cards).slice(0, 5);
+  it(
+    'offers no Seen Word again after a restart in the same Cycle',
+    { timeout: WALK_TIMEOUT_MS },
+    async () => {
+      const userState = await seedUserState();
+      const time = fakeClock(today);
+      const feed = await run(userState, time.clock);
+      // The Feed gets each next card ready while the one before it is on screen.
+      for (let position = 0; position < 5; position++) await look(feed, time, position, 2000);
+      const read = entryIdsOf(feed.cards).slice(0, 5);
 
-    const restarted = await run(userState, time.clock);
-    // It reopens on the card the reader was on; every card after it is new.
-    const [reopenedOn, ...after] = (await walk(restarted)).slice(restarted.startPosition);
+      const restarted = await run(userState, time.clock);
+      // It reopens on the card the reader was on; every card after it is new.
+      const [reopenedOn, ...after] = (await walk(restarted)).slice(restarted.startPosition);
 
-    expect(reopenedOn).toBe(read.at(-1));
-    expect(after).toHaveLength(liveIds.length - read.length);
-    for (const id of read) expect(after).not.toContain(id);
-  });
+      expect(reopenedOn).toBe(read.at(-1));
+      expect(after).toHaveLength(liveIds.length - read.length);
+      for (const id of read) expect(after).not.toContain(id);
+    },
+  );
 
   it('starts each local day with an unseen Word of the Day that stays until midnight', async () => {
     const userState = await seedUserState();

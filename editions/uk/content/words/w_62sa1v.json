@@ -1,0 +1,21 @@
+{
+  "kind": "word",
+  "id": "w_62sa1v",
+  "lemma": "соціолект",
+  "stress": [6],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Сукупність особливостей мови соціальної групи.",
+  "categoryId": "language-speech",
+  "rarity": 5,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови в 11-ти томах",
+      "url": "https://goroh.pp.ua/Тлумачення/соціолект"
+    },
+    {
+      "title": "Горох: словозміна",
+      "url": "https://goroh.pp.ua/Словозміна/соціолект"
+    }
+  ]
+}

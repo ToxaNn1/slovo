@@ -18,6 +18,7 @@ import {
   FONTS_DIR,
   openAppConfig,
   openEdition,
+  RECORDINGS_DIR,
   REPO_DIR,
   type EditionFolder,
 } from '@slovo/language-pack/edition';
@@ -68,11 +69,12 @@ function repoWithEdition(
   temporaryRepos.push(repo);
   const projectRoot = join(repo, 'apps/mobile');
   mkdirSync(projectRoot, { recursive: true });
-  // The app config reads no Entries, so the content folder stays behind.
+  // The app config reads no Entries and no Recordings, so those folders stay behind.
   const contentDir = dirname(ukrainian.path('manifest'));
+  const recordingsDir = join(ukrainian.dir, RECORDINGS_DIR);
   cpSync(ukrainian.dir, join(repo, 'editions/uk'), {
     recursive: true,
-    filter: (source) => !source.startsWith(contentDir),
+    filter: (source) => !source.startsWith(contentDir) && !source.startsWith(recordingsDir),
   });
   const copy = openEdition(join(repo, 'editions'), 'uk');
   const config = JSON.parse(readFileSync(copy.path('config'), 'utf8')) as Record<string, unknown>;

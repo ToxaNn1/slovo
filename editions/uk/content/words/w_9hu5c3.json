@@ -1,0 +1,21 @@
+{
+  "kind": "word",
+  "id": "w_9hu5c3",
+  "lemma": "ритон",
+  "stress": [3],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Посудина для пиття у вигляді рога тварини.",
+  "categoryId": "history-antiquity",
+  "rarity": 5,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови в 11-ти томах",
+      "url": "https://goroh.pp.ua/Тлумачення/ритон"
+    },
+    {
+      "title": "Горох: словозміна",
+      "url": "https://goroh.pp.ua/Словозміна/ритон"
+    }
+  ]
+}

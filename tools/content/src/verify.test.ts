@@ -204,8 +204,11 @@ describe('verify', () => {
   });
 
   describe('a book source', () => {
-    const tip = ukrainian.entries().tips[0];
-    if (tip === undefined) throw new Error('The UA Edition has no Tip');
+    // A Tip sourced from the book alone: a source with a url is fetched, not left unverified.
+    const tip = ukrainian
+      .entries()
+      .tips.find(({ entry }) => entry.sources.every((source) => source.url === undefined));
+    if (tip === undefined) throw new Error('The UA Edition has no Tip sourced from a book alone');
     const { entry } = tip;
     const quoted = [
       entry.title,
