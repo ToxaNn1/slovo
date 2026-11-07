@@ -1,0 +1,23 @@
+{
+  "kind": "word",
+  "id": "w_7tgn6m",
+  "lemma": "тригер",
+  "stress": [
+    2
+  ],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Пристрій з двома лампами або транзисторами, на виході якого струм і напруга можуть змінюватися стрибкоподібно.",
+  "categoryId": "technology",
+  "rarity": 3,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови в 11-ти томах",
+      "url": "https://goroh.pp.ua/Тлумачення/тригер"
+    },
+    {
+      "title": "Горох: словозміна",
+      "url": "https://goroh.pp.ua/Словозміна/тригер"
+    }
+  ]
+}
