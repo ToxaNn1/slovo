@@ -26,12 +26,13 @@ export function SavedTabs<Id extends string>({
   tabs: readonly SavedTab<Id>[];
   active: Id;
   onSelect: (id: Id) => void;
-  /** Each tab's test ID is `${testID}-${id}`. */
+  /** The row's test ID is `${testID}-row`, each tab's `${testID}-${id}`. */
   testID: string;
 }) {
   const { colors } = useTokens();
   return (
     <ScrollView
+      testID={`${testID}-row`}
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.row}

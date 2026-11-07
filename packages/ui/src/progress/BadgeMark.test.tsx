@@ -25,11 +25,11 @@ describe('BadgeMark', () => {
     expect(screen.queryByTestId('badge-new')).toBeNull();
   });
 
-  it('shows a Badge not started as a silhouette with no symbol', async () => {
+  it('shows a Badge not started as a silhouette with its symbol, so the shape is never empty', async () => {
     await draw({ kind: 'locked' });
     expect(screen.getByTestId('badge')).toBeOnTheScreen();
-    expect(screen.queryByTestId('badge-symbol')).toBeNull();
-    expect(screen.queryByText('7')).toBeNull();
+    expect(screen.getByTestId('badge-symbol')).toHaveTextContent('7');
+    expect(screen.queryByTestId('badge-new')).toBeNull();
   });
 
   it('shows a Badge in progress with its symbol and no new tag', async () => {

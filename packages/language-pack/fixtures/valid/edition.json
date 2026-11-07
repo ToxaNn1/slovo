@@ -116,7 +116,9 @@
     "quietCategories": true,
     "collectionBoardStyle": true,
     "previousWords": true,
-    "correctionTypes": true
+    "correctionTypes": true,
+    "profileConfirmedByRarity": true,
+    "profileGameBest": true
   },
   "userSettingDefaults": {
     "theme": "system",

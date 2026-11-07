@@ -189,7 +189,7 @@ const counterLines = [
 ];
 
 describe('the Profile', () => {
-  it('shows the Level, XP, Streaks, confirmed Entries by rarity, the Badges and each Game Mode', async () => {
+  it('shows the Level, XP, Streaks and the Badges', async () => {
     await renderScreen();
 
     expect(screen.getByText(strings.title)).toBeOnTheScreen();
@@ -203,11 +203,6 @@ describe('the Profile', () => {
     expect(screen.getByTestId('profile-badges-count')).toHaveTextContent(
       `0 з ${String(edition.badges.length)}`,
     );
-    for (const rarity of [1, 2, 3, 4, 5]) {
-      expect(screen.getByTestId(`profile-confirmed-${String(rarity)}`)).toHaveTextContent(
-        `Рідкість ${String(rarity)}: 0`,
-      );
-    }
     for (const { name } of edition.badges) expect(screen.getByLabelText(name)).toBeOnTheScreen();
     const heads = screen.getAllByRole('header');
     const places = edition.badgeFamilies.map(({ name }) =>
@@ -220,9 +215,35 @@ describe('the Profile', () => {
         `0 з ${String(members)}`,
       );
     }
+  });
+
+  it('shows the confirmed Entries by rarity while their Feature Switch is on', async () => {
+    await renderScreen({ switchedOn: 'profileConfirmedByRarity' });
+
+    expect(screen.getByText(strings.confirmed)).toBeOnTheScreen();
+    for (const rarity of [1, 2, 3, 4, 5]) {
+      expect(screen.getByTestId(`profile-confirmed-${String(rarity)}`)).toHaveTextContent(
+        `Рідкість ${String(rarity)}: 0`,
+      );
+    }
+  });
+
+  it("shows each Game Mode's Best result while its Feature Switch is on", async () => {
+    await renderScreen({ switchedOn: 'profileGameBest' });
+
+    expect(screen.getByText(strings.gameBest)).toBeOnTheScreen();
     expect(screen.getByTestId('profile-best-guess-word')).toHaveTextContent(
       `Вгадай слово — ${strings.noGameBest}`,
     );
+  });
+
+  it('leaves out the confirmed Entries by rarity and the Game Modes in the UA Edition, which turns them off', async () => {
+    await renderScreen();
+
+    expect(screen.queryByText(strings.confirmed)).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('profile-confirmed-1')).not.toBeOnTheScreen();
+    expect(screen.queryByText(strings.gameBest)).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('profile-best-guess-word')).not.toBeOnTheScreen();
   });
 
   it('reads the Level card as «N · name», its XP in the Level and the XP left to the next', async () => {
@@ -278,7 +299,12 @@ describe('the Profile', () => {
   });
 
   it('hides the Level, the XP and the Streaks while the reader hides the counters («Без лічильників»)', async () => {
-    await renderScreen({ rounds: 50, noCounters: true, shareCard: sendingShareCard });
+    await renderScreen({
+      rounds: 50,
+      noCounters: true,
+      shareCard: sendingShareCard,
+      switchedOn: 'profileConfirmedByRarity',
+    });
 
     for (const line of counterLines) expect(screen.queryByTestId(line)).not.toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: strings.shareLevel })).not.toBeOnTheScreen();

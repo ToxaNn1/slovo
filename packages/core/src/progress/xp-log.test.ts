@@ -492,7 +492,7 @@ describe('the Daily Goal', () => {
     expect(app.xpLog.state.dailyGoal).toEqual({ goal: 2, seen: 1, met: false });
   });
 
-  it('applies a change from the same local day: lowered to today’s Words Seen it is met at once, and a met day stays met', async () => {
+  it('applies a change from the same local day: lowered to today’s Words Seen it is met at once, with no celebration, and a met day stays met', async () => {
     const { app, records } = await run({
       on: dailyGoal,
       records: seen(['w_00', '2026-10-14T04:00:00.000Z'], ['w_01', '2026-10-14T04:10:00.000Z']),
@@ -508,7 +508,8 @@ describe('the Daily Goal', () => {
     await app.xpLog.setDailyGoal(50);
 
     expect(app.xpLog.state.dailyGoal).toEqual({ goal: 50, seen: 2, met: true });
-    expect(celebrations).toBe(1);
+    // Setting the goal is no learning action: nothing celebrates.
+    expect(celebrations).toBe(0);
   });
 
   it('keeps today met after an app restart, with no second celebration', async () => {

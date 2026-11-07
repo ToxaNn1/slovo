@@ -342,18 +342,23 @@ describe('the Entry card reveal in the Feed', () => {
     jest.useRealTimers();
   });
 
-  it('starts the reveal of a card only once the Feed settles on it', async () => {
+  it('starts the reveal of a card as soon as a drag brings it into view', async () => {
     await renderPager();
     await wait(1000);
-
-    await flickUp();
-    await wait(100);
-    // Still moving in: the headline waits unseen.
+    // Waiting off screen, the next card has not played.
     expect(cardPart('second', 'word-lemma-flying').opacity).toBe(0);
 
-    await wait(200 + 250);
+    // The finger is still on the screen: the next card moves in already drawing itself.
+    await act(() => {
+      fireGestureHandler(getByGestureTestId('feed-swipe'), [
+        { state: State.BEGAN, translationY: 0, velocityY: 0 },
+        { state: State.ACTIVE, translationY: -12, velocityY: -300 },
+        { state: State.ACTIVE, translationY: -12, velocityY: -300 },
+        { state: State.ACTIVE, translationY: -120, velocityY: -300 },
+      ]);
+    });
+    await wait(200);
     expect(cardPart('second', 'word-lemma-flying').opacity).toBeGreaterThan(0);
-    expect(cardPart('second', 'word-actions').opacity).toBe(0);
     await wait(1000);
     expect(cardPart('second', 'word-lemma-flying')).toEqual(revealed);
     expect(cardPart('second', 'word-actions')).toEqual(revealed);
@@ -370,9 +375,10 @@ describe('the Entry card reveal in the Feed', () => {
     // The passed card is whole at once, never half-drawn, as it leaves.
     expect(cardPart('second', 'word-lemma-flying')).toEqual(revealed);
     expect(cardPart('second', 'word-actions')).toEqual(revealed);
-    // The card the Feed heads for waits for the Feed to settle on it.
-    expect(cardPart('third', 'word-lemma-flying').opacity).toBe(0);
-    await wait(300 + 1000);
+    // The card the Feed heads for draws itself while it moves in, not after it rests.
+    await wait(200);
+    expect(cardPart('third', 'word-lemma-flying').opacity).toBeGreaterThan(0);
+    await wait(1000);
     expect(cardPart('third', 'word-lemma-flying')).toEqual(revealed);
     expect(cardPart('second', 'word-lemma-flying')).toEqual(revealed);
   });

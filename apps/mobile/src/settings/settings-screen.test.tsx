@@ -1,6 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { loadEdition, type AnalyticsPort, type Edition, type FeatureSwitch } from '@slovo/core';
-import { Linking } from 'react-native';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
 import { fireEvent, screen, within } from 'expo-router/testing-library';
@@ -345,16 +344,16 @@ describe('Settings › «Ділитися анонімною статистик�
     expect((await settings.read()).shareCounters).toBe(false);
   });
 
-  it("opens the Edition's privacy policy from the link under the switch", async () => {
-    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+  it('leaves the privacy policy to «Про застосунок», with no link under the switch', async () => {
     await renderSettings();
 
-    await fireEvent.press(screen.getByRole('button', { name: 'Політика приватності' }));
-
-    expect(openURL).toHaveBeenCalledWith('https://slovo.example/uk/privacy');
+    expect(
+      screen.getByRole('switch', { name: 'Ділитися анонімною статистикою' }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Політика приватності' })).not.toBeOnTheScreen();
   });
 
-  it('has no switch and no link while the Edition turns Community Counters and Analytics off', async () => {
+  it('has no switch while the Edition turns Community Counters and Analytics off', async () => {
     await renderSettings({ communityCounters: false, analytics: false });
 
     expect(
