@@ -401,7 +401,7 @@ describe('the Profile', () => {
     });
 
     it('is hidden with its switch off, and nothing else', async () => {
-      await renderScreen({ seed });
+      await renderScreen({ switchedOff: 'streakFreezeCard', seed });
 
       expect(screen.queryByTestId('profile-freeze-card')).toBeNull();
       expect(screen.getByTestId('stats-calendar')).toBeOnTheScreen();
