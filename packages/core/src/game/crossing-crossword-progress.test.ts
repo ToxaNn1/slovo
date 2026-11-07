@@ -34,7 +34,7 @@ async function open({
   records = new Map<string, string>(),
   start = '2026-11-04T09:00:00Z',
   under = vocabulary,
-  on = ['game', 'dailyCrossword', 'crossingCrossword'],
+  on = ['game', 'dailyCrossword', 'crossingCrossword', 'crosswordSolveTime'],
   xp,
 }: {
   records?: Map<string, string>;
@@ -184,7 +184,7 @@ describe('the crossing Daily Crossword', () => {
 
     await solve(crossword, crossword.puzzle.words.length - 1);
     expect(crossword.state.words.every(({ kind }) => kind === 'solved')).toBe(true);
-    expect(awards).toEqual([{ source: 'daily-crossword', date: '2026-11-04' }]);
+    expect(awards).toEqual([{ source: 'daily-crossword', date: '2026-11-04', solveSeconds: 0 }]);
     expect(committed()).toBe(1);
     expect(records.has('xp.daily-crossword-2026-11-04')).toBe(true);
 
@@ -194,17 +194,43 @@ describe('the crossing Daily Crossword', () => {
     await again.play({ type: 'release' });
     expect(awards).toHaveLength(1);
   });
+  it('awards the solve with the Solve time ticked so far and the hint flag of the kept progress', async () => {
+    const records = new Map<string, string>();
+    const { xp, awards } = fakeXp();
+    const crossword = await opened({ records, xp });
+    await crossword.play({ type: 'tick', seconds: 40 });
+    await solve(crossword, 0);
+    // The Crossword Hint marks the kept progress; the solve carries the mark.
+    const kept = JSON.parse(records.get('crossword.crossing') ?? '{}') as Record<string, unknown>;
+    records.set('crossword.crossing', JSON.stringify({ ...kept, hinted: true }));
+
+    const again = await opened({ records, xp });
+    await again.play({ type: 'tick', seconds: 2 });
+    for (let i = 1; i < again.puzzle.words.length; i += 1) await solve(again, i);
+    expect(awards).toEqual([
+      { source: 'daily-crossword', date: '2026-11-04', solveSeconds: 42, hinted: true },
+    ]);
+  });
+
+  it('records no time with crosswordSolveTime off: a tick changes nothing and the solve carries no seconds', async () => {
+    const { xp, awards } = fakeXp();
+    const crossword = await opened({ xp, on: ['game', 'dailyCrossword', 'crossingCrossword'] });
+    await crossword.play({ type: 'tick', seconds: 9 });
+    expect(crossword.state.seconds).toBe(0);
+    for (let i = 0; i < crossword.puzzle.words.length; i += 1) await solve(crossword, i);
+    expect(awards).toEqual([{ source: 'daily-crossword', date: '2026-11-04' }]);
+  });
 });
 
 describe('the crossing Daily Crossword of the composition', () => {
-  async function app(on: readonly FeatureSwitch[]) {
+  async function app(on: readonly FeatureSwitch[], records = new Map<string, string>()) {
     return openComposition({
       content: createMemoryContentPort({
         categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
         words: vocabulary,
       }),
       edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),
-      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      userState: await openUserState({ port: createMemoryUserStatePort(records) }),
       clock: fakeClock('2026-11-04T09:00:00Z').clock,
       random: seededRandom(7),
     });
@@ -226,5 +252,28 @@ describe('the crossing Daily Crossword of the composition', () => {
     expect(opening.crossword.state.words.filter(({ kind }) => kind === 'solved').length).toBe(
       before + 1,
     );
+  });
+
+  it('reads the Solve time and the hint of a solve back on another device with the synced records', async () => {
+    const on: FeatureSwitch[] = [
+      'game',
+      'dailyCrossword',
+      'crossingCrossword',
+      'crosswordSolveTime',
+      'xpLog',
+    ];
+    const records = new Map<string, string>();
+    const first = await app(on, records);
+    const opening = await first.openCrossingCrossword();
+    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    await opening.crossword.play({ type: 'tick', seconds: 95 });
+    for (let i = 0; i < opening.crossword.puzzle.words.length; i += 1)
+      await solve(opening.crossword, i);
+    expect(first.xpLog.crosswordSolveOn('2026-11-04')).toEqual({ solveSeconds: 95, hinted: false });
+
+    // The XP log record syncs by id; the other device holds none of the device's own progress.
+    const synced = new Map([...records].filter(([id]) => id.startsWith('xp.')));
+    const other = await app(on, synced);
+    expect(other.xpLog.crosswordSolveOn('2026-11-04')).toEqual({ solveSeconds: 95, hinted: false });
   });
 });
