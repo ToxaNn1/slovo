@@ -5,28 +5,28 @@ import { describe, expect, it } from 'vitest';
 const bare: TipCardModel = {
   kind: 'tip',
   tipId: 't_hour',
-  title: 'Котра година?',
-  nonStandardForm: 'Скільки часу?',
-  standardForm: 'Котра година?',
-  explanation: 'Час не рахують, а питають, котра година.',
+  title: 'What time is it?',
+  nonStandardForm: 'How much time?',
+  standardForm: 'What time is it?',
+  explanation: 'Time is not counted; ask what time it is.',
   example: undefined,
-  sourceNames: ['Як ми говоримо'],
+  sourceNames: ['How we speak'],
 };
 
 describe('tipTabsOf', () => {
-  it('gives a Tip without an Example «Суть» alone, so the card draws no tab bar', () => {
+  it('gives a Tip without an Example the essence tab alone, so the card draws no tab bar', () => {
     expect(tipTabsOf(bare)).toEqual([
       {
         key: 'essence',
-        standardForm: 'Котра година?',
-        explanation: 'Час не рахують, а питають, котра година.',
-        sourceNames: ['Як ми говоримо'],
+        standardForm: 'What time is it?',
+        explanation: 'Time is not counted; ask what time it is.',
+        sourceNames: ['How we speak'],
       },
     ]);
   });
 
-  it('puts the Example of a Tip in «Приклад» after «Суть»', () => {
-    const example = { text: 'Котра година, пане?', author: 'Леся Українка' };
+  it('puts the Example of a Tip in the example tab after the essence tab', () => {
+    const example = { text: 'What time is it, sir?', author: 'Lesya Ukrainka' };
 
     const tabs = tipTabsOf({ ...bare, example });
 
