@@ -391,6 +391,20 @@ export const FeatureSwitchesSchema = z.strictObject({
   questionnaire: z.boolean(),
   /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
   badges: z.boolean(),
+  /** The Level ladder of the Profile: one card per Level name with its range of Levels, and the bar to the next name (spec #1641, ADR 0085); off while `xpLog` is. */
+  levelLadder: z.boolean(),
+  /** The new Level screen: the full red ground with the Level stamped in, at every new Level, in place of the Mascot celebration (ADR 0085); off while `xpLog` is. */
+  newLevelScreen: z.boolean(),
+  /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast (ADR 0085); off while `xpLog` or `badges` is. */
+  badgeSheet: z.boolean(),
+  /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */
+  badgeToast: z.boolean(),
+  /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved (ADR 0085); off while `xpLog` is. */
+  streakFreezeCard: z.boolean(),
+  /** The Break card of the Profile while a Break runs: its dates, a 14-day strip and the next Break's date (ADR 0085); off while `xpLog` is. */
+  breakCard: z.boolean(),
+  /** The Active Days calendar's day lines: a tap on a day tells what happened on it (ADR 0085); off while `xpLog` is. */
+  calendarDayLines: z.boolean(),
   /** The Share Cards of a Level reached, a Badge earned and a Streak milestone; off while `shareCards` or `xpLog` is. */
   progressShareCards: z.boolean(),
   /** The Share Card of a solved Daily Crossword, its grid with no letters; off while `shareCards` or `dailyCrossword` is. */
@@ -503,11 +517,13 @@ const BadgeThresholdSchema = z.number().int().positive();
 const BadgeModesSchema = z.array(KebabCaseIdSchema).min(1);
 
 /**
- * A condition from the Core's catalogue of Badge conditions (ADR 0066), with
- * its parameters: the Streak reaching `days`, `entries` confirmed Entries,
- * the first win (a finished Game with at least half right) in one of
- * `modes`, `days` Daily Crosswords in a row, `count` right Game answers in
- * `modes`, the first right Game answer on a Word of `rarity`, and `level`.
+ * A condition from the Core's catalogue of Badge conditions (ADR 0066, 0085),
+ * with its parameters: the Streak reaching `days`, `entries` confirmed
+ * Entries, the first win (a finished Game with at least half right) in one
+ * of `modes`, `days` Daily Crosswords in a row, `count` right Game answers in
+ * `modes`, the first right Game answer on a Word of `rarity`, `level`, a
+ * finished Game in one of `modes` with every Round right, and `count` right
+ * answers in a row in `modes`, which a wrong answer in them breaks.
  */
 export const BadgeConditionSchema = z.discriminatedUnion('kind', [
   z.strictObject({ kind: z.literal('streak'), days: BadgeThresholdSchema }),
@@ -521,19 +537,51 @@ export const BadgeConditionSchema = z.discriminatedUnion('kind', [
   }),
   z.strictObject({ kind: z.literal('rightOnRarity'), rarity: RaritySchema }),
   z.strictObject({ kind: z.literal('level'), level: BadgeThresholdSchema }),
+  z.strictObject({ kind: z.literal('flawlessGame'), modes: BadgeModesSchema }),
+  z.strictObject({
+    kind: z.literal('rightRun'),
+    modes: BadgeModesSchema,
+    count: BadgeThresholdSchema,
+  }),
 ]);
 
 export type BadgeCondition = z.infer<typeof BadgeConditionSchema>;
 
+/** The shape of a Badge family's mark (ADR 0085). */
+export const BadgeShapeSchema = z.enum(['hexagon', 'shield', 'circle', 'tile', 'wedge', 'diamond']);
+
+export type BadgeShape = z.infer<typeof BadgeShapeSchema>;
+
+/** The tone a Badge family's earned mark is drawn in (ADR 0085). */
+export const BadgeToneSchema = z.enum(['red', 'ink', 'cream']);
+
+export type BadgeTone = z.infer<typeof BadgeToneSchema>;
+
+/**
+ * A Badge family the Edition declares (ADR 0085): its id, the name over its
+ * Badges, the line that says what its Badges count, its mark's shape and
+ * the tone an earned mark is drawn in.
+ */
+export const BadgeFamilySchema = z.strictObject({
+  id: KebabCaseIdSchema,
+  name: TextSchema,
+  description: TextSchema,
+  shape: BadgeShapeSchema,
+  tone: BadgeToneSchema,
+});
+
+export type BadgeFamily = z.infer<typeof BadgeFamilySchema>;
+
 /**
  * A Badge the Edition chooses (ADR 0066): its id, its name, the short symbol
- * its mark shows (at most three characters) and its condition from the
- * catalogue.
+ * its mark shows (at most three characters), the id of its Badge family
+ * (ADR 0085) and its condition from the catalogue.
  */
 export const BadgeSchema = z.strictObject({
   id: KebabCaseIdSchema,
   name: TextSchema,
   symbol: TextSchema.max(3),
+  family: KebabCaseIdSchema,
   condition: BadgeConditionSchema,
 });
 
@@ -900,7 +948,15 @@ export const EditionConfigSchema = z
     onboardingNotificationTimes: OnboardingNotificationTimesSchema,
     /** The onboarding questions, their options and what each sets (ADR 0067). */
     questionnaire: QuestionnaireSchema,
-    /** The Badges, in their order, each id once (ADR 0066). */
+    /** The Badge families, in their order, each id once (ADR 0085). */
+    badgeFamilies: z
+      .array(BadgeFamilySchema)
+      .min(1)
+      .refine(
+        (families) => new Set(families.map(({ id }) => id)).size === families.length,
+        'Expected each Badge family id once',
+      ),
+    /** The Badges, in their order, each id once, each of a declared family (ADR 0066, 0085). */
     badges: z
       .array(BadgeSchema)
       .refine(
@@ -921,9 +977,20 @@ export const EditionConfigSchema = z
         dashboardMoods,
         userSettingDefaults,
         questionnaire,
+        badgeFamilies,
+        badges,
       },
       context,
     ) => {
+      const familyIds = new Set(badgeFamilies.map(({ id }) => id));
+      badges.forEach(({ family }, index) => {
+        if (!familyIds.has(family))
+          context.addIssue({
+            code: 'custom',
+            path: ['badges', index, 'family'],
+            message: `Unknown Badge family "${family}"`,
+          });
+      });
       for (const question of [...QuestionnaireQuestionSchema.options, 'selfRating'] as const) {
         const optionIds = new Set<string>();
         questionnaire[question].forEach(({ id }, index) => {

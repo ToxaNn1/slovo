@@ -247,6 +247,7 @@ describe('The stats sheet’s numbers', () => {
       streak: 1,
       bestStreak: 1,
       freezesHeld: 0,
+      freezesUsed: 0,
       seenToday: 0,
       favorites: 0,
       inCollections: 0,
@@ -522,18 +523,18 @@ describe('The knowledge counts', () => {
 });
 
 describe('The Active Days calendar', () => {
-  /** Opens the app on each local date with the Active Days calendar on, unless `calendarOn` is false. */
+  /** Opens the app on each local date with the Active Days calendar on, or with the `switches` named. */
   async function openWithCalendar(
     records: Map<string, string>,
     dates: readonly string[],
-    calendarOn = true,
+    switches: readonly FeatureSwitch[] = ['activeDaysCalendar'],
   ): Promise<Composition> {
     let app: Composition | undefined;
     for (const date of dates) {
       app = await openComposition({
         content,
         edition: testEdition({
-          isFeatureEnabled: (feature) => calendarOn && feature === 'activeDaysCalendar',
+          isFeatureEnabled: (feature) => switches.includes(feature),
           userSettingDefaults: { mix: { corrections: false } },
         }),
         userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -545,69 +546,105 @@ describe('The Active Days calendar', () => {
     return app;
   }
 
-  const letters = { active: 'a', missed: 'm', today: 't', future: 'f' } as const;
+  const letters = {
+    active: 'a',
+    missed: 'm',
+    today: 't',
+    future: 'f',
+    break: 'b',
+    frozen: 'z',
+  } as const;
 
-  /** Each month as `YYYY-MM` and its weeks, a day as its number and state, `t*` today when it is an Active Day, `.` no day. */
+  /** Each week as its days, a day as its number and state, `t*` today when it is an Active Day. */
   const shown = (app: Composition) =>
-    app.progress.calendar().map(({ year, month, weeks }) => ({
-      month: `${String(year)}-${String(month).padStart(2, '0')}`,
-      weeks: weeks.map((week) =>
+    app.progress
+      .calendar()
+      .map((week) =>
         week
-          .map((day) =>
-            day === undefined
-              ? '.'
-              : `${String(day.day)}${letters[day.state]}${day.state === 'today' && day.active ? '*' : ''}`,
+          .map(
+            (day) =>
+              `${String(day.day)}${letters[day.state]}${day.state === 'today' && day.active ? '*' : ''}`,
           )
           .join(' '),
-      ),
-    }));
+      );
 
-  it('lays out a month starting on a Sunday from Monday, with today outlined and the rest to come', async () => {
-    // 2026-11-01 is a Sunday.
-    const app = await openWithCalendar(new Map(), ['2026-11-01', '2026-11-03']);
+  /** The record of a Streak freeze consumed for a missed local date. */
+  const frozenOn = (date: string): [string, string] => [
+    `xp.freeze-${date}`,
+    JSON.stringify({ kind: 'freeze', date, at: `${date}T07:00:00.000Z` }),
+  ];
+
+  /** The record of a Break of `days` started on a local date. */
+  const breakFrom = (date: string, days: number): [string, string] => [
+    `xp.break-${date}`,
+    JSON.stringify({ kind: 'break', date, at: `${date}T07:00:00.000Z`, days }),
+  ];
+
+  it('shows the 35 days ending with the current week, Monday first, across a month’s edge', async () => {
+    // 2026-11-04 is a Wednesday; its week ends on Sunday 2026-11-08.
+    const app = await openWithCalendar(new Map(), ['2026-10-12', '2026-11-03', '2026-11-04']);
 
     expect(shown(app)).toEqual([
-      {
-        month: '2026-11',
-        weeks: [
-          '. . . . . . 1a',
-          '2m 3t* 4f 5f 6f 7f 8f',
-          '9f 10f 11f 12f 13f 14f 15f',
-          '16f 17f 18f 19f 20f 21f 22f',
-          '23f 24f 25f 26f 27f 28f 29f',
-          '30f . . . . . .',
-        ],
-      },
+      '5m 6m 7m 8m 9m 10m 11m',
+      '12a 13m 14m 15m 16m 17m 18m',
+      '19m 20m 21m 22m 23m 24m 25m',
+      '26m 27m 28m 29m 30m 31m 1m',
+      '2m 3a 4t* 5f 6f 7f 8f',
     ]);
-    const [first] = app.progress.calendar()[0]?.weeks[0]?.slice(6) ?? [];
-    expect(first).toEqual({ date: '2026-11-01', day: 1, state: 'active' });
+    const [first] = app.progress.calendar()[0] ?? [];
+    expect(first).toEqual({ date: '2026-10-05', day: 5, month: 10, state: 'missed' });
+    expect(app.progress.calendar()[3]?.[6]).toEqual({
+      date: '2026-11-01',
+      day: 1,
+      month: 11,
+      state: 'missed',
+    });
   });
 
-  it('runs from the first Active Day’s month to the current one, and no further', async () => {
-    const app = await openWithCalendar(new Map(), ['2026-09-30', '2026-10-12', '2026-11-03']);
+  it('carries the Break and frozen days from the records, a Break day ahead included', async () => {
+    const records = new Map([
+      frozenOn('2026-10-28'),
+      breakFrom('2026-11-02', 4),
+      frozenOn('2026-11-01'),
+    ]);
+    await openWithCalendar(records, ['2026-10-26', '2026-10-27']);
+    // The XP log holds the freeze and Break records.
+    const app = await openWithCalendar(records, ['2026-11-03'], ['activeDaysCalendar', 'xpLog']);
 
-    const months = shown(app);
-    expect(months.map(({ month }) => month)).toEqual(['2026-09', '2026-10', '2026-11']);
-    // September 2026 starts on a Tuesday; its days before the first Active Day are missed.
-    expect(months[0]?.weeks[0]).toBe('. 1m 2m 3m 4m 5m 6m');
-    expect(months[0]?.weeks.at(-1)).toBe('28m 29m 30a . . . .');
-    expect(months[1]?.weeks[2]).toBe('12a 13m 14m 15m 16m 17m 18m');
-    expect(months[2]?.weeks[0]).toBe('. . . . . . 1m');
+    expect(shown(app).slice(3)).toEqual(['26a 27a 28z 29m 30m 31m 1z', '2b 3t 4b 5b 6f 7f 8f']);
   });
 
-  it('shows no future month, even for an Active Day kept ahead of a clock moved back', async () => {
+  it('gives the 7 days ending today for the Streak freeze card, frozen and Break days from the records', async () => {
+    const records = new Map([
+      frozenOn('2026-10-28'),
+      breakFrom('2026-11-02', 4),
+      frozenOn('2026-11-01'),
+    ]);
+    await openWithCalendar(records, ['2026-10-26', '2026-10-27']);
+    const app = await openWithCalendar(records, ['2026-11-03'], ['xpLog']);
+
+    expect(app.progress.lastWeek().map((day) => `${String(day.day)}${letters[day.state]}`)).toEqual(
+      ['28z', '29m', '30m', '31m', '1z', '2b', '3t'],
+    );
+    expect(app.progress.lastWeek()[0]).toEqual({
+      date: '2026-10-28',
+      day: 28,
+      month: 10,
+      state: 'frozen',
+    });
+  });
+
+  it('shows no future week, even for an Active Day kept ahead of a clock moved back', async () => {
     const records = new Map<string, string>();
     await openWithCalendar(records, ['2026-12-02']);
 
     const app = await openWithCalendar(records, ['2026-11-03']);
 
-    const months = shown(app);
-    expect(months.map(({ month }) => month)).toEqual(['2026-11']);
-    expect(months[0]?.weeks[1]).toBe('2m 3t* 4f 5f 6f 7f 8f');
+    expect(shown(app).at(-1)).toBe('2m 3t* 4f 5f 6f 7f 8f');
   });
 
-  it('shows no month with the Active Days calendar off', async () => {
-    const app = await openWithCalendar(new Map(), ['2026-11-03'], false);
+  it('shows no day with the Active Days calendar off', async () => {
+    const app = await openWithCalendar(new Map(), ['2026-11-03'], []);
 
     expect(app.progress.calendar()).toEqual([]);
   });

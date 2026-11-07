@@ -189,7 +189,7 @@ The points a learning action earns: a right answer in a Game (1 per Round), a fi
 _Avoid_: Points, score, coins, experience
 
 **XP log**:
-The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started and a Badge earned. Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
+The append-only record of the reader's progress, kept per Edition: XP records, the Daily Goal set (`word-goal`) and met (`goal-met`) for a day, a freeze consumed, a Break started, a Badge earned, a Badge opened (`badge-opened`, which ends its «НОВА» mark on every device) and a wrong answer in a Game (`wrong-answer`, which earns no XP and feeds the `rightRun` Badge). Every record has a unique id, a local date and a time. Sync merges XP logs as a set union by id, so two devices never double the XP. Total XP, Level, today's XP, Active Days, Streak, Best Streak, freezes held and Break eligibility are derived from it and never stored.
 _Avoid_: XP history, score table, ledger
 
 **Level**:
@@ -209,11 +209,15 @@ A pause of the Streak the reader starts: up to 7 days, once every 30 days, free.
 _Avoid_: Vacation, pause (the polite pause is a notification rule), repair
 
 **Badge**:
-A kept milestone, about 20 in all: Streak days, confirmed learned Entries, the first win in each group of Game Modes, Daily Crosswords in a row, the first right Game answer on a rarity-5 Word and Levels. A win for a Badge is a finished Game with at least half the answers right. The Core holds a catalogue of conditions; an Edition chooses its Badges, names them and adds its own from the catalogue's parameterised kinds. A Badge is never taken away, keeps the date it was earned, syncs through the Account and gives no XP.
+A kept milestone, about 20 in all: Streak days, confirmed learned Entries, the first win in each group of Game Modes, Daily Crosswords in a row, the first right Game answer on a rarity-5 Word Levels, a flawless Game and a run of right answers. Every Badge belongs to one Badge family. A win for a Badge is a finished Game with at least half the answers right. The Core holds a catalogue of conditions; an Edition chooses its Badges, names them and adds its own from the catalogue's parameterised kinds. A Badge is never taken away, keeps the date it was earned, syncs through the Account and gives no XP.
 _Avoid_: Achievement, trophy, medal
 
+**Badge family**:
+A group of Badges an Edition declares, with a name, a description, a shape and a tone that every Badge in it is drawn with. The UA Edition has six. A Badge earned but never opened is new and carries «НОВА».
+_Avoid_: Badge category, Badge group, tier
+
 **Profile**:
-The screen of the reader's whole progress: Level and progress to the next, total XP, Streak, Best Streak, the Active Days calendar, confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress.
+The screen of the reader's whole progress: Level and progress to the next, Streak, Best Streak, the Active Days calendar (the last 35 days across months, with Break and frozen days), confirmed learned Entries by rarity, Badges with progress, the Best result of each Game Mode and a button to share the Level; the reader's earlier numbers (Seen, Favorites, Known, Game results) stay available. Without an Account it offers to save the progress.
 _Avoid_: Account (the identity that syncs), dashboard, stats screen
 
 **Mascot**:

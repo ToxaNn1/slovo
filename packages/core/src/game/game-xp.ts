@@ -47,3 +47,13 @@ export interface XpAward {
 export interface GameXp {
   award(action: XpAction): XpAward;
 }
+
+/**
+ * What the Game records in the XP log: the XP it awards, and each Round
+ * answered wrong, which earns nothing and breaks a run of right answers
+ * (ADR 0085).
+ */
+export interface GameRecords extends GameXp {
+  /** The record a Round answered wrong in `mode` appends, for the write of the answer. */
+  answeredWrong(mode: string): Omit<XpAward, 'amount'>;
+}

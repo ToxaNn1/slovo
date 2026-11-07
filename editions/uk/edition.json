@@ -86,6 +86,13 @@
     "lockScreenWidget": true,
     "questionnaire": true,
     "badges": true,
+    "levelLadder": true,
+    "newLevelScreen": true,
+    "badgeSheet": true,
+    "badgeToast": true,
+    "streakFreezeCard": true,
+    "breakCard": true,
+    "calendarDayLines": true,
     "progressShareCards": true,
     "dailyCrosswordShare": true,
     "tracedCrossword": true,
@@ -511,11 +518,56 @@
       }
     ]
   },
+  "badgeFamilies": [
+    {
+      "id": "streak",
+      "name": "Серія",
+      "description": "Дні поспіль, коли слово відкрито й ціль виконано.",
+      "shape": "hexagon",
+      "tone": "red"
+    },
+    {
+      "id": "confirmed",
+      "name": "Підтверджені",
+      "description": "Слова й вислови, які ви довели, що знаєте.",
+      "shape": "shield",
+      "tone": "ink"
+    },
+    {
+      "id": "first-wins",
+      "name": "Перші перемоги",
+      "description": "Перша виграна гра в кожному виді.",
+      "shape": "circle",
+      "tone": "red"
+    },
+    {
+      "id": "crossword",
+      "name": "Кросворд",
+      "description": "Щоденні кросворди без пропусків.",
+      "shape": "tile",
+      "tone": "cream"
+    },
+    {
+      "id": "levels",
+      "name": "Рівні",
+      "description": "Рівні, до яких ви дійшли.",
+      "shape": "wedge",
+      "tone": "ink"
+    },
+    {
+      "id": "mastery",
+      "name": "Майстерність",
+      "description": "Влучність, чистота й рідкісні слова.",
+      "shape": "diamond",
+      "tone": "red"
+    }
+  ],
   "badges": [
     {
       "id": "streak-3",
       "name": "Три дні поспіль",
       "symbol": "3",
+      "family": "streak",
       "condition": {
         "kind": "streak",
         "days": 3
@@ -525,6 +577,7 @@
       "id": "streak-7",
       "name": "Тиждень поспіль",
       "symbol": "7",
+      "family": "streak",
       "condition": {
         "kind": "streak",
         "days": 7
@@ -534,6 +587,7 @@
       "id": "streak-30",
       "name": "Місяць поспіль",
       "symbol": "30",
+      "family": "streak",
       "condition": {
         "kind": "streak",
         "days": 30
@@ -543,6 +597,7 @@
       "id": "streak-100",
       "name": "Сто днів поспіль",
       "symbol": "100",
+      "family": "streak",
       "condition": {
         "kind": "streak",
         "days": 100
@@ -552,6 +607,7 @@
       "id": "streak-365",
       "name": "Рік поспіль",
       "symbol": "365",
+      "family": "streak",
       "condition": {
         "kind": "streak",
         "days": 365
@@ -561,6 +617,7 @@
       "id": "confirmed-10",
       "name": "10 підтверджених",
       "symbol": "10",
+      "family": "confirmed",
       "condition": {
         "kind": "confirmedEntries",
         "entries": 10
@@ -570,6 +627,7 @@
       "id": "confirmed-50",
       "name": "50 підтверджених",
       "symbol": "50",
+      "family": "confirmed",
       "condition": {
         "kind": "confirmedEntries",
         "entries": 50
@@ -579,6 +637,7 @@
       "id": "confirmed-100",
       "name": "100 підтверджених",
       "symbol": "100",
+      "family": "confirmed",
       "condition": {
         "kind": "confirmedEntries",
         "entries": 100
@@ -588,6 +647,7 @@
       "id": "confirmed-500",
       "name": "500 підтверджених",
       "symbol": "500",
+      "family": "confirmed",
       "condition": {
         "kind": "confirmedEntries",
         "entries": 500
@@ -596,7 +656,8 @@
     {
       "id": "win-words",
       "name": "Перша перемога в словах",
-      "symbol": "АЯ",
+      "symbol": "Сл",
+      "family": "first-wins",
       "condition": {
         "kind": "gameWin",
         "modes": ["guess-word", "type-word", "by-letters", "anagram", "origin", "pairs"]
@@ -605,7 +666,8 @@
     {
       "id": "win-corrections",
       "name": "Перша перемога в суржику",
-      "symbol": "Ї",
+      "symbol": "Сж",
+      "family": "first-wins",
       "condition": {
         "kind": "gameWin",
         "modes": ["correction", "anglicism"]
@@ -614,16 +676,18 @@
     {
       "id": "win-idioms",
       "name": "Перша перемога у фразеологізмах",
-      "symbol": "«»",
+      "symbol": "Фр",
+      "family": "first-wins",
       "condition": {
         "kind": "gameWin",
-        "modes": ["idiom-meaning", "build-idiom"]
+        "modes": ["build-idiom"]
       }
     },
     {
       "id": "win-stress",
       "name": "Перша перемога в наголосах",
       "symbol": "А́",
+      "family": "first-wins",
       "condition": {
         "kind": "gameWin",
         "modes": ["stress"]
@@ -632,16 +696,18 @@
     {
       "id": "win-challenge",
       "name": "Перша перемога у випробуваннях",
-      "symbol": "?!",
+      "symbol": "!",
+      "family": "first-wins",
       "condition": {
         "kind": "gameWin",
-        "modes": ["survival", "timed"]
+        "modes": ["survival"]
       }
     },
     {
       "id": "crossword-7",
       "name": "Сім кросвордів поспіль",
-      "symbol": "7",
+      "symbol": "7×",
+      "family": "crossword",
       "condition": {
         "kind": "dailyCrosswordRun",
         "days": 7
@@ -651,6 +717,7 @@
       "id": "rarity-5",
       "name": "Перше рідкісне слово",
       "symbol": "Ґ",
+      "family": "mastery",
       "condition": {
         "kind": "rightOnRarity",
         "rarity": 5
@@ -660,6 +727,7 @@
       "id": "level-5",
       "name": "Рівень 5",
       "symbol": "5",
+      "family": "levels",
       "condition": {
         "kind": "level",
         "level": 5
@@ -669,6 +737,7 @@
       "id": "level-10",
       "name": "Рівень 10",
       "symbol": "10",
+      "family": "levels",
       "condition": {
         "kind": "level",
         "level": 10
@@ -678,6 +747,7 @@
       "id": "level-20",
       "name": "Рівень 20",
       "symbol": "20",
+      "family": "levels",
       "condition": {
         "kind": "level",
         "level": 20
@@ -686,21 +756,22 @@
     {
       "id": "clean-language",
       "name": "Чиста мова",
-      "symbol": "50",
+      "symbol": "✓",
+      "family": "mastery",
       "condition": {
-        "kind": "rightAnswers",
-        "modes": ["correction", "anglicism"],
-        "count": 50
+        "kind": "flawlessGame",
+        "modes": ["correction", "anglicism"]
       }
     },
     {
       "id": "true-stress",
       "name": "Влучний наголос",
-      "symbol": "100",
+      "symbol": "´",
+      "family": "mastery",
       "condition": {
-        "kind": "rightAnswers",
+        "kind": "rightRun",
         "modes": ["stress"],
-        "count": 100
+        "count": 10
       }
     }
   ],

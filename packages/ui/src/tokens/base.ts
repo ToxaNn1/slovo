@@ -324,6 +324,8 @@ export const typeRoles = {
   endOfCycleInfinity: role('word', '900', 330, 330),
   /** A Badge's symbol on its mark, at a 156-wide mark; the mark scales it to a third of its side. */
   badgeSymbol: role('word', '900', 52, 62),
+  /** The «НОВА» tag on an earned Badge the reader has not opened (ADR 0085). */
+  badgeNewTag: role('word', '800', 9, 11, 1, 'uppercase'),
   /** The Game Review's title. */
   reviewTitle: role('word', '800', 15, 15),
   /** The ✓ or ✗ on a Round's mark in the Game Review. */
@@ -384,6 +386,16 @@ export const typeRoles = {
   profileStreak: role('word', '900', 60, 60, -2),
   /** The words beside the Profile's giant Streak. */
   profileStreakLabel: role('word', '800', 16, 18),
+  /** The paused Streak's ghost number in the corner of the Profile's Break card (p1). */
+  breakGhost: role('word', '900', 170, 170),
+  /** «ПЕРЕРВА» on the Break card. */
+  breakKicker: role('word', '800', 13, 13, 1.5),
+  /** «Серія N на паузі» on the Break card. */
+  breakPaused: role('word', '900', 26, 27),
+  /** The Break's last day on the Break card. */
+  breakUntil: role('ui', '500', 15, 21),
+  /** The next Break's date under the Break card's strip. */
+  breakNext: role('ui', '500', 13, 18),
   /** The name of the screen before, beside the back tile that returns to it. */
   backLink: role('ui', '500', 14, 17),
   /** The label of an action a list row's swipe shows. */
@@ -438,8 +450,6 @@ export const typeRoles = {
   settingsSubTitle: role('word', '800', 20, 22),
   /** The hero Word's Definition under its Lemma on the onboarding welcome. */
   heroDefinition: role('word', '500', 22, 29),
-  /** The title over the Active Days calendar. */
-  calendarTitle: role('ui', '600', 17, 20),
   /** A weekday's letters over a column of the Active Days calendar. */
   calendarWeekday: role('ui', '700', 11, 13),
   /** A day's number on its tile of the Active Days calendar. */
@@ -809,6 +819,8 @@ export const motion = {
   fly: { duration: 600, easing: [0.2, 0.9, 0.25, 1.15] },
   toast: { duration: 350, easing: [0.2, 0.9, 0.3, 1.1] },
   stamp: { duration: 450, easing: [0.2, 0.9, 0.3, 1.2] },
+  /** The five frames of a Badge's stamp (board 10.7), after a short wait. */
+  badgeStamp: { duration: 550, easing: ease, delay: 150 },
   /** The Level ring fills to the reader's progress. */
   ring: { duration: 1100, easing: [0.2, 0.8, 0.2, 1] },
   sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
@@ -829,7 +841,12 @@ export const motion = {
   reduceMotion: { duration: 300, easing: ease },
 } as const satisfies Record<
   string,
-  { readonly duration: number; readonly easing: Easing; readonly rise?: number }
+  {
+    readonly duration: number;
+    readonly easing: Easing;
+    readonly rise?: number;
+    readonly delay?: number;
+  }
 >;
 
 /**

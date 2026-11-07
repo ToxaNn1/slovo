@@ -75,12 +75,18 @@ export interface XpLogMilestones {
   readonly wins: ReadonlySet<string>;
   /** The right Game answers that earned XP, by Game Mode. */
   readonly rightByMode: ReadonlyMap<string, number>;
+  /** The Game Modes with a finished Game right in every Round (ADR 0085). */
+  readonly flawless: ReadonlySet<string>;
+  /** Each Game answer, right (one that earned XP) or wrong, with its Game Mode, in the order given (ADR 0085). */
+  readonly answers: readonly { readonly mode: string; readonly right: boolean }[];
   /** The rarities of the Words with a right Game answer that earned XP. */
   readonly rightRarities: ReadonlySet<number>;
   /** The local dates of the Daily Crosswords solved. */
   readonly crosswords: ReadonlySet<string>;
   /** The Badges earned: the local date each was earned on, by Badge id. */
   readonly badges: ReadonlyMap<string, string>;
+  /** The Badges the reader has opened, which ends their «НОВА» mark (ADR 0085), by Badge id. */
+  readonly opened: ReadonlySet<string>;
 }
 
 /** Records to append for another write, and the step that makes them in memory once written. */
@@ -127,6 +133,13 @@ export interface XpLog {
    * earned Badge is never earned again or removed.
    */
   earn(badges: readonly string[]): XpLogAppend;
+  /** The record of a Game Round answered wrong in `mode`, for another write; it earns no XP (ADR 0085). */
+  answeredWrong(mode: string): XpLogAppend;
+  /**
+   * The Badge-opened record of a Badge (ADR 0085), for another write. A Badge
+   * has one such record by its id, so two devices that open it merge into one.
+   */
+  open(badge: string): XpLogAppend;
   /** The local date (`YYYY-MM-DD`) the total XP first reached `total`, if it has. */
   reachedOn(total: number): string | undefined;
   /** Calls `listener` after each change of the XP. Returns the call that stops it. */
@@ -147,6 +160,8 @@ export interface XpLog {
 }
 
 /** The award of an action that earns nothing: no change to write, nothing to make in memory. */
+type WordGoalRecord = Extract<XpRecord, { kind: 'word-goal' }>;
+
 const NOTHING_EARNED: XpAward = {
   changes: new Map(),
   amount: 0,
@@ -216,6 +231,23 @@ export async function openXpLog({
   const goalOn = on && edition.isFeatureEnabled('dailyGoal');
   const seenWordOn = goalOn && edition.isFeatureEnabled('seenWordXp');
   const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
+  /** The `word-goal` records by date and instant, so a goal is looked up among them and not in the whole log; made anew after one is added. */
+  let wordGoals: WordGoalRecord[] | undefined;
+  function wordGoalsInOrder(): readonly WordGoalRecord[] {
+    wordGoals ??= [...records.values()]
+      .filter((record): record is WordGoalRecord => record.kind === 'word-goal')
+      .sort((one, other) =>
+        one.date === other.date
+          ? one.at.localeCompare(other.at)
+          : one.date.localeCompare(other.date),
+      );
+    return wordGoals;
+  }
+  /** Keeps a record in the log, and forgets the goals' order when it is a goal. */
+  function keep(id: string, record: XpRecord): void {
+    records.set(id, record);
+    if (record.kind === 'word-goal') wordGoals = undefined;
+  }
   const subscribers = createSubscribers();
   const goalMetSubscribers = createSubscribers();
   /** Tells the records of one session apart when the clock and the random source stand still. */
@@ -257,16 +289,10 @@ export async function openXpLog({
   /** The goal in force on a local date: the last `word-goal` set on or before it, unless that one turned it off. */
   function goalOf(date: string): DailyGoal | undefined {
     if (!goalOn) return undefined;
-    let last: Extract<XpRecord, { kind: 'word-goal' }> | undefined;
-    for (const record of records.values()) {
-      if (
-        record.kind === 'word-goal' &&
-        record.date <= date &&
-        (last === undefined ||
-          record.date > last.date ||
-          (record.date === last.date && record.at >= last.at))
-      )
-        last = record;
+    let last: WordGoalRecord | undefined;
+    for (const record of wordGoalsInOrder()) {
+      if (record.date > date) break;
+      last = record;
     }
     return last?.goal ?? undefined;
   }
@@ -279,8 +305,10 @@ export async function openXpLog({
   }
 
   /** Whether a `word-goal` record, «Без цілі» included, was set on or before the local date. */
-  const wordGoalSetBy = (date: string) =>
-    [...records.values()].some((record) => record.kind === 'word-goal' && record.date <= date);
+  const wordGoalSetBy = (date: string) => {
+    const first = wordGoalsInOrder()[0];
+    return first !== undefined && first.date <= date;
+  };
 
   /**
    * A past day with no goal in Words but a goal in XP from before Words
@@ -362,11 +390,17 @@ export async function openXpLog({
     const { count, reviewXpOf, seenWordsOf } = counter();
     const wins = new Set<string>();
     const rightByMode = new Map<string, number>();
+    const flawless = new Set<string>();
+    const answered: { at: string; id: string; mode: string; right: boolean }[] = [];
     const rightRarities = new Set<number>();
     const crosswords = new Set<string>();
     const badges = new Map<string, string>();
-    for (const record of records.values()) {
+    const opened = new Set<string>();
+    for (const [id, record] of records) {
       switch (record.kind) {
+        case 'wrong-answer':
+          answered.push({ at: record.at, id, mode: record.mode, right: false });
+          break;
         case 'badge':
           badges.set(record.badge, record.date);
           break;
@@ -380,11 +414,18 @@ export async function openXpLog({
         case 'word-goal':
         case 'goal-met':
           break;
+        case 'badge-opened':
+          opened.add(record.badge);
+          break;
         case 'xp': {
-          const { source, mode, rarity } = record;
-          if (source === 'game-finished' && mode !== undefined) wins.add(mode);
+          const { source, mode, rarity, right, played } = record;
+          if (source === 'game-finished' && mode !== undefined) {
+            wins.add(mode);
+            if (played !== undefined && played > 0 && right === played) flawless.add(mode);
+          }
           if (source === 'game-round' && mode !== undefined) {
             rightByMode.set(mode, (rightByMode.get(mode) ?? 0) + 1);
+            answered.push({ at: record.at, id, mode, right: true });
           }
           if (source === 'game-round' && rarity !== undefined) rightRarities.add(rarity);
           if (source === 'daily-crossword') crosswords.add(record.date);
@@ -418,7 +459,18 @@ export async function openXpLog({
       active,
       frozen,
       breaks,
-      milestones: { wins, rightByMode, rightRarities, crosswords, badges },
+      milestones: {
+        wins,
+        rightByMode,
+        flawless,
+        answers: answered
+          .sort((a, b) => (a.at === b.at ? (a.id < b.id ? -1 : 1) : a.at < b.at ? -1 : 1))
+          .map(({ mode, right }) => ({ mode, right })),
+        rightRarities,
+        crosswords,
+        badges,
+        opened,
+      },
     };
   }
   let derived = derive();
@@ -431,7 +483,7 @@ export async function openXpLog({
     const { state } = derived;
     const after = state.level?.level;
     if (before !== undefined && after !== undefined && after > before) {
-      void analytics.track('levelReached', { level: after });
+      void analytics.track('levelReached', { level: after }).catch(() => undefined);
     }
     subscribers.tell();
     if (state.dailyGoal?.met === true && !wasMet && derived.date === previousDate) {
@@ -481,12 +533,13 @@ export async function openXpLog({
       ...(action.source === 'game-round' && action.rarity !== undefined
         ? { rarity: action.rarity }
         : {}),
+      ...(action.source === 'game-finished' ? { right: action.right, played: action.played } : {}),
     };
     return {
       changes: xpRecords.record(id).change(record),
       amount,
       commit() {
-        records.set(id, record);
+        keep(id, record);
         change();
       },
     };
@@ -503,7 +556,7 @@ export async function openXpLog({
       ),
       commit() {
         if (added.size === 0) return;
-        for (const [id, record] of added) records.set(id, record);
+        for (const [id, record] of added) keep(id, record);
         change();
       },
     };
@@ -521,7 +574,45 @@ export async function openXpLog({
       ),
       commit() {
         if (added.size === 0) return;
-        for (const [id, record] of added) records.set(id, record);
+        for (const [id, record] of added) keep(id, record);
+        change();
+      },
+    };
+  }
+
+  function answeredWrong(mode: string): XpLogAppend {
+    if (!on) return NOTHING_EARNED;
+    const at = clock.now();
+    // No draw from `random`: a wrong answer leaves the Game's own draws as they were.
+    sequence += 1;
+    const id = `${at.getTime().toString(36)}-wrong-${sequence.toString(36)}`;
+    const record: XpRecord = {
+      kind: 'wrong-answer',
+      date: todayKey(clock),
+      at: at.toISOString(),
+      mode,
+    };
+    return {
+      changes: xpRecords.record(id).change(record),
+      commit() {
+        records.set(id, record);
+        change();
+      },
+    };
+  }
+
+  function open(badge: string): XpLogAppend {
+    const id = `badge-opened-${badge}`;
+    const record: XpRecord = {
+      kind: 'badge-opened',
+      date: todayKey(clock),
+      at: clock.now().toISOString(),
+      badge,
+    };
+    return {
+      changes: xpRecords.record(id).change(record),
+      commit() {
+        records.set(id, record);
         change();
       },
     };
@@ -534,7 +625,7 @@ export async function openXpLog({
     return {
       changes: xpRecords.record(id).change(record),
       commit() {
-        records.set(id, record);
+        keep(id, record);
         change();
       },
     };
@@ -551,7 +642,7 @@ export async function openXpLog({
     await userState.write(
       new Map([...added].flatMap(([id, record]) => [...xpRecords.record(id).change(record)])),
     );
-    for (const [id, record] of added) records.set(id, record);
+    for (const [id, record] of added) keep(id, record);
     change();
   }
 
@@ -656,7 +747,9 @@ export async function openXpLog({
       return derived.milestones;
     },
     award,
+    answeredWrong,
     earn,
+    open,
     freeze,
     startBreak,
     reachedOn,

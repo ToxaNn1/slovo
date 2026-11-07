@@ -120,6 +120,9 @@ const testEditionConfig = {
       { id: 'many', label: 'Many', offerRarityTest: true },
     ],
   },
+  badgeFamilies: [
+    { id: 'run', name: 'Run', description: 'Days in a row', shape: 'hexagon', tone: 'red' },
+  ],
   badges: [],
   mascot: {
     onboarding: 'Hello',
