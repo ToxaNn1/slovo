@@ -100,7 +100,7 @@ export function SynonymRowCardBody({
       </View>
       {shown.concealed ? null : tabs ? (
         // No tab bar and no pages: the whole row fills the card's fixed frame (ADR 0088).
-        <FitPanel testID="synonymRow-tab-panel" fitKey="row">
+        <FitPanel testID="synonymRow" fitKey="row">
           <SynonymRowContent card={shown.card} onOpenWord={onOpenWord} />
         </FitPanel>
       ) : (

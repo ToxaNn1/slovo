@@ -447,6 +447,11 @@
       "paronym": "пароніми"
     },
     "correctionType": "Тип: {type}",
+    "tabs": {
+      "better": "Як краще",
+      "why": "Чому",
+      "examples": "Приклади"
+    },
     "nonStandard": "Так часто кажуть",
     "standard": "Українською краще",
     "otherEquivalents": "також: {equivalents}",

@@ -56,9 +56,10 @@ export interface EntryCardProps {
    */
   wordOfTheDayFont?: string | undefined;
   /**
-   * A Word's, a Tip's or a Synonym Row's card in a fixed-height frame, with
-   * tabs under its head, while the Edition's `wordTabs` is on in effect
-   * (ADR 0088); the Word of the Day's red card keeps its column.
+   * A Word's, a Correction's, a Tip's or a Synonym Row's card in a
+   * fixed-height frame, with tabs under its head, while the Edition's
+   * `wordTabs` is on in effect (ADR 0088); the Word of the Day's red card
+   * keeps its column.
    */
   tabs?: boolean | undefined;
 }
@@ -239,6 +240,7 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             corner={corner}
+            tabs={tabs}
           />
         ) : card.kind === 'idiom' ? (
           <IdiomCardBody
@@ -290,6 +292,7 @@ function EntryCardFace({
 /** The kinds of Entry whose card is a fixed frame while `wordTabs` is on (ADR 0088). */
 const FIXED_KINDS: ReadonlySet<EntryCardProps['card']['kind']> = new Set([
   'word',
+  'correction',
   'tip',
   'synonymRow',
 ]);
