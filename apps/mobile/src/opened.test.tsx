@@ -1,6 +1,7 @@
 import { describe, expect, it } from '@jest/globals';
 import { EditionProvider } from '@slovo/ui';
-import { render, screen } from '@testing-library/react-native';
+import { screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from './shell/test-render';
 import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -24,7 +25,7 @@ function standing(state: OpeningState<unknown>): Opening<unknown> {
 }
 
 async function renderGate(state: OpeningState<unknown>) {
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={edition} strings={editionStrings}>
         <Opened opening={standing(state)} failedTestID="gate-failed">

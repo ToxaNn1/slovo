@@ -11,7 +11,8 @@ import {
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, waitFor, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import HomeScreen from '../app/index';
@@ -197,7 +198,7 @@ const shell = () =>
 
 /** The app on the home route, with the Feed route the Dashboard opens. */
 async function renderApp() {
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>

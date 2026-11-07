@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
@@ -48,7 +49,7 @@ async function renderBar({
     remoteSwitches: switchedTo(editionWith({ xpLog, noCounters: noCountersSwitch, dailyGoal })),
     settings: await settingsAt({ noCounters }),
   });
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>

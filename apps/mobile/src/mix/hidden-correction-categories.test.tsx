@@ -10,7 +10,8 @@ import {
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HideButton, HideChoiceSheet, UndoToastProvider } from '@slovo/ui';
 import { Link, Stack } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
+import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { Text } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -121,7 +122,7 @@ async function openHideChoice(entryId: string) {
     composition: opened(composition),
     remoteSwitches: switchedTo(shippedEdition),
   });
-  const app = renderRouter(
+  const app = await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
@@ -137,7 +138,6 @@ async function openHideChoice(entryId: string) {
     },
     { initialUrl: '/' },
   );
-  await app;
   await settle();
   await fireEvent.press(screen.getByTestId('hide-button'));
   await settle();

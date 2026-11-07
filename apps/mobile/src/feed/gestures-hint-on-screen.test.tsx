@@ -11,7 +11,8 @@ import {
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, waitFor } from 'expo-router/testing-library';
+import { act, fireEvent, screen, waitFor } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { AccessibilityInfo } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -136,7 +137,7 @@ const shell = () =>
 
 /** The app on the Feed. */
 async function renderApp() {
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>

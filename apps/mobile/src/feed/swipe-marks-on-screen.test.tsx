@@ -11,7 +11,8 @@ import {
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { AccessibilityInfo } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -144,7 +145,7 @@ const shell = () =>
 
 /** The app on the Feed. */
 async function renderApp() {
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>

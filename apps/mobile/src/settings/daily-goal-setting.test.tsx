@@ -8,7 +8,8 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SettingsScreen from '../app/settings/index';
@@ -69,7 +70,7 @@ beforeEach(async () => {
 });
 
 async function renderSettings() {
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({

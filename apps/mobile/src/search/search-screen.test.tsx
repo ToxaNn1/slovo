@@ -3,7 +3,8 @@ import { loadEdition, openComposition, systemRandom, type Composition } from '@s
 import type { Word } from '@slovo/contracts';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { AccessibilityInfo } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -85,7 +86,7 @@ async function settle() {
 }
 
 async function renderSearch() {
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={testShell({ composition: opened(composition) })}>
         <EditionProvider edition={edition} strings={editionStrings}>

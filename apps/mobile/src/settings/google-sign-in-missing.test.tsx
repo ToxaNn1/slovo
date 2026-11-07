@@ -7,7 +7,8 @@ import {
   seedUserState,
 } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { act, render, screen } from '@testing-library/react-native';
+import { act, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 
 // A build with a Google client id whose binary lacks Google's sign-in module,
 // such as a dev client built before it: the SDK's JavaScript throws on load,
@@ -58,7 +59,7 @@ describe('A binary without the Google sign-in module', () => {
     );
     await opening.opened();
 
-    await render(
+    await renderInGestureRoot(
       <EditionProvider edition={edition} strings={editionStrings}>
         <AccountScreen
           opening={opening}

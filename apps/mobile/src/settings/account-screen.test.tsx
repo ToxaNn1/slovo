@@ -15,7 +15,8 @@ import {
   seedUserState,
 } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { Platform } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
@@ -98,7 +99,7 @@ async function renderScreen({
   );
   await opening.opened();
   const edition = editionWith({ googleSignIn, signInWithApple });
-  await render(
+  await renderInGestureRoot(
     // The SLOVO ID screen's confirmation dialog is a bottom sheet, which reads the safe area.
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={edition} strings={editionStrings}>

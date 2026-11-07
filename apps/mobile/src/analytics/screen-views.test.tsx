@@ -1,5 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { render, waitFor } from '@testing-library/react-native';
+import { waitFor } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 
 import { ShellProvider } from '../shell-value';
 import { opened, testShell } from '../shell/test-support';
@@ -32,7 +33,7 @@ describe('ScreenViews', () => {
   it('tells the composition each screen viewed by its route', async () => {
     const { shell, screens } = await shellKeepingScreens();
     mockSegments = ['(tabs)', 'settings'];
-    const view = await render(
+    const view = await renderInGestureRoot(
       <ShellProvider shell={shell}>
         <ScreenViews />
       </ShellProvider>,

@@ -14,7 +14,8 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, systemSchedule } from '@slovo/ui';
-import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import GameScreen from '../app/game';
@@ -293,7 +294,7 @@ async function renderScreen({
     settings: await settingsAt(settings),
     shareCard,
   });
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={shell}>
         <EditionProvider edition={edition} strings={editionStrings}>

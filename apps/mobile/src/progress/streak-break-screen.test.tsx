@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
@@ -18,7 +19,7 @@ const metrics = {
 /** The Break screen over the Core's composition of a test Shell, as the UA Edition ships it. */
 async function renderScreen() {
   const composition = await testShell().composition.opened();
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider shell={testShell({ composition: opened(composition) })}>
         <EditionProvider edition={edition} strings={editionStrings}>

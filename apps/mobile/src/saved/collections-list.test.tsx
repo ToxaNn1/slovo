@@ -3,7 +3,8 @@ import type { Word } from '@slovo/contracts';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, systemSchedule } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionsScreen from '../app/saved/collections/index';
@@ -99,7 +100,7 @@ async function renderScreen() {
     isFeatureEnabled: (feature) =>
       feature === 'collectionBoardStyle' ? boardStyleOn : edition.isFeatureEnabled(feature),
   };
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <ShellProvider
         shell={testShell({

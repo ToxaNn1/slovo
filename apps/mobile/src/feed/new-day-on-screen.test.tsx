@@ -12,7 +12,8 @@ import {
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen } from 'expo-router/testing-library';
+import { act, fireEvent, screen } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import type { AppStateStatus } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -157,7 +158,7 @@ async function renderApp(appState: ReturnType<typeof fakeAppState>['source']) {
     remoteSwitches: switchedTo(editionInEffect),
     composition: opened(composition),
   });
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>

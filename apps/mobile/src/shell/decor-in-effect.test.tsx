@@ -2,7 +2,8 @@ import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import type { SeasonalMotif } from '@slovo/contracts';
 import { loadEdition, type Clock } from '@slovo/core';
 import { EditionProvider, Mascot, TokensProvider } from '@slovo/ui';
-import { act, render, screen } from '@testing-library/react-native';
+import { act, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from './test-render';
 
 import {
   activeEditionFiles,
@@ -55,7 +56,7 @@ async function renderDecor({
     remoteSwitches: switchedTo(editionInEffect),
     settings: await settingsAt({ seasonalDecor }),
   });
-  await render(
+  await renderInGestureRoot(
     <ShellProvider shell={shell}>
       <EditionProvider edition={edition} strings={editionStrings}>
         <TokensProvider tokens={editionTokens} colorScheme="light">

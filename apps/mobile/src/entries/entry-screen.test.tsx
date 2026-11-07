@@ -4,7 +4,8 @@ import { loadEdition, openComposition, type Composition, type Haptics } from '@s
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -161,7 +162,7 @@ async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
     composition: opened(composition),
     remoteSwitches: switchedTo(editionInEffect()),
   });
-  const app = renderRouter(
+  const app = await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
@@ -193,7 +194,6 @@ async function renderEntry(entryId: string, url = `/entry/${entryId}`) {
     },
     { initialUrl: url },
   );
-  await app;
   await settle();
   return { pathname: () => app.getPathname() };
 }

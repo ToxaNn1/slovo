@@ -9,7 +9,8 @@ import {
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
-import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { ShellProvider } from '../shell-value';
@@ -84,7 +85,7 @@ async function renderOnboarding(shipped: Edition = loadEdition(activeEditionFile
     remoteSwitches: switchedTo(shipped),
     composition: opened(composition),
   });
-  await renderRouter(
+  await renderRoutes(
     {
       index: () => (
         <SafeAreaProvider initialMetrics={metrics}>

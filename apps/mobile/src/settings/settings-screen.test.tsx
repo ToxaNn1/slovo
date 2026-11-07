@@ -3,7 +3,8 @@ import { loadEdition, type AnalyticsPort, type Edition, type FeatureSwitch } fro
 import { Linking } from 'react-native';
 import { EditionProvider } from '@slovo/ui';
 import { Stack } from 'expo-router';
-import { fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { fireEvent, screen, within } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SettingsScreen from '../app/settings';
@@ -91,7 +92,7 @@ async function renderSettings(
     remoteSwitches: switchedTo(editionWith(switches)),
     settings,
   });
-  await renderRouter(
+  await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>

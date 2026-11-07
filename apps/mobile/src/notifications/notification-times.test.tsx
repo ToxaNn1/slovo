@@ -2,7 +2,8 @@ import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { loadEdition, openComposition, systemRandom, type Composition } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
@@ -65,7 +66,7 @@ beforeEach(async () => {
   });
   await mockComposition.notifications.keepTime('09:00');
   await mockComposition.notifications.keepTime('21:00');
-  await render(
+  await renderInGestureRoot(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={edition} strings={editionStrings}>
         <NotificationTimes />

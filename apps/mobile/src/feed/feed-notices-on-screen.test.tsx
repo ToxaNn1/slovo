@@ -18,7 +18,8 @@ import {
 } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, renderRouter, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, within } from 'expo-router/testing-library';
+import { renderRoutes } from '../shell/test-render';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -190,7 +191,7 @@ const AccountStandIn = () => null;
 
 /** The app on the Feed, with the Entry screen a link opens and the Account screen a Notice opens. */
 async function renderApp() {
-  const app = renderRouter(
+  const app = await renderRoutes(
     {
       _layout: () => (
         <SafeAreaProvider initialMetrics={metrics}>
@@ -214,7 +215,6 @@ async function renderApp() {
     },
     { initialUrl: '/' },
   );
-  await app;
   await settle();
   // The pager lays its pages out once it knows its height.
   await fireEvent(screen.getByTestId('feed'), 'layout', {

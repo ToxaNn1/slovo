@@ -14,8 +14,8 @@ import {
   seedUserState,
 } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { act, fireEvent, screen } from '@testing-library/react-native';
+import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import CollectionLinkScreen from '../app/c/[linkId]';
@@ -122,21 +122,19 @@ async function settle() {
 }
 
 async function renderSheet() {
-  await render(
-    <GestureHandlerRootView>
-      <SafeAreaProvider initialMetrics={metrics}>
-        <ShellProvider
-          shell={testShell({
-            composition: opened(composition),
-            remoteSwitches: switchedTo(edition),
-          })}
-        >
-          <EditionProvider edition={edition} strings={editionStrings}>
-            <CollectionLinkScreen />
-          </EditionProvider>
-        </ShellProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>,
+  await renderInGestureRoot(
+    <SafeAreaProvider initialMetrics={metrics}>
+      <ShellProvider
+        shell={testShell({
+          composition: opened(composition),
+          remoteSwitches: switchedTo(edition),
+        })}
+      >
+        <EditionProvider edition={edition} strings={editionStrings}>
+          <CollectionLinkScreen />
+        </EditionProvider>
+      </ShellProvider>
+    </SafeAreaProvider>,
   );
   await settle();
 }
