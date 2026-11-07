@@ -37,23 +37,25 @@ type Paints = Readonly<Record<'body' | 'ink' | 'accent', string>>;
  * The Mascot (ADR 0070) in a state, drawn from the Edition's vector with its
  * design motion, and the Edition's short line for it under it. `onRed` draws
  * the variant for a red ground; `width` sets a smaller figure, such as the
- * Round's. It is silent and takes no touch, so it never
+ * Round's. `plate` sets the line on an ink plate in the surface colour, for
+ * a Mascot over any screen, as a celebration is; the figure on it is never
+ * the red variant. It is silent and takes no touch, so it never
  * stands in the reader's way. An Edition without a vector shows the line alone.
  */
 export function Mascot({
   state,
   line,
   onRed = false,
+  plate = false,
   width = mascotWidth,
   testID = `mascot-${state}`,
 }: {
   state: MascotState;
   line?: string;
-  onRed?: boolean;
   /** The figure's width in points; the Mascot's own by default. */
   width?: number;
   testID?: string;
-}) {
+} & ({ onRed?: boolean; plate?: false } | { plate: true; onRed?: false })) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
@@ -62,16 +64,26 @@ export function Mascot({
     <View testID={testID} pointerEvents="none" style={styles.mascot}>
       {mascot !== undefined && <Figure mascot={mascot} state={state} onRed={onRed} width={width} />}
       {line !== undefined && (
-        <Text
-          {...voice}
-          style={[
-            typeStyle('sub', tokens),
-            styles.line,
-            { color: onRed ? colors.onAccent : colors.muted },
-          ]}
+        <View
+          testID={`${testID}-line`}
+          style={
+            plate
+              ? [styles.plate, { backgroundColor: colors.ink, borderRadius: tokens.radii.chip }]
+              : undefined
+          }
         >
-          {line}
-        </Text>
+          <Text
+            {...voice}
+            testID={`${testID}-line-text`}
+            style={[
+              typeStyle('sub', tokens),
+              styles.line,
+              { color: plate ? colors.surface : onRed ? colors.onAccent : colors.muted },
+            ]}
+          >
+            {line}
+          </Text>
+        </View>
       )}
     </View>
   );
@@ -249,4 +261,5 @@ const styles = StyleSheet.create({
   // The design turns the figure about 30% across and 60% down.
   figure: { transformOrigin: '30% 60%' },
   line: { textAlign: 'center' },
+  plate: { paddingHorizontal: space[3], paddingVertical: space[2] },
 });

@@ -40,24 +40,25 @@ const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
 /**
  * The Mascot at the moment `state` with the Edition's line for it, while its
  * Feature Switch is on in effect; else nothing, as in 0.9. `width` sets a
- * smaller figure, such as the Round head's; `onRed` draws it for a red ground.
+ * smaller figure, such as the Round head's; `onRed` draws it for a red ground,
+ * `plate` sets its line on a plate for a Mascot over any screen.
  */
 export function MascotIn({
   state,
   onRed = false,
+  plate = false,
   width,
 }: {
   state: MascotMoment;
-  onRed?: boolean;
   width?: number;
-}) {
+} & ({ onRed?: boolean; plate?: false } | { plate: true; onRed?: false })) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
   return (
     <Mascot
       state={stateAt[state]}
       line={edition.mascot[state]}
-      onRed={onRed}
+      {...(plate ? { plate } : { onRed })}
       testID={`mascot-${state}`}
       {...(width === undefined ? {} : { width })}
     />
@@ -234,7 +235,8 @@ export function MascotCelebrations() {
       importantForAccessibility="no-hide-descendants"
       style={styles.celebration}
     >
-      <MascotIn state={shown} />
+      {/* The line floats over any screen, so it stands on a plate (owner bug 07.11). */}
+      <MascotIn state={shown} plate />
     </View>
   );
 }
