@@ -353,3 +353,46 @@ describe('a Game of «На час»', () => {
     ]);
   });
 });
+
+// Spec #1674, «End of a Game»: «Час!» heads a time-up, «Влучно!» at least half right.
+describe('the end of «На час»', () => {
+  it('is `time-up` once its time runs out, on target with at least half the answers right', async () => {
+    const time = handTime();
+    const app = await run({ time });
+    await app.game.start('timed');
+    for (const right of [true, false, true, false, true, false]) await pick(app, right);
+    await pass(app, time, 60_000);
+
+    expect(current(app).end).toMatchObject({
+      kind: 'time-up',
+      played: 6,
+      right: 3,
+      newBest: true,
+      onTarget: true,
+    });
+  });
+
+  it('is off target with fewer than half the answers right', async () => {
+    const time = handTime();
+    const app = await run({ time });
+    await app.game.start('timed');
+    for (const right of [true, false, true, false, false]) await pick(app, right);
+    await pass(app, time, 60_000);
+
+    expect(current(app).end).toMatchObject({
+      kind: 'time-up',
+      played: 5,
+      right: 2,
+      onTarget: false,
+    });
+  });
+
+  it('is off target with no answer at all', async () => {
+    const time = handTime();
+    const app = await run({ time });
+    await app.game.start('timed');
+    await pass(app, time, 60_000);
+
+    expect(current(app).end).toMatchObject({ kind: 'time-up', played: 0, onTarget: false });
+  });
+});

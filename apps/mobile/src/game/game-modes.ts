@@ -28,13 +28,14 @@ export function gameModeStrings(modes: GameModesStrings, modeId: string): GameMo
 }
 
 /**
- * The card of a Game Mode on offer, in the Edition's texts, with its Best
- * result once it has one; a mode still planned can't start yet and says no
+ * The card of a Game Mode on offer, in the Edition's texts: its one line and
+ * its mark, the Best result («★ 12») once it has one or «—» before, which
+ * VoiceOver reads in words («Найкраще: 12 з 15»); a mode still planned can't start yet and says no
  * reason. It throws for a mode without texts, or without a text for the
  * reason it can't start.
  */
 export function gameModeCard(offer: GameModeOffer, strings: GameStrings): GameModeCardContent {
-  const { glyph, title, description, refusals } = gameModeStrings(strings.modes, offer.modeId);
+  const { glyph, title, oneLiner, refusals } = gameModeStrings(strings.modes, offer.modeId);
   const reason = 'refusal' in offer ? offer.refusal : undefined;
   const refusal = reason === undefined ? undefined : refusals[reason];
   if (reason !== undefined && refusal === undefined) {
@@ -46,10 +47,14 @@ export function gameModeCard(offer: GameModeOffer, strings: GameStrings): GameMo
   return {
     glyph,
     title,
-    description,
+    line: oneLiner,
     canStart,
     refusal,
-    best: best === undefined ? undefined : bestText(best, strings.modeBest),
+    best:
+      best === undefined
+        ? strings.hubRow.none
+        : fill(strings.hubRow.best, { n: String(best.result) }),
+    bestLabel: best === undefined ? undefined : bestText(best, strings.modeBest),
   };
 }
 

@@ -108,6 +108,24 @@ export interface GameTime {
   readonly endsAt: Date | undefined;
 }
 
+/**
+ * How a Game ended (spec #1674): `finished` at its Round limit, `time-up` once
+ * its time limit ran out, `lives-over` with its last Life lost. Each says the
+ * Rounds played, the right answers, the XP the Game earned and whether it
+ * beat the mode's Best result; a finished Game and a time-up also say whether
+ * at least half the answers were right, «Влучно!» rather than «Ще раунд!».
+ */
+export type GameEnd = (
+  | { readonly kind: 'finished' | 'time-up'; readonly onTarget: boolean }
+  | { readonly kind: 'lives-over' }
+) & {
+  readonly played: number;
+  readonly right: number;
+  readonly xp: number;
+  /** Whether the Game set a new Best result above the one before; a first Game with a result of 0 sets none. */
+  readonly newBest: boolean;
+};
+
 /** The Game in play, or just over. */
 export interface CurrentGame {
   readonly modeId: string;
@@ -134,6 +152,8 @@ export interface CurrentGame {
    */
   readonly played: readonly PlayedRound[];
   readonly status: GameStatus;
+  /** How the Game ended, once it is over; none while it is in play. */
+  readonly end?: GameEnd;
 }
 
 /**
@@ -470,6 +490,17 @@ const inPlay = ({ status }: CurrentGame) => status === 'playing' || status === '
 const resultOf = (over: CurrentGame): number =>
   over.lives === undefined ? over.played.filter(({ right }) => right).length : over.roundsPassed;
 
+/**
+ * How a Game just over ended: its last Life lost, its time run out (the clock
+ * left at 0), or else its Round limit reached; at least half the answers right
+ * is on target.
+ */
+function endOf(over: CurrentGame, counts: Omit<GameEnd, 'kind' | 'onTarget'>): GameEnd {
+  if (over.status === 'lost') return { kind: 'lives-over', ...counts };
+  const onTarget = counts.played > 0 && counts.right * 2 >= counts.played;
+  return { kind: over.time?.left === 0 ? 'time-up' : 'finished', onTarget, ...counts };
+}
+
 /** A mode's Best result as its offer says it, out of the mode's Round limit when it has one. */
 function offeredBest(mode: GameMode, result: number): OfferedBest {
   const of = roundLimitOf(mode);
@@ -573,6 +604,8 @@ export async function openGame({
   let played: GameInPlay | undefined;
   /** When the Game in play started, by the clock. */
   let startedAt = clock.now();
+  /** The XP the Game in play has earned so far, kept in the user state. */
+  let earned = 0;
   /** Cancels the end of the timed Game in play, scheduled while its clock runs. */
   let cancelTimeUp: (() => void) | undefined;
 
@@ -673,6 +706,7 @@ export async function openGame({
     change({ ...state, modes: modesNow, current: first, widgetHint: false });
     if (first === undefined) return;
     startedAt = clock.now();
+    earned = 0;
     void analytics?.track('gameStarted', { mode: modeId }).catch(() => undefined);
   }
 
@@ -717,21 +751,20 @@ export async function openGame({
     const answered = game && played?.answer(game, given);
     if (game === undefined || answered === undefined) return;
     const round = answered.played.at(-1);
-    const roundXp =
-      round === undefined
-        ? undefined
-        : round.right
-          ? xp.award({
-              source: 'game-round',
-              mode: game.modeId,
-              rarity: round.entry.kind === 'word' ? round.entry.rarity : undefined,
-            })
-          : xp.answeredWrong(game.modeId);
+    const rightXp = round?.right
+      ? xp.award({
+          source: 'game-round',
+          mode: game.modeId,
+          rarity: round.entry.kind === 'word' ? round.entry.rarity : undefined,
+        })
+      : undefined;
+    const roundXp = round === undefined ? undefined : (rightXp ?? xp.answeredWrong(game.modeId));
     if (inPlay(answered)) {
       changeCurrent(answered);
       if (roundXp !== undefined && roundXp.changes.size > 0)
         await inTurn(() => writeAwards([roundXp]));
-    } else await inTurn(() => finish(game, answered, roundXp));
+      earned += rightXp?.amount ?? 0;
+    } else await inTurn(() => finish(game, answered, roundXp, rightXp?.amount ?? 0));
     if (round === undefined) return;
     await inTurn(() =>
       round.right ? knowledge.confirm(round.entry.id) : knowledge.answer(round.entry.id, 'unknown'),
@@ -765,30 +798,40 @@ export async function openGame({
    */
   async function finish(
     game: CurrentGame,
-    over: CurrentGame,
+    ended: CurrentGame,
     roundXp?: Omit<XpAward, 'amount'>,
+    roundAmount = 0,
   ): Promise<void> {
-    const result = resultOf(over);
-    const best = state.bestResults[over.modeId];
+    const result = resultOf(ended);
+    const best = state.bestResults[ended.modeId];
     const beaten = best === undefined || result > best;
-    const widgetHint = widgetHintDue && over.lives !== undefined && over.lives > 0;
-    const right = over.played.filter((round) => round.right).length;
+    const widgetHint = widgetHintDue && ended.lives !== undefined && ended.lives > 0;
+    const right = ended.played.filter((round) => round.right).length;
     // A Game with no right answer still sets the mode's first Best result but
     // earns no XP for it: the bonus rewards effort, not random tapping (story 3).
     const bestXp = beaten && right > 0;
+    const awards = [
+      xp.award({
+        source: 'game-finished',
+        mode: ended.modeId,
+        right,
+        played: ended.played.length,
+      }),
+      ...(bestXp ? [xp.award({ source: 'game-best' })] : []),
+    ];
     await writeAwards(
-      [
-        ...(roundXp === undefined ? [] : [roundXp]),
-        xp.award({
-          source: 'game-finished',
-          mode: over.modeId,
-          right,
-          played: over.played.length,
-        }),
-        ...(bestXp ? [xp.award({ source: 'game-best' })] : []),
-      ],
-      beaten ? gameBest.record(over.modeId).change(result) : new Map(),
+      [...(roundXp === undefined ? [] : [roundXp]), ...awards],
+      beaten ? gameBest.record(ended.modeId).change(result) : new Map(),
     );
+    const over: CurrentGame = {
+      ...ended,
+      end: endOf(ended, {
+        played: ended.played.length,
+        right,
+        xp: earned + roundAmount + awards.reduce((sum, { amount }) => sum + amount, 0),
+        newBest: beaten && result > 0,
+      }),
+    };
     void analytics
       ?.track('gameFinished', {
         mode: over.modeId,

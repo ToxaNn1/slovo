@@ -67,6 +67,7 @@ export { type FirstWeekDay } from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
   type CurrentGame,
+  type GameEnd,
   type GameTime,
   type GivenAnswer,
   type GridCell,
