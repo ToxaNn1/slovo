@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { roundLayout, space, typeStyle } from '../tokens';
@@ -10,6 +11,7 @@ import { useTokens } from '../providers/TokensProvider';
  * ink for a wrong one, one line of explanation, the Definition or the
  * Correction's explanation, and «Далі →». It covers nothing of the Round;
  * the Example and its author live in the expanded Game Review rows.
+ * VoiceOver hears the verdict and the line as the card shows.
  */
 export function AnswerCard({
   right,
@@ -25,6 +27,10 @@ export function AnswerCard({
   const { colors } = tokens;
   const { strings, voice } = useEdition();
   const card = strings.game.round.answerCard;
+  const verdict = right ? card.right : card.wrong;
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility(line === undefined ? verdict : `${verdict} ${line}`);
+  }, [verdict, line]);
   return (
     <View testID="game-answer-card" style={styles.card}>
       <Text
@@ -34,7 +40,7 @@ export function AnswerCard({
         {...voice}
         style={[typeStyle('roundVerdict', tokens), { color: right ? colors.accent : colors.ink }]}
       >
-        {right ? card.right : card.wrong}
+        {verdict}
       </Text>
       {line === undefined ? null : (
         <Text

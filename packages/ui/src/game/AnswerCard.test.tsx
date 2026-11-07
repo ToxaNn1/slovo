@@ -1,6 +1,7 @@
 import { AnswerCard, EditionProvider } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { AccessibilityInfo } from 'react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -22,6 +23,13 @@ describe('AnswerCard', () => {
 
     expect(screen.getByRole('header')).toHaveTextContent('Spot on!');
     expect(screen.getByTestId('game-answer-card-line')).toHaveTextContent('open and honest');
+  });
+
+  it('tells VoiceOver the verdict and the line as the card shows', async () => {
+    const announce = jest.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    await renderCard(false, 'open and honest');
+    expect(announce).toHaveBeenCalledWith('Close. Next one. open and honest');
+    announce.mockRestore();
   });
 
   it('heads a wrong answer with its own verdict', async () => {
