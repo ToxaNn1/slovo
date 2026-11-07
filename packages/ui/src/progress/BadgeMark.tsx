@@ -5,6 +5,7 @@ import Svg, { Circle, Polygon } from 'react-native-svg';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import {
+  badgeChecker,
   badgeMark,
   badgeNewTag,
   badgeStamp,
@@ -22,6 +23,7 @@ const outlines: Record<Exclude<BadgeShape, 'circle'>, Wedge> = {
   tile: badgeTile,
   wedge: wedges.wedge,
   diamond: wedges.diamond,
+  checker: badgeChecker,
 };
 
 /** The shape drawn in `fill` over a box of `size`, shrunk about its centre by `inset` of the side on each edge. */
