@@ -1,5 +1,5 @@
-import type { WordCardModel } from '@slovo/core';
-import { wordTabsOf } from '@slovo/ui/word-tabs';
+import type { IdiomCardModel, WordCardModel } from '@slovo/core';
+import { idiomTabsOf, wordTabsOf } from '@slovo/ui/word-tabs';
 import { describe, expect, it } from 'vitest';
 
 const bare: WordCardModel = {
@@ -84,5 +84,43 @@ describe('wordTabsOf', () => {
   it('opens the links tab on antonyms alone and the history tab on the Word History alone', () => {
     const tabs = wordTabsOf({ ...bare, antonyms: ['bold'], history: 'Old word.' });
     expect(tabs.map((tab) => tab.key)).toEqual(['essence', 'links', 'history']);
+  });
+});
+
+const bareIdiom: IdiomCardModel = {
+  kind: 'idiom',
+  idiomId: 'i1',
+  expression: 'kick the bucket',
+  idiomType: 'idiom',
+  primaryDefinition: 'To die.',
+  extraDefinitions: [],
+  examples: [],
+  etymology: undefined,
+  sourceNames: ['Dictionary'],
+};
+
+describe('idiomTabsOf', () => {
+  it('gives essence, origin and example in order for a full Idiom', () => {
+    const tabs = idiomTabsOf({
+      ...bareIdiom,
+      extraDefinitions: ['To give up.'],
+      examples: [{ text: 'He kicked the bucket.', author: 'Author' }],
+      etymology: 'From the gallows.',
+    });
+
+    expect(tabs).toEqual([
+      {
+        key: 'essence',
+        definition: 'To die.',
+        meanings: ['To give up.'],
+        sourceNames: ['Dictionary'],
+      },
+      { key: 'origin', etymology: 'From the gallows.' },
+      { key: 'example', examples: [{ text: 'He kicked the bucket.', author: 'Author' }] },
+    ]);
+  });
+
+  it('leaves out origin and example when the Idiom has no origin and no Example', () => {
+    expect(idiomTabsOf(bareIdiom).map(({ key }) => key)).toEqual(['essence']);
   });
 });

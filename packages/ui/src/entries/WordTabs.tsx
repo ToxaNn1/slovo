@@ -1,6 +1,6 @@
 import type { FontSize } from '@slovo/contracts';
 import { withoutStress, type WordCardModel } from '@slovo/core';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
@@ -18,7 +18,7 @@ import {
   WordHistory,
   WordIllustration,
 } from './WordCard';
-import { wordTabsOf, type WordTab, type WordTabKey } from './word-tabs';
+import { wordTabsOf, type WordTab } from './word-tabs';
 
 /** The step below each font size, which a tab too tall for the card takes first (ADR 0088). */
 const SMALLER: Readonly<Record<FontSize, FontSize>> = { S: 'S', M: 'S', L: 'M', XL: 'L' };
@@ -31,11 +31,7 @@ type Fit = 'fits' | 'shrunk' | 'scrolls';
 
 /**
  * The Word card's tabs under its Lemma (ADR 0088): «Суть», «Приклад»,
- * «Зв’язки» and «Історія», without the empty ones, «Суть» selected first. A
- * card with «Суть» alone draws no tab bar. The selected tab's content fills
- * the rest of the card's fixed frame; one too tall takes the font size a step
- * smaller, and one too tall even then makes the page scroll. Nothing moves
- * between tabs, so Reduce Motion has nothing to stop.
+ * «Зв’язки» and «Історія», without the empty ones, in the `EntryTabs` frame.
  */
 export function WordTabs({
   card,
@@ -48,14 +44,50 @@ export function WordTabs({
   onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
   onHistoryShown: (() => void) | undefined;
 }) {
+  const { strings } = useEdition();
+  return (
+    <EntryTabs testID="word" tabs={wordTabsOf(card)} names={strings.wordCard.tabs}>
+      {(tab) => (
+        <TabContent
+          tab={tab}
+          card={card}
+          onOpenCorrection={onOpenCorrection}
+          onOpenSynonymRow={onOpenSynonymRow}
+          onHistoryShown={onHistoryShown}
+        />
+      )}
+    </EntryTabs>
+  );
+}
+
+/**
+ * An Entry card's tabs under its head (ADR 0088), the first selected on
+ * opening. A card with one tab alone draws no tab bar. The selected tab's
+ * content fills the rest of the card's fixed frame; one too tall takes the
+ * font size a step smaller, and one too tall even then makes the page scroll.
+ * Nothing moves between tabs, so Reduce Motion has nothing to stop.
+ */
+export function EntryTabs<Key extends string, Tab extends { readonly key: Key }>({
+  testID,
+  tabs,
+  names,
+  children,
+}: {
+  /** The card's kind, which names the tabs' test IDs, e.g. `word-tab-essence`. */
+  testID: string;
+  tabs: readonly [Tab, ...Tab[]];
+  /** The name of each tab, from the Edition's strings. */
+  names: Readonly<Record<Key, string>>;
+  /** What the selected tab shows. */
+  children: (tab: Tab) => ReactNode;
+}) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const { strings, voice } = useEdition();
+  const { voice } = useEdition();
   const { step } = useWordTextSizes();
-  const tabs = wordTabsOf(card);
-  const [selectedKey, setSelectedKey] = useState<WordTabKey>('essence');
+  const [selectedKey, setSelectedKey] = useState<Key>(tabs[0].key);
   const selected = tabs.find((tab) => tab.key === selectedKey) ?? tabs[0];
-  const [fit, setFit] = useState<{ key: WordTabKey; fit: Fit }>({ key: 'essence', fit: 'fits' });
+  const [fit, setFit] = useState<{ key: Key; fit: Fit }>({ key: tabs[0].key, fit: 'fits' });
   const fitNow = fit.key === selected.key ? fit.fit : 'fits';
   const [room, setRoom] = useState<number | undefined>(undefined);
   const measured = ({ nativeEvent }: LayoutChangeEvent) => {
@@ -66,15 +98,17 @@ export function WordTabs({
     <View style={styles.tabs}>
       {tabs.length === 1 ? null : (
         <View role="tablist" style={[styles.bar, { borderBottomColor: colors.line }]}>
-          {tabs.map(({ key }) => {
+          {tabs.map((tab) => {
+            const { key } = tab;
             const on = key === selected.key;
+            const name = names[key];
             return (
               <Pressable
                 key={key}
-                testID={`word-tab-${key}`}
+                testID={`${testID}-tab-${key}`}
                 role="tab"
                 aria-selected={on}
-                accessibilityLabel={strings.wordCard.tabs[key]}
+                accessibilityLabel={name}
                 {...voice}
                 onPress={() => {
                   setSelectedKey(key);
@@ -87,7 +121,7 @@ export function WordTabs({
                     { color: on ? colors.ink : colors.muted },
                   ]}
                 >
-                  {strings.wordCard.tabs[key]}
+                  {name}
                 </Text>
               </Pressable>
             );
@@ -95,7 +129,7 @@ export function WordTabs({
         </View>
       )}
       <View
-        testID="word-tab-panel"
+        testID={`${testID}-tab-panel`}
         style={fitNow === 'scrolls' ? undefined : styles.room}
         onLayout={({ nativeEvent }) => {
           if (fitNow !== 'scrolls') setRoom(nativeEvent.layout.height);
@@ -103,13 +137,7 @@ export function WordTabs({
       >
         <View style={[styles.content, fitNow !== 'scrolls' && styles.overlay]} onLayout={measured}>
           <FontSizeProvider fontSize={fitNow === 'shrunk' ? SMALLER[step] : step}>
-            <TabContent
-              tab={selected}
-              card={card}
-              onOpenCorrection={onOpenCorrection}
-              onOpenSynonymRow={onOpenSynonymRow}
-              onHistoryShown={onHistoryShown}
-            />
+            {children(selected)}
           </FontSizeProvider>
         </View>
       </View>

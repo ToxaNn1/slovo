@@ -56,7 +56,7 @@ export interface EntryCardProps {
    */
   wordOfTheDayFont?: string | undefined;
   /**
-   * A Word's card in a fixed-height frame with tabs under its Lemma, while
+   * A Word's or an Idiom's card in a fixed-height frame with tabs under its head, while
    * the Edition's `wordTabs` is on in effect (ADR 0088); the Word of the Day's
    * red card keeps its column.
    */
@@ -204,8 +204,8 @@ function EntryCardFace({
         testID={`${card.kind}-card`}
         style={[
           styles.card,
-          // The tabbed Word card takes the page's height, whatever its tab holds (ADR 0088).
-          tabs && card.kind === 'word' && styles.fixed,
+          // A tabbed Word or Idiom card takes the page's height, whatever its tab holds (ADR 0088).
+          tabs && (card.kind === 'word' || card.kind === 'idiom') && styles.fixed,
           {
             backgroundColor: colors.surface,
             borderColor: colors.line,
@@ -246,6 +246,7 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             corner={corner}
+            tabs={tabs}
           />
         ) : card.kind === 'synonymRow' ? (
           <SynonymRowCardBody

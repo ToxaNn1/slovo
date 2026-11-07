@@ -1,4 +1,4 @@
-import type { Example, WordCardModel } from '@slovo/core';
+import type { Example, IdiomCardModel, WordCardModel } from '@slovo/core';
 
 /**
  * One tab of a Word's Entry card (ADR 0088), with what it shows: «Суть» the
@@ -45,6 +45,45 @@ export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]
     tabs.push({ key: 'history', meanings, etymology, history: card.history });
   return [
     { key: 'essence', definition: card.primaryDefinition, moreMeanings: meanings.length },
+    ...tabs,
+  ];
+}
+
+/**
+ * One tab of an Idiom's Entry card (ADR 0088), with what it shows: «Суть» the
+ * Definitions and the sources, «Звідки» where the expression comes from,
+ * «Приклад» the Examples.
+ */
+export type IdiomTab =
+  | {
+      readonly key: 'essence';
+      readonly definition: string;
+      readonly meanings: readonly string[];
+      readonly sourceNames: readonly string[];
+    }
+  | { readonly key: 'origin'; readonly etymology: string }
+  | { readonly key: 'example'; readonly examples: readonly [Example, ...Example[]] };
+
+/** The names of an Idiom card's tabs, which the Edition's strings give. */
+export type IdiomTabKey = IdiomTab['key'];
+
+/**
+ * The tabs of an Idiom's card, in order, without the ones that would be
+ * empty: «Суть» always first, so it is selected on opening, then «Звідки» and
+ * «Приклад».
+ */
+export function idiomTabsOf(card: IdiomCardModel): readonly [IdiomTab, ...IdiomTab[]] {
+  const [first, ...rest] = card.examples;
+  const tabs: IdiomTab[] = [];
+  if (card.etymology !== undefined) tabs.push({ key: 'origin', etymology: card.etymology });
+  if (first !== undefined) tabs.push({ key: 'example', examples: [first, ...rest] });
+  return [
+    {
+      key: 'essence',
+      definition: card.primaryDefinition,
+      meanings: card.extraDefinitions,
+      sourceNames: card.sourceNames,
+    },
     ...tabs,
   ];
 }
