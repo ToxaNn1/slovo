@@ -1,8 +1,8 @@
 'use no memo';
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
-import type { FixedChip, RoundAnswer } from '@slovo/core';
-import { Fragment, useEffect, useRef, useState } from 'react';
+import type { ChipLayout, FixedChip, RoundAnswer } from '@slovo/core';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Animated, {
   interpolateColor,
@@ -27,6 +27,8 @@ const CHIP_RADIUS = 14;
 /** The gap between the chips, and between the answer line and the chips. */
 const CHIP_GAP = 8;
 const LINE_GAP = 22;
+/** The columns letter tiles stand in (board 07). */
+const TILE_COLUMNS = 4;
 /** How faint a chip placed in the line stays among the shuffled ones. */
 const PLACED_OPACITY = 0.25;
 /** How far the largest text sizes of iOS may scale a chip's text, so a chip never breaks a word. */
@@ -50,13 +52,17 @@ type Judged = 'right' | 'wrong' | undefined;
  * haptic. VoiceOver reads every chip by its text, the line's in the order
  * placed, and skips the empty places. A character that stays in place, such
  * as an apostrophe, is no chip: it shows in the line once the chips before
- * it are there. Key it by the Round, so a new Round starts with an empty
- * line.
+ * it are there. As letter tiles (board 07), the tiles stand in 4 columns,
+ * decoys among them, under a red slot for each letter of the answer; the
+ * last slot filled gives the answer. Key it by the Round, so a new Round
+ * starts with an empty line.
  */
 export function OrderedChips({
   chips,
   kind,
   fixed = [],
+  layout = 'line',
+  slots = chips.length,
   answer,
   onAnswer,
 }: {
@@ -66,9 +72,13 @@ export function OrderedChips({
   kind: 'letter' | 'word';
   /** The characters that stay in place among the chips; none when left out. */
   fixed?: readonly FixedChip[] | undefined;
+  /** A line of places or letter tiles in 4 columns: a line when left out. */
+  layout?: ChipLayout | undefined;
+  /** How many places the answer takes, every chip but the decoys: one for each chip when left out. */
+  slots?: number | undefined;
   /** The Round's answer, once given. */
   answer: ChipsAnswer | undefined;
-  /** The places of the chips, in the order tapped, once every chip is in the line. */
+  /** The places of the chips, in the order tapped, once every place of the line is filled. */
   onAnswer: (chosen: number[]) => void;
 }) {
   const [tapped, setTapped] = useState<readonly number[]>([]);
@@ -78,7 +88,7 @@ export function OrderedChips({
   return (
     <View testID="chips" style={styles.chips}>
       <View testID="chips-line" style={styles.line}>
-        {chips.map((_, index) => {
+        {Array.from({ length: slots }, (_, index) => {
           const place = line[index];
           return (
             <Fragment key={index}>
@@ -87,7 +97,7 @@ export function OrderedChips({
                   .filter(({ at }) => at === index)
                   .map(({ text }, mark) => <FixedMark key={mark} text={text} kind={kind} />)}
               {place === undefined ? (
-                <EmptySlot index={index} kind={kind} />
+                <EmptySlot index={index} kind={kind} tiles={layout === 'tiles'} />
               ) : (
                 <LineChip
                   key={place}
@@ -104,12 +114,12 @@ export function OrderedChips({
             </Fragment>
           );
         })}
-        {line.length === chips.length &&
+        {line.length === slots &&
           fixed
-            .filter(({ at }) => at === chips.length)
+            .filter(({ at }) => at === slots)
             .map(({ text }, mark) => <FixedMark key={mark} text={text} kind={kind} />)}
       </View>
-      <View style={styles.tray}>
+      <Tray tiles={layout === 'tiles'}>
         {chips.map((text, place) => {
           const placed = line.includes(place);
           return (
@@ -123,18 +133,46 @@ export function OrderedChips({
               onPress={() => {
                 const next = [...tapped, place];
                 setTapped(next);
-                if (next.length === chips.length) onAnswer(next);
+                if (next.length === slots) onAnswer(next);
               }}
             />
           );
         })}
-      </View>
+      </Tray>
     </View>
   );
 }
 
-/** An empty place of the answer line, dashed, which VoiceOver skips. It carries `chips-slot-${index}`. */
-function EmptySlot({ index, kind }: { index: number; kind: 'letter' | 'word' }) {
+/** The chips under the line: wrapped and centred, or letter tiles in rows of 4. */
+function Tray({ tiles, children }: { tiles: boolean; children: ReactNode[] }) {
+  if (!tiles) return <View style={styles.tray}>{children}</View>;
+  const rows = Array.from({ length: Math.ceil(children.length / TILE_COLUMNS) }, (_, row) =>
+    children.slice(row * TILE_COLUMNS, (row + 1) * TILE_COLUMNS),
+  );
+  return (
+    <View style={styles.tiles}>
+      {rows.map((row, index) => (
+        <View key={index} testID={`chips-row-${String(index)}`} style={styles.tray}>
+          {row}
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
+ * An empty place of the answer line, dashed, or a red slot of letter tiles,
+ * which VoiceOver skips. It carries `chips-slot-${index}`.
+ */
+function EmptySlot({
+  index,
+  kind,
+  tiles,
+}: {
+  index: number;
+  kind: 'letter' | 'word';
+  tiles: boolean;
+}) {
   const { colors } = useTokens();
   return (
     <View
@@ -144,7 +182,9 @@ function EmptySlot({ index, kind }: { index: number; kind: 'letter' | 'word' }) 
       style={[
         styles.slot,
         kind === 'letter' ? styles.letter : styles.word,
-        { borderColor: colors.line, borderStyle: 'dashed' },
+        tiles
+          ? { borderColor: colors.accent, borderStyle: 'solid' }
+          : { borderColor: colors.line, borderStyle: 'dashed' },
       ]}
     />
   );
@@ -290,6 +330,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: CHIP_GAP,
   },
+  tiles: { gap: CHIP_GAP },
   tray: {
     flexDirection: 'row',
     flexWrap: 'wrap',

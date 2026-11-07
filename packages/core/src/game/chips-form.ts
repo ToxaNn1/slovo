@@ -3,6 +3,13 @@ import type { AnswerForm, AnswerSheet, RoundOption } from './answer-form';
 /** What a chips Round's chips are: a Word's letters or an expression's words. */
 export type ChipKind = 'letter' | 'word';
 
+/**
+ * How a chips Round lays out its chips: in a line of places, one for each
+ * chip, or as board 07's letter tiles in 4 columns under red slots, decoys
+ * among them, one slot for each letter of the answer.
+ */
+export type ChipLayout = 'line' | 'tiles';
+
 /** A character of a chips answer that stays in place and is no chip, such as an apostrophe. */
 export interface FixedChip {
   /** How many chips the answer has before it. */
@@ -15,10 +22,12 @@ export interface ChipsContent {
   readonly form: 'chips';
   /** What the chips are, a Word's letters or an expression's words. */
   readonly chipKind: ChipKind;
-  /** The chips, in the order shown. */
+  /** The chips, in the order shown: the answer's, plus decoys for letter tiles. */
   readonly chips: readonly string[];
-  /** The chips in the right order; equal chips are interchangeable. */
+  /** The chips in the right order, drawn from the chips; equal chips are interchangeable. */
   readonly expected: readonly string[];
+  /** How the chips are laid out: in a line when left out. */
+  readonly layout?: ChipLayout;
   /** The characters of the answer that stay in place among the chips; none when left out. */
   readonly fixed?: readonly FixedChip[];
   readonly sheet: AnswerSheet;
@@ -32,6 +41,9 @@ export interface ChipsRound {
   readonly chips: readonly string[];
   /** The characters of the answer that stay in place among the chips. */
   readonly fixed: readonly FixedChip[];
+  readonly layout: ChipLayout;
+  /** How many chips the answer takes: every chip but the decoys. */
+  readonly slots: number;
 }
 
 /** The chips the reader taps. */
@@ -68,6 +80,17 @@ export const outOfOrder = (
 ): readonly string[] =>
   chipsMatch(chips, right) ? [...chips.slice(1), ...chips.slice(0, 1)] : chips;
 
+/** Whether every chip of the answer is drawn from the chips, each chip at most once. */
+const drawnFrom = (chips: readonly string[], expected: readonly string[]): boolean => {
+  const left = [...chips];
+  return expected.every((chip) => {
+    const place = left.indexOf(chip);
+    if (place < 0) return false;
+    left.splice(place, 1);
+    return true;
+  });
+};
+
 /** A chip that is one character, such as a letter of «Анаграми»; the words of «Склади вислів» are longer. */
 const isLetter = (chip: string) => Array.from(chip).length === 1;
 
@@ -82,11 +105,20 @@ const lettersJoined = (tapped: readonly string[], fixed: readonly FixedChip[]) =
 
 /** The chips tapped in order: the answer's chips, reordered, are right. */
 export const chipsForm: AnswerForm<ChipsContent, ChipsRound, ChipsGiven, ChipsAnswer> = {
-  wellFormed: ({ chips, expected }) =>
-    chips.length > 0 && [...chips].sort().join('\u0000') === [...expected].sort().join('\u0000'),
+  wellFormed: ({ chips, expected, layout = 'line' }) =>
+    expected.length > 0 &&
+    drawnFrom(chips, expected) &&
+    (layout === 'tiles' || chips.length === expected.length),
   roundsIn: () => 1,
   entriesIn: () => [],
-  shown: ({ chipKind, chips, fixed = [] }) => ({ form: 'chips', chipKind, chips, fixed }),
+  shown: ({ chipKind, chips, expected, fixed = [], layout = 'line' }) => ({
+    form: 'chips',
+    chipKind,
+    chips,
+    fixed,
+    layout,
+    slots: expected.length,
+  }),
   judge({ chips, expected, sheet }, _shown, { chips: chosen }) {
     const tapped: string[] = [];
     for (const place of chosen) {
