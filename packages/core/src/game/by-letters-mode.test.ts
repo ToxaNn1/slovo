@@ -384,7 +384,7 @@ async function playTiles(app: Composition): Promise<Round[]> {
 }
 
 describe('«За буквами» with letter tiles', () => {
-  it('shows the Word\'s letters plus decoys from the alphabet, at least 8 tiles in a multiple of 4', async () => {
+  it("shows the Word's letters plus decoys from the alphabet, at least 8 tiles in a multiple of 4", async () => {
     const rounds = await playTiles(await run({ off: [] }));
 
     expect(rounds).toHaveLength(GAME_ROUNDS);
