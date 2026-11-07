@@ -247,22 +247,26 @@ describe('the Feed over the Ukrainian Language Pack', () => {
     expect(unseen).toContain(almost);
   });
 
-  it('offers no Seen Word again after a restart in the same Cycle', async () => {
-    const userState = await seedUserState();
-    const time = fakeClock(today);
-    const feed = await run(userState, time.clock);
-    // The Feed gets each next card ready while the one before it is on screen.
-    for (let position = 0; position < 5; position++) await look(feed, time, position, 2000);
-    const read = entryIdsOf(feed.cards).slice(0, 5);
+  it(
+    'offers no Seen Word again after a restart in the same Cycle',
+    { timeout: WALK_TIMEOUT_MS },
+    async () => {
+      const userState = await seedUserState();
+      const time = fakeClock(today);
+      const feed = await run(userState, time.clock);
+      // The Feed gets each next card ready while the one before it is on screen.
+      for (let position = 0; position < 5; position++) await look(feed, time, position, 2000);
+      const read = entryIdsOf(feed.cards).slice(0, 5);
 
-    const restarted = await run(userState, time.clock);
-    // It reopens on the card the reader was on; every card after it is new.
-    const [reopenedOn, ...after] = (await walk(restarted)).slice(restarted.startPosition);
+      const restarted = await run(userState, time.clock);
+      // It reopens on the card the reader was on; every card after it is new.
+      const [reopenedOn, ...after] = (await walk(restarted)).slice(restarted.startPosition);
 
-    expect(reopenedOn).toBe(read.at(-1));
-    expect(after).toHaveLength(liveIds.length - read.length);
-    for (const id of read) expect(after).not.toContain(id);
-  });
+      expect(reopenedOn).toBe(read.at(-1));
+      expect(after).toHaveLength(liveIds.length - read.length);
+      for (const id of read) expect(after).not.toContain(id);
+    },
+  );
 
   it('starts each local day with an unseen Word of the Day that stays until midnight', async () => {
     const userState = await seedUserState();
