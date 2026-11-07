@@ -38,6 +38,7 @@ export { CollectionMenuSheet } from './saved/CollectionMenuSheet';
 export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
 export { DailyCrosswordCard, type CrosswordMiniCell } from './game/DailyCrosswordCard';
 export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCard';
+export { GameEndPoster } from './game/GameEndPoster';
 export { GameResult } from './game/GameResult';
 export { GameReview } from './game/GameReview';
 export { GameRound, QuickQuestionRound } from './game/GameRound';

@@ -2966,3 +2966,66 @@ describe('the Game and the Badges', () => {
     expect(earnedOf(clean)).toEqual(['run-14']);
   });
 });
+
+// Spec #1674, «End of a Game»: how a Game ended, for the «Фініш» and Lives-over posters.
+describe('the end of a Game', () => {
+  it('is none while the Game is in play', async () => {
+    const app = await run();
+    await app.game.start('guess-word');
+
+    expect(current(app).end).toBeUndefined();
+  });
+
+  it('is `finished` at the Round limit, with the Rounds played, right answers, the XP the Game earned and a new Best result', async () => {
+    const app = await run({ on: ['rarityCeiling', 'knowledge', 'xpLog'] });
+    const before = app.xpLog.state.total;
+
+    await playGame(app, [3, 7]);
+
+    expect(current(app).end).toEqual({
+      kind: 'finished',
+      played: 15,
+      right: 13,
+      xp: app.xpLog.state.total - before,
+      newBest: true,
+      onTarget: true,
+    });
+    expect(current(app).end?.xp).toBeGreaterThan(0);
+  });
+
+  it('is `lives-over` once the last Life is lost', async () => {
+    const app = await run();
+
+    await playGame(app, [1, 2, 4, 6, 8]);
+
+    expect(current(app).end).toMatchObject({ kind: 'lives-over', played: 8, right: 3 });
+  });
+
+  it('says a new Best result only when the Game beats the one before', async () => {
+    const app = await run();
+
+    await playGame(app, [1, 2, 3, 4, 5]);
+    expect(current(app).end?.newBest).toBe(true);
+
+    await playGame(app, [1, 2, 3, 4, 5]);
+    expect(current(app).end?.newBest).toBe(false);
+
+    await playGame(app, [2, 3, 4, 5, 6]);
+    expect(current(app).end?.newBest).toBe(true);
+  });
+
+  it('says no new Best result for a first Game with no Round passed', async () => {
+    const app = await run({ gameModes: [{ ...lemmaMode, lives: 1 }] });
+    await app.game.start('test-lemma');
+
+    await app.game.answer({ form: 'pick', option: 1 });
+    await app.game.next();
+
+    expect(current(app).end).toMatchObject({
+      kind: 'lives-over',
+      played: 1,
+      right: 0,
+      newBest: false,
+    });
+  });
+});
