@@ -101,7 +101,6 @@ export function BadgeGrid<B extends BadgeGridItem>({
                 accessibilityRole="button"
                 accessibilityLabel={badge.name}
                 accessibilityValue={statusOf === undefined ? undefined : { text: statusOf(badge) }}
-                accessibilityState={{ disabled: !badge.earned }}
                 {...voice}
                 onPress={() => {
                   onPress(badge);
