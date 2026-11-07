@@ -1,0 +1,24 @@
+{
+  "kind": "word",
+  "id": "w_ifjy4s",
+  "lemma": "антраша",
+  "stress": [
+    6
+  ],
+  "partOfSpeech": "noun",
+  "gender": "neuter",
+  "primaryDefinition": "У балеті – легкий стрибок із швидким схрещуванням ніг у повітрі.",
+  "examples": [
+    {
+      "text": "Героїчний чоловічий танець класичних балетів будується на антраша."
+    }
+  ],
+  "categoryId": "arts-culture",
+  "rarity": 5,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+      "url": "https://goroh.pp.ua/Тлумачення/антраша"
+    }
+  ]
+}
