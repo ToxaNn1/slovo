@@ -21,7 +21,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 import { useDailyCrosswordCard } from '@/game/daily-crossword';
-import { ProgressShareOffers } from '@/game/progress-share-offers';
+// DESIGN-06: no progress share offers on the board's hub, kept for the owner
+// import { ProgressShareOffers } from '@/game/progress-share-offers';
 import {
   useGameActions,
   useGameState,
@@ -139,8 +140,8 @@ function Game() {
 /**
  * The mode screen, as the design's Games screen: the big title, the Daily
  * Crossword's red card while it is on, which opens its screen, and a row per
- * mode on offer, with its own Best result, under the titles of their groups,
- * each after a red mark.
+ * mode on offer, with its one line and «★ n» or «—», under the titles of
+ * their groups, each after a red mark. No progress share offers (DESIGN-06).
  */
 function ModeScreen({
   modes,
@@ -158,7 +159,8 @@ function ModeScreen({
           <GamesTitle>{strings.title}</GamesTitle>
           <TotalXp />
         </View>
-        <ProgressShareOffers />
+        {/* DESIGN-06: no progress share offers on the board's hub, kept for the owner */}
+        {/* <ProgressShareOffers /> */}
         {crossword === undefined ? null : (
           <DailyCrosswordCard
             testID="daily-crossword"
