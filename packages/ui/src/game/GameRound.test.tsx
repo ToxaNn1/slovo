@@ -5,6 +5,7 @@ import type {
   PlayedRound,
   RoundAnswer,
   RoundBlank,
+  Streak,
 } from '@slovo/core';
 import {
   coreTokens,
@@ -32,6 +33,7 @@ const strings = testStrings({
       progressLabel: 'Rounds passed: {passed} of {total}',
       passed: 'Passed: {passed}',
       passedLabel: 'Rounds passed: {passed}',
+      survivalStreak: '{n} in a row · best {best}',
       lives: 'Lives: {count} of {total}',
       highlight: 'Marked: {text}',
       gap: { label: 'Which word is missing?', voiceOver: 'gap' },
@@ -412,16 +414,19 @@ function Game({
   onAnswer,
   onLeave,
   onOpenLetter,
+  streak,
 }: {
   start: CurrentGame;
   onAnswer: (given: GivenAnswer) => void;
   onLeave: () => void;
   onOpenLetter: () => void;
+  streak?: Streak | undefined;
 }) {
   const [game, setGame] = useState(start);
   return (
     <GameRound
       game={game}
+      streak={streak}
       title="Definitions"
       label={LABELS[game.round.form] ?? 'Definition'}
       onAnswer={(given) => {
@@ -446,13 +451,20 @@ async function renderRound(
   onLeave: () => void = jest.fn(),
   start: CurrentGame = first,
   onOpenLetter: () => void = jest.fn(),
+  streak?: Streak,
 ) {
   await render(
     <SafeAreaProvider initialMetrics={metrics}>
       <EditionProvider edition={{ locale: 'en' }} strings={strings}>
         <HapticsProvider haptics={haptics}>
           <InterfaceSoundsProvider sounds={{ play }}>
-            <Game start={start} onAnswer={onAnswer} onLeave={onLeave} onOpenLetter={onOpenLetter} />
+            <Game
+              start={start}
+              onAnswer={onAnswer}
+              onLeave={onLeave}
+              onOpenLetter={onOpenLetter}
+              streak={streak}
+            />
           </InterfaceSoundsProvider>
         </HapticsProvider>
       </EditionProvider>
@@ -534,6 +546,24 @@ describe('GameRound', () => {
     expect(screen.getByText('Passed: 23')).toBeTruthy();
     expect(screen.queryByTestId('game-progress-bar')).toBeNull();
     expect(screen.getByRole('header', { name: 'Definitions' })).toBeOnTheScreen();
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Lives: 2 of 3');
+  });
+
+  it('shows the streak, a big counter of the Rounds passed and its line with the record, in place of the passed line', async () => {
+    const survival: CurrentGame = {
+      ...first,
+      modeId: 'survival',
+      roundsPassed: 4,
+      roundLimit: undefined,
+      lives: 2,
+      livesAtStart: 3,
+    };
+    await renderRound(jest.fn(), jest.fn(), survival, jest.fn(), { rounds: 4, record: 9 });
+
+    expect(screen.getByTestId('game-streak-rounds')).toHaveTextContent('4');
+    expect(screen.getByTestId('game-streak-line')).toHaveTextContent('4 in a row · best 9');
+    expect(screen.getByTestId('game-streak')).toHaveAccessibleName('4 in a row · best 9');
+    expect(screen.queryByText('Passed: 4')).toBeNull();
     expect(screen.getByTestId('game-lives')).toHaveTextContent('Lives: 2 of 3');
   });
 
