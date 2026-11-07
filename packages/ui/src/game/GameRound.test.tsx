@@ -30,6 +30,8 @@ const strings = testStrings({
   game: {
     round: {
       header: '{mode} · {n}/{total}',
+      pairsHint: 'Match each word to its meaning',
+      stressHint: 'Tap the stressed vowel',
       progress: '{passed} / {total}',
       progressLabel: 'Rounds passed: {passed} of {total}',
       passed: 'Passed: {passed}',
@@ -797,10 +799,10 @@ describe('GameRound', () => {
   });
 
   describe('a pairs Round', () => {
-    it('asks under the mode’s label with the grid’s Words and Definitions as buttons', async () => {
+    it('asks under the Edition’s pairs line with the grid’s Words and Definitions as buttons', async () => {
       await renderRound(jest.fn(), jest.fn(), pairsRound);
 
-      expect(screen.getByRole('header', { name: 'Find the pairs' })).toBeTruthy();
+      expect(screen.getByRole('header', { name: 'Match each word to its meaning' })).toBeTruthy();
       expect(
         screen.getAllByRole('button').map((button): unknown => button.props['accessibilityLabel']),
       ).toEqual(['Leave the Game', 'ardent', 'candid', 'open and honest', 'full of passion']);

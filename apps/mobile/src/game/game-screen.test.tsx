@@ -747,6 +747,7 @@ describe('the Game screen', () => {
       expect(
         screen.getByText(/^Де наголос\?( · |$)/, { includeHiddenElements: true }),
       ).toBeOnTheScreen();
+      expect(screen.getByText('Торкнись голосної, на яку падає наголос')).toBeOnTheScreen();
       // «слово» and its number: the first «о» is stressed, the second a vowel to tap too.
       await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
       expect(screen.getByRole('button', { name: 'о, третя літера, Правильно' })).toBeTruthy();
@@ -870,9 +871,7 @@ describe('the Game screen', () => {
           `Пройдено раундів: ${String(round - 1)} з 15`,
         );
       });
-      expect(
-        screen.getByText(/^Знайди пари( · |$)/, { includeHiddenElements: true }),
-      ).toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'З’єднай слово і значення' })).toBeOnTheScreen();
       const left = pairsLeft();
       // A grid with none of its pairs gone yet is a new one.
       if (left.length === screen.getAllByTestId(/^pairs-word-\d+$/, ALL_CELLS).length)
@@ -1015,6 +1014,30 @@ describe('the Game screen', () => {
     await waitFor(() => {
       expect(screen.getByText('Перемога!')).toBeOnTheScreen();
     });
+  });
+
+  it('takes back the last letter of «Анаграми» with «← Стерти літеру», then takes the Word', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-anagram'));
+    await waitFor(() => {
+      expect(screen.getByTestId('chips')).toBeOnTheScreen();
+    });
+    const erase = () => screen.getByRole('button', { name: '← Стерти літеру' });
+    expect(erase()).toBeDisabled();
+    const word = theWordOfThePrompt();
+    // A wrong letter for the second, taken back before the line is full.
+    await assemble(`${word.charAt(0)}${word.charAt(word.length - 1)}`);
+    expect(screen.getByTestId('chips-line')).toHaveTextContent(
+      `${word.charAt(0)}${word.charAt(word.length - 1)}`,
+    );
+
+    await fireEvent.press(erase());
+
+    expect(screen.getByTestId('chips-line')).toHaveTextContent(word.charAt(0));
+    await assemble(word.slice(1));
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+    expect(erase()).toBeDisabled();
   });
 
   it('takes a Life for a Word of «Анаграми» assembled wrong and shows the right one', async () => {
@@ -1257,7 +1280,7 @@ describe('the Game screen', () => {
       });
       // The whole expression, its punctuation too, over four meanings.
       expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
-        /^Що це означає\? перше\d+, друге — третє$/,
+        /^Що це означає\? «перше\d+, друге — третє» — це…$/,
       );
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
       await fireEvent.press(theOption(`The sense of idiom${String(theNumberOfThePrompt())}\\.`));

@@ -190,7 +190,11 @@ describe('a Round of «Фразеологізми»', () => {
       if (round.form !== 'pick') throw new Error(`A ${round.form} Round`);
       const asked = askedOf(round);
       const texts = round.options.map(({ text }) => text);
-      expect(round).toMatchObject({ entryKind: 'idiom', prompt: asked.expression });
+      expect(round).toMatchObject({
+        entryKind: 'idiom',
+        prompt: asked.expression,
+        labelKind: 'meaning',
+      });
       expect(texts).toHaveLength(4);
       expect(new Set(texts).size).toBe(4);
       expect(texts.filter((text) => text === asked.primaryDefinition)).toHaveLength(1);

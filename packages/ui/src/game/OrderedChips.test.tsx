@@ -33,6 +33,7 @@ function Round({
   kind,
   fixed,
   tiles,
+  eraseLabel,
   onAnswer,
 }: {
   chips: readonly string[];
@@ -40,6 +41,7 @@ function Round({
   kind: 'letter' | 'word';
   fixed: readonly FixedChip[] | undefined;
   tiles: boolean;
+  eraseLabel: string | undefined;
   onAnswer: (chosen: number[]) => void;
 }) {
   const [answer, setAnswer] = useState<ChipsAnswer>();
@@ -49,6 +51,7 @@ function Round({
       kind={kind}
       fixed={fixed}
       {...(tiles ? { layout: 'tiles' as const, slots: expected.length } : {})}
+      eraseLabel={eraseLabel}
       answer={answer}
       onAnswer={(chosen) => {
         onAnswer(chosen);
@@ -64,6 +67,7 @@ async function renderChips({
   kind = 'letter',
   fixed,
   tiles = false,
+  eraseLabel,
   onAnswer = jest.fn(),
 }: {
   chips?: readonly string[];
@@ -71,6 +75,7 @@ async function renderChips({
   kind?: 'letter' | 'word';
   fixed?: readonly FixedChip[];
   tiles?: boolean;
+  eraseLabel?: string;
   onAnswer?: (chosen: number[]) => void;
 } = {}) {
   await render(
@@ -81,6 +86,7 @@ async function renderChips({
         kind={kind}
         fixed={fixed}
         tiles={tiles}
+        eraseLabel={eraseLabel}
         onAnswer={onAnswer}
       />
     </EditionProvider>,
@@ -136,6 +142,41 @@ describe('OrderedChips', () => {
 
     expect(lineText()).toEqual(['o', 'r']);
     expect(screen.getByTestId('chips-3')).toBeEnabled();
+  });
+
+  describe('the erase key', () => {
+    const ERASE = '← Erase a letter';
+
+    it('takes back the last letter placed, then the one before', async () => {
+      await renderChips({ eraseLabel: ERASE });
+      await tap(1, 3, 2);
+
+      await fireEvent.press(screen.getByRole('button', { name: ERASE }));
+      expect(lineText()).toEqual(['o', 'b']);
+      expect(screen.getByTestId('chips-2')).toBeEnabled();
+
+      await fireEvent.press(screen.getByRole('button', { name: ERASE }));
+      expect(lineText()).toEqual(['o']);
+    });
+
+    it('takes nothing back from an empty line or a given answer', async () => {
+      const onAnswer = jest.fn();
+      await renderChips({ eraseLabel: ERASE, onAnswer });
+      expect(screen.getByRole('button', { name: ERASE })).toBeDisabled();
+
+      await tap(1, 3, 2, 4, 0);
+
+      expect(onAnswer).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: ERASE })).toBeDisabled();
+      expect(lineText()).toEqual(['o', 'b', 'r', 'o', 'k']);
+    });
+
+    it('shows no erase key with no label', async () => {
+      await renderChips();
+      await tap(1);
+
+      expect(screen.queryByRole('button', { name: ERASE })).toBeNull();
+    });
   });
 
   it('gives the answer with the last chip, the chips in the order tapped', async () => {

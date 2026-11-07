@@ -13,6 +13,7 @@ import Animated, {
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
+import { Button } from '../primitives/Button';
 import { PressedTile } from '../primitives/PressedTile';
 import { space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
@@ -54,7 +55,9 @@ type Judged = 'right' | 'wrong' | undefined;
  * as an apostrophe, is no chip: it shows in the line once the chips before
  * it are there. As letter tiles (board 07), the tiles stand in 4 columns,
  * decoys among them, under a red slot for each letter of the answer; the
- * last slot filled gives the answer. Key it by the Round, so a new Round
+ * last slot filled gives the answer. With an erase label, a key under the
+ * chips takes back the last chip placed, as «Анаграми» does (spec #1674); it
+ * takes nothing from an empty line or a given answer. Key it by the Round, so a new Round
  * starts with an empty line.
  */
 export function OrderedChips({
@@ -63,6 +66,7 @@ export function OrderedChips({
   fixed = [],
   layout = 'line',
   slots = chips.length,
+  eraseLabel,
   answer,
   onAnswer,
 }: {
@@ -76,6 +80,8 @@ export function OrderedChips({
   layout?: ChipLayout | undefined;
   /** How many places the answer takes, every chip but the decoys: one for each chip when left out. */
   slots?: number | undefined;
+  /** The key that takes back the last chip placed, e.g. «← Стерти літеру»; no key when left out. */
+  eraseLabel?: string | undefined;
   /** The Round's answer, once given. */
   answer: ChipsAnswer | undefined;
   /** The places of the chips, in the order tapped, once every place of the line is filled. */
@@ -139,6 +145,18 @@ export function OrderedChips({
           );
         })}
       </Tray>
+      {eraseLabel !== undefined && (
+        <Button
+          variant="ghost"
+          size="small"
+          label={eraseLabel}
+          disabled={line.length === 0 || answer !== undefined}
+          testID="chips-erase"
+          onPress={() => {
+            setTapped(tapped.slice(0, -1));
+          }}
+        />
+      )}
     </View>
   );
 }

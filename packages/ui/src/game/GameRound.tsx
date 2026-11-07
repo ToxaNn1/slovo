@@ -165,7 +165,7 @@ export function GameRound({
         contentContainerStyle={[styles.round, round.form !== 'pick' && styles.roundWithoutOptions]}
       >
         <RoundHead
-          label={asked.label}
+          label={round.form === 'pairs' ? strings.game.round.pairsHint : asked.label}
           number={round.number}
           roundLimit={game.roundLimit}
           heading={round.form === 'vowel' || round.form === 'pairs'}
@@ -205,8 +205,8 @@ export function GameRound({
 /**
  * The label and the prompt a Round shows by its label kind: a Synonym Row's
  * question on its dominant, a Tip's own question under the Tip's label, an
- * Example with a gap under the gap's label, any other Round's prompt under
- * the mode's label.
+ * Example with a gap under the gap's label, an Entry's own text asked by its
+ * meaning as «{word}» — це…, any other Round's prompt under the mode's label.
  */
 function askedAs(
   { labelKind, prompt }: Round,
@@ -223,6 +223,8 @@ function askedAs(
       return { label: strings.tip.label, prompt };
     case 'gap':
       return { label: strings.gap.label, prompt };
+    case 'meaning':
+      return { label, prompt: fill(strings.prompts.meaning, { word: prompt }) };
     case 'mode':
       return { label, prompt };
   }
@@ -554,8 +556,8 @@ function Life({
 }
 
 /**
- * The Round's head (`game-round-dark`): its label and place, such as
- * «ВИЗНАЧЕННЯ · 3 / 15», in the muted Unbounded, broken only between whole
+ * The Round's head (`game-round-dark`, board 07): its label and place, such
+ * as «ВИЗНАЧЕННЯ · 3 / 15», in the red Unbounded, broken only between whole
  * words. The label is the Round's heading for VoiceOver where its card does
  * not read it, a vowel or a pairs Round; the place is the header's to read.
  */
@@ -593,7 +595,7 @@ function RoundHead({
         ? { accessibilityRole: 'header', accessibilityLabel: label }
         : { accessibilityElementsHidden: true, importantForAccessibility: 'no' })}
       {...voice}
-      style={[typeStyle('roundHead', tokens), { color: colors.muted }]}
+      style={[typeStyle('roundHead', tokens), { color: colors.accent }]}
     >
       {place === undefined ? label : `${label} · ${place}`}
     </Text>
