@@ -5,6 +5,16 @@ updates:
     schedule:
       interval: weekly
     groups:
+      # The site's Astro stack (apps/site pins it exactly) comes in a pull
+      # request of its own, so it never rides along with the app's updates
+      # (ADR 0086). A dependency joins the first group it matches.
+      site:
+        patterns:
+          - 'astro'
+          - '@astrojs/*'
+          - 'tailwindcss'
+          - '@tailwindcss/*'
+          - '@fontsource-variable/*'
       npm-minor-and-patch:
         update-types: [minor, patch]
     ignore:

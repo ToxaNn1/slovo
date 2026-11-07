@@ -42,8 +42,42 @@ jobs:
       # The package boundaries the ADRs set, import cycles and orphan modules.
       - run: pnpm deps
 
+  # Which of the app and the site a pull request can affect (ADR 0086). A pull
+  # request that changes only the site skips the app's tests, and one that
+  # changes only the app skips the site's; every other change, and every push
+  # to main, runs both. Lint and typecheck always cover the whole workspace.
+  changes:
+    name: Changed parts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      mobile: ${{ steps.parts.outputs.mobile }}
+      site: ${{ steps.parts.outputs.site }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: parts
+        shell: bash
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          mobile=true
+          site=true
+          if [ -n "$BASE_SHA" ]; then
+            git fetch --depth=1 origin "$BASE_SHA"
+            changed=$(git diff --name-only "$BASE_SHA" HEAD)
+            # The app links to the legal pages by address and never reads them.
+            site_only='^(apps/site/|editions/[^/]+/legal/|\.github/workflows/pages\.yml$)'
+            mobile_only='^(apps/mobile/|\.github/workflows/(maestro|ota-update)\.yml$)'
+            grep -qvE "$site_only" <<<"$changed" || mobile=false
+            grep -qvE "$mobile_only" <<<"$changed" || site=false
+          fi
+          echo "mobile=$mobile site=$site"
+          echo "mobile=$mobile" >> "$GITHUB_OUTPUT"
+          echo "site=$site" >> "$GITHUB_OUTPUT"
+
   test:
     name: Test ${{ matrix.part.name }}
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 20
     strategy:
@@ -53,33 +87,58 @@ jobs:
         part:
           - { name: Core, run: 'pnpm test --filter=@slovo/core' }
           - { name: UI, run: 'pnpm test --filter=@slovo/ui' }
-          # The app's Vitest tests, then the other packages but the backend,
-          # whose tests need Postgres: the job "Backend" runs them.
+          # The other packages but the backend, whose tests need Postgres: the
+          # job "Backend" runs them.
           - name: other packages
             run: >-
-              pnpm --filter=@slovo/mobile exec vitest run &&
               pnpm test --filter='!@slovo/backend' --filter='!@slovo/core'
-              --filter='!@slovo/ui' --filter='!@slovo/mobile'
+              --filter='!@slovo/ui' --filter='!@slovo/mobile' --filter='!@slovo/site'
+          - { name: site, for: site, run: 'pnpm test --filter=@slovo/site' }
+          - { name: app Vitest, for: mobile, run: 'pnpm --filter=@slovo/mobile exec vitest run' }
           # The app's Jest tests, the slowest part, cut in three.
-          - { name: app 1/3, shard: 1, run: 'pnpm --filter=@slovo/mobile exec jest --shard=1/3' }
-          - { name: app 2/3, shard: 2, run: 'pnpm --filter=@slovo/mobile exec jest --shard=2/3' }
-          - { name: app 3/3, shard: 3, run: 'pnpm --filter=@slovo/mobile exec jest --shard=3/3' }
+          - {
+              name: app 1/3,
+              for: mobile,
+              shard: 1,
+              run: 'pnpm --filter=@slovo/mobile exec jest --shard=1/3',
+            }
+          - {
+              name: app 2/3,
+              for: mobile,
+              shard: 2,
+              run: 'pnpm --filter=@slovo/mobile exec jest --shard=2/3',
+            }
+          - {
+              name: app 3/3,
+              for: mobile,
+              shard: 3,
+              run: 'pnpm --filter=@slovo/mobile exec jest --shard=3/3',
+            }
+    env:
+      # A part for the app or the site passes without running when the pull
+      # request can't affect it; a skipped job would turn the required check red.
+      RUN: ${{ !matrix.part.for || needs.changes.outputs[matrix.part.for] == 'true' }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/setup
+      - if: ${{ env.RUN != 'true' }}
+        run: echo 'The pull request does not affect this part.'
+      - if: ${{ env.RUN == 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - if: ${{ env.RUN == 'true' }}
+        uses: ./.github/actions/setup
       # The app's Jest transforms, kept from run to run for each shard. React
       # Native loads most of its modules lazily, so on a cold cache the first
       # test to open, say, a sheet pays for Babel over dozens of them within
       # its 5 seconds. A transform is keyed by the file and the config, so an
       # older cache restored after a dependency change still serves every file
       # it holds.
-      - if: ${{ matrix.part.shard }}
+      - if: ${{ env.RUN == 'true' && matrix.part.shard }}
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: apps/mobile/node_modules/.cache/jest
           key: jest-${{ runner.os }}-${{ matrix.part.shard }}-${{ hashFiles('pnpm-lock.yaml', 'apps/mobile/jest.config.js') }}
           restore-keys: jest-${{ runner.os }}-${{ matrix.part.shard }}-
-      - run: ${{ matrix.part.run }}
+      - if: ${{ env.RUN == 'true' }}
+        run: ${{ matrix.part.run }}
 
   pack:
     name: Contract and Language Pack
@@ -154,7 +213,7 @@ jobs:
     # The check ruleset 26239313 requires: keep this name.
     name: Lint, typecheck, test and Language Pack
     if: ${{ always() }}
-    needs: [lint, typecheck, test, pack, image]
+    needs: [lint, typecheck, changes, test, pack, image]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

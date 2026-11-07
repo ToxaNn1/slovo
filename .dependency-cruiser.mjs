@@ -69,6 +69,38 @@ export default {
       },
     },
     {
+      name: 'site-reaches-no-app-or-ui-components',
+      comment:
+        'ADR 0086: the site is a static web build. Nothing it imports, directly or through a ' +
+        'package, may reach the mobile app, and of the UI it takes the tokens alone, as the ' +
+        'rest of packages/ui is React Native components.',
+      severity: 'error',
+      from: { path: '^apps/site/' },
+      // Reachable, so a package between the site and the code counts too. The
+      // cruiser leaves node_modules out of the graph, so React Native itself is
+      // caught only when imported directly: the next rule.
+      to: {
+        reachable: true,
+        path: ['^apps/mobile/', '^packages/ui/src/'],
+        pathNot: '^packages/ui/src/tokens/',
+      },
+    },
+    {
+      name: 'site-imports-no-react-native',
+      comment: 'ADR 0086: the site is a static web build, with no React Native or Expo in it.',
+      severity: 'error',
+      from: { path: '^apps/site/' },
+      // A prefix: react-native-*, expo-* and their scopes match too. The bare
+      // names catch an import of a package the site doesn't list.
+      to: {
+        path: [
+          '(^|/)node_modules/(react-native|expo|@expo/|@react-native/)',
+          '^(react-native|expo|@expo/|@react-native/)',
+          '^@slovo/mobile(/|$)',
+        ],
+      },
+    },
+    {
       name: 'mobile-imports-no-server-code',
       comment:
         'ADR 0030: the app talks to the backend over HTTP only, through the contract in ' +
