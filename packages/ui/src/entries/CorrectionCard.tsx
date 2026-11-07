@@ -15,6 +15,8 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 import { CategoryChip } from './CategoryChip';
 import { KickerRow } from './KickerRow';
 import { DetailSection, ExampleText } from './WordCard';
+import { EntryTabs } from './EntryTabs';
+import { correctionTabsOf, type CorrectionTab } from './word-tabs';
 
 /**
  * The Correction card's blocks inside the Entry card's frame: the Correction
@@ -27,13 +29,15 @@ import { DetailSection, ExampleText } from './WordCard';
  * Stress marks (ADR 0045): VoiceOver reads each form with where its Stress
  * falls, as for a Lemma, and every other text without the mark. Under Self-check it keeps only the non-standard form and
  * asks how to say it right; the Entry card draws the button that reveals the
- * rest under it.
+ * rest under it. While `wordTabs` is on, the blocks under the non-standard
+ * form sit in the tabs «Як краще», «Чому» and «Приклади» (ADR 0088).
  */
 export function CorrectionCardBody({
   card,
   lemmaSize: mainSize,
   concealed,
   corner,
+  tabs,
 }: {
   card: CorrectionCardModel;
   /** The Lemma's size at the user's font size, which the main standard equivalent takes. */
@@ -42,18 +46,15 @@ export function CorrectionCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
+  /** The tabs under the non-standard form in place of the one column, while `wordTabs` is on (ADR 0088). */
+  tabs: boolean;
 }) {
   const tokens = useTokens();
-  const { colors, radii } = tokens;
-  const sizes = useWordTextSizes();
+  const { colors } = tokens;
   const edition = useEdition();
   const { voice } = edition;
   const strings = edition.strings.correctionCard;
-  // The voices skip the Stress mark, so VoiceOver also says where it falls.
-  const formLabel = (form: string, stressedVowels: readonly string[]) =>
-    stressLabel(edition.strings.wordCard, form, stressedVowels);
   const correctionType = strings.correctionTypes[card.correctionType];
-  const sentence = [typeStyle('example', tokens), sizes.example];
 
   return (
     <>
@@ -76,7 +77,11 @@ export function CorrectionCardBody({
       <NonStandardForm
         testID="correction-non-standard"
         form={card.nonStandardForm}
-        spoken={formLabel(card.nonStandardForm, card.nonStandardStressedVowels)}
+        spoken={stressLabel(
+          edition.strings.wordCard,
+          card.nonStandardForm,
+          card.nonStandardStressedVowels,
+        )}
       />
       {concealed ? (
         <Text
@@ -86,106 +91,184 @@ export function CorrectionCardBody({
         >
           {strings.howToSay}
         </Text>
+      ) : tabs ? (
+        <EntryTabs tabs={correctionTabsOf(card)} names={strings.tabs} testID="correction">
+          {(tab) => <CorrectionTabContent tab={tab} card={card} mainSize={mainSize} />}
+        </EntryTabs>
       ) : (
         <>
-          <View style={styles.form}>
-            <StandardForm
-              testID="correction-standard"
-              form={card.mainEquivalent}
-              spoken={formLabel(card.mainEquivalent, card.mainEquivalentStressedVowels)}
-              size={mainSize}
-            />
-            {card.otherEquivalents.length === 0 ? null : (
-              <Text
-                testID="correction-other-equivalents"
-                accessibilityLabel={withoutStress(
-                  fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') }),
-                )}
-                {...voice}
-                style={[typeStyle('sub', tokens), { color: colors.ink }]}
-              >
-                {fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') })}
-              </Text>
-            )}
-          </View>
-          <Text
-            testID="correction-explanation"
-            accessibilityLabel={withoutStress(card.explanation)}
-            {...voice}
-            style={[typeStyle('explanation', tokens), { color: colors.ink }]}
-          >
-            {card.explanation}
-          </Text>
-          <View
-            testID="correction-example-pair"
-            style={[
-              styles.examplePair,
-              { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
-            ]}
-          >
-            <View
-              accessible
-              accessibilityLabel={fill(strings.exampleNonStandard, {
-                text: withoutStress(card.examplePair.nonStandard),
-              })}
-              {...voice}
-              style={styles.exampleRow}
-            >
-              <Mark lineHeight={sizes.example.lineHeight}>
-                <Path d="M7 12h10" stroke={colors.muted} strokeWidth={1.8} />
-              </Mark>
-              <Text style={[styles.sentence, sentence, { color: colors.muted }]}>
-                {card.examplePair.nonStandard}
-              </Text>
-            </View>
-            <View
-              accessible
-              accessibilityLabel={fill(strings.exampleStandard, {
-                text: withoutStress(card.examplePair.standard),
-              })}
-              {...voice}
-              style={styles.exampleRow}
-            >
-              <Mark lineHeight={sizes.example.lineHeight}>
-                <Path
-                  d="M5 12.5l4.5 4.5L19 7.5"
-                  fill="none"
-                  stroke={colors.correct}
-                  strokeWidth={2.2}
-                />
-              </Mark>
-              <Text style={[styles.sentence, sentence, { color: colors.ink }]}>
-                {card.examplePair.standard}
-              </Text>
-            </View>
-          </View>
-          {card.categoryName === undefined ? null : (
-            <CategoryChip testID="correction-category" name={card.categoryName} />
-          )}
-          {card.literaryUses.length === 0 ? null : (
-            <DetailSection testID="correction-literary-uses" title={strings.literaryUses}>
-              {card.literaryUses.map((use) => (
-                <ExampleText
-                  key={`${use.author}-${use.text}`}
-                  example={{ text: use.text, author: literaryUseSource(strings, use) }}
-                  size={sizes.example}
-                />
-              ))}
-            </DetailSection>
-          )}
-          {card.sourceNames.length === 0 ? null : (
-            <Text
-              testID="correction-source"
-              {...voice}
-              style={[typeStyle('meta', tokens), { color: colors.muted }]}
-            >
-              {fill(strings.source, { source: card.sourceNames.join(SOURCE_SEPARATOR) })}
-            </Text>
-          )}
+          <CorrectionBlock block="standard" card={card} mainSize={mainSize} />
+          <CorrectionBlock block="explanation" card={card} mainSize={mainSize} />
+          <CorrectionBlock block="examplePair" card={card} mainSize={mainSize} />
+          <CorrectionBlock block="category" card={card} mainSize={mainSize} />
+          <CorrectionBlock block="literaryUses" card={card} mainSize={mainSize} />
+          <CorrectionBlock block="sources" card={card} mainSize={mainSize} />
         </>
       )}
     </>
   );
+}
+
+/**
+ * What a Correction card's selected tab shows (ADR 0088): «Як краще» the
+ * standard equivalents and the Category chip, «Чому» the explanation and its
+ * sources, «Приклади» the example pair and the literary uses.
+ */
+function CorrectionTabContent({
+  tab,
+  card,
+  mainSize,
+}: {
+  tab: CorrectionTab;
+  card: CorrectionCardModel;
+  mainSize: TextSize;
+}) {
+  const blocks: readonly Block[] =
+    tab.key === 'better'
+      ? ['standard', 'category']
+      : tab.key === 'why'
+        ? ['explanation', 'sources']
+        : ['examplePair', 'literaryUses'];
+  return (
+    <>
+      {blocks.map((block) => (
+        <CorrectionBlock key={block} block={block} card={card} mainSize={mainSize} />
+      ))}
+    </>
+  );
+}
+
+/** The blocks of a Correction card under its non-standard form, in the column's order. */
+type Block = 'standard' | 'explanation' | 'examplePair' | 'category' | 'literaryUses' | 'sources';
+
+/** One block of a Correction card, which the column and the tabs both draw. */
+function CorrectionBlock({
+  block,
+  card,
+  mainSize,
+}: {
+  block: Block;
+  card: CorrectionCardModel;
+  mainSize: TextSize;
+}) {
+  const tokens = useTokens();
+  const { colors, radii } = tokens;
+  const sizes = useWordTextSizes();
+  const edition = useEdition();
+  const { voice } = edition;
+  const strings = edition.strings.correctionCard;
+  // The voices skip the Stress mark, so VoiceOver also says where it falls.
+  const formLabel = (form: string, stressedVowels: readonly string[]) =>
+    stressLabel(edition.strings.wordCard, form, stressedVowels);
+  const sentence = [typeStyle('example', tokens), sizes.example];
+  switch (block) {
+    case 'standard':
+      return (
+        <View style={styles.form}>
+          <StandardForm
+            testID="correction-standard"
+            form={card.mainEquivalent}
+            spoken={formLabel(card.mainEquivalent, card.mainEquivalentStressedVowels)}
+            size={mainSize}
+          />
+          {card.otherEquivalents.length === 0 ? null : (
+            <Text
+              testID="correction-other-equivalents"
+              accessibilityLabel={withoutStress(
+                fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') }),
+              )}
+              {...voice}
+              style={[typeStyle('sub', tokens), { color: colors.ink }]}
+            >
+              {fill(strings.otherEquivalents, { equivalents: card.otherEquivalents.join(', ') })}
+            </Text>
+          )}
+        </View>
+      );
+    case 'explanation':
+      return (
+        <Text
+          testID="correction-explanation"
+          accessibilityLabel={withoutStress(card.explanation)}
+          {...voice}
+          style={[typeStyle('explanation', tokens), { color: colors.ink }]}
+        >
+          {card.explanation}
+        </Text>
+      );
+    case 'examplePair':
+      return (
+        <View
+          testID="correction-example-pair"
+          style={[
+            styles.examplePair,
+            { backgroundColor: colors.surfaceSunken, borderRadius: radii.chip },
+          ]}
+        >
+          <View
+            accessible
+            accessibilityLabel={fill(strings.exampleNonStandard, {
+              text: withoutStress(card.examplePair.nonStandard),
+            })}
+            {...voice}
+            style={styles.exampleRow}
+          >
+            <Mark lineHeight={sizes.example.lineHeight}>
+              <Path d="M7 12h10" stroke={colors.muted} strokeWidth={1.8} />
+            </Mark>
+            <Text style={[styles.sentence, sentence, { color: colors.muted }]}>
+              {card.examplePair.nonStandard}
+            </Text>
+          </View>
+          <View
+            accessible
+            accessibilityLabel={fill(strings.exampleStandard, {
+              text: withoutStress(card.examplePair.standard),
+            })}
+            {...voice}
+            style={styles.exampleRow}
+          >
+            <Mark lineHeight={sizes.example.lineHeight}>
+              <Path
+                d="M5 12.5l4.5 4.5L19 7.5"
+                fill="none"
+                stroke={colors.correct}
+                strokeWidth={2.2}
+              />
+            </Mark>
+            <Text style={[styles.sentence, sentence, { color: colors.ink }]}>
+              {card.examplePair.standard}
+            </Text>
+          </View>
+        </View>
+      );
+    case 'category':
+      return card.categoryName === undefined ? null : (
+        <CategoryChip testID="correction-category" name={card.categoryName} />
+      );
+    case 'literaryUses':
+      return card.literaryUses.length === 0 ? null : (
+        <DetailSection testID="correction-literary-uses" title={strings.literaryUses}>
+          {card.literaryUses.map((use) => (
+            <ExampleText
+              key={`${use.author}-${use.text}`}
+              example={{ text: use.text, author: literaryUseSource(strings, use) }}
+              size={sizes.example}
+            />
+          ))}
+        </DetailSection>
+      );
+    case 'sources':
+      return card.sourceNames.length === 0 ? null : (
+        <Text
+          testID="correction-source"
+          {...voice}
+          style={[typeStyle('meta', tokens), { color: colors.muted }]}
+        >
+          {fill(strings.source, { source: card.sourceNames.join(SOURCE_SEPARATOR) })}
+        </Text>
+      );
+  }
 }
 
 /**

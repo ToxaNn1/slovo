@@ -1,5 +1,5 @@
-import type { WordCardModel } from '@slovo/core';
-import { wordTabsOf } from '@slovo/ui/word-tabs';
+import type { CorrectionCardModel, WordCardModel } from '@slovo/core';
+import { correctionTabsOf, wordTabsOf } from '@slovo/ui/word-tabs';
 import { describe, expect, it } from 'vitest';
 
 const bare: WordCardModel = {
@@ -84,5 +84,43 @@ describe('wordTabsOf', () => {
   it('opens the links tab on antonyms alone and the history tab on the Word History alone', () => {
     const tabs = wordTabsOf({ ...bare, antonyms: ['bold'], history: 'Old word.' });
     expect(tabs.map((tab) => tab.key)).toEqual(['essence', 'links', 'history']);
+  });
+});
+
+const correction: CorrectionCardModel = {
+  kind: 'correction',
+  correctionId: 'c1',
+  nonStandardForm: 'following',
+  nonStandardStressedVowels: [],
+  mainEquivalent: 'next',
+  mainEquivalentStressedVowels: [],
+  otherEquivalents: [],
+  correctionType: 'russianism',
+  categoryId: 'k1',
+  categoryName: undefined,
+  explanation: 'Because.',
+  examplePair: { nonStandard: 'The following day.', standard: 'The next day.' },
+  sourceNames: [],
+  literaryUses: [],
+};
+
+describe('correctionTabsOf', () => {
+  it('gives the better form, the reason and the examples in that order', () => {
+    expect(correctionTabsOf(correction)).toEqual([
+      { key: 'better' },
+      { key: 'why', explanation: 'Because.', sourceNames: [] },
+      {
+        key: 'examples',
+        examplePair: { nonStandard: 'The following day.', standard: 'The next day.' },
+        literaryUses: [],
+      },
+    ]);
+  });
+
+  it('leaves out the reason tab when the Correction gives no reason', () => {
+    expect(correctionTabsOf({ ...correction, explanation: '' }).map(({ key }) => key)).toEqual([
+      'better',
+      'examples',
+    ]);
   });
 });

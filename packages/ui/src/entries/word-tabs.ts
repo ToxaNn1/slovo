@@ -1,4 +1,5 @@
-import type { Example, WordCardModel } from '@slovo/core';
+import type { ExamplePair, LiteraryUse } from '@slovo/contracts';
+import type { CorrectionCardModel, Example, WordCardModel } from '@slovo/core';
 
 /**
  * One tab of a Word's Entry card (ADR 0088), with what it shows: «Суть» the
@@ -46,5 +47,46 @@ export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]
   return [
     { key: 'essence', definition: card.primaryDefinition, moreMeanings: meanings.length },
     ...tabs,
+  ];
+}
+
+/**
+ * One tab of a Correction's Entry card (ADR 0088), under its struck
+ * non-standard form: «Як краще» the standard equivalents and the Category,
+ * «Чому» the explanation and its sources, «Приклади» the example pair and the
+ * literary uses.
+ */
+export type CorrectionTab =
+  | { readonly key: 'better' }
+  | {
+      readonly key: 'why';
+      readonly explanation: string;
+      readonly sourceNames: readonly string[];
+    }
+  | {
+      readonly key: 'examples';
+      readonly examplePair: ExamplePair;
+      readonly literaryUses: readonly LiteraryUse[];
+    };
+
+/** The names of a Correction card's tabs, which the Edition's strings give. */
+export type CorrectionTabKey = CorrectionTab['key'];
+
+/**
+ * The tabs of a Correction's card, in order, without «Чому» when there is no
+ * reason to give. «Як краще» is always there and comes first, so it is the
+ * tab selected on opening.
+ */
+export function correctionTabsOf(
+  card: CorrectionCardModel,
+): readonly [CorrectionTab, ...CorrectionTab[]] {
+  const why: CorrectionTab[] =
+    card.explanation === ''
+      ? []
+      : [{ key: 'why', explanation: card.explanation, sourceNames: card.sourceNames }];
+  return [
+    { key: 'better' },
+    ...why,
+    { key: 'examples', examplePair: card.examplePair, literaryUses: card.literaryUses },
   ];
 }
