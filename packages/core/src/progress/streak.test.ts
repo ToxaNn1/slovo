@@ -164,6 +164,21 @@ describe('the Active Day', () => {
     await earnRounds(next.app, 5, new Map());
     expect(none).toEqual([]);
   });
+
+  it('fires no celebration when setting the Daily Goal, «Без цілі» included, keeps today', async () => {
+    const records = earned(new Map<string, string>(), 5, ...october(11, 13));
+    const { app } = await run({ records, on: [...ALL_ON, 'dailyGoal'] });
+    await app.xpLog.setDailyGoal(10);
+    await earnRounds(app, 5, records);
+    expect(app.progress.state.streak).toBe(3);
+    const celebrated: number[] = [];
+    app.progress.onStreakMilestone((streak) => celebrated.push(streak));
+
+    // With no goal, today's 5 XP keep today: the Streak grows, quietly.
+    await app.xpLog.setDailyGoal(null);
+    expect(app.progress.state.streak).toBe(4);
+    expect(celebrated).toEqual([]);
+  });
 });
 
 describe('the Streak and its freezes', () => {

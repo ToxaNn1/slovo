@@ -10,6 +10,7 @@ import type { Edition } from '../edition/edition';
 import type { ActiveDays } from './active-days';
 import { calendarWeeks, lastWeek, type CalendarDay, type CalendarWeek } from './calendar';
 import { STREAK_MILESTONES } from './streak';
+import type { XpLogChange } from './xp-log';
 
 /**
  * The reader's progress as it stands, as the stats sheet shows it: the Streak
@@ -156,11 +157,16 @@ export function openProgress({
     today: todayKey(clock),
   });
 
-  /** Makes the state again on today's local date, and tells the subscribers when a number changed. */
-  function follow(): void {
+  /**
+   * Makes the state again on today's local date, and tells the subscribers
+   * when a number changed. A Streak grown by setting the Daily Goal, «Без
+   * цілі» included, is no milestone: only a learning action celebrates.
+   */
+  function follow(change: XpLogChange = 'other'): void {
     const next = stateOf();
     if (sameState(next, state)) return;
     const celebrated =
+      change !== 'daily-goal-set' &&
       next.streak > state.streak &&
       activeDays.days.has(todayKey(clock)) &&
       STREAK_MILESTONES.has(next.streak);
@@ -169,8 +175,11 @@ export function openProgress({
     if (celebrated) for (const listener of milestones) listener(next.streak);
   }
 
-  for (const source of [activeDays, history, favorites, collections, game, knowledge]) {
-    source.subscribe(follow);
+  activeDays.subscribe(follow);
+  for (const source of [history, favorites, collections, game, knowledge]) {
+    source.subscribe(() => {
+      follow();
+    });
   }
 
   return {
