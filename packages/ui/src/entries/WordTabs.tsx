@@ -7,6 +7,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { FontSizeProvider, useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { LabelChip } from '../primitives/LabelChip';
+import { PagerScrollView } from '../primitives/VerticalPager';
 import { blockGap, minTouchTarget, space, typeStyle } from '../tokens';
 import { CategoryChip } from './CategoryChip';
 import {
@@ -20,21 +21,30 @@ import {
 } from './WordCard';
 import { wordTabsOf, type WordTab, type WordTabKey } from './word-tabs';
 
-/** The step below each font size, which a tab too tall for the card takes first (ADR 0088). */
-const SMALLER: Readonly<Record<FontSize, FontSize>> = { S: 'S', M: 'S', L: 'M', XL: 'L' };
+/** The smallest font size a tab too tall for the card shrinks to (ADR 0088). */
+const FLOOR = 'S' satisfies FontSize;
+
+/** The step below each font size above the floor, which a tab too tall for the card takes. */
+const SMALLER: Readonly<Record<Exclude<FontSize, typeof FLOOR>, FontSize>> = {
+  M: 'S',
+  L: 'M',
+  XL: 'L',
+};
 
 /**
- * How a tab's content sits in the card's fixed frame: at the user's font
- * size, one step smaller, or in the flow so the page scrolls (ADR 0088).
+ * How a tab's content sits in the card's fixed frame: whole at a font size
+ * from the user's down to the floor, or at the floor scrolling inside the
+ * tab (ADR 0088).
  */
-type Fit = 'fits' | 'shrunk' | 'scrolls';
+type Fit = FontSize | 'scrolls';
 
 /**
  * The Word card's tabs under its Lemma (ADR 0088): «Суть», «Приклад»,
  * «Зв’язки» and «Історія», without the empty ones, «Суть» selected first. A
  * card with «Суть» alone draws no tab bar. The selected tab's content fills
  * the rest of the card's fixed frame; one too tall takes the font size a step
- * smaller, and one too tall even then makes the page scroll. Nothing moves
+ * smaller at a time down to the floor, and one too tall even there scrolls
+ * inside the tab, so the card keeps its height. Nothing moves
  * between tabs, so Reduce Motion has nothing to stop.
  */
 export function WordTabs({
@@ -55,13 +65,29 @@ export function WordTabs({
   const tabs = wordTabsOf(card);
   const [selectedKey, setSelectedKey] = useState<WordTabKey>('essence');
   const selected = tabs.find((tab) => tab.key === selectedKey) ?? tabs[0];
-  const [fit, setFit] = useState<{ key: WordTabKey; fit: Fit }>({ key: 'essence', fit: 'fits' });
-  const fitNow = fit.key === selected.key ? fit.fit : 'fits';
+  // How the selected tab fit at the user's font size; another tab or size starts again at that size.
+  const [fit, setFit] = useState<{ key: WordTabKey; step: FontSize; fit: Fit }>({
+    key: 'essence',
+    step,
+    fit: step,
+  });
+  const fitNow = fit.key === selected.key && fit.step === step ? fit.fit : step;
   const [room, setRoom] = useState<number | undefined>(undefined);
   const measured = ({ nativeEvent }: LayoutChangeEvent) => {
     if (room === undefined || nativeEvent.layout.height <= room || fitNow === 'scrolls') return;
-    setFit({ key: selected.key, fit: fitNow === 'fits' && step !== 'S' ? 'shrunk' : 'scrolls' });
+    setFit({ key: selected.key, step, fit: fitNow === FLOOR ? 'scrolls' : SMALLER[fitNow] });
   };
+  const content = (
+    <FontSizeProvider fontSize={fitNow === 'scrolls' ? FLOOR : fitNow}>
+      <TabContent
+        tab={selected}
+        card={card}
+        onOpenCorrection={onOpenCorrection}
+        onOpenSynonymRow={onOpenSynonymRow}
+        onHistoryShown={onHistoryShown}
+      />
+    </FontSizeProvider>
+  );
   return (
     <View style={styles.tabs}>
       {tabs.length === 1 ? null : (
@@ -96,22 +122,24 @@ export function WordTabs({
       )}
       <View
         testID="word-tab-panel"
-        style={fitNow === 'scrolls' ? undefined : styles.room}
+        style={styles.room}
         onLayout={({ nativeEvent }) => {
-          if (fitNow !== 'scrolls') setRoom(nativeEvent.layout.height);
+          setRoom(nativeEvent.layout.height);
         }}
       >
-        <View style={[styles.content, fitNow !== 'scrolls' && styles.overlay]} onLayout={measured}>
-          <FontSizeProvider fontSize={fitNow === 'shrunk' ? SMALLER[step] : step}>
-            <TabContent
-              tab={selected}
-              card={card}
-              onOpenCorrection={onOpenCorrection}
-              onOpenSynonymRow={onOpenSynonymRow}
-              onHistoryShown={onHistoryShown}
-            />
-          </FontSizeProvider>
-        </View>
+        {fitNow === 'scrolls' ? (
+          <PagerScrollView testID="word-tab-scroll" contentContainerStyle={styles.content}>
+            {content}
+          </PagerScrollView>
+        ) : (
+          <View
+            testID="word-tab-content"
+            style={[styles.content, styles.overlay]}
+            onLayout={measured}
+          >
+            {content}
+          </View>
+        )}
       </View>
     </View>
   );
