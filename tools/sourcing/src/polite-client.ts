@@ -62,8 +62,8 @@ export const POLITE_INTERVAL_MS = 2000;
 
 /** Only answers that will be the same next time are cached. */
 const CACHEABLE_STATUSES = new Set([200, 404]);
-/** Answers that mean "slow down". */
-const BACK_OFF_STATUSES = new Set([429, 503]);
+/** Answers that mean "slow down"; goroh answers a fresh client, such as a CI run, a 403 first. */
+const BACK_OFF_STATUSES = new Set([403, 429, 503]);
 const TIMEOUT_MS = 20_000;
 const FALLBACK_TIMEOUT_MS = 5000;
 const FIRST_BACKOFF_MS = 5000;

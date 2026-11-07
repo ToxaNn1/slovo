@@ -131,4 +131,20 @@ describe('the Mix kind weights', () => {
 
     expect(await kindsOf(off.feed, 12)).toBe('WWWWCWIWRCTW');
   });
+
+  it('are in effect from the Mix while their Feature Switch is on, «Звичайно» for every kind while it is off', async () => {
+    const records = new Map<string, string>();
+    const on = await runApp(records);
+    await on.mix.setKindWeight('correction', 'more');
+
+    const off = await runApp(records, false);
+
+    expect(on.mix.kindWeightsInEffect().correction).toBe('more');
+    expect(off.mix.kindWeightsInEffect()).toEqual({
+      correction: 'normal',
+      idiom: 'normal',
+      synonymRow: 'normal',
+      tip: 'normal',
+    });
+  });
 });

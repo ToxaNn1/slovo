@@ -43,3 +43,11 @@ export const RARITIES = [1, 2, 3, 4, 5] as const;
 export const RaritySchema = z.literal(RARITIES, { error: 'Expected a whole number from 1 to 5' });
 
 export type Rarity = z.infer<typeof RaritySchema>;
+
+/**
+ * A Word id: opaque, assigned when the Word is authored and never reused.
+ * The `w_` prefix keeps it apart from the ids of other kinds of Entry.
+ */
+export const WordIdSchema = z
+  .string()
+  .regex(/^w_[a-z0-9]+$/, 'Expected a Word id: w_ followed by lowercase letters and digits');

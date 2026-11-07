@@ -1,5 +1,5 @@
 import { fill, type MixKindWeight, type QuickQuestionEvery } from '@slovo/contracts';
-import { featureOfKind, type MixKind } from '@slovo/core';
+import type { MixKind, MixKindName } from '@slovo/core';
 import {
   Chip,
   ChipChoice,
@@ -16,8 +16,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { editionStrings } from '../edition/edition';
 import { useEditionInEffect } from '../edition/remote-switches';
-import { useMixChanges, useMixState } from './mix';
-import { mixScreenModel, type MixCategoriesModel } from './mix-screen';
+import { useMixChanges, useMixScreenModel, useMixState } from './mix';
+import type { MixCategoriesModel } from './mix-screen';
 
 const strings = editionStrings.mix;
 
@@ -38,7 +38,7 @@ export function MixChoices() {
   const edition = useEditionInEffect();
   const quickQuestion = edition.isFeatureEnabled('quickQuestion');
 
-  const model = mixScreenModel({ edition, mix: state });
+  const model = useMixScreenModel();
 
   return (
     <>
@@ -62,8 +62,7 @@ export function MixChoices() {
       {model.kinds.length > 0 && (
         <View style={styles.switches}>
           <SettingsGroup>
-            {model.kinds.flatMap(({ entryKind, on }) => {
-              const name = featureOfKind(entryKind);
+            {model.kinds.flatMap(({ entryKind, name, on }) => {
               const row = (
                 <SwitchRow
                   key={entryKind}
@@ -84,6 +83,7 @@ export function MixChoices() {
                   <View key={`${entryKind}-weight`} style={styles.underSwitch}>
                     <KindWeightChoice
                       kind={entryKind}
+                      name={name}
                       title={strings[name].title}
                       weight={weight}
                       onSelect={setKindWeight}
@@ -143,16 +143,17 @@ const WEIGHTS: readonly MixKindWeight[] = ['less', 'normal', 'more'];
 /** The Mix kind weight of one kind: «Менше», «Звичайно» or «Більше». */
 function KindWeightChoice({
   kind,
+  name,
   title,
   weight,
   onSelect,
 }: {
   kind: MixKind;
+  name: MixKindName;
   title: string;
   weight: MixKindWeight;
   onSelect: (kind: MixKind, weight: MixKindWeight) => void;
 }) {
-  const name = featureOfKind(kind);
   return (
     <SegmentedControl
       accessibilityLabel={fill(strings.kindWeight.title, { kind: title })}

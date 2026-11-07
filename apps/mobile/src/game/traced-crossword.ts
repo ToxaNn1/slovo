@@ -15,6 +15,7 @@ import { AccessibilityInfo } from 'react-native';
 
 import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 
 /** How many Words of the puzzle are found. */
@@ -130,25 +131,21 @@ export function useTracedCrossword(): TracedCrosswordView | undefined {
   if (crossword === undefined || state === undefined) return { kind: 'printed' };
 
   const play = (action: PuzzleAction) => {
-    crossword.play(action).then(
-      (next) => {
-        setOpened((now) => {
-          if (now?.crossword !== crossword || now.state === undefined) return now;
-          const missed =
-            action.type === 'release' &&
-            now.state.trace.length > 1 &&
-            foundCount(next) === foundCount(now.state);
-          return {
-            ...now,
-            state: next,
-            miss: missed ? { key: (now.miss?.key ?? 0) + 1, path: now.state.trace } : now.miss,
-          };
-        });
-      },
-      (error: unknown) => {
-        logError('Could not keep the traced Daily Crossword', error);
-      },
-    );
+    void keep('the traced Daily Crossword', crossword.play(action)).then((next) => {
+      if (next === undefined) return;
+      setOpened((now) => {
+        if (now?.crossword !== crossword || now.state === undefined) return now;
+        const missed =
+          action.type === 'release' &&
+          now.state.trace.length > 1 &&
+          foundCount(next) === foundCount(now.state);
+        return {
+          ...now,
+          state: next,
+          miss: missed ? { key: (now.miss?.key ?? 0) + 1, path: now.state.trace } : now.miss,
+        };
+      });
+    });
   };
   return {
     kind: 'play',

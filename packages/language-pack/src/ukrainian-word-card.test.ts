@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { buildWordCard, createEntries, type WordCardModel } from '@slovo/core';
+import { buildWordCard, createEntries, EVERYTHING_IN, type WordCardModel } from '@slovo/core';
 
 import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
 import { ukrainianFolder } from './test-support';
@@ -23,7 +23,11 @@ beforeAll(async () => {
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
   const words = await pack.listWords();
-  const entries = createEntries({ content: pack, edition: { isFeatureEnabled: () => true } });
+  const entries = createEntries({
+    content: pack,
+    edition: { isFeatureEnabled: () => true },
+    choices: EVERYTHING_IN,
+  });
   cards = await Promise.all(words.map((word) => buildWordCard({ word, entries })));
 });
 

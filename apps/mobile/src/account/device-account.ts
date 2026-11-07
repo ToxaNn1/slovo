@@ -1,13 +1,8 @@
-import { openAccount, systemRandom, type Account, type TrackedUserState } from '@slovo/core';
-import { systemSchedule } from '@slovo/ui';
+import { openAccount, type Account } from '@slovo/core';
 
 import { deviceAnalytics } from '../analytics/posthog-analytics';
-import { backend } from '../api';
-import { deviceClock } from '../device/device-clock';
 import { nativeModules } from '../device/device-native-modules';
-import { edition } from '../edition/edition';
-import { logError } from '../diagnostics/log';
-import { openOnce, type Opening } from '../opening';
+import type { DevicePorts } from '../shell-value';
 import { createAppleSignInSheet, noAppleSignInSheet } from './apple-sign-in-sheet';
 import { createGoogleSignInSheet, noGoogleSignInSheet } from './google-sign-in-sheet';
 import { createSessionStore } from './session-store';
@@ -81,38 +76,20 @@ const appleSignInSheet =
     : createAppleSignInSheet(appleAuthentication);
 
 /**
- * The reader's Account, under the Edition's name for it,, opened once per app run apart from the
- * composition (ADR 0036, 0037), or undefined when the Edition's `account`
- * switch is off. Its Session is in the Keychain, or in memory while the
- * binary lacks it. When the Keychain can't be read, the opening fails with a
- * retry, so a Session kept there is never shadowed by one in memory. It opens
- * after the user state, whose installed marker tells a Session of this install
- * from one an earlier install left in the Keychain.
+ * Opens the reader's Account over the device ports, once per app run apart
+ * from the composition (ADR 0036, 0037); the Shell opens it only when the
+ * Edition's `account` switch is on. Its Session is in the Keychain, or in
+ * memory while the binary lacks it. When the Keychain can't be read, the
+ * opening fails with a retry, so a Session kept there is never shadowed by
+ * one in memory. It opens after the user state, whose installed marker tells
+ * a Session of this install from one an earlier install left in the Keychain.
  */
-export function accountOpening({
-  userState,
-}: {
-  userState: Opening<TrackedUserState>;
-}): Opening<Account> | undefined {
-  if (!edition.isFeatureEnabled('account')) return undefined;
-  return openOnce(
-    async () =>
-      openAccount({
-        backend,
-        edition,
-        googleSheet: googleSignInSheet,
-        appleSheet: appleSignInSheet,
-        sessions: createSessionStore(keychain),
-        userState: await userState.opened(),
-        clock: deviceClock,
-        schedule: systemSchedule,
-        random: systemRandom,
-        analytics: deviceAnalytics,
-      }),
-    {
-      onError(error) {
-        logError('Could not read the Session', error);
-      },
-    },
-  );
+export function openDeviceAccount(ports: DevicePorts): Promise<Account> {
+  return openAccount({
+    ...ports,
+    googleSheet: googleSignInSheet,
+    appleSheet: appleSignInSheet,
+    sessions: createSessionStore(keychain),
+    analytics: deviceAnalytics,
+  });
 }

@@ -3,7 +3,12 @@ import { describe, expect, it } from 'vitest';
 import { colorSchemeFor, createSettings } from '../index';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
-const defaults = { theme: 'system', fontSize: 'M', vibration: true } as const;
+const defaults = {
+  theme: 'system',
+  fontSize: 'M',
+  vibration: true,
+  narratorVoice: 'anna',
+} as const;
 
 async function settingsOver(records = new Map<string, string>()) {
   const userState = await openUserState({ port: createMemoryUserStatePort(records) });
@@ -24,6 +29,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -41,6 +47,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -57,6 +64,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
     expect(await settings.read()).toEqual({
       theme: 'dark',
@@ -68,6 +76,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -84,6 +93,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
     expect(await settings.read()).toEqual({
       theme: 'system',
@@ -95,6 +105,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -112,6 +123,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -129,6 +141,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -145,6 +158,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -166,6 +180,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -173,7 +188,7 @@ describe('settings', () => {
     const userState = await openUserState({ port: createMemoryUserStatePort() });
     const settings = createSettings({
       userState,
-      defaults: { theme: 'light', fontSize: 'L', vibration: false },
+      defaults: { theme: 'light', fontSize: 'L', vibration: false, narratorVoice: 'boris' },
     });
 
     expect(await settings.read()).toEqual({
@@ -186,6 +201,7 @@ describe('settings', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'boris',
     });
   });
 });
@@ -211,6 +227,7 @@ describe('settings: Vibration', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
     expect((await settings.read()).vibration).toBe(false);
   });
@@ -252,6 +269,7 @@ describe('settings: Vibration', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -282,6 +300,7 @@ describe('settings: «Без лічильників»', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
     expect((await settings.read()).noCounters).toBe(true);
   });
@@ -314,6 +333,7 @@ describe('settings: «Без лічильників»', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -348,6 +368,7 @@ describe('settings: «Без лічильників»', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 });
@@ -372,6 +393,7 @@ describe('settings: Self-check', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
     expect((await settings.read()).selfCheck).toBe(true);
   });
@@ -397,6 +419,7 @@ describe('settings: Self-check', () => {
       seasonalDecor: true,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -429,6 +452,7 @@ describe('settings: Seasonal Decor', () => {
       seasonalDecor: false,
       shareCounters: true,
       reduceMotion: false,
+      narratorVoice: 'anna',
     });
   });
 
@@ -443,6 +467,39 @@ describe('settings: Seasonal Decor', () => {
     const settings = await settingsOver(new Map([['settings.seasonalDecor', '"yes"']]));
 
     expect((await settings.read()).seasonalDecor).toBe(true);
+  });
+});
+
+describe('settings: «Голос диктора»', () => {
+  it("reads the Edition's default Narrator Voice until the reader chooses", async () => {
+    const settings = await settingsOver();
+
+    expect((await settings.read()).narratorVoice).toBe('anna');
+    expect(settings.defaults.narratorVoice).toBe('anna');
+  });
+
+  it('keeps the chosen voice, without touching the other settings, and returns the settings in effect', async () => {
+    const settings = await settingsOver();
+    await settings.update({ theme: 'dark' });
+
+    expect(await settings.update({ narratorVoice: 'boris' })).toMatchObject({
+      theme: 'dark',
+      sounds: true,
+      narratorVoice: 'boris',
+    });
+  });
+
+  it('keeps the choice when the user state is opened again', async () => {
+    const records = new Map<string, string>();
+    await (await settingsOver(records)).update({ narratorVoice: 'boris' });
+
+    expect((await (await settingsOver(records)).read()).narratorVoice).toBe('boris');
+  });
+
+  it("reads the Edition's default when the stored choice is not a voice id", async () => {
+    const settings = await settingsOver(new Map([['settings.narratorVoice', '3']]));
+
+    expect((await settings.read()).narratorVoice).toBe('anna');
   });
 });
 

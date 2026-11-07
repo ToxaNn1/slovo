@@ -3,6 +3,7 @@ import type { PlayedRound, RoundAnswer } from '@slovo/core';
 import { EditionProvider, GameReview } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import { Text } from 'react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -340,12 +341,26 @@ const originRounds: PlayedRound[] = [
   },
 }));
 
+/** The Edition's Pronunciation, as the app gives it: a stand-in that names the Word it reads. */
+function Pronunciation({ lemma, entryId }: { lemma: string; entryId: string }) {
+  return <Text>{`hear ${lemma} (${entryId})`}</Text>;
+}
+
 async function renderReview({
   onOpen = jest.fn(),
   played = rounds,
-}: { onOpen?: (entryId: string) => void; played?: readonly PlayedRound[] } = {}) {
+  pronunciation,
+}: {
+  onOpen?: (entryId: string) => void;
+  played?: readonly PlayedRound[];
+  pronunciation?: typeof Pronunciation;
+} = {}) {
   await render(
-    <EditionProvider edition={{ locale: 'en' }} strings={strings}>
+    <EditionProvider
+      edition={{ locale: 'en' }}
+      strings={strings}
+      {...(pronunciation === undefined ? {} : { pronunciation })}
+    >
       <GameReview rounds={played} onOpen={onOpen} />
     </EditionProvider>,
   );
@@ -392,6 +407,35 @@ describe('GameReview', () => {
 
     expect(screen.getByText('stern and gloomy')).toBeTruthy();
     expect(screen.queryByText('Etymology')).toBeNull();
+  });
+
+  it('offers an expanded Word to hear, its stressed Lemma read by the Pronunciation', async () => {
+    await renderReview({ played: originRounds, pronunciation: Pronunciation });
+
+    expect(screen.queryByText(/^hear/)).toBeNull();
+    await fireEvent.press(screen.getByTestId('game-review-row-1'));
+
+    expect(screen.getByText('hear re\u0301cord (w_record)')).toBeTruthy();
+    expect(screen.queryByText('hear candid (w_candid)')).toBeNull();
+  });
+
+  it('offers no Word to hear for an idiom, a Correction, a Synonym Row or a Tip', async () => {
+    await renderReview({ pronunciation: Pronunciation });
+
+    for (const row of [3, 4, 5, 6]) {
+      await fireEvent.press(screen.getByTestId(`game-review-row-${String(row)}`));
+      expect(screen.getByTestId('game-review-details')).toBeTruthy();
+      expect(screen.queryByText(/^hear/)).toBeNull();
+    }
+  });
+
+  it('offers no Word to hear when the Edition gives no Pronunciation', async () => {
+    await renderReview();
+
+    await fireEvent.press(screen.getByTestId('game-review-row-1'));
+
+    expect(screen.getByText('open and honest')).toBeTruthy();
+    expect(screen.queryByText(/^hear/)).toBeNull();
   });
 
   it('expands a Correction on a tap: the right form and the explanation', async () => {

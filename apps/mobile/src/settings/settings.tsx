@@ -14,6 +14,7 @@ import { Appearance, useColorScheme } from 'react-native';
 import { deviceAnalytics } from '../analytics/posthog-analytics';
 import { edition } from '../edition/edition';
 import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { openOnce, useSubscribed, type Opening } from '../opening';
 import { useShell, type OpenedSettings } from '../shell-value';
 
@@ -22,8 +23,8 @@ function applyToNativeViews({ theme }: UserSettings): void {
   Appearance.setColorScheme(theme === 'system' ? 'unspecified' : theme);
 }
 
-const { theme, fontSize, vibration } = edition.userSettingDefaults;
-const defaults: SettingsDefaults = { theme, fontSize, vibration };
+const { theme, fontSize, vibration, narratorVoice } = edition.userSettingDefaults;
+const defaults: SettingsDefaults = { theme, fontSize, vibration, narratorVoice };
 
 /** The settings with those in effect, which native views follow from the start. */
 function opened(settings: Settings, current: UserSettings): OpenedSettings {
@@ -94,9 +95,7 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     const next = { ...current, ...changes };
     applyToNativeViews(next);
     setChanged({ over: settings, current: next });
-    settings.update(changes).catch((error: unknown) => {
-      logError('Could not keep the settings', error);
-    });
+    void keep('the settings', settings.update(changes));
   }
 
   return <SettingsContext value={{ current, update }}>{children}</SettingsContext>;

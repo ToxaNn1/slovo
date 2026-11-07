@@ -1,9 +1,7 @@
-import type { CounterLine, CounterReads } from '@slovo/core';
+import type { CounterLine, CounterReads, KnowledgeMark } from '@slovo/core';
 import { useEffect, useState } from 'react';
 
 import { logError } from '../diagnostics/log';
-import { useKnowledgeMark } from '../knowledge/marks';
-import { useFavorite } from '../saved/favorites';
 import type { Opening } from '../opening';
 import { useShell } from '../shell-value';
 
@@ -53,11 +51,14 @@ function readAsked(reads: Opening<CounterReads>): void {
  * whenever the reader's own mark or Favorite of it changes, so that change
  * shows at once; none until it is read, and none offline with nothing kept.
  * Not read at all while the line is not `shown`, as with the Knowledge switch off.
+ * The card gives the reader's own mark and Favorite, which it reads already.
  */
-export function useCounterLine(entryId: string, shown: boolean): CounterLine | undefined {
+export function useCounterLine(
+  entryId: string,
+  shown: boolean,
+  { mark, inFavorites }: { mark: KnowledgeMark | undefined; inFavorites: boolean },
+): CounterLine | undefined {
   const [line, setLine] = useState<CounterLine | undefined>();
-  const { mark } = useKnowledgeMark(entryId);
-  const { inFavorites } = useFavorite(entryId);
   const reads = useShell().counterReads;
   useEffect(() => {
     if (!shown) return;

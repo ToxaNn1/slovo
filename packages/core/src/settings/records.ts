@@ -32,6 +32,13 @@ export const settingsRecords = {
    */
   seasonalDecor: declareRecord('settings.seasonalDecor', z.boolean()),
   /**
+   * The id of the Narrator Voice the reader chose on «Голос диктора» (ADR
+   * 0083). It syncs last write wins like the Theme (ADR 0041); without it
+   * the Edition's default voice reads, as for an id the Edition no longer
+   * declares.
+   */
+  narratorVoice: declareRecord('settings.narratorVoice', z.string().min(1)),
+  /**
    * The Rarity Ceiling the user chose, 1 to 5, the one «Рідкість» setting
    * every surface obeys (ADR 0072); without it, the Edition's default. It
    * syncs last write wins like the Theme (ADR 0041). Schema version 7 moves

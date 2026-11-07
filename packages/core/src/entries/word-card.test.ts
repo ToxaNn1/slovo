@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction, SynonymRow, Word } from '@slovo/contracts';
 
-import { buildWordCard, createEntries } from '../index';
+import { buildWordCard, createEntries, EVERYTHING_IN } from '../index';
 import { createMemoryContentPort } from '../testing';
 
 /** A Word with only what every Word has; each test adds what it needs. */
@@ -106,6 +106,7 @@ const build = (
           (feature !== 'illustrations' || illustrationsOn),
         illustrations: new Set(illustrations),
       },
+      choices: EVERYTHING_IN,
     }),
   });
 

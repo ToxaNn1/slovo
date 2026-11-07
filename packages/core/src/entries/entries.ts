@@ -21,15 +21,9 @@ import {
   type MixKindName,
   type ShownKind,
 } from './entry-kinds';
-import { readMix, type MixEdition, type MixState } from './mix';
-import {
-  readRarityCeiling,
-  withinRarityCeiling,
-  type RarityCeilingEdition,
-} from './rarity-ceiling';
+import { kindShown, type KindsInMix, type MixState } from './mix';
+import { HIGHEST_RARITY, withinRarityCeiling } from './rarity-ceiling';
 import type { ContentReadPort } from '../ports';
-import type { UserState } from '../user-state/user-state';
-import { userStateRecords } from '../user-state-schema';
 
 export type { ShownKind } from './entry-kinds';
 
@@ -190,7 +184,35 @@ export interface Entries {
   illustrationOf(word: Word): string | undefined;
 }
 
-const { hiddenEntries: hiddenRecords } = userStateRecords;
+/**
+ * The reader's choices that decide which Entries are eligible, as the Mix,
+ * the Rarity Ceiling and the Hidden Entries hold them now: the Entries read
+ * them on every call and keep none, so a change is eligible at once.
+ */
+export interface EligibilityChoices {
+  /** The Mix as it stands, or `everything-in`: every Category and every kind in it. */
+  mix(): Pick<MixState, 'categoryIds' | 'correctionCategories' | 'kinds'> | 'everything-in';
+  /** The Rarity Ceiling in force. */
+  rarityCeiling(): Rarity;
+  /** Whether the Entry is Hidden. */
+  isHidden(entryId: string): boolean;
+}
+
+/**
+ * Everything in: every Category and every kind in the Mix, at the highest
+ * Rarity Ceiling, no Entry Hidden, for the tools and screens that only read
+ * the Language Pack.
+ */
+export const EVERYTHING_IN: EligibilityChoices = {
+  mix: () => 'everything-in',
+  rarityCeiling: () => HIGHEST_RARITY,
+  isHidden: () => false,
+};
+
+/** The Mix as the Entries read it. */
+type MixChoice = ReturnType<EligibilityChoices['mix']>;
+
+const ALL_KINDS_IN: KindsInMix = { correction: true, idiom: true, synonymRow: true, tip: true };
 
 /**
  * Reads once and keeps the result, as the Language Pack never changes while
@@ -212,41 +234,29 @@ function readOnce<T>(read: () => Promise<T>): () => Promise<T> {
 type EntriesEdition = Pick<Edition, 'isFeatureEnabled'> & Partial<Pick<Edition, 'illustrations'>>;
 
 /**
- * The Entries over the Language Pack, and over the user's choices in the user
- * state when it is given. Without it there is no Mix and no Entry is Hidden,
- * so every live Word is eligible, for the tools and screens that only read
- * the Language Pack.
+ * The Entries over the Language Pack and the reader's choices, read live from
+ * `choices`; `EVERYTHING_IN` for the tools and screens that only read the
+ * Language Pack.
  */
-export function createEntries(
-  options:
-    | { content: ContentReadPort; edition: EntriesEdition }
-    | {
-        content: ContentReadPort;
-        edition: EntriesEdition & MixEdition & RarityCeilingEdition;
-        userState: Pick<UserState, 'list' | 'read'>;
-      },
-): Entries {
-  const { content, edition } = options;
-
+export function createEntries({
+  content,
+  edition,
+  choices,
+}: {
+  content: ContentReadPort;
+  edition: EntriesEdition;
+  choices: EligibilityChoices;
+}): Entries {
   const categories = readOnce(() => content.listCategories());
   const correctionCategories = readOnce(() => content.listCorrectionCategories());
 
-  /** The user's Mix over the Language Pack's Categories, the Words' and the Corrections'; nothing without the user state. */
-  async function readUserMix() {
-    if (!('userState' in options)) return undefined;
-    const { edition: mixEdition, userState } = options;
-    const [word, correction] = await Promise.all([categories(), correctionCategories()]);
-    return readMix({ categories: { word, correction }, edition: mixEdition, userState });
-  }
+  /** The kinds in the Mix as a whole. */
+  const kindsOf = (mix: MixChoice) => (mix === 'everything-in' ? ALL_KINDS_IN : mix.kinds);
 
-  /** Whether the kind of Entry, as a whole, is in the user's Mix; without a Mix it always is. */
-  const kindInMix = (kind: MixKind, mix: MixState | undefined) => mix?.kinds[kind] ?? true;
+  /** Whether the reader is shown the kind as a whole now, by the Mix's one rule. */
+  const shownNow = (kind: MixKind) => kindShown(edition, kindsOf(choices.mix()), kind);
 
-  /** Whether the Edition turns the kind of Entry on and the user has it in the Mix. */
-  const kindShown = (kind: MixKind, mix: MixState | undefined) =>
-    edition.isFeatureEnabled(featureOfKind(kind)) && kindInMix(kind, mix);
-
-  const linksCorrections = async () => kindShown('correction', await readUserMix());
+  const linksCorrections = () => Promise.resolve(shownNow('correction'));
 
   /**
    * The ids of every live Entry of each kind, read once from the Language
@@ -303,10 +313,6 @@ export function createEntries(
     return ids.flat();
   }
 
-  /** The Rarity Ceiling in force; the highest, so every Word is within it, without the user state. */
-  const rarityCeiling = () =>
-    'userState' in options ? readRarityCeiling(options) : Promise.resolve<Rarity>(5);
-
   /** The live Word of the id when it is within the Rarity Ceiling. */
   const wordWithinCeiling = (words: ReadonlyMap<string, Entry>, id: string, ceiling: Rarity) => {
     const word = words.get(id);
@@ -318,29 +324,32 @@ export function createEntries(
    * highest ceiling, without reading the Words.
    */
   async function underRarityCeiling(ids: readonly string[]): Promise<readonly string[]> {
-    const ceiling = await rarityCeiling();
-    if (ceiling >= 5) return ids;
+    const ceiling = choices.rarityCeiling();
+    if (ceiling >= HIGHEST_RARITY) return ids;
     const words = await live.word();
     return ids.filter((id) => wordWithinCeiling(words, id, ceiling) !== undefined);
   }
 
-  /** The ids of the Hidden Entries; none without the user state. */
-  const hiddenIds = () =>
-    'userState' in options ? options.userState.list(hiddenRecords) : new Map<string, string>();
+  /** The ids of the Categories of the kind's list in the Mix; none named when every one is in. */
+  const categoryIdsIn = (kind: CategoryKind, mix: MixChoice) => {
+    if (mix === 'everything-in') return undefined;
+    return kind === 'word' ? mix.categoryIds : mix.correctionCategories.categoryIds;
+  };
 
   async function eligible(): Promise<EntryIds> {
-    const [mix, hidden] = await Promise.all([readUserMix(), hiddenIds()]);
-    const ofKind = (kind: MixKind) => (kindShown(kind, mix) ? listIds[kind]() : []);
+    const mix = choices.mix();
+    const kinds = kindsOf(mix);
+    const ofKind = (kind: MixKind) => (kindShown(edition, kinds, kind) ? listIds[kind]() : []);
     const [words, corrections, idioms, synonymRows, tips] = await Promise.all([
-      idsInCategories('word', mix?.categoryIds).then(underRarityCeiling),
-      kindShown('correction', mix)
-        ? idsInCategories('correction', mix?.correctionCategories.categoryIds)
+      idsInCategories('word', categoryIdsIn('word', mix)).then(underRarityCeiling),
+      kindShown(edition, kinds, 'correction')
+        ? idsInCategories('correction', categoryIdsIn('correction', mix))
         : [],
       ofKind('idiom'),
       ofKind('synonymRow'),
       ofKind('tip'),
     ]);
-    const shown = (id: string) => !hidden.has(id);
+    const shown = (id: string) => !choices.isHidden(id);
     return {
       words: words.filter(shown),
       corrections: corrections.filter(shown),
@@ -357,7 +366,7 @@ export function createEntries(
     kind: ShownKind,
     alsoOf: readonly AskableKind[] = [],
   ): Promise<EligibleOfKind<AskableEntry>> {
-    if (kind !== 'word' && !kindInMix(kind, await readUserMix())) {
+    if (kind !== 'word' && !kindsOf(choices.mix())[kind]) {
       return { refusal: `${featureOfKind(kind)}-out-of-mix` };
     }
     const kinds = [kind, ...alsoOf];
@@ -370,16 +379,19 @@ export function createEntries(
   }
 
   async function eligibleWordsOfAnyRarity(): Promise<readonly Word[]> {
-    const [mix, hidden, words] = await Promise.all([readUserMix(), hiddenIds(), live.word()]);
-    const ids = await idsInCategories('word', mix?.categoryIds);
+    const [words, ids] = await Promise.all([
+      live.word(),
+      idsInCategories('word', categoryIdsIn('word', choices.mix())),
+    ]);
     return ids.flatMap((id) => {
       const entry = words.get(id);
-      return entry?.kind === 'word' && !hidden.has(id) ? [entry] : [];
+      return entry?.kind === 'word' && !choices.isHidden(id) ? [entry] : [];
     });
   }
 
   async function wordsUnderRarityCeiling(): Promise<readonly Word[]> {
-    const [ceiling, words, ids] = await Promise.all([rarityCeiling(), live.word(), listIds.word()]);
+    const ceiling = choices.rarityCeiling();
+    const [words, ids] = await Promise.all([live.word(), listIds.word()]);
     return ids.flatMap((id) => {
       const word = wordWithinCeiling(words, id, ceiling);
       return word === undefined ? [] : [word];
@@ -399,14 +411,10 @@ export function createEntries(
   }
 
   async function liveCorrections(): Promise<readonly Correction[]> {
-    const [hidden, corrections, ids] = await Promise.all([
-      hiddenIds(),
-      live.correction(),
-      listIds.correction(),
-    ]);
+    const [corrections, ids] = await Promise.all([live.correction(), listIds.correction()]);
     return ids.flatMap((id) => {
       const entry = corrections.get(id);
-      return entry?.kind === 'correction' && !hidden.has(id) ? [entry] : [];
+      return entry?.kind === 'correction' && !choices.isHidden(id) ? [entry] : [];
     });
   }
 
@@ -452,7 +460,7 @@ export function createEntries(
     },
     async linkingSynonymRow(word) {
       // Like a link to a Correction, none while the reader keeps Synonym Rows out of the Mix.
-      if (!kindShown('synonymRow', await readUserMix())) return undefined;
+      if (!shownNow('synonymRow')) return undefined;
       const [first] = await content.listLinkingSynonymRowIds(word.id);
       if (first === undefined) return undefined;
       const [row] = await content.getEntries([first]);

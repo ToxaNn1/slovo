@@ -52,3 +52,8 @@ The one native build of 0.9 goes to TestFlight (ADR 0004). It carries every nati
 2. Publish a first staged update: Actions → OTA update → Run workflow with a rollout of `10` and a message. Check that the run prints the update group and the update id, and that the EAS dashboard shows the update on the channel `uk` at 10%.
 3. On a TestFlight build of the channel `uk` that receives the update, check that «Про застосунок» shows its update id after the next launch.
 4. Run the workflow again with that update group and a rollout of `100`, and check that the EAS dashboard shows the update at 100%.
+
+### Narrator Voice (spec #1633, ADR 0083)
+
+1. Listen to the Recordings of the Words with more than one valid Stress, in each of the four voices, after the `Recordings` workflow has made them again with `--only missing`: each stresses its first Stress (за́грава, коло́ворот, пи́ха, ле́щата, ку́пина, за́клепка, ва́льок, креме́зний, ку́нтуш, сіно́жать, нагі́дки, при́мовка, ло́щина, соки́рки, бра́тки, бе́скид).
+2. In Settings › «Голос диктора», a tap on each voice reads the sample заплава with the Stress on пла́, as its caption shows.

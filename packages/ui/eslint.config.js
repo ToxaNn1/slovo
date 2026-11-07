@@ -84,6 +84,7 @@ export default [
       'src/primitives/VerticalPager.tsx',
       'src/primitives/WedgeLoader.tsx',
       'src/saved/FavoriteButton.tsx',
+      'src/settings/NarratorVoicePicker.tsx',
       'src/settings/WidgetGuide.tsx',
       'src/share/ShareSheet.tsx',
     ],

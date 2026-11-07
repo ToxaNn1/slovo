@@ -490,6 +490,37 @@ describe('pnpm content check', () => {
     expect(run.stderr).toContain(`${correctionFile}: Invalid JSON`);
   });
 
+  it('passes with Words that have no Recording and reports how many each Narrator Voice lacks', () => {
+    const recordings = join(editionDir, 'assets', 'recordings');
+    const lacking = (stdout: string): Map<string, number> =>
+      new Map(
+        [...stdout.matchAll(/^ {2}(\w+): (\d+)$/gm)].map(([, voice = '', count = '']) => [
+          voice,
+          Number(count),
+        ]),
+      );
+    const before = lacking(content(['check', '--edition', 'uk']).stdout);
+    // Two Words recorded once, in their only Stress: their Recordings are current.
+    const texts = readJson(join('assets', 'recordings', 'oksana', 'texts.json'));
+    const [first = '', second = ''] = Object.entries(texts ?? {})
+      .filter(([, text]) => typeof text === 'string' && text.split('\u0301').length === 2)
+      .map(([id]) => id);
+    rmSync(join(recordings, 'oksana', `${first}.mp3`));
+    rmSync(join(recordings, 'oksana', `${second}.mp3`));
+    rmSync(join(recordings, 'taras', `${first}.mp3`));
+
+    const run = content(['check', '--edition', 'uk']);
+
+    expect(run.stderr).toBe('');
+    expect(run.stdout).toContain('Words without a Recording:');
+    const after = lacking(run.stdout);
+    expect(after.get('oksana')).toBe((before.get('oksana') ?? 0) + 2);
+    expect(after.get('taras')).toBe((before.get('taras') ?? 0) + 1);
+    expect(after.get('marta')).toBe(before.get('marta'));
+    expect(after.get('ostap')).toBe(before.get('ostap'));
+    expect(run.status).toBe(0);
+  });
+
   it('reports content unrecorded since the last edit', () => {
     const file = ukrainian.entryFile(registry().find((id) => id.startsWith('i_')) ?? '');
     const idiom = readJson(file) as Record<string, unknown>;

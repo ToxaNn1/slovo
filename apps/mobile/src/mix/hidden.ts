@@ -1,16 +1,20 @@
-import type { CategoryKind, HiddenEntry, HideTarget, MixKind } from '@slovo/core';
+import {
+  categoryTarget,
+  type CategoryKind,
+  type HiddenEntry,
+  type HideTarget,
+  type MixKind,
+} from '@slovo/core';
 import { fill, useEdition, useUndoToast } from '@slovo/ui';
 import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useSubscribed } from '../opening';
-import { useShell } from '../shell-value';
+import { useUndo } from '../undo';
 import { hiddenScreenModel, hiddenSummary, type HiddenScreenModel } from './hidden-screen';
-import { undoRestore } from './hiding-undo';
-import { useMixState } from './mix';
+import { useMixInEffect } from './mix';
 
 const strings = editionStrings.hidden;
 
@@ -29,11 +33,10 @@ export function useHiddenSummary(): string {
 /** What the Hidden screen draws, kept up to date. */
 export function useHiddenScreenModel(): HiddenScreenModel {
   const list = useHiddenList();
-  const mix = useMixState();
-  const edition = useEditionInEffect();
+  const { outOfMix, kindsOn } = useMixInEffect();
   return useMemo(
-    () => hiddenScreenModel({ edition, hiddenEntries: list, mix, strings: editionStrings }),
-    [edition, list, mix],
+    () => hiddenScreenModel({ hiddenEntries: list, outOfMix, kindsOn, strings: editionStrings }),
+    [list, outOfMix, kindsOn],
   );
 }
 
@@ -53,32 +56,21 @@ export function useHiddenChanges(): {
   turnKindOn: (entryKind: MixKind) => void;
 } {
   const composition = useComposition();
-  const compositionOpening = useShell().composition;
+  const undo = useUndo();
   const showToast = useUndoToast();
 
   function unhide(target: HideTarget): void {
-    composition.unhide(target).then(
-      (result) => {
-        if (result?.changed.kind !== 'entry' || result.hiddenAt === undefined) return;
-        const { hiddenAt } = result;
-        const { entryId } = result.changed;
-        showToast({
-          message: fill(strings.entryRestored, { title: result.changed.row.title }),
-          undoLabel: strings.undo,
-          onUndo() {
-            compositionOpening
-              .opened()
-              .then((current) => undoRestore(current, entryId, hiddenAt))
-              .catch((error: unknown) => {
-                logError('Could not hide the Entry again', error);
-              });
-          },
-        });
-      },
-      (error: unknown) => {
-        logError('Could not bring the hidden change back', error);
-      },
-    );
+    void keep('the hidden change', composition.unhide(target)).then((result) => {
+      if (result?.changed.kind !== 'entry' || result.undo === undefined) return;
+      const { undo: restoreUndo } = result;
+      showToast({
+        message: fill(strings.entryRestored, { title: result.changed.row.title }),
+        undoLabel: strings.undo,
+        onUndo() {
+          undo('the undo of bringing the Entry back', restoreUndo);
+        },
+      });
+    });
   }
 
   return {
@@ -86,9 +78,7 @@ export function useHiddenChanges(): {
       unhide({ kind: 'entry', entryId });
     },
     turnCategoryOn: (categoryId, of) => {
-      unhide(
-        of === 'word' ? { kind: 'category', categoryId } : { kind: 'category', categoryId, of },
-      );
+      unhide(categoryTarget(categoryId, of));
     },
     turnKindOn: (entryKind) => {
       unhide({ kind: 'whole-kind', entryKind });
