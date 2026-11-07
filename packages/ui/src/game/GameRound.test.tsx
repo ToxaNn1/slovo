@@ -13,11 +13,12 @@ import {
   HapticsProvider,
   InterfaceSoundsProvider,
   TokensProvider,
+  typeStyle,
   type ColorScheme,
   type DesignTokens,
 } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo, StyleSheet, View, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -36,6 +37,7 @@ const strings = testStrings({
       gap: { label: 'Which word is missing?', voiceOver: 'gap' },
       correct: 'Right',
       chosen: 'Your choice',
+      optionKeys: 'ABCD',
       synonymRow: { label: 'Synonyms', prompt: 'What is a synonym of “{dominant}”?' },
       tip: { label: 'Tip' },
       typed: { label: 'Your answer', submit: 'Check' },
@@ -539,6 +541,58 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Lives: 2 of 3');
   });
 
+  it('keys the options in order with the Edition’s keys', async () => {
+    await renderRound();
+
+    ['A', 'B', 'C', 'D'].forEach((key, place) => {
+      expect(
+        within(screen.getByTestId(`game-option-${String(place)}`)).getByText(key),
+      ).toBeTruthy();
+    });
+  });
+
+  it('marks a wrong pick with ✕ on its key and leaves the other keys as they are', async () => {
+    await renderRound();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
+
+    const wrong = within(screen.getByTestId('game-option-1'));
+    expect(wrong.getByText('✕')).toBeTruthy();
+    expect(wrong.queryByText('B')).toBeNull();
+    expect(screen.getByRole('button', { name: 'brittle, Your choice' })).toBeTruthy();
+    expect(within(screen.getByTestId('game-option-0')).getByText('A')).toBeTruthy();
+    expect(
+      within(screen.getByTestId(`game-option-${String(CORRECT)}`)).getByText('C'),
+    ).toBeTruthy();
+    expect(screen.getAllByText('✕')).toHaveLength(1);
+  });
+
+  it('sizes each option for its text: a Word, a sentence or a long text', async () => {
+    const texts = [
+      'candid',
+      'open and honest',
+      'speaking openly and honestly about what one thinks, even when it is unwelcome',
+      'dour',
+    ];
+    const { round } = first;
+    if (round.form !== 'pick') throw new Error('The first Round is a pick Round');
+    await renderRound(jest.fn(), jest.fn(), {
+      ...first,
+      round: { ...round, options: texts.map((text) => ({ text, stressedVowels: [] })) },
+    });
+
+    /** The text on the option at that place. */
+    const textOf = (place: number) =>
+      within(screen.getByTestId(`game-option-${String(place)}`)).getByText(texts[place] ?? '');
+    const sizes = (['roundOptionWord', 'roundOptionSentence', 'roundOptionLong'] as const).map(
+      (role) => typeStyle(role, coreTokens).fontSize,
+    );
+    expect(new Set(sizes).size).toBe(3);
+    sizes.forEach((fontSize, place) => {
+      expect(textOf(place)).toHaveStyle({ fontSize });
+    });
+  });
+
   it('shows a right answer as right', async () => {
     await renderRound();
 
@@ -958,7 +1012,7 @@ describe('GameRound', () => {
       });
     }
 
-    it('turns a right answer red, pops it and stamps it with a tick', async () => {
+    it('turns a right answer red and pops it', async () => {
       await renderRound();
       expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: tile });
 
@@ -969,17 +1023,10 @@ describe('GameRound', () => {
 
       expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
       expect(step(optionMotion(CORRECT), 'scale')).toBe(1);
-      expect(
-        styleOf(
-          screen.getByTestId(`game-option-${String(CORRECT)}-stamp`, {
-            includeHiddenElements: true,
-          }),
-        ).opacity,
-      ).toBe(1);
       expect(step(optionMotion(CORRECT), 'translateX')).toBeUndefined();
     });
 
-    it('sinks a wrong choice, drops it, strikes it through and fades the others', async () => {
+    it('sinks a wrong choice, drops it and fades the others', async () => {
       await renderRound();
 
       await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
@@ -987,12 +1034,6 @@ describe('GameRound', () => {
 
       expect(optionFace(1)).toHaveStyle({ backgroundColor: surfaceSunken });
       expect(styleOf(optionMotion(1)).translateY).toBe(8);
-      expect(
-        step(
-          screen.getByTestId('game-option-1-slash', { includeHiddenElements: true }),
-          'scaleX' as 'scale',
-        ),
-      ).toBe(1);
       expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
       expect(styleOf(optionMotion(0)).opacity).toBe(0.5);
       expect(optionFace(0)).toHaveStyle({ backgroundColor: tile });
@@ -1038,7 +1079,7 @@ describe('GameRound', () => {
         jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
       });
 
-      it('turns a right answer red and stamps it in place, popping nothing', async () => {
+      it('turns a right answer red in place, popping nothing', async () => {
         await renderRound();
 
         await fireEvent.press(screen.getByRole('button', { name: 'candid' }));
@@ -1048,13 +1089,6 @@ describe('GameRound', () => {
         }
 
         expect(optionFace(CORRECT)).toHaveStyle({ backgroundColor: accent });
-        expect(
-          styleOf(
-            screen.getByTestId(`game-option-${String(CORRECT)}-stamp`, {
-              includeHiddenElements: true,
-            }),
-          ).transform,
-        ).toEqual([{ rotate: '-8deg' }]);
       });
 
       it('sinks a wrong choice in place and fades the lost Life and its «−1» without a jump', async () => {
