@@ -330,5 +330,11 @@ const styles = StyleSheet.create({
   wheel: { width: wheel, height: wheel },
   tile: { position: 'absolute', width: tile, height: tile },
   tileFace: { width: tile, height: tile, alignItems: 'center', justifyContent: 'center' },
-  coach: { position: 'absolute', left: 0, top: 0, borderWidth: crossingCrosswordLayout.coachRing, opacity: 0.6 },
+  coach: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    borderWidth: crossingCrosswordLayout.coachRing,
+    opacity: 0.6,
+  },
 });

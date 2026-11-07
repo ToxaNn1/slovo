@@ -151,10 +151,7 @@ describe('CrossingGrid and CrossingClueBar', () => {
         />
         <CrossingGrid
           cells={[
-            [
-              cell({ number: 1, current: true, label: '1 across, cell 1' }),
-              { kind: 'block' },
-            ],
+            [cell({ number: 1, current: true, label: '1 across, cell 1' }), { kind: 'block' }],
             [cell({ letter: 'a', solved: true, label: 'a' }), cell({})],
           ]}
           onSelect={onSelect}
