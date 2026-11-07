@@ -43,6 +43,7 @@ import { ease } from './round-motion';
 import { ChipsRound } from './ChipsRound';
 import { GameTimer } from './GameTimer';
 import { PairsRound } from './PairsRound';
+import { AnswerCard } from './AnswerCard';
 import { AnswerOptions, PickRound } from './PickRound';
 import { RoundCard } from './RoundCard';
 import { TypedRound } from './TypedRound';
@@ -94,6 +95,7 @@ export function GameRound({
   onOpenLetter,
   title,
   timeLeft,
+  feedback = 'sheet',
 }: {
   game: CurrentGame;
   /** The Game Mode's title, which the Round's header shows in caps. */
@@ -108,6 +110,8 @@ export function GameRound({
   onOpenLetter: () => void;
   /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
   timeLeft?: number | undefined;
+  /** How an answer shows: the bottom sheet, or the inline card under the options (`gameAnswerCard`, spec #1674). */
+  feedback?: 'sheet' | 'card';
 }) {
   const { strings } = useEdition();
   const { round } = game;
@@ -169,8 +173,11 @@ export function GameRound({
           onAnswer={onAnswer}
           onOpenLetter={onOpenLetter}
         />
+        {feedback === 'card' && answer !== undefined ? (
+          <AnswerCard right={answer.right} line={cardLine(game, answer)} onNext={onNext} />
+        ) : null}
       </ScrollView>
-      <AnswerSheet answer={round.answer} onNext={onNext} />
+      {feedback === 'sheet' ? <AnswerSheet answer={round.answer} onNext={onNext} /> : null}
       <ConfirmationDialog
         visible={asking}
         title={exit.title}
@@ -600,6 +607,16 @@ function RoundLabel({ label }: { label: string }) {
       {label}
     </Text>
   );
+}
+
+/**
+ * The answer card's line: the sheet's explanation, such as a Correction's,
+ * else the primary Definition of the Entry the Round just played, if it has one.
+ */
+function cardLine(game: CurrentGame, answer: RoundAnswer): string | undefined {
+  if (answer.sheet.explanation !== undefined) return answer.sheet.explanation;
+  const entry = game.played.at(-1)?.entry;
+  return entry !== undefined && 'primaryDefinition' in entry ? entry.primaryDefinition : undefined;
 }
 
 /**
