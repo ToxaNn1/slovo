@@ -40,6 +40,7 @@ export { DailyCrosswordCard, type CrosswordMiniCell } from './game/DailyCrosswor
 export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCard';
 export { GameEndPoster } from './game/GameEndPoster';
 export { GameResult } from './game/GameResult';
+export { AnswerCard } from './game/AnswerCard';
 export { GameReview } from './game/GameReview';
 export { GameRound, QuickQuestionRound } from './game/GameRound';
 export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
