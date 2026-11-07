@@ -6,13 +6,14 @@ import {
   type AnalyticsPort,
   type Composition,
   type CrossingWord,
+  type Edition,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, Share } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import GameScreen from '../app/game';
@@ -121,6 +122,14 @@ async function renderGame({
 } = {}) {
   events = [];
   mockInForeground = true;
+  // The UA Edition ships the crossing Daily Crossword off, so the traced one shows (ADR 0073).
+  const switched: Edition = {
+    ...edition,
+    isFeatureEnabled: (feature) =>
+      (crossing && feature === 'crossingCrossword') ||
+      on.includes(feature) ||
+      edition.isFeatureEnabled(feature),
+  };
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
@@ -135,14 +144,7 @@ async function renderGame({
         })),
       ],
     }),
-    // The UA Edition ships the crossing Daily Crossword off, so the traced one shows (ADR 0073).
-    edition: {
-      ...edition,
-      isFeatureEnabled: (feature) =>
-        (crossing && feature === 'crossingCrossword') ||
-        on.includes(feature) ||
-        edition.isFeatureEnabled(feature),
-    },
+    edition: switched,
     userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
@@ -150,7 +152,7 @@ async function renderGame({
   });
   const shell = testShell({
     composition: opened(composition),
-    remoteSwitches: switchedTo(edition),
+    remoteSwitches: switchedTo(switched),
     settings: await settingsAt(),
   });
   const app = await renderRoutes(
@@ -365,9 +367,57 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
 
     expect(screen.getByTestId('daily-crossword-solved')).toHaveTextContent('Розв’язано!');
     expect(screen.queryByTestId('crossing-crossword-wheel')).toBeNull();
+    expect(screen.queryByText('Розгадано!')).toBeNull();
     await back();
     expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано');
   });
+  it('opens «Розгадано!» once every Word is solved: the grid with no letter, the share line, «Поділитися» and «До ігор» to the hub', async () => {
+    const shared = jest
+      .spyOn(Share, 'share')
+      .mockResolvedValue({ action: Share.sharedAction, activityType: undefined });
+    const app = await renderGame({
+      crossing: true,
+      on: ['crosswordSolvedScreen', 'crosswordSolveTime'],
+    });
+    await openFromCard();
+    const { words } = await crossingPuzzle();
+
+    for (const target of words) await solveWord(target);
+
+    expect(screen.getByText('Розгадано!')).toBeOnTheScreen();
+    expect(screen.getByText('Поділитися без спойлера')).toBeOnTheScreen();
+    expect(screen.queryByTestId('crossing-crossword-wheel')).toBeNull();
+    const line = screen.getByTestId('crossword-solved-share-line');
+    expect(line).toHaveTextContent(/^SLOVO · Кросворд №\d+\d+:\d\d · без підказок$/);
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'Поділитися' })));
+    const [content] = shared.mock.calls[0] ?? [];
+    const message = content !== undefined && 'message' in content ? (content.message ?? '') : '';
+    expect(message).toMatch(/^SLOVO · Кросворд №\d+\n\d+:\d\d · без підказок\n/);
+    const letters = new Set(words.flatMap((w) => w.letters));
+    expect([...letters].some((c) => message.split('\n').slice(2).join('').includes(c))).toBe(false);
+    expect(screen.getByText('Скопійовано. Жодної літери — тільки клини.')).toBeOnTheScreen();
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'До ігор' })));
+    expect(app.pathname()).toBe('/game');
+    expect(card()).toBe('Кросворд дня. 26 жовтня. ✓ Розв’язано');
+  });
+
+  it('drops «без підказок» from the share line once «Підказка» filled a letter', async () => {
+    await renderGame({
+      crossing: true,
+      on: ['crosswordSolvedScreen', 'crosswordSolveTime', 'crosswordHint'],
+    });
+    await openFromCard();
+    const { words } = await crossingPuzzle();
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'Підказка' })));
+
+    for (const target of words) await solveWord(target);
+
+    const line = screen.getByTestId('crossword-solved-share-line');
+    expect(line).toHaveTextContent(/^SLOVO · Кросворд №\d+\d+:\d\d$/);
+  });
+
   it('counts the Solve time on screen only: it pauses in the background and on leave, and goes on when the reader comes back', async () => {
     await renderGame({ crossing: true, on: ['crosswordSolveTime'] });
     await openFromCard();

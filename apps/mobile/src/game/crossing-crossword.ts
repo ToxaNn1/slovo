@@ -129,6 +129,10 @@ export interface CrossingCrosswordPlay {
   /** Whether the hand coach shows: until the reader's first touch on this screen. */
   readonly coach: boolean;
   readonly solved: boolean;
+  /** The Solve time so far, in seconds. */
+  readonly seconds: number;
+  /** Whether the Crossword Hint filled a letter today. */
+  readonly hinted: boolean;
   readonly select: (place: PuzzlePlace) => void;
   readonly next: () => void;
   readonly extend: (tile: number) => void;
@@ -279,6 +283,8 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
     entered: solvedCount(state) > 0,
     coach: !touched,
     solved: isCrossingSolved(state),
+    seconds: state.seconds,
+    hinted: state.hinted,
     select: (place) => {
       play({ type: 'select', place });
     },

@@ -39,6 +39,7 @@ export { DeleteCollectionDialog } from './saved/DeleteCollectionDialog';
 export { DailyCrosswordCard, type CrosswordMiniCell } from './game/DailyCrosswordCard';
 export { CrosswordDayCard, type CrosswordDayCardState } from './game/CrosswordDayCard';
 export { GameModeCard, GameModeGroupTitle, GamesTitle } from './game/GameModeCard';
+export { CrosswordSolvedPoster } from './game/CrosswordSolvedPoster';
 export { GameEndPoster } from './game/GameEndPoster';
 export { GameResult } from './game/GameResult';
 export { AnswerCard } from './game/AnswerCard';
