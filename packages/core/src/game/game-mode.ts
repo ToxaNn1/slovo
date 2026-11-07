@@ -6,19 +6,22 @@ import type { AskableEntry, AskableKind, KindRefusal, ShownKind } from '../entri
 import type { Random } from '../ports';
 
 export { ROUND_OPTIONS, type AnswerSheet, type RoundOption } from './answer-form';
-export type { ChipKind, FixedChip } from './chips-form';
+export type { ChipKind, ChipLayout, FixedChip } from './chips-form';
 
 /**
  * What the Game needs to know of the Edition: its Feature Switches, its
  * Distractor rule, whether it marks Stress and on which vowels, the
- * punctuation an Idiom's expression may hold and the languages Words come
- * from; an Edition that leaves them out marks no Stress, has no expression
- * punctuation and no origin languages.
+ * punctuation an Idiom's expression may hold, its alphabet, where letter
+ * tiles' decoys come from, and the languages Words come from; an Edition
+ * that leaves them out marks no Stress, has no expression punctuation, no
+ * decoys and no origin languages.
  */
 export type GameEdition = Pick<Edition, 'isFeatureEnabled'> &
   Partial<Pick<Edition, 'originLanguages'>> & {
     readonly languageTraits: Pick<LanguageTraits, 'distractorRule'> &
-      Partial<Pick<LanguageTraits, 'marksStress' | 'vowels' | 'expressionPunctuation'>>;
+      Partial<
+        Pick<LanguageTraits, 'marksStress' | 'vowels' | 'expressionPunctuation' | 'alphabet'>
+      >;
   };
 
 /**
