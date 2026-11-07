@@ -29,11 +29,14 @@ export function WordTabs({
   onOpenCorrection,
   onOpenSynonymRow,
   onHistoryShown,
+  disabled = false,
 }: {
   card: WordCardModel;
   onOpenCorrection: ((correctionId: string) => void) | undefined;
   onOpenSynonymRow: ((synonymRowId: string) => void) | undefined;
   onHistoryShown: (() => void) | undefined;
+  /** Self-check conceals the card: the tabs are there but disabled until the reveal. */
+  disabled?: boolean;
 }) {
   const { strings } = useEdition();
   return (
@@ -41,6 +44,7 @@ export function WordTabs({
       testID="word"
       tabs={wordTabsOf(card)}
       nameOf={({ key }) => strings.wordCard.tabs[key]}
+      disabled={disabled}
     >
       {(tab) => (
         <TabContent

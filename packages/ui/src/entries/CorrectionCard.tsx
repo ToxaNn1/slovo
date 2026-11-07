@@ -83,7 +83,7 @@ export function CorrectionCardBody({
           card.nonStandardStressedVowels,
         )}
       />
-      {concealed ? (
+      {concealed && (
         <Text
           testID="correction-how-to-say"
           {...voice}
@@ -91,15 +91,17 @@ export function CorrectionCardBody({
         >
           {strings.howToSay}
         </Text>
-      ) : tabs ? (
+      )}
+      {tabs ? (
         <CardTabs
           testID="correction"
           tabs={correctionTabsOf(card)}
           nameOf={({ key }) => strings.tabs[key]}
+          disabled={concealed}
         >
           {(tab) => <CorrectionTabContent tab={tab} card={card} mainSize={mainSize} />}
         </CardTabs>
-      ) : (
+      ) : concealed ? null : (
         <>
           <CorrectionBlock block="standard" card={card} mainSize={mainSize} />
           <CorrectionBlock block="explanation" card={card} mainSize={mainSize} />

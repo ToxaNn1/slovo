@@ -67,18 +67,18 @@ export function WordCardBody({
         stressFalls={stressFalls}
         lemmaFont={wordOfTheDay === undefined ? undefined : wordOfTheDayFont}
       />
-      {concealed ? (
-        card.categoryName === undefined ? null : (
-          <CategoryChip testID="word-category" name={card.categoryName} />
-        )
-      ) : tabs ? (
+      {concealed && card.categoryName !== undefined && (
+        <CategoryChip testID="word-category" name={card.categoryName} />
+      )}
+      {tabs ? (
         <WordTabs
           card={card}
           onOpenCorrection={onOpenCorrection}
           onOpenSynonymRow={onOpenSynonymRow}
           onHistoryShown={onHistoryShown}
+          disabled={concealed}
         />
-      ) : (
+      ) : concealed ? null : (
         <WordSections
           card={card}
           compact={compact}
