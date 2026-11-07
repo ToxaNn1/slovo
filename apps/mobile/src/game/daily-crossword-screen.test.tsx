@@ -366,7 +366,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     expect(screen.getByTestId('daily-crossword-solved')).toHaveTextContent('Розв’язано!');
     expect(screen.queryByTestId('crossing-crossword-wheel')).toBeNull();
     await back();
-    expect(card()).toBe('Кросворд дня. 26 жовтня. ✓ Розв’язано');
+    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано');
   });
   it('counts the Solve time on screen only: it pauses in the background and on leave, and goes on when the reader comes back', async () => {
     await renderGame({ crossing: true, on: ['crosswordSolveTime'] });

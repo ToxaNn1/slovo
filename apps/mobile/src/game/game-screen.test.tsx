@@ -568,14 +568,28 @@ describe('the Game screen', () => {
     return opening.crossword;
   }
 
-  it('puts the Daily Crossword’s card with today’s date above the groups, offering «Почати»', async () => {
+  /** Solves every Word of today's crossing Daily Crossword, after these seconds on screen. */
+  async function solveCrossing(seconds = 0, { hint = false } = {}) {
+    const crossword = await crossingCrossword();
+    if (seconds > 0) await crossword.play({ type: 'tick', seconds });
+    if (hint) await crossword.play({ type: 'hint' });
+    for (const index of crossword.puzzle.words.keys()) await solveCrossingWord(crossword, index);
+    await crossword.keep();
+    return crossword;
+  }
+
+  it('puts the Daily Crossword’s card «Кросворд дня · {date}» above the groups, with its size, its count of Words and «Почати»', async () => {
     await open({ crossing: true });
+    const { words } = (await crossingCrossword()).puzzle;
     await renderScreen();
 
     const card = await screen.findByTestId('daily-crossword');
-    expect(within(card).getByText('Кросворд дня')).toBeOnTheScreen();
-    expect(within(card).getByText('26 жовтня')).toBeOnTheScreen();
-    expect(card.props['accessibilityLabel']).toBe('Кросворд дня. 26 жовтня. Почати');
+    expect(within(card).getByText('Кросворд дня · 26 жовтня')).toBeOnTheScreen();
+    expect(within(card).getByText(`5×5 · ${String(words.length)} слів`)).toBeOnTheScreen();
+    expect(within(card).getByText('Почати')).toBeOnTheScreen();
+    expect(card.props['accessibilityLabel']).toBe(
+      `Кросворд дня · 26 жовтня. 5×5 · ${String(words.length)} слів. Почати`,
+    );
     const cards = within(screen.getByTestId('game-modes'))
       .getAllByTestId(/^(daily-crossword|game-mode-.+)$/)
       .map((node): unknown => node.props['testID']);
@@ -583,50 +597,57 @@ describe('the Game screen', () => {
     expect(cards.slice(1)).toContain('game-mode-guess-word');
   });
 
-  it('offers «Продовжити» on the Daily Crossword’s card once a Word of today’s is solved', async () => {
+  it('offers «Продовжити» with a bar of the Words solved once a Word of today’s is', async () => {
     await open({ crossing: true });
     const crossword = await crossingCrossword();
     await solveCrossingWord(crossword, 0);
     await crossword.keep();
     await renderScreen();
 
-    expect((await screen.findByTestId('daily-crossword')).props['accessibilityLabel']).toBe(
-      'Кросворд дня. 26 жовтня. Продовжити',
+    const card = await screen.findByTestId('daily-crossword');
+    expect(card.props['accessibilityLabel']).toBe('Кросворд дня · 26 жовтня. Продовжити');
+    expect(card.props['accessibilityValue']).toEqual({
+      min: 0,
+      max: crossword.puzzle.words.length,
+      now: 1,
+    });
+    expect(within(card).queryByText(/слів$/)).toBeNull();
+  });
+
+  it('marks the card «✓ Розв’язано» «за {time} · без підказок» with its grid of cells once today’s is solved', async () => {
+    await open({ crossing: true, switchedOn: ['crosswordSolveTime'] });
+    const crossword = await solveCrossing(252);
+    await renderScreen();
+
+    const card = await screen.findByTestId('daily-crossword');
+    expect(card.props['accessibilityLabel']).toBe(
+      'Кросворд дня · 26 жовтня. ✓ Розв’язано. за 4:12 · без підказок',
     );
-  });
-
-  it('marks the Daily Crossword’s card solved once today’s is', async () => {
-    await open({ crossing: true });
-    const crossword = await crossingCrossword();
-    for (const index of crossword.puzzle.words.keys()) await solveCrossingWord(crossword, index);
-    await crossword.keep();
-    await renderScreen();
-
-    const card = await screen.findByTestId('daily-crossword');
-    expect(card.props['accessibilityLabel']).toBe('Кросворд дня. 26 жовтня. ✓ Розв’язано');
+    expect(within(card).getByText('за 4:12 · без підказок')).toBeOnTheScreen();
     expect(within(card).queryByText('Продовжити')).toBeNull();
-  });
-
-  it('draws today’s grid on the Daily Crossword’s card: its blocks dark, and a solved Word’s letters in', async () => {
-    await open({ crossing: true });
-    const crossword = await crossingCrossword();
-    await solveCrossingWord(crossword, 0);
-    await crossword.keep();
-    await renderScreen();
-
-    const card = await screen.findByTestId('daily-crossword');
-    const { blocks, words } = crossword.puzzle;
-    const [first] = words;
-    if (first === undefined) throw new Error('Expected a Word');
+    const { blocks } = crossword.puzzle;
     expect(within(card).getAllByTestId(/^daily-crossword-block-/)).toHaveLength(blocks.length);
     expect(within(card).getAllByTestId(/^daily-crossword-cell-/)).toHaveLength(25 - blocks.length);
-    first.letters.forEach((letter, i) => {
-      const { row, column } = first.start;
-      const [r, c] = first.direction === 'across' ? [row, column + i] : [row + i, column];
-      expect(
-        within(card).getByTestId(`daily-crossword-cell-${String(r)}-${String(c)}`),
-      ).toHaveTextContent(letter);
-    });
+  });
+
+  it('leaves «без підказок» off the solved card once «Підказка» was used', async () => {
+    await open({ crossing: true, switchedOn: ['crosswordSolveTime', 'crosswordHint'] });
+    await solveCrossing(65, { hint: true });
+    await renderScreen();
+
+    const card = await screen.findByTestId('daily-crossword');
+    expect(within(card).getByText('за 1:05')).toBeOnTheScreen();
+    expect(within(card).queryByText(/без підказок/)).toBeNull();
+  });
+
+  it('shows no time line on the solved card when its record has no time', async () => {
+    await open({ crossing: true });
+    await solveCrossing();
+    await renderScreen();
+
+    const card = await screen.findByTestId('daily-crossword');
+    expect(card.props['accessibilityLabel']).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано');
+    expect(within(card).queryByText(/^за /)).toBeNull();
   });
 
   it('leaves out the Daily Crossword’s card on a day no pattern fills', async () => {
