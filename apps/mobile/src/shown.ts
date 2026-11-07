@@ -18,6 +18,8 @@ export interface Shown {
   readonly tabs: readonly Tab[];
   /** The Game Review under the Game's result. */
   readonly gameReview: boolean;
+  /** The end poster of a Game, «Фініш» or «Час!» or the Lives-over one, in place of the old result screen (spec #1674). */
+  readonly finishPoster: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
   readonly entryButtons: {
     /** The Share Card button of the action row. */
@@ -158,6 +160,7 @@ export function shownOf({
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
+    finishPoster: on('finishPoster'),
     entryButtons: {
       shareCard: on('shareCards'),
       pronunciation: on('pronunciation'),

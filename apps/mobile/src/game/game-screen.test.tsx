@@ -26,14 +26,18 @@ import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support
 
 const { config } = activeEditionFiles;
 
-/** The UA Edition with the given Feature Switches turned off. */
-function editionWithout(switchedOff: readonly string[]): Edition {
+/** The UA Edition with the given Feature Switches turned off, and the others given turned on. */
+function editionWithout(
+  switchedOff: readonly string[],
+  switchedOn: readonly string[] = [],
+): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({
     ...rest,
     featureSwitches: {
       ...featureSwitches,
       ...Object.fromEntries(switchedOff.map((name) => [name, false])),
+      ...Object.fromEntries(switchedOn.map((name) => [name, true])),
     },
   });
 }
@@ -209,7 +213,8 @@ const withOrigin = (index: number): Word => ({
  * an origin, the given numbers of calque
  * Corrections, anglicisms (numbered after the calques) and Idioms and the
  * Daily Crossword of the day, with the given Best results by mode id and the
- * crossword's letters, typed on the given date, kept from before.
+ * crossword's letters, typed on the given date, kept from before, and the
+ * given Feature Switches off or on.
  */
 async function open({
   best = {},
@@ -219,6 +224,7 @@ async function open({
   longSenses = false,
   origins = 0,
   switchedOff = [],
+  switchedOn = [],
   crossword,
   clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
   schedule,
@@ -234,13 +240,15 @@ async function open({
   /** Whether each Idiom's sense runs past a sentence. */
   longSenses?: boolean;
   switchedOff?: readonly string[];
+  /** Feature Switches the UA Edition ships off, turned on. */
+  switchedOn?: readonly string[];
   crossword?: { date: string; letters: Record<string, string> };
   /** The clock the Core reads; a stopped one on the morning of 26 October by default. */
   clock?: Clock;
   /** What the Core runs something later by; nothing by default. */
   schedule?: Schedule;
 } = {}) {
-  editionInEffect = editionWithout(switchedOff);
+  editionInEffect = editionWithout(switchedOff, switchedOn);
   const xpLog = Object.fromEntries(
     xp.map(({ date, amount }, index): [string, XpRecord] => [
       `seeded-${String(index)}`,
@@ -507,33 +515,53 @@ describe('the Game screen', () => {
     ]);
   });
 
-  it('shows each mode’s own Best result on its card, out of its Round limit', async () => {
-    await open({ best: { 'guess-word': 12, correction: 7, survival: 23 } });
+  it('shows every mode row with its one-liner and «★ n» for its Best result or «—» before', async () => {
+    await open({
+      best: { 'guess-word': 12, correction: 7, survival: 23 },
+      corrections: 15,
+      anglicisms: 15,
+      idioms: 15,
+      origins: 15,
+    });
     await renderScreen();
 
-    expect(
-      within(screen.getByTestId('game-mode-guess-word')).getByText('Найкраще: 12 з 15'),
-    ).toBeTruthy();
-    expect(
-      within(screen.getByTestId('game-mode-correction')).getByText('Найкраще: 7 з 15'),
-    ).toBeTruthy();
+    const rows: readonly (readonly [string, string, string])[] = [
+      ['guess-word', 'Обери слово за визначенням', '★ 12'],
+      ['stress', 'Влуч у правильний склад', '—'],
+      ['pairs', 'З’єднай слово і його значення', '—'],
+      ['anagram', 'Збери слово з перемішаних літер', '—'],
+      ['by-letters', 'Склади слово з плиток за визначенням', '—'],
+      ['type-word', 'Виправ помилку — впиши як треба', '—'],
+      ['origin', 'Вгадай, з якої мови прийшло слово', '—'],
+      ['correction', 'Обери, як кажуть українською', '★ 7'],
+      ['anglicism', 'Заміни англіцизм українським словом', '—'],
+      ['idiom-meaning', 'Вгадай, що означає вислів', '—'],
+      ['build-idiom', 'Склади вислів слово за словом', '—'],
+      ['survival', 'Грай, доки не схибиш. Далеко зайдеш?', '★ 23'],
+      ['timed', 'Хвилина, щоб угадати якнайбільше', '—'],
+    ];
+    for (const [modeId, line, mark] of rows) {
+      const row = within(screen.getByTestId(`game-mode-${modeId}`));
+      expect(row.getByText(line)).toBeTruthy();
+      expect(row.getByText(mark)).toBeTruthy();
+    }
+    expect(screen.queryByText(/Найкраще/)).toBeNull();
+  });
+
+  it('reads a row’s Best result in words, out of its Round limit, and no dash', async () => {
+    await open({ best: { 'guess-word': 12, survival: 23 } });
+    await renderScreen();
+
+    expect(screen.getByTestId('game-mode-guess-word')).toHaveAccessibleName(
+      'Вгадай слово. Обери слово за визначенням. Найкраще: 12 з 15',
+    );
     // «Виживання» has no Round limit, so its Best result stands alone.
-    expect(within(screen.getByTestId('game-mode-survival')).getByText('Найкраще: 23')).toBeTruthy();
-  });
-
-  it('shows no rules line under the title, so a Best result shows on its card alone', async () => {
-    await open({ best: { 'guess-word': 12 } });
-    await renderScreen();
-
-    expect(screen.queryByText(/15 раундів, 5 життів/)).toBeNull();
-    expect(screen.getAllByText(/Найкраще/)).toHaveLength(1);
-  });
-
-  it('shows no Best result on a mode without a finished Game', async () => {
-    await open({ best: { 'guess-word': 12 } });
-    await renderScreen();
-
-    expect(within(screen.getByTestId('game-mode-correction')).queryByText(/Найкраще/)).toBeNull();
+    expect(screen.getByTestId('game-mode-survival')).toHaveAccessibleName(
+      'Виживання. Грай, доки не схибиш. Далеко зайдеш? Найкраще: 23',
+    );
+    expect(screen.getByTestId('game-mode-stress')).toHaveAccessibleName(
+      'Наголос. Влуч у правильний склад',
+    );
   });
 
   it('leaves out a switched-off mode and its group', async () => {
@@ -650,52 +678,62 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-mode-guess-word')).toBeOnTheScreen();
   });
 
-  it('offers the Level reached today as a Share Card and tells Analytics once it is shared', async () => {
+  it('offers no progress Share Card on the hub, even for a Level reached today', async () => {
     await open({ xp: [{ date: '2026-10-26', amount: 60 }] });
     await renderScreen({ shareCard: sendingShareCard });
-
-    await fireEvent.press(
-      await screen.findByRole('button', { name: 'Новий рівень у SLOVO · Рівень 1' }),
-    );
-    expect(
-      within(screen.getByTestId('share-preview')).getByTestId('share-card'),
-    ).toHaveAccessibleName(/Рівень 1/);
-    await fireEvent.press(screen.getByTestId('share-sheet-share'));
-
-    await waitFor(() => {
-      expect(events).toContainEqual(['shareCardShared', { card: 'level' }]);
-    });
-  });
-
-  it('draws the 28 poster mark on the Share Card of a Badge earned today', async () => {
-    await open();
-    await renderScreen({ shareCard: sendingShareCard });
-    // The first win in a Game Mode group earns a Badge.
-    await act(() => {
-      composition.xpLog
-        .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
-        .commit();
-    });
-
-    await fireEvent.press(await screen.findByTestId('progress-share-badge'));
-    expect(
-      within(screen.getByTestId('share-preview')).getByTestId('share-card-badge'),
-    ).toBeOnTheScreen();
-  });
-
-  it('offers no progress Share Card for a Level reached on another day', async () => {
-    await open({ xp: [{ date: '2026-10-25', amount: 60 }] });
-    await renderScreen({ shareCard: sendingShareCard });
+    await screen.findByTestId('game-mode-guess-word');
 
     expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
+    expect(screen.queryByRole('button', { name: /Новий рівень/ })).toBeNull();
   });
 
-  it('offers no progress Share Card with its Feature Switch off', async () => {
-    await open({ xp: [{ date: '2026-10-26', amount: 60 }], switchedOff: ['progressShareCards'] });
-    await renderScreen({ shareCard: sendingShareCard });
-
-    expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
-  });
+  // DESIGN-06: no progress share offers on the board's hub, kept for the owner
+  // it('offers the Level reached today as a Share Card and tells Analytics once it is shared', async () => {
+  //   await open({ xp: [{ date: '2026-10-26', amount: 60 }] });
+  //   await renderScreen({ shareCard: sendingShareCard });
+  //
+  //   await fireEvent.press(
+  //     await screen.findByRole('button', { name: 'Новий рівень у SLOVO · Рівень 1' }),
+  //   );
+  //   expect(
+  //     within(screen.getByTestId('share-preview')).getByTestId('share-card'),
+  //   ).toHaveAccessibleName(/Рівень 1/);
+  //   await fireEvent.press(screen.getByTestId('share-sheet-share'));
+  //
+  //   await waitFor(() => {
+  //     expect(events).toContainEqual(['shareCardShared', { card: 'level' }]);
+  //   });
+  // });
+  //
+  // it('draws the 28 poster mark on the Share Card of a Badge earned today', async () => {
+  //   await open();
+  //   await renderScreen({ shareCard: sendingShareCard });
+  //   // The first win in a Game Mode group earns a Badge.
+  //   await act(() => {
+  //     composition.xpLog
+  //       .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+  //       .commit();
+  //   });
+  //
+  //   await fireEvent.press(await screen.findByTestId('progress-share-badge'));
+  //   expect(
+  //     within(screen.getByTestId('share-preview')).getByTestId('share-card-badge'),
+  //   ).toBeOnTheScreen();
+  // });
+  //
+  // it('offers no progress Share Card for a Level reached on another day', async () => {
+  //   await open({ xp: [{ date: '2026-10-25', amount: 60 }] });
+  //   await renderScreen({ shareCard: sendingShareCard });
+  //
+  //   expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
+  // });
+  //
+  // it('offers no progress Share Card with its Feature Switch off', async () => {
+  //   await open({ xp: [{ date: '2026-10-26', amount: 60 }], switchedOff: ['progressShareCards'] });
+  //   await renderScreen({ shareCard: sendingShareCard });
+  //
+  //   expect(screen.queryAllByTestId(/^progress-share-/)).toEqual([]);
+  // });
 
   it('starts «Наголос» from its card and plays a whole Game to the result screen', async () => {
     await renderScreen();
@@ -1233,6 +1271,62 @@ describe('the Game screen', () => {
     expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
   });
 
+  describe('the end posters', () => {
+    it('ends a whole «Наголос» on the «Фініш» poster, «Влучно!», with its XP and a new record, and «До ігор» opens the Games hub', async () => {
+      await open({ switchedOn: ['finishPoster'] });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-stress'));
+      for (let round = 1; round <= 15; round += 1) {
+        await waitFor(() => {
+          expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
+        });
+        await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
+        await fireEvent.press(screen.getByTestId('game-next'));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId('game-end-finished')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Фініш')).toBeOnTheScreen();
+      expect(screen.getByText('Влучно!')).toBeOnTheScreen();
+      expect(screen.getByText('15 з 15 влучань')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-end-new-best')).toHaveTextContent('Новий рекорд!');
+      expect(screen.getByTestId('game-end-xp')).toHaveTextContent(/^Досвід\d+ XP$/);
+      expect(screen.queryByTestId('game-end-time-up')).toBeNull();
+      expect(screen.getByTestId('game-end-best')).toHaveTextContent('Рекорд15');
+      expect(screen.queryByText('Перемога!')).toBeNull();
+      expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+
+      await fireEvent.press(screen.getByTestId('game-to-games'));
+
+      expect(screen.getByTestId('game-modes')).toBeOnTheScreen();
+    });
+
+    it('ends «Виживання» on its third mistake on the Lives-over poster, with the mode and the score', async () => {
+      await open({ corrections: 15, switchedOn: ['finishPoster'] });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-survival'));
+      for (const right of [false, true, true, false, false]) {
+        await waitFor(() => {
+          expect(screen.getByTestId('game-lives')).toBeOnTheScreen();
+        });
+        await answerSurvivalRound(right);
+        await fireEvent.press(screen.getByTestId('game-next'));
+      }
+
+      await waitFor(() => {
+        expect(screen.getByTestId('game-end-lives-over')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Життя закінчилися')).toBeOnTheScreen();
+      expect(screen.getByText('ВИЖИВАННЯ · 2/5')).toBeOnTheScreen();
+      expect(screen.queryByTestId('game-end-xp')).toBeNull();
+      expect(screen.getByTestId('game-again')).toHaveTextContent('Ще раз!');
+      expect(screen.getByTestId('game-to-games')).toHaveTextContent('До ігор');
+    });
+  });
+
   describe('«На час»', () => {
     beforeEach(async () => {
       jest.useFakeTimers({ now: new Date('2026-10-26T09:00:00Z') });
@@ -1287,6 +1381,32 @@ describe('the Game screen', () => {
       expect(screen.queryByTestId('game-result-rounds')).toBeNull();
       expect(screen.queryByTestId('game-result-lives')).toBeNull();
       expect(screen.getByTestId('game-result-best')).toHaveTextContent('3', { exact: false });
+    });
+
+    it('ends on the «Фініш» poster headed «Час!», «Ще раунд!» for fewer than half right', async () => {
+      await open({
+        clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
+        schedule: systemSchedule,
+        switchedOn: ['finishPoster'],
+      });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-timed'));
+      await waitFor(() => {
+        expect(timerLabel()).toBe('лишилось 60 секунд');
+      });
+      await pickTheWordOfThePrompt();
+      await pickAnotherWord();
+      await pickAnotherWord();
+      await pass(60_000);
+
+      await waitFor(() => {
+        expect(screen.getByTestId('game-end-time-up')).toBeOnTheScreen();
+      });
+      expect(screen.getByText('Час!')).toBeOnTheScreen();
+      expect(screen.getByText('Ще раунд!')).toBeOnTheScreen();
+      expect(screen.getByText('1 з 3 влучання')).toBeOnTheScreen();
+      expect(screen.queryByText('Час вийшов!')).toBeNull();
     });
 
     it('stops the timer while the app is in the background, and runs it on from there on return', async () => {

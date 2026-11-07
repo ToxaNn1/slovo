@@ -67,6 +67,7 @@ export { type FirstWeekDay } from './feed/feed-notices';
 export { type GameModeOffer, type GameState, type OfferedBest } from './game/game';
 export {
   type CurrentGame,
+  type GameEnd,
   type GameTime,
   type GivenAnswer,
   type GridCell,
@@ -163,6 +164,18 @@ export {
   type PuzzlePlace,
   type PuzzleState,
 } from './game/crossword-puzzle';
+export {
+  CROSSING_PATTERNS,
+  CROSSING_WORD_LENGTH,
+  crossingPlacesOf,
+  generateCrossingCrossword,
+  type BlockPattern,
+  type CrossingDirection,
+  type CrossingGeneration,
+  type CrossingPrefill,
+  type CrossingPuzzle,
+  type CrossingWord,
+} from './game/crossing-crossword';
 export {
   openTracedCrossword,
   seededRandomOf,

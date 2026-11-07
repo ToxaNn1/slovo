@@ -2,6 +2,7 @@ import { fill } from '@slovo/contracts';
 import type { GameModeOffer } from '@slovo/core';
 import {
   DailyCrosswordCard,
+  GameEndPoster,
   GameModeCard,
   GameResult,
   GameRound,
@@ -21,7 +22,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { editionStrings } from '@/edition/edition';
 import { useOpenScreen } from '@/use-open-screen';
 import { useDailyCrosswordCard } from '@/game/daily-crossword';
-import { ProgressShareOffers } from '@/game/progress-share-offers';
+// DESIGN-06: no progress share offers on the board's hub, kept for the owner
+// import { ProgressShareOffers } from '@/game/progress-share-offers';
 import {
   useGameActions,
   useGameState,
@@ -38,7 +40,8 @@ const { game: strings, widget: widgetStrings, settings: settingsStrings } = edit
 
 /**
  * The Game tab: the mode screen, a Round with its answer sheet, or the result
- * screen with its Game Review, as the Core's Game stands, while the Game is on
+ * screen with its Game Review (the end poster while its switch is on, whose
+ * «До ігор» goes back to the mode screen), as the Core's Game stands, while the Game is on
  * in effect. A result that offers the widget hint shows the widget guide in a
  * sheet over it, until the reader closes it. A timed Game's timer ticks, and stops while the app is in the
  * background. The Game stays in the Core composition, so another tab and back,
@@ -58,14 +61,16 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const { gameReview } = useShown();
+  const { gameReview, finishPoster } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
   const [hintClosed, setHintClosed] = useState(false);
   const { current } = state;
   const result = current?.status === 'won' || current?.status === 'lost';
-  const hintShown = result && state.widgetHint && !hintClosed;
+  // The end poster shows no widget hint for now (DESIGN-06).
+  const poster = finishPoster ? current?.end : undefined;
+  const hintShown = result && poster === undefined && state.widgetHint && !hintClosed;
   useWidgetHintShown(hintShown);
 
   const timeLeft = useTimeLeft(current?.time);
@@ -77,6 +82,25 @@ function Game() {
     >
       {current === undefined ? (
         <ModeScreen modes={state.modes} onStart={actions.start} />
+      ) : result && poster !== undefined ? (
+        <GameEndPoster
+          game={current}
+          end={poster}
+          modeName={gameModeStrings(strings.modes, current.modeId).title}
+          bestResult={state.bestResults[current.modeId]}
+          onAgain={() => {
+            actions.start(current.modeId);
+          }}
+          onToGames={actions.leave}
+          onOpenEntry={
+            gameReview
+              ? (entryId) => {
+                  openScreen(`/game/${entryId}`);
+                }
+              : undefined
+          }
+          mascot={<MascotIn state="gameEnd" onRed />}
+        />
       ) : result ? (
         <>
           <GameResult
@@ -139,8 +163,8 @@ function Game() {
 /**
  * The mode screen, as the design's Games screen: the big title, the Daily
  * Crossword's red card while it is on, which opens its screen, and a row per
- * mode on offer, with its own Best result, under the titles of their groups,
- * each after a red mark.
+ * mode on offer, with its one line and «★ n» or «—», under the titles of
+ * their groups, each after a red mark. No progress share offers (DESIGN-06).
  */
 function ModeScreen({
   modes,
@@ -158,7 +182,8 @@ function ModeScreen({
           <GamesTitle>{strings.title}</GamesTitle>
           <TotalXp />
         </View>
-        <ProgressShareOffers />
+        {/* DESIGN-06: no progress share offers on the board's hub, kept for the owner */}
+        {/* <ProgressShareOffers /> */}
         {crossword === undefined ? null : (
           <DailyCrosswordCard
             testID="daily-crossword"

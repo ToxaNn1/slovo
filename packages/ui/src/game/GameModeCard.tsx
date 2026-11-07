@@ -13,32 +13,37 @@ const UNAVAILABLE_OPACITY = 0.45;
 
 /**
  * A Game Mode's row on the mode screen: its glyph on a pressed tile, red
- * while the mode can start, its name over its line, and its Best result at
- * the end once it has one, over a hairline. A tap starts a Game. A mode that
+ * while the mode can start, its name over its one line, and its mark at the
+ * end, the Best result («★ 12») or a dash before the first finished Game,
+ * over a hairline. A tap starts a Game. A mode that
  * can't start shows its glyph on the neutral tile, fades and takes no tap;
  * once it knows why, it says so in place of its line. VoiceOver reads the
- * row as one button.
+ * row as one button, with the Best result in words and no dash.
  */
 export function GameModeCard({
   glyph,
   title,
-  description,
+  line,
   canStart,
   refusal,
   best,
+  bestLabel,
   onPress,
   testID,
 }: {
   /** The few characters on the mode's tile, such as «АЯ». */
   glyph: string;
   title: string;
-  description: string;
+  /** The mode's one line under its name, such as «Обери слово за визначенням». */
+  line: string;
   /** Whether a Game in the mode can start now. */
   canStart: boolean;
   /** Why the mode can't start now; nothing when it can, or while that is not known yet. */
   refusal: string | undefined;
-  /** The mode's Best result, such as «Найкраще: 12 з 15»; nothing before its first finished Game. */
-  best: string | undefined;
+  /** The mark at the row's end: the Best result, such as «★ 12», or «—» before the first finished Game. */
+  best: string;
+  /** What VoiceOver reads for the Best result, such as «Найкраще: 12 з 15»; nothing before the first finished Game. */
+  bestLabel: string | undefined;
   onPress: () => void;
   testID?: string;
 }) {
@@ -51,7 +56,7 @@ export function GameModeCard({
     <Pressable
       testID={testID}
       accessibilityRole="button"
-      accessibilityLabel={sentences([title, description, refusal, best])}
+      accessibilityLabel={sentences([title, line, refusal, bestLabel])}
       accessibilityState={{ disabled: unavailable }}
       {...voice}
       disabled={unavailable}
@@ -96,17 +101,15 @@ export function GameModeCard({
             { color: refusal === undefined ? colors.muted : colors.ink },
           ]}
         >
-          {refusal ?? description}
+          {refusal ?? line}
         </Text>
       </View>
-      {best === undefined ? null : (
-        <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-          style={[typeStyle('modeBest', tokens), styles.best, { color: colors.muted }]}
-        >
-          {best}
-        </Text>
-      )}
+      <Text
+        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        style={[typeStyle('modeBest', tokens), styles.best, { color: colors.muted }]}
+      >
+        {best}
+      </Text>
     </Pressable>
   );
 }

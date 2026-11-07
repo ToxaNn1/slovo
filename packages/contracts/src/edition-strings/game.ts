@@ -275,11 +275,11 @@ export const GameStringsSchema = z.strictObject({
   /** The «Фініш» poster of a finished Game and a time-up (spec #1674). */
   finish: z.strictObject({
     title: TextSchema,
-    /** Over a Game with every Round right, e.g. «Влучно!». */
+    /** Over a finished Game or a time-up with at least half the answers right, e.g. «Влучно!». */
     won: TextSchema,
-    /** Over any other finished Game, e.g. «Ще раунд!». */
+    /** Over one with fewer right, e.g. «Ще раунд!». */
     more: TextSchema,
-    /** Over a time-up, e.g. «Час!». */
+    /** The head of a time-up, e.g. «Час!». */
     timeUp: TextSchema,
     /** The right answers, e.g. «12 з 15 влучань». Takes `{count}`, the right answers, and `{total}`. */
     hits: pluralOf('total'),
