@@ -1,0 +1,33 @@
+{
+  "kind": "word",
+  "id": "w_o24uze",
+  "lemma": "транслітерація",
+  "stress": [
+    10
+  ],
+  "partOfSpeech": "noun",
+  "gender": "feminine",
+  "primaryDefinition": "Заміна літер однієї писемності літерами іншої писемності, незалежно від їхньої вимови.",
+  "examples": [
+    {
+      "text": "Транслітерація – передача тексту, написаного тим чи іншим алфавітом, засобами іншого алфавіту."
+    }
+  ],
+  "categoryId": "language-speech",
+  "rarity": 3,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови в 11-ти томах",
+      "url": "https://goroh.pp.ua/Тлумачення/транслітерація"
+    },
+    {
+      "title": "Горох: словозміна",
+      "url": "https://goroh.pp.ua/Словозміна/транслітерація"
+    },
+    {
+      "title": "Горох: етимологія (Етимологічний словник української мови)",
+      "url": "https://goroh.pp.ua/Етимологія/транслітерація"
+    }
+  ],
+  "etymology": "запозичення із західноєвропейських мов; н. Transliteratión, англ. transliteration, фр. translitération утворено з прийменника лат. trans- «пере-» та іменника littera «літера»; р. болг. транслитера́ция, бр. транслітэра́цыя, п. transliteracja, ч. transliterace, слц. transliterácia, слн. transliterírati."
+}
