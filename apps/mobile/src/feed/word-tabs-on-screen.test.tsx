@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { Word } from '@slovo/contracts';
+import type { Idiom, Word } from '@slovo/contracts';
 import {
   loadEdition,
   openComposition,
@@ -76,8 +76,11 @@ function word(id: string, lemma: string, more: Partial<Word> = {}): Word {
   };
 }
 
-/** Opens the composition over the Word of the Day and `second`, with `wordTabs` on or off. */
-async function open(second: Word, wordTabs = true) {
+/**
+ * Opens the composition over the Word of the Day and `second`, with `wordTabs`
+ * on or off, and with `idioms` when the test reads an Idiom card.
+ */
+async function open(second: Word, wordTabs = true, idioms: readonly Idiom[] = []) {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
@@ -100,6 +103,7 @@ async function open(second: Word, wordTabs = true) {
         { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
       ],
       words: [second, word('w_lahidnyi', 'лагідний')],
+      idioms,
     }),
     edition: editionInEffect,
     userState: userState,
@@ -316,5 +320,79 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(tabsOf(card)).toEqual([]);
     expect(card.getByText('Детальніше', hidden)).toBeTruthy();
     expect(card.getByText('Значення слова сумирний.', hidden)).toBeTruthy();
+  });
+});
+
+/** An Idiom with every tab filled: two Definitions, an origin and an Example. */
+const fullIdiom: Idiom = {
+  kind: 'idiom',
+  id: 'i_bytybaidyky',
+  expression: 'бити байдики',
+  idiomType: 'idiom',
+  primaryDefinition: 'Ледарювати.',
+  extraDefinitions: ['Гаяти час.'],
+  examples: [{ text: 'Годі бити байдики!', author: 'Марко Вовчок' }],
+  etymology: 'Байдики — дрібні тріски.',
+  sources: [{ title: 'Словник фразеологізмів' }],
+  retired: false,
+};
+
+/** The Idiom card, which the Feed draws once the reader swipes past the Word of the Day. */
+function idiomCard() {
+  return within(screen.getByTestId('idiom-card', hidden));
+}
+
+describe('the tabs of an Idiom card in the Feed', () => {
+  it('shows «Суть», «Звідки» and «Приклад», «Суть» selected with the Definitions', async () => {
+    await open(word('w_sumyrnyi', 'сумирний'), true, [fullIdiom]);
+    await renderApp();
+    await swipeUp();
+
+    const card = idiomCard();
+    expect(tabsOf(card)).toEqual([
+      { name: 'Суть', selected: true },
+      { name: 'Звідки', selected: false },
+      { name: 'Приклад', selected: false },
+    ]);
+    expect(card.getByText('Ледарювати.', hidden)).toBeTruthy();
+    expect(card.getByText('2. Гаяти час.', hidden)).toBeTruthy();
+    expect(card.queryByText('Байдики — дрібні тріски.', hidden)).toBeNull();
+    expect(card.queryByText('Походження', hidden)).toBeNull();
+  });
+
+  it('shows where the expression comes from on «Звідки»', async () => {
+    await open(word('w_sumyrnyi', 'сумирний'), true, [fullIdiom]);
+    await renderApp();
+    await swipeUp();
+    // A second swipe makes the Idiom the card on screen, the one a tap reaches.
+    await swipeUp();
+
+    await settle(() => fireEvent.press(idiomCard().getByTestId('idiom-tab-origin')));
+
+    const card = idiomCard();
+    expect(tabsOf(card).find(({ selected }) => selected)?.name).toBe('Звідки');
+    expect(card.getByText('Байдики — дрібні тріски.', hidden)).toBeTruthy();
+    expect(card.queryByText('Ледарювати.', hidden)).toBeNull();
+    expect(card.getByTestId('idiom-expression', hidden)).toBeTruthy();
+  });
+
+  it('leaves out «Звідки» for an Idiom without an origin', async () => {
+    await open(word('w_sumyrnyi', 'сумирний'), true, [{ ...fullIdiom, etymology: undefined }]);
+    await renderApp();
+    await swipeUp();
+
+    expect(tabsOf(idiomCard()).map(({ name }) => name)).toEqual(['Суть', 'Приклад']);
+  });
+
+  it('keeps the column with «Походження» with `wordTabs` off', async () => {
+    await open(word('w_sumyrnyi', 'сумирний'), false, [fullIdiom]);
+    await renderApp();
+    await swipeUp();
+
+    const card = idiomCard();
+    expect(tabsOf(card)).toEqual([]);
+    expect(card.getByText('Походження', hidden)).toBeTruthy();
+    expect(card.getByText('Ледарювати.', hidden)).toBeTruthy();
+    expect(card.getByText('Байдики — дрібні тріски.', hidden)).toBeTruthy();
   });
 });
