@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fill, STRESS_MARK, type Word } from '@slovo/contracts';
+import { type FeatureSwitch, fill, STRESS_MARK, type Word } from '@slovo/contracts';
 import {
   openComposition,
   systemRandom,
@@ -8,7 +8,6 @@ import {
   type CrossingWord,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import type { FeatureSwitch } from '@slovo/contracts';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
