@@ -400,7 +400,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
 
     await settle(() => fireEvent.press(screen.getByRole('button', { name: 'До ігор' })));
     expect(app.pathname()).toBe('/game');
-    expect(card()).toBe('Кросворд дня. 26 жовтня. ✓ Розв’язано');
+    expect(card()).toBe('Кросворд дня · 26 жовтня. ✓ Розв’язано. за 0:33 · без підказок');
   });
 
   it('drops «без підказок» from the share line once «Підказка» filled a letter', async () => {
