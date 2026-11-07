@@ -18,8 +18,10 @@ const ANNOUNCE_EVERY = 10;
 const secondsLeft = (remainingMs: number) => Math.max(0, Math.ceil(remainingMs / 1000));
 
 /**
- * A timed Game's countdown in its own row under the Round's header: a skewed
- * bar that empties in the accent, then the seconds left, such as «40 с», drawn from the time left the Core gives. VoiceOver
+ * A timed Game's countdown in its own row under the Round's header: a bar of
+ * ten skewed segments that empty from the accent as the time runs out (board
+ * 06, spec #1674), then the seconds left, such as «40 с», drawn from the time
+ * left the Core gives. VoiceOver
  * reads the time left each time ten seconds pass, once even when the time
  * jumps over a ten, and never at none. The screen ticks the time and pauses
  * it, and passes the Edition's texts.
@@ -60,6 +62,8 @@ export function GameTimer({
   }, [seconds, remaining]);
 
   const left = Math.min(Math.max(remainingMs, 0), totalMs);
+  // A segment stays lit while any of its share of the time is left, so the bar empties only at none.
+  const lit = totalMs > 0 ? Math.ceil((left * roundProgress.segments) / totalMs) : 0;
   return (
     <View
       testID={testID}
@@ -69,10 +73,16 @@ export function GameTimer({
       {...voice}
       style={styles.timer}
     >
-      {/* The share of the time left, as flex weights, so the bar needs no width. */}
-      <View style={[styles.bar, { backgroundColor: colors.silhouette }]}>
-        <View style={{ flex: left, backgroundColor: colors.accent }} />
-        <View style={{ flex: totalMs - left }} />
+      <View style={styles.bar}>
+        {Array.from({ length: roundProgress.segments }, (_, place) => (
+          <View
+            key={place}
+            style={[
+              styles.segment,
+              { backgroundColor: place < lit ? colors.accent : colors.silhouette },
+            ]}
+          />
+        ))}
       </View>
       <Text
         maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
@@ -91,11 +101,6 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     fontVariant: ['tabular-nums'],
   },
-  bar: {
-    flex: 1,
-    flexDirection: 'row',
-    height: BAR_HEIGHT,
-    overflow: 'hidden',
-    transform: [{ skewX: roundProgress.skew }],
-  },
+  bar: { flex: 1, flexDirection: 'row', gap: roundProgress.gap },
+  segment: { flex: 1, height: BAR_HEIGHT, transform: [{ skewX: roundProgress.skew }] },
 });

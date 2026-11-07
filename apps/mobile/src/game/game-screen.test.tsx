@@ -747,6 +747,7 @@ describe('the Game screen', () => {
       expect(
         screen.getByText(/^Де наголос\?( · |$)/, { includeHiddenElements: true }),
       ).toBeOnTheScreen();
+      expect(screen.getByText('Торкнись голосної, на яку падає наголос')).toBeOnTheScreen();
       // «слово» and its number: the first «о» is stressed, the second a vowel to tap too.
       await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
       expect(screen.getByRole('button', { name: 'о, третя літера, Правильно' })).toBeTruthy();
@@ -870,9 +871,7 @@ describe('the Game screen', () => {
           `Пройдено раундів: ${String(round - 1)} з 15`,
         );
       });
-      expect(
-        screen.getByText(/^Знайди пари( · |$)/, { includeHiddenElements: true }),
-      ).toBeOnTheScreen();
+      expect(screen.getByRole('header', { name: 'З’єднай слово і значення' })).toBeOnTheScreen();
       const left = pairsLeft();
       // A grid with none of its pairs gone yet is a new one.
       if (left.length === screen.getAllByTestId(/^pairs-word-\d+$/, ALL_CELLS).length)
@@ -1015,6 +1014,30 @@ describe('the Game screen', () => {
     await waitFor(() => {
       expect(screen.getByText('Перемога!')).toBeOnTheScreen();
     });
+  });
+
+  it('takes back the last letter of «Анаграми» with «← Стерти літеру», then takes the Word', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-anagram'));
+    await waitFor(() => {
+      expect(screen.getByTestId('chips')).toBeOnTheScreen();
+    });
+    const erase = () => screen.getByRole('button', { name: '← Стерти літеру' });
+    expect(erase()).toBeDisabled();
+    const word = theWordOfThePrompt();
+    // A wrong letter for the second, taken back before the line is full.
+    await assemble(`${word.charAt(0)}${word.charAt(word.length - 1)}`);
+    expect(screen.getByTestId('chips-line')).toHaveTextContent(
+      `${word.charAt(0)}${word.charAt(word.length - 1)}`,
+    );
+
+    await fireEvent.press(erase());
+
+    expect(screen.getByTestId('chips-line')).toHaveTextContent(word.charAt(0));
+    await assemble(word.slice(1));
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+    expect(erase()).toBeDisabled();
   });
 
   it('takes a Life for a Word of «Анаграми» assembled wrong and shows the right one', async () => {
@@ -1259,7 +1282,7 @@ describe('the Game screen', () => {
       });
       // The whole expression, its punctuation too, over four meanings.
       expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
-        /^Що це означає\? перше\d+, друге — третє$/,
+        /^Що це означає\? «перше\d+, друге — третє» — це…$/,
       );
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
       await fireEvent.press(theOption(`The sense of idiom${String(theNumberOfThePrompt())}\\.`));
@@ -1335,6 +1358,91 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-result-best')).toHaveTextContent(/11$/);
     // A Game with no Life left offers no widget hint.
     expect(screen.queryByTestId('widget-guide-sheet')).toBeNull();
+  });
+
+  it('shows the streak of «Виживання» with its switch on, a big counter and «{n} поспіль · рекорд {best}» from the Best result, in place of the Rounds passed', async () => {
+    await open({ corrections: 15, best: { survival: 2 }, switchedOn: ['survivalStreak'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-survival'));
+
+    const lines: string[] = [];
+    for (let round = 1; round <= 4; round += 1) {
+      await waitFor(() => {
+        expect(screen.getByTestId('game-streak-rounds')).toHaveTextContent(String(round - 1));
+      });
+      lines.push(String(screen.getByTestId('game-streak').props['accessibilityLabel']));
+      expect(screen.queryByTestId('game-progress')).toBeNull();
+      await answerSurvivalRound(round !== 2);
+      await fireEvent.press(screen.getByTestId('game-next'));
+    }
+
+    expect(lines).toEqual([
+      '0 поспіль · рекорд 2',
+      '1 поспіль · рекорд 2',
+      '2 поспіль · рекорд 2',
+      '3 поспіль · рекорд 3',
+    ]);
+    expect(screen.getByTestId('game-streak-line')).toHaveTextContent('4 поспіль · рекорд 4');
+  });
+
+  describe('the answer card', () => {
+    it('answers under the options with «Влучно!» or «Майже. Наступне вийде.» and the Definition, «Далі →» moving on, and keeps the Example for the Game Review', async () => {
+      await open({ switchedOn: ['gameAnswerCard'] });
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-stress'));
+      await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
+
+      expect(screen.queryByTestId('game-sheet')).toBeNull();
+      const card = screen.getByTestId('game-answer-card');
+      expect(within(card).getByRole('header')).toHaveTextContent('Влучно!');
+      expect(within(card).getByTestId('game-answer-card-line')).toHaveTextContent(
+        /^The meaning of test\d+\.$/,
+      );
+      expect(card).not.toHaveTextContent(/Речення/);
+
+      await fireEvent.press(within(card).getByRole('button', { name: 'Далі →' }));
+
+      expect(screen.queryByTestId('game-answer-card')).toBeNull();
+      expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
+        'Пройдено раундів: 1 з 15',
+      );
+      const wrong = screen
+        .getAllByRole('button', { name: /^о, / })
+        .find((vowel) => vowel.props['accessibilityLabel'] !== 'о, третя літера');
+      if (wrong === undefined) throw new Error('No wrong vowel');
+      await fireEvent.press(wrong);
+
+      expect(within(screen.getByTestId('game-answer-card')).getByRole('header')).toHaveTextContent(
+        'Майже. Наступне вийде.',
+      );
+
+      await fireEvent.press(screen.getByRole('button', { name: 'Далі →' }));
+      for (let round = 3; round <= 15; round += 1) {
+        await waitFor(() => {
+          expect(screen.getByTestId('game-vowels')).toBeOnTheScreen();
+        });
+        await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
+        await fireEvent.press(screen.getByRole('button', { name: 'Далі →' }));
+      }
+      await waitFor(() => {
+        expect(screen.getByTestId('game-review')).toBeOnTheScreen();
+      });
+      await fireEvent.press(screen.getByTestId('game-review-row-1'));
+
+      expect(screen.getByTestId('game-review-details')).toHaveTextContent(/Речення \d+/);
+    });
+
+    it('keeps the bottom sheet with its switch off', async () => {
+      await renderScreen();
+
+      await fireEvent.press(screen.getByTestId('game-mode-stress'));
+      await fireEvent.press(screen.getByRole('button', { name: 'о, третя літера' }));
+
+      expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+      expect(screen.queryByTestId('game-answer-card')).toBeNull();
+    });
   });
 
   describe('the end posters', () => {
@@ -1415,6 +1523,7 @@ describe('the Game screen', () => {
       await waitFor(() => {
         expect(timerLabel()).toBe('лишилось 60 секунд');
       });
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('60 с');
       expect(screen.getByTestId('game-progress')).toHaveTextContent('Пройдено: 0');
       expect(screen.queryByTestId('game-lives')).toBeNull();
       expect(screen.queryByTestId('game-life-0', { includeHiddenElements: true })).toBeNull();
@@ -1437,6 +1546,7 @@ describe('the Game screen', () => {
       await pass(10_000);
 
       expect(timerLabel()).toBe('лишилось 50 секунд');
+      expect(screen.getByTestId('game-timer')).toHaveTextContent('50 с');
 
       await pass(50_000);
 

@@ -35,9 +35,11 @@ export type GameModeGroup = (typeof GAME_MODE_GROUPS)[number];
 
 /**
  * Which label a Round shows over its prompt: the Game Mode's, a Synonym
- * Row's question on its dominant, a Tip's, or an Example's with a gap.
+ * Row's question on its dominant, a Tip's, an Example's with a gap, or the
+ * Game Mode's over an Entry's own text whose meaning it asks, which the
+ * shell asks as the Edition's «{word}» — це… (spec #1674).
  */
-export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap';
+export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap' | 'meaning';
 
 /** A stretch of a text, from the character at `start` up to the one at `end`, which it leaves out. */
 export interface TextRange {

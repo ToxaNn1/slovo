@@ -9,6 +9,7 @@ import {
   type Round,
   type RoundAnswer,
   type RoundContent,
+  type Streak,
   type TextRange,
 } from '@slovo/core';
 import { useEffect, useRef, useState } from 'react';
@@ -44,6 +45,7 @@ import { ease } from './round-motion';
 import { ChipsRound } from './ChipsRound';
 import { GameTimer } from './GameTimer';
 import { PairsRound } from './PairsRound';
+import { AnswerCard } from './AnswerCard';
 import { AnswerOptions, PickRound } from './PickRound';
 import { RoundCard, type RoundFace } from './RoundCard';
 import { TypedRound } from './TypedRound';
@@ -95,8 +97,12 @@ export function GameRound({
   onOpenLetter,
   title,
   timeLeft,
+  streak,
+  feedback = 'sheet',
 }: {
   game: CurrentGame;
+  /** The streak of «Виживання» and its record, which the header shows in place of the Rounds passed; none in another mode or with the streak switched off. */
+  streak?: Streak | undefined;
   /** The Game Mode's title, which the Round's header shows in caps. */
   title: string;
   /** The label over the prompt, the Game Mode's, for a Round about a Word, an idiom or a Correction. */
@@ -109,6 +115,8 @@ export function GameRound({
   onOpenLetter: () => void;
   /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
   timeLeft?: number | undefined;
+  /** How an answer shows: the bottom sheet, or the inline card under the options (`gameAnswerCard`, spec #1674). */
+  feedback?: 'sheet' | 'card';
 }) {
   const { strings } = useEdition();
   const { round } = game;
@@ -145,6 +153,7 @@ export function GameRound({
         lives={game.lives}
         livesAtStart={game.livesAtStart}
         lifeLostAfter={round.lifeLostAfter}
+        streak={streak}
         time={
           game.time === undefined || game.timeLimit === undefined
             ? undefined
@@ -158,7 +167,7 @@ export function GameRound({
         contentContainerStyle={[styles.round, round.form !== 'pick' && styles.roundWithoutOptions]}
       >
         <RoundHead
-          label={asked.label}
+          label={round.form === 'pairs' ? strings.game.round.pairsHint : asked.label}
           number={round.number}
           roundLimit={game.roundLimit}
           heading={round.form === 'vowel' || round.form === 'pairs'}
@@ -171,8 +180,11 @@ export function GameRound({
           onAnswer={onAnswer}
           onOpenLetter={onOpenLetter}
         />
+        {feedback === 'card' && answer !== undefined ? (
+          <AnswerCard right={answer.right} line={cardLine(game, answer)} onNext={onNext} />
+        ) : null}
       </ScrollView>
-      <AnswerSheet answer={round.answer} onNext={onNext} />
+      {feedback === 'sheet' ? <AnswerSheet answer={round.answer} onNext={onNext} /> : null}
       <ConfirmationDialog
         visible={asking}
         title={exit.title}
@@ -195,8 +207,8 @@ export function GameRound({
 /**
  * The label and the prompt a Round shows by its label kind: a Synonym Row's
  * question on its dominant, a Tip's own question under the Tip's label, an
- * Example with a gap under the gap's label, any other Round's prompt under
- * the mode's label.
+ * Example with a gap under the gap's label, an Entry's own text asked by its
+ * meaning as «{word}» — це…, any other Round's prompt under the mode's label.
  */
 function askedAs(
   { labelKind, prompt }: Round,
@@ -213,6 +225,8 @@ function askedAs(
       return { label: strings.tip.label, prompt };
     case 'gap':
       return { label: strings.gap.label, prompt };
+    case 'meaning':
+      return { label, prompt: fill(strings.prompts.meaning, { word: prompt }) };
     case 'mode':
       return { label, prompt };
   }
@@ -369,6 +383,7 @@ function GameHeader({
   lives,
   livesAtStart,
   lifeLostAfter,
+  streak,
   time,
   onExit,
 }: {
@@ -384,6 +399,8 @@ function GameHeader({
   livesAtStart: number | undefined;
   /** How long after a wrong answer its Life is lost, in milliseconds. */
   lifeLostAfter: number;
+  /** The streak and its record, shown in place of the Rounds passed in a mode with no Round limit. */
+  streak: Streak | undefined;
   /** The play time left of a timed Game and its whole time, in milliseconds; none in another Game. */
   time: { left: number; limit: number } | undefined;
   onExit: () => void;
@@ -428,7 +445,9 @@ function GameHeader({
           </View>
         )}
       </View>
-      {roundLimit === undefined ? (
+      {roundLimit === undefined && streak !== undefined ? (
+        <StreakCounter streak={streak} />
+      ) : roundLimit === undefined ? (
         <Text
           testID="game-progress"
           accessibilityLabel={fill(words.passedLabel, progress)}
@@ -587,8 +606,8 @@ function Life({
 }
 
 /**
- * The Round's head (`game-round-dark`): its label and place, such as
- * «ВИЗНАЧЕННЯ · 3 / 15», in the muted Unbounded, broken only between whole
+ * The Round's head (`game-round-dark`, board 07): its label and place, such
+ * as «ВИЗНАЧЕННЯ · 3 / 15», in the red Unbounded, broken only between whole
  * words. The label is the Round's heading for VoiceOver where its card does
  * not read it, a vowel or a pairs Round; the place is the header's to read.
  */
@@ -626,7 +645,7 @@ function RoundHead({
         ? { accessibilityRole: 'header', accessibilityLabel: label }
         : { accessibilityElementsHidden: true, importantForAccessibility: 'no' })}
       {...voice}
-      style={[typeStyle('roundHead', tokens), { color: colors.muted }]}
+      style={[typeStyle('roundHead', tokens), { color: colors.accent }]}
     >
       {place === undefined ? label : `${label} · ${place}`}
     </Text>
@@ -650,6 +669,16 @@ function RoundLabel({ label }: { label: string }) {
       {label}
     </Text>
   );
+}
+
+/**
+ * The answer card's line: the sheet's explanation, such as a Correction's,
+ * else the primary Definition of the Entry the Round just played, if it has one.
+ */
+function cardLine(game: CurrentGame, answer: RoundAnswer): string | undefined {
+  if (answer.sheet.explanation !== undefined) return answer.sheet.explanation;
+  const entry = game.played.at(-1)?.entry;
+  return entry !== undefined && 'primaryDefinition' in entry ? entry.primaryDefinition : undefined;
 }
 
 /**
@@ -744,7 +773,47 @@ function AnswerSheetContent({ answer, onNext }: { answer: RoundAnswer; onNext: (
   );
 }
 
+/**
+ * The streak of «Виживання» (spec #1674): a big counter of the Rounds passed
+ * and «{n} поспіль · рекорд {best}» beside it, read by VoiceOver as that line.
+ */
+function StreakCounter({ streak }: { streak: Streak }) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const { strings, voice } = useEdition();
+  const line = fill(strings.game.round.survivalStreak, {
+    n: String(streak.rounds),
+    best: String(streak.record),
+  });
+  return (
+    <View
+      testID="game-streak"
+      accessible
+      accessibilityLabel={line}
+      {...voice}
+      style={styles.streak}
+    >
+      <Text
+        testID="game-streak-rounds"
+        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+        style={[typeStyle('roundStreak', tokens), { color: colors.accent }]}
+      >
+        {streak.rounds}
+      </Text>
+      <Text
+        testID="game-streak-line"
+        maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+        style={[typeStyle('roundStreakLine', tokens), styles.streakLine, { color: colors.ink }]}
+      >
+        {line}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  streak: { flexDirection: 'row', alignItems: 'baseline', gap: roundLayout.gap },
+  streakLine: { flexShrink: 1 },
   screen: { flex: 1 },
   round: { gap: space[5], padding: space[6] },
   // A Round of a form without options keeps one gap more under its content than a pick Round.

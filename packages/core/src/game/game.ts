@@ -491,6 +491,25 @@ const resultOf = (over: CurrentGame): number =>
   over.lives === undefined ? over.played.filter(({ right }) => right).length : over.roundsPassed;
 
 /**
+ * The streak of a Game in an endless mode with Lives, such as «Виживання»
+ * (spec #1674): the Rounds passed so far, and the record to chase, the mode's
+ * Best result, or the streak itself once it passes that.
+ */
+export interface Streak {
+  readonly rounds: number;
+  readonly record: number;
+}
+
+/** The streak of the Game in play or just over; none on the mode screen, or in a mode with a Round limit or with no Lives. */
+export function streakOf({ current, bestResults }: GameState): Streak | undefined {
+  if (current?.lives === undefined || current.roundLimit !== undefined) {
+    return undefined;
+  }
+  const rounds = current.roundsPassed;
+  return { rounds, record: Math.max(bestResults[current.modeId] ?? 0, rounds) };
+}
+
+/**
  * How a Game just over ended: its last Life lost, its time run out (the clock
  * left at 0), or else its Round limit reached; at least half the answers right
  * is on target.
