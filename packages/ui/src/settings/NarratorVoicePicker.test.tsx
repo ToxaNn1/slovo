@@ -69,7 +69,7 @@ describe('NarratorVoicePicker', () => {
           const style = StyleSheet.flatten(
             (bar as { props: { style?: StyleProp<ViewStyle> } }).props.style,
           );
-          return style.height;
+          return style?.height;
         });
     const first = await draw({ chosen: 'anna' });
     const anna = heights();

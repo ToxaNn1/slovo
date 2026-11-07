@@ -4,7 +4,11 @@
 import type { KnowledgeMark } from '@slovo/core';
 import { useCallback, useEffect, useMemo, useRef, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import {
+  GestureDetector,
+  usePanGesture,
+  type PanGestureConfig,
+} from 'react-native-gesture-handler';
 import Animated, {
   Easing,
   ReduceMotion,
@@ -248,44 +252,48 @@ export function SwipeMarks({
     [reduceMotion, setMark, showToastAfterTurn],
   );
 
-  const pan = useMemo(
-    () =>
-      Gesture.Pan()
-        .enabled(!concealed)
-        .activeOffsetX([-8, 8])
-        .failOffsetY([-8, 8])
-        .onUpdate(({ translationX }) => {
-          if (flying.value) return;
-          drag.value = translationX;
-          if (!reduceMotion) offset.value = translationX;
-        })
-        .onEnd(({ translationX, velocityX }) => {
-          if (flying.value) return;
-          // A fling counts only the way the card goes: a flick back towards the middle cancels.
-          const to =
-            translationX >= markDistance.value || (translationX > 0 && velocityX >= MARK_VELOCITY)
-              ? 'known'
-              : translationX <= -markDistance.value ||
-                  (translationX < 0 && velocityX <= -MARK_VELOCITY)
-                ? 'unknown'
-                : undefined;
-          // A swipe past the threshold flies the card off when the pager has a next page and motion is on.
-          const flew = to !== undefined && !reduceMotion && turnToNextOnUI !== undefined;
-          if (to !== undefined) scheduleOnRN(release, to, flew);
-          if (flew) {
-            flying.value = true;
-            // The next Entry comes in under the card as it flies, in the same frame,
-            // rather than after the fly and a busy JS thread (board XSwipe).
-            turnToNextOnUI();
-            offset.value = withTiming(to === 'known' ? OFF_SCREEN : -OFF_SCREEN, FLY, () => {
-              scheduleOnRN(showToastAfterTurn);
-            });
-            return;
-          }
-          drag.value = withTiming(0, FADE);
-          offset.value = withTiming(0, BACK);
-        })
-        .withTestId('entry-card-side-swipe'),
+  // Gesture Handler asks for a memoised config: a config built outside the
+  // hook's call is not workletized for us, so each callback says so.
+  const panConfig = useMemo(
+    (): PanGestureConfig => ({
+      enabled: !concealed,
+      activeOffsetX: [-8, 8],
+      failOffsetY: [-8, 8],
+      onUpdate: ({ translationX }) => {
+        'worklet';
+        if (flying.value) return;
+        drag.value = translationX;
+        if (!reduceMotion) offset.value = translationX;
+      },
+      onDeactivate: ({ translationX, velocityX }) => {
+        'worklet';
+        if (flying.value) return;
+        // A fling counts only the way the card goes: a flick back towards the middle cancels.
+        const to =
+          translationX >= markDistance.value || (translationX > 0 && velocityX >= MARK_VELOCITY)
+            ? 'known'
+            : translationX <= -markDistance.value ||
+                (translationX < 0 && velocityX <= -MARK_VELOCITY)
+              ? 'unknown'
+              : undefined;
+        // A swipe past the threshold flies the card off when the pager has a next page and motion is on.
+        const flew = to !== undefined && !reduceMotion && turnToNextOnUI !== undefined;
+        if (to !== undefined) scheduleOnRN(release, to, flew);
+        if (flew) {
+          flying.value = true;
+          // The next Entry comes in under the card as it flies, in the same frame,
+          // rather than after the fly and a busy JS thread (board XSwipe).
+          turnToNextOnUI();
+          offset.value = withTiming(to === 'known' ? OFF_SCREEN : -OFF_SCREEN, FLY, () => {
+            scheduleOnRN(showToastAfterTurn);
+          });
+          return;
+        }
+        drag.value = withTiming(0, FADE);
+        offset.value = withTiming(0, BACK);
+      },
+      testID: 'entry-card-side-swipe',
+    }),
     [
       concealed,
       drag,
@@ -298,6 +306,7 @@ export function SwipeMarks({
       turnToNextOnUI,
     ],
   );
+  const pan = usePanGesture(panConfig);
 
   const cardStyle = useAnimatedStyle(() => ({
     transform: [

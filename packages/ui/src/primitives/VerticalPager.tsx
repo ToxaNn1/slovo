@@ -12,7 +12,6 @@ import {
   useState,
   type ReactNode,
   type Ref,
-  type RefObject,
 } from 'react';
 import {
   StyleSheet,
@@ -24,11 +23,12 @@ import {
   type ViewStyle,
 } from 'react-native';
 import {
-  Gesture,
   GestureDetector,
   GestureHandlerRootView,
   ScrollView,
-  type GestureType,
+  usePanGesture,
+  type PanGesture,
+  type PanGestureConfig,
 } from 'react-native-gesture-handler';
 import Animated, {
   Easing,
@@ -133,7 +133,8 @@ const DRAG = { undecided: 0, page: 1, scroll: 2 } as const;
 const SCROLL_EDGE = 1;
 
 interface PagerContextValue {
-  readonly panRef: RefObject<GestureType | undefined>;
+  /** The pager's swipe, which a page's scroll view runs alongside. */
+  readonly pan: PanGesture;
   /** Each drawn page's scroll, by page index; a page without a scroll view has none. */
   readonly scrolls: SharedValue<Record<number, PageScroll>>;
   /** Whether a drag is turning the page now, so the page's content holds still. */
@@ -213,7 +214,6 @@ export function VerticalPager<Item>({
   const turnFrom = useSharedValue(0);
   const scrolls = useSharedValue<Record<number, PageScroll>>({});
   const turning = useSharedValue(false);
-  const panRef = useRef<GestureType | undefined>(undefined);
 
   useEffect(() => {
     lastIndex.value = items.length - 1;
@@ -325,29 +325,26 @@ export function VerticalPager<Item>({
       scheduleOnRN(turn, target);
     };
   }, [index, items.length, motion, position, turn, turnedTo]);
-  const pager = useMemo(
-    () => ({ panRef, scrolls, turning, turnedTo, settled, turnTo: turnToLasting }),
-    [scrolls, turning, turnedTo, settled, turnToLasting],
-  );
-
-  // Gesture Handler asks for a memoised gesture: a new one on each render
-  // sends its worklets to the UI thread again.
-  const pan = useMemo(() => {
+  // Gesture Handler asks for a memoised config: a new one on each render
+  // sends the gesture's worklets to the UI thread again. A config built
+  // outside the hook's call is not workletized for us, so each callback says so.
+  const panConfig = useMemo((): PanGestureConfig => {
     /** A swipe turned the page: the page turns, with the light tick of a selection. */
     function swipeTo(target: number) {
       haptics.selection();
       turn(target);
     }
 
-    const gesture = Gesture.Pan()
-      .withRef(panRef)
-      .activeOffsetY([-12, 12])
-      .failOffsetX([-24, 24])
-      .onStart(() => {
+    return {
+      activeOffsetY: [-12, 12],
+      failOffsetX: [-24, 24],
+      onActivate: () => {
+        'worklet';
         dragStart.value = position.value;
         drag.value = DRAG.undecided;
-      })
-      .onUpdate(({ translationY }) => {
+      },
+      onUpdate: ({ translationY }) => {
+        'worklet';
         if (pageHeight.value === 0) return;
         if (drag.value === DRAG.undecided) {
           // The page turns only from the end of its scroll in the swipe's direction.
@@ -362,8 +359,9 @@ export function VerticalPager<Item>({
         const dragged = dragStart.value - (translationY - turnFrom.value) / pageHeight.value;
         const clamped = Math.min(Math.max(dragged, 0), lastIndex.value);
         position.value = clamped + (dragged - clamped) * EDGE_RESISTANCE;
-      })
-      .onEnd(({ translationY, velocityY }) => {
+      },
+      onDeactivate: ({ translationY, velocityY }) => {
+        'worklet';
         if (drag.value !== DRAG.page) return;
         // A swipe during the last one's motion turns on from the page that one went to.
         const start = turnedTo.value;
@@ -381,13 +379,14 @@ export function VerticalPager<Item>({
           ? withTiming(target, CROSS_FADE)
           : // The spring's speed is the finger's, in pages per second.
             withSpring(target, { ...SETTLE, velocity: -velocityY / pageHeight.value });
-      })
-      .onFinalize(() => {
+      },
+      onFinalize: () => {
+        'worklet';
         turning.value = false;
-      });
-    // How a component test finds the swipe; Gesture Handler reads it in Jest only.
-    if (testID !== undefined) gesture.withTestId(`${testID}-swipe`);
-    return gesture;
+      },
+      // How a component test finds the swipe; Gesture Handler reads it in Jest only.
+      testID: testID === undefined ? undefined : `${testID}-swipe`,
+    };
   }, [
     drag,
     dragStart,
@@ -403,6 +402,11 @@ export function VerticalPager<Item>({
     turnedTo,
     turning,
   ]);
+  const pan = usePanGesture(panConfig);
+  const pager = useMemo(
+    () => ({ pan, scrolls, turning, turnedTo, settled, turnTo: turnToLasting }),
+    [pan, scrolls, turning, turnedTo, settled, turnToLasting],
+  );
 
   function onLayout(event: LayoutChangeEvent) {
     const measured = event.nativeEvent.layout.height;
@@ -645,7 +649,7 @@ export function PagerScrollView({
 }) {
   const pager = useContext(PagerContext);
   if (pager === undefined) throw new Error('PagerScrollView must be inside a VerticalPager');
-  const { panRef, scrolls, turning } = pager;
+  const { pan, scrolls, turning } = pager;
   const index = useContext(PageIndexContext);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const viewport = useRef(0);
@@ -679,7 +683,7 @@ export function PagerScrollView({
     <AnimatedScrollView
       ref={scrollRef}
       testID={testID}
-      simultaneousHandlers={panRef}
+      simultaneousWith={pan}
       // A sheet opened from the card is a child in React's tree (it is a Modal), and a
       // scroll view that persists no taps would swallow the first tap in the sheet's
       // name field to put the keyboard away.

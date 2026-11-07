@@ -3,7 +3,7 @@ import type { Word } from '@slovo/contracts';
 import { describe, expect, it } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { useState } from 'react';
-import { State } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 import {
   coreTokens,
@@ -113,11 +113,14 @@ function Crossword({ accessibleMode = false }: { accessibleMode?: boolean }) {
  */
 async function renderGrid(accessibleMode = false) {
   await render(
-    <TokensProvider tokens={coreTokens} colorScheme="light">
-      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
-        <Crossword accessibleMode={accessibleMode} />
-      </EditionProvider>
-    </TokensProvider>,
+    // The app's layout puts a `GestureHandlerRootView` at its root.
+    <GestureHandlerRootView>
+      <TokensProvider tokens={coreTokens} colorScheme="light">
+        <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+          <Crossword accessibleMode={accessibleMode} />
+        </EditionProvider>
+      </TokensProvider>
+    </GestureHandlerRootView>,
   );
   await fireEvent(screen.getByTestId('grid'), 'layout', {
     nativeEvent: { layout: { x: 0, y: 0, width: 304, height: 319 } },

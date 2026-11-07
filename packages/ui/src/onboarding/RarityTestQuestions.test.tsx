@@ -7,6 +7,7 @@ import {
 } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
 import { fireEvent, render, screen } from '@testing-library/react-native';
+import type { ComponentProps } from 'react';
 import { AccessibilityInfo, View } from 'react-native';
 import { testStrings } from '../test-strings';
 
@@ -37,7 +38,9 @@ function frame({ testID, footer, children }: RarityTestScreen) {
 
 async function renderTest(ceiling: Rarity | undefined) {
   const handlers = {
-    onApply: jest.fn((): Promise<Rarity | undefined> => Promise.resolve(ceiling)),
+    onApply: jest.fn<ComponentProps<typeof RarityTestQuestions>['onApply']>(() =>
+      Promise.resolve(ceiling),
+    ),
     onDone: jest.fn(),
   };
   await render(
