@@ -1141,14 +1141,16 @@ describe('the Game screen', () => {
       expect(screen.getAllByTestId(/^game-option-\d+$/)).toHaveLength(4);
     });
     const options = screen.getAllByTestId(/^game-option-\d+$/);
-    ['А', 'Б', 'В', 'Г'].forEach((key, place) => {
-      expect(within(options[place] ?? screen.root).getByText(key)).toBeTruthy();
+    options.forEach((option, place) => {
+      expect(within(option).getByText(['А', 'Б', 'В', 'Г'][place] ?? '')).toBeTruthy();
     });
     expect(screen.queryByText('✕')).toBeNull();
 
     const standard = `добре${String(theNumberOfThePrompt())}`;
     const wrong = options.findIndex((option) => option.props['accessibilityLabel'] !== standard);
-    await fireEvent.press(options[wrong] ?? screen.root);
+    const picked = options[wrong];
+    if (picked === undefined) throw new Error('No wrong option');
+    await fireEvent.press(picked);
 
     expect(within(screen.getByTestId(`game-option-${String(wrong)}`)).getByText('✕')).toBeTruthy();
     expect(screen.getAllByText('✕')).toHaveLength(1);
