@@ -242,7 +242,7 @@ export default {
       from: {
         orphan: true,
         pathNot: [
-          '\\.d\\.ts$',
+          '\\.d\\.c?ts$',
           '(^|/)[^/]+\\.config\\.(js|cjs|mjs|ts)$',
           '(^|/)jest\\.(setup|resolver|glass-effect|language-pack|fonts)\\.(js|cjs)$',
           '^apps/mobile/src/app/',
