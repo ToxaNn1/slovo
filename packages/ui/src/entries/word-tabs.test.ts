@@ -1,5 +1,5 @@
-import type { CorrectionCardModel, WordCardModel } from '@slovo/core';
-import { correctionTabsOf, wordTabsOf } from '@slovo/ui/word-tabs';
+import type { CorrectionCardModel, IdiomCardModel, WordCardModel } from '@slovo/core';
+import { correctionTabsOf, idiomTabsOf, wordTabsOf } from '@slovo/ui/word-tabs';
 import { describe, expect, it } from 'vitest';
 
 const bare: WordCardModel = {
@@ -122,5 +122,43 @@ describe('correctionTabsOf', () => {
       'better',
       'examples',
     ]);
+  });
+});
+
+const bareIdiom: IdiomCardModel = {
+  kind: 'idiom',
+  idiomId: 'i1',
+  expression: 'kick the bucket',
+  idiomType: 'idiom',
+  primaryDefinition: 'To die.',
+  extraDefinitions: [],
+  examples: [],
+  etymology: undefined,
+  sourceNames: ['Dictionary'],
+};
+
+describe('idiomTabsOf', () => {
+  it('gives essence, origin and example in order for a full Idiom', () => {
+    const tabs = idiomTabsOf({
+      ...bareIdiom,
+      extraDefinitions: ['To give up.'],
+      examples: [{ text: 'He kicked the bucket.', author: 'Author' }],
+      etymology: 'From the gallows.',
+    });
+
+    expect(tabs).toEqual([
+      {
+        key: 'essence',
+        definition: 'To die.',
+        meanings: ['To give up.'],
+        sourceNames: ['Dictionary'],
+      },
+      { key: 'origin', etymology: 'From the gallows.' },
+      { key: 'example', examples: [{ text: 'He kicked the bucket.', author: 'Author' }] },
+    ]);
+  });
+
+  it('leaves out origin and example when the Idiom has no origin and no Example', () => {
+    expect(idiomTabsOf(bareIdiom).map(({ key }) => key)).toEqual(['essence']);
   });
 });

@@ -472,6 +472,11 @@
       "proverb": "прислів’я"
     },
     "etymology": "Походження",
+    "tabs": {
+      "essence": "Суть",
+      "origin": "Звідки",
+      "example": "Приклад"
+    },
     "heading": "{expression}, {type}",
     "source": "Джерело: {source}"
   },
