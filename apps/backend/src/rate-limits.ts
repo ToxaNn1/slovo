@@ -24,6 +24,15 @@ export function createRateLimits({ db }: Database, { secret }: { secret: string 
   let nextSweep: Date | undefined;
   const take: RateLimits['take'] = async (subject, { requests, windowSeconds }, now, weight) => {
     const key = keyOf(subject);
+    // A weight over the limit fits in no window, a fresh one included, so it
+    // is refused whole here: the statement below checks only a running window.
+    if (weight > requests) {
+      const [running] = await db
+        .select({ windowEnds: rateLimits.windowEnds })
+        .from(rateLimits)
+        .where(eq(rateLimits.key, key));
+      return { taken: false, windowEnds: running?.windowEnds ?? now };
+    }
     // Windows that have ended count nothing any more, so they go, at most
     // once an hour rather than on every request.
     if (nextSweep === undefined || now >= nextSweep) {

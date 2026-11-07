@@ -7,6 +7,7 @@ import { unregisteredEntries } from './id-registry';
 import { PACK_FORMAT, type PackContent } from './pack-layout';
 import { protectedLiteraryUses } from './public-domain';
 import { readEdition } from './read-edition';
+import type { MissingRecordings } from './recordings';
 import { contentReport, type ContentReport } from './report';
 import { writePack } from './write-pack';
 
@@ -18,6 +19,8 @@ export type BuildResult =
       readonly report: ContentReport;
       /** The content targets the Edition declares and the content misses. */
       readonly missedTargets: readonly MissedTarget[];
+      /** How many Words each Narrator Voice has no Recording of (ADR 0083). */
+      readonly missingRecordings: readonly MissingRecordings[];
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
@@ -26,6 +29,8 @@ export type CheckResult =
       readonly ok: true;
       /** The content targets the Edition declares and the content misses. */
       readonly missedTargets: readonly MissedTarget[];
+      /** For each Narrator Voice, how many Words it has no Recording of (ADR 0083). */
+      readonly missingRecordings: readonly MissingRecordings[];
     }
   | { readonly ok: false; readonly errors: readonly BuildError[] };
 
@@ -44,7 +49,8 @@ export function checkLanguagePack({
 }): CheckResult {
   const checked = checkEdition(editionDir, today);
   if (!checked.ok) return checked;
-  return { ok: true, missedTargets: checked.missedTargets };
+  const { missedTargets, missingRecordings } = checked;
+  return { ok: true, missedTargets, missingRecordings };
 }
 
 /**
@@ -67,9 +73,9 @@ export function buildLanguagePack({
 }): BuildResult {
   const checked = checkEdition(editionDir, today);
   if (!checked.ok) return checked;
-  const { content, metadata, report, missedTargets } = checked;
+  const { content, metadata, report, missedTargets, missingRecordings } = checked;
   writePack(outFile, content, metadata);
-  return { ok: true, metadata, report, missedTargets };
+  return { ok: true, metadata, report, missedTargets, missingRecordings };
 }
 
 function checkEdition(
@@ -82,6 +88,7 @@ function checkEdition(
       metadata: PackMetadata;
       report: ContentReport;
       missedTargets: MissedTarget[];
+      missingRecordings: readonly MissingRecordings[];
     }
   | { ok: false; errors: readonly BuildError[] } {
   const source = readEdition(editionDir, { registryRequired: true });
@@ -121,5 +128,12 @@ function checkEdition(
   };
 
   const report = contentReport(content);
-  return { ok: true, content, metadata, report, missedTargets: missedTargets(report, targets) };
+  return {
+    ok: true,
+    content,
+    metadata,
+    report,
+    missedTargets: missedTargets(report, targets),
+    missingRecordings: source.missingRecordings,
+  };
 }

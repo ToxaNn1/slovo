@@ -28,7 +28,7 @@ import {
   type Tip,
   type Word,
 } from '@slovo/contracts';
-import type { z } from 'zod';
+import { z } from 'zod';
 
 import { formatBuildError, type BuildError } from './build-error';
 import { checkContent, type Authored } from './check-content';
@@ -68,6 +68,33 @@ const ASSETS_DIR = 'assets';
 export const FONTS_DIR = 'assets/fonts';
 /** Where an Edition keeps the Illustrations its Words name (ADR 0055). */
 export const ILLUSTRATIONS_DIR = 'assets/illustrations';
+/**
+ * An entry of the Recordings folder: a folder of one Narrator Voice, or a
+ * stray file. A voice folder lists its files (the Recordings, by Word id),
+ * any folder inside it, and its texts file read once: for each Word id, the
+ * text its Recording was made from (ADR 0083).
+ */
+export type RecordingFolderEntry =
+  | {
+      readonly kind: 'folder';
+      readonly name: string;
+      readonly files: readonly string[];
+      readonly folders: readonly string[];
+      readonly texts: RecordedTexts;
+    }
+  | { readonly kind: 'file'; readonly name: string };
+
+/** The texts file of a Narrator Voice folder: absent counts as no text recorded. */
+export type RecordedTexts =
+  | { readonly kind: 'texts'; readonly byWord: ReadonlyMap<string, string> }
+  | { readonly kind: 'invalid' };
+
+/** The file of a Narrator Voice folder that maps each Word id to the text its Recording was made from. */
+export const RECORDED_TEXTS_FILE = 'texts.json';
+const recordedTexts = z.record(z.string(), z.string());
+
+/** Where an Edition keeps its Recordings, a folder per Narrator Voice (ADR 0083). */
+export const RECORDINGS_DIR = 'assets/recordings';
 /** Where an Edition keeps its legal pages, one Markdown file per page (ADR 0049). */
 const LEGAL_DIR = 'legal';
 const WORDS_DIR = 'content/words';
@@ -229,6 +256,13 @@ export interface EditionFiles {
   illustration(name: string): string;
   /** The file names of the Illustrations the Edition brings (its PNGs), in code-unit order. */
   illustrations(): string[];
+  /**
+   * What the Edition's Recordings folder holds: each entry by name, in
+   * code-unit order, and for a folder the names of its files, also in order.
+   */
+  recordings(): RecordingFolderEntry[];
+  /** Where a Recording lies, whether or not it is there. */
+  recording(voice: string, name: string): string;
   /** Every font file the Edition brings, in code-unit order. */
   fonts(): string[];
   /** Every legal page the Edition brings, its Markdown files, in code-unit order (ADR 0049). */
@@ -380,6 +414,30 @@ export function editionFiles(dir: string): EditionFiles {
         .filter((file) => file.endsWith('.png'))
         .toSorted();
     },
+    recordings() {
+      const recordingsDir = join(dir, RECORDINGS_DIR);
+      if (!existsSync(recordingsDir)) return [];
+      return readdirSync(recordingsDir, { withFileTypes: true })
+        .toSorted((a, b) => (a.name < b.name ? -1 : a.name > b.name ? 1 : 0))
+        .map((entry): RecordingFolderEntry => {
+          if (!entry.isDirectory()) return { kind: 'file', name: entry.name };
+          const voiceDir = join(recordingsDir, entry.name);
+          const inside = readdirSync(voiceDir, { withFileTypes: true });
+          const names = (keep: (item: (typeof inside)[number]) => boolean) =>
+            inside
+              .filter(keep)
+              .map(({ name }) => name)
+              .toSorted();
+          return {
+            kind: 'folder',
+            name: entry.name,
+            files: names((item) => !item.isDirectory() && item.name !== RECORDED_TEXTS_FILE),
+            folders: names((item) => item.isDirectory()),
+            texts: readRecordedTexts(join(voiceDir, RECORDED_TEXTS_FILE)),
+          };
+        });
+    },
+    recording: (voice, name) => join(dir, RECORDINGS_DIR, voice, name),
     fonts() {
       const fontsDir = join(dir, FONTS_DIR);
       if (!existsSync(fontsDir)) return [];
@@ -552,4 +610,17 @@ function parseFile<T>(
 function entryIdOf(value: unknown): string | undefined {
   if (typeof value !== 'object' || value === null || !('id' in value)) return undefined;
   return typeof value.id === 'string' && value.id !== '' ? value.id : undefined;
+}
+
+/** The texts file of a Narrator Voice folder, parsed once where it enters. */
+function readRecordedTexts(file: string): RecordedTexts {
+  if (!existsSync(file)) return { kind: 'texts', byWord: new Map() };
+  try {
+    const parsed = recordedTexts.safeParse(JSON.parse(readFileSync(file, 'utf8')));
+    return parsed.success
+      ? { kind: 'texts', byWord: new Map(Object.entries(parsed.data)) }
+      : { kind: 'invalid' };
+  } catch {
+    return { kind: 'invalid' };
+  }
 }

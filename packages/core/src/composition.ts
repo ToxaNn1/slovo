@@ -22,8 +22,8 @@ import { openDashboard, type Dashboard } from './dashboard/dashboard';
 import { openMoodCheckIns, type MoodCheckIns } from './mood/mood';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
-import { createEntries, type Entries } from './entries/entries';
-import { createEntryRows, type EntryRowModel } from './entries/entry-row';
+import type { Entries } from './entries/entries';
+import type { EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
 import { buildEntryCard, buildFeedCard, openFeed, type Feed } from './feed/feed';
 import { createCommunityWord } from './feed/community-word';
@@ -50,9 +50,10 @@ import {
 import { openKnowledge, type Knowledge } from './knowledge/knowledge';
 import { openBadges, type Badges } from './progress/badges';
 import { openCommunityCounters, type CommunityCounters } from './community-counters/counter-deltas';
-import { openHiddenEntries, type HiddenEntries } from './mix/hidden-entries';
+import type { HiddenEntries } from './mix/hidden-entries';
 import { createHiding, type Hiding } from './mix/hiding';
-import { NORMAL_KIND_WEIGHTS, openMix, type Mix } from './entries/mix';
+import type { Mix } from './entries/mix';
+import { openEligibility } from './mix/open-eligibility';
 import type { NotificationScheduling } from './notifications/notification-plan';
 import { openNotifications, type Notifications } from './notifications/notifications';
 import { openOnboarding, type Onboarding } from './onboarding/onboarding';
@@ -65,7 +66,7 @@ import { openStreakBreak, type StreakBreak } from './progress/streak-break';
 import { openProgress, type Progress } from './progress/progress';
 import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
-import { openRarityCeiling, type RarityCeiling } from './entries/rarity-ceiling';
+import type { RarityCeiling } from './entries/rarity-ceiling';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
 import { createSearch, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
@@ -411,8 +412,15 @@ export async function openComposition({
   const opened: Subject<OpenedEntry> = createSubject();
   const dayTurned: Subject<LocalDate> = createSubject();
   const returned: Subject<void> = createSubject();
-  const entries = createEntries({ content, edition, userState });
-  const rows = createEntryRows(entries);
+  // The Entries read the reader's choices live; the Mix opens before the
+  // Feed, whose turns follow its kind weights.
+  const { entries, rows, mix, rarityCeiling, hiddenEntries } = await openEligibility({
+    content,
+    edition,
+    userState,
+    clock,
+    eligibility,
+  });
   const cycle = await openCycle({ entries, userState, random });
   // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.
   eligibility.subscribe(() => cycle.readEligibleAgain());
@@ -439,7 +447,6 @@ export async function openComposition({
     dayTurned,
     returned,
   });
-  const hiddenEntries = await openHiddenEntries({ rows, userState, clock, eligibility });
   const communityCounters = openCommunityCounters({ edition, userState });
   /** Emits an event about the Entry with its kind, rarity and Category; a failure is lost, never thrown. */
   async function withEntryProperties(
@@ -511,13 +518,6 @@ export async function openComposition({
     xpLog,
     activeDays,
   });
-  // The Mix opens before the Feed, whose turns follow its kind weights.
-  const [word, correction] = await Promise.all([
-    entries.categories(),
-    entries.correctionCategories(),
-  ]);
-  const mix = await openMix({ edition, categories: { word, correction }, userState, eligibility });
-  const rarityCeiling = await openRarityCeiling({ edition, userState, eligibility });
   const later = openQuestionnaire({
     edition,
     userState,
@@ -528,7 +528,14 @@ export async function openComposition({
     analytics,
   });
   // The Feed reads the day's Mood for each card it adds (ADR 0076); the check-in follows the day change.
-  const mood = await openMoodCheckIns({ edition, userState, clock, dayTurned, analytics });
+  const mood = await openMoodCheckIns({
+    edition,
+    userState,
+    clock,
+    dayTurned,
+    analytics,
+    rarityCeiling,
+  });
   const feed = await openFeed({
     entries,
     userState,
@@ -570,34 +577,25 @@ export async function openComposition({
             }),
       ],
     }),
-    kindWeights: () =>
-      edition.isFeatureEnabled('mixKindWeights') ? mix.state.kindWeights : NORMAL_KIND_WEIGHTS,
-    mood: () => (mood.today.state === 'chosen' ? mood.today.mood : undefined),
-    rarityCeiling,
+    mix,
+    mood,
     eligibility,
     seen,
     dayTurned,
     opened,
-    quickQuestion: {
-      every: () => {
-        const on = edition.isFeatureEnabled('game') && edition.isFeatureEnabled('quickQuestion');
-        const every = mix.state.quickQuestionEvery;
-        return on && every !== 'off' ? every : undefined;
-      },
-      questions: createQuickQuestion({
-        edition,
-        entries,
-        knowledge,
-        xp: xpLog,
-        userState,
-        random,
-        modes: [...coreGameModes, ...gameModes],
-        answered: (askedId, right) =>
-          withEntryProperties(askedId, (properties) =>
-            analytics.track('quickQuestionAnswered', { ...properties, right }),
-          ),
-      }),
-    },
+    quickQuestion: createQuickQuestion({
+      edition,
+      entries,
+      knowledge,
+      xp: xpLog,
+      userState,
+      random,
+      modes: [...coreGameModes, ...gameModes],
+      answered: (askedId, right) =>
+        withEntryProperties(askedId, (properties) =>
+          analytics.track('quickQuestionAnswered', { ...properties, right }),
+        ),
+    }),
   });
   // The Game Modes are planned once the day is turned to, last of what follows
   // it: planning reads the whole pack, so the launch never waits for it. A

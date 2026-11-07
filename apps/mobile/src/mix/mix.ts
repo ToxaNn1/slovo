@@ -1,17 +1,55 @@
 import type { MixKindWeight, QuickQuestionEvery } from '@slovo/contracts';
-import type { CategoryKind, MixKind, MixState } from '@slovo/core';
+import type {
+  CategoryKind,
+  Composition,
+  MixKind,
+  MixScreen,
+  MixState,
+  OutOfMix,
+} from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useMemo } from 'react';
 
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { useSubscribed } from '../opening';
-import { mixSummary } from './mix-screen';
+import { mixScreenModel, mixSummary, type MixScreenModel } from './mix-screen';
 
 /** The Mix as it stands, kept up to date. */
 export function useMixState(): MixState {
   return useSubscribed(useComposition().mix, ({ state }) => state);
+}
+
+/** What the screens read of the Mix in effect, as it stands at one state. */
+export interface MixInEffect {
+  readonly screen: MixScreen;
+  readonly outOfMix: OutOfMix;
+  readonly kindsOn: readonly MixKind[];
+}
+
+/** One view per state of the Mix, so it stays the same object until the Mix changes. */
+const views = new WeakMap<MixState, MixInEffect>();
+
+function inEffect(mix: Composition['mix']): MixInEffect {
+  const { state } = mix;
+  let view = views.get(state);
+  if (view === undefined) {
+    view = { screen: mix.screen(), outOfMix: mix.outOfMix(), kindsOn: mix.kindsOn() };
+    views.set(state, view);
+  }
+  return view;
+}
+
+/** The Mix in effect as it stands, kept up to date: a new view after each change of the Mix. */
+export function useMixInEffect(): MixInEffect {
+  return useSubscribed(useComposition().mix, inEffect);
+}
+
+/** What the Mix screen draws, kept up to date. */
+export function useMixScreenModel(): MixScreenModel {
+  const { screen } = useMixInEffect();
+  return useMemo(() => mixScreenModel({ screen }), [screen]);
 }
 
 /** The value of the «Мій Мікс» row of Settings. */
@@ -40,26 +78,21 @@ export function useMixChanges(): {
   setQuickQuestionEvery: (every: QuickQuestionEvery) => void;
 } {
   const { mix } = useComposition();
-  const keep = (change: Promise<unknown>) => {
-    change.catch((error: unknown) => {
-      logError('Could not keep the change of the Mix', error);
-    });
-  };
   return {
     toggleCategory: (categoryId, inMix, of) => {
-      keep(mix.setCategory(categoryId, inMix, of));
+      void keep('the Mix', mix.setCategory(categoryId, inMix, of));
     },
     turnAllOn: () => {
-      keep(mix.turnAllOn());
+      void keep('the Mix', mix.turnAllOn());
     },
     setKind: (kind, inMix) => {
-      keep(mix.setKind(kind, inMix));
+      void keep('the Mix', mix.setKind(kind, inMix));
     },
     setKindWeight: (kind, weight) => {
-      keep(mix.setKindWeight(kind, weight));
+      void keep('the Mix', mix.setKindWeight(kind, weight));
     },
     setQuickQuestionEvery: (every) => {
-      keep(mix.setQuickQuestionEvery(every));
+      void keep('the Mix', mix.setQuickQuestionEvery(every));
     },
   };
 }

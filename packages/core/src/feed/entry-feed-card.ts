@@ -42,3 +42,24 @@ export type TipFeedCard = EntryFeedCardOf<'tip', TipCardModel>;
  * and a Tip's, which the Feed and the Entry screen a list opens show (spec #730).
  */
 export type AnyEntryCard = EntryFeedCard | SynonymRowFeedCard | TipFeedCard;
+
+/**
+ * What an Entry's card leads with, the text its row leads with too: a Word's
+ * Lemma or a Synonym Row's dominant with its Stress, an Idiom's expression,
+ * a Correction's main standard equivalent or a Tip's title. Sheets over the
+ * card are titled with it.
+ */
+export function entryCardTitle(card: AnyEntryCard): string {
+  switch (card.kind) {
+    case 'word':
+      return card.model.lemma;
+    case 'correction':
+      return card.model.mainEquivalent;
+    case 'idiom':
+      return card.model.expression;
+    case 'synonymRow':
+      return card.model.dominant.text;
+    case 'tip':
+      return card.model.title;
+  }
+}

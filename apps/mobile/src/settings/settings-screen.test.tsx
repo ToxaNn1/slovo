@@ -7,9 +7,11 @@ import { fireEvent, renderRouter, screen, within } from 'expo-router/testing-lib
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import SettingsScreen from '../app/settings';
+import NarratorVoiceScreen from '../app/settings/narrator-voice';
 import WidgetGuideScreen from '../app/settings/widgets';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { ShellProvider } from '../shell-value';
+import { screenSettled } from '../use-open-screen';
 import {
   opened,
   recordedAnalytics,
@@ -25,6 +27,40 @@ const { config } = activeEditionFiles;
 jest.mock('../account/account', () => ({ useAccountInEffect: () => undefined }));
 jest.mock('../mix/hidden', () => ({ useHiddenSummary: () => '' }));
 jest.mock('../notifications/notifications', () => ({ useNotificationsSummary: () => '' }));
+
+/** The Recording of the sample Word in each Narrator Voice, as the audio module gets it. */
+const sampleRecordings: Record<string, number> = {
+  oksana: 101,
+  taras: 102,
+  marta: 103,
+  ostap: 104,
+};
+const playedRecordings: number[] = [];
+jest.mock('../edition/edition', () => {
+  const actual = jest.requireActual<typeof import('../edition/edition')>('../edition/edition');
+  const word = actual.edition.narratorVoiceSample.word;
+  return {
+    ...actual,
+    activeEditionFiles: {
+      ...actual.activeEditionFiles,
+      recordings: Object.fromEntries(
+        Object.entries(sampleRecordings).map(([voice, recording]) => [
+          voice,
+          { [word]: recording },
+        ]),
+      ),
+    },
+  };
+});
+jest.mock('../sounds/interface-sounds', () => ({
+  ...jest.requireActual<object>('../sounds/interface-sounds'),
+  recordingPlayer: {
+    play: (recording: number) => {
+      playedRecordings.push(recording);
+    },
+    stop: () => undefined,
+  },
+}));
 
 /** The UA Edition as it ships, with the Feature Switches named set as given. */
 function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition {
@@ -47,6 +83,8 @@ async function renderSettings(
   switches: Partial<Record<FeatureSwitch, boolean>> = {},
   analytics?: AnalyticsPort,
 ) {
+  // A screen an earlier test opened would hold back the next tap's.
+  screenSettled();
   const settings = await settingsAt({}, analytics);
   const shell = testShell({
     composition: opened(await testShell().composition.opened()),
@@ -68,6 +106,7 @@ async function renderSettings(
       ),
       'settings/index': SettingsScreen,
       'settings/widgets': WidgetGuideScreen,
+      'settings/narrator-voice': NarratorVoiceScreen,
     },
     { initialUrl: '/settings' },
   );
@@ -91,7 +130,12 @@ describe('Settings, as the board', () => {
 
     const groups: Record<string, string[]> = {
       look: ['settings-theme-light', 'settings-font-size-M'],
-      sound: ['settings-vibration', 'settings-row-notifications', 'settings-row-widgets'],
+      sound: [
+        'settings-vibration',
+        'settings-row-narrator-voice',
+        'settings-row-notifications',
+        'settings-row-widgets',
+      ],
       learning: ['settings-row-my-mix', 'settings-row-hidden', 'settings-row-badges'],
       account: ['settings-row-about'],
     };
@@ -138,6 +182,67 @@ describe('Settings › ЗВУК І СПОВІЩЕННЯ', () => {
     await fireEvent.press(screen.getByRole('switch', { name: 'Вібрація' }));
 
     expect((await settings.read()).vibration).toBe(false);
+  });
+});
+
+describe('Settings › «Голос диктора»', () => {
+  it('opens the voice screen from «Голос диктора» right after «Звуки», with its title and lead', async () => {
+    await renderSettings();
+    const group = screen.getByTestId('settings-group-sound');
+    const rows = within(group)
+      .getAllByTestId(/^settings-/)
+      .map((row): unknown => row.props['testID']);
+    expect(rows.indexOf('settings-row-narrator-voice')).toBe(rows.indexOf('settings-sounds') + 1);
+
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
+
+    const voiceScreen = await screen.findByTestId('narrator-voice-screen');
+    expect(within(voiceScreen).getByRole('header', { name: 'Голос диктора' })).toBeOnTheScreen();
+    expect(
+      within(voiceScreen).getByText('Хто читає слова вголос на картці та в іграх.'),
+    ).toBeOnTheScreen();
+    expect(within(voiceScreen).getByTestId('narrator-voice-voice-oksana')).toBeSelected();
+  });
+
+  it('chooses a voice from its tile and reads the sample Word in it at once', async () => {
+    const settings = await renderSettings();
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
+    playedRecordings.length = 0;
+
+    await fireEvent.press(await screen.findByTestId('narrator-voice-voice-taras'));
+
+    expect((await settings.read()).narratorVoice).toBe('taras');
+    expect(screen.getByTestId('narrator-voice-voice-taras')).toBeSelected();
+    expect(playedRecordings).toEqual([sampleRecordings['taras']]);
+  });
+
+  it('reads the sample Word in the chosen voice from the play button', async () => {
+    await renderSettings();
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
+    await fireEvent.press(await screen.findByTestId('narrator-voice-voice-marta'));
+    playedRecordings.length = 0;
+    // The tap read the sample; the button stops it, then reads it again.
+    await fireEvent.press(screen.getByTestId('narrator-voice-play'));
+    await fireEvent.press(screen.getByTestId('narrator-voice-play'));
+
+    expect(playedRecordings).toEqual([sampleRecordings['marta']]);
+  });
+
+  it('names the chosen voice on its row: «Оксана» as it ships, «Тарас» once chosen', async () => {
+    await renderSettings();
+    expect(screen.getByRole('button', { name: 'Голос диктора, Оксана' })).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByTestId('settings-row-narrator-voice'));
+    await fireEvent.press(await screen.findByTestId('narrator-voice-voice-taras'));
+    await fireEvent.press(screen.getByTestId('narrator-voice-back'));
+
+    expect(await screen.findByRole('button', { name: 'Голос диктора, Тарас' })).toBeOnTheScreen();
+  });
+
+  it('leaves the row out while its Feature Switch is off', async () => {
+    await renderSettings({ narratorVoice: false });
+
+    expect(screen.queryByTestId('settings-row-narrator-voice')).not.toBeOnTheScreen();
   });
 });
 

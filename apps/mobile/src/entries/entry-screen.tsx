@@ -1,7 +1,7 @@
 import type { AnyEntryCard, Composition, EntryLinkSource } from '@slovo/core';
 import { BackLink, EntryDetails, FeedError, space, UndoToastProvider, useTokens } from '@slovo/ui';
 import { StatusBar } from 'expo-status-bar';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { useCallback, useEffect, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,7 +19,7 @@ import { useOpenScreen } from '../use-open-screen';
  * tile to the screen before, named `back`, over the Entry and its action row. It shows the Entry by id
  * whether or not the list still holds it, so it stays open when a tap on the
  * heart takes the Entry out, until the reader goes back. A Correction a Word
- * card links opens as the next Entry screen of the same `route`, its link
+ * card links opens as the next Entry screen of the same stack, its link
  * back named for the Word, and so does the Synonym Row a Word card names; a
  * Word a member of a Synonym Row links opens the same way, its link back
  * named as this screen's. Opening it never makes the
@@ -30,13 +30,10 @@ import { useOpenScreen } from '../use-open-screen';
 export function EntryScreen({
   entryId,
   back,
-  route,
   openedFrom,
 }: {
   entryId: string;
   back: string;
-  /** The route of the list's Entry screen, such as `/saved/favorites`. */
-  route: string;
   /**
    * Where outside the app it opened from, if it did: the Entry is Seen, in
    * History and today is an Active Day. A Search result opens through its
@@ -50,6 +47,9 @@ export function EntryScreen({
   const { top, bottom } = useSafeAreaInsets();
   const router = useRouter();
   const openScreen = useOpenScreen();
+  // The stack's Entry route, such as `/saved/favorites`: this screen's path without its Entry.
+  const pathname = usePathname();
+  const route = pathname.slice(0, pathname.lastIndexOf('/'));
   const { stressFall } = useShown();
   // `null` once read for an id the Language Pack doesn't have.
   const read = useCallback(

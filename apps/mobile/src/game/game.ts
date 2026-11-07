@@ -5,7 +5,6 @@ import { useComposition } from '../composition';
 import { deviceClock } from '../device/device-clock';
 import { useInForeground } from '../foreground/in-foreground';
 import { keep } from '../keep';
-import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 
 /** The Game as it stands, kept up to date. */
@@ -22,20 +21,16 @@ export function useGameActions() {
   const { game } = useComposition();
   return {
     start: (modeId: string) => {
-      game.start(modeId).catch((error: unknown) => {
-        logError('Could not start a Game', error);
-      });
+      void keep('the Game start', game.start(modeId));
     },
     answer: (given: GivenAnswer) => {
-      void keep('the Knowledge Mark', game.answer(given), undefined);
+      void keep('the Knowledge Mark', game.answer(given));
     },
     openLetter: () => {
       game.openLetter();
     },
     next: () => {
-      game.next().catch((error: unknown) => {
-        logError('Could not go on to the next Round', error);
-      });
+      void keep('the next Round', game.next());
     },
     leave: () => {
       game.leave();
@@ -50,7 +45,7 @@ export function useGameActions() {
 export function useWidgetHintShown(shown: boolean): void {
   const { game } = useComposition();
   useEffect(() => {
-    if (shown) void keep('the widget hint shown', game.widgetHintShown(), undefined);
+    if (shown) void keep('the widget hint shown', game.widgetHintShown());
   }, [game, shown]);
 }
 
@@ -90,8 +85,6 @@ export function usePauseInBackground(): void {
   const { game } = useComposition();
   const inForeground = useInForeground();
   useEffect(() => {
-    (inForeground ? game.resume() : game.pause()).catch((error: unknown) => {
-      logError('Could not pause or resume the Game', error);
-    });
+    void keep('the Game pause or resume', inForeground ? game.resume() : game.pause());
   }, [game, inForeground]);
 }

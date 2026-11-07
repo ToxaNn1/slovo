@@ -27,7 +27,8 @@
     "notifications": true,
     "widget": true,
     "shareCards": true,
-    "pronunciation": false,
+    "pronunciation": true,
+    "narratorVoice": true,
     "wordOfTheDay": true,
     "statistics": true,
     "knowledge": true,
@@ -407,6 +408,21 @@
     }
   ],
   "dashboardMoods": ["energetic", "sleepy", "curious", "thoughtful"],
+  "narratorVoices": {
+    "default": "oksana",
+    "voices": [
+      { "id": "oksana", "name": "Оксана", "description": "Жіночий · спокійний" },
+      { "id": "taras", "name": "Тарас", "description": "Чоловічий · низький" },
+      { "id": "marta", "name": "Марта", "description": "Жіночий · жвавий" },
+      { "id": "ostap", "name": "Остап", "description": "Чоловічий · теплий" }
+    ],
+    "sample": {
+      "word": "w_1vz83c",
+      "syllables": ["за", "пла", "ва"],
+      "stressed": 1,
+      "caption": "за-пла́-ва · ім., ж. р."
+    }
+  },
   "searchLetters": {
     "ґ": "г",
     "ё": "е"

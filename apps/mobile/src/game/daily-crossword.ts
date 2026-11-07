@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState, type ComponentProps } from 'react';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { tracedMiniGrid, tracedProgress } from './traced-crossword';
 
 /** What the Daily Crossword's card draws. */
@@ -163,14 +164,10 @@ export function useDailyCrossword(): DailyCrosswordPlay | null | undefined {
   const crossword = opened?.in === composition ? opened.crossword : undefined;
   const play = useCallback(
     (move: Promise<DailyCrosswordState>) => {
-      move.then(
-        (state) => {
-          setOpened((now) => (now && now.crossword === crossword ? { ...now, state } : now));
-        },
-        (error: unknown) => {
-          logError('Could not keep the Daily Crossword', error);
-        },
-      );
+      void keep('the Daily Crossword', move).then((state) => {
+        if (state === undefined) return;
+        setOpened((now) => (now && now.crossword === crossword ? { ...now, state } : now));
+      });
     },
     [crossword],
   );

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { SynonymRow, SynonymRowMember, Word } from '@slovo/contracts';
 
-import { createEntries } from '../index';
+import { createEntries, EVERYTHING_IN } from '../index';
 import { buildSynonymRowCard } from './synonym-row-card';
 import { createMemoryContentPort } from '../testing';
 import { word } from '../test-support';
@@ -40,6 +40,7 @@ const build = (from: SynonymRow, words: readonly Word[] = []) =>
     entries: createEntries({
       content: createMemoryContentPort({ words }),
       edition: { isFeatureEnabled: () => true },
+      choices: EVERYTHING_IN,
     }),
   });
 

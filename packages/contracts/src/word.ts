@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { CorrectionIdSchema } from './correction';
 import { OriginLanguageSchema } from './edition';
-import { hasNoRepeats, RaritySchema, SourceSchema, TextSchema } from './shared';
+import { hasNoRepeats, RaritySchema, SourceSchema, TextSchema, WordIdSchema } from './shared';
 
 /**
  * Language-agnostic part-of-speech codes. Editions supply the display labels.
@@ -36,13 +36,7 @@ export const RegisterSchema = z.enum(['archaic', 'dialectal', 'bookish', 'colloq
 
 export type Register = z.infer<typeof RegisterSchema>;
 
-/**
- * A Word id: opaque, assigned when the Word is authored and never reused.
- * The `w_` prefix keeps it apart from the ids of other kinds of Entry.
- */
-export const WordIdSchema = z
-  .string()
-  .regex(/^w_[a-z0-9]+$/, 'Expected a Word id: w_ followed by lowercase letters and digits');
+export { WordIdSchema };
 
 /** A sentence showing the Word in use, with its author when the source names one. */
 export const ExampleSchema = z.strictObject({

@@ -32,6 +32,7 @@ const validConfig = {
     widget: true,
     shareCards: true,
     pronunciation: true,
+    narratorVoice: true,
     wordOfTheDay: true,
     statistics: true,
     knowledge: true,
@@ -163,6 +164,19 @@ const validConfig = {
     { id: 'thoughtful', name: 'Thoughtful', emoji: '🤔', reply: 'Food for thought.' },
   ],
   dashboardMoods: ['energetic', 'thoughtful', 'calm', 'joyful'],
+  narratorVoices: {
+    default: 'anna',
+    voices: [
+      { id: 'boris', name: 'Boris', description: 'Male · low' },
+      { id: 'anna', name: 'Anna', description: 'Female · calm' },
+    ],
+    sample: {
+      word: 'w_000001',
+      syllables: ['ab', 'ra', 'ka'],
+      stressed: 1,
+      caption: 'ab-rá-ka · n.',
+    },
+  },
   searchLetters: { b: 'a' },
   xp: {
     round: 1,
@@ -378,6 +392,7 @@ describe('loadEdition', () => {
       theme: 'system',
       fontSize: 'M',
       vibration: true,
+      narratorVoice: 'anna',
       notificationTimes: ['09:00'],
       rarityCeiling: 5,
       mix: {
@@ -745,6 +760,38 @@ describe('loadEdition', () => {
       'energetic',
       'thoughtful',
     ]);
+  });
+
+  it('declares its Narrator Voices in their order', () => {
+    expect(loadEdition(validConfig).narratorVoices).toEqual([
+      { id: 'boris', name: 'Boris', description: 'Male · low' },
+      { id: 'anna', name: 'Anna', description: 'Female · calm' },
+    ]);
+  });
+
+  it('reads the default Narrator Voice without a choice', () => {
+    expect(loadEdition(validConfig).narratorVoiceOf(undefined)).toEqual({
+      id: 'anna',
+      name: 'Anna',
+      description: 'Female · calm',
+    });
+  });
+
+  it('reads the chosen Narrator Voice', () => {
+    expect(loadEdition(validConfig).narratorVoiceOf('boris').name).toBe('Boris');
+  });
+
+  it('gives the sample Word its voice screen reads in every Narrator Voice', () => {
+    expect(loadEdition(validConfig).narratorVoiceSample).toEqual({
+      word: 'w_000001',
+      syllables: ['ab', 'ra', 'ka'],
+      stressed: 1,
+      caption: 'ab-rá-ka · n.',
+    });
+  });
+
+  it('reads a Narrator Voice it no longer declares as the default', () => {
+    expect(loadEdition(validConfig).narratorVoiceOf('olga').id).toBe('anna');
   });
 
   it('resolves the four Dashboard moods, in their order', () => {
@@ -1278,6 +1325,67 @@ describe('loadEdition', () => {
       { dashboardMoods: ['joyful', 'calm', 'sad', 'calm'] },
       'dashboardMoods.3',
     ],
+    ['no Narrator Voices', { narratorVoices: undefined }, 'narratorVoices'],
+    [
+      'no Narrator Voice at all',
+      { narratorVoices: { default: 'anna', voices: [] } },
+      'narratorVoices.voices',
+    ],
+    [
+      'a repeated Narrator Voice id',
+      {
+        narratorVoices: {
+          ...validConfig.narratorVoices,
+          default: 'anna',
+          voices: [
+            { id: 'anna', name: 'Anna', description: 'Female · calm' },
+            { id: 'anna', name: 'Ann', description: 'Female · lively' },
+          ],
+        },
+      },
+      'narratorVoices.voices.1.id',
+    ],
+    [
+      'a default Narrator Voice it does not declare',
+      {
+        narratorVoices: {
+          ...validConfig.narratorVoices,
+          default: 'olga',
+          voices: [{ id: 'anna', name: 'Anna', description: 'Female · calm' }],
+        },
+      },
+      'narratorVoices.default',
+    ],
+    [
+      'a sample stressed past its syllables',
+      {
+        narratorVoices: {
+          ...validConfig.narratorVoices,
+          sample: { word: 'w_000001', syllables: ['ab', 'ra'], stressed: 2, caption: 'ab-ra' },
+        },
+      },
+      'narratorVoices.sample.stressed',
+    ],
+    [
+      'a sample without syllables',
+      {
+        narratorVoices: {
+          ...validConfig.narratorVoices,
+          sample: { word: 'w_000001', syllables: [], stressed: 0, caption: 'ab' },
+        },
+      },
+      'narratorVoices.sample.syllables',
+    ],
+    [
+      'a Narrator Voice without a name',
+      {
+        narratorVoices: {
+          default: 'anna',
+          voices: [{ id: 'anna', name: '', description: 'Female · calm' }],
+        },
+      },
+      'narratorVoices.voices.0.name',
+    ],
     ['no Search letters', { searchLetters: undefined }, 'searchLetters'],
     ['a Search letter of two letters', { searchLetters: { ab: 'a' } }, 'searchLetters.ab'],
     ['an upper-case Search letter', { searchLetters: { B: 'a' } }, 'searchLetters.B'],
@@ -1327,6 +1435,7 @@ const dependentSwitches = [
   ['swipeMarks', ['knowledge']],
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
+  ['narratorVoice', ['pronunciation']],
   ['categoryScreens', ['dashboard', 'wordOfTheDay']],
   ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['quietCategories', ['categoryScreens', 'dashboard', 'wordOfTheDay']],

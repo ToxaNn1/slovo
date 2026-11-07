@@ -95,7 +95,7 @@ describe('a hide', () => {
     });
     expect(app.hiddenEntries.has('w_speech1')).toBe(true);
 
-    await hidden?.undo();
+    await hidden?.undo(app);
 
     expect(app.hiddenEntries.has('w_speech1')).toBe(false);
   });
@@ -134,7 +134,7 @@ describe('a hide', () => {
     expect(hidden?.changed).toEqual({ kind: 'category', categoryId: 'speech' });
     expect(app.mix.state.hiddenCategories).toEqual([speech]);
 
-    await hidden?.undo();
+    await hidden?.undo(app);
 
     expect(app.mix.state.hiddenCategories).toEqual([]);
     expect(app.mix.state.categoryIds).toEqual(['nature', 'speech', 'crafts']);
@@ -190,7 +190,7 @@ describe('a hide', () => {
       expect(hidden?.changed).toEqual({ kind: 'whole-kind', entryKind });
       expect(app.mix.state.kinds[entryKind]).toBe(false);
 
-      await hidden?.undo();
+      await hidden?.undo(app);
 
       expect(app.mix.state.kinds[entryKind]).toBe(true);
     },
@@ -257,7 +257,7 @@ describe('the undo of a hide', () => {
     const hidden = await app.hide({ kind: 'entry', entryId: onScreen });
     expect(entryIdsOf(app.feed.cards)).not.toContain(onScreen);
 
-    await hidden?.undo();
+    await hidden?.undo(app);
 
     expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
     expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
@@ -272,7 +272,7 @@ describe('the undo of a hide', () => {
     const hidden = await app.hide({ kind: 'category', categoryId: category.id });
     expect(entryIdsOf(app.feed.cards).filter(isWordOf(category))).toEqual([]);
 
-    await hidden?.undo();
+    await hidden?.undo(app);
 
     expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
     expect(app.feed.cards[app.feed.position]?.entryId).toBe(onScreen);
@@ -292,7 +292,7 @@ describe('the undo of a hide', () => {
     const hidden = await app.hide({ kind: 'whole-kind', entryKind: 'correction' });
     expect(entryIdsOf(app.feed.cards).filter(isCorrection)).toEqual([]);
 
-    await hidden?.undo();
+    await hidden?.undo(app);
 
     expect(entryIdsOf(app.feed.cards).slice(0, before.length)).toEqual(before);
     expect(app.feed.position).toBe(onScreen);
@@ -300,7 +300,7 @@ describe('the undo of a hide', () => {
 });
 
 describe('an unhide', () => {
-  it('restores a Hidden Entry, gives its row and when it was hidden, and its undo hides it again at its old place in the list', async () => {
+  it('restores a Hidden Entry, gives its row, and its undo hides it again at its old place in the list', async () => {
     const time = fakeClock();
     const app = await run({ clock: time.clock });
     await app.hide({ kind: 'entry', entryId: 'w_nature0' });
@@ -327,10 +327,9 @@ describe('an unhide', () => {
       },
     });
     expect(hiddenIdsOf(app)).toEqual(['w_crafts2', 'w_nature0']);
-    expect(unhidden?.hiddenAt).toEqual(before.find(({ entryId }) => entryId === 'c_one')?.hiddenAt);
 
     time.advance(MINUTE);
-    await unhidden?.undo?.();
+    await unhidden?.undo?.(app);
 
     expect(app.hiddenEntries.list).toEqual(before);
     expect(hiddenIdsOf(app)).toEqual(['w_crafts2', 'c_one', 'w_nature0']);

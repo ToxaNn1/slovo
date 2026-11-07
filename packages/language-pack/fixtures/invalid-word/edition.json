@@ -26,6 +26,7 @@
     "widget": true,
     "shareCards": true,
     "pronunciation": true,
+    "narratorVoice": true,
     "wordOfTheDay": true,
     "statistics": true,
     "knowledge": true,
@@ -199,6 +200,19 @@
     }
   ],
   "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
+  "narratorVoices": {
+    "default": "anna",
+    "voices": [
+      { "id": "anna", "name": "Anna", "description": "Female · calm" },
+      { "id": "boris", "name": "Boris", "description": "Male · low" }
+    ],
+    "sample": {
+      "word": "w_fx0001",
+      "syllables": ["за", "гра", "ва"],
+      "stressed": 1,
+      "caption": "за-гра́-ва"
+    }
+  },
   "searchLetters": {
     "ґ": "г"
   },

@@ -6,6 +6,8 @@ import {
   type FontSize,
   type LanguageTraits,
   type Mood,
+  type NarratorVoice,
+  type NarratorVoiceSample,
   type OriginLanguage,
   type Rarity,
   type Theme,
@@ -39,6 +41,8 @@ export interface UserSettingDefaults {
   readonly fontSize: FontSize;
   /** Whether haptics are on. */
   readonly vibration: boolean;
+  /** The id of the Narrator Voice that reads until the reader chooses: the Edition's default voice (ADR 0083). */
+  readonly narratorVoice: string;
   /** Local times of day, `HH:MM` on a 24-hour clock. */
   readonly notificationTimes: readonly string[];
   /** The Rarity Ceiling a new user starts with, «до 1» to «до 5» (ADR 0072). */
@@ -67,6 +71,15 @@ export interface Edition {
   readonly moods: readonly Mood[];
   /** The four moods the Dashboard's Mood check-in offers, in display order (ADR 0076). */
   readonly dashboardMoods: readonly Mood[];
+  /** The Narrator Voices that read Words, in their order (ADR 0083). */
+  readonly narratorVoices: readonly NarratorVoice[];
+  /**
+   * The Narrator Voice that reads: the chosen one, or the Edition's default
+   * without a choice or for a voice the Edition no longer declares.
+   */
+  narratorVoiceOf(chosen: string | undefined): NarratorVoice;
+  /** The Word the voice screen reads in every Narrator Voice, and how it shows it. */
+  readonly narratorVoiceSample: NarratorVoiceSample;
   /** The letters Search reads as another, such as ґ as г (ADR 0054). */
   readonly searchLetters: Readonly<Record<string, string>>;
   /** The XP table: what each Game learning action earns (ADR 0066). */
@@ -167,6 +180,8 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   // The quiet variant is a variant of a Category screen (ADR 0081).
   quietCategories: ['categoryScreens'],
   notificationTimeStep: ['notifications'],
+  // The reader's choice of voice only changes what Pronunciation plays (ADR 0083).
+  narratorVoice: ['pronunciation'],
 };
 
 /**
@@ -210,6 +225,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     originLanguages,
     moods,
     dashboardMoods,
+    narratorVoices,
     searchLetters,
     xp,
     levels,
@@ -221,6 +237,12 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     mascot,
   } = result.data;
   const moodOf = (id: string) => moods.find((mood) => mood.id === id);
+  const voiceOf = (id: string | undefined) =>
+    narratorVoices.voices.find((voice) => voice.id === id);
+  const defaultVoice = voiceOf(narratorVoices.default);
+  // The schema checks the default is declared; this keeps the type honest.
+  if (defaultVoice === undefined)
+    throw new InvalidEditionConfigError('Invalid Edition config:\nnarratorVoices.default');
   const { mix, ...settings } = userSettingDefaults;
   return {
     id,
@@ -230,6 +252,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     languageTraits,
     userSettingDefaults: {
       ...settings,
+      narratorVoice: defaultVoice.id,
       mix: {
         categoryIds: mix.categories,
         correctionCategoryIds: mix.correctionCategories,
@@ -244,6 +267,9 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     moods,
     // Each id is one of `moods`: the schema checked it.
     dashboardMoods: dashboardMoods.flatMap((id) => moodOf(id) ?? []),
+    narratorVoices: narratorVoices.voices,
+    narratorVoiceSample: narratorVoices.sample,
+    narratorVoiceOf: (chosen) => voiceOf(chosen) ?? defaultVoice,
     searchLetters,
     xp,
     levels,

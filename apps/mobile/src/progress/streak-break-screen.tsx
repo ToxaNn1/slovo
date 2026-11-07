@@ -16,7 +16,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useComposition } from '../composition';
-import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 import { useSubscribed } from '../opening';
 import { dayText } from './day-text';
@@ -78,9 +78,7 @@ export function StreakBreakScreen() {
               testID="streak-break-start"
               label={strings.start}
               onPress={() => {
-                streakBreak.start(Math.min(days, longest)).catch((error: unknown) => {
-                  logError('Could not start the Break', error);
-                });
+                void keep('the Break', streakBreak.start(Math.min(days, longest)));
               }}
             />
           </View>

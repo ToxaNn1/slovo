@@ -1,19 +1,17 @@
 import { fill, type EditionStrings } from '@slovo/contracts';
 import {
-  categoriesInMix,
   featureOfKind,
-  kindsShown,
-  type CategoryKind,
-  type Edition,
   type AnyEntryCard,
+  type Composition,
+  type EntryToHide,
+  type HideOption,
   type HideTarget,
   type HidingChange,
   type MixKind,
-  type MixState,
 } from '@slovo/core';
 
 /** One option of the hide choice, with what it hides and the undo toast it shows when it hides something of the Mix. */
-export type HideOption =
+export type HideChoiceOption =
   | {
       readonly kind: 'entry';
       readonly target: Extract<HideTarget, { readonly kind: 'entry' }>;
@@ -24,8 +22,13 @@ export type HideOption =
       readonly target: Extract<HideTarget, { readonly kind: 'category' }>;
       readonly label: string;
       readonly toast: string;
-      /** Why the option is offered but can't be chosen: the last Category of Corrections in the Mix. */
-      readonly disabledHint?: string;
+    }
+  | {
+      /** Offered but can't be chosen: the last Category of Corrections in the Mix, with why. */
+      readonly kind: 'last-category';
+      readonly target: Extract<HideTarget, { readonly kind: 'category' }>;
+      readonly label: string;
+      readonly disabledHint: string;
     }
   | {
       readonly kind: 'whole-kind';
@@ -48,76 +51,62 @@ function wholeKindStrings(
   return { label: strings.choice[featureOfKind(entryKind)], toast: toasts[entryKind] };
 }
 
-/**
- * The option that hides the card's Category of its kind's list, or nothing
- * while it is out of the Mix already or the Language Pack doesn't name it.
- * The last Category of Words in the Mix is left out (ADR 0019); the last of
- * Corrections is offered disabled with the reason, as Corrections as a whole
- * can still be hidden beside it.
- */
-function categoryOption(
-  categoryId: string,
-  categoryName: string | undefined,
-  of: CategoryKind,
-  mix: MixState,
-  strings: EditionStrings,
-): HideOption | undefined {
-  const list = categoriesInMix(mix, of);
-  if (categoryName === undefined || !list.categoryIds.includes(categoryId)) return undefined;
-  const last = list.lastCategoryId === categoryId;
-  if (last && of === 'word') return undefined;
-  const name = { category: categoryName };
-  return {
-    kind: 'category',
-    target: of === 'word' ? { kind: 'category', categoryId } : { kind: 'category', categoryId, of },
-    label: fill(strings.hiding.choice.category, name),
-    toast: fill(strings.hiding.categoryHidden, name),
-    ...(last && { disabledHint: strings.mix.corrections.lastCategoryHint }),
-  };
+/** The Entry a card's hide button is for, as the Mix reads it. */
+function entryToHide(card: AnyEntryCard): EntryToHide {
+  switch (card.kind) {
+    case 'word':
+    case 'correction':
+      return { kind: card.kind, entryId: card.entryId, categoryId: card.model.categoryId };
+    default:
+      return { kind: card.kind, entryId: card.entryId };
+  }
+}
+
+/** The option of the hide choice in the Edition's words. */
+function optionOf(option: HideOption, strings: EditionStrings): HideChoiceOption {
+  switch (option.kind) {
+    case 'entry':
+      return { kind: 'entry', target: option.target, label: strings.hiding.choice.entry };
+    case 'category': {
+      const name = { category: option.category.displayName };
+      return {
+        kind: 'category',
+        target: option.target,
+        label: fill(strings.hiding.choice.category, name),
+        toast: fill(strings.hiding.categoryHidden, name),
+      };
+    }
+    case 'last-category':
+      return {
+        kind: 'last-category',
+        target: option.target,
+        label: fill(strings.hiding.choice.category, { category: option.category.displayName }),
+        disabledHint: strings.mix.corrections.lastCategoryHint,
+      };
+    case 'whole-kind':
+      return {
+        kind: 'whole-kind',
+        target: option.target,
+        ...wholeKindStrings(option.target.entryKind, strings.hiding),
+      };
+  }
 }
 
 /**
- * The options of the hide choice a card's hide button opens: always its
- * Entry; on a Word or a Correction card its Category; on any card but a
- * Word's its kind as a whole (Corrections, Idioms, Synonym Rows, Tips). Each is left out when it
- * is out of the Mix already, and everything of a kind the Edition in effect
- * turns off (ADR 0040), as the Mix screen then doesn't offer it back.
+ * The options of the hide choice a card's hide button opens, as the Mix in
+ * effect offers them (`Mix.hideOptions`), in the Edition's words: the last
+ * Category of Corrections in the Mix is offered disabled with the reason.
  */
 export function hideChoice({
   card,
   mix,
-  edition,
   strings,
 }: {
   card: AnyEntryCard;
-  mix: MixState;
-  edition: Pick<Edition, 'isFeatureEnabled'>;
+  mix: Pick<Composition['mix'], 'hideOptions'>;
   strings: EditionStrings;
-}): readonly HideOption[] {
-  const entry: HideOption = {
-    kind: 'entry',
-    target: { kind: 'entry', entryId: card.entryId },
-    label: strings.hiding.choice.entry,
-  };
-  if (card.kind === 'word') {
-    const { categoryId, categoryName } = card.model;
-    const category = categoryOption(categoryId, categoryName, 'word', mix, strings);
-    return category === undefined ? [entry] : [entry, category];
-  }
-  const entryKind = card.kind;
-  if (!kindsShown({ edition, mix }).includes(entryKind)) {
-    return [entry];
-  }
-  const target = { kind: 'whole-kind', entryKind } as const;
-  const wholeKind: HideOption = {
-    kind: 'whole-kind',
-    target,
-    ...wholeKindStrings(entryKind, strings.hiding),
-  };
-  if (card.kind !== 'correction') return [entry, wholeKind];
-  const { categoryId, categoryName } = card.model;
-  const category = categoryOption(categoryId, categoryName, 'correction', mix, strings);
-  return category === undefined ? [entry, wholeKind] : [entry, category, wholeKind];
+}): readonly HideChoiceOption[] {
+  return mix.hideOptions(entryToHide(card)).map((option) => optionOf(option, strings));
 }
 
 /**
@@ -130,7 +119,7 @@ export function hideToast({
   changed,
   strings,
 }: {
-  option: HideOption;
+  option: Exclude<HideChoiceOption, { readonly kind: 'last-category' }>;
   changed: HidingChange;
   strings: EditionStrings['hiding'];
 }): string | undefined {
