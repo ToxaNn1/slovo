@@ -1,0 +1,21 @@
+{
+  "kind": "correction",
+  "id": "c_tao3hl",
+  "nonStandardForm": "ярмарка",
+  "correctionType": "russianism",
+  "standardEquivalents": [
+    "ярмарок"
+  ],
+  "explanation": "Замініть іменник ярмарка, якщо його вжито у формі жіночого роду, на правильний варіант: ярмарок - чоловічого роду.",
+  "examplePair": {
+    "nonStandard": "Велика ярмарка відкрилася на майдані.",
+    "standard": "Великий ярмарок відкрився на майдані."
+  },
+  "categoryId": "shop",
+  "sources": [
+    {
+      "title": "OnlineCorrector. Стилістичні помилки та помилки у слововживанні.",
+      "url": "https://goroh.pp.ua/Слововживання/ярмарка"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "kind": "correction",
+  "id": "c_egidyz",
+  "nonStandardForm": "корзина",
+  "correctionType": "russianism",
+  "standardEquivalents": [
+    "кошик, кошіль"
+  ],
+  "explanation": "Замініть скалькований іменник корзина на стилістично кращий варіант: кошик, кошіль.",
+  "examplePair": {
+    "nonStandard": "Жеребкування ЛЧ — «Динамо» потрапить у третю корзину.",
+    "standard": "Жеребкування ЛЧ — «Динамо» потрапить у третій кошик."
+  },
+  "categoryId": "shop",
+  "sources": [
+    {
+      "title": "OnlineCorrector. Стилістичні помилки та помилки у слововживанні.",
+      "url": "https://goroh.pp.ua/Слововживання/корзина"
+    }
+  ]
+}
