@@ -1,6 +1,6 @@
 import type { BadgeShape, BadgeTone, ColorTokens } from '@slovo/contracts';
 import { StyleSheet, Text, View } from 'react-native';
-import Svg, { Circle, Polygon, Rect } from 'react-native-svg';
+import Svg, { Circle, Polygon } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
@@ -55,6 +55,18 @@ function Shape({
   );
 }
 
+/** The corners of the square of `side` whose top left corner is at `left`, `top`, as SVG points. */
+function cellCorners(left: number, top: number, side: number) {
+  return [
+    [left, top],
+    [left + side, top],
+    [left + side, top + side],
+    [left, top + side],
+  ]
+    .map(([x, y]) => `${String(x)},${String(y)}`)
+    .join(' ');
+}
+
 /**
  * The `cells` by `cells` checker a `checker` Badge shows in place of its
  * symbol, its corner cells in `lead` and the others in `other`.
@@ -68,7 +80,7 @@ function Checker({
   size: number;
   lead: string;
   other: string;
-  testID?: string;
+  testID: string | undefined;
 }) {
   const { cells, side } = badgeCheckerFace;
   const cell = side / cells;
@@ -81,12 +93,9 @@ function Checker({
     <View testID={testID} style={styles.layer}>
       <Svg width={size} height={size} viewBox="0 0 1 1">
         {squares.map(({ row, column }) => (
-          <Rect
+          <Polygon
             key={`${String(row)}-${String(column)}`}
-            x={start + column * cell}
-            y={start + row * cell}
-            width={cell}
-            height={cell}
+            points={cellCorners(start + column * cell, start + row * cell, cell)}
             fill={(row + column) % 2 === 0 ? lead : other}
           />
         ))}
