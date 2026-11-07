@@ -811,6 +811,20 @@ describe('sourceWords', () => {
     ]);
   });
 
+  it('backs off and asks again after a 403, as goroh answers a fresh client', async () => {
+    const messages: string[] = [];
+    const { options } = setup(
+      { lemmaList: 'дратва household-crafts 2\n', log: (message) => messages.push(message) },
+      { rateLimited: { [`${GOROH}Тлумачення/дратва`]: { status: 403, times: 1 } } },
+    );
+
+    const result = await sourceWords(options);
+
+    expect(readDrafts(options.outDir)).toHaveLength(1);
+    expect(result.ok && result.report.requests.backoffs).toBe(1);
+    expect(messages).toEqual(['goroh.pp.ua: HTTP 403; backing off for 5 s (1/4)']);
+  });
+
   it('reads sum.in.ua itself when the site is reachable', async () => {
     const { options, net } = setup(
       { lemmaList: 'мжичка nature-weather 2\n' },
