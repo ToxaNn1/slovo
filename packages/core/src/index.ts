@@ -164,6 +164,18 @@ export {
   type PuzzleState,
 } from './game/crossword-puzzle';
 export {
+  CROSSING_PATTERNS,
+  CROSSING_WORD_LENGTH,
+  crossingPlacesOf,
+  generateCrossingCrossword,
+  type BlockPattern,
+  type CrossingDirection,
+  type CrossingGeneration,
+  type CrossingPrefill,
+  type CrossingPuzzle,
+  type CrossingWord,
+} from './game/crossing-crossword';
+export {
   openTracedCrossword,
   seededRandomOf,
   type TracedCrossword,
