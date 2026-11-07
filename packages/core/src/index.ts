@@ -80,6 +80,7 @@ export {
   ROUND_OPTIONS,
   type AnswerSheet,
   type ChipKind,
+  type ChipLayout,
   type FixedChip,
   type GameEdition,
   type GameMode,
