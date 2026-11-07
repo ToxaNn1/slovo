@@ -80,7 +80,10 @@ const analytics: AnalyticsPort = {
  * The Game tab as the app routes it, opened on its mode screen over a fresh
  * composition, with a Share Card capture when the binary has one.
  */
-async function renderGame({ crossing = false }: { crossing?: boolean } = {}) {
+async function renderGame({
+  crossing = false,
+  hint = false,
+}: { crossing?: boolean; hint?: boolean } = {}) {
   events = [];
   composition = await openComposition({
     content: createMemoryContentPort({
@@ -100,7 +103,9 @@ async function renderGame({ crossing = false }: { crossing?: boolean } = {}) {
     edition: {
       ...edition,
       isFeatureEnabled: (feature) =>
-        (crossing && feature === 'crossingCrossword') || edition.isFeatureEnabled(feature),
+        (crossing && feature === 'crossingCrossword') ||
+        (hint && feature === 'crosswordHint') ||
+        edition.isFeatureEnabled(feature),
     },
     userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
@@ -258,6 +263,39 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     expect(label).toContain(wordName(first));
     expect(screen.getByText('Веди пальцем по літерах')).toBeOnTheScreen();
     expect(screen.queryByText('Десь закралася помилка. Шукай уважніше!')).toBeNull();
+  });
+
+  it('fills the first empty cell of the current Word by «Підказка» in the header', async () => {
+    await renderGame({ crossing: true, hint: true });
+    await openFromCard();
+    const { words, prefilled } = await crossingPuzzle();
+    const [first] = words;
+    if (first === undefined) throw new Error('Expected a Word');
+    const empty = first.letters.findIndex((_, i) => {
+      const row = first.start.row + (first.direction === 'down' ? i : 0);
+      const column = first.start.column + (first.direction === 'across' ? i : 0);
+      return !prefilled.some(({ place }) => place.row === row && place.column === column);
+    });
+    const row = first.start.row + (first.direction === 'down' ? empty : 0);
+    const column = first.start.column + (first.direction === 'across' ? empty : 0);
+    const cellLabel = () =>
+      String(
+        screen.getByTestId(`crossing-crossword-grid-${String(row)}-${String(column)}`).props[
+          'accessibilityLabel'
+        ],
+      );
+    expect(cellLabel().startsWith(`${texts.emptyCell}. `)).toBe(true);
+
+    await settle(() => fireEvent.press(screen.getByRole('button', { name: 'Підказка' })));
+
+    expect(cellLabel().startsWith(`${first.letters[empty] ?? ''}. `)).toBe(true);
+  });
+
+  it('shows no «Підказка» while the Crossword Hint is off', async () => {
+    await renderGame({ crossing: true });
+    await openFromCard();
+    expect(screen.getByTestId('crossing-crossword-grid')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Підказка' })).toBeNull();
   });
 
   it('says «Десь закралася помилка. Шукай уважніше!» for a trace that spells no Word', async () => {

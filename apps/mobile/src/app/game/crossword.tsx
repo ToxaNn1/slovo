@@ -64,7 +64,13 @@ function TracedCrossword() {
  * The screen's background and its header with «Назад», over the content;
  * empty while the crossword opens.
  */
-function CrosswordFrame({ children }: { children?: ReactNode }) {
+function CrosswordFrame({
+  children,
+  action,
+}: {
+  children?: ReactNode;
+  action?: { label: string; onPress: () => void } | undefined;
+}) {
   const router = useRouter();
   const { colors } = useTokens();
   const insets = useSafeAreaInsets();
@@ -91,6 +97,7 @@ function CrosswordFrame({ children }: { children?: ReactNode }) {
               router.back();
             },
           }}
+          action={action}
         />
       </View>
       {children}
@@ -200,7 +207,13 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
   }, [miss, texts.miss]);
 
   return (
-    <CrosswordFrame>
+    <CrosswordFrame
+      action={
+        crossword.hint === undefined || solved
+          ? undefined
+          : { label: texts.hint, onPress: crossword.hint }
+      }
+    >
       <ScrollView contentContainerStyle={styles.content} scrollEnabled={accessibleMode || solved}>
         {!solved && (
           <CrossingClueBar

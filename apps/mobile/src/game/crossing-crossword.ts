@@ -131,6 +131,8 @@ export interface CrossingCrosswordPlay {
   readonly extend: (tile: number) => void;
   readonly stepBack: () => void;
   readonly release: () => void;
+  /** Asks the Crossword Hint, which fills one letter of the current Word; `undefined` while the Edition offers none. */
+  readonly hint: (() => void) | undefined;
 }
 
 /**
@@ -283,5 +285,10 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
     release: () => {
       play({ type: 'release' });
     },
+    hint: opened.crossword.hint
+      ? () => {
+          play({ type: 'hint' });
+        }
+      : undefined,
   };
 }
