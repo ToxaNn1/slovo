@@ -188,7 +188,7 @@ const FeedPage = memo(function FeedPage({
   onAnswerQuickQuestion: (position: number, option: number) => void;
 }) {
   const { top } = useSafeAreaInsets();
-  const { selfCheck, stressFall, calligraphicLemma } = useShown();
+  const { selfCheck, stressFall, calligraphicLemma, wordTabs } = useShown();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
     return (
@@ -254,6 +254,7 @@ const FeedPage = memo(function FeedPage({
             }}
             selfCheck={selfCheck}
             stressFalls={stressFall}
+            tabs={wordTabs}
             // Only here, on the Word of the Day card; in the Word font with the switch off.
             wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
           />
