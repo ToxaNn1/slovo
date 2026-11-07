@@ -55,7 +55,6 @@ const everything: Shown = {
   mood: true,
   curatedCollections: true,
   swipeMarks: true,
-  wordTabs: true,
   wordOfTheDayArchive: true,
   rarityCeiling: true,
   rarityTest: true,
@@ -86,8 +85,8 @@ describe('what the reader is shown', () => {
     [
       'a still Stress mark with the falling Stress off',
       { off: ['stressAnimation'], shown: { stressFall: false } },
-      { off: ['wordTabs'], shown: { wordTabs: false } },
     ],
+    ['the column Word card with the tabs off', { off: ['wordTabs'], shown: { wordTabs: false } }],
     [
       'the Word of the Day Lemma in the Word font with the calligraphic Lemma off',
       { off: ['calligraphy'], shown: { calligraphicLemma: false } },

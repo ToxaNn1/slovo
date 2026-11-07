@@ -196,7 +196,7 @@ function wordCard() {
 function tabsOf(card: ReturnType<typeof wordCard>) {
   const selected = card.queryAllByRole('tab', { ...hidden, selected: true });
   return card.queryAllByRole('tab', hidden).map((tab) => ({
-    name: tab.props['accessibilityLabel'],
+    name: String(tab.props['accessibilityLabel']),
     selected: selected.includes(tab),
   }));
 }
