@@ -1,0 +1,19 @@
+{
+  "kind": "correction",
+  "id": "c_2kgoef",
+  "nonStandardForm": "справка",
+  "correctionType": "russianism",
+  "standardEquivalents": ["довідка"],
+  "explanation": "Замініть скалькований іменник справка на стилістично кращий варіант: довідка.",
+  "examplePair": {
+    "nonStandard": "Мені потрібна від вас медична справка.",
+    "standard": "Мені потрібна від вас медична довідка."
+  },
+  "categoryId": "work",
+  "sources": [
+    {
+      "title": "OnlineCorrector. Стилістичні помилки та помилки у слововживанні.",
+      "url": "https://goroh.pp.ua/Слововживання/справка"
+    }
+  ]
+}

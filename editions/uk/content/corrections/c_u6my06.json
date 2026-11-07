@@ -1,0 +1,19 @@
+{
+  "kind": "correction",
+  "id": "c_u6my06",
+  "nonStandardForm": "конфета",
+  "correctionType": "russianism",
+  "standardEquivalents": ["цукерка (ж.р.), цукерок (ч.р.)"],
+  "explanation": "Замініть скалькований іменник конфета на стилістично кращий варіант: цукерка (ж.р.), цукерок (ч.р.).",
+  "examplePair": {
+    "nonStandard": "Тут майстер вручну виготовляє вишукані конфети.",
+    "standard": "Тут майстер вручну виготовляє вишукані цукерки."
+  },
+  "categoryId": "shop",
+  "sources": [
+    {
+      "title": "OnlineCorrector. Стилістичні помилки та помилки у слововживанні.",
+      "url": "https://goroh.pp.ua/Слововживання/конфета"
+    }
+  ]
+}

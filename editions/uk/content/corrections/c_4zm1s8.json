@@ -1,0 +1,19 @@
+{
+  "kind": "correction",
+  "id": "c_4zm1s8",
+  "nonStandardForm": "посадочний",
+  "correctionType": "russianism",
+  "standardEquivalents": ["посадковий"],
+  "explanation": "Замініть прикметник посадочний на стилістично кращий варіант: посадковий.",
+  "examplePair": {
+    "nonStandard": "Покажіть свій посадочний талон.",
+    "standard": "Покажіть свій посадковий талон."
+  },
+  "categoryId": "transport",
+  "sources": [
+    {
+      "title": "OnlineCorrector. Стилістичні помилки та помилки у слововживанні.",
+      "url": "https://goroh.pp.ua/Слововживання/посадочний"
+    }
+  ]
+}
