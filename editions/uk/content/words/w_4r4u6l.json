@@ -1,0 +1,23 @@
+{
+  "kind": "word",
+  "id": "w_4r4u6l",
+  "lemma": "таксис",
+  "stress": [
+    1
+  ],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Рухова реакція найпростіших організмів, а також деяких клітин чи окремих частин клітини, спричинена подразниками.",
+  "categoryId": "science",
+  "rarity": 4,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови в 11-ти томах",
+      "url": "https://goroh.pp.ua/Тлумачення/таксис"
+    },
+    {
+      "title": "Горох: словозміна",
+      "url": "https://goroh.pp.ua/Словозміна/таксис"
+    }
+  ]
+}
