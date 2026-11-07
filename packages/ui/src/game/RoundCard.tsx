@@ -27,6 +27,8 @@ export type RoundFace =
  * highlight, such as a non-standard form, on the sunken fill and underlined in
  * the accent. VoiceOver reads it before the options, then names the highlight;
  * a gap it reads in its place, as the Edition calls it.
+ * A Round that names the form it asks to replace (board 07 g3) shows its
+ * label as its ask, «Як сказати краще?», and the form muted under it.
  * A Definition, such as a Word's in «Звідки слово», stands under the prompt,
  * and VoiceOver reads it after the prompt.
  * An answer drawn in the prompt's place, such as the vowel buttons, stands in
@@ -93,7 +95,7 @@ export function RoundCard({
         { backgroundColor: colors.surface, borderColor: colors.line, borderRadius: radii.card },
       ]}
     >
-      {labelShown && (
+      {labelShown && face?.look !== 'instead' && (
         <Text
           maxFontSizeMultiplier={roundLayout.textMaxFontScale}
           {...voice}
@@ -104,10 +106,20 @@ export function RoundCard({
       )}
       {face?.look === 'instead' && (
         <Text
-          testID="game-instead"
+          testID="game-ask"
           maxFontSizeMultiplier={roundLayout.textMaxFontScale}
           {...voice}
           style={[typeStyle('roundAsk', tokens), { color: colors.ink }]}
+        >
+          {label}
+        </Text>
+      )}
+      {face?.look === 'instead' && (
+        <Text
+          testID="game-instead"
+          maxFontSizeMultiplier={roundLayout.textMaxFontScale}
+          {...voice}
+          style={[typeStyle('roundInstead', tokens), { color: colors.muted }]}
         >
           {face.instead}
         </Text>

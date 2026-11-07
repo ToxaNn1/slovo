@@ -717,6 +717,37 @@ describe('GameRound', () => {
     );
   });
 
+  it('asks a type-word Round under its label in the ask role, the form muted under it', async () => {
+    const { ink, muted } = coreTokens.colors.light;
+    await renderRound(jest.fn(), jest.fn(), {
+      ...typedRound,
+      modeId: 'type-word',
+      round: {
+        ...typedRound.round,
+        prompt: 'It is probly true.',
+        highlight: { start: 6, end: 12 },
+      },
+    });
+
+    const ask = typeStyle('roundAsk', coreTokens);
+    expect(screen.getByTestId('game-ask')).toHaveTextContent('Definition');
+    expect(screen.getByTestId('game-ask')).toHaveStyle({
+      fontSize: ask.fontSize,
+      fontWeight: ask.fontWeight,
+      color: ink,
+    });
+    expect(screen.getByTestId('game-instead')).toHaveStyle({
+      fontSize: typeStyle('roundInstead', coreTokens).fontSize,
+      color: muted,
+    });
+  });
+
+  it('shows no ask over the card of a Round of another mode', async () => {
+    await renderRound(jest.fn(), jest.fn(), typedRound);
+
+    expect(screen.queryByTestId('game-ask')).not.toBeOnTheScreen();
+  });
+
   it('asks what replaces the anglicism in its sentence, the anglicism still marked', async () => {
     await renderRound(jest.fn(), jest.fn(), { ...highlightRound, modeId: 'anglicism' });
 
