@@ -53,6 +53,8 @@ export {
   type TracedMiss,
   type TracedWord,
 } from './game/TracedCrosswordGrid';
+export { CrossingClueBar, CrossingGrid, type CrossingGridCell } from './game/CrossingGrid';
+export { LetterWheel, type WheelMiss } from './game/LetterWheel';
 export { HapticsProvider } from './providers/HapticsProvider';
 export { InterfaceSoundsProvider, useInterfaceSounds } from './providers/InterfaceSoundsProvider';
 export { HideButton } from './mix/HideButton';

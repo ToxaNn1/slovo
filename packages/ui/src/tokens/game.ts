@@ -161,6 +161,8 @@ export const crossingCrosswordLayout = {
   shake: 8,
   shakeBeat: 60,
   coach: 30,
+  coachRing: 3,
+  pathGap: 4,
   coachSweep: 1100,
 } as const;
 
