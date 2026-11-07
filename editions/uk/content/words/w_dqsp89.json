@@ -1,0 +1,22 @@
+{
+  "kind": "word",
+  "id": "w_dqsp89",
+  "lemma": "омметр",
+  "stress": [3],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Прилад для вимірювання електричного опору в омах.",
+  "examples": [
+    {
+      "text": "Діапазон вимірювання в омметрі становить 0,05–20 омів."
+    }
+  ],
+  "categoryId": "technology",
+  "rarity": 3,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+      "url": "https://goroh.pp.ua/Тлумачення/омметр"
+    }
+  ]
+}
