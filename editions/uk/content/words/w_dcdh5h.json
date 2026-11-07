@@ -1,0 +1,36 @@
+{
+  "kind": "word",
+  "id": "w_dcdh5h",
+  "lemma": "гарбар",
+  "stress": [
+    4
+  ],
+  "partOfSpeech": "noun",
+  "gender": "masculine",
+  "primaryDefinition": "Чинбар.",
+  "examples": [
+    {
+      "text": "Ніхто не вмів так виправляти шкірки, як вона. У Заріччі цією працею займалися гарбарі.",
+      "author": "Юліан Опільський"
+    }
+  ],
+  "synonyms": [
+    "кушнір",
+    "чинбар"
+  ],
+  "registers": [
+    "archaic"
+  ],
+  "categoryId": "old-crafts",
+  "rarity": 5,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+      "url": "https://goroh.pp.ua/Тлумачення/гарбар"
+    },
+    {
+      "title": "Горох: синонімія (Цифрові лексикографічні системи української мови)",
+      "url": "https://goroh.pp.ua/Синонімія/гарбар"
+    }
+  ]
+}
