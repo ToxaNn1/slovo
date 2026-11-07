@@ -5,16 +5,25 @@ import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react
 import { useEdition } from '../providers/EditionProvider';
 import { FontSizeProvider, useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
+import { PagerScrollView } from '../primitives/VerticalPager';
 import { blockGap, minTouchTarget, space, typeStyle } from '../tokens';
 
-/** The step below each font size, which content too tall for the card takes first (ADR 0088). */
-const SMALLER: Readonly<Record<FontSize, FontSize>> = { S: 'S', M: 'S', L: 'M', XL: 'L' };
+/** The smallest font size content too tall for the card shrinks to (ADR 0088). */
+const FLOOR = 'S' satisfies FontSize;
+
+/** The step below each font size above the floor, which content too tall for the card takes. */
+const SMALLER: Readonly<Record<Exclude<FontSize, typeof FLOOR>, FontSize>> = {
+  M: 'S',
+  L: 'M',
+  XL: 'L',
+};
 
 /**
- * How content sits in the card's fixed frame: at the user's font size, one
- * step smaller, or in the flow so the page scrolls (ADR 0088).
+ * How content sits in the card's fixed frame: whole at a font size from the
+ * user's down to the floor, or at the floor scrolling inside the frame
+ * (ADR 0088).
  */
-type Fit = 'fits' | 'shrunk' | 'scrolls';
+type Fit = FontSize | 'scrolls';
 
 /**
  * An Entry card's tabs under its head (ADR 0088): a `tablist` of `tab`s by
@@ -73,7 +82,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
           })}
         </View>
       )}
-      <FitPanel testID={`${testID}-tab-panel`} fitKey={selected.key}>
+      <FitPanel testID={testID} fitKey={selected.key}>
         {children(selected)}
       </FitPanel>
     </View>
@@ -82,41 +91,61 @@ export function CardTabs<Tab extends { readonly key: string }>({
 
 /**
  * Content that fills the rest of an Entry card's fixed frame (ADR 0088):
- * content too tall for it takes the font size a step smaller, and content too
- * tall even then, or at S, makes the page scroll. The card measures the drawn
- * height once it is laid out; a new `fitKey` (another tab) starts at the
- * user's font size again.
+ * content too tall for it takes the font size a step smaller at a time down
+ * to the floor, S, and content too tall even there stays at S and scrolls
+ * inside the frame, so the card keeps its height. In the Feed that scroll is
+ * the page's (`PagerScrollView` nested in the page's). The card measures the
+ * drawn height once it is laid out; a new `fitKey` (another tab) or font size
+ * starts at the user's font size again. Its parts are `<testID>-tab-panel`,
+ * `<testID>-tab-content` while it fits and `<testID>-tab-scroll` once it
+ * scrolls.
  */
 export function FitPanel({
   testID,
   fitKey,
   children,
 }: {
+  /** The kind of the Entry, which names the panel's parts. */
   testID: string;
   fitKey: string;
   children: ReactNode;
 }) {
   const { step } = useWordTextSizes();
-  const [fit, setFit] = useState<{ key: string; fit: Fit }>({ key: fitKey, fit: 'fits' });
-  const fitNow = fit.key === fitKey ? fit.fit : 'fits';
+  const [fit, setFit] = useState<{ key: string; step: FontSize; fit: Fit }>({
+    key: fitKey,
+    step,
+    fit: step,
+  });
+  const fitNow = fit.key === fitKey && fit.step === step ? fit.fit : step;
   const [room, setRoom] = useState<number | undefined>(undefined);
   const measured = ({ nativeEvent }: LayoutChangeEvent) => {
     if (room === undefined || nativeEvent.layout.height <= room || fitNow === 'scrolls') return;
-    setFit({ key: fitKey, fit: fitNow === 'fits' && step !== 'S' ? 'shrunk' : 'scrolls' });
+    setFit({ key: fitKey, step, fit: fitNow === FLOOR ? 'scrolls' : SMALLER[fitNow] });
   };
+  const content = (
+    <FontSizeProvider fontSize={fitNow === 'scrolls' ? FLOOR : fitNow}>{children}</FontSizeProvider>
+  );
   return (
     <View
-      testID={testID}
-      style={fitNow === 'scrolls' ? undefined : styles.room}
+      testID={`${testID}-tab-panel`}
+      style={styles.room}
       onLayout={({ nativeEvent }) => {
-        if (fitNow !== 'scrolls') setRoom(nativeEvent.layout.height);
+        setRoom(nativeEvent.layout.height);
       }}
     >
-      <View style={[styles.content, fitNow !== 'scrolls' && styles.overlay]} onLayout={measured}>
-        <FontSizeProvider fontSize={fitNow === 'shrunk' ? SMALLER[step] : step}>
-          {children}
-        </FontSizeProvider>
-      </View>
+      {fitNow === 'scrolls' ? (
+        <PagerScrollView testID={`${testID}-tab-scroll`} contentContainerStyle={styles.content}>
+          {content}
+        </PagerScrollView>
+      ) : (
+        <View
+          testID={`${testID}-tab-content`}
+          style={[styles.content, styles.overlay]}
+          onLayout={measured}
+        >
+          {content}
+        </View>
+      )}
     </View>
   );
 }

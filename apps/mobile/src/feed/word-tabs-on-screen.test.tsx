@@ -275,6 +275,39 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(card.getByText('2. Миролюбний.', hidden)).toBeTruthy();
   });
 
+  it('keeps a very long Definition whole in a tab too short for it, the corner still working', async () => {
+    const long = `${'Дуже довге значення слова, яке не вміщається в картку. '.repeat(40)}Кінець.`;
+    await open({ ...fullWord, primaryDefinition: long });
+    await renderApp();
+    await swipeUp();
+    const layout = async (testID: string, height: number) => {
+      await fireEvent(wordCard().getByTestId(testID, hidden), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height } },
+      });
+      await settle();
+    };
+
+    // The room the frame leaves the tab, then the content too tall at every size down to the floor.
+    await layout('word-tab-panel', 200);
+    for (
+      let size = 0;
+      size < 4 && wordCard().queryByTestId('word-tab-scroll', hidden) === null;
+      size++
+    )
+      await layout('word-tab-content', 2000);
+
+    const card = wordCard();
+    expect(card.getByTestId('word-tab-scroll', hidden)).toBeTruthy();
+    expect(card.getByText(long, hidden)).toBeTruthy();
+    expect(tabsOf(card).find(({ selected }) => selected)?.name).toBe('Суть');
+    const heart = card.getByTestId('favorite-button', hidden);
+    expect(heart.props['accessibilityLabel']).toBe(editionStrings.favorites.heart.add);
+    await settle(() => fireEvent.press(heart));
+    expect(wordCard().getByTestId('favorite-button', hidden).props['accessibilityLabel']).toBe(
+      editionStrings.favorites.heart.remove,
+    );
+  });
+
   it('keeps the column with «Детальніше» with `wordTabs` off', async () => {
     await open(fullWord, false);
     await renderApp();
