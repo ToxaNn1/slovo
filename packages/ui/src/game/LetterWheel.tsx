@@ -175,7 +175,7 @@ export function LetterWheel({
     <View style={styles.wheelArea}>
       <Animated.View
         testID={`${testID}-path`}
-        accessible
+        accessible={chips.length > 0}
         accessibilityLabel={chips.join('')}
         style={[styles.path, shaking]}
       >

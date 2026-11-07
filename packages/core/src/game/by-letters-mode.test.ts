@@ -10,6 +10,7 @@ import {
   type ContentReadPort,
   type CurrentGame,
   type Round,
+  type Random,
   type RoundBlank,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
@@ -67,7 +68,13 @@ async function run({
   seed = 7,
   off = ['letterTiles'],
   words = content,
-}: { seed?: number; off?: readonly string[]; words?: ContentReadPort } = {}): Promise<Composition> {
+  random = seededRandom(seed),
+}: {
+  seed?: number;
+  off?: readonly string[];
+  words?: ContentReadPort;
+  random?: Random;
+} = {}): Promise<Composition> {
   const app = await openComposition({
     content: words,
     edition: testEdition({
@@ -79,7 +86,7 @@ async function run({
       now: () => new Date('2026-10-26T09:00:00+02:00'),
       timeZone: () => 'Europe/Kyiv',
     },
-    random: seededRandom(seed),
+    random,
   });
   const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
   if (planning()) {
@@ -402,6 +409,41 @@ describe('«За буквами» with letter tiles', () => {
         expect(letters).not.toContain(decoy);
       }
     }
+  });
+
+  it('never shows the Word in order in its first tiles, even when the shuffle leaves it so', async () => {
+    // A source this high makes every shuffle keep its order.
+    const rounds = await playTiles(await run({ off: [], random: { next: () => 0.9999 } }));
+
+    expect(rounds.length).toBeGreaterThan(0);
+    for (const round of rounds) {
+      if (round.form !== 'chips') throw new Error('Not a tiles Round');
+      const letters = lettersOf(lemmaOf(round));
+      expect(round.chips.slice(0, letters.length)).not.toEqual(letters);
+    }
+  });
+
+  it('shows the tiles of a Word with a capital letter in lower case, and takes them as right', async () => {
+    const capital = createMemoryContentPort({
+      categories: [test, crafts],
+      words: words.map((entry) =>
+        entry.lemma === 'каганець'
+          ? { ...entry, lemma: 'Каганець', primaryDefinition: 'The meaning of каганець.' }
+          : entry,
+      ),
+    });
+    for (let seed = 1; seed < 200; seed += 1) {
+      const app = await run({ off: [], seed, words: capital });
+      await app.game.start('by-letters');
+      const round = tilesOf(app);
+      if (lemmaOf(round) !== 'каганець') continue;
+
+      expect(round.chips).not.toContain('К');
+      await app.game.answer({ form: 'chips', chips: placesOf(round.chips, lettersOf('каганець')) });
+      expect(current(app)).toMatchObject({ round: { answer: { right: true } } });
+      return;
+    }
+    throw new Error('No Game starts with «Каганець»');
   });
 
   it('keeps an apostrophe in place, no tile, and shows the same tiles for the same seed', async () => {

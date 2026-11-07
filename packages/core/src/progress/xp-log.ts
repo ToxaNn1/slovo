@@ -96,6 +96,12 @@ export interface XpLogAppend {
   commit(): void;
 }
 
+/** A solved Daily Crossword as its XP log record keeps it (ADR 0087). */
+export interface CrosswordSolve {
+  readonly solveSeconds: number | undefined;
+  readonly hinted: boolean;
+}
+
 /**
  * The XP log (ADR 0066): an append-only log of the XP each learning action
  * earned and of the Daily Goals set, kept per Edition, which the total,
@@ -106,12 +112,6 @@ export interface XpLogAppend {
  * the cap a day, and a Word Seen for the first time earns once, up to the
  * day's Daily Goal, however many devices' records merge.
  */
-/** A solved Daily Crossword as its XP log record keeps it (ADR 0087). */
-export interface CrosswordSolve {
-  readonly solveSeconds: number | undefined;
-  readonly hinted: boolean;
-}
-
 export interface XpLog {
   /** The XP as it stands, in memory for the session. */
   readonly state: XpLogState;

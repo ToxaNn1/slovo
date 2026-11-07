@@ -1,3 +1,4 @@
+import type { CrosswordSolve } from '@slovo/core';
 import {
   CrossingClueBar,
   CrossingGrid,
@@ -20,7 +21,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { logError } from '@/diagnostics/log';
 import { editionStrings } from '@/edition/edition';
-import { useEditionInEffect } from '@/edition/remote-switches';
 import { crosswordShare } from '@/game/crossword-share';
 import { useCrossingCrossword, type CrossingCrosswordPlay } from '@/game/crossing-crossword';
 import {
@@ -47,16 +47,17 @@ const SOLVED_MAX_FONT_SCALE = 1.5;
  * Today's Daily Crossword, opened from its card on the Game's mode screen:
  * the crossing one played on the Letter Wheel (ADR 0087), or the traced one
  * while the crossing one is off (ADR 0073). The progress stays on the device,
- * so «Назад» and the card's «Продовжити» find it. On a day no pattern fills,
- * or with the crossword turned off while the reader is on it, the screen goes
+ * so «Назад» and the card's «Продовжити» find it; a day solved on another
+ * device opens solved. On a day no pattern fills, when it cannot open, or
+ * with the crossword turned off while the reader is on it, the screen goes
  * back to the Game.
  */
 export default function DailyCrosswordScreen() {
   const crossing = useCrossingCrossword();
   if (crossing === undefined) return <CrosswordFrame />;
   if (crossing.kind === 'play') return <CrossingCrosswordScreen crossword={crossing} />;
-  if (crossing.kind === 'no-fill') return <Redirect href="/game" />;
-  return <TracedCrossword />;
+  if (crossing.kind === 'off') return <TracedCrossword />;
+  return <Redirect href="/game" />;
 }
 
 /** The traced Daily Crossword while the crossing one is off (ADR 0073); the Game when it cannot open. */
@@ -200,10 +201,10 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
   const { colors } = tokens;
   const { voice } = useEdition();
   const accessibleMode = useScreenReader();
-  const { solved, miss } = crossword;
+  const { solve, miss } = crossword;
+  const solved = solve !== undefined;
   const texts = strings.dailyCrossword;
-  const edition = useEditionInEffect();
-  const solvedScreen = edition.isFeatureEnabled('crosswordSolvedScreen');
+  const { crosswordSolvedScreen: solvedScreen, crosswordSolveTime } = useShown();
   const solvedText = solvedScreen ? texts.solvedScreen.title : texts.solved;
 
   useEffect(() => {
@@ -216,12 +217,13 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
     AccessibilityInfo.announceForAccessibility(texts.miss);
   }, [miss, texts.miss]);
 
-  if (solved && solvedScreen) {
+  if (solve !== undefined && solvedScreen) {
     return (
       <UndoToastProvider>
         <CrossingCrosswordSolved
           crossword={crossword}
-          withTime={edition.isFeatureEnabled('crosswordSolveTime')}
+          solve={solve}
+          withTime={crosswordSolveTime}
         />
       </UndoToastProvider>
     );
@@ -309,16 +311,18 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
  */
 function CrossingCrosswordSolved({
   crossword,
+  solve,
   withTime,
 }: {
   crossword: CrossingCrosswordPlay;
+  solve: CrosswordSolve;
   withTime: boolean;
 }) {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const toast = useUndoToast();
   const texts = strings.dailyCrossword;
-  const share = crosswordShare(crossword, texts, withTime);
+  const share = crosswordShare(crossword, solve, texts, withTime);
   return (
     <View
       testID="daily-crossword-screen"

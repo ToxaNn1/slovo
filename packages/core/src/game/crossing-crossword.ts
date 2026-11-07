@@ -218,18 +218,18 @@ function fill(
 /** Two or three crossing cells, drawn from the port, none of which completes a Word's letters. */
 function prefill(words: readonly CrossingWord[], random: Random): CrossingPrefill[] {
   const letters = new Map<string, string>();
-  const owners = new Map<string, CrossingWord[]>();
+  const owners = new Map<string, { place: PuzzlePlace; words: CrossingWord[] }>();
   for (const word of words)
     crossingPlacesOf(word).forEach((place, i) => {
       const key = placeKey(place);
       letters.set(key, word.letters[i] ?? '');
-      owners.set(key, [...(owners.get(key) ?? []), word]);
+      owners.set(key, { place, words: [...(owners.get(key)?.words ?? []), word] });
     });
-  const crossings = [...owners.entries()].filter(([, own]) => own.length > 1);
+  const crossings = [...owners.entries()].filter(([, { words: own }]) => own.length > 1);
   const target = PREFILLED.min + Math.floor(random.next() * (PREFILLED.max - PREFILLED.min + 1));
   const filled = new Set<string>();
   const prefilled: CrossingPrefill[] = [];
-  for (const [key, own] of shuffled(crossings, random)) {
+  for (const [key, { place, words: own }] of shuffled(crossings, random)) {
     if (prefilled.length >= target) break;
     const completes = own.some((word) =>
       crossingPlacesOf(word).every(
@@ -238,11 +238,7 @@ function prefill(words: readonly CrossingWord[], random: Random): CrossingPrefil
     );
     if (completes) continue;
     filled.add(key);
-    const [row, column] = key.split(',').map(Number);
-    prefilled.push({
-      place: { row: row ?? 0, column: column ?? 0 },
-      letter: letters.get(key) ?? '',
-    });
+    prefilled.push({ place, letter: letters.get(key) ?? '' });
   }
   return prefilled;
 }

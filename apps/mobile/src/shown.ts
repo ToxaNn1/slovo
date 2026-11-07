@@ -104,6 +104,10 @@ export interface Shown {
   readonly progressShareCards: boolean;
   /** «Поділитися» under a solved Daily Crossword, its Share Card with no letters. */
   readonly dailyCrosswordShare: boolean;
+  /** Board 08's «Розгадано!» screen once the crossing Daily Crossword is solved (ADR 0087). */
+  readonly crosswordSolvedScreen: boolean;
+  /** The crossing Daily Crossword's Solve time on its solved screen and share line (ADR 0087). */
+  readonly crosswordSolveTime: boolean;
   /** The Settings row that opens the Profile, with the reader's whole progress. */
   readonly profile: boolean;
   /** The Quick Question in the Feed and its «Швидкі питання» row in the Mix; it asks the Game's Modes. */
@@ -200,6 +204,8 @@ export function shownOf({
     badges: on('badges'),
     progressShareCards: on('progressShareCards') && !noCounters,
     dailyCrosswordShare: on('dailyCrosswordShare'),
+    crosswordSolvedScreen: on('crosswordSolvedScreen'),
+    crosswordSolveTime: on('crosswordSolveTime'),
     profile: on('profile'),
     quickQuestion: on('quickQuestion'),
     sync: on('sync'),
