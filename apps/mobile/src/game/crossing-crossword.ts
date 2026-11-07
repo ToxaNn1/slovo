@@ -13,16 +13,19 @@ import {
   type PuzzlePlace,
 } from '@slovo/core';
 import type { CrossingGridCell, CrosswordMiniCell, WheelMiss } from '@slovo/ui';
-import { useEffect, useState } from 'react';
-import { AppState } from 'react-native';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useComposition } from '../composition';
+import { deviceClock } from '../device/device-clock';
 import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
+import { useInForeground } from '../foreground/in-foreground';
 import { keep } from '../keep';
 
 type Strings = EditionStrings['game']['dailyCrossword'];
 
+/** How often the Solve time reads the clock, in milliseconds, so each second counts on time. */
 const TICK_MS = 1000;
 
 const solvedCount = ({ words }: CrossingPlay) =>
@@ -160,10 +163,12 @@ const DIRECTION_MARK = { across: '→', down: '↓' } as const;
  * Today's crossing Daily Crossword for its screen, opened with the progress
  * this device made as the screen opens and again in a composition reopened:
  * `undefined` while it opens. Each move goes to the Core in turn; a release
- * that solves no Word becomes the `miss`. The time ticks while the screen is
- * in front and the app active, and the progress is kept as the screen leaves
- * or the app goes to the background. A move that fails is logged and changes
- * nothing; an opening that fails falls back to the traced Daily Crossword.
+ * that solves no Word becomes the `miss`. The Solve time ticks from the
+ * device clock only while the screen is in front and the app in the
+ * foreground (ADR 0087); as the screen leaves or the app goes to the
+ * background the progress is kept and the time pauses, until the reader comes
+ * back. A move that fails is logged and changes nothing; an opening that
+ * fails falls back to the traced Daily Crossword.
  */
 export function useCrossingCrossword(): CrossingCrosswordView | undefined {
   const composition = useComposition();
@@ -198,22 +203,26 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
 
   const crossword =
     opened?.in === composition && opened.kind === 'open' ? opened.crossword : undefined;
-  useEffect(() => {
-    if (crossword === undefined) return;
-    const tick = () => {
-      if (AppState.currentState !== 'active' || isCrossingSolved(crossword.state)) return;
-      void keep('the crossing Daily Crossword', crossword.play({ type: 'tick', seconds: 1 }));
-    };
-    const ticking = setInterval(tick, TICK_MS);
-    const subscription = AppState.addEventListener('change', (next) => {
-      if (next !== 'active') void keep('the crossing Daily Crossword', crossword.keep());
-    });
-    return () => {
-      clearInterval(ticking);
-      subscription.remove();
-      void keep('the crossing Daily Crossword', crossword.keep());
-    };
-  }, [crossword]);
+  const inForeground = useInForeground();
+  useFocusEffect(
+    useCallback(() => {
+      if (crossword === undefined || !inForeground) return undefined;
+      // The clock's time counted so far: a tick adds the whole seconds since.
+      let counted = deviceClock.now().getTime();
+      const tick = () => {
+        if (isCrossingSolved(crossword.state)) return;
+        const seconds = Math.floor((deviceClock.now().getTime() - counted) / 1000);
+        if (seconds <= 0) return;
+        counted += seconds * 1000;
+        void keep('the crossing Daily Crossword', crossword.play({ type: 'tick', seconds }));
+      };
+      const ticking = setInterval(tick, TICK_MS);
+      return () => {
+        clearInterval(ticking);
+        void keep('the crossing Daily Crossword', crossword.keep());
+      };
+    }, [crossword, inForeground]),
+  );
 
   if (opened?.in !== composition) return undefined;
   if (opened.kind !== 'open') return { kind: opened.kind };

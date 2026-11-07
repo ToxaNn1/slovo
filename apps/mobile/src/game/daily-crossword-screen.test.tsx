@@ -8,6 +8,7 @@ import {
   type CrossingWord,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import type { FeatureSwitch } from '@slovo/contracts';
 import { EditionProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
@@ -30,6 +31,37 @@ const TRACEABLE = ['кіт', 'дім', 'вовк', 'сова', 'річка', 'в
 
 /** The composition the screens read, opened afresh for each test. */
 let composition: Composition;
+
+/** Whether the app is in the foreground, as a test moves it, and who listens to it. */
+let mockInForeground = true;
+const mockForegroundListeners = new Set<() => void>();
+
+jest.mock('../foreground/in-foreground', () => ({
+  useInForeground: () =>
+    jest.requireActual<typeof import('react')>('react').useSyncExternalStore(
+      (listener: () => void) => {
+        mockForegroundListeners.add(listener);
+        return () => {
+          mockForegroundListeners.delete(listener);
+        };
+      },
+      () => mockInForeground,
+    ),
+}));
+
+/** Sends the app to the background, or brings it back to the foreground, and lets the Core keep what it keeps. */
+async function moveApp(to: 'background' | 'foreground') {
+  mockInForeground = to === 'foreground';
+  await settle(() => {
+    for (const listener of mockForegroundListeners) listener();
+  });
+}
+
+/** Passes this many seconds of the clock, tick by tick. */
+const pass = (seconds: number) =>
+  settle(() => {
+    jest.advanceTimersByTime(seconds * 1000);
+  });
 
 /** A Word of one Category, with nothing but what the Game reads. */
 const word = (index: number): Word => ({
@@ -82,9 +114,14 @@ const analytics: AnalyticsPort = {
  */
 async function renderGame({
   crossing = false,
-  hint = false,
-}: { crossing?: boolean; hint?: boolean } = {}) {
+  on = [],
+}: {
+  crossing?: boolean;
+  /** Feature Switches on over the Edition's, such as `crosswordSolveTime`. */
+  on?: readonly FeatureSwitch[];
+} = {}) {
   events = [];
+  mockInForeground = true;
   composition = await openComposition({
     content: createMemoryContentPort({
       categories: [{ id: 'nature', displayName: 'Природа', description: 'Природа.', tone: 'loud' }],
@@ -104,7 +141,7 @@ async function renderGame({
       ...edition,
       isFeatureEnabled: (feature) =>
         (crossing && feature === 'crossingCrossword') ||
-        (hint && feature === 'crosswordHint') ||
+        on.includes(feature) ||
         edition.isFeatureEnabled(feature),
     },
     userState: await seedUserState(),
@@ -157,12 +194,17 @@ const openFromCard = () =>
 /** Goes back from the crossword to the mode screen. */
 const back = () => settle(() => fireEvent.press(screen.getByTestId('daily-crossword-screen-back')));
 
-/** Today's crossing Daily Crossword as the composition opens it again: its puzzle. */
-async function crossingPuzzle() {
+/** Today's crossing Daily Crossword as the composition opens it again, with the progress kept. */
+async function crossing() {
   const opening = await composition.openCrossingCrossword();
   if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
-  return opening.crossword.puzzle;
+  return opening.crossword;
 }
+
+const crossingPuzzle = async () => (await crossing()).puzzle;
+
+/** The Solve time kept so far, in seconds. */
+const keptSeconds = async () => (await crossing()).state.seconds;
 
 const { dailyCrossword: texts } = editionStrings.game;
 
@@ -266,7 +308,7 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
   });
 
   it('fills the first empty cell of the current Word by «Підказка» in the header', async () => {
-    await renderGame({ crossing: true, hint: true });
+    await renderGame({ crossing: true, on: ['crosswordHint'] });
     await openFromCard();
     const { words, prefilled } = await crossingPuzzle();
     const [first] = words;
@@ -326,6 +368,40 @@ describe('the crossing Daily Crossword (ADR 0087)', () => {
     expect(screen.queryByTestId('crossing-crossword-wheel')).toBeNull();
     await back();
     expect(card()).toBe('Кросворд дня. 26 жовтня. ✓ Розв’язано');
+  });
+  it('counts the Solve time on screen only: it pauses in the background and on leave, and goes on when the reader comes back', async () => {
+    await renderGame({ crossing: true, on: ['crosswordSolveTime'] });
+    await openFromCard();
+    await pass(5);
+    await moveApp('background');
+    const beforeBackground = await keptSeconds();
+    expect(beforeBackground).toBeGreaterThanOrEqual(5);
+    expect(beforeBackground).toBeLessThan(10);
+
+    await pass(60);
+    await moveApp('foreground');
+    await pass(3);
+    await back();
+    const afterReturn = await keptSeconds();
+    expect(afterReturn - beforeBackground).toBeGreaterThanOrEqual(3);
+    expect(afterReturn - beforeBackground).toBeLessThan(10);
+
+    await pass(60);
+    expect(await keptSeconds()).toBe(afterReturn);
+    await openFromCard();
+    await pass(2);
+    await back();
+    const afterSecondVisit = await keptSeconds();
+    expect(afterSecondVisit - afterReturn).toBeGreaterThanOrEqual(2);
+    expect(afterSecondVisit - afterReturn).toBeLessThan(10);
+  });
+
+  it('keeps no time with crosswordSolveTime off', async () => {
+    await renderGame({ crossing: true });
+    await openFromCard();
+    await pass(5);
+    await back();
+    expect(await keptSeconds()).toBe(0);
   });
 });
 

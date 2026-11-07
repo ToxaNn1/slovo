@@ -69,7 +69,10 @@ function fingerprintOf(puzzle: CrossingPuzzle): string {
  * another puzzle the same day, starts empty; the trace is never kept. It is
  * not a Game and never touches Seen or Knowledge Marks; its progress stays on
  * this device with no Sync. The Word that solves the day appends its XP in
- * the same write, which the XP log gives once for the date (ADR 0066).
+ * the same write, which the XP log gives once for the date (ADR 0066); the
+ * record carries the Solve time and whether a hint was used, so they sync
+ * with it. With `crosswordSolveTime` off a tick changes nothing and the
+ * record carries no time.
  */
 export async function openCrossingCrossword({
   entries,
@@ -91,6 +94,7 @@ export async function openCrossingCrossword({
   analytics?: Pick<Analytics, 'track'>;
 }): Promise<CrossingCrosswordOpening> {
   if (!edition.isFeatureEnabled('crossingCrossword')) return { kind: 'off' };
+  const timed = edition.isFeatureEnabled('crosswordSolveTime');
   const date = todayKey(clock);
   const words = await entries.wordsUnderRarityCeiling();
   const generation = generateCrossingCrossword({
@@ -127,6 +131,7 @@ export async function openCrossingCrossword({
     play: (action) =>
       inTurn(async () => {
         if (action.type === 'hint' && !hint) return state;
+        if (action.type === 'tick' && !timed) return state;
         const next = playCrossing(puzzle, state, action);
         const hinted = action.type === 'hint' && next !== state;
         if (!hinted && solvedIds(puzzle, next).length === solvedIds(puzzle, state).length) {
@@ -134,7 +139,14 @@ export async function openCrossingCrossword({
           return state;
         }
         const solves = isCrossingSolved(next);
-        const award = solves ? xp.award({ source: 'daily-crossword', date }) : undefined;
+        const award = solves
+          ? xp.award({
+              source: 'daily-crossword',
+              date,
+              ...(timed ? { solveSeconds: next.seconds } : {}),
+              ...(next.hinted ? { hinted: true } : {}),
+            })
+          : undefined;
         await userState.write(new Map([...progressOf(next), ...(award?.changes ?? [])]));
         award?.commit();
         state = next;
