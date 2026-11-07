@@ -1062,9 +1062,11 @@ describe('the Game screen', () => {
           `Пройдено раундів: ${String(round - 1)} з 15`,
         );
       });
-      // VoiceOver reads the sentence, then names the non-standard form marked in it.
+      // Board 07 g3: the card names the wrong form over its sentence; VoiceOver reads both,
+      // then names the non-standard form marked in the sentence.
+      expect(screen.getByTestId('game-instead')).toHaveTextContent(/^замість «хибне\d+»$/);
       expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
-        /^Як сказати краще\? Речення (\d+): тут хибне\1\. Виділено: хибне\1$/,
+        /^Як сказати краще\? замість «хибне(\d+)»\. Речення \1: тут хибне\1\. Виділено: хибне\1$/,
       );
       // The reader types the whole form: no blanks, no «Відкрити літеру».
       expect(screen.queryByTestId('game-typed-blanks')).toBeNull();
@@ -1170,9 +1172,9 @@ describe('the Game screen', () => {
           `Пройдено раундів: ${String(round - 1)} з 15`,
         );
       });
-      // The pick Round of «Обери правильне»: the sentence, its non-standard form marked.
+      // Board 07: «Чим замінити «…»: «…»?», the anglicism still marked in the sentence.
       expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
-        /^Як сказати краще\? Речення (\d+): тут хибне\1\. Виділено: хибне\1$/,
+        /^Як сказати краще\? Чим замінити «хибне(\d+)»: «Речення \1: тут хибне\1\.»\? Виділено: хибне\1$/,
       );
       // Anglicisms are numbered after the 15 calques, which never play here.
       const n = theNumberOfThePrompt();
@@ -1635,6 +1637,8 @@ describe('the Game screen', () => {
       expect(screen.getByTestId('game-prompt').props['accessibilityLabel']).toMatch(
         /^Звідки це слово\? сло\u0301?во(\d+)\. The meaning of test\1\.$/,
       );
+      // Board 07 g4: the Word big on its sunken tile.
+      expect(screen.getByTestId('game-word')).toHaveTextContent(/^сло\u0301?во\d+$/);
       const n = Number(
         /test(\d+)/.exec(String(screen.getByTestId('game-definition').props['children']))?.[1],
       );
@@ -1648,6 +1652,31 @@ describe('the Game screen', () => {
     await waitFor(() => {
       expect(screen.getByText('Перемога!')).toBeOnTheScreen();
     });
+  });
+
+  it('asks before leaving a Game in the Edition’s words: «Грати далі» plays on, «Вийти» leaves', async () => {
+    await open({ corrections: 15 });
+    await renderScreen();
+    await fireEvent.press(screen.getByTestId('game-mode-type-word'));
+    await waitFor(() => {
+      expect(screen.getByTestId('game-round')).toBeOnTheScreen();
+    });
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Вийти з гри' }));
+    expect(screen.getByText('Вийти з гри?')).toBeOnTheScreen();
+    expect(screen.getByText('Прогрес буде втрачено.')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Грати далі' }));
+    await waitFor(() => {
+      expect(screen.queryByText('Прогрес буде втрачено.')).not.toBeOnTheScreen();
+    });
+    expect(screen.getByTestId('game-round')).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Вийти з гри' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Вийти' }));
+    await waitFor(() => {
+      expect(screen.queryByTestId('game-round')).not.toBeOnTheScreen();
+    });
+    expect(screen.getByTestId('game-mode-type-word')).toBeOnTheScreen();
   });
 
   it('takes a Life for a wrong language in «Звідки слово» and shows the right one with the Word’s etymology', async () => {

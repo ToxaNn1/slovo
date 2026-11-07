@@ -57,7 +57,10 @@ type Judged = 'right' | 'wrong' | undefined;
  * decoys among them, under a red slot for each letter of the answer; the
  * last slot filled gives the answer. With an erase label, a key under the
  * chips takes back the last chip placed, as «Анаграми» does (spec #1674); it
- * takes nothing from an empty line or a given answer. Key it by the Round, so a new Round
+ * takes nothing from an empty line or a given answer. Words in a line
+ * (board 07 g6, «Склади вислів») take their line in a sunken box, the words
+ * placed on ink and only the next place dashed, and a placed word leaves an
+ * empty dashed place among the chips. Key it by the Round, so a new Round
  * starts with an empty line.
  */
 export function OrderedChips({
@@ -90,10 +93,22 @@ export function OrderedChips({
   const [tapped, setTapped] = useState<readonly number[]>([]);
   const line = answer?.chosen ?? tapped;
   const judged: Judged = answer === undefined ? undefined : answer.right ? 'right' : 'wrong';
+  const { colors, radii } = useTokens();
+  /** Words in a line, which take board 07 g6's look. */
+  const words = kind === 'word' && layout === 'line';
 
   return (
     <View testID="chips" style={styles.chips}>
-      <View testID="chips-line" style={styles.line}>
+      <View
+        testID="chips-line"
+        style={[
+          styles.line,
+          words && [
+            styles.box,
+            { backgroundColor: colors.surfaceSunken, borderRadius: radii.card },
+          ],
+        ]}
+      >
         {Array.from({ length: slots }, (_, index) => {
           const place = line[index];
           return (
@@ -103,7 +118,17 @@ export function OrderedChips({
                   .filter(({ at }) => at === index)
                   .map(({ text }, mark) => <FixedMark key={mark} text={text} kind={kind} />)}
               {place === undefined ? (
-                <EmptySlot index={index} kind={kind} tiles={layout === 'tiles'} />
+                <EmptySlot
+                  index={index}
+                  kind={kind}
+                  edge={
+                    layout === 'tiles'
+                      ? 'accent'
+                      : !words || index === line.length
+                        ? 'dashed'
+                        : 'none'
+                  }
+                />
               ) : (
                 <LineChip
                   key={place}
@@ -111,6 +136,7 @@ export function OrderedChips({
                   text={chips[place] ?? ''}
                   kind={kind}
                   judged={judged}
+                  onInk={words}
                   disabled={answer !== undefined}
                   onPress={() => {
                     setTapped(tapped.filter((other) => other !== place));
@@ -135,6 +161,7 @@ export function OrderedChips({
               text={text}
               kind={kind}
               placed={placed}
+              leavesPlace={words}
               inert={placed || answer !== undefined}
               onPress={() => {
                 const next = [...tapped, place];
@@ -179,17 +206,18 @@ function Tray({ tiles, children }: { tiles: boolean; children: ReactNode[] }) {
 }
 
 /**
- * An empty place of the answer line, dashed, or a red slot of letter tiles,
- * which VoiceOver skips. It carries `chips-slot-${index}`.
+ * An empty place of the answer line, dashed, a red slot of letter tiles, or
+ * a place of words not next, with no edge; VoiceOver skips it. It carries
+ * `chips-slot-${index}`.
  */
 function EmptySlot({
   index,
   kind,
-  tiles,
+  edge,
 }: {
   index: number;
   kind: 'letter' | 'word';
-  tiles: boolean;
+  edge: 'dashed' | 'accent' | 'none';
 }) {
   const { colors } = useTokens();
   return (
@@ -200,9 +228,11 @@ function EmptySlot({
       style={[
         styles.slot,
         kind === 'letter' ? styles.letter : styles.word,
-        tiles
+        edge === 'accent'
           ? { borderColor: colors.accent, borderStyle: 'solid' }
-          : { borderColor: colors.line, borderStyle: 'dashed' },
+          : edge === 'dashed'
+            ? { borderColor: colors.line, borderStyle: 'dashed' }
+            : { borderColor: 'transparent', borderStyle: 'solid' },
       ]}
     />
   );
@@ -210,13 +240,15 @@ function EmptySlot({
 
 /**
  * A chip among the shuffled ones, on a pressed tile. Once placed in the line
- * it stays faint in its place, takes no tap, and VoiceOver skips it.
+ * it stays faint in its place, or leaves an empty dashed place there, takes
+ * no tap, and VoiceOver skips it.
  */
 function Chip({
   testID,
   text,
   kind,
   placed,
+  leavesPlace,
   inert,
   onPress,
 }: {
@@ -224,6 +256,8 @@ function Chip({
   text: string;
   kind: 'letter' | 'word';
   placed: boolean;
+  /** Whether a placed chip leaves an empty dashed place rather than staying faint. */
+  leavesPlace: boolean;
   inert: boolean;
   onPress: () => void;
 }) {
@@ -233,33 +267,37 @@ function Chip({
     <View
       accessibilityElementsHidden={placed}
       importantForAccessibility={placed ? 'no-hide-descendants' : 'auto'}
-      style={placed && styles.placed}
+      testID={placed && leavesPlace ? `${testID}-place` : undefined}
+      style={placed && (leavesPlace ? [styles.left, { borderColor: colors.line }] : styles.placed)}
       {...voice}
     >
-      <PressedTile
-        testID={testID}
-        radius={CHIP_RADIUS}
-        accessibilityLabel={text}
-        accessibilityState={{ disabled: inert }}
-        inert={inert}
-        onPress={onPress}
-        faceStyle={[styles.chip, kind === 'letter' ? styles.letter : styles.word]}
-      >
-        <ChipText text={text} kind={kind} color={colors.ink} />
-      </PressedTile>
+      <View style={placed && leavesPlace && styles.gone}>
+        <PressedTile
+          testID={testID}
+          radius={CHIP_RADIUS}
+          accessibilityLabel={text}
+          accessibilityState={{ disabled: inert }}
+          inert={inert}
+          onPress={onPress}
+          faceStyle={[styles.chip, kind === 'letter' ? styles.letter : styles.word]}
+        >
+          <ChipText text={text} kind={kind} color={colors.ink} />
+        </PressedTile>
+      </View>
     </View>
   );
 }
 
 /**
- * A chip in the answer line, in a place bordered in ink. A right answer
- * turns the line red, a wrong one sinks it; nothing shakes.
+ * A chip in the answer line, in a place bordered in ink, or on ink. A right
+ * answer turns the line red, a wrong one sinks it; nothing shakes.
  */
 function LineChip({
   index,
   text,
   kind,
   judged,
+  onInk,
   disabled,
   onPress,
 }: {
@@ -268,6 +306,8 @@ function LineChip({
   text: string;
   kind: 'letter' | 'word';
   judged: Judged;
+  /** Whether the chip lies on ink, its text in the tile's colour, before the answer. */
+  onInk: boolean;
   disabled: boolean;
   onPress: () => void;
 }) {
@@ -286,13 +326,14 @@ function LineChip({
     // The shared value is stable, so only the answer given turns the chip.
   }, [judged, turned]);
 
+  const base = onInk ? colors.ink : colors.tile;
   const face = judged === 'right' ? colors.accent : colors.surfaceSunken;
   const border = judged === 'right' ? colors.accentEdge : colors.ink;
   const motion = useAnimatedStyle(() =>
     judged === undefined
       ? {}
       : {
-          backgroundColor: interpolateColor(turned.value, [0, 1], [colors.tile, face]),
+          backgroundColor: interpolateColor(turned.value, [0, 1], [base, face]),
           borderColor: interpolateColor(turned.value, [0, 1], [colors.ink, border]),
         },
   );
@@ -308,11 +349,17 @@ function LineChip({
       style={[
         styles.slot,
         kind === 'letter' ? styles.letter : styles.word,
-        { backgroundColor: colors.tile, borderColor: colors.ink, borderStyle: 'solid' },
+        { backgroundColor: base, borderColor: colors.ink, borderStyle: 'solid' },
         motion,
       ]}
     >
-      <ChipText text={text} kind={kind} color={judged === 'right' ? keyInk : colors.ink} />
+      <ChipText
+        text={text}
+        kind={kind}
+        color={
+          judged === 'right' ? keyInk : onInk && judged === undefined ? colors.tile : colors.ink
+        }
+      />
     </AnimatedPressable>
   );
 }
@@ -366,5 +413,8 @@ const styles = StyleSheet.create({
   letter: { minWidth: CHIP_WIDTH, paddingHorizontal: space[1] },
   word: { minWidth: CHIP_WIDTH, paddingHorizontal: space[4] },
   placed: { opacity: PLACED_OPACITY },
+  box: { padding: space[3] },
+  left: { borderWidth: SLOT_BORDER, borderStyle: 'dashed', borderRadius: CHIP_RADIUS },
+  gone: { opacity: 0 },
   mark: { height: SLOT_HEIGHT, justifyContent: 'center' },
 });

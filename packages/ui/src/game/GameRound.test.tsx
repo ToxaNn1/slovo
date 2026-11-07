@@ -48,6 +48,11 @@ const strings = testStrings({
       typed: { label: 'Your answer', submit: 'Check' },
       timer: { one: '{count} second left', other: '{count} seconds left' },
       timerShown: '{seconds} s',
+      prompts: {
+        meaning: '“{word}” means…',
+        instead: 'instead of “{wrong}”',
+        replace: 'What replaces “{word}”: “{sentence}”?',
+      },
     },
     openLetter: 'Open a letter',
     letters: {
@@ -693,6 +698,81 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
       'Definition. She took measures quickly. Marked: took measures',
     );
+  });
+
+  it('names the wrong form a type-word Round asks to replace over its sentence', async () => {
+    await renderRound(jest.fn(), jest.fn(), {
+      ...typedRound,
+      modeId: 'type-word',
+      round: {
+        ...typedRound.round,
+        prompt: 'It is probly true.',
+        highlight: { start: 6, end: 12 },
+      },
+    });
+
+    expect(screen.getByTestId('game-instead')).toHaveTextContent('instead of “probly”');
+    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
+      'Definition. instead of “probly”. It is probly true. Marked: probly',
+    );
+  });
+
+  it('asks a type-word Round under its label in the ask role, the form muted under it', async () => {
+    const { ink, muted } = coreTokens.colors.light;
+    await renderRound(jest.fn(), jest.fn(), {
+      ...typedRound,
+      modeId: 'type-word',
+      round: {
+        ...typedRound.round,
+        prompt: 'It is probly true.',
+        highlight: { start: 6, end: 12 },
+      },
+    });
+
+    const ask = typeStyle('roundAsk', coreTokens);
+    expect(screen.getByTestId('game-ask')).toHaveTextContent('Definition');
+    expect(screen.getByTestId('game-ask')).toHaveStyle({
+      fontSize: ask.fontSize,
+      fontWeight: ask.fontWeight,
+      color: ink,
+    });
+    expect(screen.getByTestId('game-instead')).toHaveStyle({
+      fontSize: typeStyle('roundInstead', coreTokens).fontSize,
+      color: muted,
+    });
+  });
+
+  it('shows no ask over the card of a Round of another mode', async () => {
+    await renderRound(jest.fn(), jest.fn(), typedRound);
+
+    expect(screen.queryByTestId('game-ask')).not.toBeOnTheScreen();
+  });
+
+  it('asks what replaces the anglicism in its sentence, the anglicism still marked', async () => {
+    await renderRound(jest.fn(), jest.fn(), { ...highlightRound, modeId: 'anglicism' });
+
+    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName(
+      'Definition. What replaces “took measures”: “She took measures quickly.”? Marked: took measures',
+    );
+    expect(screen.queryByTestId('game-instead')).not.toBeOnTheScreen();
+  });
+
+  it('shows the Word of an origin Round on its tile, read whole on the card', async () => {
+    await renderRound(jest.fn(), jest.fn(), {
+      ...first,
+      modeId: 'origin',
+      round: { ...first.round, prompt: 'candid' },
+    });
+
+    expect(screen.getByTestId('game-word')).toHaveTextContent('candid');
+    expect(screen.getByTestId('game-prompt')).toHaveAccessibleName('Definition. candid');
+  });
+
+  it('keeps the plain prompt in any other mode', async () => {
+    await renderRound(jest.fn(), jest.fn(), highlightRound);
+
+    expect(screen.queryByTestId('game-word')).not.toBeOnTheScreen();
+    expect(screen.queryByTestId('game-instead')).not.toBeOnTheScreen();
   });
 
   it('asks a Tip its own question, whole however long, under its own label, and takes an answer', async () => {

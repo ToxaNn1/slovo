@@ -293,6 +293,63 @@ describe('OrderedChips', () => {
     expect([1, 2, 3].map(shiftOf)).toEqual([0, 0, 0]);
   });
 
+  describe('words in a line (board 07 g6)', () => {
+    const { ink, line, surfaceSunken, tile } = coreTokens.colors.light;
+    const words = { chips: ['tail', 'the', 'wag', 'dog'], expected: ['the', 'tail', 'wag', 'dog'] };
+    const edgeOf = (index: number) =>
+      screen.getByTestId(`chips-slot-${String(index)}`, { includeHiddenElements: true });
+
+    it('takes the answer line in a sunken box', async () => {
+      await renderChips({ ...words, kind: 'word' });
+
+      expect(screen.getByTestId('chips-line')).toHaveStyle({ backgroundColor: surfaceSunken });
+    });
+
+    it('lays the words placed on ink, the text in the tile colour', async () => {
+      await renderChips({ ...words, kind: 'word' });
+
+      await tap(1);
+
+      expect(screen.getByTestId('chips-line-0')).toHaveStyle({ backgroundColor: ink });
+      expect(within(screen.getByTestId('chips-line-0')).getByText('the')).toHaveStyle({
+        color: tile,
+      });
+    });
+
+    it('dashes only the next place', async () => {
+      await renderChips({ ...words, kind: 'word' });
+
+      await tap(1);
+
+      expect(edgeOf(1)).toHaveStyle({ borderColor: line, borderStyle: 'dashed' });
+      expect(edgeOf(2)).toHaveStyle({ borderColor: 'transparent' });
+      expect(edgeOf(3)).toHaveStyle({ borderColor: 'transparent' });
+    });
+
+    it('leaves an empty dashed place among the chips for a word placed', async () => {
+      await renderChips({ ...words, kind: 'word' });
+      expect(screen.queryByTestId('chips-1-place')).not.toBeOnTheScreen();
+
+      await tap(1);
+
+      expect(screen.getByTestId('chips-1-place', { includeHiddenElements: true })).toHaveStyle({
+        borderStyle: 'dashed',
+        borderColor: line,
+      });
+    });
+
+    it('keeps the letters as they were: no box, every empty place dashed, placed letters faint', async () => {
+      await renderChips();
+
+      await tap(1);
+
+      expect(screen.getByTestId('chips-line')).not.toHaveStyle({ backgroundColor: surfaceSunken });
+      expect(edgeOf(2)).toHaveStyle({ borderStyle: 'dashed' });
+      expect(screen.queryByTestId('chips-1-place', { includeHiddenElements: true })).toBeNull();
+      expect(screen.getByTestId('chips-line-0')).toHaveStyle({ backgroundColor: tile });
+    });
+  });
+
   describe('the look of an answer', () => {
     const { accent, surfaceSunken, tile } = coreTokens.colors.light;
     const fillOf = (index: number) =>
