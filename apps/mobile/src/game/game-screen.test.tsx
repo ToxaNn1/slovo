@@ -820,7 +820,37 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
+  });
+
+  it('heads a Round with its mode’s title, the Round in play and the Lives, and loses a Life to a wrong answer', async () => {
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-guess-word'));
+    await waitFor(() => {
+      expect(screen.getByRole('header', { name: 'Вгадай слово · 1/15' })).toBeOnTheScreen();
+    });
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 5 з 5');
+    expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(
+      5,
+    );
+
+    const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
+    const n = /\d+/.exec(prompt)?.[0] ?? '';
+    const wrong = screen
+      .getAllByRole('button', { name: /^слово\d+,/ })
+      .find((one) => !String(one.props['accessibilityLabel']).startsWith(`слово${n},`));
+    if (wrong === undefined) throw new Error(`No wrong option for «${prompt}»`);
+    await fireEvent.press(wrong);
+
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
+    expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(
+      5,
+    );
+    await fireEvent.press(screen.getByTestId('game-next'));
+    await waitFor(() => {
+      expect(screen.getByRole('header', { name: 'Вгадай слово · 2/15' })).toBeOnTheScreen();
+    });
   });
 
   it('starts «Пари» from its card and plays four grids of 4, 4, 4 and 3 pairs to the result screen', async () => {
@@ -867,7 +897,7 @@ describe('the Game screen', () => {
     await fireEvent.press(screen.getByTestId(`pairs-definition-${String((definition + 1) % 4)}`));
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
   });
 
   it('starts «За буквами» from its card and plays a whole Game, typing each Word, to the result screen', async () => {
@@ -912,14 +942,14 @@ describe('the Game screen', () => {
     expect(screen.getByLabelText('с, перша літера')).toBeOnTheScreen();
     expect(screen.getByLabelText('л, друга літера')).toBeOnTheScreen();
     expect(screen.getByLabelText('третя літера, порожня')).toBeOnTheScreen();
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 5 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 5 з 5');
 
     await fireEvent.changeText(screen.getByLabelText('Твоя відповідь'), 'слово');
     await fireEvent(screen.getByLabelText('Твоя відповідь'), 'submitEditing');
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(/слово\d+/);
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
   });
 
   it('starts «Анаграми» from its card and plays a whole Game, assembling each Word, to the result screen', async () => {
@@ -961,7 +991,7 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(word, { exact: false });
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
   });
 
   it('starts «Впиши слово» from its card and plays a whole Game, typing each standard form, to the result screen', async () => {
@@ -1013,7 +1043,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
       `Чому ${standard} краще.`,
     );
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
   });
 
   it('starts «Склади вислів» from its card and plays a whole Game, assembling each expression, to the result screen', async () => {
@@ -1068,7 +1098,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(`${words[0] ?? ''}, друге — третє`, {
       exact: false,
     });
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -1123,7 +1153,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(
       `Чому ${standard} краще.`,
     );
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -1172,7 +1202,7 @@ describe('the Game screen', () => {
 
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(meaning, { exact: false });
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -1202,9 +1232,7 @@ describe('the Game screen', () => {
         right ? 'Правильно!' : 'Не цього разу',
       );
       const lives = 3 - mistakes.filter((at) => at <= round).length;
-      expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe(
-        `Життів: ${String(lives)} з 3`,
-      );
+      expect(screen.getByTestId('game-lives')).toHaveTextContent(`Життів: ${String(lives)} з 3`);
       await fireEvent.press(screen.getByTestId('game-next'));
     }
 
@@ -1301,6 +1329,8 @@ describe('the Game screen', () => {
       });
       expect(screen.getByTestId('game-progress')).toHaveTextContent('Пройдено: 0');
       expect(screen.queryByTestId('game-lives')).toBeNull();
+      expect(screen.queryByTestId('game-life-0', { includeHiddenElements: true })).toBeNull();
+      expect(screen.getByRole('header', { name: 'На час' })).toBeOnTheScreen();
       expect(
         screen.getByText(/^Визначення( · |$)/, { includeHiddenElements: true }),
       ).toBeOnTheScreen();
@@ -1452,7 +1482,7 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(language, { exact: false });
     expect(screen.getByTestId('game-sheet-explanation')).toHaveTextContent(`Від test${String(n)}.`);
-    expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+    expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
     expect(warning).toHaveBeenCalled();
   });
 
@@ -1519,23 +1549,23 @@ describe('the Game screen', () => {
   describe('the Mascot (#1386)', () => {
     const { mascot } = edition;
 
-    it('reacts to a right and a wrong answer and to the Game’s end with the Edition’s lines', async () => {
+    it('stays out of the Round, which board 07 draws without it, and meets the Game’s end with the Edition’s line', async () => {
       await open({ corrections: 15 });
       await renderScreen();
       await fireEvent.press(screen.getByTestId('game-mode-survival'));
-      expect(screen.getByTestId('mascot-waits')).toBeTruthy();
+      expect(screen.getByRole('header', { name: 'Виживання' })).toBeOnTheScreen();
+      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
 
       await answerSurvivalRound(true);
-      expect(screen.getByTestId('mascot-gameRight')).toHaveTextContent(mascot.gameRight);
+      expect(screen.queryByTestId(/^mascot-/)).toBeNull();
       await fireEvent.press(screen.getByTestId('game-next'));
-      expect(screen.getByTestId('mascot-waits')).toBeTruthy();
 
       for (let mistake = 1; mistake <= 3; mistake += 1) {
         await waitFor(() => {
           expect(screen.getByTestId('game-prompt')).toBeTruthy();
         });
         await answerSurvivalRound(false);
-        expect(screen.getByTestId('mascot-gameWrong')).toHaveTextContent(mascot.gameWrong);
+        expect(screen.queryByTestId(/^mascot-/)).toBeNull();
         await fireEvent.press(screen.getByTestId('game-next'));
       }
 
