@@ -35,9 +35,9 @@
     "@commitlint/cli": "^21.2.4",
     "@commitlint/config-conventional": "^21.2.4",
     "@slovo/config": "workspace:*",
-    "dependency-cruiser": "^18.7.0",
-    "knip": "^6.42.1",
-    "oxlint": "~1.89.0",
+    "dependency-cruiser": "^18.7.2",
+    "knip": "^6.44.1",
+    "oxlint": "~1.91.0",
     "prettier": "^3.9.10",
     "turbo": "^2.11.10",
     "typescript": "~6.0.3"
