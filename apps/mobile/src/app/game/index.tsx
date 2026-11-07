@@ -2,6 +2,7 @@ import { fill } from '@slovo/contracts';
 import type { GameModeOffer } from '@slovo/core';
 import {
   DailyCrosswordCard,
+  GameEndPoster,
   GameModeCard,
   GameResult,
   GameRound,
@@ -39,7 +40,8 @@ const { game: strings, widget: widgetStrings, settings: settingsStrings } = edit
 
 /**
  * The Game tab: the mode screen, a Round with its answer sheet, or the result
- * screen with its Game Review, as the Core's Game stands, while the Game is on
+ * screen with its Game Review (the end poster while its switch is on, whose
+ * «До ігор» goes back to the mode screen), as the Core's Game stands, while the Game is on
  * in effect. A result that offers the widget hint shows the widget guide in a
  * sheet over it, until the reader closes it. A timed Game's timer ticks, and stops while the app is in the
  * background. The Game stays in the Core composition, so another tab and back,
@@ -59,14 +61,16 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const { gameReview } = useShown();
+  const { gameReview, finishPoster } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
   const [hintClosed, setHintClosed] = useState(false);
   const { current } = state;
   const result = current?.status === 'won' || current?.status === 'lost';
-  const hintShown = result && state.widgetHint && !hintClosed;
+  // The end poster shows no widget hint for now (DESIGN-06).
+  const poster = finishPoster ? current?.end : undefined;
+  const hintShown = result && poster === undefined && state.widgetHint && !hintClosed;
   useWidgetHintShown(hintShown);
 
   const timeLeft = useTimeLeft(current?.time);
@@ -78,6 +82,25 @@ function Game() {
     >
       {current === undefined ? (
         <ModeScreen modes={state.modes} onStart={actions.start} />
+      ) : result && poster !== undefined ? (
+        <GameEndPoster
+          game={current}
+          end={poster}
+          modeName={gameModeStrings(strings.modes, current.modeId).title}
+          bestResult={state.bestResults[current.modeId]}
+          onAgain={() => {
+            actions.start(current.modeId);
+          }}
+          onToGames={actions.leave}
+          onOpenEntry={
+            gameReview
+              ? (entryId) => {
+                  openScreen(`/game/${entryId}`);
+                }
+              : undefined
+          }
+          mascot={<MascotIn state="gameEnd" onRed />}
+        />
       ) : result ? (
         <>
           <GameResult

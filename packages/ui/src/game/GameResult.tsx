@@ -14,14 +14,14 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 /** How far the largest text sizes of iOS may scale the numbers, so they keep beside each other. */
 const NUMBER_MAX_FONT_SCALE = 1.3;
 /** How far they may scale the smaller text, so it never breaks a word. */
-const TEXT_MAX_FONT_SCALE = 1.5;
-const TITLE_TRACKING = typeRoles.resultTitle.letterSpacing / typeRoles.resultTitle.size;
+export const TEXT_MAX_FONT_SCALE = 1.5;
+export const TITLE_TRACKING = typeRoles.resultTitle.letterSpacing / typeRoles.resultTitle.size;
 
 /**
  * The red panel's ground, across the screen's width: the accent cut by its
  * slanted bottom edge, under the halftone raster.
  */
-function PanelGround({ color }: { color: string }) {
+export function PanelGround({ color }: { color: string }) {
   const id = `result${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const { width } = useWindowDimensions();
   const height = resultLayout.panelHeight;
@@ -51,7 +51,7 @@ function PanelGround({ color }: { color: string }) {
 }
 
 /** One number of the result: a tile with the word that names it over the value, read as one. */
-function ResultNumber({
+export function ResultNumber({
   value,
   label,
   spoken,
