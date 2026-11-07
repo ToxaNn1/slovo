@@ -1,0 +1,29 @@
+{
+  "kind": "word",
+  "id": "w_ajcwd6",
+  "lemma": "сарабанда",
+  "stress": [
+    5
+  ],
+  "partOfSpeech": "noun",
+  "gender": "feminine",
+  "primaryDefinition": "Старовинний іспанський танець.",
+  "examples": [
+    {
+      "text": "Він сміється, щоб не заридать, Він плига під звуки сарабанди.",
+      "author": "М. Рильський"
+    }
+  ],
+  "categoryId": "arts-culture",
+  "rarity": 4,
+  "sources": [
+    {
+      "title": "Тлумачний словник української мови в 11-ти томах",
+      "url": "https://goroh.pp.ua/Тлумачення/сарабанда"
+    },
+    {
+      "title": "Горох: словозміна",
+      "url": "https://goroh.pp.ua/Словозміна/сарабанда"
+    }
+  ]
+}
