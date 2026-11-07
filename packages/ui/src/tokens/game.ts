@@ -105,6 +105,26 @@ export const dailyCrosswordCard = {
 } as const;
 
 /**
+ * The crossing Daily Crossword's card on the hub, board 08's three states
+ * (ADR 0087): its padding and the gaps between its parts, its button's
+ * height and side padding, the progress bar's height and slant, and the
+ * solved card's small grid: a cell's side, corner and gap, how faint a block
+ * shows on the ink, and how faint the time line is.
+ */
+export const crosswordDayCard = {
+  padding: 18,
+  gap: 14,
+  lineGap: 6,
+  barGap: 8,
+  button: { height: 46, paddingHorizontal: 18, depth: 4 },
+  bar: { height: 8, skew: '-20deg' },
+  mini: { cell: 22, radius: 5, gap: 3 },
+  solvedGap: 16,
+  blockOpacity: 0.12,
+  resultOpacity: 0.75,
+} as const;
+
+/**
  * The Daily Crossword, from the design: a cell's side and the gap between
  * cells (five of them fit the SE's width with the screen's margins), the
  * selected cell's ink ring, where a word's number sits in its first cell;

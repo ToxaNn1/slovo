@@ -210,6 +210,12 @@ export const typeRoles = {
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The day under the Daily Crossword's name on its red card. */
   crosswordDay: role('ui', '600', 13, 17),
+  /** The crossing Daily Crossword's name and day on its card of the hub (ADR 0087). */
+  crosswordCardTitle: role('word', '800', 16, 18),
+  /** The line under it, its grid size and count of Words, and the solved card's time line. */
+  crosswordCardLine: role('ui', '500', 13, 17),
+  /** The solved card's red mark, «✓ Розв’язано». */
+  crosswordCardMark: role('word', '900', 18, 20),
   /** A letter in a cell of the small grid on the Daily Crossword's red card. */
   crosswordMiniLetter: role('word', '800', 11, 13, 0, 'uppercase'),
   /** The XP earned in all, in its pill beside the Games screen's title. */
