@@ -1,4 +1,7 @@
-import { sentences, type FeedNotice, type FirstWeekDay, type LevelMilestone } from '@slovo/core';
+import {
+  ENOUGH_FOR_TODAY_SEEN,
+  sentences,
+  type FeedNotice, type FirstWeekDay, type LevelMilestone } from '@slovo/core';
 import type { MascotState } from '@slovo/contracts';
 import type { ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -146,20 +149,21 @@ function NotificationMark() {
 }
 
 /**
- * «Може, на сьогодні досить?» after 50 distinct Seen Entries, with «Гортати
- * далі», which turns to the next card as a swipe would, and so closes the
+ * «Може, на сьогодні досить?» after 50 distinct Seen Entries, its board text
+ * under it with those 50 (ADR 0089), and «Гортати далі», which turns to the next card as a swipe would, and so closes the
  * card for the day; it never locks the Feed (ADR 0066).
  */
 export function EnoughForTodayCard() {
   const { strings } = useEdition();
-  const { message, keepGoing } = strings.feedNotices.enoughForToday;
+  const { message, body, keepGoing } = strings.feedNotices.enoughForToday;
   const turnToNext = useTurnToNextPage();
   return (
     <FeedNoticeCard
       notice="enoughForToday"
       tone="sunken"
       mascot="sleeps"
-      message={message}
+      title={message}
+      message={fill(body, { n: String(ENOUGH_FOR_TODAY_SEEN) })}
       action={{ label: keepGoing, onPress: () => turnToNext?.() }}
     />
   );

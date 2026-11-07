@@ -268,7 +268,11 @@ describe('the 0.8.13 strings', () => {
         streak: 'серія',
       },
       yesterday: { title: 'Пам’ятаєш вчорашнє слово?' },
-      enoughForToday: { message: 'Може, на сьогодні досить?', keepGoing: 'Гортати далі' },
+      enoughForToday: {
+        message: 'Може, на сьогодні досить?',
+        body: 'Уже {n} карток позаду. Рідкісні слова краще засвоюються невеликими порціями.',
+        keepGoing: 'Гортати далі',
+      },
       firstWeek: { close: 'Зрозуміло', lastDayTitle: 'Тиждень із нами' },
     });
   });
@@ -954,8 +958,8 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
    * The «ви» forms, as whole words: the pronouns, the plural imperatives
    * («оберіть», «спробуйте», «торкніться», «позначте», «перевірте») and the plural present and future
    * («знаєте», «оберете», «торкнетеся»). Only words that merely end like a verb
-   * («навіть», «відкрите») are not «ви» forms, and the swipe hint sheet keeps the
-   * board's «ви», exactly these texts (ADR 0075, amended by ADR 0077).
+   * («навіть», «відкрите») are not «ви» forms. No text is an exception
+   * (ADR 0075, 0089).
    */
   const vyWord =
     /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте|[бвгґджзклмнпрфхцчшщ]те)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;
@@ -965,16 +969,11 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
       [...text.matchAll(vyWord)].some(([word]) => !notVerbs.has(word.toLowerCase())),
   };
 
-  const boardVy: [string, string][] = [
-    ['knowledge.swipe.hint.title', 'ГОРТАЙТЕ ПАЛЬЦЕМ'],
-    ['knowledge.swipe.hint.rows.next.body', 'Нове слово тільки коли ви готові.'],
-  ];
-
-  it('has no «ви» form in its UI strings but the swipe hint sheet', () => {
+  it('has no «ви» form in its UI strings', () => {
     const texts = textsOf(readJson('uk', 'strings'), '');
 
     expect(texts.length).toBeGreaterThan(100);
-    expect(texts.filter(([, text]) => vy.test(text))).toEqual(boardVy);
+    expect(texts.filter(([, text]) => vy.test(text))).toEqual([]);
   });
 
   it('has no «ви» form in what the Mascot says', () => {

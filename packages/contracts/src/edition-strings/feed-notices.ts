@@ -42,6 +42,8 @@ export const FeedNoticesStringsSchema = z.strictObject({
   /** «Може, на сьогодні досить?», after 50 distinct Seen Entries on a local day. */
   enoughForToday: z.strictObject({
     message: TextSchema,
+    /** Under the question. Takes `{n}`, the 50 cards Seen that brought it. */
+    body: templateOf('n'),
     /** Hides the card until tomorrow. */
     keepGoing: TextSchema,
   }),
