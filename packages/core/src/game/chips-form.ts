@@ -70,15 +70,18 @@ export const chipsMatch = (chips: readonly string[], right: readonly string[]): 
   chips.every((chip, place) => chip.toLowerCase() === right[place]?.toLowerCase());
 
 /**
- * The chips of a shuffle, never in the right order: when the shuffle left
- * them so, they move one place on, which leaves chips of at least two
- * different texts out of order.
+ * The chips of a shuffle, never starting in the right order: when the
+ * shuffle left the first chips, as many as the answer has, so, every chip
+ * moves one place on, which leaves chips of at least two different texts out
+ * of order. Decoys after the answer's chips count as chips too.
  */
 export const outOfOrder = (
   right: readonly string[],
   chips: readonly string[],
 ): readonly string[] =>
-  chipsMatch(chips, right) ? [...chips.slice(1), ...chips.slice(0, 1)] : chips;
+  chipsMatch(chips.slice(0, right.length), right)
+    ? [...chips.slice(1), ...chips.slice(0, 1)]
+    : chips;
 
 /** Whether every chip of the answer is drawn from the chips, each chip at most once. */
 const drawnFrom = (chips: readonly string[], expected: readonly string[]): boolean => {

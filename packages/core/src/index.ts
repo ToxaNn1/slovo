@@ -226,7 +226,7 @@ export { createContentUpdate, type ContentUpdate } from './content-update/conten
 export type { PackFiles, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
 export type { XpAction, XpAward } from './game/game-xp';
-export type { XpLog, XpLogState } from './progress/xp-log';
+export type { CrosswordSolve, XpLog, XpLogState } from './progress/xp-log';
 export type { BadgeProgress, BadgeState, Badges } from './progress/badges';
 export type { BreakState, StreakBreak } from './progress/streak-break';
 export {
