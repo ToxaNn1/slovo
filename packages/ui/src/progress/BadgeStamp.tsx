@@ -67,7 +67,7 @@ export function BadgeStamp({
   symbol: string;
   name: string;
   /** The line over the mark; left out, none. */
-  kicker?: string;
+  kicker?: string | undefined;
   line: string;
   /** The ink ribbon over the button; left out, none. */
   ribbon?: string;
