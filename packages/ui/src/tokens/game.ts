@@ -30,8 +30,11 @@ export const resultLayout = {
 /** The mark that leads a Round of the Game Review: a square with ✓ or ✗. */
 export const reviewMark = { side: 28, radius: 8 } as const;
 
-/** The Round's progress (design `SlovoApp`): a skewed segment per Round. */
-export const roundProgress = { height: 8, gap: 4, skew: '-20deg' } as const;
+/**
+ * The Round's progress (board 07): 10 skewed segments under the header's
+ * row, filled as the Rounds pass towards the mode's Round limit.
+ */
+export const roundProgress = { height: 6, gap: 4, skew: '-20deg', segments: 10 } as const;
 
 /**
  * Gaps and paddings of the Game's Round off the 4-pt grid, from the design:
@@ -53,18 +56,21 @@ export const roundLayout = {
 } as const;
 
 /**
- * The Round's header, from the design: a Life's shield and the gap between
- * Lives, the ✕'s glyph (its touch target is `minTouchTarget`) and the
- * corners of its sunken square; a lost Life jumps to `lostPop` (the design's
- * `slLifeOut`) as its «−1» rises `lostMarkRise` (`slXp`).
+ * The Round's header (board 07): the gap between its row and the bar and
+ * label under it, between the row's parts and between Lives; a Life's flag;
+ * the ✕'s 40-pt sunken square, its corners and glyph; the pop of a Life as
+ * it is lost (`slPop`: its scale at the start, at 60 % and the end, and how
+ * long it takes).
  */
 export const roundHeader = {
-  life: { width: 18, height: 20 },
-  lifeGap: 5,
-  exitGlyph: 16,
-  exitRadius: 14,
-  lostPop: { scale: 1.6, rotate: -25 },
-  lostMarkRise: 80,
+  gap: 14,
+  rowGap: 12,
+  lifeGap: 4,
+  life: { width: 16, height: 22 },
+  exit: 40,
+  exitRadius: 12,
+  exitGlyph: 14,
+  lostPop: { from: 0.6, peak: 1.12, duration: 400 },
 } as const;
 
 /**
