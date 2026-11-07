@@ -5,6 +5,9 @@ import {
   TracedCrosswordGrid,
   BackHeader,
   Button,
+  CrosswordSolvedPoster,
+  UndoToastProvider,
+  useUndoToast,
   space,
   typeStyle,
   useEdition,
@@ -12,10 +15,13 @@ import {
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { logError } from '@/diagnostics/log';
 import { editionStrings } from '@/edition/edition';
+import { useEditionInEffect } from '@/edition/remote-switches';
+import { crosswordShare } from '@/game/crossword-share';
 import { useCrossingCrossword, type CrossingCrosswordPlay } from '@/game/crossing-crossword';
 import {
   tracedCrosswordTexts,
@@ -23,6 +29,7 @@ import {
   useTracedCrossword,
   type TracedCrosswordPlay,
 } from '@/game/traced-crossword';
+import { MascotAs } from '@/mascot/mascot';
 import { ShareCardSheet } from '@/share/share-card-sheet';
 import { useShell } from '@/shell-value';
 import { useShown } from '@/shown-in-effect';
@@ -195,16 +202,30 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
   const accessibleMode = useScreenReader();
   const { solved, miss } = crossword;
   const texts = strings.dailyCrossword;
+  const edition = useEditionInEffect();
+  const solvedScreen = edition.isFeatureEnabled('crosswordSolvedScreen');
+  const solvedText = solvedScreen ? texts.solvedScreen.title : texts.solved;
 
   useEffect(() => {
     if (!solved) return;
-    AccessibilityInfo.announceForAccessibility(texts.solved);
-  }, [solved, texts.solved]);
+    AccessibilityInfo.announceForAccessibility(solvedText);
+  }, [solved, solvedText]);
 
   useEffect(() => {
     if (miss === undefined) return;
     AccessibilityInfo.announceForAccessibility(texts.miss);
   }, [miss, texts.miss]);
+
+  if (solved && solvedScreen) {
+    return (
+      <UndoToastProvider>
+        <CrossingCrosswordSolved
+          crossword={crossword}
+          withTime={edition.isFeatureEnabled('crosswordSolveTime')}
+        />
+      </UndoToastProvider>
+    );
+  }
 
   return (
     <CrosswordFrame
@@ -272,6 +293,54 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
         )}
       </ScrollView>
     </CrosswordFrame>
+  );
+}
+
+/**
+ * The solved screen of the crossing Daily Crossword (ADR 0087): «Розгадано!»
+ * with the Solve time and the Mascot celebrating, the grid with no letter and
+ * the share line. «Поділитися» opens the share sheet with the share line and
+ * the grid in squares, then says «Скопійовано. Жодної літери — тільки клини.»;
+ * «До ігор» goes to the Games hub.
+ */
+function CrossingCrosswordSolved({
+  crossword,
+  withTime,
+}: {
+  crossword: CrossingCrosswordPlay;
+  withTime: boolean;
+}) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const toast = useUndoToast();
+  const texts = strings.dailyCrossword;
+  const share = crosswordShare(crossword, texts, withTime);
+  return (
+    <View
+      testID="daily-crossword-screen"
+      style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+    >
+      <CrosswordSolvedPoster
+        time={share.time}
+        grid={share.grid}
+        share={share}
+        onShare={() => {
+          Share.share({ message: share.message }).then(
+            ({ action }) => {
+              if (action === Share.sharedAction)
+                toast({ message: texts.share.copied, brief: true });
+            },
+            (error: unknown) => {
+              logError('Could not share the Daily Crossword', error);
+            },
+          );
+        }}
+        onToGames={() => {
+          router.dismissTo('/game');
+        }}
+        mascot={<MascotAs state="celebrates" onRed />}
+      />
+    </View>
   );
 }
 
