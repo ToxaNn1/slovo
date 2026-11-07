@@ -40,10 +40,9 @@ export const roundProgress = { height: 6, gap: 4, skew: '-20deg', segments: 10 }
  * Gaps and paddings of the Game's Round off the 4-pt grid, from the design:
  * between the options and between the header's parts, a tight one (the
  * progress label over its bar, «Далі» under the sheet), the sheet's own and
- * the vertical padding and least height of the Round's card; the most of
- * the Round's head the Mascot and its line take, so the label keeps room for
- * its whole words; and how far the largest text sizes of iOS may scale the
- * Round's smaller text, so it never breaks a word.
+ * the vertical padding and least height of the Round's card; and how far
+ * the largest text sizes of iOS may scale the Round's smaller text, so it
+ * never breaks a word.
  */
 export const roundLayout = {
   gap: 10,
@@ -51,7 +50,6 @@ export const roundLayout = {
   sheetGap: 14,
   cardPaddingVertical: 30,
   cardMinHeight: 220,
-  mascotShare: '40%',
   textMaxFontScale: 1.5,
 } as const;
 

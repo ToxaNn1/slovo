@@ -793,7 +793,9 @@ describe('the Game screen', () => {
       expect(screen.getByRole('header', { name: 'Вгадай слово · 1/15' })).toBeOnTheScreen();
     });
     expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 5 з 5');
-    expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(5);
+    expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(
+      5,
+    );
 
     const prompt = String(screen.getByTestId('game-prompt').props['accessibilityLabel']);
     const n = /\d+/.exec(prompt)?.[0] ?? '';
@@ -804,7 +806,9 @@ describe('the Game screen', () => {
     await fireEvent.press(wrong);
 
     expect(screen.getByTestId('game-lives')).toHaveTextContent('Життів: 4 з 5');
-    expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(5);
+    expect(screen.getAllByTestId(/^game-life-\d+$/, { includeHiddenElements: true })).toHaveLength(
+      5,
+    );
     await fireEvent.press(screen.getByTestId('game-next'));
     await waitFor(() => {
       expect(screen.getByRole('header', { name: 'Вгадай слово · 2/15' })).toBeOnTheScreen();
@@ -1190,8 +1194,7 @@ describe('the Game screen', () => {
         right ? 'Правильно!' : 'Не цього разу',
       );
       const lives = 3 - mistakes.filter((at) => at <= round).length;
-      expect(screen.getByTestId('game-lives')).toHaveTextContent(`Життів: ${String(lives)} з 3`,
-      );
+      expect(screen.getByTestId('game-lives')).toHaveTextContent(`Життів: ${String(lives)} з 3`);
       await fireEvent.press(screen.getByTestId('game-next'));
     }
 

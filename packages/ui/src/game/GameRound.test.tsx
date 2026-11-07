@@ -495,7 +495,14 @@ describe('GameRound', () => {
       ...first,
       round: { ...first.round, number: 7 },
       roundsPassed: 6,
-      played: [played(true), played(false), played(true), played(true), played(false), played(true)],
+      played: [
+        played(true),
+        played(false),
+        played(true),
+        played(true),
+        played(false),
+        played(true),
+      ],
     });
     const fillOf = (place: number): unknown => {
       const style: unknown = screen.getByTestId(`game-progress-${String(place)}`).props['style'];
