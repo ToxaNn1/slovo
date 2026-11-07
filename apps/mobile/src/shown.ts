@@ -20,6 +20,8 @@ export interface Shown {
   readonly gameReview: boolean;
   /** The end poster of a Game, «Фініш» or «Час!» or the Lives-over one, in place of the old result screen (spec #1674). */
   readonly finishPoster: boolean;
+  /** The inline answer card under a Round's options in place of the bottom sheet (spec #1674). */
+  readonly answerCard: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
   readonly entryButtons: {
     /** The Share Card button of the action row. */
@@ -161,6 +163,7 @@ export function shownOf({
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
     finishPoster: on('finishPoster'),
+    answerCard: on('gameAnswerCard'),
     entryButtons: {
       shareCard: on('shareCards'),
       pronunciation: on('pronunciation'),

@@ -58,7 +58,7 @@ function Game() {
   const actions = useGameActions();
   const router = useRouter();
   const openScreen = useOpenScreen();
-  const { gameReview, finishPoster } = useShown();
+  const { gameReview, finishPoster, answerCard } = useShown();
   const { colors } = useTokens();
   usePauseInBackground();
   /** Whether the reader closed the widget hint, which is offered once ever. */
@@ -142,6 +142,7 @@ function Game() {
           onNext={actions.next}
           onLeave={actions.leave}
           onOpenLetter={actions.openLetter}
+          feedback={answerCard ? 'card' : 'sheet'}
         />
       )}
     </SafeAreaView>

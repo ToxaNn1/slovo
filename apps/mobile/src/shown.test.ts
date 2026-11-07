@@ -16,6 +16,7 @@ const everything: Shown = {
   tabs: ['home', 'game', 'saved', 'settings'],
   gameReview: true,
   finishPoster: true,
+  answerCard: true,
   entryButtons: {
     shareCard: true,
     pronunciation: true,
@@ -131,6 +132,10 @@ describe('what the reader is shown', () => {
     [
       'the old result screen with the end poster off',
       { off: ['finishPoster'], shown: { finishPoster: false } },
+    ],
+    [
+      'the answer sheet with the answer card off',
+      { off: ['gameAnswerCard'], shown: { answerCard: false } },
     ],
     [
       'no Daily Goal choice with the Daily Goal off',
