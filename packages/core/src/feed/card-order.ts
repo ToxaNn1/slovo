@@ -99,8 +99,9 @@ export function nextEntryId({
   const inCycle = session.cycleCards.filter(takesTurns);
   /** Whether the next card is the turn of the kind that comes every `every`th card. */
   function turnOf(kind: FeedCard['kind'], every: number): boolean {
-    const since = [...inCycle].reverse().findIndex((card) => card.kind === kind);
-    return (since === -1 ? inCycle.length : since) >= every - 1;
+    // The cards since the kind's last card, or all of them before its first.
+    const since = inCycle.length - 1 - inCycle.findLastIndex((card) => card.kind === kind);
+    return since >= every - 1;
   }
   const turns = TURNS.filter(({ kind, every }) => turnOf(kind, SPACING[weights[kind]](every)));
   // The kinds in the order the next card goes to them: the turns first, then Words.
@@ -135,11 +136,13 @@ export function nextEntryId({
  */
 function reviewEntryId(due: readonly string[], cards: readonly OrderedCard[]): string | undefined {
   const last = cards.findLast(takesTurns)?.entryId;
+  const candidates = due.filter((id) => id !== last);
+  // Nothing due is the common case: reading the whole session for it would
+  // make every card cost as much as all the cards before it.
+  if (candidates.length === 0) return undefined;
   // Each Entry's last place in the session.
   const shownAt = new Map(cards.map((card, place) => [card.entryId, place]));
-  return due
-    .filter((id) => id !== last)
-    .sort((a, b) => (shownAt.get(a) ?? -1) - (shownAt.get(b) ?? -1))[0];
+  return candidates.sort((a, b) => (shownAt.get(a) ?? -1) - (shownAt.get(b) ?? -1))[0];
 }
 
 /**
