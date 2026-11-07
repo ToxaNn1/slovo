@@ -26,14 +26,18 @@ import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support
 
 const { config } = activeEditionFiles;
 
-/** The UA Edition with the given Feature Switches turned off. */
-function editionWithout(switchedOff: readonly string[]): Edition {
+/** The UA Edition with the given Feature Switches turned off, and on. */
+function editionSwitched(
+  switchedOff: readonly string[],
+  switchedOn: readonly string[] = [],
+): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
   return loadEdition({
     ...rest,
     featureSwitches: {
       ...featureSwitches,
       ...Object.fromEntries(switchedOff.map((name) => [name, false])),
+      ...Object.fromEntries(switchedOn.map((name) => [name, true])),
     },
   });
 }
@@ -216,6 +220,7 @@ async function open({
   idioms = 0,
   origins = 0,
   switchedOff = [],
+  switchedOn = [],
   crossword,
   clock = { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
   schedule,
@@ -229,13 +234,14 @@ async function open({
   anglicisms?: number;
   idioms?: number;
   switchedOff?: readonly string[];
+  switchedOn?: readonly string[];
   crossword?: { date: string; letters: Record<string, string> };
   /** The clock the Core reads; a stopped one on the morning of 26 October by default. */
   clock?: Clock;
   /** What the Core runs something later by; nothing by default. */
   schedule?: Schedule;
 } = {}) {
-  editionInEffect = editionWithout(switchedOff);
+  editionInEffect = editionSwitched(switchedOff, switchedOn);
   const xpLog = Object.fromEntries(
     xp.map(({ date, amount }, index): [string, XpRecord] => [
       `seeded-${String(index)}`,
@@ -912,6 +918,40 @@ describe('the Game screen', () => {
     expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Не цього разу');
     expect(screen.getByTestId('game-sheet')).toHaveTextContent(/слово\d+/);
     expect(screen.getByTestId('game-lives').props['accessibilityLabel']).toBe('Життів: 4 з 5');
+  });
+
+  it('plays «За буквами» as letter tiles in rows of 4 with letterTiles on, no text field', async () => {
+    await open({ switchedOn: ['letterTiles'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
+    await waitFor(() => {
+      expect(screen.getByTestId('chips')).toBeOnTheScreen();
+    });
+    const word = theWordOfThePrompt();
+    const tiles = screen.getAllByTestId(/^chips-\d+$/);
+    expect(tiles.length).toBe(Math.max(8, Math.ceil(word.length / 4) * 4));
+    for (const row of screen.getAllByTestId(/^chips-row-\d+$/)) {
+      expect(within(row).getAllByRole('button')).toHaveLength(4);
+    }
+    expect(screen.queryByLabelText('Твоя відповідь')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Відкрити літеру' })).toBeNull();
+
+    await assemble(word);
+
+    expect(screen.getByTestId('game-sheet-title')).toHaveTextContent('Правильно!');
+  });
+
+  it('keeps the text field of «За буквами» with letterTiles off', async () => {
+    await open({ switchedOff: ['letterTiles'] });
+    await renderScreen();
+
+    await fireEvent.press(screen.getByTestId('game-mode-by-letters'));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Твоя відповідь')).toBeOnTheScreen();
+    });
+    expect(screen.queryByTestId('chips')).toBeNull();
   });
 
   it('starts «Анаграми» from its card and plays a whole Game, assembling each Word, to the result screen', async () => {
