@@ -50,3 +50,13 @@ export {
   type SignedIn,
   type UserRecords,
 } from './ports';
+export {
+  createAdminAccess,
+  type Action,
+  type ActionEntry,
+  type Actor,
+  type AddAgentResult,
+  type AdminAccess,
+  type AdminRole,
+  type AdminStore,
+} from './admin/admin-access';

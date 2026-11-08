@@ -37,4 +37,16 @@ pnpm build:pack uk
 DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm publish:pack uk
 ```
 
-A variable in the environment wins over the same one in `apps/backend/.env`, so the local `.env` stays pointed at the local Postgres. The other operator commands (`pnpm switch:off`, `pnpm reports`, `pnpm collection-links`) reach the Deployment the same way.
+A variable in the environment wins over the same one in `apps/backend/.env`, so the local `.env` stays pointed at the local Postgres. The other operator commands (`pnpm switch:off`, `pnpm reports`, `pnpm collection-links`, `pnpm admin`) reach the Deployment the same way.
+
+## The owner admin's people and Агент tokens
+
+The admin and its API (`/v1/admin`) answer 404 until a Власник exists (ADR 0088). The server commands add the first one and issue or revoke the token of a coding agent; each logs itself in the Action log:
+
+```sh
+DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin owner add <email>
+DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin agent add <name>
+DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin agent revoke <name>
+```
+
+`agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. Until the admin's sign-in replaces it, `OWNER_EMAIL` still names who signs in to the old pages at `/admin`.
