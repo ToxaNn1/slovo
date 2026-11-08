@@ -461,7 +461,7 @@ export const FeatureSwitchesSchema = z.strictObject({
   curatedCollections: z.boolean(),
   /** Swipe marks: the reader swipes an Entry card right for Known and left for Unknown, with an undo; off, the card's mark buttons stay. Off while `knowledge` is. */
   swipeMarks: z.boolean(),
-  /** Word tabs: every Entry card in a fixed-height frame (ADR 0088), the Word of the Day's once it is open, with tabs under its head: a Word's «Суть», «Приклад», «Зв’язки» and «Історія», a Correction's «Як краще», «Чому» and «Приклади», an Idiom's «Суть», «Звідки» and «Приклад», a Tip's «Суть» and «Приклад»; a Synonym Row's in the same frame. Content too tall for the frame shrinks a font size at a time, then scrolls. The Word of the Day card is the red card while Self-check keeps it closed; the Feed's header draws no XP bar. Off, the cards are one column, the Word's with «Детальніше». */
+  /** Word tabs: every Entry card in a fixed-height frame (ADR 0088), the Word of the Day's once it is open, with tabs under its head: a Word's «Суть», «Приклад», «Зв’язки» and «Історія», a Correction's «Як краще», «Чому» and «Приклади», an Idiom's «Суть», «Звідки» and «Приклад», a Tip's «Суть» and «Приклад»; a Synonym Row's in the same frame. Content too tall for the frame shrinks a font size at a time, then is clamped under «Детальніше», which opens it whole. The Word of the Day card is the red card while Self-check keeps it closed; the Feed's header draws no XP bar. Off, the cards are one column, the Word's with «Детальніше». */
   wordTabs: z.boolean(),
   /** The Search button of the Feed's header, which opens the Search screen; Search itself stays under `search`. Off while `search` is. */
   searchButton: z.boolean(),

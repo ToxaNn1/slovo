@@ -272,6 +272,32 @@ describe('the Entry screen of a Word', () => {
   });
 });
 
+describe('a tab too long for the Entry screen', () => {
+  it("is clamped under «Детальніше», which opens it whole in the screen's scroll (ADR 0088)", async () => {
+    await renderEntry('w_sumyrnyi');
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    await settle();
+    await fireEvent(screen.getByTestId('word-tab-panel'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 10 } },
+    });
+    for (let size = 0; size < 4 && screen.queryByTestId('word-tab-more') === null; size++) {
+      await fireEvent(screen.getByTestId('word-tab-content'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 900 } },
+      });
+      await settle();
+    }
+
+    expect(
+      within(screen.getByTestId('entry-scroll')).getByTestId('word-tab-more'),
+    ).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('word-tab-more'));
+    await settle();
+
+    expect(screen.queryByTestId('word-tab-more')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('word-history')).toBeOnTheScreen();
+  });
+});
+
 describe('the Entry screen and the side swipes (ADR 0077)', () => {
   afterEach(() => {
     swipeMarksOn = false;

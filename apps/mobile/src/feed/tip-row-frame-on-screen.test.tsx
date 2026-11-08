@@ -276,6 +276,29 @@ describe('the Tip card in the fixed frame', () => {
     expect(card.getByText('Час не рахують, а питають, котра година.', hidden)).toBeTruthy();
   });
 
+  it('clamps a Tip too long for the frame under «Детальніше», which opens it whole (owner 08.11)', async () => {
+    await open({ tips: [tip] });
+    await renderApp();
+    const card = await cardOf('tip');
+    const layout = async (testID: string, height: number) => {
+      await fireEvent(card.getByTestId(testID, hidden), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height } },
+      });
+      await settle();
+    };
+    await layout('tip-tab-panel', 120);
+    for (let size = 0; size < 4 && card.queryByTestId('tip-tab-more', hidden) === null; size++)
+      await layout('tip-tab-content', 900);
+
+    expect(card.getByTestId('tip-tab-more', hidden)).toHaveTextContent(
+      editionStrings.wordCard.tabMore,
+    );
+    await settle(() => fireEvent.press(card.getByTestId('tip-tab-more', hidden)));
+
+    expect(card.queryByTestId('tip-tab-more', hidden)).toBeNull();
+    expect(card.getByText('Час не рахують, а питають, котра година.', hidden)).toBeTruthy();
+  });
+
   it("keeps today's card with its Example in one column with `wordTabs` off", async () => {
     await open({ tips: [tip] }, false);
     await renderApp();

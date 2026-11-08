@@ -46,6 +46,8 @@ export const WordCardStringsSchema = z.strictObject({
   etymology: TextSchema,
   extraDefinitions: TextSchema,
   moreExamples: TextSchema,
+  /** The button under a tab too long for its card's frame, on every kind of card, which opens the rest of the tab (ADR 0088). */
+  tabMore: TextSchema,
   /** The names of the Word card's tabs (ADR 0088). */
   tabs: z.strictObject({
     essence: TextSchema,
