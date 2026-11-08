@@ -32,7 +32,7 @@ export const FiltersSchema = z.object({
 });
 
 /** The longest period Якість reads: Sentry keeps 30 days. */
-export const QUALITY_MAX_DAYS = 30;
+const QUALITY_MAX_DAYS = 30;
 
 /** The hint of a period Якість cuts. */
 export const QUALITY_CAP_HINT = 'Sentry зберігає дані 30 днів';

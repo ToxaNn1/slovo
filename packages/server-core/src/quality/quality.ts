@@ -6,7 +6,7 @@ export const SENTRY_RETENTION_DAYS = 30;
 /** How long a Sentry number stays fresh before Якість reads it again. */
 const FRESH_MS = 5 * 60 * 1000;
 
-export const SENTRY_READS: readonly SentryRead[] = [
+const SENTRY_READS: readonly SentryRead[] = [
   'crashFree',
   'crashes',
   'errors',
