@@ -79,17 +79,16 @@ console.log(`
 const vite = spawn(
   'pnpm',
   [
-    'exec',
+    '--filter',
+    '@slovo/admin',
     'vite',
-    '--configLoader',
-    'runner',
     '--port',
     String(adminPort),
     '--strictPort',
     ...(mock ? ['--mode', 'mock'] : []),
   ],
   {
-    cwd: `${root}/apps/admin`,
+    cwd: root,
     stdio: 'inherit',
     env: mock ? process.env : { ...process.env, SLOVO_ADMIN_API_URL: apiUrl },
   },

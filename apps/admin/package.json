@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "node ../../scripts/dev-admin.mjs",
+    "vite": "vite --configLoader runner",
     "build": "vite build --configLoader runner",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",

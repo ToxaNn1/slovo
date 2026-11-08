@@ -25,5 +25,3 @@ export const FiltersSchema = z.object({
   edition: EditionIdSchema.optional().catch(undefined),
   period: z.enum(PERIODS).optional().catch(undefined),
 });
-
-export type Filters = z.infer<typeof FiltersSchema>;
