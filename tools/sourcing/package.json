@@ -19,16 +19,16 @@
   "dependencies": {
     "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
-    "node-html-parser": "^9.0.5",
+    "node-html-parser": "^9.0.6",
     "zod": "^4.6.7"
   },
   "devDependencies": {
     "@slovo/config": "workspace:*",
     "@types/node": "^22.20.5",
-    "@vitest/coverage-v8": "5.0.5",
-    "eslint": "^10.13.0",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "^10.14.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }
