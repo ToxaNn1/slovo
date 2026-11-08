@@ -1,6 +1,7 @@
 import {
   FeatureSwitchesSchema,
   type Correction,
+  type FeatureSwitches,
   type Idiom,
   type LanguageTraits,
   type SynonymRow,
@@ -17,6 +18,7 @@ import {
 import type { PlayedRound, Round, RoundAnswer } from './game/game';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
+import type { ReaderFacts } from './edition/remote-switches';
 import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } from './ports';
 import { openEligibility } from './mix/open-eligibility';
 import { createSubject } from './subject';
@@ -439,3 +441,24 @@ export async function openLiveEntries({
   });
   return { entries, mix, rarityCeiling, hiddenEntries };
 }
+
+/** The Feature Switch states of an Edition: on where it turns a feature on, else off. */
+export function switchStatesOf(edition: Pick<Edition, 'isFeatureEnabled'>): FeatureSwitches {
+  return FeatureSwitchesSchema.parse(
+    Object.fromEntries(
+      FeatureSwitchesSchema.keyof().options.map((feature) => [
+        feature,
+        edition.isFeatureEnabled(feature) ? 'on' : 'off',
+      ]),
+    ),
+  );
+}
+
+/** A reader of 1.0.0 on iOS, signed out, with no region: one no targeted Rule matches. */
+export const readerFacts = (): ReaderFacts => ({
+  appVersion: '1.0.0',
+  platform: 'ios',
+  region: undefined,
+  signedIn: false,
+  installId: 'i',
+});

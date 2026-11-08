@@ -185,7 +185,7 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
     subscribe: subscribers.subscribe,
     ask,
     start() {
-      let cancel = () => {};
+      let cancel: () => void = () => undefined;
       const next = () => {
         cancel = schedule(() => {
           void ask().then((changed) => {
@@ -195,7 +195,9 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
         }, SWITCHES_REFRESH_MS);
       };
       next();
-      return () => cancel();
+      return () => {
+        cancel();
+      };
     },
   };
 }
