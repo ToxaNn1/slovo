@@ -1,5 +1,9 @@
 import { createORPCClient } from '@orpc/client';
-import type { ContractRouterClient, InferContractRouterOutputs } from '@orpc/contract';
+import type {
+  ContractRouterClient,
+  InferContractRouterInputs,
+  InferContractRouterOutputs,
+} from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 
@@ -49,3 +53,4 @@ export function createAdminApiClient(url: string): AdminApiClient {
 
 /** What each admin API procedure answers, by procedure name. */
 export type AdminApiOutputs = InferContractRouterOutputs<typeof adminApiContract>;
+export type AdminApiInputs = InferContractRouterInputs<typeof adminApiContract>;
