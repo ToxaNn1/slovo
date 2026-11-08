@@ -1,0 +1,47 @@
+{
+  "name": "@slovo/admin",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The owner admin: a Vite app served built by the backend at /admin, talking to it over HTTP through the contracts' admin API (ADR 0088).",
+  "type": "module",
+  "scripts": {
+    "dev": "node ../../scripts/dev-admin.mjs",
+    "build": "vite build",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fontsource-variable/onest": "5.3.1",
+    "@fontsource-variable/unbounded": "5.3.0",
+    "@slovo/contracts": "workspace:*",
+    "@tanstack/react-query": "^5.107.1",
+    "@tanstack/react-router": "^1.170.46",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "tailwind-merge": "^3.7.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@slovo/config": "workspace:*",
+    "@tailwindcss/vite": "4.3.3",
+    "@tanstack/router-plugin": "^1.168.48",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/node": "^22.20.5",
+    "@types/react": "~19.3.0",
+    "@types/react-dom": "~19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "@vitest/coverage-v8": "5.0.5",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "jsdom": "26.1.0",
+    "msw": "^3.0.4",
+    "tailwindcss": "4.3.3",
+    "typescript": "~6.0.3",
+    "vite": "8.3.5",
+    "vitest": "^5.0.5"
+  }
+}
