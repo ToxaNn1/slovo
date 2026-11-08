@@ -8,6 +8,7 @@ import {
   actionLog,
   contentBatches,
   contentCorrections,
+  contentCrosswordDays,
   contentCuratedCollections,
   contentIdioms,
   contentSynonymRows,
@@ -25,6 +26,7 @@ const TABLES = {
   synonymRow: contentSynonymRows,
   tip: contentTips,
   curatedCollection: contentCuratedCollections,
+  crosswordDay: contentCrosswordDays,
 } as const satisfies Record<RecordKind, unknown>;
 
 const RecordKindSchema = z.enum([
@@ -34,6 +36,7 @@ const RecordKindSchema = z.enum([
   'synonymRow',
   'tip',
   'curatedCollection',
+  'crosswordDay',
 ]);
 
 /** A content write's Action log row, as `content-writes` keeps it. */
@@ -46,7 +49,8 @@ const WriteWhatSchema = z.templateLiteral([
 const FlagWhatSchema = z.templateLiteral(['content.', RecordKindSchema, '.flag']);
 const StoredSchema = z.object({
   recordVersion: z.number().int(),
-  fields: z.looseObject({ id: z.string() }),
+  // A Crossword day's id is its date.
+  fields: z.looseObject({ id: z.string().optional(), date: z.string().optional() }),
 });
 const FlagAfterSchema = z.object({ id: z.string() });
 const ResolvedSchema = z.object({ flagId: z.number().int() });
@@ -95,7 +99,8 @@ export function createContentQueue({ database, clock }: { database: Database; cl
       const what = WriteWhatSchema.safeParse(row.what);
       if (!what.success || row.batchId === null) continue;
       const kind = kindOf(what.data);
-      const { id } = StoredSchema.parse(row.after).fields;
+      const { fields } = StoredSchema.parse(row.after);
+      const id = fields.id ?? fields.date ?? '';
       const key = `${row.batchId} ${kind} ${id}`;
       if (first.has(key)) continue;
       const op = z.enum(['create', 'edit', 'retire']).parse(what.data.split('.')[2]);
@@ -223,7 +228,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
         const { record } = parsed;
         const where = and(eq(table.editionId, editionId), eq(table.id, write.id));
         const set = {
-          retired: 'retired' in record.entry && record.entry.retired,
+          retired: 'retired' in record.entry && record.entry.retired === true,
           recordVersion: current.recordVersion + 1,
           contentVersion: published,
           changedBy,
@@ -275,6 +280,12 @@ export function createContentQueue({ database, clock }: { database: Database; cl
           case 'curatedCollection':
             await tx
               .update(contentCuratedCollections)
+              .set({ ...set, fields: record.entry })
+              .where(where);
+            break;
+          case 'crosswordDay':
+            await tx
+              .update(contentCrosswordDays)
               .set({ ...set, fields: record.entry })
               .where(where);
             break;

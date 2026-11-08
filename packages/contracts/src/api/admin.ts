@@ -221,6 +221,7 @@ export const ContentRecordKindSchema = z.enum([
   'synonymRow',
   'tip',
   'curatedCollection',
+  'crosswordDay',
 ]);
 
 /** What every content procedure can be refused with. */
@@ -264,7 +265,7 @@ const recordPath = '/admin/content/{editionId}/records/{kind}';
 /** A record as the content editor lists it. */
 export const ContentRecordSummarySchema = z.object({
   id: z.string(),
-  /** The lemma, expression, form, title or name the record is known by. */
+  /** The lemma, expression, form, title, name or date the record is known by. */
   label: z.string(),
   retired: z.boolean(),
   recordVersion: z.number().int().positive(),

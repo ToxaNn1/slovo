@@ -1,11 +1,13 @@
 import {
   CorrectionSchema,
+  CrosswordDaySchema,
   CuratedCollectionSchema,
   IdiomSchema,
   SynonymRowSchema,
   TipSchema,
   WordSchema,
   type Correction,
+  type CrosswordDay,
   type CuratedCollection,
   type Idiom,
   type SynonymRow,
@@ -23,9 +25,14 @@ export type AuthoredRecord =
   | ({ readonly kind: 'idiom' } & Authored<Idiom>)
   | ({ readonly kind: 'synonymRow' } & Authored<SynonymRow>)
   | ({ readonly kind: 'tip' } & Authored<Tip>)
-  | ({ readonly kind: 'curatedCollection' } & Authored<CuratedCollection>);
+  | ({ readonly kind: 'curatedCollection' } & Authored<CuratedCollection>)
+  | { readonly kind: 'crosswordDay'; readonly file: string; readonly entry: CrosswordDay };
 
 export type RecordKind = AuthoredRecord['kind'];
+
+/** A record's id: a Crossword day's is its date. */
+export const recordIdOf = (record: AuthoredRecord): string =>
+  record.kind === 'crosswordDay' ? record.entry.date : record.entry.id;
 
 /**
  * Parses outside JSON as a record of its kind, where it enters: from an
@@ -62,6 +69,15 @@ export function parseRecord(
         file,
         entry,
       }));
+    case 'crosswordDay':
+      return recordOf(
+        parseAgainst(CrosswordDaySchema, file, json, { isEntry: false }),
+        (entry) => ({
+          kind,
+          file,
+          entry,
+        }),
+      );
   }
 }
 

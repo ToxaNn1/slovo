@@ -3,6 +3,7 @@ import {
   contentSetOf,
   parseRecord,
   recordFileOf,
+  recordIdOf,
   type AuthoredRecord,
   type RecordKind,
   type Refusal,
@@ -17,6 +18,7 @@ import {
   actionLog,
   contentBatches,
   contentCorrections,
+  contentCrosswordDays,
   contentCuratedCollections,
   contentIdioms,
   contentIds,
@@ -27,8 +29,8 @@ import {
   type ContentAuthor,
 } from '../database/schema';
 
-/** The id prefix of each kind of record (ADR 0010). */
-const ID_PREFIX: Record<RecordKind, string> = {
+/** The id prefix of each kind of record the backend issues an id to (ADR 0010); a Crossword day's id is its date. */
+const ID_PREFIX: Record<Exclude<RecordKind, 'crosswordDay'>, string> = {
   word: 'w_',
   correction: 'c_',
   idiom: 'i_',
@@ -76,6 +78,7 @@ const LABEL_FIELD: Readonly<Record<RecordKind, string>> = {
   synonymRow: 'dominant',
   tip: 'title',
   curatedCollection: 'name',
+  crosswordDay: 'date',
 };
 
 /** The text a record is listed and searched by. */
@@ -103,7 +106,7 @@ export type ContentWrite =
 /** A record as a row keeps it: the fields with what each save keeps beside them. */
 interface StoredRecord {
   readonly id: string;
-  readonly fields: { readonly id: string };
+  readonly fields: object;
   readonly recordVersion: number;
 }
 
@@ -118,6 +121,37 @@ function toJson(value: unknown): Json {
       .filter(([, field]) => field !== undefined)
       .map(([key, field]) => [key, toJson(field)]),
   );
+}
+
+/**
+ * Why a write of a Crossword day is refused by its date, the day's id: an
+ * edit keeps the date, and an added day takes a date no day has.
+ */
+function datedRefusal(
+  kind: RecordKind,
+  change: ContentWrite,
+  days: readonly { readonly id: string }[],
+): Refusal | undefined {
+  if (kind !== 'crosswordDay' || change.op === 'retire') return undefined;
+  const date = change.fields['date'];
+  const file = recordFileOf(kind, change.op === 'edit' ? change.id : String(date));
+  if (change.op === 'edit' && date !== change.id) {
+    return {
+      rule: 'crossword-days-immutable',
+      file,
+      field: 'date',
+      message: `A day keeps its date: ${change.id}`,
+    };
+  }
+  if (change.op === 'create' && days.some(({ id }) => id === date)) {
+    return {
+      rule: 'duplicate-id',
+      file,
+      field: 'date',
+      message: `The day of ${String(date)} is already written: edit it instead`,
+    };
+  }
+  return undefined;
 }
 
 /**
@@ -190,7 +224,15 @@ export function createContentWrites({
       })
       .from(contentCuratedCollections)
       .where(eq(contentCuratedCollections.editionId, editionId));
-    return { word, correction, idiom, synonymRow, tip, curatedCollection };
+    const crosswordDay = await tx
+      .select({
+        id: contentCrosswordDays.id,
+        fields: contentCrosswordDays.fields,
+        recordVersion: contentCrosswordDays.recordVersion,
+      })
+      .from(contentCrosswordDays)
+      .where(eq(contentCrosswordDays.editionId, editionId));
+    return { word, correction, idiom, synonymRow, tip, curatedCollection, crosswordDay };
   }
 
   /** The Edition's content version, held to the commit; none while it is not imported. */
@@ -243,7 +285,7 @@ export function createContentWrites({
   }
 
   /** A new id of the kind that the Edition never gave, registered at once. */
-  async function newId(tx: Tx, editionId: string, kind: RecordKind) {
+  async function newId(tx: Tx, editionId: string, kind: Exclude<RecordKind, 'crosswordDay'>) {
     for (;;) {
       let id = ID_PREFIX[kind];
       for (let index = 0; index < ID_LENGTH; index += 1) {
@@ -273,8 +315,8 @@ export function createContentWrites({
     needsNewRecording: boolean,
   ) {
     const key = {
-      id: record.entry.id,
-      retired: 'retired' in record.entry && record.entry.retired,
+      id: recordIdOf(record),
+      retired: 'retired' in record.entry && record.entry.retired === true,
       ...common,
     };
     switch (record.kind) {
@@ -335,6 +377,17 @@ export function createContentWrites({
           });
         return;
       }
+      case 'crosswordDay': {
+        const row = { ...key, fields: record.entry };
+        await tx
+          .insert(contentCrosswordDays)
+          .values(row)
+          .onConflictDoUpdate({
+            target: [contentCrosswordDays.editionId, contentCrosswordDays.id],
+            set: row,
+          });
+        return;
+      }
     }
   }
 
@@ -376,9 +429,19 @@ export function createContentWrites({
           return { ok: false, reason: 'stale', currentVersion: current.recordVersion };
         }
       }
-      const id = current?.id ?? (await newId(tx, editionId, kind));
+      const dated = datedRefusal(kind, change, records.crosswordDay);
+      if (dated !== undefined) return { ok: false, reason: 'refused', refusals: [dated] };
+      const id =
+        current?.id ??
+        (kind === 'crosswordDay'
+          ? String(change.op === 'create' ? change.fields['date'] : '')
+          : await newId(tx, editionId, kind));
       const fields =
-        change.op === 'retire' ? { ...current?.fields, retired: true } : { ...change.fields, id };
+        change.op === 'retire'
+          ? { ...current?.fields, retired: true }
+          : kind === 'crosswordDay'
+            ? change.fields
+            : { ...change.fields, id };
       const parsed = parseRecord(kind, recordFileOf(kind, id), fields);
       if (!parsed.ok) return { ok: false, reason: 'refused', refusals: parsed.refusals };
       const { record } = parsed;
@@ -391,6 +454,7 @@ export function createContentWrites({
         synonymRow: fieldsOf(records.synonymRow),
         tip: fieldsOf(records.tip),
         curatedCollection: fieldsOf(records.curatedCollection),
+        crosswordDay: fieldsOf(records.crosswordDay),
       });
       const now = clock.now();
       const refusals = checkRecord(edition.config, set, record, { today: now });
@@ -539,7 +603,7 @@ export function createContentWrites({
         ok: true,
         fields: current.fields,
         recordVersion: current.recordVersion,
-        retired: 'retired' in current.fields && current.fields.retired,
+        retired: 'retired' in current.fields && current.fields.retired === true,
         ...('needsNewRecording' in current ? { needsNewRecording: current.needsNewRecording } : {}),
       } as const;
     });
