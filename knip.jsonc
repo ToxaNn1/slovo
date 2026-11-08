@@ -42,6 +42,11 @@
       // Maestro is installed on the machine, not through pnpm.
       "ignoreBinaries": ["maestro"],
     },
+    "packages/config": {
+      // Jest loads the JUnit reporter by its resolved path in CI only
+      // (test-reports.js), which Knip cannot follow.
+      "ignoreDependencies": ["jest-junit"],
+    },
     // Not listed, found by Knip itself: the `src/cli.ts` of language-pack,
     // sourcing and content (their `build-pack`, `source-words` and `content`
     // scripts; the app's `eas-build-post-install` runs build-pack). Knip treats the exports of a

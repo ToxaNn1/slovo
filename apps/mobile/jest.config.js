@@ -1,10 +1,13 @@
 // Jest runs the shell's tests that render (`*.test.tsx`), such as its routes
 // under expo-router's test renderer, on Expo's preset for iOS; Vitest runs the
 // rest (ADR 0029).
+import { jestReports } from '@slovo/config/test-reports';
+
 /** The folder of the Edition the tests run as. */
 const EDITION = '<rootDir>/../../editions/uk';
 
 export default {
+  ...jestReports,
   preset: 'jest-expo/ios',
   testMatch: ['<rootDir>/src/**/*.test.tsx'],
   // The app's Babel config is Metro's own default, so the tests name the same preset.
