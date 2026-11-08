@@ -1,8 +1,8 @@
 import type { BuildError } from '@slovo/language-pack';
 import { readEdition } from '@slovo/language-pack';
 import type { Clock, EditionRegistry } from '@slovo/server-core';
-import { eq } from 'drizzle-orm';
-import type { PgColumn } from 'drizzle-orm/pg-core';
+import type { Patch } from '@slovo/contracts/api';
+import { and, eq, gt } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -175,79 +175,123 @@ export function createContentStore({
     });
   }
 
-  /** Every record of the Edition at its current content version; none while it is not imported. */
-  async function snapshot(editionId: string) {
-    if (editions.find(editionId) === undefined) return undefined;
+  type Reader = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+  /** The records of every kind of the Edition changed after the content version, in id order. */
+  async function readKinds(tx: Reader, editionId: string, since: number) {
+    const changed = (table: (typeof CONTENT_TABLES)[number]) =>
+      and(eq(table.editionId, editionId), gt(table.contentVersion, since));
+    const words = await tx
+      .select({
+        id: contentWords.id,
+        fields: contentWords.fields,
+        needsNewRecording: contentWords.needsNewRecording,
+      })
+      .from(contentWords)
+      .where(changed(contentWords));
+    const kinds = {
+      words: inIdOrder(words),
+      idioms: inIdOrder(
+        await tx
+          .select({ id: contentIdioms.id, fields: contentIdioms.fields })
+          .from(contentIdioms)
+          .where(changed(contentIdioms)),
+      ),
+      corrections: inIdOrder(
+        await tx
+          .select({ id: contentCorrections.id, fields: contentCorrections.fields })
+          .from(contentCorrections)
+          .where(changed(contentCorrections)),
+      ),
+      tips: inIdOrder(
+        await tx
+          .select({ id: contentTips.id, fields: contentTips.fields })
+          .from(contentTips)
+          .where(changed(contentTips)),
+      ),
+      synonymRows: inIdOrder(
+        await tx
+          .select({ id: contentSynonymRows.id, fields: contentSynonymRows.fields })
+          .from(contentSynonymRows)
+          .where(changed(contentSynonymRows)),
+      ),
+      curatedCollections: inIdOrder(
+        await tx
+          .select({
+            id: contentCuratedCollections.id,
+            fields: contentCuratedCollections.fields,
+          })
+          .from(contentCuratedCollections)
+          .where(changed(contentCuratedCollections)),
+      ),
+      crosswordDays: inIdOrder(
+        await tx
+          .select({ id: contentCrosswordDays.id, fields: contentCrosswordDays.fields })
+          .from(contentCrosswordDays)
+          .where(changed(contentCrosswordDays)),
+      ),
+    };
+    return { kinds, words };
+  }
+
+  /** The Edition's content version, then what `read` makes of it, in one consistent view of every table; none while it is not imported. */
+  function atCurrentVersion<T>(
+    editionId: string,
+    read: (tx: Reader, contentVersion: number) => Promise<T>,
+  ) {
     return db.transaction(
       async (tx) => {
         const [held] = await tx
           .select()
           .from(contentVersions)
           .where(eq(contentVersions.editionId, editionId));
-        if (held === undefined) return undefined;
-        const ofEdition = (column: PgColumn) => eq(column, editionId);
-        const words = await tx
-          .select({
-            id: contentWords.id,
-            fields: contentWords.fields,
-            needsNewRecording: contentWords.needsNewRecording,
-          })
-          .from(contentWords)
-          .where(ofEdition(contentWords.editionId));
-        return {
-          editionId,
-          contentVersion: held.contentVersion,
-          words: inIdOrder(words),
-          idioms: inIdOrder(
-            await tx
-              .select({ id: contentIdioms.id, fields: contentIdioms.fields })
-              .from(contentIdioms)
-              .where(ofEdition(contentIdioms.editionId)),
-          ),
-          corrections: inIdOrder(
-            await tx
-              .select({ id: contentCorrections.id, fields: contentCorrections.fields })
-              .from(contentCorrections)
-              .where(ofEdition(contentCorrections.editionId)),
-          ),
-          tips: inIdOrder(
-            await tx
-              .select({ id: contentTips.id, fields: contentTips.fields })
-              .from(contentTips)
-              .where(ofEdition(contentTips.editionId)),
-          ),
-          synonymRows: inIdOrder(
-            await tx
-              .select({ id: contentSynonymRows.id, fields: contentSynonymRows.fields })
-              .from(contentSynonymRows)
-              .where(ofEdition(contentSynonymRows.editionId)),
-          ),
-          curatedCollections: inIdOrder(
-            await tx
-              .select({
-                id: contentCuratedCollections.id,
-                fields: contentCuratedCollections.fields,
-              })
-              .from(contentCuratedCollections)
-              .where(ofEdition(contentCuratedCollections.editionId)),
-          ),
-          crosswordDays: inIdOrder(
-            await tx
-              .select({ id: contentCrosswordDays.id, fields: contentCrosswordDays.fields })
-              .from(contentCrosswordDays)
-              .where(ofEdition(contentCrosswordDays.editionId)),
-          ),
-          needsNewRecording: inIdOrder(
-            words.filter((word) => word.needsNewRecording).map(({ id }) => ({ id, fields: id })),
-          ),
-        };
+        return held === undefined ? undefined : read(tx, held.contentVersion);
       },
-      // One consistent view of every table.
       { isolationLevel: 'repeatable read', accessMode: 'read only' },
     );
   }
 
-  return { importEdition, snapshot };
+  /** Every record of the Edition at its current content version; none while it is not imported. */
+  async function snapshot(editionId: string) {
+    if (editions.find(editionId) === undefined) return undefined;
+    return atCurrentVersion(editionId, async (tx, contentVersion) => {
+      const { kinds, words } = await readKinds(tx, editionId, 0);
+      return {
+        editionId,
+        contentVersion,
+        ...kinds,
+        needsNewRecording: inIdOrder(
+          words.filter((word) => word.needsNewRecording).map(({ id }) => ({ id, fields: id })),
+        ),
+      };
+    });
+  }
+
+  /**
+   * Every record of the Edition changed after the content version the device
+   * holds, and the content version it reaches. A device ahead of the backend
+   * gets no record: content versions only grow (ADR 0090).
+   */
+  async function patch(
+    editionId: string,
+    since: number,
+  ): Promise<
+    | { readonly ok: true; readonly patch: Omit<Patch, 'patchFormat'> }
+    | { readonly ok: false; readonly reason: 'not-serving' | 'not-imported' }
+  > {
+    if (!(await editions.serving(editionId, 'contentUpdates')).ok) {
+      return { ok: false, reason: 'not-serving' };
+    }
+    const read = await atCurrentVersion(editionId, async (tx, contentVersion) => ({
+      editionId,
+      since,
+      contentVersion,
+      ...(await readKinds(tx, editionId, since)).kinds,
+    }));
+    return read === undefined ? { ok: false, reason: 'not-imported' } : { ok: true, patch: read };
+  }
+
+  return { importEdition, snapshot, patch };
 }
 
 export type ContentStore = ReturnType<typeof createContentStore>;
