@@ -4761,13 +4761,33 @@
                           "message"
                         ]
                       }
+                    },
+                    "quoteCheck": {
+                      "type": "object",
+                      "properties": {
+                        "unverified": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "failed": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        }
+                      },
+                      "required": [
+                        "unverified",
+                        "failed"
+                      ]
                     }
                   },
                   "required": [
                     "contentVersion",
                     "report",
                     "targets",
-                    "missed"
+                    "missed",
+                    "quoteCheck"
                   ]
                 }
               }
