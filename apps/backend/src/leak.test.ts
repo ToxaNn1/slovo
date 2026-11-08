@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
-import type { ApiClient } from '@slovo/contracts/api';
+import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import { eq, getTableColumns, is, type Column } from 'drizzle-orm';
 import { PgTable } from 'drizzle-orm/pg-core';
 import { expect, it } from 'vitest';
@@ -281,6 +281,15 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           for (const row of await db.select().from(schema.contentBatches)) secrets.add(row.id);
           await client.content.snapshot({ editionId: EDITION }).catch(refused);
           await client.content.snapshot({ editionId: 'pl' }).catch(refused);
+        },
+        // The records are the published content; what the import keeps beside them is checked.
+        patch: async () => {
+          for (const row of await db.select().from(schema.contentBatches)) secrets.add(row.id);
+          const ask = (editionId: string, patchFormat: number) =>
+            client.content.patch({ params: { editionId }, query: { since: 0, patchFormat } });
+          await ask(EDITION, PATCH_FORMAT).catch(refused);
+          await ask(EDITION, PATCH_FORMAT + 1).catch(refused);
+          await ask('pl', PATCH_FORMAT).catch(refused);
         },
         // The bytes are the published pack, which any app may download; its headers are checked.
         download: async () => {
