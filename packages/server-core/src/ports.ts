@@ -8,8 +8,6 @@ import type {
   CountedQuestion,
   CounterEvent,
   MistakeReport,
-  PackMetadata,
-  PublishedPack,
 } from '@slovo/contracts';
 
 /** The current time, injected so the rules that read it stay testable. */
@@ -23,40 +21,6 @@ export const systemClock: Clock = { now: () => new Date() };
 export interface Random {
   /** A whole number from 0 up to, not including, `bound`. */
   int(bound: number): number;
-}
-
-/** The published Language Packs of every Edition, kept by the backend. */
-export interface ContentPackStore {
-  /** The newest published pack of the Edition in the pack format, if any. */
-  latest(editionId: string, packFormat: number): Promise<PublishedPack | undefined>;
-  /** The file of the Edition's pack published at the content version, if one is. */
-  file(editionId: string, contentVersion: number): Promise<PublishedFile | undefined>;
-  /**
-   * Keeps the pack unless `refuse`, given every content version published
-   * for its Edition, names why not, and answers that reason. The check and
-   * the insert run in one transaction, and no other publishing of the
-   * Edition comes between them. A kept pack is never updated.
-   */
-  publish<Refusal>(
-    pack: ContentPack,
-    refuse: (publishedVersions: readonly number[]) => Refusal | undefined,
-  ): Promise<Refusal | undefined>;
-}
-
-/** A built Language Pack file: the bytes, the metadata recorded in them and their SHA-256. */
-export interface PackFile {
-  readonly metadata: PackMetadata;
-  /** The SHA-256 of the file, as 64 lowercase hex digits; not the content checksum. */
-  readonly fileSha256: string;
-  readonly bytes: Uint8Array;
-}
-
-/** The bytes of a published pack file and their SHA-256, as a download serves them. */
-export type PublishedFile = Pick<PackFile, 'fileSha256' | 'bytes'>;
-
-/** A Language Pack file as it is published. */
-export interface ContentPack extends PackFile {
-  readonly publishedAt: Date;
 }
 
 /** An Account as the server Core sees it. */

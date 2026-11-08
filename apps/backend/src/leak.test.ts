@@ -11,7 +11,7 @@ import { accounts, sessions } from './database/schema';
 import { createLogger } from './logger';
 import { testApp, testEditions } from './test-support';
 
-/** The Edition of this test, with a published pack. */
+/** The Edition of this test. */
 const EDITION = 'probe';
 
 /**
@@ -91,10 +91,9 @@ function keysOf(value: unknown): string[] {
   );
 }
 
-/** The backend serving an Edition with a published pack, whose answers the test keeps. */
-async function recordedBackend() {
+/** The backend serving an Edition, whose answers the test keeps. */
+function recordedBackend() {
   const folder = testEditions([EDITION]);
-  const pack = folder.buildPack(EDITION);
   const answers: Answer[] = [];
   const backend = testApp({
     editions: folder.read(),
@@ -109,14 +108,12 @@ async function recordedBackend() {
       });
     },
   });
-  const published = await backend.publish(pack);
-  if (!published.ok) throw new Error(`Pack not published: ${published.reason}`);
-  return { ...backend, answers, db: backend.database.db, pack: published.pack };
+  return { ...backend, answers, db: backend.database.db };
 }
 
 it("answers no stored token, Sign-in code or its hash, password field, internal column or another Account's record in any procedure", async () => {
-  const { client, clientOf, answers, mailer, google, apple, keptSignInCode, db, pack, switchOff } =
-    await recordedBackend();
+  const { client, clientOf, answers, mailer, google, apple, keptSignInCode, db, switchOff } =
+    recordedBackend();
   /** What the database keeps that no answer may show. */
   const secrets = new Set<string>();
   const refused = () => undefined;
@@ -268,10 +265,6 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
       },
       content: {
         latest: async () => {
-          for (const row of await db.select().from(schema.contentPacks)) {
-            secrets.add(row.id);
-            secrets.add(row.contentChecksum);
-          }
           await client.content.latest({ editionId: EDITION, packFormat: 1 });
           await client.content.latest({ editionId: 'pl', packFormat: 1 }).catch(refused);
           await client.content.latest({ editionId: EDITION, packFormat: 0 }).catch(refused);
@@ -291,17 +284,10 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           await ask(EDITION, PATCH_FORMAT + 1).catch(refused);
           await ask('pl', PATCH_FORMAT).catch(refused);
         },
-        // The bytes are the published pack, which any app may download; its headers are checked.
+        // No whole pack is published any more (ADR 0090).
         download: async () => {
-          const params = { editionId: EDITION, contentVersion: pack.contentVersion };
-          await client.content.download({ params });
-          await client.content.download({
-            params,
-            headers: { 'if-none-match': `"${pack.fileSha256}"` },
-          });
-          await client.content
-            .download({ params: { ...params, contentVersion: pack.contentVersion + 1 } })
-            .catch(refused);
+          const params = { editionId: EDITION, contentVersion: 1 };
+          await client.content.download({ params }).catch(refused);
         },
       },
       admin: {

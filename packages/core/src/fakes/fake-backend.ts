@@ -1,8 +1,6 @@
-import { sha256 } from '@noble/hashes/sha2.js';
-import { bytesToHex } from '@noble/hashes/utils.js';
 import { SYNC_BATCH_SIZE, type CollectionLink, type MistakeReport } from '@slovo/contracts';
-import { createApiClient, PACK_MEDIA_TYPE, type ApiFetch, type Patch } from '@slovo/contracts/api';
-import { fileOf, refusal, serveApi, type ApiProcedures } from '@slovo/contracts/api/test-support';
+import { createApiClient, type ApiFetch, type Patch } from '@slovo/contracts/api';
+import { refusal, serveApi, type ApiProcedures } from '@slovo/contracts/api/test-support';
 
 import type {
   Backend,
@@ -11,7 +9,6 @@ import type {
   CounterEvent,
   EntryCounters,
   Json,
-  PackVersion,
   RequestFailure,
 } from '../ports';
 import { systemClock } from '../ports';
@@ -63,13 +60,6 @@ export interface FakePatchAsk {
   readonly since: number;
   readonly patchFormat: number;
   readonly ifNoneMatch?: string;
-}
-
-/** A pack the fake backend has published, with the bytes of its file. */
-export interface FakePublishedPack extends PackVersion {
-  readonly bytes: Uint8Array;
-  /** The SHA-256 the backend announces; without it, that of the bytes. */
-  readonly fileSha256?: string;
 }
 
 /**
@@ -137,14 +127,8 @@ export interface FakeBackend {
     /** The links the backend made, in order. */
     readonly made: readonly CollectionLink[];
   };
-  /** The content procedures: the test publishes packs, and `content.latest` announces the newest of a pack format. */
+  /** The content procedures: the test publishes Patches; no whole pack is published (ADR 0090). */
   readonly content: {
-    /** The pack format of each `content.latest` request, in order, failed ones included. */
-    readonly asked: readonly number[];
-    /** The content version of each `content.download` request, in order, failed ones included. */
-    readonly downloaded: readonly number[];
-    /** Publishes a pack, which `content.latest` announces while it is the newest of its format. */
-    publish(pack: FakePublishedPack): void;
     /** The query and `if-none-match` of each `content.patch` request, in order, failed ones included. */
     readonly patchesAsked: readonly FakePatchAsk[];
     /**
@@ -221,9 +205,6 @@ export function createFakeBackend({
   const received: MistakeReport[] = [];
   const made: CollectionLink[] = [];
   const linksById = new Map<string, CollectionLink>();
-  const packs: FakePublishedPack[] = [];
-  const packFormatsAsked: number[] = [];
-  const downloaded: number[] = [];
   const patchesAsked: FakePatchAsk[] = [];
   const patches: Patch[] = [];
   const counts = new Map<string, Omit<EntryCounters, 'entryId'>>();
@@ -421,24 +402,9 @@ export function createFakeBackend({
       },
     },
     content: {
-      async latest({ input, context }) {
-        packFormatsAsked.push(input.packFormat);
+      async latest({ context }) {
         await arrive('content.latest', context);
-        const newest = packs
-          .filter((pack) => pack.packFormat === input.packFormat)
-          .reduce<FakePublishedPack | undefined>(
-            (found, pack) =>
-              found === undefined || pack.contentVersion > found.contentVersion ? pack : found,
-            undefined,
-          );
-        if (newest === undefined) return { pack: null };
-        const {
-          contentVersion,
-          packFormat,
-          bytes,
-          fileSha256 = bytesToHex(sha256(bytes)),
-        } = newest;
-        return { pack: { contentVersion, packFormat, size: bytes.length, fileSha256 } };
+        return { pack: null };
       },
       async patch({ input, context }) {
         const { since, patchFormat } = input.query;
@@ -462,18 +428,9 @@ export function createFakeBackend({
         }
         return { status: 200, headers, body: { status: 'patch', patch } };
       },
-      async download({ input, context, errors }) {
-        const { contentVersion } = input.params;
-        downloaded.push(contentVersion);
+      async download({ context, errors }) {
         await arrive('content.download', context);
-        const pack = packs.find((published) => published.contentVersion === contentVersion);
-        if (pack === undefined) throw errors.NOT_FOUND();
-        const file = fileOf(pack.bytes, `pack-${String(contentVersion)}.db`, PACK_MEDIA_TYPE);
-        return {
-          status: 200,
-          headers: { etag: `"${bytesToHex(sha256(pack.bytes))}"`, 'cache-control': 'immutable' },
-          body: file,
-        };
+        throw errors.NOT_FOUND();
       },
     },
     counters: {
@@ -567,11 +524,6 @@ export function createFakeBackend({
     reports: { received },
     collectionLinks: { made },
     content: {
-      asked: packFormatsAsked,
-      downloaded,
-      publish(pack) {
-        packs.push(pack);
-      },
       patchesAsked,
       publishPatch(patch) {
         patches.push(patch);

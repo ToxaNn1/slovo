@@ -200,6 +200,17 @@ describe('buildFromSnapshot', () => {
     expect(existsSync(outFile)).toBe(false);
   });
 
+  it('builds from an Edition folder with no content manifest', async () => {
+    const editionDir = copyFixture('valid');
+    rmSync(join(editionDir, 'content/manifest.json'));
+    const outFile = packPath();
+
+    const result = buildFromSnapshot({ editionDir, snapshot: snapshotFixture(), outFile });
+
+    expect(result).toMatchObject({ ok: true, metadata: { contentVersion: 7 } });
+    expect((await readBack(outFile)).metadata).toMatchObject({ contentVersion: 7 });
+  });
+
   it("refuses a snapshot of another Edition than the folder's", () => {
     const outFile = packPath();
 
