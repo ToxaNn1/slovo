@@ -4,6 +4,7 @@ import {
   RuleTargetsSchema,
   RuleVerdictSchema,
   type FeatureSwitch,
+  type ForceUpdateMinimum,
   type ForceUpdateMinimums,
   type Platform,
   type Rule,
@@ -312,7 +313,7 @@ export function MinimumsEditor({
 }) {
   const [pending, setPending] = useState<{
     readonly platform: Platform;
-    readonly minimum: { readonly soft?: string; readonly hard?: string };
+    readonly minimum: ForceUpdateMinimum;
   }>();
   const [invalid, setInvalid] = useState<Platform>();
 

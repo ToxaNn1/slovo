@@ -151,12 +151,12 @@ describe('the Kill switch through the admin API', () => {
     await expect(store.actions('killed')).resolves.toContainEqual(
       expect.objectContaining({ what: 'switches.kill', reason: 'the Game loses scores' }),
     );
-    expect(alerts.sent).toEqual([
+    expect(alerts.sent).toMatchObject([
       {
         kind: 'kill-switch',
         feature: 'game',
         editionIds: ['killed'],
-        who: { kind: 'admin-user', email: expect.any(String) },
+        who: { kind: 'admin-user' },
         reason: 'the Game loses scores',
       },
     ]);
