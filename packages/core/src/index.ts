@@ -128,11 +128,14 @@ export {
 export { openCounterSending } from './community-counters/counter-sending';
 export {
   createAnalytics,
-  noAnalytics,
   type Analytics,
   type AnalyticsEvent,
   type AnalyticsEvents,
   type AnalyticsPort,
+  type AnalyticsReader,
+  type AnalyticsSink,
+  type AnalyticsSwitches,
+  type VariantProperty,
   type EntryEventProperties,
 } from './analytics/analytics';
 export {

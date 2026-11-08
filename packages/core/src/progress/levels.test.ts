@@ -11,7 +11,14 @@ import {
   type XpRecord,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, optionsOf, seededRandom, testEdition, word } from '../test-support';
+import {
+  fakeClock,
+  optionsOf,
+  seededRandom,
+  testEdition,
+  word,
+  analyticsInto,
+} from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -98,7 +105,7 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: time.clock,
     random: seededRandom(7),
-    analytics: fake.port,
+    analytics: analyticsInto(fake.port),
   });
   return { app, events: fake.events };
 }

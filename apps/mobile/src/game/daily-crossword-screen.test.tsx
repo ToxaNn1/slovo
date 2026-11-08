@@ -28,6 +28,7 @@ import {
   settingsAt,
   switchedTo,
   testShell,
+  analyticsInto,
 } from '../shell/test-support';
 import { SCREEN_OPEN_TIMEOUT_MS } from '../open-screen';
 import { CROSSING_LEMMAS } from './crossing-crossword.test-support';
@@ -179,7 +180,7 @@ async function renderGame({
     ),
     clock: { now: () => new Date('2026-10-26T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: systemRandom,
-    analytics,
+    analytics: analyticsInto(analytics),
   });
   if (failsToOpen)
     jest

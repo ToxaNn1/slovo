@@ -43,6 +43,7 @@ import {
   pickPlayed,
   seededRandom,
   testEdition,
+  analyticsInto,
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -242,7 +243,7 @@ async function run({
     random: seededRandom(seed),
     ...(gameModes === undefined ? {} : { gameModes }),
     ...(schedule === undefined ? {} : { schedule }),
-    ...(analytics === undefined ? {} : { analytics }),
+    ...(analytics === undefined ? {} : { analytics: analyticsInto(analytics) }),
   });
   return planned ? offersPlanned(app) : app;
 }

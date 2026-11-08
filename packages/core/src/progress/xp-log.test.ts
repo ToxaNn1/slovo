@@ -31,6 +31,7 @@ import {
   testEdition,
   testSchedule,
   word,
+  analyticsInto,
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { trackChanges } from '../user-state/tracked-user-state';
@@ -87,7 +88,7 @@ async function run({
     userState: await openUserState({ port }),
     clock: time.clock,
     random: seededRandom(7),
-    ...(analytics === undefined ? {} : { analytics }),
+    ...(analytics === undefined ? {} : { analytics: analyticsInto(analytics) }),
   });
   const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
   if (planning()) {

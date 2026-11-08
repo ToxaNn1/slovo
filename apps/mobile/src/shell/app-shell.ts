@@ -4,9 +4,12 @@ import {
   openMistakeReports,
   openRemoteSwitches,
   openSync,
+  evaluateSwitches,
   readInstallId,
   systemRandom,
+  type AnalyticsSink,
   type Edition,
+  type ReaderFacts,
 } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 import { getLocales } from 'expo-localization';
@@ -21,9 +24,10 @@ import { logError } from '../diagnostics/log';
 import { activeEditionId, edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
 import { settingsOpening } from '../settings/settings';
+import { deviceAnalytics } from '../analytics/posthog-analytics';
 import { shareCardOnDevice } from '../share/device-share';
 import { storedUserStateOpening } from '../user-state/stored-user-state';
-import type { DevicePorts, DeviceSources, Shell } from '../shell-value';
+import type { DevicePorts, DeviceSources, EditionSwitches, Shell } from '../shell-value';
 
 /** The device's own sources for an Edition: its backend, clock, schedule, randomness and stored user state. */
 function deviceSources(editionId: string): DeviceSources {
@@ -66,26 +70,30 @@ export function createShell(
   sources: DeviceSources = deviceSources(editionId),
 ): Shell {
   const { userState } = sources;
-  const remoteSwitches = over(
+  const installId = over(userState, 'Could not read the Install id', (opened) =>
+    readInstallId({ userState: opened, random: sources.random }),
+  );
+  /** The reader the Rules target, read afresh each time the verdicts are worked out. */
+  const factsOf =
+    (id: string): (() => ReaderFacts) =>
+    () => ({
+      ...deviceFacts,
+      region: getLocales().at(0)?.regionCode ?? undefined,
+      signedIn:
+        account?.state.status === 'ready' && account.state.value.state.status === 'signed-in',
+      installId: id,
+    });
+  const remoteSwitches: Opening<EditionSwitches> = over(
     userState,
     'Could not open the remote Feature Switches',
-    async (opened) => {
-      const installId = await readInstallId({ userState: opened, random: sources.random });
-      return openRemoteSwitches({
+    async (opened) =>
+      openRemoteSwitches({
         ...sources,
         edition,
         states: edition.featureSwitches,
-        // The reader the Rules target, read afresh each time the verdicts are worked out.
-        facts: () => ({
-          ...deviceFacts,
-          region: getLocales().at(0)?.regionCode ?? undefined,
-          signedIn:
-            account?.state.status === 'ready' && account.state.value.state.status === 'signed-in',
-          installId,
-        }),
+        facts: factsOf(await installId.opened()),
         userState: opened,
-      });
-    },
+      }),
   );
   // One Edition whose every read of a switch takes the remote ones as they stand.
   const editionInEffect: Edition = {
@@ -97,8 +105,41 @@ export function createShell(
       );
     },
   };
+  // The Analytics events carry the Install id and the Variants of the remote switches as they
+  // stand; the Edition's own states, so no Variant, until they open (ADR 0068, 0089).
+  const analytics = openOnce<AnalyticsSink>(
+    async () => {
+      const id = await installId.opened();
+      const ownVerdicts = evaluateSwitches({
+        rules: [],
+        states: edition.featureSwitches,
+        facts: { ...factsOf(id)(), clock: sources.clock, clockOffsetMs: 0 },
+      });
+      return {
+        port: deviceAnalytics,
+        switches: {
+          installId: id,
+          get verdicts() {
+            const switches = remoteSwitches.state;
+            return switches.status === 'ready' ? switches.value.verdicts : ownVerdicts;
+          },
+        },
+      };
+    },
+    // The opening that failed under it has logged why.
+    { onError: () => undefined },
+  );
   const ports = openOnce<DevicePorts>(
-    async () => ({ ...sources, userState: await userState.opened(), edition: editionInEffect }),
+    async () => {
+      // Without the Install id there are no Analytics.
+      const sink = await analytics.opened().catch(() => undefined);
+      return {
+        ...sources,
+        userState: await userState.opened(),
+        edition: editionInEffect,
+        ...(sink === undefined ? {} : { analytics: sink }),
+      };
+    },
     // The opening that failed under it has logged why.
     { onError: () => undefined },
   );
@@ -108,7 +149,7 @@ export function createShell(
     : undefined;
   return {
     userState,
-    settings: settingsOpening({ userState }),
+    settings: settingsOpening({ userState, edition: editionInEffect, analytics }),
     remoteSwitches,
     languagePack,
     composition: compositionOpening({ languagePack, ports, account }),

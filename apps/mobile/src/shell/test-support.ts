@@ -9,6 +9,7 @@ import {
   openRemoteSwitches,
   type ReaderFacts,
   type AnalyticsPort,
+  type AnalyticsSink,
   type Clock,
   type Edition,
   type Random,
@@ -69,19 +70,31 @@ export function switchedTo(
   edition: Edition,
   minimums: EditionSwitches['minimums'] = {},
 ): Opening<EditionSwitches> {
-  return opened({
+  return opened(switchesOf(edition, minimums));
+}
+
+/** The remote Feature Switches of the test device, with no Rule, as `edition` has them. */
+function switchesOf(edition: Edition, minimums: EditionSwitches['minimums'] = {}): EditionSwitches {
+  return {
     edition,
     verdicts: evaluateSwitches({
       rules: [],
       states: edition.featureSwitches,
       facts: { ...testReader, clock, clockOffsetMs: 0 },
     }),
+    installId: TEST_INSTALL_ID,
     minimums,
     subscribe: () => () => undefined,
     ask: () => Promise.resolve(false),
     start: () => () => undefined,
-  });
+  };
 }
+
+/** Analytics into `port` from the test device, with no Rule, so no Variant. */
+export const analyticsInto = (port: AnalyticsPort): AnalyticsSink => ({
+  port,
+  switches: switchesOf(edition),
+});
 
 /** An Analytics port a test reads: the events the Core sent it, and whether it was told to stop. */
 export interface RecordedAnalytics {
@@ -124,7 +137,9 @@ export async function settingsAt(
     defaults: edition.userSettingDefaults,
     ...(analytics === undefined
       ? {}
-      : { analytics: createAnalytics({ edition, userState, port: analytics }) }),
+      : {
+          analytics: createAnalytics({ edition, userState, sink: analyticsInto(analytics) }),
+        }),
   });
   return opened({ settings, current: await settings.update(changes) });
 }
@@ -143,13 +158,16 @@ function seeded(seed: number): Random {
 /** A schedule whose timers never fire, so nothing a test did not ask for runs in the background. */
 const never: Schedule = () => () => undefined;
 
+/** The Install id of the test device, which the Analytics events carry. */
+export const TEST_INSTALL_ID = 'test-install';
+
 /** A reader of 1.0.0 on iOS, signed out, with no region: one no targeted Rule matches. */
 const testReader: ReaderFacts = {
   appVersion: '1.0.0',
   platform: 'ios',
   region: undefined,
   signedIn: false,
-  installId: 'i',
+  installId: TEST_INSTALL_ID,
 };
 
 const clock: Clock = { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };

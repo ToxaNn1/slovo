@@ -2,7 +2,9 @@ import {
   colorSchemeFor,
   createAnalytics,
   createSettings,
+  type AnalyticsSink,
   type ColorScheme,
+  type Edition,
   type Settings,
   type SettingsDefaults,
   type TrackedUserState,
@@ -11,7 +13,6 @@ import {
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
-import { deviceAnalytics } from '../analytics/posthog-analytics';
 import { edition } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
@@ -39,15 +40,22 @@ function opened(settings: Settings, current: UserSettings): OpenedSettings {
  */
 export function settingsOpening({
   userState,
+  edition: inEffect,
+  analytics,
 }: {
   userState: Opening<TrackedUserState>;
+  /** The Edition in effect, remote switches included, whose `analytics` gates a changed setting's event. */
+  edition: Pick<Edition, 'isFeatureEnabled'>;
+  /** Where a changed setting is told; nowhere while it can't be opened. */
+  analytics: Opening<AnalyticsSink>;
 }): Opening<OpenedSettings> {
   async function settingsOverUserState(): Promise<Settings> {
     const opened = await userState.opened();
+    const sink = await analytics.opened().catch(() => undefined);
     return createSettings({
       userState: opened,
       defaults,
-      analytics: createAnalytics({ edition, userState: opened, port: deviceAnalytics }),
+      analytics: createAnalytics({ edition: inEffect, userState: opened, sink }),
     });
   }
   return openOnce(

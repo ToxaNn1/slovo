@@ -28,6 +28,7 @@ import {
   settingsAt,
   switchedTo,
   testShell,
+  analyticsInto,
 } from '../shell/test-support';
 import { CROSSING_LEMMAS, solveCrossingWord } from './crossing-crossword.test-support';
 
@@ -263,7 +264,7 @@ async function open({
     userState,
     clock,
     random: systemRandom,
-    analytics,
+    analytics: analyticsInto(analytics),
     ...(schedule === undefined ? {} : { schedule }),
   });
 }
