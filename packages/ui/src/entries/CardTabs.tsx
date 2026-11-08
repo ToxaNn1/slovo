@@ -6,7 +6,8 @@ import { useEdition } from '../providers/EditionProvider';
 import { FontSizeProvider, useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { PagerScrollView } from '../primitives/VerticalPager';
-import { blockGap, minTouchTarget, space, typeStyle } from '../tokens';
+import { Wedge } from '../primitives/Wedge';
+import { blockGap, entryCardFrame, minTouchTarget, space, typeStyle, wedges } from '../tokens';
 
 /** The smallest font size content too tall for the card shrinks to (ADR 0088). */
 const FLOOR = 'S' satisfies FontSize;
@@ -26,9 +27,10 @@ const SMALLER: Readonly<Record<Exclude<FontSize, typeof FLOOR>, FontSize>> = {
 type Fit = FontSize | 'scrolls';
 
 /**
- * An Entry card's tabs under its head (ADR 0088): a `tablist` of `tab`s by
- * their names, the first selected on opening, and the selected tab's content
- * in a `FitPanel`. A card with one tab draws no tab bar. Nothing moves between
+ * An Entry card's tabs under its head (ADR 0088): the selected tab's content
+ * in a `FitPanel`, and at the card's foot a `tablist` of `tab`s by their
+ * names, a red slanted mark over the selected one (board p1), the first
+ * selected on opening. A card with one tab draws no tab bar. Nothing moves between
  * tabs, so Reduce Motion has nothing to stop. Under Self-check the tabs are
  * there but disabled, and the panel shows nothing, until the reveal.
  */
@@ -56,8 +58,11 @@ export function CardTabs<Tab extends { readonly key: string }>({
   const selected = tabs.find((tab) => tab.key === selectedKey) ?? tabs[0];
   return (
     <View style={styles.tabs}>
+      <FitPanel testID={testID} fitKey={selected.key}>
+        {disabled ? null : children(selected)}
+      </FitPanel>
       {tabs.length === 1 ? null : (
-        <View accessibilityRole="tablist" style={[styles.bar, { borderBottomColor: colors.line }]}>
+        <View accessibilityRole="tablist" style={[styles.bar, { borderTopColor: colors.line }]}>
           {tabs.map((tab) => {
             const on = tab.key === selected.key;
             return (
@@ -72,8 +77,18 @@ export function CardTabs<Tab extends { readonly key: string }>({
                 onPress={() => {
                   setSelectedKey(tab.key);
                 }}
-                style={[styles.tab, { borderBottomColor: on ? colors.accent : 'transparent' }]}
+                style={styles.tab}
               >
+                {on && !disabled && (
+                  <View testID={`${testID}-tab-${tab.key}-bar`} style={styles.mark}>
+                    <Wedge
+                      points={wedges.slant}
+                      color={colors.accent}
+                      width="100%"
+                      height={entryCardFrame.tabMark.height}
+                    />
+                  </View>
+                )}
                 <Text
                   style={[
                     typeStyle('chipLabel', tokens),
@@ -87,9 +102,6 @@ export function CardTabs<Tab extends { readonly key: string }>({
           })}
         </View>
       )}
-      <FitPanel testID={testID} fitKey={selected.key}>
-        {disabled ? null : children(selected)}
-      </FitPanel>
     </View>
   );
 }
@@ -172,11 +184,15 @@ export function FitPanel({
 const styles = StyleSheet.create({
   // The tabs fill what the head leaves of the card's frame.
   tabs: { flexGrow: 1, gap: blockGap },
-  bar: { flexDirection: 'row', borderBottomWidth: 1, gap: space[4] },
-  tab: {
-    minHeight: minTouchTarget,
-    justifyContent: 'center',
-    borderBottomWidth: 2,
+  // The tabs spread over the card's width, under a hairline.
+  bar: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, gap: space[2] },
+  tab: { minHeight: minTouchTarget, justifyContent: 'center' },
+  // The mark lies over the hairline and reaches past the tab's name on both sides.
+  mark: {
+    position: 'absolute',
+    top: -1,
+    left: -entryCardFrame.tabMark.overhang,
+    right: -entryCardFrame.tabMark.overhang,
   },
   room: { flexGrow: 1, flexBasis: 0, overflow: 'hidden' },
   content: { gap: blockGap },

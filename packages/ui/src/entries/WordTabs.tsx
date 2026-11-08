@@ -7,7 +7,6 @@ import { useTokens } from '../providers/TokensProvider';
 import { LabelChip } from '../primitives/LabelChip';
 import { space, typeStyle } from '../tokens';
 import { CardTabs } from './CardTabs';
-import { CategoryChip } from './CategoryChip';
 import {
   DetailSection,
   ExampleText,
@@ -93,9 +92,6 @@ function TabContent({
             >
               {count(strings.moreMeanings, tab.moreMeanings)}
             </Text>
-          )}
-          {card.categoryName === undefined ? null : (
-            <CategoryChip testID="word-category" name={card.categoryName} />
           )}
           {card.synonymRow === undefined ? null : (
             <SynonymRowLine synonymRow={card.synonymRow} onOpen={onOpenSynonymRow} />

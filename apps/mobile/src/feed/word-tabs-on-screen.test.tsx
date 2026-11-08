@@ -22,7 +22,7 @@ import HomeScreen from '../app/feed';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { fontSizeSteps } from '@slovo/ui/tokens';
+import { entryCardFrame, fontSizeSteps } from '@slovo/ui/tokens';
 import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 
@@ -402,6 +402,74 @@ const fullIdiom: Idiom = {
 function idiomCard() {
   return within(screen.getByTestId('idiom-card', hidden));
 }
+
+describe('the look of a tabbed Word card in the Feed (board p1)', () => {
+  const { accent, ink } = editionTokens.colors.light;
+
+  it('draws the tab bar at the foot of the card, under the panel, a bar over the selected tab', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    const drawn = JSON.stringify(screen.toJSON());
+    expect(drawn.indexOf('"testID":"word-tab-panel"')).toBeGreaterThan(-1);
+    expect(drawn.indexOf('"accessibilityRole":"tablist"')).toBeGreaterThan(
+      drawn.indexOf('"testID":"word-tab-panel"'),
+    );
+    await swipeUp();
+    const card = wordCard();
+    expect(card.getByTestId('word-tab-essence-bar', hidden)).toBeTruthy();
+    expect(card.queryByTestId('word-tab-example-bar', hidden)).toBeNull();
+
+    await settle(() => fireEvent.press(card.getByTestId('word-tab-example')));
+
+    expect(wordCard().getByTestId('word-tab-example-bar', hidden)).toBeTruthy();
+    expect(wordCard().queryByTestId('word-tab-essence-bar', hidden)).toBeNull();
+  });
+
+  it('outlines the card in ink over a red offset shadow', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    const frame = screen
+      .getAllByTestId('word-card', hidden)
+      .find((each) => within(each).queryByTestId('word-tab-panel', hidden) !== null);
+    expect(frame).toHaveStyle({ borderColor: ink });
+    expect(frame).toHaveStyle({
+      boxShadow: [
+        {
+          offsetX: entryCardFrame.shadow,
+          offsetY: entryCardFrame.shadow,
+          blurRadius: 0,
+          color: accent,
+        },
+      ],
+    });
+  });
+
+  it('sets the stressed letter in red over a red rule under the Lemma', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    const card = wordCard();
+    const lemma = within(card.getByTestId('word-lemma', hidden));
+    expect(lemma.getByText('у', hidden)).toHaveStyle({ color: accent });
+    expect(card.getByTestId('word-rule', hidden)).toBeTruthy();
+  });
+
+  it('keeps the Category chip in the grammar line above the tabs, whichever tab is selected', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    await swipeUp();
+    const grammar = () => within(wordCard().getByTestId('word-grammar', hidden));
+    expect(grammar().getByTestId('word-category', hidden)).toBeTruthy();
+    expect(wordCard().getAllByTestId('word-category', hidden)).toHaveLength(1);
+
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-example')));
+
+    expect(grammar().getByTestId('word-category', hidden)).toBeTruthy();
+  });
+});
 
 describe('the tabs of an Idiom card in the Feed', () => {
   it('shows «Суть», «Звідки» and «Приклад», «Суть» selected with the Definitions', async () => {

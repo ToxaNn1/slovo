@@ -13,7 +13,14 @@ import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
 import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
-import { blockGap, correctionCardLayout, space, wordCardSide, wordHero } from '../tokens';
+import {
+  blockGap,
+  correctionCardLayout,
+  entryCardFrame,
+  space,
+  wordCardSide,
+  wordHero,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { WordCardBody } from './WordCardBody';
 import { WordHero } from './WordHero';
@@ -210,11 +217,25 @@ function EntryCardFace({
         testID={`${card.kind}-card`}
         style={[
           styles.card,
-          // The tabbed card takes the page's height, whatever its tab holds (ADR 0088).
-          fixedFrame(card, tabs) && styles.fixed,
+          { borderColor: colors.line },
+          // The tabbed card takes the page's height, whatever its tab holds (ADR 0088),
+          // outlined in ink over the red offset shadow of board p1.
+          fixedFrame(card, tabs) && [
+            styles.fixed,
+            {
+              borderColor: colors.ink,
+              boxShadow: [
+                {
+                  offsetX: entryCardFrame.shadow,
+                  offsetY: entryCardFrame.shadow,
+                  blurRadius: 0,
+                  color: colors.accent,
+                },
+              ],
+            },
+          ],
           {
             backgroundColor: colors.surface,
-            borderColor: colors.line,
             borderRadius: radii.card,
             paddingTop: spacing.top * padding,
             paddingHorizontal: spacing.side * padding,
@@ -306,6 +327,12 @@ function fixedFrame(card: EntryCardProps['card'], tabs: boolean): boolean {
 const styles = StyleSheet.create({
   // The border is the card's only elevation.
   card: { borderWidth: 1 },
-  fixed: { flexGrow: 1 },
+  // The tabbed card keeps room on the right and below for its offset shadow.
+  fixed: {
+    flexGrow: 1,
+    borderWidth: entryCardFrame.outline,
+    marginRight: entryCardFrame.shadow,
+    marginBottom: entryCardFrame.shadow,
+  },
   hero: { borderRadius: wordHero.radius, overflow: 'hidden' },
 });

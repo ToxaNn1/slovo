@@ -2,9 +2,9 @@
 
 A Word's Entry card grew into a long column: the Definition, the Example, the Synonym Row line, «Часто кажуть», Synonyms and antonyms, and behind «Детальніше» the other meanings, the etymology and further Examples. In the Feed a page held a card of any height, so the next card's place moved from Word to Word and the reader scrolled inside a page before swiping to the next one.
 
-**Behind the `wordTabs` Feature Switch**, a Word card is a fixed frame that takes the page's height, with the Lemma and its line on top and tabs under it, and nothing behind «Детальніше»:
+**Behind the `wordTabs` Feature Switch**, a Word card is a fixed frame that takes the page's height, with the Lemma and its line on top and tabs under it, and nothing behind «Детальніше». The tab bar stands at the card's foot under the selected tab's panel, a red slanted mark over the selected tab, and the Category chip ends the line under the Lemma, whichever tab is selected (board p1):
 
-- **«Суть»**: the primary Definition, the Synonym Row line, «Часто кажуть» and the Category chip, and «Ще {count} значення — у вкладці «Історія».» when the Word has other meanings.
+- **«Суть»**: the primary Definition, the Synonym Row line and «Часто кажуть», and «Ще {count} значення — у вкладці «Історія».» when the Word has other meanings.
 - **«Приклад»**: every Example, each with its author.
 - **«Зв’язки»**: the Synonyms and antonyms.
 - **«Історія»**: the other meanings numbered from 1, the etymology and the Word History.

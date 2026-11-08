@@ -36,6 +36,20 @@ export interface RevealTimings {
   readonly details: { readonly at: readonly number[]; readonly duration: number };
 }
 
+/**
+ * The frame of a tabbed Entry card (board p1): the width of its ink outline,
+ * how far its red offset shadow falls to the right and below (the card keeps
+ * that much room on those sides, so nothing clips it), the red rule under a
+ * Word's Lemma, and the slanted mark over the selected tab: its height and how
+ * far it reaches past the tab's name on each side.
+ */
+export const entryCardFrame = {
+  outline: 2,
+  shadow: 8,
+  rule: { width: 140, height: 8 },
+  tabMark: { height: 5, overhang: 8 },
+} as const;
+
 /** The Word card's side and bottom padding (the design's 26); the feed's skeleton keeps the same shape. */
 export const wordCardSide = 26;
 

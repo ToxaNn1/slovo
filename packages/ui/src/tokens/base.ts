@@ -758,6 +758,13 @@ export const wedges = {
     [1, 1],
     [0, 0.75],
   ],
+  /** A bar slanted forward: the rule under a Word's Lemma and the mark over the selected tab of an Entry card (board p1). */
+  slant: [
+    [0.03, 0],
+    [1, 0],
+    [0.97, 1],
+    [0, 1],
+  ],
   /** A box with its bottom right corner cut up. */
   cut: [
     [0, 0],

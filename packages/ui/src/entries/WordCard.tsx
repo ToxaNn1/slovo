@@ -15,7 +15,16 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
 import { LabelChip } from '../primitives/LabelChip';
-import { blockGap, minTouchTarget, space, typeStyle, wordCardControls } from '../tokens';
+import { Wedge } from '../primitives/Wedge';
+import {
+  blockGap,
+  entryCardFrame,
+  minTouchTarget,
+  space,
+  typeStyle,
+  wedges,
+  wordCardControls,
+} from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useOnAccent } from './on-accent';
 import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';
@@ -26,8 +35,9 @@ import { CategoryChip } from './CategoryChip';
 
 /**
  * The Word's headline: the Lemma with its falling Stress, part of speech and
- * register chips, and the Pronunciation button beside them. On the red ground
- * (`useOnAccent`) it is set in the key ink of both Themes.
+ * register chips, and the Pronunciation button beside them. Off the red
+ * ground the stressed letter is red over a red rule under the Lemma (board
+ * p1); on it (`useOnAccent`) it is set in the key ink of both Themes.
  */
 export function WordHeadline({
   card,
@@ -35,6 +45,7 @@ export function WordHeadline({
   concealed,
   stressFalls,
   lemmaFont: calligraphic,
+  category,
 }: {
   card: WordCardModel;
   lemmaSize: TextSize;
@@ -43,6 +54,8 @@ export function WordHeadline({
   stressFalls: boolean;
   /** The calligraphic font family of the Word of the Day's Lemma, if it is set in one. */
   lemmaFont: string | undefined;
+  /** The Category's name, its chip set at the end of the grammar line, as on the tabbed card (board p1). */
+  category?: string | undefined;
 }) {
   const tokens = useTokens();
   const { fontFamilies } = tokens;
@@ -83,13 +96,25 @@ export function WordHeadline({
           numberOfLines={card.lemma.includes(' ') ? 2 : 1}
           adjustsFontSizeToFit
           minimumFontScale={0.5}
+          stressed={
+            onAccent ? undefined : { mark: STRESS_MARK, style: { color: tokens.colors.accent } }
+          }
           style={[
             typeStyle('heroWord', { fontFamilies: { ...fontFamilies, word: lemmaFont } }),
             { color: colors.ink },
           ]}
         />
+        {!onAccent && (
+          <Wedge
+            testID="word-rule"
+            points={wedges.slant}
+            color={tokens.colors.accent}
+            width={entryCardFrame.rule.width}
+            height={entryCardFrame.rule.height}
+          />
+        )}
         <RevealDetail step={0}>
-          <View style={styles.grammar}>
+          <View testID="word-grammar" style={styles.grammar}>
             <Text
               testID="word-part-of-speech"
               accessibilityLabel={grammar('full')}
@@ -108,6 +133,9 @@ export function WordHeadline({
                   size="tight"
                 />
               ))}
+            {category === undefined ? null : (
+              <CategoryChip testID="word-category" name={category} />
+            )}
           </View>
         </RevealDetail>
       </View>
