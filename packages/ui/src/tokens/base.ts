@@ -246,8 +246,8 @@ export const typeRoles = {
   roundOptionSentence: role('ui', '600', 17, 22),
   /** A Round's option on its tile when it is a long text. */
   roundOptionLong: role('ui', '500', 16, 22),
-  /** The key of a Round's option, such as «А», and the ✕ on a wrong pick's key. */
-  roundOptionKey: role('word', '900', 16, 16),
+  /** The key of a Round's option, such as «А»: a line of 20 centres the letter in its box. */
+  roundOptionKey: role('word', '900', 16, 20),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
   roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
   /** The right answer on the Round's answer sheet. */

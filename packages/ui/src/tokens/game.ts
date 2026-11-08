@@ -91,8 +91,8 @@ export const roundHeader = {
  * A pick Round's option, board 07's answer tile (owner decision G6): its
  * least height, corners and side padding; how much an answered Round's other options fade, how far
  * a wrong choice drops and how a right one pops (`slPop`: its scale at the
- * start, 60 % and the end); the key at its left (side, corners, border and
- * the gap to the text); and the most characters a sentence option has before
+ * start, 60 % and the end); the key at its left (side, corners, border, the
+ * gap to the text and the side of the ✕ drawn on a wrong pick's key); and the most characters a sentence option has before
  * it is a long text.
  */
 export const answerOption = {
@@ -103,7 +103,7 @@ export const answerOption = {
   dimmedOpacity: 0.5,
   drop: 8,
   pop: [0.6, 1.12, 1],
-  key: { side: 30, radius: 9, border: 2, gap: 14 },
+  key: { side: 30, radius: 9, border: 2, gap: 14, wrongMark: 12 },
   sentenceMost: 60,
 } as const;
 
