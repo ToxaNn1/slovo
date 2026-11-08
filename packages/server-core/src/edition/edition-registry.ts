@@ -162,7 +162,20 @@ function onForAnyone(edition: Edition, rules: readonly Rule[], feature: FeatureS
 }
 
 /** A value as the Action log keeps it: its JSON. */
-const asJson = (value: unknown): Json => JSON.parse(JSON.stringify(value ?? null));
+function asJson(value: unknown): Json {
+  if (typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) return value.map(asJson);
+  if (typeof value === 'object' && value !== null) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, field]) => field !== undefined)
+        .map(([key, field]) => [key, asJson(field)]),
+    );
+  }
+  return null;
+}
 
 export function createEditionRegistry({
   editions,
