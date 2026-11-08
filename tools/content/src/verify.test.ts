@@ -119,7 +119,7 @@ describe('verify', () => {
     expect(run.status).toBe(0);
   });
 
-  it("passes a quote without the homonym index the page sets after a word", async () => {
+  it('passes a quote without the homonym index the page sets after a word', async () => {
     const page = 'Лютий <i>(див.</i> <a href="/Тлумачення/лютий">лю́тий</a><sup>2</sup>).';
     await seed({ [`${GOROH}перевірка003`]: { body: gorohPage([SUM, page]) } });
     const file = writeEntry(word('w_vrf003', 'Лютий (див. лю́тий).', `${GOROH}перевірка003`));
