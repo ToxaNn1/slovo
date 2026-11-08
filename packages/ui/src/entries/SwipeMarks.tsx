@@ -109,12 +109,15 @@ export function SwipeMarks({
   swipe,
   concealed,
   correction,
+  fill = false,
   children,
 }: {
   swipe: EntrySwipe;
   concealed: boolean;
   /** The card is a Correction's, whose Known stamp says the reader already says it right. */
   correction: boolean;
+  /** The card is a fixed frame that takes the page's height (ADR 0088), so the swipe grows to it. */
+  fill?: boolean;
   children: ReactNode;
 }) {
   const { strings } = useEdition();
@@ -363,7 +366,7 @@ export function SwipeMarks({
 
   return (
     <PageActionsProvider actions={markActions} onAction={onAction}>
-      <View style={styles.frame}>
+      <View testID="swipe-frame" style={[styles.frame, fill && styles.fill]}>
         <GestureDetector gesture={pan}>
           <Animated.View
             testID="swipe-card"
@@ -371,7 +374,7 @@ export function SwipeMarks({
               if (nativeEvent.layout.width > 0)
                 markDistance.value = nativeEvent.layout.width * MARK_SHARE;
             }}
-            style={cardStyle}
+            style={[fill && styles.fill, cardStyle]}
           >
             {children}
             {/* The wedges are the card's own, so they move and tilt with it, cut at its edges. */}
@@ -501,6 +504,7 @@ export function SwipeMarks({
 
 const styles = StyleSheet.create({
   frame: { flexShrink: 1 },
+  fill: { flexGrow: 1 },
   edges: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   edge: {
     position: 'absolute',

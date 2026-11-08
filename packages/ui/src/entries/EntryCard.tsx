@@ -133,7 +133,12 @@ export function EntryCard({
   );
   if (slots?.slot !== 'corner' || slots.swipe === undefined) return face;
   return (
-    <SwipeMarks swipe={slots.swipe} concealed={concealed} correction={card.kind === 'correction'}>
+    <SwipeMarks
+      swipe={slots.swipe}
+      concealed={concealed}
+      correction={card.kind === 'correction'}
+      fill={fixedFrame(card, tabs)}
+    >
       {face}
     </SwipeMarks>
   );
@@ -206,7 +211,7 @@ function EntryCardFace({
         style={[
           styles.card,
           // The tabbed card takes the page's height, whatever its tab holds (ADR 0088).
-          tabs && FIXED_KINDS.has(card.kind) && styles.fixed,
+          fixedFrame(card, tabs) && styles.fixed,
           {
             backgroundColor: colors.surface,
             borderColor: colors.line,
@@ -290,14 +295,13 @@ function EntryCardFace({
   );
 }
 
-/** The kinds of Entry whose card is a fixed frame while `wordTabs` is on (ADR 0088). */
-const FIXED_KINDS: ReadonlySet<EntryCardProps['card']['kind']> = new Set([
-  'word',
-  'correction',
-  'tip',
-  'synonymRow',
-  'idiom',
-]);
+/**
+ * Whether the card is a fixed frame the page's height: every card but the
+ * Word of the Day's, which stays one column, while `wordTabs` is on (ADR 0088).
+ */
+function fixedFrame(card: EntryCardProps['card'], tabs: boolean): boolean {
+  return tabs && !(card.kind === 'word' && card.wordOfTheDay !== undefined);
+}
 
 const styles = StyleSheet.create({
   // The border is the card's only elevation.

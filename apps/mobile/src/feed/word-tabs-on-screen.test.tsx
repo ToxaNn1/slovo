@@ -359,6 +359,20 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(scrolls()).toBe(true);
   });
 
+  it('lets the tabbed card take the page height through the swipe of its marks', async () => {
+    await open(fullWord);
+    await renderApp();
+    await swipeUp();
+
+    // Jest lays nothing out, so the frame is checked where the page's height passes down.
+    const around = (testID: string) =>
+      screen
+        .getAllByTestId(testID, hidden)
+        .find((each) => within(each).queryByTestId('word-tab-panel', hidden) !== null);
+    expect(around('swipe-frame')).toHaveStyle({ flexGrow: 1 });
+    expect(around('swipe-card')).toHaveStyle({ flexGrow: 1 });
+  });
+
   it('keeps the column with «Детальніше» with `wordTabs` off', async () => {
     await open(fullWord, false);
     await renderApp();
