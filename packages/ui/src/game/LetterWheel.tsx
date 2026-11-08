@@ -199,7 +199,7 @@ export function LetterWheel({
                 {...voice}
                 maxFontSizeMultiplier={TILE_MAX_FONT_SCALE}
                 style={[
-                  typeStyle('crosswordClueNumber', tokens),
+                  typeStyle('crosswordPathLetter', tokens),
                   { color: missed ? colors.background : colors.onAccent },
                 ]}
               >

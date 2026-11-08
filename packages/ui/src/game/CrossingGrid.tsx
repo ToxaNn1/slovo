@@ -17,6 +17,7 @@ import {
   crosswordLayout,
   crossingCrosswordLayout,
   minTouchTarget,
+  offsetShadow,
   motion,
   roleSize,
   typeStyle,
@@ -75,6 +76,8 @@ export function CrossingGrid({
   const { colors, radii } = useTokens();
   const columns = Math.max(0, ...cells.map((row) => row.length));
   const { cell: boardCell, cellGap } = crossingCrosswordLayout;
+  // A white cell stands on its tile's edge, so each row is that much taller than its cells.
+  const edge = offsetShadow.rest.depth;
   const [room, setRoom] = useState<{ width: number; height: number }>();
   // The board's cell, or less when the room left between the header and the Letter Wheel is smaller.
   const side =
@@ -82,7 +85,7 @@ export function CrossingGrid({
       ? boardCell
       : Math.min(
           boardCell,
-          (room.height - (cells.length - 1) * cellGap) / Math.max(cells.length, 1),
+          (room.height - (cells.length - 1) * cellGap) / Math.max(cells.length, 1) - edge,
           (room.width - (columns - 1) * cellGap) / Math.max(columns, 1),
         );
   const size = { width: side, height: side };
@@ -92,7 +95,10 @@ export function CrossingGrid({
       onLayout={({ nativeEvent: { layout } }) => {
         setRoom({ width: layout.width, height: layout.height });
       }}
-      style={[styles.room, { flexBasis: cells.length * boardCell + (cells.length - 1) * cellGap }]}
+      style={[
+        styles.room,
+        { flexBasis: cells.length * (boardCell + edge) + (cells.length - 1) * cellGap },
+      ]}
     >
       <View testID={testID} style={styles.grid}>
         {cells.map((row, r) => (

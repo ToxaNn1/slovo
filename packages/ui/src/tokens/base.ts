@@ -326,6 +326,8 @@ export const typeRoles = {
   crosswordClue: role('ui', '600', 15, 19.5),
   /** The selected word's number and direction, such as «1→», on its red badge of the clue bar. */
   crosswordClueNumber: role('word', '900', 14, 14),
+  /** A letter on a path chip over the Daily Crossword's Letter Wheel: uppercase, as the tiles. */
+  crosswordPathLetter: role('word', '900', 14, 14, 0, 'uppercase'),
   /** A word's number in the corner of its first cell of the Daily Crossword. */
   crosswordCellNumber: role('ui', '700', 10, 10),
   /** A letter on a key of the Daily Crossword's keyboard. */
