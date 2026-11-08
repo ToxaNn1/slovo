@@ -22,6 +22,13 @@ export {
 } from './edition/edition-registry';
 export { createCommunityCounters, type CommunityCounters } from './counters/community-counters';
 export { createMistakeReports, type MistakeReports } from './reports/mistake-reports';
+export {
+  createDevelopment,
+  EAS_TTL_MS,
+  GITHUB_TTL_MS,
+  type DevelopmentOverview,
+} from './development/development';
+export { cachedRead, type FreshRead } from './sources/cached-source';
 export { createSync, type Sync, type SyncChange, type SyncPage } from './sync/sync';
 export {
   systemClock,
@@ -35,7 +42,9 @@ export {
   type CollectionLinkStore,
   type ContentPackStore,
   type CounterStore,
+  type EasSource,
   type EntryCounts,
+  type GitHubSource,
   type GoogleIdentity,
   type GoogleTokenCheck,
   type GoogleVerifier,
@@ -52,6 +61,7 @@ export {
   type RecordChange,
   type SwitchRuleStore,
   type SignedIn,
+  type SourceRead,
   type UserRecords,
 } from './ports';
 export {

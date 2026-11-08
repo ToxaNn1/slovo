@@ -92,6 +92,83 @@ const SwitchesOfEditionSchema = z.object({
  * content-writing procedures only: anywhere else a token answers 403, and
  * one that is unknown or revoked answers 401, as any other Bearer does.
  */
+/** An open pull request on the repository, as Розробка lists it. */
+const PullRequestSchema = z.object({
+  number: z.number().int(),
+  title: z.string(),
+  author: z.string(),
+  url: z.string(),
+  draft: z.boolean(),
+  updatedAt: z.iso.datetime(),
+});
+
+/** The latest CI run on `main`: finished green or red, still running, or none yet. */
+const MainCiSchema = z.discriminatedUnion('state', [
+  z.object({
+    state: z.enum(['success', 'failure']),
+    url: z.string(),
+    finishedAt: z.iso.datetime(),
+  }),
+  z.object({ state: z.literal('pending'), url: z.string() }),
+  z.object({ state: z.literal('none') }),
+]);
+
+/** A version milestone (0.1 to 1.0) with its open and closed issues. */
+const MilestoneSchema = z.object({
+  title: z.string(),
+  open: z.number().int(),
+  closed: z.number().int(),
+  dueOn: z.iso.datetime().nullable(),
+});
+
+/** A published release and its tag. */
+const ReleaseSchema = z.object({
+  tag: z.string(),
+  name: z.string(),
+  publishedAt: z.iso.datetime(),
+  url: z.string(),
+});
+
+/** An EAS build of the one app (ADR 0065). */
+const EasBuildSchema = z.object({
+  id: z.string(),
+  platform: z.enum(['ios', 'android']),
+  profile: z.string(),
+  status: z.enum(['finished', 'errored', 'canceled', 'in-progress']),
+  appVersion: z.string().nullable(),
+  buildNumber: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+  url: z.string(),
+});
+
+/** What the backend read from GitHub, or that GitHub is unavailable. */
+const GitHubBlockSchema = z.discriminatedUnion('state', [
+  z.object({
+    state: z.literal('ok'),
+    fetchedAt: z.iso.datetime(),
+    pullRequests: z.array(PullRequestSchema),
+    mainCi: MainCiSchema,
+    milestones: z.array(MilestoneSchema),
+    releases: z.array(ReleaseSchema),
+  }),
+  z.object({ state: z.literal('unavailable') }),
+]);
+
+/** What the backend read from EAS, or that EAS is unavailable. */
+const EasBlockSchema = z.discriminatedUnion('state', [
+  z.object({ state: z.literal('ok'), fetchedAt: z.iso.datetime(), builds: z.array(EasBuildSchema) }),
+  z.object({ state: z.literal('unavailable') }),
+]);
+
+/** The Розробка section: GitHub and EAS, each with the time of its data. */
+export const DevelopmentSchema = z.object({ github: GitHubBlockSchema, eas: EasBlockSchema });
+export type Development = z.infer<typeof DevelopmentSchema>;
+export type PullRequest = z.infer<typeof PullRequestSchema>;
+export type MainCi = z.infer<typeof MainCiSchema>;
+export type Milestone = z.infer<typeof MilestoneSchema>;
+export type Release = z.infer<typeof ReleaseSchema>;
+export type EasBuild = z.infer<typeof EasBuildSchema>;
+
 export const adminContract = {
   requestCode: procedure
     .route({
@@ -322,4 +399,14 @@ export const adminContract = {
     })
     .errors(ADMIN_ERRORS)
     .output(z.object({ editions: z.array(AdminEditionSchema) })),
+
+  development: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/development',
+      summary: 'Розробка: open pull requests, CI on main, version milestones, releases and EAS builds',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(DevelopmentSchema),
 };
