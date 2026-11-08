@@ -22,6 +22,14 @@ export {
 } from './edition/edition-registry';
 export { createCommunityCounters, type CommunityCounters } from './counters/community-counters';
 export { createMistakeReports, type MistakeReports } from './reports/mistake-reports';
+export {
+  createQuality,
+  SENTRY_RETENTION_DAYS,
+  type CiHistoryRun,
+  type Quality,
+  type QualityAnswer,
+  type QualityKpi,
+} from './quality/quality';
 export { createSync, type Sync, type SyncChange, type SyncPage } from './sync/sync';
 export {
   systemClock,
@@ -29,6 +37,13 @@ export {
   type AppleIdentity,
   type AppleTokenCheck,
   type AppleVerifier,
+  type CiRun,
+  type CiRunStore,
+  type PackageCoverage,
+  type SentryAnswer,
+  type SentryRead,
+  type SentryReader,
+  type SentryWindow,
   type Authenticator,
   type Clock,
   type CodeCheck,
