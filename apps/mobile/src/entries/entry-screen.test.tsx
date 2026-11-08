@@ -232,6 +232,26 @@ describe('the Entry screen and the Word History', () => {
     ]);
   });
 
+  it('tells Analytics once per Entry, however often «Історія» is drawn again', async () => {
+    await renderEntry('w_sumyrnyi');
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    await settle();
+    // Another tab, then «Історія» again, and a smaller size that draws the tab anew.
+    await fireEvent.press(screen.getByTestId('word-tab-essence'));
+    await settle();
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    await settle();
+    await fireEvent(screen.getByTestId('word-tab-panel'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 10 } },
+    });
+    await fireEvent(screen.getByTestId('word-tab-content'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 900 } },
+    });
+    await settle();
+
+    expect(historyOpened()).toHaveLength(1);
+  });
+
   it('tells Analytics nothing of a Word without a Word History', async () => {
     await renderEntry('w_lahidnyi');
 

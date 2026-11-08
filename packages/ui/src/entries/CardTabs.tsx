@@ -1,6 +1,6 @@
 import type { FontSize } from '@slovo/contracts';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { FontSizeProvider, useWordTextSizes } from '../providers/FontSizeProvider';
@@ -112,8 +112,12 @@ export function CardTabs<Tab extends { readonly key: string }>({
  * to the floor, S, and content too tall even there stays at S and scrolls
  * inside the frame, so the card keeps its height. In the Feed that scroll is
  * the page's (`PagerScrollView` nested in the page's). The card measures the
- * drawn height against the room whenever either is laid out; a new `fitKey` (another tab) or font size
- * starts at the user's font size again. Its parts are `<testID>-tab-panel`,
+ * drawn height against the room once both are laid out, on the render after
+ * they arrive, so two heights reported in one layout pass are both read. Each
+ * size draws its content in a new view, which the device always lays out and
+ * reports, even when the smaller size leaves the height as it was (text in a
+ * fixed type role). A new `fitKey` (another tab) or font size starts at the
+ * user's font size again. Its parts are `<testID>-tab-panel`,
  * `<testID>-tab-content` while it fits and `<testID>-tab-scroll` once it
  * scrolls.
  */
@@ -138,20 +142,10 @@ export function FitPanel({
   // The drawn height counts only for the tab and font size it was drawn at.
   const drawnAt = `${fitKey} ${step} ${fitNow}`;
   const [drawn, setDrawn] = useState<{ at: string; height: number } | undefined>(undefined);
-  // Either height may arrive or change last, so the fit is checked on both.
-  const shrinkIfTooTall = (
-    roomNow: number | undefined,
-    drawnNow: { at: string; height: number } | undefined,
-  ) => {
-    if (roomNow === undefined || drawnNow?.at !== drawnAt || fitNow === 'scrolls') return;
-    if (drawnNow.height <= roomNow) return;
+  // Content too tall for the room takes the next smaller size, or scrolls at the floor.
+  if (fitNow !== 'scrolls' && room !== undefined && drawn?.at === drawnAt && drawn.height > room) {
     setFit({ key: fitKey, step, fit: fitNow === FLOOR ? 'scrolls' : SMALLER[fitNow] });
-  };
-  const measured = ({ nativeEvent }: LayoutChangeEvent) => {
-    const drawnNow = { at: drawnAt, height: nativeEvent.layout.height };
-    setDrawn(drawnNow);
-    shrinkIfTooTall(room, drawnNow);
-  };
+  }
   const content = (
     <FontSizeProvider fontSize={fitNow === 'scrolls' ? FLOOR : fitNow}>{children}</FontSizeProvider>
   );
@@ -161,7 +155,6 @@ export function FitPanel({
       style={styles.room}
       onLayout={({ nativeEvent }) => {
         setRoom(nativeEvent.layout.height);
-        shrinkIfTooTall(nativeEvent.layout.height, drawn);
       }}
     >
       {fitNow === 'scrolls' ? (
@@ -170,9 +163,12 @@ export function FitPanel({
         </PagerScrollView>
       ) : (
         <View
+          key={drawnAt}
           testID={`${testID}-tab-content`}
           style={[styles.content, styles.overlay]}
-          onLayout={measured}
+          onLayout={({ nativeEvent }) => {
+            setDrawn({ at: drawnAt, height: nativeEvent.layout.height });
+          }}
         >
           {content}
         </View>

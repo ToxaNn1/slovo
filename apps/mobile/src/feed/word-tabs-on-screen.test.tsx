@@ -369,6 +369,67 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(scrolls()).toBe(true);
   });
 
+  it('shrinks a Definition when the room and the content are laid out in one go', async () => {
+    const long = `${'Довге значення слова. '.repeat(20)}Кінець.`;
+    await open({ ...fullWord, primaryDefinition: long });
+    await renderApp('XL');
+    await swipeUp();
+    const size = (): unknown => {
+      const style: unknown = StyleSheet.flatten(wordCard().getByText(long, hidden).props['style']);
+      return typeof style === 'object' && style !== null && 'fontSize' in style
+        ? style.fontSize
+        : undefined;
+    };
+
+    // The device reports both heights of one layout pass together, before React draws again.
+    const content = wordCard().getByTestId('word-tab-content', hidden);
+    const panel = wordCard().getByTestId('word-tab-panel', hidden);
+    await settle(() =>
+      Promise.all([
+        fireEvent(content, 'layout', {
+          nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 300 } },
+        }),
+        fireEvent(panel, 'layout', {
+          nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 200 } },
+        }),
+      ]),
+    );
+
+    expect(size()).toBe(fontSizeSteps.L.definition);
+  });
+
+  it('measures the content afresh at each smaller size, so text that keeps its height still scrolls', async () => {
+    const history = `${'Довга історія слова. '.repeat(60)}Кінець.`;
+    await open({ ...fullWord, history });
+    await renderApp();
+    await swipeUp();
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-history')));
+    await fireEvent(wordCard().getByTestId('word-tab-panel', hidden), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 200 } },
+    });
+    await settle();
+
+    // The device reports a layout only for a view whose frame changed or that is new: a
+    // smaller size that leaves the text's height as it was must draw a new view to be measured.
+    const drawn = [];
+    for (
+      let size = 0;
+      size < 4 && wordCard().queryByTestId('word-tab-scroll', hidden) === null;
+      size++
+    ) {
+      const content = wordCard().getByTestId('word-tab-content', hidden);
+      expect(drawn).not.toContain(content);
+      drawn.push(content);
+      await fireEvent(content, 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 900 } },
+      });
+      await settle();
+    }
+
+    expect(wordCard().getByTestId('word-tab-scroll', hidden)).toBeTruthy();
+    expect(wordCard().getByText(history, hidden)).toBeTruthy();
+  });
+
   it('lets the tabbed card take the page height through the swipe of its marks', async () => {
     await open(fullWord);
     await renderApp();
