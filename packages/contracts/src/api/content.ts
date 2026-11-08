@@ -7,9 +7,29 @@ import { EditionIdSchema } from '../edition';
 import { IdiomSchema } from '../idiom';
 import { SynonymRowSchema } from '../synonym-row';
 import { TipSchema } from '../tip';
-import { WordSchema } from '../word';
+import { WordIdSchema, WordSchema } from '../word';
 import { PublishedPackSchema } from '../language-pack';
 import { procedure } from './procedure';
+
+/** The whole content of an Edition at its current content version, as the backend serves it. */
+export const ContentSnapshotSchema = z.object({
+  editionId: EditionIdSchema,
+  /** The Edition's content version; every record below is as of it. */
+  contentVersion: z.number().int().positive(),
+  // Every record of each kind in id order, the Retired ones included (ADR 0090).
+  words: z.array(WordSchema),
+  idioms: z.array(IdiomSchema),
+  corrections: z.array(CorrectionSchema),
+  tips: z.array(TipSchema),
+  synonymRows: z.array(SynonymRowSchema),
+  curatedCollections: z.array(CuratedCollectionSchema),
+  /** In date order. */
+  crosswordDays: z.array(CrosswordDaySchema),
+  /** The ids of the Words whose text changed since their Recordings, in id order. */
+  needsNewRecording: z.array(WordIdSchema),
+});
+
+export type ContentSnapshot = z.infer<typeof ContentSnapshotSchema>;
 
 /**
  * What a published pack file answers besides its bytes: a published content
@@ -107,20 +127,5 @@ export const contentContract = {
     // An Edition the backend doesn't serve, or one whose content is not imported yet.
     .errors({ NOT_FOUND: { message: 'Not found' } })
     .input(z.strictObject({ editionId: EditionIdSchema }))
-    .output(
-      z.object({
-        editionId: EditionIdSchema,
-        /** The Edition's content version; every record below is as of it. */
-        contentVersion: z.number().int().positive(),
-        // Every record of each kind in id order, the Retired ones included (ADR 0090).
-        words: z.array(WordSchema),
-        idioms: z.array(IdiomSchema),
-        corrections: z.array(CorrectionSchema),
-        tips: z.array(TipSchema),
-        synonymRows: z.array(SynonymRowSchema),
-        curatedCollections: z.array(CuratedCollectionSchema),
-        /** In date order. */
-        crosswordDays: z.array(CrosswordDaySchema),
-      }),
-    ),
+    .output(ContentSnapshotSchema),
 };

@@ -20,8 +20,8 @@ import {
 } from '@slovo/core';
 import { createFakeNotificationScheduler, seedUserState } from '@slovo/core/testing';
 
-import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
-import { ukrainian, ukrainianFolder } from './test-support';
+import { openLanguagePack, type NodeLanguagePack } from './index';
+import { buildUkrainianPack, ukrainian } from './test-support';
 
 // The Core's Feed over the real Ukrainian Language Pack, opened through the
 // Core composition (spec #96, seam 1). It lives here because only this
@@ -79,7 +79,7 @@ const wordsOnly: Edition = {
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-feed-'));
   const outFile = join(workDir, 'language-pack.db');
-  const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
+  const result = buildUkrainianPack(outFile);
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
   content = remembering(pack);

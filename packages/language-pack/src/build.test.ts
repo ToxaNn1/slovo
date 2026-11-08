@@ -13,9 +13,12 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { crc32, deflateSync } from 'node:zlib';
 
+import { DatabaseSync } from 'node:sqlite';
+
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { CorrectionSchema, WordSchema } from '@slovo/contracts';
+import { ContentSnapshotSchema, type ContentSnapshot } from '@slovo/contracts/api';
 import {
   buildEntryCard,
   buildWordCard,
@@ -25,12 +28,15 @@ import {
 } from '@slovo/core';
 
 import {
+  buildFromBackend,
+  buildFromSnapshot,
   buildLanguagePack,
   checkLanguagePack,
   formatBuildError,
   formatContentReport,
   openLanguagePack,
   recordContent,
+  SnapshotUnreachableError,
   type BuildError,
 } from './index';
 import { fontWith } from './test-support';
@@ -132,6 +138,96 @@ function buildErrors(editionDir: string): readonly BuildError[] {
 
 afterEach(() => {
   for (const dir of workDirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+/** The snapshot fixture: the valid fixture's records at content version 7, one Correction retired, one Word needing a new Recording. */
+function snapshotFixture(): ContentSnapshot {
+  return ContentSnapshotSchema.parse(JSON.parse(readFileSync(fixture('snapshot.json'), 'utf8')));
+}
+
+/** The ids of the Words the pack marks as needing a new Recording. */
+function needingNewRecording(outFile: string): string[] {
+  const db = new DatabaseSync(outFile, { readOnly: true });
+  try {
+    return db
+      .prepare('SELECT id FROM words WHERE needs_new_recording = 1 ORDER BY id')
+      .all()
+      .map((row) => String(row['id']));
+  } finally {
+    db.close();
+  }
+}
+
+describe('buildFromSnapshot', () => {
+  it("writes the snapshot's records at its content version, retired flags and «needs new recording» kept", async () => {
+    const snapshot = snapshotFixture();
+    const outFile = packPath();
+
+    const result = buildFromSnapshot({ editionDir: fixture('valid'), snapshot, outFile });
+
+    expect(result).toMatchObject({
+      ok: true,
+      metadata: { editionId: 'fixture', contentVersion: 7 },
+    });
+    expect((await readBack(outFile)).metadata).toMatchObject({ contentVersion: 7 });
+    await withEntries(outFile, async (entries) => {
+      for (const record of [...snapshot.words, ...snapshot.corrections, ...snapshot.idioms]) {
+        expect(await entries.get(record.id)).toEqual(record);
+      }
+      expect(await entries.get('c_fx0003')).toMatchObject({ retired: true });
+      expect((await entries.eligible()).words).toEqual(['w_fx0002', 'w_fx0003']);
+    });
+    expect(needingNewRecording(outFile)).toEqual(['w_fx0002']);
+  });
+
+  it('refuses a snapshot record that breaks a rule, naming it, and writes no pack', () => {
+    const snapshot = snapshotFixture();
+    const outFile = packPath();
+    const words = snapshot.words.map((word) =>
+      word.id === 'w_fx0003' ? { ...word, categoryId: 'nowhere' } : word,
+    );
+
+    const result = buildFromSnapshot({
+      editionDir: fixture('valid'),
+      snapshot: { ...snapshot, words },
+      outFile,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(result.ok ? [] : result.errors).toContainEqual(
+      expect.objectContaining({ entryId: 'w_fx0003', field: 'categoryId' }),
+    );
+    expect(existsSync(outFile)).toBe(false);
+  });
+
+  it("refuses a snapshot of another Edition than the folder's", () => {
+    const outFile = packPath();
+
+    const result = buildFromSnapshot({
+      editionDir: fixture('valid'),
+      snapshot: { ...snapshotFixture(), editionId: 'uk' },
+      outFile,
+    });
+
+    expect(result.ok).toBe(false);
+    expect(existsSync(outFile)).toBe(false);
+  });
+});
+
+describe('buildFromBackend', () => {
+  it('fails with a named error and writes no pack when the snapshot URL is unreachable', async () => {
+    const outFile = packPath();
+
+    const build = buildFromBackend({
+      editionDir: fixture('valid'),
+      apiUrl: 'http://127.0.0.1:9',
+      outFile,
+    });
+
+    await expect(build).rejects.toBeInstanceOf(SnapshotUnreachableError);
+    await expect(build).rejects.toThrow('http://127.0.0.1:9');
+    expect(existsSync(outFile)).toBe(false);
+  });
 });
 
 describe('buildLanguagePack', () => {

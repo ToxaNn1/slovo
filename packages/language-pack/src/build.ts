@@ -5,9 +5,13 @@ import { checkContentVersion } from './content-manifest';
 import { missedTargets, type MissedTarget } from './content-targets';
 import { unregisteredEntries } from './id-registry';
 import { PACK_FORMAT, type PackContent } from './pack-layout';
-import { readEdition } from './read-edition';
+import { readEdition, readEditionWithSnapshot } from './read-edition';
 import type { MissingRecordings } from './recordings';
 import { contentReport, type ContentReport } from './report';
+import { fetchSnapshot } from './snapshot-source';
+import { checksumOf } from '@slovo/content-rules';
+import { editionFiles } from './edition-folder';
+import type { ApiFetch, ContentSnapshot } from '@slovo/contracts/api';
 import { writePack } from './write-pack';
 
 export type BuildResult =
@@ -75,6 +79,76 @@ export function buildLanguagePack({
   const { content, metadata, report, missedTargets, missingRecordings } = checked;
   writePack(outFile, content, metadata);
   return { ok: true, metadata, report, missedTargets, missingRecordings };
+}
+
+/**
+ * Compiles a SQLite Language Pack at `outFile` from an Edition's folder,
+ * which gives the config, Categories and assets, and a snapshot of the
+ * backend, which gives every record, its retired flag and the Words that
+ * need a new Recording at the snapshot's content version. It checks the
+ * records with the build's own rules and writes nothing when there are
+ * errors; missed targets are not errors.
+ */
+export function buildFromSnapshot({
+  editionDir,
+  snapshot,
+  outFile,
+  today = new Date(),
+}: {
+  editionDir: string;
+  snapshot: ContentSnapshot;
+  outFile: string;
+  /** The day the public domain is judged on (ADR 0045). */
+  today?: Date;
+}): BuildResult {
+  const source = readEditionWithSnapshot(editionDir, snapshot, { today });
+  if (source.errors.length > 0 || source.valid === undefined) {
+    return { ok: false, errors: source.errors };
+  }
+  const { content, targets } = source.valid;
+  const metadata: PackMetadata = {
+    editionId: content.editionId,
+    contentVersion: content.contentVersion,
+    contentChecksum: checksumOf(content),
+    packFormat: PACK_FORMAT,
+  };
+  writePack(outFile, content, metadata);
+  const report = contentReport(content);
+  return {
+    ok: true,
+    metadata,
+    report,
+    missedTargets: missedTargets(report, targets),
+    missingRecordings: source.missingRecordings,
+  };
+}
+
+/**
+ * Fetches the Edition's snapshot from the backend at `apiUrl` and compiles it
+ * with `buildFromSnapshot`. Throws a SnapshotUnreachableError, writing no
+ * pack, when the backend gives no snapshot.
+ */
+export async function buildFromBackend({
+  editionDir,
+  apiUrl,
+  outFile,
+  today = new Date(),
+  fetch,
+}: {
+  editionDir: string;
+  apiUrl: string;
+  outFile: string;
+  /** The day the public domain is judged on (ADR 0045). */
+  today?: Date;
+  fetch?: ApiFetch;
+}): Promise<BuildResult> {
+  const { id: editionId } = editionFiles(editionDir).read('config');
+  const snapshot = await fetchSnapshot({
+    apiUrl,
+    editionId,
+    ...(fetch === undefined ? {} : { fetch }),
+  });
+  return buildFromSnapshot({ editionDir, snapshot, outFile, today });
 }
 
 function checkEdition(

@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs';
 
+import type { ContentSnapshot } from '@slovo/contracts/api';
 import { loadEdition } from '@slovo/core';
 
+import { buildFromSnapshot, type BuildResult } from './build';
 import { EDITIONS_DIR, openEdition } from './edition-folder';
+import { readEdition } from './read-edition';
 
 // Helpers the Language Pack tests share. No module of the package imports them.
 
@@ -13,6 +16,39 @@ export const ukrainianFolder = openEdition(EDITIONS_DIR, 'uk');
 export const ukrainian = loadEdition(
   JSON.parse(readFileSync(ukrainianFolder.path('config'), 'utf8')) as unknown,
 );
+
+/**
+ * The UA Edition's content as the backend's snapshot answers it after the
+ * one-time import of its folder: every record, at the manifest's content
+ * version, none needing a new Recording. The backend's own tests hold its
+ * snapshot to this one.
+ */
+export function ukrainianSnapshot(): ContentSnapshot {
+  const { valid } = readEdition(ukrainianFolder.dir, { registryRequired: true, today: new Date() });
+  if (valid === undefined) throw new Error('The Ukrainian Edition does not read');
+  const { content } = valid;
+  return {
+    editionId: content.editionId,
+    contentVersion: content.contentVersion,
+    words: [...content.words],
+    idioms: [...content.idioms],
+    corrections: [...content.corrections],
+    tips: [...content.tips],
+    synonymRows: [...content.synonymRows],
+    curatedCollections: [...(content.curatedCollections ?? [])],
+    crosswordDays: [...(content.crosswordDays ?? [])],
+    needsNewRecording: [],
+  };
+}
+
+/** Builds the UA Language Pack as the app build does: the folder's config and assets, the snapshot's records. */
+export function buildUkrainianPack(outFile: string): BuildResult {
+  return buildFromSnapshot({
+    editionDir: ukrainianFolder.dir,
+    snapshot: ukrainianSnapshot(),
+    outFile,
+  });
+}
 
 /**
  * A font file with a glyph for each of the given characters and no other:

@@ -186,15 +186,18 @@ export function createContentStore({
           .where(eq(contentVersions.editionId, editionId));
         if (held === undefined) return undefined;
         const ofEdition = (column: PgColumn) => eq(column, editionId);
+        const words = await tx
+          .select({
+            id: contentWords.id,
+            fields: contentWords.fields,
+            needsNewRecording: contentWords.needsNewRecording,
+          })
+          .from(contentWords)
+          .where(ofEdition(contentWords.editionId));
         return {
           editionId,
           contentVersion: held.contentVersion,
-          words: inIdOrder(
-            await tx
-              .select({ id: contentWords.id, fields: contentWords.fields })
-              .from(contentWords)
-              .where(ofEdition(contentWords.editionId)),
-          ),
+          words: inIdOrder(words),
           idioms: inIdOrder(
             await tx
               .select({ id: contentIdioms.id, fields: contentIdioms.fields })
@@ -233,6 +236,9 @@ export function createContentStore({
               .select({ id: contentCrosswordDays.id, fields: contentCrosswordDays.fields })
               .from(contentCrosswordDays)
               .where(ofEdition(contentCrosswordDays.editionId)),
+          ),
+          needsNewRecording: inIdOrder(
+            words.filter((word) => word.needsNewRecording).map(({ id }) => ({ id, fields: id })),
           ),
         };
       },
