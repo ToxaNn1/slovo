@@ -8,6 +8,7 @@ The short map. `README.md` is for people; grep it for one section when you need 
 | `apps/widget`            | The SwiftUI home-screen widget.                                  |
 | `apps/backend`           | The API: HTTP shell, adapters, composition root.                 |
 | `apps/site`              | The Astro site on Pages: the landing and the legal pages.        |
+| `apps/admin`             | The owner admin: Vite app the backend serves built at `/admin`.  |
 | `packages/core`          | Pure TypeScript domain logic, no React or React Native.          |
 | `packages/ui`            | Screens, components, design tokens, the Mascot.                  |
 | `packages/contracts`     | Zod schemas: Entries, Edition config, Language Pack.             |

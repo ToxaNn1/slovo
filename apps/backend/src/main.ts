@@ -1,4 +1,7 @@
 // The backend's entry point (`pnpm dev`, `pnpm start`).
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { openAppConfig, REPO_DIR } from '@slovo/language-pack/edition';
 import { systemClock } from '@slovo/server-core';
 
@@ -20,6 +23,8 @@ const database = createDatabase(config.DATABASE_URL, logger);
 const editions = readEditions(config.EDITIONS_DIR);
 const appConfig = openAppConfig(REPO_DIR).config;
 const mailer = createSmtpMailer(config.smtp);
+// The owner admin app as `pnpm --filter @slovo/admin build` leaves it; `pnpm dev:admin` serves it in Vite.
+const adminDist = join(REPO_DIR, 'apps/admin/dist');
 const app = createApp({
   database,
   clock: systemClock,
@@ -34,6 +39,7 @@ const app = createApp({
   reporter: await createSentryReporter(config.SENTRY_DSN),
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
   ownerEmail: config.OWNER_EMAIL,
+  adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
 });
 const server = await startServer({ app, database, port: config.PORT });
 

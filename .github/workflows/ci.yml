@@ -94,6 +94,7 @@ jobs:
               pnpm test --filter='!@slovo/backend' --filter='!@slovo/core'
               --filter='!@slovo/ui' --filter='!@slovo/mobile' --filter='!@slovo/site'
           - { name: site, for: site, run: 'pnpm test --filter=@slovo/site' }
+          - { name: admin build, run: 'pnpm --filter=@slovo/admin build' }
           - { name: app Vitest, for: mobile, run: 'pnpm --filter=@slovo/mobile exec vitest run' }
           # The app's Jest tests, the slowest part, cut in three.
           - {
@@ -339,7 +340,11 @@ jobs:
           "${run[@]}" --rm slovo-backend pnpm db:migrate
           "${run[@]}" --detach --name backend slovo-backend
           for _ in $(seq 1 30); do
-            if curl --silent --fail http://localhost:8787/health; then exit 0; fi
+            if curl --silent --fail http://localhost:8787/health; then
+              # The built owner admin, at /admin with its assets.
+              curl --silent --fail http://localhost:8787/admin/ | grep -q '/admin/assets/' && exit 0
+              break
+            fi
             sleep 2
           done
           docker logs backend
