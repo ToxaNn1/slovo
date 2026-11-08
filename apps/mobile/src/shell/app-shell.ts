@@ -9,15 +9,14 @@ import {
   type Edition,
 } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
-import Constants from 'expo-constants';
 import { getLocales } from 'expo-localization';
-import { Platform } from 'react-native';
 
 import { openDeviceAccount } from '../account/device-account';
 import { backend } from '../api';
 import { compositionOpening } from '../composition';
 import { languagePackOpening } from '../content-update/language-pack';
 import { deviceClock } from '../device/device-clock';
+import { deviceFacts } from '../device/device-facts';
 import { logError } from '../diagnostics/log';
 import { activeEditionId, edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
@@ -78,8 +77,7 @@ export function createShell(
         states: edition.featureSwitches,
         // The reader the Rules target, read afresh each time the verdicts are worked out.
         facts: () => ({
-          appVersion: Constants.expoConfig?.version ?? '',
-          platform: Platform.OS === 'android' ? 'android' : 'ios',
+          ...deviceFacts,
           region: getLocales().at(0)?.regionCode ?? undefined,
           signedIn:
             account?.state.status === 'ready' && account.state.value.state.status === 'signed-in',
@@ -125,7 +123,7 @@ export function createShell(
     mistakeReports: over(ports, 'Could not open Mistake Reports', async (opened) =>
       openMistakeReports({
         ...opened,
-        appVersion: Constants.expoConfig?.version ?? '',
+        appVersion: deviceFacts.appVersion,
         contentVersion: (await languagePack.opened()).version.contentVersion,
       }),
     ),

@@ -62,9 +62,13 @@ export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
 /**
  * The remote Feature Switches already open, with the Edition in effect as
  * `edition` has it, for a screen drawn under the Language Pack's gate, so a
- * test says which switches are on by the Edition it loads.
+ * test says which switches are on by the Edition it loads, and the
+ * force-update minimums of the kept answer, none unless it gives them.
  */
-export function switchedTo(edition: Edition): Opening<EditionSwitches> {
+export function switchedTo(
+  edition: Edition,
+  minimums: EditionSwitches['minimums'] = {},
+): Opening<EditionSwitches> {
   return opened({
     edition,
     verdicts: evaluateSwitches({
@@ -72,7 +76,7 @@ export function switchedTo(edition: Edition): Opening<EditionSwitches> {
       states: edition.featureSwitches,
       facts: { ...testReader, clock, clockOffsetMs: 0 },
     }),
-    minimums: {},
+    minimums,
     subscribe: () => () => undefined,
     ask: () => Promise.resolve(false),
     start: () => () => undefined,
