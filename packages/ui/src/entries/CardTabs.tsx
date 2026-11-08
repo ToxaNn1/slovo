@@ -57,15 +57,15 @@ export function CardTabs<Tab extends { readonly key: string }>({
   return (
     <View style={styles.tabs}>
       {tabs.length === 1 ? null : (
-        <View role="tablist" style={[styles.bar, { borderBottomColor: colors.line }]}>
+        <View accessibilityRole="tablist" style={[styles.bar, { borderBottomColor: colors.line }]}>
           {tabs.map((tab) => {
             const on = tab.key === selected.key;
             return (
               <Pressable
                 key={tab.key}
                 testID={`${testID}-tab-${tab.key}`}
-                role="tab"
-                aria-selected={on}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on, disabled }}
                 disabled={disabled}
                 accessibilityLabel={nameOf(tab)}
                 {...voice}
