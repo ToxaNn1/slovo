@@ -28,6 +28,16 @@ Every variable the server reads at start, with the value it takes in the Deploym
 | `PORT`               | Unset: Railway sets it, and its proxy sends the traffic there.                                                |
 | `EDITIONS_DIR`       | Unset: the image's `editions/`.                                                                               |
 
+## Importing an Edition's content
+
+An Edition's content lives in the Deployment's Postgres (ADR 0090). The Edition folder reaches it once, through the import command, run on the owner's machine with the same operator credential:
+
+```sh
+DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm content import --edition uk
+```
+
+The command checks every content rule first and writes nothing when one refuses a record; it prints the count of each kind of record and the content version it wrote. A second import is refused (exit 3) because the database is the live content from then on; `--override` imports the folder again over the database and raises the content version.
+
 ## Publishing a Language Pack
 
 A Language Pack reaches the Deployment through the publish command (ADR 0032), run on the owner's machine, never through the image. The operator credential is the public address of Railway's Postgres (`DATABASE_PUBLIC_URL` in the Postgres service's variables), given in the command's environment and never written to a file in the repository:

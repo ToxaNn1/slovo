@@ -61,7 +61,7 @@ describe('pnpm content import', () => {
     const refused = await importCommand('--edition', 'uk');
     const overridden = await importCommand('--edition', 'uk', '--override');
 
-    expect(refused.code).toBe(1);
+    expect(refused.code).toBe(3);
     expect(refused.stderr).toContain('already imported. Pass --override');
     expect(overridden.code).toBe(0);
     expect(overridden.stdout).toMatch(

@@ -1,5 +1,6 @@
 // Imports an Edition's content folder into the content tables, once (ADR 0090):
-// `pnpm content import --edition <id> [--override]`.
+// `pnpm content import --edition <id> [--override]`. Exits 0 once imported,
+// 3 when the Edition's content is already imported, 1 on any other failure.
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -46,6 +47,7 @@ async function main(): Promise<number> {
         console.error(
           `The content of "${editionId}" is already imported. Pass --override to import it again over the database.`,
         );
+        return 3;
       } else {
         console.error(`The backend does not find the Edition "${editionId}" in EDITIONS_DIR.`);
       }
