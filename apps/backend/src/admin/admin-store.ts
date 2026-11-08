@@ -1,8 +1,6 @@
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes } from 'node:crypto';
 
-import type { SecretVault } from '@slovo/server-core';
-
-import type { AdminStore, AdminTotp, AdminUser } from '@slovo/server-core';
+import type { AdminStore, AdminTotp, AdminUser, SecretVault } from '@slovo/server-core';
 import { and, asc, desc, eq, isNull } from 'drizzle-orm';
 
 import type { Database } from '../database/database';

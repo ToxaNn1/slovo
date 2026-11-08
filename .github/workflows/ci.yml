@@ -338,6 +338,8 @@ jobs:
           EOF
           run=(docker run --network host --env-file "$RUNNER_TEMP/backend.env")
           "${run[@]}" --rm slovo-backend pnpm db:migrate
+          # The admin answers 404 until a Власник exists (ADR 0088).
+          "${run[@]}" --rm slovo-backend pnpm admin owner add owner@example.com
           "${run[@]}" --detach --name backend slovo-backend
           for _ in $(seq 1 30); do
             if curl --silent --fail http://localhost:8787/health; then
