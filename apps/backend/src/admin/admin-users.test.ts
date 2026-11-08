@@ -11,6 +11,7 @@ import { systemRandom } from '../random';
 import {
   createTestDatabase,
   passTime,
+  signInAdmin,
   silentLogger,
   testApp,
   testDatabaseUrl,
@@ -64,7 +65,8 @@ describe('pnpm admin owner add', () => {
     const added = await backend.command('owner', 'add', email);
 
     expect(added.code).toBe(0);
-    const status = await backend.status();
+    const { cookie } = await signInAdmin(backend, email);
+    const status = await backend.status({ cookie });
     expect(status.status).toBe(200);
     expect(await status.json()).toEqual({ on: true });
     expect(await backend.admin.actions()).toEqual([
@@ -145,9 +147,11 @@ describe('the admin API at /v1/admin', () => {
     const backend = await freshBackend();
     expect((await backend.request('/v1/admin/editions')).status).toBe(404);
 
-    await backend.command('owner', 'add', newEmail());
+    const email = newEmail();
+    await backend.command('owner', 'add', email);
+    const { cookie } = await signInAdmin(backend, email);
 
-    const response = await backend.request('/v1/admin/editions');
+    const response = await backend.request('/v1/admin/editions', { headers: { cookie } });
     expect(response.status).toBe(200);
     const editions = readEditions(EDITIONS_DIR).map(({ config }) => ({
       id: config.id,

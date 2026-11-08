@@ -628,16 +628,11 @@ export function adminCookieOf(response: Response): string {
 }
 
 /**
- * Adds the Admin user to the backend's database and signs them in as the admin
- * app does: the emailed code, the TOTP set-up, then the code and a TOTP. Answers
- * the session cookie, the client of the session, and what the set-up showed.
+ * Signs the Admin user in as the admin app does, the first time: the emailed
+ * code, the TOTP set-up, then the code and a TOTP. Answers the session cookie,
+ * the client of the session, and what the set-up showed.
  */
-export async function signedInAdmin(
-  backend: ReturnType<typeof testApp>,
-  role: AdminRole,
-  email = `${role}-${randomUUID()}@example.com`,
-) {
-  await createAdminStore(backend.database).addAdminUser({ email, role, createdAt: new Date() });
+export async function signInAdmin(backend: ReturnType<typeof testApp>, email: string) {
   const anonymous = backend.clientWith(adminHeaders());
   await anonymous.admin.requestCode({ email });
   const code = backend.mailer.codeSentTo(email);
@@ -655,4 +650,14 @@ export async function signedInAdmin(
   if (response.status !== 200) throw new Error(`sign-in answered ${response.status}`);
   const cookie = adminCookieOf(response);
   return { email, cookie, enrolment, client: backend.clientWith(adminHeaders(cookie)) };
+}
+
+/** Adds an Admin user of the role to the backend's database, and signs them in. */
+export async function signedInAdmin(
+  backend: ReturnType<typeof testApp>,
+  role: AdminRole,
+  email = `${role}-${randomUUID()}@example.com`,
+) {
+  await createAdminStore(backend.database).addAdminUser({ email, role, createdAt: new Date() });
+  return signInAdmin(backend, email);
 }
