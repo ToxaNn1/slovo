@@ -174,7 +174,7 @@ function FeedScreen() {
 /** The key of a card's page, by the Entry, Feed Notice or Quick Question it shows. */
 function pageKey(card: FeedCard): string {
   if (card.kind === 'notice') return `notice-${card.notice}`;
-  if (card.kind === 'quick-question') return `quick-question-${card.askedId}`;
+  if (card.kind === 'quick-question') return `quick-question-${card.entry.id}`;
   return card.entryId ?? card.kind;
 }
 

@@ -141,7 +141,7 @@ describe('a Quick Question answered', () => {
     const { app } = await run();
     const { card } = await firstQuestion(app);
 
-    expect(words.map(({ id }) => id)).toContain(card.askedId);
+    expect(words.map(({ id }) => id)).toContain(card.entry.id);
     expect(card.round.form).toBe('pick');
     expect(card.round.options[card.round.correct]).toBeDefined();
   });
@@ -170,7 +170,7 @@ describe('a Quick Question answered', () => {
     const right = await app.feed.answerQuickQuestion(position, wrong);
 
     expect(right).toBe(false);
-    expect(app.knowledge.state.shown.get(card.askedId)).toBe('unknown');
+    expect(app.knowledge.state.shown.get(card.entry.id)).toBe('unknown');
     expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
     expect(app.knowledge.state.confirmed.total).toBe(0);
     expect(events).toContainEqual([
