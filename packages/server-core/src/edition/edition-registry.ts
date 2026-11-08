@@ -14,7 +14,7 @@ import {
 } from '@slovo/contracts';
 
 import type { ActionEntry, Actor } from '../admin/admin-access';
-import type { Clock, Json, SwitchRuleStore } from '../ports';
+import type { Alerts, Clock, Json, SwitchRuleStore } from '../ports';
 
 /** An Edition as the backend serves it: its config, strings and content manifest, read from its folder. */
 export interface Edition {
@@ -184,12 +184,15 @@ export function createEditionRegistry({
   switchStore,
   clock,
   log,
+  alerts,
 }: {
   editions: readonly Edition[];
   switchStore: SwitchRuleStore;
   clock: Clock;
   /** Appends a change to the Action log (ADR 0088). */
   log: (entry: ActionEntry) => Promise<void>;
+  /** Tells the owner of every Kill switch. */
+  alerts: Alerts;
 }): EditionRegistry {
   const byId = new Map(editions.map((edition) => [edition.config.id, edition]));
   const unknownEdition: UnknownEdition = { ok: false, reason: 'unknown-edition' };
@@ -294,7 +297,11 @@ export function createEditionRegistry({
         return refused('unknown-edition', editionId);
       }
       if (!isFeatureSwitch(feature)) return refused('unknown-feature', feature);
-      const editionIds = editionId === undefined ? [...byId.keys()] : [editionId];
+      // An Edition without the feature has nothing to turn off.
+      const editionIds = (editionId === undefined ? [...byId.keys()] : [editionId]).filter(
+        (id) => byId.get(id)?.config.featureSwitches[feature] !== 'unavailable',
+      );
+      if (editionIds.length === 0) return refused('unavailable-feature', feature);
       for (const id of editionIds) {
         // One Rule off for everyone in place of every Rule; the log keeps those.
         await writeRules(
@@ -305,6 +312,7 @@ export function createEditionRegistry({
           by,
         );
       }
+      await alerts.send({ kind: 'kill-switch', feature, editionIds, ...by });
       return { ok: true, editionIds };
     },
   };

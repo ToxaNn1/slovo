@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { openLanguagePack } from '@slovo/language-pack';
 import {
   createContentPacks,
+  type Alerts,
   type Clock,
   type ContentPacks,
   type Edition,
@@ -22,11 +23,13 @@ export async function publishPack({
   database,
   clock,
   editions,
+  alerts,
   editionId,
   file,
 }: {
   database: Database;
   clock: Clock;
+  alerts: Alerts;
   /** The Editions as their folders hold them now. */
   editions: readonly Edition[];
   editionId: string;
@@ -41,7 +44,7 @@ export async function publishPack({
     pack.close();
   }
   const contentPacks = createContentPacks({
-    editions: createEditions({ database, clock, editions }),
+    editions: createEditions({ database, clock, editions, alerts }),
     store: createContentPackStore(database),
     clock,
   });

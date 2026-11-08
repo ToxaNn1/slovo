@@ -27,6 +27,8 @@ export {
   systemClock,
   type AccountRecord,
   type AppleIdentity,
+  type Alert,
+  type Alerts,
   type AppleTokenCheck,
   type AppleVerifier,
   type Authenticator,

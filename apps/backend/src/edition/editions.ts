@@ -1,4 +1,4 @@
-import { createEditionRegistry, type Clock, type Edition } from '@slovo/server-core';
+import { createEditionRegistry, type Alerts, type Clock, type Edition } from '@slovo/server-core';
 
 import { createAdminStore } from '../admin/admin-store';
 import type { Database } from '../database/database';
@@ -14,10 +14,12 @@ export function createEditions({
   database,
   clock,
   editions,
+  alerts,
 }: {
   database: Database;
   clock: Clock;
   editions: readonly Edition[];
+  alerts: Alerts;
 }) {
   const adminStore = createAdminStore(database);
   return createEditionRegistry({
@@ -25,5 +27,6 @@ export function createEditions({
     switchStore: createSwitchRuleStore(database),
     clock,
     log: (entry) => adminStore.appendAction({ ...entry, at: clock.now() }),
+    alerts,
   });
 }
