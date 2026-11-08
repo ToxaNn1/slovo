@@ -118,8 +118,10 @@
     "mood": "on",
     "curatedCollections": "on",
     "swipeMarks": "on",
+    "wordTabs": "on",
     "searchButton": "on",
     "dashboardWordmark": "on",
+    "feedTab": "on",
     "categoryScreens": "on",
     "correctionCategoryScreens": "on",
     "quietCategories": "on",
@@ -220,8 +222,16 @@
   "narratorVoices": {
     "default": "anna",
     "voices": [
-      { "id": "anna", "name": "Anna", "description": "Female · calm" },
-      { "id": "boris", "name": "Boris", "description": "Male · low" }
+      {
+        "id": "anna",
+        "name": "Anna",
+        "description": "Female · calm"
+      },
+      {
+        "id": "boris",
+        "name": "Boris",
+        "description": "Male · low"
+      }
     ],
     "sample": {
       "word": "w_fx0001",
@@ -244,8 +254,15 @@
     "quickQuestion": 2,
     "seenWord": 1
   },
-  "dailyGoals": { "options": [10, 25, 50], "highlighted": 10 },
-  "onboardingNotificationTimes": { "morning": "09:00", "midday": "13:00", "evening": "20:30" },
+  "dailyGoals": {
+    "options": [10, 25, 50],
+    "highlighted": 10
+  },
+  "onboardingNotificationTimes": {
+    "morning": "09:00",
+    "midday": "13:00",
+    "evening": "20:30"
+  },
   "levels": {
     "first": 50,
     "growth": 0.1,

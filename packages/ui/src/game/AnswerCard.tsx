@@ -6,11 +6,10 @@ import { roundLayout, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
- * The inline answer card under a Round's options (board 07, spec #1674):
+ * The answer card the sheet after an answer shows (board 07, spec #1674):
  * «Влучно!» on the accent for a right answer or «Майже. Наступне вийде.» in
  * ink for a wrong one, one line of explanation, the Definition or the
- * Correction's explanation, and «Далі →». It covers nothing of the Round;
- * the Example and its author live in the expanded Game Review rows.
+ * Correction's explanation, and «Далі →». The Example and its author live in the expanded Game Review rows.
  * VoiceOver hears the verdict and the line as the card shows.
  */
 export function AnswerCard({

@@ -1,5 +1,5 @@
 'use no memo';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import Animated, {
   ReduceMotion,
@@ -18,7 +18,9 @@ import {
   crossingCrosswordLayout,
   minTouchTarget,
   motion,
+  roleSize,
   typeStyle,
+  type TypeRole,
 } from '../tokens';
 import { ease } from './round-motion';
 
@@ -71,47 +73,80 @@ export function CrossingGrid({
   testID: string;
 }) {
   const { colors, radii } = useTokens();
+  const columns = Math.max(0, ...cells.map((row) => row.length));
+  const { cell: boardCell, cellGap } = crossingCrosswordLayout;
+  const [room, setRoom] = useState<{ width: number; height: number }>();
+  // The board's cell, or less when the room left between the header and the Letter Wheel is smaller.
+  const side =
+    room === undefined
+      ? boardCell
+      : Math.min(
+          boardCell,
+          (room.height - (cells.length - 1) * cellGap) / Math.max(cells.length, 1),
+          (room.width - (columns - 1) * cellGap) / Math.max(columns, 1),
+        );
+  const size = { width: side, height: side };
   return (
-    <View testID={testID} style={styles.grid}>
-      {cells.map((row, r) => (
-        <View key={r} style={styles.row}>
-          {row.map((cell, c) =>
-            cell.kind === 'block' ? (
-              <View
-                key={c}
-                testID={`${testID}-${String(r)}-${String(c)}-block`}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-                style={[
-                  styles.cell,
-                  { backgroundColor: colors.silhouette, borderRadius: radii.tile },
-                ]}
-              />
-            ) : (
-              <Cell
-                key={c}
-                testID={`${testID}-${String(r)}-${String(c)}`}
-                cell={cell}
-                onPress={() => {
-                  onSelect({ row: r, column: c });
-                }}
-              />
-            ),
-          )}
-        </View>
-      ))}
+    <View
+      testID={`${testID}-room`}
+      onLayout={({ nativeEvent: { layout } }) => {
+        setRoom({ width: layout.width, height: layout.height });
+      }}
+      style={[styles.room, { flexBasis: cells.length * boardCell + (cells.length - 1) * cellGap }]}
+    >
+      <View testID={testID} style={styles.grid}>
+        {cells.map((row, r) => (
+          <View key={r} style={styles.row}>
+            {row.map((cell, c) =>
+              cell.kind === 'block' ? (
+                <View
+                  key={c}
+                  testID={`${testID}-${String(r)}-${String(c)}-block`}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                  style={[
+                    styles.cell,
+                    size,
+                    { backgroundColor: colors.silhouette, borderRadius: radii.tile },
+                  ]}
+                />
+              ) : (
+                <Cell
+                  key={c}
+                  testID={`${testID}-${String(r)}-${String(c)}`}
+                  cell={cell}
+                  side={side}
+                  onPress={() => {
+                    onSelect({ row: r, column: c });
+                  }}
+                />
+              ),
+            )}
+          </View>
+        ))}
+      </View>
     </View>
   );
+}
+
+/** A type role's size scaled with a cell drawn smaller than the board's. */
+function scaledRole(role: TypeRole, side: number) {
+  const ratio = side / crossingCrosswordLayout.cell;
+  const { fontSize, lineHeight } = roleSize(role);
+  return { fontSize: fontSize * ratio, lineHeight: lineHeight * ratio };
 }
 
 /** A white cell: a tile that pops once as its Word is solved. */
 function Cell({
   testID,
   cell,
+  side,
   onPress,
 }: {
   testID: string;
   cell: Extract<CrossingGridCell, { kind: 'cell' }>;
+  /** The cell's side: the board's, or less to fit the screen. */
+  side: number;
   onPress: () => void;
 }) {
   const tokens = useTokens();
@@ -146,6 +181,7 @@ function Cell({
         onPress={onPress}
         faceStyle={[
           styles.cell,
+          { width: side, height: side },
           cell.solved && { backgroundColor: colors.correct },
           !cell.solved && cell.current && { backgroundColor: colors.highlight },
           cell.current && { borderWidth: crosswordLayout.ring, borderColor: colors.ink },
@@ -154,7 +190,12 @@ function Cell({
         {cell.number !== undefined && (
           <Text
             maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
-            style={[typeStyle('crosswordCellNumber', tokens), styles.cellNumber, { color: ink }]}
+            style={[
+              typeStyle('crosswordCellNumber', tokens),
+              scaledRole('crosswordCellNumber', side),
+              styles.cellNumber,
+              { color: ink },
+            ]}
           >
             {String(cell.number)}
           </Text>
@@ -162,7 +203,11 @@ function Cell({
         <Text
           {...voice}
           maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
-          style={[typeStyle('crosswordLetter', tokens), { color: ink }]}
+          style={[
+            typeStyle('crosswordLetter', tokens),
+            scaledRole('crosswordLetter', side),
+            { color: ink },
+          ]}
         >
           {cell.letter ?? ''}
         </Text>
@@ -242,11 +287,11 @@ export function CrossingClueBar({
 }
 
 const styles = StyleSheet.create({
-  grid: { gap: crossingCrosswordLayout.cellGap, alignSelf: 'center' },
+  // The room the grid may take: its full size at most, shrinking when the screen is short.
+  room: { flexShrink: 1, minHeight: 0, alignSelf: 'stretch', alignItems: 'center' },
+  grid: { gap: crossingCrosswordLayout.cellGap },
   row: { flexDirection: 'row', gap: crossingCrosswordLayout.cellGap },
   cell: {
-    width: crossingCrosswordLayout.cell,
-    height: crossingCrosswordLayout.cell,
     alignItems: 'center',
     justifyContent: 'center',
   },

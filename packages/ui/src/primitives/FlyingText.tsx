@@ -1,6 +1,7 @@
 'use no memo';
 // Reanimated code: the React Compiler skips this module (ADR 0059).
 
+import type { ReactNode } from 'react';
 import { StyleSheet, Text, type StyleProp, type TextProps, type TextStyle } from 'react-native';
 import Animated, { useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 
@@ -14,20 +15,19 @@ export interface FlyingTextOf {
 /**
  * A text laid out as the text under it, flying in from below, small and
  * turned, as one layer. The text under it is drawn clear meanwhile, so it
- * lands on its place. A mark that falls on its own (`clearMark`) stays clear
- * here. It is drawn for the eye alone: VoiceOver reads the text under it.
+ * lands on its place. `children` is the text as the one under it draws it,
+ * with a mark that falls on its own left clear. It is drawn for the eye
+ * alone: VoiceOver reads the text under it.
  */
 export function FlyingText({
-  text,
+  children,
   flying,
-  clearMark,
   textProps,
   style,
   testID,
 }: {
-  text: string;
+  children: ReactNode;
   flying: FlyingTextOf;
-  clearMark: string | undefined;
   /** How the text under it lays out, so this one lays out alike. */
   textProps: Pick<
     TextProps,
@@ -54,19 +54,6 @@ export function FlyingText({
       ],
     };
   });
-  const shown =
-    clearMark === undefined
-      ? text
-      : text.split(clearMark).flatMap((part, at) =>
-          at === 0
-            ? [part]
-            : [
-                <Text key={at} style={styles.clear}>
-                  {clearMark}
-                </Text>,
-                part,
-              ],
-        );
   return (
     <Animated.View
       testID={testID}
@@ -76,7 +63,7 @@ export function FlyingText({
       style={[styles.over, fly]}
     >
       <Text {...textProps} style={style}>
-        {shown}
+        {children}
       </Text>
     </Animated.View>
   );
@@ -84,5 +71,4 @@ export function FlyingText({
 
 const styles = StyleSheet.create({
   over: { position: 'absolute', top: 0, left: 0, right: 0 },
-  clear: { color: 'transparent' },
 });

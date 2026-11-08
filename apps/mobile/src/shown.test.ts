@@ -25,6 +25,7 @@ const everything: Shown = {
     mistakeReport: true,
   },
   stressFall: true,
+  wordTabs: true,
   calligraphicLemma: true,
   selfCheck: false,
   selfCheckSetting: true,
@@ -58,6 +59,7 @@ const everything: Shown = {
   fastReveal: true,
   dashboard: true,
   dashboardWordmark: true,
+  feedTab: true,
   mood: true,
   curatedCollections: true,
   swipeMarks: true,
@@ -92,6 +94,7 @@ describe('what the reader is shown', () => {
       'a still Stress mark with the falling Stress off',
       { off: ['stressAnimation'], shown: { stressFall: false } },
     ],
+    ['the column Word card with the tabs off', { off: ['wordTabs'], shown: { wordTabs: false } }],
     [
       'the Word of the Day Lemma in the Word font with the calligraphic Lemma off',
       { off: ['calligraphy'], shown: { calligraphicLemma: false } },
@@ -99,6 +102,10 @@ describe('what the reader is shown', () => {
     [
       'a plain wordmark with the Dashboard wordmark off',
       { off: ['dashboardWordmark'], shown: { dashboardWordmark: false } },
+    ],
+    [
+      'a «Стрічка» tab to the Dashboard with the Feed tab off',
+      { off: ['feedTab'], shown: { feedTab: false } },
     ],
     [
       'no Search button with the Search button off',

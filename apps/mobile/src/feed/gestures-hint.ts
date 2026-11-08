@@ -6,7 +6,7 @@ import { keep } from '../keep';
 import { useShell } from '../shell-value';
 
 /**
- * The Feed's gestures hint sheet, «ГОРТАЙТЕ ПАЛЬЦЕМ», shown once on this
+ * The Feed's gestures hint sheet, «ГОРТАЙ ПАЛЬЦЕМ», shown once on this
  * device while the side swipes mark an Entry (`on`, `Shown.swipeMarks`). It is
  * due until it has been shown once, and it counts as shown only when
  * `GesturesHintSheet` is drawn (`markShown`), so a launch that ends in

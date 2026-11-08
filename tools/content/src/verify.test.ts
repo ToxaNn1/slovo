@@ -119,6 +119,17 @@ describe('verify', () => {
     expect(run.status).toBe(0);
   });
 
+  it('passes a quote without the homonym index the page sets after a word', async () => {
+    const page = 'Лютий <i>(див.</i> <a href="/Тлумачення/лютий">лю́тий</a><sup>2</sup>).';
+    await seed({ [`${GOROH}перевірка003`]: { body: gorohPage([SUM, page]) } });
+    const file = writeEntry(word('w_vrf003', 'Лютий (див. лю́тий).', `${GOROH}перевірка003`));
+
+    const run = verify([file]);
+
+    expect(run.lines).toEqual([`ok\tw_vrf003\t${file}`, '1 ok']);
+    expect(run.status).toBe(0);
+  });
+
   it('reports a miss when a word of the quote differs from the page', async () => {
     await seed({ [`${GOROH}перевірка002`]: { body: gorohPage([SUM, definition]) } });
     const changed = definition.replace('словнику', 'довіднику');

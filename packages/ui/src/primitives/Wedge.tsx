@@ -13,12 +13,14 @@ export function Wedge({
   width,
   height,
   style,
+  testID,
 }: {
   points: WedgePoints;
   color: string;
   width: number | `${number}%`;
   height: number | `${number}%`;
   style?: StyleProp<ViewStyle>;
+  testID?: string;
 }) {
   return (
     <Svg
@@ -27,6 +29,7 @@ export function Wedge({
       viewBox="0 0 1 1"
       preserveAspectRatio="none"
       accessible={false}
+      {...(testID === undefined ? {} : { testID })}
       style={style}
     >
       <Polygon

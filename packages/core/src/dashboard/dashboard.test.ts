@@ -150,6 +150,24 @@ describe('The Dashboard', () => {
     expect(shown).not.toContain(hero.wordId);
     expect(card?.entryId).toBe(hero.wordId);
   });
+
+  it('reveals a Word of the Day chosen again for one no longer eligible, the Feed opening where the reader was', async () => {
+    // Today's Word of the Day was Retired since; the reader was on w_one's card today.
+    const records = new Map([
+      ['feed.wordOfTheDay', JSON.stringify({ entryId: 'w_five', date: '2026-11-04' })],
+      ['feed.position', JSON.stringify({ entryId: 'w_one', date: '2026-11-04' })],
+    ]);
+    const { app } = await run({ records });
+    const unrevealed = heroOf(app.dashboard.blocks);
+
+    await app.dashboard.reveal();
+
+    expect(unrevealed.wordId).not.toBe('w_five');
+    expect(heroOf(app.dashboard.blocks)).toMatchObject({
+      state: 'revealed',
+      wordId: unrevealed.wordId,
+    });
+  });
 });
 
 describe('«Попередні слова» on the Dashboard', () => {
