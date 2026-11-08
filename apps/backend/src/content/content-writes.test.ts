@@ -294,7 +294,8 @@ describe('the content write API', () => {
     });
 
     expect([edited.batchId, retired.batchId]).toEqual([batchId, batchId]);
-    const log = (await admin.actions('uk')).filter(({ batchId: of }) => of === batchId);
+    // The Action log reads newest first.
+    const log = (await admin.actions('uk')).filter(({ batchId: of }) => of === batchId).reverse();
     expect(log).toEqual([
       expect.objectContaining({
         who: { kind: 'agent', name: 'claude-content' },

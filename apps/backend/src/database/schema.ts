@@ -359,7 +359,7 @@ export const collectionLinks = pgTable('collection_links', {
  * beside them. Records are retired, never deleted.
  */
 
-/** Who changed a record: the import, an admin (`admin:<Account id>`) or an Агент token (`agent:<name>`). */
+/** Who changed a record: the import, an Admin user (`admin:<Admin user email>`) or an Агент token (`agent:<name>`). */
 export type ContentAuthor = 'import' | `admin:${string}` | `agent:${string}`;
 
 /**

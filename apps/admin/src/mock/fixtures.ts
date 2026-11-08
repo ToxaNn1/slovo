@@ -10,6 +10,27 @@ const WRITTEN = {
   batchId: BATCH_ID,
 } satisfies AdminApiOutputs['content']['create'];
 
+/** A Word as the content editor reads it. */
+export const WORD_FIELDS = {
+  kind: 'word',
+  id: 'w_a1',
+  lemma: 'обруч',
+  stress: [3],
+  partOfSpeech: 'noun',
+  gender: 'masculine',
+  primaryDefinition: 'Зігнута кільцем смуга.',
+  extraDefinitions: [],
+  examples: [],
+  synonyms: [],
+  antonyms: [],
+  registers: [],
+  categoryId: 'old-crafts',
+  rarity: 3,
+  sources: [{ title: 'СУМ' }],
+  correctionIds: [],
+  retired: false,
+};
+
 /** What `pnpm dev:admin --mock` and the screen tests answer, one per procedure. */
 export const FIXTURES: AdminApiOutputs = {
   requestCode: { sent: true },
@@ -73,13 +94,28 @@ export const FIXTURES: AdminApiOutputs = {
   setMinimum: SWITCHES,
   kill: { editionIds: ['uk'] },
   editions: { editions: [{ id: 'uk', displayName: 'Рідкісні слова' }] },
+  editionCard: {
+    id: 'uk',
+    displayName: 'Рідкісні слова',
+    locale: 'uk',
+    categories: [],
+    correctionCategories: [],
+    levels: {
+      first: 100,
+      growth: 0.1,
+      growingUntil: 10,
+      later: 200,
+      names: ['Новачок', 'Знавець'],
+    },
+  },
   content: {
     openBatch: { batchId: BATCH_ID },
     create: WRITTEN,
     edit: WRITTEN,
     retire: WRITTEN,
     flag: { id: 'w_a1', batchId: BATCH_ID },
-    record: { fields: {}, recordVersion: 1 },
+    record: { fields: WORD_FIELDS, recordVersion: 1, retired: false, needsNewRecording: false },
+    records: { records: [{ id: 'w_a1', label: 'обруч', retired: false, recordVersion: 1 }] },
     report: {
       contentVersion: 1,
       report: {

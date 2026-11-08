@@ -401,6 +401,9 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         editions: async () => {
           await client.admin.editions().catch(refused);
         },
+        editionCard: async () => {
+          await client.admin.editionCard({ editionId: EDITION }).catch(refused);
+        },
         content: async () => {
           const { content } = client.admin;
           const editionId = EDITION;
@@ -414,6 +417,7 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           await content.retire({ ...record, id: 'w_a1', recordVersion: 1 }).catch(refused);
           await content.flag({ ...record, id: 'w_a1', reason: 'check' }).catch(refused);
           await content.report({ editionId }).catch(refused);
+          await content.records({ editionId, kind: 'word' }).catch(refused);
         },
         development: async () => {
           await client.admin.development().catch(refused);

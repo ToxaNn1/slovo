@@ -57,6 +57,7 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     setMinimum: handlerOf('setMinimum', fixtures.setMinimum),
     kill: handlerOf('kill', fixtures.kill),
     editions: handlerOf('editions', fixtures.editions),
+    editionCard: handlerOf('editionCard', fixtures.editionCard),
     development: handlerOf('development', fixtures.development),
   };
   const content = fixtures.content;
@@ -68,6 +69,7 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     flag: contentHandlerOf('flag', content.flag),
     record: contentHandlerOf('record', content.record),
     report: contentHandlerOf('report', content.report),
+    records: contentHandlerOf('records', content.records),
   };
   return [...Object.values(handlers), ...Object.values(contentHandlers)];
 }
