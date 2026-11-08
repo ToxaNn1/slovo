@@ -1,5 +1,5 @@
 import type { FontSize } from '@slovo/contracts';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
@@ -100,7 +100,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
  * to the floor, S, and content too tall even there stays at S and scrolls
  * inside the frame, so the card keeps its height. In the Feed that scroll is
  * the page's (`PagerScrollView` nested in the page's). The card measures the
- * drawn height once it is laid out; a new `fitKey` (another tab) or font size
+ * drawn height against the room whenever either is laid out; a new `fitKey` (another tab) or font size
  * starts at the user's font size again. Its parts are `<testID>-tab-panel`,
  * `<testID>-tab-content` while it fits and `<testID>-tab-scroll` once it
  * scrolls.
@@ -123,9 +123,17 @@ export function FitPanel({
   });
   const fitNow = fit.key === fitKey && fit.step === step ? fit.fit : step;
   const [room, setRoom] = useState<number | undefined>(undefined);
-  const measured = ({ nativeEvent }: LayoutChangeEvent) => {
-    if (room === undefined || nativeEvent.layout.height <= room || fitNow === 'scrolls') return;
+  // The drawn height counts only for the tab and font size it was drawn at.
+  const drawnAt = `${fitKey} ${step} ${fitNow}`;
+  const [drawn, setDrawn] = useState<{ at: string; height: number } | undefined>(undefined);
+  // Either height may arrive or change last, so the fit is checked whenever both are known.
+  const tooTall = room !== undefined && drawn?.at === drawnAt && drawn.height > room;
+  useEffect(() => {
+    if (!tooTall || fitNow === 'scrolls') return;
     setFit({ key: fitKey, step, fit: fitNow === FLOOR ? 'scrolls' : SMALLER[fitNow] });
+  }, [tooTall, fitNow, fitKey, step]);
+  const measured = ({ nativeEvent }: LayoutChangeEvent) => {
+    setDrawn({ at: drawnAt, height: nativeEvent.layout.height });
   };
   const content = (
     <FontSizeProvider fontSize={fitNow === 'scrolls' ? FLOOR : fitNow}>{children}</FontSizeProvider>

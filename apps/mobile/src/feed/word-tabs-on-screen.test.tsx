@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import type { Idiom, Word } from '@slovo/contracts';
+import type { FontSize, Idiom, Word } from '@slovo/contracts';
 import {
   loadEdition,
   openComposition,
@@ -9,11 +9,12 @@ import {
   type Haptics,
 } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
-import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
+import { EditionProvider, FontSizeProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { StyleSheet } from 'react-native';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
@@ -21,6 +22,7 @@ import HomeScreen from '../app/feed';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
+import { fontSizeSteps } from '@slovo/ui/tokens';
 import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 
@@ -137,8 +139,8 @@ const shell = () =>
     composition: opened(composition),
   });
 
-/** The app on the Feed. */
-async function renderApp() {
+/** The app on the Feed, at the user's font size. */
+async function renderApp(fontSize: FontSize = 'M') {
   await renderRoutes(
     {
       _layout: () => (
@@ -148,7 +150,9 @@ async function renderApp() {
               <EditionProvider edition={edition} strings={editionStrings}>
                 <HapticsProvider haptics={haptics}>
                   <SettingsProvider>
-                    <Slot />
+                    <FontSizeProvider fontSize={fontSize}>
+                      <Slot />
+                    </FontSizeProvider>
                   </SettingsProvider>
                 </HapticsProvider>
               </EditionProvider>
@@ -310,6 +314,49 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(wordCard().getByTestId('favorite-button', hidden).props['accessibilityLabel']).toBe(
       editionStrings.favorites.heart.remove,
     );
+  });
+
+  it('shrinks a Definition a font size at a time before it scrolls, whichever height comes last', async () => {
+    const long = `${'Довге значення слова. '.repeat(20)}Кінець.`;
+    await open({ ...fullWord, primaryDefinition: long });
+    await renderApp('XL');
+    await swipeUp();
+    const layout = async (testID: string, height: number) => {
+      await fireEvent(wordCard().getByTestId(testID, hidden), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height } },
+      });
+      await settle();
+    };
+    const size = (): unknown => {
+      const style: unknown = StyleSheet.flatten(wordCard().getByText(long, hidden).props['style']);
+      return typeof style === 'object' && style !== null && 'fontSize' in style
+        ? style.fontSize
+        : undefined;
+    };
+    const scrolls = () => wordCard().queryByTestId('word-tab-scroll', hidden) !== null;
+    expect(size()).toBe(fontSizeSteps.XL.definition);
+
+    // The content is drawn before the frame leaves it its room: the check waits for the room.
+    await layout('word-tab-content', 300);
+    expect(size()).toBe(fontSizeSteps.XL.definition);
+    await layout('word-tab-panel', 200);
+    expect(size()).toBe(fontSizeSteps.L.definition);
+    expect(scrolls()).toBe(false);
+
+    // A step smaller it fits, so it stays whole there without a scroll.
+    await layout('word-tab-content', 180);
+    expect(size()).toBe(fontSizeSteps.L.definition);
+    expect(scrolls()).toBe(false);
+
+    // Too tall again, it takes M, then S, and only then scrolls.
+    await layout('word-tab-content', 300);
+    expect(size()).toBe(fontSizeSteps.M.definition);
+    expect(scrolls()).toBe(false);
+    await layout('word-tab-content', 300);
+    expect(size()).toBe(fontSizeSteps.S.definition);
+    expect(scrolls()).toBe(false);
+    await layout('word-tab-content', 300);
+    expect(scrolls()).toBe(true);
   });
 
   it('keeps the column with «Детальніше» with `wordTabs` off', async () => {
