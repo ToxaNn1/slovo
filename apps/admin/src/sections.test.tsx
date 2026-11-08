@@ -16,14 +16,22 @@ test('the sidebar shows the seven sections in order', async () => {
   expect(links.map((link) => link.textContent)).toEqual(ORDER);
 });
 
-test('each section opens its empty state with the same texts in both themes', async () => {
+/** Waits for a section's content: its empty state, or what a filled section reads. */
+async function settled(section: HTMLElement, title: string) {
+  const inside = within(section);
+  if (title !== 'Якість') return inside.getByText('Поки що порожньо');
+  await inside.findByRole('listitem', { name: 'Без збоїв' });
+  return inside.findByRole('figure', { name: 'Тривалість CI' });
+}
+
+test('each section opens with the same texts in both themes, the ones not yet filled in their empty state', async () => {
   const user = userEvent.setup();
   render(<Admin />);
   const theme = await screen.findByRole('button', { name: 'Темна тема' });
   for (const title of ORDER) {
     await user.click((await sidebar()).getByRole('link', { name: title }));
     const section = await screen.findByRole('region', { name: title });
-    expect(within(section).getByText('Поки що порожньо')).toBeDefined();
+    expect(await settled(section, title)).toBeDefined();
     const light = section.textContent;
     expect(document.documentElement.dataset['theme']).toBe('light');
 

@@ -33,6 +33,9 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     setMinimum: handlerOf('setMinimum', fixtures.setMinimum),
     kill: handlerOf('kill', fixtures.kill),
     editions: handlerOf('editions', fixtures.editions),
+    quality: handlerOf('quality', fixtures.quality),
+    ciHistory: handlerOf('ciHistory', fixtures.ciHistory),
+    pushCiRun: handlerOf('pushCiRun', fixtures.pushCiRun),
   };
   return Object.values(handlers);
 }
