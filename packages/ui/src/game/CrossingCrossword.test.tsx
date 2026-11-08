@@ -1,5 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { useState, type ReactElement } from 'react';
 import { Text } from 'react-native';
 import { GestureHandlerRootView, State } from 'react-native-gesture-handler';
@@ -15,7 +15,7 @@ import {
   type WheelMiss,
 } from '@slovo/ui';
 import { testStrings } from '../test-strings';
-import { crossingCrosswordLayout } from '../tokens';
+import { crossingCrosswordLayout, offsetShadow } from '../tokens';
 
 const answer = ['c', 'a', 't'];
 const wheelLetters = ['t', 'c', 'a'];
@@ -110,6 +110,15 @@ describe('LetterWheel', () => {
     expect(screen.getByTestId('wheel-path')).toHaveProp('accessibilityLabel', 'tc');
   });
 
+  it('draws the path chips uppercase, as the tiles', async () => {
+    await renderIn(<Wheel />);
+    await drag([0, 1]);
+    for (const [i, letter] of ['t', 'c'].entries()) {
+      const chip = within(screen.getByTestId(`wheel-chip-${String(i)}`)).getByText(letter);
+      expect(chip).toHaveStyle({ textTransform: 'uppercase' });
+    }
+  });
+
   it('traces by buttons and Check in accessible mode, a tap on the last tile stepping back', async () => {
     await renderIn(<Wheel accessibleMode />);
     expect(screen.queryByTestId('wheel-coach', { includeHiddenElements: true })).toBeNull();
@@ -168,6 +177,7 @@ describe('CrossingGrid and CrossingClueBar', () => {
 
   it('shrinks its cells to the room the screen leaves it, and never past the board size', async () => {
     const { cell: side, cellGap } = crossingCrosswordLayout;
+    const edge = offsetShadow.rest.depth;
     const block: CrossingGridCell = { kind: 'block' };
     await renderIn(
       <CrossingGrid
@@ -182,11 +192,12 @@ describe('CrossingGrid and CrossingClueBar', () => {
     const blockCell = () => screen.getByTestId('grid-0-0-block', { includeHiddenElements: true });
     expect(blockCell()).toHaveStyle({ width: side, height: side });
 
-    // A short screen leaves the grid 100 pt of height: two rows and a gap fit in it.
+    // A short screen leaves the grid 100 pt of height: two rows, their tile edges and a gap fit in it.
     await fireEvent(screen.getByTestId('grid-room'), 'layout', {
       nativeEvent: { layout: { width: 300, height: 100 } },
     });
-    expect(blockCell()).toHaveStyle({ width: (100 - cellGap) / 2, height: (100 - cellGap) / 2 });
+    const short = (100 - cellGap) / 2 - edge;
+    expect(blockCell()).toHaveStyle({ width: short, height: short });
 
     // A narrow one: the width decides.
     await fireEvent(screen.getByTestId('grid-room'), 'layout', {
@@ -199,6 +210,32 @@ describe('CrossingGrid and CrossingClueBar', () => {
       nativeEvent: { layout: { width: 600, height: 600 } },
     });
     expect(blockCell()).toHaveStyle({ width: side });
+  });
+
+  it('fits letter cells with their pressed edge into the room the screen leaves', async () => {
+    const { cell: boardSide, cellGap } = crossingCrosswordLayout;
+    const edge = offsetShadow.rest.depth;
+    await renderIn(
+      <CrossingGrid
+        cells={[
+          [cell({ label: 'r0c0' }), cell({ label: 'r0c1' })],
+          [cell({ label: 'r1c0' }), cell({ label: 'r1c1' })],
+        ]}
+        onSelect={jest.fn()}
+        testID="grid"
+      />,
+    );
+    // Its room asks for the board's rows, each with its tile's edge under it.
+    expect(screen.getByTestId('grid-room')).toHaveStyle({
+      flexBasis: 2 * (boardSide + edge) + cellGap,
+    });
+
+    // 100 pt of height holds two rows, their two edges and a gap.
+    await fireEvent(screen.getByTestId('grid-room'), 'layout', {
+      nativeEvent: { layout: { width: 300, height: 100 } },
+    });
+    const side = (100 - cellGap - 2 * edge) / 2;
+    expect(screen.getByTestId('grid-1-1-face')).toHaveStyle({ width: side, height: side });
   });
 
   it('draws the clue bar as the dark plate in both Themes', async () => {
