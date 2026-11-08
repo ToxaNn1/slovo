@@ -6,7 +6,7 @@ import { KickerRow } from './KickerRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
-import { space, typeStyle } from '../tokens';
+import { idiomExpressionLength, sizeForLength, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -73,7 +73,8 @@ export function IdiomCardBody({
         <WholeWordsText
           flying={flying}
           text={card.expression}
-          size={lemmaSize}
+          // A long expression takes a smaller size, the cards' one text scale (owner 08.11).
+          size={sizeForLength(lemmaSize, card.expression, idiomExpressionLength)}
           typeRole="heroWord"
           testID="idiom-expression"
           // An expression wraps between its words and shrinks rather than break inside one.

@@ -1,4 +1,4 @@
-import type { Easing } from './base';
+import type { Easing, LengthSteps } from './base';
 
 /** The tokens of the Entry: the Word card, its reveal, panels and rows. */
 
@@ -177,8 +177,21 @@ export const actionButtonSize = 52;
 export const badgePadding = { horizontal: 10, vertical: 6 } as const;
 
 /**
- * A Tip's standard form, a whole phrase (board С2.6 «Українською краще», 30 pt
- * where the Lemma is 50): this share of the Lemma's size at the user's font
- * size, so the phrase and the explanation under it fit the card.
+ * The standard form under «Українською краще», a Tip's and a Correction's
+ * (board С2.6, 30 pt where the Lemma is 50): this share of the Lemma's size at
+ * the user's font size, so the form and the text under it keep the card's one
+ * text scale (owner 08.11).
  */
-export const tipStandardFormScale = 30 / 50;
+export const standardFormScale = 30 / 50;
+
+/**
+ * An Idiom's expression by its length (owner 08.11): the Lemma's size up to 10
+ * letters, 40 where the Lemma is 50 up to 18, and 30 for a longer one.
+ */
+export const idiomExpressionLength: LengthSteps = {
+  steps: [
+    { upTo: 10, scale: 1 },
+    { upTo: 18, scale: 40 / 50 },
+  ],
+  longer: 30 / 50,
+};

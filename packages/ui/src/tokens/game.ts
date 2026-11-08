@@ -1,4 +1,18 @@
+import type { LengthSteps } from './base';
+
 /** The tokens of the Game and its modes. */
+
+/**
+ * A Round's prompt by its length (owner 08.11, the Feed's Quick Question): 24
+ * up to 50 letters, 20 up to 100, 18 for a longer one.
+ */
+export const roundPromptLength: LengthSteps = {
+  steps: [
+    { upTo: 50, scale: 1 },
+    { upTo: 100, scale: 20 / 24 },
+  ],
+  longer: 18 / 24,
+};
 
 /**
  * A Game Mode's row on the mode screen, from the design: its tile's side,

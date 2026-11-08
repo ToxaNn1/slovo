@@ -592,6 +592,16 @@ describe('Self-check on a Correction card', () => {
   });
 });
 
+describe('the standard form on a Correction card', () => {
+  it('sets the main equivalent at the board size of a standard form, not at the Lemma size', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    const form = within(screen.getByTestId('correction-standard')).getByText('join in');
+    // Board С2.6: «Українською краще» at 30 pt, where the Lemma at step M is 50 (owner 08.11).
+    expect(form).toHaveStyle({ fontSize: 30 });
+  });
+});
+
 describe('the literary uses on a Correction card', () => {
   const withUses: EntryFeedCard = {
     kind: 'correction',
@@ -788,6 +798,16 @@ describe('the Idiom card', () => {
     expect(screen.getByTestId('idiom-type')).toHaveTextContent('proverb');
     expect(screen.getByTestId('idiom-definition')).toHaveTextContent('Who starts early, wins.');
     expect(screen.queryByTestId('idiom-etymology')).toBeNull();
+  });
+
+  it.each([
+    ['a short expression at the Lemma size', placeName, 50],
+    ['a longer one at 40', idiomCard(), 40],
+    ['a long one at 30', proverb, 30],
+  ])('sets %s, where the Lemma is 50 (owner 08.11)', async (_case, model, fontSize) => {
+    await render(inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i1', model }} />));
+
+    expect(screen.getByTestId('idiom-expression')).toHaveStyle({ fontSize });
   });
 
   it.each([

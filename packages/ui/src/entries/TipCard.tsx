@@ -6,7 +6,7 @@ import { KickerRow } from './KickerRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useLemmaSize, useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
-import { space, tipStandardFormScale, typeStyle } from '../tokens';
+import { space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { NonStandardForm, StandardForm } from './CorrectionCard';
@@ -146,17 +146,13 @@ function TipEssence({
   const { colors } = tokens;
   const edition = useEdition();
   const { voice } = edition;
-  const formSize = {
-    fontSize: size.fontSize * tipStandardFormScale,
-    lineHeight: size.lineHeight * tipStandardFormScale,
-  };
   return (
     <>
       <StandardForm
         testID="tip-standard"
         form={standardForm}
         spoken={withoutStress(standardForm)}
-        size={formSize}
+        size={size}
       />
       <Text
         testID="tip-explanation"

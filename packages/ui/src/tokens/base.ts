@@ -672,6 +672,27 @@ export function roleSize(name: TypeRole): DrawnSize {
 }
 
 /**
+ * How a text's size steps down as the text grows, so a long text takes a
+ * smaller size and the cards keep one text scale (owner 08.11): the share of
+ * the full size for a text of at most `upTo` letters, shortest first, and
+ * `longer` for a text longer than every step.
+ */
+export interface LengthSteps {
+  readonly steps: readonly { readonly upTo: number; readonly scale: number }[];
+  readonly longer: number;
+}
+
+/**
+ * `size` at the share `steps` give the length of `text`, counted in letters
+ * without the Stress marks.
+ */
+export function sizeForLength(size: DrawnSize, text: string, steps: LengthSteps): DrawnSize {
+  const length = text.replace(/\p{M}/gu, '').length;
+  const scale = steps.steps.find(({ upTo }) => length <= upTo)?.scale ?? steps.longer;
+  return { fontSize: size.fontSize * scale, lineHeight: size.lineHeight * scale };
+}
+
+/**
  * The hard offset shadow under a pressed tile or button: no blur, the edge
  * colour straight below. Pressed, the tile drops by the difference, so its
  * bottom edge stays where it was.
