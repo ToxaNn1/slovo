@@ -12,6 +12,7 @@ import { createAdminStore, hashToken } from '../admin/admin-store';
 import { createDatabase } from '../database/database';
 import { systemRandom } from '../random';
 import {
+  adminCommandDeps,
   createTestDatabase,
   signedInAdmin,
   silentLogger,
@@ -42,10 +43,11 @@ async function editorBackend() {
     random: systemRandom,
     hash: hashToken,
   });
+  const commandDeps = adminCommandDeps(admin, database);
   const out: string[] = [];
   const io = { out: (line: string) => out.push(line), err: () => undefined };
-  await runAdminCommand(['owner', 'add', 'owner@example.com'], admin, io);
-  await runAdminCommand(['agent', 'add', 'claude-content'], admin, io);
+  await runAdminCommand(['owner', 'add', 'owner@example.com'], commandDeps, io);
+  await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
   const imported = await backend.importContent('uk', folder);
