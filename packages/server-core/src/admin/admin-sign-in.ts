@@ -1,4 +1,4 @@
-import type { Clock, Mailer, Random, RateLimits } from '../ports';
+import type { Clock, Mail, Mailer, Random, RateLimits } from '../ports';
 import { blockAfterFailures, clearFailures, type TooManyRequests } from '../rate-limit';
 import type { AdminRole, AdminStore, AdminUser, SecretVault } from './admin-access';
 
@@ -82,6 +82,7 @@ export function createAdminSignIn({
   rateLimits,
   hmacSha1,
   vault,
+  codeEmail,
 }: {
   store: AdminStore;
   clock: Clock;
@@ -94,6 +95,8 @@ export function createAdminSignIn({
   hmacSha1: HmacSha1;
   /** Seals the TOTP secrets the store keeps. */
   vault: SecretVault;
+  /** The email that carries a sign-in code, in the admin's language. */
+  codeEmail: (code: string) => Omit<Mail, 'to'>;
 }): AdminSignIn {
   const letters = (length: number, alphabet = LETTERS) =>
     Array.from({ length }, () => alphabet.charAt(random.int(alphabet.length))).join('');
@@ -156,12 +159,7 @@ export function createAdminSignIn({
         codeHash: codeHashOf(email, code),
         expiresAt: new Date(clock.now().getTime() + CODE_LIFETIME_MS),
       });
-      await mailer.send({
-        to: email,
-        senderName: 'SLOVO',
-        subject: `Код входу в адмінку: ${code}`,
-        text: `Ваш код входу в адмінку SLOVO: ${code}\n\nКод діє 10 хвилин.`,
-      });
+      await mailer.send({ to: email, ...codeEmail(code) });
     },
 
     async verifyCode(given, code) {
@@ -183,7 +181,7 @@ export function createAdminSignIn({
         ok: true,
         next: 'enrol',
         secret,
-        otpauthUrl: `otpauth://totp/${label}?secret=${secret}&issuer=SLOVO&digits=6&period=${TOTP_STEP_SECONDS}`,
+        otpauthUrl: `otpauth://totp/${label}?secret=${secret}&issuer=SLOVO&digits=6&period=${String(TOTP_STEP_SECONDS)}`,
         recoveryCodes,
       };
     },
@@ -252,7 +250,7 @@ export type HmacSha1 = (key: Uint8Array, message: Uint8Array) => Uint8Array;
 
 /** The RFC 4648 bytes of a base32 text. */
 function base32Bytes(text: string): Uint8Array {
-  const bits = [...text.toUpperCase().replace(/=+$/, '')]
+  const bits = Array.from(text.toUpperCase().replace(/=+$/, ''))
     .map((letter) => BASE32.indexOf(letter).toString(2).padStart(5, '0'))
     .join('');
   const bytes = new Uint8Array(Math.floor(bits.length / 8));

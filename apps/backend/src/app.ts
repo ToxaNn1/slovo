@@ -23,6 +23,7 @@ import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
 import { adminApp } from './admin/admin-app';
+import { adminCodeEmail } from './admin/admin-mail';
 import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
@@ -192,6 +193,7 @@ export function createApp({
     rateLimits,
     hmacSha1,
     vault: createSecretVault(authSecret),
+    codeEmail: adminCodeEmail,
   });
   const api = createApiHandler({
     accounts,
