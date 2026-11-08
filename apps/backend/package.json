@@ -9,7 +9,6 @@
     "start": "tsx --env-file-if-exists=.env src/main.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env src/database/migrate-command.ts",
-    "publish-pack": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning src/content/publish-command.ts",
     "switches": "tsx --env-file-if-exists=.env src/edition/switches-command.ts",
     "import-content": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning src/content/import-command.ts",
     "admin": "tsx --env-file-if-exists=.env src/admin/admin-command.ts",

@@ -177,8 +177,7 @@ jobs:
   pack:
     name: Contract and Language Pack
     runs-on: ubuntu-latest
-    # content verify asks goroh politely; a content wave of ~500 Entries takes about 15 minutes.
-    timeout-minutes: 30
+    timeout-minutes: 15
     # The pack is built from the content snapshot of a local backend, as every
     # app build builds it from the Deployment's.
     services:
@@ -242,38 +241,6 @@ jobs:
             cat "$RUNNER_TEMP/content-report.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-      # The sourcing cache, so that a re-run or a later pull request verifies
-      # a page it fetched before without asking goroh again.
-      - name: Restore the sourcing cache
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/slovo-sourcing
-          key: sourcing-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: sourcing-
-      # Every Entry a pull request adds or changes must quote the page its
-      # first source cites (ADR 0012, 0080); content verify fetches the pages.
-      - name: Verify the quotes of the Entries the pull request changes
-        if: ${{ github.event_name == 'pull_request' }}
-        shell: bash
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          git fetch --depth=1 origin "$BASE_SHA"
-          if git diff --quiet "$BASE_SHA" HEAD -- editions/uk/content; then
-            echo 'No Entry changed.'
-            exit 0
-          fi
-          status=0
-          pnpm content verify --changed "$BASE_SHA" --edition uk \
-            | tee "$RUNNER_TEMP/verify-report.txt" || status=$?
-          {
-            echo '## Quotes of the changed Entries'
-            echo '```text'
-            cat "$RUNNER_TEMP/verify-report.txt"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit "$status"
 
   checks:
     # The check ruleset 26239313 requires: keep this name.

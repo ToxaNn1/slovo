@@ -1,33 +1,43 @@
-import { createEntries, EVERYTHING_IN, type Entries, type TrackedUserState } from '@slovo/core';
-import { openPack, type PackReader } from '@slovo/language-pack/reader';
+import { createEntries, EVERYTHING_IN, type Entries } from '@slovo/core';
+import { openPack, type PackReader, type PackWriteDatabase } from '@slovo/language-pack/reader';
 import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import { useMemo } from 'react';
 
+import { nativeModules } from '../device/device-native-modules';
 import { logError } from '../diagnostics/log';
 import { activeEditionFiles, activeEditionId } from '../edition/edition';
-import { openDeviceContentUpdate } from './device-content-updates';
-import { devicePackFiles, type DevicePackFiles } from './device-pack-files';
-import {
-  openLaunchPack,
-  type ContentUpdates,
-  type LaunchPack,
-  type OpenedPack,
-} from './launch-pack';
-import { openOnce, useOpened, type Opening } from '../opening';
 import { useEditionInEffect } from '../edition/remote-switches';
+import { openOnce, useOpened, useSubscribed, type Opening, type Source } from '../opening';
 import { useShell, type EditionSwitches } from '../shell-value';
+import { openDeviceContentUpdate } from './device-content-updates';
+import { openLaunchPack, type LaunchPack, type OpenedPack } from './launch-pack';
+import { openPackContentStore } from './pack-content-store';
 
-const DATABASE_NAME = 'language-pack.db';
+/** The pack bundled with the app, copied out of its asset on every launch. */
+const BUNDLED_NAME = 'language-pack.bundled.db';
+/** The pack the app reads, which takes Patches (ADR 0090). */
+const PATCHED_NAME = 'language-pack.db';
 
-/** Opens a pack read-only, refusing one of another Edition than the app; a refused pack is closed. */
-async function prepare(db: SQLiteDatabase): Promise<OpenedPack<PackReader>> {
+/** A writable pack over expo-sqlite: a Patch runs in one exclusive transaction. */
+function writerOf(db: SQLiteDatabase): PackWriteDatabase {
+  return {
+    transaction: (run) => db.withExclusiveTransactionAsync((txn) => run(txn)),
+  };
+}
+
+/** Opens a pack, refusing one of another Edition than the app; a refused pack is closed. */
+async function open(name: string): Promise<OpenedPack<PackReader>> {
+  const db = await openDatabaseAsync(name);
   try {
-    // expo-sqlite has no read-only open mode; this refuses every write instead.
-    await db.execAsync('PRAGMA query_only = ON');
     // The one app carries no Edition in its native config (ADR 0065): the pack must be the active Edition's.
     const opening = await openPack(db, { bundle: activeEditionId, native: undefined });
     if (!opening.ok) throw new Error(opening.reason);
-    return { reader: opening.reader, version: opening.metadata, close: () => db.closeAsync() };
+    return {
+      reader: opening.reader,
+      version: opening.metadata,
+      store: await openPackContentStore(writerOf(db)),
+      close: () => db.closeAsync(),
+    };
   } catch (error) {
     // Closed, so a retry opens it again.
     await db.closeAsync();
@@ -35,58 +45,65 @@ async function prepare(db: SQLiteDatabase): Promise<OpenedPack<PackReader>> {
   }
 }
 
-/**
- * The Language Pack bundled with the app, copied into place on every launch,
- * so the app always has the pack it shipped with, and opened.
- */
-async function openBundled(): Promise<OpenedPack<PackReader>> {
-  await importDatabaseFromAssetAsync(DATABASE_NAME, {
+/** The version of the bundled pack, copied out of its asset so it is the one this build shipped. */
+async function bundledVersion() {
+  await importDatabaseFromAssetAsync(BUNDLED_NAME, {
     assetId: activeEditionFiles.languagePack,
     forceOverwrite: true,
   });
-  return prepare(await openDatabaseAsync(DATABASE_NAME));
+  const bundled = await open(BUNDLED_NAME);
+  await bundled.close();
+  return bundled.version;
 }
 
-/** Content updates on a device that keeps downloaded packs; a kept pack opens as the bundled one does. */
-function contentUpdatesOn(
-  packFiles: DevicePackFiles,
-  userState: Opening<TrackedUserState>,
-): ContentUpdates<PackReader> {
-  return {
-    open: (bundled) => openDeviceContentUpdate(packFiles, bundled, userState),
-    async openKeptPack(version) {
-      const { directory, name } = packFiles.throwAwayAllBut(version);
-      return (await prepare(await openDatabaseAsync(name, undefined, directory))).reader;
-    },
-  };
+/** Copies the bundled pack over the patched one. */
+async function replaceWithBundled(): Promise<void> {
+  await importDatabaseFromAssetAsync(PATCHED_NAME, {
+    assetId: activeEditionFiles.languagePack,
+    forceOverwrite: true,
+  });
 }
 
 /**
- * The Language Pack of the app run: the bundled one, or the newer one a
- * Content update kept, opened read-only, with the Content update module when
- * content updates are on in effect at launch (`openLaunchPack`), so after the
- * remote Feature Switches. Either pack is refused when it is of another
- * Edition than the app.
+ * Throws away the folder of downloaded packs that content updates kept before
+ * Patches (ADR 0090); none of it is read any more. Nothing on a binary
+ * without the file-system module.
+ */
+function removeDownloadedPacks(): void {
+  nativeModules.load('contentUpdates', () => {
+    const { Directory, Paths } =
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      require('expo-file-system') as typeof import('expo-file-system');
+    const folder = new Directory(Paths.document, 'content-update');
+    if (folder.exists) folder.delete();
+  });
+}
+
+/**
+ * The Language Pack of the app run: the patched pack, which takes Patches
+ * while it is open, with the Content update module when content updates are
+ * on in effect at launch (`openLaunchPack`), so after the remote Feature
+ * Switches. A pack of another Edition than the app is refused.
  */
 export function languagePackOpening({
   remoteSwitches,
-  userState,
 }: {
   remoteSwitches: Opening<EditionSwitches>;
-  userState: Opening<TrackedUserState>;
 }): Opening<LaunchPack<PackReader>> {
   return openOnce(
-    async () =>
-      openLaunchPack({
+    async () => {
+      removeDownloadedPacks();
+      return openLaunchPack({
         edition: (await remoteSwitches.opened()).edition,
-        // Off on a binary without the file-system module.
-        contentUpdates:
-          devicePackFiles === undefined ? undefined : contentUpdatesOn(devicePackFiles, userState),
-        openBundled,
+        bundledVersion,
+        openPatched: () => open(PATCHED_NAME),
+        replaceWithBundled,
+        openContentUpdate: openDeviceContentUpdate,
         onError(error) {
-          logError('Content updates failed at launch', error);
+          logError('Could not close a Language Pack at launch', error);
         },
-      }),
+      });
+    },
     {
       onError(error) {
         logError('Could not open the Language Pack', error);
@@ -95,12 +112,26 @@ export function languagePackOpening({
   );
 }
 
-/** The Core's Entries of this Edition, read from the Language Pack of the app run. */
+/** A source that never changes, for a run without content updates. */
+const UNCHANGING: Source = { subscribe: () => () => undefined };
+
+/**
+ * The Core's Entries of this Edition, read from the Language Pack of the app
+ * run. A Patch makes new Entries, so the next read sees the patched records.
+ */
 export function useEntries(): Entries {
-  const content = useOpened(useShell().languagePack).reader;
-  const inEffect = useEditionInEffect();
-  return useMemo(
-    () => createEntries({ content, edition: inEffect, choices: EVERYTHING_IN }),
-    [content, inEffect],
+  const pack = useOpened(useShell().languagePack);
+  const contentVersion = useSubscribed(pack.contentUpdate ?? UNCHANGING, () =>
+    pack.contentVersion(),
   );
+  const inEffect = useEditionInEffect();
+  const content = pack.reader;
+  // Made again at each content version: a Patch changed what the pack holds.
+  return useMemo(
+    () => ({
+      contentVersion,
+      entries: createEntries({ content, edition: inEffect, choices: EVERYTHING_IN }),
+    }),
+    [content, inEffect, contentVersion],
+  ).entries;
 }

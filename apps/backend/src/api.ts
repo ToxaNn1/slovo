@@ -12,7 +12,6 @@ import type {
   CollectionLinks,
   AdminAnalytics,
   CommunityCounters,
-  ContentPacks,
   DevelopmentOverview,
   Edition,
   EditionRegistry,
@@ -83,7 +82,6 @@ export function createApiHandler({
   clock,
   collectionLinks,
   communityCounters,
-  contentPacks,
   contentQueue,
   contentStore,
   contentWrites,
@@ -103,7 +101,6 @@ export function createApiHandler({
   clock: Clock;
   collectionLinks: CollectionLinks;
   communityCounters: CommunityCounters;
-  contentPacks: ContentPacks;
   contentQueue: ContentQueue;
   contentStore: ContentStore;
   contentWrites: ContentWrites;
@@ -137,7 +134,7 @@ export function createApiHandler({
         quality,
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
-      content: contentProcedures(contentPacks, contentStore),
+      content: contentProcedures(editions, contentStore),
       counters: countersProcedures(communityCounters),
       edition: editionProcedures(editions, clock),
       reports: reportsProcedures(mistakeReports),

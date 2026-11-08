@@ -208,7 +208,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
         metadata: () => Promise.reject(new Error('A test pack has no metadata')),
         crosswordDay: () => Promise.resolve(undefined),
       },
-      version: { contentVersion: 1, packFormat: 1 },
+      contentVersion: () => 1,
       contentUpdate: undefined,
     });
   return {
@@ -249,7 +249,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
           backend: createFakeBackend().backend,
           edition: (await remoteSwitches.opened()).edition,
           appVersion: 'test',
-          contentVersion: (await languagePack.opened()).version.contentVersion,
+          contentVersion: (await languagePack.opened()).contentVersion,
           clock,
           schedule: never,
           random,

@@ -77,7 +77,7 @@ export interface Entries {
    * each kind when the Edition turns it on and it is in the Mix, each in the
    * Language Pack's stable order, leaving out every Hidden Entry. The Mix and
    * the Hidden Entries are read afresh on every call, the ids of the live
-   * Entries from the Language Pack once: it never changes while it is open.
+   * Entries from the Language Pack once per Patch: a Patch makes new Entries.
    */
   eligible(): Promise<EntryIds>;
   /**
@@ -140,7 +140,7 @@ export interface Entries {
   getManyOfAnyKind(ids: readonly string[]): Promise<ReadonlyMap<string, AskableEntry>>;
   /**
    * Every Category of the Language Pack, with its display name, in its order,
-   * read once: the pack never changes while it is open (ADR 0033).
+   * read once per Patch: a Patch makes new Entries (ADR 0033, 0090).
    */
   categories(): Promise<readonly Category[]>;
   /** Every Category of Corrections of the Language Pack, as `categories` gives the Words'. */
@@ -215,8 +215,9 @@ type MixChoice = ReturnType<EligibilityChoices['mix']>;
 const ALL_KINDS_IN: KindsInMix = { correction: true, idiom: true, synonymRow: true, tip: true };
 
 /**
- * Reads once and keeps the result, as the Language Pack never changes while
- * it is open; a read that fails is tried again on the next call.
+ * Reads once and keeps the result, as the Language Pack changes only by a
+ * Patch, which makes new Entries (ADR 0090); a read that fails is tried again
+ * on the next call.
  */
 function readOnce<T>(read: () => Promise<T>): () => Promise<T> {
   let kept: Promise<T> | undefined;
@@ -279,8 +280,8 @@ export function createEntries({
     (await content.getEntries(ids)).filter(isShown);
 
   /**
-   * The live Entries of each kind by id, read once: the Language Pack never
-   * changes while it is open. A read that fails is tried again on the next call.
+   * The live Entries of each kind by id, read once per Patch: a Patch makes new
+   * Entries. A read that fails is tried again on the next call.
    */
   const live = tableOfKinds((kind) =>
     readOnce(async () => new Map((await readLive[kind]()).map((entry) => [entry.id, entry]))),

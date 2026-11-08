@@ -2,9 +2,9 @@
 # docker build --tag slovo-backend .
 # The workspace packages ship their TypeScript sources, which tsx runs, so the
 # build is the install of the backend and the workspace packages it needs. The
-# Language Pack is not built here: packs reach the Deployment through
-# `pnpm publish:pack` (ADR 0032). `railway.json` names the release command
-# and the health route.
+# Language Pack is not built here: content lives in the Deployment's Postgres
+# and reaches the app as Patches (ADR 0090). `railway.json` names the release
+# command and the health route.
 FROM node:22.23.3-bookworm-slim AS base
 
 # `production` makes the server refuse Mailpit's defaults and leaves the
@@ -24,6 +24,9 @@ FROM base AS install
 COPY . .
 RUN pnpm install --frozen-lockfile --prod \
       --filter @slovo/backend... --filter '!@slovo/config'
+# Content lives in Postgres (ADR 0090): of an Edition's content folder the
+# image keeps only the content targets the backend reads at start.
+RUN find editions -path '*/content/*' -type f ! -name targets.json -delete
 
 # The owner admin (ADR 0088), built by Vite with the development dependencies
 # it needs; the image keeps its dist alone, which the backend serves at /admin.

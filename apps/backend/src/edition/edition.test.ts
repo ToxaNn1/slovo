@@ -142,26 +142,18 @@ describe('edition.switches', () => {
 });
 
 describe('a feature turned off remotely', () => {
-  it('makes content.latest and content.download NOT_FOUND, until the owner clears it', async () => {
-    const folder = testEditions(['remote-off']);
-    const pack = folder.buildPack('remote-off');
-    const { client, publish, kill, clearRules } = testApp({ editions: folder.read() });
-    await publish(pack);
-    const params = { editionId: 'remote-off', contentVersion: pack.announced.contentVersion };
+  it('makes content.latest NOT_FOUND, until the owner clears it', async () => {
+    const { client, kill, clearRules } = servingEditions('remote-off');
     await kill('remote-off', 'contentUpdates');
 
     await expect(
       client.content.latest({ editionId: 'remote-off', packFormat: PACK_FORMAT }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
-    await expect(client.content.download({ params })).rejects.toMatchObject({
-      code: 'NOT_FOUND',
-      status: 404,
-    });
 
     await clearRules('remote-off', 'contentUpdates');
     await expect(
       client.content.latest({ editionId: 'remote-off', packFormat: PACK_FORMAT }),
-    ).resolves.toEqual({ pack: pack.announced });
+    ).resolves.toEqual({ pack: null });
   });
 
   it('makes a Sign-in code request NOT_FOUND, and nothing is sent', async () => {

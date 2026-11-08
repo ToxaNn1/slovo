@@ -5,7 +5,7 @@
  * time, frozen when the test starts, which both better-auth and the backend's
  * `Clock` read and only `passTime` moves.
  */
-import { createHash, randomInt, randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -16,7 +16,7 @@ import { createApiClient } from '@slovo/contracts/api';
 import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
 import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
 import type { AppConfig, EditionConfig } from '@slovo/contracts';
-import { buildLanguagePack, recordContent } from '@slovo/language-pack';
+import { recordContent } from '@slovo/language-pack';
 import {
   EDITIONS_DIR,
   editionFiles,
@@ -59,7 +59,6 @@ import { createAdminStore, hmacSha1 } from './admin/admin-store';
 import { createOwnerCheckStore } from './admin/owner-check-store';
 import { createApp } from './app';
 import { deleteCollectionLink } from './collection-links/collection-link-delete';
-import { publishPack } from './content/publish-pack';
 import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
 import { createContentStore } from './content/content-store';
@@ -371,29 +370,11 @@ export function createFakeApple(): FakeApple {
   };
 }
 
-/** The SHA-256 of a file's bytes, as 64 lowercase hex digits. */
-export function sha256(bytes: Uint8Array): string {
-  return createHash('sha256').update(bytes).digest('hex');
-}
-
-/** A Language Pack a test built, and what `content.latest` announces for it once published. */
-interface BuiltPack {
-  readonly editionId: string;
-  readonly file: string;
-  readonly announced: {
-    readonly contentVersion: number;
-    readonly packFormat: number;
-    readonly size: number;
-    readonly fileSha256: string;
-  };
-}
-
 /**
  * An editions folder made for one test, with an Edition for each id: a copy of
  * the UA Edition's config, strings and content under its own id.
  * `change` changes each config. Copying and recording the content takes a
- * while, so an Edition gets it when a test first builds or corrects it, which
- * comes before the test reads the Editions.
+ * while, so an Edition gets it when a test first imports or corrects it.
  */
 export function testEditions(
   ids: readonly string[],
@@ -407,8 +388,6 @@ export function testEditions(
   const config = JSON.parse(readFileSync(ukrainian.path('config'), 'utf8')) as EditionConfig;
   for (const id of ids) {
     const edition = editionFiles(join(dir, id));
-    // The backend reads the manifest, not the content it records.
-    cpSync(ukrainian.path('manifest'), edition.path('manifest'));
     cpSync(ukrainian.path('strings'), edition.path('strings'));
     writeFileSync(edition.path('config'), JSON.stringify(change({ ...config, id })));
   }
@@ -416,13 +395,10 @@ export function testEditions(
     if (!recordContent({ editionDir }).ok) throw new Error('Content not recorded');
   };
   const withContent = new Set<string>();
-  let read = false;
   /** The Edition's folder, with its content. */
   const contentOf = (id: string) => {
     const { dir: editionDir } = editionFiles(join(dir, id));
     if (!withContent.has(id)) {
-      // The Editions read before would carry a manifest that doesn't record it.
-      if (read) throw new Error(`build or correct ${id} before reading the Editions`);
       cpSync(join(ukrainian.dir, 'content'), join(editionDir, 'content'), { recursive: true });
       // The Words name these, so the content is recorded only with them.
       cpSync(join(ukrainian.dir, ILLUSTRATIONS_DIR), join(editionDir, ILLUSTRATIONS_DIR), {
@@ -437,30 +413,10 @@ export function testEditions(
     return editionDir;
   };
 
-  let builds = 0;
   return {
     /** Every Edition of the folder, as the backend reads them now. */
     read(): Edition[] {
-      read = true;
       return readEditions(dir);
-    },
-    /** Builds the Edition's pack of its content as it is now. */
-    buildPack(editionId: string): BuiltPack {
-      builds += 1;
-      const file = join(dir, `language-pack-${String(builds)}.db`);
-      const built = buildLanguagePack({ editionDir: contentOf(editionId), outFile: file });
-      if (!built.ok) throw new Error('Pack not built');
-      const bytes = readFileSync(file);
-      return {
-        editionId,
-        file,
-        announced: {
-          contentVersion: built.metadata.contentVersion,
-          packFormat: built.metadata.packFormat,
-          size: bytes.byteLength,
-          fileSha256: sha256(bytes),
-        },
-      };
     },
     /** The Edition's folder with its content, as an import reads it. */
     content: contentOf,
@@ -749,12 +705,6 @@ export function testApp({
     clientOf: (token: string) => clientWith({ authorization: `Bearer ${token}` }),
     /** The client of a device whose requests come from the IP address. */
     clientFrom: (from: string) => clientWith({}, from),
-    /**
-     * Publishes the pack file as the publish command does, on the backend's
-     * database: for the Editions it serves unless given those of the moment.
-     */
-    publish: (pack: Pick<BuiltPack, 'editionId' | 'file'>, editionsNow = editions) =>
-      publishPack({ database, clock: systemClock, editions: editionsNow, alerts, ...pack }),
     /** The Kill switch of the feature in the Edition, as the switches command turns it off. */
     kill: (editionId: string, feature: string) =>
       createEditions({ database, clock: systemClock, editions, alerts }).kill(

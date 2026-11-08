@@ -53,7 +53,7 @@ export interface Search {
    * the Search key reads both: from 2 letters, up to 50 a group; from 3
    * letters, «За значенням» as well. Nothing
    * while the Edition turns Search off. The Hidden Entries are read afresh on
-   * every call, the Language Pack once: it never changes while it is open.
+   * every call, the Language Pack once per Patch (ADR 0090).
    */
   search(query: string): Promise<SearchResults>;
   /**

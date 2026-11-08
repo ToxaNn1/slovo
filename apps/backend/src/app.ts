@@ -8,7 +8,6 @@ import {
   createCollectionLinks,
   createAdminAnalytics,
   createCommunityCounters,
-  createContentPacks,
   createDevelopment,
   createMistakeReports,
   createSync,
@@ -46,7 +45,6 @@ import {
 } from './collection-links/app-site-association';
 import { createCollectionLinkStore } from './collection-links/collection-link-store';
 import { collectionPage, unavailablePage } from './collection-links/collection-page';
-import { createContentPackStore } from './content/content-pack-store';
 import { createCounterStore } from './counters/counter-store';
 import type { Database } from './database/database';
 import { migrationState, type MigrationState } from './database/migrate';
@@ -179,12 +177,6 @@ export function createApp({
     rateLimits,
     clock,
   });
-  const contentPackStore = createContentPackStore(database);
-  const contentPacks = createContentPacks({
-    editions: editionRegistry,
-    store: contentPackStore,
-    clock,
-  });
   const contentStore = createContentStore({ database, clock, editions: editionRegistry });
   const sync = createSync({
     editions: editionRegistry,
@@ -243,7 +235,6 @@ export function createApp({
     clock,
     collectionLinks,
     communityCounters,
-    contentPacks,
     contentQueue: createContentQueue({ database, clock }),
     contentStore,
     contentWrites,

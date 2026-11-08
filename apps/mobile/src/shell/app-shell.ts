@@ -143,7 +143,7 @@ export function createShell(
     // The opening that failed under it has logged why.
     { onError: () => undefined },
   );
-  const languagePack = languagePackOpening({ remoteSwitches, userState });
+  const languagePack = languagePackOpening({ remoteSwitches });
   const account = edition.isFeatureEnabled('account')
     ? over(ports, 'Could not read the Session', openDeviceAccount)
     : undefined;
@@ -165,7 +165,7 @@ export function createShell(
       openMistakeReports({
         ...opened,
         appVersion: deviceFacts.appVersion,
-        contentVersion: (await languagePack.opened()).version.contentVersion,
+        contentVersion: (await languagePack.opened()).contentVersion,
       }),
     ),
     counterReads: over(ports, 'Could not open the Community Counters', openCounterReads),

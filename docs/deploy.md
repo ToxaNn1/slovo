@@ -69,16 +69,15 @@ The EAS build runs it in the `eas-build-post-install` hook of `apps/mobile/packa
 
 Owner check for the first real build from the database pack: after the first TestFlight build, the build log of the `eas-build-post-install` hook shows `Built the Language Pack for "uk"` with the content version the Deployment's snapshot holds, and the installed app opens the Feed.
 
-## Publishing a Language Pack
+## Content and the operator commands
 
-A Language Pack reaches the Deployment through the publish command (ADR 0032), run on the owner's machine, never through the image. The operator credential is the public address of Railway's Postgres (`DATABASE_PUBLIC_URL` in the Postgres service's variables), given in the command's environment and never written to a file in the repository:
+Content lives in the Deployment's Postgres and reaches the app as Patches (ADR 0090); no pack is published. An app build builds its bundled Language Pack from the Deployment's content snapshot:
 
 ```sh
 EXPO_PUBLIC_SLOVO_API_URL='<the Deployment backend address>' pnpm build:pack uk
-DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm publish:pack uk
 ```
 
-A variable in the environment wins over the same one in `apps/backend/.env`, so the local `.env` stays pointed at the local Postgres. The other operator commands (`pnpm switches off`, `pnpm reports`, `pnpm collection-links`, `pnpm admin`) reach the Deployment the same way.
+The operator credential of the commands below is the public address of Railway's Postgres (`DATABASE_PUBLIC_URL` in the Postgres service's variables), given in the command's environment and never written to a file in the repository. A variable in the environment wins over the same one in `apps/backend/.env`, so the local `.env` stays pointed at the local Postgres. The operator commands (`pnpm switches off`, `pnpm reports`, `pnpm collection-links`, `pnpm admin`) reach the Deployment the same way.
 
 ## The owner admin's people and Агент tokens
 

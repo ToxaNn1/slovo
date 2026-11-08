@@ -11,7 +11,6 @@
     "dev:admin": "pnpm --filter @slovo/admin dev",
     "build:pack": "pnpm --filter @slovo/language-pack build-pack",
     "recording-requests": "pnpm --silent --filter @slovo/language-pack recording-requests",
-    "publish:pack": "pnpm --filter @slovo/backend publish-pack",
     "switches": "pnpm --filter @slovo/backend switches",
     "admin": "pnpm --filter @slovo/backend admin",
     "reports": "pnpm --filter @slovo/backend reports",
