@@ -101,6 +101,19 @@ export default {
       },
     },
     {
+      name: 'admin-imports-only-contracts',
+      comment:
+        'ADR 0088: the owner admin is a web app that talks to the backend over HTTP through ' +
+        "the contracts' admin API, so of the workspace it imports the contracts alone: no " +
+        'backend, server-core, Core, UI or mobile code.',
+      severity: 'error',
+      from: { path: '^apps/admin/' },
+      to: {
+        path: WORKSPACE_PART,
+        pathNot: ['^apps/admin/', '^packages/contracts/', SHARED_CONFIG],
+      },
+    },
+    {
       name: 'mobile-imports-no-server-code',
       comment:
         'ADR 0030: the app talks to the backend over HTTP only, through the contract in ' +
@@ -204,7 +217,7 @@ export default {
           '^packages/$2/',
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
-          '^packages/[^/]+/src/(index|testing|tokens/index|fonts|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
+          '^packages/[^/]+/src/(index|testing|tokens/index|fonts|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|admin-api|api-description|api/test-support)\\.ts$',
         ],
       },
     },
