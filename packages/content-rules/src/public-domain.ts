@@ -1,7 +1,6 @@
 import type { Correction } from '@slovo/contracts';
 
-import type { BuildError } from './build-error';
-import type { Authored } from './check-content';
+import type { Authored, Refusal } from './refusal';
 
 /**
  * The literary uses whose texts are not yet in the public domain on `today`.
@@ -12,13 +11,14 @@ import type { Authored } from './check-content';
 export function protectedLiteraryUses(
   corrections: readonly Authored<Correction>[],
   today: Date,
-): BuildError[] {
+): Refusal[] {
   return corrections.flatMap(({ file, entry }) =>
     entry.literaryUses.flatMap(({ authorDeathYear }, index) => {
       const freeFrom = authorDeathYear + 71;
       if (today.getFullYear() >= freeFrom) return [];
       return [
         {
+          rule: 'public-domain' as const,
           file,
           entryId: entry.id,
           field: `literaryUses.${String(index)}.authorDeathYear`,

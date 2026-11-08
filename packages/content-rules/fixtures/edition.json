@@ -1,0 +1,338 @@
+{
+  "id": "fixture",
+  "locale": "uk-UA",
+  "displayName": "SLOVO Fixture",
+  "accountName": "SLOVO ID",
+  "languageTraits": {
+    "marksStress": true,
+    "vowels": "а е є и і ї о у ю я",
+    "alphabet": "а б в г ґ д е є ж з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я",
+    "lemmaPunctuation": "' -",
+    "expressionPunctuation": ", —",
+    "sortLocale": "uk",
+    "distractorRule": "same-part-of-speech"
+  },
+  "featureSwitches": {
+    "game": true,
+    "corrections": true,
+    "idioms": true,
+    "synonymRows": true,
+    "tips": true,
+    "account": true,
+    "googleSignIn": true,
+    "signInWithApple": true,
+    "sync": true,
+    "contentUpdates": true,
+    "notifications": true,
+    "widget": true,
+    "shareCards": true,
+    "pronunciation": true,
+    "narratorVoice": true,
+    "wordOfTheDay": true,
+    "statistics": true,
+    "knowledge": true,
+    "confirmedEntries": true,
+    "selfCheck": true,
+    "rarityCeiling": true,
+    "gameReview": true,
+    "gameGuessWord": true,
+    "gameCorrection": true,
+    "gameStress": true,
+    "gamePairs": true,
+    "gameSurvival": true,
+    "gameTimed": true,
+    "gameIdiomMeaning": true,
+    "gameAnglicism": true,
+    "gameBuildIdiom": true,
+    "gameTypeWord": true,
+    "gameAnagram": true,
+    "gameByLetters": true,
+    "gameOrigin": true,
+    "dailyCrossword": true,
+    "search": true,
+    "rarityTest": true,
+    "weeklyRecap": true,
+    "yesterday": true,
+    "wordOfTheDayArchive": true,
+    "activeDaysCalendar": true,
+    "politePause": true,
+    "firstWeek": true,
+    "widgetHint": true,
+    "seasonalDecor": true,
+    "stressAnimation": true,
+    "illustrations": true,
+    "mistakeReports": true,
+    "communityCounters": true,
+    "communityWord": true,
+    "calligraphy": true,
+    "spotlight": true,
+    "appIntents": true,
+    "collectionLinks": true,
+    "replaceOpenEntry": true,
+    "mixKindWeights": true,
+    "analytics": true,
+    "xpLog": true,
+    "streakFreezes": true,
+    "streakBreak": true,
+    "quickQuestion": true,
+    "playStep": true,
+    "seenWordXp": true,
+    "levels": true,
+    "noCounters": true,
+    "dailyGoal": true,
+    "enoughForToday": true,
+    "widgetGoalRing": true,
+    "lockScreenWidget": true,
+    "questionnaire": true,
+    "badges": true,
+    "levelLadder": false,
+    "newLevelScreen": false,
+    "badgeSheet": false,
+    "badgeToast": false,
+    "streakFreezeCard": false,
+    "breakCard": false,
+    "calendarDayLines": false,
+    "progressShareCards": true,
+    "dailyCrosswordShare": true,
+    "tracedCrossword": true,
+    "crossingCrossword": false,
+    "crosswordHint": false,
+    "crosswordSolveTime": false,
+    "crosswordSolvedScreen": false,
+    "crosswordBadgeStamp": false,
+    "gameAnswerCard": false,
+    "letterTiles": false,
+    "survivalStreak": false,
+    "finishPoster": false,
+    "eveningNotification": true,
+    "notificationFarewell": true,
+    "notificationExplainer": true,
+    "notificationTimeStep": true,
+    "laterQuestions": true,
+    "profile": true,
+    "mascot": true,
+    "sounds": true,
+    "reduceMotion": true,
+    "fastReveal": true,
+    "dashboard": true,
+    "mood": true,
+    "curatedCollections": true,
+    "swipeMarks": true,
+    "searchButton": true,
+    "dashboardWordmark": true,
+    "categoryScreens": true,
+    "correctionCategoryScreens": true,
+    "quietCategories": true,
+    "collectionBoardStyle": true,
+    "previousWords": true,
+    "correctionTypes": true,
+    "profileConfirmedByRarity": true,
+    "profileGameBest": true
+  },
+  "userSettingDefaults": {
+    "theme": "system",
+    "fontSize": "M",
+    "vibration": true,
+    "notificationTimes": ["09:00"],
+    "rarityCeiling": 5,
+    "mix": {
+      "categories": "all",
+      "correctionCategories": "all",
+      "corrections": true,
+      "idioms": true,
+      "synonymRows": true,
+      "tips": true
+    }
+  },
+  "wordOfTheDayFont": "Fixture-Script.ttf",
+  "widgetPalette": {
+    "parchment": {
+      "background": "#F3E9D2",
+      "text": "#3B2A1A"
+    },
+    "blue": {
+      "background": "#1F3A5F",
+      "text": "#F3E9D2"
+    }
+  },
+  "categories": [
+    {
+      "id": "nature",
+      "displayName": "Природа",
+      "description": "Ліс, поле й небо.",
+      "tone": "loud"
+    },
+    {
+      "id": "speech",
+      "displayName": "Мовлення",
+      "description": "Як говорили колись.",
+      "tone": "quiet"
+    }
+  ],
+  "correctionCategories": [
+    {
+      "id": "work",
+      "displayName": "На роботі",
+      "description": "Слова для наради.",
+      "tone": "loud"
+    },
+    {
+      "id": "shop",
+      "displayName": "У магазині",
+      "description": "Слова біля каси.",
+      "tone": "quiet"
+    }
+  ],
+  "categoriesRequiringHistory": [],
+  "originLanguages": [
+    {
+      "code": "proto-slavic",
+      "name": "праслов'янська"
+    }
+  ],
+  "moods": [
+    {
+      "id": "energetic",
+      "name": "бадьорий",
+      "emoji": "⚡",
+      "reply": "Тримай темп!"
+    },
+    {
+      "id": "thoughtful",
+      "name": "задумливий",
+      "emoji": "🤔",
+      "reply": "Є над чим подумати."
+    },
+    {
+      "id": "calm",
+      "name": "спокійний",
+      "emoji": "😌",
+      "reply": "Без поспіху."
+    },
+    {
+      "id": "joyful",
+      "name": "радісний",
+      "emoji": "😊",
+      "reply": "Лови світле слово!"
+    }
+  ],
+  "dashboardMoods": ["energetic", "thoughtful", "calm", "joyful"],
+  "narratorVoices": {
+    "default": "anna",
+    "voices": [
+      { "id": "anna", "name": "Anna", "description": "Female · calm" },
+      { "id": "boris", "name": "Boris", "description": "Male · low" }
+    ],
+    "sample": {
+      "word": "w_fx0001",
+      "syllables": ["за", "гра", "ва"],
+      "stressed": 1,
+      "caption": "за-гра́-ва"
+    }
+  },
+  "searchLetters": {
+    "ґ": "г"
+  },
+  "xp": {
+    "round": 1,
+    "finishedGame": 5,
+    "finishedGameShare": 0.5,
+    "bestResult": 5,
+    "dailyCrossword": 15,
+    "reviewAnswer": 1,
+    "reviewDailyCap": 10,
+    "quickQuestion": 2,
+    "seenWord": 1
+  },
+  "dailyGoals": { "options": [10, 25, 50], "highlighted": 10 },
+  "onboardingNotificationTimes": { "morning": "09:00", "midday": "13:00", "evening": "20:30" },
+  "levels": {
+    "first": 50,
+    "growth": 0.1,
+    "growingUntil": 10,
+    "later": 120,
+    "names": ["Seed", "Sprout"]
+  },
+  "questionnaire": {
+    "level": [
+      {
+        "id": "studying",
+        "label": "Навчаюсь",
+        "rarityCeiling": 4
+      },
+      {
+        "id": "working",
+        "label": "Працюю",
+        "rarityCeiling": 5
+      },
+      {
+        "id": "gourmet",
+        "label": "Мовний гурман",
+        "rarityCeiling": 5
+      }
+    ],
+    "why": [
+      {
+        "id": "write-correctly",
+        "label": "Писати без помилок",
+        "kindWeights": {
+          "correction": "more"
+        }
+      },
+      {
+        "id": "rare-words",
+        "label": "Знати рідкісні слова",
+        "kindWeights": {
+          "correction": "less",
+          "tip": "less"
+        }
+      },
+      {
+        "id": "play",
+        "label": "Грати зі словами",
+        "kindWeights": {
+          "idiom": "more",
+          "synonymRow": "more"
+        }
+      }
+    ],
+    "selfRating": [
+      {
+        "id": "few",
+        "label": "Навчаюсь",
+        "offerRarityTest": false
+      },
+      {
+        "id": "some",
+        "label": "Навчаюсь",
+        "offerRarityTest": true
+      },
+      {
+        "id": "many",
+        "label": "Навчаюсь",
+        "offerRarityTest": true
+      }
+    ]
+  },
+  "badgeFamilies": [
+    {
+      "id": "streak",
+      "name": "Серія",
+      "description": "Дні поспіль, коли слово відкрито й ціль виконано.",
+      "shape": "hexagon",
+      "tone": "red"
+    }
+  ],
+  "badges": [],
+  "mascot": {
+    "onboarding": "Mascot onboarding",
+    "newLevel": "Mascot newLevel",
+    "badge": "Mascot badge",
+    "dailyGoal": "Mascot dailyGoal",
+    "streakMilestone": "Mascot streakMilestone",
+    "gameRight": "Mascot gameRight",
+    "gameWrong": "Mascot gameWrong",
+    "gameEnd": "Mascot gameEnd",
+    "empty": "Mascot empty"
+  }
+}

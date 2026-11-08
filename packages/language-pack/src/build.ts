@@ -5,7 +5,6 @@ import { checkContentVersion } from './content-manifest';
 import { missedTargets, type MissedTarget } from './content-targets';
 import { unregisteredEntries } from './id-registry';
 import { PACK_FORMAT, type PackContent } from './pack-layout';
-import { protectedLiteraryUses } from './public-domain';
 import { readEdition } from './read-edition';
 import type { MissingRecordings } from './recordings';
 import { contentReport, type ContentReport } from './report';
@@ -91,7 +90,7 @@ function checkEdition(
       missingRecordings: readonly MissingRecordings[];
     }
   | { ok: false; errors: readonly BuildError[] } {
-  const source = readEdition(editionDir, { registryRequired: true });
+  const source = readEdition(editionDir, { registryRequired: true, today });
   const command = `pnpm build:pack ${source.editionId ?? '<edition-id>'} --record`;
   const unregistered =
     source.registry === undefined
@@ -114,7 +113,6 @@ function checkEdition(
       field: 'id',
       message: `Not in content/ids.json: record new ids with ${command}`,
     })),
-    ...protectedLiteraryUses(source.corrections, today),
   ];
   if (errors.length > 0 || source.valid === undefined) return { ok: false, errors };
 
