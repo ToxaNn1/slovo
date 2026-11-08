@@ -41,11 +41,19 @@ export function parseRecord(
     case 'word':
       return recordOf(parseAgainst(WordSchema, file, json), (entry) => ({ kind, file, entry }));
     case 'correction':
-      return recordOf(parseAgainst(CorrectionSchema, file, json), (entry) => ({ kind, file, entry }));
+      return recordOf(parseAgainst(CorrectionSchema, file, json), (entry) => ({
+        kind,
+        file,
+        entry,
+      }));
     case 'idiom':
       return recordOf(parseAgainst(IdiomSchema, file, json), (entry) => ({ kind, file, entry }));
     case 'synonymRow':
-      return recordOf(parseAgainst(SynonymRowSchema, file, json), (entry) => ({ kind, file, entry }));
+      return recordOf(parseAgainst(SynonymRowSchema, file, json), (entry) => ({
+        kind,
+        file,
+        entry,
+      }));
     case 'tip':
       return recordOf(parseAgainst(TipSchema, file, json), (entry) => ({ kind, file, entry }));
     case 'curatedCollection':

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 
-import { EditionConfigSchema, type CrosswordDay, type EditionConfig } from '@slovo/contracts';
+import { EditionConfigSchema, type CrosswordDay } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -41,14 +41,14 @@ function kindOf(id: string): RecordKind {
 }
 
 /** A record of the fixture parsed as its kind, from the file of its id. */
-function parsed(json: Json, file = `${String(json.id)}.json`): AuthoredRecord {
-  const result = parseRecord(kindOf(String(json.id)), file, json);
+function parsed(json: Json, file = `${String(json['id'])}.json`): AuthoredRecord {
+  const result = parseRecord(kindOf(String(json['id'])), file, json);
   if (!result.ok) throw new Error(JSON.stringify(result.refusals));
   return result.record;
 }
 
 function record(id: string, changes: Json = {}): Json {
-  const found = [...content.records, ...content.curatedCollections].find((r) => r.id === id);
+  const found = [...content.records, ...content.curatedCollections].find((r) => r['id'] === id);
   if (found === undefined) throw new Error(`No fixture record ${id}`);
   return { ...structuredClone(found), ...changes };
 }
@@ -81,7 +81,7 @@ function fixtureSet(
   extra: Partial<ContentSet> = {},
 ): ContentSet {
   const records = [...content.records, ...content.curatedCollections].map((json) =>
-    parsed({ ...json, ...changes[String(json.id)] }),
+    parsed({ ...json, ...changes[String(json['id'])] }),
   );
   return setOf([...records, ...added], extra);
 }
@@ -111,9 +111,15 @@ describe('checkContentSet', () => {
     expect(checkContentSet(config, set, { today })).toEqual([]);
   });
 
-  const broken: readonly (readonly [RuleName, () => ContentSet, EditionConfig?])[] = [
-    ['duplicate-id', () => fixtureSet({}, [parsed(record('w_fx0002', { lemma: 'балакуча' }), 'x.json')])],
-    ['mixed-script', () => fixtureSet({ w_fx0002: { primaryDefinition: 'Який любить гoворити.' } })],
+  const broken: readonly (readonly [RuleName, () => ContentSet])[] = [
+    [
+      'duplicate-id',
+      () => fixtureSet({}, [parsed(record('w_fx0002', { lemma: 'балакуча' }), 'x.json')]),
+    ],
+    [
+      'mixed-script',
+      () => fixtureSet({ w_fx0002: { primaryDefinition: 'Який любить гoворити.' } }),
+    ],
     ['stray-character', () => fixtureSet({ w_fx0002: { lemma: 'балакучий7' } })],
     ['unique-lemma', () => fixtureSet({}, [parsed(record('w_fx0002', { id: 'w_fx0009' }))])],
     ['unique-expression', () => fixtureSet({}, [parsed(record('i_fx0001', { id: 'i_fx0009' }))])],
@@ -141,15 +147,16 @@ describe('checkContentSet', () => {
     [
       'unique-tip-answers',
       () => {
-        const { gameQuestion } = record('t_fx0001') as { gameQuestion: Json & { wrongAnswers: string[] } };
-        const wrongAnswers = [gameQuestion.rightAnswer, ...gameQuestion.wrongAnswers.slice(1)];
+        const { gameQuestion } = record('t_fx0001') as {
+          gameQuestion: Json & { wrongAnswers: string[] };
+        };
+        const wrongAnswers = [gameQuestion['rightAnswer'], ...gameQuestion.wrongAnswers.slice(1)];
         return fixtureSet({ t_fx0001: { gameQuestion: { ...gameQuestion, wrongAnswers } } });
       },
     ],
     ['word-category', () => fixtureSet({ w_fx0002: { categoryId: 'unknown' } })],
     ['correction-category', () => fixtureSet({ c_fx0001: { categoryId: 'unknown' } })],
     ['word-correction', () => fixtureSet({ w_fx0002: { correctionIds: ['c_zzzzzz'] } })],
-    ['category-history', () => fixtureSet(), { ...config, categoriesRequiringHistory: ['speech'] }],
     ['word-origin', () => fixtureSet({ w_fx0002: { origin: 'latin' } })],
     [
       'synonym-row-word',
@@ -176,7 +183,10 @@ describe('checkContentSet', () => {
       'crossword-days-gap',
       () => {
         const gap = [days[0], day('2026-11-03', ['w_fx0003'])].filter((d) => d !== undefined);
-        return fixtureSet({}, [], { crosswordDays: gap, recordedCrosswordDaysChecksum: checksumOf(gap) });
+        return fixtureSet({}, [], {
+          crosswordDays: gap,
+          recordedCrosswordDaysChecksum: checksumOf(gap),
+        });
       },
     ],
     [
@@ -199,17 +209,29 @@ describe('checkContentSet', () => {
     ],
   ];
 
-  it.each(broken)('refuses a fixture that breaks %s, naming the rule', (rule, set, edition) => {
-    expect(rules(checkContentSet(edition ?? config, set(), { today }))).toEqual([rule]);
+  it.each(broken)('refuses a fixture that breaks %s, naming the rule', (rule, set) => {
+    expect(rules(checkContentSet(config, set(), { today }))).toEqual([rule]);
+  });
+
+  it('refuses a fixture that breaks category-history, naming the rule', () => {
+    const edition = { ...config, categoriesRequiringHistory: ['speech'] };
+    expect(rules(checkContentSet(edition, fixtureSet(), { today }))).toEqual(['category-history']);
   });
 });
 
 describe('parseRecord', () => {
   it('refuses a record its kind schema does not hold, naming the field', () => {
-    expect(parseRecord('word', 'w_fx0002.json', record('w_fx0002', { rarity: 9, extra: 1 }))).toEqual({
+    expect(
+      parseRecord('word', 'w_fx0002.json', record('w_fx0002', { rarity: 9, extra: 1 })),
+    ).toEqual({
       ok: false,
       refusals: [
-        expect.objectContaining({ rule: 'schema', file: 'w_fx0002.json', entryId: 'w_fx0002', field: 'rarity' }),
+        expect.objectContaining({
+          rule: 'schema',
+          file: 'w_fx0002.json',
+          entryId: 'w_fx0002',
+          field: 'rarity',
+        }),
         expect.objectContaining({ rule: 'schema', field: 'extra', message: 'Unknown field' }),
       ],
     });
@@ -221,7 +243,9 @@ describe('checkRecord', () => {
   const save = (json: Json) => checkRecord(config, current, parsed(json), { today });
 
   it('passes a valid edit of a record of the set', () => {
-    expect(save(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }))).toEqual([]);
+    expect(save(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }))).toEqual(
+      [],
+    );
   });
 
   it('refuses a duplicate live Lemma', () => {

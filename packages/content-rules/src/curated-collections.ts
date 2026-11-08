@@ -28,10 +28,22 @@ export function checkCuratedCollections(
       const field = `entryIds.${String(position)}`;
       if (retired === undefined) {
         const message = `No Entry ${entryId} in this Edition`;
-        errors.push({ rule: 'curated-collection-entry', file, entryId: collection.id, field, message });
+        errors.push({
+          rule: 'curated-collection-entry',
+          file,
+          entryId: collection.id,
+          field,
+          message,
+        });
       } else if (retired) {
         const message = `${entryId} is a Retired Entry: a Curated Collection names live Entries only`;
-        errors.push({ rule: 'curated-collection-entry', file, entryId: collection.id, field, message });
+        errors.push({
+          rule: 'curated-collection-entry',
+          file,
+          entryId: collection.id,
+          field,
+          message,
+        });
       }
     });
   }

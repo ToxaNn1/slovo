@@ -72,7 +72,7 @@ export function unknownCrosswordEntries(
 
 /** A gap between days, and a word that comes back within 20 days. */
 function ruleErrors(days: readonly CrosswordDay[]): Refusal[] {
-  return days.flatMap((day, i) => {
+  return days.flatMap((day, i): Refusal[] => {
     const before = days[i - 1];
     if (before !== undefined && day.date !== dateAfter(before.date, 1)) {
       return [

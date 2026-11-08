@@ -123,7 +123,11 @@ export function checkEntries(
     }
 
     if (word.history === undefined && categoriesRequiringHistory.has(word.categoryId)) {
-      fail('category-history', 'history', `Required: Category "${word.categoryId}" requires history`);
+      fail(
+        'category-history',
+        'history',
+        `Required: Category "${word.categoryId}" requires history`,
+      );
     }
 
     if (word.origin !== undefined && !originCodes.has(word.origin)) {
@@ -135,7 +139,8 @@ export function checkEntries(
     }
 
     if (!marksStress) {
-      if (word.stress.length > 0) fail('marks-stress', 'stress', 'Not allowed: the Edition does not mark Stress');
+      if (word.stress.length > 0)
+        fail('marks-stress', 'stress', 'Not allowed: the Edition does not mark Stress');
       continue;
     }
     if (word.stress.length === 0) {
@@ -210,7 +215,11 @@ export function checkEntries(
     if (correction.correctionType !== 'wrongStress') {
       for (const [field, text] of texts) {
         if (text.includes(STRESS_MARK)) {
-          fail('wrong-stress', field, 'Not allowed: only a wrong-stress Correction writes Stress marks');
+          fail(
+            'wrong-stress',
+            field,
+            'Not allowed: only a wrong-stress Correction writes Stress marks',
+          );
         }
       }
       continue;
@@ -224,7 +233,11 @@ export function checkEntries(
     const forms = texts.slice(0, 1 + correction.standardEquivalents.length);
     for (const [field, text] of forms) {
       if (!text.includes(STRESS_MARK)) {
-        fail('wrong-stress', field, 'Required: a wrong-stress Correction writes a Stress mark in each form');
+        fail(
+          'wrong-stress',
+          field,
+          'Required: a wrong-stress Correction writes a Stress mark in each form',
+        );
         continue;
       }
       const characters = Array.from(text);
