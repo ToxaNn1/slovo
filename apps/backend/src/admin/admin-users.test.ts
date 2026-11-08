@@ -218,7 +218,7 @@ describe('the Action log', () => {
 });
 
 describe('the Owner checks', () => {
-  const FIXTURE = fileURLToPath(new URL('fixtures/owner-checks.md', import.meta.url));
+  const FIXTURE = fileURLToPath(new URL('fixtures/checks-file.md', import.meta.url));
   const importCommand = { kind: 'command', command: 'pnpm admin check import' };
 
   it('imports every line of the file as a check of its version', async () => {
