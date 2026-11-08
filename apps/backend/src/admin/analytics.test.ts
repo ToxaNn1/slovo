@@ -67,12 +67,16 @@ describe('the Аналітика reads', () => {
     app.posthog.hold();
 
     const read = client.admin.analytics({ editionId: ids[0], ...PERIOD });
-    await vi.waitFor(() => { expect(app.posthog.asked).toHaveLength(3); });
+    await vi.waitFor(() => {
+      expect(app.posthog.asked).toHaveLength(3);
+    });
     await settle();
     expect(app.posthog.asked).toHaveLength(3);
 
     app.posthog.release();
-    await vi.waitFor(() => { expect(app.posthog.asked).toHaveLength(4); });
+    await vi.waitFor(() => {
+      expect(app.posthog.asked).toHaveLength(4);
+    });
     expect(app.posthog.running()).toBe(3);
 
     app.posthog.releaseAll();
