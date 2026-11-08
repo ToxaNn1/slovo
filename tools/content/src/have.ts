@@ -1,131 +1,127 @@
 /**
- * What an Edition already has, printed to stdout:
+ * What an Edition already has, as the API answers it:
  *
- *   pnpm content have --edition <id> [--kind word|correction|idiom|synonym-row|tip]
+ *   pnpm content have --edition <id> [--kind <kind>]
  *   pnpm content counts --edition <id>
  *
- * `have` prints one line per Entry, tab-separated: its kind, its Category or
- * type, its text, and `retired` for a Retired Entry. `counts` prints the
- * Words per Category and rarity and the Corrections per Category, with
- * totals; a cell or row under a content target shows its gap.
+ * `have` prints one line per live record of the content snapshot,
+ * tab-separated: its id, its kind and its text. `counts` prints the content
+ * report: the live records per kind, Category, type and rarity, with each
+ * content target the content falls short of.
  */
-import { parseArgs } from 'node:util';
+import type { ApiClient } from '@slovo/contracts/api';
 
-import { rarityFloor, wordFloor, type ContentTargets } from '@slovo/language-pack';
-import {
-  EDITIONS_DIR,
-  EditionFolderError,
-  openEdition,
-  type EditionFolder,
-} from '@slovo/language-pack/edition';
+import { refusalLines, type RecordKind } from './api';
+import type { Io } from './writes';
 
-import { entryKind, KIND_NAMES, type EntryKind } from './content';
-
-const USAGE = [
-  'Usage: pnpm content have --edition <id> [--kind word|correction|idiom|synonym-row|tip]',
-  '       pnpm content counts --edition <id>',
-].join('\n');
-
-const RARITIES = [1, 2, 3, 4, 5] as const;
-
-/** Runs `have` or `counts` with the arguments after `pnpm content`; returns the exit code. */
-export function listContent(args: readonly string[]): number {
-  let parsed;
+/** The live records of the snapshot, of one kind when one is named. */
+export async function have(
+  api: ApiClient,
+  { editionId, kind: only }: { editionId: string; kind: RecordKind | undefined },
+  io: Io,
+): Promise<number> {
+  let snapshot;
   try {
-    parsed = parseArgs({
-      args: [...args],
-      allowPositionals: true,
-      options: { edition: { type: 'string' }, kind: { type: 'string' } },
-    });
-  } catch {
-    console.error(USAGE);
-    return 2;
-  }
-  const { positionals, values } = parsed;
-  const [command, ...rest] = positionals;
-  const kind = values.kind === undefined ? undefined : entryKind(values.kind);
-  const known =
-    rest.length === 0 &&
-    ((command === 'have' && (values.kind === undefined || kind !== undefined)) ||
-      (command === 'counts' && values.kind === undefined));
-  if (!known || values.edition === undefined) {
-    console.error(USAGE);
-    return 2;
-  }
-  let edition: EditionFolder;
-  try {
-    edition = openEdition(process.env['SLOVO_EDITIONS_DIR'] ?? EDITIONS_DIR, values.edition);
+    snapshot = await api.content.snapshot({ editionId });
   } catch (error) {
-    if (!(error instanceof EditionFolderError)) throw error;
-    console.error(error.message);
-    return error.reason === 'unknown' ? 2 : 1;
+    for (const line of refusalLines(editionId, error)) io.problem(line);
+    return 1;
   }
-  const printed = command === 'have' ? have(edition, kind) : counts(edition);
-  for (const line of printed) console.log(line);
+  const texts: Record<RecordKind, { id: string; text: string; retired: boolean }[]> = {
+    word: snapshot.words.map(({ id, lemma, retired }) => ({
+      id,
+      text: lemma,
+      retired,
+    })),
+    correction: snapshot.corrections.map(({ id, nonStandardForm, retired }) => ({
+      id,
+      text: nonStandardForm,
+      retired,
+    })),
+    idiom: snapshot.idioms.map(({ id, expression, retired }) => ({
+      id,
+      text: expression,
+      retired,
+    })),
+    synonymRow: snapshot.synonymRows.map(({ id, dominant }) => ({
+      id,
+      text: dominant.text,
+      retired: false,
+    })),
+    tip: snapshot.tips.map(({ id, title }) => ({ id, text: title, retired: false })),
+    curatedCollection: snapshot.curatedCollections.map(({ id, name }) => ({
+      id,
+      text: name,
+      retired: false,
+    })),
+  };
+  for (const [kind, records] of Object.entries(texts)) {
+    if (only !== undefined && kind !== only) continue;
+    for (const { id, text, retired } of records)
+      if (!retired) io.print([id, kind, text].join('\t'));
+  }
   return 0;
 }
 
-function have(edition: EditionFolder, only: EntryKind | undefined): string[] {
-  return edition.entryTexts().flatMap(({ kind: entryKindOf, group, text, forms, retired }) => {
-    const kind = KIND_NAMES[entryKindOf];
-    if (only !== undefined && kind !== only) return [];
-    const shown = forms.length === 0 ? text : `${text} -> ${forms.join(', ')}`;
-    return [[kind, group ?? '-', shown, ...(retired ? ['retired'] : [])].join('\t')];
-  });
-}
-
-/** The tables of Words and Corrections; Retired Entries are left out, as the content targets count. */
-function counts(edition: EditionFolder): string[] {
-  const { categories, correctionCategories } = edition.config;
-  const targets: ContentTargets = edition.readIfPresent('targets') ?? {};
-  const { words, corrections } = edition.entries();
-  const liveWords = words.map(({ entry }) => entry).filter((word) => !word.retired);
-  const liveCorrections = corrections
-    .map(({ entry }) => entry)
-    .filter((correction) => !correction.retired);
-  const perRarity = rarityFloor(targets);
-
-  const wordRows = categories.map(({ id }) => {
-    const inCategory = liveWords.filter((word) => word.categoryId === id);
-    const floor = wordFloor(targets, id)?.min;
-    return [
-      id,
-      ...RARITIES.map((rarity) => cell(inCategory.filter((word) => word.rarity === rarity).length)),
-      cell(inCategory.length, floor),
-    ];
-  });
-  const wordTotals = [
-    'total',
-    ...RARITIES.map((rarity) =>
-      cell(liveWords.filter((word) => word.rarity === rarity).length, perRarity),
-    ),
-    cell(liveWords.length, targets.minWords),
-  ];
-  const correctionRows = correctionCategories.map(({ id }) => [
-    id,
-    cell(
-      liveCorrections.filter((correction) => correction.categoryId === id).length,
-      targets.minCorrectionsPerCategory,
-    ),
-  ]);
-  const correctionTotals = ['total', cell(liveCorrections.length, targets.minCorrections)];
-
-  return [
+/** The content report against the Edition's content targets. */
+export async function counts(
+  api: ApiClient,
+  { editionId }: { editionId: string },
+  io: Io,
+): Promise<number> {
+  let answer;
+  try {
+    answer = await api.admin.content.report({ editionId });
+  } catch (error) {
+    for (const line of refusalLines(editionId, error)) io.problem(line);
+    return 1;
+  }
+  const { report, missed, contentVersion } = answer;
+  const lines = [
+    `Content version ${String(contentVersion)}`,
+    '',
+    `Words: ${String(report.words)} (retired ${String(report.retiredWords)})`,
     ...table([
-      ['Words', ...RARITIES.map((rarity) => `r${String(rarity)}`), 'total'],
-      ...wordRows,
-      wordTotals,
+      ['Category', 'words'],
+      ...report.wordsPerCategory.map(({ categoryId, words }) => [categoryId, String(words)]),
+    ]),
+    ...table([
+      ['Rarity', 'words'],
+      ...report.rarity.map(({ rarity, words }) => [`r${String(rarity)}`, String(words)]),
+    ]),
+    ...table([
+      ['Coverage', 'words'],
+      ...Object.entries(report.coverage).map(([field, words]) => [field, String(words)]),
     ]),
     '',
-    ...table([['Corrections', 'total'], ...correctionRows, correctionTotals]),
+    `Corrections: ${String(report.corrections)} (retired ${String(report.retiredCorrections)})`,
+    ...table([
+      ['Category', 'corrections'],
+      ...report.correctionsPerCategory.map(({ categoryId, corrections }) => [
+        categoryId,
+        String(corrections),
+      ]),
+    ]),
+    ...table([
+      ['Type', 'corrections'],
+      ...report.correctionsPerType.map(({ correctionType, corrections }) => [
+        correctionType,
+        String(corrections),
+      ]),
+    ]),
+    '',
+    `Idioms: ${String(report.idioms)} (retired ${String(report.retiredIdioms)})`,
+    ...table([
+      ['Type', 'idioms'],
+      ...report.idiomsPerType.map(({ idiomType, idioms }) => [idiomType, String(idioms)]),
+    ]),
+    '',
+    ...(missed.length === 0
+      ? ['Every content target is met']
+      : ['Missed targets:', ...missed.map(({ target, message }) => `  ${target}: ${message}`)]),
   ];
-}
-
-/** A count, with its gap when it is under the target's floor. */
-function cell(count: number, floor?: number): string {
-  return floor === undefined || count >= floor
-    ? String(count)
-    : `${String(count)} (-${String(floor - count)})`;
+  for (const line of lines) io.print(line);
+  return 0;
 }
 
 /** Rows as columns padded to their widest cell, two spaces apart. */

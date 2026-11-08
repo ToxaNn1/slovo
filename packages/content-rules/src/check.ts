@@ -12,7 +12,7 @@ import type {
 import { checkCrosswordDays, unknownCrosswordEntries } from './crossword-days';
 import { checkCuratedCollections } from './curated-collections';
 import { checkEntries } from './entries';
-import type { AuthoredRecord } from './parse-record';
+import type { AuthoredRecord, RecordKind } from './parse-record';
 import { protectedLiteraryUses } from './public-domain';
 import type { Authored, Refusal } from './refusal';
 import { checkSynonymRows } from './synonym-rows';
@@ -30,6 +30,33 @@ export interface ContentSet {
   readonly crosswordDays?: readonly CrosswordDay[];
   /** The checksum of the crossword days last published; absent when none were. */
   readonly recordedCrosswordDaysChecksum?: string;
+}
+
+/** The records of each kind of an Edition's content, each with its id. */
+export interface ContentRecords {
+  readonly word: readonly Word[];
+  readonly correction: readonly Correction[];
+  readonly idiom: readonly Idiom[];
+  readonly synonymRow: readonly SynonymRow[];
+  readonly tip: readonly Tip[];
+  readonly curatedCollection: readonly CuratedCollection[];
+}
+
+/** Where a record is located in a refusal: `<kind>/<id>`. */
+export const recordFileOf = (kind: RecordKind, id: string): string => `${kind}/${id}`;
+
+/** The content set of the records, each located by `recordFileOf`, as a save is checked against it. */
+export function contentSetOf(records: ContentRecords): ContentSet {
+  const authored = <T extends { readonly id: string }>(kind: RecordKind, entries: readonly T[]) =>
+    entries.map((entry) => ({ file: recordFileOf(kind, entry.id), entry }));
+  return {
+    words: authored('word', records.word),
+    corrections: authored('correction', records.correction),
+    idioms: authored('idiom', records.idiom),
+    synonymRows: authored('synonymRow', records.synonymRow),
+    tips: authored('tip', records.tip),
+    curatedCollections: authored('curatedCollection', records.curatedCollection),
+  };
 }
 
 /**
