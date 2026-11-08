@@ -21,7 +21,10 @@ export interface WordOfTheDayChoice {
  * choice is made in memory only once it is written.
  */
 export interface WordOfTheDay {
-  /** Today's Word of the Day if it is chosen already. Never chooses one. */
+  /**
+   * Today's Word of the Day if it is chosen already and still eligible, so
+   * one Retired or Hidden since reads as none chosen. Never chooses one.
+   */
   chosen(): WordOfTheDayChoice | undefined;
   /**
    * Takes the Word the notification plan Reserved for this morning as
@@ -116,9 +119,9 @@ export async function openWordOfTheDay({
 
   return {
     chosen() {
-      return record?.date === todayKey(clock)
-        ? { wordId: record.entryId, date: parseLocalDate(record.date) }
-        : undefined;
+      const today = todayKey(clock);
+      const wordId = kept(today);
+      return wordId === undefined ? undefined : { wordId, date: parseLocalDate(today) };
     },
     takeMorningWord: () =>
       inTurn(async () => {
