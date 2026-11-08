@@ -13,7 +13,9 @@ import { testDatabaseUrl } from '../test-support';
 // A copy of the Editions folder holding only the UA Edition.
 const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-import-command-'));
 cpSync(join(EDITIONS_DIR, 'uk'), join(editionsDir, 'uk'), { recursive: true });
-afterAll(() => rmSync(editionsDir, { recursive: true, force: true }));
+afterAll(() => {
+  rmSync(editionsDir, { recursive: true, force: true });
+});
 
 const authored = readEdition(join(editionsDir, 'uk'), {
   registryRequired: true,
