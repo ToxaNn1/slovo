@@ -10,6 +10,7 @@ import {
   createDevelopment,
   createMistakeReports,
   createSync,
+  type Alerts,
   type AppleVerifier,
   type Clock,
   type EasSource,
@@ -70,6 +71,8 @@ export interface AppDependencies {
   readonly editions: readonly Edition[];
   /** Sends the sign-in emails. */
   readonly mailer: Mailer;
+  /** Tells the owner of a Kill switch. */
+  readonly alerts: Alerts;
   /** Verifies the Google identity tokens of Google sign-ins. */
   readonly google: GoogleVerifier;
   /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
@@ -139,6 +142,7 @@ export function createApp({
   app: appConfig,
   editions,
   mailer,
+  alerts,
   google,
   apple,
   github,
@@ -148,7 +152,7 @@ export function createApp({
   trustedProxyHops,
   adminDist,
 }: AppDependencies) {
-  const editionRegistry = createEditions({ database, clock, editions });
+  const editionRegistry = createEditions({ database, clock, editions, alerts });
   const rateLimits = createRateLimits(database, { secret: authSecret });
   const accounts = createAccounts({
     editions: editionRegistry,

@@ -97,10 +97,16 @@ function OwnerSecurity({ email }: { email: string }) {
       <ActionLog />
       {pending === null ? null : (
         <ConfirmDialog
-          write={pending}
+          title={pending.title}
+          confirmLabel={pending.confirm}
+          onConfirm={(reason) => {
+            pending.run(reason);
+            return Promise.resolve();
+          }}
           onClose={() => {
             setPending(null);
           }}
+          refusalText={String}
         />
       )}
     </section>

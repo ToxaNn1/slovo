@@ -28,6 +28,7 @@ async function ownerOn(...editionIds: string[]) {
     database: app.database,
     clock: systemClock,
     editions: folder.read(),
+    alerts: app.alerts,
   });
   return { ...app, owner, editions, store: createAdminStore(app.database) };
 }

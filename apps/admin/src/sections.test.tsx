@@ -19,8 +19,10 @@ test('the sidebar shows the seven sections in order', async () => {
 /**
  * Безпека shows the Власник its blocks: `security.test.tsx`. Розробка is built
  * and shows the Owner checks: `development.test.tsx`, `owner-checks.test.tsx`.
+ * Свічі shows the switch screens: `switches/*.test.tsx`.
  */
-const EMPTY = ORDER.filter((title) => title !== 'Безпека' && title !== 'Розробка');
+const BUILT = ['Безпека', 'Розробка', 'Свічі'];
+const EMPTY = ORDER.filter((title) => !BUILT.includes(title));
 
 test('each section not yet built opens its empty state with the same texts in both themes', async () => {
   const user = userEvent.setup();

@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { ContentTargetsSchema } from '../content-targets';
 import { CorrectionTypeSchema } from '../correction';
-import { EditionIdSchema } from '../edition';
+import { EditionIdSchema, FeatureSwitchesSchema } from '../edition';
 import {
   ForceUpdateMinimumSchema,
   ForceUpdateMinimumsSchema,
@@ -97,8 +97,9 @@ const AgentNameSchema = z
   .trim()
   .regex(/^[a-z0-9-]{1,40}$/);
 
-/** The Rules and the force-update minimums of an Edition. */
+/** What an Edition declares of each feature, its Rules and its force-update minimums. */
 const SwitchesOfEditionSchema = z.object({
+  states: FeatureSwitchesSchema,
   rules: z.array(RuleSchema),
   minimums: ForceUpdateMinimumsSchema,
 });

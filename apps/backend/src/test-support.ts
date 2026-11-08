@@ -32,6 +32,8 @@ import {
   totpOf,
   type AdminAccess,
   type AdminRole,
+  type Alert,
+  type Alerts,
   type AppleIdentity,
   type AppleVerifier,
   type EasSource,
@@ -180,6 +182,22 @@ function createFakeMailer(): FakeMailer {
       const code = sent.findLast((mail) => mail.to === email)?.text.match(/\b[0-9]{6}\b/)?.[0];
       if (code === undefined) throw new Error(`no Sign-in code was sent to ${email}`);
       return code;
+    },
+  };
+}
+
+/** Alerts that keep every alert they are given, oldest first. */
+interface FakeAlerts extends Alerts {
+  readonly sent: readonly Alert[];
+}
+
+function createFakeAlerts(): FakeAlerts {
+  const sent: Alert[] = [];
+  return {
+    sent,
+    send: (alert) => {
+      sent.push(alert);
+      return Promise.resolve();
     },
   };
 }
@@ -629,6 +647,7 @@ export function testApp({
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
   const mailer = createFakeMailer();
+  const alerts = createFakeAlerts();
   const google = createFakeGoogle(googleClientIds);
   const apple = createFakeApple();
   const reports: ErrorReport[] = [];
@@ -640,6 +659,7 @@ export function testApp({
     app: appConfig,
     editions,
     mailer,
+    alerts,
     google: givenGoogle ?? google,
     apple: givenApple ?? apple,
     authSecret: TEST_AUTH_SECRET,
@@ -694,6 +714,8 @@ export function testApp({
     ip,
     /** Every email the backend sent. */
     mailer,
+    /** Every alert the backend sent the owner. */
+    alerts,
     /** The fake Google the backend verifies tokens with, and the tokens its sign-in sheet gives. */
     google,
     /** The fake Apple the backend verifies tokens with, and the tokens its sign-in sheet gives. */
@@ -719,17 +741,17 @@ export function testApp({
      * database: for the Editions it serves unless given those of the moment.
      */
     publish: (pack: Pick<BuiltPack, 'editionId' | 'file'>, editionsNow = editions) =>
-      publishPack({ database, clock: systemClock, editions: editionsNow, ...pack }),
+      publishPack({ database, clock: systemClock, editions: editionsNow, alerts, ...pack }),
     /** The Kill switch of the feature in the Edition, as the switches command turns it off. */
     kill: (editionId: string, feature: string) =>
-      createEditions({ database, clock: systemClock, editions }).kill(
+      createEditions({ database, clock: systemClock, editions, alerts }).kill(
         feature,
         editionId,
         TEST_WRITE,
       ),
     /** Clears every Rule of the feature in the Edition, back to the Edition's state. */
     clearRules: (editionId: string, feature: string) =>
-      createEditions({ database, clock: systemClock, editions }).setRules(
+      createEditions({ database, clock: systemClock, editions, alerts }).setRules(
         editionId,
         feature,
         [],
@@ -740,7 +762,7 @@ export function testApp({
       createContentStore({
         database,
         clock: systemClock,
-        editions: createEditions({ database, clock: systemClock, editions }),
+        editions: createEditions({ database, clock: systemClock, editions, alerts }),
       }).importEdition(editionId, editionDir, options),
     /** The lines the reports list command prints of the reports the backend keeps. */
     listReports: (filter?: ReportFilter) => listReports(database, filter),

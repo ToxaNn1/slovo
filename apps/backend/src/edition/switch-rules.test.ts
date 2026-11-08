@@ -28,6 +28,7 @@ async function adminOn(...ids: string[]) {
     database: app.database,
     clock: systemClock,
     editions: folder.read(),
+    alerts: app.alerts,
   });
   return { ...app, client: owner.client, owner, store, editions };
 }
@@ -125,6 +126,58 @@ describe('Rules the admin sets', () => {
     await expect(latest()).resolves.toEqual({ pack: null });
     await share(0);
     await expect(latest()).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
+  });
+});
+
+describe('the Kill switch through the admin API', () => {
+  it('turns the feature off over every Rule, logs it and alerts the owner', async () => {
+    const { client, store, alerts } = await adminOn('killed');
+    await client.admin.setRules({
+      editionId: 'killed',
+      feature: 'game',
+      rules: [{ id: 'all', verdict: 'on', targets: {} }],
+      reason: 'everyone plays',
+    });
+
+    await expect(
+      client.admin.kill({ feature: 'game', editionId: 'killed', reason: 'the Game loses scores' }),
+    ).resolves.toEqual({ editionIds: ['killed'] });
+
+    await expect(
+      client.edition.switches({ params: { editionId: 'killed' } }),
+    ).resolves.toMatchObject({
+      body: { rules: [{ id: 'kill', feature: 'game', verdict: 'off', targets: {} }] },
+    });
+    await expect(store.actions('killed')).resolves.toContainEqual(
+      expect.objectContaining({ what: 'switches.kill', reason: 'the Game loses scores' }),
+    );
+    expect(alerts.sent).toMatchObject([
+      {
+        kind: 'kill-switch',
+        feature: 'game',
+        editionIds: ['killed'],
+        who: { kind: 'admin-user' },
+        reason: 'the Game loses scores',
+      },
+    ]);
+  });
+
+  it('sends no alert for a refused kill', async () => {
+    const { client, alerts } = await adminOn('kept');
+
+    await expect(
+      client.admin.kill({ feature: 'nothing', editionId: 'kept', reason: 'a typo' }),
+    ).rejects.toThrow();
+    expect(alerts.sent).toEqual([]);
+  });
+
+  it('skips the Editions that have the feature unavailable', async () => {
+    const { client, alerts } = await adminOn('open');
+
+    await expect(
+      client.admin.kill({ feature: 'mistakeReports', reason: 'reports flood in' }),
+    ).rejects.toThrow();
+    expect(alerts.sent).toEqual([]);
   });
 });
 

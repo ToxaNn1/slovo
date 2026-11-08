@@ -146,7 +146,7 @@ export function adminProcedures(
     if (!result.ok) {
       throw errors.BAD_REQUEST({ data: { refusal: result.reason, feature: result.feature } });
     }
-    return { rules: [...result.rules], minimums: result.minimums };
+    return { states: result.states, rules: [...result.rules], minimums: result.minimums };
   }
 
   /** Throws the refusal by name of a Безпека write the contract lists. */
@@ -363,7 +363,7 @@ export function adminProcedures(
       await admit(context.headers, errors);
       const switches = await editions.switches(input.editionId);
       if (!switches.ok) throw errors.NOT_FOUND();
-      return { rules: [...switches.rules], minimums: switches.minimums };
+      return { states: switches.states, rules: [...switches.rules], minimums: switches.minimums };
     }),
 
     setRules: os.setRules.handler(async ({ context, input, errors }) => {

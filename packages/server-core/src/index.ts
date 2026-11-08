@@ -64,6 +64,7 @@ export {
   type SourceRead,
   type UserRecords,
 } from './ports';
+export type { Alert, Alerts } from './admin/alerts';
 export {
   createAdminAccess,
   type Action,

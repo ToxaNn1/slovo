@@ -8,6 +8,7 @@ import { parseArgs } from 'node:util';
 import { systemClock, type EditionRegistry } from '@slovo/server-core';
 
 import type { CommandOutput } from '../admin/admin-command';
+import { createLoggedAlerts } from '../admin/logged-alerts';
 import { PublishConfigSchema, readConfig } from '../config';
 import { createDatabase } from '../database/database';
 import { createLogger } from '../logger';
@@ -54,11 +55,13 @@ export async function runSwitchesCommand(
 
 async function main(): Promise<number> {
   const { DATABASE_URL, EDITIONS_DIR } = readConfig(PublishConfigSchema, process.env);
-  const database = createDatabase(DATABASE_URL, createLogger());
+  const logger = createLogger();
+  const database = createDatabase(DATABASE_URL, logger);
   try {
     const editions = createEditions({
       database,
       clock: systemClock,
+      alerts: createLoggedAlerts(logger),
       editions: readEditions(EDITIONS_DIR),
     });
     return await runSwitchesCommand(process.argv.slice(2), editions, {

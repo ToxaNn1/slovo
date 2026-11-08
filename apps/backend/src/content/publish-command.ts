@@ -7,6 +7,7 @@ import { parseArgs } from 'node:util';
 import { EditionFolderError, openEdition } from '@slovo/language-pack/edition';
 import { systemClock, type PublishRefusal } from '@slovo/server-core';
 
+import { createLoggedAlerts } from '../admin/logged-alerts';
 import { PublishConfigSchema, readConfig } from '../config';
 import { createDatabase } from '../database/database';
 import { readEditions } from '../edition/edition-folders';
@@ -47,11 +48,13 @@ async function main(): Promise<number> {
     );
     return 1;
   }
-  const database = createDatabase(DATABASE_URL, createLogger());
+  const logger = createLogger();
+  const database = createDatabase(DATABASE_URL, logger);
   try {
     const published = await publishPack({
       database,
       clock: systemClock,
+      alerts: createLoggedAlerts(logger),
       editions: readEditions(EDITIONS_DIR),
       editionId,
       file,

@@ -6,6 +6,7 @@ import {
   type EditionConfig,
   type EditionStrings,
   type FeatureSwitch,
+  type FeatureSwitches,
   type ForceUpdateMinimum,
   type ForceUpdateMinimums,
   type Platform,
@@ -15,6 +16,7 @@ import {
 } from '@slovo/contracts';
 
 import type { ActionEntry, Actor } from '../admin/admin-access';
+import type { Alerts } from '../admin/alerts';
 import type { Clock, Json, SwitchRuleStore } from '../ports';
 
 /** An Edition as the backend serves it: its config, strings and content manifest, read from its folder. */
@@ -70,6 +72,8 @@ export interface SwitchRefused {
 /** The Rules of an Edition, by feature name and then order, and its force-update minimums. */
 export interface EditionSwitches {
   readonly ok: true;
+  /** What the Edition declares of each feature, before any Rule. */
+  readonly states: FeatureSwitches;
   readonly rules: readonly Rule[];
   /** The features the Edition turns on and the Rules turn off for everyone, for an app that reads no Rule. */
   readonly off: readonly FeatureSwitch[];
@@ -187,12 +191,15 @@ export function createEditionRegistry({
   switchStore,
   clock,
   log,
+  alerts,
 }: {
   editions: readonly Edition[];
   switchStore: SwitchRuleStore;
   clock: Clock;
   /** Appends a change to the Action log (ADR 0088). */
   log: (entry: ActionEntry) => Promise<void>;
+  /** Tells the owner of every Kill switch. */
+  alerts: Alerts;
 }): EditionRegistry {
   const byId = new Map(editions.map((edition) => [edition.config.id, edition]));
   const unknownEdition: UnknownEdition = { ok: false, reason: 'unknown-edition' };
@@ -213,7 +220,7 @@ export function createEditionRegistry({
     const off = FeatureSwitchSchema.options.filter(
       (feature) => edition.config.featureSwitches[feature] === 'on' && !inEffect(feature),
     );
-    return { ok: true, rules, off, minimums };
+    return { ok: true, states: edition.config.featureSwitches, rules, off, minimums };
   }
 
   const rulesOf = (rules: readonly Rule[], feature: string) =>
@@ -297,7 +304,11 @@ export function createEditionRegistry({
         return refused('unknown-edition', editionId);
       }
       if (!isFeatureSwitch(feature)) return refused('unknown-feature', feature);
-      const editionIds = editionId === undefined ? [...byId.keys()] : [editionId];
+      // An Edition without the feature has nothing to turn off.
+      const editionIds = (editionId === undefined ? [...byId.keys()] : [editionId]).filter(
+        (id) => byId.get(id)?.config.featureSwitches[feature] !== 'unavailable',
+      );
+      if (editionIds.length === 0) return refused('unavailable-feature', feature);
       for (const id of editionIds) {
         // One Rule off for everyone in place of every Rule; the log keeps those.
         await writeRules(
@@ -308,6 +319,7 @@ export function createEditionRegistry({
           by,
         );
       }
+      await alerts.send({ kind: 'kill-switch', feature, editionIds, ...by });
       return { ok: true, editionIds };
     },
   };
