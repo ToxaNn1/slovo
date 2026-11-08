@@ -211,6 +211,13 @@ export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { loadEdition, type Edition } from './edition/edition';
 export { openRemoteSwitches } from './edition/remote-switches';
 export {
+  evaluateSwitches,
+  type RemoteRule,
+  type SwitchFacts,
+  type SwitchVerdict,
+  type SwitchVerdicts,
+} from './edition/switch-evaluator';
+export {
   colorSchemeFor,
   createSettings,
   type ColorScheme,
