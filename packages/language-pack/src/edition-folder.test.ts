@@ -133,7 +133,7 @@ describe('openEdition', () => {
         editJson(join(dir, 'edition.json'), (config) => ({
           ...config,
           featureSwitches: {
-            ...(config.featureSwitches as Json),
+            ...(config['featureSwitches'] as Json),
             game: 'off',
             narratorVoice: 'unavailable',
           },
@@ -153,7 +153,7 @@ describe('openEdition', () => {
       change: (dir) => {
         editJson(join(dir, 'edition.json'), (config) => ({
           ...config,
-          featureSwitches: { ...(config.featureSwitches as Json), teleport: 'on', game: true },
+          featureSwitches: { ...(config['featureSwitches'] as Json), teleport: 'on', game: true },
         }));
       },
     });
