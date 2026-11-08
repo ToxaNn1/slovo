@@ -10,6 +10,7 @@ import {
 } from '@slovo/contracts';
 
 import type { Clock } from '../ports';
+import { compareVersions } from './app-version';
 import { switchedOn } from './edition';
 
 const everyFeature = FeatureSwitchesSchema.keyof().options;
@@ -62,18 +63,6 @@ function fnv1a(text: string): number {
 
 /** The reader's bucket of the Rule, 0 to 99: the Install id hashed with the Rule id as salt. */
 const bucketOf = (ruleId: string, installId: string) => fnv1a(`${ruleId}:${installId}`) % 100;
-
-const versionParts = (version: string) => version.split('.').map(Number);
-
-/** Compares two app versions by number, part by part. */
-function compareVersions(a: string, b: string): number {
-  const [partsA, partsB] = [versionParts(a), versionParts(b)];
-  for (let i = 0; i < Math.max(partsA.length, partsB.length); i += 1) {
-    const difference = (partsA[i] ?? 0) - (partsB[i] ?? 0);
-    if (difference !== 0) return difference;
-  }
-  return 0;
-}
 
 function matches(ruleId: string, targets: RuleTargets, facts: SwitchFacts): boolean {
   const { appVersion, platform, region, share, signedIn, schedule } = targets;

@@ -52,9 +52,15 @@ export interface RemoteSwitches<E extends Pick<Edition, 'id'>> {
   readonly edition: E & Pick<Edition, 'isFeatureEnabled'>;
   /** The effective value of every Feature Switch, with the Variant a Rule picked. */
   readonly verdicts: SwitchVerdicts;
-  /** The force-update minimums of the last answer known, by platform. */
+  /**
+   * The force-update minimums of the last answer known, by platform. A new
+   * answer keeps the same object unless they change.
+   */
   readonly minimums: RemoteSwitchesAnswer['minimums'];
-  /** Calls `listener` after each change of the Edition as the app runs it. Returns the call that stops it. */
+  /**
+   * Calls `listener` after each change of the Edition as the app runs it or
+   * of the minimums. Returns the call that stops it.
+   */
   subscribe(listener: () => void): () => void;
   /**
    * Asks the backend for the switches, naming the ETag of the answer kept, and
@@ -146,10 +152,15 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
   }
 
   async function askOnce(): Promise<boolean> {
+    const minimumsBefore = kept?.minimums;
     try {
       const reply = await withRetries(() => switches(kept?.etag), { schedule, random });
       if (reply.ok && reply.answer !== 'unchanged') {
-        kept = reply.answer;
+        const fresh = reply.answer;
+        const sameMinimums =
+          minimumsBefore !== undefined &&
+          JSON.stringify(fresh.minimums) === JSON.stringify(minimumsBefore);
+        kept = sameMinimums ? { ...fresh, minimums: minimumsBefore } : fresh;
         // Kept for the next launch; one that fails to be kept is asked again then.
         await userState.write(record.change(kept)).catch(() => undefined);
       }
@@ -158,7 +169,11 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
     }
     const before = effective();
     verdicts = evaluate();
-    if (effective() === before) return false;
+    if (effective() === before) {
+      // A change of the minimums alone tells the subscribers, with no reopen.
+      if (kept?.minimums !== minimumsBefore) subscribers.tell();
+      return false;
+    }
     current = inEffect();
     subscribers.tell();
     return true;
