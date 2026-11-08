@@ -213,7 +213,7 @@ A kept milestone, about 20 in all: Streak days, confirmed learned Entries, the f
 _Avoid_: Achievement, trophy, medal
 
 **Badge family**:
-A group of Badges an Edition declares, with a name, a description, a shape and a tone that every Badge in it is drawn with. The UA Edition has six. A Badge earned but never opened is new and carries «НОВА».
+A group of Badges an Edition declares, with a name, a description, a shape and a tone that every Badge in it is drawn with. The shapes are `hexagon`, `shield`, `circle`, `tile`, `wedge`, `diamond` and `checker` (ADR 0087). The UA Edition has six. A Badge earned but never opened is new and carries «НОВА».
 _Avoid_: Badge category, Badge group, tier
 
 **Profile**:
@@ -399,7 +399,7 @@ _Avoid_: Quiz, practice, test
 **Game Mode**:
 The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round limit (or none), its time limit (or none), the form of its answers and the group of the mode screen it stands in, and has its own Feature Switch. The Core modes, in four groups:
 
-- «Слова»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «Наголос» (`stress`), tap the stressed vowel; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Анаграми» (`anagram`), assemble the Word from shuffled letters; «За буквами» (`by-letters`), type the Word, opening letters if needed; «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from.
+- «Слова»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «Наголос» (`stress`), tap the stressed vowel; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Анаграми» (`anagram`), assemble the Word from shuffled letters; «За буквами» (`by-letters`), tap letter tiles into the slots by the Definition (no typing, no opened letters); «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from.
 - «Виправлення»: «Обери правильне» (`correction`), a sentence with a non-standard form → pick the standard equivalent; «Англіцизми» (`anglicism`), the same with anglicisms only.
 - «Вислови»: «Фразеологізми» (`idiom-meaning`), an idiom or a proverb → pick its meaning; «Склади вислів» (`build-idiom`), assemble an expression from its words.
 - «Виклик»: «Виживання» (`survival`), 3 Lives and no Round limit; «На час» (`timed`), 60 seconds and no Lives.
@@ -407,7 +407,7 @@ The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round
 Editions may add modes through an Extension Point.
 
 **Round**:
-One prompt with exactly one right answer. The number and form of its options depend on the Game Mode: a pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in order, or typed text.
+One prompt with exactly one right answer. The number and form of its options depend on the Game Mode: a pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in order (letter tiles with decoys included), or typed text.
 _Avoid_: Level, question
 
 **Answer Form**:
@@ -430,5 +430,16 @@ The result screen's list of every played Round in order, in every Game Mode: its
 _Avoid_: Mistakes list, answer log
 
 **Daily Crossword**:
-«Кросворд дня»: one 5×5 grid a day, already full of letters, the same for every reader with the same Rarity Ceiling on a local date. Its hidden Words, all within the Rarity Ceiling and Hidden Entries included, use every letter once and snake through cells that touch by a side or a corner, turns allowed; their primary Definitions are the clues. The reader traces a Word cell by cell; a traced hidden Word locks as found, and every Word found solves the day (ADR 0073). It is not a Game: it has no Rounds, no Lives, no Best result and no Game Review, and solving it makes nothing Seen and changes no Knowledge Mark.
+«Кросворд дня»: one 5×5 crossing crossword a day, the same for every reader with the same Rarity Ceiling on a local date (ADR 0087). Its blocks leave runs of white cells, each run a Word within the Rarity Ceiling, Hidden Entries included, numbered where it starts; across and down Words cross and share their letters, and a few crossing cells come pre-filled. One clue at a time, the current Word's primary Definition, is entered on the Letter Wheel. Solving it earns XP once a day; it is not a Game. Off `crossingCrossword`, the traced grid of ADR 0073 stays.
 _Avoid_: Daily puzzle, crossword game, Word of the Day
+
+**Letter Wheel**:
+The Daily Crossword's ring of the current Word's letters, repeats kept, plus one decoy letter of the Edition's alphabet, shuffled by the day's seed and traced with a finger to enter the Word (ADR 0087).
+_Avoid_: keyboard, letter circle
+
+**Crossword Hint**:
+«Підказка»: fills the first empty letter of the Daily Crossword's current Word; it costs nothing and only marks the day as hinted, so its solve shows no «без підказок» (ADR 0087).
+_Avoid_: reveal, help
+
+**Solve time**:
+The seconds the Daily Crossword was on screen until it was solved, kept and synced with its XP log record; a solve recorded before it has none (ADR 0087).

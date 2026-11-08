@@ -94,6 +94,15 @@
     "progressShareCards": true,
     "dailyCrosswordShare": true,
     "tracedCrossword": true,
+    "crossingCrossword": false,
+    "crosswordHint": false,
+    "crosswordSolveTime": false,
+    "crosswordSolvedScreen": false,
+    "crosswordBadgeStamp": false,
+    "gameAnswerCard": false,
+    "letterTiles": false,
+    "survivalStreak": false,
+    "finishPoster": false,
     "eveningNotification": true,
     "notificationFarewell": true,
     "notificationExplainer": true,
@@ -116,7 +125,9 @@
     "quietCategories": true,
     "collectionBoardStyle": true,
     "previousWords": true,
-    "correctionTypes": true
+    "correctionTypes": true,
+    "profileConfirmedByRarity": true,
+    "profileGameBest": true
   },
   "userSettingDefaults": {
     "theme": "system",

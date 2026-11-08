@@ -1,7 +1,7 @@
 import type { FixedChip, RoundAnswer } from '@slovo/core';
 import { coreTokens, EditionProvider, OrderedChips } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { act, fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen, within } from '@testing-library/react-native';
 import { useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
@@ -32,12 +32,16 @@ function Round({
   expected,
   kind,
   fixed,
+  tiles,
+  eraseLabel,
   onAnswer,
 }: {
   chips: readonly string[];
   expected: readonly string[];
   kind: 'letter' | 'word';
   fixed: readonly FixedChip[] | undefined;
+  tiles: boolean;
+  eraseLabel: string | undefined;
   onAnswer: (chosen: number[]) => void;
 }) {
   const [answer, setAnswer] = useState<ChipsAnswer>();
@@ -46,6 +50,8 @@ function Round({
       chips={chips}
       kind={kind}
       fixed={fixed}
+      {...(tiles ? { layout: 'tiles' as const, slots: expected.length } : {})}
+      eraseLabel={eraseLabel}
       answer={answer}
       onAnswer={(chosen) => {
         onAnswer(chosen);
@@ -60,17 +66,29 @@ async function renderChips({
   expected = WORD,
   kind = 'letter',
   fixed,
+  tiles = false,
+  eraseLabel,
   onAnswer = jest.fn(),
 }: {
   chips?: readonly string[];
   expected?: readonly string[];
   kind?: 'letter' | 'word';
   fixed?: readonly FixedChip[];
+  tiles?: boolean;
+  eraseLabel?: string;
   onAnswer?: (chosen: number[]) => void;
 } = {}) {
   await render(
     <EditionProvider edition={{ locale: 'en' }} strings={strings}>
-      <Round chips={chips} expected={expected} kind={kind} fixed={fixed} onAnswer={onAnswer} />
+      <Round
+        chips={chips}
+        expected={expected}
+        kind={kind}
+        fixed={fixed}
+        tiles={tiles}
+        eraseLabel={eraseLabel}
+        onAnswer={onAnswer}
+      />
     </EditionProvider>,
   );
 }
@@ -124,6 +142,41 @@ describe('OrderedChips', () => {
 
     expect(lineText()).toEqual(['o', 'r']);
     expect(screen.getByTestId('chips-3')).toBeEnabled();
+  });
+
+  describe('the erase key', () => {
+    const ERASE = '← Erase a letter';
+
+    it('takes back the last letter placed, then the one before', async () => {
+      await renderChips({ eraseLabel: ERASE });
+      await tap(1, 3, 2);
+
+      await fireEvent.press(screen.getByRole('button', { name: ERASE }));
+      expect(lineText()).toEqual(['o', 'b']);
+      expect(screen.getByTestId('chips-2')).toBeEnabled();
+
+      await fireEvent.press(screen.getByRole('button', { name: ERASE }));
+      expect(lineText()).toEqual(['o']);
+    });
+
+    it('takes nothing back from an empty line or a given answer', async () => {
+      const onAnswer = jest.fn();
+      await renderChips({ eraseLabel: ERASE, onAnswer });
+      expect(screen.getByRole('button', { name: ERASE })).toBeDisabled();
+
+      await tap(1, 3, 2, 4, 0);
+
+      expect(onAnswer).toHaveBeenCalledTimes(1);
+      expect(screen.getByRole('button', { name: ERASE })).toBeDisabled();
+      expect(lineText()).toEqual(['o', 'b', 'r', 'o', 'k']);
+    });
+
+    it('shows no erase key with no label', async () => {
+      await renderChips();
+      await tap(1);
+
+      expect(screen.queryByRole('button', { name: ERASE })).toBeNull();
+    });
   });
 
   it('gives the answer with the last chip, the chips in the order tapped', async () => {
@@ -240,6 +293,63 @@ describe('OrderedChips', () => {
     expect([1, 2, 3].map(shiftOf)).toEqual([0, 0, 0]);
   });
 
+  describe('words in a line (board 07 g6)', () => {
+    const { ink, line, surfaceSunken, tile } = coreTokens.colors.light;
+    const words = { chips: ['tail', 'the', 'wag', 'dog'], expected: ['the', 'tail', 'wag', 'dog'] };
+    const edgeOf = (index: number) =>
+      screen.getByTestId(`chips-slot-${String(index)}`, { includeHiddenElements: true });
+
+    it('takes the answer line in a sunken box', async () => {
+      await renderChips({ ...words, kind: 'word' });
+
+      expect(screen.getByTestId('chips-line')).toHaveStyle({ backgroundColor: surfaceSunken });
+    });
+
+    it('lays the words placed on ink, the text in the tile colour', async () => {
+      await renderChips({ ...words, kind: 'word' });
+
+      await tap(1);
+
+      expect(screen.getByTestId('chips-line-0')).toHaveStyle({ backgroundColor: ink });
+      expect(within(screen.getByTestId('chips-line-0')).getByText('the')).toHaveStyle({
+        color: tile,
+      });
+    });
+
+    it('dashes only the next place', async () => {
+      await renderChips({ ...words, kind: 'word' });
+
+      await tap(1);
+
+      expect(edgeOf(1)).toHaveStyle({ borderColor: line, borderStyle: 'dashed' });
+      expect(edgeOf(2)).toHaveStyle({ borderColor: 'transparent' });
+      expect(edgeOf(3)).toHaveStyle({ borderColor: 'transparent' });
+    });
+
+    it('leaves an empty dashed place among the chips for a word placed', async () => {
+      await renderChips({ ...words, kind: 'word' });
+      expect(screen.queryByTestId('chips-1-place')).not.toBeOnTheScreen();
+
+      await tap(1);
+
+      expect(screen.getByTestId('chips-1-place', { includeHiddenElements: true })).toHaveStyle({
+        borderStyle: 'dashed',
+        borderColor: line,
+      });
+    });
+
+    it('keeps the letters as they were: no box, every empty place dashed, placed letters faint', async () => {
+      await renderChips();
+
+      await tap(1);
+
+      expect(screen.getByTestId('chips-line')).not.toHaveStyle({ backgroundColor: surfaceSunken });
+      expect(edgeOf(2)).toHaveStyle({ borderStyle: 'dashed' });
+      expect(screen.queryByTestId('chips-1-place', { includeHiddenElements: true })).toBeNull();
+      expect(screen.getByTestId('chips-line-0')).toHaveStyle({ backgroundColor: tile });
+    });
+  });
+
   describe('the look of an answer', () => {
     const { accent, surfaceSunken, tile } = coreTokens.colors.light;
     const fillOf = (index: number) =>
@@ -299,6 +409,45 @@ describe('OrderedChips', () => {
 
       expect(fillOf(0)).toBe(rgba(accent));
       expect(shiftOf(0)).toBe(0);
+    });
+  });
+
+  describe('as letter tiles', () => {
+    /** «obrok» shuffled with three decoys: 8 tiles. */
+    const TILES = ['k', 'x', 'o', 'r', 'z', 'b', 'o', 'q'];
+
+    it('stands the tiles, decoys among them, in rows of 4 under a slot for each letter', async () => {
+      await renderChips({ chips: TILES, tiles: true });
+
+      expect(screen.getAllByTestId(/^chips-row-\d+$/)).toHaveLength(2);
+      for (const row of screen.getAllByTestId(/^chips-row-\d+$/)) {
+        expect(within(row).getAllByRole('button')).toHaveLength(4);
+      }
+      expect(
+        screen.getAllByTestId(/^chips-slot-\d+$/, { includeHiddenElements: true }),
+      ).toHaveLength(WORD.length);
+    });
+
+    it('returns the letter of a filled slot tapped to its tile', async () => {
+      await renderChips({ chips: TILES, tiles: true });
+
+      await tap(2, 5);
+      await fireEvent.press(screen.getByTestId('chips-line-0'));
+
+      expect(lineText()).toEqual(['b']);
+      expect(screen.getByTestId('chips-2')).toBeEnabled();
+    });
+
+    it('gives the answer once every slot is filled, decoys left over', async () => {
+      const onAnswer = jest.fn();
+      await renderChips({ chips: TILES, tiles: true, onAnswer });
+
+      await tap(2, 5, 3, 6);
+      expect(onAnswer).not.toHaveBeenCalled();
+      await tap(0);
+
+      expect(onAnswer).toHaveBeenCalledWith([2, 5, 3, 6, 0]);
+      expect(lineText()).toEqual(['o', 'b', 'r', 'o', 'k']);
     });
   });
 });

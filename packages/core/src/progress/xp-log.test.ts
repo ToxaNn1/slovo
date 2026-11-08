@@ -492,7 +492,7 @@ describe('the Daily Goal', () => {
     expect(app.xpLog.state.dailyGoal).toEqual({ goal: 2, seen: 1, met: false });
   });
 
-  it('applies a change from the same local day: lowered to today’s Words Seen it is met at once, and a met day stays met', async () => {
+  it('applies a change from the same local day: lowered to today’s Words Seen it is met at once, with no celebration, and a met day stays met', async () => {
     const { app, records } = await run({
       on: dailyGoal,
       records: seen(['w_00', '2026-10-14T04:00:00.000Z'], ['w_01', '2026-10-14T04:10:00.000Z']),
@@ -508,7 +508,8 @@ describe('the Daily Goal', () => {
     await app.xpLog.setDailyGoal(50);
 
     expect(app.xpLog.state.dailyGoal).toEqual({ goal: 50, seen: 2, met: true });
-    expect(celebrations).toBe(1);
+    // Setting the goal is no learning action: nothing celebrates.
+    expect(celebrations).toBe(0);
   });
 
   it('keeps today met after an app restart, with no second celebration', async () => {
@@ -936,5 +937,51 @@ describe('the Seen-Word XP', () => {
     expect(app.xpLog.state.today).toBe(2);
     expect(app.xpLog.state.total).toBe(2);
     expect(app.xpLog.dayOf('2026-10-14').xp).toBe(2);
+  });
+});
+
+describe('the Daily Crossword solve in the XP log (ADR 0087)', () => {
+  const solve = (date: string, extra: object = {}) =>
+    [
+      `xp.daily-crossword-${date}`,
+      JSON.stringify({
+        kind: 'xp',
+        date,
+        at: `${date}T05:00:00.000Z`,
+        source: 'daily-crossword',
+        amount: 15,
+        ...extra,
+      }),
+    ] as const;
+
+  it('reads a solve recorded before the Solve time as no time and no hint', async () => {
+    const { app } = await run({ records: new Map([solve('2026-10-13')]) });
+
+    expect(app.xpLog.crosswordSolveOn('2026-10-13')).toEqual({
+      solveSeconds: undefined,
+      hinted: false,
+    });
+    expect(app.xpLog.crosswordSolveOn('2026-10-14')).toBeUndefined();
+  });
+
+  it('reads the Solve time and the hint a synced record carries', async () => {
+    const records = new Map([solve('2026-10-13', { solveSeconds: 95, hinted: true })]);
+    const { app } = await run({ records });
+
+    expect(app.xpLog.crosswordSolveOn('2026-10-13')).toEqual({ solveSeconds: 95, hinted: true });
+  });
+
+  it('keeps the Solve time and the hint of a solve it awards, still 15 XP', async () => {
+    const { app } = await run();
+    const award = app.xpLog.award({
+      source: 'daily-crossword',
+      date: '2026-10-14',
+      solveSeconds: 222,
+      hinted: false,
+    });
+    award.commit();
+
+    expect(award.amount).toBe(15);
+    expect(app.xpLog.crosswordSolveOn('2026-10-14')).toEqual({ solveSeconds: 222, hinted: false });
   });
 });

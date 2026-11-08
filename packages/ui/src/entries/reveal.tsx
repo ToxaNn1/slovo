@@ -107,17 +107,18 @@ function stepOf(ms: number, at: number, duration: number): number {
 }
 
 /** Where the pager stands towards the card: resting on it, heading for it, or away. */
-type Towards = 'unknown' | 'settled' | 'heading' | 'away';
+type Towards = 'settled' | 'heading' | 'away';
 
 /**
  * An Entry card's reveal, played once: the headline flies in and the details
- * rise into place after it. It starts on the UI thread when the Feed's pager
- * comes to rest on the card, at once outside a pager; a card the pager heads
- * for and leaves before it rests there shows its final frame. Under Reduce
- * Motion nothing moves and the card fades in once instead. Until the system
- * answers on Reduce Motion the card waits unseen. Each play takes its pace
- * from the Feed's `RevealPace`, full outside one. Returns the card's fade, and
- * the reveal its parts read.
+ * rise into place after it. It starts on the UI thread as soon as the card
+ * comes into view, so a card the Feed's pager brings in draws itself while the
+ * drag and the settle move it, at once outside a pager; a card the pager
+ * heads for and leaves before it rests there shows its final frame. Under
+ * Reduce Motion nothing moves and the card fades in once instead. Until the
+ * system answers on Reduce Motion the card waits unseen. Each play takes its
+ * pace from the Feed's `RevealPace`, full outside one. Returns the card's
+ * fade, and the reveal its parts read.
  */
 function useEntryReveal() {
   const onScreen = useIsPageOnScreen();
@@ -134,34 +135,39 @@ function useEntryReveal() {
   });
 
   const known = reduceMotion === false;
+  // Plays once the card is in view: resting on screen, or partly there as a swipe moves it.
   useAnimatedReaction(
-    (): Towards => {
-      if (!known) return 'unknown';
-      if (settle === undefined || settle.settled.value === settle.page) return 'settled';
+    () => known && (settle === undefined || Math.abs(settle.position.value - settle.page) < 1),
+    (inView) => {
+      if (!inView || started.value) return;
+      const playFast = playsFast(pacer);
+      const end = playFast ? FAST_END : FULL_END;
+      started.set(true);
+      fast.set(playFast);
+      elapsed.set(
+        withTiming(end, {
+          duration: end,
+          easing: Easing.linear,
+          reduceMotion: ReduceMotion.Never,
+        }),
+      );
+    },
+    [known, settle, pacer],
+  );
+  useAnimatedReaction(
+    (): Towards | undefined => {
+      if (!known || settle === undefined) return undefined;
+      if (settle.settled.value === settle.page) return 'settled';
       return settle.turnedTo.value === settle.page ? 'heading' : 'away';
     },
     (towards, previous) => {
-      if (started.value) return;
-      if (towards === 'settled') {
-        const playFast = playsFast(pacer);
-        const end = playFast ? FAST_END : FULL_END;
-        started.set(true);
-        fast.set(playFast);
-        elapsed.set(
-          withTiming(end, {
-            duration: end,
-            easing: Easing.linear,
-            reduceMotion: ReduceMotion.Never,
-          }),
-        );
-      } else if (towards === 'away' && previous === 'heading') {
-        // Swiped past before it settled: whole at once, never half drawn.
-        started.set(true);
-        fast.set(false);
-        elapsed.set(FULL_END);
-      }
+      if (towards !== 'away' || previous !== 'heading') return;
+      // Swiped past before it settled: whole at once, never half drawn.
+      started.set(true);
+      fast.set(false);
+      elapsed.set(FULL_END);
     },
-    [known, settle, pacer],
+    [known, settle],
   );
 
   const reveal = useMemo<Reveal>(

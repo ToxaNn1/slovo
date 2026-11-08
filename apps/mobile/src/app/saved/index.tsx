@@ -51,7 +51,7 @@ const LISTS = {
  * Favorites, History, Collections, and «Слова дня» while the Word of the Day
  * archive is on in effect. The active tab's list shows under them, the first
  * tab's unless the `list` parameter names another; a tap on a tab shows its
- * list in place.
+ * list in place. Only the list scrolls; the title, search and tabs stay over it.
  */
 export default function SavedScreen() {
   const favorites = useFavoriteList();
@@ -90,8 +90,18 @@ export default function SavedScreen() {
   const active = tabs.find(({ id }) => id === list)?.id ?? tabs[0]?.id ?? 'favorites';
   const List = LISTS[active];
 
+  // Title, search and tabs stay outside the active list, which is drawn afresh
+  // for each tab, so the row of tabs keeps where the reader scrolled it.
   const header: ListHeader = (tool) => (
-    <>
+    <>{tool !== null && <View style={styles.tool}>{tool}</View>}</>
+  );
+
+  return (
+    <SafeAreaView
+      testID="saved"
+      edges={['top']}
+      style={[styles.screen, { backgroundColor: colors.background }]}
+    >
       <View style={styles.title}>
         <ScreenTitle>{editionStrings.tabs.saved}</ScreenTitle>
       </View>
@@ -112,16 +122,6 @@ export default function SavedScreen() {
           router.setParams({ list: id });
         }}
       />
-      {tool !== null && <View style={styles.tool}>{tool}</View>}
-    </>
-  );
-
-  return (
-    <SafeAreaView
-      testID="saved"
-      edges={['top']}
-      style={[styles.screen, { backgroundColor: colors.background }]}
-    >
       <List key={active} header={header} />
     </SafeAreaView>
   );

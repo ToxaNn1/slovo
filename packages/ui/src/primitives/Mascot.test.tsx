@@ -1,9 +1,9 @@
 import { loadDecor, type Decor } from '@slovo/core';
 import type { MascotState } from '@slovo/contracts';
-import { coreTokens, DecorProvider, EditionProvider, Mascot } from '@slovo/ui';
+import { coreTokens, DecorProvider, EditionProvider, Mascot, TokensProvider } from '@slovo/ui';
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { act, render, screen } from '@testing-library/react-native';
-import { AccessibilityInfo } from 'react-native';
+import { AccessibilityInfo, StyleSheet } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { testStrings } from '../test-strings';
 
@@ -204,5 +204,40 @@ describe('Mascot', () => {
 
     expect(fading.opacity).toBeLessThan(1);
     expect(figureNow()).toEqual({ up: 0, opacity: 1, moving: false });
+  });
+});
+
+// Owner bug 07.11: a celebration's line floats over any screen, so it stands on a plate.
+describe('the Mascot over a screen', () => {
+  const styleOf = (testID: string) =>
+    (StyleSheet.flatten(screen.getByTestId(testID).props['style']) ?? {}) as {
+      backgroundColor?: string;
+      color?: string;
+    };
+
+  it.each(['light', 'dark'] as const)(
+    'sets its line on an ink plate in the surface colour in the %s theme',
+    async (scheme) => {
+      await render(
+        <TokensProvider tokens={coreTokens} colorScheme={scheme}>
+          <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+            <DecorProvider decor={withMascot}>
+              <Mascot state="celebrates" line="A line" plate />
+            </DecorProvider>
+          </EditionProvider>
+        </TokensProvider>,
+      );
+
+      const colors = coreTokens.colors[scheme];
+      expect(styleOf('mascot-celebrates-line').backgroundColor).toBe(colors.ink);
+      expect(styleOf('mascot-celebrates-line-text').color).toBe(colors.surface);
+    },
+  );
+
+  it('leaves the line on the screen ground with no plate', async () => {
+    await renderMascot('happy');
+
+    expect(styleOf('mascot-happy-line').backgroundColor).toBeUndefined();
+    expect(styleOf('mascot-happy-line-text').color).toBe(light.muted);
   });
 });

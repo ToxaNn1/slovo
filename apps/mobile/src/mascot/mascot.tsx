@@ -12,14 +12,22 @@ import { useShown } from '../shown-in-effect';
 const newLevelStrings = editionStrings.settings.profile.newLevel;
 const stampStrings = editionStrings.settings.profile.badgeStamp;
 
-/** A Badge just earned, with the `badgeToast` switch on: toasted in a Game, stamped elsewhere. */
+/**
+ * A Badge just earned, with the `badgeToast` switch on: toasted in a Game,
+ * stamped elsewhere, and stamped bare on the Daily Crossword with the
+ * `crosswordBadgeStamp` switch on (board 08.2).
+ */
 type Earned =
   | { readonly kind: 'toast'; readonly badge: BadgeState }
-  | { readonly kind: 'stamp'; readonly badge: BadgeState };
+  | { readonly kind: 'stamp'; readonly badge: BadgeState }
+  | { readonly kind: 'crosswordStamp'; readonly badge: BadgeState };
 
 /** A route of a Game, where a Badge earned toasts so the Game goes on. */
 const inGame = (route: string | undefined) =>
   route === '/game' || route?.startsWith('/game/') === true;
+
+/** The route of the Daily Crossword, where a Badge of its solves in a row is stamped. */
+const CROSSWORD_ROUTE = '/game/crossword';
 
 /** How long a celebration keeps the Mascot on screen. */
 export const CELEBRATION_MS = 4000;
@@ -40,24 +48,25 @@ const stateAt: Readonly<Record<MascotMoment, MascotState>> = {
 /**
  * The Mascot at the moment `state` with the Edition's line for it, while its
  * Feature Switch is on in effect; else nothing, as in 0.9. `width` sets a
- * smaller figure, such as the Round head's; `onRed` draws it for a red ground.
+ * smaller figure, such as the Round head's; `onRed` draws it for a red ground,
+ * `plate` sets its line on a plate for a Mascot over any screen.
  */
 export function MascotIn({
   state,
   onRed = false,
+  plate = false,
   width,
 }: {
   state: MascotMoment;
-  onRed?: boolean;
   width?: number;
-}) {
+} & ({ onRed?: boolean; plate?: false } | { plate: true; onRed?: false })) {
   const edition = useEditionInEffect();
   if (!edition.isFeatureEnabled('mascot')) return null;
   return (
     <Mascot
       state={stateAt[state]}
       line={edition.mascot[state]}
-      onRed={onRed}
+      {...(plate ? { plate } : { onRed })}
       testID={`mascot-${state}`}
       {...(width === undefined ? {} : { width })}
     />
@@ -121,9 +130,19 @@ export function MascotCelebrations() {
   const screensNewLevel = useEffectEvent(
     () => celebrations && edition.isFeatureEnabled('newLevelScreen'),
   );
-  /** How a Badge just earned shows: toasted or stamped, or with the Mascot alone. */
-  const badgeShownAs = useEffectEvent((): Earned['kind'] | undefined => {
+  /**
+   * How a Badge just earned shows: toasted or stamped, or with the Mascot
+   * alone; a Badge of Daily Crosswords in a row earned on the crossword's
+   * screen gets board 08's stamp.
+   */
+  const badgeShownAs = useEffectEvent((badge: BadgeState): Earned['kind'] | undefined => {
     if (!edition.isFeatureEnabled('badgeToast')) return undefined;
+    if (
+      route === CROSSWORD_ROUTE &&
+      badge.condition.kind === 'dailyCrosswordRun' &&
+      edition.isFeatureEnabled('crosswordBadgeStamp')
+    )
+      return 'crosswordStamp';
     return inGame(route) ? 'toast' : 'stamp';
   });
   useEffect(() => {
@@ -137,7 +156,7 @@ export function MascotCelebrations() {
       }, CELEBRATION_MS);
     };
     const showBadge = (badge: BadgeState) => {
-      const kind = badgeShownAs();
+      const kind = badgeShownAs(badge);
       if (kind === undefined) {
         celebrate('badge');
         return;
@@ -213,6 +232,24 @@ export function MascotCelebrations() {
       />
     );
   }
+  if (earnedBadge?.kind === 'crosswordStamp') {
+    const { badge } = earnedBadge;
+    return (
+      <BadgeStamp
+        shape={familyOf(badge)?.shape ?? 'circle'}
+        symbol={badge.symbol}
+        name={badge.name}
+        kicker={stampKickerOf(badge)}
+        line={stampStrings.line}
+        doneLabel={stampStrings.done}
+        isNew
+        onClose={() => {
+          setEarnedBadge(undefined);
+          void badges.open(badge.id).catch(() => undefined);
+        }}
+      />
+    );
+  }
   if (earnedBadge?.kind === 'toast') {
     const { badge } = earnedBadge;
     const family = familyOf(badge);
@@ -234,7 +271,8 @@ export function MascotCelebrations() {
       importantForAccessibility="no-hide-descendants"
       style={styles.celebration}
     >
-      <MascotIn state={shown} />
+      {/* The line floats over any screen, so it stands on a plate (owner bug 07.11). */}
+      <MascotIn state={shown} plate />
     </View>
   );
 }
@@ -242,6 +280,10 @@ export function MascotCelebrations() {
 /** The family of a Badge, from the shipped Edition. */
 const familyOf = ({ family }: BadgeState) =>
   shippedEdition.badgeFamilies.find(({ id }) => id === family);
+
+/** The Badge's stamp kicker in the shipped Edition, e.g. «7 ПОСПІЛЬ»; none when it has none. */
+const stampKickerOf = ({ id }: BadgeState) =>
+  shippedEdition.badges.find((badge) => badge.id === id)?.stampKicker;
 
 const styles = StyleSheet.create({
   celebration: { position: 'absolute', left: 0, right: 0, bottom: 0 },

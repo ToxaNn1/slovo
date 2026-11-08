@@ -18,6 +18,12 @@ export interface Shown {
   readonly tabs: readonly Tab[];
   /** The Game Review under the Game's result. */
   readonly gameReview: boolean;
+  /** The end poster of a Game, «Фініш» or «Час!» or the Lives-over one, in place of the old result screen (spec #1674). */
+  readonly finishPoster: boolean;
+  /** The streak counter of «Виживання» and its record, in place of the Rounds passed (spec #1674). */
+  readonly survivalStreak: boolean;
+  /** The inline answer card under a Round's options in place of the bottom sheet (spec #1674). */
+  readonly answerCard: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
   readonly entryButtons: {
     /** The Share Card button of the action row. */
@@ -100,8 +106,16 @@ export interface Shown {
   readonly progressShareCards: boolean;
   /** «Поділитися» under a solved Daily Crossword, its Share Card with no letters. */
   readonly dailyCrosswordShare: boolean;
+  /** Board 08's «Розгадано!» screen once the crossing Daily Crossword is solved (ADR 0087). */
+  readonly crosswordSolvedScreen: boolean;
+  /** The crossing Daily Crossword's Solve time on its solved screen and share line (ADR 0087). */
+  readonly crosswordSolveTime: boolean;
   /** The Settings row that opens the Profile, with the reader's whole progress. */
   readonly profile: boolean;
+  /** The Profile's confirmed Entries by rarity. */
+  readonly profileConfirmedByRarity: boolean;
+  /** The Profile's Best result of each Game Mode. */
+  readonly profileGameBest: boolean;
   /** The Quick Question in the Feed and its «Швидкі питання» row in the Mix; it asks the Game's Modes. */
   readonly quickQuestion: boolean;
   /** The Sync status line of the SLOVO ID screen. */
@@ -160,6 +174,9 @@ export function shownOf({
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
+    finishPoster: on('finishPoster'),
+    survivalStreak: on('survivalStreak'),
+    answerCard: on('gameAnswerCard'),
     entryButtons: {
       shareCard: on('shareCards'),
       pronunciation: on('pronunciation'),
@@ -194,7 +211,11 @@ export function shownOf({
     badges: on('badges'),
     progressShareCards: on('progressShareCards') && !noCounters,
     dailyCrosswordShare: on('dailyCrosswordShare'),
+    crosswordSolvedScreen: on('crosswordSolvedScreen'),
+    crosswordSolveTime: on('crosswordSolveTime'),
     profile: on('profile'),
+    profileConfirmedByRarity: on('profileConfirmedByRarity'),
+    profileGameBest: on('profileGameBest'),
     quickQuestion: on('quickQuestion'),
     sync: on('sync'),
     dailyGoal: on('dailyGoal'),

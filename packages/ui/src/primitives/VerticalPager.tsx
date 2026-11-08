@@ -143,6 +143,8 @@ interface PagerContextValue {
   readonly turnedTo: SharedValue<number>;
   /** The page the screen last came to rest on, alone on screen, on the UI thread. */
   readonly settled: SharedValue<number>;
+  /** The page on screen, in pages, on the UI thread; fractional while a swipe moves. */
+  readonly position: SharedValue<number>;
   /** Turns to a page as `turnTo` does; the same function for the pager's whole life. */
   readonly turnTo: (index: number) => void;
 }
@@ -404,8 +406,8 @@ export function VerticalPager<Item>({
   ]);
   const pan = usePanGesture(panConfig);
   const pager = useMemo(
-    () => ({ pan, scrolls, turning, turnedTo, settled, turnTo: turnToLasting }),
-    [pan, scrolls, turning, turnedTo, settled, turnToLasting],
+    () => ({ pan, scrolls, turning, turnedTo, settled, position, turnTo: turnToLasting }),
+    [pan, scrolls, turning, turnedTo, settled, position, turnToLasting],
   );
 
   function onLayout(event: LayoutChangeEvent) {
@@ -589,13 +591,14 @@ export function useIsPageOnScreen(): boolean {
 /**
  * Where the pager stands towards a page, on the UI thread, so a page can start
  * its motion there without a render: the page's index, the page the last swipe
- * or turn went to, and the page the screen last came to rest on. None outside
- * a `VerticalPager`.
+ * or turn went to, the page the screen last came to rest on, and the page on
+ * screen as a swipe moves. None outside a `VerticalPager`.
  */
 export interface PageSettle {
   readonly page: number;
   readonly turnedTo: SharedValue<number>;
   readonly settled: SharedValue<number>;
+  readonly position: SharedValue<number>;
 }
 
 export function usePageSettle(): PageSettle | undefined {
@@ -603,7 +606,9 @@ export function usePageSettle(): PageSettle | undefined {
   const page = useContext(PageIndexContext);
   return useMemo(
     () =>
-      pager === undefined ? undefined : { page, turnedTo: pager.turnedTo, settled: pager.settled },
+      pager === undefined
+        ? undefined
+        : { page, turnedTo: pager.turnedTo, settled: pager.settled, position: pager.position },
     [pager, page],
   );
 }

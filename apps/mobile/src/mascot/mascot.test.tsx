@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { openComposition, SEEN_DWELL_MS, type Composition } from '@slovo/core';
+import { openComposition, SEEN_DWELL_MS, type Composition, type UserStateFact } from '@slovo/core';
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, RouteProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
+import { StyleSheet } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { edition, editionStrings } from '../edition/edition';
@@ -47,12 +48,14 @@ async function renderCelebrations({
   levelScreen = false,
   noCounters = false,
   badgeToast = false,
+  crosswordStamp = false,
+  crosswordDays = 0,
   route = '/feed',
 } = {}) {
   const composition = await openComposition({
     content: createMemoryContentPort({ words: [word] }),
     edition,
-    userState: await seedUserState(),
+    userState: await seedUserState({ xpLog: crosswordsSolved(crosswordDays) }),
     clock: { now: () => new Date(), timeZone: () => 'Europe/Kyiv' },
     random: { next: () => 0.5 },
   });
@@ -67,7 +70,9 @@ async function renderCelebrations({
             ? levelScreen
             : feature === 'badgeToast'
               ? badgeToast
-              : edition.isFeatureEnabled(feature),
+              : feature === 'crosswordBadgeStamp'
+                ? crosswordStamp
+                : edition.isFeatureEnabled(feature),
     }),
     settings: await settingsAt({ noCounters }),
   });
@@ -85,6 +90,49 @@ async function renderCelebrations({
     </SafeAreaProvider>,
   );
   return composition;
+}
+
+/** The day `days` before today in Kyiv, as `YYYY-MM-DD`. */
+const dayBefore = (days: number) =>
+  new Date(Date.now() - days * 86_400_000).toLocaleDateString('sv-SE', {
+    timeZone: 'Europe/Kyiv',
+  });
+
+/**
+ * The XP records of the Daily Crossword solved on each of the `days` days
+ * before today, with the week's Streak Badge earned before them, as a reader
+ * on a Streak has it.
+ */
+function crosswordsSolved(days: number): UserStateFact<'xpLog'> {
+  if (days === 0) return {};
+  const records: Record<string, UserStateFact<'xpLog'>[string]> = {
+    'badge-streak-7': {
+      kind: 'badge',
+      date: dayBefore(30),
+      at: `${dayBefore(30)}T09:00:00.000Z`,
+      badge: 'streak-7',
+    },
+  };
+  for (let day = 1; day <= days; day += 1) {
+    const date = dayBefore(day);
+    records[`seeded-crossword-${date}`] = {
+      kind: 'xp',
+      date,
+      at: `${date}T09:00:00.000Z`,
+      source: 'daily-crossword',
+      amount: 15,
+    };
+  }
+  return records;
+}
+
+/** Solves today's Daily Crossword, as the crossword screen does. */
+async function solveCrossword(composition: Composition) {
+  await act(async () => {
+    composition.xpLog.award({ source: 'daily-crossword', date: dayBefore(0) }).commit();
+    // Settles the writes without running the celebration's timer out.
+    await jest.advanceTimersByTimeAsync(0);
+  });
 }
 
 /** Wins a Game for the first time, which earns a Badge. */
@@ -133,6 +181,11 @@ describe('the Mascot’s celebrations', () => {
     // The 5th XP makes today an Active Day, the first day of the Streak.
     await playRounds(composition, 5);
     expect(celebration('streakMilestone')).toHaveTextContent(mascot.streakMilestone);
+    // Over any screen, the line stands on a plate of its own (owner bug 07.11).
+    const plate = screen.getByTestId('mascot-streakMilestone-line', {
+      includeHiddenElements: true,
+    });
+    expect(StyleSheet.flatten(plate.props['style'])).toHaveProperty('backgroundColor');
     // VoiceOver skips the line, which takes no touch either.
     expect(screen.queryByText(mascot.streakMilestone)).toBeNull();
 
@@ -227,6 +280,72 @@ describe('a Badge earned with the badge toast on', () => {
     expect(celebration('badge')).toHaveTextContent(mascot.badge);
     expect(screen.queryByTestId('badge-toast', hidden)).toBeNull();
     expect(screen.queryByText(stamp.kicker, hidden)).toBeNull();
+  });
+});
+
+// Ticket #1683: a Badge earned by a crossword solve is stamped full screen (board 08.2).
+describe('a Badge earned with the crossword Badge stamp on', () => {
+  const stamp = editionStrings.settings.profile.badgeStamp;
+  const hidden = { includeHiddenElements: true };
+
+  it('stamps the 7th solve in a row with its kicker, mark, name and line, with no Mascot or ribbon', async () => {
+    const composition = await renderCelebrations({
+      badgeToast: true,
+      crosswordStamp: true,
+      crosswordDays: 6,
+      route: '/game/crossword',
+    });
+
+    await solveCrossword(composition);
+
+    expect(screen.getByText('7 ПОСПІЛЬ')).toBeOnTheScreen();
+    expect(screen.getByTestId('badge-stamp-mark')).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Сім кросвордів поспіль' })).toBeOnTheScreen();
+    expect(screen.getByText('Нова відзнака — тепер вона твоя назавжди.')).toBeOnTheScreen();
+    expect(screen.queryByText(stamp.ribbon, hidden)).toBeNull();
+    expect(shownMascot()).toBeNull();
+    expect(screen.queryByTestId('badge-toast', hidden)).toBeNull();
+    await fireEvent.press(screen.getByRole('button', { name: stamp.done }));
+    expect(screen.queryByText('7 ПОСПІЛЬ')).toBeNull();
+  });
+
+  it('still toasts a Badge earned in a Game', async () => {
+    const composition = await renderCelebrations({
+      badgeToast: true,
+      crosswordStamp: true,
+      route: '/game/guess-word',
+    });
+
+    await winGame(composition);
+
+    expect(screen.getByTestId('badge-toast', hidden)).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-stamp', hidden)).toBeNull();
+  });
+
+  it('toasts a Badge of another family earned on the crossword’s screen', async () => {
+    const composition = await renderCelebrations({
+      badgeToast: true,
+      crosswordStamp: true,
+      route: '/game/crossword',
+    });
+
+    await winGame(composition);
+
+    expect(screen.getByTestId('badge-toast', hidden)).toBeOnTheScreen();
+    expect(screen.queryByTestId('badge-stamp', hidden)).toBeNull();
+  });
+
+  it('toasts the 7th solve as before with its Feature Switch off', async () => {
+    const composition = await renderCelebrations({
+      badgeToast: true,
+      crosswordDays: 6,
+      route: '/game/crossword',
+    });
+
+    await solveCrossword(composition);
+
+    expect(screen.getByTestId('badge-toast', hidden)).toBeOnTheScreen();
+    expect(screen.queryByText('7 ПОСПІЛЬ', hidden)).toBeNull();
   });
 });
 

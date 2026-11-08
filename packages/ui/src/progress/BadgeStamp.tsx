@@ -46,6 +46,8 @@ const turned = (degrees: number) => `${String(degrees)}deg`;
  * that closes it. The mark flies in, strikes with an ink burst and a light
  * shake, springs back and rests turned; then the ribbon and the button come
  * in. Under Reduce Motion the whole stamp fades in at rest, with no burst.
+ * The kicker, the Mascot and the ribbon are each left out when not given,
+ * as on the stamp after the Daily Crossword (board 08.2).
  */
 export function BadgeStamp({
   shape,
@@ -64,9 +66,11 @@ export function BadgeStamp({
   shape: BadgeShape;
   symbol: string;
   name: string;
-  kicker: string;
+  /** The line over the mark; left out, none. */
+  kicker?: string | undefined;
   line: string;
-  ribbon: string;
+  /** The ink ribbon over the button; left out, none. */
+  ribbon?: string;
   doneLabel: string;
   mascot?: ReactNode;
   /** The Badge is opened for the first time: its mark carries the cream «НОВА» tag. */
@@ -143,14 +147,16 @@ export function BadgeStamp({
       >
         <StampHalftone id={`${testID}-halftone`} />
         <Animated.View style={[styles.content, shaken]}>
-          <Text
-            {...voice}
-            adjustsFontSizeToFit
-            numberOfLines={1}
-            style={[typeStyle('shout', tokens), styles.kicker, { color: key.background }]}
-          >
-            {kicker}
-          </Text>
+          {kicker !== undefined && (
+            <Text
+              {...voice}
+              adjustsFontSizeToFit
+              numberOfLines={1}
+              style={[typeStyle('shout', tokens), styles.kicker, { color: key.background }]}
+            >
+              {kicker}
+            </Text>
+          )}
           <View style={styles.mark}>
             {!reduceMotion && (
               <Animated.View
@@ -187,14 +193,16 @@ export function BadgeStamp({
           <View style={styles.spring} />
           {mascot !== undefined && <View style={styles.mascot}>{mascot}</View>}
           <Animated.View style={[styles.last, lastFrame]}>
-            <View style={[styles.ribbon, { backgroundColor: key.ink }]}>
-              <Text
-                {...voice}
-                style={[typeStyle('sectionLabel', tokens), { color: key.background }]}
-              >
-                {ribbon}
-              </Text>
-            </View>
+            {ribbon !== undefined && (
+              <View style={[styles.ribbon, { backgroundColor: key.ink }]}>
+                <Text
+                  {...voice}
+                  style={[typeStyle('sectionLabel', tokens), { color: key.background }]}
+                >
+                  {ribbon}
+                </Text>
+              </View>
+            )}
             <View style={styles.done}>
               <Button
                 variant="onAccent"
