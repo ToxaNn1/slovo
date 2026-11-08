@@ -1,10 +1,5 @@
 import { createEntries, EVERYTHING_IN, type Entries } from '@slovo/core';
-import {
-  openPack,
-  type PackReader,
-  type PackTransaction,
-  type PackWriteDatabase,
-} from '@slovo/language-pack/reader';
+import { openPack, type PackReader, type PackWriteDatabase } from '@slovo/language-pack/reader';
 import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 import { useMemo } from 'react';
 
@@ -24,9 +19,8 @@ const BUNDLED_NAME = 'language-pack.bundled.db';
 const PATCHED_NAME = 'language-pack.db';
 
 /** A writable pack over expo-sqlite: a Patch runs in one exclusive transaction. */
-function writerOf(db: SQLiteDatabase): PackWriteDatabase & Pick<PackTransaction, 'getAllAsync'> {
+function writerOf(db: SQLiteDatabase): PackWriteDatabase {
   return {
-    getAllAsync: (sql, params) => db.getAllAsync(sql, params),
     transaction: (run) => db.withExclusiveTransactionAsync((txn) => run(txn)),
   };
 }
