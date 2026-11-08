@@ -2,6 +2,8 @@
 
 Until 0.7 the shell had four ways to open something once per app run and retry or fall back, two separate in-memory fallbacks for the user state, and screens that read a Core module through a hook returning a stand-in until the composition opened, so each route told loading from empty and drew its own error state.
 
+**Amended by ADR 0090.** The Language Pack opened once per app run is the bundled one alone; no newer pack is kept beside it. Content reaches the device as Patches written into the open pack inside one transaction, so the pack changes under its open reader without a reopening, and the Content update module applies them rather than downloading a pack.
+
 The shell has one opening module, `apps/mobile/src/opening.ts`:
 
 - **`openOnce(open, { onError, fallback })`** opens a resource on its first read and shares it for the app run: loading, then ready with the value, or failed with a retry that opens it again for every screen. A failure is reported; with a fallback the opening is ready with the fallback instead. `opened()` gives the value once ready, so one opening can wait for another. The Language Pack, the user state, the settings, the composition, the Account, Sync and the remote switches open through it. Only the user state has an in-memory fallback; the settings fall back to `Settings.defaults` (the Edition's defaults and the Core's own for settings no Edition sets) over that same user state.
