@@ -164,12 +164,12 @@ export function createQuoteCheck({
   /** The page from the sourcing cache while fresh, else from the source; a 200 or 404 is cached. */
   async function pageOf(url: string): Promise<SourcePage | undefined> {
     const now = clock.now();
-    const [cached] = await db.select().from(sourcingCache).where(eq(sourcingCache.url, url));
+    const [cached] = await db.select().from(sourcingCache).where(eq(sourcingCache.pageUrl, url));
     if (
       cached !== undefined &&
       now.getTime() - cached.fetchedAt.getTime() < QUOTE_CHECK_FRESHNESS_MS
     ) {
-      return cached;
+      return { status: cached.httpStatus, body: cached.body };
     }
     let page: SourcePage;
     try {
@@ -178,11 +178,11 @@ export function createQuoteCheck({
       return undefined;
     }
     if (page.status === 200 || page.status === 404) {
-      const row = { url, status: page.status, body: page.body, fetchedAt: now };
+      const row = { pageUrl: url, httpStatus: page.status, body: page.body, fetchedAt: now };
       await db
         .insert(sourcingCache)
         .values(row)
-        .onConflictDoUpdate({ target: sourcingCache.url, set: row });
+        .onConflictDoUpdate({ target: sourcingCache.pageUrl, set: row });
     }
     return page;
   }

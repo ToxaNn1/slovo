@@ -38,6 +38,18 @@ DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm content import
 
 The command checks every content rule first and writes nothing when one refuses a record; it prints the count of each kind of record and the content version it wrote. A second import writes nothing and says so, because the database is the live content from then on; `--override` imports the folder again over the database and raises the content version.
 
+## The quote check
+
+The quote check (ADR 0084) runs on the Deployment as a second Railway service, a Cron service on the same image: `railway.quote-check.json` holds its settings.
+
+| Setting  | Value                                                                  |
+| -------- | ---------------------------------------------------------------------- |
+| Command  | `pnpm quote-check`                                                     |
+| Schedule | `0 * * * *`: hourly, UTC                                               |
+| Restart  | Never: the command exits when done, and the next run comes on schedule |
+
+Its one variable is `DATABASE_URL`, a reference to the same Postgres. A save never waits for it: every create or edit of a Word, Correction, Idiom, Synonym Row or Tip leaves the record unverified, and the job checks the quoted text of each unverified record against its first source's page, through the sourcing cache in Postgres (a fetched page stands for 30 days). A quote it does not find is flagged for the Content queue with the finding, and the record stays live. A page it cannot fetch leaves the record unverified for the next run. Imported records count as checked, since CI ran `pnpm content verify` on them, and a record with no source page is not checked. The admin content report gives the counts of unverified and failed records.
+
 ## Building the Language Pack from the snapshot
 
 Every app build bundles a Language Pack built from the live content: the Edition folder gives the config, Categories and assets, and the records come from the content snapshot the backend serves (`GET /v1/editions/<id>/content/snapshot`). `pnpm build:pack` fetches it from the backend at `EXPO_PUBLIC_SLOVO_API_URL`; `--snapshot <file>` reads a snapshot saved to a file instead. When the backend gives no snapshot, the build fails with the reason and writes no pack.

@@ -1,5 +1,5 @@
 {
-  "id": "a91fc1b3-2a59-4fe7-9a21-5c28ceeb84f1",
+  "id": "a73928d6-e49d-40fc-9dbb-f107044604ed",
   "prevId": "64ede4c5-15e0-47a3-99c4-9404a7af8ef1",
   "version": "7",
   "dialect": "postgresql",
@@ -2066,14 +2066,14 @@
       "name": "sourcing_cache",
       "schema": "",
       "columns": {
-        "url": {
-          "name": "url",
+        "page_url": {
+          "name": "page_url",
           "type": "text",
           "primaryKey": true,
           "notNull": true
         },
-        "status": {
-          "name": "status",
+        "http_status": {
+          "name": "http_status",
           "type": "integer",
           "primaryKey": false,
           "notNull": true

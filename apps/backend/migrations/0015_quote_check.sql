@@ -10,8 +10,8 @@ CREATE TABLE "quote_checks" (
 );
 --> statement-breakpoint
 CREATE TABLE "sourcing_cache" (
-	"url" text PRIMARY KEY NOT NULL,
-	"status" integer NOT NULL,
+	"page_url" text PRIMARY KEY NOT NULL,
+	"http_status" integer NOT NULL,
 	"body" text NOT NULL,
 	"fetched_at" timestamp with time zone NOT NULL
 );

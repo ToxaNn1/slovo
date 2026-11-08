@@ -447,8 +447,9 @@ export const quoteChecks = pgTable(
 
 /** The sourcing cache: the source pages the quote check fetched, each with when. */
 export const sourcingCache = pgTable('sourcing_cache', {
-  url: text('url').primaryKey(),
-  status: integer('status').notNull(),
+  pageUrl: text('page_url').primaryKey(),
+  /** The page's HTTP status: 200, or 404 for no such page. */
+  httpStatus: integer('http_status').notNull(),
   body: text('body').notNull(),
   fetchedAt: time('fetched_at'),
 });

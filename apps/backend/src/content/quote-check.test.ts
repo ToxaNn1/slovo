@@ -2,6 +2,7 @@ import { cpSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { quoteOf } from '@slovo/content-rules';
 import type { ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
@@ -124,7 +125,7 @@ describe('the quote check job', () => {
     const { client, agent, batchId, admin, job } = await quoteCheckBackend();
     const word = (await client.content.snapshot({ editionId: 'uk' })).words[0];
     const pages = fakePages({ [word?.sources[0]?.url ?? '']: pageWith('Зовсім інший текст.') });
-    const { id } = await createQuoted(client, agent, batchId);
+    const { id, url } = await createQuoted(client, agent, batchId);
 
     expect(pages.fetched).toEqual([]);
     await job(pages);
@@ -135,7 +136,7 @@ describe('the quote check job', () => {
     expect((await admin.actions('uk')).filter(({ what }) => what === 'content.word.flag')).toEqual([
       expect.objectContaining({
         who: { kind: 'command', command: 'quote-check' },
-        reason: expect.stringContaining('quote not found'),
+        reason: `quote not found: «${quoteOf(QUOTE)}» is not on ${url}`,
       }),
     ]);
   });
