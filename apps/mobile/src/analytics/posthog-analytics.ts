@@ -67,7 +67,7 @@ export function postHogAnalytics(
       client ??= create(apiKey);
       if (client.optedOut) void client.optIn();
       if (client.getDistinctId() !== reader.distinctId) client.identify(reader.distinctId);
-      client.capture(event, { ...properties, ...reader.variants });
+      client.capture(event, { ...properties, edition: reader.edition, ...reader.variants });
       const answer = questionnaireAnswer(event, properties);
       if (answer !== undefined) client.setPersonProperties(answer, undefined, false);
     },

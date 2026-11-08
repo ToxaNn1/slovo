@@ -6,6 +6,7 @@ import {
   createAdminSignIn,
   createQuality,
   createCollectionLinks,
+  createAdminAnalytics,
   createCommunityCounters,
   createContentPacks,
   createDevelopment,
@@ -19,6 +20,7 @@ import {
   type GitHubSource,
   type GoogleVerifier,
   type Mailer,
+  type PostHogPort,
   type Random,
   type SentryReader,
 } from '@slovo/server-core';
@@ -76,6 +78,8 @@ export interface AppDependencies {
   readonly mailer: Mailer;
   /** Tells the owner of a Kill switch. */
   readonly alerts: Alerts;
+  /** Reads the aggregates of the Analytics events, for the admin's Аналітика. */
+  readonly posthog: PostHogPort;
   /** Verifies the Google identity tokens of Google sign-ins. */
   readonly google: GoogleVerifier;
   /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
@@ -150,6 +154,7 @@ export function createApp({
   editions,
   mailer,
   alerts,
+  posthog,
   google,
   apple,
   github,
@@ -192,9 +197,10 @@ export function createApp({
     rateLimits,
     clock,
   });
+  const counterStore = createCounterStore(database);
   const communityCounters = createCommunityCounters({
     editions: editionRegistry,
-    store: createCounterStore(database),
+    store: counterStore,
     rateLimits,
     clock,
   });
@@ -221,10 +227,17 @@ export function createApp({
     vault: createSecretVault(authSecret),
     codeEmail: adminCodeEmail,
   });
+  const adminAnalytics = createAdminAnalytics({
+    posthog,
+    counters: counterStore,
+    clock,
+    wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  });
   const contentWrites = createContentWrites({ database, clock, random, editions: editionRegistry });
   const api = createApiHandler({
     accounts,
     admin,
+    adminAnalytics,
     adminSignIn,
     clock,
     collectionLinks,

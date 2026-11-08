@@ -380,6 +380,17 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         switches: async () => {
           await client.admin.switches({ editionId: EDITION }).catch(refused);
         },
+        analytics: async () => {
+          await client.admin
+            .analytics({ editionId: EDITION, from: '2026-11-01', to: '2026-11-07' })
+            .catch(refused);
+        },
+        variantResults: async () => {
+          await client.admin.variantResults({ editionId: EDITION, feature: 'game' }).catch(refused);
+        },
+        counters: async () => {
+          await client.admin.counters({ editionId: EDITION }).catch(refused);
+        },
         setRules: async () => {
           await client.admin
             .setRules({ editionId: EDITION, feature: 'game', rules: [], reason: 'leak' })

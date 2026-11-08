@@ -66,6 +66,12 @@ const ServerVariablesSchema = z.object({
   SENTRY_DSN: unsetWhenEmpty(
     z.url({ protocol: /^https$/, error: 'must be an https:// Sentry DSN' }),
   ),
+  // PostHog's query API, for the admin's Аналітика (spec #1709): a personal
+  // API key with the read-only `query` scope, the project's id and its host.
+  // Unset, the Аналітика answers «PostHog недоступний»; the repository holds no key.
+  POSTHOG_PERSONAL_API_KEY: unsetWhenEmpty(z.string()),
+  POSTHOG_PROJECT_ID: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a project number')),
+  POSTHOG_HOST: unsetWhenEmpty(z.url({ protocol: /^https$/, error: 'must be an https:// URL' })),
   // Розробка's reads (spec #1709). A read-only fine-grained GitHub token and
   // an EAS read token; unset, that block of the admin answers unavailable.
   GITHUB_TOKEN: unsetWhenEmpty(z.string()),
@@ -128,9 +134,20 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     SMTP_PASSWORD,
     SMTP_TLS,
     MAIL_FROM,
+    POSTHOG_PERSONAL_API_KEY,
+    POSTHOG_PROJECT_ID,
+    POSTHOG_HOST,
     ...rest
   }) => ({
     ...rest,
+    posthog:
+      POSTHOG_PERSONAL_API_KEY === undefined || POSTHOG_PROJECT_ID === undefined
+        ? undefined
+        : {
+            apiKey: POSTHOG_PERSONAL_API_KEY,
+            projectId: POSTHOG_PROJECT_ID,
+            host: POSTHOG_HOST ?? 'https://eu.posthog.com',
+          },
     smtp: {
       host: SMTP_HOST ?? 'localhost',
       port: SMTP_PORT ?? 1025,

@@ -69,6 +69,7 @@ import { createEditions } from './edition/editions';
 import { systemRandom } from './random';
 import { listReports, type ReportFilter } from './reports/report-list';
 import { resolveReport } from './reports/report-resolve';
+import { createFakePostHog } from './analytics/fake-posthog';
 import type { ErrorReport } from './error-reporter';
 
 /** The Postgres of the repo's `compose.yaml`, which the tests use unless `DATABASE_URL` names another. */
@@ -651,6 +652,7 @@ export function testApp({
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
   const mailer = createFakeMailer();
   const alerts = createFakeAlerts();
+  const posthog = createFakePostHog();
   const google = createFakeGoogle(googleClientIds);
   const apple = createFakeApple();
   const reports: ErrorReport[] = [];
@@ -664,6 +666,7 @@ export function testApp({
     editions,
     mailer,
     alerts,
+    posthog,
     google: givenGoogle ?? google,
     apple: givenApple ?? apple,
     authSecret: TEST_AUTH_SECRET,
@@ -724,6 +727,8 @@ export function testApp({
     alerts,
     /** The fake Sentry Якість reads. */
     sentry,
+    /** The fake PostHog the Аналітика reads from. */
+    posthog,
     /** The fake Google the backend verifies tokens with, and the tokens its sign-in sheet gives. */
     google,
     /** The fake Apple the backend verifies tokens with, and the tokens its sign-in sheet gives. */

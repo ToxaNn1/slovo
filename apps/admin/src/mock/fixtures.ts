@@ -19,9 +19,20 @@ const SWITCHES = {
       verdict: 'off',
       targets: { platform: 'android' },
     },
+    {
+      id: 'rule-timed',
+      editionId: 'uk',
+      feature: 'gameTimed',
+      order: 0,
+      verdict: { variants: ['a', 'b'] },
+      targets: {},
+    },
   ],
   minimums: {},
 } satisfies AdminApiOutputs['switches'];
+
+/** 13:58 in Kyiv. */
+const ANALYTICS_FETCHED_AT = '2026-11-08T11:58:00.000Z';
 
 const BATCH_ID = '00000000-0000-4000-8000-000000000000';
 const WRITTEN = {
@@ -106,6 +117,36 @@ export const FIXTURES: AdminApiOutputs = {
   setMinimum: SWITCHES,
   kill: { editionIds: ['uk'] },
   editions: { editions: [{ id: 'uk', displayName: 'Рідкісні слова' }] },
+  analytics: {
+    activeByDay: [
+      { key: '2026-11-06', count: 120 },
+      { key: '2026-11-07', count: 135 },
+    ],
+    visitsByDay: [
+      { key: '2026-11-06', count: 310 },
+      { key: '2026-11-07', count: 342 },
+    ],
+    medianVisitSeconds: 245,
+    devices: [
+      { key: 'iPhone 15', count: 80 },
+      { key: 'iPhone 13', count: 55 },
+    ],
+    appVersions: [{ key: '1.0.0', count: 135 }],
+    fetchedAt: ANALYTICS_FETCHED_AT,
+  },
+  variantResults: {
+    variants: [
+      { key: 'a', count: 61 },
+      { key: 'b', count: 59 },
+    ],
+    fetchedAt: ANALYTICS_FETCHED_AT,
+  },
+  counters: {
+    known: 1200,
+    unknown: 340,
+    saved: 95,
+    answers: [{ question: 'level', answer: 'good', count: 12 }],
+  },
   content: {
     openBatch: { batchId: BATCH_ID },
     create: WRITTEN,

@@ -19,6 +19,7 @@ import { createLogger } from './logger';
 import { systemRandom } from './random';
 import { createSentryApi, unsetSentry } from './quality/sentry-api';
 import { createSentryReporter } from './sentry-reporter';
+import { createPostHogClient, unavailablePostHog } from './analytics/posthog-client';
 import { startServer } from './server';
 
 const config = readConfig(ServerConfigSchema, process.env);
@@ -38,6 +39,7 @@ const app = createApp({
   editions,
   mailer,
   alerts: createLoggedAlerts(logger),
+  posthog: config.posthog === undefined ? unavailablePostHog : createPostHogClient(config.posthog),
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   apple: createAppleVerifier({ clock: systemClock }),
   github: createGitHubSource({

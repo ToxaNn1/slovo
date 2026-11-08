@@ -91,6 +91,64 @@ const ADMIN_ERRORS = {
   },
 } as const;
 
+/** What an Аналітика read from PostHog may refuse with: the errors of every admin procedure, and PostHog down. */
+const ANALYTICS_ERRORS = {
+  ...ADMIN_ERRORS,
+  ANALYTICS_UNAVAILABLE: { status: 503, message: 'PostHog недоступний' },
+} as const;
+
+/** The Edition id an Аналітика read takes for every Edition the backend serves, summed. */
+export const ALL_EDITIONS = 'all';
+
+/** The Edition an Аналітика read is of, or `all`. */
+const AnalyticsEditionSchema = EditionIdSchema;
+
+/** A day as `YYYY-MM-DD`. */
+const DaySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Expected YYYY-MM-DD');
+
+/** A count of one key (a day, a device, a version, a Variant): never a person or an id (ADR 0060). */
+export const AnalyticsCountSchema = z
+  .object({ key: z.string(), count: z.number().int().min(0) })
+  .strict();
+export type AnalyticsCount = z.infer<typeof AnalyticsCountSchema>;
+
+/** When the oldest part of a PostHog read was read, as an ISO time. */
+const FetchedAtSchema = z.iso.datetime();
+
+/** The Аналітика of an Edition over a period, from PostHog: aggregates only. */
+export const AnalyticsOverviewSchema = z
+  .object({
+    activeByDay: z.array(AnalyticsCountSchema),
+    visitsByDay: z.array(AnalyticsCountSchema),
+    medianVisitSeconds: z.number().int().min(0),
+    devices: z.array(AnalyticsCountSchema),
+    appVersions: z.array(AnalyticsCountSchema),
+    fetchedAt: FetchedAtSchema,
+  })
+  .strict();
+export type AnalyticsOverview = z.infer<typeof AnalyticsOverviewSchema>;
+
+/** People active in each Variant of an A/B Feature Switch. */
+export const VariantResultsSchema = z
+  .object({ variants: z.array(AnalyticsCountSchema), fetchedAt: FetchedAtSchema })
+  .strict();
+export type VariantResults = z.infer<typeof VariantResultsSchema>;
+
+/** The Community Counters sums and the questionnaire counters of an Edition. */
+export const CountersSummarySchema = z
+  .object({
+    known: z.number().int().min(0),
+    unknown: z.number().int().min(0),
+    saved: z.number().int().min(0),
+    answers: z.array(
+      z
+        .object({ question: z.string(), answer: z.string(), count: z.number().int().min(0) })
+        .strict(),
+    ),
+  })
+  .strict();
+export type CountersSummary = z.infer<typeof CountersSummarySchema>;
+
 /** A role of an Admin user: Власник (`owner`) or Адмін (`admin`). */
 const AdminRoleSchema = z.enum(['owner', 'admin']);
 
@@ -808,6 +866,41 @@ export const adminContract = {
     .errors(ADMIN_ERRORS)
     .output(z.object({ editions: z.array(AdminEditionSchema) })),
 
+  analytics: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/editions/{editionId}/analytics',
+      summary: 'The Аналітика of an Edition, or of `all`, over a period, from PostHog',
+      description:
+        'Active people by day, Відвідини by day and their median length, devices and app versions: counts only, cached for 10 minutes.',
+      tags: ['admin'],
+    })
+    .errors(ANALYTICS_ERRORS)
+    .input(z.object({ editionId: AnalyticsEditionSchema, from: DaySchema, to: DaySchema }))
+    .output(AnalyticsOverviewSchema),
+
+  variantResults: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/editions/{editionId}/switches/{feature}/variants',
+      summary: 'The people active in each Variant of an A/B Feature Switch, from PostHog',
+      tags: ['admin'],
+    })
+    .errors(ANALYTICS_ERRORS)
+    .input(z.object({ editionId: AnalyticsEditionSchema, feature: z.string().min(1) }))
+    .output(VariantResultsSchema),
+
+  counters: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/editions/{editionId}/counters',
+      summary:
+        'The Community Counters sums and the questionnaire counters of an Edition, or of `all`',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ editionId: AnalyticsEditionSchema }))
+    .output(CountersSummarySchema),
   content: contentWriteContract,
   development: procedure
     .route({
