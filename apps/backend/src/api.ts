@@ -11,6 +11,7 @@ import type {
   CollectionLinks,
   CommunityCounters,
   ContentPacks,
+  Edition,
   EditionRegistry,
   MistakeReports,
   Sync,
@@ -74,6 +75,7 @@ export function createApiHandler({
   contentPacks,
   editions,
   mistakeReports,
+  served,
   sync,
 }: {
   accounts: Accounts;
@@ -84,13 +86,15 @@ export function createApiHandler({
   contentPacks: ContentPacks;
   editions: EditionRegistry;
   mistakeReports: MistakeReports;
+  /** The Editions the backend serves, as the admin lists them. */
+  served: readonly Edition[];
   sync: Sync;
 }) {
   const router = implement(apiContract)
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin, editions),
+      admin: adminProcedures(admin, editions, served),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks),
       counters: countersProcedures(communityCounters),

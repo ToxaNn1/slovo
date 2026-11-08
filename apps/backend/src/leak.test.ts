@@ -323,6 +323,9 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         kill: async () => {
           await client.admin.kill({ feature: 'game', reason: 'leak' }).catch(refused);
         },
+        editions: async () => {
+          await client.admin.editions().catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {

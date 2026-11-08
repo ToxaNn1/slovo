@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "dev:admin": "pnpm --filter @slovo/admin dev",
     "build:pack": "pnpm --filter @slovo/language-pack build-pack",
     "recording-requests": "pnpm --silent --filter @slovo/language-pack recording-requests",
     "publish:pack": "pnpm --filter @slovo/backend publish-pack",

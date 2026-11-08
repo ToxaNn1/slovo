@@ -3,6 +3,7 @@ import { apiContract } from '@slovo/contracts/api';
 import type {
   Actor,
   AdminAccess,
+  Edition,
   EditionRegistry,
   EditionSwitches,
   SwitchRefusal,
@@ -24,7 +25,11 @@ export type AdminCaller =
  * exists. A procedure declares whether it writes content: only those take
  * an Агент token; every other one refuses it.
  */
-export function adminProcedures(admin: AdminAccess, editions: EditionRegistry) {
+export function adminProcedures(
+  admin: AdminAccess,
+  editions: EditionRegistry,
+  served: readonly Edition[],
+) {
   const os = implement(apiContract.admin).$context<{ headers: Headers }>();
 
   /** Admits the caller to a procedure, or throws the refusal the contract lists. */
@@ -103,6 +108,13 @@ export function adminProcedures(admin: AdminAccess, editions: EditionRegistry) {
         throw errors.BAD_REQUEST({ data: { refusal: result.reason, feature: result.feature } });
       }
       return { editionIds: [...result.editionIds] };
+    }),
+
+    editions: os.editions.handler(async ({ context, errors }) => {
+      await admit(context.headers, errors, { writesContent: false });
+      return {
+        editions: served.map(({ config }) => ({ id: config.id, displayName: config.displayName })),
+      };
     }),
   });
 }

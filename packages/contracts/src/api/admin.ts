@@ -11,7 +11,15 @@ import {
 } from '../feature-switch-rules';
 import { procedure } from './procedure';
 
-/** The refusals every admin procedure lists. */
+/** An Edition the admin's global Edition filter offers. */
+export const AdminEditionSchema = z.object({
+  id: EditionIdSchema,
+  /** The Edition's `displayName` from its config. */
+  displayName: z.string().min(1),
+});
+export type AdminEdition = z.infer<typeof AdminEditionSchema>;
+
+/** What every admin procedure may refuse with. */
 const ADMIN_ERRORS = {
   NOT_FOUND: { message: 'Not found' },
   UNAUTHORIZED: { message: 'The Агент token is unknown or revoked' },
@@ -133,4 +141,14 @@ export const adminContract = {
       }),
     )
     .output(z.object({ editionIds: z.array(EditionIdSchema) })),
+
+  editions: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/editions',
+      summary: 'The Editions the backend serves, for the global Edition filter',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(z.object({ editions: z.array(AdminEditionSchema) })),
 };

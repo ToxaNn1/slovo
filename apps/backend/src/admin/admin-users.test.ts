@@ -1,10 +1,12 @@
 import { randomUUID } from 'node:crypto';
 
+import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
 import { sql } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { createDatabase } from '../database/database';
+import { readEditions } from '../edition/edition-folders';
 import { systemRandom } from '../random';
 import {
   createTestDatabase,
@@ -120,6 +122,9 @@ describe('the Агент token', () => {
 
     // The admin API's procedures: none writes content yet.
     expect((await backend.status(bearer(token))).status).toBe(403);
+    expect((await backend.request('/v1/admin/editions', { headers: bearer(token) })).status).toBe(
+      403,
+    );
     // The app's API takes an Account's Session only.
     await expect(agent.account.me()).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
@@ -132,6 +137,24 @@ describe('the Агент token', () => {
 
     expect(again.code).toBe(1);
     expect(tokenOf(again.out)).toEqual([]);
+  });
+});
+
+describe('the admin API at /v1/admin', () => {
+  it('answers the Editions the backend serves once a Власник exists', async () => {
+    const backend = await freshBackend();
+    expect((await backend.request('/v1/admin/editions')).status).toBe(404);
+
+    await backend.command('owner', 'add', newEmail());
+
+    const response = await backend.request('/v1/admin/editions');
+    expect(response.status).toBe(200);
+    const editions = readEditions(EDITIONS_DIR).map(({ config }) => ({
+      id: config.id,
+      displayName: config.displayName,
+    }));
+    expect(editions.length).toBeGreaterThan(0);
+    expect(await response.json()).toEqual({ editions });
   });
 });
 

@@ -21,6 +21,7 @@ import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
+import { adminApp } from './admin/admin-app';
 import { adminRoutes } from './admin/admin-routes';
 import { createAdminStore, hashToken } from './admin/admin-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
@@ -77,6 +78,8 @@ export interface AppDependencies {
   readonly trustedProxyHops: number;
   /** The one Account the owner admin signs in; without it the backend has no admin (ADR 0069). */
   readonly ownerEmail?: string | undefined;
+  /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
+  readonly adminDist?: string | undefined;
 }
 
 type Variables = RequestIdVariables & {
@@ -133,6 +136,7 @@ export function createApp({
   reporter,
   trustedProxyHops,
   ownerEmail,
+  adminDist,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -193,6 +197,7 @@ export function createApp({
     contentPacks,
     editions: editionRegistry,
     mistakeReports,
+    served: editions,
     sync,
   });
 
@@ -319,6 +324,9 @@ export function createApp({
       }),
     );
   }
+
+  // The owner admin app (ADR 0088); the pages above keep their addresses until #1715.
+  if (adminDist !== undefined) app.route('/admin', adminApp({ dist: adminDist }));
 
   // An address the backend doesn't serve, under `/v1` too.
   app.notFound((c) => c.json({ code: 'NOT_FOUND' }, 404));
