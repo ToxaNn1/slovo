@@ -241,3 +241,4 @@ export {
   type CrosswordDay,
   type CrosswordWord,
 } from './crossword';
+export { ContentTargetsSchema, type ContentTargets } from './content-targets';

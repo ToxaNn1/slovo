@@ -348,6 +348,8 @@ export const contentBatches = pgTable('content_batches', {
   editionId: text('edition_id').notNull(),
   changedBy: text('changed_by').$type<ContentAuthor>().notNull(),
   createdAt: time('created_at'),
+  /** When the Content queue reviewed the batch; none while it is «не перевірено». */
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
 });
 
 /** The columns every content table has, with the record's fields typed by its contract. */

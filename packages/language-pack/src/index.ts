@@ -9,10 +9,10 @@
 export { buildLanguagePack, checkLanguagePack, type BuildResult, type CheckResult } from './build';
 export { formatBuildError, type BuildError } from './build-error';
 export { generateDailyCrossword, type CrosswordResult } from './crossword';
-export { rarityFloor, wordFloor } from './content-targets';
+export { missedTargets, rarityFloor, wordFloor } from './content-targets';
 export type { ContentTarget, ContentTargets, MissedTarget } from './content-targets';
 export { PACK_FORMAT } from './pack-layout';
 export { openLanguagePack, type NodeLanguagePack } from './read-pack';
 export { readEdition, type EditionSource } from './read-edition';
 export { recordContent, type RecordResult } from './record';
-export { formatContentReport, type ContentReport } from './report';
+export { contentReport, formatContentReport, type ContentReport } from './report';

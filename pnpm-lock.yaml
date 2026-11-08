@@ -217,6 +217,9 @@ importers:
       '@sentry/node':
         specifier: ^11.8.0
         version: 11.8.0(@babel/core@7.29.7(supports-color@8.1.1))
+      '@slovo/content-rules':
+        specifier: workspace:*
+        version: link:../../packages/content-rules
       '@slovo/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

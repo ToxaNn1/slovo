@@ -79,8 +79,10 @@ export function serveApi(procedures: ApiProcedures): (request: Request) => Promi
     Object.entries(apiContract).map(([domain, contracts]) => [
       domain,
       Object.fromEntries(
-        Object.entries(contracts as Record<string, AnyContractProcedure>).map(
-          ([name, contract]) => [
+        Object.entries(contracts)
+          // A group of procedures within a domain, such as the admin's content, is not served here.
+          .filter((entry): entry is [string, AnyContractProcedure] => isContractProcedure(entry[1]))
+          .map(([name, contract]) => [
             name,
             implement<AnyContractProcedure, InProcessContext>(contract).handler(
               handlers[domain]?.[name] ??
@@ -88,8 +90,7 @@ export function serveApi(procedures: ApiProcedures): (request: Request) => Promi
                   throw new Error(`The test serves no ${domain}.${name}`);
                 }),
             ),
-          ],
-        ),
+          ]),
       ),
     ]),
   );

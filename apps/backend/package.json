@@ -25,6 +25,7 @@
     "@orpc/openapi": "^1.16.1",
     "@orpc/server": "^1.16.1",
     "@sentry/node": "^11.8.0",
+    "@slovo/content-rules": "workspace:*",
     "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
     "@slovo/server-core": "workspace:*",

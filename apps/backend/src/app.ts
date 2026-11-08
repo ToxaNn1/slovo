@@ -24,6 +24,7 @@ import { createAuthenticator } from './account/authenticator';
 import { adminRoutes } from './admin/admin-routes';
 import { createAdminStore, hashToken } from './admin/admin-store';
 import { createContentStore } from './content/content-store';
+import { createContentWrites } from './content/content-writes';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -186,6 +187,7 @@ export function createApp({
     random,
     hash: hashToken,
   });
+  const contentWrites = createContentWrites({ database, clock, random, editions: editionRegistry });
   const api = createApiHandler({
     accounts,
     admin,
@@ -193,6 +195,7 @@ export function createApp({
     communityCounters,
     contentPacks,
     contentStore,
+    contentWrites,
     editions: editionRegistry,
     mistakeReports,
     sync,
