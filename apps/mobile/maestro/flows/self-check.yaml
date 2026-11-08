@@ -1,45 +1,19 @@
-# Self-check («Перевір себе»): with the setting on, a Feed card conceals its
-# meaning behind a reveal button and its Knowledge Mark buttons are inactive;
-# the reveal shows the meaning and makes them work, and the next card is
-# concealed again. A subflow of `smoke.yaml`; run it from there. It starts by
-# turning the setting off, whatever an earlier run left, and leaves it off.
+# Self-check («Перевір себе») is switched off in the UA Edition (Feature Switch
+# `selfCheck`), so a Feed card shows everything at once: its meaning is on
+# screen with no reveal button, and its Knowledge Mark buttons work right away,
+# on this card and on the next.
+# A subflow of `smoke.yaml`; run it from there. It leaves the Feed on screen.
 appId: ${APP_ID || 'app.slovo.uk'}
 ---
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-self-check
-- runFlow:
-    when:
-      visible:
-        id: settings-self-check
-        checked: true
-    commands:
-      - tapOn:
-          id: settings-self-check
-- assertVisible:
-    id: settings-self-check
-    checked: false
-- tapOn:
-    id: settings-self-check
-- assertVisible:
-    id: settings-self-check
-    checked: true
-# The card on screen conceals its meaning: a Word, a Correction or an Idiom.
+# The card on screen shows its meaning: a Word, a Correction or an Idiom.
 - tapOn:
     id: tab-home
 - scrollUntilVisible:
     element:
-      id: (word|correction|idiom)-reveal
+      id: word-definition|correction-standard|idiom-definition
 - assertNotVisible:
-    id: word-definition|correction-standard|idiom-definition
-- takeScreenshot: self-check-concealed
-- tapOn:
-    id: (word|correction|idiom)-reveal
-- assertVisible:
-    id: word-definition|correction-standard|idiom-definition
-- assertNotVisible:
-    id: (word|correction|idiom)-reveal
+    id: (word|correction|idiom|tip|synonymRow)-reveal
+- takeScreenshot: self-check-off-shown
 # The buttons sit under the card, which may be taller than the screen.
 - scrollUntilVisible:
     element:
@@ -55,22 +29,20 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - assertVisible:
     id: knowledge-known
     enabled: true
-- takeScreenshot: self-check-revealed
-# The next card is concealed, and its buttons do nothing until the reveal. A
-# card taller than the screen scrolls first, so swipe until the page turns.
-- repeat:
-    while:
-      notVisible:
-        id: (word|correction|idiom)-reveal
-    times: 8
-    commands:
-      - swipe:
-          start: 50%, 70%
-          end: 50%, 20%
-          duration: 300
-      - waitForAnimationToEnd
 - assertVisible:
-    id: (word|correction|idiom)-reveal
+    id: knowledge-unknown
+    enabled: true
+# The next card shows everything too.
+- swipe:
+    start: 50%, 70%
+    end: 50%, 20%
+    duration: 300
+- waitForAnimationToEnd
+- scrollUntilVisible:
+    element:
+      id: word-definition|correction-standard|idiom-definition
+- assertNotVisible:
+    id: (word|correction|idiom|tip|synonymRow)-reveal
 - scrollUntilVisible:
     element:
       id: knowledge-known
@@ -81,21 +53,8 @@ appId: ${APP_ID || 'app.slovo.uk'}
 - waitForAnimationToEnd
 - assertVisible:
     id: knowledge-known
-    enabled: false
+    enabled: true
 - assertVisible:
     id: knowledge-unknown
-    enabled: false
-# Self-check off again: the card shows its meaning.
-- runFlow:
-    file: ../open-settings-row.yaml
-    env:
-      ROW: settings-self-check
-- tapOn:
-    id: settings-self-check
-- assertVisible:
-    id: settings-self-check
-    checked: false
-- tapOn:
-    id: tab-home
-- assertNotVisible:
-    id: (word|correction|idiom)-reveal
+    enabled: true
+- takeScreenshot: self-check-off-next
