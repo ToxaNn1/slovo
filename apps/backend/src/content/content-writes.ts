@@ -1,8 +1,9 @@
 import {
   checkRecord,
+  contentSetOf,
   parseRecord,
+  recordFileOf,
   type AuthoredRecord,
-  type ContentSet,
   type RecordKind,
   type Refusal,
 } from '@slovo/content-rules';
@@ -90,8 +91,6 @@ function toJson(value: unknown): Json {
       .map(([key, field]) => [key, toJson(field)]),
   );
 }
-
-const fileOf = (kind: RecordKind, id: string) => `${kind}/${id}`;
 
 /**
  * The content write API's store (ADR 0090): every write runs in one
@@ -351,21 +350,19 @@ export function createContentWrites({
       const id = current?.id ?? (await newId(tx, editionId, kind));
       const fields =
         change.op === 'retire' ? { ...current?.fields, retired: true } : { ...change.fields, id };
-      const parsed = parseRecord(kind, fileOf(kind, id), fields);
+      const parsed = parseRecord(kind, recordFileOf(kind, id), fields);
       if (!parsed.ok) return { ok: false, reason: 'refused', refusals: parsed.refusals };
       const { record } = parsed;
-      const authored = <T extends { readonly id: string }>(
-        of: RecordKind,
-        rows: readonly { readonly id: string; readonly fields: T }[],
-      ) => rows.map((row) => ({ file: fileOf(of, row.id), entry: row.fields }));
-      const set: ContentSet = {
-        words: authored('word', records.word),
-        corrections: authored('correction', records.correction),
-        idioms: authored('idiom', records.idiom),
-        synonymRows: authored('synonymRow', records.synonymRow),
-        tips: authored('tip', records.tip),
-        curatedCollections: authored('curatedCollection', records.curatedCollection),
-      };
+      const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
+        rows.map((row) => row.fields);
+      const set = contentSetOf({
+        word: fieldsOf(records.word),
+        correction: fieldsOf(records.correction),
+        idiom: fieldsOf(records.idiom),
+        synonymRow: fieldsOf(records.synonymRow),
+        tip: fieldsOf(records.tip),
+        curatedCollection: fieldsOf(records.curatedCollection),
+      });
       const now = clock.now();
       const refusals = checkRecord(edition.config, set, record, { today: now });
       if (refusals.length > 0) return { ok: false, reason: 'refused', refusals };
@@ -499,7 +496,20 @@ export function createContentWrites({
     );
   }
 
-  return { openBatch, write, flag, report };
+  /** A record's fields and its record version, which an edit is made from. */
+  async function record(editionId: string, kind: RecordKind, id: string) {
+    if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
+    return db.transaction(async (tx) => {
+      if ((await heldVersion(tx, editionId)) === undefined) {
+        return { ok: false, reason: 'not-imported' } as const;
+      }
+      const current = (await recordsOf(tx, editionId))[kind].find((row) => row.id === id);
+      if (current === undefined) return { ok: false, reason: 'not-found' } as const;
+      return { ok: true, fields: current.fields, recordVersion: current.recordVersion } as const;
+    });
+  }
+
+  return { openBatch, write, flag, report, record };
 }
 
 export type ContentWrites = ReturnType<typeof createContentWrites>;

@@ -817,6 +817,12 @@ importers:
 
   tools/content:
     dependencies:
+      '@slovo/content-rules':
+        specifier: workspace:*
+        version: link:../../packages/content-rules
+      '@slovo/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@slovo/language-pack':
         specifier: workspace:*
         version: link:../../packages/language-pack

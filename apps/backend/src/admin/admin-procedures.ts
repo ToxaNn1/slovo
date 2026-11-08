@@ -138,6 +138,12 @@ export function adminProcedures(admin: AdminAccess, contentWrites: ContentWrites
         const { ok: _ok, ...report } = reported;
         return report;
       }),
+      record: content.record.handler(async ({ context, input, errors }) => {
+        await writerOf(context.headers, errors);
+        const found = await contentWrites.record(input.editionId, input.kind, input.id);
+        if (!found.ok) throw refusalOf(found, errors);
+        return { fields: found.fields, recordVersion: found.recordVersion };
+      }),
     },
   });
 }
