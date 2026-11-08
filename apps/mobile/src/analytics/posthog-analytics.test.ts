@@ -36,7 +36,7 @@ function fakeClient() {
 const seen = { entryKind: 'word', rarity: 4, categoryId: 'human-body' } as const;
 
 /** The test device, with no switch under test. */
-const reader = { distinctId: 'install-1', variants: {} };
+const reader = { distinctId: 'install-1', edition: 'uk', variants: {} };
 
 describe('The PostHog adapter', () => {
   it('sends to the EU host with no session recording, autocapture or location', () => {
@@ -49,7 +49,7 @@ describe('The PostHog adapter', () => {
     });
   });
 
-  it('makes no client until the first event, then captures it with its properties', () => {
+  it('makes no client until the first event, then captures it with its properties and the Edition', () => {
     const { client, captured } = fakeClient();
     const create = vi.fn(() => client);
     const analytics = postHogAnalytics('phc_test', create);
@@ -58,7 +58,7 @@ describe('The PostHog adapter', () => {
     analytics.track('seen', seen, reader);
 
     expect(create).toHaveBeenCalledWith('phc_test');
-    expect(captured).toEqual([['seen', seen]]);
+    expect(captured).toEqual([['seen', { ...seen, edition: 'uk' }]]);
   });
 
   it('keeps each questionnaire answer as a person property of the reader', () => {
@@ -69,8 +69,8 @@ describe('The PostHog adapter', () => {
     analytics.track('questionnaireAnswered', { question: 'why', answer: 'curiosity' }, reader);
 
     expect(captured).toEqual([
-      ['questionnaireAnswered', { question: 'level', answer: 'good' }],
-      ['questionnaireAnswered', { question: 'why', answer: 'curiosity' }],
+      ['questionnaireAnswered', { question: 'level', answer: 'good', edition: 'uk' }],
+      ['questionnaireAnswered', { question: 'why', answer: 'curiosity', edition: 'uk' }],
     ]);
     expect(personProperties).toEqual([
       [{ questionnaire_level: 'good' }, undefined, false],

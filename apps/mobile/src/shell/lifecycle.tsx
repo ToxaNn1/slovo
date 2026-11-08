@@ -64,6 +64,11 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   reports.listen(composition, (opened, moment) => {
     if (moment === 'launch' || moment === 'background') writeWidgetSnapshot(opened.widget);
   });
+  // A Visit runs from a launch or a return to the background (spec #1709); its events never fail.
+  reports.listen(composition, (opened, moment) => {
+    if (moment === 'launch' || moment === 'return') void opened.analytics.sessionStarted();
+    if (moment === 'background') void opened.analytics.sessionEnded();
+  });
   /** Reopens what read the old switches once an ask changed an effective value. */
   async function reopenForSwitches() {
     await composition.reopen();

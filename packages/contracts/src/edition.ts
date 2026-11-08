@@ -365,6 +365,18 @@ export const FeatureSwitchesSchema = z.strictObject({
   communityWord: FeatureSwitchStateSchema,
   /** Analytics: the product events sent through the Core's port while the reader shares anonymous statistics (ADR 0068). */
   analytics: FeatureSwitchStateSchema,
+  /** The Visit events «Відвідини»: the app coming to and leaving the foreground, with how long it stayed; off while `analytics` is (spec #1709). */
+  analyticsSessions: FeatureSwitchStateSchema,
+  /** The event of a Feature Switch's screen opened, named by the switch; off while `analytics` is (spec #1709). */
+  analyticsFeatureUsed: FeatureSwitchStateSchema,
+  /** The event of a Search query with nothing found, by its length only; off while `analytics` is (spec #1709). */
+  analyticsSearchNoResult: FeatureSwitchStateSchema,
+  /** The event of the reader's answer to the device's notification permission; off while `analytics` is (spec #1709). */
+  analyticsNotificationPermission: FeatureSwitchStateSchema,
+  /** The NPS answer event, 0 to 10; no screen asks it yet; off while `analytics` is (spec #1709). */
+  analyticsNps: FeatureSwitchStateSchema,
+  /** The Game events, started and finished; off while `analytics` is (spec #1709). */
+  analyticsGames: FeatureSwitchStateSchema,
   /** The calligraphic Lemma: the Lemma on the Word of the Day card in the Feed set in the Edition's calligraphic font. */
   calligraphy: FeatureSwitchStateSchema,
   /** Spotlight: the Spotlight Snapshot the app writes into the system search; off, the snapshot is empty (ADR 0057). */

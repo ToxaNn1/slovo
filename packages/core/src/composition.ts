@@ -72,7 +72,7 @@ import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
 import type { RarityCeiling } from './entries/rarity-ceiling';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
-import { createSearch, type Search } from './search/search';
+import { createSearch, withNoResultEvent, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
 import { createSpotlight, type Spotlight } from './spotlight/spotlight';
 import { createSubject, type Subject } from './subject';
@@ -81,6 +81,7 @@ import {
   type AnalyticsSink,
   type EntryEventProperties,
   type ShareCardKind,
+  featureOfScreen,
 } from './analytics/analytics';
 import { openProgressShareCards, type ProgressShareCards } from './share/progress-share-cards';
 import { createWidget, type Widget } from './widget/widget';
@@ -263,6 +264,10 @@ export interface Composition extends Hiding {
     shareCardShared(card: ShareCardKind): Promise<void>;
     /** The reader opened the app from a notification of this kind. */
     notificationOpened(kind: NotificationKind): Promise<void>;
+    /** The app came to the foreground: a Visit begins. */
+    sessionStarted(): Promise<void>;
+    /** The app left the foreground: the Visit begun last ends, with how long it ran. */
+    sessionEnded(): Promise<void>;
   };
   /** The iPhone search: the Spotlight Snapshot the app hands its native module (ADR 0057). */
   readonly spotlight: Spotlight;
@@ -437,6 +442,8 @@ export async function openComposition({
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   const analytics = createAnalytics({ edition, userState, sink: analyticsSink });
+  /** When the Visit under way began, while the app is in the foreground. */
+  let visitStarted: Date | undefined;
   const { history, recorder } = await openHistory({ rows, userState });
   const xpLog = await openXpLog({
     edition,
@@ -528,6 +535,7 @@ export async function openComposition({
     returned,
     xpLog,
     activeDays,
+    analytics,
   });
   const later = openQuestionnaire({
     edition,
@@ -772,7 +780,7 @@ export async function openComposition({
     game,
     onboarding,
     questionnaire: later.questionnaire,
-    search: createSearch({ content, edition, userState }),
+    search: withNoResultEvent(createSearch({ content, edition, userState }), analytics),
     recentQueries: createRecentQueries({ edition, userState }),
     rarityTest,
     rarityCeiling,
@@ -823,11 +831,26 @@ export async function openComposition({
     analytics: {
       pronunciationPlayed: (entryId) => entryEvent('pronunciationPlayed', entryId),
       wordHistoryOpened: (entryId) => entryEvent('wordHistoryOpened', entryId),
-      screenViewed: (screen) => analytics.track('screenViewed', { screen }).catch(() => undefined),
+      async screenViewed(screen) {
+        await analytics.track('screenViewed', { screen }).catch(() => undefined);
+        const feature = featureOfScreen(screen);
+        if (feature !== undefined)
+          await analytics.track('featureUsed', { feature }).catch(() => undefined);
+      },
       shareCardShared: (card) =>
         analytics.track('shareCardShared', { card }).catch(() => undefined),
       notificationOpened: (kind) =>
         analytics.track('notificationOpened', { kind }).catch(() => undefined),
+      async sessionStarted() {
+        visitStarted = clock.now();
+        await analytics.track('sessionStarted', {}).catch(() => undefined);
+      },
+      async sessionEnded() {
+        if (visitStarted === undefined) return;
+        const durationSeconds = Math.round((clock.now().getTime() - visitStarted.getTime()) / 1000);
+        visitStarted = undefined;
+        await analytics.track('sessionEnded', { durationSeconds }).catch(() => undefined);
+      },
     },
     close,
   };

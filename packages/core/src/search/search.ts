@@ -1,3 +1,4 @@
+import type { Analytics } from '../analytics/analytics';
 import type { Correction, Entry, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
@@ -235,6 +236,24 @@ export function createSearch({
         ...groups,
         byMeaning: byMeaning<Word | SynonymRow>([...wordsFound, ...synonymRows], hidden, listed),
       };
+    },
+  };
+}
+
+/**
+ * Search that tells Analytics of each query it answers with nothing found
+ * (spec #1709): only the query's length goes, never its text.
+ */
+export function withNoResultEvent(search: Search, analytics: Pick<Analytics, 'track'>): Search {
+  return {
+    answers: (query) => search.answers(query),
+    async search(query) {
+      const results = await search.search(query);
+      if (search.answers(query) && Object.values(results).every((found) => found.length === 0))
+        await analytics
+          .track('searchNoResult', { queryLength: Array.from(query.trim()).length })
+          .catch(() => undefined);
+      return results;
     },
   };
 }

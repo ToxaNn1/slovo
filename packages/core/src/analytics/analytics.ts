@@ -99,7 +99,35 @@ export interface AnalyticsEvents {
    */
   readonly signedIn: { readonly method: SignInMethod };
   readonly settingChanged: { readonly setting: string; readonly value: string | number | boolean };
+  /** The app came to the foreground: a Visit («Відвідини») began. */
+  readonly sessionStarted: Record<string, never>;
+  /** The app left the foreground: the Visit that ended and how long it ran. */
+  readonly sessionEnded: { readonly durationSeconds: number };
+  /** The reader opened the screen of a Feature Switch, named by the switch. */
+  readonly featureUsed: { readonly feature: FeatureSwitch };
+  /** Search answered a query with nothing found; only its length goes, never the query. */
+  readonly searchNoResult: { readonly queryLength: number };
+  /** The reader answered the device's question to allow notifications. */
+  readonly notificationPermissionAnswered: { readonly granted: boolean };
+  /** The reader answered «Наскільки ймовірно, що ти порадиш застосунок?» from 0 to 10. */
+  readonly npsAnswered: { readonly score: number };
 }
+
+/**
+ * The Feature Switch each event of the admin's Аналітика goes behind, beside
+ * `analytics` (spec #1709): off, the event is not sent. An event not listed
+ * goes behind `analytics` alone.
+ */
+const EVENT_SWITCHES: Partial<Record<AnalyticsEvent, FeatureSwitch>> = {
+  sessionStarted: 'analyticsSessions',
+  sessionEnded: 'analyticsSessions',
+  featureUsed: 'analyticsFeatureUsed',
+  searchNoResult: 'analyticsSearchNoResult',
+  notificationPermissionAnswered: 'analyticsNotificationPermission',
+  npsAnswered: 'analyticsNps',
+  gameStarted: 'analyticsGames',
+  gameFinished: 'analyticsGames',
+};
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
 
@@ -108,11 +136,13 @@ export type VariantProperty = `variant_${FeatureSwitch}`;
 
 /**
  * Who an event comes from (ADR 0068, 0089): the Install id as the distinct
- * id, and the Variant of every Feature Switch on with one, as event
+ * id, the Edition, and the Variant of every Feature Switch on with one, as event
  * properties. Nothing else of the reader goes with it.
  */
 export interface AnalyticsReader {
   readonly distinctId: string;
+  /** The Edition the event comes from, so the admin reads each Edition apart. */
+  readonly edition: string;
   readonly variants: Readonly<Partial<Record<VariantProperty, Variant>>>;
 }
 
@@ -150,20 +180,21 @@ export interface AnalyticsSink {
 const everyFeature = FeatureSwitchesSchema.keyof().options;
 
 /** The reader an event comes from, by the verdicts in effect now. */
-function readerOf({ installId, verdicts }: AnalyticsSwitches): AnalyticsReader {
+function readerOf(edition: string, { installId, verdicts }: AnalyticsSwitches): AnalyticsReader {
   const variants: Partial<Record<VariantProperty, Variant>> = {};
   for (const feature of everyFeature) {
     const verdict = verdicts[feature];
     if (verdict.on && verdict.variant !== undefined)
       variants[`variant_${feature}`] = verdict.variant;
   }
-  return { distinctId: installId, variants };
+  return { distinctId: installId, edition, variants };
 }
 
 /**
  * The one gate of Analytics (ADR 0068): an event reaches the port only while
  * the Edition's `analytics` Feature Switch is on and the reader shares their
- * anonymous statistics, both read at each event; otherwise nothing is sent,
+ * anonymous statistics, both read at each event, and the event's own switch
+ * of `EVENT_SWITCHES` is on; otherwise nothing is sent,
  * so neither the Install id nor a Variant leaves the device. The Variants are
  * read at each event, so a Rule's change shows on the next one.
  */
@@ -172,7 +203,7 @@ export function createAnalytics({
   userState,
   sink,
 }: {
-  edition: Pick<Edition, 'isFeatureEnabled'>;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   userState: Pick<UserState, 'read'>;
   sink?: AnalyticsSink | undefined;
 }): Analytics {
@@ -180,11 +211,30 @@ export function createAnalytics({
     async track(event, properties) {
       if (sink === undefined) return;
       if (!edition.isFeatureEnabled('analytics')) return;
+      const eventSwitch = EVENT_SWITCHES[event];
+      if (eventSwitch !== undefined && !edition.isFeatureEnabled(eventSwitch)) return;
       if ((await userState.read(userStateRecords.shareCounters)) === false) return;
-      sink.port.track(event, properties, readerOf(sink.switches));
+      sink.port.track(event, properties, readerOf(edition.id, sink.switches));
     },
     stop: () => {
       sink?.port.stop();
     },
   };
+}
+
+/** The Feature Switch whose screen each route is (spec #1709): `featureUsed` names it. */
+const SCREEN_FEATURES: Readonly<Record<string, FeatureSwitch>> = {
+  '/search': 'search',
+  '/game': 'game',
+  '/game/crossword': 'dailyCrossword',
+  '/settings/badges': 'badges',
+  '/settings/streak-break': 'streakBreak',
+  '/settings/rarity-test': 'rarityTest',
+  '/curated-collection/[collectionId]': 'curatedCollections',
+  '/c/[linkId]': 'collectionLinks',
+};
+
+/** The Feature Switch of the screen at this route, if it is the screen of one. */
+export function featureOfScreen(screen: string): FeatureSwitch | undefined {
+  return SCREEN_FEATURES[screen];
 }

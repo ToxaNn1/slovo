@@ -14,7 +14,7 @@ import {
   type FeatureSwitch,
   type RemoteRule,
 } from '../index';
-import { createMemoryContentPort } from '../testing';
+import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
 import {
   analyticsInto,
   correction,
@@ -245,8 +245,8 @@ describe('Analytics distinct id and Variants', () => {
     expect(['a', 'b']).toContain(variant);
     expect(readers).toHaveLength(2);
     expect(readers).toEqual([
-      { distinctId: installId, variants: { variant_gameTimed: variant } },
-      { distinctId: installId, variants: { variant_gameTimed: variant } },
+      { distinctId: installId, edition: 'test', variants: { variant_gameTimed: variant } },
+      { distinctId: installId, edition: 'test', variants: { variant_gameTimed: variant } },
     ]);
   });
 
@@ -293,5 +293,87 @@ describe('Analytics distinct id and Variants', () => {
       ['variant_gameTimed'],
     ]);
     expect(new Set(readers.map(({ variants }) => variants.variant_gameTimed)).size).toBe(1);
+  });
+});
+
+// Spec #1709, ticket #1727: the events the admin's Аналітика reads, each behind its own Feature Switch.
+describe('Analytics for the admin', () => {
+  const eventSwitches = [
+    'analyticsSessions',
+    'analyticsFeatureUsed',
+    'analyticsSearchNoResult',
+    'analyticsNotificationPermission',
+    'analyticsNps',
+    'analyticsGames',
+  ] as const satisfies readonly FeatureSwitch[];
+
+  async function runWith(on: readonly FeatureSwitch[]) {
+    const fake = fakePort();
+    const edition = testEdition({ isFeatureEnabled: (feature) => on.includes(feature) });
+    const userState = await openUserState({ port: createMemoryUserStatePort(new Map()) });
+    const time = fakeClock('2026-10-31T09:00:00.000Z');
+    const app = await openComposition({
+      content,
+      edition,
+      userState,
+      clock: time.clock,
+      random: { next: () => 0.25 },
+      analytics: analyticsInto(fake.port),
+      scheduling: {
+        scheduler: createFakeNotificationScheduler({ permission: 'not-asked', answer: 'denied' }),
+        ellipsis: '…',
+        titles: ['{word}'],
+        farewell: 'Пауза',
+        streakWarning: 'Серія',
+        goalNotMet: 'Ціль',
+      },
+    });
+    const analytics = createAnalytics({ edition, userState, sink: analyticsInto(fake.port) });
+    return { app, analytics, time, ...fake };
+  }
+
+  /** Every new event, through the seams the app uses. */
+  async function sendEach({ app, analytics, time }: Awaited<ReturnType<typeof runWith>>) {
+    await app.analytics.sessionStarted();
+    time.advance(90 * SECOND);
+    await app.analytics.sessionEnded();
+    await app.analytics.screenViewed('/search');
+    await app.search.search('ябз');
+    await app.notifications.askPermission();
+    await analytics.track('npsAnswered', { score: 9 });
+    await analytics.track('gameStarted', { mode: 'guessWord' });
+    await settle();
+  }
+
+  it('sends each event with its Feature Switch on, with counts and labels only', async () => {
+    const running = await runWith(['analytics', 'search', ...eventSwitches]);
+    await sendEach(running);
+
+    expect(running.events).toEqual([
+      ['sessionStarted', {}],
+      ['sessionEnded', { durationSeconds: 90 }],
+      ['screenViewed', { screen: '/search' }],
+      ['featureUsed', { feature: 'search' }],
+      ['searchNoResult', { queryLength: 3 }],
+      ['notificationPermissionAnswered', { granted: false }],
+      ['npsAnswered', { score: 9 }],
+      ['gameStarted', { mode: 'guessWord' }],
+    ]);
+    for (const reader of running.readers) expect(reader.edition).toBe('test');
+  });
+
+  it('sends none of them while its Feature Switch is off', async () => {
+    const running = await runWith(['analytics', 'search']);
+    await sendEach(running);
+
+    expect(running.events).toEqual([['screenViewed', { screen: '/search' }]]);
+  });
+
+  it('sends no featureUsed for a screen of no Feature Switch', async () => {
+    const running = await runWith(['analytics', ...eventSwitches]);
+    await running.app.analytics.screenViewed('/entry/[entryId]');
+    await settle();
+
+    expect(running.events).toEqual([['screenViewed', { screen: '/entry/[entryId]' }]]);
   });
 });
