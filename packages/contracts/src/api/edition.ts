@@ -65,6 +65,11 @@ export const editionContract = {
              * is; an app skips a Rule of a feature it doesn't know.
              */
             rules: z.array(RemoteRuleSchema),
+            /**
+             * The features off for everyone, for an app that reads only this
+             * field: `/v1` keeps it (ADR 0031).
+             */
+            off: z.array(z.string()),
             /** The force-update minimums of the Edition, by platform. */
             minimums: z.object({
               ios: RemoteMinimumSchema.optional(),

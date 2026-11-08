@@ -62,6 +62,19 @@ describe('edition.switches', () => {
     expect(cleared).toMatchObject({ status: 200, body: { rules: [] } });
   });
 
+  it('still lists a feature off for everyone in `off`, for the apps that read only that', async () => {
+    const { client, kill, clearRules } = servingEditions('older-app');
+    const params = { editionId: 'older-app' };
+
+    await kill('older-app', 'game');
+    const off = await client.edition.switches({ params });
+    await clearRules('older-app', 'game');
+    const cleared = await client.edition.switches({ params });
+
+    expect(off.status === 200 && off.body.off).toContain('game');
+    expect(cleared.status === 200 && cleared.body.off).toEqual([]);
+  });
+
   it("keeps each Edition's switches apart", async () => {
     const { client, kill } = servingEditions('switched', 'neighbour');
     await kill('switched', 'game');

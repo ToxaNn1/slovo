@@ -68,6 +68,8 @@ export interface SwitchRefused {
 export interface EditionSwitches {
   readonly ok: true;
   readonly rules: readonly Rule[];
+  /** The features the Edition turns on and the Rules turn off for everyone, for an app that reads no Rule. */
+  readonly off: readonly FeatureSwitch[];
   readonly minimums: ForceUpdateMinimums;
 }
 
@@ -161,8 +163,22 @@ function onForAnyone(edition: Edition, rules: readonly Rule[], feature: FeatureS
   return state === 'on';
 }
 
-/** A value as the Action log keeps it: its JSON. */
-const asJson = (value: unknown): Json => JSON.parse(JSON.stringify(value ?? null));
+/** A value as the Action log keeps it: its JSON, undefined fields left out. */
+function asJson(value: unknown): Json {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return value;
+  }
+  if (value instanceof Date) return value.toISOString();
+  if (Array.isArray(value)) return value.map((item: unknown) => asJson(item));
+  if (typeof value === 'object' && value !== null) {
+    return Object.fromEntries(
+      Object.entries(value)
+        .filter(([, field]) => field !== undefined)
+        .map(([key, field]) => [key, asJson(field)]),
+    );
+  }
+  return null;
+}
 
 export function createEditionRegistry({
   editions,
@@ -184,12 +200,18 @@ export function createEditionRegistry({
     feature,
   });
 
-  async function switches(editionId: string): Promise<EditionSwitches> {
+  async function switches(edition: Edition): Promise<EditionSwitches> {
+    const editionId = edition.config.id;
     const [rules, minimums] = await Promise.all([
       switchStore.rules(editionId),
       switchStore.minimums(editionId),
     ]);
-    return { ok: true, rules, minimums };
+    const inEffect = switchedOn((switchName) => onForAnyone(edition, rules, switchName));
+    // As `/v1` first answered it: what the Edition turns on and the owner turned off.
+    const off = FeatureSwitchSchema.options.filter(
+      (feature) => edition.config.featureSwitches[feature] === 'on' && !inEffect(feature),
+    );
+    return { ok: true, rules, off, minimums };
   }
 
   const rulesOf = (rules: readonly Rule[], feature: string) =>
@@ -224,13 +246,14 @@ export function createEditionRegistry({
     async serving(editionId, feature) {
       const edition = byId.get(editionId);
       if (edition === undefined) return unknownEdition;
-      const { rules } = await switches(editionId);
+      const { rules } = await switches(edition);
       const inEffect = switchedOn((switchName) => onForAnyone(edition, rules, switchName));
       return inEffect(feature) ? { ok: true, edition } : { ok: false, reason: 'switched-off' };
     },
 
     async switches(editionId) {
-      return byId.has(editionId) ? switches(editionId) : unknownEdition;
+      const edition = byId.get(editionId);
+      return edition === undefined ? unknownEdition : switches(edition);
     },
 
     async setRules(editionId, feature, rules, by) {
@@ -241,17 +264,18 @@ export function createEditionRegistry({
         if (edition.config.featureSwitches[feature] === 'unavailable') {
           return refused('unavailable-feature', feature);
         }
-        const current = (await switches(editionId)).rules;
+        const current = (await switches(edition)).rules;
         const inEffect = switchedOn((switchName) => onForAnyone(edition, current, switchName));
         const off = (DEPENDS_ON[feature] ?? []).find((dependency) => !inEffect(dependency));
         if (off !== undefined) return refused('dependency-off', off);
       }
       await writeRules(editionId, feature, rules, 'switches.rules.set', by);
-      return switches(editionId);
+      return switches(edition);
     },
 
     async setMinimum(editionId, platform, minimum, { who, reason }) {
-      if (!byId.has(editionId)) return refused('unknown-edition', editionId);
+      const edition = byId.get(editionId);
+      if (edition === undefined) return refused('unknown-edition', editionId);
       const before = (await switchStore.minimums(editionId))[platform];
       await switchStore.setMinimum(editionId, platform, minimum, clock.now());
       await log({
@@ -263,7 +287,7 @@ export function createEditionRegistry({
         editionId,
         batchId: null,
       });
-      return switches(editionId);
+      return switches(edition);
     },
 
     async kill(feature, editionId, by) {

@@ -477,7 +477,8 @@ export function createFakeBackend({
         const named = input.headers?.['if-none-match'];
         etagsAsked.push(named);
         await arrive('edition.switches', context);
-        const body = { rules: [...rules], minimums };
+        // The app reads the Rules; `off` is for the apps that read no Rule.
+        const body = { rules: [...rules], off: [], minimums };
         const etag = `"${bytesToHex(sha256(utf8ToBytes(JSON.stringify(body))))}"`;
         const headers = { etag, date: clock.now().toUTCString() };
         return named === etag ? { status: 304, headers } : { status: 200, headers, body };

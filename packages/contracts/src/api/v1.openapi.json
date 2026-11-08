@@ -6128,6 +6128,12 @@
                         ]
                       }
                     },
+                    "off": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
                     "minimums": {
                       "type": "object",
                       "properties": {
@@ -6158,6 +6164,7 @@
                   },
                   "required": [
                     "rules",
+                    "off",
                     "minimums"
                   ]
                 }

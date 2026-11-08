@@ -20,7 +20,7 @@ export function editionProcedures(editions: EditionRegistry, clock: Clock) {
         verdict,
         targets,
       }));
-      const body = { rules, minimums: switches.minimums };
+      const body = { rules, off: [...switches.off], minimums: switches.minimums };
       // The same switches always get the same ETag: the SHA-256 of the answer.
       const digest = createHash('sha256').update(JSON.stringify(body)).digest('hex');
       // The backend's clock, which the app keeps with the Rules (ADR 0089).
