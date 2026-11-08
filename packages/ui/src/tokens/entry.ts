@@ -175,3 +175,10 @@ export const actionButtonSize = 52;
 
 /** The padding of the Word of the day badge. */
 export const badgePadding = { horizontal: 10, vertical: 6 } as const;
+
+/**
+ * A Tip's standard form, a whole phrase (board С2.6 «Українською краще», 30 pt
+ * where the Lemma is 50): this share of the Lemma's size at the user's font
+ * size, so the phrase and the explanation under it fit the card.
+ */
+export const tipStandardFormScale = 30 / 50;

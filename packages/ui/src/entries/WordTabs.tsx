@@ -193,11 +193,21 @@ function TabContent({
               ))}
             </DetailSection>
           )}
-          {tab.etymology === undefined ? null : (
+          {tab.etymology.length === 0 ? null : (
             <DetailSection testID="word-etymology" title={strings.etymology}>
-              <Text accessibilityLabel={withoutStress(tab.etymology)} {...voice} style={body}>
-                {tab.etymology}
-              </Text>
+              {/* A paragraph per group of the dictionary's etymology, apart, so it reads as steps. */}
+              <View style={styles.paragraphs}>
+                {tab.etymology.map((paragraph, index) => (
+                  <Text
+                    key={index}
+                    accessibilityLabel={withoutStress(paragraph)}
+                    {...voice}
+                    style={body}
+                  >
+                    {paragraph}
+                  </Text>
+                ))}
+              </View>
             </DetailSection>
           )}
           {tab.history === undefined ? null : (
@@ -210,6 +220,7 @@ function TabContent({
 
 const styles = StyleSheet.create({
   quote: { gap: exampleMark.gap },
+  paragraphs: { gap: space[2] },
   links: { gap: space[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
   chip: {

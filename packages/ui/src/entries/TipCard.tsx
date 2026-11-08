@@ -6,7 +6,7 @@ import { KickerRow } from './KickerRow';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useLemmaSize, useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { LabelChip } from '../primitives/LabelChip';
-import { space, typeStyle } from '../tokens';
+import { space, tipStandardFormScale, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { NonStandardForm, StandardForm } from './CorrectionCard';
@@ -34,7 +34,7 @@ export function TipCardBody({
   tabs,
 }: {
   card: TipCardModel;
-  /** The Lemma's size at the user's font size, which the standard form takes. */
+  /** The Lemma's size at the user's font size, a share of which the standard form takes. */
   lemmaSize: TextSize;
   /** Self-check: only the title, its chip and the non-standard form. */
   concealed: boolean;
@@ -127,7 +127,10 @@ function TipTabContent({ tab }: { tab: TipTab }) {
   );
 }
 
-/** The standard form at the Lemma's size, the explanation and the line naming the sources. */
+/**
+ * The standard form, a phrase at a share of the Lemma's size (board С2.6), the
+ * explanation and the line naming the sources.
+ */
 function TipEssence({
   standardForm,
   explanation,
@@ -143,13 +146,17 @@ function TipEssence({
   const { colors } = tokens;
   const edition = useEdition();
   const { voice } = edition;
+  const formSize = {
+    fontSize: size.fontSize * tipStandardFormScale,
+    lineHeight: size.lineHeight * tipStandardFormScale,
+  };
   return (
     <>
       <StandardForm
         testID="tip-standard"
         form={standardForm}
         spoken={withoutStress(standardForm)}
-        size={size}
+        size={formSize}
       />
       <Text
         testID="tip-explanation"

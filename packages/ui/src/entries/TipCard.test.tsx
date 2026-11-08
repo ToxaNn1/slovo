@@ -1,7 +1,7 @@
 import type { TipCardModel, TipFeedCard } from '@slovo/core';
 import { ActionRow, EditionProvider, EntryCard, KnowledgeButtons } from '@slovo/ui';
 import { describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { fireEvent, render, screen, within } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 const strings = testStrings({
@@ -88,6 +88,14 @@ describe('the Tip card', () => {
     expect(screen.getByRole('header', { name: 'Tip: What time is it?' })).toBeTruthy();
     expect(screen.getByLabelText('Often said: How much is the time?')).toBeTruthy();
     expect(screen.getByLabelText('Better: What time is it?')).toBeTruthy();
+  });
+
+  it('sets the standard form as a phrase at the board size, not at the Lemma size', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    const form = within(screen.getByTestId('tip-standard')).getByText('What time is it?');
+    // Board С2.6: «Українською краще» at 30 pt, where the Lemma at step M is 50.
+    expect(form).toHaveStyle({ fontSize: 30 });
   });
 });
 

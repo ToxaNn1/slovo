@@ -1,5 +1,5 @@
 import type { IdiomCardModel, WordCardModel } from '@slovo/core';
-import { idiomTabsOf, wordTabsOf } from '@slovo/ui/word-tabs';
+import { etymologyParagraphs, idiomTabsOf, wordTabsOf } from '@slovo/ui/word-tabs';
 import { describe, expect, it } from 'vitest';
 
 const bare: WordCardModel = {
@@ -53,7 +53,7 @@ describe('wordTabsOf', () => {
     expect(history).toEqual({
       key: 'history',
       meanings: ['Submissive.', 'Tame.'],
-      etymology: 'From Old Norse.',
+      etymology: ['From Old Norse.'],
       history: 'Old word.',
     });
   });
@@ -120,5 +120,25 @@ describe('idiomTabsOf', () => {
 
   it('leaves out origin and example when the Idiom has no origin and no Example', () => {
     expect(idiomTabsOf(bareIdiom).map(({ key }) => key)).toEqual(['essence']);
+  });
+});
+
+describe('etymologyParagraphs', () => {
+  it('starts a paragraph at each semicolon outside brackets and quotes', () => {
+    expect(
+      etymologyParagraphs('psl. *sulnice (‹*sŭl(n)-; x); cf. lit. sáulė «id.; tc.»; ie. *sun-.'),
+    ).toEqual(['psl. *sulnice (‹*sŭl(n)-; x)', 'cf. lit. sáulė «id.; tc.»', 'ie. *sun-.']);
+  });
+
+  it('drops the stray spacing marks and rings below a dump leaves, and keeps the Stress marks', () => {
+    // A spacing breve after a letter, a ring below and the deprecated tone mark U+0341.
+    expect(etymologyParagraphs('*sa\u0301o\u02D8el-, sul\u0325nice, sa\u0341ule')).toEqual([
+      '*s\u00E1oel-, sulnice, s\u00E1ule',
+    ]);
+  });
+
+  it('keeps a text with no semicolon as one paragraph and drops empty ones', () => {
+    expect(etymologyParagraphs('From Old Norse.')).toEqual(['From Old Norse.']);
+    expect(etymologyParagraphs('a; ; b;')).toEqual(['a', 'b']);
   });
 });
