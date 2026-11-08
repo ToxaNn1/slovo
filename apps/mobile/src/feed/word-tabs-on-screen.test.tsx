@@ -96,8 +96,11 @@ async function open(
     isFeatureEnabled: (feature) =>
       feature === 'wordTabs'
         ? wordTabs
-        : // No later question takes the Word of the Day's place in the Feed.
-          feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+        : // Self-check's switch follows the reader's setting; the UA Edition turns it off (owner 08.11).
+          feature === 'selfCheck'
+          ? selfCheck
+          : // No later question takes the Word of the Day's place in the Feed.
+            feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   // The gestures hint was shown on an earlier launch: its finger demo loops for as long as

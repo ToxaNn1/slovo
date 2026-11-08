@@ -226,7 +226,9 @@ const FeedPage = memo(function FeedPage({
   return (
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
-      <PagerScrollView
+      <CardPage
+        // A tabbed card is a frame the page's height, which scrolls its tab inside it (ADR 0088).
+        framed={card.kind !== 'notice' && wordTabs}
         // The red card of the Word of the Day and every tabbed card hang from the top row, closer to the edges (board p1).
         contentContainerStyle={
           card.kind !== 'notice' &&
@@ -270,10 +272,33 @@ const FeedPage = memo(function FeedPage({
             wordOfTheDayFont={calligraphicLemma ? wordOfTheDayFontFamily : undefined}
           />
         )}
-      </PagerScrollView>
+      </CardPage>
     </View>
   );
 });
+
+/**
+ * An Entry card's page under the header. A tabbed card stands in a plain view
+ * the page's height, so its fixed frame keeps that height and a tab too tall
+ * for it scrolls inside the card, turning the page only from its end (ADR
+ * 0088); inside a scroll view the frame would grow to its content and the
+ * swipe would turn the page at once. Any other card scrolls with the page.
+ */
+function CardPage({
+  framed,
+  contentContainerStyle,
+  children,
+}: Pick<ComponentProps<typeof PagerScrollView>, 'contentContainerStyle' | 'children'> & {
+  framed: boolean;
+}) {
+  return framed ? (
+    <View testID="feed-card-frame" style={[styles.page, contentContainerStyle]}>
+      {children}
+    </View>
+  ) : (
+    <PagerScrollView contentContainerStyle={contentContainerStyle}>{children}</PagerScrollView>
+  );
+}
 
 /**
  * The Feed header's rows: the logo row, and the row of the XP bar and Search

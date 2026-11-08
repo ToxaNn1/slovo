@@ -33,7 +33,7 @@
     "statistics": true,
     "knowledge": true,
     "confirmedEntries": true,
-    "selfCheck": true,
+    "selfCheck": false,
     "rarityCeiling": true,
     "gameReview": true,
     "gameGuessWord": true,

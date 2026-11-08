@@ -149,7 +149,11 @@ async function open(content: Content, selfCheck: boolean) {
   editionInEffect = {
     ...shipped,
     isFeatureEnabled: (feature) =>
-      feature === 'wordTabs' || feature === 'tips' || feature === 'synonymRows'
+      // Self-check's switch is on, as in an Edition that keeps it; the UA Edition turns it off (owner 08.11).
+      feature === 'wordTabs' ||
+      feature === 'tips' ||
+      feature === 'synonymRows' ||
+      feature === 'selfCheck'
         ? true
         : // No later question takes the Word of the Day's place in the Feed.
           feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),

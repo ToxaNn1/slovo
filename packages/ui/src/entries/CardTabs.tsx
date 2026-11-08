@@ -180,8 +180,8 @@ export function FitPanel({
 const styles = StyleSheet.create({
   // The tabs fill what the head leaves of the card's frame.
   tabs: { flexGrow: 1, gap: blockGap },
-  // The tabs spread over the card's width, under a hairline.
-  bar: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, gap: space[2] },
+  // The tabs stand packed from the left, under a hairline (owner 08.11).
+  bar: { flexDirection: 'row', borderTopWidth: 1, gap: space[6] },
   tab: { minHeight: minTouchTarget, justifyContent: 'center' },
   // The mark lies over the hairline and reaches past the tab's name on both sides.
   mark: {
