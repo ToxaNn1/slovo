@@ -4,6 +4,8 @@
 import type { EditionStrings } from '@slovo/contracts';
 import {
   stressLabel,
+  type AnswerSheet as RoundSheet,
+  type AskableEntry,
   type CurrentGame,
   type GivenAnswer,
   type Round,
@@ -183,7 +185,7 @@ export function GameRound({
       </ScrollView>
       <AnswerSheet
         answer={answer}
-        line={answer === undefined ? undefined : cardLine(game, answer)}
+        line={answer === undefined ? undefined : cardLine(answer.sheet, game.played.at(-1)?.entry)}
         feedback={feedback}
         onNext={onNext}
       />
@@ -325,26 +327,39 @@ function FormRound({
 /**
  * A Quick Question in the Feed: its title, then one pick Round as the Game
  * draws it, the prompt under the mode's label and the four options. Once
- * answered, the options show the right one and the one picked, with no
- * sheet; the reader turns on to the next card.
+ * answered, the options show the right one and the one picked, and the
+ * Game's sheet after an answer explains it, right or wrong, until «Далі»
+ * closes it; the reader turns on to the next card.
  */
 export function QuickQuestionRound({
   title,
   round,
+  entry,
   label,
   answered,
+  feedback,
   onAnswer,
 }: {
   title: string;
   round: Extract<RoundContent, { readonly form: 'pick' }>;
+  /** The Entry asked about, whose Definition the answer card explains the answer with. */
+  entry: AskableEntry;
   /** The Game Mode's label over the prompt. */
   label: string;
   /** The option the reader picked; none yet. */
   answered: number | undefined;
+  /** What the sheet after an answer shows, as in the Game (`gameAnswerCard`). */
+  feedback: 'sheet' | 'card';
   onAnswer: (option: number) => void;
 }) {
   const gameHaptics = useGameHaptics();
   const answer = answered === undefined ? undefined : { chosen: answered, correct: round.correct };
+  // The sheet explains the answer picked on this card, not one kept from an earlier visit.
+  const [explaining, setExplaining] = useState(false);
+  const explained: RoundAnswer | undefined =
+    explaining && answer !== undefined
+      ? { form: 'pick', ...answer, right: answer.chosen === answer.correct, sheet: round.sheet }
+      : undefined;
   return (
     <View testID="quick-question" style={styles.round}>
       <RoundLabel label={title} />
@@ -362,7 +377,16 @@ export function QuickQuestionRound({
         onPick={(option) => {
           if (option === round.correct) gameHaptics.rightAnswer();
           else gameHaptics.wrongAnswer();
+          setExplaining(true);
           onAnswer(option);
+        }}
+      />
+      <AnswerSheet
+        answer={explained}
+        line={cardLine(round.sheet, entry)}
+        feedback={feedback}
+        onNext={() => {
+          setExplaining(false);
         }}
       />
     </View>
@@ -670,11 +694,10 @@ function RoundLabel({ label }: { label: string }) {
 
 /**
  * The answer card's line: the sheet's explanation, such as a Correction's,
- * else the primary Definition of the Entry the Round just played, if it has one.
+ * else the primary Definition of the Entry the Round asked about, if it has one.
  */
-function cardLine(game: CurrentGame, answer: RoundAnswer): string | undefined {
-  if (answer.sheet.explanation !== undefined) return answer.sheet.explanation;
-  const entry = game.played.at(-1)?.entry;
+function cardLine(sheet: RoundSheet, entry: AskableEntry | undefined): string | undefined {
+  if (sheet.explanation !== undefined) return sheet.explanation;
   return entry !== undefined && 'primaryDefinition' in entry ? entry.primaryDefinition : undefined;
 }
 

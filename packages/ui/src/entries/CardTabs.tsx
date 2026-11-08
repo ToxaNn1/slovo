@@ -132,14 +132,16 @@ export function CardTabs<Tab extends { readonly key: string }>({
  * to the floor, S, and content too tall even there stays at S, clamped to the
  * frame, with «Детальніше» under it. A tap on it grows the room to the whole
  * content, smoothly unless Reduce Motion is on, and the card grows with it,
- * so the page scrolls over the card. The card measures the
+ * so the page scrolls over the card; «Сховати» under the opened content clamps
+ * it to the frame again at once. The card measures the
  * drawn height against the room once both are laid out, on the render after
  * they arrive, so two heights reported in one layout pass are both read. Each
  * size draws its content in a new view, which the device always lays out and
  * reports, even when the smaller size leaves the height as it was (text in a
  * fixed type role). A new `fitKey` (another tab) or font size starts at the
  * user's font size again, clamped. Its parts are `<testID>-tab-panel`,
- * `<testID>-tab-content` and, while clamped, `<testID>-tab-more`.
+ * `<testID>-tab-content` and, while clamped, `<testID>-tab-more`, or once
+ * opened, `<testID>-tab-less`.
  */
 export function FitPanel({
   testID,
@@ -169,7 +171,7 @@ export function FitPanel({
   if (fitNow !== 'clamped' && room !== undefined && drawn?.at === drawnAt && drawn.height > room) {
     setFit({ key: fitKey, step, fit: fitNow === FLOOR ? 'clamped' : SMALLER[fitNow] });
   }
-  // «Детальніше» opens the tab at the size it was tapped on, until another tab or font size.
+  // «Детальніше» opens the tab at the size it was tapped on, until «Сховати», another tab or font size.
   const [openAt, setOpenAt] = useState<string | undefined>(undefined);
   const open = fitNow === 'clamped' && openAt === drawnAt;
   const height = useSharedValue(0);
@@ -215,6 +217,22 @@ export function FitPanel({
         >
           <Text style={[typeStyle('textLink', tokens), { color: tokens.colors.accentText }]}>
             {strings.wordCard.tabMore}
+          </Text>
+        </Pressable>
+      )}
+      {open && (
+        <Pressable
+          testID={`${testID}-tab-less`}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: true }}
+          {...voice}
+          onPress={() => {
+            setOpenAt(undefined);
+          }}
+          style={styles.more}
+        >
+          <Text style={[typeStyle('textLink', tokens), { color: tokens.colors.accentText }]}>
+            {strings.wordCard.tabLess}
           </Text>
         </Pressable>
       )}

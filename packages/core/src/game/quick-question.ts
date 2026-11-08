@@ -1,4 +1,4 @@
-import type { Entries } from '../entries/entries';
+import type { AskableEntry, Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { Random } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -13,6 +13,8 @@ export type PickRound = Extract<RoundContent, { readonly form: 'pick' }>;
 export interface QuickQuestionContent {
   /** The Entry the Round asks about, which its answer marks. */
   readonly askedId: string;
+  /** The Entry asked about, whose Definition the answer card explains the answer with, as the Game's does. */
+  readonly entry: AskableEntry;
   readonly modeId: string;
   readonly round: PickRound;
 }
@@ -72,7 +74,8 @@ export function createQuickQuestion({
         random,
         edition,
       });
-      if (round?.form === 'pick') return { askedId: answer.id, modeId: mode.id, round };
+      if (round?.form === 'pick')
+        return { askedId: answer.id, entry: answer, modeId: mode.id, round };
     }
     return undefined;
   }

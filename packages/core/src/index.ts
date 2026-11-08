@@ -36,6 +36,7 @@ export { coreDecor, loadDecor, type Decor } from './edition/decor';
 export {
   createEntries,
   EVERYTHING_IN,
+  type AskableEntry,
   type EligibilityChoices,
   type Entries,
 } from './entries/entries';

@@ -192,7 +192,7 @@ const FeedPage = memo(function FeedPage({
   onAnswerQuickQuestion: (position: number, option: number) => void;
 }) {
   const { top } = useSafeAreaInsets();
-  const { selfCheck, stressFall, calligraphicLemma, wordTabs } = useShown();
+  const { selfCheck, stressFall, calligraphicLemma, wordTabs, answerCard } = useShown();
   const { toolsRow, topRow } = useHeaderRows();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
@@ -205,8 +205,10 @@ const FeedPage = memo(function FeedPage({
           <QuickQuestionRound
             title={feedStrings.quickQuestion}
             round={card.round}
+            entry={card.entry}
             label={gameModeStrings(editionStrings.game.modes, card.modeId).roundLabel}
             answered={card.answered}
+            feedback={answerCard ? 'card' : 'sheet'}
             onAnswer={(option) => {
               onAnswerQuickQuestion(position, option);
             }}
