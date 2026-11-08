@@ -1,5 +1,13 @@
-import type { CrosswordDay, EditionConfig } from '@slovo/contracts';
-import type { Correction, CuratedCollection, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type {
+  Correction,
+  CrosswordDay,
+  CuratedCollection,
+  EditionConfig,
+  Idiom,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 
 import { checkCrosswordDays, unknownCrosswordEntries } from './crossword-days';
 import { checkCuratedCollections } from './curated-collections';
