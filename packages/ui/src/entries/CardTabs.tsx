@@ -1,5 +1,5 @@
 import type { FontSize } from '@slovo/contracts';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
@@ -126,14 +126,19 @@ export function FitPanel({
   // The drawn height counts only for the tab and font size it was drawn at.
   const drawnAt = `${fitKey} ${step} ${fitNow}`;
   const [drawn, setDrawn] = useState<{ at: string; height: number } | undefined>(undefined);
-  // Either height may arrive or change last, so the fit is checked whenever both are known.
-  const tooTall = room !== undefined && drawn?.at === drawnAt && drawn.height > room;
-  useEffect(() => {
-    if (!tooTall || fitNow === 'scrolls') return;
+  // Either height may arrive or change last, so the fit is checked on both.
+  const shrinkIfTooTall = (
+    roomNow: number | undefined,
+    drawnNow: { at: string; height: number } | undefined,
+  ) => {
+    if (roomNow === undefined || drawnNow?.at !== drawnAt || fitNow === 'scrolls') return;
+    if (drawnNow.height <= roomNow) return;
     setFit({ key: fitKey, step, fit: fitNow === FLOOR ? 'scrolls' : SMALLER[fitNow] });
-  }, [tooTall, fitNow, fitKey, step]);
+  };
   const measured = ({ nativeEvent }: LayoutChangeEvent) => {
-    setDrawn({ at: drawnAt, height: nativeEvent.layout.height });
+    const drawnNow = { at: drawnAt, height: nativeEvent.layout.height };
+    setDrawn(drawnNow);
+    shrinkIfTooTall(room, drawnNow);
   };
   const content = (
     <FontSizeProvider fontSize={fitNow === 'scrolls' ? FLOOR : fitNow}>{children}</FontSizeProvider>
@@ -144,6 +149,7 @@ export function FitPanel({
       style={styles.room}
       onLayout={({ nativeEvent }) => {
         setRoom(nativeEvent.layout.height);
+        shrinkIfTooTall(nativeEvent.layout.height, drawn);
       }}
     >
       {fitNow === 'scrolls' ? (

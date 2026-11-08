@@ -43,10 +43,7 @@ export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]
     tabs.push({ key: 'links', synonyms: card.synonyms, antonyms: card.antonyms });
   if (meanings.length > 0 || etymology !== undefined || card.history !== undefined)
     tabs.push({ key: 'history', meanings, etymology, history: card.history });
-  return [
-    { key: 'essence', moreMeanings: meanings.length },
-    ...tabs,
-  ];
+  return [{ key: 'essence', moreMeanings: meanings.length }, ...tabs];
 }
 
 /**
@@ -55,7 +52,9 @@ export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]
  * «Чому» the explanation and its sources, «Приклади» the example pair and the
  * literary uses.
  */
-export type CorrectionTab = { readonly key: 'better' | 'why' | 'examples' };
+export interface CorrectionTab {
+  readonly key: 'better' | 'why' | 'examples';
+}
 
 /** The names of a Correction card's tabs, which the Edition's strings give. */
 export type CorrectionTabKey = CorrectionTab['key'];

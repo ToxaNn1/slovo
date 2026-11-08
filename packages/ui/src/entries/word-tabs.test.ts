@@ -76,9 +76,7 @@ describe('wordTabsOf', () => {
       'example',
       'history',
     ]);
-    expect(wordTabsOf(bare)).toEqual([
-      { key: 'essence', moreMeanings: 0 },
-    ]);
+    expect(wordTabsOf(bare)).toEqual([{ key: 'essence', moreMeanings: 0 }]);
   });
 
   it('opens the links tab on antonyms alone and the history tab on the Word History alone', () => {
