@@ -52,6 +52,19 @@ export const entryCardFrame = {
   kicker: { wedge: { width: 14, height: 11 }, gap: 8 },
 } as const;
 
+/**
+ * A Synonym's or an antonym's chip in the tabbed Word card's «Зв’язки» (board
+ * p1): a raised tile outlined in the line colour, its edge `depth` below it.
+ */
+export const linkChip = {
+  padding: { horizontal: 12, vertical: 9 },
+  radius: 11,
+  depth: 3,
+} as const;
+
+/** The gap between the big opening quote mark, the Example and its author's line in the tabbed Word card's «Приклад» (board p1). */
+export const exampleMark = { gap: 10 } as const;
+
 /** The Word card's side and bottom padding (the design's 26); the feed's skeleton keeps the same shape. */
 export const wordCardSide = 26;
 

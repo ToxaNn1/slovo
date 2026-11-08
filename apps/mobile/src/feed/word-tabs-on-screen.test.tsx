@@ -22,7 +22,8 @@ import HomeScreen from '../app/feed';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { entryCardFrame, fontSizeSteps } from '@slovo/ui/tokens';
+import { entryCardFrame, fontSizeSteps, linkChip } from '@slovo/ui/tokens';
+import { LOGO_ROW } from '../edition/feed-loading';
 import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 
@@ -539,6 +540,45 @@ describe('the look of a tabbed Word card in the Feed (board p1)', () => {
     await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-example')));
 
     expect(grammar().getByTestId('word-category', hidden)).toBeTruthy();
+  });
+
+  it('quotes the Example under a big red opening mark, not wrapped in the marks', async () => {
+    await open(fullWord);
+    await renderApp();
+    await swipeUp();
+
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-example')));
+
+    const card = wordCard();
+    expect(card.getByTestId('word-example-mark', hidden)).toHaveStyle({ color: accent });
+    expect(card.getByText('Сумирний кінь стояв тихо.', hidden)).toBeTruthy();
+    expect(card.queryByText('«Сумирний кінь стояв тихо.»', hidden)).toBeNull();
+  });
+
+  it('labels the links without a colon over raised chips', async () => {
+    await open({ ...fullWord, synonyms: ['тихий', 'спокійний'] });
+    await renderApp();
+    await swipeUp();
+
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-links')));
+
+    const card = wordCard();
+    expect(card.getByText('Синоніми', hidden)).toBeTruthy();
+    expect(card.getByText('Антонім', hidden)).toBeTruthy();
+    const { tile, tileEdge, line } = editionTokens.colors.light;
+    expect(card.getByTestId('word-synonyms-тихий', hidden)).toHaveStyle({
+      backgroundColor: tile,
+      borderColor: line,
+      boxShadow: [{ offsetX: 0, offsetY: linkChip.depth, blurRadius: 0, color: tileEdge }],
+    });
+  });
+
+  it('hangs the card right under the logo row, with no XP bar or Search over it', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    expect(screen.getByTestId('feed-header')).toHaveStyle({ height: LOGO_ROW });
+    expect(screen.queryByTestId('feed-header-tools', hidden)).toBeNull();
   });
 });
 

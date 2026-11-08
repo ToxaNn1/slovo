@@ -4,8 +4,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { LabelChip } from '../primitives/LabelChip';
-import { space, typeStyle } from '../tokens';
+import { exampleMark, linkChip, space, typeStyle } from '../tokens';
 import { CardTabs } from './CardTabs';
 import {
   DetailSection,
@@ -101,12 +100,31 @@ function TabContent({
       );
     case 'example': {
       const [first, ...rest] = tab.examples;
+      // The big red mark is the opening one of the Edition's quote around an Example.
+      const [mark = ''] = strings.example.split('{text}');
       return (
         <>
-          {/* The first Example is the tab's large quote. */}
-          <ExampleText testID="word-example" example={first} size={sizes.definition} />
+          <View style={styles.quote}>
+            {mark === '' ? null : (
+              <Text
+                testID="word-example-mark"
+                accessibilityElementsHidden
+                importantForAccessibility="no"
+                style={[typeStyle('exampleMark', tokens), { color: colors.accent }]}
+              >
+                {mark}
+              </Text>
+            )}
+            {/* The first Example is the tab's large quote. */}
+            <ExampleText
+              testID="word-example"
+              example={first}
+              size={sizes.definition}
+              quoted={false}
+            />
+          </View>
           {rest.map((example, index) => (
-            <ExampleText key={index} example={example} size={sizes.example} />
+            <ExampleText key={index} example={example} size={sizes.example} quoted={false} />
           ))}
         </>
       );
@@ -115,24 +133,43 @@ function TabContent({
       return (
         <>
           {[
-            { key: 'synonyms', words: tab.synonyms, one: strings.synonym, many: strings.synonyms },
-            { key: 'antonyms', words: tab.antonyms, one: strings.antonym, many: strings.antonyms },
+            { key: 'synonyms', words: tab.synonyms, ...strings.linkLabels.synonyms },
+            { key: 'antonyms', words: tab.antonyms, ...strings.linkLabels.antonyms },
           ]
             .filter(({ words }) => words.length > 0)
             .map(({ key, words, one, many }) => (
               <View key={key} testID={`word-${key}`} style={styles.links}>
-                <Text style={[typeStyle('sub', tokens), { color: colors.muted }]} {...voice}>
+                <Text style={[typeStyle('linksLabel', tokens), { color: colors.muted }]} {...voice}>
                   {words.length === 1 ? one : many}
                 </Text>
                 <View style={styles.chips}>
                   {words.map((word) => (
-                    <LabelChip
+                    <View
                       key={word}
                       testID={`word-${key}-${word}`}
-                      text={word}
+                      accessible
                       accessibilityLabel={withoutStress(word)}
-                      size="roomy"
-                    />
+                      {...voice}
+                      style={[
+                        styles.chip,
+                        {
+                          backgroundColor: colors.tile,
+                          borderColor: colors.line,
+                          boxShadow: [
+                            {
+                              offsetX: 0,
+                              offsetY: linkChip.depth,
+                              blurRadius: 0,
+                              color: colors.tileEdge,
+                            },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Text style={[typeStyle('linkChip', tokens), { color: colors.ink }]}>
+                        {word}
+                      </Text>
+                    </View>
                   ))}
                 </View>
               </View>
@@ -172,6 +209,13 @@ function TabContent({
 }
 
 const styles = StyleSheet.create({
+  quote: { gap: exampleMark.gap },
   links: { gap: space[2] },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space[2] },
+  chip: {
+    paddingHorizontal: linkChip.padding.horizontal,
+    paddingVertical: linkChip.padding.vertical,
+    borderRadius: linkChip.radius,
+    borderWidth: 1,
+  },
 });

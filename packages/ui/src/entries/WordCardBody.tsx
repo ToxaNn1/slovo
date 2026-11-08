@@ -70,8 +70,7 @@ export function WordCardBody({
         concealed={concealed}
         stressFalls={stressFalls}
         lemmaFont={wordOfTheDay === undefined ? undefined : wordOfTheDayFont}
-        // The tabbed card sets its Category chip in the grammar line, even under Self-check (board p1).
-        category={tabs ? card.categoryName : undefined}
+        tabbed={tabs}
       />
       {!tabs && concealed && card.categoryName !== undefined && (
         <CategoryChip testID="word-category" name={card.categoryName} />

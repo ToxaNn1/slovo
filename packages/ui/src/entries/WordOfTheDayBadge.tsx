@@ -72,9 +72,16 @@ export function WordOfTheDayKicker({ day: { month, day } }: { day: LocalDate }) 
         width={wedge.width}
         height={wedge.height}
       />
+      {/* A long date shrinks a little rather than run under the corner tiles. */}
       <Text
         numberOfLines={1}
-        style={[typeStyle('heroKicker', tokens), { color: tokens.colors.accent }]}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+        style={[
+          typeStyle('cardKicker', tokens),
+          styles.kickerText,
+          { color: tokens.colors.accent },
+        ]}
       >
         {label}
       </Text>
@@ -89,6 +96,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     gap: entryCardFrame.kicker.gap,
   },
+  kickerText: { flexShrink: 1 },
   badge: {
     alignSelf: 'flex-start',
     paddingHorizontal: badgePadding.horizontal,
