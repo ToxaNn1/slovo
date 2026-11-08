@@ -13,7 +13,9 @@ import { testApp } from '../test-support';
 function copyOfUkrainian(): string {
   const dir = join(mkdtempSync(join(tmpdir(), 'slovo-import-')), 'uk');
   cpSync(join(EDITIONS_DIR, 'uk'), dir, { recursive: true });
-  afterAll(() => rmSync(dir, { recursive: true, force: true }));
+  afterAll(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
   return dir;
 }
 

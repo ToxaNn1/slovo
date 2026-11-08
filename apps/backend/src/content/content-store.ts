@@ -2,6 +2,7 @@ import type { BuildError } from '@slovo/language-pack';
 import { readEdition } from '@slovo/language-pack';
 import type { Clock, EditionRegistry } from '@slovo/server-core';
 import { eq } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
 import {
@@ -184,8 +185,7 @@ export function createContentStore({
           .from(contentVersions)
           .where(eq(contentVersions.editionId, editionId));
         if (held === undefined) return undefined;
-        const where = <T extends { editionId: typeof contentIdioms.editionId }>(table: T) =>
-          eq(table.editionId, editionId);
+        const ofEdition = (column: PgColumn) => eq(column, editionId);
         return {
           editionId,
           contentVersion: held.contentVersion,
@@ -193,31 +193,31 @@ export function createContentStore({
             await tx
               .select({ id: contentWords.id, fields: contentWords.fields })
               .from(contentWords)
-              .where(where(contentWords)),
+              .where(ofEdition(contentWords.editionId)),
           ),
           idioms: inIdOrder(
             await tx
               .select({ id: contentIdioms.id, fields: contentIdioms.fields })
               .from(contentIdioms)
-              .where(where(contentIdioms)),
+              .where(ofEdition(contentIdioms.editionId)),
           ),
           corrections: inIdOrder(
             await tx
               .select({ id: contentCorrections.id, fields: contentCorrections.fields })
               .from(contentCorrections)
-              .where(where(contentCorrections)),
+              .where(ofEdition(contentCorrections.editionId)),
           ),
           tips: inIdOrder(
             await tx
               .select({ id: contentTips.id, fields: contentTips.fields })
               .from(contentTips)
-              .where(where(contentTips)),
+              .where(ofEdition(contentTips.editionId)),
           ),
           synonymRows: inIdOrder(
             await tx
               .select({ id: contentSynonymRows.id, fields: contentSynonymRows.fields })
               .from(contentSynonymRows)
-              .where(where(contentSynonymRows)),
+              .where(ofEdition(contentSynonymRows.editionId)),
           ),
           curatedCollections: inIdOrder(
             await tx
@@ -226,13 +226,13 @@ export function createContentStore({
                 fields: contentCuratedCollections.fields,
               })
               .from(contentCuratedCollections)
-              .where(where(contentCuratedCollections)),
+              .where(ofEdition(contentCuratedCollections.editionId)),
           ),
           crosswordDays: inIdOrder(
             await tx
               .select({ id: contentCrosswordDays.id, fields: contentCrosswordDays.fields })
               .from(contentCrosswordDays)
-              .where(where(contentCrosswordDays)),
+              .where(ofEdition(contentCrosswordDays.editionId)),
           ),
         };
       },
