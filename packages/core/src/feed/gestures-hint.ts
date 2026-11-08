@@ -12,7 +12,7 @@ export interface GesturesHint {
 }
 
 /**
- * The Feed's gestures hint sheet, «ГОРТАЙТЕ ПАЛЬЦЕМ», which shows the swipe
+ * The Feed's gestures hint sheet, «ГОРТАЙ ПАЛЬЦЕМ», which shows the swipe
  * marks and how to reach the next card, once on this device, to every reader,
  * also one who saw the retired swipe hint.
  */

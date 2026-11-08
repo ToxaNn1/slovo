@@ -30,18 +30,37 @@ const FALL = {
 /** How far above its place a mark starts, as a share of the font size. */
 const FALL_HEIGHT = 0.4;
 
-/** The text with every `mark` in `markStyle`. */
-export function withMarks(text: string, mark: string, markStyle: StyleProp<TextStyle>): ReactNode {
-  return text.split(mark).flatMap((part, index) =>
-    index === 0
-      ? [part]
+/**
+ * The text with every `mark` in `markStyle` and, given a `letterStyle`, the
+ * letter each mark sits on in that one, such as a Lemma's stressed vowel.
+ */
+export function withMarks(
+  text: string,
+  mark: string,
+  markStyle: StyleProp<TextStyle>,
+  letterStyle?: StyleProp<TextStyle>,
+): ReactNode {
+  const parts = text.split(mark);
+  return parts.flatMap((part, index) => {
+    // Every part but the last ends on the letter the next mark sits on.
+    const marked = letterStyle !== undefined && index < parts.length - 1 && part.length > 0;
+    const head = marked
+      ? [
+          part.slice(0, -1),
+          <Text key={`letter-${String(index)}`} style={letterStyle}>
+            {part.slice(-1)}
+          </Text>,
+        ]
+      : [part];
+    return index === 0
+      ? head
       : [
           <Text key={index} style={markStyle}>
             {mark}
           </Text>,
-          part,
-        ],
-  );
+          ...head,
+        ];
+  });
 }
 
 /**
@@ -56,10 +75,13 @@ export function FallingMarks({
   fontSize,
   textProps,
   style,
+  markStyle,
   testID,
 }: {
   text: string;
   falling: FallingMarksOf;
+  /** How the marks look: in the text's colour unless given. */
+  markStyle?: StyleProp<TextStyle> | undefined;
   fontSize: number;
   /** How the text under the marks lays out, so the marks lay out alike. */
   textProps: Pick<
@@ -97,7 +119,7 @@ export function FallingMarks({
       style={[styles.over, fall]}
     >
       <Text {...textProps} style={[style, styles.clear]}>
-        {withMarks(text, mark, { color })}
+        {withMarks(text, mark, markStyle ?? { color })}
       </Text>
     </Animated.View>
   );

@@ -15,6 +15,7 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSequence,
+  withSpring,
   withTiming,
 } from 'react-native-reanimated';
 import Svg, { Path, Polygon } from 'react-native-svg';
@@ -57,25 +58,50 @@ export const MARK_VELOCITY = 800;
 /** Where a marked card flies to, off screen, and where an undone one comes back from (board 04). */
 const OFF_SCREEN = 520;
 
-/** The card springs back to its place on the design's curve. */
-const BACK = {
-  duration: 420,
-  easing: Easing.bezier(0.2, 1, 0.3, 1),
-  reduceMotion: ReduceMotion.Never,
-};
-/** A marked card flies off in 0.3 s, gathering speed as it leaves (board 04, ADR 0078). */
-const FLY = {
-  duration: 300,
-  easing: Easing.bezier(0.4, 0, 1, 1),
-  reduceMotion: ReduceMotion.Never,
-};
+/**
+ * The card springs back to its place from the speed the finger let it go at,
+ * a touch past it and home: a 0.3 s spring, which Reanimated plays out and
+ * settles in 1.5 times that, 0.45 s, about the design's 0.42 s curve.
+ */
+const BACK = { duration: 300, dampingRatio: 0.85, reduceMotion: ReduceMotion.Never };
+/** A marked card flies off in 0.3 s at most, gathering speed as it leaves (board 04, ADR 0078). */
+const FLY_DURATION = 300;
+/** The shortest fly, for the fastest fling. */
+const FLY_SHORTEST = 100;
+/** Where the fly's curve sets its first control point along the time. */
+const FLY_HANDLE = 0.4;
 const FADE = { duration: 200, easing: Easing.linear, reduceMotion: ReduceMotion.Never };
-/** The stamp lands in 0.45 s (#1578), one of the Рупор peaks ADR 0055 allows. */
+/**
+ * The stamp lands in 0.45 s (#1578), one of the Рупор peaks ADR 0055 allows,
+ * on one curve that runs a little past its end and comes back (ease-out
+ * back), so the stamp presses in and settles with no corner in its motion.
+ */
 const STAMP_LANDS = {
   duration: 450,
-  easing: Easing.out(Easing.quad),
+  easing: Easing.bezier(0.34, 1.56, 0.64, 1),
   reduceMotion: ReduceMotion.Never,
 };
+
+/**
+ * How a marked card flies off `remaining` points, let go at `speed` points a
+ * second its way: it leaves at the finger's speed, never slower, and gathers
+ * speed to the edge in at most 0.3 s; a fling faster than that goes straight
+ * off at its own speed.
+ */
+function flyFrom(remaining: number, speed: number) {
+  'worklet';
+  const duration =
+    speed > 0
+      ? Math.max(FLY_SHORTEST, Math.min(FLY_DURATION, (remaining / speed) * 1000))
+      : FLY_DURATION;
+  // The curve's slope at its start is the finger's speed as a share of the average.
+  const start = Math.min(1, (speed * duration) / 1000 / Math.max(1, remaining));
+  return {
+    duration,
+    easing: Easing.bezier(FLY_HANDLE, FLY_HANDLE * start, 1, 1),
+    reduceMotion: ReduceMotion.Never,
+  };
+}
 // hidden: not on board 04, owner 05.11. The «ВГОРУ — НАСТУПНЕ» chip's fade and the card's nudge.
 // /** Under Reduce Motion the chip comes in as the one short fade of ADR 0055. */
 // const CHIP_FADE = {
@@ -109,12 +135,15 @@ export function SwipeMarks({
   swipe,
   concealed,
   correction,
+  fill = false,
   children,
 }: {
   swipe: EntrySwipe;
   concealed: boolean;
   /** The card is a Correction's, whose Known stamp says the reader already says it right. */
   correction: boolean;
+  /** The card is a fixed frame that takes the page's height (ADR 0091), so the swipe grows to it. */
+  fill?: boolean;
   children: ReactNode;
 }) {
   const { strings } = useEdition();
@@ -190,7 +219,7 @@ export function SwipeMarks({
             ? 0
             : withSequence(
                 withTiming(to === 'known' ? OFF_SCREEN : -OFF_SCREEN, { duration: 0 }),
-                withTiming(0, BACK),
+                withSpring(0, BACK),
               );
           undo();
         },
@@ -284,13 +313,19 @@ export function SwipeMarks({
           // The next Entry comes in under the card as it flies, in the same frame,
           // rather than after the fly and a busy JS thread (board XSwipe).
           turnToNextOnUI();
-          offset.value = withTiming(to === 'known' ? OFF_SCREEN : -OFF_SCREEN, FLY, () => {
-            scheduleOnRN(showToastAfterTurn);
-          });
+          const side = to === 'known' ? 1 : -1;
+          offset.value = withTiming(
+            side * OFF_SCREEN,
+            flyFrom(OFF_SCREEN - side * translationX, Math.max(0, side * velocityX)),
+            () => {
+              scheduleOnRN(showToastAfterTurn);
+            },
+          );
           return;
         }
         drag.value = withTiming(0, FADE);
-        offset.value = withTiming(0, BACK);
+        // The card goes home from the speed it was let go at, with no stop first.
+        offset.value = withSpring(0, { ...BACK, velocity: velocityX });
       },
       testID: 'entry-card-side-swipe',
     }),
@@ -334,11 +369,10 @@ export function SwipeMarks({
   const stampStyle = useAnimatedStyle(() => {
     const progress = stamp.value;
     if (reduceMotion) return { opacity: progress, transform: [{ rotate: '-6deg' }] };
-    // Lands from 1.6 through 0.94 to 1, turning from -14° to -6°.
-    const scale = progress < 0.5 ? 1.6 - progress * 2 * 0.66 : 0.94 + (progress - 0.5) * 2 * 0.06;
+    // Lands from 1.6 to 1, pressing in to about 0.94 as the curve runs past its end, turning from -14° to -6°.
     return {
-      opacity: Math.min(1, progress * 2),
-      transform: [{ scale }, { rotate: `${String(-14 + progress * 8)}deg` }],
+      opacity: Math.min(1, Math.max(0, progress * 2)),
+      transform: [{ scale: 1.6 - progress * 0.6 }, { rotate: `${String(-14 + progress * 8)}deg` }],
     };
   });
 
@@ -363,7 +397,8 @@ export function SwipeMarks({
 
   return (
     <PageActionsProvider actions={markActions} onAction={onAction}>
-      <View style={styles.frame}>
+      {/* A card that fills its page leaves room under it for the stamp, which the page would cut. */}
+      <View testID="swipe-frame" style={[styles.frame, fill && styles.filled]}>
         <GestureDetector gesture={pan}>
           <Animated.View
             testID="swipe-card"
@@ -371,7 +406,7 @@ export function SwipeMarks({
               if (nativeEvent.layout.width > 0)
                 markDistance.value = nativeEvent.layout.width * MARK_SHARE;
             }}
-            style={cardStyle}
+            style={[fill && styles.fill, cardStyle]}
           >
             {children}
             {/* The wedges are the card's own, so they move and tilt with it, cut at its edges. */}
@@ -501,6 +536,8 @@ export function SwipeMarks({
 
 const styles = StyleSheet.create({
   frame: { flexShrink: 1 },
+  fill: { flexGrow: 1 },
+  filled: { flexGrow: 1, paddingBottom: swipeStampLayout.room },
   edges: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   edge: {
     position: 'absolute',

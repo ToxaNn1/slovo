@@ -53,7 +53,7 @@ const KEY_RADIUS = 11;
 const KEY_BORDER = 2;
 
 /**
- * The «ГОРТАЙТЕ ПАЛЬЦЕМ» sheet the Feed shows once (board 04): its title, a row
+ * The «ГОРТАЙ ПАЛЬЦЕМ» sheet the Feed shows once (board 04): its title, a row
  * per gesture (right marks the Entry Known, left Unknown, up turns to the next
  * card) and «ЗРОЗУМІЛО», which asks `onDismiss`; nothing else closes it. While
  * it is open a finger over the card plays the three gestures in a loop and

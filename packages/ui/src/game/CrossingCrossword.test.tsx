@@ -166,6 +166,41 @@ describe('CrossingGrid and CrossingClueBar', () => {
     expect(onNext).toHaveBeenCalled();
   });
 
+  it('shrinks its cells to the room the screen leaves it, and never past the board size', async () => {
+    const { cell: side, cellGap } = crossingCrosswordLayout;
+    const block: CrossingGridCell = { kind: 'block' };
+    await renderIn(
+      <CrossingGrid
+        cells={[
+          [block, block],
+          [block, block],
+        ]}
+        onSelect={jest.fn()}
+        testID="grid"
+      />,
+    );
+    const blockCell = () => screen.getByTestId('grid-0-0-block', { includeHiddenElements: true });
+    expect(blockCell()).toHaveStyle({ width: side, height: side });
+
+    // A short screen leaves the grid 100 pt of height: two rows and a gap fit in it.
+    await fireEvent(screen.getByTestId('grid-room'), 'layout', {
+      nativeEvent: { layout: { width: 300, height: 100 } },
+    });
+    expect(blockCell()).toHaveStyle({ width: (100 - cellGap) / 2, height: (100 - cellGap) / 2 });
+
+    // A narrow one: the width decides.
+    await fireEvent(screen.getByTestId('grid-room'), 'layout', {
+      nativeEvent: { layout: { width: 80, height: 300 } },
+    });
+    expect(blockCell()).toHaveStyle({ width: (80 - cellGap) / 2 });
+
+    // Room to spare keeps the board's cell.
+    await fireEvent(screen.getByTestId('grid-room'), 'layout', {
+      nativeEvent: { layout: { width: 600, height: 600 } },
+    });
+    expect(blockCell()).toHaveStyle({ width: side });
+  });
+
   it('draws the clue bar as the dark plate in both Themes', async () => {
     const { light } = coreTokens.colors;
     for (const scheme of ['light', 'dark'] as const) {

@@ -241,13 +241,13 @@ export const typeRoles = {
   /** The form a «Впиши слово» Round asks to replace, under its ask (board 07 g3): «замість «вірогідно»». */
   roundInstead: role('ui', '500', 16, 22),
   /** A Round's option on its tile when it is a Word. */
-  roundOptionWord: role('word', '800', 22, 26),
+  roundOptionWord: role('word', '800', 18, 22),
   /** A Round's option on its tile when it is a sentence. */
-  roundOptionSentence: role('word', '700', 18, 23),
+  roundOptionSentence: role('ui', '600', 17, 22),
   /** A Round's option on its tile when it is a long text. */
-  roundOptionLong: role('ui', '500', 15, 20),
-  /** The key of a Round's option, such as «А», and the ✕ on a wrong pick's key. */
-  roundOptionKey: role('word', '900', 16, 16),
+  roundOptionLong: role('ui', '500', 16, 22),
+  /** The key of a Round's option, such as «А»: a line of 20 centres the letter in its box. */
+  roundOptionKey: role('word', '900', 16, 20),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
   roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
   /** The right answer on the Round's answer sheet. */
@@ -492,8 +492,16 @@ export const typeRoles = {
   actionHint: role('ui', '600', 13, 15.6),
   /** The shout on the closed card of the Word of the Day, «ЛОВИ СЛОВО!». */
   heroShout: role('word', '900', 40, 38, -1.5, 'uppercase'),
-  /** The kicker over the Lemma on a red ground, such as «СЛОВО ДНЯ · 3 ЛИСТОПАДА». */
+  /** The kicker over the Lemma of the Word of the Day on a red ground, such as «СЛОВО ДНЯ · 3 ЛИСТОПАДА». */
   heroKicker: role('word', '800', 11, 11, 2, 'uppercase'),
+  /** The kicker over the Lemma on the tabbed card of the Word of the Day, «СЛОВО ДНЯ · 7.11» (board p1). */
+  cardKicker: role('word', '800', 11, 11, 1.5, 'uppercase'),
+  /** The big red opening quote mark over the Example in the tabbed Word card's «Приклад» (board p1). */
+  exampleMark: role('word', '900', 54, 26),
+  /** The small label over the chips in the tabbed Word card's «Зв’язки», «Синоніми» (board p1). */
+  linksLabel: role('ui', '700', 12, 12),
+  /** A Synonym or an antonym on its chip in the tabbed Word card's «Зв’язки» (board p1). */
+  linkChip: role('ui', '700', 15, 15),
   /** The giant letter behind the card of the Word of the Day: the Lemma's first, or «?» while it is closed. */
   giantLetter: role('word', '900', 360, 360),
   /** The giant letter behind the red panel on top of Entry details. */
@@ -664,6 +672,27 @@ export function roleSize(name: TypeRole): DrawnSize {
 }
 
 /**
+ * How a text's size steps down as the text grows, so a long text takes a
+ * smaller size and the cards keep one text scale (owner 08.11): the share of
+ * the full size for a text of at most `upTo` letters, shortest first, and
+ * `longer` for a text longer than every step.
+ */
+export interface LengthSteps {
+  readonly steps: readonly { readonly upTo: number; readonly scale: number }[];
+  readonly longer: number;
+}
+
+/**
+ * `size` at the share `steps` give the length of `text`, counted in letters
+ * without the Stress marks.
+ */
+export function sizeForLength(size: DrawnSize, text: string, steps: LengthSteps): DrawnSize {
+  const length = text.replace(/\p{M}/gu, '').length;
+  const scale = steps.steps.find(({ upTo }) => length <= upTo)?.scale ?? steps.longer;
+  return { fontSize: size.fontSize * scale, lineHeight: size.lineHeight * scale };
+}
+
+/**
  * The hard offset shadow under a pressed tile or button: no blur, the edge
  * colour straight below. Pressed, the tile drops by the difference, so its
  * bottom edge stays where it was.
@@ -757,6 +786,13 @@ export const wedges = {
     [1, 0.25],
     [1, 1],
     [0, 0.75],
+  ],
+  /** A bar slanted forward: the rule under a Word's Lemma and the mark over the selected tab of an Entry card (board p1). */
+  slant: [
+    [0.03, 0],
+    [1, 0],
+    [0.97, 1],
+    [0, 1],
   ],
   /** A box with its bottom right corner cut up. */
   cut: [

@@ -36,7 +36,7 @@ Write everything in the repo in English: code, comments, tests, docs, commit mes
 - `main` takes changes through PRs with green CI only. Work on a branch.
 - Commit and push only when the owner asks in the current conversation. One approval covers that one commit.
 - CI checks that every commit is the owner's and that no AI attribution is left; a PR with auto-merge on merges itself once every check is green.
-- Write Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`). Keep commits small and logical.
+- Write Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`, `style:`). Keep commits small and logical.
 - A scope is a workspace folder name (`mobile`, `ui`, `site` …), `deps`, `deps-dev` or `test`: `commitlint.config.js`. `.claude/hooks/commit-messages.mjs` lints every commit and blocks a push CI's "Commit messages" check would fail; reword, never work around it.
 - Commits come from the owner's identity alone. Leave git config and hooks untouched and let hooks run. Commit messages, PR titles and PR descriptions carry no `Co-Authored-By` trailer and no AI attribution, whatever your tooling suggests.
 

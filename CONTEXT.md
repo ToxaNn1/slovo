@@ -202,7 +202,7 @@ A rule of good speech with its standard form, a short explanation and its own Ga
 _Avoid_: Hack, advice, lifehack
 
 **Entry card**:
-How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). The Feed and every screen that opens a kept Entry show the same Entry card.
+How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). With `wordTabs` on, every card but the Word of the Day's is a fixed frame the height of the Feed's page (ADR 0091): a Word card with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, a Correction card with «Як краще», «Чому» and «Приклади» under its struck non-standard form, an Idiom card with «Суть», «Звідки» and «Приклад» under its expression, a Tip card with «Суть» and «Приклад», and a Synonym Row card in the same frame, empty tabs left out. Content too tall for the frame shrinks a font size at a time down to S, then is clamped under «Детальніше», which opens it whole and lets the page scroll. The Feed and every screen that opens a kept Entry show the same Entry card.
 _Avoid_: Item, tile (for a card; a tile is the pressed button of the design)
 
 ### User's words
@@ -212,7 +212,7 @@ The single built-in list of Entries the user marked with the heart ("save word")
 _Avoid_: Saved words, likes
 
 **Dashboard**:
-The home behind «Стрічка»: the Word of the Day hero, the Mood check-in, «Попередні слова», the «Категорії» rail of Categories of Words, the «Добірки» rail of Curated Collections and the Correction Types rail, whose header opens the grid of the Categories of Corrections. Each block has its own Feature Switch; with `dashboard` off the Feed is the home.
+The home the app opens on, behind «Стрічка» unless `feedTab` makes that tab open the Feed (ADR 0093): the Word of the Day hero, the Mood check-in, «Попередні слова», the «Категорії» rail of Categories of Words, the «Добірки» rail of Curated Collections and the Correction Types rail, whose header opens the grid of the Categories of Corrections. Each block has its own Feature Switch; with `dashboard` off the Feed is the home.
 _Avoid_: Home, start screen, overview
 
 **Curated Collection**:

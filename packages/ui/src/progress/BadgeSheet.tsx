@@ -1,10 +1,8 @@
 import type { BadgeShape, BadgeTone } from '@slovo/contracts';
-import { useEffect } from 'react';
-import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { BottomSheet } from '../primitives/BottomSheet';
 import { Button } from '../primitives/Button';
-import { ToastFace } from '../primitives/UndoToast';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { badgeSheet, typeStyle } from '../tokens';
@@ -17,8 +15,6 @@ export type BadgeSheetBadge = BadgeGridItem & {
   readonly tone: BadgeTone;
   /** Its date once earned, how far its condition has come while not. */
   readonly status: string;
-  /** A toast over the sheet, such as the one at a tap on a Badge not yet earned. */
-  readonly toast?: string | undefined;
 };
 
 /**
@@ -40,11 +36,6 @@ export function BadgeSheet({
   doneLabel: string;
   onClose: () => void;
 }) {
-  const toast = visible ? badge?.toast : undefined;
-  useEffect(() => {
-    if (toast !== undefined) AccessibilityInfo.announceForAccessibility(toast);
-  }, [toast]);
-
   return (
     <BottomSheet visible={visible && badge !== undefined} onClose={onClose} testID="badge-sheet">
       {badge !== undefined && (
@@ -73,11 +64,6 @@ function BadgeSheetContent({
 
   return (
     <View style={styles.content}>
-      {badge.toast !== undefined && (
-        <View style={styles.toast} pointerEvents="none">
-          <ToastFace message={badge.toast} />
-        </View>
-      )}
       <Text {...voice} style={[typeStyle('soonTag', tokens), { color: colors.accent }]}>
         {kicker}
       </Text>
@@ -124,14 +110,6 @@ function BadgeSheetContent({
 
 const styles = StyleSheet.create({
   content: { alignItems: 'center' },
-  toast: {
-    position: 'absolute',
-    bottom: '100%',
-    left: 0,
-    right: 0,
-    marginBottom: badgeSheet.toastGap,
-    alignItems: 'center',
-  },
   mark: { marginTop: badgeSheet.markTop },
   name: { marginTop: badgeSheet.nameTop, textAlign: 'center' },
   status: { marginTop: badgeSheet.statusTop, textAlign: 'center' },

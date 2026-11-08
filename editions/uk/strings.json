@@ -58,6 +58,7 @@
   },
   "wordOfTheDay": {
     "badge": "Слово дня · {day} {month}",
+    "kicker": "Слово дня · {day}.{month}",
     "shout": "Лови слово!",
     "reveal": "Розкрити"
   },
@@ -275,8 +276,7 @@
         "kicker": "ВІДЗНАКА",
         "notYet": "Ще ні · {progress}",
         "done": "ГОТОВО"
-      },
-      "lockedToast": "«{name}» ще не твоя. Поки що."
+      }
     },
     "sounds": {
       "sounds": "Звуки",
@@ -415,6 +415,23 @@
     "etymology": "Етимологія",
     "extraDefinitions": "Інші значення",
     "moreExamples": "Ще приклади",
+    "tabMore": "Детальніше",
+    "tabs": {
+      "essence": "Суть",
+      "example": "Приклад",
+      "links": "Зв’язки",
+      "history": "Історія"
+    },
+    "linkLabels": {
+      "synonyms": { "one": "Синонім", "many": "Синоніми" },
+      "antonyms": { "one": "Антонім", "many": "Антоніми" }
+    },
+    "moreMeanings": {
+      "one": "Ще {count} значення — у вкладці «Історія».",
+      "few": "Ще {count} значення — у вкладці «Історія».",
+      "many": "Ще {count} значень — у вкладці «Історія».",
+      "other": "Ще {count} значення — у вкладці «Історія»."
+    },
     "history": "Історія слова",
     "oftenSaid": "Часто кажуть:",
     "oftenSaidHint": "Відкриває виправлення",
@@ -435,6 +452,11 @@
       "paronym": "пароніми"
     },
     "correctionType": "Тип: {type}",
+    "tabs": {
+      "better": "Як краще",
+      "why": "Чому",
+      "examples": "Приклади"
+    },
     "nonStandard": "Так часто кажуть",
     "standard": "Українською краще",
     "otherEquivalents": "також: {equivalents}",
@@ -455,6 +477,11 @@
       "proverb": "прислів’я"
     },
     "etymology": "Походження",
+    "tabs": {
+      "essence": "Суть",
+      "origin": "Звідки",
+      "example": "Приклад"
+    },
     "heading": "{expression}, {type}",
     "source": "Джерело: {source}"
   },
@@ -707,7 +734,7 @@
         "share": "Поділитися",
         "hide": "Сховати",
         "report": "Повідомити про помилку",
-        "close": "Закрити",
+        "close": "Скасувати",
         "toasts": {
           "known": "Позначено: знаю",
           "unknown": "Позначено: не знаю",
@@ -715,7 +742,7 @@
         }
       },
       "hint": {
-        "title": "ГОРТАЙТЕ ПАЛЬЦЕМ",
+        "title": "ГОРТАЙ ПАЛЬЦЕМ",
         "rows": {
           "known": {
             "title": "Вправо — знаю",
@@ -727,7 +754,7 @@
           },
           "next": {
             "title": "Вгору — наступне слово",
-            "body": "Нове слово тільки коли ви готові."
+            "body": "Нове слово — коли захочеш."
           }
         },
         "dismiss": "ЗРОЗУМІЛО"
@@ -1181,6 +1208,7 @@
     },
     "enoughForToday": {
       "message": "Може, на сьогодні досить?",
+      "body": "Уже {n} карток позаду. Рідкісні слова краще засвоюються невеликими порціями.",
       "keepGoing": "Гортати далі"
     },
     "notificationExplainer": {

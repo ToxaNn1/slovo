@@ -592,6 +592,16 @@ describe('Self-check on a Correction card', () => {
   });
 });
 
+describe('the standard form on a Correction card', () => {
+  it('sets the main equivalent at the board size of a standard form, not at the Lemma size', async () => {
+    await render(inEdition(<EntryCard card={card} />));
+
+    const form = within(screen.getByTestId('correction-standard')).getByText('join in');
+    // Board С2.6: «Українською краще» at 30 pt, where the Lemma at step M is 50 (owner 08.11).
+    expect(form).toHaveStyle({ fontSize: 30 });
+  });
+});
+
 describe('the literary uses on a Correction card', () => {
   const withUses: EntryFeedCard = {
     kind: 'correction',
@@ -791,6 +801,16 @@ describe('the Idiom card', () => {
   });
 
   it.each([
+    ['a short expression at the Lemma size', placeName, 50],
+    ['a longer one at 40', idiomCard(), 40],
+    ['a long one at 30', proverb, 30],
+  ])('sets %s, where the Lemma is 50 (owner 08.11)', async (_case, model, fontSize) => {
+    await render(inEdition(<EntryCard card={{ kind: 'idiom', entryId: 'i1', model }} />));
+
+    expect(screen.getByTestId('idiom-expression')).toHaveStyle({ fontSize });
+  });
+
+  it.each([
     ['an idiom', idiomCard(), 'to beat the bushes, idiom', 'To idle about.'],
     ['a place name', placeName, 'Berdychiv, place name', 'A town in the Zhytomyr region.'],
     ['a proverb', proverb, 'the early bird catches the worm, proverb', 'Who starts early, wins.'],
@@ -976,6 +996,29 @@ describe('the corner of an Entry card', () => {
       const row = screen.getByTestId(`${kind}-kicker-row`);
       expect(within(row).getByTestId(`${kind}-corner`)).not.toHaveStyle({ position: 'absolute' });
       if (kicker !== null) expect(within(row).getByText(kicker)).toBeOnTheScreen();
+    },
+  );
+
+  it.each<[string, EntryFeedCard]>([
+    ['correction', { ...card, review: true }],
+    ['idiom', { kind: 'idiom', entryId: 'i1', model: idiomCard(), review: true }],
+    ['word', { ...wordWithEverything, review: true }],
+  ])(
+    'sets the corner of a %s card brought back for Review in one row beside its Review label',
+    async (kind, entry) => {
+      await render(
+        inEdition(
+          <EntryCard
+            card={entry}
+            slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+          />,
+        ),
+      );
+
+      const row = screen.getByTestId(`${kind}-review-row`);
+      expect(within(row).getByTestId('review-label')).toBeOnTheScreen();
+      expect(within(row).getByTestId(`${kind}-corner`)).toBeOnTheScreen();
+      expect(screen.getAllByTestId(`${kind}-corner`)).toHaveLength(1);
     },
   );
 

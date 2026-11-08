@@ -7,10 +7,14 @@ import {
   designTokens,
   fontSizeSteps,
   halftone,
+  idiomExpressionLength,
   motion,
   offsetShadow,
   roleAt,
+  roleSize,
+  roundPromptLength,
   shadowEdge,
+  sizeForLength,
   typeRoles,
   typeStyle,
   type TypeRole,
@@ -215,5 +219,47 @@ describe('the Core’s shape, type and motion roles', () => {
     expect(motion.press.duration).toBe(80);
     expect(motion.reduceMotion.duration).toBe(300);
     expect(halftone).toEqual({ dot: 'rgba(20, 12, 10, 0.22)', radius: 1.1, cell: 6 });
+  });
+});
+
+describe('sizeForLength', () => {
+  const size = { fontSize: 50, lineHeight: 60 };
+  const steps = {
+    steps: [
+      { upTo: 5, scale: 1 },
+      { upTo: 10, scale: 0.8 },
+    ],
+    longer: 0.6,
+  } as const;
+  const text = (length: number) => 'a'.repeat(length);
+
+  it('keeps the full size for a short text and steps it down as the text grows', () => {
+    expect(sizeForLength(size, text(5), steps)).toEqual(size);
+    expect(sizeForLength(size, text(10), steps)).toEqual({ fontSize: 40, lineHeight: 48 });
+    expect(sizeForLength(size, text(11), steps)).toEqual({ fontSize: 30, lineHeight: 36 });
+  });
+
+  it('counts no Stress mark as a letter', () => {
+    expect(sizeForLength(size, `${text(2)}\u0301${text(3)}`, steps)).toEqual(size);
+  });
+
+  it('sets a Round prompt at 24, a longer one at 20 and a long one at 18 (owner 08.11)', () => {
+    const at = (length: number) =>
+      sizeForLength(roleSize('roundPrompt'), text(length), roundPromptLength).fontSize;
+    expect(at(22)).toBe(24);
+    expect(at(68)).toBe(20);
+    // The owner's Quick Question of 110 letters.
+    expect(at(110)).toBe(18);
+  });
+
+  it("sets an Idiom's expression at the Lemma size, a longer one at 40 and a long one at 30 at M (owner 08.11)", () => {
+    const lemma = { fontSize: fontSizeSteps.M.lemma, lineHeight: 65 };
+    const at = (length: number) =>
+      sizeForLength(lemma, text(length), idiomExpressionLength).fontSize;
+    expect(at(7)).toBe(50);
+    expect(at(14)).toBe(40);
+    // «мокрим рядном накрити» and «І долоню протиснути не можна».
+    expect(at(21)).toBe(30);
+    expect(at(28)).toBe(30);
   });
 });
