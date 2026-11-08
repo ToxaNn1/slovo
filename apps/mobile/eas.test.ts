@@ -5,6 +5,9 @@ import { openAppConfig, REPO_DIR } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
 
 const eas: unknown = JSON.parse(readFileSync(new URL('eas.json', import.meta.url), 'utf8'));
+const manifest: unknown = JSON.parse(
+  readFileSync(new URL('package.json', import.meta.url), 'utf8'),
+);
 
 const app = openAppConfig(REPO_DIR).config;
 const { development, release } = app.buildProfiles.ios;
@@ -39,6 +42,15 @@ describe('eas.json', () => {
         },
       },
     });
+  });
+
+  it("builds the pack from the Deployment's snapshot before bundling, with no snapshot file", () => {
+    // EAS runs the hook after installing; build:pack fetches the records from
+    // the backend at EXPO_PUBLIC_SLOVO_API_URL, which the environment holds.
+    expect(manifest).toHaveProperty(
+      ['scripts', 'eas-build-post-install'],
+      'pnpm --dir ../.. build:pack',
+    );
   });
 
   it('builds a development client for the simulator only in the development profile', () => {
