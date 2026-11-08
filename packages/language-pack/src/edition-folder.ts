@@ -30,7 +30,13 @@ import {
 } from '@slovo/contracts';
 import { z } from 'zod';
 
-import { checkContentSet, parseAgainst, type Authored, type ContentSet } from '@slovo/content-rules';
+import {
+  checkContentSet,
+  CROSSWORD_DAYS_FILE,
+  parseAgainst,
+  type Authored,
+  type ContentSet,
+} from '@slovo/content-rules';
 
 import { buildErrorsOf, formatBuildError, type BuildError } from './build-error';
 import { ContentManifestSchema, MANIFEST_FILE } from './content-manifest';
@@ -47,7 +53,7 @@ export const REPO_DIR = fileURLToPath(new URL('../../..', import.meta.url));
 export const APP_CONFIG_FILE = 'app/app.json';
 
 /** Where an Edition keeps the days of its Daily Crossword (ADR 0052). */
-export { CROSSWORD_DAYS_FILE } from '@slovo/content-rules';
+export { CROSSWORD_DAYS_FILE };
 
 /** Where each file of an Edition lies in its folder. */
 const FILES = {
@@ -363,8 +369,12 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
   function checkNew(withNew: (set: ContentSet) => ContentSet): BuildError[] {
     content ??= files.entries();
     const set = withNew(content);
-    const old = new Set([content.words, content.corrections, content.idioms, content.synonymRows].flat());
-    const drafts = [set.words, set.corrections, set.idioms, set.synonymRows].flat().filter((r) => !old.has(r));
+    const old = new Set(
+      [content.words, content.corrections, content.idioms, content.synonymRows].flat(),
+    );
+    const drafts = [set.words, set.corrections, set.idioms, set.synonymRows]
+      .flat()
+      .filter((r) => !old.has(r));
     return onlyIn(drafts, buildErrorsOf(checkContentSet(config, set, { today: new Date() })));
   }
 
@@ -583,27 +593,8 @@ function parseFile<T>(
     const reason = error instanceof Error ? error.message : String(error);
     return { ok: false, errors: [{ file, message: `Invalid JSON: ${reason}` }] };
   }
-  const result = schema.safeParse(json);
-  if (result.success) return { ok: true, value: result.data };
-  const entryId = isEntry ? entryIdOf(json) : undefined;
-  const errors = result.error.issues.flatMap((issue) =>
-    // An unknown key is reported on the object holding it, so name each key as the field.
-    (issue.code === 'unrecognized_keys'
-      ? issue.keys.map((key) => ({ path: [...issue.path, key], message: 'Unknown field' }))
-      : [{ path: issue.path, message: issue.message }]
-    ).map(({ path: fieldPath, message }) => ({
-      file,
-      ...(entryId === undefined ? {} : { entryId }),
-      ...(fieldPath.length === 0 ? {} : { field: fieldPath.join('.') }),
-      message,
-    })),
-  );
-  return { ok: false, errors };
-}
-
-function entryIdOf(value: unknown): string | undefined {
-  if (typeof value !== 'object' || value === null || !('id' in value)) return undefined;
-  return typeof value.id === 'string' && value.id !== '' ? value.id : undefined;
+  const result = parseAgainst(schema, file, json, { isEntry });
+  return result.ok ? result : { ok: false, errors: buildErrorsOf(result.refusals) };
 }
 
 /** The texts file of a Narrator Voice folder, parsed once where it enters. */

@@ -1,4 +1,3 @@
-
 import { checksumOf } from '@slovo/content-rules';
 import { PackMetadataSchema, type PackMetadata } from '@slovo/contracts';
 import { z } from 'zod';

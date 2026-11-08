@@ -1,16 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type {
-  Correction,
-  CrosswordDay,
-  CuratedCollection,
-  Entry,
-  Idiom,
-  SynonymRow,
-  Tip,
-  Word,
-} from '@slovo/contracts';
+import type { Correction, CuratedCollection, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import { WordIdSchema } from '@slovo/contracts';
 
 import { checkContentSet, type Authored } from '@slovo/content-rules';
