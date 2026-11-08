@@ -264,7 +264,11 @@ export const typeRoles = {
   guideNumber: role('ui', '700', 15, 15),
   /** The title of a step of the widget guide. */
   guideTitle: role('ui', '700', 17, 20),
-  /** The Lemma on a widget of the widget guide's drawing. */
+  /** The mode over the Lemma on a widget of the widget guide's drawing (board 15: 8 and 9). */
+  widgetMode: role('word', '800', 8, 10, 1.2, 'uppercase'),
+  /** The Lemma on the drawing's small widget (board 15: 19 at 158 wide). */
+  widgetSmallLemma: role('word', '500', 19, 23),
+  /** The Lemma on the drawing's medium widget (board 15: 26 at 346 wide, 24 at the drawing's width). */
   widgetLemma: role('word', '500', 24, 29),
   /** The short line under the Lemma on the drawing's medium widget. */
   widgetLine: role('word', '500', 12, 15),

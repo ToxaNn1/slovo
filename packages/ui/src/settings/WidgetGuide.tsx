@@ -97,7 +97,7 @@ function SampleWidget({
       <Text
         allowFontScaling={false}
         numberOfLines={1}
-        style={[typeStyle('eyebrow', tokens), { color: colors.decor }]}
+        style={[typeStyle('widgetMode', tokens), { color: colors.decor }]}
       >
         {mode}
       </Text>
@@ -105,7 +105,10 @@ function SampleWidget({
         <Text
           allowFontScaling={false}
           numberOfLines={1}
-          style={[typeStyle('widgetLemma', tokens), { color: colors.ink }]}
+          style={[
+            typeStyle(size === 'small' ? 'widgetSmallLemma' : 'widgetLemma', tokens),
+            { color: colors.ink },
+          ]}
         >
           {lemma}
         </Text>
