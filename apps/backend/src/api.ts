@@ -6,6 +6,7 @@ import { apiContract } from '@slovo/contracts/api';
 import { apiDescriptionOptions } from '@slovo/contracts/api-description';
 import type {
   Accounts,
+  AdminAccess,
   CollectionLinks,
   CommunityCounters,
   ContentPacks,
@@ -16,6 +17,7 @@ import type {
 import type { Logger } from 'pino';
 
 import { accountProcedures } from './account/account-procedures';
+import { adminProcedures } from './admin/admin-procedures';
 import { collectionLinksProcedures } from './collection-links/collection-links-procedures';
 import { contentProcedures } from './content/content-procedures';
 import { countersProcedures } from './counters/counters-procedures';
@@ -64,6 +66,7 @@ interface ApiContext extends ResponseHeadersPluginContext, FailureContext {
  */
 export function createApiHandler({
   accounts,
+  admin,
   collectionLinks,
   communityCounters,
   contentPacks,
@@ -72,6 +75,7 @@ export function createApiHandler({
   sync,
 }: {
   accounts: Accounts;
+  admin: AdminAccess;
   collectionLinks: CollectionLinks;
   communityCounters: CommunityCounters;
   contentPacks: ContentPacks;
@@ -83,6 +87,7 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
+      admin: adminProcedures(admin),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks),
       counters: countersProcedures(communityCounters),
