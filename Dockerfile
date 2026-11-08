@@ -5,7 +5,7 @@
 # Language Pack is not built here: packs reach the Deployment through
 # `pnpm publish:pack` (ADR 0032). `railway.json` names the release command
 # and the health route.
-FROM node:22.23.3-bookworm-slim AS base
+FROM node:22.23.4-bookworm-slim AS base
 
 # `production` makes the server refuse Mailpit's defaults and leaves the
 # development dependencies out of the install. Corepack keeps the pnpm of
