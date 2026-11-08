@@ -13,7 +13,13 @@ import { createAdminStore, hashToken } from '../admin/admin-store';
 import { createDatabase } from '../database/database';
 import { systemRandom } from '../random';
 import { startServer } from '../server';
-import { createTestDatabase, silentLogger, testApp, testDatabaseUrl } from '../test-support';
+import {
+  adminCommandDeps,
+  createTestDatabase,
+  silentLogger,
+  testApp,
+  testDatabaseUrl,
+} from '../test-support';
 
 /** A scratch folder of the file's own: a copy of the UA Edition folder and the CLI's input files. */
 const scratch = (() => {
@@ -49,10 +55,11 @@ async function servedBackend() {
     random: systemRandom,
     hash: hashToken,
   });
+  const commandDeps = adminCommandDeps(admin, database);
   const out: string[] = [];
   const io = { out: (line: string) => out.push(line), err: () => undefined };
-  await runAdminCommand(['owner', 'add', 'owner@example.com'], admin, io);
-  await runAdminCommand(['agent', 'add', 'claude-content'], admin, io);
+  await runAdminCommand(['owner', 'add', 'owner@example.com'], commandDeps, io);
+  await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
   const imported = await backend.importContent('uk', join(editionsDir, 'uk'));
@@ -60,7 +67,7 @@ async function servedBackend() {
   const server = await startServer({ app: backend.app, database, port: 0 });
   onTestFinished(() => server.stop());
   const url = `http://localhost:${String(server.port)}/v1`;
-  return { ...backend, admin, token, url, agent: backend.clientOf(token) };
+  return { ...backend, admin, commandDeps, token, url, agent: backend.clientOf(token) };
 }
 
 /** Runs `pnpm content` from the repo root, as an agent does, against the API at `url`. */
@@ -257,7 +264,7 @@ describe('pnpm content against the content write API', () => {
       '--edition',
       'uk',
     );
-    await runAdminCommand(['agent', 'revoke', 'claude-content'], backend.admin, {
+    await runAdminCommand(['agent', 'revoke', 'claude-content'], backend.commandDeps, {
       out: () => undefined,
       err: () => undefined,
     });

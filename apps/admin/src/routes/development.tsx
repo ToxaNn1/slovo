@@ -3,6 +3,10 @@ import { createFileRoute } from '@tanstack/react-router';
 
 import { adminApi } from '../api';
 import { EasBlock, GitHubBlocks, Source } from '../components/development/blocks';
+import { OwnerChecks } from '../components/owner-checks';
+import { sectionAt } from '../sections';
+
+const section = sectionAt('/development');
 
 export const Route = createFileRoute('/development')({
   component: Development,
@@ -22,8 +26,9 @@ function Development() {
   return (
     <section aria-labelledby="section-title" className="flex flex-col gap-8">
       <h1 id="section-title" className="font-display text-2xl font-semibold">
-        Розробка
+        {section.title}
       </h1>
+      <OwnerChecks />
       {github !== undefined && (
         <Source name="GitHub" read={github}>
           {github.state === 'ok' && <GitHubBlocks read={github} />}

@@ -67,6 +67,9 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     kill: handlerOf('kill', fixtures.kill),
     editions: handlerOf('editions', fixtures.editions),
     development: handlerOf('development', fixtures.development),
+    ownerChecks: handlerOf('ownerChecks', fixtures.ownerChecks),
+    tickOwnerCheck: handlerOf('tickOwnerCheck', fixtures.tickOwnerCheck),
+    addOwnerCheck: handlerOf('addOwnerCheck', fixtures.addOwnerCheck),
   };
   const content = fixtures.content;
   const contentHandlers: Record<ContentName, HttpHandler> = {

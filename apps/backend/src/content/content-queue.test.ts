@@ -13,6 +13,7 @@ import { createDatabase } from '../database/database';
 import { mistakeReports } from '../database/schema';
 import { systemRandom } from '../random';
 import {
+  adminCommandDeps,
   createTestDatabase,
   signedInAdmin,
   silentLogger,
@@ -45,8 +46,12 @@ async function queueBackend() {
   });
   const out: string[] = [];
   const io = { out: (line: string) => out.push(line), err: () => undefined };
-  await runAdminCommand(['owner', 'add', 'first-owner@example.com'], admin, io);
-  await runAdminCommand(['agent', 'add', 'claude-content'], admin, io);
+  await runAdminCommand(
+    ['owner', 'add', 'first-owner@example.com'],
+    adminCommandDeps(admin, database),
+    io,
+  );
+  await runAdminCommand(['agent', 'add', 'claude-content'], adminCommandDeps(admin, database), io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
   const result = await backend.importContent('uk', folder);

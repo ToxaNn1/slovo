@@ -7,6 +7,7 @@
  */
 import { createHash, randomInt, randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -26,8 +27,10 @@ import {
   REPO_DIR,
 } from '@slovo/language-pack/edition';
 import {
+  createOwnerChecks,
   systemClock,
   totpOf,
+  type AdminAccess,
   type AdminRole,
   type AppleIdentity,
   type AppleVerifier,
@@ -46,7 +49,9 @@ import { pino, type Logger } from 'pino';
 import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
 
 import { keptSignInCode } from './account/authenticator';
+import type { CommandDeps } from './admin/admin-command';
 import { createAdminStore, hmacSha1 } from './admin/admin-store';
+import { createOwnerCheckStore } from './admin/owner-check-store';
 import { createApp } from './app';
 import { deleteCollectionLink } from './collection-links/collection-link-delete';
 import { publishPack } from './content/publish-pack';
@@ -67,6 +72,19 @@ const LOCAL_DATABASE_URL = 'postgres://slovo:slovo@localhost:55432/slovo';
 /** A logger that writes nothing, for tests that don't read the logs. */
 /** Who writes the switches in a test, for the Action log. */
 const TEST_WRITE = { who: { kind: 'command', command: 'test' }, reason: 'test' } as const;
+
+/** What `pnpm admin` runs its commands with, over the test's database. */
+export function adminCommandDeps(admin: AdminAccess, database: Database): CommandDeps {
+  return {
+    admin,
+    ownerChecks: createOwnerChecks({
+      store: createOwnerCheckStore(database),
+      clock: systemClock,
+      admin,
+    }),
+    readFile: (path) => readFile(path, 'utf8'),
+  };
+}
 
 export const silentLogger = pino({ enabled: false });
 
