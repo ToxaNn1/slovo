@@ -15,7 +15,16 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
 import { LabelChip } from '../primitives/LabelChip';
-import { blockGap, minTouchTarget, space, typeStyle, wordCardControls } from '../tokens';
+import { Wedge } from '../primitives/Wedge';
+import {
+  blockGap,
+  entryCardFrame,
+  minTouchTarget,
+  space,
+  typeStyle,
+  wedges,
+  wordCardControls,
+} from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useOnAccent } from './on-accent';
 import { useIsPageOnScreen, usePageTurnActions } from '../primitives/VerticalPager';
@@ -26,8 +35,10 @@ import { CategoryChip } from './CategoryChip';
 
 /**
  * The Word's headline: the Lemma with its falling Stress, part of speech and
- * register chips, and the Pronunciation button beside them. On the red ground
- * (`useOnAccent`) it is set in the key ink of both Themes.
+ * register chips, and the Pronunciation button beside them; on the tabbed
+ * card (`tabbed`) the Category chip ends the grammar line and the button
+ * sits at its right end (board p1). Off the red ground the stressed letter is red over a red rule under the Lemma (board
+ * p1); on it (`useOnAccent`) it is set in the key ink of both Themes.
  */
 export function WordHeadline({
   card,
@@ -35,6 +46,7 @@ export function WordHeadline({
   concealed,
   stressFalls,
   lemmaFont: calligraphic,
+  tabbed,
 }: {
   card: WordCardModel;
   lemmaSize: TextSize;
@@ -43,6 +55,8 @@ export function WordHeadline({
   stressFalls: boolean;
   /** The calligraphic font family of the Word of the Day's Lemma, if it is set in one. */
   lemmaFont: string | undefined;
+  /** The tabbed card's headline (ADR 0088, board p1). */
+  tabbed: boolean;
 }) {
   const tokens = useTokens();
   const { fontFamilies } = tokens;
@@ -64,6 +78,33 @@ export function WordHeadline({
       : undefined;
   const lemmaFont = calligraphic ?? fontFamilies.word;
   const grammar = (form: 'short' | 'full') => partOfSpeechText(strings, card, form);
+  // The tabbed card keeps its Category chip in the grammar line, even under Self-check.
+  const category = tabbed ? card.categoryName : undefined;
+  const pronunciation =
+    Pronunciation === undefined ? null : <Pronunciation lemma={card.lemma} entryId={card.wordId} />;
+  const grammarLine = (
+    <>
+      <Text
+        testID="word-part-of-speech"
+        accessibilityLabel={grammar('full')}
+        {...voice}
+        style={[typeStyle('partOfSpeech', tokens), { color: colors.muted }]}
+      >
+        {grammar('short')}
+      </Text>
+      {!concealed &&
+        card.registers.map((register) => (
+          <LabelChip
+            key={register}
+            testID={`word-register-${register}`}
+            text={registerText(strings, register, card.region, 'short')}
+            accessibilityLabel={registerText(strings, register, card.region, 'full')}
+            size="tight"
+          />
+        ))}
+      {category === undefined ? null : <CategoryChip testID="word-category" name={category} />}
+    </>
+  );
   return (
     <View style={styles.header}>
       <View style={styles.headline}>
@@ -83,37 +124,37 @@ export function WordHeadline({
           numberOfLines={card.lemma.includes(' ') ? 2 : 1}
           adjustsFontSizeToFit
           minimumFontScale={0.5}
+          stressed={
+            onAccent ? undefined : { mark: STRESS_MARK, style: { color: tokens.colors.accent } }
+          }
           style={[
             typeStyle('heroWord', { fontFamilies: { ...fontFamilies, word: lemmaFont } }),
             { color: colors.ink },
           ]}
         />
+        {!onAccent && (
+          <Wedge
+            testID="word-rule"
+            points={wedges.slant}
+            color={tokens.colors.accent}
+            width={entryCardFrame.rule.width}
+            height={entryCardFrame.rule.height}
+          />
+        )}
         <RevealDetail step={0}>
-          <View style={styles.grammar}>
-            <Text
-              testID="word-part-of-speech"
-              accessibilityLabel={grammar('full')}
-              {...voice}
-              style={[typeStyle('partOfSpeech', tokens), { color: colors.muted }]}
-            >
-              {grammar('short')}
-            </Text>
-            {!concealed &&
-              card.registers.map((register) => (
-                <LabelChip
-                  key={register}
-                  testID={`word-register-${register}`}
-                  text={registerText(strings, register, card.region, 'short')}
-                  accessibilityLabel={registerText(strings, register, card.region, 'full')}
-                  size="tight"
-                />
-              ))}
-          </View>
+          {tabbed ? (
+            <View testID="word-grammar" style={styles.grammarRow}>
+              <View style={[styles.grammar, styles.grammarLine]}>{grammarLine}</View>
+              {pronunciation}
+            </View>
+          ) : (
+            <View testID="word-grammar" style={styles.grammar}>
+              {grammarLine}
+            </View>
+          )}
         </RevealDetail>
       </View>
-      {Pronunciation === undefined ? null : (
-        <Pronunciation lemma={card.lemma} entryId={card.wordId} />
-      )}
+      {tabbed ? null : pronunciation}
     </View>
   );
 }
@@ -377,20 +418,26 @@ export function SynonymRowLine({
   );
 }
 
-/** An Example in italics, with its author's line only when the source names one. */
+/**
+ * An Example in italics, in the Edition's quote marks unless `quoted` is
+ * false, with its author's line only when the source names one.
+ */
 export function ExampleText({
   example,
   size,
   testID,
+  quoted = true,
 }: {
   example: Example;
   size: TextSize;
   testID?: string;
+  /** False under the big opening mark of the tabbed card's «Приклад», which stands for the marks (board p1). */
+  quoted?: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
   const { strings, voice } = useEdition();
-  const text = fill(strings.wordCard.example, { text: example.text });
+  const text = quoted ? fill(strings.wordCard.example, { text: example.text }) : example.text;
   const author =
     example.author === undefined
       ? undefined
@@ -517,6 +564,9 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], zIndex: 1 },
   headline: { flex: 1, minWidth: 0, gap: space[2] },
   grammar: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: space[2] },
+  // The tabbed card's grammar line, the Pronunciation button at its right end.
+  grammarRow: { flexDirection: 'row', alignItems: 'center', gap: space[3] },
+  grammarLine: { flex: 1, minWidth: 0 },
   italic: { fontStyle: 'italic' },
   author: { marginTop: space[1] },
   relations: { gap: space[1] },

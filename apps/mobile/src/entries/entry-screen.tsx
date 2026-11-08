@@ -2,7 +2,7 @@ import type { AnyEntryCard, Composition, EntryLinkSource } from '@slovo/core';
 import { BackLink, EntryDetails, FeedError, space, UndoToastProvider, useTokens } from '@slovo/ui';
 import { StatusBar } from 'expo-status-bar';
 import { usePathname, useRouter } from 'expo-router';
-import { useCallback, useEffect, type ComponentProps } from 'react';
+import { useCallback, useEffect, useRef, type ComponentProps } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -61,11 +61,15 @@ export function EntryScreen({
   useEffect(() => {
     if (card === null) router.replace('/');
   }, [card, router]);
-  // The Word History drawn is the history opened for Analytics (ADR 0068); stable, so it counts once per Entry.
+  // The Word History drawn is the history opened for Analytics (ADR 0068), once per Entry:
+  // «Історія» draws it again on every return to the tab and at each smaller size (ADR 0088).
   const composition = useShell().composition;
+  const historyCountedFor = useRef<string | undefined>(undefined);
   const onWordHistoryShown = useCallback(() => {
     const open = composition.state;
-    if (open.status === 'ready') void open.value.analytics.wordHistoryOpened(entryId);
+    if (open.status !== 'ready' || historyCountedFor.current === entryId) return;
+    historyCountedFor.current = entryId;
+    void open.value.analytics.wordHistoryOpened(entryId);
   }, [composition, entryId]);
 
   return (

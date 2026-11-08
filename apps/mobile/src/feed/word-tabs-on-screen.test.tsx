@@ -22,7 +22,8 @@ import HomeScreen from '../app/feed';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { fontSizeSteps } from '@slovo/ui/tokens';
+import { entryCardFrame, fontSizeSteps, linkChip } from '@slovo/ui/tokens';
+import { LOGO_ROW } from '../edition/feed-loading';
 import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 
@@ -80,9 +81,15 @@ function word(id: string, lemma: string, more: Partial<Word> = {}): Word {
 
 /**
  * Opens the composition over the Word of the Day and `second`, with `wordTabs`
- * on or off, and with `idioms` when the test reads an Idiom card.
+ * on or off, with `idioms` when the test reads an Idiom card, and with the
+ * reader's Self-check on or off.
  */
-async function open(second: Word, wordTabs = true, idioms: readonly Idiom[] = []) {
+async function open(
+  second: Word,
+  wordTabs = true,
+  idioms: readonly Idiom[] = [],
+  selfCheck = false,
+) {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
@@ -96,7 +103,7 @@ async function open(second: Word, wordTabs = true, idioms: readonly Idiom[] = []
   // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
   // the sheet is open, which settling every timer would never finish. It has its own test.
   userState = await seedUserState(
-    { onboardingFinished: '2026-09-01T09:00:00.000Z', gesturesHintShown: true },
+    { onboardingFinished: '2026-09-01T09:00:00.000Z', gesturesHintShown: true, selfCheck },
     { clock },
   );
   composition = await openComposition({
@@ -195,7 +202,11 @@ async function swipeUp() {
 function wordCard() {
   const card = screen
     .getAllByTestId('word-card', hidden)
-    .find((each) => within(each).queryByTestId('word-of-the-day-badge', hidden) === null);
+    .find(
+      (each) =>
+        within(each).queryByTestId('word-of-the-day-badge', hidden) === null &&
+        within(each).queryByTestId('word-of-the-day-kicker', hidden) === null,
+    );
   if (card === undefined) throw new Error('No Word card besides the Word of the Day');
   return within(card);
 }
@@ -359,6 +370,67 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(scrolls()).toBe(true);
   });
 
+  it('shrinks a Definition when the room and the content are laid out in one go', async () => {
+    const long = `${'Довге значення слова. '.repeat(20)}Кінець.`;
+    await open({ ...fullWord, primaryDefinition: long });
+    await renderApp('XL');
+    await swipeUp();
+    const size = (): unknown => {
+      const style: unknown = StyleSheet.flatten(wordCard().getByText(long, hidden).props['style']);
+      return typeof style === 'object' && style !== null && 'fontSize' in style
+        ? style.fontSize
+        : undefined;
+    };
+
+    // The device reports both heights of one layout pass together, before React draws again.
+    const content = wordCard().getByTestId('word-tab-content', hidden);
+    const panel = wordCard().getByTestId('word-tab-panel', hidden);
+    await settle(() =>
+      Promise.all([
+        fireEvent(content, 'layout', {
+          nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 300 } },
+        }),
+        fireEvent(panel, 'layout', {
+          nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 200 } },
+        }),
+      ]),
+    );
+
+    expect(size()).toBe(fontSizeSteps.L.definition);
+  });
+
+  it('measures the content afresh at each smaller size, so text that keeps its height still scrolls', async () => {
+    const history = `${'Довга історія слова. '.repeat(60)}Кінець.`;
+    await open({ ...fullWord, history });
+    await renderApp();
+    await swipeUp();
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-history')));
+    await fireEvent(wordCard().getByTestId('word-tab-panel', hidden), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 200 } },
+    });
+    await settle();
+
+    // The device reports a layout only for a view whose frame changed or that is new: a
+    // smaller size that leaves the text's height as it was must draw a new view to be measured.
+    const drawn = [];
+    for (
+      let size = 0;
+      size < 4 && wordCard().queryByTestId('word-tab-scroll', hidden) === null;
+      size++
+    ) {
+      const content = wordCard().getByTestId('word-tab-content', hidden);
+      expect(drawn).not.toContain(content);
+      drawn.push(content);
+      await fireEvent(content, 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 900 } },
+      });
+      await settle();
+    }
+
+    expect(wordCard().getByTestId('word-tab-scroll', hidden)).toBeTruthy();
+    expect(wordCard().getByText(history, hidden)).toBeTruthy();
+  });
+
   it('lets the tabbed card take the page height through the swipe of its marks', async () => {
     await open(fullWord);
     await renderApp();
@@ -402,6 +474,188 @@ const fullIdiom: Idiom = {
 function idiomCard() {
   return within(screen.getByTestId('idiom-card', hidden));
 }
+
+describe('the look of a tabbed Word card in the Feed (board p1)', () => {
+  const { accent, ink } = editionTokens.colors.light;
+
+  it('draws the tab bar at the foot of the card, under the panel, a bar over the selected tab', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    const drawn = JSON.stringify(screen.toJSON());
+    expect(drawn.indexOf('"testID":"word-tab-panel"')).toBeGreaterThan(-1);
+    expect(drawn.indexOf('"accessibilityRole":"tablist"')).toBeGreaterThan(
+      drawn.indexOf('"testID":"word-tab-panel"'),
+    );
+    await swipeUp();
+    const card = wordCard();
+    expect(card.getByTestId('word-tab-essence-bar', hidden)).toBeTruthy();
+    expect(card.queryByTestId('word-tab-example-bar', hidden)).toBeNull();
+
+    await settle(() => fireEvent.press(card.getByTestId('word-tab-example')));
+
+    expect(wordCard().getByTestId('word-tab-example-bar', hidden)).toBeTruthy();
+    expect(wordCard().queryByTestId('word-tab-essence-bar', hidden)).toBeNull();
+  });
+
+  it('outlines the card in ink over a red offset shadow', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    const frame = screen
+      .getAllByTestId('word-card', hidden)
+      .find((each) => within(each).queryByTestId('word-tab-panel', hidden) !== null);
+    expect(frame).toHaveStyle({ borderColor: ink });
+    expect(frame).toHaveStyle({
+      boxShadow: [
+        {
+          offsetX: entryCardFrame.shadow,
+          offsetY: entryCardFrame.shadow,
+          blurRadius: 0,
+          color: accent,
+        },
+      ],
+    });
+  });
+
+  it('sets the stressed letter in red over a red rule under the Lemma', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    const card = wordCard();
+    const lemma = within(card.getByTestId('word-lemma', hidden));
+    expect(lemma.getByText('у', hidden)).toHaveStyle({ color: accent });
+    expect(card.getByTestId('word-rule', hidden)).toBeTruthy();
+  });
+
+  it('keeps the Category chip in the grammar line above the tabs, whichever tab is selected', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    await swipeUp();
+    const grammar = () => within(wordCard().getByTestId('word-grammar', hidden));
+    expect(grammar().getByTestId('word-category', hidden)).toBeTruthy();
+    expect(wordCard().getAllByTestId('word-category', hidden)).toHaveLength(1);
+
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-example')));
+
+    expect(grammar().getByTestId('word-category', hidden)).toBeTruthy();
+  });
+
+  it('quotes the Example under a big red opening mark, not wrapped in the marks', async () => {
+    await open(fullWord);
+    await renderApp();
+    await swipeUp();
+
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-example')));
+
+    const card = wordCard();
+    expect(card.getByTestId('word-example-mark', hidden)).toHaveStyle({ color: accent });
+    expect(card.getByText('Сумирний кінь стояв тихо.', hidden)).toBeTruthy();
+    expect(card.queryByText('«Сумирний кінь стояв тихо.»', hidden)).toBeNull();
+  });
+
+  it('labels the links without a colon over raised chips', async () => {
+    await open({ ...fullWord, synonyms: ['тихий', 'спокійний'] });
+    await renderApp();
+    await swipeUp();
+
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-links')));
+
+    const card = wordCard();
+    expect(card.getByText('Синоніми', hidden)).toBeTruthy();
+    expect(card.getByText('Антонім', hidden)).toBeTruthy();
+    const { tile, tileEdge, line } = editionTokens.colors.light;
+    expect(card.getByTestId('word-synonyms-тихий', hidden)).toHaveStyle({
+      backgroundColor: tile,
+      borderColor: line,
+      boxShadow: [{ offsetX: 0, offsetY: linkChip.depth, blurRadius: 0, color: tileEdge }],
+    });
+  });
+
+  it('hangs the card right under the logo row, with no XP bar or Search over it', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    expect(screen.getByTestId('feed-header')).toHaveStyle({ height: LOGO_ROW });
+    expect(screen.queryByTestId('feed-header-tools', hidden)).toBeNull();
+  });
+});
+
+describe('the Word of the Day with `wordTabs` on (board p1 #5–#12)', () => {
+  /** The Word of the Day's card: the one with its kicker or its badge. */
+  const dayCard = () => {
+    const card = screen
+      .getAllByTestId('word-card', hidden)
+      .find(
+        (each) =>
+          within(each).queryByTestId('word-of-the-day-kicker', hidden) !== null ||
+          within(each).queryByTestId('word-of-the-day-badge', hidden) !== null,
+      );
+    if (card === undefined) throw new Error('No card of the Word of the Day');
+    return card;
+  };
+
+  it('stays the red card while Self-check keeps it closed', async () => {
+    await open(fullWord, true, [], true);
+    await renderApp();
+
+    const card = within(dayCard());
+    expect(card.getByTestId('word-hero-shout', hidden)).toBeTruthy();
+    expect(card.getByTestId('word-reveal', hidden)).toBeTruthy();
+    expect(card.queryByRole('tablist', hidden)).toBeNull();
+  });
+
+  it('opens on «Розкрити» into the tabbed card, its kicker the day as «Слово дня · 28.10»', async () => {
+    await open(fullWord, true, [], true);
+    await renderApp();
+
+    await settle(() => fireEvent.press(within(dayCard()).getByTestId('word-reveal', hidden)));
+
+    const frame = dayCard();
+    const card = within(frame);
+    expect(card.queryByTestId('word-hero', hidden)).toBeNull();
+    expect(card.getByTestId('word-tab-panel', hidden)).toBeTruthy();
+    expect(card.getByText('Слово дня · 28.10', hidden)).toBeTruthy();
+    expect(card.queryByTestId('word-of-the-day-badge', hidden)).toBeNull();
+    expect(frame).toHaveStyle({ flexGrow: 1, borderColor: editionTokens.colors.light.ink });
+  });
+
+  it('is the tabbed card from the start without Self-check', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    const card = within(dayCard());
+    expect(card.queryByTestId('word-hero', hidden)).toBeNull();
+    expect(card.getByTestId('word-of-the-day-kicker', hidden)).toBeTruthy();
+    expect(card.getByTestId('word-tab-panel', hidden)).toBeTruthy();
+  });
+
+  it('keeps the red card in one column with `wordTabs` off', async () => {
+    await open(fullWord, false);
+    await renderApp();
+
+    const card = within(dayCard());
+    expect(card.getByTestId('word-hero', hidden)).toBeTruthy();
+    expect(card.queryByRole('tablist', hidden)).toBeNull();
+  });
+});
+
+describe('the Feed header with `wordTabs` on (board p1)', () => {
+  it('draws no XP bar over the cards', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    expect(screen.queryByTestId('xp-bar', hidden)).toBeNull();
+  });
+
+  it('keeps the XP bar with `wordTabs` off', async () => {
+    await open(fullWord, false);
+    await renderApp();
+
+    expect(screen.getByTestId('xp-bar', hidden)).toBeTruthy();
+  });
+});
 
 describe('the tabs of an Idiom card in the Feed', () => {
   it('shows «Суть», «Звідки» and «Приклад», «Суть» selected with the Definitions', async () => {

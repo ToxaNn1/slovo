@@ -68,6 +68,7 @@ export function WordHero({
       concealed={concealed}
       stressFalls={stressFalls}
       lemmaFont={lemmaFont}
+      tabbed={false}
     />
   );
   return (

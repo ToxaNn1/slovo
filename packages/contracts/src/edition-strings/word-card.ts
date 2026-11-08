@@ -53,6 +53,11 @@ export const WordCardStringsSchema = z.strictObject({
     links: TextSchema,
     history: TextSchema,
   }),
+  /** The labels over the Synonyms and antonyms in «Зв’язки», for one and for several, e.g. "Синонім" / "Синоніми" (board p1). */
+  linkLabels: z.strictObject({
+    synonyms: z.strictObject({ one: TextSchema, many: TextSchema }),
+    antonyms: z.strictObject({ one: TextSchema, many: TextSchema }),
+  }),
   /** The line under the Definition in «Суть» that names the other meanings in «Історія», e.g. "Ще {count} значення — у вкладці «Історія»." (ADR 0088). */
   moreMeanings: pluralOf(),
   /** The heading of the Word History on the card, e.g. "Історія слова". */

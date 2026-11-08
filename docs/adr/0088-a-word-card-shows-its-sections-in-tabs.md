@@ -2,9 +2,9 @@
 
 A Word's Entry card grew into a long column: the Definition, the Example, the Synonym Row line, «Часто кажуть», Synonyms and antonyms, and behind «Детальніше» the other meanings, the etymology and further Examples. In the Feed a page held a card of any height, so the next card's place moved from Word to Word and the reader scrolled inside a page before swiping to the next one.
 
-**Behind the `wordTabs` Feature Switch**, a Word card is a fixed frame that takes the page's height, with the Lemma and its line on top and tabs under it, and nothing behind «Детальніше»:
+**Behind the `wordTabs` Feature Switch**, a Word card is a fixed frame that takes the page's height, with the Lemma and its line on top and tabs under it, and nothing behind «Детальніше». The tab bar stands at the card's foot under the selected tab's panel, a red slanted mark over the selected tab, and the Category chip ends the line under the Lemma, whichever tab is selected (board p1):
 
-- **«Суть»**: the primary Definition, the Synonym Row line, «Часто кажуть» and the Category chip, and «Ще {count} значення — у вкладці «Історія».» when the Word has other meanings.
+- **«Суть»**: the primary Definition, the Synonym Row line and «Часто кажуть», and «Ще {count} значення — у вкладці «Історія».» when the Word has other meanings.
 - **«Приклад»**: every Example, each with its author.
 - **«Зв’язки»**: the Synonyms and antonyms.
 - **«Історія»**: the other meanings numbered from 1, the etymology and the Word History.
@@ -23,7 +23,7 @@ The tabs come in that order. A tab with nothing to show is left out, and a card 
 
 **Shrink, then scroll.** The selected tab's content fills the rest of the frame. One too tall for it takes the Word text size a step smaller at a time (XL to L, L to M, M to S) down to the floor, **S**, the smallest Word text size. One too tall even at S stays at S and scrolls inside the frame, the last resort for a very long tab, on every kind of card: the card keeps its height, and its head (the Lemma and its line, the struck form, the title) and the corner stay in place. In the Feed the tab's scroll is the page's scroll (`PagerScrollView` nested in the page's), so a swipe scrolls the tab and turns the page only from its end. The Lemma keeps its own shrink. The card measures the content once it is laid out (`onLayout`), so the test is the drawn height, whatever the font and the device; it measures again on another tab or font size.
 
-Which tabs a card has is one pure function of the Core's card model (`wordTabsOf`, `correctionTabsOf` and `idiomTabsOf`, `@slovo/ui/word-tabs`), tested in Vitest; one component (`CardTabs`, `FitPanel`) draws the tab bar and the fit for every kind; the screen tests check what the Feed draws. The Feed and the Entry screen read the switch from the Shell and pass it to the card. The Word of the Day's red card keeps its column (owner question, 07.11.2026).
+Which tabs a card has is one pure function of the Core's card model (`wordTabsOf`, `correctionTabsOf` and `idiomTabsOf`, `@slovo/ui/word-tabs`), tested in Vitest; one component (`CardTabs`, `FitPanel`) draws the tab bar and the fit for every kind; the screen tests check what the Feed draws. The Feed and the Entry screen read the switch from the Shell and pass it to the card. The Word of the Day's card is the red card only while Self-check keeps it closed; once revealed, or from the start without Self-check, it is the tabbed card of every Word, with the kicker «▶ СЛОВО ДНЯ · 7.11» in red over its Lemma (owner, 08.11.2026, board p1 #5–#12). With the switch on, every Entry card in the Feed hangs from the top row closer to the screen's edges, and the Feed's header draws no XP bar over the cards (board p1); so the Daily Goal's progress (ADR 0074) shows in Profile only while the switch is on, and a plain new Word keeps its kicker, the board having no sample of one (owner, 08.11.2026).
 
 ## Considered Options
 

@@ -90,6 +90,7 @@ export function EntryDetails({
                   concealed={false}
                   stressFalls={stressFalls}
                   lemmaFont={undefined}
+                  tabbed={false}
                 />
               </View>
             )}

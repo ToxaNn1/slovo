@@ -5,7 +5,7 @@ import type { TextSize } from '../providers/FontSizeProvider';
 import { CategoryChip } from './CategoryChip';
 import { KickerRow } from './KickerRow';
 import { WordHeadline, WordSections } from './WordCard';
-import { WordOfTheDayBadge } from './WordOfTheDayBadge';
+import { WordOfTheDayBadge, WordOfTheDayKicker } from './WordOfTheDayBadge';
 import { WordTabs } from './WordTabs';
 
 /**
@@ -34,7 +34,7 @@ export function WordCardBody({
   tabs,
 }: {
   card: WordCardModel;
-  /** On the card of the Word of the Day: the local day it is the Word of. */
+  /** On the card of the Word of the Day: the local day it is the Word of, its kicker with tabs and its badge without. */
   wordOfTheDay: LocalDate | undefined;
   /** The design's compact iPhone SE layout. */
   compact: boolean;
@@ -58,7 +58,11 @@ export function WordCardBody({
   return (
     <>
       <KickerRow testID="word-kicker-row" corner={corner}>
-        {wordOfTheDay === undefined ? null : <WordOfTheDayBadge day={wordOfTheDay} />}
+        {wordOfTheDay === undefined ? null : tabs ? (
+          <WordOfTheDayKicker day={wordOfTheDay} />
+        ) : (
+          <WordOfTheDayBadge day={wordOfTheDay} />
+        )}
       </KickerRow>
       <WordHeadline
         card={card}
@@ -66,8 +70,9 @@ export function WordCardBody({
         concealed={concealed}
         stressFalls={stressFalls}
         lemmaFont={wordOfTheDay === undefined ? undefined : wordOfTheDayFont}
+        tabbed={tabs}
       />
-      {concealed && card.categoryName !== undefined && (
+      {!tabs && concealed && card.categoryName !== undefined && (
         <CategoryChip testID="word-category" name={card.categoryName} />
       )}
       {tabs ? (

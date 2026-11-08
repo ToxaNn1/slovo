@@ -36,6 +36,35 @@ export interface RevealTimings {
   readonly details: { readonly at: readonly number[]; readonly duration: number };
 }
 
+/**
+ * The frame of a tabbed Entry card (board p1): the width of its ink outline,
+ * how far its red offset shadow falls to the right and below (the card keeps
+ * that much room on those sides, so nothing clips it), the red rule under a
+ * Word's Lemma, the slanted mark over the selected tab: its height and how
+ * far it reaches past the tab's name on each side, and the red wedge of the
+ * kicker over the Lemma of the Word of the Day with its gap to the text.
+ */
+export const entryCardFrame = {
+  outline: 2,
+  shadow: 8,
+  rule: { width: 140, height: 8 },
+  tabMark: { height: 5, overhang: 8 },
+  kicker: { wedge: { width: 14, height: 11 }, gap: 8 },
+} as const;
+
+/**
+ * A Synonym's or an antonym's chip in the tabbed Word card's «Зв’язки» (board
+ * p1): a raised tile outlined in the line colour, its edge `depth` below it.
+ */
+export const linkChip = {
+  padding: { horizontal: 12, vertical: 9 },
+  radius: 11,
+  depth: 3,
+} as const;
+
+/** The gap between the big opening quote mark, the Example and its author's line in the tabbed Word card's «Приклад» (board p1). */
+export const exampleMark = { gap: 10 } as const;
+
 /** The Word card's side and bottom padding (the design's 26); the feed's skeleton keeps the same shape. */
 export const wordCardSide = 26;
 

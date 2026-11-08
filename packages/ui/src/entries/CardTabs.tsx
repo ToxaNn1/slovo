@@ -1,12 +1,13 @@
 import type { FontSize } from '@slovo/contracts';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { FontSizeProvider, useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { PagerScrollView } from '../primitives/VerticalPager';
-import { blockGap, minTouchTarget, space, typeStyle } from '../tokens';
+import { Wedge } from '../primitives/Wedge';
+import { blockGap, entryCardFrame, minTouchTarget, space, typeStyle, wedges } from '../tokens';
 
 /** The smallest font size content too tall for the card shrinks to (ADR 0088). */
 const FLOOR = 'S' satisfies FontSize;
@@ -26,9 +27,10 @@ const SMALLER: Readonly<Record<Exclude<FontSize, typeof FLOOR>, FontSize>> = {
 type Fit = FontSize | 'scrolls';
 
 /**
- * An Entry card's tabs under its head (ADR 0088): a `tablist` of `tab`s by
- * their names, the first selected on opening, and the selected tab's content
- * in a `FitPanel`. A card with one tab draws no tab bar. Nothing moves between
+ * An Entry card's tabs under its head (ADR 0088): the selected tab's content
+ * in a `FitPanel`, and at the card's foot a `tablist` of `tab`s by their
+ * names, a red slanted mark over the selected one (board p1), the first
+ * selected on opening. A card with one tab draws no tab bar. Nothing moves between
  * tabs, so Reduce Motion has nothing to stop. Under Self-check the tabs are
  * there but disabled, and the panel shows nothing, until the reveal.
  */
@@ -56,8 +58,11 @@ export function CardTabs<Tab extends { readonly key: string }>({
   const selected = tabs.find((tab) => tab.key === selectedKey) ?? tabs[0];
   return (
     <View style={styles.tabs}>
+      <FitPanel testID={testID} fitKey={selected.key}>
+        {disabled ? null : children(selected)}
+      </FitPanel>
       {tabs.length === 1 ? null : (
-        <View accessibilityRole="tablist" style={[styles.bar, { borderBottomColor: colors.line }]}>
+        <View accessibilityRole="tablist" style={[styles.bar, { borderTopColor: colors.line }]}>
           {tabs.map((tab) => {
             const on = tab.key === selected.key;
             return (
@@ -72,8 +77,18 @@ export function CardTabs<Tab extends { readonly key: string }>({
                 onPress={() => {
                   setSelectedKey(tab.key);
                 }}
-                style={[styles.tab, { borderBottomColor: on ? colors.accent : 'transparent' }]}
+                style={styles.tab}
               >
+                {on && !disabled && (
+                  <View testID={`${testID}-tab-${tab.key}-bar`} style={styles.mark}>
+                    <Wedge
+                      points={wedges.slant}
+                      color={colors.accent}
+                      width="100%"
+                      height={entryCardFrame.tabMark.height}
+                    />
+                  </View>
+                )}
                 <Text
                   style={[
                     typeStyle('chipLabel', tokens),
@@ -87,9 +102,6 @@ export function CardTabs<Tab extends { readonly key: string }>({
           })}
         </View>
       )}
-      <FitPanel testID={testID} fitKey={selected.key}>
-        {disabled ? null : children(selected)}
-      </FitPanel>
     </View>
   );
 }
@@ -100,8 +112,12 @@ export function CardTabs<Tab extends { readonly key: string }>({
  * to the floor, S, and content too tall even there stays at S and scrolls
  * inside the frame, so the card keeps its height. In the Feed that scroll is
  * the page's (`PagerScrollView` nested in the page's). The card measures the
- * drawn height against the room whenever either is laid out; a new `fitKey` (another tab) or font size
- * starts at the user's font size again. Its parts are `<testID>-tab-panel`,
+ * drawn height against the room once both are laid out, on the render after
+ * they arrive, so two heights reported in one layout pass are both read. Each
+ * size draws its content in a new view, which the device always lays out and
+ * reports, even when the smaller size leaves the height as it was (text in a
+ * fixed type role). A new `fitKey` (another tab) or font size starts at the
+ * user's font size again. Its parts are `<testID>-tab-panel`,
  * `<testID>-tab-content` while it fits and `<testID>-tab-scroll` once it
  * scrolls.
  */
@@ -126,20 +142,10 @@ export function FitPanel({
   // The drawn height counts only for the tab and font size it was drawn at.
   const drawnAt = `${fitKey} ${step} ${fitNow}`;
   const [drawn, setDrawn] = useState<{ at: string; height: number } | undefined>(undefined);
-  // Either height may arrive or change last, so the fit is checked on both.
-  const shrinkIfTooTall = (
-    roomNow: number | undefined,
-    drawnNow: { at: string; height: number } | undefined,
-  ) => {
-    if (roomNow === undefined || drawnNow?.at !== drawnAt || fitNow === 'scrolls') return;
-    if (drawnNow.height <= roomNow) return;
+  // Content too tall for the room takes the next smaller size, or scrolls at the floor.
+  if (fitNow !== 'scrolls' && room !== undefined && drawn?.at === drawnAt && drawn.height > room) {
     setFit({ key: fitKey, step, fit: fitNow === FLOOR ? 'scrolls' : SMALLER[fitNow] });
-  };
-  const measured = ({ nativeEvent }: LayoutChangeEvent) => {
-    const drawnNow = { at: drawnAt, height: nativeEvent.layout.height };
-    setDrawn(drawnNow);
-    shrinkIfTooTall(room, drawnNow);
-  };
+  }
   const content = (
     <FontSizeProvider fontSize={fitNow === 'scrolls' ? FLOOR : fitNow}>{children}</FontSizeProvider>
   );
@@ -149,7 +155,6 @@ export function FitPanel({
       style={styles.room}
       onLayout={({ nativeEvent }) => {
         setRoom(nativeEvent.layout.height);
-        shrinkIfTooTall(nativeEvent.layout.height, drawn);
       }}
     >
       {fitNow === 'scrolls' ? (
@@ -158,9 +163,12 @@ export function FitPanel({
         </PagerScrollView>
       ) : (
         <View
+          key={drawnAt}
           testID={`${testID}-tab-content`}
           style={[styles.content, styles.overlay]}
-          onLayout={measured}
+          onLayout={({ nativeEvent }) => {
+            setDrawn({ at: drawnAt, height: nativeEvent.layout.height });
+          }}
         >
           {content}
         </View>
@@ -172,11 +180,15 @@ export function FitPanel({
 const styles = StyleSheet.create({
   // The tabs fill what the head leaves of the card's frame.
   tabs: { flexGrow: 1, gap: blockGap },
-  bar: { flexDirection: 'row', borderBottomWidth: 1, gap: space[4] },
-  tab: {
-    minHeight: minTouchTarget,
-    justifyContent: 'center',
-    borderBottomWidth: 2,
+  // The tabs spread over the card's width, under a hairline.
+  bar: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, gap: space[2] },
+  tab: { minHeight: minTouchTarget, justifyContent: 'center' },
+  // The mark lies over the hairline and reaches past the tab's name on both sides.
+  mark: {
+    position: 'absolute',
+    top: -1,
+    left: -entryCardFrame.tabMark.overhang,
+    right: -entryCardFrame.tabMark.overhang,
   },
   room: { flexGrow: 1, flexBasis: 0, overflow: 'hidden' },
   content: { gap: blockGap },

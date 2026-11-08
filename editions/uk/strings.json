@@ -58,6 +58,7 @@
   },
   "wordOfTheDay": {
     "badge": "Слово дня · {day} {month}",
+    "kicker": "Слово дня · {day}.{month}",
     "shout": "Лови слово!",
     "reveal": "Розкрити"
   },
@@ -420,6 +421,10 @@
       "example": "Приклад",
       "links": "Зв’язки",
       "history": "Історія"
+    },
+    "linkLabels": {
+      "synonyms": { "one": "Синонім", "many": "Синоніми" },
+      "antonyms": { "one": "Антонім", "many": "Антоніми" }
     },
     "moreMeanings": {
       "one": "Ще {count} значення — у вкладці «Історія».",

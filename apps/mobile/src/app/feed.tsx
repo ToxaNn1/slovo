@@ -35,7 +35,7 @@ import { useFeed } from '@/feed/feed';
 import { gameModeStrings } from '@/game/game-modes';
 import { wordOfTheDayLanding } from '@/feed/word-of-the-day-landing';
 import { useFirstWeekStreak } from '@/feed/first-week';
-import { TOP_ROW } from '@/edition/feed-loading';
+import { LOGO_ROW, TOP_ROW } from '@/edition/feed-loading';
 import { wordOfTheDayFontFamily } from '@/edition/reported-edition';
 import { StatsPillAndSheet } from '@/progress/progress';
 import { XpBarToGame } from '@/progress/xp-bar';
@@ -69,6 +69,7 @@ function FeedScreen() {
   const { colors } = useTokens();
   const { top } = useSafeAreaInsets();
   const shown = useShown();
+  const { toolsRow, topRow } = useHeaderRows();
   const gesturesHint = useGesturesHint(shown.swipeMarks);
   const openScreen = useOpenScreen();
 
@@ -122,7 +123,7 @@ function FeedScreen() {
       <View
         testID="feed-header"
         pointerEvents="box-none"
-        style={[styles.header, { paddingTop: top, height: top + TOP_ROW }]}
+        style={[styles.header, { paddingTop: top, height: top + topRow }]}
       >
         <View pointerEvents="none" style={StyleSheet.absoluteFill}>
           <View
@@ -144,18 +145,21 @@ function FeedScreen() {
               : undefined
           }
         />
-        <View pointerEvents="box-none" style={styles.tools}>
-          <XpBarToGame />
-          <View style={styles.headerButtons}>
-            {shown.search && (
-              <SearchButton
-                onPress={() => {
-                  openScreen('/search');
-                }}
-              />
-            )}
+        {/* The tabbed cards' Feed has no XP bar over them (board p1, ADR 0088). */}
+        {toolsRow && (
+          <View testID="feed-header-tools" pointerEvents="box-none" style={styles.tools}>
+            {!shown.wordTabs && <XpBarToGame />}
+            <View style={styles.headerButtons}>
+              {shown.search && (
+                <SearchButton
+                  onPress={() => {
+                    openScreen('/search');
+                  }}
+                />
+              )}
+            </View>
           </View>
-        </View>
+        )}
       </View>
       <GesturesHintSheet
         visible={gesturesHint.visible}
@@ -189,12 +193,13 @@ const FeedPage = memo(function FeedPage({
 }) {
   const { top } = useSafeAreaInsets();
   const { selfCheck, stressFall, calligraphicLemma, wordTabs } = useShown();
+  const { toolsRow, topRow } = useHeaderRows();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
     return (
       <View
         testID={`feed-card-${String(position)}`}
-        style={[styles.page, { paddingTop: top + TOP_ROW }]}
+        style={[styles.page, { paddingTop: top + topRow }]}
       >
         <PagerScrollView>
           <QuickQuestionRound
@@ -213,7 +218,7 @@ const FeedPage = memo(function FeedPage({
     return (
       <View
         testID={`feed-card-${String(position)}`}
-        style={[styles.page, styles.centred, { paddingTop: top + TOP_ROW }]}
+        style={[styles.page, styles.centred, { paddingTop: top + topRow }]}
       >
         {card.kind === 'end-of-cycle' ? <EndOfCycleCard /> : <NoticeCard card={card} />}
       </View>
@@ -222,11 +227,16 @@ const FeedPage = memo(function FeedPage({
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView
-        // The red card of the Word of the Day hangs from the top row, closer to the edges.
+        // The red card of the Word of the Day and every tabbed card hang from the top row, closer to the edges (board p1).
         contentContainerStyle={
-          card.kind === 'word' && card.wordOfTheDay !== undefined
-            ? styles.heroContent
-            : styles.content
+          card.kind !== 'notice' &&
+          (wordTabs || (card.kind === 'word' && card.wordOfTheDay !== undefined))
+            ? [
+                styles.heroContent,
+                // Under the logo row alone the card starts where the header ends.
+                { paddingTop: toolsRow ? topRow + space[2] : topRow },
+              ]
+            : [styles.content, { paddingTop: topRow }]
         }
       >
         {card.kind === 'notice' ? (
@@ -264,6 +274,17 @@ const FeedPage = memo(function FeedPage({
     </View>
   );
 });
+
+/**
+ * The Feed header's rows: the logo row, and the row of the XP bar and Search
+ * under it unless the tabbed cards leave it empty (board p1, ADR 0088), with
+ * the header's height under the status bar.
+ */
+function useHeaderRows() {
+  const { wordTabs, search } = useShown();
+  const toolsRow = !wordTabs || search;
+  return { toolsRow, topRow: toolsRow ? TOP_ROW : LOGO_ROW };
+}
 
 /** An Entry's card in the Feed, with its action row or its corner and side swipes (ADR 0077). */
 function SwipedEntryCard(props: Omit<ComponentProps<typeof EntryCard>, 'slots'>) {
@@ -328,13 +349,11 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingTop: TOP_ROW,
     paddingHorizontal: space[6],
     paddingBottom: space[6],
   },
   heroContent: {
     flexGrow: 1,
-    paddingTop: TOP_ROW + space[2],
     paddingHorizontal: space[3],
     paddingBottom: space[6],
   },
