@@ -58,6 +58,7 @@
   },
   "wordOfTheDay": {
     "badge": "Слово дня · {day} {month}",
+    "kicker": "Слово дня · {day}.{month}",
     "shout": "Лови слово!",
     "reveal": "Розкрити"
   },

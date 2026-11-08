@@ -492,7 +492,7 @@ export const typeRoles = {
   actionHint: role('ui', '600', 13, 15.6),
   /** The shout on the closed card of the Word of the Day, «ЛОВИ СЛОВО!». */
   heroShout: role('word', '900', 40, 38, -1.5, 'uppercase'),
-  /** The kicker over the Lemma on a red ground, such as «СЛОВО ДНЯ · 3 ЛИСТОПАДА». */
+  /** The kicker over the Lemma of the Word of the Day: on a red ground, such as «СЛОВО ДНЯ · 3 ЛИСТОПАДА», and in red on its tabbed card, «СЛОВО ДНЯ · 7.11». */
   heroKicker: role('word', '800', 11, 11, 2, 'uppercase'),
   /** The giant letter behind the card of the Word of the Day: the Lemma's first, or «?» while it is closed. */
   giantLetter: role('word', '900', 360, 360),

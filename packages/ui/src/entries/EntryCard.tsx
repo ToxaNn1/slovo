@@ -65,8 +65,9 @@ export interface EntryCardProps {
   /**
    * A Word's, a Correction's, a Tip's, a Synonym Row's or an Idiom's card in
    * a fixed-height frame, with tabs under its head, while the Edition's
-   * `wordTabs` is on in effect (ADR 0088); the Word of the Day's red card
-   * keeps its column.
+   * `wordTabs` is on in effect (ADR 0088). The Word of the Day's card stays
+   * the red card while Self-check keeps it closed, and opens into the tabbed
+   * card with its kicker.
    */
   tabs?: boolean | undefined;
 }
@@ -144,7 +145,7 @@ export function EntryCard({
       swipe={slots.swipe}
       concealed={concealed}
       correction={card.kind === 'correction'}
-      fill={fixedFrame(card, tabs)}
+      fill={fixedFrame(card, tabs, concealed)}
     >
       {face}
     </SwipeMarks>
@@ -186,8 +187,9 @@ function EntryCardFace({
       </View>
     ) : undefined;
 
-  // The Word of the Day is the red shout card, which draws its own reveal button.
-  if (card.kind === 'word' && card.wordOfTheDay !== undefined)
+  // The Word of the Day is the red shout card, which draws its own reveal button;
+  // with tabs, only while it is closed, and once open it is the tabbed card (board p1).
+  if (card.kind === 'word' && card.wordOfTheDay !== undefined && !fixedFrame(card, tabs, concealed))
     return (
       <EntryReveal>
         <RevealFrame testID="word-card" style={styles.hero}>
@@ -220,7 +222,7 @@ function EntryCardFace({
           { borderColor: colors.line },
           // The tabbed card takes the page's height, whatever its tab holds (ADR 0088),
           // outlined in ink over the red offset shadow of board p1.
-          fixedFrame(card, tabs) && [
+          fixedFrame(card, tabs, concealed) && [
             styles.fixed,
             {
               borderColor: colors.ink,
@@ -317,11 +319,12 @@ function EntryCardFace({
 }
 
 /**
- * Whether the card is a fixed frame the page's height: every card but the
- * Word of the Day's, which stays one column, while `wordTabs` is on (ADR 0088).
+ * Whether the card is a fixed frame the page's height while `wordTabs` is on
+ * (ADR 0088): every card but the Word of the Day's while Self-check keeps it
+ * closed, which is the red card until the reader reveals it.
  */
-function fixedFrame(card: EntryCardProps['card'], tabs: boolean): boolean {
-  return tabs && !(card.kind === 'word' && card.wordOfTheDay !== undefined);
+function fixedFrame(card: EntryCardProps['card'], tabs: boolean, concealed: boolean): boolean {
+  return tabs && !(card.kind === 'word' && card.wordOfTheDay !== undefined && concealed);
 }
 
 const styles = StyleSheet.create({

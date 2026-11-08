@@ -145,7 +145,8 @@ function FeedScreen() {
           }
         />
         <View pointerEvents="box-none" style={styles.tools}>
-          <XpBarToGame />
+          {/* The tabbed cards' Feed has no XP bar over them (board p1, ADR 0088). */}
+          {!shown.wordTabs && <XpBarToGame />}
           <View style={styles.headerButtons}>
             {shown.search && (
               <SearchButton
@@ -222,9 +223,10 @@ const FeedPage = memo(function FeedPage({
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView
-        // The red card of the Word of the Day hangs from the top row, closer to the edges.
+        // The red card of the Word of the Day and every tabbed card hang from the top row, closer to the edges (board p1).
         contentContainerStyle={
-          card.kind === 'word' && card.wordOfTheDay !== undefined
+          card.kind !== 'notice' &&
+          (wordTabs || (card.kind === 'word' && card.wordOfTheDay !== undefined))
             ? styles.heroContent
             : styles.content
         }

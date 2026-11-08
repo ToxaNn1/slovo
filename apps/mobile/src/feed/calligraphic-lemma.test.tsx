@@ -180,7 +180,9 @@ async function renderApp() {
 function feedLemmas() {
   const hidden = { includeHiddenElements: true };
   return screen.getAllByTestId('word-card', hidden).map((card) => ({
-    wordOfTheDay: within(card).queryByTestId('word-of-the-day-badge', hidden) !== null,
+    wordOfTheDay:
+      within(card).queryByTestId('word-of-the-day-badge', hidden) !== null ||
+      within(card).queryByTestId('word-of-the-day-kicker', hidden) !== null,
     lemma: within(card).getByTestId('word-lemma', hidden),
   }));
 }

@@ -80,9 +80,15 @@ function word(id: string, lemma: string, more: Partial<Word> = {}): Word {
 
 /**
  * Opens the composition over the Word of the Day and `second`, with `wordTabs`
- * on or off, and with `idioms` when the test reads an Idiom card.
+ * on or off, with `idioms` when the test reads an Idiom card, and with the
+ * reader's Self-check on or off.
  */
-async function open(second: Word, wordTabs = true, idioms: readonly Idiom[] = []) {
+async function open(
+  second: Word,
+  wordTabs = true,
+  idioms: readonly Idiom[] = [],
+  selfCheck = false,
+) {
   const shipped = loadEdition(config);
   editionInEffect = {
     ...shipped,
@@ -96,7 +102,7 @@ async function open(second: Word, wordTabs = true, idioms: readonly Idiom[] = []
   // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
   // the sheet is open, which settling every timer would never finish. It has its own test.
   userState = await seedUserState(
-    { onboardingFinished: '2026-09-01T09:00:00.000Z', gesturesHintShown: true },
+    { onboardingFinished: '2026-09-01T09:00:00.000Z', gesturesHintShown: true, selfCheck },
     { clock },
   );
   composition = await openComposition({
@@ -195,7 +201,11 @@ async function swipeUp() {
 function wordCard() {
   const card = screen
     .getAllByTestId('word-card', hidden)
-    .find((each) => within(each).queryByTestId('word-of-the-day-badge', hidden) === null);
+    .find(
+      (each) =>
+        within(each).queryByTestId('word-of-the-day-badge', hidden) === null &&
+        within(each).queryByTestId('word-of-the-day-kicker', hidden) === null,
+    );
   if (card === undefined) throw new Error('No Word card besides the Word of the Day');
   return within(card);
 }
@@ -468,6 +478,81 @@ describe('the look of a tabbed Word card in the Feed (board p1)', () => {
     await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-example')));
 
     expect(grammar().getByTestId('word-category', hidden)).toBeTruthy();
+  });
+});
+
+describe('the Word of the Day with `wordTabs` on (board p1 #5–#12)', () => {
+  /** The Word of the Day's card: the one with its kicker or its badge. */
+  const dayCard = () => {
+    const card = screen
+      .getAllByTestId('word-card', hidden)
+      .find(
+        (each) =>
+          within(each).queryByTestId('word-of-the-day-kicker', hidden) !== null ||
+          within(each).queryByTestId('word-of-the-day-badge', hidden) !== null,
+      );
+    if (card === undefined) throw new Error('No card of the Word of the Day');
+    return card;
+  };
+
+  it('stays the red card while Self-check keeps it closed', async () => {
+    await open(fullWord, true, [], true);
+    await renderApp();
+
+    const card = within(dayCard());
+    expect(card.getByTestId('word-hero-shout', hidden)).toBeTruthy();
+    expect(card.getByTestId('word-reveal', hidden)).toBeTruthy();
+    expect(card.queryByRole('tablist', hidden)).toBeNull();
+  });
+
+  it('opens on «Розкрити» into the tabbed card, its kicker the day as «Слово дня · 28.10»', async () => {
+    await open(fullWord, true, [], true);
+    await renderApp();
+
+    await settle(() => fireEvent.press(within(dayCard()).getByTestId('word-reveal', hidden)));
+
+    const frame = dayCard();
+    const card = within(frame);
+    expect(card.queryByTestId('word-hero', hidden)).toBeNull();
+    expect(card.getByTestId('word-tab-panel', hidden)).toBeTruthy();
+    expect(card.getByText('Слово дня · 28.10', hidden)).toBeTruthy();
+    expect(card.queryByTestId('word-of-the-day-badge', hidden)).toBeNull();
+    expect(frame).toHaveStyle({ flexGrow: 1, borderColor: editionTokens.colors.light.ink });
+  });
+
+  it('is the tabbed card from the start without Self-check', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    const card = within(dayCard());
+    expect(card.queryByTestId('word-hero', hidden)).toBeNull();
+    expect(card.getByTestId('word-of-the-day-kicker', hidden)).toBeTruthy();
+    expect(card.getByTestId('word-tab-panel', hidden)).toBeTruthy();
+  });
+
+  it('keeps the red card in one column with `wordTabs` off', async () => {
+    await open(fullWord, false);
+    await renderApp();
+
+    const card = within(dayCard());
+    expect(card.getByTestId('word-hero', hidden)).toBeTruthy();
+    expect(card.queryByRole('tablist', hidden)).toBeNull();
+  });
+});
+
+describe('the Feed header with `wordTabs` on (board p1)', () => {
+  it('draws no XP bar over the cards', async () => {
+    await open(fullWord);
+    await renderApp();
+
+    expect(screen.queryByTestId('xp-bar', hidden)).toBeNull();
+  });
+
+  it('keeps the XP bar with `wordTabs` off', async () => {
+    await open(fullWord, false);
+    await renderApp();
+
+    expect(screen.getByTestId('xp-bar', hidden)).toBeTruthy();
   });
 });
 

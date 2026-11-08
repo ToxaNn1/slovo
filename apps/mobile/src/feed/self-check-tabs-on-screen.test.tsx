@@ -263,7 +263,11 @@ async function swipeUp() {
 function cardOf(kind: string) {
   const card = screen
     .queryAllByTestId(`${kind}-card`, hidden)
-    .find((each) => within(each).queryByTestId('word-of-the-day-badge', hidden) === null);
+    .find(
+      (each) =>
+        within(each).queryByTestId('word-of-the-day-badge', hidden) === null &&
+        within(each).queryByTestId('word-of-the-day-kicker', hidden) === null,
+    );
   if (card === undefined) throw new Error(`No ${kind} card besides the Word of the Day`);
   return within(card);
 }
