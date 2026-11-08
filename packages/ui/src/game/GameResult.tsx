@@ -1,6 +1,14 @@
 import type { CurrentGame } from '@slovo/core';
-import { type ReactNode, useEffect, useId, useRef } from 'react';
-import { ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { type ReactNode, useEffect, useId, useRef, useState } from 'react';
+import {
+  ScrollView,
+  type StyleProp,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+  type ViewStyle,
+} from 'react-native';
 import Svg, { Circle, Defs, Pattern, Polygon } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
@@ -34,44 +42,66 @@ const MASCOT_COLUMN = mascotWidth + 2 * space[4];
  * would take its whole width on one line, run off the screen and squeeze the
  * title and line beside it until their words break.
  */
-export function PanelMascot({ children }: { children: ReactNode }) {
+export function PanelMascot({
+  children,
+  style,
+}: {
+  children: ReactNode;
+  style?: StyleProp<ViewStyle> | undefined;
+}) {
   return (
-    <View testID="game-panel-mascot" style={styles.mascot}>
+    <View testID="game-panel-mascot" style={[styles.mascot, style]}>
       {children}
     </View>
   );
 }
 
 /**
- * The red panel's ground, across the screen's width: the accent cut by its
- * slanted bottom edge, under the halftone raster.
+ * The red panel's ground, across the screen's width and the panel's height:
+ * the accent cut by its slanted bottom edge, under the halftone raster. The
+ * panel is at least the board's height and grows with its text, at the
+ * largest text sizes too, so the ground follows the height it is laid out at.
  */
 export function PanelGround({ color }: { color: string }) {
   const id = `result${useId().replace(/[^a-zA-Z0-9]/g, '')}`;
   const { width } = useWindowDimensions();
-  const height = resultLayout.panelHeight;
+  const [height, setHeight] = useState<number>(resultLayout.panelHeight);
   const points = wedges.cut.map(([x, y]) => `${String(x * width)},${String(y * height)}`).join(' ');
   return (
-    <Svg
-      width={width}
-      height={height}
+    <View
+      testID="game-panel-ground"
       style={StyleSheet.absoluteFill}
-      accessible={false}
       pointerEvents="none"
+      onLayout={({ nativeEvent }) => {
+        setHeight(nativeEvent.layout.height);
+      }}
     >
-      <Defs>
-        <Pattern id={id} width={halftone.cell} height={halftone.cell} patternUnits="userSpaceOnUse">
-          <Circle
-            cx={halftone.cell / 2}
-            cy={halftone.cell / 2}
-            r={halftone.radius}
-            fill={halftone.dot}
-          />
-        </Pattern>
-      </Defs>
-      <Polygon points={points} fill={color} />
-      <Polygon points={points} fill={`url(#${id})`} />
-    </Svg>
+      <Svg
+        width={width}
+        height={height}
+        style={StyleSheet.absoluteFill}
+        accessible={false}
+        pointerEvents="none"
+      >
+        <Defs>
+          <Pattern
+            id={id}
+            width={halftone.cell}
+            height={halftone.cell}
+            patternUnits="userSpaceOnUse"
+          >
+            <Circle
+              cx={halftone.cell / 2}
+              cy={halftone.cell / 2}
+              r={halftone.radius}
+              fill={halftone.dot}
+            />
+          </Pattern>
+        </Defs>
+        <Polygon points={points} fill={color} />
+        <Polygon points={points} fill={`url(#${id})`} />
+      </Svg>
+    </View>
   );
 }
 
@@ -269,7 +299,7 @@ export function GameResult({
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, paddingBottom: space[8] + space[2] },
-  panel: { height: resultLayout.panelHeight, justifyContent: 'flex-end' },
+  panel: { minHeight: resultLayout.panelHeight, justifyContent: 'flex-end' },
   // The title and line on the left, the Mascot on the right, over the slant.
   panelFoot: {
     flexDirection: 'row',

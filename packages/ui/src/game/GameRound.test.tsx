@@ -25,7 +25,7 @@ import { AccessibilityInfo, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
-import { capitalMarkRoom, roundHeader } from '../tokens';
+import { roundHeader } from '../tokens';
 
 const strings = testStrings({
   game: {
@@ -1375,10 +1375,10 @@ describe('the answer sheet', () => {
   it('spaces the answer card’s verdict so a wrapped line’s capital marks clear the line over it', async () => {
     await answerIn('light', 'brittle', 'card');
 
-    // The banner type at its size, with each line the room its capital marks need.
+    // The banner type at its size, each line tall enough for Ї over a capital (1.255 em at 30 pt), so a wrapped line clears the one above.
     expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({
       fontSize: 30,
-      lineHeight: 30 + capitalMarkRoom('roundVerdict'),
+      lineHeight: 38,
     });
   });
 

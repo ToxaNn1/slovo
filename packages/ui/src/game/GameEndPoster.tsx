@@ -69,8 +69,9 @@ export function GameEndPoster({
     gameHaptics.win();
   }, [onTarget, gameHaptics]);
 
-  const panelText = (title: string, line: string, kicker?: string) => (
-    <View accessible {...voice} style={styles.text}>
+  const livesOver = end.kind === 'lives-over';
+  const panelText = (title: string, line: string | undefined, kicker?: string) => (
+    <View accessible {...voice} style={livesOver ? styles.stackedText : styles.text}>
       {kicker === undefined ? null : (
         <Text
           maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
@@ -86,31 +87,33 @@ export function GameEndPoster({
         accessibilityRole="header"
         style={[typeStyle('resultTitle', tokens), { color: keyInk }]}
       />
-      <Text
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-        style={[typeStyle('resultLine', tokens), { color: keyInk }]}
-      >
-        {line}
-      </Text>
+      {line === undefined ? null : (
+        <Text
+          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          style={[typeStyle('resultLine', tokens), { color: keyInk }]}
+        >
+          {line}
+        </Text>
+      )}
     </View>
   );
 
   const finish = words.finish;
-  const head =
-    end.kind === 'lives-over'
-      ? panelText(
-          words.result.lost.title,
-          fill(words.livesOver, {
-            mode: modeName.toLocaleUpperCase(voice.accessibilityLanguage),
-            score: String(end.right),
-            total: String(game.roundLimit ?? end.played),
-          }),
-        )
-      : panelText(
-          end.onTarget ? finish.won : finish.more,
-          fill(count(finish.hits, end.right), { total: String(end.played) }),
-          end.kind === 'time-up' ? finish.timeUp : finish.title,
-        );
+  const head = livesOver
+    ? panelText(
+        words.result.lost.title,
+        undefined,
+        fill(words.livesOver, {
+          mode: modeName.toLocaleUpperCase(voice.accessibilityLanguage),
+          score: String(end.right),
+          total: String(game.roundLimit ?? end.played),
+        }),
+      )
+    : panelText(
+        end.onTarget ? finish.won : finish.more,
+        fill(count(finish.hits, end.right), { total: String(end.played) }),
+        end.kind === 'time-up' ? finish.timeUp : finish.title,
+      );
 
   return (
     <ScrollView
@@ -120,9 +123,12 @@ export function GameEndPoster({
     >
       <View style={styles.panel}>
         <PanelGround color={colors.accent} />
-        <View style={styles.panelFoot}>
+        <View
+          testID="game-end-panel-foot"
+          style={[styles.panelFoot, livesOver ? styles.stacked : null]}
+        >
           {head}
-          <PanelMascot>{mascot}</PanelMascot>
+          <PanelMascot style={livesOver ? styles.stackedMascot : undefined}>{mascot}</PanelMascot>
         </View>
       </View>
       <View style={styles.body}>
@@ -178,7 +184,7 @@ export function GameEndPoster({
 
 const styles = StyleSheet.create({
   screen: { flexGrow: 1, paddingBottom: space[8] + space[2] },
-  panel: { height: resultLayout.panelHeight, justifyContent: 'flex-end' },
+  panel: { minHeight: resultLayout.panelHeight, justifyContent: 'flex-end' },
   panelFoot: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -187,6 +193,11 @@ const styles = StyleSheet.create({
     paddingBottom: resultLayout.panelFootBottom,
   },
   text: { flex: 1, gap: space[2] - 2 },
+  // The Lives-over poster (board 07, g9): the title across the panel, the Mascot under it, its figure in line with the text.
+  stacked: { flexDirection: 'column', alignItems: 'flex-start', gap: 0 },
+  stackedText: { alignSelf: 'stretch', gap: space[2] - 2 },
+  // The figure in line with the text, past the padding the Mascot draws around it.
+  stackedMascot: { marginLeft: -space[4] },
   body: { paddingHorizontal: space[5], gap: blockGap },
   numbers: { flexDirection: 'row', flexWrap: 'wrap', gap: resultLayout.numbersGap },
   buttons: { flexDirection: 'row', gap: space[3] },
