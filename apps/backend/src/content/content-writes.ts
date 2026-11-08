@@ -11,6 +11,7 @@ import type { Clock, EditionRegistry, Json, Random } from '@slovo/server-core';
 import { and, eq, sql } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
+import { quoteCheckCounts } from './quote-check';
 import {
   actionLog,
   contentBatches,
@@ -493,6 +494,7 @@ export function createContentWrites({
           },
           targets: edition.targets,
           missed: missedTargets(counted, edition.targets),
+          quoteCheck: await quoteCheckCounts(tx, editionId),
         };
       },
       { isolationLevel: 'repeatable read', accessMode: 'read only' },

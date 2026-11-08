@@ -16,6 +16,7 @@ import {
   contentTips,
   contentVersions,
   contentWords,
+  quoteChecks,
 } from '../database/schema';
 
 /** How many records of each kind an import wrote. */
@@ -135,6 +136,8 @@ export function createContentStore({
       for (const table of CONTENT_TABLES) {
         await tx.delete(table).where(eq(table.editionId, editionId));
       }
+      // Every record starts again at version 1, checked in CI (ADR 0084).
+      await tx.delete(quoteChecks).where(eq(quoteChecks.editionId, editionId));
       await inChunks(words, (rows) => tx.insert(contentWords).values(rows));
       await inChunks(rowsOf(content.idioms), (rows) => tx.insert(contentIdioms).values(rows));
       await inChunks(rowsOf(content.corrections), (rows) =>
