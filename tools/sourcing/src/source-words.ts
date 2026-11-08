@@ -38,7 +38,7 @@ import {
 import type { Flag, FlagKind } from './review-report';
 import type { DictionaryArticle } from './article';
 import { SumDictionary, type SumAccess } from './sum';
-import { matchKey, readStress, unstressed } from './text';
+import { matchKey, readStress, unstressed, withoutHomonymIndexes } from './text';
 import { filterWord } from './word-filters';
 
 export type SourcingOptions = PipelineOptions & {
@@ -498,8 +498,8 @@ function draftDefinitions(article: DictionaryArticle): Step<{
     );
   }
   return {
-    primaryDefinition: primary?.text,
-    extraDefinitions: extra.map((definition) => definition.text),
+    primaryDefinition: primary === undefined ? undefined : withoutHomonymIndexes(primary.text),
+    extraDefinitions: extra.map((definition) => withoutHomonymIndexes(definition.text)),
     registers,
     flags,
   };
@@ -570,7 +570,7 @@ function draftEtymology(
   const [chosen] = entries;
   if (entries.length === 1 && chosen !== undefined && chosen.text !== '') {
     return {
-      etymology: chosen.text.replace(/;$/, '.'),
+      etymology: withoutHomonymIndexes(chosen.text).replace(/;$/, '.'),
       sources: [
         {
           title: underOtherHeadword
