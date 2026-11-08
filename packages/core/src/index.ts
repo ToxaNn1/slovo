@@ -223,6 +223,7 @@ export {
   type SwitchVerdict,
   type SwitchVerdicts,
 } from './edition/switch-evaluator';
+export { forceUpdateOf, type ForceUpdate, type ForceUpdateFacts } from './edition/force-update';
 export { readInstallId } from './edition/install-id';
 export {
   colorSchemeFor,

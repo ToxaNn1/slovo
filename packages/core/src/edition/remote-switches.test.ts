@@ -413,6 +413,24 @@ describe('the remote Feature Switches', () => {
     expect(app.backend.switches.asked).toHaveLength(1);
   });
 
+  it('tells its subscribers of new minimums without asking for a reopen', async () => {
+    const app = device();
+    const switches = await app.launch();
+    await switches.ask();
+    let told = 0;
+    switches.subscribe(() => {
+      told += 1;
+    });
+
+    app.backend.switches.setMinimums({ ios: { hard: '2.0.0' } });
+
+    await expect(switches.ask()).resolves.toBe(false);
+    expect(told).toBe(1);
+    expect(switches.minimums).toEqual({ ios: { hard: '2.0.0' } });
+    await switches.ask();
+    expect(told).toBe(1);
+  });
+
   it('never rejects, even when the answer can’t be kept', async () => {
     const backend = createFakeBackend();
     backend.switches.turnOff('game');

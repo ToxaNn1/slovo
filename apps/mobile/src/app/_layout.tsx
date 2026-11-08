@@ -27,6 +27,8 @@ import {
 import { ScreenViews } from '@/analytics/screen-views';
 import { hapticEngine } from '@/game/haptics';
 import { deviceClock } from '@/device/device-clock';
+import { deviceFacts } from '@/device/device-facts';
+import { ForceUpdateGate } from '@/force-update/force-update';
 import { startCrashReports } from '@/diagnostics/crash-reports';
 import { DecorInEffect } from '@/shell/decor-in-effect';
 import { InterfaceSoundsInEffect, soundEngine } from '@/sounds/interface-sounds';
@@ -109,41 +111,44 @@ function ThemedTabs() {
             {/* Outside the gates: each of its listeners waits for its own opening (ADR 0036, 0037). */}
             <Lifecycle />
             <ScreenViews />
-            {/* Every screen draws over the open Language Pack and composition. */}
-            <Opened opening={languagePack} failedTestID="language-pack-failed">
-              <Opened opening={composition} failedTestID="feed-error">
-                {/* The screens' background and divider follow the local date (ADR 0055). */}
-                <ReduceMotionInEffect>
-                  <RouteInEffect>
-                    <InterfaceSoundsInEffect engine={soundEngine}>
-                      <DecorInEffect clock={deviceClock}>
-                        <NotificationTaps
-                          onOpened={(kind) => {
-                            // The event never fails; a composition that fails to open is reported where it opens.
-                            composition.opened().then(
-                              (open) => open.analytics.notificationOpened(kind),
-                              () => undefined,
-                            );
-                          }}
-                        />
-                        <EditionTabs
-                          screenOptions={{
-                            headerShown: false,
-                            tabBarStyle: {
-                              backgroundColor: colors.tabBar,
-                              borderTopColor: colors.line,
-                            },
-                          }}
-                        />
-                        {/* Over the tabs until the reader finishes or skips it. */}
-                        <MascotCelebrations />
-                        <Onboarding />
-                      </DecorInEffect>
-                    </InterfaceSoundsInEffect>
-                  </RouteInEffect>
-                </ReduceMotionInEffect>
+            {/* Below the hard minimum no screen mounts: the force update waits for the remote switches alone (ADR 0089). */}
+            <ForceUpdateGate device={deviceFacts}>
+              {/* Every screen draws over the open Language Pack and composition. */}
+              <Opened opening={languagePack} failedTestID="language-pack-failed">
+                <Opened opening={composition} failedTestID="feed-error">
+                  {/* The screens' background and divider follow the local date (ADR 0055). */}
+                  <ReduceMotionInEffect>
+                    <RouteInEffect>
+                      <InterfaceSoundsInEffect engine={soundEngine}>
+                        <DecorInEffect clock={deviceClock}>
+                          <NotificationTaps
+                            onOpened={(kind) => {
+                              // The event never fails; a composition that fails to open is reported where it opens.
+                              composition.opened().then(
+                                (open) => open.analytics.notificationOpened(kind),
+                                () => undefined,
+                              );
+                            }}
+                          />
+                          <EditionTabs
+                            screenOptions={{
+                              headerShown: false,
+                              tabBarStyle: {
+                                backgroundColor: colors.tabBar,
+                                borderTopColor: colors.line,
+                              },
+                            }}
+                          />
+                          {/* Over the tabs until the reader finishes or skips it. */}
+                          <MascotCelebrations />
+                          <Onboarding />
+                        </DecorInEffect>
+                      </InterfaceSoundsInEffect>
+                    </RouteInEffect>
+                  </ReduceMotionInEffect>
+                </Opened>
               </Opened>
-            </Opened>
+            </ForceUpdateGate>
           </HapticsProvider>
         </FontSizeProvider>
         <LaunchSplash />

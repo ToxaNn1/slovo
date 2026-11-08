@@ -128,7 +128,8 @@
     "previousWords": "on",
     "correctionTypes": "on",
     "profileConfirmedByRarity": "on",
-    "profileGameBest": "on"
+    "profileGameBest": "on",
+    "forceUpdate": "on"
   },
   "userSettingDefaults": {
     "theme": "system",

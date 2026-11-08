@@ -26,6 +26,13 @@ export const edition = loadEdition(config, Object.keys(illustrations));
 
 const app = AppConfigSchema.parse(appConfig);
 
+/** The app's name, bundle id and App Store Connect id, from the AppConfig: its store pages are named by them. */
+export const appStore = {
+  name: app.name,
+  bundleId: app.bundleId,
+  appStoreConnectAppId: app.appStoreConnectAppId,
+} as const;
+
 /** The App Group the app shares with its widget (ADR 0026), from the AppConfig. */
 export const appGroup = app.appGroup;
 
