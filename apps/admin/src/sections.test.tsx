@@ -16,11 +16,11 @@ test('the sidebar shows the seven sections in order', async () => {
   expect(links.map((link) => link.textContent)).toEqual(ORDER);
 });
 
-test('each section opens its empty state with the same texts in both themes', async () => {
+test('each section not yet built opens its empty state with the same texts in both themes', async () => {
   const user = userEvent.setup();
   render(<Admin />);
   const theme = await screen.findByRole('button', { name: 'Темна тема' });
-  for (const title of ORDER) {
+  for (const title of ORDER.filter((title) => title !== 'Аналітика')) {
     await user.click((await sidebar()).getByRole('link', { name: title }));
     const section = await screen.findByRole('region', { name: title });
     expect(within(section).getByText('Поки що порожньо')).toBeDefined();

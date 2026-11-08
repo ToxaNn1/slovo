@@ -25,3 +25,18 @@ export const FiltersSchema = z.object({
   edition: EditionIdSchema.optional().catch(undefined),
   period: z.enum(PERIODS).optional().catch(undefined),
 });
+
+/** The days of a period in the admin's time zone. */
+const PERIOD_DAYS: Readonly<Record<PeriodId, number>> = { '1d': 1, '7d': 7, '30d': 30, '90d': 90 };
+
+/** A day as `YYYY-MM-DD` in Kyiv, where the owner reads the admin. */
+const kyivDay = (instant: Date) =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Kyiv' }).format(instant);
+
+/** The first and the last day of a period that ends today in Kyiv, both included. */
+export function periodDays(period: PeriodId, now: Date): { from: string; to: string } {
+  const to = kyivDay(now);
+  const first = new Date(`${to}T12:00:00.000Z`);
+  first.setUTCDate(first.getUTCDate() - (PERIOD_DAYS[period] - 1));
+  return { from: first.toISOString().slice(0, 10), to };
+}
