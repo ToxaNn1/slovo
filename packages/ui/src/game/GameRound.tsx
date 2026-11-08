@@ -642,7 +642,7 @@ function RoundHead({
         ? { accessibilityRole: 'header', accessibilityLabel: label }
         : { accessibilityElementsHidden: true, importantForAccessibility: 'no' })}
       {...voice}
-      style={[typeStyle('roundHead', tokens), { color: colors.accent }]}
+      style={[typeStyle('roundHead', tokens), { color: colors.accentText }]}
     >
       {place === undefined ? label : `${label} · ${place}`}
     </Text>

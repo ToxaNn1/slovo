@@ -122,7 +122,7 @@ export function ProblemLine({
     <Text
       testID={testID}
       {...voice}
-      style={[typeStyle('fieldProblem', tokens), { color: colors.accent }]}
+      style={[typeStyle('fieldProblem', tokens), { color: colors.accentText }]}
     >
       {problem}
     </Text>

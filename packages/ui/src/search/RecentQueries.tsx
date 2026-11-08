@@ -38,7 +38,7 @@ export function RecentQueries({
           onPress={onClear}
           style={styles.clear}
         >
-          <Text style={[typeStyle('recentClear', tokens), { color: colors.accent }]}>
+          <Text style={[typeStyle('recentClear', tokens), { color: colors.accentText }]}>
             {strings.search.clear}
           </Text>
         </Pressable>

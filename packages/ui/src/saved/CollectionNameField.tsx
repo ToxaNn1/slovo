@@ -65,7 +65,7 @@ export function CollectionNameField({
       <Text
         accessibilityRole="header"
         {...voice}
-        style={[typeStyle('eyebrow', tokens), { color: colors.accent }]}
+        style={[typeStyle('eyebrow', tokens), { color: colors.accentText }]}
       >
         {overline}
       </Text>
@@ -103,7 +103,7 @@ export function CollectionNameField({
         <Text
           testID={`${testID}-refusal`}
           {...voice}
-          style={[typeStyle('fieldProblem', tokens), { color: colors.destructive }]}
+          style={[typeStyle('fieldProblem', tokens), { color: colors.accentText }]}
         >
           {refusal}
         </Text>
