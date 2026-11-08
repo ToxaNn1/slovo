@@ -35,6 +35,7 @@ import { adminApp } from './admin/admin-app';
 import { adminCodeEmail } from './admin/admin-mail';
 import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
 import { createContentStore } from './content/content-store';
+import { createContentQueue } from './content/content-queue';
 import { createContentWrites } from './content/content-writes';
 import { createOwnerCheckStore } from './admin/owner-check-store';
 import { createCiRunStore } from './quality/ci-run-store';
@@ -243,6 +244,7 @@ export function createApp({
     collectionLinks,
     communityCounters,
     contentPacks,
+    contentQueue: createContentQueue({ database, clock }),
     contentStore,
     contentWrites,
     development: createDevelopment({ github, eas, clock }),

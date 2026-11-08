@@ -17,6 +17,8 @@ import { Route as QualityRouteImport } from './routes/quality'
 import { Route as SecurityRouteImport } from './routes/security'
 import { Route as SessionsRouteImport } from './routes/sessions'
 import { Route as SwitchesRouteImport } from './routes/switches'
+import { Route as ContentIndexRouteImport } from './routes/content.index'
+import { Route as ContentQueueRouteImport } from './routes/content.queue'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -58,37 +60,52 @@ const SwitchesRoute = SwitchesRouteImport.update({
   path: '/switches',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ContentIndexRoute = ContentIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ContentRoute,
+} as any)
+const ContentQueueRoute = ContentQueueRouteImport.update({
+  id: '/queue',
+  path: '/queue',
+  getParentRoute: () => ContentRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
-  '/content': typeof ContentRoute
+  '/content': typeof ContentRouteWithChildren
   '/development': typeof DevelopmentRoute
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
   '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRoute
+  '/content/queue': typeof ContentQueueRoute
+  '/content/': typeof ContentIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
-  '/content': typeof ContentRoute
   '/development': typeof DevelopmentRoute
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
   '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRoute
+  '/content/queue': typeof ContentQueueRoute
+  '/content': typeof ContentIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analytics': typeof AnalyticsRoute
-  '/content': typeof ContentRoute
+  '/content': typeof ContentRouteWithChildren
   '/development': typeof DevelopmentRoute
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
   '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRoute
+  '/content/queue': typeof ContentQueueRoute
+  '/content/': typeof ContentIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,16 +118,19 @@ export interface FileRouteTypes {
     | '/security'
     | '/sessions'
     | '/switches'
+    | '/content/queue'
+    | '/content/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/analytics'
-    | '/content'
     | '/development'
     | '/quality'
     | '/security'
     | '/sessions'
     | '/switches'
+    | '/content/queue'
+    | '/content'
   id:
     | '__root__'
     | '/'
@@ -121,12 +141,14 @@ export interface FileRouteTypes {
     | '/security'
     | '/sessions'
     | '/switches'
+    | '/content/queue'
+    | '/content/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalyticsRoute: typeof AnalyticsRoute
-  ContentRoute: typeof ContentRoute
+  ContentRoute: typeof ContentRouteWithChildren
   DevelopmentRoute: typeof DevelopmentRoute
   QualityRoute: typeof QualityRoute
   SecurityRoute: typeof SecurityRoute
@@ -192,13 +214,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SwitchesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/content/': {
+      id: '/content/'
+      path: '/'
+      fullPath: '/content/'
+      preLoaderRoute: typeof ContentIndexRouteImport
+      parentRoute: typeof ContentRoute
+    }
+    '/content/queue': {
+      id: '/content/queue'
+      path: '/queue'
+      fullPath: '/content/queue'
+      preLoaderRoute: typeof ContentQueueRouteImport
+      parentRoute: typeof ContentRoute
+    }
   }
 }
+
+interface ContentRouteChildren {
+  ContentQueueRoute: typeof ContentQueueRoute
+  ContentIndexRoute: typeof ContentIndexRoute
+}
+
+const ContentRouteChildren: ContentRouteChildren = {
+  ContentQueueRoute: ContentQueueRoute,
+  ContentIndexRoute: ContentIndexRoute,
+}
+
+const ContentRouteWithChildren =
+  ContentRoute._addFileChildren(ContentRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
-  ContentRoute: ContentRoute,
+  ContentRoute: ContentRouteWithChildren,
   DevelopmentRoute: DevelopmentRoute,
   QualityRoute: QualityRoute,
   SecurityRoute: SecurityRoute,

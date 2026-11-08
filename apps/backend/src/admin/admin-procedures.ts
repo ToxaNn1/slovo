@@ -29,6 +29,7 @@ import type {
   SwitchRefused,
 } from '@slovo/server-core';
 
+import type { ContentQueue } from '../content/content-queue';
 import type { ContentWrites, WriteRefusal } from '../content/content-writes';
 import { adminInviteEmail } from './admin-mail';
 
@@ -101,6 +102,7 @@ export function adminProcedures(
   contentWrites: ContentWrites,
   mailer: Mailer,
   development: DevelopmentOverview,
+  contentQueue: ContentQueue,
   ownerChecks: OwnerChecks,
   analytics: AdminAnalytics,
   { quality, ciToken }: { readonly quality: Quality; readonly ciToken: string | undefined },
@@ -167,6 +169,13 @@ export function adminProcedures(
       throw errors.UNAUTHORIZED({ data: { attemptsLeft: refusal.attemptsLeft } });
     }
     throw errors.TOO_MANY_REQUESTS({ data: { retryAfterSeconds: refusal.retryAfterSeconds } });
+  }
+
+  /** The email of the Admin user calling the Content queue; an Агент is refused. */
+  async function queueCaller(headers: Headers, errors: AdminErrors, writes = false) {
+    const caller = await admit(headers, errors, { writes });
+    if (caller.kind !== 'admin-user') throw errors.FORBIDDEN();
+    return caller.email;
   }
 
   /** Who the Action log names for a caller of a write. */
@@ -259,6 +268,7 @@ export function adminProcedures(
   }
 
   const content = os.content;
+  const queue = os.contentQueue;
   return os.router({
     requestCode: os.requestCode.handler(async ({ context, input, errors }) => {
       await admitSignIn(context.headers, errors);
@@ -528,6 +538,50 @@ export function adminProcedures(
         const found = await contentWrites.record(input.editionId, input.kind, input.id);
         if (!found.ok) throw refusalOf(found, errors);
         return { fields: found.fields, recordVersion: found.recordVersion };
+      }),
+    },
+    contentQueue: {
+      batches: queue.batches.handler(async ({ context, input, errors }) => {
+        await queueCaller(context.headers, errors);
+        return { batches: await contentQueue.batches(input.editionId) };
+      }),
+      review: queue.review.handler(async ({ context, input, errors }) => {
+        const email = await queueCaller(context.headers, errors, true);
+        const reviewed = await contentQueue.review(email, input.batchId, input.reason);
+        if (!reviewed.ok) throw errors.NOT_FOUND();
+        return { reviewed: true as const };
+      }),
+      rollback: queue.rollback.handler(async ({ context, input, errors }) => {
+        const email = await queueCaller(context.headers, errors, true);
+        const rolledBack = await contentQueue.rollback(email, input.batchId, input.reason);
+        if (!rolledBack.ok) throw errors.NOT_FOUND();
+        const { ok: _ok, ...answer } = rolledBack;
+        return answer;
+      }),
+      flags: queue.flags.handler(async ({ context, input, errors }) => {
+        await queueCaller(context.headers, errors);
+        return { flags: await contentQueue.flags(input.editionId) };
+      }),
+      resolveFlag: queue.resolveFlag.handler(async ({ context, input, errors }) => {
+        const email = await queueCaller(context.headers, errors, true);
+        const resolved = await contentQueue.resolveFlag(
+          email,
+          input.id,
+          input.decision,
+          input.reason,
+        );
+        if (!resolved.ok) throw errors.NOT_FOUND();
+        return { resolved: true as const };
+      }),
+      reports: queue.reports.handler(async ({ context, input, errors }) => {
+        await queueCaller(context.headers, errors);
+        return { reports: await contentQueue.reports(input.editionId) };
+      }),
+      resolveReport: queue.resolveReport.handler(async ({ context, input, errors }) => {
+        const email = await queueCaller(context.headers, errors, true);
+        const resolved = await contentQueue.resolveReport(email, input.id, input.reason);
+        if (!resolved.ok) throw errors.NOT_FOUND();
+        return { resolved: true as const };
       }),
     },
     development: os.development.handler(async ({ context, errors }) => {

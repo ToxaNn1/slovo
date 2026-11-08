@@ -39,7 +39,7 @@ test('each section not yet built opens with the same texts in both themes, the o
   render(<Admin />);
   const theme = await screen.findByRole('button', { name: 'Темна тема' });
   for (const title of OPENED) {
-    await user.click((await sidebar()).getByRole('link', { name: title }));
+    await user.click((await sidebar()).getByRole('link', { name: new RegExp(`^${title}`) }));
     const section = await screen.findByRole('region', { name: title });
     expect(await settled(section, title)).toBeDefined();
     const light = section.textContent;
