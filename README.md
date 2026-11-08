@@ -48,7 +48,7 @@ Parts marked as placeholders are reserved and filled by later versions.
 - [`CONTEXT.md`](CONTEXT.md): the domain glossary.
 - [`docs/adr/`](docs/adr/README.md): architecture decision records, with an index of every number.
 - [`docs/deploy.md`](docs/deploy.md): the Deployment on Railway, its container image and every variable it reads.
-- [`docs/owner-checks.md`](docs/owner-checks.md): the steps only the owner takes, by version.
+- The steps only the owner takes, by version, are the Owner checks in the admin's Розробка; an agent adds one with `pnpm admin check add <version> <text>`.
 - [Master spec, issue #1](https://github.com/ToxaNn1/slovo/issues/1): product vision, every decision so far and the roadmap from 0.1 to 1.0.
 - [0.1 Foundation spec, issue #2](https://github.com/ToxaNn1/slovo/issues/2) and [0.2 Feed spec, issue #51](https://github.com/ToxaNn1/slovo/issues/51): the versions built so far and their tickets.
 - `editions/<edition>/legal/`: the Edition's privacy policy and terms, which the workflow `Pages` publishes to GitHub Pages at `<LEGAL_SITE>/<edition>/<page>` on every change on `main`; the Core constant `LEGAL_SITE` is the one place that names the site's base (ADR 0049). Pages must be on in the repository settings with "GitHub Actions" as its source.
@@ -156,7 +156,7 @@ What the tests can't reach runs on the simulator after the native build that bri
 1. **A Content update downloads, is kept and opens at the next launch.** Start the backend ([Run the backend](#run-the-backend)). In a second worktree with the same `apps/backend/.env`, correct a Definition, record and build the content with `pnpm build:pack uk --record`, and publish it with `pnpm publish:pack uk`. The checkout Metro runs from keeps the older content, so the app bundles an older pack than the published one. Delete the app from the simulator, install the build again and open it: the first check is due at once. The app's data folder (`xcrun simctl get_app_container booted app.slovo.uk data`) then holds `Documents/content-update/kept.json`, naming the new content version, beside `language-pack-<version>.db`. The open app still shows the old Definition. Add a Word to Favorites, force-quit the app and open it again: the corrected Definition shows, and the Word is still in Favorites. Opening it again the same day asks the backend nothing (no `content.latest` request in its log).
 2. **The SLOVO ID Session survives a restart.** Sign in on the SLOVO ID screen with a code from Mailpit, force-quit the app and open it again: the screen still shows the email, signed in.
 
-The checks of the native build of 0.9, on a real iPhone, are in [the owner's checks](docs/owner-checks.md#09-build).
+The checks of the native build of 0.9, on a real iPhone, are Owner checks of 0.9 in the admin's Розробка.
 
 ## Check the bundle with Expo Atlas
 
