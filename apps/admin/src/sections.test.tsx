@@ -23,7 +23,7 @@ test('each section not yet built opens its empty state with the same texts in bo
   // Безпека shows the Власник its blocks: src/security.test.tsx.
   // Розробка is built: development.test.tsx.
   for (const title of ORDER.filter((section) => section !== 'Безпека' && section !== 'Розробка')) {
-    await user.click((await sidebar()).getByRole('link', { name: title }));
+    await user.click((await sidebar()).getByRole('link', { name: new RegExp(`^${title}`) }));
     const section = await screen.findByRole('region', { name: title });
     expect(within(section).getByText('Поки що порожньо')).toBeDefined();
     const light = section.textContent;

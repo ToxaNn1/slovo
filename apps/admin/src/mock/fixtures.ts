@@ -11,6 +11,28 @@ const WRITTEN = {
 } satisfies AdminApiOutputs['content']['create'];
 
 /** What `pnpm dev:admin --mock` and the screen tests answer, one per procedure. */
+/** The Content queue's one batch. */
+export const QUEUE_BATCH = {
+  id: BATCH_ID,
+  editionId: 'uk',
+  author: 'claude-content',
+  createdAt: '2026-11-08T08:00:00.000Z',
+  added: 3,
+  changed: 2,
+} satisfies AdminApiOutputs['contentQueue']['batches']['batches'][number];
+
+/** The Content queue's one Mistake Report. */
+export const QUEUE_REPORT = {
+  id: '0b9c3f0e-6a52-4c39-9f3e-2f1d7c1a5b11',
+  editionId: 'uk',
+  entryId: 'w_b2',
+  type: 'stress',
+  comment: 'Наголос на другому складі.',
+  appVersion: '0.8.0',
+  contentVersion: 2,
+  receivedAt: '2026-11-07T20:00:00.000Z',
+} satisfies AdminApiOutputs['contentQueue']['reports']['reports'][number];
+
 export const FIXTURES: AdminApiOutputs = {
   requestCode: { sent: true },
   verifyCode: {
@@ -100,6 +122,31 @@ export const FIXTURES: AdminApiOutputs = {
       missed: [],
       quoteCheck: { unverified: 0, failed: 0 },
     },
+  },
+  contentQueue: {
+    batches: {
+      batches: [QUEUE_BATCH],
+    },
+    review: { reviewed: true },
+    rollback: { contentVersion: 3, retired: ['w_a1'], restored: ['w_b2'], skipped: ['w_c3'] },
+    flags: {
+      flags: [
+        {
+          id: 7,
+          editionId: 'uk',
+          kind: 'word',
+          recordId: 'w_a1',
+          author: 'claude-content',
+          explanation: 'Цитату не знайдено в джерелі.',
+          at: '2026-11-08T08:05:00.000Z',
+        },
+      ],
+    },
+    resolveFlag: { resolved: true },
+    reports: {
+      reports: [QUEUE_REPORT],
+    },
+    resolveReport: { resolved: true },
   },
   development: {
     github: {

@@ -3,8 +3,9 @@ import { HttpHandler, HttpResponse, type JsonBodyType } from 'msw';
 
 import { FIXTURES } from './fixtures';
 
-type Name = Exclude<keyof typeof adminApiContract, 'content'>;
+type Name = Exclude<keyof typeof adminApiContract, 'content' | 'contentQueue'>;
 type ContentName = keyof typeof adminApiContract.content;
+type QueueName = keyof typeof adminApiContract.contentQueue;
 
 /** A handler at a contract route, answering the fixture. */
 function routeHandler(
@@ -31,6 +32,14 @@ function contentHandlerOf<N extends ContentName>(
   fixture: AdminApiOutputs['content'][N],
 ): HttpHandler {
   return routeHandler(adminApiContract.content[name]['~orpc'].route, name, fixture);
+}
+
+/** The handler of one Content queue procedure, as `handlerOf`. */
+function queueHandlerOf<N extends QueueName>(
+  name: N,
+  fixture: AdminApiOutputs['contentQueue'][N],
+): HttpHandler {
+  return routeHandler(adminApiContract.contentQueue[name]['~orpc'].route, name, fixture);
 }
 
 /** The MSW handlers of every admin API procedure; a new procedure needs a fixture to compile. */
@@ -69,5 +78,19 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     record: contentHandlerOf('record', content.record),
     report: contentHandlerOf('report', content.report),
   };
-  return [...Object.values(handlers), ...Object.values(contentHandlers)];
+  const queue = fixtures.contentQueue;
+  const queueHandlers: Record<QueueName, HttpHandler> = {
+    batches: queueHandlerOf('batches', queue.batches),
+    review: queueHandlerOf('review', queue.review),
+    rollback: queueHandlerOf('rollback', queue.rollback),
+    flags: queueHandlerOf('flags', queue.flags),
+    resolveFlag: queueHandlerOf('resolveFlag', queue.resolveFlag),
+    reports: queueHandlerOf('reports', queue.reports),
+    resolveReport: queueHandlerOf('resolveReport', queue.resolveReport),
+  };
+  return [
+    ...Object.values(handlers),
+    ...Object.values(contentHandlers),
+    ...Object.values(queueHandlers),
+  ];
 }
