@@ -33,6 +33,9 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     setMinimum: handlerOf('setMinimum', fixtures.setMinimum),
     kill: handlerOf('kill', fixtures.kill),
     editions: handlerOf('editions', fixtures.editions),
+    ownerChecks: handlerOf('ownerChecks', fixtures.ownerChecks),
+    tickOwnerCheck: handlerOf('tickOwnerCheck', fixtures.tickOwnerCheck),
+    addOwnerCheck: handlerOf('addOwnerCheck', fixtures.addOwnerCheck),
   };
   return Object.values(handlers);
 }
