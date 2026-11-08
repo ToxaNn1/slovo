@@ -217,6 +217,7 @@ export {
   type SwitchVerdict,
   type SwitchVerdicts,
 } from './edition/switch-evaluator';
+export { readInstallId } from './edition/install-id';
 export {
   colorSchemeFor,
   createSettings,

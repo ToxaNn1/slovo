@@ -128,6 +128,7 @@ describe('the 0.8 sync marks', () => {
       'firstWeek.from',
       'contentUpdate.checkedAt',
       'edition.switches',
+      'edition.installId',
       'feed.noticesClosed',
       'search.recentQueries',
       'notifications.titles',
@@ -319,6 +320,7 @@ const storedIn1_0: readonly (readonly [
   ['firstWeekFrom', undefined, 'firstWeek.from', '"2026-10-24"'],
   ['contentUpdateCheckedAt', undefined, 'contentUpdate.checkedAt', '"2026-10-30T08:15:00.000Z"'],
   ['remoteSwitches', undefined, 'edition.switches', '{"off":["game"],"etag":"\\"v1\\""}'],
+  ['installId', undefined, 'edition.installId', '"k3f9q2zx7m1c0b8v5n4h"'],
   ['widgetHintShown', undefined, 'game.widgetHintOffered', 'true'],
   ['gameBest', 'guess-word', 'game.best.guess-word', '11'],
   [
