@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { EditionIdSchema } from '../edition';
+import { EditionIdSchema, FeatureSwitchesSchema } from '../edition';
 import {
   ForceUpdateMinimumSchema,
   ForceUpdateMinimumsSchema,
@@ -77,8 +77,9 @@ const SWITCH_WRITE_ERRORS = {
 /** Every admin write names why: the Action log keeps it (ADR 0088). */
 const ReasonSchema = z.string().trim().min(1).max(500);
 
-/** The Rules and the force-update minimums of an Edition. */
+/** What an Edition declares of each feature, its Rules and its force-update minimums. */
 const SwitchesOfEditionSchema = z.object({
+  states: FeatureSwitchesSchema,
   rules: z.array(RuleSchema),
   minimums: ForceUpdateMinimumsSchema,
 });

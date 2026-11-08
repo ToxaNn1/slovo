@@ -134,7 +134,7 @@ export function adminProcedures(
     if (!result.ok) {
       throw errors.BAD_REQUEST({ data: { refusal: result.reason, feature: result.feature } });
     }
-    return { rules: [...result.rules], minimums: result.minimums };
+    return { states: result.states, rules: [...result.rules], minimums: result.minimums };
   }
 
   /** The Admin user's own session; another caller is refused. */
@@ -227,7 +227,7 @@ export function adminProcedures(
       await admit(context.headers, errors);
       const switches = await editions.switches(input.editionId);
       if (!switches.ok) throw errors.NOT_FOUND();
-      return { rules: [...switches.rules], minimums: switches.minimums };
+      return { states: switches.states, rules: [...switches.rules], minimums: switches.minimums };
     }),
 
     setRules: os.setRules.handler(async ({ context, input, errors }) => {

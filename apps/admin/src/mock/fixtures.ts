@@ -1,6 +1,27 @@
+import { FeatureSwitchesSchema } from '@slovo/contracts';
 import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 
-const SWITCHES = { rules: [], minimums: {} } satisfies AdminApiOutputs['switches'];
+/** Every feature on, but one off and one the Edition hasn't got. */
+const STATES = FeatureSwitchesSchema.parse({
+  ...Object.fromEntries(FeatureSwitchesSchema.keyof().options.map((feature) => [feature, 'on'])),
+  contentUpdates: 'off',
+  mistakeReports: 'unavailable',
+});
+
+const SWITCHES = {
+  states: STATES,
+  rules: [
+    {
+      id: 'android-beta',
+      editionId: 'uk',
+      feature: 'game',
+      order: 0,
+      verdict: 'off',
+      targets: { platform: 'android' },
+    },
+  ],
+  minimums: {},
+} satisfies AdminApiOutputs['switches'];
 
 /** What `pnpm dev:admin --mock` and the screen tests answer, one per procedure. */
 export const FIXTURES: AdminApiOutputs = {

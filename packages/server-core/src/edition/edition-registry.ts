@@ -5,6 +5,7 @@ import {
   type EditionConfig,
   type EditionStrings,
   type FeatureSwitch,
+  type FeatureSwitches,
   type ForceUpdateMinimum,
   type ForceUpdateMinimums,
   type Platform,
@@ -67,6 +68,8 @@ export interface SwitchRefused {
 /** The Rules of an Edition, by feature name and then order, and its force-update minimums. */
 export interface EditionSwitches {
   readonly ok: true;
+  /** What the Edition declares of each feature, before any Rule. */
+  readonly states: FeatureSwitches;
   readonly rules: readonly Rule[];
   /** The features the Edition turns on and the Rules turn off for everyone, for an app that reads no Rule. */
   readonly off: readonly FeatureSwitch[];
@@ -213,7 +216,7 @@ export function createEditionRegistry({
     const off = FeatureSwitchSchema.options.filter(
       (feature) => edition.config.featureSwitches[feature] === 'on' && !inEffect(feature),
     );
-    return { ok: true, rules, off, minimums };
+    return { ok: true, states: edition.config.featureSwitches, rules, off, minimums };
   }
 
   const rulesOf = (rules: readonly Rule[], feature: string) =>
