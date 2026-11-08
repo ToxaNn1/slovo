@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { ContentTargetsSchema } from '../content-targets';
 import { CorrectionTypeSchema } from '../correction';
-import { EditionIdSchema, FeatureSwitchesSchema } from '../edition';
+import { CategorySchema, EditionIdSchema, FeatureSwitchesSchema, LevelsSchema } from '../edition';
 import {
   ForceUpdateMinimumSchema,
   ForceUpdateMinimumsSchema,
@@ -229,6 +229,8 @@ const contentProcedure = procedure.errors({
   NOT_FOUND: { message: 'Not found' },
   /** No Агент token, an unknown or revoked one, or the app's Session. */
   UNAUTHORIZED: { message: 'Content is written by an Агент token or an admin session' },
+  /** An admin session's write without the admin header. */
+  FORBIDDEN: { message: 'An admin session writes content with the admin header' },
   NOT_IMPORTED: { status: 409, message: "The Edition's content is not imported" },
 });
 
@@ -258,6 +260,27 @@ const writeErrors = {
 } as const;
 
 const recordPath = '/admin/content/{editionId}/records/{kind}';
+
+/** A record as the content editor lists it. */
+export const ContentRecordSummarySchema = z.object({
+  id: z.string(),
+  /** The lemma, expression, form, title or name the record is known by. */
+  label: z.string(),
+  retired: z.boolean(),
+  recordVersion: z.number().int().positive(),
+});
+export type ContentRecordSummary = z.infer<typeof ContentRecordSummarySchema>;
+
+/** The Edition card: what the Edition registry holds of an Edition, shown read-only (story 44). */
+export const EditionCardSchema = z.object({
+  id: EditionIdSchema,
+  displayName: z.string().min(1),
+  locale: z.string(),
+  categories: z.array(CategorySchema),
+  correctionCategories: z.array(CategorySchema),
+  levels: LevelsSchema,
+});
+export type EditionCard = z.infer<typeof EditionCardSchema>;
 
 /** What a write answers: the record's new version and the Edition's content version it published. */
 const WrittenSchema = z.object({
@@ -406,8 +429,28 @@ const contentWriteContract = {
       z.object({
         fields: z.record(z.string(), z.unknown()),
         recordVersion: z.number().int().positive(),
+        retired: z.boolean(),
+        /** Words only: whether the Word's Recordings no longer read its text (ADR 0083). */
+        needsNewRecording: z.boolean().optional(),
       }),
     ),
+  records: contentProcedure
+    .route({
+      method: 'GET',
+      path: recordPath,
+      summary:
+        'The records of a kind, for the content editor: by a text query, retired ones on request',
+      tags: ['admin'],
+    })
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema,
+        kind: ContentRecordKindSchema,
+        query: z.string().max(200).optional(),
+        retired: z.stringbool().optional(),
+      }),
+    )
+    .output(z.object({ records: z.array(ContentRecordSummarySchema) })),
   report: contentProcedure
     .route({
       method: 'GET',
@@ -999,6 +1042,16 @@ export const adminContract = {
     })
     .errors(ADMIN_ERRORS)
     .output(z.object({ editions: z.array(AdminEditionSchema) })),
+  editionCard: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/editions/{editionId}',
+      summary: 'The Edition card, read-only, from the Edition registry',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.strictObject({ editionId: EditionIdSchema }))
+    .output(EditionCardSchema),
 
   analytics: procedure
     .route({

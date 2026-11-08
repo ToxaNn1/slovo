@@ -69,6 +69,7 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     analytics: handlerOf('analytics', fixtures.analytics),
     variantResults: handlerOf('variantResults', fixtures.variantResults),
     counters: handlerOf('counters', fixtures.counters),
+    editionCard: handlerOf('editionCard', fixtures.editionCard),
     development: handlerOf('development', fixtures.development),
     ownerChecks: handlerOf('ownerChecks', fixtures.ownerChecks),
     tickOwnerCheck: handlerOf('tickOwnerCheck', fixtures.tickOwnerCheck),
@@ -86,6 +87,7 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     flag: contentHandlerOf('flag', content.flag),
     record: contentHandlerOf('record', content.record),
     report: contentHandlerOf('report', content.report),
+    records: contentHandlerOf('records', content.records),
   };
   const queue = fixtures.contentQueue;
   const queueHandlers: Record<QueueName, HttpHandler> = {

@@ -22,8 +22,9 @@ test('the sidebar shows the seven sections in order', async () => {
  * and shows the Owner checks: `development.test.tsx`, `owner-checks.test.tsx`.
  * Свічі shows the switch screens: `switches/*.test.tsx`. Якість is filled and
  * checked here and in `quality.test.tsx`.
+ * Контент shows the content editor: `content-editor.test.tsx`.
  */
-const BUILT = ['Аналітика', 'Безпека', 'Розробка', 'Свічі'];
+const BUILT = ['Аналітика', 'Безпека', 'Розробка', 'Свічі', 'Контент'];
 const OPENED = ORDER.filter((title) => !BUILT.includes(title));
 
 /** Waits for a section's content: its empty state, or what a filled section reads. */

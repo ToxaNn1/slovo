@@ -30,7 +30,7 @@ import type {
 } from '@slovo/server-core';
 
 import type { ContentQueue } from '../content/content-queue';
-import type { ContentWrites, WriteRefusal } from '../content/content-writes';
+import type { ContentWrites, WriteRefusal, Writer } from '../content/content-writes';
 import { adminInviteEmail } from './admin-mail';
 
 /** The path the admin session cookie is sent on: the admin API's. */
@@ -222,16 +222,20 @@ export function adminProcedures(
     return caller;
   }
 
-  /** The Агент a content procedure is called by; until admin sessions exist, no one else writes content. */
-  async function writerOf(
-    headers: Headers,
-    errors: { NOT_FOUND: () => Error; UNAUTHORIZED: () => Error },
-  ) {
-    if (!(await admin.isOn())) throw errors.NOT_FOUND();
-    const token = bearerOf(headers);
-    const name = token === undefined ? undefined : await admin.agentOf(token);
-    if (name === undefined) throw errors.UNAUTHORIZED();
-    return { name };
+  /**
+   * Who a content procedure is called by: an Агент by its token, or an Admin
+   * user (Адмін or Власник) of a session, whose writes need the admin header.
+   */
+  async function writerOf(headers: Headers, errors: AdminErrors, { writes = true } = {}) {
+    const caller = await admit(headers, errors, { writesContent: true });
+    if (caller.kind === 'admin-user' && writes && headers.get(ADMIN_WRITE_HEADER) === null) {
+      throw errors.FORBIDDEN();
+    }
+    const writer: Writer =
+      caller.kind === 'agent'
+        ? { kind: 'agent', name: caller.name }
+        : { kind: 'admin-user', email: caller.email };
+    return writer;
   }
 
   /** The refusal the contract lists for what the content store refused. */
@@ -483,6 +487,14 @@ export function adminProcedures(
       };
     }),
 
+    editionCard: os.editionCard.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors);
+      const edition = served.find(({ config }) => config.id === input.editionId);
+      if (edition === undefined) throw errors.NOT_FOUND();
+      const { id, displayName, locale, categories, correctionCategories, levels } = edition.config;
+      return { id, displayName, locale, categories, correctionCategories, levels };
+    }),
+
     content: {
       openBatch: content.openBatch.handler(async ({ context, input, errors }) => {
         const writer = await writerOf(context.headers, errors);
@@ -527,17 +539,25 @@ export function adminProcedures(
         return { id: input.id, batchId: input.batchId };
       }),
       report: content.report.handler(async ({ context, input, errors }) => {
-        await writerOf(context.headers, errors);
+        await writerOf(context.headers, errors, { writes: false });
         const reported = await contentWrites.report(input.editionId);
         if (!reported.ok) throw refusalOf(reported, errors);
         const { ok: _ok, ...report } = reported;
         return report;
       }),
       record: content.record.handler(async ({ context, input, errors }) => {
-        await writerOf(context.headers, errors);
+        await writerOf(context.headers, errors, { writes: false });
         const found = await contentWrites.record(input.editionId, input.kind, input.id);
         if (!found.ok) throw refusalOf(found, errors);
-        return { fields: found.fields, recordVersion: found.recordVersion };
+        const { ok: _ok, ...record } = found;
+        return record;
+      }),
+      records: content.records.handler(async ({ context, input, errors }) => {
+        await writerOf(context.headers, errors, { writes: false });
+        const { editionId, kind, ...filters } = input;
+        const listed = await contentWrites.list(editionId, kind, filters);
+        if (!listed.ok) throw refusalOf(listed, errors);
+        return { records: listed.records };
       }),
     },
     contentQueue: {

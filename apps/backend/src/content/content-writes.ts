@@ -57,9 +57,36 @@ export type WriteRefusal =
 
 export type WriteResult = { readonly ok: true; readonly written: Written } | WriteRefusal;
 
-/** The Агент a write comes from. */
-export interface Writer {
-  readonly name: string;
+/** Who a write comes from: an Агент by its token, or an Admin user of a session in the content editor. */
+export type Writer =
+  | { readonly kind: 'agent'; readonly name: string }
+  | { readonly kind: 'admin-user'; readonly email: string };
+
+/** The Action log's name for the writer. */
+const whoOf = (writer: Writer) =>
+  writer.kind === 'agent'
+    ? { kind: 'agent' as const, name: writer.name }
+    : { kind: 'admin-user' as const, email: writer.email };
+
+/** The field a record of each kind is listed by in the content editor. */
+const LABEL_FIELD: Readonly<Record<RecordKind, string>> = {
+  word: 'lemma',
+  correction: 'nonStandardForm',
+  idiom: 'expression',
+  synonymRow: 'dominant',
+  tip: 'title',
+  curatedCollection: 'name',
+};
+
+/** The text a record is listed and searched by. */
+function labelOf(kind: RecordKind, fields: Readonly<Record<string, unknown>>): string {
+  const value = fields[LABEL_FIELD[kind]];
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value !== null) {
+    const text = Object.values(value).find((part) => typeof part === 'string');
+    if (typeof text === 'string') return text;
+  }
+  return typeof fields['id'] === 'string' ? fields['id'] : '';
 }
 
 /** One write of a record: what it changes, from which record version, in which batch. */
@@ -197,7 +224,8 @@ export function createContentWrites({
     });
   }
 
-  const authorOf = (writer: Writer): ContentAuthor => `agent:${writer.name}`;
+  const authorOf = (writer: Writer): ContentAuthor =>
+    writer.kind === 'agent' ? `agent:${writer.name}` : `admin:${writer.email}`;
 
   /** Whether the batch is the Агент's own, of the Edition. */
   async function ownBatch(tx: Tx, writer: Writer, editionId: string, batchId: string) {
@@ -396,7 +424,7 @@ export function createContentWrites({
         .set({ contentVersion: published, updatedAt: now })
         .where(eq(contentVersions.editionId, editionId));
       await tx.insert(actionLog).values({
-        who: { kind: 'agent', name: writer.name },
+        who: whoOf(writer),
         at: now,
         what: `content.${kind}.${change.op}`,
         before:
@@ -443,7 +471,7 @@ export function createContentWrites({
       const current = (await recordsOf(tx, editionId))[kind].find((row) => row.id === id);
       if (current === undefined) return { ok: false, reason: 'not-found' };
       await tx.insert(actionLog).values({
-        who: { kind: 'agent', name: writer.name },
+        who: whoOf(writer),
         at: clock.now(),
         what: `content.${kind}.flag`,
         before: null,
@@ -507,11 +535,49 @@ export function createContentWrites({
       }
       const current = (await recordsOf(tx, editionId))[kind].find((row) => row.id === id);
       if (current === undefined) return { ok: false, reason: 'not-found' } as const;
-      return { ok: true, fields: current.fields, recordVersion: current.recordVersion } as const;
+      return {
+        ok: true,
+        fields: current.fields,
+        recordVersion: current.recordVersion,
+        retired: 'retired' in current.fields && current.fields.retired,
+        ...('needsNewRecording' in current ? { needsNewRecording: current.needsNewRecording } : {}),
+      } as const;
     });
   }
 
-  return { openBatch, write, flag, report, record };
+  /** The records of a kind the content editor lists: by a text query in their label, retired ones on request. */
+  async function list(
+    editionId: string,
+    kind: RecordKind,
+    {
+      query = '',
+      retired = false,
+    }: { query?: string | undefined; retired?: boolean | undefined } = {},
+  ) {
+    if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
+    return db.transaction(async (tx) => {
+      if ((await heldVersion(tx, editionId)) === undefined) {
+        return { ok: false, reason: 'not-imported' } as const;
+      }
+      const needle = query.trim().toLocaleLowerCase();
+      const records = (await recordsOf(tx, editionId))[kind]
+        .map((row) => {
+          const fields: Readonly<Record<string, unknown>> = row.fields;
+          return {
+            id: row.id,
+            label: labelOf(kind, fields),
+            retired: fields['retired'] === true,
+            recordVersion: row.recordVersion,
+          };
+        })
+        .filter((row) => retired || !row.retired)
+        .filter((row) => needle === '' || row.label.toLocaleLowerCase().includes(needle))
+        .sort((a, b) => a.label.localeCompare(b.label));
+      return { ok: true, records } as const;
+    });
+  }
+
+  return { openBatch, write, flag, report, record, list };
 }
 
 export type ContentWrites = ReturnType<typeof createContentWrites>;
