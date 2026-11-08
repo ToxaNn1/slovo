@@ -15,6 +15,7 @@ import type {
   PublishedPack,
   Rule,
 } from '@slovo/contracts';
+import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
 
 /** The current time, injected so the rules that read it stay testable. */
 export interface Clock {
@@ -461,4 +462,31 @@ export interface EntryCounts {
   readonly known: number;
   readonly unknown: number;
   readonly saved: number;
+}
+
+/**
+ * What a read of an outside service answers: its value, or that the service is
+ * unavailable. An adapter never throws: a refusal, a timeout or an answer of
+ * the wrong shape is `unavailable`.
+ */
+export type SourceRead<Value> =
+  | { readonly ok: true; readonly value: Value }
+  | { readonly ok: false; readonly reason: 'unavailable' };
+
+/** The repository on GitHub, read with a read-only token (Розробка). */
+export interface GitHubSource {
+  /** The open pull requests, newest change first. */
+  pullRequests(): Promise<SourceRead<PullRequest[]>>;
+  /** The latest CI run on `main`. */
+  mainCi(): Promise<SourceRead<MainCi>>;
+  /** Every milestone, open and closed. */
+  milestones(): Promise<SourceRead<Milestone[]>>;
+  /** The published releases, newest first. */
+  releases(): Promise<SourceRead<Release[]>>;
+}
+
+/** The app's builds on EAS, read with a read token (Розробка). */
+export interface EasSource {
+  /** The newest builds, at most `limit`, newest first. */
+  latestBuilds(limit: number): Promise<SourceRead<EasBuild[]>>;
 }

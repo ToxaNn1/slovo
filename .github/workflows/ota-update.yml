@@ -87,8 +87,14 @@ jobs:
           cache: pnpm
       - if: ${{ inputs.update-group == '' }}
         run: pnpm install --frozen-lockfile
-      - if: ${{ inputs.update-group == '' }}
-        run: pnpm build:pack
+      # The pack the update carries, built from the snapshot of the backend the
+      # production environment's EXPO_PUBLIC_SLOVO_API_URL names.
+      - name: Build the Language Pack from the Deployment's snapshot
+        if: ${{ inputs.update-group == '' }}
+        working-directory: apps/mobile
+        run: |
+          npx --yes "$EAS_CLI" env:exec "$EAS_ENVIRONMENT" 'pnpm --dir ../.. build:pack' \
+            --non-interactive
 
       # The app accepts only an update signed with the key of this certificate.
       - name: Fetch the code-signing key

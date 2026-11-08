@@ -11,6 +11,8 @@ import { createSmtpMailer } from './account/smtp-mailer';
 import { createApp } from './app';
 import { readConfig, ServerConfigSchema } from './config';
 import { createDatabase } from './database/database';
+import { createEasSource } from './development/eas-source';
+import { createGitHubSource } from './development/github-source';
 import { readEditions } from './edition/edition-folders';
 import { createLogger } from './logger';
 import { systemRandom } from './random';
@@ -37,6 +39,12 @@ const app = createApp({
   posthog: config.posthog === undefined ? unavailablePostHog : createPostHogClient(config.posthog),
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   apple: createAppleVerifier({ clock: systemClock }),
+  github: createGitHubSource({
+    token: config.GITHUB_TOKEN,
+    repository: config.GITHUB_REPOSITORY,
+    logger,
+  }),
+  eas: createEasSource({ token: config.EXPO_TOKEN, projectId: config.EAS_PROJECT_ID, logger }),
   authSecret: config.AUTH_SECRET,
   reporter: await createSentryReporter(config.SENTRY_DSN),
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,

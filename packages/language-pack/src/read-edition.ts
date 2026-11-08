@@ -1,28 +1,17 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import type {
-  Correction,
-  CrosswordDay,
-  CuratedCollection,
-  Entry,
-  Idiom,
-  SynonymRow,
-  Tip,
-  Word,
-} from '@slovo/contracts';
+import type { Correction, CuratedCollection, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 import { WordIdSchema } from '@slovo/contracts';
+import type { ContentSnapshot } from '@slovo/contracts/api';
 
-import type { BuildError } from './build-error';
+import { checkContentSet, checksumOf, type Authored } from '@slovo/content-rules';
+
+import { buildErrorsOf, type BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
-import { checkContent, type Authored } from './check-content';
-import { checkCuratedCollections } from './check-curated-collections';
-import { checkSynonymRows } from './check-synonym-rows';
-import { checkTips } from './check-tips';
 import type { ContentManifest } from './content-manifest';
 import type { ContentTargets } from './content-targets';
-import { crosswordDayErrors } from './crossword-days';
-import { CROSSWORD_DAYS_FILE, editionFiles, EditionFolderError } from './edition-folder';
+import { editionFiles, EditionFolderError, type AuthoredContent } from './edition-folder';
 import { illustrationErrors } from './illustrations';
 import { missingRecordings, recordingErrors, type MissingRecordings } from './recordings';
 import { missingEntryErrors } from './id-registry';
@@ -53,6 +42,19 @@ export interface EditionSource {
   };
 }
 
+/** The part of the content a snapshot gives the build, everything else coming from the folder. */
+export interface SnapshotSource {
+  readonly errors: readonly BuildError[];
+  /** How many Words each Narrator Voice has no Recording of; none when the config can't be read. */
+  readonly missingRecordings: readonly MissingRecordings[];
+  /** Set when there are no errors. */
+  readonly valid?: {
+    /** The content at the snapshot's content version. */
+    readonly content: PackContent;
+    readonly targets: ContentTargets;
+  };
+}
+
 /**
  * Reads an Edition's config and content and checks them Entry by Entry,
  * across Entries and against the id registry. It leaves to the caller
@@ -61,8 +63,75 @@ export interface EditionSource {
  */
 export function readEdition(
   editionDir: string,
-  { registryRequired }: { registryRequired: boolean },
+  {
+    registryRequired,
+    today,
+  }: {
+    registryRequired: boolean;
+    /** The day the public domain is judged on (ADR 0045). */
+    today: Date;
+  },
 ): EditionSource {
+  const { source, manifest, checked } = readWith(editionDir, today, {
+    from: 'folder',
+    registryRequired,
+  });
+  if (checked === undefined || manifest === undefined) return source;
+  const content = { ...checked.content, contentVersion: manifest.contentVersion };
+  return { ...source, valid: { content, manifest, targets: checked.targets } };
+}
+
+/**
+ * Reads an Edition's config, Categories and assets from its folder and takes
+ * the records from a snapshot of the backend, checking them as `readEdition`
+ * checks the folder's. The folder's content files, id registry and manifest
+ * are not read: the snapshot carries the ids and the content version.
+ */
+export function readEditionWithSnapshot(
+  editionDir: string,
+  snapshot: ContentSnapshot,
+  {
+    today,
+  }: {
+    /** The day the public domain is judged on (ADR 0045). */
+    today: Date;
+  },
+): SnapshotSource {
+  const { source, checked } = readWith(editionDir, today, { from: 'snapshot', snapshot });
+  const { errors, missingRecordings } = source;
+  if (source.editionId !== undefined && source.editionId !== snapshot.editionId) {
+    const message = `The snapshot is of Edition ${snapshot.editionId}, not ${source.editionId}`;
+    return { errors: [...errors, { file: SNAPSHOT_FILE, message }], missingRecordings };
+  }
+  if (checked === undefined) return { errors, missingRecordings };
+  const content: PackContent = {
+    ...checked.content,
+    contentVersion: snapshot.contentVersion,
+    ...(snapshot.needsNewRecording.length === 0
+      ? {}
+      : { needsNewRecording: snapshot.needsNewRecording }),
+  };
+  return { errors, missingRecordings, valid: { content, targets: checked.targets } };
+}
+
+/** What the errors of a snapshot name as their file. */
+const SNAPSHOT_FILE = 'snapshot';
+
+/** Where the records come from: the Edition folder's content files or a snapshot of the backend. */
+type RecordsFrom =
+  | { readonly from: 'folder'; readonly registryRequired: boolean }
+  | { readonly from: 'snapshot'; readonly snapshot: ContentSnapshot };
+
+function readWith(
+  editionDir: string,
+  today: Date,
+  records: RecordsFrom,
+): {
+  source: EditionSource;
+  manifest?: ContentManifest;
+  /** Set when there are no errors. */
+  checked?: { content: Omit<PackContent, 'contentVersion'>; targets: ContentTargets };
+} {
   const folder = editionFiles(editionDir);
   const errors: BuildError[] = [];
 
@@ -78,7 +147,8 @@ export function readEdition(
   }
 
   const config = readOrCollect(() => folder.read('config'));
-  const manifest = readOrCollect(() => folder.read('manifest'));
+  const fromFolder = records.from === 'folder';
+  const manifest = fromFolder ? readOrCollect(() => folder.read('manifest')) : undefined;
   const {
     words,
     corrections,
@@ -87,25 +157,56 @@ export function readEdition(
     tips,
     curatedCollections,
     errors: entryErrors,
-  } = folder.entries();
+  } = fromFolder ? folder.entries() : snapshotEntries(records.snapshot);
   errors.push(...entryErrors);
   const targets = readOrCollect(() => folder.readIfPresent('targets') ?? {});
-  const crosswordDays = readOrCollect(() => folder.readIfPresent('crosswordDays'));
+  const crosswordDays = fromFolder
+    ? readOrCollect(() => folder.readIfPresent('crosswordDays'))
+    : records.snapshot.crosswordDays.length === 0
+      ? undefined
+      : records.snapshot.crosswordDays;
   const tokens = readOrCollect(() => folder.readIfPresent('tokens'));
   const decor = readOrCollect(() => folder.readIfPresent('decor'));
-  const registry = readOrCollect(() =>
-    registryRequired ? folder.read('idRegistry') : (folder.readIfPresent('idRegistry') ?? []),
-  );
+  const registry = fromFolder
+    ? readOrCollect(() =>
+        records.registryRequired
+          ? folder.read('idRegistry')
+          : (folder.readIfPresent('idRegistry') ?? []),
+      )
+    : undefined;
+  // The folder's days are held to the manifest; a snapshot's days are the backend's, which keeps them.
+  const recordedCrosswordDaysChecksum = fromFolder
+    ? manifest?.crosswordDaysChecksum
+    : crosswordDays === undefined
+      ? undefined
+      : checksumOf(crosswordDays);
   const wordIds = new Set(words.map(({ entry }) => entry.id));
   /** Whether the Edition has a Word of this id: a valid one, or a Word file that fails its checks. */
   const isWord = (id: string) =>
     wordIds.has(id) ||
-    (WordIdSchema.safeParse(id).success && existsSync(join(editionDir, folder.entryFile(id))));
+    (fromFolder &&
+      WordIdSchema.safeParse(id).success &&
+      existsSync(join(editionDir, folder.entryFile(id))));
   if (config !== undefined) {
     errors.push(
-      ...checkContent(config, words, corrections, idioms),
-      ...checkSynonymRows(config, words, synonymRows),
-      ...checkTips(config, tips),
+      ...buildErrorsOf(
+        checkContentSet(
+          config,
+          {
+            words,
+            corrections,
+            idioms,
+            synonymRows,
+            tips,
+            curatedCollections,
+            ...(crosswordDays === undefined ? {} : { crosswordDays }),
+            ...(recordedCrosswordDaysChecksum === undefined
+              ? {}
+              : { recordedCrosswordDaysChecksum }),
+          },
+          { today },
+        ),
+      ),
       ...editionFontErrors(config, tokens, folder.fonts()),
       ...categoryArtErrors(config, decor),
       ...recordingErrors(config, isWord, folder.recordings(), (voice, name) =>
@@ -114,19 +215,6 @@ export function readEdition(
     );
   }
   errors.push(...illustrationErrors(words, (name) => folder.illustration(name)));
-  errors.push(
-    ...checkCuratedCollections(curatedCollections, [
-      ...words,
-      ...corrections,
-      ...idioms,
-      ...synonymRows,
-      ...tips,
-    ]),
-  );
-  errors.push(
-    ...unknownCrosswordEntries(crosswordDays ?? [], [...words, ...corrections]),
-    ...crosswordDayErrors(crosswordDays, manifest, config?.id),
-  );
   if (registry !== undefined) {
     errors.push(
       ...missingEntryErrors(
@@ -150,17 +238,10 @@ export function readEdition(
     ...(config === undefined ? {} : { editionId: config.id }),
     ...(registry === undefined ? {} : { registry }),
   };
-  if (
-    errors.length > 0 ||
-    config === undefined ||
-    manifest === undefined ||
-    targets === undefined
-  ) {
-    return source;
-  }
-  const content: PackContent = {
+  const read = { source, ...(manifest === undefined ? {} : { manifest }) };
+  if (errors.length > 0 || config === undefined || targets === undefined) return read;
+  const content = {
     editionId: config.id,
-    contentVersion: manifest.contentVersion,
     categories: config.categories,
     correctionCategories: config.correctionCategories,
     words: sortedById(words),
@@ -173,31 +254,22 @@ export function readEdition(
       ? {}
       : { curatedCollections: sortedById(curatedCollections) }),
   };
-  return { ...source, valid: { content, manifest, targets } };
+  return { ...read, checked: { content, targets } };
 }
 
-/**
- * The words of crossword days that no Word or Correction of the Edition
- * stands behind. A Retired one still does: its day stays as it was made.
- */
-function unknownCrosswordEntries(
-  days: readonly CrosswordDay[],
-  entries: readonly Authored<Entry>[],
-): BuildError[] {
-  const ids = new Set(entries.map(({ entry }) => entry.id));
-  return days.flatMap(({ words }, day) =>
-    words.flatMap(({ entryId }, word) =>
-      ids.has(entryId)
-        ? []
-        : [
-            {
-              file: CROSSWORD_DAYS_FILE,
-              field: `${String(day)}.words.${String(word)}.entryId`,
-              message: `No Word or Correction ${entryId} in the Edition`,
-            },
-          ],
-    ),
-  );
+/** The snapshot's records, each named by its kind and id in the errors. */
+function snapshotEntries(snapshot: ContentSnapshot): AuthoredContent {
+  const authored = <T extends { readonly id: string }>(kind: string, records: readonly T[]) =>
+    records.map((entry) => ({ file: `${SNAPSHOT_FILE}:${kind}/${entry.id}`, entry }));
+  return {
+    words: authored('words', snapshot.words),
+    corrections: authored('corrections', snapshot.corrections),
+    idioms: authored('idioms', snapshot.idioms),
+    synonymRows: authored('synonymRows', snapshot.synonymRows),
+    tips: authored('tips', snapshot.tips),
+    curatedCollections: authored('curatedCollections', snapshot.curatedCollections),
+    errors: [],
+  };
 }
 
 function sortedById<T extends { readonly id: string }>(authored: readonly Authored<T>[]): T[] {

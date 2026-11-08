@@ -20,7 +20,12 @@ test('each section not yet built opens its empty state with the same texts in bo
   const user = userEvent.setup();
   render(<Admin />);
   const theme = await screen.findByRole('button', { name: 'Темна тема' });
-  for (const title of ORDER.filter((title) => title !== 'Аналітика')) {
+  // Аналітика is built: analytics.test.tsx.
+  // Безпека shows the Власник its blocks: src/security.test.tsx.
+  // Розробка is built: development.test.tsx.
+  for (const title of ORDER.filter(
+    (section) => section !== 'Аналітика' && section !== 'Безпека' && section !== 'Розробка',
+  )) {
     await user.click((await sidebar()).getByRole('link', { name: title }));
     const section = await screen.findByRole('region', { name: title });
     expect(within(section).getByText('Поки що порожньо')).toBeDefined();

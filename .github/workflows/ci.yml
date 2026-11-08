@@ -179,6 +179,26 @@ jobs:
     runs-on: ubuntu-latest
     # content verify asks goroh politely; a content wave of ~500 Entries takes about 15 minutes.
     timeout-minutes: 30
+    # The pack is built from the content snapshot of a local backend, as every
+    # app build builds it from the Deployment's.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: slovo
+          POSTGRES_PASSWORD: slovo
+          POSTGRES_DB: slovo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username=slovo --dbname=slovo"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgres://slovo:slovo@localhost:5432/slovo
+      PORT: 8787
+      EXPO_PUBLIC_SLOVO_API_URL: http://localhost:8787
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
@@ -195,6 +215,18 @@ jobs:
             git show "FETCH_HEAD:$promised" > "$RUNNER_TEMP/promised.json"
             pnpm describe:api "$RUNNER_TEMP/promised.json"
           fi
+      # The Edition folder's content, imported into an empty database, served
+      # by the backend. The SMTP settings are placeholders: no email is sent.
+      - name: Import the Ukrainian content and start the backend
+        shell: bash
+        run: |
+          pnpm --filter @slovo/backend db:migrate
+          pnpm --silent content import --edition uk
+          AUTH_SECRET="$(openssl rand -base64 32)" SMTP_HOST=localhost SMTP_PORT=1025 \
+            nohup pnpm --filter @slovo/backend start > "$RUNNER_TEMP/backend.log" 2>&1 &
+          for _ in $(seq 60); do curl -fs "http://localhost:$PORT/health" && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/backend.log"
+          echo "::error::The backend did not answer /health in 60 s"; exit 1
       # Fails on invalid content and on any missed content target of the Edition.
       - name: Build the Ukrainian Language Pack and check its content targets
         id: pack

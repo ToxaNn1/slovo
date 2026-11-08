@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+import { ContentTargetsSchema } from '../content-targets';
+import { CorrectionTypeSchema } from '../correction';
 import { EditionIdSchema } from '../edition';
 import {
   ForceUpdateMinimumSchema,
@@ -9,6 +11,7 @@ import {
   RuleTargetsSchema,
   RuleVerdictSchema,
 } from '../feature-switch-rules';
+import { IdiomTypeSchema } from '../idiom';
 import { procedure } from './procedure';
 
 /** An Edition the admin's global Edition filter offers. */
@@ -135,11 +138,250 @@ const SWITCH_WRITE_ERRORS = {
 /** Every admin write names why: the Action log keeps it (ADR 0088). */
 const ReasonSchema = z.string().trim().min(1).max(500);
 
+/** Why the backend refuses a write of people or Агент tokens, by name. */
+export const AccessRefusalSchema = z.object({
+  refusal: z.enum(['taken', 'self', 'unknown', 'name-taken']),
+});
+
+/** The errors of a Безпека write: a refusal by name answers 409. */
+const ACCESS_WRITE_ERRORS = {
+  ...ADMIN_ERRORS,
+  CONFLICT: { message: 'The write is refused', data: AccessRefusalSchema },
+} as const;
+
+/** An Агент's name: lower-case letters, digits and hyphens. */
+const AgentNameSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-z0-9-]{1,40}$/);
+
 /** The Rules and the force-update minimums of an Edition. */
 const SwitchesOfEditionSchema = z.object({
   rules: z.array(RuleSchema),
   minimums: ForceUpdateMinimumsSchema,
 });
+
+/** The kinds of record the content write API writes. */
+export const ContentRecordKindSchema = z.enum([
+  'word',
+  'correction',
+  'idiom',
+  'synonymRow',
+  'tip',
+  'curatedCollection',
+]);
+
+/** What every content procedure can be refused with. */
+const contentProcedure = procedure.errors({
+  /** No Власник yet, an Edition the backend doesn't serve, or an unknown batch or record. */
+  NOT_FOUND: { message: 'Not found' },
+  /** No Агент token, an unknown or revoked one, or the app's Session. */
+  UNAUTHORIZED: { message: 'Content is written by an Агент token or an admin session' },
+  NOT_IMPORTED: { status: 409, message: "The Edition's content is not imported" },
+});
+
+/** What a write is refused with besides the common refusals. */
+const writeErrors = {
+  /** The save breaks the content rules: each refusal names its rule. */
+  REFUSED: {
+    status: 422,
+    message: 'The record breaks a content rule',
+    data: z.object({
+      refusals: z.array(
+        z.object({
+          rule: z.string(),
+          entryId: z.string().optional(),
+          field: z.string().optional(),
+          message: z.string(),
+        }),
+      ),
+    }),
+  },
+  /** The record changed after the version the write saw. */
+  STALE: {
+    status: 409,
+    message: 'The record changed since the version the write saw',
+    data: z.object({ currentVersion: z.number().int().positive() }),
+  },
+} as const;
+
+const recordPath = '/admin/content/{editionId}/records/{kind}';
+
+/** What a write answers: the record's new version and the Edition's content version it published. */
+const WrittenSchema = z.object({
+  id: z.string(),
+  recordVersion: z.number().int().positive(),
+  contentVersion: z.number().int().positive(),
+  batchId: z.string(),
+  /** Words only: whether the Word's Recordings no longer read its text (ADR 0083). */
+  needsNewRecording: z.boolean().optional(),
+});
+
+/** Every batch's writes name it: one CLI run, or one admin save. */
+const BatchIdSchema = z.uuid();
+
+/** The content report: counts of the live records per kind and Category. */
+const ContentReportSchema = z.object({
+  words: z.number().int(),
+  retiredWords: z.number().int(),
+  wordsPerCategory: z.array(
+    z.object({ categoryId: z.string(), displayName: z.string(), words: z.number().int() }),
+  ),
+  rarity: z.array(z.object({ rarity: z.number().int(), words: z.number().int() })),
+  coverage: z.object({
+    examples: z.number().int(),
+    synonyms: z.number().int(),
+    etymology: z.number().int(),
+    stress: z.number().int(),
+    region: z.number().int(),
+  }),
+  corrections: z.number().int(),
+  retiredCorrections: z.number().int(),
+  correctionsPerType: z.array(
+    z.object({ correctionType: CorrectionTypeSchema, corrections: z.number().int() }),
+  ),
+  correctionsPerCategory: z.array(
+    z.object({ categoryId: z.string(), displayName: z.string(), corrections: z.number().int() }),
+  ),
+  idioms: z.number().int(),
+  retiredIdioms: z.number().int(),
+  idiomsPerType: z.array(z.object({ idiomType: IdiomTypeSchema, idioms: z.number().int() })),
+});
+
+/**
+ * The content write API (ADR 0090): every write is checked by the shared
+ * content rules and published at once as a new content version.
+ */
+const contentWriteContract = {
+  openBatch: contentProcedure
+    .route({
+      method: 'POST',
+      path: '/admin/content/{editionId}/batches',
+      summary: 'Open a batch of content writes',
+      description: 'A new batch is «не перевірено» until the Content queue reviews it.',
+      tags: ['admin'],
+    })
+    .input(z.strictObject({ editionId: EditionIdSchema }))
+    .output(z.object({ batchId: BatchIdSchema })),
+  create: contentProcedure
+    .route({
+      method: 'POST',
+      path: recordPath,
+      summary: 'Create a record; the backend issues its id',
+      tags: ['admin'],
+    })
+    .errors(writeErrors)
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema,
+        kind: ContentRecordKindSchema,
+        batchId: BatchIdSchema,
+        /** The record's fields without its id. */
+        fields: z.record(z.string(), z.unknown()),
+        reason: z.string().min(1).optional(),
+      }),
+    )
+    .output(WrittenSchema),
+  edit: contentProcedure
+    .route({
+      method: 'PUT',
+      path: `${recordPath}/{id}`,
+      summary: "Replace a record's fields",
+      tags: ['admin'],
+    })
+    .errors(writeErrors)
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema,
+        kind: ContentRecordKindSchema,
+        id: z.string(),
+        batchId: BatchIdSchema,
+        /** The record version the edit was made from. */
+        recordVersion: z.number().int().positive(),
+        fields: z.record(z.string(), z.unknown()),
+        reason: z.string().min(1).optional(),
+      }),
+    )
+    .output(WrittenSchema),
+  retire: contentProcedure
+    .route({
+      method: 'POST',
+      path: `${recordPath}/{id}/retire`,
+      summary: 'Retire a record: it stays, marked retired',
+      tags: ['admin'],
+    })
+    .errors(writeErrors)
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema,
+        kind: ContentRecordKindSchema,
+        id: z.string(),
+        batchId: BatchIdSchema,
+        recordVersion: z.number().int().positive(),
+        reason: z.string().min(1).optional(),
+      }),
+    )
+    .output(WrittenSchema),
+  flag: contentProcedure
+    .route({
+      method: 'POST',
+      path: `${recordPath}/{id}/flag`,
+      summary: 'Flag a record for the Content queue',
+      description: 'A flag changes no content: it is an Action log row the Content queue lists.',
+      tags: ['admin'],
+    })
+    .input(
+      z.strictObject({
+        editionId: EditionIdSchema,
+        kind: ContentRecordKindSchema,
+        id: z.string(),
+        batchId: BatchIdSchema,
+        reason: z.string().min(1),
+      }),
+    )
+    .output(z.object({ id: z.string(), batchId: z.string() })),
+  record: contentProcedure
+    .route({
+      method: 'GET',
+      path: `${recordPath}/{id}`,
+      summary: "A record's fields and its record version, which an edit is made from",
+      tags: ['admin'],
+    })
+    .input(
+      z.strictObject({ editionId: EditionIdSchema, kind: ContentRecordKindSchema, id: z.string() }),
+    )
+    .output(
+      z.object({
+        fields: z.record(z.string(), z.unknown()),
+        recordVersion: z.number().int().positive(),
+      }),
+    ),
+  report: contentProcedure
+    .route({
+      method: 'GET',
+      path: '/admin/content/{editionId}/report',
+      summary: "Counts of the content against the Edition's content targets",
+      tags: ['admin'],
+    })
+    .input(z.strictObject({ editionId: EditionIdSchema }))
+    .output(
+      z.object({
+        contentVersion: z.number().int().positive(),
+        report: ContentReportSchema,
+        targets: ContentTargetsSchema,
+        /** Each target the content falls short of. */
+        missed: z.array(z.object({ target: z.string(), message: z.string() })),
+        /**
+         * The quote check (ADR 0084): records changed since their last check, and
+         * records whose quote was not found on their source page.
+         */
+        quoteCheck: z.object({
+          unverified: z.number().int().nonnegative(),
+          failed: z.number().int().nonnegative(),
+        }),
+      }),
+    ),
+};
 
 /**
  * The admin API (ADR 0088): what `apps/admin` and an Агент know of the
@@ -150,6 +392,87 @@ const SwitchesOfEditionSchema = z.object({
  * content-writing procedures only: anywhere else a token answers 403, and
  * one that is unknown or revoked answers 401, as any other Bearer does.
  */
+/** An open pull request on the repository, as Розробка lists it. */
+const PullRequestSchema = z.object({
+  number: z.number().int(),
+  title: z.string(),
+  author: z.string(),
+  url: z.string(),
+  draft: z.boolean(),
+  updatedAt: z.iso.datetime(),
+});
+
+/** The latest CI run on `main`: finished green or red, still running, or none yet. */
+const MainCiSchema = z.discriminatedUnion('state', [
+  z.object({
+    state: z.enum(['success', 'failure']),
+    url: z.string(),
+    finishedAt: z.iso.datetime(),
+  }),
+  z.object({ state: z.literal('pending'), url: z.string() }),
+  z.object({ state: z.literal('none') }),
+]);
+
+/** A version milestone (0.1 to 1.0) with its open and closed issues. */
+const MilestoneSchema = z.object({
+  title: z.string(),
+  open: z.number().int(),
+  closed: z.number().int(),
+  dueOn: z.iso.datetime().nullable(),
+});
+
+/** A published release and its tag. */
+const ReleaseSchema = z.object({
+  tag: z.string(),
+  name: z.string(),
+  publishedAt: z.iso.datetime(),
+  url: z.string(),
+});
+
+/** An EAS build of the one app (ADR 0065). */
+const EasBuildSchema = z.object({
+  id: z.string(),
+  platform: z.enum(['ios', 'android']),
+  profile: z.string(),
+  status: z.enum(['finished', 'errored', 'canceled', 'in-progress']),
+  appVersion: z.string().nullable(),
+  buildNumber: z.string().nullable(),
+  createdAt: z.iso.datetime(),
+  url: z.string(),
+});
+
+/** What the backend read from GitHub, or that GitHub is unavailable. */
+const GitHubBlockSchema = z.discriminatedUnion('state', [
+  z.object({
+    state: z.literal('ok'),
+    fetchedAt: z.iso.datetime(),
+    pullRequests: z.array(PullRequestSchema),
+    mainCi: MainCiSchema,
+    milestones: z.array(MilestoneSchema),
+    releases: z.array(ReleaseSchema),
+  }),
+  z.object({ state: z.literal('unavailable') }),
+]);
+
+/** What the backend read from EAS, or that EAS is unavailable. */
+const EasBlockSchema = z.discriminatedUnion('state', [
+  z.object({
+    state: z.literal('ok'),
+    fetchedAt: z.iso.datetime(),
+    builds: z.array(EasBuildSchema),
+  }),
+  z.object({ state: z.literal('unavailable') }),
+]);
+
+/** The Розробка section: GitHub and EAS, each with the time of its data. */
+export const DevelopmentSchema = z.object({ github: GitHubBlockSchema, eas: EasBlockSchema });
+export type Development = z.infer<typeof DevelopmentSchema>;
+export type PullRequest = z.infer<typeof PullRequestSchema>;
+export type MainCi = z.infer<typeof MainCiSchema>;
+export type Milestone = z.infer<typeof MilestoneSchema>;
+export type Release = z.infer<typeof ReleaseSchema>;
+export type EasBuild = z.infer<typeof EasBuildSchema>;
+
 export const adminContract = {
   requestCode: procedure
     .route({
@@ -261,8 +584,9 @@ export const adminContract = {
     .route({
       method: 'GET',
       path: '/admin/actions',
-      summary: 'The Action log, oldest first, of one Edition when one is named',
-      description: 'A Безпека procedure: a Власник only.',
+      summary: 'The Action log, newest first, of one Edition when one is named',
+      description:
+        'A Безпека procedure: a Власник only. Answers the 500 newest rows; under an Edition, only its rows.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
@@ -278,12 +602,109 @@ export const adminContract = {
               z.object({ kind: z.literal('command'), command: z.string() }),
             ]),
             what: z.string(),
+            before: z.json(),
+            after: z.json(),
             reason: z.string().nullable(),
             editionId: z.string().nullable(),
           }),
         ),
       }),
     ),
+
+  people: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/people',
+      summary: 'The active Admin users, by email',
+      description: 'A Безпека procedure: a Власник only.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(
+      z.object({
+        people: z.array(
+          z.object({ email: z.string(), role: AdminRoleSchema, signedInYet: z.boolean() }),
+        ),
+      }),
+    ),
+
+  invite: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/people',
+      summary: 'Invites a person by email as a Власник or an Адмін',
+      description:
+        'Emails them a notice; they sign in with an emailed code and set up a TOTP. A removed person comes back afresh. Refused with `taken` for an active email.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
+    .output(z.object({ invited: z.literal(true) })),
+
+  setRole: procedure
+    .route({
+      method: 'PUT',
+      path: '/admin/people/{email}/role',
+      summary: "Changes a person's role",
+      description: 'Refused with `self` for the caller, `unknown` for an email with no access.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
+    .output(z.object({ changed: z.literal(true) })),
+
+  removePerson: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/people/{email}/remove',
+      summary: "Removes a person's access and ends their sessions",
+      description: 'Refused with `self` for the caller, `unknown` for an email with no access.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ email: EmailSchema, reason: ReasonSchema }))
+    .output(z.object({ removed: z.literal(true) })),
+
+  agentTokens: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/agent-tokens',
+      summary: 'The Агент tokens by name, the revoked ones too',
+      description: 'A Безпека procedure: a Власник only. A token itself is never answered again.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(
+      z.object({
+        tokens: z.array(
+          z.object({ name: z.string(), createdAt: z.string(), revokedAt: z.string().nullable() }),
+        ),
+      }),
+    ),
+
+  issueAgentToken: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/agent-tokens',
+      summary: 'Issues a named Агент token, answered this once',
+      description: 'Refused with `name-taken` for a name issued before, revoked or not.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ name: AgentNameSchema, reason: ReasonSchema }))
+    .output(z.object({ name: z.string(), token: z.string() })),
+
+  revokeAgentToken: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/agent-tokens/{name}/revoke',
+      summary: "Revokes an Агент's token: it answers 401 from then on",
+      description: 'Refused with `unknown` for a name with no token to revoke.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ name: AgentNameSchema, reason: ReasonSchema }))
+    .output(z.object({ revoked: z.literal(true) })),
 
   status: procedure
     .route({
@@ -416,4 +837,15 @@ export const adminContract = {
     .errors(ADMIN_ERRORS)
     .input(z.object({ editionId: AnalyticsEditionSchema }))
     .output(CountersSummarySchema),
+  content: contentWriteContract,
+  development: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/development',
+      summary:
+        'Розробка: open pull requests, CI on main, version milestones, releases and EAS builds',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(DevelopmentSchema),
 };

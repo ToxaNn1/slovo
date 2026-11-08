@@ -45,7 +45,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: mkdir -p "$ARTIFACTS"
-      - run: pnpm build:pack
 
       # The native project, from the app config, as EAS makes it. Its Xcode
       # project gets fresh object ids on every prebuild, so the cache key below
@@ -113,6 +112,12 @@ jobs:
             nohup pnpm --filter @slovo/backend start > "$ARTIFACTS/backend.log" 2>&1 &
           for _ in $(seq 60); do curl -fs "http://localhost:$PORT/health" && exit 0; sleep 1; done
           echo "::error::The backend did not answer /health in 60 s"; exit 1
+      # The pack the bundle carries, built from the snapshot of the backend
+      # started above, as an EAS build builds it from the Deployment's.
+      - name: Build the Language Pack from the backend's snapshot
+        run: |
+          pnpm --silent content import --edition uk
+          pnpm build:pack
       - name: Start Metro
         working-directory: apps/mobile
         run: |

@@ -72,6 +72,16 @@ const ServerVariablesSchema = z.object({
   POSTHOG_PERSONAL_API_KEY: unsetWhenEmpty(z.string()),
   POSTHOG_PROJECT_ID: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a project number')),
   POSTHOG_HOST: unsetWhenEmpty(z.url({ protocol: /^https$/, error: 'must be an https:// URL' })),
+  // Розробка's reads (spec #1709). A read-only fine-grained GitHub token and
+  // an EAS read token; unset, that block of the admin answers unavailable.
+  GITHUB_TOKEN: unsetWhenEmpty(z.string()),
+  GITHUB_REPOSITORY: z
+    .string()
+    .regex(/^[\w.-]+\/[\w.-]+$/, 'must be owner/name')
+    .default('ToxaNn1/slovo'),
+  EXPO_TOKEN: unsetWhenEmpty(z.string()),
+  // The EAS project of the one app (apps/mobile/app.config.ts).
+  EAS_PROJECT_ID: z.string().min(1).default('e2401ef2-2a47-407e-b0ff-03706421b71c'),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
   // Docker; 1 behind Railway's proxy.

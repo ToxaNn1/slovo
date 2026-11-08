@@ -7,11 +7,14 @@ import {
   createAdminAnalytics,
   createCommunityCounters,
   createContentPacks,
+  createDevelopment,
   createMistakeReports,
   createSync,
   type AppleVerifier,
   type Clock,
+  type EasSource,
   type Edition,
+  type GitHubSource,
   type GoogleVerifier,
   type Mailer,
   type PostHogPort,
@@ -27,6 +30,8 @@ import { createAuthenticator } from './account/authenticator';
 import { adminApp } from './admin/admin-app';
 import { adminCodeEmail } from './admin/admin-mail';
 import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
+import { createContentStore } from './content/content-store';
+import { createContentWrites } from './content/content-writes';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -35,7 +40,6 @@ import {
 import { createCollectionLinkStore } from './collection-links/collection-link-store';
 import { collectionPage, unavailablePage } from './collection-links/collection-page';
 import { createContentPackStore } from './content/content-pack-store';
-import { createPackEntries } from './content/pack-entries';
 import { createCounterStore } from './counters/counter-store';
 import type { Database } from './database/database';
 import { migrationState, type MigrationState } from './database/migrate';
@@ -72,6 +76,10 @@ export interface AppDependencies {
   readonly google: GoogleVerifier;
   /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
   readonly apple: AppleVerifier;
+  /** The repository on GitHub, read for Розробка. */
+  readonly github: GitHubSource;
+  /** The app's builds on EAS, read for Розробка. */
+  readonly eas: EasSource;
   /** Signs the Sessions' tokens. */
   readonly authSecret: string;
   /** Where the unexpected failures (500) are reported. */
@@ -136,6 +144,8 @@ export function createApp({
   posthog,
   google,
   apple,
+  github,
+  eas,
   authSecret,
   reporter,
   trustedProxyHops,
@@ -159,6 +169,7 @@ export function createApp({
     store: contentPackStore,
     clock,
   });
+  const contentStore = createContentStore({ database, clock, editions: editionRegistry });
   const sync = createSync({
     editions: editionRegistry,
     records: createUserRecords(database),
@@ -207,6 +218,7 @@ export function createApp({
     clock,
     wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   });
+  const contentWrites = createContentWrites({ database, clock, random, editions: editionRegistry });
   const api = createApiHandler({
     accounts,
     admin,
@@ -216,7 +228,11 @@ export function createApp({
     collectionLinks,
     communityCounters,
     contentPacks,
+    contentStore,
+    contentWrites,
+    development: createDevelopment({ github, eas, clock }),
     editions: editionRegistry,
+    mailer,
     mistakeReports,
     served: editions,
     sync,
@@ -310,7 +326,6 @@ export function createApp({
   // answer for the link. Like the API's read, it is not limited. The page
   // speaks the language of the Edition the path names; a link of another
   // Edition is unavailable there.
-  const packEntries = createPackEntries(contentPackStore);
   app.get('/:edition/c/:id', async (c) => {
     const id = c.req.param('id');
     const edition = editions.find(({ config }) => config.id === c.req.param('edition'));
@@ -327,7 +342,7 @@ export function createApp({
     if (!found.ok || found.link.edition !== edition.config.id) {
       return c.html(unavailablePage(edition), 404);
     }
-    const entries = await packEntries.entries(found.link.edition, found.link.entryIds);
+    const entries = await contentStore.entries(found.link.edition, found.link.entryIds);
     return c.html(collectionPage(edition, appConfig.scheme, id, found.link, entries));
   });
 

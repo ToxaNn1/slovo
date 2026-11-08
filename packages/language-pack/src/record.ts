@@ -8,7 +8,6 @@ import { newCrosswordDays } from './crossword';
 import { crosswordDaysChecksum } from './crossword-days';
 import { editionFiles } from './edition-folder';
 import { ID_REGISTRY_FILE, unregisteredEntries } from './id-registry';
-import { protectedLiteraryUses } from './public-domain';
 import { compare, readEdition } from './read-edition';
 
 export type RecordResult =
@@ -44,8 +43,8 @@ export function recordContent({
   /** The day the public domain is judged on (ADR 0045). */
   today?: Date;
 }): RecordResult {
-  const source = readEdition(editionDir, { registryRequired: false });
-  const errors = [...source.errors, ...protectedLiteraryUses(source.corrections, today)];
+  const source = readEdition(editionDir, { registryRequired: false, today });
+  const { errors } = source;
   if (errors.length > 0 || source.valid === undefined || source.registry === undefined) {
     return { ok: false, errors };
   }

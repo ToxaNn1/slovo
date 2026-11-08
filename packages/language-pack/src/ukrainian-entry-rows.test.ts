@@ -7,8 +7,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { openComposition, type Clock } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
 
-import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
-import { ukrainian, ukrainianFolder } from './test-support';
+import { openLanguagePack, type NodeLanguagePack } from './index';
+import { buildUkrainianPack, ukrainian } from './test-support';
 
 // The rows of the Idioms the reader keeps, over the real Ukrainian Language
 // Pack opened through the Core composition (spec #549, seam 1). It lives here
@@ -20,7 +20,7 @@ let pack: NodeLanguagePack;
 beforeAll(() => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-entry-rows-'));
   const outFile = join(workDir, 'language-pack.db');
-  if (!buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile }).ok) {
+  if (!buildUkrainianPack(outFile).ok) {
     throw new Error('The Ukrainian Language Pack does not build');
   }
   pack = openLanguagePack(outFile);

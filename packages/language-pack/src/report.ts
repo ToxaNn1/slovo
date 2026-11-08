@@ -61,7 +61,10 @@ export function contentReport({
   words: allWords,
   corrections: allCorrections,
   idioms: allIdioms,
-}: PackContent): ContentReport {
+}: Pick<
+  PackContent,
+  'categories' | 'correctionCategories' | 'words' | 'corrections' | 'idioms'
+>): ContentReport {
   const words = allWords.filter((word) => !word.retired);
   const corrections = allCorrections.filter((correction) => !correction.retired);
   const idioms = allIdioms.filter((idiom) => !idiom.retired);

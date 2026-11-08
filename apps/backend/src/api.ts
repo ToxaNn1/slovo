@@ -13,8 +13,10 @@ import type {
   AdminAnalytics,
   CommunityCounters,
   ContentPacks,
+  DevelopmentOverview,
   Edition,
   EditionRegistry,
+  Mailer,
   MistakeReports,
   Sync,
 } from '@slovo/server-core';
@@ -24,6 +26,8 @@ import { accountProcedures } from './account/account-procedures';
 import { adminProcedures } from './admin/admin-procedures';
 import { collectionLinksProcedures } from './collection-links/collection-links-procedures';
 import { contentProcedures } from './content/content-procedures';
+import type { ContentStore } from './content/content-store';
+import type { ContentWrites } from './content/content-writes';
 import { countersProcedures } from './counters/counters-procedures';
 import { reportOf, type ErrorReporter } from './error-reporter';
 import { editionProcedures } from './edition/edition-procedures';
@@ -77,7 +81,11 @@ export function createApiHandler({
   collectionLinks,
   communityCounters,
   contentPacks,
+  contentStore,
+  contentWrites,
+  development,
   editions,
+  mailer,
   mistakeReports,
   served,
   sync,
@@ -90,7 +98,12 @@ export function createApiHandler({
   collectionLinks: CollectionLinks;
   communityCounters: CommunityCounters;
   contentPacks: ContentPacks;
+  contentStore: ContentStore;
+  contentWrites: ContentWrites;
+  development: DevelopmentOverview;
   editions: EditionRegistry;
+  /** Sends the notice of an admin invite. */
+  mailer: Mailer;
   mistakeReports: MistakeReports;
   /** The Editions the backend serves, as the admin lists them. */
   served: readonly Edition[];
@@ -100,9 +113,18 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin, adminSignIn, editions, served, adminAnalytics),
+      admin: adminProcedures(
+        admin,
+        adminSignIn,
+        editions,
+        served,
+        contentWrites,
+        mailer,
+        development,
+        adminAnalytics,
+      ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
-      content: contentProcedures(contentPacks),
+      content: contentProcedures(contentPacks, contentStore),
       counters: countersProcedures(communityCounters),
       edition: editionProcedures(editions, clock),
       reports: reportsProcedures(mistakeReports),

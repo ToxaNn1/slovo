@@ -1,0 +1,1 @@
+ALTER TABLE "content_batches" ADD COLUMN "reviewed_at" timestamp with time zone;

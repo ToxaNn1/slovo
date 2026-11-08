@@ -152,6 +152,45 @@ export function createAdminStore({ db }: Database): AdminStore {
       return added.length > 0 ? 'added' : 'taken';
     },
 
+    async adminUsers() {
+      const rows = await db.select().from(adminUsers).where(active).orderBy(asc(adminUsers.email));
+      return rows.map(userOf);
+    },
+
+    async setAdminRole(adminUserId, role) {
+      await db.update(adminUsers).set({ role }).where(eq(adminUsers.id, adminUserId));
+    },
+
+    async removeAdminUser(adminUserId) {
+      await db.transaction(async (tx) => {
+        await tx.update(adminUsers).set({ state: 'removed' }).where(eq(adminUsers.id, adminUserId));
+        await tx.delete(adminSessions).where(eq(adminSessions.adminUserId, adminUserId));
+      });
+    },
+
+    async reactivateAdminUser(email, role) {
+      return db.transaction(async (tx) => {
+        const [user] = await tx
+          .update(adminUsers)
+          .set({ state: 'active', role, totpSecret: null, totpConfirmedAt: null })
+          .where(and(eq(adminUsers.email, email), eq(adminUsers.state, 'removed')))
+          .returning({ id: adminUsers.id });
+        if (user === undefined) return false;
+        await tx.delete(recoveryCodes).where(eq(recoveryCodes.adminUserId, user.id));
+        return true;
+      });
+    },
+
+    agentTokens: () =>
+      db
+        .select({
+          name: agentTokens.name,
+          createdAt: agentTokens.createdAt,
+          revokedAt: agentTokens.revokedAt,
+        })
+        .from(agentTokens)
+        .orderBy(asc(agentTokens.createdAt), asc(agentTokens.name)),
+
     async addAgentToken({ name, tokenHash, createdAt }) {
       const added = await db
         .insert(agentTokens)
@@ -187,7 +226,8 @@ export function createAdminStore({ db }: Database): AdminStore {
         .select()
         .from(actionLog)
         .where(editionId === undefined ? undefined : eq(actionLog.editionId, editionId))
-        .orderBy(asc(actionLog.id));
+        .orderBy(desc(actionLog.id))
+        .limit(500);
       return rows.map(({ who, at, what, before, after, reason, editionId, batchId }) => ({
         who,
         at,
