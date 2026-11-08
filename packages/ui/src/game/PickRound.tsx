@@ -123,7 +123,7 @@ export function AnswerOptions({
 }
 
 /**
- * One option of a Round, the design's answer tile, 84 pt tall, its key at its
+ * One option of a Round, board 07's answer tile, 66 pt tall, its key at its
  * left and its text sized for its tier. Once the Round is answered, the right
  * option turns red and pops; a wrong choice sinks, mutes and drops, with ✕ on
  * its key; the others fade. Under Reduce Motion nothing pops or drops.

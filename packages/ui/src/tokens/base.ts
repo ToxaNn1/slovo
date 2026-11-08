@@ -241,11 +241,11 @@ export const typeRoles = {
   /** The form a «Впиши слово» Round asks to replace, under its ask (board 07 g3): «замість «вірогідно»». */
   roundInstead: role('ui', '500', 16, 22),
   /** A Round's option on its tile when it is a Word. */
-  roundOptionWord: role('word', '800', 22, 26),
+  roundOptionWord: role('word', '800', 18, 22),
   /** A Round's option on its tile when it is a sentence. */
-  roundOptionSentence: role('word', '700', 18, 23),
+  roundOptionSentence: role('ui', '600', 17, 22),
   /** A Round's option on its tile when it is a long text. */
-  roundOptionLong: role('ui', '500', 15, 20),
+  roundOptionLong: role('ui', '500', 16, 22),
   /** The key of a Round's option, such as «А», and the ✕ on a wrong pick's key. */
   roundOptionKey: role('word', '900', 16, 16),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */

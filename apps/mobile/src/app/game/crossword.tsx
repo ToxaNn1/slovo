@@ -206,6 +206,9 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
   const texts = strings.dailyCrossword;
   const { crosswordSolvedScreen: solvedScreen, crosswordSolveTime } = useShown();
   const solvedText = solvedScreen ? texts.solvedScreen.title : texts.solved;
+  // While the finger traces the wheel the screen holds still, and the grid shrinks to leave the
+  // Letter Wheel whole on a short screen; with VoiceOver on or once solved, it scrolls instead.
+  const scrolls = accessibleMode || solved;
 
   useEffect(() => {
     if (!solved) return;
@@ -238,8 +241,8 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
       }
     >
       <ScrollView
-        contentContainerStyle={[styles.crossing, styles.fill]}
-        scrollEnabled={accessibleMode || solved}
+        contentContainerStyle={[styles.crossing, scrolls ? styles.fill : styles.fit]}
+        scrollEnabled={scrolls}
       >
         <CrossingGrid
           testID="crossing-crossword-grid"
@@ -362,9 +365,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { paddingHorizontal: space[4], paddingTop: space[2] },
   content: { gap: space[4], paddingHorizontal: space[5], paddingBottom: space[8] },
-  // Board 08's spacing, so the grid, the clue bar and the Letter Wheel fit an iPhone's screen.
+  // Board 08's spacing; the grid shrinks when the clue bar and the Letter Wheel need its room.
   crossing: { paddingHorizontal: space[4], paddingBottom: space[2] },
   crossingSolved: { marginTop: space[4] },
   solved: { textAlign: 'center' },
   fill: { flexGrow: 1 },
+  // As tall as the screen and no taller, so the grid gives up the room the rest needs.
+  fit: { flex: 1 },
 });

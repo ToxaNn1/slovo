@@ -58,9 +58,11 @@ export const roundLayout = {
  * label under it, between the row's parts and between Lives; a Life's flag;
  * the ✕'s 40-pt sunken square, its corners and glyph; the pop of a Life as
  * it is lost (`slPop`: its scale at the start, at 60 % and the end, and how
- * long it takes).
+ * long it takes); how far the title may shrink to fit its line beside the
+ * Lives, so «ВГАДАЙ СЛОВО · 3/15» shows whole on a narrow iPhone.
  */
 export const roundHeader = {
+  titleMinScale: 0.6,
   gap: 14,
   rowGap: 12,
   lifeGap: 4,
@@ -72,22 +74,22 @@ export const roundHeader = {
 } as const;
 
 /**
- * A pick Round's option, the board's answer tile: its least height, corners
- * and side padding; how much an answered Round's other options fade, how far
+ * A pick Round's option, board 07's answer tile (owner decision G6): its
+ * least height, corners and side padding; how much an answered Round's other options fade, how far
  * a wrong choice drops and how a right one pops (`slPop`: its scale at the
  * start, 60 % and the end); the key at its left (side, corners, border and
  * the gap to the text); and the most characters a sentence option has before
  * it is a long text.
  */
 export const answerOption = {
-  minHeight: 84,
-  radius: 18,
+  minHeight: 66,
+  radius: 16,
   paddingLeft: 16,
   paddingRight: 18,
   dimmedOpacity: 0.5,
   drop: 8,
   pop: [0.6, 1.12, 1],
-  key: { side: 36, radius: 10, border: 2, gap: 14 },
+  key: { side: 30, radius: 9, border: 2, gap: 14 },
   sentenceMost: 60,
 } as const;
 

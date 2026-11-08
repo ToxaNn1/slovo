@@ -427,6 +427,8 @@ function GameHeader({
           testID="game-title"
           accessibilityRole="header"
           numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={roundHeader.titleMinScale}
           maxFontSizeMultiplier={roundLayout.textMaxFontScale}
           {...voice}
           style={[typeStyle('roundTitle', tokens), styles.title, { color: colors.ink }]}
@@ -818,7 +820,8 @@ const styles = StyleSheet.create({
   round: { gap: space[5], padding: space[6] },
   // A Round of a form without options keeps one gap more under its content than a pick Round.
   roundWithoutOptions: { paddingBottom: space[6] + space[5] },
-  header: { gap: roundHeader.gap, paddingHorizontal: space[4] },
+  // Room under «Життів: n з N», so a scrolled Round slides away clear of its label, not against it.
+  header: { gap: roundHeader.gap, paddingHorizontal: space[4], paddingBottom: space[3] },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: roundHeader.rowGap },
   title: { flex: 1 },
   segments: { flexDirection: 'row', gap: roundProgress.gap },

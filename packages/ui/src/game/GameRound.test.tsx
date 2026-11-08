@@ -25,6 +25,7 @@ import { AccessibilityInfo, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
+import { roundHeader } from '../tokens';
 
 const strings = testStrings({
   game: {
@@ -505,6 +506,15 @@ describe('GameRound', () => {
 
     expect(screen.getByRole('header', { name: 'Definitions · 3/15' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Leave the Game' })).toBeOnTheScreen();
+  });
+
+  it('shrinks a long title to its line beside the Lives rather than cutting it short', async () => {
+    await renderRound(jest.fn(), jest.fn(), first);
+
+    const title = screen.getByTestId('game-title');
+    expect(title).toHaveProp('numberOfLines', 1);
+    expect(title).toHaveProp('adjustsFontSizeToFit', true);
+    expect(title).toHaveProp('minimumFontScale', roundHeader.titleMinScale);
   });
 
   it('fills the 10 segments by the Rounds passed out of the Round limit, then the current one, then the rest', async () => {
