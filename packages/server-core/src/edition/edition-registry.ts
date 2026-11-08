@@ -15,7 +15,8 @@ import {
 } from '@slovo/contracts';
 
 import type { ActionEntry, Actor } from '../admin/admin-access';
-import type { Alerts, Clock, Json, SwitchRuleStore } from '../ports';
+import type { Alerts } from '../admin/alerts';
+import type { Clock, Json, SwitchRuleStore } from '../ports';
 
 /** An Edition as the backend serves it: its config, strings and content manifest, read from its folder. */
 export interface Edition {

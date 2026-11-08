@@ -7,7 +7,6 @@ import type {
   CollectionLink,
   CountedQuestion,
   CounterEvent,
-  FeatureSwitch,
   MistakeReport,
   ForceUpdateMinimum,
   ForceUpdateMinimums,
@@ -16,8 +15,6 @@ import type {
   PublishedPack,
   Rule,
 } from '@slovo/contracts';
-
-import type { Actor } from './admin/admin-access';
 
 /** The current time, injected so the rules that read it stay testable. */
 export interface Clock {
@@ -206,21 +203,6 @@ export interface Mail {
 /** Sends emails (SMTP in the backend). */
 export interface Mailer {
   send(mail: Mail): Promise<void>;
-}
-
-/** What the owner hears of at once: a feature turned off by the Kill switch. */
-export interface Alert {
-  readonly kind: 'kill-switch';
-  readonly feature: FeatureSwitch;
-  /** The Editions the feature was turned off in. */
-  readonly editionIds: readonly string[];
-  readonly who: Actor;
-  readonly reason: string;
-}
-
-/** Tells the owner of an Alert (Telegram in the backend). */
-export interface Alerts {
-  send(alert: Alert): Promise<void>;
 }
 
 /** How many requests a window of time takes. */

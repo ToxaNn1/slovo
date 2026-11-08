@@ -27,8 +27,6 @@ export {
   systemClock,
   type AccountRecord,
   type AppleIdentity,
-  type Alert,
-  type Alerts,
   type AppleTokenCheck,
   type AppleVerifier,
   type Authenticator,
@@ -56,6 +54,7 @@ export {
   type SignedIn,
   type UserRecords,
 } from './ports';
+export type { Alert, Alerts } from './admin/alerts';
 export {
   createAdminAccess,
   type Action,
