@@ -35,7 +35,7 @@ export function sessionTokenOf(headers: Headers): string | undefined {
 }
 
 const cookie = (value: string, maxAge: number) =>
-  `${ADMIN_SESSION_COOKIE}=${value}; Path=${COOKIE_PATH}; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`;
+  `${ADMIN_SESSION_COOKIE}=${value}; Path=${COOKIE_PATH}; Max-Age=${String(maxAge)}; HttpOnly; Secure; SameSite=Strict`;
 
 /** Who calls an admin procedure: a signed-in Admin user, or an Агент. */
 export type AdminCaller =
@@ -52,7 +52,11 @@ interface Needs {
   readonly security?: boolean;
 }
 
-type AdminErrors = { NOT_FOUND: () => Error; UNAUTHORIZED: () => Error; FORBIDDEN: () => Error };
+interface AdminErrors {
+  NOT_FOUND: () => Error;
+  UNAUTHORIZED: () => Error;
+  FORBIDDEN: () => Error;
+}
 
 /**
  * The admin API (ADR 0088). Every procedure answers 404 while no Власник

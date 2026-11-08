@@ -647,7 +647,7 @@ export async function signInAdmin(backend: ReturnType<typeof testApp>, email: st
       factor: { kind: 'totp', totp: totpOf(hmacSha1, enrolment.secret, new Date()) },
     }),
   });
-  if (response.status !== 200) throw new Error(`sign-in answered ${response.status}`);
+  if (response.status !== 200) throw new Error(`sign-in answered ${String(response.status)}`);
   const cookie = adminCookieOf(response);
   return { email, cookie, enrolment, client: backend.clientWith(adminHeaders(cookie)) };
 }
