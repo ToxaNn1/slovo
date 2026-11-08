@@ -64,8 +64,11 @@ jest.mock('../sounds/interface-sounds', () => ({
 
 /** The UA Edition as it ships, with the Feature Switches named set as given. */
 function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
-  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...switches } });
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
+  const states = Object.fromEntries(
+    Object.entries(switches).map(([name, on]) => [name, on ? 'on' : 'off']),
+  );
+  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...states } });
 }
 
 const metrics = {

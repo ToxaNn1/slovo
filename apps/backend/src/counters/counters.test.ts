@@ -247,7 +247,7 @@ describe('counters.send', () => {
   it('answers an Edition with Community Counters switched off as NOT_FOUND and counts nothing', async () => {
     const folder = testEditions(['off'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, communityCounters: false },
+      featureSwitches: { ...config.featureSwitches, communityCounters: 'off' },
     }));
     const { client, database } = testApp({ editions: folder.read() });
     const word = newEntryId();
@@ -360,7 +360,7 @@ describe('the Favorites adds of an ISO week', () => {
   it('adds nothing for a batch refused, or for an Edition with Community Counters switched off', async () => {
     const folder = testEditions(['uk', 'off'], (config) =>
       config.id === 'off'
-        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: false } }
+        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: 'off' } }
         : config,
     );
     const { request, client, database } = testApp({ editions: folder.read() });
@@ -581,7 +581,7 @@ describe('counters.read', () => {
   it('answers NOT_FOUND for an Edition with Community Counters switched off, locally or remotely', async () => {
     const folder = testEditions(['off', 'remote'], (config) =>
       config.id === 'off'
-        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: false } }
+        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: 'off' } }
         : config,
     );
     const { client, switchOff } = testApp({ editions: folder.read() });
@@ -722,7 +722,7 @@ describe('counters.communityWord', () => {
       const feature = locallyOff.get(config.id);
       return feature === undefined
         ? config
-        : { ...config, featureSwitches: { ...config.featureSwitches, [feature]: false } };
+        : { ...config, featureSwitches: { ...config.featureSwitches, [feature]: 'off' } };
     });
     const { client, switchOff } = testApp({ editions: folder.read() });
     // Adds kept before the counters went off remotely give no Community Word after.
@@ -823,7 +823,7 @@ describe('counters.questionnaire', () => {
   it('answers NOT_FOUND for an Edition it does not serve, or with the questionnaire switched off, locally or remotely', async () => {
     const folder = testEditions(['qoff'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, questionnaire: false },
+      featureSwitches: { ...config.featureSwitches, questionnaire: 'off' },
     }));
     const { client, database, switchOff } = testApp({
       editions: [...folder.read(), ...testEditions(['qremote']).read()],
@@ -881,7 +881,7 @@ describe('counters.questionnaire', () => {
   it('answers NOT_FOUND for the goal with the Daily Goal switched off, and the time with its step switched off', async () => {
     const folder = testEditions(['qsteps'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, dailyGoal: false, notificationTimeStep: false },
+      featureSwitches: { ...config.featureSwitches, dailyGoal: 'off', notificationTimeStep: 'off' },
     }));
     const { client, database } = testApp({ editions: folder.read() });
 

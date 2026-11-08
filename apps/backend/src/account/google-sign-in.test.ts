@@ -226,7 +226,7 @@ describe('an Edition', () => {
   it('with Google sign-in switched off is NOT_FOUND, while a Sign-in code still works', async () => {
     const folder = testEditions(['uk'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, googleSignIn: false },
+      featureSwitches: { ...config.featureSwitches, googleSignIn: 'off' },
     }));
     const { client, google, mailer } = testApp({ editions: folder.read() });
     const email = newEmail();

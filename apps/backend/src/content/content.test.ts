@@ -162,7 +162,7 @@ function withContentUpdatesOff(editions: readonly Edition[]): Edition[] {
     ...edition,
     config: {
       ...edition.config,
-      featureSwitches: { ...edition.config.featureSwitches, contentUpdates: false },
+      featureSwitches: { ...edition.config.featureSwitches, contentUpdates: 'off' },
     },
   }));
 }

@@ -31,15 +31,15 @@ const { config } = activeEditionFiles;
  */
 function shippedEdition({ off = [] }: { off?: readonly FeatureSwitch[] } = {}): Edition {
   const { featureSwitches, userSettingDefaults, ...rest } = config as {
-    featureSwitches: Record<string, boolean>;
+    featureSwitches: Record<string, string>;
     userSettingDefaults: Record<string, unknown>;
   };
   return loadEdition({
     ...rest,
     featureSwitches: {
       ...featureSwitches,
-      account: false,
-      ...Object.fromEntries(off.map((feature) => [feature, false])),
+      account: 'off',
+      ...Object.fromEntries(off.map((feature) => [feature, 'off'])),
     },
     userSettingDefaults,
   });

@@ -245,7 +245,7 @@ describe('an Edition', () => {
   it('with Sign in with Apple switched off is NOT_FOUND, while a Sign-in code still works', async () => {
     const folder = testEditions(['uk'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, signInWithApple: false },
+      featureSwitches: { ...config.featureSwitches, signInWithApple: 'off' },
     }));
     const { client, apple, mailer, rowsOf } = testApp({ editions: folder.read() });
     const email = newEmail();

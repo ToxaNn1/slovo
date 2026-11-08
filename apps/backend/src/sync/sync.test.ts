@@ -598,7 +598,7 @@ describe('a Sync procedure', () => {
     async (feature) => {
       const { signIn } = syncing(['on', 'off'], (config) =>
         config.id === 'off'
-          ? { ...config, featureSwitches: { ...config.featureSwitches, [feature]: false } }
+          ? { ...config, featureSwitches: { ...config.featureSwitches, [feature]: 'off' } }
           : config,
       );
       const phone = await signIn();

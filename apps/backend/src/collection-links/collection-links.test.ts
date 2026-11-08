@@ -274,7 +274,7 @@ describe('Collection Links switched off', () => {
     const id = newLinkId();
     const folder = testEditions(['off'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, collectionLinks: false },
+      featureSwitches: { ...config.featureSwitches, collectionLinks: 'off' },
     }));
     const { client, database } = testApp({ editions: folder.read(), random: drawing(id) });
 

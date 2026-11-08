@@ -1023,7 +1023,7 @@ describe('Sign in with Apple', () => {
   it('the UA Edition turns Sign in with Apple on', () => {
     expect(
       EditionConfigSchema.parse(readJson('uk', 'config')).featureSwitches.signInWithApple,
-    ).toBe(true);
+    ).toBe('on');
   });
 
   it.each(['bundleId', 'appleTeamId', 'appStoreConnectAppId', 'updateChannel'])(
@@ -1651,7 +1651,7 @@ describe('Edition Decor', () => {
       const { featureSwitches } = EditionConfigSchema.parse(readJson(edition, 'config'));
       const { seasons } = EditionDecorSchema.parse(readJson(edition, 'decor'));
 
-      if (featureSwitches.seasonalDecor) expect(seasons).toBeDefined();
+      if (featureSwitches.seasonalDecor === 'on') expect(seasons).toBeDefined();
     },
   );
 
