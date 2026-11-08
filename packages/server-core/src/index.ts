@@ -69,6 +69,19 @@ export {
   type SecretVault,
 } from './admin/admin-access';
 export {
+  createOwnerChecks,
+  ownerChecksOf,
+  type ImportResult,
+  type NewOwnerCheck,
+  type OwnerCheck,
+  type OwnerChecks,
+  type OwnerCheckStore,
+  type OwnerCheckTick,
+  type ParsedOwnerCheck,
+  type ParsedOwnerChecks,
+  type TickResult,
+} from './admin/owner-checks';
+export {
   createAdminSignIn,
   totpOf,
   type AdminSessionView,

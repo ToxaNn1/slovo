@@ -2,6 +2,7 @@ import { CollectionLinkIdSchema, type AppConfig } from '@slovo/contracts';
 import {
   createAccounts,
   createAdminAccess,
+  createOwnerChecks,
   createAdminSignIn,
   createCollectionLinks,
   createCommunityCounters,
@@ -25,6 +26,7 @@ import { createAuthenticator } from './account/authenticator';
 import { adminApp } from './admin/admin-app';
 import { adminCodeEmail } from './admin/admin-mail';
 import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
+import { createOwnerCheckStore } from './admin/owner-check-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -205,6 +207,7 @@ export function createApp({
     contentPacks,
     editions: editionRegistry,
     mistakeReports,
+    ownerChecks: createOwnerChecks({ store: createOwnerCheckStore(database), clock, admin }),
     served: editions,
     sync,
   });

@@ -6,9 +6,11 @@
  */
 import type { MistakeType, Platform, RuleTargets, RuleVerdict } from '@slovo/contracts';
 import type { Actor, Json } from '@slovo/server-core';
+import { sql } from 'drizzle-orm';
 import {
   bigserial,
   boolean,
+  check,
   customType,
   date,
   index,
@@ -413,4 +415,22 @@ export const actionLog = pgTable(
     batchId: text('batch_id'),
   },
   (table) => [index('action_log_edition_id_idx').on(table.editionId)],
+);
+
+/** The Owner checks per version, ticked in Розробка without a reason (ADR 0088). */
+export const ownerChecks = pgTable(
+  'owner_checks',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    version: text('version').notNull(),
+    text: text('text').notNull(),
+    addedBy: jsonb('added_by').$type<Actor>().notNull(),
+    addedAt: time('added_at'),
+    tickedAt: timestamp('ticked_at', { withTimezone: true }),
+    tickedBy: jsonb('ticked_by').$type<Actor>(),
+  },
+  (table) => [
+    index('owner_checks_version_idx').on(table.version),
+    check('owner_checks_tick', sql`(${table.tickedAt} is null) = (${table.tickedBy} is null)`),
+  ],
 );

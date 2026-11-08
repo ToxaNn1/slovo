@@ -8,6 +8,8 @@ import type {
   Edition,
   EditionRegistry,
   EditionSwitches,
+  OwnerCheck,
+  OwnerChecks,
   SignInRefused,
   SignedInAdmin,
   SwitchRefusal,
@@ -70,6 +72,7 @@ export function adminProcedures(
   signIn: AdminSignIn,
   editions: EditionRegistry,
   served: readonly Edition[],
+  ownerChecks: OwnerChecks,
 ) {
   const os = implement(apiContract.admin).$context<{ headers: Headers; resHeaders?: Headers }>();
 
@@ -266,5 +269,57 @@ export function adminProcedures(
         editions: served.map(({ config }) => ({ id: config.id, displayName: config.displayName })),
       };
     }),
+
+    ownerChecks: os.ownerChecks.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors);
+      const checks = await ownerChecks.list(input.version);
+      const open: Record<string, number> = {};
+      for (const check of checks) {
+        open[check.version] = (open[check.version] ?? 0) + (check.ticked === null ? 1 : 0);
+      }
+      return { checks: checks.map(ownerCheckView), open };
+    }),
+
+    tickOwnerCheck: os.tickOwnerCheck.handler(async ({ context, input, errors }) => {
+      const caller = await admit(context.headers, errors, { writes: true });
+      if ((await ownerChecks.tick(input.id, actorOf(caller))) === 'unknown') {
+        throw errors.NOT_FOUND();
+      }
+      const check = (await ownerChecks.list()).find(({ id }) => id === input.id);
+      if (!check) throw errors.NOT_FOUND();
+      return { check: ownerCheckView(check) };
+    }),
+
+    addOwnerCheck: os.addOwnerCheck.handler(async ({ context, input, errors }) => {
+      const caller = await admit(context.headers, errors, { writes: true });
+      const check = await ownerChecks.add(input.version, input.text, actorOf(caller));
+      return { check: ownerCheckView(check) };
+    }),
   });
+}
+
+/** Who changed something, as the admin shows it. */
+function actorName(who: Actor): string {
+  switch (who.kind) {
+    case 'admin-user':
+      return who.email;
+    case 'agent':
+      return who.name;
+    case 'command':
+      return who.command;
+  }
+}
+
+function ownerCheckView(check: OwnerCheck) {
+  return {
+    id: check.id,
+    version: check.version,
+    text: check.text,
+    addedBy: actorName(check.addedBy),
+    addedAt: check.addedAt.toISOString(),
+    ticked:
+      check.ticked === null
+        ? null
+        : { at: check.ticked.at.toISOString(), by: actorName(check.ticked.by) },
+  };
 }

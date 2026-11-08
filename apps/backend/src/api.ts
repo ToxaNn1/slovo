@@ -15,6 +15,7 @@ import type {
   Edition,
   EditionRegistry,
   MistakeReports,
+  OwnerChecks,
   Sync,
 } from '@slovo/server-core';
 import type { Logger } from 'pino';
@@ -77,6 +78,7 @@ export function createApiHandler({
   contentPacks,
   editions,
   mistakeReports,
+  ownerChecks,
   served,
   sync,
 }: {
@@ -89,6 +91,7 @@ export function createApiHandler({
   contentPacks: ContentPacks;
   editions: EditionRegistry;
   mistakeReports: MistakeReports;
+  ownerChecks: OwnerChecks;
   /** The Editions the backend serves, as the admin lists them. */
   served: readonly Edition[];
   sync: Sync;
@@ -97,7 +100,7 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin, adminSignIn, editions, served),
+      admin: adminProcedures(admin, adminSignIn, editions, served, ownerChecks),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks),
       counters: countersProcedures(communityCounters),
