@@ -405,6 +405,16 @@ describe('the tabs of an Idiom card in the Feed', () => {
     expect(card.getByText('2. Гаяти час.', hidden)).toBeTruthy();
     expect(card.queryByText('Байдики — дрібні тріски.', hidden)).toBeNull();
     expect(card.queryByText('Походження', hidden)).toBeNull();
+    // The Definition offers VoiceOver the card's page actions, its Knowledge Marks first.
+    const actions: unknown = card.getByTestId('idiom-definition', hidden).props[
+      'accessibilityActions'
+    ];
+    expect(actions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ name: 'known' }),
+        expect.objectContaining({ name: 'unknown' }),
+      ]),
+    );
   });
 
   it('shows where the expression comes from on «Звідки»', async () => {

@@ -167,6 +167,8 @@ function IdiomTabContent({ tab }: { tab: IdiomTab }) {
   const { colors } = tokens;
   const sizes = useWordTextSizes();
   const { voice } = useEdition();
+  // In the Feed, VoiceOver turns to the next or previous card from the Definition too.
+  const turnActions = usePageTurnActions();
   const body = [typeStyle('sectionText', tokens), { color: colors.ink }];
   switch (tab.key) {
     case 'essence':
@@ -176,6 +178,7 @@ function IdiomTabContent({ tab }: { tab: IdiomTab }) {
             testID="idiom-definition"
             accessibilityLabel={withoutStress(tab.definition)}
             {...voice}
+            {...turnActions}
             style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
           >
             {tab.definition}
