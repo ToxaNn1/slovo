@@ -1,5 +1,4 @@
-import type { ExamplePair, LiteraryUse } from '@slovo/contracts';
-import type { CorrectionCardModel, Example, IdiomCardModel, WordCardModel } from '@slovo/core';
+import type { Example, IdiomCardModel, WordCardModel } from '@slovo/core';
 
 /**
  * One tab of a Word's Entry card (ADR 0088), with what it shows: «Суть» the
@@ -8,7 +7,7 @@ import type { CorrectionCardModel, Example, IdiomCardModel, WordCardModel } from
  * meanings, the etymology and the Word History.
  */
 export type WordTab =
-  | { readonly key: 'essence'; readonly definition: string; readonly moreMeanings: number }
+  | { readonly key: 'essence'; readonly moreMeanings: number }
   | { readonly key: 'example'; readonly examples: readonly [Example, ...Example[]] }
   | {
       readonly key: 'links';
@@ -45,7 +44,7 @@ export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]
   if (meanings.length > 0 || etymology !== undefined || card.history !== undefined)
     tabs.push({ key: 'history', meanings, etymology, history: card.history });
   return [
-    { key: 'essence', definition: card.primaryDefinition, moreMeanings: meanings.length },
+    { key: 'essence', moreMeanings: meanings.length },
     ...tabs,
   ];
 }
@@ -56,40 +55,21 @@ export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]
  * «Чому» the explanation and its sources, «Приклади» the example pair and the
  * literary uses.
  */
-export type CorrectionTab =
-  | { readonly key: 'better' }
-  | {
-      readonly key: 'why';
-      readonly explanation: string;
-      readonly sourceNames: readonly string[];
-    }
-  | {
-      readonly key: 'examples';
-      readonly examplePair: ExamplePair;
-      readonly literaryUses: readonly LiteraryUse[];
-    };
+export type CorrectionTab = { readonly key: 'better' | 'why' | 'examples' };
 
 /** The names of a Correction card's tabs, which the Edition's strings give. */
 export type CorrectionTabKey = CorrectionTab['key'];
 
 /**
- * The tabs of a Correction's card, in order, without «Чому» when there is no
- * reason to give. «Як краще» is always there and comes first, so it is the
- * tab selected on opening.
+ * The tabs of a Correction's card, in order. Every Correction gives a reason
+ * (its explanation is never empty), so all three are always there; «Як краще»
+ * comes first, so it is the tab selected on opening.
  */
-export function correctionTabsOf(
-  card: CorrectionCardModel,
-): readonly [CorrectionTab, ...CorrectionTab[]] {
-  const why: CorrectionTab[] =
-    card.explanation === ''
-      ? []
-      : [{ key: 'why', explanation: card.explanation, sourceNames: card.sourceNames }];
-  return [
-    { key: 'better' },
-    ...why,
-    { key: 'examples', examplePair: card.examplePair, literaryUses: card.literaryUses },
-  ];
-}
+export const correctionTabs: readonly [CorrectionTab, ...CorrectionTab[]] = [
+  { key: 'better' },
+  { key: 'why' },
+  { key: 'examples' },
+];
 
 /**
  * One tab of an Idiom's Entry card (ADR 0088), with what it shows: «Суть» the

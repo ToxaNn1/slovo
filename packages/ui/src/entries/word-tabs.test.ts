@@ -1,5 +1,5 @@
-import type { CorrectionCardModel, IdiomCardModel, WordCardModel } from '@slovo/core';
-import { correctionTabsOf, idiomTabsOf, wordTabsOf } from '@slovo/ui/word-tabs';
+import type { IdiomCardModel, WordCardModel } from '@slovo/core';
+import { idiomTabsOf, wordTabsOf } from '@slovo/ui/word-tabs';
 import { describe, expect, it } from 'vitest';
 
 const bare: WordCardModel = {
@@ -49,7 +49,7 @@ describe('wordTabsOf', () => {
 
   it('counts the other meanings in the essence tab and lists them in the history tab', () => {
     const [essence, , , history] = wordTabsOf(full);
-    expect(essence).toEqual({ key: 'essence', definition: 'Quiet and gentle.', moreMeanings: 2 });
+    expect(essence).toEqual({ key: 'essence', moreMeanings: 2 });
     expect(history).toEqual({
       key: 'history',
       meanings: ['Submissive.', 'Tame.'],
@@ -77,51 +77,13 @@ describe('wordTabsOf', () => {
       'history',
     ]);
     expect(wordTabsOf(bare)).toEqual([
-      { key: 'essence', definition: 'Quiet and gentle.', moreMeanings: 0 },
+      { key: 'essence', moreMeanings: 0 },
     ]);
   });
 
   it('opens the links tab on antonyms alone and the history tab on the Word History alone', () => {
     const tabs = wordTabsOf({ ...bare, antonyms: ['bold'], history: 'Old word.' });
     expect(tabs.map((tab) => tab.key)).toEqual(['essence', 'links', 'history']);
-  });
-});
-
-const correction: CorrectionCardModel = {
-  kind: 'correction',
-  correctionId: 'c1',
-  nonStandardForm: 'following',
-  nonStandardStressedVowels: [],
-  mainEquivalent: 'next',
-  mainEquivalentStressedVowels: [],
-  otherEquivalents: [],
-  correctionType: 'russianism',
-  categoryId: 'k1',
-  categoryName: undefined,
-  explanation: 'Because.',
-  examplePair: { nonStandard: 'The following day.', standard: 'The next day.' },
-  sourceNames: [],
-  literaryUses: [],
-};
-
-describe('correctionTabsOf', () => {
-  it('gives the better form, the reason and the examples in that order', () => {
-    expect(correctionTabsOf(correction)).toEqual([
-      { key: 'better' },
-      { key: 'why', explanation: 'Because.', sourceNames: [] },
-      {
-        key: 'examples',
-        examplePair: { nonStandard: 'The following day.', standard: 'The next day.' },
-        literaryUses: [],
-      },
-    ]);
-  });
-
-  it('leaves out the reason tab when the Correction gives no reason', () => {
-    expect(correctionTabsOf({ ...correction, explanation: '' }).map(({ key }) => key)).toEqual([
-      'better',
-      'examples',
-    ]);
   });
 });
 

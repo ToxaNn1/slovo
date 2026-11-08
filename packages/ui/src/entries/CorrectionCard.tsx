@@ -16,7 +16,7 @@ import { CategoryChip } from './CategoryChip';
 import { KickerRow } from './KickerRow';
 import { DetailSection, ExampleText } from './WordCard';
 import { CardTabs } from './CardTabs';
-import { correctionTabsOf, type CorrectionTab } from './word-tabs';
+import { correctionTabs, type CorrectionTab } from './word-tabs';
 
 /**
  * The Correction card's blocks inside the Entry card's frame: the Correction
@@ -95,7 +95,7 @@ export function CorrectionCardBody({
       {tabs ? (
         <CardTabs
           testID="correction"
-          tabs={correctionTabsOf(card)}
+          tabs={correctionTabs}
           nameOf={({ key }) => strings.tabs[key]}
           disabled={concealed}
         >
