@@ -27,6 +27,50 @@ export async function countRequest(
 }
 
 /**
+ * Counts failed attempts under the key (a wrong code, say): `attempts`
+ * failures in a row block it for `blockSeconds` from the last one, and a
+ * success clears them (`clearFailures`). Answers the attempts left, or when
+ * a blocked key may try again; `failed: false` only asks.
+ */
+export async function blockAfterFailures(
+  rateLimits: RateLimits,
+  key: string,
+  {
+    attempts,
+    blockSeconds,
+    now,
+    failed,
+  }: { attempts: number; blockSeconds: number; now: Date; failed: boolean },
+): Promise<{ readonly attemptsLeft: number } | TooManyRequests> {
+  const blockKey = `${key}:blocked`;
+  const tooMany = (windowEnds: Date): TooManyRequests => ({
+    ok: false,
+    reason: 'too-many-requests',
+    retryAfterSeconds: Math.max(1, Math.ceil((windowEnds.getTime() - now.getTime()) / 1000)),
+  });
+  const block = await rateLimits.peek(blockKey, now);
+  if (block !== undefined) return tooMany(block.windowEnds);
+  if (failed) {
+    await rateLimits.take(key, { requests: attempts, windowSeconds: blockSeconds }, now, 1);
+  }
+  const count = (await rateLimits.peek(key, now))?.count ?? 0;
+  if (count < attempts) return { attemptsLeft: attempts - count };
+  const { windowEnds } = await rateLimits.take(
+    blockKey,
+    { requests: 1, windowSeconds: blockSeconds },
+    now,
+    1,
+  );
+  await rateLimits.clear(key);
+  return tooMany(windowEnds);
+}
+
+/** Clears the failed attempts under the key, after a success. */
+export function clearFailures(rateLimits: RateLimits, key: string): Promise<void> {
+  return rateLimits.clear(key);
+}
+
+/**
  * What a per-IP limit counts for the address: an IPv4 address itself, an
  * IPv4-mapped IPv6 address (`::ffff:a.b.c.d`) as its IPv4, and any other IPv6
  * address as its /64 prefix, since a host normally owns the whole /64 and would

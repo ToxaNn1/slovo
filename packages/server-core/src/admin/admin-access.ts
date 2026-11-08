@@ -7,9 +7,7 @@ export type AdminRole = 'owner' | 'admin';
 export type Actor =
   | { readonly kind: 'admin-user'; readonly email: string }
   | { readonly kind: 'agent'; readonly name: string }
-  | { readonly kind: 'command'; readonly command: string }
-  /** A caller of the admin API the sign-in doesn't name yet. */
-  | { readonly kind: 'anonymous' };
+  | { readonly kind: 'command'; readonly command: string };
 
 /** What a change brings to the Action log; the log adds when. */
 export interface ActionEntry {
@@ -29,8 +27,67 @@ export interface Action extends ActionEntry {
   readonly at: Date;
 }
 
+/** Where an Admin user's TOTP stands: none yet, set up but never used to sign in, or on. */
+export type AdminTotp =
+  | { readonly state: 'none' }
+  | { readonly state: 'pending'; readonly sealedSecret: string }
+  | { readonly state: 'on'; readonly sealedSecret: string };
+
+/** Seals a secret the store keeps, and opens it again. */
+export interface SecretVault {
+  seal(plain: string): string;
+  open(sealed: string): string;
+}
+
+/** An active Admin user, as the sign-in knows them. */
+export interface AdminUser {
+  readonly id: string;
+  readonly email: string;
+  readonly role: AdminRole;
+  readonly totp: AdminTotp;
+}
+
+/** A signed-in admin session, by the hash of its cookie's token. */
+export interface AdminSessionRow {
+  readonly tokenHash: string;
+  readonly user: AdminUser;
+  readonly createdAt: Date;
+  readonly lastSeenAt: Date;
+  readonly expiresAt: Date;
+}
+
 /** The admin's identities and its Action log, kept by the backend apart from the Accounts. */
 export interface AdminStore {
+  /** The active Admin user of the email, trimmed and lower case. */
+  adminUserByEmail(email: string): Promise<AdminUser | undefined>;
+  /** Keeps the email's one emailed code, by hash, in place of any before it. */
+  setSignInCode(code: { email: string; codeHash: string; expiresAt: Date }): Promise<void>;
+  /** The email's emailed code, by hash. */
+  signInCode(email: string): Promise<{ codeHash: string; expiresAt: Date } | undefined>;
+  deleteSignInCode(email: string): Promise<void>;
+  /** Sets a sealed TOTP secret not yet used, and the recovery codes by hash, in place of any before. */
+  setPendingTotp(
+    adminUserId: string,
+    sealedSecret: string,
+    recoveryCodeHashes: readonly string[],
+  ): Promise<void>;
+  /** Turns the pending TOTP on: it has signed in once. */
+  confirmTotp(adminUserId: string, at: Date): Promise<void>;
+  /** Spends the recovery code; `false` when it is not one of the user's unspent codes. */
+  spendRecoveryCode(adminUserId: string, codeHash: string, at: Date): Promise<boolean>;
+  addAdminSession(session: {
+    tokenHash: string;
+    adminUserId: string;
+    createdAt: Date;
+    expiresAt: Date;
+  }): Promise<void>;
+  /** The session of an active Admin user under the hash. */
+  adminSession(tokenHash: string): Promise<AdminSessionRow | undefined>;
+  touchAdminSession(tokenHash: string, at: Date): Promise<void>;
+  /** The Admin user's sessions, newest first. */
+  adminSessionsOf(adminUserId: string): Promise<readonly AdminSessionRow[]>;
+  deleteAdminSession(tokenHash: string): Promise<void>;
+  deleteAdminSessionsOf(adminUserId: string): Promise<void>;
   /** Whether at least one Власник is active. */
   hasOwner(): Promise<boolean>;
   /** Adds an Admin user; `taken` when the email has one already. */

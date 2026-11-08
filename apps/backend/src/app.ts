@@ -2,6 +2,7 @@ import { CollectionLinkIdSchema, type AppConfig } from '@slovo/contracts';
 import {
   createAccounts,
   createAdminAccess,
+  createAdminSignIn,
   createCollectionLinks,
   createCommunityCounters,
   createContentPacks,
@@ -22,8 +23,7 @@ import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
 import { adminApp } from './admin/admin-app';
-import { adminRoutes } from './admin/admin-routes';
-import { createAdminStore, hashToken } from './admin/admin-store';
+import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -76,8 +76,6 @@ export interface AppDependencies {
    * whose addresses it trusts: 0 when nothing is in front of it.
    */
   readonly trustedProxyHops: number;
-  /** The one Account the owner admin signs in; without it the backend has no admin (ADR 0069). */
-  readonly ownerEmail?: string | undefined;
   /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
   readonly adminDist?: string | undefined;
 }
@@ -135,7 +133,6 @@ export function createApp({
   authSecret,
   reporter,
   trustedProxyHops,
-  ownerEmail,
   adminDist,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
@@ -182,15 +179,24 @@ export function createApp({
     random,
     domain: appConfig.domain,
   });
-  const admin = createAdminAccess({
-    store: createAdminStore(database),
+  const adminStore = createAdminStore(database);
+  const admin = createAdminAccess({ store: adminStore, clock, random, hash: hashToken });
+  // The admin's own sign-in: only the mailer and the limits' table are shared
+  // with the Account's (ADR 0088).
+  const adminSignIn = createAdminSignIn({
+    store: adminStore,
     clock,
     random,
     hash: hashToken,
+    mailer,
+    rateLimits,
+    hmacSha1,
+    vault: createSecretVault(authSecret),
   });
   const api = createApiHandler({
     accounts,
     admin,
+    adminSignIn,
     clock,
     collectionLinks,
     communityCounters,
@@ -310,23 +316,10 @@ export function createApp({
     return c.html(collectionPage(edition, appConfig.scheme, id, found.link, entries));
   });
 
-  // The owner admin (ADR 0069), only with the owner's email set.
-  if (ownerEmail !== undefined) {
-    app.route(
-      '/admin',
-      adminRoutes({
-        database,
-        accounts,
-        editions: editionRegistry,
-        served: editions,
-        app: appConfig,
-        ownerEmail,
-      }),
-    );
+  // The owner admin app (ADR 0088), off (404) while no Власник exists.
+  if (adminDist !== undefined) {
+    app.route('/admin', adminApp({ dist: adminDist, isOn: () => admin.isOn() }));
   }
-
-  // The owner admin app (ADR 0088); the pages above keep their addresses until #1715.
-  if (adminDist !== undefined) app.route('/admin', adminApp({ dist: adminDist }));
 
   // An address the backend doesn't serve, under `/v1` too.
   app.notFound((c) => c.json({ code: 'NOT_FOUND' }, 404));

@@ -62,5 +62,21 @@ export {
   type AddAgentResult,
   type AdminAccess,
   type AdminRole,
+  type AdminSessionRow,
   type AdminStore,
+  type AdminTotp,
+  type AdminUser,
+  type SecretVault,
 } from './admin/admin-access';
+export {
+  createAdminSignIn,
+  totpOf,
+  type AdminSessionView,
+  type AdminSignIn,
+  type CodeAccepted,
+  type HmacSha1,
+  type SecondFactor,
+  type AdminSignedIn,
+  type SignedInAdmin,
+  type SignInRefused,
+} from './admin/admin-sign-in';

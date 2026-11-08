@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 
 import type { RateLimits } from '@slovo/server-core';
-import { eq, lte, sql } from 'drizzle-orm';
+import { and, eq, gt, lte, sql } from 'drizzle-orm';
 
 import type { Database } from './database/database';
 import { rateLimits } from './database/schema';
@@ -64,5 +64,17 @@ export function createRateLimits({ db }: Database, { secret }: { secret: string 
     if (full === undefined) return take(subject, { requests, windowSeconds }, now, weight);
     return { taken: false, windowEnds: full.windowEnds };
   };
-  return { take };
+  return {
+    take,
+    async peek(subject, now) {
+      const [running] = await db
+        .select({ count: rateLimits.count, windowEnds: rateLimits.windowEnds })
+        .from(rateLimits)
+        .where(and(eq(rateLimits.key, keyOf(subject)), gt(rateLimits.windowEnds, now)));
+      return running;
+    },
+    async clear(subject) {
+      await db.delete(rateLimits).where(eq(rateLimits.key, keyOf(subject)));
+    },
+  };
 }
