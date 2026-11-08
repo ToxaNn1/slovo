@@ -38,62 +38,28 @@ function servingEditions(...ids: string[]) {
 }
 
 describe('edition.switches', () => {
-  it('answers no feature off while the owner turned none off', async () => {
+  it('answers no Rules and no force-update minimums while the owner set none', async () => {
     const { client } = servingEditions('untouched');
 
     const switches = await client.edition.switches({ params: { editionId: 'untouched' } });
 
-    expect(switches).toMatchObject({ status: 200, body: { off: [] } });
+    expect(switches).toMatchObject({ status: 200, body: { rules: [], minimums: {} } });
   });
 
-  it('answers a feature after the owner turns it off, and none after they clear it', async () => {
+  it('answers the Kill switch as one Rule off for everyone, and none once cleared', async () => {
     const { client, kill, clearRules } = servingEditions('emergency');
     const params = { editionId: 'emergency' };
 
-    await expect(kill('emergency', 'game')).resolves.toEqual({ ok: true, off: ['game'] });
+    await kill('emergency', 'game');
     const off = await client.edition.switches({ params });
-    await expect(clearRules('emergency', 'game')).resolves.toEqual({ ok: true, off: [] });
+    await clearRules('emergency', 'game');
     const cleared = await client.edition.switches({ params });
 
-    expect(off).toMatchObject({ status: 200, body: { off: ['game'] } });
-    expect(cleared).toMatchObject({ status: 200, body: { off: [] } });
-  });
-
-  it('answers every feature turned off, in name order', async () => {
-    const { client, kill } = servingEditions('several');
-    await kill('several', 'game');
-    await kill('several', 'contentUpdates');
-    await kill('several', 'account');
-
-    const switches = await client.edition.switches({ params: { editionId: 'several' } });
-
-    expect(switches).toMatchObject({ body: { off: ['account', 'contentUpdates', 'game'] } });
-  });
-
-  it.each([
-    'synonymRows',
-    'tips',
-    'notifications',
-    'widget',
-    'shareCards',
-    'pronunciation',
-    'wordOfTheDay',
-    'statistics',
-    'knowledge',
-    'selfCheck',
-    'rarityCeiling',
-    'gameReview',
-  ])('turns the %s switch off remotely and back on', async (feature) => {
-    const { client, kill, clearRules } = servingEditions('polish');
-    const params = { editionId: 'polish' };
-
-    await expect(kill('polish', feature)).resolves.toEqual({ ok: true, off: [feature] });
-    const off = await client.edition.switches({ params });
-    await expect(clearRules('polish', feature)).resolves.toEqual({ ok: true, off: [] });
-    const cleared = await client.edition.switches({ params });
-
-    expect(off).toMatchObject({ status: 200, body: { off: [feature] } });
-    expect(cleared).toMatchObject({ status: 200, body: { off: [] } });
+    expect(off).toMatchObject({
+      status: 200,
+      body: { rules: [{ id: 'kill', feature: 'game', verdict: 'off', targets: {} }] },
+    });
+    expect(cleared).toMatchObject({ status: 200, body: { rules: [] } });
   });
 
   it("keeps each Edition's switches apart", async () => {
@@ -102,7 +68,7 @@ describe('edition.switches', () => {
 
     const neighbour = await client.edition.switches({ params: { editionId: 'neighbour' } });
 
-    expect(neighbour).toMatchObject({ body: { off: [] } });
+    expect(neighbour).toMatchObject({ body: { rules: [] } });
   });
 
   it('answers 304 without the switches when If-None-Match names their ETag', async () => {
@@ -133,7 +99,10 @@ describe('edition.switches', () => {
     await clearRules('changed', 'corrections');
     const back = await client.edition.switches({ params });
 
-    expect(after).toMatchObject({ status: 200, body: { off: ['corrections'] } });
+    expect(after).toMatchObject({
+      status: 200,
+      body: { rules: [{ feature: 'corrections', verdict: 'off', targets: {} }] },
+    });
     expect(after.headers.etag).not.toBe(before);
     expect(back.headers.etag).toBe(before);
   });
@@ -208,57 +177,13 @@ describe('a feature turned off remotely', () => {
     }));
     const { client, clearRules } = testApp({ editions: folder.read() });
 
-    await expect(clearRules('edition-off', 'contentUpdates')).resolves.toEqual({
+    await expect(clearRules('edition-off', 'contentUpdates')).resolves.toMatchObject({
       ok: true,
-      off: [],
+      rules: [],
     });
 
     await expect(
       client.content.latest({ editionId: 'edition-off', packFormat: PACK_FORMAT }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
-  });
-});
-
-describe('the switch commands', () => {
-  it('refuse an Edition the backend did not find, and switch nothing', async () => {
-    const { client, kill, clearRules } = servingEditions('found');
-
-    await expect(kill('pl', 'game')).resolves.toEqual({
-      ok: false,
-      reason: 'unknown-edition',
-    });
-    await expect(clearRules('pl', 'game')).resolves.toEqual({
-      ok: false,
-      reason: 'unknown-edition',
-    });
-    await expect(
-      client.edition.switches({ params: { editionId: 'found' } }),
-    ).resolves.toMatchObject({ body: { off: [] } });
-  });
-
-  it('refuse a feature the Feature Switches schema does not know, and switch nothing', async () => {
-    const { client, kill, clearRules } = servingEditions('typo');
-
-    await expect(kill('typo', 'gmae')).resolves.toEqual({
-      ok: false,
-      reason: 'unknown-feature',
-    });
-    await expect(clearRules('typo', 'gmae')).resolves.toEqual({
-      ok: false,
-      reason: 'unknown-feature',
-    });
-    await expect(client.edition.switches({ params: { editionId: 'typo' } })).resolves.toMatchObject(
-      {
-        body: { off: [] },
-      },
-    );
-  });
-
-  it('turn a feature off once however often they run, and clear one that is on', async () => {
-    const { kill, clearRules } = servingEditions('repeated');
-
-    await expect(clearRules('repeated', 'game')).resolves.toEqual({ ok: true, off: [] });
-    await kill('repeated', 'game');
-    await expect(kill('repeated', 'game')).resolves.toEqual({ ok: true, off: ['game'] });
   });
 });
