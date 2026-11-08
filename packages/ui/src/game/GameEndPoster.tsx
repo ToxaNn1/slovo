@@ -7,7 +7,13 @@ import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { blockGap, resultLayout, space, typeStyle } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { PanelGround, ResultNumber, TEXT_MAX_FONT_SCALE, TITLE_TRACKING } from './GameResult';
+import {
+  PanelGround,
+  PanelMascot,
+  ResultNumber,
+  TEXT_MAX_FONT_SCALE,
+  TITLE_TRACKING,
+} from './GameResult';
 import { GameReview } from './GameReview';
 import { useGameHaptics } from './useGameHaptics';
 
@@ -116,7 +122,7 @@ export function GameEndPoster({
         <PanelGround color={colors.accent} />
         <View style={styles.panelFoot}>
           {head}
-          {mascot}
+          <PanelMascot>{mascot}</PanelMascot>
         </View>
       </View>
       <View style={styles.body}>

@@ -5,7 +5,16 @@ import Svg, { Circle, Defs, Pattern, Polygon } from 'react-native-svg';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
-import { blockGap, halftone, resultLayout, space, typeRoles, typeStyle, wedges } from '../tokens';
+import {
+  blockGap,
+  halftone,
+  mascotWidth,
+  resultLayout,
+  space,
+  typeRoles,
+  typeStyle,
+  wedges,
+} from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { GameReview } from './GameReview';
 import { useGameHaptics } from './useGameHaptics';
@@ -16,6 +25,22 @@ const NUMBER_MAX_FONT_SCALE = 1.3;
 /** How far they may scale the smaller text, so it never breaks a word. */
 export const TEXT_MAX_FONT_SCALE = 1.5;
 export const TITLE_TRACKING = typeRoles.resultTitle.letterSpacing / typeRoles.resultTitle.size;
+/** The Mascot's own width on the panel: its figure and the padding it draws around it. */
+const MASCOT_COLUMN = mascotWidth + 2 * space[4];
+
+/**
+ * The Mascot beside the title on the red panel, no wider than its figure, as
+ * the board sets it. Its line wraps under the figure: unbounded, the line
+ * would take its whole width on one line, run off the screen and squeeze the
+ * title and line beside it until their words break.
+ */
+export function PanelMascot({ children }: { children: ReactNode }) {
+  return (
+    <View testID="game-panel-mascot" style={styles.mascot}>
+      {children}
+    </View>
+  );
+}
 
 /**
  * The red panel's ground, across the screen's width: the accent cut by its
@@ -177,7 +202,7 @@ export function GameResult({
               {line}
             </Text>
           </View>
-          {mascot}
+          <PanelMascot>{mascot}</PanelMascot>
         </View>
       </View>
       <View style={styles.body}>
@@ -254,6 +279,7 @@ const styles = StyleSheet.create({
     paddingBottom: resultLayout.panelFootBottom,
   },
   text: { flex: 1, gap: space[2] - 2 },
+  mascot: { maxWidth: MASCOT_COLUMN },
   body: { paddingHorizontal: space[5], gap: blockGap },
   numbers: { flexDirection: 'row', flexWrap: 'wrap', gap: resultLayout.numbersGap },
   number: {

@@ -25,12 +25,13 @@ import { AccessibilityInfo, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
-import { roundHeader } from '../tokens';
+import { capitalMarkRoom, roundHeader } from '../tokens';
 
 const strings = testStrings({
   game: {
     round: {
       header: '{mode} · {n}/{total}',
+      answerCard: { right: 'Spot on!', wrong: 'Close. Next one will land.', next: 'Next →' },
       pairsHint: 'Match each word to its meaning',
       stressHint: 'Tap the stressed vowel',
       progress: '{passed} / {total}',
@@ -427,18 +428,21 @@ function Game({
   onLeave,
   onOpenLetter,
   streak,
+  feedback = 'sheet',
 }: {
   start: CurrentGame;
   onAnswer: (given: GivenAnswer) => void;
   onLeave: () => void;
   onOpenLetter: () => void;
   streak?: Streak | undefined;
+  feedback?: 'sheet' | 'card';
 }) {
   const [game, setGame] = useState(start);
   return (
     <GameRound
       game={game}
       streak={streak}
+      feedback={feedback}
       title="Definitions"
       label={LABELS[game.round.form] ?? 'Definition'}
       onAnswer={(given) => {
@@ -1299,7 +1303,11 @@ describe('the answer sheet', () => {
     },
   };
 
-  async function answerIn(colorScheme: ColorScheme, option: string) {
+  async function answerIn(
+    colorScheme: ColorScheme,
+    option: string,
+    feedback: 'sheet' | 'card' = 'sheet',
+  ) {
     await render(
       <TokensProvider tokens={boardTokens} colorScheme={colorScheme}>
         <SafeAreaProvider initialMetrics={metrics}>
@@ -1308,6 +1316,7 @@ describe('the answer sheet', () => {
               <InterfaceSoundsProvider sounds={{ play }}>
                 <Game
                   start={first}
+                  feedback={feedback}
                   onAnswer={jest.fn()}
                   onLeave={jest.fn()}
                   onOpenLetter={jest.fn()}
@@ -1341,6 +1350,37 @@ describe('the answer sheet', () => {
       expect(screen.getByTestId('game-sheet-title')).toHaveStyle({ color: text });
     },
   );
+
+  it.each(['light', 'dark'] as const)(
+    'draws the answer card of a right answer red with ink on it in the %s Theme, apart from the Round under it',
+    async (colorScheme) => {
+      await answerIn(colorScheme, 'candid', 'card');
+
+      expect(screen.getByTestId('game-sheet-fill')).toHaveStyle({ backgroundColor: RED });
+      expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({ color: DARK });
+    },
+  );
+
+  it.each(['light', 'dark'] as const)(
+    'draws the answer card of a wrong answer on the Theme’s ink in the %s Theme, apart from the Round under it',
+    async (colorScheme) => {
+      const { ink: fill, background: text } = boardTokens.colors[colorScheme];
+      await answerIn(colorScheme, 'brittle', 'card');
+
+      expect(screen.getByTestId('game-sheet-fill')).toHaveStyle({ backgroundColor: fill });
+      expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({ color: text });
+    },
+  );
+
+  it('spaces the answer card’s verdict so a wrapped line’s capital marks clear the line over it', async () => {
+    await answerIn('light', 'brittle', 'card');
+
+    // The banner type at its size, with each line the room its capital marks need.
+    expect(screen.getByTestId('game-answer-card-title')).toHaveStyle({
+      fontSize: 30,
+      lineHeight: 30 + capitalMarkRoom('roundVerdict'),
+    });
+  });
 
   it.each(['candid', 'brittle'])(
     'titles the answer to «%s» in the board’s big uppercase banner type',
