@@ -1,7 +1,7 @@
 import { sha256 } from '@noble/hashes/sha2.js';
 import { bytesToHex } from '@noble/hashes/utils.js';
 import { SYNC_BATCH_SIZE, type CollectionLink, type MistakeReport } from '@slovo/contracts';
-import { createApiClient, PACK_MEDIA_TYPE, type ApiFetch } from '@slovo/contracts/api';
+import { createApiClient, PACK_MEDIA_TYPE, type ApiFetch, type Patch } from '@slovo/contracts/api';
 import { fileOf, refusal, serveApi, type ApiProcedures } from '@slovo/contracts/api/test-support';
 
 import type {
@@ -56,6 +56,13 @@ export interface KeptRecord {
   readonly value: Json;
   readonly changedAt: number;
   readonly sequence: number;
+}
+
+/** A `content.patch` request as the fake backend received it. */
+export interface FakePatchAsk {
+  readonly since: number;
+  readonly patchFormat: number;
+  readonly ifNoneMatch?: string;
 }
 
 /** A pack the fake backend has published, with the bytes of its file. */
@@ -138,6 +145,15 @@ export interface FakeBackend {
     readonly downloaded: readonly number[];
     /** Publishes a pack, which `content.latest` announces while it is the newest of its format. */
     publish(pack: FakePublishedPack): void;
+    /** The query and `if-none-match` of each `content.patch` request, in order, failed ones included. */
+    readonly patchesAsked: readonly FakePatchAsk[];
+    /**
+     * Publishes a Patch, which `content.patch` answers to a device at its
+     * `since`, with the ETag `"<contentVersion>"`, or as an unsupported format
+     * when the device asks for a lower one than its `patchFormat`. A device
+     * with no Patch at its content version, or naming its ETag, gets 304.
+     */
+    publishPatch(patch: Patch): void;
   };
   /** The Community Counters procedures (ADR 0060): the counts the backend keeps, and what it counted. */
   readonly counters: {
@@ -208,6 +224,8 @@ export function createFakeBackend({
   const packs: FakePublishedPack[] = [];
   const packFormatsAsked: number[] = [];
   const downloaded: number[] = [];
+  const patchesAsked: FakePatchAsk[] = [];
+  const patches: Patch[] = [];
   const counts = new Map<string, Omit<EntryCounters, 'entryId'>>();
   const countersAsked: (readonly string[])[] = [];
   const answers: {
@@ -422,6 +440,28 @@ export function createFakeBackend({
         } = newest;
         return { pack: { contentVersion, packFormat, size: bytes.length, fileSha256 } };
       },
+      async patch({ input, context }) {
+        const { since, patchFormat } = input.query;
+        const ifNoneMatch = input.headers?.['if-none-match'];
+        patchesAsked.push({
+          since,
+          patchFormat,
+          ...(ifNoneMatch === undefined ? {} : { ifNoneMatch }),
+        });
+        await arrive('content.patch', context);
+        const patch = patches.findLast((published) => published.since === since);
+        const etag = `"${String(patch?.contentVersion ?? since)}"`;
+        const headers = { etag, 'cache-control': 'no-cache' } as const;
+        if (patch === undefined || ifNoneMatch === etag) return { status: 304, headers };
+        if (patch.patchFormat > patchFormat) {
+          return {
+            status: 200,
+            headers,
+            body: { status: 'unsupported-format', patchFormat: patch.patchFormat },
+          };
+        }
+        return { status: 200, headers, body: { status: 'patch', patch } };
+      },
       async download({ input, context, errors }) {
         const { contentVersion } = input.params;
         downloaded.push(contentVersion);
@@ -531,6 +571,10 @@ export function createFakeBackend({
       downloaded,
       publish(pack) {
         packs.push(pack);
+      },
+      patchesAsked,
+      publishPatch(patch) {
+        patches.push(patch);
       },
     },
     counters: {
