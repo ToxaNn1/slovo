@@ -262,6 +262,33 @@ jobs:
             if [ "$result" != success ]; then exit 1; fi
           done
 
+  # Pushes this run's tests, coverage and job durations to Якість (ADR 0095).
+  # Runs on main only, after the checks; it never makes main red.
+  ci-history:
+    name: CI history
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download the test reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --pattern 'test-reports-*' --dir "$RUNNER_TEMP/reports" || true
+      - name: Push the run to the CI history
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLOVO_BACKEND_URL: ${{ secrets.SLOVO_BACKEND_URL }}
+          CI_HISTORY_TOKEN: ${{ secrets.CI_HISTORY_TOKEN }}
+        run: mkdir -p "$RUNNER_TEMP/reports" && node scripts/ci-history.mjs "$RUNNER_TEMP/reports"
+
   backend:
     name: Backend
     runs-on: ubuntu-latest
