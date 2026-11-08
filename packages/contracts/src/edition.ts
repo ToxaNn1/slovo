@@ -467,6 +467,8 @@ export const FeatureSwitchesSchema = z.strictObject({
   searchButton: z.boolean(),
   /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). Off while `dashboard` is. */
   dashboardWordmark: z.boolean(),
+  /** The «Стрічка» tab opens the Feed, not the Dashboard, which stays the home at launch (ADR 0090). Off while `dashboard` is. */
+  feedTab: z.boolean(),
   /** Category screens: the Dashboard's «Категорії» rail of Categories of Words, their grid and each one's screen (ADR 0081). Off while `dashboard` is. */
   categoryScreens: z.boolean(),
   /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen (ADR 0081); off, the header is a plain title. Off while `dashboard` or `corrections` is. */

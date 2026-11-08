@@ -148,7 +148,7 @@ The single built-in list of Entries the user marked with the heart ("save word")
 _Avoid_: Saved words, likes
 
 **Dashboard**:
-The home behind «Стрічка»: the Word of the Day hero, the Mood check-in, «Попередні слова», the «Категорії» rail of Categories of Words, the «Добірки» rail of Curated Collections and the Correction Types rail, whose header opens the grid of the Categories of Corrections. Each block has its own Feature Switch; with `dashboard` off the Feed is the home.
+The home the app opens on, behind «Стрічка» unless `feedTab` makes that tab open the Feed (ADR 0090): the Word of the Day hero, the Mood check-in, «Попередні слова», the «Категорії» rail of Categories of Words, the «Добірки» rail of Curated Collections and the Correction Types rail, whose header opens the grid of the Categories of Corrections. Each block has its own Feature Switch; with `dashboard` off the Feed is the home.
 _Avoid_: Home, start screen, overview
 
 **Curated Collection**:

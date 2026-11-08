@@ -131,7 +131,18 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       screenOptions={screenOptions}
       screenLayout={({ route, children }) => <FocusedEnter route={route}>{children}</FocusedEnter>}
     >
-      <Tabs.Screen name="index" options={tab('home')} />
+      <Tabs.Screen
+        name="index"
+        options={tab('home')}
+        listeners={{
+          tabPress: (event) => {
+            // The Dashboard stays the home at launch; its tab opens the Feed (ADR 0090).
+            if (!shown.feedTab) return;
+            event.preventDefault();
+            router.navigate('/feed');
+          },
+        }}
+      />
       <Tabs.Screen name="game" options={({ route }) => tab('game', atRoot(route) && !gameOn)} />
       <Tabs.Screen name="saved" options={({ route }) => tab('saved', atRoot(route))} />
       <Tabs.Screen

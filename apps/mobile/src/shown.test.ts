@@ -59,6 +59,7 @@ const everything: Shown = {
   fastReveal: true,
   dashboard: true,
   dashboardWordmark: true,
+  feedTab: true,
   mood: true,
   curatedCollections: true,
   swipeMarks: true,
@@ -101,6 +102,10 @@ describe('what the reader is shown', () => {
     [
       'a plain wordmark with the Dashboard wordmark off',
       { off: ['dashboardWordmark'], shown: { dashboardWordmark: false } },
+    ],
+    [
+      'a «Стрічка» tab to the Dashboard with the Feed tab off',
+      { off: ['feedTab'], shown: { feedTab: false } },
     ],
     [
       'no Search button with the Search button off',
