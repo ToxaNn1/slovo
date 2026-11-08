@@ -66,6 +66,17 @@ const ServerVariablesSchema = z.object({
   SENTRY_DSN: unsetWhenEmpty(
     z.url({ protocol: /^https$/, error: 'must be an https:// Sentry DSN' }),
   ),
+  // Якість reads Sentry's REST API with this token (scopes org:read,
+  // project:read, event:read); unset, Якість shows Sentry unavailable.
+  SENTRY_AUTH_TOKEN: unsetWhenEmpty(z.string().min(1)),
+  // The Sentry organization's slug, and the numeric ids of the app's and the
+  // backend's projects.
+  SENTRY_ORG: unsetWhenEmpty(z.string().min(1)),
+  SENTRY_APP_PROJECT: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a numeric project id')),
+  SENTRY_BACKEND_PROJECT: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a numeric project id')),
+  // The Bearer token CI pushes its history with (ADR 0095); unset, every push
+  // is refused.
+  CI_HISTORY_TOKEN: unsetWhenEmpty(z.string().min(32, 'must be at least 32 characters')),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
   // Docker; 1 behind Railway's proxy.

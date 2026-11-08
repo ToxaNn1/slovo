@@ -1,10 +1,10 @@
-import { EditionIdSchema } from '@slovo/contracts/admin-api';
+import { ADMIN_PERIODS, EditionIdSchema, type AdminPeriod } from '@slovo/contracts/admin-api';
 import { z } from 'zod';
 
 /** The periods of the global period filter, shortest first. */
-export const PERIODS = ['1d', '7d', '30d', '90d'] as const;
+export const PERIODS = ADMIN_PERIODS;
 
-export type PeriodId = (typeof PERIODS)[number];
+export type PeriodId = AdminPeriod;
 
 export const PERIOD_LABELS: Readonly<Record<PeriodId, string>> = {
   '1d': '24 години',

@@ -359,6 +359,25 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         editions: async () => {
           await client.admin.editions().catch(refused);
         },
+        quality: async () => {
+          await client.admin.quality({ period: '7d' }).catch(refused);
+        },
+        ciHistory: async () => {
+          await client.admin.ciHistory({ period: '7d' }).catch(refused);
+        },
+        pushCiRun: async () => {
+          await client.admin
+            .pushCiRun({
+              runId: 1,
+              at: new Date().toISOString(),
+              sha: 'abcdef0',
+              tests: 0,
+              failedTests: [],
+              coverage: [],
+              jobs: [],
+            })
+            .catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {

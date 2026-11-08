@@ -7,6 +7,7 @@
 import type { MistakeType, Platform, RuleTargets, RuleVerdict } from '@slovo/contracts';
 import type { Actor, Json } from '@slovo/server-core';
 import {
+  bigint,
   bigserial,
   boolean,
   customType,
@@ -413,4 +414,22 @@ export const actionLog = pgTable(
     batchId: text('batch_id'),
   },
   (table) => [index('action_log_edition_id_idx').on(table.editionId)],
+);
+
+/** The CI runs on `main` CI pushed after each, for Якість (#1728): one row per run. */
+export const ciRuns = pgTable(
+  'ci_runs',
+  {
+    /** GitHub's id of the workflow run. */
+    runId: bigint('run_id', { mode: 'number' }).primaryKey(),
+    at: time('at'),
+    sha: text('sha').notNull(),
+    tests: integer('tests').notNull(),
+    failedTests: jsonb('failed_tests').$type<string[]>().notNull(),
+    coverage: jsonb('coverage')
+      .$type<{ package: string; lines: number; branches: number }[]>()
+      .notNull(),
+    jobs: jsonb('jobs').$type<{ name: string; seconds: number }[]>().notNull(),
+  },
+  (table) => [index('ci_runs_at_idx').on(table.at)],
 );

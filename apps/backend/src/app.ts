@@ -3,6 +3,7 @@ import {
   createAccounts,
   createAdminAccess,
   createAdminSignIn,
+  createQuality,
   createCollectionLinks,
   createCommunityCounters,
   createContentPacks,
@@ -14,6 +15,7 @@ import {
   type GoogleVerifier,
   type Mailer,
   type Random,
+  type SentryReader,
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
@@ -25,6 +27,7 @@ import { createAuthenticator } from './account/authenticator';
 import { adminApp } from './admin/admin-app';
 import { adminCodeEmail } from './admin/admin-mail';
 import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
+import { createCiRunStore } from './quality/ci-run-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -77,6 +80,10 @@ export interface AppDependencies {
    * whose addresses it trusts: 0 when nothing is in front of it.
    */
   readonly trustedProxyHops: number;
+  /** Where Якість reads Sentry's numbers. */
+  readonly sentry: SentryReader;
+  /** The Bearer token CI pushes its history with (ADR 0095); unset refuses every push. */
+  readonly ciToken: string | undefined;
   /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
   readonly adminDist?: string | undefined;
 }
@@ -135,6 +142,8 @@ export function createApp({
   reporter,
   trustedProxyHops,
   adminDist,
+  sentry,
+  ciToken,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -205,6 +214,10 @@ export function createApp({
     contentPacks,
     editions: editionRegistry,
     mistakeReports,
+    quality: {
+      quality: createQuality({ sentry, ciRuns: createCiRunStore(database), clock }),
+      ciToken,
+    },
     served: editions,
     sync,
   });
