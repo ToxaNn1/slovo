@@ -240,6 +240,18 @@ export function createSearch({
   };
 }
 
+/** How many things the results hold. */
+function found(results: SearchResults): number {
+  return (
+    results.words.length +
+    results.corrections.length +
+    results.idioms.length +
+    results.synonymRows.length +
+    results.tips.length +
+    results.byMeaning.length
+  );
+}
+
 /**
  * Search that tells Analytics of each query it answers with nothing found
  * (spec #1709): only the query's length goes, never its text.
@@ -249,7 +261,7 @@ export function withNoResultEvent(search: Search, analytics: Pick<Analytics, 'tr
     answers: (query) => search.answers(query),
     async search(query) {
       const results = await search.search(query);
-      if (search.answers(query) && Object.values(results).every((found) => found.length === 0))
+      if (search.answers(query) && found(results) === 0)
         await analytics
           .track('searchNoResult', { queryLength: Array.from(query.trim()).length })
           .catch(() => undefined);

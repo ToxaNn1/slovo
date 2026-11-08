@@ -45,7 +45,7 @@ export function settingsOpening({
 }: {
   userState: Opening<TrackedUserState>;
   /** The Edition in effect, remote switches included, whose `analytics` gates a changed setting's event. */
-  edition: Pick<Edition, 'isFeatureEnabled'>;
+  edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   /** Where a changed setting is told; nowhere while it can't be opened. */
   analytics: Opening<AnalyticsSink>;
 }): Opening<OpenedSettings> {

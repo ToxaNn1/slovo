@@ -104,15 +104,19 @@ describe('The PostHog adapter', () => {
   it('names the reader by the Install id once and sends the Variants with each event', () => {
     const { client, captured, identified } = fakeClient();
     const analytics = postHogAnalytics('phc_test', () => client);
-    const testing = { distinctId: 'install-1', variants: { variant_gameTimed: 'b' } };
+    const testing = {
+      distinctId: 'install-1',
+      edition: 'uk',
+      variants: { variant_gameTimed: 'b' },
+    };
 
     analytics.track('seen', seen, testing);
     analytics.track('screenViewed', { screen: 'feed' }, testing);
 
     expect(identified).toEqual(['install-1']);
     expect(captured).toEqual([
-      ['seen', { ...seen, variant_gameTimed: 'b' }],
-      ['screenViewed', { screen: 'feed', variant_gameTimed: 'b' }],
+      ['seen', { ...seen, edition: 'uk', variant_gameTimed: 'b' }],
+      ['screenViewed', { screen: 'feed', edition: 'uk', variant_gameTimed: 'b' }],
     ]);
   });
 
