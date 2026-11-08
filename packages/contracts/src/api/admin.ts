@@ -12,6 +12,7 @@ import {
   RuleVerdictSchema,
 } from '../feature-switch-rules';
 import { IdiomTypeSchema } from '../idiom';
+import { MistakeTypeSchema } from '../mistake-report';
 import { procedure } from './procedure';
 
 /** An Edition the admin's global Edition filter offers. */
@@ -323,6 +324,139 @@ const contentWriteContract = {
         }),
       }),
     ),
+};
+
+/** A batch of the Content queue's procedures is named by its id. */
+const QueueBatchSchema = z.object({
+  id: z.string(),
+  editionId: EditionIdSchema,
+  /** The Агент token's name the batch came from. */
+  author: z.string(),
+  createdAt: z.string(),
+  /** Records the batch created. */
+  added: z.number().int().nonnegative(),
+  /** Records the batch edited or retired. */
+  changed: z.number().int().nonnegative(),
+});
+
+/** An open flag: an Агент's or the quote check's note on a record. */
+const QueueFlagSchema = z.object({
+  /** The flag's Action log row. */
+  id: z.number().int().positive(),
+  editionId: EditionIdSchema,
+  kind: ContentRecordKindSchema,
+  recordId: z.string(),
+  /** The Агент's name, or `quote-check`. */
+  author: z.string(),
+  explanation: z.string(),
+  at: z.string(),
+});
+
+/** A Mistake Report still to check (ADR 0056). */
+const QueueReportSchema = z.object({
+  id: z.string(),
+  editionId: EditionIdSchema,
+  entryId: z.string(),
+  type: MistakeTypeSchema,
+  comment: z.string(),
+  appVersion: z.string(),
+  contentVersion: z.number().int(),
+  receivedAt: z.string(),
+});
+
+const queuePath = '/admin/content-queue';
+
+/**
+ * The Content queue (ADR 0090): the Агент batches «не перевірено», their
+ * rollback, the open flags and the Mistake Reports. Every write takes the
+ * admin header and a reason; an Агент token is refused.
+ */
+const contentQueueContract = {
+  batches: procedure
+    .route({
+      method: 'GET',
+      path: `${queuePath}/batches`,
+      summary: 'The Агент batches not reviewed yet, oldest first',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ editionId: EditionIdSchema.optional() }))
+    .output(z.object({ batches: z.array(QueueBatchSchema) })),
+  review: procedure
+    .route({
+      method: 'POST',
+      path: `${queuePath}/batches/{batchId}/review`,
+      summary: 'Marks a batch reviewed: it leaves the queue',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ batchId: BatchIdSchema, reason: ReasonSchema }))
+    .output(z.object({ reviewed: z.literal(true) })),
+  rollback: procedure
+    .route({
+      method: 'POST',
+      path: `${queuePath}/batches/{batchId}/rollback`,
+      summary: 'Rolls a batch back as one publish',
+      description:
+        'Retires the records the batch created and restores the ones it changed to their version before it; a record changed after the batch is skipped.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ batchId: BatchIdSchema, reason: ReasonSchema }))
+    .output(
+      z.object({
+        contentVersion: z.number().int().positive(),
+        retired: z.array(z.string()),
+        restored: z.array(z.string()),
+        skipped: z.array(z.string()),
+      }),
+    ),
+  flags: procedure
+    .route({
+      method: 'GET',
+      path: `${queuePath}/flags`,
+      summary: 'The flags not accepted or rejected yet',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ editionId: EditionIdSchema.optional() }))
+    .output(z.object({ flags: z.array(QueueFlagSchema) })),
+  resolveFlag: procedure
+    .route({
+      method: 'POST',
+      path: `${queuePath}/flags/{id}`,
+      summary: 'Accepts or rejects a flag; the content stays',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(
+      z.object({
+        id: z.coerce.number().int().positive(),
+        decision: z.enum(['accept', 'reject']),
+        reason: ReasonSchema,
+      }),
+    )
+    .output(z.object({ resolved: z.literal(true) })),
+  reports: procedure
+    .route({
+      method: 'GET',
+      path: `${queuePath}/reports`,
+      summary: 'The Mistake Reports still to check, oldest first',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ editionId: EditionIdSchema.optional() }))
+    .output(z.object({ reports: z.array(QueueReportSchema) })),
+  resolveReport: procedure
+    .route({
+      method: 'POST',
+      path: `${queuePath}/reports/{id}/resolve`,
+      summary: '«Вирішено»: deletes the Mistake Report (ADR 0056)',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ id: z.uuid(), reason: ReasonSchema }))
+    .output(z.object({ resolved: z.literal(true) })),
 };
 
 /**
@@ -745,6 +879,7 @@ export const adminContract = {
     .output(z.object({ editions: z.array(AdminEditionSchema) })),
 
   content: contentWriteContract,
+  contentQueue: contentQueueContract,
   development: procedure
     .route({
       method: 'GET',

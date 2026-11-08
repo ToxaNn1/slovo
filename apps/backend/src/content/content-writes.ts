@@ -447,7 +447,7 @@ export function createContentWrites({
         at: clock.now(),
         what: `content.${kind}.flag`,
         before: null,
-        after: null,
+        after: { id },
         reason,
         editionId,
         batchId,

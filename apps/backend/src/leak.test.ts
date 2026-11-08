@@ -418,6 +418,18 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         development: async () => {
           await client.admin.development().catch(refused);
         },
+        contentQueue: async () => {
+          const queue = client.admin.contentQueue;
+          const batchId = '00000000-0000-4000-8000-000000000000';
+          const reason = 'Причина';
+          await queue.batches({}).catch(refused);
+          await queue.review({ batchId, reason }).catch(refused);
+          await queue.rollback({ batchId, reason }).catch(refused);
+          await queue.flags({}).catch(refused);
+          await queue.resolveFlag({ id: 1, decision: 'accept', reason }).catch(refused);
+          await queue.reports({}).catch(refused);
+          await queue.resolveReport({ id: batchId, reason }).catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {
