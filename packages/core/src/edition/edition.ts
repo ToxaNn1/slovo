@@ -3,6 +3,7 @@ import {
   type DailyGoals,
   type OnboardingNotificationTimes,
   type FeatureSwitch,
+  type FeatureSwitches,
   type FontSize,
   type LanguageTraits,
   type Mood,
@@ -106,6 +107,8 @@ export interface Edition {
    * Word naming any other file shows no Illustration (ADR 0055).
    */
   readonly illustrations: ReadonlySet<string>;
+  /** The Edition's own Feature Switch states, which hold where no remote Rule matches (ADR 0089). */
+  readonly featureSwitches: FeatureSwitches;
   /**
    * Whether the given Core feature is in effect: its Feature Switch on, not
    * off remotely (ADR 0040), and every switch it depends on in effect.
@@ -198,6 +201,7 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     badges,
     mascot,
     illustrations: new Set(illustrations),
+    featureSwitches,
     isFeatureEnabled: switchedOn((feature) => featureSwitches[feature] === 'on'),
   };
 }

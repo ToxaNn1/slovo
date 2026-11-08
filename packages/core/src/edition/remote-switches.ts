@@ -65,8 +65,11 @@ export interface RemoteSwitches<E extends Pick<Edition, 'id'>> {
    * read the old ones. It never rejects; a call while one is under way joins it.
    */
   ask(): Promise<boolean>;
-  /** Asks every two minutes from now on. Returns the call that stops it. */
-  start(): () => void;
+  /**
+   * Asks every two minutes from now on and tells `onChange` after an ask
+   * that changes an effective value. Returns the call that stops it.
+   */
+  start(onChange: () => void): () => void;
 }
 
 /**
@@ -84,7 +87,6 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
   schedule,
   random,
   clock,
-  onChange,
 }: {
   edition: E;
   /** The Edition's own Feature Switch states, which hold where no Rule matches. */
@@ -98,8 +100,6 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
   /** What the waits between tries are jittered by. */
   random: Random;
   clock: Clock;
-  /** Told after a timed ask changes an effective value, as `ask` resolves. */
-  onChange?: () => void;
 }): Promise<RemoteSwitches<E>> {
   const record = userStateRecords.remoteSwitches;
   const subscribers = createSubscribers();
@@ -184,12 +184,12 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
     },
     subscribe: subscribers.subscribe,
     ask,
-    start() {
+    start(onChange) {
       let cancel: () => void = () => undefined;
       const next = () => {
         cancel = schedule(() => {
           void ask().then((changed) => {
-            if (changed) onChange?.();
+            if (changed) onChange();
           });
           next();
         }, SWITCHES_REFRESH_MS);

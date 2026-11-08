@@ -454,10 +454,11 @@ describe('the remote Feature Switches', () => {
         schedule,
         random: randomOf(0.5),
         clock: time.clock,
-        onChange: () => (changes += 1),
       });
       await switches.ask();
-      const stop = switches.start();
+      const stop = switches.start(() => {
+        changes += 1;
+      });
 
       expect(switches.edition.isFeatureEnabled('game')).toBe(true);
       expect(switches.edition.isFeatureEnabled('search')).toBe(true);
