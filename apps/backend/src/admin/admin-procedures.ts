@@ -2,12 +2,14 @@ import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
 import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
 import type {
+  AccessResult,
   Actor,
   AdminAccess,
   AdminSignIn,
   Edition,
   EditionRegistry,
   EditionSwitches,
+  Mailer,
   SignInRefused,
   SignedInAdmin,
   SwitchRefusal,
@@ -15,6 +17,7 @@ import type {
 } from '@slovo/server-core';
 
 import type { ContentWrites, WriteRefusal } from '../content/content-writes';
+import { adminInviteEmail } from './admin-mail';
 
 /** The path the admin session cookie is sent on: the admin API's. */
 const COOKIE_PATH = '/v1/admin';
@@ -73,6 +76,7 @@ export function adminProcedures(
   editions: EditionRegistry,
   served: readonly Edition[],
   contentWrites: ContentWrites,
+  mailer: Mailer,
 ) {
   const os = implement(apiContract.admin).$context<{ headers: Headers; resHeaders?: Headers }>();
 
@@ -138,6 +142,24 @@ export function adminProcedures(
       throw errors.BAD_REQUEST({ data: { refusal: result.reason, feature: result.feature } });
     }
     return { rules: [...result.rules], minimums: result.minimums };
+  }
+
+  /** Throws the refusal by name of a Безпека write the contract lists. */
+  function done(
+    result: AccessResult,
+    errors: {
+      CONFLICT: (options: {
+        data: { refusal: Extract<AccessResult, { ok: false }>['reason'] };
+      }) => Error;
+    },
+  ) {
+    if (!result.ok) throw errors.CONFLICT({ data: { refusal: result.reason } });
+  }
+
+  /** Admits a Власник to a Безпека write, and names them with the reason for the Action log. */
+  async function securityWrite(headers: Headers, errors: AdminErrors, reason: string) {
+    const caller = await admit(headers, errors, { security: true, writes: true });
+    return { who: actorOf(caller), reason };
   }
 
   /** The Admin user's own session; another caller is refused. */
@@ -257,14 +279,74 @@ export function adminProcedures(
       await admit(context.headers, errors, { security: true });
       const actions = await admin.actions(input.editionId);
       return {
-        actions: actions.map(({ at, who, what, reason, editionId }) => ({
+        actions: actions.map(({ at, who, what, before, after, reason, editionId }) => ({
           at: at.toISOString(),
           who,
           what,
+          before,
+          after,
           reason,
           editionId,
         })),
       };
+    }),
+
+    people: os.people.handler(async ({ context, errors }) => {
+      await admit(context.headers, errors, { security: true });
+      const people = await admin.people();
+      return {
+        people: people.map(({ email, role, totp }) => ({
+          email,
+          role,
+          signedInYet: totp.state === 'on',
+        })),
+      };
+    }),
+
+    invite: os.invite.handler(async ({ context, input, errors }) => {
+      const write = await securityWrite(context.headers, errors, input.reason);
+      done(await admin.invite(input.email, input.role, write), errors);
+      await mailer.send({ to: input.email.toLowerCase(), ...adminInviteEmail(input.role) });
+      return { invited: true as const };
+    }),
+
+    setRole: os.setRole.handler(async ({ context, input, errors }) => {
+      const write = await securityWrite(context.headers, errors, input.reason);
+      done(await admin.setRole(input.email, input.role, write), errors);
+      return { changed: true as const };
+    }),
+
+    removePerson: os.removePerson.handler(async ({ context, input, errors }) => {
+      const write = await securityWrite(context.headers, errors, input.reason);
+      done(await admin.remove(input.email, write), errors);
+      return { removed: true as const };
+    }),
+
+    agentTokens: os.agentTokens.handler(async ({ context, errors }) => {
+      await admit(context.headers, errors, { security: true });
+      const tokens = await admin.agents();
+      return {
+        tokens: tokens.map(({ name, createdAt, revokedAt }) => ({
+          name,
+          createdAt: createdAt.toISOString(),
+          revokedAt: revokedAt?.toISOString() ?? null,
+        })),
+      };
+    }),
+
+    issueAgentToken: os.issueAgentToken.handler(async ({ context, input, errors }) => {
+      const write = await securityWrite(context.headers, errors, input.reason);
+      const added = await admin.addAgent(input.name, write);
+      if (!added.ok) throw errors.CONFLICT({ data: { refusal: 'name-taken' } });
+      return { name: input.name, token: added.token };
+    }),
+
+    revokeAgentToken: os.revokeAgentToken.handler(async ({ context, input, errors }) => {
+      const write = await securityWrite(context.headers, errors, input.reason);
+      if (!(await admin.revokeAgent(input.name, write))) {
+        throw errors.CONFLICT({ data: { refusal: 'unknown' } });
+      }
+      return { revoked: true as const };
     }),
 
     status: os.status.handler(async ({ context, errors }) => {

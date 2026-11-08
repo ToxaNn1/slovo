@@ -343,6 +343,33 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         signOutEverywhere: async () => {
           await client.admin.signOutEverywhere().catch(refused);
         },
+        people: async () => {
+          await client.admin.people().catch(refused);
+        },
+        invite: async () => {
+          await client.admin
+            .invite({ email: 'admin@example.com', role: 'admin', reason: 'help' })
+            .catch(refused);
+        },
+        setRole: async () => {
+          await client.admin
+            .setRole({ email: 'admin@example.com', role: 'owner', reason: 'trust' })
+            .catch(refused);
+        },
+        removePerson: async () => {
+          await client.admin
+            .removePerson({ email: 'admin@example.com', reason: 'left' })
+            .catch(refused);
+        },
+        agentTokens: async () => {
+          await client.admin.agentTokens().catch(refused);
+        },
+        issueAgentToken: async () => {
+          await client.admin.issueAgentToken({ name: 'claude', reason: 'batches' }).catch(refused);
+        },
+        revokeAgentToken: async () => {
+          await client.admin.revokeAgentToken({ name: 'claude', reason: 'leaked' }).catch(refused);
+        },
         actions: async () => {
           await client.admin.actions({}).catch(refused);
         },

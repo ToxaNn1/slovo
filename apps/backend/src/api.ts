@@ -14,6 +14,7 @@ import type {
   ContentPacks,
   Edition,
   EditionRegistry,
+  Mailer,
   MistakeReports,
   Sync,
 } from '@slovo/server-core';
@@ -80,6 +81,7 @@ export function createApiHandler({
   contentStore,
   contentWrites,
   editions,
+  mailer,
   mistakeReports,
   served,
   sync,
@@ -94,6 +96,8 @@ export function createApiHandler({
   contentStore: ContentStore;
   contentWrites: ContentWrites;
   editions: EditionRegistry;
+  /** Sends the notice of an admin invite. */
+  mailer: Mailer;
   mistakeReports: MistakeReports;
   /** The Editions the backend serves, as the admin lists them. */
   served: readonly Edition[];
@@ -103,7 +107,7 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin, adminSignIn, editions, served, contentWrites),
+      admin: adminProcedures(admin, adminSignIn, editions, served, contentWrites, mailer),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks, contentStore),
       counters: countersProcedures(communityCounters),

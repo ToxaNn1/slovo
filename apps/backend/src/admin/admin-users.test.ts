@@ -192,11 +192,11 @@ describe('the Action log', () => {
 
     const rows = await backend.admin.actions();
     expect(rows.map((row) => row.what)).toEqual([
-      'admin.owner.add',
-      'admin.agent.add',
       'admin.agent.revoke',
+      'admin.agent.add',
+      'admin.owner.add',
     ]);
-    expect(rows[0]).toEqual(first);
+    expect(rows[2]).toEqual(first);
     const { db } = backend.database;
     await expect(db.execute(sql`UPDATE action_log SET reason = 'edited'`)).rejects.toThrow();
     await expect(db.execute(sql`DELETE FROM action_log`)).rejects.toThrow();

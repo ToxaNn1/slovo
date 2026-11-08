@@ -37,7 +37,36 @@ export const FIXTURES: AdminApiOutputs = {
   },
   signOut: { signedOut: true },
   signOutEverywhere: { signedOut: true },
-  actions: { actions: [] },
+  actions: {
+    actions: [
+      {
+        at: '2026-11-08T09:30:00.000Z',
+        who: { kind: 'command', command: 'switches off' },
+        what: 'switches.kill',
+        before: null,
+        after: { feature: 'game', verdict: 'off' },
+        reason: 'the Game loses scores',
+        editionId: 'uk',
+      },
+    ],
+  },
+  people: {
+    people: [
+      { email: 'owner@example.com', role: 'owner', signedInYet: true },
+      { email: 'editor@example.com', role: 'admin', signedInYet: false },
+    ],
+  },
+  invite: { invited: true },
+  setRole: { changed: true },
+  removePerson: { removed: true },
+  agentTokens: {
+    tokens: [{ name: 'claude-content', createdAt: '2026-11-01T09:00:00.000Z', revokedAt: null }],
+  },
+  issueAgentToken: {
+    name: 'claude-batches',
+    token: 'slovo_agent_4fJk9QmZr2Lw8xPaT7eYb3NcVd6HsUoG1iKqMnBy',
+  },
+  revokeAgentToken: { revoked: true },
   status: { on: true },
   switches: SWITCHES,
   setRules: SWITCHES,

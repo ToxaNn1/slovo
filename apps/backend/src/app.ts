@@ -209,6 +209,7 @@ export function createApp({
     contentStore,
     contentWrites,
     editions: editionRegistry,
+    mailer,
     mistakeReports,
     served: editions,
     sync,
