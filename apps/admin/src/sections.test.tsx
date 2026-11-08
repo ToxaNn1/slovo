@@ -21,8 +21,9 @@ test('each section not yet built opens its empty state with the same texts in bo
   render(<Admin />);
   const theme = await screen.findByRole('button', { name: 'Темна тема' });
   // Безпека shows the Власник its blocks: src/security.test.tsx.
-  // Розробка is built: development.test.tsx.
-  for (const title of ORDER.filter((section) => section !== 'Безпека' && section !== 'Розробка')) {
+  // Розробка is built: development.test.tsx. Контент is built: content-editor.test.tsx.
+  const built = ['Безпека', 'Розробка', 'Контент'];
+  for (const title of ORDER.filter((section) => !built.includes(section))) {
     await user.click((await sidebar()).getByRole('link', { name: title }));
     const section = await screen.findByRole('region', { name: title });
     expect(within(section).getByText('Поки що порожньо')).toBeDefined();
