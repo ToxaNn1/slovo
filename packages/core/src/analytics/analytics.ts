@@ -1,11 +1,15 @@
-import type {
-  EntryKind,
-  OnboardingStepKind,
-  QuestionnaireQuestion,
-  Rarity,
+import {
+  FeatureSwitchesSchema,
+  type EntryKind,
+  type FeatureSwitch,
+  type OnboardingStepKind,
+  type QuestionnaireQuestion,
+  type Rarity,
+  type Variant,
 } from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
+import type { RemoteSwitches } from '../edition/remote-switches';
 import type { NotificationKind } from '../ports';
 import type { LaterQuestion } from '../feed-notice';
 import type { UserState } from '../user-state/user-state';
@@ -99,19 +103,33 @@ export interface AnalyticsEvents {
 
 export type AnalyticsEvent = keyof AnalyticsEvents;
 
+/** The event property that names the Variant of a Feature Switch under test (ADR 0089). */
+export type VariantProperty = `variant_${FeatureSwitch}`;
+
+/**
+ * Who an event comes from (ADR 0068, 0089): the Install id as the distinct
+ * id, and the Variant of every Feature Switch on with one, as event
+ * properties. Nothing else of the reader goes with it.
+ */
+export interface AnalyticsReader {
+  readonly distinctId: string;
+  readonly variants: Readonly<Partial<Record<VariantProperty, Variant>>>;
+}
+
 /**
  * Where the Analytics events go: the app shell's PostHog adapter, a fake in
  * tests. The Core calls it only while the reader shares their anonymous
  * statistics and the Edition's `analytics` Feature Switch is on.
  */
 export interface AnalyticsPort {
-  track<E extends AnalyticsEvent>(event: E, properties: AnalyticsEvents[E]): void;
+  track<E extends AnalyticsEvent>(
+    event: E,
+    properties: AnalyticsEvents[E],
+    reader: AnalyticsReader,
+  ): void;
   /** «Ділитися анонімною статистикою» was turned off: send nothing more and drop what waits. */
   stop(): void;
 }
-
-/** The port that sends nothing, for a shell or a tool without Analytics. */
-export const noAnalytics: AnalyticsPort = { track: () => undefined, stop: () => undefined };
 
 /** Analytics as the Core uses it: an event goes to the port only while sharing is allowed. */
 export interface Analytics {
@@ -120,28 +138,53 @@ export interface Analytics {
   stop(): void;
 }
 
+/** What the Analytics events say of the reader: the Install id and the verdicts of the remote Feature Switches. */
+export type AnalyticsSwitches = Pick<RemoteSwitches<Pick<Edition, 'id'>>, 'installId' | 'verdicts'>;
+
+/** Where the Analytics events go and what they say of the reader; a port never goes without the switches. */
+export interface AnalyticsSink {
+  readonly port: AnalyticsPort;
+  readonly switches: AnalyticsSwitches;
+}
+
+const everyFeature = FeatureSwitchesSchema.keyof().options;
+
+/** The reader an event comes from, by the verdicts in effect now. */
+function readerOf({ installId, verdicts }: AnalyticsSwitches): AnalyticsReader {
+  const variants: Partial<Record<VariantProperty, Variant>> = {};
+  for (const feature of everyFeature) {
+    const verdict = verdicts[feature];
+    if (verdict.on && verdict.variant !== undefined)
+      variants[`variant_${feature}`] = verdict.variant;
+  }
+  return { distinctId: installId, variants };
+}
+
 /**
  * The one gate of Analytics (ADR 0068): an event reaches the port only while
  * the Edition's `analytics` Feature Switch is on and the reader shares their
- * anonymous statistics, both read at each event; otherwise nothing is sent.
+ * anonymous statistics, both read at each event; otherwise nothing is sent,
+ * so neither the Install id nor a Variant leaves the device. The Variants are
+ * read at each event, so a Rule's change shows on the next one.
  */
 export function createAnalytics({
   edition,
   userState,
-  port = noAnalytics,
+  sink,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
   userState: Pick<UserState, 'read'>;
-  port?: AnalyticsPort | undefined;
+  sink?: AnalyticsSink | undefined;
 }): Analytics {
   return {
     async track(event, properties) {
+      if (sink === undefined) return;
       if (!edition.isFeatureEnabled('analytics')) return;
       if ((await userState.read(userStateRecords.shareCounters)) === false) return;
-      port.track(event, properties);
+      sink.port.track(event, properties, readerOf(sink.switches));
     },
     stop: () => {
-      port.stop();
+      sink?.port.stop();
     },
   };
 }

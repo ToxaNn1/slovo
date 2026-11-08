@@ -15,7 +15,7 @@ import {
   createFakeBackend,
   createFakeGoogleSignInSheet,
 } from '../testing';
-import { fakeClock, randomOf } from '../test-support';
+import { fakeClock, randomOf, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -69,7 +69,7 @@ async function setup({
       clock: time.clock,
       schedule: later.schedule,
       random,
-      analytics,
+      ...(analytics === undefined ? {} : { analytics: analyticsInto(analytics) }),
     });
   const account = await open();
   return { account, api, googleSheet, appleSheet, sessions, time, delays: later.delays, open };

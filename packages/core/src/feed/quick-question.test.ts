@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { openComposition, type AnalyticsPort, type FeatureSwitch, type FeedCard } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, seededRandom, testEdition, word } from '../test-support';
+import { fakeClock, seededRandom, testEdition, word, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 // Spec #1358, ticket #1374, ADR 0066: the Quick Question in the Feed.
@@ -45,7 +45,7 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: time.clock,
     random: seededRandom(7),
-    analytics,
+    analytics: analyticsInto(analytics),
   });
   return { app, events, time };
 }

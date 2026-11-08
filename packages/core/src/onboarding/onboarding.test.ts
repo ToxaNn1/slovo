@@ -8,7 +8,13 @@ import {
   createMemoryContentPort,
   type FakeBackend,
 } from '../testing';
-import { fakeClock, testEdition, word, type TestEditionOverrides } from '../test-support';
+import {
+  fakeClock,
+  testEdition,
+  word,
+  type TestEditionOverrides,
+  analyticsInto,
+} from '../test-support';
 import type { NotificationSchedulerPort } from '../ports';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
@@ -60,7 +66,7 @@ async function run({
     userState,
     clock: fakeClock('2026-11-01T09:00:00+02:00').clock,
     random: { next: () => 0.25 },
-    analytics,
+    analytics: analyticsInto(analytics),
     backend: api.backend,
     ...(scheduler === undefined
       ? {}

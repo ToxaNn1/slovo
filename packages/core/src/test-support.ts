@@ -18,7 +18,9 @@ import {
 import type { PlayedRound, Round, RoundAnswer } from './game/game';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
+import type { AnalyticsPort, AnalyticsSink } from './analytics/analytics';
 import type { ReaderFacts } from './edition/remote-switches';
+import { evaluateSwitches } from './edition/switch-evaluator';
 import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } from './ports';
 import { openEligibility } from './mix/open-eligibility';
 import { createSubject } from './subject';
@@ -461,4 +463,27 @@ export const readerFacts = (): ReaderFacts => ({
   region: undefined,
   signedIn: false,
   installId: 'i',
+});
+
+/** The Install id of the test device, which the Analytics events carry. */
+export const TEST_INSTALL_ID = 'test-install';
+
+/** Analytics into `port` from the test device, with no Rule, so no Variant. */
+export const analyticsInto = (port: AnalyticsPort): AnalyticsSink => ({
+  port,
+  switches: {
+    installId: TEST_INSTALL_ID,
+    verdicts: evaluateSwitches({
+      rules: [],
+      states: FeatureSwitchesSchema.parse(
+        Object.fromEntries(FeatureSwitchesSchema.keyof().options.map((feature) => [feature, 'on'])),
+      ),
+      facts: {
+        ...readerFacts(),
+        installId: TEST_INSTALL_ID,
+        clock: { now: () => new Date(0), timeZone: () => 'UTC' },
+        clockOffsetMs: 0,
+      },
+    }),
+  },
 });

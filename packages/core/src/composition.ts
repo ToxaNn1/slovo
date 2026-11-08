@@ -78,7 +78,7 @@ import { createSpotlight, type Spotlight } from './spotlight/spotlight';
 import { createSubject, type Subject } from './subject';
 import {
   createAnalytics,
-  type AnalyticsPort,
+  type AnalyticsSink,
   type EntryEventProperties,
   type ShareCardKind,
 } from './analytics/analytics';
@@ -380,7 +380,7 @@ export async function openComposition({
   crossword,
   feedNotices = noFeedNotices,
   backend,
-  analytics: analyticsPort,
+  analytics: analyticsSink,
   signedIn,
   ...ports
 }: {
@@ -406,7 +406,7 @@ export async function openComposition({
    */
   backend?: Pick<Backend, 'collectionLinks' | 'counters'>;
   /** Where the Analytics events go (ADR 0068); without it, as in tools and tests of other features, nowhere. */
-  analytics?: AnalyticsPort;
+  analytics?: AnalyticsSink;
   /**
    * Whether the reader is signed in to the Account, which opens apart from
    * the composition (ADR 0037); without it, as in tools and tests of other
@@ -436,7 +436,7 @@ export async function openComposition({
   // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const analytics = createAnalytics({ edition, userState, port: analyticsPort });
+  const analytics = createAnalytics({ edition, userState, sink: analyticsSink });
   const { history, recorder } = await openHistory({ rows, userState });
   const xpLog = await openXpLog({
     edition,

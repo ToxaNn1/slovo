@@ -52,6 +52,8 @@ export interface RemoteSwitches<E extends Pick<Edition, 'id'>> {
   readonly edition: E & Pick<Edition, 'isFeatureEnabled'>;
   /** The effective value of every Feature Switch, with the Variant a Rule picked. */
   readonly verdicts: SwitchVerdicts;
+  /** The Install id the Rules' shares and Variants are picked by, and the Analytics distinct id. */
+  readonly installId: string;
   /** The force-update minimums of the last answer known, by platform. */
   readonly minimums: RemoteSwitchesAnswer['minimums'];
   /** Calls `listener` after each change of the Edition as the app runs it. Returns the call that stops it. */
@@ -178,6 +180,9 @@ export async function openRemoteSwitches<E extends Pick<Edition, 'id'>>({
     },
     get verdicts() {
       return verdicts;
+    },
+    get installId() {
+      return facts().installId;
     },
     get minimums() {
       return kept?.minimums ?? {};

@@ -34,7 +34,7 @@ export interface SwitchFacts {
   /** The phone's two-letter region, when the locale names one. */
   readonly region: string | undefined;
   readonly signedIn: boolean;
-  /** The Install id: the device's own random name, never sent anywhere. */
+  /** The Install id: the device's own random name, sent only as the Analytics distinct id, while Analytics are on. */
   readonly installId: string;
   readonly clock: Clock;
   /** The backend's clock minus the device's, in milliseconds, so a schedule holds by the backend's. */
