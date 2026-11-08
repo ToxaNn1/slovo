@@ -36,7 +36,7 @@ An Edition's content lives in the Deployment's Postgres (ADR 0090). The Edition 
 DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm content import --edition uk
 ```
 
-The command checks every content rule first and writes nothing when one refuses a record; it prints the count of each kind of record and the content version it wrote. A second import is refused (exit 3) because the database is the live content from then on; `--override` imports the folder again over the database and raises the content version.
+The command checks every content rule first and writes nothing when one refuses a record; it prints the count of each kind of record and the content version it wrote. A second import writes nothing and says so, because the database is the live content from then on; `--override` imports the folder again over the database and raises the content version.
 
 ## Publishing a Language Pack
 

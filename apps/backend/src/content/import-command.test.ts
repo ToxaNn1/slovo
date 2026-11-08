@@ -57,12 +57,13 @@ describe('pnpm content import', () => {
     expect(stdout).toMatch(new RegExp(`content version:\\s+${String(content.contentVersion)}\\n`));
   }, 60_000);
 
-  it('refuses a second import without --override and imports over the database with it', async () => {
+  it('leaves an imported Edition as it is without --override and imports over it with it', async () => {
     const refused = await importCommand('--edition', 'uk');
     const overridden = await importCommand('--edition', 'uk', '--override');
 
-    expect(refused.code).toBe(3);
-    expect(refused.stderr).toContain('already imported. Pass --override');
+    expect(refused.code).toBe(0);
+    expect(refused.stderr).toContain('already imported: nothing was written');
+    expect(refused.stdout).not.toContain('content version');
     expect(overridden.code).toBe(0);
     expect(overridden.stdout).toMatch(
       new RegExp(`content version:\\s+${String(content.contentVersion + 1)}\\n`),

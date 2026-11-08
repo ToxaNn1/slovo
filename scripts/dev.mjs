@@ -114,15 +114,8 @@ step('Running the backend migrations');
 run('pnpm', ['--filter', '@slovo/backend', 'db:migrate']);
 const { defaultEdition } = JSON.parse(readFileSync(`${root}app/app.json`, 'utf8'));
 step(`Importing the content of the default Edition "${defaultEdition}" into Postgres`);
-// Exit 3: imported by an earlier run; the database keeps what it has.
-const imported = spawnSync('pnpm', ['--silent', 'content', 'import', '--edition', defaultEdition], {
-  cwd: root,
-  stdio: 'inherit',
-});
-if (imported.status !== 0 && imported.status !== 3) {
-  console.error(`\n✗ pnpm content import --edition ${defaultEdition} failed.`);
-  process.exit(imported.status ?? 1);
-}
+// An earlier run's import stays: the database keeps what it has.
+run('pnpm', ['--silent', 'content', 'import', '--edition', defaultEdition]);
 step("Building the Language Pack of the app's default Edition");
 run('pnpm', ['build:pack']);
 

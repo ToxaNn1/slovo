@@ -1,6 +1,6 @@
 // Imports an Edition's content folder into the content tables, once (ADR 0090):
-// `pnpm content import --edition <id> [--override]`. Exits 0 once imported,
-// 3 when the Edition's content is already imported, 1 on any other failure.
+// `pnpm content import --edition <id> [--override]`. An Edition already
+// imported is left as it is and the command succeeds, so it can run again.
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
@@ -36,6 +36,12 @@ async function main(): Promise<number> {
     const imported = await store.importEdition(editionId, join(EDITIONS_DIR, editionId), {
       override: values.override,
     });
+    if (!imported.ok && imported.reason === 'already-imported') {
+      console.error(
+        `The content of "${editionId}" is already imported: nothing was written. Pass --override to import it again over the database.`,
+      );
+      return 0;
+    }
     if (!imported.ok) {
       if (imported.reason === 'refused') {
         for (const refusal of imported.refusals) {
@@ -43,11 +49,6 @@ async function main(): Promise<number> {
           console.error(`${rule}${formatBuildError(refusal)}`);
         }
         console.error(`The content of "${editionId}" is not imported: nothing was written.`);
-      } else if (imported.reason === 'already-imported') {
-        console.error(
-          `The content of "${editionId}" is already imported. Pass --override to import it again over the database.`,
-        );
-        return 3;
       } else {
         console.error(`The backend does not find the Edition "${editionId}" in EDITIONS_DIR.`);
       }
