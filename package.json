@@ -13,6 +13,7 @@
     "publish:pack": "pnpm --filter @slovo/backend publish-pack",
     "switch:off": "pnpm --filter @slovo/backend switch-off",
     "switch:clear": "pnpm --filter @slovo/backend switch-clear",
+    "admin": "pnpm --filter @slovo/backend admin",
     "reports": "pnpm --filter @slovo/backend reports",
     "collection-links": "pnpm --filter @slovo/backend collection-links",
     "describe:api": "pnpm --filter @slovo/contracts describe-api",
