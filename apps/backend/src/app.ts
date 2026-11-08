@@ -1,6 +1,7 @@
 import { CollectionLinkIdSchema, type AppConfig } from '@slovo/contracts';
 import {
   createAccounts,
+  createAdminAccess,
   createCollectionLinks,
   createCommunityCounters,
   createContentPacks,
@@ -21,6 +22,7 @@ import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
 import { adminRoutes } from './admin/admin-routes';
+import { createAdminStore, hashToken } from './admin/admin-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -176,8 +178,15 @@ export function createApp({
     random,
     domain: appConfig.domain,
   });
+  const admin = createAdminAccess({
+    store: createAdminStore(database),
+    clock,
+    random,
+    hash: hashToken,
+  });
   const api = createApiHandler({
     accounts,
+    admin,
     collectionLinks,
     communityCounters,
     contentPacks,
