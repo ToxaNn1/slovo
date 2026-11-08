@@ -1,5 +1,5 @@
 import { fill, ScreenEnter, TabBarButton, type IconName } from '@slovo/ui';
-import { router, Tabs, useIsFocused } from 'expo-router';
+import { router, Tabs, useIsFocused, usePathname } from 'expo-router';
 import { getFocusedRouteNameFromRoute } from 'expo-router/react-navigation';
 import type { ComponentProps } from 'react';
 
@@ -36,9 +36,10 @@ type ScreenLayoutProps = Parameters<NonNullable<ComponentProps<typeof Tabs>['scr
 /**
  * A tab's `name`, test id and button among the tabs shown in their order. Its
  * VoiceOver label counts the tabs shown only, not the hidden routes beside
- * them, in the Edition's language. A tab not shown has no button.
+ * them, in the Edition's language. A tab not shown has no button. A button
+ * shows as selected while its tab is focused, or while `alsoSelected` holds.
  */
-function tabOptions(tab: Tab, tabOrder: readonly Tab[], name: string) {
+function tabOptions(tab: Tab, tabOrder: readonly Tab[], name: string, alsoSelected: boolean) {
   if (!tabOrder.includes(tab)) return noTabButton;
   return {
     title: name,
@@ -59,7 +60,7 @@ function tabOptions(tab: Tab, tabOrder: readonly Tab[], name: string) {
       <TabBarButton
         icon={tabIcons[tab]}
         label={name}
-        selected={ariaSelected === true}
+        selected={ariaSelected === true || alsoSelected}
         onPress={onPress}
         onLongPress={onLongPress}
         accessibilityLabel={ariaLabel}
@@ -121,8 +122,11 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
   const names = { ...tabs, settings: shown.profile ? tabs.profile : tabs.settings };
   /** While a Game is on, its Round or its result fills the Game tab. */
   const gameOn = useGameState().current !== undefined;
-  const tab = (name: Tab, onRoot = true) => ({
-    ...tabOptions(name, tabOrder, names[name]),
+  /** With `feedTab` on, «Стрічка» shows as selected over the Feed it opens (ADR 0093). */
+  const pathname = usePathname();
+  const feedSelected = shown.feedTab && pathname === '/feed';
+  const tab = (name: Tab, onRoot = true, alsoSelected = false) => ({
+    ...tabOptions(name, tabOrder, names[name], alsoSelected),
     ...barShown(onRoot, screenOptions.tabBarStyle),
   });
   const offTabs = { ...noTabButton, ...barShown(false, screenOptions.tabBarStyle) };
@@ -131,7 +135,18 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
       screenOptions={screenOptions}
       screenLayout={({ route, children }) => <FocusedEnter route={route}>{children}</FocusedEnter>}
     >
-      <Tabs.Screen name="index" options={tab('home')} />
+      <Tabs.Screen
+        name="index"
+        options={tab('home', true, feedSelected)}
+        listeners={{
+          tabPress: (event) => {
+            // The Dashboard stays the home at launch; its tab opens the Feed (ADR 0093).
+            if (!shown.feedTab) return;
+            event.preventDefault();
+            router.navigate('/feed');
+          },
+        }}
+      />
       <Tabs.Screen name="game" options={({ route }) => tab('game', atRoot(route) && !gameOn)} />
       <Tabs.Screen name="saved" options={({ route }) => tab('saved', atRoot(route))} />
       <Tabs.Screen

@@ -119,8 +119,6 @@ export const SettingsStringsSchema = z.strictObject({
       /** The button that closes the sheet, e.g. «ГОТОВО». */
       done: TextSchema,
     }),
-    /** The toast after a tap on an unearned Badge, e.g. ««Тиждень поспіль» ще не твоя. Поки що.» Takes `{name}`. */
-    lockedToast: templateOf('name'),
   }),
   /** The Profile: the reader's whole progress, with its Badges as the Badges screen words them. */
   profile: z.strictObject({

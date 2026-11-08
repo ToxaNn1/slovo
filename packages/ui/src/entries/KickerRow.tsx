@@ -6,9 +6,10 @@ import { cornerTile } from '../tokens';
 /**
  * The top line of an Entry card's body. With no `corner` it is the card's
  * kicker alone, if it has one. With the corner actions (XSwipe bar 6) the
- * kicker takes the room left of them in one row, the tiles at its right end
- * at their own width, so they never cover a word of it; a card with no
- * kicker keeps the row, the tiles alone at its right, over its headline.
+ * kicker takes the room left of them in one row, level with their middle
+ * (board p1), the tiles at its right end at their own width, so they never
+ * cover a word of it; a card with no kicker keeps the row, the tiles alone at
+ * its right, over its headline.
  */
 export function KickerRow({
   testID,
@@ -31,7 +32,7 @@ export function KickerRow({
 const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: cornerTile.kickerGap,
     minHeight: cornerTile.side,
   },

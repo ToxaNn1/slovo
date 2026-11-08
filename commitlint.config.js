@@ -13,7 +13,7 @@ const workspaceFolders = ['apps', 'packages', 'tools', 'editions'].flatMap((dir)
 export default {
   extends: ['@commitlint/config-conventional'],
   rules: {
-    'type-enum': [2, 'always', ['feat', 'fix', 'docs', 'chore', 'test', 'refactor']],
+    'type-enum': [2, 'always', ['feat', 'fix', 'docs', 'chore', 'test', 'refactor', 'style']],
     // A workspace package by its folder name, `deps` and `deps-dev` for
     // dependency bumps (Dependabot uses both), or `test`.
     'scope-enum': [2, 'always', [...workspaceFolders, 'deps', 'deps-dev', 'test']],

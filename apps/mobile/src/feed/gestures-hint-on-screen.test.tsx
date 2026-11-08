@@ -167,15 +167,17 @@ async function renderApp() {
 }
 
 describe('the gestures hint sheet on the Feed', () => {
-  it('shows «ГОРТАЙТЕ ПАЛЬЦЕМ» with its three rows on the first launch with swipeMarks on', async () => {
+  it('shows «ГОРТАЙ ПАЛЬЦЕМ» with its three rows on the first launch with swipeMarks on', async () => {
     await open(true);
     await renderApp();
     await settle();
     expect(screen.getByTestId('gestures-hint')).toBeOnTheScreen();
-    expect(screen.getByText('ГОРТАЙТЕ ПАЛЬЦЕМ')).toBeOnTheScreen();
+    // The board's texts in «ти» (ADR 0092).
+    expect(screen.getByText('ГОРТАЙ ПАЛЬЦЕМ')).toBeOnTheScreen();
     expect(screen.getByText('Вправо — знаю')).toBeOnTheScreen();
     expect(screen.getByText('Вліво — не знаю')).toBeOnTheScreen();
     expect(screen.getByText('Вгору — наступне слово')).toBeOnTheScreen();
+    expect(screen.getByText('Нове слово — коли захочеш.')).toBeOnTheScreen();
   });
 
   it('goes on «ЗРОЗУМІЛО» and stays gone after a restart', async () => {
@@ -211,6 +213,6 @@ describe('the gestures hint sheet on the Feed', () => {
     await renderApp();
     expect(screen.getByTestId('feed')).toBeOnTheScreen();
     expect(screen.queryByTestId('gestures-hint')).toBeNull();
-    expect(screen.queryByText('ГОРТАЙТЕ ПАЛЬЦЕМ')).toBeNull();
+    expect(screen.queryByText('ГОРТАЙ ПАЛЬЦЕМ')).toBeNull();
   });
 });

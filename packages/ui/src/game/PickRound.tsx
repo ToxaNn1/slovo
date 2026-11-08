@@ -11,6 +11,7 @@ import {
 } from '@slovo/core';
 import { useEffect, useRef } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import Animated, {
   interpolate,
   useAnimatedStyle,
@@ -30,8 +31,8 @@ import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 /** The answer to a Round of the pick form. */
 type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
 
-/** The mark on a wrong pick's key in place of its letter. */
-const WRONG_MARK = '✕';
+/** The ✕ on a wrong pick's key in place of its letter, drawn on a 14-unit square as the Round's exit glyph, so it sits in the key's centre whatever the font. */
+const WRONG_MARK = 'M0 2L2 0L7 5L12 0L14 2L9 7L14 12L12 14L7 9L2 14L0 12L5 7Z';
 
 /**
  * The type role an option's text takes, its tier: a Word is one word, a
@@ -123,7 +124,7 @@ export function AnswerOptions({
 }
 
 /**
- * One option of a Round, the design's answer tile, 84 pt tall, its key at its
+ * One option of a Round, board 07's answer tile, 66 pt tall, its key at its
  * left and its text sized for its tier. Once the Round is answered, the right
  * option turns red and pops; a wrong choice sinks, mutes and drops, with ✕ on
  * its key; the others fade. Under Reduce Motion nothing pops or drops.
@@ -218,17 +219,25 @@ function AnswerOption({
               look === 'wrong' && { backgroundColor: colors.accent, borderColor: colors.accent },
             ]}
           >
-            <Text
-              style={[
-                typeStyle('roundOptionKey', tokens),
-                {
-                  color:
-                    look === 'right' ? keyInk : look === 'wrong' ? colors.onAccent : colors.ink,
-                },
-              ]}
-            >
-              {look === 'wrong' ? WRONG_MARK : optionKey}
-            </Text>
+            {look === 'wrong' ? (
+              <Svg
+                testID={`${testID}-wrong-mark`}
+                width={answerOption.key.wrongMark}
+                height={answerOption.key.wrongMark}
+                viewBox="0 0 14 14"
+              >
+                <Path d={WRONG_MARK} fill={colors.onAccent} />
+              </Svg>
+            ) : (
+              <Text
+                style={[
+                  typeStyle('roundOptionKey', tokens),
+                  { color: look === 'right' ? keyInk : colors.ink },
+                ]}
+              >
+                {optionKey}
+              </Text>
+            )}
           </View>
         )}
         <View style={styles.optionText}>

@@ -115,7 +115,7 @@ export function GameRound({
   onOpenLetter: () => void;
   /** The play time left now in a timed Game, as the screen ticks it; the Game's own when none. */
   timeLeft?: number | undefined;
-  /** How an answer shows: the bottom sheet, or the inline card under the options (`gameAnswerCard`, spec #1674). */
+  /** What the sheet after an answer shows: the answer with its Example, or the answer card (`gameAnswerCard`, spec #1674). */
   feedback?: 'sheet' | 'card';
 }) {
   const { strings } = useEdition();
@@ -180,11 +180,13 @@ export function GameRound({
           onAnswer={onAnswer}
           onOpenLetter={onOpenLetter}
         />
-        {feedback === 'card' && answer !== undefined ? (
-          <AnswerCard right={answer.right} line={cardLine(game, answer)} onNext={onNext} />
-        ) : null}
       </ScrollView>
-      {feedback === 'sheet' ? <AnswerSheet answer={round.answer} onNext={onNext} /> : null}
+      <AnswerSheet
+        answer={answer}
+        line={answer === undefined ? undefined : cardLine(game, answer)}
+        feedback={feedback}
+        onNext={onNext}
+      />
       <ConfirmationDialog
         visible={asking}
         title={exit.title}
@@ -372,8 +374,8 @@ export function QuickQuestionRound({
  * the mode's title in caps with the Round in play out of the Round limit,
  * and the Lives as flags; under it the 10 segments that fill as the Rounds
  * pass towards the limit, or with no limit the Rounds passed, and in a timed
- * Game the timer under them; then «Життів: 4 з 5» on its red label. A mode without
- * Lives shows no flags and no Lives line.
+ * Game the timer under them. The flags alone show the Lives, which VoiceOver
+ * reads as «Життів: 4 з 5». A mode without Lives shows no flags.
  */
 function GameHeader({
   title,
@@ -427,6 +429,8 @@ function GameHeader({
           testID="game-title"
           accessibilityRole="header"
           numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={roundHeader.titleMinScale}
           maxFontSizeMultiplier={roundLayout.textMaxFontScale}
           {...voice}
           style={[typeStyle('roundTitle', tokens), styles.title, { color: colors.ink }]}
@@ -435,8 +439,13 @@ function GameHeader({
         </Text>
         {hasLives && (
           <View
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
+            testID="game-lives"
+            accessible
+            accessibilityLabel={fill(words.lives, {
+              count: String(lives),
+              total: String(livesAtStart),
+            })}
+            {...voice}
             style={styles.lives}
           >
             {Array.from({ length: livesAtStart }, (_, life) => (
@@ -494,18 +503,6 @@ function GameHeader({
           }}
           testID="game-timer"
         />
-      )}
-      {hasLives && (
-        <View style={[styles.livesLabel, { backgroundColor: colors.accent }]}>
-          <Text
-            testID="game-lives"
-            maxFontSizeMultiplier={roundLayout.textMaxFontScale}
-            {...voice}
-            style={[typeStyle('roundLives', tokens), { color: colors.onAccent }]}
-          >
-            {fill(words.lives, { count: String(lives), total: String(livesAtStart) })}
-          </Text>
-        </View>
       )}
     </View>
   );
@@ -687,20 +684,37 @@ function cardLine(game: CurrentGame, answer: RoundAnswer): string | undefined {
  * «Правильно!» or «Не цього разу», the right answer with its Stress and its
  * Example with the author, or its explanation, or the answer alone, and
  * «Далі», the only way to close it. As the boards draw it, a right answer is
- * on red with ink on it and a wrong one on the Theme's ink; it keeps what it
- * showed while it slides away.
+ * on red with ink on it and a wrong one on the Theme's ink. With the answer
+ * card switched on (`gameAnswerCard`) it shows the answer card instead, on
+ * the Theme's surface, so the explanation stays in sight however long the
+ * Round. It keeps what it showed while it slides away.
  */
-function AnswerSheet({ answer, onNext }: { answer: RoundAnswer | undefined; onNext: () => void }) {
-  // The answer it shows, kept while the sheet leaves after «Далі» took the Round's away.
-  const [shown, setShown] = useState(answer);
-  if (answer !== undefined && answer !== shown) setShown(answer);
+function AnswerSheet({
+  answer,
+  line,
+  feedback,
+  onNext,
+}: {
+  answer: RoundAnswer | undefined;
+  /** The answer card's line for this answer. */
+  line: string | undefined;
+  feedback: 'sheet' | 'card';
+  onNext: () => void;
+}) {
+  // The answer it shows and its line, kept while the sheet leaves after «Далі» took the Round's away.
+  const [shown, setShown] = useState(answer === undefined ? undefined : { answer, line });
+  if (answer !== undefined && answer !== shown?.answer) setShown({ answer, line });
   return (
     <BottomSheet
       visible={answer !== undefined}
-      tone={shown?.right === true ? 'accent' : 'ink'}
+      tone={feedback === 'card' ? 'surface' : shown?.answer.right === true ? 'accent' : 'ink'}
       testID="game-sheet"
     >
-      {shown === undefined ? null : <AnswerSheetContent answer={shown} onNext={onNext} />}
+      {shown === undefined ? null : feedback === 'card' ? (
+        <AnswerCard right={shown.answer.right} line={shown.line} onNext={onNext} />
+      ) : (
+        <AnswerSheetContent answer={shown.answer} onNext={onNext} />
+      )}
     </BottomSheet>
   );
 }
@@ -818,13 +832,13 @@ const styles = StyleSheet.create({
   round: { gap: space[5], padding: space[6] },
   // A Round of a form without options keeps one gap more under its content than a pick Round.
   roundWithoutOptions: { paddingBottom: space[6] + space[5] },
-  header: { gap: roundHeader.gap, paddingHorizontal: space[4] },
+  // Room under the header, so a scrolled Round slides away clear of it, not against it.
+  header: { gap: roundHeader.gap, paddingHorizontal: space[4], paddingBottom: space[3] },
   headerRow: { flexDirection: 'row', alignItems: 'center', gap: roundHeader.rowGap },
   title: { flex: 1 },
   segments: { flexDirection: 'row', gap: roundProgress.gap },
   segment: { flex: 1, height: roundProgress.height, transform: [{ skewX: roundProgress.skew }] },
   lives: { flexDirection: 'row', gap: roundHeader.lifeGap },
-  livesLabel: { alignSelf: 'flex-start', paddingHorizontal: space[2], paddingVertical: space[1] },
   exit: {
     width: roundHeader.exit,
     height: roundHeader.exit,

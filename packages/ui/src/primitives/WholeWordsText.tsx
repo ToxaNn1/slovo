@@ -22,7 +22,8 @@ import { capitalMarkRoom, roleSize, typeRoles, type TypeRole } from '../tokens';
  * `size` first, and the text is drawn small enough for that word to fit on a
  * line; `numberOfLines` and `adjustsFontSizeToFit` still apply on top.
  * A `highlight` draws one stretch of the text in a style of its own, or
- * `falling` lets the text's marks fall into place over it. `flying` lets it
+ * `falling` lets the text's marks fall into place over it, and `stressed`
+ * sets the letters a mark sits on, with the mark, in a style of their own. `flying` lets it
  * fly into place over it as one. The text sets its own top
  * padding and margin: the room its `typeRole`'s capital marks need at the size
  * it is drawn at.
@@ -35,6 +36,7 @@ export function WholeWordsText({
   style,
   highlight,
   falling,
+  stressed,
   flying,
   ...props
 }: Omit<TextProps, 'children' | 'style'> & {
@@ -54,11 +56,14 @@ export function WholeWordsText({
         /** A stretch of the text to mark, and how it looks on top of `style`. */
         highlight?: { readonly range: TextRange; readonly style: StyleProp<TextStyle> } | undefined;
         falling?: never;
+        stressed?: never;
       }
     | {
         highlight?: never;
         /** Marks that fall into place over the text, which leaves them clear meanwhile. */
         falling: FallingMarksOf | undefined;
+        /** A mark of the text, and how the letters it sits on look with it, on top of `style`. */
+        stressed?: { readonly mark: string; readonly style: StyleProp<TextStyle> } | undefined;
       }
   )) {
   const [lineWidth, setLineWidth] = useState<number>();
@@ -89,6 +94,24 @@ export function WholeWordsText({
     maxFontSizeMultiplier: props.maxFontSizeMultiplier,
   };
 
+  // The text as drawn: marks that fall on their own left clear, stressed letters in their style.
+  const shown =
+    falling !== undefined ? (
+      withMarks(text, falling.mark, clearMarks, stressed?.style)
+    ) : stressed !== undefined ? (
+      withMarks(text, stressed.mark, stressed.style, stressed.style)
+    ) : highlight === undefined ? (
+      text
+    ) : (
+      <>
+        {text.slice(0, highlight.range.start)}
+        <Text style={highlight.style}>
+          {text.slice(highlight.range.start, highlight.range.end)}
+        </Text>
+        {text.slice(highlight.range.end)}
+      </>
+    );
+
   return (
     <View
       onLayout={(event) => {
@@ -97,19 +120,7 @@ export function WholeWordsText({
       }}
     >
       <Text {...props} style={flying === undefined ? textStyle : [textStyle, styles.clear]}>
-        {falling !== undefined ? (
-          withMarks(text, falling.mark, clearMarks)
-        ) : highlight === undefined ? (
-          text
-        ) : (
-          <>
-            {text.slice(0, highlight.range.start)}
-            <Text style={highlight.style}>
-              {text.slice(highlight.range.start, highlight.range.end)}
-            </Text>
-            {text.slice(highlight.range.end)}
-          </>
-        )}
+        {shown}
       </Text>
       {falling === undefined ? null : (
         <FallingMarks
@@ -118,18 +129,19 @@ export function WholeWordsText({
           fontSize={size.fontSize * (scale ?? 1)}
           textProps={textProps}
           style={textStyle}
+          markStyle={stressed?.style}
           testID={props.testID === undefined ? undefined : `${props.testID}-falling`}
         />
       )}
       {flying === undefined ? null : (
         <FlyingText
-          text={text}
           flying={flying}
-          clearMark={falling?.mark}
           textProps={textProps}
           style={textStyle}
           testID={props.testID === undefined ? undefined : `${props.testID}-flying`}
-        />
+        >
+          {shown}
+        </FlyingText>
       )}
       {/* Every word on its own line, wide enough that none of them wraps. */}
       <View

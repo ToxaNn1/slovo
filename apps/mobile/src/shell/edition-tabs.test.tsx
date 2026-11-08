@@ -41,6 +41,7 @@ async function renderTabs(url: string, editionInEffect: Edition = edition) {
         </SafeAreaProvider>
       ),
       index: () => <Text>Feed</Text>,
+      feed: () => <Text>Feed opened</Text>,
       'game/_layout': () => <ScreenStack />,
       'game/index': () => <Text>Games</Text>,
       'game/crossword': () => <Text>Crossword</Text>,
@@ -141,6 +142,60 @@ describe('the tab bar', () => {
   });
 });
 
+/** The shipped Edition with the «Стрічка» tab leading to the Dashboard, as before ADR 0093. */
+const feedTabOff: Edition = {
+  ...edition,
+  isFeatureEnabled: (feature) => feature !== 'feedTab' && edition.isFeatureEnabled(feature),
+};
+
+describe('the «Стрічка» tab', () => {
+  it('opens the Feed from the Dashboard', async () => {
+    await renderTabs('/');
+    await settle(() => fireEvent.press(screen.getByText(tabs.home)));
+
+    expect(await screen.findByText('Feed opened')).toBeVisible();
+    expect(screen.queryByText('Feed')).toBeNull();
+  });
+
+  it('opens the Feed from another tab', async () => {
+    await renderTabs('/saved');
+    await settle(() => fireEvent.press(screen.getByText(tabs.home)));
+
+    expect(await screen.findByText('Feed opened')).toBeVisible();
+    expect(screen.queryByText('Feed')).toBeNull();
+  });
+
+  it('keeps the Feed on a tap on the Feed', async () => {
+    await renderTabs('/feed');
+    await settle(() => fireEvent.press(screen.getByText(tabs.home)));
+
+    expect(screen.getByText('Feed opened')).toBeVisible();
+    expect(screen.queryByText('Feed')).toBeNull();
+  });
+
+  it('shows as selected while the Feed is on screen', async () => {
+    await renderTabs('/');
+    await settle(() => fireEvent.press(screen.getByText(tabs.home)));
+
+    expect(await screen.findByText('Feed opened')).toBeVisible();
+    expect(screen.getByTestId('tab-home')).toBeSelected();
+  });
+
+  it('shows as not selected over the Feed with the Feed tab off', async () => {
+    await renderTabs('/feed', feedTabOff);
+
+    expect(await screen.findByText('Feed opened')).toBeVisible();
+    expect(screen.getByTestId('tab-home')).not.toBeSelected();
+  });
+
+  it('opens the Dashboard with the Feed tab off', async () => {
+    await renderTabs('/feed', feedTabOff);
+    await settle(() => fireEvent.press(screen.getByText(tabs.home)));
+
+    expect(await screen.findByText('Feed')).toBeVisible();
+  });
+});
+
 /** How far a tab's screen still stands off its place as it enters. */
 function shiftOf(tab: string) {
   return (
@@ -159,7 +214,7 @@ describe('the entrance of a tab', () => {
   });
 
   it('brings a tab to rest each time it is opened again', async () => {
-    await renderTabs('/');
+    await renderTabs('/', feedTabOff);
     await settle(() => fireEvent.press(screen.getByText(tabs.saved)));
     await settle(() => fireEvent.press(screen.getByText(tabs.home)));
     // The tab comes back on screen a step after the press; its entrance runs from there.
