@@ -128,6 +128,7 @@ const validConfig = {
     wordTabs: true,
     searchButton: true,
     dashboardWordmark: true,
+    feedTab: true,
     categoryScreens: true,
     correctionCategoryScreens: true,
     quietCategories: true,
@@ -976,6 +977,7 @@ describe('loadEdition', () => {
       withoutSwitch('dashboardWordmark'),
       'featureSwitches.dashboardWordmark',
     ],
+    ['a missing Feed tab Feature Switch', withoutSwitch('feedTab'), 'featureSwitches.feedTab'],
     [
       'a missing Search button Feature Switch',
       withoutSwitch('searchButton'),
@@ -1496,6 +1498,7 @@ const dependentSwitches = [
   ['swipeMarks', ['knowledge']],
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
+  ['feedTab', ['dashboard', 'wordOfTheDay']],
   ['narratorVoice', ['pronunciation']],
   ['categoryScreens', ['dashboard', 'wordOfTheDay']],
   ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],

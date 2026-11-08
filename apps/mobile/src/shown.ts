@@ -130,6 +130,8 @@ export interface Shown {
   readonly dashboard: boolean;
   /** The Feed header's wordmark opens the Dashboard (ADR 0079). */
   readonly dashboardWordmark: boolean;
+  /** The «Стрічка» tab opens the Feed; the Dashboard stays the home at launch (ADR 0090). */
+  readonly feedTab: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;
   /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
@@ -223,6 +225,7 @@ export function shownOf({
     fastReveal: on('fastReveal'),
     dashboard: on('dashboard'),
     dashboardWordmark: on('dashboardWordmark'),
+    feedTab: on('feedTab'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
     swipeMarks: on('swipeMarks'),

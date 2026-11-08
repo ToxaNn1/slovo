@@ -121,6 +121,7 @@
     "wordTabs": true,
     "searchButton": true,
     "dashboardWordmark": true,
+    "feedTab": true,
     "categoryScreens": true,
     "correctionCategoryScreens": true,
     "quietCategories": true,

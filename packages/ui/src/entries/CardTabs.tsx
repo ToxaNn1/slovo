@@ -1,13 +1,30 @@
+'use no memo';
+// Reanimated code: the React Compiler skips this module (ADR 0059).
+
 import type { FontSize } from '@slovo/contracts';
 import { useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
 import { FontSizeProvider, useWordTextSizes } from '../providers/FontSizeProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { PagerScrollView } from '../primitives/VerticalPager';
+import { useReduceMotion } from '../providers/useReduceMotion';
 import { Wedge } from '../primitives/Wedge';
-import { blockGap, entryCardFrame, minTouchTarget, space, typeStyle, wedges } from '../tokens';
+import {
+  blockGap,
+  entryCardFrame,
+  minTouchTarget,
+  motion,
+  space,
+  typeStyle,
+  wedges,
+} from '../tokens';
 
 /** The smallest font size content too tall for the card shrinks to (ADR 0088). */
 const FLOOR = 'S' satisfies FontSize;
@@ -21,10 +38,13 @@ const SMALLER: Readonly<Record<Exclude<FontSize, typeof FLOOR>, FontSize>> = {
 
 /**
  * How content sits in the card's fixed frame: whole at a font size from the
- * user's down to the floor, or at the floor scrolling inside the frame
- * (ADR 0088).
+ * user's down to the floor, or at the floor clamped to the frame under
+ * «Детальніше» (ADR 0088).
  */
-type Fit = FontSize | 'scrolls';
+type Fit = FontSize | 'clamped';
+
+/** How the room grows to a clamped tab's whole height once «Детальніше» is tapped. */
+const growEasing = Easing.bezier(...motion.collapse.easing);
 
 /**
  * An Entry card's tabs under its head (ADR 0088): the selected tab's content
@@ -109,17 +129,17 @@ export function CardTabs<Tab extends { readonly key: string }>({
 /**
  * Content that fills the rest of an Entry card's fixed frame (ADR 0088):
  * content too tall for it takes the font size a step smaller at a time down
- * to the floor, S, and content too tall even there stays at S and scrolls
- * inside the frame, so the card keeps its height. In the Feed that scroll is
- * the page's (`PagerScrollView` nested in the page's). The card measures the
+ * to the floor, S, and content too tall even there stays at S, clamped to the
+ * frame, with «Детальніше» under it. A tap on it grows the room to the whole
+ * content, smoothly unless Reduce Motion is on, and the card grows with it,
+ * so the page scrolls over the card. The card measures the
  * drawn height against the room once both are laid out, on the render after
  * they arrive, so two heights reported in one layout pass are both read. Each
  * size draws its content in a new view, which the device always lays out and
  * reports, even when the smaller size leaves the height as it was (text in a
  * fixed type role). A new `fitKey` (another tab) or font size starts at the
- * user's font size again. Its parts are `<testID>-tab-panel`,
- * `<testID>-tab-content` while it fits and `<testID>-tab-scroll` once it
- * scrolls.
+ * user's font size again, clamped. Its parts are `<testID>-tab-panel`,
+ * `<testID>-tab-content` and, while clamped, `<testID>-tab-more`.
  */
 export function FitPanel({
   testID,
@@ -131,6 +151,9 @@ export function FitPanel({
   fitKey: string;
   children: ReactNode;
 }) {
+  const tokens = useTokens();
+  const { strings, voice } = useEdition();
+  const reduceMotion = useReduceMotion();
   const { step } = useWordTextSizes();
   const [fit, setFit] = useState<{ key: string; step: FontSize; fit: Fit }>({
     key: fitKey,
@@ -142,26 +165,25 @@ export function FitPanel({
   // The drawn height counts only for the tab and font size it was drawn at.
   const drawnAt = `${fitKey} ${step} ${fitNow}`;
   const [drawn, setDrawn] = useState<{ at: string; height: number } | undefined>(undefined);
-  // Content too tall for the room takes the next smaller size, or scrolls at the floor.
-  if (fitNow !== 'scrolls' && room !== undefined && drawn?.at === drawnAt && drawn.height > room) {
-    setFit({ key: fitKey, step, fit: fitNow === FLOOR ? 'scrolls' : SMALLER[fitNow] });
+  // Content too tall for the room takes the next smaller size, or is clamped at the floor.
+  if (fitNow !== 'clamped' && room !== undefined && drawn?.at === drawnAt && drawn.height > room) {
+    setFit({ key: fitKey, step, fit: fitNow === FLOOR ? 'clamped' : SMALLER[fitNow] });
   }
-  const content = (
-    <FontSizeProvider fontSize={fitNow === 'scrolls' ? FLOOR : fitNow}>{children}</FontSizeProvider>
-  );
+  // «Детальніше» opens the tab at the size it was tapped on, until another tab or font size.
+  const [openAt, setOpenAt] = useState<string | undefined>(undefined);
+  const open = fitNow === 'clamped' && openAt === drawnAt;
+  const height = useSharedValue(0);
+  // A style key once set stays until it is set again, so a closed room sets its least height back to 0.
+  const grown = useAnimatedStyle(() => ({ minHeight: open ? height.value : 0 }));
   return (
-    <View
-      testID={`${testID}-tab-panel`}
-      style={styles.room}
-      onLayout={({ nativeEvent }) => {
-        setRoom(nativeEvent.layout.height);
-      }}
-    >
-      {fitNow === 'scrolls' ? (
-        <PagerScrollView testID={`${testID}-tab-scroll`} contentContainerStyle={styles.content}>
-          {content}
-        </PagerScrollView>
-      ) : (
+    <>
+      <Animated.View
+        testID={`${testID}-tab-panel`}
+        style={[styles.room, grown]}
+        onLayout={({ nativeEvent }) => {
+          setRoom(nativeEvent.layout.height);
+        }}
+      >
         <View
           key={drawnAt}
           testID={`${testID}-tab-content`}
@@ -170,18 +192,41 @@ export function FitPanel({
             setDrawn({ at: drawnAt, height: nativeEvent.layout.height });
           }}
         >
-          {content}
+          <FontSizeProvider fontSize={fitNow === 'clamped' ? FLOOR : fitNow}>
+            {children}
+          </FontSizeProvider>
         </View>
+      </Animated.View>
+      {fitNow === 'clamped' && !open && (
+        <Pressable
+          testID={`${testID}-tab-more`}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: false }}
+          {...voice}
+          onPress={() => {
+            const whole = drawn?.at === drawnAt ? drawn.height : (room ?? 0);
+            height.value = room ?? 0;
+            height.value = reduceMotion
+              ? whole
+              : withTiming(whole, { duration: motion.collapse.duration, easing: growEasing });
+            setOpenAt(drawnAt);
+          }}
+          style={styles.more}
+        >
+          <Text style={[typeStyle('textLink', tokens), { color: tokens.colors.accent }]}>
+            {strings.wordCard.tabMore}
+          </Text>
+        </Pressable>
       )}
-    </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   // The tabs fill what the head leaves of the card's frame.
   tabs: { flexGrow: 1, gap: blockGap },
-  // The tabs spread over the card's width, under a hairline.
-  bar: { flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, gap: space[2] },
+  // The tabs stand packed from the left, under a hairline (owner 08.11).
+  bar: { flexDirection: 'row', borderTopWidth: 1, gap: space[6] },
   tab: { minHeight: minTouchTarget, justifyContent: 'center' },
   // The mark lies over the hairline and reaches past the tab's name on both sides.
   mark: {
@@ -192,6 +237,7 @@ const styles = StyleSheet.create({
   },
   room: { flexGrow: 1, flexBasis: 0, overflow: 'hidden' },
   content: { gap: blockGap },
+  more: { minHeight: minTouchTarget, justifyContent: 'center', alignSelf: 'flex-start' },
   // While it fits, the content takes no room of its own, so the frame keeps its height.
   overlay: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

@@ -8,7 +8,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { useWordTextSizes, type TextSize } from '../providers/FontSizeProvider';
 import { SectionLabel } from '../primitives/headings';
 import { LabelChip } from '../primitives/LabelChip';
-import { correctionCardLayout, space, typeStyle, withAlpha } from '../tokens';
+import { correctionCardLayout, space, standardFormScale, typeStyle, withAlpha } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
@@ -21,7 +21,7 @@ import { correctionTabs, type CorrectionTab } from './word-tabs';
 /**
  * The Correction card's blocks inside the Entry card's frame: the Correction
  * Type, the non-standard form muted and struck through, the main standard
- * equivalent at the Lemma's size with the others under it, the explanation,
+ * equivalent at a share of the Lemma's size with the others under it, the explanation,
  * the example pair, the Category chip as on the Word card, the Correction's
  * literary uses under their heading, each like a Word's Example with its
  * author, work and year, and, when the Correction has sources, a line naming them.
@@ -40,7 +40,7 @@ export function CorrectionCardBody({
   tabs,
 }: {
   card: CorrectionCardModel;
-  /** The Lemma's size at the user's font size, which the main standard equivalent takes. */
+  /** The Lemma's size at the user's font size, a share of which the main standard equivalent takes. */
   lemmaSize: TextSize;
   /** Self-check: only the non-standard form and the question. */
   concealed: boolean;
@@ -326,9 +326,9 @@ export function NonStandardForm({
 }
 
 /**
- * The standard form under the label «Українською краще», at the Lemma's
- * size, as one element VoiceOver reads with its label; the Tip card shows its
- * standard form the same way.
+ * The standard form under the label «Українською краще», at a share of the
+ * Lemma's size (`standardFormScale`), as one element VoiceOver reads with its
+ * label; the Tip card shows its standard form the same way.
  */
 export function StandardForm({
   form,
@@ -362,7 +362,10 @@ export function StandardForm({
       <WholeWordsText
         text={form}
         typeRole="heroWord"
-        size={size}
+        size={{
+          fontSize: size.fontSize * standardFormScale,
+          lineHeight: size.lineHeight * standardFormScale,
+        }}
         tracking={-0.01}
         // A phrase wraps; a single word shrinks to fit rather than break.
         numberOfLines={form.includes(' ') ? 3 : 1}

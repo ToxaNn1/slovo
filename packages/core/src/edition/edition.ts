@@ -186,6 +186,8 @@ const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   searchButton: ['search'],
   // The wordmark leads to the Dashboard (ADR 0079).
   dashboardWordmark: ['dashboard'],
+  // The «Стрічка» tab opens the Feed the Dashboard otherwise opens (ADR 0090).
+  feedTab: ['dashboard'],
   // The Categories rail and its grid are Dashboard blocks (ADR 0081).
   categoryScreens: ['dashboard'],
   // The grid of the Categories of Corrections opens from the Dashboard's Corrections rail (ADR 0081).

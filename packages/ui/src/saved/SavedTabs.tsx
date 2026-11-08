@@ -35,6 +35,7 @@ export function SavedTabs<Id extends string>({
       testID={`${testID}-row`}
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.scroll}
       contentContainerStyle={styles.row}
     >
       {tabs.map((tab) => (
@@ -60,6 +61,9 @@ export function SavedTabs<Id extends string>({
 }
 
 const styles = StyleSheet.create({
+  // A ScrollView grows by default: without this the row would split the
+  // screen's height with the list under it.
+  scroll: { flexGrow: 0 },
   row: {
     gap: space[2],
     paddingHorizontal: space[5],

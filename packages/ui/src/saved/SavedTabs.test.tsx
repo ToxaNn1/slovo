@@ -31,6 +31,14 @@ describe('SavedTabs', () => {
     });
   });
 
+  it('takes only the height of its chips, so the list under it starts at the top', async () => {
+    // A ScrollView grows by default; in the Saved column it would split the
+    // height with the list and push the list's rows to the middle.
+    await renderTabs('favorites');
+
+    expect(screen.getByTestId('saved-row')).toHaveStyle({ flexGrow: 0 });
+  });
+
   it('asks to show the list of the tab tapped', async () => {
     const onSelect = await renderTabs('history');
 

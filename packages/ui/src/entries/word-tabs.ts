@@ -17,7 +17,8 @@ export type WordTab =
   | {
       readonly key: 'history';
       readonly meanings: readonly string[];
-      readonly etymology: string | undefined;
+      /** The etymology in paragraphs (`etymologyParagraphs`), none when the Word has none. */
+      readonly etymology: readonly string[];
       readonly history: string | undefined;
     };
 
@@ -31,7 +32,8 @@ export type WordTabKey = WordTab['key'];
  */
 export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]] {
   const meanings = card.details?.extraDefinitions ?? [];
-  const etymology = card.details?.etymology;
+  const etymology =
+    card.details?.etymology === undefined ? [] : etymologyParagraphs(card.details.etymology);
   const examples = [
     ...(card.example === undefined ? [] : [card.example]),
     ...(card.details?.examples ?? []),
@@ -41,10 +43,47 @@ export function wordTabsOf(card: WordCardModel): readonly [WordTab, ...WordTab[]
   if (first !== undefined) tabs.push({ key: 'example', examples: [first, ...rest] });
   if (card.synonyms.length > 0 || card.antonyms.length > 0)
     tabs.push({ key: 'links', synonyms: card.synonyms, antonyms: card.antonyms });
-  if (meanings.length > 0 || etymology !== undefined || card.history !== undefined)
+  if (meanings.length > 0 || etymology.length > 0 || card.history !== undefined)
     tabs.push({ key: 'history', meanings, etymology, history: card.history });
   return [{ key: 'essence', moreMeanings: meanings.length }, ...tabs];
 }
+
+/**
+ * A dictionary etymology as paragraphs a reader can follow: one per group the
+ * dictionary separates with a semicolon outside brackets and quotes (the
+ * Proto-Slavic form, the cognates, the reconstruction, the sister languages),
+ * without the separators. The text is composed (NFC), which also turns the
+ * deprecated tone mark into the acute Stress mark, and loses the marks a
+ * dictionary dump leaves that a font draws as stray glyphs beside or under a
+ * letter: spacing diacritics such as «˘» and «ˇ», and the ring below.
+ */
+export function etymologyParagraphs(etymology: string): readonly string[] {
+  const clean = etymology.normalize('NFC').replace(STRAY_MARKS, '');
+  const paragraphs: string[] = [];
+  let depth = 0;
+  let start = 0;
+  for (let index = 0; index < clean.length; index += 1) {
+    const char = clean.charAt(index);
+    if (OPENING.includes(char)) depth += 1;
+    else if (CLOSING.includes(char)) depth = Math.max(0, depth - 1);
+    else if (char === ';' && depth === 0) {
+      paragraphs.push(clean.slice(start, index));
+      start = index + 1;
+    }
+  }
+  paragraphs.push(clean.slice(start));
+  return paragraphs.map((paragraph) => paragraph.trim()).filter((paragraph) => paragraph !== '');
+}
+
+/** Spacing modifier diacritics (U+02D8–U+02DD, U+02C7) and the combining ring below (U+0325). */
+const STRAY_MARKS = /\u02C7|[\u02D8-\u02DD]|\u0325/gu;
+
+/**
+ * The brackets and quotes a semicolon inside of does not end a paragraph; «‹»
+ * stays out, as a dictionary writes it for «from».
+ */
+const OPENING = '([{«';
+const CLOSING = ')]}»';
 
 /**
  * One tab of a Correction's Entry card (ADR 0088), under its struck

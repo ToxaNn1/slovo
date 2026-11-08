@@ -227,6 +227,7 @@ const FeedPage = memo(function FeedPage({
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView
+        // A tabbed card fills the page at least, and grows past it when «Детальніше» opens a tab (ADR 0088).
         // The red card of the Word of the Day and every tabbed card hang from the top row, closer to the edges (board p1).
         contentContainerStyle={
           card.kind !== 'notice' &&

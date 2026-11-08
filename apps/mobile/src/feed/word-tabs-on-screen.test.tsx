@@ -16,6 +16,7 @@ import { renderRoutes } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StyleSheet } from 'react-native';
 import { State } from 'react-native-gesture-handler';
+import { getAnimatedStyle } from 'react-native-reanimated';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
 
 import HomeScreen from '../app/feed';
@@ -96,8 +97,11 @@ async function open(
     isFeatureEnabled: (feature) =>
       feature === 'wordTabs'
         ? wordTabs
-        : // No later question takes the Word of the Day's place in the Feed.
-          feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
+        : // Self-check's switch follows the reader's setting; the UA Edition turns it off (owner 08.11).
+          feature === 'selfCheck'
+          ? selfCheck
+          : // No later question takes the Word of the Day's place in the Feed.
+            feature !== 'laterQuestions' && shipped.isFeatureEnabled(feature),
   };
   // Onboarding finished weeks ago: nothing covers the Feed, and its first week is over.
   // The gestures hint was shown on an earlier launch: its finger demo loops for as long as
@@ -294,7 +298,7 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(card.getByText('2. Миролюбний.', hidden)).toBeTruthy();
   });
 
-  it('keeps a very long Definition whole in a tab too short for it, the corner still working', async () => {
+  it('clamps a very long Definition in a tab too short for it under «Детальніше», the corner still working', async () => {
     const long = `${'Дуже довге значення слова, яке не вміщається в картку. '.repeat(40)}Кінець.`;
     await open({ ...fullWord, primaryDefinition: long });
     await renderApp();
@@ -310,13 +314,16 @@ describe('the tabs of a Word card in the Feed', () => {
     await layout('word-tab-panel', 200);
     for (
       let size = 0;
-      size < 4 && wordCard().queryByTestId('word-tab-scroll', hidden) === null;
+      size < 4 && wordCard().queryByTestId('word-tab-more', hidden) === null;
       size++
     )
       await layout('word-tab-content', 2000);
 
+    // Clamped at the floor, the tab shows «Детальніше» under it instead of a scroll (owner 08.11).
     const card = wordCard();
-    expect(card.getByTestId('word-tab-scroll', hidden)).toBeTruthy();
+    expect(card.getByTestId('word-tab-more', hidden)).toHaveTextContent(
+      editionStrings.wordCard.tabMore,
+    );
     expect(card.getByText(long, hidden)).toBeTruthy();
     expect(tabsOf(card).find(({ selected }) => selected)?.name).toBe('Суть');
     const heart = card.getByTestId('favorite-button', hidden);
@@ -327,7 +334,7 @@ describe('the tabs of a Word card in the Feed', () => {
     );
   });
 
-  it('shrinks a Definition a font size at a time before it scrolls, whichever height comes last', async () => {
+  it('shrinks a Definition a font size at a time before it is clamped, whichever height comes last', async () => {
     const long = `${'Довге значення слова. '.repeat(20)}Кінець.`;
     await open({ ...fullWord, primaryDefinition: long });
     await renderApp('XL');
@@ -344,7 +351,7 @@ describe('the tabs of a Word card in the Feed', () => {
         ? style.fontSize
         : undefined;
     };
-    const scrolls = () => wordCard().queryByTestId('word-tab-scroll', hidden) !== null;
+    const clamped = () => wordCard().queryByTestId('word-tab-more', hidden) !== null;
     expect(size()).toBe(fontSizeSteps.XL.definition);
 
     // The content is drawn before the frame leaves it its room: the check waits for the room.
@@ -352,22 +359,57 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(size()).toBe(fontSizeSteps.XL.definition);
     await layout('word-tab-panel', 200);
     expect(size()).toBe(fontSizeSteps.L.definition);
-    expect(scrolls()).toBe(false);
+    expect(clamped()).toBe(false);
 
-    // A step smaller it fits, so it stays whole there without a scroll.
+    // A step smaller it fits, so it stays whole there without «Детальніше».
     await layout('word-tab-content', 180);
     expect(size()).toBe(fontSizeSteps.L.definition);
-    expect(scrolls()).toBe(false);
+    expect(clamped()).toBe(false);
 
-    // Too tall again, it takes M, then S, and only then scrolls.
+    // Too tall again, it takes M, then S, and only then is clamped.
     await layout('word-tab-content', 300);
     expect(size()).toBe(fontSizeSteps.M.definition);
-    expect(scrolls()).toBe(false);
+    expect(clamped()).toBe(false);
     await layout('word-tab-content', 300);
     expect(size()).toBe(fontSizeSteps.S.definition);
-    expect(scrolls()).toBe(false);
+    expect(clamped()).toBe(false);
     await layout('word-tab-content', 300);
-    expect(scrolls()).toBe(true);
+    expect(clamped()).toBe(true);
+  });
+
+  it('opens a clamped tab whole under «Детальніше», the card growing to it, and clamps it again on another tab', async () => {
+    const long = `${'Дуже довге значення слова, яке не вміщається в картку. '.repeat(40)}Кінець.`;
+    await open({ ...fullWord, primaryDefinition: long });
+    await renderApp();
+    await swipeUp();
+    const layout = async (testID: string, height: number) => {
+      await fireEvent(wordCard().getByTestId(testID, hidden), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height } },
+      });
+      await settle();
+    };
+    await layout('word-tab-panel', 200);
+    for (
+      let size = 0;
+      size < 4 && wordCard().queryByTestId('word-tab-more', hidden) === null;
+      size++
+    )
+      await layout('word-tab-content', 2000);
+    await layout('word-tab-content', 2000);
+
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-more', hidden)));
+
+    await act(() => jest.advanceTimersByTimeAsync(500));
+
+    // The room grows to the whole tab, so the page scrolls over the card (ADR 0088).
+    const room = () => getAnimatedStyle(wordCard().getByTestId('word-tab-panel', hidden));
+    expect(wordCard().queryByTestId('word-tab-more', hidden)).toBeNull();
+    expect(room()).toMatchObject({ minHeight: 2000 });
+    expect(wordCard().getByText(long, hidden)).toBeTruthy();
+
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-example')));
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-essence')));
+    expect(room()).toMatchObject({ minHeight: 0 });
   });
 
   it('shrinks a Definition when the room and the content are laid out in one go', async () => {
@@ -399,7 +441,7 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(size()).toBe(fontSizeSteps.L.definition);
   });
 
-  it('measures the content afresh at each smaller size, so text that keeps its height still scrolls', async () => {
+  it('measures the content afresh at each smaller size, so text that keeps its height is still clamped', async () => {
     const history = `${'Довга історія слова. '.repeat(60)}Кінець.`;
     await open({ ...fullWord, history });
     await renderApp();
@@ -415,7 +457,7 @@ describe('the tabs of a Word card in the Feed', () => {
     const drawn = [];
     for (
       let size = 0;
-      size < 4 && wordCard().queryByTestId('word-tab-scroll', hidden) === null;
+      size < 4 && wordCard().queryByTestId('word-tab-more', hidden) === null;
       size++
     ) {
       const content = wordCard().getByTestId('word-tab-content', hidden);
@@ -427,7 +469,7 @@ describe('the tabs of a Word card in the Feed', () => {
       await settle();
     }
 
-    expect(wordCard().getByTestId('word-tab-scroll', hidden)).toBeTruthy();
+    expect(wordCard().getByTestId('word-tab-more', hidden)).toBeTruthy();
     expect(wordCard().getByText(history, hidden)).toBeTruthy();
   });
 

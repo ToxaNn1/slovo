@@ -241,13 +241,13 @@ export const typeRoles = {
   /** The form a «Впиши слово» Round asks to replace, under its ask (board 07 g3): «замість «вірогідно»». */
   roundInstead: role('ui', '500', 16, 22),
   /** A Round's option on its tile when it is a Word. */
-  roundOptionWord: role('word', '800', 22, 26),
+  roundOptionWord: role('word', '800', 18, 22),
   /** A Round's option on its tile when it is a sentence. */
-  roundOptionSentence: role('word', '700', 18, 23),
+  roundOptionSentence: role('ui', '600', 17, 22),
   /** A Round's option on its tile when it is a long text. */
-  roundOptionLong: role('ui', '500', 15, 20),
-  /** The key of a Round's option, such as «А», and the ✕ on a wrong pick's key. */
-  roundOptionKey: role('word', '900', 16, 16),
+  roundOptionLong: role('ui', '500', 16, 22),
+  /** The key of a Round's option, such as «А»: a line of 20 centres the letter in its box. */
+  roundOptionKey: role('word', '900', 16, 20),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
   roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
   /** The right answer on the Round's answer sheet. */
@@ -669,6 +669,27 @@ export function typeStyle(name: TypeRole, tokens: Pick<DesignTokens, 'fontFamili
 export function roleSize(name: TypeRole): DrawnSize {
   const { size, lineHeight } = typeRoles[name];
   return { fontSize: size, lineHeight };
+}
+
+/**
+ * How a text's size steps down as the text grows, so a long text takes a
+ * smaller size and the cards keep one text scale (owner 08.11): the share of
+ * the full size for a text of at most `upTo` letters, shortest first, and
+ * `longer` for a text longer than every step.
+ */
+export interface LengthSteps {
+  readonly steps: readonly { readonly upTo: number; readonly scale: number }[];
+  readonly longer: number;
+}
+
+/**
+ * `size` at the share `steps` give the length of `text`, counted in letters
+ * without the Stress marks.
+ */
+export function sizeForLength(size: DrawnSize, text: string, steps: LengthSteps): DrawnSize {
+  const length = text.replace(/\p{M}/gu, '').length;
+  const scale = steps.steps.find(({ upTo }) => length <= upTo)?.scale ?? steps.longer;
+  return { fontSize: size.fontSize * scale, lineHeight: size.lineHeight * scale };
 }
 
 /**

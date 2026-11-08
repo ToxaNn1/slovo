@@ -1,4 +1,4 @@
-import type { Easing } from './base';
+import type { Easing, LengthSteps } from './base';
 
 /** The tokens of the Entry: the Word card, its reveal, panels and rows. */
 
@@ -162,6 +162,12 @@ export const swipeStampLayout = {
   paddingVertical: 4,
   paddingHorizontal: 12,
   border: 3,
+  /**
+   * The room a card that fills its page (ADR 0088) leaves under it for the
+   * stamp: its 20-point hang below the card and the drop of the far end of
+   * the longest stamp, «✓ КАЖУ ПРАВИЛЬНО», tilted 6°, about 18 points.
+   */
+  room: 40,
 } as const;
 
 /** The side of each button of the action row under the Entry card, from the design. */
@@ -169,3 +175,23 @@ export const actionButtonSize = 52;
 
 /** The padding of the Word of the day badge. */
 export const badgePadding = { horizontal: 10, vertical: 6 } as const;
+
+/**
+ * The standard form under «Українською краще», a Tip's and a Correction's
+ * (board С2.6, 30 pt where the Lemma is 50): this share of the Lemma's size at
+ * the user's font size, so the form and the text under it keep the card's one
+ * text scale (owner 08.11).
+ */
+export const standardFormScale = 30 / 50;
+
+/**
+ * An Idiom's expression by its length (owner 08.11): the Lemma's size up to 10
+ * letters, 40 where the Lemma is 50 up to 18, and 30 for a longer one.
+ */
+export const idiomExpressionLength: LengthSteps = {
+  steps: [
+    { upTo: 10, scale: 1 },
+    { upTo: 18, scale: 40 / 50 },
+  ],
+  longer: 30 / 50,
+};
