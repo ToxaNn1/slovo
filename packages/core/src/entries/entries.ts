@@ -160,20 +160,17 @@ export interface Entries {
    * The live Corrections the Word is the standard form for, in the order the
    * Word links them, or none when the Edition turns Corrections off or the
    * user took Corrections out of the Mix. A Correction missing from the
-   * Language Pack is skipped. Read afresh on every call.
+   * Language Pack, a Hidden one and one of a Category of Corrections out of
+   * the Mix are skipped: a link obeys the Hidden Entries and the Mix as the
+   * Feed does, so a Hidden Entry is never reached through a Word card. Read
+   * afresh on every call.
    */
   linkedCorrections(word: Word): Promise<Correction[]>;
   /**
-   * Whether a Word links its Corrections at all: the Edition turns Corrections
-   * on and the user has them in the Mix. Read afresh on every call, so a caller
-   * can tell when the links of the Word cards it holds went stale.
-   */
-  linksCorrections(): Promise<boolean>;
-  /**
-   * The first live Synonym Row, in the Language Pack's stable order, that
-   * links the live Word as a member, or none when no row does, the Edition
-   * turns Synonym Rows off or the reader keeps them out of the Mix (ADR 0051).
-   * Derived from the rows: nothing on the Word names it.
+   * The first live Synonym Row that is not Hidden, in the Language Pack's
+   * stable order, that links the live Word as a member, or none when no such
+   * row does, the Edition turns Synonym Rows off or the reader keeps them out
+   * of the Mix (ADR 0051). Derived from the rows: nothing on the Word names it.
    */
   linkingSynonymRow(word: Word): Promise<SynonymRow | undefined>;
   /**
@@ -255,8 +252,6 @@ export function createEntries({
 
   /** Whether the reader is shown the kind as a whole now, by the Mix's one rule. */
   const shownNow = (kind: MixKind) => kindShown(edition, kindsOf(choices.mix()), kind);
-
-  const linksCorrections = () => Promise.resolve(shownNow('correction'));
 
   /**
    * The ids of every live Entry of each kind, read once from the Language
@@ -445,9 +440,10 @@ export function createEntries({
     },
     categories,
     correctionCategories,
-    linksCorrections,
     async linkedCorrections(word) {
-      if (!(await linksCorrections())) return [];
+      // Like the back-link to a Synonym Row, none while Corrections are out of the Mix.
+      if (!shownNow('correction')) return [];
+      const inMix = categoryIdsIn('correction', choices.mix());
       const linked = new Map(
         (await content.getEntries(word.correctionIds)).map((entry) => [entry.id, entry]),
       );
@@ -455,13 +451,17 @@ export function createEntries({
         .map((id) => linked.get(id))
         .filter(
           (correction): correction is Correction =>
-            correction?.kind === 'correction' && !correction.retired,
+            correction?.kind === 'correction' &&
+            !correction.retired &&
+            !choices.isHidden(correction.id) &&
+            (inMix === undefined || inMix.includes(correction.categoryId)),
         );
     },
     async linkingSynonymRow(word) {
       // Like a link to a Correction, none while the reader keeps Synonym Rows out of the Mix.
       if (!shownNow('synonymRow')) return undefined;
-      const [first] = await content.listLinkingSynonymRowIds(word.id);
+      const linking = await content.listLinkingSynonymRowIds(word.id);
+      const first = linking.find((id) => !choices.isHidden(id));
       if (first === undefined) return undefined;
       const [row] = await content.getEntries([first]);
       return row?.kind === 'synonymRow' ? row : undefined;

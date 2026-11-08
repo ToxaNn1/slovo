@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type { Correction, EntryKind, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import {
   buildEntryCard,
@@ -1196,6 +1196,46 @@ describe('Corrections in the Feed', () => {
 
       expect(await feed.openLinkedCorrection(position, 'c_retired')).toBeUndefined();
       expect(await feed.openLinkedCorrection(position, 'c_live0')).toBeUndefined();
+      expect(feed.cards).toHaveLength(count);
+    });
+
+    it('drops the link to a Correction the reader hides, opens none, and links it again once unhidden', async () => {
+      const app = await runApp({ words, corrections: linkedCorrections });
+      const { feed } = app;
+      while (!feed.cards.some((card) => card.entryId === linked.id)) await feed.next();
+      const position = feed.cards.findIndex((card) => card.entryId === linked.id);
+      const link = { correctionId: 'c_protiazi', nonStandardForm: 'not protiazi' };
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([link]);
+
+      await app.hide({ kind: 'entry', entryId: 'c_protiazi' });
+
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([]);
+      expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBeUndefined();
+      expect(feed.cards.map((card) => card.entryId)).not.toContain('c_protiazi');
+
+      await app.hiddenEntries.restore('c_protiazi');
+
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([link]);
+      expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBe(position + 1);
+    });
+
+    it('opens no linked Correction the Cycle does not cover, such as one the Language Pack lists under no kind', async () => {
+      const pack = createMemoryContentPort({ words, corrections: linkedCorrections });
+      const content: ContentReadPort = {
+        ...pack,
+        async listIds(kind: EntryKind, categoryId?: string) {
+          const listed =
+            categoryId === undefined || (kind !== 'word' && kind !== 'correction')
+              ? await pack.listIds(kind)
+              : await pack.listIds(kind, categoryId);
+          return listed.filter((id) => id !== 'c_protiazi');
+        },
+      };
+      const { feed, position } = await feedOnLinkedWord({ content });
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toHaveLength(1);
+      const count = feed.cards.length;
+
+      expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBeUndefined();
       expect(feed.cards).toHaveLength(count);
     });
 
