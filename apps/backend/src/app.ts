@@ -21,6 +21,7 @@ import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
 import { adminRoutes } from './admin/admin-routes';
+import { createContentStore } from './content/content-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -150,6 +151,7 @@ export function createApp({
     store: contentPackStore,
     clock,
   });
+  const contentStore = createContentStore({ database, clock, editions: editionRegistry });
   const sync = createSync({
     editions: editionRegistry,
     records: createUserRecords(database),
@@ -181,6 +183,7 @@ export function createApp({
     collectionLinks,
     communityCounters,
     contentPacks,
+    contentStore,
     editions: editionRegistry,
     mistakeReports,
     sync,

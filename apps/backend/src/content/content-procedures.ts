@@ -3,17 +3,24 @@ import { apiContract, PACK_MEDIA_TYPE } from '@slovo/contracts/api';
 import type { ContentPacks, PublishedFile } from '@slovo/server-core';
 
 import { namesEtag } from '../etag';
+import type { ContentStore } from './content-store';
 
 /** A published content version never changes, so the file may be kept for good. */
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 
-/** The content procedures of the contract, over the server Core's content packs. */
-export function contentProcedures(contentPacks: ContentPacks) {
+/** The content procedures of the contract, over the server Core's content packs and the content tables. */
+export function contentProcedures(contentPacks: ContentPacks, contentStore: ContentStore) {
   // The server Core answers one object per published file, so its File is
   // made once and every download sends that one copy of the bytes.
   const packFiles = new WeakMap<PublishedFile, File>();
   const content = implement(apiContract.content);
   return content.router({
+    snapshot: content.snapshot.handler(async ({ input, errors }) => {
+      const snapshot = await contentStore.snapshot(input.editionId);
+      if (snapshot === undefined) throw errors.NOT_FOUND();
+      return snapshot;
+    }),
+
     latest: content.latest.handler(async ({ input, errors }) => {
       const latest = await contentPacks.latest(input.editionId, input.packFormat);
       if (!latest.ok) throw errors.NOT_FOUND();

@@ -276,6 +276,12 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           await client.content.latest({ editionId: 'pl', packFormat: 1 }).catch(refused);
           await client.content.latest({ editionId: EDITION, packFormat: 0 }).catch(refused);
         },
+        // The records are the published content; what the import keeps beside them is checked.
+        snapshot: async () => {
+          for (const row of await db.select().from(schema.contentBatches)) secrets.add(row.id);
+          await client.content.snapshot({ editionId: EDITION }).catch(refused);
+          await client.content.snapshot({ editionId: 'pl' }).catch(refused);
+        },
         // The bytes are the published pack, which any app may download; its headers are checked.
         download: async () => {
           const params = { editionId: EDITION, contentVersion: pack.contentVersion };

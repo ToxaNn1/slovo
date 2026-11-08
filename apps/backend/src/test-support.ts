@@ -45,6 +45,7 @@ import { deleteCollectionLink } from './collection-links/collection-link-delete'
 import { publishPack } from './content/publish-pack';
 import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
+import { createContentStore } from './content/content-store';
 import { accounts, sessions, signInMethods } from './database/schema';
 import { readEditions } from './edition/edition-folders';
 import { createEditions } from './edition/editions';
@@ -578,6 +579,13 @@ export function testApp({
      */
     publish: (pack: Pick<BuiltPack, 'editionId' | 'file'>, editionsNow = editions) =>
       publishPack({ database, clock: systemClock, editions: editionsNow, ...pack }),
+    /** Imports the Edition folder into the content tables, as the import command does. */
+    importContent: (editionId: string, editionDir: string, options?: { override?: boolean }) =>
+      createContentStore({
+        database,
+        clock: systemClock,
+        editions: createEditions({ database, clock: systemClock, editions }),
+      }).importEdition(editionId, editionDir, options),
     /** Turns the feature off in the Edition remotely, as the off command does, on the backend's database. */
     switchOff: (editionId: string, feature: string) =>
       createEditions({ database, clock: systemClock, editions }).switchOff(editionId, feature),
