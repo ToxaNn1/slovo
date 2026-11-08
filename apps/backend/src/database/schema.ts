@@ -4,7 +4,16 @@
  * `timestamptz` and every id a UUID (spec #333, Data model). The tables come
  * with the tickets that need them.
  */
-import type { MistakeType } from '@slovo/contracts';
+import type {
+  Correction,
+  CrosswordDay,
+  CuratedCollection,
+  Idiom,
+  MistakeType,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
 import type { Actor, Json } from '@slovo/server-core';
 import {
   bigserial,
@@ -319,6 +328,99 @@ export const collectionLinks = pgTable('collection_links', {
   /** The Collection's Entry ids, in its order. */
   entryIds: text('entry_ids').array().notNull(),
   createdAt: time('created_at'),
+});
+
+/*
+ * The content of every Edition (ADR 0090): one table per kind, the record's
+ * fields as the contract's schema shapes them, with what each save keeps
+ * beside them. Records are retired, never deleted.
+ */
+
+/** Who changed a record: the import, an admin (`admin:<Account id>`) or an Агент token (`agent:<name>`). */
+export type ContentAuthor = 'import' | `admin:${string}` | `agent:${string}`;
+
+/**
+ * The batches of content writes: one import, one CLI run or one admin save
+ * each, so a batch can be reviewed and rolled back as one.
+ */
+export const contentBatches = pgTable('content_batches', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  editionId: text('edition_id').notNull(),
+  changedBy: text('changed_by').$type<ContentAuthor>().notNull(),
+  createdAt: time('created_at'),
+});
+
+/** The columns every content table has, with the record's fields typed by its contract. */
+function contentColumns<Fields>() {
+  return {
+    editionId: text('edition_id').notNull(),
+    id: text('id').notNull(),
+    fields: jsonb('fields').$type<Fields>().notNull(),
+    /** Raised by one on every change of the record. */
+    recordVersion: integer('record_version').notNull(),
+    /** The Edition's content version the record last changed at. */
+    contentVersion: integer('content_version').notNull(),
+    retired: boolean('retired').notNull(),
+    changedBy: text('changed_by').$type<ContentAuthor>().notNull(),
+    changedAt: time('changed_at'),
+    batchId: uuid('batch_id')
+      .notNull()
+      .references(() => contentBatches.id),
+  };
+}
+
+const contentTable = <Fields>(name: string) =>
+  pgTable(name, contentColumns<Fields>(), (table) => [
+    primaryKey({ columns: [table.editionId, table.id] }),
+    index().on(table.editionId, table.contentVersion),
+  ]);
+
+export const contentWords = pgTable(
+  'content_words',
+  {
+    ...contentColumns<Word>(),
+    /** Set when the Word's text changed after its Recordings were made. */
+    needsNewRecording: boolean('needs_new_recording').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.editionId, table.id] }),
+    index().on(table.editionId, table.contentVersion),
+  ],
+);
+export const contentIdioms = contentTable<Idiom>('content_idioms');
+export const contentCorrections = contentTable<Correction>('content_corrections');
+export const contentTips = contentTable<Tip>('content_tips');
+export const contentSynonymRows = contentTable<SynonymRow>('content_synonym_rows');
+export const contentCuratedCollections = contentTable<CuratedCollection>(
+  'content_curated_collections',
+);
+/** A Crossword day's id is its date. */
+export const contentCrosswordDays = contentTable<CrosswordDay>('content_crossword_days');
+
+/**
+ * Every id an Edition ever gave, with its kind prefix in the id itself:
+ * append-only, so an id never comes back with another meaning (ADR 0010).
+ */
+export const contentIds = pgTable(
+  'content_ids',
+  {
+    editionId: text('edition_id').notNull(),
+    id: text('id').notNull(),
+    registeredAt: time('registered_at'),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.id] })],
+);
+
+/**
+ * The content version of each imported Edition: one integer that only grows,
+ * raised on every publish. No row means the Edition is not imported, and its
+ * content takes no writes.
+ */
+export const contentVersions = pgTable('content_versions', {
+  editionId: text('edition_id').primaryKey(),
+  contentVersion: integer('content_version').notNull(),
+  importedAt: time('imported_at'),
+  updatedAt: time('updated_at'),
 });
 
 /*

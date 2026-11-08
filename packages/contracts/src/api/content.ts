@@ -1,6 +1,13 @@
 import { z } from 'zod';
 
+import { CorrectionSchema } from '../correction';
+import { CrosswordDaySchema } from '../crossword';
+import { CuratedCollectionSchema } from '../curated-collection';
 import { EditionIdSchema } from '../edition';
+import { IdiomSchema } from '../idiom';
+import { SynonymRowSchema } from '../synonym-row';
+import { TipSchema } from '../tip';
+import { WordSchema } from '../word';
 import { PublishedPackSchema } from '../language-pack';
 import { procedure } from './procedure';
 
@@ -88,5 +95,32 @@ export const contentContract = {
           headers: PackFileCachingSchema,
         }),
       ]),
+    ),
+
+  snapshot: procedure
+    .route({
+      method: 'GET',
+      path: '/editions/{editionId}/content/snapshot',
+      summary: 'The whole content of an Edition at its current content version',
+      tags: ['content'],
+    })
+    // An Edition the backend doesn't serve, or one whose content is not imported yet.
+    .errors({ NOT_FOUND: { message: 'Not found' } })
+    .input(z.strictObject({ editionId: EditionIdSchema }))
+    .output(
+      z.object({
+        editionId: EditionIdSchema,
+        /** The Edition's content version; every record below is as of it. */
+        contentVersion: z.number().int().positive(),
+        // Every record of each kind in id order, the Retired ones included (ADR 0090).
+        words: z.array(WordSchema),
+        idioms: z.array(IdiomSchema),
+        corrections: z.array(CorrectionSchema),
+        tips: z.array(TipSchema),
+        synonymRows: z.array(SynonymRowSchema),
+        curatedCollections: z.array(CuratedCollectionSchema),
+        /** In date order. */
+        crosswordDays: z.array(CrosswordDaySchema),
+      }),
     ),
 };

@@ -8,6 +8,7 @@
  *   pnpm content have --edition <id> [--kind <kind>]
  *   pnpm content counts --edition <id>
  *   pnpm content import <kind> <array.json | drafts folder> --edition <id> [--no-record]
+ *   pnpm content import --edition <id> [--override]   (the Edition folder into the backend's Postgres)
  *   pnpm content verify <files, ids or folders> | --changed <ref> --edition <id> [--book <file>]
  *
  * `new` drafts an Entry with a fresh id and `edit` finds an existing one;
@@ -64,6 +65,7 @@ const USAGE = [
   '       pnpm content have --edition <id> [--kind <kind>]',
   '       pnpm content counts --edition <id>',
   '       pnpm content import word|correction|idiom|synonym-row|tip <array.json | drafts folder> --edition <id> [--no-record]',
+  '       pnpm content import --edition <id> [--override]',
   '       pnpm content verify <files, ids or folder> | --changed <ref> --edition <id> [--book <text file>] [--cache <dir>]',
 ].join('\n');
 
@@ -104,6 +106,19 @@ const terminal: Terminal = {
   },
 };
 
+/**
+ * Imports the Edition folder into the content tables through the backend's
+ * own command, which reads DATABASE_URL and EDITIONS_DIR (ADR 0090): the
+ * import is the backend's, the CLI only names it.
+ */
+function importIntoDatabase(editionId: string, override: boolean): number {
+  const args = ['--silent', '--filter', '@slovo/backend', 'import-content', '--edition', editionId];
+  const { status } = spawnSync('pnpm', override ? [...args, '--override'] : args, {
+    stdio: 'inherit',
+  });
+  return status ?? 1;
+}
+
 async function main(): Promise<number> {
   if (['have', 'counts'].includes(process.argv[2] ?? '')) return listContent(process.argv.slice(2));
   const { positionals, values } = parseArgs({
@@ -114,9 +129,13 @@ async function main(): Promise<number> {
       changed: { type: 'string' },
       book: { type: 'string' },
       cache: { type: 'string' },
+      override: { type: 'boolean' },
     },
   });
   const [command, ...rest] = positionals;
+  if (command === 'import' && rest.length === 0 && values.edition !== undefined) {
+    return importIntoDatabase(values.edition, values.override === true);
+  }
   const [argument] = rest;
   const kind = command === 'new' && rest.length === 1 ? entryKind(argument) : undefined;
   const importKind = command === 'import' && rest.length === 2 ? entryKind(argument) : undefined;

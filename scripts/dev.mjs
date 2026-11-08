@@ -5,7 +5,8 @@
 // 2. apps/backend/.env, made from .env.example with a fresh AUTH_SECRET when
 //    it is missing, or given a fresh one when it keeps the example's, which
 //    the backend refuses.
-// 3. The backend's migrations and the Edition's Language Pack.
+// 3. The backend's migrations, the default Edition's content imported into
+//    Postgres once (ADR 0090), and the Edition's Language Pack.
 // 4. The backend in watch mode, then Metro, each on the first free port from
 //    its default, so a second worktree or a running smoke flow never collides.
 //    The app is pointed at the backend through EXPO_PUBLIC_SLOVO_API_URL.
@@ -111,6 +112,10 @@ run('docker', ['compose', 'up', '--detach', '--wait']);
 makeEnvFile();
 step('Running the backend migrations');
 run('pnpm', ['--filter', '@slovo/backend', 'db:migrate']);
+const { defaultEdition } = JSON.parse(readFileSync(`${root}app/app.json`, 'utf8'));
+step(`Importing the content of the default Edition "${defaultEdition}" into Postgres`);
+// An earlier run's import stays: the database keeps what it has.
+run('pnpm', ['--silent', 'content', 'import', '--edition', defaultEdition]);
 step("Building the Language Pack of the app's default Edition");
 run('pnpm', ['build:pack']);
 

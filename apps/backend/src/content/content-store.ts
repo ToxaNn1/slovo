@@ -1,0 +1,247 @@
+import type { BuildError } from '@slovo/language-pack';
+import { readEdition } from '@slovo/language-pack';
+import type { Clock, EditionRegistry } from '@slovo/server-core';
+import { eq } from 'drizzle-orm';
+import type { PgColumn } from 'drizzle-orm/pg-core';
+
+import type { Database } from '../database/database';
+import {
+  contentBatches,
+  contentCorrections,
+  contentCrosswordDays,
+  contentCuratedCollections,
+  contentIdioms,
+  contentIds,
+  contentSynonymRows,
+  contentTips,
+  contentVersions,
+  contentWords,
+} from '../database/schema';
+
+/** How many records of each kind an import wrote. */
+export interface ImportCounts {
+  readonly words: number;
+  readonly idioms: number;
+  readonly corrections: number;
+  readonly tips: number;
+  readonly synonymRows: number;
+  readonly curatedCollections: number;
+  readonly crosswordDays: number;
+}
+
+export type ImportResult =
+  | { readonly ok: true; readonly contentVersion: number; readonly counts: ImportCounts }
+  | { readonly ok: false; readonly reason: 'unknown-edition' | 'already-imported' }
+  /** The folder breaks a content rule or does not read; each refusal names its rule when a rule refused it. */
+  | { readonly ok: false; readonly reason: 'refused'; readonly refusals: readonly BuildError[] };
+
+/** Rows a single insert sends, well inside Postgres's limit of parameters. */
+const ROWS_PER_INSERT = 500;
+
+/** Every content table, for what an import does to all of them. */
+const CONTENT_TABLES = [
+  contentWords,
+  contentIdioms,
+  contentCorrections,
+  contentTips,
+  contentSynonymRows,
+  contentCuratedCollections,
+  contentCrosswordDays,
+] as const;
+
+/** The records in code-unit order of their ids, as the Language Pack keeps them, whatever the collation. */
+function inIdOrder<F>(rows: readonly { readonly id: string; readonly fields: F }[]): F[] {
+  return rows.toSorted((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)).map((row) => row.fields);
+}
+
+/** Sends the rows in inserts of at most ROWS_PER_INSERT each. */
+async function inChunks<R>(rows: readonly R[], insert: (chunk: R[]) => Promise<unknown>) {
+  for (let start = 0; start < rows.length; start += ROWS_PER_INSERT) {
+    await insert(rows.slice(start, start + ROWS_PER_INSERT));
+  }
+}
+
+/** The content of the Edition's tables, imported, snapshotted. */
+export function createContentStore({
+  database,
+  clock,
+  editions,
+}: {
+  database: Database;
+  clock: Clock;
+  editions: EditionRegistry;
+}) {
+  const { db } = database;
+
+  /**
+   * Imports the Edition's folder through the shared content rules, keeping
+   * every id and retired flag, all in one transaction: a refusal writes
+   * nothing. The first import continues from the manifest's content
+   * version; a second one is refused unless overridden, and then replaces
+   * every record one version on, so no device ever sees a lower version.
+   */
+  async function importEdition(
+    editionId: string,
+    editionDir: string,
+    { override = false }: { readonly override?: boolean } = {},
+  ): Promise<ImportResult> {
+    if (editions.find(editionId) === undefined) return { ok: false, reason: 'unknown-edition' };
+    const now = clock.now();
+    const source = readEdition(editionDir, { registryRequired: true, today: now });
+    if (source.editionId !== undefined && source.editionId !== editionId) {
+      return { ok: false, reason: 'unknown-edition' };
+    }
+    const { valid, registry = [] } = source;
+    if (valid === undefined) return { ok: false, reason: 'refused', refusals: source.errors };
+    const { content } = valid;
+    return db.transaction(async (tx) => {
+      const [held] = await tx
+        .select()
+        .from(contentVersions)
+        .where(eq(contentVersions.editionId, editionId))
+        .for('update');
+      if (held !== undefined && !override)
+        return { ok: false, reason: 'already-imported' } as const;
+      const contentVersion = held === undefined ? content.contentVersion : held.contentVersion + 1;
+      const [batch] = await tx
+        .insert(contentBatches)
+        .values({ editionId, changedBy: 'import', createdAt: now })
+        .returning({ id: contentBatches.id });
+      if (batch === undefined) throw new Error('the batch of the import was not written');
+      const common = {
+        editionId,
+        recordVersion: 1,
+        contentVersion,
+        changedBy: 'import' as const,
+        changedAt: now,
+        batchId: batch.id,
+      };
+      const rowsOf = <T extends { readonly id: string; readonly retired?: boolean }>(
+        records: readonly T[],
+      ) =>
+        records.map((fields) => ({
+          ...common,
+          id: fields.id,
+          fields,
+          retired: fields.retired ?? false,
+        }));
+      const words = rowsOf(content.words).map((row) => ({ ...row, needsNewRecording: false }));
+      const crosswordDays = (content.crosswordDays ?? []).map((fields) => ({
+        ...common,
+        id: fields.date,
+        fields,
+        retired: false,
+      }));
+      for (const table of CONTENT_TABLES) {
+        await tx.delete(table).where(eq(table.editionId, editionId));
+      }
+      await inChunks(words, (rows) => tx.insert(contentWords).values(rows));
+      await inChunks(rowsOf(content.idioms), (rows) => tx.insert(contentIdioms).values(rows));
+      await inChunks(rowsOf(content.corrections), (rows) =>
+        tx.insert(contentCorrections).values(rows),
+      );
+      await inChunks(rowsOf(content.tips), (rows) => tx.insert(contentTips).values(rows));
+      await inChunks(rowsOf(content.synonymRows), (rows) =>
+        tx.insert(contentSynonymRows).values(rows),
+      );
+      await inChunks(rowsOf(content.curatedCollections ?? []), (rows) =>
+        tx.insert(contentCuratedCollections).values(rows),
+      );
+      await inChunks(crosswordDays, (rows) => tx.insert(contentCrosswordDays).values(rows));
+      await inChunks(
+        registry.map((id) => ({ editionId, id, registeredAt: now })),
+        (rows) => tx.insert(contentIds).values(rows).onConflictDoNothing(),
+      );
+      await tx
+        .insert(contentVersions)
+        .values({ editionId, contentVersion, importedAt: now, updatedAt: now })
+        .onConflictDoUpdate({
+          target: contentVersions.editionId,
+          set: { contentVersion, updatedAt: now },
+        });
+      return {
+        ok: true,
+        contentVersion,
+        counts: {
+          words: content.words.length,
+          idioms: content.idioms.length,
+          corrections: content.corrections.length,
+          tips: content.tips.length,
+          synonymRows: content.synonymRows.length,
+          curatedCollections: content.curatedCollections?.length ?? 0,
+          crosswordDays: content.crosswordDays?.length ?? 0,
+        },
+      } as const;
+    });
+  }
+
+  /** Every record of the Edition at its current content version; none while it is not imported. */
+  async function snapshot(editionId: string) {
+    if (editions.find(editionId) === undefined) return undefined;
+    return db.transaction(
+      async (tx) => {
+        const [held] = await tx
+          .select()
+          .from(contentVersions)
+          .where(eq(contentVersions.editionId, editionId));
+        if (held === undefined) return undefined;
+        const ofEdition = (column: PgColumn) => eq(column, editionId);
+        return {
+          editionId,
+          contentVersion: held.contentVersion,
+          words: inIdOrder(
+            await tx
+              .select({ id: contentWords.id, fields: contentWords.fields })
+              .from(contentWords)
+              .where(ofEdition(contentWords.editionId)),
+          ),
+          idioms: inIdOrder(
+            await tx
+              .select({ id: contentIdioms.id, fields: contentIdioms.fields })
+              .from(contentIdioms)
+              .where(ofEdition(contentIdioms.editionId)),
+          ),
+          corrections: inIdOrder(
+            await tx
+              .select({ id: contentCorrections.id, fields: contentCorrections.fields })
+              .from(contentCorrections)
+              .where(ofEdition(contentCorrections.editionId)),
+          ),
+          tips: inIdOrder(
+            await tx
+              .select({ id: contentTips.id, fields: contentTips.fields })
+              .from(contentTips)
+              .where(ofEdition(contentTips.editionId)),
+          ),
+          synonymRows: inIdOrder(
+            await tx
+              .select({ id: contentSynonymRows.id, fields: contentSynonymRows.fields })
+              .from(contentSynonymRows)
+              .where(ofEdition(contentSynonymRows.editionId)),
+          ),
+          curatedCollections: inIdOrder(
+            await tx
+              .select({
+                id: contentCuratedCollections.id,
+                fields: contentCuratedCollections.fields,
+              })
+              .from(contentCuratedCollections)
+              .where(ofEdition(contentCuratedCollections.editionId)),
+          ),
+          crosswordDays: inIdOrder(
+            await tx
+              .select({ id: contentCrosswordDays.id, fields: contentCrosswordDays.fields })
+              .from(contentCrosswordDays)
+              .where(ofEdition(contentCrosswordDays.editionId)),
+          ),
+        };
+      },
+      // One consistent view of every table.
+      { isolationLevel: 'repeatable read', accessMode: 'read only' },
+    );
+  }
+
+  return { importEdition, snapshot };
+}
+
+export type ContentStore = ReturnType<typeof createContentStore>;
