@@ -1,7 +1,8 @@
+import type { Entry } from '@slovo/contracts';
 import type { BuildError } from '@slovo/language-pack';
 import { readEdition } from '@slovo/language-pack';
 import type { Clock, EditionRegistry } from '@slovo/server-core';
-import { eq } from 'drizzle-orm';
+import { and, eq, inArray } from 'drizzle-orm';
 import type { PgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
@@ -47,6 +48,15 @@ const CONTENT_TABLES = [
   contentSynonymRows,
   contentCuratedCollections,
   contentCrosswordDays,
+] as const;
+
+/** The content tables of the kinds of Entry. */
+const ENTRY_TABLES = [
+  contentWords,
+  contentCorrections,
+  contentIdioms,
+  contentSynonymRows,
+  contentTips,
 ] as const;
 
 /** The records in code-unit order of their ids, as the Language Pack keeps them, whatever the collation. */
@@ -247,7 +257,56 @@ export function createContentStore({
     );
   }
 
-  return { importEdition, snapshot };
+  /**
+   * The Entries of the ids the Edition's tables have and have not retired,
+   * at its current content version, in no set order.
+   */
+  async function entries(editionId: string, ids: readonly string[]): Promise<readonly Entry[]> {
+    if (ids.length === 0) return [];
+    return db.transaction(
+      async (tx) => {
+        const live = (table: (typeof ENTRY_TABLES)[number]) =>
+          and(
+            eq(table.editionId, editionId),
+            inArray(table.id, [...ids]),
+            eq(table.retired, false),
+          );
+        const fieldsOf = async <F>(rows: Promise<readonly { readonly fields: F }[]>) =>
+          (await rows).map(({ fields }) => fields);
+        const [words, corrections, idioms, synonymRows, tips] = [
+          await fieldsOf(
+            tx.select({ fields: contentWords.fields }).from(contentWords).where(live(contentWords)),
+          ),
+          await fieldsOf(
+            tx
+              .select({ fields: contentCorrections.fields })
+              .from(contentCorrections)
+              .where(live(contentCorrections)),
+          ),
+          await fieldsOf(
+            tx
+              .select({ fields: contentIdioms.fields })
+              .from(contentIdioms)
+              .where(live(contentIdioms)),
+          ),
+          await fieldsOf(
+            tx
+              .select({ fields: contentSynonymRows.fields })
+              .from(contentSynonymRows)
+              .where(live(contentSynonymRows)),
+          ),
+          await fieldsOf(
+            tx.select({ fields: contentTips.fields }).from(contentTips).where(live(contentTips)),
+          ),
+        ];
+        return [...words, ...corrections, ...idioms, ...synonymRows, ...tips];
+      },
+      // One consistent view of every table.
+      { isolationLevel: 'repeatable read', accessMode: 'read only' },
+    );
+  }
+
+  return { importEdition, snapshot, entries };
 }
 
 export type ContentStore = ReturnType<typeof createContentStore>;
