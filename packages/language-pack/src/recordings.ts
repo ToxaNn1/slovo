@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { renderStress, type EditionConfig, type Word } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
-import type { Authored } from './check-content';
+import type { Authored } from '@slovo/content-rules';
 import { RECORDED_TEXTS_FILE, RECORDINGS_DIR, type RecordingFolderEntry } from './edition-folder';
 
 /** How many live Words a Narrator Voice has no Recording of their current text. */

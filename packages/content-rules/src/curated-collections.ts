@@ -1,7 +1,6 @@
 import type { CuratedCollection, Entry } from '@slovo/contracts';
 
-import type { BuildError } from './build-error';
-import type { Authored } from './check-content';
+import type { Authored, Refusal } from './refusal';
 
 /**
  * The checks the schema can't make on one Curated Collection alone (ADR 0076):
@@ -11,8 +10,8 @@ import type { Authored } from './check-content';
 export function checkCuratedCollections(
   collections: readonly Authored<CuratedCollection>[],
   entries: readonly Authored<Entry>[],
-): BuildError[] {
-  const errors: BuildError[] = [];
+): Refusal[] {
+  const errors: Refusal[] = [];
   const retiredById = new Map(entries.map(({ entry }) => [entry.id, entry.retired]));
   const fileById = new Map<string, string>();
 
@@ -22,17 +21,17 @@ export function checkCuratedCollections(
       fileById.set(collection.id, file);
     } else {
       const message = `Duplicate Curated Collection id: also in ${first}`;
-      errors.push({ file, entryId: collection.id, field: 'id', message });
+      errors.push({ rule: 'duplicate-id', file, entryId: collection.id, field: 'id', message });
     }
     collection.entryIds.forEach((entryId, position) => {
       const retired = retiredById.get(entryId);
       const field = `entryIds.${String(position)}`;
       if (retired === undefined) {
         const message = `No Entry ${entryId} in this Edition`;
-        errors.push({ file, entryId: collection.id, field, message });
+        errors.push({ rule: 'curated-collection-entry', file, entryId: collection.id, field, message });
       } else if (retired) {
         const message = `${entryId} is a Retired Entry: a Curated Collection names live Entries only`;
-        errors.push({ file, entryId: collection.id, field, message });
+        errors.push({ rule: 'curated-collection-entry', file, entryId: collection.id, field, message });
       }
     });
   }

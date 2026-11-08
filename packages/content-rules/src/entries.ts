@@ -1,7 +1,13 @@
-import type { Correction, EditionConfig, Entry, Idiom, Word } from '@slovo/contracts';
-import { STRESS_MARK, withoutStress } from '@slovo/core';
+import {
+  STRESS_MARK,
+  type Correction,
+  type EditionConfig,
+  type Entry,
+  type Idiom,
+  type Word,
+} from '@slovo/contracts';
 
-import type { BuildError } from './build-error';
+import type { Authored, Refusal, RuleName } from './refusal';
 
 /**
  * Checks that each Stress position of a text falls on one of its letters, and
@@ -28,23 +34,17 @@ export function checkStress(
   });
 }
 
-/** An Entry that passed the schema, with the file it was authored in. */
-export interface Authored<T extends { readonly id: string }> {
-  readonly file: string;
-  readonly entry: T;
-}
-
 /**
  * The checks the schema can't make on one Entry alone: they need the Edition
  * config or the other Entries.
  */
-export function checkContent(
+export function checkEntries(
   config: EditionConfig,
   words: readonly Authored<Word>[],
   corrections: readonly Authored<Correction>[],
   idioms: readonly Authored<Idiom>[],
-): BuildError[] {
-  const errors: BuildError[] = [];
+): Refusal[] {
+  const errors: Refusal[] = [];
   const {
     marksStress,
     vowels,
@@ -67,7 +67,7 @@ export function checkContent(
       fileById.set(entry.id, file);
     } else {
       const message = `Duplicate id, already used in ${firstFile}`;
-      errors.push({ file, entryId: entry.id, field: 'id', message });
+      errors.push({ rule: 'duplicate-id', file, entryId: entry.id, field: 'id', message });
     }
   }
 
@@ -77,19 +77,20 @@ export function checkContent(
 
   for (const { file, entry } of [...words, ...corrections, ...idioms]) {
     for (const [field, message] of mixedScriptWords(entry)) {
-      errors.push({ file, entryId: entry.id, field, message });
+      errors.push({ rule: 'mixed-script', file, entryId: entry.id, field, message });
     }
   }
 
   for (const { file, entry: word } of words) {
-    const fail = (field: string, message: string) => {
-      errors.push({ file, entryId: word.id, field, message });
+    const fail = (rule: RuleName, field: string, message: string) => {
+      errors.push({ rule, file, entryId: word.id, field, message });
     };
 
     const stray = strayCharacter(word.lemma.toLocaleLowerCase(config.locale), lemmaTokens);
     if (stray !== undefined) {
       const code = codePointLabel(stray);
       fail(
+        'stray-character',
         'lemma',
         /\p{M}/u.test(stray)
           ? `Holds the combining mark ${code}: mark Stress in the stress field and write every letter whole`
@@ -104,6 +105,7 @@ export function checkContent(
         wordByLemmaAndDefinition.set(key, { file, entry: word });
       } else if (first.entry.id !== word.id) {
         fail(
+          'unique-lemma',
           'primaryDefinition',
           `Same Lemma and primary Definition as ${first.entry.id} in ${first.file}: author it once, or retire one of them`,
         );
@@ -112,38 +114,39 @@ export function checkContent(
 
     word.correctionIds.forEach((id, index) => {
       if (!correctionIds.has(id)) {
-        fail(`correctionIds.${String(index)}`, `Unknown Correction "${id}"`);
+        fail('word-correction', `correctionIds.${String(index)}`, `Unknown Correction "${id}"`);
       }
     });
 
     if (!categoryIds.has(word.categoryId)) {
-      fail('categoryId', `Unknown Category "${word.categoryId}"`);
+      fail('word-category', 'categoryId', `Unknown Category "${word.categoryId}"`);
     }
 
     if (word.history === undefined && categoriesRequiringHistory.has(word.categoryId)) {
-      fail('history', `Required: Category "${word.categoryId}" requires history`);
+      fail('category-history', 'history', `Required: Category "${word.categoryId}" requires history`);
     }
 
     if (word.origin !== undefined && !originCodes.has(word.origin)) {
       fail(
+        'word-origin',
         'origin',
         `Unknown origin language "${word.origin}": the Edition's originLanguages list no such code`,
       );
     }
 
     if (!marksStress) {
-      if (word.stress.length > 0) fail('stress', 'Not allowed: the Edition does not mark Stress');
+      if (word.stress.length > 0) fail('marks-stress', 'stress', 'Not allowed: the Edition does not mark Stress');
       continue;
     }
     if (word.stress.length === 0) {
-      fail('stress', 'Required: the Edition marks Stress');
+      fail('marks-stress', 'stress', 'Required: the Edition marks Stress');
       continue;
     }
     checkStress(
       config,
       { text: word.lemma, stress: word.stress, named: 'Lemma' },
       (index, message) => {
-        fail(`stress.${String(index)}`, message);
+        fail('stress', `stress.${String(index)}`, message);
       },
     );
   }
@@ -161,13 +164,14 @@ export function checkContent(
   const idiomByExpression = new Map<string, Authored<Idiom>>();
 
   for (const { file, entry: idiom } of idioms) {
-    const fail = (message: string) => {
-      errors.push({ file, entryId: idiom.id, field: 'expression', message });
+    const fail = (rule: RuleName, message: string) => {
+      errors.push({ rule, file, entryId: idiom.id, field: 'expression', message });
     };
 
     const stray = strayCharacter(idiom.expression, expressionTokens);
     if (stray !== undefined) {
       fail(
+        'stray-character',
         `"${stray}" (${codePointLabel(stray)}) is not a letter of the alphabet, punctuation or space the Edition allows`,
       );
     }
@@ -179,6 +183,7 @@ export function checkContent(
         idiomByExpression.set(expression, { file, entry: idiom });
       } else if (first.entry.id !== idiom.id) {
         fail(
+          'unique-expression',
           `Same expression as ${first.entry.id} in ${first.file}: author it once, or retire one of them`,
         );
       }
@@ -186,11 +191,11 @@ export function checkContent(
   }
 
   for (const { file, entry: correction } of corrections) {
-    const fail = (field: string, message: string) => {
-      errors.push({ file, entryId: correction.id, field, message });
+    const fail = (rule: RuleName, field: string, message: string) => {
+      errors.push({ rule, file, entryId: correction.id, field, message });
     };
     if (!correctionCategoryIds.has(correction.categoryId)) {
-      fail('categoryId', `Unknown Category "${correction.categoryId}"`);
+      fail('correction-category', 'categoryId', `Unknown Category "${correction.categoryId}"`);
     }
     const texts: readonly (readonly [field: string, text: string])[] = [
       ['nonStandardForm', correction.nonStandardForm],
@@ -205,13 +210,13 @@ export function checkContent(
     if (correction.correctionType !== 'wrongStress') {
       for (const [field, text] of texts) {
         if (text.includes(STRESS_MARK)) {
-          fail(field, 'Not allowed: only a wrong-stress Correction writes Stress marks');
+          fail('wrong-stress', field, 'Not allowed: only a wrong-stress Correction writes Stress marks');
         }
       }
       continue;
     }
     if (!marksStress) {
-      fail('correctionType', 'Not allowed: the Edition does not mark Stress');
+      fail('marks-stress', 'correctionType', 'Not allowed: the Edition does not mark Stress');
       continue;
     }
 
@@ -219,7 +224,7 @@ export function checkContent(
     const forms = texts.slice(0, 1 + correction.standardEquivalents.length);
     for (const [field, text] of forms) {
       if (!text.includes(STRESS_MARK)) {
-        fail(field, 'Required: a wrong-stress Correction writes a Stress mark in each form');
+        fail('wrong-stress', field, 'Required: a wrong-stress Correction writes a Stress mark in each form');
         continue;
       }
       const characters = Array.from(text);
@@ -227,17 +232,19 @@ export function checkContent(
         if (character !== STRESS_MARK) return;
         const letter = characters[index - 1];
         if (letter === undefined || !vowels?.includes(letter.toLocaleLowerCase(config.locale))) {
-          fail(field, `The Stress mark follows "${letter ?? ''}", not a vowel`);
+          fail('wrong-stress', field, `The Stress mark follows "${letter ?? ''}", not a vowel`);
         }
       });
     }
 
     // The two forms are one word said two ways, so only their Stress differs.
-    const sameWord = (text: string) => withoutStress(text).toLocaleLowerCase(config.locale);
+    const sameWord = (text: string) =>
+      text.replaceAll(STRESS_MARK, '').toLocaleLowerCase(config.locale);
     const nonStandard = sameWord(correction.nonStandardForm);
     correction.standardEquivalents.forEach((equivalent, index) => {
       if (sameWord(equivalent) !== nonStandard) {
         fail(
+          'wrong-stress',
           `standardEquivalents.${String(index)}`,
           "A wrong-stress Correction's forms differ only in their Stress marks",
         );

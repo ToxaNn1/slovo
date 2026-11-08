@@ -13,16 +13,13 @@ import type {
 } from '@slovo/contracts';
 import { WordIdSchema } from '@slovo/contracts';
 
-import type { BuildError } from './build-error';
+import { checkContentSet, type Authored } from '@slovo/content-rules';
+
+import { buildErrorsOf, type BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
-import { checkContent, type Authored } from './check-content';
-import { checkCuratedCollections } from './check-curated-collections';
-import { checkSynonymRows } from './check-synonym-rows';
-import { checkTips } from './check-tips';
 import type { ContentManifest } from './content-manifest';
 import type { ContentTargets } from './content-targets';
-import { crosswordDayErrors } from './crossword-days';
-import { CROSSWORD_DAYS_FILE, editionFiles, EditionFolderError } from './edition-folder';
+import { editionFiles, EditionFolderError } from './edition-folder';
 import { illustrationErrors } from './illustrations';
 import { missingRecordings, recordingErrors, type MissingRecordings } from './recordings';
 import { missingEntryErrors } from './id-registry';
@@ -61,7 +58,14 @@ export interface EditionSource {
  */
 export function readEdition(
   editionDir: string,
-  { registryRequired }: { registryRequired: boolean },
+  {
+    registryRequired,
+    today,
+  }: {
+    registryRequired: boolean;
+    /** The day the public domain is judged on (ADR 0045). */
+    today: Date;
+  },
 ): EditionSource {
   const folder = editionFiles(editionDir);
   const errors: BuildError[] = [];
@@ -103,9 +107,24 @@ export function readEdition(
     (WordIdSchema.safeParse(id).success && existsSync(join(editionDir, folder.entryFile(id))));
   if (config !== undefined) {
     errors.push(
-      ...checkContent(config, words, corrections, idioms),
-      ...checkSynonymRows(config, words, synonymRows),
-      ...checkTips(config, tips),
+      ...buildErrorsOf(
+        checkContentSet(
+          config,
+          {
+            words,
+            corrections,
+            idioms,
+            synonymRows,
+            tips,
+            curatedCollections,
+            ...(crosswordDays === undefined ? {} : { crosswordDays }),
+            ...(manifest?.crosswordDaysChecksum === undefined
+              ? {}
+              : { recordedCrosswordDaysChecksum: manifest.crosswordDaysChecksum }),
+          },
+          { today },
+        ),
+      ),
       ...editionFontErrors(config, tokens, folder.fonts()),
       ...categoryArtErrors(config, decor),
       ...recordingErrors(config, isWord, folder.recordings(), (voice, name) =>
@@ -114,19 +133,6 @@ export function readEdition(
     );
   }
   errors.push(...illustrationErrors(words, (name) => folder.illustration(name)));
-  errors.push(
-    ...checkCuratedCollections(curatedCollections, [
-      ...words,
-      ...corrections,
-      ...idioms,
-      ...synonymRows,
-      ...tips,
-    ]),
-  );
-  errors.push(
-    ...unknownCrosswordEntries(crosswordDays ?? [], [...words, ...corrections]),
-    ...crosswordDayErrors(crosswordDays, manifest, config?.id),
-  );
   if (registry !== undefined) {
     errors.push(
       ...missingEntryErrors(
@@ -174,30 +180,6 @@ export function readEdition(
       : { curatedCollections: sortedById(curatedCollections) }),
   };
   return { ...source, valid: { content, manifest, targets } };
-}
-
-/**
- * The words of crossword days that no Word or Correction of the Edition
- * stands behind. A Retired one still does: its day stays as it was made.
- */
-function unknownCrosswordEntries(
-  days: readonly CrosswordDay[],
-  entries: readonly Authored<Entry>[],
-): BuildError[] {
-  const ids = new Set(entries.map(({ entry }) => entry.id));
-  return days.flatMap(({ words }, day) =>
-    words.flatMap(({ entryId }, word) =>
-      ids.has(entryId)
-        ? []
-        : [
-            {
-              file: CROSSWORD_DAYS_FILE,
-              field: `${String(day)}.words.${String(word)}.entryId`,
-              message: `No Word or Correction ${entryId} in the Edition`,
-            },
-          ],
-    ),
-  );
 }
 
 function sortedById<T extends { readonly id: string }>(authored: readonly Authored<T>[]): T[] {
