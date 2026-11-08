@@ -425,12 +425,14 @@ describe('buildLanguagePack', () => {
         /unknown correction.*c_fx9999/i,
       ],
     ])('%s', (_rule, file, entryId, field, message) => {
-      expect(errors()).toContainEqual({
-        file: `content/words/${file}`,
-        entryId,
-        field,
-        message: expect.stringMatching(message) as string,
-      });
+      expect(errors()).toContainEqual(
+        expect.objectContaining({
+          file: `content/words/${file}`,
+          entryId,
+          field,
+          message: expect.stringMatching(message) as string,
+        }),
+      );
     });
 
     it.each([
@@ -494,12 +496,14 @@ describe('buildLanguagePack', () => {
         /unknown category "speech"/i,
       ],
     ])('%s', (_rule, file, entryId, field, message) => {
-      expect(errors()).toContainEqual({
-        file: `content/corrections/${file}`,
-        entryId,
-        field,
-        message: expect.stringMatching(message) as string,
-      });
+      expect(errors()).toContainEqual(
+        expect.objectContaining({
+          file: `content/corrections/${file}`,
+          entryId,
+          field,
+          message: expect.stringMatching(message) as string,
+        }),
+      );
     });
 
     it.each([
@@ -524,36 +528,44 @@ describe('buildLanguagePack', () => {
         /same expression as i_fx1005/i,
       ],
     ])('%s', (_rule, entryId, field, message) => {
-      expect(errors()).toContainEqual({
-        file: `content/idioms/${entryId}.json`,
-        entryId,
-        field,
-        message: expect.stringMatching(message) as string,
-      });
+      expect(errors()).toContainEqual(
+        expect.objectContaining({
+          file: `content/idioms/${entryId}.json`,
+          entryId,
+          field,
+          message: expect.stringMatching(message) as string,
+        }),
+      );
     });
 
     it('rejects a file that is not an Entry file', () => {
-      expect(errors()).toContainEqual({
-        file: 'content/words/notes.txt',
-        message: expect.stringMatching(/<id>\.json/) as string,
-      });
+      expect(errors()).toContainEqual(
+        expect.objectContaining({
+          file: 'content/words/notes.txt',
+          message: expect.stringMatching(/<id>\.json/) as string,
+        }),
+      );
     });
 
     it('rejects an Entry whose id is not in the registry', () => {
-      expect(errors()).toContainEqual({
-        file: 'content/words/w_fx1023.json',
-        entryId: 'w_fx1023',
-        field: 'id',
-        message: expect.stringMatching(/not in content\/ids\.json/i) as string,
-      });
+      expect(errors()).toContainEqual(
+        expect.objectContaining({
+          file: 'content/words/w_fx1023.json',
+          entryId: 'w_fx1023',
+          field: 'id',
+          message: expect.stringMatching(/not in content\/ids\.json/i) as string,
+        }),
+      );
     });
 
     it('rejects a known id that has no file', () => {
-      expect(errors()).toContainEqual({
-        file: 'content/ids.json',
-        entryId: 'w_fx1099',
-        message: expect.stringMatching(/no file/i) as string,
-      });
+      expect(errors()).toContainEqual(
+        expect.objectContaining({
+          file: 'content/ids.json',
+          entryId: 'w_fx1099',
+          message: expect.stringMatching(/no file/i) as string,
+        }),
+      );
     });
 
     it('reports nothing but those errors', () => {
@@ -571,11 +583,11 @@ describe('buildLanguagePack', () => {
     }));
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'edition.json',
         field: 'languageTraits.vowels',
         message: expect.stringMatching(/marks stress/i) as string,
-      },
+      }),
     ]);
   });
 
@@ -617,12 +629,12 @@ describe('buildLanguagePack', () => {
     addStressTrap(editionDir);
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/corrections/c_fx0005.json',
         entryId: 'c_fx0005',
         field: 'correctionType',
         message: expect.stringMatching(/does not mark stress/i) as string,
-      },
+      }),
     ]);
   });
 
@@ -691,6 +703,7 @@ describe('buildLanguagePack', () => {
         entryId,
         field: 'stress',
         message: expect.stringMatching(/does not mark stress/i) as string,
+        rule: 'marks-stress',
       })),
     );
   });
@@ -701,18 +714,18 @@ describe('buildLanguagePack', () => {
     writeFileSync(join(editionDir, 'content/corrections/c_fx0002_copy.json'), JSON.stringify(copy));
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/corrections/c_fx0002_copy.json',
         entryId: 'c_fx0002',
         field: 'id',
         message: expect.stringMatching(/named c_fx0002\.json/i) as string,
-      },
-      {
+      }),
+      expect.objectContaining({
         file: 'content/corrections/c_fx0002_copy.json',
         entryId: 'c_fx0002',
         field: 'id',
         message: expect.stringMatching(/duplicate.*c_fx0002\.json/i) as string,
-      },
+      }),
     ]);
   });
 
@@ -750,12 +763,12 @@ describe('buildLanguagePack', () => {
       languageTraits: { ...(config['languageTraits'] as Json), lemmaPunctuation: "'" },
     }));
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/words/w_fx0002.json',
         entryId: 'w_fx0002',
         field: 'lemma',
         message: expect.stringMatching(/"-" \(U\+002D\) is not a letter/) as string,
-      },
+      }),
     ]);
   });
 
@@ -768,34 +781,34 @@ describe('buildLanguagePack', () => {
     }));
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/words/w_fx0002.json',
         entryId: 'w_fx0002',
         field: 'primaryDefinition',
         message:
           'The word "вiд" mixes Cyrillic and Latin letters ("i" U+0069): write each word in one script',
-      },
-      {
+      }),
+      expect.objectContaining({
         file: 'content/words/w_fx0002.json',
         entryId: 'w_fx0002',
         field: 'examples.1.text',
         message:
           'The word "Свiчка" mixes Cyrillic and Latin letters ("i" U+0069): write each word in one script',
-      },
-      {
+      }),
+      expect.objectContaining({
         file: 'content/words/w_fx0002.json',
         entryId: 'w_fx0002',
         field: 'examples.1.text',
         message:
           'The word "Iскри" mixes Cyrillic and Latin letters ("I" U+0049): write each word in one script',
-      },
-      {
+      }),
+      expect.objectContaining({
         file: 'content/words/w_fx0002.json',
         entryId: 'w_fx0002',
         field: 'examples.1.text',
         message:
           'The word "i" stands in Latin between Cyrillic words ("i" U+0069): write each word in one script',
-      },
+      }),
     ]);
   });
 
@@ -1017,12 +1030,14 @@ describe('buildLanguagePack', () => {
         ],
         ['no source', { ...fullTip, sources: [] }, 'sources', /at least 1|>=1/i],
       ])('%s', (_rule, tip, field, message) => {
-        expect(refusals(tip)).toContainEqual({
-          file: 'content/tips/t_fx0001.json',
-          entryId: 't_fx0001',
-          field,
-          message: expect.stringMatching(message) as string,
-        });
+        expect(refusals(tip)).toContainEqual(
+          expect.objectContaining({
+            file: 'content/tips/t_fx0001.json',
+            entryId: 't_fx0001',
+            field,
+            message: expect.stringMatching(message) as string,
+          }),
+        );
       });
 
       it('compares answers in lower case', () => {
@@ -1031,12 +1046,14 @@ describe('buildLanguagePack', () => {
           wrongAnswers: ['Скільки час?', 'Скільки годин?', 'котра година?'],
         });
 
-        expect(refusals(tip)).toContainEqual({
-          file: 'content/tips/t_fx0001.json',
-          entryId: 't_fx0001',
-          field: 'gameQuestion.wrongAnswers.2',
-          message: expect.stringMatching(/same answer as rightAnswer:/i) as string,
-        });
+        expect(refusals(tip)).toContainEqual(
+          expect.objectContaining({
+            file: 'content/tips/t_fx0001.json',
+            entryId: 't_fx0001',
+            field: 'gameQuestion.wrongAnswers.2',
+            message: expect.stringMatching(/same answer as rightAnswer:/i) as string,
+          }),
+        );
       });
     });
   });
@@ -1213,23 +1230,27 @@ describe('buildLanguagePack', () => {
           /position 8 is out of range for the 8-letter text/i,
         ],
       ])('%s', (_rule, row, field, message) => {
-        expect(refusals(row)).toContainEqual({
-          file: 'content/synonym-rows/r_fx0001.json',
-          entryId: 'r_fx0001',
-          field,
-          message: expect.stringMatching(message) as string,
-        });
+        expect(refusals(row)).toContainEqual(
+          expect.objectContaining({
+            file: 'content/synonym-rows/r_fx0001.json',
+            entryId: 'r_fx0001',
+            field,
+            message: expect.stringMatching(message) as string,
+          }),
+        );
       });
 
       it('compares member texts in lower case', () => {
         const row = withMembers([...fullRow.members.slice(0, 4), { text: 'Казати', stress: [3] }]);
 
-        expect(refusals(row)).toContainEqual({
-          file: 'content/synonym-rows/r_fx0001.json',
-          entryId: 'r_fx0001',
-          field: 'members.4.text',
-          message: expect.stringMatching(/same text as members\.2:/i) as string,
-        });
+        expect(refusals(row)).toContainEqual(
+          expect.objectContaining({
+            file: 'content/synonym-rows/r_fx0001.json',
+            entryId: 'r_fx0001',
+            field: 'members.4.text',
+            message: expect.stringMatching(/same text as members\.2:/i) as string,
+          }),
+        );
       });
     });
 
@@ -1271,12 +1292,12 @@ describe('buildLanguagePack', () => {
       languageTraits: { ...(config['languageTraits'] as Json), expressionPunctuation: ',' },
     }));
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/idioms/i_fx0001.json',
         entryId: 'i_fx0001',
         field: 'expression',
         message: expect.stringMatching(/"—" \(U\+2014\) is not a letter/) as string,
-      },
+      }),
     ]);
   });
 
@@ -1353,12 +1374,12 @@ describe('buildLanguagePack', () => {
 
       const refused = build(new Date(2030, 11, 31));
       expect(refused.ok ? [] : refused.errors).toEqual([
-        {
+        expect.objectContaining({
           file: 'content/corrections/c_fx0001.json',
           entryId: 'c_fx0001',
           field: 'literaryUses.1.authorDeathYear',
           message: 'Not in the public domain until 1 January 2031',
-        },
+        }),
       ]);
       expect(checkLanguagePack({ editionDir, today: new Date(2030, 11, 31) }).ok).toBe(false);
       expect(build(new Date(2031, 0, 1)).ok).toBe(true);
@@ -1401,10 +1422,12 @@ describe('buildLanguagePack', () => {
       const editionDir = copyFixture('valid');
       renameSync(join(editionDir, dir), join(editionDir, `${dir}-renamed`));
 
-      expect(buildErrors(editionDir)).toContainEqual({
-        file: dir,
-        message: expect.stringMatching(/folder not found/i) as string,
-      });
+      expect(buildErrors(editionDir)).toContainEqual(
+        expect.objectContaining({
+          file: dir,
+          message: expect.stringMatching(/folder not found/i) as string,
+        }),
+      );
     },
   );
 
@@ -1574,12 +1597,12 @@ describe('buildLanguagePack', () => {
       editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, origin: 'fr' }));
 
       expect(buildErrors(editionDir)).toEqual([
-        {
+        expect.objectContaining({
           file: 'content/words/w_fx0002.json',
           entryId: 'w_fx0002',
           field: 'origin',
           message: expect.stringMatching(/unknown origin language "fr"/i) as string,
-        },
+        }),
       ]);
     });
 
@@ -1783,6 +1806,7 @@ describe('buildLanguagePack', () => {
         entryId,
         field: 'history',
         message: expect.stringMatching(/category "speech" requires history/i) as string,
+        rule: 'category-history',
       })),
     );
   });
@@ -1795,11 +1819,11 @@ describe('buildLanguagePack', () => {
     }));
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'edition.json',
         field: 'categoriesRequiringHistory.0',
         message: expect.stringMatching(/unknown category id "work"/i) as string,
-      },
+      }),
     ]);
   });
 
@@ -1904,13 +1928,13 @@ describe('buildLanguagePack', () => {
       editJson(editionDir, file, (entry) => ({ ...entry, ...change }));
 
       expect(buildErrors(editionDir)).toEqual([
-        {
+        expect.objectContaining({
           file: 'content/manifest.json',
           field: 'contentChecksum',
           message: expect.stringMatching(
             /content changed since content version 9.*pnpm build:pack fixture --record/i,
           ) as string,
-        },
+        }),
       ]);
     },
   );
@@ -1934,11 +1958,11 @@ describe('buildLanguagePack', () => {
     editJson(editionDir, 'content/manifest.json', () => ({ contentVersion: 3 }));
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/manifest.json',
         field: 'contentChecksum',
         message: expect.stringMatching(/not recorded.*--record/i) as string,
-      },
+      }),
     ]);
   });
 });
@@ -1998,10 +2022,10 @@ describe('the Recordings of the Narrator Voices', () => {
     writeFileSync(join(recordingsDir(editionDir), 'anna/texts.json'), '["заметі́ль"]');
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'assets/recordings/anna/texts.json',
         message: 'Not a map of Word id to the text its Recording was made from',
-      },
+      }),
     ]);
   });
 
@@ -2010,7 +2034,7 @@ describe('the Recordings of the Narrator Voices', () => {
     mkdirSync(join(recordingsDir(editionDir), 'anna/old'));
 
     expect(buildErrors(editionDir)).toEqual([
-      { file: 'assets/recordings/anna/old', message: 'Not an mp3' },
+      expect.objectContaining({ file: 'assets/recordings/anna/old', message: 'Not an mp3' }),
     ]);
   });
 
@@ -2022,10 +2046,10 @@ describe('the Recordings of the Narrator Voices', () => {
     );
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'assets/recordings/anna/w_fx0099.mp3',
         message: 'No Word w_fx0099 in the Edition',
-      },
+      }),
     ]);
   });
 
@@ -2050,11 +2074,11 @@ describe('the Recordings of the Narrator Voices', () => {
     }));
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'edition.json',
         field: 'narratorVoices.sample.word',
         message: 'No Word w_fx0099 in the Edition',
-      },
+      }),
     ]);
   });
 
@@ -2065,10 +2089,10 @@ describe('the Recordings of the Narrator Voices', () => {
     });
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'assets/recordings/olga',
         message: 'No Narrator Voice olga in the Edition config',
-      },
+      }),
     ]);
   });
 
@@ -2080,7 +2104,7 @@ describe('the Recordings of the Narrator Voices', () => {
     writeFileSync(join(recordingsDir(editionDir), 'anna', name), bytes);
 
     expect(buildErrors(editionDir)).toEqual([
-      { file: `assets/recordings/anna/${name}`, message: 'Not an mp3' },
+      expect.objectContaining({ file: `assets/recordings/anna/${name}`, message: 'Not an mp3' }),
     ]);
   });
 });
@@ -2162,21 +2186,21 @@ describe('the art of each Category', () => {
     const editionDir = withCategoryArt({ nature: art(), work: art(), weather: art() });
 
     expect(errorsOf(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'decor/decor.json',
         field: 'categories.speech',
         message: 'No pictogram and cover for the Category speech',
-      },
-      {
+      }),
+      expect.objectContaining({
         file: 'decor/decor.json',
         field: 'categories.shop',
         message: 'No pictogram and cover for the Correction Category shop',
-      },
-      {
+      }),
+      expect.objectContaining({
         file: 'decor/decor.json',
         field: 'categories.weather',
         message: 'Art for weather, which is no Category or Correction Category of the Edition',
-      },
+      }),
     ]);
   });
 
@@ -2219,21 +2243,21 @@ describe('the Word of the Day font', () => {
 
   it('refuses a font file the Edition does not bring', () => {
     expect(errorsOf(withFont('Missing.ttf'))).toEqual([
-      {
+      expect.objectContaining({
         file: 'edition.json',
         field: 'wordOfTheDayFont',
         message: 'No font file Missing.ttf in assets/fonts/',
-      },
+      }),
     ]);
   });
 
   it('refuses a file that is not a font', () => {
     expect(errorsOf(withFont('Script.ttf', Buffer.from('not a font')))).toEqual([
-      {
+      expect.objectContaining({
         file: 'edition.json',
         field: 'wordOfTheDayFont',
         message: 'assets/fonts/Script.ttf is not a TrueType or OpenType font',
-      },
+      }),
     ]);
   });
 
@@ -2241,11 +2265,11 @@ describe('the Word of the Day font', () => {
     const font = fontWith(everyCharacter.replace('ї', ''));
 
     expect(errorsOf(withFont('Script.ttf', font))).toEqual([
-      {
+      expect.objectContaining({
         file: 'edition.json',
         field: 'wordOfTheDayFont',
         message: 'assets/fonts/Script.ttf has no glyph for ї',
-      },
+      }),
     ]);
   });
 
@@ -2263,11 +2287,11 @@ describe('the Word of the Day font', () => {
     const font = fontWith(everyCharacter.replace("'", '').replace('-', ''));
 
     expect(errorsOf(withFont('Script.ttf', font))).toEqual([
-      {
+      expect.objectContaining({
         file: 'edition.json',
         field: 'wordOfTheDayFont',
         message: "assets/fonts/Script.ttf has no glyph for ', -",
-      },
+      }),
     ]);
   });
 
@@ -2275,11 +2299,11 @@ describe('the Word of the Day font', () => {
     const font = fontWith(everyCharacter.replace(stressMark, ''));
 
     expect(errorsOf(withFont('Script.ttf', font))).toEqual([
-      {
+      expect.objectContaining({
         file: 'edition.json',
         field: 'wordOfTheDayFont',
         message: 'assets/fonts/Script.ttf has no glyph for the Stress mark (U+0301)',
-      },
+      }),
     ]);
   });
 
@@ -2335,11 +2359,11 @@ describe('the fonts of the word and UI families', () => {
     });
 
     expect(familyErrorsOf(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'tokens.json',
         field: 'fontFamilies.word',
         message: 'assets/fonts/Display-Black.ttf has no glyph for ї',
-      },
+      }),
     ]);
   });
 
@@ -2350,11 +2374,11 @@ describe('the fonts of the word and UI families', () => {
     });
 
     expect(familyErrorsOf(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'tokens.json',
         field: 'fontFamilies.word',
         message: 'assets/fonts/Display-Regular.ttf has no glyph for the Stress mark (U+0301)',
-      },
+      }),
     ]);
   });
 
@@ -2362,11 +2386,11 @@ describe('the fonts of the word and UI families', () => {
     const editionDir = withFamilies({ 'Display-Regular.ttf': fontWith(everyCharacter) });
 
     expect(familyErrorsOf(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'tokens.json',
         field: 'fontFamilies.ui',
         message: 'No font file of the family Sans in assets/fonts/',
-      },
+      }),
     ]);
   });
 
@@ -2496,11 +2520,11 @@ describe('the id registry', () => {
     rmSync(join(editionDir, 'content/words/w_fx0002.json'));
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/ids.json',
         entryId: 'w_fx0002',
         message: expect.stringMatching(/no file content\/words\/w_fx0002\.json.*retire/i) as string,
-      },
+      }),
     ]);
   });
 
@@ -2513,12 +2537,12 @@ describe('the id registry', () => {
     );
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/words/w_fx0004.json',
         entryId: 'w_fx0004',
         field: 'id',
         message: expect.stringMatching(/not in content\/ids\.json.*--record/i) as string,
-      },
+      }),
     ]);
   });
 
@@ -2527,7 +2551,10 @@ describe('the id registry', () => {
     rmSync(join(editionDir, 'content/ids.json'));
 
     expect(buildErrors(editionDir)).toEqual([
-      { file: 'content/ids.json', message: expect.stringMatching(/not found/i) as string },
+      expect.objectContaining({
+        file: 'content/ids.json',
+        message: expect.stringMatching(/not found/i) as string,
+      }),
     ]);
   });
 
@@ -2537,7 +2564,10 @@ describe('the id registry', () => {
     writeFileSync(join(editionDir, 'content/ids.json'), JSON.stringify([...ids, ids[0]]));
 
     expect(buildErrors(editionDir)).toEqual([
-      { file: 'content/ids.json', message: expect.stringMatching(/repeat/i) as string },
+      expect.objectContaining({
+        file: 'content/ids.json',
+        message: expect.stringMatching(/repeat/i) as string,
+      }),
     ]);
   });
 });
@@ -2661,6 +2691,7 @@ describe('recordContent', () => {
           entryId: 'c_fx0001',
           field: 'literaryUses.0.authorDeathYear',
           message: 'Not in the public domain until 1 January 2031',
+          rule: 'public-domain',
         },
       ],
     });
@@ -2868,11 +2899,11 @@ describe('content targets', () => {
     const editionDir = editionWithTargets({ minWords: 2, minWordz: 900 });
 
     expect(buildErrors(editionDir)).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/targets.json',
         field: 'minWordz',
         message: expect.stringMatching(/unknown field/i) as string,
-      },
+      }),
     ]);
   });
 });
