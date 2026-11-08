@@ -245,6 +245,8 @@ export {
 } from './crossword';
 export {
   AppVersionSchema,
+  ForceUpdateMinimumSchema,
+  ForceUpdateMinimumsSchema,
   PlatformSchema,
   RegionSchema,
   RuleSchema,
@@ -252,9 +254,12 @@ export {
   RuleVerdictSchema,
   VariantSchema,
   type AppVersion,
+  type ForceUpdateMinimum,
+  type ForceUpdateMinimums,
   type Platform,
   type Rule,
   type RuleTargets,
   type RuleVerdict,
   type Variant,
 } from './feature-switch-rules';
+export { DEPENDS_ON, switchedOn } from './feature-switch-dependencies';

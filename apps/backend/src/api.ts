@@ -7,6 +7,7 @@ import { apiDescriptionOptions } from '@slovo/contracts/api-description';
 import type {
   Accounts,
   AdminAccess,
+  Clock,
   CollectionLinks,
   CommunityCounters,
   ContentPacks,
@@ -67,6 +68,7 @@ interface ApiContext extends ResponseHeadersPluginContext, FailureContext {
 export function createApiHandler({
   accounts,
   admin,
+  clock,
   collectionLinks,
   communityCounters,
   contentPacks,
@@ -76,6 +78,7 @@ export function createApiHandler({
 }: {
   accounts: Accounts;
   admin: AdminAccess;
+  clock: Clock;
   collectionLinks: CollectionLinks;
   communityCounters: CommunityCounters;
   contentPacks: ContentPacks;
@@ -87,11 +90,11 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin),
+      admin: adminProcedures(admin, editions),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks),
       counters: countersProcedures(communityCounters),
-      edition: editionProcedures(editions),
+      edition: editionProcedures(editions, clock),
       reports: reportsProcedures(mistakeReports),
       sync: syncProcedures(sync, accounts),
     });

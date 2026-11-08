@@ -76,3 +76,22 @@ export type Variant = z.infer<typeof VariantSchema>;
 export type RuleVerdict = z.infer<typeof RuleVerdictSchema>;
 export type RuleTargets = z.infer<typeof RuleTargetsSchema>;
 export type Rule = z.infer<typeof RuleSchema>;
+
+/**
+ * The force-update minimums of one platform of an Edition (ADR 0089): below
+ * `soft` the app asks the reader to update, below `hard` it asks and waits.
+ * An end left out asks nothing.
+ */
+export const ForceUpdateMinimumSchema = z.strictObject({
+  soft: AppVersionSchema.optional(),
+  hard: AppVersionSchema.optional(),
+});
+
+/** The force-update minimums of an Edition, by platform; a platform left out has none. */
+export const ForceUpdateMinimumsSchema = z.strictObject({
+  ios: ForceUpdateMinimumSchema.optional(),
+  android: ForceUpdateMinimumSchema.optional(),
+});
+
+export type ForceUpdateMinimum = z.infer<typeof ForceUpdateMinimumSchema>;
+export type ForceUpdateMinimums = z.infer<typeof ForceUpdateMinimumsSchema>;

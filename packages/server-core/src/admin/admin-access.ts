@@ -7,7 +7,9 @@ export type AdminRole = 'owner' | 'admin';
 export type Actor =
   | { readonly kind: 'admin-user'; readonly email: string }
   | { readonly kind: 'agent'; readonly name: string }
-  | { readonly kind: 'command'; readonly command: string };
+  | { readonly kind: 'command'; readonly command: string }
+  /** A caller of the admin API the sign-in doesn't name yet. */
+  | { readonly kind: 'anonymous' };
 
 /** What a change brings to the Action log; the log adds when. */
 export interface ActionEntry {

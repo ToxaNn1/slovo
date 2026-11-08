@@ -4,7 +4,7 @@
  * `timestamptz` and every id a UUID (spec #333, Data model). The tables come
  * with the tickets that need them.
  */
-import type { MistakeType } from '@slovo/contracts';
+import type { MistakeType, Platform, RuleTargets, RuleVerdict } from '@slovo/contracts';
 import type { Actor, Json } from '@slovo/server-core';
 import {
   bigserial,
@@ -171,20 +171,40 @@ export const rateLimits = pgTable(
 );
 
 /**
- * The Feature Switches the owner turned off remotely (ADR 0040), one row per
- * Edition and feature. Clearing a switch keeps its row with `off` false, so a
- * row tells when its switch last changed.
+ * The remote Feature Switch Rules the owner sets (ADR 0089), one row per
+ * Rule: for one Edition and one feature, tried in `order`. A feature's Rules
+ * are replaced together; the Action log keeps the ones before.
  */
-export const remoteSwitches = pgTable(
-  'remote_switches',
+export const switchRules = pgTable(
+  'switch_rules',
   {
     editionId: text('edition_id').notNull(),
     /** The name of the Feature Switch, such as `game`. */
     feature: text('feature').notNull(),
-    off: boolean('off').notNull(),
+    order: integer('order').notNull(),
+    /** The Rule's id, which salts the Rollout on the device. */
+    ruleId: text('rule_id').notNull(),
+    verdict: jsonb('verdict').$type<RuleVerdict>().notNull(),
+    targets: jsonb('targets').$type<RuleTargets>().notNull(),
     setAt: time('set_at'),
   },
-  (table) => [primaryKey({ columns: [table.editionId, table.feature] })],
+  (table) => [primaryKey({ columns: [table.editionId, table.feature, table.order] })],
+);
+
+/**
+ * The force-update minimums of an Edition (ADR 0089), one row per platform:
+ * below `soft` the app asks the reader to update, below `hard` it waits for it.
+ */
+export const forceUpdateMinimums = pgTable(
+  'force_update_minimums',
+  {
+    editionId: text('edition_id').notNull(),
+    platform: text('platform').$type<Platform>().notNull(),
+    soft: text('soft'),
+    hard: text('hard'),
+    setAt: time('set_at'),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.platform] })],
 );
 
 /**
