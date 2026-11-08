@@ -20,7 +20,7 @@ import HomeScreen from '../app/feed';
 import { ShellProvider } from '../shell-value';
 import { opened, switchedTo, testShell } from '../shell/test-support';
 import { activeEditionFiles, edition, editionStrings, editionTokens } from '../edition/edition';
-import { TOP_ROW } from '../edition/feed-loading';
+import { LOGO_ROW } from '../edition/feed-loading';
 import { screenSettled } from '../use-open-screen';
 import { SettingsProvider } from '../settings/settings';
 
@@ -187,12 +187,13 @@ describe('the Feed header', () => {
     async (colorScheme) => {
       await open();
       await renderApp(colorScheme);
-      // From the top of the screen, behind the status bar, down past the top row the cards scroll under.
+      // From the top of the screen, behind the status bar, down past the logo row the cards scroll under:
+      // the tabbed cards' Feed has no row of the XP bar and Search under it (board p1, ADR 0091).
       expect(screen.getByTestId('feed-header')).toHaveStyle({
         top: 0,
         left: 0,
         right: 0,
-        height: 47 + TOP_ROW,
+        height: 47 + LOGO_ROW,
       });
       expect(
         screen.getByTestId('feed-header-backdrop', { includeHiddenElements: true }),

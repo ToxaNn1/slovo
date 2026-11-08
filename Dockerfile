@@ -35,6 +35,7 @@ ENV pnpm_config_verify_deps_before_run=false
 COPY --from=install /usr/local/share/corepack /usr/local/share/corepack
 COPY --from=install /app/package.json /app/pnpm-workspace.yaml /app/pnpm-lock.yaml ./
 COPY --from=install /app/node_modules node_modules
+COPY --from=install /app/packages/content-rules packages/content-rules
 COPY --from=install /app/packages/contracts packages/contracts
 COPY --from=install /app/packages/core packages/core
 COPY --from=install /app/packages/language-pack packages/language-pack

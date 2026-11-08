@@ -295,6 +295,12 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
             .catch(refused);
         },
       },
+      admin: {
+        status: async () => {
+          // No Власник in this database: the admin API answers 404.
+          await client.admin.status().catch(refused);
+        },
+      },
       collectionLinks: {
         create: async () => {
           const link = { edition: EDITION, name: 'reader@example.com', entryIds: ['w_a1'] };

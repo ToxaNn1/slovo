@@ -38,7 +38,9 @@ describe('the UA Edition', () => {
     expect(edition.isFeatureEnabled('wordOfTheDay')).toBe(true);
     expect(edition.isFeatureEnabled('statistics')).toBe(true);
     expect(edition.isFeatureEnabled('knowledge')).toBe(true);
-    expect(edition.isFeatureEnabled('selfCheck')).toBe(true);
+    // Off by the owner's decision: a Feed card shows everything at once.
+    expect(edition.isFeatureEnabled('selfCheck')).toBe(false);
+    expect(edition.isFeatureEnabled('feedTab')).toBe(true);
     expect(edition.isFeatureEnabled('rarityCeiling')).toBe(true);
     expect(edition.isFeatureEnabled('gameReview')).toBe(true);
     expect(edition.isFeatureEnabled('gameGuessWord')).toBe(true);

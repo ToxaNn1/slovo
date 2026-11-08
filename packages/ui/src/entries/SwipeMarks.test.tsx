@@ -501,6 +501,16 @@ describe('SwipeMarks in a VerticalPager', () => {
     expect(screen.queryByTestId('swipe-next-chip')).toBeNull();
   });
 
+  it('flies a fast fling off at the speed of the finger, sooner than 0.3 s', async () => {
+    await renderPaged();
+
+    // 2400 points a second over the 360 points left: off screen in 0.15 s, not slowing down first.
+    await sideSwipe(-160, -2400, { settle: false });
+    await pass(184);
+
+    expect(cardX()).toBe(-520);
+  });
+
   it('turns to the next Entry as the card starts to fly, not after it flew', async () => {
     const { onIndexChange } = await renderPaged();
 

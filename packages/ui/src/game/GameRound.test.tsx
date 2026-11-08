@@ -25,6 +25,7 @@ import { AccessibilityInfo, StyleSheet, type ViewStyle } from 'react-native';
 import { getAnimatedStyle } from 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { testStrings } from '../test-strings';
+import { roundHeader } from '../tokens';
 
 const strings = testStrings({
   game: {
@@ -493,7 +494,14 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-progress').props['accessibilityLabel']).toBe(
       'Rounds passed: 7 of 15',
     );
-    expect(screen.getByTestId('game-lives')).toHaveTextContent('Lives: 4 of 5');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 4 of 5');
+  });
+
+  it('shows the Lives as flags alone, with no line of text to repeat them', async () => {
+    await renderRound(jest.fn(), jest.fn(), { ...first, lives: 4 });
+
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 4 of 5');
+    expect(screen.queryByText(/Lives:/)).toBeNull();
   });
 
   it('heads the Round with the mode’s title and the Round in play out of the Round limit', async () => {
@@ -505,6 +513,15 @@ describe('GameRound', () => {
 
     expect(screen.getByRole('header', { name: 'Definitions · 3/15' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Leave the Game' })).toBeOnTheScreen();
+  });
+
+  it('shrinks a long title to its line beside the Lives rather than cutting it short', async () => {
+    await renderRound(jest.fn(), jest.fn(), first);
+
+    const title = screen.getByTestId('game-title');
+    expect(title).toHaveProp('numberOfLines', 1);
+    expect(title).toHaveProp('adjustsFontSizeToFit', true);
+    expect(title).toHaveProp('minimumFontScale', roundHeader.titleMinScale);
   });
 
   it('fills the 10 segments by the Rounds passed out of the Round limit, then the current one, then the rest', async () => {
@@ -557,7 +574,7 @@ describe('GameRound', () => {
     expect(screen.getByText('Passed: 23')).toBeTruthy();
     expect(screen.queryByTestId('game-progress-bar')).toBeNull();
     expect(screen.getByRole('header', { name: 'Definitions' })).toBeOnTheScreen();
-    expect(screen.getByTestId('game-lives')).toHaveTextContent('Lives: 2 of 3');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 2 of 3');
   });
 
   it('shows the streak, a big counter of the Rounds passed and its line with the record, in place of the passed line', async () => {
@@ -575,7 +592,7 @@ describe('GameRound', () => {
     expect(screen.getByTestId('game-streak-line')).toHaveTextContent('4 in a row · best 9');
     expect(screen.getByTestId('game-streak')).toHaveAccessibleName('4 in a row · best 9');
     expect(screen.queryByText('Passed: 4')).toBeNull();
-    expect(screen.getByTestId('game-lives')).toHaveTextContent('Lives: 2 of 3');
+    expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 2 of 3');
   });
 
   it('keys the options in order with the Edition’s keys', async () => {
@@ -594,14 +611,14 @@ describe('GameRound', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'brittle' }));
 
     const wrong = within(screen.getByTestId('game-option-1'));
-    expect(wrong.getByText('✕')).toBeTruthy();
+    expect(wrong.getByTestId('game-option-1-wrong-mark')).toBeTruthy();
     expect(wrong.queryByText('B')).toBeNull();
     expect(screen.getByRole('button', { name: 'brittle, Your choice' })).toBeTruthy();
     expect(within(screen.getByTestId('game-option-0')).getByText('A')).toBeTruthy();
     expect(
       within(screen.getByTestId(`game-option-${String(CORRECT)}`)).getByText('C'),
     ).toBeTruthy();
-    expect(screen.getAllByText('✕')).toHaveLength(1);
+    expect(screen.getAllByTestId(/^game-option-\d+-wrong-mark$/)).toHaveLength(1);
   });
 
   it('sizes each option for its text: a Word, a sentence or a long text', async () => {
@@ -898,7 +915,7 @@ describe('GameRound', () => {
       expect(onAnswer).toHaveBeenCalledWith({ form: 'pairs', word: 1, definition: 0 });
       expect(screen.getByRole('header', { name: 'Right!' })).toBeTruthy();
       expect(screen.getByText('An ardent reader.')).toBeOnTheScreen();
-      expect(screen.getByText('Lives: 5 of 5')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 5 of 5');
     });
 
     it('takes a Life for a wrong pair', async () => {
@@ -908,7 +925,7 @@ describe('GameRound', () => {
       await fireEvent.press(screen.getByRole('button', { name: 'open and honest' }));
 
       expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
-      expect(screen.getByText('Lives: 4 of 5')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 4 of 5');
     });
   });
 
@@ -946,7 +963,7 @@ describe('GameRound', () => {
 
       expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
       expect(screen.getByTestId('game-sheet')).toHaveTextContent("o'brok", { exact: false });
-      expect(screen.getByText('Lives: 4 of 5')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 4 of 5');
     });
   });
 
@@ -977,7 +994,7 @@ describe('GameRound', () => {
       expect(screen.getByLabelText('w, first letter')).toBeOnTheScreen();
       expect(screen.getByLabelText('e, second letter')).toBeOnTheScreen();
       expect(screen.getByLabelText('third letter, empty')).toBeOnTheScreen();
-      expect(screen.getByText('Lives: 5 of 5')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 5 of 5');
     });
 
     it('answers with the text typed and shows the Word with its Example', async () => {
@@ -1000,7 +1017,7 @@ describe('GameRound', () => {
 
       expect(screen.getByRole('header', { name: 'Not this time' })).toBeTruthy();
       expect(screen.getByTestId('game-sheet')).toHaveTextContent(TYPED, { exact: false });
-      expect(screen.getByText('Lives: 4 of 5')).toBeOnTheScreen();
+      expect(screen.getByTestId('game-lives')).toHaveAccessibleName('Lives: 4 of 5');
     });
   });
 

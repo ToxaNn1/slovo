@@ -72,10 +72,9 @@ type Opened =
 /**
  * A tap on a Badge's mark, for the screens that show the Badges. With the
  * `badgeSheet` switch on, every tap opens the Badge's sheet (board 10
- * p3/p4) and opens the Badge, which ends its «НОВА» mark (ADR 0085): an
- * earned one with the shout, one not yet earned with the toast «… ще не
- * твоя». With it off, only an earned Badge answers, stamped on red. Draw
- * `opening` on the screen.
+ * p3/p4) and opens the Badge, which ends its «НОВА» mark (ADR 0085), an
+ * earned one with the shout. With it off, only an earned Badge answers,
+ * stamped on red. Draw `opening` on the screen.
  */
 export function useBadgeOpening(): {
   onPress: (badge: BadgeState) => void;
@@ -118,9 +117,6 @@ export function useBadgeOpening(): {
                 shape: family?.shape ?? 'circle',
                 tone: family?.tone ?? 'ink',
                 status: sheetStatusOf(sheeted),
-                toast: sheeted.earned
-                  ? undefined
-                  : fill(strings.lockedToast, { name: sheeted.name }),
               }
         }
         kicker={strings.sheet.kicker}

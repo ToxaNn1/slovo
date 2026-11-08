@@ -55,11 +55,18 @@ const shippedEdition = loadEdition(activeEditionFiles.config);
 /** Whether the Swipe Marks switch is on in effect: off as the Edition ships it unless a test turns it on. */
 let swipeMarksOn = false;
 
-/** The Edition in effect: as it ships, with the Swipe Marks switch as the test sets it. */
+/** Whether the Word tabs switch is on in effect: on as the Edition ships it unless a test turns it off. */
+let wordTabsOn = true;
+
+/** The Edition in effect: as it ships, with the Swipe Marks and Word tabs switches as the test sets them. */
 const editionInEffect = (): typeof shippedEdition => ({
   ...shippedEdition,
   isFeatureEnabled: (feature) =>
-    feature === 'swipeMarks' ? swipeMarksOn : shippedEdition.isFeatureEnabled(feature),
+    feature === 'swipeMarks'
+      ? swipeMarksOn
+      : feature === 'wordTabs'
+        ? wordTabsOn
+        : shippedEdition.isFeatureEnabled(feature),
 });
 
 const haptics: Haptics = {
@@ -211,6 +218,10 @@ const historyOpened = () => analytics.events.filter(({ event }) => event === 'wo
 describe('the Entry screen and the Word History', () => {
   it('tells Analytics the Word History opened once, with the Entry, when the section is drawn', async () => {
     await renderEntry('w_sumyrnyi');
+    // With `wordTabs` on, the Word History is drawn on «Історія» alone (ADR 0091).
+    expect(historyOpened()).toEqual([]);
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    await settle();
 
     expect(screen.getByTestId('word-history')).toBeOnTheScreen();
     expect(historyOpened()).toEqual([
@@ -219,6 +230,26 @@ describe('the Entry screen and the Word History', () => {
         properties: { entryKind: 'word', rarity: 3, categoryId: 'emotions-character' },
       },
     ]);
+  });
+
+  it('tells Analytics once per Entry, however often «Історія» is drawn again', async () => {
+    await renderEntry('w_sumyrnyi');
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    await settle();
+    // Another tab, then «Історія» again, and a smaller size that draws the tab anew.
+    await fireEvent.press(screen.getByTestId('word-tab-essence'));
+    await settle();
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    await settle();
+    await fireEvent(screen.getByTestId('word-tab-panel'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 10 } },
+    });
+    await fireEvent(screen.getByTestId('word-tab-content'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 900 } },
+    });
+    await settle();
+
+    expect(historyOpened()).toHaveLength(1);
   });
 
   it('tells Analytics nothing of a Word without a Word History', async () => {
@@ -238,6 +269,32 @@ describe('the Entry screen of a Word', () => {
     expect(within(scroll).getByTestId('word-definition')).toBeOnTheScreen();
     expect(screen.getByTestId('entry-actions')).toBeOnTheScreen();
     expect(within(scroll).queryByTestId('entry-actions')).not.toBeOnTheScreen();
+  });
+});
+
+describe('a tab too long for the Entry screen', () => {
+  it("is clamped under «Детальніше», which opens it whole in the screen's scroll (ADR 0091)", async () => {
+    await renderEntry('w_sumyrnyi');
+    await fireEvent.press(screen.getByTestId('word-tab-history'));
+    await settle();
+    await fireEvent(screen.getByTestId('word-tab-panel'), 'layout', {
+      nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 10 } },
+    });
+    for (let size = 0; size < 4 && screen.queryByTestId('word-tab-more') === null; size++) {
+      await fireEvent(screen.getByTestId('word-tab-content'), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height: 900 } },
+      });
+      await settle();
+    }
+
+    expect(
+      within(screen.getByTestId('entry-scroll')).getByTestId('word-tab-more'),
+    ).toBeOnTheScreen();
+    await fireEvent.press(screen.getByTestId('word-tab-more'));
+    await settle();
+
+    expect(screen.queryByTestId('word-tab-more')).not.toBeOnTheScreen();
+    expect(screen.getByTestId('word-history')).toBeOnTheScreen();
   });
 });
 
@@ -279,6 +336,50 @@ describe('the Entry screen and the side swipes (ADR 0077)', () => {
 
     expect(screen.getByTestId('word-card')).toBeOnTheScreen();
     expect(screen.queryByTestId('swipe-card')).not.toBeOnTheScreen();
+  });
+});
+
+/** The tabs on the Entry screen, by their names, with whether each is selected. */
+function tabsOnScreen() {
+  const selected = screen.queryAllByRole('tab', { selected: true });
+  return screen.queryAllByRole('tab').map((tab) => ({
+    name: String(tab.props['accessibilityLabel']),
+    selected: selected.includes(tab),
+  }));
+}
+
+describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
+  afterEach(() => {
+    wordTabsOn = true;
+  });
+
+  it('shows a Word with its tabs, «Суть» selected with the Definition', async () => {
+    await renderEntry('w_sumyrnyi');
+
+    expect(tabsOnScreen()[0]).toEqual({ name: 'Суть', selected: true });
+    expect(tabsOnScreen().map(({ name }) => name)).toContain('Історія');
+    expect(screen.getByTestId('word-definition')).toBeOnTheScreen();
+  });
+
+  it('shows a Correction with «Як краще», «Чому» and «Приклади», «Як краще» selected', async () => {
+    await renderEntry('c_vezhlyvyi');
+
+    expect(tabsOnScreen()).toEqual([
+      { name: 'Як краще', selected: true },
+      { name: 'Чому', selected: false },
+      { name: 'Приклади', selected: false },
+    ]);
+    expect(screen.getByTestId('correction-tab-panel')).toBeOnTheScreen();
+  });
+
+  it('keeps a Word and a Correction in one column with `wordTabs` off', async () => {
+    wordTabsOn = false;
+    await renderEntry('w_sumyrnyi');
+    expect(tabsOnScreen()).toEqual([]);
+    expect(screen.getByTestId('word-definition')).toBeOnTheScreen();
+
+    await renderEntry('c_vezhlyvyi');
+    expect(tabsOnScreen()).toEqual([]);
   });
 });
 

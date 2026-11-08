@@ -12,7 +12,7 @@ import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 
 import type { EditionFolder } from '@slovo/language-pack/edition';
-import { readArticleBlocks, type PoliteClient } from '@slovo/sourcing';
+import { readArticleBlocks, withoutHomonymIndexes, type PoliteClient } from '@slovo/sourcing';
 
 /** Which Entries to verify: named on the command line, or those that differ from a git ref. */
 export type VerifyTargets =
@@ -238,9 +238,15 @@ function checkBook(
   return { outcome: 'ok', detail: `page ${page}` };
 }
 
-/** Lower case, without spaces, quotation marks, apostrophes or dashes: the 06.11 wave's comparison. */
+/**
+ * Lower case, without homonym indexes, spaces, quotation marks, apostrophes or
+ * dashes: the 06.11 wave's comparison. The Edition drops the indexes a page
+ * sets after a word, so `лю́тий` quotes the page's `лю́тий2`.
+ */
 function squash(text: string): string {
-  return text.toLowerCase().replace(/[\s’ʼ«»"„“”'–—-]/g, '');
+  return withoutHomonymIndexes(text)
+    .toLowerCase()
+    .replace(/[\s’ʼ«»"„“”'–—-]/g, '');
 }
 
 const withoutFinalPeriod = (text: string) => text.replace(/\.$/, '');

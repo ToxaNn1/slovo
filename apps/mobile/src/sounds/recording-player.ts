@@ -11,19 +11,22 @@ export interface RecordingPlayer {
 
 /**
  * A status update of `expo-audio`, as far as the player reads it. A failure
- * comes as `error` (on Android alone, with no other field) or as the
- * `failed` playback state (iOS).
+ * comes as an `error` message (on Android alone, with no other field) or as
+ * the `failed` playback state (iOS). iOS sends `error: null` in every update
+ * while nothing failed.
  */
 export interface RecordingStatus {
   readonly didJustFinish?: boolean;
   readonly playbackState?: string;
-  readonly error?: string;
+  readonly error?: string | null;
 }
 
 /** Whether a status update ends the reading: the Recording played to its end or failed. */
 function ends(status: RecordingStatus): boolean {
   return (
-    status.didJustFinish === true || status.error !== undefined || status.playbackState === 'failed'
+    status.didJustFinish === true ||
+    typeof status.error === 'string' ||
+    status.playbackState === 'failed'
   );
 }
 

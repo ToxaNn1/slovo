@@ -8,7 +8,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { roundLayout, space, typeStyle } from '../tokens';
+import {
+  roleSize,
+  roundLayout,
+  roundPromptLength,
+  sizeForLength,
+  space,
+  typeStyle,
+} from '../tokens';
 
 /** Whether a label ends in punctuation of its own, such as «?», so VoiceOver needs no full stop after it. */
 const ENDS_IN_PUNCTUATION = /\p{P}$/u;
@@ -131,6 +138,8 @@ export function RoundCard({
           <WholeWordsText
             text={prompt}
             typeRole="roundPrompt"
+            // A long prompt takes a smaller size, the cards' one text scale (owner 08.11).
+            size={sizeForLength(roleSize('roundPrompt'), prompt, roundPromptLength)}
             style={[typeStyle('roundPrompt', tokens), { color: colors.ink }]}
             highlight={
               highlight === undefined

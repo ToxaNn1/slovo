@@ -12,6 +12,7 @@ import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import { EntryCard, type EntryCardProps } from './EntryCard';
 import { EntryReveal, RevealDetail } from './reveal';
 import { WordHeadline, WordSections } from './WordCard';
+import { WordTabs } from './WordTabs';
 import { firstLetter } from './WordHero';
 import { WordOfTheDayBadge } from './WordOfTheDayBadge';
 
@@ -37,6 +38,7 @@ export function EntryDetails({
   onOpenSynonymRow,
   onWordHistoryShown,
   slots,
+  tabs = false,
 }: Omit<EntryCardProps, 'selfCheck' | 'wordOfTheDayFont'> & {
   /** The name of the screen the back tile returns to, which VoiceOver reads. */
   back: string;
@@ -56,11 +58,13 @@ export function EntryDetails({
       <ScrollView
         testID="entry-scroll"
         style={styles.scroll}
+        // The tabs fill the rest of the screen under the panel (ADR 0091).
+        contentContainerStyle={tabs ? styles.fill : undefined}
         // The sheet of the action row is a child in React's tree, so a tap in its
         // name field must not be swallowed to put the keyboard away.
         keyboardShouldPersistTaps="handled"
       >
-        <Swiped swipe={swipe} correction={card.kind === 'correction'}>
+        <Swiped swipe={swipe} correction={card.kind === 'correction'} fill={tabs}>
           <AccentGround
             id="entry-panel"
             testID="entry-panel"
@@ -86,12 +90,13 @@ export function EntryDetails({
                   concealed={false}
                   stressFalls={stressFalls}
                   lemmaFont={undefined}
+                  tabbed={false}
                 />
               </View>
             )}
           </AccentGround>
           {word === undefined ? (
-            <View style={styles.otherKind}>
+            <View style={[styles.otherKind, tabs && styles.fill]}>
               <EntryCard
                 card={card}
                 onOpenCorrection={onOpenCorrection}
@@ -101,17 +106,27 @@ export function EntryDetails({
                 // The swipes take the whole of Entry details, so the card keeps only its corner.
                 slots={slots?.slot === 'corner' ? { ...slots, swipe: undefined } : slots}
                 stressFalls={stressFalls}
+                tabs={tabs}
               />
             </View>
           ) : (
-            <View testID="word-card" style={styles.body}>
-              <WordSections
-                card={word.model}
-                compact={compact}
-                onOpenCorrection={onOpenCorrection}
-                onOpenSynonymRow={onOpenSynonymRow}
-                onHistoryShown={onWordHistoryShown}
-              />
+            <View testID="word-card" style={[styles.body, tabs && styles.fill]}>
+              {tabs ? (
+                <WordTabs
+                  card={word.model}
+                  onOpenCorrection={onOpenCorrection}
+                  onOpenSynonymRow={onOpenSynonymRow}
+                  onHistoryShown={onWordHistoryShown}
+                />
+              ) : (
+                <WordSections
+                  card={word.model}
+                  compact={compact}
+                  onOpenCorrection={onOpenCorrection}
+                  onOpenSynonymRow={onOpenSynonymRow}
+                  onHistoryShown={onWordHistoryShown}
+                />
+              )}
             </View>
           )}
         </Swiped>
@@ -144,15 +159,18 @@ export function EntryDetails({
 function Swiped({
   swipe,
   correction,
+  fill,
   children,
 }: {
   swipe: EntrySwipe | undefined;
   correction: boolean;
+  /** The tabbed card fills the rest of the screen (ADR 0091), so the swipe grows to it. */
+  fill: boolean;
   children: ReactNode;
 }) {
   if (swipe === undefined) return <>{children}</>;
   return (
-    <SwipeMarks swipe={swipe} concealed={false} correction={correction}>
+    <SwipeMarks swipe={swipe} concealed={false} correction={correction} fill={fill}>
       {children}
     </SwipeMarks>
   );
@@ -181,6 +199,7 @@ function BackTile({ label, onPress }: { label: string; onPress: () => void }) {
 
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
+  fill: { flexGrow: 1 },
   // A Word's action row stays at the screen's foot over the scrolling text (XActions a4).
   dock: {
     paddingHorizontal: space[3],

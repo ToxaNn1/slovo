@@ -16,7 +16,11 @@ import { testStrings } from '../test-strings';
 
 const strings = testStrings({
   feedNotices: {
-    enoughForToday: { message: 'Maybe enough for today?', keepGoing: 'Keep going' },
+    enoughForToday: {
+      message: 'Maybe enough for today?',
+      body: '{n} cards behind you.',
+      keepGoing: 'Keep going',
+    },
     notificationExplainer: { title: 'Send the word?', message: 'Two a day at most.', yes: 'Yes' },
     notificationReask: { title: 'Once more?', message: 'The word each morning.', yes: 'Yes' },
     levelMilestone: {
@@ -91,6 +95,7 @@ describe('the «enough for today» card', () => {
 
     expect(screen.getByTestId('feed-notice-enoughForToday')).toBeTruthy();
     expect(screen.getByText('Maybe enough for today?')).toBeTruthy();
+    expect(screen.getByText('50 cards behind you.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Keep going' })).toBeTruthy();
   });
 
@@ -103,7 +108,7 @@ describe('the «enough for today» card', () => {
   it('reads its text to VoiceOver as one element, then the button', async () => {
     await renderFeed(<EnoughForTodayCard />);
 
-    expect(screen.getByLabelText('Maybe enough for today?')).toBeTruthy();
+    expect(screen.getByLabelText('Maybe enough for today? 50 cards behind you.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Keep going' })).toBeTruthy();
   });
 

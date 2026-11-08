@@ -194,10 +194,10 @@ async function renderApp(appState: ReturnType<typeof fakeAppState>['source']) {
   await settle();
 }
 
-/** The Feed on 3 November: its header and its Word of the Day. */
+/** The Feed on 3 November: its header and the kicker of its Word of the Day, on its tabbed card. */
 function expectTuesday() {
   expect(screen.getByText('вт, 3 листопада', hidden)).toBeTruthy();
-  expect(screen.getByText('Слово дня · 3 листопада', hidden)).toBeTruthy();
+  expect(screen.getByText('Слово дня · 3.11', hidden)).toBeTruthy();
 }
 
 describe('the Feed on a new local day', () => {
@@ -213,7 +213,7 @@ describe('the Feed on a new local day', () => {
     expect(screen.queryByText('вт, 3 листопада', hidden)).toBeNull();
     // The card on screen stays (ADR 0022); the new day's Word of the Day comes after the next swipe.
     await swipeUp();
-    expect(screen.getByText('Слово дня · 4 листопада', hidden)).toBeTruthy();
+    expect(screen.getByText('Слово дня · 4.11', hidden)).toBeTruthy();
   });
 
   it('shows the new date in its header and the new Word of the Day next, on a return to the foreground on a new day', async () => {
@@ -233,6 +233,6 @@ describe('the Feed on a new local day', () => {
     expect(screen.getByText('ср, 4 листопада', hidden)).toBeTruthy();
     expect(screen.queryByText('вт, 3 листопада', hidden)).toBeNull();
     await swipeUp();
-    expect(screen.getByText('Слово дня · 4 листопада', hidden)).toBeTruthy();
+    expect(screen.getByText('Слово дня · 4.11', hidden)).toBeTruthy();
   });
 });
