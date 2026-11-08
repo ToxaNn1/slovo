@@ -75,7 +75,7 @@ export function FeedNoticeCard({
     <Text
       style={[
         titleKind === 'eyebrow'
-          ? [typeStyle('eyebrow', tokens), { color: colors.accent }]
+          ? [typeStyle('eyebrow', tokens), { color: colors.accentText }]
           : [typeStyle('noticeTitle', tokens), { color: ink }],
         titleKind === 'marked' && styles.markedTitle,
       ]}

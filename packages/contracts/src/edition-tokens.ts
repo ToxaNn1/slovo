@@ -15,8 +15,14 @@ export const ColorTokensSchema = z.strictObject({
   ink: ColorSchema,
   /** Secondary labels: part of speech, captions. */
   muted: ColorSchema,
-  /** The active tab, links, the Pronunciation button, selected controls. */
+  /** The active tab, the Pronunciation button, selected controls: fills, borders and large text. */
   accent: ColorSchema,
+  /**
+   * The red of small text (below 18.66 bold or 24 regular): links, eyebrows,
+   * tags, field labels and problems. Darker than the accent where it must be, so
+   * it keeps 4.5:1 on every ground it sits on.
+   */
+  accentText: ColorSchema,
   /** Decor only; never carries text. */
   decor: ColorSchema,
   /** Category chips, the example-pair box, skeleton blocks. */
