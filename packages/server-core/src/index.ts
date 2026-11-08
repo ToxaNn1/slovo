@@ -20,12 +20,29 @@ export {
   type SwitchRefused,
   type WriteBy,
 } from './edition/edition-registry';
+export {
+  createAdminAnalytics,
+  POSTHOG_FRESH_FOR_MS,
+  type AdminAnalytics,
+  type AnalyticsOverview,
+  type CountersSummary,
+  type PostHogRead,
+} from './analytics/admin-analytics';
+export { createSourceCache, type Fetched, type SourceCache } from './analytics/source-cache';
+export { createQueryQueue, type QueryQueue, type Wait } from './analytics/query-queue';
 export { createCommunityCounters, type CommunityCounters } from './counters/community-counters';
 export { createMistakeReports, type MistakeReports } from './reports/mistake-reports';
 export { createSync, type Sync, type SyncChange, type SyncPage } from './sync/sync';
 export {
   systemClock,
   type AccountRecord,
+  type AnalyticsAnswer,
+  type AnalyticsPeriod,
+  type AnalyticsQuery,
+  type AnalyticsRow,
+  type AnswerCount,
+  type CounterTotals,
+  type PostHogPort,
   type AppleIdentity,
   type AppleTokenCheck,
   type AppleVerifier,

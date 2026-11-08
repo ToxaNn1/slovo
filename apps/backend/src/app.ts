@@ -4,6 +4,7 @@ import {
   createAdminAccess,
   createAdminSignIn,
   createCollectionLinks,
+  createAdminAnalytics,
   createCommunityCounters,
   createContentPacks,
   createMistakeReports,
@@ -13,6 +14,7 @@ import {
   type Edition,
   type GoogleVerifier,
   type Mailer,
+  type PostHogPort,
   type Random,
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
@@ -64,6 +66,8 @@ export interface AppDependencies {
   readonly editions: readonly Edition[];
   /** Sends the sign-in emails. */
   readonly mailer: Mailer;
+  /** Reads the aggregates of the Analytics events, for the admin's Аналітика. */
+  readonly posthog: PostHogPort;
   /** Verifies the Google identity tokens of Google sign-ins. */
   readonly google: GoogleVerifier;
   /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
@@ -129,6 +133,7 @@ export function createApp({
   app: appConfig,
   editions,
   mailer,
+  posthog,
   google,
   apple,
   authSecret,
@@ -166,9 +171,10 @@ export function createApp({
     rateLimits,
     clock,
   });
+  const counterStore = createCounterStore(database);
   const communityCounters = createCommunityCounters({
     editions: editionRegistry,
-    store: createCounterStore(database),
+    store: counterStore,
     rateLimits,
     clock,
   });
@@ -195,9 +201,16 @@ export function createApp({
     vault: createSecretVault(authSecret),
     codeEmail: adminCodeEmail,
   });
+  const adminAnalytics = createAdminAnalytics({
+    posthog,
+    counters: counterStore,
+    clock,
+    wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+  });
   const api = createApiHandler({
     accounts,
     admin,
+    adminAnalytics,
     adminSignIn,
     clock,
     collectionLinks,

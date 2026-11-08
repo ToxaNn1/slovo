@@ -205,6 +205,69 @@ export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
 
+/** A period of days, both ends included, each as `YYYY-MM-DD` (Kyiv days). */
+export interface AnalyticsPeriod {
+  readonly from: string;
+  readonly to: string;
+}
+
+/**
+ * One aggregate read of the Analytics events of some Editions. Every read
+ * answers counts per key only, never a person or an id (ADR 0060).
+ */
+export type AnalyticsQuery =
+  | {
+      /** People active on each day (key: the day). */
+      readonly kind: 'activeByDay';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** Відвідини started on each day (key: the day). */
+      readonly kind: 'visitsByDay';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** The median length of a Відвідини in seconds (one row, key `median`). */
+      readonly kind: 'visitSeconds';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** People active on each kind of device (key: `ios`, `android` …). */
+      readonly kind: 'devices';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** People active on each app version (key: the version). */
+      readonly kind: 'appVersions';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** People active in each Variant of an A/B Feature Switch (key: the Variant). */
+      readonly kind: 'variants';
+      readonly editionIds: readonly string[];
+      readonly feature: string;
+    };
+
+/** A count of one key of an aggregate read. */
+export interface AnalyticsRow {
+  readonly key: string;
+  readonly count: number;
+}
+
+/** What PostHog answers a read: its rows, or that it can't answer now. */
+export type AnalyticsAnswer =
+  { readonly ok: true; readonly rows: readonly AnalyticsRow[] } | { readonly ok: false };
+
+/** Reads the aggregates of the Analytics events (PostHog in the backend). */
+export interface PostHogPort {
+  query(query: AnalyticsQuery): Promise<AnalyticsAnswer>;
+}
+
 /** How many requests a window of time takes. */
 export interface RequestLimit {
   readonly requests: number;
@@ -366,6 +429,24 @@ export interface CounterStore {
   mostAdded(editionId: string, week: string): Promise<CommunityWord | undefined>;
   /** Adds one to the count of the answer to the Edition's counted question (ADR 0068). */
   addAnswer(editionId: string, question: CountedQuestion, answer: string): Promise<void>;
+  /** The sums of the Community Counters of the Editions' Entries. */
+  totals(editionIds: readonly string[]): Promise<CounterTotals>;
+  /** The count of each questionnaire answer of the Editions, summed over them, in any order. */
+  answers(editionIds: readonly string[]): Promise<readonly AnswerCount[]>;
+}
+
+/** The sums of the Community Counters of some Editions. */
+export interface CounterTotals {
+  readonly known: number;
+  readonly unknown: number;
+  readonly saved: number;
+}
+
+/** How many readers chose an answer of a counted question. */
+export interface AnswerCount {
+  readonly question: string;
+  readonly answer: string;
+  readonly count: number;
 }
 
 /** The Community Word of a week: the Entry most added to Favorites, with its adds (ADR 0060). */

@@ -1,9 +1,10 @@
 import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
-import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
+import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER, ALL_EDITIONS } from '@slovo/contracts/admin-api';
 import type {
   Actor,
   AdminAccess,
+  AdminAnalytics,
   AdminSignIn,
   Edition,
   EditionRegistry,
@@ -70,8 +71,17 @@ export function adminProcedures(
   signIn: AdminSignIn,
   editions: EditionRegistry,
   served: readonly Edition[],
+  analytics: AdminAnalytics,
 ) {
   const os = implement(apiContract.admin).$context<{ headers: Headers; resHeaders?: Headers }>();
+
+  /** The Editions an Аналітика read sums: the one named, or every Edition served for `all`. */
+  function editionIdsOf(editionId: string, errors: Pick<AdminErrors, 'NOT_FOUND'>): string[] {
+    const ids = served.map(({ config }) => config.id);
+    if (editionId === ALL_EDITIONS) return ids;
+    if (!ids.includes(editionId)) throw errors.NOT_FOUND();
+    return [editionId];
+  }
 
   /** Admits the caller to a procedure, or throws the refusal the contract lists. */
   async function admit(
@@ -258,6 +268,37 @@ export function adminProcedures(
         throw errors.BAD_REQUEST({ data: { refusal: result.reason, feature: result.feature } });
       }
       return { editionIds: [...result.editionIds] };
+    }),
+
+    analytics: os.analytics.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors);
+      const read = await analytics.overview(editionIdsOf(input.editionId, errors), {
+        from: input.from,
+        to: input.to,
+      });
+      if (!read.ok) throw errors.ANALYTICS_UNAVAILABLE();
+      const { activeByDay, visitsByDay, medianVisitSeconds, devices, appVersions } = read.value;
+      return {
+        activeByDay: [...activeByDay],
+        visitsByDay: [...visitsByDay],
+        medianVisitSeconds,
+        devices: [...devices],
+        appVersions: [...appVersions],
+        fetchedAt: read.fetchedAt.toISOString(),
+      };
+    }),
+
+    variantResults: os.variantResults.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors);
+      const read = await analytics.variants(editionIdsOf(input.editionId, errors), input.feature);
+      if (!read.ok) throw errors.ANALYTICS_UNAVAILABLE();
+      return { variants: [...read.value], fetchedAt: read.fetchedAt.toISOString() };
+    }),
+
+    counters: os.counters.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors);
+      const { totals, answers } = await analytics.counters(editionIdsOf(input.editionId, errors));
+      return { ...totals, answers: [...answers] };
     }),
 
     editions: os.editions.handler(async ({ context, errors }) => {

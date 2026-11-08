@@ -87,6 +87,31 @@ export function createCounterStore({ db }: Database): CounterStore {
       return mostAdded;
     },
 
+    async totals(editionIds) {
+      if (editionIds.length === 0) return { known: 0, unknown: 0, saved: 0 };
+      const { known, unknown, saved, editionId } = communityCounters;
+      const [row] = await db
+        .select({
+          known: sql<number>`coalesce(sum(${known}), 0)::integer`,
+          unknown: sql<number>`coalesce(sum(${unknown}), 0)::integer`,
+          saved: sql<number>`coalesce(sum(${saved}), 0)::integer`,
+        })
+        .from(communityCounters)
+        .where(inArray(editionId, [...editionIds]));
+      return row ?? { known: 0, unknown: 0, saved: 0 };
+    },
+
+    async answers(editionIds) {
+      if (editionIds.length === 0) return [];
+      const { question, answer, count, editionId } = questionnaireCounters;
+      return db
+        .select({ question, answer, count: sql<number>`sum(${count})::integer` })
+        .from(questionnaireCounters)
+        .where(inArray(editionId, [...editionIds]))
+        .groupBy(question, answer)
+        .orderBy(asc(question), asc(answer));
+    },
+
     async addAnswer(editionId, question, answer) {
       await db
         .insert(questionnaireCounters)

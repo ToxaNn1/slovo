@@ -12,7 +12,12 @@ export {
   ADMIN_SESSION_COOKIE,
   ADMIN_WRITE_HEADER,
   AdminEditionSchema,
+  ALL_EDITIONS,
   type AdminEdition,
+  type AnalyticsCount,
+  type AnalyticsOverview,
+  type CountersSummary,
+  type VariantResults,
 } from './api/admin';
 
 /**

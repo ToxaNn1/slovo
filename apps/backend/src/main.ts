@@ -15,6 +15,7 @@ import { readEditions } from './edition/edition-folders';
 import { createLogger } from './logger';
 import { systemRandom } from './random';
 import { createSentryReporter } from './sentry-reporter';
+import { createPostHogClient, unavailablePostHog } from './analytics/posthog-client';
 import { startServer } from './server';
 
 const config = readConfig(ServerConfigSchema, process.env);
@@ -33,6 +34,7 @@ const app = createApp({
   app: appConfig,
   editions,
   mailer,
+  posthog: config.posthog === undefined ? unavailablePostHog : createPostHogClient(config.posthog),
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   apple: createAppleVerifier({ clock: systemClock }),
   authSecret: config.AUTH_SECRET,

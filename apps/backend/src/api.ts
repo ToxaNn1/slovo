@@ -10,6 +10,7 @@ import type {
   AdminSignIn,
   Clock,
   CollectionLinks,
+  AdminAnalytics,
   CommunityCounters,
   ContentPacks,
   Edition,
@@ -70,6 +71,7 @@ interface ApiContext extends ResponseHeadersPluginContext, FailureContext {
 export function createApiHandler({
   accounts,
   admin,
+  adminAnalytics,
   adminSignIn,
   clock,
   collectionLinks,
@@ -82,6 +84,7 @@ export function createApiHandler({
 }: {
   accounts: Accounts;
   admin: AdminAccess;
+  adminAnalytics: AdminAnalytics;
   adminSignIn: AdminSignIn;
   clock: Clock;
   collectionLinks: CollectionLinks;
@@ -97,7 +100,7 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin, adminSignIn, editions, served),
+      admin: adminProcedures(admin, adminSignIn, editions, served, adminAnalytics),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks),
       counters: countersProcedures(communityCounters),
@@ -111,8 +114,8 @@ export function createApiHandler({
         try {
           return await options.next();
         } catch (error) {
-          // A refused request (4xx) is an answer the contract lists.
-          if (error instanceof ORPCError && error.status < 500) throw error;
+          // A refused request (4xx), or a failure the contract lists, is an answer.
+          if (error instanceof ORPCError && (error.status < 500 || error.defined)) throw error;
           onUnexpectedFailure(options.context, error);
           return {
             matched: true,
