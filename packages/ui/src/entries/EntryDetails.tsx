@@ -59,12 +59,12 @@ export function EntryDetails({
         testID="entry-scroll"
         style={styles.scroll}
         // The tabs fill the rest of the screen under the panel (ADR 0088).
-        contentContainerStyle={tabs && word !== undefined ? styles.fill : undefined}
+        contentContainerStyle={tabs ? styles.fill : undefined}
         // The sheet of the action row is a child in React's tree, so a tap in its
         // name field must not be swallowed to put the keyboard away.
         keyboardShouldPersistTaps="handled"
       >
-        <Swiped swipe={swipe} correction={card.kind === 'correction'}>
+        <Swiped swipe={swipe} correction={card.kind === 'correction'} fill={tabs}>
           <AccentGround
             id="entry-panel"
             testID="entry-panel"
@@ -95,7 +95,7 @@ export function EntryDetails({
             )}
           </AccentGround>
           {word === undefined ? (
-            <View style={styles.otherKind}>
+            <View style={[styles.otherKind, tabs && styles.fill]}>
               <EntryCard
                 card={card}
                 onOpenCorrection={onOpenCorrection}
@@ -105,6 +105,7 @@ export function EntryDetails({
                 // The swipes take the whole of Entry details, so the card keeps only its corner.
                 slots={slots?.slot === 'corner' ? { ...slots, swipe: undefined } : slots}
                 stressFalls={stressFalls}
+                tabs={tabs}
               />
             </View>
           ) : (
@@ -157,15 +158,18 @@ export function EntryDetails({
 function Swiped({
   swipe,
   correction,
+  fill,
   children,
 }: {
   swipe: EntrySwipe | undefined;
   correction: boolean;
+  /** The tabbed card fills the rest of the screen (ADR 0088), so the swipe grows to it. */
+  fill: boolean;
   children: ReactNode;
 }) {
   if (swipe === undefined) return <>{children}</>;
   return (
-    <SwipeMarks swipe={swipe} concealed={false} correction={correction}>
+    <SwipeMarks swipe={swipe} concealed={false} correction={correction} fill={fill}>
       {children}
     </SwipeMarks>
   );

@@ -55,11 +55,18 @@ const shippedEdition = loadEdition(activeEditionFiles.config);
 /** Whether the Swipe Marks switch is on in effect: off as the Edition ships it unless a test turns it on. */
 let swipeMarksOn = false;
 
-/** The Edition in effect: as it ships, with the Swipe Marks switch as the test sets it. */
+/** Whether the Word tabs switch is on in effect: on as the Edition ships it unless a test turns it off. */
+let wordTabsOn = true;
+
+/** The Edition in effect: as it ships, with the Swipe Marks and Word tabs switches as the test sets them. */
 const editionInEffect = (): typeof shippedEdition => ({
   ...shippedEdition,
   isFeatureEnabled: (feature) =>
-    feature === 'swipeMarks' ? swipeMarksOn : shippedEdition.isFeatureEnabled(feature),
+    feature === 'swipeMarks'
+      ? swipeMarksOn
+      : feature === 'wordTabs'
+        ? wordTabsOn
+        : shippedEdition.isFeatureEnabled(feature),
 });
 
 const haptics: Haptics = {
@@ -283,6 +290,50 @@ describe('the Entry screen and the side swipes (ADR 0077)', () => {
 
     expect(screen.getByTestId('word-card')).toBeOnTheScreen();
     expect(screen.queryByTestId('swipe-card')).not.toBeOnTheScreen();
+  });
+});
+
+/** The tabs on the Entry screen, by their names, with whether each is selected. */
+function tabsOnScreen() {
+  const selected = screen.queryAllByRole('tab', { selected: true });
+  return screen.queryAllByRole('tab').map((tab) => ({
+    name: String(tab.props['accessibilityLabel']),
+    selected: selected.includes(tab),
+  }));
+}
+
+describe('the tabs of an Entry card on the Entry screen (ADR 0088)', () => {
+  afterEach(() => {
+    wordTabsOn = true;
+  });
+
+  it('shows a Word with its tabs, «Суть» selected with the Definition', async () => {
+    await renderEntry('w_sumyrnyi');
+
+    expect(tabsOnScreen()[0]).toEqual({ name: 'Суть', selected: true });
+    expect(tabsOnScreen().map(({ name }) => name)).toContain('Історія');
+    expect(screen.getByTestId('word-definition')).toBeOnTheScreen();
+  });
+
+  it('shows a Correction with «Як краще», «Чому» and «Приклади», «Як краще» selected', async () => {
+    await renderEntry('c_vezhlyvyi');
+
+    expect(tabsOnScreen()).toEqual([
+      { name: 'Як краще', selected: true },
+      { name: 'Чому', selected: false },
+      { name: 'Приклади', selected: false },
+    ]);
+    expect(screen.getByTestId('correction-tab-panel')).toBeOnTheScreen();
+  });
+
+  it('keeps a Word and a Correction in one column with `wordTabs` off', async () => {
+    wordTabsOn = false;
+    await renderEntry('w_sumyrnyi');
+    expect(tabsOnScreen()).toEqual([]);
+    expect(screen.getByTestId('word-definition')).toBeOnTheScreen();
+
+    await renderEntry('c_vezhlyvyi');
+    expect(tabsOnScreen()).toEqual([]);
   });
 });
 
