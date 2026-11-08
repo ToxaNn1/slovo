@@ -1,12 +1,12 @@
 import { Link } from '@tanstack/react-router';
 
-import { SECTIONS } from '../sections';
+import { sectionsOf } from '../sections';
 
-/** The seven sections; a link keeps the global filters of the URL. */
-export function Sidebar() {
+/** The sections of the role; a link keeps the global filters of the URL. */
+export function Sidebar({ role }: { readonly role: 'owner' | 'admin' }) {
   return (
     <nav aria-label="Розділи" className="flex flex-col gap-1">
-      {SECTIONS.map((section) => (
+      {sectionsOf(role).map((section) => (
         <Link
           key={section.path}
           to={section.path}

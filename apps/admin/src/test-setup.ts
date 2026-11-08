@@ -1,11 +1,7 @@
 import { cleanup } from '@testing-library/react';
-import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 
-import { mockHandlers } from './mock/handlers';
-
-// The screens talk to the same handlers as `pnpm dev:admin --mock`.
-const server = setupServer(...mockHandlers());
+import { server } from './mock/server';
 
 // jsdom has no scrolling; the router scrolls to the top on every navigation.
 window.scrollTo = () => undefined;

@@ -15,6 +15,7 @@ import { Route as ContentRouteImport } from './routes/content'
 import { Route as DevelopmentRouteImport } from './routes/development'
 import { Route as QualityRouteImport } from './routes/quality'
 import { Route as SecurityRouteImport } from './routes/security'
+import { Route as SessionsRouteImport } from './routes/sessions'
 import { Route as SwitchesRouteImport } from './routes/switches'
 
 const IndexRoute = IndexRouteImport.update({
@@ -47,6 +48,11 @@ const SecurityRoute = SecurityRouteImport.update({
   path: '/security',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SessionsRoute = SessionsRouteImport.update({
+  id: '/sessions',
+  path: '/sessions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SwitchesRoute = SwitchesRouteImport.update({
   id: '/switches',
   path: '/switches',
@@ -60,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/development': typeof DevelopmentRoute
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
+  '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRoute
 }
 export interface FileRoutesByTo {
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/development': typeof DevelopmentRoute
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
+  '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRoute
 }
 export interface FileRoutesById {
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/development': typeof DevelopmentRoute
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
+  '/sessions': typeof SessionsRoute
   '/switches': typeof SwitchesRoute
 }
 export interface FileRouteTypes {
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/development'
     | '/quality'
     | '/security'
+    | '/sessions'
     | '/switches'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -99,6 +109,7 @@ export interface FileRouteTypes {
     | '/development'
     | '/quality'
     | '/security'
+    | '/sessions'
     | '/switches'
   id:
     | '__root__'
@@ -108,6 +119,7 @@ export interface FileRouteTypes {
     | '/development'
     | '/quality'
     | '/security'
+    | '/sessions'
     | '/switches'
   fileRoutesById: FileRoutesById
 }
@@ -118,6 +130,7 @@ export interface RootRouteChildren {
   DevelopmentRoute: typeof DevelopmentRoute
   QualityRoute: typeof QualityRoute
   SecurityRoute: typeof SecurityRoute
+  SessionsRoute: typeof SessionsRoute
   SwitchesRoute: typeof SwitchesRoute
 }
 
@@ -165,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SecurityRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/sessions': {
+      id: '/sessions'
+      path: '/sessions'
+      fullPath: '/sessions'
+      preLoaderRoute: typeof SessionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/switches': {
       id: '/switches'
       path: '/switches'
@@ -182,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevelopmentRoute: DevelopmentRoute,
   QualityRoute: QualityRoute,
   SecurityRoute: SecurityRoute,
+  SessionsRoute: SessionsRoute,
   SwitchesRoute: SwitchesRoute,
 }
 export const routeTree = rootRouteImport
