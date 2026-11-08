@@ -22,7 +22,7 @@ const contentProcedure = procedure.errors({
   NOT_FOUND: { message: 'Not found' },
   /** No Агент token, an unknown or revoked one, or the app's Session. */
   UNAUTHORIZED: { message: 'Content is written by an Агент token or an admin session' },
-  NOT_IMPORTED: { status: 409, message: 'The Edition\'s content is not imported' },
+  NOT_IMPORTED: { status: 409, message: "The Edition's content is not imported" },
 });
 
 /** What a write is refused with besides the common refusals. */
@@ -131,7 +131,7 @@ const contentWriteContract = {
     .route({
       method: 'PUT',
       path: `${recordPath}/{id}`,
-      summary: 'Replace a record\'s fields',
+      summary: "Replace a record's fields",
       tags: ['admin'],
     })
     .errors(writeErrors)
@@ -189,7 +189,7 @@ const contentWriteContract = {
     .route({
       method: 'GET',
       path: '/admin/content/{editionId}/report',
-      summary: 'Counts of the content against the Edition\'s content targets',
+      summary: "Counts of the content against the Edition's content targets",
       tags: ['admin'],
     })
     .input(z.strictObject({ editionId: EditionIdSchema }))

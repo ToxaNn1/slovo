@@ -21,6 +21,7 @@ import { adminProcedures } from './admin/admin-procedures';
 import { collectionLinksProcedures } from './collection-links/collection-links-procedures';
 import { contentProcedures } from './content/content-procedures';
 import type { ContentStore } from './content/content-store';
+import type { ContentWrites } from './content/content-writes';
 import { countersProcedures } from './counters/counters-procedures';
 import { reportOf, type ErrorReporter } from './error-reporter';
 import { editionProcedures } from './edition/edition-procedures';
@@ -72,6 +73,7 @@ export function createApiHandler({
   communityCounters,
   contentPacks,
   contentStore,
+  contentWrites,
   editions,
   mistakeReports,
   sync,
@@ -82,6 +84,7 @@ export function createApiHandler({
   communityCounters: CommunityCounters;
   contentPacks: ContentPacks;
   contentStore: ContentStore;
+  contentWrites: ContentWrites;
   editions: EditionRegistry;
   mistakeReports: MistakeReports;
   sync: Sync;
@@ -90,7 +93,7 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin),
+      admin: adminProcedures(admin, contentWrites),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks, contentStore),
       counters: countersProcedures(communityCounters),

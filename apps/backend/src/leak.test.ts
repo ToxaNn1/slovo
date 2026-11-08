@@ -300,6 +300,20 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           // No Власник in this database: the admin API answers 404.
           await client.admin.status().catch(refused);
         },
+        content: async () => {
+          const { content } = client.admin;
+          const editionId = EDITION;
+          const batchId = '00000000-0000-4000-8000-000000000000';
+          const record = { editionId, kind: 'word' as const, batchId };
+          await content.openBatch({ editionId }).catch(refused);
+          await content.create({ ...record, fields: {} }).catch(refused);
+          await content
+            .edit({ ...record, id: 'w_a1', recordVersion: 1, fields: {} })
+            .catch(refused);
+          await content.retire({ ...record, id: 'w_a1', recordVersion: 1 }).catch(refused);
+          await content.flag({ ...record, id: 'w_a1', reason: 'check' }).catch(refused);
+          await content.report({ editionId }).catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {

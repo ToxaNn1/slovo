@@ -99,18 +99,22 @@ describe('the content write API', () => {
     const { client, agent, batchId } = await contentBackend();
     const before = await snapshotOf(client);
     const word = await wordOf(client, WORD_ID);
-    const retired = before.words.find((found) => found.retired === true);
+    const retired = before.words.find((found) => found.retired);
     const [collection] = before.curatedCollections;
     if (retired === undefined || collection === undefined) throw new Error('no fixture records');
-    const edit = (kind: 'word' | 'curatedCollection', id: string, fields: object) =>
-      agent.admin.content.edit({ editionId: 'uk', kind, id, batchId, recordVersion: 1, fields });
+    const edit = (
+      kind: 'word' | 'curatedCollection',
+      id: string,
+      fields: Record<string, unknown>,
+    ) => agent.admin.content.edit({ editionId: 'uk', kind, id, batchId, recordVersion: 1, fields });
     const refusedBy = (rule: string) => ({
       code: 'REFUSED',
       data: { refusals: expect.arrayContaining([expect.objectContaining({ rule })]) as unknown },
     });
 
-    await expect(edit('word', WORD_ID, { ...word, categoryId: 'no-such-category' })).rejects
-      .toMatchObject(refusedBy('word-category'));
+    await expect(
+      edit('word', WORD_ID, { ...word, categoryId: 'no-such-category' }),
+    ).rejects.toMatchObject(refusedBy('word-category'));
     // The б of «обруч».
     await expect(edit('word', WORD_ID, { ...word, stress: [1] })).rejects.toMatchObject(
       refusedBy('stress'),
@@ -166,7 +170,8 @@ describe('the content write API', () => {
       editionId: 'uk',
       kind: 'word',
       batchId,
-      fields: { ...fields, lemma: 'обручик', stress: [2] },
+      // «обру́чик».
+      fields: { ...fields, lemma: 'обручик', stress: [3] },
     });
 
     const after = await snapshotOf(client);
@@ -206,15 +211,16 @@ describe('the content write API', () => {
     await expect(edit(backend.client)).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
     await expect(edit(backend.clientOf(token))).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
     const notImported = await contentBackend({ imported: false });
-    await expect(notImported.agent.admin.content.openBatch({ editionId: 'uk' })).rejects
-      .toMatchObject({ code: 'NOT_IMPORTED' });
+    await expect(
+      notImported.agent.admin.content.openBatch({ editionId: 'uk' }),
+    ).rejects.toMatchObject({ code: 'NOT_IMPORTED' });
     await expect(edit(notImported.agent)).rejects.toMatchObject({ code: 'NOT_IMPORTED' });
   });
 
   it('sets «needs new recording» on a change of the Lemma or Stress, not of a definition', async () => {
     const { client, agent, batchId } = await contentBackend();
     const word = await wordOf(client, WORD_ID);
-    const edit = (recordVersion: number, fields: object) =>
+    const edit = (recordVersion: number, fields: Record<string, unknown>) =>
       agent.admin.content.edit({
         editionId: 'uk',
         kind: 'word',
@@ -233,6 +239,37 @@ describe('the content write API', () => {
     expect(await edit(3, { primaryDefinition: 'Знову тлумачення.' })).toMatchObject({
       needsNewRecording: true,
     });
+  });
+
+  it('flags a record with a reason as an Action log row, changing no content', async () => {
+    const { client, agent, batchId, admin } = await contentBackend();
+    const before = await snapshotOf(client);
+
+    await agent.admin.content.flag({
+      editionId: 'uk',
+      kind: 'word',
+      id: WORD_ID,
+      batchId,
+      reason: 'сумнівне джерело',
+    });
+
+    expect(await snapshotOf(client)).toEqual(before);
+    expect((await admin.actions('uk')).filter(({ batchId: of }) => of === batchId)).toEqual([
+      expect.objectContaining({
+        who: { kind: 'agent', name: 'claude-content' },
+        what: 'content.word.flag',
+        reason: 'сумнівне джерело',
+      }),
+    ]);
+    await expect(
+      agent.admin.content.flag({
+        editionId: 'uk',
+        kind: 'word',
+        id: 'w_none00',
+        batchId,
+        reason: 'x',
+      }),
+    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
   });
 
   it('keeps one batch id over its writes, logs before and after, and reports against the targets', async () => {
@@ -283,10 +320,11 @@ describe('the content write API', () => {
 
     const { report, missed } = await agent.admin.content.report({ editionId: 'uk' });
     const snapshot = await snapshotOf(client);
-    const live = snapshot.words.filter((found) => found.retired !== true);
+    const live = snapshot.words.filter((found) => !found.retired);
     expect(report.words).toBe(live.length);
-    expect(report.wordsPerCategory.find(({ categoryId }) => categoryId === word.categoryId))
-      .toMatchObject({ words: live.filter((found) => found.categoryId === word.categoryId).length });
+    expect(
+      report.wordsPerCategory.find(({ categoryId }) => categoryId === word.categoryId),
+    ).toMatchObject({ words: live.filter((found) => found.categoryId === word.categoryId).length });
     // The UA Edition declares 500 Words at least.
     expect(missed.some(({ target }) => target === 'minWords')).toBe(live.length < 500);
   });
