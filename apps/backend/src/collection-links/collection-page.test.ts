@@ -108,8 +108,8 @@ describe('the web page of a Collection Link', () => {
 
   it('answers a link of an Edition with Collection Links switched off as not available', async () => {
     // The remote switch stays in the database the tests of the file share.
-    const { request, id, switchOff } = await shared(['w_00g2ap'], 'switched');
-    await switchOff('switched', 'collectionLinks');
+    const { request, id, kill } = await shared(['w_00g2ap'], 'switched');
+    await kill('switched', 'collectionLinks');
 
     const response = await request(`/switched/c/${id}`, { headers: HTML });
 

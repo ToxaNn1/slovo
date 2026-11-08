@@ -5,6 +5,7 @@ import type {
   AdminAccess,
   EditionRegistry,
   EditionSwitches,
+  SwitchRefusal,
   SwitchRefused,
 } from '@slovo/server-core';
 
@@ -51,7 +52,9 @@ export function adminProcedures(admin: AdminAccess, editions: EditionRegistry) {
   /** The answer of a switch write, or the refusal by name the contract lists. */
   function answered(
     result: EditionSwitches | SwitchRefused,
-    errors: { BAD_REQUEST: (options: { data: { refusal: string; feature: string } }) => Error },
+    errors: {
+      BAD_REQUEST: (options: { data: { refusal: SwitchRefusal; feature: string } }) => Error;
+    },
   ) {
     if (!result.ok) {
       throw errors.BAD_REQUEST({ data: { refusal: result.reason, feature: result.feature } });

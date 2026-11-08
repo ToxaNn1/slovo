@@ -285,11 +285,11 @@ describe('Collection Links switched off', () => {
   });
 
   it('remotely answer both requests as NOT_FOUND, and the links read again once cleared', async () => {
-    const { client, switchOff, clearSwitch } = testApp({
+    const { client, kill, clearRules } = testApp({
       editions: testEditions(['remote']).read(),
     });
     const { id } = await client.collectionLinks.create(validLink({ edition: 'remote' }));
-    await switchOff('remote', 'collectionLinks');
+    await kill('remote', 'collectionLinks');
 
     await expect(
       client.collectionLinks.create(validLink({ edition: 'remote' })),
@@ -299,7 +299,7 @@ describe('Collection Links switched off', () => {
       status: 404,
     });
 
-    await clearSwitch('remote', 'collectionLinks');
+    await clearRules('remote', 'collectionLinks');
     await expect(client.collectionLinks.read({ id })).resolves.toEqual(
       validLink({ edition: 'remote' }),
     );

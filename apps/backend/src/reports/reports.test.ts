@@ -170,8 +170,8 @@ describe('reports.send', () => {
   });
 
   it('answers NOT_FOUND once the owner turns Mistake Reports off remotely', async () => {
-    const { client, switchOff } = testApp({ editions: testEditions(['remote']).read() });
-    await switchOff('remote', 'mistakeReports');
+    const { client, kill } = testApp({ editions: testEditions(['remote']).read() });
+    await kill('remote', 'mistakeReports');
 
     await expect(
       client.reports.send(validReport(newEntryId(), { editionId: 'remote' })),
