@@ -464,6 +464,8 @@ interface TestAppOptions {
   readonly trustedProxyHops?: number;
   /** The owner admin's one Account; no admin unless given. */
   readonly ownerEmail?: string;
+  /** The built owner admin app's folder; none unless given. */
+  readonly adminDist?: string;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
@@ -487,6 +489,7 @@ export function testApp({
   random = systemRandom,
   trustedProxyHops = 0,
   ownerEmail,
+  adminDist,
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
@@ -509,6 +512,7 @@ export function testApp({
     reporter: { report: (report) => reports.push(report) },
     trustedProxyHops,
     ownerEmail,
+    adminDist,
   });
   const ip = newIp();
   // The one way a request reaches the app.
