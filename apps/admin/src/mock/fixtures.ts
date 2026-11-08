@@ -101,4 +101,53 @@ export const FIXTURES: AdminApiOutputs = {
       quoteCheck: { unverified: 0, failed: 0 },
     },
   },
+  development: {
+    github: {
+      state: 'ok',
+      fetchedAt: '2026-11-08T09:30:00.000Z',
+      pullRequests: [
+        {
+          number: 1750,
+          title: 'feat(admin): Розробка',
+          author: 'anton',
+          url: 'https://github.com/ToxaNn1/slovo/pull/1750',
+          draft: false,
+          updatedAt: '2026-11-08T09:00:00.000Z',
+        },
+      ],
+      mainCi: {
+        state: 'success',
+        url: 'https://github.com/ToxaNn1/slovo/actions/runs/1',
+        finishedAt: '2026-11-08T08:00:00.000Z',
+      },
+      milestones: [
+        { title: '0.9', open: 4, closed: 12, dueOn: '2026-12-01T00:00:00Z' },
+        { title: '1.0', open: 30, closed: 0, dueOn: null },
+      ],
+      releases: [
+        {
+          tag: 'v0.8.0',
+          name: '0.8',
+          publishedAt: '2026-10-20T10:00:00.000Z',
+          url: 'https://github.com/ToxaNn1/slovo/releases/tag/v0.8.0',
+        },
+      ],
+    },
+    eas: {
+      state: 'ok',
+      fetchedAt: '2026-11-08T09:30:00.000Z',
+      builds: [
+        {
+          id: 'build-1',
+          platform: 'ios',
+          profile: 'production',
+          status: 'finished',
+          appVersion: '0.8.0',
+          buildNumber: '42',
+          createdAt: '2026-11-07T18:00:00.000Z',
+          url: 'https://expo.dev/accounts/anton_de/projects/slovo/builds/build-1',
+        },
+      ],
+    },
+  },
 };

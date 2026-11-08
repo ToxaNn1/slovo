@@ -6,6 +6,7 @@ import type {
   Actor,
   AdminAccess,
   AdminSignIn,
+  DevelopmentOverview,
   Edition,
   EditionRegistry,
   EditionSwitches,
@@ -77,6 +78,7 @@ export function adminProcedures(
   served: readonly Edition[],
   contentWrites: ContentWrites,
   mailer: Mailer,
+  development: DevelopmentOverview,
 ) {
   const os = implement(apiContract.admin).$context<{ headers: Headers; resHeaders?: Headers }>();
 
@@ -455,5 +457,9 @@ export function adminProcedures(
         return { fields: found.fields, recordVersion: found.recordVersion };
       }),
     },
+    development: os.development.handler(async ({ context, errors }) => {
+      await admit(context.headers, errors);
+      return development.overview();
+    }),
   });
 }

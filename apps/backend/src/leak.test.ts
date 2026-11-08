@@ -415,6 +415,9 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           await content.flag({ ...record, id: 'w_a1', reason: 'check' }).catch(refused);
           await content.report({ editionId }).catch(refused);
         },
+        development: async () => {
+          await client.admin.development().catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {

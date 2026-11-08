@@ -12,6 +12,7 @@ import type {
   CollectionLinks,
   CommunityCounters,
   ContentPacks,
+  DevelopmentOverview,
   Edition,
   EditionRegistry,
   Mailer,
@@ -80,6 +81,7 @@ export function createApiHandler({
   contentPacks,
   contentStore,
   contentWrites,
+  development,
   editions,
   mailer,
   mistakeReports,
@@ -95,6 +97,7 @@ export function createApiHandler({
   contentPacks: ContentPacks;
   contentStore: ContentStore;
   contentWrites: ContentWrites;
+  development: DevelopmentOverview;
   editions: EditionRegistry;
   /** Sends the notice of an admin invite. */
   mailer: Mailer;
@@ -107,7 +110,15 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin, adminSignIn, editions, served, contentWrites, mailer),
+      admin: adminProcedures(
+        admin,
+        adminSignIn,
+        editions,
+        served,
+        contentWrites,
+        mailer,
+        development,
+      ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks, contentStore),
       counters: countersProcedures(communityCounters),
