@@ -209,7 +209,13 @@ export {
 } from './game/traced-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { loadEdition, type Edition } from './edition/edition';
-export { openRemoteSwitches } from './edition/remote-switches';
+export {
+  openRemoteSwitches,
+  SWITCHES_REFRESH_MS,
+  type ReaderFacts,
+  type RemoteSwitches,
+  type RemoteSwitchesAnswer,
+} from './edition/remote-switches';
 export {
   evaluateSwitches,
   type RemoteRule,

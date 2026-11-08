@@ -2,17 +2,34 @@ import { z } from 'zod';
 
 import { declareRecord } from '../user-state/user-state-record';
 
+/** A force-update minimum as the backend answers it. */
+const minimum = z.object({ soft: z.string().optional(), hard: z.string().optional() });
+
 /** The records of the Edition. */
 export const editionRecords = {
   /**
-   * The last answer of the backend's remote Feature Switches: the features
-   * the owner turned off remotely, by name, and the ETag that names them
-   * (ADR 0040). Without the record, none is known, and the Edition's own
-   * values hold. It stays on the device: each device asks for itself.
+   * The last answer of the backend's remote Feature Switches (ADR 0089): the
+   * Rules, read leniently, the force-update minimums, the ETag that names
+   * them and how far the backend's clock was ahead of the device's. Without
+   * the record, or with one of the older shape, none is known and the
+   * Edition's own states hold. It stays on the device: each device asks for
+   * itself.
    */
   remoteSwitches: declareRecord(
     'edition.switches',
-    z.object({ off: z.array(z.string()), etag: z.string() }),
+    z.object({
+      rules: z.array(
+        z.object({
+          id: z.string(),
+          feature: z.string(),
+          verdict: z.unknown(),
+          targets: z.record(z.string(), z.unknown()),
+        }),
+      ),
+      minimums: z.object({ ios: minimum.optional(), android: minimum.optional() }),
+      etag: z.string(),
+      clockOffsetMs: z.number(),
+    }),
     { sync: 'device-only' },
   ),
   /**
