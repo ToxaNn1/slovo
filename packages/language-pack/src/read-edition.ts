@@ -5,7 +5,7 @@ import type { Correction, CuratedCollection, Idiom, SynonymRow, Tip, Word } from
 import { WordIdSchema } from '@slovo/contracts';
 import type { ContentSnapshot } from '@slovo/contracts/api';
 
-import { checkContentSet, type Authored } from '@slovo/content-rules';
+import { checkContentSet, checksumOf, type Authored } from '@slovo/content-rules';
 
 import { buildErrorsOf, type BuildError } from './build-error';
 import { categoryArtErrors } from './category-art';
@@ -174,6 +174,12 @@ function readWith(
           : (folder.readIfPresent('idRegistry') ?? []),
       )
     : undefined;
+  // The folder's days are held to the manifest; a snapshot's days are the backend's, which keeps them.
+  const recordedCrosswordDaysChecksum = fromFolder
+    ? manifest?.crosswordDaysChecksum
+    : crosswordDays === undefined
+      ? undefined
+      : checksumOf(crosswordDays);
   const wordIds = new Set(words.map(({ entry }) => entry.id));
   /** Whether the Edition has a Word of this id: a valid one, or a Word file that fails its checks. */
   const isWord = (id: string) =>
@@ -194,9 +200,9 @@ function readWith(
             tips,
             curatedCollections,
             ...(crosswordDays === undefined ? {} : { crosswordDays }),
-            ...(manifest?.crosswordDaysChecksum === undefined
+            ...(recordedCrosswordDaysChecksum === undefined
               ? {}
-              : { recordedCrosswordDaysChecksum: manifest.crosswordDaysChecksum }),
+              : { recordedCrosswordDaysChecksum }),
           },
           { today },
         ),
