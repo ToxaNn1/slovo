@@ -16,12 +16,14 @@ export const ME_KEY = ['me'] as const;
 export function useSignedInAdmin(): SignedInAdmin | null | undefined {
   const me = useQuery({
     queryKey: ME_KEY,
-    queryFn: () =>
-      adminApi
-        .me()
-        .catch((error: unknown) =>
-          codeOf(error) === 'UNAUTHORIZED' ? null : Promise.reject(error),
-        ),
+    queryFn: async () => {
+      try {
+        return await adminApi.me();
+      } catch (error) {
+        if (codeOf(error) === 'UNAUTHORIZED') return null;
+        throw error;
+      }
+    },
     retry: false,
   });
   return me.data;

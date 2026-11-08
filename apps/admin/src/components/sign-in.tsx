@@ -1,6 +1,6 @@
 import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 import { useQueryClient } from '@tanstack/react-query';
-import { useState, type FormEvent, type ReactNode } from 'react';
+import { useState, type SubmitEvent, type ReactNode } from 'react';
 
 import { adminApi } from '../api';
 import { ME_KEY, refusalText } from '../session';
@@ -32,7 +32,7 @@ export function SignIn() {
 
   /** Runs one step, showing its refusal. */
   const run =
-    (action: (form: FormData) => Promise<void>) => (event: FormEvent<HTMLFormElement>) => {
+    (action: (form: FormData) => Promise<void>) => (event: SubmitEvent<HTMLFormElement>) => {
       event.preventDefault();
       const form = new FormData(event.currentTarget);
       setBusy(true);

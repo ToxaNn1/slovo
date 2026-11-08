@@ -1,7 +1,8 @@
 /** A section of the Owner admin behind the sidebar (ADR 0088). */
 export interface Section {
   /** The route under `/admin`. */
-  readonly path: '/' | `/${string}`;
+  readonly path:
+    '/' | '/content' | '/switches' | '/analytics' | '/quality' | '/development' | '/security';
   readonly title: string;
   /** The empty state's line until the section's own ticket fills it. */
   readonly empty: string;
