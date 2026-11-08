@@ -25,6 +25,12 @@ import { metadataOf, type MetadataRow } from './pack-layout';
 
 /** The pack format this reader reads, the one this package builds; the app asks for Content updates of it. */
 export { PACK_FORMAT } from './pack-layout';
+export {
+  applyPatch,
+  patchStateOf,
+  type PackTransaction,
+  type PackWriteDatabase,
+} from './apply-patch';
 
 /** A value bound to a `?` placeholder. */
 type BindValue = string | number;

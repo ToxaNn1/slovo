@@ -88,11 +88,31 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
       reopen: reopenAfterSync({ settings: shell.settings, composition, writeWidgetSnapshot }),
     });
   }
+  // While the app is in the foreground it checks for a Patch at once and every 15 minutes (ADR 0090).
+  let stopFollowing: () => void = () => undefined;
+  let unsubscribePatches: () => void = () => undefined;
   reports.listen(languagePack, ({ contentUpdate }, moment) => {
+    if (contentUpdate === undefined) return;
+    if (moment === 'launch') {
+      // A Patch changed the records: the composition reopens over them, as after a remote switch.
+      unsubscribePatches = contentUpdate.subscribe(() => {
+        void composition.reopen().then(() => {
+          const { state } = composition;
+          if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
+        });
+      });
+    }
+    if (moment === 'background') {
+      stopFollowing();
+      return;
+    }
     if (moment !== 'launch' && moment !== 'return') return;
     isOnInEffect('contentUpdates')
       .then(async (on) => {
-        if (on) await contentUpdate?.checkForUpdate();
+        if (!on) return;
+        stopFollowing();
+        stopFollowing = contentUpdate.followForeground();
+        await contentUpdate.checkForUpdate();
       })
       .catch((error: unknown) => {
         logError('Could not check for a content update', error);
@@ -119,6 +139,8 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   }
   return () => {
     stopSpotlight();
+    stopFollowing();
+    unsubscribePatches();
     reports.stop();
   };
 }

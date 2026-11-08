@@ -19,6 +19,7 @@ export { generateDailyCrossword, type CrosswordResult } from './crossword';
 export { missedTargets, rarityFloor, wordFloor } from './content-targets';
 export type { ContentTarget, ContentTargets, MissedTarget } from './content-targets';
 export { PACK_FORMAT } from './pack-layout';
+export { applyPatch, patchStateOf, type PackWriteDatabase } from './apply-patch';
 export { openLanguagePack, type NodeLanguagePack } from './read-pack';
 export { readEdition, type EditionSource } from './read-edition';
 export { recordContent, type RecordResult } from './record';

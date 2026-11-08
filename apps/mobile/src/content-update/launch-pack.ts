@@ -1,76 +1,63 @@
-import type { ContentUpdate, Edition, PackVersion } from '@slovo/core';
+import type { ContentStore, ContentUpdate, Edition, PackVersion } from '@slovo/core';
 
-/** A Language Pack the shell opened, with its version and what closes it. */
+/** The patched Language Pack opened, with the content store its Patches go through, and what closes it. */
 export interface OpenedPack<R> {
   readonly reader: R;
   readonly version: PackVersion;
+  readonly store: ContentStore;
   close(): Promise<void>;
 }
 
-/**
- * What content updates need on the device: the Content update module over the
- * bundled pack, and a way to open the kept pack.
- */
-export interface ContentUpdates<R> {
-  /** Opens the Content update module over the version of the bundled pack. */
-  open(bundled: PackVersion): Promise<ContentUpdate>;
-  /** Opens the kept pack of the version the module names; it rejects when it refuses the pack. */
-  readonly openKeptPack: (version: PackVersion) => Promise<R>;
-}
-
-/** The Language Pack of the app run, with its version, and the Content update module, when content updates are on. */
+/** The Language Pack of the app run, and the Content update module, when content updates are on. */
 export interface LaunchPack<R> {
   readonly reader: R;
-  /** The version of the pack open, which a Mistake Report carries (ADR 0056). */
-  readonly version: PackVersion;
+  /** The content version the pack holds now, which a Mistake Report carries (ADR 0056); a Patch raises it. */
+  readonly contentVersion: () => number;
   readonly contentUpdate: ContentUpdate | undefined;
 }
 
 /**
- * Opens the Language Pack of the app run. Content updates are on when the
- * Edition switches them on and the device has what keeps a downloaded pack
- * (`contentUpdates`; undefined on a binary without the file-system module).
- * Then the Content update module opens the kept pack when it wins over the
- * bundled one, which then closes; the pack never changes while it is open
- * (ADR 0015, 0032). A kept pack that fails to open, such as one of another
- * Edition, leaves the bundled one open. Otherwise, or when the module fails
- * to open, content updates are off and the bundled pack opens, as before
- * them. Only a failure of the bundled pack rejects.
+ * Opens the Language Pack of the app run: the patched pack the runs before
+ * left, which takes Patches while it is open (ADR 0090). The bundled pack is
+ * copied over it first when there is none yet, when it does not open (another
+ * Edition, a pack format the app does not read), or when the bundled one is
+ * newer, as after an app update. Content updates are on when the Edition
+ * switches them on. Only a pack that fails to open after the copy rejects.
  */
 export async function openLaunchPack<R>({
   edition,
-  contentUpdates,
-  openBundled,
+  bundledVersion,
+  openPatched,
+  replaceWithBundled,
+  openContentUpdate,
   onError,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
-  contentUpdates: ContentUpdates<R> | undefined;
-  /** Copies the pack bundled with the app into place and opens it. */
-  openBundled: () => Promise<OpenedPack<R>>;
+  /** The version of the pack bundled with the app. */
+  bundledVersion: () => Promise<PackVersion>;
+  /** Opens the patched pack; it rejects when there is none or it refuses the pack. */
+  openPatched: () => Promise<OpenedPack<R>>;
+  /** Copies the bundled pack over the patched one. */
+  replaceWithBundled: () => Promise<void>;
+  openContentUpdate: (store: ContentStore) => ContentUpdate;
   onError: (error: unknown) => void;
 }): Promise<LaunchPack<R>> {
-  const bundled = await openBundled();
-  if (contentUpdates === undefined || !edition.isFeatureEnabled('contentUpdates')) {
-    return { reader: bundled.reader, version: bundled.version, contentUpdate: undefined };
+  const bundled = await bundledVersion();
+  let patched: OpenedPack<R> | undefined = await openPatched().catch(() => undefined);
+  if (patched !== undefined && patched.version.contentVersion < bundled.contentVersion) {
+    await patched.close().catch(onError);
+    patched = undefined;
   }
-  let contentUpdate: ContentUpdate;
-  try {
-    contentUpdate = await contentUpdates.open(bundled.version);
-  } catch (error) {
-    onError(error);
-    return { reader: bundled.reader, version: bundled.version, contentUpdate: undefined };
+  if (patched === undefined) {
+    await replaceWithBundled();
+    patched = await openPatched();
   }
-  let kept: { readonly reader: R; readonly version: PackVersion } | undefined;
-  try {
-    kept = await contentUpdate.openKept(async (version) => ({
-      reader: await contentUpdates.openKeptPack(version),
-      version,
-    }));
-  } catch (error) {
-    onError(error);
-  }
-  if (kept === undefined)
-    return { reader: bundled.reader, version: bundled.version, contentUpdate };
-  await bundled.close().catch(onError);
-  return { ...kept, contentUpdate };
+  const { store } = patched;
+  return {
+    reader: patched.reader,
+    contentVersion: () => store.contentVersion(),
+    contentUpdate: edition.isFeatureEnabled('contentUpdates')
+      ? openContentUpdate(store)
+      : undefined,
+  };
 }
