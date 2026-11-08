@@ -31,6 +31,7 @@ import {
   switchedTo,
   testShell,
   type RecordedAnalytics,
+  analyticsInto,
 } from '../shell/test-support';
 import { screenSettled } from '../use-open-screen';
 
@@ -148,7 +149,7 @@ beforeEach(async () => {
     userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-28T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
     random: { next: () => 0 },
-    analytics: analytics.port,
+    analytics: analyticsInto(analytics.port),
   });
 });
 

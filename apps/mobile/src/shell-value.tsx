@@ -1,4 +1,5 @@
 import type {
+  AnalyticsSink,
   Account,
   Backend,
   Clock,
@@ -51,6 +52,11 @@ export interface DevicePorts extends Omit<DeviceSources, 'userState'> {
    * whenever it is asked.
    */
   readonly edition: Edition;
+  /**
+   * Where the Analytics events go, with the Install id and Variants they
+   * carry (ADR 0068, 0089); none while the remote switches can't be opened.
+   */
+  readonly analytics?: AnalyticsSink;
 }
 
 /** The settings and those in effect when they opened. */

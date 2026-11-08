@@ -16,7 +16,7 @@ import { edition } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
 import { openOnce, useSubscribed, type Opening } from '../opening';
-import { useShell, type OpenedSettings } from '../shell-value';
+import { useShell, type EditionSwitches, type OpenedSettings } from '../shell-value';
 
 /** Makes native views (alerts, keyboards) follow the Theme too. */
 function applyToNativeViews({ theme }: UserSettings): void {
@@ -39,15 +39,27 @@ function opened(settings: Settings, current: UserSettings): OpenedSettings {
  */
 export function settingsOpening({
   userState,
+  remoteSwitches,
 }: {
   userState: Opening<TrackedUserState>;
+  /** The switches in effect, whose `analytics` gates a changed setting's event; without them none is sent. */
+  remoteSwitches: Opening<EditionSwitches>;
 }): Opening<OpenedSettings> {
   async function settingsOverUserState(): Promise<Settings> {
     const opened = await userState.opened();
+    const switches = await remoteSwitches.opened().catch(() => undefined);
     return createSettings({
       userState: opened,
       defaults,
-      analytics: createAnalytics({ edition, userState: opened, port: deviceAnalytics }),
+      ...(switches === undefined
+        ? {}
+        : {
+            analytics: createAnalytics({
+              edition: switches.edition,
+              userState: opened,
+              sink: { port: deviceAnalytics, switches },
+            }),
+          }),
     });
   }
   return openOnce(

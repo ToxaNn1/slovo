@@ -22,9 +22,10 @@ import { logError } from '../diagnostics/log';
 import { activeEditionId, edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
 import { settingsOpening } from '../settings/settings';
+import { deviceAnalytics } from '../analytics/posthog-analytics';
 import { shareCardOnDevice } from '../share/device-share';
 import { storedUserStateOpening } from '../user-state/stored-user-state';
-import type { DevicePorts, DeviceSources, Shell } from '../shell-value';
+import type { DevicePorts, DeviceSources, EditionSwitches, Shell } from '../shell-value';
 
 /** The device's own sources for an Edition: its backend, clock, schedule, randomness and stored user state. */
 function deviceSources(editionId: string): DeviceSources {
@@ -67,7 +68,7 @@ export function createShell(
   sources: DeviceSources = deviceSources(editionId),
 ): Shell {
   const { userState } = sources;
-  const remoteSwitches = over(
+  const remoteSwitches: Opening<EditionSwitches> = over(
     userState,
     'Could not open the remote Feature Switches',
     async (opened) => {
@@ -100,7 +101,16 @@ export function createShell(
     },
   };
   const ports = openOnce<DevicePorts>(
-    async () => ({ ...sources, userState: await userState.opened(), edition: editionInEffect }),
+    async () => {
+      // Without the remote switches there is no Install id, so no Analytics.
+      const switches = await remoteSwitches.opened().catch(() => undefined);
+      return {
+        ...sources,
+        userState: await userState.opened(),
+        edition: editionInEffect,
+        ...(switches === undefined ? {} : { analytics: { port: deviceAnalytics, switches } }),
+      };
+    },
     // The opening that failed under it has logged why.
     { onError: () => undefined },
   );
@@ -110,7 +120,7 @@ export function createShell(
     : undefined;
   return {
     userState,
-    settings: settingsOpening({ userState }),
+    settings: settingsOpening({ userState, remoteSwitches }),
     remoteSwitches,
     languagePack,
     composition: compositionOpening({ languagePack, ports, account }),
