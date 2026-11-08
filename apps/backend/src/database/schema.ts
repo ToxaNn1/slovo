@@ -353,8 +353,10 @@ export const adminUsers = pgTable('admin_users', {
   /** The email, trimmed and lower case. */
   email: text('email').notNull().unique(),
   role: text('role').$type<'owner' | 'admin'>().notNull(),
-  /** The TOTP secret, set when the Admin user enrolls at the first sign-in. */
+  /** The TOTP secret, sealed with a key of the backend's secret, set when the Admin user enrols at the first sign-in. */
   totpSecret: text('totp_secret'),
+  /** When the TOTP first signed in; until then the secret is pending and set anew at each enrolment. */
+  totpConfirmedAt: timestamp('totp_confirmed_at', { withTimezone: true }),
   state: text('state').$type<'active' | 'removed'>().notNull(),
   createdAt: time('created_at'),
 });
@@ -366,6 +368,15 @@ export const adminSessions = pgTable('admin_sessions', {
     .notNull()
     .references(() => adminUsers.id, { onDelete: 'cascade' }),
   createdAt: time('created_at'),
+  /** The last request of the session: 8 idle hours end it. */
+  lastSeenAt: time('last_seen_at'),
+  expiresAt: time('expires_at'),
+});
+
+/** The one emailed code of an Admin user's email waiting to sign in, by hash; it lives 10 minutes. */
+export const adminSignInCodes = pgTable('admin_sign_in_codes', {
+  email: text('email').primaryKey(),
+  codeHash: text('code_hash').notNull(),
   expiresAt: time('expires_at'),
 });
 

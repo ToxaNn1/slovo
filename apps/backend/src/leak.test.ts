@@ -298,6 +298,39 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         },
       },
       admin: {
+        // No Власник in this database: every admin procedure answers 404.
+        requestCode: async () => {
+          await client.admin.requestCode({ email: 'admin@example.com' }).catch(refused);
+        },
+        verifyCode: async () => {
+          await client.admin
+            .verifyCode({ email: 'admin@example.com', code: '000000' })
+            .catch(refused);
+        },
+        signIn: async () => {
+          await client.admin
+            .signIn({
+              email: 'admin@example.com',
+              code: '000000',
+              factor: { kind: 'totp', totp: '000000' },
+            })
+            .catch(refused);
+        },
+        me: async () => {
+          await client.admin.me().catch(refused);
+        },
+        sessions: async () => {
+          await client.admin.sessions().catch(refused);
+        },
+        signOut: async () => {
+          await client.admin.signOut().catch(refused);
+        },
+        signOutEverywhere: async () => {
+          await client.admin.signOutEverywhere().catch(refused);
+        },
+        actions: async () => {
+          await client.admin.actions({}).catch(refused);
+        },
         status: async () => {
           // No Власник in this database: the admin API answers 404.
           await client.admin.status().catch(refused);

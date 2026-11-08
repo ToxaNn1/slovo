@@ -4,10 +4,16 @@ import type { JsonifiedClient } from '@orpc/openapi-client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 
 import { apiContract } from './api';
+import { ADMIN_WRITE_HEADER } from './api/admin';
 import { EditionIdSchema } from './edition';
 
 export { EditionIdSchema };
-export { AdminEditionSchema, type AdminEdition } from './api/admin';
+export {
+  ADMIN_SESSION_COOKIE,
+  ADMIN_WRITE_HEADER,
+  AdminEditionSchema,
+  type AdminEdition,
+} from './api/admin';
 
 /**
  * The admin API: everything `apps/admin` knows about the backend, called over
@@ -27,7 +33,11 @@ export function createAdminApiClient(url: string): AdminApiClient {
   // The global `fetch` looked up on every call, not kept: a test or a mock
   // that replaces it after the client is made is still the one called.
   const fetch = (request: Request, init: RequestInit) => globalThis.fetch(request, init);
-  return createORPCClient(new OpenAPILink(adminApiContract, { url, fetch }));
+  // Every request carries the admin header, which the writes need; the
+  // session cookie goes along on the same origin by itself.
+  return createORPCClient(
+    new OpenAPILink(adminApiContract, { url, fetch, headers: { [ADMIN_WRITE_HEADER]: '1' } }),
+  );
 }
 
 /** What each admin API procedure answers, by procedure name. */

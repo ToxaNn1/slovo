@@ -4,13 +4,14 @@ import { PACK_FORMAT } from '@slovo/language-pack';
 import { systemClock } from '@slovo/server-core';
 
 import { createAdminStore } from '../admin/admin-store';
-import { testApp, testEditions } from '../test-support';
+import { signedInAdmin, testApp, testEditions } from '../test-support';
 import { createEditions } from './editions';
 import { runSwitchesCommand } from './switches-command';
 
-const OWNER = 'owner@example.com';
-
-/** A backend over the Editions, its admin API on: the owner is in its database. */
+/**
+ * A backend over the Editions, its admin API on: a Власник is in its database,
+ * and `client` is the Власник's, signed in.
+ */
 async function adminOn(...ids: string[]) {
   const folder = testEditions(ids, (config) => ({
     ...config,
@@ -22,13 +23,13 @@ async function adminOn(...ids: string[]) {
   }));
   const app = testApp({ editions: folder.read() });
   const store = createAdminStore(app.database);
-  await store.addAdminUser({ email: OWNER, role: 'owner', createdAt: new Date() });
+  const owner = await signedInAdmin(app, 'owner');
   const editions = createEditions({
     database: app.database,
     clock: systemClock,
     editions: folder.read(),
   });
-  return { ...app, store, editions };
+  return { ...app, client: owner.client, owner, store, editions };
 }
 
 describe('Rules the admin sets', () => {

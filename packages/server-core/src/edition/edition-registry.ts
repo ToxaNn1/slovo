@@ -165,9 +165,8 @@ function onForAnyone(edition: Edition, rules: readonly Rule[], feature: FeatureS
 
 /** A value as the Action log keeps it: its JSON, undefined fields left out. */
 function asJson(value: unknown): Json {
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return value;
-  }
+  if (typeof value === 'string' || typeof value === 'boolean') return value;
+  if (typeof value === 'number') return Number.isFinite(value) ? value : null;
   if (value instanceof Date) return value.toISOString();
   if (Array.isArray(value)) return value.map((item: unknown) => asJson(item));
   if (typeof value === 'object' && value !== null) {

@@ -12,6 +12,7 @@ import { join } from 'node:path';
 
 import type { HttpBindings } from '@hono/node-server';
 import { createApiClient } from '@slovo/contracts/api';
+import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
 import type { AppConfig, EditionConfig } from '@slovo/contracts';
 import { buildLanguagePack, recordContent } from '@slovo/language-pack';
 import {
@@ -25,6 +26,8 @@ import {
 } from '@slovo/language-pack/edition';
 import {
   systemClock,
+  totpOf,
+  type AdminRole,
   type AppleIdentity,
   type AppleVerifier,
   type Edition,
@@ -40,6 +43,7 @@ import { pino, type Logger } from 'pino';
 import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
 
 import { keptSignInCode } from './account/authenticator';
+import { createAdminStore, hmacSha1 } from './admin/admin-store';
 import { createApp } from './app';
 import { deleteCollectionLink } from './collection-links/collection-link-delete';
 import { publishPack } from './content/publish-pack';
@@ -465,8 +469,6 @@ interface TestAppOptions {
   readonly random?: Random;
   /** How many proxies in front of the backend it trusts; none unless given. */
   readonly trustedProxyHops?: number;
-  /** The owner admin's one Account; no admin unless given. */
-  readonly ownerEmail?: string;
   /** The built owner admin app's folder; none unless given. */
   readonly adminDist?: string;
   /** Sees every answer before the test gets it, with the request it answers. */
@@ -491,7 +493,6 @@ export function testApp({
   apple: givenApple,
   random = systemRandom,
   trustedProxyHops = 0,
-  ownerEmail,
   adminDist,
   onAnswer,
 }: TestAppOptions = {}) {
@@ -514,7 +515,6 @@ export function testApp({
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
     trustedProxyHops,
-    ownerEmail,
     adminDist,
   });
   const ip = newIp();
@@ -575,6 +575,8 @@ export function testApp({
     request: (path: string, init?: RequestInit, from?: string) =>
       send(new Request(new URL(path, 'http://backend.test'), init), from),
     client: clientWith({}),
+    /** The client of a request with the headers, such as the admin's cookie and write header. */
+    clientWith,
     /** The client of a device signed in with the Session's token. */
     clientOf: (token: string) => clientWith({ authorization: `Bearer ${token}` }),
     /** The client of a device whose requests come from the IP address. */
@@ -609,4 +611,53 @@ export function testApp({
     /** Closes the database the backend opened, as when Postgres goes away. */
     close,
   };
+}
+
+/** The headers of the admin app: its write header, and the session cookie when signed in. */
+export const adminHeaders = (cookie?: string): Record<string, string> => ({
+  [ADMIN_WRITE_HEADER]: '1',
+  ...(cookie === undefined ? {} : { cookie }),
+});
+
+/** The `name=value` of the admin session cookie an answer sets. */
+export function adminCookieOf(response: Response): string {
+  const set = response.headers.get('set-cookie') ?? '';
+  const pair = set.split(';')[0] ?? '';
+  if (!pair.startsWith(`${ADMIN_SESSION_COOKIE}=`)) throw new Error('no admin session cookie set');
+  return pair;
+}
+
+/**
+ * Signs the Admin user in as the admin app does, the first time: the emailed
+ * code, the TOTP set-up, then the code and a TOTP. Answers the session cookie,
+ * the client of the session, and what the set-up showed.
+ */
+export async function signInAdmin(backend: ReturnType<typeof testApp>, email: string) {
+  const anonymous = backend.clientWith(adminHeaders());
+  await anonymous.admin.requestCode({ email });
+  const code = backend.mailer.codeSentTo(email);
+  const enrolment = await anonymous.admin.verifyCode({ email, code });
+  if (enrolment.next !== 'enrol') throw new Error(`${email} has a TOTP already`);
+  const response = await backend.request('/v1/admin/sign-in', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...adminHeaders() },
+    body: JSON.stringify({
+      email,
+      code,
+      factor: { kind: 'totp', totp: totpOf(hmacSha1, enrolment.secret, new Date()) },
+    }),
+  });
+  if (response.status !== 200) throw new Error(`sign-in answered ${String(response.status)}`);
+  const cookie = adminCookieOf(response);
+  return { email, cookie, enrolment, client: backend.clientWith(adminHeaders(cookie)) };
+}
+
+/** Adds an Admin user of the role to the backend's database, and signs them in. */
+export async function signedInAdmin(
+  backend: ReturnType<typeof testApp>,
+  role: AdminRole,
+  email = `${role}-${randomUUID()}@example.com`,
+) {
+  await createAdminStore(backend.database).addAdminUser({ email, role, createdAt: new Date() });
+  return signInAdmin(backend, email);
 }

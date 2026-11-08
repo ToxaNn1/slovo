@@ -38,7 +38,6 @@ const app = createApp({
   authSecret: config.AUTH_SECRET,
   reporter: await createSentryReporter(config.SENTRY_DSN),
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
-  ownerEmail: config.OWNER_EMAIL,
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
 });
 const server = await startServer({ app, database, port: config.PORT });

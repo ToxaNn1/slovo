@@ -229,6 +229,13 @@ export interface RateLimits {
     now: Date,
     weight: number,
   ): Promise<{ readonly taken: boolean; readonly windowEnds: Date }>;
+  /** What the key's window holds at `now`; none when it has no window running. */
+  peek(
+    key: string,
+    now: Date,
+  ): Promise<{ readonly count: number; readonly windowEnds: Date } | undefined>;
+  /** Ends the key's window: what it held counts nothing any more. */
+  clear(key: string): Promise<void>;
 }
 
 /**

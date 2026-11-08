@@ -19,6 +19,14 @@ function handlerOf<N extends Name>(name: N, fixture: AdminApiOutputs[N]): HttpHa
 /** The MSW handlers of every admin API procedure; a new procedure needs a fixture to compile. */
 export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[] {
   const handlers: Record<Name, HttpHandler> = {
+    requestCode: handlerOf('requestCode', fixtures.requestCode),
+    verifyCode: handlerOf('verifyCode', fixtures.verifyCode),
+    signIn: handlerOf('signIn', fixtures.signIn),
+    me: handlerOf('me', fixtures.me),
+    sessions: handlerOf('sessions', fixtures.sessions),
+    signOut: handlerOf('signOut', fixtures.signOut),
+    signOutEverywhere: handlerOf('signOutEverywhere', fixtures.signOutEverywhere),
+    actions: handlerOf('actions', fixtures.actions),
     status: handlerOf('status', fixtures.status),
     switches: handlerOf('switches', fixtures.switches),
     setRules: handlerOf('setRules', fixtures.setRules),
