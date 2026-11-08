@@ -28,7 +28,7 @@ import type { Mix } from '../entries/mix';
 import type { MoodCheckIns, MoodFeedParameters } from '../mood/mood';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-import { buildWordCard } from '../entries/word-card';
+import { buildWordCard, type WordCardModel } from '../entries/word-card';
 import type { WordOfTheDay, WordOfTheDayChoice } from './word-of-the-day';
 import type { QuickQuestion } from '../game/quick-question';
 
@@ -102,7 +102,8 @@ export interface Feed {
    * Opens a Correction the Word card at `position` links («often said»): its
    * card goes right after the Word's, and the Feed goes on after it. Returns
    * the position of the Correction's card, or nothing when the Word card
-   * doesn't link that Correction.
+   * doesn't link that Correction or the Cycle doesn't cover it (Hidden, of a
+   * Category out of the Mix): a Hidden Entry is never reached through a link.
    */
   openLinkedCorrection(position: number, correctionId: string): Promise<number | undefined>;
   /**
@@ -235,7 +236,10 @@ function eligibleDue(cycle: Cycle, knowledge: Pick<Knowledge, 'state'>): EntryId
  * eligible Entries again: the Feed drops every card whose Entry the Cycle no
  * longer covers and puts back the dropped ones it covers again, see
  * `Feed.position` for the reader's place. A card that leaves the screen this
- * way is Seen by the dwell rule, like any card that leaves it.
+ * way is Seen by the dwell rule, like any card that leaves it. The Word cards
+ * are built again too, so their links to Corrections and Synonym Rows follow
+ * the Hidden Entries and the Mix: a Hidden Entry is never reached through a
+ * link, and `openLinkedCorrection` opens no Entry the Cycle doesn't cover.
  *
  * The Feed follows `opened`, an Entry opened outside the
  * Feed, from a notification or the widget: it becomes Seen with its History
@@ -498,6 +502,9 @@ export async function openFeed({
     const linked = card?.kind === 'word' ? card.model.linkedCorrections : [];
     if (card === undefined || !linked.some((link) => link.correctionId === correctionId))
       return undefined;
+    // A link the card still shows opens no Entry the Cycle doesn't cover: a
+    // Hidden Entry never enters the Feed, not even through a link.
+    if (!cycle.covers(correctionId)) return undefined;
     // Tapped again: the Correction's card is already there.
     if (session.cards[position + 1]?.entryId === correctionId) return position + 1;
     const correction = await entries.get(correctionId);
@@ -696,25 +703,25 @@ export async function openFeed({
     await Promise.all([kept, keepNextCardReady()]);
   }
 
-  /** Whether the Word cards of the session link their Corrections, as of the last pass. */
-  let linksShown = await entries.linksCorrections();
-
   /**
-   * Builds the Word cards of the session again once Corrections went out of
-   * the Mix or came back: a Word card links no Correction while they are out.
-   * Each card keeps its place, and so does the reader.
+   * Builds the Word cards of the session again once eligibility changed: a
+   * Word card links no Correction that is Hidden, of a Category out of the
+   * Mix or of the kind out of the Mix, and no Synonym Row that is Hidden or
+   * out of the Mix, so the links follow the Hidden Entries and the Mix as
+   * the Cycle does. Each card keeps its place, and so does the reader; only
+   * a card whose links changed is replaced, and nobody is told when none did.
    */
-  async function refreshLinkedCorrections(): Promise<void> {
-    const links = await entries.linksCorrections();
-    if (links === linksShown) return;
-    const rebuilt = new Map<FeedCard, FeedCard>();
-    for (const card of session.all) {
-      if (card.kind !== 'word') continue;
-      const entry = await entries.get(card.entryId);
-      if (entry?.kind === 'word')
-        rebuilt.set(card, await buildEntryCard(entries, entry, card.wordOfTheDay));
-    }
-    linksShown = links;
+  async function refreshLinks(): Promise<void> {
+    const pairs = await Promise.all(
+      session.all.map(async (card): Promise<readonly [FeedCard, FeedCard] | undefined> => {
+        if (card.kind !== 'word') return undefined;
+        const entry = await entries.get(card.entryId);
+        if (entry?.kind !== 'word') return undefined;
+        const fresh = await buildEntryCard(entries, entry, card.wordOfTheDay);
+        return sameLinks(card.model, fresh.model) ? undefined : [card, fresh];
+      }),
+    );
+    const rebuilt = new Map(pairs.filter((pair) => pair !== undefined));
     if (rebuilt.size === 0) return;
     session.renew((card) => rebuilt.get(card) ?? card);
     subscribers.tell();
@@ -722,13 +729,14 @@ export async function openFeed({
 
   /**
    * Drops every card whose Entry the Cycle no longer covers and puts back the
-   * dropped ones it covers again, then keeps the next card ready. The Word
-   * cards follow the Mix too, once the drop is done.
+   * dropped ones it covers again, then keeps the next card ready. The links
+   * of the Word cards follow the Hidden Entries and the Mix too, once the
+   * drop is done.
    */
   async function followEligibility(): Promise<void> {
     await inTurnTellingSeen(async () => {
       const seenId = await followCovered();
-      await refreshLinkedCorrections();
+      await refreshLinks();
       return seenId;
     });
     await keepNextCardReady();
@@ -839,4 +847,11 @@ export async function openFeed({
         : inTurnTellingSeen(() => markOpenedSeen(chosen.wordId, new Map()));
     },
   };
+}
+
+/** Whether two Word cards link the same Corrections and the same Synonym Row. */
+function sameLinks(a: WordCardModel, b: WordCardModel): boolean {
+  const links = ({ linkedCorrections, synonymRow }: WordCardModel) =>
+    JSON.stringify([linkedCorrections, synonymRow]);
+  return links(a) === links(b);
 }

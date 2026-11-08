@@ -409,7 +409,7 @@ export function SynonymRowLine({
     >
       <Text style={[typeStyle('sub', tokens), { color: colors.muted }]}>
         {before}
-        <Text style={[typeStyle('linkWord', tokens), { color: colors.accent }]}>
+        <Text style={[typeStyle('linkWord', tokens), { color: colors.accentText }]}>
           {dominant.text}
         </Text>
         {after}
@@ -483,7 +483,7 @@ function Details({ details }: { details: NonNullable<WordCardModel['details']> }
         }}
         style={styles.moreButton}
       >
-        <Text style={[typeStyle('textLink', tokens), { color: colors.accent }]}>
+        <Text style={[typeStyle('textLink', tokens), { color: colors.accentText }]}>
           {strings.wordCard.more}
         </Text>
         <Svg

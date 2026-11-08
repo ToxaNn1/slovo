@@ -2,6 +2,8 @@
 
 ADR 0080 let a content wave reach `main` without the owner reading the drafts, through `pnpm content check` and CI. Neither checked that a Definition really is the dictionary's words: in the 06.11 wave the coordinator ran a throw-away quote check by hand, and agents quoted Idioms, Corrections and Synonym Rows from goroh pages by hand with the wave's scripts as their only help (spec #1622). This amends ADR 0080.
 
+**Amended by ADR 0094.** A quoted text is at most one sentence of a dictionary article; the check stays word for word over what is quoted.
+
 **Amended by ADR 0090.** `pnpm content verify` runs as a background job on the Deployment over the records added or changed since its last run, keeps its sourcing cache in a Postgres table and flags a failing record in the Content queue; the CI step stays only until the repo content files go.
 
 - `pnpm content verify` checks, for every Entry it is given, one quoted field per kind (a Word's or an Idiom's primary Definition, a Correction's explanation, a Synonym Row's meaning line, a Tip's explanation): its first 40 characters, normalised, must be on the page the Entry's first source names, and on goroh in a block not attributed to «Велика мовна модель». Pages come through the sourcing tool's polite client and shared cache. `miss`, `llm` and `fetch-failed` fail; an Entry whose first source has no page is `unverified`, and `--book` checks it against the book.

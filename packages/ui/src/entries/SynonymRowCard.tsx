@@ -193,7 +193,7 @@ function Member({
       style={[
         typeStyle('listWord', tokens),
         size,
-        { color: wordId === undefined ? colors.ink : colors.accent },
+        { color: wordId === undefined ? colors.ink : colors.accentText },
       ]}
     >
       {member.text}

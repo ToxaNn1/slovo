@@ -527,6 +527,35 @@ describe('the Entries', () => {
       expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
     });
 
+    it('lead from a Word past a Hidden Correction, and to it again once unhidden', async () => {
+      const { entries, hiddenEntries } = await openLiveEntries({
+        content: createMemoryContentPort({ words: [talkative], corrections: [chatty, always] }),
+        edition: editionWith(true),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+      });
+
+      await hiddenEntries.hide('c_chatty');
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_always']);
+
+      await hiddenEntries.restore('c_chatty');
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
+    });
+
+    it('lead from a Word past a Correction of a Category of Corrections out of the Mix, and to it again once it is back', async () => {
+      const office: Correction = { ...always, categoryId: 'office' };
+      const { entries, mix } = await openLiveEntries({
+        content: createMemoryContentPort({ words: [talkative], corrections: [chatty, office] }),
+        edition: editionWith(true),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+      });
+
+      await mix.takeOut('everyday', 'correction');
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_always']);
+
+      await mix.putBack('everyday', 'correction');
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
+    });
+
     it('lead from a Word to no Synonym Row while Synonym Rows are out of the Mix, and back when they return', async () => {
       const row = synonymRow('r_talk');
       const linking: SynonymRow = {
@@ -544,6 +573,34 @@ describe('the Entries', () => {
       expect(await entries.linkingSynonymRow(talkative)).toBeUndefined();
 
       await mix.setKind('synonymRow', true);
+      expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
+    });
+
+    it('lead from a Word to the first Synonym Row that is not Hidden, and to none while every linking row is', async () => {
+      const linking = (id: string): SynonymRow => {
+        const row = synonymRow(id);
+        return {
+          ...row,
+          members: [{ text: 'балакучий', stress: [3], wordId: 'w_talkative' }, ...row.members],
+        };
+      };
+      const { entries, hiddenEntries } = await openLiveEntries({
+        content: createMemoryContentPort({
+          words: [talkative],
+          synonymRows: [linking('r_talk'), linking('r_chat')],
+        }),
+        edition: editionWith(true),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+      });
+      expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
+
+      await hiddenEntries.hide('r_talk');
+      expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_chat');
+
+      await hiddenEntries.hide('r_chat');
+      expect(await entries.linkingSynonymRow(talkative)).toBeUndefined();
+
+      await hiddenEntries.restore('r_talk');
       expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
     });
 

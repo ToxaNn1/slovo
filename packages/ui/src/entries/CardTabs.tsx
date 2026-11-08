@@ -213,7 +213,7 @@ export function FitPanel({
           }}
           style={styles.more}
         >
-          <Text style={[typeStyle('textLink', tokens), { color: tokens.colors.accent }]}>
+          <Text style={[typeStyle('textLink', tokens), { color: tokens.colors.accentText }]}>
             {strings.wordCard.tabMore}
           </Text>
         </Pressable>

@@ -126,7 +126,7 @@ export function GameEndPoster({
               <Text
                 testID="game-end-new-best"
                 maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-                style={[typeStyle('eyebrow', tokens), { color: colors.accent }]}
+                style={[typeStyle('eyebrow', tokens), { color: colors.accentText }]}
               >
                 {finish.newBest}
               </Text>

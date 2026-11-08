@@ -22,7 +22,7 @@ export function ReviewLabel() {
       {...voice}
       style={[styles.label, { borderColor: colors.accent, borderRadius: radii.chip }]}
     >
-      <Text style={[typeStyle('reviewTag', tokens), { color: colors.accent }]}>{label}</Text>
+      <Text style={[typeStyle('reviewTag', tokens), { color: colors.accentText }]}>{label}</Text>
     </View>
   );
 }
