@@ -22,12 +22,19 @@ import { MixChoices } from './mix-choices';
 
 const { config } = activeEditionFiles;
 
+const stateOf = (on: boolean) => (on ? 'on' : 'off');
+
 /** The UA Edition with Synonym Rows and Tips, and the Mix kind weights, turned on or off. */
 function editionWith(on: boolean, mixKindWeights = true): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
-    featureSwitches: { ...featureSwitches, synonymRows: on, tips: on, mixKindWeights },
+    featureSwitches: {
+      ...featureSwitches,
+      synonymRows: stateOf(on),
+      tips: stateOf(on),
+      mixKindWeights: stateOf(mixKindWeights),
+    },
   });
 }
 

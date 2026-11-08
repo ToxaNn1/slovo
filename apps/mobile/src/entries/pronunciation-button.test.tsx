@@ -49,7 +49,10 @@ jest.mock('../sounds/interface-sounds', () => ({
 /** The UA Edition as it ships, with the Feature Switches named set as given. */
 function editionWith(switches: Partial<Record<FeatureSwitch, boolean>>): Edition {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
-  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...switches } });
+  const states = Object.fromEntries(
+    Object.entries(switches).map(([name, on]) => [name, on ? 'on' : 'off']),
+  );
+  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...states } });
 }
 
 /** Taps the Pronunciation button of a Word card under the settings and switches given; gives the Recording it played. */

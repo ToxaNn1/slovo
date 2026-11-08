@@ -44,7 +44,10 @@ const CLIENT_ID = '123456789012-test.apps.googleusercontent.com';
 /** The Edition with its Google and Apple sign-in Feature Switches as given. */
 const editionWith = (switches: { googleSignIn: boolean; signInWithApple: boolean }) => {
   const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
-  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...switches } });
+  const states = Object.fromEntries(
+    Object.entries(switches).map(([name, on]) => [name, on ? 'on' : 'off']),
+  );
+  return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, ...states } });
 };
 
 /** The time stands still: no countdown runs on the signed-out screen. */
