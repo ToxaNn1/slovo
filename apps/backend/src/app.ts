@@ -204,6 +204,7 @@ export function createApp({
     communityCounters,
     contentPacks,
     editions: editionRegistry,
+    mailer,
     mistakeReports,
     served: editions,
     sync,

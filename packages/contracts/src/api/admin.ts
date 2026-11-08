@@ -77,6 +77,23 @@ const SWITCH_WRITE_ERRORS = {
 /** Every admin write names why: the Action log keeps it (ADR 0088). */
 const ReasonSchema = z.string().trim().min(1).max(500);
 
+/** Why the backend refuses a write of people or Агент tokens, by name. */
+export const AccessRefusalSchema = z.object({
+  refusal: z.enum(['taken', 'self', 'unknown', 'name-taken']),
+});
+
+/** The errors of a Безпека write: a refusal by name answers 409. */
+const ACCESS_WRITE_ERRORS = {
+  ...ADMIN_ERRORS,
+  CONFLICT: { message: 'The write is refused', data: AccessRefusalSchema },
+} as const;
+
+/** An Агент's name: lower-case letters, digits and hyphens. */
+const AgentNameSchema = z
+  .string()
+  .trim()
+  .regex(/^[a-z0-9-]{1,40}$/);
+
 /** The Rules and the force-update minimums of an Edition. */
 const SwitchesOfEditionSchema = z.object({
   rules: z.array(RuleSchema),
@@ -203,8 +220,9 @@ export const adminContract = {
     .route({
       method: 'GET',
       path: '/admin/actions',
-      summary: 'The Action log, oldest first, of one Edition when one is named',
-      description: 'A Безпека procedure: a Власник only.',
+      summary: 'The Action log, newest first, of one Edition when one is named',
+      description:
+        'A Безпека procedure: a Власник only. Answers the 500 newest rows; under an Edition, only its rows.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)
@@ -220,12 +238,109 @@ export const adminContract = {
               z.object({ kind: z.literal('command'), command: z.string() }),
             ]),
             what: z.string(),
+            before: z.json(),
+            after: z.json(),
             reason: z.string().nullable(),
             editionId: z.string().nullable(),
           }),
         ),
       }),
     ),
+
+  people: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/people',
+      summary: 'The active Admin users, by email',
+      description: 'A Безпека procedure: a Власник only.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(
+      z.object({
+        people: z.array(
+          z.object({ email: z.string(), role: AdminRoleSchema, signedInYet: z.boolean() }),
+        ),
+      }),
+    ),
+
+  invite: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/people',
+      summary: 'Invites a person by email as a Власник or an Адмін',
+      description:
+        'Emails them a notice; they sign in with an emailed code and set up a TOTP. A removed person comes back afresh. Refused with `taken` for an active email.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
+    .output(z.object({ invited: z.literal(true) })),
+
+  setRole: procedure
+    .route({
+      method: 'PUT',
+      path: '/admin/people/{email}/role',
+      summary: "Changes a person's role",
+      description: 'Refused with `self` for the caller, `unknown` for an email with no access.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ email: EmailSchema, role: AdminRoleSchema, reason: ReasonSchema }))
+    .output(z.object({ changed: z.literal(true) })),
+
+  removePerson: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/people/{email}/remove',
+      summary: "Removes a person's access and ends their sessions",
+      description: 'Refused with `self` for the caller, `unknown` for an email with no access.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ email: EmailSchema, reason: ReasonSchema }))
+    .output(z.object({ removed: z.literal(true) })),
+
+  agentTokens: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/agent-tokens',
+      summary: 'The Агент tokens by name, the revoked ones too',
+      description: 'A Безпека procedure: a Власник only. A token itself is never answered again.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(
+      z.object({
+        tokens: z.array(
+          z.object({ name: z.string(), createdAt: z.string(), revokedAt: z.string().nullable() }),
+        ),
+      }),
+    ),
+
+  issueAgentToken: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/agent-tokens',
+      summary: 'Issues a named Агент token, answered this once',
+      description: 'Refused with `name-taken` for a name issued before, revoked or not.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ name: AgentNameSchema, reason: ReasonSchema }))
+    .output(z.object({ name: z.string(), token: z.string() })),
+
+  revokeAgentToken: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/agent-tokens/{name}/revoke',
+      summary: "Revokes an Агент's token: it answers 401 from then on",
+      description: 'Refused with `unknown` for a name with no token to revoke.',
+      tags: ['admin'],
+    })
+    .errors(ACCESS_WRITE_ERRORS)
+    .input(z.object({ name: AgentNameSchema, reason: ReasonSchema }))
+    .output(z.object({ revoked: z.literal(true) })),
 
   status: procedure
     .route({

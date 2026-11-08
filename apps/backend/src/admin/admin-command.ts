@@ -49,7 +49,10 @@ export async function runAdminCommand(
     return 0;
   }
   if (subject === 'agent' && verb === 'add') {
-    const added = await admin.addAgent(value, 'pnpm admin agent add');
+    const added = await admin.addAgent(value, {
+      who: { kind: 'command', command: 'pnpm admin agent add' },
+      reason: null,
+    });
     if (!added.ok) {
       err(`The Агент "${value}" has a token already; revoke it or choose another name.`);
       return 1;
@@ -59,7 +62,12 @@ export async function runAdminCommand(
     return 0;
   }
   if (subject === 'agent' && verb === 'revoke') {
-    if (!(await admin.revokeAgent(value, 'pnpm admin agent revoke'))) {
+    if (
+      !(await admin.revokeAgent(value, {
+        who: { kind: 'command', command: 'pnpm admin agent revoke' },
+        reason: null,
+      }))
+    ) {
       err(`The Агент "${value}" has no token to revoke.`);
       return 1;
     }
