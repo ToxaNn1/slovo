@@ -3843,6 +3843,13 @@
                         ],
                         "additionalProperties": false
                       }
+                    },
+                    "needsNewRecording": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "pattern": "^w_[a-z0-9]+$"
+                      }
                     }
                   },
                   "required": [
@@ -3854,7 +3861,8 @@
                     "tips",
                     "synonymRows",
                     "curatedCollections",
-                    "crosswordDays"
+                    "crosswordDays",
+                    "needsNewRecording"
                   ]
                 }
               }

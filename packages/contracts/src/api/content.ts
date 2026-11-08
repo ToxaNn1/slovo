@@ -7,7 +7,7 @@ import { EditionIdSchema } from '../edition';
 import { IdiomSchema } from '../idiom';
 import { SynonymRowSchema } from '../synonym-row';
 import { TipSchema } from '../tip';
-import { WordSchema } from '../word';
+import { WordIdSchema, WordSchema } from '../word';
 import { PublishedPackSchema } from '../language-pack';
 import { procedure } from './procedure';
 
@@ -121,6 +121,8 @@ export const contentContract = {
         curatedCollections: z.array(CuratedCollectionSchema),
         /** In date order. */
         crosswordDays: z.array(CrosswordDaySchema),
+        /** The ids of the Words whose text changed since their Recordings, in id order. */
+        needsNewRecording: z.array(WordIdSchema),
       }),
     ),
 };

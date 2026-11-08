@@ -90,6 +90,8 @@ describe('importing an Edition into the database', () => {
       synonymRows: content.synonymRows,
       curatedCollections: content.curatedCollections ?? [],
       crosswordDays: content.crosswordDays ?? [],
+      // A Word's text has not changed since the import, so none needs a new Recording.
+      needsNewRecording: [],
     });
     expect(snapshot.corrections.some((correction) => correction.retired)).toBe(true);
   });
