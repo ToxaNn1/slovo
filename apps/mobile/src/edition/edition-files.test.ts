@@ -959,7 +959,7 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
    * («оберіть», «спробуйте», «торкніться», «позначте», «перевірте») and the plural present and future
    * («знаєте», «оберете», «торкнетеся»). Only words that merely end like a verb
    * («навіть», «відкрите») are not «ви» forms. No text is an exception
-   * (ADR 0075, 0089).
+   * (ADR 0075, 0092).
    */
   const vyWord =
     /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте|[бвгґджзклмнпрфхцчшщ]те)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;

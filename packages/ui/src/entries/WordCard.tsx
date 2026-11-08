@@ -55,7 +55,7 @@ export function WordHeadline({
   stressFalls: boolean;
   /** The calligraphic font family of the Word of the Day's Lemma, if it is set in one. */
   lemmaFont: string | undefined;
-  /** The tabbed card's headline (ADR 0088, board p1). */
+  /** The tabbed card's headline (ADR 0091, board p1). */
   tabbed: boolean;
 }) {
   const tokens = useTokens();

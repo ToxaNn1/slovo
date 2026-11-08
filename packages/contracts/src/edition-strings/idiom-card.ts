@@ -8,7 +8,7 @@ export const IdiomCardStringsSchema = z.strictObject({
   idiomTypes: z.record(IdiomTypeSchema, TextSchema),
   /** The heading over an Idiom's etymology, e.g. "Походження". */
   etymology: TextSchema,
-  /** The names of the Idiom card's tabs, e.g. "Суть", "Звідки", "Приклад" (ADR 0088). */
+  /** The names of the Idiom card's tabs, e.g. "Суть", "Звідки", "Приклад" (ADR 0091). */
   tabs: z.strictObject({
     essence: TextSchema,
     origin: TextSchema,

@@ -251,7 +251,7 @@ describe('the Category screen of Corrections', () => {
 
     await settle(() => fireEvent.press(screen.getByTestId('category-entry-c_protiahom')));
     expect(screen.queryByTestId('category-hero')).toBeNull();
-    // With `wordTabs` on, the explanation is on «Чому» (ADR 0088).
+    // With `wordTabs` on, the explanation is on «Чому» (ADR 0091).
     await settle(() => fireEvent.press(screen.getByTestId('correction-tab-why')));
     expect(screen.getByText('Чому не «на протязі».')).toBeTruthy();
     expect(composition.history.list).toEqual([]);

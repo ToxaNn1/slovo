@@ -163,7 +163,7 @@ export const swipeStampLayout = {
   paddingHorizontal: 12,
   border: 3,
   /**
-   * The room a card that fills its page (ADR 0088) leaves under it for the
+   * The room a card that fills its page (ADR 0091) leaves under it for the
    * stamp: its 20-point hang below the card and the drop of the far end of
    * the longest stamp, «✓ КАЖУ ПРАВИЛЬНО», tilted 6°, about 18 points.
    */

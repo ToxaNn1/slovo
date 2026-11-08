@@ -62,7 +62,7 @@ export function EntryScreen({
     if (card === null) router.replace('/');
   }, [card, router]);
   // The Word History drawn is the history opened for Analytics (ADR 0068), once per Entry:
-  // «Історія» draws it again on every return to the tab and at each smaller size (ADR 0088).
+  // «Історія» draws it again on every return to the tab and at each smaller size (ADR 0091).
   const composition = useShell().composition;
   const historyCountedFor = useRef<string | undefined>(undefined);
   const onWordHistoryShown = useCallback(() => {

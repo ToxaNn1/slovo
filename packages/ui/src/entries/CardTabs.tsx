@@ -26,7 +26,7 @@ import {
   wedges,
 } from '../tokens';
 
-/** The smallest font size content too tall for the card shrinks to (ADR 0088). */
+/** The smallest font size content too tall for the card shrinks to (ADR 0091). */
 const FLOOR = 'S' satisfies FontSize;
 
 /** The step below each font size above the floor, which content too tall for the card takes. */
@@ -39,7 +39,7 @@ const SMALLER: Readonly<Record<Exclude<FontSize, typeof FLOOR>, FontSize>> = {
 /**
  * How content sits in the card's fixed frame: whole at a font size from the
  * user's down to the floor, or at the floor clamped to the frame under
- * «Детальніше» (ADR 0088).
+ * «Детальніше» (ADR 0091).
  */
 type Fit = FontSize | 'clamped';
 
@@ -47,7 +47,7 @@ type Fit = FontSize | 'clamped';
 const growEasing = Easing.bezier(...motion.collapse.easing);
 
 /**
- * An Entry card's tabs under its head (ADR 0088): the selected tab's content
+ * An Entry card's tabs under its head (ADR 0091): the selected tab's content
  * in a `FitPanel`, and at the card's foot a `tablist` of `tab`s by their
  * names, a red slanted mark over the selected one (board p1), the first
  * selected on opening. A card with one tab draws no tab bar. Nothing moves between
@@ -127,7 +127,7 @@ export function CardTabs<Tab extends { readonly key: string }>({
 }
 
 /**
- * Content that fills the rest of an Entry card's fixed frame (ADR 0088):
+ * Content that fills the rest of an Entry card's fixed frame (ADR 0091):
  * content too tall for it takes the font size a step smaller at a time down
  * to the floor, S, and content too tall even there stays at S, clamped to the
  * frame, with «Детальніше» under it. A tap on it grows the room to the whole

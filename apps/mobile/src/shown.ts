@@ -37,7 +37,7 @@ export interface Shown {
   };
   /** Whether the Stress mark of a Word card's Lemma falls onto its vowel in the Feed and on the Entry screen. */
   readonly stressFall: boolean;
-  /** Whether the Entry cards of Words, Corrections, Idioms, Tips and Synonym Rows, in the Feed and on the Entry screen, are fixed-height cards with tabs (ADR 0088); the Word of the Day card is the red card while Self-check keeps it closed, and the Feed's header draws no XP bar. */
+  /** Whether the Entry cards of Words, Corrections, Idioms, Tips and Synonym Rows, in the Feed and on the Entry screen, are fixed-height cards with tabs (ADR 0091); the Word of the Day card is the red card while Self-check keeps it closed, and the Feed's header draws no XP bar. */
   readonly wordTabs: boolean;
   /** Whether the Lemma on the Word of the Day card in the Feed is set in the Edition's calligraphic font. */
   readonly calligraphicLemma: boolean;
@@ -130,7 +130,7 @@ export interface Shown {
   readonly dashboard: boolean;
   /** The Feed header's wordmark opens the Dashboard (ADR 0079). */
   readonly dashboardWordmark: boolean;
-  /** The «Стрічка» tab opens the Feed; the Dashboard stays the home at launch (ADR 0090). */
+  /** The «Стрічка» tab opens the Feed; the Dashboard stays the home at launch (ADR 0093). */
   readonly feedTab: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;

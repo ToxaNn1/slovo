@@ -1,6 +1,9 @@
 // Jest runs the component tests (`*.test.tsx`), on Expo's preset for iOS;
 // Vitest runs the rest (ADR 0029).
+import { jestReports } from '@slovo/config/test-reports';
+
 export default {
+  ...jestReports,
   preset: 'jest-expo/ios',
   testMatch: ['<rootDir>/src/**/*.test.tsx'],
   // The package has no Babel config of its own, so Metro never picks one up.

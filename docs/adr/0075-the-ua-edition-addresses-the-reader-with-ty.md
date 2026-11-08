@@ -8,7 +8,7 @@ Ticket #1561 first moved the UA Edition to «ви». Owner decision 04.11 (spec 
 
 **Guard.** A test in `apps/mobile/src/edition/edition-files.test.ts` refuses any «ви» form in the UA Edition's UI strings and Mascot lines, with no exceptions.
 
-**Amended by ADR 0089.** ADR 0077 once kept two «ви» texts in the swipe hint sheet; they are now «ГОРТАЙ ПАЛЬЦЕМ» and «Нове слово — коли захочеш.», and the guard allows none.
+**Amended by ADR 0092.** ADR 0077 once kept two «ви» texts in the swipe hint sheet; they are now «ГОРТАЙ ПАЛЬЦЕМ» and «Нове слово — коли захочеш.», and the guard allows none.
 
 **Out of scope.** The legal documents (`editions/uk/legal/`) are not UI strings and are not changed by this decision.
 

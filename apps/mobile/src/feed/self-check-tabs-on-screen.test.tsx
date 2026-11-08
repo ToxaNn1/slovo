@@ -123,7 +123,7 @@ const tip: Tip = {
   retired: false,
 };
 
-/** A Synonym Row, which draws no tab bar (ADR 0088). */
+/** A Synonym Row, which draws no tab bar (ADR 0091). */
 const row: SynonymRow = {
   kind: 'synonymRow',
   id: 'r_walk',

@@ -643,7 +643,7 @@ function forget(scrolls: SharedValue<Record<number, PageScroll>>, index: number)
  * taller than the screen. It scrolls with the same swipe that turns pages,
  * and holds still while the swipe turns the page. One drawn inside another
  * owns the page's scroll while it is drawn, as a Word card's tab that scrolls
- * inside its fixed frame does (ADR 0088). Outside a `VerticalPager`, as on the
+ * inside its fixed frame does (ADR 0091). Outside a `VerticalPager`, as on the
  * Entry screen, it is a plain scroll view.
  */
 export function PagerScrollView(props: PagerScrollViewProps) {

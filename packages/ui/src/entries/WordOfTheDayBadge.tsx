@@ -49,7 +49,7 @@ export function WordOfTheDayBadge({ day: { month, day } }: { day: LocalDate }) {
 }
 
 /**
- * The kicker that marks the Word of the Day on its tabbed card (ADR 0088,
+ * The kicker that marks the Word of the Day on its tabbed card (ADR 0091,
  * board p1): a red wedge and «СЛОВО ДНЯ · 7.11» in red capitals, no fill.
  * VoiceOver reads the label as written.
  */

@@ -401,7 +401,7 @@ describe('the tabs of a Word card in the Feed', () => {
 
     await act(() => jest.advanceTimersByTimeAsync(500));
 
-    // The room grows to the whole tab, so the page scrolls over the card (ADR 0088).
+    // The room grows to the whole tab, so the page scrolls over the card (ADR 0091).
     const room = () => getAnimatedStyle(wordCard().getByTestId('word-tab-panel', hidden));
     expect(wordCard().queryByTestId('word-tab-more', hidden)).toBeNull();
     expect(room()).toMatchObject({ minHeight: 2000 });

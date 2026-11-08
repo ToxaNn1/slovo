@@ -58,7 +58,7 @@ export function EntryDetails({
       <ScrollView
         testID="entry-scroll"
         style={styles.scroll}
-        // The tabs fill the rest of the screen under the panel (ADR 0088).
+        // The tabs fill the rest of the screen under the panel (ADR 0091).
         contentContainerStyle={tabs ? styles.fill : undefined}
         // The sheet of the action row is a child in React's tree, so a tap in its
         // name field must not be swallowed to put the keyboard away.
@@ -164,7 +164,7 @@ function Swiped({
 }: {
   swipe: EntrySwipe | undefined;
   correction: boolean;
-  /** The tabbed card fills the rest of the screen (ADR 0088), so the swipe grows to it. */
+  /** The tabbed card fills the rest of the screen (ADR 0091), so the swipe grows to it. */
   fill: boolean;
   children: ReactNode;
 }) {

@@ -46,9 +46,9 @@ export const WordCardStringsSchema = z.strictObject({
   etymology: TextSchema,
   extraDefinitions: TextSchema,
   moreExamples: TextSchema,
-  /** The button under a tab too long for its card's frame, on every kind of card, which opens the rest of the tab (ADR 0088). */
+  /** The button under a tab too long for its card's frame, on every kind of card, which opens the rest of the tab (ADR 0091). */
   tabMore: TextSchema,
-  /** The names of the Word card's tabs (ADR 0088). */
+  /** The names of the Word card's tabs (ADR 0091). */
   tabs: z.strictObject({
     essence: TextSchema,
     example: TextSchema,
@@ -60,7 +60,7 @@ export const WordCardStringsSchema = z.strictObject({
     synonyms: z.strictObject({ one: TextSchema, many: TextSchema }),
     antonyms: z.strictObject({ one: TextSchema, many: TextSchema }),
   }),
-  /** The line under the Definition in «Суть» that names the other meanings in «Історія», e.g. "Ще {count} значення — у вкладці «Історія»." (ADR 0088). */
+  /** The line under the Definition in «Суть» that names the other meanings in «Історія», e.g. "Ще {count} значення — у вкладці «Історія»." (ADR 0091). */
   moreMeanings: pluralOf(),
   /** The heading of the Word History on the card, e.g. "Історія слова". */
   history: TextSchema,

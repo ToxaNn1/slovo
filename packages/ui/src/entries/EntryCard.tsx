@@ -66,7 +66,7 @@ export interface EntryCardProps {
   /**
    * A Word's, a Correction's, a Tip's, a Synonym Row's or an Idiom's card in
    * a fixed-height frame, with tabs under its head, while the Edition's
-   * `wordTabs` is on in effect (ADR 0088). The Word of the Day's card stays
+   * `wordTabs` is on in effect (ADR 0091). The Word of the Day's card stays
    * the red card while Self-check keeps it closed, and opens into the tabbed
    * card with its kicker.
    */
@@ -224,7 +224,7 @@ function EntryCardFace({
         style={[
           styles.card,
           { borderColor: colors.line },
-          // The tabbed card takes the page's height, whatever its tab holds (ADR 0088),
+          // The tabbed card takes the page's height, whatever its tab holds (ADR 0091),
           // outlined in ink over the red offset shadow of board p1.
           fixedFrame(card, tabs, concealed) && [
             styles.fixed,
@@ -328,7 +328,7 @@ function EntryCardFace({
 
 /**
  * Whether the card is a fixed frame the page's height while `wordTabs` is on
- * (ADR 0088): every card but the Word of the Day's while Self-check keeps it
+ * (ADR 0091): every card but the Word of the Day's while Self-check keeps it
  * closed, which is the red card until the reader reveals it.
  */
 function fixedFrame(card: EntryCardProps['card'], tabs: boolean, concealed: boolean): boolean {

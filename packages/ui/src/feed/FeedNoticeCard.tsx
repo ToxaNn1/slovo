@@ -153,7 +153,7 @@ function NotificationMark() {
 
 /**
  * «Може, на сьогодні досить?» after 50 distinct Seen Entries, its board text
- * under it with those 50 (ADR 0089), and «Гортати далі», which turns to the next card as a swipe would, and so closes the
+ * under it with those 50 (ADR 0092), and «Гортати далі», which turns to the next card as a swipe would, and so closes the
  * card for the day; it never locks the Feed (ADR 0066).
  */
 export function EnoughForTodayCard() {

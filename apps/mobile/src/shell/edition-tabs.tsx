@@ -122,7 +122,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
   const names = { ...tabs, settings: shown.profile ? tabs.profile : tabs.settings };
   /** While a Game is on, its Round or its result fills the Game tab. */
   const gameOn = useGameState().current !== undefined;
-  /** With `feedTab` on, «Стрічка» shows as selected over the Feed it opens (ADR 0090). */
+  /** With `feedTab` on, «Стрічка» shows as selected over the Feed it opens (ADR 0093). */
   const pathname = usePathname();
   const feedSelected = shown.feedTab && pathname === '/feed';
   const tab = (name: Tab, onRoot = true, alsoSelected = false) => ({
@@ -140,7 +140,7 @@ export function EditionTabs({ screenOptions }: { screenOptions: TabOptions }) {
         options={tab('home', true, feedSelected)}
         listeners={{
           tabPress: (event) => {
-            // The Dashboard stays the home at launch; its tab opens the Feed (ADR 0090).
+            // The Dashboard stays the home at launch; its tab opens the Feed (ADR 0093).
             if (!shown.feedTab) return;
             event.preventDefault();
             router.navigate('/feed');

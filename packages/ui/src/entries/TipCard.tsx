@@ -24,7 +24,7 @@ import { tipTabsOf, type TipTab } from './tip-tabs';
  * each form with its label. Under Self-check it keeps the title, its chip and
  * the non-standard form (ADR 0051); the Entry card draws the button that
  * reveals the rest under them. While `wordTabs` is on, the rest sits in the
- * Entry card's tabs, «Суть» and «Приклад» (ADR 0088).
+ * Entry card's tabs, «Суть» and «Приклад» (ADR 0091).
  */
 export function TipCardBody({
   card,
@@ -40,7 +40,7 @@ export function TipCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The rest under the title in tabs, «Суть» and «Приклад», while `wordTabs` is on (ADR 0088). */
+  /** The rest under the title in tabs, «Суть» and «Приклад», while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
 }) {
   const tokens = useTokens();
@@ -110,7 +110,7 @@ export function TipCardBody({
   );
 }
 
-/** What the selected tab of a Tip shows, at the font size its frame gives (ADR 0088). */
+/** What the selected tab of a Tip shows, at the font size its frame gives (ADR 0091). */
 function TipTabContent({ tab }: { tab: TipTab }) {
   const sizes = useWordTextSizes();
   const lemmaSize = useLemmaSize();

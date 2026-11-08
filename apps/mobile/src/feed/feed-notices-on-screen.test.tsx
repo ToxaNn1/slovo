@@ -361,7 +361,7 @@ describe('the Feed Notices on the Feed', () => {
 
     const card = within(screen.getByTestId('feed-notice-enoughForToday', hidden));
     expect(card.getByText('Може, на сьогодні досить?', hidden)).toBeTruthy();
-    // The board text in «ти» (ADR 0089).
+    // The board text in «ти» (ADR 0092).
     expect(
       card.getByText(
         'Уже 50 карток позаду. Рідкісні слова краще засвоюються невеликими порціями.',

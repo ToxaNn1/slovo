@@ -5,7 +5,7 @@
  * with the tickets that need them.
  */
 import type { MistakeType } from '@slovo/contracts';
-import type { Json } from '@slovo/server-core';
+import type { Actor, Json } from '@slovo/server-core';
 import {
   bigserial,
   boolean,
@@ -320,3 +320,66 @@ export const collectionLinks = pgTable('collection_links', {
   entryIds: text('entry_ids').array().notNull(),
   createdAt: time('created_at'),
 });
+
+/*
+ * The admin's identities, apart from the Account tables (ADR 0088): Admin
+ * users, their admin sessions and recovery codes, the Агент tokens, and the
+ * Action log.
+ */
+
+/** The Admin users: a Власник (`owner`) or an Адмін (`admin`). */
+export const adminUsers = pgTable('admin_users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  /** The email, trimmed and lower case. */
+  email: text('email').notNull().unique(),
+  role: text('role').$type<'owner' | 'admin'>().notNull(),
+  /** The TOTP secret, set when the Admin user enrolls at the first sign-in. */
+  totpSecret: text('totp_secret'),
+  state: text('state').$type<'active' | 'removed'>().notNull(),
+  createdAt: time('created_at'),
+});
+
+/** The signed-in admin sessions, by the hash of the cookie's token. */
+export const adminSessions = pgTable('admin_sessions', {
+  tokenHash: text('token_hash').primaryKey(),
+  adminUserId: uuid('admin_user_id')
+    .notNull()
+    .references(() => adminUsers.id, { onDelete: 'cascade' }),
+  createdAt: time('created_at'),
+  expiresAt: time('expires_at'),
+});
+
+/** The Admin user's one-time recovery codes, by hash; a used code keeps its `used_at`. */
+export const recoveryCodes = pgTable('recovery_codes', {
+  codeHash: text('code_hash').primaryKey(),
+  adminUserId: uuid('admin_user_id')
+    .notNull()
+    .references(() => adminUsers.id, { onDelete: 'cascade' }),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+});
+
+/** The Агент tokens, one per named agent, kept as the token's SHA-256 only. */
+export const agentTokens = pgTable('agent_tokens', {
+  name: text('name').primaryKey(),
+  tokenHash: text('token_hash').notNull().unique(),
+  createdAt: time('created_at'),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+});
+
+/** The Action log: one row per change, appended and never updated or deleted. */
+export const actionLog = pgTable(
+  'action_log',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    /** Who: an Admin user, an Агент or a server command. */
+    who: jsonb('who').$type<Actor>().notNull(),
+    at: time('at'),
+    what: text('what').notNull(),
+    before: jsonb('before').$type<Json>(),
+    after: jsonb('after').$type<Json>(),
+    reason: text('reason'),
+    editionId: text('edition_id'),
+    batchId: text('batch_id'),
+  },
+  (table) => [index('action_log_edition_id_idx').on(table.editionId)],
+);

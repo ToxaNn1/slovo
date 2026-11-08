@@ -270,7 +270,7 @@ describe('the side swipes on the Feed (ADR 0077)', () => {
 });
 
 describe('the «⋯» sheet of an Entry card on the Feed', () => {
-  it('closes with «Скасувати», as on the board (ADR 0089)', async () => {
+  it('closes with «Скасувати», as on the board (ADR 0092)', async () => {
     await open(true);
     await renderApp();
     const page = within(screen.getByTestId('feed-card-0'));

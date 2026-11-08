@@ -142,7 +142,7 @@ export function SwipeMarks({
   concealed: boolean;
   /** The card is a Correction's, whose Known stamp says the reader already says it right. */
   correction: boolean;
-  /** The card is a fixed frame that takes the page's height (ADR 0088), so the swipe grows to it. */
+  /** The card is a fixed frame that takes the page's height (ADR 0091), so the swipe grows to it. */
   fill?: boolean;
   children: ReactNode;
 }) {

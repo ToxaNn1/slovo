@@ -18,7 +18,7 @@ import {
 import { wordTabsOf, type WordTab } from './word-tabs';
 
 /**
- * The Word card's tabs under its Lemma (ADR 0088): «Суть», «Приклад»,
+ * The Word card's tabs under its Lemma (ADR 0091): «Суть», «Приклад»,
  * «Зв’язки» and «Історія», without the empty ones, «Суть» selected first, in
  * the Entry card's tabs (`CardTabs`).
  */

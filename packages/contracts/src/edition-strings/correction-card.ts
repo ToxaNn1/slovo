@@ -11,7 +11,7 @@ export const CorrectionCardStringsSchema = z.strictObject({
   correctionTypes: z.record(CorrectionTypeSchema, TextSchema),
   /** The VoiceOver label of the Correction Type chip, e.g. "Тип: {type}". */
   correctionType: templateOf('type'),
-  /** The names of the Correction card's tabs (ADR 0088). */
+  /** The names of the Correction card's tabs (ADR 0091). */
   tabs: z.strictObject({
     better: TextSchema,
     why: TextSchema,

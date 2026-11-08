@@ -48,7 +48,7 @@ export function SynonymRowCardBody({
   onOpenWord: ((wordId: string) => void) | undefined;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The fixed frame of the Entry card, without a tab bar or pages, while `wordTabs` is on (ADR 0088). */
+  /** The fixed frame of the Entry card, without a tab bar or pages, while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
 }) {
   const tokens = useTokens();
@@ -99,7 +99,7 @@ export function SynonymRowCardBody({
         </View>
       </View>
       {shown.concealed ? null : tabs ? (
-        // No tab bar and no pages: the whole row fills the card's fixed frame (ADR 0088).
+        // No tab bar and no pages: the whole row fills the card's fixed frame (ADR 0091).
         <FitPanel testID="synonymRow" fitKey="row">
           <SynonymRowContent card={shown.card} onOpenWord={onOpenWord} />
         </FitPanel>

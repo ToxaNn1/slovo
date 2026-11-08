@@ -30,7 +30,7 @@ import { correctionTabs, type CorrectionTab } from './word-tabs';
  * falls, as for a Lemma, and every other text without the mark. Under Self-check it keeps only the non-standard form and
  * asks how to say it right; the Entry card draws the button that reveals the
  * rest under it. While `wordTabs` is on, the blocks under the non-standard
- * form sit in the tabs «Як краще», «Чому» and «Приклади» (ADR 0088).
+ * form sit in the tabs «Як краще», «Чому» and «Приклади» (ADR 0091).
  */
 export function CorrectionCardBody({
   card,
@@ -46,7 +46,7 @@ export function CorrectionCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The tabs under the non-standard form in place of the one column, while `wordTabs` is on (ADR 0088). */
+  /** The tabs under the non-standard form in place of the one column, while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
 }) {
   const tokens = useTokens();
@@ -116,7 +116,7 @@ export function CorrectionCardBody({
 }
 
 /**
- * What a Correction card's selected tab shows (ADR 0088): «Як краще» the
+ * What a Correction card's selected tab shows (ADR 0091): «Як краще» the
  * standard equivalents and the Category chip, «Чому» the explanation and its
  * sources, «Приклади» the example pair and the literary uses.
  */

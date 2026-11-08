@@ -1,7 +1,7 @@
 import type { Example, IdiomCardModel, WordCardModel } from '@slovo/core';
 
 /**
- * One tab of a Word's Entry card (ADR 0088), with what it shows: «Суть» the
+ * One tab of a Word's Entry card (ADR 0091), with what it shows: «Суть» the
  * primary Definition and how many other meanings «Історія» holds, «Приклад»
  * the Examples, «Зв’язки» the Synonyms and antonyms, «Історія» the other
  * meanings, the etymology and the Word History.
@@ -86,7 +86,7 @@ const OPENING = '([{«';
 const CLOSING = ')]}»';
 
 /**
- * One tab of a Correction's Entry card (ADR 0088), under its struck
+ * One tab of a Correction's Entry card (ADR 0091), under its struck
  * non-standard form: «Як краще» the standard equivalents and the Category,
  * «Чому» the explanation and its sources, «Приклади» the example pair and the
  * literary uses.
@@ -110,7 +110,7 @@ export const correctionTabs: readonly [CorrectionTab, ...CorrectionTab[]] = [
 ];
 
 /**
- * One tab of an Idiom's Entry card (ADR 0088), with what it shows: «Суть» the
+ * One tab of an Idiom's Entry card (ADR 0091), with what it shows: «Суть» the
  * Definitions and the sources, «Звідки» where the expression comes from,
  * «Приклад» the Examples.
  */

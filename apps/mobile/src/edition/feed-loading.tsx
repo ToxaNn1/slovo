@@ -13,7 +13,7 @@ export const TOP_ROW = 80;
 
 /**
  * The Feed's header over the tabbed cards with nothing under the logo row
- * (board p1, ADR 0088): the room above the row (8), the row (32) and the
+ * (board p1, ADR 0091): the room above the row (8), the row (32) and the
  * room under it (14), where the first card starts.
  */
 export const LOGO_ROW = 54;

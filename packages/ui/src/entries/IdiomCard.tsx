@@ -24,7 +24,7 @@ import { idiomTabsOf, type IdiomTab } from './word-tabs';
  * with its kind, then its Definition. Under Self-check it keeps the
  * expression and its chip; the Entry card draws the button that reveals the
  * rest under them. With `tabs` the expression is underlined in the accent and
- * the rest sits in the tabs «Суть», «Звідки» and «Приклад» (ADR 0088).
+ * the rest sits in the tabs «Суть», «Звідки» and «Приклад» (ADR 0091).
  */
 export function IdiomCardBody({
   card,
@@ -40,7 +40,7 @@ export function IdiomCardBody({
   concealed: boolean;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The tabs under the expression in place of the one column, while `wordTabs` is on (ADR 0088). */
+  /** The tabs under the expression in place of the one column, while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
 }) {
   const tokens = useTokens();
@@ -162,7 +162,7 @@ export function IdiomCardBody({
   );
 }
 
-/** What the selected tab of an Idiom card shows (ADR 0088). */
+/** What the selected tab of an Idiom card shows (ADR 0091). */
 function IdiomTabContent({ tab }: { tab: IdiomTab }) {
   const tokens = useTokens();
   const { colors } = tokens;

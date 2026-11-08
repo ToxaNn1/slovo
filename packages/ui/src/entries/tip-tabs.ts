@@ -1,7 +1,7 @@
 import type { Example, TipCardModel } from '@slovo/core';
 
 /**
- * One tab of a Tip's Entry card (ADR 0088), made only from what a Tip has:
+ * One tab of a Tip's Entry card (ADR 0091), made only from what a Tip has:
  * «Суть» the standard form, the explanation and the sources, «Приклад» the
  * Example. A Tip has no exceptions, so it has no «Винятки».
  */

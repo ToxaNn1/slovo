@@ -218,7 +218,7 @@ const historyOpened = () => analytics.events.filter(({ event }) => event === 'wo
 describe('the Entry screen and the Word History', () => {
   it('tells Analytics the Word History opened once, with the Entry, when the section is drawn', async () => {
     await renderEntry('w_sumyrnyi');
-    // With `wordTabs` on, the Word History is drawn on «Історія» alone (ADR 0088).
+    // With `wordTabs` on, the Word History is drawn on «Історія» alone (ADR 0091).
     expect(historyOpened()).toEqual([]);
     await fireEvent.press(screen.getByTestId('word-tab-history'));
     await settle();
@@ -273,7 +273,7 @@ describe('the Entry screen of a Word', () => {
 });
 
 describe('a tab too long for the Entry screen', () => {
-  it("is clamped under «Детальніше», which opens it whole in the screen's scroll (ADR 0088)", async () => {
+  it("is clamped under «Детальніше», which opens it whole in the screen's scroll (ADR 0091)", async () => {
     await renderEntry('w_sumyrnyi');
     await fireEvent.press(screen.getByTestId('word-tab-history'));
     await settle();
@@ -348,7 +348,7 @@ function tabsOnScreen() {
   }));
 }
 
-describe('the tabs of an Entry card on the Entry screen (ADR 0088)', () => {
+describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
   afterEach(() => {
     wordTabsOn = true;
   });

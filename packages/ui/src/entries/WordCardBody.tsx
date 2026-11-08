@@ -52,7 +52,7 @@ export function WordCardBody({
   wordOfTheDayFont: string | undefined;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
-  /** The tabs under the Lemma in place of the one column, while `wordTabs` is on (ADR 0088). */
+  /** The tabs under the Lemma in place of the one column, while `wordTabs` is on (ADR 0091). */
   tabs: boolean;
 }) {
   return (

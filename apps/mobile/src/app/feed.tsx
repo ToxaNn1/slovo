@@ -145,7 +145,7 @@ function FeedScreen() {
               : undefined
           }
         />
-        {/* The tabbed cards' Feed has no XP bar over them (board p1, ADR 0088). */}
+        {/* The tabbed cards' Feed has no XP bar over them (board p1, ADR 0091). */}
         {toolsRow && (
           <View testID="feed-header-tools" pointerEvents="box-none" style={styles.tools}>
             {!shown.wordTabs && <XpBarToGame />}
@@ -227,7 +227,7 @@ const FeedPage = memo(function FeedPage({
     // The content scrolls under the top row but stops at the status bar.
     <View testID={`feed-card-${String(position)}`} style={[styles.page, { paddingTop: top }]}>
       <PagerScrollView
-        // A tabbed card fills the page at least, and grows past it when «Детальніше» opens a tab (ADR 0088).
+        // A tabbed card fills the page at least, and grows past it when «Детальніше» opens a tab (ADR 0091).
         // The red card of the Word of the Day and every tabbed card hang from the top row, closer to the edges (board p1).
         contentContainerStyle={
           card.kind !== 'notice' &&
@@ -278,7 +278,7 @@ const FeedPage = memo(function FeedPage({
 
 /**
  * The Feed header's rows: the logo row, and the row of the XP bar and Search
- * under it unless the tabbed cards leave it empty (board p1, ADR 0088), with
+ * under it unless the tabbed cards leave it empty (board p1, ADR 0091), with
  * the header's height under the status bar.
  */
 function useHeaderRows() {

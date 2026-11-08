@@ -34,7 +34,7 @@ export const feedStringsShape = {
   wordOfTheDay: z.strictObject({
     /** The badge text; `{day}` stands for the day of the month and `{month}` for its name, one of `dates.months`. */
     badge: templateOf('day', 'month'),
-    /** The kicker over the Lemma on its tabbed card (ADR 0088), «Слово дня · 7.11»; `{day}` and `{month}` stand for the numbers of the day and the month. */
+    /** The kicker over the Lemma on its tabbed card (ADR 0091), «Слово дня · 7.11»; `{day}` and `{month}` stand for the numbers of the day and the month. */
     kicker: templateOf('day', 'month'),
     /** The shout on its red card while Self-check keeps the meaning closed, «Лови слово!». */
     shout: TextSchema,

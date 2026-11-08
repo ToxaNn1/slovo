@@ -188,7 +188,7 @@ describe('the Feed header', () => {
       await open();
       await renderApp(colorScheme);
       // From the top of the screen, behind the status bar, down past the logo row the cards scroll under:
-      // the tabbed cards' Feed has no row of the XP bar and Search under it (board p1, ADR 0088).
+      // the tabbed cards' Feed has no row of the XP bar and Search under it (board p1, ADR 0091).
       expect(screen.getByTestId('feed-header')).toHaveStyle({
         top: 0,
         left: 0,
