@@ -1,5 +1,6 @@
 import {
   FeatureSwitchesSchema,
+  type ContentTargets,
   type EditionConfig,
   type EditionStrings,
   type FeatureSwitch,
@@ -20,6 +21,8 @@ export interface Edition {
     readonly contentVersion: number;
     readonly contentChecksum?: string | undefined;
   };
+  /** The floors the Edition's content must reach; none checked when the Edition declares none. */
+  readonly targets: ContentTargets;
 }
 
 /** What a request for an Edition the backend didn't find gets. */
