@@ -366,7 +366,8 @@ export function SwipeMarks({
 
   return (
     <PageActionsProvider actions={markActions} onAction={onAction}>
-      <View testID="swipe-frame" style={[styles.frame, fill && styles.fill]}>
+      {/* A card that fills its page leaves room under it for the stamp, which the page would cut. */}
+      <View testID="swipe-frame" style={[styles.frame, fill && styles.filled]}>
         <GestureDetector gesture={pan}>
           <Animated.View
             testID="swipe-card"
@@ -505,6 +506,7 @@ export function SwipeMarks({
 const styles = StyleSheet.create({
   frame: { flexShrink: 1 },
   fill: { flexGrow: 1 },
+  filled: { flexGrow: 1, paddingBottom: swipeStampLayout.room },
   edges: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   edge: {
     position: 'absolute',

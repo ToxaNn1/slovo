@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
+import { KickerRow } from './KickerRow';
 import { ConcealedProvider, useSelfCheck } from './self-check';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
@@ -187,6 +188,9 @@ function EntryCardFace({
       </View>
     ) : undefined;
 
+  // A card brought back for Review sets its corner beside the Review label, on the card's top row.
+  const bodyCorner = card.review === true ? undefined : corner;
+
   // The Word of the Day is the red shout card, which draws its own reveal button;
   // with tabs, only while it is closed, and once open it is the tabbed card (board p1).
   if (card.kind === 'word' && card.wordOfTheDay !== undefined && !fixedFrame(card, tabs, concealed))
@@ -246,7 +250,11 @@ function EntryCardFace({
           },
         ]}
       >
-        {card.review === true && <ReviewLabel />}
+        {card.review === true && (
+          <KickerRow testID={`${card.kind}-review-row`} corner={corner}>
+            <ReviewLabel />
+          </KickerRow>
+        )}
         {card.kind === 'word' ? (
           <WordCardBody
             card={card.model}
@@ -259,7 +267,7 @@ function EntryCardFace({
             concealed={concealed}
             stressFalls={stressFalls}
             wordOfTheDayFont={wordOfTheDayFont}
-            corner={corner}
+            corner={bodyCorner}
             tabs={tabs}
           />
         ) : card.kind === 'correction' ? (
@@ -267,7 +275,7 @@ function EntryCardFace({
             card={card.model}
             lemmaSize={lemmaSize}
             concealed={concealed}
-            corner={corner}
+            corner={bodyCorner}
             tabs={tabs}
           />
         ) : card.kind === 'idiom' ? (
@@ -275,7 +283,7 @@ function EntryCardFace({
             card={card.model}
             lemmaSize={lemmaSize}
             concealed={concealed}
-            corner={corner}
+            corner={bodyCorner}
             tabs={tabs}
           />
         ) : card.kind === 'synonymRow' ? (
@@ -284,7 +292,7 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             onOpenWord={onOpenWord}
-            corner={corner}
+            corner={bodyCorner}
             tabs={tabs}
           />
         ) : (
@@ -292,7 +300,7 @@ function EntryCardFace({
             card={card.model}
             lemmaSize={lemmaSize}
             concealed={concealed}
-            corner={corner}
+            corner={bodyCorner}
             tabs={tabs}
           />
         )}

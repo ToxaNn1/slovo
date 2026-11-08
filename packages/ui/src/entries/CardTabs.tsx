@@ -158,9 +158,15 @@ export function FitPanel({
       }}
     >
       {fitNow === 'scrolls' ? (
-        <PagerScrollView testID={`${testID}-tab-scroll`} contentContainerStyle={styles.content}>
-          {content}
-        </PagerScrollView>
+        // The scroll stops short of the tab bar's hairline, and its text short of the indicator (owner 08.11).
+        <View style={styles.scrolling}>
+          <PagerScrollView
+            testID={`${testID}-tab-scroll`}
+            contentContainerStyle={[styles.content, styles.scrolled]}
+          >
+            {content}
+          </PagerScrollView>
+        </View>
       ) : (
         <View
           key={drawnAt}
@@ -192,6 +198,8 @@ const styles = StyleSheet.create({
   },
   room: { flexGrow: 1, flexBasis: 0, overflow: 'hidden' },
   content: { gap: blockGap },
+  scrolling: { flex: 1, marginBottom: space[3] },
+  scrolled: { paddingRight: space[3], paddingBottom: space[2] },
   // While it fits, the content takes no room of its own, so the frame keeps its height.
   overlay: { position: 'absolute', top: 0, left: 0, right: 0 },
 });

@@ -979,6 +979,29 @@ describe('the corner of an Entry card', () => {
     },
   );
 
+  it.each<[string, EntryFeedCard]>([
+    ['correction', { ...card, review: true }],
+    ['idiom', { kind: 'idiom', entryId: 'i1', model: idiomCard(), review: true }],
+    ['word', { ...wordWithEverything, review: true }],
+  ])(
+    'sets the corner of a %s card brought back for Review in one row beside its Review label',
+    async (kind, entry) => {
+      await render(
+        inEdition(
+          <EntryCard
+            card={entry}
+            slots={{ slot: 'corner', corner: cornerMarks, swipe: undefined }}
+          />,
+        ),
+      );
+
+      const row = screen.getByTestId(`${kind}-review-row`);
+      expect(within(row).getByTestId('review-label')).toBeOnTheScreen();
+      expect(within(row).getByTestId(`${kind}-corner`)).toBeOnTheScreen();
+      expect(screen.getAllByTestId(`${kind}-corner`)).toHaveLength(1);
+    },
+  );
+
   it('draws no kicker row without a corner', async () => {
     await render(inEdition(<EntryCard card={card} />));
 
