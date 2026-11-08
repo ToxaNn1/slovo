@@ -9,7 +9,6 @@ import {
   openRemoteSwitches,
   type ReaderFacts,
   type AnalyticsPort,
-  type AnalyticsReader,
   type AnalyticsSink,
   type Clock,
   type Edition,
@@ -97,22 +96,18 @@ export const analyticsInto = (port: AnalyticsPort): AnalyticsSink => ({
 export interface RecordedAnalytics {
   readonly port: AnalyticsPort;
   /** The events the Core sent, in order, each with its properties. */
-  readonly events: readonly {
-    readonly event: string;
-    readonly properties: unknown;
-    readonly reader: AnalyticsReader;
-  }[];
+  readonly events: readonly { readonly event: string; readonly properties: unknown }[];
   /** Whether the Core told the port sharing was turned off. */
   stopped(): boolean;
 }
 
 /** An Analytics port that keeps what the Core sends it, in place of PostHog. */
 export function recordedAnalytics(): RecordedAnalytics {
-  const events: { event: string; properties: unknown; reader: AnalyticsReader }[] = [];
+  const events: { event: string; properties: unknown }[] = [];
   let stopped = false;
   return {
     port: {
-      track: (event, properties, reader) => void events.push({ event, properties, reader }),
+      track: (event, properties) => void events.push({ event, properties }),
       stop: () => {
         stopped = true;
       },

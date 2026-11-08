@@ -2,7 +2,9 @@ import {
   colorSchemeFor,
   createAnalytics,
   createSettings,
+  type AnalyticsSink,
   type ColorScheme,
+  type Edition,
   type Settings,
   type SettingsDefaults,
   type TrackedUserState,
@@ -11,12 +13,11 @@ import {
 import { createContext, useContext, useState, type ReactNode } from 'react';
 import { Appearance, useColorScheme } from 'react-native';
 
-import { deviceAnalytics } from '../analytics/posthog-analytics';
 import { edition } from '../edition/edition';
 import { logError } from '../diagnostics/log';
 import { keep } from '../keep';
 import { openOnce, useSubscribed, type Opening } from '../opening';
-import { useShell, type EditionSwitches, type OpenedSettings } from '../shell-value';
+import { useShell, type OpenedSettings } from '../shell-value';
 
 /** Makes native views (alerts, keyboards) follow the Theme too. */
 function applyToNativeViews({ theme }: UserSettings): void {
@@ -39,27 +40,22 @@ function opened(settings: Settings, current: UserSettings): OpenedSettings {
  */
 export function settingsOpening({
   userState,
-  remoteSwitches,
+  edition: inEffect,
+  analytics,
 }: {
   userState: Opening<TrackedUserState>;
-  /** The switches in effect, whose `analytics` gates a changed setting's event; without them none is sent. */
-  remoteSwitches: Opening<EditionSwitches>;
+  /** The Edition in effect, remote switches included, whose `analytics` gates a changed setting's event. */
+  edition: Pick<Edition, 'isFeatureEnabled'>;
+  /** Where a changed setting is told; nowhere while it can't be opened. */
+  analytics: Opening<AnalyticsSink>;
 }): Opening<OpenedSettings> {
   async function settingsOverUserState(): Promise<Settings> {
     const opened = await userState.opened();
-    const switches = await remoteSwitches.opened().catch(() => undefined);
+    const sink = await analytics.opened().catch(() => undefined);
     return createSettings({
       userState: opened,
       defaults,
-      ...(switches === undefined
-        ? {}
-        : {
-            analytics: createAnalytics({
-              edition: switches.edition,
-              userState: opened,
-              sink: { port: deviceAnalytics, switches },
-            }),
-          }),
+      analytics: createAnalytics({ edition: inEffect, userState: opened, sink }),
     });
   }
   return openOnce(
