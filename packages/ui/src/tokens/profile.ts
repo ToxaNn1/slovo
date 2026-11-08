@@ -275,6 +275,4 @@ export const badgeSheet = {
   barHeight: 10,
   barSkew: -14,
   doneTop: 22,
-  /** How far the toast stands above the sheet's slanted top. */
-  toastGap: 12,
 } as const;

@@ -276,8 +276,7 @@
         "kicker": "ВІДЗНАКА",
         "notYet": "Ще ні · {progress}",
         "done": "ГОТОВО"
-      },
-      "lockedToast": "«{name}» ще не твоя. Поки що."
+      }
     },
     "sounds": {
       "sounds": "Звуки",
