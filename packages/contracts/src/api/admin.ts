@@ -185,6 +185,22 @@ const contentWriteContract = {
       }),
     )
     .output(z.object({ id: z.string(), batchId: z.string() })),
+  record: contentProcedure
+    .route({
+      method: 'GET',
+      path: `${recordPath}/{id}`,
+      summary: "A record's fields and its record version, which an edit is made from",
+      tags: ['admin'],
+    })
+    .input(
+      z.strictObject({ editionId: EditionIdSchema, kind: ContentRecordKindSchema, id: z.string() }),
+    )
+    .output(
+      z.object({
+        fields: z.record(z.string(), z.unknown()),
+        recordVersion: z.number().int().positive(),
+      }),
+    ),
   report: contentProcedure
     .route({
       method: 'GET',
@@ -200,6 +216,14 @@ const contentWriteContract = {
         targets: ContentTargetsSchema,
         /** Each target the content falls short of. */
         missed: z.array(z.object({ target: z.string(), message: z.string() })),
+        /**
+         * The quote check (ADR 0084): records changed since their last check, and
+         * records whose quote was not found on their source page.
+         */
+        quoteCheck: z.object({
+          unverified: z.number().int().nonnegative(),
+          failed: z.number().int().nonnegative(),
+        }),
       }),
     ),
 };

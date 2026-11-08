@@ -580,6 +580,9 @@ importers:
       '@slovo/contracts':
         specifier: workspace:*
         version: link:../contracts
+      node-html-parser:
+        specifier: ^9.0.5
+        version: 9.0.5
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -817,6 +820,12 @@ importers:
 
   tools/content:
     dependencies:
+      '@slovo/content-rules':
+        specifier: workspace:*
+        version: link:../../packages/content-rules
+      '@slovo/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
       '@slovo/language-pack':
         specifier: workspace:*
         version: link:../../packages/language-pack
@@ -848,6 +857,9 @@ importers:
 
   tools/sourcing:
     dependencies:
+      '@slovo/content-rules':
+        specifier: workspace:*
+        version: link:../../packages/content-rules
       '@slovo/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts

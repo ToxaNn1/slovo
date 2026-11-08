@@ -425,6 +425,35 @@ export const contentVersions = pgTable('content_versions', {
   updatedAt: time('updated_at'),
 });
 
+/**
+ * The quote check's last finding per quoted record (ADR 0084), at the record
+ * version it checked. A record changed since, by any write other than an
+ * import, has no row at its version: it is unverified.
+ */
+export const quoteChecks = pgTable(
+  'quote_checks',
+  {
+    editionId: text('edition_id').notNull(),
+    kind: text('kind').$type<'word' | 'correction' | 'idiom' | 'synonymRow' | 'tip'>().notNull(),
+    id: text('id').notNull(),
+    recordVersion: integer('record_version').notNull(),
+    outcome: text('outcome').$type<'verified' | 'not-found'>().notNull(),
+    /** What the check found when the quote is not on the page; none when verified. */
+    finding: text('finding'),
+    checkedAt: time('checked_at'),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.kind, table.id] })],
+);
+
+/** The sourcing cache: the source pages the quote check fetched, each with when. */
+export const sourcingCache = pgTable('sourcing_cache', {
+  pageUrl: text('page_url').primaryKey(),
+  /** The page's HTTP status: 200, or 404 for no such page. */
+  httpStatus: integer('http_status').notNull(),
+  body: text('body').notNull(),
+  fetchedAt: time('fetched_at'),
+});
+
 /*
  * The admin's identities, apart from the Account tables (ADR 0088): Admin
  * users, their admin sessions and recovery codes, the Агент tokens, and the

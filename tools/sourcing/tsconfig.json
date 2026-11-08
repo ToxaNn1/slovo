@@ -7,5 +7,9 @@
     "types": ["node"]
   },
   "include": ["src"],
-  "references": [{ "path": "../../packages/contracts" }, { "path": "../../packages/language-pack" }]
+  "references": [
+    { "path": "../../packages/content-rules" },
+    { "path": "../../packages/contracts" },
+    { "path": "../../packages/language-pack" }
+  ]
 }
