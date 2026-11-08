@@ -9,7 +9,6 @@ import type {
   AdminAccess,
   CollectionLinks,
   CommunityCounters,
-  ContentPacks,
   EditionRegistry,
   MistakeReports,
   Sync,
@@ -71,7 +70,6 @@ export function createApiHandler({
   admin,
   collectionLinks,
   communityCounters,
-  contentPacks,
   contentStore,
   contentWrites,
   editions,
@@ -82,7 +80,6 @@ export function createApiHandler({
   admin: AdminAccess;
   collectionLinks: CollectionLinks;
   communityCounters: CommunityCounters;
-  contentPacks: ContentPacks;
   contentStore: ContentStore;
   contentWrites: ContentWrites;
   editions: EditionRegistry;
@@ -95,7 +92,7 @@ export function createApiHandler({
       account: accountProcedures(accounts),
       admin: adminProcedures(admin, contentWrites),
       collectionLinks: collectionLinksProcedures(collectionLinks),
-      content: contentProcedures(contentPacks, contentStore),
+      content: contentProcedures(editions, contentStore),
       counters: countersProcedures(communityCounters),
       edition: editionProcedures(editions),
       reports: reportsProcedures(mistakeReports),

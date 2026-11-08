@@ -10,7 +10,6 @@
     "dev": "node scripts/dev.mjs",
     "build:pack": "pnpm --filter @slovo/language-pack build-pack",
     "recording-requests": "pnpm --silent --filter @slovo/language-pack recording-requests",
-    "publish:pack": "pnpm --filter @slovo/backend publish-pack",
     "switch:off": "pnpm --filter @slovo/backend switch-off",
     "switch:clear": "pnpm --filter @slovo/backend switch-clear",
     "admin": "pnpm --filter @slovo/backend admin",

@@ -8,7 +8,6 @@ export {
   type FakeBackend,
   type FakeFailure,
   type FakeFailureReason,
-  type FakePublishedPack,
   type ProcedureName,
 } from './fakes/fake-backend';
 export {
