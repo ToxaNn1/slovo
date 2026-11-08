@@ -11,6 +11,16 @@ const WRITTEN = {
 } satisfies AdminApiOutputs['content']['create'];
 
 /** What `pnpm dev:admin --mock` and the screen tests answer, one per procedure. */
+/** An open Owner check, the base of the fixtures. */
+const OPEN_CHECK = {
+  id: 1,
+  version: '0.9',
+  text: 'Пошук знаходить слово.',
+  addedBy: 'pnpm admin check add',
+  addedAt: '2026-11-01T10:00:00.000Z',
+  ticked: null,
+};
+
 export const FIXTURES: AdminApiOutputs = {
   requestCode: { sent: true },
   verifyCode: {
@@ -150,4 +160,22 @@ export const FIXTURES: AdminApiOutputs = {
       ],
     },
   },
+  ownerChecks: {
+    checks: [
+      { ...OPEN_CHECK, id: 1, version: '0.9', text: 'Пошук знаходить слово.' },
+      {
+        ...OPEN_CHECK,
+        id: 2,
+        version: '0.9',
+        text: 'Пейвол зʼявляється один раз.',
+        ticked: { at: '2026-11-07T10:00:00.000Z', by: 'owner@example.com' },
+      },
+      { ...OPEN_CHECK, id: 3, version: '1.0', text: 'Вхід через Apple.' },
+    ],
+    open: { '0.9': 1, '1.0': 1 },
+  },
+  tickOwnerCheck: {
+    check: { ...OPEN_CHECK, ticked: { at: '2026-11-08T10:00:00.000Z', by: 'owner@example.com' } },
+  },
+  addOwnerCheck: { check: OPEN_CHECK },
 };

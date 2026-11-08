@@ -16,13 +16,17 @@ test('the sidebar shows the seven sections in order', async () => {
   expect(links.map((link) => link.textContent)).toEqual(ORDER);
 });
 
+/**
+ * Безпека shows the Власник its blocks: `security.test.tsx`. Розробка is built
+ * and shows the Owner checks: `development.test.tsx`, `owner-checks.test.tsx`.
+ */
+const EMPTY = ORDER.filter((title) => title !== 'Безпека' && title !== 'Розробка');
+
 test('each section not yet built opens its empty state with the same texts in both themes', async () => {
   const user = userEvent.setup();
   render(<Admin />);
   const theme = await screen.findByRole('button', { name: 'Темна тема' });
-  // Безпека shows the Власник its blocks: src/security.test.tsx.
-  // Розробка is built: development.test.tsx.
-  for (const title of ORDER.filter((section) => section !== 'Безпека' && section !== 'Розробка')) {
+  for (const title of EMPTY) {
     await user.click((await sidebar()).getByRole('link', { name: title }));
     const section = await screen.findByRole('region', { name: title });
     expect(within(section).getByText('Поки що порожньо')).toBeDefined();

@@ -415,6 +415,19 @@ export type Milestone = z.infer<typeof MilestoneSchema>;
 export type Release = z.infer<typeof ReleaseSchema>;
 export type EasBuild = z.infer<typeof EasBuildSchema>;
 
+/** A milestone `0.1` to `1.0`: the version an Owner check belongs to. */
+export const OwnerCheckVersionSchema = z.string().regex(/^\d+\.\d+$/);
+
+/** An Owner check; who added or ticked it is an email, an Агент or a server command. */
+export const OwnerCheckSchema = z.object({
+  id: z.number().int(),
+  version: OwnerCheckVersionSchema,
+  text: z.string(),
+  addedBy: z.string(),
+  addedAt: z.iso.datetime(),
+  ticked: z.object({ at: z.iso.datetime(), by: z.string() }).nullable(),
+});
+
 export const adminContract = {
   requestCode: procedure
     .route({
@@ -755,4 +768,43 @@ export const adminContract = {
     })
     .errors(ADMIN_ERRORS)
     .output(DevelopmentSchema),
+  ownerChecks: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/owner-checks',
+      summary: 'The Owner checks, of one version or of all, with the open count per version',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ version: OwnerCheckVersionSchema.optional() }))
+    .output(
+      z.object({
+        checks: z.array(OwnerCheckSchema),
+        open: z.record(z.string(), z.number().int()),
+      }),
+    ),
+
+  tickOwnerCheck: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/owner-checks/{id}/tick',
+      summary: 'Ticks an Owner check: who and when, no reason',
+      description:
+        'The one admin write that takes no reason (ADR 0088). A ticked check keeps its first tick.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ id: z.coerce.number<number>().int().positive() }))
+    .output(z.object({ check: OwnerCheckSchema })),
+
+  addOwnerCheck: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/owner-checks',
+      summary: 'Adds an Owner check to a version',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ version: OwnerCheckVersionSchema, text: z.string().trim().min(1).max(2000) }))
+    .output(z.object({ check: OwnerCheckSchema })),
 };

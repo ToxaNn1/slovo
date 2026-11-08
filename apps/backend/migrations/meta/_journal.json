@@ -127,6 +127,13 @@
       "when": 1794161263182,
       "tag": "0017_quote_check",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794161264182,
+      "tag": "0018_owner_checks",
+      "breakpoints": true
     }
   ]
 }

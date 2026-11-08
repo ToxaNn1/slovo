@@ -418,6 +418,17 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         development: async () => {
           await client.admin.development().catch(refused);
         },
+        ownerChecks: async () => {
+          await client.admin.ownerChecks({}).catch(refused);
+        },
+        tickOwnerCheck: async () => {
+          await client.admin.tickOwnerCheck({ id: 1 }).catch(refused);
+        },
+        addOwnerCheck: async () => {
+          await client.admin
+            .addOwnerCheck({ version: '0.9', text: 'Open the app.' })
+            .catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {

@@ -82,4 +82,11 @@ DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin agent ad
 DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin agent revoke <name>
 ```
 
+The Owner checks of a version live in the same database; the owner ticks them in Розробка. One command adds a check, and a one-time import reads a Markdown file of checks (a line takes the version of the nearest heading that names one, else `--version`; it refuses once the table holds checks):
+
+```sh
+DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin check add <version> <text>
+DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm admin check import <file> [--version <version>]
+```
+
 `agent add` prints the token once; the database keeps its SHA-256 only. The Агент sends it as `Authorization: Bearer <token>`, and only the content-writing procedures of the admin API take it. A person signs in to `/admin` with a code emailed by the mailer above and a TOTP; the TOTP secrets are sealed with a key derived from `BETTER_AUTH_SECRET`, so rotating it makes every Admin user set up the TOTP again.
