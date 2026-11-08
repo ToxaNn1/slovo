@@ -20,6 +20,10 @@ function handlerOf<N extends Name>(name: N, fixture: AdminApiOutputs[N]): HttpHa
 export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[] {
   const handlers: Record<Name, HttpHandler> = {
     status: handlerOf('status', fixtures.status),
+    switches: handlerOf('switches', fixtures.switches),
+    setRules: handlerOf('setRules', fixtures.setRules),
+    setMinimum: handlerOf('setMinimum', fixtures.setMinimum),
+    kill: handlerOf('kill', fixtures.kill),
     editions: handlerOf('editions', fixtures.editions),
   };
   return Object.values(handlers);

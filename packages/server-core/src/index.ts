@@ -13,8 +13,12 @@ export {
   createEditionRegistry,
   type Edition,
   type EditionRegistry,
+  type EditionSwitches,
   type NotServing,
+  type RuleInput,
   type SwitchRefusal,
+  type SwitchRefused,
+  type WriteBy,
 } from './edition/edition-registry';
 export { createCommunityCounters, type CommunityCounters } from './counters/community-counters';
 export { createMistakeReports, type MistakeReports } from './reports/mistake-reports';
@@ -46,7 +50,7 @@ export {
   type Random,
   type RateLimits,
   type RecordChange,
-  type RemoteSwitchStore,
+  type SwitchRuleStore,
   type SignedIn,
   type UserRecords,
 } from './ports';

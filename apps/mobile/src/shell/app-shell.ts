@@ -4,11 +4,14 @@ import {
   openMistakeReports,
   openRemoteSwitches,
   openSync,
+  readInstallId,
   systemRandom,
   type Edition,
 } from '@slovo/core';
 import { systemSchedule } from '@slovo/ui';
 import Constants from 'expo-constants';
+import { getLocales } from 'expo-localization';
+import { Platform } from 'react-native';
 
 import { openDeviceAccount } from '../account/device-account';
 import { backend } from '../api';
@@ -64,8 +67,27 @@ export function createShell(
   sources: DeviceSources = deviceSources(editionId),
 ): Shell {
   const { userState } = sources;
-  const remoteSwitches = over(userState, 'Could not open the remote Feature Switches', (opened) =>
-    openRemoteSwitches({ ...sources, edition, userState: opened }),
+  const remoteSwitches = over(
+    userState,
+    'Could not open the remote Feature Switches',
+    async (opened) => {
+      const installId = await readInstallId({ userState: opened, random: sources.random });
+      return openRemoteSwitches({
+        ...sources,
+        edition,
+        states: edition.featureSwitches,
+        // The reader the Rules target, read afresh each time the verdicts are worked out.
+        facts: () => ({
+          appVersion: Constants.expoConfig?.version ?? '',
+          platform: Platform.OS === 'android' ? 'android' : 'ios',
+          region: getLocales().at(0)?.regionCode ?? undefined,
+          signedIn:
+            account?.state.status === 'ready' && account.state.value.state.status === 'signed-in',
+          installId,
+        }),
+        userState: opened,
+      });
+    },
   );
   // One Edition whose every read of a switch takes the remote ones as they stand.
   const editionInEffect: Edition = {

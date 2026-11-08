@@ -57,6 +57,9 @@ import type { ErrorReport } from './error-reporter';
 const LOCAL_DATABASE_URL = 'postgres://slovo:slovo@localhost:55432/slovo';
 
 /** A logger that writes nothing, for tests that don't read the logs. */
+/** Who writes the switches in a test, for the Action log. */
+const TEST_WRITE = { who: { kind: 'command', command: 'test' }, reason: 'test' } as const;
+
 export const silentLogger = pino({ enabled: false });
 
 interface TestDatabase {
@@ -582,12 +585,21 @@ export function testApp({
      */
     publish: (pack: Pick<BuiltPack, 'editionId' | 'file'>, editionsNow = editions) =>
       publishPack({ database, clock: systemClock, editions: editionsNow, ...pack }),
-    /** Turns the feature off in the Edition remotely, as the off command does, on the backend's database. */
-    switchOff: (editionId: string, feature: string) =>
-      createEditions({ database, clock: systemClock, editions }).switchOff(editionId, feature),
-    /** Clears the Edition's remote switch of the feature, as the clear command does. */
-    clearSwitch: (editionId: string, feature: string) =>
-      createEditions({ database, clock: systemClock, editions }).clearSwitch(editionId, feature),
+    /** The Kill switch of the feature in the Edition, as the switches command turns it off. */
+    kill: (editionId: string, feature: string) =>
+      createEditions({ database, clock: systemClock, editions }).kill(
+        feature,
+        editionId,
+        TEST_WRITE,
+      ),
+    /** Clears every Rule of the feature in the Edition, back to the Edition's state. */
+    clearRules: (editionId: string, feature: string) =>
+      createEditions({ database, clock: systemClock, editions }).setRules(
+        editionId,
+        feature,
+        [],
+        TEST_WRITE,
+      ),
     /** The lines the reports list command prints of the reports the backend keeps. */
     listReports: (filter?: ReportFilter) => listReports(database, filter),
     /** What the reports resolve command prints and exits with for the id. */

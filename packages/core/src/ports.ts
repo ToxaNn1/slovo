@@ -314,16 +314,6 @@ export interface CommunityWordAnswer {
   readonly adds: number;
 }
 
-/**
- * What the backend answers for the running Edition's remote Feature Switches:
- * the features the owner turned off remotely, by their Feature Switch's name,
- * and the ETag that names them (ADR 0040).
- */
-export interface RemoteSwitchesAnswer {
-  readonly off: readonly string[];
-  readonly etag: string;
-}
-
 /** The Community Counters of one Entry, as the backend answers them (ADR 0060). */
 export interface EntryCounters {
   readonly entryId: string;

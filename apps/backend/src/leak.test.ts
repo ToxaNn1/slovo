@@ -26,7 +26,12 @@ const ANSWERED_COLUMNS = new Set([
   'packFormat',
   'size',
   'fileSha256',
-  'off',
+  // An Edition's Rules and force-update minimums, naming no reader.
+  'feature',
+  'verdict',
+  'targets',
+  'soft',
+  'hard',
   // An Entry's Community Counters, totals that name no reader.
   'entryId',
   'known',
@@ -45,6 +50,9 @@ const ANSWERED_COLUMNS = new Set([
  * Account's name would show.
  */
 const COLLECTION_LINK_KEYS = new Set(['id', 'name']);
+
+/** The requests that answer Rules, whose own ids name no reader. */
+const RULES_REQUEST = /\/switches(\/|$)/;
 
 /** The requests of the Collection Links procedures. */
 const COLLECTION_LINK_REQUEST = /^(POST|GET) \/v1\/collection-links(\/|$)/;
@@ -115,7 +123,7 @@ async function recordedBackend() {
 }
 
 it("answers no stored token, Sign-in code or its hash, password field, internal column or another Account's record in any procedure", async () => {
-  const { client, clientOf, answers, mailer, google, apple, keptSignInCode, db, pack, switchOff } =
+  const { client, clientOf, answers, mailer, google, apple, keptSignInCode, db, pack, kill } =
     await recordedBackend();
   /** What the database keeps that no answer may show. */
   const secrets = new Set<string>();
@@ -204,7 +212,7 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
             status: 429,
           });
           expect(overLimit?.headers).toContain('retry-after');
-          await switchOff(EDITION, 'googleSignIn');
+          await kill(EDITION, 'googleSignIn');
           await refusedGoogle(google.token({ email }));
         },
         signInWithApple: async () => {
@@ -243,7 +251,7 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
             request: 'POST /v1/account/apple-sessions',
             status: 429,
           });
-          await switchOff(EDITION, 'signInWithApple');
+          await kill(EDITION, 'signInWithApple');
           await refusedApple(apple.token({ email }));
         },
         me: async () => {
@@ -294,6 +302,27 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           // No Власник in this database: the admin API answers 404.
           await client.admin.status().catch(refused);
         },
+        switches: async () => {
+          await client.admin.switches({ editionId: EDITION }).catch(refused);
+        },
+        setRules: async () => {
+          await client.admin
+            .setRules({ editionId: EDITION, feature: 'game', rules: [], reason: 'leak' })
+            .catch(refused);
+        },
+        setMinimum: async () => {
+          await client.admin
+            .setMinimum({
+              editionId: EDITION,
+              platform: 'ios',
+              minimum: { soft: '1.0.0' },
+              reason: 'leak',
+            })
+            .catch(refused);
+        },
+        kill: async () => {
+          await client.admin.kill({ feature: 'game', reason: 'leak' }).catch(refused);
+        },
         editions: async () => {
           await client.admin.editions().catch(refused);
         },
@@ -335,7 +364,7 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         switches: async () => {
           const params = { editionId: EDITION };
           const { headers } = await client.edition.switches({ params });
-          await switchOff(EDITION, 'game');
+          await kill(EDITION, 'game');
           await client.edition.switches({ params, headers: { 'if-none-match': headers.etag } });
           await client.edition.switches({ params: { editionId: 'pl' } }).catch(refused);
         },
@@ -402,7 +431,8 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
       columns: keysOf(body).filter(
         (key) =>
           INTERNAL_COLUMNS.includes(key) &&
-          !(COLLECTION_LINK_REQUEST.test(request) && COLLECTION_LINK_KEYS.has(key)),
+          !(COLLECTION_LINK_REQUEST.test(request) && COLLECTION_LINK_KEYS.has(key)) &&
+          !(RULES_REQUEST.test(request) && key === 'id'),
       ),
       password: /password/i.test(text),
       cookie: /set-cookie|set-auth-token/i.test(headers),

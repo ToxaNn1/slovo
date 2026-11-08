@@ -64,15 +64,25 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   reports.listen(composition, (opened, moment) => {
     if (moment === 'launch' || moment === 'background') writeWidgetSnapshot(opened.widget);
   });
+  /** Reopens what read the old switches once an ask changed an effective value. */
+  async function reopenForSwitches() {
+    await composition.reopen();
+    // A reopen does what the launch did: the composition makes the plan as it opens.
+    const { state } = composition;
+    if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
+  }
+  // The switches are asked at launch, on each return and every two minutes in the foreground (ADR 0089).
+  let stopAsking: () => void = () => undefined;
   reports.listen(remoteSwitches, (switches, moment) => {
+    if (moment === 'background') stopAsking();
     if (moment !== 'launch' && moment !== 'return') return;
     // Neither the ask nor a reopen rejects.
     void switches.ask().then(async (changed) => {
-      if (!changed) return;
-      await composition.reopen();
-      // A reopen does what the launch did: the composition makes the plan as it opens.
-      const { state } = composition;
-      if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
+      if (changed) await reopenForSwitches();
+    });
+    stopAsking();
+    stopAsking = switches.start(() => {
+      void reopenForSwitches();
     });
   });
   const stopSpotlight = handOverSpotlight({
@@ -118,6 +128,7 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
     });
   }
   return () => {
+    stopAsking();
     stopSpotlight();
     reports.stop();
   };

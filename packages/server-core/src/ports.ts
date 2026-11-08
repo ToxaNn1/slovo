@@ -8,8 +8,12 @@ import type {
   CountedQuestion,
   CounterEvent,
   MistakeReport,
+  ForceUpdateMinimum,
+  ForceUpdateMinimums,
   PackMetadata,
+  Platform,
   PublishedPack,
+  Rule,
 } from '@slovo/contracts';
 
 /** The current time, injected so the rules that read it stay testable. */
@@ -228,15 +232,24 @@ export interface RateLimits {
 }
 
 /**
- * The Feature Switches the owner turned off remotely, per Edition and feature
- * (Postgres in the backend). It keeps a feature by its name and never reads
- * it: the server Core checks the names.
+ * The remote Feature Switch Rules and force-update minimums the owner sets,
+ * per Edition (Postgres in the backend; ADR 0089). It keeps a feature by its
+ * name and never reads it: the server Core checks the names.
  */
-export interface RemoteSwitchStore {
-  /** The features turned off in the Edition, in no order. */
-  off(editionId: string): Promise<readonly string[]>;
-  /** Sets whether the feature is off in the Edition, as of `at`. */
-  set(editionId: string, feature: string, off: boolean, at: Date): Promise<void>;
+export interface SwitchRuleStore {
+  /** The Rules of the Edition, by feature name and then order. */
+  rules(editionId: string): Promise<readonly Rule[]>;
+  /** Replaces the Rules of one feature of the Edition with these, as of `at`. */
+  setRules(editionId: string, feature: string, rules: readonly Rule[], at: Date): Promise<void>;
+  /** The force-update minimums of the Edition, by platform. */
+  minimums(editionId: string): Promise<ForceUpdateMinimums>;
+  /** Sets the force-update minimums of one platform of the Edition, as of `at`. */
+  setMinimum(
+    editionId: string,
+    platform: Platform,
+    minimum: ForceUpdateMinimum,
+    at: Date,
+  ): Promise<void>;
 }
 
 /** A Mistake Report as the backend keeps it: the report and its time of arrival, nothing else. */

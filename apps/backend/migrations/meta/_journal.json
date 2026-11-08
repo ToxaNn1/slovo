@@ -92,6 +92,13 @@
       "when": 1794154039352,
       "tag": "0012_admin_users",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794156504600,
+      "tag": "0013_switch_rules",
+      "breakpoints": true
     }
   ]
 }

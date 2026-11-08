@@ -1,11 +1,20 @@
 import {
+  DEPENDS_ON,
   FeatureSwitchesSchema,
+  switchedOn,
   type EditionConfig,
   type EditionStrings,
   type FeatureSwitch,
+  type ForceUpdateMinimum,
+  type ForceUpdateMinimums,
+  type Platform,
+  type Rule,
+  type RuleTargets,
+  type RuleVerdict,
 } from '@slovo/contracts';
 
-import type { Clock, RemoteSwitchStore } from '../ports';
+import type { ActionEntry, Actor } from '../admin/admin-access';
+import type { Clock, Json, SwitchRuleStore } from '../ports';
 
 /** An Edition as the backend serves it: its config, strings and content manifest, read from its folder. */
 export interface Edition {
@@ -30,7 +39,8 @@ interface UnknownEdition {
 
 /**
  * Why an Edition doesn't serve a feature: the backend didn't find the
- * Edition, or the feature is switched off, in the Edition or remotely.
+ * Edition, or the feature is off for every reader, by the Edition's state
+ * and its Rules (ADR 0089).
  */
 export interface NotServing {
   readonly ok: false;
@@ -38,52 +48,87 @@ export interface NotServing {
 }
 
 /**
- * Why a remote switch is not set: the backend didn't find the Edition, or
- * the Feature Switches schema of the contracts doesn't know the feature.
+ * Why a write of the switches is refused: the backend didn't find the
+ * Edition, the Feature Switches schema of the contracts doesn't know the
+ * feature, the Edition has it `unavailable`, or a switch it depends on is
+ * off for every reader (ADR 0089).
  */
-export type SwitchRefusal = 'unknown-edition' | 'unknown-feature';
+export type SwitchRefusal =
+  'unknown-edition' | 'unknown-feature' | 'unavailable-feature' | 'dependency-off';
 
-/** Why a remote switch is not set, as `SwitchRefusal` names it. */
-interface SwitchRefused {
+/** A refused write of the switches, with the feature it names. */
+export interface SwitchRefused {
   readonly ok: false;
   readonly reason: SwitchRefusal;
+  /** The feature written, or the switch it depends on that is off for everyone. */
+  readonly feature: string;
 }
 
-/** The features turned off remotely in an Edition, in name order. */
-interface RemoteSwitches {
+/** The Rules of an Edition, by feature name and then order, and its force-update minimums. */
+export interface EditionSwitches {
   readonly ok: true;
-  readonly off: readonly FeatureSwitch[];
+  readonly rules: readonly Rule[];
+  readonly minimums: ForceUpdateMinimums;
+}
+
+/** A Rule as the admin writes it: its place in the list is its order. */
+export interface RuleInput {
+  readonly id: string;
+  readonly verdict: RuleVerdict;
+  readonly targets: RuleTargets;
+}
+
+/** Who writes and why, for the Action log. */
+export interface WriteBy {
+  readonly who: Actor;
+  readonly reason: string;
 }
 
 /**
  * Every Edition the backend serves: the ones it found in the Edition folders
- * at start (ADR 0030), with the Feature Switches the owner turned off
- * remotely (ADR 0040). A new Edition folder is enough to be served.
+ * at start (ADR 0030), with the Rules and force-update minimums the owner
+ * sets remotely (ADR 0089). Every write is logged with before and after.
  */
 export interface EditionRegistry {
-  /** The Edition with the id, or none when the backend didn't find it. */
+  /** The Edition by its id, if the backend serves it. */
   find(editionId: string): Edition | undefined;
+  /** The ids of every Edition the backend serves. */
+  ids(): readonly string[];
   /**
-   * The Edition with the id when it serves the feature: the backend found it,
-   * its Feature Switch for the feature is on, as it is in the app, and the
-   * feature is not turned off remotely.
+   * The Edition, when it serves the feature: on for any reader by the
+   * Edition's state or a Rule, and every switch it depends on too. Only a
+   * feature off for everyone is `switched-off`. Read per request.
    */
   serving(
     editionId: string,
     feature: FeatureSwitch,
   ): Promise<{ readonly ok: true; readonly edition: Edition } | NotServing>;
-  /** The features turned off remotely in the Edition. */
-  remoteSwitches(editionId: string): Promise<RemoteSwitches | UnknownEdition>;
+  /** The Rules and force-update minimums of the Edition. */
+  switches(editionId: string): Promise<EditionSwitches | UnknownEdition>;
+  /** Replaces the Rules of one feature of the Edition with these, tried in their order. */
+  setRules(
+    editionId: string,
+    feature: string,
+    rules: readonly RuleInput[],
+    by: WriteBy,
+  ): Promise<EditionSwitches | SwitchRefused>;
+  /** Sets the force-update minimums of one platform of the Edition. */
+  setMinimum(
+    editionId: string,
+    platform: Platform,
+    minimum: ForceUpdateMinimum,
+    by: WriteBy,
+  ): Promise<EditionSwitches | SwitchRefused>;
   /**
-   * Turns the feature off in the Edition remotely, and answers the features
-   * off now. A feature already off stays off.
+   * The Kill switch: the feature off for every reader of the Edition, or of
+   * every Edition when none is named, over every Rule. Answers the Editions
+   * it turned it off in.
    */
-  switchOff(editionId: string, feature: string): Promise<RemoteSwitches | SwitchRefused>;
-  /**
-   * Clears the remote switch of the feature in the Edition, so the Edition's
-   * own switch decides again, and answers the features off now.
-   */
-  clearSwitch(editionId: string, feature: string): Promise<RemoteSwitches | SwitchRefused>;
+  kill(
+    feature: string,
+    editionId: string | undefined,
+    by: WriteBy,
+  ): Promise<{ readonly ok: true; readonly editionIds: readonly string[] } | SwitchRefused>;
 }
 
 const FeatureSwitchSchema = FeatureSwitchesSchema.keyof();
@@ -93,52 +138,151 @@ function isFeatureSwitch(name: string): name is FeatureSwitch {
   return FeatureSwitchSchema.safeParse(name).success;
 }
 
-/** The features of the names the schema knows, in name order. */
-function knownInNameOrder(features: readonly string[]): FeatureSwitch[] {
-  return features.filter(isFeatureSwitch).sort();
+/** Whether a Rule's targets match every reader: none named, or a share of 100 alone. */
+const matchesEveryone = (targets: RuleTargets) =>
+  Object.entries(targets).every(
+    ([target, value]) => value === undefined || (target === 'share' && value === 100),
+  );
+
+/**
+ * Whether the feature is on for any reader by its own state and Rules, as the
+ * backend can tell without device facts: a Rule that turns it on for a share
+ * above 0 does; an off Rule for everyone ends the search, as the device
+ * would; with none, the Edition's state decides.
+ */
+function onForAnyone(edition: Edition, rules: readonly Rule[], feature: FeatureSwitch): boolean {
+  const state = edition.config.featureSwitches[feature];
+  if (state === 'unavailable') return false;
+  for (const rule of rules) {
+    if (rule.feature !== feature || rule.targets.share === 0) continue;
+    if (rule.verdict !== 'off') return true;
+    if (matchesEveryone(rule.targets)) return false;
+  }
+  return state === 'on';
 }
+
+/** A value as the Action log keeps it: its JSON. */
+const asJson = (value: unknown): Json => JSON.parse(JSON.stringify(value ?? null));
 
 export function createEditionRegistry({
   editions,
   switchStore,
   clock,
+  log,
 }: {
   editions: readonly Edition[];
-  switchStore: RemoteSwitchStore;
+  switchStore: SwitchRuleStore;
   clock: Clock;
+  /** Appends a change to the Action log (ADR 0088). */
+  log: (entry: ActionEntry) => Promise<void>;
 }): EditionRegistry {
   const byId = new Map(editions.map((edition) => [edition.config.id, edition]));
   const unknownEdition: UnknownEdition = { ok: false, reason: 'unknown-edition' };
+  const refused = (reason: SwitchRefusal, feature: string): SwitchRefused => ({
+    ok: false,
+    reason,
+    feature,
+  });
 
-  async function setSwitch(editionId: string, feature: string, off: boolean) {
-    if (!byId.has(editionId)) return unknownEdition;
-    if (!isFeatureSwitch(feature)) return { ok: false, reason: 'unknown-feature' } as const;
-    await switchStore.set(editionId, feature, off, clock.now());
-    return { ok: true, off: knownInNameOrder(await switchStore.off(editionId)) } as const;
+  async function switches(editionId: string): Promise<EditionSwitches> {
+    const [rules, minimums] = await Promise.all([
+      switchStore.rules(editionId),
+      switchStore.minimums(editionId),
+    ]);
+    return { ok: true, rules, minimums };
+  }
+
+  const rulesOf = (rules: readonly Rule[], feature: string) =>
+    rules.filter((rule) => rule.feature === feature);
+
+  /** Writes the Rules of one feature and logs the change. */
+  async function writeRules(
+    editionId: string,
+    feature: FeatureSwitch,
+    rules: readonly RuleInput[],
+    what: string,
+    { who, reason }: WriteBy,
+  ) {
+    const before = rulesOf(await switchStore.rules(editionId), feature);
+    const after: Rule[] = rules.map((rule, order) => ({ ...rule, editionId, feature, order }));
+    await switchStore.setRules(editionId, feature, after, clock.now());
+    await log({
+      who,
+      what,
+      before: asJson(before),
+      after: asJson(after),
+      reason,
+      editionId,
+      batchId: null,
+    });
   }
 
   return {
     find: (editionId) => byId.get(editionId),
+    ids: () => [...byId.keys()],
 
     async serving(editionId, feature) {
       const edition = byId.get(editionId);
       if (edition === undefined) return unknownEdition;
-      // The Edition's own switch needs no store.
-      if (edition.config.featureSwitches[feature] !== 'on')
-        return { ok: false, reason: 'switched-off' };
-      if ((await switchStore.off(editionId)).includes(feature)) {
-        return { ok: false, reason: 'switched-off' };
+      const { rules } = await switches(editionId);
+      const inEffect = switchedOn((switchName) => onForAnyone(edition, rules, switchName));
+      return inEffect(feature) ? { ok: true, edition } : { ok: false, reason: 'switched-off' };
+    },
+
+    async switches(editionId) {
+      return byId.has(editionId) ? switches(editionId) : unknownEdition;
+    },
+
+    async setRules(editionId, feature, rules, by) {
+      const edition = byId.get(editionId);
+      if (edition === undefined) return refused('unknown-edition', editionId);
+      if (!isFeatureSwitch(feature)) return refused('unknown-feature', feature);
+      if (rules.length > 0) {
+        if (edition.config.featureSwitches[feature] === 'unavailable') {
+          return refused('unavailable-feature', feature);
+        }
+        const current = (await switches(editionId)).rules;
+        const inEffect = switchedOn((switchName) => onForAnyone(edition, current, switchName));
+        const off = (DEPENDS_ON[feature] ?? []).find((dependency) => !inEffect(dependency));
+        if (off !== undefined) return refused('dependency-off', off);
       }
-      return { ok: true, edition };
+      await writeRules(editionId, feature, rules, 'switches.rules.set', by);
+      return switches(editionId);
     },
 
-    async remoteSwitches(editionId) {
-      if (!byId.has(editionId)) return unknownEdition;
-      return { ok: true, off: knownInNameOrder(await switchStore.off(editionId)) };
+    async setMinimum(editionId, platform, minimum, { who, reason }) {
+      if (!byId.has(editionId)) return refused('unknown-edition', editionId);
+      const before = (await switchStore.minimums(editionId))[platform];
+      await switchStore.setMinimum(editionId, platform, minimum, clock.now());
+      await log({
+        who,
+        what: 'switches.minimum.set',
+        before: asJson({ platform, minimum: before }),
+        after: asJson({ platform, minimum }),
+        reason,
+        editionId,
+        batchId: null,
+      });
+      return switches(editionId);
     },
 
-    switchOff: (editionId, feature) => setSwitch(editionId, feature, true),
-
-    clearSwitch: (editionId, feature) => setSwitch(editionId, feature, false),
+    async kill(feature, editionId, by) {
+      if (editionId !== undefined && !byId.has(editionId)) {
+        return refused('unknown-edition', editionId);
+      }
+      if (!isFeatureSwitch(feature)) return refused('unknown-feature', feature);
+      const editionIds = editionId === undefined ? [...byId.keys()] : [editionId];
+      for (const id of editionIds) {
+        // One Rule off for everyone in place of every Rule; the log keeps those.
+        await writeRules(
+          id,
+          feature,
+          [{ id: 'kill', verdict: 'off', targets: {} }],
+          'switches.kill',
+          by,
+        );
+      }
+      return { ok: true, editionIds };
+    },
   };
 }

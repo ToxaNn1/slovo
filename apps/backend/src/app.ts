@@ -191,6 +191,7 @@ export function createApp({
   const api = createApiHandler({
     accounts,
     admin,
+    clock,
     collectionLinks,
     communityCounters,
     contentPacks,

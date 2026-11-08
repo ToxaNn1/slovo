@@ -5,7 +5,9 @@ import {
   openCounterReads,
   openCounterSending,
   openMistakeReports,
+  evaluateSwitches,
   openRemoteSwitches,
+  type ReaderFacts,
   type AnalyticsPort,
   type Clock,
   type Edition,
@@ -63,7 +65,18 @@ export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
  * test says which switches are on by the Edition it loads.
  */
 export function switchedTo(edition: Edition): Opening<EditionSwitches> {
-  return opened({ edition, subscribe: () => () => undefined, ask: () => Promise.resolve(false) });
+  return opened({
+    edition,
+    verdicts: evaluateSwitches({
+      rules: [],
+      states: edition.featureSwitches,
+      facts: { ...testReader, clock, clockOffsetMs: 0 },
+    }),
+    minimums: {},
+    subscribe: () => () => undefined,
+    ask: () => Promise.resolve(false),
+    start: () => () => undefined,
+  });
 }
 
 /** An Analytics port a test reads: the events the Core sent it, and whether it was told to stop. */
@@ -126,6 +139,15 @@ function seeded(seed: number): Random {
 /** A schedule whose timers never fire, so nothing a test did not ask for runs in the background. */
 const never: Schedule = () => () => undefined;
 
+/** A reader of 1.0.0 on iOS, signed out, with no region: one no targeted Rule matches. */
+const testReader: ReaderFacts = {
+  appVersion: '1.0.0',
+  platform: 'ios',
+  region: undefined,
+  signedIn: false,
+  installId: 'i',
+};
+
 const clock: Clock = { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
 /**
@@ -146,10 +168,13 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       async () =>
         openRemoteSwitches({
           edition,
+          states: edition.featureSwitches,
+          facts: () => testReader,
           backend: unreachableBackend(),
           userState: await userState.opened(),
           schedule: never,
           random,
+          clock,
         }),
       { onError },
     );

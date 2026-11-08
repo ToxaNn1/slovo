@@ -242,15 +242,15 @@ describe('an Edition', () => {
   });
 
   it('with Google sign-in turned off remotely is NOT_FOUND until the switch is cleared', async () => {
-    const { client, google, switchOff, clearSwitch } = testApp();
+    const { client, google, kill, clearRules } = testApp();
     const email = newEmail();
     const signIn = () =>
       client.account.signInWithGoogle({ idToken: google.token({ email }), editionId: 'uk' });
-    await switchOff('uk', 'googleSignIn');
+    await kill('uk', 'googleSignIn');
 
     await expect(signIn()).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
 
-    await clearSwitch('uk', 'googleSignIn');
+    await clearRules('uk', 'googleSignIn');
     await expect(signIn()).resolves.toMatchObject({ email });
   });
 });

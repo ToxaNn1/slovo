@@ -3,8 +3,27 @@ import { z } from 'zod';
 import { EditionIdSchema } from '../edition';
 import { procedure } from './procedure';
 
-/** The ETag of the switches answered, which names them; 304 answers it too. */
-const SwitchesCachingSchema = z.object({ etag: z.string() });
+/**
+ * The ETag of the switches answered, which names them, and the backend's
+ * clock, which the app keeps with the Rules so a schedule holds by the
+ * backend's clock (ADR 0089); 304 answers both too.
+ */
+const SwitchesCachingSchema = z.object({ etag: z.string(), date: z.string() });
+
+/**
+ * A Rule as `/v1` answers it, read leniently: the verdict and the targets stay
+ * unparsed, so a new verdict or target keeps `/v1` as it is and an app skips
+ * the Rule alone (ADR 0089). The Rules come in their order.
+ */
+const RemoteRuleSchema = z.object({
+  id: z.string(),
+  feature: z.string(),
+  verdict: z.unknown(),
+  targets: z.record(z.string(), z.unknown()),
+});
+
+/** Force-update minimums as `/v1` answers them; a new platform keeps `/v1` as it is. */
+const RemoteMinimumSchema = z.object({ soft: z.string().optional(), hard: z.string().optional() });
 
 /** The Edition procedures. They need no Account. */
 export const editionContract = {
@@ -12,9 +31,9 @@ export const editionContract = {
     .route({
       method: 'GET',
       path: '/editions/{editionId}/switches',
-      summary: 'The Feature Switches the owner turned off remotely',
+      summary: 'The remote Feature Switch Rules and force-update minimums of the Edition',
       description:
-        "A remote switch only turns a feature off: a feature is on when the Edition's config turns it on and it is not off here (ADR 0040).",
+        "The first Rule of a feature that matches the device decides its value, the Edition's state when none does; an unavailable feature is never on (ADR 0089).",
       tags: ['edition'],
       inputStructure: 'detailed',
       outputStructure: 'detailed',
@@ -41,11 +60,16 @@ export const editionContract = {
           headers: SwitchesCachingSchema,
           body: z.object({
             /**
-             * The features turned off remotely, by their Feature Switch's
-             * name, in name order. A name is a string, so a new Feature
-             * Switch keeps `/v1` as it is; an app skips a name it doesn't know.
+             * The Rules of the Edition, by feature name and then order. A
+             * feature is a string, so a new Feature Switch keeps `/v1` as it
+             * is; an app skips a Rule of a feature it doesn't know.
              */
-            off: z.array(z.string()),
+            rules: z.array(RemoteRuleSchema),
+            /** The force-update minimums of the Edition, by platform. */
+            minimums: z.object({
+              ios: RemoteMinimumSchema.optional(),
+              android: RemoteMinimumSchema.optional(),
+            }),
           }),
         }),
         z.object({

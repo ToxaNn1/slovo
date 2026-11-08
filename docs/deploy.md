@@ -37,7 +37,7 @@ pnpm build:pack uk
 DATABASE_URL='<DATABASE_PUBLIC_URL of the Railway Postgres>' pnpm publish:pack uk
 ```
 
-A variable in the environment wins over the same one in `apps/backend/.env`, so the local `.env` stays pointed at the local Postgres. The other operator commands (`pnpm switch:off`, `pnpm reports`, `pnpm collection-links`, `pnpm admin`) reach the Deployment the same way.
+A variable in the environment wins over the same one in `apps/backend/.env`, so the local `.env` stays pointed at the local Postgres. The other operator commands (`pnpm switches off`, `pnpm reports`, `pnpm collection-links`, `pnpm admin`) reach the Deployment the same way.
 
 ## The owner admin's people and Агент tokens
 

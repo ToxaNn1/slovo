@@ -259,11 +259,11 @@ describe('counters.send', () => {
   });
 
   it('answers NOT_FOUND once the owner turns Community Counters off remotely', async () => {
-    const { client, database, switchOff } = testApp({
+    const { client, database, kill } = testApp({
       editions: testEditions(['remote']).read(),
     });
     const word = newEntryId();
-    await switchOff('remote', 'communityCounters');
+    await kill('remote', 'communityCounters');
 
     await expect(
       client.counters.send({ editionId: 'remote', events: [event(word, { known: 1 })] }),
@@ -584,8 +584,8 @@ describe('counters.read', () => {
         ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: 'off' } }
         : config,
     );
-    const { client, switchOff } = testApp({ editions: folder.read() });
-    await switchOff('remote', 'communityCounters');
+    const { client, kill } = testApp({ editions: folder.read() });
+    await kill('remote', 'communityCounters');
 
     for (const edition of ['off', 'remote']) {
       await expect(client.counters.read({ edition, entries: 'w_a' })).rejects.toMatchObject({
@@ -724,12 +724,12 @@ describe('counters.communityWord', () => {
         ? config
         : { ...config, featureSwitches: { ...config.featureSwitches, [feature]: 'off' } };
     });
-    const { client, switchOff } = testApp({ editions: folder.read() });
+    const { client, kill } = testApp({ editions: folder.read() });
     // Adds kept before the counters went off remotely give no Community Word after.
     vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
     await addToFavorites(client, 'counters-remote', ['w_a']);
-    await switchOff('remote', 'communityWord');
-    await switchOff('counters-remote', 'communityCounters');
+    await kill('remote', 'communityWord');
+    await kill('counters-remote', 'communityCounters');
     vi.setSystemTime(new Date('2026-11-04T09:00:00Z'));
 
     for (const edition of ['xx', 'off', 'remote', 'counters-off', 'counters-remote']) {
@@ -825,10 +825,10 @@ describe('counters.questionnaire', () => {
       ...config,
       featureSwitches: { ...config.featureSwitches, questionnaire: 'off' },
     }));
-    const { client, database, switchOff } = testApp({
+    const { client, database, kill } = testApp({
       editions: [...folder.read(), ...testEditions(['qremote']).read()],
     });
-    await switchOff('qremote', 'questionnaire');
+    await kill('qremote', 'questionnaire');
 
     for (const editionId of ['xx', 'qoff', 'qremote']) {
       await expect(

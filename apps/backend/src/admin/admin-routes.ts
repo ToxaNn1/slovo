@@ -138,27 +138,20 @@ export function adminRoutes({
     return c.redirect('/admin', 303);
   });
 
-  // A remote switch only turns a feature off, or clears that (ADR 0040); a
-  // feature the Edition has off stays off, so it has nothing to clear.
+  // The Kill switch: the feature off for every reader of the Edition, over
+  // every Rule (ADR 0089). The admin sets Rules; this page only kills.
   admin.post('/switches', async (c) => {
     const signedIn = await ownerSession(c);
     if (!signedIn.ok) return signedIn.answer;
-    const [editionId, feature, action] = await Promise.all(
-      ['edition', 'feature', 'action'].map((name) => field(c, name)),
+    const [editionId, feature, reason] = await Promise.all(
+      ['edition', 'feature', 'reason'].map((name) => field(c, name)),
     );
-    if (action !== 'off' && action !== 'clear') {
-      return refused(c, 400, 'A remote switch only turns a feature off or clears that.');
-    }
-    const shipped = editions.find(editionId ?? '')?.config.featureSwitches;
-    const known = FeatureSchema.safeParse(feature);
-    if (action === 'clear' && known.success && shipped?.[known.data] !== 'on') {
-      return refused(c, 400, 'The Edition has the feature off; a remote switch never turns it on.');
-    }
-    const set =
-      action === 'off'
-        ? await editions.switchOff(editionId ?? '', feature ?? '')
-        : await editions.clearSwitch(editionId ?? '', feature ?? '');
-    if (!set.ok) return refused(c, 400, `Not set: ${set.reason}.`);
+    if (!reason?.trim()) return refused(c, 400, 'Say why the feature goes off.');
+    const killed = await editions.kill(feature ?? '', editionId ?? '', {
+      who: { kind: 'admin-user', email: signedIn.session.account.email },
+      reason: reason.trim(),
+    });
+    if (!killed.ok) return refused(c, 400, `Not turned off: ${killed.reason} (${killed.feature}).`);
     return c.redirect('/admin', 303);
   });
 
@@ -200,8 +193,8 @@ export function adminRoutes({
         .orderBy(desc(mistakeReports.receivedAt), desc(mistakeReports.id)),
       Promise.all(
         served.map(async (edition) => {
-          const remote = await editions.remoteSwitches(edition.config.id);
-          return { edition, off: remote.ok ? remote.off : [] };
+          const remote = await editions.switches(edition.config.id);
+          return { edition, rules: remote.ok ? remote.rules : [] };
         }),
       ),
     ]);
@@ -277,28 +270,25 @@ export function adminRoutes({
             )}
           </table>
 
-          <h2>Remote Feature Switches</h2>
+          <h2>Kill switch</h2>
           ${switches.map(
-            ({ edition, off }) =>
+            ({ edition, rules }) =>
               html`<h3>${edition.config.id}</h3>
                 <table>
                   ${FEATURES.map((feature) => {
+                    const ruleCount = rules.filter((rule) => rule.feature === feature).length;
                     const control =
-                      edition.config.featureSwitches[feature] !== 'on'
-                        ? 'off in the Edition'
+                      edition.config.featureSwitches[feature] === 'unavailable'
+                        ? 'unavailable in the Edition'
                         : html`<form method="post" action="/admin/switches">
                             <input type="hidden" name="edition" value="${edition.config.id}" />
                             <input type="hidden" name="feature" value="${feature}" />
-                            ${
-                              off.includes(feature)
-                                ? html`<input type="hidden" name="action" value="clear" />
-                                    <button>off remotely: clear</button>`
-                                : html`<input type="hidden" name="action" value="off" />
-                                    <button>on: turn off</button>`
-                            }
+                            <input name="reason" placeholder="reason" required />
+                            <button>turn off for everyone</button>
                           </form>`;
                     return html`<tr>
                       <td>${feature}</td>
+                      <td>${edition.config.featureSwitches[feature]}, ${ruleCount} Rules</td>
                       <td>${control}</td>
                     </tr>`;
                   })}

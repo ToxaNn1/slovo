@@ -1,6 +1,12 @@
 import { sha256 } from '@noble/hashes/sha2.js';
-import { bytesToHex } from '@noble/hashes/utils.js';
-import { SYNC_BATCH_SIZE, type CollectionLink, type MistakeReport } from '@slovo/contracts';
+import { bytesToHex, utf8ToBytes } from '@noble/hashes/utils.js';
+import {
+  SYNC_BATCH_SIZE,
+  type CollectionLink,
+  type ForceUpdateMinimums,
+  type MistakeReport,
+  type Rule,
+} from '@slovo/contracts';
 import { createApiClient, PACK_MEDIA_TYPE, type ApiFetch } from '@slovo/contracts/api';
 import { fileOf, refusal, serveApi, type ApiProcedures } from '@slovo/contracts/api/test-support';
 
@@ -157,17 +163,24 @@ export interface FakeBackend {
     answerCommunityWord(communityWord: CommunityWordAnswer | undefined): void;
   };
   /**
-   * The `edition.switches` procedure (ADR 0040): the features the owner
-   * turned off remotely, with an ETag that names them, and 304 when the app
-   * names that ETag.
+   * The `edition.switches` procedure (ADR 0040, 0089): the Rules and
+   * force-update minimums the owner set, with an ETag that names them and the
+   * backend's clock as the date, and 304 when the app names that ETag.
    */
   readonly switches: {
     /** The ETag each `edition.switches` request named, in order, the failed ones included. */
     readonly asked: readonly (string | undefined)[];
-    /** Sets the features turned off remotely, as `pnpm switch:off` and `switch:clear` do. */
+    /** Sets the Rules to one Kill switch per feature named, as `pnpm switches off` does; none clears them. */
     turnOff(...features: readonly string[]): void;
+    /** Sets the Rules the backend answers, as the HTML admin does. */
+    setRules(rules: readonly RemoteRule[]): void;
+    /** Sets the force-update minimums the backend answers. */
+    setMinimums(minimums: ForceUpdateMinimums): void;
   };
 }
+
+/** A Rule as the backend answers it to the app, in its order. */
+type RemoteRule = Pick<Rule, 'id' | 'feature' | 'verdict' | 'targets'>;
 
 /** What a request brings to a procedure served in process: its headers, where a Session travels, and the answer's. */
 type ServedContext = Parameters<
@@ -217,7 +230,8 @@ export function createFakeBackend({
   }[] = [];
   const sent: (readonly CounterEvent[])[] = [];
   let communityWord: CommunityWordAnswer | undefined;
-  let off: string[] = [];
+  let rules: readonly RemoteRule[] = [];
+  let minimums: ForceUpdateMinimums = {};
   const etagsAsked: (string | undefined)[] = [];
 
   const fake = {
@@ -284,8 +298,6 @@ export function createFakeBackend({
   function endSessionsOf(email: string): void {
     for (const [token, owner] of sessions) if (owner === email) sessions.delete(token);
   }
-
-  const etagOf = (names: readonly string[]) => `"${names.join(',')}"`;
 
   const procedures: ApiProcedures = {
     account: {
@@ -465,10 +477,10 @@ export function createFakeBackend({
         const named = input.headers?.['if-none-match'];
         etagsAsked.push(named);
         await arrive('edition.switches', context);
-        const etag = etagOf(off);
-        return named === etag
-          ? { status: 304, headers: { etag } }
-          : { status: 200, headers: { etag }, body: { off: [...off] } };
+        const body = { rules: [...rules], minimums };
+        const etag = `"${bytesToHex(sha256(utf8ToBytes(JSON.stringify(body))))}"`;
+        const headers = { etag, date: clock.now().toUTCString() };
+        return named === etag ? { status: 304, headers } : { status: 200, headers, body };
       },
     },
   };
@@ -547,7 +559,18 @@ export function createFakeBackend({
     switches: {
       asked: etagsAsked,
       turnOff(...features) {
-        off = [...features].sort();
+        rules = features.map((feature) => ({
+          id: `kill-${feature}`,
+          feature,
+          verdict: 'off',
+          targets: {},
+        }));
+      },
+      setRules(next) {
+        rules = next;
+      },
+      setMinimums(next) {
+        minimums = next;
       },
     },
   };

@@ -1,6 +1,5 @@
 import { randomInt, randomUUID } from 'node:crypto';
 
-import type { EditionConfig } from '@slovo/contracts';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { testApp, testEditions } from '../test-support';
@@ -92,7 +91,7 @@ describe('the owner admin sign-in', () => {
     const page = await backend.request('/admin', { headers: { cookie } });
     const switched = await backend.request(
       '/admin/switches',
-      form({ edition: 'uk', feature: 'sync', action: 'off' }, cookie),
+      form({ edition: 'uk', feature: 'sync', reason: 'abuse' }, cookie),
     );
 
     expect(page.status).toBe(403);
@@ -100,7 +99,7 @@ describe('the owner admin sign-in', () => {
     expect(switched.status).toBe(403);
     await expect(
       backend.client.edition.switches({ params: { editionId: 'uk' } }),
-    ).resolves.toMatchObject({ body: { off: [] } });
+    ).resolves.toMatchObject({ body: { rules: [] } });
   });
 
   it('shows the sign-in form alone without a Session', async () => {
@@ -130,59 +129,38 @@ describe('the owner admin sign-in', () => {
   });
 });
 
-describe('the remote switches of the owner admin', () => {
-  it('turns a feature off in an Edition, and clears it again', async () => {
-    const { request, cookie, client } = await ownerSignedIn({
+describe('the Kill switch of the owner admin', () => {
+  it('turns a feature off for every reader of an Edition, over its Rules', async () => {
+    const { request, cookie, client, page } = await ownerSignedIn({
       editions: testEditions(['switched']).read(),
     });
-    const off = () => client.edition.switches({ params: { editionId: 'switched' } });
 
     const turned = await request(
       '/admin/switches',
-      form({ edition: 'switched', feature: 'sync', action: 'off' }, cookie),
+      form({ edition: 'switched', feature: 'sync', reason: 'sync loses Collections' }, cookie),
     );
-    expect(turned.status).toBe(303);
-    await expect(off()).resolves.toMatchObject({ body: { off: ['sync'] } });
 
-    await request(
-      '/admin/switches',
-      form({ edition: 'switched', feature: 'sync', action: 'clear' }, cookie),
-    );
-    await expect(off()).resolves.toMatchObject({ body: { off: [] } });
+    expect(turned.status).toBe(303);
+    await expect(
+      client.edition.switches({ params: { editionId: 'switched' } }),
+    ).resolves.toMatchObject({
+      body: { rules: [{ feature: 'sync', verdict: 'off', targets: {} }] },
+    });
+    await expect((await page()).text()).resolves.toMatch(/sync<\/td>\s*<td>on, 1 Rules<\/td>/);
   });
 
-  it('never turns on a feature the Edition has off', async () => {
-    const shippedOff = (config: EditionConfig): EditionConfig => ({
-      ...config,
-      featureSwitches: { ...config.featureSwitches, mistakeReports: 'off' },
-    });
-    const { request, cookie, client, page } = await ownerSignedIn({
-      editions: testEditions(['shipped-off'], shippedOff).read(),
-    });
+  it('refuses a Kill switch without a reason', async () => {
+    const { request, cookie, client } = await ownerSignedIn();
 
-    const cleared = await request(
+    const turned = await request(
       '/admin/switches',
-      form({ edition: 'shipped-off', feature: 'mistakeReports', action: 'clear' }, cookie),
-    );
-    const turnedOn = await request(
-      '/admin/switches',
-      form({ edition: 'shipped-off', feature: 'mistakeReports', action: 'on' }, cookie),
+      form({ edition: 'uk', feature: 'sync', reason: ' ' }, cookie),
     );
 
-    expect(cleared.status).toBe(400);
-    expect(turnedOn.status).toBe(400);
-    await expect(
-      client.reports.send({
-        editionId: 'shipped-off',
-        entryId: newEntryId(),
-        type: 'typo',
-        comment: '',
-        appVersion: '1.0.0',
-        contentVersion: 1,
-      }),
-    ).rejects.toMatchObject({ code: 'NOT_FOUND' });
-    const shown = await (await page()).text();
-    expect(shown).toMatch(/mistakeReports[^<]*<\/td>\s*<td>off in the Edition<\/td>/);
+    expect(turned.status).toBe(400);
+    await expect(client.edition.switches({ params: { editionId: 'uk' } })).resolves.toMatchObject({
+      body: { rules: [] },
+    });
   });
 
   it('refuses an Edition or a feature it does not know', async () => {
@@ -190,11 +168,11 @@ describe('the remote switches of the owner admin', () => {
 
     const edition = await request(
       '/admin/switches',
-      form({ edition: 'nowhere', feature: 'sync', action: 'off' }, cookie),
+      form({ edition: 'nowhere', feature: 'sync', reason: 'abuse' }, cookie),
     );
     const feature = await request(
       '/admin/switches',
-      form({ edition: 'uk', feature: 'teleport', action: 'off' }, cookie),
+      form({ edition: 'uk', feature: 'teleport', reason: 'abuse' }, cookie),
     );
 
     expect(edition.status).toBe(400);
