@@ -412,6 +412,8 @@ export function testEditions(
         },
       };
     },
+    /** The Edition's folder with its content, as an import reads it. */
+    content: contentOf,
     /** Corrects a Word's Definition and records the content, which raises its version. */
     correctWord(editionId: string): void {
       const editionDir = contentOf(editionId);
