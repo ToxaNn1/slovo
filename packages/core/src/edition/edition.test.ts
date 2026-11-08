@@ -135,6 +135,7 @@ const validConfig = {
     collectionBoardStyle: 'on',
     profileConfirmedByRarity: 'on',
     profileGameBest: 'on',
+    forceUpdate: 'on',
   },
   userSettingDefaults: {
     theme: 'system',

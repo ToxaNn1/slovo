@@ -27,6 +27,7 @@ import { RarityTestStringsSchema } from './rarity-test';
 import { SearchStringsSchema } from './search';
 import { SettingsStringsSchema } from './settings';
 import { ShareStringsSchema } from './share';
+import { ForceUpdateStringsSchema } from './force-update';
 import { SplashStringsSchema } from './splash';
 import { SpotlightStringsSchema } from './spotlight';
 import { StatsStringsSchema } from './stats';
@@ -82,6 +83,7 @@ export const EditionStringsSchema = z.strictObject({
   share: ShareStringsSchema,
   account: AccountStringsSchema,
   email: EmailStringsSchema,
+  forceUpdate: ForceUpdateStringsSchema,
 });
 
 export type EditionStrings = z.infer<typeof EditionStringsSchema>;

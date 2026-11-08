@@ -114,6 +114,7 @@
     "mascot": "on",
     "sounds": "off",
     "reduceMotion": "on",
+    "forceUpdate": "on",
     "fastReveal": "on",
     "dashboard": "on",
     "mood": "on",
