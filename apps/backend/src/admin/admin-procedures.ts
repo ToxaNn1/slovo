@@ -2,6 +2,7 @@ import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
 import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
 import type {
+  DevelopmentOverview,
   Actor,
   AdminAccess,
   AdminSignIn,
@@ -70,6 +71,7 @@ export function adminProcedures(
   signIn: AdminSignIn,
   editions: EditionRegistry,
   served: readonly Edition[],
+  development: DevelopmentOverview,
 ) {
   const os = implement(apiContract.admin).$context<{ headers: Headers; resHeaders?: Headers }>();
 
@@ -265,6 +267,11 @@ export function adminProcedures(
       return {
         editions: served.map(({ config }) => ({ id: config.id, displayName: config.displayName })),
       };
+    }),
+
+    development: os.development.handler(async ({ context, errors }) => {
+      await admit(context.headers, errors);
+      return development.overview();
     }),
   });
 }

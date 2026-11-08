@@ -359,6 +359,9 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         editions: async () => {
           await client.admin.editions().catch(refused);
         },
+        development: async () => {
+          await client.admin.development().catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {

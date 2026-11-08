@@ -15,13 +15,7 @@ import type {
   PublishedPack,
   Rule,
 } from '@slovo/contracts';
-import type {
-  EasBuild,
-  MainCi,
-  Milestone,
-  PullRequest,
-  Release,
-} from '@slovo/contracts/admin-api';
+import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
 
 /** The current time, injected so the rules that read it stay testable. */
 export interface Clock {

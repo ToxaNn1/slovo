@@ -6,11 +6,14 @@ import {
   createCollectionLinks,
   createCommunityCounters,
   createContentPacks,
+  createDevelopment,
   createMistakeReports,
   createSync,
   type AppleVerifier,
   type Clock,
+  type EasSource,
   type Edition,
+  type GitHubSource,
   type GoogleVerifier,
   type Mailer,
   type Random,
@@ -68,6 +71,10 @@ export interface AppDependencies {
   readonly google: GoogleVerifier;
   /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
   readonly apple: AppleVerifier;
+  /** The repository on GitHub, read for Розробка. */
+  readonly github: GitHubSource;
+  /** The app's builds on EAS, read for Розробка. */
+  readonly eas: EasSource;
   /** Signs the Sessions' tokens. */
   readonly authSecret: string;
   /** Where the unexpected failures (500) are reported. */
@@ -131,6 +138,8 @@ export function createApp({
   mailer,
   google,
   apple,
+  github,
+  eas,
   authSecret,
   reporter,
   trustedProxyHops,
@@ -203,6 +212,7 @@ export function createApp({
     collectionLinks,
     communityCounters,
     contentPacks,
+    development: createDevelopment({ github, eas, clock }),
     editions: editionRegistry,
     mistakeReports,
     served: editions,

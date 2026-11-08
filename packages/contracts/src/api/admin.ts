@@ -156,7 +156,11 @@ const GitHubBlockSchema = z.discriminatedUnion('state', [
 
 /** What the backend read from EAS, or that EAS is unavailable. */
 const EasBlockSchema = z.discriminatedUnion('state', [
-  z.object({ state: z.literal('ok'), fetchedAt: z.iso.datetime(), builds: z.array(EasBuildSchema) }),
+  z.object({
+    state: z.literal('ok'),
+    fetchedAt: z.iso.datetime(),
+    builds: z.array(EasBuildSchema),
+  }),
   z.object({ state: z.literal('unavailable') }),
 ]);
 
@@ -404,7 +408,8 @@ export const adminContract = {
     .route({
       method: 'GET',
       path: '/admin/development',
-      summary: 'Розробка: open pull requests, CI on main, version milestones, releases and EAS builds',
+      summary:
+        'Розробка: open pull requests, CI on main, version milestones, releases and EAS builds',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)

@@ -12,6 +12,7 @@ import { join } from 'node:path';
 
 import type { HttpBindings } from '@hono/node-server';
 import { createApiClient } from '@slovo/contracts/api';
+import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
 import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
 import type { AppConfig, EditionConfig } from '@slovo/contracts';
 import { buildLanguagePack, recordContent } from '@slovo/language-pack';
@@ -30,7 +31,9 @@ import {
   type AdminRole,
   type AppleIdentity,
   type AppleVerifier,
+  type EasSource,
   type Edition,
+  type GitHubSource,
   type GoogleIdentity,
   type GoogleVerifier,
   type Mail,
@@ -450,6 +453,107 @@ const connectionFrom = (ip: string) =>
 /** The AppConfig of the repo (ADR 0065), the one app the backend serves. */
 export const testAppConfig = openAppConfig(REPO_DIR).config;
 
+/** The fake GitHub's open pull request, CI run, milestones and release. */
+export const GITHUB_FIXTURE: {
+  pullRequests: PullRequest[];
+  mainCi: MainCi;
+  milestones: Milestone[];
+  releases: Release[];
+} = {
+  pullRequests: [
+    {
+      number: 1750,
+      title: 'feat(admin): the Розробка section',
+      author: 'anton',
+      url: 'https://github.com/ToxaNn1/slovo/pull/1750',
+      draft: false,
+      updatedAt: '2026-11-08T09:00:00.000Z',
+    },
+  ],
+  mainCi: {
+    state: 'success',
+    url: 'https://github.com/ToxaNn1/slovo/actions/runs/1',
+    finishedAt: '2026-11-08T08:00:00.000Z',
+  },
+  milestones: [
+    { title: '1.0', open: 30, closed: 0, dueOn: null },
+    { title: 'Backlog', open: 9, closed: 1, dueOn: null },
+    { title: '0.9', open: 4, closed: 12, dueOn: '2026-12-01T00:00:00.000Z' },
+  ],
+  releases: [
+    {
+      tag: 'v0.8.0',
+      name: '0.8',
+      publishedAt: '2026-10-20T10:00:00.000Z',
+      url: 'https://github.com/ToxaNn1/slovo/releases/tag/v0.8.0',
+    },
+  ],
+};
+
+/** The fake EAS's one build. */
+export const EAS_FIXTURE: EasBuild[] = [
+  {
+    id: 'build-1',
+    platform: 'ios',
+    profile: 'production',
+    status: 'finished',
+    appVersion: '0.8.0',
+    buildNumber: '42',
+    createdAt: '2026-11-07T18:00:00.000Z',
+    url: 'https://expo.dev/accounts/slovo/projects/slovo/builds/build-1',
+  },
+];
+
+/** A fake outside service: it counts its calls and fails once told to. */
+interface FakeSource {
+  /** How many reads it answered. */
+  readonly calls: number;
+  /** From now on every read answers `unavailable`. */
+  fail(): void;
+}
+
+const unavailable = { ok: false, reason: 'unavailable' } as const;
+
+/** A GitHub that answers GITHUB_FIXTURE. */
+export function createFakeGitHub(): GitHubSource & FakeSource {
+  let calls = 0;
+  let failing = false;
+  const answer =
+    <Value>(value: Value) =>
+    () => {
+      calls += 1;
+      return Promise.resolve(failing ? unavailable : ({ ok: true, value } as const));
+    };
+  return {
+    get calls() {
+      return calls;
+    },
+    fail: () => (failing = true),
+    pullRequests: answer(GITHUB_FIXTURE.pullRequests),
+    mainCi: answer(GITHUB_FIXTURE.mainCi),
+    milestones: answer(GITHUB_FIXTURE.milestones),
+    releases: answer(GITHUB_FIXTURE.releases),
+  };
+}
+
+/** An EAS that answers EAS_FIXTURE. */
+export function createFakeEas(): EasSource & FakeSource {
+  let calls = 0;
+  let failing = false;
+  return {
+    get calls() {
+      return calls;
+    },
+    fail: () => (failing = true),
+    latestBuilds: (limit) => {
+      calls += 1;
+      return Promise.resolve(
+        failing ? unavailable : { ok: true, value: EAS_FIXTURE.slice(0, limit) },
+      );
+    },
+  };
+}
+
 interface TestAppOptions {
   /** A database of the test's own, which the test closes; the file's database unless given. */
   readonly database?: Database;
@@ -471,6 +575,10 @@ interface TestAppOptions {
   readonly trustedProxyHops?: number;
   /** The built owner admin app's folder; none unless given. */
   readonly adminDist?: string;
+  /** GitHub, for Розробка; a fake GitHub unless given. */
+  readonly github?: GitHubSource;
+  /** EAS, for Розробка; a fake EAS unless given. */
+  readonly eas?: EasSource;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
@@ -494,6 +602,8 @@ export function testApp({
   random = systemRandom,
   trustedProxyHops = 0,
   adminDist,
+  github = createFakeGitHub(),
+  eas = createFakeEas(),
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
@@ -516,6 +626,8 @@ export function testApp({
     reporter: { report: (report) => reports.push(report) },
     trustedProxyHops,
     adminDist,
+    github,
+    eas,
   });
   const ip = newIp();
   // The one way a request reaches the app.

@@ -12,6 +12,7 @@ import type {
   CollectionLinks,
   CommunityCounters,
   ContentPacks,
+  DevelopmentOverview,
   Edition,
   EditionRegistry,
   MistakeReports,
@@ -75,6 +76,7 @@ export function createApiHandler({
   collectionLinks,
   communityCounters,
   contentPacks,
+  development,
   editions,
   mistakeReports,
   served,
@@ -87,6 +89,7 @@ export function createApiHandler({
   collectionLinks: CollectionLinks;
   communityCounters: CommunityCounters;
   contentPacks: ContentPacks;
+  development: DevelopmentOverview;
   editions: EditionRegistry;
   mistakeReports: MistakeReports;
   /** The Editions the backend serves, as the admin lists them. */
@@ -97,7 +100,7 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin, adminSignIn, editions, served),
+      admin: adminProcedures(admin, adminSignIn, editions, served, development),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks),
       counters: countersProcedures(communityCounters),
