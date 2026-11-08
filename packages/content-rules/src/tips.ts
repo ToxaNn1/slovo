@@ -1,7 +1,6 @@
 import type { EditionConfig, Tip } from '@slovo/contracts';
 
-import type { BuildError } from './build-error';
-import type { Authored } from './check-content';
+import type { Authored, Refusal } from './refusal';
 
 /**
  * The check the schema can't make on a Tip alone: the answers of its Game
@@ -9,8 +8,8 @@ import type { Authored } from './check-content';
  * holds a Tip's shape: an explanation of at most 300 characters, a Game
  * question with one right and three wrong answers, at least one source.
  */
-export function checkTips(config: EditionConfig, tips: readonly Authored<Tip>[]): BuildError[] {
-  const errors: BuildError[] = [];
+export function checkTips(config: EditionConfig, tips: readonly Authored<Tip>[]): Refusal[] {
+  const errors: Refusal[] = [];
 
   for (const { file, entry: tip } of tips) {
     const { rightAnswer, wrongAnswers } = tip.gameQuestion;
@@ -26,6 +25,7 @@ export function checkTips(config: EditionConfig, tips: readonly Authored<Tip>[])
         fieldByText.set(key, field);
       } else {
         errors.push({
+          rule: 'unique-tip-answers',
           file,
           entryId: tip.id,
           field: `gameQuestion.${field}`,

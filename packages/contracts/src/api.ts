@@ -12,7 +12,14 @@ import { editionContract } from './api/edition';
 import { reportsContract } from './api/reports';
 import { syncContract } from './api/sync';
 
-export { PACK_MEDIA_TYPE } from './api/content';
+export {
+  ContentSnapshotSchema,
+  PACK_MEDIA_TYPE,
+  PATCH_FORMAT,
+  PatchSchema,
+  type ContentSnapshot,
+  type Patch,
+} from './api/content';
 
 /**
  * What a call throws when the backend answers with an error: its `code`, as

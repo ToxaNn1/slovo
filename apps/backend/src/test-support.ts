@@ -49,6 +49,7 @@ import { deleteCollectionLink } from './collection-links/collection-link-delete'
 import { publishPack } from './content/publish-pack';
 import { createDatabase, type Database } from './database/database';
 import { migrateDatabase } from './database/migrate';
+import { createContentStore } from './content/content-store';
 import { accounts, sessions, signInMethods } from './database/schema';
 import { readEditions } from './edition/edition-folders';
 import { createEditions } from './edition/editions';
@@ -418,6 +419,8 @@ export function testEditions(
         },
       };
     },
+    /** The Edition's folder with its content, as an import reads it. */
+    content: contentOf,
     /** Corrects a Word's Definition and records the content, which raises its version. */
     correctWord(editionId: string): void {
       const editionDir = contentOf(editionId);
@@ -602,6 +605,13 @@ export function testApp({
         [],
         TEST_WRITE,
       ),
+    /** Imports the Edition folder into the content tables, as the import command does. */
+    importContent: (editionId: string, editionDir: string, options?: { override?: boolean }) =>
+      createContentStore({
+        database,
+        clock: systemClock,
+        editions: createEditions({ database, clock: systemClock, editions }),
+      }).importEdition(editionId, editionDir, options),
     /** The lines the reports list command prints of the reports the backend keeps. */
     listReports: (filter?: ReportFilter) => listReports(database, filter),
     /** What the reports resolve command prints and exits with for the id. */

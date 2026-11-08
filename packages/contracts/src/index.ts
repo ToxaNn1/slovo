@@ -263,3 +263,4 @@ export {
   type Variant,
 } from './feature-switch-rules';
 export { DEPENDS_ON, switchedOn } from './feature-switch-dependencies';
+export { ContentTargetsSchema, type ContentTargets } from './content-targets';

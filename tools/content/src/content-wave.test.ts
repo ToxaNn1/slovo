@@ -47,16 +47,20 @@ describe('launch.sh --dry-run', () => {
     const idioms = run.stdout.split('== content/1107-idioms')[1] ?? '';
     expect(words).toContain('== content/1107-words-a: 15 words from lists/words-a.txt');
     expect(words).toContain('git checkout -b content/1107-words-a origin/content/1107-wave');
-    expect(words).toContain('Grant: commit and push ONLY content/1107-words-a;');
+    expect(words).toContain(
+      'Grant: push ONLY content/1107-words-a, with the report commit alone; no commit of content, no PR',
+    );
     expect(words).toContain('pnpm source:words lists/words-a.txt --edition uk');
     expect(words).toContain(
-      'pnpm content import word tools/sourcing/review/words/drafts --edition uk --no-record',
+      'pnpm content add word tools/sourcing/review/words/drafts --edition uk',
     );
-    expect(words).toContain('pnpm content verify --changed origin/content/1107-wave --edition uk');
+    expect(words).toContain(
+      'pnpm content check word tools/sourcing/review/words/drafts --edition uk',
+    );
     expect(words).toContain('chore: DONE content/1107-words-a');
     expect(idioms).toContain('pnpm source:idioms lists/idioms.txt --edition uk');
     expect(idioms).toContain(
-      'pnpm content import idiom tools/sourcing/review/idioms/drafts --edition uk --no-record',
+      'pnpm content add idiom tools/sourcing/review/idioms/drafts --edition uk',
     );
     expect(idioms).not.toContain('words-a');
   });

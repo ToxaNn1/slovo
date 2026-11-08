@@ -262,7 +262,9 @@ describe('content.download', () => {
     expect((await download(newest)).status).toBe(200);
     expect((await download(older)).status).toBe(200);
     await expect(download(oldest)).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
-  });
+    // Three versions take three records and three builds of the whole UA Edition,
+    // the most of any test here, while the other files check it side by side.
+  }, 60_000);
 
   it('answers NOT_FOUND for a content version not published', async () => {
     const { client, pack } = await publishedPack('one-version');

@@ -23,6 +23,8 @@ import { accountProcedures } from './account/account-procedures';
 import { adminProcedures } from './admin/admin-procedures';
 import { collectionLinksProcedures } from './collection-links/collection-links-procedures';
 import { contentProcedures } from './content/content-procedures';
+import type { ContentStore } from './content/content-store';
+import type { ContentWrites } from './content/content-writes';
 import { countersProcedures } from './counters/counters-procedures';
 import { reportOf, type ErrorReporter } from './error-reporter';
 import { editionProcedures } from './edition/edition-procedures';
@@ -75,6 +77,8 @@ export function createApiHandler({
   collectionLinks,
   communityCounters,
   contentPacks,
+  contentStore,
+  contentWrites,
   editions,
   mistakeReports,
   served,
@@ -87,6 +91,8 @@ export function createApiHandler({
   collectionLinks: CollectionLinks;
   communityCounters: CommunityCounters;
   contentPacks: ContentPacks;
+  contentStore: ContentStore;
+  contentWrites: ContentWrites;
   editions: EditionRegistry;
   mistakeReports: MistakeReports;
   /** The Editions the backend serves, as the admin lists them. */
@@ -97,9 +103,9 @@ export function createApiHandler({
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin, adminSignIn, editions, served),
+      admin: adminProcedures(admin, adminSignIn, editions, served, contentWrites),
       collectionLinks: collectionLinksProcedures(collectionLinks),
-      content: contentProcedures(contentPacks),
+      content: contentProcedures(contentPacks, contentStore),
       counters: countersProcedures(communityCounters),
       edition: editionProcedures(editions, clock),
       reports: reportsProcedures(mistakeReports),

@@ -25,6 +25,8 @@ import { createAuthenticator } from './account/authenticator';
 import { adminApp } from './admin/admin-app';
 import { adminCodeEmail } from './admin/admin-mail';
 import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
+import { createContentStore } from './content/content-store';
+import { createContentWrites } from './content/content-writes';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -33,7 +35,6 @@ import {
 import { createCollectionLinkStore } from './collection-links/collection-link-store';
 import { collectionPage, unavailablePage } from './collection-links/collection-page';
 import { createContentPackStore } from './content/content-pack-store';
-import { createPackEntries } from './content/pack-entries';
 import { createCounterStore } from './counters/counter-store';
 import type { Database } from './database/database';
 import { migrationState, type MigrationState } from './database/migrate';
@@ -154,6 +155,7 @@ export function createApp({
     store: contentPackStore,
     clock,
   });
+  const contentStore = createContentStore({ database, clock, editions: editionRegistry });
   const sync = createSync({
     editions: editionRegistry,
     records: createUserRecords(database),
@@ -195,6 +197,7 @@ export function createApp({
     vault: createSecretVault(authSecret),
     codeEmail: adminCodeEmail,
   });
+  const contentWrites = createContentWrites({ database, clock, random, editions: editionRegistry });
   const api = createApiHandler({
     accounts,
     admin,
@@ -203,6 +206,8 @@ export function createApp({
     collectionLinks,
     communityCounters,
     contentPacks,
+    contentStore,
+    contentWrites,
     editions: editionRegistry,
     mistakeReports,
     served: editions,
@@ -297,7 +302,6 @@ export function createApp({
   // answer for the link. Like the API's read, it is not limited. The page
   // speaks the language of the Edition the path names; a link of another
   // Edition is unavailable there.
-  const packEntries = createPackEntries(contentPackStore);
   app.get('/:edition/c/:id', async (c) => {
     const id = c.req.param('id');
     const edition = editions.find(({ config }) => config.id === c.req.param('edition'));
@@ -314,7 +318,7 @@ export function createApp({
     if (!found.ok || found.link.edition !== edition.config.id) {
       return c.html(unavailablePage(edition), 404);
     }
-    const entries = await packEntries.entries(found.link.edition, found.link.entryIds);
+    const entries = await contentStore.entries(found.link.edition, found.link.entryIds);
     return c.html(collectionPage(edition, appConfig.scheme, id, found.link, entries));
   });
 

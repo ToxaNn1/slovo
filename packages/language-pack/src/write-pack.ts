@@ -54,8 +54,8 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     }
 
     const insertWord = db.prepare(`
-      INSERT INTO words (id, lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO words (id, lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired, needs_new_recording)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     const insertStress = db.prepare('INSERT INTO word_stress (word_id, position) VALUES (?, ?)');
     const insertDefinition = db.prepare(
@@ -161,6 +161,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
     const insertCorrectionLink = db.prepare(
       'INSERT INTO word_corrections (word_id, position, correction_id) VALUES (?, ?, ?)',
     );
+    const needsNewRecording = new Set(content.needsNewRecording);
     for (const word of content.words) {
       insertWord.run(
         word.id,
@@ -175,6 +176,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
         word.origin ?? null,
         word.illustration ?? null,
         word.retired ? 1 : 0,
+        needsNewRecording.has(word.id) ? 1 : 0,
       );
       for (const position of word.stress) insertStress.run(word.id, position);
       [word.primaryDefinition, ...word.extraDefinitions].forEach((text, position) => {

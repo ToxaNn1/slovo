@@ -14,6 +14,7 @@ export function readEditions(editionsDir: string): Edition[] {
       config: edition.config,
       strings: edition.read('strings'),
       manifest: edition.read('manifest'),
+      targets: edition.readIfPresent('targets') ?? {},
     };
   });
 }

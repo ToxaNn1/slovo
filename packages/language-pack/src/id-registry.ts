@@ -9,7 +9,7 @@ import {
 import { z } from 'zod';
 
 import type { BuildError } from './build-error';
-import type { Authored } from './check-content';
+import type { Authored } from '@slovo/content-rules';
 
 /** Every Entry id the Edition ever issued, oldest first. */
 export const ID_REGISTRY_FILE = 'content/ids.json';

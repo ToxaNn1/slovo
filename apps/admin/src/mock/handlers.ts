@@ -1,19 +1,36 @@
 import { adminApiContract, type AdminApiOutputs } from '@slovo/contracts/admin-api';
-import { HttpHandler, HttpResponse } from 'msw';
+import { HttpHandler, HttpResponse, type JsonBodyType } from 'msw';
 
 import { FIXTURES } from './fixtures';
 
-type Name = keyof typeof adminApiContract;
+type Name = Exclude<keyof typeof adminApiContract, 'content'>;
+type ContentName = keyof typeof adminApiContract.content;
+
+/** A handler at a contract route, answering the fixture. */
+function routeHandler(
+  route: { method?: string; path?: string },
+  name: string,
+  fixture: JsonBodyType,
+): HttpHandler {
+  // `{param}` in the contract is `:param` in MSW; any origin, for the Vite middleware too.
+  const path = `*${(route.path ?? `/${name}`).replace(/\{(\w+)\}/g, ':$1')}`;
+  return new HttpHandler(route.method ?? 'POST', path, () => HttpResponse.json(fixture));
+}
 
 /**
  * The handler of one procedure, made from the contract: its method and path,
  * answering the fixture, which the contract's output type checks.
  */
 function handlerOf<N extends Name>(name: N, fixture: AdminApiOutputs[N]): HttpHandler {
-  const { route } = adminApiContract[name]['~orpc'];
-  // `{param}` in the contract is `:param` in MSW; any origin, for the Vite middleware too.
-  const path = `*${(route.path ?? `/${name}`).replace(/\{(\w+)\}/g, ':$1')}`;
-  return new HttpHandler(route.method ?? 'POST', path, () => HttpResponse.json(fixture));
+  return routeHandler(adminApiContract[name]['~orpc'].route, name, fixture);
+}
+
+/** The handler of one content write procedure, as `handlerOf`. */
+function contentHandlerOf<N extends ContentName>(
+  name: N,
+  fixture: AdminApiOutputs['content'][N],
+): HttpHandler {
+  return routeHandler(adminApiContract.content[name]['~orpc'].route, name, fixture);
 }
 
 /** The MSW handlers of every admin API procedure; a new procedure needs a fixture to compile. */
@@ -34,5 +51,15 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     kill: handlerOf('kill', fixtures.kill),
     editions: handlerOf('editions', fixtures.editions),
   };
-  return Object.values(handlers);
+  const content = fixtures.content;
+  const contentHandlers: Record<ContentName, HttpHandler> = {
+    openBatch: contentHandlerOf('openBatch', content.openBatch),
+    create: contentHandlerOf('create', content.create),
+    edit: contentHandlerOf('edit', content.edit),
+    retire: contentHandlerOf('retire', content.retire),
+    flag: contentHandlerOf('flag', content.flag),
+    record: contentHandlerOf('record', content.record),
+    report: contentHandlerOf('report', content.report),
+  };
+  return [...Object.values(handlers), ...Object.values(contentHandlers)];
 }

@@ -1,7 +1,7 @@
 import type { EditionConfig, SynonymRow, Word } from '@slovo/contracts';
 
-import type { BuildError } from './build-error';
-import { checkStress, type Authored } from './check-content';
+import { checkStress } from './entries';
+import type { Authored, Refusal, RuleName } from './refusal';
 
 /**
  * The checks the schema can't make on a Synonym Row alone: they need the
@@ -14,13 +14,13 @@ export function checkSynonymRows(
   config: EditionConfig,
   words: readonly Authored<Word>[],
   synonymRows: readonly Authored<SynonymRow>[],
-): BuildError[] {
-  const errors: BuildError[] = [];
+): Refusal[] {
+  const errors: Refusal[] = [];
   const wordIds = new Set(words.map(({ entry }) => entry.id));
 
   for (const { file, entry: row } of synonymRows) {
-    const fail = (field: string, message: string) => {
-      errors.push({ file, entryId: row.id, field, message });
+    const fail = (rule: RuleName, field: string, message: string) => {
+      errors.push({ rule, file, entryId: row.id, field, message });
     };
 
     const rowWords = [
@@ -29,13 +29,13 @@ export function checkSynonymRows(
     ];
     for (const { field, word } of rowWords) {
       if (word.wordId !== undefined && !wordIds.has(word.wordId)) {
-        fail(`${field}.wordId`, `Unknown Word "${word.wordId}"`);
+        fail('synonym-row-word', `${field}.wordId`, `Unknown Word "${word.wordId}"`);
       }
       checkStress(
         config,
         { text: word.text, stress: word.stress, named: 'text' },
         (index, message) => {
-          fail(`${field}.stress.${String(index)}`, message);
+          fail('stress', `${field}.stress.${String(index)}`, message);
         },
       );
     }
@@ -48,6 +48,7 @@ export function checkSynonymRows(
         placeByText.set(text, place);
       } else {
         fail(
+          'unique-synonym-text',
           `members.${String(place)}.text`,
           `Same text as members.${String(first)}: a row names each word once`,
         );

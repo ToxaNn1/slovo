@@ -13,8 +13,8 @@ import {
 } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
 
-import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
-import { ukrainian, ukrainianFolder } from './test-support';
+import { openLanguagePack, type NodeLanguagePack } from './index';
+import { buildUkrainianPack, ukrainian, ukrainianFolder } from './test-support';
 
 // The Idioms of the real Ukrainian Language Pack, read by the Core as the app
 // reads them (spec #549, seam 1). It lives here because only this package can
@@ -27,7 +27,7 @@ let entries: Entries;
 beforeAll(() => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-idioms-'));
   const outFile = join(workDir, 'language-pack.db');
-  const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
+  const result = buildUkrainianPack(outFile);
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
   entries = createEntries({ content: pack, edition: ukrainian, choices: EVERYTHING_IN });
