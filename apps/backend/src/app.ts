@@ -4,6 +4,7 @@ import {
   createAdminAccess,
   createOwnerChecks,
   createAdminSignIn,
+  createQuality,
   createCollectionLinks,
   createCommunityCounters,
   createContentPacks,
@@ -19,6 +20,7 @@ import {
   type GoogleVerifier,
   type Mailer,
   type Random,
+  type SentryReader,
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
@@ -33,6 +35,7 @@ import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admi
 import { createContentStore } from './content/content-store';
 import { createContentWrites } from './content/content-writes';
 import { createOwnerCheckStore } from './admin/owner-check-store';
+import { createCiRunStore } from './quality/ci-run-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -90,6 +93,10 @@ export interface AppDependencies {
    * whose addresses it trusts: 0 when nothing is in front of it.
    */
   readonly trustedProxyHops: number;
+  /** Where Якість reads Sentry's numbers. */
+  readonly sentry: SentryReader;
+  /** The Bearer token CI pushes its history with (ADR 0095); unset refuses every push. */
+  readonly ciToken: string | undefined;
   /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
   readonly adminDist?: string | undefined;
 }
@@ -151,6 +158,8 @@ export function createApp({
   reporter,
   trustedProxyHops,
   adminDist,
+  sentry,
+  ciToken,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions, alerts });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -228,6 +237,10 @@ export function createApp({
     mailer,
     mistakeReports,
     ownerChecks: createOwnerChecks({ store: createOwnerCheckStore(database), clock, admin }),
+    quality: {
+      quality: createQuality({ sentry, ciRuns: createCiRunStore(database), clock }),
+      ciToken,
+    },
     served: editions,
     sync,
   });

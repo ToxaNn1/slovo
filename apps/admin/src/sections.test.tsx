@@ -19,19 +19,28 @@ test('the sidebar shows the seven sections in order', async () => {
 /**
  * Безпека shows the Власник its blocks: `security.test.tsx`. Розробка is built
  * and shows the Owner checks: `development.test.tsx`, `owner-checks.test.tsx`.
- * Свічі shows the switch screens: `switches/*.test.tsx`.
+ * Свічі shows the switch screens: `switches/*.test.tsx`. Якість is filled and
+ * checked here and in `quality.test.tsx`.
  */
 const BUILT = ['Безпека', 'Розробка', 'Свічі'];
-const EMPTY = ORDER.filter((title) => !BUILT.includes(title));
+const OPENED = ORDER.filter((title) => !BUILT.includes(title));
 
-test('each section not yet built opens its empty state with the same texts in both themes', async () => {
+/** Waits for a section's content: its empty state, or what a filled section reads. */
+async function settled(section: HTMLElement, title: string) {
+  const inside = within(section);
+  if (title !== 'Якість') return inside.getByText('Поки що порожньо');
+  await inside.findByRole('listitem', { name: 'Без збоїв' });
+  return inside.findByRole('figure', { name: 'Тривалість CI' });
+}
+
+test('each section not yet built opens with the same texts in both themes, the ones not yet filled in their empty state', async () => {
   const user = userEvent.setup();
   render(<Admin />);
   const theme = await screen.findByRole('button', { name: 'Темна тема' });
-  for (const title of EMPTY) {
+  for (const title of OPENED) {
     await user.click((await sidebar()).getByRole('link', { name: title }));
     const section = await screen.findByRole('region', { name: title });
-    expect(within(section).getByText('Поки що порожньо')).toBeDefined();
+    expect(await settled(section, title)).toBeDefined();
     const light = section.textContent;
     expect(document.documentElement.dataset['theme']).toBe('light');
 

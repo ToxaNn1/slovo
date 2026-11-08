@@ -31,6 +31,8 @@ const WRITTEN = {
   batchId: BATCH_ID,
 } satisfies AdminApiOutputs['content']['create'];
 
+const FETCHED_AT = '2026-11-08T10:00:00.000Z';
+
 /** What `pnpm dev:admin --mock` and the screen tests answer, one per procedure. */
 /** An open Owner check, the base of the fixtures. */
 const OPEN_CHECK = {
@@ -199,4 +201,48 @@ export const FIXTURES: AdminApiOutputs = {
     check: { ...OPEN_CHECK, ticked: { at: '2026-11-08T10:00:00.000Z', by: 'owner@example.com' } },
   },
   addOwnerCheck: { check: OPEN_CHECK },
+  quality: {
+    capped: false,
+    from: '2026-11-01T10:00:00.000Z',
+    to: FETCHED_AT,
+    kpis: {
+      crashFree: { state: 'ok', value: 99.6, yesterday: 99.4, fetchedAt: FETCHED_AT },
+      crashes: { state: 'ok', value: 3, yesterday: 5, fetchedAt: FETCHED_AT },
+      errors: { state: 'ok', value: 42, yesterday: 40, fetchedAt: FETCHED_AT },
+      newIssues: { state: 'ok', value: 0, yesterday: 2, fetchedAt: FETCHED_AT },
+      backendP95: { state: 'ok', value: null, yesterday: null, fetchedAt: FETCHED_AT },
+      appStart: { state: 'ok', value: null, yesterday: null, fetchedAt: FETCHED_AT },
+    },
+  },
+  ciHistory: {
+    runs: [
+      {
+        runId: 101,
+        at: '2026-11-07T09:00:00.000Z',
+        sha: 'a63299a',
+        tests: 812,
+        failedTests: ['sync › retries a lost write'],
+        flakyTests: ['sync › retries a lost write'],
+        coverage: [{ package: 'core', lines: 91.2, branches: 84 }],
+        jobs: [{ name: 'test', seconds: 240 }],
+      },
+      {
+        runId: 102,
+        at: '2026-11-08T09:00:00.000Z',
+        sha: 'c6f01b8',
+        tests: 815,
+        failedTests: [],
+        flakyTests: [],
+        coverage: [
+          { package: 'core', lines: 92.5, branches: 85.1 },
+          { package: 'backend', lines: 78, branches: 70.4 },
+        ],
+        jobs: [
+          { name: 'test', seconds: 250 },
+          { name: 'lint', seconds: 60 },
+        ],
+      },
+    ],
+  },
+  pushCiRun: { kept: true },
 };

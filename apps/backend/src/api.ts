@@ -18,6 +18,7 @@ import type {
   Mailer,
   MistakeReports,
   OwnerChecks,
+  Quality,
   Sync,
 } from '@slovo/server-core';
 import type { Logger } from 'pino';
@@ -87,6 +88,7 @@ export function createApiHandler({
   mailer,
   mistakeReports,
   ownerChecks,
+  quality,
   served,
   sync,
 }: {
@@ -105,6 +107,8 @@ export function createApiHandler({
   mailer: Mailer;
   mistakeReports: MistakeReports;
   ownerChecks: OwnerChecks;
+  /** Якість, and the token CI pushes its history with. */
+  quality: { readonly quality: Quality; readonly ciToken: string | undefined };
   /** The Editions the backend serves, as the admin lists them. */
   served: readonly Edition[];
   sync: Sync;
@@ -122,6 +126,7 @@ export function createApiHandler({
         mailer,
         development,
         ownerChecks,
+        quality,
       ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(contentPacks, contentStore),

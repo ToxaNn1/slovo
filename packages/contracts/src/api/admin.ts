@@ -22,6 +22,56 @@ export const AdminEditionSchema = z.object({
 });
 export type AdminEdition = z.infer<typeof AdminEditionSchema>;
 
+/** The periods of the admin's global period filter, shortest first. */
+export const ADMIN_PERIODS = ['1d', '7d', '30d', '90d'] as const;
+export const AdminPeriodSchema = z.enum(ADMIN_PERIODS);
+export type AdminPeriod = z.infer<typeof AdminPeriodSchema>;
+
+/** How many days each period covers. */
+export const PERIOD_DAYS: Readonly<Record<AdminPeriod, number>> = {
+  '1d': 1,
+  '7d': 7,
+  '30d': 30,
+  '90d': 90,
+};
+
+/** One Sentry number of Якість, or none while Sentry can't be read. */
+const QualityKpiSchema = z.discriminatedUnion('state', [
+  z.object({
+    state: z.literal('ok'),
+    /** `null` while Sentry keeps no data for it. */
+    value: z.number().nullable(),
+    /** The same number a day earlier. */
+    yesterday: z.number().nullable(),
+    /** When the backend read it of Sentry: its freshness. */
+    fetchedAt: z.iso.datetime(),
+  }),
+  z.object({ state: z.literal('unavailable') }),
+]);
+export type QualityKpi = z.infer<typeof QualityKpiSchema>;
+
+/** One CI run on `main`, as CI pushes it. */
+export const CiRunSchema = z.object({
+  runId: z.number().int().positive(),
+  at: z.iso.datetime(),
+  sha: z.string().regex(/^[0-9a-f]{7,40}$/),
+  tests: z.number().int().nonnegative(),
+  failedTests: z.array(z.string().min(1).max(500)).max(1000),
+  coverage: z
+    .array(
+      z.object({
+        package: z.string().min(1).max(100),
+        lines: z.number().min(0).max(100),
+        branches: z.number().min(0).max(100),
+      }),
+    )
+    .max(100),
+  jobs: z
+    .array(z.object({ name: z.string().min(1).max(200), seconds: z.number().nonnegative() }))
+    .max(100),
+});
+export type CiRunInput = z.infer<typeof CiRunSchema>;
+
 /**
  * The custom header every admin write carries (a CSRF guard, ADR 0088): a
  * page of another site cannot set it on a request that sends the cookie.
@@ -808,4 +858,60 @@ export const adminContract = {
     .errors(ADMIN_ERRORS)
     .input(z.object({ version: OwnerCheckVersionSchema, text: z.string().trim().min(1).max(2000) }))
     .output(z.object({ check: OwnerCheckSchema })),
+  quality: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/quality',
+      summary: 'Якість: the Sentry numbers of a period, with the day before',
+      description:
+        'Crash-free rate, crashes, errors, new issues, backend p95 and app start times. Sentry keeps 30 days, so a longer period is cut to 30 days and answers `capped`.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ editionId: EditionIdSchema.optional(), period: AdminPeriodSchema }))
+    .output(
+      z.object({
+        capped: z.boolean(),
+        from: z.iso.datetime(),
+        to: z.iso.datetime(),
+        kpis: z.object({
+          crashFree: QualityKpiSchema,
+          crashes: QualityKpiSchema,
+          errors: QualityKpiSchema,
+          newIssues: QualityKpiSchema,
+          backendP95: QualityKpiSchema,
+          appStart: QualityKpiSchema,
+        }),
+      }),
+    ),
+
+  ciHistory: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/quality/ci',
+      summary: 'Якість: the CI runs on main of a period, oldest first',
+      description:
+        'Each run with its coverage per package, job durations and its flaky tests: failed in it and passed in another run of the period.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(z.object({ period: AdminPeriodSchema }))
+    .output(
+      z.object({
+        runs: z.array(CiRunSchema.extend({ flakyTests: z.array(z.string()) })),
+      }),
+    ),
+
+  pushCiRun: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/ci-runs',
+      summary: 'CI pushes a run on main to the history',
+      description:
+        'Called by CI after each run on main, with the CI history token as Bearer (ADR 0095). A run already kept stays as it is.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(CiRunSchema)
+    .output(z.object({ kept: z.literal(true) })),
 };

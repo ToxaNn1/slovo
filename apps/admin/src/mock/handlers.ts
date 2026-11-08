@@ -61,6 +61,9 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     ownerChecks: handlerOf('ownerChecks', fixtures.ownerChecks),
     tickOwnerCheck: handlerOf('tickOwnerCheck', fixtures.tickOwnerCheck),
     addOwnerCheck: handlerOf('addOwnerCheck', fixtures.addOwnerCheck),
+    quality: handlerOf('quality', fixtures.quality),
+    ciHistory: handlerOf('ciHistory', fixtures.ciHistory),
+    pushCiRun: handlerOf('pushCiRun', fixtures.pushCiRun),
   };
   const content = fixtures.content;
   const contentHandlers: Record<ContentName, HttpHandler> = {

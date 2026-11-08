@@ -1,6 +1,8 @@
+import { createHash, timingSafeEqual } from 'node:crypto';
+
 import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
-import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
+import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER, PERIOD_DAYS } from '@slovo/contracts/admin-api';
 import type {
   AccessResult,
   Actor,
@@ -13,6 +15,8 @@ import type {
   Mailer,
   OwnerCheck,
   OwnerChecks,
+  Quality,
+  QualityKpi,
   SignInRefused,
   SignedInAdmin,
   SwitchRefusal,
@@ -41,6 +45,16 @@ export function sessionTokenOf(headers: Headers): string | undefined {
   }
   return undefined;
 }
+
+/** Whether two tokens are equal, in a time that tells nothing of where they differ. */
+function sameToken(given: string, expected: string): boolean {
+  const digest = (token: string) => createHash('sha256').update(token).digest();
+  return timingSafeEqual(digest(given), digest(expected));
+}
+
+/** A Sentry number as the contract carries it: its freshness as an ISO time. */
+const kpiOf = (kpi: QualityKpi) =>
+  kpi.state === 'ok' ? { ...kpi, fetchedAt: kpi.fetchedAt.toISOString() } : kpi;
 
 const cookie = (value: string, maxAge: number) =>
   `${ADMIN_SESSION_COOKIE}=${value}; Path=${COOKIE_PATH}; Max-Age=${String(maxAge)}; HttpOnly; Secure; SameSite=Strict`;
@@ -82,6 +96,7 @@ export function adminProcedures(
   mailer: Mailer,
   development: DevelopmentOverview,
   ownerChecks: OwnerChecks,
+  { quality, ciToken }: { readonly quality: Quality; readonly ciToken: string | undefined },
 ) {
   const os = implement(apiContract.admin).$context<{ headers: Headers; resHeaders?: Headers }>();
 
@@ -105,6 +120,15 @@ export function adminProcedures(
     if (session === undefined || user === undefined) throw errors.UNAUTHORIZED();
     if (security && user.role !== 'owner') throw errors.FORBIDDEN();
     return { kind: 'admin-user', token: session, ...user };
+  }
+
+  /** Admits CI by the CI history token (ADR 0095); no other caller pushes CI runs. */
+  async function admitCi(headers: Headers, errors: AdminErrors): Promise<void> {
+    if (!(await admin.isOn())) throw errors.NOT_FOUND();
+    const token = bearerOf(headers);
+    if (ciToken === undefined || token === undefined || !sameToken(token, ciToken)) {
+      throw errors.UNAUTHORIZED();
+    }
   }
 
   /** Lets a sign-in step through: the admin is on and the header came. */
@@ -489,6 +513,57 @@ export function adminProcedures(
       const caller = await admit(context.headers, errors, { writes: true });
       const check = await ownerChecks.add(input.version, input.text, actorOf(caller));
       return { check: ownerCheckView(check) };
+    }),
+
+    quality: os.quality.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors);
+      const answer = await quality.read({
+        editionId: input.editionId,
+        days: PERIOD_DAYS[input.period],
+      });
+      const {
+        crashFree,
+        crashes,
+        errors: errorCount,
+        newIssues,
+        backendP95,
+        appStart,
+      } = answer.kpis;
+      return {
+        capped: answer.capped,
+        from: answer.from.toISOString(),
+        to: answer.to.toISOString(),
+        kpis: {
+          crashFree: kpiOf(crashFree),
+          crashes: kpiOf(crashes),
+          errors: kpiOf(errorCount),
+          newIssues: kpiOf(newIssues),
+          backendP95: kpiOf(backendP95),
+          appStart: kpiOf(appStart),
+        },
+      };
+    }),
+
+    ciHistory: os.ciHistory.handler(async ({ context, input, errors }) => {
+      await admit(context.headers, errors);
+      const runs = await quality.ciHistory(PERIOD_DAYS[input.period]);
+      return {
+        runs: runs.map((run) => ({
+          ...run,
+          at: run.at.toISOString(),
+          failedTests: [...run.failedTests],
+          flakyTests: [...run.flakyTests],
+          coverage: [...run.coverage],
+          jobs: [...run.jobs],
+        })),
+      };
+    }),
+
+    // Data CI pushes, not an admin change: no Action log row.
+    pushCiRun: os.pushCiRun.handler(async ({ context, input, errors }) => {
+      await admitCi(context.headers, errors);
+      await quality.pushCiRun({ ...input, at: new Date(input.at) });
+      return { kept: true as const };
     }),
   });
 }

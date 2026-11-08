@@ -44,6 +44,9 @@ import {
   type Mail,
   type Mailer,
   type Random,
+  type SentryRead,
+  type SentryReader,
+  type SentryWindow,
 } from '@slovo/server-core';
 import { eq } from 'drizzle-orm';
 import pg from 'pg';
@@ -651,6 +654,7 @@ export function testApp({
   const google = createFakeGoogle(googleClientIds);
   const apple = createFakeApple();
   const reports: ErrorReport[] = [];
+  const sentry = createFakeSentry();
   const app = createApp({
     database,
     clock: systemClock,
@@ -669,6 +673,8 @@ export function testApp({
     adminDist,
     github,
     eas,
+    sentry,
+    ciToken: TEST_CI_TOKEN,
   });
   const ip = newIp();
   // The one way a request reaches the app.
@@ -716,6 +722,8 @@ export function testApp({
     mailer,
     /** Every alert the backend sent the owner. */
     alerts,
+    /** The fake Sentry Якість reads. */
+    sentry,
     /** The fake Google the backend verifies tokens with, and the tokens its sign-in sheet gives. */
     google,
     /** The fake Apple the backend verifies tokens with, and the tokens its sign-in sheet gives. */
@@ -772,6 +780,44 @@ export function testApp({
     deleteCollectionLink: (id: string) => deleteCollectionLink(database, id),
     /** Closes the database the backend opened, as when Postgres goes away. */
     close,
+  };
+}
+
+/** The token CI pushes its history with, in tests. */
+export const TEST_CI_TOKEN = 'a-test-ci-history-token-of-32-characters-at-least';
+
+/** A Sentry that answers the numbers a test sets, and counts the reads it was asked. */
+export interface FakeSentry extends SentryReader {
+  /** The number every later read of the kind answers, for a window ending at or before `until` (now unless given). */
+  set(read: SentryRead, value: number | null, window?: 'now' | 'yesterday'): void;
+  /** Every later read answers rate-limited until the time, or answers again when `undefined`. */
+  limit(retryAt: Date | undefined): void;
+  /** The windows of the reads asked, oldest first. */
+  readonly asked: readonly ({ readonly read: SentryRead } & SentryWindow)[];
+}
+
+/**
+ * A fake Sentry. A read whose window ends a day or more before the newest
+ * window asked of its kind answers its `yesterday` number, any other its
+ * `now` number; numbers not set answer `null`.
+ */
+export function createFakeSentry(): FakeSentry {
+  const numbers = new Map<string, number | null>();
+  const asked: ({ read: SentryRead } & SentryWindow)[] = [];
+  let limitedUntil: Date | undefined;
+  return {
+    asked,
+    set: (read, value, window = 'now') => numbers.set(`${read}|${window}`, value),
+    limit: (retryAt) => (limitedUntil = retryAt),
+    read(read, window) {
+      asked.push({ read, ...window });
+      if (limitedUntil !== undefined) {
+        return Promise.resolve({ ok: false, reason: 'rate-limited', retryAt: limitedUntil });
+      }
+      const behind = Date.now() - window.to.getTime() >= 24 * 60 * 60 * 1000;
+      const value = numbers.get(`${read}|${behind ? 'yesterday' : 'now'}`) ?? null;
+      return Promise.resolve({ ok: true, value });
+    },
   };
 }
 

@@ -409,3 +409,59 @@ export interface EasSource {
   /** The newest builds, at most `limit`, newest first. */
   latestBuilds(limit: number): Promise<SourceRead<EasBuild[]>>;
 }
+
+/** What Якість reads of Sentry (ADR 0048). */
+export type SentryRead =
+  'crashFree' | 'crashes' | 'errors' | 'newIssues' | 'backendP95' | 'appStart';
+
+/** The window a Sentry read covers: one Edition's, or every Edition's when none is named. */
+export interface SentryWindow {
+  readonly editionId?: string | undefined;
+  readonly from: Date;
+  readonly to: Date;
+}
+
+/**
+ * Sentry's answer to one read: the number, or `null` while Sentry keeps no
+ * data for it; or why there is none: Sentry is unreachable or not set up, or
+ * it limits the reads until `retryAt`.
+ */
+export type SentryAnswer =
+  | { readonly ok: true; readonly value: number | null }
+  | { readonly ok: false; readonly reason: 'unavailable' }
+  | { readonly ok: false; readonly reason: 'rate-limited'; readonly retryAt: Date };
+
+/** Reads Sentry's numbers for Якість. */
+export interface SentryReader {
+  read(read: SentryRead, window: SentryWindow): Promise<SentryAnswer>;
+}
+
+/** The coverage of one package in one CI run, in percent. */
+export interface PackageCoverage {
+  readonly package: string;
+  readonly lines: number;
+  readonly branches: number;
+}
+
+/** One CI run on `main`, as CI pushes it after the run. */
+export interface CiRun {
+  /** GitHub's id of the workflow run: a run is kept once. */
+  readonly runId: number;
+  readonly at: Date;
+  readonly sha: string;
+  /** How many tests ran. */
+  readonly tests: number;
+  /** The names of the tests that failed. */
+  readonly failedTests: readonly string[];
+  readonly coverage: readonly PackageCoverage[];
+  /** How long each job took, in seconds. */
+  readonly jobs: readonly { readonly name: string; readonly seconds: number }[];
+}
+
+/** The CI runs on `main`, kept by the backend. */
+export interface CiRunStore {
+  /** Keeps the run; a run already kept stays as it is. */
+  add(run: CiRun): Promise<void>;
+  /** The runs from `from` up to `to`, oldest first. */
+  between(from: Date, to: Date): Promise<readonly CiRun[]>;
+}

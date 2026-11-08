@@ -1,8 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
-import { useNavigate, useSearch } from '@tanstack/react-router';
+import { useMatchRoute, useNavigate, useSearch } from '@tanstack/react-router';
 
 import { adminApi } from '../api';
-import { DEFAULT_PERIOD, FiltersSchema, PERIOD_LABELS, PERIODS } from '../filters';
+import {
+  DEFAULT_PERIOD,
+  FiltersSchema,
+  PERIOD_LABELS,
+  PERIODS,
+  QUALITY_CAP_HINT,
+  qualityPeriod,
+} from '../filters';
 
 const ALL_EDITIONS = '';
 
@@ -13,6 +20,10 @@ const selectClass =
 export function FiltersBar() {
   const search = useSearch({ from: '__root__' });
   const navigate = useNavigate();
+  // Якість reads Sentry, which keeps 30 days: a longer period reads as 30 days there.
+  const onQuality = Boolean(useMatchRoute()({ to: '/quality' }));
+  const chosen = search.period ?? DEFAULT_PERIOD;
+  const period = onQuality ? qualityPeriod(chosen) : chosen;
   const editions = useQuery({ queryKey: ['editions'], queryFn: () => adminApi.editions() });
 
   const choose = (patch: Record<string, string | undefined>) =>
@@ -46,18 +57,25 @@ export function FiltersBar() {
         <span className="text-muted-foreground">Період</span>
         <select
           className={selectClass}
-          value={search.period ?? DEFAULT_PERIOD}
+          value={period}
           onChange={(event) => {
             choose({ period: event.target.value });
           }}
         >
-          {PERIODS.map((period) => (
-            <option key={period} value={period}>
-              {PERIOD_LABELS[period]}
+          {PERIODS.map((option) => (
+            <option
+              key={option}
+              value={option}
+              disabled={onQuality && qualityPeriod(option) !== option}
+            >
+              {PERIOD_LABELS[option]}
             </option>
           ))}
         </select>
       </label>
+      {period === chosen ? null : (
+        <span className="text-sm text-muted-foreground">{QUALITY_CAP_HINT}</span>
+      )}
     </div>
   );
 }

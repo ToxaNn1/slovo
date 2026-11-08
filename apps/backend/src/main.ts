@@ -17,6 +17,7 @@ import { createGitHubSource } from './development/github-source';
 import { readEditions } from './edition/edition-folders';
 import { createLogger } from './logger';
 import { systemRandom } from './random';
+import { createSentryApi, unsetSentry } from './quality/sentry-api';
 import { createSentryReporter } from './sentry-reporter';
 import { startServer } from './server';
 
@@ -49,6 +50,19 @@ const app = createApp({
   reporter: await createSentryReporter(config.SENTRY_DSN),
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
+  sentry:
+    config.SENTRY_AUTH_TOKEN === undefined ||
+    config.SENTRY_ORG === undefined ||
+    config.SENTRY_APP_PROJECT === undefined ||
+    config.SENTRY_BACKEND_PROJECT === undefined
+      ? unsetSentry
+      : createSentryApi({
+          token: config.SENTRY_AUTH_TOKEN,
+          org: config.SENTRY_ORG,
+          appProject: config.SENTRY_APP_PROJECT,
+          backendProject: config.SENTRY_BACKEND_PROJECT,
+        }),
+  ciToken: config.CI_HISTORY_TOKEN,
 });
 const server = await startServer({ app, database, port: config.PORT });
 
