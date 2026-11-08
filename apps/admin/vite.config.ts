@@ -17,6 +17,5 @@ export default defineConfig(({ mode }) => ({
     tailwindcss(),
     ...(mode === 'mock' ? [mockAdminApi()] : []),
   ],
-  server:
-    mode === 'mock' ? {} : { proxy: { '/admin/api': backend, '/v1': backend, '/health': backend } },
+  server: mode === 'mock' ? {} : { proxy: { '/v1': backend, '/health': backend } },
 }));

@@ -1,37 +1,20 @@
 import { createORPCClient } from '@orpc/client';
-import { oc, type ContractRouterClient, type InferContractRouterOutputs } from '@orpc/contract';
+import type { ContractRouterClient, InferContractRouterOutputs } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
-import { z } from 'zod';
 
-import { procedure } from './api/procedure';
+import { apiContract } from './api';
 import { EditionIdSchema } from './edition';
 
 export { EditionIdSchema };
-
-/** An Edition the admin's global Edition filter offers. */
-export const AdminEditionSchema = z.object({
-  id: EditionIdSchema,
-  /** The Edition's `displayName` from its config. */
-  displayName: z.string().min(1),
-});
-export type AdminEdition = z.infer<typeof AdminEditionSchema>;
+export { AdminEditionSchema, type AdminEdition } from './api/admin';
 
 /**
  * The admin API: everything `apps/admin` knows about the backend, called over
- * HTTP on the same origin, under `/admin/api` (ADR 0088). It is apart from the
- * app's `/v1` and carries no promise to old apps.
+ * HTTP on the same origin, under `/v1/admin` (ADR 0088). It is the `admin`
+ * router of the API contract.
  */
-export const adminApiContract = oc.prefix('/admin/api').router({
-  editions: procedure
-    .route({
-      method: 'GET',
-      path: '/editions',
-      summary: 'The Editions the backend serves, for the global Edition filter',
-      tags: ['admin'],
-    })
-    .output(z.object({ editions: z.array(AdminEditionSchema) })),
-});
+export const adminApiContract = apiContract.admin;
 
 /** The admin API as `apps/admin` calls it: one function per procedure. */
 export type AdminApiClient = JsonifiedClient<ContractRouterClient<typeof adminApiContract>>;

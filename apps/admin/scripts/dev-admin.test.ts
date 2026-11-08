@@ -64,6 +64,6 @@ describe('pnpm dev:admin', () => {
   it('with --mock serves the fixtures on the admin API', async () => {
     const { output } = start(['--mock'], { SLOVO_ADMIN_PORT: '5391' });
     const url = await waitFor(output, /Admin\s+(http:\/\/localhost:\d+\/admin\/)/);
-    expect(await answer(`${url}api/editions`)).toEqual(FIXTURES.editions);
+    expect(await answer(`${new URL(url).origin}/v1/admin/editions`)).toEqual(FIXTURES.editions);
   }, 40_000);
 });

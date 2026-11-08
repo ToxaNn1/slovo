@@ -196,6 +196,7 @@ export function createApp({
     contentPacks,
     editions: editionRegistry,
     mistakeReports,
+    served: editions,
     sync,
   });
 
@@ -324,7 +325,7 @@ export function createApp({
   }
 
   // The owner admin app (ADR 0088); the pages above keep their addresses until #1715.
-  if (adminDist !== undefined) app.route('/admin', adminApp({ dist: adminDist, editions }));
+  if (adminDist !== undefined) app.route('/admin', adminApp({ dist: adminDist }));
 
   // An address the backend doesn't serve, under `/v1` too.
   app.notFound((c) => c.json({ code: 'NOT_FOUND' }, 404));

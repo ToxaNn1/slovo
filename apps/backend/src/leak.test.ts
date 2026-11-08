@@ -294,6 +294,9 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
           // No Власник in this database: the admin API answers 404.
           await client.admin.status().catch(refused);
         },
+        editions: async () => {
+          await client.admin.editions().catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {

@@ -13,7 +13,7 @@ export function mockAdminApi(): Plugin {
     name: 'slovo-admin-mock-api',
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (req.url?.startsWith('/admin/api/') !== true) {
+        if (req.url?.startsWith('/v1/admin/') !== true) {
           next();
           return;
         }

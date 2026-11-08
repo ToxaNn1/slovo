@@ -4,9 +4,6 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { EDITIONS_DIR } from '@slovo/language-pack/edition';
-
-import { readEditions } from '../edition/edition-folders';
 import { testApp } from '../test-support';
 
 /** A built admin of the test's own: an index page and one asset. */
@@ -34,17 +31,6 @@ describe('the owner admin app at /admin', () => {
     const response = await get(testApp({ adminDist: adminDist() }), '/admin/assets/main.js');
     expect(response.status).toBe(200);
     expect(await response.text()).toBe('console.log("admin");');
-  });
-
-  it('answers the admin API with the Editions it serves', async () => {
-    const response = await get(testApp({ adminDist: adminDist() }), '/admin/api/editions');
-    expect(response.status).toBe(200);
-    const editions = readEditions(EDITIONS_DIR).map(({ config }) => ({
-      id: config.id,
-      displayName: config.displayName,
-    }));
-    expect(editions.length).toBeGreaterThan(0);
-    expect(await response.json()).toEqual({ editions });
   });
 
   it('is not served without a built admin', async () => {

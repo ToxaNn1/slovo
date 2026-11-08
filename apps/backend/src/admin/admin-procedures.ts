@@ -1,6 +1,6 @@
 import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
-import type { AdminAccess } from '@slovo/server-core';
+import type { AdminAccess, Edition } from '@slovo/server-core';
 
 /** The bearer token of the request's `Authorization` header, if it carries one. */
 function bearerOf(headers: Headers): string | undefined {
@@ -17,7 +17,7 @@ export type AdminCaller =
  * exists. A procedure declares whether it writes content: only those take
  * an Агент token; every other one refuses it.
  */
-export function adminProcedures(admin: AdminAccess) {
+export function adminProcedures(admin: AdminAccess, served: readonly Edition[]) {
   const os = implement(apiContract.admin).$context<{ headers: Headers }>();
 
   /** Admits the caller to a procedure, or throws the refusal the contract lists. */
@@ -39,6 +39,12 @@ export function adminProcedures(admin: AdminAccess) {
     status: os.status.handler(async ({ context, errors }) => {
       await admit(context.headers, errors, { writesContent: false });
       return { on: true as const };
+    }),
+    editions: os.editions.handler(async ({ context, errors }) => {
+      await admit(context.headers, errors, { writesContent: false });
+      return {
+        editions: served.map(({ config }) => ({ id: config.id, displayName: config.displayName })),
+      };
     }),
   });
 }

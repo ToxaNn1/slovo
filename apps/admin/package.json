@@ -16,7 +16,7 @@
     "@fontsource-variable/onest": "5.3.1",
     "@fontsource-variable/unbounded": "5.3.0",
     "@slovo/contracts": "workspace:*",
-    "@tanstack/react-query": "^5.107.1",
+    "@tanstack/react-query": "^5.106.1",
     "@tanstack/react-router": "^1.170.46",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
