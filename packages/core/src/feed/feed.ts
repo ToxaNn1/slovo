@@ -28,7 +28,7 @@ import type { Mix } from '../entries/mix';
 import type { MoodCheckIns, MoodFeedParameters } from '../mood/mood';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-import { buildWordCard } from '../entries/word-card';
+import { buildWordCard, type WordCardModel } from '../entries/word-card';
 import type { WordOfTheDay, WordOfTheDayChoice } from './word-of-the-day';
 import type { QuickQuestion } from '../game/quick-question';
 
@@ -708,16 +708,20 @@ export async function openFeed({
    * Word card links no Correction that is Hidden, of a Category out of the
    * Mix or of the kind out of the Mix, and no Synonym Row that is Hidden or
    * out of the Mix, so the links follow the Hidden Entries and the Mix as
-   * the Cycle does. Each card keeps its place, and so does the reader.
+   * the Cycle does. Each card keeps its place, and so does the reader; only
+   * a card whose links changed is replaced, and nobody is told when none did.
    */
   async function refreshLinks(): Promise<void> {
-    const rebuilt = new Map<FeedCard, FeedCard>();
-    for (const card of session.all) {
-      if (card.kind !== 'word') continue;
-      const entry = await entries.get(card.entryId);
-      if (entry?.kind === 'word')
-        rebuilt.set(card, await buildEntryCard(entries, entry, card.wordOfTheDay));
-    }
+    const pairs = await Promise.all(
+      session.all.map(async (card): Promise<readonly [FeedCard, FeedCard] | undefined> => {
+        if (card.kind !== 'word') return undefined;
+        const entry = await entries.get(card.entryId);
+        if (entry?.kind !== 'word') return undefined;
+        const fresh = await buildEntryCard(entries, entry, card.wordOfTheDay);
+        return sameLinks(card.model, fresh.model) ? undefined : [card, fresh];
+      }),
+    );
+    const rebuilt = new Map(pairs.filter((pair) => pair !== undefined));
     if (rebuilt.size === 0) return;
     session.renew((card) => rebuilt.get(card) ?? card);
     subscribers.tell();
@@ -843,4 +847,11 @@ export async function openFeed({
         : inTurnTellingSeen(() => markOpenedSeen(chosen.wordId, new Map()));
     },
   };
+}
+
+/** Whether two Word cards link the same Corrections and the same Synonym Row. */
+function sameLinks(a: WordCardModel, b: WordCardModel): boolean {
+  const links = ({ linkedCorrections, synonymRow }: WordCardModel) =>
+    JSON.stringify([linkedCorrections, synonymRow]);
+  return links(a) === links(b);
 }

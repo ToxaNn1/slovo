@@ -1219,6 +1219,23 @@ describe('Corrections in the Feed', () => {
       expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBe(position + 1);
     });
 
+    it('builds again only the Word cards whose links a hide changes, and keeps every other card as it was', async () => {
+      const app = await runApp({ words, corrections: linkedCorrections });
+      const { feed } = app;
+      while (!feed.cards.some((card) => card.entryId === linked.id)) await feed.next();
+      await feed.next();
+      const before = feed.cards;
+      const position = before.findIndex((card) => card.entryId === linked.id);
+
+      await app.hide({ kind: 'entry', entryId: 'c_protiazi' });
+
+      expect(feed.cards.map((card) => card.entryId)).toEqual(before.map((card) => card.entryId));
+      feed.cards.forEach((card, at) => {
+        if (at === position) expect(card).not.toBe(before[at]);
+        else expect(card).toBe(before[at]);
+      });
+    });
+
     it('opens no linked Correction the Cycle does not cover, such as one the Language Pack lists under no kind', async () => {
       const pack = createMemoryContentPort({ words, corrections: linkedCorrections });
       const content: ContentReadPort = {
