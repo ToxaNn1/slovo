@@ -102,7 +102,7 @@ function TitleRow({
             testID={`${name}-count`}
             accessibilityLabel={count(aside.forms, aside.value)}
             {...voice}
-            style={[typeStyle('collectionCount', tokens), { color: colors.accent }]}
+            style={[typeStyle('collectionCount', tokens), { color: colors.accentText }]}
           >
             {String(aside.value)}
           </Text>

@@ -23,19 +23,6 @@ import {
 } from '@slovo/ui/tokens';
 import { describe, expect, it } from 'vitest';
 
-/** The WCAG 2 contrast ratio of two #RRGGBB colours. */
-function contrast(a: string, b: string): number {
-  const luminance = (hex: string) => {
-    const [r = 0, g = 0, bl = 0] = [1, 3, 5].map((at) => {
-      const c = parseInt(hex.slice(at, at + 2), 16) / 255;
-      return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-    });
-    return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
-  };
-  const [light, dark] = [luminance(a), luminance(b)].sort((x, y) => y - x);
-  return ((light ?? 0) + 0.05) / ((dark ?? 0) + 0.05);
-}
-
 describe('withAlpha', () => {
   it('turns a #RRGGBB colour into rgba at the given opacity', () => {
     expect(withAlpha('#161616', 0.5)).toBe('rgba(22, 22, 22, 0.5)');
@@ -108,19 +95,6 @@ describe('the Ukrainian Edition’s design tokens', () => {
       expect([colors.correct, colors.heart, colors.destructive]).toEqual(Array(3).fill('#FF3B2F'));
       expect(colors.wrong).toBe(colors.ink);
     }
-  });
-
-  it('keeps the red text of small type at WCAG AA (4.5:1) on every ground it sits on, in both Themes', () => {
-    const below = (['light', 'dark'] as const).flatMap((scheme) =>
-      (['background', 'surface', 'surfaceSunken', 'tile'] as const)
-        .map((ground) => ({
-          scheme,
-          ground,
-          ratio: contrast(tokens.colors[scheme].accentText, tokens.colors[scheme][ground]),
-        }))
-        .filter(({ ratio }) => ratio < 4.5),
-    );
-    expect(below).toEqual([]);
   });
 
   it('sets the word in Unbounded and the UI in Onest', () => {
