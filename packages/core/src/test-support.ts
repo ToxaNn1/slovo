@@ -44,7 +44,7 @@ const testEditionConfig = {
     distractorRule: 'same-part-of-speech',
   },
   featureSwitches: Object.fromEntries(
-    Object.keys(FeatureSwitchesSchema.shape).map((feature) => [feature, true]),
+    Object.keys(FeatureSwitchesSchema.shape).map((feature) => [feature, 'on']),
   ),
   userSettingDefaults: {
     theme: 'system',

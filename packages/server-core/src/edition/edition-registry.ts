@@ -124,7 +124,8 @@ export function createEditionRegistry({
       const edition = byId.get(editionId);
       if (edition === undefined) return unknownEdition;
       // The Edition's own switch needs no store.
-      if (!edition.config.featureSwitches[feature]) return { ok: false, reason: 'switched-off' };
+      if (edition.config.featureSwitches[feature] !== 'on')
+        return { ok: false, reason: 'switched-off' };
       if ((await switchStore.off(editionId)).includes(feature)) {
         return { ok: false, reason: 'switched-off' };
       }

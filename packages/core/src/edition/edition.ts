@@ -293,6 +293,6 @@ export function loadEdition(config: unknown, illustrations: readonly string[] = 
     badges,
     mascot,
     illustrations: new Set(illustrations),
-    isFeatureEnabled: switchedOn((feature) => featureSwitches[feature]),
+    isFeatureEnabled: switchedOn((feature) => featureSwitches[feature] === 'on'),
   };
 }

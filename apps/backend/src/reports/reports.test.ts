@@ -158,7 +158,7 @@ describe('reports.send', () => {
   it('answers an Edition with Mistake Reports switched off as NOT_FOUND and keeps nothing', async () => {
     const folder = testEditions(['off'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, mistakeReports: false },
+      featureSwitches: { ...config.featureSwitches, mistakeReports: 'off' },
     }));
     const { client, database } = testApp({ editions: folder.read() });
     const entryId = newEntryId();

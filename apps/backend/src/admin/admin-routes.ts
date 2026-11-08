@@ -151,7 +151,7 @@ export function adminRoutes({
     }
     const shipped = editions.find(editionId ?? '')?.config.featureSwitches;
     const known = FeatureSchema.safeParse(feature);
-    if (action === 'clear' && known.success && shipped?.[known.data] === false) {
+    if (action === 'clear' && known.success && shipped?.[known.data] !== 'on') {
       return refused(c, 400, 'The Edition has the feature off; a remote switch never turns it on.');
     }
     const set =
@@ -283,19 +283,20 @@ export function adminRoutes({
               html`<h3>${edition.config.id}</h3>
                 <table>
                   ${FEATURES.map((feature) => {
-                    const control = !edition.config.featureSwitches[feature]
-                      ? 'off in the Edition'
-                      : html`<form method="post" action="/admin/switches">
-                          <input type="hidden" name="edition" value="${edition.config.id}" />
-                          <input type="hidden" name="feature" value="${feature}" />
-                          ${
-                            off.includes(feature)
-                              ? html`<input type="hidden" name="action" value="clear" />
-                                  <button>off remotely: clear</button>`
-                              : html`<input type="hidden" name="action" value="off" />
-                                  <button>on: turn off</button>`
-                          }
-                        </form>`;
+                    const control =
+                      edition.config.featureSwitches[feature] !== 'on'
+                        ? 'off in the Edition'
+                        : html`<form method="post" action="/admin/switches">
+                            <input type="hidden" name="edition" value="${edition.config.id}" />
+                            <input type="hidden" name="feature" value="${feature}" />
+                            ${
+                              off.includes(feature)
+                                ? html`<input type="hidden" name="action" value="clear" />
+                                    <button>off remotely: clear</button>`
+                                : html`<input type="hidden" name="action" value="off" />
+                                    <button>on: turn off</button>`
+                            }
+                          </form>`;
                     return html`<tr>
                       <td>${feature}</td>
                       <td>${control}</td>

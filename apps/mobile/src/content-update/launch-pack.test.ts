@@ -19,11 +19,11 @@ const bytesOf = (text: string) => Uint8Array.from(text, (character) => character
 /** The UA Edition with its `contentUpdates` Feature Switch off. */
 function withContentUpdatesOff(): Edition {
   const config = JSON.parse(readFileSync(ukrainianFolder.path('config'), 'utf8')) as {
-    featureSwitches: Record<string, boolean>;
+    featureSwitches: Record<string, string>;
   };
   return loadEdition({
     ...config,
-    featureSwitches: { ...config.featureSwitches, contentUpdates: false },
+    featureSwitches: { ...config.featureSwitches, contentUpdates: 'off' },
   });
 }
 

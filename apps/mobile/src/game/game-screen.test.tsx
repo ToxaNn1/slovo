@@ -41,14 +41,14 @@ function editionWithout(
   switchedOff: readonly string[],
   switchedOn: readonly string[] = [],
 ): Edition {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
     featureSwitches: {
       ...featureSwitches,
-      ...Object.fromEntries(GAMES_BOARD_SWITCHES.map((name) => [name, false])),
-      ...Object.fromEntries(switchedOff.map((name) => [name, false])),
-      ...Object.fromEntries(switchedOn.map((name) => [name, true])),
+      ...Object.fromEntries(GAMES_BOARD_SWITCHES.map((name) => [name, 'off'])),
+      ...Object.fromEntries(switchedOff.map((name) => [name, 'off'])),
+      ...Object.fromEntries(switchedOn.map((name) => [name, 'on'])),
     },
   });
 }

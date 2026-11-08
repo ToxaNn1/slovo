@@ -126,6 +126,47 @@ describe('openEdition', () => {
     });
   });
 
+  // ADR 0089: the Edition declares each feature on, off or unavailable.
+  it('reads the three states of a Feature Switch', () => {
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        editJson(join(dir, 'edition.json'), (config) => ({
+          ...config,
+          featureSwitches: {
+            ...(config.featureSwitches as Json),
+            game: 'off',
+            narratorVoice: 'unavailable',
+          },
+        }));
+      },
+    });
+
+    expect(openEdition(editionsDir, 'fixture').config.featureSwitches).toMatchObject({
+      game: 'off',
+      narratorVoice: 'unavailable',
+      corrections: 'on',
+    });
+  });
+
+  it('refuses a Feature Switch it does not know, and a boolean, the shape before ADR 0089', () => {
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        editJson(join(dir, 'edition.json'), (config) => ({
+          ...config,
+          featureSwitches: { ...(config.featureSwitches as Json), teleport: 'on', game: true },
+        }));
+      },
+    });
+
+    const failure = failureOf(() => openEdition(editionsDir, 'fixture'));
+
+    expect(failure?.reason).toBe('invalid');
+    expect(failure?.errors.map(({ field }) => field)).toEqual([
+      'featureSwitches.game',
+      'featureSwitches.teleport',
+    ]);
+  });
+
   it('names every field of an invalid config', () => {
     const editionsDir = editionsWith({
       change: (dir) => {

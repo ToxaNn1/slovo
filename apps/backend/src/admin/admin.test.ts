@@ -154,7 +154,7 @@ describe('the remote switches of the owner admin', () => {
   it('never turns on a feature the Edition has off', async () => {
     const shippedOff = (config: EditionConfig): EditionConfig => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, mistakeReports: false },
+      featureSwitches: { ...config.featureSwitches, mistakeReports: 'off' },
     });
     const { request, cookie, client, page } = await ownerSignedIn({
       editions: testEditions(['shipped-off'], shippedOff).read(),

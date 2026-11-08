@@ -40,7 +40,7 @@ const pathsOf = ({ accessory }: SeasonalMotif) => accessory.shapes.map(({ path }
 
 /** The UA Edition as it ships, with its Seasonal Decor Feature Switch set as given. */
 function editionWithSeasonalDecor(on: boolean) {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({ ...rest, featureSwitches: { ...featureSwitches, seasonalDecor: on } });
 }
 

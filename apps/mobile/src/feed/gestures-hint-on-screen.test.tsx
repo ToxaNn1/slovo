@@ -27,10 +27,10 @@ const { config } = activeEditionFiles;
 
 /** The UA Edition with the side swipes marking an Entry as `swipeMarks` says. */
 function editionWith(swipeMarks: boolean): Edition {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
-    featureSwitches: { ...featureSwitches, knowledge: true, swipeMarks },
+    featureSwitches: { ...featureSwitches, knowledge: 'on', swipeMarks: swipeMarks ? 'on' : 'off' },
   });
 }
 

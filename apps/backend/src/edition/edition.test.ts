@@ -204,7 +204,7 @@ describe('a feature turned off remotely', () => {
   it('can not turn on a feature the Edition turns off', async () => {
     const folder = testEditions(['edition-off'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, contentUpdates: false },
+      featureSwitches: { ...config.featureSwitches, contentUpdates: 'off' },
     }));
     const { client, clearSwitch } = testApp({ editions: folder.read() });
 
