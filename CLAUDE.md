@@ -23,9 +23,21 @@ Work comes from GitHub issues in STAR form: Situation / Task / Action / Result /
 
 - The **Result** checklist is the definition of done. Tick every item or say why not.
 - Specs form a tree: master spec #1, version specs (one per milestone), tickets under them.
-- Labels: one type (`feature`, `bug`, `chore`, `docs`), `area:*` labels, `ready-for-agent`, `spec`. Milestones are versions `0.1` to `1.0`. Leave labels, milestones and issue edits to the owner.
+- Labels: one type (`feature`, `bug`, `chore`, `docs`), `area:*` labels, `ready-for-agent`, `spec`. Milestones are versions `0.1` to `1.0`.
 - Branch names: `<type>/<ticket-number>-<slug>`, e.g. `docs/4-repo-conventions`.
 - A spec is built on one integration branch by implementer subagents and reaches `main` as one PR: `docs/agents/waves.md`.
+
+## Agent skills
+
+Planning and build skills come from the `mattpocock-skills` plugin (`.claude/settings.json`). Call them by their full name, e.g. `/mattpocock-skills:to-spec`, `mattpocock-skills:tdd`; when a skill name exists twice, the plugin's one wins. Do not use another grill, spec or ticket skill (a personal `grill-me`, `anthropic-skills:grill-me`) and never write `docs/SPEC.md` or `docs/DECISIONS.md`: specs and tickets are GitHub issues.
+
+### Issue tracker
+
+GitHub issues in STAR form, specs as parents of their tickets. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` is the glossary (skills that say `GLOSSARY.md` mean it), decisions in `docs/adr/`. See `docs/agents/domain.md`.
 
 ## Language
 
