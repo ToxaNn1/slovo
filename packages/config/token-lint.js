@@ -1,5 +1,11 @@
 const SIZE_PROPERTY =
   '/^(fontSize|lineHeight|gap|rowGap|columnGap|padding\\w*|margin\\w*|borderRadius|border\\w*Radius)$/';
+/** A size word in a constant's name: `CHIP_GAP`, `chipGap`, but not `STRING_COUNT`. */
+const SIZE_WORDS =
+  'Size|Width|Height|Gap|Radius|Padding|Margin|Border|Inset|Offset|Distance|Travel|Ring|Slant|Overshoot|Drop';
+const SIZE_NAME = `/(^|_)(${SIZE_WORDS.toUpperCase()})(_|$)|(^|[a-z0-9])(${SIZE_WORDS})([A-Z0-9]|$)|^(${SIZE_WORDS.toLowerCase()})([A-Z0-9]|$)/`;
+/** A non-zero number: the raw text holds a digit other than 0. */
+const NON_ZERO = 'Literal[raw=/^[0-9.]*[1-9]/]';
 const MESSAGE = 'Take sizes from `@slovo/ui` tokens (docs/react-native.md)';
 const TYPE_ROLE_MESSAGE =
   'Take the font and its weight from a type role: `typeStyle(role, tokens)` (ADR 0070)';
@@ -30,6 +36,12 @@ export const tokenSelectors = [
   {
     // A non-zero number: the raw text holds a digit other than 0.
     selector: `Property[key.name=${SIZE_PROPERTY}] > Literal[raw=/^[0-9.]*[1-9]/], Property[key.name=${SIZE_PROPERTY}] > UnaryExpression > Literal[raw=/^[0-9.]*[1-9]/]`,
+    message: MESSAGE,
+  },
+  {
+    // A size kept in a constant of its own, `const CHIP_GAP = 8`, instead of a token;
+    // a `let` counter such as a loop's `offset` is no size.
+    selector: `VariableDeclaration[kind=const] > VariableDeclarator[id.name=${SIZE_NAME}] > ${NON_ZERO}, VariableDeclaration[kind=const] > VariableDeclarator[id.name=${SIZE_NAME}] > UnaryExpression > ${NON_ZERO}`,
     message: MESSAGE,
   },
   {
