@@ -79,3 +79,18 @@ export function matchKey(text: string): string {
 }
 
 export { withoutHomonymIndexes } from '@slovo/content-rules';
+
+/** How the Edition names СУМ-11 in a card's «Джерело:» line, whichever site it is read from. */
+export const SUM_11_SHORT_NAME = 'Словник української мови в 11 томах';
+
+/** The short names the Edition gives the dictionaries goroh cites, by the title goroh cites them by. */
+const SHORT_NAMES: ReadonlyMap<string, string> = new Map([
+  ["Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)", 'Тлумачний словник (томи 1–15)'],
+  ['Тлумачний словник української мови в 11-ти томах', SUM_11_SHORT_NAME],
+]);
+
+/** A source cited by its title, with the Edition's short name for it when it has one. */
+export function citedAs(title: string): { title: string; shortName?: string } {
+  const shortName = SHORT_NAMES.get(title);
+  return shortName === undefined ? { title } : { title, shortName };
+}

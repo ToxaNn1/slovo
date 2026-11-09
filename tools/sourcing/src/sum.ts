@@ -7,7 +7,7 @@ import { HTMLElement, NodeType, parse, type Node } from 'node-html-parser';
 
 import type { ArticleDefinition, ArticleExample, DictionaryArticle } from './article';
 import { HostUnreachableError, type PoliteClient } from './polite-client';
-import { matchKey, squeeze } from './text';
+import { matchKey, squeeze, SUM_11_SHORT_NAME } from './text';
 
 /** How to reach sum.in.ua: try the site and fall back to the archive, use one of them only, or neither. */
 export type SumAccess = 'auto' | 'direct' | 'wayback' | 'off';
@@ -253,6 +253,7 @@ function parseArticle(
         tom?.classList.contains('tom') === true
           ? squeeze(tom.text)
           : 'Словник української мови: в 11 томах',
+      shortName: SUM_11_SHORT_NAME,
       ...address,
     },
   };
