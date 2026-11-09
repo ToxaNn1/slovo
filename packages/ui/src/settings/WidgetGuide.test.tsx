@@ -54,6 +54,20 @@ describe('WidgetGuide', () => {
     jest.restoreAllMocks();
   });
 
+  it('draws the widgets at the sizes of board 15, scaled to the drawing (owner 08.11)', async () => {
+    await renderGuide();
+
+    // The drawing is a picture VoiceOver skips, so its texts are hidden ones.
+    const hidden = { includeHiddenElements: true };
+    const [small, medium, ...more] = screen.getAllByText('word', hidden);
+    expect(more).toHaveLength(0);
+    expect(small).toHaveStyle({ fontSize: 19 });
+    expect(medium).toHaveStyle({ fontSize: 24 });
+    const modes = screen.getAllByText('ALL WORDS', hidden);
+    expect(modes).toHaveLength(2);
+    for (const mode of modes) expect(mode).toHaveStyle({ fontSize: 8 });
+  });
+
   it('numbers the steps, which VoiceOver reads with their hints', async () => {
     await renderGuide();
 

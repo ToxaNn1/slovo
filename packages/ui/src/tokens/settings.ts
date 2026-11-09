@@ -44,9 +44,8 @@ export const guideStep = { badge: 28, badgeRadius: 4 } as const;
 /**
  * The drawing of the widgets in the widget guide. It is a picture of the
  * phone, so it does not follow the text size of iOS and its wallpaper is no
- * Edition token. Its type roles are smaller than the design's real widgets
- * (28–30 for the Lemma at 170×170, 34 at 364×170), which the drawing scales
- * down with its own width.
+ * Edition token. Its widgets are about as wide as board 15's (158 and 346),
+ * so its type roles take the board's sizes, scaled to the drawing's width.
  */
 export const widgetDrawing = {
   wallpaper: '#3F3128',

@@ -1,4 +1,4 @@
-import { BackLink, ScreenTitle, space, useTokens, WidgetGuide } from '@slovo/ui';
+import { BackHeader, space, useTokens, WidgetGuide } from '@slovo/ui';
 import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,15 +21,19 @@ export default function WidgetGuideScreen() {
       style={[styles.screen, { backgroundColor: colors.background }]}
     >
       <ScrollView contentContainerStyle={styles.content}>
-        <BackLink
-          testID="widget-guide-back"
-          label={editionStrings.settings.title}
-          onPress={() => {
-            router.back();
-          }}
-        />
-        <View style={styles.title}>
-          <ScreenTitle>{guide.title}</ScreenTitle>
+        {/* The title beside the back tile, as on every screen a Settings row opens (owner 08.11). */}
+        <View style={styles.header}>
+          <BackHeader
+            titleRole="settingsSubTitle"
+            title={guide.title}
+            back={{
+              label: editionStrings.settings.title,
+              testID: 'widget-guide-back',
+              onPress: () => {
+                router.back();
+              },
+            }}
+          />
         </View>
         <WidgetGuide
           testID="widget-guide"
@@ -46,5 +50,5 @@ export default function WidgetGuideScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingHorizontal: space[5], paddingTop: space[2], paddingBottom: space[8] },
-  title: { paddingTop: space[2], paddingBottom: space[4] },
+  header: { paddingBottom: space[4] },
 });
