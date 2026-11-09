@@ -1,4 +1,4 @@
-import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
+import type { AdminApiOutputs, AlertThresholdKey } from '@slovo/contracts/admin-api';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useState, type ReactNode, type SubmitEvent } from 'react';
@@ -14,6 +14,7 @@ export const Route = createFileRoute('/security')({
 
 type Role = 'owner' | 'admin';
 type Action = AdminApiOutputs['actions']['actions'][number];
+type AlertThreshold = AdminApiOutputs['alertThresholds']['thresholds'][number];
 
 const ROLE_LABELS: Readonly<Record<Role, string>> = { owner: 'Власник', admin: 'Адмін' };
 
@@ -94,6 +95,7 @@ function OwnerSecurity({ email }: { email: string }) {
       </div>
       <People self={email} confirm={setPending} />
       <AgentTokens confirm={setPending} />
+      <AlertThresholds confirm={setPending} />
       <ActionLog />
       {pending === null ? null : (
         <ConfirmDialog
@@ -344,6 +346,93 @@ function AgentTokens({ confirm }: { confirm: (write: PendingWrite) => void }) {
         </p>
       )}
     </Block>
+  );
+}
+
+/** What each alert threshold measures, as the Власник reads it. */
+const THRESHOLD_LABELS: Readonly<Record<AlertThresholdKey, string>> = {
+  crashFree: 'Сесії без падінь, %',
+  issueEvents: 'Подій нової помилки за годину',
+  apiErrors: 'Помилки API 5xx за 15 хв, %',
+  batchRecords: 'Записів у пакеті',
+  activityDrop: 'Падіння активності, %',
+};
+
+const number = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 2 });
+
+function AlertThresholds({ confirm }: { confirm: (write: PendingWrite) => void }) {
+  const thresholds = useQuery({
+    queryKey: ['alert-thresholds'],
+    queryFn: () => adminApi.alertThresholds(),
+  });
+  const change = useSecurityWrite(adminApi.setAlertThreshold);
+  return (
+    <Block title="Пороги сповіщень">
+      <ul className="flex flex-col gap-2">
+        {(thresholds.data?.thresholds ?? []).map((threshold) => (
+          // Keyed by value too: a changed threshold starts its field afresh.
+          <li key={`${threshold.key}-${String(threshold.value)}`}>
+            <ThresholdForm threshold={threshold} confirm={confirm} change={change.mutate} />
+          </li>
+        ))}
+      </ul>
+      {change.isError ? (
+        <p role="alert" className="text-sm text-destructive">
+          {refusalOf(change.error)}
+        </p>
+      ) : null}
+    </Block>
+  );
+}
+
+function ThresholdForm({
+  threshold,
+  confirm,
+  change,
+}: {
+  threshold: AlertThreshold;
+  confirm: (write: PendingWrite) => void;
+  change: (input: { key: AlertThresholdKey; value: number; reason: string }) => void;
+}) {
+  const label = THRESHOLD_LABELS[threshold.key];
+  const [draft, setDraft] = useState(String(threshold.value));
+  const value = Number(draft.replace(',', '.'));
+  const valid = draft.trim() !== '' && Number.isFinite(value) && value >= 0 && value <= 100_000;
+
+  function onChange(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!valid || value === threshold.value) return;
+    confirm({
+      title: `Змінити поріг «${label}» з ${number(threshold.value)} на ${number(value)}?`,
+      confirm: 'Змінити поріг',
+      run: (reason) => {
+        change({ key: threshold.key, value, reason });
+      },
+    });
+  }
+
+  return (
+    <form
+      aria-label={`Поріг: ${label}`}
+      onSubmit={onChange}
+      className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+    >
+      <label className="flex grow flex-col gap-1">
+        {label}
+        <input
+          inputMode="decimal"
+          className={inputClass}
+          value={draft}
+          onChange={(event) => {
+            setDraft(event.target.value);
+          }}
+        />
+      </label>
+      <span className="text-muted-foreground">Типово {number(threshold.default)}</span>
+      <Button type="submit" variant="outline" disabled={!valid || value === threshold.value}>
+        Змінити поріг
+      </Button>
+    </form>
   );
 }
 

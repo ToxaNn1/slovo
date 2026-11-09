@@ -71,7 +71,11 @@ describe('the Install id', () => {
       random: randomOf(0.5),
     };
     const sending = openCounterSending(ports);
-    const reports = openMistakeReports({ ...ports, appVersion: '0.8.14', contentVersion: () => 42 });
+    const reports = openMistakeReports({
+      ...ports,
+      appVersion: '0.8.14',
+      contentVersion: () => 42,
+    });
 
     await app.knowledge.tap('w_000', 'known');
     sending.foreground();

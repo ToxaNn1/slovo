@@ -103,7 +103,7 @@ const shortDay = (day: string) => `${day.slice(8, 10)}.${day.slice(5, 7)}`;
  * Огляд: whether today is fine, for the global Edition and period, each block
  * from the procedure its section reads: PostHog of Аналітика, Sentry of
  * Якість, CI on `main` of Розробка, the open batches of the Content queue,
- * and the latest alerts of the Action log (a Власник reads it).
+ * and the latest alerts the owner was told of (a Власник reads them).
  */
 export function Overview() {
   const search = useSearch({ from: '__root__' });
@@ -129,9 +129,8 @@ export function Overview() {
   });
   const batches = useQueueBatches();
   const alerts = useQuery({
-    queryKey: ['actions', search.edition],
-    queryFn: () =>
-      adminApi.actions(search.edition === undefined ? {} : { editionId: search.edition }),
+    queryKey: ['alerts'],
+    queryFn: () => adminApi.latestAlerts(),
     enabled: owner,
   });
 
@@ -148,7 +147,7 @@ export function Overview() {
       : github.state === 'ok'
         ? { state: 'ok', fetchedAt: github.fetchedAt }
         : { state: 'unavailable', text: 'GitHub недоступний' };
-  const killed = (alerts.data?.actions ?? []).filter(({ what }) => what === 'switches.kill');
+  const latest = alerts.data?.alerts ?? [];
 
   return (
     <section aria-labelledby="section-title" className="flex flex-col gap-6">
@@ -203,17 +202,17 @@ export function Overview() {
           </Link>
         </Block>
         {owner ? (
-          <Block title="Останні сповіщення" read={readOf(alerts, 'Action log недоступний')}>
-            {killed.length === 0 ? (
+          <Block title="Останні сповіщення" read={readOf(alerts, 'Сповіщення недоступні')}>
+            {latest.length === 0 ? (
               <Quiet>Сповіщень немає</Quiet>
             ) : (
               <ul className="flex flex-col gap-2 text-sm">
-                {killed.slice(0, 5).map((action) => (
-                  <li key={`${action.at}-${String(action.editionId)}`} className="flex flex-col">
-                    <span className="font-medium">Kill switch: {featureOf(action.after)}</span>
-                    {action.reason === null ? null : <span>{action.reason}</span>}
+                {latest.slice(0, 5).map((alert) => (
+                  <li key={alert.id} className="flex flex-col">
+                    <span className="whitespace-pre-line">{alert.text}</span>
                     <span className="text-muted-foreground">
-                      {action.editionId ?? 'Усі Editions'} · {kyivDateTime(action.at)}
+                      {kyivDateTime(alert.at)}
+                      {alert.sentAt === null ? ' · не надіслано' : ''}
                     </span>
                   </li>
                 ))}
@@ -224,13 +223,4 @@ export function Overview() {
       </ul>
     </section>
   );
-}
-
-/** The feature a kill switch row turned off, as its `after` names it. */
-function featureOf(after: unknown): string {
-  if (typeof after === 'object' && after !== null && 'feature' in after) {
-    const { feature } = after;
-    if (typeof feature === 'string') return feature;
-  }
-  return '—';
 }
