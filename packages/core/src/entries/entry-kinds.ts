@@ -42,7 +42,7 @@ export type ShownKind = Exclude<EntryKind, 'synonymRow' | 'tip'>;
 export type EntryOfKind<Kind extends EntryKind> = Extract<Entry, { kind: Kind }>;
 
 /** What the kind table says of one kind of Entry. Every kind states every trait. */
-export interface EntryKindTraits<Kind extends EntryKind> {
+interface EntryKindTraits<Kind extends EntryKind> {
   /**
    * The prefix of its ids, a letter and `_`, which tells the kind of an id
    * apart (ADR 0010, 0046, 0051).
@@ -88,7 +88,7 @@ export function tableOfKinds<Row>(of: (kind: EntryKind) => Row): Readonly<Record
 }
 
 /** Every kind of Entry, in the kind table's order. */
-export const ALL_KINDS: readonly EntryKind[] = Object.keys(ENTRY_KINDS) as EntryKind[];
+export const ALL_KINDS: readonly EntryKind[] = Object.values(tableOfKinds((kind) => kind));
 
 /** Every kind of Entry in the Mix as a whole, in the Mix screen's order. */
 export const MIX_KINDS: readonly MixKind[] = ALL_KINDS.filter(

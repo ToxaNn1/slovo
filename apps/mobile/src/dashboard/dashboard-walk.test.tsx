@@ -65,7 +65,7 @@ function word(id: string, lemma: string): Word {
 function correction(
   id: string,
   nonStandardForm: string,
-  standardEquivalents: string[],
+  standardEquivalents: Correction['standardEquivalents'],
 ): Correction {
   return {
     kind: 'correction',

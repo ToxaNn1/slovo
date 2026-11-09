@@ -5,7 +5,7 @@ import { renderStress, stressedVowelsOf } from './stress';
 import { buildSynonymRowCard, type SynonymRowWordModel } from './synonym-row-card';
 
 /** A Correction the Word is the standard form for, as its card links it. */
-export interface LinkedCorrection {
+interface LinkedCorrection {
   readonly correctionId: string;
   /** The non-standard form people commonly use. */
   readonly nonStandardForm: string;
@@ -15,14 +15,17 @@ export interface LinkedCorrection {
  * The Synonym Row a Word card links back to, shown as «У синонімічному ряду:
  * {домінанта}» and opened on a tap (ADR 0051).
  */
-export interface WordCardSynonymRow {
+interface WordCardSynonymRow {
   readonly synonymRowId: string;
   /** The row's dominant, linked to its Word as the row's card links it. */
   readonly dominant: SynonymRowWordModel;
 }
 
-/** What "more" opens on a Word card. Each list holds at least one item when present. */
-export interface WordCardDetails {
+/**
+ * What "more" opens on a Word card, present when at least one part is: an
+ * etymology, an extra Definition or an extra Example. A list may be empty.
+ */
+interface WordCardDetails {
   readonly etymology: string | undefined;
   /** The Definitions after the primary one. */
   readonly extraDefinitions: readonly string[];

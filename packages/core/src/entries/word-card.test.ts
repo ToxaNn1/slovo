@@ -270,7 +270,10 @@ describe('the Word card', () => {
         ],
       });
 
-      expect(card.synonymRow?.dominant.wordId).toBeUndefined();
+      expect(card.synonymRow).toEqual({
+        synonymRowId: 'r_bezlad',
+        dominant: { text: 'безла́д', stressedVowels: ['а'], wordId: undefined },
+      });
     });
 
     it('carries nothing for a Word in no row, the dominant of a row or a member as plain text', async () => {

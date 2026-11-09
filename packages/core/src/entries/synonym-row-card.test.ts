@@ -137,10 +137,15 @@ describe('the Synonym Row card', () => {
 
   it('links no member to a Word the Language Pack does not have', async () => {
     const card = await build(
-      row({ members: [member('простувати', { wordId: 'w_gone' }), ...row().members.slice(1)] }),
+      row({
+        members: [
+          member('простувати', { stress: [7], wordId: 'w_gone' }),
+          ...row().members.slice(1),
+        ],
+      }),
     );
 
-    expect(card.members[0]?.wordId).toBeUndefined();
+    expect(card.members[0]).toMatchObject({ text: 'простува́ти', wordId: undefined });
   });
 
   it('links a member to a live Word even when other members link Retired ones', async () => {

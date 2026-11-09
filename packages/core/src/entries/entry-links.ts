@@ -42,7 +42,8 @@ export function linkSourceOf({
 
 /** The Entry link of a path and search, or nothing for a path other than `/entry/<id>`. */
 export function parseLink(link: string): ParsedEntryLink | undefined {
-  const [path = '', search = ''] = link.split('?');
+  const [beforeFragment = ''] = link.split('#');
+  const [path = '', search = ''] = beforeFragment.split('?');
   const encoded = entryPath.exec(path)?.[1];
   if (encoded === undefined) return undefined;
   let entryId: string;

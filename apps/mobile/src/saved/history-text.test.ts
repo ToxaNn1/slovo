@@ -66,6 +66,7 @@ describe('the History texts', () => {
               ...text,
               labelKey,
               partOfSpeech: 'noun',
+              gender: undefined,
               registers: [],
               rarity: 3,
             }
