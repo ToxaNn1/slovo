@@ -84,7 +84,7 @@ export function createWordOfTheDayArchive({
 }: {
   content: ContentReadPort;
   /** Its `locale` writes the dates. */
-  edition: Pick<Edition, 'isFeatureEnabled' | 'locale'>;
+  edition: Pick<Edition, 'isFeatureEnabled' | 'locale' | 'illustrations'>;
   userState: Pick<UserState, 'list'>;
   /** Tells the current year, whose dates go without it. */
   clock: Clock;

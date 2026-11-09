@@ -38,7 +38,7 @@ beforeAll(async () => {
   stressTraps = corrections.filter((correction) => correction.correctionType === 'wrongStress');
   const entries = createEntries({
     content: pack,
-    edition: { isFeatureEnabled: () => true },
+    edition: { isFeatureEnabled: () => true, illustrations: new Set() },
     choices: EVERYTHING_IN,
   });
   cardOf = (correction) => buildCorrectionCard({ correction, entries });

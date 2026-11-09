@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { postHogAnalytics, postHogOptions, type PostHogClient } from './posthog-analytics';
+import type { PostHogOptions } from 'posthog-react-native';
+
+import {
+  createPostHog,
+  postHogAnalytics,
+  type PostHogClient,
+  type PostHogSdk,
+} from './posthog-analytics';
 
 /** A PostHog client that keeps what it was given. */
 function fakeClient() {
@@ -39,14 +46,30 @@ const seen = { entryKind: 'word', rarity: 4, categoryId: 'human-body' } as const
 const reader = { distinctId: 'install-1', edition: 'uk', variants: {} };
 
 describe('The PostHog adapter', () => {
-  it('sends to the EU host with no session recording, autocapture or location', () => {
-    expect(postHogOptions).toMatchObject({
-      host: 'https://eu.i.posthog.com',
-      enableSessionReplay: false,
-      captureAppLifecycleEvents: false,
-      disableGeoip: true,
-      flushAt: 1,
+  it('makes the client for the EU host with no session recording, autocapture or location', () => {
+    const { client, captured } = fakeClient();
+    const PostHog = vi.fn(function (_apiKey: string, _options: PostHogOptions) {
+      return client;
     });
+    const sdk: PostHogSdk = { PostHog };
+
+    postHogAnalytics('phc_test', (apiKey) => createPostHog(apiKey, sdk)).track(
+      'seen',
+      seen,
+      reader,
+    );
+
+    expect(PostHog).toHaveBeenCalledWith(
+      'phc_test',
+      expect.objectContaining({
+        host: 'https://eu.i.posthog.com',
+        enableSessionReplay: false,
+        captureAppLifecycleEvents: false,
+        disableGeoip: true,
+        flushAt: 1,
+      }),
+    );
+    expect(captured).toEqual([['seen', { ...seen, edition: 'uk' }]]);
   });
 
   it('makes no client until the first event, then captures it with its properties and the Edition', () => {
