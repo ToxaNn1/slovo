@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Word } from '@slovo/contracts';
+import { createApiClient } from '@slovo/contracts/api';
 
 import { openComposition, type Feed, type FeedCard } from '../index';
 import { createFakeBackend, type FakeBackend, createMemoryContentPort } from '../testing';
@@ -168,11 +169,23 @@ describe('The Community Word', () => {
     expect(api.calls).toHaveLength(0);
   });
 
+  it('keeps nothing and shows nothing when the backend answers out of shape', async () => {
+    const records = new Map<string, string>();
+    const backend = createApiClient({
+      url: 'http://backend.test',
+      fetch: () => Promise.resolve(Response.json({ communityWord: { entryId: 42 } })),
+    });
+    const app = await run({ records, at: monday, api: { ...createFakeBackend(), backend } });
+
+    expect((await firstCards(app.feed, 4)).some((card) => card.kind === 'notice')).toBe(false);
+    expect([...records.keys()].filter((key) => key.startsWith('feed.communityWord'))).toEqual([]);
+  });
+
   it('is gone for the day once swiped past', async () => {
     const records = new Map<string, string>();
     const api = apiOfWord();
     const app = await run({ records, at: monday, api });
-    await firstCards(app.feed, 3);
+    expect(shownBy(await firstCards(app.feed, 3))[1]).toBe('communityWord');
 
     await app.feed.show(0);
     await app.feed.show(1);
