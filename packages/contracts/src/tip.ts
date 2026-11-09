@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { SourceSchema, TextSchema } from './shared';
+import { SourceSchema, EntryTextSchema } from './shared';
 import { ExampleSchema } from './word';
 
 /**
@@ -16,9 +16,9 @@ export const TIP_EXPLANATION_MAX_LENGTH = 300;
 
 /** A Tip's own Game question: a prompt with one right answer and three wrong ones. */
 export const TipGameQuestionSchema = z.strictObject({
-  prompt: TextSchema,
-  rightAnswer: TextSchema,
-  wrongAnswers: z.tuple([TextSchema, TextSchema, TextSchema]),
+  prompt: EntryTextSchema,
+  rightAnswer: EntryTextSchema,
+  wrongAnswers: z.tuple([EntryTextSchema, EntryTextSchema, EntryTextSchema]),
 });
 
 export type TipGameQuestion = z.infer<typeof TipGameQuestionSchema>;
@@ -38,10 +38,10 @@ export type TipGameQuestion = z.infer<typeof TipGameQuestionSchema>;
 export const TipSchema = z.strictObject({
   kind: z.literal('tip').default('tip'),
   id: TipIdSchema,
-  title: TextSchema,
-  nonStandardForm: TextSchema.optional(),
-  standardForm: TextSchema,
-  explanation: TextSchema.max(TIP_EXPLANATION_MAX_LENGTH),
+  title: EntryTextSchema,
+  nonStandardForm: EntryTextSchema.optional(),
+  standardForm: EntryTextSchema,
+  explanation: EntryTextSchema.max(TIP_EXPLANATION_MAX_LENGTH),
   example: ExampleSchema.optional(),
   sources: z.array(SourceSchema).min(1),
   gameQuestion: TipGameQuestionSchema,

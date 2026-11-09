@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { EntryIdSchema } from './entry';
-import { TextSchema, hasNoRepeats } from './shared';
+import { EntryTextSchema, hasNoRepeats } from './shared';
 
 /**
  * A Curated Collection id: opaque, assigned when the collection is authored
@@ -21,8 +21,8 @@ export const CuratedCollectionIdSchema = z
  */
 export const CuratedCollectionSchema = z.strictObject({
   id: CuratedCollectionIdSchema,
-  name: TextSchema,
-  description: TextSchema,
+  name: EntryTextSchema,
+  description: EntryTextSchema,
   /** The local date (`YYYY-MM-DD`) from which the collection is on the rail. */
   publishedOn: z.iso.date(),
   /** The Entries in the collection's order. */

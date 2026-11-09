@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { SourceSchema, TextSchema } from './shared';
+import { SourceSchema, EntryTextSchema } from './shared';
 import { ExampleSchema, WordIdSchema } from './word';
 
 /**
@@ -22,7 +22,7 @@ export const SHADE_NOTE_MAX_LENGTH = 60;
  * is, if any.
  */
 const RowWordShape = {
-  text: TextSchema.refine(
+  text: EntryTextSchema.refine(
     (text) => text === text.normalize('NFC'),
     'Expected the text in Unicode NFC, with every letter composed',
   ),
@@ -44,7 +44,7 @@ export type SynonymRowDominant = z.infer<typeof SynonymRowDominantSchema>;
 /** A member of a Synonym Row, with an optional note on its shade («повільно»). */
 export const SynonymRowMemberSchema = z.strictObject({
   ...RowWordShape,
-  shadeNote: TextSchema.max(SHADE_NOTE_MAX_LENGTH).optional(),
+  shadeNote: EntryTextSchema.max(SHADE_NOTE_MAX_LENGTH).optional(),
 });
 
 export type SynonymRowMember = z.infer<typeof SynonymRowMemberSchema>;
@@ -63,7 +63,7 @@ export const SynonymRowSchema = z.strictObject({
   kind: z.literal('synonymRow').default('synonymRow'),
   id: SynonymRowIdSchema,
   dominant: SynonymRowDominantSchema,
-  meaning: TextSchema,
+  meaning: EntryTextSchema,
   members: z.array(SynonymRowMemberSchema).min(5).max(12),
   example: ExampleSchema.optional(),
   sources: z.array(SourceSchema).min(1),
