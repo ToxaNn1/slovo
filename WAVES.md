@@ -24,3 +24,10 @@ coord: coord/infra-1109
 branches: ^origin/(coord/infra-1109|docs/1109-conflict-free-waves|(chore|docs|test)/1109-)
 brief:
 You are the infra wave coordinator, in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/infra-1109 (tasks, grants, log) and continue from the log tail. Grants: commits, pushes, PRs; no main merge except #1752's existing auto-merge. Never touch feat/1108-video or apps/video.
+
+## wave ci-affected-1109
+status: active
+coord: coord/ci-affected-1109
+branches: ^origin/(coord/ci-affected-1109|chore/1109-ci-affected-tests)
+brief:
+You are the CI affected tests coordinator, in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/ci-affected-1109 and continue from the log tail. Grants: commits, pushes, one PR; no main merge, no auto-merge. Never touch feat/1108-video, apps/video or #1756.
