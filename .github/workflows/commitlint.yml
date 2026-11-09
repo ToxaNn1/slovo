@@ -43,7 +43,8 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           printf '%s' "$PR_BODY" > "$RUNNER_TEMP/body.md"
-          if [ "$FORK" = true ]; then
+          # A fork gets a read-only token; a base without the script (the PR that adds it) has nothing to run.
+          if [ "$FORK" = true ] || [ ! -f scripts/strip-pr-footer.mjs ]; then
             cp "$RUNNER_TEMP/body.md" "$RUNNER_TEMP/clean.md"
           else
             node scripts/strip-pr-footer.mjs < "$RUNNER_TEMP/body.md" > "$RUNNER_TEMP/clean.md"
