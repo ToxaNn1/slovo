@@ -44,7 +44,7 @@ export function alertText(alert: Alert): string {
     case 'backend-down':
       return '🚨 Бекенд не відповідає на перевірку здоров’я.';
     case 'batch-size':
-      return `📦 Великий пакет у черзі ${alert.editionId}: ${n(alert.records)} записів (поріг ${n(alert.threshold)}).`;
+      return `📦 Велика пачка у черзі ${alert.editionId}: ${n(alert.records)} записів (поріг ${n(alert.threshold)}).`;
   }
 }
 
@@ -60,7 +60,7 @@ export function digestText(digest: Digest): string {
     `Відвідин: ${orDash(digest.visits)}`,
     `Падінь за 24 год: ${orDash(digest.crashes)}`,
     `CI на main: ${ci}`,
-    `Відкритих пакетів: ${n(digest.openBatches)} (${n(digest.openRecords)} записів)`,
+    `Відкритих пачок: ${n(digest.openBatches)} (${n(digest.openRecords)} записів)`,
   ].join('\n');
 }
 

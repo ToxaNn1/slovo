@@ -52,7 +52,7 @@ const app = createApp({
   reporter: await createSentryReporter(config.SENTRY_DSN),
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
-  sentry: sentryOf(config),
+  sentry: sentryOf(config, systemClock),
   ciToken: config.CI_HISTORY_TOKEN,
 });
 const server = await startServer({ app, database, port: config.PORT });

@@ -29,6 +29,8 @@ function cron(start: string) {
   const batches: OpenBatch[] = [];
   const sent: OwnerMessage[] = [];
   const posthog = createFakePostHog();
+  const failures: string[] = [];
+  let batchesFail = false;
   const monitor = createMonitor({
     settings: { thresholds: () => Promise.resolve(ALERT_THRESHOLD_DEFAULTS) },
     store: createAlertStore(database),
@@ -46,8 +48,12 @@ function cron(start: string) {
       between: (from, to) => Promise.resolve(runs.filter(({ at }) => at >= from && at <= to)),
     },
     health: { up: () => Promise.resolve(true) },
-    batches: { open: () => Promise.resolve(batches) },
+    batches: {
+      open: () =>
+        batchesFail ? Promise.reject(new Error('connection reset')) : Promise.resolve(batches),
+    },
     editionIds: ['uk'],
+    logFailure: (message) => failures.push(message),
     clock: { now: () => now },
   });
   return {
@@ -58,6 +64,8 @@ function cron(start: string) {
     sentry: (read: SentryRead | SentryAlertRead, value: number) => numbers.set(read, value),
     at: (time: string) => (now = new Date(time)),
     run: () => monitor.run(),
+    failBatches: () => (batchesFail = true),
+    failures,
     alerts: () => sent.flatMap((message) => (message.kind === 'alert' ? [message.alert] : [])),
   };
 }
@@ -116,6 +124,15 @@ describe('the Cron service', () => {
     await below.run();
     await below.run();
     expect(below.alerts()).toEqual([{ kind: 'crash-free', percent: 99.4, threshold: 99.5 }]);
+  });
+
+  it('keeps the alerts of the other checks when one check throws, and logs it', async () => {
+    const run = cron('2026-11-22T03:00:00Z');
+    run.sentry('crashFree', 99.4);
+    run.failBatches();
+    await run.run();
+    expect(run.alerts()).toEqual([{ kind: 'crash-free', percent: 99.4, threshold: 99.5 }]);
+    expect(run.failures).toEqual(['alert check batch-size failed']);
   });
 
   it('fires the batch alert once for a batch of 201 records, not for 200', async () => {

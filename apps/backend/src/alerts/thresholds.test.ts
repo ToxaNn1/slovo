@@ -55,6 +55,7 @@ describe('the alert thresholds', () => {
       editionIds: ['uk'],
       // 05:00 Kyiv: before the digest.
       clock: { now: () => new Date('2026-11-20T03:00:00Z') },
+      logFailure: () => undefined,
     });
     await monitor.run();
     expect(sent).toEqual([]);

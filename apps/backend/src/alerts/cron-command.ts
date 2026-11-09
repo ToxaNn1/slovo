@@ -67,7 +67,7 @@ async function main(): Promise<number> {
       settings: { thresholds: () => thresholdsOf(thresholds) },
       store: createAlertStore(database),
       chat: ownerChatOf(config, logger),
-      sentry: sentryOf(config),
+      sentry: sentryOf(config, clock),
       posthog:
         config.posthog === undefined ? unavailablePostHog : createPostHogClient(config.posthog),
       ciRuns: createCiRunStore(database),
@@ -75,6 +75,9 @@ async function main(): Promise<number> {
       batches: openBatchesOf(createContentQueue({ database, clock })),
       editionIds: readEditions(config.EDITIONS_DIR).map(({ config: edition }) => edition.id),
       clock,
+      logFailure: (message, error) => {
+        logger.error({ err: error }, message);
+      },
     }).run();
     logger.info('cron run done');
     return 0;

@@ -1,4 +1,11 @@
-import type { SentryAlertRead, SentryAnswer, SentryRead, SentryReader } from '@slovo/server-core';
+import type {
+  Clock,
+  SentryAlertRead,
+  SentryAnswer,
+  SentryRead,
+  SentryReader,
+} from '@slovo/server-core';
+import { z } from 'zod';
 
 /** Where and how Якість reads Sentry's REST API. */
 export interface SentryApiOptions {
@@ -8,6 +15,8 @@ export interface SentryApiOptions {
   readonly appProject: string;
   /** The numeric id of the backend's project. */
   readonly backendProject: string;
+  /** The time a rate limit's `Retry-After` counts from. */
+  readonly clock: Clock;
   readonly fetch?: typeof fetch;
   readonly baseUrl?: string;
 }
@@ -17,23 +26,42 @@ export const unsetSentry: SentryReader = {
   read: () => Promise.resolve({ ok: false, reason: 'unavailable' }),
 };
 
-type Json = Record<string, unknown>;
+/** How long a read waits for Sentry before it answers unavailable. */
+const TIMEOUT_MS = 10_000;
+
+const RowSchema = z.record(z.string(), z.unknown());
+
+/** A Discover query's rows of its fields. */
+const EventsSchema = z.object({ data: z.array(RowSchema) });
+
+/** The session totals, by group. */
+const SessionsSchema = z.object({
+  groups: z.array(z.object({ by: RowSchema.optional(), totals: RowSchema })),
+});
+
+/** The issues, each with its count of events, which Sentry writes as a string. */
+const IssuesSchema = z.array(z.object({ count: z.union([z.string(), z.number()]).optional() }));
+
+type Failure = Exclude<SentryAnswer, { ok: true }>;
 
 const numberOr = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
 /** The Sentry reads of the environment's token, organization and projects, or none while one is unset. */
-export function sentryOf({
-  SENTRY_AUTH_TOKEN,
-  SENTRY_ORG,
-  SENTRY_APP_PROJECT,
-  SENTRY_BACKEND_PROJECT,
-}: {
-  readonly SENTRY_AUTH_TOKEN?: string | undefined;
-  readonly SENTRY_ORG?: string | undefined;
-  readonly SENTRY_APP_PROJECT?: string | undefined;
-  readonly SENTRY_BACKEND_PROJECT?: string | undefined;
-}): SentryReader {
+export function sentryOf(
+  {
+    SENTRY_AUTH_TOKEN,
+    SENTRY_ORG,
+    SENTRY_APP_PROJECT,
+    SENTRY_BACKEND_PROJECT,
+  }: {
+    readonly SENTRY_AUTH_TOKEN?: string | undefined;
+    readonly SENTRY_ORG?: string | undefined;
+    readonly SENTRY_APP_PROJECT?: string | undefined;
+    readonly SENTRY_BACKEND_PROJECT?: string | undefined;
+  },
+  clock: Clock,
+): SentryReader {
   return SENTRY_AUTH_TOKEN === undefined ||
     SENTRY_ORG === undefined ||
     SENTRY_APP_PROJECT === undefined ||
@@ -44,12 +72,14 @@ export function sentryOf({
         org: SENTRY_ORG,
         appProject: SENTRY_APP_PROJECT,
         backendProject: SENTRY_BACKEND_PROJECT,
+        clock,
       });
 }
 
 /**
  * Reads Якість's numbers of Sentry's REST API. A 429 answers rate-limited
- * until its `Retry-After`, or `X-Sentry-Rate-Limit-Reset`, or a minute on.
+ * until its `Retry-After`, or `X-Sentry-Rate-Limit-Reset`, or a minute on;
+ * an answer that fails, hangs or comes in another shape answers unavailable.
  * Neither the app nor the backend sends an Edition tag nor traces yet (ADR
  * 0048), so every read covers every Edition, and p95 and app start answer
  * `null` until tracing is on.
@@ -59,38 +89,43 @@ export function createSentryApi({
   org,
   appProject,
   backendProject,
+  clock,
   fetch: fetchWith = fetch,
   baseUrl = 'https://sentry.io',
 }: SentryApiOptions): SentryReader {
-  async function get(
+  async function get<T>(
     path: string,
     params: Record<string, string>,
-  ): Promise<Json | Json[] | SentryAnswer> {
+    schema: z.ZodType<T>,
+  ): Promise<{ readonly ok: true; readonly body: T } | Failure> {
     const url = new URL(`/api/0/organizations/${encodeURIComponent(org)}/${path}/`, baseUrl);
     for (const [name, value] of Object.entries(params)) url.searchParams.set(name, value);
-    let response: Response;
     try {
-      response = await fetchWith(url, { headers: { authorization: `Bearer ${token}` } });
+      const response = await fetchWith(url, {
+        headers: { authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(TIMEOUT_MS),
+      });
+      if (response.status === 429) {
+        const seconds = Number(response.headers.get('retry-after'));
+        const reset = Number(response.headers.get('x-sentry-rate-limit-reset'));
+        const now = clock.now().getTime();
+        const retryAt =
+          seconds > 0
+            ? new Date(now + seconds * 1000)
+            : reset > 0
+              ? new Date(reset * 1000)
+              : new Date(now + 60_000);
+        return { ok: false, reason: 'rate-limited', retryAt };
+      }
+      if (!response.ok) return { ok: false, reason: 'unavailable' };
+      const parsed = schema.safeParse(await response.json());
+      return parsed.success
+        ? { ok: true, body: parsed.data }
+        : { ok: false, reason: 'unavailable' };
     } catch {
       return { ok: false, reason: 'unavailable' };
     }
-    if (response.status === 429) {
-      const seconds = Number(response.headers.get('retry-after'));
-      const reset = Number(response.headers.get('x-sentry-rate-limit-reset'));
-      const retryAt =
-        seconds > 0
-          ? new Date(Date.now() + seconds * 1000)
-          : reset > 0
-            ? new Date(reset * 1000)
-            : new Date(Date.now() + 60_000);
-      return { ok: false, reason: 'rate-limited', retryAt };
-    }
-    if (!response.ok) return { ok: false, reason: 'unavailable' };
-    return (await response.json()) as Json | Json[];
   }
-
-  const isAnswer = (body: unknown): body is SentryAnswer =>
-    typeof body === 'object' && body !== null && 'ok' in body;
 
   /** The first row's field of a Discover query. */
   async function discover(
@@ -100,10 +135,9 @@ export function createSentryApi({
     dataset: string,
     window: Window,
   ) {
-    const body = await get('events', { ...window, project, field, query, dataset });
-    if (isAnswer(body)) return body;
-    const data = Array.isArray(body) ? undefined : (body['data'] as Json[] | undefined);
-    return { ok: true, value: numberOr(data?.[0]?.[field]) } as const;
+    const answer = await get('events', { ...window, project, field, query, dataset }, EventsSchema);
+    if (!answer.ok) return answer;
+    return { ok: true, value: numberOr(answer.body.data[0]?.[field]) } as const;
   }
 
   async function sessionTotal(
@@ -111,46 +145,57 @@ export function createSentryApi({
     field: string,
     status?: string,
   ): Promise<SentryAnswer> {
-    const body = await get('sessions', {
-      ...window,
-      project: appProject,
-      field,
-      ...(status === undefined ? {} : { groupBy: 'session.status' }),
-    });
-    if (isAnswer(body)) return body;
-    const groups = Array.isArray(body) ? [] : ((body['groups'] as Json[] | undefined) ?? []);
+    const answer = await get(
+      'sessions',
+      {
+        ...window,
+        project: appProject,
+        field,
+        ...(status === undefined ? {} : { groupBy: 'session.status' }),
+      },
+      SessionsSchema,
+    );
+    if (!answer.ok) return answer;
+    const { groups } = answer.body;
     const group =
       status === undefined
         ? groups[0]
-        : groups.find((row) => (row['by'] as Json | undefined)?.['session.status'] === status);
-    const totals = group?.['totals'] as Json | undefined;
-    const value = numberOr(totals?.[field]);
+        : groups.find((row) => row.by?.['session.status'] === status);
+    const value = numberOr(group?.totals[field]);
     // No group of the status is none of them; a crash-free rate comes as a share, Якість shows percent.
     if (value === null) return { ok: true, value: status === undefined ? null : 0 };
     return { ok: true, value: field.startsWith('crash_free') ? value * 100 : value };
   }
 
   async function newIssues(window: Window): Promise<SentryAnswer> {
-    const body = await get('issues', {
-      project: appProject,
-      query: `firstSeen:>=${window.start} firstSeen:<=${window.end}`,
-      limit: '100',
-    });
-    if (isAnswer(body)) return body;
-    return { ok: true, value: Array.isArray(body) ? body.length : null };
+    const answer = await get(
+      'issues',
+      {
+        project: appProject,
+        query: `firstSeen:>=${window.start} firstSeen:<=${window.end}`,
+        limit: '100',
+      },
+      IssuesSchema,
+    );
+    if (!answer.ok) return answer;
+    return { ok: true, value: answer.body.length };
   }
 
   /** The most events of an app issue first seen in the window. */
   async function newIssueEvents(window: Window): Promise<SentryAnswer> {
-    const body = await get('issues', {
-      project: appProject,
-      query: `firstSeen:>=${window.start} firstSeen:<=${window.end}`,
-      sort: 'freq',
-      limit: '1',
-    });
-    if (isAnswer(body)) return body;
-    const top = Array.isArray(body) ? body[0] : undefined;
-    return { ok: true, value: top === undefined ? 0 : numberOr(Number(top['count'])) };
+    const answer = await get(
+      'issues',
+      {
+        project: appProject,
+        query: `firstSeen:>=${window.start} firstSeen:<=${window.end}`,
+        sort: 'freq',
+        limit: '1',
+      },
+      IssuesSchema,
+    );
+    if (!answer.ok) return answer;
+    const [top] = answer.body;
+    return { ok: true, value: top === undefined ? 0 : numberOr(Number(top.count)) };
   }
 
   /** The backend's transactions answered 5xx, in percent of all, or `null` with none. */

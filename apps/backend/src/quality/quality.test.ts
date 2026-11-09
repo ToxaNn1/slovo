@@ -31,10 +31,15 @@ async function backendWithOwner() {
 }
 
 /** A CI run on `main` as CI pushes it. */
-const runOf = (runId: number, daysAgo: number, failedTests: string[]) => ({
+const runOf = (
+  runId: number,
+  daysAgo: number,
+  failedTests: string[],
+  sha = `${String(runId)}abcdef0`,
+) => ({
   runId,
   at: new Date(Date.now() - daysAgo * DAY_MS).toISOString(),
-  sha: `${String(runId)}abcdef0`,
+  sha,
   tests: 120,
   failedTests,
   coverage: [{ package: '@slovo/core', lines: 90 + runId, branches: 80 + runId }],
@@ -53,21 +58,26 @@ const ci = { authorization: `Bearer ${TEST_CI_TOKEN}` };
 describe('the CI history', () => {
   it('keeps each run CI pushes once and answers coverage, flaky tests and durations over time', async () => {
     const backend = await backendWithOwner();
+    const failed = ['core > draws a card', 'core > breaks'];
     expect((await push(backend, runOf(2, 1, []), ci)).status).toBe(200);
-    expect((await push(backend, runOf(1, 2, ['core > draws a card']), ci)).status).toBe(200);
+    expect((await push(backend, runOf(1, 2, failed), ci)).status).toBe(200);
     expect((await push(backend, runOf(1, 2, ['another']), ci)).status).toBe(200);
     expect((await push(backend, runOf(3, 40, ['core > draws a card']), ci)).status).toBe(200);
+    // A re-run of run 1's commit passes one of its failed tests: that one is flaky.
+    const rerun = runOf(4, 1.5, ['core > breaks'], '1abcdef0');
+    expect((await push(backend, rerun, ci)).status).toBe(200);
 
     const { runs } = await backend.owner.client.admin.ciHistory({ period: '7d' });
 
-    expect(runs.map((run) => run.runId)).toEqual([1, 2]);
+    expect(runs.map((run) => run.runId)).toEqual([1, 4, 2]);
     expect(runs[0]).toMatchObject({
-      failedTests: ['core > draws a card'],
+      failedTests: failed,
       flakyTests: ['core > draws a card'],
       coverage: [{ package: '@slovo/core', lines: 91, branches: 81 }],
       jobs: [{ name: 'checks', seconds: 301 }],
     });
-    expect(runs[1]).toMatchObject({ flakyTests: [], jobs: [{ name: 'checks', seconds: 302 }] });
+    expect(runs[1]).toMatchObject({ flakyTests: [] });
+    expect(runs[2]).toMatchObject({ flakyTests: [], jobs: [{ name: 'checks', seconds: 302 }] });
   });
 
   it('refuses a push without the CI token, with an Агент token or an admin session', async () => {
