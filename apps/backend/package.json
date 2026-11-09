@@ -12,6 +12,7 @@
     "switches": "tsx --env-file-if-exists=.env src/edition/switches-command.ts",
     "import-content": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning src/content/import-command.ts",
     "admin": "tsx --env-file-if-exists=.env src/admin/admin-command.ts",
+    "cron": "tsx --env-file-if-exists=.env src/alerts/cron-command.ts",
     "reports": "tsx --env-file-if-exists=.env src/reports/reports-command.ts",
     "quote-check": "tsx --env-file-if-exists=.env src/content/quote-check-command.ts",
     "collection-links": "tsx --env-file-if-exists=.env src/collection-links/collection-links-command.ts",

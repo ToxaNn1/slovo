@@ -5,6 +5,8 @@ import { ResponseHeadersPlugin, type ResponseHeadersPluginContext } from '@orpc/
 import { apiContract } from '@slovo/contracts/api';
 import { apiDescriptionOptions } from '@slovo/contracts/api-description';
 import type {
+  AlertSettings,
+  AlertStore,
   Accounts,
   AdminAccess,
   AdminSignIn,
@@ -111,7 +113,12 @@ export function createApiHandler({
   mistakeReports: MistakeReports;
   ownerChecks: OwnerChecks;
   /** Якість, and the token CI pushes its history with. */
-  quality: { readonly quality: Quality; readonly ciToken: string | undefined };
+  quality: {
+    readonly quality: Quality;
+    readonly ciToken: string | undefined;
+    readonly alertSettings: AlertSettings;
+    readonly alertStore: AlertStore;
+  };
   /** The Editions the backend serves, as the admin lists them. */
   served: readonly Edition[];
   sync: Sync;

@@ -17,7 +17,7 @@ import type {
   Tip,
   Word,
 } from '@slovo/contracts';
-import type { Actor, Json } from '@slovo/server-core';
+import type { Actor, Alert, Json } from '@slovo/server-core';
 import { sql } from 'drizzle-orm';
 import {
   bigint,
@@ -25,6 +25,7 @@ import {
   boolean,
   check,
   date,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -556,3 +557,28 @@ export const ciRuns = pgTable(
   },
   (table) => [index('ci_runs_at_idx').on(table.at)],
 );
+
+/** The alert thresholds the owner changed from their defaults (Round 14, 5A). */
+export const alertThresholds = pgTable('alert_thresholds', {
+  key: text('key').primaryKey(),
+  value: doublePrecision('value').notNull(),
+});
+
+/** The alerts fired, kept for Огляд; a key fires once, a Kill switch has none. */
+export const alerts = pgTable(
+  'alerts',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    at: time('at'),
+    key: text('key').unique(),
+    alert: jsonb('alert').$type<Alert>().notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+  },
+  (table) => [index('alerts_at_idx').on(table.at)],
+);
+
+/** The daily digests sent, one per Kyiv day. */
+export const alertDigests = pgTable('alert_digests', {
+  day: date('day', { mode: 'string' }).primaryKey(),
+  sentAt: time('sent_at'),
+});

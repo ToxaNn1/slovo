@@ -2,6 +2,7 @@ import { CollectionLinkIdSchema, type AppConfig } from '@slovo/contracts';
 import {
   createAccounts,
   createAdminAccess,
+  createAlertSettings,
   createOwnerChecks,
   createAdminSignIn,
   createQuality,
@@ -38,6 +39,7 @@ import { createContentQueue } from './content/content-queue';
 import { createContentWrites } from './content/content-writes';
 import { createOwnerCheckStore } from './admin/owner-check-store';
 import { createCiRunStore } from './quality/ci-run-store';
+import { createAlertStore, createAlertThresholdStore } from './alerts/alert-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -246,6 +248,8 @@ export function createApp({
     quality: {
       quality: createQuality({ sentry, ciRuns: createCiRunStore(database), clock }),
       ciToken,
+      alertSettings: createAlertSettings({ store: createAlertThresholdStore(database), admin }),
+      alertStore: createAlertStore(database),
     },
     served: editions,
     sync,

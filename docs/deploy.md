@@ -28,6 +28,9 @@ Every variable the server reads at start, with the value it takes in the Deploym
 | `SENTRY_APP_PROJECT`       | The numeric id of the app's Sentry project.                                                                                                                                                                                                                                                                                            |
 | `SENTRY_BACKEND_PROJECT`   | The numeric id of the backend's Sentry project.                                                                                                                                                                                                                                                                                        |
 | `CI_HISTORY_TOKEN`         | Secret. The Bearer token of `POST /v1/admin/ci-runs`, which CI pushes its history with after each run on `main` (ADR 0095); make it with `openssl rand -base64 32` and give the same value to the GitHub Actions secret `CI_HISTORY_TOKEN`, with the backend's public URL as the secret `SLOVO_BACKEND_URL`. Empty refuses every push. |
+| `TELEGRAM_BOT_TOKEN`       | Secret. The token @BotFather gives the owner's alert bot. Empty keeps alerts for Огляд and only logs them.                                                                                                                                                                                                                             |
+| `TELEGRAM_CHAT_ID`         | The owner's Telegram chat id, the only chat the bot writes to; a message to any other chat never leaves.                                                                                                                                                                                                                               |
+| `BACKEND_HEALTH_URL`       | The Cron service only: the backend's public health URL it checks each run; empty skips the check.                                                                                                                                                                                                                                      |
 | `GITHUB_TOKEN`             | Secret. A fine-grained token on `ToxaNn1/slovo`, read-only: Pull requests, Actions, Contents, Issues, Metadata. Розробка reads GitHub with it; empty shows «GitHub недоступний».                                                                                                                                                       |
 | `GITHUB_REPOSITORY`        | Unset: `ToxaNn1/slovo`, the repository Розробка reads.                                                                                                                                                                                                                                                                                 |
 | `EXPO_TOKEN`               | Secret. An EAS robot token with read access to the app's project. Розробка reads the latest builds with it and never starts one (ADR 0004); empty shows «EAS недоступний».                                                                                                                                                             |
@@ -60,6 +63,18 @@ The quote check (ADR 0084) runs on the Deployment as a second Railway service, a
 | Restart  | Never: the command exits when done, and the next run comes on schedule |
 
 Its one variable is `DATABASE_URL`, a reference to the same Postgres. A save never waits for it: every create or edit of a Word, Correction, Idiom, Synonym Row or Tip leaves the record unverified, and the job checks the quoted text of each unverified record against its first source's page, through the sourcing cache in Postgres (a fetched page stands for 30 days). A quote it does not find is flagged for the Content queue with the finding, and the record stays live. A page it cannot fetch leaves the record unverified for the next run. Imported records count as checked, since CI ran `pnpm content verify` on them, and a record with no source page is not checked. The admin content report gives the counts of unverified and failed records.
+
+## The alerts Cron service
+
+The owner's alerts and daily digest (spec #1709) run as a third Railway service, a Cron service on the same image: `railway.cron.json` holds its settings.
+
+| Setting  | Value                                                                  |
+| -------- | ---------------------------------------------------------------------- |
+| Command  | `pnpm cron`                                                            |
+| Schedule | `*/15 * * * *`: every 15 minutes, UTC                                  |
+| Restart  | Never: the command exits when done, and the next run comes on schedule |
+
+Its variables are references to the backend's: `DATABASE_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, the `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_APP_PROJECT` and `SENTRY_BACKEND_PROJECT` of Якість, the `POSTHOG_*` of Аналітика, and `BACKEND_HEALTH_URL`, the backend's public `/health` URL. Each run checks the thresholds the owner sets in the admin (crash-free sessions, new Sentry issues, red CI on `main`, API 5xx, the activity drop, the backend's health, the size of open content batches), keeps each alert once for Огляд, and sends the unsent ones to the owner's chat. The first run after 09:00 Kyiv sends the digest of yesterday. A message that does not leave stays unsent for the next run, for 24 hours. A Kill switch alert does not wait for the Cron service: the backend sends it at once.
 
 ## Building the Language Pack from the snapshot
 

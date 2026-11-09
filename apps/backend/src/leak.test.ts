@@ -461,6 +461,17 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
             })
             .catch(refused);
         },
+        alertThresholds: async () => {
+          await client.admin.alertThresholds().catch(refused);
+        },
+        setAlertThreshold: async () => {
+          await client.admin
+            .setAlertThreshold({ key: 'crashFree', value: 99, reason: 'noisy' })
+            .catch(refused);
+        },
+        latestAlerts: async () => {
+          await client.admin.latestAlerts().catch(refused);
+        },
       },
       collectionLinks: {
         create: async () => {

@@ -44,6 +44,7 @@ import {
   type Mail,
   type Mailer,
   type Random,
+  type SentryAlertRead,
   type SentryRead,
   type SentryReader,
   type SentryWindow,
@@ -744,11 +745,11 @@ export const TEST_CI_TOKEN = 'a-test-ci-history-token-of-32-characters-at-least'
 /** A Sentry that answers the numbers a test sets, and counts the reads it was asked. */
 export interface FakeSentry extends SentryReader {
   /** The number every later read of the kind answers, for a window ending at or before `until` (now unless given). */
-  set(read: SentryRead, value: number | null, window?: 'now' | 'yesterday'): void;
+  set(read: SentryRead | SentryAlertRead, value: number | null, window?: 'now' | 'yesterday'): void;
   /** Every later read answers rate-limited until the time, or answers again when `undefined`. */
   limit(retryAt: Date | undefined): void;
   /** The windows of the reads asked, oldest first. */
-  readonly asked: readonly ({ readonly read: SentryRead } & SentryWindow)[];
+  readonly asked: readonly ({ readonly read: SentryRead | SentryAlertRead } & SentryWindow)[];
 }
 
 /**
@@ -758,7 +759,7 @@ export interface FakeSentry extends SentryReader {
  */
 export function createFakeSentry(): FakeSentry {
   const numbers = new Map<string, number | null>();
-  const asked: ({ read: SentryRead } & SentryWindow)[] = [];
+  const asked: ({ read: SentryRead | SentryAlertRead } & SentryWindow)[] = [];
   let limitedUntil: Date | undefined;
   return {
     asked,

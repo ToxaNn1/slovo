@@ -8,7 +8,7 @@ import { systemClock } from '@slovo/server-core';
 import { createAppleVerifier } from './account/apple-verifier';
 import { createGoogleVerifier } from './account/google-verifier';
 import { createSmtpMailer } from './account/smtp-mailer';
-import { createLoggedAlerts } from './admin/logged-alerts';
+import { ownerAlertsOf } from './alerts/owner-chat';
 import { createApp } from './app';
 import { readConfig, ServerConfigSchema } from './config';
 import { createDatabase } from './database/database';
@@ -17,7 +17,7 @@ import { createGitHubSource } from './development/github-source';
 import { readEditions } from './edition/edition-folders';
 import { createLogger } from './logger';
 import { systemRandom } from './random';
-import { createSentryApi, unsetSentry } from './quality/sentry-api';
+import { sentryOf } from './quality/sentry-api';
 import { createSentryReporter } from './sentry-reporter';
 import { createPostHogClient, unavailablePostHog } from './analytics/posthog-client';
 import { startServer } from './server';
@@ -38,7 +38,7 @@ const app = createApp({
   app: appConfig,
   editions,
   mailer,
-  alerts: createLoggedAlerts(logger),
+  alerts: ownerAlertsOf(database, logger),
   posthog: config.posthog === undefined ? unavailablePostHog : createPostHogClient(config.posthog),
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   apple: createAppleVerifier({ clock: systemClock }),
@@ -52,18 +52,7 @@ const app = createApp({
   reporter: await createSentryReporter(config.SENTRY_DSN),
   trustedProxyHops: config.TRUSTED_PROXY_HOPS,
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
-  sentry:
-    config.SENTRY_AUTH_TOKEN === undefined ||
-    config.SENTRY_ORG === undefined ||
-    config.SENTRY_APP_PROJECT === undefined ||
-    config.SENTRY_BACKEND_PROJECT === undefined
-      ? unsetSentry
-      : createSentryApi({
-          token: config.SENTRY_AUTH_TOKEN,
-          org: config.SENTRY_ORG,
-          appProject: config.SENTRY_APP_PROJECT,
-          backendProject: config.SENTRY_BACKEND_PROJECT,
-        }),
+  sentry: sentryOf(config),
   ciToken: config.CI_HISTORY_TOKEN,
 });
 const server = await startServer({ app, database, port: config.PORT });

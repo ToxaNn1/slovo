@@ -93,6 +93,13 @@ const ServerVariablesSchema = z.object({
   // The Bearer token CI pushes its history with (ADR 0095); unset, every push
   // is refused.
   CI_HISTORY_TOKEN: unsetWhenEmpty(z.string().min(32, 'must be at least 32 characters')),
+  // The Telegram bot that tells the owner of alerts and the daily digest, and
+  // the owner's chat id, the only chat it writes to; unset, alerts are kept
+  // for Огляд and logged.
+  TELEGRAM_BOT_TOKEN: unsetWhenEmpty(z.string().min(1)),
+  TELEGRAM_CHAT_ID: unsetWhenEmpty(z.string().regex(/^-?\d+$/, 'must be a numeric chat id')),
+  // The backend's health URL the Cron service checks; unset, it is not checked.
+  BACKEND_HEALTH_URL: unsetWhenEmpty(z.url()),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
   // Docker; 1 behind Railway's proxy.
@@ -106,6 +113,25 @@ const ServerVariablesSchema = z.object({
   // The folder that holds one folder per Edition (ADR 0035).
   EDITIONS_DIR: z.string().min(1).default(EDITIONS_DIR),
 });
+
+/** The options of PostHog's query API, or none while its key or project is unset. */
+function posthogOf({
+  POSTHOG_PERSONAL_API_KEY,
+  POSTHOG_PROJECT_ID,
+  POSTHOG_HOST,
+}: {
+  POSTHOG_PERSONAL_API_KEY?: string | undefined;
+  POSTHOG_PROJECT_ID?: string | undefined;
+  POSTHOG_HOST?: string | undefined;
+}) {
+  return POSTHOG_PERSONAL_API_KEY === undefined || POSTHOG_PROJECT_ID === undefined
+    ? undefined
+    : {
+        apiKey: POSTHOG_PERSONAL_API_KEY,
+        projectId: POSTHOG_PROJECT_ID,
+        host: POSTHOG_HOST ?? 'https://eu.posthog.com',
+      };
+}
 
 /**
  * The environment the server reads at start, with the SMTP settings gathered
@@ -140,14 +166,7 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     ...rest
   }) => ({
     ...rest,
-    posthog:
-      POSTHOG_PERSONAL_API_KEY === undefined || POSTHOG_PROJECT_ID === undefined
-        ? undefined
-        : {
-            apiKey: POSTHOG_PERSONAL_API_KEY,
-            projectId: POSTHOG_PROJECT_ID,
-            host: POSTHOG_HOST ?? 'https://eu.posthog.com',
-          },
+    posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
     smtp: {
       host: SMTP_HOST ?? 'localhost',
       port: SMTP_PORT ?? 1025,
@@ -163,6 +182,31 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
 
 /** The environment the migrate and reports commands read. */
 export const MigrateConfigSchema = ServerVariablesSchema.pick({ DATABASE_URL: true });
+
+/** The Telegram bot of the owner's alerts, read by the server and every command that alerts. */
+export const TelegramConfigSchema = ServerVariablesSchema.pick({
+  TELEGRAM_BOT_TOKEN: true,
+  TELEGRAM_CHAT_ID: true,
+});
+
+/** The environment the Cron service's `pnpm cron` reads. */
+export const CronConfigSchema = ServerVariablesSchema.pick({
+  DATABASE_URL: true,
+  EDITIONS_DIR: true,
+  POSTHOG_PERSONAL_API_KEY: true,
+  POSTHOG_PROJECT_ID: true,
+  POSTHOG_HOST: true,
+  SENTRY_AUTH_TOKEN: true,
+  SENTRY_ORG: true,
+  SENTRY_APP_PROJECT: true,
+  SENTRY_BACKEND_PROJECT: true,
+  TELEGRAM_BOT_TOKEN: true,
+  TELEGRAM_CHAT_ID: true,
+  BACKEND_HEALTH_URL: true,
+}).transform(({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST, ...rest }) => ({
+  ...rest,
+  posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
+}));
 
 /** The environment the publish command reads. */
 export const PublishConfigSchema = ServerVariablesSchema.pick({

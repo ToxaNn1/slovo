@@ -476,9 +476,16 @@ export type SentryAnswer =
   | { readonly ok: false; readonly reason: 'unavailable' }
   | { readonly ok: false; readonly reason: 'rate-limited'; readonly retryAt: Date };
 
-/** Reads Sentry's numbers for Якість. */
+/**
+ * What the alert checks read of Sentry besides Якість's reads: the most
+ * events of an issue first seen in the window, and the backend's share of
+ * 5xx answers in percent.
+ */
+export type SentryAlertRead = 'newIssueEvents' | 'backendErrorRate';
+
+/** Reads Sentry's numbers for Якість and the alert checks. */
 export interface SentryReader {
-  read(read: SentryRead, window: SentryWindow): Promise<SentryAnswer>;
+  read(read: SentryRead | SentryAlertRead, window: SentryWindow): Promise<SentryAnswer>;
 }
 
 /** The coverage of one package in one CI run, in percent. */
