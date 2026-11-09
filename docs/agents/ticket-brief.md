@@ -9,7 +9,7 @@ Cost = steps × context. Every step resends the whole session, so a step costs a
 - `CLAUDE.md` (project): glossary, ADRs, language, git, code rules. `CONTEXT.md` and `docs/adr/` override everything, including the ticket. Read them with `grep` for the terms and ADR numbers your ticket names (`docs/adr/README.md` has one line per ADR); never read `CONTEXT.md` or an ADR whole unless the ticket is about it. If the ticket conflicts with the glossary or an ADR, stop and report it.
 - Ticket: `gh issue view <n>` once. Its **Result** checklist is the definition of done. Do not read the version spec: its Testing Decisions are quoted in the launch message; the seams named there are the only ones to test through, the rest only as needed. Where there is behaviour, write the test first.
 - Only if you touch a screen, component or hook in `apps/mobile` or `packages/ui`: read `docs/react-native.md` first, and load the `expo-overview` skill if it is available.
-- Load the skills `tdd` and, if you design an interface, `codebase-design` when they are available; otherwise work test-first anyway.
+- Load the skills `mattpocock-skills:tdd` and, if you design an interface, `mattpocock-skills:codebase-design` when they are available; otherwise work test-first anyway.
 - The integration branch already holds `main` and every ticket of this spec merged so far: build on it, add no parallel paths.
 - ADRs: a change to a decision goes into the existing ADR file, rewritten as the decision in force. A new ADR takes the next free number above the highest on the integration branch and `origin/main` when you write it, unless the ticket names a reserved number.
 

@@ -20,7 +20,7 @@ The short map. `README.md` is for people; grep it for one section when you need 
 | `tools/content`          | Writes Entries through the write API, checks them (`pnpm content`). |
 | `scripts/content-wave`   | The content wave launcher and two page helpers.                     |
 | `docs/adr/`              | Decisions; `docs/adr/README.md` has one line per ADR.               |
-| `docs/agents/`           | This map, the ticket brief, spec and content waves, test states.    |
+| `docs/agents/`           | This map, ticket brief, waves, test states, agent-skills config.    |
 | `docs/research/`         | Research behind a decision not yet taken, one dated file each.      |
 
 Truth: `CONTEXT.md` (glossary) and `docs/adr/` override everything. Read both with `grep -n`, never whole.
