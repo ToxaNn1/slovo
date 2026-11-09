@@ -26,7 +26,7 @@ function correction(
     retired = false,
   }: {
     nonStandardForm?: string;
-    standardEquivalents?: string[];
+    standardEquivalents?: Correction['standardEquivalents'];
     sentence?: string;
     retired?: boolean;
   } = {},

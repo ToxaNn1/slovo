@@ -24,6 +24,7 @@ const word: EntryRowModel = {
   labelKey: 'word',
   spoken: 'candid, Open and honest.',
   partOfSpeech: 'adjective',
+  gender: undefined,
   registers: [],
   rarity: 3,
 };

@@ -24,7 +24,7 @@ function correction(
   }: {
     correctionType?: CorrectionType;
     nonStandardForm?: string;
-    standardEquivalents?: string[];
+    standardEquivalents?: Correction['standardEquivalents'];
     sentence?: string;
   } = {},
 ): Correction {
