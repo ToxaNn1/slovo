@@ -86,7 +86,19 @@ jobs:
       matrix:
         part:
           - { name: Core, run: 'pnpm test --filter=@slovo/core' }
-          - { name: UI, run: 'pnpm test --filter=@slovo/ui' }
+          # The UI's Vitest and Jest tests, cut in three like the app's.
+          - {
+              name: UI 1/3,
+              run: 'pnpm --filter=@slovo/ui exec vitest run --shard=1/3 && pnpm --filter=@slovo/ui exec jest --shard=1/3',
+            }
+          - {
+              name: UI 2/3,
+              run: 'pnpm --filter=@slovo/ui exec vitest run --shard=2/3 && pnpm --filter=@slovo/ui exec jest --shard=2/3',
+            }
+          - {
+              name: UI 3/3,
+              run: 'pnpm --filter=@slovo/ui exec vitest run --shard=3/3 && pnpm --filter=@slovo/ui exec jest --shard=3/3',
+            }
           # The other packages but the backend, whose tests need Postgres: the
           # job "Backend" runs them.
           - name: other packages
