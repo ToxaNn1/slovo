@@ -28,7 +28,7 @@ const REFUSALS: Readonly<Record<string, string>> = {
 const when = (iso: string) =>
   new Date(iso).toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
 
-const inputClass = 'h-9 rounded-md border border-border bg-surface px-3 text-sm';
+const inputClass = 'h-9 rounded-lg border border-border bg-background px-3 text-sm';
 
 /** What the Власник reads of a refused write. */
 function refusalOf(error: unknown): string {
@@ -92,7 +92,10 @@ function OwnerSecurity({ email }: { email: string }) {
   return (
     <section aria-label="Безпека" className="flex flex-col gap-8">
       <div className="flex items-baseline justify-between gap-4">
-        <Link to="/sessions" className="text-sm underline">
+        <Link
+          to="/sessions"
+          className="rounded-lg bg-sunk px-3 py-1.5 text-[12.5px] text-foreground no-underline hover:bg-border"
+        >
           Мої сесії
         </Link>
       </div>
@@ -158,7 +161,7 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
           return (
             <li
               key={person.email}
-              className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+              className="flex flex-wrap items-center gap-3 rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm"
             >
               <span className="grow">
                 {person.email} · {ROLE_LABELS[person.role]}
@@ -170,7 +173,7 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
                 <>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => {
                       confirm({
                         title: `Зробити ${person.email} ${ROLE_LABELS[other]}ом?`,
@@ -184,7 +187,7 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="danger"
                     onClick={() => {
                       confirm({
                         title: `Забрати доступ у ${person.email}?`,
@@ -259,16 +262,13 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
   return (
     <Block title="Токени Агентів">
       {issued === null ? null : (
-        <div
-          role="status"
-          className="flex flex-col gap-2 rounded-lg border border-border bg-muted px-4 py-3 text-sm"
-        >
+        <div role="status" className="flex flex-col gap-2 rounded-[14px] bg-sunk px-4 py-3 text-sm">
           <p>Токен Агента {issued.name}. Його видно лише зараз: скопіюйте і збережіть.</p>
           <code className="break-all font-mono">{issued.token}</code>
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary"
               onClick={() => {
                 void navigator.clipboard.writeText(issued.token);
               }}
@@ -291,7 +291,7 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
         {(tokens.data?.tokens ?? []).map((token) => (
           <li
             key={token.name}
-            className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+            className="flex flex-wrap items-center gap-3 rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm"
           >
             <span className="grow">
               {token.name} · видано {when(token.createdAt)}
@@ -300,7 +300,7 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
             {token.revokedAt === null ? (
               <Button
                 size="sm"
-                variant="outline"
+                variant="danger"
                 onClick={() => {
                   confirm({
                     title: `Відкликати токен Агента ${token.name}?`,
@@ -393,7 +393,7 @@ function ThresholdForm({
     <form
       aria-label={`Поріг: ${label}`}
       onSubmit={onChange}
-      className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+      className="flex flex-wrap items-end gap-3 rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm"
     >
       <label className="flex grow flex-col gap-1">
         {label}
@@ -409,7 +409,7 @@ function ThresholdForm({
       <span className="flex h-9 min-w-24 items-center text-muted-foreground">
         Типово {number(threshold.default)}
       </span>
-      <Button type="submit" variant="outline" disabled={!valid || value === threshold.value}>
+      <Button type="submit" variant="secondary" disabled={!valid || value === threshold.value}>
         Змінити поріг
       </Button>
     </form>

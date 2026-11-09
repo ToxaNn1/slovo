@@ -40,7 +40,7 @@ export function OwnerChecks() {
           <section
             key={version}
             aria-labelledby={`owner-checks-${version}`}
-            className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5"
+            className="flex flex-col gap-3 rounded-2xl bg-surface shadow-panel p-5"
           >
             <header className="flex items-baseline justify-between gap-4">
               <h3 id={`owner-checks-${version}`} className="font-display text-base font-semibold">

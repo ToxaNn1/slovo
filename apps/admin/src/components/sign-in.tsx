@@ -114,7 +114,7 @@ export function SignIn() {
         {step.enrolment === undefined ? (
           <Button
             type="button"
-            variant="outline"
+            variant="secondary"
             onClick={() => {
               setRecovery(!recovery);
             }}
@@ -130,7 +130,7 @@ export function SignIn() {
     <main className="flex min-h-screen items-center justify-center bg-background p-8 font-sans text-foreground">
       <section
         aria-labelledby="sign-in-title"
-        className="flex w-full max-w-sm flex-col gap-4 rounded-2xl border border-border bg-surface p-6"
+        className="flex w-full max-w-sm flex-col gap-4 rounded-[18px] bg-surface p-6 shadow-panel"
       >
         <h1 id="sign-in-title" className="font-display text-xl font-semibold">
           Вхід до SLOVO Admin

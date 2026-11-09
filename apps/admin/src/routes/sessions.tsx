@@ -29,7 +29,7 @@ function Sessions() {
         {(sessions.data?.sessions ?? []).map((session) => (
           <li
             key={session.createdAt}
-            className="rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+            className="rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm"
           >
             Вхід {when(session.createdAt)} · остання дія {when(session.lastSeenAt)}
             {session.current ? ' · ця сесія' : ''}
@@ -38,7 +38,7 @@ function Sessions() {
       </ul>
       <div>
         <Button
-          variant="outline"
+          variant="secondary"
           disabled={everywhere.isPending}
           onClick={() => {
             everywhere.mutate();

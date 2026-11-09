@@ -61,7 +61,7 @@ function Block({
     <li className="flex">
       <section
         aria-label={title}
-        className="flex flex-1 flex-col gap-2 rounded-2xl border border-border bg-surface p-5"
+        className="flex flex-1 flex-col gap-2 rounded-2xl bg-surface shadow-panel p-5"
       >
         <h2 className="text-sm text-muted-foreground">{title}</h2>
         {read.state === 'unavailable' ? (

@@ -58,7 +58,7 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="flex w-full max-w-md flex-col gap-4 rounded-2xl border border-border bg-surface p-6"
+        className="flex w-full max-w-[520px] flex-col gap-4 rounded-[20px] bg-surface p-6 shadow-[0_24px_70px_rgb(0_0_0/0.3)]"
       >
         <h2 id={titleId} className="font-display text-lg font-semibold">
           {title}
@@ -68,7 +68,7 @@ export function ConfirmDialog({
           <span>Причина</span>
           <textarea
             id={reasonId}
-            className="min-h-20 rounded-lg border border-border bg-surface p-2"
+            className="min-h-16 rounded-xl border border-border bg-background px-3 py-2.5 text-[13.5px]"
             maxLength={500}
             value={reason}
             onChange={(event) => {
@@ -82,7 +82,7 @@ export function ConfirmDialog({
           </p>
         )}
         <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="secondary" onClick={onClose}>
             Скасувати
           </Button>
           <Button disabled={busy || reason.trim() === ''} onClick={confirm}>

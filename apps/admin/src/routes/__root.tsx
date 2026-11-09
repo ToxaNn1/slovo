@@ -48,7 +48,7 @@ function Layout() {
         <p role="alert" className="text-sm text-destructive">
           Не вдалося. Спробуйте ще раз.
         </p>
-        <Button variant="outline" onClick={session.retry}>
+        <Button variant="secondary" onClick={session.retry}>
           Спробувати ще раз
         </Button>
       </main>
@@ -74,7 +74,7 @@ function Layout() {
             <Logo withName={false} />
             <strong className="flex-1 font-display text-[15px] font-medium">{heading.title}</strong>
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               aria-expanded={menuOpen}
               onClick={() => {

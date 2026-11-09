@@ -85,7 +85,7 @@ function freshness(kpis: Kpis): string | undefined {
 
 function Notice({ children }: { readonly children: ReactNode }) {
   return (
-    <p role="status" className="rounded-lg border border-border bg-surface px-4 py-3 text-sm">
+    <p role="status" className="rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm">
       {children}
     </p>
   );
@@ -105,7 +105,7 @@ function Tile({
   return (
     <li
       aria-label={title}
-      className="flex flex-col gap-1 rounded-xl border border-border bg-surface px-4 py-3"
+      className="flex flex-col gap-1 rounded-[14px] bg-surface shadow-panel px-4 py-3"
     >
       <span className="text-sm text-muted-foreground">{title}</span>
       <TileValue kpi={kpi} unit={unit} isNewIssues={id === 'newIssues'} />
@@ -205,7 +205,7 @@ function Chart({
   return (
     <figure
       aria-label={title}
-      className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4"
+      className="flex flex-col gap-3 rounded-[14px] bg-surface shadow-panel p-4"
     >
       <figcaption className="font-display font-medium">{title}</figcaption>
       {children === null ? (

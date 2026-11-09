@@ -25,7 +25,7 @@ const FEATURES: readonly FeatureSwitch[] = FeatureSwitchesSchema.keyof().options
 const SWITCHES_KEY = ['switches'] as const;
 
 const selectClass =
-  'h-9 rounded-lg border border-border bg-surface px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring';
+  'h-9 rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring';
 
 /** A write the admin is confirming. */
 type Pending =
@@ -121,7 +121,7 @@ export function SwitchesScreen() {
         />
       ) : null}
 
-      <div className="overflow-x-auto rounded-2xl border border-border bg-surface">
+      <div className="overflow-x-auto rounded-2xl bg-surface shadow-panel">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border text-left">
@@ -267,7 +267,7 @@ function KillSwitch({
   return (
     <section
       aria-labelledby="kill-switch-title"
-      className="flex flex-col gap-3 rounded-2xl border border-destructive/40 bg-surface p-4 sm:flex-row sm:items-end"
+      className="flex flex-col gap-3 rounded-[18px] bg-surface p-5 shadow-[0_0_0_1.5px_var(--destructive)] sm:flex-row sm:items-end"
     >
       <div className="flex flex-col gap-1">
         <h2 id="kill-switch-title" className="font-display text-lg font-semibold">

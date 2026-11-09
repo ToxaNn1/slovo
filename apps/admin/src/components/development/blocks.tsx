@@ -20,7 +20,7 @@ function Block({ title, children }: { readonly title: string; readonly children:
   return (
     <section
       aria-labelledby={id}
-      className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-5"
+      className="flex flex-col gap-3 rounded-2xl bg-surface shadow-panel p-5"
     >
       <h3 id={id} className="font-display text-base font-semibold">
         {title}
@@ -55,7 +55,7 @@ export function Source({
       ) : (
         <div
           role="status"
-          className="rounded-2xl border border-dashed border-destructive p-6 text-center"
+          className="flex flex-col items-start gap-1.5 rounded-2xl bg-surface p-5 shadow-panel"
         >
           <p className="font-medium text-destructive">{name} недоступний</p>
         </div>

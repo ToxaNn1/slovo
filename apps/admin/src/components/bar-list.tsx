@@ -21,7 +21,7 @@ export function BarList({
   return (
     <figure
       aria-label={label}
-      className="flex flex-col gap-3 rounded-2xl border border-border bg-surface p-4"
+      className="flex flex-col gap-3 rounded-2xl bg-surface shadow-panel p-4"
     >
       <figcaption className="font-display text-base font-medium">{label}</figcaption>
       {rows.length === 0 ? (
