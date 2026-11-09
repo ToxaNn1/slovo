@@ -15,20 +15,14 @@ import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { PressedTile } from '../primitives/PressedTile';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { minTouchTarget, space, typeStyle } from '../tokens';
+import { minTouchTarget, space, typeStyle, vowelButtonsLayout } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
-/** A vowel tile's width, narrower than the touch target so a long Word fits the SE; its hit slop makes up the rest. */
-const VOWEL_WIDTH = 38;
-/** A vowel tile's height, the board's. */
-const VOWEL_HEIGHT = 62;
 /** How a wrong tap drops: down, tilted and faded, the board's `slDrop`. */
 const VOWEL_DROP = { translateY: 12, rotate: -6, opacity: 0.55 };
 /** How a right vowel pops, the board's `slPop`: its scale at the start, 60 % and the end. */
 const VOWEL_POP = [0.6, 1.12, 1];
-const VOWEL_SLOP = (minTouchTarget - VOWEL_WIDTH) / 2;
-/** The gap between the Word's letters, which leaves the vowel buttons apart. */
-const LETTER_GAP = 2;
+const VOWEL_SLOP = (minTouchTarget - vowelButtonsLayout.width) / 2;
 /** How far the largest text sizes of iOS may scale a letter, so the Word keeps its shape. */
 const LETTER_MAX_FONT_SCALE = 1.3;
 /** Whether a character is a letter, which counts for a vowel's place, unlike an apostrophe or a hyphen. */
@@ -218,13 +212,13 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: LETTER_GAP,
+    gap: vowelButtonsLayout.letterGap,
     paddingVertical: space[2],
   },
   letter: { textAlign: 'center' },
   vowel: {
-    minHeight: VOWEL_HEIGHT,
-    minWidth: VOWEL_WIDTH,
+    minHeight: vowelButtonsLayout.height,
+    minWidth: vowelButtonsLayout.width,
     alignItems: 'center',
     justifyContent: 'center',
   },

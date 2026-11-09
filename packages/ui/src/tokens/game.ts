@@ -215,3 +215,42 @@ export const crossingCrosswordLayout = {
 
 /** The «Знаю» and «Не знаю» pair: two equal columns across the card's width (XActions). */
 export const knowledgePair = { gap: 10 } as const;
+
+/**
+ * The Ordered chips mode (board 07): a place of the answer line, the
+ * design's slot, with its height and border; a chip among the shuffled
+ * ones, the design's letter tile, with its height, width and corner; the gap
+ * between the chips, and between the answer line and the chips.
+ */
+export const orderedChipsLayout = {
+  slotHeight: 64,
+  slotBorder: 3,
+  chipHeight: 60,
+  chipWidth: 54,
+  chipRadius: 14,
+  chipGap: 8,
+  lineGap: 22,
+} as const;
+
+/**
+ * The pairs grid: a cell's height and corner, the design's pairs tile,
+ * above the 44 pt touch target, and the gap between the columns and between
+ * the cells of a column.
+ */
+export const pairsGridLayout = { cellHeight: 70, cellRadius: 16, cellGap: 12 } as const;
+
+/**
+ * The vowel buttons: a tile's width, narrower than the touch target so a
+ * long Word fits the SE (its hit slop makes up the rest), and its height,
+ * the board's; the gap between the Word's letters, which leaves the buttons apart.
+ */
+export const vowelButtonsLayout = { width: 38, height: 62, letterGap: 2 } as const;
+
+/**
+ * The Game timer: the height of its skewed bar, from the design, and the
+ * seconds' width, so the bar keeps its length as they count down.
+ */
+export const gameTimerLayout = { barHeight: 10, secondsWidth: 40 } as const;
+
+/** A blank of the typed answer: its width and the thickness of the line it stands on. */
+export const typedAnswerLayout = { blankWidth: 28, blankLine: 2 } as const;

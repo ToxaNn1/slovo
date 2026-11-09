@@ -2,12 +2,9 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
-import { minTouchTarget, roundLayout, space, typeStyle } from '../tokens';
+import { minTouchTarget, roundLayout, space, typeStyle, typedAnswerLayout } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
-/** A blank's width and the thickness of the line it stands on. */
-const BLANK_WIDTH = 28;
-const BLANK_LINE = 2;
 /** How far the largest text sizes of iOS may scale a blank's letter, so the row keeps its shape. */
 const BLANK_MAX_FONT_SCALE = 1.5;
 
@@ -170,7 +167,11 @@ const styles = StyleSheet.create({
     gap: roundLayout.tightGap,
     paddingVertical: space[2],
   },
-  blank: { minWidth: BLANK_WIDTH, alignItems: 'center', borderBottomWidth: BLANK_LINE },
+  blank: {
+    minWidth: typedAnswerLayout.blankWidth,
+    alignItems: 'center',
+    borderBottomWidth: typedAnswerLayout.blankLine,
+  },
   letter: { textAlign: 'center' },
   box: {
     minHeight: minTouchTarget + space[2],
