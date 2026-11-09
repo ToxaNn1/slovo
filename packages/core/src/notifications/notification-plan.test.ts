@@ -1149,6 +1149,42 @@ describe('the evening notification', () => {
     });
   });
 
+  it('plans again on a later change after the device failed to take the plan an XP change made, with nothing rejected unhandled', async () => {
+    const fake = createFakeNotificationScheduler();
+    let failing = false;
+    let failed = 0;
+    const scheduler: FakeNotificationScheduler = {
+      ...fake,
+      get plan() {
+        return fake.plan;
+      },
+      replacePlan(plan) {
+        if (!failing) return fake.replacePlan(plan);
+        failed += 1;
+        return Promise.reject(new Error('The device took no plan'));
+      },
+    };
+    const records = new Map([
+      goalSet,
+      [
+        'history.w_000',
+        JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
+      ],
+    ]);
+    const { app } = await run({ evening: true, records, scheduler });
+
+    failing = true;
+    await app.xpLog.setDailyGoal(1);
+    await vi.waitFor(() => {
+      expect(failed).toBe(1);
+    });
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
+
+    failing = false;
+    await app.notifications.setSound(false);
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBeUndefined();
+  });
+
   it('sends neither the Streak warning nor the goal reminder while the reader hides the counters', async () => {
     const records = new Map([
       ...activeOn(sevenDays),
