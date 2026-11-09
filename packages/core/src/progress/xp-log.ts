@@ -180,6 +180,13 @@ export interface XpLog {
    * calls nothing. Returns the call that stops it.
    */
   subscribeGoalMet(listener: () => void): () => void;
+  /**
+   * Calls `listener` once when a learning action reaches a new Level, with
+   * the Level reached: the celebration's trigger. A log opened over a Level
+   * already reached, as after a sync, calls nothing. Returns the call that
+   * stops it.
+   */
+  onLevelReached(listener: (level: LevelState) => void): () => void;
 }
 
 /** The award of an action that earns nothing: no change to write, nothing to make in memory. */
@@ -276,6 +283,7 @@ export async function openXpLog({
   }
   const subscribers = createSubscribers<XpLogChange>();
   const goalMetSubscribers = createSubscribers();
+  const levelReachedSubscribers = createSubscribers<LevelState>();
   /** Tells the records of one session apart when the clock and the random source stand still. */
   let sequence = 0;
 
@@ -510,11 +518,15 @@ export async function openXpLog({
     const before = derived.state.level?.level;
     derived = derive();
     const { state } = derived;
-    const after = state.level?.level;
-    if (before !== undefined && after !== undefined && after > before) {
-      void analytics.track('levelReached', { level: after }).catch(() => undefined);
+    const reached =
+      before !== undefined && state.level !== undefined && state.level.level > before
+        ? state.level
+        : undefined;
+    if (reached !== undefined) {
+      void analytics.track('levelReached', { level: reached.level }).catch(() => undefined);
     }
     subscribers.tell(cause);
+    if (reached !== undefined) levelReachedSubscribers.tell(reached);
     if (state.dailyGoal?.met === true && !wasMet && derived.date === previousDate) {
       // Met by setting the goal, today is met but nothing celebrates.
       if (cause !== 'daily-goal-set') goalMetSubscribers.tell();
@@ -805,5 +817,6 @@ export async function openXpLog({
     dayOf,
     setDailyGoal,
     subscribeGoalMet: goalMetSubscribers.subscribe,
+    onLevelReached: levelReachedSubscribers.subscribe,
   };
 }

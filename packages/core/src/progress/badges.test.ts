@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { openComposition, type AnalyticsPort, type FeatureSwitch, type XpRecord } from '../index';
+import {
+  openComposition,
+  type AnalyticsPort,
+  type BadgeState,
+  type FeatureSwitch,
+  type XpRecord,
+} from '../index';
 import type { Badge } from '@slovo/contracts';
 
 import { createMemoryContentPort } from '../testing';
@@ -243,6 +249,50 @@ describe('the Badges', () => {
     const later = (await run({ records, on: '2026-10-30' })).app;
     expect(later.knowledge.state.confirmed.total).toBe(0);
     expect(progressOf(later, 'confirmed-3')).toMatchObject({ earned: true, date: '2026-10-14' });
+  });
+
+  // Review ticket T-mobile-6: the Core tells a Badge earned, so no app diffs Badges.
+  describe('a Badge earned', () => {
+    it('is told once, as the earned Badge, by the learning action that earns it', async () => {
+      const { app } = await run();
+      const told: BadgeState[] = [];
+      app.badges.onEarned((badge) => told.push(badge));
+      await app.knowledge.confirm('w_0');
+      const second = checked(app);
+      await app.knowledge.confirm('w_1');
+      await second;
+      expect(told).toEqual([]);
+
+      const third = checked(app);
+      await app.knowledge.confirm('w_2');
+      await third;
+      const fourth = checked(app);
+      await app.knowledge.confirm('w_3');
+      await fourth;
+
+      expect(told).toEqual([
+        expect.objectContaining({
+          id: 'confirmed-3',
+          earned: true,
+          date: '2026-10-14',
+          isNew: true,
+        }),
+      ]);
+    });
+
+    it('is not told for a Badge the Badges opened with, as after a sync, nor by a later check', async () => {
+      const three = await readerWith(xp('2026-10-12', 5), xp('2026-10-13', 5), xp('2026-10-14', 5));
+      const { app } = await run({ records: three });
+      const told: string[] = [];
+      app.badges.onEarned(({ id }) => told.push(id));
+      expect(earned(app)).toMatchObject({ 'streak-3': '2026-10-14' });
+
+      const next = checked(app);
+      await app.knowledge.confirm('w_0');
+      await next;
+
+      expect(told).toEqual([]);
+    });
   });
 
   // Spec #1641, ticket #1644, ADR 0085: a flawless Game and a run of right answers.

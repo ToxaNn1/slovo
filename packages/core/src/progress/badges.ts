@@ -46,6 +46,13 @@ export interface Badges {
   open(badge: string): Promise<void>;
   /** Calls `listener` after each change of the Badges. Returns the call that stops it. */
   subscribe(listener: () => void): () => void;
+  /**
+   * Calls `listener` with each Badge a learning action earns, once its record
+   * is written: the celebration's trigger. A Badge earned as the Badges open,
+   * as after a sync, is in `state` from the start and told to no one. Returns
+   * the call that stops it.
+   */
+  onEarned(listener: (badge: BadgeState) => void): () => void;
 }
 
 /** What a condition reaches now (`current`) and at its best (`best`), out of `target`. */
@@ -109,6 +116,7 @@ export async function openBadges({
 }): Promise<Badges> {
   const on = edition.isFeatureEnabled('xpLog') && edition.isFeatureEnabled('badges');
   const subscribers = createSubscribers();
+  const earnedSubscribers = createSubscribers<BadgeState>();
   const inTurn = createInTurn();
 
   /** What the condition reaches; nothing for a Level Badge with Levels off. */
@@ -174,7 +182,7 @@ export async function openBadges({
 
   let state = derive().state;
 
-  /** Earns every Badge whose condition is met, in one write, then tells the subscribers. */
+  /** Earns every Badge whose condition is met, in one write, then tells the subscribers and each Badge earned. */
   async function check(): Promise<void> {
     const { due } = derive();
     if (due.length > 0) {
@@ -186,6 +194,8 @@ export async function openBadges({
     }
     state = derive().state;
     subscribers.tell();
+    for (const badge of state)
+      if (badge.earned && due.includes(badge.id)) earnedSubscribers.tell(badge);
   }
 
   const checkInTurn = () => {
@@ -214,5 +224,6 @@ export async function openBadges({
     },
     open: (badge) => inTurn(() => open(badge)),
     subscribe: subscribers.subscribe,
+    onEarned: earnedSubscribers.subscribe,
   };
 }

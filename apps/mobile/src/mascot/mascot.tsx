@@ -168,16 +168,10 @@ export function MascotCelebrations() {
           setEarnedBadge(undefined);
         }, CELEBRATION_MS);
     };
-    let level = xpLog.state.level?.level ?? 0;
-    let earned = new Set(badges.state.filter((badge) => badge.earned).map(({ id }) => id));
     const stops = [
-      xpLog.subscribe(() => {
-        const next = xpLog.state.level;
-        if (next !== undefined && next.level > level) {
-          if (screensNewLevel()) setReached({ level: next.level, name: next.name });
-          else celebrate('newLevel');
-        }
-        level = next?.level ?? 0;
+      xpLog.onLevelReached(({ level, name }) => {
+        if (screensNewLevel()) setReached({ level, name });
+        else celebrate('newLevel');
       }),
       xpLog.subscribeGoalMet(() => {
         celebrate('dailyGoal');
@@ -185,12 +179,7 @@ export function MascotCelebrations() {
       progress.onStreakMilestone(() => {
         celebrate('streakMilestone');
       }),
-      badges.subscribe(() => {
-        const now = badges.state.filter((badge) => badge.earned);
-        const fresh = now.find(({ id }) => !earned.has(id));
-        if (fresh !== undefined) showBadge(fresh);
-        earned = new Set(now.map(({ id }) => id));
-      }),
+      badges.onEarned(showBadge),
     ];
     return () => {
       clearTimeout(timer);
