@@ -11,7 +11,7 @@
  */
 import { parseArgs } from 'node:util';
 
-import { rarityFloor, wordFloor, type ContentTargets } from '@slovo/language-pack';
+import { wordsPerRarityFloor, wordFloor, type ContentTargets } from '@slovo/language-pack';
 import {
   EDITIONS_DIR,
   EditionFolderError,
@@ -83,7 +83,7 @@ function counts(edition: EditionFolder): string[] {
   const liveCorrections = corrections
     .map(({ entry }) => entry)
     .filter((correction) => !correction.retired);
-  const perRarity = rarityFloor(targets);
+  const perRarity = wordsPerRarityFloor(targets);
 
   const wordRows = categories.map(({ id }) => {
     const inCategory = liveWords.filter((word) => word.categoryId === id);

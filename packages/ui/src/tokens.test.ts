@@ -56,7 +56,7 @@ describe('designTokens', () => {
   });
 });
 
-describe('the Ukrainian Edition’s design tokens', () => {
+describe('the UA Edition’s design tokens', () => {
   const tokens = designTokens(
     EditionTokensSchema.parse(
       JSON.parse(
