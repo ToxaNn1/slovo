@@ -26,7 +26,7 @@ brief:
 You are the infra wave coordinator, in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/infra-1109 (tasks, grants, log) and continue from the log tail. Grants: commits, pushes, PRs; no main merge except #1752's existing auto-merge. Never touch feat/1108-video or apps/video.
 
 ## wave ci-affected-1109
-status: active
+status: finished
 coord: coord/ci-affected-1109
 branches: ^origin/(coord/ci-affected-1109|chore/1109-ci-affected-tests)
 brief:
