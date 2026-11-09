@@ -23,3 +23,4 @@ Done = every PR green -> `STATUS: FINISHED` first line, WAVES.md block finished.
 - 2026-11-09T13:32:32Z WAITING until 2026-11-09T14:02:32Z: task4 Stryker implementer (chore/1109-stryker)
 - 2026-11-09T14:02:05Z task4: implementer still running after 60 min, nothing pushed yet
 - 2026-11-09T14:31:26Z task4: stryker run still in progress locally (~90 min)
+- 2026-11-09T14:35:36Z task4: PR #1756 (chore/1109-stryker, on top of #1755); waiting CI
