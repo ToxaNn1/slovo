@@ -20,3 +20,4 @@ Done = every PR green -> `STATUS: FINISHED` first line, WAVES.md block finished.
 - 2026-11-09T13:20:26Z task2: PR #1754 opened (chore/1109-ui-test-shards); waiting its CI and task3 implementer
 - 2026-11-09T13:25:20Z task3: PR #1755 (chore/1109-dependabot, bf668aa45). #1752 merged. #1754/#1755 Commit messages red only from proxy-appended PR-body footer (owner must delete). task4 implementer on top of chore/1109-dependabot
 - 2026-11-09T13:32:23Z task3: #1755 CI green except footer-caused Commit messages; waiting task4 implementer
+- 2026-11-09T13:32:32Z WAITING until 2026-11-09T14:02:32Z: task4 Stryker implementer (chore/1109-stryker)
