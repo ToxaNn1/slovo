@@ -46,7 +46,9 @@ const WriteWhatSchema = z.templateLiteral([
   '.',
   z.enum(['create', 'edit', 'retire']),
 ]);
-const FlagWhatSchema = z.templateLiteral(['content.', RecordKindSchema, '.flag']);
+// A Crossword day takes no flag.
+const FlagKindSchema = RecordKindSchema.exclude(['crosswordDay']);
+const FlagWhatSchema = z.templateLiteral(['content.', FlagKindSchema, '.flag']);
 const StoredSchema = z.object({
   recordVersion: z.number().int(),
   // A Crossword day's id is its date.
@@ -352,7 +354,7 @@ export function createContentQueue({ database, clock }: { database: Database; cl
         {
           id: row.id,
           editionId: row.editionId,
-          kind: kindOf(what.data),
+          kind: FlagKindSchema.parse(what.data.split('.')[1]),
           recordId: after.data.id,
           author: row.who.kind === 'command' ? row.who.command : authorName(row.who),
           explanation: row.reason ?? '',

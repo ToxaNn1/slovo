@@ -224,6 +224,12 @@ export const ContentRecordKindSchema = z.enum([
   'crosswordDay',
 ]);
 
+/**
+ * The kinds of record a flag names. A Crossword day takes no flag, so the
+ * Content queue's flags keep their kinds (ADR 0031).
+ */
+export const FlaggableKindSchema = ContentRecordKindSchema.exclude(['crosswordDay']);
+
 /** What every content procedure can be refused with. */
 const contentProcedure = procedure.errors({
   /** No Власник yet, an Edition the backend doesn't serve, or an unknown batch or record. */
@@ -409,7 +415,7 @@ const contentWriteContract = {
     .input(
       z.strictObject({
         editionId: EditionIdSchema,
-        kind: ContentRecordKindSchema,
+        kind: FlaggableKindSchema,
         id: z.string(),
         batchId: BatchIdSchema,
         reason: z.string().min(1),
@@ -497,7 +503,7 @@ const QueueFlagSchema = z.object({
   /** The flag's Action log row. */
   id: z.number().int().positive(),
   editionId: EditionIdSchema,
-  kind: ContentRecordKindSchema,
+  kind: FlaggableKindSchema,
   recordId: z.string(),
   /** The Агент's name, or `quote-check`. */
   author: z.string(),
