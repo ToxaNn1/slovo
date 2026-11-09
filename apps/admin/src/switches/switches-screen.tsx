@@ -1,13 +1,12 @@
-import { FeatureSwitchesSchema, type FeatureSwitch } from '@slovo/contracts';
+import type { FeatureSwitch } from '@slovo/contracts';
 import type { AdminEdition } from '@slovo/contracts/admin-api';
-import { useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useSearch } from '@tanstack/react-router';
+import { Link, Outlet, useNavigate } from '@tanstack/react-router';
 import { useState } from 'react';
 
 import { adminApi } from '../api';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { Button } from '../components/ui/button';
-import { MinimumsEditor, RuleEditor } from './rule-editor';
+import { MinimumsEditor } from './rule-editor';
 import {
   cellOf,
   cellText,
@@ -18,107 +17,85 @@ import {
   withEveryone,
   type Cell,
 } from './switch-state';
+import { FEATURES, useSwitches } from './switches-data';
 
-const FEATURES: readonly FeatureSwitch[] = FeatureSwitchesSchema.keyof().options;
+const tabClass =
+  'rounded-lg px-3.5 py-[7px] text-[13px] text-muted-foreground no-underline hover:text-foreground data-[status=active]:bg-surface data-[status=active]:font-semibold data-[status=active]:text-foreground data-[status=active]:shadow-panel';
 
-/** The key of every Edition's switches; a write refetches them all. */
-const SWITCHES_KEY = ['switches'] as const;
+/** Свічі: the matrix, the Rules of one feature and the Kill switch, as three tabs. */
+export function SwitchesScreen() {
+  return (
+    <section aria-label="Свічі" className="flex flex-1 flex-col gap-6">
+      <nav
+        aria-label="Свічі"
+        className="flex flex-wrap gap-0.5 self-start rounded-[11px] bg-sunk p-[3px]"
+      >
+        <Link
+          to="/switches"
+          search={(previous) => previous}
+          activeOptions={{ exact: true, includeSearch: false }}
+          className={tabClass}
+        >
+          Feature Switch
+        </Link>
+        <Link
+          to="/switches/rule"
+          search={(previous) => previous}
+          activeOptions={{ includeSearch: false }}
+          className={tabClass}
+        >
+          Правило
+        </Link>
+        <Link
+          to="/switches/kill"
+          search={(previous) => previous}
+          activeOptions={{ includeSearch: false }}
+          className={tabClass}
+        >
+          Аварійний вимикач
+        </Link>
+      </nav>
+      <Outlet />
+    </section>
+  );
+}
 
-const selectClass =
-  'h-9 rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring';
-
-/** A write the admin is confirming. */
-type Pending =
-  | {
-      readonly kind: 'toggle';
-      readonly feature: FeatureSwitch;
-      readonly edition: AdminEdition;
-      readonly on: boolean;
-    }
-  | {
-      readonly kind: 'kill';
-      readonly feature: FeatureSwitch;
-      readonly edition: AdminEdition | undefined;
-    };
+/** A matrix switch waiting for its confirmation. */
+interface Toggle {
+  readonly feature: FeatureSwitch;
+  readonly edition: AdminEdition;
+  readonly on: boolean;
+}
 
 /**
- * Свічі: every feature against the Editions, the Rules of one feature in one
- * Edition, the force-update minimums and the Kill switch.
+ * Feature Switch: every feature against the Editions, a switch per cell and,
+ * with one Edition picked, its Rules and force-update minimums.
  */
-export function SwitchesScreen() {
-  const search = useSearch({ from: '__root__' });
-  const queryClient = useQueryClient();
-  const editionsQuery = useQuery({ queryKey: ['editions'], queryFn: () => adminApi.editions() });
-  const editions = editionsQuery.data?.editions ?? [];
-  const answers = useQueries({
-    queries: editions.map((edition) => ({
-      queryKey: [...SWITCHES_KEY, edition.id],
-      queryFn: () => adminApi.switches({ editionId: edition.id }),
-    })),
-  });
-  const [pending, setPending] = useState<Pending>();
-  const [editing, setEditing] = useState<FeatureSwitch>();
-
-  const picked = editions.find((edition) => edition.id === search.edition);
-  const loaded = editions.flatMap((edition, index) => {
-    const answer = answers[index]?.data;
-    return answer === undefined ? [] : [{ edition, answer }];
-  });
+export function SwitchesMatrix() {
+  const { editions, loaded, ready, picked, pickedAnswer, answerOf, refetch } = useSwitches();
+  const navigate = useNavigate();
+  const [pending, setPending] = useState<Toggle>();
   const columns =
     picked === undefined ? loaded : loaded.filter(({ edition }) => edition === picked);
-  const refetch = () => queryClient.invalidateQueries({ queryKey: SWITCHES_KEY });
-  const answerOf = (edition: AdminEdition) =>
-    loaded.find((column) => column.edition === edition)?.answer;
 
   const write = async (reason: string) => {
     if (pending === undefined) return;
-    if (pending.kind === 'toggle') {
-      const answer = answerOf(pending.edition);
-      await adminApi.setRules({
-        editionId: pending.edition.id,
-        feature: pending.feature,
-        rules: withEveryone(
-          answer === undefined ? [] : rulesOf(answer, pending.feature),
-          pending.on,
-        ),
-        reason,
-      });
-    } else {
-      await adminApi.kill({ feature: pending.feature, editionId: pending.edition?.id, reason });
-    }
+    const answer = answerOf(pending.edition);
+    await adminApi.setRules({
+      editionId: pending.edition.id,
+      feature: pending.feature,
+      rules: withEveryone(answer === undefined ? [] : rulesOf(answer, pending.feature), pending.on),
+      reason,
+    });
     await refetch();
   };
 
-  const pickedAnswer = picked === undefined ? undefined : answerOf(picked);
-
   return (
-    <section aria-label="Свічі" className="flex flex-1 flex-col gap-6">
-      <KillSwitch
-        scope={picked}
-        onKill={(feature) => {
-          setPending({ kind: 'kill', feature, edition: picked });
-        }}
-      />
-
+    <>
       {picked === undefined ? (
         <p className="text-sm text-muted-foreground">
           Оберіть одну Edition, щоб змінити правила або мінімальні версії.
         </p>
-      ) : null}
-
-      {picked !== undefined && editing !== undefined && pickedAnswer !== undefined ? (
-        <RuleEditor
-          // Keyed by the Rules too: a write made while it is open (a matrix
-          // toggle, a Kill switch) starts its drafts afresh, so saving never undoes it.
-          key={`${picked.id}-${editing}-${JSON.stringify(rulesOf(pickedAnswer, editing))}`}
-          edition={picked}
-          feature={editing}
-          rules={rulesOf(pickedAnswer, editing)}
-          onSaved={refetch}
-          onClose={() => {
-            setEditing(undefined);
-          }}
-        />
       ) : null}
 
       <div className="overflow-x-auto rounded-2xl bg-surface shadow-panel">
@@ -126,10 +103,10 @@ export function SwitchesScreen() {
           <thead>
             <tr className="border-b border-border text-xs text-subtle">
               <th scope="col" className="px-4 py-3 text-left font-normal">
-                Світч
+                Feature Switch
               </th>
               {picked === undefined ? (
-                <th scope="col" className="px-2.5 py-3 text-center font-normal">
+                <th scope="col" className="px-2.5 py-3 text-center font-semibold">
                   Усі Editions
                 </th>
               ) : null}
@@ -141,7 +118,7 @@ export function SwitchesScreen() {
             </tr>
           </thead>
           <tbody>
-            {loaded.length < editions.length || editions.length === 0
+            {!ready || editions.length === 0
               ? null
               : FEATURES.map((feature) => {
                   const cells = columns.map(({ edition, answer }) => ({
@@ -166,10 +143,13 @@ export function SwitchesScreen() {
                             cell={cell}
                             exact={picked !== undefined}
                             onToggle={(on) => {
-                              setPending({ kind: 'toggle', feature, edition, on });
+                              setPending({ feature, edition, on });
                             }}
                             onRules={() => {
-                              setEditing(feature);
+                              void navigate({
+                                to: '/switches/rule',
+                                search: (previous) => ({ ...previous, feature }),
+                              });
                             }}
                           />
                         </td>
@@ -180,6 +160,10 @@ export function SwitchesScreen() {
           </tbody>
         </table>
       </div>
+      <span className="text-[12.5px] text-subtle">
+        Клік по клітинці Edition перемикає свіч після підтвердження з причиною. «Недоступно» — у
+        Edition немає контенту для функції, керування немає.
+      </span>
 
       {picked !== undefined && pickedAnswer !== undefined ? (
         <MinimumsEditor edition={picked} minimums={pickedAnswer.minimums} onSaved={refetch} />
@@ -187,11 +171,7 @@ export function SwitchesScreen() {
 
       {pending === undefined ? null : (
         <ConfirmDialog
-          title={
-            pending.kind === 'kill'
-              ? `Kill switch: вимкнути ${pending.feature} для всіх читачів`
-              : `${pending.feature}: ${pending.on ? 'увімкнути' : 'вимкнути'} для всіх у ${pending.edition.displayName}`
-          }
+          title={`${pending.feature}: ${pending.on ? 'увімкнути' : 'вимкнути'} для всіх у ${pending.edition.displayName}`}
           onConfirm={write}
           onClose={() => {
             setPending(undefined);
@@ -199,13 +179,11 @@ export function SwitchesScreen() {
           refusalText={switchRefusalText}
         >
           <p className="text-sm text-muted-foreground">
-            {pending.kind === 'kill'
-              ? `Для: ${pending.edition?.displayName ?? 'Усі Editions'}. Усі правила світча замінить одне: вимкнено для всіх.`
-              : 'Правила, що цілять у частину читачів, лишаються й вирішують першими.'}
+            Правила, що цілять у частину читачів, лишаються й вирішують першими.
           </p>
         </ConfirmDialog>
       )}
-    </section>
+    </>
   );
 }
 
@@ -273,53 +251,4 @@ function SummaryPill({ cells }: { readonly cells: readonly Cell[] }) {
   const tone: PillTone =
     available.length === 0 ? 'unavailable' : available.some((cell) => cell.on) ? 'on' : 'off';
   return <span className={pillClass(tone)}>{summaryText(cells)}</span>;
-}
-
-/** One feature off for every reader of the picked Edition, or of every Edition. */
-function KillSwitch({
-  scope,
-  onKill,
-}: {
-  readonly scope: AdminEdition | undefined;
-  readonly onKill: (feature: FeatureSwitch) => void;
-}) {
-  const [feature, setFeature] = useState<FeatureSwitch>(FEATURES[0] ?? 'game');
-  return (
-    <section
-      aria-labelledby="kill-switch-title"
-      className="flex flex-col gap-3 rounded-[18px] bg-surface p-5 shadow-[0_0_0_1.5px_var(--destructive)] sm:flex-row sm:items-end"
-    >
-      <div className="flex flex-col gap-1">
-        <h2 id="kill-switch-title" className="font-display text-lg font-semibold">
-          Kill switch
-        </h2>
-        <p className="text-sm text-muted-foreground">Для: {scope?.displayName ?? 'Усі Editions'}</p>
-      </div>
-      <label className="flex flex-col gap-1 text-sm sm:ml-auto">
-        <span className="text-muted-foreground">Світч</span>
-        <select
-          className={selectClass}
-          value={feature}
-          onChange={(event) => {
-            const chosen = FEATURES.find((name) => name === event.target.value);
-            if (chosen !== undefined) setFeature(chosen);
-          }}
-        >
-          {FEATURES.map((name) => (
-            <option key={name} value={name}>
-              {name}
-            </option>
-          ))}
-        </select>
-      </label>
-      <Button
-        className="bg-destructive text-primary-foreground hover:bg-destructive/90"
-        onClick={() => {
-          onKill(feature);
-        }}
-      >
-        Вимкнути для всіх
-      </Button>
-    </section>
-  );
 }

@@ -163,11 +163,13 @@ test('at a phone width the sidebar collapses, Огляд stacks every block and 
   expect(await screen.findByRole('region', { name: 'Свічі' })).toBeDefined();
   expect(screen.queryByRole('navigation', { name: 'Розділи' })).toBeNull();
 
-  const kill = within(screen.getByRole('region', { name: 'Kill switch' }));
-  await user.click(kill.getByRole('button', { name: 'Вимкнути для всіх' }));
+  const tabs = within(screen.getByRole('navigation', { name: 'Свічі' }));
+  await user.click(tabs.getByRole('link', { name: 'Аварійний вимикач' }));
+  const kill = within(await screen.findByRole('region', { name: 'Аварійний вимикач' }));
+  await user.click(kill.getByRole('button', { name: 'Вимкнути зараз' }));
   const dialog = within(await screen.findByRole('dialog'));
   expect(dialog.getByRole('textbox', { name: 'Причина' })).toBeDefined();
-  expect(dialog.getByRole('button', { name: 'Підтвердити' })).toHaveProperty('disabled', true);
+  expect(dialog.getByRole('button', { name: 'Вимкнути зараз' })).toHaveProperty('disabled', true);
 });
 
 test('at a wide width the sidebar is shown and Огляд lays its blocks in a grid', async () => {

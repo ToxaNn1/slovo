@@ -1,5 +1,6 @@
 import { Link } from '@tanstack/react-router';
 
+import { FiltersSchema } from '../filters';
 import { sectionsOf } from '../sections';
 import { useQueueBatches } from './content-queue/queries';
 
@@ -35,7 +36,7 @@ export function Sidebar({ role }: { readonly role: 'owner' | 'admin' }) {
         <Link
           key={section.path}
           to={section.path}
-          search={(previous) => previous}
+          search={(previous) => FiltersSchema.parse(previous)}
           activeOptions={{ exact: section.path === '/', includeSearch: false }}
           className="group flex items-center gap-2.5 rounded-[9px] px-2.5 py-[9px] text-[13.5px] text-side-muted hover:bg-side-hover data-[status=active]:bg-side-active data-[status=active]:font-semibold data-[status=active]:text-side-foreground data-[status=active]:shadow-[inset_0_0_0_1px_var(--primary-line),0_0_22px_-6px_var(--primary)]"
         >
