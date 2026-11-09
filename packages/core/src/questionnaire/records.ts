@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { declareRecord } from '../user-state/user-state-record';
+import { declareRecord, LocalDateKeySchema } from '../user-state/user-state-record';
 import { LATER_QUESTIONS, RETIRED_NOTICE, withoutRetired } from '../feed-notice';
 
 /** The records of the questionnaire. */
@@ -16,7 +16,7 @@ export const questionnaireRecords = {
     'questionnaire.later',
     z.object({
       asked: z.array(z.enum([...LATER_QUESTIONS, RETIRED_NOTICE])).transform(withoutRetired),
-      date: z.string().optional(),
+      date: LocalDateKeySchema.optional(),
       offerRarityTest: z.boolean().optional(),
     }),
     { sync: 'device-only' },
