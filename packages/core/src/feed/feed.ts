@@ -376,8 +376,7 @@ export async function openFeed({
     // The last card shown is the current Cycle's end-of-Cycle card, not one of
     // an earlier Cycle whose next cards were all dropped.
     const atEnd = last?.kind === 'end-of-cycle' && session.inCurrentCycle(last);
-    const unseen = cycle.unseen();
-    const { words, corrections, idioms, synonymRows, tips } = unseen;
+    const { words, corrections, idioms, synonymRows, tips } = readable(cycle.unseen());
     const unseenLeft = [words, corrections, idioms, synonymRows, tips].some(
       ({ length }) => length > 0,
     );
@@ -402,42 +401,57 @@ export async function openFeed({
       session.startCycle();
     }
     const today = mood.feedParameters();
-    // Read again: the card after the end-of-Cycle card started a new Cycle above.
-    const unseenNow = cycle.unseen();
-    const id = nextEntryId({
-      session: {
-        cards: session.cards,
-        all: session.all,
-        cycleCards: session.cycleCards(),
-        shownIds: session.shownIds(),
-      },
-      unseen: unseenNow,
-      due: eligibleDue(cycle, knowledge),
-      weights: today.kindWeights(mix.kindWeightsInEffect()),
-      wordInBand: await inBandOf(unseenNow.words, today.inBand),
-    });
-    // A due Review goes before the Quick Question (ADR 0066), and the card
-    // after the end-of-Cycle card, which starts the new Cycle, is an Entry's.
-    const due = id !== undefined && knowledge.state.shown.get(id) === 'review';
-    if (!due && !atEnd) {
-      const asked = await addQuickQuestion();
-      if (asked !== undefined) return asked;
+    for (;;) {
+      // Read again: the card after the end-of-Cycle card started a new Cycle above.
+      const unseenNow = readable(cycle.unseen());
+      const id = nextEntryId({
+        session: {
+          cards: session.cards,
+          all: session.all,
+          cycleCards: session.cycleCards(),
+          shownIds: session.shownIds(),
+        },
+        unseen: unseenNow,
+        due: readable(eligibleDue(cycle, knowledge)),
+        weights: today.kindWeights(mix.kindWeightsInEffect()),
+        wordInBand: await inBandOf(unseenNow.words, today.inBand),
+      });
+      // A due Review goes before the Quick Question (ADR 0066), and the card
+      // after the end-of-Cycle card, which starts the new Cycle, is an Entry's.
+      const due = id !== undefined && knowledge.state.shown.get(id) === 'review';
+      if (!due && !atEnd) {
+        const asked = await addQuickQuestion();
+        if (asked !== undefined) return asked;
+      }
+      let card: FeedCard = { kind: 'end-of-cycle' };
+      if (id !== undefined) {
+        const entryCard = await buildFeedCard(entries, id);
+        // The Language Pack cannot read an Entry it lists: the session passes it over and picks again.
+        if (entryCard === undefined) {
+          unreadable.add(id);
+          continue;
+        }
+        card = asReviewIfDue(entryCard, knowledge);
+      }
+      session.add(card, tooEarly);
+      subscribers.tell();
+      return card;
     }
-    let card: FeedCard = { kind: 'end-of-cycle' };
-    if (id !== undefined) {
-      const entryCard = await buildFeedCard(entries, id);
-      if (entryCard === undefined) return undefined;
-      card = asReviewIfDue(entryCard, knowledge);
-    }
-    session.add(card, tooEarly);
-    subscribers.tell();
-    return card;
   }
 
-  /**
-   * Adds a Quick Question when it is its turn: `every - 1` cards that take
-   * turns came since the last one, or since the session opened.
-   */
+  /** The Entries the Language Pack listed as eligible but cannot read, passed over for the session. */
+  const unreadable = new Set<string>();
+  function readable(ids: EntryIds): EntryIds {
+    const isReadable = (id: string) => !unreadable.has(id);
+    return {
+      words: ids.words.filter(isReadable),
+      corrections: ids.corrections.filter(isReadable),
+      idioms: ids.idioms.filter(isReadable),
+      synonymRows: ids.synonymRows.filter(isReadable),
+      tips: ids.tips.filter(isReadable),
+    };
+  }
+
   /** The rarity of each Word, read once per session: a Word's rarity never changes while the app runs. */
   const rarities = new Map<string, Rarity>();
   async function raritiesOf(ids: readonly string[]): Promise<ReadonlyMap<string, Rarity>> {
@@ -466,6 +480,10 @@ export async function openFeed({
     };
   }
 
+  /**
+   * Adds a Quick Question when it is its turn: `every - 1` cards that take
+   * turns came since the last one, or since the session opened.
+   */
   async function addQuickQuestion(): Promise<FeedCard | undefined> {
     const every = mix.quickQuestionEveryInEffect();
     if (quickQuestion === undefined || every === undefined) return undefined;
