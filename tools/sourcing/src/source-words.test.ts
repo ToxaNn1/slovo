@@ -408,6 +408,8 @@ describe('sourceWords', () => {
     // The dialect homonym has no Region, so it waits in incomplete/.
     const ready = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
     expect(ready.map((word) => word.primaryDefinition)).not.toContain('Селезінка.');
+    // Homonyms are separate Words: one ready draft does not hold back the next.
+    expect(ready).toHaveLength(3);
     const words = [...ready, ...readDrafts(options.outDir, 'incomplete')].map((draft) =>
       WordSchema.parse(draft),
     );
@@ -745,7 +747,13 @@ describe('sourceWords', () => {
       'КО́СА 5',
     ]);
     const ready = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
+    // КОСА́ 1-3 are ready: homonyms are separate Words, told apart by the Definition.
+    // КОСА́ 4 waits for a Region and КО́СА 5 for a gender (below).
+    expect(ready).toHaveLength(3);
     expect(ready.map((word) => word.primaryDefinition)).toContain('Заплетене волосся.');
+    expect(outcome.drafts.flatMap((draft) => draft.flags).map((flag) => flag.kind)).not.toContain(
+      'existing-entry',
+    );
     for (const word of ready) {
       expect(word.sources[0]?.title).toBe(
         "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
@@ -970,6 +978,38 @@ describe('the review report', () => {
 });
 
 describe('a Lemma the Edition already has', () => {
+  it('drafts a homonym ready when the Edition has the Lemma with another primary Definition', async () => {
+    const edition = editionWith((config) => config, {
+      w_exist1: {
+        id: 'w_exist1',
+        lemma: 'коса',
+        stress: [3],
+        partOfSpeech: 'noun',
+        gender: 'feminine',
+        primaryDefinition: 'Заплетене волосся.',
+        categoryId: 'household-crafts',
+        rarity: 2,
+        sources: [{ title: 'Тестове джерело' }],
+        retired: false,
+      },
+    });
+    const { options } = setup({ lemmaList: 'коса household-crafts 2\n', edition });
+
+    const result = await sourceWords(options);
+
+    const ready = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
+    expect(ready).toHaveLength(2);
+    expect(ready.map((word) => word.primaryDefinition)).not.toContain('Заплетене волосся.');
+    const twin = lemmaOutcome(result, 'коса').drafts.find(
+      (draft) => draft.summary.definition === 'Заплетене волосся.',
+    );
+    expect(twin?.ready).toBe(false);
+    expect(twin?.flags).toContainEqual({
+      kind: 'existing-entry',
+      message: '"коса" is already a Word of the Edition: w_exist1',
+    });
+  });
+
   it('lands in incomplete/ with a flag naming the Entry, even when it is Retired', async () => {
     const edition = editionWith((config) => config, {
       w_exist1: {
@@ -978,7 +1018,9 @@ describe('a Lemma the Edition already has', () => {
         stress: [2],
         partOfSpeech: 'noun',
         gender: 'feminine',
-        primaryDefinition: 'Тестове значення, якого немає в словнику.',
+        // The Definition the dictionary gives, so this is the same Word, not a homonym.
+        primaryDefinition:
+          'Дуже дрібні краплі води, які насичують повітря; дрібний, густий дощ; мряка (у 1 знач.).',
         categoryId: 'nature-weather',
         rarity: 2,
         sources: [{ title: 'Тестове джерело' }],
@@ -997,6 +1039,11 @@ describe('a Lemma the Edition already has', () => {
       kind: 'existing-entry',
       message: '"мжичка" is already a Word of the Edition: w_exist1 (Retired)',
     });
+    // A repeat lacks no data: the report calls it incomplete and says why.
+    const report = readFileSync(join(options.outDir, 'words', 'review-report.md'), 'utf8');
+    expect(report).toContain('- Drafts incomplete: 1 (in `incomplete/`)');
+    expect(report).toContain(`\`${draft?.file ?? ''}\` from ${draft?.headword ?? ''}: incomplete`);
+    expect(report).not.toContain('missing required data');
   });
 });
 

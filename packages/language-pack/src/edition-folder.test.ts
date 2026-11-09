@@ -483,7 +483,7 @@ describe('checkNewSynonymRows', () => {
 describe('entryTexts', () => {
   const member = (text: string) => ({ text, stress: [1] });
 
-  it('lists the text of every Entry of the five kinds, with its group and forms, Retired ones marked', () => {
+  it('lists the text of every Entry of the five kinds, with its group and forms and each Word with its primary Definition, Retired ones marked', () => {
     const editionsDir = editionsWith({
       change: (dir) => {
         writeFileSync(
@@ -520,7 +520,15 @@ describe('entryTexts', () => {
     const texts = openEdition(editionsDir, 'fixture').entryTexts();
 
     expect(texts).toEqual([
-      { kind: 'word', id: 'w_fx0001', group: 'nature', text: 'заметіль', forms: [], retired: true },
+      {
+        kind: 'word',
+        id: 'w_fx0001',
+        group: 'nature',
+        text: 'заметіль',
+        forms: [],
+        retired: true,
+        primaryDefinition: 'Сильний вітер зі снігом.',
+      },
       {
         kind: 'word',
         id: 'w_fx0002',
@@ -528,8 +536,17 @@ describe('entryTexts', () => {
         text: 'балакучий',
         forms: [],
         retired: false,
+        primaryDefinition: 'Який любить багато говорити.',
       },
-      { kind: 'word', id: 'w_fx0003', group: 'speech', text: 'завжди', forms: [], retired: false },
+      {
+        kind: 'word',
+        id: 'w_fx0003',
+        group: 'speech',
+        text: 'завжди',
+        forms: [],
+        retired: false,
+        primaryDefinition: 'У будь-який час, постійно.',
+      },
       {
         kind: 'correction',
         id: 'c_fx0001',
