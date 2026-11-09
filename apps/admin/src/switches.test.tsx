@@ -17,12 +17,13 @@ const EDITIONS = [
   { id: 'de', displayName: 'Seltene Wörter' },
 ];
 
-/** Every feature on, `mistakeReports` unavailable everywhere, `game` off in `de`. */
+/** Every feature on, `mistakeReports` unavailable everywhere, `game` off and `idioms` unavailable in `de`. */
 function statesOf(editionId: string) {
   return FeatureSwitchesSchema.parse({
     ...Object.fromEntries(FeatureSwitchesSchema.keyof().options.map((feature) => [feature, 'on'])),
     mistakeReports: 'unavailable',
     game: editionId === 'de' ? 'off' : 'on',
+    idioms: editionId === 'de' ? 'unavailable' : 'on',
   });
 }
 
@@ -72,6 +73,9 @@ test('the matrix counts a feature on in some Editions, and shows the exact state
   render(<Admin />);
 
   expect((await rowOf('game')).getByText('увімкнено (2 з 3)')).toBeDefined();
+  // On in every Edition that has it, though one Edition does not.
+  expect((await rowOf('idioms')).getAllByText('увімкнено').length).toBeGreaterThan(0);
+  expect((await rowOf('idioms')).queryByText(/з 3/)).toBeNull();
   expect((await rowOf('mistakeReports')).queryAllByRole('switch')).toEqual([]);
   expect((await rowOf('mistakeReports')).getAllByText('недоступно').length).toBeGreaterThan(0);
 

@@ -65,8 +65,8 @@ export function summaryText(cells: readonly Cell[]): string {
   if (available.length === 0) return 'недоступно';
   const on = available.filter((cell) => cell.on).length;
   if (on === 0) return 'вимкнено';
-  if (on === cells.length) return 'увімкнено';
-  return `увімкнено (${String(on)} з ${String(cells.length)})`;
+  if (on === available.length) return 'увімкнено';
+  return `увімкнено (${String(on)} з ${String(available.length)})`;
 }
 
 /** How many Rules target some readers, beside the state. */
