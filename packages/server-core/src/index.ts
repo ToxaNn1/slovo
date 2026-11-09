@@ -60,6 +60,7 @@ export {
   type CiRunStore,
   type PackageCoverage,
   type SentryAnswer,
+  type SentryAlertRead,
   type SentryRead,
   type SentryReader,
   type SentryWindow,
@@ -89,7 +90,27 @@ export {
   type SourceRead,
   type UserRecords,
 } from './ports';
-export type { Alert, Alerts } from './admin/alerts';
+export {
+  ALERT_THRESHOLD_DEFAULTS,
+  createAlertSettings,
+  type Alert,
+  type Alerts,
+  type AlertSettings,
+  type AlertStore,
+  type AlertThresholds,
+  type AlertThresholdStore,
+  type Digest,
+  type KeptAlert,
+  type OwnerChat,
+  type OwnerMessage,
+} from './admin/alerts';
+export {
+  createMonitor,
+  type HealthProbe,
+  type Monitor,
+  type OpenBatch,
+  type OpenBatches,
+} from './admin/monitor';
 export {
   createAdminAccess,
   type Action,

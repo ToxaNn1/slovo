@@ -714,6 +714,34 @@ export const OwnerCheckSchema = z.object({
   ticked: z.object({ at: z.iso.datetime(), by: z.string() }).nullable(),
 });
 
+/** The alert thresholds the owner sets in Безпека (Round 14, 5A). */
+export const ALERT_THRESHOLD_KEYS = [
+  'crashFree',
+  'issueEvents',
+  'apiErrors',
+  'batchRecords',
+  'activityDrop',
+] as const;
+export const AlertThresholdKeySchema = z.enum(ALERT_THRESHOLD_KEYS);
+export type AlertThresholdKey = z.infer<typeof AlertThresholdKeySchema>;
+
+/** One alert threshold: its value and the default it falls back to. */
+const AlertThresholdSchema = z.object({
+  key: AlertThresholdKeySchema,
+  value: z.number(),
+  default: z.number(),
+});
+
+/** An alert the owner was told of, or is still to be told of while `sentAt` is null. */
+export const SentAlertSchema = z.object({
+  id: z.number().int(),
+  at: z.iso.datetime(),
+  kind: z.string(),
+  /** The message the owner reads in Telegram. */
+  text: z.string(),
+  sentAt: z.iso.datetime().nullable(),
+});
+
 export const adminContract = {
   requestCode: procedure
     .route({
@@ -1195,4 +1223,44 @@ export const adminContract = {
     .errors(ADMIN_ERRORS)
     .input(CiRunSchema)
     .output(z.object({ kept: z.literal(true) })),
+
+  alertThresholds: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/alert-thresholds',
+      summary: 'The alert thresholds, each with its default',
+      description: 'A Безпека procedure: a Власник only.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(z.object({ thresholds: z.array(AlertThresholdSchema) })),
+
+  setAlertThreshold: procedure
+    .route({
+      method: 'POST',
+      path: '/admin/alert-thresholds/{key}',
+      summary: 'Changes an alert threshold, with a reason for the Action log',
+      description: 'A Безпека write: a Власник only. The next Cron run checks with the new value.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .input(
+      z.object({
+        key: AlertThresholdKeySchema,
+        value: z.number().min(0).max(100_000),
+        reason: ReasonSchema,
+      }),
+    )
+    .output(z.object({ threshold: AlertThresholdSchema })),
+
+  latestAlerts: procedure
+    .route({
+      method: 'GET',
+      path: '/admin/alerts',
+      summary: 'The newest alerts the owner was told of, newest first',
+      description: 'A Власник only: what Огляд lists as the latest alerts.',
+      tags: ['admin'],
+    })
+    .errors(ADMIN_ERRORS)
+    .output(z.object({ alerts: z.array(SentAlertSchema) })),
 };
