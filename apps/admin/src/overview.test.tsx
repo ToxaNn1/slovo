@@ -175,6 +175,26 @@ test('at a phone width bottom tabs open Огляд, the kill switch and Ще ins
   expect(await screen.findByRole('region', { name: 'Огляд' })).toBeDefined();
 });
 
+test('at a phone width Огляд picks the Edition and the period from rows of chips', async () => {
+  screenOf(390);
+  const user = userEvent.setup();
+  await openOverview();
+
+  const editions = within(screen.getByRole('group', { name: 'Edition' }));
+  await user.click(await editions.findByRole('button', { name: 'Рідкісні слова' }));
+  await user.click(
+    within(screen.getByRole('group', { name: 'Період' })).getByRole('button', { name: '30 днів' }),
+  );
+
+  expect(new URLSearchParams(window.location.search).get('edition')).toBe('uk');
+  expect(new URLSearchParams(window.location.search).get('period')).toBe('30d');
+  const pressed = editions
+    .getAllByRole('button')
+    .filter((chip) => chip.getAttribute('aria-pressed') === 'true');
+  expect(pressed.map((chip) => chip.textContent)).toEqual(['Рідкісні слова']);
+  expect(screen.queryByRole('combobox', { name: 'Edition' })).toBeNull();
+});
+
 test('at a phone width a section of the big screen says to open a computer', async () => {
   screenOf(390);
   window.history.replaceState(null, '', '/admin/analytics');

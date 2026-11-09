@@ -4,7 +4,7 @@ import { useState, type ReactNode } from 'react';
 import type { SignedInAdmin } from '../session';
 import type { Theme } from '../theme';
 import { AccountMenu } from './account-menu';
-import { FiltersBar } from './filters-bar';
+import { FilterChips } from './filters-bar';
 import { Logo } from './sidebar';
 
 /** The two sections a phone opens; the rest want a big screen. */
@@ -69,7 +69,7 @@ export function PhoneShell({
       ) : (
         <main className="flex flex-1 flex-col gap-3 px-4 pt-1 pb-4">
           {/* The Kill switch picks its own place; the filters are Огляд's. */}
-          {current === '/' ? <FiltersBar /> : null}
+          {current === '/' ? <FilterChips /> : null}
           {children}
         </main>
       )}
