@@ -56,6 +56,8 @@ export interface XpLogState {
 
 /** What the XP log holds by local date `YYYY-MM-DD`, for the Active Days and the Streak. */
 export interface XpLogDays {
+  /** The local date the log was last derived for as today: the date of `state`'s today, till the day change reaches it. */
+  readonly date: string;
   /** The XP earned on each local date that has any. */
   readonly byDate: ReadonlyMap<string, number>;
   /**
@@ -402,7 +404,6 @@ export async function openXpLog({
   }
 
   function derive(): XpLogDays & {
-    date: string;
     state: XpLogState;
     reviewToday: number;
     /** Today's Seen-Word records counted toward today's goal. */
