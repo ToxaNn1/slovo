@@ -11,6 +11,7 @@ import {
 import { contentReport, missedTargets } from '@slovo/language-pack';
 import type { Clock, EditionRegistry, Json, Random } from '@slovo/server-core';
 import { and, eq, sql } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
 import { quoteCheckCounts } from './quote-check';
@@ -110,8 +111,12 @@ export function createContentWrites({
   const { db } = database;
   type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-  /** Every record of the Edition, by kind. */
-  async function recordsOf(tx: Tx, editionId: string) {
+  /** Every record of the Edition, by kind; with an id, only the record of that id. */
+  async function recordsOf(tx: Tx, editionId: string, id?: string) {
+    const of = (table: { editionId: AnyPgColumn; id: AnyPgColumn }) =>
+      id === undefined
+        ? eq(table.editionId, editionId)
+        : and(eq(table.editionId, editionId), eq(table.id, id));
     const word = await tx
       .select({
         id: contentWords.id,
@@ -120,7 +125,7 @@ export function createContentWrites({
         needsNewRecording: contentWords.needsNewRecording,
       })
       .from(contentWords)
-      .where(eq(contentWords.editionId, editionId));
+      .where(of(contentWords));
     const correction = await tx
       .select({
         id: contentCorrections.id,
@@ -128,7 +133,7 @@ export function createContentWrites({
         recordVersion: contentCorrections.recordVersion,
       })
       .from(contentCorrections)
-      .where(eq(contentCorrections.editionId, editionId));
+      .where(of(contentCorrections));
     const idiom = await tx
       .select({
         id: contentIdioms.id,
@@ -136,7 +141,7 @@ export function createContentWrites({
         recordVersion: contentIdioms.recordVersion,
       })
       .from(contentIdioms)
-      .where(eq(contentIdioms.editionId, editionId));
+      .where(of(contentIdioms));
     const synonymRow = await tx
       .select({
         id: contentSynonymRows.id,
@@ -144,7 +149,7 @@ export function createContentWrites({
         recordVersion: contentSynonymRows.recordVersion,
       })
       .from(contentSynonymRows)
-      .where(eq(contentSynonymRows.editionId, editionId));
+      .where(of(contentSynonymRows));
     const tip = await tx
       .select({
         id: contentTips.id,
@@ -152,7 +157,7 @@ export function createContentWrites({
         recordVersion: contentTips.recordVersion,
       })
       .from(contentTips)
-      .where(eq(contentTips.editionId, editionId));
+      .where(of(contentTips));
     const curatedCollection = await tx
       .select({
         id: contentCuratedCollections.id,
@@ -160,7 +165,7 @@ export function createContentWrites({
         recordVersion: contentCuratedCollections.recordVersion,
       })
       .from(contentCuratedCollections)
-      .where(eq(contentCuratedCollections.editionId, editionId));
+      .where(of(contentCuratedCollections));
     return { word, correction, idiom, synonymRow, tip, curatedCollection };
   }
 
@@ -445,7 +450,7 @@ export function createContentWrites({
       if (!(await ownBatch(tx, writer, editionId, batchId))) {
         return { ok: false, reason: 'not-found' };
       }
-      const current = (await recordsOf(tx, editionId))[kind].find((row) => row.id === id);
+      const [current] = (await recordsOf(tx, editionId, id))[kind];
       if (current === undefined) return { ok: false, reason: 'not-found' };
       await tx.insert(actionLog).values({
         who: { kind: 'agent', name: writer.name },
@@ -510,7 +515,7 @@ export function createContentWrites({
       if ((await heldVersion(tx, editionId)) === undefined) {
         return { ok: false, reason: 'not-imported' } as const;
       }
-      const current = (await recordsOf(tx, editionId))[kind].find((row) => row.id === id);
+      const [current] = (await recordsOf(tx, editionId, id))[kind];
       if (current === undefined) return { ok: false, reason: 'not-found' } as const;
       return { ok: true, fields: current.fields, recordVersion: current.recordVersion } as const;
     });
