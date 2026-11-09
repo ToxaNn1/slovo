@@ -15,7 +15,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { PressedTile } from '../primitives/PressedTile';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { minTouchTarget, space, typeStyle, vowelButtonsLayout } from '../tokens';
+import { fontScaleCap, minTouchTarget, space, typeStyle, vowelButtonsLayout } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** How a wrong tap drops: down, tilted and faded, the board's `slDrop`. */
@@ -23,8 +23,6 @@ const VOWEL_DROP = { translateY: 12, rotate: -6, opacity: 0.55 };
 /** How a right vowel pops, the board's `slPop`: its scale at the start, 60 % and the end. */
 const VOWEL_POP = [0.6, 1.12, 1];
 const VOWEL_SLOP = (minTouchTarget - vowelButtonsLayout.width) / 2;
-/** How far the largest text sizes of iOS may scale a letter, so the Word keeps its shape. */
-const LETTER_MAX_FONT_SCALE = 1.3;
 /** Whether a character is a letter, which counts for a vowel's place, unlike an apostrophe or a hyphen. */
 const LETTER = /\p{L}/u;
 
@@ -83,7 +81,7 @@ export function VowelButtons({
               key={position}
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
-              maxFontSizeMultiplier={LETTER_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.number}
               style={[letterStyle, { color: colors.ink }]}
             >
               {letter}
@@ -190,7 +188,7 @@ function Vowel({
         faceStyle={[styles.vowel, fill === 'wrong' && { backgroundColor: colors.surfaceSunken }]}
       >
         <Text
-          maxFontSizeMultiplier={LETTER_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[
             typeStyle('vowelButton', tokens),
             styles.letter,

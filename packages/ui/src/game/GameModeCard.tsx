@@ -4,10 +4,16 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { modeRow, pressedFade, shadowEdge, space, typeStyle, wedges } from '../tokens';
+import {
+  fontScaleCap,
+  modeRow,
+  pressedFade,
+  shadowEdge,
+  space,
+  typeStyle,
+  wedges,
+} from '../tokens';
 
-/** How far the largest text sizes of iOS may scale the row's text, so it never breaks a word. */
-const TEXT_MAX_FONT_SCALE = 1.5;
 /** How much a mode that can't start fades, like an answered Round's other options. */
 const UNAVAILABLE_OPACITY = 0.45;
 
@@ -80,7 +86,7 @@ export function GameModeCard({
         ]}
       >
         <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.text}
           style={[typeStyle('modeGlyph', tokens), { color: canStart ? keyInk : colors.ink }]}
         >
           {glyph}
@@ -88,13 +94,13 @@ export function GameModeCard({
       </View>
       <View style={styles.texts}>
         <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.text}
           style={[typeStyle('modeName', tokens), { color: colors.ink }]}
         >
           {title}
         </Text>
         <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.text}
           numberOfLines={refusal === undefined ? 1 : undefined}
           style={[
             typeStyle('modeLine', tokens),
@@ -105,7 +111,7 @@ export function GameModeCard({
         </Text>
       </View>
       <Text
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('modeBest', tokens), styles.best, { color: colors.muted }]}
       >
         {best}
@@ -120,7 +126,7 @@ export function GamesTitle({ children }: { children: string }) {
   return (
     <Text
       accessibilityRole="header"
-      maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+      maxFontSizeMultiplier={fontScaleCap.text}
       style={[typeStyle('gamesTitle', tokens), { color: tokens.colors.ink }]}
     >
       {children}
@@ -136,7 +142,7 @@ export function GameModeGroupTitle({ children }: { children: string }) {
       <Wedge points={wedges.band} color={tokens.colors.accent} {...modeRow.groupMark} />
       <Text
         accessibilityRole="header"
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('groupTitle', tokens), { color: tokens.colors.ink }]}
       >
         {children}

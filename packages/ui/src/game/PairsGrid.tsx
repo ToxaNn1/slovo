@@ -16,11 +16,9 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { pairsGridLayout, space, typeStyle } from '../tokens';
+import { fontScaleCap, pairsGridLayout, space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
-/** How far the largest text sizes of iOS may scale a Definition, so a long one stays in the grid. */
-const DEFINITION_MAX_FONT_SCALE = 1.5;
 /** How a right pair pops: from small, past its size, back. */
 const CELL_POP = [0.6, 1.12, 1];
 /** How far a wrong pair drops, how far its cells turn (a Word left, a Definition right), how much it fades. */
@@ -131,7 +129,7 @@ export function PairsGrid({
               }}
             >
               <Text
-                maxFontSizeMultiplier={DEFINITION_MAX_FONT_SCALE}
+                maxFontSizeMultiplier={fontScaleCap.text}
                 style={[typeStyle('pairsDefinition', tokens), { color: textColor(look) }]}
               >
                 {shown}

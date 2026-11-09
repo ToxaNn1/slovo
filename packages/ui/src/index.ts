@@ -69,13 +69,7 @@ export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
 export { ChipChoice } from './mix/ChipChoice';
-export {
-  HEADLINE_MAX_FONT_SCALE,
-  LaterButton,
-  OnboardingStep,
-  stepStyles,
-  TEXT_MAX_FONT_SCALE,
-} from './onboarding/OnboardingStep';
+export { LaterButton, OnboardingStep, stepStyles } from './onboarding/OnboardingStep';
 export { OnboardingWelcome, type HeroWord } from './onboarding/OnboardingWelcome';
 export {
   RarityTestQuestions,
@@ -186,6 +180,7 @@ export {
   rowPadding,
   signInButtonHeight,
   space,
+  fontScaleCap,
   STACK_AT_FONT_SCALE,
   roleSize,
   typeStyle,

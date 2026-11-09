@@ -5,8 +5,15 @@ import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { blockGap, dailyCrosswordCard, resultLayout, space, typeStyle } from '../tokens';
-import { PanelGround, TEXT_MAX_FONT_SCALE, TITLE_TRACKING } from './GameResult';
+import {
+  blockGap,
+  dailyCrosswordCard,
+  fontScaleCap,
+  resultLayout,
+  space,
+  typeStyle,
+} from '../tokens';
+import { PanelGround, TITLE_TRACKING } from './GameResult';
 
 const { mini } = dailyCrosswordCard;
 
@@ -64,7 +71,7 @@ export function CrosswordSolvedPoster({
             {time === undefined ? null : (
               <Text
                 testID="crossword-solved-time"
-                maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+                maxFontSizeMultiplier={fontScaleCap.text}
                 style={[typeStyle('resultLine', tokens), { color: keyInk }]}
               >
                 {time}
@@ -76,7 +83,7 @@ export function CrosswordSolvedPoster({
       </View>
       <View style={styles.body}>
         <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.text}
           accessibilityRole="header"
           style={[typeStyle('eyebrow', tokens), { color: colors.muted }]}
         >
@@ -101,14 +108,14 @@ export function CrosswordSolvedPoster({
         </View>
         <View testID="crossword-solved-share-line" accessible {...voice} style={styles.line}>
           <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.text}
             style={[typeStyle('resultLine', tokens), { color: colors.ink }]}
           >
             {share.title}
           </Text>
           {share.line === undefined ? null : (
             <Text
-              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.text}
               style={[typeStyle('hint', tokens), { color: colors.muted }]}
             >
               {share.line}

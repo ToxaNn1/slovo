@@ -3,13 +3,11 @@ import { StyleSheet, Text } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { space, typeStyle } from '../tokens';
+import { fontScaleCap, space, typeStyle } from '../tokens';
 
 /** The height of a sheet's rows and of its «Готово» button, from the design. */
 export const SHEET_ROW_HEIGHT = 56;
 
-/** How far the largest text sizes of iOS may scale a sheet's title, as a screen title. */
-const TITLE_MAX_FONT_SCALE = 1.3;
 /** The title band's padding above and below, and how far it reaches left of the sheet's edge, from the design. */
 const TITLE_BAND = { vertical: 10, outset: 2 };
 
@@ -29,7 +27,7 @@ export function SheetTitle({ children }: { children: ReactNode }) {
     <Text
       accessibilityRole="header"
       {...voice}
-      maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
+      maxFontSizeMultiplier={fontScaleCap.number}
       style={[
         typeStyle('sheetTitle', tokens),
         styles.title,

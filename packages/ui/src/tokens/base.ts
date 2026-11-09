@@ -1085,6 +1085,14 @@ export const blockGap = 18;
 /** The empty state's space over its content. */
 export const emptyStatePaddingTop = 80;
 
+/**
+ * How far the largest text sizes of iOS may scale a text
+ * (`maxFontSizeMultiplier`): a number, a title, a label or a letter that must
+ * keep its box to `number`, running text to `text`, and a letter that keeps
+ * its size inside a fixed cell to `fixed`.
+ */
+export const fontScaleCap = { number: 1.3, text: 1.5, fixed: 1 } as const;
+
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;
 

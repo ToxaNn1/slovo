@@ -2,11 +2,15 @@ import { StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
-import { minTouchTarget, roundLayout, space, typeStyle, typedAnswerLayout } from '../tokens';
+import {
+  fontScaleCap,
+  minTouchTarget,
+  roundLayout,
+  space,
+  typedAnswerLayout,
+  typeStyle,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-
-/** How far the largest text sizes of iOS may scale a blank's letter, so the row keeps its shape. */
-const BLANK_MAX_FONT_SCALE = 1.5;
 
 /**
  * One place of the Word to type, in order: an apostrophe or a hyphen, which
@@ -124,7 +128,7 @@ function Blanks({
               key={index}
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
-              maxFontSizeMultiplier={BLANK_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.text}
               style={letterStyle}
             >
               {blank.mark}
@@ -139,7 +143,7 @@ function Blanks({
             {...voice}
             style={[styles.blank, { borderBottomColor: colors.ink }]}
           >
-            <Text maxFontSizeMultiplier={BLANK_MAX_FONT_SCALE} style={letterStyle}>
+            <Text maxFontSizeMultiplier={fontScaleCap.text} style={letterStyle}>
               {blank.letter ?? ' '}
             </Text>
           </View>

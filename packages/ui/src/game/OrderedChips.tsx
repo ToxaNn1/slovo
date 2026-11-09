@@ -15,15 +15,13 @@ import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { Button } from '../primitives/Button';
 import { PressedTile } from '../primitives/PressedTile';
-import { orderedChipsLayout, space, typeStyle } from '../tokens';
+import { fontScaleCap, orderedChipsLayout, space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** The columns letter tiles stand in (board 07). */
 const TILE_COLUMNS = 4;
 /** How faint a chip placed in the line stays among the shuffled ones. */
 const PLACED_OPACITY = 0.25;
-/** How far the largest text sizes of iOS may scale a chip's text, so a chip never breaks a word. */
-const CHIP_MAX_FONT_SCALE = 1.5;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -369,7 +367,7 @@ function ChipText({ text, kind, color }: { text: string; kind: 'letter' | 'word'
   const tokens = useTokens();
   return (
     <Text
-      maxFontSizeMultiplier={CHIP_MAX_FONT_SCALE}
+      maxFontSizeMultiplier={fontScaleCap.text}
       style={[typeStyle(kind === 'letter' ? 'chipLetter' : 'chipWord', tokens), { color }]}
     >
       {text}

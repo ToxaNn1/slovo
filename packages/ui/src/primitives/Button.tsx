@@ -4,11 +4,8 @@ import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { buttonHeight, space, typeStyle } from '../tokens';
+import { buttonHeight, fontScaleCap, space, typeStyle } from '../tokens';
 import { PressedTile, type TileTone } from './PressedTile';
-
-/** How far the largest text sizes of iOS may scale the label, so the button never outgrows its screen. */
-const LABEL_MAX_FONT_SCALE = 1.3;
 
 /**
  * The design's buttons, each a pressed tile: `primary` is the red with an
@@ -100,7 +97,7 @@ export function Button({
         {mark}
         <Text
           {...voice}
-          maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[styles.label, typeStyle('buttonLabel', tokens), { color: labelColor }]}
         >
           {label}

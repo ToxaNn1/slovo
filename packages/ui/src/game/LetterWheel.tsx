@@ -23,11 +23,8 @@ import { PressedTile } from '../primitives/PressedTile';
 import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { useTokens } from '../providers/TokensProvider';
-import { crossingCrosswordLayout, typeStyle } from '../tokens';
+import { crossingCrosswordLayout, fontScaleCap, typeStyle } from '../tokens';
 import { ease } from './round-motion';
-
-/** How far the largest text sizes of iOS may scale a tile's letter, so it stays inside its tile. */
-const TILE_MAX_FONT_SCALE = 1.3;
 
 /** A trace that spelled no Word: its letters show in ink and the chips shake; a new `key` plays it again. */
 export interface WheelMiss {
@@ -197,7 +194,7 @@ export function LetterWheel({
             >
               <Text
                 {...voice}
-                maxFontSizeMultiplier={TILE_MAX_FONT_SCALE}
+                maxFontSizeMultiplier={fontScaleCap.number}
                 style={[
                   typeStyle('crosswordPathLetter', tokens),
                   { color: missed ? colors.background : colors.onAccent },
@@ -262,7 +259,7 @@ export function LetterWheel({
                 >
                   <Text
                     {...voice}
-                    maxFontSizeMultiplier={TILE_MAX_FONT_SCALE}
+                    maxFontSizeMultiplier={fontScaleCap.number}
                     style={[
                       typeStyle('crosswordLetter', tokens),
                       { color: traced ? colors.onAccent : colors.ink },

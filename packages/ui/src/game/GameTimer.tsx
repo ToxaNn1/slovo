@@ -3,10 +3,8 @@ import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { gameTimerLayout, roundLayout, roundProgress, typeStyle } from '../tokens';
+import { fontScaleCap, gameTimerLayout, roundLayout, roundProgress, typeStyle } from '../tokens';
 
-/** How far the largest text sizes of iOS may scale the seconds, so the header keeps its shape. */
-const TEXT_MAX_FONT_SCALE = 1.5;
 /** VoiceOver reads the time left each time this many seconds pass. */
 const ANNOUNCE_EVERY = 10;
 
@@ -81,7 +79,7 @@ export function GameTimer({
         ))}
       </View>
       <Text
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('timerSeconds', tokens), styles.seconds, { color: colors.ink }]}
       >
         {shown(seconds)}

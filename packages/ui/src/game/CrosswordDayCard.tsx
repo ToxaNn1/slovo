@@ -3,10 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { crosswordDayCard, pressedFade, typeStyle } from '../tokens';
-
-/** How far the largest text sizes of iOS may scale the card's text, so it never breaks a word. */
-const TEXT_MAX_FONT_SCALE = 1.3;
+import { crosswordDayCard, fontScaleCap, pressedFade, typeStyle } from '../tokens';
 
 /**
  * How far today's crossing Daily Crossword has come, as its card draws it:
@@ -65,7 +62,7 @@ export function CrosswordDayCard({
         : sentences([title, state.mark, state.result]);
   const titleText = (
     <Text
-      maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+      maxFontSizeMultiplier={fontScaleCap.number}
       style={[
         typeStyle('crosswordCardTitle', tokens),
         { color: solved ? colors.background : colors.ink },
@@ -123,14 +120,14 @@ export function CrosswordDayCard({
             </View>
             <View style={styles.lines}>
               <Text
-                maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+                maxFontSizeMultiplier={fontScaleCap.number}
                 style={[typeStyle('crosswordCardMark', tokens), { color: colors.accentText }]}
               >
                 {state.mark}
               </Text>
               {state.result === undefined ? null : (
                 <Text
-                  maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+                  maxFontSizeMultiplier={fontScaleCap.number}
                   style={[
                     typeStyle('crosswordCardLine', tokens),
                     styles.result,
@@ -149,7 +146,7 @@ export function CrosswordDayCard({
             {titleText}
             {state.kind === 'start' ? (
               <Text
-                maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+                maxFontSizeMultiplier={fontScaleCap.number}
                 style={[typeStyle('crosswordCardLine', tokens), { color: colors.muted }]}
               >
                 {state.line}
@@ -182,7 +179,7 @@ export function CrosswordDayCard({
             ]}
           >
             <Text
-              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.number}
               style={[
                 typeStyle('crosswordState', tokens),
                 { color: state.kind === 'start' ? keyInk : colors.background },
