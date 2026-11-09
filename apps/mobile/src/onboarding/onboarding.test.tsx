@@ -131,8 +131,10 @@ describe('the onboarding', () => {
 
     await press('onboarding-start');
     expect(screen.getByText(strings.firstWord.title)).toBeTruthy();
-    const firstWord = composition.onboarding.state.step;
-    if (firstWord?.kind !== 'firstWord') throw new Error('No first Word');
+    const { state } = composition.onboarding;
+    if (state.status !== 'open' || state.step.kind !== 'firstWord')
+      throw new Error('No first Word');
+    const firstWord = state.step;
     expect(screen.getAllByText(firstWord.word.primaryDefinition).length).toBeGreaterThan(0);
 
     await press('onboarding-next');
@@ -172,7 +174,7 @@ describe('the onboarding', () => {
     await press('onboarding-time-20:30');
 
     expect(composition.notifications.state.times).toEqual(['20:30']);
-    expect(composition.onboarding.state.finishedAt).toEqual(clock.now());
+    expect(composition.onboarding.state).toEqual({ status: 'finished', finishedAt: clock.now() });
     expect(screen.queryByTestId('onboarding-daily-goal')).toBeNull();
   });
 
@@ -213,7 +215,7 @@ describe('the onboarding', () => {
     await press('onboarding-skip');
 
     expect(screen.queryByTestId('onboarding')).toBeNull();
-    expect(composition.onboarding.state.finishedAt).toEqual(clock.now());
+    expect(composition.onboarding.state).toEqual({ status: 'finished', finishedAt: clock.now() });
     expect(composition.xpLog.state.dailyGoal).toBeNull();
   });
 

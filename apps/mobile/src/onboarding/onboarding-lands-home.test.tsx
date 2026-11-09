@@ -193,7 +193,7 @@ describe('the whole onboarding flow', () => {
     await press('onboarding-time-20:30');
 
     // The Dashboard: nothing covers it.
-    expect(composition.onboarding.state.finishedAt).toEqual(clock.now());
+    expect(composition.onboarding.state).toEqual({ status: 'finished', finishedAt: clock.now() });
     for (const shout of shouts) expect(screen.queryByText(shout)).toBeNull();
     expect(screen.queryByTestId('onboarding-notification-time')).toBeNull();
     expect(screen.getByTestId('dashboard')).toBeTruthy();
