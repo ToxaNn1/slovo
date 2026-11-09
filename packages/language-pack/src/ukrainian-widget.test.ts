@@ -131,7 +131,7 @@ describe('The Widget Snapshot of the UA Edition', () => {
     const snapshot = await app.widget.snapshot(notificationStrings);
     if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
     for (const { id, standardEquivalents, nonStandardForm } of stressTraps) {
-      const [headline, secondLine] = [standardEquivalents[0] ?? '', nonStandardForm];
+      const [headline, secondLine] = [standardEquivalents[0], nonStandardForm];
       expect(headline).toContain(STRESS_MARK);
       expect(secondLine).toContain(STRESS_MARK);
       const unmarked = (text: string) => text.replaceAll(STRESS_MARK, '');
