@@ -14,3 +14,4 @@ Grants (owner 09.11): commits, pushes, one new PR, edits of PR bodies. NO merge 
 - B: implementer subagent started on chore/1109-strip-pr-footer.
 - A: #1756 CI green, mergeable=clean, no auto-merge.
 - C: no open PR body has the footer (checked #1756, #1762).
+- B: implementer pushed 3 commits on chore/1109-strip-pr-footer; next: PR, then throwaway PR with base chore/1109-strip-pr-footer (main has no script yet).
