@@ -41,6 +41,9 @@ const QUALITY_MAX_DAYS = 30;
 /** The hint of a period Якість cuts. */
 export const QUALITY_CAP_HINT = 'Sentry зберігає дані 30 днів';
 
+/** The hint of a page that reads neither filter: Розробка and Мої сесії. */
+export const FILTERS_OFF_HINT = 'Фільтри тут не діють';
+
 /** The period Якість reads for the one chosen: one over 30 days reads as 30 days. */
 export function qualityPeriod(period: PeriodId): PeriodId {
   return PERIOD_DAYS[period] > QUALITY_MAX_DAYS ? '30d' : period;

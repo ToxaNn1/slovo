@@ -107,4 +107,6 @@ test('another section keeps 90 days on offer', async () => {
   const period = within(screen.getByRole('group', { name: 'Період' }));
   expect(period.getByRole('button', { name: '90 днів' }).getAttribute('aria-pressed')).toBe('true');
   expect(screen.queryByText('Sentry зберігає дані 30 днів')).toBeNull();
+  expect(screen.queryByText('Фільтри тут не діють')).toBeNull();
+  expect(screen.getByRole('combobox', { name: 'Edition' }).matches(':disabled')).toBe(false);
 });

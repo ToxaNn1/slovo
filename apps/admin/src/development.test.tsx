@@ -51,3 +51,11 @@ test('a failing GitHub or EAS shows its own unavailable state, the same in both 
   expect(document.documentElement.dataset['theme']).toBe('dark');
   expect(screen.getByRole('region', { name: 'Розробка' }).textContent).toBe(light);
 });
+
+test('Розробка reads neither filter, so the bar is switched off and says so', async () => {
+  await openDevelopment();
+  expect(screen.getByText('Фільтри тут не діють')).toBeDefined();
+  expect(screen.getByRole('combobox', { name: 'Edition' }).matches(':disabled')).toBe(true);
+  const period = within(screen.getByRole('group', { name: 'Період' }));
+  expect(period.getByRole('button', { name: '7 днів' }).matches(':disabled')).toBe(true);
+});
