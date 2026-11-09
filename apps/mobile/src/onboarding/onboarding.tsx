@@ -40,8 +40,9 @@ const { onboarding: strings } = editionStrings;
  */
 export function Onboarding() {
   const { onboarding } = useComposition();
-  const step = useSubscribed(onboarding, ({ state }) => state.step);
-  if (step === undefined) return null;
+  const state = useSubscribed(onboarding, (module) => module.state);
+  if (state.status === 'finished') return null;
+  const { step } = state;
   const skip = () => {
     void keep('the onboarding', onboarding.finish());
   };

@@ -215,7 +215,7 @@ describe('the whole Dashboard', () => {
     await press('onboarding-later');
     await press('onboarding-done');
     await press('onboarding-time-20:30');
-    expect(composition.onboarding.state.finishedAt).toEqual(clock.now());
+    expect(composition.onboarding.state).toEqual({ status: 'finished', finishedAt: clock.now() });
     expect(screen.getByTestId('dashboard')).toBeTruthy();
 
     // The hero: «Розкрити» reveals the Word of the Day in place and makes it Seen.

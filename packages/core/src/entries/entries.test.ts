@@ -591,6 +591,43 @@ describe('the Entries', () => {
       expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
     });
 
+    it('lead from a Word to exactly the Corrections `eligible` holds: a Retired one, one of a Category out of the Mix, a Hidden one or one of the kind out of the Mix is out of both', async () => {
+      const office: Correction = { ...always, categoryId: 'office' };
+      const { entries, mix, hiddenEntries } = await openLiveEntries({
+        content: createMemoryContentPort({
+          words: [talkative],
+          corrections: [chatty, office, correction('c_old', true)],
+        }),
+        edition: editionWith(true),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+      });
+      /** The Corrections `eligible` holds and those the Word links, read together. */
+      const both = async () => {
+        const [{ corrections }, linked] = await Promise.all([
+          entries.eligible(),
+          entries.linkedCorrections(talkative),
+        ]);
+        return { eligible: corrections, linked: ids(linked) };
+      };
+      const all = ['c_chatty', 'c_always'];
+
+      // The Word links Retired `c_old` too: live is the first reason.
+      expect(await both()).toEqual({ eligible: all, linked: all });
+
+      await mix.takeOut('office', 'correction');
+      expect(await both()).toEqual({ eligible: ['c_chatty'], linked: ['c_chatty'] });
+
+      await hiddenEntries.hide('c_chatty');
+      expect(await both()).toEqual({ eligible: [], linked: [] });
+
+      await mix.putBack('office', 'correction');
+      await hiddenEntries.restore('c_chatty');
+      expect(await both()).toEqual({ eligible: all, linked: all });
+
+      await mix.setKind('correction', false);
+      expect(await both()).toEqual({ eligible: [], linked: [] });
+    });
+
     it('lead from a Word to no Synonym Row while Synonym Rows are out of the Mix, and back when they return', async () => {
       const row = synonymRow('r_talk');
       const linking: SynonymRow = {
