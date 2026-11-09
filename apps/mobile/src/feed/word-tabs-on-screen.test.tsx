@@ -412,6 +412,41 @@ describe('the tabs of a Word card in the Feed', () => {
     expect(room()).toMatchObject({ minHeight: 0 });
   });
 
+  it('hides an opened tab again under «Сховати», which gives «Детальніше» back (owner 08.11)', async () => {
+    const long = `${'Дуже довге значення слова, яке не вміщається в картку. '.repeat(40)}Кінець.`;
+    await open({ ...fullWord, primaryDefinition: long });
+    await renderApp();
+    await swipeUp();
+    const layout = async (testID: string, height: number) => {
+      await fireEvent(wordCard().getByTestId(testID, hidden), 'layout', {
+        nativeEvent: { layout: { x: 0, y: 0, width: 358, height } },
+      });
+      await settle();
+    };
+    await layout('word-tab-panel', 200);
+    for (
+      let size = 0;
+      size < 4 && wordCard().queryByTestId('word-tab-more', hidden) === null;
+      size++
+    )
+      await layout('word-tab-content', 2000);
+    await layout('word-tab-content', 2000);
+    await settle(() => fireEvent.press(wordCard().getByTestId('word-tab-more', hidden)));
+    await act(() => jest.advanceTimersByTimeAsync(500));
+    const room = () => getAnimatedStyle(wordCard().getByTestId('word-tab-panel', hidden));
+    expect(room()).toMatchObject({ minHeight: 2000 });
+
+    const less = wordCard().getByTestId('word-tab-less', hidden);
+    expect(less).toHaveTextContent('Сховати');
+    expect(less.props['accessibilityState']).toMatchObject({ expanded: true });
+    await settle(() => fireEvent.press(less));
+    await act(() => jest.advanceTimersByTimeAsync(500));
+
+    expect(room()).toMatchObject({ minHeight: 0 });
+    expect(wordCard().queryByTestId('word-tab-less', hidden)).toBeNull();
+    expect(wordCard().getByTestId('word-tab-more', hidden)).toHaveTextContent('Детальніше');
+  });
+
   it('shrinks a Definition when the room and the content are laid out in one go', async () => {
     const long = `${'Довге значення слова. '.repeat(20)}Кінець.`;
     await open({ ...fullWord, primaryDefinition: long });
