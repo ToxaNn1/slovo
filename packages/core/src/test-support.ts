@@ -42,10 +42,9 @@ const testEditionConfig = {
   displayName: 'SLOVO Test',
   accountName: 'Test ID',
   languageTraits: {
-    marksStress: false,
+    stress: { marked: false },
     alphabet: 'a b c d e f g h i j k l m n o p q r s t u v w x y z',
     sortLocale: 'en',
-    distractorRule: 'same-part-of-speech',
   },
   featureSwitches: Object.fromEntries(
     Object.keys(FeatureSwitchesSchema.shape).map((feature) => [feature, 'on']),

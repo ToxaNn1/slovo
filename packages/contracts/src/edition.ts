@@ -86,11 +86,6 @@ export const MoodSchema = z.strictObject({
 
 export type Mood = z.infer<typeof MoodSchema>;
 
-/** How the Game picks Distractors for a Round. */
-export const DistractorRuleSchema = z.enum(['same-part-of-speech']);
-
-export type DistractorRule = z.infer<typeof DistractorRuleSchema>;
-
 /** One lower-case letter. */
 const LowerCaseLetterSchema = z.string().regex(/^\p{Ll}$/u, 'Expected one lower-case letter');
 
@@ -109,10 +104,19 @@ const LetterListSchema = z
       .refine((letters) => new Set(letters).size === letters.length, 'Expected unique letters'),
   );
 
+/**
+ * Whether the language marks Stress. One that does, so that every Lemma
+ * carries it, names its lowercase vowels, each a letter of the alphabet: the
+ * only letters Stress may fall on.
+ */
+const StressTraitSchema = z.discriminatedUnion('marked', [
+  z.strictObject({ marked: z.literal(false) }),
+  z.strictObject({ marked: z.literal(true), vowels: LetterListSchema }),
+]);
+
 export const LanguageTraitsSchema = z
   .strictObject({
-    /** Whether the language marks Stress, so every Lemma must carry it. */
-    marksStress: z.boolean(),
+    stress: StressTraitSchema,
     /** The lowercase letters of the alphabet in alphabetical order. */
     alphabet: LetterListSchema,
     /**
@@ -128,12 +132,6 @@ export const LanguageTraitsSchema = z
     expressionPunctuation: LetterListSchema.optional(),
     /** The language tag used to sort text in the Edition's language. */
     sortLocale: LanguageTagSchema,
-    distractorRule: DistractorRuleSchema,
-    /**
-     * The lowercase vowels, each a letter of the alphabet: the only letters
-     * Stress may fall on. Required when the Edition marks Stress.
-     */
-    vowels: LetterListSchema.optional(),
     /**
      * The rows of the on-screen keyboard of the Daily Crossword, top to
      * bottom: every letter of the alphabet once. The alphabet in rows when
@@ -141,7 +139,7 @@ export const LanguageTraitsSchema = z
      */
     keyboard: z.array(LetterListSchema).min(1).optional(),
   })
-  .superRefine(({ marksStress, alphabet, vowels, keyboard }, context) => {
+  .superRefine(({ stress, alphabet, keyboard }, context) => {
     if (keyboard !== undefined) {
       const keys = keyboard.flat();
       keyboard.forEach((row, rowIndex) => {
@@ -164,21 +162,12 @@ export const LanguageTraitsSchema = z
           });
       });
     }
-    if (vowels === undefined) {
-      if (marksStress) {
-        context.addIssue({
-          code: 'custom',
-          path: ['vowels'],
-          message: 'Required when the Edition marks Stress',
-        });
-      }
-      return;
-    }
-    vowels.forEach((vowel, index) => {
+    if (!stress.marked) return;
+    stress.vowels.forEach((vowel, index) => {
       if (!alphabet.includes(vowel)) {
         context.addIssue({
           code: 'custom',
-          path: ['vowels', index],
+          path: ['stress', 'vowels', index],
           message: `"${vowel}" is not a letter of the alphabet`,
         });
       }
