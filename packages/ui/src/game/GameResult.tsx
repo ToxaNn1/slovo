@@ -15,6 +15,7 @@ import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import {
   blockGap,
+  fontScaleCap,
   halftone,
   mascotWidth,
   resultLayout,
@@ -28,10 +29,6 @@ import { GameReview } from './GameReview';
 import { useGameHaptics } from './useGameHaptics';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 
-/** How far the largest text sizes of iOS may scale the numbers, so they keep beside each other. */
-const NUMBER_MAX_FONT_SCALE = 1.3;
-/** How far they may scale the smaller text, so it never breaks a word. */
-export const TEXT_MAX_FONT_SCALE = 1.5;
 export const TITLE_TRACKING = typeRoles.resultTitle.letterSpacing / typeRoles.resultTitle.size;
 /** The Mascot's own width on the panel: its figure and the padding it draws around it. */
 const MASCOT_COLUMN = mascotWidth + 2 * space[4];
@@ -130,14 +127,14 @@ export function ResultNumber({
       style={[styles.number, { backgroundColor: colors.surfaceSunken }]}
     >
       <Text
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         numberOfLines={1}
         style={[typeStyle('eyebrow', tokens), { color: colors.muted }]}
       >
         {label}
       </Text>
       <Text
-        maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[typeStyle('screenTitle', tokens), { color: colors.ink }]}
       >
         {value}
@@ -226,7 +223,7 @@ export function GameResult({
               style={[typeStyle('resultTitle', tokens), { color: keyInk }]}
             />
             <Text
-              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.text}
               style={[typeStyle('resultLine', tokens), { color: keyInk }]}
             >
               {line}

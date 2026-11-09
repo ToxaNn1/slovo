@@ -23,19 +23,21 @@ import { useSafeAreaFrame, useSafeAreaInsets } from 'react-native-safe-area-cont
 import { fill, useEdition } from '../providers/EditionProvider';
 import { HalftoneGround } from '../primitives/HalftoneGround';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { minTouchTarget, motion, onboardingLayout, space, typeStyle, wedges } from '../tokens';
+import {
+  fontScaleCap,
+  minTouchTarget,
+  motion,
+  onboardingLayout,
+  space,
+  typeStyle,
+  wedges,
+} from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
 /** How long a step takes to slide in (ADR 0055), and how far from the side it starts. */
 const SLIDE_MS = 300;
 const SLIDE_DISTANCE = 40;
-/**
- * How far the largest text sizes of iOS may scale the step's text, so no word
- * breaks in the middle: the bigger of the two is for running text.
- */
-export const HEADLINE_MAX_FONT_SCALE = 1.3;
-export const TEXT_MAX_FONT_SCALE = 1.5;
 const { shout: shoutAt } = onboardingLayout;
 const SHOUT_TURN = `${String(shoutAt.turn)}deg`;
 
@@ -205,7 +207,7 @@ export function OnboardingStep({
             style={styles.skip}
           >
             <Text
-              maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.number}
               style={[typeStyle('quietAction', { fontFamilies }), { color: inkOnRed }]}
             >
               {onboarding.skip}
@@ -283,7 +285,7 @@ export function LaterButton({ testID, onPress }: { testID: string; onPress: () =
       style={styles.later}
     >
       <Text
-        maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[typeStyle('quietAction', tokens), { color: colors.muted }]}
       >
         {strings.onboarding.later}

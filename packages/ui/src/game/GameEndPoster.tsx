@@ -5,15 +5,9 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { blockGap, resultLayout, space, typeStyle } from '../tokens';
+import { blockGap, fontScaleCap, resultLayout, space, typeStyle } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import {
-  PanelGround,
-  PanelMascot,
-  ResultNumber,
-  TEXT_MAX_FONT_SCALE,
-  TITLE_TRACKING,
-} from './GameResult';
+import { PanelGround, PanelMascot, ResultNumber, TITLE_TRACKING } from './GameResult';
 import { GameReview } from './GameReview';
 import { useGameHaptics } from './useGameHaptics';
 
@@ -74,7 +68,7 @@ export function GameEndPoster({
     <View accessible {...voice} style={livesOver ? styles.stackedText : styles.text}>
       {kicker === undefined ? null : (
         <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.text}
           style={[typeStyle('eyebrow', tokens), { color: keyInk }]}
         >
           {kicker}
@@ -89,7 +83,7 @@ export function GameEndPoster({
       />
       {line === undefined ? null : (
         <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.text}
           style={[typeStyle('resultLine', tokens), { color: keyInk }]}
         >
           {line}
@@ -137,7 +131,7 @@ export function GameEndPoster({
             {end.newBest ? (
               <Text
                 testID="game-end-new-best"
-                maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+                maxFontSizeMultiplier={fontScaleCap.text}
                 style={[typeStyle('eyebrow', tokens), { color: colors.accentText }]}
               >
                 {finish.newBest}

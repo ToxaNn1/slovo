@@ -4,9 +4,9 @@ import { StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { space, typeStyle } from '../tokens';
+import { fontScaleCap, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { HEADLINE_MAX_FONT_SCALE, OnboardingStep, TEXT_MAX_FONT_SCALE } from './OnboardingStep';
+import { OnboardingStep } from './OnboardingStep';
 
 /** The Word the welcome shows large. */
 export interface HeroWord {
@@ -62,7 +62,7 @@ export function OnboardingWelcome({
             testID="onboarding-hero-lemma"
             accessibilityLabel={hero.accessibilityLabel}
             {...voice}
-            maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.number}
             numberOfLines={1}
             adjustsFontSizeToFit
             minimumFontScale={0.5}
@@ -71,7 +71,7 @@ export function OnboardingWelcome({
           <Text
             testID="onboarding-hero-definition"
             {...voice}
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.text}
             style={[typeStyle('heroDefinition', tokens), { color: colors.ink }]}
           >
             {hero.definition}
@@ -81,14 +81,14 @@ export function OnboardingWelcome({
       <Text
         accessibilityRole="header"
         {...voice}
-        maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[typeStyle('stepTitle', tokens), { color: colors.ink }]}
       >
         {welcome.title}
       </Text>
       <Text
         {...voice}
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('stepText', tokens), { color: colors.muted }]}
       >
         {welcome.subtitle}

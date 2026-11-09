@@ -4,10 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { dashboard, feedHeader, space, typeStyle, wedges } from '../tokens';
-
-/** How far the largest text sizes of iOS may scale the header's text, so it stays on one row. */
-const HEADER_MAX_FONT_SCALE = 1.3;
+import { dashboard, feedHeader, fontScaleCap, space, typeStyle, wedges } from '../tokens';
 
 /**
  * The Feed's header, from the design: the red wedge and the app's name
@@ -46,7 +43,7 @@ export function FeedHeader({
           height={feedHeader.logoWedge.height}
         />
         <Text
-          maxFontSizeMultiplier={HEADER_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle('logo', tokens), { color: colors.ink }]}
         >
           {wordmark}
@@ -58,7 +55,7 @@ export function FeedHeader({
           <Wedge points={wedges.logoPlate} color={colors.ink} width="100%" height="100%" />
         </View>
         <Text
-          maxFontSizeMultiplier={HEADER_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle('logo', tokens), { color: colors.background }]}
         >
           {wordmark}
@@ -94,7 +91,7 @@ export function FeedHeader({
       <View style={styles.end}>
         <Text
           testID="feed-today"
-          maxFontSizeMultiplier={HEADER_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle('headerDate', tokens), { color: colors.muted }]}
         >
           {today}

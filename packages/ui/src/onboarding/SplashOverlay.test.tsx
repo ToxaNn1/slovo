@@ -67,6 +67,23 @@ describe('SplashOverlay', () => {
     },
   );
 
+  it('hands over through the latest onDone it was given', async () => {
+    jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(false);
+    const first = jest.fn();
+    const latest = jest.fn();
+    const splash = (onDone: () => void) => (
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+        <SplashOverlay wordmark="SLOVO" tagline="rare words" kind="daily" onDone={onDone} />
+      </EditionProvider>
+    );
+    const { rerender } = await render(splash(first));
+    await pass(100);
+    await rerender(splash(latest));
+    await pass(400);
+    expect(first).not.toHaveBeenCalled();
+    expect(latest).toHaveBeenCalledTimes(1);
+  });
+
   it("draws the cut in the dark Theme's own background and ink", async () => {
     jest.spyOn(AccessibilityInfo, 'isReduceMotionEnabled').mockResolvedValue(true);
     await render(

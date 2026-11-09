@@ -2,7 +2,6 @@ import type { DailyGoal, MascotState } from '@slovo/contracts';
 import type { OnboardingStep as Step, QuestionnaireOption, WordCardModel } from '@slovo/core';
 import {
   EntryCard,
-  HEADLINE_MAX_FONT_SCALE,
   LaterButton,
   OnboardingStep,
   OnboardingWelcome,
@@ -12,11 +11,11 @@ import {
   RarityTestQuestions,
   space,
   stepStyles,
-  TEXT_MAX_FONT_SCALE,
   typeStyle,
   useEdition,
   useTokens,
   type RarityTestQuestion,
+  fontScaleCap,
 } from '@slovo/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -145,7 +144,7 @@ function Title({ children }: { children: string }) {
     <Text
       accessibilityRole="header"
       {...voice}
-      maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+      maxFontSizeMultiplier={fontScaleCap.number}
       style={[typeStyle('stepTitle', tokens), { color: colors.ink }]}
     >
       {children}
@@ -193,7 +192,7 @@ function Subtitle({ children }: { children: string }) {
   return (
     <Text
       {...voice}
-      maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+      maxFontSizeMultiplier={fontScaleCap.text}
       style={[typeStyle('stepText', tokens), { color: colors.muted }]}
     >
       {children}
@@ -490,13 +489,13 @@ function DailyGoalStep({
                 }}
               >
                 <Text
-                  maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+                  maxFontSizeMultiplier={fontScaleCap.number}
                   style={[typeStyle('goalNumber', tokens), { color: ink }]}
                 >
                   {String(goal)}
                 </Text>
                 <Text
-                  maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+                  maxFontSizeMultiplier={fontScaleCap.text}
                   style={[typeStyle('goalUnit', tokens), { color: ink }]}
                 >
                   {strings.dailyGoal.unit}

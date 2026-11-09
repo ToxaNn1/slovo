@@ -13,12 +13,9 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
-import { guideStep, space, typeStyle, widgetDrawing, withAlpha } from '../tokens';
+import { fontScaleCap, guideStep, space, typeStyle, widgetDrawing, withAlpha } from '../tokens';
 import { InvertedTokens, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
-
-/** How far the largest text sizes of iOS may scale a step's title and hint, so no word breaks and the hint stays under its title. */
-const STEP_MAX_FONT_SCALE = 1.3;
 
 /** One numbered step of the widget guide: its number in a square, what to do and a hint under it. */
 function GuideStep({
@@ -56,13 +53,13 @@ function GuideStep({
       </View>
       <View style={styles.stepText}>
         <Text
-          maxFontSizeMultiplier={STEP_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle('guideTitle', tokens), { color: colors.ink }]}
         >
           {title}
         </Text>
         <Text
-          maxFontSizeMultiplier={STEP_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle('sub', tokens), { color: colors.muted }]}
         >
           {hint}

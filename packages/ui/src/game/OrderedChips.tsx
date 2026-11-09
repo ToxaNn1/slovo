@@ -15,25 +15,13 @@ import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { Button } from '../primitives/Button';
 import { PressedTile } from '../primitives/PressedTile';
-import { space, typeStyle } from '../tokens';
+import { fontScaleCap, orderedChipsLayout, space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
-/** A place of the answer line, the design's slot: its height, least width, corner and border. */
-const SLOT_HEIGHT = 64;
-const SLOT_BORDER = 3;
-/** A chip among the shuffled ones, the design's letter tile. */
-const CHIP_HEIGHT = 60;
-const CHIP_WIDTH = 54;
-const CHIP_RADIUS = 14;
-/** The gap between the chips, and between the answer line and the chips. */
-const CHIP_GAP = 8;
-const LINE_GAP = 22;
 /** The columns letter tiles stand in (board 07). */
 const TILE_COLUMNS = 4;
 /** How faint a chip placed in the line stays among the shuffled ones. */
 const PLACED_OPACITY = 0.25;
-/** How far the largest text sizes of iOS may scale a chip's text, so a chip never breaks a word. */
-const CHIP_MAX_FONT_SCALE = 1.5;
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
@@ -274,7 +262,7 @@ function Chip({
       <View style={placed && leavesPlace && styles.gone}>
         <PressedTile
           testID={testID}
-          radius={CHIP_RADIUS}
+          radius={orderedChipsLayout.chipRadius}
           accessibilityLabel={text}
           accessibilityState={{ disabled: inert }}
           inert={inert}
@@ -379,7 +367,7 @@ function ChipText({ text, kind, color }: { text: string; kind: 'letter' | 'word'
   const tokens = useTokens();
   return (
     <Text
-      maxFontSizeMultiplier={CHIP_MAX_FONT_SCALE}
+      maxFontSizeMultiplier={fontScaleCap.text}
       style={[typeStyle(kind === 'letter' ? 'chipLetter' : 'chipWord', tokens), { color }]}
     >
       {text}
@@ -388,33 +376,37 @@ function ChipText({ text, kind, color }: { text: string; kind: 'letter' | 'word'
 }
 
 const styles = StyleSheet.create({
-  chips: { gap: LINE_GAP },
+  chips: { gap: orderedChipsLayout.lineGap },
   line: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: CHIP_GAP,
+    gap: orderedChipsLayout.chipGap,
   },
-  tiles: { gap: CHIP_GAP },
+  tiles: { gap: orderedChipsLayout.chipGap },
   tray: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: CHIP_GAP,
+    gap: orderedChipsLayout.chipGap,
   },
   slot: {
-    height: SLOT_HEIGHT,
-    borderWidth: SLOT_BORDER,
-    borderRadius: CHIP_RADIUS,
+    height: orderedChipsLayout.slotHeight,
+    borderWidth: orderedChipsLayout.slotBorder,
+    borderRadius: orderedChipsLayout.chipRadius,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  chip: { height: CHIP_HEIGHT, alignItems: 'center', justifyContent: 'center' },
-  letter: { minWidth: CHIP_WIDTH, paddingHorizontal: space[1] },
-  word: { minWidth: CHIP_WIDTH, paddingHorizontal: space[4] },
+  chip: { height: orderedChipsLayout.chipHeight, alignItems: 'center', justifyContent: 'center' },
+  letter: { minWidth: orderedChipsLayout.chipWidth, paddingHorizontal: space[1] },
+  word: { minWidth: orderedChipsLayout.chipWidth, paddingHorizontal: space[4] },
   placed: { opacity: PLACED_OPACITY },
   box: { padding: space[3] },
-  left: { borderWidth: SLOT_BORDER, borderStyle: 'dashed', borderRadius: CHIP_RADIUS },
+  left: {
+    borderWidth: orderedChipsLayout.slotBorder,
+    borderStyle: 'dashed',
+    borderRadius: orderedChipsLayout.chipRadius,
+  },
   gone: { opacity: 0 },
-  mark: { height: SLOT_HEIGHT, justifyContent: 'center' },
+  mark: { height: orderedChipsLayout.slotHeight, justifyContent: 'center' },
 });

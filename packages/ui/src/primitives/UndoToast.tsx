@@ -30,7 +30,15 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, motion, pressedFade, space, typeStyle, wedges } from '../tokens';
+import {
+  fontScaleCap,
+  minTouchTarget,
+  motion,
+  pressedFade,
+  space,
+  typeStyle,
+  wedges,
+} from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Wedge } from './Wedge';
@@ -61,11 +69,6 @@ const TAIL = '4%';
 const MARK = { width: 12, height: 22 };
 /** The toast's undo button, from the design; its tap area is taller. */
 const UNDO_HEIGHT = 38;
-
-/** The message stops growing here, so the toast stays whole over what it covers. */
-const MESSAGE_MAX_FONT_SCALE = 1.3;
-/** The undo button's label stops growing here, so it never breaks a word. */
-const UNDO_MAX_FONT_SCALE = 1.3;
 
 /** What one undo toast says and what its undo button does. */
 export interface UndoToastContent {
@@ -270,7 +273,7 @@ export function ToastFace({
         ref={messageRef}
         testID="undo-toast-message"
         {...voice}
-        maxFontSizeMultiplier={MESSAGE_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[styles.message, typeStyle('toast', tokens), { color: colors.background }]}
       >
         {message}
@@ -306,7 +309,7 @@ function UndoButton({ undoLabel, onUndo, onPress }: UndoToastContent & { onPress
       ]}
     >
       <Text
-        maxFontSizeMultiplier={UNDO_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[typeStyle('toastAction', tokens), { color: key.ink }]}
       >
         {undoLabel}

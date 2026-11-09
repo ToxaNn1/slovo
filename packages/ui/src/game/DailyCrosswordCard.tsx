@@ -4,13 +4,9 @@ import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
 import { HalftoneGround } from '../primitives/HalftoneGround';
 import { PressedTile } from '../primitives/PressedTile';
+import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { capitalMarkRoom, dailyCrosswordCard, typeStyle } from '../tokens';
-
-/** How far the largest text sizes of iOS may scale the card's text, so it never breaks a word. */
-const TEXT_MAX_FONT_SCALE = 1.3;
-/** A letter of the small grid keeps its size, so it stays inside its 22 pt cell. */
-const MINI_MAX_FONT_SCALE = 1;
+import { capitalMarkRoom, dailyCrosswordCard, fontScaleCap, typeStyle } from '../tokens';
 
 /** A place of the small grid on the card: dark where no word reads through, else a cell with the letter in it, if any. */
 export type CrosswordMiniCell =
@@ -50,6 +46,7 @@ export function DailyCrosswordCard({
   testID?: string;
 }) {
   const tokens = useTokens();
+  const { voice } = useEdition();
   const light = useSchemeColors('light');
   const keyInk = light.ink;
   const [size, setSize] = useState<{ width: number; height: number }>();
@@ -65,6 +62,7 @@ export function DailyCrosswordCard({
       depth="card"
       radius={tokens.radii.card}
       accessibilityLabel={sentences([title, day, state])}
+      {...voice}
       onPress={onPress}
       faceStyle={styles.face}
       testID={testID}
@@ -100,7 +98,7 @@ export function DailyCrosswordCard({
                   >
                     {cell.letter === undefined ? null : (
                       <Text
-                        maxFontSizeMultiplier={MINI_MAX_FONT_SCALE}
+                        maxFontSizeMultiplier={fontScaleCap.fixed}
                         style={[typeStyle('crosswordMiniLetter', tokens), { color: keyInk }]}
                       >
                         {cell.letter}
@@ -114,19 +112,19 @@ export function DailyCrosswordCard({
         </View>
         <View style={styles.texts}>
           <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.number}
             style={[typeStyle('crosswordTitle', tokens), { color: keyInk }]}
           >
             {title}
           </Text>
           <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.number}
             style={[typeStyle('crosswordDay', tokens), { color: keyInk }]}
           >
             {day}
           </Text>
           <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.number}
             style={[typeStyle('crosswordState', tokens), styles.state, { color: keyInk }]}
           >
             {solved ? state : `${state} →`}

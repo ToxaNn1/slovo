@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, segmentedDrawing, typeStyle } from '../tokens';
+import { fontScaleCap, minTouchTarget, segmentedDrawing, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /** The slack above and below a segment up to the smallest tap area. */
@@ -9,9 +9,6 @@ const HIT_SLOP = {
   top: (minTouchTarget - segmentedDrawing.segmentHeight) / 2,
   bottom: (minTouchTarget - segmentedDrawing.segmentHeight) / 2,
 };
-
-/** A segment's label stops growing here, so it never breaks a word at the largest text sizes. */
-const LABEL_MAX_FONT_SCALE = 1.3;
 
 export interface Segment<Value extends string> {
   value: Value;
@@ -61,7 +58,7 @@ export function SegmentedControl<Value extends string>({
             style={[styles.segment, isSelected && { backgroundColor: colors.ink }]}
           >
             <Text
-              maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.number}
               style={[
                 typeStyle('segment', tokens),
                 { color: isSelected ? colors.background : colors.ink },

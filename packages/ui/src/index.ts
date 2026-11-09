@@ -7,7 +7,7 @@ export { DeleteAccountButton } from './account/DeleteAccountButton';
 export { ResendButton } from './account/ResendButton';
 export { BackLink } from './primitives/BackLink';
 export { FeedError, FeedLoading } from './feed/FeedStates';
-export { GesturesHintSheet, type GesturesHintTexts } from './feed/GesturesHintSheet';
+export { GesturesHintSheet } from './feed/GesturesHintSheet';
 export { AboutPanel } from './settings/AboutPanel';
 export { FontSizePreview } from './settings/FontSizePreview';
 export { NarratorVoicePicker } from './settings/NarratorVoicePicker';
@@ -49,12 +49,7 @@ export { TypedAnswer, type TypedAnswerBlank } from './game/TypedAnswer';
 export { OrderedChips } from './game/OrderedChips';
 export { PairsGrid } from './game/PairsGrid';
 export { GameTimer } from './game/GameTimer';
-export {
-  TracedCrosswordGrid,
-  type TracedLetter,
-  type TracedMiss,
-  type TracedWord,
-} from './game/TracedCrosswordGrid';
+export { TracedCrosswordGrid, type TracedMiss, type TracedWord } from './game/TracedCrosswordGrid';
 export {
   CrossingClueBar,
   CrossingGrid,
@@ -74,13 +69,7 @@ export { HideChoiceSheet } from './mix/HideChoiceSheet';
 export { ScreenTitle, SectionLabel } from './primitives/headings';
 export { Chip } from './primitives/Chip';
 export { ChipChoice } from './mix/ChipChoice';
-export {
-  HEADLINE_MAX_FONT_SCALE,
-  LaterButton,
-  OnboardingStep,
-  stepStyles,
-  TEXT_MAX_FONT_SCALE,
-} from './onboarding/OnboardingStep';
+export { LaterButton, OnboardingStep, stepStyles } from './onboarding/OnboardingStep';
 export { OnboardingWelcome, type HeroWord } from './onboarding/OnboardingWelcome';
 export {
   RarityTestQuestions,
@@ -114,10 +103,7 @@ export { SearchField, SearchLink } from './primitives/SearchField';
 export { ProblemLine, TextField } from './primitives/TextField';
 export { ShareButton } from './share/ShareButton';
 export { MistakeReportButton } from './mistake-reports/MistakeReportButton';
-export {
-  MistakeReportSheet,
-  type MistakeReportSheetDraft,
-} from './mistake-reports/MistakeReportSheet';
+export { MistakeReportSheet } from './mistake-reports/MistakeReportSheet';
 export { ShareSheet, type ShareSheetOutcome } from './share/ShareSheet';
 export {
   ChoiceRow,
@@ -126,7 +112,6 @@ export {
   SoonRow,
   SwitchRow,
   TimeRow,
-  type RowIcon,
 } from './settings/SettingsRows';
 export { SplashOverlay } from './onboarding/SplashOverlay';
 export { SearchButton } from './search/SearchButton';
@@ -149,15 +134,14 @@ export { QuietScreenRow } from './dashboard/QuietScreenRow';
 export { RailBoard, knownShare, type RailBoardCard } from './dashboard/RailBoard';
 export { RailScreenCard } from './dashboard/RailScreenCard';
 export { CuratedCollectionsRail } from './dashboard/CuratedCollectionsRail';
-export { RailScreenHero, type HeroAction } from './dashboard/RailScreenHero';
+export { RailScreenHero } from './dashboard/RailScreenHero';
 export { CategoriesRail } from './categories/CategoriesRail';
-export { CategoryGrid, type GridColumns, type GridTile } from './categories/CategoryGrid';
+export { CategoryGrid, type GridTile } from './categories/CategoryGrid';
 export { CorrectionCategoryGrid } from './categories/CorrectionCategoryGrid';
 export {
   CategoryTile,
   shapeAt,
   toneByPosition,
-  type CategoryShape,
   type CategoryShapes,
   type CategoryTileBox,
   type CategoryTone,
@@ -196,6 +180,7 @@ export {
   rowPadding,
   signInButtonHeight,
   space,
+  fontScaleCap,
   STACK_AT_FONT_SCALE,
   roleSize,
   typeStyle,
@@ -212,8 +197,6 @@ export {
   UndoToastProvider,
   useCloseUndoToast,
   useUndoToast,
-  type MessageToastContent,
-  type ToastContent,
   type UndoToastContent,
 } from './primitives/UndoToast';
 export {

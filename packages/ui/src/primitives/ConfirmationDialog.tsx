@@ -2,13 +2,10 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { space, typeStyle } from '../tokens';
+import { fontScaleCap, space, typeStyle } from '../tokens';
 import { BottomSheet } from './BottomSheet';
 import { Button } from './Button';
 import { SheetTitle } from './SheetParts';
-
-/** How far the largest text sizes of iOS may scale the message, so the dialog stays on the screen. */
-const MESSAGE_MAX_FONT_SCALE = 1.3;
 
 /**
  * The SLOVO confirmation dialog, which stands in for the system's alerts and
@@ -48,7 +45,7 @@ export function ConfirmationDialog({
       {message !== undefined && (
         <Text
           {...voice}
-          maxFontSizeMultiplier={MESSAGE_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle('sub', tokens), { color: tokens.colors.ink }]}
           testID={id('message')}
         >

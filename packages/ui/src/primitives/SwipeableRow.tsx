@@ -8,12 +8,10 @@ import ReanimatedSwipeable, {
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { onFill, space, typeStyle } from '../tokens';
+import { fontScaleCap, onFill, space, typeStyle } from '../tokens';
 
 /** The width of each swipe action, from the design. */
 const ACTION_WIDTH = 96;
-/** How far the text size of iOS may scale an action's label. */
-const ACTION_MAX_FONT_SCALE = 1.3;
 
 /** An action a row offers behind a swipe to the left, and to VoiceOver as a custom action. */
 export interface RowAction {
@@ -99,7 +97,7 @@ export function SwipeableRow({
             >
               <Text
                 // A fixed 96 pt action: the label scales a little, then shrinks to fit, never breaking a word.
-                maxFontSizeMultiplier={ACTION_MAX_FONT_SCALE}
+                maxFontSizeMultiplier={fontScaleCap.number}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 style={[

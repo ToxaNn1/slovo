@@ -13,6 +13,7 @@ import {
   typeStyle,
   useEdition,
   useTokens,
+  fontScaleCap,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
@@ -39,9 +40,6 @@ const wheelTexts = {
   tileLabel: (letter: string) => letter,
   check: strings.dailyCrossword.check,
 };
-
-/** How far the largest text sizes of iOS may scale the solved line, so it never breaks a word. */
-const SOLVED_MAX_FONT_SCALE = 1.5;
 
 /**
  * Today's Daily Crossword, opened from its card on the Game's mode screen:
@@ -158,7 +156,7 @@ function TracedCrosswordScreen({ crossword }: { crossword: TracedCrosswordPlay }
           <Text
             testID="daily-crossword-solved"
             {...voice}
-            maxFontSizeMultiplier={SOLVED_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.text}
             style={[typeStyle('crosswordSolved', tokens), styles.solved, { color: colors.correct }]}
           >
             {strings.dailyCrossword.solved}
@@ -263,7 +261,7 @@ function CrossingCrosswordScreen({ crossword }: { crossword: CrossingCrosswordPl
           <Text
             testID="daily-crossword-solved"
             {...voice}
-            maxFontSizeMultiplier={SOLVED_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.text}
             style={[
               typeStyle('crosswordSolved', tokens),
               styles.solved,

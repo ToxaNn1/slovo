@@ -787,6 +787,15 @@ export const wedges = {
     [0.5, 1],
     [0, 0.667],
   ],
+  /** The check mark on a swiped card's «ЗНАЮ» wedge; drawn on the design's 26 × 22 box. */
+  check: [
+    [0, 12 / 22],
+    [4 / 26, 8 / 22],
+    [10 / 26, 14 / 22],
+    [22 / 26, 0],
+    [1, 4 / 22],
+    [10 / 26, 1],
+  ],
   /** The loader's wedge: a right edge narrower than the left, from the middle. */
   loader: [
     [0, 0],
@@ -867,7 +876,7 @@ export const wedges = {
     [1, 1],
     [0, 0.84],
   ],
-  /** The chevron at the end of a row of «Попередні слова». */
+  /** The slanted chevron at the end of a row of «Попередні слова» and of a settings row that opens a screen. */
   chevron: [
     [0, 0],
     [0.4, 0],
@@ -1075,6 +1084,14 @@ export const blockGap = 18;
 
 /** The empty state's space over its content. */
 export const emptyStatePaddingTop = 80;
+
+/**
+ * How far the largest text sizes of iOS may scale a text
+ * (`maxFontSizeMultiplier`): a number, a title, a label or a letter that must
+ * keep its box to `number`, running text to `text`, and a letter that keeps
+ * its size inside a fixed cell to `fixed`.
+ */
+export const fontScaleCap = { number: 1.3, text: 1.5, fixed: 1 } as const;
 
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;

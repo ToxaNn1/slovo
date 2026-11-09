@@ -4,11 +4,8 @@ import { useEdition } from '../providers/EditionProvider';
 import { useInterfaceSounds } from '../providers/InterfaceSoundsProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { useTokens } from '../providers/TokensProvider';
-import { backHeader, pressedFade, typeStyle, type TypeRole } from '../tokens';
+import { backHeader, fontScaleCap, pressedFade, type TypeRole, typeStyle } from '../tokens';
 import { IconButton } from './IconButton';
-
-/** How far the largest text sizes of iOS may scale the title. */
-const TITLE_MAX_FONT_SCALE = 1.3;
 
 /**
  * A screen's header as the boards draw it (design `SlovoApp`: Settings, the
@@ -47,7 +44,7 @@ export function BackHeader({
         {...voice}
         numberOfLines={action === undefined ? undefined : 1}
         adjustsFontSizeToFit={action !== undefined}
-        maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[styles.title, typeStyle(titleRole, tokens), { color: tokens.colors.ink }]}
       >
         {title}
@@ -92,7 +89,7 @@ function HeaderAction({
       <Text
         {...voice}
         numberOfLines={1}
-        maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[typeStyle('headerAction', tokens), { color: colors.background }]}
       >
         {label}
