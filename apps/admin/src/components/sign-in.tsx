@@ -4,6 +4,7 @@ import { useState, type SubmitEvent, type ReactNode } from 'react';
 
 import { adminApi } from '../api';
 import { ME_KEY, refusalText } from '../session';
+import { Logo } from './sidebar';
 import { Button } from './ui/button';
 
 type Enrolment = Extract<AdminApiOutputs['verifyCode'], { next: 'enrol' }>;
@@ -20,7 +21,7 @@ type Step =
     };
 
 const FIELD =
-  'h-9 rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary';
+  'h-10 rounded-[10px] border border-transparent bg-sunk px-3 text-sm font-normal outline-none focus:border-primary';
 
 /** The admin's sign-in (ADR 0088): an emailed code, then a TOTP or a recovery code. */
 export function SignIn() {
@@ -127,10 +128,14 @@ export function SignIn() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-background p-8 font-sans text-foreground">
+    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-backdrop p-8 font-sans text-foreground">
+      <div className="flex w-full max-w-[352px] items-center gap-2.5 text-white">
+        <Logo withName={false} />
+        <span className="font-display text-sm font-semibold">slovo адмінка</span>
+      </div>
       <section
         aria-labelledby="sign-in-title"
-        className="flex w-full max-w-sm flex-col gap-4 rounded-[18px] bg-surface p-6 shadow-panel"
+        className="flex w-full max-w-[352px] flex-col gap-4 rounded-[18px] bg-surface p-6 shadow-panel"
       >
         <h1 id="sign-in-title" className="font-display text-xl font-semibold">
           Вхід до SLOVO Admin

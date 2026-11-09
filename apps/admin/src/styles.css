@@ -40,6 +40,8 @@
   --side-active: #f0ebff;
   --side-border: #ebe8f3;
   --side-pop: #ffffff;
+  /* The sign-in sits on the same deep backdrop in both Themes. */
+  --backdrop: #0f0c24;
   --ring: var(--primary);
   --muted: var(--sunk);
   color-scheme: light;
@@ -115,6 +117,7 @@
   --color-side-active: var(--side-active);
   --color-side-border: var(--side-border);
   --color-side-pop: var(--side-pop);
+  --color-backdrop: var(--backdrop);
   --shadow-panel: var(--panel-shadow);
   --font-sans: 'Golos Text Variable', system-ui, sans-serif;
   --font-display: 'Unbounded Variable', 'Golos Text Variable', system-ui, sans-serif;

@@ -70,13 +70,16 @@ export function CiBadge({ ci }: { readonly ci: MainCi }) {
   if (ci.state === 'none') return <Quiet>Запусків ще не було</Quiet>;
   const tone =
     ci.state === 'success'
-      ? 'border-primary text-primary'
+      ? 'bg-ok-soft text-ok'
       : ci.state === 'failure'
-        ? 'border-destructive text-destructive'
-        : 'border-border text-muted-foreground';
+        ? 'bg-destructive-soft text-destructive'
+        : 'bg-warn-soft text-warn';
   return (
     <p className="flex items-center gap-3 text-sm">
-      <a href={ci.url} className={`rounded-full border px-3 py-1 font-medium ${tone}`}>
+      <a
+        href={ci.url}
+        className={`rounded-[20px] px-[9px] py-[3px] text-[11.5px] font-semibold ${tone}`}
+      >
         {CI_LABEL[ci.state]}
       </a>
       {ci.state !== 'pending' && (
@@ -175,28 +178,28 @@ export function EasBlock({ builds }: { readonly builds: readonly EasBuild[] }) {
       {builds.length === 0 ? (
         <Quiet>Збірок ще немає</Quiet>
       ) : (
-        <table className="w-full text-left text-sm">
-          <thead className="text-muted-foreground">
+        <table className="w-full text-left text-[13px]">
+          <thead className="text-xs text-subtle">
             <tr>
-              <th className="py-1 font-normal">Платформа</th>
-              <th className="py-1 font-normal">Профіль</th>
-              <th className="py-1 font-normal">Версія</th>
-              <th className="py-1 font-normal">Стан</th>
-              <th className="py-1 font-normal">Створено</th>
+              <th className="py-[9px] font-normal">Платформа</th>
+              <th className="py-[9px] font-normal">Профіль</th>
+              <th className="py-[9px] font-normal">Версія</th>
+              <th className="py-[9px] font-normal">Стан</th>
+              <th className="py-[9px] font-normal">Створено</th>
             </tr>
           </thead>
           <tbody>
             {builds.map((build) => (
               <tr key={build.id} className="border-t border-border">
-                <td className="py-2">{build.platform === 'ios' ? 'iOS' : 'Android'}</td>
-                <td className="py-2">{build.profile}</td>
-                <td className="py-2">{versionOf(build)}</td>
-                <td className="py-2">
+                <td className="py-[9px]">{build.platform === 'ios' ? 'iOS' : 'Android'}</td>
+                <td className="py-[9px]">{build.profile}</td>
+                <td className="py-[9px]">{versionOf(build)}</td>
+                <td className="py-[9px]">
                   <a href={build.url} className="hover:underline">
                     {BUILD_LABEL[build.status]}
                   </a>
                 </td>
-                <td className="py-2 text-muted-foreground">{kyivDate(build.createdAt)}</td>
+                <td className="py-[9px] text-muted-foreground">{kyivDate(build.createdAt)}</td>
               </tr>
             ))}
           </tbody>

@@ -155,17 +155,25 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
 
   return (
     <Block title="Люди і доступ">
-      <ul aria-label="Люди" className="flex flex-col gap-2">
+      <ul
+        aria-label="Люди"
+        className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-surface shadow-panel"
+      >
         {(people.data?.people ?? []).map((person) => {
           const other: Role = person.role === 'owner' ? 'admin' : 'owner';
           return (
             <li
               key={person.email}
-              className="flex flex-wrap items-center gap-3 rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm"
+              className="flex flex-wrap items-center gap-3 px-[18px] py-3 text-[13px]"
             >
               <span className="grow">
-                {person.email} · {ROLE_LABELS[person.role]}
-                {person.signedInYet ? '' : ' · ще не входили'}
+                {person.email}{' '}
+                <span
+                  className={`ml-2 rounded-md px-2 py-0.5 text-[11.5px] font-semibold ${person.role === 'owner' ? 'bg-primary/10 text-primary' : 'bg-sunk text-muted-foreground'}`}
+                >
+                  {ROLE_LABELS[person.role]}
+                </span>
+                {person.signedInYet ? '' : <span className="ml-2 text-warn">ще не входили</span>}
               </span>
               {person.email === self ? (
                 <span className="text-muted-foreground">це ви</span>
@@ -287,11 +295,14 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
           </div>
         </div>
       )}
-      <ul aria-label="Токени" className="flex flex-col gap-2">
+      <ul
+        aria-label="Токени"
+        className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-surface shadow-panel"
+      >
         {(tokens.data?.tokens ?? []).map((token) => (
           <li
             key={token.name}
-            className="flex flex-wrap items-center gap-3 rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm"
+            className="flex flex-wrap items-center gap-3 px-[18px] py-3 text-[13px]"
           >
             <span className="grow">
               {token.name} · видано {when(token.createdAt)}
@@ -425,26 +436,26 @@ function ActionLog() {
   return (
     <Block title="Журнал дій">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="text-muted-foreground">
+        <table className="w-full text-left text-[13px]">
+          <thead className="text-xs text-subtle">
             <tr>
-              <th className="px-2 py-1">Хто</th>
-              <th className="px-2 py-1">Коли</th>
-              <th className="px-2 py-1">Що</th>
-              <th className="px-2 py-1">Було</th>
-              <th className="px-2 py-1">Стало</th>
-              <th className="px-2 py-1">Причина</th>
+              <th className="px-2 py-[9px] font-normal">Хто</th>
+              <th className="px-2 py-[9px] font-normal">Коли</th>
+              <th className="px-2 py-[9px] font-normal">Що</th>
+              <th className="px-2 py-[9px] font-normal">Було</th>
+              <th className="px-2 py-[9px] font-normal">Стало</th>
+              <th className="px-2 py-[9px] font-normal">Причина</th>
             </tr>
           </thead>
           <tbody>
             {(actions.data?.actions ?? []).map((row, index) => (
               <tr key={`${row.at}-${String(index)}`} className="border-t border-border">
-                <td className="px-2 py-1">{authorOf(row.who)}</td>
-                <td className="px-2 py-1">{when(row.at)}</td>
-                <td className="px-2 py-1 font-mono">{row.what}</td>
-                <td className="px-2 py-1 font-mono">{shown(row.before)}</td>
-                <td className="px-2 py-1 font-mono">{shown(row.after)}</td>
-                <td className="px-2 py-1">{row.reason ?? '—'}</td>
+                <td className="px-2 py-[9px]">{authorOf(row.who)}</td>
+                <td className="px-2 py-[9px]">{when(row.at)}</td>
+                <td className="px-2 py-[9px] font-mono">{row.what}</td>
+                <td className="px-2 py-[9px] font-mono">{shown(row.before)}</td>
+                <td className="px-2 py-[9px] font-mono">{shown(row.after)}</td>
+                <td className="px-2 py-[9px]">{row.reason ?? '—'}</td>
               </tr>
             ))}
           </tbody>

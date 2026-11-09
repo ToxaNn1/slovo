@@ -21,24 +21,13 @@ function Sessions() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_KEY }),
   });
   return (
-    <section aria-label="Мої сесії" className="flex flex-col gap-6">
-      <p className="text-sm text-muted-foreground">
-        Сесія закінчується після 8 годин без дій і через 30 днів після входу.
-      </p>
-      <ul aria-label="Сесії" className="flex flex-col gap-2">
-        {(sessions.data?.sessions ?? []).map((session) => (
-          <li
-            key={session.createdAt}
-            className="rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm"
-          >
-            Вхід {when(session.createdAt)} · остання дія {when(session.lastSeenAt)}
-            {session.current ? ' · ця сесія' : ''}
-          </li>
-        ))}
-      </ul>
-      <div>
+    <section aria-label="Мої сесії" className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[13px] text-muted-foreground">
+          Сесія закінчується після 8 годин без дій і через 30 днів після входу.
+        </p>
         <Button
-          variant="secondary"
+          variant="danger"
           disabled={everywhere.isPending}
           onClick={() => {
             everywhere.mutate();
@@ -47,6 +36,26 @@ function Sessions() {
           Вийти всюди
         </Button>
       </div>
+      <ul
+        aria-label="Сесії"
+        className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-surface shadow-panel"
+      >
+        {(sessions.data?.sessions ?? []).map((session) => (
+          <li
+            key={session.createdAt}
+            className="flex flex-wrap items-center gap-3 px-[18px] py-3 text-[13px]"
+          >
+            <span className="grow">
+              Вхід {when(session.createdAt)} · остання дія {when(session.lastSeenAt)}
+            </span>
+            {session.current ? (
+              <span className="rounded-[20px] bg-ok-soft px-[9px] py-[3px] text-[11.5px] font-semibold text-ok">
+                ця сесія
+              </span>
+            ) : null}
+          </li>
+        ))}
+      </ul>
     </section>
   );
 }
