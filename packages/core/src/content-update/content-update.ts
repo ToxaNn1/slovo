@@ -140,6 +140,8 @@ export function createContentUpdate({
     } catch (error) {
       // A pack that fails to be forgotten fails again at the next launch, which forgets it then.
       await packFiles.forget().catch(() => undefined);
+      // The next check, due at once, downloads it again.
+      await userState.write(lastCheck.change(undefined)).catch(() => undefined);
       throw error;
     }
     await packFiles.forget();
