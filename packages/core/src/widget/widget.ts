@@ -204,7 +204,7 @@ export function createWidget({
         format: WIDGET_SNAPSHOT_FORMAT,
         editionId: edition.id,
         writtenAt: clock.now().toISOString(),
-        onboardingFinished: onboarding.state.finishedAt !== undefined,
+        onboardingFinished: onboarding.state.status === 'finished',
         entries: eligible,
         allEntries: eligible.map(({ id }) => id),
         favorites: onlyEligible(favorites.list),

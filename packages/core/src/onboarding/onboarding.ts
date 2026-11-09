@@ -66,13 +66,13 @@ export type OnboardingStep =
    */
   | (StepPlace & { readonly kind: 'rarityTest' });
 
-/** Where the onboarding stands. */
-export interface OnboardingState {
-  /** When the reader finished or skipped it; nothing while it still opens on launch. */
-  readonly finishedAt: Date | undefined;
-  /** The step on screen while it is open; nothing once it is finished. */
-  readonly step: OnboardingStep | undefined;
-}
+/**
+ * Where the onboarding stands: open on the step on screen, or finished as of
+ * when the reader finished or skipped it, after which it never opens again.
+ */
+export type OnboardingState =
+  | { readonly status: 'open'; readonly step: OnboardingStep }
+  | { readonly status: 'finished'; readonly finishedAt: Date };
 
 /**
  * The onboarding (ADR 0067): the welcome, the first Word, «ГРАЙ!», «Рівень» (whose
@@ -235,16 +235,16 @@ export async function openOnboarding({
   }
 
   /** Emits an event; a failure is lost, never thrown. */
-  const viewed = (step: OnboardingStep | undefined): void => {
-    if (step === undefined) return;
+  const viewed = (step: OnboardingStep): void => {
     analytics.track('onboardingStepViewed', { step: step.kind }).catch(() => undefined);
   };
 
+  // The welcome is always the first step: no switch leaves it out.
   let state: OnboardingState =
     finished === undefined
-      ? { finishedAt: undefined, step: stepAt(0) }
-      : { finishedAt: new Date(finished), step: undefined };
-  if (finished === undefined) viewed(state.step);
+      ? { status: 'open', step: { kind: 'welcome', number: 1, total: steps.length } }
+      : { status: 'finished', finishedAt: new Date(finished) };
+  if (state.status === 'open') viewed(state.step);
 
   function change(changed: OnboardingState): void {
     state = changed;
@@ -255,7 +255,7 @@ export async function openOnboarding({
   let ending = false;
   /** Ends the step on screen with `end`, unless another call is ending it or it is finished. */
   async function endStep(end: (step: OnboardingStep) => Promise<void>): Promise<void> {
-    if (ending || state.step === undefined) return;
+    if (ending || state.status === 'finished') return;
     ending = true;
     try {
       await end(state.step);
@@ -275,12 +275,12 @@ export async function openOnboarding({
         ...(steps.includes('dailyGoal') ? await dailyGoalAsked(userState) : []),
       ]),
     );
-    change({ finishedAt, step: undefined });
+    change({ status: 'finished', finishedAt });
     analytics.track('onboardingFinished', { skipped }).catch(() => undefined);
   }
 
   function show(step: OnboardingStep): void {
-    change({ ...state, step });
+    change({ status: 'open', step });
     viewed(step);
   }
 
