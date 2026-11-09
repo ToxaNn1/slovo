@@ -128,8 +128,8 @@ export function createFeedSession(): FeedSession {
     inCurrentCycle: (card) => session.indexOf(card) >= cycleStart,
     cycleCards: () => session.slice(cycleStart).filter((card) => !dropped.has(card)),
     shownIds(except) {
-      const shown = session.filter((card) => card !== except);
-      return new Set(shown.slice(cycleStart).flatMap((card) => card.entryId ?? []));
+      const shown = session.slice(cycleStart).filter((card) => card !== except);
+      return new Set(shown.flatMap((card) => card.entryId ?? []));
     },
     startCycle() {
       cycleStart = session.length;

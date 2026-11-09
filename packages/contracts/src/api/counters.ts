@@ -77,6 +77,11 @@ const CountersSchema = z.object({
 });
 
 /** A procedure of Community Counters, for one Edition. */
+/** The answer of `counters.communityWord`: the Community Word of the last ISO week, or none (ADR 0060). */
+export const CommunityWordOutputSchema = z.object({
+  communityWord: z.object({ entryId: EntryIdSchema, adds: z.int().positive() }).nullable(),
+});
+
 const ofCounters = procedure.errors({
   /** An Edition the backend doesn't serve, or one with Community Counters switched off. */
   NOT_FOUND: { message: 'Not found' },
@@ -155,11 +160,7 @@ export const countersContract = {
       tags: ['counters'],
     })
     .input(z.strictObject({ edition: EditionIdSchema }))
-    .output(
-      z.object({
-        communityWord: z.object({ entryId: EntryIdSchema, adds: z.int().positive() }).nullable(),
-      }),
-    ),
+    .output(CommunityWordOutputSchema),
 
   questionnaire: procedure
     .route({

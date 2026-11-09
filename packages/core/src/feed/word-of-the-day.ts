@@ -98,9 +98,14 @@ export async function openWordOfTheDay({
     return record?.date === today && cycle.covers(record.entryId) ? record.entryId : undefined;
   }
 
+  /** The Word of the Day of the date before today, not today's record when it is chosen again. */
+  function dayBeforeOf(today: string): string | undefined {
+    return record?.date === today ? record.dayBefore : record?.entryId;
+  }
+
   /** Makes `entryId` today's Word of the Day, with the `changes` in the same write. */
   async function choose(entryId: string, today: string, changes: UserStateChanges = new Map()) {
-    const chosen = { entryId, date: today };
+    const chosen = { entryId, date: today, dayBefore: dayBeforeOf(today) };
     await userState.write(new Map([...changes, ...wordOfTheDayRecord.change(chosen)]));
     record = chosen;
   }
@@ -108,7 +113,7 @@ export async function openWordOfTheDay({
   /** The Word Reserved for this morning, if today takes it, kept as today's Word of the Day. */
   async function chooseMorningWord(today: string): Promise<string | undefined> {
     const reserved = await reservedWords.morningWordOf(parseLocalDate(today));
-    if (reserved === undefined || reserved === record?.entryId) return undefined;
+    if (reserved === undefined || reserved === dayBeforeOf(today)) return undefined;
     if (!cycle.unseen().words.includes(reserved)) return undefined;
     await choose(reserved, today);
     return reserved;
@@ -134,7 +139,7 @@ export async function openWordOfTheDay({
         const date = parseLocalDate(today);
         const id = kept(today) ?? (await chooseMorningWord(today));
         if (id !== undefined) return { wordId: id, date, startedCycle: false };
-        const dayBefore = record?.entryId;
+        const dayBefore = dayBeforeOf(today);
         const unseen = cycle.unseen();
         let next = nextWordId(unseen.words, dayBefore, avoid);
         // Every Word is Seen, but the Cycle goes on while another kind is unseen.

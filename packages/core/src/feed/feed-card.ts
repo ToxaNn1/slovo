@@ -6,7 +6,6 @@ import type { QuickQuestionContent } from '../game/quick-question';
 
 export type {
   AnyEntryCard,
-  CorrectionFeedCard,
   EntryFeedCard,
   IdiomFeedCard,
   SynonymRowFeedCard,
@@ -34,7 +33,7 @@ export type FeedNoticeCard = FeedNoticeContent & {
  * in no turn and no Review slot and makes nothing Seen; `answered` is the
  * option the reader picked, once they did.
  */
-export type QuickQuestionCard = QuickQuestionContent & {
+type QuickQuestionCard = QuickQuestionContent & {
   readonly kind: 'quick-question';
   readonly entryId?: undefined;
   readonly review?: undefined;

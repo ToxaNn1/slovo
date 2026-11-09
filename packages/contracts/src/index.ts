@@ -191,6 +191,7 @@ export {
   type CuratedCollection,
 } from './curated-collection';
 export {
+  CommunityWordOutputSchema,
   NotificationTimeBucketSchema,
   type CountedQuestion,
   type CounterEvent,
