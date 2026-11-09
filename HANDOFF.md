@@ -24,3 +24,4 @@ Triage files (per finding id: FIXED/SKIP-*/FIX + tickets): scratchpad triage cor
 - 2026-11-09T14:48:27Z merged T-contracts-1 (53a380436), T-ui-4 (2fc4ead62); fixed red breaking-changes test (tuple lost minItems in /v1 description) in api-description.ts. Running: T-lp-1+T-edition-1, T-onboarding-1, T-sourcing-5. Next: content T-core-1, T-mobile-6 (Fable).
 - 2026-11-09T14:49:08Z merged T-sourcing-5 (94cb54241), T-edition-1 (d16a82704). T-lp-1 SKIPPED: the checks now live in packages/content-rules (out of scope); its branch fix/1109-lp-unique-names (71aac0c39) is local only. Started content T-core-1, T-mobile-6 (Fable).
 - 2026-11-09T14:51:24Z merged T-onboarding-1. Running: content T-core-1, T-mobile-6.
+- 2026-11-09T14:56:00Z merged content T-core-1. Running: T-mobile-6.
