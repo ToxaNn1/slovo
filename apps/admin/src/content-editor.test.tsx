@@ -159,3 +159,52 @@ test('retire asks for the confirmation and a reason', async () => {
     expect(bodies).toEqual([expect.objectContaining({ reason: 'дубль', recordVersion: 1 })]);
   });
 });
+
+test('a new Crossword day sends its date and words to the crosswordDay kind', async () => {
+  const sent: { kind: string | readonly string[] | undefined; body: unknown }[] = [];
+  server.use(
+    http.post('*/admin/content/:editionId/records/:kind', async ({ params, request }) => {
+      sent.push({ kind: params['kind'], body: await request.json() });
+      return HttpResponse.json(FIXTURES.content.create);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  await user.click(await screen.findByRole('tab', { name: 'Кросворди дня' }));
+  await user.click(await screen.findByRole('button', { name: 'Додати' }));
+  await user.type(await screen.findByLabelText('Дата'), '2026-12-01');
+  const words = screen.getByLabelText('Слова кросворду');
+  await user.clear(words);
+  await user.click(words);
+  await user.paste(
+    '[{"entryId":"w_a1","answer":"обруч","clue":"обід колеса","row":0,"column":0,"direction":"across"}]',
+  );
+  await user.click(screen.getByRole('button', { name: 'Зберегти' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByLabelText('Причина'), 'новий день');
+  await user.click(dialog.getByRole('button', { name: 'Додати' }));
+
+  await waitFor(() => {
+    expect(sent).toMatchObject([
+      {
+        kind: 'crosswordDay',
+        body: {
+          fields: {
+            date: '2026-12-01',
+            words: [
+              {
+                entryId: 'w_a1',
+                answer: 'обруч',
+                clue: 'обід колеса',
+                row: 0,
+                column: 0,
+                direction: 'across',
+              },
+            ],
+          },
+          reason: 'новий день',
+        },
+      },
+    ]);
+  });
+});

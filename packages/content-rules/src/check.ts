@@ -9,7 +9,7 @@ import type {
   Word,
 } from '@slovo/contracts';
 
-import { checkCrosswordDays, unknownCrosswordEntries } from './crossword-days';
+import { checkCrosswordDay, checkCrosswordDays, unknownCrosswordEntries } from './crossword-days';
 import { checkCuratedCollections } from './curated-collections';
 import { checkEntries } from './entries';
 import type { AuthoredRecord, RecordKind } from './parse-record';
@@ -40,6 +40,7 @@ export interface ContentRecords {
   readonly synonymRow: readonly SynonymRow[];
   readonly tip: readonly Tip[];
   readonly curatedCollection: readonly CuratedCollection[];
+  readonly crosswordDay: readonly CrosswordDay[];
 }
 
 /** Where a record is located in a refusal: `<kind>/<id>`. */
@@ -56,6 +57,7 @@ export function contentSetOf(records: ContentRecords): ContentSet {
     synonymRows: authored('synonymRow', records.synonymRow),
     tips: authored('tip', records.tip),
     curatedCollections: authored('curatedCollection', records.curatedCollection),
+    crosswordDays: [...records.crosswordDay].sort((a, b) => a.date.localeCompare(b.date)),
   };
 }
 
@@ -97,12 +99,23 @@ export function checkRecord(
   record: AuthoredRecord,
   options: { today: Date },
 ): Refusal[] {
+  if (record.kind === 'crosswordDay') {
+    return checkCrosswordDay(
+      set.crosswordDays ?? [],
+      record.entry,
+      [...set.words, ...set.corrections],
+      { file: record.file, today: options.today.toISOString().slice(0, 10) },
+    );
+  }
   return checkContentSet(config, withRecord(set, record), options).filter(
     ({ file }) => file === record.file,
   );
 }
 
-function withRecord(set: ContentSet, record: AuthoredRecord): ContentSet {
+function withRecord(
+  set: ContentSet,
+  record: Exclude<AuthoredRecord, { kind: 'crosswordDay' }>,
+): ContentSet {
   switch (record.kind) {
     case 'word':
       return { ...set, words: replaced(set.words, record) };

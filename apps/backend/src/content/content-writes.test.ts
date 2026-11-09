@@ -2,6 +2,7 @@ import { cpSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { dateAfter } from '@slovo/content-rules';
 import type { ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
@@ -246,6 +247,52 @@ describe('the content write API', () => {
     expect(await edit(3, { primaryDefinition: 'Знову тлумачення.' })).toMatchObject({
       needsNewRecording: true,
     });
+  });
+
+  it('writes Crossword days by their date: a day ahead edits and retires, a published day never changes', async () => {
+    const { client, agent, batchId } = await contentBackend();
+    const days = (await snapshotOf(client)).crosswordDays;
+    const [first, last] = [days[0], days.at(-1)];
+    if (first === undefined || last === undefined) throw new Error('no Crossword days');
+    const write = { editionId: 'uk' as const, kind: 'crosswordDay' as const, batchId };
+    const clued = last.words.map((word, i) =>
+      i === 0 ? { ...word, clue: 'Нова підказка.' } : word,
+    );
+
+    expect(
+      await agent.admin.content.edit({
+        ...write,
+        id: last.date,
+        recordVersion: 1,
+        fields: { ...last, words: clued },
+      }),
+    ).toMatchObject({ id: last.date, recordVersion: 2 });
+    expect(
+      (await snapshotOf(client)).crosswordDays.find(({ date }) => date === last.date)?.words[0]
+        ?.clue,
+    ).toBe('Нова підказка.');
+
+    const refused = (refusals: unknown) => ({ code: 'REFUSED', data: { refusals } });
+    await expect(
+      agent.admin.content.edit({ ...write, id: first.date, recordVersion: 1, fields: first }),
+    ).rejects.toMatchObject(refused([{ rule: 'crossword-days-immutable', field: 'date' }]));
+    // The day after the last, with the words of the last: they come back within 20 days.
+    const next = { ...last, date: dateAfter(last.date, 1) };
+    await expect(agent.admin.content.create({ ...write, fields: next })).rejects.toMatchObject(
+      refused(
+        expect.arrayContaining([
+          expect.objectContaining({ rule: 'crossword-days-repeat', field: 'words.0.entryId' }),
+        ]),
+      ),
+    );
+    await expect(agent.admin.content.create({ ...write, fields: last })).rejects.toMatchObject(
+      refused([{ rule: 'duplicate-id', field: 'date' }]),
+    );
+
+    await agent.admin.content.retire({ ...write, id: last.date, recordVersion: 2 });
+    expect(
+      (await snapshotOf(client)).crosswordDays.find(({ date }) => date === last.date),
+    ).toMatchObject({ retired: true });
   });
 
   it('flags a record with a reason as an Action log row, changing no content', async () => {
