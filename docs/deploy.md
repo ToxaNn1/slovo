@@ -64,6 +64,18 @@ The quote check (ADR 0084) runs on the Deployment as a second Railway service, a
 
 Its one variable is `DATABASE_URL`, a reference to the same Postgres. A save never waits for it: every create or edit of a Word, Correction, Idiom, Synonym Row or Tip leaves the record unverified, and the job checks the quoted text of each unverified record against its first source's page, through the sourcing cache in Postgres (a fetched page stands for 30 days). A quote it does not find is flagged for the Content queue with the finding, and the record stays live. A page it cannot fetch leaves the record unverified for the next run. Imported records count as checked, since CI ran `pnpm content verify` on them, and a record with no source page is not checked. The admin content report gives the counts of unverified and failed records.
 
+## The alerts Cron service
+
+The owner's alerts and daily digest (spec #1709) run as a third Railway service, a Cron service on the same image: `railway.cron.json` holds its settings.
+
+| Setting  | Value                                                                  |
+| -------- | ---------------------------------------------------------------------- |
+| Command  | `pnpm cron`                                                            |
+| Schedule | `*/15 * * * *`: every 15 minutes, UTC                                  |
+| Restart  | Never: the command exits when done, and the next run comes on schedule |
+
+Its variables are references to the backend's: `DATABASE_URL`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`, the `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_APP_PROJECT` and `SENTRY_BACKEND_PROJECT` of Якість, the `POSTHOG_*` of Аналітика, and `BACKEND_HEALTH_URL`, the backend's public `/health` URL. Each run checks the thresholds the owner sets in the admin (crash-free sessions, new Sentry issues, red CI on `main`, API 5xx, the activity drop, the backend's health, the size of open content batches), keeps each alert once for Огляд, and sends the unsent ones to the owner's chat. The first run after 09:00 Kyiv sends the digest of yesterday. A message that does not leave stays unsent for the next run, for 24 hours. A Kill switch alert does not wait for the Cron service: the backend sends it at once.
+
 ## Building the Language Pack from the snapshot
 
 Every app build bundles a Language Pack built from the live content: the Edition folder gives the config, Categories and assets, and the records come from the content snapshot the backend serves (`GET /v1/editions/<id>/content/snapshot`). `pnpm build:pack` fetches it from the backend at `EXPO_PUBLIC_SLOVO_API_URL`; `--snapshot <file>` reads a snapshot saved to a file instead. When the backend gives no snapshot, the build fails with the reason and writes no pack.
