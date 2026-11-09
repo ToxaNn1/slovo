@@ -61,7 +61,7 @@ export interface Settings {
   readonly defaults: UserSettings;
   /** The settings in effect: what the user chose, else the Edition's default. */
   read(): Promise<UserSettings>;
-  /** Keeps the user's choices and returns the settings now in effect. Only a value that differs is written and told. */
+  /** Keeps the user's choices and returns the settings now in effect. Only a value that differs is told. */
   update(changes: Partial<UserSettings>): Promise<UserSettings>;
 }
 
@@ -120,29 +120,30 @@ export function createSettings({
     read,
     async update(changes) {
       const before = new Map<string, unknown>(Object.entries(await read()));
-      const changed = new Map(
-        Object.entries(changes).filter(([setting, value]) => before.get(setting) !== value),
+      // Every choice is written, an equal one too: its stamp lets the newer choice win on sync.
+      const changed = Object.entries(changes).filter(
+        ([setting, value]) => before.get(setting) !== value,
       );
       await userState.write(
         new Map([
-          ...(changed.has('theme') ? userStateRecords.theme.change(changes.theme) : []),
-          ...(changed.has('fontSize') ? userStateRecords.fontSize.change(changes.fontSize) : []),
-          ...(changed.has('vibration') ? userStateRecords.vibration.change(changes.vibration) : []),
-          ...(changed.has('sounds') ? userStateRecords.sounds.change(changes.sounds) : []),
-          ...(changed.has('noCounters')
+          ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
+          ...('fontSize' in changes ? userStateRecords.fontSize.change(changes.fontSize) : []),
+          ...('vibration' in changes ? userStateRecords.vibration.change(changes.vibration) : []),
+          ...('sounds' in changes ? userStateRecords.sounds.change(changes.sounds) : []),
+          ...('noCounters' in changes
             ? userStateRecords.noCounters.change(changes.noCounters)
             : []),
-          ...(changed.has('selfCheck') ? userStateRecords.selfCheck.change(changes.selfCheck) : []),
-          ...(changed.has('seasonalDecor')
+          ...('selfCheck' in changes ? userStateRecords.selfCheck.change(changes.selfCheck) : []),
+          ...('seasonalDecor' in changes
             ? userStateRecords.seasonalDecor.change(changes.seasonalDecor)
             : []),
-          ...(changed.has('shareCounters')
+          ...('shareCounters' in changes
             ? userStateRecords.shareCounters.change(changes.shareCounters)
             : []),
-          ...(changed.has('reduceMotion')
+          ...('reduceMotion' in changes
             ? userStateRecords.reduceMotion.change(changes.reduceMotion)
             : []),
-          ...(changed.has('narratorVoice')
+          ...('narratorVoice' in changes
             ? userStateRecords.narratorVoice.change(changes.narratorVoice)
             : []),
           ...(changes.shareCounters === false ? await forgetUnsentCounters(userState) : []),
