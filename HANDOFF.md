@@ -10,3 +10,5 @@ Grants (owner 09.11): commits, pushes, one new PR, edits of PR bodies. NO merge 
 
 ## Log
 - step 0: coord branch created.
+- A: merged origin/main into chore/1109-stryker (ADR index 0097-0099 in order), pushed; waiting CI.
+- B: implementer subagent started on chore/1109-strip-pr-footer.
