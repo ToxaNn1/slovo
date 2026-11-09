@@ -4,7 +4,7 @@ import { createFileRoute, Link, useSearch } from '@tanstack/react-router';
 import { useState, type ReactNode, type SubmitEvent } from 'react';
 
 import { adminApi } from '../api';
-import { ConfirmDialog, type PendingWrite } from '../components/confirm-dialog';
+import { ConfirmDialog } from '../components/confirm-dialog';
 import { Button } from '../components/ui/button';
 import { useSignedInAdmin } from '../session';
 
@@ -65,6 +65,15 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
+/** A write of Безпека: its confirmation stays open until the write ends. */
+interface SecurityWrite {
+  readonly title: string;
+  readonly confirm: string;
+  readonly run: (reason: string) => Promise<unknown>;
+}
+
+type Confirm = (write: SecurityWrite) => void;
+
 /** Безпека: a Власник only; an Адмін reads why it stays closed. */
 function Security() {
   const admin = useSignedInAdmin();
@@ -82,7 +91,7 @@ function Security() {
 }
 
 function OwnerSecurity({ email }: { email: string }) {
-  const [pending, setPending] = useState<PendingWrite | null>(null);
+  const [pending, setPending] = useState<SecurityWrite | null>(null);
   return (
     <section aria-labelledby="section-title" className="flex flex-col gap-8">
       <div className="flex items-baseline justify-between gap-4">
@@ -101,21 +110,20 @@ function OwnerSecurity({ email }: { email: string }) {
         <ConfirmDialog
           title={pending.title}
           confirmLabel={pending.confirm}
-          onConfirm={(reason) => {
-            pending.run(reason);
-            return Promise.resolve();
+          onConfirm={async (reason) => {
+            await pending.run(reason);
           }}
           onClose={() => {
             setPending(null);
           }}
-          refusalText={String}
+          refusalText={refusalOf}
         />
       )}
     </section>
   );
 }
 
-/** A write of Безпека that refreshes what it changed and keeps its refusal to show. */
+/** A write of Безпека that refreshes what it changed. */
 function useSecurityWrite<I, O>(write: (input: I) => Promise<O>, onDone?: (output: O) => void) {
   const queryClient = useQueryClient();
   return useMutation({
@@ -127,7 +135,7 @@ function useSecurityWrite<I, O>(write: (input: I) => Promise<O>, onDone?: (outpu
   });
 }
 
-function People({ self, confirm }: { self: string; confirm: (write: PendingWrite) => void }) {
+function People({ self, confirm }: { self: string; confirm: Confirm }) {
   const people = useQuery({ queryKey: ['people'], queryFn: () => adminApi.people() });
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<Role>('admin');
@@ -136,7 +144,6 @@ function People({ self, confirm }: { self: string; confirm: (write: PendingWrite
   });
   const changeRole = useSecurityWrite(adminApi.setRole);
   const remove = useSecurityWrite(adminApi.removePerson);
-  const failed = [invite, changeRole, remove].find((write) => write.isError);
 
   function onInvite(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -145,9 +152,7 @@ function People({ self, confirm }: { self: string; confirm: (write: PendingWrite
     confirm({
       title: `Запросити ${invitee} як ${ROLE_LABELS[role]}а?`,
       confirm: 'Запросити',
-      run: (reason) => {
-        invite.mutate({ email: invitee, role, reason });
-      },
+      run: (reason) => invite.mutateAsync({ email: invitee, role, reason }),
     });
   }
 
@@ -176,9 +181,8 @@ function People({ self, confirm }: { self: string; confirm: (write: PendingWrite
                       confirm({
                         title: `Зробити ${person.email} ${ROLE_LABELS[other]}ом?`,
                         confirm: 'Змінити роль',
-                        run: (reason) => {
-                          changeRole.mutate({ email: person.email, role: other, reason });
-                        },
+                        run: (reason) =>
+                          changeRole.mutateAsync({ email: person.email, role: other, reason }),
                       });
                     }}
                   >
@@ -191,9 +195,7 @@ function People({ self, confirm }: { self: string; confirm: (write: PendingWrite
                       confirm({
                         title: `Забрати доступ у ${person.email}?`,
                         confirm: 'Забрати доступ',
-                        run: (reason) => {
-                          remove.mutate({ email: person.email, reason });
-                        },
+                        run: (reason) => remove.mutateAsync({ email: person.email, reason }),
                       });
                     }}
                   >
@@ -230,18 +232,15 @@ function People({ self, confirm }: { self: string; confirm: (write: PendingWrite
             <option value="owner">Власник</option>
           </select>
         </label>
-        <Button type="submit">Запросити</Button>
+        <Button type="submit" disabled={invite.isPending}>
+          Запросити
+        </Button>
       </form>
-      {failed === undefined ? null : (
-        <p role="alert" className="text-sm text-destructive">
-          {refusalOf(failed.error)}
-        </p>
-      )}
     </Block>
   );
 }
 
-function AgentTokens({ confirm }: { confirm: (write: PendingWrite) => void }) {
+function AgentTokens({ confirm }: { confirm: Confirm }) {
   const tokens = useQuery({ queryKey: ['agent-tokens'], queryFn: () => adminApi.agentTokens() });
   const [name, setName] = useState('');
   // The one-time token lives here alone: once closed, only names render.
@@ -251,7 +250,6 @@ function AgentTokens({ confirm }: { confirm: (write: PendingWrite) => void }) {
     setName('');
   });
   const revoke = useSecurityWrite(adminApi.revokeAgentToken);
-  const failed = [issue, revoke].find((write) => write.isError);
 
   function onIssue(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -260,9 +258,7 @@ function AgentTokens({ confirm }: { confirm: (write: PendingWrite) => void }) {
     confirm({
       title: `Видати токен Агенту ${agent}?`,
       confirm: 'Видати токен',
-      run: (reason) => {
-        issue.mutate({ name: agent, reason });
-      },
+      run: (reason) => issue.mutateAsync({ name: agent, reason }),
     });
   }
 
@@ -315,9 +311,7 @@ function AgentTokens({ confirm }: { confirm: (write: PendingWrite) => void }) {
                   confirm({
                     title: `Відкликати токен Агента ${token.name}?`,
                     confirm: 'Відкликати',
-                    run: (reason) => {
-                      revoke.mutate({ name: token.name, reason });
-                    },
+                    run: (reason) => revoke.mutateAsync({ name: token.name, reason }),
                   });
                 }}
               >
@@ -338,13 +332,10 @@ function AgentTokens({ confirm }: { confirm: (write: PendingWrite) => void }) {
             }}
           />
         </label>
-        <Button type="submit">Видати токен</Button>
+        <Button type="submit" disabled={issue.isPending}>
+          Видати токен
+        </Button>
       </form>
-      {failed === undefined ? null : (
-        <p role="alert" className="text-sm text-destructive">
-          {refusalOf(failed.error)}
-        </p>
-      )}
     </Block>
   );
 }
@@ -360,7 +351,7 @@ const THRESHOLD_LABELS: Readonly<Record<AlertThresholdKey, string>> = {
 
 const number = (value: number) => value.toLocaleString('uk-UA', { maximumFractionDigits: 2 });
 
-function AlertThresholds({ confirm }: { confirm: (write: PendingWrite) => void }) {
+function AlertThresholds({ confirm }: { confirm: Confirm }) {
   const thresholds = useQuery({
     queryKey: ['alert-thresholds'],
     queryFn: () => adminApi.alertThresholds(),
@@ -372,15 +363,10 @@ function AlertThresholds({ confirm }: { confirm: (write: PendingWrite) => void }
         {(thresholds.data?.thresholds ?? []).map((threshold) => (
           // Keyed by value too: a changed threshold starts its field afresh.
           <li key={`${threshold.key}-${String(threshold.value)}`}>
-            <ThresholdForm threshold={threshold} confirm={confirm} change={change.mutate} />
+            <ThresholdForm threshold={threshold} confirm={confirm} change={change.mutateAsync} />
           </li>
         ))}
       </ul>
-      {change.isError ? (
-        <p role="alert" className="text-sm text-destructive">
-          {refusalOf(change.error)}
-        </p>
-      ) : null}
     </Block>
   );
 }
@@ -391,8 +377,8 @@ function ThresholdForm({
   change,
 }: {
   threshold: AlertThreshold;
-  confirm: (write: PendingWrite) => void;
-  change: (input: { key: AlertThresholdKey; value: number; reason: string }) => void;
+  confirm: Confirm;
+  change: (input: { key: AlertThresholdKey; value: number; reason: string }) => Promise<unknown>;
 }) {
   const label = THRESHOLD_LABELS[threshold.key];
   const [draft, setDraft] = useState(String(threshold.value));
@@ -405,9 +391,7 @@ function ThresholdForm({
     confirm({
       title: `Змінити поріг «${label}» з ${number(threshold.value)} на ${number(value)}?`,
       confirm: 'Змінити поріг',
-      run: (reason) => {
-        change({ key: threshold.key, value, reason });
-      },
+      run: (reason) => change({ key: threshold.key, value, reason }),
     });
   }
 
