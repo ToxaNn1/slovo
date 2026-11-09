@@ -136,7 +136,11 @@ describe('The Curated Collections rail', () => {
       async list(prefix) {
         const found = await memory.list(prefix);
         if (!holding || !prefix.startsWith('curatedCollections.opened.')) return found;
-        return new Promise((resolve) => held.push(() => resolve(found)));
+        return new Promise((resolve) =>
+          held.push(() => {
+            resolve(found);
+          }),
+        );
       },
     };
     const { app } = await run({ port });
