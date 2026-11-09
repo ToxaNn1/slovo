@@ -30,6 +30,15 @@ describe('the link to an Entry', () => {
     });
   });
 
+  it('drops a fragment from the Entry id and from the key', () => {
+    expect(parseLink('/entry/w_1#top')).toEqual({ entryId: 'w_1', source: undefined, key: undefined });
+    expect(parseLink('/entry/w_1?from=widget&key=k1#x')).toEqual({
+      entryId: 'w_1',
+      source: 'widget',
+      key: 'k1',
+    });
+  });
+
   it('reads no Entry link from any other path', () => {
     expect(parseLink('/game/w_00g2ap?from=widget')).toBeUndefined();
     expect(parseLink('/entry')).toBeUndefined();
