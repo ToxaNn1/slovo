@@ -26,7 +26,17 @@ const GAME_PART_SWITCHES = [
  */
 export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>> = {
   ...Object.fromEntries(GAME_PART_SWITCHES.map((feature) => [feature, ['game']])),
+  // The Game Modes that ask Corrections.
+  gameCorrection: ['game', 'corrections'],
+  gameSurvival: ['game', 'corrections'],
+  gameAnglicism: ['game', 'corrections'],
+  gameTypeWord: ['game', 'corrections'],
+  // The Game Modes that ask Idioms.
+  gameIdiomMeaning: ['game', 'idioms'],
+  gameBuildIdiom: ['game', 'idioms'],
   // The 1.0 progress features all stand on the XP log (ADR 0066).
+  levels: ['xpLog'],
+  streakFreezes: ['xpLog'],
   streakBreak: ['xpLog'],
   badges: ['xpLog'],
   // The board 10 parts of the Profile and the Badges (ADR 0085).
@@ -92,6 +102,14 @@ export const DEPENDS_ON: Partial<Record<FeatureSwitch, readonly FeatureSwitch[]>
   // The quiet variant is a variant of a Category screen (ADR 0081).
   quietCategories: ['categoryScreens'],
   notificationTimeStep: ['notifications'],
+  // The explainer card asks for the permission the Notifications need.
+  notificationExplainer: ['notifications'],
+  // The Community Word is chosen from the Community Counters.
+  communityWord: ['communityCounters'],
+  // Sync runs for the reader's Account.
+  sync: ['account'],
+  // The hint after a Game points to the widget.
+  widgetHint: ['widget'],
   // The reader's choice of voice only changes what Pronunciation plays (ADR 0083).
   narratorVoice: ['pronunciation'],
 };
