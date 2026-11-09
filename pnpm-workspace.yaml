@@ -34,6 +34,16 @@ overrides:
   # (GHSA-7wch-p9px-956x and four more; GHSA-qr28-fpjm-wq7f); both have patched releases.
   node-forge@<=1.4.0: ^1.4.1
   decode-uri-component@<=0.5.0: ^0.5.1
+  # Moderate advisories in build and test tooling, each with a patched
+  # release that keeps its consumers' API: esbuild <=0.24.2 under drizzle-kit's
+  # loader (GHSA-67mh-4wv8-2f99), uuid <11.1.1 under the Xcode project libraries
+  # (GHSA-w5hq-g745-h8pq; uuid 11 still ships CommonJS), glob 9 to 14.0.1 and
+  # minimatch 7 to 11.0.0 under Jest, Expo CLI and ESLint (GHSA-3g3m-2fjr-6pw4,
+  # GHSA-g3hv-75wg-m249).
+  '@esbuild-kit/core-utils>esbuild': ^0.25.0
+  uuid@<11.1.1: ^11.1.1
+  glob@>=9 <14.0.2: ^14.0.2
+  minimatch@>=7 <11.0.1: ^11.0.1
 
 # High advisories with no patched release yet, reachable only through
 # build-time tooling (Expo CLI code signing, Metro's file watcher) and never
