@@ -17,7 +17,7 @@ jobs:
   # A cloud session appends a footer to the PR body (ADR 0100). This job alone
   # may edit the PR, so it never runs the PR's code: the script comes from the
   # base commit and nothing is installed. A fork's PR gets a read-only token,
-  # so its body is checked as it is.
+  # so its body stays as it is; the check below ignores the footer either way.
   footer:
     name: PR body footer
     runs-on: ubuntu-latest
@@ -25,8 +25,6 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
-    outputs:
-      body: ${{ steps.strip.outputs.body }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -53,14 +51,9 @@ jobs:
               echo "Removed the cloud session footer from the PR body"
             fi
           fi
-          delimiter="body-$(openssl rand -hex 16)"
-          { echo "body<<$delimiter"; cat "$RUNNER_TEMP/clean.md"; echo; echo "$delimiter"; } >> "$GITHUB_OUTPUT"
 
   commits:
     name: Commit messages
-    needs: footer
-    # Runs when the footer job fails too, and then checks the body as it came.
-    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -92,12 +85,10 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
           PR_TITLE: ${{ github.event.pull_request.title }}
           PR_BODY: ${{ github.event.pull_request.body }}
-          FOOTER_RESULT: ${{ needs.footer.result }}
-          CLEAN_BODY: ${{ needs.footer.outputs.body }}
         run: |
           status=0
-          # The body without the cloud session footer, once the footer job has removed it.
-          if [ "$FOOTER_RESULT" = success ]; then PR_TEXT="$PR_TITLE $CLEAN_BODY"; else PR_TEXT="$PR_TITLE $PR_BODY"; fi
+          # The body without the cloud session footer, as the footer job leaves it on the PR (ADR 0100).
+          PR_TEXT="$PR_TITLE $(printf '%s' "$PR_BODY" | node scripts/strip-pr-footer.mjs)"
           if git log --format='%ae' "$BASE_SHA..$HEAD_SHA" | grep -qvx 'antondemydenko113@gmail.com'; then
             echo "::error::Every commit must be authored by antondemydenko113@gmail.com"; status=1
           fi
