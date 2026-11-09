@@ -39,7 +39,8 @@ const EXPLANATION = field('explanation', 'Пояснення', 'long-text');
 
 /**
  * The editor of every kind, with the fields the contracts define for it
- * (Word, Idiom, Correction, Tip, Synonym Row and Curated Collection schemas).
+ * (Word, Idiom, Correction, Tip, Synonym Row, Curated Collection and Crossword day
+ * schemas).
  * Categories, translation, topic and CEFR fields are not edited here.
  */
 export const CONTENT_KINDS: readonly KindEditor[] = [
@@ -128,6 +129,11 @@ export const CONTENT_KINDS: readonly KindEditor[] = [
       field('publishedOn', 'Дата публікації', 'text'),
       field('entryIds', 'Записи добірки', 'json'),
     ],
+  },
+  {
+    kind: 'crosswordDay',
+    name: 'Кросворди дня',
+    fields: [field('date', 'Дата', 'text'), field('words', 'Слова кросворду', 'json')],
   },
 ];
 

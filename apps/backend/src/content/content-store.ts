@@ -141,7 +141,7 @@ export function createContentStore({
         ...common,
         id: fields.date,
         fields,
-        retired: false,
+        retired: fields.retired ?? false,
       }));
       for (const table of CONTENT_TABLES) {
         await tx.delete(table).where(eq(table.editionId, editionId));

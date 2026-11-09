@@ -14781,7 +14781,8 @@
                 "idiom",
                 "synonymRow",
                 "tip",
-                "curatedCollection"
+                "curatedCollection",
+                "crosswordDay"
               ],
               "type": "string"
             }
@@ -15319,7 +15320,8 @@
                 "idiom",
                 "synonymRow",
                 "tip",
-                "curatedCollection"
+                "curatedCollection",
+                "crosswordDay"
               ],
               "type": "string"
             }
@@ -15720,7 +15722,8 @@
                 "idiom",
                 "synonymRow",
                 "tip",
-                "curatedCollection"
+                "curatedCollection",
+                "crosswordDay"
               ],
               "type": "string"
             }
@@ -16273,7 +16276,8 @@
                 "idiom",
                 "synonymRow",
                 "tip",
-                "curatedCollection"
+                "curatedCollection",
+                "crosswordDay"
               ],
               "type": "string"
             }
@@ -16655,7 +16659,8 @@
                 "idiom",
                 "synonymRow",
                 "tip",
-                "curatedCollection"
+                "curatedCollection",
+                "crosswordDay"
               ],
               "type": "string"
             }
@@ -26179,6 +26184,9 @@
                                       ],
                                       "additionalProperties": false
                                     }
+                                  },
+                                  "retired": {
+                                    "type": "boolean"
                                   }
                                 },
                                 "required": [
@@ -27261,6 +27269,9 @@
                               ],
                               "additionalProperties": false
                             }
+                          },
+                          "retired": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
