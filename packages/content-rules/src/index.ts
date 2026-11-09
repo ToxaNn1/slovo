@@ -7,6 +7,7 @@ export {
   type ContentSet,
 } from './check';
 export { checksumOf } from './checksum';
+export { wordKey } from './entries';
 export { CROSSWORD_DAYS_FILE, CROSSWORD_REPEAT_DAYS, dateAfter } from './crossword-days';
 export {
   ID_PREFIX,

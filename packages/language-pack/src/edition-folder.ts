@@ -236,7 +236,7 @@ export type EntryKind = 'word' | 'correction' | 'idiom' | 'synonymRow' | 'tip';
  * carries its primary Definition: homonyms share a Lemma and are separate
  * Words, told apart by it (`wordKey`).
  */
-export { wordKey } from './check-content';
+export { wordKey } from '@slovo/content-rules';
 
 export type EntryText = EntryTextFields &
   (
