@@ -73,7 +73,7 @@ const weeks = weeksOf((month, day) => {
   return day === 1 || day === 30 ? 'active' : 'missed';
 });
 
-// A red accent, as in the Ukrainian Edition, so that each day state has its own face.
+// A red accent, as in the UA Edition, so that each day state has its own face.
 const light = { ...coreTokens.colors.light, accent: '#E0301E' };
 const tokens = { ...coreTokens, colors: { ...coreTokens.colors, light } };
 

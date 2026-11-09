@@ -2370,7 +2370,7 @@ describe('the fonts of the word and UI families', () => {
     ]);
   });
 
-  it('passes the Ukrainian Edition: Unbounded and Onest set its alphabet', () => {
+  it('passes the UA Edition: Unbounded and Onest set its alphabet', () => {
     const ukFonts = fileURLToPath(new URL('../../../editions/uk/assets/fonts', import.meta.url));
     const files = Object.fromEntries(
       [
