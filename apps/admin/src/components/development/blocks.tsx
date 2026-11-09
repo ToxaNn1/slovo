@@ -66,7 +66,7 @@ export function Source({
 
 const CI_LABEL = { success: 'успішно', failure: 'впав', pending: 'триває' } as const;
 
-function CiBadge({ ci }: { readonly ci: MainCi }) {
+export function CiBadge({ ci }: { readonly ci: MainCi }) {
   if (ci.state === 'none') return <Quiet>Запусків ще не було</Quiet>;
   const tone =
     ci.state === 'success'
