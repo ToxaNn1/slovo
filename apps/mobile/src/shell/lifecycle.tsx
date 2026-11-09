@@ -66,14 +66,18 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   });
   reports.listen(remoteSwitches, (switches, moment) => {
     if (moment !== 'launch' && moment !== 'return') return;
-    // Neither the ask nor a reopen rejects.
-    void switches.ask().then(async (changed) => {
-      if (!changed) return;
-      await composition.reopen();
-      // A reopen does what the launch did: the composition makes the plan as it opens.
-      const { state } = composition;
-      if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
-    });
+    switches
+      .ask()
+      .then(async (changed) => {
+        if (!changed) return;
+        await composition.reopen();
+        // A reopen does what the launch did: the composition makes the plan as it opens.
+        const { state } = composition;
+        if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
+      })
+      .catch((error: unknown) => {
+        logError('Could not follow the remote Feature Switches', error);
+      });
   });
   const stopSpotlight = handOverSpotlight({
     reports,

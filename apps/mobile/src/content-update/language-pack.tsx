@@ -1,7 +1,6 @@
-import { createEntries, EVERYTHING_IN, type Entries, type TrackedUserState } from '@slovo/core';
+import type { TrackedUserState } from '@slovo/core';
 import { openPack, type PackReader } from '@slovo/language-pack/reader';
 import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
-import { useMemo } from 'react';
 
 import { logError } from '../diagnostics/log';
 import { activeEditionFiles, activeEditionId } from '../edition/edition';
@@ -13,9 +12,8 @@ import {
   type LaunchPack,
   type OpenedPack,
 } from './launch-pack';
-import { openOnce, useOpened, type Opening } from '../opening';
-import { useEditionInEffect } from '../edition/remote-switches';
-import { useShell, type EditionSwitches } from '../shell-value';
+import { openOnce, type Opening } from '../opening';
+import type { EditionSwitches } from '../shell-value';
 
 const DATABASE_NAME = 'language-pack.db';
 
@@ -92,15 +90,5 @@ export function languagePackOpening({
         logError('Could not open the Language Pack', error);
       },
     },
-  );
-}
-
-/** The Core's Entries of this Edition, read from the Language Pack of the app run. */
-export function useEntries(): Entries {
-  const content = useOpened(useShell().languagePack).reader;
-  const inEffect = useEditionInEffect();
-  return useMemo(
-    () => createEntries({ content, edition: inEffect, choices: EVERYTHING_IN }),
-    [content, inEffect],
   );
 }

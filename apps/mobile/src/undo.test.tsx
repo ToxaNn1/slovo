@@ -10,6 +10,9 @@ describe('the undo of a toast', () => {
     const category = await composition.hide({ kind: 'category', categoryId: crafts.id });
     if (entry === undefined || category === undefined) throw new Error('Nothing was hidden');
     const after = await reopen();
+    // The reopened composition kept both hides, so the undo has something to take back.
+    expect(after.hiddenEntries.list).toHaveLength(1);
+    expect(after.mix.state.hiddenCategories).toHaveLength(1);
 
     await settled(() => {
       hook.result.current('the undo of the hide', entry.undo);
@@ -28,6 +31,8 @@ describe('the undo of a toast', () => {
     const undo = restored?.undo;
     if (undo === undefined) throw new Error('Nothing was restored');
     const after = await reopen();
+    // The reopened composition kept the restore, so the undo has something to take back.
+    expect(after.hiddenEntries.list).toHaveLength(wordIds.length - 1);
 
     await settled(() => {
       hook.result.current('the undo of bringing the Entry back', undo);

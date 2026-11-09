@@ -8,7 +8,7 @@ export type PostHogClient = Pick<
 >;
 
 /** PostHog's project in the EU (ADR 0068). */
-export const POSTHOG_EU_HOST = 'https://eu.i.posthog.com';
+const POSTHOG_EU_HOST = 'https://eu.i.posthog.com';
 
 /**
  * The client's options: the EU host and an anonymous id, with no session

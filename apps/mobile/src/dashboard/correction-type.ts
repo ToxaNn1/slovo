@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 
 import { useComposition } from '../composition';
 import { logError } from '../diagnostics/log';
+import { keep } from '../keep';
 import { editionStrings } from '../edition/edition';
 
 /** What a Correction Type's screen draws and does. */
@@ -35,10 +36,14 @@ export function useCorrectionTypeScreen(type: CorrectionType): CorrectionTypeScr
   }>();
   useEffect(() => {
     let active = true;
+    // Only the latest read is shown: an earlier one that ends after it is dropped.
+    let latest = 0;
     const reread = () => {
+      latest += 1;
+      const mine = latest;
       correctionTypes.corrections(type).then(
         (rows) => {
-          if (active) setRead({ in: composition, type, rows });
+          if (active && mine === latest) setRead({ in: composition, type, rows });
         },
         (error: unknown) => {
           logError('Could not read the Corrections of a Correction Type', error);
@@ -62,7 +67,7 @@ export function useCorrectionTypeScreen(type: CorrectionType): CorrectionTypeScr
     // A read of a composition since reopened, or of another type, is not shown.
     rows: read?.in === composition && read.type === type ? read.rows : undefined,
     reveal: (correctionId) => {
-      void correctionTypes.reveal(correctionId);
+      void keep('the revealed Corrections', correctionTypes.reveal(correctionId));
     },
   };
 }

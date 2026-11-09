@@ -80,7 +80,7 @@ function shortcutPhrase(phrase: string, displayName: string, field: string): str
  * the Shortcuts app know them with no setup; and the route each intent opens,
  * which names the Edition (`edition=<id>`), so the app opens it in that Edition.
  */
-export function appShortcutsSwift({ editionId, displayName, strings }: AppIntentsEdition): string {
+function appShortcutsSwift({ editionId, displayName, strings }: AppIntentsEdition): string {
   const intents = Object.entries(APP_INTENTS) as [IntentKey, (typeof APP_INTENTS)[IntentKey]][];
   const shortcuts = intents.map(([key, { type, symbol }]) => {
     const phrases = strings[key].phrases.map((phrase, index) =>

@@ -73,7 +73,8 @@ export interface CuratedCollections {
    * «+ Додати»: copies the collection into the reader's Collections through
    * the Collection copy of «Додати собі», its name under the duplicate-name
    * rule, its Entries in order with the Retired ones skipped, recording its id
-   * as the source. Nothing for an id without a screen, or once a copy is kept.
+   * as the source. Nothing for an id without a screen, or once a copy is kept
+   * or is being made (a double tap makes one copy).
    */
   add(collectionId: string): Promise<Collection | undefined>;
 }
@@ -145,6 +146,9 @@ export async function openCuratedCollections({
       .slice(0, RAIL_LENGTH);
   }
 
+  /** The collections whose copy is being made. */
+  const adding = new Set<string>();
+
   let rail = await railOf();
   async function refresh(): Promise<void> {
     rail = await railOf();
@@ -196,13 +200,19 @@ export async function openCuratedCollections({
     },
     async add(collectionId) {
       const collection = published(collectionId);
-      if (collection === undefined || isAdded(collectionId)) return undefined;
-      const live = await liveEntries(collection);
-      return collections.createCopy(
-        collection.name,
-        live.map(({ id }) => id),
-        collectionId,
-      );
+      if (collection === undefined || isAdded(collectionId) || adding.has(collectionId))
+        return undefined;
+      adding.add(collectionId);
+      try {
+        const live = await liveEntries(collection);
+        return await collections.createCopy(
+          collection.name,
+          live.map(({ id }) => id),
+          collectionId,
+        );
+      } finally {
+        adding.delete(collectionId);
+      }
     },
   };
 }
