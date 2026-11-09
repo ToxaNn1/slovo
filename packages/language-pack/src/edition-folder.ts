@@ -226,10 +226,19 @@ export type EntryKind = 'word' | 'correction' | 'idiom' | 'synonymRow' | 'tip';
 /**
  * The text an Entry is known by, so that a new Entry of the same text can be
  * told apart: a Word's Lemma, an Idiom's expression, a Correction's
- * non-standard form, a Synonym Row's dominant, a Tip's title.
+ * non-standard form, a Synonym Row's dominant, a Tip's title. A Word also
+ * carries its primary Definition: homonyms share a Lemma and are separate
+ * Words, told apart by it (`wordKey`).
  */
-export interface EntryText {
-  readonly kind: EntryKind;
+export { wordKey } from './check-content';
+
+export type EntryText = EntryTextFields &
+  (
+    | { readonly kind: 'word'; readonly primaryDefinition: string }
+    | { readonly kind: Exclude<EntryKind, 'word'> }
+  );
+
+interface EntryTextFields {
   readonly id: string;
   /** The Word's Category, the Idiom Type or the Correction Type; none for Synonym Rows and Tips. */
   readonly group: string | undefined;
@@ -482,14 +491,22 @@ function entryTextsOf({
   tips,
 }: AuthoredContent): EntryText[] {
   const text = (
-    kind: EntryKind,
+    kind: Exclude<EntryKind, 'word'>,
     entry: { readonly id: string; readonly retired: boolean },
     group: string | undefined,
     main: string,
     forms: readonly string[] = [],
   ): EntryText => ({ kind, id: entry.id, group, text: main, forms, retired: entry.retired });
   return [
-    ...words.map(({ entry }) => text('word', entry, entry.categoryId, entry.lemma)),
+    ...words.map(({ entry }): EntryText => ({
+      kind: 'word',
+      id: entry.id,
+      group: entry.categoryId,
+      text: entry.lemma,
+      forms: [],
+      retired: entry.retired,
+      primaryDefinition: entry.primaryDefinition,
+    })),
     ...corrections.map(({ entry }) =>
       text(
         'correction',
