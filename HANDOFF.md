@@ -1,6 +1,8 @@
+STATUS: FINISHED
+
 # Admin wave handoff (specs #1708, #1709; PRs #1743, #1746)
 
-State (2026-11-09, later):
+State (2026-11-09, final): #1746 squash-merged into main as 4e89cfb8 with all CI green (auto-merge refused a PR already clean). #1735 stays open.
 - #1743 merged to main (96fcc066). #1735 stays open (owner's first app build).
 - feat/1709-admin 950bd738: main merged in. ADR: 1709's duplicate quote-check 0094 dropped, CI-history ADR is now 0096. Migrations 0017-0021 are 1709's (switch_rules, admin_sign_in, owner_checks, ci_runs, alerts); db:generate no changes. content-rules fixture fixed. lint/typecheck/test green.
 - Review findings: scratchpad review-1709.md (part 1: invite not atomic, email format, addOwnerCheck lacks reason per ADR 0088, retire reason blank, Needs flags, tickOwnerCheck re-read). Copy kept below if the scratchpad is gone.
