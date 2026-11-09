@@ -14,3 +14,5 @@ Triage files (per finding id: FIXED/SKIP-*/FIX + tickets): scratchpad triage cor
 - Finisher fixes: 29ede0df6 fix(contracts) empty standardEquivalents names the field (language-pack test); affb82d11 refactor(ui) CorrectionTypeRow guard.
 - Not done, next wave: T-ui-4, T-mobile-4, T-mobile-6, T-settings-1, T-onboarding-1, T-dashboard-1, T-sourcing-5, T-lp-1, T-contracts-1, T-edition-1, content T-core-1, T-content-1 (ADR 0090); also E-L5, sourcing-L5, mobile-T6.
 - Open: branch conflicts with main (#1743, #1746) -> merge main first. Local red only from env: backend tests (no Postgres), content import.test chmod-as-root.
+
+- 09.11 main merged into fix/1109-global-review-tails (8f8187d91, tip e1b0474f8); lint/typecheck 25/25, tests core/mobile/language-pack/content green locally. Draft PR #1753 left draft for the owner. Next wave: the not-done list above.
