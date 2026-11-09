@@ -95,7 +95,7 @@ async function withEntries<T>(outFile: string, use: (entries: Entries) => Promis
     return await use(
       createEntries({
         content: pack,
-        edition: { isFeatureEnabled: () => true },
+        edition: { isFeatureEnabled: () => true, illustrations: new Set() },
         choices: EVERYTHING_IN,
       }),
     );

@@ -225,11 +225,8 @@ function readOnce<T>(read: () => Promise<T>): () => Promise<T> {
     }));
 }
 
-/**
- * What the Entries ask of the Edition. One that leaves out `illustrations`,
- * as in tests of other features, bundles no Illustration.
- */
-type EntriesEdition = Pick<Edition, 'isFeatureEnabled'> & Partial<Pick<Edition, 'illustrations'>>;
+/** What the Entries ask of the Edition. */
+type EntriesEdition = Pick<Edition, 'isFeatureEnabled' | 'illustrations'>;
 
 /**
  * The Entries over the Language Pack and the reader's choices, read live from
@@ -475,7 +472,7 @@ export function createEntries({
     illustrationOf({ illustration }) {
       return illustration !== undefined &&
         edition.isFeatureEnabled('illustrations') &&
-        edition.illustrations?.has(illustration) === true
+        edition.illustrations.has(illustration)
         ? illustration
         : undefined;
     },
