@@ -11,3 +11,4 @@ Done = PR green, ready for review, no auto-merge -> `STATUS: FINISHED` first lin
 ## Log
 - 2026-11-09T17:10:43Z step 0: branch created
 - 2026-11-09T17:11:40Z step 0: WAVES.md block added on coord/safety-net; implementer launched on chore/1109-ci-affected-tests (Opus subagent, worktree)
+- 2026-11-09T17:21:17Z PR #1758 opened (draft). Proxy appends AI footer to the body -> Commit messages check red until the owner deletes it. Next: probe PRs docs/admin/core on top of the branch
