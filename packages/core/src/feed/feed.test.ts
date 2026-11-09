@@ -158,6 +158,22 @@ describe('the Feed', () => {
     expect(new Set(ids)).toEqual(new Set(liveIds));
   });
 
+  it('moves past an eligible Entry the Language Pack cannot read', async () => {
+    const expected = await walk(await run());
+    const unreadable = expected[2];
+    const memory = createMemoryContentPort({ words: pack });
+    const content: ContentReadPort = {
+      ...memory,
+      getEntries: async (ids) =>
+        (await memory.getEntries(ids)).filter((entry) => entry.id !== unreadable),
+    };
+    const feed = await run({ content });
+    await feed.next();
+
+    expect((await feed.next())?.entryId).toBe(expected[3]);
+    expect(await walk(feed)).toEqual(expected.filter((id) => id !== unreadable));
+  });
+
   it('gives two cards in turn when asked for the next card twice at once', async () => {
     const expected = await walk(await run());
     const feed = await run();
@@ -349,7 +365,9 @@ describe('the Feed', () => {
 
       await look(feed, time, 0, SEEN_DWELL_MS);
 
-      expect(await unseenNextDay(records)).not.toContain(feed.cards[0]?.entryId);
+      const first = feed.cards[0]?.entryId;
+      expect(liveIds).toContain(first);
+      expect(await unseenNextDay(records)).not.toContain(first);
     });
 
     it('offers no Seen Word again after a restart in the same Cycle', async () => {
@@ -1181,7 +1199,8 @@ describe('Corrections in the Feed', () => {
       const { feed, position } = await feedOnLinkedWord({ records, clock: time.clock });
       const opened = await feed.openLinkedCorrection(position, 'c_protiazi');
 
-      await look(feed, time, opened ?? -1, SEEN_DWELL_MS);
+      expect(opened).toBe(position + 1);
+      await look(feed, time, position + 1, SEEN_DWELL_MS);
 
       const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
       const unseen = await walk(
