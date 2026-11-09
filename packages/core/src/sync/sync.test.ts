@@ -22,6 +22,8 @@ import { userStateRecords } from '../user-state-schema';
 const { favorites, syncCursor, syncSyncedAt, theme } = userStateRecords;
 
 const HOUR = 60 * 60_000;
+/** The cursor the fake backend answers the first pull with. */
+const CURSOR_AFTER_FIRST_PULL = 0;
 
 /**
  * One device signed into an Account on a fake backend, with the Edition's
@@ -357,7 +359,7 @@ describe('Sync tries a sync again', () => {
 
 describe('Sync, when too many requests', () => {
   it('waits for the Retry-After and syncs then', async () => {
-    const { sync, server, advance, syncs } = await device();
+    const { sync, server, time, advance, syncs } = await device();
     server.failNext({ procedure: 'sync.pull', reason: 'too-many-requests', retryAfter: 60 });
     sync.foreground();
     await advance(59_999);
@@ -365,7 +367,7 @@ describe('Sync, when too many requests', () => {
     await advance(1);
 
     expect(syncs()).toBe(2);
-    expect(sync.state.syncedAt).toBeDefined();
+    expect(sync.state.syncedAt).toEqual(time.clock.now());
   });
 
   it('syncs at no moment sooner', async () => {
@@ -403,7 +405,7 @@ describe('Sync, when too many requests', () => {
 
 describe('Sync, when the device fails to write a sync', () => {
   it('stops it quietly and syncs at the next moment', async () => {
-    const { sync, pushFromElsewhere, disk, advance, syncs } = await device();
+    const { sync, pushFromElsewhere, disk, time, advance, syncs } = await device();
     await pushFromElsewhere([{ key: 'settings.theme', value: 'dark', changedAt: 1 }]);
     disk.refuses = () => true;
     sync.foreground();
@@ -416,7 +418,7 @@ describe('Sync, when the device fails to write a sync', () => {
     sync.foreground();
     await advance(0);
     expect(syncs()).toBe(2);
-    expect(sync.state.syncedAt).toBeDefined();
+    expect(sync.state.syncedAt).toEqual(time.clock.now());
   });
 
   it('says the user state may have changed when it fails after a pull wrote', async () => {
@@ -459,11 +461,11 @@ describe('Sync and the end of a Session', () => {
   });
 
   it('forgets the cursor at a sign-out and keeps the pending changes and the words', async () => {
-    const { sync, account, userState, records, addFavorite, advance } = await device();
+    const { sync, account, userState, records, time, addFavorite, advance } = await device();
     sync.foreground();
     await advance(0);
-    expect(sync.state.syncedAt).toBeDefined();
-    expect(await userState.cursor()).toBeDefined();
+    expect(sync.state.syncedAt).toEqual(time.clock.now());
+    expect(await userState.cursor()).toBe(CURSOR_AFTER_FIRST_PULL);
     await addFavorite('w_one');
 
     await account.signOut();
@@ -548,6 +550,41 @@ describe('Sync and the end of a Session', () => {
     });
 
     expect(await userState.cursor()).toBeUndefined();
+  });
+
+  it('opens signed out even when the store fails to read what an ended Session left', async () => {
+    const time = fakeClock();
+    const kept = trackChanges({
+      userState: await openUserState({ port: createMemoryUserStatePort() }),
+      clock: time.clock,
+    });
+    const userState = {
+      ...kept,
+      read: () => Promise.reject(new Error('disk unreadable')),
+      cursor: () => Promise.reject(new Error('disk unreadable')),
+    };
+
+    const sync = await openSync({
+      userState,
+      backend: createFakeBackend({ clock: time.clock }).backend,
+      account: await openAccount({
+        backend: createFakeBackend().backend,
+        edition: { id: 'uk', isFeatureEnabled: () => false },
+        googleSheet: createFakeGoogleSignInSheet(),
+        appleSheet: createFakeAppleSignInSheet(),
+        sessions: createMemorySessionStore(),
+        userState: kept,
+        clock: time.clock,
+        schedule: testSchedule(time).schedule,
+        random: randomOf(0.5),
+      }),
+      edition: { id: 'uk', isFeatureEnabled: () => true },
+      clock: time.clock,
+      schedule: testSchedule(time).schedule,
+      random: randomOf(0.5),
+    });
+
+    expect(sync.state).toEqual({ syncedAt: undefined, running: false, offline: false });
   });
 });
 
