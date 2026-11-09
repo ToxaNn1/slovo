@@ -1,4 +1,9 @@
-import { CorrectionTypeSchema, type Correction, type CorrectionType } from '@slovo/contracts';
+import {
+  CorrectionIdSchema,
+  CorrectionTypeSchema,
+  type Correction,
+  type CorrectionType,
+} from '@slovo/contracts';
 
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
@@ -85,7 +90,12 @@ export async function openCorrectionTypes({
     subscribers.tell();
   }
 
-  if (on) seen.subscribe((entryId) => markWorkedThrough(entryId));
+  // A Seen Word reads nothing; a read that fails here leaves the Correction to its next Seen.
+  if (on)
+    seen.subscribe(async (entryId) => {
+      if (!CorrectionIdSchema.safeParse(entryId).success) return;
+      await markWorkedThrough(entryId).catch(() => undefined);
+    });
 
   return {
     get tiles() {

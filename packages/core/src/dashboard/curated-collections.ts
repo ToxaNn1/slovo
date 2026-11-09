@@ -150,8 +150,14 @@ export async function openCuratedCollections({
   const adding = new Set<string>();
 
   let rail = await railOf();
+  // The refreshes started, so one that ends after a newer one never puts back what it read.
+  let started = 0;
   async function refresh(): Promise<void> {
-    rail = await railOf();
+    started += 1;
+    const mine = started;
+    const next = await railOf();
+    if (mine !== started) return;
+    rail = next;
     subscribers.tell();
   }
   if (on) {
