@@ -82,8 +82,19 @@ const centreOf = (index: number) => {
   return { x: wheel / 2 + orbit * Math.cos(angle), y: wheel / 2 + orbit * Math.sin(angle) };
 };
 
+/** A point `share` of a tile's side from the tile's centre, away from the wheel's centre. */
+const nearTile = (index: number, share: number) => {
+  const { wheel, orbit, tile } = crossingCrosswordLayout;
+  const angle = -Math.PI / 2 + (index * 2 * Math.PI) / wheelLetters.length;
+  const reach = orbit + share * tile;
+  return { x: wheel / 2 + reach * Math.cos(angle), y: wheel / 2 + reach * Math.sin(angle) };
+};
+
 const drag = async (tiles: number[]) => {
-  const points = tiles.map(centreOf);
+  await dragThrough(tiles.map(centreOf));
+};
+
+const dragThrough = async (points: { x: number; y: number }[]) => {
   const [first, ...rest] = points;
   await act(() => {
     fireGestureHandler(getByGestureTestId('wheel-trace'), [
@@ -117,6 +128,15 @@ describe('LetterWheel', () => {
       const chip = within(screen.getByTestId(`wheel-chip-${String(i)}`)).getByText(letter);
       expect(chip).toHaveStyle({ textTransform: 'uppercase' });
     }
+  });
+
+  it('catches the finger 0.3 of a tile from a tile centre but not 0.4, near the tile edge', async () => {
+    await renderIn(<Wheel />);
+    await dragThrough([centreOf(1), nearTile(2, 0.4), centreOf(0)]);
+    expect(screen.queryByTestId('solved')).toBeNull();
+    expect(screen.getByTestId('wheel-path')).toHaveProp('accessibilityLabel', 'ct');
+    await dragThrough([centreOf(1), nearTile(2, 0.3), centreOf(0)]);
+    expect(screen.getByTestId('solved')).toBeTruthy();
   });
 
   it('traces by buttons and Check in accessible mode, a tap on the last tile stepping back', async () => {
