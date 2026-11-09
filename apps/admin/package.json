@@ -13,7 +13,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@fontsource-variable/onest": "5.3.1",
+    "@fontsource-variable/golos-text": "5.3.0",
+    "@fontsource-variable/jetbrains-mono": "5.3.0",
     "@fontsource-variable/unbounded": "5.3.0",
     "@slovo/contracts": "workspace:*",
     "@tanstack/react-query": "^5.106.1",

@@ -1,47 +1,135 @@
 @import 'tailwindcss';
 
-/* Both Themes read the same tokens; <html data-theme> picks one (src/theme.ts). */
+/*
+ * The tokens of the owner's design «SLOVO Admin v4». Both Themes read the
+ * same names; <html data-theme> picks one (src/theme.ts).
+ */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  --background: #f6f5f1;
+  --background: #f6f6f9;
   --surface: #ffffff;
-  --foreground: #1d1c1a;
-  --muted: #efede7;
-  --muted-foreground: #6c6962;
-  --border: #e3e0d8;
-  --primary: #4b45d6;
+  --sunk: #f0eff5;
+  --border: #e8e6f0;
+  --border-strong: #d6d3e3;
+  --foreground: #16132b;
+  --muted-foreground: #56526e;
+  --subtle: #8a86a2;
+  --bar: #dedbea;
+  --primary: oklch(0.53 0.23 293);
   --primary-foreground: #ffffff;
-  --ring: #4b45d6;
-  --destructive: #b42318;
+  --primary-line: oklch(0.53 0.23 293 / 0.25);
+  --glow: transparent;
+  --glow-2: transparent;
+  --ok: oklch(0.55 0.13 155);
+  --ok-soft: oklch(0.95 0.04 155);
+  --warn: oklch(0.62 0.15 65);
+  --warn-soft: oklch(0.96 0.05 80);
+  --destructive: oklch(0.57 0.21 25);
+  --destructive-soft: oklch(0.96 0.03 25);
+  --agent: oklch(0.55 0.12 215);
+  --agent-soft: oklch(0.95 0.03 215);
+  --info: oklch(0.55 0.15 255);
+  --info-soft: oklch(0.95 0.03 255);
+  --scrim: rgb(20 16 45 / 0.45);
+  --panel-shadow: 0 0 0 1px rgb(22 19 43 / 0.06), 0 1px 3px rgb(22 19 43 / 0.05);
+  --side: #ffffff;
+  --side-foreground: #16132b;
+  --side-muted: #6e6a88;
+  --side-hover: #f4f2fa;
+  --side-active: #f0ebff;
+  --side-border: #ebe8f3;
+  --side-pop: #ffffff;
+  --ring: var(--primary);
+  --muted: var(--sunk);
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --background: #121214;
-  --surface: #1b1b1f;
-  --foreground: #f1f0ec;
-  --muted: #26262b;
-  --muted-foreground: #a3a19b;
-  --border: #2e2e34;
-  --primary: #8f8af5;
-  --primary-foreground: #121214;
-  --ring: #8f8af5;
-  --destructive: #f97066;
+  --background: #0e0b22;
+  --surface: #18143a;
+  --sunk: #221d4a;
+  --border: #2a2554;
+  --border-strong: #3b356b;
+  --foreground: #f2f0fb;
+  --muted-foreground: #b3aed3;
+  --subtle: #7d77a6;
+  --bar: #352f66;
+  --primary: oklch(0.68 0.22 300);
+  --primary-foreground: #ffffff;
+  --primary-line: oklch(0.68 0.22 300 / 0.35);
+  --glow: rgb(150 80 255 / 0.22);
+  --glow-2: rgb(255 70 170 / 0.1);
+  --ok: oklch(0.78 0.15 155);
+  --ok-soft: oklch(0.32 0.06 160);
+  --warn: oklch(0.82 0.14 80);
+  --warn-soft: oklch(0.34 0.06 70);
+  --destructive: oklch(0.72 0.18 25);
+  --destructive-soft: oklch(0.32 0.08 20);
+  --agent: oklch(0.8 0.11 215);
+  --agent-soft: oklch(0.32 0.05 220);
+  --info: oklch(0.75 0.12 255);
+  --info-soft: oklch(0.32 0.06 260);
+  --scrim: rgb(5 3 20 / 0.7);
+  --panel-shadow: 0 0 0 1px rgb(255 255 255 / 0.06), 0 10px 30px -12px rgb(0 0 0 / 0.5);
+  --side: #120e2e;
+  --side-foreground: #f2f0fb;
+  --side-muted: #8d87b6;
+  --side-hover: #1d1844;
+  --side-active: #2a2160;
+  --side-border: #26214f;
+  --side-pop: #1a1540;
   color-scheme: dark;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
-  --color-foreground: var(--foreground);
+  --color-sunk: var(--sunk);
   --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-foreground: var(--foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-bar: var(--bar);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-line: var(--primary-line);
   --color-ring: var(--ring);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
   --color-destructive: var(--destructive);
-  --font-sans: 'Onest Variable', system-ui, sans-serif;
-  --font-display: 'Unbounded Variable', 'Onest Variable', system-ui, sans-serif;
+  --color-destructive-soft: var(--destructive-soft);
+  --color-agent: var(--agent);
+  --color-agent-soft: var(--agent-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+  --color-scrim: var(--scrim);
+  --color-side: var(--side);
+  --color-side-foreground: var(--side-foreground);
+  --color-side-muted: var(--side-muted);
+  --color-side-hover: var(--side-hover);
+  --color-side-active: var(--side-active);
+  --color-side-border: var(--side-border);
+  --color-side-pop: var(--side-pop);
+  --shadow-panel: var(--panel-shadow);
+  --font-sans: 'Golos Text Variable', system-ui, sans-serif;
+  --font-display: 'Unbounded Variable', 'Golos Text Variable', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', ui-monospace, monospace;
+}
+
+body {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The design's page: two soft glows (dark Theme only) over the background. */
+.admin-page {
+  background:
+    radial-gradient(900px 420px at 80% -8%, var(--glow), transparent 70%),
+    radial-gradient(700px 380px at 20% 110%, var(--glow-2), transparent 70%), var(--background);
+  background-attachment: fixed;
 }
