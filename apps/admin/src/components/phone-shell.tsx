@@ -14,7 +14,7 @@ const PHONE_TITLES: Readonly<Record<string, string>> = {
 };
 
 const tabClass =
-  'flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[14px] text-xs text-side-muted no-underline aria-[current=page]:bg-side-active aria-[current=page]:font-semibold aria-[current=page]:text-side-foreground';
+  'flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-[14px] text-xs text-side-muted no-underline data-current:bg-side-active data-current:font-semibold data-current:text-side-foreground';
 
 /**
  * The admin on a phone: the header with the section's title, the Theme and
@@ -38,7 +38,9 @@ export function PhoneShell({
   const sectionTitle = PHONE_TITLES[pathname];
   const more = moreAt === pathname || sectionTitle === undefined;
   const current = more ? 'more' : pathname;
-  const tab = (id: string) => (current === id ? ('page' as const) : undefined);
+  // The router marks the route's Link aria-current itself, also under Ще,
+  // so the open tab is drawn from data-current.
+  const tab = (id: string) => (current === id ? '' : undefined);
   const closeMore = () => {
     setMoreAt(undefined);
   };
@@ -66,7 +68,8 @@ export function PhoneShell({
         <MoreScreen onOverview={closeMore} />
       ) : (
         <main className="flex flex-1 flex-col gap-3 px-4 pt-1 pb-4">
-          <FiltersBar />
+          {/* The Kill switch picks its own place; the filters are Огляд's. */}
+          {current === '/' ? <FiltersBar /> : null}
           {children}
         </main>
       )}
@@ -89,7 +92,7 @@ export function PhoneShell({
           to="/"
           search={(previous) => previous}
           onClick={closeMore}
-          aria-current={tab('/')}
+          data-current={tab('/')}
           className={tabClass}
         >
           <Dot on={current === '/'} />
@@ -99,7 +102,7 @@ export function PhoneShell({
           to="/switches/kill"
           search={(previous) => previous}
           onClick={closeMore}
-          aria-current={tab('/switches/kill')}
+          data-current={tab('/switches/kill')}
           className={tabClass}
         >
           <Dot on={current === '/switches/kill'} danger />
@@ -107,7 +110,8 @@ export function PhoneShell({
         </Link>
         <button
           type="button"
-          aria-current={tab('more')}
+          aria-current={more ? 'page' : undefined}
+          data-current={tab('more')}
           onClick={() => {
             setMoreAt(pathname);
           }}

@@ -168,6 +168,9 @@ test('at a phone width bottom tabs open Огляд, the kill switch and Ще ins
 
   await user.click(tabs.getByRole('button', { name: 'Ще' }));
   expect(screen.getByText('Відкрийте на комп’ютері')).toBeDefined();
+  // Only Ще is drawn as the open tab, though the route is still Огляд's.
+  expect(tabs.getByRole('button', { name: 'Ще' }).dataset['current']).toBe('');
+  expect(tabs.getByRole('link', { name: 'Огляд' }).dataset['current']).toBeUndefined();
   await user.click(screen.getByRole('link', { name: 'До Огляду' }));
   expect(await screen.findByRole('region', { name: 'Огляд' })).toBeDefined();
 });
