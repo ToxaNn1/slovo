@@ -80,7 +80,7 @@ export const byLettersMode: GameMode = {
     };
     if (edition.isFeatureEnabled('letterTiles')) {
       const prompt = answer.primaryDefinition;
-      const alphabet = edition.languageTraits.alphabet ?? [];
+      const { alphabet } = edition.languageTraits;
       return tilesRound({ lemma: answer.lemma, prompt, sheet }, alphabet, random);
     }
     const inPlace = Array.from(answer.lemma).flatMap((character, place) =>

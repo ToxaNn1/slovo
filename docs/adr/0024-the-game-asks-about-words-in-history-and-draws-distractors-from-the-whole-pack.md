@@ -6,7 +6,7 @@ The Core has a Game: Rounds in one Game Mode, up to 15 Rounds with 5 Lives unles
 
 **Distractors** come from every eligible Entry of the Round's kind, not only from History, so four options always exist. A Word Round never offers an idiom, and an idiom Round never offers a Word.
 
-- **«Вгадай слово»** gives a primary Definition (in its Rounds 6–15 a Word is asked by a gap in an Example or typed instead, ADR 0052). For a Word it picks Distractors by the Edition's Distractor rule (for `same-part-of-speech`, Words of the answer's part of speech first, then other eligible Words). It also asks about idioms of Idiom Type `idiom` (ADR 0046): the options are other eligible idioms drawn at random, shown as their expression with no Stress. No two options share a Lemma or expression, and no Distractor's primary Definition is the answer's (compared after case, runs of spaces and Stress marks are set aside). A place name or a proverb builds no Round and is never a Distractor (ADR 0046).
+- **«Вгадай слово»** gives a primary Definition (in its Rounds 6–15 a Word is asked by a gap in an Example or typed instead, ADR 0052). For a Word it picks Distractors from the Words of the answer's part of speech first, then from the other eligible Words. It also asks about idioms of Idiom Type `idiom` (ADR 0046): the options are other eligible idioms drawn at random, shown as their expression with no Stress. No two options share a Lemma or expression, and no Distractor's primary Definition is the answer's (compared after case, runs of spaces and Stress marks are set aside). A place name or a proverb builds no Round and is never a Distractor (ADR 0046).
 - **The Correction mode**'s Distractors are the main standard equivalents of other eligible Corrections, of the same Correction Type first, never one of the asked Correction's own equivalents. Corrections carry no authored distractors.
 
 When a mode can make no fair Round of an Entry, such as a Word without three other Lemmas beside it, it skips that Entry.
@@ -27,7 +27,7 @@ When a mode can make no fair Round of an Entry, such as a Word without three oth
 - **Distractors from History too**: rejected. A reader with 15 Words in History would get the same few Distractors in every Round.
 - **Authored Distractors for each Correction**: rejected for now. Other Corrections' equivalents need no new content field.
 - **Keep the Game in the user state**: rejected. An abandoned Game must never count, so a restart that drops it is simpler than migrating a half-played Game.
-- **Build each Round when it comes, reading Words one by one**: rejected. The Distractor rule needs every eligible Word's part of speech.
+- **Build each Round when it comes, reading Words one by one**: rejected. Picking Distractors needs every eligible Word's part of speech.
 - **A table of modes in the shell**: rejected. The shell decided which modes exist, and a mode it didn't know vanished.
 - **Each mode value carries its own strings**: rejected. The Core holds no texts in any language.
 - **Count eligible Entries for the offer, and let the start refuse**: rejected. A card would promise a Game the start refuses.
