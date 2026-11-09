@@ -223,8 +223,12 @@ export { withinRarityCeiling, type RarityCeiling } from './entries/rarity-ceilin
 export { renderStress, STRESS_MARK, withoutStress } from './entries/stress';
 export { createGesturesHint, type GesturesHint } from './feed/gestures-hint';
 export { buildWordCard, type WordCardModel } from './entries/word-card';
-export { createContentUpdate, type ContentUpdate } from './content-update/content-update';
-export type { PackFiles, PackVersion } from './ports';
+export {
+  CONTENT_UPDATE_EVERY,
+  createContentUpdate,
+  type ContentUpdate,
+} from './content-update/content-update';
+export type { ContentStore, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
 export type { XpAction, XpAward } from './game/game-xp';
 export type { CrosswordSolve, XpLog, XpLogState } from './progress/xp-log';

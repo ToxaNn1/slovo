@@ -36,7 +36,7 @@ async function device({ off = [] }: { off?: FeatureSwitch[] } = {}) {
       backend: api.backend,
       edition: { id: 'uk', isFeatureEnabled: (feature) => !switchedOff.has(feature) },
       appVersion: '0.8.14',
-      contentVersion: 42,
+      contentVersion: () => 42,
       clock: time.clock,
       schedule: timers.schedule,
       random: randomOf(0.5),

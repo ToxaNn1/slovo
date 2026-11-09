@@ -23,13 +23,8 @@ import {
 } from '@slovo/core';
 import { readFact, seedUserState } from '@slovo/core/testing';
 
-import {
-  buildLanguagePack,
-  type ContentReport,
-  openLanguagePack,
-  type NodeLanguagePack,
-} from './index';
-import { ukrainian, ukrainianFolder } from './test-support';
+import { type ContentReport, openLanguagePack, type NodeLanguagePack } from './index';
+import { buildUkrainianPack, ukrainian } from './test-support';
 
 /** The options of a Round of the pick form, the one every Core mode of 0.8.11 plays. */
 function optionsOf(round: Round): readonly RoundOption[] {
@@ -50,7 +45,7 @@ let report: ContentReport;
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-game-'));
   const outFile = join(workDir, 'language-pack.db');
-  const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
+  const result = buildUkrainianPack(outFile);
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   report = result.report;
   pack = openLanguagePack(outFile);

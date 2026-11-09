@@ -273,7 +273,7 @@ describe('Mistake Reports over a backend that fails', () => {
       backend,
       edition: { id: 'uk', isFeatureEnabled: () => true },
       appVersion: '0.8.14',
-      contentVersion: 42,
+      contentVersion: () => 42,
       clock: time.clock,
       schedule: timers.schedule,
       random: randomOf(0.5),

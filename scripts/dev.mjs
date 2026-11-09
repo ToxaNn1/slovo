@@ -5,8 +5,10 @@
 // 2. apps/backend/.env, made from .env.example with a fresh AUTH_SECRET when
 //    it is missing, or given a fresh one when it keeps the example's, which
 //    the backend refuses.
-// 3. The backend's migrations and the Edition's Language Pack.
-// 4. The backend in watch mode, then Metro, each on the first free port from
+// 3. The backend's migrations, the default Edition's content imported into
+//    Postgres once (ADR 0090).
+// 4. The backend in watch mode, the Edition's Language Pack built from its
+//    content snapshot, then Metro, each server on the first free port from
 //    its default, so a second worktree or a running smoke flow never collides.
 //    The app is pointed at the backend through EXPO_PUBLIC_SLOVO_API_URL.
 //
@@ -111,8 +113,10 @@ run('docker', ['compose', 'up', '--detach', '--wait']);
 makeEnvFile();
 step('Running the backend migrations');
 run('pnpm', ['--filter', '@slovo/backend', 'db:migrate']);
-step("Building the Language Pack of the app's default Edition");
-run('pnpm', ['build:pack']);
+const { defaultEdition } = JSON.parse(readFileSync(`${root}app/app.json`, 'utf8'));
+step(`Importing the content of the default Edition "${defaultEdition}" into Postgres`);
+// An earlier run's import stays: the database keeps what it has.
+run('pnpm', ['--silent', 'content', 'import', '--edition', defaultEdition]);
 
 const apiPort = await freePortFrom(Number(process.env.PORT ?? 8787));
 const metroPort = await freePortFrom(Number(process.env.SLOVO_METRO_PORT ?? 8081));
@@ -132,6 +136,19 @@ backend.on('exit', (code) => {
   process.exit(code ?? 1);
 });
 await waitForHealth(`${apiUrl}/health`);
+
+step("Building the Language Pack of the app's default Edition from the backend's snapshot");
+const pack = spawnSync('pnpm', ['build:pack'], {
+  cwd: root,
+  stdio: 'inherit',
+  env: { ...process.env, EXPO_PUBLIC_SLOVO_API_URL: apiUrl },
+});
+if (pack.status !== 0) {
+  console.error('\n✗ pnpm build:pack failed.');
+  backend.removeAllListeners('exit');
+  process.kill(-backend.pid, 'SIGTERM');
+  process.exit(pack.status ?? 1);
+}
 
 console.log(`
   Backend   ${apiUrl}   (API docs ${apiUrl}/docs)

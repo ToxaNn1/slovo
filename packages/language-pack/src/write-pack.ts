@@ -1,10 +1,21 @@
 import { mkdirSync, renameSync, rmSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { DatabaseSync } from 'node:sqlite';
+import { DatabaseSync, type StatementSync } from 'node:sqlite';
 
-import type { Entry, PackMetadata } from '@slovo/contracts';
+import type { PackMetadata } from '@slovo/contracts';
 
 import { metadataRows, PACK_SCHEMA, type PackContent } from './pack-layout';
+import {
+  correctionRows,
+  crosswordDayRows,
+  curatedCollectionRows,
+  entryRow,
+  idiomRows,
+  synonymRowRows,
+  tipRows,
+  wordRows,
+  type Statement,
+} from './record-rows';
 
 /**
  * Writes the pack to a temporary file and moves it into place, so a failed
@@ -42,7 +53,7 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       });
     }
 
-    const insertEntry = db.prepare('INSERT INTO entries (id, kind) VALUES (?, ?)');
+    const run = statementRunner(db);
     for (const entry of [
       ...content.words,
       ...content.corrections,
@@ -50,244 +61,18 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
       ...content.synonymRows,
       ...content.tips,
     ]) {
-      insertEntry.run(entry.id, entry.kind);
+      run(entryRow(entry));
     }
-
-    const insertWord = db.prepare(`
-      INSERT INTO words (id, lemma, part_of_speech, gender, category_id, rarity, etymology, region, history, origin, illustration, retired)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    const insertStress = db.prepare('INSERT INTO word_stress (word_id, position) VALUES (?, ?)');
-    const insertDefinition = db.prepare(
-      'INSERT INTO definitions (word_id, position, text) VALUES (?, ?, ?)',
-    );
-    const insertExample = db.prepare(
-      'INSERT INTO examples (word_id, position, text, author) VALUES (?, ?, ?, ?)',
-    );
-    const insertRelatedWord = db.prepare(
-      'INSERT INTO related_words (word_id, relation, position, text) VALUES (?, ?, ?, ?)',
-    );
-    const insertRegister = db.prepare(
-      'INSERT INTO word_registers (word_id, position, register) VALUES (?, ?, ?)',
-    );
-    const insertSource = db.prepare(
-      'INSERT INTO sources (entry_id, position, title, short_name, url, archived_url) VALUES (?, ?, ?, ?, ?, ?)',
-    );
-    const insertSources = ({ id, sources }: Entry) => {
-      sources.forEach((source, position) => {
-        insertSource.run(
-          id,
-          position,
-          source.title,
-          source.shortName ?? null,
-          source.url ?? null,
-          source.archivedUrl ?? null,
-        );
-      });
-    };
-
-    const insertCorrection = db.prepare(`
-      INSERT INTO corrections (
-        id, non_standard_form, correction_type, explanation, example_non_standard, example_standard,
-        category_id, retired
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    const insertEquivalent = db.prepare(
-      'INSERT INTO correction_equivalents (correction_id, position, text) VALUES (?, ?, ?)',
-    );
-    const insertLiteraryUse = db.prepare(`
-      INSERT INTO correction_literary_uses (
-        correction_id, position, text, author, work, author_death_year, work_year, url
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    for (const correction of content.corrections) {
-      insertCorrection.run(
-        correction.id,
-        correction.nonStandardForm,
-        correction.correctionType,
-        correction.explanation,
-        correction.examplePair.nonStandard,
-        correction.examplePair.standard,
-        correction.categoryId,
-        correction.retired ? 1 : 0,
-      );
-      correction.standardEquivalents.forEach((text, position) => {
-        insertEquivalent.run(correction.id, position, text);
-      });
-      correction.literaryUses.forEach((use, position) => {
-        insertLiteraryUse.run(
-          correction.id,
-          position,
-          use.text,
-          use.author,
-          use.work,
-          use.authorDeathYear,
-          use.workYear ?? null,
-          use.url ?? null,
-        );
-      });
-      insertSources(correction);
-    }
-
-    const insertIdiom = db.prepare(`
-      INSERT INTO idioms (id, expression, idiom_type, etymology, retired)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    const insertIdiomDefinition = db.prepare(
-      'INSERT INTO idiom_definitions (idiom_id, position, text) VALUES (?, ?, ?)',
-    );
-    const insertIdiomExample = db.prepare(
-      'INSERT INTO idiom_examples (idiom_id, position, text, author) VALUES (?, ?, ?, ?)',
-    );
-    for (const idiom of content.idioms) {
-      insertIdiom.run(
-        idiom.id,
-        idiom.expression,
-        idiom.idiomType,
-        idiom.etymology ?? null,
-        idiom.retired ? 1 : 0,
-      );
-      [idiom.primaryDefinition, ...idiom.extraDefinitions].forEach((text, position) => {
-        insertIdiomDefinition.run(idiom.id, position, text);
-      });
-      idiom.examples.forEach((example, position) => {
-        insertIdiomExample.run(idiom.id, position, example.text, example.author ?? null);
-      });
-      insertSources(idiom);
-    }
-
-    const insertCorrectionLink = db.prepare(
-      'INSERT INTO word_corrections (word_id, position, correction_id) VALUES (?, ?, ?)',
-    );
-    for (const word of content.words) {
-      insertWord.run(
-        word.id,
-        word.lemma,
-        word.partOfSpeech,
-        word.gender ?? null,
-        word.categoryId,
-        word.rarity,
-        word.etymology ?? null,
-        word.region ?? null,
-        word.history ?? null,
-        word.origin ?? null,
-        word.illustration ?? null,
-        word.retired ? 1 : 0,
-      );
-      for (const position of word.stress) insertStress.run(word.id, position);
-      [word.primaryDefinition, ...word.extraDefinitions].forEach((text, position) => {
-        insertDefinition.run(word.id, position, text);
-      });
-      word.examples.forEach((example, position) => {
-        insertExample.run(word.id, position, example.text, example.author ?? null);
-      });
-      word.synonyms.forEach((text, position) => {
-        insertRelatedWord.run(word.id, 'synonym', position, text);
-      });
-      word.antonyms.forEach((text, position) => {
-        insertRelatedWord.run(word.id, 'antonym', position, text);
-      });
-      word.registers.forEach((register, position) => {
-        insertRegister.run(word.id, position, register);
-      });
-      word.correctionIds.forEach((correctionId, position) => {
-        insertCorrectionLink.run(word.id, position, correctionId);
-      });
-      insertSources(word);
-    }
-
-    const insertRow = db.prepare(`
-      INSERT INTO synonym_rows (
-        id, dominant, dominant_word_id, meaning, example_text, example_author, retired
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `);
-    const insertRowMember = db.prepare(`
-      INSERT INTO synonym_row_members (row_id, position, text, word_id, shade_note)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    const insertRowStress = db.prepare(
-      'INSERT INTO synonym_row_stress (row_id, member, position) VALUES (?, ?, ?)',
-    );
+    for (const correction of content.corrections) correctionRows(correction).forEach(run);
+    for (const idiom of content.idioms) idiomRows(idiom).forEach(run);
+    const needsNewRecording = new Set(content.needsNewRecording);
+    for (const word of content.words) wordRows(word, needsNewRecording.has(word.id)).forEach(run);
     // After the Words, whose ids a row may link.
-    for (const row of content.synonymRows) {
-      insertRow.run(
-        row.id,
-        row.dominant.text,
-        row.dominant.wordId ?? null,
-        row.meaning,
-        row.example?.text ?? null,
-        row.example?.author ?? null,
-        row.retired ? 1 : 0,
-      );
-      row.members.forEach((member, position) => {
-        insertRowMember.run(
-          row.id,
-          position,
-          member.text,
-          member.wordId ?? null,
-          member.shadeNote ?? null,
-        );
-      });
-      [row.dominant, ...row.members].forEach(({ stress }, member) => {
-        for (const position of stress) insertRowStress.run(row.id, member, position);
-      });
-      insertSources(row);
-    }
-
-    const insertTip = db.prepare(`
-      INSERT INTO tips (
-        id, title, non_standard_form, standard_form, explanation, example_text, example_author,
-        question_prompt, right_answer, retired
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    const insertWrongAnswer = db.prepare(
-      'INSERT INTO tip_wrong_answers (tip_id, position, text) VALUES (?, ?, ?)',
-    );
-    for (const tip of content.tips) {
-      insertTip.run(
-        tip.id,
-        tip.title,
-        tip.nonStandardForm ?? null,
-        tip.standardForm,
-        tip.explanation,
-        tip.example?.text ?? null,
-        tip.example?.author ?? null,
-        tip.gameQuestion.prompt,
-        tip.gameQuestion.rightAnswer,
-        tip.retired ? 1 : 0,
-      );
-      tip.gameQuestion.wrongAnswers.forEach((text, position) => {
-        insertWrongAnswer.run(tip.id, position, text);
-      });
-      insertSources(tip);
-    }
-
-    const insertCrosswordWord = db.prepare(`
-      INSERT INTO crossword_words (date, position, entry_id, answer, clue, start_row, start_column, direction)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    for (const { date, words } of content.crosswordDays ?? []) {
-      words.forEach(({ entryId, answer, clue, row, column, direction }, position) => {
-        insertCrosswordWord.run(date, position, entryId, answer, clue, row, column, direction);
-      });
-    }
-
-    const insertCollection = db.prepare(`
-      INSERT INTO curated_collections (id, name, description, published_on) VALUES (?, ?, ?, ?)
-    `);
-    const insertCollectionEntry = db.prepare(
-      'INSERT INTO curated_collection_entries (collection_id, position, entry_id) VALUES (?, ?, ?)',
-    );
-    for (const { id, name, description, publishedOn, entryIds } of content.curatedCollections ??
-      []) {
-      insertCollection.run(id, name, description, publishedOn);
-      entryIds.forEach((entryId, position) => {
-        insertCollectionEntry.run(id, position, entryId);
-      });
+    for (const row of content.synonymRows) synonymRowRows(row).forEach(run);
+    for (const tip of content.tips) tipRows(tip).forEach(run);
+    for (const day of content.crosswordDays ?? []) crosswordDayRows(day).forEach(run);
+    for (const collection of content.curatedCollections ?? []) {
+      curatedCollectionRows(collection).forEach(run);
     }
 
     db.exec('COMMIT');
@@ -298,4 +83,17 @@ export function writePack(outFile: string, content: PackContent, metadata: PackM
   }
   db.close();
   renameSync(tempFile, outFile);
+}
+
+/** Runs statements over the database, preparing each SQL text once. */
+function statementRunner(db: DatabaseSync): (statement: Statement) => void {
+  const prepared = new Map<string, StatementSync>();
+  return ({ sql, params }) => {
+    let prepare = prepared.get(sql);
+    if (prepare === undefined) {
+      prepare = db.prepare(sql);
+      prepared.set(sql, prepare);
+    }
+    prepare.run(...params);
+  };
 }

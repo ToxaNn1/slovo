@@ -17,6 +17,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@slovo/content-rules": "workspace:*",
     "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
     "node-html-parser": "^9.0.6",

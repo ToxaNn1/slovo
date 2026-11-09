@@ -211,7 +211,7 @@ beforeEach(async () => {
     backend: reportsApi.backend,
     edition: shippedEdition,
     appVersion: '0.8.14',
-    contentVersion: 42,
+    contentVersion: () => 42,
     clock,
     // The tries again wait for nothing.
     schedule: (run) => {

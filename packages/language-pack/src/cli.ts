@@ -1,28 +1,32 @@
 /**
  * Builds an Edition's Language Pack:
  *
- *   pnpm build:pack [<edition-id>] [--record] [--out <file>]
+ *   pnpm build:pack [<edition-id>] [--snapshot <file>] [--out <file>]
+ *   pnpm build:pack [<edition-id>] --record
  *
  * Without an id it builds the pack of the Edition the app bundles, the
  * AppConfig's default Edition (ADR 0065), as every app build does.
+ * The Edition folder gives the config, Categories and assets; the records
+ * come from the content snapshot of the backend at EXPO_PUBLIC_SLOVO_API_URL,
+ * or from a snapshot saved to a file with `--snapshot`. It fails, writing no
+ * pack, when the backend gives no snapshot.
  * The pack goes to `editions/<edition-id>/dist/language-pack.db` unless
  * `--out` says otherwise. Prints the content report after every successful
  * build. Exits non-zero, listing every error, when the content is invalid,
  * and listing every miss when the content falls short of the Edition's
  * content targets (`content/targets.json`); the pack is still written then.
  *
- * After editing the content, `--record` first appends the new ids to the id
+ * After editing the content files, `--record` appends the new ids to the id
  * registry (`content/ids.json`) and, when the content changed, raises the
- * content version in `content/manifest.json`. Without it, a build of
- * unrecorded content fails, so CI catches it. For an Edition that keeps
- * crossword days (`content/crossword-days.json`), `--record` also appends days
- * so that 400 lie ahead (ADR 0052).
+ * content version in `content/manifest.json`, building nothing. For an
+ * Edition that keeps crossword days (`content/crossword-days.json`), it also
+ * appends days so that 400 lie ahead (ADR 0052).
  */
 import { relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
-import { buildLanguagePack } from './build';
+import { buildFromBackend, buildFromSnapshot, type BuildResult } from './build';
 import { formatBuildError } from './build-error';
 import {
   EDITIONS_DIR,
@@ -34,16 +38,30 @@ import {
 } from './edition-folder';
 import { recordContent } from './record';
 import { formatContentReport } from './report';
+import { readSnapshotFile, SnapshotUnreachableError } from './snapshot-source';
 
 const repoRoot = fileURLToPath(new URL('../../../', import.meta.url));
 
-function main(): number {
+const USAGE = [
+  'Usage: pnpm build:pack [<edition-id>] [--snapshot <file>] [--out <file>]',
+  '       pnpm build:pack [<edition-id>] --record',
+].join('\n');
+
+async function main(): Promise<number> {
   const { positionals, values } = parseArgs({
     allowPositionals: true,
-    options: { out: { type: 'string' }, record: { type: 'boolean' } },
+    options: {
+      out: { type: 'string' },
+      record: { type: 'boolean' },
+      snapshot: { type: 'string' },
+    },
   });
-  if (positionals.length > 1) {
-    console.error('Usage: pnpm build:pack [<edition-id>] [--record] [--out <file>]');
+  const recording = values.record === true;
+  if (
+    positionals.length > 1 ||
+    (recording && (values.snapshot !== undefined || values.out !== undefined))
+  ) {
+    console.error(USAGE);
     return 2;
   }
   const editionId = positionals[0] ?? openAppConfig(REPO_DIR).config.defaultEdition;
@@ -62,12 +80,9 @@ function main(): number {
     return 1;
   }
   const editionDir = edition.dir;
-  const outFile =
-    values.out === undefined
-      ? edition.path('languagePack')
-      : resolve(process.env['INIT_CWD'] ?? process.cwd(), values.out);
+  const fromCwd = (path: string): string => resolve(process.env['INIT_CWD'] ?? process.cwd(), path);
 
-  if (values.record === true) {
+  if (recording) {
     const recorded = recordContent({ editionDir });
     if (!recorded.ok) {
       console.error(
@@ -83,10 +98,30 @@ function main(): number {
     );
     console.log(`  new ids:         ${String(newIds.length)}`);
     console.log(`  crossword days:  ${String(newCrosswordDays.length)} appended`);
-    console.log('');
+    return 0;
   }
 
-  const result = buildLanguagePack({ editionDir, outFile });
+  const outFile = values.out === undefined ? edition.path('languagePack') : fromCwd(values.out);
+  const apiUrl = process.env['EXPO_PUBLIC_SLOVO_API_URL'];
+  let result: BuildResult;
+  if (values.snapshot !== undefined) {
+    const snapshot = readSnapshotFile(fromCwd(values.snapshot));
+    result = buildFromSnapshot({ editionDir, snapshot, outFile });
+  } else if (apiUrl === undefined || apiUrl === '') {
+    console.error(
+      'No content snapshot: set EXPO_PUBLIC_SLOVO_API_URL to the backend, or pass --snapshot <file>',
+    );
+    console.error(USAGE);
+    return 2;
+  } else {
+    try {
+      result = await buildFromBackend({ editionDir, apiUrl, outFile });
+    } catch (error) {
+      if (!(error instanceof SnapshotUnreachableError)) throw error;
+      console.error(`Language Pack for "${editionId}" not built: ${error.message}`);
+      return 1;
+    }
+  }
   if (!result.ok) {
     console.error(
       `Language Pack for "${editionId}" not built: ${String(result.errors.length)} error(s)`,
@@ -123,4 +158,4 @@ function displayPath(path: string): string {
   return fromRoot.startsWith('..') ? path : fromRoot;
 }
 
-process.exitCode = main();
+process.exitCode = await main();

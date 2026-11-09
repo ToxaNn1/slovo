@@ -93,8 +93,8 @@ export function openMistakeReports({
   edition: Pick<Edition, 'id' | 'isFeatureEnabled'>;
   /** The app version, the release it belongs to (ADR 0044). */
   appVersion: string;
-  /** The content version of the open Language Pack. */
-  contentVersion: number;
+  /** The content version the Language Pack holds now, read at each report: a Patch moves it on (ADR 0090). */
+  contentVersion: () => number;
   clock: Clock;
   /** What the waits between tries wait by. */
   schedule: Schedule;
@@ -190,7 +190,7 @@ export function openMistakeReports({
         ...draft,
         editionId: edition.id,
         appVersion,
-        contentVersion,
+        contentVersion: contentVersion(),
       });
       if (!parsed.success) return 'invalid';
       // Still over the limit by an earlier `Retry-After`: the backend would refuse it too.
