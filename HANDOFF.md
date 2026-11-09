@@ -21,3 +21,4 @@ Triage files (per finding id: FIXED/SKIP-*/FIX + tickets): scratchpad triage cor
 - 2026-11-09T14:22:29Z WAITING until 2026-11-09T15:45:00Z: batch 1 implementers
 - 2026-11-09T14:40:10Z T-settings-1, T-dashboard-1 merged (d41525c94). Owner Q: settings writes every choice (sync stamp), only tracking is filtered. Started T-onboarding-1.
 - 2026-11-09T14:42:52Z T-mobile-4 merged. Started T-sourcing-5.
+- 2026-11-09T14:48:27Z merged T-contracts-1 (53a380436), T-ui-4 (2fc4ead62); fixed red breaking-changes test (tuple lost minItems in /v1 description) in api-description.ts. Running: T-lp-1+T-edition-1, T-onboarding-1, T-sourcing-5. Next: content T-core-1, T-mobile-6 (Fable).
