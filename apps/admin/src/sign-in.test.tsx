@@ -39,6 +39,12 @@ function signedOut(role: 'owner' | 'admin' = 'owner') {
   return bodies;
 }
 
+/** The step the sign-in's step bar marks as the current one. */
+function currentStep() {
+  const steps = within(screen.getByRole('list', { name: 'Кроки входу' })).getAllByRole('listitem');
+  return steps.find((step) => step.getAttribute('aria-current') === 'step')?.textContent;
+}
+
 async function typeInto(label: string, text: string, button: string) {
   const user = userEvent.setup();
   await user.type(await screen.findByLabelText(label), text);
@@ -49,11 +55,16 @@ test('without a session the admin signs in by the emailed code and a TOTP it set
   const bodies = signedOut();
   render(<Admin />);
 
-  expect(await screen.findByRole('heading', { name: 'Вхід до SLOVO Admin' })).toBeDefined();
+  expect(await screen.findByRole('heading', { name: 'Увійти' })).toBeDefined();
+  expect(currentStep()).toBe('Email');
   expect(screen.queryByRole('navigation', { name: 'Розділи' })).toBeNull();
   await typeInto('Пошта', 'owner@example.com', 'Надіслати код');
+  expect(await screen.findByRole('heading', { name: 'Код з листа' })).toBeDefined();
+  expect(currentStep()).toBe('Код з листа');
   await typeInto('Код із листа', '123456', 'Далі');
-  expect(await screen.findByText('JBSWY3DPEHPK3PXP')).toBeDefined();
+  expect(await screen.findByRole('heading', { name: 'Налаштуйте TOTP' })).toBeDefined();
+  expect(currentStep()).toBe('Коди');
+  expect(screen.getByText('JBSWY3DPEHPK3PXP')).toBeDefined();
   const codes = within(screen.getByRole('list', { name: 'Коди відновлення' }));
   expect(codes.getAllByRole('listitem').map((item) => item.textContent)).toEqual([
     'k7Qm2xPa',
@@ -122,7 +133,7 @@ test('«Мої сесії» lists the sessions, and «Вийти всюди» go
   expect(sessions.getByText(/ця сесія/)).toBeDefined();
   await user.click(screen.getByRole('button', { name: 'Вийти всюди' }));
 
-  expect(await screen.findByRole('heading', { name: 'Вхід до SLOVO Admin' })).toBeDefined();
+  expect(await screen.findByRole('heading', { name: 'Увійти' })).toBeDefined();
 });
 
 test('a backend that fails to answer who is signed in offers to try again', async () => {
