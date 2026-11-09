@@ -5,7 +5,7 @@ Coordinators: add your wave when it starts; set `status: finished` when its PR i
 Before a blocking wait over 20 min, push a line `WAITING until <UTC ISO time>: <what>` at the end of your HANDOFF.md.
 
 ## wave admin-1709
-status: active
+status: finished
 coord: coord/admin-wave
 branches: ^origin/(feat/1709-admin|coord/admin-wave|(feat|chore|fix)/17[0-3][0-9]-)
 brief:
