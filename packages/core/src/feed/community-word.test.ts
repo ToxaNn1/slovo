@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Word } from '@slovo/contracts';
 import { createApiClient } from '@slovo/contracts/api';
+import { answeringWith } from '@slovo/contracts/api/test-support';
 
 import { openComposition, type Feed, type FeedCard } from '../index';
 import { createFakeBackend, type FakeBackend, createMemoryContentPort } from '../testing';
@@ -171,11 +172,13 @@ describe('The Community Word', () => {
 
   it('keeps nothing and shows nothing when the backend answers out of shape', async () => {
     const records = new Map<string, string>();
+    const api = createFakeBackend();
+    // The client checks no answer, so a backend bug reaches the Core as it is.
     const backend = createApiClient({
       url: 'http://backend.test',
-      fetch: () => Promise.resolve(Response.json({ communityWord: { entryId: 42 } })),
+      fetch: answeringWith(200, '{ "communityWord": { "entryId": 42 } }'),
     });
-    const app = await run({ records, at: monday, api: { ...createFakeBackend(), backend } });
+    const app = await run({ records, at: monday, api: { ...api, backend } });
 
     expect((await firstCards(app.feed, 4)).some((card) => card.kind === 'notice')).toBe(false);
     expect([...records.keys()].filter((key) => key.startsWith('feed.communityWord'))).toEqual([]);
