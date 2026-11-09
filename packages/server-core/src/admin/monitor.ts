@@ -64,6 +64,7 @@ export function createMonitor({
   batches,
   editionIds,
   clock,
+  logFailure,
 }: {
   settings: Pick<AlertSettings, 'thresholds'>;
   store: AlertStore;
@@ -76,6 +77,8 @@ export function createMonitor({
   /** The Editions served: activity is summed over them. */
   editionIds: readonly string[];
   clock: Clock;
+  /** Logs a check that threw: the run goes on with the other checks. */
+  logFailure: (message: string, error: unknown) => void;
 }): Monitor {
   /** The number Sentry answers for the window ending now, or `null`. */
   async function sentryNumber(read: Parameters<SentryReader['read']>[0], ms: number, now: Date) {
@@ -92,66 +95,97 @@ export function createMonitor({
     return days;
   }
 
-  /** The alerts of this run, each with the key that fires it once. */
+  /** The alerts of this run, each with the key that fires it once; a check that throws fires none. */
   async function check(now: Date): Promise<[Alert, string][]> {
     const t = await settings.thresholds();
-    const fired: [Alert, string][] = [];
     const { day } = kyiv(now);
     const hour = now.toISOString().slice(0, 13);
-
-    const crashFree = await sentryNumber('crashFree', DAY, now);
-    if (crashFree !== null && crashFree < t.crashFree) {
-      fired.push([
-        { kind: 'crash-free', percent: crashFree, threshold: t.crashFree },
-        `crash-free:${day}`,
-      ]);
-    }
-    const events = await sentryNumber('newIssueEvents', HOUR, now);
-    if (events !== null && events >= t.issueEvents) {
-      fired.push([
-        { kind: 'sentry-issue', events, threshold: t.issueEvents },
-        `sentry-issue:${hour}`,
-      ]);
-    }
-    for (const run of await ciRuns.between(new Date(now.getTime() - DAY), now)) {
-      if (run.failedTests.length === 0) continue;
-      const { runId, sha, failedTests } = run;
-      fired.push([{ kind: 'ci-red', runId, sha, failedTests }, `ci-red:${String(runId)}`]);
-    }
-    const errors = await sentryNumber('backendErrorRate', 15 * MINUTE, now);
-    if (errors !== null && errors > t.apiErrors) {
-      const slot = Math.floor(now.getTime() / (15 * MINUTE));
-      fired.push([
-        { kind: 'api-errors', percent: errors, threshold: t.apiErrors },
-        `api-errors:${String(slot)}`,
-      ]);
-    }
     const yesterday = shiftDay(day, -1);
-    const active = await activeByDay(shiftDay(yesterday, -7), yesterday);
-    if (active !== null) {
-      const before = [...active].filter(([key]) => key !== yesterday).map(([, count]) => count);
-      const average = before.reduce((sum, count) => sum + count, 0) / 7;
-      const people = active.get(yesterday) ?? 0;
-      if (before.length > 0 && people < (average * (100 - t.activityDrop)) / 100) {
-        fired.push([
-          {
-            kind: 'activity-drop',
-            day: yesterday,
-            active: people,
-            average,
-            threshold: t.activityDrop,
-          },
-          `activity-drop:${yesterday}`,
-        ]);
+
+    const checks: Record<string, () => Promise<[Alert, string][]>> = {
+      'crash-free': async () => {
+        const crashFree = await sentryNumber('crashFree', DAY, now);
+        return crashFree !== null && crashFree < t.crashFree
+          ? [
+              [
+                { kind: 'crash-free', percent: crashFree, threshold: t.crashFree },
+                `crash-free:${day}`,
+              ],
+            ]
+          : [];
+      },
+      'sentry-issue': async () => {
+        const events = await sentryNumber('newIssueEvents', HOUR, now);
+        return events !== null && events >= t.issueEvents
+          ? [[{ kind: 'sentry-issue', events, threshold: t.issueEvents }, `sentry-issue:${hour}`]]
+          : [];
+      },
+      'ci-red': async () =>
+        (await ciRuns.between(new Date(now.getTime() - DAY), now)).flatMap(
+          ({ runId, sha, failedTests }): [Alert, string][] =>
+            failedTests.length === 0
+              ? []
+              : [[{ kind: 'ci-red', runId, sha, failedTests }, `ci-red:${String(runId)}`]],
+        ),
+      'api-errors': async () => {
+        const errors = await sentryNumber('backendErrorRate', 15 * MINUTE, now);
+        if (errors === null || errors <= t.apiErrors) return [];
+        const slot = Math.floor(now.getTime() / (15 * MINUTE));
+        return [
+          [
+            { kind: 'api-errors', percent: errors, threshold: t.apiErrors },
+            `api-errors:${String(slot)}`,
+          ],
+        ];
+      },
+      'activity-drop': async () => {
+        const active = await activeByDay(shiftDay(yesterday, -7), yesterday);
+        if (active === null) return [];
+        const before = [...active].filter(([key]) => key !== yesterday).map(([, count]) => count);
+        const average = before.reduce((sum, count) => sum + count, 0) / 7;
+        const people = active.get(yesterday) ?? 0;
+        if (before.length === 0 || people >= (average * (100 - t.activityDrop)) / 100) return [];
+        return [
+          [
+            {
+              kind: 'activity-drop',
+              day: yesterday,
+              active: people,
+              average,
+              threshold: t.activityDrop,
+            },
+            `activity-drop:${yesterday}`,
+          ],
+        ];
+      },
+      'backend-down': async () =>
+        (await health.up()) ? [] : [[{ kind: 'backend-down' }, `backend-down:${hour}`]],
+      'batch-size': async () =>
+        (await batches.open()).flatMap(({ id, editionId, records }): [Alert, string][] =>
+          records <= t.batchRecords
+            ? []
+            : [
+                [
+                  {
+                    kind: 'batch-size',
+                    batchId: id,
+                    editionId,
+                    records,
+                    threshold: t.batchRecords,
+                  },
+                  `batch:${id}`,
+                ],
+              ],
+        ),
+    };
+
+    const fired: [Alert, string][] = [];
+    for (const [name, run] of Object.entries(checks)) {
+      try {
+        fired.push(...(await run()));
+      } catch (error) {
+        logFailure(`alert check ${name} failed`, error);
       }
-    }
-    if (!(await health.up())) fired.push([{ kind: 'backend-down' }, `backend-down:${hour}`]);
-    for (const { id, editionId, records } of await batches.open()) {
-      if (records <= t.batchRecords) continue;
-      fired.push([
-        { kind: 'batch-size', batchId: id, editionId, records, threshold: t.batchRecords },
-        `batch:${id}`,
-      ]);
     }
     return fired;
   }
