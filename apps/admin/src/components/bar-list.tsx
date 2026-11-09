@@ -1,17 +1,21 @@
 import type { AnalyticsCount } from '@slovo/contracts/admin-api';
+import type { ReactNode } from 'react';
 
 /**
  * A chart of counts as horizontal bars, one row per key, the longest bar the
- * largest count; with no row, «Немає даних». The figure is named by `label`.
+ * largest count; with no row, «Немає даних». The figure is named by `label`;
+ * a `note` closes it, inside the card.
  */
 export function BarList({
   label,
   rows,
   keyLabel = (key) => key,
+  note,
 }: {
   readonly label: string;
   readonly rows: readonly AnalyticsCount[];
   readonly keyLabel?: (key: string) => string;
+  readonly note?: ReactNode;
 }) {
   const largest = Math.max(1, ...rows.map(({ count }) => count));
   return (
@@ -38,6 +42,7 @@ export function BarList({
           ))}
         </ul>
       )}
+      {note !== undefined && <p className="mt-auto text-sm text-muted-foreground">{note}</p>}
     </figure>
   );
 }

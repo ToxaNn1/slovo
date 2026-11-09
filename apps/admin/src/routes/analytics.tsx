@@ -79,12 +79,12 @@ function Analytics() {
       {data !== undefined && (
         <div className="grid gap-4 md:grid-cols-2">
           <BarList label="Активні за днями" rows={data.activeByDay} keyLabel={shortDay} />
-          <div className="flex flex-col gap-2">
-            <BarList label="Відвідини" rows={data.visitsByDay} keyLabel={shortDay} />
-            <p className="text-sm text-muted-foreground">
-              Медіана відвідин: {duration(data.medianVisitSeconds)}
-            </p>
-          </div>
+          <BarList
+            label="Відвідини"
+            rows={data.visitsByDay}
+            keyLabel={shortDay}
+            note={`Медіана відвідин: ${duration(data.medianVisitSeconds)}`}
+          />
           <BarList label="Країни" rows={[]} />
           <BarList label="Пристрої" rows={data.devices} />
           <BarList label="Версії застосунку" rows={data.appVersions} />
