@@ -14,8 +14,7 @@ export const typeWordMode: GameMode = {
   id: 'type-word',
   group: 'words',
   entryKind: 'correction',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameTypeWord') && edition.isFeatureEnabled('corrections'),
+  isOn: (edition) => edition.isFeatureEnabled('gameTypeWord'),
   buildRound({ answer }) {
     if (answer.kind !== 'correction' || !plays(answer)) return undefined;
     const prompt = answer.examplePair.nonStandard;

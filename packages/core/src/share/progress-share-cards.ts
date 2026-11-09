@@ -52,8 +52,7 @@ export function openProgressShareCards({
   const subscribers = createSubscribers();
 
   function stateOf(): readonly ProgressShareCard[] {
-    if (!edition.isFeatureEnabled('progressShareCards') || !edition.isFeatureEnabled('xpLog'))
-      return [];
+    if (!edition.isFeatureEnabled('progressShareCards')) return [];
     const date = todayKey(clock);
     const { level } = xpLog.state;
     const { streak } = activeDays.streak;

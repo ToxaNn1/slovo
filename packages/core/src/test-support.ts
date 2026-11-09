@@ -11,6 +11,7 @@ import {
 
 import {
   loadEdition,
+  switchedOn,
   type DefaultMix,
   type Edition,
   type UserSettingDefaults,
@@ -160,7 +161,9 @@ export interface TestEditionOverrides extends Partial<
 
 /**
  * The Edition a test runs the Core as: the test Edition with the overrides,
- * most often `isFeatureEnabled` and the default Mix. Built by `loadEdition`
+ * most often `isFeatureEnabled` and the default Mix. `isFeatureEnabled` says
+ * which switches are on by themselves; the Edition answers what is in effect,
+ * a feature off while a switch it depends on is off. Built by `loadEdition`
  * from a config in the shape of a real Edition's, so what the Core reads of
  * an Edition is what a config can say.
  */
@@ -170,9 +173,11 @@ export function testEdition({
   ...overrides
 }: TestEditionOverrides = {}): Edition {
   const { mix = {}, ...settings } = userSettingDefaults;
+  const { isFeatureEnabled } = overrides;
   return {
     ...baseTestEdition,
     ...overrides,
+    ...(isFeatureEnabled === undefined ? {} : { isFeatureEnabled: switchedOn(isFeatureEnabled) }),
     languageTraits: { ...baseTestEdition.languageTraits, ...languageTraits },
     userSettingDefaults: {
       ...baseTestEdition.userSettingDefaults,

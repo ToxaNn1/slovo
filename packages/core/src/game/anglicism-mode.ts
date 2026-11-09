@@ -16,8 +16,7 @@ export const anglicismMode: GameMode = {
   id: 'anglicism',
   group: 'corrections',
   entryKind: 'correction',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameAnglicism') && edition.isFeatureEnabled('corrections'),
+  isOn: (edition) => edition.isFeatureEnabled('gameAnglicism'),
   buildRound(input) {
     if (!isAnglicism(input.answer)) return undefined;
     return correctionMode.buildRound({ ...input, eligible: input.eligible.filter(isAnglicism) });

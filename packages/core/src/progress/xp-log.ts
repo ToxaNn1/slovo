@@ -260,9 +260,9 @@ export async function openXpLog({
   analytics: Pick<Analytics, 'track'>;
 }): Promise<XpLog> {
   const on = edition.isFeatureEnabled('xpLog');
-  const levelsOn = on && edition.isFeatureEnabled('levels');
-  const goalOn = on && edition.isFeatureEnabled('dailyGoal');
-  const seenWordOn = goalOn && edition.isFeatureEnabled('seenWordXp');
+  const levelsOn = edition.isFeatureEnabled('levels');
+  const goalOn = edition.isFeatureEnabled('dailyGoal');
+  const seenWordOn = edition.isFeatureEnabled('seenWordXp');
   const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
   /** The `word-goal` records by date and instant, so a goal is looked up among them and not in the whole log; made anew after one is added. */
   let wordGoals: WordGoalRecord[] | undefined;
