@@ -48,6 +48,7 @@ interface IdiomRequest {
 const LINE_TYPES: readonly IdiomType[] = ['idiom', 'proverb'];
 
 const idiomsKind: SourcingKind<IdiomRequest> = {
+  entryKind: 'idiom',
   folder: 'idioms',
   idPrefix: 'i_',
   parseLine,
