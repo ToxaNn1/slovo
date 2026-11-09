@@ -1,22 +1,30 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createRootRoute, Link, Outlet, useLocation } from '@tanstack/react-router';
+import { createRootRoute, Outlet, useLocation } from '@tanstack/react-router';
 import { useState } from 'react';
 
-import { adminApi } from '../api';
-
-import { FiltersBar } from '../components/filters-bar';
-import { Sidebar } from '../components/sidebar';
+import { AccountMenu } from '../components/account-menu';
+import { FiltersBar, useEditionLabel } from '../components/filters-bar';
+import { Logo, Sidebar } from '../components/sidebar';
 import { SignIn } from '../components/sign-in';
 import { Button } from '../components/ui/button';
 import { FiltersSchema } from '../filters';
 import { useWide } from '../screen-width';
-import { ME_KEY, useSession } from '../session';
+import { sectionOf } from '../sections';
+import { useSession } from '../session';
 import { useTheme } from '../theme';
 
 export const Route = createRootRoute({
   validateSearch: (search) => FiltersSchema.parse(search),
   component: Layout,
 });
+
+/** The section's title and line in the header; «Мої сесії» is off the sidebar. */
+function useHeading(): { readonly title: string; readonly subtitle: string } {
+  const { pathname } = useLocation();
+  const edition = useEditionLabel();
+  const section = sectionOf(pathname);
+  if (section === undefined) return { title: 'Мої сесії', subtitle: '' };
+  return { title: section.title, subtitle: section.subtitle(edition) };
+}
 
 /**
  * The admin of a signed-in Admin user; the sign-in without a session; a
@@ -28,19 +36,15 @@ function Layout() {
   const session = useSession();
   const wide = useWide();
   const { pathname } = useLocation();
+  const heading = useHeading();
   // The path the menu was opened on: opening a section closes it.
   const [menuOpenAt, setMenuOpenAt] = useState<string>();
   const menuOpen = menuOpenAt === pathname;
-  const queryClient = useQueryClient();
-  const signOut = useMutation({
-    mutationFn: () => adminApi.signOut(),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_KEY }),
-  });
   if (session.kind === 'pending') return null;
   if (session.kind === 'signed-out') return <SignIn />;
   if (session.kind === 'failed') {
     return (
-      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-4 font-sans text-foreground">
+      <main className="admin-page flex min-h-screen flex-col items-center justify-center gap-4 p-4 font-sans text-foreground">
         <p role="alert" className="text-sm text-destructive">
           Не вдалося. Спробуйте ще раз.
         </p>
@@ -51,17 +55,24 @@ function Layout() {
     );
   }
   const { admin } = session;
+  const account = <AccountMenu admin={admin} theme={theme} setTheme={setTheme} />;
   return (
-    <div className="flex min-h-screen flex-col bg-background font-sans text-foreground md:flex-row">
+    <div className="admin-page flex min-h-screen flex-col font-sans text-foreground md:grid md:grid-cols-[236px_minmax(0,1fr)]">
       {wide ? (
-        <aside className="flex w-60 shrink-0 flex-col gap-6 border-r border-border bg-surface p-4">
-          <p className="px-3 font-display text-lg font-bold tracking-tight">SLOVO Admin</p>
-          <Sidebar role={admin.role} />
+        <aside className="sticky top-0 flex h-screen flex-col overflow-auto border-r border-side-border bg-side text-side-foreground">
+          <div className="px-[18px] pt-5 pb-[18px]">
+            <Logo />
+          </div>
+          <div className="px-2.5 py-1">
+            <Sidebar role={admin.role} />
+          </div>
+          <div className="mt-auto p-2.5">{account}</div>
         </aside>
       ) : (
-        <div className="flex flex-col gap-2 border-b border-border bg-surface p-4">
-          <div className="flex items-center justify-between gap-4">
-            <p className="font-display text-lg font-bold tracking-tight">SLOVO Admin</p>
+        <div className="sticky top-0 z-10 flex flex-col gap-2 bg-background/80 px-4 py-3 backdrop-blur-[14px]">
+          <div className="flex items-center gap-2.5">
+            <Logo withName={false} />
+            <strong className="flex-1 font-display text-[15px] font-medium">{heading.title}</strong>
             <Button
               variant="outline"
               size="sm"
@@ -73,44 +84,29 @@ function Layout() {
               Меню
             </Button>
           </div>
-          {menuOpen ? <Sidebar role={admin.role} /> : null}
+          {menuOpen ? (
+            <div className="flex flex-col gap-2 rounded-[14px] bg-side p-2.5 text-side-foreground shadow-panel">
+              <Sidebar role={admin.role} />
+              {account}
+            </div>
+          ) : null}
         </div>
       )}
-      <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-4 py-4 md:px-8">
+      <div className="flex min-w-0 flex-col">
+        <header className="sticky top-0 z-10 flex flex-wrap items-center gap-4 bg-background/80 px-4 py-3.5 backdrop-blur-[14px] md:px-7">
+          {wide ? (
+            <div className="flex min-w-60 flex-1 flex-col gap-0.5">
+              <h1 className="font-display text-[22px] font-medium tracking-[-0.01em]">
+                {heading.title}
+              </h1>
+              {heading.subtitle === '' ? null : (
+                <span className="text-[13px] text-subtle">{heading.subtitle}</span>
+              )}
+            </div>
+          ) : null}
           <FiltersBar />
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-muted-foreground">{admin.email}</span>
-            <Link
-              to="/sessions"
-              search={(previous) => previous}
-              className="rounded-lg px-3 py-1.5 text-sm font-medium hover:bg-muted"
-            >
-              Мої сесії
-            </Link>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={signOut.isPending}
-              onClick={() => {
-                signOut.mutate();
-              }}
-            >
-              Вийти
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              aria-pressed={theme === 'dark'}
-              onClick={() => {
-                setTheme(theme === 'dark' ? 'light' : 'dark');
-              }}
-            >
-              Темна тема
-            </Button>
-          </div>
         </header>
-        <main className="flex flex-1 flex-col p-4 md:p-8">
+        <main className="flex flex-1 flex-col px-4 pt-2 pb-8 md:px-7">
           <Outlet />
         </main>
       </div>

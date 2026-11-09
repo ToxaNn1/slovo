@@ -13,8 +13,16 @@ import {
 
 const ALL_EDITIONS = '';
 
-const selectClass =
-  'h-9 rounded-lg border border-border bg-surface px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring';
+/** The label of the Edition filter's choice: an Edition's name or «Усі Editions». */
+export function useEditionLabel(): string {
+  const search = useSearch({ from: '__root__' });
+  const editions = useQuery({ queryKey: ['editions'], queryFn: () => adminApi.editions() });
+  if (search.edition === undefined) return 'Усі Editions';
+  return (
+    editions.data?.editions.find((edition) => edition.id === search.edition)?.displayName ??
+    search.edition
+  );
+}
 
 /** The global Edition and period filters, written to the URL. */
 export function FiltersBar() {
@@ -33,11 +41,11 @@ export function FiltersBar() {
     });
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <label className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground">Edition</span>
+    <div className="flex flex-wrap items-center gap-2">
+      <label className="relative flex items-center gap-2 rounded-[10px] bg-surface py-2 pr-7 pl-3 text-[13px] shadow-panel focus-within:outline-2 focus-within:outline-ring">
+        <span className="text-subtle">Edition</span>
         <select
-          className={selectClass}
+          className="appearance-none bg-transparent font-semibold text-foreground outline-none"
           value={search.edition ?? ALL_EDITIONS}
           onChange={(event) => {
             choose({
@@ -52,30 +60,35 @@ export function FiltersBar() {
             </option>
           ))}
         </select>
+        <span aria-hidden className="pointer-events-none absolute right-3 text-[11px] text-subtle">
+          ▾
+        </span>
       </label>
-      <label className="flex items-center gap-2 text-sm">
-        <span className="text-muted-foreground">Період</span>
-        <select
-          className={selectClass}
-          value={period}
-          onChange={(event) => {
-            choose({ period: event.target.value });
-          }}
-        >
-          {PERIODS.map((option) => (
-            <option
+      <div
+        role="group"
+        aria-label="Період"
+        className="flex gap-0.5 rounded-[10px] bg-surface p-[3px] shadow-panel"
+      >
+        {PERIODS.map((option) => {
+          const capped = onQuality && qualityPeriod(option) !== option;
+          return (
+            <button
               key={option}
-              value={option}
-              disabled={onQuality && qualityPeriod(option) !== option}
+              type="button"
+              aria-pressed={period === option}
+              disabled={capped}
+              title={capped ? QUALITY_CAP_HINT : undefined}
+              onClick={() => {
+                choose({ period: option });
+              }}
+              className="rounded-[7px] px-[11px] py-[5px] text-[12.5px] whitespace-nowrap text-muted-foreground disabled:opacity-35 aria-pressed:bg-primary aria-pressed:font-semibold aria-pressed:text-primary-foreground"
             >
               {PERIOD_LABELS[option]}
-            </option>
-          ))}
-        </select>
-      </label>
-      {period === chosen ? null : (
-        <span className="text-sm text-muted-foreground">{QUALITY_CAP_HINT}</span>
-      )}
+            </button>
+          );
+        })}
+      </div>
+      {period === chosen ? null : <span className="text-xs text-subtle">{QUALITY_CAP_HINT}</span>}
     </div>
   );
 }

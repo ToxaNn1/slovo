@@ -63,11 +63,8 @@ function Analytics() {
   });
   const data = overview.data;
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-6">
+    <section aria-label="Аналітика" className="flex flex-col gap-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 id="section-title" className="font-display text-2xl font-semibold">
-          Аналітика
-        </h1>
         {data !== undefined && (
           <p className="text-sm text-muted-foreground">
             Останні дані за {kyivTime(data.fetchedAt)}

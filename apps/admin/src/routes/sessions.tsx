@@ -21,10 +21,7 @@ function Sessions() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_KEY }),
   });
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-6">
-      <h1 id="section-title" className="font-display text-2xl font-semibold">
-        Мої сесії
-      </h1>
+    <section aria-label="Мої сесії" className="flex flex-col gap-6">
       <p className="text-sm text-muted-foreground">
         Сесія закінчується після 8 годин без дій і через 30 днів після входу.
       </p>

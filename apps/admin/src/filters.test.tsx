@@ -4,6 +4,12 @@ import { expect, test } from 'vitest';
 
 import { Admin } from './router';
 
+/** The label of the period the period filter has pressed. */
+const pressedPeriod = () =>
+  within(screen.getByRole('group', { name: 'Період' }))
+    .getAllByRole('button')
+    .find((button) => button.getAttribute('aria-pressed') === 'true')?.textContent;
+
 test('the Edition filter lists «Усі Editions» and each Edition of the admin API', async () => {
   render(<Admin />);
   const edition = await screen.findByRole('combobox', { name: 'Edition' });
@@ -23,7 +29,11 @@ test('picking an Edition and a period changes the URL, and the choice survives a
   });
 
   await user.selectOptions(screen.getByRole('combobox', { name: 'Edition' }), 'Рідкісні слова');
-  await user.selectOptions(screen.getByRole('combobox', { name: 'Період' }), '30 днів');
+  await user.click(
+    within(screen.getByRole('group', { name: 'Період' })).getByRole('button', {
+      name: '30 днів',
+    }),
+  );
   expect(new URLSearchParams(window.location.search).get('edition')).toBe('uk');
   expect(new URLSearchParams(window.location.search).get('period')).toBe('30d');
 
@@ -34,7 +44,7 @@ test('picking an Edition and a period changes the URL, and the choice survives a
   expect(new URLSearchParams(window.location.search).get('edition')).toBe('uk');
   expect(new URLSearchParams(window.location.search).get('period')).toBe('30d');
   expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Edition' }).value).toBe('uk');
-  expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Період' }).value).toBe('30d');
+  expect(pressedPeriod()).toBe('30 днів');
 
   await user.selectOptions(screen.getByRole('combobox', { name: 'Edition' }), 'Усі Editions');
   expect(new URLSearchParams(window.location.search).has('edition')).toBe(false);
@@ -44,7 +54,11 @@ test('the shortest period is «Сьогодні»: its days start at midnight in
   const user = userEvent.setup();
   render(<Admin />);
 
-  await user.selectOptions(await screen.findByRole('combobox', { name: 'Період' }), 'Сьогодні');
+  await user.click(
+    within(await screen.findByRole('group', { name: 'Період' })).getByRole('button', {
+      name: 'Сьогодні',
+    }),
+  );
   expect(new URLSearchParams(window.location.search).get('period')).toBe('1d');
 });
 
@@ -52,5 +66,5 @@ test('a link with the filters opens with them chosen', async () => {
   window.history.replaceState(null, '', '/admin/switches?edition=uk&period=1d');
   render(<Admin />);
   await screen.findByRole('region', { name: 'Свічі' });
-  expect(screen.getByRole<HTMLSelectElement>('combobox', { name: 'Період' }).value).toBe('1d');
+  expect(pressedPeriod()).toBe('Сьогодні');
 });

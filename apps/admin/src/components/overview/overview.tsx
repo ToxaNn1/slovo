@@ -150,10 +150,7 @@ export function Overview() {
   const latest = alerts.data?.alerts ?? [];
 
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-6">
-      <h1 id="section-title" className="font-display text-2xl font-semibold">
-        Огляд
-      </h1>
+    <section aria-label="Огляд" className="flex flex-col gap-6">
       <ul
         aria-label="Блоки"
         data-layout={wide ? 'grid' : 'stack'}

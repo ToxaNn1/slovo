@@ -79,10 +79,7 @@ function Security() {
   const admin = useSignedInAdmin();
   if (admin?.role !== 'owner') {
     return (
-      <section aria-labelledby="section-title" className="flex flex-col gap-2">
-        <h1 id="section-title" className="font-display text-2xl font-semibold">
-          Безпека
-        </h1>
+      <section aria-label="Безпека" className="flex flex-col gap-2">
         <p className="text-sm text-muted-foreground">Безпека відкрита лише Власнику.</p>
       </section>
     );
@@ -93,11 +90,8 @@ function Security() {
 function OwnerSecurity({ email }: { email: string }) {
   const [pending, setPending] = useState<SecurityWrite | null>(null);
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-8">
+    <section aria-label="Безпека" className="flex flex-col gap-8">
       <div className="flex items-baseline justify-between gap-4">
-        <h1 id="section-title" className="font-display text-2xl font-semibold">
-          Безпека
-        </h1>
         <Link to="/sessions" className="text-sm underline">
           Мої сесії
         </Link>

@@ -53,10 +53,7 @@ function Quality() {
   const fetched = quality.data ? freshness(quality.data.kpis) : undefined;
 
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-6">
-      <h1 id="section-title" className="font-display text-2xl font-semibold">
-        Якість
-      </h1>
+    <section aria-label="Якість" className="flex flex-col gap-6">
       {quality.isError ? <Notice>Sentry недоступний</Notice> : null}
       {fetched === undefined ? null : (
         <p className="text-sm text-muted-foreground">Останні дані за {time(fetched)}</p>

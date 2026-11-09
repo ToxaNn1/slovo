@@ -140,7 +140,8 @@ test('Огляд renders the same texts in both themes', async () => {
   await overview.findByText(NEWEST);
   const light = screen.getByRole('region', { name: 'Огляд' }).textContent;
 
-  await user.click(screen.getByRole('button', { name: 'Темна тема' }));
+  await user.click(screen.getByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('button', { name: 'Темна' }));
   expect(document.documentElement.dataset['theme']).toBe('dark');
   expect(screen.getByRole('region', { name: 'Огляд' }).textContent).toBe(light);
 });

@@ -92,11 +92,7 @@ export function SwitchesScreen() {
   const pickedAnswer = picked === undefined ? undefined : answerOf(picked);
 
   return (
-    <section aria-labelledby="section-title" className="flex flex-1 flex-col gap-6">
-      <h1 id="section-title" className="font-display text-2xl font-semibold">
-        Свічі
-      </h1>
-
+    <section aria-label="Свічі" className="flex flex-1 flex-col gap-6">
       <KillSwitch
         scope={picked}
         onKill={(feature) => {

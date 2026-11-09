@@ -57,10 +57,7 @@ export function ContentQueue() {
     flags.data.flags.length === 0 &&
     reports.data.reports.length === 0;
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-8">
-      <h1 id="section-title" className="font-display text-2xl font-semibold">
-        Черга контенту
-      </h1>
+    <section aria-label="Черга контенту" className="flex flex-col gap-8">
       {empty ? (
         <p className="rounded-2xl border border-dashed border-border bg-surface p-12 text-center font-display text-lg font-medium">
           Усе перевірено

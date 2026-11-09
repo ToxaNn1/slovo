@@ -115,7 +115,8 @@ test('«Мої сесії» lists the sessions, and «Вийти всюди» go
   await typeInto('Код із застосунку', '654321', 'Увійти');
   const user = userEvent.setup();
 
-  await user.click(await screen.findByRole('link', { name: 'Мої сесії' }));
+  await user.click(await screen.findByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('link', { name: 'Мої сесії' }));
   const sessions = within(await screen.findByRole('list', { name: 'Сесії' }));
   expect(sessions.getAllByRole('listitem')).toHaveLength(2);
   expect(sessions.getByText(/ця сесія/)).toBeDefined();

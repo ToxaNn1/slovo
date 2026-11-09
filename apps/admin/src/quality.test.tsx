@@ -93,12 +93,10 @@ test('on Якість 90 days reads as 30 days with a hint, and longer periods a
   render(<Admin />);
 
   await screen.findByRole('listitem', { name: 'Без збоїв' });
-  const period = screen.getByRole<HTMLSelectElement>('combobox', { name: 'Період' });
-  expect(period.value).toBe('30d');
+  const period = within(screen.getByRole('group', { name: 'Період' }));
+  expect(period.getByRole('button', { name: '30 днів' }).getAttribute('aria-pressed')).toBe('true');
   expect(screen.getByText('Sentry зберігає дані 30 днів')).toBeDefined();
-  expect(within(period).getByRole<HTMLOptionElement>('option', { name: '90 днів' }).disabled).toBe(
-    true,
-  );
+  expect(period.getByRole('button', { name: '90 днів' })).toHaveProperty('disabled', true);
   expect(periods).toEqual(['30d']);
 });
 
@@ -106,7 +104,7 @@ test('another section keeps 90 days on offer', async () => {
   window.history.replaceState(null, '', '/admin/switches?period=90d');
   render(<Admin />);
   await screen.findByRole('region', { name: 'Свічі' });
-  const period = screen.getByRole<HTMLSelectElement>('combobox', { name: 'Період' });
-  expect(period.value).toBe('90d');
+  const period = within(screen.getByRole('group', { name: 'Період' }));
+  expect(period.getByRole('button', { name: '90 днів' }).getAttribute('aria-pressed')).toBe('true');
   expect(screen.queryByText('Sentry зберігає дані 30 днів')).toBeNull();
 });
