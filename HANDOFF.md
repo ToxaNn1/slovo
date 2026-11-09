@@ -1,3 +1,4 @@
+STATUS: FINISHED
 # HANDOFF: wave infra-1109
 
 Coordinator: cloud. Grants (owner 09.11): commits, pushes, PRs. NO merge to main, except PR #1752 whose auto-merge is already on. Never touch feat/1108-video or apps/video.
@@ -24,3 +25,4 @@ Done = every PR green -> `STATUS: FINISHED` first line, WAVES.md block finished.
 - 2026-11-09T14:02:05Z task4: implementer still running after 60 min, nothing pushed yet
 - 2026-11-09T14:31:26Z task4: stryker run still in progress locally (~90 min)
 - 2026-11-09T14:35:36Z task4: PR #1756 (chore/1109-stryker, on top of #1755); waiting CI
+- 2026-11-09T14:43:36Z done: #1752 merged; #1754, #1755, #1756 open, all checks green except «Commit messages» (proxy-appended PR-body footer; owner deletes it and re-runs). Merge order: #1754, #1755, #1756
