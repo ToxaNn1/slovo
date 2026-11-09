@@ -18,3 +18,4 @@ Triage files (per finding id: FIXED/SKIP-*/FIX + tickets): scratchpad triage cor
 - 09.11 main merged into fix/1109-global-review-tails (8f8187d91, tip e1b0474f8); lint/typecheck 25/25, tests core/mobile/language-pack/content green locally. Draft PR #1753 left draft for the owner. Next wave: the not-done list above.
 - 2026-11-09T14:21:17Z safety net takeover (last commit 2026-11-09T13:21:58Z)
 - 2026-11-09T14:22:22Z batch 1 running (local worktrees): T-ui-4, T-mobile-4, T-settings-1+T-dashboard-1, T-lp-1+T-edition-1, T-contracts-1. Batch 2 next: T-onboarding-1, T-sourcing-5, content T-core-1, T-mobile-6. T-content-1 skipped (tools/content retired under ADR 0090).
+- 2026-11-09T14:22:29Z WAITING until 2026-11-09T15:45:00Z: batch 1 implementers
