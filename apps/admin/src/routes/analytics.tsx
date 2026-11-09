@@ -88,9 +88,9 @@ function Analytics() {
         </div>
       )}
       {counters.data !== undefined && (
-        <div className="flex flex-col gap-2">
-          <h2 className="font-display text-lg font-medium">Лічильники</h2>
-          <ul aria-label="Лічильники" className="flex flex-col gap-1 text-sm">
+        <div className="flex flex-col gap-3 rounded-2xl bg-surface px-[18px] py-4 shadow-panel">
+          <h2 className="font-display text-[13px] font-medium">Лічильники</h2>
+          <ul aria-label="Лічильники" className="flex flex-col gap-1.5 text-sm">
             <li>Знаю: {counters.data.known}</li>
             <li>Не знаю: {counters.data.unknown}</li>
             <li>Збережено: {counters.data.saved}</li>
@@ -102,8 +102,8 @@ function Analytics() {
           </ul>
         </div>
       )}
-      <div className="flex flex-col gap-2">
-        <h2 className="font-display text-lg font-medium">Варіанти</h2>
+      <div className="flex flex-col gap-3">
+        <h2 className="font-display text-[15px] font-medium">Варіанти</h2>
         {features.data?.length === 0 && (
           <p className="text-sm text-muted-foreground">Немає A/B-тестів</p>
         )}

@@ -124,17 +124,17 @@ export function SwitchesScreen() {
       <div className="overflow-x-auto rounded-2xl bg-surface shadow-panel">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border text-left">
-              <th scope="col" className="p-3 font-medium">
+            <tr className="border-b border-border text-xs text-subtle">
+              <th scope="col" className="px-4 py-3 text-left font-normal">
                 Світч
               </th>
               {picked === undefined ? (
-                <th scope="col" className="p-3 font-medium">
+                <th scope="col" className="px-2.5 py-3 text-center font-normal">
                   Усі Editions
                 </th>
               ) : null}
               {columns.map(({ edition }) => (
-                <th key={edition.id} scope="col" className="p-3 font-medium">
+                <th key={edition.id} scope="col" className="px-2.5 py-3 text-center font-normal">
                   {edition.displayName}
                 </th>
               ))}
@@ -150,14 +150,16 @@ export function SwitchesScreen() {
                   }));
                   return (
                     <tr key={feature} className="border-b border-border last:border-0">
-                      <th scope="row" className="p-3 text-left font-mono font-normal">
+                      <th scope="row" className="px-4 py-2 text-left font-mono text-xs font-normal">
                         {feature}
                       </th>
                       {picked === undefined ? (
-                        <td className="p-3">{summaryText(cells.map(({ cell }) => cell))}</td>
+                        <td className="px-2.5 py-2">
+                          <SummaryPill cells={cells.map(({ cell }) => cell)} />
+                        </td>
                       ) : null}
                       {cells.map(({ edition, cell }) => (
-                        <td key={edition.id} className="p-3">
+                        <td key={edition.id} className="px-2.5 py-2">
                           <CellView
                             feature={feature}
                             edition={edition}
@@ -224,27 +226,25 @@ function CellView({
   readonly onToggle: (on: boolean) => void;
   readonly onRules: () => void;
 }) {
-  if (cell.kind === 'unavailable') return <span className="text-muted-foreground">недоступно</span>;
+  if (cell.kind === 'unavailable')
+    return <span className={pillClass('unavailable')}>недоступно</span>;
   const targeted = targetedText(cell.targeted);
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex items-center gap-2">
       <button
         type="button"
         role="switch"
         aria-checked={cell.on}
         aria-label={`${feature} у ${edition.displayName}`}
-        className="relative h-5 w-9 shrink-0 rounded-full bg-muted transition-colors aria-checked:bg-primary focus-visible:outline-2 focus-visible:outline-ring"
+        className={`${pillClass(cell.on ? 'on' : 'off')} cursor-pointer focus-visible:outline-2 focus-visible:outline-ring`}
         onClick={() => {
           onToggle(!cell.on);
         }}
       >
-        <span
-          className={`absolute top-0.5 size-4 rounded-full bg-surface transition-all ${cell.on ? 'left-4.5' : 'left-0.5'}`}
-        />
+        {exact ? cellText(cell) : cell.on ? 'увімкнено' : 'вимкнено'}
       </button>
-      {exact ? <span>{cellText(cell)}</span> : null}
       {targeted === undefined ? null : (
-        <span className="text-xs text-muted-foreground">{targeted}</span>
+        <span className="text-xs whitespace-nowrap text-muted-foreground">{targeted}</span>
       )}
       {exact ? (
         <Button variant="ghost" size="sm" onClick={onRules}>
@@ -253,6 +253,26 @@ function CellView({
       ) : null}
     </div>
   );
+}
+
+type PillTone = 'on' | 'off' | 'unavailable';
+
+/** A state as the v4 matrix draws it: soft green on, outlined off, sunk unavailable. */
+function pillClass(tone: PillTone): string {
+  const look = {
+    on: 'border-transparent bg-ok-soft text-ok',
+    off: 'border-border-strong bg-surface text-muted-foreground',
+    unavailable: 'border-transparent bg-sunk text-subtle',
+  }[tone];
+  return `inline-flex min-h-8 w-full min-w-28 items-center justify-center rounded-[9px] border-[1.5px] px-2 py-1.5 text-center text-xs font-semibold ${look}`;
+}
+
+/** The state over every Edition: on when any Edition that has it has it on. */
+function SummaryPill({ cells }: { readonly cells: readonly Cell[] }) {
+  const available = cells.filter((cell) => cell.kind === 'available');
+  const tone: PillTone =
+    available.length === 0 ? 'unavailable' : available.some((cell) => cell.on) ? 'on' : 'off';
+  return <span className={pillClass(tone)}>{summaryText(cells)}</span>;
 }
 
 /** One feature off for every reader of the picked Edition, or of every Edition. */

@@ -127,7 +127,7 @@ test('the Kill switch asks for a reason and the matrix shows the feature off aft
   const user = userEvent.setup();
   window.history.replaceState(null, '', '/admin/switches');
   render(<Admin />);
-  expect((await rowOf('tips')).getByText('увімкнено')).toBeDefined();
+  expect((await rowOf('tips')).getAllByText('увімкнено')).not.toHaveLength(0);
 
   const kill = within(screen.getByRole('region', { name: 'Kill switch' }));
   await user.selectOptions(kill.getByRole('combobox', { name: 'Світч' }), 'tips');
@@ -137,7 +137,7 @@ test('the Kill switch asks for a reason and the matrix shows the feature off aft
   await user.type(dialog.getByRole('textbox', { name: 'Причина' }), 'tips crash the app');
   await user.click(dialog.getByRole('button', { name: 'Підтвердити' }));
 
-  expect(await (await rowOf('tips')).findByText('вимкнено')).toBeDefined();
+  expect(await (await rowOf('tips')).findAllByText('вимкнено')).not.toHaveLength(0);
   expect(screen.queryByRole('dialog')).toBeNull();
   expect(writes).toEqual([{ reason: 'tips crash the app' }]);
 });

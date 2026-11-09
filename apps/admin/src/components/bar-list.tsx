@@ -21,23 +21,25 @@ export function BarList({
   return (
     <figure
       aria-label={label}
-      className="flex flex-col gap-3 rounded-2xl bg-surface shadow-panel p-4"
+      className="flex flex-col gap-3 rounded-2xl bg-surface px-[18px] py-4 shadow-panel"
     >
-      <figcaption className="font-display text-base font-medium">{label}</figcaption>
+      <figcaption className="font-display text-[13px] font-medium">{label}</figcaption>
       {rows.length === 0 ? (
         <p className="text-sm text-muted-foreground">Немає даних</p>
       ) : (
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2.5">
           {rows.map(({ key, count }) => (
-            <li key={key} className="grid grid-cols-[6rem_1fr_3.5rem] items-center gap-2 text-sm">
+            <li key={key} className="grid grid-cols-[6rem_1fr_3.5rem] items-center gap-3 text-sm">
               <span className="truncate">{keyLabel(key)}</span>
-              <span className="h-2 rounded-full bg-muted">
+              <span className="h-2.5 rounded-full bg-sunk">
                 <span
-                  className="block h-2 rounded-full bg-primary"
+                  className="block h-2.5 rounded-full bg-primary"
                   style={{ width: `${String((count / largest) * 100)}%` }}
                 />
               </span>
-              <span className="text-right tabular-nums">{count}</span>
+              <span className="text-right font-mono text-xs font-semibold tabular-nums">
+                {count}
+              </span>
             </li>
           ))}
         </ul>
