@@ -26,3 +26,4 @@ Triage files (per finding id: FIXED/SKIP-*/FIX + tickets): scratchpad triage cor
 - 2026-11-09T14:51:24Z merged T-onboarding-1. Running: content T-core-1, T-mobile-6.
 - 2026-11-09T14:56:00Z merged content T-core-1. Running: T-mobile-6.
 - 2026-11-09T15:09:08Z merged T-mobile-6 (aafa43c27). Running: leftovers E-L5, sourcing-L5, mobile-T6 (fix/1109-review-leftovers). Then root lint/typecheck, PR body, FINISHED.
+- 2026-11-09T15:11:25Z root lint + typecheck green on aafa43c27; waiting leftovers agent
