@@ -17,3 +17,10 @@ coord: coord/global-review-tails
 branches: ^origin/(coord/global-review-tails|(feat|chore|fix|docs|test|refactor)/.*1109-)
 brief:
 You are the coordinator of the «global review tails» wave, in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/global-review-tails (input review/REPORT.md, review/OWNER-DECISIONS-1106.md, progress log) and continue. Scope: Medium/Low findings fixable and provable by tests/typecheck/lint; SKIP visual, owner decisions, and every file under apps/admin, apps/backend, packages/server-core, packages/content-rules. Integration branch fix/1109-global-review-tails; implementers = Opus subagents with tdd in own worktrees; one DRAFT PR to main «fix: global review tails (Medium/Low)» listing fixed / skipped + why; leave it draft, NO merge to main. Grants: commits, pushes, one draft PR. When every finding in scope is done or skipped: `STATUS: FINISHED` first line of HANDOFF.md.
+
+## wave infra-1109
+status: active
+coord: coord/infra-1109
+branches: ^origin/(coord/infra-1109|docs/1109-conflict-free-waves|(chore|docs|test)/1109-)
+brief:
+You are the infra wave coordinator, in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/infra-1109 (tasks, grants, log) and continue from the log tail. Grants: commits, pushes, PRs; no main merge except #1752's existing auto-merge. Never touch feat/1108-video or apps/video.
