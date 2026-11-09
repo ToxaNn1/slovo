@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { WordSchema } from '@slovo/contracts';
+import { SourceSchema, WordSchema } from '@slovo/contracts';
 import {
   EDITIONS_DIR,
   editionFiles,
@@ -18,6 +18,7 @@ import {
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import {
   sourceWords,
@@ -208,7 +209,7 @@ function editionWith(
   registry?: unknown,
 ): EditionFolder {
   const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
-  const config = JSON.parse(readFileSync(ukrainianConfigFile, 'utf8')) as Record<string, unknown>;
+  const config = FieldsSchema.parse(JSON.parse(readFileSync(ukrainianConfigFile, 'utf8')));
   mkdirSync(join(editionsDir, 'uk'));
   writeFileSync(editionFiles(join(editionsDir, 'uk')).path('config'), JSON.stringify(edit(config)));
   const edition = openEdition(editionsDir, 'uk');
@@ -224,6 +225,12 @@ function editionWith(
   }
   return edition;
 }
+
+/** An object read from JSON, its fields still unchecked. */
+const FieldsSchema = z.record(z.string(), z.unknown());
+
+/** A draft as far as its sources go: an incomplete one may fail the Word schema elsewhere. */
+const CitedSchema = z.object({ sources: z.array(SourceSchema) });
 
 function readDrafts(outDir: string, folder = 'drafts'): unknown[] {
   const dir = join(outDir, 'words', folder);
@@ -272,6 +279,7 @@ describe('sourceWords', () => {
     expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
     expect(word.sources[0]).toEqual({
       title: 'Словник української мови: в 11 томах. — Том 4, 1973. — Стор. 698.',
+      shortName: 'Словник української мови в 11 томах',
       url: 'https://sum.in.ua/s/mzhychka',
       archivedUrl: 'https://web.archive.org/web/20241216072945/https://sum.in.ua/s/mzhychka',
     });
@@ -333,10 +341,7 @@ describe('sourceWords', () => {
     it('puts a draft with a Lemma letter outside the alphabet in incomplete/ with the build message', async () => {
       // Without «ж», and so without the keyboard, which holds every letter of the alphabet.
       const edition = editionWith((config) => {
-        const { keyboard: _keyboard, ...traits } = config['languageTraits'] as Record<
-          string,
-          unknown
-        >;
+        const { keyboard: _keyboard, ...traits } = FieldsSchema.parse(config['languageTraits']);
         return {
           ...config,
           languageTraits: {
@@ -359,7 +364,7 @@ describe('sourceWords', () => {
       const edition = editionWith((config) => ({
         ...config,
         languageTraits: {
-          ...(config['languageTraits'] as Record<string, string>),
+          ...FieldsSchema.parse(config['languageTraits']),
           marksStress: false,
         },
       }));
@@ -621,6 +626,7 @@ describe('sourceWords', () => {
     expect(word.sources).toEqual([
       {
         title: "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+        shortName: 'Тлумачний словник (томи 1–15)',
         url: 'https://goroh.pp.ua/Тлумачення/дратва',
       },
     ]);
@@ -644,6 +650,7 @@ describe('sourceWords', () => {
     expect(word.sources).toEqual([
       {
         title: 'Тлумачний словник української мови в 11-ти томах',
+        shortName: 'Словник української мови в 11 томах',
         url: 'https://goroh.pp.ua/Тлумачення/ятір',
       },
       { title: 'Горох: словозміна', url: 'https://goroh.pp.ua/Словозміна/ятір' },
@@ -759,9 +766,10 @@ describe('sourceWords', () => {
       'existing-entry',
     );
     for (const word of ready) {
-      expect(word.sources[0]?.title).toBe(
-        "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
-      );
+      expect(word.sources[0]).toMatchObject({
+        title: "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+        shortName: 'Тлумачний словник (томи 1–15)',
+      });
     }
     // КО́СА, the people, is masculine and feminine at once: a human picks.
     const incomplete = readDrafts(options.outDir, 'incomplete');
@@ -772,9 +780,9 @@ describe('sourceWords', () => {
       expect.objectContaining({ stress: [1], gender: expect.anything() as unknown }),
     );
     // The page also carries articles written by a language model and from ВТС; none is drafted.
-    const all = [...ready, ...readDrafts(options.outDir, 'incomplete')] as {
-      sources: { title: string }[];
-    }[];
+    const all = [...ready, ...readDrafts(options.outDir, 'incomplete')].map((draft) =>
+      CitedSchema.parse(draft),
+    );
     for (const draft of all) {
       expect(draft.sources.map((source) => source.title).join()).not.toMatch(/Велик/);
     }
@@ -848,6 +856,7 @@ describe('sourceWords', () => {
     const word = WordSchema.parse(readDrafts(options.outDir)[0]);
     expect(word.sources[0]).toEqual({
       title: 'Словник української мови: в 11 томах. — Том 4, 1973. — Стор. 698.',
+      shortName: 'Словник української мови в 11 томах',
       url: 'https://sum.in.ua/s/mzhychka',
     });
     expect(net.requests.filter((address) => address.includes('web.archive.org'))).toEqual([]);

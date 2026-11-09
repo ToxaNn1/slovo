@@ -133,6 +133,22 @@ describe('sourceIdioms', () => {
     });
   });
 
+  it('cites СУМ-20 by the short name the Edition gives it', async () => {
+    const sum20 = "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)";
+    // The лити page with its phraseologisms cited to СУМ-20 instead of Єфімова.
+    const fetch: Fetch = (url, options) =>
+      fakeFetch(url, options).then((response) => ({
+        ...response,
+        body: response.body.replaceAll(EFIMOVA, sum20),
+      }));
+    const { outDir, result } = run('лити\n', { fetch });
+    ok(await result);
+
+    expect(draftOf(outDir, 'Лити воду')?.['sources']).toEqual([
+      { title: sum20, shortName: 'Тлумачний словник (томи 1–15)', url: `${PHRASEOLOGY}лити` },
+    ]);
+  });
+
   it('keeps further meanings as extra Definitions and Examples with their authors', async () => {
     const { outDir, result } = run('лити\n');
     ok(await result);

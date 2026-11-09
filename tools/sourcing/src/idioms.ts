@@ -21,7 +21,7 @@ import {
 } from './pipeline';
 import type { Flag } from './review-report';
 import { authorOf } from './source-words';
-import { unstressed } from './text';
+import { citedAs, unstressed } from './text';
 
 export type IdiomSourcingOptions = PipelineOptions & {
   /** The Lemmas to read, one per line: `<lemma> [idiom|proverb]`, `idiom` by default; `#` starts a comment. */
@@ -134,7 +134,7 @@ function draftIdiom(
     ...(primaryDefinition === undefined ? {} : { primaryDefinition }),
     ...(extraDefinitions.length === 0 ? {} : { extraDefinitions }),
     ...(examples.length === 0 ? {} : { examples }),
-    sources: [{ title: block.dictionary, url: gorohUrl('Фразеологія', request.lemma) }],
+    sources: [{ ...citedAs(block.dictionary), url: gorohUrl('Фразеологія', request.lemma) }],
   };
   return {
     entry: idiom,

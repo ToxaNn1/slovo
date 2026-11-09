@@ -10,7 +10,7 @@ import { LANGUAGE_MODEL } from '@slovo/content-rules';
 
 import type { DictionaryArticle } from './article';
 import type { PoliteClient } from './polite-client';
-import { matchKey, squeeze, unstressed } from './text';
+import { citedAs, matchKey, squeeze, unstressed } from './text';
 
 const SITE = 'https://goroh.pp.ua/';
 
@@ -84,7 +84,7 @@ export function parseDefinitions(html: string, lemma: string): GorohDefinitions 
             sense.querySelectorAll('.examples li').flatMap(exampleIn),
           ),
           unmarkedExamples: false,
-          source: { title: dictionary, url: gorohUrl('Тлумачення', lemma) },
+          source: { ...citedAs(dictionary), url: gorohUrl('Тлумачення', lemma) },
         },
       ];
     },
