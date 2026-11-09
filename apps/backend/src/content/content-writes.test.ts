@@ -10,6 +10,7 @@ import { afterAll, describe, expect, it, onTestFinished } from 'vitest';
 import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
 import { createDatabase } from '../database/database';
+import { contentIds } from '../database/schema';
 import { systemRandom } from '../random';
 import { createTestDatabase, silentLogger, testApp, testDatabaseUrl } from '../test-support';
 
@@ -53,7 +54,7 @@ async function contentBackend({ imported = true }: { imported?: boolean } = {}) 
   const { batchId } = imported
     ? await agent.admin.content.openBatch({ editionId: 'uk' })
     : { batchId: '00000000-0000-4000-8000-000000000000' };
-  return { ...backend, admin, agent, batchId };
+  return { ...backend, database, admin, agent, batchId };
 }
 
 const snapshotOf = (client: ApiClient) => client.content.snapshot({ editionId: 'uk' });
@@ -131,6 +132,23 @@ describe('the content write API', () => {
     ).rejects.toMatchObject(refusedBy('curated-collection-entry'));
 
     expect((await snapshotOf(client)).contentVersion).toBe(before.contentVersion);
+  });
+
+  it('registers no id for a refused create', async () => {
+    const { client, agent, batchId, database } = await contentBackend();
+    const { id: _id, ...fields } = await wordOf(client, WORD_ID);
+    const registered = async () => (await database.db.select().from(contentIds)).length;
+    const before = await registered();
+
+    await expect(
+      agent.admin.content.create({
+        editionId: 'uk',
+        kind: 'word',
+        batchId,
+        fields: { ...fields, lemma: 'обручик', stress: [3], categoryId: 'no-such-category' },
+      }),
+    ).rejects.toMatchObject({ code: 'REFUSED' });
+    expect(await registered()).toBe(before);
   });
 
   it('refuses an edit made from a stale record version with the current one', async () => {

@@ -80,6 +80,13 @@ interface StoredRecord {
   readonly recordVersion: number;
 }
 
+/** A refusal met inside a write's transaction, thrown so that the transaction rolls back. */
+class Refused extends Error {
+  constructor(readonly refusal: WriteRefusal) {
+    super(refusal.reason);
+  }
+}
+
 /** A record as JSON, for the Action log's columns: undefined fields are left out, as JSON leaves them. */
 function toJson(value: unknown): Json {
   if (value === null || typeof value === 'string' || typeof value === 'number') return value;
@@ -333,92 +340,99 @@ export function createContentWrites({
   ): Promise<WriteResult> {
     const edition = editions.find(editionId);
     if (edition === undefined) return { ok: false, reason: 'not-found' };
-    return db.transaction(async (tx): Promise<WriteResult> => {
-      const contentVersion = await heldVersion(tx, editionId);
-      if (contentVersion === undefined) return { ok: false, reason: 'not-imported' };
-      if (!(await ownBatch(tx, writer, editionId, batchId))) {
-        return { ok: false, reason: 'not-found' };
-      }
-      const records = await recordsOf(tx, editionId);
-      let current: StoredRecord | undefined;
-      if (change.op !== 'create') {
-        current = records[kind].find(({ id }) => id === change.id);
-        if (current === undefined) return { ok: false, reason: 'not-found' };
-        if (current.recordVersion !== change.recordVersion) {
-          return { ok: false, reason: 'stale', currentVersion: current.recordVersion };
+    try {
+      return await db.transaction(async (tx): Promise<WriteResult> => {
+        const contentVersion = await heldVersion(tx, editionId);
+        if (contentVersion === undefined) return { ok: false, reason: 'not-imported' };
+        if (!(await ownBatch(tx, writer, editionId, batchId))) {
+          return { ok: false, reason: 'not-found' };
         }
-      }
-      const id = current?.id ?? (await newId(tx, editionId, kind));
-      const fields =
-        change.op === 'retire' ? { ...current?.fields, retired: true } : { ...change.fields, id };
-      const parsed = parseRecord(kind, recordFileOf(kind, id), fields);
-      if (!parsed.ok) return { ok: false, reason: 'refused', refusals: parsed.refusals };
-      const { record } = parsed;
-      const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
-        rows.map((row) => row.fields);
-      const set = contentSetOf({
-        word: fieldsOf(records.word),
-        correction: fieldsOf(records.correction),
-        idiom: fieldsOf(records.idiom),
-        synonymRow: fieldsOf(records.synonymRow),
-        tip: fieldsOf(records.tip),
-        curatedCollection: fieldsOf(records.curatedCollection),
-      });
-      const now = clock.now();
-      const refusals = checkRecord(edition.config, set, record, { today: now });
-      if (refusals.length > 0) return { ok: false, reason: 'refused', refusals };
+        const records = await recordsOf(tx, editionId);
+        let current: StoredRecord | undefined;
+        if (change.op !== 'create') {
+          current = records[kind].find(({ id }) => id === change.id);
+          if (current === undefined) return { ok: false, reason: 'not-found' };
+          if (current.recordVersion !== change.recordVersion) {
+            return { ok: false, reason: 'stale', currentVersion: current.recordVersion };
+          }
+        }
+        const id = current?.id ?? (await newId(tx, editionId, kind));
+        const fields =
+          change.op === 'retire' ? { ...current?.fields, retired: true } : { ...change.fields, id };
+        const parsed = parseRecord(kind, recordFileOf(kind, id), fields);
+        // A new id is registered by now: a refusal rolls it back with the rest.
+        if (!parsed.ok)
+          throw new Refused({ ok: false, reason: 'refused', refusals: parsed.refusals });
+        const { record } = parsed;
+        const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
+          rows.map((row) => row.fields);
+        const set = contentSetOf({
+          word: fieldsOf(records.word),
+          correction: fieldsOf(records.correction),
+          idiom: fieldsOf(records.idiom),
+          synonymRow: fieldsOf(records.synonymRow),
+          tip: fieldsOf(records.tip),
+          curatedCollection: fieldsOf(records.curatedCollection),
+        });
+        const now = clock.now();
+        const refusals = checkRecord(edition.config, set, record, { today: now });
+        if (refusals.length > 0) throw new Refused({ ok: false, reason: 'refused', refusals });
 
-      const recordVersion = (current?.recordVersion ?? 0) + 1;
-      const published = contentVersion + 1;
-      // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
-      const wordBefore = records.word.find((row) => row.id === id);
-      const needsNewRecording =
-        record.kind === 'word' &&
-        wordBefore !== undefined &&
-        (wordBefore.needsNewRecording ||
-          wordBefore.fields.lemma !== record.entry.lemma ||
-          JSON.stringify(wordBefore.fields.stress) !== JSON.stringify(record.entry.stress));
-      await saveRow(
-        tx,
-        record,
-        {
+        const recordVersion = (current?.recordVersion ?? 0) + 1;
+        const published = contentVersion + 1;
+        // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
+        const wordBefore = records.word.find((row) => row.id === id);
+        const needsNewRecording =
+          record.kind === 'word' &&
+          wordBefore !== undefined &&
+          (wordBefore.needsNewRecording ||
+            wordBefore.fields.lemma !== record.entry.lemma ||
+            JSON.stringify(wordBefore.fields.stress) !== JSON.stringify(record.entry.stress));
+        await saveRow(
+          tx,
+          record,
+          {
+            editionId,
+            recordVersion,
+            contentVersion: published,
+            changedBy: authorOf(writer),
+            changedAt: now,
+            batchId,
+          },
+          needsNewRecording,
+        );
+        await tx
+          .update(contentVersions)
+          .set({ contentVersion: published, updatedAt: now })
+          .where(eq(contentVersions.editionId, editionId));
+        await tx.insert(actionLog).values({
+          who: { kind: 'agent', name: writer.name },
+          at: now,
+          what: `content.${kind}.${change.op}`,
+          before:
+            current === undefined
+              ? null
+              : toJson({ recordVersion: current.recordVersion, fields: current.fields }),
+          after: toJson({ recordVersion, fields: record.entry }),
+          reason: reason ?? null,
           editionId,
-          recordVersion,
-          contentVersion: published,
-          changedBy: authorOf(writer),
-          changedAt: now,
           batchId,
-        },
-        needsNewRecording,
-      );
-      await tx
-        .update(contentVersions)
-        .set({ contentVersion: published, updatedAt: now })
-        .where(eq(contentVersions.editionId, editionId));
-      await tx.insert(actionLog).values({
-        who: { kind: 'agent', name: writer.name },
-        at: now,
-        what: `content.${kind}.${change.op}`,
-        before:
-          current === undefined
-            ? null
-            : toJson({ recordVersion: current.recordVersion, fields: current.fields }),
-        after: toJson({ recordVersion, fields: record.entry }),
-        reason: reason ?? null,
-        editionId,
-        batchId,
+        });
+        return {
+          ok: true,
+          written: {
+            id,
+            recordVersion,
+            contentVersion: published,
+            batchId,
+            ...(kind === 'word' ? { needsNewRecording } : {}),
+          },
+        };
       });
-      return {
-        ok: true,
-        written: {
-          id,
-          recordVersion,
-          contentVersion: published,
-          batchId,
-          ...(kind === 'word' ? { needsNewRecording } : {}),
-        },
-      };
-    });
+    } catch (error) {
+      if (error instanceof Refused) return error.refusal;
+      throw error;
+    }
   }
 
   /** Flags a record for the Content queue: an Action log row, no change of the content. */
