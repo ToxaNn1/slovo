@@ -174,7 +174,7 @@ function FeedScreen() {
 /** The key of a card's page, by the Entry, Feed Notice or Quick Question it shows. */
 function pageKey(card: FeedCard): string {
   if (card.kind === 'notice') return `notice-${card.notice}`;
-  if (card.kind === 'quick-question') return `quick-question-${card.askedId}`;
+  if (card.kind === 'quick-question') return `quick-question-${card.entry.id}`;
   return card.entryId ?? card.kind;
 }
 
@@ -192,7 +192,7 @@ const FeedPage = memo(function FeedPage({
   onAnswerQuickQuestion: (position: number, option: number) => void;
 }) {
   const { top } = useSafeAreaInsets();
-  const { selfCheck, stressFall, calligraphicLemma, wordTabs } = useShown();
+  const { selfCheck, stressFall, calligraphicLemma, wordTabs, answerCard } = useShown();
   const { toolsRow, topRow } = useHeaderRows();
   const openScreen = useOpenScreen();
   if (card.kind === 'quick-question')
@@ -205,8 +205,10 @@ const FeedPage = memo(function FeedPage({
           <QuickQuestionRound
             title={feedStrings.quickQuestion}
             round={card.round}
+            entry={card.entry}
             label={gameModeStrings(editionStrings.game.modes, card.modeId).roundLabel}
             answered={card.answered}
+            feedback={answerCard ? 'card' : 'sheet'}
             onAnswer={(option) => {
               onAnswerQuickQuestion(position, option);
             }}

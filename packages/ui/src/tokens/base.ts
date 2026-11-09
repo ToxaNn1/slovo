@@ -252,6 +252,12 @@ export const typeRoles = {
   roundOptionKey: role('word', '900', 16, 20),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
   roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
+  /**
+   * The answer card's verdict, such as «Майже. Наступне вийде.»: the banner title's
+   * type, with lines far enough apart that a wrapped line's capital marks,
+   * Й's breve and Ї's dots, clear the line over it.
+   */
+  answerVerdict: role('word', '900', 30, 38, -0.5, 'uppercase'),
   /** The right answer on the Round's answer sheet. */
   roundAnswer: role('word', '500', 30, 39),
   /** A Round's explanation, and the Definition under its prompt. */
@@ -264,7 +270,11 @@ export const typeRoles = {
   guideNumber: role('ui', '700', 15, 15),
   /** The title of a step of the widget guide. */
   guideTitle: role('ui', '700', 17, 20),
-  /** The Lemma on a widget of the widget guide's drawing. */
+  /** The mode over the Lemma on a widget of the widget guide's drawing (board 15: 8 and 9). */
+  widgetMode: role('word', '800', 8, 10, 1.2, 'uppercase'),
+  /** The Lemma on the drawing's small widget (board 15: 19 at 158 wide). */
+  widgetSmallLemma: role('word', '500', 19, 23),
+  /** The Lemma on the drawing's medium widget (board 15: 26 at 346 wide, 24 at the drawing's width). */
   widgetLemma: role('word', '500', 24, 29),
   /** The short line under the Lemma on the drawing's medium widget. */
   widgetLine: role('word', '500', 12, 15),
@@ -326,6 +336,8 @@ export const typeRoles = {
   crosswordClue: role('ui', '600', 15, 19.5),
   /** The selected word's number and direction, such as «1→», on its red badge of the clue bar. */
   crosswordClueNumber: role('word', '900', 14, 14),
+  /** A letter on a path chip over the Daily Crossword's Letter Wheel: uppercase, as the tiles. */
+  crosswordPathLetter: role('word', '900', 14, 14, 0, 'uppercase'),
   /** A word's number in the corner of its first cell of the Daily Crossword. */
   crosswordCellNumber: role('ui', '700', 10, 10),
   /** A letter on a key of the Daily Crossword's keyboard. */

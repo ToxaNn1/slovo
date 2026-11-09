@@ -202,7 +202,7 @@ export const crossingCrosswordLayout = {
   tile: 62,
   tileRadius: 18,
   orbit: 88,
-  hitRadius: 0.5,
+  hitRadius: 0.35,
   trace: 12,
   chip: 34,
   shake: 8,
