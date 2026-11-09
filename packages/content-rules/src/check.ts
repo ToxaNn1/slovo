@@ -70,9 +70,19 @@ export function checkContentSet(
   set: ContentSet,
   { today }: { today: Date },
 ): Refusal[] {
+  return checkSet(config, set, today, () => true);
+}
+
+/** The content rules over the set, the rules of one Entry alone on the Entries whose file `checksFile` takes. */
+function checkSet(
+  config: EditionConfig,
+  set: ContentSet,
+  today: Date,
+  checksFile: (file: string) => boolean,
+): Refusal[] {
   const { words, corrections, idioms, synonymRows, tips, curatedCollections } = set;
   return [
-    ...checkEntries(config, words, corrections, idioms),
+    ...checkEntries(config, words, corrections, idioms, checksFile),
     ...checkSynonymRows(config, words, synonymRows),
     ...checkTips(config, tips),
     ...checkCuratedCollections(curatedCollections, [
@@ -108,10 +118,15 @@ export function checkRecord(
       { file: record.file, today: options.today.toISOString().slice(0, 10) },
     );
   }
-  const before = new Set(checkContentSet(config, set, options).map(keyOf));
-  return checkContentSet(config, withRecord(set, record), options).filter(
-    (refusal) => refusal.file === record.file || !before.has(keyOf(refusal)),
+  // The rules of one Entry alone give the other records what they gave before, so only the record's run.
+  const before = new Set(checkSet(config, set, options.today, () => false).map(keyOf));
+  const after = checkSet(
+    config,
+    withRecord(set, record),
+    options.today,
+    (file) => file === record.file,
   );
+  return after.filter((refusal) => refusal.file === record.file || !before.has(keyOf(refusal)));
 }
 
 function keyOf({ rule, file, entryId, field }: Refusal): string {

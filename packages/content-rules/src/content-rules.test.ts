@@ -217,6 +217,18 @@ describe('checkContentSet', () => {
     const edition = { ...config, categoriesRequiringHistory: ['speech'] };
     expect(rules(checkContentSet(edition, fixtureSet(), { today }))).toEqual(['category-history']);
   });
+
+  it.each([
+    ['мoxo', 'Latin and Cyrillic'],
+    ['мoxм', 'Cyrillic and Latin'],
+    ['oммo', 'Latin and Cyrillic'],
+  ])('names the script most letters of "%s" are in, the first letter’s on a tie', (word, mix) => {
+    const set = fixtureSet({ w_fx0002: { primaryDefinition: `Який любить ${word}.` } });
+    const refusals = checkContentSet(config, set, { today });
+    expect(
+      refusals.map(({ rule, message }) => [rule, /mixes (\w+ and \w+)/.exec(message)?.[1]]),
+    ).toEqual([['mixed-script', mix]]);
+  });
 });
 
 describe('parseRecord', () => {
