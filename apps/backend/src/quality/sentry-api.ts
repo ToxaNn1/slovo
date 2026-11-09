@@ -1,4 +1,4 @@
-import type { SentryAnswer, SentryRead, SentryReader } from '@slovo/server-core';
+import type { SentryAlertRead, SentryAnswer, SentryRead, SentryReader } from '@slovo/server-core';
 
 /** Where and how Якість reads Sentry's REST API. */
 export interface SentryApiOptions {
@@ -115,7 +115,34 @@ export function createSentryApi({
     return { ok: true, value: Array.isArray(body) ? body.length : null };
   }
 
-  const reads: Record<SentryRead, (window: Window) => Promise<SentryAnswer>> = {
+  /** The most events of an app issue first seen in the window. */
+  async function newIssueEvents(window: Window): Promise<SentryAnswer> {
+    const body = await get('issues', {
+      project: appProject,
+      query: `firstSeen:>=${window.start} firstSeen:<=${window.end}`,
+      sort: 'freq',
+      limit: '1',
+    });
+    if (isAnswer(body)) return body;
+    const top = Array.isArray(body) ? body[0] : undefined;
+    return { ok: true, value: top === undefined ? 0 : numberOr(Number(top['count'])) };
+  }
+
+  /** The backend's transactions answered 5xx, in percent of all, or `null` with none. */
+  async function backendErrorRate(window: Window): Promise<SentryAnswer> {
+    const count = (query: string) =>
+      discover(backendProject, 'count()', query, 'transactions', window);
+    const all = await count('event.type:transaction');
+    if (!all.ok) return all;
+    const failed = await count('event.type:transaction http.status_code:5*');
+    if (!failed.ok) return failed;
+    if (all.value === null || all.value === 0) return { ok: true, value: null };
+    return { ok: true, value: ((failed.value ?? 0) / all.value) * 100 };
+  }
+
+  const reads: Record<SentryRead | SentryAlertRead, (window: Window) => Promise<SentryAnswer>> = {
+    newIssueEvents,
+    backendErrorRate,
     crashFree: (window) => sessionTotal(window, 'crash_free_rate(session)'),
     crashes: (window) => sessionTotal(window, 'sum(session)', 'crashed'),
     errors: (window) => discover(appProject, 'count()', 'event.type:error', 'errors', window),

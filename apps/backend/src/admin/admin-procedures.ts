@@ -3,12 +3,17 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { implement } from '@orpc/server';
 import { apiContract } from '@slovo/contracts/api';
 import {
+  ALERT_THRESHOLD_KEYS,
+  type AlertThresholdKey,
   ADMIN_SESSION_COOKIE,
   ADMIN_WRITE_HEADER,
   ALL_EDITIONS,
   PERIOD_DAYS,
 } from '@slovo/contracts/admin-api';
+import { ALERT_THRESHOLD_DEFAULTS } from '@slovo/server-core';
 import type {
+  AlertSettings,
+  AlertStore,
   AccessResult,
   Actor,
   AdminAccess,
@@ -29,6 +34,7 @@ import type {
   SwitchRefused,
 } from '@slovo/server-core';
 
+import { alertText } from '../alerts/owner-chat';
 import type { ContentQueue } from '../content/content-queue';
 import type { ContentWrites, WriteRefusal, Writer } from '../content/content-writes';
 import { adminInviteEmail } from './admin-mail';
@@ -105,7 +111,17 @@ export function adminProcedures(
   contentQueue: ContentQueue,
   ownerChecks: OwnerChecks,
   analytics: AdminAnalytics,
-  { quality, ciToken }: { readonly quality: Quality; readonly ciToken: string | undefined },
+  {
+    quality,
+    ciToken,
+    alertSettings,
+    alertStore,
+  }: {
+    readonly quality: Quality;
+    readonly ciToken: string | undefined;
+    readonly alertSettings: AlertSettings;
+    readonly alertStore: AlertStore;
+  },
 ) {
   const os = implement(apiContract.admin).$context<{ headers: Headers; resHeaders?: Headers }>();
 
@@ -407,6 +423,32 @@ export function adminProcedures(
       return { revoked: true as const };
     }),
 
+    alertThresholds: os.alertThresholds.handler(async ({ context, errors }) => {
+      await admit(context.headers, errors, { security: true });
+      const values = await alertSettings.thresholds();
+      return { thresholds: ALERT_THRESHOLD_KEYS.map((key) => thresholdView(key, values[key])) };
+    }),
+
+    setAlertThreshold: os.setAlertThreshold.handler(async ({ context, input, errors }) => {
+      const write = await securityWrite(context.headers, errors, input.reason);
+      await alertSettings.set(input.key, input.value, write);
+      return { threshold: thresholdView(input.key, input.value) };
+    }),
+
+    latestAlerts: os.latestAlerts.handler(async ({ context, errors }) => {
+      await admit(context.headers, errors, { security: true });
+      const kept = await alertStore.latest(LATEST_ALERTS);
+      return {
+        alerts: kept.map(({ id, at, alert, sentAt }) => ({
+          id,
+          at: at.toISOString(),
+          kind: alert.kind,
+          text: alertText(alert),
+          sentAt: sentAt?.toISOString() ?? null,
+        })),
+      };
+    }),
+
     status: os.status.handler(async ({ context, errors }) => {
       await admit(context.headers, errors);
       return { on: true as const };
@@ -689,6 +731,15 @@ export function adminProcedures(
 }
 
 /** Who changed something, as the admin shows it. */
+/** How many of the newest alerts Огляд lists. */
+const LATEST_ALERTS = 20;
+
+const thresholdView = (key: AlertThresholdKey, value: number) => ({
+  key,
+  value,
+  default: ALERT_THRESHOLD_DEFAULTS[key],
+});
+
 function actorName(who: Actor): string {
   switch (who.kind) {
     case 'admin-user':

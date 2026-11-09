@@ -8,7 +8,7 @@ import { systemClock } from '@slovo/server-core';
 import { createAppleVerifier } from './account/apple-verifier';
 import { createGoogleVerifier } from './account/google-verifier';
 import { createSmtpMailer } from './account/smtp-mailer';
-import { createLoggedAlerts } from './admin/logged-alerts';
+import { ownerAlertsOf } from './alerts/owner-chat';
 import { createApp } from './app';
 import { readConfig, ServerConfigSchema } from './config';
 import { createDatabase } from './database/database';
@@ -38,7 +38,7 @@ const app = createApp({
   app: appConfig,
   editions,
   mailer,
-  alerts: createLoggedAlerts(logger),
+  alerts: ownerAlertsOf(database, logger),
   posthog: config.posthog === undefined ? unavailablePostHog : createPostHogClient(config.posthog),
   google: createGoogleVerifier({ clientIds: config.GOOGLE_CLIENT_IDS, clock: systemClock }),
   apple: createAppleVerifier({ clock: systemClock }),

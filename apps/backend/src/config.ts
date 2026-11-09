@@ -93,6 +93,13 @@ const ServerVariablesSchema = z.object({
   // The Bearer token CI pushes its history with (ADR 0095); unset, every push
   // is refused.
   CI_HISTORY_TOKEN: unsetWhenEmpty(z.string().min(32, 'must be at least 32 characters')),
+  // The Telegram bot that tells the owner of alerts and the daily digest, and
+  // the owner's chat id, the only chat it writes to; unset, alerts are kept
+  // for Огляд and logged.
+  TELEGRAM_BOT_TOKEN: unsetWhenEmpty(z.string().min(1)),
+  TELEGRAM_CHAT_ID: unsetWhenEmpty(z.string().regex(/^-?\d+$/, 'must be a numeric chat id')),
+  // The backend's health URL the Cron service checks; unset, it is not checked.
+  BACKEND_HEALTH_URL: unsetWhenEmpty(z.url()),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
   // Docker; 1 behind Railway's proxy.
@@ -163,6 +170,12 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
 
 /** The environment the migrate and reports commands read. */
 export const MigrateConfigSchema = ServerVariablesSchema.pick({ DATABASE_URL: true });
+
+/** The Telegram bot of the owner's alerts, read by the server and every command that alerts. */
+export const TelegramConfigSchema = ServerVariablesSchema.pick({
+  TELEGRAM_BOT_TOKEN: true,
+  TELEGRAM_CHAT_ID: true,
+});
 
 /** The environment the publish command reads. */
 export const PublishConfigSchema = ServerVariablesSchema.pick({
