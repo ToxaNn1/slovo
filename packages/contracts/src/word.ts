@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 import { CorrectionIdSchema } from './correction';
 import { OriginLanguageSchema } from './edition';
-import { hasNoRepeats, RaritySchema, SourceSchema, TextSchema, WordIdSchema } from './shared';
+import { hasNoRepeats, RaritySchema, SourceSchema, EntryTextSchema, WordIdSchema } from './shared';
 
 /**
  * Language-agnostic part-of-speech codes. Editions supply the display labels.
@@ -40,8 +40,8 @@ export { WordIdSchema };
 
 /** A sentence showing the Word in use, with its author when the source names one. */
 export const ExampleSchema = z.strictObject({
-  text: TextSchema,
-  author: TextSchema.optional(),
+  text: EntryTextSchema,
+  author: EntryTextSchema.optional(),
 });
 
 export type Example = z.infer<typeof ExampleSchema>;
@@ -85,7 +85,7 @@ export const WordSchema = z
   .strictObject({
     kind: z.literal('word').default('word'),
     id: WordIdSchema,
-    lemma: TextSchema.refine(
+    lemma: EntryTextSchema.refine(
       (lemma) => lemma === lemma.normalize('NFC'),
       'Expected the Lemma in Unicode NFC, with every letter composed',
     ),
@@ -98,18 +98,18 @@ export const WordSchema = z
       .default([]),
     partOfSpeech: PartOfSpeechSchema,
     gender: GenderSchema.optional(),
-    primaryDefinition: TextSchema,
-    extraDefinitions: z.array(TextSchema).default([]),
+    primaryDefinition: EntryTextSchema,
+    extraDefinitions: z.array(EntryTextSchema).default([]),
     examples: z.array(ExampleSchema).default([]),
-    synonyms: z.array(TextSchema).default([]),
-    antonyms: z.array(TextSchema).default([]),
-    etymology: TextSchema.optional(),
+    synonyms: z.array(EntryTextSchema).default([]),
+    antonyms: z.array(EntryTextSchema).default([]),
+    etymology: EntryTextSchema.optional(),
     registers: z
       .array(RegisterSchema)
       .refine(hasNoRepeats, 'Register labels must not repeat')
       .default([]),
-    region: TextSchema.optional(),
-    history: TextSchema.optional(),
+    region: EntryTextSchema.optional(),
+    history: EntryTextSchema.optional(),
     origin: OriginLanguageSchema.shape.code.optional(),
     illustration: z
       .string()
