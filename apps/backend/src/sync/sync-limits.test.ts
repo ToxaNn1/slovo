@@ -284,7 +284,7 @@ describe('the Sync requests of one Session', () => {
 
     expect({
       status: pull.status,
-      body: (await pull.json()) as unknown,
+      body: await pull.json(),
       retryAfter: pull.headers.get('retry-after'),
     }).toMatchObject({
       status: 429,
