@@ -13,6 +13,7 @@
     "recording-requests": "pnpm --silent --filter @slovo/language-pack recording-requests",
     "switches": "pnpm --filter @slovo/backend switches",
     "admin": "pnpm --filter @slovo/backend admin",
+    "cron": "pnpm --filter @slovo/backend cron",
     "reports": "pnpm --filter @slovo/backend reports",
     "collection-links": "pnpm --filter @slovo/backend collection-links",
     "describe:api": "pnpm --filter @slovo/contracts describe-api",

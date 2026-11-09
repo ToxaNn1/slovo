@@ -93,6 +93,7 @@ export {
 export {
   ALERT_THRESHOLD_DEFAULTS,
   createAlertSettings,
+  thresholdsOf,
   type Alert,
   type Alerts,
   type AlertSettings,

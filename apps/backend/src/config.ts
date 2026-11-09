@@ -114,6 +114,25 @@ const ServerVariablesSchema = z.object({
   EDITIONS_DIR: z.string().min(1).default(EDITIONS_DIR),
 });
 
+/** The options of PostHog's query API, or none while its key or project is unset. */
+function posthogOf({
+  POSTHOG_PERSONAL_API_KEY,
+  POSTHOG_PROJECT_ID,
+  POSTHOG_HOST,
+}: {
+  POSTHOG_PERSONAL_API_KEY?: string | undefined;
+  POSTHOG_PROJECT_ID?: string | undefined;
+  POSTHOG_HOST?: string | undefined;
+}) {
+  return POSTHOG_PERSONAL_API_KEY === undefined || POSTHOG_PROJECT_ID === undefined
+    ? undefined
+    : {
+        apiKey: POSTHOG_PERSONAL_API_KEY,
+        projectId: POSTHOG_PROJECT_ID,
+        host: POSTHOG_HOST ?? 'https://eu.posthog.com',
+      };
+}
+
 /**
  * The environment the server reads at start, with the SMTP settings gathered
  * into the options of the SMTP client.
@@ -147,14 +166,7 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     ...rest
   }) => ({
     ...rest,
-    posthog:
-      POSTHOG_PERSONAL_API_KEY === undefined || POSTHOG_PROJECT_ID === undefined
-        ? undefined
-        : {
-            apiKey: POSTHOG_PERSONAL_API_KEY,
-            projectId: POSTHOG_PROJECT_ID,
-            host: POSTHOG_HOST ?? 'https://eu.posthog.com',
-          },
+    posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
     smtp: {
       host: SMTP_HOST ?? 'localhost',
       port: SMTP_PORT ?? 1025,
@@ -176,6 +188,25 @@ export const TelegramConfigSchema = ServerVariablesSchema.pick({
   TELEGRAM_BOT_TOKEN: true,
   TELEGRAM_CHAT_ID: true,
 });
+
+/** The environment the Cron service's `pnpm cron` reads. */
+export const CronConfigSchema = ServerVariablesSchema.pick({
+  DATABASE_URL: true,
+  EDITIONS_DIR: true,
+  POSTHOG_PERSONAL_API_KEY: true,
+  POSTHOG_PROJECT_ID: true,
+  POSTHOG_HOST: true,
+  SENTRY_AUTH_TOKEN: true,
+  SENTRY_ORG: true,
+  SENTRY_APP_PROJECT: true,
+  SENTRY_BACKEND_PROJECT: true,
+  TELEGRAM_BOT_TOKEN: true,
+  TELEGRAM_CHAT_ID: true,
+  BACKEND_HEALTH_URL: true,
+}).transform(({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST, ...rest }) => ({
+  ...rest,
+  posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
+}));
 
 /** The environment the publish command reads. */
 export const PublishConfigSchema = ServerVariablesSchema.pick({

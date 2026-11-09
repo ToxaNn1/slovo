@@ -730,7 +730,6 @@ export function adminProcedures(
   });
 }
 
-/** Who changed something, as the admin shows it. */
 /** How many of the newest alerts Огляд lists. */
 const LATEST_ALERTS = 20;
 
@@ -740,6 +739,7 @@ const thresholdView = (key: AlertThresholdKey, value: number) => ({
   default: ALERT_THRESHOLD_DEFAULTS[key],
 });
 
+/** Who changed something, as the admin shows it. */
 function actorName(who: Actor): string {
   switch (who.kind) {
     case 'admin-user':

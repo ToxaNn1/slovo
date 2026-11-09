@@ -85,7 +85,8 @@ export interface Digest {
 
 /** A message to the owner's chat. */
 export type OwnerMessage =
-  { readonly kind: 'alert'; readonly alert: Alert } | { readonly kind: 'digest'; readonly digest: Digest };
+  | { readonly kind: 'alert'; readonly alert: Alert }
+  | { readonly kind: 'digest'; readonly digest: Digest };
 
 /** The owner's Telegram chat: answers whether the message left. */
 export interface OwnerChat {
@@ -131,6 +132,13 @@ export interface AlertThresholdStore {
   set(key: AlertThresholdKey, value: number): Promise<void>;
 }
 
+/** The thresholds in force: the defaults, with the owner's changes over them. */
+export async function thresholdsOf(
+  store: Pick<AlertThresholdStore, 'changed'>,
+): Promise<AlertThresholds> {
+  return { ...ALERT_THRESHOLD_DEFAULTS, ...(await store.changed()) };
+}
+
 /** The alert thresholds, and their changes logged in the Action log. */
 export interface AlertSettings {
   thresholds(): Promise<AlertThresholds>;
@@ -144,7 +152,7 @@ export function createAlertSettings({
   store: AlertThresholdStore;
   admin: Pick<AdminAccess, 'log'>;
 }): AlertSettings {
-  const thresholds = async () => ({ ...ALERT_THRESHOLD_DEFAULTS, ...(await store.changed()) });
+  const thresholds = () => thresholdsOf(store);
   return {
     thresholds,
     async set(key, value, { who, reason }) {

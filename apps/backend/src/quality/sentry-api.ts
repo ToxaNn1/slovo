@@ -22,6 +22,31 @@ type Json = Record<string, unknown>;
 const numberOr = (value: unknown): number | null =>
   typeof value === 'number' && Number.isFinite(value) ? value : null;
 
+/** The Sentry reads of the environment's token, organization and projects, or none while one is unset. */
+export function sentryOf({
+  SENTRY_AUTH_TOKEN,
+  SENTRY_ORG,
+  SENTRY_APP_PROJECT,
+  SENTRY_BACKEND_PROJECT,
+}: {
+  readonly SENTRY_AUTH_TOKEN?: string | undefined;
+  readonly SENTRY_ORG?: string | undefined;
+  readonly SENTRY_APP_PROJECT?: string | undefined;
+  readonly SENTRY_BACKEND_PROJECT?: string | undefined;
+}): SentryReader {
+  return SENTRY_AUTH_TOKEN === undefined ||
+    SENTRY_ORG === undefined ||
+    SENTRY_APP_PROJECT === undefined ||
+    SENTRY_BACKEND_PROJECT === undefined
+    ? unsetSentry
+    : createSentryApi({
+        token: SENTRY_AUTH_TOKEN,
+        org: SENTRY_ORG,
+        appProject: SENTRY_APP_PROJECT,
+        backendProject: SENTRY_BACKEND_PROJECT,
+      });
+}
+
 /**
  * Reads Якість's numbers of Sentry's REST API. A 429 answers rate-limited
  * until its `Retry-After`, or `X-Sentry-Rate-Limit-Reset`, or a minute on.
