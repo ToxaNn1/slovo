@@ -27,3 +27,4 @@ Done = every PR green -> `STATUS: FINISHED` first line, WAVES.md block finished.
 - 2026-11-09T14:35:36Z task4: PR #1756 (chore/1109-stryker, on top of #1755); waiting CI
 - 2026-11-09T14:43:36Z done: #1752 merged; #1754, #1755, #1756 open, all checks green except «Commit messages» (proxy-appended PR-body footer; owner deletes it and re-runs). Merge order: #1754, #1755, #1756
 - 2026-11-09T16:23:22Z #1755 merged by owner; #1754/#1756 auto-merge on. #1756 conflicted in pnpm-lock: merged origin/main, lock regenerated, pushed 35d2b6e57
+- 2026-11-09T16:34:50Z #1754 merged. #1756: contract check red because branch lacked #1753; merged origin/main again, pushed ddfaaf4b651e1927796c8aa1ef012911f54e8d11
