@@ -10,7 +10,7 @@ import { SignIn } from '../components/sign-in';
 import { Button } from '../components/ui/button';
 import { FiltersSchema } from '../filters';
 import { useWide } from '../screen-width';
-import { ME_KEY, useSignedInAdmin } from '../session';
+import { ME_KEY, useSession } from '../session';
 import { useTheme } from '../theme';
 
 export const Route = createRootRoute({
@@ -19,12 +19,13 @@ export const Route = createRootRoute({
 });
 
 /**
- * The admin of a signed-in Admin user; the sign-in without a session. On a
+ * The admin of a signed-in Admin user; the sign-in without a session; a
+ * retry when the backend fails to answer who is signed in. On a
  * phone the sidebar folds behind «Меню» and closes once a section opens.
  */
 function Layout() {
   const [theme, setTheme] = useTheme();
-  const admin = useSignedInAdmin();
+  const session = useSession();
   const wide = useWide();
   const { pathname } = useLocation();
   // The path the menu was opened on: opening a section closes it.
@@ -35,8 +36,21 @@ function Layout() {
     mutationFn: () => adminApi.signOut(),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ME_KEY }),
   });
-  if (admin === undefined) return null;
-  if (admin === null) return <SignIn />;
+  if (session.kind === 'pending') return null;
+  if (session.kind === 'signed-out') return <SignIn />;
+  if (session.kind === 'failed') {
+    return (
+      <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background p-4 font-sans text-foreground">
+        <p role="alert" className="text-sm text-destructive">
+          Не вдалося. Спробуйте ще раз.
+        </p>
+        <Button variant="outline" onClick={session.retry}>
+          Спробувати ще раз
+        </Button>
+      </main>
+    );
+  }
+  const { admin } = session;
   return (
     <div className="flex min-h-screen flex-col bg-background font-sans text-foreground md:flex-row">
       {wide ? (

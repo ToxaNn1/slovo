@@ -9,12 +9,9 @@ export type SignedInAdmin = AdminApiOutputs['me'];
 /** The query key of the signed-in Admin user, which a sign-in or a sign-out refreshes. */
 export const ME_KEY = ['me'] as const;
 
-/**
- * The Admin user of the session cookie: `null` without a session, `undefined`
- * while the backend has not answered yet.
- */
-export function useSignedInAdmin(): SignedInAdmin | null | undefined {
-  const me = useQuery({
+/** The query of the Admin user of the session cookie: `null` without a session. */
+function useMe() {
+  return useQuery({
     queryKey: ME_KEY,
     queryFn: async () => {
       try {
@@ -26,7 +23,38 @@ export function useSignedInAdmin(): SignedInAdmin | null | undefined {
     },
     retry: false,
   });
-  return me.data;
+}
+
+/** The session cookie as the backend answers it, or why it has not. */
+export type Session =
+  | { readonly kind: 'pending' }
+  | { readonly kind: 'failed'; readonly retry: () => void }
+  | { readonly kind: 'signed-out' }
+  | { readonly kind: 'signed-in'; readonly admin: SignedInAdmin };
+
+/** The session of the admin: who is signed in, or a failed answer to try again. */
+export function useSession(): Session {
+  const me = useMe();
+  // A failed refetch keeps the answer it had: only a first answer that failed shows.
+  if (me.data === null) return { kind: 'signed-out' };
+  if (me.data !== undefined) return { kind: 'signed-in', admin: me.data };
+  if (me.isError) {
+    return {
+      kind: 'failed',
+      retry: () => {
+        void me.refetch();
+      },
+    };
+  }
+  return { kind: 'pending' };
+}
+
+/**
+ * The Admin user of the session cookie: `null` without a session, `undefined`
+ * while the backend has not answered yet.
+ */
+export function useSignedInAdmin(): SignedInAdmin | null | undefined {
+  return useMe().data;
 }
 
 /** The error code of an admin API refusal, such as `UNAUTHORIZED`. */
