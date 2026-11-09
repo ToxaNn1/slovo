@@ -28,3 +28,4 @@ Done = every PR green -> `STATUS: FINISHED` first line, WAVES.md block finished.
 - 2026-11-09T14:43:36Z done: #1752 merged; #1754, #1755, #1756 open, all checks green except «Commit messages» (proxy-appended PR-body footer; owner deletes it and re-runs). Merge order: #1754, #1755, #1756
 - 2026-11-09T16:23:22Z #1755 merged by owner; #1754/#1756 auto-merge on. #1756 conflicted in pnpm-lock: merged origin/main, lock regenerated, pushed 35d2b6e57
 - 2026-11-09T16:34:50Z #1754 merged. #1756: contract check red because branch lacked #1753; merged origin/main again, pushed ddfaaf4b651e1927796c8aa1ef012911f54e8d11
+- 2026-11-09T17:05:13Z #1754, #1755 merged. #1756 head 35213cb30 (owner's main merge) all checks green, clean; auto-merge currently off, left to owner
