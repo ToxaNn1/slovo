@@ -911,7 +911,18 @@ export const motion = {
   badgeStamp: { duration: 550, easing: ease, delay: 150 },
   /** The Level ring fills to the reader's progress. */
   ring: { duration: 1100, easing: [0.2, 0.8, 0.2, 1] },
-  sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
+  /**
+   * A sheet rises `overshoot.distance` points past its place in the first
+   * `overshoot.share` of its slide (`slSheet`), then settles; a drag on its top
+   * past `close.distance` points, or a downward flick of `close.velocity`
+   * points per second whatever its length, closes it.
+   */
+  sheet: {
+    duration: 450,
+    easing: [0.2, 0.9, 0.3, 1],
+    overshoot: { distance: 10, share: 0.72 },
+    close: { distance: 96, velocity: 800 },
+  },
   pop: { duration: 300, easing: ease },
   /** One beat of the loader's wedges, from short to tall and back. */
   loader: { duration: 800, easing: [0.42, 0, 0.58, 1] },
@@ -934,6 +945,8 @@ export const motion = {
     readonly easing: Easing;
     readonly rise?: number;
     readonly delay?: number;
+    readonly overshoot?: { readonly distance: number; readonly share: number };
+    readonly close?: { readonly distance: number; readonly velocity: number };
   }
 >;
 
@@ -1075,6 +1088,16 @@ export const fontSizeSteps: Readonly<
   L: { lemma: 58, definition: 22, example: 20 },
   XL: { lemma: 65, definition: 25, example: 22 },
 };
+
+/**
+ * The Word card's line heights, as multiples of the type size: the Lemma's
+ * leaves room above the glyphs so the Stress mark over a capital or tall
+ * vowel isn't clipped; the Definition and the Example take the body's.
+ */
+export const wordLineHeight = { lemma: 1.3, body: 1.5 } as const;
+
+/** Below this window width the cards take the design's compact iPhone SE layout. */
+export const compactWidth = 390;
 
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
 export const rowPadding = 14;

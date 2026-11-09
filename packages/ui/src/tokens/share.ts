@@ -3,6 +3,9 @@
 /** The format of a Share Card's image: Story (9:16) or Square (1:1). */
 export type ShareCardFormat = 'story' | 'square';
 
+/** The share of the screen's height the Share Card's preview may take, so the sheet fits the SE. */
+export const sharePreviewHeightShare = 0.58;
+
 /**
  * A Share Card's image in pixels, by format: the Story a true 9:16
  * (the design's 9:16), the Square 1:1.

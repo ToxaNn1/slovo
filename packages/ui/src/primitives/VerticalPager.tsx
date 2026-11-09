@@ -47,6 +47,7 @@ import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { useHaptics } from '../providers/HapticsProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
+import { pageTurn } from '../tokens';
 
 /**
  * How a swipe let go settles (ADR 0055, the audit's C1): a critically damped
@@ -74,12 +75,6 @@ const TURN = {
  * would otherwise skip the cross-fade too: the hook alone decides.
  */
 const CROSS_FADE = { duration: 200, easing: Easing.linear, reduceMotion: ReduceMotion.Never };
-
-/** How far, as a share of the page, a slow drag must go to turn the page. */
-const TURN_DISTANCE = 0.2;
-
-/** How fast, in points per second, a flick turns the page whatever its length. */
-const TURN_VELOCITY = 500;
 
 /** How much of a drag past the first or last page still moves it. */
 const EDGE_RESISTANCE = 0.3;
@@ -370,8 +365,8 @@ export function VerticalPager<Item>({
         const turned = translationY - turnFrom.value;
         const share = pageHeight.value === 0 ? 0 : turned / pageHeight.value;
         let target = start;
-        if (velocityY < -TURN_VELOCITY || share < -TURN_DISTANCE) target = start + 1;
-        else if (velocityY > TURN_VELOCITY || share > TURN_DISTANCE) target = start - 1;
+        if (velocityY < -pageTurn.velocity || share < -pageTurn.distance) target = start + 1;
+        else if (velocityY > pageTurn.velocity || share > pageTurn.distance) target = start - 1;
         target = Math.min(Math.max(target, 0), lastIndex.value);
         if (target !== start) {
           turnedTo.value = target;

@@ -34,7 +34,7 @@ import { useEdition } from '../providers/EditionProvider';
 import { useHaptics } from '../providers/HapticsProvider';
 import { useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { swipeEdgeLayout, swipeStampLayout, typeStyle, wedges } from '../tokens';
+import { swipeEdgeLayout, swipeMarkLayout, swipeStampLayout, typeStyle, wedges } from '../tokens';
 
 /** The side swipes of an Entry card, under the `swipeMarks` Feature Switch (ADR 0077). */
 export interface EntrySwipe {
@@ -51,12 +51,8 @@ export interface EntrySwipe {
  * short of it the reader is only looking at the edge label, and the card springs back.
  */
 export const MARK_SHARE = 0.4;
-/** The card's width until its first layout, a phone's card. */
-const UNMEASURED_WIDTH = 360;
 /** How fast, in points per second, a fling the way the card goes sets the mark from any distance. */
 export const MARK_VELOCITY = 800;
-/** Where a marked card flies to, off screen, and where an undone one comes back from (board 04). */
-const OFF_SCREEN = 520;
 
 /**
  * The card springs back to its place from the speed the finger let it go at,
@@ -165,7 +161,7 @@ export function SwipeMarks({
   const offset = useSharedValue(0);
   const drag = useSharedValue(0);
   /** How far the card goes before a release sets the mark: 40% of its width. */
-  const markDistance = useSharedValue(UNMEASURED_WIDTH * MARK_SHARE);
+  const markDistance = useSharedValue(swipeMarkLayout.unmeasuredWidth * MARK_SHARE);
   /** The card is flying off after a mark, and takes no drag until it is back. */
   const flying = useSharedValue(false);
   /** The wedges' widths, which they slide by to come in from beyond the card's edges. */
@@ -221,7 +217,10 @@ export function SwipeMarks({
           offset.value = reduceMotion
             ? 0
             : withSequence(
-                withTiming(to === 'known' ? OFF_SCREEN : -OFF_SCREEN, { duration: 0 }),
+                withTiming(
+                  to === 'known' ? swipeMarkLayout.offScreen : -swipeMarkLayout.offScreen,
+                  { duration: 0 },
+                ),
                 withSpring(0, BACK),
               );
           undo();
@@ -318,8 +317,8 @@ export function SwipeMarks({
           turnToNextOnUI();
           const side = to === 'known' ? 1 : -1;
           offset.value = withTiming(
-            side * OFF_SCREEN,
-            flyFrom(OFF_SCREEN - side * translationX, Math.max(0, side * velocityX)),
+            side * swipeMarkLayout.offScreen,
+            flyFrom(swipeMarkLayout.offScreen - side * translationX, Math.max(0, side * velocityX)),
             () => {
               scheduleOnRN(showToastAfterTurn);
             },

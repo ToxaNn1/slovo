@@ -235,9 +235,14 @@ export const orderedChipsLayout = {
 /**
  * The pairs grid: a cell's height and corner, the design's pairs tile,
  * above the 44 pt touch target, and the gap between the columns and between
- * the cells of a column.
+ * the cells of a column, and how far a wrong pair drops.
  */
-export const pairsGridLayout = { cellHeight: 70, cellRadius: 16, cellGap: 12 } as const;
+export const pairsGridLayout = {
+  cellHeight: 70,
+  cellRadius: 16,
+  cellGap: 12,
+  cellDrop: 8,
+} as const;
 
 /**
  * The vowel buttons: a tile's width, narrower than the touch target so a
