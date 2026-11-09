@@ -2,7 +2,7 @@
 // Reanimated or gesture code: the React Compiler skips this module (ADR 0059).
 
 import type { LaunchKind } from '@slovo/core';
-import { useEffect, useRef } from 'react';
+import { useEffect, useEffectEvent, useRef } from 'react';
 import { StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
@@ -113,24 +113,30 @@ export function SplashOverlay({ wordmark, tagline, kind, onShown, onDone }: Spla
   const shown = useRef(false);
   const progress = useSharedValue(0);
 
-  useEffect(() => {
-    // The cut waits for the system to say whether it may move.
-    if (reduceMotion === undefined) return;
-    if (reduceMotion) {
+  const done = useEffectEvent(onDone);
+  // Starts the cut once the system has answered and gives how long it lasts.
+  const play = useEffectEvent((still: boolean) => {
+    if (still) {
       progress.value = splashMotion.still;
-    } else {
-      progress.value = withTiming(1, {
-        duration,
-        easing: Easing.linear,
-        reduceMotion: ReduceMotion.Never,
-      });
+      return reduceMotionHold;
     }
-    const done = setTimeout(onDone, reduceMotion ? reduceMotionHold : duration);
+    progress.value = withTiming(1, {
+      duration,
+      easing: Easing.linear,
+      reduceMotion: ReduceMotion.Never,
+    });
+    return duration;
+  });
+
+  useEffect(() => {
+    // The cut waits for the system to say whether it may move, then plays once.
+    if (reduceMotion === undefined) return;
+    const timer = setTimeout(() => {
+      done();
+    }, play(reduceMotion));
     return () => {
-      clearTimeout(done);
+      clearTimeout(timer);
     };
-    // The cut plays once, as soon as the system has answered.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduceMotion]);
 
   const taglineEase = curve(taglineMotion.easing);

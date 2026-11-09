@@ -3,10 +3,7 @@ import Svg, { Circle, Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, withAlpha } from '../tokens';
-
-/** The button's size, the Stats pill's height beside it. */
-const BUTTON_SIZE = 40;
+import { minTouchTarget, searchButtonSize, withAlpha } from '../tokens';
 
 /**
  * The magnifier of the «Стрічка» header, which opens Search. A round button
@@ -23,7 +20,7 @@ export function SearchButton({ onPress }: { onPress: () => void }) {
       {...voice}
       onPress={onPress}
       // The 40 pt circle takes taps a little beyond its edge, to the 44 pt touch target.
-      hitSlop={(minTouchTarget - BUTTON_SIZE) / 2}
+      hitSlop={(minTouchTarget - searchButtonSize) / 2}
       style={({ pressed }) => [
         styles.button,
         // The border of the Stats pill, at 35% of the accent.
@@ -41,9 +38,9 @@ export function SearchButton({ onPress }: { onPress: () => void }) {
 
 const styles = StyleSheet.create({
   button: {
-    width: BUTTON_SIZE,
-    height: BUTTON_SIZE,
-    borderRadius: BUTTON_SIZE / 2,
+    width: searchButtonSize,
+    height: searchButtonSize,
+    borderRadius: searchButtonSize / 2,
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',

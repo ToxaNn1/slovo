@@ -1,12 +1,9 @@
 import { StyleSheet, Text, View, type StyleProp, type TextStyle } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { typeRoles, typeStyle } from '../tokens';
+import { fontScaleCap, typeRoles, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { WholeWordsText } from './WholeWordsText';
-
-/** How far the largest text sizes of iOS may scale a screen title. */
-const TITLE_MAX_FONT_SCALE = 1.3;
 
 /**
  * A screen's title, such as Settings, in the word family. It wraps between
@@ -24,7 +21,7 @@ export function ScreenTitle({ children }: { children: string }) {
       <WholeWordsText
         accessibilityRole="header"
         {...voice}
-        maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         text={children}
         typeRole="screenTitle"
         tracking={TITLE_TRACKING}

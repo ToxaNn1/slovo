@@ -7,11 +7,8 @@ import { ActiveDaysCalendar } from './ActiveDaysCalendar';
 import { knownLine } from './known-line';
 import { moodLine, type MoodDays } from './mood-line';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { space, STACK_AT_FONT_SCALE, typeStyle } from '../tokens';
+import { fontScaleCap, space, STACK_AT_FONT_SCALE, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-
-/** How far the largest text sizes of iOS may scale the numbers, so the big Streak fits beside its words. */
-const NUMBER_MAX_FONT_SCALE = 1.5;
 
 /** One count of the sheet's grid: the number over the words that name it. */
 function Count({
@@ -41,7 +38,7 @@ function Count({
       style={[styles.count, { width: stacked ? '100%' : '50%' }]}
     >
       <Text
-        maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('statsCount', tokens), { color: colors.ink }]}
       >
         {value}
@@ -108,7 +105,7 @@ export function StatsSheet({
             style={[styles.streakRow, stacked && styles.streakStacked]}
           >
             <Text
-              maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.text}
               style={[typeStyle('statsStreak', tokens), { color: colors.ink }]}
             >
               {stats.streak}

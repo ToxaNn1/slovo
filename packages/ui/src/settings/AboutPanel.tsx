@@ -5,10 +5,7 @@ import { HalftoneGround } from '../primitives/HalftoneGround';
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { aboutPanel, typeStyle, wedges } from '../tokens';
-
-/** How far the largest text sizes of iOS may scale the app's name, so it stays on the panel. */
-const NAME_MAX_FONT_SCALE = 1.3;
+import { aboutPanel, fontScaleCap, typeStyle, wedges } from '../tokens';
 
 /**
  * The About screen's red shout panel: on the halftone red, a giant `glyph`
@@ -60,7 +57,7 @@ export function AboutPanel({
         <Text
           accessibilityRole="header"
           {...voice}
-          maxFontSizeMultiplier={NAME_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle('aboutName', tokens), { color: light.ink }]}
         >
           {name}

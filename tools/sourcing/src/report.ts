@@ -16,7 +16,7 @@ export function formatReviewReport(report: ReviewReport): string {
     '',
     `- Lemmas: ${String(report.lemmas.length)}`,
     `- Drafts ready for review: ${String(ready)} (in \`drafts/\`)`,
-    `- Drafts missing required data: ${String(drafts.length - ready)} (in \`incomplete/\`)`,
+    `- Drafts incomplete: ${String(drafts.length - ready)} (in \`incomplete/\`)`,
     `- Lemmas without a draft: ${String(report.lemmas.filter((lemma) => lemma.drafts.length === 0).length)}`,
     `- Requests: ${String(report.requests.network)} to the network, ${String(report.requests.cached)} from the cache, ${String(report.requests.backoffs)} back-off(s)`,
     ...Object.entries(report.requests.unreachable).map(
@@ -41,7 +41,8 @@ export function formatReviewReport(report: ReviewReport): string {
 }
 
 function formatDraft(draft: DraftOutcome): string[] {
-  const status = draft.ready ? 'ready for review' : 'missing required data';
+  // Incomplete for the issues and flags below it: missing data, or a repeat of an Entry.
+  const status = draft.ready ? 'ready for review' : 'incomplete';
   return [
     `- \`${draft.file}\` from ${draft.headword}: ${status}`,
     ...draft.issues.map((issue) => `  - schema: ${issue}`),

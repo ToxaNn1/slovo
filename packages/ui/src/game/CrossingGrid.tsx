@@ -14,19 +14,17 @@ import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import {
-  crosswordLayout,
   crossingCrosswordLayout,
+  crosswordLayout,
+  fontScaleCap,
   minTouchTarget,
-  offsetShadow,
   motion,
+  offsetShadow,
   roleSize,
-  typeStyle,
   type TypeRole,
+  typeStyle,
 } from '../tokens';
 import { ease } from './round-motion';
-
-/** How far the largest text sizes of iOS may scale a cell's letter or number, so it stays inside its cell. */
-const CELL_MAX_FONT_SCALE = 1.3;
 
 /**
  * A cell of the crossing Daily Crossword's grid: a block, or a white cell
@@ -195,7 +193,7 @@ function Cell({
       >
         {cell.number !== undefined && (
           <Text
-            maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.number}
             style={[
               typeStyle('crosswordCellNumber', tokens),
               scaledRole('crosswordCellNumber', side),
@@ -208,7 +206,7 @@ function Cell({
         )}
         <Text
           {...voice}
-          maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[
             typeStyle('crosswordLetter', tokens),
             scaledRole('crosswordLetter', side),
@@ -264,7 +262,7 @@ export function CrossingClueBar({
       >
         <View style={[styles.clueNumber, { backgroundColor: colors.accent }]}>
           <Text
-            maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.number}
             style={[typeStyle('crosswordClueNumber', tokens), { color: colors.onAccent }]}
           >
             {number}

@@ -1,3 +1,5 @@
+import { CommunityWordOutputSchema } from '@slovo/contracts';
+
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import { dateKeyOf, isMonday, type LocalDate } from '../local-date';
@@ -47,7 +49,10 @@ export function createCommunityWord({
     // `counters.communityWord` needs no Account and carries no device id (ADR 0060).
     const answer = await answerOf(backend.counters.communityWord({ edition: edition.id }));
     if (!answer.ok) return undefined;
-    const communityWord = answer.output.communityWord ?? null;
+    // The client does not check answers: one out of the contract's shape is unexpected and kept nowhere.
+    const parsed = CommunityWordOutputSchema.safeParse(answer.output);
+    if (!parsed.success) return undefined;
+    const { communityWord } = parsed.data;
     await userState.write(kept.change({ date, communityWord }));
     return communityWord ?? undefined;
   }

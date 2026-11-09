@@ -30,7 +30,16 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, motion, pressedFade, space, typeStyle, wedges } from '../tokens';
+import {
+  fontScaleCap,
+  minTouchTarget,
+  motion,
+  pressedFade,
+  space,
+  typeStyle,
+  undoToast,
+  wedges,
+} from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotionKnown } from '../providers/useReduceMotion';
 import { Wedge } from './Wedge';
@@ -53,19 +62,8 @@ const FADE_IN = {
   easing: Easing.bezier(...motion.reduceMotion.easing),
   reduceMotion: ReduceMotion.Never,
 };
-/** Where the toast starts, in widths of the window, and how far it leans. */
-const START = { across: -1.2, lean: -12 };
 /** The share of its width the toast's right edge slants in by at the bottom. */
 const TAIL = '4%';
-/** The toast's red mark. */
-const MARK = { width: 12, height: 22 };
-/** The toast's undo button, from the design; its tap area is taller. */
-const UNDO_HEIGHT = 38;
-
-/** The message stops growing here, so the toast stays whole over what it covers. */
-const MESSAGE_MAX_FONT_SCALE = 1.3;
-/** The undo button's label stops growing here, so it never breaks a word. */
-const UNDO_MAX_FONT_SCALE = 1.3;
 
 /** What one undo toast says and what its undo button does. */
 export interface UndoToastContent {
@@ -209,8 +207,8 @@ function UndoToast({
     return {
       opacity: reduceMotion ? shown.value : 1,
       transform: [
-        { translateX: away * START.across * windowWidth },
-        { skewX: `${String(away * START.lean)}deg` },
+        { translateX: away * undoToast.start.across * windowWidth },
+        { skewX: `${String(away * undoToast.start.lean)}deg` },
       ],
     };
   });
@@ -265,12 +263,12 @@ export function ToastFace({
         height="100%"
         style={styles.tail}
       />
-      <Wedge points={wedges.band} color={colors.accent} {...MARK} />
+      <Wedge points={wedges.band} color={colors.accent} {...undoToast.mark} />
       <Text
         ref={messageRef}
         testID="undo-toast-message"
         {...voice}
-        maxFontSizeMultiplier={MESSAGE_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[styles.message, typeStyle('toast', tokens), { color: colors.background }]}
       >
         {message}
@@ -295,7 +293,7 @@ function UndoButton({ undoLabel, onUndo, onPress }: UndoToastContent & { onPress
         onUndo();
         onPress();
       }}
-      hitSlop={(minTouchTarget - UNDO_HEIGHT) / 2}
+      hitSlop={(minTouchTarget - undoToast.undoHeight) / 2}
       style={({ pressed }) => [
         styles.undo,
         {
@@ -306,7 +304,7 @@ function UndoButton({ undoLabel, onUndo, onPress }: UndoToastContent & { onPress
       ]}
     >
       <Text
-        maxFontSizeMultiplier={UNDO_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[typeStyle('toastAction', tokens), { color: key.ink }]}
       >
         {undoLabel}
@@ -342,7 +340,7 @@ const styles = StyleSheet.create({
   tail: { position: 'absolute', top: 0, right: 0 },
   message: { flex: 1 },
   undo: {
-    height: UNDO_HEIGHT,
+    height: undoToast.undoHeight,
     paddingLeft: space[3],
     paddingRight: space[4] + 2,
     alignItems: 'center',

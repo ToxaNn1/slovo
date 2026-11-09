@@ -157,7 +157,7 @@ async function listOf(records: Map<string, string>) {
         word('w_oldword', { lemma: 'стародавній', stress: [6], retired: true }),
       ],
     }),
-    edition: { locale: 'uk-UA', isFeatureEnabled: () => true },
+    edition: { locale: 'uk-UA', isFeatureEnabled: () => true, illustrations: new Set() },
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: fakeClock('2026-10-27T09:00:00+02:00').clock,
   });

@@ -23,7 +23,7 @@ import { SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { space, typeStyle } from '../tokens';
+import { gesturesHint, space, typeStyle } from '../tokens';
 
 /** A row of the sheet: what one gesture does. */
 interface HintRow {
@@ -44,13 +44,6 @@ type Gesture = (typeof gestures)[number];
 
 /** One gesture of the demo, as on board 04 (2.8 s each). */
 const GESTURE_MS = 2800;
-/** How far the finger travels over the card. */
-const FINGER_TRAVEL = 118;
-const FINGER_SIZE = 52;
-const FINGER_RING = 8;
-const KEY_SIZE = 40;
-const KEY_RADIUS = 11;
-const KEY_BORDER = 2;
 
 /**
  * The «ГОРТАЙ ПАЛЬЦЕМ» sheet the Feed shows once (board 04): its title, a row
@@ -205,7 +198,11 @@ function GestureKey({ gesture }: { gesture: Gesture }) {
       style={[
         styles.key,
         cream
-          ? { backgroundColor: key.background, borderColor: key.ink, borderWidth: KEY_BORDER }
+          ? {
+              backgroundColor: key.background,
+              borderColor: key.ink,
+              borderWidth: gesturesHint.keyBorder,
+            }
           : { backgroundColor: key.ink },
       ]}
     >
@@ -222,7 +219,7 @@ function Finger({ progress, testID }: { progress: SharedValue<number>; testID: s
   const style = useAnimatedStyle(() => {
     const index = Math.min(Math.floor(progress.value), gestures.length - 1);
     const t = through(progress.value, index);
-    const travel = interpolate(t, [0.2, 0.56], [0, FINGER_TRAVEL], Extrapolation.CLAMP);
+    const travel = interpolate(t, [0.2, 0.56], [0, gesturesHint.fingerTravel], Extrapolation.CLAMP);
     return {
       opacity: interpolate(t, [0, 0.08, 0.2, 0.8, 0.92], [0, 0, 1, 1, 0], Extrapolation.CLAMP),
       transform: [
@@ -253,9 +250,9 @@ const styles = StyleSheet.create({
   },
   rowText: { flex: 1, gap: space[1] },
   key: {
-    width: KEY_SIZE,
-    height: KEY_SIZE,
-    borderRadius: KEY_RADIUS,
+    width: gesturesHint.keySize,
+    height: gesturesHint.keySize,
+    borderRadius: gesturesHint.keyRadius,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -266,20 +263,20 @@ const styles = StyleSheet.create({
     paddingTop: '33%',
   },
   finger: {
-    width: FINGER_SIZE + 2 * FINGER_RING,
-    height: FINGER_SIZE + 2 * FINGER_RING,
+    width: gesturesHint.fingerSize + 2 * gesturesHint.fingerRing,
+    height: gesturesHint.fingerSize + 2 * gesturesHint.fingerRing,
     alignItems: 'center',
     justifyContent: 'center',
   },
   fingerRing: {
     ...StyleSheet.absoluteFill,
-    borderRadius: FINGER_SIZE / 2 + FINGER_RING,
+    borderRadius: gesturesHint.fingerSize / 2 + gesturesHint.fingerRing,
     opacity: 0.28,
   },
   fingerTip: {
-    width: FINGER_SIZE,
-    height: FINGER_SIZE,
-    borderRadius: FINGER_SIZE / 2,
+    width: gesturesHint.fingerSize,
+    height: gesturesHint.fingerSize,
+    borderRadius: gesturesHint.fingerSize / 2,
     opacity: 0.92,
   },
 });

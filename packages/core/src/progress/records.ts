@@ -1,7 +1,12 @@
 import { DailyGoalSchema, RaritySchema } from '@slovo/contracts';
 import { z } from 'zod';
 
-import { declareRecord, declareRecords, InstantSchema } from '../user-state/user-state-record';
+import {
+  declareRecord,
+  declareRecords,
+  InstantSchema,
+  LocalDateKeySchema,
+} from '../user-state/user-state-record';
 
 /** The most days a Break lasts (ADR 0066). */
 export const BREAK_DAYS_AT_MOST = 7;
@@ -29,7 +34,7 @@ export const XpSourceSchema = z.literal([
 const XpRecordSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('xp'),
-    date: z.string(),
+    date: LocalDateKeySchema,
     at: InstantSchema,
     source: XpSourceSchema,
     amount: z.number().int().positive(),
@@ -45,10 +50,10 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
     /** Whether a Daily Crossword solve used the Crossword Hint (ADR 0087); left out, no hint. */
     hinted: z.boolean().optional(),
   }),
-  z.object({ kind: z.literal('freeze'), date: z.string(), at: InstantSchema }),
+  z.object({ kind: z.literal('freeze'), date: LocalDateKeySchema, at: InstantSchema }),
   z.object({
     kind: z.literal('break'),
-    date: z.string(),
+    date: LocalDateKeySchema,
     at: InstantSchema,
     /** The length in days, 1 to 7 (ADR 0066): a longer record, from Sync or storage, is dropped. */
     days: z.number().int().min(1).max(BREAK_DAYS_AT_MOST),
@@ -59,31 +64,36 @@ const XpRecordSchema = z.discriminatedUnion('kind', [
    */
   z.object({
     kind: z.literal('daily-goal'),
-    date: z.string(),
+    date: LocalDateKeySchema,
     at: InstantSchema,
     goal: z.number(),
   }),
   /** The Daily Goal in Words set from a local day on, or `null` where «Без цілі» turned it off (ADR 0074). */
   z.object({
     kind: z.literal('word-goal'),
-    date: z.string(),
+    date: LocalDateKeySchema,
     at: InstantSchema,
     goal: DailyGoalSchema.nullable(),
   }),
   /** The day's Seen Words reached its Daily Goal; one per local date by its id (ADR 0074). */
-  z.object({ kind: z.literal('goal-met'), date: z.string(), at: InstantSchema }),
-  z.object({ kind: z.literal('badge'), date: z.string(), at: InstantSchema, badge: z.string() }),
+  z.object({ kind: z.literal('goal-met'), date: LocalDateKeySchema, at: InstantSchema }),
+  z.object({
+    kind: z.literal('badge'),
+    date: LocalDateKeySchema,
+    at: InstantSchema,
+    badge: z.string(),
+  }),
   /** The reader opened an earned Badge's sheet or stamp, which ends its «НОВА» mark; one per Badge by its id (ADR 0085). */
   z.object({
     kind: z.literal('badge-opened'),
-    date: z.string(),
+    date: LocalDateKeySchema,
     at: InstantSchema,
     badge: z.string(),
   }),
   /** A Game Round answered wrong in its Game Mode, which earns no XP and breaks a run of right answers (ADR 0085). */
   z.object({
     kind: z.literal('wrong-answer'),
-    date: z.string(),
+    date: LocalDateKeySchema,
     at: InstantSchema,
     mode: z.string(),
   }),
@@ -111,7 +121,7 @@ export const progressRecords = {
    * that break is emitted, so a later app run emits it no more. Without it, no
    * break is reported yet. It stays on the device, like the events.
    */
-  streakBrokenReported: declareRecord('progress.streakBrokenReported', z.string(), {
+  streakBrokenReported: declareRecord('progress.streakBrokenReported', LocalDateKeySchema, {
     sync: 'device-only',
   }),
 };

@@ -136,12 +136,20 @@ export const userStateRecords = {
   ...syncRecords,
   ...communityCounterRecords,
   ...mistakeReportRecords,
+  ...moodRecords,
+  ...dashboardRecords,
 };
 
 /** Every declared record and kind of record, for finding the one a key belongs to. */
 const declared: readonly Declaration[] = domains.flatMap(
   (domain: Readonly<Record<string, Declaration>>) => Object.values(domain),
 );
+
+// Every record a domain declares is a fact the user state keeps by name.
+const named = new Set<Declaration>(Object.values(userStateRecords));
+if (declared.some((declaration) => !named.has(declaration))) {
+  throw new Error('A domain’s record is missing from userStateRecords.');
+}
 
 /**
  * How the record under the key syncs, by the schema: its mark,

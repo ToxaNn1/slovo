@@ -138,6 +138,17 @@ describe('Analytics', () => {
     ]);
   });
 
+  it('sends a setting changed only for a value that changed', async () => {
+    const { settings, events } = await run();
+    const { theme } = await settings.read();
+
+    await settings.update({ theme });
+    await settings.update({ theme: 'dark', vibration: (await settings.read()).vibration });
+    await settings.update({ theme: 'dark' });
+
+    expect(events).toEqual([['settingChanged', { setting: 'theme', value: 'dark' }]]);
+  });
+
   it('sends each notification opened with its kind, and nothing while sharing is off', async () => {
     const { app, settings, events } = await run();
 

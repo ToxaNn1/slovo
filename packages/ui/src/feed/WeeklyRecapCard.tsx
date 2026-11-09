@@ -4,11 +4,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { noticeCard, typeStyle } from '../tokens';
+import { fontScaleCap, noticeCard, typeStyle } from '../tokens';
 import { FeedNoticeCard } from './FeedNoticeCard';
-
-/** How far a number grows with the text size, so four of them still fit the card. */
-const NUMBER_MAX_FONT_SCALE = 1.5;
 
 /**
  * The Weekly Recap card «Твій тиждень» in the Feed Notice frame: the past
@@ -126,7 +123,7 @@ function RecapNumber({
       ]}
     >
       <Text
-        maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('recapNumber', tokens), { color: ink }]}
       >
         {value}

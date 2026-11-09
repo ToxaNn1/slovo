@@ -16,7 +16,7 @@ export {
 } from './build';
 export { formatBuildError, type BuildError } from './build-error';
 export { generateDailyCrossword, type CrosswordResult } from './crossword';
-export { missedTargets, rarityFloor, wordFloor } from './content-targets';
+export { missedTargets, wordsPerRarityFloor, wordFloor } from './content-targets';
 export type { ContentTarget, ContentTargets, MissedTarget } from './content-targets';
 export { PACK_FORMAT } from './pack-layout';
 export { applyPatch, patchStateOf, type PackWriteDatabase } from './apply-patch';

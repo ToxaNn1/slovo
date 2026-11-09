@@ -68,15 +68,13 @@ export function CorrectionTypeRow({
           <Text {...voice} style={[typeStyle('railLabel', tokens), { color: keyInk }]}>
             {card.standard}
           </Text>
-          {main !== undefined && (
-            <Text
-              {...voice}
-              accessibilityLabel={withoutStress(main)}
-              style={[typeStyle('railStandard', tokens), { color: keyInk }]}
-            >
-              {main}
-            </Text>
-          )}
+          <Text
+            {...voice}
+            accessibilityLabel={withoutStress(main)}
+            style={[typeStyle('railStandard', tokens), { color: keyInk }]}
+          >
+            {main}
+          </Text>
           {others.length > 0 && (
             <Text {...voice} style={[typeStyle('railNote', tokens), { color: keyInk }]}>
               {fill(card.otherEquivalents, { equivalents: others.join(', ') })}

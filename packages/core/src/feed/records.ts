@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-import { declareRecord, declareRecords } from '../user-state/user-state-record';
+import { declareRecord, declareRecords, LocalDateKeySchema } from '../user-state/user-state-record';
 import { FEED_NOTICES, RETIRED_NOTICE, withoutRetired } from '../feed-notice';
 
 /** A card's Entry and the local date it was on screen. */
-const EntryOnDateSchema = z.object({ entryId: z.string(), date: z.string() });
+const EntryOnDateSchema = z.object({ entryId: z.string(), date: LocalDateKeySchema });
 
 /** The records of the Feed. The Cycle and the Word of the Day keep the `feed.` keys from 0.2, when the Feed held them. */
 export const feedRecords = {
@@ -25,7 +25,7 @@ export const feedRecords = {
   feedNoticesClosed: declareRecord(
     'feed.noticesClosed',
     z.object({
-      date: z.string(),
+      date: LocalDateKeySchema,
       notices: z.array(z.enum([...FEED_NOTICES, RETIRED_NOTICE])).transform(withoutRetired),
     }),
     { sync: 'device-only' },
@@ -45,9 +45,13 @@ export const feedRecords = {
    * comes on no third day (ADR 0066). It stays on the device, which has no
    * Account to sync it while the Notice comes.
    */
-  saveProgressOffered: declareRecord('feed.saveProgressOffered', z.array(z.string()).max(2), {
-    sync: 'device-only',
-  }),
+  saveProgressOffered: declareRecord(
+    'feed.saveProgressOffered',
+    z.array(LocalDateKeySchema).max(2),
+    {
+      sync: 'device-only',
+    },
+  ),
   /**
    * The Community Word the backend answered on the local date `date`, kept so
    * the week is read once a day; `null`, none (ADR 0060). It stays on the
@@ -56,7 +60,7 @@ export const feedRecords = {
   communityWord: declareRecord(
     'feed.communityWord',
     z.object({
-      date: z.string(),
+      date: LocalDateKeySchema,
       communityWord: z.object({ entryId: z.string(), adds: z.number() }).nullable(),
     }),
     { sync: 'device-only' },
@@ -75,9 +79,15 @@ export const feedRecords = {
    */
   seen: declareRecords('feed.seen.', z.number().int().positive()),
   /**
-   * The Word of the Day and the local date it belongs to. It stays on the
+   * The Word of the Day, the local date it belongs to and the Word of the Day
+   * of the date before it, so a Word chosen again that day is not the day
+   * before's; none in a record kept before it was there. It stays on the
    * device: it is the Word of the morning notification this device's own plan
    * Reserves (ADR 0021, 0022).
    */
-  wordOfTheDay: declareRecord('feed.wordOfTheDay', EntryOnDateSchema, { sync: 'device-only' }),
+  wordOfTheDay: declareRecord(
+    'feed.wordOfTheDay',
+    EntryOnDateSchema.extend({ dayBefore: z.string().optional() }),
+    { sync: 'device-only' },
+  ),
 };

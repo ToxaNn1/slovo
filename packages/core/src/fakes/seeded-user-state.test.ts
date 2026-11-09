@@ -25,6 +25,18 @@ describe('a seeded user state', () => {
     );
   });
 
+  it('holds the facts of every domain, Mood and the Dashboard among them', async () => {
+    const userState = await seedUserState({
+      checkIns: { '2026-10-27': { date: '2026-10-27', choice: 'calm' } },
+      correctionsWorkedThrough: { 'c-1': true },
+    });
+
+    expect(await readFact(userState, 'checkIns')).toEqual(
+      new Map([['2026-10-27', { date: '2026-10-27', choice: 'calm' }]]),
+    );
+    expect(await readFact(userState, 'correctionsWorkedThrough')).toEqual(new Map([['c-1', true]]));
+  });
+
   it('holds nothing it was not seeded with', async () => {
     const userState = await seedUserState();
 

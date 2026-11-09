@@ -56,6 +56,8 @@ export interface XpLogState {
 
 /** What the XP log holds by local date `YYYY-MM-DD`, for the Active Days and the Streak. */
 export interface XpLogDays {
+  /** The local date the log was last derived for as today: the date of `state`'s today, till the day change reaches it. */
+  readonly date: string;
   /** The XP earned on each local date that has any. */
   readonly byDate: ReadonlyMap<string, number>;
   /**
@@ -178,6 +180,13 @@ export interface XpLog {
    * calls nothing. Returns the call that stops it.
    */
   subscribeGoalMet(listener: () => void): () => void;
+  /**
+   * Calls `listener` once when a learning action reaches a new Level, with
+   * the Level reached: the celebration's trigger. A log opened over a Level
+   * already reached, as after a sync, calls nothing. Returns the call that
+   * stops it.
+   */
+  onLevelReached(listener: (level: LevelState) => void): () => void;
 }
 
 /** The award of an action that earns nothing: no change to write, nothing to make in memory. */
@@ -274,6 +283,7 @@ export async function openXpLog({
   }
   const subscribers = createSubscribers<XpLogChange>();
   const goalMetSubscribers = createSubscribers();
+  const levelReachedSubscribers = createSubscribers<LevelState>();
   /** Tells the records of one session apart when the clock and the random source stand still. */
   let sequence = 0;
 
@@ -369,9 +379,13 @@ export async function openXpLog({
 
   function dayOf(date: string): XpDay {
     const { count } = counter();
-    const ofDay = [...records.values()]
-      .filter((record) => record.date === date)
-      .sort((one, other) => (one.at < other.at ? -1 : 1));
+    // By instant, then by id, so records at one instant read the same on every device.
+    const ofDay = [...records]
+      .filter(([, record]) => record.date === date)
+      .sort(([oneId, one], [otherId, other]) =>
+        one.at === other.at ? (oneId < otherId ? -1 : 1) : one.at < other.at ? -1 : 1,
+      )
+      .map(([, record]) => record);
     const dailyGoal =
       goalOn && date < todayKey(clock) && !wordGoalSetBy(date)
         ? (xpGoalOf(date, ofDay, counter().count) ?? null)
@@ -398,7 +412,6 @@ export async function openXpLog({
   }
 
   function derive(): XpLogDays & {
-    date: string;
     state: XpLogState;
     reviewToday: number;
     /** Today's Seen-Word records counted toward today's goal. */
@@ -505,11 +518,15 @@ export async function openXpLog({
     const before = derived.state.level?.level;
     derived = derive();
     const { state } = derived;
-    const after = state.level?.level;
-    if (before !== undefined && after !== undefined && after > before) {
-      void analytics.track('levelReached', { level: after }).catch(() => undefined);
+    const reached =
+      before !== undefined && state.level !== undefined && state.level.level > before
+        ? state.level
+        : undefined;
+    if (reached !== undefined) {
+      void analytics.track('levelReached', { level: reached.level }).catch(() => undefined);
     }
     subscribers.tell(cause);
+    if (reached !== undefined) levelReachedSubscribers.tell(reached);
     if (state.dailyGoal?.met === true && !wasMet && derived.date === previousDate) {
       // Met by setting the goal, today is met but nothing celebrates.
       if (cause !== 'daily-goal-set') goalMetSubscribers.tell();
@@ -800,5 +817,6 @@ export async function openXpLog({
     dayOf,
     setDailyGoal,
     subscribeGoalMet: goalMetSubscribers.subscribe,
+    onLevelReached: levelReachedSubscribers.subscribe,
   };
 }

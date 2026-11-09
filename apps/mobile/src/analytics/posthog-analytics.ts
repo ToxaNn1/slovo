@@ -8,30 +8,34 @@ export type PostHogClient = Pick<
 >;
 
 /** PostHog's project in the EU (ADR 0068). */
-export const POSTHOG_EU_HOST = 'https://eu.i.posthog.com';
+const POSTHOG_EU_HOST = 'https://eu.i.posthog.com';
+
+/** What the adapter uses of PostHog's SDK: its client's constructor. */
+export interface PostHogSdk {
+  readonly PostHog: new (apiKey: string, options: PostHogOptions) => PostHogClient;
+}
 
 /**
- * The client's options: the EU host, with no session
- * recording, no lifecycle or screen autocapture, no surveys, no preloaded feature flags
- * and no location from the IP address. Each event is sent at once, so
- * nothing waits in a queue.
+ * PostHog's client, made when the first event is sent: the EU host, with no
+ * session recording, no lifecycle or screen autocapture, no surveys, no
+ * preloaded feature flags and no location from the IP address. Each event is
+ * sent at once, so nothing waits in a queue.
  */
-export const postHogOptions: PostHogOptions = {
-  host: POSTHOG_EU_HOST,
-  enableSessionReplay: false,
-  captureAppLifecycleEvents: false,
-  disableSurveys: true,
-  preloadFeatureFlags: false,
-  disableGeoip: true,
-  flushAt: 1,
-};
-
-/** PostHog's client, loaded only when the first event is sent. */
-function createPostHog(apiKey: string): PostHogClient {
+export function createPostHog(
+  apiKey: string,
   // A plain require, so a build without a key, or a reader who never shares, never runs the SDK.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const sdk = require('posthog-react-native') as typeof import('posthog-react-native');
-  return new sdk.PostHog(apiKey, postHogOptions);
+  sdk: PostHogSdk = require('posthog-react-native') as typeof import('posthog-react-native'),
+): PostHogClient {
+  return new sdk.PostHog(apiKey, {
+    host: POSTHOG_EU_HOST,
+    enableSessionReplay: false,
+    captureAppLifecycleEvents: false,
+    disableSurveys: true,
+    preloadFeatureFlags: false,
+    disableGeoip: true,
+    flushAt: 1,
+  });
 }
 
 /** A questionnaire answer as a person property of the reader: `questionnaire_<question>`. */

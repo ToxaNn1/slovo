@@ -4,10 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, reviewMark, rowPadding, space, typeStyle } from '../tokens';
-
-/** How far the largest text sizes of iOS may scale the rows' text, so it never breaks a word. */
-const TEXT_MAX_FONT_SCALE = 1.5;
+import { fontScaleCap, minTouchTarget, reviewMark, rowPadding, space, typeStyle } from '../tokens';
 
 /**
  * The Game Review under the result: every Round of the Game just over, in
@@ -40,7 +37,7 @@ export function GameReview({
     <View testID="game-review" style={styles.review}>
       <Text
         accessibilityRole="header"
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         {...voice}
         style={[typeStyle('reviewTitle', tokens), styles.title, { color: colors.ink }]}
       >
@@ -109,7 +106,7 @@ function ReviewRow({
           style={[styles.mark, { backgroundColor: right ? colors.accent : colors.ink }]}
         >
           <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.text}
             style={[typeStyle('reviewMark', tokens), { color: right ? keyInk : colors.background }]}
           >
             {right ? '✓' : '✗'}
@@ -117,14 +114,14 @@ function ReviewRow({
         </View>
         <View style={styles.text}>
           <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.text}
             style={[typeStyle('reviewWord', tokens), { color: colors.ink }]}
           >
             {withAnswer(title.text)}
           </Text>
           {picked === undefined ? null : (
             <Text
-              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.text}
               style={[typeStyle('reviewPicked', tokens), { color: colors.wrong }]}
             >
               {picked}
@@ -153,16 +150,16 @@ function ReviewDetails({
   if (details.kind === 'correction') {
     return (
       <View testID="game-review-details" {...voice} style={styles.details}>
-        <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={heading}>
+        <Text maxFontSizeMultiplier={fontScaleCap.text} style={heading}>
           {strings.correctionCard.standard}
         </Text>
         <Text
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.text}
           style={[typeStyle('reviewForm', tokens), { color: colors.ink }]}
         >
           {details.standardForm}
         </Text>
-        <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
+        <Text maxFontSizeMultiplier={fontScaleCap.text} style={body}>
           {details.explanation}
         </Text>
       </View>
@@ -171,7 +168,7 @@ function ReviewDetails({
   if (details.kind === 'tip') {
     return (
       <View testID="game-review-details" {...voice} style={styles.details}>
-        <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
+        <Text maxFontSizeMultiplier={fontScaleCap.text} style={body}>
           {details.explanation}
         </Text>
       </View>
@@ -180,7 +177,7 @@ function ReviewDetails({
   if (details.kind === 'synonymRow') {
     return (
       <View testID="game-review-details" {...voice} style={styles.details}>
-        <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
+        <Text maxFontSizeMultiplier={fontScaleCap.text} style={body}>
           {details.members.map(({ text }) => text).join(', ')}
         </Text>
       </View>
@@ -192,20 +189,20 @@ function ReviewDetails({
       {details.kind === 'word' && Pronunciation !== undefined ? (
         <Pronunciation lemma={details.lemma} entryId={entryId} />
       ) : null}
-      <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
+      <Text maxFontSizeMultiplier={fontScaleCap.text} style={body}>
         {definition}
       </Text>
       {example === undefined ? null : (
         <View>
           <Text
-            maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.text}
             style={[body, styles.example, { color: colors.ink }]}
           >
             {fill(strings.wordCard.example, { text: example.text })}
           </Text>
           {example.author === undefined ? null : (
             <Text
-              maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+              maxFontSizeMultiplier={fontScaleCap.text}
               style={[typeStyle('meta', tokens), styles.author, { color: colors.muted }]}
             >
               {fill(strings.wordCard.exampleAuthor, { author: example.author })}
@@ -215,10 +212,10 @@ function ReviewDetails({
       )}
       {etymology === undefined ? null : (
         <View>
-          <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={heading}>
+          <Text maxFontSizeMultiplier={fontScaleCap.text} style={heading}>
             {details.kind === 'idiom' ? strings.idiomCard.etymology : strings.wordCard.etymology}
           </Text>
-          <Text maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE} style={body}>
+          <Text maxFontSizeMultiplier={fontScaleCap.text} style={body}>
             {etymology}
           </Text>
         </View>

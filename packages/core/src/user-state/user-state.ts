@@ -46,8 +46,8 @@ export async function openUserState({
     }
   });
   const record = await port.get(SCHEMA_VERSION_KEY);
-  const stored = record === undefined ? 0 : Number(record);
-  if (!Number.isSafeInteger(stored) || stored < 0) {
+  const stored = record === undefined ? 0 : /^\d+$/.test(record) ? Number(record) : Number.NaN;
+  if (!Number.isSafeInteger(stored)) {
     throw new Error(`The user state has an unreadable schema version "${String(record)}".`);
   }
   if (stored > migrations.length) {

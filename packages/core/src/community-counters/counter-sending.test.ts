@@ -4,6 +4,7 @@ import { createSettings, openComposition, openCounterSending, type FeatureSwitch
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, testSchedule, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { userStateRecords } from '../user-state-schema';
 
 /** Long enough for every wait between the tries of one request (ADR 0037). */
 const ALL_TRIES = 10_000;
@@ -53,6 +54,7 @@ async function device() {
   return {
     app,
     api,
+    userState,
     settings,
     sending,
     switchedOff,
@@ -151,6 +153,26 @@ describe('sending the Community Counters', () => {
       [{ entryId: 'w_000', known: -1, unknown: 0, saved: 0 }],
     ]);
     expect(await phone.unsent()).toEqual([]);
+  });
+
+  it('forgets an unsent change that taking off what was sent leaves out of range', async () => {
+    const phone = await device();
+    await phone.app.knowledge.tap('w_000', 'known');
+    phone.api.failNext('server-error');
+
+    phone.sending.foreground();
+    await phone.advance(0);
+    await phone.userState.write(
+      userStateRecords.countersUnsent.record('w_000').change({ known: -1, unknown: 0, saved: 0 }),
+    );
+    await phone.advance(ALL_TRIES);
+    expect(phone.api.counters.sent).toEqual([
+      [{ entryId: 'w_000', known: 1, unknown: 0, saved: 0 }],
+    ]);
+    expect(await phone.unsent()).toEqual([]);
+
+    await phone.foreground();
+    expect(phone.api.counters.sent).toHaveLength(1);
   });
 
   it('waits for Retry-After after too many requests', async () => {

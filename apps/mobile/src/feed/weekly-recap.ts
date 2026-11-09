@@ -1,4 +1,4 @@
-import type { LocalDate, WeeklyRecapModel } from '@slovo/core';
+import { dateKeyOf, parseLocalDate, type LocalDate, type WeeklyRecapModel } from '@slovo/core';
 import { useEffect, useState } from 'react';
 
 import { useComposition } from '../composition';
@@ -10,12 +10,14 @@ import { logError } from '../diagnostics/log';
  */
 export function useWeeklyRecap(day: LocalDate): WeeklyRecapModel | undefined {
   const { weeklyRecap } = useComposition();
-  const [recap, setRecap] = useState<{ of: LocalDate; model: WeeklyRecapModel | undefined }>();
+  // Keyed on the date, not the object: a new object of the same day reads nothing again.
+  const key = dateKeyOf(day);
+  const [recap, setRecap] = useState<{ of: string; model: WeeklyRecapModel | undefined }>();
   useEffect(() => {
     let active = true;
-    weeklyRecap.of(day).then(
+    weeklyRecap.of(parseLocalDate(key)).then(
       (model) => {
-        if (active) setRecap({ of: day, model });
+        if (active) setRecap({ of: key, model });
       },
       (error: unknown) => {
         logError('Could not read the Weekly Recap', error);
@@ -24,6 +26,6 @@ export function useWeeklyRecap(day: LocalDate): WeeklyRecapModel | undefined {
     return () => {
       active = false;
     };
-  }, [weeklyRecap, day]);
-  return recap?.of === day ? recap.model : undefined;
+  }, [weeklyRecap, key]);
+  return recap?.of === key ? recap.model : undefined;
 }

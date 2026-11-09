@@ -69,6 +69,9 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
     if (moment === 'launch' || moment === 'return') void opened.analytics.sessionStarted();
     if (moment === 'background') void opened.analytics.sessionEnded();
   });
+  function logSwitchesError(error: unknown) {
+    logError('Could not follow the remote Feature Switches', error);
+  }
   /** Reopens what read the old switches once an ask changed an effective value. */
   async function reopenForSwitches() {
     await composition.reopen();
@@ -81,13 +84,15 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   reports.listen(remoteSwitches, (switches, moment) => {
     if (moment === 'background') stopAsking();
     if (moment !== 'launch' && moment !== 'return') return;
-    // Neither the ask nor a reopen rejects.
-    void switches.ask().then(async (changed) => {
-      if (changed) await reopenForSwitches();
-    });
+    switches
+      .ask()
+      .then(async (changed) => {
+        if (changed) await reopenForSwitches();
+      })
+      .catch(logSwitchesError);
     stopAsking();
     stopAsking = switches.start(() => {
-      void reopenForSwitches();
+      reopenForSwitches().catch(logSwitchesError);
     });
   });
   const stopSpotlight = handOverSpotlight({

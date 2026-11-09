@@ -31,6 +31,7 @@ const word: EntryRowModel = {
   labelKey: 'word',
   spoken: 'river, what river means',
   partOfSpeech: 'noun',
+  gender: undefined,
   registers: [],
   rarity: 3,
 };

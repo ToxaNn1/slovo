@@ -8,6 +8,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { EDITIONS_DIR, openEdition } from '@slovo/language-pack/edition';
 import { PoliteClient } from '@slovo/sourcing';
 
+import { verifyEntries } from './verify';
+
 const toolDir = fileURLToPath(new URL('../', import.meta.url));
 const ukrainian = openEdition(EDITIONS_DIR, 'uk');
 const categoryId = ukrainian.config.categories[0]?.id ?? '';
@@ -168,14 +170,36 @@ describe('verify', () => {
     expect(verify([file]).lines).toEqual([`ok\tw_vrf004\t${file}`, '1 ok']);
   });
 
-  it('fails an Entry whose page could not be fetched', async () => {
-    await seed({ [`${GOROH}перевірка005`]: { status: 404, body: 'Not found' } });
+  it('fails an Entry whose page could not be fetched, and asks again on a re-run', async () => {
     const file = writeEntry(word('w_vrf005', definition, `${GOROH}перевірка005`));
+    const answers = [
+      { status: 404, body: 'Not found' },
+      { status: 200, body: gorohPage([SUM, definition]) },
+    ];
+    const run = async () => {
+      const lines: string[] = [];
+      const status = await verifyEntries({
+        edition: openEdition(join(workDir, 'editions'), 'uk'),
+        targets: { kind: 'named', names: [file] },
+        bookFile: undefined,
+        client: new PoliteClient(
+          () => Promise.resolve(answers.shift() ?? { status: 500, body: '' }),
+          { now: () => 0, sleep: () => Promise.resolve() },
+          cacheDir,
+          0,
+        ),
+        cwd: editionDir,
+        print: (line) => lines.push(line),
+        problem: (line) => lines.push(line),
+      });
+      return { status, lines };
+    };
 
-    const run = verify([file]);
-
-    expect(run.lines).toEqual([`fetch-failed\tw_vrf005\t${file}\tHTTP 404`, '1 fetch-failed']);
-    expect(run.status).toBe(1);
+    expect(await run()).toEqual({
+      status: 1,
+      lines: [`fetch-failed\tw_vrf005\t${file}\tHTTP 404`, '1 fetch-failed'],
+    });
+    expect(await run()).toEqual({ status: 0, lines: [`ok\tw_vrf005\t${file}`, '1 ok'] });
   });
 
   it('picks Entries by id', async () => {

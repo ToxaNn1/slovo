@@ -11,7 +11,7 @@ import type { UserStateRecords } from '../user-state/user-state-record';
  */
 
 /** An Entry in the list: its id, the time it went in under the list's own name, and its row. */
-export type ListedEntry<TimeKey extends string> = {
+type ListedEntry<TimeKey extends string> = {
   readonly entryId: string;
   /** What its row in a list shows. */
   readonly row: EntryRowModel;

@@ -289,6 +289,55 @@ describe('the Word of the Day', () => {
     expect(evening.wordOfTheDay.chosen()?.wordId).toBe(today?.wordId);
   });
 
+  it("is not the day before's Word when chosen again the same day, in the same run", async () => {
+    const records = new Map<string, string>();
+    const dayBefore = await (await open({ records })).wordOfTheDay.today();
+    const words = [...wordIds];
+    const nextDay = await open({
+      records,
+      clock: fakeClock('2026-10-12T09:00:00+03:00').clock,
+      words,
+    });
+    const first = await nextDay.wordOfTheDay.today();
+    // Today's Word is Hidden since: the Cycle no longer covers it.
+    words.splice(words.indexOf(first?.wordId ?? ''), 1);
+    await nextDay.cycle.readEligibleAgain();
+
+    const today = await nextDay.wordOfTheDay.today();
+
+    expect(dayBefore?.wordId).toBe(nextDay.cycle.unseen().words[0]);
+    expect(today?.wordId).not.toBe(first?.wordId);
+    expect(today?.wordId).not.toBe(dayBefore?.wordId);
+  });
+
+  it("is not the day before's Word when chosen again the same day, after a restart", async () => {
+    const records = new Map<string, string>();
+    const dayBefore = await (await open({ records })).wordOfTheDay.today();
+    const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
+    const first = await (await open({ records, clock: nextDay })).wordOfTheDay.today();
+
+    const { cycle, wordOfTheDay } = await open({
+      records,
+      clock: nextDay,
+      words: wordIds.filter((id) => id !== first?.wordId),
+    });
+    const today = await wordOfTheDay.today();
+
+    expect(dayBefore?.wordId).toBe(cycle.unseen().words[0]);
+    expect(today?.wordId).not.toBe(first?.wordId);
+    expect(today?.wordId).not.toBe(dayBefore?.wordId);
+  });
+
+  it('reads a stored record whose date is not a local date as no record', async () => {
+    const records = new Map<string, string>();
+    const firstUnseen = (await open({ records })).cycle.unseen().words[0] ?? '';
+    records.set('feed.wordOfTheDay', JSON.stringify({ entryId: firstUnseen, date: 'garbage' }));
+
+    const today = await (await open({ records })).wordOfTheDay.today();
+
+    expect(today?.wordId).toBe(firstUnseen);
+  });
+
   it('takes no Word without a morning notification, and starts no Cycle though every Word is Seen', async () => {
     const records = new Map(wordIds.map((id) => [`feed.seen.${id}`, '1']));
     const allSeen = await open({ records });

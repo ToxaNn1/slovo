@@ -130,7 +130,7 @@ const STRINGS = {
 const entries = (content: Parameters<typeof createMemoryContentPort>[0] = {}) =>
   createEntries({
     content: createMemoryContentPort(content),
-    edition: { isFeatureEnabled: () => true },
+    edition: { isFeatureEnabled: () => true, illustrations: new Set() },
     choices: EVERYTHING_IN,
   });
 

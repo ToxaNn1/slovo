@@ -79,6 +79,7 @@ const row: EntryRowModel = {
   labelKey: 'word',
   spoken: 'catalog, A list of things.',
   partOfSpeech: 'noun',
+  gender: undefined,
   registers: [],
   rarity: 3,
 };

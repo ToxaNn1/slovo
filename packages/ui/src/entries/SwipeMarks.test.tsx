@@ -85,7 +85,7 @@ const correction: EntryFeedCard = {
   },
 };
 
-/** A place name, the Idiom card «Черкаси» is in the Ukrainian Edition. */
+/** A place name, the Idiom card «Черкаси» is in the UA Edition. */
 const placeName: EntryFeedCard = {
   kind: 'idiom',
   entryId: 'c1',

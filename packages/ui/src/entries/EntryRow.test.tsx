@@ -16,6 +16,7 @@ const row: EntryRowModel = {
   labelKey: 'word',
   spoken: 'lemma, what it means',
   partOfSpeech: 'adjective',
+  gender: undefined,
   registers: [],
   rarity: 3,
 };

@@ -128,7 +128,7 @@ const modelOf = (app: Composition) =>
     strings,
   });
 
-/** The Ukrainian Edition with the feature turned off. */
+/** The UA Edition with the feature turned off. */
 const without = (feature: string): Edition => ({
   ...ukrainian,
   isFeatureEnabled: (each) => each !== feature && ukrainian.isFeatureEnabled(each),

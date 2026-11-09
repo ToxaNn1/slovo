@@ -1,4 +1,4 @@
-import type { HistoryEntry } from '@slovo/core';
+import { dateKeyOf, todayDate, type HistoryEntry } from '@slovo/core';
 import { useEdition } from '@slovo/ui';
 import { useIsFocused } from 'expo-router';
 import { useMemo } from 'react';
@@ -50,12 +50,20 @@ function useHistoryText() {
 
 /**
  * The sections of the History screen: the Entries in History under the day
- * they were Seen on the device's clock, kept up to date.
+ * they were Seen on the device's clock, kept up to date. Today's local day is
+ * read on each render, focus included, so a screen that comes back on a new
+ * day heads yesterday's Entries «Учора».
  */
 export function useHistorySections(): readonly HistorySection[] {
   const list = useHistoryList();
   const text = useHistoryText();
-  return useMemo(() => historySections({ history: list, text, clock: deviceClock }), [list, text]);
+  const today = dateKeyOf(todayDate(deviceClock));
+  // The sections carry the day they were built on, so a new local day builds them again.
+  const built = useMemo(
+    () => ({ today, sections: historySections({ history: list, text, clock: deviceClock }) }),
+    [list, text, today],
+  );
+  return built.sections;
 }
 
 /** How many Entries History holds, kept up to date. */

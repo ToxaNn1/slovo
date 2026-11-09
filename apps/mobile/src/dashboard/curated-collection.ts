@@ -32,10 +32,15 @@ export function useCuratedCollectionScreen(collectionId: string): CuratedCollect
   const [read, setRead] = useState<{ in: Composition; id: string; screen: Screen | null }>();
   useEffect(() => {
     let active = true;
+    // Only the latest read is shown: an earlier one that ends after it is dropped.
+    let latest = 0;
     const reread = () => {
+      latest += 1;
+      const mine = latest;
       curatedCollections.screen(collectionId).then(
         (screen) => {
-          if (active) setRead({ in: composition, id: collectionId, screen: screen ?? null });
+          if (active && mine === latest)
+            setRead({ in: composition, id: collectionId, screen: screen ?? null });
         },
         (error: unknown) => {
           logError('Could not read a Curated Collection', error);

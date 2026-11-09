@@ -62,7 +62,7 @@ export interface OpenedEntry {
 }
 
 /** The subjects the day change publishes; it is their only publisher. */
-export interface DaySubjects {
+interface DaySubjects {
   /** A new local day started and its morning Word is taken; nothing of the day is written yet. */
   dayStarted: Pick<Subject<LocalDate>, 'publish'>;
   /** A notification or the widget opened an Entry; the write that keeps it is awaited. */

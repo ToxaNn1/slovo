@@ -2,7 +2,7 @@ import type { FontSize } from '@slovo/contracts';
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
 import { useWindowDimensions } from 'react-native';
 
-import { fontSizeSteps } from '../tokens';
+import { compactWidth, fontSizeSteps, wordLineHeight } from '../tokens';
 
 /** A font size and the line height that goes with it. */
 export interface TextSize {
@@ -22,18 +22,14 @@ export interface WordTextSizes {
   readonly example: TextSize;
 }
 
-// Room above the glyphs so the Stress mark over a capital or tall vowel isn't clipped.
-const LEMMA_LINE_HEIGHT = 1.3;
-const BODY_LINE_HEIGHT = 1.5;
-
 /** The type sizes of a font-size step, from the one table in `fontSizeSteps`. */
 function wordTextSizes(step: FontSize): WordTextSizes {
   const { lemma, definition, example } = fontSizeSteps[step];
   return {
     step,
-    lemma: { fontSize: lemma, lineHeight: lemma * LEMMA_LINE_HEIGHT },
-    definition: { fontSize: definition, lineHeight: definition * BODY_LINE_HEIGHT },
-    example: { fontSize: example, lineHeight: example * BODY_LINE_HEIGHT },
+    lemma: { fontSize: lemma, lineHeight: lemma * wordLineHeight.lemma },
+    definition: { fontSize: definition, lineHeight: definition * wordLineHeight.body },
+    example: { fontSize: example, lineHeight: example * wordLineHeight.body },
   };
 }
 
@@ -56,15 +52,12 @@ export function useWordTextSizes(): WordTextSizes {
   return useContext(FontSizeContext);
 }
 
-/** Below this window width the cards take the design's compact iPhone SE layout. */
-const COMPACT_WIDTH = 390;
-
 /** On the SE the Lemma drops from 48 to 44 at M, whatever the step. */
 const COMPACT_LEMMA = 44 / 48;
 
 /** Whether the window is narrow enough for the compact layout. */
 export function useCompactLayout(): boolean {
-  return useWindowDimensions().width < COMPACT_WIDTH;
+  return useWindowDimensions().width < compactWidth;
 }
 
 /**

@@ -11,6 +11,7 @@ import {
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { sourceIdioms, type Fetch, type IdiomSourcingOptions, type SourcingResult } from './index';
 import { seededRandom } from './test-support';
@@ -88,10 +89,13 @@ function run(idiomList: string, overrides: Partial<IdiomSourcingOptions> = {}) {
   return { outDir: options.outDir, result: sourceIdioms(options) };
 }
 
+const DraftSchema = z.record(z.string(), z.unknown());
+
 function readDrafts(outDir: string, folder: 'drafts' | 'incomplete'): Record<string, unknown>[] {
   const dir = join(outDir, 'idioms', folder);
   return readdirSync(dir).map(
-    (name) => JSON.parse(readFileSync(join(dir, name), 'utf8')) as Record<string, unknown>,
+    // An incomplete draft fails the Idiom schema, so a draft is read as a plain object.
+    (name) => DraftSchema.parse(JSON.parse(readFileSync(join(dir, name), 'utf8'))),
   );
 }
 
@@ -127,6 +131,22 @@ describe('sourceIdioms', () => {
       ],
       sources: [{ title: EFIMOVA, url: `${PHRASEOLOGY}лити` }],
     });
+  });
+
+  it('cites СУМ-20 by the short name the Edition gives it', async () => {
+    const sum20 = "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)";
+    // The лити page with its phraseologisms cited to СУМ-20 instead of Єфімова.
+    const fetch: Fetch = (url, options) =>
+      fakeFetch(url, options).then((response) => ({
+        ...response,
+        body: response.body.replaceAll(EFIMOVA, sum20),
+      }));
+    const { outDir, result } = run('лити\n', { fetch });
+    ok(await result);
+
+    expect(draftOf(outDir, 'Лити воду')?.['sources']).toEqual([
+      { title: sum20, shortName: 'Тлумачний словник (томи 1–15)', url: `${PHRASEOLOGY}лити` },
+    ]);
   });
 
   it('keeps further meanings as extra Definitions and Examples with their authors', async () => {
@@ -175,6 +195,21 @@ describe('sourceIdioms', () => {
       new Set(['proverb']),
       new Set(['idiom']),
     ]);
+  });
+
+  it('asks about the Idiom Type of an idiom line whose page cites a proverbs dictionary', async () => {
+    const { result } = run('лити proverb\nборона idiom\n');
+    const { report } = ok(await result);
+
+    const [lyty, borona] = report.lemmas.map(({ drafts }) => drafts.flatMap((d) => d.flags));
+    expect(lyty).toEqual([]);
+    expect(borona?.length).toBeGreaterThan(0);
+    expect(borona).toEqual(
+      borona?.map(() => ({
+        kind: 'check',
+        message: expect.stringMatching(/^Idiom Type idiom from the line, .*прислів'їв/) as string,
+      })),
+    );
   });
 
   it('calls ready only the drafts that pass the schema and the build’s checks', async () => {

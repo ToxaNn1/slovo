@@ -56,7 +56,7 @@ function tracedWords(puzzle: CrosswordPuzzle, state: PuzzleState): TracedWord[] 
 }
 
 /** The texts of the traced grid in the Edition's strings. */
-export function tracedTexts(strings: EditionStrings['game']['dailyCrossword']) {
+function tracedTexts(strings: EditionStrings['game']['dailyCrossword']) {
   return {
     cellLabel: (letter: string, { row, column }: PuzzlePlace) =>
       fill(strings.tracedCellLabel, { letter, row: String(row + 1), column: String(column + 1) }),

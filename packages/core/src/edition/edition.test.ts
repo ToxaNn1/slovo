@@ -779,7 +779,7 @@ describe('loadEdition', () => {
   );
 
   it('accepts an Edition that lists no origin languages', () => {
-    expect(() => loadEdition({ ...validConfig, originLanguages: [] })).not.toThrow();
+    expect(loadEdition({ ...validConfig, originLanguages: [] }).originLanguages).toEqual([]);
   });
 
   it('lists the Illustrations the app bundles as Edition assets', () => {
@@ -848,14 +848,16 @@ describe('loadEdition', () => {
   });
 
   it('accepts an Edition whose Categories require no history', () => {
-    expect(() => loadEdition({ ...validConfig, categoriesRequiringHistory: [] })).not.toThrow();
+    // Code outside the Core reads this field from the Edition config; the loaded Edition does not carry it.
+    expect(loadEdition({ ...validConfig, categoriesRequiringHistory: [] }).id).toBe(validConfig.id);
   });
 
   it('requires the font file of the Word of the Day', () => {
     const { wordOfTheDayFont: _removed, ...config } = validConfig;
 
     expect(() => loadEdition(config)).toThrow('wordOfTheDayFont');
-    expect(() => loadEdition({ ...validConfig, wordOfTheDayFont: 'Script.otf' })).not.toThrow();
+    // Code outside the Core reads this field from the Edition config; the loaded Edition does not carry it.
+    expect(loadEdition({ ...validConfig, wordOfTheDayFont: 'Script.otf' }).id).toBe(validConfig.id);
   });
 
   it.each(['script.woff', 'fonts/Script.ttf', '', '.ttf'])(
@@ -896,9 +898,11 @@ describe('loadEdition', () => {
     // #767676 on white is 4.54:1, the lightest grey that passes WCAG AA.
     const parchment = { background: '#FFFFFF', text: '#767676' };
 
-    expect(() =>
-      loadEdition({ ...validConfig, widgetPalette: { ...validConfig.widgetPalette, parchment } }),
-    ).not.toThrow();
+    // Code outside the Core reads the palette from the Edition config; the loaded Edition does not carry it.
+    expect(
+      loadEdition({ ...validConfig, widgetPalette: { ...validConfig.widgetPalette, parchment } })
+        .id,
+    ).toBe(validConfig.id);
   });
 
   it.each(['F3E9D2', '#F3E9D', 'rgba(0, 0, 0, 1)'])(
