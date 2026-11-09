@@ -1,3 +1,4 @@
+STATUS: FINISHED
 # Global review tails (coordination branch, never merged)
 review/REPORT.md + per-area files = global review of 06.11; review/OWNER-DECISIONS-1106.md = owner decisions (items 4-7 already in main via #1749).
 Progress log: append below (finding id -> branch/commit, or skipped + why).
@@ -28,3 +29,4 @@ Triage files (per finding id: FIXED/SKIP-*/FIX + tickets): scratchpad triage cor
 - 2026-11-09T15:09:08Z merged T-mobile-6 (aafa43c27). Running: leftovers E-L5, sourcing-L5, mobile-T6 (fix/1109-review-leftovers). Then root lint/typecheck, PR body, FINISHED.
 - 2026-11-09T15:11:25Z root lint + typecheck green on aafa43c27; waiting leftovers agent
 - 2026-11-09T15:23:06Z merged leftovers (42771aa84); all in-scope findings done or skipped. WAITING until 2026-11-09T16:30:00Z: CI on #1753
+- 2026-11-09T15:30:05Z CI green on 42771aa84, PR #1753 body updated, left draft. T-lp-1 skipped (content-rules protected; implementation on local branch fix/1109-lp-unique-names 71aac0c39, not pushed). Wave finished.
