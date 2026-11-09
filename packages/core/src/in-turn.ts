@@ -47,6 +47,7 @@ export function newestFirst<T>(time: (item: T) => Date, key: (item: T) => string
   return (first: T, second: T): number => {
     const byTime = time(second).getTime() - time(first).getTime();
     if (byTime !== 0) return byTime;
-    return key(first) < key(second) ? -1 : 1;
+    const [one, other] = [key(first), key(second)];
+    return one < other ? -1 : one > other ? 1 : 0;
   };
 }
