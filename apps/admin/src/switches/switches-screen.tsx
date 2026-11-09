@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { adminApi } from '../api';
 import { ConfirmDialog } from '../components/confirm-dialog';
 import { Button } from '../components/ui/button';
+import { useWide } from '../screen-width';
 import { MinimumsEditor } from './rule-editor';
 import {
   cellOf,
@@ -22,39 +23,45 @@ import { FEATURES, useSwitches } from './switches-data';
 const tabClass =
   'rounded-lg px-3.5 py-[7px] text-[13px] text-muted-foreground no-underline hover:text-foreground data-[status=active]:bg-surface data-[status=active]:font-semibold data-[status=active]:text-foreground data-[status=active]:shadow-panel';
 
-/** Свічі: the matrix, the Rules of one feature and the Kill switch, as three tabs. */
+/**
+ * Свічі: the matrix, the Rules of one feature and the Kill switch, as three
+ * tabs. A phone opens only the Kill switch, from its bottom tabs.
+ */
 export function SwitchesScreen() {
+  const wide = useWide();
   return (
     <section aria-label="Свічі" className="flex flex-1 flex-col gap-6">
-      <nav
-        aria-label="Свічі"
-        className="flex flex-wrap gap-0.5 self-start rounded-[11px] bg-sunk p-[3px]"
-      >
-        <Link
-          to="/switches"
-          search={(previous) => previous}
-          activeOptions={{ exact: true, includeSearch: false }}
-          className={tabClass}
+      {wide ? (
+        <nav
+          aria-label="Свічі"
+          className="flex flex-wrap gap-0.5 self-start rounded-[11px] bg-sunk p-[3px]"
         >
-          Feature Switch
-        </Link>
-        <Link
-          to="/switches/rule"
-          search={(previous) => previous}
-          activeOptions={{ includeSearch: false }}
-          className={tabClass}
-        >
-          Правило
-        </Link>
-        <Link
-          to="/switches/kill"
-          search={(previous) => previous}
-          activeOptions={{ includeSearch: false }}
-          className={tabClass}
-        >
-          Аварійний вимикач
-        </Link>
-      </nav>
+          <Link
+            to="/switches"
+            search={(previous) => previous}
+            activeOptions={{ exact: true, includeSearch: false }}
+            className={tabClass}
+          >
+            Feature Switch
+          </Link>
+          <Link
+            to="/switches/rule"
+            search={(previous) => previous}
+            activeOptions={{ includeSearch: false }}
+            className={tabClass}
+          >
+            Правило
+          </Link>
+          <Link
+            to="/switches/kill"
+            search={(previous) => previous}
+            activeOptions={{ includeSearch: false }}
+            className={tabClass}
+          >
+            Аварійний вимикач
+          </Link>
+        </nav>
+      ) : null}
       <Outlet />
     </section>
   );
