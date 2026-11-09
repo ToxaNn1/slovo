@@ -129,7 +129,7 @@ How a Word left the language or changed its meaning, a text in the Edition's lan
 _Avoid_: Etymology, history on its own
 
 **Illustration**:
-A PNG picture a Word may carry above its Definition, named by its field `illustration` and bundled in the app as an Edition asset, not in the Language Pack. It is square, at most 150 KB, shown at most 160 pt high and the same in both Themes. Only Words carry Illustrations.
+A PNG picture a Word may carry above its Definition, kept in the Media Store and cached on the device, not in the Language Pack; only the Starter Media's are bundled in the app. It is square, at most 150 KB, shown at most 160 pt high and the same in both Themes. Only Words carry Illustrations.
 _Avoid_: Image, picture, Decor (Decor belongs to the Edition's look, not to Words)
 
 **Retired Word**:
@@ -436,7 +436,17 @@ _Avoid_: Audio, TTS
 One of the Edition's recorded voices that read Words. The reader chooses one in Settings › «Голос диктора», behind the `narratorVoice` Feature Switch; a tap on a voice chooses it and reads the Edition's sample Word in it (UA: заграва). The Edition config declares each with a display name and a description, and one as the default (UA: Оксана), which reads while the switch is off.
 
 **Recording**:
-A Narrator Voice reading one Word, made ahead of time and keyed by Word id. The app bundles every voice's Recordings; Corrections, Idioms and Synonym Row members have none.
+A Narrator Voice reading one Word, made ahead of time and keyed by Word id, Narrator Voice and Recording Kind. Recordings live in the Media Store and are cached on the device; only the Starter Media's are bundled in the app. Corrections, Idioms and Synonym Row members have none.
+
+**Recording Kind**:
+How a Recording reads its Word. The first and only Kind is `plain`, the Lemma in its first Stress; each later Kind comes with its own Feature Switch.
+
+**Media Store**:
+The Deployment's file storage for Recordings and Illustrations: Cloudflare R2 behind Cloudflare's CDN, at public URLs that carry the file's content hash. Postgres describes each file; the Media Store holds it.
+_Avoid_: bucket, CDN (as names of the whole), assets (assets are the Edition's own files in the repo)
+
+**Starter Media**:
+The media the app bundles so a first launch works offline: the default Narrator Voice's Recordings of the first 300 Words of the default Mix, the sample Word in every voice, and those Words' Illustrations.
 
 **Needs new recording** («потребує нового запису»):
 The mark on a Word whose text or stress changed in the content database; Pronunciation hides for it until a Recording of the new text ships in a build (ADR 0090).
