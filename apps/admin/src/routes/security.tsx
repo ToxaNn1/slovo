@@ -428,7 +428,9 @@ function ThresholdForm({
           }}
         />
       </label>
-      <span className="text-muted-foreground">Типово {number(threshold.default)}</span>
+      <span className="flex h-9 min-w-24 items-center text-muted-foreground">
+        Типово {number(threshold.default)}
+      </span>
       <Button type="submit" variant="outline" disabled={!valid || value === threshold.value}>
         Змінити поріг
       </Button>
