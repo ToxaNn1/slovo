@@ -170,7 +170,7 @@ const SIGN_IN_ERRORS = {
   },
 } as const;
 
-const EmailSchema = z.string().trim().min(3).max(320);
+const EmailSchema = z.string().trim().max(320).pipe(z.email());
 const CodeSchema = z.string().trim().min(1).max(20);
 
 /** Why the backend refuses a write of the switches, with the name it refuses. */
@@ -360,7 +360,7 @@ const contentWriteContract = {
         batchId: BatchIdSchema,
         /** The record's fields without its id. */
         fields: z.record(z.string(), z.unknown()),
-        reason: z.string().min(1).optional(),
+        reason: z.string().trim().min(1).optional(),
       }),
     )
     .output(WrittenSchema),
@@ -381,7 +381,7 @@ const contentWriteContract = {
         /** The record version the edit was made from. */
         recordVersion: z.number().int().positive(),
         fields: z.record(z.string(), z.unknown()),
-        reason: z.string().min(1).optional(),
+        reason: z.string().trim().min(1).optional(),
       }),
     )
     .output(WrittenSchema),
@@ -400,7 +400,7 @@ const contentWriteContract = {
         id: z.string(),
         batchId: BatchIdSchema,
         recordVersion: z.number().int().positive(),
-        reason: z.string().min(1).optional(),
+        reason: z.string().trim().min(1).optional(),
       }),
     )
     .output(WrittenSchema),
@@ -418,7 +418,7 @@ const contentWriteContract = {
         kind: FlaggableKindSchema,
         id: z.string(),
         batchId: BatchIdSchema,
-        reason: z.string().min(1),
+        reason: z.string().trim().min(1),
       }),
     )
     .output(z.object({ id: z.string(), batchId: z.string() })),

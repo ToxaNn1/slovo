@@ -1,8 +1,10 @@
+import { randomUUID } from 'node:crypto';
+
 import { totpOf } from '@slovo/server-core';
 import { describe, expect, it } from 'vitest';
 
 import { adminHeaders, passTime, signedInAdmin, testApp } from '../test-support';
-import { hmacSha1 } from './admin-store';
+import { createAdminStore, hmacSha1 } from './admin-store';
 
 const MINUTE = 60 * 1000;
 const HOUR = 60 * MINUTE;
@@ -116,6 +118,62 @@ describe('the admin sign-in', () => {
 
     const right = { kind: 'totp', totp: totpOf(hmacSha1, enrolment.secret, new Date()) } as const;
     expect((await signInAgain(backend, email, right)).status).toBe(200);
+  });
+
+  it('checks at most three codes of an email, however many come together', async () => {
+    const backend = await adminOn();
+    const email = `fresh-${randomUUID()}@example.com`;
+    await createAdminStore(backend.database).addAdminUser({
+      email,
+      role: 'owner',
+      createdAt: new Date(),
+    });
+    await backend.anonymous.admin.requestCode({ email });
+    const code = backend.mailer.codeSentTo(email);
+    const guesses = Array.from({ length: 12 }, (_, guess) =>
+      String((Number(code) + 1 + guess) % 1_000_000).padStart(6, '0'),
+    );
+
+    const answers = await Promise.allSettled(
+      [...guesses, code].map((guess) => backend.anonymous.admin.verifyCode({ email, code: guess })),
+    );
+
+    expect(answers.filter((answer) => answer.status === 'fulfilled')).toEqual([]);
+  });
+
+  it('sends an email at most ten sign-in codes an hour, and answers the same past that', async () => {
+    const backend = await adminOn();
+    const email = `fresh-${randomUUID()}@example.com`;
+    await createAdminStore(backend.database).addAdminUser({
+      email,
+      role: 'admin',
+      createdAt: new Date(),
+    });
+    const sent = () => backend.mailer.sent.filter((mail) => mail.to === email).length;
+
+    for (let request = 0; request < 11; request++) {
+      await expect(backend.anonymous.admin.requestCode({ email })).resolves.toEqual({ sent: true });
+    }
+    expect(sent()).toBe(10);
+
+    passTime(HOUR + 1000);
+    await backend.anonymous.admin.requestCode({ email });
+    expect(sent()).toBe(11);
+  });
+
+  it('sends no sign-in code to a request from an IP address past 20 in 10 minutes', async () => {
+    const backend = await adminOn();
+    const { email } = backend.owner;
+    const sent = () => backend.mailer.sent.filter((mail) => mail.to === email).length;
+    const before = sent();
+    for (let stranger = 0; stranger < 20; stranger++) {
+      await backend.anonymous.admin.requestCode({
+        email: `stranger-${String(stranger)}@example.com`,
+      });
+    }
+
+    await expect(backend.anonymous.admin.requestCode({ email })).resolves.toEqual({ sent: true });
+    expect(sent()).toBe(before);
   });
 
   it('refuses a write without the admin header', async () => {

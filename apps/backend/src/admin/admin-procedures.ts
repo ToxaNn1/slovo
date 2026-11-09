@@ -123,7 +123,12 @@ export function adminProcedures(
     readonly alertStore: AlertStore;
   },
 ) {
-  const os = implement(apiContract.admin).$context<{ headers: Headers; resHeaders?: Headers }>();
+  const os = implement(apiContract.admin).$context<{
+    headers: Headers;
+    resHeaders?: Headers;
+    /** The IP address of the request's connection. */
+    ip: string;
+  }>();
 
   /** The Editions an Аналітика read sums: the one named, or every Edition served for `all`. */
   function editionIdsOf(editionId: string, errors: Pick<AdminErrors, 'NOT_FOUND'>): string[] {
@@ -292,7 +297,7 @@ export function adminProcedures(
   return os.router({
     requestCode: os.requestCode.handler(async ({ context, input, errors }) => {
       await admitSignIn(context.headers, errors);
-      await signIn.requestCode(input.email);
+      await signIn.requestCode(input.email, context.ip);
       return { sent: true as const };
     }),
 
@@ -379,8 +384,8 @@ export function adminProcedures(
 
     invite: os.invite.handler(async ({ context, input, errors }) => {
       const write = await securityWrite(context.headers, errors, input.reason);
-      done(await admin.invite(input.email, input.role, write), errors);
-      await mailer.send({ to: input.email.toLowerCase(), ...adminInviteEmail(input.role) });
+      const announce = (to: string) => mailer.send({ to, ...adminInviteEmail(input.role) });
+      done(await admin.invite(input.email, input.role, write, announce), errors);
       return { invited: true as const };
     }),
 

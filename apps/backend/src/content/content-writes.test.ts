@@ -16,6 +16,7 @@ import { systemRandom } from '../random';
 import {
   adminCommandDeps,
   createTestDatabase,
+  importedDatabases,
   silentLogger,
   testApp,
   testDatabaseUrl,
@@ -31,12 +32,14 @@ const folder = (() => {
   return dir;
 })();
 
+const importedDatabase = importedDatabases('uk', folder);
+
 /**
  * The backend on a database of the test's own, with a Власник, the UA
  * Edition imported unless told otherwise, and an Агент's client.
  */
 async function contentBackend({ imported = true }: { imported?: boolean } = {}) {
-  const own = await createTestDatabase(testDatabaseUrl());
+  const own = imported ? await importedDatabase() : await createTestDatabase(testDatabaseUrl());
   onTestFinished(() => own.drop());
   const database = createDatabase(own.url, silentLogger);
   onTestFinished(() => database.close());
@@ -54,10 +57,6 @@ async function contentBackend({ imported = true }: { imported?: boolean } = {}) 
   await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
-  if (imported) {
-    const result = await backend.importContent('uk', folder);
-    if (!result.ok) throw new Error('the UA Edition did not import');
-  }
   const agent = backend.clientOf(token);
   const { batchId } = imported
     ? await agent.admin.content.openBatch({ editionId: 'uk' })
@@ -183,6 +182,16 @@ describe('the content write API', () => {
     const { client, agent, batchId } = await contentBackend();
     const before = await snapshotOf(client);
     const word = await wordOf(client, WORD_ID);
+    const retire = {
+      editionId: 'uk',
+      kind: 'word',
+      id: WORD_ID,
+      batchId,
+      recordVersion: 1,
+    } as const;
+    await expect(agent.admin.content.retire({ ...retire, reason: '  ' })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
 
     await agent.admin.content.retire({
       editionId: 'uk',

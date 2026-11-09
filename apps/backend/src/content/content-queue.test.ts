@@ -14,11 +14,10 @@ import { mistakeReports } from '../database/schema';
 import { systemRandom } from '../random';
 import {
   adminCommandDeps,
-  createTestDatabase,
+  importedDatabases,
   signedInAdmin,
   silentLogger,
   testApp,
-  testDatabaseUrl,
 } from '../test-support';
 
 /** A copy of the UA Edition folder, removed after the file. */
@@ -31,9 +30,11 @@ const folder = (() => {
   return dir;
 })();
 
+const importedDatabase = importedDatabases('uk', folder);
+
 /** The backend with the UA Edition imported, an Агент's client and a signed-in Власник and Адмін. */
 async function queueBackend() {
-  const own = await createTestDatabase(testDatabaseUrl());
+  const own = await importedDatabase();
   onTestFinished(() => own.drop());
   const database = createDatabase(own.url, silentLogger);
   onTestFinished(() => database.close());
@@ -54,8 +55,6 @@ async function queueBackend() {
   await runAdminCommand(['agent', 'add', 'claude-content'], adminCommandDeps(admin, database), io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
-  const result = await backend.importContent('uk', folder);
-  if (!result.ok) throw new Error('the UA Edition did not import');
   const owner = (await signedInAdmin(backend, 'owner')).client;
   const adminUser = (await signedInAdmin(backend, 'admin')).client;
   return { ...backend, token, agent: backend.clientOf(token), owner, adminUser };

@@ -262,6 +262,8 @@ export interface RateLimits {
     key: string,
     now: Date,
   ): Promise<{ readonly count: number; readonly windowEnds: Date } | undefined>;
+  /** Takes `weight` requests back out of the key's window, none below nothing. */
+  giveBack(key: string, weight: number): Promise<void>;
   /** Ends the key's window: what it held counts nothing any more. */
   clear(key: string): Promise<void>;
 }

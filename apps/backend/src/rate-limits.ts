@@ -73,6 +73,12 @@ export function createRateLimits({ db }: Database, { secret }: { secret: string 
         .where(and(eq(rateLimits.key, keyOf(subject)), gt(rateLimits.windowEnds, now)));
       return running;
     },
+    async giveBack(subject, weight) {
+      await db
+        .update(rateLimits)
+        .set({ count: sql`greatest(${rateLimits.count} - ${weight}, 0)` })
+        .where(eq(rateLimits.key, keyOf(subject)));
+    },
     async clear(subject) {
       await db.delete(rateLimits).where(eq(rateLimits.key, keyOf(subject)));
     },

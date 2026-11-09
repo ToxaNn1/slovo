@@ -1,5 +1,13 @@
 import type { Clock, Mail, Mailer, Random, RateLimits } from '../ports';
-import { blockAfterFailures, clearFailures, type TooManyRequests } from '../rate-limit';
+import {
+  attemptFailed,
+  clearFailures,
+  countRequest,
+  giveBackAttempt,
+  ipSubject,
+  takeAttempt,
+  type TooManyRequests,
+} from '../rate-limit';
 import type { AdminRole, AdminStore, AdminUser, SecretVault } from './admin-access';
 
 /** How long an emailed code lives. */
@@ -13,6 +21,10 @@ const ATTEMPTS = 3;
 const BLOCK_SECONDS = 15 * 60;
 const RECOVERY_CODES = 10;
 const TOTP_STEP_SECONDS = 30;
+/** Sign-in codes sent to one email in an hour. */
+const CODES_PER_EMAIL = { requests: 10, windowSeconds: 60 * 60 } as const;
+/** Sign-in code requests from one IP address in 10 minutes. */
+const CODE_REQUESTS_PER_IP = { requests: 20, windowSeconds: 10 * 60 } as const;
 
 const LETTERS = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 const BASE32 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
@@ -56,8 +68,11 @@ export interface AdminSessionView {
 
 /** The admin's own sign-in (ADR 0088): an emailed code, then a TOTP or a recovery code. */
 export interface AdminSignIn {
-  /** Emails a code to an active Admin user; tells nothing of whether one exists. */
-  requestCode(email: string): Promise<void>;
+  /**
+   * Emails a code to an active Admin user, within the limits per IP address
+   * and per email; tells nothing of whether one exists or a limit refused it.
+   */
+  requestCode(email: string, ip: string): Promise<void>;
   /** Checks the emailed code without spending it, and answers what comes next. */
   verifyCode(email: string, code: string): Promise<CodeAccepted | SignInRefused>;
   /** Spends the code and the second factor, and begins a session. */
@@ -103,28 +118,27 @@ export function createAdminSignIn({
   const failuresKey = (email: string) => `adminSignIn:${email}`;
   const codeHashOf = (email: string, code: string) => hash(`${email}:${code.trim()}`);
 
-  /** Counts a failed attempt and answers the refusal it earns. */
+  const attemptLimit = () => ({
+    attempts: ATTEMPTS,
+    blockSeconds: BLOCK_SECONDS,
+    now: clock.now(),
+  });
+
+  /** Answers the refusal a wrong attempt, already taken, earns. */
   async function failed(email: string): Promise<SignInRefused> {
-    const result = await blockAfterFailures(rateLimits, failuresKey(email), {
-      attempts: ATTEMPTS,
-      blockSeconds: BLOCK_SECONDS,
-      now: clock.now(),
-      failed: true,
-    });
+    const result = await attemptFailed(rateLimits, failuresKey(email), attemptLimit());
     return 'attemptsLeft' in result
       ? { ok: false, reason: 'wrong-code', attemptsLeft: result.attemptsLeft }
       : result;
   }
 
-  /** The user whose emailed code is right; a refusal when it isn't or the email is blocked. */
+  /**
+   * The user whose emailed code is right, with an attempt taken that a right
+   * sign-in clears or gives back; a refusal when it isn't or the email is blocked.
+   */
   async function withCode(email: string, code: string): Promise<AdminUser | SignInRefused> {
-    const blocked = await blockAfterFailures(rateLimits, failuresKey(email), {
-      attempts: ATTEMPTS,
-      blockSeconds: BLOCK_SECONDS,
-      now: clock.now(),
-      failed: false,
-    });
-    if (!('attemptsLeft' in blocked)) return blocked;
+    const blocked = await takeAttempt(rateLimits, failuresKey(email), attemptLimit());
+    if (blocked !== undefined) return blocked;
     const [user, kept] = await Promise.all([
       store.adminUserByEmail(email),
       store.signInCode(email),
@@ -149,8 +163,17 @@ export function createAdminSignIn({
   }
 
   return {
-    async requestCode(given) {
+    async requestCode(given, ip) {
       const email = normalized(given);
+      // A request the IP address may not make leaves the email's codes uncounted.
+      const refused =
+        (await countRequest(
+          rateLimits,
+          `adminCodeRequests:${ipSubject(ip)}`,
+          CODE_REQUESTS_PER_IP,
+          clock.now(),
+        )) ?? (await countRequest(rateLimits, `adminCodes:${email}`, CODES_PER_EMAIL, clock.now()));
+      if (refused !== undefined) return;
       const user = await store.adminUserByEmail(email);
       if (user === undefined) return;
       const code = letters(6, '0123456789');
@@ -166,6 +189,8 @@ export function createAdminSignIn({
       const email = normalized(given);
       const user = await withCode(email, code);
       if ('ok' in user) return user;
+      // The code is checked, not spent: its attempt is not one of the failures.
+      await giveBackAttempt(rateLimits, failuresKey(email));
       if (user.totp.state === 'on') return { ok: true, next: 'totp' };
       const secret = letters(32, BASE32);
       const recoveryCodes = Array.from({ length: RECOVERY_CODES }, () =>
