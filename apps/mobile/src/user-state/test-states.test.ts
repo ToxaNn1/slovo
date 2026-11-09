@@ -100,7 +100,8 @@ describe('a test state loaded from its link', () => {
   it('fresh: the onboarding from its first step, and nothing kept from before', async () => {
     const app = await opened('fresh');
 
-    expect(app.onboarding.state.step).toBeDefined();
+    expect(app.onboarding.state.step?.number).toBe(1);
+    expect(app.onboarding.state.step?.kind).toBe('welcome');
     expect(app.favorites.list).toEqual([]);
     expect(app.xpLog.state.total).toBe(0);
   });
