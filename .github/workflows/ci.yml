@@ -42,38 +42,38 @@ jobs:
       # The package boundaries the ADRs set, import cycles and orphan modules.
       - run: pnpm deps
 
-  # Which of the app and the site a pull request can affect (ADR 0086). A pull
-  # request that changes only the site skips the app's tests, and one that
-  # changes only the app skips the site's; every other change, and every push
-  # to main, runs both. Lint and typecheck always cover the whole workspace.
+  # Which test parts a pull request can affect (ADR 0098, amending 0086):
+  # those of the packages Turborepo counts as affected, changed or depending
+  # on a changed package. An Edition's legal pages and pages.yml count for the
+  # site, maestro.yml and ota-update.yml for the app; documentation counts for
+  # nothing. A change outside the packages (an Edition's content, a root
+  # config, the lockfile, a workflow, a script), a failed detection and every
+  # push to main run every part. Lint, typecheck, the package boundaries, the
+  # Contract and the Language Pack always cover the whole workspace.
   changes:
     name: Changed parts
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      mobile: ${{ steps.parts.outputs.mobile }}
+      core: ${{ steps.parts.outputs.core }}
+      ui: ${{ steps.parts.outputs.ui }}
+      other: ${{ steps.parts.outputs.other }}
+      other_filters: ${{ steps.parts.outputs.other_filters }}
       site: ${{ steps.parts.outputs.site }}
+      admin: ${{ steps.parts.outputs.admin }}
+      mobile: ${{ steps.parts.outputs.mobile }}
+      backend: ${{ steps.parts.outputs.backend }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Turborepo compares the pull request with its base.
+          fetch-depth: 0
+          persist-credentials: false
       - id: parts
-        shell: bash
         env:
+          EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          mobile=true
-          site=true
-          if [ -n "$BASE_SHA" ]; then
-            git fetch --depth=1 origin "$BASE_SHA"
-            changed=$(git diff --name-only "$BASE_SHA" HEAD)
-            # The app links to the legal pages by address and never reads them.
-            site_only='^(apps/site/|editions/[^/]+/legal/|\.github/workflows/pages\.yml$)'
-            mobile_only='^(apps/mobile/|\.github/workflows/(maestro|ota-update)\.yml$)'
-            grep -qvE "$site_only" <<<"$changed" || mobile=false
-            grep -qvE "$mobile_only" <<<"$changed" || site=false
-          fi
-          echo "mobile=$mobile site=$site"
-          echo "mobile=$mobile" >> "$GITHUB_OUTPUT"
-          echo "site=$site" >> "$GITHUB_OUTPUT"
+        run: node scripts/ci-affected-parts.mjs
 
   test:
     name: Test ${{ matrix.part.name }}
@@ -85,28 +85,29 @@ jobs:
       fail-fast: false
       matrix:
         part:
-          - { name: Core, run: 'pnpm test --filter=@slovo/core' }
+          - { name: Core, for: core, run: 'pnpm test --filter=@slovo/core' }
           # The UI's Vitest and Jest tests, cut in three like the app's.
           - {
               name: UI 1/3,
+              for: ui,
               run: 'pnpm --filter=@slovo/ui exec vitest run --shard=1/3 && pnpm --filter=@slovo/ui exec jest --shard=1/3',
             }
           - {
               name: UI 2/3,
+              for: ui,
               run: 'pnpm --filter=@slovo/ui exec vitest run --shard=2/3 && pnpm --filter=@slovo/ui exec jest --shard=2/3',
             }
           - {
               name: UI 3/3,
+              for: ui,
               run: 'pnpm --filter=@slovo/ui exec vitest run --shard=3/3 && pnpm --filter=@slovo/ui exec jest --shard=3/3',
             }
           # The other packages but the backend, whose tests need Postgres: the
-          # job "Backend" runs them.
-          - name: other packages
-            run: >-
-              pnpm test --filter='!@slovo/backend' --filter='!@slovo/core'
-              --filter='!@slovo/ui' --filter='!@slovo/mobile' --filter='!@slovo/site'
+          # job "Backend" runs them. OTHER_FILTERS names the affected ones, or
+          # leaves out the packages tested elsewhere when every part runs.
+          - { name: other packages, for: other, run: 'pnpm test $OTHER_FILTERS' }
           - { name: site, for: site, run: 'pnpm test --filter=@slovo/site' }
-          - { name: admin build, run: 'pnpm --filter=@slovo/admin build' }
+          - { name: admin build, for: admin, run: 'pnpm --filter=@slovo/admin build' }
           - { name: app Vitest, for: mobile, run: 'pnpm --filter=@slovo/mobile exec vitest run' }
           # The app's Jest tests, the slowest part, cut in three.
           - {
@@ -128,9 +129,10 @@ jobs:
               run: 'pnpm --filter=@slovo/mobile exec jest --shard=3/3',
             }
     env:
-      # A part for the app or the site passes without running when the pull
-      # request can't affect it; a skipped job would turn the required check red.
-      RUN: ${{ !matrix.part.for || needs.changes.outputs[matrix.part.for] == 'true' }}
+      # A part passes without running when the pull request can't affect it;
+      # a skipped job would turn the required check red.
+      RUN: ${{ needs.changes.outputs[matrix.part.for] == 'true' }}
+      OTHER_FILTERS: ${{ needs.changes.outputs.other_filters }}
     steps:
       - if: ${{ env.RUN != 'true' }}
         run: echo 'The pull request does not affect this part.'
@@ -302,6 +304,7 @@ jobs:
 
   backend:
     name: Backend
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -321,13 +324,21 @@ jobs:
           --health-retries 15
     env:
       DATABASE_URL: postgres://slovo:slovo@localhost:5432/slovo
+      # Passes without running when the pull request can't affect the backend.
+      RUN: ${{ needs.changes.outputs.backend }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/setup
+      - if: ${{ env.RUN != 'true' }}
+        run: echo 'The pull request does not affect the backend.'
+      - if: ${{ env.RUN == 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - if: ${{ env.RUN == 'true' }}
+        uses: ./.github/actions/setup
       # Every migration, from an empty database.
-      - run: pnpm --filter @slovo/backend db:migrate
+      - if: ${{ env.RUN == 'true' }}
+        run: pnpm --filter @slovo/backend db:migrate
       # Each test file makes its own database on the same server and drops it after.
-      - run: pnpm test --filter=@slovo/backend
+      - if: ${{ env.RUN == 'true' }}
+        run: pnpm test --filter=@slovo/backend
 
   image:
     name: Container image
