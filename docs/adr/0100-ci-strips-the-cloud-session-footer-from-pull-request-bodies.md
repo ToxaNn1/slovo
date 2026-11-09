@@ -14,3 +14,4 @@ Owner decision of 2026-11-09. A cloud session appends a footer such as «_Genera
 - **Asking each session to leave the footer out**: not enough alone. The footer still appears, and each time the check fails and the PR waits.
 - **Letting the check ignore the footer**: rejected. The squash merge copies the PR body into `main`'s history, so the footer would reach `main`.
 - **Editing the body in the job "Commit messages"**: rejected. That job installs and runs the PR's code, which would then run beside a token that can edit the PR.
+
