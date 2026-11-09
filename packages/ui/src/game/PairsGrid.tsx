@@ -21,8 +21,7 @@ import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** How a right pair pops: from small, past its size, back. */
 const CELL_POP = [0.6, 1.12, 1];
-/** How far a wrong pair drops, how far its cells turn (a Word left, a Definition right), how much it fades. */
-const CELL_DROP = 8;
+/** How far a wrong pair's cells turn (a Word left, a Definition right), how much it fades. */
 const CELL_TURN = 3;
 const WRONG_OPACITY = 0.6;
 
@@ -192,7 +191,7 @@ function Cell({
         transform: still
           ? []
           : [
-              { translateY: CELL_DROP * moved.value },
+              { translateY: pairsGridLayout.cellDrop * moved.value },
               { rotate: `${String(turn * moved.value)}deg` },
             ],
       };

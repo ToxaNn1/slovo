@@ -16,6 +16,7 @@ import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
 import {
   blockGap,
+  compactCardPadding,
   correctionCardLayout,
   entryCardFrame,
   space,
@@ -84,9 +85,6 @@ export interface EntryCardProps {
 export type EntryCardSlots =
   | { slot: 'actions'; actions: ReactNode }
   | { slot: 'corner'; corner: ReactNode; swipe: EntrySwipe | undefined };
-
-/** On the SE the padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
-const COMPACT_PADDING = 0.75;
 
 /** The padding and the space between blocks from the design, for each kind of card. */
 const SPACING = {
@@ -171,7 +169,7 @@ function EntryCardFace({
   const { colors, radii } = useTokens();
   const lemmaSize = useLemmaSize();
   const compact = useCompactLayout();
-  const padding = compact ? COMPACT_PADDING : 1;
+  const padding = compact ? compactCardPadding : 1;
   const spacing = SPACING[card.kind];
   // A Word's raised tiles stand under its card; the icons of the other kinds sit in theirs (XActions a10).
   const actionsOf = (kind: typeof card.kind) =>

@@ -2,11 +2,16 @@ import type { Plural } from '@slovo/contracts';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { fill, useEdition } from '../providers/EditionProvider';
-import { fontScaleCap, minTouchTarget, space, typeStyle, withAlpha, xpBarPadding } from '../tokens';
+import {
+  fontScaleCap,
+  minTouchTarget,
+  space,
+  typeStyle,
+  withAlpha,
+  xpBarHeight,
+  xpBarPadding,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-
-/** The bar's height, the Search button's beside it. */
-const BAR_HEIGHT = 40;
 
 /**
  * The XP bar under the Feed's header: today's XP from the XP log, on the
@@ -44,7 +49,7 @@ export function XpBar({
       {...voice}
       onPress={onPress}
       // The 40 pt bar takes taps a little beyond its edge, to the 44 pt touch target.
-      hitSlop={(minTouchTarget - BAR_HEIGHT) / 2}
+      hitSlop={(minTouchTarget - xpBarHeight) / 2}
       style={({ pressed }) => [
         styles.bar,
         // The design draws the accent border at 35%.
@@ -64,8 +69,8 @@ export function XpBar({
 
 const styles = StyleSheet.create({
   bar: {
-    height: BAR_HEIGHT,
-    borderRadius: BAR_HEIGHT / 2,
+    height: xpBarHeight,
+    borderRadius: xpBarHeight / 2,
     borderWidth: 1,
     paddingHorizontal: xpBarPadding,
     flexDirection: 'row',

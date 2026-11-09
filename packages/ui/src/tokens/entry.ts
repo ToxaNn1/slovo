@@ -195,3 +195,19 @@ export const idiomExpressionLength: LengthSteps = {
   ],
   longer: 30 / 50,
 };
+
+/** The tallest an Illustration is drawn, in points (ADR 0055). */
+export const illustrationHeight = 160;
+
+/** On the SE an Entry card's padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
+export const compactCardPadding = 0.75;
+
+/** The missing-voice message's widest, and its distance from the screen's edges. */
+export const voiceMessage = { maxWidth: 260, margin: 64 } as const;
+
+/**
+ * A swiped Entry card: its width until its first layout, a phone's card, and
+ * where a marked card flies to, off screen, and where an undone one comes
+ * back from (board 04).
+ */
+export const swipeMarkLayout = { unmeasuredWidth: 360, offScreen: 520 } as const;

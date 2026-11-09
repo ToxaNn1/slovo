@@ -35,9 +35,8 @@ import {
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 
-/** How long a step takes to slide in (ADR 0055), and how far from the side it starts. */
+/** How long a step takes to slide in (ADR 0055). */
 const SLIDE_MS = 300;
-const SLIDE_DISTANCE = 40;
 const { shout: shoutAt } = onboardingLayout;
 const SHOUT_TURN = `${String(shoutAt.turn)}deg`;
 
@@ -155,7 +154,9 @@ export function OnboardingStep({
   }, [step]);
   const slide = useAnimatedStyle(() => ({
     opacity: progress.value,
-    transform: [{ translateX: reduceMotion ? 0 : (1 - progress.value) * SLIDE_DISTANCE }],
+    transform: [
+      { translateX: reduceMotion ? 0 : (1 - progress.value) * onboardingLayout.slideDistance },
+    ],
   }));
   const flyIn = useAnimatedStyle(() => ({
     opacity: Math.min(1, fly.value),

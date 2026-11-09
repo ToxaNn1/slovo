@@ -5,9 +5,6 @@ import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { fontScaleCap, space, typeStyle } from '../tokens';
 
-/** The height of a sheet's rows and of its «Готово» button, from the design. */
-export const SHEET_ROW_HEIGHT = 56;
-
 /** The title band's padding above and below, and how far it reaches left of the sheet's edge, from the design. */
 const TITLE_BAND = { vertical: 10, outset: 2 };
 

@@ -16,6 +16,7 @@ import {
   toastElevation,
   toastRadius,
   typeStyle,
+  voiceMessage,
   withAlpha,
 } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
@@ -37,10 +38,6 @@ export interface PronunciationButtonProps {
 
 /** How long the missing-voice message stays when the reader leaves it. */
 const MESSAGE_MS = 8000;
-
-/** The message's widest, and its distance from the screen's edges. */
-const MESSAGE_WIDTH = 260;
-const MESSAGE_MARGIN = 64;
 
 /**
  * The Pronunciation button of the Word card: an outlined accent circle with a
@@ -103,7 +100,7 @@ export function PronunciationButton({
           style={[
             styles.message,
             {
-              width: Math.min(MESSAGE_WIDTH, window.width - MESSAGE_MARGIN),
+              width: Math.min(voiceMessage.maxWidth, window.width - voiceMessage.margin),
               backgroundColor: colors.ink,
             },
           ]}

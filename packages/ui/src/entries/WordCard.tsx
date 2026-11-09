@@ -19,6 +19,7 @@ import { Wedge } from '../primitives/Wedge';
 import {
   blockGap,
   entryCardFrame,
+  illustrationHeight,
   minTouchTarget,
   space,
   typeStyle,
@@ -555,11 +556,8 @@ export function DetailSection({
   );
 }
 
-/** The tallest an Illustration is drawn, in points (ADR 0055). */
-const ILLUSTRATION_HEIGHT = 160;
-
 const styles = StyleSheet.create({
-  illustration: { width: '100%', height: ILLUSTRATION_HEIGHT },
+  illustration: { width: '100%', height: illustrationHeight },
   // Over the blocks below it, so the Pronunciation message can open over them.
   header: { flexDirection: 'row', alignItems: 'flex-start', gap: space[3], zIndex: 1 },
   headline: { flex: 1, minWidth: 0, gap: space[2] },

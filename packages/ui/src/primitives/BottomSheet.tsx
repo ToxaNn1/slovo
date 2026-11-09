@@ -33,7 +33,14 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { motion, scrim, space, type Easing as Easing4, type Wedge as WedgePoints } from '../tokens';
+import {
+  motion,
+  scrim,
+  sheetLayout,
+  space,
+  type Easing as Easing4,
+  type Wedge as WedgePoints,
+} from '../tokens';
 import { InvertedTokens, SchemeTokens, useTokens } from '../providers/TokensProvider';
 import { useRouteOnScreen } from '../providers/RouteProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
@@ -59,10 +66,6 @@ const FADE = {
 };
 /** Leaving is quicker than arriving. */
 const SLIDE_OUT = { duration: 220, easing: Easing.in(Easing.quad), ...never };
-/** How far past its place, in points, the sheet rises before it settles. */
-const OVERSHOOT = 10;
-/** The share of the slide spent rising past its place, from `slSheet`. */
-const RISE_SHARE = 0.72;
 
 /**
  * What follows a drag: a critically damped spring that settles in about
@@ -76,16 +79,8 @@ const DRAG_SPRING = {
   reduceMotion: ReduceMotion.Never,
 };
 
-/** How far, in points, a drag on its top must go to close the sheet. */
-const CLOSE_DISTANCE = 96;
-/** How fast, in points per second, a downward flick closes it whatever its length. */
-const CLOSE_VELOCITY = 800;
-
 /** The colour role a sheet is drawn on. */
 export type SheetTone = 'surface' | 'ink' | 'accent';
-
-/** How far down the top edge slants, from the right edge to the left. */
-export const SHEET_SLANT = 30;
 
 /**
  * A bottom sheet of the design over a scrim: a top edge that slants up to the
@@ -158,11 +153,14 @@ export function BottomSheet({
       progress.value = reduceMotion
         ? withTiming(1, FADE)
         : withSequence(
-            withTiming(1 + OVERSHOOT / height.value, {
+            withTiming(1 + motion.sheet.overshoot.distance / height.value, {
               ...SLIDE_IN,
-              duration: SLIDE_IN.duration * RISE_SHARE,
+              duration: SLIDE_IN.duration * motion.sheet.overshoot.share,
             }),
-            withTiming(1, { ...SLIDE_IN, duration: SLIDE_IN.duration * (1 - RISE_SHARE) }),
+            withTiming(1, {
+              ...SLIDE_IN,
+              duration: SLIDE_IN.duration * (1 - motion.sheet.overshoot.share),
+            }),
           );
       wasVisible.current = true;
     } else {
@@ -205,7 +203,10 @@ export function BottomSheet({
       drag.value = Math.max(translationY, 0);
     },
     onDeactivate: ({ translationY, velocityY }) => {
-      if (onClose !== undefined && (translationY > CLOSE_DISTANCE || velocityY > CLOSE_VELOCITY)) {
+      if (
+        onClose !== undefined &&
+        (translationY > motion.sheet.close.distance || velocityY > motion.sheet.close.velocity)
+      ) {
         scheduleOnRN(closeByDrag, velocityY);
       } else if (reduceMotion) {
         // Under Reduce Motion the sheet is simply back in place.
@@ -318,7 +319,7 @@ function SheetPanel({
       style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, space[8]) }, sheetStyle]}
     >
       <View style={styles.slant}>
-        <Wedge points={SLANT} color={fill} width="100%" height={SHEET_SLANT} />
+        <Wedge points={SLANT} color={fill} width="100%" height={sheetLayout.slant} />
       </View>
       <View
         style={[styles.body, { backgroundColor: fill }]}
@@ -350,11 +351,16 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   // Over the scrim, which takes the taps beside the sheet.
   avoiding: { flex: 1, justifyContent: 'flex-end', pointerEvents: 'box-none' },
-  sheet: { maxHeight: '100%', paddingTop: SHEET_SLANT, paddingHorizontal: space[5], gap: space[4] },
+  sheet: {
+    maxHeight: '100%',
+    paddingTop: sheetLayout.slant,
+    paddingHorizontal: space[5],
+    gap: space[4],
+  },
   // Edge to edge: an absolute child's percentage width counts without the sheet's side padding.
-  slant: { position: 'absolute', top: 0, left: 0, right: 0, height: SHEET_SLANT },
-  body: { position: 'absolute', top: SHEET_SLANT, left: 0, right: 0, bottom: 0 },
+  slant: { position: 'absolute', top: 0, left: 0, right: 0, height: sheetLayout.slant },
+  body: { position: 'absolute', top: sheetLayout.slant, left: 0, right: 0, bottom: 0 },
   // The slanted top, above the content, takes the drag and the tap.
-  dragStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: SHEET_SLANT },
+  dragStrip: { position: 'absolute', top: 0, left: 0, right: 0, height: sheetLayout.slant },
   fill: { flex: 1 },
 });
