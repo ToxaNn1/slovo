@@ -12,7 +12,7 @@ brief:
 You are the admin wave coordinator (specs #1708/#1709, PR #1746), in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/admin-wave (its log tail says where the work is) and continue; read docs/agents/map.md and the skill mattpocock-skills:implement-spec (implementers = Opus subagents with tdd in own worktrees; merger subagents). Goal: #1746 merges origin/main, #1728's ADR moves to the next free number, migrations renumbered after main's (`pnpm --filter @slovo/backend db:generate` reports no changes), content-rules fixture fixed, code-review (medium) fixes, green CI, ready + `gh pr merge 1746 --auto --squash`. #1735 stays open. Owner questions: safe default under «Питання власнику» in the PR body, never block. Grants: commits, pushes, PRs.
 
 ## wave review-tails
-status: active
+status: finished
 coord: coord/global-review-tails
 branches: ^origin/(coord/global-review-tails|(feat|chore|fix|docs|test|refactor)/.*1109-)
 brief:
