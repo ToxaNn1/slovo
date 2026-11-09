@@ -111,7 +111,8 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
           >
             <input
               aria-label="Пошук"
-              className="min-w-0 flex-1 rounded-md border border-border bg-background px-3 py-2 text-sm"
+              placeholder="Пошук"
+              className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-sm"
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
