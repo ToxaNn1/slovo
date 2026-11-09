@@ -40,7 +40,7 @@ describe('content.latest', () => {
   it('answers NOT_FOUND for an Edition with content updates switched off', async () => {
     const folder = testEditions(['switched-off'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, contentUpdates: false },
+      featureSwitches: { ...config.featureSwitches, contentUpdates: 'off' },
     }));
     const { client } = testApp({ editions: folder.read() });
 

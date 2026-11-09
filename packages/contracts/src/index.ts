@@ -20,6 +20,7 @@ export {
   DistractorRuleSchema,
   EditionConfigSchema,
   FeatureSwitchesSchema,
+  FeatureSwitchStateSchema,
   XpTableSchema,
   LevelsSchema,
   QuestionnaireSchema,
@@ -47,6 +48,7 @@ export {
   type DistractorRule,
   type EditionConfig,
   type FeatureSwitch,
+  type FeatureSwitchState,
   type FeatureSwitches,
   type XpTable,
   type Levels,
@@ -241,4 +243,24 @@ export {
   type CrosswordDay,
   type CrosswordWord,
 } from './crossword';
+export {
+  AppVersionSchema,
+  ForceUpdateMinimumSchema,
+  ForceUpdateMinimumsSchema,
+  PlatformSchema,
+  RegionSchema,
+  RuleSchema,
+  RuleTargetsSchema,
+  RuleVerdictSchema,
+  VariantSchema,
+  type AppVersion,
+  type ForceUpdateMinimum,
+  type ForceUpdateMinimums,
+  type Platform,
+  type Rule,
+  type RuleTargets,
+  type RuleVerdict,
+  type Variant,
+} from './feature-switch-rules';
+export { DEPENDS_ON, switchedOn } from './feature-switch-dependencies';
 export { ContentTargetsSchema, type ContentTargets } from './content-targets';

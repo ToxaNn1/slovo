@@ -11,7 +11,13 @@ import { runAdminCommand } from '../admin/admin-command';
 import { createAdminStore, hashToken } from '../admin/admin-store';
 import { createDatabase } from '../database/database';
 import { systemRandom } from '../random';
-import { createTestDatabase, silentLogger, testApp, testDatabaseUrl } from '../test-support';
+import {
+  adminCommandDeps,
+  createTestDatabase,
+  silentLogger,
+  testApp,
+  testDatabaseUrl,
+} from '../test-support';
 
 /** A copy of the UA Edition folder, removed after the file. */
 const folder = (() => {
@@ -39,10 +45,11 @@ async function contentBackend({ imported = true }: { imported?: boolean } = {}) 
     random: systemRandom,
     hash: hashToken,
   });
+  const commandDeps = adminCommandDeps(admin, database);
   const out: string[] = [];
   const io = { out: (line: string) => out.push(line), err: () => undefined };
-  await runAdminCommand(['owner', 'add', 'owner@example.com'], admin, io);
-  await runAdminCommand(['agent', 'add', 'claude-content'], admin, io);
+  await runAdminCommand(['owner', 'add', 'owner@example.com'], commandDeps, io);
+  await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
   if (imported) {
@@ -205,7 +212,7 @@ describe('the Patch read API', () => {
 
   it('answers NOT_FOUND while content updates are off, the content is not imported or the Edition is unknown', async () => {
     const off = await contentBackend();
-    await off.switchOff('uk', 'contentUpdates');
+    await off.kill('uk', 'contentUpdates');
     await expect(patchOf(off.client, 0)).rejects.toMatchObject({ code: 'NOT_FOUND' });
 
     const notImported = await contentBackend({ imported: false });

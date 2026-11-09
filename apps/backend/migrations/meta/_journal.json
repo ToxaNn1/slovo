@@ -120,6 +120,41 @@
       "when": 1794168928419,
       "tag": "0016_drop_content_packs",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1794168929419,
+      "tag": "0017_switch_rules",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1794168930419,
+      "tag": "0018_admin_sign_in",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1794168931419,
+      "tag": "0019_owner_checks",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794169474313,
+      "tag": "0020_ci_runs",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794213525276,
+      "tag": "0021_alerts",
+      "breakpoints": true
     }
   ]
 }

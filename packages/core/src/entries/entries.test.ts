@@ -12,7 +12,16 @@ import type {
 
 import { createEntries, EVERYTHING_IN, openRemoteSwitches } from '../index';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
-import { countingReads, idiom, openLiveEntries, randomOf, testEdition } from '../test-support';
+import {
+  countingReads,
+  fakeClock,
+  idiom,
+  openLiveEntries,
+  randomOf,
+  readerFacts,
+  switchStatesOf,
+  testEdition,
+} from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
@@ -194,10 +203,23 @@ describe('the Entries', () => {
       const port = createMemoryUserStatePort();
       const userState = await openUserState({ port });
       await port.write(
-        new Map([['edition.switches', JSON.stringify({ off: ['idioms'], etag: '"idioms"' })]]),
+        new Map([
+          [
+            'edition.switches',
+            JSON.stringify({
+              rules: [{ id: 'kill', feature: 'idioms', verdict: 'off', targets: {} }],
+              minimums: {},
+              etag: '"kill"',
+              clockOffsetMs: 0,
+            }),
+          ],
+        ]),
       );
       const remote = await openRemoteSwitches({
         edition: editionWith(true),
+        states: switchStatesOf(editionWith(true)),
+        facts: readerFacts,
+        clock: fakeClock().clock,
         backend: unreachableBackend(),
         userState,
         schedule: (run) => {
@@ -389,10 +411,23 @@ describe('the Entries', () => {
         const port = createMemoryUserStatePort();
         const userState = await openUserState({ port });
         await port.write(
-          new Map([['edition.switches', JSON.stringify({ off: [feature], etag: `"${feature}"` })]]),
+          new Map([
+            [
+              'edition.switches',
+              JSON.stringify({
+                rules: [{ id: 'kill', feature: feature, verdict: 'off', targets: {} }],
+                minimums: {},
+                etag: '"kill"',
+                clockOffsetMs: 0,
+              }),
+            ],
+          ]),
         );
         const remote = await openRemoteSwitches({
           edition: editionWith(true),
+          states: switchStatesOf(editionWith(true)),
+          facts: readerFacts,
+          clock: fakeClock().clock,
           backend: unreachableBackend(),
           userState,
           schedule: (run) => {

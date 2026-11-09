@@ -2,16 +2,27 @@ import { CollectionLinkIdSchema, type AppConfig } from '@slovo/contracts';
 import {
   createAccounts,
   createAdminAccess,
+  createAlertSettings,
+  createOwnerChecks,
+  createAdminSignIn,
+  createQuality,
   createCollectionLinks,
+  createAdminAnalytics,
   createCommunityCounters,
+  createDevelopment,
   createMistakeReports,
   createSync,
+  type Alerts,
   type AppleVerifier,
   type Clock,
+  type EasSource,
   type Edition,
+  type GitHubSource,
   type GoogleVerifier,
   type Mailer,
+  type PostHogPort,
   type Random,
+  type SentryReader,
 } from '@slovo/server-core';
 import type { HttpBindings } from '@hono/node-server';
 import { Hono } from 'hono';
@@ -20,10 +31,15 @@ import { requestId, type RequestIdVariables } from 'hono/request-id';
 import type { Logger } from 'pino';
 
 import { createAuthenticator } from './account/authenticator';
-import { adminRoutes } from './admin/admin-routes';
-import { createAdminStore, hashToken } from './admin/admin-store';
+import { adminApp } from './admin/admin-app';
+import { adminCodeEmail } from './admin/admin-mail';
+import { createAdminStore, createSecretVault, hashToken, hmacSha1 } from './admin/admin-store';
 import { createContentStore } from './content/content-store';
+import { createContentQueue } from './content/content-queue';
 import { createContentWrites } from './content/content-writes';
+import { createOwnerCheckStore } from './admin/owner-check-store';
+import { createCiRunStore } from './quality/ci-run-store';
+import { createAlertStore, createAlertThresholdStore } from './alerts/alert-store';
 import { createApiHandler, INTERNAL_FAILURE, onUnexpectedFailure } from './api';
 import {
   APP_SITE_ASSOCIATION_PATH,
@@ -61,10 +77,18 @@ export interface AppDependencies {
   readonly editions: readonly Edition[];
   /** Sends the sign-in emails. */
   readonly mailer: Mailer;
+  /** Tells the owner of a Kill switch. */
+  readonly alerts: Alerts;
+  /** Reads the aggregates of the Analytics events, for the admin's Аналітика. */
+  readonly posthog: PostHogPort;
   /** Verifies the Google identity tokens of Google sign-ins. */
   readonly google: GoogleVerifier;
   /** Verifies the Apple identity tokens of Apple sign-ins, for the app's bundle id. */
   readonly apple: AppleVerifier;
+  /** The repository on GitHub, read for Розробка. */
+  readonly github: GitHubSource;
+  /** The app's builds on EAS, read for Розробка. */
+  readonly eas: EasSource;
   /** Signs the Sessions' tokens. */
   readonly authSecret: string;
   /** Where the unexpected failures (500) are reported. */
@@ -74,8 +98,12 @@ export interface AppDependencies {
    * whose addresses it trusts: 0 when nothing is in front of it.
    */
   readonly trustedProxyHops: number;
-  /** The one Account the owner admin signs in; without it the backend has no admin (ADR 0069). */
-  readonly ownerEmail?: string | undefined;
+  /** Where Якість reads Sentry's numbers. */
+  readonly sentry: SentryReader;
+  /** The Bearer token CI pushes its history with (ADR 0096); unset refuses every push. */
+  readonly ciToken: string | undefined;
+  /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
+  readonly adminDist?: string | undefined;
 }
 
 type Variables = RequestIdVariables & {
@@ -126,14 +154,20 @@ export function createApp({
   app: appConfig,
   editions,
   mailer,
+  alerts,
+  posthog,
   google,
   apple,
+  github,
+  eas,
   authSecret,
   reporter,
   trustedProxyHops,
-  ownerEmail,
+  adminDist,
+  sentry,
+  ciToken,
 }: AppDependencies) {
-  const editionRegistry = createEditions({ database, clock, editions });
+  const editionRegistry = createEditions({ database, clock, editions, alerts });
   const rateLimits = createRateLimits(database, { secret: authSecret });
   const accounts = createAccounts({
     editions: editionRegistry,
@@ -158,9 +192,10 @@ export function createApp({
     rateLimits,
     clock,
   });
+  const counterStore = createCounterStore(database);
   const communityCounters = createCommunityCounters({
     editions: editionRegistry,
-    store: createCounterStore(database),
+    store: counterStore,
     rateLimits,
     clock,
   });
@@ -172,22 +207,51 @@ export function createApp({
     random,
     domain: appConfig.domain,
   });
-  const admin = createAdminAccess({
-    store: createAdminStore(database),
+  const adminStore = createAdminStore(database);
+  const admin = createAdminAccess({ store: adminStore, clock, random, hash: hashToken });
+  // The admin's own sign-in: only the mailer and the limits' table are shared
+  // with the Account's (ADR 0088).
+  const adminSignIn = createAdminSignIn({
+    store: adminStore,
     clock,
     random,
     hash: hashToken,
+    mailer,
+    rateLimits,
+    hmacSha1,
+    vault: createSecretVault(authSecret),
+    codeEmail: adminCodeEmail,
+  });
+  const adminAnalytics = createAdminAnalytics({
+    posthog,
+    counters: counterStore,
+    clock,
+    wait: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
   });
   const contentWrites = createContentWrites({ database, clock, random, editions: editionRegistry });
   const api = createApiHandler({
     accounts,
     admin,
+    adminAnalytics,
+    adminSignIn,
+    clock,
     collectionLinks,
     communityCounters,
+    contentQueue: createContentQueue({ database, clock }),
     contentStore,
     contentWrites,
+    development: createDevelopment({ github, eas, clock }),
     editions: editionRegistry,
+    mailer,
     mistakeReports,
+    ownerChecks: createOwnerChecks({ store: createOwnerCheckStore(database), clock, admin }),
+    quality: {
+      quality: createQuality({ sentry, ciRuns: createCiRunStore(database), clock }),
+      ciToken,
+      alertSettings: createAlertSettings({ store: createAlertThresholdStore(database), admin }),
+      alertStore: createAlertStore(database),
+    },
+    served: editions,
     sync,
   });
 
@@ -299,19 +363,9 @@ export function createApp({
     return c.html(collectionPage(edition, appConfig.scheme, id, found.link, entries));
   });
 
-  // The owner admin (ADR 0069), only with the owner's email set.
-  if (ownerEmail !== undefined) {
-    app.route(
-      '/admin',
-      adminRoutes({
-        database,
-        accounts,
-        editions: editionRegistry,
-        served: editions,
-        app: appConfig,
-        ownerEmail,
-      }),
-    );
+  // The owner admin app (ADR 0088), off (404) while no Власник exists.
+  if (adminDist !== undefined) {
+    app.route('/admin', adminApp({ dist: adminDist, isOn: () => admin.isOn() }));
   }
 
   // An address the backend doesn't serve, under `/v1` too.

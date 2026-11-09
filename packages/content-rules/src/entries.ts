@@ -36,13 +36,15 @@ export function checkStress(
 
 /**
  * The checks the schema can't make on one Entry alone: they need the Edition
- * config or the other Entries.
+ * config or the other Entries. The rules of one Entry alone run on the Entries
+ * whose file `checksFile` takes, all by default; the rules across Entries run on all.
  */
 export function checkEntries(
   config: EditionConfig,
   words: readonly Authored<Word>[],
   corrections: readonly Authored<Correction>[],
   idioms: readonly Authored<Idiom>[],
+  checksFile: (file: string) => boolean = () => true,
 ): Refusal[] {
   const errors: Refusal[] = [];
   const {
@@ -76,6 +78,7 @@ export function checkEntries(
   const wordByLemmaAndDefinition = new Map<string, Authored<Word>>();
 
   for (const { file, entry } of [...words, ...corrections, ...idioms]) {
+    if (!checksFile(file)) continue;
     for (const [field, message] of mixedScriptWords(entry)) {
       errors.push({ rule: 'mixed-script', file, entryId: entry.id, field, message });
     }
@@ -86,7 +89,9 @@ export function checkEntries(
       errors.push({ rule, file, entryId: word.id, field, message });
     };
 
-    const stray = strayCharacter(word.lemma.toLocaleLowerCase(config.locale), lemmaTokens);
+    const stray = checksFile(file)
+      ? strayCharacter(word.lemma.toLocaleLowerCase(config.locale), lemmaTokens)
+      : undefined;
     if (stray !== undefined) {
       const code = codePointLabel(stray);
       fail(
@@ -117,6 +122,8 @@ export function checkEntries(
         fail('word-correction', `correctionIds.${String(index)}`, `Unknown Correction "${id}"`);
       }
     });
+
+    if (!checksFile(file)) continue;
 
     if (!categoryIds.has(word.categoryId)) {
       fail('word-category', 'categoryId', `Unknown Category "${word.categoryId}"`);
@@ -173,7 +180,7 @@ export function checkEntries(
       errors.push({ rule, file, entryId: idiom.id, field: 'expression', message });
     };
 
-    const stray = strayCharacter(idiom.expression, expressionTokens);
+    const stray = checksFile(file) ? strayCharacter(idiom.expression, expressionTokens) : undefined;
     if (stray !== undefined) {
       fail(
         'stray-character',
@@ -196,6 +203,7 @@ export function checkEntries(
   }
 
   for (const { file, entry: correction } of corrections) {
+    if (!checksFile(file)) continue;
     const fail = (rule: RuleName, field: string, message: string) => {
       errors.push({ rule, file, entryId: correction.id, field, message });
     };
@@ -271,6 +279,19 @@ const SCRIPTS = ['Latin', 'Cyrillic', 'Greek', 'Armenian', 'Georgian', 'Hebrew',
   (name) => ({ name, pattern: new RegExp(`\\p{Script=${name}}`, 'u') }),
 );
 
+/** A letter of any of the scripts. */
+const ANY_SCRIPT = new RegExp(SCRIPTS.map(({ name }) => `\\p{Script=${name}}`).join('|'), 'u');
+
+/** By script, a word with no letter of the other scripts. */
+const ONLY_SCRIPT = new Map(
+  SCRIPTS.map(({ name }) => {
+    const others = SCRIPTS.filter((other) => other.name !== name)
+      .map((other) => `\\p{Script=${other.name}}`)
+      .join('');
+    return [name, new RegExp(`^[^${others}]*$`, 'u')];
+  }),
+);
+
 /**
  * The fields the script check leaves out. A Lemma and an Idiom's expression
  * hold only the Edition's alphabet, which is checked already. The etymology
@@ -289,8 +310,7 @@ function mixedScriptWords(entry: Entry): [field: string, message: string][] {
   const visit = (value: unknown, field: string) => {
     if (typeof value === 'string') {
       const words = (value.match(/[\p{L}\p{M}]+/gu) ?? []).map(scriptedWord);
-      words.forEach(({ word, letters, main }, index) => {
-        const stray = letters.find(({ script }) => script !== main);
+      words.forEach(({ word, main, stray, single }, index) => {
         const before = words[index - 1]?.main;
         const after = words[index + 1]?.main;
         if (stray !== undefined) {
@@ -300,7 +320,7 @@ function mixedScriptWords(entry: Entry): [field: string, message: string][] {
           ]);
         } else if (
           // A one-letter word, such as a Latin "i" for the conjunction, in another script than the words around it.
-          letters.length === 1 &&
+          single &&
           before !== undefined &&
           before === after &&
           before !== main
@@ -326,23 +346,41 @@ function mixedScriptWords(entry: Entry): [field: string, message: string][] {
   return found;
 }
 
-/** A word's letters with their scripts, and the script most of them are in: the first letter's on a tie. */
+/**
+ * A word's script, the one most of its letters are in (the first letter's on a
+ * tie), its first letter in another script, and whether it has one letter only.
+ * Letters of no script the check knows, such as combining marks, don't count.
+ */
 function scriptedWord(word: string): {
   word: string;
-  letters: { letter: string; script: string }[];
   main: string | undefined;
+  stray: { letter: string; script: string } | undefined;
+  single: boolean;
 } {
+  // Most words are in one script: two regex tests tell them apart from the rest.
+  const first = ANY_SCRIPT.exec(word);
+  if (first === null) return { word, main: undefined, stray: undefined, single: false };
+  const script = scriptOf(first[0]);
+  if (script !== undefined && ONLY_SCRIPT.get(script)?.test(word) === true) {
+    const single = !ANY_SCRIPT.test(word.slice(first.index + first[0].length));
+    return { word, main: script, stray: undefined, single };
+  }
   const letters = Array.from(word).flatMap((letter) => {
-    const script = SCRIPTS.find(({ pattern }) => pattern.test(letter));
-    return script === undefined ? [] : [{ letter, script: script.name }];
+    const scriptOfLetter = scriptOf(letter);
+    return scriptOfLetter === undefined ? [] : [{ letter, script: scriptOfLetter }];
   });
-  const count = (script: string) => letters.filter((letter) => letter.script === script).length;
-  const main = letters
-    .map(({ script }) => script)
-    .reduce<string | undefined>((best, script) => {
-      return best === undefined || count(script) > count(best) ? script : best;
-    }, undefined);
-  return { word, letters, main };
+  const counts = new Map<string, number>();
+  for (const letter of letters) counts.set(letter.script, (counts.get(letter.script) ?? 0) + 1);
+  let main: string | undefined;
+  for (const [name, count] of counts) {
+    if (main === undefined || count > (counts.get(main) ?? 0)) main = name;
+  }
+  const stray = letters.find((letter) => letter.script !== main);
+  return { word, main, stray, single: letters.length === 1 };
+}
+
+function scriptOf(letter: string): string | undefined {
+  return SCRIPTS.find(({ pattern }) => pattern.test(letter))?.name;
 }
 
 function letterLabel(letter: string): string {

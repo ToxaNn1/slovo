@@ -5,12 +5,22 @@ import { ResponseHeadersPlugin, type ResponseHeadersPluginContext } from '@orpc/
 import { apiContract } from '@slovo/contracts/api';
 import { apiDescriptionOptions } from '@slovo/contracts/api-description';
 import type {
+  AlertSettings,
+  AlertStore,
   Accounts,
   AdminAccess,
+  AdminSignIn,
+  Clock,
   CollectionLinks,
+  AdminAnalytics,
   CommunityCounters,
+  DevelopmentOverview,
+  Edition,
   EditionRegistry,
+  Mailer,
   MistakeReports,
+  OwnerChecks,
+  Quality,
   Sync,
 } from '@slovo/server-core';
 import type { Logger } from 'pino';
@@ -20,6 +30,7 @@ import { adminProcedures } from './admin/admin-procedures';
 import { collectionLinksProcedures } from './collection-links/collection-links-procedures';
 import { contentProcedures } from './content/content-procedures';
 import type { ContentStore } from './content/content-store';
+import type { ContentQueue } from './content/content-queue';
 import type { ContentWrites } from './content/content-writes';
 import { countersProcedures } from './counters/counters-procedures';
 import { reportOf, type ErrorReporter } from './error-reporter';
@@ -68,33 +79,71 @@ interface ApiContext extends ResponseHeadersPluginContext, FailureContext {
 export function createApiHandler({
   accounts,
   admin,
+  adminAnalytics,
+  adminSignIn,
+  clock,
   collectionLinks,
   communityCounters,
+  contentQueue,
   contentStore,
   contentWrites,
+  development,
   editions,
+  mailer,
   mistakeReports,
+  ownerChecks,
+  quality,
+  served,
   sync,
 }: {
   accounts: Accounts;
   admin: AdminAccess;
+  adminAnalytics: AdminAnalytics;
+  adminSignIn: AdminSignIn;
+  clock: Clock;
   collectionLinks: CollectionLinks;
   communityCounters: CommunityCounters;
+  contentQueue: ContentQueue;
   contentStore: ContentStore;
   contentWrites: ContentWrites;
+  development: DevelopmentOverview;
   editions: EditionRegistry;
+  /** Sends the notice of an admin invite. */
+  mailer: Mailer;
   mistakeReports: MistakeReports;
+  ownerChecks: OwnerChecks;
+  /** Якість, and the token CI pushes its history with. */
+  quality: {
+    readonly quality: Quality;
+    readonly ciToken: string | undefined;
+    readonly alertSettings: AlertSettings;
+    readonly alertStore: AlertStore;
+  };
+  /** The Editions the backend serves, as the admin lists them. */
+  served: readonly Edition[];
   sync: Sync;
 }) {
   const router = implement(apiContract)
     .$context<ApiContext>()
     .router({
       account: accountProcedures(accounts),
-      admin: adminProcedures(admin, contentWrites),
+      admin: adminProcedures(
+        admin,
+        adminSignIn,
+        editions,
+        served,
+        contentWrites,
+        mailer,
+        development,
+        contentQueue,
+        ownerChecks,
+        adminAnalytics,
+        quality,
+      ),
       collectionLinks: collectionLinksProcedures(collectionLinks),
       content: contentProcedures(editions, contentStore),
       counters: countersProcedures(communityCounters),
-      edition: editionProcedures(editions),
+      edition: editionProcedures(editions, clock),
       reports: reportsProcedures(mistakeReports),
       sync: syncProcedures(sync, accounts),
     });
@@ -104,8 +153,8 @@ export function createApiHandler({
         try {
           return await options.next();
         } catch (error) {
-          // A refused request (4xx) is an answer the contract lists.
-          if (error instanceof ORPCError && error.status < 500) throw error;
+          // A refused request (4xx), or a failure the contract lists, is an answer.
+          if (error instanceof ORPCError && (error.status < 500 || error.defined)) throw error;
           onUnexpectedFailure(options.context, error);
           return {
             matched: true,

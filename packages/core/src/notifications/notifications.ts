@@ -1,3 +1,4 @@
+import type { Analytics } from '../analytics/analytics';
 import { MAX_NOTIFICATION_TIMES, TimeOfDaySchema } from '@slovo/contracts';
 
 import type { Cycle } from '../feed/cycle';
@@ -153,6 +154,7 @@ export async function openNotifications({
   returned,
   xpLog,
   activeDays,
+  analytics,
 }: {
   edition: NotificationsEdition;
   userState: UserState;
@@ -169,6 +171,7 @@ export async function openNotifications({
   returned: Pick<Subject<void>, 'subscribe'>;
   xpLog: Pick<XpLog, 'dayOf' | 'days' | 'subscribe'>;
   activeDays: Pick<ActiveDays, 'days' | 'subscribe'>;
+  analytics: Pick<Analytics, 'track'>;
 }): Promise<Notifications> {
   const [storedTimes, storedSound] = await Promise.all([
     userState.read(timesRecord),
@@ -271,6 +274,10 @@ export async function openNotifications({
   async function askPermission(): Promise<NotificationPermission> {
     const reported = await planner.permission();
     const permission = reported === 'not-asked' ? await planner.askPermission() : reported;
+    if (reported === 'not-asked' && permission !== 'not-asked')
+      await analytics
+        .track('notificationPermissionAnswered', { granted: permission === 'allowed' })
+        .catch(() => undefined);
     await plan();
     return permission;
   }

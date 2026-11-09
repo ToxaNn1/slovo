@@ -129,11 +129,14 @@ export {
 export { openCounterSending } from './community-counters/counter-sending';
 export {
   createAnalytics,
-  noAnalytics,
   type Analytics,
   type AnalyticsEvent,
   type AnalyticsEvents,
   type AnalyticsPort,
+  type AnalyticsReader,
+  type AnalyticsSink,
+  type AnalyticsSwitches,
+  type VariantProperty,
   type EntryEventProperties,
 } from './analytics/analytics';
 export {
@@ -210,7 +213,22 @@ export {
 } from './game/traced-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { loadEdition, type Edition } from './edition/edition';
-export { openRemoteSwitches } from './edition/remote-switches';
+export {
+  openRemoteSwitches,
+  SWITCHES_REFRESH_MS,
+  type ReaderFacts,
+  type RemoteSwitches,
+  type RemoteSwitchesAnswer,
+} from './edition/remote-switches';
+export {
+  evaluateSwitches,
+  type RemoteRule,
+  type SwitchFacts,
+  type SwitchVerdict,
+  type SwitchVerdicts,
+} from './edition/switch-evaluator';
+export { forceUpdateOf, type ForceUpdate, type ForceUpdateFacts } from './edition/force-update';
+export { readInstallId } from './edition/install-id';
 export {
   colorSchemeFor,
   createSettings,

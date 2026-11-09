@@ -28,8 +28,15 @@ RUN pnpm install --frozen-lockfile --prod \
 # image keeps only the content targets the backend reads at start.
 RUN find editions -path '*/content/*' -type f ! -name targets.json -delete
 
+# The owner admin (ADR 0088), built by Vite with the development dependencies
+# it needs; the image keeps its dist alone, which the backend serves at /admin.
+FROM base AS admin
+COPY . .
+RUN NODE_ENV=development pnpm install --frozen-lockfile --filter @slovo/admin... \
+    && pnpm --filter @slovo/admin build
+
 # The image keeps the backend, the workspace packages it imports, the Editions
-# it serves and their installs: no app, no tools, no package store. The
+# it serves, the built admin and their installs: no other app, no tools, no package store. The
 # release command runs through pnpm, which would otherwise try to reinstall
 # this partial workspace before the script, and which writes its own version
 # into a missing lockfile (the user cannot write /app).
@@ -46,6 +53,7 @@ COPY --from=install /app/packages/server-core packages/server-core
 COPY --from=install /app/app app
 COPY --from=install /app/editions editions
 COPY --from=install /app/apps/backend apps/backend
+COPY --from=admin /app/apps/admin/dist apps/admin/dist
 
 WORKDIR /app/apps/backend
 USER node

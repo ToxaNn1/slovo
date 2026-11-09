@@ -38,71 +38,50 @@ function servingEditions(...ids: string[]) {
 }
 
 describe('edition.switches', () => {
-  it('answers no feature off while the owner turned none off', async () => {
+  it('answers no Rules and no force-update minimums while the owner set none', async () => {
     const { client } = servingEditions('untouched');
 
     const switches = await client.edition.switches({ params: { editionId: 'untouched' } });
 
-    expect(switches).toMatchObject({ status: 200, body: { off: [] } });
+    expect(switches).toMatchObject({ status: 200, body: { rules: [], minimums: {} } });
   });
 
-  it('answers a feature after the owner turns it off, and none after they clear it', async () => {
-    const { client, switchOff, clearSwitch } = servingEditions('emergency');
+  it('answers the Kill switch as one Rule off for everyone, and none once cleared', async () => {
+    const { client, kill, clearRules } = servingEditions('emergency');
     const params = { editionId: 'emergency' };
 
-    await expect(switchOff('emergency', 'game')).resolves.toEqual({ ok: true, off: ['game'] });
+    await kill('emergency', 'game');
     const off = await client.edition.switches({ params });
-    await expect(clearSwitch('emergency', 'game')).resolves.toEqual({ ok: true, off: [] });
+    await clearRules('emergency', 'game');
     const cleared = await client.edition.switches({ params });
 
-    expect(off).toMatchObject({ status: 200, body: { off: ['game'] } });
-    expect(cleared).toMatchObject({ status: 200, body: { off: [] } });
+    expect(off).toMatchObject({
+      status: 200,
+      body: { rules: [{ id: 'kill', feature: 'game', verdict: 'off', targets: {} }] },
+    });
+    expect(cleared).toMatchObject({ status: 200, body: { rules: [] } });
   });
 
-  it('answers every feature turned off, in name order', async () => {
-    const { client, switchOff } = servingEditions('several');
-    await switchOff('several', 'game');
-    await switchOff('several', 'contentUpdates');
-    await switchOff('several', 'account');
+  it('still lists a feature off for everyone in `off`, for the apps that read only that', async () => {
+    const { client, kill, clearRules } = servingEditions('older-app');
+    const params = { editionId: 'older-app' };
 
-    const switches = await client.edition.switches({ params: { editionId: 'several' } });
-
-    expect(switches).toMatchObject({ body: { off: ['account', 'contentUpdates', 'game'] } });
-  });
-
-  it.each([
-    'synonymRows',
-    'tips',
-    'notifications',
-    'widget',
-    'shareCards',
-    'pronunciation',
-    'wordOfTheDay',
-    'statistics',
-    'knowledge',
-    'selfCheck',
-    'rarityCeiling',
-    'gameReview',
-  ])('turns the %s switch off remotely and back on', async (feature) => {
-    const { client, switchOff, clearSwitch } = servingEditions('polish');
-    const params = { editionId: 'polish' };
-
-    await expect(switchOff('polish', feature)).resolves.toEqual({ ok: true, off: [feature] });
+    await kill('older-app', 'game');
     const off = await client.edition.switches({ params });
-    await expect(clearSwitch('polish', feature)).resolves.toEqual({ ok: true, off: [] });
+    await clearRules('older-app', 'game');
     const cleared = await client.edition.switches({ params });
 
-    expect(off).toMatchObject({ status: 200, body: { off: [feature] } });
-    expect(cleared).toMatchObject({ status: 200, body: { off: [] } });
+    expect(off.status === 200 && off.body.off).toContain('game');
+    expect(cleared.status === 200 && cleared.body.off).toEqual([]);
   });
 
   it("keeps each Edition's switches apart", async () => {
-    const { client, switchOff } = servingEditions('switched', 'neighbour');
-    await switchOff('switched', 'game');
+    const { client, kill } = servingEditions('switched', 'neighbour');
+    await kill('switched', 'game');
 
     const neighbour = await client.edition.switches({ params: { editionId: 'neighbour' } });
 
-    expect(neighbour).toMatchObject({ body: { off: [] } });
+    expect(neighbour).toMatchObject({ body: { rules: [] } });
   });
 
   it('answers 304 without the switches when If-None-Match names their ETag', async () => {
@@ -124,16 +103,19 @@ describe('edition.switches', () => {
   });
 
   it('answers the switches with a new ETag once they change', async () => {
-    const { client, switchOff, clearSwitch } = servingEditions('changed');
+    const { client, kill, clearRules } = servingEditions('changed');
     const params = { editionId: 'changed' };
     const before = (await client.edition.switches({ params })).headers.etag;
-    await switchOff('changed', 'corrections');
+    await kill('changed', 'corrections');
 
     const after = await client.edition.switches({ params, headers: { 'if-none-match': before } });
-    await clearSwitch('changed', 'corrections');
+    await clearRules('changed', 'corrections');
     const back = await client.edition.switches({ params });
 
-    expect(after).toMatchObject({ status: 200, body: { off: ['corrections'] } });
+    expect(after).toMatchObject({
+      status: 200,
+      body: { rules: [{ feature: 'corrections', verdict: 'off', targets: {} }] },
+    });
     expect(after.headers.etag).not.toBe(before);
     expect(back.headers.etag).toBe(before);
   });
@@ -161,22 +143,22 @@ describe('edition.switches', () => {
 
 describe('a feature turned off remotely', () => {
   it('makes content.latest NOT_FOUND, until the owner clears it', async () => {
-    const { client, switchOff, clearSwitch } = servingEditions('remote-off');
-    await switchOff('remote-off', 'contentUpdates');
+    const { client, kill, clearRules } = servingEditions('remote-off');
+    await kill('remote-off', 'contentUpdates');
 
     await expect(
       client.content.latest({ editionId: 'remote-off', packFormat: PACK_FORMAT }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
 
-    await clearSwitch('remote-off', 'contentUpdates');
+    await clearRules('remote-off', 'contentUpdates');
     await expect(
       client.content.latest({ editionId: 'remote-off', packFormat: PACK_FORMAT }),
     ).resolves.toEqual({ pack: null });
   });
 
   it('makes a Sign-in code request NOT_FOUND, and nothing is sent', async () => {
-    const { client, mailer, switchOff } = servingEditions('no-account');
-    await switchOff('no-account', 'account');
+    const { client, mailer, kill } = servingEditions('no-account');
+    await kill('no-account', 'account');
 
     await expect(
       client.account.requestCode({ email: newEmail(), editionId: 'no-account' }),
@@ -185,8 +167,8 @@ describe('a feature turned off remotely', () => {
   });
 
   it("leaves the Edition's other features served", async () => {
-    const { client, switchOff } = servingEditions('partly-off');
-    await switchOff('partly-off', 'game');
+    const { client, kill } = servingEditions('partly-off');
+    await kill('partly-off', 'game');
 
     await expect(
       client.content.latest({ editionId: 'partly-off', packFormat: PACK_FORMAT }),
@@ -196,61 +178,17 @@ describe('a feature turned off remotely', () => {
   it('can not turn on a feature the Edition turns off', async () => {
     const folder = testEditions(['edition-off'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, contentUpdates: false },
+      featureSwitches: { ...config.featureSwitches, contentUpdates: 'off' },
     }));
-    const { client, clearSwitch } = testApp({ editions: folder.read() });
+    const { client, clearRules } = testApp({ editions: folder.read() });
 
-    await expect(clearSwitch('edition-off', 'contentUpdates')).resolves.toEqual({
+    await expect(clearRules('edition-off', 'contentUpdates')).resolves.toMatchObject({
       ok: true,
-      off: [],
+      rules: [],
     });
 
     await expect(
       client.content.latest({ editionId: 'edition-off', packFormat: PACK_FORMAT }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
-  });
-});
-
-describe('the switch commands', () => {
-  it('refuse an Edition the backend did not find, and switch nothing', async () => {
-    const { client, switchOff, clearSwitch } = servingEditions('found');
-
-    await expect(switchOff('pl', 'game')).resolves.toEqual({
-      ok: false,
-      reason: 'unknown-edition',
-    });
-    await expect(clearSwitch('pl', 'game')).resolves.toEqual({
-      ok: false,
-      reason: 'unknown-edition',
-    });
-    await expect(
-      client.edition.switches({ params: { editionId: 'found' } }),
-    ).resolves.toMatchObject({ body: { off: [] } });
-  });
-
-  it('refuse a feature the Feature Switches schema does not know, and switch nothing', async () => {
-    const { client, switchOff, clearSwitch } = servingEditions('typo');
-
-    await expect(switchOff('typo', 'gmae')).resolves.toEqual({
-      ok: false,
-      reason: 'unknown-feature',
-    });
-    await expect(clearSwitch('typo', 'gmae')).resolves.toEqual({
-      ok: false,
-      reason: 'unknown-feature',
-    });
-    await expect(client.edition.switches({ params: { editionId: 'typo' } })).resolves.toMatchObject(
-      {
-        body: { off: [] },
-      },
-    );
-  });
-
-  it('turn a feature off once however often they run, and clear one that is on', async () => {
-    const { switchOff, clearSwitch } = servingEditions('repeated');
-
-    await expect(clearSwitch('repeated', 'game')).resolves.toEqual({ ok: true, off: [] });
-    await switchOff('repeated', 'game');
-    await expect(switchOff('repeated', 'game')).resolves.toEqual({ ok: true, off: ['game'] });
   });
 });

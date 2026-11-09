@@ -264,7 +264,7 @@ describe("the widget extension's Edition files", () => {
       ...ukrainian,
       config: {
         ...config,
-        featureSwitches: { ...config.featureSwitches, lockScreenWidget: false },
+        featureSwitches: { ...config.featureSwitches, lockScreenWidget: 'off' },
       },
     });
 

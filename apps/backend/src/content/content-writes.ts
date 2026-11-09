@@ -4,6 +4,7 @@ import {
   contentSetOf,
   parseRecord,
   recordFileOf,
+  recordIdOf,
   type AuthoredRecord,
   type RecordKind,
   type Refusal,
@@ -19,6 +20,7 @@ import {
   actionLog,
   contentBatches,
   contentCorrections,
+  contentCrosswordDays,
   contentCuratedCollections,
   contentIdioms,
   contentIds,
@@ -49,9 +51,37 @@ export type WriteRefusal =
 
 export type WriteResult = { readonly ok: true; readonly written: Written } | WriteRefusal;
 
-/** The Агент a write comes from. */
-export interface Writer {
-  readonly name: string;
+/** Who a write comes from: an Агент by its token, or an Admin user of a session in the content editor. */
+export type Writer =
+  | { readonly kind: 'agent'; readonly name: string }
+  | { readonly kind: 'admin-user'; readonly email: string };
+
+/** The Action log's name for the writer. */
+const whoOf = (writer: Writer) =>
+  writer.kind === 'agent'
+    ? { kind: 'agent' as const, name: writer.name }
+    : { kind: 'admin-user' as const, email: writer.email };
+
+/** The field a record of each kind is listed by in the content editor. */
+const LABEL_FIELD: Readonly<Record<RecordKind, string>> = {
+  word: 'lemma',
+  correction: 'nonStandardForm',
+  idiom: 'expression',
+  synonymRow: 'dominant',
+  tip: 'title',
+  curatedCollection: 'name',
+  crosswordDay: 'date',
+};
+
+/** The text a record is listed and searched by. */
+function labelOf(kind: RecordKind, fields: Readonly<Record<string, unknown>>): string {
+  const value = fields[LABEL_FIELD[kind]];
+  if (typeof value === 'string') return value;
+  if (typeof value === 'object' && value !== null) {
+    const text = Object.values(value).find((part) => typeof part === 'string');
+    if (typeof text === 'string') return text;
+  }
+  return typeof fields['id'] === 'string' ? fields['id'] : '';
 }
 
 /** One write of a record: what it changes, from which record version, in which batch. */
@@ -68,7 +98,7 @@ export type ContentWrite =
 /** A record as a row keeps it: the fields with what each save keeps beside them. */
 interface StoredRecord {
   readonly id: string;
-  readonly fields: { readonly id: string };
+  readonly fields: object;
   readonly recordVersion: number;
 }
 
@@ -90,6 +120,37 @@ function toJson(value: unknown): Json {
       .filter(([, field]) => field !== undefined)
       .map(([key, field]) => [key, toJson(field)]),
   );
+}
+
+/**
+ * Why a write of a Crossword day is refused by its date, the day's id: an
+ * edit keeps the date, and an added day takes a date no day has.
+ */
+function datedRefusal(
+  kind: RecordKind,
+  change: ContentWrite,
+  days: readonly { readonly id: string }[],
+): Refusal | undefined {
+  if (kind !== 'crosswordDay' || change.op === 'retire') return undefined;
+  const date = change.fields['date'];
+  const file = recordFileOf(kind, change.op === 'edit' ? change.id : String(date));
+  if (change.op === 'edit' && date !== change.id) {
+    return {
+      rule: 'crossword-days-immutable',
+      file,
+      field: 'date',
+      message: `A day keeps its date: ${change.id}`,
+    };
+  }
+  if (change.op === 'create' && days.some(({ id }) => id === date)) {
+    return {
+      rule: 'duplicate-id',
+      file,
+      field: 'date',
+      message: `The day of ${String(date)} is already written: edit it instead`,
+    };
+  }
+  return undefined;
 }
 
 /**
@@ -166,7 +227,15 @@ export function createContentWrites({
       })
       .from(contentCuratedCollections)
       .where(of(contentCuratedCollections));
-    return { word, correction, idiom, synonymRow, tip, curatedCollection };
+    const crosswordDay = await tx
+      .select({
+        id: contentCrosswordDays.id,
+        fields: contentCrosswordDays.fields,
+        recordVersion: contentCrosswordDays.recordVersion,
+      })
+      .from(contentCrosswordDays)
+      .where(of(contentCrosswordDays));
+    return { word, correction, idiom, synonymRow, tip, curatedCollection, crosswordDay };
   }
 
   /** The Edition's content version, held to the commit; none while it is not imported. */
@@ -200,7 +269,8 @@ export function createContentWrites({
     });
   }
 
-  const authorOf = (writer: Writer): ContentAuthor => `agent:${writer.name}`;
+  const authorOf = (writer: Writer): ContentAuthor =>
+    writer.kind === 'agent' ? `agent:${writer.name}` : `admin:${writer.email}`;
 
   /** Whether the batch is the Агент's own, of the Edition. */
   async function ownBatch(tx: Tx, writer: Writer, editionId: string, batchId: string) {
@@ -218,7 +288,7 @@ export function createContentWrites({
   }
 
   /** A new id of the kind that the Edition never gave, registered at once. */
-  async function newId(tx: Tx, editionId: string, kind: RecordKind) {
+  async function newId(tx: Tx, editionId: string, kind: Exclude<RecordKind, 'crosswordDay'>) {
     for (;;) {
       let id = ID_PREFIX[kind];
       for (let index = 0; index < ID_LENGTH; index += 1) {
@@ -248,8 +318,8 @@ export function createContentWrites({
     needsNewRecording: boolean,
   ) {
     const key = {
-      id: record.entry.id,
-      retired: 'retired' in record.entry && record.entry.retired,
+      id: recordIdOf(record),
+      retired: 'retired' in record.entry && record.entry.retired === true,
       ...common,
     };
     switch (record.kind) {
@@ -310,6 +380,17 @@ export function createContentWrites({
           });
         return;
       }
+      case 'crosswordDay': {
+        const row = { ...key, fields: record.entry };
+        await tx
+          .insert(contentCrosswordDays)
+          .values(row)
+          .onConflictDoUpdate({
+            target: [contentCrosswordDays.editionId, contentCrosswordDays.id],
+            set: row,
+          });
+        return;
+      }
     }
   }
 
@@ -352,9 +433,19 @@ export function createContentWrites({
             return { ok: false, reason: 'stale', currentVersion: current.recordVersion };
           }
         }
-        const id = current?.id ?? (await newId(tx, editionId, kind));
+        const dated = datedRefusal(kind, change, records.crosswordDay);
+        if (dated !== undefined) return { ok: false, reason: 'refused', refusals: [dated] };
+        const id =
+          current?.id ??
+          (kind === 'crosswordDay'
+            ? String(change.op === 'create' ? change.fields['date'] : '')
+            : await newId(tx, editionId, kind));
         const fields =
-          change.op === 'retire' ? { ...current?.fields, retired: true } : { ...change.fields, id };
+          change.op === 'retire'
+            ? { ...current?.fields, retired: true }
+            : kind === 'crosswordDay'
+              ? change.fields
+              : { ...change.fields, id };
         const parsed = parseRecord(kind, recordFileOf(kind, id), fields);
         // A new id is registered by now: a refusal rolls it back with the rest.
         if (!parsed.ok)
@@ -369,6 +460,7 @@ export function createContentWrites({
           synonymRow: fieldsOf(records.synonymRow),
           tip: fieldsOf(records.tip),
           curatedCollection: fieldsOf(records.curatedCollection),
+          crosswordDay: fieldsOf(records.crosswordDay),
         });
         const now = clock.now();
         const refusals = checkRecord(edition.config, set, record, { today: now });
@@ -402,7 +494,7 @@ export function createContentWrites({
           .set({ contentVersion: published, updatedAt: now })
           .where(eq(contentVersions.editionId, editionId));
         await tx.insert(actionLog).values({
-          who: { kind: 'agent', name: writer.name },
+          who: whoOf(writer),
           at: now,
           what: `content.${kind}.${change.op}`,
           before:
@@ -453,11 +545,11 @@ export function createContentWrites({
       const [current] = (await recordsOf(tx, editionId, id))[kind];
       if (current === undefined) return { ok: false, reason: 'not-found' };
       await tx.insert(actionLog).values({
-        who: { kind: 'agent', name: writer.name },
+        who: whoOf(writer),
         at: clock.now(),
         what: `content.${kind}.flag`,
         before: null,
-        after: null,
+        after: { id },
         reason,
         editionId,
         batchId,
@@ -517,11 +609,49 @@ export function createContentWrites({
       }
       const [current] = (await recordsOf(tx, editionId, id))[kind];
       if (current === undefined) return { ok: false, reason: 'not-found' } as const;
-      return { ok: true, fields: current.fields, recordVersion: current.recordVersion } as const;
+      return {
+        ok: true,
+        fields: current.fields,
+        recordVersion: current.recordVersion,
+        retired: 'retired' in current.fields && current.fields.retired === true,
+        ...('needsNewRecording' in current ? { needsNewRecording: current.needsNewRecording } : {}),
+      } as const;
     });
   }
 
-  return { openBatch, write, flag, report, record };
+  /** The records of a kind the content editor lists: by a text query in their label, retired ones on request. */
+  async function list(
+    editionId: string,
+    kind: RecordKind,
+    {
+      query = '',
+      retired = false,
+    }: { query?: string | undefined; retired?: boolean | undefined } = {},
+  ) {
+    if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
+    return db.transaction(async (tx) => {
+      if ((await heldVersion(tx, editionId)) === undefined) {
+        return { ok: false, reason: 'not-imported' } as const;
+      }
+      const needle = query.trim().toLocaleLowerCase();
+      const records = (await recordsOf(tx, editionId))[kind]
+        .map((row) => {
+          const fields: Readonly<Record<string, unknown>> = row.fields;
+          return {
+            id: row.id,
+            label: labelOf(kind, fields),
+            retired: fields['retired'] === true,
+            recordVersion: row.recordVersion,
+          };
+        })
+        .filter((row) => retired || !row.retired)
+        .filter((row) => needle === '' || row.label.toLocaleLowerCase().includes(needle))
+        .sort((a, b) => a.label.localeCompare(b.label));
+      return { ok: true, records } as const;
+    });
+  }
+
+  return { openBatch, write, flag, report, record, list };
 }
 
 export type ContentWrites = ReturnType<typeof createContentWrites>;

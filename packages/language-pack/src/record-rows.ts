@@ -323,7 +323,9 @@ export function tipRows(tip: Tip): Statement[] {
   ];
 }
 
-export function crosswordDayRows({ date, words }: CrosswordDay): Statement[] {
+/** The rows of a Crossword day; a Retired day has none, so a Patch removes it. */
+export function crosswordDayRows({ date, words, retired }: CrosswordDay): Statement[] {
+  if (retired === true) return [];
   return words.map(({ entryId, answer, clue, row, column, direction }, position) =>
     statement(SQL.crosswordWord, date, position, entryId, answer, clue, row, column, direction),
   );

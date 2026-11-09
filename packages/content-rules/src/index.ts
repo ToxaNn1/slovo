@@ -12,6 +12,7 @@ export {
   ID_PREFIX,
   parseAgainst,
   parseRecord,
+  recordIdOf,
   type AuthoredRecord,
   type RecordKind,
 } from './parse-record';

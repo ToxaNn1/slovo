@@ -142,7 +142,7 @@ export function createContentStore({
         ...common,
         id: fields.date,
         fields,
-        retired: false,
+        retired: fields.retired ?? false,
       }));
       const folderIds = new Map<(typeof CONTENT_TABLES)[number], readonly string[]>([
         [contentWords, content.words.map(({ id }) => id)],

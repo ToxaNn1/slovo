@@ -9,7 +9,7 @@ import type {
   Word,
 } from '@slovo/contracts';
 
-import { checkCrosswordDays, unknownCrosswordEntries } from './crossword-days';
+import { checkCrosswordDay, checkCrosswordDays, unknownCrosswordEntries } from './crossword-days';
 import { checkCuratedCollections } from './curated-collections';
 import { checkEntries } from './entries';
 import type { AuthoredRecord, RecordKind } from './parse-record';
@@ -40,6 +40,7 @@ export interface ContentRecords {
   readonly synonymRow: readonly SynonymRow[];
   readonly tip: readonly Tip[];
   readonly curatedCollection: readonly CuratedCollection[];
+  readonly crosswordDay: readonly CrosswordDay[];
 }
 
 /** Where a record is located in a refusal: `<kind>/<id>`. */
@@ -56,6 +57,7 @@ export function contentSetOf(records: ContentRecords): ContentSet {
     synonymRows: authored('synonymRow', records.synonymRow),
     tips: authored('tip', records.tip),
     curatedCollections: authored('curatedCollection', records.curatedCollection),
+    crosswordDays: [...records.crosswordDay].sort((a, b) => a.date.localeCompare(b.date)),
   };
 }
 
@@ -68,9 +70,19 @@ export function checkContentSet(
   set: ContentSet,
   { today }: { today: Date },
 ): Refusal[] {
+  return checkSet(config, set, today, () => true);
+}
+
+/** The content rules over the set, the rules of one Entry alone on the Entries whose file `checksFile` takes. */
+function checkSet(
+  config: EditionConfig,
+  set: ContentSet,
+  today: Date,
+  checksFile: (file: string) => boolean,
+): Refusal[] {
   const { words, corrections, idioms, synonymRows, tips, curatedCollections } = set;
   return [
-    ...checkEntries(config, words, corrections, idioms),
+    ...checkEntries(config, words, corrections, idioms, checksFile),
     ...checkSynonymRows(config, words, synonymRows),
     ...checkTips(config, tips),
     ...checkCuratedCollections(curatedCollections, [
@@ -98,17 +110,33 @@ export function checkRecord(
   record: AuthoredRecord,
   options: { today: Date },
 ): Refusal[] {
-  const before = new Set(checkContentSet(config, set, options).map(keyOf));
-  return checkContentSet(config, withRecord(set, record), options).filter(
-    (refusal) => refusal.file === record.file || !before.has(keyOf(refusal)),
+  if (record.kind === 'crosswordDay') {
+    return checkCrosswordDay(
+      set.crosswordDays ?? [],
+      record.entry,
+      [...set.words, ...set.corrections],
+      { file: record.file, today: options.today.toISOString().slice(0, 10) },
+    );
+  }
+  // The rules of one Entry alone give the other records what they gave before, so only the record's run.
+  const before = new Set(checkSet(config, set, options.today, () => false).map(keyOf));
+  const after = checkSet(
+    config,
+    withRecord(set, record),
+    options.today,
+    (file) => file === record.file,
   );
+  return after.filter((refusal) => refusal.file === record.file || !before.has(keyOf(refusal)));
 }
 
 function keyOf({ rule, file, entryId, field }: Refusal): string {
   return JSON.stringify([rule, file, entryId, field]);
 }
 
-function withRecord(set: ContentSet, record: AuthoredRecord): ContentSet {
+function withRecord(
+  set: ContentSet,
+  record: Exclude<AuthoredRecord, { kind: 'crosswordDay' }>,
+): ContentSet {
   switch (record.kind) {
     case 'word':
       return { ...set, words: replaced(set.words, record) };

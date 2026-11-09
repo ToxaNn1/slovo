@@ -37,12 +37,14 @@ export type CrosswordWord = z.infer<typeof CrosswordWordSchema>;
  * each from another Entry. Every word lies inside the grid and crosses another, all of them hang
  * together, crossing words agree on their shared letter, and every run of two
  * or more letters in a row or a column is one of the words, so the grid reads
- * nothing but its words.
+ * nothing but its words. A Retired day keeps its date and words and is no
+ * longer played; a day not Retired leaves the flag out.
  */
 export const CrosswordDaySchema = z
   .strictObject({
     date: z.iso.date(),
     words: z.array(CrosswordWordSchema).min(CROSSWORD_WORDS.min).max(CROSSWORD_WORDS.max),
+    retired: z.boolean().optional(),
   })
   .superRefine(({ words }, context) => {
     words.forEach(({ entryId }, i) => {

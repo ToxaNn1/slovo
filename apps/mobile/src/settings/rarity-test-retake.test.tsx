@@ -28,13 +28,13 @@ const { config } = activeEditionFiles;
 
 /** The UA Edition as it ships, with the Feature Switches given off. */
 function editionWithout(...off: FeatureSwitch[]): Edition {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
     featureSwitches: {
       ...featureSwitches,
-      account: false,
-      ...Object.fromEntries(off.map((feature) => [feature, false])),
+      account: 'off',
+      ...Object.fromEntries(off.map((feature) => [feature, 'off'])),
     },
   });
 }

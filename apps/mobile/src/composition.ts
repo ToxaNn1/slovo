@@ -2,7 +2,6 @@ import { openComposition, type Account, type Composition } from '@slovo/core';
 import type { PackReader } from '@slovo/language-pack/reader';
 import { useEffect, useState } from 'react';
 
-import { deviceAnalytics } from './analytics/posthog-analytics';
 import { logError } from './diagnostics/log';
 import { deviceNotificationScheduler } from './notifications/device-notifications';
 import { editionStrings } from './edition/edition';
@@ -31,7 +30,6 @@ async function openOver({
     ...(await ports.opened()),
     content,
     crossword: content,
-    analytics: deviceAnalytics,
     scheduling: {
       scheduler: deviceNotificationScheduler,
       ellipsis: editionStrings.notificationBody.ellipsis,
