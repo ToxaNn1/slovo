@@ -14,8 +14,52 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A cloud session appends a footer to the PR body (ADR 0100). This job alone
+  # may edit the PR, so it never runs the PR's code: the script comes from the
+  # base commit and nothing is installed. A fork's PR gets a read-only token,
+  # so its body is checked as it is.
+  footer:
+    name: PR body footer
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    outputs:
+      body: ${{ steps.strip.outputs.body }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+          sparse-checkout: scripts
+      - name: Strip the cloud session footer
+        id: strip
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORK: ${{ github.event.pull_request.head.repo.full_name != github.repository }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          printf '%s' "$PR_BODY" > "$RUNNER_TEMP/body.md"
+          if [ "$FORK" = true ]; then
+            cp "$RUNNER_TEMP/body.md" "$RUNNER_TEMP/clean.md"
+          else
+            node scripts/strip-pr-footer.mjs < "$RUNNER_TEMP/body.md" > "$RUNNER_TEMP/clean.md"
+            if ! cmp -s "$RUNNER_TEMP/body.md" "$RUNNER_TEMP/clean.md"; then
+              gh api --method PATCH "repos/$REPO/pulls/$PR_NUMBER" -F "body=@$RUNNER_TEMP/clean.md" > /dev/null
+              echo "Removed the cloud session footer from the PR body"
+            fi
+          fi
+          delimiter="body-$(openssl rand -hex 16)"
+          { echo "body<<$delimiter"; cat "$RUNNER_TEMP/clean.md"; echo; echo "$delimiter"; } >> "$GITHUB_OUTPUT"
+
   commits:
     name: Commit messages
+    needs: footer
+    # Runs when the footer job fails too, and then checks the body as it came.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -45,9 +89,14 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-          PR_TEXT: ${{ github.event.pull_request.title }} ${{ github.event.pull_request.body }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          FOOTER_RESULT: ${{ needs.footer.result }}
+          CLEAN_BODY: ${{ needs.footer.outputs.body }}
         run: |
           status=0
+          # The body without the cloud session footer, once the footer job has removed it.
+          if [ "$FOOTER_RESULT" = success ]; then PR_TEXT="$PR_TITLE $CLEAN_BODY"; else PR_TEXT="$PR_TITLE $PR_BODY"; fi
           if git log --format='%ae' "$BASE_SHA..$HEAD_SHA" | grep -qvx 'antondemydenko113@gmail.com'; then
             echo "::error::Every commit must be authored by antondemydenko113@gmail.com"; status=1
           fi
