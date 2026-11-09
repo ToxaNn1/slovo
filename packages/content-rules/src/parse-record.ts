@@ -27,6 +27,16 @@ export type AuthoredRecord =
 
 export type RecordKind = AuthoredRecord['kind'];
 
+/** The id prefix of each kind of record (ADR 0010). */
+export const ID_PREFIX: Record<RecordKind, string> = {
+  word: 'w_',
+  correction: 'c_',
+  idiom: 'i_',
+  synonymRow: 'r_',
+  tip: 't_',
+  curatedCollection: 'cc_',
+};
+
 /**
  * Parses outside JSON as a record of its kind, where it enters: from an
  * Edition file or a save. Every problem is refused by the schema rule and

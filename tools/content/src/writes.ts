@@ -6,6 +6,7 @@
  */
 import type { ApiClient } from '@slovo/contracts/api';
 import {
+  ID_PREFIX,
   checkRecord,
   contentSetOf,
   parseRecord,
@@ -179,16 +180,6 @@ export async function flag(
   );
   return flagged === undefined ? 1 : 0;
 }
-
-/** The id prefix of each kind of record (ADR 0010). */
-const ID_PREFIX: Record<RecordKind, string> = {
-  word: 'w_',
-  correction: 'c_',
-  idiom: 'i_',
-  synonymRow: 'r_',
-  tip: 't_',
-  curatedCollection: 'cc_',
-};
 
 /**
  * Checks each record of the input with the shared content rules against

@@ -1,4 +1,5 @@
 import {
+  ID_PREFIX,
   checkRecord,
   contentSetOf,
   parseRecord,
@@ -26,16 +27,6 @@ import {
   contentWords,
   type ContentAuthor,
 } from '../database/schema';
-
-/** The id prefix of each kind of record (ADR 0010). */
-const ID_PREFIX: Record<RecordKind, string> = {
-  word: 'w_',
-  correction: 'c_',
-  idiom: 'i_',
-  synonymRow: 'r_',
-  tip: 't_',
-  curatedCollection: 'cc_',
-};
 
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const ID_LENGTH = 6;
