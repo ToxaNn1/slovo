@@ -31,3 +31,6 @@ apps/mobile/ios/
 
 # The private code-signing key of OTA updates lives in EAS only (ADR 0062).
 private-key.pem
+
+# Local copy review by the marketer and copywriter agents (not shared, see copy-review/README.md)
+copy-review/
