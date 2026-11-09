@@ -1255,7 +1255,7 @@ describe('Corrections in the Feed', () => {
       });
     });
 
-    it('opens no linked Correction the Cycle does not cover, such as one the Language Pack lists under no kind', async () => {
+    it('links no Correction the Language Pack lists under no kind, by the one rule the Cycle covers Corrections, and opens none', async () => {
       const pack = createMemoryContentPort({ words, corrections: linkedCorrections });
       const content: ContentReadPort = {
         ...pack,
@@ -1268,7 +1268,7 @@ describe('Corrections in the Feed', () => {
         },
       };
       const { feed, position } = await feedOnLinkedWord({ content });
-      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toHaveLength(1);
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([]);
       const count = feed.cards.length;
 
       expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBeUndefined();
