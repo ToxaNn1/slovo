@@ -6,6 +6,7 @@ import { useEffect, useSyncExternalStore } from 'react';
 import { useComposition } from '../composition';
 import { editionStrings } from '../edition/edition';
 import { wordOfTheDayLanding } from '../feed/word-of-the-day-landing';
+import { keep } from '../keep';
 import { useSubscribed } from '../opening';
 import { useOpenScreen } from '../use-open-screen';
 
@@ -52,11 +53,11 @@ export function useDashboardScreen(): DashboardScreen {
   return {
     blocks,
     reveal: () => {
-      void dashboard.reveal();
+      void keep('the reveal of the Word of the Day', dashboard.reveal());
     },
     toCard: wordOfTheDayLanding.ask,
     chooseMood: (moodId) => {
-      void mood.choose(moodId);
+      void keep("today's Mood", mood.choose(moodId));
     },
     openPreviousWord: (entryId) => {
       openScreen(`/search/${entryId}?back=${encodeURIComponent(previousWordsTitle)}`);
@@ -65,7 +66,7 @@ export function useDashboardScreen(): DashboardScreen {
       openScreen(`/correction-type/${type}`);
     },
     openCuratedCollection: (collectionId) => {
-      void curatedCollections.open(collectionId);
+      void keep('the opened Curated Collections', curatedCollections.open(collectionId));
       openScreen(`/curated-collection/${collectionId}`);
     },
     openCategories: () => {
