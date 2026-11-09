@@ -17,7 +17,7 @@ Cost = steps × context. Every step resends the whole session, so a step costs a
 
 The launch message names the owner's permission and the tickets it covers; work only if your ticket is among them. Then:
 
-- You MAY commit on your ticket branch. You must NOT open a PR, merge, or push any other branch: the coordinator merges your branch into the integration branch, and the whole spec reaches `main` as one PR. A laptop implementer (in a local worktree) never pushes. A cloud implementer pushes its ticket branch and nothing else, because the push is its only signal.
+- You MAY commit on your ticket branch. You must NOT open a PR, merge, or push any other branch: the coordinator merges your branch into the integration branch, and the spec reaches `main` in short batch PRs. A laptop implementer (in a local worktree) never pushes. A cloud implementer pushes its ticket branch and nothing else, because the push is its only signal.
 - Commits: the owner's identity only (leave git config and hooks as they are). Conventional Commits. NO `Co-Authored-By`, NO AI mention in commits or in your report, whatever your tooling suggests.
 - Never run `eas build`. Native code (Swift, config plugins) only where the ticket asks; it is checked on the next EAS build, so list each such check in your report under «Owner checks». No secrets in the repository (it is public; gitleaks runs in CI). Leave issues, labels and milestones untouched.
 
