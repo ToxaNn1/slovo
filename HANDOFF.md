@@ -15,3 +15,4 @@ Done = every PR green -> `STATUS: FINISHED` first line, WAVES.md block finished.
 
 ## Log
 - 2026-11-09T13:09:28Z step 0: branch created
+- 2026-11-09T13:10:14Z task1: merged origin/main into #1752 (waves.md conflict), pushed cf500803f; CI running. Next: tasks 2+3 implementers in parallel, task 4 on top of task 3 (pnpm-lock); ADR number 0097
