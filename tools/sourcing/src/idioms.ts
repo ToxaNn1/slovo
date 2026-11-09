@@ -109,6 +109,9 @@ async function draftLemma(request: IdiomRequest, context: DraftContext): Promise
   };
 }
 
+/** «Словник прислів'їв та приказок…», a dictionary of proverbs and sayings. */
+const PROVERB_DICTIONARY = /^Словник прислів['’ʼ]їв та приказок/u;
+
 /** An Idiom as drafted: the sources may leave the primary Definition open, and then it fails the schema. */
 type IdiomDraft = Omit<IdiomInput, 'primaryDefinition'> &
   Partial<Pick<IdiomInput, 'primaryDefinition'>>;
@@ -137,7 +140,16 @@ function draftIdiom(
     entry: idiom,
     headword: block.expression,
     issues: checkDraft(idiom, context.edition),
-    flags: [],
+    // That dictionary also holds idioms proper («Лити воду»), so it only raises the question.
+    flags:
+      request.idiomType !== 'proverb' && PROVERB_DICTIONARY.test(block.dictionary)
+        ? [
+            {
+              kind: 'check',
+              message: `Idiom Type ${request.idiomType} from the line, but goroh cites ${block.dictionary}: is it a proverb?`,
+            },
+          ]
+        : [],
     summary: {
       text: expression,
       group: request.idiomType,

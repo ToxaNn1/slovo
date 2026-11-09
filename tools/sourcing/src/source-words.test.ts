@@ -498,7 +498,7 @@ describe('sourceWords', () => {
     ]);
   });
 
-  it('answers a re-run from the cache without touching the network', async () => {
+  it('answers a re-run from the cache, asking again only for a page that was not found', async () => {
     const lemmaList = 'мжичка nature-weather 2\nкоса household-crafts 2\n';
     const first = setup({ lemmaList });
     await sourceWords(first.options);
@@ -508,12 +508,13 @@ describe('sourceWords', () => {
     const second = setup({ lemmaList, cacheDir: first.options.cacheDir, random: seededRandom() });
     const result = await sourceWords(second.options);
 
-    expect(second.net.requests).toEqual([]);
+    // goroh has no «Тлумачення» page of мжичка: a 404 is not cached, as goroh may add it.
+    expect(second.net.requests).toEqual([`${GOROH}Тлумачення/мжичка`]);
     expect(readDrafts(second.options.outDir)).toEqual(firstDrafts);
-    // Only the failed try of sum.in.ua was not cached.
+    // Neither the failed try of sum.in.ua nor the 404 was cached.
     expect(result.ok && result.report.requests).toEqual({
-      network: 0,
-      cached: first.net.requests.length - 1,
+      network: 1,
+      cached: first.net.requests.length - 2,
       backoffs: 0,
       unreachable: {},
     });
@@ -587,8 +588,11 @@ describe('sourceWords', () => {
     await Promise.all([sourceWords(first.options), sourceWords(second.options)]);
 
     for (const gap of gapsPerHost(first.net)) expect(gap).toBeGreaterThanOrEqual(2000);
-    // At most one run asked for each dratva page; the other read it from the cache.
-    const dratva = first.net.requests.filter((address) => address.endsWith('/дратва'));
+    // At most one run fetched each dratva page; the other read it from the cache.
+    const dratva = first.net.requests.filter(
+      (address) => address.endsWith('/дратва') && savedPages[address]?.status === 200,
+    );
+    expect(dratva.length).toBeGreaterThan(0);
     expect(dratva.length).toBe(new Set(dratva).size);
   });
 

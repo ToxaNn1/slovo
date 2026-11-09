@@ -11,6 +11,7 @@ import {
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import { sourceIdioms, type Fetch, type IdiomSourcingOptions, type SourcingResult } from './index';
 import { seededRandom } from './test-support';
@@ -88,10 +89,13 @@ function run(idiomList: string, overrides: Partial<IdiomSourcingOptions> = {}) {
   return { outDir: options.outDir, result: sourceIdioms(options) };
 }
 
+const DraftSchema = z.record(z.string(), z.unknown());
+
 function readDrafts(outDir: string, folder: 'drafts' | 'incomplete'): Record<string, unknown>[] {
   const dir = join(outDir, 'idioms', folder);
   return readdirSync(dir).map(
-    (name) => JSON.parse(readFileSync(join(dir, name), 'utf8')) as Record<string, unknown>,
+    // An incomplete draft fails the Idiom schema, so a draft is read as a plain object.
+    (name) => DraftSchema.parse(JSON.parse(readFileSync(join(dir, name), 'utf8'))),
   );
 }
 
@@ -175,6 +179,21 @@ describe('sourceIdioms', () => {
       new Set(['proverb']),
       new Set(['idiom']),
     ]);
+  });
+
+  it('asks about the Idiom Type of an idiom line whose page cites a proverbs dictionary', async () => {
+    const { result } = run('лити proverb\nборона idiom\n');
+    const { report } = ok(await result);
+
+    const [lyty, borona] = report.lemmas.map(({ drafts }) => drafts.flatMap((d) => d.flags));
+    expect(lyty).toEqual([]);
+    expect(borona?.length).toBeGreaterThan(0);
+    expect(borona).toEqual(
+      borona?.map(() => ({
+        kind: 'check',
+        message: expect.stringMatching(/^Idiom Type idiom from the line, .*прислів'їв/) as string,
+      })),
+    );
   });
 
   it('calls ready only the drafts that pass the schema and the build’s checks', async () => {
