@@ -56,6 +56,8 @@ export interface XpLogState {
 
 /** What the XP log holds by local date `YYYY-MM-DD`, for the Active Days and the Streak. */
 export interface XpLogDays {
+  /** The local date the log was last derived for as today: the date of `state`'s today, till the day change reaches it. */
+  readonly date: string;
   /** The XP earned on each local date that has any. */
   readonly byDate: ReadonlyMap<string, number>;
   /**
@@ -369,9 +371,13 @@ export async function openXpLog({
 
   function dayOf(date: string): XpDay {
     const { count } = counter();
-    const ofDay = [...records.values()]
-      .filter((record) => record.date === date)
-      .sort((one, other) => (one.at < other.at ? -1 : 1));
+    // By instant, then by id, so records at one instant read the same on every device.
+    const ofDay = [...records]
+      .filter(([, record]) => record.date === date)
+      .sort(([oneId, one], [otherId, other]) =>
+        one.at === other.at ? (oneId < otherId ? -1 : 1) : one.at < other.at ? -1 : 1,
+      )
+      .map(([, record]) => record);
     const dailyGoal =
       goalOn && date < todayKey(clock) && !wordGoalSetBy(date)
         ? (xpGoalOf(date, ofDay, counter().count) ?? null)
@@ -398,7 +404,6 @@ export async function openXpLog({
   }
 
   function derive(): XpLogDays & {
-    date: string;
     state: XpLogState;
     reviewToday: number;
     /** Today's Seen-Word records counted toward today's goal. */

@@ -340,4 +340,19 @@ describe('opening the kept pack at launch', () => {
     expect(app.contentApi.content.downloaded).toEqual([5]);
     expect(await (await app.launch()).openKept(openPack)).toBe('kept 5');
   });
+
+  it('downloads the pack again at once after forgetting one that failed to open, a check done or not', async () => {
+    const app = device({ kept: { contentVersion: 5, packFormat: 1, bytes: hello } });
+    app.contentApi.content.publish({ contentVersion: 5, packFormat: 1, bytes: hello });
+    const launched = await app.launch();
+    await launched.checkForUpdate();
+    expect(app.contentApi.content.downloaded).toEqual([]);
+
+    await launched
+      .openKept(() => Promise.reject(new Error('The app mixes Editions')))
+      .catch(() => undefined);
+    await launched.checkForUpdate();
+
+    expect(app.contentApi.content.downloaded).toEqual([5]);
+  });
 });

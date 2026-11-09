@@ -797,6 +797,7 @@ describe('an interrupted sync', () => {
     const { device, server, time } = account();
     const phone = await device();
     const app = await phone.open();
+    const addedAt = time.clock.now().toISOString();
     const created = await app.collections.create('Море', 'w_one');
     if (!created.ok) throw new Error('The Collection was refused');
     const { id } = created.collection;
@@ -825,7 +826,7 @@ describe('an interrupted sync', () => {
       },
     });
     expect(await tablet.sync()).toEqual({ ok: false, reason: 'offline', changed: true });
-    expect(await tablet.userState.read(collectionEntries.record(`${id}.w_one`))).toBeDefined();
+    expect(await tablet.userState.read(collectionEntries.record(`${id}.w_one`))).toBe(addedAt);
     expect(await tablet.userState.read(collections.record(id))).toBeUndefined();
     // Still offline, the reader sees no Collection yet and makes one of their own.
     const opened = await tablet.open();

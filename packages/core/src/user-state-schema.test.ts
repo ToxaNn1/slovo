@@ -356,6 +356,9 @@ const storedIn1_0: readonly (readonly [
   ['syncCursor', undefined, 'sync.cursor', '17'],
   ['syncSyncedAt', undefined, 'sync.syncedAt', '"2026-10-30T08:15:00.000Z"'],
   ['mistakeReportQueue', undefined, 'reports.queue', '[]'],
+  ['checkIns', '2026-10-30', 'mood.2026-10-30', '{"date":"2026-10-30","choice":"calm"}'],
+  ['correctionsWorkedThrough', 'c-1', 'correctionsWorkedThrough.c-1', 'true'],
+  ['curatedCollectionsOpened', 'cc-1', 'curatedCollections.opened.cc-1', 'true'],
 ];
 
 describe('a user state kept by 1.0', () => {
