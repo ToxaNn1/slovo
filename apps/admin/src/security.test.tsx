@@ -79,12 +79,14 @@ test('every write opens the confirmation, its button disabled until a reason is 
 
   await user.type(people.getByLabelText('Пошта'), 'new@example.com');
   await user.click(people.getByRole('button', { name: 'Запросити' }));
+  expect(within(await screen.findByRole('dialog')).getByText('підтвердження')).toBeDefined();
   await confirmWith('a new editor', 'Запросити');
 
   await user.click(people.getByRole('button', { name: 'Зробити Власником' }));
   await confirmWith('trusted', 'Змінити роль');
 
   await user.click(people.getByRole('button', { name: 'Забрати доступ' }));
+  expect(within(await screen.findByRole('dialog')).getByText('небезпечна дія')).toBeDefined();
   await confirmWith('left', 'Забрати доступ');
 
   await user.click(await tokens.findByRole('button', { name: 'Відкликати' }));

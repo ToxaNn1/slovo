@@ -69,6 +69,7 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
 interface SecurityWrite {
   readonly title: string;
   readonly confirm: string;
+  readonly danger?: boolean;
   readonly run: (reason: string) => Promise<unknown>;
 }
 
@@ -107,6 +108,7 @@ function OwnerSecurity({ email }: { email: string }) {
         <ConfirmDialog
           title={pending.title}
           confirmLabel={pending.confirm}
+          danger={pending.danger}
           onConfirm={async (reason) => {
             await pending.run(reason);
           }}
@@ -186,6 +188,7 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
                       confirm({
                         title: `Зробити ${person.email} ${ROLE_LABELS[other]}ом?`,
                         confirm: 'Змінити роль',
+                        danger: true,
                         run: (reason) =>
                           changeRole.mutateAsync({ email: person.email, role: other, reason }),
                       });
@@ -200,6 +203,7 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
                       confirm({
                         title: `Забрати доступ у ${person.email}?`,
                         confirm: 'Забрати доступ',
+                        danger: true,
                         run: (reason) => remove.mutateAsync({ email: person.email, reason }),
                       });
                     }}
@@ -316,6 +320,7 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
                   confirm({
                     title: `Відкликати токен Агента ${token.name}?`,
                     confirm: 'Відкликати',
+                    danger: true,
                     run: (reason) => revoke.mutateAsync({ name: token.name, reason }),
                   });
                 }}

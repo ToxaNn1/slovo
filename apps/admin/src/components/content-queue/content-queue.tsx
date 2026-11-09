@@ -73,6 +73,7 @@ export function ContentQueue() {
         <ConfirmDialog
           title={pending.title}
           confirmLabel={pending.confirm}
+          danger={pending.danger}
           onConfirm={(reason) => {
             pending.run(reason);
             return Promise.resolve();
@@ -134,6 +135,7 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
                 confirm({
                   title: `Відкотити пачку ${batch.author}? Записи, змінені після неї, буде пропущено.`,
                   confirm: 'Відкотити пачку',
+                  danger: true,
                   run: (reason) => {
                     rollback.mutate({ batchId: batch.id, reason });
                   },

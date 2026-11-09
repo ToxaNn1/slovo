@@ -109,6 +109,7 @@ export function KillTab() {
         <ConfirmDialog
           title={`Аварійний вимикач: вимкнути ${feature} для всіх читачів`}
           confirmLabel="Вимкнути зараз"
+          danger
           onConfirm={async (reason) => {
             await adminApi.kill({ feature, editionId: picked?.id, reason });
             await refetch();
