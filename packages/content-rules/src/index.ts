@@ -9,6 +9,7 @@ export {
 export { checksumOf } from './checksum';
 export { CROSSWORD_DAYS_FILE, CROSSWORD_REPEAT_DAYS, dateAfter } from './crossword-days';
 export {
+  ID_PREFIX,
   parseAgainst,
   parseRecord,
   recordIdOf,

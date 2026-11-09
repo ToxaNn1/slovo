@@ -63,8 +63,8 @@ interface Changed {
  */
 async function changedRecords(db: Db, editionId: string): Promise<Changed[]> {
   const checks = await db.select().from(quoteChecks).where(eq(quoteChecks.editionId, editionId));
-  const checkOf = (kind: QuotedKind, id: string) =>
-    checks.find((check) => check.kind === kind && check.id === id);
+  const byRecord = new Map(checks.map((check) => [`${check.kind}:${check.id}`, check]));
+  const checkOf = (kind: QuotedKind, id: string) => byRecord.get(`${kind}:${id}`);
   type Table = (typeof QUOTED_TABLES)[QuotedKind];
   const live = (table: Table) =>
     and(eq(table.editionId, editionId), eq(table.retired, false), ne(table.changedBy, 'import'));

@@ -33,6 +33,15 @@ export type RecordKind = AuthoredRecord['kind'];
 /** A record's id: a Crossword day's is its date. */
 export const recordIdOf = (record: AuthoredRecord): string =>
   record.kind === 'crosswordDay' ? record.entry.date : record.entry.id;
+/** The id prefix of each kind of record (ADR 0010). */
+export const ID_PREFIX: Record<Exclude<RecordKind, 'crosswordDay'>, string> = {
+  word: 'w_',
+  correction: 'c_',
+  idiom: 'i_',
+  synonymRow: 'r_',
+  tip: 't_',
+  curatedCollection: 'cc_',
+};
 
 /**
  * Parses outside JSON as a record of its kind, where it enters: from an

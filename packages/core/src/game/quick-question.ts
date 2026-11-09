@@ -1,4 +1,4 @@
-import type { Entries } from '../entries/entries';
+import type { AskableEntry, Entries } from '../entries/entries';
 import type { Knowledge } from '../knowledge/knowledge';
 import type { Random } from '../ports';
 import type { UserState } from '../user-state/user-state';
@@ -11,8 +11,8 @@ export type PickRound = Extract<RoundContent, { readonly form: 'pick' }>;
 
 /** What a Quick Question asks: one pick Round of a Game Mode over an Eligible Entry. */
 export interface QuickQuestionContent {
-  /** The Entry the Round asks about, which its answer marks. */
-  readonly askedId: string;
+  /** The Entry the Round asks about, which its answer marks and whose Definition the answer card explains it with, as the Game's does. */
+  readonly entry: AskableEntry;
   readonly modeId: string;
   readonly round: PickRound;
 }
@@ -72,7 +72,7 @@ export function createQuickQuestion({
         random,
         edition,
       });
-      if (round?.form === 'pick') return { askedId: answer.id, modeId: mode.id, round };
+      if (round?.form === 'pick') return { entry: answer, modeId: mode.id, round };
     }
     return undefined;
   }
@@ -83,9 +83,9 @@ export function createQuickQuestion({
       const award = xp.award({ source: 'quick-question' });
       if (award.changes.size > 0) await userState.write(award.changes);
       award.commit();
-      await knowledge.confirm(content.askedId);
-    } else await knowledge.answer(content.askedId, 'unknown');
-    await answered?.(content.askedId, right);
+      await knowledge.confirm(content.entry.id);
+    } else await knowledge.answer(content.entry.id, 'unknown');
+    await answered?.(content.entry.id, right);
     return right;
   }
 

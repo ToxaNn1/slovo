@@ -1,4 +1,5 @@
 import {
+  ID_PREFIX,
   checkRecord,
   contentSetOf,
   parseRecord,
@@ -11,6 +12,7 @@ import {
 import { contentReport, missedTargets } from '@slovo/language-pack';
 import type { Clock, EditionRegistry, Json, Random } from '@slovo/server-core';
 import { and, eq, sql } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
 import { quoteCheckCounts } from './quote-check';
@@ -28,16 +30,6 @@ import {
   contentWords,
   type ContentAuthor,
 } from '../database/schema';
-
-/** The id prefix of each kind of record the backend issues an id to (ADR 0010); a Crossword day's id is its date. */
-const ID_PREFIX: Record<Exclude<RecordKind, 'crosswordDay'>, string> = {
-  word: 'w_',
-  correction: 'c_',
-  idiom: 'i_',
-  synonymRow: 'r_',
-  tip: 't_',
-  curatedCollection: 'cc_',
-};
 
 const ID_ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyz';
 const ID_LENGTH = 6;
@@ -110,6 +102,13 @@ interface StoredRecord {
   readonly recordVersion: number;
 }
 
+/** A refusal met inside a write's transaction, thrown so that the transaction rolls back. */
+class Refused extends Error {
+  constructor(readonly refusal: WriteRefusal) {
+    super(refusal.reason);
+  }
+}
+
 /** A record as JSON, for the Action log's columns: undefined fields are left out, as JSON leaves them. */
 function toJson(value: unknown): Json {
   if (value === null || typeof value === 'string' || typeof value === 'number') return value;
@@ -173,8 +172,12 @@ export function createContentWrites({
   const { db } = database;
   type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-  /** Every record of the Edition, by kind. */
-  async function recordsOf(tx: Tx, editionId: string) {
+  /** Every record of the Edition, by kind; with an id, only the record of that id. */
+  async function recordsOf(tx: Tx, editionId: string, id?: string) {
+    const of = (table: { editionId: AnyPgColumn; id: AnyPgColumn }) =>
+      id === undefined
+        ? eq(table.editionId, editionId)
+        : and(eq(table.editionId, editionId), eq(table.id, id));
     const word = await tx
       .select({
         id: contentWords.id,
@@ -183,7 +186,7 @@ export function createContentWrites({
         needsNewRecording: contentWords.needsNewRecording,
       })
       .from(contentWords)
-      .where(eq(contentWords.editionId, editionId));
+      .where(of(contentWords));
     const correction = await tx
       .select({
         id: contentCorrections.id,
@@ -191,7 +194,7 @@ export function createContentWrites({
         recordVersion: contentCorrections.recordVersion,
       })
       .from(contentCorrections)
-      .where(eq(contentCorrections.editionId, editionId));
+      .where(of(contentCorrections));
     const idiom = await tx
       .select({
         id: contentIdioms.id,
@@ -199,7 +202,7 @@ export function createContentWrites({
         recordVersion: contentIdioms.recordVersion,
       })
       .from(contentIdioms)
-      .where(eq(contentIdioms.editionId, editionId));
+      .where(of(contentIdioms));
     const synonymRow = await tx
       .select({
         id: contentSynonymRows.id,
@@ -207,7 +210,7 @@ export function createContentWrites({
         recordVersion: contentSynonymRows.recordVersion,
       })
       .from(contentSynonymRows)
-      .where(eq(contentSynonymRows.editionId, editionId));
+      .where(of(contentSynonymRows));
     const tip = await tx
       .select({
         id: contentTips.id,
@@ -215,7 +218,7 @@ export function createContentWrites({
         recordVersion: contentTips.recordVersion,
       })
       .from(contentTips)
-      .where(eq(contentTips.editionId, editionId));
+      .where(of(contentTips));
     const curatedCollection = await tx
       .select({
         id: contentCuratedCollections.id,
@@ -223,7 +226,7 @@ export function createContentWrites({
         recordVersion: contentCuratedCollections.recordVersion,
       })
       .from(contentCuratedCollections)
-      .where(eq(contentCuratedCollections.editionId, editionId));
+      .where(of(contentCuratedCollections));
     const crosswordDay = await tx
       .select({
         id: contentCrosswordDays.id,
@@ -231,7 +234,7 @@ export function createContentWrites({
         recordVersion: contentCrosswordDays.recordVersion,
       })
       .from(contentCrosswordDays)
-      .where(eq(contentCrosswordDays.editionId, editionId));
+      .where(of(contentCrosswordDays));
     return { word, correction, idiom, synonymRow, tip, curatedCollection, crosswordDay };
   }
 
@@ -414,103 +417,110 @@ export function createContentWrites({
   ): Promise<WriteResult> {
     const edition = editions.find(editionId);
     if (edition === undefined) return { ok: false, reason: 'not-found' };
-    return db.transaction(async (tx): Promise<WriteResult> => {
-      const contentVersion = await heldVersion(tx, editionId);
-      if (contentVersion === undefined) return { ok: false, reason: 'not-imported' };
-      if (!(await ownBatch(tx, writer, editionId, batchId))) {
-        return { ok: false, reason: 'not-found' };
-      }
-      const records = await recordsOf(tx, editionId);
-      let current: StoredRecord | undefined;
-      if (change.op !== 'create') {
-        current = records[kind].find(({ id }) => id === change.id);
-        if (current === undefined) return { ok: false, reason: 'not-found' };
-        if (current.recordVersion !== change.recordVersion) {
-          return { ok: false, reason: 'stale', currentVersion: current.recordVersion };
+    try {
+      return await db.transaction(async (tx): Promise<WriteResult> => {
+        const contentVersion = await heldVersion(tx, editionId);
+        if (contentVersion === undefined) return { ok: false, reason: 'not-imported' };
+        if (!(await ownBatch(tx, writer, editionId, batchId))) {
+          return { ok: false, reason: 'not-found' };
         }
-      }
-      const dated = datedRefusal(kind, change, records.crosswordDay);
-      if (dated !== undefined) return { ok: false, reason: 'refused', refusals: [dated] };
-      const id =
-        current?.id ??
-        (kind === 'crosswordDay'
-          ? String(change.op === 'create' ? change.fields['date'] : '')
-          : await newId(tx, editionId, kind));
-      const fields =
-        change.op === 'retire'
-          ? { ...current?.fields, retired: true }
-          : kind === 'crosswordDay'
-            ? change.fields
-            : { ...change.fields, id };
-      const parsed = parseRecord(kind, recordFileOf(kind, id), fields);
-      if (!parsed.ok) return { ok: false, reason: 'refused', refusals: parsed.refusals };
-      const { record } = parsed;
-      const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
-        rows.map((row) => row.fields);
-      const set = contentSetOf({
-        word: fieldsOf(records.word),
-        correction: fieldsOf(records.correction),
-        idiom: fieldsOf(records.idiom),
-        synonymRow: fieldsOf(records.synonymRow),
-        tip: fieldsOf(records.tip),
-        curatedCollection: fieldsOf(records.curatedCollection),
-        crosswordDay: fieldsOf(records.crosswordDay),
-      });
-      const now = clock.now();
-      const refusals = checkRecord(edition.config, set, record, { today: now });
-      if (refusals.length > 0) return { ok: false, reason: 'refused', refusals };
+        const records = await recordsOf(tx, editionId);
+        let current: StoredRecord | undefined;
+        if (change.op !== 'create') {
+          current = records[kind].find(({ id }) => id === change.id);
+          if (current === undefined) return { ok: false, reason: 'not-found' };
+          if (current.recordVersion !== change.recordVersion) {
+            return { ok: false, reason: 'stale', currentVersion: current.recordVersion };
+          }
+        }
+        const dated = datedRefusal(kind, change, records.crosswordDay);
+        if (dated !== undefined) return { ok: false, reason: 'refused', refusals: [dated] };
+        const id =
+          current?.id ??
+          (kind === 'crosswordDay'
+            ? String(change.op === 'create' ? change.fields['date'] : '')
+            : await newId(tx, editionId, kind));
+        const fields =
+          change.op === 'retire'
+            ? { ...current?.fields, retired: true }
+            : kind === 'crosswordDay'
+              ? change.fields
+              : { ...change.fields, id };
+        const parsed = parseRecord(kind, recordFileOf(kind, id), fields);
+        // A new id is registered by now: a refusal rolls it back with the rest.
+        if (!parsed.ok)
+          throw new Refused({ ok: false, reason: 'refused', refusals: parsed.refusals });
+        const { record } = parsed;
+        const fieldsOf = <T>(rows: readonly { readonly fields: T }[]) =>
+          rows.map((row) => row.fields);
+        const set = contentSetOf({
+          word: fieldsOf(records.word),
+          correction: fieldsOf(records.correction),
+          idiom: fieldsOf(records.idiom),
+          synonymRow: fieldsOf(records.synonymRow),
+          tip: fieldsOf(records.tip),
+          curatedCollection: fieldsOf(records.curatedCollection),
+          crosswordDay: fieldsOf(records.crosswordDay),
+        });
+        const now = clock.now();
+        const refusals = checkRecord(edition.config, set, record, { today: now });
+        if (refusals.length > 0) throw new Refused({ ok: false, reason: 'refused', refusals });
 
-      const recordVersion = (current?.recordVersion ?? 0) + 1;
-      const published = contentVersion + 1;
-      // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
-      const wordBefore = records.word.find((row) => row.id === id);
-      const needsNewRecording =
-        record.kind === 'word' &&
-        wordBefore !== undefined &&
-        (wordBefore.needsNewRecording ||
-          wordBefore.fields.lemma !== record.entry.lemma ||
-          JSON.stringify(wordBefore.fields.stress) !== JSON.stringify(record.entry.stress));
-      await saveRow(
-        tx,
-        record,
-        {
+        const recordVersion = (current?.recordVersion ?? 0) + 1;
+        const published = contentVersion + 1;
+        // A Word's Recordings no longer read it once its Lemma or Stress changed (ADR 0083).
+        const wordBefore = records.word.find((row) => row.id === id);
+        const needsNewRecording =
+          record.kind === 'word' &&
+          wordBefore !== undefined &&
+          (wordBefore.needsNewRecording ||
+            wordBefore.fields.lemma !== record.entry.lemma ||
+            JSON.stringify(wordBefore.fields.stress) !== JSON.stringify(record.entry.stress));
+        await saveRow(
+          tx,
+          record,
+          {
+            editionId,
+            recordVersion,
+            contentVersion: published,
+            changedBy: authorOf(writer),
+            changedAt: now,
+            batchId,
+          },
+          needsNewRecording,
+        );
+        await tx
+          .update(contentVersions)
+          .set({ contentVersion: published, updatedAt: now })
+          .where(eq(contentVersions.editionId, editionId));
+        await tx.insert(actionLog).values({
+          who: whoOf(writer),
+          at: now,
+          what: `content.${kind}.${change.op}`,
+          before:
+            current === undefined
+              ? null
+              : toJson({ recordVersion: current.recordVersion, fields: current.fields }),
+          after: toJson({ recordVersion, fields: record.entry }),
+          reason: reason ?? null,
           editionId,
-          recordVersion,
-          contentVersion: published,
-          changedBy: authorOf(writer),
-          changedAt: now,
           batchId,
-        },
-        needsNewRecording,
-      );
-      await tx
-        .update(contentVersions)
-        .set({ contentVersion: published, updatedAt: now })
-        .where(eq(contentVersions.editionId, editionId));
-      await tx.insert(actionLog).values({
-        who: whoOf(writer),
-        at: now,
-        what: `content.${kind}.${change.op}`,
-        before:
-          current === undefined
-            ? null
-            : toJson({ recordVersion: current.recordVersion, fields: current.fields }),
-        after: toJson({ recordVersion, fields: record.entry }),
-        reason: reason ?? null,
-        editionId,
-        batchId,
+        });
+        return {
+          ok: true,
+          written: {
+            id,
+            recordVersion,
+            contentVersion: published,
+            batchId,
+            ...(kind === 'word' ? { needsNewRecording } : {}),
+          },
+        };
       });
-      return {
-        ok: true,
-        written: {
-          id,
-          recordVersion,
-          contentVersion: published,
-          batchId,
-          ...(kind === 'word' ? { needsNewRecording } : {}),
-        },
-      };
-    });
+    } catch (error) {
+      if (error instanceof Refused) return error.refusal;
+      throw error;
+    }
   }
 
   /** Flags a record for the Content queue: an Action log row, no change of the content. */
@@ -532,7 +542,7 @@ export function createContentWrites({
       if (!(await ownBatch(tx, writer, editionId, batchId))) {
         return { ok: false, reason: 'not-found' };
       }
-      const current = (await recordsOf(tx, editionId))[kind].find((row) => row.id === id);
+      const [current] = (await recordsOf(tx, editionId, id))[kind];
       if (current === undefined) return { ok: false, reason: 'not-found' };
       await tx.insert(actionLog).values({
         who: whoOf(writer),
@@ -597,7 +607,7 @@ export function createContentWrites({
       if ((await heldVersion(tx, editionId)) === undefined) {
         return { ok: false, reason: 'not-imported' } as const;
       }
-      const current = (await recordsOf(tx, editionId))[kind].find((row) => row.id === id);
+      const [current] = (await recordsOf(tx, editionId, id))[kind];
       if (current === undefined) return { ok: false, reason: 'not-found' } as const;
       return {
         ok: true,

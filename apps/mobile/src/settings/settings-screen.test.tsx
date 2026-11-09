@@ -157,7 +157,11 @@ describe('Settings › Віджети', () => {
     await fireEvent.press(screen.getByRole('button', { name: /^Як додати віджет/ }));
 
     const guide = await screen.findByTestId('widget-guide');
-    expect(within(guide).getByText('Слово на головному екрані')).toBeOnTheScreen();
+    // Beside its back tile at the size of every screen a Settings row opens, as the board has it (owner 08.11).
+    expect(within(guide).getByRole('header', { name: 'Слово на головному екрані' })).toHaveStyle({
+      fontSize: 20,
+      textTransform: 'none',
+    });
     for (const [index, step] of editionStrings.widget.guide.steps.entries()) {
       expect(screen.getByTestId(`widget-guide-step-${String(index + 1)}`)).toHaveTextContent(
         `${String(index + 1)}${step.title}${step.hint}`,

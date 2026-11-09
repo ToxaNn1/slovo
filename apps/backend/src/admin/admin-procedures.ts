@@ -155,7 +155,7 @@ export function adminProcedures(
     return { kind: 'admin-user', token: session, ...user };
   }
 
-  /** Admits CI by the CI history token (ADR 0095); no other caller pushes CI runs. */
+  /** Admits CI by the CI history token (ADR 0096); no other caller pushes CI runs. */
   async function admitCi(headers: Headers, errors: AdminErrors): Promise<void> {
     if (!(await admin.isOn())) throw errors.NOT_FOUND();
     const token = bearerOf(headers);

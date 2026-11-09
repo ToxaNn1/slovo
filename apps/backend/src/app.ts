@@ -100,7 +100,7 @@ export interface AppDependencies {
   readonly trustedProxyHops: number;
   /** Where Якість reads Sentry's numbers. */
   readonly sentry: SentryReader;
-  /** The Bearer token CI pushes its history with (ADR 0095); unset refuses every push. */
+  /** The Bearer token CI pushes its history with (ADR 0096); unset refuses every push. */
   readonly ciToken: string | undefined;
   /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
   readonly adminDist?: string | undefined;

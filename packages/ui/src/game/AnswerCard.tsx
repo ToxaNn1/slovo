@@ -2,15 +2,17 @@ import { useEffect } from 'react';
 import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
-import { roundLayout, space, typeStyle } from '../tokens';
+import { capitalMarkRoom, roundLayout, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
- * The answer card the sheet after an answer shows (board 07, spec #1674):
- * «Влучно!» on the accent for a right answer or «Майже. Наступне вийде.» in
- * ink for a wrong one, one line of explanation, the Definition or the
- * Correction's explanation, and «Далі →». The Example and its author live in the expanded Game Review rows.
- * VoiceOver hears the verdict and the line as the card shows.
+ * The answer card the sheet after an answer shows (board 07, spec #1674),
+ * on the accent for a right answer, «Влучно!», or on the ink for a wrong one,
+ * «Майже. Наступне вийде.»: the verdict, one line of explanation, the
+ * Definition or the Correction's explanation, and «Далі →». It takes the
+ * colours of the sheet it is on. The Example and its author live in the
+ * expanded Game Review rows. VoiceOver hears the verdict and the line as the
+ * card shows.
  */
 export function AnswerCard({
   right,
@@ -37,7 +39,7 @@ export function AnswerCard({
         accessibilityRole="header"
         maxFontSizeMultiplier={roundLayout.textMaxFontScale}
         {...voice}
-        style={[typeStyle('roundVerdict', tokens), { color: right ? colors.accent : colors.ink }]}
+        style={[typeStyle('answerVerdict', tokens), styles.verdict, { color: colors.ink }]}
       >
         {verdict}
       </Text>
@@ -52,13 +54,20 @@ export function AnswerCard({
         </Text>
       )}
       <View style={styles.next}>
-        <Button testID="game-next" label={card.next} variant="primary" onPress={onNext} />
+        <Button
+          testID="game-next"
+          label={card.next}
+          variant={right ? 'onAccent' : 'primary'}
+          onPress={onNext}
+        />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { gap: roundLayout.sheetGap, paddingTop: space[2] },
+  card: { gap: roundLayout.sheetGap, paddingHorizontal: space[1], paddingBottom: space[2] },
+  // The board's banner title sits clear of the slant over the sheet, not on its low edge.
+  verdict: { marginTop: space[3] - capitalMarkRoom('answerVerdict') },
   next: { marginTop: roundLayout.tightGap },
 });

@@ -276,7 +276,14 @@ describe('checkRecord', () => {
     ]);
   });
 
-  it("keeps only the saved record's refusals", () => {
+  it('refuses a retire that leaves a Curated Collection naming a Retired Entry', () => {
+    expect(save(record('w_fx0003', { retired: true }))).toEqual([
+      expect.objectContaining({ rule: 'curated-collection-entry', entryId: 'cc_fx0001' }),
+      expect.objectContaining({ rule: 'curated-collection-entry', entryId: 'cc_fx0002' }),
+    ]);
+  });
+
+  it('keeps refusals the set already had out of a save', () => {
     const broken = fixtureSet({ w_fx0003: { categoryId: 'unknown' } });
     const edit = parsed(record('w_fx0002', { primaryDefinition: 'Який дуже любить говорити.' }));
     expect(checkRecord(config, broken, edit, { today })).toEqual([]);

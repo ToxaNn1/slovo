@@ -5,6 +5,7 @@ import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
 import { act, fireEvent, screen, within } from 'expo-router/testing-library';
+import { StyleSheet } from 'react-native';
 import { renderRoutes } from '../shell/test-render';
 import { State } from 'react-native-gesture-handler';
 import { fireGestureHandler, getByGestureTestId } from 'react-native-gesture-handler/jest-utils';
@@ -80,7 +81,8 @@ const haptics: Haptics = {
 
 const metrics = {
   frame: { x: 0, y: 0, width: 390, height: 844 },
-  insets: { top: 0, left: 0, right: 0, bottom: 0 },
+  // The home indicator of an iPhone with Face ID.
+  insets: { top: 0, left: 0, right: 0, bottom: 34 },
 };
 
 /** A Word of the Edition's first Category, with its Word History when `history` is given. */
@@ -352,6 +354,7 @@ function tabsOnScreen() {
 describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
   afterEach(() => {
     wordTabsOn = true;
+    swipeMarksOn = false;
   });
 
   it('shows a Word with its tabs, «Суть» selected with the Definition', async () => {
@@ -372,6 +375,24 @@ describe('the tabs of an Entry card on the Entry screen (ADR 0091)', () => {
     ]);
     expect(screen.getByTestId('correction-tab-panel')).toBeOnTheScreen();
   });
+
+  it.each([
+    ['off', false],
+    ['on', true],
+  ])(
+    'stands the tab bar at the foot of the screen with the Swipe Marks switch %s (owner 08.11)',
+    async (_, swiped) => {
+      swipeMarksOn = swiped;
+      await renderEntry('w_sumyrnyi');
+
+      // Under the tab bar: the docked action row, or the room for the swipe's stamp,
+      // which takes in the home indicator; the scroll adds nothing of its own.
+      expect(screen.getByTestId('word-card')).toHaveStyle({ paddingBottom: 0 });
+      const scroll = screen.getByTestId('entry-scroll');
+      const content: unknown = StyleSheet.flatten(scroll.props['contentContainerStyle']);
+      expect(content).toMatchObject({ flexGrow: 1, paddingBottom: 0 });
+    },
+  );
 
   it('keeps a Word and a Correction in one column with `wordTabs` off', async () => {
     wordTabsOn = false;

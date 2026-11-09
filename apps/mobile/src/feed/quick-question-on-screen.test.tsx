@@ -192,4 +192,39 @@ describe('the Quick Question on the Feed', () => {
       within(screen.getByTestId('quick-question', hidden)).getByTestId('game-option-0', hidden),
     ).toBeDisabled();
   });
+
+  // Owner test pass 08.11: the Feed explains the answer as the Game does, right or wrong.
+  it.each([
+    ['right', true],
+    ['wrong', false],
+  ])('explains a %s answer in the answer card until «Далі →»', async (_, right) => {
+    await open({ onboardingFinished: '2026-09-01T09:00:00Z', mixQuickQuestion: 6 });
+    while (!composition.feed.cards.some((card) => card.kind === 'quick-question')) {
+      if ((await composition.feed.next()) === undefined) throw new Error('No Quick Question');
+    }
+    const position = composition.feed.cards.findIndex((card) => card.kind === 'quick-question');
+    const asked = composition.feed.cards[position];
+    if (asked?.kind !== 'quick-question') throw new Error('No Quick Question');
+    await composition.feed.show(position);
+    await renderApp();
+    const option = right ? asked.round.correct : (asked.round.correct + 1) % 4;
+    const card = screen.getByTestId('quick-question', hidden);
+    expect(screen.queryByTestId('game-answer-card', hidden)).toBeNull();
+
+    await settle(() =>
+      fireEvent.press(within(card).getByTestId(`game-option-${String(option)}`, hidden)),
+    );
+
+    const answerCard = editionStrings.game.round.answerCard;
+    expect(screen.getByTestId('game-answer-card-title', hidden)).toHaveTextContent(
+      right ? answerCard.right : answerCard.wrong,
+    );
+    const definition = 'primaryDefinition' in asked.entry ? asked.entry.primaryDefinition : '';
+    expect(screen.getByTestId('game-answer-card-line', hidden)).toHaveTextContent(
+      asked.round.sheet.explanation ?? definition,
+    );
+    await settle(() => fireEvent.press(screen.getByTestId('game-next', hidden)));
+    await act(() => jest.advanceTimersByTimeAsync(1000));
+    expect(screen.queryByTestId('game-answer-card', hidden)).toBeNull();
+  });
 });

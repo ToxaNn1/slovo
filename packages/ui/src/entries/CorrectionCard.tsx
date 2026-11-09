@@ -87,7 +87,7 @@ export function CorrectionCardBody({
         <Text
           testID="correction-how-to-say"
           {...voice}
-          style={[typeStyle('formLabel', tokens), { color: colors.accent }]}
+          style={[typeStyle('formLabel', tokens), { color: colors.accentText }]}
         >
           {strings.howToSay}
         </Text>
@@ -356,7 +356,7 @@ export function StandardForm({
       {...turnActions}
       style={styles.form}
     >
-      <Text style={[typeStyle('formLabel', tokens), { color: colors.accent }]}>
+      <Text style={[typeStyle('formLabel', tokens), { color: colors.accentText }]}>
         {strings.correctionCard.standard}
       </Text>
       <WholeWordsText

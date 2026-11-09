@@ -90,8 +90,9 @@ export function checkContentSet(
 
 /**
  * Every content rule over one record saved into the current set: the record
- * takes the place of the one of its id, or joins the set. Only the refusals
- * of the saved record come back; what the set already broke stays its own.
+ * takes the place of the one of its id, or joins the set. The refusals of the
+ * saved record come back, and those the save newly causes in other records
+ * (a retire under a Curated Collection); what the set already broke stays its own.
  */
 export function checkRecord(
   config: EditionConfig,
@@ -107,9 +108,14 @@ export function checkRecord(
       { file: record.file, today: options.today.toISOString().slice(0, 10) },
     );
   }
+  const before = new Set(checkContentSet(config, set, options).map(keyOf));
   return checkContentSet(config, withRecord(set, record), options).filter(
-    ({ file }) => file === record.file,
+    (refusal) => refusal.file === record.file || !before.has(keyOf(refusal)),
   );
+}
+
+function keyOf({ rule, file, entryId, field }: Refusal): string {
+  return JSON.stringify([rule, file, entryId, field]);
 }
 
 function withRecord(

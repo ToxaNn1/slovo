@@ -1736,6 +1736,11 @@ const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof Colo
   // The Pronunciation message on ink, and the speaker while it plays on accent.
   ['surface', 'ink'],
   ['surface', 'accent'],
+  // Small red text (ADR 0070): links, counts, refusals on every ground.
+  ['accentText', 'background'],
+  ['accentText', 'surface'],
+  ['accentText', 'surfaceSunken'],
+  ['accentText', 'tile'],
 ];
 
 /** The Core's colours and those of every Edition that supplies its own. */

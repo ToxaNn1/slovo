@@ -6,7 +6,7 @@ import { PressedTile } from '../primitives/PressedTile';
 import { useEdition } from '../providers/EditionProvider';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
-import { entryPanel, iconButton, space, wedges, wordCardSide } from '../tokens';
+import { entryPanel, iconButton, space, swipeStampLayout, wedges, wordCardSide } from '../tokens';
 import { AccentGround } from './AccentGround';
 import { SwipeMarks, type EntrySwipe } from './SwipeMarks';
 import { EntryCard, type EntryCardProps } from './EntryCard';
@@ -45,7 +45,7 @@ export function EntryDetails({
   onBack: () => void;
   /** The status bar's height: the panel runs under it. */
   topInset: number;
-  /** The home indicator's height: a Word's dock keeps its buttons above it. */
+  /** The home indicator's height: a Word's dock, or else the tabbed card's tab bar, keeps above it. */
   bottomInset: number;
 }) {
   const { colors } = useTokens();
@@ -53,13 +53,17 @@ export function EntryDetails({
   const compact = useCompactLayout();
   const word = card.kind === 'word' ? card : undefined;
   const swipe = slots?.slot === 'corner' ? slots.swipe : undefined;
+  const docked = word !== undefined && slots?.slot === 'actions';
+  // The tab bar stands at the screen's foot (owner 08.11): under it only the docked
+  // action row, or the room the swipe's stamp keeps, which takes in the home indicator.
+  const foot = docked ? 0 : Math.max(0, bottomInset - (swipe ? swipeStampLayout.room : 0));
   return (
     <EntryReveal>
       <ScrollView
         testID="entry-scroll"
         style={styles.scroll}
         // The tabs fill the rest of the screen under the panel (ADR 0091).
-        contentContainerStyle={tabs ? styles.fill : undefined}
+        contentContainerStyle={tabs ? [styles.fill, { paddingBottom: foot }] : undefined}
         // The sheet of the action row is a child in React's tree, so a tap in its
         // name field must not be swallowed to put the keyboard away.
         keyboardShouldPersistTaps="handled"
@@ -110,7 +114,7 @@ export function EntryDetails({
               />
             </View>
           ) : (
-            <View testID="word-card" style={[styles.body, tabs && styles.fill]}>
+            <View testID="word-card" style={[styles.body, tabs && styles.tabbed]}>
               {tabs ? (
                 <WordTabs
                   card={word.model}
@@ -200,6 +204,8 @@ function BackTile({ label, onPress }: { label: string; onPress: () => void }) {
 const styles = StyleSheet.create({
   scroll: { flex: 1 },
   fill: { flexGrow: 1 },
+  // A tabbed Word fills the rest of the screen, its tab bar at the foot (ADR 0091).
+  tabbed: { flexGrow: 1, paddingBottom: 0 },
   // A Word's action row stays at the screen's foot over the scrolling text (XActions a4).
   dock: {
     paddingHorizontal: space[3],

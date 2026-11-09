@@ -261,7 +261,7 @@ jobs:
             if [ "$result" != success ]; then exit 1; fi
           done
 
-  # Pushes this run's tests, coverage and job durations to Якість (ADR 0095).
+  # Pushes this run's tests, coverage and job durations to Якість (ADR 0096).
   # Runs on main only, after the checks; it never makes main red.
   ci-history:
     name: CI history

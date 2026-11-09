@@ -6,6 +6,7 @@
  */
 import type { ApiClient } from '@slovo/contracts/api';
 import {
+  ID_PREFIX,
   checkRecord,
   contentSetOf,
   parseRecord,
@@ -180,16 +181,6 @@ export async function flag(
   return flagged === undefined ? 1 : 0;
 }
 
-/** The id prefix of each kind of record (ADR 0010). */
-const ID_PREFIX: Record<RecordKind, string> = {
-  word: 'w_',
-  correction: 'c_',
-  idiom: 'i_',
-  synonymRow: 'r_',
-  tip: 't_',
-  curatedCollection: 'cc_',
-};
-
 /**
  * Checks each record of the input with the shared content rules against
  * the Edition's current content, as a save would be checked, and prints
@@ -225,6 +216,8 @@ export async function check(
     synonymRow: snapshot.synonymRows,
     tip: snapshot.tips,
     curatedCollection: snapshot.curatedCollections,
+    // The snapshot holds no Crossword days, and drafts are never Crossword days.
+    crosswordDay: [],
   });
   const taken = new Set(
     [set.words, set.corrections, set.idioms, set.synonymRows, set.tips, set.curatedCollections]

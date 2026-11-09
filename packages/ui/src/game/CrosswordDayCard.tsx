@@ -124,7 +124,7 @@ export function CrosswordDayCard({
             <View style={styles.lines}>
               <Text
                 maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
-                style={[typeStyle('crosswordCardMark', tokens), { color: colors.accent }]}
+                style={[typeStyle('crosswordCardMark', tokens), { color: colors.accentText }]}
               >
                 {state.mark}
               </Text>

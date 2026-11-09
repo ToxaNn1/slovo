@@ -90,7 +90,7 @@ const ServerVariablesSchema = z.object({
   SENTRY_ORG: unsetWhenEmpty(z.string().min(1)),
   SENTRY_APP_PROJECT: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a numeric project id')),
   SENTRY_BACKEND_PROJECT: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a numeric project id')),
-  // The Bearer token CI pushes its history with (ADR 0095); unset, every push
+  // The Bearer token CI pushes its history with (ADR 0096); unset, every push
   // is refused.
   CI_HISTORY_TOKEN: unsetWhenEmpty(z.string().min(32, 'must be at least 32 characters')),
   // The Telegram bot that tells the owner of alerts and the daily digest, and

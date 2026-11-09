@@ -1224,7 +1224,7 @@ export const adminContract = {
       path: '/admin/ci-runs',
       summary: 'CI pushes a run on main to the history',
       description:
-        'Called by CI after each run on main, with the CI history token as Bearer (ADR 0095). A run already kept stays as it is.',
+        'Called by CI after each run on main, with the CI history token as Bearer (ADR 0096). A run already kept stays as it is.',
       tags: ['admin'],
     })
     .errors(ADMIN_ERRORS)

@@ -190,6 +190,7 @@ export {
   feedHeader,
   disabledOpacity,
   minTouchTarget,
+  mascotWidth,
   onboardingLayout,
   railScreen,
   rowPadding,

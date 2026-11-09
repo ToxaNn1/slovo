@@ -145,4 +145,13 @@ describe('applying a Patch', () => {
     ).rejects.toThrow(/does not apply/);
     expect((await pack.metadata()).contentVersion).toBe(snapshot.contentVersion);
   });
+
+  it('refuses a Patch that would lower the content version', async () => {
+    const pack = writablePack();
+
+    await expect(
+      applyPatch(pack.writer, { ...patchOf(), contentVersion: snapshot.contentVersion - 1 }, '"x"'),
+    ).rejects.toThrow(/lower/);
+    expect((await pack.metadata()).contentVersion).toBe(snapshot.contentVersion);
+  });
 });
