@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createRootRoute, Link, Outlet } from '@tanstack/react-router';
+import { createRootRoute, Link, Outlet, useLocation } from '@tanstack/react-router';
+import { useState } from 'react';
 
 import { adminApi } from '../api';
 
@@ -8,6 +9,7 @@ import { Sidebar } from '../components/sidebar';
 import { SignIn } from '../components/sign-in';
 import { Button } from '../components/ui/button';
 import { FiltersSchema } from '../filters';
+import { useWide } from '../screen-width';
 import { ME_KEY, useSignedInAdmin } from '../session';
 import { useTheme } from '../theme';
 
@@ -16,10 +18,18 @@ export const Route = createRootRoute({
   component: Layout,
 });
 
-/** The admin of a signed-in Admin user; the sign-in without a session. */
+/**
+ * The admin of a signed-in Admin user; the sign-in without a session. On a
+ * phone the sidebar folds behind «Меню» and closes once a section opens.
+ */
 function Layout() {
   const [theme, setTheme] = useTheme();
   const admin = useSignedInAdmin();
+  const wide = useWide();
+  const { pathname } = useLocation();
+  // The path the menu was opened on: opening a section closes it.
+  const [menuOpenAt, setMenuOpenAt] = useState<string>();
+  const menuOpen = menuOpenAt === pathname;
   const queryClient = useQueryClient();
   const signOut = useMutation({
     mutationFn: () => adminApi.signOut(),
@@ -28,15 +38,34 @@ function Layout() {
   if (admin === undefined) return null;
   if (admin === null) return <SignIn />;
   return (
-    <div className="flex min-h-screen bg-background font-sans text-foreground">
-      <aside className="flex w-60 shrink-0 flex-col gap-6 border-r border-border bg-surface p-4">
-        <p className="px-3 font-display text-lg font-bold tracking-tight">SLOVO Admin</p>
-        <Sidebar role={admin.role} />
-      </aside>
-      <div className="flex flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b border-border px-8 py-4">
+    <div className="flex min-h-screen flex-col bg-background font-sans text-foreground md:flex-row">
+      {wide ? (
+        <aside className="flex w-60 shrink-0 flex-col gap-6 border-r border-border bg-surface p-4">
+          <p className="px-3 font-display text-lg font-bold tracking-tight">SLOVO Admin</p>
+          <Sidebar role={admin.role} />
+        </aside>
+      ) : (
+        <div className="flex flex-col gap-2 border-b border-border bg-surface p-4">
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-display text-lg font-bold tracking-tight">SLOVO Admin</p>
+            <Button
+              variant="outline"
+              size="sm"
+              aria-expanded={menuOpen}
+              onClick={() => {
+                setMenuOpenAt(menuOpen ? undefined : pathname);
+              }}
+            >
+              Меню
+            </Button>
+          </div>
+          {menuOpen ? <Sidebar role={admin.role} /> : null}
+        </div>
+      )}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border px-4 py-4 md:px-8">
           <FiltersBar />
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <span className="text-sm text-muted-foreground">{admin.email}</span>
             <Link
               to="/sessions"
@@ -67,7 +96,7 @@ function Layout() {
             </Button>
           </div>
         </header>
-        <main className="flex flex-1 flex-col p-8">
+        <main className="flex flex-1 flex-col p-4 md:p-8">
           <Outlet />
         </main>
       </div>

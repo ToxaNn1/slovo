@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router';
 
-import { EmptyState } from '../components/empty-state';
-import { sectionAt } from '../sections';
+import { Overview } from '../components/overview/overview';
 
 export const Route = createFileRoute('/')({
-  component: () => <EmptyState section={sectionAt('/')} />,
+  component: Overview,
 });
