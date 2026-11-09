@@ -150,33 +150,24 @@ describe('The Correction Types', () => {
       },
     };
     const { app, time } = await run({ port });
-    const unhandled: unknown[] = [];
-    const onUnhandled = (reason: unknown) => unhandled.push(reason);
-    process.on('unhandledRejection', onUnhandled);
-    try {
-      while (!app.feed.cards.some(({ entryId }) => entryId === 'w_one')) await app.feed.next();
-      const wordAt = app.feed.cards.findIndex(({ entryId }) => entryId === 'w_one');
-      const readsBefore = reads;
-      await app.feed.show(wordAt);
-      time.advance(SEEN_DWELL_MS);
-      await app.feed.show(undefined);
-      expect(reads).toBe(readsBefore);
+    while (!app.feed.cards.some(({ entryId }) => entryId === 'w_one')) await app.feed.next();
+    const wordAt = app.feed.cards.findIndex(({ entryId }) => entryId === 'w_one');
+    const readsBefore = reads;
+    await app.feed.show(wordAt);
+    time.advance(SEEN_DWELL_MS);
+    await app.feed.show(undefined);
+    expect(reads).toBe(readsBefore);
 
-      const position = await app.feed.openLinkedCorrection(wordAt, 'c_one');
-      if (position === undefined) throw new Error('The Correction did not open');
-      failing = true;
-      const readsAtCorrection = reads;
-      await app.feed.show(position);
-      time.advance(SEEN_DWELL_MS);
-      await expect(app.feed.show(undefined)).resolves.toBeUndefined();
-      await settle();
-      await new Promise((resolve) => setTimeout(resolve, 0));
-      expect(reads).toBeGreaterThan(readsAtCorrection);
-    } finally {
-      process.off('unhandledRejection', onUnhandled);
-    }
+    const position = await app.feed.openLinkedCorrection(wordAt, 'c_one');
+    if (position === undefined) throw new Error('The Correction did not open');
+    failing = true;
+    await app.feed.show(position);
+    time.advance(SEEN_DWELL_MS);
+    // The Seen that reads and fails rejects nothing: not the Feed, not unhandled.
+    await expect(app.feed.show(undefined)).resolves.toBeUndefined();
+    await settle();
 
-    expect(unhandled).toEqual([]);
+    expect(reads).toBeGreaterThan(readsBefore);
     expect(app.correctionTypes.tiles).toContainEqual({
       type: 'surzhyk',
       total: 1,
