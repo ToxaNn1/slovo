@@ -1,18 +1,17 @@
 # Admin wave handoff (specs #1708, #1709; PRs #1743, #1746)
 
 State (2026-11-09):
-- feat/1708-content-postgres: all tickets incl. #1734; review fixes #1-#7 pushed (#8 false). An agent is merging main into it (PR #1743 conflicted), fixing doc leftovers (publish:pack, switch:off/clear in map.md, content-wave.md, README, maestro remote-switches.yaml) and waiting for CI. Open: writerOf->admit cleanup (optional).
-- feat/1709-admin 7738d66d: everything merged incl. #1737, Crossword days editor, #1736 part A (backend). @slovo/admin typecheck RED until #1736 part B (branch feat/1736-alerts-admin: mocks for alertThresholds/setAlertThreshold/latestAlerts, thresholds screen, Огляд «Останні сповіщення» on latestAlerts) is merged.
+- PR #1743 (spec 1708): ready, all CI green, auto-merge (squash) on. Body has «Питання власнику». #1735 stays open (owner's first app build).
+- feat/1709-admin 1d1eaaf1: every 1709 ticket merged incl. #1736 (backend + admin), #1737, Crossword days editor. Admin lint/typecheck/test green.
+- #1738 visual pass running on chore/1738-visual-pass (ends with `chore: DONE #1738`); texts list goes to the coordinator scratchpad texts-1709.md (rebuild it from `git diff origin/main...feat/1709-admin -- apps/admin` if lost).
 Next:
-1. Merge feat/1736-alerts-admin into feat/1709-admin; then merge feat/1708-content-postgres again.
-2. Fix: packages/content-rules/fixtures/edition.json outdated (switches true vs "on"); prettier on packages/core/src/edition/install-id.test.ts.
-3. #1738 visual pass last (texts listed in the PR, do not block on «текст ок»; Telegram texts are in the #1736 part A DONE commit body).
-4. #1735 stays open: needs the owner's first app build.
-5. code-review medium on feat/1709-admin vs main, one fix implementer, green CI on #1743 and #1746; merge #1743 first, then update #1746 from main, auto-merge.
-Owner questions («Питання власнику»):
-- Keep CI job «Contract and Language Pack» (default keep). CLAUDE.md Edition line after #1734: owner edits.
-- Огляд: «Активні люди» = last day, «Відвідини» = sum.
-- Crossword days: edit/retire/add only days after today (UTC); batch rollback can still change a passed day.
-- --override import retires missing Entries; Curated Collections/Crossword Days missing from the folder stay.
-- Alerts: activity drop 50 %; kill switch sends at once, others via Cron every 15 min; «Останні сповіщення» Owner only.
+1. Merge origin/chore/1738-visual-pass into feat/1709-admin.
+2. After #1743 lands: merge origin/main into feat/1709-admin. ADR clash: main now has 0095 = quote check (1708); #1728's Якість ADR 0095 on 1709 must move to the next free number (fix the index and links). Migrations: renumber 1709's after main's, `pnpm --filter @slovo/backend db:generate` reports no changes.
+3. Fix packages/content-rules/fixtures/edition.json (outdated vs Edition config schema: switches true vs "on"), its test is red.
+4. code-review medium on feat/1709-admin vs main; one implementer fixes; green CI on #1746.
+5. PR #1746 body: Checks, «Питання власнику» (below), Owner checks, new texts (do not block on «текст ок»); ready; auto-merge squash.
+Owner questions for #1746:
+- Огляд: «Активні люди» = last day, «Відвідини» = sum; shows 5 latest alerts (backend returns 20).
+- Crossword days: add/edit/retire only days after today (UTC); batch rollback can still change a passed day.
+- Alerts: activity drop 50 %; kill switch sends at once, others via Cron every 15 min; «Останні сповіщення» Owner only; thresholds block sits in Безпека between Агент tokens and the Action log.
 Flaky under load: some backend and language-pack tests; pass alone.
