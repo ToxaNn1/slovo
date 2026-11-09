@@ -33,7 +33,7 @@ brief:
 You are the CI affected tests coordinator, in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/ci-affected-1109 and continue from the log tail. Grants: commits, pushes, one PR; no main merge, no auto-merge. Never touch feat/1108-video, apps/video or #1756.
 
 ## wave pr-footer-1109
-status: active
+status: finished
 coord: coord/pr-footer-1109
 branches: ^origin/(coord/pr-footer-1109|chore/1109-strip-pr-footer|chore/1109-stryker)
 brief:
