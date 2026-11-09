@@ -30,9 +30,15 @@ import {
 } from '@slovo/contracts';
 import { z } from 'zod';
 
-import { formatBuildError, type BuildError } from './build-error';
-import { checkContent, type Authored } from './check-content';
-import { checkSynonymRows } from './check-synonym-rows';
+import {
+  checkContentSet,
+  CROSSWORD_DAYS_FILE,
+  parseAgainst,
+  type Authored,
+  type ContentSet,
+} from '@slovo/content-rules';
+
+import { buildErrorsOf, formatBuildError, type BuildError } from './build-error';
 import { ContentManifestSchema, MANIFEST_FILE } from './content-manifest';
 import { ContentTargetsSchema } from './content-targets';
 import { ID_REGISTRY_FILE, IdRegistrySchema } from './id-registry';
@@ -47,7 +53,7 @@ export const REPO_DIR = fileURLToPath(new URL('../../..', import.meta.url));
 export const APP_CONFIG_FILE = 'app/app.json';
 
 /** Where an Edition keeps the days of its Daily Crossword (ADR 0052). */
-export const CROSSWORD_DAYS_FILE = 'content/crossword-days.json';
+export { CROSSWORD_DAYS_FILE };
 
 /** Where each file of an Edition lies in its folder. */
 const FILES = {
@@ -352,36 +358,34 @@ export function openEdition(editionsDir: string, editionId: string): EditionFold
     id: editionId,
     config,
     checkNewWords(words) {
-      content ??= files.entries();
-      const drafts = authored(words);
-      return onlyIn(
-        drafts,
-        checkContent(config, [...content.words, ...drafts], content.corrections, content.idioms),
-      );
+      return checkNew((set) => ({ ...set, words: [...set.words, ...authored(words)] }));
     },
     checkNewCorrections(corrections) {
-      content ??= files.entries();
-      const drafts = authored(corrections);
-      return onlyIn(
-        drafts,
-        checkContent(config, content.words, [...content.corrections, ...drafts], content.idioms),
-      );
+      return checkNew((set) => ({
+        ...set,
+        corrections: [...set.corrections, ...authored(corrections)],
+      }));
     },
     checkNewIdioms(idioms) {
-      content ??= files.entries();
-      const drafts = idioms.map((idiom) => ({ file: files.entryFile(idiom.id), entry: idiom }));
-      const draftFiles = new Set(drafts.map(({ file }) => file));
-      return checkContent(config, content.words, content.corrections, [
-        ...content.idioms,
-        ...drafts,
-      ]).filter(({ file }) => draftFiles.has(file));
+      return checkNew((set) => ({ ...set, idioms: [...set.idioms, ...authored(idioms)] }));
     },
     checkNewSynonymRows(rows) {
-      content ??= files.entries();
-      const drafts = rows.map((row) => ({ file: files.entryFile(row.id), entry: row }));
-      return checkSynonymRows(config, content.words, drafts);
+      return checkNew((set) => ({ ...set, synonymRows: authored(rows) }));
     },
   };
+
+  /** The content rules' refusals of the new records that `withNew` adds to the authored content. */
+  function checkNew(withNew: (set: ContentSet) => ContentSet): BuildError[] {
+    content ??= files.entries();
+    const set = withNew(content);
+    const old = new Set(
+      [content.words, content.corrections, content.idioms, content.synonymRows].flat(),
+    );
+    const drafts = [set.words, set.corrections, set.idioms, set.synonymRows]
+      .flat()
+      .filter((r) => !old.has(r));
+    return onlyIn(drafts, buildErrorsOf(checkContentSet(config, set, { today: new Date() })));
+  }
 
   /** New Entries, each located in the file it would be authored in. */
   function authored<E extends { readonly id: string }>(entries: readonly E[]): Authored<E>[] {
@@ -606,27 +610,8 @@ function parseFile<T>(
     const reason = error instanceof Error ? error.message : String(error);
     return { ok: false, errors: [{ file, message: `Invalid JSON: ${reason}` }] };
   }
-  const result = schema.safeParse(json);
-  if (result.success) return { ok: true, value: result.data };
-  const entryId = isEntry ? entryIdOf(json) : undefined;
-  const errors = result.error.issues.flatMap((issue) =>
-    // An unknown key is reported on the object holding it, so name each key as the field.
-    (issue.code === 'unrecognized_keys'
-      ? issue.keys.map((key) => ({ path: [...issue.path, key], message: 'Unknown field' }))
-      : [{ path: issue.path, message: issue.message }]
-    ).map(({ path: fieldPath, message }) => ({
-      file,
-      ...(entryId === undefined ? {} : { entryId }),
-      ...(fieldPath.length === 0 ? {} : { field: fieldPath.join('.') }),
-      message,
-    })),
-  );
-  return { ok: false, errors };
-}
-
-function entryIdOf(value: unknown): string | undefined {
-  if (typeof value !== 'object' || value === null || !('id' in value)) return undefined;
-  return typeof value.id === 'string' && value.id !== '' ? value.id : undefined;
+  const result = parseAgainst(schema, file, json, { isEntry });
+  return result.ok ? result : { ok: false, errors: buildErrorsOf(result.refusals) };
 }
 
 /** The texts file of a Narrator Voice folder, parsed once where it enters. */

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { openComposition, type Clock, type FeatureSwitch } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, settle, testEdition, word } from '../test-support';
+import { fakeClock, settle, testEdition, word, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two')] });
@@ -68,7 +68,7 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },
-    analytics: {
+    analytics: analyticsInto({
       // The Mood events alone: the onboarding tracks its welcome step on open.
       track: (event, properties) => {
         if (!event.startsWith('mood')) return;
@@ -76,7 +76,7 @@ async function run({
         events.push({ event, properties });
       },
       stop: () => undefined,
-    },
+    }),
   });
   return { app, records, events };
 }

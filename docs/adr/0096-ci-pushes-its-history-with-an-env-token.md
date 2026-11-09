@@ -1,0 +1,7 @@
+# CI pushes its history with an env token
+
+Owner decision of 2026-11-08 (ticket #1728, spec #1709). Якість shows coverage, flaky tests and job durations over time, which GitHub keeps only as long as its retention. CI pushes one run to the backend after each run on `main`, so CI is a caller of the admin API, beside the three of ADR 0088 (a Власник, an Адмін, an Агент).
+
+**Decision.** CI calls one procedure, `POST /v1/admin/ci-runs`, with the Bearer token `CI_HISTORY_TOKEN`, a variable of the Deployment and a GitHub Actions secret of the same value. It is not an Агент token: it is compared, in constant time, with the variable alone, admits that one procedure and no other, and an Агент token, an admin session or no token there answers 401. Unset, every push is refused. A push writes no Action log row: it is data, not an admin change. A run is kept once, by GitHub's run id. Flaky tests are tests that failed in one kept run and did not fail in another of the period; CI adds no retries.
+
+**Consequences.** Rotating the token is changing both the variable and the secret. The CI step that pushes runs after the checks on `main` only, never makes `main` red (`continue-on-error`) and, without `SLOVO_BACKEND_URL` or the token, says so and ends. Sentry numbers are read live with no tracing (ADR 0048 stays as it is): backend p95 and app start show «Немає даних» until tracing is on, and the Edition filter does not narrow Sentry's numbers until the app sends an Edition tag; both are a later owner decision amending ADR 0048.

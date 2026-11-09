@@ -78,18 +78,4 @@ export function matchKey(text: string): string {
   return squeeze(unstressed(text)).toLocaleLowerCase(SOURCE_LANGUAGE).replace(APOSTROPHES, "'");
 }
 
-/**
- * The homonym index the dictionaries glue to a word when they refer to one of
- * several homonyms (`склад1 1`: the first «склад», its first meaning), after
- * a lowercase Cyrillic letter or its stress mark. An uppercase abbreviation
- * keeps its number: `СІС2` is the second edition of a dictionary.
- */
-const HOMONYM_INDEX = new RegExp(`(?<=[\\p{Script=Cyrillic}&&\\p{Ll}]${STRESS_MARK}?)\\d+`, 'gv');
-
-/**
- * Drops the homonym indexes from dictionary text: a reader of the Edition sees
- * `склад 1`, not `склад1 1`. The meaning number after the word stays.
- */
-export function withoutHomonymIndexes(text: string): string {
-  return text.replace(HOMONYM_INDEX, '');
-}
+export { withoutHomonymIndexes } from '@slovo/content-rules';

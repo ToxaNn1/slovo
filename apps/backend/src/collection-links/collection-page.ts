@@ -61,7 +61,7 @@ function page(
 
 /**
  * The web page of a Collection Link (ADR 0058): the Collection's name, the
- * Entries of the link the Edition's pack has, by kind in the link's order,
+ * Entries of the link the Edition's tables have, by kind in the link's order,
  * the line that it is a snapshot, the link that opens it in the app and the
  * TestFlight line. It shows what the link stores and nothing more.
  */

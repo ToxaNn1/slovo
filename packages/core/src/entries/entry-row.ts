@@ -127,7 +127,8 @@ export function buildEntryRow(entry: AskableEntry): EntryRowModel {
 
 /**
  * The row models of the Entries the user keeps, by id, read once per Entry:
- * the Language Pack is read-only, so a row never changes in an app session.
+ * the Language Pack changes only by a Patch, after which the app opens them
+ * again (ADR 0090).
  */
 export interface EntryRows {
   /** The row model of any Entry, Retired or not; nothing for an id the Language Pack doesn't have. */

@@ -43,6 +43,7 @@ import {
   pickPlayed,
   seededRandom,
   testEdition,
+  analyticsInto,
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
@@ -242,7 +243,7 @@ async function run({
     random: seededRandom(seed),
     ...(gameModes === undefined ? {} : { gameModes }),
     ...(schedule === undefined ? {} : { schedule }),
-    ...(analytics === undefined ? {} : { analytics }),
+    ...(analytics === undefined ? {} : { analytics: analyticsInto(analytics) }),
   });
   return planned ? offersPlanned(app) : app;
 }
@@ -333,7 +334,7 @@ describe('the Game and Analytics', () => {
     const { port, events } = fakePort();
     const time = fakeClock('2026-10-11T09:00:00+03:00');
     const app = await run({
-      on: ['rarityCeiling', 'knowledge', 'analytics'],
+      on: ['rarityCeiling', 'knowledge', 'analytics', 'analyticsGames'],
       analytics: port,
       time: time.clock,
     });

@@ -1,6 +1,6 @@
 import { AccountEmailSchema, SignInCodeSchema } from '@slovo/contracts';
 
-import { createAnalytics, type AnalyticsPort, type SignInMethod } from '../analytics/analytics';
+import { createAnalytics, type AnalyticsSink, type SignInMethod } from '../analytics/analytics';
 import { createSubscribers } from '../in-turn';
 import type { Edition } from '../edition/edition';
 import type {
@@ -204,7 +204,7 @@ export async function openAccount({
   clock,
   schedule,
   random,
-  analytics: analyticsPort,
+  analytics: analyticsSink,
 }: {
   backend: Pick<Backend, 'account'>;
   /** The Edition, which the Sign-in code email and the Google sign-in name, and whose `analytics` switch gates the events. */
@@ -220,10 +220,10 @@ export async function openAccount({
   /** What the waits between tries are jittered by. */
   random: Random;
   /** Where each sign-in is told (ADR 0068), while the reader shares anonymous statistics; nowhere without it. */
-  analytics?: AnalyticsPort | undefined;
+  analytics?: AnalyticsSink | undefined;
 }): Promise<Account> {
   const api = accountRequests(backend, edition.id);
-  const analytics = createAnalytics({ edition, userState, port: analyticsPort });
+  const analytics = createAnalytics({ edition, userState, sink: analyticsSink });
   const subscribers = createSubscribers();
   const kept = await sessions.read();
   let state: AccountState = kept === undefined ? signedOut : signedIn(kept.email);

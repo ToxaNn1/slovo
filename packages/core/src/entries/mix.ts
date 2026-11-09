@@ -482,7 +482,7 @@ async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise
 
 /**
  * Opens the Mix over the user state and the Language Pack's Categories, which
- * the Entries read once, as the pack never changes while it is open. For the
+ * the Entries read once per Patch (ADR 0090). For the
  * Core composition: each change publishes `eligibility`, so the Cycle reads
  * the eligible Entries again and the Feed, the plan and the Game follow.
  */

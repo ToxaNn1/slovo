@@ -3,7 +3,7 @@ import { readFileSync, statSync } from 'node:fs';
 import type { Word } from '@slovo/contracts';
 
 import type { BuildError } from './build-error';
-import type { Authored } from './check-content';
+import type { Authored } from '@slovo/content-rules';
 import { ILLUSTRATIONS_DIR } from './edition-folder';
 
 /** The largest Illustration the build takes, in bytes: 150 KB (ADR 0055). */

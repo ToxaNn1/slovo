@@ -47,7 +47,7 @@ export function generateDailyCrossword({
   if (!CrosswordDaySchema.shape.date.safeParse(date).success) {
     return { ok: false, errors: [{ file: 'content', message: `Not a calendar date: ${date}` }] };
   }
-  const source = readEdition(editionDir, { registryRequired: false });
+  const source = readEdition(editionDir, { registryRequired: false, today: new Date() });
   if (source.errors.length > 0 || source.valid === undefined) {
     return { ok: false, errors: source.errors };
   }

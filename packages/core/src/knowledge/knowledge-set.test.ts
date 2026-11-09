@@ -8,7 +8,7 @@ import {
   type FeatureSwitch,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, testEdition, word } from '../test-support';
+import { fakeClock, testEdition, word, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 import type { KnowledgeRecord } from './knowledge-record';
@@ -38,7 +38,7 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },
-    ...(analytics === undefined ? {} : { analytics }),
+    ...(analytics === undefined ? {} : { analytics: analyticsInto(analytics) }),
   });
 }
 

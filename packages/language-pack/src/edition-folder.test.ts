@@ -126,6 +126,47 @@ describe('openEdition', () => {
     });
   });
 
+  // ADR 0089: the Edition declares each feature on, off or unavailable.
+  it('reads the three states of a Feature Switch', () => {
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        editJson(join(dir, 'edition.json'), (config) => ({
+          ...config,
+          featureSwitches: {
+            ...(config['featureSwitches'] as Json),
+            game: 'off',
+            narratorVoice: 'unavailable',
+          },
+        }));
+      },
+    });
+
+    expect(openEdition(editionsDir, 'fixture').config.featureSwitches).toMatchObject({
+      game: 'off',
+      narratorVoice: 'unavailable',
+      corrections: 'on',
+    });
+  });
+
+  it('refuses a Feature Switch it does not know, and a boolean, the shape before ADR 0089', () => {
+    const editionsDir = editionsWith({
+      change: (dir) => {
+        editJson(join(dir, 'edition.json'), (config) => ({
+          ...config,
+          featureSwitches: { ...(config['featureSwitches'] as Json), teleport: 'on', game: true },
+        }));
+      },
+    });
+
+    const failure = failureOf(() => openEdition(editionsDir, 'fixture'));
+
+    expect(failure?.reason).toBe('invalid');
+    expect(failure?.errors.map(({ field }) => field)).toEqual([
+      'featureSwitches.game',
+      'featureSwitches.teleport',
+    ]);
+  });
+
   it('names every field of an invalid config', () => {
     const editionsDir = editionsWith({
       change: (dir) => {
@@ -156,7 +197,10 @@ describe('openEdition', () => {
     });
 
     expect(failureOf(() => openEdition(editionsDir, 'fixture'))?.errors).toEqual([
-      { file: 'edition.json', message: expect.stringMatching(/^Invalid JSON/) as string },
+      expect.objectContaining({
+        file: 'edition.json',
+        message: expect.stringMatching(/^Invalid JSON/) as string,
+      }),
     ]);
   });
 });
@@ -198,7 +242,7 @@ describe('an Edition folder', () => {
 
     expect(edition.readIfPresent('idRegistry')).toBeUndefined();
     expect(failureOf(() => edition.read('idRegistry'))?.errors).toEqual([
-      { file: 'content/ids.json', message: 'File not found' },
+      expect.objectContaining({ file: 'content/ids.json', message: 'File not found' }),
     ]);
   });
 
@@ -213,7 +257,7 @@ describe('an Edition folder', () => {
     );
 
     expect(failureOf(() => edition.readIfPresent('idRegistry'))?.errors).toEqual([
-      { file: 'content/ids.json', message: 'Ids must not repeat' },
+      expect.objectContaining({ file: 'content/ids.json', message: 'Ids must not repeat' }),
     ]);
   });
 
@@ -228,7 +272,11 @@ describe('an Edition folder', () => {
     );
 
     expect(failureOf(() => edition.read('idRegistry'))?.errors).toEqual([
-      { file: 'content/ids.json', field: '1', message: expect.any(String) as string },
+      expect.objectContaining({
+        file: 'content/ids.json',
+        field: '1',
+        message: expect.any(String) as string,
+      }),
     ]);
   });
 
@@ -330,12 +378,12 @@ describe('checkNewWords', () => {
     ],
   ])('reports %s as the build does', (_name, changes, field, message) => {
     expect(openEdition(editionsWith(), 'fixture').checkNewWords([draft(changes)])).toEqual([
-      {
+      expect.objectContaining({
         file: draftFile,
         entryId: 'w_draft1',
         field,
         message: expect.stringMatching(message) as string,
-      },
+      }),
     ]);
   });
 
@@ -354,12 +402,12 @@ describe('checkNewWords', () => {
     ]);
 
     expect(errors).toEqual([
-      {
+      expect.objectContaining({
         file: draftFile,
         entryId: 'w_draft1',
         field: 'primaryDefinition',
         message: expect.stringMatching(/same lemma and primary definition as w_fx0002/i) as string,
-      },
+      }),
     ]);
   });
 
@@ -377,12 +425,12 @@ describe('checkNewWords', () => {
     );
 
     expect(edition.checkNewWords([draft()])).toEqual([
-      {
+      expect.objectContaining({
         file: draftFile,
         entryId: 'w_draft1',
         field: 'stress',
         message: 'Not allowed: the Edition does not mark Stress',
-      },
+      }),
     ]);
   });
 
@@ -431,12 +479,12 @@ describe('checkNewCorrections', () => {
     'reports %s as the build does, in the file it would be authored in',
     (_name, changes, field, message) => {
       expect(openEdition(editionsWith(), 'fixture').checkNewCorrections([draft(changes)])).toEqual([
-        {
+        expect.objectContaining({
           file: 'content/corrections/c_draft1.json',
           entryId: 'c_draft1',
           field,
           message: expect.stringMatching(message) as string,
-        },
+        }),
       ]);
     },
   );
@@ -470,12 +518,12 @@ describe('checkNewSynonymRows', () => {
     ]);
 
     expect(errors).toEqual([
-      {
+      expect.objectContaining({
         file: 'content/synonym-rows/r_draft1.json',
         entryId: 'r_draft1',
         field: 'dominant.wordId',
         message: 'Unknown Word "w_nowhere"',
-      },
+      }),
     ]);
   });
 });
@@ -640,12 +688,12 @@ describe('checkNewIdioms', () => {
     ],
   ])('reports %s as the build does', (_name, changes, message) => {
     expect(openEdition(editionsWith(), 'fixture').checkNewIdioms([draft(changes)])).toEqual([
-      {
+      expect.objectContaining({
         file: draftFile,
         entryId: 'i_draft1',
         field: 'expression',
         message: expect.stringMatching(message) as string,
-      },
+      }),
     ]);
   });
 

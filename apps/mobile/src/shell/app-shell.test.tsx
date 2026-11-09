@@ -13,7 +13,7 @@ jest.mock('../content-update/language-pack', () => {
     languagePackOpening: () =>
       opened({
         reader: {},
-        version: { contentVersion: 7, packFormat: 1 },
+        contentVersion: () => 7,
         contentUpdate: undefined,
       }),
   };

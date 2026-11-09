@@ -186,4 +186,51 @@ describe('the lifecycle', () => {
     stop();
     consoleError.mockRestore();
   });
+
+  it('asks for the remote Feature Switches every two minutes from launch, reopens the composition when they change, and stops with the app', async () => {
+    const asking: string[] = [];
+    let changed: () => void = () => undefined;
+    const stub = await switchedTo(edition).opened();
+    const base = testShell({
+      remoteSwitches: opened({
+        ...stub,
+        start(onChange: () => void) {
+          asking.push('start');
+          changed = onChange;
+          return () => {
+            asking.push('stop');
+          };
+        },
+      }),
+    });
+    const events: string[] = [];
+    const shell = { ...base, composition: recorded('composition', base.composition, events) };
+    const stop = listen(shell, {
+      clock,
+      appState,
+      writeWidgetSnapshot() {
+        events.push('write the Widget Snapshot');
+      },
+      spotlight: { replace: () => Promise.resolve() },
+    });
+    await waitFor(() => {
+      expect(asking).toEqual(['start']);
+    });
+    await waitFor(() => {
+      expect(events).toContain('write the Widget Snapshot');
+    });
+    events.length = 0;
+
+    changed();
+
+    await waitFor(() => {
+      expect(events).toEqual([
+        'reopen composition',
+        'composition reopened',
+        'write the Widget Snapshot',
+      ]);
+    });
+    stop();
+    expect(asking).toEqual(['start', 'stop']);
+  });
 });

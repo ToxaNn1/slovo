@@ -22,10 +22,10 @@ const { config } = activeEditionFiles;
 
 /** The UA Edition with the Account off, and the Daily Goal on or off. */
 function editionWith({ dailyGoal }: { dailyGoal: boolean }): Edition {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
-    featureSwitches: { ...featureSwitches, account: false, dailyGoal },
+    featureSwitches: { ...featureSwitches, account: 'off', dailyGoal: dailyGoal ? 'on' : 'off' },
   });
 }
 

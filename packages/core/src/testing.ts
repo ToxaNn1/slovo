@@ -8,7 +8,6 @@ export {
   type FakeBackend,
   type FakeFailure,
   type FakeFailureReason,
-  type FakePublishedPack,
   type ProcedureName,
 } from './fakes/fake-backend';
 export {
@@ -32,5 +31,5 @@ export {
   type UserStateFacts,
 } from './fakes/seeded-user-state';
 export { UserStateTooNewError } from './user-state/user-state';
-export { createMemoryPackFiles, type MemoryPackFile } from './fakes/memory-pack-files';
+export { createMemoryContentStore, type MemoryContentStore } from './fakes/memory-content-store';
 export { testEdition, type TestEditionOverrides } from './test-support';

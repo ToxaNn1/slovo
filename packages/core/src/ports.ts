@@ -6,7 +6,7 @@ import type {
   PackMetadata,
   Word,
 } from '@slovo/contracts';
-import type { ApiClient } from '@slovo/contracts/api';
+import type { ApiClient, Patch } from '@slovo/contracts/api';
 
 import type { CategoryKind } from './entries/entry-kinds';
 
@@ -292,16 +292,21 @@ export const systemRandom: Random = { next: () => Math.random() };
 export type PackVersion = Readonly<Pick<PackMetadata, 'contentVersion' | 'packFormat'>>;
 
 /**
- * Keeps one downloaded Language Pack on the device, apart from the pack
- * bundled with the app, for the shell to open at the next launch.
+ * The device's writable Language Pack as the content update changes it: its
+ * content version and the ETag of the Patch applied last, and the one way to
+ * change it, a Patch applied in one transaction (ADR 0090).
  */
-export interface PackFiles {
-  /** Keeps the pack file with its version, in place of any pack kept before. */
-  keep(version: PackVersion, bytes: Uint8Array): Promise<void>;
-  /** The version of the pack kept, if one is. */
-  read(): Promise<PackVersion | undefined>;
-  /** Throws the kept pack away, if one is kept. */
-  forget(): Promise<void>;
+export interface ContentStore {
+  /** The content version the pack holds now. */
+  contentVersion(): number;
+  /** The ETag of the Patch applied last, if one was. */
+  etag(): string | undefined;
+  /**
+   * Applies the Patch and keeps its ETag, in one transaction: it rejects a
+   * Patch of another Edition or from another content version, and a
+   * rejection changes nothing.
+   */
+  apply(patch: Patch, etag: string): Promise<void>;
 }
 
 /**
@@ -312,16 +317,6 @@ export interface PackFiles {
 export interface CommunityWordAnswer {
   readonly entryId: string;
   readonly adds: number;
-}
-
-/**
- * What the backend answers for the running Edition's remote Feature Switches:
- * the features the owner turned off remotely, by their Feature Switch's name,
- * and the ETag that names them (ADR 0040).
- */
-export interface RemoteSwitchesAnswer {
-  readonly off: readonly string[];
-  readonly etag: string;
 }
 
 /** The Community Counters of one Entry, as the backend answers them (ADR 0060). */

@@ -18,123 +18,130 @@ const validConfig = {
     vowels: 'a',
   },
   featureSwitches: {
-    game: true,
-    corrections: true,
-    idioms: true,
-    synonymRows: true,
-    tips: true,
-    account: true,
-    googleSignIn: true,
-    signInWithApple: true,
-    sync: true,
-    contentUpdates: true,
-    notifications: true,
-    widget: true,
-    shareCards: true,
-    pronunciation: true,
-    narratorVoice: true,
-    wordOfTheDay: true,
-    statistics: true,
-    knowledge: true,
-    selfCheck: true,
-    rarityCeiling: true,
-    gameReview: true,
-    gameGuessWord: true,
-    gameCorrection: true,
-    gameStress: true,
-    gamePairs: true,
-    gameSurvival: true,
-    gameTimed: true,
-    gameIdiomMeaning: true,
-    gameAnglicism: true,
-    gameBuildIdiom: true,
-    gameTypeWord: true,
-    gameAnagram: true,
-    gameByLetters: true,
-    gameOrigin: true,
-    dailyCrossword: true,
-    search: true,
-    rarityTest: true,
-    weeklyRecap: true,
-    confirmedEntries: true,
-    yesterday: true,
-    wordOfTheDayArchive: true,
-    activeDaysCalendar: true,
-    politePause: true,
-    firstWeek: true,
-    widgetHint: true,
-    seasonalDecor: true,
-    stressAnimation: true,
-    illustrations: true,
-    mistakeReports: true,
-    communityCounters: true,
-    communityWord: true,
-    calligraphy: true,
-    spotlight: true,
-    appIntents: true,
-    collectionLinks: true,
-    replaceOpenEntry: true,
-    mixKindWeights: true,
-    analytics: true,
-    xpLog: true,
-    streakFreezes: true,
-    streakBreak: true,
-    quickQuestion: true,
-    playStep: true,
-    seenWordXp: true,
-    levels: true,
-    noCounters: true,
-    dailyGoal: true,
-    enoughForToday: true,
-    widgetGoalRing: true,
-    lockScreenWidget: true,
-    questionnaire: true,
-    badges: true,
-    levelLadder: true,
-    newLevelScreen: true,
-    badgeSheet: true,
-    badgeToast: true,
-    streakFreezeCard: true,
-    breakCard: true,
-    calendarDayLines: true,
-    progressShareCards: true,
-    dailyCrosswordShare: true,
-    tracedCrossword: true,
-    crossingCrossword: true,
-    crosswordHint: true,
-    crosswordSolveTime: true,
-    crosswordSolvedScreen: true,
-    crosswordBadgeStamp: true,
-    gameAnswerCard: true,
-    letterTiles: true,
-    survivalStreak: true,
-    finishPoster: true,
-    eveningNotification: true,
-    notificationFarewell: true,
-    notificationExplainer: true,
-    notificationTimeStep: true,
-    laterQuestions: true,
-    profile: true,
-    mascot: true,
-    sounds: true,
-    reduceMotion: true,
-    fastReveal: true,
-    dashboard: true,
-    mood: true,
-    previousWords: true,
-    correctionTypes: true,
-    curatedCollections: true,
-    swipeMarks: true,
-    wordTabs: true,
-    searchButton: true,
-    dashboardWordmark: true,
-    feedTab: true,
-    categoryScreens: true,
-    correctionCategoryScreens: true,
-    quietCategories: true,
-    collectionBoardStyle: true,
-    profileConfirmedByRarity: true,
-    profileGameBest: true,
+    game: 'on',
+    corrections: 'on',
+    idioms: 'on',
+    synonymRows: 'on',
+    tips: 'on',
+    account: 'on',
+    googleSignIn: 'on',
+    signInWithApple: 'on',
+    sync: 'on',
+    contentUpdates: 'on',
+    notifications: 'on',
+    widget: 'on',
+    shareCards: 'on',
+    pronunciation: 'on',
+    narratorVoice: 'on',
+    wordOfTheDay: 'on',
+    statistics: 'on',
+    knowledge: 'on',
+    selfCheck: 'on',
+    rarityCeiling: 'on',
+    gameReview: 'on',
+    gameGuessWord: 'on',
+    gameCorrection: 'on',
+    gameStress: 'on',
+    gamePairs: 'on',
+    gameSurvival: 'on',
+    gameTimed: 'on',
+    gameIdiomMeaning: 'on',
+    gameAnglicism: 'on',
+    gameBuildIdiom: 'on',
+    gameTypeWord: 'on',
+    gameAnagram: 'on',
+    gameByLetters: 'on',
+    gameOrigin: 'on',
+    dailyCrossword: 'on',
+    search: 'on',
+    rarityTest: 'on',
+    weeklyRecap: 'on',
+    confirmedEntries: 'on',
+    yesterday: 'on',
+    wordOfTheDayArchive: 'on',
+    activeDaysCalendar: 'on',
+    politePause: 'on',
+    firstWeek: 'on',
+    widgetHint: 'on',
+    seasonalDecor: 'on',
+    stressAnimation: 'on',
+    illustrations: 'on',
+    mistakeReports: 'on',
+    communityCounters: 'on',
+    communityWord: 'on',
+    calligraphy: 'on',
+    spotlight: 'on',
+    appIntents: 'on',
+    collectionLinks: 'on',
+    replaceOpenEntry: 'on',
+    mixKindWeights: 'on',
+    analytics: 'on',
+    analyticsSessions: 'on',
+    analyticsFeatureUsed: 'on',
+    analyticsSearchNoResult: 'on',
+    analyticsNotificationPermission: 'on',
+    analyticsNps: 'on',
+    analyticsGames: 'on',
+    xpLog: 'on',
+    streakFreezes: 'on',
+    streakBreak: 'on',
+    quickQuestion: 'on',
+    playStep: 'on',
+    seenWordXp: 'on',
+    levels: 'on',
+    noCounters: 'on',
+    dailyGoal: 'on',
+    enoughForToday: 'on',
+    widgetGoalRing: 'on',
+    lockScreenWidget: 'on',
+    questionnaire: 'on',
+    badges: 'on',
+    levelLadder: 'on',
+    newLevelScreen: 'on',
+    badgeSheet: 'on',
+    badgeToast: 'on',
+    streakFreezeCard: 'on',
+    breakCard: 'on',
+    calendarDayLines: 'on',
+    progressShareCards: 'on',
+    dailyCrosswordShare: 'on',
+    tracedCrossword: 'on',
+    crossingCrossword: 'on',
+    crosswordHint: 'on',
+    crosswordSolveTime: 'on',
+    crosswordSolvedScreen: 'on',
+    crosswordBadgeStamp: 'on',
+    gameAnswerCard: 'on',
+    letterTiles: 'on',
+    survivalStreak: 'on',
+    finishPoster: 'on',
+    eveningNotification: 'on',
+    notificationFarewell: 'on',
+    notificationExplainer: 'on',
+    notificationTimeStep: 'on',
+    laterQuestions: 'on',
+    profile: 'on',
+    mascot: 'on',
+    sounds: 'on',
+    reduceMotion: 'on',
+    fastReveal: 'on',
+    dashboard: 'on',
+    mood: 'on',
+    previousWords: 'on',
+    correctionTypes: 'on',
+    curatedCollections: 'on',
+    swipeMarks: 'on',
+    wordTabs: 'on',
+    searchButton: 'on',
+    dashboardWordmark: 'on',
+    feedTab: 'on',
+    categoryScreens: 'on',
+    correctionCategoryScreens: 'on',
+    quietCategories: 'on',
+    collectionBoardStyle: 'on',
+    profileConfirmedByRarity: 'on',
+    profileGameBest: 'on',
+    forceUpdate: 'on',
   },
   userSettingDefaults: {
     theme: 'system',
@@ -333,7 +340,7 @@ describe('loadEdition', () => {
   it('reports the Game as disabled when its Feature Switch is off', () => {
     const edition = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, game: false },
+      featureSwitches: { ...validConfig.featureSwitches, game: 'off' },
     });
 
     expect(edition.isFeatureEnabled('game')).toBe(false);
@@ -343,7 +350,7 @@ describe('loadEdition', () => {
   it('turns every Game Mode and the Daily Crossword off while the Game is off', () => {
     const edition = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, game: false },
+      featureSwitches: { ...validConfig.featureSwitches, game: 'off' },
     });
 
     for (const feature of gamePartSwitches) expect(edition.isFeatureEnabled(feature)).toBe(false);
@@ -391,7 +398,7 @@ describe('loadEdition', () => {
     const on = loadEdition(validConfig);
     const off = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, [feature]: false },
+      featureSwitches: { ...validConfig.featureSwitches, [feature]: 'off' },
     });
 
     expect(on.isFeatureEnabled(feature)).toBe(true);
@@ -560,7 +567,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the levels Feature Switch', () => {
     const { levels, ...switches } = validConfig.featureSwitches;
-    expect(levels).toBe(true);
+    expect(levels).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -677,7 +684,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the profile Feature Switch', () => {
     const { profile, ...switches } = validConfig.featureSwitches;
-    expect(profile).toBe(true);
+    expect(profile).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -685,7 +692,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the badges Feature Switch', () => {
     const { badges, ...switches } = validConfig.featureSwitches;
-    expect(badges).toBe(true);
+    expect(badges).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -710,7 +717,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the mascot Feature Switch', () => {
     const { mascot, ...switches } = validConfig.featureSwitches;
-    expect(mascot).toBe(true);
+    expect(mascot).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -718,7 +725,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the «Менше руху» Feature Switch', () => {
     const { reduceMotion, ...switches } = validConfig.featureSwitches;
-    expect(reduceMotion).toBe(true);
+    expect(reduceMotion).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -1082,7 +1089,7 @@ describe('loadEdition', () => {
     ],
     [
       'an unknown Feature Switch',
-      { featureSwitches: { ...validConfig.featureSwitches, share: true } },
+      { featureSwitches: { ...validConfig.featureSwitches, share: 'on' } },
       'featureSwitches',
     ],
     [
@@ -1515,7 +1522,7 @@ describe('the Feature Switches a feature depends on', () => {
     for (const need of needs) {
       const edition = loadEdition({
         ...validConfig,
-        featureSwitches: { ...validConfig.featureSwitches, [need]: false },
+        featureSwitches: { ...validConfig.featureSwitches, [need]: 'off' },
       });
 
       expect(edition.isFeatureEnabled(feature)).toBe(false);
@@ -1525,7 +1532,7 @@ describe('the Feature Switches a feature depends on', () => {
   it('keep the Collection board style on while the Dashboard is off', () => {
     const edition = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, dashboard: false },
+      featureSwitches: { ...validConfig.featureSwitches, dashboard: 'off' },
     });
 
     expect(edition.isFeatureEnabled('categoryScreens')).toBe(false);
@@ -1535,7 +1542,7 @@ describe('the Feature Switches a feature depends on', () => {
   it('keep a feature on while only a feature that depends on it is off', () => {
     const edition = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, badges: false, quickQuestion: false },
+      featureSwitches: { ...validConfig.featureSwitches, badges: 'off', quickQuestion: 'off' },
     });
 
     expect(edition.isFeatureEnabled('xpLog')).toBe(true);

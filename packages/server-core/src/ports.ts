@@ -8,9 +8,12 @@ import type {
   CountedQuestion,
   CounterEvent,
   MistakeReport,
-  PackMetadata,
-  PublishedPack,
+  ForceUpdateMinimum,
+  ForceUpdateMinimums,
+  Platform,
+  Rule,
 } from '@slovo/contracts';
+import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
 
 /** The current time, injected so the rules that read it stay testable. */
 export interface Clock {
@@ -23,40 +26,6 @@ export const systemClock: Clock = { now: () => new Date() };
 export interface Random {
   /** A whole number from 0 up to, not including, `bound`. */
   int(bound: number): number;
-}
-
-/** The published Language Packs of every Edition, kept by the backend. */
-export interface ContentPackStore {
-  /** The newest published pack of the Edition in the pack format, if any. */
-  latest(editionId: string, packFormat: number): Promise<PublishedPack | undefined>;
-  /** The file of the Edition's pack published at the content version, if one is. */
-  file(editionId: string, contentVersion: number): Promise<PublishedFile | undefined>;
-  /**
-   * Keeps the pack unless `refuse`, given every content version published
-   * for its Edition, names why not, and answers that reason. The check and
-   * the insert run in one transaction, and no other publishing of the
-   * Edition comes between them. A kept pack is never updated.
-   */
-  publish<Refusal>(
-    pack: ContentPack,
-    refuse: (publishedVersions: readonly number[]) => Refusal | undefined,
-  ): Promise<Refusal | undefined>;
-}
-
-/** A built Language Pack file: the bytes, the metadata recorded in them and their SHA-256. */
-export interface PackFile {
-  readonly metadata: PackMetadata;
-  /** The SHA-256 of the file, as 64 lowercase hex digits; not the content checksum. */
-  readonly fileSha256: string;
-  readonly bytes: Uint8Array;
-}
-
-/** The bytes of a published pack file and their SHA-256, as a download serves them. */
-export type PublishedFile = Pick<PackFile, 'fileSha256' | 'bytes'>;
-
-/** A Language Pack file as it is published. */
-export interface ContentPack extends PackFile {
-  readonly publishedAt: Date;
 }
 
 /** An Account as the server Core sees it. */
@@ -201,6 +170,69 @@ export interface Mailer {
   send(mail: Mail): Promise<void>;
 }
 
+/** A period of days, both ends included, each as `YYYY-MM-DD` (Kyiv days). */
+export interface AnalyticsPeriod {
+  readonly from: string;
+  readonly to: string;
+}
+
+/**
+ * One aggregate read of the Analytics events of some Editions. Every read
+ * answers counts per key only, never a person or an id (ADR 0060).
+ */
+export type AnalyticsQuery =
+  | {
+      /** People active on each day (key: the day). */
+      readonly kind: 'activeByDay';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** Відвідини started on each day (key: the day). */
+      readonly kind: 'visitsByDay';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** The median length of a Відвідини in seconds (one row, key `median`). */
+      readonly kind: 'visitSeconds';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** People active on each kind of device (key: `ios`, `android` …). */
+      readonly kind: 'devices';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** People active on each app version (key: the version). */
+      readonly kind: 'appVersions';
+      readonly editionIds: readonly string[];
+      readonly period: AnalyticsPeriod;
+    }
+  | {
+      /** People active in each Variant of an A/B Feature Switch (key: the Variant). */
+      readonly kind: 'variants';
+      readonly editionIds: readonly string[];
+      readonly feature: string;
+    };
+
+/** A count of one key of an aggregate read. */
+export interface AnalyticsRow {
+  readonly key: string;
+  readonly count: number;
+}
+
+/** What PostHog answers a read: its rows, or that it can't answer now. */
+export type AnalyticsAnswer =
+  { readonly ok: true; readonly rows: readonly AnalyticsRow[] } | { readonly ok: false };
+
+/** Reads the aggregates of the Analytics events (PostHog in the backend). */
+export interface PostHogPort {
+  query(query: AnalyticsQuery): Promise<AnalyticsAnswer>;
+}
+
 /** How many requests a window of time takes. */
 export interface RequestLimit {
   readonly requests: number;
@@ -225,18 +257,36 @@ export interface RateLimits {
     now: Date,
     weight: number,
   ): Promise<{ readonly taken: boolean; readonly windowEnds: Date }>;
+  /** What the key's window holds at `now`; none when it has no window running. */
+  peek(
+    key: string,
+    now: Date,
+  ): Promise<{ readonly count: number; readonly windowEnds: Date } | undefined>;
+  /** Takes `weight` requests back out of the key's window, none below nothing. */
+  giveBack(key: string, weight: number): Promise<void>;
+  /** Ends the key's window: what it held counts nothing any more. */
+  clear(key: string): Promise<void>;
 }
 
 /**
- * The Feature Switches the owner turned off remotely, per Edition and feature
- * (Postgres in the backend). It keeps a feature by its name and never reads
- * it: the server Core checks the names.
+ * The remote Feature Switch Rules and force-update minimums the owner sets,
+ * per Edition (Postgres in the backend; ADR 0089). It keeps a feature by its
+ * name and never reads it: the server Core checks the names.
  */
-export interface RemoteSwitchStore {
-  /** The features turned off in the Edition, in no order. */
-  off(editionId: string): Promise<readonly string[]>;
-  /** Sets whether the feature is off in the Edition, as of `at`. */
-  set(editionId: string, feature: string, off: boolean, at: Date): Promise<void>;
+export interface SwitchRuleStore {
+  /** The Rules of the Edition, by feature name and then order. */
+  rules(editionId: string): Promise<readonly Rule[]>;
+  /** Replaces the Rules of one feature of the Edition with these, as of `at`. */
+  setRules(editionId: string, feature: string, rules: readonly Rule[], at: Date): Promise<void>;
+  /** The force-update minimums of the Edition, by platform. */
+  minimums(editionId: string): Promise<ForceUpdateMinimums>;
+  /** Sets the force-update minimums of one platform of the Edition, as of `at`. */
+  setMinimum(
+    editionId: string,
+    platform: Platform,
+    minimum: ForceUpdateMinimum,
+    at: Date,
+  ): Promise<void>;
 }
 
 /** A Mistake Report as the backend keeps it: the report and its time of arrival, nothing else. */
@@ -346,6 +396,24 @@ export interface CounterStore {
   mostAdded(editionId: string, week: string): Promise<CommunityWord | undefined>;
   /** Adds one to the count of the answer to the Edition's counted question (ADR 0068). */
   addAnswer(editionId: string, question: CountedQuestion, answer: string): Promise<void>;
+  /** The sums of the Community Counters of the Editions' Entries. */
+  totals(editionIds: readonly string[]): Promise<CounterTotals>;
+  /** The count of each questionnaire answer of the Editions, summed over them, in any order. */
+  answers(editionIds: readonly string[]): Promise<readonly AnswerCount[]>;
+}
+
+/** The sums of the Community Counters of some Editions. */
+export interface CounterTotals {
+  readonly known: number;
+  readonly unknown: number;
+  readonly saved: number;
+}
+
+/** How many readers chose an answer of a counted question. */
+export interface AnswerCount {
+  readonly question: string;
+  readonly answer: string;
+  readonly count: number;
 }
 
 /** The Community Word of a week: the Entry most added to Favorites, with its adds (ADR 0060). */
@@ -360,4 +428,94 @@ export interface EntryCounts {
   readonly known: number;
   readonly unknown: number;
   readonly saved: number;
+}
+
+/**
+ * What a read of an outside service answers: its value, or that the service is
+ * unavailable. An adapter never throws: a refusal, a timeout or an answer of
+ * the wrong shape is `unavailable`.
+ */
+export type SourceRead<Value> =
+  | { readonly ok: true; readonly value: Value }
+  | { readonly ok: false; readonly reason: 'unavailable' };
+
+/** The repository on GitHub, read with a read-only token (Розробка). */
+export interface GitHubSource {
+  /** The open pull requests, newest change first. */
+  pullRequests(): Promise<SourceRead<PullRequest[]>>;
+  /** The latest CI run on `main`. */
+  mainCi(): Promise<SourceRead<MainCi>>;
+  /** Every milestone, open and closed. */
+  milestones(): Promise<SourceRead<Milestone[]>>;
+  /** The published releases, newest first. */
+  releases(): Promise<SourceRead<Release[]>>;
+}
+
+/** The app's builds on EAS, read with a read token (Розробка). */
+export interface EasSource {
+  /** The newest builds, at most `limit`, newest first. */
+  latestBuilds(limit: number): Promise<SourceRead<EasBuild[]>>;
+}
+
+/** What Якість reads of Sentry (ADR 0048). */
+export type SentryRead =
+  'crashFree' | 'crashes' | 'errors' | 'newIssues' | 'backendP95' | 'appStart';
+
+/** The window a Sentry read covers: one Edition's, or every Edition's when none is named. */
+export interface SentryWindow {
+  readonly editionId?: string | undefined;
+  readonly from: Date;
+  readonly to: Date;
+}
+
+/**
+ * Sentry's answer to one read: the number, or `null` while Sentry keeps no
+ * data for it; or why there is none: Sentry is unreachable or not set up, or
+ * it limits the reads until `retryAt`.
+ */
+export type SentryAnswer =
+  | { readonly ok: true; readonly value: number | null }
+  | { readonly ok: false; readonly reason: 'unavailable' }
+  | { readonly ok: false; readonly reason: 'rate-limited'; readonly retryAt: Date };
+
+/**
+ * What the alert checks read of Sentry besides Якість's reads: the most
+ * events of an issue first seen in the window, and the backend's share of
+ * 5xx answers in percent.
+ */
+export type SentryAlertRead = 'newIssueEvents' | 'backendErrorRate';
+
+/** Reads Sentry's numbers for Якість and the alert checks. */
+export interface SentryReader {
+  read(read: SentryRead | SentryAlertRead, window: SentryWindow): Promise<SentryAnswer>;
+}
+
+/** The coverage of one package in one CI run, in percent. */
+export interface PackageCoverage {
+  readonly package: string;
+  readonly lines: number;
+  readonly branches: number;
+}
+
+/** One CI run on `main`, as CI pushes it after the run. */
+export interface CiRun {
+  /** GitHub's id of the workflow run: a run is kept once. */
+  readonly runId: number;
+  readonly at: Date;
+  readonly sha: string;
+  /** How many tests ran. */
+  readonly tests: number;
+  /** The names of the tests that failed. */
+  readonly failedTests: readonly string[];
+  readonly coverage: readonly PackageCoverage[];
+  /** How long each job took, in seconds. */
+  readonly jobs: readonly { readonly name: string; readonly seconds: number }[];
+}
+
+/** The CI runs on `main`, kept by the backend. */
+export interface CiRunStore {
+  /** Keeps the run; a run already kept stays as it is. */
+  add(run: CiRun): Promise<void>;
+  /** The runs from `from` up to `to`, oldest first. */
+  between(from: Date, to: Date): Promise<readonly CiRun[]>;
 }

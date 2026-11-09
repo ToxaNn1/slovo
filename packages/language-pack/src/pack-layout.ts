@@ -56,7 +56,9 @@ CREATE TABLE words (
   history TEXT,
   origin TEXT,
   illustration TEXT,
-  retired INTEGER NOT NULL
+  retired INTEGER NOT NULL,
+  -- 1 when the Word's text changed since its Recordings; no app reads it yet.
+  needs_new_recording INTEGER NOT NULL DEFAULT 0
 ) WITHOUT ROWID;
 
 -- The live Words of a Category, read once per Category of the Mix. The primary
@@ -288,7 +290,8 @@ CREATE TABLE sources (
  * Curated Collection tables (`curated_collections` and
  * `curated_collection_entries`) of the Dashboard's rail (spec #1564, ADR 0076);
  * format 11 adds the columns `description` and `tone` to both Category tables
- * (spec #1604).
+ * (spec #1604), and later the Word's `needs_new_recording` column, which no
+ * app reads, so the format stays (spec #1708).
  */
 export const PACK_FORMAT = 11;
 
@@ -350,4 +353,10 @@ export interface PackContent {
    * so the content checksum of an Edition without them stays as it was.
    */
   readonly curatedCollections?: readonly CuratedCollection[];
+  /**
+   * The ids of the Words whose text changed since their Recordings, from the
+   * backend's snapshot; unset when none, so the content checksum of a pack
+   * without them stays as it was.
+   */
+  readonly needsNewRecording?: readonly string[];
 }

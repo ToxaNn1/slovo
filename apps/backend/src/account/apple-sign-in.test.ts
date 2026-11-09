@@ -245,7 +245,7 @@ describe('an Edition', () => {
   it('with Sign in with Apple switched off is NOT_FOUND, while a Sign-in code still works', async () => {
     const folder = testEditions(['uk'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, signInWithApple: false },
+      featureSwitches: { ...config.featureSwitches, signInWithApple: 'off' },
     }));
     const { client, apple, mailer, rowsOf } = testApp({ editions: folder.read() });
     const email = newEmail();
@@ -262,15 +262,15 @@ describe('an Edition', () => {
   });
 
   it('with Sign in with Apple turned off remotely is NOT_FOUND until the switch is cleared', async () => {
-    const { client, apple, switchOff, clearSwitch } = testApp();
+    const { client, apple, kill, clearRules } = testApp();
     const email = newEmail();
     const signIn = () =>
       client.account.signInWithApple({ idToken: apple.token({ email }), editionId: 'uk' });
-    await switchOff('uk', 'signInWithApple');
+    await kill('uk', 'signInWithApple');
 
     await expect(signIn()).rejects.toMatchObject({ code: 'NOT_FOUND', status: 404 });
 
-    await clearSwitch('uk', 'signInWithApple');
+    await clearRules('uk', 'signInWithApple');
     await expect(signIn()).resolves.toMatchObject({ email });
   });
 });

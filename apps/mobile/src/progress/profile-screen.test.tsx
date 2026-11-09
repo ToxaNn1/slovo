@@ -133,7 +133,7 @@ async function renderScreen({
       metadata: () => Promise.reject(new Error('A test pack has no metadata')),
       crosswordDay: () => Promise.resolve(undefined),
     },
-    version: { contentVersion: 1, packFormat: 1 },
+    contentVersion: () => 1,
     contentUpdate: undefined,
   });
   const composition = await testShell({ userState, languagePack }).composition.opened();

@@ -48,9 +48,6 @@ const ServerVariablesSchema = z.object({
   // The address the sign-in emails come from; the Edition names the sender.
   // Unset, no-reply@slovo.app.
   MAIL_FROM: unsetWhenEmpty(z.email({ error: 'must be an email address' })),
-  // The one Account the owner admin at /admin signs in (ADR 0069). Empty, or
-  // unset, leaves the admin out of the backend.
-  OWNER_EMAIL: unsetWhenEmpty(z.email({ error: 'must be an email address' })),
   // The OAuth client ids of SLOVO at Google, comma-separated: one per app
   // that signs in with Google (ADR 0047). A Google identity token must name
   // one as its audience. Empty, or unset, turns Google sign-in off.
@@ -69,6 +66,40 @@ const ServerVariablesSchema = z.object({
   SENTRY_DSN: unsetWhenEmpty(
     z.url({ protocol: /^https$/, error: 'must be an https:// Sentry DSN' }),
   ),
+  // PostHog's query API, for the admin's Аналітика (spec #1709): a personal
+  // API key with the read-only `query` scope, the project's id and its host.
+  // Unset, the Аналітика answers «PostHog недоступний»; the repository holds no key.
+  POSTHOG_PERSONAL_API_KEY: unsetWhenEmpty(z.string()),
+  POSTHOG_PROJECT_ID: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a project number')),
+  POSTHOG_HOST: unsetWhenEmpty(z.url({ protocol: /^https$/, error: 'must be an https:// URL' })),
+  // Розробка's reads (spec #1709). A read-only fine-grained GitHub token and
+  // an EAS read token; unset, that block of the admin answers unavailable.
+  GITHUB_TOKEN: unsetWhenEmpty(z.string()),
+  GITHUB_REPOSITORY: z
+    .string()
+    .regex(/^[\w.-]+\/[\w.-]+$/, 'must be owner/name')
+    .default('ToxaNn1/slovo'),
+  EXPO_TOKEN: unsetWhenEmpty(z.string()),
+  // The EAS project of the one app (apps/mobile/app.config.ts).
+  EAS_PROJECT_ID: z.string().min(1).default('e2401ef2-2a47-407e-b0ff-03706421b71c'),
+  // Якість reads Sentry's REST API with this token (scopes org:read,
+  // project:read, event:read); unset, Якість shows Sentry unavailable.
+  SENTRY_AUTH_TOKEN: unsetWhenEmpty(z.string().min(1)),
+  // The Sentry organization's slug, and the numeric ids of the app's and the
+  // backend's projects.
+  SENTRY_ORG: unsetWhenEmpty(z.string().min(1)),
+  SENTRY_APP_PROJECT: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a numeric project id')),
+  SENTRY_BACKEND_PROJECT: unsetWhenEmpty(z.string().regex(/^\d+$/, 'must be a numeric project id')),
+  // The Bearer token CI pushes its history with (ADR 0096); unset, every push
+  // is refused.
+  CI_HISTORY_TOKEN: unsetWhenEmpty(z.string().min(32, 'must be at least 32 characters')),
+  // The Telegram bot that tells the owner of alerts and the daily digest, and
+  // the owner's chat id, the only chat it writes to; unset, alerts are kept
+  // for Огляд and logged.
+  TELEGRAM_BOT_TOKEN: unsetWhenEmpty(z.string().min(1)),
+  TELEGRAM_CHAT_ID: unsetWhenEmpty(z.string().regex(/^-?\d+$/, 'must be a numeric chat id')),
+  // The backend's health URL the Cron service checks; unset, it is not checked.
+  BACKEND_HEALTH_URL: unsetWhenEmpty(z.url()),
   // How many proxies in front of the backend append to X-Forwarded-For, whose
   // addresses it trusts (ADR 0030): 0 when nothing is in front, as in local
   // Docker; 1 behind Railway's proxy.
@@ -82,6 +113,25 @@ const ServerVariablesSchema = z.object({
   // The folder that holds one folder per Edition (ADR 0035).
   EDITIONS_DIR: z.string().min(1).default(EDITIONS_DIR),
 });
+
+/** The options of PostHog's query API, or none while its key or project is unset. */
+function posthogOf({
+  POSTHOG_PERSONAL_API_KEY,
+  POSTHOG_PROJECT_ID,
+  POSTHOG_HOST,
+}: {
+  POSTHOG_PERSONAL_API_KEY?: string | undefined;
+  POSTHOG_PROJECT_ID?: string | undefined;
+  POSTHOG_HOST?: string | undefined;
+}) {
+  return POSTHOG_PERSONAL_API_KEY === undefined || POSTHOG_PROJECT_ID === undefined
+    ? undefined
+    : {
+        apiKey: POSTHOG_PERSONAL_API_KEY,
+        projectId: POSTHOG_PROJECT_ID,
+        host: POSTHOG_HOST ?? 'https://eu.posthog.com',
+      };
+}
 
 /**
  * The environment the server reads at start, with the SMTP settings gathered
@@ -110,9 +160,13 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     SMTP_PASSWORD,
     SMTP_TLS,
     MAIL_FROM,
+    POSTHOG_PERSONAL_API_KEY,
+    POSTHOG_PROJECT_ID,
+    POSTHOG_HOST,
     ...rest
   }) => ({
     ...rest,
+    posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
     smtp: {
       host: SMTP_HOST ?? 'localhost',
       port: SMTP_PORT ?? 1025,
@@ -128,6 +182,31 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
 
 /** The environment the migrate and reports commands read. */
 export const MigrateConfigSchema = ServerVariablesSchema.pick({ DATABASE_URL: true });
+
+/** The Telegram bot of the owner's alerts, read by the server and every command that alerts. */
+export const TelegramConfigSchema = ServerVariablesSchema.pick({
+  TELEGRAM_BOT_TOKEN: true,
+  TELEGRAM_CHAT_ID: true,
+});
+
+/** The environment the Cron service's `pnpm cron` reads. */
+export const CronConfigSchema = ServerVariablesSchema.pick({
+  DATABASE_URL: true,
+  EDITIONS_DIR: true,
+  POSTHOG_PERSONAL_API_KEY: true,
+  POSTHOG_PROJECT_ID: true,
+  POSTHOG_HOST: true,
+  SENTRY_AUTH_TOKEN: true,
+  SENTRY_ORG: true,
+  SENTRY_APP_PROJECT: true,
+  SENTRY_BACKEND_PROJECT: true,
+  TELEGRAM_BOT_TOKEN: true,
+  TELEGRAM_CHAT_ID: true,
+  BACKEND_HEALTH_URL: true,
+}).transform(({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST, ...rest }) => ({
+  ...rest,
+  posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
+}));
 
 /** The environment the publish command reads. */
 export const PublishConfigSchema = ServerVariablesSchema.pick({

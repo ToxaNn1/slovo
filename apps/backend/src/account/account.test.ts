@@ -294,7 +294,7 @@ describe('an Edition', () => {
   it('with the Account switched off is NOT_FOUND, and nothing is sent', async () => {
     const folder = testEditions(['uk'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, account: false },
+      featureSwitches: { ...config.featureSwitches, account: 'off' },
     }));
     const { client, mailer } = testApp({ editions: folder.read() });
 

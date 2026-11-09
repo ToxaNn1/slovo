@@ -4,14 +4,14 @@ import type { PostHog, PostHogOptions } from 'posthog-react-native';
 /** What the adapter uses of PostHog's client. */
 export type PostHogClient = Pick<
   PostHog,
-  'capture' | 'setPersonProperties' | 'optIn' | 'optOut' | 'optedOut'
+  'capture' | 'identify' | 'getDistinctId' | 'setPersonProperties' | 'optIn' | 'optOut' | 'optedOut'
 >;
 
 /** PostHog's project in the EU (ADR 0068). */
 const POSTHOG_EU_HOST = 'https://eu.i.posthog.com';
 
 /**
- * The client's options: the EU host and an anonymous id, with no session
+ * The client's options: the EU host, with no session
  * recording, no lifecycle or screen autocapture, no surveys, no preloaded feature flags
  * and no location from the IP address. Each event is sent at once, so
  * nothing waits in a queue.
@@ -34,7 +34,7 @@ function createPostHog(apiKey: string): PostHogClient {
   return new sdk.PostHog(apiKey, postHogOptions);
 }
 
-/** A questionnaire answer as a person property of the anonymous id: `questionnaire_<question>`. */
+/** A questionnaire answer as a person property of the reader: `questionnaire_<question>`. */
 function questionnaireAnswer(
   event: AnalyticsEvent,
   properties: AnalyticsEvents[AnalyticsEvent],
@@ -48,8 +48,10 @@ function questionnaireAnswer(
  * reader shares their anonymous statistics, so the client is made at the
  * first event, never while sharing is off from launch. Turning sharing off
  * opts the client out; the next event, once it is on again, opts it back in.
- * A questionnaire answer is also kept as a person property of the anonymous
- * id, `questionnaire_<question>`, without reloading feature flags.
+ * The Install id is the distinct id (ADR 0068, 0089): the client is told it
+ * once, when its own differs. Each event carries the Variant of every switch
+ * under test as `variant_<feature>`. A questionnaire answer is also kept as a
+ * person property, `questionnaire_<question>`, without reloading feature flags.
  * Without a key (`EXPO_PUBLIC_POSTHOG_KEY` in the build's environment) it
  * sends nothing.
  */
@@ -61,10 +63,11 @@ export function postHogAnalytics(
     return { track: () => undefined, stop: () => undefined };
   let client: PostHogClient | undefined;
   return {
-    track(event, properties) {
+    track(event, properties, reader) {
       client ??= create(apiKey);
       if (client.optedOut) void client.optIn();
-      client.capture(event, { ...properties });
+      if (client.getDistinctId() !== reader.distinctId) client.identify(reader.distinctId);
+      client.capture(event, { ...properties, edition: reader.edition, ...reader.variants });
       const answer = questionnaireAnswer(event, properties);
       if (answer !== undefined) client.setPersonProperties(answer, undefined, false);
     },
