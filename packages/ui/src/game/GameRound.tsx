@@ -709,8 +709,9 @@ function cardLine(sheet: RoundSheet, entry: AskableEntry | undefined): string | 
  * «Далі», the only way to close it. As the boards draw it, a right answer is
  * on red with ink on it and a wrong one on the Theme's ink. With the answer
  * card switched on (`gameAnswerCard`) it shows the answer card instead, on
- * the Theme's surface, so the explanation stays in sight however long the
- * Round. It keeps what it showed while it slides away.
+ * the same red or ink, so the explanation stays in sight however long the
+ * Round, and the sheet stands apart from the Round under it, which no scrim
+ * dims. It keeps what it showed while it slides away.
  */
 function AnswerSheet({
   answer,
@@ -730,7 +731,7 @@ function AnswerSheet({
   return (
     <BottomSheet
       visible={answer !== undefined}
-      tone={feedback === 'card' ? 'surface' : shown?.answer.right === true ? 'accent' : 'ink'}
+      tone={shown?.answer.right === true ? 'accent' : 'ink'}
       testID="game-sheet"
     >
       {shown === undefined ? null : feedback === 'card' ? (

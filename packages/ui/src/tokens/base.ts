@@ -252,6 +252,12 @@ export const typeRoles = {
   roundOptionKey: role('word', '900', 16, 20),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
   roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
+  /**
+   * The answer card's verdict, such as «Майже. Наступне вийде.»: the banner title's
+   * type, with lines far enough apart that a wrapped line's capital marks,
+   * Й's breve and Ї's dots, clear the line over it.
+   */
+  answerVerdict: role('word', '900', 30, 38, -0.5, 'uppercase'),
   /** The right answer on the Round's answer sheet. */
   roundAnswer: role('word', '500', 30, 39),
   /** A Round's explanation, and the Definition under its prompt. */
