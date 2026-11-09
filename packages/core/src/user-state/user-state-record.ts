@@ -16,6 +16,9 @@ export type SyncMark = 'device-only' | 'union' | 'highest';
 /** An instant, kept as an ISO 8601 date and time in UTC. */
 export const InstantSchema = z.iso.datetime();
 
+/** A local date, kept as `YYYY-MM-DD`. */
+export const LocalDateKeySchema = z.iso.date();
+
 /** The options of a declared record. */
 interface RecordOptions {
   readonly sync?: SyncMark | undefined;

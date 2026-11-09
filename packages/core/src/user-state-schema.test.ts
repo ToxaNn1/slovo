@@ -81,6 +81,32 @@ describe('the 0.4 user-state records', () => {
       feedNoticesClosed.decode('{"date":"2026-10-31","notices":["weeklyRecap","banner"]}'),
     ).toBeUndefined();
   });
+
+  it('reads a record whose local date is not `YYYY-MM-DD` as absent', () => {
+    const { xpLog, notificationAsk, streakBrokenReported, firstWeekFrom, laterQuestions } =
+      userStateRecords;
+    const xp = (date: string) =>
+      JSON.stringify({ kind: 'freeze', date, at: '2026-10-30T08:15:00.000Z' });
+    expect(xpLog.record('x-1').decode(xp('2025-1-5'))).toBeUndefined();
+    expect(xpLog.record('x-1').decode(xp('2025-01-05'))).toEqual({
+      kind: 'freeze',
+      date: '2025-01-05',
+      at: '2026-10-30T08:15:00.000Z',
+    });
+    expect(notificationAsk.decode('{"step":"reask","date":""}')).toBeUndefined();
+    expect(notificationAsk.decode('{"step":"reask","date":"2026-10-29"}')).toEqual({
+      step: 'reask',
+      date: '2026-10-29',
+    });
+    expect(streakBrokenReported.decode('"yesterday"')).toBeUndefined();
+    expect(firstWeekFrom.decode('"2026-13-01"')).toBeUndefined();
+    expect(firstWeekFrom.decode('"2026-10-24"')).toBe('2026-10-24');
+    expect(laterQuestions.decode('{"asked":[],"date":"30.10.2026"}')).toBeUndefined();
+    expect(laterQuestions.decode('{"asked":[],"date":"2026-10-30"}')).toEqual({
+      asked: [],
+      date: '2026-10-30',
+    });
+  });
 });
 
 // Spec #772, "Best result per mode": one Best result per Game Mode.

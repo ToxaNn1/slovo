@@ -1,7 +1,7 @@
 import { NotificationTimesSchema } from '@slovo/contracts';
 import { z } from 'zod';
 
-import { declareRecord, declareRecords } from '../user-state/user-state-record';
+import { declareRecord, declareRecords, LocalDateKeySchema } from '../user-state/user-state-record';
 
 /** The records of the notifications. */
 export const notificationRecords = {
@@ -49,8 +49,8 @@ export const notificationRecords = {
     'notifications.ask',
     z.discriminatedUnion('step', [
       z.object({ step: z.literal('onboarding') }),
-      z.object({ step: z.literal('explainer'), date: z.string() }),
-      z.object({ step: z.literal('reask'), date: z.string() }),
+      z.object({ step: z.literal('explainer'), date: LocalDateKeySchema }),
+      z.object({ step: z.literal('reask'), date: LocalDateKeySchema }),
     ]),
     { sync: 'device-only' },
   ),
