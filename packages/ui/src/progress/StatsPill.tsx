@@ -2,11 +2,8 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 
 import { Wedge } from '../primitives/Wedge';
 import { useEdition } from '../providers/EditionProvider';
-import { minTouchTarget, streakPill, typeStyle, wedges } from '../tokens';
+import { fontScaleCap, minTouchTarget, streakPill, typeStyle, wedges } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-
-/** How far the largest text sizes of iOS may scale the number, so it stays inside the 32 pt pill. */
-const NUMBER_MAX_FONT_SCALE = 1.3;
 
 /**
  * The Streak pill in the Feed's header, from the design: a red mark and the
@@ -54,7 +51,7 @@ export function StatsPill({
       />
       {!hideStreak && (
         <Text
-          maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle('streak', tokens), { color: colors.background }]}
         >
           {streak}

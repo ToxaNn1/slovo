@@ -54,7 +54,7 @@ export function useFeed(
   );
   const focused = useIsFocused();
   const inForeground = useInForeground();
-  const covered = useSubscribed(onboarding, ({ state }) => state.step !== undefined);
+  const covered = useSubscribed(onboarding, ({ state }) => state.status === 'open');
   const onScreen = cardOnScreen({ feed, turnedTo, focused, inForeground, covered });
   const inSight = onScreen !== undefined;
   /** The page to turn to once it is drawn, such as a Correction opened from a Word. */

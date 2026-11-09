@@ -1,5 +1,7 @@
 # The XP log derives the Streak, the Active Day, the Level, freezes and the Break; the Daily Goal replaces the Daily Limit
 
+**Amended by ADR 0074.** The Daily Goal is a number of Words Seen per local day; a day with a goal is an Active Day only when the goal is met, a day without one at 5 XP.
+
 Until 1.0 an Active Day was a day on which the app was opened, so scrolling alone kept the Streak, and the Daily Limit (ADR 0054) asked the reader to stop. Spec #1358 adds a learning game that rewards effort: XP, Levels, a Daily Goal, Streak freezes, a Break and Badges, all computed from one log.
 
 **The XP log.** A module of the Core composition keeps an append-only log per Edition. Every record has a unique id, a local date, a time, a kind and an amount. The kinds: XP for a learning action with its source (Game Round, finished Game, Best result, Daily Crossword, Review answer, Quick Question); the Daily Goal set for a day; a freeze consumed; a Break started (start date, length); a Badge earned (Badge id, date). The local date comes from the injected clock and time zone.

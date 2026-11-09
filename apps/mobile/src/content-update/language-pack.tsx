@@ -1,14 +1,11 @@
-import { createEntries, EVERYTHING_IN, type Entries } from '@slovo/core';
 import { openPack, type PackReader, type PackWriteDatabase } from '@slovo/language-pack/reader';
 import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
-import { useMemo } from 'react';
 
 import { nativeModules } from '../device/device-native-modules';
 import { logError } from '../diagnostics/log';
 import { activeEditionFiles, activeEditionId } from '../edition/edition';
-import { useEditionInEffect } from '../edition/remote-switches';
-import { openOnce, useOpened, useSubscribed, type Opening, type Source } from '../opening';
-import { useShell, type EditionSwitches } from '../shell-value';
+import { openOnce, type Opening } from '../opening';
+import type { EditionSwitches } from '../shell-value';
 import { openDeviceContentUpdate } from './device-content-updates';
 import { openLaunchPack, type LaunchPack, type OpenedPack } from './launch-pack';
 import { openPackContentStore } from './pack-content-store';
@@ -110,28 +107,4 @@ export function languagePackOpening({
       },
     },
   );
-}
-
-/** A source that never changes, for a run without content updates. */
-const UNCHANGING: Source = { subscribe: () => () => undefined };
-
-/**
- * The Core's Entries of this Edition, read from the Language Pack of the app
- * run. A Patch makes new Entries, so the next read sees the patched records.
- */
-export function useEntries(): Entries {
-  const pack = useOpened(useShell().languagePack);
-  const contentVersion = useSubscribed(pack.contentUpdate ?? UNCHANGING, () =>
-    pack.contentVersion(),
-  );
-  const inEffect = useEditionInEffect();
-  const content = pack.reader;
-  // Made again at each content version: a Patch changed what the pack holds.
-  return useMemo(
-    () => ({
-      contentVersion,
-      entries: createEntries({ content, edition: inEffect, choices: EVERYTHING_IN }),
-    }),
-    [content, inEffect, contentVersion],
-  ).entries;
 }

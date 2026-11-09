@@ -159,6 +159,37 @@ describe('the notification plan', () => {
     );
   });
 
+  it.each([
+    [false, false],
+    [false, true],
+    [true, false],
+    [true, true],
+  ])(
+    'plans from one reading of the clock, however its reads straddle midnight (polite pause %s, the first read before midnight %s)',
+    async (politePause, beforeFirst) => {
+      const midnight = new Date('2026-10-15T00:00:00+03:00').getTime();
+      const time = fakeClock(start);
+      let straddling = false;
+      let reads = 0;
+      // Once straddling, every other read is a millisecond before midnight, the rest at midnight.
+      const clock: Clock = {
+        now: () => {
+          if (!straddling) return time.clock.now();
+          reads += 1;
+          return new Date(reads % 2 === (beforeFirst ? 1 : 0) ? midnight - 1 : midnight);
+        },
+        timeZone: () => time.clock.timeZone(),
+      };
+      const { app, scheduler } = await run({ clock, politePause });
+
+      straddling = true;
+      await app.notifications.setSound(false);
+
+      // Either instant leaves nothing of 2026-10-14 ahead, so the plan starts on the morning of the 15th.
+      expect(slotsOf(planOf(scheduler))[0]).toBe('2026-10-15T09:00');
+    },
+  );
+
   it('plans the stored times over the Edition defaults', async () => {
     const records = new Map([['notifications.times', JSON.stringify(['21:30', '07:15'])]]);
 
@@ -1035,7 +1066,7 @@ describe('the evening notification', () => {
 
     const plan = planOf(scheduler);
     expect(eveningOf(plan, '2026-10-14')).toBe(streakWarning);
-    // With no open tomorrow, today's miss breaks the Streak: the goal is left to remind of.
+    // With no open tomorrow, today's miss breaks the Streak: the goal not met is left to notify of.
     expect(eveningOf(plan, '2026-10-15')).toBe(goalNotMet);
   });
 
@@ -1051,14 +1082,14 @@ describe('the evening notification', () => {
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(streakWarning);
   });
 
-  it('reminds of the goal, not the Streak, while a freeze is held', async () => {
+  it('notifies of the goal not met, not the Streak, while a freeze is held', async () => {
     const records = new Map([goalSet, ...activeOn(sevenDays)]);
     const { scheduler } = await run({ evening: true, records });
 
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
   });
 
-  it('reminds of the goal, not the Streak, below a Streak of 7', async () => {
+  it('notifies of the goal not met, not the Streak, below a Streak of 7', async () => {
     const records = new Map([goalSet, ...activeOn(sevenDays.slice(1))]);
     const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
 
@@ -1076,10 +1107,12 @@ describe('the evening notification', () => {
     const records = new Map([...activeOn(sevenDays), xpOn('2026-10-14', 5)]);
     const { scheduler } = await run({ evening: true, records, switchedOff: ['streakFreezes'] });
 
-    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBeUndefined();
+    const plan = planOf(scheduler);
+    expect(eveningOf(plan, '2026-10-14')).toBeUndefined();
+    expect(plan.some(({ kind, date }) => kind === 'word' && date === '2026-10-14')).toBe(true);
   });
 
-  it("reminds of the goal while today's Words Seen are below it", async () => {
+  it("notifies of the goal not met while today's Words Seen are below it", async () => {
     const records = new Map([
       goalFrom('2026-10-01', 2),
       [
@@ -1092,7 +1125,7 @@ describe('the evening notification', () => {
     expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
   });
 
-  it('never reminds of the goal a reader who set none, whatever today has', async () => {
+  it('never notifies of the goal not met a reader who set none, whatever today has', async () => {
     const records = new Map([
       [
         'history.w_000',
@@ -1101,7 +1134,9 @@ describe('the evening notification', () => {
     ]);
     const { scheduler } = await run({ evening: true, records });
 
-    expect(planOf(scheduler).filter(({ kind }) => kind === 'evening')).toEqual([]);
+    const plan = planOf(scheduler);
+    expect(plan.filter(({ kind }) => kind === 'evening')).toEqual([]);
+    expect(plan.some(({ kind }) => kind === 'word')).toBe(true);
   });
 
   it('plans no evening notification today once the goal is met', async () => {
@@ -1118,7 +1153,9 @@ describe('the evening notification', () => {
   it('plans no evening notification with the Daily Goal off and no Streak at risk', async () => {
     const { scheduler } = await run({ evening: true, switchedOff: ['dailyGoal'] });
 
-    expect(planOf(scheduler).filter(({ kind }) => kind === 'evening')).toEqual([]);
+    const plan = planOf(scheduler);
+    expect(plan.filter(({ kind }) => kind === 'evening')).toEqual([]);
+    expect(plan.some(({ kind }) => kind === 'word')).toBe(true);
   });
 
   it('plans no evening notification on the days of a Break', async () => {
@@ -1149,7 +1186,43 @@ describe('the evening notification', () => {
     });
   });
 
-  it('sends neither the Streak warning nor the goal reminder while the reader hides the counters', async () => {
+  it('plans again on a later change after the device failed to take the plan an XP change made, with nothing rejected unhandled', async () => {
+    const fake = createFakeNotificationScheduler();
+    let failing = false;
+    let failed = 0;
+    const scheduler: FakeNotificationScheduler = {
+      ...fake,
+      get plan() {
+        return fake.plan;
+      },
+      replacePlan(plan) {
+        if (!failing) return fake.replacePlan(plan);
+        failed += 1;
+        return Promise.reject(new Error('The device took no plan'));
+      },
+    };
+    const records = new Map([
+      goalSet,
+      [
+        'history.w_000',
+        JSON.stringify({ seenAt: '2026-10-14T04:00:00.000Z', wordOfTheDay: false }),
+      ],
+    ]);
+    const { app } = await run({ evening: true, records, scheduler });
+
+    failing = true;
+    await app.xpLog.setDailyGoal(1);
+    await vi.waitFor(() => {
+      expect(failed).toBe(1);
+    });
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBe(goalNotMet);
+
+    failing = false;
+    await app.notifications.setSound(false);
+    expect(eveningOf(planOf(scheduler), '2026-10-14')).toBeUndefined();
+  });
+
+  it('sends neither the Streak warning nor the goal-not-met notification while the reader hides the counters', async () => {
     const records = new Map([
       ...activeOn(sevenDays),
       xpOn('2026-10-14', 4),

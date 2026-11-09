@@ -22,18 +22,21 @@ const expand: UserStateMigration = {
 };
 
 describe('openUserState', () => {
-  it('refuses a schema version it cannot read, rather than migrating again', async () => {
-    const records = new Map([['schema.version', 'two']]);
-    const migrate = () => Promise.resolve(new Map([['migrated', 'again']]));
+  it.each(['two', '', ' ', '0x2', '1e0'])(
+    'refuses a schema version it cannot read (%j), rather than migrating again',
+    async (version) => {
+      const records = new Map([['schema.version', version]]);
+      const migrate = () => Promise.resolve(new Map([['migrated', 'again']]));
 
-    await expect(
-      openUserState({
-        port: createMemoryUserStatePort(records),
-        migrations: [{ version: 1, migrate }],
-      }),
-    ).rejects.toThrow(/schema version/);
-    expect(records.has('migrated')).toBe(false);
-  });
+      await expect(
+        openUserState({
+          port: createMemoryUserStatePort(records),
+          migrations: [{ version: 1, migrate }],
+        }),
+      ).rejects.toThrow(/unreadable schema version/);
+      expect(records.has('migrated')).toBe(false);
+    },
+  );
 
   it('rejects migrations that skip a version', async () => {
     const migrate = () => Promise.resolve(new Map());

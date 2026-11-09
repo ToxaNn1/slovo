@@ -14,10 +14,17 @@ import {
 import { BottomSheet } from '../primitives/BottomSheet';
 import { Button } from '../primitives/Button';
 import { ChoiceMark } from '../primitives/ChoiceMark';
-import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
+import { SheetTitle } from '../primitives/SheetParts';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { minTouchTarget, mistakeReportField, space, typeRoles, typeStyle } from '../tokens';
+import {
+  minTouchTarget,
+  mistakeReportField,
+  sheetLayout,
+  space,
+  typeRoles,
+  typeStyle,
+} from '../tokens';
 
 /** The types of mistake in the order the sheet offers them. */
 const TYPES: readonly MistakeType[] = ['typo', 'stress', 'definition', 'other'];
@@ -187,7 +194,7 @@ const styles = StyleSheet.create({
   content: { gap: space[4] },
   header: { paddingBottom: space[3] },
   row: {
-    minHeight: SHEET_ROW_HEIGHT,
+    minHeight: sheetLayout.rowHeight,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[4],

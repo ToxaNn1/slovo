@@ -95,7 +95,7 @@ async function withEntries<T>(outFile: string, use: (entries: Entries) => Promis
     return await use(
       createEntries({
         content: pack,
-        edition: { isFeatureEnabled: () => true },
+        edition: { isFeatureEnabled: () => true, illustrations: new Set() },
         choices: EVERYTHING_IN,
       }),
     );
@@ -2501,7 +2501,7 @@ describe('the fonts of the word and UI families', () => {
     ]);
   });
 
-  it('passes the Ukrainian Edition: Unbounded and Onest set its alphabet', () => {
+  it('passes the UA Edition: Unbounded and Onest set its alphabet', () => {
     const ukFonts = fileURLToPath(new URL('../../../editions/uk/assets/fonts', import.meta.url));
     const files = Object.fromEntries(
       [

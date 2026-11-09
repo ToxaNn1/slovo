@@ -48,6 +48,7 @@ interface RowRequest {
 }
 
 const synonymsKind: SourcingKind<RowRequest> = {
+  entryKind: 'synonymRow',
   folder: 'synonyms',
   idPrefix: 'r_',
   parseLine: parseRowLine,

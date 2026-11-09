@@ -142,11 +142,11 @@ export async function openMoodCheckIns({
     async choose(moodId) {
       if (moodOf(moodId) === undefined) return;
       await record(moodId);
-      await analytics.track('moodChosen', { mood: moodId });
+      await analytics.track('moodChosen', { mood: moodId }).catch(() => undefined);
     },
     async skip() {
       await record(SKIPPED);
-      await analytics.track('moodSkipped', {});
+      await analytics.track('moodSkipped', {}).catch(() => undefined);
     },
     async daysByMood() {
       const days = new Map<string, number>();

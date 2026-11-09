@@ -13,6 +13,7 @@ import {
   space,
   STACK_AT_FONT_SCALE,
   typeStyle,
+  wedges,
 } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
@@ -105,6 +106,11 @@ function useRowLook() {
   };
 }
 
+/** The chevron's points on its 10 × 16 box. */
+const chevronPoints = wedges.chevron
+  .map(([x, y]) => `${String(x * 10)},${String(y * 16)}`)
+  .join(' ');
+
 /** The design's slanted chevron, in the muted colour. */
 function Chevron() {
   const { colors } = useTokens();
@@ -114,7 +120,7 @@ function Chevron() {
       height={settingsRowDrawing.chevronHeight}
       viewBox="0 0 10 16"
     >
-      <Polygon points="0,0 4,0 10,8 4,16 0,16 6,8" fill={colors.muted} />
+      <Polygon points={chevronPoints} fill={colors.muted} />
     </Svg>
   );
 }

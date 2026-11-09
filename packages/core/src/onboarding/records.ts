@@ -1,6 +1,4 @@
-import { z } from 'zod';
-
-import { declareRecord, InstantSchema } from '../user-state/user-state-record';
+import { declareRecord, InstantSchema, LocalDateKeySchema } from '../user-state/user-state-record';
 
 /** The records of the onboarding. */
 export const onboardingRecords = {
@@ -16,5 +14,5 @@ export const onboardingRecords = {
    * without the record, as for a reader who finished it before, there is no
    * first week. It stays on the device, like the onboarding finished (ADR 0054).
    */
-  firstWeekFrom: declareRecord('firstWeek.from', z.string(), { sync: 'device-only' }),
+  firstWeekFrom: declareRecord('firstWeek.from', LocalDateKeySchema, { sync: 'device-only' }),
 };

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { hasNoRepeats, SourceSchema, TextSchema, WebAddressSchema } from './shared';
+import { hasNoRepeats, SourceSchema, EntryTextSchema, WebAddressSchema } from './shared';
 
 /**
  * A Correction id: opaque, assigned when the Correction is authored and never
@@ -30,8 +30,8 @@ export type CorrectionType = z.infer<typeof CorrectionTypeSchema>;
 
 /** The same sentence said the common, non-standard way and the standard way. */
 export const ExamplePairSchema = z.strictObject({
-  nonStandard: TextSchema,
-  standard: TextSchema,
+  nonStandard: EntryTextSchema,
+  standard: EntryTextSchema,
 });
 
 export type ExamplePair = z.infer<typeof ExamplePairSchema>;
@@ -42,9 +42,9 @@ export type ExamplePair = z.infer<typeof ExamplePairSchema>;
  * 1 January of the 71st year after the author's death (ADR 0045).
  */
 export const LiteraryUseSchema = z.strictObject({
-  text: TextSchema,
-  author: TextSchema,
-  work: TextSchema,
+  text: EntryTextSchema,
+  author: EntryTextSchema,
+  work: EntryTextSchema,
   /** The year the author died, from which the build counts the public domain. */
   authorDeathYear: z.int(),
   /** The year the work was written or first published. */
@@ -67,13 +67,16 @@ export type LiteraryUse = z.infer<typeof LiteraryUseSchema>;
 export const CorrectionSchema = z.strictObject({
   kind: z.literal('correction').default('correction'),
   id: CorrectionIdSchema,
-  nonStandardForm: TextSchema,
+  nonStandardForm: EntryTextSchema,
   correctionType: CorrectionTypeSchema,
+  // The array names the field when it is empty; the tuple with a rest it
+  // pipes into types the main equivalent as always there.
   standardEquivalents: z
-    .array(TextSchema)
+    .array(EntryTextSchema)
     .min(1)
+    .pipe(z.tuple([EntryTextSchema], EntryTextSchema))
     .refine(hasNoRepeats, 'Standard equivalents must not repeat'),
-  explanation: TextSchema,
+  explanation: EntryTextSchema,
   examplePair: ExamplePairSchema,
   /** One of the Edition's Categories of Corrections, a list apart from the Words' (ADR 0033). */
   categoryId: z.string().min(1),

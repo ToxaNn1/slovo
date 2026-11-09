@@ -115,7 +115,7 @@ async function device() {
     schedule: now,
     readableFormats: [PATCH_FORMAT],
   });
-  // A Patch makes new Entries, as the app's `useEntries` does.
+  // A Patch makes new Entries: the next read sees the patched records.
   const entries = () =>
     createEntries({ content: pack, edition: ukrainian, choices: EVERYTHING_IN });
   return { api, pack, contentUpdate, entries };

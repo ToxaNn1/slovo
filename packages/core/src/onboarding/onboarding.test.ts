@@ -84,14 +84,17 @@ async function run({
   return { app, events, api, settings };
 }
 
-const kinds = (app: Awaited<ReturnType<typeof run>>['app']) => app.onboarding.state.step?.kind;
+/** The step on screen, or nothing once the onboarding is finished. */
+const stepOf = ({ onboarding: { state } }: Awaited<ReturnType<typeof run>>['app']) =>
+  state.status === 'open' ? state.step : undefined;
+const kinds = (app: Awaited<ReturnType<typeof run>>['app']) => stepOf(app)?.kind;
 
 describe('the onboarding', () => {
   it('runs welcome, the first Word, «Рівень», «Навіщо», the Daily Goal, «Коли нагадати?», then the Feed', async () => {
     const { app } = await run();
     const seen = [];
-    for (let i = 0; i < 7 && app.onboarding.state.step !== undefined; i += 1) {
-      const { kind, number, total } = app.onboarding.state.step;
+    for (let i = 0, step = stepOf(app); i < 7 && step !== undefined; i += 1, step = stepOf(app)) {
+      const { kind, number, total } = step;
       seen.push(`${kind} ${String(number)}/${String(total)}`);
       await app.onboarding.next();
     }
@@ -103,15 +106,15 @@ describe('the onboarding', () => {
       'dailyGoal 5/6',
       'notificationTime 6/6',
     ]);
-    expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+    expect(app.onboarding.state.status).toBe('finished');
   });
 
   // Spec #1553, ticket #1558: «ГРАЙ!» shows the Games after the first Word.
   it('shows «ГРАЙ!» after the first Word while the Game and `playStep` are on, counted in the steps', async () => {
     const { app } = await run({ on: [...ALL_ON, 'game', 'playStep'] });
     const seen = [];
-    for (let i = 0; i < 8 && app.onboarding.state.step !== undefined; i += 1) {
-      const { kind, number, total } = app.onboarding.state.step;
+    for (let i = 0, step = stepOf(app); i < 8 && step !== undefined; i += 1, step = stepOf(app)) {
+      const { kind, number, total } = step;
       seen.push(`${kind} ${String(number)}/${String(total)}`);
       await app.onboarding.next();
     }
@@ -135,17 +138,17 @@ describe('the onboarding', () => {
       const { app } = await run({ on: [...ALL_ON, ...more] });
       await app.onboarding.next();
       await app.onboarding.next();
-      expect(app.onboarding.state.step).toMatchObject({ kind: 'level', number: 3, total: 6 });
+      expect(stepOf(app)).toMatchObject({ kind: 'level', number: 3, total: 6 });
     },
   );
 
   it('shows the Word of the Day as the first Word, and the Edition options of the questions', async () => {
     const { app } = await run();
     await app.onboarding.next();
-    const first = app.onboarding.state.step;
+    const first = stepOf(app);
     expect(first?.kind === 'firstWord' && first.word.wordId).toMatch(/^w_/);
     await app.onboarding.next();
-    const level = app.onboarding.state.step;
+    const level = stepOf(app);
     expect(level?.kind === 'level' && level.options).toEqual([
       { id: 'starting', label: 'Starting' },
       { id: 'good', label: 'Good' },
@@ -155,7 +158,7 @@ describe('the onboarding', () => {
 
   it('leaves out the questions with the questionnaire switch off and the Daily Goal with its switch off', async () => {
     const { app } = await run({ on: ['wordOfTheDay'] });
-    expect(app.onboarding.state.step).toMatchObject({ kind: 'welcome', total: 2 });
+    expect(stepOf(app)).toMatchObject({ kind: 'welcome', total: 2 });
     await app.onboarding.next();
     expect(kinds(app)).toBe('firstWord');
   });
@@ -163,14 +166,14 @@ describe('the onboarding', () => {
   it('highlights the Edition Daily Goal in Words on its step and sets the goal the reader picks', async () => {
     const { app } = await run({ on: ['dailyGoal', 'xpLog'] });
     while (kinds(app) !== 'dailyGoal') await app.onboarding.next();
-    expect(app.onboarding.state.step).toMatchObject({
+    expect(stepOf(app)).toMatchObject({
       kind: 'dailyGoal',
       goals: [10, 25, 50],
       highlighted: 10,
     });
     await app.onboarding.chooseDailyGoal(25);
     expect(app.xpLog.dayOf('2026-11-01').dailyGoal?.goal).toBe(25);
-    expect(app.onboarding.state.step).toBeUndefined();
+    expect(app.onboarding.state.status).toBe('finished');
   });
 
   it('sets the Rarity Ceiling by «Рівень» and the kind weights by «Навіщо»', async () => {
@@ -190,7 +193,7 @@ describe('the onboarding', () => {
     await app.onboarding.next();
     const ceiling = app.rarityCeiling.state;
     await app.onboarding.answer('dont-know');
-    expect(app.onboarding.state.step).toEqual({ kind: 'rarityTest', number: 3, total: 6 });
+    expect(stepOf(app)).toEqual({ kind: 'rarityTest', number: 3, total: 6 });
     expect(app.rarityCeiling.state).toBe(ceiling);
     await vi.waitFor(() => {
       expect(api.counters.answers).toEqual([
@@ -203,14 +206,14 @@ describe('the onboarding', () => {
       { question: 'level', answer: 'dont-know' },
     ]);
     await app.onboarding.next();
-    expect(app.onboarding.state.step).toMatchObject({ kind: 'why', number: 4 });
+    expect(stepOf(app)).toMatchObject({ kind: 'why', number: 4 });
   });
 
   it('leaves out «Не знаю» and ignores it with the Rarity Test switch off', async () => {
     const { app } = await run({ on: ALL_ON.filter((feature) => feature !== 'rarityTest') });
     await app.onboarding.next();
     await app.onboarding.next();
-    const level = app.onboarding.state.step;
+    const level = stepOf(app);
     expect(level?.kind === 'level' && level.options.map(({ id }) => id)).toEqual([
       'starting',
       'good',
@@ -224,7 +227,7 @@ describe('the onboarding', () => {
     const before = app.mix.state;
     const ceiling = app.rarityCeiling.state;
     await app.onboarding.finish();
-    expect(app.onboarding.state.step).toBeUndefined();
+    expect(app.onboarding.state.status).toBe('finished');
     expect(app.rarityCeiling.state).toBe(ceiling);
     expect(app.mix.state.kindWeights).toEqual(before.kindWeights);
   });
@@ -273,7 +276,7 @@ describe('the onboarding', () => {
     const counted = (api: FakeBackend) =>
       api.counters.answers.filter(({ question }) => question !== 'level' && question !== 'why');
     async function goTo(app: Awaited<ReturnType<typeof run>>['app'], kind: string) {
-      while (app.onboarding.state.step !== undefined && kinds(app) !== kind) {
+      while (stepOf(app) !== undefined && kinds(app) !== kind) {
         await app.onboarding.next();
       }
     }
@@ -342,7 +345,7 @@ describe('the onboarding', () => {
       for (let turn = 0; turn < 50; turn += 1) await Promise.resolve();
       expect(counted(early.api)).toEqual([]);
       expect(quiet.api.counters.answers).toEqual([]);
-      expect(quiet.app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+      expect(quiet.app.onboarding.state.status).toBe('finished');
     });
   });
 
@@ -368,18 +371,31 @@ describe('the onboarding', () => {
     expect(quiet.events).toEqual([]);
   });
 
+  it('is open on a step until finished, then finished as of then with no step', async () => {
+    const { app } = await run({ on: ['wordOfTheDay'] });
+    expect(app.onboarding.state).toEqual({
+      status: 'open',
+      step: { kind: 'welcome', number: 1, total: 2 },
+    });
+    await app.onboarding.finish();
+    expect(app.onboarding.state).toEqual({
+      status: 'finished',
+      finishedAt: new Date('2026-11-01T09:00:00+02:00'),
+    });
+  });
+
   it('never opens again once finished, so a reader of the old onboarding sees none', async () => {
     const records = new Map<string, string>();
     await (await run({ records })).app.onboarding.finish();
     const again = await run({ records });
-    expect(again.app.onboarding.state.step).toBeUndefined();
+    expect(again.app.onboarding.state.status).toBe('finished');
     expect(again.events.filter(([event]) => event === 'onboardingStepViewed')).toEqual([]);
   });
   // Spec #1553, ticket #1559.
   describe('«Коли нагадати?»', () => {
     /** Goes on to the step of `kind`. */
     async function goTo(app: Awaited<ReturnType<typeof run>>['app'], kind: string) {
-      while (app.onboarding.state.step !== undefined && kinds(app) !== kind) {
+      while (stepOf(app) !== undefined && kinds(app) !== kind) {
         await app.onboarding.next();
       }
     }
@@ -387,13 +403,13 @@ describe('the onboarding', () => {
     it('offers 09:00, 13:00 and 20:30, and a chosen time becomes the only Notification time', async () => {
       const { app } = await run();
       await goTo(app, 'notificationTime');
-      const step = app.onboarding.state.step;
+      const step = stepOf(app);
       expect(step?.kind === 'notificationTime' && step.times).toEqual(['09:00', '13:00', '20:30']);
 
       await app.onboarding.chooseNotificationTime('07:45');
 
       expect(app.notifications.state.times).toEqual(['07:45']);
-      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+      expect(app.onboarding.state.status).toBe('finished');
     });
 
     it('offers the Edition times and counts each by its bucket', async () => {
@@ -403,7 +419,7 @@ describe('the onboarding', () => {
         },
       });
       await goTo(app, 'notificationTime');
-      const step = app.onboarding.state.step;
+      const step = stepOf(app);
       expect(step?.kind === 'notificationTime' && step.times).toEqual(['08:15', '12:00', '21:00']);
 
       await app.onboarding.chooseNotificationTime('21:00');
@@ -428,7 +444,7 @@ describe('the onboarding', () => {
       await app.onboarding.chooseNotificationTime('09:00');
 
       expect(app.notifications.state.times).toEqual(['09:00']);
-      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+      expect(app.onboarding.state.status).toBe('finished');
     });
 
     it('leaves no Notification time after «Без нагадувань»', async () => {
@@ -438,7 +454,7 @@ describe('the onboarding', () => {
       await app.onboarding.chooseNotificationTime(undefined);
 
       expect(app.notifications.state.times).toEqual([]);
-      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+      expect(app.onboarding.state.status).toBe('finished');
     });
 
     it('keeps the default Notification times and the later explainer when skipped', async () => {
@@ -449,7 +465,7 @@ describe('the onboarding', () => {
 
       await app.onboarding.next();
 
-      expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+      expect(app.onboarding.state.status).toBe('finished');
       expect(app.notifications.state.times).toEqual(defaults);
       expect(records.has('notifications.ask')).toBe(false);
     });
@@ -461,7 +477,7 @@ describe('the onboarding', () => {
         await app.onboarding.chooseNotificationTime('07:45');
         expect(kinds(app)).toBe('welcome');
         await goTo(app, 'notificationTime');
-        expect(app.onboarding.state.finishedAt).toBeInstanceOf(Date);
+        expect(app.onboarding.state.status).toBe('finished');
         expect(app.notifications.state.times).toEqual(before);
       }
     });

@@ -25,11 +25,8 @@ import { SegmentedControl } from '../primitives/SegmentedControl';
 import { SHARE_CARD, ShareCard, type ShareCardProps } from './ShareCard';
 import { SheetTitle } from '../primitives/SheetParts';
 import { ToastFace } from '../primitives/UndoToast';
-import { type ShareCardFormat, shareImage, space } from '../tokens';
+import { type ShareCardFormat, shareImage, sharePreviewHeightShare, space } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-
-/** The share of the screen's height the preview may take, so the sheet fits the SE. */
-const PREVIEW_HEIGHT_SHARE = 0.58;
 
 /** How long the toast stays, as the undo toast does. */
 const TOAST_MS = 4000;
@@ -106,7 +103,7 @@ function ShareSheetContent({
   const scale = Math.min(
     1,
     (width - 2 * space[5]) / size.width,
-    (height * PREVIEW_HEIGHT_SHARE) / size.height,
+    (height * sharePreviewHeightShare) / size.height,
   );
 
   async function share() {

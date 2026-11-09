@@ -611,6 +611,41 @@ describe('the Daily Goal', () => {
     expect(app.xpLog.state.dailyGoal).toBeNull();
   });
 
+  it('reads a past day the same whichever order its records at one instant come in', async () => {
+    const record = (id: string, value: object) => [`xp.${id}`, JSON.stringify(value)] as const;
+    const before = record('old', {
+      kind: 'daily-goal',
+      date: '2026-10-10',
+      at: '2026-10-10T05:00:00.000Z',
+      goal: 20,
+    });
+    const earned = record('2026-10-12-crossword', {
+      kind: 'xp',
+      date: '2026-10-12',
+      at: '2026-10-12T05:00:00.000Z',
+      source: 'daily-crossword',
+      amount: 25,
+    });
+    // Raised at the instant the 25 XP were earned: the record keys order the two.
+    const raised = record('raised', {
+      kind: 'daily-goal',
+      date: '2026-10-12',
+      at: '2026-10-12T05:00:00.000Z',
+      goal: 30,
+    });
+    const metIn = async (order: (typeof earned)[]) => {
+      const { app } = await run({
+        on: dailyGoal,
+        records: new Map([before, ...order]),
+        time: fakeClock('2026-10-15T08:00:00+03:00'),
+      });
+      return app.xpLog.dayOf('2026-10-12').dailyGoal?.met;
+    };
+
+    expect(await metIn([earned, raised])).toBe(true);
+    expect(await metIn([raised, earned])).toBe(true);
+  });
+
   it('keeps a past day met under a goal in XP set before Words counted', async () => {
     const record = (id: string, value: object) => [`xp.${id}`, JSON.stringify(value)] as const;
     const xp = (date: string, at: string, amount: number) =>

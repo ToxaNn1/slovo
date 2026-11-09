@@ -14,8 +14,8 @@ import { BottomSheet } from '../primitives/BottomSheet';
 import { ChoiceMark } from '../primitives/ChoiceMark';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
-import { SHEET_ROW_HEIGHT, SheetTitle } from '../primitives/SheetParts';
-import { minTouchTarget, space, typeStyle } from '../tokens';
+import { SheetTitle } from '../primitives/SheetParts';
+import { minTouchTarget, sheetLayout, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 
 /**
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
   entry: { flexShrink: 1, textAlign: 'right' },
   list: { flexGrow: 0, flexShrink: 1 },
   row: {
-    minHeight: SHEET_ROW_HEIGHT,
+    minHeight: sheetLayout.rowHeight,
     flexDirection: 'row',
     alignItems: 'center',
     gap: space[4],
@@ -257,12 +257,12 @@ const styles = StyleSheet.create({
   creationRow: { flexDirection: 'row', gap: space[3] },
   field: {
     flex: 1,
-    minHeight: SHEET_ROW_HEIGHT,
+    minHeight: sheetLayout.rowHeight,
     borderWidth: 1,
     paddingHorizontal: space[4],
   },
   create: {
-    minHeight: SHEET_ROW_HEIGHT,
+    minHeight: sheetLayout.rowHeight,
     paddingHorizontal: space[5],
     alignItems: 'center',
     justifyContent: 'center',

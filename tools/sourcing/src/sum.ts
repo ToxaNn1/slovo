@@ -7,7 +7,7 @@ import { HTMLElement, NodeType, parse, type Node } from 'node-html-parser';
 
 import type { ArticleDefinition, ArticleExample, DictionaryArticle } from './article';
 import { HostUnreachableError, type PoliteClient } from './polite-client';
-import { matchKey, squeeze } from './text';
+import { matchKey, squeeze, SUM_11_SHORT_NAME } from './text';
 
 /** How to reach sum.in.ua: try the site and fall back to the archive, use one of them only, or neither. */
 export type SumAccess = 'auto' | 'direct' | 'wayback' | 'off';
@@ -36,7 +36,8 @@ export class SumDictionary {
     for (const slug of sumSlugs(lemma)) {
       const url = SITE + slug;
       // A page found in the archive on an earlier run is read from the cache again.
-      const archived = this.access === 'auto' && this.client.isCached(cdxQuery(slug));
+      const listing = this.access === 'auto' ? this.client.cached(cdxQuery(slug)) : undefined;
+      const archived = listing !== undefined && latestCopy(listing.body, slug) !== undefined;
       if (this.access !== 'wayback' && !archived) {
         const articles = await this.reach(() => this.fromSite(url));
         if (articles !== 'unreachable') {
@@ -79,15 +80,7 @@ export class SumDictionary {
   private async fromWayback(slug: string, url: string): Promise<DictionaryArticle[] | undefined> {
     const listing = await this.client.get(cdxQuery(slug), { fallback: true });
     if (listing.status !== 200) return undefined;
-    const latest = listing.body
-      .split('\n')
-      .map((line) => line.trim().split(' '))
-      .filter(
-        (row): row is [string, string] =>
-          row.length === 2 && isPageOf(row[1] ?? '', slug) && /^\d{14}$/.test(row[0] ?? ''),
-      )
-      .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-      .at(-1);
+    const latest = latestCopy(listing.body, slug);
     if (latest === undefined) return undefined;
 
     const [timestamp, original] = latest;
@@ -102,6 +95,19 @@ export class SumDictionary {
     });
     return articles.length === 0 ? undefined : articles;
   }
+}
+
+/** The newest copy of the page `/s/<slug>` in a CDX listing, as `[timestamp, original]`. */
+function latestCopy(listing: string, slug: string): [string, string] | undefined {
+  return listing
+    .split('\n')
+    .map((line) => line.trim().split(' '))
+    .filter(
+      (row): row is [string, string] =>
+        row.length === 2 && isPageOf(row[1] ?? '', slug) && /^\d{14}$/.test(row[0] ?? ''),
+    )
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+    .at(-1);
 }
 
 /** Lists the archived copies of a sum.in.ua page. */
@@ -161,12 +167,18 @@ const TRANSLITERATION: Readonly<Record<string, readonly string[]>> = {
   ' ': ['_'],
 };
 
+/**
+ * At most this many addresses are tried per Lemma: each ґ and apostrophe
+ * doubles the spellings, and each one is a request at the polite pace.
+ */
+const MAX_SUM_SLUGS = 8;
+
 /** The addresses sum.in.ua may use for a Lemma, most likely first. */
 function sumSlugs(lemma: string): string[] {
   let slugs = [''];
   for (const letter of matchKey(lemma)) {
     const options = TRANSLITERATION[letter] ?? [letter];
-    slugs = slugs.flatMap((slug) => options.map((option) => slug + option));
+    slugs = slugs.flatMap((slug) => options.map((option) => slug + option)).slice(0, MAX_SUM_SLUGS);
   }
   return slugs;
 }
@@ -241,6 +253,7 @@ function parseArticle(
         tom?.classList.contains('tom') === true
           ? squeeze(tom.text)
           : 'Словник української мови: в 11 томах',
+      shortName: SUM_11_SHORT_NAME,
       ...address,
     },
   };

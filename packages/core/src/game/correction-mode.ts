@@ -33,7 +33,7 @@ export const plays = (correction: Correction): boolean =>
 
 /** A Correction's main standard equivalent, the right option of a Round that asks about it. */
 export const mainEquivalentOf = (correction: Correction): string =>
-  correction.standardEquivalents[0] ?? '';
+  correction.standardEquivalents[0];
 
 /**
  * «Обери правильне», the Core's Correction mode, on when the Edition turns

@@ -94,6 +94,8 @@ export function useSearchScreen(query: string): SearchScreenModel {
       },
       (error: unknown) => {
         logError('Could not search', error);
+        // The results of an earlier query are not this one's.
+        if (active) setModel(nothingYet);
       },
     );
     return () => {

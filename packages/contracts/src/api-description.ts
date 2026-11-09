@@ -10,13 +10,45 @@ import { apiContract } from './api';
  */
 export const COMMITTED_DESCRIPTION = new URL('./api/v1.openapi.json', import.meta.url);
 
+type JsonSchemaPart = Record<string, unknown>;
+
+const isJsonSchemaPart = (value: unknown): value is JsonSchemaPart =>
+  typeof value === 'object' && value !== null;
+
+/**
+ * A tuple with a rest (`[main, ...more]`) promises at least its fixed items;
+ * the Zod converter leaves `minItems` out of such an array, so it is added
+ * here, wherever a schema has `prefixItems`.
+ */
+function addTupleMinItems(schema: unknown): void {
+  if (Array.isArray(schema)) {
+    schema.forEach(addTupleMinItems);
+  } else if (isJsonSchemaPart(schema)) {
+    Object.values(schema).forEach(addTupleMinItems);
+    const prefixItems = schema['prefixItems'];
+    if (Array.isArray(prefixItems) && schema['minItems'] === undefined) {
+      schema['minItems'] = prefixItems.length;
+    }
+  }
+}
+
+class TupleAwareConverter extends ZodToJsonSchemaConverter {
+  override convert(
+    ...args: Parameters<ZodToJsonSchemaConverter['convert']>
+  ): ReturnType<ZodToJsonSchemaConverter['convert']> {
+    const converted = super.convert(...args);
+    addTupleMinItems(converted[1]);
+    return converted;
+  }
+}
+
 /**
  * How the contract is described in OpenAPI. The backend serves its `/docs`
  * with the same options, so `/docs/openapi.json` is the description
  * `describeApi` gives, plus the server it is read from.
  */
 export const apiDescriptionOptions = {
-  schemaConverters: [new ZodToJsonSchemaConverter()],
+  schemaConverters: [new TupleAwareConverter()],
   specGenerateOptions: { info: { title: 'SLOVO API', version: '1' } },
 };
 

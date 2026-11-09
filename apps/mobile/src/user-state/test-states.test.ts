@@ -100,7 +100,10 @@ describe('a test state loaded from its link', () => {
   it('fresh: the onboarding from its first step, and nothing kept from before', async () => {
     const app = await opened('fresh');
 
-    expect(app.onboarding.state.step).toBeDefined();
+    expect(app.onboarding.state).toMatchObject({
+      status: 'open',
+      step: { kind: 'welcome', number: 1 },
+    });
     expect(app.favorites.list).toEqual([]);
     expect(app.xpLog.state.total).toBe(0);
   });
@@ -108,7 +111,7 @@ describe('a test state loaded from its link', () => {
   it('day-3-streak: a Streak of 3', async () => {
     const app = await opened('day-3-streak');
 
-    expect(app.onboarding.state.step).toBeUndefined();
+    expect(app.onboarding.state.status).toBe('finished');
     expect(app.progress.state.streak).toBe(3);
   });
 

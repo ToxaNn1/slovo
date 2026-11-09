@@ -6,9 +6,8 @@ import type { Rarity } from '@slovo/contracts';
 import { fill, useEdition } from '../providers/EditionProvider';
 import { Button } from '../primitives/Button';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { typeStyle } from '../tokens';
+import { fontScaleCap, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { HEADLINE_MAX_FONT_SCALE, TEXT_MAX_FONT_SCALE } from './OnboardingStep';
 
 /** A Word the Rarity Test asks about. */
 export interface RarityTestQuestion {
@@ -40,7 +39,7 @@ export function RarityTestTitle({ children }: { children: string }) {
     <Text
       accessibilityRole="header"
       {...voice}
-      maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+      maxFontSizeMultiplier={fontScaleCap.number}
       style={[typeStyle('stepTitle', tokens), { color: tokens.colors.ink }]}
     >
       {children}
@@ -154,7 +153,7 @@ export function RarityTestQuestions({
         <Text
           testID={`${testID}-progress`}
           {...voice}
-          maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.text}
           style={[typeStyle('progressCount', tokens), { color: colors.muted }]}
         >
           {progressOf(phase.answers.length)}
@@ -165,7 +164,7 @@ export function RarityTestQuestions({
           testID={`${testID}-lemma`}
           accessibilityLabel={word.accessibilityLabel}
           {...voice}
-          maxFontSizeMultiplier={HEADLINE_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           numberOfLines={1}
           adjustsFontSizeToFit
           minimumFontScale={0.5}

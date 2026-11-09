@@ -66,7 +66,7 @@ export const stressMode: GameMode = {
       });
     }
     if (answer.kind !== 'correction' || answer.correctionType !== 'wrongStress') return undefined;
-    const form = answer.standardEquivalents[0] ?? '';
+    const form = answer.standardEquivalents[0];
     return vowelRound(withoutStress(form), markedStressOf(form), edition, {
       answer: { text: form, stressedVowels: markedStressedVowelsOf(form) },
       example: undefined,

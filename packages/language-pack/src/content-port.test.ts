@@ -238,7 +238,7 @@ describe.each(adapters)('the content read port %s', (_, open) => {
 });
 
 /**
- * Every test here builds or opens the whole Ukrainian Edition, about 1.6 s on an
+ * Every test here builds or opens the whole UA Edition, about 1.6 s on an
  * idle machine since content wave 4. On a busy machine that comes close to
  * Vitest's 5 s default, so these tests get the Feed walk's 20 s.
  */

@@ -3,11 +3,8 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { Button } from './Button';
-import { blockGap, emptyStatePaddingTop, space, typeStyle } from '../tokens';
+import { blockGap, emptyStatePaddingTop, fontScaleCap, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-
-/** How far the largest text sizes of iOS may scale the title. */
-const TITLE_MAX_FONT_SCALE = 1.3;
 
 /**
  * An empty list's state: the Mascot on top when the app shows it, a title,
@@ -38,7 +35,7 @@ export function EmptyState({
       <View accessible accessibilityLabel={`${title}. ${message}`} {...voice} style={styles.text}>
         <Text
           // A 22 pt title at the largest accessibility sizes would break a word across lines.
-          maxFontSizeMultiplier={TITLE_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[typeStyle('emptyTitle', tokens), styles.centered, { color: colors.ink }]}
         >
           {title}

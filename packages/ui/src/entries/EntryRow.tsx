@@ -4,15 +4,19 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-na
 
 import { entryRowSubtitle } from './entry-row-text';
 import { useEdition } from '../providers/EditionProvider';
-import { entryRow, rowPadding, space, STACK_AT_FONT_SCALE, typeStyle } from '../tokens';
+import {
+  entryRow,
+  fontScaleCap,
+  rowPadding,
+  space,
+  STACK_AT_FONT_SCALE,
+  typeStyle,
+} from '../tokens';
 import { rowActionProps, SwipeableRow, type RowAction } from '../primitives/SwipeableRow';
 import { useTokens } from '../providers/TokensProvider';
 
 /** An action of an Entry row. */
 export type EntryRowAction = RowAction;
-
-/** How far the largest text sizes of iOS may scale a title that shares its row with a button. */
-const ACCESSORY_TITLE_MAX_FONT_SCALE = 1.3;
 
 /**
  * One Entry in a list (Favorites, Collections, History, Hidden and «Вчу»),
@@ -80,7 +84,7 @@ export function EntryRow({
       <View style={styles.titleLine}>
         <Text
           // Beside a button the Lemma stops growing at 1.3×, so it never breaks a word.
-          maxFontSizeMultiplier={hasAccessory ? ACCESSORY_TITLE_MAX_FONT_SCALE : undefined}
+          maxFontSizeMultiplier={hasAccessory ? fontScaleCap.number : undefined}
           style={[typeStyle('listWord', tokens), styles.title, { color: colors.ink }]}
         >
           {leading !== undefined && (

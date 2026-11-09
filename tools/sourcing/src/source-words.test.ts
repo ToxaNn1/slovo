@@ -10,7 +10,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { WordSchema } from '@slovo/contracts';
+import { SourceSchema, WordSchema } from '@slovo/contracts';
 import {
   EDITIONS_DIR,
   editionFiles,
@@ -18,6 +18,7 @@ import {
   type EditionFolder,
 } from '@slovo/language-pack/edition';
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 
 import {
   sourceWords,
@@ -208,7 +209,7 @@ function editionWith(
   registry?: unknown,
 ): EditionFolder {
   const editionsDir = mkdtempSync(join(tmpdir(), 'slovo-editions-'));
-  const config = JSON.parse(readFileSync(ukrainianConfigFile, 'utf8')) as Record<string, unknown>;
+  const config = FieldsSchema.parse(JSON.parse(readFileSync(ukrainianConfigFile, 'utf8')));
   mkdirSync(join(editionsDir, 'uk'));
   writeFileSync(editionFiles(join(editionsDir, 'uk')).path('config'), JSON.stringify(edit(config)));
   const edition = openEdition(editionsDir, 'uk');
@@ -224,6 +225,12 @@ function editionWith(
   }
   return edition;
 }
+
+/** An object read from JSON, its fields still unchecked. */
+const FieldsSchema = z.record(z.string(), z.unknown());
+
+/** A draft as far as its sources go: an incomplete one may fail the Word schema elsewhere. */
+const CitedSchema = z.object({ sources: z.array(SourceSchema) });
 
 function readDrafts(outDir: string, folder = 'drafts'): unknown[] {
   const dir = join(outDir, 'words', folder);
@@ -272,6 +279,7 @@ describe('sourceWords', () => {
     expect(word.id).toMatch(/^w_[a-z0-9]{6}$/);
     expect(word.sources[0]).toEqual({
       title: 'Словник української мови: в 11 томах. — Том 4, 1973. — Стор. 698.',
+      shortName: 'Словник української мови в 11 томах',
       url: 'https://sum.in.ua/s/mzhychka',
       archivedUrl: 'https://web.archive.org/web/20241216072945/https://sum.in.ua/s/mzhychka',
     });
@@ -333,10 +341,7 @@ describe('sourceWords', () => {
     it('puts a draft with a Lemma letter outside the alphabet in incomplete/ with the build message', async () => {
       // Without «ж», and so without the keyboard, which holds every letter of the alphabet.
       const edition = editionWith((config) => {
-        const { keyboard: _keyboard, ...traits } = config['languageTraits'] as Record<
-          string,
-          unknown
-        >;
+        const { keyboard: _keyboard, ...traits } = FieldsSchema.parse(config['languageTraits']);
         return {
           ...config,
           languageTraits: {
@@ -359,7 +364,7 @@ describe('sourceWords', () => {
       const edition = editionWith((config) => ({
         ...config,
         languageTraits: {
-          ...(config['languageTraits'] as Record<string, string>),
+          ...FieldsSchema.parse(config['languageTraits']),
           marksStress: false,
         },
       }));
@@ -408,6 +413,8 @@ describe('sourceWords', () => {
     // The dialect homonym has no Region, so it waits in incomplete/.
     const ready = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
     expect(ready.map((word) => word.primaryDefinition)).not.toContain('Селезінка.');
+    // Homonyms are separate Words: one ready draft does not hold back the next.
+    expect(ready).toHaveLength(3);
     const words = [...ready, ...readDrafts(options.outDir, 'incomplete')].map((draft) =>
       WordSchema.parse(draft),
     );
@@ -496,7 +503,7 @@ describe('sourceWords', () => {
     ]);
   });
 
-  it('answers a re-run from the cache without touching the network', async () => {
+  it('answers a re-run from the cache, asking again only for a page that was not found', async () => {
     const lemmaList = 'мжичка nature-weather 2\nкоса household-crafts 2\n';
     const first = setup({ lemmaList });
     await sourceWords(first.options);
@@ -506,12 +513,13 @@ describe('sourceWords', () => {
     const second = setup({ lemmaList, cacheDir: first.options.cacheDir, random: seededRandom() });
     const result = await sourceWords(second.options);
 
-    expect(second.net.requests).toEqual([]);
+    // goroh has no «Тлумачення» page of мжичка: a 404 is not cached, as goroh may add it.
+    expect(second.net.requests).toEqual([`${GOROH}Тлумачення/мжичка`]);
     expect(readDrafts(second.options.outDir)).toEqual(firstDrafts);
-    // Only the failed try of sum.in.ua was not cached.
+    // Neither the failed try of sum.in.ua nor the 404 was cached.
     expect(result.ok && result.report.requests).toEqual({
-      network: 0,
-      cached: first.net.requests.length - 1,
+      network: 1,
+      cached: first.net.requests.length - 2,
       backoffs: 0,
       unreachable: {},
     });
@@ -585,8 +593,11 @@ describe('sourceWords', () => {
     await Promise.all([sourceWords(first.options), sourceWords(second.options)]);
 
     for (const gap of gapsPerHost(first.net)) expect(gap).toBeGreaterThanOrEqual(2000);
-    // At most one run asked for each dratva page; the other read it from the cache.
-    const dratva = first.net.requests.filter((address) => address.endsWith('/дратва'));
+    // At most one run fetched each dratva page; the other read it from the cache.
+    const dratva = first.net.requests.filter(
+      (address) => address.endsWith('/дратва') && savedPages[address]?.status === 200,
+    );
+    expect(dratva.length).toBeGreaterThan(0);
     expect(dratva.length).toBe(new Set(dratva).size);
   });
 
@@ -615,6 +626,7 @@ describe('sourceWords', () => {
     expect(word.sources).toEqual([
       {
         title: "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+        shortName: 'Тлумачний словник (томи 1–15)',
         url: 'https://goroh.pp.ua/Тлумачення/дратва',
       },
     ]);
@@ -638,6 +650,7 @@ describe('sourceWords', () => {
     expect(word.sources).toEqual([
       {
         title: 'Тлумачний словник української мови в 11-ти томах',
+        shortName: 'Словник української мови в 11 томах',
         url: 'https://goroh.pp.ua/Тлумачення/ятір',
       },
       { title: 'Горох: словозміна', url: 'https://goroh.pp.ua/Словозміна/ятір' },
@@ -745,11 +758,18 @@ describe('sourceWords', () => {
       'КО́СА 5',
     ]);
     const ready = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
+    // КОСА́ 1-3 are ready: homonyms are separate Words, told apart by the Definition.
+    // КОСА́ 4 waits for a Region and КО́СА 5 for a gender (below).
+    expect(ready).toHaveLength(3);
     expect(ready.map((word) => word.primaryDefinition)).toContain('Заплетене волосся.');
+    expect(outcome.drafts.flatMap((draft) => draft.flags).map((flag) => flag.kind)).not.toContain(
+      'existing-entry',
+    );
     for (const word of ready) {
-      expect(word.sources[0]?.title).toBe(
-        "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
-      );
+      expect(word.sources[0]).toMatchObject({
+        title: "Тлумачний словник української мови. Томи 1-15 (А-П'ЯТЬ)",
+        shortName: 'Тлумачний словник (томи 1–15)',
+      });
     }
     // КО́СА, the people, is masculine and feminine at once: a human picks.
     const incomplete = readDrafts(options.outDir, 'incomplete');
@@ -760,9 +780,9 @@ describe('sourceWords', () => {
       expect.objectContaining({ stress: [1], gender: expect.anything() as unknown }),
     );
     // The page also carries articles written by a language model and from ВТС; none is drafted.
-    const all = [...ready, ...readDrafts(options.outDir, 'incomplete')] as {
-      sources: { title: string }[];
-    }[];
+    const all = [...ready, ...readDrafts(options.outDir, 'incomplete')].map((draft) =>
+      CitedSchema.parse(draft),
+    );
     for (const draft of all) {
       expect(draft.sources.map((source) => source.title).join()).not.toMatch(/Велик/);
     }
@@ -836,6 +856,7 @@ describe('sourceWords', () => {
     const word = WordSchema.parse(readDrafts(options.outDir)[0]);
     expect(word.sources[0]).toEqual({
       title: 'Словник української мови: в 11 томах. — Том 4, 1973. — Стор. 698.',
+      shortName: 'Словник української мови в 11 томах',
       url: 'https://sum.in.ua/s/mzhychka',
     });
     expect(net.requests.filter((address) => address.includes('web.archive.org'))).toEqual([]);
@@ -970,6 +991,38 @@ describe('the review report', () => {
 });
 
 describe('a Lemma the Edition already has', () => {
+  it('drafts a homonym ready when the Edition has the Lemma with another primary Definition', async () => {
+    const edition = editionWith((config) => config, {
+      w_exist1: {
+        id: 'w_exist1',
+        lemma: 'коса',
+        stress: [3],
+        partOfSpeech: 'noun',
+        gender: 'feminine',
+        primaryDefinition: 'Заплетене волосся.',
+        categoryId: 'household-crafts',
+        rarity: 2,
+        sources: [{ title: 'Тестове джерело' }],
+        retired: false,
+      },
+    });
+    const { options } = setup({ lemmaList: 'коса household-crafts 2\n', edition });
+
+    const result = await sourceWords(options);
+
+    const ready = readDrafts(options.outDir).map((draft) => WordSchema.parse(draft));
+    expect(ready).toHaveLength(2);
+    expect(ready.map((word) => word.primaryDefinition)).not.toContain('Заплетене волосся.');
+    const twin = lemmaOutcome(result, 'коса').drafts.find(
+      (draft) => draft.summary.definition === 'Заплетене волосся.',
+    );
+    expect(twin?.ready).toBe(false);
+    expect(twin?.flags).toContainEqual({
+      kind: 'existing-entry',
+      message: '"коса" is already a Word of the Edition: w_exist1',
+    });
+  });
+
   it('lands in incomplete/ with a flag naming the Entry, even when it is Retired', async () => {
     const edition = editionWith((config) => config, {
       w_exist1: {
@@ -978,7 +1031,9 @@ describe('a Lemma the Edition already has', () => {
         stress: [2],
         partOfSpeech: 'noun',
         gender: 'feminine',
-        primaryDefinition: 'Тестове значення, якого немає в словнику.',
+        // The Definition the dictionary gives, so this is the same Word, not a homonym.
+        primaryDefinition:
+          'Дуже дрібні краплі води, які насичують повітря; дрібний, густий дощ; мряка (у 1 знач.).',
         categoryId: 'nature-weather',
         rarity: 2,
         sources: [{ title: 'Тестове джерело' }],
@@ -997,6 +1052,11 @@ describe('a Lemma the Edition already has', () => {
       kind: 'existing-entry',
       message: '"мжичка" is already a Word of the Edition: w_exist1 (Retired)',
     });
+    // A repeat lacks no data: the report calls it incomplete and says why.
+    const report = readFileSync(join(options.outDir, 'words', 'review-report.md'), 'utf8');
+    expect(report).toContain('- Drafts incomplete: 1 (in `incomplete/`)');
+    expect(report).toContain(`\`${draft?.file ?? ''}\` from ${draft?.headword ?? ''}: incomplete`);
+    expect(report).not.toContain('missing required data');
   });
 });
 

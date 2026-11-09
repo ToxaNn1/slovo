@@ -61,7 +61,7 @@ export interface Settings {
   readonly defaults: UserSettings;
   /** The settings in effect: what the user chose, else the Edition's default. */
   read(): Promise<UserSettings>;
-  /** Keeps the user's choices and returns the settings now in effect. */
+  /** Keeps the user's choices and returns the settings now in effect. Only a value that differs is told. */
   update(changes: Partial<UserSettings>): Promise<UserSettings>;
 }
 
@@ -119,6 +119,11 @@ export function createSettings({
     defaults: all,
     read,
     async update(changes) {
+      const before = new Map<string, unknown>(Object.entries(await read()));
+      // Every choice is written, an equal one too: its stamp lets the newer choice win on sync.
+      const changed = Object.entries(changes).filter(
+        ([setting, value]) => before.get(setting) !== value,
+      );
       await userState.write(
         new Map([
           ...('theme' in changes ? userStateRecords.theme.change(changes.theme) : []),
@@ -145,7 +150,7 @@ export function createSettings({
         ]),
       );
       if (changes.shareCounters === false) analytics?.stop();
-      for (const [setting, value] of Object.entries(changes)) {
+      for (const [setting, value] of changed) {
         if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean')
           await analytics?.track('settingChanged', { setting, value }).catch(() => undefined);
       }

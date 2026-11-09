@@ -10,6 +10,15 @@ import {
 import type { Authored, Refusal, RuleName } from './refusal';
 
 /**
+ * What one Word is told by: its Lemma and its trimmed primary Definition. Two
+ * Words with one key are one Word authored twice; homonyms differ in the
+ * Definition. The build and the sourcing run both compare Words by it.
+ */
+export function wordKey(lemma: string, primaryDefinition: string): string {
+  return JSON.stringify([lemma, primaryDefinition.trim()]);
+}
+
+/**
  * Checks that each Stress position of a text falls on one of its letters, and
  * on a vowel when the Edition names its vowels; `fail` gets the index of each
  * position that does not, and why.
@@ -104,7 +113,7 @@ export function checkEntries(
     }
 
     if (!word.retired) {
-      const key = JSON.stringify([word.lemma, word.primaryDefinition.trim()]);
+      const key = wordKey(word.lemma, word.primaryDefinition);
       const first = wordByLemmaAndDefinition.get(key);
       if (first === undefined) {
         wordByLemmaAndDefinition.set(key, { file, entry: word });

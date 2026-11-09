@@ -8,7 +8,7 @@ import { appDomain, edition } from '../edition/edition';
 export type LegalPage = 'privacy' | 'terms';
 
 /** The address of the active Edition's legal page, `https://<domain>/<edition>/<page>` (ADR 0065). */
-export function legalPageAddress(page: LegalPage): string {
+function legalPageAddress(page: LegalPage): string {
   return `${editionSite(appDomain, edition.id)}/${page}`;
 }
 

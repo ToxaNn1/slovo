@@ -37,7 +37,7 @@ export const testStateNames = [
 
 export type TestStateName = (typeof testStateNames)[number];
 
-export function isTestStateName(name: string): name is TestStateName {
+function isTestStateName(name: string): name is TestStateName {
   return testStateNames.some((each) => each === name);
 }
 

@@ -21,7 +21,7 @@ import {
 } from './pipeline';
 import type { Flag } from './review-report';
 import { authorOf } from './source-words';
-import { unstressed } from './text';
+import { citedAs, unstressed } from './text';
 
 export type IdiomSourcingOptions = PipelineOptions & {
   /** The Lemmas to read, one per line: `<lemma> [idiom|proverb]`, `idiom` by default; `#` starts a comment. */
@@ -48,6 +48,7 @@ interface IdiomRequest {
 const LINE_TYPES: readonly IdiomType[] = ['idiom', 'proverb'];
 
 const idiomsKind: SourcingKind<IdiomRequest> = {
+  entryKind: 'idiom',
   folder: 'idioms',
   idPrefix: 'i_',
   parseLine,
@@ -108,6 +109,9 @@ async function draftLemma(request: IdiomRequest, context: DraftContext): Promise
   };
 }
 
+/** «Словник прислів'їв та приказок…», a dictionary of proverbs and sayings. */
+const PROVERB_DICTIONARY = /^Словник прислів['’ʼ]їв та приказок/u;
+
 /** An Idiom as drafted: the sources may leave the primary Definition open, and then it fails the schema. */
 type IdiomDraft = Omit<IdiomInput, 'primaryDefinition'> &
   Partial<Pick<IdiomInput, 'primaryDefinition'>>;
@@ -130,13 +134,22 @@ function draftIdiom(
     ...(primaryDefinition === undefined ? {} : { primaryDefinition }),
     ...(extraDefinitions.length === 0 ? {} : { extraDefinitions }),
     ...(examples.length === 0 ? {} : { examples }),
-    sources: [{ title: block.dictionary, url: gorohUrl('Фразеологія', request.lemma) }],
+    sources: [{ ...citedAs(block.dictionary), url: gorohUrl('Фразеологія', request.lemma) }],
   };
   return {
     entry: idiom,
     headword: block.expression,
     issues: checkDraft(idiom, context.edition),
-    flags: [],
+    // That dictionary also holds idioms proper («Лити воду»), so it only raises the question.
+    flags:
+      request.idiomType !== 'proverb' && PROVERB_DICTIONARY.test(block.dictionary)
+        ? [
+            {
+              kind: 'check',
+              message: `Idiom Type ${request.idiomType} from the line, but goroh cites ${block.dictionary}: is it a proverb?`,
+            },
+          ]
+        : [],
     summary: {
       text: expression,
       group: request.idiomType,

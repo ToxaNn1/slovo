@@ -28,7 +28,7 @@ export function wordFloor(
 }
 
 /** The floor of Words each rarity must reach; none when no target sets one. */
-export function rarityFloor(targets: ContentTargets): number | undefined {
+export function wordsPerRarityFloor(targets: ContentTargets): number | undefined {
   return targets.everyRarity === true ? 1 : undefined;
 }
 
@@ -88,7 +88,7 @@ export function missedTargets(report: ContentReport, targets: ContentTargets): M
       });
     }
   }
-  const perRarity = rarityFloor(targets);
+  const perRarity = wordsPerRarityFloor(targets);
   if (perRarity !== undefined) {
     const empty = report.rarity
       .filter(({ words }) => words < perRarity)

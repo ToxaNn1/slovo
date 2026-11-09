@@ -3,14 +3,8 @@ import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { roundLayout, roundProgress, typeStyle } from '../tokens';
+import { fontScaleCap, gameTimerLayout, roundLayout, roundProgress, typeStyle } from '../tokens';
 
-/** The height of the timer's skewed bar, from the design. */
-const BAR_HEIGHT = 10;
-/** The seconds' width, so the bar keeps its length as they count down. */
-const SECONDS_WIDTH = 40;
-/** How far the largest text sizes of iOS may scale the seconds, so the header keeps its shape. */
-const TEXT_MAX_FONT_SCALE = 1.5;
 /** VoiceOver reads the time left each time this many seconds pass. */
 const ANNOUNCE_EVERY = 10;
 
@@ -85,7 +79,7 @@ export function GameTimer({
         ))}
       </View>
       <Text
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('timerSeconds', tokens), styles.seconds, { color: colors.ink }]}
       >
         {shown(seconds)}
@@ -97,10 +91,14 @@ export function GameTimer({
 const styles = StyleSheet.create({
   timer: { flexDirection: 'row', alignItems: 'center', gap: roundLayout.gap },
   seconds: {
-    width: SECONDS_WIDTH,
+    width: gameTimerLayout.secondsWidth,
     textAlign: 'right',
     fontVariant: ['tabular-nums'],
   },
   bar: { flex: 1, flexDirection: 'row', gap: roundProgress.gap },
-  segment: { flex: 1, height: BAR_HEIGHT, transform: [{ skewX: roundProgress.skew }] },
+  segment: {
+    flex: 1,
+    height: gameTimerLayout.barHeight,
+    transform: [{ skewX: roundProgress.skew }],
+  },
 });

@@ -150,7 +150,7 @@ function crosswordSupply({ words, corrections }: PackContent): Clued[] {
       .filter((correction) => !correction.retired)
       .map((correction) => ({
         entryId: correction.id,
-        form: correction.standardEquivalents[0] ?? '',
+        form: correction.standardEquivalents[0],
         clue: correction.explanation,
       })),
   ];

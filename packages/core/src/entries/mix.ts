@@ -53,10 +53,10 @@ const KINDS: Readonly<
   tip: { record: userStateRecords.mixTips, byDefault: (mix) => mix.tips },
 };
 
-/** One list of Categories in the Mix, the Words' or the Corrections', as it stands. */
 /** How often the Feed asks a Quick Question until the user chooses: every 10th card. */
-export const DEFAULT_QUICK_QUESTION_EVERY: QuickQuestionEvery = 10;
+const DEFAULT_QUICK_QUESTION_EVERY: QuickQuestionEvery = 10;
 
+/** One list of Categories in the Mix, the Words' or the Corrections', as it stands. */
 export interface CategoriesInMix {
   /** Every Category of the list in the Language Pack, in or out of the Mix, with its display name, in its order (ADR 0033). */
   readonly allCategories: readonly Category[];
@@ -250,7 +250,7 @@ const { mixKindWeights: kindWeightRecords, mixQuickQuestion: quickQuestionRecord
   userStateRecords;
 
 /** The Categories of the Language Pack, each kind's list. */
-export type CategoryLists = Readonly<Record<CategoryKind, readonly Category[]>>;
+type CategoryLists = Readonly<Record<CategoryKind, readonly Category[]>>;
 
 /** The places the user chose, by Category id, for each kind's list. */
 type CategoryChoices = Readonly<Record<CategoryKind, ReadonlyMap<string, boolean>>>;
@@ -265,15 +265,17 @@ interface MixChoices {
 
 /** A record over each kind of Entry in the Mix as a whole, from what `of` gives for it. */
 function eachKind<T>(of: (kind: MixKind) => T): Readonly<Record<MixKind, T>> {
-  return Object.fromEntries(MIX_KINDS.map((kind) => [kind, of(kind)])) as Record<MixKind, T>;
+  return {
+    correction: of('correction'),
+    idiom: of('idiom'),
+    synonymRow: of('synonymRow'),
+    tip: of('tip'),
+  };
 }
 
 /** A record over each kind of Entry with Categories, from what `of` gives for it. */
 function eachList<T>(of: (kind: CategoryKind) => T): Readonly<Record<CategoryKind, T>> {
-  return Object.fromEntries(CATEGORY_KINDS.map((kind) => [kind, of(kind)])) as Record<
-    CategoryKind,
-    T
-  >;
+  return { word: of('word'), correction: of('correction') };
 }
 
 /** Whether the Edition in effect turns the kind of Entry on: the Edition does and no remote Feature Switch turns it off. */

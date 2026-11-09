@@ -48,10 +48,6 @@ export async function buildCorrectionCard({
   entries: Pick<Entries, 'correctionCategories'>;
 }): Promise<CorrectionCardModel> {
   const [mainEquivalent, ...otherEquivalents] = correction.standardEquivalents;
-  // The contracts require at least one standard equivalent.
-  if (mainEquivalent === undefined) {
-    throw new Error(`Correction ${correction.id} has no standard equivalent`);
-  }
   const categories = await entries.correctionCategories();
   return {
     kind: 'correction',

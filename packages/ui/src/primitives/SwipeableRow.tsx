@@ -8,12 +8,7 @@ import ReanimatedSwipeable, {
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { onFill, space, typeStyle } from '../tokens';
-
-/** The width of each swipe action, from the design. */
-const ACTION_WIDTH = 96;
-/** How far the text size of iOS may scale an action's label. */
-const ACTION_MAX_FONT_SCALE = 1.3;
+import { fontScaleCap, onFill, space, swipeActionWidth, typeStyle } from '../tokens';
 
 /** An action a row offers behind a swipe to the left, and to VoiceOver as a custom action. */
 export interface RowAction {
@@ -72,7 +67,7 @@ export function SwipeableRow({
       ref={swipeable}
       testID={testID}
       friction={1.5}
-      rightThreshold={ACTION_WIDTH / 2}
+      rightThreshold={swipeActionWidth / 2}
       overshootRight={false}
       enabled={actions.length > 0}
       containerStyle={containerStyle}
@@ -99,7 +94,7 @@ export function SwipeableRow({
             >
               <Text
                 // A fixed 96 pt action: the label scales a little, then shrinks to fit, never breaking a word.
-                maxFontSizeMultiplier={ACTION_MAX_FONT_SCALE}
+                maxFontSizeMultiplier={fontScaleCap.number}
                 numberOfLines={1}
                 adjustsFontSizeToFit
                 style={[
@@ -125,6 +120,6 @@ export function SwipeableRow({
 
 const styles = StyleSheet.create({
   actions: { flexDirection: 'row' },
-  action: { width: ACTION_WIDTH, alignItems: 'center', justifyContent: 'center' },
+  action: { width: swipeActionWidth, alignItems: 'center', justifyContent: 'center' },
   actionLabel: { paddingHorizontal: space[1] },
 });

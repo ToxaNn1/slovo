@@ -612,7 +612,9 @@ describe('eligibility over the Mix', () => {
     expect(entryIdsOf(app.feed.cards).slice(0, 1)).toEqual(
       before.filter((id) => !isWordOf(hidden)(id)).slice(0, 1),
     );
-    expect(app.feed.cards[app.feed.position + 1]).toBeDefined();
+    const next = app.feed.cards[app.feed.position + 1];
+    expect(next?.entryId).toEqual(expect.any(String));
+    expect(isWordOf(hidden)(next?.entryId ?? '')).toBe(false);
 
     await app.mix.putBack(hidden.id);
 
@@ -654,7 +656,9 @@ describe('eligibility over the Mix', () => {
     const now = app.feed.cards[app.feed.position];
     expect(now?.kind).not.toBe('end-of-cycle');
     expect(isWordOf(hidden)(now?.entryId ?? '')).toBe(false);
-    expect(app.feed.cards[app.feed.position + 1]).toBeDefined();
+    const next = app.feed.cards[app.feed.position + 1];
+    expect(next?.entryId).toEqual(expect.any(String));
+    expect(isWordOf(hidden)(next?.entryId ?? '')).toBe(false);
     time.advance(MINUTE);
     const reopened = await run({ records, clock: time.clock });
     expect(reopened.feed.cards[reopened.feed.startPosition]?.entryId).toBe(now?.entryId);

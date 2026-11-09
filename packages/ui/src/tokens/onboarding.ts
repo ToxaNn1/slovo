@@ -197,6 +197,8 @@ export const onboardingLayout = {
    * shows its content: it still holds «Пропустити», the shout word and the Mascot.
    */
   minHeroHeight: 260,
+  /** How far from the side a step starts when it slides in (ADR 0055). */
+  slideDistance: 40,
   /**
    * Where the shout word sits on the red top, its turn in degrees, and where
    * it flies in from. Inset by the boards' side, as their glyphs' own bearing
