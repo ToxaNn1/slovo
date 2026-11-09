@@ -25,8 +25,7 @@ export const idiomMeaningMode: GameMode = {
   id: 'idiom-meaning',
   group: 'idioms',
   entryKind: 'idiom',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameIdiomMeaning') && edition.isFeatureEnabled('idioms'),
+  isOn: (edition) => edition.isFeatureEnabled('gameIdiomMeaning'),
   buildRound({ answer, eligible, random }) {
     if (answer.kind !== 'idiom' || !plays(answer)) return undefined;
     const right = answer.primaryDefinition;

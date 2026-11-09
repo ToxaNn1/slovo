@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { openComposition, type ContentReadPort, type Schedule, type UserStatePort } from './index';
 import { createFakeNotificationScheduler, createMemoryContentPort } from './testing';
-import { fakeClock, testEdition, word, wordIdOf } from './test-support';
+import { correction, fakeClock, idiom, testEdition, word, wordIdOf } from './test-support';
 import { createMemoryUserStatePort, openUserState } from './user-state/user-state';
 
 const SECOND = 1000;
@@ -382,5 +382,54 @@ describe('the undo of a toast', () => {
 
     expect(kept(records)).toEqual(before);
     expect(app.knowledge.state.shown.get('w_04')).toBe('unknown');
+  });
+});
+
+describe('a Game Mode that depends on another Feature Switch', () => {
+  const pack = createMemoryContentPort({
+    categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
+    words: Array.from({ length: 20 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`)),
+    corrections: Array.from({ length: 20 }, (_, index) => correction(`c_${String(index)}`)),
+    idioms: Array.from({ length: 20 }, (_, index) => idiom(`i_${String(index)}`)),
+  });
+
+  /** The ids of the Game Modes on offer with every Feature Switch on but those turned off. */
+  async function modesOffered(off: readonly string[]) {
+    const app = await openComposition({
+      content: pack,
+      edition: testEdition({ isFeatureEnabled: (feature) => !off.includes(feature) }),
+      userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
+      clock: fakeClock('2026-10-14T08:00:00+03:00').clock,
+      random: { next: () => 0.25 },
+    });
+    return app.game.state.modes.map(({ modeId }) => modeId);
+  }
+
+  it.each([
+    ['survival', 'gameSurvival', 'corrections'],
+    ['anglicism', 'gameAnglicism', 'corrections'],
+    ['type-word', 'gameTypeWord', 'corrections'],
+    ['correction', 'gameCorrection', 'corrections'],
+    ['idiom-meaning', 'gameIdiomMeaning', 'idioms'],
+    ['build-idiom', 'gameBuildIdiom', 'idioms'],
+  ] as const)(
+    'offers %s only while %s, %s and the Game are all on',
+    async (modeId, own, dependency) => {
+      const switches = [own, dependency, 'game'];
+      // Every combination of the three switches off.
+      for (let combination = 0; combination < 8; combination += 1) {
+        const off = switches.filter((_, index) => (combination & (1 << index)) !== 0);
+
+        expect((await modesOffered(off)).includes(modeId)).toBe(off.length === 0);
+      }
+    },
+  );
+
+  it('keeps the Game Modes that ask Words on offer with Corrections and Idioms off', async () => {
+    const offered = await modesOffered(['corrections', 'idioms']);
+
+    expect(offered).toContain('guess-word');
+    expect(offered).not.toContain('survival');
+    expect(offered).not.toContain('build-idiom');
   });
 });

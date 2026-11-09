@@ -1511,6 +1511,18 @@ const dependentSwitches = [
   ['categoryScreens', ['dashboard', 'wordOfTheDay']],
   ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['quietCategories', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
+  ['gameSurvival', ['corrections', 'game']],
+  ['gameAnglicism', ['corrections', 'game']],
+  ['gameTypeWord', ['corrections', 'game']],
+  ['gameCorrection', ['corrections', 'game']],
+  ['gameIdiomMeaning', ['idioms', 'game']],
+  ['gameBuildIdiom', ['idioms', 'game']],
+  ['communityWord', ['communityCounters']],
+  ['sync', ['account']],
+  ['widgetHint', ['widget']],
+  ['notificationExplainer', ['notifications']],
+  ['levels', ['xpLog']],
+  ['streakFreezes', ['xpLog']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

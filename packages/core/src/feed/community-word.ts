@@ -59,9 +59,7 @@ export function createCommunityWord({
 
   return {
     async forDay(day) {
-      const switchedOn =
-        edition.isFeatureEnabled('communityCounters') && edition.isFeatureEnabled('communityWord');
-      if (!switchedOn || !isMonday(day)) return [];
+      if (!edition.isFeatureEnabled('communityWord') || !isMonday(day)) return [];
       const communityWord = await ofDay(day);
       if (communityWord === undefined || hiddenEntries.has(communityWord.entryId)) return [];
       const { entryId, adds } = communityWord;
