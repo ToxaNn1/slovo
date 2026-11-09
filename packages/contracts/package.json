@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./admin-api": "./src/admin-api.ts",
     "./api": "./src/api.ts",
     "./api-description": "./src/api-description.ts",
     "./api/test-support": "./src/api/test-support.ts"

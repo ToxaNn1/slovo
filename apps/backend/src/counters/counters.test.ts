@@ -247,7 +247,7 @@ describe('counters.send', () => {
   it('answers an Edition with Community Counters switched off as NOT_FOUND and counts nothing', async () => {
     const folder = testEditions(['off'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, communityCounters: false },
+      featureSwitches: { ...config.featureSwitches, communityCounters: 'off' },
     }));
     const { client, database } = testApp({ editions: folder.read() });
     const word = newEntryId();
@@ -259,11 +259,11 @@ describe('counters.send', () => {
   });
 
   it('answers NOT_FOUND once the owner turns Community Counters off remotely', async () => {
-    const { client, database, switchOff } = testApp({
+    const { client, database, kill } = testApp({
       editions: testEditions(['remote']).read(),
     });
     const word = newEntryId();
-    await switchOff('remote', 'communityCounters');
+    await kill('remote', 'communityCounters');
 
     await expect(
       client.counters.send({ editionId: 'remote', events: [event(word, { known: 1 })] }),
@@ -360,7 +360,7 @@ describe('the Favorites adds of an ISO week', () => {
   it('adds nothing for a batch refused, or for an Edition with Community Counters switched off', async () => {
     const folder = testEditions(['uk', 'off'], (config) =>
       config.id === 'off'
-        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: false } }
+        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: 'off' } }
         : config,
     );
     const { request, client, database } = testApp({ editions: folder.read() });
@@ -581,11 +581,11 @@ describe('counters.read', () => {
   it('answers NOT_FOUND for an Edition with Community Counters switched off, locally or remotely', async () => {
     const folder = testEditions(['off', 'remote'], (config) =>
       config.id === 'off'
-        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: false } }
+        ? { ...config, featureSwitches: { ...config.featureSwitches, communityCounters: 'off' } }
         : config,
     );
-    const { client, switchOff } = testApp({ editions: folder.read() });
-    await switchOff('remote', 'communityCounters');
+    const { client, kill } = testApp({ editions: folder.read() });
+    await kill('remote', 'communityCounters');
 
     for (const edition of ['off', 'remote']) {
       await expect(client.counters.read({ edition, entries: 'w_a' })).rejects.toMatchObject({
@@ -722,14 +722,14 @@ describe('counters.communityWord', () => {
       const feature = locallyOff.get(config.id);
       return feature === undefined
         ? config
-        : { ...config, featureSwitches: { ...config.featureSwitches, [feature]: false } };
+        : { ...config, featureSwitches: { ...config.featureSwitches, [feature]: 'off' } };
     });
-    const { client, switchOff } = testApp({ editions: folder.read() });
+    const { client, kill } = testApp({ editions: folder.read() });
     // Adds kept before the counters went off remotely give no Community Word after.
     vi.setSystemTime(new Date('2026-10-28T09:00:00Z'));
     await addToFavorites(client, 'counters-remote', ['w_a']);
-    await switchOff('remote', 'communityWord');
-    await switchOff('counters-remote', 'communityCounters');
+    await kill('remote', 'communityWord');
+    await kill('counters-remote', 'communityCounters');
     vi.setSystemTime(new Date('2026-11-04T09:00:00Z'));
 
     for (const edition of ['xx', 'off', 'remote', 'counters-off', 'counters-remote']) {
@@ -823,12 +823,12 @@ describe('counters.questionnaire', () => {
   it('answers NOT_FOUND for an Edition it does not serve, or with the questionnaire switched off, locally or remotely', async () => {
     const folder = testEditions(['qoff'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, questionnaire: false },
+      featureSwitches: { ...config.featureSwitches, questionnaire: 'off' },
     }));
-    const { client, database, switchOff } = testApp({
+    const { client, database, kill } = testApp({
       editions: [...folder.read(), ...testEditions(['qremote']).read()],
     });
-    await switchOff('qremote', 'questionnaire');
+    await kill('qremote', 'questionnaire');
 
     for (const editionId of ['xx', 'qoff', 'qremote']) {
       await expect(
@@ -881,7 +881,7 @@ describe('counters.questionnaire', () => {
   it('answers NOT_FOUND for the goal with the Daily Goal switched off, and the time with its step switched off', async () => {
     const folder = testEditions(['qsteps'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, dailyGoal: false, notificationTimeStep: false },
+      featureSwitches: { ...config.featureSwitches, dailyGoal: 'off', notificationTimeStep: 'off' },
     }));
     const { client, database } = testApp({ editions: folder.read() });
 

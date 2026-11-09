@@ -7,6 +7,7 @@ import { parseArgs } from 'node:util';
 import { formatBuildError } from '@slovo/language-pack';
 import { systemClock } from '@slovo/server-core';
 
+import { ownerAlertsOf } from '../alerts/owner-chat';
 import { PublishConfigSchema, readConfig } from '../config';
 import { createDatabase } from '../database/database';
 import { createEditions } from '../edition/editions';
@@ -25,12 +26,14 @@ async function main(): Promise<number> {
     return 2;
   }
   const { DATABASE_URL, EDITIONS_DIR } = readConfig(PublishConfigSchema, process.env);
-  const database = createDatabase(DATABASE_URL, createLogger());
+  const logger = createLogger();
+  const database = createDatabase(DATABASE_URL, logger);
   try {
     const editions = createEditions({
       database,
       clock: systemClock,
       editions: readEditions(EDITIONS_DIR),
+      alerts: ownerAlertsOf(database, logger),
     });
     const store = createContentStore({ database, clock: systemClock, editions });
     const imported = await store.importEdition(editionId, join(EDITIONS_DIR, editionId), {

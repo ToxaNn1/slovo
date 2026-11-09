@@ -6,8 +6,15 @@ import { postHogAnalytics, postHogOptions, type PostHogClient } from './posthog-
 function fakeClient() {
   const captured: unknown[][] = [];
   const personProperties: unknown[][] = [];
+  const identified: string[] = [];
+  let distinctId = 'posthog-made';
   const client: PostHogClient & { optedOut: boolean } = {
     optedOut: false,
+    getDistinctId: () => distinctId,
+    identify: (id) => {
+      if (id !== undefined) distinctId = id;
+      identified.push(id ?? '');
+    },
     capture: (event, properties) => {
       captured.push([event, properties]);
     },
@@ -23,10 +30,13 @@ function fakeClient() {
       return Promise.resolve();
     },
   };
-  return { client, captured, personProperties };
+  return { client, captured, personProperties, identified };
 }
 
 const seen = { entryKind: 'word', rarity: 4, categoryId: 'human-body' } as const;
+
+/** The test device, with no switch under test. */
+const reader = { distinctId: 'install-1', edition: 'uk', variants: {} };
 
 describe('The PostHog adapter', () => {
   it('sends to the EU host with no session recording, autocapture or location', () => {
@@ -39,28 +49,28 @@ describe('The PostHog adapter', () => {
     });
   });
 
-  it('makes no client until the first event, then captures it with its properties', () => {
+  it('makes no client until the first event, then captures it with its properties and the Edition', () => {
     const { client, captured } = fakeClient();
     const create = vi.fn(() => client);
     const analytics = postHogAnalytics('phc_test', create);
 
     expect(create).not.toHaveBeenCalled();
-    analytics.track('seen', seen);
+    analytics.track('seen', seen, reader);
 
     expect(create).toHaveBeenCalledWith('phc_test');
-    expect(captured).toEqual([['seen', seen]]);
+    expect(captured).toEqual([['seen', { ...seen, edition: 'uk' }]]);
   });
 
-  it('keeps each questionnaire answer as a person property of the anonymous id', () => {
+  it('keeps each questionnaire answer as a person property of the reader', () => {
     const { client, captured, personProperties } = fakeClient();
     const analytics = postHogAnalytics('phc_test', () => client);
 
-    analytics.track('questionnaireAnswered', { question: 'level', answer: 'good' });
-    analytics.track('questionnaireAnswered', { question: 'why', answer: 'curiosity' });
+    analytics.track('questionnaireAnswered', { question: 'level', answer: 'good' }, reader);
+    analytics.track('questionnaireAnswered', { question: 'why', answer: 'curiosity' }, reader);
 
     expect(captured).toEqual([
-      ['questionnaireAnswered', { question: 'level', answer: 'good' }],
-      ['questionnaireAnswered', { question: 'why', answer: 'curiosity' }],
+      ['questionnaireAnswered', { question: 'level', answer: 'good', edition: 'uk' }],
+      ['questionnaireAnswered', { question: 'why', answer: 'curiosity', edition: 'uk' }],
     ]);
     expect(personProperties).toEqual([
       [{ questionnaire_level: 'good' }, undefined, false],
@@ -72,8 +82,8 @@ describe('The PostHog adapter', () => {
     const { client, personProperties } = fakeClient();
     const analytics = postHogAnalytics('phc_test', () => client);
 
-    analytics.track('seen', seen);
-    analytics.track('laterQuestionAnswered', { question: 'wordGoalChoice', answer: '10' });
+    analytics.track('seen', seen, reader);
+    analytics.track('laterQuestionAnswered', { question: 'wordGoalChoice', answer: '10' }, reader);
 
     expect(personProperties).toEqual([]);
   });
@@ -81,19 +91,38 @@ describe('The PostHog adapter', () => {
   it('opts out when sharing is turned off and back in at the next event', () => {
     const { client, captured } = fakeClient();
     const analytics = postHogAnalytics('phc_test', () => client);
-    analytics.track('seen', seen);
+    analytics.track('seen', seen, reader);
 
     analytics.stop();
     expect(client.optedOut).toBe(true);
 
-    analytics.track('screenViewed', { screen: 'feed' });
+    analytics.track('screenViewed', { screen: 'feed' }, reader);
     expect(client.optedOut).toBe(false);
     expect(captured).toHaveLength(2);
   });
 
+  it('names the reader by the Install id once and sends the Variants with each event', () => {
+    const { client, captured, identified } = fakeClient();
+    const analytics = postHogAnalytics('phc_test', () => client);
+    const testing = {
+      distinctId: 'install-1',
+      edition: 'uk',
+      variants: { variant_gameTimed: 'b' },
+    };
+
+    analytics.track('seen', seen, testing);
+    analytics.track('screenViewed', { screen: 'feed' }, testing);
+
+    expect(identified).toEqual(['install-1']);
+    expect(captured).toEqual([
+      ['seen', { ...seen, edition: 'uk', variant_gameTimed: 'b' }],
+      ['screenViewed', { screen: 'feed', edition: 'uk', variant_gameTimed: 'b' }],
+    ]);
+  });
+
   it('makes no client without a key', () => {
     const create = vi.fn(() => fakeClient().client);
-    postHogAnalytics(undefined, create).track('seen', seen);
+    postHogAnalytics(undefined, create).track('seen', seen, reader);
 
     expect(create).not.toHaveBeenCalled();
   });

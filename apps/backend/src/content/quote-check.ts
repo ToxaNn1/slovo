@@ -236,7 +236,7 @@ export function createQuoteCheck({
             at: now,
             what: `content.${record.kind}.flag`,
             before: null,
-            after: null,
+            after: { id },
             reason: finding,
             editionId,
             batchId: null,

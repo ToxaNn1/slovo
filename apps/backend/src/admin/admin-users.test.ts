@@ -1,20 +1,30 @@
 import { randomUUID } from 'node:crypto';
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { createAdminAccess, systemClock } from '@slovo/server-core';
+import { EDITIONS_DIR } from '@slovo/language-pack/edition';
+import { createAdminAccess, createOwnerChecks, systemClock } from '@slovo/server-core';
 import { sql } from 'drizzle-orm';
 import { describe, expect, it, onTestFinished } from 'vitest';
 
 import { createDatabase } from '../database/database';
+import { readEditions } from '../edition/edition-folders';
 import { systemRandom } from '../random';
 import {
+  adminHeaders,
   createTestDatabase,
   passTime,
+  signInAdmin,
   silentLogger,
   testApp,
   testDatabaseUrl,
 } from '../test-support';
 import { runAdminCommand } from './admin-command';
 import { createAdminStore, hashToken } from './admin-store';
+import { createOwnerCheckStore } from './owner-check-store';
 
 /**
  * The backend on a database of the test's own, since a Власник turns the
@@ -33,10 +43,16 @@ async function freshBackend() {
     random: systemRandom,
     hash: hashToken,
   });
+  const ownerChecks = createOwnerChecks({
+    store: createOwnerCheckStore(database),
+    clock: systemClock,
+    admin,
+  });
+  const deps = { admin, ownerChecks, readFile: (path: string) => readFile(path, 'utf8') };
   async function command(...args: string[]) {
     const out: string[] = [];
     const err: string[] = [];
-    const code = await runAdminCommand(args, admin, {
+    const code = await runAdminCommand(args, deps, {
       out: (line) => out.push(line),
       err: (line) => err.push(line),
     });
@@ -44,7 +60,7 @@ async function freshBackend() {
   }
   const status = (headers: Record<string, string> = {}) =>
     backend.request('/v1/admin/status', { headers });
-  return { ...backend, admin, command, status };
+  return { ...backend, admin, ownerChecks, command, status };
 }
 
 const newEmail = () => `owner-${randomUUID()}@example.com`;
@@ -62,7 +78,8 @@ describe('pnpm admin owner add', () => {
     const added = await backend.command('owner', 'add', email);
 
     expect(added.code).toBe(0);
-    const status = await backend.status();
+    const { cookie } = await signInAdmin(backend, email);
+    const status = await backend.status({ cookie });
     expect(status.status).toBe(200);
     expect(await status.json()).toEqual({ on: true });
     expect(await backend.admin.actions()).toEqual([
@@ -120,6 +137,9 @@ describe('the Агент token', () => {
 
     // The admin API's procedures: none writes content yet.
     expect((await backend.status(bearer(token))).status).toBe(403);
+    expect((await backend.request('/v1/admin/editions', { headers: bearer(token) })).status).toBe(
+      403,
+    );
     // The app's API takes an Account's Session only.
     await expect(agent.account.me()).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
   });
@@ -132,6 +152,26 @@ describe('the Агент token', () => {
 
     expect(again.code).toBe(1);
     expect(tokenOf(again.out)).toEqual([]);
+  });
+});
+
+describe('the admin API at /v1/admin', () => {
+  it('answers the Editions the backend serves once a Власник exists', async () => {
+    const backend = await freshBackend();
+    expect((await backend.request('/v1/admin/editions')).status).toBe(404);
+
+    const email = newEmail();
+    await backend.command('owner', 'add', email);
+    const { cookie } = await signInAdmin(backend, email);
+
+    const response = await backend.request('/v1/admin/editions', { headers: { cookie } });
+    expect(response.status).toBe(200);
+    const editions = readEditions(EDITIONS_DIR).map(({ config }) => ({
+      id: config.id,
+      displayName: config.displayName,
+    }));
+    expect(editions.length).toBeGreaterThan(0);
+    expect(await response.json()).toEqual({ editions });
   });
 });
 
@@ -165,14 +205,133 @@ describe('the Action log', () => {
 
     const rows = await backend.admin.actions();
     expect(rows.map((row) => row.what)).toEqual([
-      'admin.owner.add',
-      'admin.agent.add',
       'admin.agent.revoke',
+      'admin.agent.add',
+      'admin.owner.add',
     ]);
-    expect(rows[0]).toEqual(first);
+    expect(rows[2]).toEqual(first);
     const { db } = backend.database;
     await expect(db.execute(sql`UPDATE action_log SET reason = 'edited'`)).rejects.toThrow();
     await expect(db.execute(sql`DELETE FROM action_log`)).rejects.toThrow();
     expect(await backend.admin.actions()).toEqual(rows);
+  });
+});
+
+describe('the Owner checks', () => {
+  const FIXTURE = fileURLToPath(new URL('fixtures/checks-file.md', import.meta.url));
+  const importCommand = { kind: 'command', command: 'pnpm admin check import' };
+
+  it('imports every line of the file as a check of its version', async () => {
+    const backend = await freshBackend();
+
+    const imported = await backend.command('check', 'import', FIXTURE);
+
+    expect(imported).toMatchObject({ code: 0, out: ['5 Owner checks imported.'] });
+    const checks = await backend.ownerChecks.list();
+    expect(checks.map(({ version, text, ticked }) => [version, text, ticked !== null])).toEqual([
+      ['0.9', 'Open the app on a phone.', false],
+      ['0.9', 'Search finds **слово**.', false],
+      ['0.9', 'Share a card.', false],
+      ['0.9', 'The paywall shows once.', true],
+      ['1.0', 'Sign in with Apple.', false],
+    ]);
+    expect(checks[3]?.ticked).toEqual({ at: new Date(), by: importCommand });
+    expect((await backend.command('check', 'import', FIXTURE)).code).toBe(1);
+    expect(await backend.ownerChecks.list()).toHaveLength(5);
+  });
+
+  it('refuses a check line with no version unless --version names one', async () => {
+    const backend = await freshBackend();
+    const dir = mkdtempSync(join(tmpdir(), 'owner-checks-'));
+    onTestFinished(() => {
+      rmSync(dir, { recursive: true });
+    });
+    const file = join(dir, 'checks.md');
+    writeFileSync(file, '# Checks\n\n- [ ] Open the app.\n');
+
+    expect((await backend.command('check', 'import', file)).code).toBe(1);
+    expect(await backend.ownerChecks.list()).toEqual([]);
+    expect((await backend.command('check', 'import', file, '--version', '0.8')).code).toBe(0);
+    expect((await backend.ownerChecks.list()).map(({ version }) => version)).toEqual(['0.8']);
+  });
+
+  it('ticks a check with who and when, no reason, and logs it', async () => {
+    const backend = await freshBackend();
+    const email = newEmail();
+    await backend.command('owner', 'add', email);
+    await backend.command('check', 'import', FIXTURE);
+    const [first] = await backend.ownerChecks.list();
+    if (!first) throw new Error('nothing imported');
+    const { client } = await signInAdmin(backend, email);
+    passTime(60_000);
+
+    const { check } = await client.admin.tickOwnerCheck({ id: first.id });
+
+    const at = new Date().toISOString();
+    expect(check).toMatchObject({ id: first.id, ticked: { at, by: email } });
+    const listed = await client.admin.ownerChecks({ version: '0.9' });
+    expect(listed.open).toEqual({ '0.9': 2 });
+    expect((await backend.admin.actions()).at(0)).toMatchObject({
+      who: { kind: 'admin-user', email },
+      what: 'owner-check.tick',
+      reason: null,
+      at: new Date(at),
+    });
+    passTime(60_000);
+    const again = await client.admin.tickOwnerCheck({ id: first.id });
+    expect(again.check.ticked).toEqual({ at, by: email });
+  });
+
+  it('adds a check by pnpm admin check add that the list answers', async () => {
+    const backend = await freshBackend();
+    const email = newEmail();
+    await backend.command('owner', 'add', email);
+
+    const added = await backend.command('check', 'add', '0.9', 'Read', 'the', 'feed', 'offline.');
+
+    expect(added.code).toBe(0);
+    const { client } = await signInAdmin(backend, email);
+    const listed = await client.admin.ownerChecks({});
+    expect(listed.checks).toEqual([
+      expect.objectContaining({
+        version: '0.9',
+        text: 'Read the feed offline.',
+        addedBy: 'pnpm admin check add',
+        ticked: null,
+      }),
+    ]);
+    expect(listed.open).toEqual({ '0.9': 1 });
+    expect((await backend.admin.actions()).at(0)).toMatchObject({
+      who: { kind: 'command', command: 'pnpm admin check add' },
+      what: 'owner-check.add',
+    });
+  });
+
+  it('refuses an Агент token on every Owner-check procedure', async () => {
+    const backend = await freshBackend();
+    await backend.command('owner', 'add', newEmail());
+    await backend.command('check', 'add', '0.9', 'Open the app.');
+    const [token] = tokenOf((await backend.command('agent', 'add', 'claude-content')).out);
+    if (token === undefined) throw new Error('no token printed');
+    const [check] = await backend.ownerChecks.list();
+    if (!check) throw new Error('no check');
+    const write = { ...bearer(token), ...adminHeaders(), 'content-type': 'application/json' };
+
+    const answers = await Promise.all([
+      backend.request('/v1/admin/owner-checks', { headers: bearer(token) }),
+      backend.request(`/v1/admin/owner-checks/${String(check.id)}/tick`, {
+        method: 'POST',
+        headers: write,
+        body: '{}',
+      }),
+      backend.request('/v1/admin/owner-checks', {
+        method: 'POST',
+        headers: write,
+        body: JSON.stringify({ version: '0.9', text: 'More.' }),
+      }),
+    ]);
+
+    expect(answers.map(({ status }) => status)).toEqual([403, 403, 403]);
+    expect((await backend.ownerChecks.list())[0]?.ticked).toBeNull();
   });
 });

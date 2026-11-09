@@ -7,11 +7,14 @@
  */
 import { randomInt, randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import type { HttpBindings } from '@hono/node-server';
 import { createApiClient } from '@slovo/contracts/api';
+import type { EasBuild, MainCi, Milestone, PullRequest, Release } from '@slovo/contracts/admin-api';
+import { ADMIN_SESSION_COOKIE, ADMIN_WRITE_HEADER } from '@slovo/contracts/admin-api';
 import type { AppConfig, EditionConfig } from '@slovo/contracts';
 import { recordContent } from '@slovo/language-pack';
 import {
@@ -24,15 +27,27 @@ import {
   REPO_DIR,
 } from '@slovo/language-pack/edition';
 import {
+  createOwnerChecks,
   systemClock,
+  totpOf,
+  type AdminAccess,
+  type AdminRole,
+  type Alert,
+  type Alerts,
   type AppleIdentity,
   type AppleVerifier,
+  type EasSource,
   type Edition,
+  type GitHubSource,
   type GoogleIdentity,
   type GoogleVerifier,
   type Mail,
   type Mailer,
   type Random,
+  type SentryAlertRead,
+  type SentryRead,
+  type SentryReader,
+  type SentryWindow,
 } from '@slovo/server-core';
 import { eq } from 'drizzle-orm';
 import pg from 'pg';
@@ -40,6 +55,9 @@ import { pino, type Logger } from 'pino';
 import { afterAll, afterEach, beforeAll, beforeEach, onTestFinished, vi } from 'vitest';
 
 import { keptSignInCode } from './account/authenticator';
+import type { CommandDeps } from './admin/admin-command';
+import { createAdminStore, hmacSha1 } from './admin/admin-store';
+import { createOwnerCheckStore } from './admin/owner-check-store';
 import { createApp } from './app';
 import { deleteCollectionLink } from './collection-links/collection-link-delete';
 import { createDatabase, type Database } from './database/database';
@@ -51,15 +69,34 @@ import { createEditions } from './edition/editions';
 import { systemRandom } from './random';
 import { listReports, type ReportFilter } from './reports/report-list';
 import { resolveReport } from './reports/report-resolve';
+import { createFakePostHog } from './analytics/fake-posthog';
 import type { ErrorReport } from './error-reporter';
 
 /** The Postgres of the repo's `compose.yaml`, which the tests use unless `DATABASE_URL` names another. */
 const LOCAL_DATABASE_URL = 'postgres://slovo:slovo@localhost:55432/slovo';
 
 /** A logger that writes nothing, for tests that don't read the logs. */
+/** Who writes the switches in a test, for the Action log. */
+const TEST_WRITE = { who: { kind: 'command', command: 'test' }, reason: 'test' } as const;
+
+/** What `pnpm admin` runs its commands with, over the test's database. */
+export function adminCommandDeps(admin: AdminAccess, database: Database): CommandDeps {
+  return {
+    admin,
+    ownerChecks: createOwnerChecks({
+      store: createOwnerCheckStore(database),
+      clock: systemClock,
+      admin,
+    }),
+    readFile: (path) => readFile(path, 'utf8'),
+  };
+}
+
 export const silentLogger = pino({ enabled: false });
 
 interface TestDatabase {
+  /** The name of the new database. */
+  readonly name: string;
   /** The URL of the new database. */
   readonly url: string;
   drop(): Promise<void>;
@@ -68,23 +105,65 @@ interface TestDatabase {
 /**
  * Makes a database with a random name on the server `serverUrl` names and
  * runs the migrations on it unless told not to, so a test file never meets another's data.
+ * Given a template, the database is a copy of that one, migrations and rows alike.
  */
 export async function createTestDatabase(
   serverUrl: string,
-  { migrate = true }: { readonly migrate?: boolean } = {},
+  options: { readonly migrate?: boolean } | { readonly template: string } = {},
 ): Promise<TestDatabase> {
   const name = `slovo_test_${randomUUID().replaceAll('-', '')}`;
-  await onServer(serverUrl, `CREATE DATABASE ${name}`);
+  const template = 'template' in options ? options.template : undefined;
+  await onServer(
+    serverUrl,
+    template === undefined
+      ? `CREATE DATABASE ${name}`
+      : `CREATE DATABASE ${name} TEMPLATE ${template}`,
+  );
   const drop = () => onServer(serverUrl, `DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
   const url = new URL(serverUrl);
   url.pathname = `/${name}`;
   try {
-    if (migrate) await migrateDatabase(url.href, silentLogger);
+    if (!('template' in options) && options.migrate !== false) {
+      await migrateDatabase(url.href, silentLogger);
+    }
   } catch (error) {
     await drop();
     throw error;
   }
-  return { url: url.href, drop };
+  return { name, url: url.href, drop };
+}
+
+/**
+ * Hands out databases of a test's own with the Edition folder imported. The
+ * folder is read, checked and imported once per test file, into a template,
+ * and each database is a copy of it: a test pays a copy, not an import of the
+ * whole Edition. The template is dropped after the file.
+ */
+export function importedDatabases(editionId: string, editionDir: string) {
+  let template: Promise<TestDatabase> | undefined;
+  afterAll(async () => {
+    await template?.then(
+      (made) => made.drop(),
+      () => undefined,
+    );
+  });
+  async function makeTemplate() {
+    const made = await createTestDatabase(testDatabaseUrl());
+    const database = createDatabase(made.url, silentLogger);
+    try {
+      const result = await testApp({ database }).importContent(editionId, editionDir);
+      if (!result.ok) throw new Error(`the ${editionId} Edition did not import`);
+    } finally {
+      // A template takes no copy while a connection to it is open.
+      await database.close();
+    }
+    return made;
+  }
+  return async (): Promise<TestDatabase> => {
+    template ??= makeTemplate();
+    const { name } = await template;
+    return createTestDatabase(testDatabaseUrl(), { template: name });
+  };
 }
 
 async function onServer(serverUrl: string, statement: string): Promise<void> {
@@ -137,13 +216,23 @@ interface FakeMailer extends Mailer {
   readonly sent: readonly Mail[];
   /** The six digits of the newest email to the address. Throws when none was sent. */
   codeSentTo(email: string): string;
+  /** Makes the next email fail to send, as an SMTP server that refuses it. */
+  failNext(): void;
 }
 
 function createFakeMailer(): FakeMailer {
   const sent: Mail[] = [];
+  let failing = false;
   return {
     sent,
+    failNext() {
+      failing = true;
+    },
     send: (mail) => {
+      if (failing) {
+        failing = false;
+        return Promise.reject(new Error('the email was not sent (SMTP 554)'));
+      }
       sent.push(mail);
       return Promise.resolve();
     },
@@ -151,6 +240,22 @@ function createFakeMailer(): FakeMailer {
       const code = sent.findLast((mail) => mail.to === email)?.text.match(/\b[0-9]{6}\b/)?.[0];
       if (code === undefined) throw new Error(`no Sign-in code was sent to ${email}`);
       return code;
+    },
+  };
+}
+
+/** Alerts that keep every alert they are given, oldest first. */
+interface FakeAlerts extends Alerts {
+  readonly sent: readonly Alert[];
+}
+
+function createFakeAlerts(): FakeAlerts {
+  const sent: Alert[] = [];
+  return {
+    sent,
+    send: (alert) => {
+      sent.push(alert);
+      return Promise.resolve();
     },
   };
 }
@@ -402,6 +507,107 @@ const connectionFrom = (ip: string) =>
 /** The AppConfig of the repo (ADR 0065), the one app the backend serves. */
 export const testAppConfig = openAppConfig(REPO_DIR).config;
 
+/** The fake GitHub's open pull request, CI run, milestones and release. */
+export const GITHUB_FIXTURE: {
+  pullRequests: PullRequest[];
+  mainCi: MainCi;
+  milestones: Milestone[];
+  releases: Release[];
+} = {
+  pullRequests: [
+    {
+      number: 1750,
+      title: 'feat(admin): the Розробка section',
+      author: 'anton',
+      url: 'https://github.com/ToxaNn1/slovo/pull/1750',
+      draft: false,
+      updatedAt: '2026-11-08T09:00:00.000Z',
+    },
+  ],
+  mainCi: {
+    state: 'success',
+    url: 'https://github.com/ToxaNn1/slovo/actions/runs/1',
+    finishedAt: '2026-11-08T08:00:00.000Z',
+  },
+  milestones: [
+    { title: '1.0', open: 30, closed: 0, dueOn: null },
+    { title: 'Backlog', open: 9, closed: 1, dueOn: null },
+    { title: '0.9', open: 4, closed: 12, dueOn: '2026-12-01T00:00:00.000Z' },
+  ],
+  releases: [
+    {
+      tag: 'v0.8.0',
+      name: '0.8',
+      publishedAt: '2026-10-20T10:00:00.000Z',
+      url: 'https://github.com/ToxaNn1/slovo/releases/tag/v0.8.0',
+    },
+  ],
+};
+
+/** The fake EAS's one build. */
+export const EAS_FIXTURE: EasBuild[] = [
+  {
+    id: 'build-1',
+    platform: 'ios',
+    profile: 'production',
+    status: 'finished',
+    appVersion: '0.8.0',
+    buildNumber: '42',
+    createdAt: '2026-11-07T18:00:00.000Z',
+    url: 'https://expo.dev/accounts/slovo/projects/slovo/builds/build-1',
+  },
+];
+
+/** A fake outside service: it counts its calls and fails once told to. */
+interface FakeSource {
+  /** How many reads it answered. */
+  readonly calls: number;
+  /** From now on every read answers `unavailable`. */
+  fail(): void;
+}
+
+const unavailable = { ok: false, reason: 'unavailable' } as const;
+
+/** A GitHub that answers GITHUB_FIXTURE. */
+export function createFakeGitHub(): GitHubSource & FakeSource {
+  let calls = 0;
+  let failing = false;
+  const answer =
+    <Value>(value: Value) =>
+    () => {
+      calls += 1;
+      return Promise.resolve(failing ? unavailable : ({ ok: true, value } as const));
+    };
+  return {
+    get calls() {
+      return calls;
+    },
+    fail: () => (failing = true),
+    pullRequests: answer(GITHUB_FIXTURE.pullRequests),
+    mainCi: answer(GITHUB_FIXTURE.mainCi),
+    milestones: answer(GITHUB_FIXTURE.milestones),
+    releases: answer(GITHUB_FIXTURE.releases),
+  };
+}
+
+/** An EAS that answers EAS_FIXTURE. */
+export function createFakeEas(): EasSource & FakeSource {
+  let calls = 0;
+  let failing = false;
+  return {
+    get calls() {
+      return calls;
+    },
+    fail: () => (failing = true),
+    latestBuilds: (limit) => {
+      calls += 1;
+      return Promise.resolve(
+        failing ? unavailable : { ok: true, value: EAS_FIXTURE.slice(0, limit) },
+      );
+    },
+  };
+}
+
 interface TestAppOptions {
   /** A database of the test's own, which the test closes; the file's database unless given. */
   readonly database?: Database;
@@ -421,8 +627,12 @@ interface TestAppOptions {
   readonly random?: Random;
   /** How many proxies in front of the backend it trusts; none unless given. */
   readonly trustedProxyHops?: number;
-  /** The owner admin's one Account; no admin unless given. */
-  readonly ownerEmail?: string;
+  /** The built owner admin app's folder; none unless given. */
+  readonly adminDist?: string;
+  /** GitHub, for Розробка; a fake GitHub unless given. */
+  readonly github?: GitHubSource;
+  /** EAS, for Розробка; a fake EAS unless given. */
+  readonly eas?: EasSource;
   /** Sees every answer before the test gets it, with the request it answers. */
   readonly onAnswer?: (request: Request, response: Response) => Promise<void>;
 }
@@ -445,14 +655,19 @@ export function testApp({
   apple: givenApple,
   random = systemRandom,
   trustedProxyHops = 0,
-  ownerEmail,
+  adminDist,
+  github = createFakeGitHub(),
+  eas = createFakeEas(),
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
   const mailer = createFakeMailer();
+  const alerts = createFakeAlerts();
+  const posthog = createFakePostHog();
   const google = createFakeGoogle(googleClientIds);
   const apple = createFakeApple();
   const reports: ErrorReport[] = [];
+  const sentry = createFakeSentry();
   const app = createApp({
     database,
     clock: systemClock,
@@ -461,13 +676,19 @@ export function testApp({
     app: appConfig,
     editions,
     mailer,
+    alerts,
+    posthog,
     google: givenGoogle ?? google,
     apple: givenApple ?? apple,
     authSecret: TEST_AUTH_SECRET,
     // A fake Sentry: it keeps every report.
     reporter: { report: (report) => reports.push(report) },
     trustedProxyHops,
-    ownerEmail,
+    adminDist,
+    github,
+    eas,
+    sentry,
+    ciToken: TEST_CI_TOKEN,
   });
   const ip = newIp();
   // The one way a request reaches the app.
@@ -513,6 +734,12 @@ export function testApp({
     ip,
     /** Every email the backend sent. */
     mailer,
+    /** Every alert the backend sent the owner. */
+    alerts,
+    /** The fake Sentry Якість reads. */
+    sentry,
+    /** The fake PostHog the Аналітика reads from. */
+    posthog,
     /** The fake Google the backend verifies tokens with, and the tokens its sign-in sheet gives. */
     google,
     /** The fake Apple the backend verifies tokens with, and the tokens its sign-in sheet gives. */
@@ -527,23 +754,34 @@ export function testApp({
     request: (path: string, init?: RequestInit, from?: string) =>
       send(new Request(new URL(path, 'http://backend.test'), init), from),
     client: clientWith({}),
+    /** The client of a request with the headers, such as the admin's cookie and write header. */
+    clientWith,
     /** The client of a device signed in with the Session's token. */
     clientOf: (token: string) => clientWith({ authorization: `Bearer ${token}` }),
     /** The client of a device whose requests come from the IP address. */
     clientFrom: (from: string) => clientWith({}, from),
+    /** The Kill switch of the feature in the Edition, as the switches command turns it off. */
+    kill: (editionId: string, feature: string) =>
+      createEditions({ database, clock: systemClock, editions, alerts }).kill(
+        feature,
+        editionId,
+        TEST_WRITE,
+      ),
+    /** Clears every Rule of the feature in the Edition, back to the Edition's state. */
+    clearRules: (editionId: string, feature: string) =>
+      createEditions({ database, clock: systemClock, editions, alerts }).setRules(
+        editionId,
+        feature,
+        [],
+        TEST_WRITE,
+      ),
     /** Imports the Edition folder into the content tables, as the import command does. */
     importContent: (editionId: string, editionDir: string, options?: { override?: boolean }) =>
       createContentStore({
         database,
         clock: systemClock,
-        editions: createEditions({ database, clock: systemClock, editions }),
+        editions: createEditions({ database, clock: systemClock, editions, alerts }),
       }).importEdition(editionId, editionDir, options),
-    /** Turns the feature off in the Edition remotely, as the off command does, on the backend's database. */
-    switchOff: (editionId: string, feature: string) =>
-      createEditions({ database, clock: systemClock, editions }).switchOff(editionId, feature),
-    /** Clears the Edition's remote switch of the feature, as the clear command does. */
-    clearSwitch: (editionId: string, feature: string) =>
-      createEditions({ database, clock: systemClock, editions }).clearSwitch(editionId, feature),
     /** The lines the reports list command prints of the reports the backend keeps. */
     listReports: (filter?: ReportFilter) => listReports(database, filter),
     /** What the reports resolve command prints and exits with for the id. */
@@ -553,4 +791,91 @@ export function testApp({
     /** Closes the database the backend opened, as when Postgres goes away. */
     close,
   };
+}
+
+/** The token CI pushes its history with, in tests. */
+export const TEST_CI_TOKEN = 'a-test-ci-history-token-of-32-characters-at-least';
+
+/** A Sentry that answers the numbers a test sets, and counts the reads it was asked. */
+export interface FakeSentry extends SentryReader {
+  /** The number every later read of the kind answers, for a window ending at or before `until` (now unless given). */
+  set(read: SentryRead | SentryAlertRead, value: number | null, window?: 'now' | 'yesterday'): void;
+  /** Every later read answers rate-limited until the time, or answers again when `undefined`. */
+  limit(retryAt: Date | undefined): void;
+  /** The windows of the reads asked, oldest first. */
+  readonly asked: readonly ({ readonly read: SentryRead | SentryAlertRead } & SentryWindow)[];
+}
+
+/**
+ * A fake Sentry. A read whose window ends a day or more before the newest
+ * window asked of its kind answers its `yesterday` number, any other its
+ * `now` number; numbers not set answer `null`.
+ */
+export function createFakeSentry(): FakeSentry {
+  const numbers = new Map<string, number | null>();
+  const asked: ({ read: SentryRead | SentryAlertRead } & SentryWindow)[] = [];
+  let limitedUntil: Date | undefined;
+  return {
+    asked,
+    set: (read, value, window = 'now') => numbers.set(`${read}|${window}`, value),
+    limit: (retryAt) => (limitedUntil = retryAt),
+    read(read, window) {
+      asked.push({ read, ...window });
+      if (limitedUntil !== undefined) {
+        return Promise.resolve({ ok: false, reason: 'rate-limited', retryAt: limitedUntil });
+      }
+      const behind = Date.now() - window.to.getTime() >= 24 * 60 * 60 * 1000;
+      const value = numbers.get(`${read}|${behind ? 'yesterday' : 'now'}`) ?? null;
+      return Promise.resolve({ ok: true, value });
+    },
+  };
+}
+
+/** The headers of the admin app: its write header, and the session cookie when signed in. */
+export const adminHeaders = (cookie?: string): Record<string, string> => ({
+  [ADMIN_WRITE_HEADER]: '1',
+  ...(cookie === undefined ? {} : { cookie }),
+});
+
+/** The `name=value` of the admin session cookie an answer sets. */
+export function adminCookieOf(response: Response): string {
+  const set = response.headers.get('set-cookie') ?? '';
+  const pair = set.split(';')[0] ?? '';
+  if (!pair.startsWith(`${ADMIN_SESSION_COOKIE}=`)) throw new Error('no admin session cookie set');
+  return pair;
+}
+
+/**
+ * Signs the Admin user in as the admin app does, the first time: the emailed
+ * code, the TOTP set-up, then the code and a TOTP. Answers the session cookie,
+ * the client of the session, and what the set-up showed.
+ */
+export async function signInAdmin(backend: ReturnType<typeof testApp>, email: string) {
+  const anonymous = backend.clientWith(adminHeaders());
+  await anonymous.admin.requestCode({ email });
+  const code = backend.mailer.codeSentTo(email);
+  const enrolment = await anonymous.admin.verifyCode({ email, code });
+  if (enrolment.next !== 'enrol') throw new Error(`${email} has a TOTP already`);
+  const response = await backend.request('/v1/admin/sign-in', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', ...adminHeaders() },
+    body: JSON.stringify({
+      email,
+      code,
+      factor: { kind: 'totp', totp: totpOf(hmacSha1, enrolment.secret, new Date()) },
+    }),
+  });
+  if (response.status !== 200) throw new Error(`sign-in answered ${String(response.status)}`);
+  const cookie = adminCookieOf(response);
+  return { email, cookie, enrolment, client: backend.clientWith(adminHeaders(cookie)) };
+}
+
+/** Adds an Admin user of the role to the backend's database, and signs them in. */
+export async function signedInAdmin(
+  backend: ReturnType<typeof testApp>,
+  role: AdminRole,
+  email = `${role}-${randomUUID()}@example.com`,
+) {
+  await createAdminStore(backend.database).addAdminUser({ email, role, createdAt: new Date() });
+  return signInAdmin(backend, email);
 }

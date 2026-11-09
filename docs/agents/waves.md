@@ -32,7 +32,7 @@ Several specs may build at once, at most 3, when they cannot conflict:
    - `DONE #n`: merge the ticket branch (cloud: `origin/<branch>` after a fetch) into the integration branch (`git merge --no-ff -m 'chore: merge #n: <ticket title>'`: commitlint checks every commit of the PR, merges too), run the changed packages' checks, push. After the first merge of a batch open a draft PR against `main` (`Closes` the batch's tickets). After 3–5 merged tickets run `code-review` on the batch, mark the PR ready and `gh pr merge --auto --squash`.
    - `FAILED`, `STUCK`, or a report without that first line: relaunch from its handoff on the same branch, split the ticket, or ask the owner (serious matters only). Never leave it for later.
    - Start every ticket the merge put on the frontier.
-5. **Each batch PR and the end:** `code-review` on the batch; one implementer fixes the findings. PR body: Checks, «Questions for the owner», «Owner checks», new reader-visible texts. Mark it ready and `gh pr merge --auto --squash`, unless prominent copy waits for «текст ок». Red CI: one implementer fixes it. The last batch PR `Closes` the spec.
+5. **Each batch PR and the end:** `code-review` on the batch; one implementer fixes the findings. PR body: Checks, «Questions for the owner», «Owner checks», new reader-visible texts. The coordinator adds each Owner check to the database with `pnpm admin check add <version> "<text>"` (`docs/deploy.md`). Mark it ready and `gh pr merge --auto --squash`, unless prominent copy waits for «текст ок». Red CI: one implementer fixes it. The last batch PR `Closes` the spec.
 6. Remove the implementer worktrees and the pushed ticket branches.
 
 ## Unchanged

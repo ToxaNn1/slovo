@@ -10,15 +10,22 @@ import type {
   CuratedCollection,
   Idiom,
   MistakeType,
+  Platform,
+  RuleTargets,
+  RuleVerdict,
   SynonymRow,
   Tip,
   Word,
 } from '@slovo/contracts';
-import type { Actor, Json } from '@slovo/server-core';
+import type { Actor, Alert, Json } from '@slovo/server-core';
+import { sql } from 'drizzle-orm';
 import {
+  bigint,
   bigserial,
   boolean,
+  check,
   date,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -147,20 +154,40 @@ export const rateLimits = pgTable(
 );
 
 /**
- * The Feature Switches the owner turned off remotely (ADR 0040), one row per
- * Edition and feature. Clearing a switch keeps its row with `off` false, so a
- * row tells when its switch last changed.
+ * The remote Feature Switch Rules the owner sets (ADR 0089), one row per
+ * Rule: for one Edition and one feature, tried in `order`. A feature's Rules
+ * are replaced together; the Action log keeps the ones before.
  */
-export const remoteSwitches = pgTable(
-  'remote_switches',
+export const switchRules = pgTable(
+  'switch_rules',
   {
     editionId: text('edition_id').notNull(),
     /** The name of the Feature Switch, such as `game`. */
     feature: text('feature').notNull(),
-    off: boolean('off').notNull(),
+    order: integer('order').notNull(),
+    /** The Rule's id, which salts the Rollout on the device. */
+    ruleId: text('rule_id').notNull(),
+    verdict: jsonb('verdict').$type<RuleVerdict>().notNull(),
+    targets: jsonb('targets').$type<RuleTargets>().notNull(),
     setAt: time('set_at'),
   },
-  (table) => [primaryKey({ columns: [table.editionId, table.feature] })],
+  (table) => [primaryKey({ columns: [table.editionId, table.feature, table.order] })],
+);
+
+/**
+ * The force-update minimums of an Edition (ADR 0089), one row per platform:
+ * below `soft` the app asks the reader to update, below `hard` it waits for it.
+ */
+export const forceUpdateMinimums = pgTable(
+  'force_update_minimums',
+  {
+    editionId: text('edition_id').notNull(),
+    platform: text('platform').$type<Platform>().notNull(),
+    soft: text('soft'),
+    hard: text('hard'),
+    setAt: time('set_at'),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.platform] })],
 );
 
 /**
@@ -303,7 +330,7 @@ export const collectionLinks = pgTable('collection_links', {
  * beside them. Records are retired, never deleted.
  */
 
-/** Who changed a record: the import, an admin (`admin:<Account id>`) or an Агент token (`agent:<name>`). */
+/** Who changed a record: the import, an Admin user (`admin:<Admin user email>`) or an Агент token (`agent:<name>`). */
 export type ContentAuthor = 'import' | `admin:${string}` | `agent:${string}`;
 
 /**
@@ -433,8 +460,10 @@ export const adminUsers = pgTable('admin_users', {
   /** The email, trimmed and lower case. */
   email: text('email').notNull().unique(),
   role: text('role').$type<'owner' | 'admin'>().notNull(),
-  /** The TOTP secret, set when the Admin user enrolls at the first sign-in. */
+  /** The TOTP secret, sealed with a key of the backend's secret, set when the Admin user enrols at the first sign-in. */
   totpSecret: text('totp_secret'),
+  /** When the TOTP first signed in; until then the secret is pending and set anew at each enrolment. */
+  totpConfirmedAt: timestamp('totp_confirmed_at', { withTimezone: true }),
   state: text('state').$type<'active' | 'removed'>().notNull(),
   createdAt: time('created_at'),
 });
@@ -446,6 +475,15 @@ export const adminSessions = pgTable('admin_sessions', {
     .notNull()
     .references(() => adminUsers.id, { onDelete: 'cascade' }),
   createdAt: time('created_at'),
+  /** The last request of the session: 8 idle hours end it. */
+  lastSeenAt: time('last_seen_at'),
+  expiresAt: time('expires_at'),
+});
+
+/** The one emailed code of an Admin user's email waiting to sign in, by hash; it lives 10 minutes. */
+export const adminSignInCodes = pgTable('admin_sign_in_codes', {
+  email: text('email').primaryKey(),
+  codeHash: text('code_hash').notNull(),
   expiresAt: time('expires_at'),
 });
 
@@ -483,3 +521,64 @@ export const actionLog = pgTable(
   },
   (table) => [index('action_log_edition_id_idx').on(table.editionId)],
 );
+
+/** The Owner checks per version, ticked in Розробка without a reason (ADR 0088). */
+export const ownerChecks = pgTable(
+  'owner_checks',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    version: text('version').notNull(),
+    text: text('text').notNull(),
+    addedBy: jsonb('added_by').$type<Actor>().notNull(),
+    addedAt: time('added_at'),
+    tickedAt: timestamp('ticked_at', { withTimezone: true }),
+    tickedBy: jsonb('ticked_by').$type<Actor>(),
+  },
+  (table) => [
+    index('owner_checks_version_idx').on(table.version),
+    check('owner_checks_tick', sql`(${table.tickedAt} is null) = (${table.tickedBy} is null)`),
+  ],
+);
+
+/** The CI runs on `main` CI pushed after each, for Якість (#1728): one row per run. */
+export const ciRuns = pgTable(
+  'ci_runs',
+  {
+    /** GitHub's id of the workflow run. */
+    runId: bigint('run_id', { mode: 'number' }).primaryKey(),
+    at: time('at'),
+    sha: text('sha').notNull(),
+    tests: integer('tests').notNull(),
+    failedTests: jsonb('failed_tests').$type<string[]>().notNull(),
+    coverage: jsonb('coverage')
+      .$type<{ package: string; lines: number; branches: number }[]>()
+      .notNull(),
+    jobs: jsonb('jobs').$type<{ name: string; seconds: number }[]>().notNull(),
+  },
+  (table) => [index('ci_runs_at_idx').on(table.at)],
+);
+
+/** The alert thresholds the owner changed from their defaults (Round 14, 5A). */
+export const alertThresholds = pgTable('alert_thresholds', {
+  key: text('key').primaryKey(),
+  value: doublePrecision('value').notNull(),
+});
+
+/** The alerts fired, kept for Огляд; a key fires once, a Kill switch has none. */
+export const alerts = pgTable(
+  'alerts',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    at: time('at'),
+    key: text('key').unique(),
+    alert: jsonb('alert').$type<Alert>().notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+  },
+  (table) => [index('alerts_at_idx').on(table.at)],
+);
+
+/** The daily digests sent, one per Kyiv day. */
+export const alertDigests = pgTable('alert_digests', {
+  day: date('day', { mode: 'string' }).primaryKey(),
+  sentAt: time('sent_at'),
+});

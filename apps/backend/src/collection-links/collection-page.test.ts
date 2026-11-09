@@ -8,6 +8,7 @@ import { createAdminStore, hashToken } from '../admin/admin-store';
 import { createDatabase } from '../database/database';
 import { systemRandom } from '../random';
 import {
+  adminCommandDeps,
   createTestDatabase,
   silentLogger,
   testApp,
@@ -109,11 +110,12 @@ describe('the web page of a Collection Link', () => {
       random: systemRandom,
       hash: hashToken,
     });
+    const commandDeps = adminCommandDeps(admin, database);
     const out: string[] = [];
     const io = { out: (line: string) => out.push(line), err: () => undefined };
     // The admin API is on once it has a Власник.
-    await runAdminCommand(['owner', 'add', 'owner@example.com'], admin, io);
-    await runAdminCommand(['agent', 'add', 'claude-content'], admin, io);
+    await runAdminCommand(['owner', 'add', 'owner@example.com'], commandDeps, io);
+    await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
     const token = out.find((line) => line.startsWith('slovo_agent_'));
     if (token === undefined) throw new Error('no Агент token');
     const agent = backend.clientOf(token);
@@ -186,8 +188,8 @@ describe('the web page of a Collection Link', () => {
 
   it('answers a link of an Edition with Collection Links switched off as not available', async () => {
     // The remote switch stays in the database the tests of the file share.
-    const { request, id, switchOff } = await shared(['w_00g2ap'], 'switched');
-    await switchOff('switched', 'collectionLinks');
+    const { request, id, kill } = await shared(['w_00g2ap'], 'switched');
+    await kill('switched', 'collectionLinks');
 
     const response = await request(`/switched/c/${id}`, { headers: HTML });
 

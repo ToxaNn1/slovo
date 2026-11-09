@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+/* Both Themes read the same tokens; <html data-theme> picks one (src/theme.ts). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  --background: #f6f5f1;
+  --surface: #ffffff;
+  --foreground: #1d1c1a;
+  --muted: #efede7;
+  --muted-foreground: #6c6962;
+  --border: #e3e0d8;
+  --primary: #4b45d6;
+  --primary-foreground: #ffffff;
+  --ring: #4b45d6;
+  --destructive: #b42318;
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --background: #121214;
+  --surface: #1b1b1f;
+  --foreground: #f1f0ec;
+  --muted: #26262b;
+  --muted-foreground: #a3a19b;
+  --border: #2e2e34;
+  --primary: #8f8af5;
+  --primary-foreground: #121214;
+  --ring: #8f8af5;
+  --destructive: #f97066;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-ring: var(--ring);
+  --color-destructive: var(--destructive);
+  --font-sans: 'Onest Variable', system-ui, sans-serif;
+  --font-display: 'Unbounded Variable', 'Onest Variable', system-ui, sans-serif;
+}

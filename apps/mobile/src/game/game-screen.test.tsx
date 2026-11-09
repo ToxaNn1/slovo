@@ -28,6 +28,7 @@ import {
   settingsAt,
   switchedTo,
   testShell,
+  analyticsInto,
 } from '../shell/test-support';
 import { CROSSING_LEMMAS, solveCrossingWord } from './crossing-crossword.test-support';
 
@@ -41,14 +42,14 @@ function editionWithout(
   switchedOff: readonly string[],
   switchedOn: readonly string[] = [],
 ): Edition {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
     featureSwitches: {
       ...featureSwitches,
-      ...Object.fromEntries(GAMES_BOARD_SWITCHES.map((name) => [name, false])),
-      ...Object.fromEntries(switchedOff.map((name) => [name, false])),
-      ...Object.fromEntries(switchedOn.map((name) => [name, true])),
+      ...Object.fromEntries(GAMES_BOARD_SWITCHES.map((name) => [name, 'off'])),
+      ...Object.fromEntries(switchedOff.map((name) => [name, 'off'])),
+      ...Object.fromEntries(switchedOn.map((name) => [name, 'on'])),
     },
   });
 }
@@ -263,7 +264,7 @@ async function open({
     userState,
     clock,
     random: systemRandom,
-    analytics,
+    analytics: analyticsInto(analytics),
     ...(schedule === undefined ? {} : { schedule }),
   });
 }

@@ -2,6 +2,7 @@ import { cpSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import { dateAfter } from '@slovo/content-rules';
 import type { ApiClient } from '@slovo/contracts/api';
 import { EDITIONS_DIR } from '@slovo/language-pack/edition';
 import { createAdminAccess, systemClock } from '@slovo/server-core';
@@ -12,7 +13,14 @@ import { createAdminStore, hashToken } from '../admin/admin-store';
 import { createDatabase } from '../database/database';
 import { contentIds } from '../database/schema';
 import { systemRandom } from '../random';
-import { createTestDatabase, silentLogger, testApp, testDatabaseUrl } from '../test-support';
+import {
+  adminCommandDeps,
+  createTestDatabase,
+  importedDatabases,
+  silentLogger,
+  testApp,
+  testDatabaseUrl,
+} from '../test-support';
 
 /** A copy of the UA Edition folder, removed after the file. */
 const folder = (() => {
@@ -24,12 +32,14 @@ const folder = (() => {
   return dir;
 })();
 
+const importedDatabase = importedDatabases('uk', folder);
+
 /**
  * The backend on a database of the test's own, with a Власник, the UA
  * Edition imported unless told otherwise, and an Агент's client.
  */
 async function contentBackend({ imported = true }: { imported?: boolean } = {}) {
-  const own = await createTestDatabase(testDatabaseUrl());
+  const own = imported ? await importedDatabase() : await createTestDatabase(testDatabaseUrl());
   onTestFinished(() => own.drop());
   const database = createDatabase(own.url, silentLogger);
   onTestFinished(() => database.close());
@@ -40,16 +50,13 @@ async function contentBackend({ imported = true }: { imported?: boolean } = {}) 
     random: systemRandom,
     hash: hashToken,
   });
+  const commandDeps = adminCommandDeps(admin, database);
   const out: string[] = [];
   const io = { out: (line: string) => out.push(line), err: () => undefined };
-  await runAdminCommand(['owner', 'add', 'owner@example.com'], admin, io);
-  await runAdminCommand(['agent', 'add', 'claude-content'], admin, io);
+  await runAdminCommand(['owner', 'add', 'owner@example.com'], commandDeps, io);
+  await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
   const token = out.find((line) => line.startsWith('slovo_agent_'));
   if (token === undefined) throw new Error('no Агент token');
-  if (imported) {
-    const result = await backend.importContent('uk', folder);
-    if (!result.ok) throw new Error('the UA Edition did not import');
-  }
   const agent = backend.clientOf(token);
   const { batchId } = imported
     ? await agent.admin.content.openBatch({ editionId: 'uk' })
@@ -175,6 +182,16 @@ describe('the content write API', () => {
     const { client, agent, batchId } = await contentBackend();
     const before = await snapshotOf(client);
     const word = await wordOf(client, WORD_ID);
+    const retire = {
+      editionId: 'uk',
+      kind: 'word',
+      id: WORD_ID,
+      batchId,
+      recordVersion: 1,
+    } as const;
+    await expect(agent.admin.content.retire({ ...retire, reason: '  ' })).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+    });
 
     await agent.admin.content.retire({
       editionId: 'uk',
@@ -259,6 +276,52 @@ describe('the content write API', () => {
     });
   });
 
+  it('writes Crossword days by their date: a day ahead edits and retires, a published day never changes', async () => {
+    const { client, agent, batchId } = await contentBackend();
+    const days = (await snapshotOf(client)).crosswordDays;
+    const [first, last] = [days[0], days.at(-1)];
+    if (first === undefined || last === undefined) throw new Error('no Crossword days');
+    const write = { editionId: 'uk' as const, kind: 'crosswordDay' as const, batchId };
+    const clued = last.words.map((word, i) =>
+      i === 0 ? { ...word, clue: 'Нова підказка.' } : word,
+    );
+
+    expect(
+      await agent.admin.content.edit({
+        ...write,
+        id: last.date,
+        recordVersion: 1,
+        fields: { ...last, words: clued },
+      }),
+    ).toMatchObject({ id: last.date, recordVersion: 2 });
+    expect(
+      (await snapshotOf(client)).crosswordDays.find(({ date }) => date === last.date)?.words[0]
+        ?.clue,
+    ).toBe('Нова підказка.');
+
+    const refused = (refusals: unknown) => ({ code: 'REFUSED', data: { refusals } });
+    await expect(
+      agent.admin.content.edit({ ...write, id: first.date, recordVersion: 1, fields: first }),
+    ).rejects.toMatchObject(refused([{ rule: 'crossword-days-immutable', field: 'date' }]));
+    // The day after the last, with the words of the last: they come back within 20 days.
+    const next = { ...last, date: dateAfter(last.date, 1) };
+    await expect(agent.admin.content.create({ ...write, fields: next })).rejects.toMatchObject(
+      refused(
+        expect.arrayContaining([
+          expect.objectContaining({ rule: 'crossword-days-repeat', field: 'words.0.entryId' }),
+        ]),
+      ),
+    );
+    await expect(agent.admin.content.create({ ...write, fields: last })).rejects.toMatchObject(
+      refused([{ rule: 'duplicate-id', field: 'date' }]),
+    );
+
+    await agent.admin.content.retire({ ...write, id: last.date, recordVersion: 2 });
+    expect(
+      (await snapshotOf(client)).crosswordDays.find(({ date }) => date === last.date),
+    ).toMatchObject({ retired: true });
+  });
+
   it('flags a record with a reason as an Action log row, changing no content', async () => {
     const { client, agent, batchId, admin } = await contentBackend();
     const before = await snapshotOf(client);
@@ -312,7 +375,8 @@ describe('the content write API', () => {
     });
 
     expect([edited.batchId, retired.batchId]).toEqual([batchId, batchId]);
-    const log = (await admin.actions('uk')).filter(({ batchId: of }) => of === batchId);
+    // The Action log answers newest first.
+    const log = (await admin.actions('uk')).filter(({ batchId: of }) => of === batchId).reverse();
     expect(log).toEqual([
       expect.objectContaining({
         who: { kind: 'agent', name: 'claude-content' },

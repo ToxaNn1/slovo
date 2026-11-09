@@ -216,6 +216,8 @@ export async function check(
     synonymRow: snapshot.synonymRows,
     tip: snapshot.tips,
     curatedCollection: snapshot.curatedCollections,
+    // The snapshot holds no Crossword days, and drafts are never Crossword days.
+    crosswordDay: [],
   });
   const taken = new Set(
     [set.words, set.corrections, set.idioms, set.synonymRows, set.tips, set.curatedCollections]

@@ -237,10 +237,10 @@ describe('the onboarding', () => {
   it('goes from the first Word straight to «Рівень» with the Game off', async () => {
     // Through the Edition's own switches, so `playStep` goes off with the Game it depends on.
     const { featureSwitches, ...rest } = activeEditionFiles.config as {
-      featureSwitches: Record<string, boolean>;
+      featureSwitches: Record<string, string>;
     };
     await renderOnboarding(
-      loadEdition({ ...rest, featureSwitches: { ...featureSwitches, game: false } }),
+      loadEdition({ ...rest, featureSwitches: { ...featureSwitches, game: 'off' } }),
     );
     await press('onboarding-start');
     await press('onboarding-next');
