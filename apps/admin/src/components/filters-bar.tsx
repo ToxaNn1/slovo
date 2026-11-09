@@ -25,10 +25,69 @@ export function useEditionLabel(): string {
   );
 }
 
+/** Writes a change of the global filters to the URL. */
+function useChooseFilters() {
+  const navigate = useNavigate();
+  return (patch: Record<string, string | undefined>) =>
+    void navigate({
+      to: '.',
+      search: (previous) => FiltersSchema.parse({ ...previous, ...patch }),
+    });
+}
+
+const chipClass =
+  'flex-none rounded-full px-[13px] py-2 text-[13px] whitespace-nowrap aria-pressed:bg-primary aria-pressed:font-semibold aria-pressed:text-primary-foreground';
+
+/** The global filters on a phone: a row of Edition chips over a row of period chips. */
+export function FilterChips() {
+  const search = useSearch({ from: '__root__' });
+  const choose = useChooseFilters();
+  const period = search.period ?? DEFAULT_PERIOD;
+  const editions = useQuery({ queryKey: ['editions'], queryFn: () => adminApi.editions() });
+  const options = [
+    { id: undefined, name: 'Усі Editions' },
+    ...(editions.data?.editions.map(({ id, displayName }) => ({ id, name: displayName })) ?? []),
+  ];
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div role="group" aria-label="Edition" className="flex gap-1.5 overflow-x-auto pb-1">
+        {options.map((option) => (
+          <button
+            key={option.id ?? ALL_EDITIONS}
+            type="button"
+            aria-pressed={search.edition === option.id}
+            onClick={() => {
+              choose({ edition: option.id });
+            }}
+            className={`${chipClass} bg-surface text-muted-foreground`}
+          >
+            {option.name}
+          </button>
+        ))}
+      </div>
+      <div role="group" aria-label="Період" className="flex gap-1.5 overflow-x-auto pb-1">
+        {PERIODS.map((option) => (
+          <button
+            key={option}
+            type="button"
+            aria-pressed={period === option}
+            onClick={() => {
+              choose({ period: option });
+            }}
+            className={`${chipClass} px-3 py-[7px] text-[12.5px] text-muted-foreground`}
+          >
+            {PERIOD_LABELS[option]}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /** The global Edition and period filters, written to the URL. */
 export function FiltersBar() {
   const search = useSearch({ from: '__root__' });
-  const navigate = useNavigate();
+  const choose = useChooseFilters();
   // Якість reads Sentry, which keeps 30 days: a longer period reads as 30 days there.
   const matchRoute = useMatchRoute();
   const onQuality = Boolean(matchRoute({ to: '/quality' }));
@@ -37,12 +96,6 @@ export function FiltersBar() {
   const chosen = search.period ?? DEFAULT_PERIOD;
   const period = onQuality ? qualityPeriod(chosen) : chosen;
   const editions = useQuery({ queryKey: ['editions'], queryFn: () => adminApi.editions() });
-
-  const choose = (patch: Record<string, string | undefined>) =>
-    void navigate({
-      to: '.',
-      search: (previous) => FiltersSchema.parse({ ...previous, ...patch }),
-    });
 
   return (
     <div className="flex flex-wrap items-center gap-2">

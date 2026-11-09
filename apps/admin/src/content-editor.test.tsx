@@ -37,6 +37,29 @@ async function openWord() {
   return user;
 }
 
+test('lists the records of a kind as a table of label, version and state', async () => {
+  server.use(
+    http.get('*/admin/content/:editionId/records/:kind', () =>
+      HttpResponse.json({
+        records: [
+          { id: 'w_a1', label: 'обруч', retired: false, recordVersion: 3 },
+          { id: 'w_a2', label: 'жупан', retired: true, recordVersion: 1 },
+        ],
+      }),
+    ),
+  );
+  render(<Admin />);
+
+  const table = await screen.findByRole('table', { name: 'Записи' });
+  await within(table).findByRole('button', { name: 'жупан' });
+  const rows = within(table).getAllByRole('row');
+  expect(rows.map((row) => row.textContent)).toEqual([
+    'ЗаписВерсіяСтан',
+    'обруч3чинний',
+    'жупан1виведено',
+  ]);
+});
+
 test('shows the Edition card read-only, and opens an editor with its fields for each kind', async () => {
   const user = userEvent.setup();
   render(<Admin />);

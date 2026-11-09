@@ -105,11 +105,11 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
         ))}
       </div>
 
-      <div className="grid gap-6 md:grid-cols-[16rem_1fr]">
-        <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <form
             role="search"
-            className="flex gap-2"
+            className="flex min-w-[200px] flex-1 gap-2"
             onSubmit={(event) => {
               event.preventDefault();
               setQuery(search.trim());
@@ -135,24 +135,53 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
           >
             Додати
           </Button>
-          <ul className="flex flex-col gap-1">
-            {records.data?.records.map((each) => (
-              <li key={each.id}>
-                <button
-                  type="button"
+        </div>
+        <div className="overflow-hidden rounded-2xl bg-surface shadow-panel">
+          <table aria-label="Записи" className="w-full text-[13px]">
+            <thead>
+              <tr className="text-xs text-subtle">
+                <th scope="col" className="px-[18px] py-[9px] text-left font-normal">
+                  Запис
+                </th>
+                <th scope="col" className="w-[140px] px-3 py-[9px] text-left font-normal">
+                  Версія
+                </th>
+                <th scope="col" className="w-[140px] px-[18px] py-[9px] text-left font-normal">
+                  Стан
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {records.data?.records.map((each) => (
+                <tr
+                  key={each.id}
                   className={cn(
-                    'w-full rounded-md px-3 py-1.5 text-left text-sm hover:bg-muted',
-                    each.retired && 'text-muted-foreground line-through',
+                    'border-t border-border hover:bg-sunk',
+                    each.retired && 'opacity-55',
                   )}
-                  onClick={() => {
-                    choose({ at: 'edit', id: each.id });
-                  }}
                 >
-                  {each.label}
-                </button>
-              </li>
-            ))}
-          </ul>
+                  <td className="px-[18px] py-[9px]">
+                    <button
+                      type="button"
+                      className={cn(
+                        'text-left font-semibold hover:underline',
+                        each.retired && 'line-through',
+                      )}
+                      onClick={() => {
+                        choose({ at: 'edit', id: each.id });
+                      }}
+                    >
+                      {each.label}
+                    </button>
+                  </td>
+                  <td className="px-3 py-[9px] text-muted-foreground">{each.recordVersion}</td>
+                  <td className="px-[18px] py-[9px] text-muted-foreground">
+                    {each.retired ? 'виведено' : 'чинний'}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
         <div className="flex flex-col gap-4">

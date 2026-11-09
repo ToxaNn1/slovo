@@ -2,6 +2,7 @@ import type { AdminApiOutputs } from '@slovo/contracts/admin-api';
 import { useState, type ReactNode } from 'react';
 
 import { adminApi } from '../../api';
+import { cn } from '../../lib/utils';
 import { ConfirmDialog, type PendingWrite } from '../confirm-dialog';
 import { Button } from '../ui/button';
 import { useQueueBatches, useQueueFlags, useQueueReports, useQueueWrite } from './queries';
@@ -32,14 +33,26 @@ const records = (count: number) =>
   `${String(count)} ${RECORD_FORMS[RECORDS.select(count)] ?? 'записів'}`;
 
 const itemClass =
-  'flex flex-wrap items-center gap-3 rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm';
+  'flex flex-wrap items-center gap-3 border-t border-border px-[18px] py-[9px] text-[13px]';
 
+const noticeClass = 'border-t border-border px-[18px] py-[9px] text-[13px]';
+
+/** One panel of the queue: a header row with its title, then its rows. */
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <section aria-label={title} className="flex flex-col gap-3">
-      <h2 className="font-display text-lg font-semibold">{title}</h2>
+    <section aria-label={title} className="overflow-hidden rounded-2xl bg-surface shadow-panel">
+      <h2 className="px-[18px] py-[13px] font-display text-[13px] font-medium">{title}</h2>
       {children}
     </section>
+  );
+}
+
+/** The Агент who wrote a batch or a flag, tagged as in the design. */
+function AgentTag({ author }: { author: string }) {
+  return (
+    <span className="rounded-[5px] border border-dashed border-agent bg-agent-soft px-1.5 py-px font-mono text-[10.5px] font-semibold text-agent">
+      агент · {author}
+    </span>
   );
 }
 
@@ -57,7 +70,7 @@ export function ContentQueue() {
     flags.data.flags.length === 0 &&
     reports.data.reports.length === 0;
   return (
-    <section aria-label="Черга контенту" className="flex flex-col gap-8">
+    <section aria-label="Черга контенту" className="flex flex-col gap-4">
       {empty ? (
         <p className="rounded-2xl bg-surface shadow-panel p-12 text-center font-display text-lg font-medium">
           Усе перевірено
@@ -95,23 +108,24 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
   return (
     <Block title="Пачки Агентів">
       {rollback.isSuccess ? (
-        <p role="status" className="text-sm">
+        <p role="status" className={noticeClass}>
           Пачку відкочено. {skipped === 0 ? null : <span>{records(skipped)} пропущено</span>}
         </p>
       ) : null}
       {review.isError || rollback.isError ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className={cn(noticeClass, 'text-destructive')}>
           Не вдалося. Спробуйте ще раз.
         </p>
       ) : null}
-      <ul aria-label="Пачки" className="flex flex-col gap-2">
+      <ul aria-label="Пачки">
         {batches.map((batch) => (
           <li key={batch.id} className={itemClass}>
-            <span className="grow">
-              {batch.author} · {when(batch.createdAt)}
-            </span>
-            <span className="text-muted-foreground">
-              +{batch.added} нових · {batch.changed} змінено
+            <span className="flex grow flex-wrap items-center gap-2 text-[12.5px] text-subtle">
+              <AgentTag author={batch.author} />
+              <span>{when(batch.createdAt)}</span>
+              <span>
+                +{batch.added} нових · {batch.changed} змінено
+              </span>
             </span>
             <Button
               size="sm"
@@ -165,22 +179,25 @@ function Flags({ flags, confirm }: { flags: readonly Flag[]; confirm: Confirm })
   return (
     <Block title="Прапорці">
       {resolve.isError ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className={cn(noticeClass, 'text-destructive')}>
           Не вдалося. Спробуйте ще раз.
         </p>
       ) : null}
-      <ul aria-label="Відкриті прапорці" className="flex flex-col gap-2">
+      <ul aria-label="Відкриті прапорці">
         {flags.map((flag) => (
           <li key={flag.id} className={itemClass}>
-            <span className="grow">
-              {flag.recordId} · {flag.author} · {when(flag.at)}
-              <br />
+            <strong className="w-[150px] font-semibold">{flag.recordId}</strong>
+            <span className="flex min-w-[200px] grow flex-col gap-0.5">
               <span className="text-muted-foreground">{flag.explanation}</span>
+              <span className="flex flex-wrap items-center gap-2 text-xs text-subtle">
+                <AgentTag author={flag.author} />
+                {when(flag.at)}
+              </span>
             </span>
             <Button size="sm" onClick={decide(flag, 'accept', 'Прийняти')}>
               Прийняти
             </Button>
-            <Button size="sm" variant="danger" onClick={decide(flag, 'reject', 'Відхилити')}>
+            <Button size="sm" variant="secondary" onClick={decide(flag, 'reject', 'Відхилити')}>
               Відхилити
             </Button>
           </li>
@@ -195,21 +212,20 @@ function Reports({ reports, confirm }: { reports: readonly Report[]; confirm: Co
   return (
     <Block title="Помилки в записах">
       {resolve.isError ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className={cn(noticeClass, 'text-destructive')}>
           Не вдалося. Спробуйте ще раз.
         </p>
       ) : null}
-      <ul aria-label="Звіти" className="flex flex-col gap-2">
+      <ul aria-label="Звіти">
         {reports.map((report) => (
           <li key={report.id} className={itemClass}>
-            <span className="grow">
-              {report.entryId} · {MISTAKE_TYPES[report.type]} · {when(report.receivedAt)}
-              <br />
-              <span className="text-muted-foreground">
-                версія застосунку {report.appVersion} · версія контенту {report.contentVersion}
-              </span>
-              <br />
+            <strong className="w-[150px] font-semibold">{report.entryId}</strong>
+            <span className="flex min-w-[200px] grow flex-col gap-0.5">
               <span>{report.comment}</span>
+              <span className="text-xs text-subtle">
+                {MISTAKE_TYPES[report.type]} · {when(report.receivedAt)} · версія застосунку{' '}
+                {report.appVersion} · версія контенту {report.contentVersion}
+              </span>
             </span>
             <Button
               size="sm"
