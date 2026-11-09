@@ -119,12 +119,7 @@ export function buildEntryRow(entry: AskableEntry): EntryRowModel {
   }
   return {
     kind: 'correction',
-    ...rowText(
-      entry.id,
-      entry.standardEquivalents[0],
-      entry.nonStandardForm,
-      'correction',
-    ),
+    ...rowText(entry.id, entry.standardEquivalents[0], entry.nonStandardForm, 'correction'),
     correctionType: entry.correctionType,
     standardForms: entry.standardEquivalents,
   };

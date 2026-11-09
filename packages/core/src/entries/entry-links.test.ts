@@ -31,7 +31,11 @@ describe('the link to an Entry', () => {
   });
 
   it('drops a fragment from the Entry id and from the key', () => {
-    expect(parseLink('/entry/w_1#top')).toEqual({ entryId: 'w_1', source: undefined, key: undefined });
+    expect(parseLink('/entry/w_1#top')).toEqual({
+      entryId: 'w_1',
+      source: undefined,
+      key: undefined,
+    });
     expect(parseLink('/entry/w_1?from=widget&key=k1#x')).toEqual({
       entryId: 'w_1',
       source: 'widget',
