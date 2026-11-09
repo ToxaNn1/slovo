@@ -99,6 +99,35 @@ test('every write opens the confirmation, its button disabled until a reason is 
   });
 });
 
+test('an alert threshold changes only with a reason, and shows its default', async () => {
+  const bodies: unknown[] = [];
+  server.use(
+    http.post('*/admin/alert-thresholds/:key', async ({ params, request }) => {
+      bodies.push({ key: params['key'], ...Object(await request.json()) });
+      return HttpResponse.json(FIXTURES.setAlertThreshold);
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  const thresholds = within(await screen.findByRole('region', { name: 'Пороги сповіщень' }));
+  const crashFree = within(
+    await thresholds.findByRole('form', { name: 'Поріг: Сесії без падінь, %' }),
+  );
+  const value = crashFree.getByLabelText('Сесії без падінь, %');
+
+  expect(value).toHaveProperty('value', '99');
+  expect(crashFree.getByText('Типово 99,5')).toBeDefined();
+  await user.clear(value);
+  await user.type(value, '99.5');
+  await user.click(crashFree.getByRole('button', { name: 'Змінити поріг' }));
+  expect(bodies).toEqual([]);
+  await confirmWith('too noisy', 'Змінити поріг');
+
+  await waitFor(() => {
+    expect(bodies).toEqual([{ key: 'crashFree', value: 99.5, reason: 'too noisy' }]);
+  });
+});
+
 test('the Action log names its author, with the same texts in both Themes', async () => {
   const user = userEvent.setup();
   render(<Admin />);

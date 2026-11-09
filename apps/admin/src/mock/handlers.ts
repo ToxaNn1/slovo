@@ -77,6 +77,9 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     quality: handlerOf('quality', fixtures.quality),
     ciHistory: handlerOf('ciHistory', fixtures.ciHistory),
     pushCiRun: handlerOf('pushCiRun', fixtures.pushCiRun),
+    alertThresholds: handlerOf('alertThresholds', fixtures.alertThresholds),
+    setAlertThreshold: handlerOf('setAlertThreshold', fixtures.setAlertThreshold),
+    latestAlerts: handlerOf('latestAlerts', fixtures.latestAlerts),
   };
   const content = fixtures.content;
   const contentHandlers: Record<ContentName, HttpHandler> = {

@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { afterEach, expect, test } from 'vitest';
 
+import { FIXTURES } from './mock/fixtures';
 import { server } from './mock/server';
 import { Admin } from './router';
 
@@ -17,6 +18,9 @@ const BLOCKS = [
   'Відкриті пачки',
   'Останні сповіщення',
 ];
+
+/** The texts of the latest alerts, newest first. */
+const [NEWEST = '', OLDER = ''] = FIXTURES.latestAlerts.alerts.map(({ text }) => text);
 
 /** The screen as wide as `width` in CSS pixels: `matchMedia` answers its min-width queries. */
 function screenOf(width: number) {
@@ -59,7 +63,7 @@ test('Огляд reads every block of the picked Edition and period, each with t
     requests.push(decodeURIComponent(request.url));
   });
   const overview = await openOverview('/admin/?edition=uk&period=30d');
-  await overview.findByText('Kill switch: game');
+  await overview.findByText(NEWEST);
 
   expect(
     overview.getAllByRole('region').map((region) => region.getAttribute('aria-label')),
@@ -75,9 +79,14 @@ test('Огляд reads every block of the picked Edition and period, each with t
   expect(
     block(overview, 'Відкриті пачки').getByText('claude-content: +3, змінено 2'),
   ).toBeDefined();
-  const alerts = block(overview, 'Останні сповіщення');
-  expect(alerts.getByText('Kill switch: game')).toBeDefined();
-  expect(alerts.getByText('the Game loses scores')).toBeDefined();
+  // The latest alerts newest first, the one still to be sent marked so, at 13:45 in Kyiv.
+  const alerts = within(block(overview, 'Останні сповіщення').getByRole('list'));
+  const [newest, older, ...rest] = alerts.getAllByRole('listitem').map((item) => item.textContent);
+  expect(rest).toEqual([]);
+  expect(newest).toContain(NEWEST);
+  expect(newest).toMatch(/13:45 · не надіслано$/);
+  expect(older).toContain(OLDER);
+  expect(older).toMatch(/12:15$/);
   // PostHog at 11:58 UTC, Sentry at 10:00, GitHub at 09:30: 13:58, 12:00 and 11:30 in Kyiv.
   expect(block(overview, 'Відвідини').getByText('Останні дані за 13:58')).toBeDefined();
   expect(block(overview, 'Збої').getByText('Останні дані за 12:00')).toBeDefined();
@@ -87,7 +96,7 @@ test('Огляд reads every block of the picked Edition and period, each with t
   expect(requests.some((url) => /\/admin\/quality\?.*editionId=uk/.test(url))).toBe(true);
   expect(requests.some((url) => /\/admin\/quality\?.*period=30d/.test(url))).toBe(true);
   expect(requests.some((url) => /\/batches\?.*editionId=uk/.test(url))).toBe(true);
-  expect(requests.some((url) => /\/admin\/actions\?.*editionId=uk/.test(url))).toBe(true);
+  expect(requests.some((url) => url.endsWith('/admin/alerts'))).toBe(true);
   server.events.removeAllListeners();
 });
 
@@ -118,7 +127,7 @@ test('a failing source shows its own unavailable state in its blocks', async () 
 test('an empty queue and no alerts read as such', async () => {
   server.use(
     http.get('*/admin/content-queue/batches', () => HttpResponse.json({ batches: [] })),
-    http.get('*/admin/actions', () => HttpResponse.json({ actions: [] })),
+    http.get('*/admin/alerts', () => HttpResponse.json({ alerts: [] })),
   );
   const overview = await openOverview();
   expect(await block(overview, 'Відкриті пачки').findByText('0')).toBeDefined();
@@ -128,7 +137,7 @@ test('an empty queue and no alerts read as such', async () => {
 test('Огляд renders the same texts in both themes', async () => {
   const user = userEvent.setup();
   const overview = await openOverview();
-  await overview.findByText('Kill switch: game');
+  await overview.findByText(NEWEST);
   const light = screen.getByRole('region', { name: 'Огляд' }).textContent;
 
   await user.click(screen.getByRole('button', { name: 'Темна тема' }));

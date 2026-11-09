@@ -369,4 +369,33 @@ export const FIXTURES: AdminApiOutputs = {
     ],
   },
   pushCiRun: { kept: true },
+  alertThresholds: {
+    // The crash-free threshold changed; the rest at the defaults of Round 14, 5A.
+    thresholds: [
+      { key: 'crashFree', value: 99, default: 99.5 },
+      { key: 'issueEvents', value: 10, default: 10 },
+      { key: 'apiErrors', value: 2, default: 2 },
+      { key: 'batchRecords', value: 200, default: 200 },
+      { key: 'activityDrop', value: 50, default: 50 },
+    ],
+  },
+  setAlertThreshold: { threshold: { key: 'crashFree', value: 99.5, default: 99.5 } },
+  latestAlerts: {
+    alerts: [
+      {
+        id: 2,
+        at: '2026-11-08T11:45:00.000Z',
+        kind: 'crash-free',
+        text: '📉 Сесій без падінь за 24 год: 99,4 % (поріг 99,5 %).',
+        sentAt: null,
+      },
+      {
+        id: 1,
+        at: '2026-11-08T10:15:00.000Z',
+        kind: 'kill-switch',
+        text: '⛔ Kill switch: «game» вимкнено в uk.',
+        sentAt: '2026-11-08T10:15:05.000Z',
+      },
+    ],
+  },
 };
