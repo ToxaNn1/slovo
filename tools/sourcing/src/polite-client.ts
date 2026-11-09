@@ -20,8 +20,11 @@ export interface FetchResponse {
   readonly body: string;
 }
 
-/** What a cache file holds; the address it came from rides along but is not read back. */
-const CachedResponseSchema = z.object({ status: z.number().int(), body: z.string() });
+/**
+ * What a cache file holds; the address it came from rides along but is not
+ * read back. A 404 an older run cached is a miss.
+ */
+const CachedResponseSchema = z.object({ status: z.literal(200), body: z.string() });
 
 /** The network port. Rejects when the host can't be reached or doesn't answer in time. */
 export type Fetch = (url: string, options: { timeoutMs: number }) => Promise<FetchResponse>;
@@ -60,8 +63,11 @@ export class HostUnreachableError extends Error {}
 /** The least time between two requests to one host that every tool keeps by default. */
 export const POLITE_INTERVAL_MS = 2000;
 
-/** Only answers that will be the same next time are cached. */
-const CACHEABLE_STATUSES = new Set([200, 404]);
+/**
+ * Only a page is cached: a 404 may be a page the site adds later or a passing
+ * fault, so a re-run asks again.
+ */
+const CACHEABLE_STATUS = 200;
 /** Answers that mean "slow down"; goroh answers a fresh client, such as a CI run, a 403 first. */
 const BACK_OFF_STATUSES = new Set([403, 429, 503]);
 const TIMEOUT_MS = 20_000;
@@ -76,7 +82,7 @@ const LOCK_RETRY_MS = 25;
  * Fetches politely, together with every other run on the machine that shares
  * the cache folder:
  *
- * - every usable answer is kept on disk, so no page is fetched twice;
+ * - every page it gets (a 200 it accepts) is kept on disk, so no page is fetched twice;
  * - each host gets at most one request every `minIntervalMs`, across processes;
  * - a host that refuses, fails or rate-limits gets an exponential rest, which
  *   every process honours.
@@ -92,9 +98,9 @@ export class PoliteClient {
     private readonly log: (message: string) => void = () => undefined,
   ) {}
 
-  /** Whether the answer for `url` is already on disk. */
-  isCached(url: string): boolean {
-    return this.readCache(this.cacheFile(url)) !== undefined;
+  /** The page for `url` already on disk, if any; nothing is fetched. */
+  cached(url: string): FetchResponse | undefined {
+    return this.readCache(this.cacheFile(url));
   }
 
   async get(
@@ -127,14 +133,12 @@ export class PoliteClient {
         const response = await this.fetch(url, {
           timeoutMs: fallback ? FALLBACK_TIMEOUT_MS : TIMEOUT_MS,
         });
-        if (
-          CACHEABLE_STATUSES.has(response.status) &&
-          (response.status !== 200 || accept(response.body))
-        ) {
+        if (response.status === CACHEABLE_STATUS && accept(response.body)) {
           this.writeCache(cacheFile, url, response);
           return response;
         }
-        if (!BACK_OFF_STATUSES.has(response.status) && response.status !== 200) return response;
+        if (!BACK_OFF_STATUSES.has(response.status) && response.status !== CACHEABLE_STATUS)
+          return response;
         trouble =
           response.status === 200
             ? 'an error page instead of the content'
