@@ -62,7 +62,7 @@ function Quality() {
         <p className="text-sm text-muted-foreground">Останні дані за {time(fetched)}</p>
       )}
       {quality.data ? (
-        <ul aria-label="Показники" className="grid grid-cols-2 gap-3 md:grid-cols-3">
+        <ul aria-label="Показники" className="grid grid-cols-2 gap-4 md:grid-cols-3">
           {TILES.map((tile) => (
             <Tile
               key={tile.key}
