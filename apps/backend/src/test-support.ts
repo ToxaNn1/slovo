@@ -95,6 +95,8 @@ export function adminCommandDeps(admin: AdminAccess, database: Database): Comman
 export const silentLogger = pino({ enabled: false });
 
 interface TestDatabase {
+  /** The name of the new database. */
+  readonly name: string;
   /** The URL of the new database. */
   readonly url: string;
   drop(): Promise<void>;
@@ -103,23 +105,65 @@ interface TestDatabase {
 /**
  * Makes a database with a random name on the server `serverUrl` names and
  * runs the migrations on it unless told not to, so a test file never meets another's data.
+ * Given a template, the database is a copy of that one, migrations and rows alike.
  */
 export async function createTestDatabase(
   serverUrl: string,
-  { migrate = true }: { readonly migrate?: boolean } = {},
+  options: { readonly migrate?: boolean } | { readonly template: string } = {},
 ): Promise<TestDatabase> {
   const name = `slovo_test_${randomUUID().replaceAll('-', '')}`;
-  await onServer(serverUrl, `CREATE DATABASE ${name}`);
+  const template = 'template' in options ? options.template : undefined;
+  await onServer(
+    serverUrl,
+    template === undefined
+      ? `CREATE DATABASE ${name}`
+      : `CREATE DATABASE ${name} TEMPLATE ${template}`,
+  );
   const drop = () => onServer(serverUrl, `DROP DATABASE IF EXISTS ${name} WITH (FORCE)`);
   const url = new URL(serverUrl);
   url.pathname = `/${name}`;
   try {
-    if (migrate) await migrateDatabase(url.href, silentLogger);
+    if (!('template' in options) && options.migrate !== false) {
+      await migrateDatabase(url.href, silentLogger);
+    }
   } catch (error) {
     await drop();
     throw error;
   }
-  return { url: url.href, drop };
+  return { name, url: url.href, drop };
+}
+
+/**
+ * Hands out databases of a test's own with the Edition folder imported. The
+ * folder is read, checked and imported once per test file, into a template,
+ * and each database is a copy of it: a test pays a copy, not an import of the
+ * whole Edition. The template is dropped after the file.
+ */
+export function importedDatabases(editionId: string, editionDir: string) {
+  let template: Promise<TestDatabase> | undefined;
+  afterAll(async () => {
+    await template?.then(
+      (made) => made.drop(),
+      () => undefined,
+    );
+  });
+  async function makeTemplate() {
+    const made = await createTestDatabase(testDatabaseUrl());
+    const database = createDatabase(made.url, silentLogger);
+    try {
+      const result = await testApp({ database }).importContent(editionId, editionDir);
+      if (!result.ok) throw new Error(`the ${editionId} Edition did not import`);
+    } finally {
+      // A template takes no copy while a connection to it is open.
+      await database.close();
+    }
+    return made;
+  }
+  return async (): Promise<TestDatabase> => {
+    template ??= makeTemplate();
+    const { name } = await template;
+    return createTestDatabase(testDatabaseUrl(), { template: name });
+  };
 }
 
 async function onServer(serverUrl: string, statement: string): Promise<void> {
@@ -172,13 +216,23 @@ interface FakeMailer extends Mailer {
   readonly sent: readonly Mail[];
   /** The six digits of the newest email to the address. Throws when none was sent. */
   codeSentTo(email: string): string;
+  /** Makes the next email fail to send, as an SMTP server that refuses it. */
+  failNext(): void;
 }
 
 function createFakeMailer(): FakeMailer {
   const sent: Mail[] = [];
+  let failing = false;
   return {
     sent,
+    failNext() {
+      failing = true;
+    },
     send: (mail) => {
+      if (failing) {
+        failing = false;
+        return Promise.reject(new Error('the email was not sent (SMTP 554)'));
+      }
       sent.push(mail);
       return Promise.resolve();
     },

@@ -159,8 +159,18 @@ export interface AdminAccess {
   addOwner(email: string, command: string): Promise<'added' | 'taken'>;
   /** The active Admin users, by email. */
   people(): Promise<readonly AdminUser[]>;
-  /** Gives the email access under the role, and logs it; `taken` when it has access already. */
-  invite(email: string, role: AdminRole, write: AccessWrite): Promise<AccessResult>;
+  /**
+   * Tells the person of the email through `announce`, then gives the email
+   * access under the role and logs it; `taken` when it has access already,
+   * and then no one is told. When `announce` throws, no access is given, so
+   * the invite can be made again.
+   */
+  invite(
+    email: string,
+    role: AdminRole,
+    write: AccessWrite,
+    announce: (email: string) => Promise<void>,
+  ): Promise<AccessResult>;
   /** Changes the role of a person other than the writer, and logs it. */
   setRole(email: string, role: AdminRole, write: AccessWrite): Promise<AccessResult>;
   /** Removes the access of a person other than the writer, ending their sessions, and logs it. */
@@ -221,8 +231,12 @@ export function createAdminAccess({
 
     people: () => store.adminUsers(),
 
-    async invite(email, role, write) {
+    async invite(email, role, write, announce) {
       const normalized = normal(email);
+      if ((await store.adminUserByEmail(normalized)) !== undefined) {
+        return { ok: false, reason: 'taken' };
+      }
+      await announce(normalized);
       const added = await store.addAdminUser({ email: normalized, role, createdAt: clock.now() });
       if (added === 'taken' && !(await store.reactivateAdminUser(normalized, role))) {
         return { ok: false, reason: 'taken' };

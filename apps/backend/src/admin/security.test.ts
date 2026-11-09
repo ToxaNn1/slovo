@@ -142,10 +142,29 @@ describe('people and access', () => {
     });
   });
 
+  it('grants no access when the invitation email is not sent, so the invite can be repeated', async () => {
+    const backend = await ownerOn();
+    const email = newEmail();
+    backend.mailer.failNext();
+
+    await expect(
+      backend.owner.client.admin.invite({ email, role: 'admin', reason: 'help' }),
+    ).rejects.toMatchObject({ code: 'INTERNAL_SERVER_ERROR' });
+    expect((await backend.owner.client.admin.people()).people).not.toContainEqual(
+      expect.objectContaining({ email }),
+    );
+
+    await backend.owner.client.admin.invite({ email, role: 'admin', reason: 'help' });
+    expect(backend.mailer.sent.filter((mail) => mail.to === email)).toHaveLength(1);
+  });
+
   it('takes a write only with a reason and the admin header', async () => {
     const backend = await ownerOn();
     await expect(
       backend.owner.client.admin.invite({ email: newEmail(), role: 'admin', reason: ' ' }),
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    await expect(
+      backend.owner.client.admin.invite({ email: 'not an email', role: 'admin', reason: 'help' }),
     ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
     const response = await backend.request('/v1/admin/people', {
       method: 'POST',

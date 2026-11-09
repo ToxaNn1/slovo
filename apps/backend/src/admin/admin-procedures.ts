@@ -384,8 +384,8 @@ export function adminProcedures(
 
     invite: os.invite.handler(async ({ context, input, errors }) => {
       const write = await securityWrite(context.headers, errors, input.reason);
-      done(await admin.invite(input.email, input.role, write), errors);
-      await mailer.send({ to: input.email.toLowerCase(), ...adminInviteEmail(input.role) });
+      const announce = (to: string) => mailer.send({ to, ...adminInviteEmail(input.role) });
+      done(await admin.invite(input.email, input.role, write, announce), errors);
       return { invited: true as const };
     }),
 
