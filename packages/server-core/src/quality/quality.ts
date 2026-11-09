@@ -7,15 +7,6 @@ export const SENTRY_RETENTION_DAYS = 30;
 /** How long a Sentry number stays fresh before Якість reads it again. */
 const FRESH_MS = 5 * 60 * 1000;
 
-const SENTRY_READS: readonly SentryRead[] = [
-  'crashFree',
-  'crashes',
-  'errors',
-  'newIssues',
-  'backendP95',
-  'appStart',
-];
-
 /** One Sentry number of Якість: the period's, the same a day earlier, and when it was read. */
 export type QualityKpi =
   | {
@@ -106,15 +97,24 @@ export function createQuality({
       const capped = days > SENTRY_RETENTION_DAYS;
       const cut = Math.min(days, SENTRY_RETENTION_DAYS);
       const to = clock.now();
-      const entries = await Promise.all(
-        SENTRY_READS.map(async (read) => [read, await kpi(read, editionId, cut)] as const),
-      );
-      return {
-        capped,
-        from: new Date(to.getTime() - cut * DAY_MS),
-        to,
-        kpis: Object.fromEntries(entries) as Record<SentryRead, QualityKpi>,
+      const read = (sentryRead: SentryRead) => kpi(sentryRead, editionId, cut);
+      const [crashFree, crashes, errors, newIssues, backendP95, appStart] = await Promise.all([
+        read('crashFree'),
+        read('crashes'),
+        read('errors'),
+        read('newIssues'),
+        read('backendP95'),
+        read('appStart'),
+      ]);
+      const kpis: Record<SentryRead, QualityKpi> = {
+        crashFree,
+        crashes,
+        errors,
+        newIssues,
+        backendP95,
+        appStart,
       };
+      return { capped, from: new Date(to.getTime() - cut * DAY_MS), to, kpis };
     },
 
     pushCiRun: (run) => ciRuns.add(run),
@@ -125,7 +125,10 @@ export function createQuality({
       return runs.map((run) => ({
         ...run,
         flakyTests: run.failedTests.filter((test) =>
-          runs.some((other) => other !== run && !other.failedTests.includes(test)),
+          // Only a re-run of the same commit that passes the test makes it flaky; a later commit may have fixed it.
+          runs.some(
+            (other) => other !== run && other.sha === run.sha && !other.failedTests.includes(test),
+          ),
         ),
       }));
     },
