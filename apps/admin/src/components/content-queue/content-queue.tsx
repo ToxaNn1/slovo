@@ -32,7 +32,7 @@ const records = (count: number) =>
   `${String(count)} ${RECORD_FORMS[RECORDS.select(count)] ?? 'записів'}`;
 
 const itemClass =
-  'flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm';
+  'flex flex-wrap items-center gap-3 rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm';
 
 function Block({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -57,12 +57,9 @@ export function ContentQueue() {
     flags.data.flags.length === 0 &&
     reports.data.reports.length === 0;
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-8">
-      <h1 id="section-title" className="font-display text-2xl font-semibold">
-        Черга контенту
-      </h1>
+    <section aria-label="Черга контенту" className="flex flex-col gap-8">
       {empty ? (
-        <p className="rounded-2xl border border-dashed border-border bg-surface p-12 text-center font-display text-lg font-medium">
+        <p className="rounded-2xl bg-surface shadow-panel p-12 text-center font-display text-lg font-medium">
           Усе перевірено
         </p>
       ) : (
@@ -76,6 +73,7 @@ export function ContentQueue() {
         <ConfirmDialog
           title={pending.title}
           confirmLabel={pending.confirm}
+          danger={pending.danger}
           onConfirm={(reason) => {
             pending.run(reason);
             return Promise.resolve();
@@ -117,7 +115,7 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
             </span>
             <Button
               size="sm"
-              variant="outline"
+
               onClick={() => {
                 confirm({
                   title: `Позначити пачку ${batch.author} перевіреною?`,
@@ -132,11 +130,12 @@ function Batches({ batches, confirm }: { batches: readonly Batch[]; confirm: Con
             </Button>
             <Button
               size="sm"
-              variant="outline"
+              variant="danger"
               onClick={() => {
                 confirm({
                   title: `Відкотити пачку ${batch.author}? Записи, змінені після неї, буде пропущено.`,
                   confirm: 'Відкотити пачку',
+                  danger: true,
                   run: (reason) => {
                     rollback.mutate({ batchId: batch.id, reason });
                   },
@@ -178,10 +177,10 @@ function Flags({ flags, confirm }: { flags: readonly Flag[]; confirm: Confirm })
               <br />
               <span className="text-muted-foreground">{flag.explanation}</span>
             </span>
-            <Button size="sm" variant="outline" onClick={decide(flag, 'accept', 'Прийняти')}>
+            <Button size="sm" onClick={decide(flag, 'accept', 'Прийняти')}>
               Прийняти
             </Button>
-            <Button size="sm" variant="outline" onClick={decide(flag, 'reject', 'Відхилити')}>
+            <Button size="sm" variant="danger" onClick={decide(flag, 'reject', 'Відхилити')}>
               Відхилити
             </Button>
           </li>
@@ -214,7 +213,7 @@ function Reports({ reports, confirm }: { reports: readonly Report[]; confirm: Co
             </span>
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary"
               onClick={() => {
                 confirm({
                   title: `Позначити помилку в ${report.entryId} вирішеною? Звіт буде видалено.`,

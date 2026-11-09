@@ -134,11 +134,16 @@ describe('the admin sign-in', () => {
       String((Number(code) + 1 + guess) % 1_000_000).padStart(6, '0'),
     );
 
+    // Requests that come together are taken in no set order, so a right code
+    // among them could be one of the three checked: it comes after them.
     const answers = await Promise.allSettled(
-      [...guesses, code].map((guess) => backend.anonymous.admin.verifyCode({ email, code: guess })),
+      guesses.map((guess) => backend.anonymous.admin.verifyCode({ email, code: guess })),
     );
 
     expect(answers.filter((answer) => answer.status === 'fulfilled')).toEqual([]);
+    await expect(backend.anonymous.admin.verifyCode({ email, code })).rejects.toMatchObject({
+      code: 'TOO_MANY_REQUESTS',
+    });
   });
 
   it('sends an email at most ten sign-in codes an hour, and answers the same past that', async () => {

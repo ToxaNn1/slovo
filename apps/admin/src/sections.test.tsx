@@ -13,7 +13,8 @@ async function sidebar() {
 test('the sidebar shows the seven sections in order', async () => {
   render(<Admin />);
   const links = (await sidebar()).getAllByRole('link');
-  expect(links.map((link) => link.textContent)).toEqual(ORDER);
+  // Контент may carry the count of the Агент batches not reviewed yet.
+  expect(links.map((link) => link.textContent.replace(/\d+$/, ''))).toEqual(ORDER);
 });
 
 /**
@@ -38,7 +39,6 @@ async function settled(section: HTMLElement, title: string) {
 test('each section not yet built opens with the same texts in both themes, the ones not yet filled in their empty state', async () => {
   const user = userEvent.setup();
   render(<Admin />);
-  const theme = await screen.findByRole('button', { name: 'Темна тема' });
   for (const title of OPENED) {
     await user.click((await sidebar()).getByRole('link', { name: new RegExp(`^${title}`) }));
     const section = await screen.findByRole('region', { name: title });
@@ -46,18 +46,21 @@ test('each section not yet built opens with the same texts in both themes, the o
     const light = section.textContent;
     expect(document.documentElement.dataset['theme']).toBe('light');
 
-    await user.click(theme);
+    await user.click(screen.getByRole('button', { name: 'owner@example.com Власник' }));
+    const dark = screen.getByRole('button', { name: 'Темна' });
+    await user.click(dark);
     expect(document.documentElement.dataset['theme']).toBe('dark');
-    expect(theme.getAttribute('aria-pressed')).toBe('true');
+    expect(dark.getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('region', { name: title }).textContent).toBe(light);
-    await user.click(theme);
+    await user.click(screen.getByRole('button', { name: 'Світла' }));
   }
 });
 
 test('the dark Theme the owner picked is kept for the next visit', async () => {
   const user = userEvent.setup();
   const { unmount } = render(<Admin />);
-  await user.click(await screen.findByRole('button', { name: 'Темна тема' }));
+  await user.click(await screen.findByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('button', { name: 'Темна' }));
   unmount();
   delete document.documentElement.dataset['theme'];
 

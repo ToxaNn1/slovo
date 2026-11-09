@@ -122,27 +122,44 @@ test('a switch change asks for a reason, and a refused Rule names the switch it 
   ]);
 });
 
+/** Opens a tab of Свічі. */
+async function openTab(user: ReturnType<typeof userEvent.setup>, name: string) {
+  const tabs = within(await screen.findByRole('navigation', { name: 'Свічі' }));
+  await user.click(tabs.getByRole('link', { name }));
+}
+
+/** Turns the feature off with the Аварійний вимикач tab, giving the reason. */
+async function kill(user: ReturnType<typeof userEvent.setup>, feature: string, reason: string) {
+  await openTab(user, 'Аварійний вимикач');
+  await user.click(await screen.findByRole('button', { name: new RegExp(`^${feature} `) }));
+  const panel = within(screen.getByRole('region', { name: 'Аварійний вимикач' }));
+  expect(panel.getByText(`Вимкнеться «${feature}» · усі Editions`)).toBeDefined();
+  await user.click(panel.getByRole('button', { name: 'Вимкнути зараз' }));
+  const dialog = within(await screen.findByRole('dialog'));
+  const confirm = dialog.getByRole('button', { name: 'Вимкнути зараз' });
+  expect(confirm).toHaveProperty('disabled', true);
+  await user.type(dialog.getByRole('textbox', { name: 'Причина' }), reason);
+  await user.click(confirm);
+  await vi.waitFor(() => {
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+}
+
 test('the Kill switch asks for a reason and the matrix shows the feature off after it', async () => {
   const { writes } = threeEditions();
   const user = userEvent.setup();
   window.history.replaceState(null, '', '/admin/switches');
   render(<Admin />);
-  expect((await rowOf('tips')).getByText('увімкнено')).toBeDefined();
+  expect((await rowOf('tips')).getAllByText('увімкнено')).not.toHaveLength(0);
 
-  const kill = within(screen.getByRole('region', { name: 'Kill switch' }));
-  await user.selectOptions(kill.getByRole('combobox', { name: 'Світч' }), 'tips');
-  await user.click(kill.getByRole('button', { name: 'Вимкнути для всіх' }));
-  const dialog = within(await screen.findByRole('dialog'));
-  expect(dialog.getByRole('button', { name: 'Підтвердити' })).toHaveProperty('disabled', true);
-  await user.type(dialog.getByRole('textbox', { name: 'Причина' }), 'tips crash the app');
-  await user.click(dialog.getByRole('button', { name: 'Підтвердити' }));
+  await kill(user, 'tips', 'tips crash the app');
+  await openTab(user, 'Feature Switch');
 
-  expect(await (await rowOf('tips')).findByText('вимкнено')).toBeDefined();
-  expect(screen.queryByRole('dialog')).toBeNull();
+  expect(await (await rowOf('tips')).findAllByText('вимкнено')).not.toHaveLength(0);
   expect(writes).toEqual([{ reason: 'tips crash the app' }]);
 });
 
-test('the Rule editor saves over a Kill switch written while it was open, never undoing it', async () => {
+test('the Rule editor saves over a Kill switch written since it opened, never undoing it', async () => {
   threeEditions();
   const sent: unknown[] = [];
   server.use(
@@ -158,16 +175,16 @@ test('the Rule editor saves over a Kill switch written while it was open, never 
   await user.click((await rowOf('game')).getByRole('button', { name: 'Правила' }));
   const editor = 'Правила game у Рідкісні слова';
   expect(await screen.findByRole('region', { name: editor })).toBeDefined();
-  const kill = within(screen.getByRole('region', { name: 'Kill switch' }));
-  await user.selectOptions(kill.getByRole('combobox', { name: 'Світч' }), 'game');
-  await user.click(kill.getByRole('button', { name: 'Вимкнути для всіх' }));
-  const killDialog = within(await screen.findByRole('dialog'));
-  await user.type(killDialog.getByRole('textbox', { name: 'Причина' }), 'game crashes');
-  await user.click(killDialog.getByRole('button', { name: 'Підтвердити' }));
-  expect(await (await rowOf('game')).findByText('вимкнено')).toBeDefined();
+
+  await openTab(user, 'Аварійний вимикач');
+  await user.click(screen.getByRole('button', { name: 'Усі Editions' }));
+  await kill(user, 'game', 'game crashes');
+  await user.click(screen.getByRole('button', { name: 'Рідкісні слова' }));
+  await openTab(user, 'Правило');
+  expect(screen.getByRole('combobox', { name: 'Світч' })).toHaveProperty('value', 'game');
 
   await user.click(
-    within(screen.getByRole('region', { name: editor })).getByRole('button', {
+    within(await screen.findByRole('region', { name: editor })).getByRole('button', {
       name: 'Зберегти правила',
     }),
   );

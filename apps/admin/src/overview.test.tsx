@@ -140,12 +140,13 @@ test('Огляд renders the same texts in both themes', async () => {
   await overview.findByText(NEWEST);
   const light = screen.getByRole('region', { name: 'Огляд' }).textContent;
 
-  await user.click(screen.getByRole('button', { name: 'Темна тема' }));
+  await user.click(screen.getByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('button', { name: 'Темна' }));
   expect(document.documentElement.dataset['theme']).toBe('dark');
   expect(screen.getByRole('region', { name: 'Огляд' }).textContent).toBe(light);
 });
 
-test('at a phone width the sidebar collapses, Огляд stacks every block and the kill switch takes its reason', async () => {
+test('at a phone width bottom tabs open Огляд, the kill switch and Ще instead of the sidebar', async () => {
   screenOf(390);
   const user = userEvent.setup();
   const overview = await openOverview();
@@ -154,19 +155,33 @@ test('at a phone width the sidebar collapses, Огляд stacks every block and 
   expect(overview.getByRole('list', { name: 'Блоки' }).dataset['layout']).toBe('stack');
   for (const title of BLOCKS) expect(overview.getByRole('region', { name: title })).toBeDefined();
 
-  const menu = screen.getByRole('button', { name: 'Меню' });
-  expect(menu.getAttribute('aria-expanded')).toBe('false');
-  await user.click(menu);
-  const sections = within(screen.getByRole('navigation', { name: 'Розділи' }));
-  await user.click(sections.getByRole('link', { name: 'Свічі' }));
-  expect(await screen.findByRole('region', { name: 'Свічі' })).toBeDefined();
-  expect(screen.queryByRole('navigation', { name: 'Розділи' })).toBeNull();
-
-  const kill = within(screen.getByRole('region', { name: 'Kill switch' }));
-  await user.click(kill.getByRole('button', { name: 'Вимкнути для всіх' }));
+  const tabs = within(screen.getByRole('navigation', { name: 'Вкладки' }));
+  expect(tabs.getByRole('link', { name: 'Огляд' }).getAttribute('aria-current')).toBe('page');
+  await user.click(tabs.getByRole('link', { name: 'Вимикач' }));
+  const kill = within(await screen.findByRole('region', { name: 'Аварійний вимикач' }));
+  expect(screen.queryByRole('navigation', { name: 'Свічі' })).toBeNull();
+  await user.click(kill.getByRole('button', { name: 'Вимкнути зараз' }));
   const dialog = within(await screen.findByRole('dialog'));
   expect(dialog.getByRole('textbox', { name: 'Причина' })).toBeDefined();
-  expect(dialog.getByRole('button', { name: 'Підтвердити' })).toHaveProperty('disabled', true);
+  expect(dialog.getByRole('button', { name: 'Вимкнути зараз' })).toHaveProperty('disabled', true);
+  await user.click(dialog.getByRole('button', { name: 'Скасувати' }));
+
+  await user.click(tabs.getByRole('button', { name: 'Ще' }));
+  expect(screen.getByText('Відкрийте на комп’ютері')).toBeDefined();
+  // Only Ще is drawn as the open tab, though the route is still Огляд's.
+  expect(tabs.getByRole('button', { name: 'Ще' }).dataset['current']).toBe('');
+  expect(tabs.getByRole('link', { name: 'Огляд' }).dataset['current']).toBeUndefined();
+  await user.click(screen.getByRole('link', { name: 'До Огляду' }));
+  expect(await screen.findByRole('region', { name: 'Огляд' })).toBeDefined();
+});
+
+test('at a phone width a section of the big screen says to open a computer', async () => {
+  screenOf(390);
+  window.history.replaceState(null, '', '/admin/analytics');
+  render(<Admin />);
+
+  expect(await screen.findByText('Відкрийте на комп’ютері')).toBeDefined();
+  expect(screen.queryByRole('region', { name: 'Аналітика' })).toBeNull();
 });
 
 test('at a wide width the sidebar is shown and Огляд lays its blocks in a grid', async () => {
@@ -174,6 +189,6 @@ test('at a wide width the sidebar is shown and Огляд lays its blocks in a g
   const overview = await openOverview();
 
   expect(screen.getByRole('navigation', { name: 'Розділи' })).toBeDefined();
-  expect(screen.queryByRole('button', { name: 'Меню' })).toBeNull();
+  expect(screen.queryByRole('navigation', { name: 'Вкладки' })).toBeNull();
   expect(overview.getByRole('list', { name: 'Блоки' }).dataset['layout']).toBe('grid');
 });

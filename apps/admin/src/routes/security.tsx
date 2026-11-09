@@ -28,7 +28,7 @@ const REFUSALS: Readonly<Record<string, string>> = {
 const when = (iso: string) =>
   new Date(iso).toLocaleString('uk-UA', { dateStyle: 'medium', timeStyle: 'short' });
 
-const inputClass = 'h-9 rounded-md border border-border bg-surface px-3 text-sm';
+const inputClass = 'h-9 rounded-lg border border-border bg-background px-3 text-sm';
 
 /** What the Власник reads of a refused write. */
 function refusalOf(error: unknown): string {
@@ -69,6 +69,7 @@ function Block({ title, children }: { title: string; children: ReactNode }) {
 interface SecurityWrite {
   readonly title: string;
   readonly confirm: string;
+  readonly danger?: boolean;
   readonly run: (reason: string) => Promise<unknown>;
 }
 
@@ -79,10 +80,7 @@ function Security() {
   const admin = useSignedInAdmin();
   if (admin?.role !== 'owner') {
     return (
-      <section aria-labelledby="section-title" className="flex flex-col gap-2">
-        <h1 id="section-title" className="font-display text-2xl font-semibold">
-          Безпека
-        </h1>
+      <section aria-label="Безпека" className="flex flex-col gap-2">
         <p className="text-sm text-muted-foreground">Безпека відкрита лише Власнику.</p>
       </section>
     );
@@ -93,12 +91,12 @@ function Security() {
 function OwnerSecurity({ email }: { email: string }) {
   const [pending, setPending] = useState<SecurityWrite | null>(null);
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-8">
+    <section aria-label="Безпека" className="flex flex-col gap-8">
       <div className="flex items-baseline justify-between gap-4">
-        <h1 id="section-title" className="font-display text-2xl font-semibold">
-          Безпека
-        </h1>
-        <Link to="/sessions" className="text-sm underline">
+        <Link
+          to="/sessions"
+          className="rounded-lg bg-sunk px-3 py-1.5 text-[12.5px] text-foreground no-underline hover:bg-border"
+        >
           Мої сесії
         </Link>
       </div>
@@ -110,6 +108,7 @@ function OwnerSecurity({ email }: { email: string }) {
         <ConfirmDialog
           title={pending.title}
           confirmLabel={pending.confirm}
+          danger={pending.danger}
           onConfirm={async (reason) => {
             await pending.run(reason);
           }}
@@ -158,17 +157,25 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
 
   return (
     <Block title="Люди і доступ">
-      <ul aria-label="Люди" className="flex flex-col gap-2">
+      <ul
+        aria-label="Люди"
+        className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-surface shadow-panel"
+      >
         {(people.data?.people ?? []).map((person) => {
           const other: Role = person.role === 'owner' ? 'admin' : 'owner';
           return (
             <li
               key={person.email}
-              className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+              className="flex flex-wrap items-center gap-3 px-[18px] py-3 text-[13px]"
             >
               <span className="grow">
-                {person.email} · {ROLE_LABELS[person.role]}
-                {person.signedInYet ? '' : ' · ще не входили'}
+                {person.email}{' '}
+                <span
+                  className={`ml-2 rounded-md px-2 py-0.5 text-[11.5px] font-semibold ${person.role === 'owner' ? 'bg-primary/10 text-primary' : 'bg-sunk text-muted-foreground'}`}
+                >
+                  {ROLE_LABELS[person.role]}
+                </span>
+                {person.signedInYet ? '' : <span className="ml-2 text-warn">ще не входили</span>}
               </span>
               {person.email === self ? (
                 <span className="text-muted-foreground">це ви</span>
@@ -176,11 +183,12 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
                 <>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="secondary"
                     onClick={() => {
                       confirm({
                         title: `Зробити ${person.email} ${ROLE_LABELS[other]}ом?`,
                         confirm: 'Змінити роль',
+                        danger: true,
                         run: (reason) =>
                           changeRole.mutateAsync({ email: person.email, role: other, reason }),
                       });
@@ -190,11 +198,12 @@ function People({ self, confirm }: { self: string; confirm: Confirm }) {
                   </Button>
                   <Button
                     size="sm"
-                    variant="outline"
+                    variant="danger"
                     onClick={() => {
                       confirm({
                         title: `Забрати доступ у ${person.email}?`,
                         confirm: 'Забрати доступ',
+                        danger: true,
                         run: (reason) => remove.mutateAsync({ email: person.email, reason }),
                       });
                     }}
@@ -265,16 +274,13 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
   return (
     <Block title="Токени Агентів">
       {issued === null ? null : (
-        <div
-          role="status"
-          className="flex flex-col gap-2 rounded-lg border border-border bg-muted px-4 py-3 text-sm"
-        >
+        <div role="status" className="flex flex-col gap-2 rounded-[14px] bg-sunk px-4 py-3 text-sm">
           <p>Токен Агента {issued.name}. Його видно лише зараз: скопіюйте і збережіть.</p>
           <code className="break-all font-mono">{issued.token}</code>
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary"
               onClick={() => {
                 void navigator.clipboard.writeText(issued.token);
               }}
@@ -293,11 +299,14 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
           </div>
         </div>
       )}
-      <ul aria-label="Токени" className="flex flex-col gap-2">
+      <ul
+        aria-label="Токени"
+        className="flex flex-col divide-y divide-border overflow-hidden rounded-2xl bg-surface shadow-panel"
+      >
         {(tokens.data?.tokens ?? []).map((token) => (
           <li
             key={token.name}
-            className="flex flex-wrap items-center gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+            className="flex flex-wrap items-center gap-3 px-[18px] py-3 text-[13px]"
           >
             <span className="grow">
               {token.name} · видано {when(token.createdAt)}
@@ -306,11 +315,12 @@ function AgentTokens({ confirm }: { confirm: Confirm }) {
             {token.revokedAt === null ? (
               <Button
                 size="sm"
-                variant="outline"
+                variant="danger"
                 onClick={() => {
                   confirm({
                     title: `Відкликати токен Агента ${token.name}?`,
                     confirm: 'Відкликати',
+                    danger: true,
                     run: (reason) => revoke.mutateAsync({ name: token.name, reason }),
                   });
                 }}
@@ -399,7 +409,7 @@ function ThresholdForm({
     <form
       aria-label={`Поріг: ${label}`}
       onSubmit={onChange}
-      className="flex flex-wrap items-end gap-3 rounded-lg border border-border bg-surface px-4 py-3 text-sm"
+      className="flex flex-wrap items-end gap-3 rounded-[14px] bg-surface px-4 py-3 shadow-panel text-sm"
     >
       <label className="flex grow flex-col gap-1">
         {label}
@@ -415,7 +425,7 @@ function ThresholdForm({
       <span className="flex h-9 min-w-24 items-center text-muted-foreground">
         Типово {number(threshold.default)}
       </span>
-      <Button type="submit" variant="outline" disabled={!valid || value === threshold.value}>
+      <Button type="submit" variant="secondary" disabled={!valid || value === threshold.value}>
         Змінити поріг
       </Button>
     </form>
@@ -431,26 +441,26 @@ function ActionLog() {
   return (
     <Block title="Журнал дій">
       <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="text-muted-foreground">
+        <table className="w-full text-left text-[13px]">
+          <thead className="text-xs text-subtle">
             <tr>
-              <th className="px-2 py-1">Хто</th>
-              <th className="px-2 py-1">Коли</th>
-              <th className="px-2 py-1">Що</th>
-              <th className="px-2 py-1">Було</th>
-              <th className="px-2 py-1">Стало</th>
-              <th className="px-2 py-1">Причина</th>
+              <th className="px-2 py-[9px] font-normal">Хто</th>
+              <th className="px-2 py-[9px] font-normal">Коли</th>
+              <th className="px-2 py-[9px] font-normal">Що</th>
+              <th className="px-2 py-[9px] font-normal">Було</th>
+              <th className="px-2 py-[9px] font-normal">Стало</th>
+              <th className="px-2 py-[9px] font-normal">Причина</th>
             </tr>
           </thead>
           <tbody>
             {(actions.data?.actions ?? []).map((row, index) => (
               <tr key={`${row.at}-${String(index)}`} className="border-t border-border">
-                <td className="px-2 py-1">{authorOf(row.who)}</td>
-                <td className="px-2 py-1">{when(row.at)}</td>
-                <td className="px-2 py-1 font-mono">{row.what}</td>
-                <td className="px-2 py-1 font-mono">{shown(row.before)}</td>
-                <td className="px-2 py-1 font-mono">{shown(row.after)}</td>
-                <td className="px-2 py-1">{row.reason ?? '—'}</td>
+                <td className="px-2 py-[9px]">{authorOf(row.who)}</td>
+                <td className="px-2 py-[9px]">{when(row.at)}</td>
+                <td className="px-2 py-[9px] font-mono">{row.what}</td>
+                <td className="px-2 py-[9px] font-mono">{shown(row.before)}</td>
+                <td className="px-2 py-[9px] font-mono">{shown(row.after)}</td>
+                <td className="px-2 py-[9px]">{row.reason ?? '—'}</td>
               </tr>
             ))}
           </tbody>

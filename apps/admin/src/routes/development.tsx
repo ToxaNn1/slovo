@@ -24,10 +24,7 @@ function Development() {
   });
   const { github, eas } = development.data ?? {};
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-8">
-      <h1 id="section-title" className="font-display text-2xl font-semibold">
-        {section.title}
-      </h1>
+    <section aria-label={section.title} className="flex flex-col gap-8">
       <OwnerChecks />
       {github !== undefined && (
         <Source name="GitHub" read={github}>

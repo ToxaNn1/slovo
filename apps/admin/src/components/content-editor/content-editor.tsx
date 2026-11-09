@@ -59,7 +59,7 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
     <div className="flex flex-col gap-6">
       <section
         aria-label="Картка Edition"
-        className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4"
+        className="flex flex-col gap-2 rounded-2xl bg-surface px-[18px] py-4 shadow-panel"
       >
         {card.data !== undefined && (
           <>
@@ -78,7 +78,11 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
         )}
       </section>
 
-      <div role="tablist" aria-label="Види записів" className="flex flex-wrap gap-2">
+      <div
+        role="tablist"
+        aria-label="Види записів"
+        className="flex flex-wrap gap-0.5 self-start rounded-[11px] bg-sunk p-[3px]"
+      >
         {CONTENT_KINDS.map((each) => (
           <button
             key={each.kind}
@@ -86,8 +90,10 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
             role="tab"
             aria-selected={each.kind === kind}
             className={cn(
-              'rounded-md px-3 py-1.5 text-sm',
-              each.kind === kind ? 'bg-primary text-primary-foreground' : 'hover:bg-muted',
+              'rounded-lg px-3 py-1.5 text-[12.5px]',
+              each.kind === kind
+                ? 'bg-surface font-semibold shadow-panel'
+                : 'text-muted-foreground hover:text-foreground',
             )}
             onClick={() => {
               setEditor(each);
@@ -112,13 +118,13 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
             <input
               aria-label="Пошук"
               placeholder="Пошук"
-              className="h-9 min-w-0 flex-1 rounded-md border border-border bg-surface px-3 text-sm"
+              className="h-9 min-w-0 flex-1 rounded-[10px] bg-surface px-[13px] text-[13px] shadow-panel"
               value={search}
               onChange={(event) => {
                 setSearch(event.target.value);
               }}
             />
-            <Button type="submit" variant="outline">
+            <Button type="submit" variant="secondary">
               Шукати
             </Button>
           </form>

@@ -19,6 +19,9 @@ import { Route as SessionsRouteImport } from './routes/sessions'
 import { Route as SwitchesRouteImport } from './routes/switches'
 import { Route as ContentIndexRouteImport } from './routes/content.index'
 import { Route as ContentQueueRouteImport } from './routes/content.queue'
+import { Route as SwitchesIndexRouteImport } from './routes/switches.index'
+import { Route as SwitchesKillRouteImport } from './routes/switches.kill'
+import { Route as SwitchesRuleRouteImport } from './routes/switches.rule'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -70,6 +73,21 @@ const ContentQueueRoute = ContentQueueRouteImport.update({
   path: '/queue',
   getParentRoute: () => ContentRoute,
 } as any)
+const SwitchesIndexRoute = SwitchesIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => SwitchesRoute,
+} as any)
+const SwitchesKillRoute = SwitchesKillRouteImport.update({
+  id: '/kill',
+  path: '/kill',
+  getParentRoute: () => SwitchesRoute,
+} as any)
+const SwitchesRuleRoute = SwitchesRuleRouteImport.update({
+  id: '/rule',
+  path: '/rule',
+  getParentRoute: () => SwitchesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -79,9 +97,12 @@ export interface FileRoutesByFullPath {
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
   '/sessions': typeof SessionsRoute
-  '/switches': typeof SwitchesRoute
+  '/switches': typeof SwitchesRouteWithChildren
   '/content/queue': typeof ContentQueueRoute
+  '/switches/kill': typeof SwitchesKillRoute
+  '/switches/rule': typeof SwitchesRuleRoute
   '/content/': typeof ContentIndexRoute
+  '/switches/': typeof SwitchesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -90,9 +111,11 @@ export interface FileRoutesByTo {
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
   '/sessions': typeof SessionsRoute
-  '/switches': typeof SwitchesRoute
   '/content/queue': typeof ContentQueueRoute
+  '/switches/kill': typeof SwitchesKillRoute
+  '/switches/rule': typeof SwitchesRuleRoute
   '/content': typeof ContentIndexRoute
+  '/switches': typeof SwitchesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -103,9 +126,12 @@ export interface FileRoutesById {
   '/quality': typeof QualityRoute
   '/security': typeof SecurityRoute
   '/sessions': typeof SessionsRoute
-  '/switches': typeof SwitchesRoute
+  '/switches': typeof SwitchesRouteWithChildren
   '/content/queue': typeof ContentQueueRoute
+  '/switches/kill': typeof SwitchesKillRoute
+  '/switches/rule': typeof SwitchesRuleRoute
   '/content/': typeof ContentIndexRoute
+  '/switches/': typeof SwitchesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -119,7 +145,10 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/switches'
     | '/content/queue'
+    | '/switches/kill'
+    | '/switches/rule'
     | '/content/'
+    | '/switches/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -128,9 +157,11 @@ export interface FileRouteTypes {
     | '/quality'
     | '/security'
     | '/sessions'
-    | '/switches'
     | '/content/queue'
+    | '/switches/kill'
+    | '/switches/rule'
     | '/content'
+    | '/switches'
   id:
     | '__root__'
     | '/'
@@ -142,7 +173,10 @@ export interface FileRouteTypes {
     | '/sessions'
     | '/switches'
     | '/content/queue'
+    | '/switches/kill'
+    | '/switches/rule'
     | '/content/'
+    | '/switches/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -153,7 +187,7 @@ export interface RootRouteChildren {
   QualityRoute: typeof QualityRoute
   SecurityRoute: typeof SecurityRoute
   SessionsRoute: typeof SessionsRoute
-  SwitchesRoute: typeof SwitchesRoute
+  SwitchesRoute: typeof SwitchesRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -228,6 +262,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ContentQueueRouteImport
       parentRoute: typeof ContentRoute
     }
+    '/switches/': {
+      id: '/switches/'
+      path: '/'
+      fullPath: '/switches/'
+      preLoaderRoute: typeof SwitchesIndexRouteImport
+      parentRoute: typeof SwitchesRoute
+    }
+    '/switches/kill': {
+      id: '/switches/kill'
+      path: '/kill'
+      fullPath: '/switches/kill'
+      preLoaderRoute: typeof SwitchesKillRouteImport
+      parentRoute: typeof SwitchesRoute
+    }
+    '/switches/rule': {
+      id: '/switches/rule'
+      path: '/rule'
+      fullPath: '/switches/rule'
+      preLoaderRoute: typeof SwitchesRuleRouteImport
+      parentRoute: typeof SwitchesRoute
+    }
   }
 }
 
@@ -244,6 +299,22 @@ const ContentRouteChildren: ContentRouteChildren = {
 const ContentRouteWithChildren =
   ContentRoute._addFileChildren(ContentRouteChildren)
 
+interface SwitchesRouteChildren {
+  SwitchesKillRoute: typeof SwitchesKillRoute
+  SwitchesRuleRoute: typeof SwitchesRuleRoute
+  SwitchesIndexRoute: typeof SwitchesIndexRoute
+}
+
+const SwitchesRouteChildren: SwitchesRouteChildren = {
+  SwitchesKillRoute: SwitchesKillRoute,
+  SwitchesRuleRoute: SwitchesRuleRoute,
+  SwitchesIndexRoute: SwitchesIndexRoute,
+}
+
+const SwitchesRouteWithChildren = SwitchesRoute._addFileChildren(
+  SwitchesRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalyticsRoute: AnalyticsRoute,
@@ -252,7 +323,7 @@ const rootRouteChildren: RootRouteChildren = {
   QualityRoute: QualityRoute,
   SecurityRoute: SecurityRoute,
   SessionsRoute: SessionsRoute,
-  SwitchesRoute: SwitchesRoute,
+  SwitchesRoute: SwitchesRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

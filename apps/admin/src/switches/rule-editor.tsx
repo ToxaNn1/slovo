@@ -27,7 +27,7 @@ interface Draft {
 }
 
 const inputClass =
-  'h-9 rounded-lg border border-border bg-surface px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring';
+  'h-9 rounded-lg border border-border bg-background px-3 text-sm focus-visible:outline-2 focus-visible:outline-ring';
 
 const PLATFORMS: readonly Platform[] = ['ios', 'android'];
 
@@ -144,7 +144,7 @@ export function RuleEditor({
   return (
     <section
       aria-labelledby="rule-editor-title"
-      className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4"
+      className="flex flex-col gap-4 rounded-2xl bg-surface shadow-panel p-4"
     >
       <div className="flex items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
@@ -173,7 +173,7 @@ export function RuleEditor({
           {drafts.map((draft, index) => (
             <li
               key={draft.id}
-              className="flex flex-wrap items-center gap-2 rounded-lg border border-border p-2 text-sm"
+              className="flex flex-wrap items-center gap-2 rounded-lg bg-sunk p-2 text-sm"
             >
               <span className="font-medium">{verdictText(draft.verdict)}</span>
               <span className="text-muted-foreground">{targetsText(draft.targets)}</span>
@@ -260,7 +260,7 @@ export function RuleEditor({
           <input name="scheduleUntil" type="datetime-local" className={inputClass} />
         </Field>
         <div className="flex items-end gap-2 sm:col-span-3">
-          <Button type="submit" variant="outline">
+          <Button type="submit" variant="secondary">
             Додати правило
           </Button>
           <Button
@@ -320,7 +320,7 @@ export function MinimumsEditor({
   return (
     <section
       aria-labelledby="minimums-title"
-      className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-4"
+      className="flex flex-col gap-4 rounded-2xl bg-surface shadow-panel p-4"
     >
       <h2 id="minimums-title" className="font-display text-lg font-semibold">
         Примусове оновлення
@@ -360,7 +360,7 @@ export function MinimumsEditor({
               defaultValue={minimums[platform]?.hard}
             />
           </Field>
-          <Button type="submit" variant="outline">
+          <Button type="submit" variant="secondary">
             Зберегти
           </Button>
           {invalid === platform ? (

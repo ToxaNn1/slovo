@@ -79,12 +79,14 @@ test('every write opens the confirmation, its button disabled until a reason is 
 
   await user.type(people.getByLabelText('Пошта'), 'new@example.com');
   await user.click(people.getByRole('button', { name: 'Запросити' }));
+  expect(within(await screen.findByRole('dialog')).getByText('підтвердження')).toBeDefined();
   await confirmWith('a new editor', 'Запросити');
 
   await user.click(people.getByRole('button', { name: 'Зробити Власником' }));
   await confirmWith('trusted', 'Змінити роль');
 
   await user.click(people.getByRole('button', { name: 'Забрати доступ' }));
+  expect(within(await screen.findByRole('dialog')).getByText('небезпечна дія')).toBeDefined();
   await confirmWith('left', 'Забрати доступ');
 
   await user.click(await tokens.findByRole('button', { name: 'Відкликати' }));
@@ -137,10 +139,11 @@ test('the Action log names its author, with the same texts in both Themes', asyn
   expect(log.getByText('the Game loses scores')).toBeDefined();
   const section = screen.getByRole('region', { name: 'Безпека' });
   const light = section.textContent;
-  await user.click(screen.getByRole('button', { name: 'Темна тема' }));
+  await user.click(screen.getByRole('button', { name: 'owner@example.com Власник' }));
+  await user.click(screen.getByRole('button', { name: 'Темна' }));
   expect(document.documentElement.dataset['theme']).toBe('dark');
   expect(screen.getByRole('region', { name: 'Безпека' }).textContent).toBe(light);
-  await user.click(screen.getByRole('button', { name: 'Темна тема' }));
+  await user.click(screen.getByRole('button', { name: 'Світла' }));
 });
 
 test('a write keeps its confirmation open until it ends, and a refusal stays in it', async () => {

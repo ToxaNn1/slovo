@@ -218,7 +218,7 @@ export function RecordForm({
             value: texts[field.name] ?? '',
             'aria-invalid': error !== undefined,
             'aria-describedby': error === undefined ? undefined : `${id}-error`,
-            className: 'rounded-md border border-border bg-background px-3 py-2 text-sm',
+            className: 'rounded-lg border border-border bg-background px-3 py-2 text-sm',
             onChange: (event: { target: { value: string } }) => {
               setTexts((previous) => ({ ...previous, [field.name]: event.target.value }));
             },
@@ -244,7 +244,7 @@ export function RecordForm({
             <label htmlFor="edit-reason">Причина (необов&apos;язково)</label>
             <input
               id="edit-reason"
-              className="rounded-md border border-border bg-background px-3 py-2"
+              className="rounded-lg border border-border bg-background px-3 py-2"
               value={reason}
               onChange={(event) => {
                 setReason(event.target.value);
@@ -260,7 +260,7 @@ export function RecordForm({
         {stale !== undefined && (
           <section
             aria-label="Запис змінився, поки ви редагували"
-            className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
+            className="flex flex-col gap-3 rounded-[14px] bg-sunk p-4"
           >
             <h3 className="font-display font-semibold">Запис змінився, поки ви редагували</h3>
             {changed.map((field) => (
@@ -288,7 +288,7 @@ export function RecordForm({
             Зберегти
           </Button>
           {record.at === 'edit' && (
-            <Button type="button" variant="outline" disabled={busy} onClick={retire}>
+            <Button type="button" variant="danger" disabled={busy} onClick={retire}>
               Вивести з ужитку
             </Button>
           )}

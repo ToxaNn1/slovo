@@ -63,11 +63,8 @@ function Analytics() {
   });
   const data = overview.data;
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-6">
+    <section aria-label="Аналітика" className="flex flex-col gap-6">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 id="section-title" className="font-display text-2xl font-semibold">
-          Аналітика
-        </h1>
         {data !== undefined && (
           <p className="text-sm text-muted-foreground">
             Останні дані за {kyivTime(data.fetchedAt)}
@@ -91,9 +88,9 @@ function Analytics() {
         </div>
       )}
       {counters.data !== undefined && (
-        <div className="flex flex-col gap-2">
-          <h2 className="font-display text-lg font-medium">Лічильники</h2>
-          <ul aria-label="Лічильники" className="flex flex-col gap-1 text-sm">
+        <div className="flex flex-col gap-3 rounded-2xl bg-surface px-[18px] py-4 shadow-panel">
+          <h2 className="font-display text-[13px] font-medium">Лічильники</h2>
+          <ul aria-label="Лічильники" className="flex flex-col gap-1.5 text-sm">
             <li>Знаю: {counters.data.known}</li>
             <li>Не знаю: {counters.data.unknown}</li>
             <li>Збережено: {counters.data.saved}</li>
@@ -105,8 +102,8 @@ function Analytics() {
           </ul>
         </div>
       )}
-      <div className="flex flex-col gap-2">
-        <h2 className="font-display text-lg font-medium">Варіанти</h2>
+      <div className="flex flex-col gap-3">
+        <h2 className="font-display text-[15px] font-medium">Варіанти</h2>
         {features.data?.length === 0 && (
           <p className="text-sm text-muted-foreground">Немає A/B-тестів</p>
         )}

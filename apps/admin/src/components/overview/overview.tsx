@@ -61,7 +61,7 @@ function Block({
     <li className="flex">
       <section
         aria-label={title}
-        className="flex flex-1 flex-col gap-2 rounded-2xl border border-border bg-surface p-5"
+        className="flex flex-1 flex-col gap-2 rounded-2xl bg-surface shadow-panel p-5"
       >
         <h2 className="text-sm text-muted-foreground">{title}</h2>
         {read.state === 'unavailable' ? (
@@ -150,10 +150,7 @@ export function Overview() {
   const latest = alerts.data?.alerts ?? [];
 
   return (
-    <section aria-labelledby="section-title" className="flex flex-col gap-6">
-      <h1 id="section-title" className="font-display text-2xl font-semibold">
-        Огляд
-      </h1>
+    <section aria-label="Огляд" className="flex flex-col gap-6">
       <ul
         aria-label="Блоки"
         data-layout={wide ? 'grid' : 'stack'}
