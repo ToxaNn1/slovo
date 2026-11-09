@@ -4,6 +4,7 @@ import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 
 import { HalftoneGround } from '../primitives/HalftoneGround';
 import { PressedTile } from '../primitives/PressedTile';
+import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { capitalMarkRoom, dailyCrosswordCard, typeStyle } from '../tokens';
 
@@ -50,6 +51,7 @@ export function DailyCrosswordCard({
   testID?: string;
 }) {
   const tokens = useTokens();
+  const { voice } = useEdition();
   const light = useSchemeColors('light');
   const keyInk = light.ink;
   const [size, setSize] = useState<{ width: number; height: number }>();
@@ -65,6 +67,7 @@ export function DailyCrosswordCard({
       depth="card"
       radius={tokens.radii.card}
       accessibilityLabel={sentences([title, day, state])}
+      {...voice}
       onPress={onPress}
       faceStyle={styles.face}
       testID={testID}

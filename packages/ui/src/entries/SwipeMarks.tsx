@@ -82,6 +82,9 @@ const STAMP_LANDS = {
   reduceMotion: ReduceMotion.Never,
 };
 
+/** The check mark's points on its 26 × 22 box. */
+const checkPoints = wedges.check.map(([x, y]) => `${String(x * 26)},${String(y * 22)}`).join(' ');
+
 /**
  * How a marked card flies off `remaining` points, let go at `speed` points a
  * second its way: it leaves at the finger's speed, never slower, and gathers
@@ -432,7 +435,7 @@ export function SwipeMarks({
                   height={swipeEdgeLayout.check.height}
                   viewBox="0 0 26 22"
                 >
-                  <Polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill={colors.accent} />
+                  <Polygon points={checkPoints} fill={colors.accent} />
                 </Svg>
                 <Text style={[edgeText, { color: colors.background }]}>{texts.edges.known}</Text>
               </Animated.View>

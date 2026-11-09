@@ -787,6 +787,15 @@ export const wedges = {
     [0.5, 1],
     [0, 0.667],
   ],
+  /** The check mark on a swiped card's «ЗНАЮ» wedge; drawn on the design's 26 × 22 box. */
+  check: [
+    [0, 12 / 22],
+    [4 / 26, 8 / 22],
+    [10 / 26, 14 / 22],
+    [22 / 26, 0],
+    [1, 4 / 22],
+    [10 / 26, 1],
+  ],
   /** The loader's wedge: a right edge narrower than the left, from the middle. */
   loader: [
     [0, 0],
@@ -867,7 +876,7 @@ export const wedges = {
     [1, 1],
     [0, 0.84],
   ],
-  /** The chevron at the end of a row of «Попередні слова». */
+  /** The slanted chevron at the end of a row of «Попередні слова» and of a settings row that opens a screen. */
   chevron: [
     [0, 0],
     [0.4, 0],
