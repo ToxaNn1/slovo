@@ -119,4 +119,26 @@ describe('importing an Edition into the database', () => {
       words: content.words,
     });
   });
+
+  it('retires a record the folder of an override no longer holds, keeping it', async () => {
+    // The database holds a Word the folder of the override never had.
+    const withExtra = copyOfUkrainian();
+    const words = join(withExtra, 'content', 'words');
+    // «обру́чик».
+    const extra = readFileSync(join(words, 'w_009orq.json'), 'utf8')
+      .replace('"w_009orq"', '"w_zzzzzz"')
+      .replace('"обруч"', '"обручик"');
+    writeFileSync(join(words, 'w_zzzzzz.json'), extra);
+    const ids = join(withExtra, 'content', 'ids.json');
+    writeFileSync(ids, readFileSync(ids, 'utf8').replace(/\n]/, ',\n  "w_zzzzzz"\n]'));
+    const { client, importContent } = testApp();
+    await importContent('uk', withExtra, { override: true });
+
+    const again = await importContent('uk', folder, { override: true });
+
+    expect(again).toMatchObject({ ok: true });
+    const snapshot = await client.content.snapshot({ editionId: 'uk' });
+    expect(snapshot.words.find(({ id }) => id === 'w_zzzzzz')).toMatchObject({ retired: true });
+    expect(snapshot.words).toHaveLength(content.words.length + 1);
+  });
 });

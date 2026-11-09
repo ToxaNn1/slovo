@@ -3,7 +3,7 @@ import type { BuildError } from '@slovo/language-pack';
 import { readEdition } from '@slovo/language-pack';
 import type { Clock, EditionRegistry } from '@slovo/server-core';
 import type { Patch } from '@slovo/contracts/api';
-import { and, eq, gt, inArray } from 'drizzle-orm';
+import { and, eq, gt, inArray, notInArray, sql } from 'drizzle-orm';
 
 import type { Database } from '../database/database';
 import {
@@ -89,7 +89,8 @@ export function createContentStore({
    * every id and retired flag, all in one transaction: a refusal writes
    * nothing. The first import continues from the manifest's content
    * version; a second one is refused unless overridden, and then replaces
-   * every record one version on, so no device ever sees a lower version.
+   * every record of the folder one version on, so no device ever sees a
+   * lower version, and retires the Entries the folder no longer holds.
    */
   async function importEdition(
     editionId: string,
@@ -143,8 +144,43 @@ export function createContentStore({
         fields,
         retired: false,
       }));
-      for (const table of CONTENT_TABLES) {
-        await tx.delete(table).where(eq(table.editionId, editionId));
+      const folderIds = new Map<(typeof CONTENT_TABLES)[number], readonly string[]>([
+        [contentWords, content.words.map(({ id }) => id)],
+        [contentIdioms, content.idioms.map(({ id }) => id)],
+        [contentCorrections, content.corrections.map(({ id }) => id)],
+        [contentTips, content.tips.map(({ id }) => id)],
+        [contentSynonymRows, content.synonymRows.map(({ id }) => id)],
+        [contentCuratedCollections, (content.curatedCollections ?? []).map(({ id }) => id)],
+        [contentCrosswordDays, crosswordDays.map(({ id }) => id)],
+      ]);
+      // Retire, never delete (ADR 0090): an Entry the folder no longer holds
+      // is retired one version on, so a device's Patch retires it too. A
+      // Curated Collection or Crossword Day has no retired flag, and stays.
+      for (const table of ENTRY_TABLES) {
+        const ids = folderIds.get(table) ?? [];
+        await tx
+          .update(table)
+          .set({
+            retired: true,
+            fields: sql`${table.fields} || '{"retired": true}'::jsonb`,
+            contentVersion,
+            changedBy: 'import',
+            changedAt: now,
+            batchId: batch.id,
+          })
+          .where(
+            and(
+              eq(table.editionId, editionId),
+              eq(table.retired, false),
+              ids.length === 0 ? undefined : notInArray(table.id, [...ids]),
+            ),
+          );
+      }
+      for (const [table, ids] of folderIds) {
+        if (ids.length === 0) continue;
+        await tx
+          .delete(table)
+          .where(and(eq(table.editionId, editionId), inArray(table.id, [...ids])));
       }
       // Every record starts again at version 1, checked in CI (ADR 0084).
       await tx.delete(quoteChecks).where(eq(quoteChecks.editionId, editionId));
