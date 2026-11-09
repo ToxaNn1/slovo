@@ -37,7 +37,9 @@ export function HistoryList({ header }: { header: ListHeader }) {
       keyExtractor={(entry) => entry.entryId}
       stickySectionHeadersEnabled={false}
       renderSectionHeader={({ section }) => (
-        <SectionLabel style={[styles.day, { color: colors.accent }]}>{section.title}</SectionLabel>
+        <SectionLabel style={[styles.day, { color: colors.accentText }]}>
+          {section.title}
+        </SectionLabel>
       )}
       renderItem={({ item }) => (
         <EntryRow

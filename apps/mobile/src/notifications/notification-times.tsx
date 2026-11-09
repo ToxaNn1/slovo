@@ -112,7 +112,10 @@ export function NotificationTimes() {
         style={styles.addTime}
       >
         <Text
-          style={[typeStyle('textLink', tokens), { color: canAdd ? colors.accent : colors.muted }]}
+          style={[
+            typeStyle('textLink', tokens),
+            { color: canAdd ? colors.accentText : colors.muted },
+          ]}
         >
           {strings.addTime}
         </Text>

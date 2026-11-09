@@ -111,7 +111,7 @@ function SheetContent({
         <SheetTitle>{sheet.title}</SheetTitle>
         <Text
           {...voice}
-          style={[typeStyle('sheetLemma', tokens), styles.entry, { color: colors.accent }]}
+          style={[typeStyle('sheetLemma', tokens), styles.entry, { color: colors.accentText }]}
           numberOfLines={2}
         >
           {entryTitle}
@@ -220,7 +220,7 @@ function SheetContent({
             }}
             style={styles.newCollection}
           >
-            <Text style={[typeStyle('textButton', tokens), { color: colors.accent }]}>
+            <Text style={[typeStyle('textButton', tokens), { color: colors.accentText }]}>
               {sheet.newCollection}
             </Text>
           </Pressable>

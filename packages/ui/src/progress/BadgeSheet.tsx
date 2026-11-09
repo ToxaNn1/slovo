@@ -64,7 +64,7 @@ function BadgeSheetContent({
 
   return (
     <View style={styles.content}>
-      <Text {...voice} style={[typeStyle('soonTag', tokens), { color: colors.accent }]}>
+      <Text {...voice} style={[typeStyle('soonTag', tokens), { color: colors.accentText }]}>
         {kicker}
       </Text>
       <View style={styles.mark}>

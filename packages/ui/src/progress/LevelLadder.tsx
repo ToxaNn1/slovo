@@ -106,7 +106,7 @@ export function LevelLadder({
           <Text
             {...voice}
             testID={id('to-next')}
-            style={[typeStyle('soonTag', tokens), { color: colors.accent }]}
+            style={[typeStyle('soonTag', tokens), { color: colors.accentText }]}
           >
             {toNext}
           </Text>

@@ -61,7 +61,7 @@ export function EntryMenuSheet({
       <View style={styles.rows}>
         <Text
           {...voice}
-          style={[typeStyle('sheetLemma', tokens), { color: colors.accent }]}
+          style={[typeStyle('sheetLemma', tokens), { color: colors.accentText }]}
           numberOfLines={2}
           testID={`${testID}-title`}
         >

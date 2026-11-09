@@ -293,8 +293,8 @@ One of the short sounds the app plays for a shout, a right answer, a wrong answe
 _Avoid_: Voice, music, notification sound (that is the sound of a notification)
 
 **Account**:
-The optional identity that keeps a reader's words and progress across devices, shown under the name its Edition gives it (set in the Edition's config), never «SLOVO ID». One Account works in every Edition; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code, Sign in with Google or Sign in with Apple. Knowledge Marks, the XP log and Badges sync through it. Without an Account everything lives on the device only.
-_Avoid_: Cabinet, login, SLOVO ID (the old name), admin user (the admin's own sign-in, not an Account)
+The optional identity that keeps a reader's words and progress across devices, called SLOVO ID in code and docs, and shown to the reader under the name its Edition gives it (set in the Edition's config). One Account works in every Edition; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code, Sign in with Google or Sign in with Apple. Knowledge Marks, the XP log and Badges sync through it. Without an Account everything lives on the device only.
+_Avoid_: Cabinet, login, admin user (the admin's own sign-in, not an Account)
 
 **Session**:
 One device's sign-in to an Account, ended on that device or on all at once.

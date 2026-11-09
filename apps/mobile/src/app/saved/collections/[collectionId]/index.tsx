@@ -108,7 +108,7 @@ function CollectionListScreen({ collectionId }: { collectionId: string }) {
                   testID="collection-count"
                   accessibilityLabel={count(collectionStrings.count, entries.length)}
                   {...voice}
-                  style={[typeStyle('collectionCount', tokens), { color: colors.accent }]}
+                  style={[typeStyle('collectionCount', tokens), { color: colors.accentText }]}
                 >
                   {String(entries.length)}
                 </Text>

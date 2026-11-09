@@ -80,7 +80,7 @@ export function WordOfTheDayKicker({ day: { month, day } }: { day: LocalDate }) 
         style={[
           typeStyle('cardKicker', tokens),
           styles.kickerText,
-          { color: tokens.colors.accent },
+          { color: tokens.colors.accentText },
         ]}
       >
         {label}

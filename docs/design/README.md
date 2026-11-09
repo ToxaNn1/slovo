@@ -37,6 +37,7 @@ The design sets its colours as CSS variables on `[data-slovo]`; `data-th` picks 
 | `--tile`     | `tile` (new)             | `#FFFBF5`               | `#33241F`               | The face of a tile or button.                    |
 | `--edge`     | `tileEdge` (new)         | `#DCC2A6`               | `#050302`               | The 3D edge of a tile.                           |
 | `--r`        | `accent`                 | `#FF3B2F`               | `#FF3B2F`               | Wedges, the main button, success.                |
+| none         | `accentText` (new)       | `#C4271D`               | `#FF5247`               | Small red text, at 4.5:1 on every ground.        |
 | `--re`       | `accentEdge` (new)       | `#C4271D`               | `#C4271D`               | The red's edge and pressed shadow.               |
 | `--c`        | `onAccent` (new)         | `#FFF4E6`               | `#FFF4E6`               | Cream on red.                                    |
 | `--hl`       | `highlight` (new)        | `#F2D3AE`               | `#5A3C33`               | The crossword word, the selected letter.         |
