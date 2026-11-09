@@ -112,7 +112,9 @@ export function SwitchesScreen() {
 
       {picked !== undefined && editing !== undefined && pickedAnswer !== undefined ? (
         <RuleEditor
-          key={`${picked.id}-${editing}`}
+          // Keyed by the Rules too: a write made while it is open (a matrix
+          // toggle, a Kill switch) starts its drafts afresh, so saving never undoes it.
+          key={`${picked.id}-${editing}-${JSON.stringify(rulesOf(pickedAnswer, editing))}`}
           edition={picked}
           feature={editing}
           rules={rulesOf(pickedAnswer, editing)}

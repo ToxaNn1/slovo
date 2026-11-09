@@ -123,3 +123,23 @@ test('«Мої сесії» lists the sessions, and «Вийти всюди» go
 
   expect(await screen.findByRole('heading', { name: 'Вхід до SLOVO Admin' })).toBeDefined();
 });
+
+test('a backend that fails to answer who is signed in offers to try again', async () => {
+  let failing = true;
+  server.use(
+    http.get('*/admin/me', () =>
+      failing
+        ? refusal(502, 'INTERNAL_SERVER_ERROR')
+        : HttpResponse.json({ email: 'owner@example.com', role: 'owner' }),
+    ),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+
+  expect(await screen.findByText('Не вдалося. Спробуйте ще раз.')).toBeDefined();
+  failing = false;
+  await user.click(screen.getByRole('button', { name: 'Спробувати ще раз' }));
+
+  expect(await screen.findByRole('navigation', { name: 'Розділи' })).toBeDefined();
+  expect(screen.queryByText('Не вдалося. Спробуйте ще раз.')).toBeNull();
+});

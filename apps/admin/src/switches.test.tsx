@@ -2,7 +2,7 @@ import { FeatureSwitchesSchema, type Rule } from '@slovo/contracts';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { expect, test } from 'vitest';
+import { expect, test, vi } from 'vitest';
 
 import { server } from './mock/server';
 import { Admin } from './router';
@@ -17,12 +17,13 @@ const EDITIONS = [
   { id: 'de', displayName: 'Seltene Wörter' },
 ];
 
-/** Every feature on, `mistakeReports` unavailable everywhere, `game` off in `de`. */
+/** Every feature on, `mistakeReports` unavailable everywhere, `game` off and `idioms` unavailable in `de`. */
 function statesOf(editionId: string) {
   return FeatureSwitchesSchema.parse({
     ...Object.fromEntries(FeatureSwitchesSchema.keyof().options.map((feature) => [feature, 'on'])),
     mistakeReports: 'unavailable',
     game: editionId === 'de' ? 'off' : 'on',
+    idioms: editionId === 'de' ? 'unavailable' : 'on',
   });
 }
 
@@ -72,6 +73,9 @@ test('the matrix counts a feature on in some Editions, and shows the exact state
   render(<Admin />);
 
   expect((await rowOf('game')).getByText('увімкнено (2 з 3)')).toBeDefined();
+  // On in every Edition that has it, though one Edition does not.
+  expect((await rowOf('idioms')).getAllByText('увімкнено').length).toBeGreaterThan(0);
+  expect((await rowOf('idioms')).queryByText(/з 3/)).toBeNull();
   expect((await rowOf('mistakeReports')).queryAllByRole('switch')).toEqual([]);
   expect((await rowOf('mistakeReports')).getAllByText('недоступно').length).toBeGreaterThan(0);
 
@@ -136,4 +140,42 @@ test('the Kill switch asks for a reason and the matrix shows the feature off aft
   expect(await (await rowOf('tips')).findByText('вимкнено')).toBeDefined();
   expect(screen.queryByRole('dialog')).toBeNull();
   expect(writes).toEqual([{ reason: 'tips crash the app' }]);
+});
+
+test('the Rule editor saves over a Kill switch written while it was open, never undoing it', async () => {
+  threeEditions();
+  const sent: unknown[] = [];
+  server.use(
+    http.put('*/admin/editions/:editionId/switches/:feature/rules', async ({ request }) => {
+      sent.push(await request.json());
+      return HttpResponse.json({ editionId: 'uk' });
+    }),
+  );
+  const user = userEvent.setup();
+  window.history.replaceState(null, '', '/admin/switches?edition=uk');
+  render(<Admin />);
+
+  await user.click((await rowOf('game')).getByRole('button', { name: 'Правила' }));
+  const editor = 'Правила game у Рідкісні слова';
+  expect(await screen.findByRole('region', { name: editor })).toBeDefined();
+  const kill = within(screen.getByRole('region', { name: 'Kill switch' }));
+  await user.selectOptions(kill.getByRole('combobox', { name: 'Світч' }), 'game');
+  await user.click(kill.getByRole('button', { name: 'Вимкнути для всіх' }));
+  const killDialog = within(await screen.findByRole('dialog'));
+  await user.type(killDialog.getByRole('textbox', { name: 'Причина' }), 'game crashes');
+  await user.click(killDialog.getByRole('button', { name: 'Підтвердити' }));
+  expect(await (await rowOf('game')).findByText('вимкнено')).toBeDefined();
+
+  await user.click(
+    within(screen.getByRole('region', { name: editor })).getByRole('button', {
+      name: 'Зберегти правила',
+    }),
+  );
+  const dialog = within(await screen.findByRole('dialog'));
+  await user.type(dialog.getByRole('textbox', { name: 'Причина' }), 'reorder');
+  await user.click(dialog.getByRole('button', { name: 'Підтвердити' }));
+
+  await vi.waitFor(() => {
+    expect(sent).toMatchObject([{ rules: [{ verdict: 'off', targets: {} }], reason: 'reorder' }]);
+  });
 });

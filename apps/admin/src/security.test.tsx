@@ -142,3 +142,45 @@ test('the Action log names its author, with the same texts in both Themes', asyn
   expect(screen.getByRole('region', { name: 'Безпека' }).textContent).toBe(light);
   await user.click(screen.getByRole('button', { name: 'Темна тема' }));
 });
+
+test('a write keeps its confirmation open until it ends, and a refusal stays in it', async () => {
+  let answer: (response: Response) => void = () => undefined;
+  const writes: unknown[] = [];
+  server.use(
+    http.post('*/admin/agent-tokens', async ({ request }) => {
+      writes.push(await request.json());
+      return new Promise<Response>((resolve) => {
+        answer = resolve;
+      });
+    }),
+  );
+  const user = userEvent.setup();
+  render(<Admin />);
+  const tokens = within(await screen.findByRole('region', { name: 'Токени Агентів' }));
+
+  await user.type(tokens.getByLabelText('Назва Агента'), 'claude-next');
+  await user.click(tokens.getByRole('button', { name: 'Видати токен' }));
+  await confirmWith('batches', 'Видати токен');
+
+  const dialog = within(screen.getByRole('dialog'));
+  await waitFor(() => {
+    expect(writes).toHaveLength(1);
+  });
+  expect(dialog.getByRole('button', { name: 'Видати токен' })).toHaveProperty('disabled', true);
+  answer(
+    HttpResponse.json(
+      {
+        defined: true,
+        code: 'CONFLICT',
+        status: 409,
+        message: 'CONFLICT',
+        data: { refusal: 'name-taken' },
+      },
+      { status: 409 },
+    ),
+  );
+
+  expect(await dialog.findByText('Цю назву вже видано; оберіть іншу.')).toBeDefined();
+  expect(screen.getByRole('dialog')).toBeDefined();
+  expect(writes).toHaveLength(1);
+});
