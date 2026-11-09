@@ -16,3 +16,4 @@ Triage files (per finding id: FIXED/SKIP-*/FIX + tickets): scratchpad triage cor
 - Open: branch conflicts with main (#1743, #1746) -> merge main first. Local red only from env: backend tests (no Postgres), content import.test chmod-as-root.
 
 - 09.11 main merged into fix/1109-global-review-tails (8f8187d91, tip e1b0474f8); lint/typecheck 25/25, tests core/mobile/language-pack/content green locally. Draft PR #1753 left draft for the owner. Next wave: the not-done list above.
+- 2026-11-09T14:21:17Z safety net takeover (last commit 2026-11-09T13:21:58Z)
