@@ -25,10 +25,8 @@ export function accountProblemLine({
   strings: AccountStrings;
   count: (forms: Plural, count: number) => string;
 }): string | undefined {
-  const { problem } = state;
-  if (problem === undefined) return undefined;
-  if (problem !== 'wrong-code') return strings.problems[problem];
+  if (state.problem === undefined) return undefined;
+  if (state.problem !== 'wrong-code') return strings.problems[state.problem];
   // A wrong code always comes with its tries left (ADR 0037).
-  const triesLeft = state.status === 'code-sent' ? (state.triesLeft ?? 0) : 0;
-  return count(strings.problems['wrong-code'], triesLeft);
+  return count(strings.problems['wrong-code'], state.triesLeft ?? 0);
 }
