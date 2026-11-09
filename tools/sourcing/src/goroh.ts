@@ -10,7 +10,7 @@ import { LANGUAGE_MODEL } from '@slovo/content-rules';
 
 import type { DictionaryArticle } from './article';
 import type { PoliteClient } from './polite-client';
-import { citedAs, matchKey, squeeze, unstressed } from './text';
+import { citedAs, SOURCE_LANGUAGE, squeeze, unstressed } from './text';
 
 const SITE = 'https://goroh.pp.ua/';
 
@@ -59,12 +59,22 @@ export interface GorohDefinitions {
   readonly leftOut: readonly string[];
 }
 
+/**
+ * Whether a «Тлумачення» headword is the Lemma. The explanatory dictionary
+ * prints its headwords in capitals, so case tells nothing there; a headword
+ * in mixed case keeps it, so a proper name stays apart, as in `isSameWord`.
+ */
+function isHeadwordOf(headword: string, lemma: string): boolean {
+  const inCapitals = headword === headword.toLocaleUpperCase(SOURCE_LANGUAGE);
+  return isSameWord(inCapitals ? headword.toLocaleLowerCase(SOURCE_LANGUAGE) : headword, lemma);
+}
+
 /** Reads the articles for the Lemma on a «Тлумачення» page, each with the dictionary it cites. */
 export function parseDefinitions(html: string, lemma: string): GorohDefinitions {
   const leftOut: string[] = [];
   const matching = blocksOf(html).flatMap(
     ({ element: block, headword, dictionary }): Omit<DictionaryArticle, 'homonymNumber'>[] => {
-      if (headword === '' || matchKey(headword) !== matchKey(lemma)) return [];
+      if (!isHeadwordOf(headword, lemma)) return [];
       if (!dictionary.startsWith(EXPLANATORY_DICTIONARY)) {
         leftOut.push(`${dictionary === '' ? '(no source)' : dictionary}: ${headword}`);
         return [];
