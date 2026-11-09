@@ -11,8 +11,12 @@ export const PERIODS = ADMIN_PERIODS;
 
 export type PeriodId = AdminPeriod;
 
+/**
+ * The label of each period. Аналітика reads whole Kyiv days up to today, so
+ * '1d' is today since Kyiv midnight, not the last 24 hours.
+ */
 export const PERIOD_LABELS: Readonly<Record<PeriodId, string>> = {
-  '1d': '24 години',
+  '1d': 'Сьогодні',
   '7d': '7 днів',
   '30d': '30 днів',
   '90d': '90 днів',

@@ -40,6 +40,14 @@ test('picking an Edition and a period changes the URL, and the choice survives a
   expect(new URLSearchParams(window.location.search).has('edition')).toBe(false);
 });
 
+test('the shortest period is «Сьогодні»: its days start at midnight in Kyiv', async () => {
+  const user = userEvent.setup();
+  render(<Admin />);
+
+  await user.selectOptions(await screen.findByRole('combobox', { name: 'Період' }), 'Сьогодні');
+  expect(new URLSearchParams(window.location.search).get('period')).toBe('1d');
+});
+
 test('a link with the filters opens with them chosen', async () => {
   window.history.replaceState(null, '', '/admin/switches?edition=uk&period=1d');
   render(<Admin />);
