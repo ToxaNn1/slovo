@@ -178,6 +178,19 @@ describe('the Patch read API', () => {
     });
   });
 
+  it('keeps a device ahead of the backend at its own content version, with no record', async () => {
+    const { client } = await contentBackend();
+    const { contentVersion } = await snapshotOf(client);
+
+    expect(patchIn(await patchOf(client, contentVersion + 5))).toEqual({
+      editionId: 'uk',
+      since: contentVersion + 5,
+      contentVersion: contentVersion + 5,
+      patchFormat: PATCH_FORMAT,
+      ...NO_RECORDS,
+    });
+  });
+
   it('answers a Patch format it does not serve as unsupported', async () => {
     const { client } = await contentBackend();
     const answer = await client.content.patch({

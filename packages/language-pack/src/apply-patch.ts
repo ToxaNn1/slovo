@@ -47,8 +47,8 @@ export async function patchStateOf(
  * Applies a Patch to the pack in one transaction (ADR 0090): each record of
  * the Patch replaces the pack's record of its id, a new one is added, and the
  * pack's content version and the Patch's ETag are written last. It rejects a
- * Patch of another Edition or from another content version than the pack's,
- * and any failure rolls the whole Patch back.
+ * Patch of another Edition, from another content version than the pack's or
+ * to a lower one, and any failure rolls the whole Patch back.
  */
 export async function applyPatch(db: PackWriteDatabase, patch: Patch, etag: string): Promise<void> {
   await db.transaction(async (tx) => {
@@ -61,6 +61,11 @@ export async function applyPatch(db: PackWriteDatabase, patch: Patch, etag: stri
     if (pack.contentVersion !== patch.since) {
       throw new Error(
         `A Patch since ${String(patch.since)} does not apply to a pack at ${String(pack.contentVersion)}`,
+      );
+    }
+    if (patch.contentVersion < patch.since) {
+      throw new Error(
+        `A Patch to ${String(patch.contentVersion)} would lower the pack from ${String(patch.since)}`,
       );
     }
     const statements: Statement[] = [

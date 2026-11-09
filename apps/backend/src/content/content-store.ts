@@ -283,7 +283,7 @@ export function createContentStore({
   /**
    * Every record of the Edition changed after the content version the device
    * holds, and the content version it reaches. A device ahead of the backend
-   * gets no record: content versions only grow (ADR 0090).
+   * gets no record and keeps its version: content versions only grow (ADR 0090).
    */
   async function patch(
     editionId: string,
@@ -298,7 +298,7 @@ export function createContentStore({
     const read = await atCurrentVersion(editionId, async (tx, contentVersion) => ({
       editionId,
       since,
-      contentVersion,
+      contentVersion: Math.max(since, contentVersion),
       ...(await readKinds(tx, editionId, since)).kinds,
     }));
     return read === undefined ? { ok: false, reason: 'not-imported' } : { ok: true, patch: read };
