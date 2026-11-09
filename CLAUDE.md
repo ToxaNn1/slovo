@@ -16,6 +16,7 @@ SLOVO is a factory of single-language rare-word apps: one language-agnostic Core
 - Read `CONTEXT.md` and an ADR with `grep` for the terms and numbers your change names; read one whole only when the change is about it. Every file you read stays in the context of every later step.
 - Respect every ADR. When a ticket conflicts with the glossary or an ADR, stop and report the conflict to the owner.
 - Record a new decision as an ADR in the same change.
+- A change that adds, changes or removes a feature updates that feature's page in the owner's handbook `~/Downloads/WORD/handbook/` in the same change: Ukrainian, plain words, the page template from its `README.md`. A new feature gets a new page and a line in that `README.md`. A cloud session, which has no such folder, names the page and what changed in its report.
 
 ## Tickets
 
