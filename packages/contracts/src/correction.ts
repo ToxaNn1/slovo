@@ -69,9 +69,12 @@ export const CorrectionSchema = z.strictObject({
   id: CorrectionIdSchema,
   nonStandardForm: TextSchema,
   correctionType: CorrectionTypeSchema,
-  // A tuple with a rest types the main equivalent as always there.
+  // The array names the field when it is empty; the tuple with a rest it
+  // pipes into types the main equivalent as always there.
   standardEquivalents: z
-    .tuple([TextSchema], TextSchema)
+    .array(TextSchema)
+    .min(1)
+    .pipe(z.tuple([TextSchema], TextSchema))
     .refine(hasNoRepeats, 'Standard equivalents must not repeat'),
   explanation: TextSchema,
   examplePair: ExamplePairSchema,
