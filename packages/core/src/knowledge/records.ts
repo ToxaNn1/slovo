@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import { declareRecords, InstantSchema } from '../user-state/user-state-record';
+import { knowledgeRecordOf } from './knowledge-record';
 
 /** The records of the Knowledge Marks and the confirmed Entries. */
 export const knowledgeRecords = {
@@ -9,17 +10,20 @@ export const knowledgeRecords = {
    * Review step, the next Review local day, whether the Entry is Learned and,
    * from 0.8.13, the instant the mark was set (ADR 0043, 0054). Removing a mark
    * deletes the record. The mark time is optional, so a record kept before it
-   * still reads and needs no migration.
+   * still reads and needs no migration. A record reads as Learned or in
+   * Review; one kept as neither is reduced by the rule of `knowledgeRecordOf`.
    */
   knowledge: declareRecords(
     'knowledge.',
-    z.object({
-      mark: z.enum(['known', 'unknown']),
-      step: z.literal([1, 3, 7, 30, 90]).nullable(),
-      reviewDay: z.iso.date().nullable(),
-      learned: z.boolean(),
-      markedAt: InstantSchema.exactOptional(),
-    }),
+    z
+      .object({
+        mark: z.enum(['known', 'unknown']),
+        step: z.literal([1, 3, 7, 30, 90]).nullable(),
+        reviewDay: z.iso.date().nullable(),
+        learned: z.boolean(),
+        markedAt: InstantSchema.exactOptional(),
+      })
+      .transform(knowledgeRecordOf),
   ),
   /**
    * The confirmed Entries, one record per Entry, by Entry id: the instant the
