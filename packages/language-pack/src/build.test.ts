@@ -1018,14 +1018,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Tip and reads it back with every field, in pack format 11', async () => {
+    it('builds a Tip and reads it back with every field, in pack format 12', async () => {
       const editionDir = withTips([fullTip]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 11 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 12 } });
       expect(await readTips(outFile, ['t_fx0001'])).toEqual([
         { ...fullTip, kind: 'tip', retired: false },
       ]);
@@ -1204,14 +1204,14 @@ describe('buildLanguagePack', () => {
       }
     }
 
-    it('builds a Synonym Row and reads it back with every field, in pack format 11', async () => {
+    it('builds a Synonym Row and reads it back with every field, in pack format 12', async () => {
       const editionDir = withRows([fullRow]);
       const outFile = packPath();
 
       const result = buildLanguagePack({ editionDir, outFile });
 
       expect(result.ok ? [] : result.errors).toEqual([]);
-      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 11 } });
+      expect(result).toMatchObject({ ok: true, metadata: { packFormat: 12 } });
       expect(await readRows(outFile, ['r_fx0001'])).toEqual([
         { ...fullRow, kind: 'synonymRow', retired: false },
       ]);
@@ -1680,7 +1680,7 @@ describe('buildLanguagePack', () => {
       return editionDir;
     }
 
-    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 11", async () => {
+    it("builds a Word with an origin from the Edition's list and reads it back, in pack format 12", async () => {
       const editionDir = withOriginLanguages();
       editJson(editionDir, 'content/words/w_fx0002.json', (word) => ({ ...word, origin: 'la' }));
       record(editionDir);
@@ -1689,7 +1689,7 @@ describe('buildLanguagePack', () => {
       const result = buildLanguagePack({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(11);
+      expect(result.metadata.packFormat).toBe(12);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -1786,7 +1786,7 @@ describe('buildLanguagePack', () => {
       message,
     });
 
-    it('builds a Word that names an Illustration and reads the name back, in pack format 11', async () => {
+    it('builds a Word that names an Illustration and reads the name back, in pack format 12', async () => {
       const editionDir = withIllustration('w_fx0002.png', png(320, 320));
       record(editionDir);
       const outFile = packPath();
@@ -1794,7 +1794,7 @@ describe('buildLanguagePack', () => {
       const result = buildLanguagePack({ editionDir, outFile });
 
       if (!result.ok) throw new Error(result.errors.map(formatBuildError).join('\n'));
-      expect(result.metadata.packFormat).toBe(11);
+      expect(result.metadata.packFormat).toBe(12);
       await withEntries(outFile, async (entries) => {
         const word = await entries.get('w_fx0002');
         const other = await entries.get('w_fx0003');
@@ -2010,7 +2010,7 @@ describe('buildLanguagePack', () => {
       editionId: 'fixture',
       contentVersion: 9,
       contentChecksum: expect.stringMatching(/^sha256:[0-9a-f]{64}$/) as string,
-      packFormat: 11,
+      packFormat: 12,
     });
     expect(b.metadata).toEqual(a.metadata);
     expect(readFileSync(second).equals(readFileSync(first))).toBe(true);
@@ -2021,8 +2021,8 @@ describe('buildLanguagePack', () => {
 
     const result = buildLanguagePack({ editionDir: fixture('valid'), outFile });
 
-    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 11 } });
-    expect((await readBack(outFile)).metadata.packFormat).toBe(11);
+    expect(result).toMatchObject({ ok: true, metadata: { packFormat: 12 } });
+    expect((await readBack(outFile)).metadata.packFormat).toBe(12);
   });
 
   it.each([
