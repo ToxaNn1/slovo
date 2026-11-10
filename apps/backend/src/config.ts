@@ -128,6 +128,16 @@ const ServerVariablesSchema = z.object({
   R2_BUCKET: unsetWhenEmpty(z.string().min(1)),
   R2_ACCESS_KEY_ID: unsetWhenEmpty(z.string().min(1)),
   R2_SECRET_ACCESS_KEY: unsetWhenEmpty(z.string().min(1)),
+  // The Python and the model the Recording generator runs; the defaults are
+  // where recordings.Dockerfile puts them.
+  RECORDINGS_PYTHON: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).default('/opt/recordings/venv/bin/python'),
+  ),
+  RECORDINGS_MODEL_DIR: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z.string().min(1).default('/opt/recordings/model'),
+  ),
 });
 
 const R2_VARIABLES = [
@@ -240,6 +250,8 @@ export const RecordingsConfigSchema = ServerVariablesSchema.pick({
   R2_BUCKET: true,
   R2_ACCESS_KEY_ID: true,
   R2_SECRET_ACCESS_KEY: true,
+  RECORDINGS_PYTHON: true,
+  RECORDINGS_MODEL_DIR: true,
 })
   .superRefine((variables, context) => {
     const unset = R2_VARIABLES.filter((name) => variables[name] === undefined);
