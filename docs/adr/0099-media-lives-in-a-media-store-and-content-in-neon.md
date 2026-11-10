@@ -4,6 +4,8 @@ Owner grilling of 2026-11-09. With tens of thousands of Words, the Recordings of
 
 **Amended 2026-11-10 (#1771).** Railway has no Frankfurt region, so the backend and Neon cannot share one: the owner read the Deployment's Railway region from the dashboard as «EU West (Amsterdam, Netherlands)», and Neon runs in Frankfurt, about 10 ms away. The Patch route answers `cache-control: public, max-age=0, s-maxage=60`: the CDN keeps a Patch for a minute under its URL (the Edition, the device's content version and the Patch format), the device revalidates it by its ETag and still gets 304, and an edit reaches every device within that minute with no purge.
 
+**Amended 2026-11-10 (#1764 Spec 7).** Two owner decisions. First, CI runs the backend tests on a Postgres container, not on a Neon branch per pull request as the Neon bullet below expects; the deviation is deliberate, chosen by the owner, and Neon branches stay available for manual use. Second, the app's first Cycle has a fixed order whose first 300 cards are the Starter Words (the Words of the Starter Media), so a first launch plays bundled media from the first card; later Cycles stay as they are.
+
 **Decision.**
 
 - **Content in Neon.** The Deployment's Postgres (ADR 0090) runs on Neon in Frankfurt (`aws-eu-central-1`), beside the backend on Railway in EU West, Amsterdam. Neon gives a database branch per pull request and point-in-time restore; it scales to zero while idle, which costs about half a second on the first query after sleep. The backend stays on Railway (ADR 0063). The CDN caches the Patch responses, keyed by Edition, the device's content version and the Patch format and kept 60 s, so most devices never reach the database.

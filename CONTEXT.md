@@ -450,10 +450,10 @@ The Deployment's file storage for Recordings and Illustrations: Cloudflare R2 be
 _Avoid_: bucket, CDN (as names of the whole), assets (assets are the Edition's own files in the repo)
 
 **Starter Media**:
-The media the app bundles so a first launch works offline: the default Narrator Voice's Recordings of the first 300 Words of the default Mix, the sample Word in every voice, and those Words' Illustrations.
+The media the app bundles so a first launch works offline: the default Narrator Voice's Recordings of the first 300 Words of the default Mix, the sample Word in every voice, and those Words' Illustrations. Those 300 Words (the Starter Words) open the app's first Cycle, in a fixed order.
 
 **Needs new recording** («потребує нового запису»):
-The mark on a Word whose text or stress changed in the content database; Pronunciation hides for it until a Recording of the new text ships in a build (ADR 0090).
+The mark on a Word whose text or stress changed in the content database; Pronunciation hides for it until a new Recording of the new text reaches the device in a Patch, which clears the mark (ADR 0099).
 _Avoid_: Stale audio, outdated recording
 
 **Share Card**:
