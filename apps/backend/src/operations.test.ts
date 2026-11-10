@@ -318,7 +318,7 @@ describe('the server', { timeout: 30_000 }, () => {
     }
   });
 
-  it('starts in production with its SMTP settings and sender', async () => {
+  it('starts in production with its SMTP settings, sender and Media Store', async () => {
     const server = runServer({
       ...VALID_ENV,
       DATABASE_URL: testDatabaseUrl(),
@@ -330,6 +330,10 @@ describe('the server', { timeout: 30_000 }, () => {
       SMTP_PASSWORD: 'a-password',
       SMTP_TLS: 'true',
       MAIL_FROM: 'no-reply@example.com',
+      R2_ACCOUNT_ID: 'account',
+      R2_BUCKET: 'media',
+      R2_ACCESS_KEY_ID: 'key',
+      R2_SECRET_ACCESS_KEY: 'secret',
     });
 
     await server.listening;
