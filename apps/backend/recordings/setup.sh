@@ -2,7 +2,7 @@
 # Creates the Python 3.10 environment of the Recordings generator from the
 # lockfile: CPU-only torch first, then every locked package (ADR 0083).
 #
-#   tools/recordings/setup.sh <venv-dir>
+#   apps/backend/recordings/setup.sh <venv-dir>
 set -euo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
