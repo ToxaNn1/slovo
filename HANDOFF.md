@@ -69,3 +69,4 @@ Owner questions open: generator in recordings.Dockerfile (accepted, owner may ve
 - 2026-11-10 18:21 UTC safety net takeover (last commit 2026-11-10 17:35 UTC)
 - 2026-11-10 18:31 UTC safety net: finished feat/1764-fix-keys (pushed c=27aa62887): merged integration 2f162682a in, then one refactor commit switching backend recordingKey/illustrationKey, Core recordingPath/illustrationPath and language-pack starter-media to the contracts recordingPath/illustrationPath (one definition); local typecheck/lint/test green. NOT merged into integration: a laptop push (944e116a6, ADR 0099 amend) arrived meanwhile, the wave is alive, safety net yields. Next: merge feat/1764-fix-keys into feat/1764-media-store, CI on #1792.
 - 2026-11-10 19:18 UTC safety net takeover (last commit 2026-11-10 18:43 UTC)
+- 2026-11-10 19:25 UTC safety net: merged feat/1764-fix-keys (27aa62887) into feat/1764-media-store → 2efb72f02; local typecheck/lint/test green; CI running on #1792.
