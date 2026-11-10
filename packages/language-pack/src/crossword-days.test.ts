@@ -1,6 +1,7 @@
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { DatabaseSync } from 'node:sqlite';
 import { fileURLToPath } from 'node:url';
 
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
@@ -12,7 +13,6 @@ import {
   buildLanguagePack,
   formatBuildError,
   generateDailyCrossword,
-  openLanguagePack,
   recordContent,
 } from './index';
 
@@ -179,14 +179,28 @@ describe('the crossword days the pack build keeps in the Edition', () => {
     const outFile = join(editionDir, 'dist', 'language-pack.db');
     const result = buildLanguagePack({ editionDir, outFile });
     expect(result.ok && result.metadata.packFormat).toBe(11);
-    const pack = openLanguagePack(outFile);
+    const db = new DatabaseSync(outFile, { readOnly: true });
     try {
-      expect(await pack.crosswordDay('2027-06-15')).toEqual(
-        recorded.find((day) => day.date === '2027-06-15'),
+      const wordsOf = (date: string) =>
+        db
+          .prepare(
+            'SELECT entry_id, answer, clue, start_row, start_column, direction FROM crossword_words WHERE date = ? ORDER BY position',
+          )
+          .all(date)
+          .map((row) => ({
+            entryId: row['entry_id'],
+            answer: row['answer'],
+            clue: row['clue'],
+            row: row['start_row'],
+            column: row['start_column'],
+            direction: row['direction'],
+          }));
+      expect(wordsOf('2027-06-15')).toEqual(
+        recorded.find((day) => day.date === '2027-06-15')?.words,
       );
-      expect(await pack.crosswordDay('2028-02-06')).toBeUndefined();
+      expect(wordsOf('2028-02-06')).toEqual([]);
     } finally {
-      pack.close();
+      db.close();
     }
   }, 60_000);
 
