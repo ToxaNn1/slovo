@@ -5,15 +5,14 @@ import { loadDecor } from '@slovo/core';
 import { ukrainian as edition, ukrainianFolder } from './test-support';
 
 describe('the UA Edition', () => {
-  it('marks Stress, sorts with the Ukrainian alphabet and allows the apostrophe and hyphen in a Lemma, and the comma and dash in an expression', () => {
+  it('marks Stress, sorts with the Ukrainian alphabet, allows the apostrophe and hyphen in a Lemma and the comma and dash in an expression, and reads three apostrophes as one', () => {
     expect(edition.languageTraits).toEqual({
-      marksStress: true,
+      stress: { marked: true, vowels: 'а е є и і ї о у ю я'.split(' ') },
       alphabet: 'а б в г ґ д е є ж з и і ї й к л м н о п р с т у ф х ц ч ш щ ь ю я'.split(' '),
       lemmaPunctuation: ["'", '-'],
       expressionPunctuation: [',', '—'],
+      apostrophes: ['ʼ', "'", '’'],
       sortLocale: 'uk',
-      distractorRule: 'same-part-of-speech',
-      vowels: 'а е є и і ї о у ю я'.split(' '),
       keyboard: ['й ц у к е н г ш щ з х', 'ф і в а п р о л д ж є', 'я ч с м и т ь б ю ї ґ'].map(
         (row) => row.split(' '),
       ),
@@ -100,10 +99,7 @@ describe('the UA Edition', () => {
       mix: {
         categoryIds: 'all',
         correctionCategoryIds: 'all',
-        corrections: true,
-        idioms: true,
-        synonymRows: true,
-        tips: true,
+        kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
       },
       rarityCeiling: 5,
       narratorVoice: 'oksana',

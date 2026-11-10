@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  openComposition,
-  type AnalyticsPort,
-  type BadgeState,
-  type FeatureSwitch,
-  type XpRecord,
-} from '../index';
+import { openComposition, type AnalyticsPort, type BadgeState, type FeatureSwitch } from '../index';
+import { type XpRecord } from './records';
 import type { Badge } from '@slovo/contracts';
 
 import { createMemoryContentPort } from '../testing';

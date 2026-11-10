@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   openComposition,
-  renderStress,
   type AnalyticsPort,
   type Composition,
   type FeatureSwitch,
   type FeedCard,
   type Round,
-  type XpRecord,
 } from '../index';
+import { renderStress } from '../entries/stress';
+import { type XpRecord } from './records';
 import { createMemoryContentPort } from '../testing';
 import {
   fakeClock,
@@ -99,7 +99,7 @@ async function run({
     edition: testEdition({
       isFeatureEnabled: (feature) => ALL_ON.includes(feature) && !off.includes(feature),
       userSettingDefaults: {
-        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
+        mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
       },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSettings, openComposition, type Backend, type UserStateChanges } from '../index';
+import { createSettings, openComposition, type Backend } from '../index';
+import { type UserStateChanges } from '../ports';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { createSyncExchange } from './exchange';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
@@ -26,7 +27,7 @@ const content = createMemoryContentPort({
 
 const edition = testEdition({
   isFeatureEnabled: (feature) => feature === 'knowledge' || feature === 'rarityCeiling',
-  userSettingDefaults: { mix: { categoryIds: ['test', 'sea'], corrections: false } },
+  userSettingDefaults: { mix: { categoryIds: ['test', 'sea'], kinds: { correction: false } } },
 });
 
 /** One Account on a fake backend, and the devices signed into it, on one clock. */

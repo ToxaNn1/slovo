@@ -54,7 +54,8 @@ async function runApp(on: FeatureSwitch[] = []): Promise<Composition> {
   return openComposition({
     content,
     edition: testEdition({
-      isFeatureEnabled: (feature) => ['mood', 'rarityCeiling', ...on].includes(feature),
+      isFeatureEnabled: (feature) =>
+        ['wordOfTheDay', 'dashboard', 'mood', 'rarityCeiling', ...on].includes(feature),
       moods: MOODS,
       dashboardMoods: MOODS,
     }),
@@ -180,7 +181,8 @@ describe('the Feed under a Mood', () => {
       const app = await openComposition({
         content,
         edition: testEdition({
-          isFeatureEnabled: (feature) => ['mood', 'rarityCeiling'].includes(feature),
+          isFeatureEnabled: (feature) =>
+            ['wordOfTheDay', 'dashboard', 'mood', 'rarityCeiling'].includes(feature),
           moods: MOODS,
           dashboardMoods: MOODS,
         }),

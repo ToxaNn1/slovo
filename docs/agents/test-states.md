@@ -27,4 +27,4 @@ Each state is built from the declared user-state records of the Core (`changesOf
 Limits:
 
 - `weekly-recap`: the Weekly Recap shows on a local Monday only (ADR 0054); on another day the state holds last week but no Recap shows.
-- `crossword-solved`, `crossword-7-in-a-row`: today's grid is filled for the Daily Crossword of letters; the traced Daily Crossword (ADR 0073) starts with no Word found.
+- `crossword-solved`, `crossword-7-in-a-row`: the solves are XP log records only, so the crossing Daily Crossword's card (ADR 0087) reads solved while its grid opens empty; the traced Daily Crossword (ADR 0073) starts with no Word found.

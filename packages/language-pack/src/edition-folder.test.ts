@@ -417,7 +417,7 @@ describe('checkNewWords', () => {
         change: (dir) => {
           editJson(join(dir, 'edition.json'), (config) => ({
             ...config,
-            languageTraits: { ...(config['languageTraits'] as Json), marksStress: false },
+            languageTraits: { ...(config['languageTraits'] as Json), stress: { marked: false } },
           }));
         },
       }),

@@ -1,5 +1,3 @@
-import type { LanguageTraits } from '@slovo/contracts';
-
 import {
   markedStressedVowelsOf,
   renderStress,
@@ -7,22 +5,26 @@ import {
   stressedVowelsOf,
   withoutStress,
 } from '../entries/stress';
-import type { AnswerSheet, GameMode, RoundContent } from './game-mode';
+import type { AnswerSheet, GameEdition, GameMode, RoundContent } from './game-mode';
+import type { TextComparison } from '../text/text-comparison';
 
 /**
  * A vowel Round of the text, its Stress set apart: each vowel, by the
- * Edition's vowels, a button, the stressed ones right; nothing when the text
+ * Edition's vowels, a button, the stressed ones right; nothing when the
+ * Edition marks no Stress, or when the text
  * has one vowel or no stressed one, since its Round would be trivial.
  */
 function vowelRound(
   text: string,
   stress: readonly number[],
-  edition: { readonly languageTraits: Partial<Pick<LanguageTraits, 'vowels'>> },
+  { stress: trait }: GameEdition['languageTraits'],
+  comparison: TextComparison,
   sheet: AnswerSheet,
 ): RoundContent | undefined {
-  const editionVowels = new Set(edition.languageTraits.vowels);
+  if (!trait.marked) return undefined;
+  const editionVowels = new Set(trait.vowels);
   const vowels = Array.from(text).flatMap((character, place) =>
-    editionVowels.has(character.toLowerCase()) ? [place] : [],
+    editionVowels.has(comparison.key(character, 'typedAnswer')) ? [place] : [],
   );
   const stressed = stress.filter((place) => vowels.includes(place));
   if (vowels.length < 2 || stressed.length === 0) return undefined;
@@ -56,21 +58,26 @@ export const stressMode: GameMode = {
   group: 'words',
   entryKind: 'word',
   alsoAsks: ['correction'],
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameStress') && edition.languageTraits.marksStress === true,
-  buildRound({ answer, edition }) {
+  isOn: (edition) => edition.isFeatureEnabled('gameStress') && edition.languageTraits.stress.marked,
+  buildRound({ answer, edition, comparison }) {
     if (answer.kind === 'word') {
-      return vowelRound(answer.lemma, answer.stress, edition, {
+      return vowelRound(answer.lemma, answer.stress, edition.languageTraits, comparison, {
         answer: { text: renderStress(answer), stressedVowels: stressedVowelsOf(answer) },
         example: answer.examples[0],
       });
     }
     if (answer.kind !== 'correction' || answer.correctionType !== 'wrongStress') return undefined;
     const form = answer.standardEquivalents[0];
-    return vowelRound(withoutStress(form), markedStressOf(form), edition, {
-      answer: { text: form, stressedVowels: markedStressedVowelsOf(form) },
-      example: undefined,
-      explanation: answer.explanation,
-    });
+    return vowelRound(
+      withoutStress(form),
+      markedStressOf(form),
+      edition.languageTraits,
+      comparison,
+      {
+        answer: { text: form, stressedVowels: markedStressedVowelsOf(form) },
+        example: undefined,
+        explanation: answer.explanation,
+      },
+    );
   },
 };

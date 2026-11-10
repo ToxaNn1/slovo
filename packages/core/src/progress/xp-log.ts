@@ -14,6 +14,7 @@ import type { XpRecord } from './records';
 import { userStateRecords } from '../user-state-schema';
 import { levelOf, type LevelState } from './levels';
 import { ACTIVE_DAY_XP } from './streak';
+import { xpEntryOf } from './xp-entry';
 
 const { xpLog: xpRecords } = userStateRecords;
 
@@ -260,9 +261,9 @@ export async function openXpLog({
   analytics: Pick<Analytics, 'track'>;
 }): Promise<XpLog> {
   const on = edition.isFeatureEnabled('xpLog');
-  const levelsOn = on && edition.isFeatureEnabled('levels');
-  const goalOn = on && edition.isFeatureEnabled('dailyGoal');
-  const seenWordOn = goalOn && edition.isFeatureEnabled('seenWordXp');
+  const levelsOn = edition.isFeatureEnabled('levels');
+  const goalOn = edition.isFeatureEnabled('dailyGoal');
+  const seenWordOn = edition.isFeatureEnabled('seenWordXp');
   const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
   /** The `word-goal` records by date and instant, so a goal is looked up among them and not in the whole log; made anew after one is added. */
   let wordGoals: WordGoalRecord[] | undefined;
@@ -455,17 +456,26 @@ export async function openXpLog({
           opened.add(record.badge);
           break;
         case 'xp': {
-          const { source, mode, rarity, right, played } = record;
-          if (source === 'game-finished' && mode !== undefined) {
-            wins.add(mode);
-            if (played !== undefined && played > 0 && right === played) flawless.add(mode);
+          switch (record.source) {
+            case 'game-finished': {
+              const { mode, right, played } = record;
+              if (mode === undefined) break;
+              wins.add(mode);
+              if (played !== undefined && played > 0 && right === played) flawless.add(mode);
+              break;
+            }
+            case 'game-round': {
+              const { mode, rarity } = record;
+              if (mode !== undefined) {
+                rightByMode.set(mode, (rightByMode.get(mode) ?? 0) + 1);
+                answered.push({ at: record.at, id, mode, right: true });
+              }
+              if (rarity !== undefined) rightRarities.add(rarity);
+              break;
+            }
+            case 'daily-crossword':
+              crosswords.add(record.date);
           }
-          if (source === 'game-round' && mode !== undefined) {
-            rightByMode.set(mode, (rightByMode.get(mode) ?? 0) + 1);
-            answered.push({ at: record.at, id, mode, right: true });
-          }
-          if (source === 'game-round' && rarity !== undefined) rightRarities.add(rarity);
-          if (source === 'daily-crossword') crosswords.add(record.date);
           const amount = count(record);
           total += amount;
           byDate.set(record.date, (byDate.get(record.date) ?? 0) + amount);
@@ -569,26 +579,13 @@ export async function openXpLog({
     if (amount === 0) return NOTHING_EARNED;
     const at = clock.now();
     const id = fixedId ?? newId(at);
-    const record: XpRecord = {
+    const record = xpEntryOf({
+      ...action,
       kind: 'xp',
       date: todayKey(clock),
       at: at.toISOString(),
-      source: action.source,
       amount,
-      ...(action.source === 'game-round' || action.source === 'game-finished'
-        ? { mode: action.mode }
-        : {}),
-      ...(action.source === 'game-round' && action.rarity !== undefined
-        ? { rarity: action.rarity }
-        : {}),
-      ...(action.source === 'game-finished' ? { right: action.right, played: action.played } : {}),
-      ...(action.source === 'daily-crossword' && action.solveSeconds !== undefined
-        ? { solveSeconds: action.solveSeconds }
-        : {}),
-      ...(action.source === 'daily-crossword' && action.hinted !== undefined
-        ? { hinted: action.hinted }
-        : {}),
-    };
+    });
     return {
       changes: xpRecords.record(id).change(record),
       amount,

@@ -28,7 +28,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
-      userSettingDefaults: { mix: { corrections: true } },
+      userSettingDefaults: { mix: { kinds: { correction: true } } },
     }),
     userState: await openUserState({ port }),
     clock: time.clock,
@@ -61,7 +61,13 @@ describe('The Correction Types', () => {
 
   it('carries the Categories of Corrections in pack order with `correctionCategoryScreens` on', async () => {
     const { app } = await run({
-      on: ['dashboard', 'corrections', 'correctionTypes', 'correctionCategoryScreens'],
+      on: [
+        'wordOfTheDay',
+        'dashboard',
+        'corrections',
+        'correctionTypes',
+        'correctionCategoryScreens',
+      ],
     });
     const categories = await content.listCorrectionCategories();
 

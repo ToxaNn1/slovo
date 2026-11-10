@@ -5,6 +5,7 @@ import type { UserState } from '../user-state/user-state';
 import { shuffled } from '../shuffled';
 import type { GameEdition, GameMode, RoundContent } from './game-mode';
 import type { GameXp } from './game-xp';
+import type { TextComparison } from '../text/text-comparison';
 
 /** A Round the reader answers by picking one of its options. */
 export type PickRound = Extract<RoundContent, { readonly form: 'pick' }>;
@@ -36,6 +37,7 @@ export interface QuickQuestion {
 
 export function createQuickQuestion({
   edition,
+  comparison,
   entries,
   knowledge,
   xp,
@@ -45,6 +47,8 @@ export function createQuickQuestion({
   answered,
 }: {
   edition: GameEdition;
+  /** The Edition's text comparison, built once by the composition. */
+  comparison: TextComparison;
   entries: Pick<Entries, 'eligibleOfKind'>;
   knowledge: Pick<Knowledge, 'answer' | 'confirm'>;
   xp: GameXp;
@@ -71,6 +75,7 @@ export function createQuickQuestion({
         round: 1,
         random,
         edition,
+        comparison,
       });
       if (round?.form === 'pick') return { entry: answer, modeId: mode.id, round };
     }

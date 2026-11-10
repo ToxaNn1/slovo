@@ -1,6 +1,7 @@
 import type { Example } from '@slovo/contracts';
 
 import type { AskableEntry } from '../entries/entries';
+import type { TextComparison } from '../text/text-comparison';
 
 /** How many options a Round offers, exactly one of them correct. */
 export const ROUND_OPTIONS = 4;
@@ -53,8 +54,16 @@ export interface AnswerForm<Content, Shown, Given, Answer> {
   entriesIn(content: Content): readonly string[];
   /** The Round as the reader sees it, its right answer kept out, after the answers given in its earlier Rounds. */
   shown(content: Content, answered: readonly Answer[]): Shown;
-  /** The answer judged; nothing when it names something the Round doesn't have. */
-  judge(content: Content, shown: Shown, given: Given): Judged<Answer> | undefined;
+  /**
+   * The answer judged, text compared the Edition's way; nothing when it
+   * names something the Round doesn't have.
+   */
+  judge(
+    content: Content,
+    shown: Shown,
+    given: Given,
+    comparison: TextComparison,
+  ): Judged<Answer> | undefined;
   /** The reader's wrong answer as the Game Review shows it; nothing when it can't be shown. */
   reviewAnswer(round: Shown & { readonly prompt: string }, answer: Answer): RoundOption | undefined;
 }

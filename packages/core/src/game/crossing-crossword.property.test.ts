@@ -1,7 +1,9 @@
 import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
-import { crossingPlacesOf, generateCrossingCrossword, seededRandomOf } from '../index';
+import { crossingPlacesOf } from '../index';
+import { generateCrossingCrossword } from './crossing-crossword';
+import { seededRandomOf } from './traced-crossword';
 import {
   ALPHABET,
   ineligible,

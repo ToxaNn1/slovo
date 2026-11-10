@@ -1,9 +1,8 @@
-import { CROSSWORD_SIZE, fill, pluralCount, type EditionStrings } from '@slovo/contracts';
+import { fill, pluralCount, type EditionStrings } from '@slovo/contracts';
 
 import type { AnyEntryCard } from '../feed/entry-feed-card';
 import { isTodaysWordOfTheDay } from '../feed/feed';
 import type { CrosswordPuzzle } from '../game/crossword-puzzle';
-import type { DailyCrosswordState } from '../game/daily-crossword';
 import { parseLocalDate, type LocalDate } from '../local-date';
 import type { BadgeState } from '../progress/badges';
 import type { LevelState } from '../progress/levels';
@@ -41,7 +40,6 @@ export type ShareCardSubject =
   | { readonly level: Pick<LevelState, 'level' | 'name'>; readonly date: string }
   | { readonly badge: Extract<BadgeState, { readonly earned: true }> }
   | { readonly streak: number; readonly date: string }
-  | { readonly crossword: DailyCrosswordState }
   /** A solved traced Daily Crossword (ADR 0073), whose every cell a Word reads through. */
   | { readonly puzzle: CrosswordPuzzle };
 
@@ -176,7 +174,6 @@ export function buildShareCardContent(
       detail: undefined,
     });
   }
-  if ('crossword' in subject) return dailyCrosswordContent(subject.crossword, strings);
   if ('puzzle' in subject) return tracedCrosswordContent(subject.puzzle, strings);
   const { card } = subject;
   const model = card.model;
@@ -363,28 +360,6 @@ function milestoneContent(
     label: sentences([overline, texts.title, texts.headline, texts.detail]),
     body: { kind: 'milestone', ...texts },
   };
-}
-
-/**
- * A solved Daily Crossword's Share Card: which cells its words read through,
- * with no letter and no clue, so it gives no answer away.
- */
-function dailyCrosswordContent(
-  crossword: DailyCrosswordState,
-  strings: ShareCardStrings,
-): ShareCardContent {
-  const grid = Array.from({ length: CROSSWORD_SIZE }, () =>
-    Array.from({ length: CROSSWORD_SIZE }, () => false),
-  );
-  for (const { start, direction, length } of crossword.words) {
-    for (let i = 0; i < length; i++) {
-      const row = direction === 'across' ? start.row : start.row + i;
-      const column = direction === 'across' ? start.column + i : start.column;
-      const cells = grid[row];
-      if (cells !== undefined && column < CROSSWORD_SIZE) cells[column] = true;
-    }
-  }
-  return crosswordGridContent(crossword.date, grid, strings);
 }
 
 /**

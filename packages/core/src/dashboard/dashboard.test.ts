@@ -33,7 +33,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
-      userSettingDefaults: { mix: { corrections: false } },
+      userSettingDefaults: { mix: { kinds: { correction: false } } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
@@ -251,7 +251,7 @@ describe('The Categories rail on the Dashboard', () => {
     blocks.find((block) => block.kind === 'categories');
 
   it('lists the Categories of Words of the Language Pack in its order', async () => {
-    const { app } = await run({ on: ['dashboard', 'categoryScreens'] });
+    const { app } = await run({ on: ['wordOfTheDay', 'dashboard', 'categoryScreens'] });
     const categories = await content.listCategories();
 
     expect(categories.length).toBeGreaterThan(0);

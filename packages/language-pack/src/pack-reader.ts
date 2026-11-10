@@ -1,14 +1,12 @@
 import {
   CategorySchema,
   CorrectionSchema,
-  CrosswordDaySchema,
   CuratedCollectionSchema,
   IdiomSchema,
   SynonymRowSchema,
   TipSchema,
   WordSchema,
   type Correction,
-  type CrosswordDay,
   type Entry,
   type EntryKind,
   type Idiom,
@@ -48,8 +46,6 @@ export interface PackDatabase {
 export interface PackReader extends ContentReadPort {
   /** Throws when the pack's metadata misses a field or holds an invalid one. */
   metadata(): Promise<PackMetadata>;
-  /** The Daily Crossword of a date, `YYYY-MM-DD`, or undefined when the pack has no such day. */
-  crosswordDay(date: string): Promise<CrosswordDay | undefined>;
 }
 
 interface CuratedCollectionRow {
@@ -62,15 +58,6 @@ interface CuratedCollectionRow {
 interface CuratedCollectionEntryRow {
   collection_id: string;
   entry_id: string;
-}
-
-interface CrosswordWordRow {
-  entry_id: string;
-  answer: string;
-  clue: string;
-  start_row: number;
-  start_column: number;
-  direction: string;
 }
 
 interface WordRow {
@@ -187,8 +174,6 @@ const SQL = {
     'SELECT id, name, description, published_on FROM curated_collections ORDER BY id',
   curatedCollectionEntries:
     'SELECT collection_id, entry_id FROM curated_collection_entries ORDER BY collection_id, position',
-  crosswordDay:
-    'SELECT entry_id, answer, clue, start_row, start_column, direction FROM crossword_words WHERE date = ? ORDER BY position',
 };
 
 /** Which Words a read takes: a condition on the `words` table and the values it binds. */
@@ -614,21 +599,6 @@ export function createPackReader(db: PackDatabase): PackReader {
       );
     },
     metadata: async () => metadataOf(await db.getAllAsync<MetadataRow>(SQL.metadata, [])),
-    crosswordDay: async (date) => {
-      const rows = await db.getAllAsync<CrosswordWordRow>(SQL.crosswordDay, [date]);
-      if (rows.length === 0) return undefined;
-      return CrosswordDaySchema.parse({
-        date,
-        words: rows.map((row) => ({
-          entryId: row.entry_id,
-          answer: row.answer,
-          clue: row.clue,
-          row: row.start_row,
-          column: row.start_column,
-          direction: row.direction,
-        })),
-      });
-    },
   };
 }
 

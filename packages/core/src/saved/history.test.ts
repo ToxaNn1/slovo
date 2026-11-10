@@ -5,12 +5,12 @@ import type { Word } from '@slovo/contracts';
 import {
   HISTORY_CAP,
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
-  type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
+import { type UserStateChanges } from '../ports';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';

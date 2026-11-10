@@ -1,12 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  groupByLocalDay,
-  openComposition,
-  relativeTimeOf,
-  SEEN_DWELL_MS,
-  type Clock,
-} from '../index';
+import { groupByLocalDay, openComposition, type Clock } from '../index';
+import { relativeTimeOf } from './history-time';
+import { SEEN_DWELL_MS } from '../feed/feed';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';

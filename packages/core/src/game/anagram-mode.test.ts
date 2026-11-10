@@ -83,11 +83,17 @@ async function offersPlanned(app: Composition): Promise<Composition> {
 async function run({
   seed = 7,
   off = [],
-}: { seed?: number; off?: readonly string[] } = {}): Promise<Composition> {
+  apostrophes = ['ʼ', "'", '’'],
+}: {
+  seed?: number;
+  off?: readonly string[];
+  apostrophes?: string[];
+} = {}): Promise<Composition> {
   const app = await openComposition({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
+      languageTraits: { apostrophes },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {
@@ -220,6 +226,20 @@ describe('a Round of «Анаграми»', () => {
         fixed: lemmaOf(round) === 'вʼязанка' ? [{ at: 1, text: 'ʼ' }] : [{ at: 4, text: '-' }],
       });
     }
+  });
+
+  it('keeps in place only what the Edition reads as an apostrophe', async () => {
+    for (let seed = 1; seed < 200; seed += 1) {
+      const app = await run({ seed, apostrophes: [] });
+      await app.game.start('anagram');
+      const round = app.game.state.current?.round;
+      if (round === undefined || lemmaOf(round) !== 'вʼязанка') continue;
+
+      expect(chipsOf(round)).toHaveLength(8);
+      expect(round).toMatchObject({ fixed: [] });
+      return;
+    }
+    throw new Error('No Game starts with «вʼязанка»');
   });
 
   it('takes equal letters in either order', async () => {

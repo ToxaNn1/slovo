@@ -1,10 +1,10 @@
 /**
  * The Core's public interface. Every Edition reaches Core behaviour through
- * this module only (ADR 0006). It exports what the rest of the workspace
- * imports, never what only the Core's own tests use, and every Extension
- * Point; the fakes of the ports sit behind `@slovo/core/testing`.
+ * this module only (ADR 0006). It exports only what the non-test code of the
+ * rest of the workspace imports (ADR 0018, 0027; `scripts/core-exports.mjs`
+ * checks it); what only tests need sits behind `@slovo/core/testing`.
  */
-export type { Correction, Entry, Example, FeatureSwitch, Idiom, Word } from '@slovo/contracts';
+export type { Example, FeatureSwitch } from '@slovo/contracts';
 export { openAccount, type Account, type AccountState } from './account/account';
 export { openComposition, type Composition } from './composition';
 export {
@@ -15,7 +15,7 @@ export {
   type Collections,
 } from './saved/collections';
 export { type CollectionLinkPreview } from './collection-links/copy-collection';
-export { buildCorrectionCard, type CorrectionCardModel } from './entries/correction-card';
+export { type CorrectionCardModel } from './entries/correction-card';
 export { type IdiomCardModel } from './entries/idiom-card';
 export { type SynonymRowCardModel, type SynonymRowMemberModel } from './entries/synonym-row-card';
 export { type TipCardModel } from './entries/tip-card';
@@ -24,46 +24,35 @@ export {
   buildShareCardContent,
   type ShareCardBody,
   type ShareCardContent,
-  type ShareCardStrings,
   type ShareCardSubject,
 } from './share/share-card';
 export { type ShareCardKind } from './analytics/analytics';
-export { type ProgressShareCard, type ProgressShareCards } from './share/progress-share-cards';
-export { partOfSpeechText, registerText, wordGrammarText } from './entries/part-of-speech';
+export { type ProgressShareCard } from './share/progress-share-cards';
+export { partOfSpeechText, registerText } from './entries/part-of-speech';
 export { stressLabel } from './entries/stress-label';
 export { sentences } from './sentences';
 export { coreDecor, loadDecor, type Decor } from './edition/decor';
-export {
-  createEntries,
-  EVERYTHING_IN,
-  type AskableEntry,
-  type EligibilityChoices,
-  type Entries,
-} from './entries/entries';
+export { type AskableEntry } from './entries/entries';
 export {
   linkFromOutside,
   linkSourceOf,
   linkTo,
   parseLink,
-  type EntryLink,
   type EntryLinkSource,
-  type ParsedEntryLink,
 } from './entries/entry-links';
 export { buildEntryRow, type EntryRowModel } from './entries/entry-row';
 export { type Favorite } from './saved/favorites';
-export { buildEntryCard, isTodaysWordOfTheDay, SEEN_DWELL_MS, type Feed } from './feed/feed';
+export { isTodaysWordOfTheDay, type Feed } from './feed/feed';
 export {
   type AnyEntryCard,
   type EntryFeedCard,
   type FeedCard,
   type FeedNoticeCard,
-  type IdiomFeedCard,
   type SynonymRowFeedCard,
   type TipFeedCard,
-  type WordFeedCard,
 } from './feed/feed-card';
 export { entryCardTitle } from './feed/entry-feed-card';
-export { LATER_QUESTIONS, type FeedNotice, type LaterQuestion } from './feed-notice';
+export { type FeedNotice, type LaterQuestion } from './feed-notice';
 export { ENOUGH_FOR_TODAY_SEEN, type FirstWeekDay } from './feed/feed-notices';
 export {
   streakOf,
@@ -75,6 +64,7 @@ export {
 export {
   type CurrentGame,
   type GameEnd,
+  type GameOver,
   type GameTime,
   type GivenAnswer,
   type GridCell,
@@ -85,20 +75,10 @@ export {
 } from './game/game';
 export {
   GAME_MODE_GROUPS,
-  ROUND_OPTIONS,
   type AnswerSheet,
-  type ChipKind,
   type ChipLayout,
   type FixedChip,
-  type GameEdition,
-  type GameMode,
-  type GameModeGroup,
-  type GameModeRefusal,
-  type GridPair,
   type RoundContent,
-  type RoundForm,
-  type RoundInput,
-  type RoundLabelKind,
   type RoundOption,
   type TextRange,
 } from './game/game-mode';
@@ -115,12 +95,12 @@ export {
   type SoundEngine,
 } from './sounds/interface-sounds';
 export { type HiddenEntry } from './mix/hidden-entries';
-export { type HidingChange, type HidingUndo } from './mix/hiding';
+export { type HidingChange } from './mix/hiding';
 export { HISTORY_CAP, type HistoryEntry } from './saved/history';
 export { type WordOfTheDayArchiveDay } from './saved/word-of-the-day-archive';
-export { groupByLocalDay, relativeTimeOf, type RelativeTime } from './saved/history-time';
+export { groupByLocalDay, type RelativeTime } from './saved/history-time';
 export { type KnowledgeMark } from './knowledge/knowledge-record';
-export { type ConfirmedCounts, type KnownCounts, type LearningEntry } from './knowledge/knowledge';
+export { type KnownCounts, type LearningEntry } from './knowledge/knowledge';
 export {
   openCounterReads,
   type CounterLine,
@@ -129,15 +109,10 @@ export {
 export { openCounterSending } from './community-counters/counter-sending';
 export {
   createAnalytics,
-  type Analytics,
   type AnalyticsEvent,
   type AnalyticsEvents,
   type AnalyticsPort,
-  type AnalyticsReader,
   type AnalyticsSink,
-  type AnalyticsSwitches,
-  type VariantProperty,
-  type EntryEventProperties,
 } from './analytics/analytics';
 export {
   dateKeyOf,
@@ -153,80 +128,30 @@ export {
   type LocalDay,
 } from './local-date';
 export {
-  type CrosswordPlace,
-  type DailyCrossword,
-  type DailyCrosswordState,
-  type DailyCrosswordWord,
-} from './game/daily-crossword';
-export {
-  areAdjacent,
-  foundIds,
-  generateCrosswordPuzzle,
-  HIDDEN_WORD_LENGTH,
   isSolved,
-  playPuzzle,
-  startPuzzle,
   type CrosswordPuzzle,
-  type HiddenWord,
-  type HiddenWordState,
   type PuzzleAction,
-  type PuzzleGeneration,
-  type PuzzleLetter,
   type PuzzlePlace,
   type PuzzleState,
 } from './game/crossword-puzzle';
 export {
-  CROSSING_PATTERNS,
-  CROSSING_WORD_LENGTH,
   crossingPlacesOf,
-  generateCrossingCrossword,
-  type BlockPattern,
-  type CrossingDirection,
-  type CrossingGeneration,
-  type CrossingPrefill,
   type CrossingPuzzle,
   type CrossingWord,
 } from './game/crossing-crossword';
 export {
   crossingCellKey,
-  filledLetters,
   isCrossingSolved,
-  playCrossing,
-  solvedIds,
-  startCrossingPlay,
   type CrossingAction,
-  type CrossingCell,
   type CrossingPlay,
-  type CrossingWordState,
-  type KeptCrossingPlay,
 } from './game/crossing-play';
-export {
-  openCrossingCrossword,
-  type CrossingCrossword,
-  type CrossingCrosswordOpening,
-} from './game/crossing-crossword-progress';
-export {
-  openTracedCrossword,
-  seededRandomOf,
-  type TracedCrossword,
-  type TracedCrosswordOpening,
-} from './game/traced-crossword';
+export { type CrossingCrossword } from './game/crossing-crossword-progress';
+export { type TracedCrossword } from './game/traced-crossword';
+export { type DailyCrosswordOpening } from './game/daily-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { loadEdition, type Edition } from './edition/edition';
-export {
-  openRemoteSwitches,
-  SWITCHES_REFRESH_MS,
-  type ReaderFacts,
-  type RemoteSwitches,
-  type RemoteSwitchesAnswer,
-} from './edition/remote-switches';
-export {
-  evaluateSwitches,
-  type RemoteRule,
-  type SwitchFacts,
-  type SwitchVerdict,
-  type SwitchVerdicts,
-} from './edition/switch-evaluator';
+export { openRemoteSwitches, type ReaderFacts } from './edition/remote-switches';
+export { evaluateSwitches } from './edition/switch-evaluator';
 export { forceUpdateOf, type ForceUpdate, type ForceUpdateFacts } from './edition/force-update';
 export { readInstallId } from './edition/install-id';
 export {
@@ -237,77 +162,44 @@ export {
   type SettingsDefaults,
   type UserSettings,
 } from './settings/settings';
-export { withinRarityCeiling, type RarityCeiling } from './entries/rarity-ceiling';
-export { renderStress, STRESS_MARK, withoutStress } from './entries/stress';
+export { STRESS_MARK, withoutStress } from './entries/stress';
 export { createGesturesHint, type GesturesHint } from './feed/gestures-hint';
-export { buildWordCard, type WordCardModel } from './entries/word-card';
-export {
-  CONTENT_UPDATE_EVERY,
-  createContentUpdate,
-  type ContentUpdate,
-} from './content-update/content-update';
+export { type WordCardModel } from './entries/word-card';
+export { createContentUpdate, type ContentUpdate } from './content-update/content-update';
 export type { ContentStore, PackVersion } from './ports';
 export { type ProgressState } from './progress/progress';
-export type { XpAction, XpAward } from './game/game-xp';
-export type { CrosswordSolve, XpLog, XpLogState } from './progress/xp-log';
-export type { BadgeProgress, BadgeState, Badges } from './progress/badges';
-export type { BreakState, StreakBreak } from './progress/streak-break';
-export {
-  totalFor,
-  type LadderRung,
-  type LevelBand,
-  type LevelMilestone,
-  type LevelState,
-  type NextName,
-} from './progress/levels';
-export type { XpRecord, XpSource } from './progress/records';
+export type { CrosswordSolve, XpLogState } from './progress/xp-log';
+export type { BadgeState } from './progress/badges';
+export { totalFor, type LevelMilestone, type LevelState } from './progress/levels';
 export type { CalendarDay, CalendarWeek } from './progress/calendar';
 export { type WeeklyRecapModel } from './feed/weekly-recap';
 export {
-  ALL_KINDS,
-  ENTRY_KINDS,
   featureOfKind,
-  MIX_KINDS,
   type CategoryKind,
   type MixKind,
   type MixKindName,
 } from './entries/entry-kinds';
 export {
-  categoriesInMix,
   categoryTarget,
   categoryPlace,
   kindsShown,
-  type CategoriesInMix,
   type CategoryPlace,
   type EntryToHide,
   type HideOption,
   type HideTarget,
   type MixChip,
   type MixScreen,
-  type MixKindWeights,
   type MixState,
   type OutOfMix,
 } from './entries/mix';
 export { launchKind, type LaunchKind, type OnboardingStep } from './onboarding/onboarding';
-export type {
-  OptionQuestion,
-  Questionnaire,
-  QuestionnaireOption,
-} from './questionnaire/questionnaire';
+export type { OptionQuestion, QuestionnaireOption } from './questionnaire/questionnaire';
 export { type RarityTestAnswer, type RarityTestWord } from './mix/rarity-test';
 // The shell keeps the Session in memory on a development client without the Keychain.
 export { createMemorySessionStore } from './account/memory-session-store';
 export { type CollectionShareRefusal } from './collection-links/share-collection';
-export {
-  openMistakeReports,
-  type MistakeReports,
-  type ReportsApiFailure,
-} from './mistake-reports/mistake-reports';
+export { openMistakeReports, type MistakeReports } from './mistake-reports/mistake-reports';
 export { openSync, type Sync, type SyncState } from './sync/sync';
-export { type SyncApiFailure } from './sync/exchange';
-export { type AccountApiFailure } from './account/account-requests';
-export { type CollectionLinksApiFailure } from './collection-links/collection-link-requests';
-export { NOTIFICATION_BODY_LENGTH } from './notifications/notification-text';
 export {
   type NotificationTimeRefusal,
   type NotificationsState,
@@ -323,44 +215,29 @@ export {
   type KeptSession,
   type NotificationPermission,
   type NotificationSchedulerPort,
-  type EveningMessage,
   type NotificationKind,
   type PlannedNotification,
   type PlannedSound,
   type Random,
-  type RecordChange,
-  type RequestFailure,
   type Schedule,
   type SessionStore,
-  type UserStateChanges,
   type UserStatePort,
 } from './ports';
 export { openTrackedUserState, type TrackedUserState } from './user-state/tracked-user-state';
 export {
   changesOfFacts,
   type UserStateFact,
-  type UserStateFactName,
   type UserStateFacts,
 } from './user-state/user-state-facts';
-export {
-  type CorrectionTypeRow,
-  type CorrectionTypes,
-  type CorrectionTypeTile,
-} from './dashboard/correction-types';
+export { type CorrectionTypeRow, type CorrectionTypeTile } from './dashboard/correction-types';
 export {
   type CuratedCollectionCard,
   type CuratedCollectionEntry,
   type CuratedCollectionScreen,
-  type CuratedCollections,
 } from './dashboard/curated-collections';
 export {
-  type CorrectionTypesBlock,
-  type CategoriesBlock,
-  type CuratedCollectionsBlock,
-  type Dashboard,
   type DashboardBlock,
   type MoodBlock,
   type PreviousWordsBlock,
   type WordOfTheDayHero,
 } from './dashboard/dashboard';
-export { type MoodCheckIn, type MoodCheckIns } from './mood/mood';

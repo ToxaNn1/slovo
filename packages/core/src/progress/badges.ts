@@ -114,7 +114,7 @@ export async function openBadges({
   activeDays: Pick<ActiveDays, 'streak' | 'subscribe'>;
   analytics: Pick<Analytics, 'track'>;
 }): Promise<Badges> {
-  const on = edition.isFeatureEnabled('xpLog') && edition.isFeatureEnabled('badges');
+  const on = edition.isFeatureEnabled('badges');
   const subscribers = createSubscribers();
   const earnedSubscribers = createSubscribers<BadgeState>();
   const inTurn = createInTurn();

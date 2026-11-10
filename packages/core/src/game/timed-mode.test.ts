@@ -204,7 +204,7 @@ describe('a Game of «На час»', () => {
 
     await pass(app, time, 1);
 
-    expect(current(app)).toMatchObject({ status: 'won', time: { left: 0, endsAt: undefined } });
+    expect(current(app)).toMatchObject({ status: 'time-up', time: { left: 0, endsAt: undefined } });
   });
 
   it('moves on at once after an answer, right or wrong, with no answer sheet to wait on', async () => {
@@ -265,7 +265,7 @@ describe('a Game of «На час»', () => {
 
     await pass(app, time, 1);
 
-    expect(current(app).status).toBe('won');
+    expect(current(app).status).toBe('time-up');
   });
 
   it('takes no answer once its time is up, even before the schedule ends it', async () => {
@@ -277,7 +277,7 @@ describe('a Game of «На час»', () => {
 
     await pick(app, true);
 
-    expect(current(app)).toMatchObject({ status: 'won' });
+    expect(current(app)).toMatchObject({ status: 'time-up' });
     expect(current(app).played).toHaveLength(1);
     expect(app.game.state.bestResults['timed']).toBe(1);
   });

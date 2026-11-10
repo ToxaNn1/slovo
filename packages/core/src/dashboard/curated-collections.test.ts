@@ -69,7 +69,13 @@ describe('The Curated Collections rail', () => {
       }),
       edition: testEdition({
         isFeatureEnabled: (feature) =>
-          ['dashboard', 'curatedCollections', 'corrections', 'correctionTypes'].includes(feature),
+          [
+            'wordOfTheDay',
+            'dashboard',
+            'curatedCollections',
+            'corrections',
+            'correctionTypes',
+          ].includes(feature),
       }),
       userState: await openUserState({ port: createMemoryUserStatePort() }),
       clock: fakeClock('2026-11-04T09:00:00+02:00').clock,

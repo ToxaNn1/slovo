@@ -10,16 +10,15 @@ import {
   type CrossingPlay,
   type CrossingPuzzle,
   type CrossingWord,
-  type DailyCrosswordState,
   type PuzzlePlace,
 } from '@slovo/core';
 import type { CrossingGridCell, CrosswordMiniCell, WheelMiss } from '@slovo/ui';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { useComposition } from '../composition';
+import type { DailyCrosswordProgress } from './crossword-progress';
 import { deviceClock } from '../device/device-clock';
-import { logError } from '../diagnostics/log';
 import { editionStrings } from '../edition/edition';
 import { useInForeground } from '../foreground/in-foreground';
 import { keep } from '../keep';
@@ -145,14 +144,13 @@ export function crossingMiniGrid(
 export function crossingProgress(
   state: CrossingPlay,
   solve: CrosswordSolve | undefined,
-): DailyCrosswordState['progress'] {
+): DailyCrosswordProgress {
   if (solve !== undefined) return 'solved';
   return Object.values(state.cells).some(({ kind }) => kind === 'filled') ? 'started' : 'untouched';
 }
 
 /** Today's crossing Daily Crossword on its screen: what it draws, and the reader's moves. */
 export interface CrossingCrosswordPlay {
-  readonly kind: 'play';
   readonly puzzle: CrossingPuzzle;
   readonly cells: CrossingGridCell[][];
   /** The current Word's chip, e.g. «1→», its clue and what VoiceOver reads for the clue. */
@@ -181,79 +179,39 @@ export interface CrossingCrosswordPlay {
   readonly hint: (() => void) | undefined;
 }
 
-/**
- * What the Daily Crossword's screen shows of the crossing one: `off` while
- * the Edition has it off, so the traced Daily Crossword shows (ADR 0073),
- * `no-fill` on a day no pattern fills, `failed` when it could not open, or
- * the puzzle.
- */
-export type CrossingCrosswordView =
-  | { readonly kind: 'off' }
-  | { readonly kind: 'no-fill' }
-  | { readonly kind: 'failed' }
-  | CrossingCrosswordPlay;
+interface Opened {
+  readonly crossword: CrossingCrossword;
+  readonly state: CrossingPlay;
+  readonly miss: WheelMiss | undefined;
+  readonly touched: boolean;
+}
 
-type Opened =
-  | { readonly in: Composition; readonly kind: 'off' | 'no-fill' | 'failed' }
-  | {
-      readonly in: Composition;
-      readonly kind: 'open';
-      readonly crossword: CrossingCrossword;
-      readonly state: CrossingPlay;
-      readonly miss: WheelMiss | undefined;
-      readonly touched: boolean;
-    };
+const fresh = (crossword: CrossingCrossword): Opened => ({
+  crossword,
+  state: crossword.state,
+  miss: undefined,
+  touched: false,
+});
 
 const DIRECTION_MARK = { across: '→', down: '↓' } as const;
 
 /**
- * Today's crossing Daily Crossword for its screen, opened with the progress
- * this device made as the screen opens and again in a composition reopened:
- * `undefined` while it opens. Each move goes to the Core in turn; a release
- * that solves no Word becomes the `miss`. The Solve time ticks from the
- * device clock only while the screen is in front and the app in the
- * foreground (ADR 0087); as the screen leaves or the app goes to the
- * background the progress is kept and the time pauses, until the reader comes
- * back. A move that fails is logged and changes nothing; an opening that
- * fails is logged and `failed`, never the traced Daily Crossword.
+ * Today's crossing Daily Crossword for its screen, as the Core opened it with
+ * the progress this device made, and afresh for another one opened. Each move
+ * goes to the Core in turn; a release that solves no Word becomes the `miss`.
+ * The Solve time ticks from the device clock only while the screen is in front
+ * and the app in the foreground (ADR 0087); as the screen leaves or the app
+ * goes to the background the progress is kept and the time pauses, until the
+ * reader comes back. A move that fails is logged and changes nothing.
  */
-export function useCrossingCrossword(): CrossingCrosswordView | undefined {
+export function useCrossingCrossword(crossword: CrossingCrossword): CrossingCrosswordPlay {
   const composition = useComposition();
-  const [opened, setOpened] = useState<Opened>();
-  useEffect(() => {
-    let active = true;
-    composition.openCrossingCrossword().then(
-      (opening) => {
-        if (!active) return;
-        setOpened(
-          opening.kind === 'open'
-            ? {
-                in: composition,
-                kind: 'open',
-                crossword: opening.crossword,
-                state: opening.crossword.state,
-                miss: undefined,
-                touched: false,
-              }
-            : { in: composition, kind: opening.kind },
-        );
-      },
-      (error: unknown) => {
-        logError('Could not open the crossing Daily Crossword', error);
-        if (active) setOpened({ in: composition, kind: 'failed' });
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, [composition]);
-
-  const crossword =
-    opened?.in === composition && opened.kind === 'open' ? opened.crossword : undefined;
+  const [opened, setOpened] = useState(() => fresh(crossword));
+  if (opened.crossword !== crossword) setOpened(fresh(crossword));
   const inForeground = useInForeground();
   useFocusEffect(
     useCallback(() => {
-      if (crossword === undefined || !inForeground) return undefined;
+      if (!inForeground) return undefined;
       // The clock's time counted so far: a tick adds the whole seconds since.
       let counted = deviceClock.now().getTime();
       const tick = () => {
@@ -271,17 +229,15 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
     }, [composition, crossword, inForeground]),
   );
 
-  if (opened?.in !== composition) return undefined;
-  if (opened.kind !== 'open') return { kind: opened.kind };
-  const { puzzle } = opened.crossword;
+  const { puzzle } = crossword;
   const { state, miss, touched } = opened;
   const strings = editionStrings.game.dailyCrossword;
 
   const play = (action: CrossingAction) => {
-    void keep('the crossing Daily Crossword', opened.crossword.play(action)).then((next) => {
+    void keep('the crossing Daily Crossword', crossword.play(action)).then((next) => {
       if (next === undefined) return;
       setOpened((now) => {
-        if (now?.kind !== 'open' || now.crossword !== opened.crossword) return now;
+        if (now.crossword !== crossword) return now;
         const word = puzzle.words[now.state.current];
         const missed =
           action.type === 'release' &&
@@ -304,7 +260,6 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
   const current = puzzle.words[state.current];
   const solve = crossingSolveOf(composition, puzzle, state);
   return {
-    kind: 'play',
     puzzle,
     cells: crossingCells(puzzle, state, strings, solve !== undefined),
     clue: {
@@ -342,7 +297,7 @@ export function useCrossingCrossword(): CrossingCrosswordView | undefined {
     release: () => {
       play({ type: 'release' });
     },
-    hint: opened.crossword.hint
+    hint: crossword.hint
       ? () => {
           play({ type: 'hint' });
         }

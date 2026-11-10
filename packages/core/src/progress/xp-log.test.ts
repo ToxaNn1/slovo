@@ -6,8 +6,6 @@ import {
   openAccount,
   openComposition,
   openSync,
-  renderStress,
-  SEEN_DWELL_MS,
   type AnalyticsPort,
   type Composition,
   type CurrentGame,
@@ -15,6 +13,8 @@ import {
   type Round,
   type UserStatePort,
 } from '../index';
+import { renderStress } from '../entries/stress';
+import { SEEN_DWELL_MS } from '../feed/feed';
 import {
   createFakeAppleSignInSheet,
   createFakeBackend,

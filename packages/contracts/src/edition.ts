@@ -86,11 +86,6 @@ export const MoodSchema = z.strictObject({
 
 export type Mood = z.infer<typeof MoodSchema>;
 
-/** How the Game picks Distractors for a Round. */
-export const DistractorRuleSchema = z.enum(['same-part-of-speech']);
-
-export type DistractorRule = z.infer<typeof DistractorRuleSchema>;
-
 /** One lower-case letter. */
 const LowerCaseLetterSchema = z.string().regex(/^\p{Ll}$/u, 'Expected one lower-case letter');
 
@@ -109,10 +104,19 @@ const LetterListSchema = z
       .refine((letters) => new Set(letters).size === letters.length, 'Expected unique letters'),
   );
 
+/**
+ * Whether the language marks Stress. One that does, so that every Lemma
+ * carries it, names its lowercase vowels, each a letter of the alphabet: the
+ * only letters Stress may fall on.
+ */
+const StressTraitSchema = z.discriminatedUnion('marked', [
+  z.strictObject({ marked: z.literal(false) }),
+  z.strictObject({ marked: z.literal(true), vowels: LetterListSchema }),
+]);
+
 export const LanguageTraitsSchema = z
   .strictObject({
-    /** Whether the language marks Stress, so every Lemma must carry it. */
-    marksStress: z.boolean(),
+    stress: StressTraitSchema,
     /** The lowercase letters of the alphabet in alphabetical order. */
     alphabet: LetterListSchema,
     /**
@@ -126,14 +130,14 @@ export const LanguageTraitsSchema = z
      * None when left out.
      */
     expressionPunctuation: LetterListSchema.optional(),
-    /** The language tag used to sort text in the Edition's language. */
-    sortLocale: LanguageTagSchema,
-    distractorRule: DistractorRuleSchema,
     /**
-     * The lowercase vowels, each a letter of the alphabet: the only letters
-     * Stress may fall on. Required when the Edition marks Stress.
+     * The characters read as one apostrophe when text is compared, such as
+     * the ones a reader's keyboard may type; a Comparison Key writes each as
+     * the first. None when left out.
      */
-    vowels: LetterListSchema.optional(),
+    apostrophes: LetterListSchema.optional(),
+    /** The language tag used to sort text and fold its case in the Edition's language. */
+    sortLocale: LanguageTagSchema,
     /**
      * The rows of the on-screen keyboard of the Daily Crossword, top to
      * bottom: every letter of the alphabet once. The alphabet in rows when
@@ -141,7 +145,7 @@ export const LanguageTraitsSchema = z
      */
     keyboard: z.array(LetterListSchema).min(1).optional(),
   })
-  .superRefine(({ marksStress, alphabet, vowels, keyboard }, context) => {
+  .superRefine(({ stress, alphabet, keyboard }, context) => {
     if (keyboard !== undefined) {
       const keys = keyboard.flat();
       keyboard.forEach((row, rowIndex) => {
@@ -164,21 +168,12 @@ export const LanguageTraitsSchema = z
           });
       });
     }
-    if (vowels === undefined) {
-      if (marksStress) {
-        context.addIssue({
-          code: 'custom',
-          path: ['vowels'],
-          message: 'Required when the Edition marks Stress',
-        });
-      }
-      return;
-    }
-    vowels.forEach((vowel, index) => {
+    if (!stress.marked) return;
+    stress.vowels.forEach((vowel, index) => {
       if (!alphabet.includes(vowel)) {
         context.addIssue({
           code: 'custom',
-          path: ['vowels', index],
+          path: ['stress', 'vowels', index],
           message: `"${vowel}" is not a letter of the alphabet`,
         });
       }
@@ -775,14 +770,16 @@ export const MixConfigSchema = z.strictObject({
     // At least one Category of Corrections always stays in the Mix, as of Words (ADR 0019).
     z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category of Corrections'),
   ]),
-  /** Whether Corrections, as a whole, are in the Mix. */
-  corrections: z.boolean(),
-  /** Whether Idioms, as a whole, are in the Mix. */
-  idioms: z.boolean(),
-  /** Whether Synonym Rows, as a whole, are in the Mix (ADR 0051). */
-  synonymRows: z.boolean(),
-  /** Whether Tips, as a whole, are in the Mix (ADR 0051). */
-  tips: z.boolean(),
+  /**
+   * Whether each kind of Entry beside Words is in the Mix as a whole (ADR
+   * 0033, 0046, 0051): the same map of Entry kinds as the Mix state in the Core.
+   */
+  kinds: z.strictObject({
+    correction: z.boolean(),
+    idiom: z.boolean(),
+    synonymRow: z.boolean(),
+    tip: z.boolean(),
+  }),
 });
 
 export type MixConfig = z.infer<typeof MixConfigSchema>;

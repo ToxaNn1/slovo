@@ -5,7 +5,7 @@ import type { Word } from '@slovo/contracts';
 import type { AskableEntry, AskableKind, EligibleOfKind, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
 import { createSubject } from '../subject';
-import { fakeClock, testEdition, testSchedule, word } from '../test-support';
+import { fakeClock, testComparison, testEdition, testSchedule, word } from '../test-support';
 import { buildGameReview } from './game-review';
 import { LIFE_LOST_DELAY } from './game-haptics';
 import { GAME_LIVES, openGame, type CurrentGame, type Game, type GivenAnswer } from './game';
@@ -98,6 +98,7 @@ async function open(gameMode: GameMode, eligibleAtStart: readonly Word[] = words
   }
   const game = await openGame({
     edition: testEdition(),
+    comparison: testComparison,
     entries: { eligibleOfKind },
     history: { list: [] },
     knowledge: {

@@ -19,7 +19,7 @@ const editionWith = (on: readonly FeatureSwitch[]) =>
   testEdition({
     isFeatureEnabled: (feature) => on.includes(feature),
     userSettingDefaults: {
-      mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
+      mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
     },
   });
 

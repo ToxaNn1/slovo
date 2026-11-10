@@ -1,25 +1,7 @@
 import type { Correction } from '@slovo/contracts';
 
-import { ROUND_OPTIONS, type GameMode, type RoundOption, type TextRange } from './game-mode';
+import { ROUND_OPTIONS, type GameMode, type RoundOption } from './game-mode';
 import { shuffled } from '../shuffled';
-
-/** Text as it compares to other text, regardless of case. */
-const folded = (text: string) => text.toLowerCase();
-
-/**
- * Where the text first holds the form, regardless of case; nothing when it
- * doesn't hold the form as written, such as when it holds an inflected form.
- * It compares stretch by stretch, so a letter whose lower case is longer never
- * shifts the range.
- */
-export function firstOccurrence(text: string, form: string): TextRange | undefined {
-  const wanted = folded(form);
-  for (let start = 0; start + form.length <= text.length; start += 1) {
-    const end = start + form.length;
-    if (folded(text.slice(start, end)) === wanted) return { start, end };
-  }
-  return undefined;
-}
 
 const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
@@ -50,11 +32,11 @@ export const correctionMode: GameMode = {
   id: 'correction',
   group: 'corrections',
   entryKind: 'correction',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameCorrection') && edition.isFeatureEnabled('corrections'),
-  buildRound({ answer, eligible, random }) {
+  isOn: (edition) => edition.isFeatureEnabled('gameCorrection'),
+  buildRound({ answer, eligible, random, comparison }) {
     if (answer.kind !== 'correction' || !plays(answer)) return undefined;
-    const taken = new Set(answer.standardEquivalents.map(folded));
+    const keyOf = (text: string) => comparison.key(text, 'definition');
+    const taken = new Set(answer.standardEquivalents.map(keyOf));
     const others = eligible.filter(
       (entry): entry is Correction =>
         entry.kind === 'correction' && entry.id !== answer.id && plays(entry),
@@ -72,15 +54,15 @@ export const correctionMode: GameMode = {
     ]) {
       if (distractors.length === ROUND_OPTIONS - 1) break;
       const text = mainEquivalentOf(other);
-      if (taken.has(folded(text))) continue;
-      taken.add(folded(text));
+      if (taken.has(keyOf(text))) continue;
+      taken.add(keyOf(text));
       distractors.push(text);
     }
     if (distractors.length < ROUND_OPTIONS - 1) return undefined;
     const right = mainEquivalentOf(answer);
     const options = shuffled([right, ...distractors], random);
     const prompt = answer.examplePair.nonStandard;
-    const highlight = firstOccurrence(prompt, answer.nonStandardForm);
+    const highlight = comparison.find(prompt, answer.nonStandardForm);
     return {
       form: 'pick',
       prompt,

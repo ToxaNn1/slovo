@@ -1,4 +1,5 @@
 import type { AskableEntry } from '../entries/entries';
+import type { TextComparison } from '../text/text-comparison';
 import type { AnswerForm, Judged, RoundOption } from './answer-form';
 import {
   chipsForm,
@@ -105,12 +106,14 @@ export function judge(
   shown: ShownRound,
   given: GivenAnswer,
   own: AskableEntry,
+  comparison: TextComparison,
 ): { answer: RoundAnswer; entry: AskableEntry } | undefined {
   if (shown.form !== content.form || given.form !== content.form) return undefined;
   const judgement: Judged<RoundAnswer> | undefined = formOf(content.form).judge(
     content,
     shown,
     given,
+    comparison,
   );
   return judgement && { answer: judgement.answer, entry: judgement.about ?? own };
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { createRecentQueries } from './recent-queries';
 import { createSearch } from './search';
+import { createTextComparison } from '../text/text-comparison';
 import { createMemoryContentPort } from '../testing';
 import { word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -9,17 +10,20 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 /** An Ukrainian-like Edition: Search on, ґ read as г and ё as е. */
 const edition = {
   isFeatureEnabled: () => true,
-  languageTraits: { sortLocale: 'uk' },
+  languageTraits: { apostrophes: ['ʼ', "'", '’'], sortLocale: 'uk' },
   searchLetters: { ґ: 'г', ё: 'е' },
 };
+
+const comparison = createTextComparison(edition);
 
 async function open(port = createMemoryUserStatePort()) {
   const userState = await openUserState({ port });
   return {
-    recent: createRecentQueries({ edition, userState }),
+    recent: createRecentQueries({ comparison, userState }),
     search: createSearch({
       content: createMemoryContentPort({ words: [word('w_quiet', { lemma: 'сумирний' })] }),
       edition,
+      comparison,
       userState,
     }),
   };

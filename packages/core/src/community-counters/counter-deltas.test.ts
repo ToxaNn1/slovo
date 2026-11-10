@@ -26,7 +26,7 @@ async function run({
     edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
       userSettingDefaults: {
-        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
+        mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
       },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -45,7 +45,11 @@ async function markedBeforeTheUpdate(entryId: string, mark: 'known' | 'unknown')
   await userState.write(
     userStateRecords.knowledge
       .record(entryId)
-      .change({ mark, step: mark === 'known' ? null : 1, reviewDay: null, learned: false }),
+      .change(
+        mark === 'known'
+          ? { mark, step: null, reviewDay: null, learned: true }
+          : { mark, step: 1, reviewDay: '2099-01-01', learned: false },
+      ),
   );
   return records;
 }

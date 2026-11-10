@@ -1,4 +1,4 @@
-import { firstOccurrence, mainEquivalentOf, plays } from './correction-mode';
+import { mainEquivalentOf, plays } from './correction-mode';
 import type { GameMode } from './game-mode';
 
 /**
@@ -6,7 +6,7 @@ import type { GameMode } from './game-mode';
  * Edition turns Corrections on: a Round shows a Correction's «people often
  * say» sentence, its non-standard form marked where the sentence holds it as
  * written, and the reader types the Correction's main standard equivalent,
- * compared the way `typedAnswerMatches` does. It asks about no stress trap,
+ * compared by its Comparison Key as a typed answer. It asks about no stress trap,
  * since the comparison ignores Stress marks (ADR 0045). Its sheet shows the
  * main standard equivalent and the Correction's explanation.
  */
@@ -14,12 +14,11 @@ export const typeWordMode: GameMode = {
   id: 'type-word',
   group: 'words',
   entryKind: 'correction',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameTypeWord') && edition.isFeatureEnabled('corrections'),
-  buildRound({ answer }) {
+  isOn: (edition) => edition.isFeatureEnabled('gameTypeWord'),
+  buildRound({ answer, comparison }) {
     if (answer.kind !== 'correction' || !plays(answer)) return undefined;
     const prompt = answer.examplePair.nonStandard;
-    const highlight = firstOccurrence(prompt, answer.nonStandardForm);
+    const highlight = comparison.find(prompt, answer.nonStandardForm);
     const right = mainEquivalentOf(answer);
     return {
       form: 'typed',

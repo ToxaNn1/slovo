@@ -2,18 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction, Idiom, SynonymRow, SynonymRowMember, Tip, Word } from '@slovo/contracts';
 
-import {
-  buildCorrectionCard,
-  buildShareCardContent,
-  buildWordCard,
-  createEntries,
-  generateCrosswordPuzzle,
-  seededRandomOf,
-  EVERYTHING_IN,
-  type AnyEntryCard,
-  type ShareCardStrings,
-  type WeeklyRecapModel,
-} from '../index';
+import { buildShareCardContent, type AnyEntryCard, type WeeklyRecapModel } from '../index';
+import { buildCorrectionCard } from '../entries/correction-card';
+import { buildWordCard } from '../entries/word-card';
+import { createEntries, EVERYTHING_IN } from '../entries/entries';
+import { generateCrosswordPuzzle } from '../game/crossword-puzzle';
+import { seededRandomOf } from '../game/traced-crossword';
+import { type ShareCardStrings } from './share-card';
 import { buildIdiomCard } from '../entries/idiom-card';
 import { buildSynonymRowCard } from '../entries/synonym-row-card';
 import { buildTipCard } from '../entries/tip-card';
@@ -556,61 +551,6 @@ describe('the Share Card of progress', () => {
     expect(
       buildShareCardContent({ streak: 3, date: '2026-11-01' }, STRINGS, 'uk', clock).label,
     ).toBe('1 листопада. Моя серія в SLOVO. 3 дні поспіль');
-  });
-});
-
-describe('the Share Card of a solved Daily Crossword', () => {
-  const crossword = {
-    date: '2026-11-01',
-    letters: [
-      ['к', 'і', 'т', undefined, undefined],
-      [undefined, undefined, 'и', undefined, undefined],
-      [undefined, undefined, 'н', undefined, undefined],
-      [undefined, undefined, undefined, undefined, undefined],
-      [undefined, undefined, undefined, undefined, undefined],
-    ],
-    words: [
-      {
-        start: { row: 0, column: 0 },
-        direction: 'across',
-        length: 3,
-        clue: 'Свійська тварина',
-        right: true,
-      },
-      {
-        start: { row: 0, column: 2 },
-        direction: 'down',
-        length: 3,
-        clue: 'Огорожа з лози',
-        right: true,
-      },
-    ],
-    progress: 'solved',
-  } as const;
-
-  it('shows the grid’s open cells with no letter and no clue, the day as its overline', () => {
-    const content = buildShareCardContent({ crossword }, STRINGS, 'uk', clock);
-
-    expect(content).toEqual({
-      shows: 'crossword:2026-11-01',
-      overline: '1 листопада',
-      label: '1 листопада. Кросворд дня розв’язано. Сітка кросворду без літер',
-      body: {
-        kind: 'dailyCrossword',
-        title: 'Кросворд дня розв’язано',
-        grid: [
-          [true, true, true, false, false],
-          [false, false, true, false, false],
-          [false, false, true, false, false],
-          [false, false, false, false, false],
-          [false, false, false, false, false],
-        ],
-      },
-    });
-    const shared = JSON.stringify(content);
-    for (const answerOrClue of ['кіт', 'тин', 'Свійська', 'лози']) {
-      expect(shared).not.toContain(answerOrClue);
-    }
   });
 });
 

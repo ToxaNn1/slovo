@@ -39,7 +39,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: pnpm typecheck
-      # The package boundaries the ADRs set, import cycles and orphan modules.
+      # The package boundaries the ADRs set, import cycles, orphan modules and
+      # unused exports of the Core's main entry.
       - run: pnpm deps
 
   # Which test parts a pull request can affect (ADR 0098, amending 0086):

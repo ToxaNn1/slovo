@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { openComposition } from '../composition';
-import type { FeatureSwitch, Word } from '../index';
+import type { FeatureSwitch } from '../index';
+import { type Word } from '@slovo/contracts';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -258,15 +259,10 @@ describe('the crossing Daily Crossword of the composition', () => {
     });
   }
 
-  it('is off while the Edition has it off', async () => {
-    const composition = await app(['game', 'dailyCrossword']);
-    expect(await composition.openCrossingCrossword()).toEqual({ kind: 'off' });
-  });
-
   it('opens the puzzle of the Words within the Rarity Ceiling, which a solve plays', async () => {
     const composition = await app(['game', 'dailyCrossword', 'crossingCrossword']);
-    const opening = await composition.openCrossingCrossword();
-    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    const opening = await composition.openDailyCrossword();
+    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
     const ids = vocabulary.map(({ id }) => id);
     for (const { word: placed } of opening.crossword.puzzle.words) expect(ids).toContain(placed.id);
     const before = opening.crossword.state.words.filter(({ kind }) => kind === 'solved').length;
@@ -274,6 +270,21 @@ describe('the crossing Daily Crossword of the composition', () => {
     expect(opening.crossword.state.words.filter(({ kind }) => kind === 'solved').length).toBe(
       before + 1,
     );
+  });
+
+  it('opens over the typed crossword record of an older app and leaves it as it was (ADR 0013)', async () => {
+    const typed = '{"date":"2026-11-04","letters":{"0,1":"п"}}';
+    const records = new Map([['crossword.progress', typed]]);
+    const composition = await app(['game', 'dailyCrossword', 'crossingCrossword'], records);
+    const opening = await composition.openDailyCrossword();
+    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    expect(Object.values(opening.crossword.state.cells).some(({ kind }) => kind === 'filled')).toBe(
+      false,
+    );
+
+    await solve(opening.crossword, opening.crossword.state.current);
+    expect(records.has('crossword.crossing')).toBe(true);
+    expect(records.get('crossword.progress')).toBe(typed);
   });
 
   it('reads the Solve time and the hint of a solve back on another device with the synced records', async () => {
@@ -286,8 +297,8 @@ describe('the crossing Daily Crossword of the composition', () => {
     ];
     const records = new Map<string, string>();
     const first = await app(on, records);
-    const opening = await first.openCrossingCrossword();
-    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    const opening = await first.openDailyCrossword();
+    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
     await opening.crossword.play({ type: 'tick', seconds: 95 });
     for (let i = 0; i < opening.crossword.puzzle.words.length; i += 1)
       await solve(opening.crossword, i);

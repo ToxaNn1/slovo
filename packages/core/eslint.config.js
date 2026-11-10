@@ -18,6 +18,9 @@ const webGlobals = [
   'WebSocket',
 ];
 
+/** A question about one Feature Switch, as the Core asks the Edition. */
+const switchQuestion = "CallExpression[callee.property.name='isFeatureEnabled']";
+
 export default [
   ...shared,
   {
@@ -63,6 +66,13 @@ export default [
           selector:
             'Literal[value=/[\\u0400-\\u04FF]/], TemplateElement[value.raw=/[\\u0400-\\u04FF]/]',
           message: 'The Core must not contain language-specific text; read it from the Edition.',
+        },
+        {
+          // A dependency between two Feature Switches lives in the one table of
+          // the contracts (`DEPENDS_ON`), which the Edition applies (ADR 0089).
+          selector: `LogicalExpression:has(> .left:matches(${switchQuestion}, :has(${switchQuestion}))):has(> .right:matches(${switchQuestion}, :has(${switchQuestion})))`,
+          message:
+            'Ask about one Feature Switch in a condition; a dependency between two goes into DEPENDS_ON in the contracts.',
         },
       ],
     },
