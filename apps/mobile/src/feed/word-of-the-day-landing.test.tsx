@@ -26,10 +26,6 @@ let composition: Composition;
 
 // The Feed is in sight: its tab is focused.
 jest.mock('expo-router', () => ({ useIsFocused: () => true }));
-// The Feed downloads its media ahead in the Narrator Voice of the settings.
-jest.mock('../settings/settings', () => ({
-  useSettings: () => ({ current: { narratorVoice: 'oksana' } }),
-}));
 
 /** Whether the app is in the foreground, as a test moves it, and who listens to it. */
 let mockInForeground = true;
@@ -121,7 +117,7 @@ async function openFeed(clock: Clock, kept: UserStateFacts = {}) {
   const ref = { current: pager };
   const landing = createWordOfTheDayLanding();
   const shell = testShell({ composition: opened(composition) });
-  const feed = await renderHook(() => useFeed(ref, { clock, landing }), {
+  const feed = await renderHook(() => useFeed(ref, { clock, landing, voice: 'oksana' }), {
     wrapper: ({ children }: { children: ReactNode }) => (
       <ShellProvider shell={shell}>{children}</ShellProvider>
     ),

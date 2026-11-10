@@ -8,7 +8,6 @@ import { useInForeground } from '../foreground/in-foreground';
 import { keep } from '../keep';
 import { prefetchAhead } from '../media/shell-media';
 import { useSubscribed } from '../opening';
-import { useSettings } from '../settings/settings';
 import { useShell } from '../shell-value';
 import { wordIdsAhead } from './feed-ahead';
 import { cardOnScreen, type TurnedTo } from './feed-screen';
@@ -43,11 +42,19 @@ export interface FeedState {
  */
 export function useFeed(
   pager: RefObject<VerticalPagerHandle | null>,
-  { clock, landing }: { clock: Clock; landing: WordOfTheDayLanding },
+  {
+    clock,
+    landing,
+    voice,
+  }: {
+    clock: Clock;
+    landing: WordOfTheDayLanding;
+    /** The reader's Narrator Voice, which the Feed downloads its media ahead in. */
+    voice: string;
+  },
 ): FeedState {
   const { feed, onboarding } = useComposition();
   const shell = useShell();
-  const voice = useSettings().current.narratorVoice;
   const cards = useSubscribed(feed, (open) => open.cards);
   const today = useSubscribed(feed, (open) => open.today);
   /** The card the reader turned to last, by the Feed's position, in the Feed they turned it in. */

@@ -27,11 +27,6 @@ jest.mock('../media/shell-media', () => ({
   prefetchAhead: (shell: unknown, wordIds: readonly string[], voice: string) =>
     mockPrefetchAhead(shell, wordIds, voice),
 }));
-/** The Narrator Voice the reader chose in the settings. */
-let mockNarratorVoice = 'oksana';
-jest.mock('../settings/settings', () => ({
-  useSettings: () => ({ current: { narratorVoice: mockNarratorVoice } }),
-}));
 
 /** A Word «слово{n}» that links the Correction `c_one`. */
 const word = (index: number): Word => ({
@@ -102,7 +97,10 @@ async function openFeed() {
   const pager = fakePager();
   const ref = { current: pager };
   const landing = createWordOfTheDayLanding();
-  const feed = await renderHook(() => useFeed(ref, { clock, landing }));
+  const feed = await renderHook(
+    ({ voice }: { voice: string }) => useFeed(ref, { clock, landing, voice }),
+    { initialProps: { voice: 'oksana' } },
+  );
   await waitFor(() => {
     expect(feed.result.current.cards.length).toBeGreaterThan(1);
   });
@@ -162,7 +160,6 @@ describe('the Feed on its pager', () => {
   });
 
   it('downloads the media ahead again in the voice the reader chose', async () => {
-    mockNarratorVoice = 'oksana';
     const { feed } = await openFeed();
     await act(() => {
       feed.result.current.onCardChange(1);
@@ -171,8 +168,7 @@ describe('the Feed on its pager', () => {
       expect(mockPrefetchAhead.mock.lastCall?.[2]).toBe('oksana');
     });
 
-    mockNarratorVoice = 'taras';
-    await feed.rerender({});
+    await feed.rerender({ voice: 'taras' });
 
     await waitFor(() => {
       expect(mockPrefetchAhead.mock.lastCall?.[2]).toBe('taras');
