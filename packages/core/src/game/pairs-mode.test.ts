@@ -209,7 +209,7 @@ describe('the grids of «Пари»', () => {
     expect(after.words.map(({ shown }) => shown)).toEqual(grid.words.map(({ shown }) => shown));
   });
 
-  it('fills a grid with Words of one part of speech, by the Distractor rule', async () => {
+  it('fills a grid with Words of one part of speech', async () => {
     for (const seed of [1, 2, 3, 4, 5, 6]) {
       const app = await run({ seed });
       await app.game.start('pairs');

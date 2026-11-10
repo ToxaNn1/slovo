@@ -69,16 +69,19 @@ async function run({
   off = ['letterTiles'],
   words = content,
   random = seededRandom(seed),
+  apostrophes = ['ʼ', "'", '’'],
 }: {
   seed?: number;
   off?: readonly string[];
   words?: ContentReadPort;
   random?: Random;
+  apostrophes?: string[];
 } = {}): Promise<Composition> {
   const app = await openComposition({
     content: words,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
+      languageTraits: { apostrophes },
       userSettingDefaults: { mix: { categoryIds: ['test', 'crafts'] } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
@@ -228,6 +231,18 @@ describe('a Round of «За буквами»', () => {
     expect((await startAt('будь-що')).game.state.current?.round).toMatchObject({
       blanks: [{}, {}, {}, {}, { mark: '-' }, {}, {}],
     });
+  });
+
+  it('keeps in place only what the Edition reads as an apostrophe', async () => {
+    for (let seed = 1; seed < 200; seed += 1) {
+      const app = await run({ seed, apostrophes: [] });
+      await app.game.start('by-letters');
+      if (lemmaOf(current(app).round) !== 'пірʼя') continue;
+
+      expect(blanksOf(app)).toEqual([{}, {}, {}, {}, {}]);
+      return;
+    }
+    throw new Error('No Game starts with «пірʼя»');
   });
 
   it('draws an apostrophe of any kind and a hyphen as a mark in place, never a letter', async () => {
