@@ -17,6 +17,7 @@ import { systemRandom } from '../random';
 import {
   adminCommandDeps,
   createTestDatabase,
+  png,
   signedInAdmin,
   silentLogger,
   TEST_MEDIA_BASE,
@@ -167,16 +168,6 @@ describe('the content editor through an admin session', () => {
     expect(batchId).toMatch(/^[0-9a-f-]{36}$/);
   });
 });
-
-/** A square PNG header of the size, padded to the length in bytes; the seed makes its content its own. */
-function png(width: number, height: number, length = 2_000, seed = 0): Buffer {
-  const bytes = Buffer.alloc(length, seed);
-  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13]).copy(bytes);
-  bytes.write('IHDR', 12, 'latin1');
-  bytes.writeUInt32BE(width, 16);
-  bytes.writeUInt32BE(height, 20);
-  return bytes;
-}
 
 const sha256 = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex');
 

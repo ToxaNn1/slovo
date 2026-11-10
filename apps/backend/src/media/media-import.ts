@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import { illustrationRefusals } from '@slovo/content-rules';
 import type { Clock, Edition } from '@slovo/server-core';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
@@ -48,6 +49,21 @@ interface Upload {
   readonly key: string;
   readonly bytes: Uint8Array;
   readonly contentType: string;
+}
+
+/** The voice's texts.json: its texts, absent when there is no file, or unreadable. */
+function readTexts(
+  path: string,
+): Record<string, string> | undefined | 'not JSON' | 'not a map of texts' {
+  if (!existsSync(path)) return undefined;
+  let json: unknown;
+  try {
+    json = JSON.parse(readFileSync(path, 'utf8'));
+  } catch {
+    return 'not JSON';
+  }
+  const texts = TextsSchema.safeParse(json);
+  return texts.success ? texts.data : 'not a map of texts';
 }
 
 const sha256 = (bytes: Uint8Array) => createHash('sha256').update(bytes).digest('hex');
@@ -97,7 +113,8 @@ export function createMediaImport({
 
   /**
    * Imports the folder's media: refuses it whole, before any upload, when a
-   * file names no voice or Word of the Edition or is no mp3, and refuses a
+   * file names no voice or Word of the Edition, is no mp3, an Illustration
+   * breaks a content rule or a texts.json is unreadable, and refuses a
    * second run over the Edition unless forced.
    */
   async function run(
@@ -129,10 +146,9 @@ export function createMediaImport({
         continue;
       }
       const textsPath = join(editionDir, voiceDir, TEXTS_FILE);
-      const texts = existsSync(textsPath)
-        ? TextsSchema.safeParse(JSON.parse(readFileSync(textsPath, 'utf8')))
-        : undefined;
-      if (texts?.success === false) problems.push(`${voiceDir}/${TEXTS_FILE}: not a map of texts`);
+      const read = readTexts(textsPath);
+      if (typeof read === 'string') problems.push(`${voiceDir}/${TEXTS_FILE}: ${read}`);
+      const texts = typeof read === 'string' ? undefined : read;
       for (const name of filesOf(join(editionDir, voiceDir))) {
         if (name === TEXTS_FILE) continue;
         const path = `${voiceDir}/${name}`;
@@ -152,7 +168,7 @@ export function createMediaImport({
           problems.push(`${path}: not an mp3`);
           continue;
         }
-        const text = texts?.success === true ? texts.data[wordId] : undefined;
+        const text = texts?.[wordId];
         if (text === undefined) {
           problems.push(`${path}: no text in ${TEXTS_FILE}`);
           continue;
@@ -193,6 +209,11 @@ export function createMediaImport({
         continue;
       }
       const bytes = new Uint8Array(readFileSync(join(editionDir, path)));
+      const refusals = illustrationRefusals(bytes);
+      if (refusals.length > 0) {
+        problems.push(...refusals.map(({ message }) => `${path}: ${message}`));
+        continue;
+      }
       const file = { wordId, hash: sha256(bytes), size: bytes.byteLength };
       uploads.push({ key: illustrationKey(file), bytes, contentType: 'image/png' });
       illustrations.push(file);
