@@ -1,3 +1,4 @@
+import { type Entry } from '@slovo/contracts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -5,20 +6,22 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
-  type Entry,
-  ENTRY_KINDS,
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type ContentReadPort,
   type Edition,
   type Feed,
   type FeedCard,
-  NOTIFICATION_BODY_LENGTH,
   type Random,
   type TrackedUserState,
 } from '@slovo/core';
-import { createFakeNotificationScheduler, seedUserState } from '@slovo/core/testing';
+import {
+  createFakeNotificationScheduler,
+  seedUserState,
+  ENTRY_KINDS,
+  SEEN_DWELL_MS,
+  NOTIFICATION_BODY_LENGTH,
+} from '@slovo/core/testing';
 
 import { openLanguagePack, type NodeLanguagePack } from './index';
 import { buildUkrainianPack, ukrainian } from './test-support';

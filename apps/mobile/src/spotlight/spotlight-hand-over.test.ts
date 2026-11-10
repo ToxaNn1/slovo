@@ -1,6 +1,6 @@
 import { type Category } from '@slovo/contracts';
-import { openComposition, SEEN_DWELL_MS, type Edition } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, type Edition } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, SEEN_DWELL_MS } from '@slovo/core/testing';
 import type { AppStateStatus } from 'react-native';
 import { describe, expect, it } from 'vitest';
 

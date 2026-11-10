@@ -2,18 +2,13 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction, Idiom, SynonymRow, SynonymRowMember, Tip, Word } from '@slovo/contracts';
 
-import {
-  buildCorrectionCard,
-  buildShareCardContent,
-  buildWordCard,
-  createEntries,
-  generateCrosswordPuzzle,
-  seededRandomOf,
-  EVERYTHING_IN,
-  type AnyEntryCard,
-  type ShareCardStrings,
-  type WeeklyRecapModel,
-} from '../index';
+import { buildShareCardContent, type AnyEntryCard, type WeeklyRecapModel } from '../index';
+import { buildCorrectionCard } from '../entries/correction-card';
+import { buildWordCard } from '../entries/word-card';
+import { createEntries, EVERYTHING_IN } from '../entries/entries';
+import { generateCrosswordPuzzle } from '../game/crossword-puzzle';
+import { seededRandomOf } from '../game/traced-crossword';
+import { type ShareCardStrings } from './share-card';
 import { buildIdiomCard } from '../entries/idiom-card';
 import { buildSynonymRowCard } from '../entries/synonym-row-card';
 import { buildTipCard } from '../entries/tip-card';

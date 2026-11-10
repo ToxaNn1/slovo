@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   kindsShown,
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type ContentReadPort,
@@ -11,6 +10,7 @@ import {
   type FeedCard,
   type UserStatePort,
 } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
 import { createMemoryContentPort } from '../testing';
 import { RARITIES, type Category } from '@slovo/contracts';
 import { correction, fakeClock, idiom, testEdition, word } from '../test-support';

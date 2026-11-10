@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  openRemoteSwitches,
-  SWITCHES_REFRESH_MS,
-  type Edition,
-  type FeatureSwitch,
-  type Schedule,
-} from '../index';
+import { openRemoteSwitches, type Edition, type FeatureSwitch, type Schedule } from '../index';
+import { SWITCHES_REFRESH_MS } from './remote-switches';
 import {
   fakeClock,
   randomOf,

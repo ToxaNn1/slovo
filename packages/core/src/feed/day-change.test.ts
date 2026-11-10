@@ -1,12 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  openComposition,
-  type Clock,
-  type Composition,
-  type PlannedNotification,
-  type UserStateChanges,
-} from '../index';
+import { openComposition, type Clock, type Composition, type PlannedNotification } from '../index';
+import { type UserStateChanges } from '../ports';
 import {
   createFakeNotificationScheduler,
   createMemoryContentPort,

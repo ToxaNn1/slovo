@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { openComposition } from '../composition';
-import type { FeatureSwitch, Word } from '../index';
+import type { FeatureSwitch } from '../index';
+import { type Word } from '@slovo/contracts';
 import { createMemoryContentPort, testEdition } from '../testing';
 import { fakeClock, seededRandom } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';

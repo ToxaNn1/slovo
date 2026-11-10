@@ -1,13 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  MIX_KINDS,
-  openComposition,
-  type Clock,
-  type Composition,
-  type Feed,
-  type FeedCard,
-} from '../index';
+import { openComposition, type Clock, type Composition, type Feed, type FeedCard } from '../index';
+import { MIX_KINDS } from '../entries/entry-kinds';
 import { createMemoryContentPort } from '../testing';
 import type { Category } from '@slovo/contracts';
 import { correction, fakeClock, testEdition, word } from '../test-support';

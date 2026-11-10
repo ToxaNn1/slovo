@@ -9,11 +9,10 @@ import {
   openComposition,
   readInstallId,
   type AnalyticsPort,
-  type AnalyticsReader,
-  type AnalyticsSwitches,
   type FeatureSwitch,
-  type RemoteRule,
 } from '../index';
+import { type AnalyticsReader, type AnalyticsSwitches } from './analytics';
+import { type RemoteRule } from '../edition/switch-evaluator';
 import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
 import {
   analyticsInto,

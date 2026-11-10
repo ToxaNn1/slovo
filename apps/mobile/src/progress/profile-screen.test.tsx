@@ -1,10 +1,10 @@
+import { type Word } from '@slovo/contracts';
 import { describe, expect, it, jest } from '@jest/globals';
 import {
   createMemorySessionStore,
   openAccount,
   systemRandom,
   type FeatureSwitch,
-  type Word,
 } from '@slovo/core';
 import {
   createFakeAppleSignInSheet,

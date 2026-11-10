@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   openComposition,
-  renderStress,
   type AnalyticsPort,
   type Composition,
   type FeatureSwitch,
   type FeedCard,
   type Round,
-  type XpRecord,
 } from '../index';
+import { renderStress } from '../entries/stress';
+import { type XpRecord } from './records';
 import { createMemoryContentPort } from '../testing';
 import {
   fakeClock,

@@ -10,7 +10,8 @@ import type {
   Word,
 } from '@slovo/contracts';
 
-import { createEntries, EVERYTHING_IN, openRemoteSwitches } from '../index';
+import { openRemoteSwitches } from '../index';
+import { createEntries, EVERYTHING_IN } from './entries';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import {
   countingReads,
