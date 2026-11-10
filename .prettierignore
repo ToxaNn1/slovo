@@ -17,3 +17,6 @@ packages/contracts/src/api/v1.openapi.json
 
 # Written by the TanStack router plugin.
 apps/admin/src/routeTree.gen.ts
+
+# The videos, left out of lint, typecheck and tests (ADR 0102)
+apps/video/

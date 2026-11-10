@@ -218,7 +218,10 @@ export const FIXTURES: AdminApiOutputs = {
         url: `https://media.slovo.test/illustrations/w_a1.${'b'.repeat(64)}.png`,
       },
     },
-    records: { records: [{ id: 'w_a1', label: 'обруч', retired: false, recordVersion: 1 }] },
+    records: {
+      records: [{ id: 'w_a1', label: 'обруч', retired: false, recordVersion: 1 }],
+      total: 1,
+    },
     report: {
       contentVersion: 1,
       report: {

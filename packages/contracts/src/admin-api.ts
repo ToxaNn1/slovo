@@ -35,6 +35,7 @@ export {
   AlertThresholdKeySchema,
   type AlertThresholdKey,
   CiRunSchema,
+  CONTENT_PAGE_SIZE,
   PERIOD_DAYS,
   type AdminPeriod,
   type CiRunInput,
