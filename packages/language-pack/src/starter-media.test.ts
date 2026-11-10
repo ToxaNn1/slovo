@@ -170,6 +170,15 @@ describe('The Starter Media folder', () => {
     expect(asked).toHaveLength(3);
   });
 
+  it('makes the folder when the Media Store holds no Starter Media yet', async () => {
+    const dir = join(mkdtempSync(join(tmpdir(), 'starter-')), 'starter-media');
+    await downloadStarterMedia({ ...list, files: [] }, dir, () =>
+      Promise.resolve(new Uint8Array()),
+    );
+    expect(starterMediaFiles(dir)).toEqual({ recordings: {}, illustrations: {} });
+    expect(existsSync(join(dir, 'list.json'))).toBe(true);
+  });
+
   it('writes no list when a download ends short, so Metro bundles none of it', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'starter-'));
     await expect(
