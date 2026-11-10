@@ -6,11 +6,11 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { illustrationRefusals } from '@slovo/content-rules';
+import { illustrationPath, recordingPath } from '@slovo/contracts';
 import type { Clock, Edition } from '@slovo/server-core';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { illustrationKey } from '../content/illustrations';
 import {
   createMediaRows,
   type NewIllustration,
@@ -20,7 +20,6 @@ import {
 import type { Database } from '../database/database';
 import { contentWords, mediaIllustrations, mediaRecordings } from '../database/schema';
 import { RECORDING_TEXTS } from '../recordings/recording-text';
-import { recordingKey } from '../recordings/recordings';
 import type { MediaStore } from './media-store';
 import { mp3DurationMs } from './mp3-duration';
 
@@ -185,7 +184,7 @@ export function createMediaImport({
           size: bytes.byteLength,
           durationMs,
         };
-        uploads.push({ key: recordingKey(file), bytes, contentType: 'audio/mpeg' });
+        uploads.push({ key: recordingPath(file), bytes, contentType: 'audio/mpeg' });
         const files = recorded.get(wordId)?.files ?? [];
         recorded.set(wordId, {
           wordId,
@@ -215,7 +214,7 @@ export function createMediaImport({
         continue;
       }
       const file = { wordId, hash: sha256(bytes), size: bytes.byteLength };
-      uploads.push({ key: illustrationKey(file), bytes, contentType: 'image/png' });
+      uploads.push({ key: illustrationPath(file), bytes, contentType: 'image/png' });
       illustrations.push(file);
     }
 

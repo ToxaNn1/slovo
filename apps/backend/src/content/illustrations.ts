@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 
 import { illustrationRefusals, recordFileOf } from '@slovo/content-rules';
+import { illustrationPath } from '@slovo/contracts';
 import type { Clock, EditionRegistry } from '@slovo/server-core';
 import { and, eq, isNull } from 'drizzle-orm';
 
@@ -19,10 +20,6 @@ export interface LiveIllustration {
 export type IllustrationUpload =
   | { readonly ok: true; readonly contentVersion: number; readonly illustration: LiveIllustration }
   | WriteRefusal;
-
-/** The Media Store key of an Illustration file (ADR 0099). */
-export const illustrationKey = ({ wordId, hash }: { wordId: string; hash: string }) =>
-  `illustrations/${wordId}.${hash}.png`;
 
 /**
  * The Illustrations the content editor saves (ADR 0055, 0099): a file is
@@ -48,7 +45,7 @@ export function createIllustrations({
   const mediaRows = createMediaRows({ database, clock });
   const liveOf = (wordId: string, hash: string): LiveIllustration => ({
     hash,
-    url: `${mediaBase}/${illustrationKey({ wordId, hash })}`,
+    url: `${mediaBase}/${illustrationPath({ wordId, hash })}`,
   });
 
   /** Checks the file and makes it the Word's live Illustration; nothing is written when it is refused. */
@@ -77,7 +74,7 @@ export function createIllustrations({
       .where(and(eq(contentWords.editionId, editionId), eq(contentWords.id, wordId)));
     if (word === undefined || word.retired) return { ok: false, reason: 'not-found' };
     const hash = createHash('sha256').update(bytes).digest('hex');
-    await mediaStore.put(illustrationKey({ wordId, hash }), bytes, 'image/png');
+    await mediaStore.put(illustrationPath({ wordId, hash }), bytes, 'image/png');
     const saved = await mediaRows.saveIllustration(editionId, {
       wordId,
       hash,
