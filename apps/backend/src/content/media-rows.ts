@@ -268,3 +268,42 @@ export async function readMediaRows(
     })),
   };
 }
+
+/**
+ * The media gaps of the live Words (ADR 0099): per Narrator Voice, how many
+ * have no live Recording in it, and how many have no live Illustration.
+ */
+export async function mediaGaps(
+  tx: Pick<Transaction, 'select'>,
+  editionId: string,
+  { wordIds, voices }: { wordIds: readonly string[]; voices: readonly string[] },
+) {
+  const recorded = await tx
+    .select({
+      wordId: mediaRecordings.wordId,
+      narratorVoice: mediaRecordings.narratorVoice,
+    })
+    .from(mediaRecordings)
+    .where(and(eq(mediaRecordings.editionId, editionId), isNull(mediaRecordings.retiredAt)));
+  const illustrated = await tx
+    .select({ wordId: mediaIllustrations.wordId })
+    .from(mediaIllustrations)
+    .where(and(eq(mediaIllustrations.editionId, editionId), isNull(mediaIllustrations.retiredAt)));
+  const live = new Set(wordIds);
+  const recordedIn = (voice: string) =>
+    new Set(
+      recorded
+        .filter((row) => row.narratorVoice === voice && live.has(row.wordId))
+        .map((row) => row.wordId),
+    );
+  const withIllustration = new Set(
+    illustrated.map((row) => row.wordId).filter((id) => live.has(id)),
+  );
+  return {
+    withoutRecording: voices.map((narratorVoice) => ({
+      narratorVoice,
+      words: live.size - recordedIn(narratorVoice).size,
+    })),
+    withoutIllustration: live.size - withIllustration.size,
+  };
+}
