@@ -574,8 +574,8 @@ describe('the Game screen', () => {
 
   /** Today's crossing Daily Crossword, as the composition opens it. */
   async function crossingCrossword() {
-    const opening = await composition.openCrossingCrossword();
-    if (opening.kind !== 'open') throw new Error(`Expected the puzzle, got ${opening.kind}`);
+    const opening = await composition.openDailyCrossword();
+    if (opening.kind !== 'crossing') throw new Error(`Expected the puzzle, got ${opening.kind}`);
     return opening.crossword;
   }
 

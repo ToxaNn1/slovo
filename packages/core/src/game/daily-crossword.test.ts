@@ -25,9 +25,15 @@ const kindOf = async (on: readonly FeatureSwitch[], words?: readonly Word[]) =>
 
 describe('the Daily Crossword the composition opens', () => {
   it('is the crossing one while it is on, the traced one on as well', async () => {
-    const composition = await app(['game', 'dailyCrossword', 'crossingCrossword', 'tracedCrossword']);
+    const composition = await app([
+      'game',
+      'dailyCrossword',
+      'crossingCrossword',
+      'tracedCrossword',
+    ]);
     const opening = await composition.openDailyCrossword();
-    if (opening.kind !== 'crossing') throw new Error(`Expected the crossing one, got ${opening.kind}`);
+    if (opening.kind !== 'crossing')
+      throw new Error(`Expected the crossing one, got ${opening.kind}`);
     const ids = vocabulary.map(({ id }) => id);
     for (const { word: placed } of opening.crossword.puzzle.words) expect(ids).toContain(placed.id);
   });
