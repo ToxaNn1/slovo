@@ -21,6 +21,7 @@ Owner grant: ~/.slovo-coord/grant-media-1110.md — «так даю дозвол
 - 2026-11-10 09:00 #1765 impl #2 stopped (ctx 125k + load 218), uncommitted work in t3-b2853a35…, handoff updated. #1771 two local commits 998691915. Load spikes likely from parallel full pnpm test → now ONE agent at a time, tests per package only. Launched verify+merge of #1771. #1765 impl #3 after it.
 - 2026-11-10 09:12 owner «продовжи роботу» → option 1: CI tests the full suite. #1771 pushed (998691915) and merged into integration b901fc745. Draft PR #1792. #1765 impl #3 launched in t3-b2853a35… (local tests per package only).
 - 2026-11-10 09:25 CI fix c8701a5d5 (deploy.md NEON_PROJECT_ID row named a server variable); PR #1792 CI all green. #1765 impl #3 alive: 5 local commits (d7176f2f0..2d67dc803: contracts format 2, migration 0022, backend rows, /v1 openapi, fixtures), not pushed yet.
+- 2026-11-10 09:50 coordinator #2 took over. #1765 impl #3 done at 119k: pushed feat/1765-media-rows c0fa86ef5 (7 commits); red: 10 language-pack tests expect pack format 11 (→12); not run: core tests, backend DB tests (CI), lint; integration not merged in yet. Launched #1765 impl #4 (T3 delegate, Opus) in the same worktree t3-b2853a35… to finish green + merge integration tip. Watchdog: PR #1792 green/draft; no main merge (wave unfinished, needs owner word). Next: merger → #1766 + #1768.
 
 ## Handoff to coordinator #2 (2026-11-10 09:35 UTC; #1 at 112k context)
 State: done #1771 (in integration b901fc745 + CI fix c8701a5d5). Draft PR #1792, CI green.
