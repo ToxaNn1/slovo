@@ -365,7 +365,7 @@ describe('sourceWords', () => {
         ...config,
         languageTraits: {
           ...FieldsSchema.parse(config['languageTraits']),
-          marksStress: false,
+          stress: { marked: false },
         },
       }));
       const { options } = setup({ lemmaList, edition });

@@ -646,9 +646,7 @@ export async function openMix({
     kindWeightsInEffect: () =>
       edition.isFeatureEnabled('mixKindWeights') ? state.kindWeights : NORMAL_KIND_WEIGHTS,
     quickQuestionEveryInEffect: () =>
-      edition.isFeatureEnabled('game') &&
-      edition.isFeatureEnabled('quickQuestion') &&
-      state.quickQuestionEvery !== 'off'
+      edition.isFeatureEnabled('quickQuestion') && state.quickQuestionEvery !== 'off'
         ? state.quickQuestionEvery
         : undefined,
     subscribe: subscribers.subscribe,

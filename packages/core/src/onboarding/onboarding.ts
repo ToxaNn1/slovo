@@ -2,7 +2,9 @@ import {
   ONBOARDING_STEPS as STEPS,
   type CountedQuestion,
   type DailyGoal,
+  type FeatureSwitch,
   type NotificationTimeBucket,
+  type OnboardingStepKind,
   type QuestionnaireQuestion,
 } from '@slovo/contracts';
 
@@ -25,6 +27,15 @@ import {
 } from '../questionnaire/questionnaire';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
+
+/** The Feature Switch each step is shown under; a step not named here is shown under none. */
+const STEP_SWITCH: Partial<Record<OnboardingStepKind, FeatureSwitch>> = {
+  playStep: 'playStep',
+  level: 'questionnaire',
+  why: 'questionnaire',
+  dailyGoal: 'dailyGoal',
+  notificationTime: 'notificationTimeStep',
+};
 
 /** The buckets of the times «Коли нагадати?» offers, in time order. */
 const OFFERED = ['morning', 'midday', 'evening'] as const;
@@ -194,14 +205,13 @@ export async function openOnboarding({
   const wordId = wordOfTheDay.chosen()?.wordId;
   const word = wordId === undefined ? undefined : await entries.get(wordId);
   const firstWord = word?.kind === 'word' ? await buildWordCard({ word, entries }) : undefined;
-  const steps = STEPS.filter(
-    (kind) =>
+  const steps = STEPS.filter((kind) => {
+    const feature = STEP_SWITCH[kind];
+    return (
       (kind !== 'firstWord' || firstWord !== undefined) &&
-      (kind !== 'playStep' || edition.isFeatureEnabled('playStep')) &&
-      ((kind !== 'level' && kind !== 'why') || edition.isFeatureEnabled('questionnaire')) &&
-      (kind !== 'dailyGoal' || edition.isFeatureEnabled('dailyGoal')) &&
-      (kind !== 'notificationTime' || edition.isFeatureEnabled('notificationTimeStep')),
-  );
+      (feature === undefined || edition.isFeatureEnabled(feature))
+    );
+  });
 
   function stepAt(index: number): OnboardingStep | undefined {
     const place = { number: index + 1, total: steps.length };

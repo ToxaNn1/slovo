@@ -132,7 +132,7 @@ export async function openSync({
 
   /** One sync with the Session, tried again by the one rule while the Session lasts. */
   async function syncOnce(): Promise<void> {
-    if (!edition.isFeatureEnabled('account') || !edition.isFeatureEnabled('sync')) return;
+    if (!edition.isFeatureEnabled('sync')) return;
     if (!signedIn()) return;
     const session = endedSessions;
     const ended: SyncResult = { ok: false, reason: 'unauthorized', changed: false };

@@ -686,14 +686,13 @@ describe('buildLanguagePack', () => {
     const editionDir = copyFixture('valid');
     editJson(editionDir, 'edition.json', (config) => ({
       ...config,
-      languageTraits: { ...(config['languageTraits'] as Json), vowels: undefined },
+      languageTraits: { ...(config['languageTraits'] as Json), stress: { marked: true } },
     }));
 
     expect(buildErrors(editionDir)).toEqual([
       expect.objectContaining({
         file: 'edition.json',
-        field: 'languageTraits.vowels',
-        message: expect.stringMatching(/marks stress/i) as string,
+        field: 'languageTraits.stress.vowels',
       }),
     ]);
   });
@@ -704,8 +703,7 @@ describe('buildLanguagePack', () => {
       ...config,
       languageTraits: {
         ...(config['languageTraits'] as Json),
-        marksStress: false,
-        vowels: undefined,
+        stress: { marked: false },
       },
     }));
     for (const file of validWordFiles) {
@@ -726,8 +724,7 @@ describe('buildLanguagePack', () => {
       ...config,
       languageTraits: {
         ...(config['languageTraits'] as Json),
-        marksStress: false,
-        vowels: undefined,
+        stress: { marked: false },
       },
     }));
     for (const file of validWordFiles) {
@@ -799,8 +796,7 @@ describe('buildLanguagePack', () => {
       ...config,
       languageTraits: {
         ...(config['languageTraits'] as Json),
-        marksStress: false,
-        vowels: undefined,
+        stress: { marked: false },
       },
     }));
 
@@ -2418,7 +2414,7 @@ describe('the Word of the Day font', () => {
     const editionDir = withFont('Script.ttf', fontWith(everyCharacter.replace(stressMark, '')));
     editJson(editionDir, 'edition.json', (config) => ({
       ...config,
-      languageTraits: { ...(config['languageTraits'] as Json), marksStress: false },
+      languageTraits: { ...(config['languageTraits'] as Json), stress: { marked: false } },
     }));
 
     expect(errorsOf(editionDir).filter(({ file }) => file === 'edition.json')).toEqual([]);
@@ -2984,8 +2980,7 @@ describe('content targets', () => {
       ...config,
       languageTraits: {
         ...(config['languageTraits'] as Json),
-        marksStress: false,
-        vowels: undefined,
+        stress: { marked: false },
       },
     }));
     for (const file of validWordFiles) {

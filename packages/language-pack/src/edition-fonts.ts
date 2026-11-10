@@ -61,7 +61,7 @@ function glyphErrors(
   const missing = [...new Set(characters)]
     .filter((shown) => Array.from(shown).some((character) => !hasGlyph(character)))
     .concat(
-      setsLemmas && languageTraits.marksStress && !hasGlyph(STRESS_MARK)
+      setsLemmas && languageTraits.stress.marked && !hasGlyph(STRESS_MARK)
         ? ['the Stress mark (U+0301)']
         : [],
     );
