@@ -22,7 +22,7 @@ describe('the Illustration rules (ADR 0055)', () => {
   });
 
   it('refuses a file that is not a PNG, and checks nothing else of it', () => {
-    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...new Array<number>(60).fill(0)]);
+    const jpeg = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, ...Array.from({ length: 60 }, () => 0)]);
     expect(illustrationRefusals(jpeg)).toEqual([
       { rule: 'illustration-png', message: 'The file is not a PNG' },
     ]);
