@@ -11,6 +11,7 @@ import type {
   Idiom,
   MistakeType,
   Platform,
+  RecordingKind,
   RuleTargets,
   RuleVerdict,
   SynonymRow,
@@ -33,6 +34,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
 
@@ -418,6 +420,69 @@ export const contentVersions = pgTable('content_versions', {
   importedAt: time('imported_at'),
   updatedAt: time('updated_at'),
 });
+
+/**
+ * The Edition's media files (ADR 0099): one row per file in the Media Store,
+ * which keeps the file under a name that carries its hash. A row is retired,
+ * never deleted, when its Word changes or a new file replaces it; at most one
+ * row of a Word's slot is live. Every media write raises the Edition's
+ * content version in its transaction, and the row keeps the version it last
+ * changed at, so a Patch carries it.
+ */
+function mediaColumns() {
+  return {
+    editionId: text('edition_id').notNull(),
+    wordId: text('word_id').notNull(),
+    /** The SHA-256 of the file, in lowercase hex. */
+    hash: text('hash').notNull(),
+    /** The file's size in bytes. */
+    size: integer('size').notNull(),
+    createdAt: time('created_at'),
+    /** When the row left the live set; none while it is live. */
+    retiredAt: timestamp('retired_at', { withTimezone: true }),
+    /** The Edition's content version the row last changed at. */
+    contentVersion: integer('content_version').notNull(),
+  };
+}
+
+/** A Recording per Word, Narrator Voice and Recording Kind. */
+export const mediaRecordings = pgTable(
+  'media_recordings',
+  {
+    ...mediaColumns(),
+    narratorVoice: text('narrator_voice').notNull(),
+    recordingKind: text('recording_kind').$type<RecordingKind>().notNull(),
+    durationMs: integer('duration_ms').notNull(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.editionId,
+        table.wordId,
+        table.narratorVoice,
+        table.recordingKind,
+        table.hash,
+      ],
+    }),
+    uniqueIndex('media_recordings_live')
+      .on(table.editionId, table.wordId, table.narratorVoice, table.recordingKind)
+      .where(sql`${table.retiredAt} is null`),
+    index().on(table.editionId, table.contentVersion),
+  ],
+);
+
+/** An Illustration per Word. */
+export const mediaIllustrations = pgTable(
+  'media_illustrations',
+  mediaColumns(),
+  (table) => [
+    primaryKey({ columns: [table.editionId, table.wordId, table.hash] }),
+    uniqueIndex('media_illustrations_live')
+      .on(table.editionId, table.wordId)
+      .where(sql`${table.retiredAt} is null`),
+    index().on(table.editionId, table.contentVersion),
+  ],
+);
 
 /**
  * The quote check's last finding per quoted record (ADR 0084), at the record
