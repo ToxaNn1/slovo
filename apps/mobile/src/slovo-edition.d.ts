@@ -16,6 +16,8 @@ declare module 'slovo-editions' {
     readonly sounds: Readonly<Partial<Record<'shout' | 'right' | 'wrong' | 'tap', number>>>;
     /** The asset ids of the Starter Media the Edition bundles, by Media Store path (ADR 0099). */
     readonly starterMedia: Readonly<Record<string, number>>;
+    /** The ids of the Starter Words, whose media the Starter Media holds; the first Cycle opens with them. */
+    readonly starterWords: readonly string[];
     /** The asset id of the compiled Language Pack. */
     readonly languagePack: number;
   }

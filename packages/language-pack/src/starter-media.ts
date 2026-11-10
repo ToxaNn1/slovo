@@ -136,13 +136,27 @@ export async function downloadStarterMedia(
  */
 export type StarterMediaFiles = Readonly<Record<string, string>>;
 
+/** The list the Language Pack build wrote in `dir`, or nothing before it has. */
+function writtenList(dir: string): StarterMediaList | undefined {
+  const listFile = join(dir, LIST_FILE);
+  if (!existsSync(listFile)) return undefined;
+  return StarterMediaListSchema.parse(JSON.parse(readFileSync(listFile, 'utf8')));
+}
+
 /**
  * The Starter Media files in `dir` that Metro bundles; none when the folder
  * has no list yet (the Language Pack build writes it).
  */
 export function starterMediaFiles(dir: string): StarterMediaFiles {
-  const listFile = join(dir, LIST_FILE);
-  if (!existsSync(listFile)) return {};
-  const list = StarterMediaListSchema.parse(JSON.parse(readFileSync(listFile, 'utf8')));
-  return Object.fromEntries(list.files.map((file) => [file.path, join(dir, file.path)]));
+  const files = writtenList(dir)?.files ?? [];
+  return Object.fromEntries(files.map((file) => [file.path, join(dir, file.path)]));
+}
+
+/**
+ * The ids of the Starter Words of the Starter Media in `dir`, which Metro
+ * bundles so the first Cycle opens with them; none when the folder has no
+ * list yet.
+ */
+export function starterWordIds(dir: string): readonly string[] {
+  return writtenList(dir)?.wordIds ?? [];
 }

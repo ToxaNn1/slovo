@@ -9,7 +9,7 @@ const { APP_CONFIG_FILE, EDITIONS_DIR, REPO_DIR, openAppConfig, openEdition } = 
   '@slovo/language-pack/edition',
   __filename,
 );
-const { STARTER_MEDIA_DIR, starterMediaFiles } = tsxRequire(
+const { STARTER_MEDIA_DIR, starterMediaFiles, starterWordIds } = tsxRequire(
   '@slovo/language-pack/starter-media',
   __filename,
 );
@@ -96,6 +96,7 @@ function bundledEdition(edition) {
     decor: ${optional(edition, 'decor')},
     sounds: ${sounds(edition)},
     starterMedia: ${starterMedia(edition)},
+    starterWords: ${JSON.stringify(starterWordIds(join(edition.dir, STARTER_MEDIA_DIR)))},
     languagePack: ${mandatory(edition, 'languagePack', `Run \`pnpm build:pack ${id}\` to build the Language Pack first.`)},
   },`;
 }

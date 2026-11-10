@@ -38,6 +38,7 @@ async function open({
     },
     userState,
     random,
+    starterWords: [],
   });
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
   return {

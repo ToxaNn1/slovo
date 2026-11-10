@@ -22,6 +22,7 @@ module.exports = {
         ]),
       ),
       starterMedia: {},
+      starterWords: [],
       languagePack: 1,
     },
   },
