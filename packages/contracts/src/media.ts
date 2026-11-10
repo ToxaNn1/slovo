@@ -33,3 +33,18 @@ export type RecordingRow = z.infer<typeof RecordingRowSchema>;
 export const IllustrationRowSchema = z.strictObject(mediaRowFields);
 
 export type IllustrationRow = z.infer<typeof IllustrationRowSchema>;
+
+/** A Recording's path in the Media Store, named by its Word id and hash (ADR 0099). */
+export const recordingPath = ({
+  wordId,
+  narratorVoice,
+  recordingKind,
+  hash,
+}: Pick<RecordingRow, 'wordId' | 'narratorVoice' | 'recordingKind' | 'hash'>): string =>
+  `recordings/${narratorVoice}/${recordingKind}/${wordId}.${hash}.mp3`;
+
+/** An Illustration's path in the Media Store, named by its Word id and hash (ADR 0099). */
+export const illustrationPath = ({
+  wordId,
+  hash,
+}: Pick<IllustrationRow, 'wordId' | 'hash'>): string => `illustrations/${wordId}.${hash}.png`;
