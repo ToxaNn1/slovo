@@ -75,6 +75,8 @@ export {
 export {
   type CurrentGame,
   type GameEnd,
+  type GameOver,
+  type PlayingGame,
   type GameTime,
   type GivenAnswer,
   type GridCell,
