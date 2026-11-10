@@ -6,18 +6,8 @@ export type KnowledgeMark = 'known' | 'unknown';
 /** The days a Review waits, one step after the other. */
 export type ReviewStep = 1 | 3 | 7 | 30 | 90;
 
-/**
- * The Knowledge Mark of one Entry and where its Review stands (ADR 0043). An
- * Entry without a record has no mark.
- */
-export interface KnowledgeRecord {
-  readonly mark: KnowledgeMark;
-  /** The days the current Review waited; none once the Entry is Learned. */
-  readonly step: ReviewStep | null;
-  /** The local day the Entry is due for Review, `YYYY-MM-DD`; none once it is Learned. */
-  readonly reviewDay: string | null;
-  /** Whether the Entry is Learned: it no longer comes back for Review. */
-  readonly learned: boolean;
+/** What every Knowledge record keeps, whichever form it has. */
+interface Marked {
   /**
    * The instant the mark was set or changed, ISO 8601 in UTC, which the
    * Weekly Recap counts (ADR 0054); none on a mark kept before 0.8.13.
@@ -25,7 +15,68 @@ export interface KnowledgeRecord {
   readonly markedAt?: string;
 }
 
-const learned: KnowledgeRecord = { mark: 'known', step: null, reviewDay: null, learned: true };
+/** A Learned Entry: Known, and it no longer comes back for Review. */
+export interface LearnedRecord extends Marked {
+  readonly learned: true;
+  readonly mark: 'known';
+  readonly step: null;
+  readonly reviewDay: null;
+}
+
+/** An Entry in Review: its mark, the step it is on and the day it is due. */
+export interface ReviewRecord extends Marked {
+  readonly learned: false;
+  readonly mark: KnowledgeMark;
+  /** The days the current Review waited. */
+  readonly step: ReviewStep;
+  /** The local day the Entry is due for Review, `YYYY-MM-DD`. */
+  readonly reviewDay: string;
+}
+
+/**
+ * The Knowledge Mark of one Entry and where its Review stands (ADR 0043):
+ * Learned, or in Review. An Entry without a record has no mark. Both forms
+ * hold the fields of the stored record, in its order, so a record is kept as
+ * it is.
+ */
+export type KnowledgeRecord = LearnedRecord | ReviewRecord;
+
+/** A Knowledge record as the user state may hold it: any mix of the fields. */
+interface StoredKnowledgeRecord extends Marked {
+  readonly mark: KnowledgeMark;
+  readonly step: ReviewStep | null;
+  readonly reviewDay: string | null;
+  readonly learned: boolean;
+}
+
+const learned: LearnedRecord = { mark: 'known', step: null, reviewDay: null, learned: true };
+
+/** A Review day that is due on any day: before every day a reader marks on. */
+const dueAtOnce = '1970-01-01';
+
+/**
+ * The record a stored one reads as. A Learned record and a record in Review
+ * read as they are. One that is neither is reduced by a fixed rule, in this
+ * order:
+ * 1. with a step and a Review day it is in Review with them, whatever it
+ *    says of Learned;
+ * 2. Known otherwise, it is Learned;
+ * 3. Unknown otherwise, it is in Review at 1 day, on the Review day it keeps
+ *    or, without one, due at once.
+ */
+export function knowledgeRecordOf({
+  mark,
+  step,
+  reviewDay,
+  markedAt,
+}: StoredKnowledgeRecord): KnowledgeRecord {
+  const time = markedAt === undefined ? {} : { markedAt };
+  if (step !== null && reviewDay !== null) {
+    return { mark, step, reviewDay, learned: false, ...time };
+  }
+  if (mark === 'known') return { ...learned, ...time };
+  return { mark, step: 1, reviewDay: reviewDay ?? dueAtOnce, learned: false, ...time };
+}
 
 /** The step after a Review answered Known, or nothing when the Entry becomes Learned. */
 const nextStep: Record<ReviewStep, ReviewStep | undefined> = {
@@ -61,8 +112,7 @@ export function answerKnowledge(
  * Review day, until the reader answers it.
  */
 export function isDue(record: KnowledgeRecord | undefined, day: LocalDate): boolean {
-  const reviewDay = record?.reviewDay ?? undefined;
-  return reviewDay !== undefined && reviewDay <= dateKeyOf(day);
+  return record?.learned === false && record.reviewDay <= dateKeyOf(day);
 }
 
 /**
@@ -70,7 +120,7 @@ export function isDue(record: KnowledgeRecord | undefined, day: LocalDate): bool
  * 7 days or later (ADR 0043).
  */
 export const confirmsOnKnown = (record: KnowledgeRecord | undefined): boolean =>
-  record?.step !== undefined && record.step !== null && record.step >= 7;
+  record?.learned === false && record.step >= 7;
 
 /** Whether the Entry is Learned. */
 export const isLearned = (record: KnowledgeRecord | undefined): boolean => record?.learned === true;

@@ -388,7 +388,7 @@ export async function openKnowledge({
       const record = next(previous);
       if (record === 'same' || (record === undefined && previous === undefined)) return;
       if (record === undefined) return keep(entryId, undefined, counts, 'none');
-      const { mark, step, reviewDay, learned } = record;
+      const { mark } = record;
       const markedAt = mark === previous?.mark ? previous.markedAt : clock.now().toISOString();
       // Only the reader's own mark answers a Review, and earns XP once per Entry on a local day; a Game answer earns the Game's XP.
       const review =
@@ -403,9 +403,7 @@ export async function openKnowledge({
         !confirmed.has(entryId);
       await keep(
         entryId,
-        markedAt === undefined
-          ? { mark, step, reviewDay, learned }
-          : { mark, step, reviewDay, learned, markedAt },
+        markedAt === undefined ? record : { ...record, markedAt },
         counts,
         confirms ? 'add' : 'none',
         review,
