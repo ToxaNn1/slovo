@@ -15,7 +15,6 @@ async function illustrationSourceOf(
     case 'bundled':
       return source.asset;
     case 'cached':
-      await media.used(wordId, 'illustration');
       return { uri: source.uri };
     default:
       return undefined;
@@ -25,9 +24,10 @@ async function illustrationSourceOf(
 /**
  * Shows a Word's Illustration (ADR 0099): the bundled Starter Media, else the
  * cached file, else none while the file is still in the Media Store; each
- * file that arrives in the cache reads it again, so a card fills in once its
- * download lands. A card never downloads an Illustration itself: the Feed's
- * prefetch does. Media that cannot be read shows none. Answers the stop.
+ * file that arrives in the cache reads it again until the card has its
+ * Illustration, so a card fills in once its download lands and marks it used
+ * once. A card never downloads an Illustration itself: the Feed's prefetch
+ * does. Media that cannot be read shows none. Answers the stop.
  */
 export function watchIllustration({
   media,
@@ -42,18 +42,23 @@ export function watchIllustration({
 }): () => void {
   let watching = true;
   const read = async () => {
-    let source: IllustrationSource | undefined;
     try {
-      source = await illustrationSourceOf(await media(), wordId);
+      const opened = await media();
+      const source = await illustrationSourceOf(opened, wordId);
+      if (!watching) return;
+      if (source !== undefined) stop();
+      show(source);
+      if (typeof source === 'object') await opened.used(wordId, 'illustration');
     } catch (error) {
       logError('Could not get the Illustration of a Word', error);
+      if (watching) show(undefined);
     }
-    if (watching) show(source);
   };
-  void read();
   const stopArrivals = arrivals(() => void read());
-  return () => {
+  const stop = () => {
     watching = false;
     stopArrivals();
   };
+  void read();
+  return stop;
 }
