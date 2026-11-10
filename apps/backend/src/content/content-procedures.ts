@@ -9,13 +9,18 @@ import type { ContentStore } from './content-store';
 const PATCH_CACHE_CONTROL = 'no-cache';
 
 /** The content procedures of the contract, over the Editions and the content tables. */
-export function contentProcedures(editions: EditionRegistry, contentStore: ContentStore) {
+export function contentProcedures(
+  editions: EditionRegistry,
+  contentStore: ContentStore,
+  /** The URL root of the Media Store the snapshot and the Patch name (ADR 0099). */
+  mediaBase: string,
+) {
   const content = implement(apiContract.content);
   return content.router({
     snapshot: content.snapshot.handler(async ({ input, errors }) => {
       const snapshot = await contentStore.snapshot(input.editionId);
       if (snapshot === undefined) throw errors.NOT_FOUND();
-      return snapshot;
+      return { ...snapshot, mediaBase };
     }),
 
     patch: content.patch.handler(async ({ input, errors }) => {
@@ -45,7 +50,7 @@ export function contentProcedures(editions: EditionRegistry, contentStore: Conte
       return {
         status: 200 as const,
         headers,
-        body: { status: 'patch' as const, patch: { ...patch, patchFormat: PATCH_FORMAT } },
+        body: { status: 'patch' as const, patch: { ...patch, mediaBase, patchFormat: PATCH_FORMAT } },
       };
     }),
 

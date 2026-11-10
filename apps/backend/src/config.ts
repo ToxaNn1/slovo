@@ -112,6 +112,15 @@ const ServerVariablesSchema = z.object({
   PORT: z.coerce.number().int().min(0).max(65535).default(8787),
   // The folder that holds one folder per Edition (ADR 0035).
   EDITIONS_DIR: z.string().min(1).default(EDITIONS_DIR),
+  // The URL root of the Media Store the snapshot and the Patch name (ADR
+  // 0099), with no trailing slash: one setting moves it to media.<domain>.
+  MEDIA_BASE: z.preprocess(
+    (value) => (value === '' ? undefined : value),
+    z
+      .url({ error: 'must be a URL' })
+      .refine((url) => !url.endsWith('/'), 'must not end with a slash')
+      .default('http://localhost:8787/media'),
+  ),
 });
 
 /** The options of PostHog's query API, or none while its key or project is unset. */

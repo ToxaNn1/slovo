@@ -19,6 +19,7 @@ import {
   contentWords,
   quoteChecks,
 } from '../database/schema';
+import { readMediaRows } from './media-rows';
 
 /** How many records of each kind an import wrote. */
 export interface ImportCounts {
@@ -300,7 +301,7 @@ export function createContentStore({
     );
   }
 
-  /** Every record of the Edition at its current content version; none while it is not imported. */
+  /** Every record and media row of the Edition at its current content version; none while it is not imported. */
   async function snapshot(editionId: string) {
     if (editions.find(editionId) === undefined) return undefined;
     return atCurrentVersion(editionId, async (tx, contentVersion) => {
@@ -309,6 +310,7 @@ export function createContentStore({
         editionId,
         contentVersion,
         ...kinds,
+        ...(await readMediaRows(tx, editionId, 0)),
         needsNewRecording: inIdOrder(
           words.filter((word) => word.needsNewRecording).map(({ id }) => ({ id, fields: id })),
         ),
@@ -325,7 +327,7 @@ export function createContentStore({
     editionId: string,
     since: number,
   ): Promise<
-    | { readonly ok: true; readonly patch: Omit<Patch, 'patchFormat'> }
+    | { readonly ok: true; readonly patch: Omit<Patch, 'patchFormat' | 'mediaBase'> }
     | { readonly ok: false; readonly reason: 'not-serving' | 'not-imported' }
   > {
     if (!(await editions.serving(editionId, 'contentUpdates')).ok) {
@@ -336,6 +338,7 @@ export function createContentStore({
       since,
       contentVersion: Math.max(since, contentVersion),
       ...(await readKinds(tx, editionId, since)).kinds,
+      ...(await readMediaRows(tx, editionId, since)),
     }));
     return read === undefined ? { ok: false, reason: 'not-imported' } : { ok: true, patch: read };
   }

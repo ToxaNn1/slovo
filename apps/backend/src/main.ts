@@ -54,6 +54,7 @@ const app = createApp({
   adminDist: existsSync(join(adminDist, 'index.html')) ? adminDist : undefined,
   sentry: sentryOf(config, systemClock),
   ciToken: config.CI_HISTORY_TOKEN,
+  mediaBase: config.MEDIA_BASE,
 });
 const server = await startServer({ app, database, port: config.PORT });
 

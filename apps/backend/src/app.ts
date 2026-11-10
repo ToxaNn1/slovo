@@ -102,6 +102,8 @@ export interface AppDependencies {
   readonly sentry: SentryReader;
   /** The Bearer token CI pushes its history with (ADR 0096); unset refuses every push. */
   readonly ciToken: string | undefined;
+  /** The URL root of the Media Store the snapshot and the Patch name (ADR 0099). */
+  readonly mediaBase: string;
   /** The folder of the built owner admin app (apps/admin/dist), served at `/admin`; without it none. */
   readonly adminDist?: string | undefined;
 }
@@ -166,6 +168,7 @@ export function createApp({
   adminDist,
   sentry,
   ciToken,
+  mediaBase,
 }: AppDependencies) {
   const editionRegistry = createEditions({ database, clock, editions, alerts });
   const rateLimits = createRateLimits(database, { secret: authSecret });
@@ -241,6 +244,7 @@ export function createApp({
     contentStore,
     contentWrites,
     development: createDevelopment({ github, eas, clock }),
+    mediaBase,
     editions: editionRegistry,
     mailer,
     mistakeReports,
