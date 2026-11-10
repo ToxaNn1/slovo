@@ -267,10 +267,6 @@ export interface EditionFiles {
   readIfPresent<F extends EditionJsonFile>(file: F): EditionFileContent<F> | undefined;
   /** Where a file the Edition brings in `assets/` lies, such as its notification sound. */
   asset(name: string): string;
-  /** Where the Illustration a Word names lies, whether or not it is there. */
-  illustration(name: string): string;
-  /** The file names of the Illustrations the Edition brings (its PNGs), in code-unit order. */
-  illustrations(): string[];
   /**
    * What the Edition's Recordings folder holds: each entry by name, in
    * code-unit order, and for a folder the names of its files, also in order.
@@ -419,14 +415,6 @@ export function editionFiles(dir: string): EditionFiles {
     read,
     readIfPresent: (file) => (existsSync(join(dir, FILES[file])) ? read(file) : undefined),
     asset: (name) => join(dir, ASSETS_DIR, name),
-    illustration: (name) => join(dir, ILLUSTRATIONS_DIR, name),
-    illustrations() {
-      const illustrationsDir = join(dir, ILLUSTRATIONS_DIR);
-      if (!existsSync(illustrationsDir)) return [];
-      return readdirSync(illustrationsDir)
-        .filter((file) => file.endsWith('.png'))
-        .toSorted();
-    },
     recordings() {
       const recordingsDir = join(dir, RECORDINGS_DIR);
       if (!existsSync(recordingsDir)) return [];
