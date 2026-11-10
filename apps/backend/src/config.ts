@@ -284,6 +284,36 @@ export const RecordingsConfigSchema = ServerVariablesSchema.pick({
           },
   }));
 
+/** An R2 variable the media import can't run without. */
+const requiredR2 = z.preprocess(
+  (value) => (value === '' ? undefined : value),
+  z.string({ error: 'is required: the media import puts the files in R2' }).min(1),
+);
+
+/**
+ * The environment `pnpm import-media` reads: the database and the R2 bucket,
+ * every R2 variable required, so the files never land in a memory store.
+ */
+export const MediaImportConfigSchema = ServerVariablesSchema.pick({
+  DATABASE_URL: true,
+  EDITIONS_DIR: true,
+})
+  .extend({
+    R2_ACCOUNT_ID: requiredR2,
+    R2_BUCKET: requiredR2,
+    R2_ACCESS_KEY_ID: requiredR2,
+    R2_SECRET_ACCESS_KEY: requiredR2,
+  })
+  .transform(({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, ...rest }) => ({
+    ...rest,
+    r2: {
+      accountId: R2_ACCOUNT_ID,
+      bucket: R2_BUCKET,
+      accessKeyId: R2_ACCESS_KEY_ID,
+      secretAccessKey: R2_SECRET_ACCESS_KEY,
+    },
+  }));
+
 /** The environment the publish command reads. */
 export const PublishConfigSchema = ServerVariablesSchema.pick({
   DATABASE_URL: true,

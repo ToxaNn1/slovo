@@ -89,9 +89,28 @@ export function createMediaRows({ database, clock }: { database: Database; clock
    * retired meanwhile, keeps what it has: the next run records it again.
    */
   function saveRecordings(editionId: string, words: readonly RecordedWord[]) {
+    return saveMedia(editionId, { recorded: words, illustrations: [] });
+  }
+
+  /** Makes the file the live Illustration of its Word. */
+  function saveIllustration(editionId: string, file: NewIllustration) {
+    return saveMedia(editionId, { recorded: [], illustrations: [file] });
+  }
+
+  /**
+   * Saves Recordings as `saveRecordings` does and makes each Illustration its
+   * Word's live one, raising the content version once for them all.
+   */
+  function saveMedia(
+    editionId: string,
+    {
+      recorded,
+      illustrations,
+    }: { recorded: readonly RecordedWord[]; illustrations: readonly NewIllustration[] },
+  ) {
     return write(editionId, async (tx, version, now) => {
       let changed = false;
-      for (const word of words) {
+      for (const word of recorded) {
         const [current] = await tx
           .select({ fields: contentWords.fields, retired: contentWords.retired })
           .from(contentWords)
@@ -111,42 +130,14 @@ export function createMediaRows({ database, clock }: { database: Database; clock
           .set({ needsNewRecording: false })
           .where(and(eq(contentWords.editionId, editionId), eq(contentWords.id, word.wordId)));
       }
+      for (const file of illustrations) {
+        if (await saveIllustrationRow(tx, editionId, file, version, now)) changed = true;
+      }
       return changed;
     });
   }
 
-  /** Makes the file the live Illustration of its Word. */
-  function saveIllustration(editionId: string, file: NewIllustration) {
-    return write(editionId, async (tx, version, now) => {
-      const slot = and(
-        eq(mediaIllustrations.editionId, editionId),
-        eq(mediaIllustrations.wordId, file.wordId),
-      );
-      const [live] = await tx
-        .select({ hash: mediaIllustrations.hash })
-        .from(mediaIllustrations)
-        .where(and(slot, isNull(mediaIllustrations.retiredAt)));
-      if (live?.hash === file.hash) return false;
-      await tx
-        .update(mediaIllustrations)
-        .set({ retiredAt: now, contentVersion: version })
-        .where(and(slot, isNull(mediaIllustrations.retiredAt)));
-      await tx
-        .insert(mediaIllustrations)
-        .values({ editionId, ...file, createdAt: now, retiredAt: null, contentVersion: version })
-        .onConflictDoUpdate({
-          target: [
-            mediaIllustrations.editionId,
-            mediaIllustrations.wordId,
-            mediaIllustrations.hash,
-          ],
-          set: { retiredAt: null, fileDeletedAt: null, contentVersion: version },
-        });
-      return true;
-    });
-  }
-
-  return { saveRecording, saveRecordings, saveIllustration };
+  return { saveRecording, saveRecordings, saveIllustration, saveMedia };
 }
 
 export type MediaRows = ReturnType<typeof createMediaRows>;
@@ -185,6 +176,37 @@ async function saveRecordingRow(
         mediaRecordings.recordingKind,
         mediaRecordings.hash,
       ],
+      set: { retiredAt: null, fileDeletedAt: null, contentVersion: version },
+    });
+  return true;
+}
+
+/** Makes the file its Word's live Illustration, retiring the one it replaces; false when it already is. */
+async function saveIllustrationRow(
+  tx: Transaction,
+  editionId: string,
+  file: NewIllustration,
+  version: number,
+  now: Date,
+): Promise<boolean> {
+  const slot = and(
+    eq(mediaIllustrations.editionId, editionId),
+    eq(mediaIllustrations.wordId, file.wordId),
+  );
+  const [live] = await tx
+    .select({ hash: mediaIllustrations.hash })
+    .from(mediaIllustrations)
+    .where(and(slot, isNull(mediaIllustrations.retiredAt)));
+  if (live?.hash === file.hash) return false;
+  await tx
+    .update(mediaIllustrations)
+    .set({ retiredAt: now, contentVersion: version })
+    .where(and(slot, isNull(mediaIllustrations.retiredAt)));
+  await tx
+    .insert(mediaIllustrations)
+    .values({ editionId, ...file, createdAt: now, retiredAt: null, contentVersion: version })
+    .onConflictDoUpdate({
+      target: [mediaIllustrations.editionId, mediaIllustrations.wordId, mediaIllustrations.hash],
       set: { retiredAt: null, fileDeletedAt: null, contentVersion: version },
     });
   return true;

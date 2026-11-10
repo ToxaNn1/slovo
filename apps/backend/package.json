@@ -11,6 +11,7 @@
     "db:migrate": "tsx --env-file-if-exists=.env src/database/migrate-command.ts",
     "switches": "tsx --env-file-if-exists=.env src/edition/switches-command.ts",
     "import-content": "tsx --env-file-if-exists=.env --disable-warning=ExperimentalWarning src/content/import-command.ts",
+    "import-media": "tsx --env-file-if-exists=.env src/media/media-import-command.ts",
     "admin": "tsx --env-file-if-exists=.env src/admin/admin-command.ts",
     "cron": "tsx --env-file-if-exists=.env src/alerts/cron-command.ts",
     "reports": "tsx --env-file-if-exists=.env src/reports/reports-command.ts",

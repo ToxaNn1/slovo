@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { RecordingsConfigSchema } from '../config';
+import { MediaImportConfigSchema, RecordingsConfigSchema } from '../config';
 import { memoryMediaStore, r2MediaStore, signS3Request } from './media-store';
 
 describe('the memory Media Store', () => {
@@ -112,5 +112,30 @@ describe('the Recordings configuration', () => {
     expect(RecordingsConfigSchema.safeParse({ ...base, NODE_ENV: 'production' }).success).toBe(
       false,
     );
+  });
+});
+
+describe('the media import configuration', () => {
+  const base = { DATABASE_URL: 'postgres://localhost/slovo' };
+  const r2 = {
+    R2_ACCOUNT_ID: 'acc',
+    R2_BUCKET: 'media',
+    R2_ACCESS_KEY_ID: 'key',
+    R2_SECRET_ACCESS_KEY: 'secret',
+  };
+
+  it('takes the R2 bucket the import puts the files in', () => {
+    expect(MediaImportConfigSchema.parse({ ...base, ...r2 }).r2).toEqual({
+      accountId: 'acc',
+      bucket: 'media',
+      accessKeyId: 'key',
+      secretAccessKey: 'secret',
+    });
+  });
+
+  it('refuses to run without every R2 variable, even in development', () => {
+    const missing = MediaImportConfigSchema.safeParse({ ...base, ...r2, R2_BUCKET: '' });
+    expect(missing.error?.issues.map((issue) => issue.path[0])).toEqual(['R2_BUCKET']);
+    expect(MediaImportConfigSchema.safeParse({ ...r2 }).success).toBe(false);
   });
 });

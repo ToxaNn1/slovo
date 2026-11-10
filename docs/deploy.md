@@ -84,6 +84,18 @@ DATABASE_URL='<the Neon connection string>' pnpm content import --edition uk
 
 The command checks every content rule first and writes nothing when one refuses a record; it prints the count of each kind of record and the content version it wrote. A second import writes nothing and says so, because the database is the live content from then on; `--override` imports the folder again over the database and raises the content version.
 
+## Importing an Edition's media
+
+The Recordings and Illustrations in an Edition folder reach the Media Store once (#1770), after its content import and before the Recordings Cron service runs its first backlog. Run it on the owner's laptop with the four `R2_*` of the Media Store's bucket and the Deployment's `DATABASE_URL`; the command refuses to start without any of them, so the files never land in memory:
+
+```sh
+DATABASE_URL='<the Neon connection string>' R2_ACCOUNT_ID='…' R2_BUCKET='…' \
+R2_ACCESS_KEY_ID='…' R2_SECRET_ACCESS_KEY='…' \
+pnpm --filter @slovo/backend import-media --edition uk
+```
+
+It checks every file first and uploads nothing when one names no Narrator Voice or Word of the Edition, is no mp3, or is an Illustration no Word names. A Recording whose text in `texts.json` no longer matches its Word is left out as stale, for the Recordings job to make again. It puts each file in R2 under its key, writes the media rows at one content version and prints the counts of Recordings, Illustrations and stale ones, and the content version. Compare the counts with the folder's mp3 and PNG files (Recordings + stale = mp3 files). A second run writes nothing and says so; `--force` imports the folder again.
+
 ## The quote check
 
 The quote check (ADR 0084) runs on the Deployment as a second Railway service, a Cron service on the same image: `railway.quote-check.json` holds its settings.
@@ -107,7 +119,7 @@ The Recordings job (ADR 0083, 0099) runs as a fourth Railway service, a Cron ser
 | Schedule   | `0 * * * *`: hourly, UTC                                               |
 | Restart    | Never: the command exits when done, and the next run comes on schedule |
 
-Its variables are `DATABASE_URL`, a reference to the same Postgres, and the four `R2_*` of the Media Store's bucket. Each run takes, per Edition and under a lock of its own, the next 50 live Words in id order that miss a live Recording in one of the Edition's Narrator Voices and Recording Kinds, or whose Lemma or Stress changed. It makes their Recordings with `apps/backend/recordings/generate.py`, puts each file in R2 at `recordings/<voice>/<kind>/<Word id>.<hash>.mp3`, and saves the rows at one content version, so the next Patch carries them. A Word the generator fails for keeps what it has and comes back on the next run. An edit of a Word's Lemma or Stress retires its Recordings at once, in the same Patch as the Word. Last, the run deletes from R2 the file of every Recording or Illustration row retired more than 30 days ago and marks the row, which stays. Turn the Cron service on only after the Recordings in the repo have moved to the Media Store (#1770), or its first runs record every Word again.
+Its variables are `DATABASE_URL`, a reference to the same Postgres, and the four `R2_*` of the Media Store's bucket. Each run takes, per Edition and under a lock of its own, the next 50 live Words in id order that miss a live Recording in one of the Edition's Narrator Voices and Recording Kinds, or whose Lemma or Stress changed. It makes their Recordings with `apps/backend/recordings/generate.py`, puts each file in R2 at `recordings/<voice>/<kind>/<Word id>.<hash>.mp3`, and saves the rows at one content version, so the next Patch carries them. A Word the generator fails for keeps what it has and comes back on the next run. An edit of a Word's Lemma or Stress retires its Recordings at once, in the same Patch as the Word. Last, the run deletes from R2 the file of every Recording or Illustration row retired more than 30 days ago and marks the row, which stays. Turn the Cron service on only after `pnpm import-media` has put the Recordings in the repo in the Media Store (Importing an Edition's media), or its first runs record every Word again.
 
 ## The alerts Cron service
 
