@@ -14,3 +14,4 @@ Owner grant: ~/.slovo-coord/grant-media-1110.md — «так даю дозвол
 
 ## Log (UTC)
 - 2026-11-10 08:00 coordinator (laptop, T3 thread «🟢 🧭 Координатор · Media Store (#1764)») created feat/1764-media-store from main 79e6df00b; launching #1765 and #1771.
+- 2026-11-10 08:10 launched implementers (T3 delegate, Opus, worktrees): #1765 → feat/1765-media-rows, #1771 → chore/1771-neon-patch-route. Registered in safety-net WAVES.md (media-1764).
