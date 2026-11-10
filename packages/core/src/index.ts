@@ -194,17 +194,9 @@ export {
   type CrossingWordState,
   type KeptCrossingPlay,
 } from './game/crossing-play';
-export {
-  openCrossingCrossword,
-  type CrossingCrossword,
-  type CrossingCrosswordOpening,
-} from './game/crossing-crossword-progress';
-export {
-  openTracedCrossword,
-  seededRandomOf,
-  type TracedCrossword,
-  type TracedCrosswordOpening,
-} from './game/traced-crossword';
+export { type CrossingCrossword } from './game/crossing-crossword-progress';
+export { seededRandomOf, type TracedCrossword } from './game/traced-crossword';
+export { type DailyCrosswordOpening } from './game/daily-crossword';
 export { decorOf, loadSeasonalMotifs } from './decor/decor-of';
 export { loadEdition, type Edition } from './edition/edition';
 export {
