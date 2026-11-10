@@ -276,7 +276,7 @@ async function factsOf(name: TestStateName, sources: TestStateSources): Promise<
           mark: 'known',
           step: null,
           reviewDay: null,
-          learned: false,
+          learned: true,
           markedAt: at(index + 2),
         })),
         history: each(week, (_, index) => ({ seenAt: at(index + 1), wordOfTheDay: false })),
