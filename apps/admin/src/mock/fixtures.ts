@@ -211,7 +211,10 @@ export const FIXTURES: AdminApiOutputs = {
     retire: WRITTEN,
     flag: { id: 'w_a1', batchId: BATCH_ID },
     record: { fields: WORD_FIELDS, recordVersion: 1, retired: false, needsNewRecording: false },
-    records: { records: [{ id: 'w_a1', label: 'обруч', retired: false, recordVersion: 1 }] },
+    records: {
+      records: [{ id: 'w_a1', label: 'обруч', retired: false, recordVersion: 1 }],
+      total: 1,
+    },
     report: {
       contentVersion: 1,
       report: {

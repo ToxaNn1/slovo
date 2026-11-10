@@ -604,7 +604,7 @@ export function adminProcedures(
         const { editionId, kind, ...filters } = input;
         const listed = await contentWrites.list(editionId, kind, filters);
         if (!listed.ok) throw refusalOf(listed, errors);
-        return { records: listed.records };
+        return { records: listed.records, total: listed.total };
       }),
     },
     contentQueue: {
