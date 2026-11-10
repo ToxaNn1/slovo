@@ -57,7 +57,7 @@ export default function RootLayout() {
             edition={edition}
             strings={editionStrings}
             pronunciation={LemmaPronunciation}
-            useIllustration={useWordIllustration}
+            useIllustration={useReaderIllustration}
           >
             <DecorProvider decor={editionDecor}>
               <ThemedTabs />
@@ -169,4 +169,9 @@ function ReduceMotionInEffect({ children }: { children: ReactNode }) {
 /** The route on screen for every sheet below, so a sheet closes when another route comes on screen. */
 function RouteInEffect({ children }: { children: ReactNode }) {
   return <RouteProvider route={usePathname()}>{children}</RouteProvider>;
+}
+
+/** A Word's Illustration in the Narrator Voice the reader chose. */
+function useReaderIllustration(wordId: string) {
+  return useWordIllustration(wordId, useSettings().current.narratorVoice);
 }

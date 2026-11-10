@@ -1,7 +1,6 @@
 import type { Media } from '@slovo/core';
 import { useEffect, useState } from 'react';
 
-import { useSettings } from '../settings/settings';
 import { useShell, type Shell } from '../shell-value';
 import { onMediaArrived } from './device-media';
 import { watchIllustration, type IllustrationSource } from './illustration-source';
@@ -30,11 +29,14 @@ export async function prefetchAhead(
 /**
  * A Word's Illustration for its card (ADR 0099): the Starter Media asset or
  * the cached file, none while the file is still remote, filled in once it
- * arrives.
+ * arrives. The caller passes the reader's Narrator Voice, so media never
+ * imports settings (settings → feed → media is one way).
  */
-export function useWordIllustration(wordId: string): IllustrationSource | undefined {
+export function useWordIllustration(
+  wordId: string,
+  voice: string,
+): IllustrationSource | undefined {
   const shell = useShell();
-  const voice = useSettings().current.narratorVoice;
   const [shown, setShown] = useState<{ wordId: string; source: IllustrationSource | undefined }>();
   useEffect(
     () =>
