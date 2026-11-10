@@ -32,7 +32,7 @@ async function run({
     edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
       userSettingDefaults: {
-        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
+        mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
       },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),

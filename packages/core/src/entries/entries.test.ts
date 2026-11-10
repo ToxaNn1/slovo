@@ -10,7 +10,8 @@ import type {
   Word,
 } from '@slovo/contracts';
 
-import { createEntries, EVERYTHING_IN, openRemoteSwitches } from '../index';
+import { openRemoteSwitches } from '../index';
+import { createEntries, EVERYTHING_IN } from './entries';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import {
   countingReads,
@@ -342,10 +343,7 @@ describe('the Entries', () => {
           mix: {
             categoryIds: 'all' as const,
             correctionCategoryIds: 'all' as const,
-            corrections: true,
-            idioms: false,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: false, synonymRow: true, tip: true },
           },
         },
       };
@@ -389,7 +387,10 @@ describe('the Entries', () => {
             ...edition,
             userSettingDefaults: {
               ...edition.userSettingDefaults,
-              mix: { ...edition.userSettingDefaults.mix, [feature]: false },
+              mix: {
+                ...edition.userSettingDefaults.mix,
+                kinds: { ...edition.userSettingDefaults.mix.kinds, [kind]: false },
+              },
             },
           },
         );

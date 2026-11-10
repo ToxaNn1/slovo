@@ -5,6 +5,7 @@
  * time, frozen when the test starts, which both better-auth and the backend's
  * `Clock` read and only `passTime` moves.
  */
+import { memoryMediaStore } from './media/media-store';
 import { randomInt, randomUUID } from 'node:crypto';
 import { cpSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -140,7 +141,11 @@ export async function createTestDatabase(
  * and each database is a copy of it: a test pays a copy, not an import of the
  * whole Edition. The template is dropped after the file.
  */
-export function importedDatabases(editionId: string, editionDir: string) {
+export function importedDatabases(
+  editionId: string,
+  editionDir: string,
+  prepare: (database: Database) => Promise<unknown> = () => Promise.resolve(),
+) {
   let template: Promise<TestDatabase> | undefined;
   afterAll(async () => {
     await template?.then(
@@ -154,6 +159,7 @@ export function importedDatabases(editionId: string, editionDir: string) {
     try {
       const result = await testApp({ database }).importContent(editionId, editionDir);
       if (!result.ok) throw new Error(`the ${editionId} Edition did not import`);
+      await prepare(database);
     } finally {
       // A template takes no copy while a connection to it is open.
       await database.close();
@@ -662,6 +668,7 @@ export function testApp({
   onAnswer,
 }: TestAppOptions = {}) {
   const database = given ?? createDatabase(testDatabaseUrl(), silentLogger);
+  const mediaStore = memoryMediaStore();
   const mailer = createFakeMailer();
   const alerts = createFakeAlerts();
   const posthog = createFakePostHog();
@@ -691,6 +698,7 @@ export function testApp({
     sentry,
     ciToken: TEST_CI_TOKEN,
     mediaBase: TEST_MEDIA_BASE,
+    mediaStore,
   });
   const ip = newIp();
   // The one way a request reaches the app.
@@ -732,6 +740,8 @@ export function testApp({
   return {
     /** The app itself, for a test that serves it over HTTP. */
     app,
+    /** The fake Media Store the content editor keeps Illustrations in. */
+    mediaStore,
     /** The IP address the requests come from unless the test names another. */
     ip,
     /** Every email the backend sent. */

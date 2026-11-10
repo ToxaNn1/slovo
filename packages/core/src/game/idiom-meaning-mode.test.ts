@@ -55,7 +55,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: { mix: { categoryIds: [], idioms: idiomsInMix } },
+      userSettingDefaults: { mix: { categoryIds: [], kinds: { idiom: idiomsInMix } } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {

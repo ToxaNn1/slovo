@@ -65,7 +65,7 @@ function Game() {
   /** Whether the reader closed the widget hint, which is offered once ever. */
   const [hintClosed, setHintClosed] = useState(false);
   const { current } = state;
-  const result = current?.status === 'won' || current?.status === 'lost';
+  const result = current?.end !== undefined;
   // The end poster shows no widget hint for now (DESIGN-06).
   const poster = finishPoster ? current?.end : undefined;
   const hintShown = result && poster === undefined && state.widgetHint && !hintClosed;

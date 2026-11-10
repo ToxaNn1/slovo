@@ -1,4 +1,5 @@
-import { playPuzzle, startPuzzle, type CrosswordPuzzle, type PuzzleAction } from '@slovo/core';
+import { playPuzzle, startPuzzle } from '@slovo/core/testing';
+import { type CrosswordPuzzle, type PuzzleAction } from '@slovo/core';
 import type { Word } from '@slovo/contracts';
 import { describe, expect, it } from '@jest/globals';
 import { act, fireEvent, render, screen } from '@testing-library/react-native';

@@ -62,7 +62,7 @@ export function openStreakBreak({
   analytics: Pick<Analytics, 'track'>;
 }): StreakBreak {
   const inTurn = createInTurn();
-  const on = () => edition.isFeatureEnabled('xpLog') && edition.isFeatureEnabled('streakBreak');
+  const on = () => edition.isFeatureEnabled('streakBreak');
 
   function state(): BreakState {
     if (!on()) return { kind: 'off' };

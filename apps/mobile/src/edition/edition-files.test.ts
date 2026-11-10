@@ -197,11 +197,11 @@ describe('the 0.8.12 Game strings', () => {
       { dailyCrossword: { ...(game['dailyCrossword'] as object), dated: 'Кросворд дня' } },
     ],
     [
-      'dailyCrossword.cellLabel',
+      'dailyCrossword.tracedCellLabel',
       {
         dailyCrossword: {
           ...(game['dailyCrossword'] as object),
-          cellLabel: '{cell}. {clue}. Рядок {row}',
+          tracedCellLabel: '{letter}. Рядок {row}',
         },
       },
     ],

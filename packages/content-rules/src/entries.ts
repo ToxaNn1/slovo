@@ -20,7 +20,7 @@ export function wordKey(lemma: string, primaryDefinition: string): string {
 
 /**
  * Checks that each Stress position of a text falls on one of its letters, and
- * on a vowel when the Edition names its vowels; `fail` gets the index of each
+ * on a vowel when the Edition marks Stress; `fail` gets the index of each
  * position that does not, and why.
  */
 export function checkStress(
@@ -28,7 +28,7 @@ export function checkStress(
   { text, stress, named }: { text: string; stress: readonly number[]; named: string },
   fail: (index: number, message: string) => void,
 ): void {
-  const { vowels } = config.languageTraits;
+  const { stress: trait } = config.languageTraits;
   const letters = Array.from(text);
   stress.forEach((position, index) => {
     const letter = letters[position];
@@ -37,7 +37,7 @@ export function checkStress(
         index,
         `Position ${String(position)} is out of range for the ${String(letters.length)}-letter ${named}`,
       );
-    } else if (vowels !== undefined && !vowels.includes(letter.toLocaleLowerCase(config.locale))) {
+    } else if (trait.marked && !trait.vowels.includes(letter.toLocaleLowerCase(config.locale))) {
       fail(index, `Position ${String(position)} is "${letter}", not a vowel`);
     }
   });
@@ -57,8 +57,7 @@ export function checkEntries(
 ): Refusal[] {
   const errors: Refusal[] = [];
   const {
-    marksStress,
-    vowels,
+    stress: stressTrait,
     alphabet,
     lemmaPunctuation = [],
     expressionPunctuation = [],
@@ -154,7 +153,7 @@ export function checkEntries(
       );
     }
 
-    if (!marksStress) {
+    if (!stressTrait.marked) {
       if (word.stress.length > 0)
         fail('marks-stress', 'stress', 'Not allowed: the Edition does not mark Stress');
       continue;
@@ -241,7 +240,7 @@ export function checkEntries(
       }
       continue;
     }
-    if (!marksStress) {
+    if (!stressTrait.marked) {
       fail('marks-stress', 'correctionType', 'Not allowed: the Edition does not mark Stress');
       continue;
     }
@@ -261,7 +260,10 @@ export function checkEntries(
       characters.forEach((character, index) => {
         if (character !== STRESS_MARK) return;
         const letter = characters[index - 1];
-        if (letter === undefined || !vowels?.includes(letter.toLocaleLowerCase(config.locale))) {
+        if (
+          letter === undefined ||
+          !stressTrait.vowels.includes(letter.toLocaleLowerCase(config.locale))
+        ) {
           fail('wrong-stress', field, `The Stress mark follows "${letter ?? ''}", not a vowel`);
         }
       });

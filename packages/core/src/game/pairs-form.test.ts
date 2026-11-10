@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { word } from '../test-support';
+import { word, testComparison } from '../test-support';
 import { pairsForm, type GridPair, type PairsContent } from './pairs-form';
 
 const pairOf = (id: string, lemma: string, definition: string): GridPair => {
@@ -43,7 +43,9 @@ describe('the pairs form', () => {
   });
 
   it('judges the Word matched with its own Definition right, about the Word tapped', () => {
-    expect(pairsForm.judge(content, fresh, { form: 'pairs', word: 0, definition: 1 })).toEqual({
+    expect(
+      pairsForm.judge(content, fresh, { form: 'pairs', word: 0, definition: 1 }, testComparison),
+    ).toEqual({
       about: коса.entry,
       answer: { form: 'pairs', word: 0, definition: 1, correct: 1, right: true, sheet: коса.sheet },
     });
@@ -51,33 +53,44 @@ describe('the pairs form', () => {
 
   it('judges a Word matched with another Definition wrong', () => {
     expect(
-      pairsForm.judge(content, fresh, { form: 'pairs', word: 1, definition: 0 })?.answer,
+      pairsForm.judge(content, fresh, { form: 'pairs', word: 1, definition: 0 }, testComparison)
+        ?.answer,
     ).toMatchObject({ right: false, correct: 2 });
   });
 
   it('takes the pairs answered in the grid, right or wrong, out of the grid', () => {
-    const wrong = pairsForm.judge(content, fresh, { form: 'pairs', word: 1, definition: 0 });
+    const wrong = pairsForm.judge(
+      content,
+      fresh,
+      { form: 'pairs', word: 1, definition: 0 },
+      testComparison,
+    );
     if (wrong === undefined) throw new Error('The answer was not judged');
     const after = pairsForm.shown(content, [wrong.answer]);
     expect(after.words.map(({ gone }) => gone)).toEqual([false, true, false]);
     expect(after.definitions.map(({ gone }) => gone)).toEqual([false, false, true]);
-    expect(pairsForm.judge(content, after, { form: 'pairs', word: 1, definition: 1 })).toBe(
-      undefined,
-    );
-    expect(pairsForm.judge(content, after, { form: 'pairs', word: 0, definition: 2 })).toBe(
-      undefined,
-    );
+    expect(
+      pairsForm.judge(content, after, { form: 'pairs', word: 1, definition: 1 }, testComparison),
+    ).toBe(undefined);
+    expect(
+      pairsForm.judge(content, after, { form: 'pairs', word: 0, definition: 2 }, testComparison),
+    ).toBe(undefined);
   });
 
   it('judges nothing for a cell the grid does not have', () => {
-    expect(pairsForm.judge(content, fresh, { form: 'pairs', word: 3, definition: 0 })).toBe(
-      undefined,
-    );
+    expect(
+      pairsForm.judge(content, fresh, { form: 'pairs', word: 3, definition: 0 }, testComparison),
+    ).toBe(undefined);
   });
 
   it('reviews a wrong answer as the Definition tapped', () => {
     const round = { ...fresh, prompt: '' };
-    const judged = pairsForm.judge(content, fresh, { form: 'pairs', word: 1, definition: 0 });
+    const judged = pairsForm.judge(
+      content,
+      fresh,
+      { form: 'pairs', word: 1, definition: 0 },
+      testComparison,
+    );
     if (judged === undefined) throw new Error('The answer was not judged');
     expect(pairsForm.reviewAnswer(round, judged.answer)).toEqual({
       text: 'A mountain path.',

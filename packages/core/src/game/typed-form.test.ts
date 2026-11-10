@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AnswerSheet } from './answer-form';
 import { typedForm, type TypedContent } from './typed-form';
+import { testComparison } from '../test-support';
 
 const sheet: AnswerSheet = {
   answer: { text: 'пʼять', stressedVowels: [] },
@@ -57,19 +58,27 @@ describe('the typed form', () => {
   });
 
   it('judges the text typed right the way typed answers compare', () => {
-    expect(typedForm.judge(content, round, { form: 'typed', text: " П'ять " })).toEqual({
+    expect(
+      typedForm.judge(content, round, { form: 'typed', text: " П'ять " }, testComparison),
+    ).toEqual({
       answer: { form: 'typed', typed: " П'ять ", expected: 'пʼять', right: true, sheet },
     });
   });
 
   it('judges other text wrong', () => {
-    expect(typedForm.judge(content, round, { form: 'typed', text: 'пять' })?.answer.right).toBe(
-      false,
-    );
+    expect(
+      typedForm.judge(content, round, { form: 'typed', text: 'пять' }, testComparison)?.answer
+        .right,
+    ).toBe(false);
   });
 
   it('shows the text typed, trimmed, in the Game Review', () => {
-    const judged = typedForm.judge(content, round, { form: 'typed', text: ' пять ' });
+    const judged = typedForm.judge(
+      content,
+      round,
+      { form: 'typed', text: ' пять ' },
+      testComparison,
+    );
     expect(judged && typedForm.reviewAnswer(round, judged.answer)).toEqual({
       text: 'пять',
       stressedVowels: [],

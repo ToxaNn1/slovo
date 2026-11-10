@@ -3,8 +3,6 @@ import type { Idiom } from '@slovo/contracts';
 import { ROUND_OPTIONS, type GameMode, type RoundOption } from './game-mode';
 import { shuffled } from '../shuffled';
 
-const folded = (text: string) => text.toLowerCase();
-
 const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
 /** An idiom proper or a proverb: a place name never plays, its meaning being its story (ADR 0046). */
@@ -25,12 +23,12 @@ export const idiomMeaningMode: GameMode = {
   id: 'idiom-meaning',
   group: 'idioms',
   entryKind: 'idiom',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameIdiomMeaning') && edition.isFeatureEnabled('idioms'),
-  buildRound({ answer, eligible, random }) {
+  isOn: (edition) => edition.isFeatureEnabled('gameIdiomMeaning'),
+  buildRound({ answer, eligible, random, comparison }) {
     if (answer.kind !== 'idiom' || !plays(answer)) return undefined;
     const right = answer.primaryDefinition;
-    const taken = new Set([right, ...answer.extraDefinitions].map(folded));
+    const keyOf = (text: string) => comparison.key(text, 'definition');
+    const taken = new Set([right, ...answer.extraDefinitions].map(keyOf));
     const others = eligible.filter(
       (entry): entry is Idiom => entry.kind === 'idiom' && entry.id !== answer.id && plays(entry),
     );
@@ -47,8 +45,8 @@ export const idiomMeaningMode: GameMode = {
     ]) {
       if (distractors.length === ROUND_OPTIONS - 1) break;
       const text = other.primaryDefinition;
-      if (taken.has(folded(text))) continue;
-      taken.add(folded(text));
+      if (taken.has(keyOf(text))) continue;
+      taken.add(keyOf(text));
       distractors.push(text);
     }
     if (distractors.length < ROUND_OPTIONS - 1) return undefined;

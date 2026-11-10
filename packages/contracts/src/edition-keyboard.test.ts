@@ -3,10 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { LanguageTraitsSchema } from './edition';
 
 const traits = {
-  marksStress: false,
+  stress: { marked: false },
   alphabet: 'а б в',
   sortLocale: 'uk',
-  distractorRule: 'same-part-of-speech',
 };
 
 describe('the keyboard of the language traits', () => {

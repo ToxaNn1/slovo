@@ -1,13 +1,12 @@
 import type { Word } from '@slovo/contracts';
+import { openComposition, systemRandom, type Composition, type GameModeOffer } from '@slovo/core';
 import {
-  openComposition,
-  systemRandom,
-  type Composition,
+  createMemoryContentPort,
+  testEdition,
+  seedUserState,
   type GameMode,
   type GameModeGroup,
-  type GameModeOffer,
-} from '@slovo/core';
-import { createMemoryContentPort, testEdition, seedUserState } from '@slovo/core/testing';
+} from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { gameModeCard, gameModeGroups, gameModeStrings } from './game-modes';
@@ -76,7 +75,7 @@ async function open({
     content: createMemoryContentPort({ words: Array.from({ length: words }, (_, i) => word(i)) }),
     edition: testEdition({
       isFeatureEnabled: (feature) => !switchedOff.includes(feature),
-      userSettingDefaults: { mix: { corrections: correctionsInMix } },
+      userSettingDefaults: { mix: { kinds: { correction: correctionsInMix } } },
     }),
     userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-15T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },

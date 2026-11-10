@@ -15,7 +15,7 @@ import { and, eq, sql } from 'drizzle-orm';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 import type { Database } from '../database/database';
-import { retireRecordings } from './media-rows';
+import { mediaGaps, retireRecordings } from './media-rows';
 import { quoteCheckCounts } from './quote-check';
 import {
   actionLog,
@@ -596,6 +596,10 @@ export function createContentWrites({
             correctionsPerType: [...counted.correctionsPerType],
             correctionsPerCategory: [...counted.correctionsPerCategory],
             idiomsPerType: [...counted.idiomsPerType],
+            media: await mediaGaps(tx, editionId, {
+              wordIds: records.word.filter((row) => !row.fields.retired).map((row) => row.id),
+              voices: edition.config.narratorVoices.voices.map(({ id }) => id),
+            }),
           },
           targets: edition.targets,
           missed: missedTargets(counted, edition.targets),

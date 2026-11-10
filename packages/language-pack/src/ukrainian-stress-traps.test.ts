@@ -1,3 +1,4 @@
+import { buildCorrectionCard, createEntries, EVERYTHING_IN } from '@slovo/core/testing';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -5,12 +6,7 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Correction } from '@slovo/contracts';
-import {
-  buildCorrectionCard,
-  createEntries,
-  EVERYTHING_IN,
-  type CorrectionCardModel,
-} from '@slovo/core';
+import { type CorrectionCardModel } from '@slovo/core';
 
 import { openLanguagePack, type NodeLanguagePack } from './index';
 import { buildUkrainianPack } from './test-support';

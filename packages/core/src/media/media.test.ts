@@ -2,7 +2,7 @@ import type { IllustrationRow, RecordingRow } from '@slovo/contracts';
 import { PATCH_FORMAT, type Patch } from '@slovo/contracts/api';
 import { describe, expect, it } from 'vitest';
 
-import { createMedia, MEDIA_CACHE_LIMIT, type MediaSwitch } from '../index';
+import { createMedia, MEDIA_CACHE_LIMIT, type MediaSwitch } from './media';
 import {
   createFakeMediaFetcher,
   createMemoryContentStore,

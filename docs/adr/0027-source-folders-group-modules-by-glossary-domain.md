@@ -18,6 +18,8 @@ Not regrouped: `apps/mobile/src/app/` holds the Expo Router routes, whose paths 
 
 **Two Core entry points.** `index.ts` (`@slovo/core`) exports only what another workspace package or app imports, a test of another package included, plus every Extension Point (ADR 0006). The Core's own tests do not count: they import from the module files, such as `../search/search`, and import `../index` only for what it exports anyway. `testing.ts` (`@slovo/core/testing`) exports the fakes in `fakes/` that the tests of the app and the Language Pack use; only a test or a test-support module imports it, and nothing ships it (dependency-cruiser's `only-tests-import-the-core-testing-entry`).
 
+**Amended by ADR 0101.** `index.ts` exports only what the non-test code of another workspace package or app imports, so the shell cannot go around the composition (ADR 0018); an Extension Point is exported once an Edition's part uses it. `scripts/core-exports.mjs`, run by `pnpm deps`, fails on a name of `index.ts` that no non-test module outside the Core imports. `testing.ts` also exports the Core's functions, models and constants that only the tests of the app, the UI package and the Language Pack use.
+
 ## Considered Options
 
 - **One folder per component** (`Button/Button.tsx` beside its styles and test): rejected. Styles live in a `StyleSheet.create` in the component's own file (`docs/react-native.md`), and a component's test sits beside it (ADR 0029), so each folder would hold a component and its test, often with its own `index.ts`. The flat list would only move one level down.

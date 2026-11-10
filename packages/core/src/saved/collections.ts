@@ -1,6 +1,7 @@
 import type { EntryRowModel, EntryRows } from '../entries/entry-row';
 import { createInTurn, createSubscribers, newestFirst } from '../in-turn';
 import type { Clock, Random, UserStateChanges } from '../ports';
+import type { TextComparison } from '../text/text-comparison';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -164,21 +165,22 @@ function viewOf({ id, name, createdAt, filed, source }: Stored): Collection {
 const entryRecord = (collectionId: string, entryId: string) =>
   collectionEntryRecords.record(`${collectionId}.${entryId}`);
 
-/** The key of a name for comparing: one Unicode form in one letter case. */
-const nameKey = (name: string) => name.normalize('NFC').toLowerCase();
-
 /** Opens Collections over the user state, for the Core composition. */
 export async function openCollections({
   rows,
   userState,
   clock,
   random,
+  comparison,
 }: {
   rows: EntryRows;
   userState: UserState;
   clock: Clock;
   random: Random;
+  /** How the Edition compares text: two names are one when their Comparison Keys are, as a typed answer's. */
+  comparison: TextComparison;
 }): Promise<Collections> {
+  const nameKey = (name: string) => comparison.key(name, 'typedAnswer');
   const [storedCollections, storedEntries] = await Promise.all([
     userState.list(collectionRecords),
     userState.list(collectionEntryRecords),

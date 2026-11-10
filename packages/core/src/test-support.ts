@@ -11,6 +11,7 @@ import {
 
 import {
   loadEdition,
+  switchedOn,
   type DefaultMix,
   type Edition,
   type UserSettingDefaults,
@@ -25,6 +26,7 @@ import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } fr
 import { openEligibility } from './mix/open-eligibility';
 import { createSubject } from './subject';
 import type { UserState } from './user-state/user-state';
+import { createTextComparison } from './text/text-comparison';
 
 // Helpers the Core's tests share. They are not part of the public `index.ts`;
 // `testing.ts` exports `testEdition` to the tests of other packages.
@@ -33,8 +35,8 @@ import type { UserState } from './user-state/user-state';
  * The config of the test Edition, in the shape of a real Edition's
  * `edition.json`: every Feature Switch on, one Category `test`, the one the
  * test Words carry, in its default Mix with every kind of Entry, the Daily
- * Limit off, four moods that shift nothing, and no notification time, origin
- * language or search letter.
+ * Limit off, four moods that shift nothing, the UA Edition's apostrophes, and
+ * no notification time, origin language or search letter.
  */
 const testEditionConfig = {
   id: 'test',
@@ -42,10 +44,10 @@ const testEditionConfig = {
   displayName: 'SLOVO Test',
   accountName: 'Test ID',
   languageTraits: {
-    marksStress: false,
+    stress: { marked: false },
     alphabet: 'a b c d e f g h i j k l m n o p q r s t u v w x y z',
+    apostrophes: "ʼ ' ’",
     sortLocale: 'en',
-    distractorRule: 'same-part-of-speech',
   },
   featureSwitches: Object.fromEntries(
     Object.keys(FeatureSwitchesSchema.shape).map((feature) => [feature, 'on']),
@@ -59,10 +61,7 @@ const testEditionConfig = {
     mix: {
       categories: ['test'],
       correctionCategories: 'all',
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
+      kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
     },
   },
   wordOfTheDayFont: 'Test-Regular.ttf',
@@ -154,13 +153,17 @@ export interface TestEditionOverrides extends Partial<
 > {
   readonly languageTraits?: Partial<LanguageTraits>;
   readonly userSettingDefaults?: Partial<Omit<UserSettingDefaults, 'mix'>> & {
-    readonly mix?: Partial<DefaultMix>;
+    readonly mix?: Partial<Omit<DefaultMix, 'kinds'>> & {
+      readonly kinds?: Partial<DefaultMix['kinds']>;
+    };
   };
 }
 
 /**
  * The Edition a test runs the Core as: the test Edition with the overrides,
- * most often `isFeatureEnabled` and the default Mix. Built by `loadEdition`
+ * most often `isFeatureEnabled` and the default Mix. `isFeatureEnabled` says
+ * which switches are on by themselves; the Edition answers what is in effect,
+ * a feature off while a switch it depends on is off. Built by `loadEdition`
  * from a config in the shape of a real Edition's, so what the Core reads of
  * an Edition is what a config can say.
  */
@@ -169,20 +172,29 @@ export function testEdition({
   userSettingDefaults = {},
   ...overrides
 }: TestEditionOverrides = {}): Edition {
-  const { mix = {}, ...settings } = userSettingDefaults;
+  const { mix: { kinds = {}, ...mix } = {}, ...settings } = userSettingDefaults;
+  const { isFeatureEnabled } = overrides;
   return {
     ...baseTestEdition,
     ...overrides,
+    ...(isFeatureEnabled === undefined ? {} : { isFeatureEnabled: switchedOn(isFeatureEnabled) }),
     languageTraits: { ...baseTestEdition.languageTraits, ...languageTraits },
     userSettingDefaults: {
       ...baseTestEdition.userSettingDefaults,
       ...settings,
-      mix: { ...baseTestEdition.userSettingDefaults.mix, ...mix },
+      mix: {
+        ...baseTestEdition.userSettingDefaults.mix,
+        ...mix,
+        kinds: { ...baseTestEdition.userSettingDefaults.mix.kinds, ...kinds },
+      },
     },
   };
 }
 
 /** The Known counts by kind of Entry: those named, and 0 for every other kind. */
+/** How the test Edition compares text. */
+export const testComparison = createTextComparison(testEdition());
+
 export const knownCounts = (counts: Partial<KnownCounts> = {}): KnownCounts => ({
   word: 0,
   correction: 0,

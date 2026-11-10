@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { Correction, SynonymRow, Word } from '@slovo/contracts';
 
-import { buildWordCard, createEntries, EVERYTHING_IN } from '../index';
+import { buildWordCard } from './word-card';
+import { createEntries, EVERYTHING_IN } from './entries';
 import { createMemoryContentPort } from '../testing';
 
 /** A Word with only what every Word has; each test adds what it needs. */

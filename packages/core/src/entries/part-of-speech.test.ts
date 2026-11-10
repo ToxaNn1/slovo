@@ -1,4 +1,5 @@
-import { partOfSpeechText, wordGrammarText } from '../index';
+import { partOfSpeechText } from '../index';
+import { wordGrammarText } from './part-of-speech';
 import { describe, expect, it } from 'vitest';
 
 type Strings = Parameters<typeof wordGrammarText>[0];

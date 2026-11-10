@@ -1,7 +1,8 @@
 import { SpotlightSnapshotSchema, type Category, type SpotlightSnapshot } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
-import { openComposition, SEEN_DWELL_MS, type Clock, type Composition } from '../index';
+import { openComposition, type Clock, type Composition } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, steppingRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';

@@ -1,9 +1,5 @@
-import {
-  type CorrectionCardModel,
-  type EntryFeedCard,
-  type IdiomCardModel,
-  type WordFeedCard,
-} from '@slovo/core';
+import { type WordFeedCard } from '@slovo/core/testing';
+import { type CorrectionCardModel, type EntryFeedCard, type IdiomCardModel } from '@slovo/core';
 import {
   ActionRow,
   EditionProvider,

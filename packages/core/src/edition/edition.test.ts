@@ -11,11 +11,9 @@ const validConfig = {
   displayName: 'SLOVO Test',
   accountName: 'Test ID',
   languageTraits: {
-    marksStress: true,
+    stress: { marked: true, vowels: 'a' },
     alphabet: 'a b c',
     sortLocale: 'xx',
-    distractorRule: 'same-part-of-speech',
-    vowels: 'a',
   },
   featureSwitches: {
     game: 'on',
@@ -151,10 +149,7 @@ const validConfig = {
     mix: {
       categories: 'all',
       correctionCategories: 'all',
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
+      kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
     },
     rarityCeiling: 5,
   },
@@ -321,7 +316,7 @@ describe('loadEdition', () => {
 
     expect(edition.id).toBe('test');
     expect(edition.locale).toBe('xx-XX');
-    expect(edition.languageTraits.marksStress).toBe(true);
+    expect(edition.languageTraits.stress.marked).toBe(true);
   });
 
   it('reports the display name, the watermark of its Share Cards', () => {
@@ -331,10 +326,10 @@ describe('loadEdition', () => {
   it('reports an Edition that does not mark Stress', () => {
     const edition = loadEdition({
       ...validConfig,
-      languageTraits: { ...validConfig.languageTraits, marksStress: false },
+      languageTraits: { ...validConfig.languageTraits, stress: { marked: false } },
     });
 
-    expect(edition.languageTraits.marksStress).toBe(false);
+    expect(edition.languageTraits.stress).toEqual({ marked: false });
   });
 
   it('reports the Game as disabled when its Feature Switch is off', () => {
@@ -410,8 +405,7 @@ describe('loadEdition', () => {
 
     expect(languageTraits.alphabet).toEqual(['a', 'b', 'c']);
     expect(languageTraits.sortLocale).toBe('xx');
-    expect(languageTraits.distractorRule).toBe('same-part-of-speech');
-    expect(languageTraits.vowels).toEqual(['a']);
+    expect(languageTraits.stress).toEqual({ marked: true, vowels: ['a'] });
   });
 
   it('reports the user-setting defaults, with a Mix of all left to the Language Pack', () => {
@@ -427,10 +421,7 @@ describe('loadEdition', () => {
       mix: {
         categoryIds: 'all',
         correctionCategoryIds: 'all',
-        corrections: true,
-        idioms: true,
-        synonymRows: true,
-        tips: true,
+        kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
       },
     });
   });
@@ -443,10 +434,7 @@ describe('loadEdition', () => {
         mix: {
           categories: ['speech'],
           correctionCategories: ['work'],
-          corrections: false,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
+          kinds: { correction: false, idiom: true, synonymRow: true, tip: true },
         },
       },
     });
@@ -454,10 +442,7 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.mix).toEqual({
       categoryIds: ['speech'],
       correctionCategoryIds: ['work'],
-      corrections: false,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
+      kinds: { correction: false, idiom: true, synonymRow: true, tip: true },
     });
   });
 
@@ -1083,9 +1068,9 @@ describe('loadEdition', () => {
       'featureSwitches',
     ],
     [
-      'an unknown Distractor rule',
-      { languageTraits: { ...languageTraits, distractorRule: 'random' } },
-      'languageTraits.distractorRule',
+      'a Distractor rule',
+      { languageTraits: { ...languageTraits, distractorRule: 'same-part-of-speech' } },
+      'languageTraits',
     ],
     [
       'a repeated letter in the alphabet',
@@ -1094,13 +1079,13 @@ describe('loadEdition', () => {
     ],
     [
       'a Stress-marking Edition without vowels',
-      { languageTraits: { ...languageTraits, vowels: undefined } },
-      'languageTraits.vowels',
+      { languageTraits: { ...languageTraits, stress: { marked: true } } },
+      'languageTraits.stress.vowels',
     ],
     [
       'a vowel that is not a letter of the alphabet',
-      { languageTraits: { ...languageTraits, vowels: 'a e' } },
-      'languageTraits.vowels.1',
+      { languageTraits: { ...languageTraits, stress: { marked: true, vowels: 'a e' } } },
+      'languageTraits.stress.vowels.1',
     ],
     [
       'an unknown Theme',
@@ -1177,10 +1162,7 @@ describe('loadEdition', () => {
           mix: {
             categories: ['nature', 'military'],
             correctionCategories: 'all',
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1194,10 +1176,7 @@ describe('loadEdition', () => {
           mix: {
             categories: [],
             correctionCategories: 'all',
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1211,10 +1190,7 @@ describe('loadEdition', () => {
           mix: {
             categories: 'all',
             correctionCategories: ['nature'],
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1228,10 +1204,7 @@ describe('loadEdition', () => {
           mix: {
             categories: 'all',
             correctionCategories: [],
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1244,10 +1217,7 @@ describe('loadEdition', () => {
           ...userSettingDefaults,
           mix: {
             categories: 'all',
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1504,6 +1474,18 @@ const dependentSwitches = [
   ['categoryScreens', ['dashboard', 'wordOfTheDay']],
   ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['quietCategories', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
+  ['gameSurvival', ['corrections', 'game']],
+  ['gameAnglicism', ['corrections', 'game']],
+  ['gameTypeWord', ['corrections', 'game']],
+  ['gameCorrection', ['corrections', 'game']],
+  ['gameIdiomMeaning', ['idioms', 'game']],
+  ['gameBuildIdiom', ['idioms', 'game']],
+  ['communityWord', ['communityCounters']],
+  ['sync', ['account']],
+  ['widgetHint', ['widget']],
+  ['notificationExplainer', ['notifications']],
+  ['levels', ['xpLog']],
+  ['streakFreezes', ['xpLog']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {

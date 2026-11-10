@@ -3,12 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { Correction, EntryKind, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import {
-  buildEntryCard,
-  createEntries,
-  EVERYTHING_IN,
   isTodaysWordOfTheDay,
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type ContentReadPort,
@@ -16,8 +12,10 @@ import {
   type FeedCard,
   type Random,
   type UserStatePort,
-  type WordFeedCard,
 } from '../index';
+import { buildEntryCard, SEEN_DWELL_MS } from './feed';
+import { createEntries, EVERYTHING_IN } from '../entries/entries';
+import { type WordFeedCard } from './feed-card';
 import { ENTRY_KINDS } from '../entries/entry-kinds';
 import { createMemoryContentPort } from '../testing';
 import {

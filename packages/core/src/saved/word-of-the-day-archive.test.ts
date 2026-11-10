@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 
 import {
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type FeatureSwitch,
   type LocalDate,
-  type UserStateChanges,
   type UserStatePort,
 } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
+import { type UserStateChanges } from '../ports';
 import { createWordOfTheDayArchive } from './word-of-the-day-archive';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
@@ -42,7 +42,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature),
-      userSettingDefaults: { mix: { corrections: false } },
+      userSettingDefaults: { mix: { kinds: { correction: false } } },
     }),
     userState: await openUserState({ port }),
     clock,

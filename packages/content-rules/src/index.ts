@@ -17,6 +17,11 @@ export {
   type AuthoredRecord,
   type RecordKind,
 } from './parse-record';
+export {
+  MAX_ILLUSTRATION_BYTES,
+  illustrationRefusals,
+  type IllustrationRefusal,
+} from './illustrations';
 export type { Authored, Refusal, RuleName } from './refusal';
 export {
   LANGUAGE_MODEL,

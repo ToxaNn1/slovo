@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  openComposition,
-  openTracedCrossword,
-  type FeatureSwitch,
-  type PuzzleAction,
-  type Word,
-} from '../index';
+import { openComposition, type FeatureSwitch, type PuzzleAction } from '../index';
+import { type Word } from '@slovo/contracts';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { openTracedCrossword } from './traced-crossword';
 
 const words = [
   'w_кіт',
@@ -128,21 +124,16 @@ describe('the traced Daily Crossword of the composition', () => {
     return { composition, records };
   }
 
-  it('is off while the Edition has it off', async () => {
-    const { composition } = await app(['game', 'dailyCrossword']);
-    expect(await composition.openTracedCrossword()).toEqual({ kind: 'off' });
-  });
-
   it('gives a reader who hid a Word the same puzzle as one who did not', async () => {
     const plain = await app(['game', 'dailyCrossword', 'tracedCrossword']);
     const hiding = await app(['game', 'dailyCrossword', 'tracedCrossword']);
     await hiding.composition.hide({ kind: 'entry', entryId: 'w_вовк' });
 
     const [first, second] = await Promise.all([
-      plain.composition.openTracedCrossword(),
-      hiding.composition.openTracedCrossword(),
+      plain.composition.openDailyCrossword(),
+      hiding.composition.openDailyCrossword(),
     ]);
-    if (first.kind !== 'open' || second.kind !== 'open') throw new Error('Expected the puzzle');
+    if (first.kind !== 'traced' || second.kind !== 'traced') throw new Error('Expected the puzzle');
     expect(second.crossword.puzzle).toEqual(first.crossword.puzzle);
   });
 
@@ -153,8 +144,8 @@ describe('the traced Daily Crossword of the composition', () => {
       'tracedCrossword',
       'xpLog',
     ]);
-    const opening = await composition.openTracedCrossword();
-    if (opening.kind !== 'open') throw new Error('Expected the puzzle');
+    const opening = await composition.openDailyCrossword();
+    if (opening.kind !== 'traced') throw new Error('Expected the puzzle');
     const { crossword } = opening;
     const ids = words.map(({ id }) => id);
     expect(crossword.puzzle.words.length).toBeGreaterThan(0);

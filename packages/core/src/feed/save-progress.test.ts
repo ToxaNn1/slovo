@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  openComposition,
-  type Composition,
-  type FeatureSwitch,
-  type FeedCard,
-  type XpRecord,
-} from '../index';
+import { openComposition, type Composition, type FeatureSwitch, type FeedCard } from '../index';
+import { type XpRecord } from '../progress/records';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, seededRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';

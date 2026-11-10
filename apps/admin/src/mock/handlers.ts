@@ -86,6 +86,7 @@ export function mockHandlers(fixtures: AdminApiOutputs = FIXTURES): HttpHandler[
     openBatch: contentHandlerOf('openBatch', content.openBatch),
     create: contentHandlerOf('create', content.create),
     edit: contentHandlerOf('edit', content.edit),
+    uploadIllustration: contentHandlerOf('uploadIllustration', content.uploadIllustration),
     retire: contentHandlerOf('retire', content.retire),
     flag: contentHandlerOf('flag', content.flag),
     record: contentHandlerOf('record', content.record),

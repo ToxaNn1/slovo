@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import type { Word } from '@slovo/contracts';
-import { openComposition, SEEN_DWELL_MS, type Composition, type UserStateFact } from '@slovo/core';
-import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import { openComposition, type Composition, type UserStateFact } from '@slovo/core';
+import { createMemoryContentPort, seedUserState, SEEN_DWELL_MS } from '@slovo/core/testing';
 import { EditionProvider, RouteProvider } from '@slovo/ui';
 import { act, fireEvent, screen } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';

@@ -2,15 +2,13 @@ import fc from 'fast-check';
 import { describe, expect, it } from 'vitest';
 
 import {
-  generateCrosswordPuzzle,
   isSolved,
-  playPuzzle,
-  startPuzzle,
   type CrosswordPuzzle,
   type PuzzleAction,
   type PuzzlePlace,
   type PuzzleState,
 } from '../index';
+import { generateCrosswordPuzzle, playPuzzle, startPuzzle } from './crossword-puzzle';
 import { seededRandom, word } from '../test-support';
 
 /** Twelve Words of 3–7 letters, a stressed one among them, and two that cannot hide: a phrase and a capital. */

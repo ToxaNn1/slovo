@@ -1,12 +1,12 @@
 import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import type { EntryKind } from '@slovo/contracts';
 import { formatBuildError } from '@slovo/language-pack';
 import {
   EditionFolderError,
   wordKey,
   type EditionFolder,
-  type EntryKind,
   type EntryText,
 } from '@slovo/language-pack/edition';
 

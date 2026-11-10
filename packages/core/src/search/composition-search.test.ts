@@ -11,9 +11,9 @@ import { createMemoryUserStatePort, openUserState } from '../user-state/user-sta
 const edition = (off: readonly FeatureSwitch[] = []) =>
   testEdition({
     isFeatureEnabled: (feature) => !off.includes(feature),
-    languageTraits: { sortLocale: 'uk' },
+    languageTraits: { apostrophes: ['ʼ', "'", '’'], sortLocale: 'uk' },
     searchLetters: { ґ: 'г' },
-    userSettingDefaults: { mix: { corrections: false } },
+    userSettingDefaults: { mix: { kinds: { correction: false } } },
   });
 
 const content = createMemoryContentPort({

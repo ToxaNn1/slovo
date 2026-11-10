@@ -117,7 +117,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: { mix: { idioms: idiomsInMix } },
+      userSettingDefaults: { mix: { kinds: { idiom: idiomsInMix } } },
       languageTraits: { expressionPunctuation: [',', '—'] },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
