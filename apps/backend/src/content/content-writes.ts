@@ -9,6 +9,7 @@ import {
   type RecordKind,
   type Refusal,
 } from '@slovo/content-rules';
+import { CONTENT_PAGE_SIZE } from '@slovo/contracts/admin-api';
 import { contentReport, missedTargets } from '@slovo/language-pack';
 import type { Clock, EditionRegistry, Json, Random } from '@slovo/server-core';
 import { and, eq, sql } from 'drizzle-orm';
@@ -629,14 +630,23 @@ export function createContentWrites({
     });
   }
 
-  /** The records of a kind the content editor lists: by a text query in their label, retired ones on request. */
+  /**
+   * The records of a kind the content editor lists: by a text query in their
+   * label, retired ones on request, one page of `CONTENT_PAGE_SIZE` in label
+   * then id order, with the count of every match.
+   */
   async function list(
     editionId: string,
     kind: RecordKind,
     {
       query = '',
       retired = false,
-    }: { query?: string | undefined; retired?: boolean | undefined } = {},
+      page = 1,
+    }: {
+      query?: string | undefined;
+      retired?: boolean | undefined;
+      page?: number | undefined;
+    } = {},
   ) {
     if (editions.find(editionId) === undefined) return { ok: false, reason: 'not-found' } as const;
     return db.transaction(async (tx) => {
@@ -656,8 +666,13 @@ export function createContentWrites({
         })
         .filter((row) => retired || !row.retired)
         .filter((row) => needle === '' || row.label.toLocaleLowerCase().includes(needle))
-        .sort((a, b) => a.label.localeCompare(b.label));
-      return { ok: true, records } as const;
+        .sort((a, b) => a.label.localeCompare(b.label) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+      const start = (page - 1) * CONTENT_PAGE_SIZE;
+      return {
+        ok: true,
+        records: records.slice(start, start + CONTENT_PAGE_SIZE),
+        total: records.length,
+      } as const;
     });
   }
 

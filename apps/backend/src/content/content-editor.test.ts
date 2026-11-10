@@ -127,6 +127,32 @@ describe('the content editor through an admin session', () => {
     expect(card.displayName.length).toBeGreaterThan(0);
   });
 
+  it('lists the records a page of 50 at a time, with the count of every match', async () => {
+    const backend = await editorBackend();
+    const { client: adminClient } = await signedInAdmin(backend, 'owner');
+    const list = (page?: number) =>
+      adminClient.admin.content.records({
+        editionId: 'uk',
+        kind: 'word',
+        ...(page === undefined ? {} : { page }),
+      });
+
+    const first = await list();
+    expect(first.records).toHaveLength(50);
+    expect(first.total).toBeGreaterThan(100);
+    const second = await list(2);
+    expect(second.records).toHaveLength(50);
+    expect(second.total).toBe(first.total);
+    const firstIds = new Set(first.records.map((each) => each.id));
+    expect(second.records.some((each) => firstIds.has(each.id))).toBe(false);
+    expect(
+      second.records[0]?.label.localeCompare(first.records[49]?.label ?? ''),
+    ).toBeGreaterThanOrEqual(0);
+    const last = Math.ceil(first.total / 50);
+    expect((await list(last)).records).toHaveLength(first.total - (last - 1) * 50);
+    expect((await list(last + 1)).records).toEqual([]);
+  });
+
   it('refuses a session write without the admin header, and an Агент still writes', async () => {
     const backend = await editorBackend();
     const { cookie } = await signedInAdmin(backend, 'admin');

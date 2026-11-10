@@ -291,6 +291,9 @@ export const ContentRecordSummarySchema = z.object({
 });
 export type ContentRecordSummary = z.infer<typeof ContentRecordSummarySchema>;
 
+/** How many records the content editor lists on one page. */
+export const CONTENT_PAGE_SIZE = 50;
+
 /** The Edition card: what the Edition registry holds of an Edition, shown read-only (story 44). */
 export const EditionCardSchema = z.object({
   id: EditionIdSchema,
@@ -485,7 +488,7 @@ const contentWriteContract = {
       method: 'GET',
       path: recordPath,
       summary:
-        'The records of a kind, for the content editor: by a text query, retired ones on request',
+        'The records of a kind, for the content editor: by a text query, retired ones on request, a page of 50 at a time with the count of every match',
       tags: ['admin'],
     })
     .input(
@@ -494,9 +497,17 @@ const contentWriteContract = {
         kind: ContentRecordKindSchema,
         query: z.string().max(200).optional(),
         retired: z.stringbool().optional(),
+        /** The page from 1, of `CONTENT_PAGE_SIZE` records in label order; past the last one it lists none. */
+        page: z.coerce.number<number>().int().positive().optional(),
       }),
     )
-    .output(z.object({ records: z.array(ContentRecordSummarySchema) })),
+    .output(
+      z.object({
+        records: z.array(ContentRecordSummarySchema),
+        /** How many records match, on every page. */
+        total: z.number().int().nonnegative(),
+      }),
+    ),
   report: contentProcedure
     .route({
       method: 'GET',

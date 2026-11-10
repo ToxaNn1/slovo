@@ -15289,7 +15289,7 @@
       },
       "get": {
         "operationId": "admin.content.records",
-        "summary": "The records of a kind, for the content editor: by a text query, retired ones on request",
+        "summary": "The records of a kind, for the content editor: by a text query, retired ones on request, a page of 50 at a time with the count of every match",
         "tags": [
           "admin"
         ],
@@ -15338,6 +15338,18 @@
             },
             "allowEmptyValue": true,
             "allowReserved": true
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991,
+              "exclusiveMinimum": 0
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -15376,10 +15388,16 @@
                           "recordVersion"
                         ]
                       }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
-                    "records"
+                    "records",
+                    "total"
                   ]
                 }
               }

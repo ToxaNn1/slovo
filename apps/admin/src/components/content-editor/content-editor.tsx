@@ -1,4 +1,5 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { CONTENT_PAGE_SIZE } from '@slovo/contracts/admin-api';
+import { keepPreviousData, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { adminApi } from '../../api';
@@ -6,6 +7,7 @@ import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { IllustrationUpload } from './illustration';
 import { CONTENT_KINDS, type KindEditor } from './kinds';
+import { Pager } from './pager';
 import { RecordForm, type Written } from './record-form';
 
 /** The record the editor has open: none, a new one, or one by its id. */
@@ -26,6 +28,7 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
   const [editor, setEditor] = useState<KindEditor>(CONTENT_KINDS[0] ?? never());
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
   const [open, setOpen] = useState<Open>(NONE);
   const [written, setWritten] = useState<Written>();
   const kind = editor.kind;
@@ -35,9 +38,10 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
     queryFn: () => adminApi.editionCard({ editionId }),
   });
   const records = useQuery({
-    queryKey: ['content', 'records', editionId, kind, query],
+    queryKey: ['content', 'records', editionId, kind, query, page],
     queryFn: () =>
-      adminApi.content.records({ editionId, kind, ...(query === '' ? {} : { query }) }),
+      adminApi.content.records({ editionId, kind, page, ...(query === '' ? {} : { query }) }),
+    placeholderData: keepPreviousData,
   });
   const openId = open.at === 'edit' ? open.id : undefined;
   const record = useQuery({
@@ -98,6 +102,7 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
             )}
             onClick={() => {
               setEditor(each);
+              setPage(1);
               choose(NONE);
             }}
           >
@@ -114,6 +119,7 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
             onSubmit={(event) => {
               event.preventDefault();
               setQuery(search.trim());
+              setPage(1);
             }}
           >
             <input
@@ -184,6 +190,15 @@ export function ContentEditor({ editionId }: { readonly editionId: string }) {
             </tbody>
           </table>
         </div>
+        {records.data !== undefined && (
+          <Pager
+            label="Сторінки записів"
+            page={page}
+            pageSize={CONTENT_PAGE_SIZE}
+            total={records.data.total}
+            onPage={setPage}
+          />
+        )}
 
         <div className="flex flex-col gap-4">
           {written !== undefined && (
