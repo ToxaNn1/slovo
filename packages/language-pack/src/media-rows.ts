@@ -72,9 +72,18 @@ interface MediaReader {
   getAllAsync<T>(sql: string, params: string[]): Promise<T[]>;
 }
 
-/** The live Recording and Illustration rows of a Word, each kind in a steady order. */
+/** The live Recording and Illustration rows of a Word, each kind in a steady order, with the media base and its mark. */
 export async function mediaOf(db: MediaReader, wordId: string): Promise<WordMedia> {
   // One read after the other: a transaction runs one statement at a time.
+  const [base] = await db.getAllAsync<{ value: string }>(
+    'SELECT value FROM metadata WHERE key = ?',
+    [MEDIA_BASE],
+  );
+  if (base === undefined) throw new Error('The pack has no media base');
+  const marked = await db.getAllAsync<{ id: string }>(
+    'SELECT id FROM words WHERE id = ? AND needs_new_recording = 1',
+    [wordId],
+  );
   const recordings = await db.getAllAsync<RecordingRecord>(
     `SELECT word_id, narrator_voice, recording_kind, hash, size, duration_ms FROM media_recordings
         WHERE word_id = ? ORDER BY narrator_voice, recording_kind, hash`,
@@ -85,6 +94,8 @@ export async function mediaOf(db: MediaReader, wordId: string): Promise<WordMedi
     [wordId],
   );
   return {
+    mediaBase: base.value,
+    needsNewRecording: marked.length > 0,
     recordings: recordings.map((row) => ({
       wordId: row.word_id,
       narratorVoice: row.narrator_voice,

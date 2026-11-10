@@ -14,7 +14,17 @@ export function createMemoryContentStore({
   editionId = 'uk',
   contentVersion = 1,
   etag,
-}: { editionId?: string; contentVersion?: number; etag?: string } = {}): MemoryContentStore {
+  mediaBase = 'https://media.slovo.test',
+  needsNewRecording = [],
+}: {
+  editionId?: string;
+  contentVersion?: number;
+  etag?: string;
+  mediaBase?: string;
+  /** The Words marked «needs new recording». */
+  needsNewRecording?: readonly string[];
+} = {}): MemoryContentStore {
+  let base = mediaBase;
   let version = contentVersion;
   let lastEtag = etag;
   let failing = false;
@@ -44,6 +54,7 @@ export function createMemoryContentStore({
         if (row.retired) illustrations.delete(key);
         else illustrations.set(key, liveOf(row));
       }
+      base = patch.mediaBase;
       version = patch.contentVersion;
       lastEtag = patchEtag;
       return Promise.resolve();
@@ -55,6 +66,8 @@ export function createMemoryContentStore({
           .sort(([a], [b]) => a.localeCompare(b))
           .map(([, row]) => row);
       return Promise.resolve({
+        mediaBase: base,
+        needsNewRecording: needsNewRecording.includes(wordId),
         recordings: ofWord(recordings),
         illustrations: ofWord(illustrations),
       });
