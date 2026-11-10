@@ -109,9 +109,37 @@ const noCache: MediaCache = {
   files: () => Promise.resolve([]),
 };
 
+/** Who hears of each file the cache takes in, as a card waits for its Illustration. */
+const arrivalListeners = new Set<() => void>();
+
+/** Calls `listener` after each file the media cache takes in; answers the stop. */
+export function onMediaArrived(listener: () => void): () => void {
+  arrivalListeners.add(listener);
+  return () => {
+    arrivalListeners.delete(listener);
+  };
+}
+
+/** The one media cache of the device, opened at the first use, that tells of each file it takes in. */
+let deviceCache: MediaCache | undefined;
+
+function deviceMediaCache(): MediaCache {
+  if (deviceCache !== undefined) return deviceCache;
+  const cache = createFileMediaCache() ?? noCache;
+  deviceCache = {
+    ...cache,
+    async put(path, bytes, usedAt) {
+      await cache.put(path, bytes, usedAt);
+      for (const listener of arrivalListeners) listener();
+    },
+  };
+  return deviceCache;
+}
+
 /**
  * The Core media of the device over the Language Pack's content store: the
- * Starter Media, the file cache and `fetch`, in the Narrator Voice given.
+ * Starter Media, the device's one file cache and `fetch`, in the Narrator
+ * Voice given and by the Feature Switches in effect.
  */
 export function openDeviceMedia({
   store,
@@ -119,17 +147,17 @@ export function openDeviceMedia({
   voice,
 }: {
   store: Pick<ContentStore, 'mediaOf'>;
-  edition: Pick<Edition, 'isFeatureEnabled' | 'narratorVoiceOf'>;
+  edition: () => Pick<Edition, 'isFeatureEnabled' | 'narratorVoiceOf'>;
   voice: () => string;
 }): Media<number> {
   return createMedia({
     store,
-    cache: createFileMediaCache() ?? noCache,
+    cache: deviceMediaCache(),
     fetcher: fetchMediaFetcher,
     starter,
     clock: deviceClock,
     voice,
-    defaultVoice: edition.narratorVoiceOf(undefined).id,
-    isOn: (name) => edition.isFeatureEnabled(name),
+    defaultVoice: edition().narratorVoiceOf(undefined).id,
+    isOn: (name) => edition().isFeatureEnabled(name),
   });
 }

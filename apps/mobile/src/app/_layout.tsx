@@ -1,5 +1,6 @@
 // Before anything that counts in the Edition's language.
 import '@/shell/intl-polyfill';
+import { useWordIllustration } from '../media/shell-media';
 import { MascotCelebrations } from '@/mascot/mascot';
 
 import { createHaptics } from '@slovo/core';
@@ -20,7 +21,6 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import {
   edition,
   editionDecor,
-  editionIllustrations,
   editionStrings,
   editionTokens,
 } from '@/edition/edition';
@@ -62,7 +62,7 @@ export default function RootLayout() {
             edition={edition}
             strings={editionStrings}
             pronunciation={LemmaPronunciation}
-            illustrations={editionIllustrations}
+            useIllustration={useWordIllustration}
           >
             <DecorProvider decor={editionDecor}>
               <ThemedTabs />

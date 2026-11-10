@@ -1,9 +1,11 @@
+import type { ContentStore } from '@slovo/core';
 import { openPack, type PackReader, type PackWriteDatabase } from '@slovo/language-pack/reader';
 import { importDatabaseFromAssetAsync, openDatabaseAsync, type SQLiteDatabase } from 'expo-sqlite';
 
 import { nativeModules } from '../device/device-native-modules';
 import { logError } from '../diagnostics/log';
 import { activeEditionFiles, activeEditionId } from '../edition/edition';
+import { storeMedia } from '../media/store-media';
 import { openOnce, type Opening } from '../opening';
 import type { EditionSwitches } from '../shell-value';
 import { openDeviceContentUpdate } from './device-content-updates';
@@ -22,6 +24,21 @@ function writerOf(db: SQLiteDatabase): PackWriteDatabase {
   };
 }
 
+/**
+ * Evicts the media files of the rows a Patch retired; a failed eviction
+ * leaves them to the cache's limit, and the Patch stays applied.
+ */
+async function evictRetiredMedia(
+  store: ContentStore,
+  patch: Parameters<ContentStore['apply']>[0],
+): Promise<void> {
+  try {
+    await storeMedia(store).patchApplied(patch);
+  } catch (error) {
+    logError('Could not evict the media a Patch retired', error);
+  }
+}
+
 /** Opens a pack, refusing one of another Edition than the app; a refused pack is closed. */
 async function open(name: string): Promise<OpenedPack<PackReader>> {
   const db = await openDatabaseAsync(name);
@@ -32,7 +49,7 @@ async function open(name: string): Promise<OpenedPack<PackReader>> {
     return {
       reader: opening.reader,
       version: opening.metadata,
-      store: await openPackContentStore(writerOf(db)),
+      store: await openPackContentStore(writerOf(db), evictRetiredMedia),
       close: () => db.closeAsync(),
     };
   } catch (error) {

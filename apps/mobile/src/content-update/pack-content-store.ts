@@ -1,4 +1,7 @@
 import type { ContentStore, WordMedia } from '@slovo/core';
+
+/** A Patch the content store applies. */
+type Patch = Parameters<ContentStore['apply']>[0];
 import {
   applyPatch,
   mediaOf,
@@ -20,15 +23,21 @@ async function stateOf(db: PackWriteDatabase) {
  * The content store over a writable Language Pack: it applies a Patch in one
  * transaction (`applyPatch`) and keeps the pack's content version and ETag at
  * hand, read again after each Patch, as the Core reads them synchronously.
+ * Each applied Patch goes on to `patchApplied`, which evicts the media files
+ * of the rows it retired (ADR 0099).
  */
-export async function openPackContentStore(db: PackWriteDatabase): Promise<ContentStore> {
+export async function openPackContentStore(
+  db: PackWriteDatabase,
+  patchApplied: (store: ContentStore, patch: Patch) => Promise<void>,
+): Promise<ContentStore> {
   let state = await stateOf(db);
-  return {
+  const store: ContentStore = {
     contentVersion: () => state.contentVersion,
     etag: () => state.etag,
     async apply(patch, etag) {
       await applyPatch(db, patch, etag);
       state = await stateOf(db);
+      await patchApplied(store, patch);
     },
     async mediaOf(wordId) {
       let media: WordMedia | undefined;
@@ -39,4 +48,5 @@ export async function openPackContentStore(db: PackWriteDatabase): Promise<Conte
       return media;
     },
   };
+  return store;
 }

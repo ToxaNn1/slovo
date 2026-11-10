@@ -39,7 +39,7 @@ const build = (from: SynonymRow, words: readonly Word[] = []) =>
     synonymRow: from,
     entries: createEntries({
       content: createMemoryContentPort({ words }),
-      edition: { isFeatureEnabled: () => true, illustrations: new Set() },
+      edition: { isFeatureEnabled: () => true },
       choices: EVERYTHING_IN,
     }),
   });

@@ -2,11 +2,10 @@ import { PronunciationButton } from '@slovo/ui';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
-import type { Media } from '@slovo/core';
-
 import { edition } from '../edition/edition';
-import { openDeviceMedia } from '../media/device-media';
 import { recordingSourceOf } from '../media/recording-source';
+import { shellMedia } from '../media/shell-media';
+import { setNarratorVoice } from '../media/store-media';
 import { useSettings } from '../settings/settings';
 import { useShell, type Shell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
@@ -16,28 +15,8 @@ import { createPronunciation } from './pronunciation';
 /** «Звуки» as the cards last drew them. */
 let soundsOn = true;
 
-/** The id of the Narrator Voice the last tap read in (ADR 0083). */
-let narratorVoice = edition.narratorVoiceOf(undefined).id;
-
 /** The shell the last tap came from, whose Language Pack holds the Recordings. */
 let tappedShell: Shell | undefined;
-
-/** The Core media of each content store, opened at the first tap over it. */
-const mediaOfStore = new WeakMap<object, Media<number>>();
-
-/** The Core media of the tapped shell's Language Pack, in the Narrator Voice of the last tap. */
-async function shellMedia(shell: Shell): Promise<Media<number>> {
-  const [{ store }, { edition: inEffect }] = await Promise.all([
-    shell.languagePack.opened(),
-    shell.remoteSwitches.opened(),
-  ]);
-  let media = mediaOfStore.get(store);
-  if (media === undefined) {
-    media = openDeviceMedia({ store, edition: inEffect, voice: () => narratorVoice });
-    mediaOfStore.set(store, media);
-  }
-  return media;
-}
 
 /**
  * One for the whole app: one Word read at a time, by its Recording (bundled,
@@ -101,6 +80,11 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
     if (!sounds && pronunciation.stateOf(entryId) === 'playing') void pronunciation.stop();
   }, [sounds, entryId]);
 
+  // The Feed's prefetch downloads the Recordings in the voice the cards read in.
+  useEffect(() => {
+    setNarratorVoice(voice);
+  }, [voice]);
+
   // A card that leaves the Feed stops its Word and closes its message.
   useEffect(
     () => () => {
@@ -115,7 +99,7 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
     const opened = composition.state;
     if (sounds && pronunciation.stateOf(entryId) !== 'playing' && opened.status === 'ready')
       void opened.value.analytics.pronunciationPlayed(entryId);
-    narratorVoice = voice;
+    setNarratorVoice(voice);
     tappedShell = shell;
     void pronunciation.toggle({ id: entryId, lemma });
   }, [shell, composition, sounds, voice, lemma, entryId]);
@@ -163,7 +147,7 @@ export function useSampleReading(): SampleReading {
   const read = useCallback(
     async (reader: string, fromStart: boolean) => {
       soundsOn = sounds;
-      narratorVoice = reader;
+      setNarratorVoice(reader);
       tappedShell = shell;
       if (fromStart) await pronunciation.stop();
       await pronunciation.toggle({ id: word, lemma: syllables.join('') });

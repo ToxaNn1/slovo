@@ -172,7 +172,7 @@ export async function openOnboarding({
   clock: Clock;
   entries: Pick<
     Entries,
-    'get' | 'getMany' | 'linkedCorrections' | 'categories' | 'linkingSynonymRow' | 'illustrationOf'
+    'get' | 'getMany' | 'linkedCorrections' | 'categories' | 'linkingSynonymRow'
   >;
   wordOfTheDay: Pick<WordOfTheDay, 'chosen'>;
   mix: Pick<Mix, 'setKindWeight'>;

@@ -16,13 +16,10 @@ export const activeEditionId = deviceActiveEdition(bundledEditions);
 /** The bundled files of the active Edition. */
 export const activeEditionFiles = bundledEditions.files(activeEditionId);
 
-const { config, strings, tokens, decor, starterMedia } = activeEditionFiles;
-
-/** The Illustrations the active Edition bundles as Starter Media, by Word id (ADR 0099). */
-export const editionIllustrations = starterMedia.illustrations;
+const { config, strings, tokens, decor } = activeEditionFiles;
 
 /** The active Edition, validated by the Core at startup. */
-export const edition = loadEdition(config, Object.keys(editionIllustrations));
+export const edition = loadEdition(config);
 
 const app = AppConfigSchema.parse(appConfig);
 

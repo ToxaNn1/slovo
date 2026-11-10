@@ -35,7 +35,7 @@ const build = (from: Correction) =>
           { id: 'everyday', displayName: 'Побут', description: 'Побут.', tone: 'loud' },
         ],
       }),
-      edition: { isFeatureEnabled: () => true, illustrations: new Set() },
+      edition: { isFeatureEnabled: () => true },
       choices: EVERYTHING_IN,
     }),
   });

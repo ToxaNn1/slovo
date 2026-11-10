@@ -25,7 +25,7 @@ beforeAll(async () => {
   const words = await pack.listWords();
   const entries = createEntries({
     content: pack,
-    edition: { isFeatureEnabled: () => true, illustrations: new Set() },
+    edition: { isFeatureEnabled: () => true },
     choices: EVERYTHING_IN,
   });
   cards = await Promise.all(words.map((word) => buildWordCard({ word, entries })));
