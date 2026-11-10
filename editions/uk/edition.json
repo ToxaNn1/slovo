@@ -146,10 +146,7 @@
     "mix": {
       "categories": "all",
       "correctionCategories": "all",
-      "corrections": true,
-      "idioms": true,
-      "synonymRows": true,
-      "tips": true
+      "kinds": { "correction": true, "idiom": true, "synonymRow": true, "tip": true }
     }
   },
   "notificationSound": "notification.wav",

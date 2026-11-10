@@ -764,14 +764,16 @@ export const MixConfigSchema = z.strictObject({
     // At least one Category of Corrections always stays in the Mix, as of Words (ADR 0019).
     z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category of Corrections'),
   ]),
-  /** Whether Corrections, as a whole, are in the Mix. */
-  corrections: z.boolean(),
-  /** Whether Idioms, as a whole, are in the Mix. */
-  idioms: z.boolean(),
-  /** Whether Synonym Rows, as a whole, are in the Mix (ADR 0051). */
-  synonymRows: z.boolean(),
-  /** Whether Tips, as a whole, are in the Mix (ADR 0051). */
-  tips: z.boolean(),
+  /**
+   * Whether each kind of Entry beside Words is in the Mix as a whole (ADR
+   * 0033, 0046, 0051): the same map of Entry kinds as the Mix state in the Core.
+   */
+  kinds: z.strictObject({
+    correction: z.boolean(),
+    idiom: z.boolean(),
+    synonymRow: z.boolean(),
+    tip: z.boolean(),
+  }),
 });
 
 export type MixConfig = z.infer<typeof MixConfigSchema>;

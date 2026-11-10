@@ -35,22 +35,13 @@ export const NORMAL_KIND_WEIGHTS: MixKindWeights = {
 
 /**
  * Each kind of Entry in the Mix as a whole (the kind table names them, ADR
- * 0015): its user-state record (ADR 0013, 0041) and whether the Edition's
- * default Mix holds it.
+ * 0015): its user-state record (ADR 0013, 0041).
  */
-const KINDS: Readonly<
-  Record<
-    MixKind,
-    {
-      readonly record: typeof userStateRecords.mixCorrections;
-      readonly byDefault: (mix: DefaultMix) => boolean;
-    }
-  >
-> = {
-  correction: { record: userStateRecords.mixCorrections, byDefault: (mix) => mix.corrections },
-  idiom: { record: userStateRecords.mixIdioms, byDefault: (mix) => mix.idioms },
-  synonymRow: { record: userStateRecords.mixSynonymRows, byDefault: (mix) => mix.synonymRows },
-  tip: { record: userStateRecords.mixTips, byDefault: (mix) => mix.tips },
+const KIND_RECORDS: Readonly<Record<MixKind, typeof userStateRecords.mixCorrections>> = {
+  correction: userStateRecords.mixCorrections,
+  idiom: userStateRecords.mixIdioms,
+  synonymRow: userStateRecords.mixSynonymRows,
+  tip: userStateRecords.mixTips,
 };
 
 /** How often the Feed asks a Quick Question until the user chooses: every 10th card. */
@@ -459,7 +450,7 @@ function mixStateOf(lists: CategoryLists, edition: MixEdition, choices: MixChoic
   return {
     ...categoriesInMixOf(lists.word, edition, choices, 'word'),
     correctionCategories: categoriesInMixOf(lists.correction, edition, choices, 'correction'),
-    kinds: eachKind((kind) => choices.kinds[kind] ?? KINDS[kind].byDefault(mix)),
+    kinds: eachKind((kind) => choices.kinds[kind] ?? mix.kinds[kind]),
     kindWeights: eachKind((kind) => choices.kindWeights.get(kind) ?? NORMAL_KIND_WEIGHTS[kind]),
     quickQuestionEvery: choices.quickQuestionEvery ?? DEFAULT_QUICK_QUESTION_EVERY,
   };
@@ -468,7 +459,7 @@ function mixStateOf(lists: CategoryLists, edition: MixEdition, choices: MixChoic
 async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise<MixChoices> {
   const [lists, read, kindWeights, quickQuestionEvery] = await Promise.all([
     Promise.all(CATEGORY_KINDS.map((kind) => userState.list(CATEGORY_LISTS[kind].records))),
-    Promise.all(MIX_KINDS.map((kind) => userState.read(KINDS[kind].record))),
+    Promise.all(MIX_KINDS.map((kind) => userState.read(KIND_RECORDS[kind]))),
     userState.list(kindWeightRecords),
     userState.read(quickQuestionRecord),
   ]);
@@ -543,7 +534,7 @@ export async function openMix({
     });
     for (const kind of MIX_KINDS) {
       if (kinds[kind] === state.kinds[kind]) continue;
-      for (const [key, value] of KINDS[kind].record.change(kinds[kind])) writes.set(key, value);
+      for (const [key, value] of KIND_RECORDS[kind].change(kinds[kind])) writes.set(key, value);
     }
     const weights = new Map(choices.kindWeights);
     for (const kind of MIX_KINDS) {

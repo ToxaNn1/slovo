@@ -63,7 +63,7 @@ async function run({
       isFeatureEnabled: (feature) => on.includes(feature),
       moods: MOODS,
       dashboardMoods: MOODS,
-      userSettingDefaults: { mix: { corrections: false } },
+      userSettingDefaults: { mix: { kinds: { correction: false } } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
@@ -129,7 +129,7 @@ describe('The Mood check-in', () => {
           ),
         moods: MOODS,
         dashboardMoods: MOODS,
-        userSettingDefaults: { mix: { corrections: false } },
+        userSettingDefaults: { mix: { kinds: { correction: false } } },
       }),
       userState: await openUserState({
         port: {

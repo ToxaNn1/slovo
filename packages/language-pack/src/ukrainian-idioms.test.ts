@@ -41,7 +41,7 @@ afterAll(() => {
 describe('the Idioms of the UA Edition', () => {
   it('turns Idioms on and has them in the default Mix', () => {
     expect(ukrainian.isFeatureEnabled('idioms')).toBe(true);
-    expect(ukrainianFolder.config.userSettingDefaults.mix.idioms).toBe(true);
+    expect(ukrainianFolder.config.userSettingDefaults.mix.kinds.idiom).toBe(true);
   });
 
   it('names each Idiom Type in the Edition strings', () => {

@@ -59,10 +59,7 @@ const testEditionConfig = {
     mix: {
       categories: ['test'],
       correctionCategories: 'all',
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
+      kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
     },
   },
   wordOfTheDayFont: 'Test-Regular.ttf',
@@ -154,7 +151,9 @@ export interface TestEditionOverrides extends Partial<
 > {
   readonly languageTraits?: Partial<LanguageTraits>;
   readonly userSettingDefaults?: Partial<Omit<UserSettingDefaults, 'mix'>> & {
-    readonly mix?: Partial<DefaultMix>;
+    readonly mix?: Partial<Omit<DefaultMix, 'kinds'>> & {
+      readonly kinds?: Partial<DefaultMix['kinds']>;
+    };
   };
 }
 
@@ -171,7 +170,7 @@ export function testEdition({
   userSettingDefaults = {},
   ...overrides
 }: TestEditionOverrides = {}): Edition {
-  const { mix = {}, ...settings } = userSettingDefaults;
+  const { mix: { kinds = {}, ...mix } = {}, ...settings } = userSettingDefaults;
   const { isFeatureEnabled } = overrides;
   return {
     ...baseTestEdition,
@@ -181,7 +180,11 @@ export function testEdition({
     userSettingDefaults: {
       ...baseTestEdition.userSettingDefaults,
       ...settings,
-      mix: { ...baseTestEdition.userSettingDefaults.mix, ...mix },
+      mix: {
+        ...baseTestEdition.userSettingDefaults.mix,
+        ...mix,
+        kinds: { ...baseTestEdition.userSettingDefaults.mix.kinds, ...kinds },
+      },
     },
   };
 }
