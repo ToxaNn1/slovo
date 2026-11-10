@@ -100,7 +100,11 @@ async function importBackend() {
     store,
     run,
     contentVersion: snapshot.contentVersion,
-    words: { first, second, illustrated: { ...illustrated, illustration: illustrated.illustration } },
+    words: {
+      first,
+      second,
+      illustrated: { ...illustrated, illustration: illustrated.illustration },
+    },
   };
 }
 
