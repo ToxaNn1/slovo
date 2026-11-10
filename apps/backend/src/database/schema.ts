@@ -379,6 +379,8 @@ export const contentWords = pgTable(
     ...contentColumns<Word>(),
     /** Set when the Word's text changed after its Recordings were made. */
     needsNewRecording: boolean('needs_new_recording').notNull(),
+    /** When the Recordings job last failed for the Word; the job tries such Words last. */
+    recordingFailedAt: timestamp('recording_failed_at', { withTimezone: true }),
   },
   (table) => [
     primaryKey({ columns: [table.editionId, table.id] }),

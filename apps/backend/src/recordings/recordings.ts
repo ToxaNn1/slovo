@@ -66,7 +66,12 @@ export function createRecordings({
   const { db } = database;
   const rows = createMediaRows({ database, clock });
 
-  /** The Edition's live Words that need Recordings, each with the slots it misses, in id order. */
+  /**
+   * The Edition's live Words that need Recordings, each with the slots it
+   * misses: the Words the job never failed for first, in id order, then the
+   * ones it failed for, longest ago first, so a Word that always fails never
+   * holds the batch.
+   */
   async function candidates(editionId: string, voices: readonly string[]) {
     const slots = voices.length * RECORDING_KINDS.length;
     const liveCount = sql`(select count(*) from ${mediaRecordings} r
@@ -93,7 +98,7 @@ export function createRecordings({
           sql`(${contentWords.needsNewRecording} or ${liveCount} < ${slots})`,
         ),
       )
-      .orderBy(asc(contentWords.id))
+      .orderBy(sql`${contentWords.recordingFailedAt} asc nulls first`, asc(contentWords.id))
       .limit(batch);
     if (words.length === 0) return [];
     const held = await db
@@ -142,7 +147,6 @@ export function createRecordings({
     if (requests.length === 0) return { recorded: 0, failed: 0 };
     const outcomes = await generator.record(requests.map(({ voice, text }) => ({ voice, text })));
     const recorded: RecordedWord[] = [];
-    let failed = 0;
     for (const word of words) {
       const own = requests.flatMap((request, index) =>
         request.word === word ? [{ ...request, outcome: outcomes[index] }] : [],
@@ -160,14 +164,33 @@ export function createRecordings({
         await store.put(recordingKey(file), outcome.bytes, 'audio/mpeg');
         files.push(file);
       }
-      if (files.length < own.length) {
-        failed += 1;
-        continue;
-      }
+      if (files.length < own.length) continue;
       recorded.push({ wordId: word.id, read: readOf(word.fields), files });
     }
     await rows.saveRecordings(editionId, recorded);
-    return { recorded: recorded.length, failed };
+    await markFailures(editionId, words, recorded);
+    return { recorded: recorded.length, failed: words.length - recorded.length };
+  }
+
+  /** Stamps the Words the run failed for, and clears the stamp of the ones it recorded. */
+  async function markFailures(
+    editionId: string,
+    words: readonly { readonly id: string }[],
+    recorded: readonly RecordedWord[],
+  ) {
+    const done = new Set(recorded.map(({ wordId }) => wordId));
+    const stamp = async (ids: string[], recordingFailedAt: Date | null) => {
+      if (ids.length === 0) return;
+      await db
+        .update(contentWords)
+        .set({ recordingFailedAt })
+        .where(and(eq(contentWords.editionId, editionId), inArray(contentWords.id, ids)));
+    };
+    await stamp(
+      words.filter(({ id }) => !done.has(id)).map(({ id }) => id),
+      clock.now(),
+    );
+    await stamp([...done], null);
   }
 
   /** Deletes the files of rows retired before the cutoff; how many. */

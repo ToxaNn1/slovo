@@ -267,6 +267,24 @@ describe('the Recordings job', () => {
     expect(live.some((hash) => retired.includes(hash))).toBe(false);
   });
 
+  it('tries a Word that failed after the Words that never did, so it never blocks the batch', async () => {
+    const { client, agent, batchId, run } = await recordingsBackend();
+    const words = [
+      { id: await createWord(client, agent, batchId, 'обручичок', 3), text: 'обру́чичок' },
+      { id: await createWord(client, agent, batchId, 'ґудзичок', 1), text: 'ґу́дзичок' },
+    ].sort((one, other) => (one.id < other.id ? -1 : 1));
+    const [first, second] = words;
+    if (first === undefined || second === undefined) throw new Error('no Words');
+    const before = await versionOf(client);
+
+    // The Word first in id order fails every time; a batch holds one Word.
+    await run(fakeGenerator(first.text), 1);
+    await run(fakeGenerator(first.text), 1);
+
+    const recorded = (await patchSince(client, before)).recordings.map(({ wordId }) => wordId);
+    expect(new Set(recorded)).toEqual(new Set([second.id]));
+  });
+
   it('deletes the file of a row retired 31 days ago, and keeps one retired 29 days ago', async () => {
     const { client, agent, batchId, store, run } = await recordingsBackend();
     const id = await createWord(client, agent, batchId, 'обручичок', 3);
