@@ -27,9 +27,12 @@ jest.mock('../edition/edition', () => {
     ...actual,
     activeEditionFiles: {
       ...actual.activeEditionFiles,
-      recordings: {
-        oksana: { w_card: 201, [actual.edition.narratorVoiceSample.word]: 301 },
-        taras: { w_card: 202 },
+      starterMedia: {
+        ...actual.activeEditionFiles.starterMedia,
+        recordings: {
+          oksana: { w_card: 201, [actual.edition.narratorVoiceSample.word]: 301 },
+          taras: { w_card: 202 },
+        },
       },
     },
   };

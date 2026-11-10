@@ -1,3 +1,4 @@
+import type { RecordingSource } from '../media/recording-source';
 import type { AudioModule } from './sound-engine';
 
 /**
@@ -5,7 +6,7 @@ import type { AudioModule } from './sound-engine';
  * when it plays to its end, and `stop` ends it without that report.
  */
 export interface RecordingPlayer {
-  play(source: number, onEnd: () => void): void;
+  play(source: RecordingSource, onEnd: () => void): void;
   stop(): void;
 }
 
@@ -40,7 +41,7 @@ export interface RecordingAudioPlayer {
 
 /** The part of `expo-audio` the Recording player uses. */
 export interface RecordingAudioModule {
-  createAudioPlayer(source: number): RecordingAudioPlayer;
+  createAudioPlayer(source: RecordingSource): RecordingAudioPlayer;
   setAudioModeAsync: AudioModule['setAudioModeAsync'];
 }
 

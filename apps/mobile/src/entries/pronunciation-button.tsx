@@ -2,9 +2,13 @@ import { PronunciationButton } from '@slovo/ui';
 import * as Speech from 'expo-speech';
 import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
-import { activeEditionFiles, edition } from '../edition/edition';
+import type { Media } from '@slovo/core';
+
+import { edition } from '../edition/edition';
+import { openDeviceMedia } from '../media/device-media';
+import { recordingSourceOf } from '../media/recording-source';
 import { useSettings } from '../settings/settings';
-import { useShell } from '../shell-value';
+import { useShell, type Shell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
 import { recordingPlayer } from '../sounds/interface-sounds';
 import { createPronunciation } from './pronunciation';
@@ -15,18 +19,45 @@ let soundsOn = true;
 /** The id of the Narrator Voice the last tap read in (ADR 0083). */
 let narratorVoice = edition.narratorVoiceOf(undefined).id;
 
+/** The shell the last tap came from, whose Language Pack holds the Recordings. */
+let tappedShell: Shell | undefined;
+
+/** The Core media of each content store, opened at the first tap over it. */
+const mediaOfStore = new WeakMap<object, Media<number>>();
+
+/** The Core media of the tapped shell's Language Pack, in the Narrator Voice of the last tap. */
+async function shellMedia(shell: Shell): Promise<Media<number>> {
+  const [{ store }, { edition: inEffect }] = await Promise.all([
+    shell.languagePack.opened(),
+    shell.remoteSwitches.opened(),
+  ]);
+  let media = mediaOfStore.get(store);
+  if (media === undefined) {
+    media = openDeviceMedia({ store, edition: inEffect, voice: () => narratorVoice });
+    mediaOfStore.set(store, media);
+  }
+  return media;
+}
+
 /**
- * One for the whole app: one Word read at a time, by its Recording or, with
- * none or no audio module in the binary, by the device's voice.
+ * One for the whole app: one Word read at a time, by its Recording (bundled,
+ * cached or downloaded at the tap) or, with none, offline or no audio module
+ * in the binary, by the device's voice.
  */
 const pronunciation = createPronunciation({
   speech: Speech,
   locale: edition.locale,
   ...(recordingPlayer === undefined
-    ? { player: { play: () => undefined, stop: () => undefined }, recordingOf: () => undefined }
+    ? {
+        player: { play: () => undefined, stop: () => undefined },
+        recordingOf: () => Promise.resolve(undefined),
+      }
     : {
         player: recordingPlayer,
-        recordingOf: (id: string) => activeEditionFiles.recordings[narratorVoice]?.[id],
+        recordingOf: async (id: string) =>
+          tappedShell === undefined
+            ? undefined
+            : recordingSourceOf(await shellMedia(tappedShell), id),
       }),
   soundsOn: () => soundsOn,
 });
@@ -59,7 +90,8 @@ export function LemmaPronunciation({ lemma, entryId }: { lemma: string; entryId:
 }
 
 function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
-  const composition = useShell().composition;
+  const shell = useShell();
+  const composition = shell.composition;
   const sounds = useSettings().current.sounds;
   const voice = useNarratorVoice();
   const state = useSyncExternalStore(subscribe, () => pronunciation.stateOf(entryId));
@@ -84,8 +116,9 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
     if (sounds && pronunciation.stateOf(entryId) !== 'playing' && opened.status === 'ready')
       void opened.value.analytics.pronunciationPlayed(entryId);
     narratorVoice = voice;
+    tappedShell = shell;
     void pronunciation.toggle({ id: entryId, lemma });
-  }, [composition, sounds, voice, lemma, entryId]);
+  }, [shell, composition, sounds, voice, lemma, entryId]);
 
   return <PronunciationButton state={state} onPress={toggle} onDismissMessage={dismiss} />;
 }
@@ -106,6 +139,7 @@ export interface SampleReading {
  * go off.
  */
 export function useSampleReading(): SampleReading {
+  const shell = useShell();
   const sounds = useSettings().current.sounds;
   const voice = useNarratorVoice();
   const { word, syllables } = edition.narratorVoiceSample;
@@ -130,10 +164,11 @@ export function useSampleReading(): SampleReading {
     async (reader: string, fromStart: boolean) => {
       soundsOn = sounds;
       narratorVoice = reader;
+      tappedShell = shell;
       if (fromStart) await pronunciation.stop();
       await pronunciation.toggle({ id: word, lemma: syllables.join('') });
     },
-    [sounds, word, syllables],
+    [shell, sounds, word, syllables],
   );
 
   return {

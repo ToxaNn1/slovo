@@ -6,6 +6,7 @@ import {
   type SpeechVoice,
   type SpokenLemmaOptions,
 } from './pronunciation';
+import type { RecordingSource } from '../media/recording-source';
 import type { RecordingPlayer } from '../sounds/recording-player';
 
 interface Utterance {
@@ -79,8 +80,8 @@ const word = (lemma: string) => ({ id: lemma, lemma });
  * a new one or `stop` ends the one playing, without its end being reported.
  */
 function fakePlayer() {
-  let playing: { readonly source: number; readonly onEnd: () => void } | undefined;
-  const played: number[] = [];
+  let playing: { readonly source: RecordingSource; readonly onEnd: () => void } | undefined;
+  const played: RecordingSource[] = [];
   const player: RecordingPlayer = {
     play(source, onEnd) {
       playing = { source, onEnd };
@@ -108,7 +109,7 @@ function fakePlayer() {
 /** No Word has a Recording, and «Звуки» are on: only the device voice reads. */
 const deviceVoiceOnly = {
   player: fakePlayer().player,
-  recordingOf: () => undefined,
+  recordingOf: () => Promise.resolve(undefined),
   soundsOn: () => true,
 };
 
@@ -373,9 +374,21 @@ describe('Pronunciation', () => {
   describe('with Recordings', () => {
     const VEREMIIA_WORD = { id: 'w_0001', lemma: VEREMIIA };
     const SHPARKYI_WORD = { id: 'w_0002', lemma: SHPARKYI };
-    const recordings: Readonly<Record<string, number>> = { w_0001: 11, w_0002: 12 };
+    const recordings: Readonly<Record<string, RecordingSource>> = {
+      w_0001: 11,
+      w_0002: 12,
+      w_0004: { uri: 'file:///media/w_0004.mp3' },
+    };
 
-    function setUp({ voices = [ukrainian], soundsOn = true } = {}) {
+    function setUp({
+      voices = [ukrainian],
+      soundsOn = true,
+      recordingOf = (id: string) => Promise.resolve(recordings[id]),
+    }: {
+      voices?: SpeechVoice[];
+      soundsOn?: boolean;
+      recordingOf?: (id: string) => Promise<RecordingSource | undefined>;
+    } = {}) {
       const fake = fakeSpeech(voices);
       const player = fakePlayer();
       let sounds = soundsOn;
@@ -383,7 +396,7 @@ describe('Pronunciation', () => {
         speech: fake.speech,
         locale: 'uk-UA',
         player: player.player,
-        recordingOf: (id) => recordings[id],
+        recordingOf,
         soundsOn: () => sounds,
       });
       return {
@@ -461,6 +474,35 @@ describe('Pronunciation', () => {
       expect(player.playing()).toBe(12);
       expect(player.played).toEqual([12]);
       expect(pronunciation.stateOf('w_0001')).toBe('idle');
+      expect(pronunciation.stateOf('w_0002')).toBe('playing');
+    });
+
+    it('plays a Recording the media cache holds, by its file', async () => {
+      const { player, pronunciation } = setUp();
+
+      await pronunciation.toggle({ id: 'w_0004', lemma: 'заграва' });
+
+      expect(player.playing()).toEqual({ uri: 'file:///media/w_0004.mp3' });
+      expect(pronunciation.stateOf('w_0004')).toBe('playing');
+    });
+
+    it('plays only the last Word tapped while the Recording of the one before downloads', async () => {
+      let download: (source: RecordingSource) => void = () => undefined;
+      const { player, pronunciation } = setUp({
+        recordingOf: (id) =>
+          id === 'w_0001'
+            ? new Promise((resolve) => {
+                download = resolve;
+              })
+            : Promise.resolve(recordings[id]),
+      });
+
+      const first = pronunciation.toggle(VEREMIIA_WORD);
+      await pronunciation.toggle(SHPARKYI_WORD);
+      download(11);
+      await first;
+
+      expect(player.played).toEqual([12]);
       expect(pronunciation.stateOf('w_0002')).toBe('playing');
     });
 

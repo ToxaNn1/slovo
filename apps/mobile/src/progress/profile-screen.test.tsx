@@ -12,6 +12,7 @@ import {
   createFakeGoogleSignInSheet,
   createMemoryContentPort,
   seedUserState,
+  createMemoryContentStore,
 } from '@slovo/core/testing';
 import { EditionProvider, fill } from '@slovo/ui';
 import { act, fireEvent, screen, within } from '@testing-library/react-native';
@@ -135,6 +136,7 @@ async function renderScreen({
     },
     contentVersion: () => 1,
     contentUpdate: undefined,
+    store: createMemoryContentStore(),
   });
   const composition = await testShell({ userState, languagePack }).composition.opened();
   for (let round = 0; round < rounds; round += 1) {

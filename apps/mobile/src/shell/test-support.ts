@@ -16,7 +16,12 @@ import {
   type Schedule,
   type UserSettings,
 } from '@slovo/core';
-import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+import {
+  createFakeBackend,
+  createMemoryContentPort,
+  createMemoryContentStore,
+  seedUserState,
+} from '@slovo/core/testing';
 
 import type { FeatureSwitch } from '@slovo/contracts';
 
@@ -210,6 +215,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       },
       contentVersion: () => 1,
       contentUpdate: undefined,
+      store: createMemoryContentStore(),
     });
   return {
     userState,
