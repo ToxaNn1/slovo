@@ -26,6 +26,10 @@ let composition: Composition;
 
 // The Feed is in sight: its tab is focused.
 jest.mock('expo-router', () => ({ useIsFocused: () => true }));
+// The Feed downloads its media ahead in the Narrator Voice of the settings.
+jest.mock('../settings/settings', () => ({
+  useSettings: () => ({ current: { narratorVoice: 'oksana' } }),
+}));
 
 /** Whether the app is in the foreground, as a test moves it, and who listens to it. */
 let mockInForeground = true;

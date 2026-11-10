@@ -5,7 +5,6 @@ import { useCallback, useEffect, useSyncExternalStore } from 'react';
 import { edition } from '../edition/edition';
 import { recordingSourceOf } from '../media/recording-source';
 import { shellMedia } from '../media/shell-media';
-import { setNarratorVoice } from '../media/store-media';
 import { useSettings } from '../settings/settings';
 import { useShell, type Shell } from '../shell-value';
 import { useShown } from '../shown-in-effect';
@@ -15,8 +14,8 @@ import { createPronunciation } from './pronunciation';
 /** «Звуки» as the cards last drew them. */
 let soundsOn = true;
 
-/** The shell the last tap came from, whose Language Pack holds the Recordings. */
-let tappedShell: Shell | undefined;
+/** The shell the last tap came from, whose Language Pack holds the Recordings, and the voice it read in. */
+let tapped: { readonly shell: Shell; readonly voice: string } | undefined;
 
 /**
  * One for the whole app: one Word read at a time, by its Recording (bundled,
@@ -34,9 +33,9 @@ const pronunciation = createPronunciation({
     : {
         player: recordingPlayer,
         recordingOf: async (id: string) =>
-          tappedShell === undefined
+          tapped === undefined
             ? undefined
-            : recordingSourceOf(await shellMedia(tappedShell), id),
+            : recordingSourceOf(await shellMedia(tapped.shell), id, tapped.voice),
       }),
   soundsOn: () => soundsOn,
 });
@@ -80,11 +79,6 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
     if (!sounds && pronunciation.stateOf(entryId) === 'playing') void pronunciation.stop();
   }, [sounds, entryId]);
 
-  // The Feed's prefetch downloads the Recordings in the voice the cards read in.
-  useEffect(() => {
-    setNarratorVoice(voice);
-  }, [voice]);
-
   // A card that leaves the Feed stops its Word and closes its message.
   useEffect(
     () => () => {
@@ -99,8 +93,7 @@ function PlayingLemma({ lemma, entryId }: { lemma: string; entryId: string }) {
     const opened = composition.state;
     if (sounds && pronunciation.stateOf(entryId) !== 'playing' && opened.status === 'ready')
       void opened.value.analytics.pronunciationPlayed(entryId);
-    setNarratorVoice(voice);
-    tappedShell = shell;
+    tapped = { shell, voice };
     void pronunciation.toggle({ id: entryId, lemma });
   }, [shell, composition, sounds, voice, lemma, entryId]);
 
@@ -147,8 +140,7 @@ export function useSampleReading(): SampleReading {
   const read = useCallback(
     async (reader: string, fromStart: boolean) => {
       soundsOn = sounds;
-      setNarratorVoice(reader);
-      tappedShell = shell;
+      tapped = { shell, voice: reader };
       if (fromStart) await pronunciation.stop();
       await pronunciation.toggle({ id: word, lemma: syllables.join('') });
     },
