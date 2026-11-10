@@ -54,11 +54,13 @@ interface StoredFile {
   readonly size: number;
 }
 
-function recordingPath(wordId: string, voice: string, kind: string, hash: string): string {
+/** A Recording's path in the Media Store, named by its Word id and hash (ADR 0099). */
+export function recordingPath(wordId: string, voice: string, kind: string, hash: string): string {
   return `recordings/${voice}/${kind}/${wordId}.${hash}.mp3`;
 }
 
-function illustrationPath(wordId: string, hash: string): string {
+/** An Illustration's path in the Media Store, named by its Word id and hash (ADR 0099). */
+export function illustrationPath(wordId: string, hash: string): string {
   return `illustrations/${wordId}.${hash}.png`;
 }
 

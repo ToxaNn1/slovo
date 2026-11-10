@@ -256,6 +256,8 @@ export type {
 } from './ports';
 export {
   createMedia,
+  illustrationPath,
+  recordingPath,
   MEDIA_CACHE_LIMIT,
   PREFETCH_CARDS,
   type CardMedia,
