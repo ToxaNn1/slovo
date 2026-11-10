@@ -62,3 +62,4 @@ Nothing running at handoff. Relaunch both now (2 slots): #1769 impl #5 in /Users
 Owner asked to keep #1767 part 1 OUT of integration until the ticket is done (he stopped that merge). Next: merge #1769 and #1767 into integration (fetch, `git merge --no-ff`, push, CI on #1792); then #1770 (←1766,1769), #1772 last (owner checklist); then /code-review on integration, one fix implementer, mark #1792 ready, ask the owner for the main merge.
 Lesson: implementers hit 120k fast on #1769 — give narrow scopes (1–2 handoff steps) and stop at 100k.
 Owner questions open: generator in recordings.Dockerfile (accepted, owner may veto); Starter Media = sample Word in every voice (ADR 0099 over the ticket text).
+- 2026-11-10 17:17 UTC safety net takeover (last commit 2026-11-10 16:15 UTC)
