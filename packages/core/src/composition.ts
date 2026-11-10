@@ -17,6 +17,7 @@ import { openDashboard, type Dashboard } from './dashboard/dashboard';
 import { openMoodCheckIns, type MoodCheckIns } from './mood/mood';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
+import { createTextComparison } from './text/text-comparison';
 import type { Entries } from './entries/entries';
 import type { EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
@@ -623,7 +624,7 @@ export async function openComposition({
         },
       },
     }),
-    openCollections({ rows, userState, clock, random }),
+    openCollections({ rows, userState, clock, random, comparison: createTextComparison(edition) }),
   ]);
   const badges = await openBadges({
     edition,

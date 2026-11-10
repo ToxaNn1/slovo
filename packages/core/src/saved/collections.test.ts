@@ -112,6 +112,15 @@ describe('Collections', () => {
       expect(namesOf(app)).toEqual(['Цікаве']);
     });
 
+    it('refuses a name taken in another kind of apostrophe or with Stress marks', async () => {
+      const app = await run();
+      await create(app, "П'ять слів");
+
+      expect(await app.collections.create('П’ять слів')).toEqual({ ok: false, reason: 'duplicate' });
+      expect(await app.collections.create("П'я́ть слів")).toEqual({ ok: false, reason: 'duplicate' });
+      expect((await app.collections.create("П'ять  слів")).ok).toBe(true);
+    });
+
     it('sees the same letters as the same name, however they are composed', async () => {
       const app = await run();
       await create(app, 'Кіт \u0439');
