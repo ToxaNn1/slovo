@@ -40,7 +40,7 @@ brief:
 You are the PR footer coordinator, in the cloud; the previous coordinator stopped. Read HANDOFF.md on origin/coord/pr-footer-1109 and continue from the log tail. Grants: commits, pushes, one PR; no main merge, no auto-merge, no force-push. Never touch feat/1108-video, apps/video or #1762.
 
 ## wave core-audit-1778
-status: active
+status: finished
 coord: chore/1778-core-rules-one-place
 branches: ^origin/(chore/1778-core-rules-one-place|(chore|refactor|fix|test)/17(79|8[0-9]|90)-)
 brief:
