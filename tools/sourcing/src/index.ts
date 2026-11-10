@@ -43,5 +43,5 @@ export type {
 export { sourceIdioms, type IdiomSourcingOptions } from './idioms';
 export { sourceSynonyms, type SynonymSourcingOptions } from './synonyms';
 export { sourceWords, type SourcingOptions } from './source-words';
-export { matchKey } from './text';
+export { matchKey, withoutHomonymIndexes } from './text';
 export type { SumAccess } from './sum';

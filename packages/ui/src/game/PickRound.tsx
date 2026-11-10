@@ -7,45 +7,44 @@ import {
   type Round,
   type RoundAnswer,
   type RoundOption,
+  type TextRange,
 } from '@slovo/core';
 import { useEffect, useRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
 import Animated, {
-  Easing,
-  Extrapolation,
   interpolate,
-  ReduceMotion,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
-  type SharedValue,
 } from 'react-native-reanimated';
-import Svg, { Polygon } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { PressedTile } from '../primitives/PressedTile';
 import { WholeWordsText } from '../primitives/WholeWordsText';
-import { answerOption, badgeStamp, motion, roundLayout, space, typeStyle } from '../tokens';
-import { RoundCard } from './RoundCard';
+import { answerOption, roundLayout, space, typeStyle, type TypeRole } from '../tokens';
+import { RoundCard, type RoundFace } from './RoundCard';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
 /** The answer to a Round of the pick form. */
 type PickAnswer = Extract<RoundAnswer, { form: 'pick' }>;
 
-/** The stamp lands as the Badge's does (`motion.stamp`). */
-const STAMP_LANDING = {
-  duration: motion.stamp.duration,
-  easing: Easing.bezier(...motion.stamp.easing),
-  reduceMotion: ReduceMotion.Never,
-};
-/** The slash on a wrong choice is drawn in 300 ms, the board's `slSlash`. */
-const SLASH_DRAWING = {
-  duration: 300,
-  easing: Easing.out(Easing.ease),
-  reduceMotion: ReduceMotion.Never,
-};
+/** The ✕ on a wrong pick's key in place of its letter, drawn on a 14-unit square as the Round's exit glyph, so it sits in the key's centre whatever the font. */
+const WRONG_MARK = 'M0 2L2 0L7 5L12 0L14 2L9 7L14 12L12 14L7 9L2 14L0 12L5 7Z';
+
+/**
+ * The type role an option's text takes, its tier: a Word is one word, a
+ * sentence runs to `answerOption.sentenceMost` characters, a long text past
+ * that.
+ */
+function optionRole(text: string): TypeRole {
+  if (!/\s/u.test(text.trim())) return 'roundOptionWord';
+  return Array.from(text).length <= answerOption.sentenceMost
+    ? 'roundOptionSentence'
+    : 'roundOptionLong';
+}
 
 /**
  * A Round of the pick form: the prompt on its card under the Round's head,
@@ -55,12 +54,18 @@ export function PickRound({
   round,
   label,
   prompt,
+  highlight,
+  face,
   onAnswer,
 }: {
   round: Extract<Round, { form: 'pick' }>;
   /** The label the card reads over the prompt. */
   label: string;
   prompt: string;
+  /** The part of the prompt to mark, the Round's own unless its look moves it. */
+  highlight: TextRange | undefined;
+  /** The restyled look of the Round's card; the plain prompt if none. */
+  face: RoundFace | undefined;
   onAnswer: (given: Extract<GivenAnswer, { form: 'pick' }>) => void;
 }) {
   return (
@@ -68,9 +73,10 @@ export function PickRound({
       <RoundCard
         label={label}
         prompt={prompt}
-        highlight={round.highlight}
+        highlight={highlight}
         gap={round.gap}
         definition={round.definition}
+        face={face}
       />
       <AnswerOptions
         key={round.number}
@@ -98,6 +104,7 @@ export function AnswerOptions({
   answer: Pick<PickAnswer, 'chosen' | 'correct'> | undefined;
   onPick: (option: number) => void;
 }) {
+  const keys = Array.from(useEdition().strings.game.round.optionKeys);
   return (
     <View style={styles.options}>
       {options.map((option, place) => (
@@ -105,6 +112,7 @@ export function AnswerOptions({
           key={String(place)}
           option={option}
           place={place}
+          optionKey={keys[place]}
           answer={answer}
           onPress={() => {
             onPick(place);
@@ -116,23 +124,25 @@ export function AnswerOptions({
 }
 
 /**
- * One option of a Round, the design's answer tile, 84 pt tall. Once the
- * Round is answered, the right option turns red, pops and takes the ink
- * stamp of a tick; a wrong choice sinks, mutes, drops and is struck through
- * with a red slash; the others fade. Under Reduce Motion nothing pops,
- * drops or slides: the stamp and the slash appear in place. Nothing shakes.
- * VoiceOver reads the option with its Stress, then «Правильно» or «Твій
- * вибір», and the faded ones as dimmed.
+ * One option of a Round, board 07's answer tile, 66 pt tall, its key at its
+ * left and its text sized for its tier. Once the Round is answered, the right
+ * option turns red and pops; a wrong choice sinks, mutes and drops, with ✕ on
+ * its key; the others fade. Under Reduce Motion nothing pops or drops.
+ * Nothing shakes. VoiceOver reads the option with its Stress, then
+ * «Правильно» or «Твій вибір», and the faded ones as dimmed.
  */
 function AnswerOption({
   option,
   place,
+  optionKey,
   answer,
   onPress,
 }: {
   option: RoundOption;
   /** Its place among the options. */
   place: number;
+  /** Its key, such as «А»; none past the Edition's keys. */
+  optionKey: string | undefined;
   /** The Round's answer, once given. */
   answer: Pick<PickAnswer, 'chosen' | 'correct'> | undefined;
   onPress: () => void;
@@ -152,8 +162,6 @@ function AnswerOption({
   const reduceMotion = useReduceMotion();
   /** 0 before the answer, 1 once the option has popped, dropped or faded. */
   const answered = useSharedValue(answer === undefined ? 0 : 1);
-  /** 0 before the answer, 1 once the stamp has landed or the slash is drawn. */
-  const marked = useSharedValue(answer === undefined ? 0 : 1);
   // Whether the option showed an answer before, so only the answer given now moves.
   const shownAnswered = useRef(answer !== undefined);
 
@@ -161,9 +169,8 @@ function AnswerOption({
     if (look === 'rest' || shownAnswered.current) return;
     shownAnswered.current = true;
     answered.value = withTiming(1, look === 'right' ? RIGHT_FILL : WRONG_FILL);
-    marked.value = withTiming(1, look === 'right' ? STAMP_LANDING : SLASH_DRAWING);
-    // The shared values are stable, so only the answer given moves the option.
-  }, [look, answered, marked]);
+    // The shared value is stable, so only the answer given moves the option.
+  }, [look, answered]);
 
   const still = reduceMotion || look === 'rest';
   const optionMotion = useAnimatedStyle(() => {
@@ -182,6 +189,7 @@ function AnswerOption({
     };
   });
   const testID = `game-option-${String(place)}`;
+  const role = optionRole(option.text);
   return (
     <Animated.View testID={`${testID}-motion`} style={optionMotion} {...voice}>
       <PressedTile
@@ -203,105 +211,49 @@ function AnswerOption({
         onPress={onPress}
         faceStyle={[styles.option, look === 'wrong' && { backgroundColor: colors.surfaceSunken }]}
       >
+        {optionKey !== undefined && (
+          <View
+            style={[
+              styles.key,
+              { borderColor: look === 'right' ? keyInk : colors.ink },
+              look === 'wrong' && { backgroundColor: colors.accent, borderColor: colors.accent },
+            ]}
+          >
+            {look === 'wrong' ? (
+              <Svg
+                testID={`${testID}-wrong-mark`}
+                width={answerOption.key.wrongMark}
+                height={answerOption.key.wrongMark}
+                viewBox="0 0 14 14"
+              >
+                <Path d={WRONG_MARK} fill={colors.onAccent} />
+              </Svg>
+            ) : (
+              <Text
+                style={[
+                  typeStyle('roundOptionKey', tokens),
+                  { color: look === 'right' ? keyInk : colors.ink },
+                ]}
+              >
+                {optionKey}
+              </Text>
+            )}
+          </View>
+        )}
         <View style={styles.optionText}>
           <WholeWordsText
             text={option.text}
-            typeRole="roundOption"
+            typeRole={role}
             style={[
-              typeStyle('roundOption', tokens),
+              typeStyle(role, tokens),
               { color: look === 'right' ? keyInk : look === 'wrong' ? colors.muted : colors.ink },
             ]}
           />
         </View>
-        {look === 'right' && (
-          <Stamp landed={marked} still={reduceMotion} ink={keyInk} testID={testID} />
-        )}
-        {look === 'wrong' && (
-          <Slash drawn={marked} still={reduceMotion} color={colors.accent} testID={testID} />
-        )}
       </PressedTile>
     </Animated.View>
   );
 }
-
-/**
- * The ink stamp on a right option: a tick in a ring, turned, that lands from
- * large and turned further (the Badge stamp's landing); under Reduce Motion
- * it fades in at rest. It carries `${testID}-stamp`.
- */
-function Stamp({
-  landed,
-  still,
-  ink,
-  testID,
-}: {
-  landed: SharedValue<number>;
-  still: boolean;
-  ink: string;
-  testID: string;
-}) {
-  const stampMotion = useAnimatedStyle(() => {
-    const opacity = interpolate(landed.value, [0, 0.7], [0, 1], Extrapolation.CLAMP);
-    if (still) return { opacity, transform: [{ rotate: `${String(badgeStamp.turn)}deg` }] };
-    const scale = interpolate(landed.value, [0, 0.7, 1], [badgeStamp.from.scale, 0.92, 1]);
-    const turn = interpolate(
-      landed.value,
-      [0, 0.7],
-      [badgeStamp.from.turn, badgeStamp.turn],
-      Extrapolation.CLAMP,
-    );
-    return { opacity, transform: [{ scale }, { rotate: `${String(turn)}deg` }] };
-  });
-  return (
-    <Animated.View
-      testID={`${testID}-stamp`}
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      style={[styles.stamp, { borderColor: ink }, stampMotion]}
-    >
-      <Svg width={answerOption.tick.width} height={answerOption.tick.height} viewBox="0 0 26 22">
-        <Polygon points="0,12 4,8 10,14 22,0 26,4 10,22" fill={ink} />
-      </Svg>
-    </Animated.View>
-  );
-}
-
-/**
- * The red slash across a wrong choice, a little turned, drawn from the left;
- * under Reduce Motion it fades in whole. Its line carries `${testID}-slash`.
- */
-function Slash({
-  drawn,
-  still,
-  color,
-  testID,
-}: {
-  drawn: SharedValue<number>;
-  still: boolean;
-  color: string;
-  testID: string;
-}) {
-  const slashMotion = useAnimatedStyle(() =>
-    still
-      ? { opacity: drawn.value, transform: [{ scaleX: 1 }] }
-      : { opacity: 1, transform: [{ scaleX: Math.min(drawn.value, 1) }] },
-  );
-  return (
-    <View
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-      pointerEvents="none"
-      style={styles.slashTrack}
-    >
-      <Animated.View
-        testID={`${testID}-slash`}
-        style={[styles.slash, { backgroundColor: color }, slashMotion]}
-      />
-    </View>
-  );
-}
-
-const { stamp, slash } = answerOption;
 
 const styles = StyleSheet.create({
   options: { gap: roundLayout.gap },
@@ -309,31 +261,18 @@ const styles = StyleSheet.create({
     minHeight: answerOption.minHeight,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: answerOption.key.gap,
     paddingVertical: space[2],
     paddingLeft: answerOption.paddingLeft,
-    paddingRight: stamp.side + stamp.right + space[2],
+    paddingRight: answerOption.paddingRight,
   },
   optionText: { flex: 1 },
-  stamp: {
-    position: 'absolute',
-    right: stamp.right,
-    top: stamp.top,
-    width: stamp.side,
-    height: stamp.side,
-    borderWidth: stamp.border,
-    borderRadius: stamp.side / 2,
+  key: {
+    width: answerOption.key.side,
+    height: answerOption.key.side,
+    borderRadius: answerOption.key.radius,
+    borderWidth: answerOption.key.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  slashTrack: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    justifyContent: 'center',
-    paddingHorizontal: slash.inset,
-    transform: [{ rotate: `${String(slash.turn)}deg` }],
-  },
-  slash: { height: slash.thickness, transformOrigin: 'left' },
 });

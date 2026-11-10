@@ -1,3 +1,5 @@
+import { CommunityWordOutputSchema } from '@slovo/contracts';
+
 import type { Edition } from '../edition/edition';
 import type { Entries } from '../entries/entries';
 import { dateKeyOf, isMonday, type LocalDate } from '../local-date';
@@ -47,16 +49,17 @@ export function createCommunityWord({
     // `counters.communityWord` needs no Account and carries no device id (ADR 0060).
     const answer = await answerOf(backend.counters.communityWord({ edition: edition.id }));
     if (!answer.ok) return undefined;
-    const communityWord = answer.output.communityWord ?? null;
+    // The client does not check answers: one out of the contract's shape is unexpected and kept nowhere.
+    const parsed = CommunityWordOutputSchema.safeParse(answer.output);
+    if (!parsed.success) return undefined;
+    const { communityWord } = parsed.data;
     await userState.write(kept.change({ date, communityWord }));
     return communityWord ?? undefined;
   }
 
   return {
     async forDay(day) {
-      const switchedOn =
-        edition.isFeatureEnabled('communityCounters') && edition.isFeatureEnabled('communityWord');
-      if (!switchedOn || !isMonday(day)) return [];
+      if (!edition.isFeatureEnabled('communityWord') || !isMonday(day)) return [];
       const communityWord = await ofDay(day);
       if (communityWord === undefined || hiddenEntries.has(communityWord.entryId)) return [];
       const { entryId, adds } = communityWord;

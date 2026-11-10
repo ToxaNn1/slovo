@@ -4,6 +4,7 @@ import type { JsonifiedClient } from '@orpc/openapi-client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 
 import { accountContract } from './api/account';
+import { adminContract } from './api/admin';
 import { collectionLinksContract } from './api/collection-links';
 import { contentContract } from './api/content';
 import { countersContract } from './api/counters';
@@ -11,7 +12,14 @@ import { editionContract } from './api/edition';
 import { reportsContract } from './api/reports';
 import { syncContract } from './api/sync';
 
-export { PACK_MEDIA_TYPE } from './api/content';
+export {
+  ContentSnapshotSchema,
+  PACK_MEDIA_TYPE,
+  PATCH_FORMAT,
+  PatchSchema,
+  type ContentSnapshot,
+  type Patch,
+} from './api/content';
 
 /**
  * What a call throws when the backend answers with an error: its `code`, as
@@ -34,6 +42,7 @@ export { safe, type ClientPromiseResult } from '@orpc/client';
  */
 export const apiContract = oc.prefix('/v1').router({
   account: accountContract,
+  admin: adminContract,
   collectionLinks: collectionLinksContract,
   content: contentContract,
   counters: countersContract,

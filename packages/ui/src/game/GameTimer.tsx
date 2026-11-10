@@ -3,14 +3,8 @@ import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { roundLayout, roundProgress, typeStyle } from '../tokens';
+import { fontScaleCap, gameTimerLayout, roundLayout, roundProgress, typeStyle } from '../tokens';
 
-/** The height of the timer's skewed bar, from the design. */
-const BAR_HEIGHT = 10;
-/** The seconds' width, so the bar keeps its length as they count down. */
-const SECONDS_WIDTH = 40;
-/** How far the largest text sizes of iOS may scale the seconds, so the header keeps its shape. */
-const TEXT_MAX_FONT_SCALE = 1.5;
 /** VoiceOver reads the time left each time this many seconds pass. */
 const ANNOUNCE_EVERY = 10;
 
@@ -18,8 +12,10 @@ const ANNOUNCE_EVERY = 10;
 const secondsLeft = (remainingMs: number) => Math.max(0, Math.ceil(remainingMs / 1000));
 
 /**
- * A timed Game's countdown in its own row under the Round's header: a skewed
- * bar that empties in the accent, then the seconds left, such as «40 с», drawn from the time left the Core gives. VoiceOver
+ * A timed Game's countdown in its own row under the Round's header: a bar of
+ * ten skewed segments that empty from the accent as the time runs out (board
+ * 06, spec #1674), then the seconds left, such as «40 с», drawn from the time
+ * left the Core gives. VoiceOver
  * reads the time left each time ten seconds pass, once even when the time
  * jumps over a ten, and never at none. The screen ticks the time and pauses
  * it, and passes the Edition's texts.
@@ -60,6 +56,8 @@ export function GameTimer({
   }, [seconds, remaining]);
 
   const left = Math.min(Math.max(remainingMs, 0), totalMs);
+  // A segment stays lit while any of its share of the time is left, so the bar empties only at none.
+  const lit = totalMs > 0 ? Math.ceil((left * roundProgress.segments) / totalMs) : 0;
   return (
     <View
       testID={testID}
@@ -69,13 +67,19 @@ export function GameTimer({
       {...voice}
       style={styles.timer}
     >
-      {/* The share of the time left, as flex weights, so the bar needs no width. */}
-      <View style={[styles.bar, { backgroundColor: colors.silhouette }]}>
-        <View style={{ flex: left, backgroundColor: colors.accent }} />
-        <View style={{ flex: totalMs - left }} />
+      <View style={styles.bar}>
+        {Array.from({ length: roundProgress.segments }, (_, place) => (
+          <View
+            key={place}
+            style={[
+              styles.segment,
+              { backgroundColor: place < lit ? colors.accent : colors.silhouette },
+            ]}
+          />
+        ))}
       </View>
       <Text
-        maxFontSizeMultiplier={TEXT_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.text}
         style={[typeStyle('timerSeconds', tokens), styles.seconds, { color: colors.ink }]}
       >
         {shown(seconds)}
@@ -87,15 +91,14 @@ export function GameTimer({
 const styles = StyleSheet.create({
   timer: { flexDirection: 'row', alignItems: 'center', gap: roundLayout.gap },
   seconds: {
-    width: SECONDS_WIDTH,
+    width: gameTimerLayout.secondsWidth,
     textAlign: 'right',
     fontVariant: ['tabular-nums'],
   },
-  bar: {
+  bar: { flex: 1, flexDirection: 'row', gap: roundProgress.gap },
+  segment: {
     flex: 1,
-    flexDirection: 'row',
-    height: BAR_HEIGHT,
-    overflow: 'hidden',
+    height: gameTimerLayout.barHeight,
     transform: [{ skewX: roundProgress.skew }],
   },
 });

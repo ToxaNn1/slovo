@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { space, typeStyle } from '../tokens';
+import { feedStateButtonHeight, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { WedgeLoader } from '../primitives/WedgeLoader';
 
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   errorMessage: { marginTop: space[3], textAlign: 'center' },
   button: {
     alignSelf: 'stretch',
-    minHeight: 54,
+    minHeight: feedStateButtonHeight,
     marginTop: space[8],
     alignItems: 'center',
     justifyContent: 'center',

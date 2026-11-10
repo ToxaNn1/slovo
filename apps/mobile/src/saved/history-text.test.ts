@@ -1,4 +1,5 @@
-import { localDayOf, relativeTimeOf, type EntryRowModel, type HistoryEntry } from '@slovo/core';
+import { relativeTimeOf } from '@slovo/core/testing';
+import { localDayOf, type EntryRowModel, type HistoryEntry } from '@slovo/core';
 import { describe, expect, it } from 'vitest';
 
 import { historyText } from './history-text';
@@ -66,6 +67,7 @@ describe('the History texts', () => {
               ...text,
               labelKey,
               partOfSpeech: 'noun',
+              gender: undefined,
               registers: [],
               rarity: 3,
             }

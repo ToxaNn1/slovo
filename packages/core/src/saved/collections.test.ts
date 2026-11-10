@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  openComposition,
-  type Clock,
-  SEEN_DWELL_MS,
-  type Composition,
-  type Random,
-} from '../index';
+import { openComposition, type Clock, type Composition, type Random } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, steppingRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -110,6 +105,21 @@ describe('Collections', () => {
       expect(await app.collections.create(' цІкаве ')).toEqual({ ok: false, reason: 'duplicate' });
 
       expect(namesOf(app)).toEqual(['Цікаве']);
+    });
+
+    it('refuses a name taken in another kind of apostrophe or with Stress marks', async () => {
+      const app = await run();
+      await create(app, "П'ять слів");
+
+      expect(await app.collections.create('П’ять слів')).toEqual({
+        ok: false,
+        reason: 'duplicate',
+      });
+      expect(await app.collections.create("П'я́ть слів")).toEqual({
+        ok: false,
+        reason: 'duplicate',
+      });
+      expect((await app.collections.create("П'ять  слів")).ok).toBe(true);
     });
 
     it('sees the same letters as the same name, however they are composed', async () => {

@@ -10,9 +10,19 @@ import type {
   Word,
 } from '@slovo/contracts';
 
-import { createEntries, EVERYTHING_IN, openRemoteSwitches } from '../index';
+import { openRemoteSwitches } from '../index';
+import { createEntries, EVERYTHING_IN } from './entries';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
-import { countingReads, idiom, openLiveEntries, randomOf, testEdition } from '../test-support';
+import {
+  countingReads,
+  fakeClock,
+  idiom,
+  openLiveEntries,
+  randomOf,
+  readerFacts,
+  switchStatesOf,
+  testEdition,
+} from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 function word(id: string, overrides: Partial<Word> = {}): Word {
@@ -194,10 +204,23 @@ describe('the Entries', () => {
       const port = createMemoryUserStatePort();
       const userState = await openUserState({ port });
       await port.write(
-        new Map([['edition.switches', JSON.stringify({ off: ['idioms'], etag: '"idioms"' })]]),
+        new Map([
+          [
+            'edition.switches',
+            JSON.stringify({
+              rules: [{ id: 'kill', feature: 'idioms', verdict: 'off', targets: {} }],
+              minimums: {},
+              etag: '"kill"',
+              clockOffsetMs: 0,
+            }),
+          ],
+        ]),
       );
       const remote = await openRemoteSwitches({
         edition: editionWith(true),
+        states: switchStatesOf(editionWith(true)),
+        facts: readerFacts,
+        clock: fakeClock().clock,
         backend: unreachableBackend(),
         userState,
         schedule: (run) => {
@@ -320,10 +343,7 @@ describe('the Entries', () => {
           mix: {
             categoryIds: 'all' as const,
             correctionCategoryIds: 'all' as const,
-            corrections: true,
-            idioms: false,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: false, synonymRow: true, tip: true },
           },
         },
       };
@@ -367,7 +387,10 @@ describe('the Entries', () => {
             ...edition,
             userSettingDefaults: {
               ...edition.userSettingDefaults,
-              mix: { ...edition.userSettingDefaults.mix, [feature]: false },
+              mix: {
+                ...edition.userSettingDefaults.mix,
+                kinds: { ...edition.userSettingDefaults.mix.kinds, [kind]: false },
+              },
             },
           },
         );
@@ -389,10 +412,23 @@ describe('the Entries', () => {
         const port = createMemoryUserStatePort();
         const userState = await openUserState({ port });
         await port.write(
-          new Map([['edition.switches', JSON.stringify({ off: [feature], etag: `"${feature}"` })]]),
+          new Map([
+            [
+              'edition.switches',
+              JSON.stringify({
+                rules: [{ id: 'kill', feature: feature, verdict: 'off', targets: {} }],
+                minimums: {},
+                etag: '"kill"',
+                clockOffsetMs: 0,
+              }),
+            ],
+          ]),
         );
         const remote = await openRemoteSwitches({
           edition: editionWith(true),
+          states: switchStatesOf(editionWith(true)),
+          facts: readerFacts,
+          clock: fakeClock().clock,
           backend: unreachableBackend(),
           userState,
           schedule: (run) => {
@@ -527,6 +563,72 @@ describe('the Entries', () => {
       expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
     });
 
+    it('lead from a Word past a Hidden Correction, and to it again once unhidden', async () => {
+      const { entries, hiddenEntries } = await openLiveEntries({
+        content: createMemoryContentPort({ words: [talkative], corrections: [chatty, always] }),
+        edition: editionWith(true),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+      });
+
+      await hiddenEntries.hide('c_chatty');
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_always']);
+
+      await hiddenEntries.restore('c_chatty');
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
+    });
+
+    it('lead from a Word past a Correction of a Category of Corrections out of the Mix, and to it again once it is back', async () => {
+      const office: Correction = { ...always, categoryId: 'office' };
+      const { entries, mix } = await openLiveEntries({
+        content: createMemoryContentPort({ words: [talkative], corrections: [chatty, office] }),
+        edition: editionWith(true),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+      });
+
+      await mix.takeOut('everyday', 'correction');
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_always']);
+
+      await mix.putBack('everyday', 'correction');
+      expect(ids(await entries.linkedCorrections(talkative))).toEqual(['c_chatty', 'c_always']);
+    });
+
+    it('lead from a Word to exactly the Corrections `eligible` holds: a Retired one, one of a Category out of the Mix, a Hidden one or one of the kind out of the Mix is out of both', async () => {
+      const office: Correction = { ...always, categoryId: 'office' };
+      const { entries, mix, hiddenEntries } = await openLiveEntries({
+        content: createMemoryContentPort({
+          words: [talkative],
+          corrections: [chatty, office, correction('c_old', true)],
+        }),
+        edition: editionWith(true),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+      });
+      /** The Corrections `eligible` holds and those the Word links, read together. */
+      const both = async () => {
+        const [{ corrections }, linked] = await Promise.all([
+          entries.eligible(),
+          entries.linkedCorrections(talkative),
+        ]);
+        return { eligible: corrections, linked: ids(linked) };
+      };
+      const all = ['c_chatty', 'c_always'];
+
+      // The Word links Retired `c_old` too: live is the first reason.
+      expect(await both()).toEqual({ eligible: all, linked: all });
+
+      await mix.takeOut('office', 'correction');
+      expect(await both()).toEqual({ eligible: ['c_chatty'], linked: ['c_chatty'] });
+
+      await hiddenEntries.hide('c_chatty');
+      expect(await both()).toEqual({ eligible: [], linked: [] });
+
+      await mix.putBack('office', 'correction');
+      await hiddenEntries.restore('c_chatty');
+      expect(await both()).toEqual({ eligible: all, linked: all });
+
+      await mix.setKind('correction', false);
+      expect(await both()).toEqual({ eligible: [], linked: [] });
+    });
+
     it('lead from a Word to no Synonym Row while Synonym Rows are out of the Mix, and back when they return', async () => {
       const row = synonymRow('r_talk');
       const linking: SynonymRow = {
@@ -544,6 +646,34 @@ describe('the Entries', () => {
       expect(await entries.linkingSynonymRow(talkative)).toBeUndefined();
 
       await mix.setKind('synonymRow', true);
+      expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
+    });
+
+    it('lead from a Word to the first Synonym Row that is not Hidden, and to none while every linking row is', async () => {
+      const linking = (id: string): SynonymRow => {
+        const row = synonymRow(id);
+        return {
+          ...row,
+          members: [{ text: 'балакучий', stress: [3], wordId: 'w_talkative' }, ...row.members],
+        };
+      };
+      const { entries, hiddenEntries } = await openLiveEntries({
+        content: createMemoryContentPort({
+          words: [talkative],
+          synonymRows: [linking('r_talk'), linking('r_chat')],
+        }),
+        edition: editionWith(true),
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+      });
+      expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
+
+      await hiddenEntries.hide('r_talk');
+      expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_chat');
+
+      await hiddenEntries.hide('r_chat');
+      expect(await entries.linkingSynonymRow(talkative)).toBeUndefined();
+
+      await hiddenEntries.restore('r_talk');
       expect((await entries.linkingSynonymRow(talkative))?.id).toBe('r_talk');
     });
 

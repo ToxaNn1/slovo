@@ -1,10 +1,10 @@
+import { type Word } from '@slovo/contracts';
 import { describe, expect, it, jest } from '@jest/globals';
 import {
   createMemorySessionStore,
   openAccount,
   systemRandom,
   type FeatureSwitch,
-  type Word,
 } from '@slovo/core';
 import {
   createFakeAppleSignInSheet,
@@ -131,9 +131,8 @@ async function renderScreen({
         words: [sumyrnyi],
       }),
       metadata: () => Promise.reject(new Error('A test pack has no metadata')),
-      crosswordDay: () => Promise.resolve(undefined),
     },
-    version: { contentVersion: 1, packFormat: 1 },
+    contentVersion: () => 1,
     contentUpdate: undefined,
   });
   const composition = await testShell({ userState, languagePack }).composition.opened();
@@ -352,7 +351,7 @@ describe('the Profile', () => {
   });
 
   // Ticket #1646: board 10 p3/p4.
-  it('opens the sheet and the toast at a tap on a Badge not yet earned', async () => {
+  it('opens the sheet, and no toast, at a tap on a Badge not yet earned', async () => {
     await renderScreen();
     const badge = edition.badges[0];
     const badges = editionStrings.settings.badges;
@@ -363,9 +362,8 @@ describe('the Profile', () => {
     expect(within(sheet).getByText(badges.sheet.kicker)).toBeOnTheScreen();
     expect(within(sheet).getByRole('header')).toHaveTextContent(badge?.name ?? '');
     expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent(/^Ще ні · /);
-    expect(
-      screen.getByText(fill(badges.lockedToast, { name: badge?.name ?? '' })),
-    ).toBeOnTheScreen();
+    // The sheet's status says it is not earned yet; no toast over it (run 10).
+    expect(screen.queryByText(/не твоя/)).not.toBeOnTheScreen();
     expect(screen.queryByTestId('badge-stamp')).not.toBeOnTheScreen();
   });
 

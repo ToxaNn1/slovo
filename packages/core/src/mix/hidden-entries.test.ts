@@ -4,13 +4,13 @@ import type { Word } from '@slovo/contracts';
 
 import {
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type Feed,
   type FeedCard,
   type UserStatePort,
 } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';

@@ -4,13 +4,28 @@
  * `timestamptz` and every id a UUID (spec #333, Data model). The tables come
  * with the tickets that need them.
  */
-import type { MistakeType } from '@slovo/contracts';
-import type { Json } from '@slovo/server-core';
+import type {
+  Correction,
+  CrosswordDay,
+  CuratedCollection,
+  Idiom,
+  MistakeType,
+  Platform,
+  RuleTargets,
+  RuleVerdict,
+  SynonymRow,
+  Tip,
+  Word,
+} from '@slovo/contracts';
+import type { Actor, Alert, Json } from '@slovo/server-core';
+import { sql } from 'drizzle-orm';
 import {
+  bigint,
   bigserial,
   boolean,
-  customType,
+  check,
   date,
+  doublePrecision,
   index,
   integer,
   jsonb,
@@ -18,40 +33,8 @@ import {
   primaryKey,
   text,
   timestamp,
-  unique,
   uuid,
 } from 'drizzle-orm/pg-core';
-
-/** Raw bytes, such as a Language Pack file. */
-const bytea = customType<{ data: Uint8Array; driverData: Buffer }>({
-  dataType: () => 'bytea',
-  toDriver: (bytes) => Buffer.from(bytes),
-  fromDriver: (buffer) => new Uint8Array(buffer),
-});
-
-/**
- * The published Language Packs of every Edition, one row each with the bytes
- * of the pack file. A row is never updated: a content version, once
- * published, is immutable (ADR 0011).
- */
-export const contentPacks = pgTable(
-  'content_packs',
-  {
-    id: uuid('id').primaryKey().defaultRandom(),
-    editionId: text('edition_id').notNull(),
-    contentVersion: integer('content_version').notNull(),
-    packFormat: integer('pack_format').notNull(),
-    /** The checksum of the pack's content (ADR 0011), not of the file. */
-    contentChecksum: text('content_checksum').notNull(),
-    /** The SHA-256 of the pack file, as 64 lowercase hex digits. */
-    fileSha256: text('file_sha256').notNull(),
-    /** The size of the pack file, in bytes. */
-    size: integer('size').notNull(),
-    bytes: bytea('bytes').notNull(),
-    publishedAt: timestamp('published_at', { withTimezone: true }).notNull(),
-  },
-  (table) => [unique().on(table.editionId, table.contentVersion)],
-);
 
 /** A time, as every table keeps it. */
 const time = (name: string) => timestamp(name, { withTimezone: true }).notNull();
@@ -171,20 +154,40 @@ export const rateLimits = pgTable(
 );
 
 /**
- * The Feature Switches the owner turned off remotely (ADR 0040), one row per
- * Edition and feature. Clearing a switch keeps its row with `off` false, so a
- * row tells when its switch last changed.
+ * The remote Feature Switch Rules the owner sets (ADR 0089), one row per
+ * Rule: for one Edition and one feature, tried in `order`. A feature's Rules
+ * are replaced together; the Action log keeps the ones before.
  */
-export const remoteSwitches = pgTable(
-  'remote_switches',
+export const switchRules = pgTable(
+  'switch_rules',
   {
     editionId: text('edition_id').notNull(),
     /** The name of the Feature Switch, such as `game`. */
     feature: text('feature').notNull(),
-    off: boolean('off').notNull(),
+    order: integer('order').notNull(),
+    /** The Rule's id, which salts the Rollout on the device. */
+    ruleId: text('rule_id').notNull(),
+    verdict: jsonb('verdict').$type<RuleVerdict>().notNull(),
+    targets: jsonb('targets').$type<RuleTargets>().notNull(),
     setAt: time('set_at'),
   },
-  (table) => [primaryKey({ columns: [table.editionId, table.feature] })],
+  (table) => [primaryKey({ columns: [table.editionId, table.feature, table.order] })],
+);
+
+/**
+ * The force-update minimums of an Edition (ADR 0089), one row per platform:
+ * below `soft` the app asks the reader to update, below `hard` it waits for it.
+ */
+export const forceUpdateMinimums = pgTable(
+  'force_update_minimums',
+  {
+    editionId: text('edition_id').notNull(),
+    platform: text('platform').$type<Platform>().notNull(),
+    soft: text('soft'),
+    hard: text('hard'),
+    setAt: time('set_at'),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.platform] })],
 );
 
 /**
@@ -319,4 +322,263 @@ export const collectionLinks = pgTable('collection_links', {
   /** The Collection's Entry ids, in its order. */
   entryIds: text('entry_ids').array().notNull(),
   createdAt: time('created_at'),
+});
+
+/*
+ * The content of every Edition (ADR 0090): one table per kind, the record's
+ * fields as the contract's schema shapes them, with what each save keeps
+ * beside them. Records are retired, never deleted.
+ */
+
+/** Who changed a record: the import, an Admin user (`admin:<Admin user email>`) or an Агент token (`agent:<name>`). */
+export type ContentAuthor = 'import' | `admin:${string}` | `agent:${string}`;
+
+/**
+ * The batches of content writes: one import, one CLI run or one admin save
+ * each, so a batch can be reviewed and rolled back as one.
+ */
+export const contentBatches = pgTable('content_batches', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  editionId: text('edition_id').notNull(),
+  changedBy: text('changed_by').$type<ContentAuthor>().notNull(),
+  createdAt: time('created_at'),
+  /** When the Content queue reviewed the batch; none while it is «не перевірено». */
+  reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+});
+
+/** The columns every content table has, with the record's fields typed by its contract. */
+function contentColumns<Fields>() {
+  return {
+    editionId: text('edition_id').notNull(),
+    id: text('id').notNull(),
+    fields: jsonb('fields').$type<Fields>().notNull(),
+    /** Raised by one on every change of the record. */
+    recordVersion: integer('record_version').notNull(),
+    /** The Edition's content version the record last changed at. */
+    contentVersion: integer('content_version').notNull(),
+    retired: boolean('retired').notNull(),
+    changedBy: text('changed_by').$type<ContentAuthor>().notNull(),
+    changedAt: time('changed_at'),
+    batchId: uuid('batch_id')
+      .notNull()
+      .references(() => contentBatches.id),
+  };
+}
+
+const contentTable = <Fields>(name: string) =>
+  pgTable(name, contentColumns<Fields>(), (table) => [
+    primaryKey({ columns: [table.editionId, table.id] }),
+    index().on(table.editionId, table.contentVersion),
+  ]);
+
+export const contentWords = pgTable(
+  'content_words',
+  {
+    ...contentColumns<Word>(),
+    /** Set when the Word's text changed after its Recordings were made. */
+    needsNewRecording: boolean('needs_new_recording').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.editionId, table.id] }),
+    index().on(table.editionId, table.contentVersion),
+  ],
+);
+export const contentIdioms = contentTable<Idiom>('content_idioms');
+export const contentCorrections = contentTable<Correction>('content_corrections');
+export const contentTips = contentTable<Tip>('content_tips');
+export const contentSynonymRows = contentTable<SynonymRow>('content_synonym_rows');
+export const contentCuratedCollections = contentTable<CuratedCollection>(
+  'content_curated_collections',
+);
+/** A Crossword day's id is its date. */
+export const contentCrosswordDays = contentTable<CrosswordDay>('content_crossword_days');
+
+/**
+ * Every id an Edition ever gave, with its kind prefix in the id itself:
+ * append-only, so an id never comes back with another meaning (ADR 0010).
+ */
+export const contentIds = pgTable(
+  'content_ids',
+  {
+    editionId: text('edition_id').notNull(),
+    id: text('id').notNull(),
+    registeredAt: time('registered_at'),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.id] })],
+);
+
+/**
+ * The content version of each imported Edition: one integer that only grows,
+ * raised on every publish. No row means the Edition is not imported, and its
+ * content takes no writes.
+ */
+export const contentVersions = pgTable('content_versions', {
+  editionId: text('edition_id').primaryKey(),
+  contentVersion: integer('content_version').notNull(),
+  importedAt: time('imported_at'),
+  updatedAt: time('updated_at'),
+});
+
+/**
+ * The quote check's last finding per quoted record (ADR 0084), at the record
+ * version it checked. A record changed since, by any write other than an
+ * import, has no row at its version: it is unverified.
+ */
+export const quoteChecks = pgTable(
+  'quote_checks',
+  {
+    editionId: text('edition_id').notNull(),
+    kind: text('kind').$type<'word' | 'correction' | 'idiom' | 'synonymRow' | 'tip'>().notNull(),
+    id: text('id').notNull(),
+    recordVersion: integer('record_version').notNull(),
+    outcome: text('outcome').$type<'verified' | 'not-found'>().notNull(),
+    /** What the check found when the quote is not on the page; none when verified. */
+    finding: text('finding'),
+    checkedAt: time('checked_at'),
+  },
+  (table) => [primaryKey({ columns: [table.editionId, table.kind, table.id] })],
+);
+
+/** The sourcing cache: the source pages the quote check fetched, each with when. */
+export const sourcingCache = pgTable('sourcing_cache', {
+  pageUrl: text('page_url').primaryKey(),
+  /** The page's HTTP status: 200, or 404 for no such page. */
+  httpStatus: integer('http_status').notNull(),
+  body: text('body').notNull(),
+  fetchedAt: time('fetched_at'),
+});
+
+/*
+ * The admin's identities, apart from the Account tables (ADR 0088): Admin
+ * users, their admin sessions and recovery codes, the Агент tokens, and the
+ * Action log.
+ */
+
+/** The Admin users: a Власник (`owner`) or an Адмін (`admin`). */
+export const adminUsers = pgTable('admin_users', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  /** The email, trimmed and lower case. */
+  email: text('email').notNull().unique(),
+  role: text('role').$type<'owner' | 'admin'>().notNull(),
+  /** The TOTP secret, sealed with a key of the backend's secret, set when the Admin user enrols at the first sign-in. */
+  totpSecret: text('totp_secret'),
+  /** When the TOTP first signed in; until then the secret is pending and set anew at each enrolment. */
+  totpConfirmedAt: timestamp('totp_confirmed_at', { withTimezone: true }),
+  state: text('state').$type<'active' | 'removed'>().notNull(),
+  createdAt: time('created_at'),
+});
+
+/** The signed-in admin sessions, by the hash of the cookie's token. */
+export const adminSessions = pgTable('admin_sessions', {
+  tokenHash: text('token_hash').primaryKey(),
+  adminUserId: uuid('admin_user_id')
+    .notNull()
+    .references(() => adminUsers.id, { onDelete: 'cascade' }),
+  createdAt: time('created_at'),
+  /** The last request of the session: 8 idle hours end it. */
+  lastSeenAt: time('last_seen_at'),
+  expiresAt: time('expires_at'),
+});
+
+/** The one emailed code of an Admin user's email waiting to sign in, by hash; it lives 10 minutes. */
+export const adminSignInCodes = pgTable('admin_sign_in_codes', {
+  email: text('email').primaryKey(),
+  codeHash: text('code_hash').notNull(),
+  expiresAt: time('expires_at'),
+});
+
+/** The Admin user's one-time recovery codes, by hash; a used code keeps its `used_at`. */
+export const recoveryCodes = pgTable('recovery_codes', {
+  codeHash: text('code_hash').primaryKey(),
+  adminUserId: uuid('admin_user_id')
+    .notNull()
+    .references(() => adminUsers.id, { onDelete: 'cascade' }),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+});
+
+/** The Агент tokens, one per named agent, kept as the token's SHA-256 only. */
+export const agentTokens = pgTable('agent_tokens', {
+  name: text('name').primaryKey(),
+  tokenHash: text('token_hash').notNull().unique(),
+  createdAt: time('created_at'),
+  revokedAt: timestamp('revoked_at', { withTimezone: true }),
+});
+
+/** The Action log: one row per change, appended and never updated or deleted. */
+export const actionLog = pgTable(
+  'action_log',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    /** Who: an Admin user, an Агент or a server command. */
+    who: jsonb('who').$type<Actor>().notNull(),
+    at: time('at'),
+    what: text('what').notNull(),
+    before: jsonb('before').$type<Json>(),
+    after: jsonb('after').$type<Json>(),
+    reason: text('reason'),
+    editionId: text('edition_id'),
+    batchId: text('batch_id'),
+  },
+  (table) => [index('action_log_edition_id_idx').on(table.editionId)],
+);
+
+/** The Owner checks per version, ticked in Розробка without a reason (ADR 0088). */
+export const ownerChecks = pgTable(
+  'owner_checks',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    version: text('version').notNull(),
+    text: text('text').notNull(),
+    addedBy: jsonb('added_by').$type<Actor>().notNull(),
+    addedAt: time('added_at'),
+    tickedAt: timestamp('ticked_at', { withTimezone: true }),
+    tickedBy: jsonb('ticked_by').$type<Actor>(),
+  },
+  (table) => [
+    index('owner_checks_version_idx').on(table.version),
+    check('owner_checks_tick', sql`(${table.tickedAt} is null) = (${table.tickedBy} is null)`),
+  ],
+);
+
+/** The CI runs on `main` CI pushed after each, for Якість (#1728): one row per run. */
+export const ciRuns = pgTable(
+  'ci_runs',
+  {
+    /** GitHub's id of the workflow run. */
+    runId: bigint('run_id', { mode: 'number' }).primaryKey(),
+    at: time('at'),
+    sha: text('sha').notNull(),
+    tests: integer('tests').notNull(),
+    failedTests: jsonb('failed_tests').$type<string[]>().notNull(),
+    coverage: jsonb('coverage')
+      .$type<{ package: string; lines: number; branches: number }[]>()
+      .notNull(),
+    jobs: jsonb('jobs').$type<{ name: string; seconds: number }[]>().notNull(),
+  },
+  (table) => [index('ci_runs_at_idx').on(table.at)],
+);
+
+/** The alert thresholds the owner changed from their defaults (Round 14, 5A). */
+export const alertThresholds = pgTable('alert_thresholds', {
+  key: text('key').primaryKey(),
+  value: doublePrecision('value').notNull(),
+});
+
+/** The alerts fired, kept for Огляд; a key fires once, a Kill switch has none. */
+export const alerts = pgTable(
+  'alerts',
+  {
+    id: bigserial('id', { mode: 'number' }).primaryKey(),
+    at: time('at'),
+    key: text('key').unique(),
+    alert: jsonb('alert').$type<Alert>().notNull(),
+    sentAt: timestamp('sent_at', { withTimezone: true }),
+  },
+  (table) => [index('alerts_at_idx').on(table.at)],
+);
+
+/** The daily digests sent, one per Kyiv day. */
+export const alertDigests = pgTable('alert_digests', {
+  day: date('day', { mode: 'string' }).primaryKey(),
+  sentAt: time('sent_at'),
 });

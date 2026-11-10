@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./admin-api": "./src/admin-api.ts",
     "./api": "./src/api.ts",
     "./api-description": "./src/api-description.ts",
     "./api/test-support": "./src/api/test-support.ts"
@@ -20,10 +21,11 @@
     "@orpc/server": "^1.16.1",
     "@slovo/config": "workspace:*",
     "@types/node": "^22.20.5",
-    "eslint": "^10.13.0",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "^10.14.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   },
   "dependencies": {
     "@orpc/client": "^1.16.1",

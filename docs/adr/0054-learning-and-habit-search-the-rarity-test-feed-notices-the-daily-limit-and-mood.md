@@ -15,6 +15,8 @@ Search, the Rarity Test, Feed Notices, the Word of the Day archive, the Active D
 - Each result reads its kind and text to VoiceOver.
 - **The screen.** The magnifier opens a Search screen of its own stack, a field over the groups, each under its kind's chip; a result opens its Entry card on that stack, so «Назад» returns to the results. The composition holds Search and its recent queries, and Search says which queries it answers, so a query shorter than 2 letters shows nothing rather than «Нічого не знайдено». «За значенням» comes last, after the kinds' groups. While the field is empty, the screen lists the recent queries, newest first, under «Очистити», which empties them at once without asking (they are 10 queries on this device); a tap on one runs it again.
 
+**Amended by ADR 0101.** Search compares by the Comparison Key for a Search query, given by the Core's one text comparison module; Search imports nothing from the Game.
+
 **The Rarity Test** («Перевірка рівня», the step «Перевірити рівень») is offered once in onboarding after the Mix, skippable, and again from Settings («Пройти тест ще раз»).
 
 - **The draw.** 10 Words, 2 of each rarity 1–5, drawn with injected randomness from the Words that are eligible but for the Rarity Floor (not Retired, not Hidden, of a Category in the Mix), asked the commonest first; a rarity with fewer than 2 such Words gives what it has. Each shows only its Lemma with Stress and the buttons «Знаю» / «Не знаю». The test sets the Rarity Floor, so it is absent while the `rarityFloor` switch is off as well as while `rarityTest` is (from 1.0 it sets the Rarity Ceiling, under the `rarityCeiling` switch, ADR 0072).

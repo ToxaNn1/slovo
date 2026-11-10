@@ -1,13 +1,12 @@
 import type { Word } from '@slovo/contracts';
+import { openComposition, systemRandom, type Composition, type GameModeOffer } from '@slovo/core';
 import {
-  openComposition,
-  systemRandom,
-  type Composition,
+  createMemoryContentPort,
+  testEdition,
+  seedUserState,
   type GameMode,
   type GameModeGroup,
-  type GameModeOffer,
-} from '@slovo/core';
-import { createMemoryContentPort, testEdition, seedUserState } from '@slovo/core/testing';
+} from '@slovo/core/testing';
 import { describe, expect, it } from 'vitest';
 
 import { gameModeCard, gameModeGroups, gameModeStrings } from './game-modes';
@@ -76,7 +75,7 @@ async function open({
     content: createMemoryContentPort({ words: Array.from({ length: words }, (_, i) => word(i)) }),
     edition: testEdition({
       isFeatureEnabled: (feature) => !switchedOff.includes(feature),
-      userSettingDefaults: { mix: { corrections: correctionsInMix } },
+      userSettingDefaults: { mix: { kinds: { correction: correctionsInMix } } },
     }),
     userState: await seedUserState(),
     clock: { now: () => new Date('2026-10-15T09:00:00Z'), timeZone: () => 'Europe/Kyiv' },
@@ -93,12 +92,12 @@ const cardsOf = ({ game }: Composition) =>
 const guessWordCard = {
   glyph: '?',
   title: 'Вгадай слово',
-  description: 'Читаєш визначення — обираєш одне слово чи вислів з чотирьох.',
+  line: 'Обери слово за визначенням',
 };
 const correctionCard = {
   glyph: '?!',
   title: 'Обери правильне',
-  description: 'У реченні — поширена ненормативна форма. Знайди нормативну.',
+  line: 'Обери, як кажуть українською',
 };
 
 describe('the card of each Game Mode on offer', () => {
@@ -109,7 +108,8 @@ describe('the card of each Game Mode on offer', () => {
       ...guessWordCard,
       canStart: true,
       refusal: undefined,
-      best: undefined,
+      best: '—',
+      bestLabel: undefined,
     });
   });
 
@@ -123,7 +123,8 @@ describe('the card of each Game Mode on offer', () => {
       ...guessWordCard,
       canStart: false,
       refusal: undefined,
-      best: undefined,
+      best: '—',
+      bestLabel: undefined,
     });
   });
 
@@ -136,33 +137,37 @@ describe('the card of each Game Mode on offer', () => {
         ...guessWordCard,
         canStart: false,
         refusal: 'Замало слів і висловів у твоєму Міксі. Поверни кілька категорій у Налаштуваннях.',
-        best: undefined,
+        best: '—',
+        bestLabel: undefined,
       },
       {
         ...correctionCard,
         canStart: false,
         refusal: 'Замало виправлень у твоєму Міксі. Поверни приховані в Налаштуваннях.',
-        best: undefined,
+        best: '—',
+        bestLabel: undefined,
       },
     ]);
     expect(outOfMix[1]).toEqual({
       ...correctionCard,
       canStart: false,
       refusal: 'Виправлень немає у твоєму Міксі. Увімкни їх у Налаштуваннях.',
-      best: undefined,
+      best: '—',
+      bestLabel: undefined,
     });
   });
 
   it.each([
-    [{ result: 12, of: 15 }, 'Найкраще: 12 з 15'],
-    [{ result: 23 }, 'Найкраще: 23'],
-  ])('shows the Best result %j as «%s»', (best, text) => {
+    [{ result: 12, of: 15 }, '★ 12', 'Найкраще: 12 з 15'],
+    [{ result: 23 }, '★ 23', 'Найкраще: 23'],
+  ])('shows the Best result %j as «%s», read as «%s»', (best, text, label) => {
     const card = gameModeCard(
       { modeId: 'guess-word', entryKind: 'word', group: 'words', canStart: true, best },
       strings,
     );
 
     expect(card.best).toBe(text);
+    expect(card.bestLabel).toBe(label);
   });
 
   it('fails loudly for a registered mode the Edition gives no strings', async () => {

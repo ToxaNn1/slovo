@@ -11,7 +11,7 @@ import {
 import { createMemoryContentPort, seedUserState } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
-import { act, fireEvent, screen, within } from 'expo-router/testing-library';
+import { act, fireEvent, screen, waitFor, within } from 'expo-router/testing-library';
 import { renderRoutes } from '../shell/test-render';
 import { AccessibilityInfo } from 'react-native';
 import { State } from 'react-native-gesture-handler';
@@ -29,10 +29,10 @@ const { config } = activeEditionFiles;
 
 /** The UA Edition with the Knowledge switch on and the side swipes as `swipeMarks` says. */
 function editionWith(swipeMarks: boolean): Edition {
-  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, boolean> };
+  const { featureSwitches, ...rest } = config as { featureSwitches: Record<string, string> };
   return loadEdition({
     ...rest,
-    featureSwitches: { ...featureSwitches, knowledge: true, swipeMarks },
+    featureSwitches: { ...featureSwitches, knowledge: 'on', swipeMarks: swipeMarks ? 'on' : 'off' },
   });
 }
 
@@ -266,5 +266,24 @@ describe('the side swipes on the Feed (ADR 0077)', () => {
     await swipeUp();
 
     expect(screen.queryByTestId('undo-toast', hidden)).toBeNull();
+  });
+});
+
+describe('the «⋯» sheet of an Entry card on the Feed', () => {
+  it('closes with «Скасувати», as on the board (ADR 0092)', async () => {
+    await open(true);
+    await renderApp();
+    const page = within(screen.getByTestId('feed-card-0'));
+    await settle(() => fireEvent.press(page.getByRole('button', { name: 'Більше дій' })));
+
+    const menu = within(screen.getByTestId('entry-menu'));
+    expect(menu.getByRole('button', { name: 'Скасувати' })).toBeOnTheScreen();
+    expect(menu.queryByRole('button', { name: 'Закрити' })).toBeNull();
+
+    await settle(() => fireEvent.press(menu.getByRole('button', { name: 'Скасувати' })));
+    // The sheet slides away.
+    await waitFor(() => {
+      expect(screen.queryByTestId('entry-menu')).toBeNull();
+    });
   });
 });

@@ -16,20 +16,12 @@ import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useEdition } from '../providers/EditionProvider';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
-import { space, typeStyle } from '../tokens';
+import { fontScaleCap, pairsGridLayout, space, typeStyle } from '../tokens';
 import { RIGHT_FILL, WRONG_FILL } from './round-motion';
 
-/** A cell's height and corner, the design's pairs tile, above the 44 pt touch target. */
-const CELL_HEIGHT = 70;
-const CELL_RADIUS = 16;
-/** The gap between the columns and between the cells of a column. */
-const CELL_GAP = 12;
-/** How far the largest text sizes of iOS may scale a Definition, so a long one stays in the grid. */
-const DEFINITION_MAX_FONT_SCALE = 1.5;
 /** How a right pair pops: from small, past its size, back. */
 const CELL_POP = [0.6, 1.12, 1];
-/** How far a wrong pair drops, how far its cells turn (a Word left, a Definition right), how much it fades. */
-const CELL_DROP = 8;
+/** How far a wrong pair's cells turn (a Word left, a Definition right), how much it fades. */
 const CELL_TURN = 3;
 const WRONG_OPACITY = 0.6;
 
@@ -136,7 +128,7 @@ export function PairsGrid({
               }}
             >
               <Text
-                maxFontSizeMultiplier={DEFINITION_MAX_FONT_SCALE}
+                maxFontSizeMultiplier={fontScaleCap.text}
                 style={[typeStyle('pairsDefinition', tokens), { color: textColor(look) }]}
               >
                 {shown}
@@ -199,7 +191,7 @@ function Cell({
         transform: still
           ? []
           : [
-              { translateY: CELL_DROP * moved.value },
+              { translateY: pairsGridLayout.cellDrop * moved.value },
               { rotate: `${String(turn * moved.value)}deg` },
             ],
       };
@@ -218,7 +210,7 @@ function Cell({
         <PressedTile
           testID={testID}
           tone={TONES[look]}
-          radius={CELL_RADIUS}
+          radius={pairsGridLayout.cellRadius}
           accessibilityLabel={label}
           accessibilityState={{ selected: look === 'selected', disabled: answered || gone }}
           inert={answered || gone}
@@ -233,12 +225,12 @@ function Cell({
 }
 
 const styles = StyleSheet.create({
-  grid: { flexDirection: 'row', gap: CELL_GAP },
+  grid: { flexDirection: 'row', gap: pairsGridLayout.cellGap },
   // The design's columns, .8 and 1.2 of the width.
-  words: { flex: 2, gap: CELL_GAP },
-  definitions: { flex: 3, gap: CELL_GAP },
+  words: { flex: 2, gap: pairsGridLayout.cellGap },
+  definitions: { flex: 3, gap: pairsGridLayout.cellGap },
   cell: {
-    minHeight: CELL_HEIGHT,
+    minHeight: pairsGridLayout.cellHeight,
     justifyContent: 'center',
     paddingHorizontal: space[3],
     paddingVertical: space[2],

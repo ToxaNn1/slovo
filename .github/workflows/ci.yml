@@ -39,42 +39,42 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
       - run: pnpm typecheck
-      # The package boundaries the ADRs set, import cycles and orphan modules.
+      # The package boundaries the ADRs set, import cycles, orphan modules and
+      # unused exports of the Core's main entry.
       - run: pnpm deps
 
-  # Which of the app and the site a pull request can affect (ADR 0086). A pull
-  # request that changes only the site skips the app's tests, and one that
-  # changes only the app skips the site's; every other change, and every push
-  # to main, runs both. Lint and typecheck always cover the whole workspace.
+  # Which test parts a pull request can affect (ADR 0098, amending 0086):
+  # those of the packages Turborepo counts as affected, changed or depending
+  # on a changed package. An Edition's legal pages and pages.yml count for the
+  # site, maestro.yml and ota-update.yml for the app; documentation counts for
+  # nothing. A change outside the packages (an Edition's content, a root
+  # config, the lockfile, a workflow, a script), a failed detection and every
+  # push to main run every part. Lint, typecheck, the package boundaries, the
+  # Contract and the Language Pack always cover the whole workspace.
   changes:
     name: Changed parts
     runs-on: ubuntu-latest
     timeout-minutes: 5
     outputs:
-      mobile: ${{ steps.parts.outputs.mobile }}
+      core: ${{ steps.parts.outputs.core }}
+      ui: ${{ steps.parts.outputs.ui }}
+      other: ${{ steps.parts.outputs.other }}
+      other_filters: ${{ steps.parts.outputs.other_filters }}
       site: ${{ steps.parts.outputs.site }}
+      admin: ${{ steps.parts.outputs.admin }}
+      mobile: ${{ steps.parts.outputs.mobile }}
+      backend: ${{ steps.parts.outputs.backend }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Turborepo compares the pull request with its base.
+          fetch-depth: 0
+          persist-credentials: false
       - id: parts
-        shell: bash
         env:
+          EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          mobile=true
-          site=true
-          if [ -n "$BASE_SHA" ]; then
-            git fetch --depth=1 origin "$BASE_SHA"
-            # The videos (apps/video) are left out of CI (ADR 0087).
-            changed=$(git diff --name-only "$BASE_SHA" HEAD | grep -v '^apps/video/' || true)
-            # The app links to the legal pages by address and never reads them.
-            site_only='^(apps/site/|editions/[^/]+/legal/|\.github/workflows/pages\.yml$)'
-            mobile_only='^(apps/mobile/|\.github/workflows/(maestro|ota-update)\.yml$)'
-            grep -qvE "$site_only" <<<"$changed" || mobile=false
-            grep -qvE "$mobile_only" <<<"$changed" || site=false
-          fi
-          echo "mobile=$mobile site=$site"
-          echo "mobile=$mobile" >> "$GITHUB_OUTPUT"
-          echo "site=$site" >> "$GITHUB_OUTPUT"
+        run: node scripts/ci-affected-parts.mjs
 
   test:
     name: Test ${{ matrix.part.name }}
@@ -86,16 +86,29 @@ jobs:
       fail-fast: false
       matrix:
         part:
-          - { name: Core, run: 'pnpm test --filter=@slovo/core' }
-          - { name: UI, run: 'pnpm test --filter=@slovo/ui' }
+          - { name: Core, for: core, run: 'pnpm test --filter=@slovo/core' }
+          # The UI's Vitest and Jest tests, cut in three like the app's.
+          - {
+              name: UI 1/3,
+              for: ui,
+              run: 'pnpm --filter=@slovo/ui exec vitest run --shard=1/3 && pnpm --filter=@slovo/ui exec jest --shard=1/3',
+            }
+          - {
+              name: UI 2/3,
+              for: ui,
+              run: 'pnpm --filter=@slovo/ui exec vitest run --shard=2/3 && pnpm --filter=@slovo/ui exec jest --shard=2/3',
+            }
+          - {
+              name: UI 3/3,
+              for: ui,
+              run: 'pnpm --filter=@slovo/ui exec vitest run --shard=3/3 && pnpm --filter=@slovo/ui exec jest --shard=3/3',
+            }
           # The other packages but the backend, whose tests need Postgres: the
-          # job "Backend" runs them.
-          - name: other packages
-            run: >-
-              pnpm test --filter='!@slovo/backend' --filter='!@slovo/core'
-              --filter='!@slovo/ui' --filter='!@slovo/mobile' --filter='!@slovo/site'
-              --filter='!@slovo/video'
+          # job "Backend" runs them. OTHER_FILTERS names the affected ones, or
+          # leaves out the packages tested elsewhere when every part runs.
+          - { name: other packages, for: other, run: 'pnpm test $OTHER_FILTERS' }
           - { name: site, for: site, run: 'pnpm test --filter=@slovo/site' }
+          - { name: admin build, for: admin, run: 'pnpm --filter=@slovo/admin build' }
           - { name: app Vitest, for: mobile, run: 'pnpm --filter=@slovo/mobile exec vitest run' }
           # The app's Jest tests, the slowest part, cut in three.
           - {
@@ -117,9 +130,10 @@ jobs:
               run: 'pnpm --filter=@slovo/mobile exec jest --shard=3/3',
             }
     env:
-      # A part for the app or the site passes without running when the pull
-      # request can't affect it; a skipped job would turn the required check red.
-      RUN: ${{ !matrix.part.for || needs.changes.outputs[matrix.part.for] == 'true' }}
+      # A part passes without running when the pull request can't affect it;
+      # a skipped job would turn the required check red.
+      RUN: ${{ needs.changes.outputs[matrix.part.for] == 'true' }}
+      OTHER_FILTERS: ${{ needs.changes.outputs.other_filters }}
     steps:
       - if: ${{ env.RUN != 'true' }}
         run: echo 'The pull request does not affect this part.'
@@ -141,12 +155,64 @@ jobs:
           restore-keys: jest-${{ runner.os }}-${{ matrix.part.shard }}-
       - if: ${{ env.RUN == 'true' }}
         run: ${{ matrix.part.run }}
+      # In CI each test run writes a JUnit report and a coverage summary to its
+      # package's coverage/ folder (packages/config/test-reports.js); the part
+      # keeps them as an artifact for the test history.
+      - name: Publish the coverage to the job summary
+        id: reports
+        if: ${{ !cancelled() && env.RUN == 'true' }}
+        shell: bash
+        env:
+          PART: ${{ matrix.part.name }}
+        run: |
+          {
+            echo "## Coverage of $PART"
+            find apps packages tools -name node_modules -prune -o -name coverage-summary.json -print \
+              | sort | xargs -r node -e '
+                for (const file of process.argv.slice(1)) {
+                  const { lines, branches } = require(`./${file}`).total;
+                  const [where, runner] = file.split("/coverage/");
+                  console.log(`- \`${where}\` ${runner.split("/")[0]}: lines ${lines.pct}%, branches ${branches.pct}%`);
+                }'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # An artifact's name takes no slash: "app 1/3" becomes "app-1-3".
+          name="${PART//[ \/]/-}"
+          echo "artifact=test-reports-$name" >> "$GITHUB_OUTPUT"
+      - name: Upload the test reports and coverage
+        if: ${{ !cancelled() && env.RUN == 'true' }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ steps.reports.outputs.artifact }}
+          path: |
+            apps/*/coverage/
+            packages/*/coverage/
+            tools/*/coverage/
+          retention-days: 30
 
   pack:
     name: Contract and Language Pack
     runs-on: ubuntu-latest
-    # content verify asks goroh politely; a content wave of ~500 Entries takes about 15 minutes.
-    timeout-minutes: 30
+    timeout-minutes: 15
+    # The pack is built from the content snapshot of a local backend, as every
+    # app build builds it from the Deployment's.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: slovo
+          POSTGRES_PASSWORD: slovo
+          POSTGRES_DB: slovo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready --username=slovo --dbname=slovo"
+          --health-interval 2s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      DATABASE_URL: postgres://slovo:slovo@localhost:5432/slovo
+      PORT: 8787
+      EXPO_PUBLIC_SLOVO_API_URL: http://localhost:8787
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
@@ -163,6 +229,18 @@ jobs:
             git show "FETCH_HEAD:$promised" > "$RUNNER_TEMP/promised.json"
             pnpm describe:api "$RUNNER_TEMP/promised.json"
           fi
+      # The Edition folder's content, imported into an empty database, served
+      # by the backend. The SMTP settings are placeholders: no email is sent.
+      - name: Import the Ukrainian content and start the backend
+        shell: bash
+        run: |
+          pnpm --filter @slovo/backend db:migrate
+          pnpm --silent content import --edition uk
+          AUTH_SECRET="$(openssl rand -base64 32)" SMTP_HOST=localhost SMTP_PORT=1025 \
+            nohup pnpm --filter @slovo/backend start > "$RUNNER_TEMP/backend.log" 2>&1 &
+          for _ in $(seq 60); do curl -fs "http://localhost:$PORT/health" && exit 0; sleep 1; done
+          cat "$RUNNER_TEMP/backend.log"
+          echo "::error::The backend did not answer /health in 60 s"; exit 1
       # Fails on invalid content and on any missed content target of the Edition.
       - name: Build the Ukrainian Language Pack and check its content targets
         id: pack
@@ -178,38 +256,6 @@ jobs:
             cat "$RUNNER_TEMP/content-report.txt"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-      # The sourcing cache, so that a re-run or a later pull request verifies
-      # a page it fetched before without asking goroh again.
-      - name: Restore the sourcing cache
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-        with:
-          path: ~/.cache/slovo-sourcing
-          key: sourcing-${{ github.run_id }}-${{ github.run_attempt }}
-          restore-keys: sourcing-
-      # Every Entry a pull request adds or changes must quote the page its
-      # first source cites (ADR 0012, 0080); content verify fetches the pages.
-      - name: Verify the quotes of the Entries the pull request changes
-        if: ${{ github.event_name == 'pull_request' }}
-        shell: bash
-        env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
-        run: |
-          git fetch --depth=1 origin "$BASE_SHA"
-          if git diff --quiet "$BASE_SHA" HEAD -- editions/uk/content; then
-            echo 'No Entry changed.'
-            exit 0
-          fi
-          status=0
-          pnpm content verify --changed "$BASE_SHA" --edition uk \
-            | tee "$RUNNER_TEMP/verify-report.txt" || status=$?
-          {
-            echo '## Quotes of the changed Entries'
-            echo '```text'
-            cat "$RUNNER_TEMP/verify-report.txt"
-            echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
-          exit "$status"
 
   checks:
     # The check ruleset 26239313 requires: keep this name.
@@ -230,8 +276,36 @@ jobs:
             if [ "$result" != success ]; then exit 1; fi
           done
 
+  # Pushes this run's tests, coverage and job durations to Якість (ADR 0096).
+  # Runs on main only, after the checks; it never makes main red.
+  ci-history:
+    name: CI history
+    if: ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: [checks]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    continue-on-error: true
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Download the test reports
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh run download "$GITHUB_RUN_ID" --repo "$GITHUB_REPOSITORY" --pattern 'test-reports-*' --dir "$RUNNER_TEMP/reports" || true
+      - name: Push the run to the CI history
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          SLOVO_BACKEND_URL: ${{ secrets.SLOVO_BACKEND_URL }}
+          CI_HISTORY_TOKEN: ${{ secrets.CI_HISTORY_TOKEN }}
+        run: mkdir -p "$RUNNER_TEMP/reports" && node scripts/ci-history.mjs "$RUNNER_TEMP/reports"
+
   backend:
     name: Backend
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 15
     services:
@@ -251,13 +325,21 @@ jobs:
           --health-retries 15
     env:
       DATABASE_URL: postgres://slovo:slovo@localhost:5432/slovo
+      # Passes without running when the pull request can't affect the backend.
+      RUN: ${{ needs.changes.outputs.backend }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: ./.github/actions/setup
+      - if: ${{ env.RUN != 'true' }}
+        run: echo 'The pull request does not affect the backend.'
+      - if: ${{ env.RUN == 'true' }}
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - if: ${{ env.RUN == 'true' }}
+        uses: ./.github/actions/setup
       # Every migration, from an empty database.
-      - run: pnpm --filter @slovo/backend db:migrate
+      - if: ${{ env.RUN == 'true' }}
+        run: pnpm --filter @slovo/backend db:migrate
       # Each test file makes its own database on the same server and drops it after.
-      - run: pnpm test --filter=@slovo/backend
+      - if: ${{ env.RUN == 'true' }}
+        run: pnpm test --filter=@slovo/backend
 
   image:
     name: Container image
@@ -306,9 +388,15 @@ jobs:
           EOF
           run=(docker run --network host --env-file "$RUNNER_TEMP/backend.env")
           "${run[@]}" --rm slovo-backend pnpm db:migrate
+          # The admin answers 404 until a Власник exists (ADR 0088).
+          "${run[@]}" --rm slovo-backend pnpm admin owner add owner@example.com
           "${run[@]}" --detach --name backend slovo-backend
           for _ in $(seq 1 30); do
-            if curl --silent --fail http://localhost:8787/health; then exit 0; fi
+            if curl --silent --fail http://localhost:8787/health; then
+              # The built owner admin, at /admin with its assets.
+              curl --silent --fail http://localhost:8787/admin/ | grep -q '/admin/assets/' && exit 0
+              break
+            fi
             sleep 2
           done
           docker logs backend

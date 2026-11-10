@@ -1,20 +1,15 @@
+import { type Idiom } from '@slovo/contracts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import {
-  createEntries,
-  EVERYTHING_IN,
-  type Idiom,
-  openComposition,
-  type Entries,
-} from '@slovo/core';
-import { seedUserState } from '@slovo/core/testing';
+import { openComposition } from '@slovo/core';
+import { seedUserState, createEntries, EVERYTHING_IN, type Entries } from '@slovo/core/testing';
 
-import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
-import { ukrainian, ukrainianFolder } from './test-support';
+import { openLanguagePack, type NodeLanguagePack } from './index';
+import { buildUkrainianPack, ukrainian, ukrainianFolder } from './test-support';
 
 // The Idioms of the real Ukrainian Language Pack, read by the Core as the app
 // reads them (spec #549, seam 1). It lives here because only this package can
@@ -27,7 +22,7 @@ let entries: Entries;
 beforeAll(() => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-idioms-'));
   const outFile = join(workDir, 'language-pack.db');
-  const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
+  const result = buildUkrainianPack(outFile);
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
   entries = createEntries({ content: pack, edition: ukrainian, choices: EVERYTHING_IN });
@@ -41,7 +36,7 @@ afterAll(() => {
 describe('the Idioms of the UA Edition', () => {
   it('turns Idioms on and has them in the default Mix', () => {
     expect(ukrainian.isFeatureEnabled('idioms')).toBe(true);
-    expect(ukrainianFolder.config.userSettingDefaults.mix.idioms).toBe(true);
+    expect(ukrainianFolder.config.userSettingDefaults.mix.kinds.idiom).toBe(true);
   });
 
   it('names each Idiom Type in the Edition strings', () => {

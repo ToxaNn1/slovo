@@ -1,3 +1,4 @@
+import { type Entry } from '@slovo/contracts';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -5,23 +6,25 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
-  type Entry,
-  ENTRY_KINDS,
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type ContentReadPort,
   type Edition,
   type Feed,
   type FeedCard,
-  NOTIFICATION_BODY_LENGTH,
   type Random,
   type TrackedUserState,
 } from '@slovo/core';
-import { createFakeNotificationScheduler, seedUserState } from '@slovo/core/testing';
+import {
+  createFakeNotificationScheduler,
+  seedUserState,
+  ENTRY_KINDS,
+  SEEN_DWELL_MS,
+  NOTIFICATION_BODY_LENGTH,
+} from '@slovo/core/testing';
 
-import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
-import { ukrainian, ukrainianFolder } from './test-support';
+import { openLanguagePack, type NodeLanguagePack } from './index';
+import { buildUkrainianPack, ukrainian } from './test-support';
 
 // The Core's Feed over the real Ukrainian Language Pack, opened through the
 // Core composition (spec #96, seam 1). It lives here because only this
@@ -79,7 +82,7 @@ const wordsOnly: Edition = {
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-feed-'));
   const outFile = join(workDir, 'language-pack.db');
-  const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
+  const result = buildUkrainianPack(outFile);
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
   content = remembering(pack);

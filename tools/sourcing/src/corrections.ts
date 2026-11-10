@@ -39,6 +39,7 @@ export type CorrectionSourcingOptions = PipelineOptions & {
  */
 export function sourceCorrections(options: CorrectionSourcingOptions): Promise<SourcingResult> {
   return runSourcing(options.formList, options, {
+    entryKind: 'correction',
     folder: 'corrections',
     idPrefix: 'c_',
     parseLine: parseFormLine,
@@ -128,13 +129,14 @@ function draftFrom(
 ): KindDraft {
   const { form } = request;
   const url = gorohUrl('Слововживання', form);
+  const [mainEquivalent, ...otherEquivalents] = article?.standardEquivalents ?? [];
+  const standardEquivalents: CorrectionInput['standardEquivalents'] | undefined =
+    mainEquivalent === undefined ? undefined : [mainEquivalent, ...otherEquivalents];
   const draft = {
     id: context.newId(),
     nonStandardForm: form,
     correctionType: request.correctionType,
-    ...(article === undefined || article.standardEquivalents.length === 0
-      ? {}
-      : { standardEquivalents: [...article.standardEquivalents] }),
+    ...(standardEquivalents === undefined ? {} : { standardEquivalents }),
     ...(article === undefined || article.explanation === ''
       ? {}
       : { explanation: article.explanation }),

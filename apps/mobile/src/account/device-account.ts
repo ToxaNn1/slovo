@@ -1,6 +1,5 @@
 import { openAccount, type Account } from '@slovo/core';
 
-import { deviceAnalytics } from '../analytics/posthog-analytics';
 import { nativeModules } from '../device/device-native-modules';
 import type { DevicePorts } from '../shell-value';
 import { createAppleSignInSheet, noAppleSignInSheet } from './apple-sign-in-sheet';
@@ -90,6 +89,5 @@ export function openDeviceAccount(ports: DevicePorts): Promise<Account> {
     googleSheet: googleSignInSheet,
     appleSheet: appleSignInSheet,
     sessions: createSessionStore(keychain),
-    analytics: deviceAnalytics,
   });
 }

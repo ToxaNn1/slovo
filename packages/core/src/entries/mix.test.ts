@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import {
   kindsShown,
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type ContentReadPort,
@@ -11,6 +10,7 @@ import {
   type FeedCard,
   type UserStatePort,
 } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
 import { createMemoryContentPort } from '../testing';
 import { RARITIES, type Category } from '@slovo/contracts';
 import { correction, fakeClock, idiom, testEdition, word } from '../test-support';
@@ -612,7 +612,9 @@ describe('eligibility over the Mix', () => {
     expect(entryIdsOf(app.feed.cards).slice(0, 1)).toEqual(
       before.filter((id) => !isWordOf(hidden)(id)).slice(0, 1),
     );
-    expect(app.feed.cards[app.feed.position + 1]).toBeDefined();
+    const next = app.feed.cards[app.feed.position + 1];
+    expect(next?.entryId).toEqual(expect.any(String));
+    expect(isWordOf(hidden)(next?.entryId ?? '')).toBe(false);
 
     await app.mix.putBack(hidden.id);
 
@@ -654,7 +656,9 @@ describe('eligibility over the Mix', () => {
     const now = app.feed.cards[app.feed.position];
     expect(now?.kind).not.toBe('end-of-cycle');
     expect(isWordOf(hidden)(now?.entryId ?? '')).toBe(false);
-    expect(app.feed.cards[app.feed.position + 1]).toBeDefined();
+    const next = app.feed.cards[app.feed.position + 1];
+    expect(next?.entryId).toEqual(expect.any(String));
+    expect(isWordOf(hidden)(next?.entryId ?? '')).toBe(false);
     time.advance(MINUTE);
     const reopened = await run({ records, clock: time.clock });
     expect(reopened.feed.cards[reopened.feed.startPosition]?.entryId).toBe(now?.entryId);

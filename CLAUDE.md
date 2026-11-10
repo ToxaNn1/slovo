@@ -16,6 +16,7 @@ SLOVO is a factory of single-language rare-word apps: one language-agnostic Core
 - Read `CONTEXT.md` and an ADR with `grep` for the terms and numbers your change names; read one whole only when the change is about it. Every file you read stays in the context of every later step.
 - Respect every ADR. When a ticket conflicts with the glossary or an ADR, stop and report the conflict to the owner.
 - Record a new decision as an ADR in the same change.
+- A change that adds, changes or removes a feature updates that feature's page in the owner's handbook `~/Downloads/WORD/handbook/` in the same change: Ukrainian, plain words, the page template from its `README.md`. A new feature gets a new page and a line in that `README.md`. A cloud session, which has no such folder, names the page and what changed in its report.
 
 ## Tickets
 
@@ -23,9 +24,21 @@ Work comes from GitHub issues in STAR form: Situation / Task / Action / Result /
 
 - The **Result** checklist is the definition of done. Tick every item or say why not.
 - Specs form a tree: master spec #1, version specs (one per milestone), tickets under them.
-- Labels: one type (`feature`, `bug`, `chore`, `docs`), `area:*` labels, `ready-for-agent`, `spec`. Milestones are versions `0.1` to `1.0`. Leave labels, milestones and issue edits to the owner.
+- Labels: one type (`feature`, `bug`, `chore`, `docs`), `area:*` labels, `ready-for-agent`, `spec`. Milestones are versions `0.1` to `1.0`.
 - Branch names: `<type>/<ticket-number>-<slug>`, e.g. `docs/4-repo-conventions`.
 - A spec is built on one integration branch by implementer subagents and reaches `main` as one PR: `docs/agents/waves.md`.
+
+## Agent skills
+
+Planning and build skills come from the `mattpocock-skills` plugin (`.claude/settings.json`). Call them by their full name, e.g. `/mattpocock-skills:to-spec`, `mattpocock-skills:tdd`; when a skill name exists twice, the plugin's one wins. Do not use another grill, spec or ticket skill (a personal `grill-me`, `anthropic-skills:grill-me`) and never write `docs/SPEC.md` or `docs/DECISIONS.md`: specs and tickets are GitHub issues.
+
+### Issue tracker
+
+GitHub issues in STAR form, specs as parents of their tickets. See `docs/agents/issue-tracker.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` is the glossary (skills that say `GLOSSARY.md` mean it), decisions in `docs/adr/`. See `docs/agents/domain.md`.
 
 ## Language
 
@@ -36,7 +49,7 @@ Write everything in the repo in English: code, comments, tests, docs, commit mes
 - `main` takes changes through PRs with green CI only. Work on a branch.
 - Commit and push only when the owner asks in the current conversation. One approval covers that one commit.
 - CI checks that every commit is the owner's and that no AI attribution is left; a PR with auto-merge on merges itself once every check is green.
-- Write Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`). Keep commits small and logical.
+- Write Conventional Commits (`feat:`, `fix:`, `docs:`, `chore:`, `test:`, `refactor:`, `style:`). Keep commits small and logical.
 - A scope is a workspace folder name (`mobile`, `ui`, `site` …), `deps`, `deps-dev` or `test`: `commitlint.config.js`. `.claude/hooks/commit-messages.mjs` lints every commit and blocks a push CI's "Commit messages" check would fail; reword, never work around it.
 - Commits come from the owner's identity alone. Leave git config and hooks untouched and let hooks run. Commit messages, PR titles and PR descriptions carry no `Co-Authored-By` trailer and no AI attribution, whatever your tooling suggests.
 

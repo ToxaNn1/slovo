@@ -2,6 +2,7 @@ import type { CuratedCollection } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { openComposition, type FeatureSwitch } from '../index';
+import type { UserStatePort } from '../ports';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, settle, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -23,11 +24,13 @@ async function run({
   on = ['wordOfTheDay', 'dashboard', 'curatedCollections'],
   curatedCollections = collections,
   start = '2026-11-04T09:00:00+02:00',
+  port = createMemoryUserStatePort(records),
 }: {
   records?: Map<string, string>;
   on?: FeatureSwitch[];
   curatedCollections?: readonly CuratedCollection[];
   start?: string;
+  port?: UserStatePort;
 } = {}) {
   const time = fakeClock(start);
   const app = await openComposition({
@@ -36,7 +39,7 @@ async function run({
       curatedCollections,
     }),
     edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState: await openUserState({ port }),
     clock: time.clock,
     random: { next: () => 0.25 },
   });
@@ -66,7 +69,13 @@ describe('The Curated Collections rail', () => {
       }),
       edition: testEdition({
         isFeatureEnabled: (feature) =>
-          ['dashboard', 'curatedCollections', 'corrections', 'correctionTypes'].includes(feature),
+          [
+            'wordOfTheDay',
+            'dashboard',
+            'curatedCollections',
+            'corrections',
+            'correctionTypes',
+          ].includes(feature),
       }),
       userState: await openUserState({ port: createMemoryUserStatePort() }),
       clock: fakeClock('2026-11-04T09:00:00+02:00').clock,
@@ -122,6 +131,38 @@ describe('The Curated Collections rail', () => {
     expect([...records.keys()].filter((key) => key.startsWith('curatedCollections.'))).toEqual([
       'curatedCollections.opened.cc_today',
     ]);
+  });
+
+  it('keeps the newer rail when an older refresh reads after it', async () => {
+    const memory = createMemoryUserStatePort();
+    const held: (() => void)[] = [];
+    let holding = false;
+    const port: UserStatePort = {
+      ...memory,
+      async list(prefix) {
+        const found = await memory.list(prefix);
+        if (!holding || !prefix.startsWith('curatedCollections.opened.')) return found;
+        return new Promise((resolve) =>
+          held.push(() => {
+            resolve(found);
+          }),
+        );
+      },
+    };
+    const { app } = await run({ port });
+
+    // «+ Додати» changes the Collections, which refreshes the rail: its read is slow.
+    holding = true;
+    await app.curatedCollections.add('cc_jan');
+    holding = false;
+    expect(held).toHaveLength(1);
+    await app.curatedCollections.open('cc_jan');
+    expect(idsOf(app)).toEqual(['cc_today:new', 'cc_oct:new', 'cc_jan:opened']);
+
+    for (const release of held) release();
+    await settle();
+
+    expect(idsOf(app)).toEqual(['cc_today:new', 'cc_oct:new', 'cc_jan:opened']);
   });
 
   it('shows ten collections at most', async () => {
@@ -252,6 +293,19 @@ describe('A Curated Collection screen', () => {
     // The source is kept: the next app run still shows «Додано ✓».
     const next = await runPicks(records);
     expect(next.app.curatedCollections.rail[0]?.added).toBe(true);
+  });
+
+  it('makes one copy on a double tap: the second «+ Додати» while the first is copying is nothing', async () => {
+    const { app } = await runPicks();
+
+    const [first, second] = await Promise.all([
+      app.curatedCollections.add('cc_picks'),
+      app.curatedCollections.add('cc_picks'),
+    ]);
+
+    expect(first?.source).toBe('cc_picks');
+    expect(second).toBeUndefined();
+    expect(app.collections.list.filter(({ source }) => source === 'cc_picks')).toHaveLength(1);
   });
 
   it('copies under the duplicate-name rule, and is «Додати» again once the copy is deleted', async () => {

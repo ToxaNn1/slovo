@@ -6,8 +6,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Correction } from '@slovo/contracts';
 
-import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
-import { ukrainianFolder } from './test-support';
+import { openLanguagePack, type NodeLanguagePack } from './index';
+import { buildUkrainianPack, ukrainianFolder } from './test-support';
 
 // The paronyms of the real Ukrainian Language Pack: Corrections of Correction
 // Type paronym, two look-alike words swapped (spec #680, seam 1).
@@ -20,7 +20,7 @@ let pack: NodeLanguagePack;
 beforeAll(() => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-paronyms-'));
   const outFile = join(workDir, 'language-pack.db');
-  const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
+  const result = buildUkrainianPack(outFile);
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
 });

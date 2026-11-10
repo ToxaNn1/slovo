@@ -1,10 +1,9 @@
 import type { AnswerForm, AnswerSheet } from './answer-form';
-import { typedAnswerMatches } from './typed-answer';
 
 /** The content of a typed Round as a Game Mode builds it. */
 export interface TypedContent {
   readonly form: 'typed';
-  /** The text to type, compared the way `typedAnswerMatches` does. */
+  /** The text to type, compared by its Comparison Key as a typed answer. */
   readonly expected: string;
   /**
    * Whether the text shows as blanks, one per character, which «Відкрити
@@ -74,13 +73,13 @@ export const typedForm: AnswerForm<TypedContent, TypedRound, TypedGiven, TypedAn
       );
     return { form: 'typed', blanks, canOpenLetter: canOpenLetterIn(blanks) };
   },
-  judge({ expected, sheet }, _shown, { text }) {
+  judge({ expected, sheet }, _shown, { text }, comparison) {
     return {
       answer: {
         form: 'typed',
         typed: text,
         expected,
-        right: typedAnswerMatches(text, expected),
+        right: comparison.same(text, expected, 'typedAnswer'),
         sheet,
       },
     };

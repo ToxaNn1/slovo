@@ -20,12 +20,9 @@ import { Button } from '../primitives/Button';
 import { PressedTile } from '../primitives/PressedTile';
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { crosswordLayout, tracedCrosswordLayout, typeStyle } from '../tokens';
-import type { CrosswordPlace } from './CrosswordGrid';
+import { crosswordLayout, fontScaleCap, tracedCrosswordLayout, typeStyle } from '../tokens';
+import type { CrosswordPlace } from './CrossingGrid';
 import { ease } from './round-motion';
-
-/** How far the largest text sizes of iOS may scale a cell's letter, so it stays inside its cell. */
-const CELL_MAX_FONT_SCALE = 1.3;
 
 /** A letter of the grid and whether it carries the Stress mark. */
 export interface TracedLetter {
@@ -209,7 +206,7 @@ export function TracedCrosswordGrid({
                     >
                       <Text
                         {...voice}
-                        maxFontSizeMultiplier={CELL_MAX_FONT_SCALE}
+                        maxFontSizeMultiplier={fontScaleCap.number}
                         style={[typeStyle('crosswordLetter', tokens), { color: ink }]}
                       >
                         {shown(cell)}

@@ -46,7 +46,7 @@ export interface StoredPlan {
  * reads the stored plan once, so it holds nothing in memory and any number of
  * modules can ask it.
  */
-export interface ReservedWords {
+interface ReservedWords {
   /** The stored plan, read once, for the plan to make the next one from and replace. */
   stored(): Promise<StoredPlan>;
   /** The morning Word of a local day: the Word of the earliest notification planned that day, if any. */

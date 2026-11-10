@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { Writable } from 'node:stream';
 
-import type { ApiClient } from '@slovo/contracts/api';
+import { PATCH_FORMAT, type ApiClient } from '@slovo/contracts/api';
 import { eq, getTableColumns, is, type Column } from 'drizzle-orm';
 import { PgTable } from 'drizzle-orm/pg-core';
 import { expect, it } from 'vitest';
@@ -11,7 +11,7 @@ import { accounts, sessions } from './database/schema';
 import { createLogger } from './logger';
 import { testApp, testEditions } from './test-support';
 
-/** The Edition of this test, with a published pack. */
+/** The Edition of this test. */
 const EDITION = 'probe';
 
 /**
@@ -26,7 +26,12 @@ const ANSWERED_COLUMNS = new Set([
   'packFormat',
   'size',
   'fileSha256',
-  'off',
+  // An Edition's Rules and force-update minimums, naming no reader.
+  'feature',
+  'verdict',
+  'targets',
+  'soft',
+  'hard',
   // An Entry's Community Counters, totals that name no reader.
   'entryId',
   'known',
@@ -45,6 +50,9 @@ const ANSWERED_COLUMNS = new Set([
  * Account's name would show.
  */
 const COLLECTION_LINK_KEYS = new Set(['id', 'name']);
+
+/** The requests that answer Rules, whose own ids name no reader. */
+const RULES_REQUEST = /\/switches(\/|$)/;
 
 /** The requests of the Collection Links procedures. */
 const COLLECTION_LINK_REQUEST = /^(POST|GET) \/v1\/collection-links(\/|$)/;
@@ -91,10 +99,9 @@ function keysOf(value: unknown): string[] {
   );
 }
 
-/** The backend serving an Edition with a published pack, whose answers the test keeps. */
-async function recordedBackend() {
+/** The backend serving an Edition, whose answers the test keeps. */
+function recordedBackend() {
   const folder = testEditions([EDITION]);
-  const pack = folder.buildPack(EDITION);
   const answers: Answer[] = [];
   const backend = testApp({
     editions: folder.read(),
@@ -109,14 +116,12 @@ async function recordedBackend() {
       });
     },
   });
-  const published = await backend.publish(pack);
-  if (!published.ok) throw new Error(`Pack not published: ${published.reason}`);
-  return { ...backend, answers, db: backend.database.db, pack: published.pack };
+  return { ...backend, answers, db: backend.database.db };
 }
 
 it("answers no stored token, Sign-in code or its hash, password field, internal column or another Account's record in any procedure", async () => {
-  const { client, clientOf, answers, mailer, google, apple, keptSignInCode, db, pack, switchOff } =
-    await recordedBackend();
+  const { client, clientOf, answers, mailer, google, apple, keptSignInCode, db, kill } =
+    recordedBackend();
   /** What the database keeps that no answer may show. */
   const secrets = new Set<string>();
   const refused = () => undefined;
@@ -204,7 +209,7 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
             status: 429,
           });
           expect(overLimit?.headers).toContain('retry-after');
-          await switchOff(EDITION, 'googleSignIn');
+          await kill(EDITION, 'googleSignIn');
           await refusedGoogle(google.token({ email }));
         },
         signInWithApple: async () => {
@@ -243,7 +248,7 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
             request: 'POST /v1/account/apple-sessions',
             status: 429,
           });
-          await switchOff(EDITION, 'signInWithApple');
+          await kill(EDITION, 'signInWithApple');
           await refusedApple(apple.token({ email }));
         },
         me: async () => {
@@ -268,25 +273,204 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
       },
       content: {
         latest: async () => {
-          for (const row of await db.select().from(schema.contentPacks)) {
-            secrets.add(row.id);
-            secrets.add(row.contentChecksum);
-          }
           await client.content.latest({ editionId: EDITION, packFormat: 1 });
           await client.content.latest({ editionId: 'pl', packFormat: 1 }).catch(refused);
           await client.content.latest({ editionId: EDITION, packFormat: 0 }).catch(refused);
         },
-        // The bytes are the published pack, which any app may download; its headers are checked.
+        // The records are the published content; what the import keeps beside them is checked.
+        snapshot: async () => {
+          for (const row of await db.select().from(schema.contentBatches)) secrets.add(row.id);
+          await client.content.snapshot({ editionId: EDITION }).catch(refused);
+          await client.content.snapshot({ editionId: 'pl' }).catch(refused);
+        },
+        // The records are the published content; what the import keeps beside them is checked.
+        patch: async () => {
+          for (const row of await db.select().from(schema.contentBatches)) secrets.add(row.id);
+          const ask = (editionId: string, patchFormat: number) =>
+            client.content.patch({ params: { editionId }, query: { since: 0, patchFormat } });
+          await ask(EDITION, PATCH_FORMAT).catch(refused);
+          await ask(EDITION, PATCH_FORMAT + 1).catch(refused);
+          await ask('pl', PATCH_FORMAT).catch(refused);
+        },
+        // No whole pack is published any more (ADR 0090).
         download: async () => {
-          const params = { editionId: EDITION, contentVersion: pack.contentVersion };
-          await client.content.download({ params });
-          await client.content.download({
-            params,
-            headers: { 'if-none-match': `"${pack.fileSha256}"` },
-          });
-          await client.content
-            .download({ params: { ...params, contentVersion: pack.contentVersion + 1 } })
+          const params = { editionId: EDITION, contentVersion: 1 };
+          await client.content.download({ params }).catch(refused);
+        },
+      },
+      admin: {
+        // No Власник in this database: every admin procedure answers 404.
+        requestCode: async () => {
+          await client.admin.requestCode({ email: 'admin@example.com' }).catch(refused);
+        },
+        verifyCode: async () => {
+          await client.admin
+            .verifyCode({ email: 'admin@example.com', code: '000000' })
             .catch(refused);
+        },
+        signIn: async () => {
+          await client.admin
+            .signIn({
+              email: 'admin@example.com',
+              code: '000000',
+              factor: { kind: 'totp', totp: '000000' },
+            })
+            .catch(refused);
+        },
+        me: async () => {
+          await client.admin.me().catch(refused);
+        },
+        sessions: async () => {
+          await client.admin.sessions().catch(refused);
+        },
+        signOut: async () => {
+          await client.admin.signOut().catch(refused);
+        },
+        signOutEverywhere: async () => {
+          await client.admin.signOutEverywhere().catch(refused);
+        },
+        people: async () => {
+          await client.admin.people().catch(refused);
+        },
+        invite: async () => {
+          await client.admin
+            .invite({ email: 'admin@example.com', role: 'admin', reason: 'help' })
+            .catch(refused);
+        },
+        setRole: async () => {
+          await client.admin
+            .setRole({ email: 'admin@example.com', role: 'owner', reason: 'trust' })
+            .catch(refused);
+        },
+        removePerson: async () => {
+          await client.admin
+            .removePerson({ email: 'admin@example.com', reason: 'left' })
+            .catch(refused);
+        },
+        agentTokens: async () => {
+          await client.admin.agentTokens().catch(refused);
+        },
+        issueAgentToken: async () => {
+          await client.admin.issueAgentToken({ name: 'claude', reason: 'batches' }).catch(refused);
+        },
+        revokeAgentToken: async () => {
+          await client.admin.revokeAgentToken({ name: 'claude', reason: 'leaked' }).catch(refused);
+        },
+        actions: async () => {
+          await client.admin.actions({}).catch(refused);
+        },
+        status: async () => {
+          // No Власник in this database: the admin API answers 404.
+          await client.admin.status().catch(refused);
+        },
+        switches: async () => {
+          await client.admin.switches({ editionId: EDITION }).catch(refused);
+        },
+        analytics: async () => {
+          await client.admin
+            .analytics({ editionId: EDITION, from: '2026-11-01', to: '2026-11-07' })
+            .catch(refused);
+        },
+        variantResults: async () => {
+          await client.admin.variantResults({ editionId: EDITION, feature: 'game' }).catch(refused);
+        },
+        counters: async () => {
+          await client.admin.counters({ editionId: EDITION }).catch(refused);
+        },
+        setRules: async () => {
+          await client.admin
+            .setRules({ editionId: EDITION, feature: 'game', rules: [], reason: 'leak' })
+            .catch(refused);
+        },
+        setMinimum: async () => {
+          await client.admin
+            .setMinimum({
+              editionId: EDITION,
+              platform: 'ios',
+              minimum: { soft: '1.0.0' },
+              reason: 'leak',
+            })
+            .catch(refused);
+        },
+        kill: async () => {
+          await client.admin.kill({ feature: 'game', reason: 'leak' }).catch(refused);
+        },
+        editions: async () => {
+          await client.admin.editions().catch(refused);
+        },
+        editionCard: async () => {
+          await client.admin.editionCard({ editionId: EDITION }).catch(refused);
+        },
+        content: async () => {
+          const { content } = client.admin;
+          const editionId = EDITION;
+          const batchId = '00000000-0000-4000-8000-000000000000';
+          const record = { editionId, kind: 'word' as const, batchId };
+          await content.openBatch({ editionId }).catch(refused);
+          await content.create({ ...record, fields: {} }).catch(refused);
+          await content
+            .edit({ ...record, id: 'w_a1', recordVersion: 1, fields: {} })
+            .catch(refused);
+          await content.retire({ ...record, id: 'w_a1', recordVersion: 1 }).catch(refused);
+          await content.flag({ ...record, id: 'w_a1', reason: 'check' }).catch(refused);
+          await content.report({ editionId }).catch(refused);
+          await content.records({ editionId, kind: 'word' }).catch(refused);
+        },
+        development: async () => {
+          await client.admin.development().catch(refused);
+        },
+        contentQueue: async () => {
+          const queue = client.admin.contentQueue;
+          const batchId = '00000000-0000-4000-8000-000000000000';
+          const reason = 'Причина';
+          await queue.batches({}).catch(refused);
+          await queue.review({ batchId, reason }).catch(refused);
+          await queue.rollback({ batchId, reason }).catch(refused);
+          await queue.flags({}).catch(refused);
+          await queue.resolveFlag({ id: 1, decision: 'accept', reason }).catch(refused);
+          await queue.reports({}).catch(refused);
+          await queue.resolveReport({ id: batchId, reason }).catch(refused);
+        },
+        ownerChecks: async () => {
+          await client.admin.ownerChecks({}).catch(refused);
+        },
+        tickOwnerCheck: async () => {
+          await client.admin.tickOwnerCheck({ id: 1 }).catch(refused);
+        },
+        addOwnerCheck: async () => {
+          await client.admin
+            .addOwnerCheck({ version: '0.9', text: 'Open the app.' })
+            .catch(refused);
+        },
+        quality: async () => {
+          await client.admin.quality({ period: '7d' }).catch(refused);
+        },
+        ciHistory: async () => {
+          await client.admin.ciHistory({ period: '7d' }).catch(refused);
+        },
+        pushCiRun: async () => {
+          await client.admin
+            .pushCiRun({
+              runId: 1,
+              at: new Date().toISOString(),
+              sha: 'abcdef0',
+              tests: 0,
+              failedTests: [],
+              coverage: [],
+              jobs: [],
+            })
+            .catch(refused);
+        },
+        alertThresholds: async () => {
+          await client.admin.alertThresholds().catch(refused);
+        },
+        setAlertThreshold: async () => {
+          await client.admin
+            .setAlertThreshold({ key: 'crashFree', value: 99, reason: 'noisy' })
+            .catch(refused);
+        },
+        latestAlerts: async () => {
+          await client.admin.latestAlerts().catch(refused);
         },
       },
       collectionLinks: {
@@ -326,7 +510,7 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
         switches: async () => {
           const params = { editionId: EDITION };
           const { headers } = await client.edition.switches({ params });
-          await switchOff(EDITION, 'game');
+          await kill(EDITION, 'game');
           await client.edition.switches({ params, headers: { 'if-none-match': headers.etag } });
           await client.edition.switches({ params: { editionId: 'pl' } }).catch(refused);
         },
@@ -393,7 +577,8 @@ it("answers no stored token, Sign-in code or its hash, password field, internal 
       columns: keysOf(body).filter(
         (key) =>
           INTERNAL_COLUMNS.includes(key) &&
-          !(COLLECTION_LINK_REQUEST.test(request) && COLLECTION_LINK_KEYS.has(key)),
+          !(COLLECTION_LINK_REQUEST.test(request) && COLLECTION_LINK_KEYS.has(key)) &&
+          !(RULES_REQUEST.test(request) && key === 'id'),
       ),
       password: /password/i.test(text),
       cookie: /set-cookie|set-auth-token/i.test(headers),

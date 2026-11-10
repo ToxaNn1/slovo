@@ -8,13 +8,13 @@ import {
   type Edition,
   type Haptics,
   type NotificationSchedulerPort,
-  type XpRecord,
 } from '@slovo/core';
 import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
   seedUserState,
   type UserStateFacts,
+  type XpRecord,
 } from '@slovo/core/testing';
 import { EditionProvider, HapticsProvider, TokensProvider } from '@slovo/ui';
 import { Slot } from 'expo-router';
@@ -105,7 +105,7 @@ const xp = (date: string, amount: number): XpRecord => ({
 });
 
 /**
- * Opens the composition over two Words for a reader who finished the
+ * Opens the composition over two Words, and the `words` given after them, for a reader who finished the
  * onboarding with the facts given, on 2026-10-28 in Kyiv: with the XP
  * earned before, each record on its own day, and signed in or out as
  * `signedIn` says, as the app tells the Core once the Account is open.
@@ -117,11 +117,13 @@ async function open(
     edition: openedEdition = shippedEdition,
     xp: earned = [],
     signedIn,
+    words: more = [],
   }: {
     scheduler?: NotificationSchedulerPort;
     edition?: Edition;
     xp?: readonly XpRecord[];
     signedIn?: () => boolean;
+    words?: readonly Word[];
   } = {},
 ) {
   userState = await seedUserState(
@@ -139,7 +141,7 @@ async function open(
       categories: [
         { id: 'emotions-character', displayName: 'Емоції', description: 'Емоції.', tone: 'loud' },
       ],
-      words: [word('w_sumyrnyi', 'сумирний'), word('w_lahidnyi', 'лагідний')],
+      words: [word('w_sumyrnyi', 'сумирний'), word('w_lahidnyi', 'лагідний'), ...more],
     }),
     edition: openedEdition,
     userState: userState,
@@ -340,5 +342,32 @@ describe('the Feed Notices on the Feed', () => {
     expect(
       within(card).getByText(editionStrings.feedNotices.levelMilestone.message, hidden),
     ).toBeTruthy();
+  });
+
+  it('asks «Може, на сьогодні досить?» with the board text once 50 cards are Seen today', async () => {
+    // 50 distinct Entries Seen this morning in Kyiv, the threshold (ADR 0066).
+    const seenWords = Array.from({ length: 50 }, (_, index) =>
+      word(`w_seen_${String(index)}`, `слово${String(index)}`),
+    );
+    const seen = { seenAt: '2026-10-28T06:00:00.000Z', wordOfTheDay: false };
+    await open(
+      {
+        onboardingFinished: '2026-09-01T09:00:00Z',
+        history: Object.fromEntries(seenWords.map(({ id }) => [id, seen])),
+      },
+      { edition: withoutLaterQuestions, words: seenWords },
+    );
+    await renderApp();
+
+    const card = within(screen.getByTestId('feed-notice-enoughForToday', hidden));
+    expect(card.getByText('Може, на сьогодні досить?', hidden)).toBeTruthy();
+    // The board text in «ти» (ADR 0092).
+    expect(
+      card.getByText(
+        'Уже 50 карток позаду. Рідкісні слова краще засвоюються невеликими порціями.',
+        hidden,
+      ),
+    ).toBeTruthy();
+    expect(card.getByRole('button', { name: 'Гортати далі', ...hidden })).toBeTruthy();
   });
 });

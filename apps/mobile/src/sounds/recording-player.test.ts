@@ -2,8 +2,15 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createRecordingPlayer, type RecordingAudioModule } from './recording-player';
 
-/** A status update as `expo-audio` sends it: Android sends a failure as `error` alone. */
-type AudioStatusUpdate = Partial<{ didJustFinish: boolean; playbackState: string; error: string }>;
+/**
+ * A status update as `expo-audio` sends it: Android sends a failure as `error`
+ * alone, iOS sends `error: null` in every update while nothing failed.
+ */
+type AudioStatusUpdate = Partial<{
+  didJustFinish: boolean;
+  playbackState: string;
+  error: string | null;
+}>;
 
 /** A mocked `expo-audio`: each player it makes, with what happened to it. */
 function mockAudio({ failToLoad = false } = {}) {
@@ -124,14 +131,23 @@ describe('the Recording player', () => {
     expect(players[0]?.removed).toBe(true);
   });
 
-  it('keeps a Recording playing through a status update that is neither its end nor a failure', () => {
-    const { audio, players } = mockAudio();
-    const onEnd = vi.fn();
-    createRecordingPlayer(audio)?.play(7, onEnd);
+  it.each<[string, AudioStatusUpdate]>([
+    ['with no error field', { didJustFinish: false, playbackState: 'readyToPlay' }],
+    [
+      'with a null error, as on iOS',
+      { didJustFinish: false, playbackState: 'readyToPlay', error: null },
+    ],
+  ])(
+    'keeps a Recording playing through a status update %s that is neither its end nor a failure',
+    (_how, status) => {
+      const { audio, players } = mockAudio();
+      const onEnd = vi.fn();
+      createRecordingPlayer(audio)?.play(7, onEnd);
 
-    players[0]?.report({ didJustFinish: false, playbackState: 'readyToPlay' });
+      players[0]?.report(status);
 
-    expect(onEnd).not.toHaveBeenCalled();
-    expect(players[0]?.playing).toBe(true);
-  });
+      expect(onEnd).not.toHaveBeenCalled();
+      expect(players[0]?.playing).toBe(true);
+    },
+  );
 });

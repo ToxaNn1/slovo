@@ -2,23 +2,23 @@ import type { LanguageTraits } from '@slovo/contracts';
 
 import type { RoundForm } from './answer-forms';
 import type { Edition } from '../edition/edition';
+import type { TextComparison } from '../text/text-comparison';
 import type { AskableEntry, AskableKind, KindRefusal, ShownKind } from '../entries/entries';
 import type { Random } from '../ports';
 
 export { ROUND_OPTIONS, type AnswerSheet, type RoundOption } from './answer-form';
-export type { ChipKind, FixedChip } from './chips-form';
+export type { ChipKind, ChipLayout, FixedChip } from './chips-form';
 
 /**
- * What the Game needs to know of the Edition: its Feature Switches, its
- * Distractor rule, whether it marks Stress and on which vowels, the
- * punctuation an Idiom's expression may hold and the languages Words come
- * from; an Edition that leaves them out marks no Stress, has no expression
- * punctuation and no origin languages.
+ * What the Game needs to know of the Edition: its Feature Switches, whether
+ * it marks Stress and on which vowels, the punctuation an Idiom's expression
+ * may hold, its alphabet, where letter tiles' decoys come from, and the
+ * languages Words come from; an Edition that leaves the last out has no
+ * origin languages.
  */
 export type GameEdition = Pick<Edition, 'isFeatureEnabled'> &
   Partial<Pick<Edition, 'originLanguages'>> & {
-    readonly languageTraits: Pick<LanguageTraits, 'distractorRule'> &
-      Partial<Pick<LanguageTraits, 'marksStress' | 'vowels' | 'expressionPunctuation'>>;
+    readonly languageTraits: Pick<LanguageTraits, 'stress' | 'expressionPunctuation' | 'alphabet'>;
   };
 
 /**
@@ -32,9 +32,11 @@ export type GameModeGroup = (typeof GAME_MODE_GROUPS)[number];
 
 /**
  * Which label a Round shows over its prompt: the Game Mode's, a Synonym
- * Row's question on its dominant, a Tip's, or an Example's with a gap.
+ * Row's question on its dominant, a Tip's, an Example's with a gap, or the
+ * Game Mode's over an Entry's own text whose meaning it asks, which the
+ * shell asks as the Edition's «{word}» — це… (spec #1674).
  */
-export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap';
+export type RoundLabelKind = 'mode' | 'synonymRow' | 'tip' | 'gap' | 'meaning';
 
 /** A stretch of a text, from the character at `start` up to the one at `end`, which it leaves out. */
 export interface TextRange {
@@ -86,6 +88,8 @@ export interface RoundInput {
   /** The source of every shuffle. */
   readonly random: Random;
   readonly edition: GameEdition;
+  /** How the Edition compares text, such as an option with another. */
+  readonly comparison: TextComparison;
 }
 
 /**

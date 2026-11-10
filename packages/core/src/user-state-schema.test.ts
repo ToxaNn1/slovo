@@ -81,6 +81,32 @@ describe('the 0.4 user-state records', () => {
       feedNoticesClosed.decode('{"date":"2026-10-31","notices":["weeklyRecap","banner"]}'),
     ).toBeUndefined();
   });
+
+  it('reads a record whose local date is not `YYYY-MM-DD` as absent', () => {
+    const { xpLog, notificationAsk, streakBrokenReported, firstWeekFrom, laterQuestions } =
+      userStateRecords;
+    const xp = (date: string) =>
+      JSON.stringify({ kind: 'freeze', date, at: '2026-10-30T08:15:00.000Z' });
+    expect(xpLog.record('x-1').decode(xp('2025-1-5'))).toBeUndefined();
+    expect(xpLog.record('x-1').decode(xp('2025-01-05'))).toEqual({
+      kind: 'freeze',
+      date: '2025-01-05',
+      at: '2026-10-30T08:15:00.000Z',
+    });
+    expect(notificationAsk.decode('{"step":"reask","date":""}')).toBeUndefined();
+    expect(notificationAsk.decode('{"step":"reask","date":"2026-10-29"}')).toEqual({
+      step: 'reask',
+      date: '2026-10-29',
+    });
+    expect(streakBrokenReported.decode('"yesterday"')).toBeUndefined();
+    expect(firstWeekFrom.decode('"2026-13-01"')).toBeUndefined();
+    expect(firstWeekFrom.decode('"2026-10-24"')).toBe('2026-10-24');
+    expect(laterQuestions.decode('{"asked":[],"date":"30.10.2026"}')).toBeUndefined();
+    expect(laterQuestions.decode('{"asked":[],"date":"2026-10-30"}')).toEqual({
+      asked: [],
+      date: '2026-10-30',
+    });
+  });
 });
 
 // Spec #772, "Best result per mode": one Best result per Game Mode.
@@ -128,6 +154,7 @@ describe('the 0.8 sync marks', () => {
       'firstWeek.from',
       'contentUpdate.checkedAt',
       'edition.switches',
+      'edition.installId',
       'feed.noticesClosed',
       'search.recentQueries',
       'notifications.titles',
@@ -318,7 +345,13 @@ const storedIn1_0: readonly (readonly [
   ],
   ['firstWeekFrom', undefined, 'firstWeek.from', '"2026-10-24"'],
   ['contentUpdateCheckedAt', undefined, 'contentUpdate.checkedAt', '"2026-10-30T08:15:00.000Z"'],
-  ['remoteSwitches', undefined, 'edition.switches', '{"off":["game"],"etag":"\\"v1\\""}'],
+  [
+    'remoteSwitches',
+    undefined,
+    'edition.switches',
+    '{"rules":[{"id":"kill","feature":"game","verdict":"off","targets":{}}],"minimums":{},"etag":"\\"v1\\"","clockOffsetMs":0}',
+  ],
+  ['installId', undefined, 'edition.installId', '"k3f9q2zx7m1c0b8v5n4h"'],
   ['widgetHintShown', undefined, 'game.widgetHintOffered', 'true'],
   ['gameBest', 'guess-word', 'game.best.guess-word', '11'],
   [
@@ -332,6 +365,12 @@ const storedIn1_0: readonly (readonly [
     undefined,
     'crossword.traced',
     '{"date":"2026-10-30","puzzle":"w_кіт 0.0 0.1 0.2","found":["w_кіт"]}',
+  ],
+  [
+    'crossingCrosswordProgress',
+    undefined,
+    'crossword.crossing',
+    '{"date":"2026-10-30","puzzle":"w_кіт across 0.0","filled":{"0,1":"і"},"solved":["w_кіт"],"hinted":false,"seconds":42}',
   ],
   [
     'syncPending',
@@ -350,6 +389,9 @@ const storedIn1_0: readonly (readonly [
   ['syncCursor', undefined, 'sync.cursor', '17'],
   ['syncSyncedAt', undefined, 'sync.syncedAt', '"2026-10-30T08:15:00.000Z"'],
   ['mistakeReportQueue', undefined, 'reports.queue', '[]'],
+  ['checkIns', '2026-10-30', 'mood.2026-10-30', '{"date":"2026-10-30","choice":"calm"}'],
+  ['correctionsWorkedThrough', 'c-1', 'correctionsWorkedThrough.c-1', 'true'],
+  ['curatedCollectionsOpened', 'cc-1', 'curatedCollections.opened.cc-1', 'true'],
 ];
 
 describe('a user state kept by 1.0', () => {

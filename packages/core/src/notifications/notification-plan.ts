@@ -12,6 +12,7 @@ import {
   localTimeOf,
   parseLocalDate,
   todayDate,
+  type LocalDate,
   type TimeOfDay,
 } from '../local-date';
 import type {
@@ -97,6 +98,13 @@ interface PlanSettings {
   readonly permission: NotificationPermission;
 }
 
+/** Today's local date and the local time now, both of one reading of the clock. */
+function momentOf(clock: Clock): { today: LocalDate; now: TimeOfDay } {
+  const instant = clock.now();
+  const at: Clock = { now: () => instant, timeZone: () => clock.timeZone() };
+  return { today: todayDate(at), now: localTimeOf(instant, at) };
+}
+
 /**
  * When each notification the plan covers comes, in time order: every time
  * from the next one still ahead today (a time due this minute has passed),
@@ -104,8 +112,7 @@ interface PlanSettings {
  * `MAX_PLANNED_NOTIFICATIONS`.
  */
 function slotsAhead(times: readonly TimeOfDay[], clock: Clock): Slot[] {
-  const today = todayDate(clock);
-  const now = localTimeOf(clock.now(), clock);
+  const { today, now } = momentOf(clock);
   const count = Math.min(times.length * PLAN_DAYS, MAX_PLANNED_NOTIFICATIONS);
   const slots: Slot[] = [];
   for (let day = 0; slots.length < count; day += 1) {
@@ -131,8 +138,7 @@ function slotsUntilPause(
   times: readonly TimeOfDay[],
   clock: Clock,
 ): { slots: Slot[]; farewell: Slot | undefined } {
-  const today = todayDate(clock);
-  const now = localTimeOf(clock.now(), clock);
+  const { today, now } = momentOf(clock);
   const slots: Slot[] = [];
   for (let day = 0; day <= PLAN_DAYS; day += 1) {
     const date = localDateAfter(today, day);
@@ -318,7 +324,8 @@ export function createNotificationPlanner({
    */
   async function chooseTemplates(planned: readonly PlannedWord[]): Promise<number[]> {
     const stored = (await userState.read(titlesRecord)) ?? { planned: {} };
-    const now = slotId({ date: todayDate(clock), time: localTimeOf(clock.now(), clock) });
+    const { today, now: time } = momentOf(clock);
+    const now = slotId({ date: today, time });
     const cameLast = Object.keys(stored.planned).reduce<string | undefined>(
       (greatest, id) => (id <= now && (greatest === undefined || id > greatest) ? id : greatest),
       undefined,
@@ -391,7 +398,7 @@ export function createNotificationPlanner({
   /**
    * The evening message of a local date, projected with no XP earned from now
    * on: the Streak warning while the Streak is 7 or more, the day is below an
-   * Active Day's XP and no freeze is held; else the goal reminder while the
+   * Active Day's XP and no freeze is held; else the goal-not-met notification while the
    * Daily Goal is not met; else none. None on the days of a Break.
    */
   function eveningMessageOf(date: string): EveningMessage | undefined {
@@ -409,7 +416,7 @@ export function createNotificationPlanner({
       frozen,
       breaks,
       today: date,
-      freezes: xpOn && edition.isFeatureEnabled('streakFreezes'),
+      freezes: edition.isFeatureEnabled('streakFreezes'),
     });
     if (xpOn && streak >= STREAK_WARNING_AT && !xpLog.days.active.has(date) && freezesHeld === 0) {
       return 'streakWarning';

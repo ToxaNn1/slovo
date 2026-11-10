@@ -1,12 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  openComposition,
-  type Clock,
-  type Composition,
-  type PlannedNotification,
-  type UserStateChanges,
-} from '../index';
+import { openComposition, type Clock, type Composition, type PlannedNotification } from '../index';
+import { type UserStateChanges } from '../ports';
 import {
   createFakeNotificationScheduler,
   createMemoryContentPort,
@@ -38,7 +33,10 @@ async function run({
     edition: testEdition({
       // With the XP log off, opening the app records the day as an Active Day, as before 1.0.
       isFeatureEnabled: (feature) => feature !== 'xpLog' && feature !== 'eveningNotification',
-      userSettingDefaults: { mix: { corrections: false }, notificationTimes: ['09:00', '19:00'] },
+      userSettingDefaults: {
+        mix: { kinds: { correction: false } },
+        notificationTimes: ['09:00', '19:00'],
+      },
     }),
     userState: await openUserState({
       port: {

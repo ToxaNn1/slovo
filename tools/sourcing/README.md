@@ -36,7 +36,7 @@ pnpm source:words path/to/lemmas.txt --edition uk
 
 Every run on the machine shares one cache: `--cache`, else `$SLOVO_SOURCING_CACHE`, else `$XDG_CACHE_HOME/slovo-sourcing`, else `~/.cache/slovo-sourcing`. Through it, parallel runs (one per worktree, say) are polite together:
 
-- a page is fetched once, by whichever run asks first, and read from disk by every other run, now and later;
+- a page is fetched once, by whichever run asks first, and read from disk by every other run, now and later; any other answer, a 404 included, is asked again on the next run;
 - each host gets at most one request every 2 seconds across all runs, booked in a schedule file under `hosts/` behind a lock;
 - on HTTP 429 or 503, or a failed connection, goroh gets a rest of 5, 10, 20 and then 40 seconds, which every run honours, before the Lemma is reported as `fetch-failed`. Each back-off is printed, and the totals are in the report.
 

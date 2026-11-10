@@ -1,8 +1,17 @@
 import { describe, expect, it } from 'vitest';
 
 import { openRemoteSwitches, type Edition, type FeatureSwitch, type Schedule } from '../index';
-import { randomOf } from '../test-support';
+import { SWITCHES_REFRESH_MS } from './remote-switches';
+import {
+  fakeClock,
+  randomOf,
+  readerFacts,
+  settle,
+  switchStatesOf,
+  testSchedule,
+} from '../test-support';
 import { createFakeBackend } from '../testing';
+import { editionRecords } from './records';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 /** An Edition that turns on every Feature Switch but those named. */
@@ -30,7 +39,8 @@ function immediateSchedule() {
  * launches, so a new launch finds the answer the one before kept.
  */
 function device(edition = editionWithout()) {
-  const backend = createFakeBackend();
+  const time = fakeClock();
+  const backend = createFakeBackend({ clock: time.clock });
   const records = new Map<string, string>();
   const { schedule, delays } = immediateSchedule();
   return {
@@ -40,10 +50,13 @@ function device(edition = editionWithout()) {
     async launch() {
       return openRemoteSwitches({
         edition,
+        states: switchStatesOf(edition),
+        facts: readerFacts,
         backend: backend.backend,
         userState: await openUserState({ port: createMemoryUserStatePort(records) }),
         schedule,
         random: randomOf(0.5),
+        clock: time.clock,
       });
     },
   };
@@ -89,7 +102,7 @@ describe('the remote Feature Switches', () => {
     await switches.ask();
 
     expect(switches.edition.isFeatureEnabled('communityCounters')).toBe(false);
-    expect(switches.edition.isFeatureEnabled('communityWord')).toBe(true);
+    expect(switches.edition.isFeatureEnabled('communityWord')).toBe(false);
     expect(switches.edition.isFeatureEnabled('mistakeReports')).toBe(true);
   });
 
@@ -227,8 +240,10 @@ describe('the remote Feature Switches', () => {
       await (await app.launch()).ask();
 
       expect(JSON.parse(app.records.get('edition.switches') ?? 'null')).toEqual({
-        off: ['game'],
-        etag: '"game"',
+        rules: [{ id: 'kill-game', feature: 'game', verdict: 'off', targets: {} }],
+        minimums: {},
+        etag: expect.stringMatching(/^"[0-9a-f]{64}"$/) as unknown,
+        clockOffsetMs: 0,
       });
       expect(app.records.has('sync.pending.edition.switches')).toBe(false);
     });
@@ -247,6 +262,9 @@ describe('the remote Feature Switches', () => {
 
       const switches = await openRemoteSwitches({
         edition: editionWithout(),
+        states: switchStatesOf(editionWithout()),
+        facts: readerFacts,
+        clock: fakeClock().clock,
         backend: createFakeBackend().backend,
         userState: {
           ...userState,
@@ -355,7 +373,8 @@ describe('the remote Feature Switches', () => {
 
       await expect(switches.ask()).resolves.toBe(false);
 
-      expect(app.backend.switches.asked).toEqual([undefined, '"game"']);
+      const kept = editionRecords.remoteSwitches.decode(app.records.get('edition.switches') ?? '');
+      expect(app.backend.switches.asked).toEqual([undefined, kept?.etag]);
       expect(told).toBe(0);
       expect(switches.edition).toBe(before);
     });
@@ -389,12 +408,33 @@ describe('the remote Feature Switches', () => {
     expect(app.backend.switches.asked).toHaveLength(1);
   });
 
+  it('tells its subscribers of new minimums without asking for a reopen', async () => {
+    const app = device();
+    const switches = await app.launch();
+    await switches.ask();
+    let told = 0;
+    switches.subscribe(() => {
+      told += 1;
+    });
+
+    app.backend.switches.setMinimums({ ios: { hard: '2.0.0' } });
+
+    await expect(switches.ask()).resolves.toBe(false);
+    expect(told).toBe(1);
+    expect(switches.minimums).toEqual({ ios: { hard: '2.0.0' } });
+    await switches.ask();
+    expect(told).toBe(1);
+  });
+
   it('never rejects, even when the answer can’t be kept', async () => {
     const backend = createFakeBackend();
     backend.switches.turnOff('game');
     const userState = await openUserState({ port: createMemoryUserStatePort() });
     const switches = await openRemoteSwitches({
       edition: editionWithout(),
+      states: switchStatesOf(editionWithout()),
+      facts: readerFacts,
+      clock: fakeClock().clock,
       backend: backend.backend,
       userState: { ...userState, write: () => Promise.reject(new Error('The disk is full')) },
       schedule: immediateSchedule().schedule,
@@ -403,5 +443,55 @@ describe('the remote Feature Switches', () => {
 
     await expect(switches.ask()).resolves.toBe(true);
     expect(switches.edition.isFeatureEnabled('game')).toBe(false);
+  });
+
+  describe('while the app runs', () => {
+    it('asks every two minutes, so a Rule’s schedule and its share take effect', async () => {
+      const time = fakeClock();
+      const { schedule, advance } = testSchedule(time);
+      const fake = createFakeBackend({ clock: time.clock });
+      const from = new Date(time.clock.now().getTime() + 3 * 60 * 1000).toISOString();
+      fake.switches.setRules([
+        { id: 'later', feature: 'game', verdict: 'off', targets: { schedule: { from } } },
+        { id: 'nobody', feature: 'search', verdict: 'off', targets: { share: 0 } },
+        { id: 'everybody', feature: 'corrections', verdict: 'off', targets: { share: 100 } },
+      ]);
+      fake.switches.setMinimums({ ios: { soft: '1.2.0' } });
+      let changes = 0;
+      const switches = await openRemoteSwitches({
+        edition: editionWithout(),
+        states: switchStatesOf(editionWithout()),
+        facts: readerFacts,
+        backend: fake.backend,
+        userState: await openUserState({ port: createMemoryUserStatePort() }),
+        schedule,
+        random: randomOf(0.5),
+        clock: time.clock,
+      });
+      await switches.ask();
+      const stop = switches.start(() => {
+        changes += 1;
+      });
+
+      expect(switches.edition.isFeatureEnabled('game')).toBe(true);
+      expect(switches.edition.isFeatureEnabled('search')).toBe(true);
+      expect(switches.edition.isFeatureEnabled('corrections')).toBe(false);
+      expect(switches.minimums).toEqual({ ios: { soft: '1.2.0' } });
+
+      await advance(SWITCHES_REFRESH_MS);
+      await settle();
+      expect(fake.switches.asked).toHaveLength(2);
+      expect(switches.edition.isFeatureEnabled('game')).toBe(true);
+
+      await advance(SWITCHES_REFRESH_MS);
+      await settle();
+      expect(fake.switches.asked).toHaveLength(3);
+      expect(switches.edition.isFeatureEnabled('game')).toBe(false);
+      expect(changes).toBe(1);
+
+      stop();
+      await advance(SWITCHES_REFRESH_MS);
+      expect(fake.switches.asked).toHaveLength(3);
+    });
   });
 });

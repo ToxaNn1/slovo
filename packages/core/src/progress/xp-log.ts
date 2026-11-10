@@ -14,6 +14,7 @@ import type { XpRecord } from './records';
 import { userStateRecords } from '../user-state-schema';
 import { levelOf, type LevelState } from './levels';
 import { ACTIVE_DAY_XP } from './streak';
+import { xpEntryOf } from './xp-entry';
 
 const { xpLog: xpRecords } = userStateRecords;
 
@@ -56,6 +57,8 @@ export interface XpLogState {
 
 /** What the XP log holds by local date `YYYY-MM-DD`, for the Active Days and the Streak. */
 export interface XpLogDays {
+  /** The local date the log was last derived for as today: the date of `state`'s today, till the day change reaches it. */
+  readonly date: string;
   /** The XP earned on each local date that has any. */
   readonly byDate: ReadonlyMap<string, number>;
   /**
@@ -101,6 +104,12 @@ export interface XpLogAppend {
   readonly changes: UserStateChanges;
   /** Makes the change in memory. Call it once the changes are written. */
   commit(): void;
+}
+
+/** A solved Daily Crossword as its XP log record keeps it (ADR 0087). */
+export interface CrosswordSolve {
+  readonly solveSeconds: number | undefined;
+  readonly hinted: boolean;
 }
 
 /**
@@ -149,6 +158,13 @@ export interface XpLog {
   open(badge: string): XpLogAppend;
   /** The local date (`YYYY-MM-DD`) the total XP first reached `total`, if it has. */
   reachedOn(total: number): string | undefined;
+  /**
+   * The Daily Crossword solve of a local date `YYYY-MM-DD`, if it is solved:
+   * its Solve time in seconds, if one was kept, and whether the Crossword
+   * Hint was used. A solve recorded before them reads as no time and no
+   * hint (ADR 0087).
+   */
+  crosswordSolveOn(date: string): CrosswordSolve | undefined;
   /** Calls `listener` after each change of the XP, with what it came from. Returns the call that stops it. */
   subscribe(listener: (change: XpLogChange) => void): () => void;
   /** The XP and the Daily Goal of a local date `YYYY-MM-DD`: a past day keeps the goal it had. */
@@ -165,6 +181,13 @@ export interface XpLog {
    * calls nothing. Returns the call that stops it.
    */
   subscribeGoalMet(listener: () => void): () => void;
+  /**
+   * Calls `listener` once when a learning action reaches a new Level, with
+   * the Level reached: the celebration's trigger. A log opened over a Level
+   * already reached, as after a sync, calls nothing. Returns the call that
+   * stops it.
+   */
+  onLevelReached(listener: (level: LevelState) => void): () => void;
 }
 
 /** The award of an action that earns nothing: no change to write, nothing to make in memory. */
@@ -199,6 +222,9 @@ function amountOf(table: XpTable, action: XpAction, reviewToday: number): number
   }
 }
 
+/** The id of the Daily Crossword's record of a date: one solve a day. */
+const crosswordIdOf = (date: string) => `daily-crossword-${date}`;
+
 /**
  * The id of the action's record. The Daily Crossword of a date has one, and
  * so has the Review answer of an Entry on `today`, so a second award is
@@ -206,7 +232,7 @@ function amountOf(table: XpTable, action: XpAction, reviewToday: number): number
  * record; any other action's id is new, made by `newId`.
  */
 function fixedIdOf(action: XpAction, today: string): string | undefined {
-  if (action.source === 'daily-crossword') return `daily-crossword-${action.date}`;
+  if (action.source === 'daily-crossword') return crosswordIdOf(action.date);
   if (action.source === 'review-answer') return `review-answer-${today}-${action.entryId}`;
   return undefined;
 }
@@ -235,9 +261,9 @@ export async function openXpLog({
   analytics: Pick<Analytics, 'track'>;
 }): Promise<XpLog> {
   const on = edition.isFeatureEnabled('xpLog');
-  const levelsOn = on && edition.isFeatureEnabled('levels');
-  const goalOn = on && edition.isFeatureEnabled('dailyGoal');
-  const seenWordOn = goalOn && edition.isFeatureEnabled('seenWordXp');
+  const levelsOn = edition.isFeatureEnabled('levels');
+  const goalOn = edition.isFeatureEnabled('dailyGoal');
+  const seenWordOn = edition.isFeatureEnabled('seenWordXp');
   const records = new Map<string, XpRecord>(on ? await userState.list(xpRecords) : []);
   /** The `word-goal` records by date and instant, so a goal is looked up among them and not in the whole log; made anew after one is added. */
   let wordGoals: WordGoalRecord[] | undefined;
@@ -258,6 +284,7 @@ export async function openXpLog({
   }
   const subscribers = createSubscribers<XpLogChange>();
   const goalMetSubscribers = createSubscribers();
+  const levelReachedSubscribers = createSubscribers<LevelState>();
   /** Tells the records of one session apart when the clock and the random source stand still. */
   let sequence = 0;
 
@@ -353,9 +380,13 @@ export async function openXpLog({
 
   function dayOf(date: string): XpDay {
     const { count } = counter();
-    const ofDay = [...records.values()]
-      .filter((record) => record.date === date)
-      .sort((one, other) => (one.at < other.at ? -1 : 1));
+    // By instant, then by id, so records at one instant read the same on every device.
+    const ofDay = [...records]
+      .filter(([, record]) => record.date === date)
+      .sort(([oneId, one], [otherId, other]) =>
+        one.at === other.at ? (oneId < otherId ? -1 : 1) : one.at < other.at ? -1 : 1,
+      )
+      .map(([, record]) => record);
     const dailyGoal =
       goalOn && date < todayKey(clock) && !wordGoalSetBy(date)
         ? (xpGoalOf(date, ofDay, counter().count) ?? null)
@@ -382,7 +413,6 @@ export async function openXpLog({
   }
 
   function derive(): XpLogDays & {
-    date: string;
     state: XpLogState;
     reviewToday: number;
     /** Today's Seen-Word records counted toward today's goal. */
@@ -426,17 +456,26 @@ export async function openXpLog({
           opened.add(record.badge);
           break;
         case 'xp': {
-          const { source, mode, rarity, right, played } = record;
-          if (source === 'game-finished' && mode !== undefined) {
-            wins.add(mode);
-            if (played !== undefined && played > 0 && right === played) flawless.add(mode);
+          switch (record.source) {
+            case 'game-finished': {
+              const { mode, right, played } = record;
+              if (mode === undefined) break;
+              wins.add(mode);
+              if (played !== undefined && played > 0 && right === played) flawless.add(mode);
+              break;
+            }
+            case 'game-round': {
+              const { mode, rarity } = record;
+              if (mode !== undefined) {
+                rightByMode.set(mode, (rightByMode.get(mode) ?? 0) + 1);
+                answered.push({ at: record.at, id, mode, right: true });
+              }
+              if (rarity !== undefined) rightRarities.add(rarity);
+              break;
+            }
+            case 'daily-crossword':
+              crosswords.add(record.date);
           }
-          if (source === 'game-round' && mode !== undefined) {
-            rightByMode.set(mode, (rightByMode.get(mode) ?? 0) + 1);
-            answered.push({ at: record.at, id, mode, right: true });
-          }
-          if (source === 'game-round' && rarity !== undefined) rightRarities.add(rarity);
-          if (source === 'daily-crossword') crosswords.add(record.date);
           const amount = count(record);
           total += amount;
           byDate.set(record.date, (byDate.get(record.date) ?? 0) + amount);
@@ -489,16 +528,26 @@ export async function openXpLog({
     const before = derived.state.level?.level;
     derived = derive();
     const { state } = derived;
-    const after = state.level?.level;
-    if (before !== undefined && after !== undefined && after > before) {
-      void analytics.track('levelReached', { level: after }).catch(() => undefined);
+    const reached =
+      before !== undefined && state.level !== undefined && state.level.level > before
+        ? state.level
+        : undefined;
+    if (reached !== undefined) {
+      void analytics.track('levelReached', { level: reached.level }).catch(() => undefined);
     }
     subscribers.tell(cause);
+    if (reached !== undefined) levelReachedSubscribers.tell(reached);
     if (state.dailyGoal?.met === true && !wasMet && derived.date === previousDate) {
       // Met by setting the goal, today is met but nothing celebrates.
       if (cause !== 'daily-goal-set') goalMetSubscribers.tell();
       void analytics.track('dailyGoalMet', { goal: state.dailyGoal.goal }).catch(() => undefined);
     }
+  }
+
+  function crosswordSolveOn(date: string): CrosswordSolve | undefined {
+    const record = records.get(crosswordIdOf(date));
+    if (record?.kind !== 'xp' || record.source !== 'daily-crossword') return undefined;
+    return { solveSeconds: record.solveSeconds, hinted: record.hinted ?? false };
   }
 
   function reachedOn(total: number): string | undefined {
@@ -530,20 +579,13 @@ export async function openXpLog({
     if (amount === 0) return NOTHING_EARNED;
     const at = clock.now();
     const id = fixedId ?? newId(at);
-    const record: XpRecord = {
+    const record = xpEntryOf({
+      ...action,
       kind: 'xp',
       date: todayKey(clock),
       at: at.toISOString(),
-      source: action.source,
       amount,
-      ...(action.source === 'game-round' || action.source === 'game-finished'
-        ? { mode: action.mode }
-        : {}),
-      ...(action.source === 'game-round' && action.rarity !== undefined
-        ? { rarity: action.rarity }
-        : {}),
-      ...(action.source === 'game-finished' ? { right: action.right, played: action.played } : {}),
-    };
+    });
     return {
       changes: xpRecords.record(id).change(record),
       amount,
@@ -767,9 +809,11 @@ export async function openXpLog({
     freeze,
     startBreak,
     reachedOn,
+    crosswordSolveOn,
     subscribe: subscribers.subscribe,
     dayOf,
     setDailyGoal,
     subscribeGoalMet: goalMetSubscribers.subscribe,
+    onLevelReached: levelReachedSubscribers.subscribe,
   };
 }

@@ -3,6 +3,16 @@ import { z } from 'zod';
 /** Non-empty text in the Edition's language. */
 export const TextSchema = z.string().min(1);
 
+/**
+ * Text of an Entry: never blank, never padded with spaces at either end.
+ * Refused rather than trimmed, so the authored file says what the card shows.
+ * Edition strings keep `TextSchema`: their separators are padded by design.
+ */
+export const EntryTextSchema = TextSchema.refine(
+  (text) => text === text.trim(),
+  'Expected text with no space at either end',
+);
+
 /** A colour as six hex digits, e.g. `#F5EEE2`. */
 export const HexColorSchema = z
   .string()
@@ -26,8 +36,8 @@ export const WebAddressSchema = z.url({ protocol: /^https?$/ });
  * names a source without one by its `title`.
  */
 export const SourceSchema = z.strictObject({
-  title: TextSchema,
-  shortName: TextSchema.optional(),
+  title: EntryTextSchema,
+  shortName: EntryTextSchema.optional(),
   url: WebAddressSchema.optional(),
   archivedUrl: WebAddressSchema.optional(),
 });

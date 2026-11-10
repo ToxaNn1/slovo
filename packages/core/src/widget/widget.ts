@@ -17,7 +17,7 @@ import type { Edition } from '../edition/edition';
 import type { Onboarding } from '../onboarding/onboarding';
 import { notificationText } from '../notifications/notification-text';
 import type { History } from '../saved/history';
-import { dateKeyOf, localDayOf, todayKey } from '../local-date';
+import { dateKeyOf, localDayOf } from '../local-date';
 import type { ActiveDays } from '../progress/active-days';
 import type { Progress } from '../progress/progress';
 import type { XpLog } from '../progress/xp-log';
@@ -120,14 +120,12 @@ async function goalRingOf({
   progress,
   activeDays,
   userState,
-  clock,
 }: {
   edition: Pick<Edition, 'isFeatureEnabled'>;
-  xpLog: Pick<XpLog, 'state'>;
+  xpLog: Pick<XpLog, 'state' | 'days'>;
   progress: Pick<Progress, 'state'>;
   activeDays: Pick<ActiveDays, 'streakTomorrow'>;
   userState: Pick<UserState, 'read'>;
-  clock: Clock;
 }): Promise<GoalRing | undefined> {
   const on = edition.isFeatureEnabled.bind(edition);
   const { dailyGoal } = xpLog.state;
@@ -136,7 +134,8 @@ async function goalRingOf({
   if (hidden && on('noCounters')) return undefined;
   // `xp` carries the Words Seen toward the Daily Goal (ADR 0074).
   const ring = {
-    on: todayKey(clock),
+    // The date `dailyGoal` was derived for, which lags today till the day change reaches the log.
+    on: xpLog.days.date,
     xp: dailyGoal.seen,
     goal: dailyGoal.goal,
     met: dailyGoal.met,
@@ -177,7 +176,7 @@ export function createWidget({
   collections: Collections;
   history: History;
   onboarding: Onboarding;
-  xpLog: Pick<XpLog, 'state'>;
+  xpLog: Pick<XpLog, 'state' | 'days'>;
   progress: Pick<Progress, 'state'>;
   activeDays: Pick<ActiveDays, 'streakTomorrow'>;
   userState: Pick<UserState, 'read'>;
@@ -200,13 +199,12 @@ export function createWidget({
         progress,
         activeDays,
         userState,
-        clock,
       });
       return {
         format: WIDGET_SNAPSHOT_FORMAT,
         editionId: edition.id,
         writtenAt: clock.now().toISOString(),
-        onboardingFinished: onboarding.state.finishedAt !== undefined,
+        onboardingFinished: onboarding.state.status === 'finished',
         entries: eligible,
         allEntries: eligible.map(({ id }) => id),
         favorites: onlyEligible(favorites.list),

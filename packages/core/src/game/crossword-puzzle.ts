@@ -55,7 +55,7 @@ export function areAdjacent(a: PuzzlePlace, b: PuzzlePlace): boolean {
 const samePlace = (a: PuzzlePlace, b: PuzzlePlace) => a.row === b.row && a.column === b.column;
 
 /** A copy of the items in an order drawn from the random port: a Fisher–Yates shuffle. */
-function shuffled<T>(items: readonly T[], random: Random): T[] {
+export function shuffled<T>(items: readonly T[], random: Random): T[] {
   const order = [...items];
   for (let i = order.length - 1; i > 0; i -= 1) {
     const j = Math.floor(random.next() * (i + 1));

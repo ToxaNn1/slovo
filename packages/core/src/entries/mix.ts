@@ -35,28 +35,19 @@ export const NORMAL_KIND_WEIGHTS: MixKindWeights = {
 
 /**
  * Each kind of Entry in the Mix as a whole (the kind table names them, ADR
- * 0015): its user-state record (ADR 0013, 0041) and whether the Edition's
- * default Mix holds it.
+ * 0015): its user-state record (ADR 0013, 0041).
  */
-const KINDS: Readonly<
-  Record<
-    MixKind,
-    {
-      readonly record: typeof userStateRecords.mixCorrections;
-      readonly byDefault: (mix: DefaultMix) => boolean;
-    }
-  >
-> = {
-  correction: { record: userStateRecords.mixCorrections, byDefault: (mix) => mix.corrections },
-  idiom: { record: userStateRecords.mixIdioms, byDefault: (mix) => mix.idioms },
-  synonymRow: { record: userStateRecords.mixSynonymRows, byDefault: (mix) => mix.synonymRows },
-  tip: { record: userStateRecords.mixTips, byDefault: (mix) => mix.tips },
+const KIND_RECORDS: Readonly<Record<MixKind, typeof userStateRecords.mixCorrections>> = {
+  correction: userStateRecords.mixCorrections,
+  idiom: userStateRecords.mixIdioms,
+  synonymRow: userStateRecords.mixSynonymRows,
+  tip: userStateRecords.mixTips,
 };
 
-/** One list of Categories in the Mix, the Words' or the Corrections', as it stands. */
 /** How often the Feed asks a Quick Question until the user chooses: every 10th card. */
-export const DEFAULT_QUICK_QUESTION_EVERY: QuickQuestionEvery = 10;
+const DEFAULT_QUICK_QUESTION_EVERY: QuickQuestionEvery = 10;
 
+/** One list of Categories in the Mix, the Words' or the Corrections', as it stands. */
 export interface CategoriesInMix {
   /** Every Category of the list in the Language Pack, in or out of the Mix, with its display name, in its order (ADR 0033). */
   readonly allCategories: readonly Category[];
@@ -250,7 +241,7 @@ const { mixKindWeights: kindWeightRecords, mixQuickQuestion: quickQuestionRecord
   userStateRecords;
 
 /** The Categories of the Language Pack, each kind's list. */
-export type CategoryLists = Readonly<Record<CategoryKind, readonly Category[]>>;
+type CategoryLists = Readonly<Record<CategoryKind, readonly Category[]>>;
 
 /** The places the user chose, by Category id, for each kind's list. */
 type CategoryChoices = Readonly<Record<CategoryKind, ReadonlyMap<string, boolean>>>;
@@ -265,15 +256,17 @@ interface MixChoices {
 
 /** A record over each kind of Entry in the Mix as a whole, from what `of` gives for it. */
 function eachKind<T>(of: (kind: MixKind) => T): Readonly<Record<MixKind, T>> {
-  return Object.fromEntries(MIX_KINDS.map((kind) => [kind, of(kind)])) as Record<MixKind, T>;
+  return {
+    correction: of('correction'),
+    idiom: of('idiom'),
+    synonymRow: of('synonymRow'),
+    tip: of('tip'),
+  };
 }
 
 /** A record over each kind of Entry with Categories, from what `of` gives for it. */
 function eachList<T>(of: (kind: CategoryKind) => T): Readonly<Record<CategoryKind, T>> {
-  return Object.fromEntries(CATEGORY_KINDS.map((kind) => [kind, of(kind)])) as Record<
-    CategoryKind,
-    T
-  >;
+  return { word: of('word'), correction: of('correction') };
 }
 
 /** Whether the Edition in effect turns the kind of Entry on: the Edition does and no remote Feature Switch turns it off. */
@@ -457,7 +450,7 @@ function mixStateOf(lists: CategoryLists, edition: MixEdition, choices: MixChoic
   return {
     ...categoriesInMixOf(lists.word, edition, choices, 'word'),
     correctionCategories: categoriesInMixOf(lists.correction, edition, choices, 'correction'),
-    kinds: eachKind((kind) => choices.kinds[kind] ?? KINDS[kind].byDefault(mix)),
+    kinds: eachKind((kind) => choices.kinds[kind] ?? mix.kinds[kind]),
     kindWeights: eachKind((kind) => choices.kindWeights.get(kind) ?? NORMAL_KIND_WEIGHTS[kind]),
     quickQuestionEvery: choices.quickQuestionEvery ?? DEFAULT_QUICK_QUESTION_EVERY,
   };
@@ -466,7 +459,7 @@ function mixStateOf(lists: CategoryLists, edition: MixEdition, choices: MixChoic
 async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise<MixChoices> {
   const [lists, read, kindWeights, quickQuestionEvery] = await Promise.all([
     Promise.all(CATEGORY_KINDS.map((kind) => userState.list(CATEGORY_LISTS[kind].records))),
-    Promise.all(MIX_KINDS.map((kind) => userState.read(KINDS[kind].record))),
+    Promise.all(MIX_KINDS.map((kind) => userState.read(KIND_RECORDS[kind]))),
     userState.list(kindWeightRecords),
     userState.read(quickQuestionRecord),
   ]);
@@ -480,7 +473,7 @@ async function readChoices(userState: Pick<UserState, 'list' | 'read'>): Promise
 
 /**
  * Opens the Mix over the user state and the Language Pack's Categories, which
- * the Entries read once, as the pack never changes while it is open. For the
+ * the Entries read once per Patch (ADR 0090). For the
  * Core composition: each change publishes `eligibility`, so the Cycle reads
  * the eligible Entries again and the Feed, the plan and the Game follow.
  */
@@ -541,7 +534,7 @@ export async function openMix({
     });
     for (const kind of MIX_KINDS) {
       if (kinds[kind] === state.kinds[kind]) continue;
-      for (const [key, value] of KINDS[kind].record.change(kinds[kind])) writes.set(key, value);
+      for (const [key, value] of KIND_RECORDS[kind].change(kinds[kind])) writes.set(key, value);
     }
     const weights = new Map(choices.kindWeights);
     for (const kind of MIX_KINDS) {
@@ -644,9 +637,7 @@ export async function openMix({
     kindWeightsInEffect: () =>
       edition.isFeatureEnabled('mixKindWeights') ? state.kindWeights : NORMAL_KIND_WEIGHTS,
     quickQuestionEveryInEffect: () =>
-      edition.isFeatureEnabled('game') &&
-      edition.isFeatureEnabled('quickQuestion') &&
-      state.quickQuestionEvery !== 'off'
+      edition.isFeatureEnabled('quickQuestion') && state.quickQuestionEvery !== 'off'
         ? state.quickQuestionEvery
         : undefined,
     subscribe: subscribers.subscribe,

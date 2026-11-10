@@ -185,10 +185,10 @@ export async function unsentAfterSending(
   for (const { entryId, ...sent } of events) {
     const unsent = (await userState.read(countersUnsent.record(entryId))) ?? unchanged;
     const rest = sumOfDeltas(unsent, negated(sent));
-    if (rest === undefined) continue;
+    // A rest out of range is no change this device can send: it is forgotten.
     for (const change of countersUnsent
       .record(entryId)
-      .change(isUnchanged(rest) ? undefined : rest)) {
+      .change(rest === undefined || isUnchanged(rest) ? undefined : rest)) {
       changes.set(...change);
     }
   }

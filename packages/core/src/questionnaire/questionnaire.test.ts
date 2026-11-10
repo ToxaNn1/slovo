@@ -5,7 +5,7 @@ import type { Category, FeatureSwitch } from '@slovo/contracts';
 import { openComposition, type AnalyticsPort, type Composition, type FeedCard } from '../index';
 import { createMemoryContentPort } from '../testing';
 import type { UserState } from '../user-state/user-state';
-import { fakeClock, randomOf, testEdition, word } from '../test-support';
+import { fakeClock, randomOf, testEdition, word, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -60,7 +60,7 @@ async function run({
     userState,
     clock: fakeClock(morningOf(on)).clock,
     random: randomOf(0.25),
-    analytics,
+    analytics: analyticsInto(analytics),
   });
   return Object.assign(app, { userState });
 }

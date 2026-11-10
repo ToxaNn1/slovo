@@ -13,8 +13,8 @@ import {
 import { openComposition, type Clock, type Random } from '@slovo/core';
 import { seedUserState } from '@slovo/core/testing';
 
-import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
-import { ukrainian, ukrainianFolder } from './test-support';
+import { openLanguagePack, type NodeLanguagePack } from './index';
+import { buildUkrainianPack, ukrainian, ukrainianFolder } from './test-support';
 
 // The Widget Snapshot contract (spec #259, seam 2): the snapshot the Core
 // builds over the real Ukrainian Language Pack, and the example the widget's
@@ -33,7 +33,7 @@ let pack: NodeLanguagePack;
 beforeAll(() => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-widget-'));
   const outFile = join(workDir, 'language-pack.db');
-  if (!buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile }).ok) {
+  if (!buildUkrainianPack(outFile).ok) {
     throw new Error('The Ukrainian Language Pack does not build');
   }
   pack = openLanguagePack(outFile);
@@ -131,7 +131,7 @@ describe('The Widget Snapshot of the UA Edition', () => {
     const snapshot = await app.widget.snapshot(notificationStrings);
     if (snapshot === undefined) throw new Error('No Widget Snapshot was built');
     for (const { id, standardEquivalents, nonStandardForm } of stressTraps) {
-      const [headline, secondLine] = [standardEquivalents[0] ?? '', nonStandardForm];
+      const [headline, secondLine] = [standardEquivalents[0], nonStandardForm];
       expect(headline).toContain(STRESS_MARK);
       expect(secondLine).toContain(STRESS_MARK);
       const unmarked = (text: string) => text.replaceAll(STRESS_MARK, '');

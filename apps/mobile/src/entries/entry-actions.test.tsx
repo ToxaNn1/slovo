@@ -211,7 +211,7 @@ beforeEach(async () => {
     backend: reportsApi.backend,
     edition: shippedEdition,
     appVersion: '0.8.14',
-    contentVersion: 42,
+    contentVersion: () => 42,
     clock,
     // The tries again wait for nothing.
     schedule: (run) => {
@@ -717,7 +717,7 @@ describe('the corner of an Entry card while marks are swiped', () => {
     expect(menu.getByRole('button', { name: 'Знаю' })).toBeOnTheScreen();
     expect(menu.getByRole('button', { name: 'Не знаю' })).toBeOnTheScreen();
     expect(menu.queryByRole('button', { name: 'Зняти позначку' })).toBeNull();
-    for (const name of ['Поділитися', 'Сховати', 'Повідомити про помилку', 'Закрити'])
+    for (const name of ['Поділитися', 'Сховати', 'Повідомити про помилку', 'Скасувати'])
       expect(menu.getByRole('button', { name })).toBeOnTheScreen();
   });
 

@@ -363,7 +363,7 @@ describe('Knowledge Marks', () => {
       content,
       edition: testEdition({
         isFeatureEnabled: (feature) => feature === 'knowledge',
-        userSettingDefaults: { mix: { corrections: false } },
+        userSettingDefaults: { mix: { kinds: { correction: false } } },
       }),
       userState: await openUserState({ port }),
       clock: fakeClock().clock,

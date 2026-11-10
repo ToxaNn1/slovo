@@ -1,4 +1,4 @@
-import type { Easing } from './base';
+import type { Easing, LengthSteps } from './base';
 
 /** The tokens of the Entry: the Word card, its reveal, panels and rows. */
 
@@ -35,6 +35,35 @@ export interface RevealTimings {
   readonly headline: { readonly duration: number; readonly delay: number };
   readonly details: { readonly at: readonly number[]; readonly duration: number };
 }
+
+/**
+ * The frame of a tabbed Entry card (board p1): the width of its ink outline,
+ * how far its red offset shadow falls to the right and below (the card keeps
+ * that much room on those sides, so nothing clips it), the red rule under a
+ * Word's Lemma, the slanted mark over the selected tab: its height and how
+ * far it reaches past the tab's name on each side, and the red wedge of the
+ * kicker over the Lemma of the Word of the Day with its gap to the text.
+ */
+export const entryCardFrame = {
+  outline: 2,
+  shadow: 8,
+  rule: { width: 140, height: 8 },
+  tabMark: { height: 5, overhang: 8 },
+  kicker: { wedge: { width: 14, height: 11 }, gap: 8 },
+} as const;
+
+/**
+ * A Synonym's or an antonym's chip in the tabbed Word card's «Зв’язки» (board
+ * p1): a raised tile outlined in the line colour, its edge `depth` below it.
+ */
+export const linkChip = {
+  padding: { horizontal: 12, vertical: 9 },
+  radius: 11,
+  depth: 3,
+} as const;
+
+/** The gap between the big opening quote mark, the Example and its author's line in the tabbed Word card's «Приклад» (board p1). */
+export const exampleMark = { gap: 10 } as const;
 
 /** The Word card's side and bottom padding (the design's 26); the feed's skeleton keeps the same shape. */
 export const wordCardSide = 26;
@@ -133,6 +162,12 @@ export const swipeStampLayout = {
   paddingVertical: 4,
   paddingHorizontal: 12,
   border: 3,
+  /**
+   * The room a card that fills its page (ADR 0091) leaves under it for the
+   * stamp: its 20-point hang below the card and the drop of the far end of
+   * the longest stamp, «✓ КАЖУ ПРАВИЛЬНО», tilted 6°, about 18 points.
+   */
+  room: 40,
 } as const;
 
 /** The side of each button of the action row under the Entry card, from the design. */
@@ -140,3 +175,39 @@ export const actionButtonSize = 52;
 
 /** The padding of the Word of the day badge. */
 export const badgePadding = { horizontal: 10, vertical: 6 } as const;
+
+/**
+ * The standard form under «Українською краще», a Tip's and a Correction's
+ * (board С2.6, 30 pt where the Lemma is 50): this share of the Lemma's size at
+ * the user's font size, so the form and the text under it keep the card's one
+ * text scale (owner 08.11).
+ */
+export const standardFormScale = 30 / 50;
+
+/**
+ * An Idiom's expression by its length (owner 08.11): the Lemma's size up to 10
+ * letters, 40 where the Lemma is 50 up to 18, and 30 for a longer one.
+ */
+export const idiomExpressionLength: LengthSteps = {
+  steps: [
+    { upTo: 10, scale: 1 },
+    { upTo: 18, scale: 40 / 50 },
+  ],
+  longer: 30 / 50,
+};
+
+/** The tallest an Illustration is drawn, in points (ADR 0055). */
+export const illustrationHeight = 160;
+
+/** On the SE an Entry card's padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
+export const compactCardPadding = 0.75;
+
+/** The missing-voice message's widest, and its distance from the screen's edges. */
+export const voiceMessage = { maxWidth: 260, margin: 64 } as const;
+
+/**
+ * A swiped Entry card: its width until its first layout, a phone's card, and
+ * where a marked card flies to, off screen, and where an undone one comes
+ * back from (board 04).
+ */
+export const swipeMarkLayout = { unmeasuredWidth: 360, offScreen: 520 } as const;

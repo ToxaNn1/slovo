@@ -40,6 +40,7 @@ export const coreTokens: DesignTokens = {
       ink: '#161616',
       muted: '#6A6A6A',
       accent: '#161616',
+      accentText: '#161616',
       decor: '#D6D6D2',
       surfaceSunken: '#EFEFEC',
       line: 'rgba(0, 0, 0, 0.1)',
@@ -61,6 +62,7 @@ export const coreTokens: DesignTokens = {
       ink: '#F2F2F0',
       muted: '#9C9C9C',
       accent: '#F2F2F0',
+      accentText: '#F2F2F0',
       decor: '#3A3A3A',
       surfaceSunken: '#262626',
       line: 'rgba(255, 255, 255, 0.12)',
@@ -206,28 +208,56 @@ export const typeRoles = {
   crosswordTitle: role('word', '900', 19, 20, 0, 'uppercase'),
   /** The Daily Crossword's name in its screen's header, beside the back tile. */
   crosswordHeader: role('word', '900', 18, 18, 0, 'uppercase'),
+  /** A screen's own action at the far end of its header, as the Daily Crossword's «Підказка». */
+  headerAction: role('ui', '700', 13, 13),
   /** How far today's Daily Crossword has come, on its red card. */
   crosswordState: role('word', '800', 12, 12, 1, 'uppercase'),
   /** The day under the Daily Crossword's name on its red card. */
   crosswordDay: role('ui', '600', 13, 17),
+  /** The crossing Daily Crossword's name and day on its card of the hub (ADR 0087). */
+  crosswordCardTitle: role('word', '800', 16, 18),
+  /** The line under it, its grid size and count of Words, and the solved card's time line. */
+  crosswordCardLine: role('ui', '500', 13, 17),
+  /** The solved card's red mark, «✓ Розв’язано». */
+  crosswordCardMark: role('word', '900', 18, 20),
   /** A letter in a cell of the small grid on the Daily Crossword's red card. */
   crosswordMiniLetter: role('word', '800', 11, 13, 0, 'uppercase'),
   /** The XP earned in all, in its pill beside the Games screen's title. */
   xpPill: role('word', '800', 13, 13),
-  /** How many Rounds have passed, in a Game's header when it has no Round limit. */
-  roundPassed: role('word', '800', 13, 13),
-  /** The «−1» that rises from a lost Life. */
-  lifeLost: role('word', '900', 13, 13),
+  /** The mode's title in the Round's header (board 07), such as «ВГАДАЙ СЛОВО · 3/15». */
+  roundTitle: role('word', '800', 14, 14, 1, 'uppercase'),
+  /** «Життів: 4 з 5» in its red label under the Round's header (board 07). */
+  roundLives: role('ui', '600', 13, 13),
+  /** The big streak counter of «Виживання» under the Round's header (spec #1674), the Rounds passed. */
+  roundStreak: role('word', '800', 48, 52),
+  /** «4 поспіль · рекорд 9» beside the big streak counter of «Виживання» (spec #1674). */
+  roundStreakLine: role('ui', '600', 13, 17),
   /** The label over a Round's prompt, and a Quick Question's title. */
   roundLabel: role('word', '800', 12, 12, 1.5, 'uppercase'),
   /** A Round's head: its label and place, such as «НАГОЛОС · 6/10». */
   roundHead: role('word', '800', 12, 12, 2, 'uppercase'),
   /** A Round's prompt on its card. */
   roundPrompt: role('word', '800', 24, 30),
-  /** A Round's option on its tile. */
-  roundOption: role('word', '800', 18, 22),
+  /** A restyled Round's ask on its card (board 07 g3, g4), such as «Як сказати краще?» or the Word in «Звідки слово». */
+  roundAsk: role('word', '900', 24, 30),
+  /** The form a «Впиши слово» Round asks to replace, under its ask (board 07 g3): «замість «вірогідно»». */
+  roundInstead: role('ui', '500', 16, 22),
+  /** A Round's option on its tile when it is a Word. */
+  roundOptionWord: role('word', '800', 18, 22),
+  /** A Round's option on its tile when it is a sentence. */
+  roundOptionSentence: role('ui', '600', 17, 22),
+  /** A Round's option on its tile when it is a long text. */
+  roundOptionLong: role('ui', '500', 16, 22),
+  /** The key of a Round's option, such as «А»: a line of 20 centres the letter in its box. */
+  roundOptionKey: role('word', '900', 16, 20),
   /** The verdict over the Round's answer sheet, right or wrong: the board's big uppercase banner title. */
   roundVerdict: role('word', '900', 30, 30, -0.5, 'uppercase'),
+  /**
+   * The answer card's verdict, such as «Майже. Наступне вийде.»: the banner title's
+   * type, with lines far enough apart that a wrapped line's capital marks,
+   * Й's breve and Ї's dots, clear the line over it.
+   */
+  answerVerdict: role('word', '900', 30, 38, -0.5, 'uppercase'),
   /** The right answer on the Round's answer sheet. */
   roundAnswer: role('word', '500', 30, 39),
   /** A Round's explanation, and the Definition under its prompt. */
@@ -240,7 +270,11 @@ export const typeRoles = {
   guideNumber: role('ui', '700', 15, 15),
   /** The title of a step of the widget guide. */
   guideTitle: role('ui', '700', 17, 20),
-  /** The Lemma on a widget of the widget guide's drawing. */
+  /** The mode over the Lemma on a widget of the widget guide's drawing (board 15: 8 and 9). */
+  widgetMode: role('word', '800', 8, 10, 1.2, 'uppercase'),
+  /** The Lemma on the drawing's small widget (board 15: 19 at 158 wide). */
+  widgetSmallLemma: role('word', '500', 19, 23),
+  /** The Lemma on the drawing's medium widget (board 15: 26 at 346 wide, 24 at the drawing's width). */
   widgetLemma: role('word', '500', 24, 29),
   /** The short line under the Lemma on the drawing's medium widget. */
   widgetLine: role('word', '500', 12, 15),
@@ -302,6 +336,8 @@ export const typeRoles = {
   crosswordClue: role('ui', '600', 15, 19.5),
   /** The selected word's number and direction, such as «1→», on its red badge of the clue bar. */
   crosswordClueNumber: role('word', '900', 14, 14),
+  /** A letter on a path chip over the Daily Crossword's Letter Wheel: uppercase, as the tiles. */
+  crosswordPathLetter: role('word', '900', 14, 14, 0, 'uppercase'),
   /** A word's number in the corner of its first cell of the Daily Crossword. */
   crosswordCellNumber: role('ui', '700', 10, 10),
   /** A letter on a key of the Daily Crossword's keyboard. */
@@ -470,8 +506,16 @@ export const typeRoles = {
   actionHint: role('ui', '600', 13, 15.6),
   /** The shout on the closed card of the Word of the Day, «ЛОВИ СЛОВО!». */
   heroShout: role('word', '900', 40, 38, -1.5, 'uppercase'),
-  /** The kicker over the Lemma on a red ground, such as «СЛОВО ДНЯ · 3 ЛИСТОПАДА». */
+  /** The kicker over the Lemma of the Word of the Day on a red ground, such as «СЛОВО ДНЯ · 3 ЛИСТОПАДА». */
   heroKicker: role('word', '800', 11, 11, 2, 'uppercase'),
+  /** The kicker over the Lemma on the tabbed card of the Word of the Day, «СЛОВО ДНЯ · 7.11» (board p1). */
+  cardKicker: role('word', '800', 11, 11, 1.5, 'uppercase'),
+  /** The big red opening quote mark over the Example in the tabbed Word card's «Приклад» (board p1). */
+  exampleMark: role('word', '900', 54, 26),
+  /** The small label over the chips in the tabbed Word card's «Зв’язки», «Синоніми» (board p1). */
+  linksLabel: role('ui', '700', 12, 12),
+  /** A Synonym or an antonym on its chip in the tabbed Word card's «Зв’язки» (board p1). */
+  linkChip: role('ui', '700', 15, 15),
   /** The giant letter behind the card of the Word of the Day: the Lemma's first, or «?» while it is closed. */
   giantLetter: role('word', '900', 360, 360),
   /** The giant letter behind the red panel on top of Entry details. */
@@ -642,6 +686,27 @@ export function roleSize(name: TypeRole): DrawnSize {
 }
 
 /**
+ * How a text's size steps down as the text grows, so a long text takes a
+ * smaller size and the cards keep one text scale (owner 08.11): the share of
+ * the full size for a text of at most `upTo` letters, shortest first, and
+ * `longer` for a text longer than every step.
+ */
+export interface LengthSteps {
+  readonly steps: readonly { readonly upTo: number; readonly scale: number }[];
+  readonly longer: number;
+}
+
+/**
+ * `size` at the share `steps` give the length of `text`, counted in letters
+ * without the Stress marks.
+ */
+export function sizeForLength(size: DrawnSize, text: string, steps: LengthSteps): DrawnSize {
+  const length = text.replace(/\p{M}/gu, '').length;
+  const scale = steps.steps.find(({ upTo }) => length <= upTo)?.scale ?? steps.longer;
+  return { fontSize: size.fontSize * scale, lineHeight: size.lineHeight * scale };
+}
+
+/**
  * The hard offset shadow under a pressed tile or button: no blur, the edge
  * colour straight below. Pressed, the tile drops by the difference, so its
  * bottom edge stays where it was.
@@ -722,6 +787,15 @@ export const wedges = {
     [0.5, 1],
     [0, 0.667],
   ],
+  /** The check mark on a swiped card's «ЗНАЮ» wedge; drawn on the design's 26 × 22 box. */
+  check: [
+    [0, 12 / 22],
+    [4 / 26, 8 / 22],
+    [10 / 26, 14 / 22],
+    [22 / 26, 0],
+    [1, 4 / 22],
+    [10 / 26, 1],
+  ],
   /** The loader's wedge: a right edge narrower than the left, from the middle. */
   loader: [
     [0, 0],
@@ -736,6 +810,13 @@ export const wedges = {
     [1, 1],
     [0, 0.75],
   ],
+  /** A bar slanted forward: the rule under a Word's Lemma and the mark over the selected tab of an Entry card (board p1). */
+  slant: [
+    [0.03, 0],
+    [1, 0],
+    [0.97, 1],
+    [0, 1],
+  ],
   /** A box with its bottom right corner cut up. */
   cut: [
     [0, 0],
@@ -749,6 +830,13 @@ export const wedges = {
     [1, 0],
     [1, 1],
     [0, 1],
+  ],
+  /** A Life in the Round's header (board 07): a flag whose right edge sits lower. */
+  lifeFlag: [
+    [0, 0],
+    [1, 0.25],
+    [1, 1],
+    [0, 0.75],
   ],
   /** A shield, pointed at the bottom. */
   shield: [
@@ -788,7 +876,7 @@ export const wedges = {
     [1, 1],
     [0, 0.84],
   ],
-  /** The chevron at the end of a row of «Попередні слова». */
+  /** The slanted chevron at the end of a row of «Попередні слова» and of a settings row that opens a screen. */
   chevron: [
     [0, 0],
     [0.4, 0],
@@ -823,7 +911,18 @@ export const motion = {
   badgeStamp: { duration: 550, easing: ease, delay: 150 },
   /** The Level ring fills to the reader's progress. */
   ring: { duration: 1100, easing: [0.2, 0.8, 0.2, 1] },
-  sheet: { duration: 450, easing: [0.2, 0.9, 0.3, 1] },
+  /**
+   * A sheet rises `overshoot.distance` points past its place in the first
+   * `overshoot.share` of its slide (`slSheet`), then settles; a drag on its top
+   * past `close.distance` points, or a downward flick of `close.velocity`
+   * points per second whatever its length, closes it.
+   */
+  sheet: {
+    duration: 450,
+    easing: [0.2, 0.9, 0.3, 1],
+    overshoot: { distance: 10, share: 0.72 },
+    close: { distance: 96, velocity: 800 },
+  },
   pop: { duration: 300, easing: ease },
   /** One beat of the loader's wedges, from short to tall and back. */
   loader: { duration: 800, easing: [0.42, 0, 0.58, 1] },
@@ -846,6 +945,8 @@ export const motion = {
     readonly easing: Easing;
     readonly rise?: number;
     readonly delay?: number;
+    readonly overshoot?: { readonly distance: number; readonly share: number };
+    readonly close?: { readonly distance: number; readonly velocity: number };
   }
 >;
 
@@ -988,6 +1089,16 @@ export const fontSizeSteps: Readonly<
   XL: { lemma: 65, definition: 25, example: 22 },
 };
 
+/**
+ * The Word card's line heights, as multiples of the type size: the Lemma's
+ * leaves room above the glyphs so the Stress mark over a capital or tall
+ * vowel isn't clipped; the Definition and the Example take the body's.
+ */
+export const wordLineHeight = { lemma: 1.3, body: 1.5 } as const;
+
+/** Below this window width the cards take the design's compact iPhone SE layout. */
+export const compactWidth = 390;
+
 /** Vertical padding of a row in a list, off the 4-pt grid (the design's 14); also the space under a screen's header or over its list. */
 export const rowPadding = 14;
 
@@ -996,6 +1107,14 @@ export const blockGap = 18;
 
 /** The empty state's space over its content. */
 export const emptyStatePaddingTop = 80;
+
+/**
+ * How far the largest text sizes of iOS may scale a text
+ * (`maxFontSizeMultiplier`): a number, a title, a label or a letter that must
+ * keep its box to `number`, running text to `text`, and a letter that keeps
+ * its size inside a fixed cell to `fixed`.
+ */
+export const fontScaleCap = { number: 1.3, text: 1.5, fixed: 1 } as const;
 
 /** The text size scale above which a row puts its value, button or switch under its label, so no word breaks. */
 export const STACK_AT_FONT_SCALE = 1.3;

@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { CorrectionCardBody } from './CorrectionCard';
 import { IdiomCardBody } from './IdiomCard';
+import { KickerRow } from './KickerRow';
 import { ConcealedProvider, useSelfCheck } from './self-check';
 import { SynonymRowCardBody } from './SynonymRowCard';
 import { TipCardBody } from './TipCard';
@@ -13,9 +14,17 @@ import { useEdition } from '../providers/EditionProvider';
 import { ReviewLabel } from './ReviewLabel';
 import { EntryReveal, RevealDetail, RevealFrame } from './reveal';
 import { useCompactLayout, useLemmaSize } from '../providers/FontSizeProvider';
-import { blockGap, correctionCardLayout, space, wordCardSide, wordHero } from '../tokens';
+import {
+  blockGap,
+  compactCardPadding,
+  correctionCardLayout,
+  entryCardFrame,
+  space,
+  wordCardSide,
+  wordHero,
+} from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
-import { WordCardBody } from './WordCard';
+import { WordCardBody } from './WordCardBody';
 import { WordHero } from './WordHero';
 
 export interface EntryCardProps {
@@ -55,6 +64,14 @@ export interface EntryCardProps {
    * `calligraphy` is on in effect. Any other card keeps the Word font.
    */
   wordOfTheDayFont?: string | undefined;
+  /**
+   * A Word's, a Correction's, a Tip's, a Synonym Row's or an Idiom's card in
+   * a fixed-height frame, with tabs under its head, while the Edition's
+   * `wordTabs` is on in effect (ADR 0091). The Word of the Day's card stays
+   * the red card while Self-check keeps it closed, and opens into the tabbed
+   * card with its kicker.
+   */
+  tabs?: boolean | undefined;
 }
 
 /**
@@ -68,9 +85,6 @@ export interface EntryCardProps {
 export type EntryCardSlots =
   | { slot: 'actions'; actions: ReactNode }
   | { slot: 'corner'; corner: ReactNode; swipe: EntrySwipe | undefined };
-
-/** On the SE the padding shrinks by 25% (the Lemma's size is in `useLemmaSize`). */
-const COMPACT_PADDING = 0.75;
 
 /** The padding and the space between blocks from the design, for each kind of card. */
 const SPACING = {
@@ -106,6 +120,7 @@ export function EntryCard({
   selfCheck = false,
   stressFalls = false,
   wordOfTheDayFont,
+  tabs = false,
 }: EntryCardProps) {
   const { concealed, reveal } = useSelfCheck(selfCheck);
   const face = (
@@ -118,13 +133,19 @@ export function EntryCard({
       slots={slots}
       stressFalls={stressFalls}
       wordOfTheDayFont={wordOfTheDayFont}
+      tabs={tabs}
       concealed={concealed}
       reveal={reveal}
     />
   );
   if (slots?.slot !== 'corner' || slots.swipe === undefined) return face;
   return (
-    <SwipeMarks swipe={slots.swipe} concealed={concealed} correction={card.kind === 'correction'}>
+    <SwipeMarks
+      swipe={slots.swipe}
+      concealed={concealed}
+      correction={card.kind === 'correction'}
+      fill={fixedFrame(card, tabs, concealed)}
+    >
       {face}
     </SwipeMarks>
   );
@@ -140,6 +161,7 @@ function EntryCardFace({
   slots,
   stressFalls = false,
   wordOfTheDayFont,
+  tabs = false,
   concealed,
   reveal,
 }: Omit<EntryCardProps, 'selfCheck'> & { concealed: boolean; reveal: () => void }) {
@@ -147,7 +169,7 @@ function EntryCardFace({
   const { colors, radii } = useTokens();
   const lemmaSize = useLemmaSize();
   const compact = useCompactLayout();
-  const padding = compact ? COMPACT_PADDING : 1;
+  const padding = compact ? compactCardPadding : 1;
   const spacing = SPACING[card.kind];
   // A Word's raised tiles stand under its card; the icons of the other kinds sit in theirs (XActions a10).
   const actionsOf = (kind: typeof card.kind) =>
@@ -164,8 +186,12 @@ function EntryCardFace({
       </View>
     ) : undefined;
 
-  // The Word of the Day is the red shout card, which draws its own reveal button.
-  if (card.kind === 'word' && card.wordOfTheDay !== undefined)
+  // A card brought back for Review sets its corner beside the Review label, on the card's top row.
+  const bodyCorner = card.review === true ? undefined : corner;
+
+  // The Word of the Day is the red shout card, which draws its own reveal button;
+  // with tabs, only while it is closed, and once open it is the tabbed card (board p1).
+  if (card.kind === 'word' && card.wordOfTheDay !== undefined && !fixedFrame(card, tabs, concealed))
     return (
       <EntryReveal>
         <RevealFrame testID="word-card" style={styles.hero}>
@@ -195,9 +221,25 @@ function EntryCardFace({
         testID={`${card.kind}-card`}
         style={[
           styles.card,
+          { borderColor: colors.line },
+          // The tabbed card takes the page's height, whatever its tab holds (ADR 0091),
+          // outlined in ink over the red offset shadow of board p1.
+          fixedFrame(card, tabs, concealed) && [
+            styles.fixed,
+            {
+              borderColor: colors.ink,
+              boxShadow: [
+                {
+                  offsetX: entryCardFrame.shadow,
+                  offsetY: entryCardFrame.shadow,
+                  blurRadius: 0,
+                  color: colors.accent,
+                },
+              ],
+            },
+          ],
           {
             backgroundColor: colors.surface,
-            borderColor: colors.line,
             borderRadius: radii.card,
             paddingTop: spacing.top * padding,
             paddingHorizontal: spacing.side * padding,
@@ -206,7 +248,11 @@ function EntryCardFace({
           },
         ]}
       >
-        {card.review === true && <ReviewLabel />}
+        {card.review === true && (
+          <KickerRow testID={`${card.kind}-review-row`} corner={corner}>
+            <ReviewLabel />
+          </KickerRow>
+        )}
         {card.kind === 'word' ? (
           <WordCardBody
             card={card.model}
@@ -219,21 +265,24 @@ function EntryCardFace({
             concealed={concealed}
             stressFalls={stressFalls}
             wordOfTheDayFont={wordOfTheDayFont}
-            corner={corner}
+            corner={bodyCorner}
+            tabs={tabs}
           />
         ) : card.kind === 'correction' ? (
           <CorrectionCardBody
             card={card.model}
             lemmaSize={lemmaSize}
             concealed={concealed}
-            corner={corner}
+            corner={bodyCorner}
+            tabs={tabs}
           />
         ) : card.kind === 'idiom' ? (
           <IdiomCardBody
             card={card.model}
             lemmaSize={lemmaSize}
             concealed={concealed}
-            corner={corner}
+            corner={bodyCorner}
+            tabs={tabs}
           />
         ) : card.kind === 'synonymRow' ? (
           <SynonymRowCardBody
@@ -241,14 +290,16 @@ function EntryCardFace({
             lemmaSize={lemmaSize}
             concealed={concealed}
             onOpenWord={onOpenWord}
-            corner={corner}
+            corner={bodyCorner}
+            tabs={tabs}
           />
         ) : (
           <TipCardBody
             card={card.model}
             lemmaSize={lemmaSize}
             concealed={concealed}
-            corner={corner}
+            corner={bodyCorner}
+            tabs={tabs}
           />
         )}
         {concealed && (
@@ -273,8 +324,24 @@ function EntryCardFace({
   );
 }
 
+/**
+ * Whether the card is a fixed frame the page's height while `wordTabs` is on
+ * (ADR 0091): every card but the Word of the Day's while Self-check keeps it
+ * closed, which is the red card until the reader reveals it.
+ */
+function fixedFrame(card: EntryCardProps['card'], tabs: boolean, concealed: boolean): boolean {
+  return tabs && !(card.kind === 'word' && card.wordOfTheDay !== undefined && concealed);
+}
+
 const styles = StyleSheet.create({
   // The border is the card's only elevation.
   card: { borderWidth: 1 },
+  // The tabbed card keeps room on the right and below for its offset shadow.
+  fixed: {
+    flexGrow: 1,
+    borderWidth: entryCardFrame.outline,
+    marginRight: entryCardFrame.shadow,
+    marginBottom: entryCardFrame.shadow,
+  },
   hero: { borderRadius: wordHero.radius, overflow: 'hidden' },
 });

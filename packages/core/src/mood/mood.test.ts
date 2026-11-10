@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { openComposition, type Clock, type FeatureSwitch } from '../index';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, settle, testEdition, word } from '../test-support';
+import { fakeClock, settle, testEdition, word, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 const content = createMemoryContentPort({ words: [word('w_one'), word('w_two')] });
@@ -48,7 +48,14 @@ async function run({
   records = new Map<string, string>(),
   clock = fakeClock('2026-11-04T09:00:00+02:00').clock,
   on = ['wordOfTheDay', 'dashboard', 'mood', 'analytics'],
-}: { records?: Map<string, string>; clock?: Clock; on?: FeatureSwitch[] } = {}) {
+  analyticsFails = false,
+}: {
+  records?: Map<string, string>;
+  clock?: Clock;
+  on?: FeatureSwitch[];
+  /** Whether the Analytics port throws at each Mood event. */
+  analyticsFails?: boolean;
+} = {}) {
   const events: { event: string; properties: unknown }[] = [];
   const app = await openComposition({
     content,
@@ -56,18 +63,20 @@ async function run({
       isFeatureEnabled: (feature) => on.includes(feature),
       moods: MOODS,
       dashboardMoods: MOODS,
-      userSettingDefaults: { mix: { corrections: false } },
+      userSettingDefaults: { mix: { kinds: { correction: false } } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock,
     random: { next: () => 0.25 },
-    analytics: {
+    analytics: analyticsInto({
       // The Mood events alone: the onboarding tracks its welcome step on open.
       track: (event, properties) => {
-        if (event.startsWith('mood')) events.push({ event, properties });
+        if (!event.startsWith('mood')) return;
+        if (analyticsFails) throw new Error('analytics down');
+        events.push({ event, properties });
       },
       stop: () => undefined,
-    },
+    }),
   });
   return { app, records, events };
 }
@@ -120,7 +129,7 @@ describe('The Mood check-in', () => {
           ),
         moods: MOODS,
         dashboardMoods: MOODS,
-        userSettingDefaults: { mix: { corrections: false } },
+        userSettingDefaults: { mix: { kinds: { correction: false } } },
       }),
       userState: await openUserState({
         port: {
@@ -157,6 +166,17 @@ describe('The Mood check-in', () => {
     expect(app.mood.today).toEqual({ state: 'skipped' });
     expect(moodBlock(app)).toBeUndefined();
     expect(events).toEqual([{ event: 'moodSkipped', properties: {} }]);
+  });
+
+  it('keeps a choice and a skip when Analytics fails to track them', async () => {
+    const chose = await run({ analyticsFails: true });
+    const skipped = await run({ analyticsFails: true });
+
+    await chose.app.mood.choose('calm');
+    await skipped.app.mood.skip();
+
+    expect(chose.app.mood.today).toMatchObject({ state: 'chosen', mood: { id: 'calm' } });
+    expect(skipped.app.mood.today).toEqual({ state: 'skipped' });
   });
 
   it('changes the mood of the day', async () => {

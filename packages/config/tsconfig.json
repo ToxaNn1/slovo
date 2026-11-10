@@ -1,0 +1,6 @@
+{
+  // Only so ESLint's type-aware rules can read test-reports.d.ts; nothing here is built.
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": { "noEmit": true, "composite": false, "declarationMap": false },
+  "include": ["*.d.ts"]
+}

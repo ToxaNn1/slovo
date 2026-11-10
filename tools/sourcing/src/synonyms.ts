@@ -25,7 +25,7 @@ import {
   type SourcingResult,
 } from './pipeline';
 import type { Flag } from './review-report';
-import { matchKey, readStress, squeeze, unstressed } from './text';
+import { matchKey, readStress, squeeze, unstressed, withoutHomonymIndexes } from './text';
 import { isCrossReference } from './word-filters';
 
 export type SynonymSourcingOptions = PipelineOptions & {
@@ -48,6 +48,7 @@ interface RowRequest {
 }
 
 const synonymsKind: SourcingKind<RowRequest> = {
+  entryKind: 'synonymRow',
   folder: 'synonyms',
   idPrefix: 'r_',
   parseLine: parseRowLine,
@@ -177,7 +178,7 @@ function wordIdOf(lemmas: Map<string, string | undefined>, text: string): { word
 
 /** A member's gloss as a shade note: none when it only points to another word or names the dominant. */
 function shadeNoteOf(note: string, dominant: string): string | undefined {
-  const trimmed = withoutTrailingPunctuation(note);
+  const trimmed = withoutTrailingPunctuation(withoutHomonymIndexes(note));
   if (trimmed === '' || isCrossReference(trimmed) || matchKey(trimmed) === matchKey(dominant)) {
     return undefined;
   }

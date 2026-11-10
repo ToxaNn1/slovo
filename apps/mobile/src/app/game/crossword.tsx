@@ -1,57 +1,70 @@
+import type { CrossingCrossword, CrosswordSolve, TracedCrossword } from '@slovo/core';
 import {
-  CrosswordGrid,
+  CrossingClueBar,
+  CrossingGrid,
+  LetterWheel,
   TracedCrosswordGrid,
   BackHeader,
   Button,
+  CrosswordSolvedPoster,
+  UndoToastProvider,
+  useUndoToast,
   space,
   typeStyle,
   useEdition,
   useTokens,
+  fontScaleCap,
 } from '@slovo/ui';
 import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { edition, editionStrings } from '@/edition/edition';
-import { crosswordCellLabel, crosswordKeys, useDailyCrossword } from '@/game/daily-crossword';
-import {
-  tracedCrosswordTexts,
-  useScreenReader,
-  useTracedCrossword,
-  type TracedCrosswordPlay,
-} from '@/game/traced-crossword';
+import { logError } from '@/diagnostics/log';
+import { editionStrings } from '@/edition/edition';
+import { crosswordShare } from '@/game/crossword-share';
+import { useCrossingCrossword, type CrossingCrosswordPlay } from '@/game/crossing-crossword';
+import { useDailyCrossword } from '@/game/daily-crossword';
+import { tracedCrosswordTexts, useScreenReader, useTracedCrossword } from '@/game/traced-crossword';
+import { MascotAs } from '@/mascot/mascot';
 import { ShareCardSheet } from '@/share/share-card-sheet';
 import { useShell } from '@/shell-value';
 import { useShown } from '@/shown-in-effect';
 
 const { game: strings } = editionStrings;
-const keys = crosswordKeys(edition.languageTraits);
-
-/** How far the largest text sizes of iOS may scale the solved line, so it never breaks a word. */
-const SOLVED_MAX_FONT_SCALE = 1.5;
+const wheelTexts = {
+  tileLabel: (letter: string) => letter,
+  check: strings.dailyCrossword.check,
+};
 
 /**
  * Today's Daily Crossword, opened from its card on the Game's mode screen:
- * the grid with its clue bar, «Відкрити літеру» and the Edition's keyboard, and «Розв’язано!» in
- * place of the button once every word is right. The letters stay on the
- * device as they go in, so «Назад» and the card's «Продовжити» find them.
- * With the crossword turned off while the reader is on it, the screen goes
- * back to the Game. A solved one offers its Share Card, the grid without a
- * letter, while that card is on in effect and the binary can capture it.
+ * the crossing one played on the Letter Wheel (ADR 0087), or the traced one
+ * while the crossing one is off (ADR 0073). The progress stays on the device,
+ * so «Назад» and the card's «Продовжити» find it; a day solved on another
+ * device opens solved. On a day no pattern fills, when it cannot open, or
+ * with the crossword turned off while the reader is on it, the screen goes
+ * back to the Game.
  */
 export default function DailyCrosswordScreen() {
-  const traced = useTracedCrossword();
-  if (traced === undefined) return <CrosswordFrame />;
-  if (traced.kind === 'play') return <TracedCrosswordScreen crossword={traced} />;
-  return <PrintedCrosswordScreen />;
+  const opening = useDailyCrossword();
+  if (opening === undefined) return <CrosswordFrame />;
+  if (opening.kind === 'crossing') return <CrossingCrosswordScreen opened={opening.crossword} />;
+  if (opening.kind === 'traced') return <TracedCrosswordScreen opened={opening.crossword} />;
+  return <Redirect href="/game" />;
 }
 
 /**
  * The screen's background and its header with «Назад», over the content;
  * empty while the crossword opens.
  */
-function CrosswordFrame({ children }: { children?: ReactNode }) {
+function CrosswordFrame({
+  children,
+  action,
+}: {
+  children?: ReactNode;
+  action?: { label: string; onPress: () => void } | undefined;
+}) {
   const router = useRouter();
   const { colors } = useTokens();
   const insets = useSafeAreaInsets();
@@ -78,6 +91,7 @@ function CrosswordFrame({ children }: { children?: ReactNode }) {
               router.back();
             },
           }}
+          action={action}
         />
       </View>
       {children}
@@ -91,7 +105,8 @@ function CrosswordFrame({ children }: { children?: ReactNode }) {
  * «Розв’язано!» and its Share Card, every cell open with no letter, once
  * every Word is found.
  */
-function TracedCrosswordScreen({ crossword }: { crossword: TracedCrosswordPlay }) {
+function TracedCrosswordScreen({ opened }: { opened: TracedCrossword }) {
+  const crossword = useTracedCrossword(opened);
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
@@ -130,7 +145,7 @@ function TracedCrosswordScreen({ crossword }: { crossword: TracedCrosswordPlay }
           <Text
             testID="daily-crossword-solved"
             {...voice}
-            maxFontSizeMultiplier={SOLVED_MAX_FONT_SCALE}
+            maxFontSizeMultiplier={fontScaleCap.text}
             style={[typeStyle('crosswordSolved', tokens), styles.solved, { color: colors.correct }]}
           >
             {strings.dailyCrossword.solved}
@@ -163,78 +178,174 @@ function TracedCrosswordScreen({ crossword }: { crossword: TracedCrosswordPlay }
 }
 
 /**
- * The printed Daily Crossword, while the traced one is off or cannot fill its
- * grid (ADR 0073).
+ * The crossing Daily Crossword (ADR 0087), as board 08 orders it: the grid,
+ * the current Word's clue bar with «next» under it, the line on how to trace,
+ * long until a Word is solved, and the Letter Wheel at the foot; a trace that spells no Word shakes in ink under
+ * «Десь закралася помилка. Шукай уважніше!»; «Розв’язано!» once every Word is solved.
  */
-function PrintedCrosswordScreen() {
-  const crossword = useDailyCrossword();
+function CrossingCrosswordScreen({ opened }: { opened: CrossingCrossword }) {
+  const crossword = useCrossingCrossword(opened);
   const tokens = useTokens();
   const { colors } = tokens;
   const { voice } = useEdition();
-  const solved = crossword?.state.progress === 'solved';
-  const { shareCard } = useShell();
-  const share = useShown().dailyCrosswordShare ? shareCard : undefined;
-  const [sharing, setSharing] = useState(false);
+  const accessibleMode = useScreenReader();
+  const { solve, miss } = crossword;
+  const solved = solve !== undefined;
+  const texts = strings.dailyCrossword;
+  const { crosswordSolvedScreen: solvedScreen, crosswordSolveTime } = useShown();
+  const solvedText = solvedScreen ? texts.solvedScreen.title : texts.solved;
+  // While the finger traces the wheel the screen holds still, and the grid shrinks to leave the
+  // Letter Wheel whole on a short screen; with VoiceOver on or once solved, it scrolls instead.
+  const scrolls = accessibleMode || solved;
 
   useEffect(() => {
     if (!solved) return;
-    AccessibilityInfo.announceForAccessibility(strings.dailyCrossword.solved);
-  }, [solved]);
+    AccessibilityInfo.announceForAccessibility(solvedText);
+  }, [solved, solvedText]);
 
-  if (crossword === null) return <Redirect href="/game" />;
+  useEffect(() => {
+    if (miss === undefined) return;
+    AccessibilityInfo.announceForAccessibility(texts.miss);
+  }, [miss, texts.miss]);
+
+  if (solve !== undefined && solvedScreen) {
+    return (
+      <UndoToastProvider>
+        <CrossingCrosswordSolved
+          crossword={crossword}
+          solve={solve}
+          withTime={crosswordSolveTime}
+        />
+      </UndoToastProvider>
+    );
+  }
+
   return (
-    // The frame's bottom inset keeps the keyboard's last row, ⌫ with it, above the home indicator.
-    <CrosswordFrame>
-      <ScrollView contentContainerStyle={styles.content}>
-        {crossword !== undefined && (
-          <CrosswordGrid
-            testID="daily-crossword-grid"
-            letters={crossword.state.letters}
-            words={crossword.state.words}
-            keys={keys}
-            onLetter={crossword.setLetter}
-            onOpenLetter={solved ? undefined : crossword.openCell}
-            texts={{
-              cellLabel: (letter, place) =>
-                crosswordCellLabel(crossword.state.words, strings, letter, place),
-              openLetter: strings.openLetter,
-              eraseKey: strings.dailyCrossword.eraseKey,
-            }}
+    <CrosswordFrame
+      action={
+        crossword.hint === undefined || solved
+          ? undefined
+          : { label: texts.hint, onPress: crossword.hint }
+      }
+    >
+      <ScrollView
+        contentContainerStyle={[styles.crossing, scrolls ? styles.fill : styles.fit]}
+        scrollEnabled={scrolls}
+      >
+        <CrossingGrid
+          testID="crossing-crossword-grid"
+          cells={crossword.cells}
+          onSelect={crossword.select}
+        />
+        {!solved && (
+          <CrossingClueBar
+            testID="crossing-crossword-clue"
+            number={crossword.clue.number}
+            clue={crossword.clue.text}
+            label={crossword.clue.label}
+            next={texts.nextWord}
+            onNext={crossword.next}
           />
         )}
-        {solved && (
+        {solved ? (
           <Text
             testID="daily-crossword-solved"
             {...voice}
-            maxFontSizeMultiplier={SOLVED_MAX_FONT_SCALE}
-            style={[typeStyle('crosswordSolved', tokens), styles.solved, { color: colors.correct }]}
+            maxFontSizeMultiplier={fontScaleCap.text}
+            style={[
+              typeStyle('crosswordSolved', tokens),
+              styles.solved,
+              styles.crossingSolved,
+              { color: colors.correct },
+            ]}
           >
-            {strings.dailyCrossword.solved}
+            {texts.solved}
           </Text>
-        )}
-        {solved && share !== undefined && (
-          <>
-            <Button
-              variant="neutral"
-              testID="daily-crossword-share"
-              label={editionStrings.share.button}
-              onPress={() => {
-                setSharing(true);
-              }}
-            />
-            <ShareCardSheet
-              subject={{ crossword: crossword.state }}
-              kind="dailyCrossword"
-              share={share}
-              visible={sharing}
-              onClose={() => {
-                setSharing(false);
-              }}
-            />
-          </>
+        ) : (
+          <LetterWheel
+            testID="crossing-crossword-wheel"
+            letters={crossword.wheel}
+            trace={crossword.trace}
+            miss={miss}
+            coach={crossword.coach}
+            accessibleMode={accessibleMode}
+            onExtend={crossword.extend}
+            onStepBack={crossword.stepBack}
+            onRelease={crossword.release}
+            help={
+              <>
+                <Text
+                  {...voice}
+                  style={[typeStyle('hint', tokens), styles.solved, { color: colors.muted }]}
+                >
+                  {crossword.entered ? texts.wheelHintShort : texts.wheelHint}
+                </Text>
+                {miss !== undefined && (
+                  <Text
+                    testID="crossing-crossword-miss"
+                    {...voice}
+                    style={[typeStyle('hint', tokens), styles.solved, { color: colors.ink }]}
+                  >
+                    {texts.miss}
+                  </Text>
+                )}
+              </>
+            }
+            texts={wheelTexts}
+          />
         )}
       </ScrollView>
     </CrosswordFrame>
+  );
+}
+
+/**
+ * The solved screen of the crossing Daily Crossword (ADR 0087): «Розгадано!»
+ * with the Solve time and the Mascot celebrating, the grid with no letter and
+ * the share line. «Поділитися» opens the share sheet with the share line and
+ * the grid in squares, then says «Скопійовано. Жодної літери — тільки клини.»;
+ * «До ігор» goes to the Games hub.
+ */
+function CrossingCrosswordSolved({
+  crossword,
+  solve,
+  withTime,
+}: {
+  crossword: CrossingCrosswordPlay;
+  solve: CrosswordSolve;
+  withTime: boolean;
+}) {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const toast = useUndoToast();
+  const texts = strings.dailyCrossword;
+  const share = crosswordShare(crossword, solve, texts, withTime);
+  return (
+    <View
+      testID="daily-crossword-screen"
+      style={[styles.screen, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+    >
+      <CrosswordSolvedPoster
+        time={share.time}
+        grid={share.grid}
+        share={share}
+        onShare={() => {
+          Share.share({ message: share.message }).then(
+            ({ action }) => {
+              if (action === Share.sharedAction)
+                toast({ message: texts.share.copied, brief: true });
+            },
+            (error: unknown) => {
+              logError('Could not share the Daily Crossword', error);
+            },
+          );
+        }}
+        onToGames={() => {
+          router.dismissTo('/game');
+        }}
+        mascot={<MascotAs state="celebrates" onRed />}
+      />
+    </View>
   );
 }
 
@@ -242,5 +353,11 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   header: { paddingHorizontal: space[4], paddingTop: space[2] },
   content: { gap: space[4], paddingHorizontal: space[5], paddingBottom: space[8] },
+  // Board 08's spacing; the grid shrinks when the clue bar and the Letter Wheel need its room.
+  crossing: { paddingHorizontal: space[4], paddingBottom: space[2] },
+  crossingSolved: { marginTop: space[4] },
   solved: { textAlign: 'center' },
+  fill: { flexGrow: 1 },
+  // As tall as the screen and no taller, so the grid gives up the room the rest needs.
+  fit: { flex: 1 },
 });

@@ -1,8 +1,9 @@
 import type { LocalDate } from '@slovo/core';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { Wedge } from '../primitives/Wedge';
 import { fill, useEdition } from '../providers/EditionProvider';
-import { badgePadding, space, typeStyle } from '../tokens';
+import { badgePadding, entryCardFrame, space, typeStyle, wedges } from '../tokens';
 import { useSchemeColors, useTokens } from '../providers/TokensProvider';
 import { useOnAccent } from './on-accent';
 
@@ -47,7 +48,55 @@ export function WordOfTheDayBadge({ day: { month, day } }: { day: LocalDate }) {
   );
 }
 
+/**
+ * The kicker that marks the Word of the Day on its tabbed card (ADR 0091,
+ * board p1): a red wedge and «СЛОВО ДНЯ · 7.11» in red capitals, no fill.
+ * VoiceOver reads the label as written.
+ */
+export function WordOfTheDayKicker({ day: { month, day } }: { day: LocalDate }) {
+  const tokens = useTokens();
+  const { strings, voice } = useEdition();
+  const label = fill(strings.wordOfTheDay.kicker, { day: String(day), month: String(month) });
+  const { wedge } = entryCardFrame.kicker;
+  return (
+    <View
+      testID="word-of-the-day-kicker"
+      accessible
+      accessibilityLabel={label}
+      {...voice}
+      style={styles.kickerRow}
+    >
+      <Wedge
+        points={wedges.logo}
+        color={tokens.colors.accent}
+        width={wedge.width}
+        height={wedge.height}
+      />
+      {/* A long date shrinks a little rather than run under the corner tiles. */}
+      <Text
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+        style={[
+          typeStyle('cardKicker', tokens),
+          styles.kickerText,
+          { color: tokens.colors.accentText },
+        ]}
+      >
+        {label}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  kickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: entryCardFrame.kicker.gap,
+  },
+  kickerText: { flexShrink: 1 },
   badge: {
     alignSelf: 'flex-start',
     paddingHorizontal: badgePadding.horizontal,

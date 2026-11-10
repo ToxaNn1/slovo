@@ -5,8 +5,11 @@ import {
   openCounterReads,
   openCounterSending,
   openMistakeReports,
+  evaluateSwitches,
   openRemoteSwitches,
+  type ReaderFacts,
   type AnalyticsPort,
+  type AnalyticsSink,
   type Clock,
   type Edition,
   type Random,
@@ -14,6 +17,8 @@ import {
   type UserSettings,
 } from '@slovo/core';
 import { createFakeBackend, createMemoryContentPort, seedUserState } from '@slovo/core/testing';
+
+import type { FeatureSwitch } from '@slovo/contracts';
 
 import { edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
@@ -39,13 +44,57 @@ export function opened<T>(value: T): Opening<T> {
 }
 
 /**
+ * The Feature Switches of the Games boards (spec #1674). A test of the Game tab
+ * starts with each of them off and turns on the ones it needs, so it does not
+ * hang on whether the UA Edition ships them.
+ */
+export const GAMES_BOARD_SWITCHES: readonly FeatureSwitch[] = [
+  'crossingCrossword',
+  'crosswordHint',
+  'crosswordSolveTime',
+  'crosswordSolvedScreen',
+  'crosswordBadgeStamp',
+  'gameAnswerCard',
+  'letterTiles',
+  'survivalStreak',
+  'finishPoster',
+];
+
+/**
  * The remote Feature Switches already open, with the Edition in effect as
  * `edition` has it, for a screen drawn under the Language Pack's gate, so a
- * test says which switches are on by the Edition it loads.
+ * test says which switches are on by the Edition it loads, and the
+ * force-update minimums of the kept answer, none unless it gives them.
  */
-export function switchedTo(edition: Edition): Opening<EditionSwitches> {
-  return opened({ edition, subscribe: () => () => undefined, ask: () => Promise.resolve(false) });
+export function switchedTo(
+  edition: Edition,
+  minimums: EditionSwitches['minimums'] = {},
+): Opening<EditionSwitches> {
+  return opened(switchesOf(edition, minimums));
 }
+
+/** The remote Feature Switches of the test device, with no Rule, as `edition` has them. */
+function switchesOf(edition: Edition, minimums: EditionSwitches['minimums'] = {}): EditionSwitches {
+  return {
+    edition,
+    verdicts: evaluateSwitches({
+      rules: [],
+      states: edition.featureSwitches,
+      facts: { ...testReader, clock, clockOffsetMs: 0 },
+    }),
+    installId: TEST_INSTALL_ID,
+    minimums,
+    subscribe: () => () => undefined,
+    ask: () => Promise.resolve(false),
+    start: () => () => undefined,
+  };
+}
+
+/** Analytics into `port` from the test device, with no Rule, so no Variant. */
+export const analyticsInto = (port: AnalyticsPort): AnalyticsSink => ({
+  port,
+  switches: switchesOf(edition),
+});
 
 /** An Analytics port a test reads: the events the Core sent it, and whether it was told to stop. */
 export interface RecordedAnalytics {
@@ -88,7 +137,9 @@ export async function settingsAt(
     defaults: edition.userSettingDefaults,
     ...(analytics === undefined
       ? {}
-      : { analytics: createAnalytics({ edition, userState, port: analytics }) }),
+      : {
+          analytics: createAnalytics({ edition, userState, sink: analyticsInto(analytics) }),
+        }),
   });
   return opened({ settings, current: await settings.update(changes) });
 }
@@ -106,6 +157,18 @@ function seeded(seed: number): Random {
 
 /** A schedule whose timers never fire, so nothing a test did not ask for runs in the background. */
 const never: Schedule = () => () => undefined;
+
+/** The Install id of the test device, which the Analytics events carry. */
+export const TEST_INSTALL_ID = 'test-install';
+
+/** A reader of 1.0.0 on iOS, signed out, with no region: one no targeted Rule matches. */
+const testReader: ReaderFacts = {
+  appVersion: '1.0.0',
+  platform: 'ios',
+  region: undefined,
+  signedIn: false,
+  installId: TEST_INSTALL_ID,
+};
 
 const clock: Clock = { now: () => new Date('2026-10-13T09:00:00Z'), timeZone: () => 'Europe/Kyiv' };
 
@@ -127,10 +190,13 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       async () =>
         openRemoteSwitches({
           edition,
+          states: edition.featureSwitches,
+          facts: () => testReader,
           backend: unreachableBackend(),
           userState: await userState.opened(),
           schedule: never,
           random,
+          clock,
         }),
       { onError },
     );
@@ -140,9 +206,8 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
       reader: {
         ...createMemoryContentPort(),
         metadata: () => Promise.reject(new Error('A test pack has no metadata')),
-        crosswordDay: () => Promise.resolve(undefined),
       },
-      version: { contentVersion: 1, packFormat: 1 },
+      contentVersion: () => 1,
       contentUpdate: undefined,
     });
   return {
@@ -164,7 +229,6 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
         const content = (await languagePack.opened()).reader;
         return openComposition({
           content,
-          crossword: content,
           edition: (await remoteSwitches.opened()).edition,
           userState: await userState.opened(),
           clock,
@@ -183,7 +247,7 @@ export function testShell(overrides: Partial<Shell> = {}): Shell {
           backend: createFakeBackend().backend,
           edition: (await remoteSwitches.opened()).edition,
           appVersion: 'test',
-          contentVersion: (await languagePack.opened()).version.contentVersion,
+          contentVersion: (await languagePack.opened()).contentVersion,
           clock,
           schedule: never,
           random,

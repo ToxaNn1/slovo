@@ -24,6 +24,7 @@ const word: EntryRowModel = {
   labelKey: 'word',
   spoken: 'meek, Quiet and gentle.',
   partOfSpeech: 'adjective',
+  gender: undefined,
   registers: [],
   rarity: 3,
 };

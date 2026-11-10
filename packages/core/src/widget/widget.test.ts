@@ -10,12 +10,12 @@ import { describe, expect, it } from 'vitest';
 
 import {
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type ContentReadPort,
   type FeatureSwitch,
 } from '../index';
+import { SEEN_DWELL_MS } from '../feed/feed';
 import { createMemoryContentPort } from '../testing';
 import { correction, fakeClock, idiom, steppingRandom, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -676,6 +676,16 @@ describe('the goal ring and the lock-screen widget in the Widget Snapshot', () =
       after: { xp: 0, met: false, streak: 0 },
     });
     expect(() => serializeWidgetSnapshot(snapshot)).not.toThrow();
+  });
+
+  it('dates the ring by the day its Words were counted for, till the day change reaches it', async () => {
+    const { clock, advance } = fakeClock(start);
+    const app = await run({ records: earned(), clock, on: ring });
+
+    // 09:00 to 00:30 of the next day in Kyiv, with no day change yet.
+    advance(15.5 * 60 * MINUTE);
+
+    expect((await snapshotOf(app)).goalRing).toMatchObject({ on: '2026-10-16', xp: 3, goal: 20 });
   });
 
   /** The goal ring of a run over `records` at the instant `at`. */

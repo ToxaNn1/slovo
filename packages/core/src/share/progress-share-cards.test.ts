@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { openComposition, type AnalyticsPort, type FeatureSwitch, type XpRecord } from '../index';
+import { openComposition, type AnalyticsPort, type FeatureSwitch } from '../index';
+import { type XpRecord } from '../progress/records';
 import type { Badge } from '@slovo/contracts';
 
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, seededRandom, testEdition, word } from '../test-support';
+import { fakeClock, seededRandom, testEdition, word, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -74,7 +75,7 @@ async function run({
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: fakeClock(`${TODAY}T09:00:00+03:00`).clock,
     random: seededRandom(7),
-    analytics: port,
+    analytics: analyticsInto(port),
   });
   await Promise.resolve();
   return app;

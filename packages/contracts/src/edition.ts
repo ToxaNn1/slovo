@@ -86,11 +86,6 @@ export const MoodSchema = z.strictObject({
 
 export type Mood = z.infer<typeof MoodSchema>;
 
-/** How the Game picks Distractors for a Round. */
-export const DistractorRuleSchema = z.enum(['same-part-of-speech']);
-
-export type DistractorRule = z.infer<typeof DistractorRuleSchema>;
-
 /** One lower-case letter. */
 const LowerCaseLetterSchema = z.string().regex(/^\p{Ll}$/u, 'Expected one lower-case letter');
 
@@ -109,10 +104,19 @@ const LetterListSchema = z
       .refine((letters) => new Set(letters).size === letters.length, 'Expected unique letters'),
   );
 
+/**
+ * Whether the language marks Stress. One that does, so that every Lemma
+ * carries it, names its lowercase vowels, each a letter of the alphabet: the
+ * only letters Stress may fall on.
+ */
+const StressTraitSchema = z.discriminatedUnion('marked', [
+  z.strictObject({ marked: z.literal(false) }),
+  z.strictObject({ marked: z.literal(true), vowels: LetterListSchema }),
+]);
+
 export const LanguageTraitsSchema = z
   .strictObject({
-    /** Whether the language marks Stress, so every Lemma must carry it. */
-    marksStress: z.boolean(),
+    stress: StressTraitSchema,
     /** The lowercase letters of the alphabet in alphabetical order. */
     alphabet: LetterListSchema,
     /**
@@ -126,14 +130,14 @@ export const LanguageTraitsSchema = z
      * None when left out.
      */
     expressionPunctuation: LetterListSchema.optional(),
-    /** The language tag used to sort text in the Edition's language. */
-    sortLocale: LanguageTagSchema,
-    distractorRule: DistractorRuleSchema,
     /**
-     * The lowercase vowels, each a letter of the alphabet: the only letters
-     * Stress may fall on. Required when the Edition marks Stress.
+     * The characters read as one apostrophe when text is compared, such as
+     * the ones a reader's keyboard may type; a Comparison Key writes each as
+     * the first. None when left out.
      */
-    vowels: LetterListSchema.optional(),
+    apostrophes: LetterListSchema.optional(),
+    /** The language tag used to sort text and fold its case in the Edition's language. */
+    sortLocale: LanguageTagSchema,
     /**
      * The rows of the on-screen keyboard of the Daily Crossword, top to
      * bottom: every letter of the alphabet once. The alphabet in rows when
@@ -141,7 +145,7 @@ export const LanguageTraitsSchema = z
      */
     keyboard: z.array(LetterListSchema).min(1).optional(),
   })
-  .superRefine(({ marksStress, alphabet, vowels, keyboard }, context) => {
+  .superRefine(({ stress, alphabet, keyboard }, context) => {
     if (keyboard !== undefined) {
       const keys = keyboard.flat();
       keyboard.forEach((row, rowIndex) => {
@@ -164,21 +168,12 @@ export const LanguageTraitsSchema = z
           });
       });
     }
-    if (vowels === undefined) {
-      if (marksStress) {
-        context.addIssue({
-          code: 'custom',
-          path: ['vowels'],
-          message: 'Required when the Edition marks Stress',
-        });
-      }
-      return;
-    }
-    vowels.forEach((vowel, index) => {
+    if (!stress.marked) return;
+    stress.vowels.forEach((vowel, index) => {
       if (!alphabet.includes(vowel)) {
         context.addIssue({
           code: 'custom',
-          path: ['vowels', index],
+          path: ['stress', 'vowels', index],
           message: `"${vowel}" is not a letter of the alphabet`,
         });
       }
@@ -247,218 +242,264 @@ export const NarratorVoicesSchema = z
       });
   });
 
-/** Per-Edition on/off settings for Core features. */
+/**
+ * The states an Edition declares a Feature Switch in (ADR 0089): `on`, in
+ * effect unless a Rule turns it off; `off`, shipped and ready, off until a
+ * Rule turns it on; `unavailable`, the Edition has no content or assets for
+ * it, and nothing turns it on.
+ */
+export const FeatureSwitchStateSchema = z.enum(['on', 'off', 'unavailable']);
+
+export type FeatureSwitchState = z.infer<typeof FeatureSwitchStateSchema>;
+
+/** The Edition's state of every Core feature's Feature Switch (ADR 0089). */
 export const FeatureSwitchesSchema = z.strictObject({
-  game: z.boolean(),
-  corrections: z.boolean(),
+  game: FeatureSwitchStateSchema,
+  corrections: FeatureSwitchStateSchema,
   /** Idioms: the third kind of Entry, idioms and place names (ADR 0046). */
-  idioms: z.boolean(),
+  idioms: FeatureSwitchStateSchema,
   /** Synonym Rows: the fourth kind of Entry, a dominant word and a row of its synonyms (ADR 0051). */
-  synonymRows: z.boolean(),
+  synonymRows: FeatureSwitchStateSchema,
   /** Tips: the fifth kind of Entry, rules of good speech (ADR 0051). */
-  tips: z.boolean(),
+  tips: FeatureSwitchStateSchema,
   /** The Account, under the Edition's `accountName`: its Settings row, its screen and the backend's answers to it. */
-  account: z.boolean(),
+  account: FeatureSwitchStateSchema,
   /** Sign in with Google: the second Sign-in method, its button and the backend's procedure for it (ADR 0047). */
-  googleSignIn: z.boolean(),
+  googleSignIn: FeatureSwitchStateSchema,
   /** Sign in with Apple: the third Sign-in method, its button on iOS and the backend's procedure for it. */
-  signInWithApple: z.boolean(),
+  signInWithApple: FeatureSwitchStateSchema,
   /** Sync: the background exchange of the reader's words with their Account. Apart from `account`, so Sync can stop while sign-in keeps working. */
-  sync: z.boolean(),
+  sync: FeatureSwitchStateSchema,
   /** Content updates: the app's daily check for a newer Language Pack. */
-  contentUpdates: z.boolean(),
+  contentUpdates: FeatureSwitchStateSchema,
   /** Notifications: the daily reminders the Core plans (ADR 0021). */
-  notifications: z.boolean(),
+  notifications: FeatureSwitchStateSchema,
   /** The home-screen widget: the Widget Snapshot and the widget it feeds. */
-  widget: z.boolean(),
+  widget: FeatureSwitchStateSchema,
   /** The widget goal ring: today's Daily Goal progress and the Streak on the medium widget, in the Widget Snapshot. */
-  widgetGoalRing: z.boolean(),
+  widgetGoalRing: FeatureSwitchStateSchema,
   /** The lock-screen widget: its families in the widget extension and its content in the Widget Snapshot. */
-  lockScreenWidget: z.boolean(),
+  lockScreenWidget: FeatureSwitchStateSchema,
   /** Share Cards: the buttons that make and share an image of an Entry. */
-  shareCards: z.boolean(),
+  shareCards: FeatureSwitchStateSchema,
   /** Pronunciation: the buttons that play a Word's audio. */
-  pronunciation: z.boolean(),
+  pronunciation: FeatureSwitchStateSchema,
   /** «Голос диктора»: the reader's choice of the Narrator Voice that reads; off while `pronunciation` is, and off the default voice reads (ADR 0083). */
-  narratorVoice: z.boolean(),
+  narratorVoice: FeatureSwitchStateSchema,
   /** The Word of the Day: its pick, its notification and its widget. */
-  wordOfTheDay: z.boolean(),
+  wordOfTheDay: FeatureSwitchStateSchema,
   /** The statistics screens and the Streak. */
-  statistics: z.boolean(),
+  statistics: FeatureSwitchStateSchema,
   /** Knowledge Marks: the Known / Unknown marks on Words, Corrections and Idioms, and the Review they feed. */
-  knowledge: z.boolean(),
+  knowledge: FeatureSwitchStateSchema,
   /** The confirmed-Entry counts the Profile and the Badges show; with it off they are hidden and nothing is confirmed, while Review goes on under `knowledge` (ADR 0043). */
-  confirmedEntries: z.boolean(),
+  confirmedEntries: FeatureSwitchStateSchema,
   /** Self-check: the setting that hides a card's meaning until the reader reveals it. */
-  selfCheck: z.boolean(),
+  selfCheck: FeatureSwitchStateSchema,
   /** The Rarity Ceiling: the one «Рідкість» setting every surface obeys. Off, every Word up to rarity 5 is in, as before 1.0. */
-  rarityCeiling: z.boolean(),
+  rarityCeiling: FeatureSwitchStateSchema,
   /** Game Review: the list of every Round on the Game's result. */
-  gameReview: z.boolean(),
+  gameReview: FeatureSwitchStateSchema,
   /** The Game Mode «Вгадай слово» (`guess-word`); off while `game` is (ADR 0052). */
-  gameGuessWord: z.boolean(),
+  gameGuessWord: FeatureSwitchStateSchema,
   /** The Game Mode «Обери правильне» (`correction`); off while `game` is (ADR 0052). */
-  gameCorrection: z.boolean(),
+  gameCorrection: FeatureSwitchStateSchema,
   /** The Game Mode «Наголос» (`stress`); off while `game` is (ADR 0052). */
-  gameStress: z.boolean(),
+  gameStress: FeatureSwitchStateSchema,
   /** The Game Mode «Пари» (`pairs`); off while `game` is (ADR 0052). */
-  gamePairs: z.boolean(),
+  gamePairs: FeatureSwitchStateSchema,
   /** The Game Mode «Виживання» (`survival`); off while `game` is (ADR 0052). */
-  gameSurvival: z.boolean(),
+  gameSurvival: FeatureSwitchStateSchema,
   /** The Game Mode «На час» (`timed`); off while `game` is (ADR 0052). */
-  gameTimed: z.boolean(),
+  gameTimed: FeatureSwitchStateSchema,
   /** The Game Mode «Фразеологізми» (`idiom-meaning`); off while `game` is (ADR 0052). */
-  gameIdiomMeaning: z.boolean(),
+  gameIdiomMeaning: FeatureSwitchStateSchema,
   /** The Game Mode «Англіцизми» (`anglicism`); off while `game` is (ADR 0052). */
-  gameAnglicism: z.boolean(),
+  gameAnglicism: FeatureSwitchStateSchema,
   /** The Game Mode «Склади вислів» (`build-idiom`); off while `game` is (ADR 0052). */
-  gameBuildIdiom: z.boolean(),
+  gameBuildIdiom: FeatureSwitchStateSchema,
   /** The Game Mode «Впиши слово» (`type-word`); off while `game` is (ADR 0052). */
-  gameTypeWord: z.boolean(),
+  gameTypeWord: FeatureSwitchStateSchema,
   /** The Game Mode «Анаграми» (`anagram`); off while `game` is (ADR 0052). */
-  gameAnagram: z.boolean(),
+  gameAnagram: FeatureSwitchStateSchema,
   /** The Game Mode «За буквами» (`by-letters`); off while `game` is (ADR 0052). */
-  gameByLetters: z.boolean(),
+  gameByLetters: FeatureSwitchStateSchema,
   /** The Game Mode «Звідки слово» (`origin`); off while `game` is (ADR 0052). */
-  gameOrigin: z.boolean(),
+  gameOrigin: FeatureSwitchStateSchema,
   /** The Daily Crossword; off while `game` is (ADR 0052). */
-  dailyCrossword: z.boolean(),
+  dailyCrossword: FeatureSwitchStateSchema,
   /** Search: its header button and screen over every non-Retired, non-Hidden Entry (ADR 0054). */
-  search: z.boolean(),
+  search: FeatureSwitchStateSchema,
   /** The Rarity Test: the short test that sets the Rarity Ceiling (ADR 0054, 0072). */
-  rarityTest: z.boolean(),
+  rarityTest: FeatureSwitchStateSchema,
   /** The Weekly Recap «Твій тиждень»: the Monday Feed Notice about the week before (ADR 0054). */
-  weeklyRecap: z.boolean(),
+  weeklyRecap: FeatureSwitchStateSchema,
   /** Yesterday: the Feed Notice «Пам'ятаєш вчорашнє слово?» (ADR 0054). */
-  yesterday: z.boolean(),
+  yesterday: FeatureSwitchStateSchema,
   /** The Word of the Day archive «Слова дня» in Saved (ADR 0054). */
-  wordOfTheDayArchive: z.boolean(),
+  wordOfTheDayArchive: FeatureSwitchStateSchema,
   /** The Active Days calendar on the statistics screen (ADR 0054). */
-  activeDaysCalendar: z.boolean(),
+  activeDaysCalendar: FeatureSwitchStateSchema,
   /** The polite pause: the notification plan stops 14 days after the last open, with the Edition's farewell (ADR 0054). */
-  politePause: z.boolean(),
+  politePause: FeatureSwitchStateSchema,
   /** The first week: one intro Feed Notice on each of a new reader's first 7 Active Days (ADR 0054). */
-  firstWeek: z.boolean(),
+  firstWeek: FeatureSwitchStateSchema,
   /** The widget hint: the sheet after the first finished Game and the guide to adding the widget (ADR 0054). */
-  widgetHint: z.boolean(),
+  widgetHint: FeatureSwitchStateSchema,
   /** «Сезонний декор»: the Decor motif of the local date's Holiday or Season, and its setting (ADR 0055). */
-  seasonalDecor: z.boolean(),
+  seasonalDecor: FeatureSwitchStateSchema,
   /** The falling Stress: the Stress mark of a Word card's Lemma falls onto its vowel (ADR 0055). */
-  stressAnimation: z.boolean(),
+  stressAnimation: FeatureSwitchStateSchema,
   /** Illustrations: the Illustration a Word may carry above its Definition (ADR 0055). */
-  illustrations: z.boolean(),
+  illustrations: FeatureSwitchStateSchema,
   /** Mistake Reports: the Entry card's menu item, its sheet and the queue that sends them (ADR 0056). */
-  mistakeReports: z.boolean(),
+  mistakeReports: FeatureSwitchStateSchema,
   /** Community Counters: the line under the mark buttons and the changes the device sends (ADR 0060). */
-  communityCounters: z.boolean(),
+  communityCounters: FeatureSwitchStateSchema,
   /** The Community Word «Слово тижня спільноти»: its Monday Feed Notice (ADR 0060). */
-  communityWord: z.boolean(),
+  communityWord: FeatureSwitchStateSchema,
   /** Analytics: the product events sent through the Core's port while the reader shares anonymous statistics (ADR 0068). */
-  analytics: z.boolean(),
+  analytics: FeatureSwitchStateSchema,
+  /** The Visit events «Відвідини»: the app coming to and leaving the foreground, with how long it stayed; off while `analytics` is (spec #1709). */
+  analyticsSessions: FeatureSwitchStateSchema,
+  /** The event of a Feature Switch's screen opened, named by the switch; off while `analytics` is (spec #1709). */
+  analyticsFeatureUsed: FeatureSwitchStateSchema,
+  /** The event of a Search query with nothing found, by its length only; off while `analytics` is (spec #1709). */
+  analyticsSearchNoResult: FeatureSwitchStateSchema,
+  /** The event of the reader's answer to the device's notification permission; off while `analytics` is (spec #1709). */
+  analyticsNotificationPermission: FeatureSwitchStateSchema,
+  /** The NPS answer event, 0 to 10; no screen asks it yet; off while `analytics` is (spec #1709). */
+  analyticsNps: FeatureSwitchStateSchema,
+  /** The Game events, started and finished; off while `analytics` is (spec #1709). */
+  analyticsGames: FeatureSwitchStateSchema,
   /** The calligraphic Lemma: the Lemma on the Word of the Day card in the Feed set in the Edition's calligraphic font. */
-  calligraphy: z.boolean(),
+  calligraphy: FeatureSwitchStateSchema,
   /** Spotlight: the Spotlight Snapshot the app writes into the system search; off, the snapshot is empty (ADR 0057). */
-  spotlight: z.boolean(),
+  spotlight: FeatureSwitchStateSchema,
   /** App Intents: «Слово дня» and «Відкрити гру» open the Word of the Day card and the Game; off, they open the app's start (ADR 0057). */
-  appIntents: z.boolean(),
+  appIntents: FeatureSwitchStateSchema,
   /** Collection Links: «Поділитися посиланням» on a Collection and the `c/<id>` links that open its copy (ADR 0058). */
-  collectionLinks: z.boolean(),
+  collectionLinks: FeatureSwitchStateSchema,
   /** A Word from the widget's link takes the place of the open Entry, so «Назад» returns to the Feed. */
-  replaceOpenEntry: z.boolean(),
+  replaceOpenEntry: FeatureSwitchStateSchema,
   /** The Mix kind weights: «Менше», «Звичайно» or «Більше» for each kind beside Words, which space its Feed turns; off, every kind keeps its turn of 0.9. */
-  mixKindWeights: z.boolean(),
+  mixKindWeights: FeatureSwitchStateSchema,
   /** The XP log: XP for Game learning actions, kept per Edition, and the XP bar on the Feed (ADR 0066). */
-  xpLog: z.boolean(),
+  xpLog: FeatureSwitchStateSchema,
   /** Streak freezes: a held freeze covers a missed day automatically, 2 at the start, one more per 7 Streak days, at most 2 held (ADR 0066). */
-  streakFreezes: z.boolean(),
+  streakFreezes: FeatureSwitchStateSchema,
   /** The Break: the reader pauses the Streak for up to 7 days, once every 30 days, free; its days keep the Streak and add nothing (ADR 0066). */
-  streakBreak: z.boolean(),
+  streakBreak: FeatureSwitchStateSchema,
   /** The Quick Question: every Nth Feed card asks one Round from an enabled Game Mode over an Eligible Entry; off, the Feed of 0.9. */
-  quickQuestion: z.boolean(),
+  quickQuestion: FeatureSwitchStateSchema,
   /** The onboarding step «ГРАЙ!» after the first Word, which shows the Games; off while `game` is (ADR 0067). */
-  playStep: z.boolean(),
+  playStep: FeatureSwitchStateSchema,
   /** Levels: the Level derived from total XP, its Edition name and the level-milestone Feed Notices (ADR 0066). */
-  levels: z.boolean(),
+  levels: FeatureSwitchStateSchema,
   /** «Без лічильників»: the setting hides XP, Level, Streak, celebrations, level milestones and in-Game XP feedback while counting goes on; off, «Приховати Серію» of 0.9, which hides only the Streak (ADR 0066). */
-  noCounters: z.boolean(),
+  noCounters: FeatureSwitchStateSchema,
   /** The Daily Goal: its Settings row, its progress on the XP bar and its celebration trigger (ADR 0066). */
-  dailyGoal: z.boolean(),
+  dailyGoal: FeatureSwitchStateSchema,
   /** The Seen-Word XP: 1 XP for each Word Seen for the first time, up to the day's Daily Goal; off, viewing earns nothing. */
-  seenWordXp: z.boolean(),
+  seenWordXp: FeatureSwitchStateSchema,
   /** The Feed Notice «Може, на сьогодні досить?» once a local day after 50 distinct Seen Entries (ADR 0066). */
-  enoughForToday: z.boolean(),
+  enoughForToday: FeatureSwitchStateSchema,
   /** The onboarding questions «Як добре ти знаєш мову?» and «Навіщо», their Feed settings and their anonymous counters (ADR 0067, 0068). */
-  questionnaire: z.boolean(),
+  questionnaire: FeatureSwitchStateSchema,
   /** Badges: kept milestones from the Core's catalogue of conditions, chosen and named by the Edition (ADR 0066). */
-  badges: z.boolean(),
+  badges: FeatureSwitchStateSchema,
   /** The Level ladder of the Profile: one card per Level name with its range of Levels, and the bar to the next name (spec #1641, ADR 0085); off while `xpLog` is. */
-  levelLadder: z.boolean(),
+  levelLadder: FeatureSwitchStateSchema,
   /** The new Level screen: the full red ground with the Level stamped in, at every new Level, in place of the Mascot celebration (ADR 0085); off while `xpLog` is. */
-  newLevelScreen: z.boolean(),
+  newLevelScreen: FeatureSwitchStateSchema,
   /** The Badge sheet: a tap on any Badge opens its name, date or progress, and an unearned one answers with a toast (ADR 0085); off while `xpLog` or `badges` is. */
-  badgeSheet: z.boolean(),
+  badgeSheet: FeatureSwitchStateSchema,
   /** The Badge toast: a Badge earned during a Game shows a toast in place of the stamp (ADR 0085); off while `xpLog` or `badges` is. */
-  badgeToast: z.boolean(),
+  badgeToast: FeatureSwitchStateSchema,
   /** The Streak freeze card of the Profile: the freezes held, the last 7 days and the days saved (ADR 0085); off while `xpLog` is. */
-  streakFreezeCard: z.boolean(),
+  streakFreezeCard: FeatureSwitchStateSchema,
   /** The Break card of the Profile while a Break runs: its dates, a 14-day strip and the next Break's date (ADR 0085); off while `xpLog` is. */
-  breakCard: z.boolean(),
+  breakCard: FeatureSwitchStateSchema,
   /** The Active Days calendar's day lines: a tap on a day tells what happened on it (ADR 0085); off while `xpLog` is. */
-  calendarDayLines: z.boolean(),
+  calendarDayLines: FeatureSwitchStateSchema,
   /** The Share Cards of a Level reached, a Badge earned and a Streak milestone; off while `shareCards` or `xpLog` is. */
-  progressShareCards: z.boolean(),
+  progressShareCards: FeatureSwitchStateSchema,
   /** The Share Card of a solved Daily Crossword, its grid with no letters; off while `shareCards` or `dailyCrossword` is. */
-  dailyCrosswordShare: z.boolean(),
+  dailyCrosswordShare: FeatureSwitchStateSchema,
   /** The traced Daily Crossword: a 5 × 5 grid full of letters whose hidden Words the reader traces; off, the typed one (ADR 0073). Off while `dailyCrossword` is. */
-  tracedCrossword: z.boolean(),
+  tracedCrossword: FeatureSwitchStateSchema,
+  /** The crossing Daily Crossword: a 5 × 5 crossword with blocks, numbered cells and pre-filled letters, played one clue at a time on the Letter Wheel (ADR 0087); off, the traced one stays. Off while `dailyCrossword` is. */
+  crossingCrossword: FeatureSwitchStateSchema,
+  /** «Підказка»: the Crossword Hint, which fills one letter of the current Word, costs nothing and marks the day as hinted (ADR 0087); off while `crossingCrossword` is. */
+  crosswordHint: FeatureSwitchStateSchema,
+  /** The Solve time: the on-screen seconds of the Daily Crossword, kept with its XP log record and shown on the solved card (ADR 0087); off while `crossingCrossword` is. */
+  crosswordSolveTime: FeatureSwitchStateSchema,
+  /** The solved screen of the Daily Crossword, «Розгадано!» with its share buttons (ADR 0087); off while `crossingCrossword` is. */
+  crosswordSolvedScreen: FeatureSwitchStateSchema,
+  /** The full-screen Badge stamp after a solved Daily Crossword that earns a Badge (ADR 0087); off while `crossingCrossword` or `badges` is. */
+  crosswordBadgeStamp: FeatureSwitchStateSchema,
+  /** The inline answer card of a Game Round, in place of the bottom sheet (spec #1674); off while `game` is. */
+  gameAnswerCard: FeatureSwitchStateSchema,
+  /** The letter tiles of «За буквами»: tiles with decoys tapped into the slots, in place of the text field (spec #1674); off while `gameByLetters` is. */
+  letterTiles: FeatureSwitchStateSchema,
+  /** The streak counter of «Виживання»: the right answers in a row and the record (spec #1674); off while `gameSurvival` is. */
+  survivalStreak: FeatureSwitchStateSchema,
+  /** The «Фініш» poster at the end of a Game and a time-up (spec #1674); off while `game` is. */
+  finishPoster: FeatureSwitchStateSchema,
   /** The evening notification: at most 2 a day, the morning Word of the Day and one evening slot with the Streak warning or the unmet Daily Goal, or nothing; off, a Word at every Notification time. */
-  eveningNotification: z.boolean(),
+  eveningNotification: FeatureSwitchStateSchema,
   /** The farewell: the polite pause ends with the Edition's farewell on the 14th day without an open; off, it ends in silence. */
-  notificationFarewell: z.boolean(),
+  notificationFarewell: FeatureSwitchStateSchema,
   /** The notification explainer: the sheet before the system permission prompt, after the first met Daily Goal or on day 3, and its one re-ask Feed Notice 7 days after a refusal. */
-  notificationExplainer: z.boolean(),
+  notificationExplainer: FeatureSwitchStateSchema,
   /** «Коли нагадати?»: the onboarding step after the Daily Goal that sets the one Notification time or none; off while `notifications` is. */
-  notificationTimeStep: z.boolean(),
+  notificationTimeStep: FeatureSwitchStateSchema,
   /** The later questions through Feed Notices (the interests, the self-rating, the Mix review, the Rarity Test offer and, for an existing reader, the Daily Goal) and the questionnaire retake in Settings (ADR 0067). */
-  laterQuestions: z.boolean(),
+  laterQuestions: FeatureSwitchStateSchema,
   /** The Profile: the screen of the reader's whole progress and the save-progress Feed Notice (ADR 0066). */
-  profile: z.boolean(),
+  profile: FeatureSwitchStateSchema,
   /** The Mascot: the Edition's silent figure with its short lines (CONTEXT.md, Mascot). */
-  mascot: z.boolean(),
+  mascot: FeatureSwitchStateSchema,
   /** The Interface sounds (a shout, a right answer, a wrong answer, a tap) and the «Звуки» setting (ADR 0070). */
-  sounds: z.boolean(),
+  sounds: FeatureSwitchStateSchema,
   /** «Менше руху»: the Settings switch that turns every animation into its calmer variant, as the system's Reduce Motion does (ADR 0055). */
-  reduceMotion: z.boolean(),
+  reduceMotion: FeatureSwitchStateSchema,
   /** The fast reveal: in one visit to the Feed the first Entry card plays the full reveal and every next card a fast one; off, every card plays the full reveal. */
-  fastReveal: z.boolean(),
+  fastReveal: FeatureSwitchStateSchema,
   /** The Dashboard: the home behind the «Стрічка» tab, with the Word of the Day hero; off, the Feed is the home (ADR 0076). Off while `wordOfTheDay` is. */
-  dashboard: z.boolean(),
+  dashboard: FeatureSwitchStateSchema,
   /** The Mood check-in: the Dashboard block that asks «Як настрій?» once a day (ADR 0076). Off while `dashboard` is. */
-  mood: z.boolean(),
+  mood: FeatureSwitchStateSchema,
   /** «Попередні слова»: the Dashboard block with the three newest Word of the Day archive days before today (ADR 0076). Off while `dashboard` or `wordOfTheDayArchive` is. */
-  previousWords: z.boolean(),
+  previousWords: FeatureSwitchStateSchema,
   /** The Correction Types rail: the Dashboard's tile per Correction Type with its screen (ADR 0076). Off while `dashboard` or `corrections` is. */
-  correctionTypes: z.boolean(),
+  correctionTypes: FeatureSwitchStateSchema,
   /** Curated Collections: the Dashboard's «Добірки» rail of editorial Entry sets from the Language Pack (ADR 0076). Off while `dashboard` is. */
-  curatedCollections: z.boolean(),
+  curatedCollections: FeatureSwitchStateSchema,
   /** Swipe marks: the reader swipes an Entry card right for Known and left for Unknown, with an undo; off, the card's mark buttons stay. Off while `knowledge` is. */
-  swipeMarks: z.boolean(),
+  swipeMarks: FeatureSwitchStateSchema,
+  /** Word tabs: every Entry card in a fixed-height frame (ADR 0091), the Word of the Day's once it is open, with tabs under its head: a Word's «Суть», «Приклад», «Зв’язки» and «Історія», a Correction's «Як краще», «Чому» and «Приклади», an Idiom's «Суть», «Звідки» and «Приклад», a Tip's «Суть» and «Приклад»; a Synonym Row's in the same frame. Content too tall for the frame shrinks a font size at a time, then is clamped under «Детальніше», which opens it whole. The Word of the Day card is the red card while Self-check keeps it closed; the Feed's header draws no XP bar. Off, the cards are one column, the Word's with «Детальніше». */
+  wordTabs: FeatureSwitchStateSchema,
   /** The Search button of the Feed's header, which opens the Search screen; Search itself stays under `search`. Off while `search` is. */
-  searchButton: z.boolean(),
+  searchButton: FeatureSwitchStateSchema,
   /** The Feed header's wordmark as a button that opens the Dashboard (ADR 0079). Off while `dashboard` is. */
-  dashboardWordmark: z.boolean(),
+  dashboardWordmark: FeatureSwitchStateSchema,
+  /** The «Стрічка» tab opens the Feed, not the Dashboard, which stays the home at launch (ADR 0093). Off while `dashboard` is. */
+  feedTab: FeatureSwitchStateSchema,
   /** Category screens: the Dashboard's «Категорії» rail of Categories of Words, their grid and each one's screen (ADR 0081). Off while `dashboard` is. */
-  categoryScreens: z.boolean(),
+  categoryScreens: FeatureSwitchStateSchema,
   /** The grid of the Categories of Corrections behind the «Виправлення» rail header and each one's screen (ADR 0081); off, the header is a plain title. Off while `dashboard` or `corrections` is. */
-  correctionCategoryScreens: z.boolean(),
+  correctionCategoryScreens: FeatureSwitchStateSchema,
   /** Quiet Categories: the quiet variant of a Category screen and the muted tile for a Category whose tone is `quiet` (ADR 0081); off, a quiet Category draws loud. Off while `categoryScreens` is. */
-  quietCategories: z.boolean(),
+  quietCategories: FeatureSwitchStateSchema,
   /** The board style of the Collections: their list as the Category grid and a Collection's screen as a Category screen (ADR 0082); off, today's list and screen. */
-  collectionBoardStyle: z.boolean(),
+  collectionBoardStyle: FeatureSwitchStateSchema,
   /** The Profile's confirmed Entries by rarity («Підтверджені записи за рідкістю»); off while `profile` or `confirmedEntries` is. */
-  profileConfirmedByRarity: z.boolean(),
+  profileConfirmedByRarity: FeatureSwitchStateSchema,
   /** The Profile's Best result of each Game Mode («Найкраще в грі»); off while `profile` or `game` is. */
-  profileGameBest: z.boolean(),
+  profileGameBest: FeatureSwitchStateSchema,
+  /** Force update: the banner below the soft minimum and the blocking screen below the hard minimum of the app version (ADR 0089); off, neither shows. */
+  forceUpdate: FeatureSwitchStateSchema,
 });
 
 /** A whole number of XP, which an Edition may set to 0 for an action that earns none. */
@@ -551,8 +592,16 @@ export const BadgeConditionSchema = z.discriminatedUnion('kind', [
 
 export type BadgeCondition = z.infer<typeof BadgeConditionSchema>;
 
-/** The shape of a Badge family's mark (ADR 0085). */
-export const BadgeShapeSchema = z.enum(['hexagon', 'shield', 'circle', 'tile', 'wedge', 'diamond']);
+/** The shape of a Badge family's mark (ADR 0085; `checker`, ADR 0087). */
+export const BadgeShapeSchema = z.enum([
+  'hexagon',
+  'shield',
+  'circle',
+  'tile',
+  'wedge',
+  'diamond',
+  'checker',
+]);
 
 export type BadgeShape = z.infer<typeof BadgeShapeSchema>;
 
@@ -579,7 +628,8 @@ export type BadgeFamily = z.infer<typeof BadgeFamilySchema>;
 /**
  * A Badge the Edition chooses (ADR 0066): its id, its name, the short symbol
  * its mark shows (at most three characters), the id of its Badge family
- * (ADR 0085) and its condition from the catalogue.
+ * (ADR 0085), its condition from the catalogue and, optionally, its stamp's
+ * kicker (ADR 0087).
  */
 export const BadgeSchema = z.strictObject({
   id: KebabCaseIdSchema,
@@ -587,6 +637,8 @@ export const BadgeSchema = z.strictObject({
   symbol: TextSchema.max(3),
   family: KebabCaseIdSchema,
   condition: BadgeConditionSchema,
+  /** The line over the Badge's name on its full-screen stamp, e.g. «7 ПОСПІЛЬ»; left out, none (ADR 0087). */
+  stampKicker: TextSchema.optional(),
 });
 
 export type Badge = z.infer<typeof BadgeSchema>;
@@ -718,14 +770,16 @@ export const MixConfigSchema = z.strictObject({
     // At least one Category of Corrections always stays in the Mix, as of Words (ADR 0019).
     z.array(KebabCaseIdSchema).min(1, 'Expected at least one Category of Corrections'),
   ]),
-  /** Whether Corrections, as a whole, are in the Mix. */
-  corrections: z.boolean(),
-  /** Whether Idioms, as a whole, are in the Mix. */
-  idioms: z.boolean(),
-  /** Whether Synonym Rows, as a whole, are in the Mix (ADR 0051). */
-  synonymRows: z.boolean(),
-  /** Whether Tips, as a whole, are in the Mix (ADR 0051). */
-  tips: z.boolean(),
+  /**
+   * Whether each kind of Entry beside Words is in the Mix as a whole (ADR
+   * 0033, 0046, 0051): the same map of Entry kinds as the Mix state in the Core.
+   */
+  kinds: z.strictObject({
+    correction: z.boolean(),
+    idiom: z.boolean(),
+    synonymRow: z.boolean(),
+    tip: z.boolean(),
+  }),
 });
 
 export type MixConfig = z.infer<typeof MixConfigSchema>;

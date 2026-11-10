@@ -1,12 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  openComposition,
-  type Clock,
-  type Composition,
-  type UserStateChanges,
-  type UserStatePort,
-} from './index';
+import { openComposition, type Clock, type Composition, type UserStatePort } from './index';
+import { type UserStateChanges } from './ports';
 import { createMemoryContentPort } from './testing';
 import { fakeClock, testEdition, word } from './test-support';
 import { createMemoryUserStatePort, openUserState } from './user-state/user-state';
@@ -34,7 +29,7 @@ async function run({ clock = fakeClock().clock }: { clock?: Clock } = {}) {
     content,
     edition: testEdition({
       isFeatureEnabled: () => false,
-      userSettingDefaults: { mix: { corrections: false } },
+      userSettingDefaults: { mix: { kinds: { correction: false } } },
     }),
     userState: await openUserState({ port }),
     clock,

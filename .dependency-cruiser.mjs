@@ -51,6 +51,23 @@ export default {
       },
     },
     {
+      name: 'content-rules-import-only-contracts-and-zod',
+      comment:
+        'ADR 0090: the content rules run in the Language Pack build and on the backend at ' +
+        'every save, so their source imports no workspace part but contracts, no package ' +
+        'but Zod and no Node module but crypto for the checksum.',
+      severity: 'error',
+      from: { path: '^packages/content-rules/', pathNot: '\\.test\\.ts$' },
+      to: {
+        pathNot: [
+          '^packages/(content-rules|contracts)/',
+          SHARED_CONFIG,
+          '(^|/)node_modules/zod/',
+          '^(node:)?crypto$',
+        ],
+      },
+    },
+    {
       name: 'backend-imports-no-app-core-ui-or-react',
       comment:
         "ADR 0030: the backend is the server Core's shell. The app's Core, the UI and React " +
@@ -98,6 +115,19 @@ export default {
           '^(react-native|expo|@expo/|@react-native/)',
           '^@slovo/mobile(/|$)',
         ],
+      },
+    },
+    {
+      name: 'admin-imports-only-contracts',
+      comment:
+        'ADR 0088: the owner admin is a web app that talks to the backend over HTTP through ' +
+        "the contracts' admin API, so of the workspace it imports the contracts alone: no " +
+        'backend, server-core, Core, UI or mobile code.',
+      severity: 'error',
+      from: { path: '^apps/admin/' },
+      to: {
+        path: WORKSPACE_PART,
+        pathNot: ['^apps/admin/', '^packages/contracts/', SHARED_CONFIG],
       },
     },
     {
@@ -204,7 +234,7 @@ export default {
           '^packages/$2/',
           SHARED_CONFIG,
           '^packages/[^/]+/package\\.json$',
-          '^packages/[^/]+/src/(index|testing|tokens/index|fonts|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|api-description|api/test-support)\\.ts$',
+          '^packages/[^/]+/src/(index|testing|tokens/index|fonts|entries/part-of-speech|entries/entry-row-text|progress/known-line|pack-reader|edition-folder|api|admin-api|api-description|api/test-support)\\.ts$',
         ],
       },
     },

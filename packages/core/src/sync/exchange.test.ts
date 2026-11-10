@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { createSettings, openComposition, type Backend, type UserStateChanges } from '../index';
+import { createSettings, openComposition, type Backend } from '../index';
+import { type UserStateChanges } from '../ports';
 import { createFakeBackend, createMemoryContentPort } from '../testing';
 import { createSyncExchange } from './exchange';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
@@ -26,7 +27,7 @@ const content = createMemoryContentPort({
 
 const edition = testEdition({
   isFeatureEnabled: (feature) => feature === 'knowledge' || feature === 'rarityCeiling',
-  userSettingDefaults: { mix: { categoryIds: ['test', 'sea'], corrections: false } },
+  userSettingDefaults: { mix: { categoryIds: ['test', 'sea'], kinds: { correction: false } } },
 });
 
 /** One Account on a fake backend, and the devices signed into it, on one clock. */
@@ -797,6 +798,7 @@ describe('an interrupted sync', () => {
     const { device, server, time } = account();
     const phone = await device();
     const app = await phone.open();
+    const addedAt = time.clock.now().toISOString();
     const created = await app.collections.create('Море', 'w_one');
     if (!created.ok) throw new Error('The Collection was refused');
     const { id } = created.collection;
@@ -825,7 +827,7 @@ describe('an interrupted sync', () => {
       },
     });
     expect(await tablet.sync()).toEqual({ ok: false, reason: 'offline', changed: true });
-    expect(await tablet.userState.read(collectionEntries.record(`${id}.w_one`))).toBeDefined();
+    expect(await tablet.userState.read(collectionEntries.record(`${id}.w_one`))).toBe(addedAt);
     expect(await tablet.userState.read(collections.record(id))).toBeUndefined();
     // Still offline, the reader sees no Collection yet and makes one of their own.
     const opened = await tablet.open();

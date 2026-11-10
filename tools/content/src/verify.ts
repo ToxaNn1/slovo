@@ -12,7 +12,8 @@ import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import { relative, resolve, sep } from 'node:path';
 
 import type { EditionFolder } from '@slovo/language-pack/edition';
-import { readArticleBlocks, type PoliteClient } from '@slovo/sourcing';
+import { quoteOf, quoteOnPage, squash, withoutFinalPeriod } from '@slovo/content-rules';
+import type { PoliteClient } from '@slovo/sourcing';
 
 /** Which Entries to verify: named on the command line, or those that differ from a git ref. */
 export type VerifyTargets =
@@ -43,8 +44,6 @@ interface Quoted {
   readonly text: string;
   readonly bookFields: readonly (readonly [string, string])[];
 }
-
-const GOROH_HOST = 'goroh.pp.ua';
 
 /** Verifies the Entries and prints one line each, then the count per outcome. */
 export async function verifyEntries(request: VerifyRequest): Promise<number> {
@@ -195,16 +194,10 @@ async function checkPage(
       detail: error instanceof Error ? error.message : String(error),
     };
   }
-  const quote = quoteOf(text);
-  if (new URL(url).host !== GOROH_HOST) {
-    return squash(plainText(body)).includes(quote) ? { outcome: 'ok' } : miss(quote);
-  }
-  const holding = readArticleBlocks(body).filter((block) => squash(block.text).includes(quote));
-  if (holding.some((block) => !block.languageModel)) return { outcome: 'ok' };
-  return holding.length > 0 ? { outcome: 'llm' } : miss(quote);
+  const found = quoteOnPage(text, url, { status: 200, body });
+  if (found.outcome === 'miss') return { outcome: 'miss', detail: found.quote };
+  return { outcome: found.outcome };
 }
-
-const miss = (quote: string) => ({ outcome: 'miss' as const, detail: quote });
 
 interface Paragraph {
   readonly page: string;
@@ -238,57 +231,10 @@ function checkBook(
   return { outcome: 'ok', detail: `page ${page}` };
 }
 
-/** Lower case, without spaces, quotation marks, apostrophes or dashes: the 06.11 wave's comparison. */
-function squash(text: string): string {
-  return text.toLowerCase().replace(/[\s’ʼ«»"„“”'–—-]/g, '');
-}
-
-const withoutFinalPeriod = (text: string) => text.replace(/\.$/, '');
-
-/** The field's first 40 characters, without a final period, compared squashed. */
-function quoteOf(text: string): string {
-  return squash(withoutFinalPeriod(text).slice(0, 40));
-}
-
 function safeDecode(url: string): string {
   try {
     return decodeURI(url);
   } catch {
     return url;
   }
-}
-
-const ENTITIES: Readonly<Record<string, string>> = {
-  amp: '&',
-  lt: '<',
-  gt: '>',
-  quot: '"',
-  apos: "'",
-  nbsp: ' ',
-  laquo: '«',
-  raquo: '»',
-  bdquo: '„',
-  ldquo: '“',
-  rdquo: '”',
-  lsquo: '‘',
-  rsquo: '’',
-  mdash: '—',
-  ndash: '–',
-  hellip: '…',
-  shy: '',
-};
-
-/** A page's text: no scripts, styles or tags, entities decoded. */
-function plainText(html: string): string {
-  return html
-    .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ')
-    .replace(/<[^>]*>/g, ' ')
-    .replace(/&(#x[0-9a-f]+|#\d+|[a-z]+);/gi, (entity: string, name: string) => {
-      if (name.startsWith('#')) {
-        const code =
-          name[1] === 'x' || name[1] === 'X' ? parseInt(name.slice(2), 16) : Number(name.slice(1));
-        return String.fromCodePoint(code);
-      }
-      return ENTITIES[name.toLowerCase()] ?? entity;
-    });
 }

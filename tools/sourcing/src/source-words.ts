@@ -38,7 +38,7 @@ import {
 import type { Flag, FlagKind } from './review-report';
 import type { DictionaryArticle } from './article';
 import { SumDictionary, type SumAccess } from './sum';
-import { matchKey, readStress, unstressed } from './text';
+import { matchKey, readStress, unstressed, withoutHomonymIndexes } from './text';
 import { filterWord } from './word-filters';
 
 export type SourcingOptions = PipelineOptions & {
@@ -68,6 +68,7 @@ interface WordRequest {
 /** Words as a kind of the sourcing run. */
 function wordsKind(sumAccess: SumAccess): SourcingKind<WordRequest> {
   return {
+    entryKind: 'word',
     folder: 'words',
     idPrefix: 'w_',
     parseLine: parseLemmaLine,
@@ -255,22 +256,27 @@ function draftArticle(
     sources.push({ title: 'Горох: словозміна', url: gorohUrl('Словозміна', lemma) });
   sources.push(...synonyms.sources, ...etymology.sources);
 
-  const word = compact<WordDraft>({
+  // Empty lists and missing values are left out, so drafts read like authored content.
+  const word: WordDraft = {
     id: context.newId(),
     lemma,
-    stress: stress.stress,
-    partOfSpeech: grammar.partOfSpeech,
-    gender: grammar.gender,
-    primaryDefinition: definitions.primaryDefinition,
-    extraDefinitions: definitions.extraDefinitions,
-    examples: examples.examples,
-    synonyms: synonyms.synonyms,
-    etymology: etymology.etymology,
-    registers: definitions.registers,
+    ...(stress.stress === undefined || stress.stress.length === 0 ? {} : { stress: stress.stress }),
+    ...(grammar.partOfSpeech === undefined ? {} : { partOfSpeech: grammar.partOfSpeech }),
+    ...(grammar.gender === undefined ? {} : { gender: grammar.gender }),
+    ...(definitions.primaryDefinition === undefined
+      ? {}
+      : { primaryDefinition: definitions.primaryDefinition }),
+    ...(definitions.extraDefinitions.length === 0
+      ? {}
+      : { extraDefinitions: definitions.extraDefinitions }),
+    ...(examples.examples.length === 0 ? {} : { examples: examples.examples }),
+    ...(synonyms.synonyms.length === 0 ? {} : { synonyms: synonyms.synonyms }),
+    ...(etymology.etymology === undefined ? {} : { etymology: etymology.etymology }),
+    ...(definitions.registers.length === 0 ? {} : { registers: definitions.registers }),
     categoryId: request.categoryId,
     rarity: request.rarity,
     sources,
-  });
+  };
 
   const flags: Flag[] = [
     ...headwordFlags(article, headword, lemma, isHomonym),
@@ -498,8 +504,8 @@ function draftDefinitions(article: DictionaryArticle): Step<{
     );
   }
   return {
-    primaryDefinition: primary?.text,
-    extraDefinitions: extra.map((definition) => definition.text),
+    primaryDefinition: primary === undefined ? undefined : withoutHomonymIndexes(primary.text),
+    extraDefinitions: extra.map((definition) => withoutHomonymIndexes(definition.text)),
     registers,
     flags,
   };
@@ -570,7 +576,7 @@ function draftEtymology(
   const [chosen] = entries;
   if (entries.length === 1 && chosen !== undefined && chosen.text !== '') {
     return {
-      etymology: chosen.text.replace(/;$/, '.'),
+      etymology: withoutHomonymIndexes(chosen.text).replace(/;$/, '.'),
       sources: [
         {
           title: underOtherHeadword
@@ -617,21 +623,6 @@ function checkDraft(word: WordDraft, edition: EditionFolder): string[] {
         .map(({ field, message }) => `${field ?? '(word)'}: ${message}`)
     : result.error.issues.map((issue) => `${issue.path.join('.') || '(word)'}: ${issue.message}`);
   return unique(issues);
-}
-
-/** A draft's fields as they are gathered: an optional one may still be missing. */
-type Gathered<T> = { [K in keyof T]: object extends Pick<T, K> ? T[K] | undefined : T[K] };
-
-/**
- * Drops empty lists and missing values, so drafts read like authored content.
- * The draft keeps a required field only when its source gave one.
- */
-function compact<T extends object>(fields: Gathered<T>): T {
-  return Object.fromEntries(
-    Object.entries(fields).filter(
-      ([, value]) => value !== undefined && !(Array.isArray(value) && value.length === 0),
-    ),
-  ) as T;
 }
 
 /** СУМ-11 spells ґ as г, so its headwords are matched with the two letters merged. */

@@ -7,32 +7,96 @@ SLOVO helps people discover, learn and share rare words of a single language. It
 ### Factory
 
 **Edition**:
-One language inside the one SLOVO app (ADR 0065): its configuration, content and assets, with its UI language and content language the same, its own progress and its own localized store page. One Edition is active at a time. The first Edition is the UA Edition, Ukrainian, whose id is the language code `uk`; the label «UA Edition» names it in docs and code comments, and the id never changes.
+One language inside the one SLOVO app (ADR 0065): its configuration and assets in the repository and its content in the Deployment's database (ADR 0090), with its UI language and content language the same, its own progress and its own localized store page. One Edition is active at a time. The first Edition is the UA Edition, Ukrainian, whose id is the language code `uk`; the label «UA Edition» names it in docs and code comments, and the id never changes.
 _Avoid_: Flavor, variant, localization, separate app, Ukrainian Edition, UK Edition
 
 **Language Pack**:
-Everything that makes an Edition specific to its language: words, categories, UI strings and language traits (e.g. whether the language marks stress).
+Everything that makes an Edition specific to its language: words, categories, UI strings and language traits (e.g. whether the language marks stress). Its SQLite pack is built at EAS build time from a snapshot of the Deployment's database and bundled with the app as its offline base, kept current by Patches; the live content is the database (ADR 0090).
 _Avoid_: Locale bundle, dictionary
 
 **Content update**:
-A newer Language Pack of the Edition that the app downloads by itself, without an Account, and opens from the next launch.
-_Avoid_: OTA (that is an update of the app's JavaScript), patch
+The records of the Edition's content changed since the content version the app holds, fetched by the app by itself, without an Account, at launch, on return to the foreground and every 15 minutes, and applied at once over the bundled Language Pack as Patches; a device far behind gets one bigger Patch (ADR 0090).
+_Avoid_: OTA (that is an update of the app's JavaScript), delta, whole pack
+
+**Patch**:
+The changed records of an Edition since a content version, whole records the app fetches and applies at once inside one transaction over its open Language Pack; the unit of a Content update. It carries a format number an older app may refuse, keeping what it has.
+_Avoid_: Delta, diff (that is what the editor shows on a version conflict), OTA
+
+**Content version**:
+A per-Edition number the Deployment's database raises on every publish, a rollback included; it only grows, and two different contents never share one (ADR 0011, 0090). A record version is the per-record counter a save names and the server checks, refusing a save over a newer one.
+_Avoid_: Pack version, checksum, revision
 
 **Update channel**:
 An Edition's stream of signed OTA updates to the app's JavaScript, named after the Edition id and bound to its builds; an update reaches only the builds whose native code it was made for, and the owner publishes one deliberately, to a share of readers first (ADR 0062).
 _Avoid_: Release, release channel, branch
 
 **Deployment**:
-The one running backend that serves every Edition: one container image on Railway with its Postgres, behind the app's domain (ADR 0063, 0065). Its secrets and addresses live in its environment variables, never in the repository.
+The one running backend that serves every Edition: one container image on Railway with its Postgres, which holds every Edition's content (ADR 0090), behind the app's domain (ADR 0063, 0065). Its secrets and addresses live in its environment variables, never in the repository.
 _Avoid_: Env, prod, server (the backend is the code; the Deployment is its running copy)
+
+**Owner admin**:
+The Vite app `apps/admin`, served built by the backend at `/admin` on the Deployment, where the owner and admins run SLOVO (ADR 0088): seven sections, Огляд, Контент, Свічі, Аналітика, Якість, Розробка and Безпека, behind a global Edition and period filter. It imports only the contracts and talks to the backend over HTTP alone.
+_Avoid_: Dashboard, back office, admin panel
+
+**Admin user**:
+A person or token that signs in to the Owner admin: a row of its own table with an email, a role, TOTP and sessions of its own, never an Account (ADR 0088).
+_Avoid_: Account, user (a reader)
+
+**Власник / Адмін / Агент**:
+The three roles of an Admin user (ADR 0088). Власник does everything and makes the others; the first is made by `pnpm admin owner add`. Адмін does everything but Безпека. Агент is the service token a coding agent writes content with, one per agent, named in the Action log; in English, an Agent token.
+_Avoid_: Admin (for Власник), bot, superuser
+
+**Action log**:
+The append-only record of every write through the admin API, the server commands included: who, when, what, the value before and after, and the reason (ADR 0088). Every change asks for a confirmation and a reason; an Entry save takes an optional one, an Owner check tick none.
+_Avoid_: Audit trail, history, journal
+
+**Content queue** («Черга контенту»):
+The list under Контент in the Owner admin of agent Batches «не перевірено», of agents' and the quote check's flags on records, and of Mistake Reports awaiting the owner (ADR 0088, 0090).
+_Avoid_: Inbox, moderation queue
+
+**Batch** («пачка»):
+The records one `pnpm content add|edit|flag` run adds or edits, published at once and reviewed afterwards in the Content queue; «Відкотити пачку» reverts it whole, new records to Retired and edits to their previous versions, skipping a record anyone changed after the batch (ADR 0090).
+_Avoid_: Wave (that is the repo process of ADR 0080), PR, commit
+
+**Owner check**:
+A manual check the owner ticks in the Owner admin, kept in the database per version; agents add one through a command (ADR 0088).
+_Avoid_: Checklist item, QA task
 
 **Core**:
 The language-agnostic behaviour and screens shared by every Edition. Editions never replace Core code.
 _Avoid_: Engine, base app
 
 **Feature Switch**:
-A per-Edition on/off setting for a Core feature (e.g. the Game), set in the Edition or remotely. A remote switch can only turn a feature off; only the Edition turns one on. Its effective value, which everything reads, is the Edition's value, not off remotely, and every Feature Switch it depends on in effect (a Game Mode needs the Game, the Badges need the XP log); the Core's Edition module lists the dependencies, nothing else joins two switches.
+A per-Edition setting for a Core feature (e.g. the Game) that the Edition declares `on`, `off` or `unavailable` in `edition.json`, and that a remote Rule set in the Owner admin can turn on or off for the readers it targets; `unavailable` nothing turns on (ADR 0089). Its effective value, which everything reads, is the first matching Rule's answer on the device, else the Edition's state, and every Feature Switch it depends on in effect (a Game Mode needs the Game, the Badges need the XP log); the Core's Edition module lists the dependencies, nothing else joins two switches.
 _Avoid_: Toggle, flag (in conversation)
+
+**`unavailable`**:
+The Edition state of a feature it has no content or assets for (no Narrator Voice recordings, no Curated Collections): no control in the Owner admin, no Rule turns it on (ADR 0089).
+_Avoid_: Disabled, hidden
+
+**Rule**:
+One remote Feature Switch setting: the readers it targets (Edition, app version, platform, the phone's region, a share of readers, signed in or not, a schedule) and on, off or a Variant; ordered per feature, the first match decides. A Rule the app doesn't understand is skipped (ADR 0089).
+_Avoid_: Flag, override, condition
+
+**Rollout**:
+A Rule's share of readers in per cent, stable per device by the Install id hashed with the Rule id as salt, so a reader stays in or out as the share grows (ADR 0089).
+_Avoid_: Percentage flag, canary
+
+**Variant**:
+One of two or three values of a Feature Switch under test, picked on the device by the Install id and sent to PostHog as a property of the Analytics events; with Analytics off it is picked and reported nowhere (ADR 0089).
+_Avoid_: Experiment arm, A/B group, treatment
+
+**Install id**:
+The one random anonymous id the app makes at first launch and keeps until reinstall: the key of Rollouts and Variants and, while Analytics are on, the Analytics distinct id; with Analytics off it stays on the phone. Tied to no Account and no device identifier; never sent in a switch request, a Community Counter or a Mistake Report (ADR 0089).
+_Avoid_: Device id, user id, anonymous id (the old ADR 0068 wording), installation id
+
+**Force update**:
+A soft and a hard minimum app version per Edition and platform set in the Owner admin and carried in the Rules answer; below the soft minimum the app shows a banner, below the hard one a blocking screen (ADR 0089).
+_Avoid_: Forced upgrade, min version flag
+
+**Kill switch**:
+One click and a reason in the Owner admin that turns one feature off for every reader of one Edition or of every Edition over every Rule, fires a Telegram alert and lands in the Action log; from a shell, `pnpm switches off` (ADR 0088, 0089).
+_Avoid_: Emergency flag, panic button
 
 **Extension Point**:
 A place the Core deliberately opens for an Edition to plug in its own behaviour or UI, such as extra Game modes, extra Word card sections or language services.
@@ -65,11 +129,11 @@ How a Word left the language or changed its meaning, a text in the Edition's lan
 _Avoid_: Etymology, history on its own
 
 **Illustration**:
-A PNG picture a Word may carry above its Definition, named by its field `illustration` and bundled in the app as an Edition asset, not in the Language Pack. It is square, at most 150 KB, shown at most 160 pt high and the same in both Themes. Only Words carry Illustrations.
+A PNG picture a Word may carry above its Definition, kept in the Media Store and cached on the device, not in the Language Pack; only the Starter Media's are bundled in the app. It is square, at most 150 KB, shown at most 160 pt high and the same in both Themes. Only Words carry Illustrations.
 _Avoid_: Image, picture, Decor (Decor belongs to the Edition's look, not to Words)
 
 **Retired Word**:
-A Word withdrawn from the Language Pack. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History).
+A Word marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. It never appears in the Feed, notifications, widgets or the Game, but stays visible wherever the user already keeps it (Favorites, Collections, History).
 _Avoid_: Deleted word
 
 **Lemma**:
@@ -111,7 +175,7 @@ A real use of a Correction's standard form in literature, quoted with its author
 _Avoid_: Quote, citation (a citation is a source)
 
 **Retired Correction**:
-A Correction withdrawn from the Language Pack. Like a Retired Word, it never appears anywhere new and is no longer linked from Words, but stays visible wherever the user already keeps it.
+A Correction marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. Like a Retired Word, it never appears anywhere new and is no longer linked from Words, but stays visible wherever the user already keeps it.
 _Avoid_: Deleted correction
 
 **Correction Type**:
@@ -126,7 +190,7 @@ What kind of fixed expression an Idiom is: `idiom` («фразеологізм»
 _Avoid_: Subtype, kind (a kind is Word, Correction, Idiom, Synonym Row or Tip)
 
 **Retired Idiom**:
-An Idiom withdrawn from the Language Pack. Like a Retired Word, it never appears anywhere new, but stays visible wherever the user already keeps it.
+An Idiom marked Retired in the content database (never deleted), so it leaves the Language Pack and the Patches. Like a Retired Word, it never appears anywhere new, but stays visible wherever the user already keeps it.
 _Avoid_: Deleted idiom
 
 **Synonym Row**:
@@ -138,7 +202,7 @@ A rule of good speech with its standard form, a short explanation and its own Ga
 _Avoid_: Hack, advice, lifehack
 
 **Entry card**:
-How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). The Feed and every screen that opens a kept Entry show the same Entry card.
+How the app shows one Entry: a Word card, a Correction card, an Idiom card, a Synonym Row card or a Tip card in the same frame, with the action row (heart, Collections, share, hide, and the flag of «Повідомити про помилку») under it. With `swipeMarks` on, the action row moves to the card's top-right corner as heart, Collections and «⋯», whose sheet holds the mark items, share, hide and «Повідомити про помилку», and a side swipe sets a Knowledge Mark (ADR 0077). With `wordTabs` on, every card but the Word of the Day's is a fixed frame the height of the Feed's page (ADR 0091): a Word card with the tabs «Суть», «Приклад», «Зв’язки» and «Історія» under its Lemma, a Correction card with «Як краще», «Чому» and «Приклади» under its struck non-standard form, an Idiom card with «Суть», «Звідки» and «Приклад» under its expression, a Tip card with «Суть» and «Приклад», and a Synonym Row card in the same frame, empty tabs left out. Content too tall for the frame shrinks a font size at a time down to S, then is clamped under «Детальніше», which opens it whole and lets the page scroll. The Feed and every screen that opens a kept Entry show the same Entry card.
 _Avoid_: Item, tile (for a card; a tile is the pressed button of the design)
 
 ### User's words
@@ -148,7 +212,7 @@ The single built-in list of Entries the user marked with the heart ("save word")
 _Avoid_: Saved words, likes
 
 **Dashboard**:
-The home behind «Стрічка»: the Word of the Day hero, the Mood check-in, «Попередні слова», the «Категорії» rail of Categories of Words, the «Добірки» rail of Curated Collections and the Correction Types rail, whose header opens the grid of the Categories of Corrections. Each block has its own Feature Switch; with `dashboard` off the Feed is the home.
+The home the app opens on, behind «Стрічка» unless `feedTab` makes that tab open the Feed (ADR 0093): the Word of the Day hero, the Mood check-in, «Попередні слова», the «Категорії» rail of Categories of Words, the «Добірки» rail of Curated Collections and the Correction Types rail, whose header opens the grid of the Categories of Corrections. Each block has its own Feature Switch; with `dashboard` off the Feed is the home.
 _Avoid_: Home, start screen, overview
 
 **Curated Collection**:
@@ -213,7 +277,7 @@ A kept milestone, about 20 in all: Streak days, confirmed learned Entries, the f
 _Avoid_: Achievement, trophy, medal
 
 **Badge family**:
-A group of Badges an Edition declares, with a name, a description, a shape and a tone that every Badge in it is drawn with. The UA Edition has six. A Badge earned but never opened is new and carries «НОВА».
+A group of Badges an Edition declares, with a name, a description, a shape and a tone that every Badge in it is drawn with. The shapes are `hexagon`, `shield`, `circle`, `tile`, `wedge`, `diamond` and `checker` (ADR 0087). The UA Edition has six. A Badge earned but never opened is new and carries «НОВА».
 _Avoid_: Badge category, Badge group, tier
 
 **Profile**:
@@ -229,8 +293,8 @@ One of the short sounds the app plays for a shout, a right answer, a wrong answe
 _Avoid_: Voice, music, notification sound (that is the sound of a notification)
 
 **Account**:
-The optional identity that keeps a reader's words and progress across devices, shown under the name its Edition gives it (set in the Edition's config), never «SLOVO ID». One Account works in every Edition; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code, Sign in with Google or Sign in with Apple. Knowledge Marks, the XP log and Badges sync through it. Without an Account everything lives on the device only.
-_Avoid_: Cabinet, login, SLOVO ID (the old name)
+The optional identity that keeps a reader's words and progress across devices, called SLOVO ID in code and docs, and shown to the reader under the name its Edition gives it (set in the Edition's config). One Account works in every Edition; each Edition's data stays separate. An email has one Account, which every Sign-in method reaches: a Sign-in code, Sign in with Google or Sign in with Apple. Knowledge Marks, the XP log and Badges sync through it. Without an Account everything lives on the device only.
+_Avoid_: Cabinet, login, admin user (the admin's own sign-in, not an Account)
 
 **Session**:
 One device's sign-in to an Account, ended on that device or on all at once.
@@ -314,8 +378,12 @@ A Category, of Words or of Corrections, the user took out of their Mix, whether 
 _Avoid_: Muted topic
 
 **Eligible Entry**:
-An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind the Edition turns on (and not off remotely), in the user's Mix (a Word of a Category in the Mix within the Rarity Ceiling; a Correction while Corrections and its Category are in; an Idiom while Idioms are in; a Synonym Row while Synonym Rows are in; a Tip while Tips are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
+An Entry that may appear anywhere new (the Feed, notifications, widgets, the Game): not Retired, of a kind whose Feature Switch is in effect, in the user's Mix (a Word of a Category in the Mix within the Rarity Ceiling; a Correction while Corrections and its Category are in; an Idiom while Idioms are in; a Synonym Row while Synonym Rows are in; a Tip while Tips are in) and not Hidden. An Entry that is not eligible stays visible wherever the user already keeps it.
 _Avoid_: Available, visible, active entry
+
+**Comparison Key**:
+The form a text is compared by, which the Core gives from the Edition's Language Traits for one purpose: a typed answer in the Game, a Search query, or a Definition or option among Distractors. Every Comparison Key folds case with the Edition's locale, takes out Stress marks, writes each character the Edition reads as an apostrophe as one and drops spaces at the ends; a Search query's also reads the Edition's Search letters alike (г/ґ, е/ё), and a Definition's reads the spaces between words as one. Two texts match when their Comparison Keys are equal.
+_Avoid_: Normalized text, search key, folded form
 
 **Search**:
 «Пошук»: finding Entries by their visible text, behind a magnifier in the «Стрічка» header. It covers every Entry of a kind the Edition turns on that is neither Retired nor Hidden, the Mix and the Rarity Ceiling aside, and ignores case, Stress, the kind of apostrophe, г/ґ and е/ё. A text matches from 2 characters when it or one of its words starts with the query; «За значенням», from 3 characters, finds Words by their Definition and the Synonym Rows that contain the query. Opening a result makes nothing Seen. The last 10 queries stay on the device.
@@ -334,15 +402,15 @@ _Avoid_: Weekly report, digest, summary
 _Avoid_: Word of the week, top word, trending word, Word of the Day
 
 **Community Counters**:
-Anonymous counts of how many readers know an Entry, don't know it and saved it, shown under its mark buttons as «Знають {known} з {total} читачів · зберегли {saved}», and of its Favorites adds per ISO week, which choose the Community Word. A device sends only the changes it made itself after the update, with no Account and no device id, never Game answers, and nothing while «Ділитися анонімною статистикою» is off; the server keeps totals, never one reader's marks. They are not Analytics.
+Anonymous counts of how many readers know an Entry, don't know it and saved it, shown under its mark buttons as «Знають {known} з {total} читачів · зберегли {saved}», and of its Favorites adds per ISO week, which choose the Community Word. A device sends only the changes it made itself after the update, with no Account, no device id and no Install id, never Game answers, and nothing while «Ділитися анонімною статистикою» is off; the server keeps totals, never one reader's marks. They are not Analytics.
 _Avoid_: Stats, statistics (the reader's own numbers), ratings
 
 **Analytics**:
-Reader-consented product events (onboarding steps, Games, Review, goals, Streak events, settings, screens) sent with an anonymous id through one port of the Core, to measure retention and goal completion. No advertising id, no location, no contacts, no session recording and no tracking prompt. One Settings switch, «Ділитися анонімною статистикою», turns off both Analytics and Community Counters. Distinct from Community Counters, which count Entries and never events.
+Reader-consented product events (onboarding steps, Games, Review, goals, Streak events, settings, screens) sent with the Install id as the distinct id through one port of the Core, to measure retention and goal completion. No advertising id, no location, no contacts, no session recording and no tracking prompt. One Settings switch, «Ділитися анонімною статистикою», turns off both Analytics and Community Counters. Distinct from Community Counters, which count Entries and never events.
 _Avoid_: Tracking, telemetry, stats (the reader's own numbers)
 
 **Mistake Report**:
-«Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no Account and no device id, waits on the device until it can be sent, and is kept on the server until the owner resolves it.
+«Повідомлення про помилку»: what a reader sends from an Entry card's menu about a mistake in that Entry: its type (typo, Stress, Definition or other), an optional comment of at most 500 characters (required for other), the Edition, the Entry id, the app version and the content version. It carries no Account, no device id and no Install id, waits on the device until it can be sent, and is kept on the server until the owner resolves it in the Owner admin's Content queue.
 _Avoid_: Bug report, feedback, complaint
 
 **Daily Limit**:
@@ -372,7 +440,21 @@ _Avoid_: Audio, TTS
 One of the Edition's recorded voices that read Words. The reader chooses one in Settings › «Голос диктора», behind the `narratorVoice` Feature Switch; a tap on a voice chooses it and reads the Edition's sample Word in it (UA: заграва). The Edition config declares each with a display name and a description, and one as the default (UA: Оксана), which reads while the switch is off.
 
 **Recording**:
-A Narrator Voice reading one Word, made ahead of time and keyed by Word id. The app bundles every voice's Recordings; Corrections, Idioms and Synonym Row members have none.
+A Narrator Voice reading one Word, made ahead of time and keyed by Word id, Narrator Voice and Recording Kind. Recordings live in the Media Store and are cached on the device; only the Starter Media's are bundled in the app. Corrections, Idioms and Synonym Row members have none.
+
+**Recording Kind**:
+How a Recording reads its Word. The first and only Kind is `plain`, the Lemma in its first Stress; each later Kind comes with its own Feature Switch.
+
+**Media Store**:
+The Deployment's file storage for Recordings and Illustrations: Cloudflare R2 behind Cloudflare's CDN, at public URLs that carry the file's content hash. Postgres describes each file; the Media Store holds it.
+_Avoid_: bucket, CDN (as names of the whole), assets (assets are the Edition's own files in the repo)
+
+**Starter Media**:
+The media the app bundles so a first launch works offline: the default Narrator Voice's Recordings of the first 300 Words of the default Mix, the sample Word in every voice, and those Words' Illustrations.
+
+**Needs new recording** («потребує нового запису»):
+The mark on a Word whose text or stress changed in the content database; Pronunciation hides for it until a Recording of the new text ships in a build (ADR 0090).
+_Avoid_: Stale audio, outdated recording
 
 **Share Card**:
 A branded image of an Entry, of the reader's Weekly Recap («Мій тиждень у SLOVO»), of their progress on the day it happens (a Level reached, a Badge earned, a Streak milestone), or of a solved Daily Crossword's grid without its letters, made for sharing outside the app.
@@ -399,7 +481,7 @@ _Avoid_: Quiz, practice, test
 **Game Mode**:
 The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round limit (or none), its time limit (or none), the form of its answers and the group of the mode screen it stands in, and has its own Feature Switch. The Core modes, in four groups:
 
-- «Слова»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «Наголос» (`stress`), tap the stressed vowel; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Анаграми» (`anagram`), assemble the Word from shuffled letters; «За буквами» (`by-letters`), type the Word, opening letters if needed; «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from.
+- «Слова»: «Вгадай слово» (`guess-word`), a Definition → pick the Word, getting harder as it goes (Rounds 6–10 an Example with a gap, Rounds 11–15 a Definition → type the Word); it asks about idioms of Idiom Type `idiom` the same way, with four idioms (place names never play), about Synonym Rows with «Що є синонімом до „{домінанта}“?», one member of the row right and members of other rows wrong (only while the Mix holds at least 4 Synonym Rows), and about Tips, each with its own Game question; «Наголос» (`stress`), tap the stressed vowel; «Пари» (`pairs`), match 4 Words to 4 Definitions; «Анаграми» (`anagram`), assemble the Word from shuffled letters; «За буквами» (`by-letters`), tap letter tiles into the slots by the Definition (no typing, no opened letters); «Впиши слово» (`type-word`), a sentence with a non-standard form → type the standard form; «Звідки слово» (`origin`), pick the language a Word came from.
 - «Виправлення»: «Обери правильне» (`correction`), a sentence with a non-standard form → pick the standard equivalent; «Англіцизми» (`anglicism`), the same with anglicisms only.
 - «Вислови»: «Фразеологізми» (`idiom-meaning`), an idiom or a proverb → pick its meaning; «Склади вислів» (`build-idiom`), assemble an expression from its words.
 - «Виклик»: «Виживання» (`survival`), 3 Lives and no Round limit; «На час» (`timed`), 60 seconds and no Lives.
@@ -407,7 +489,7 @@ The kind of challenge in a Game. A Game Mode sets its Lives (or none), its Round
 Editions may add modes through an Extension Point.
 
 **Round**:
-One prompt with exactly one right answer. The number and form of its options depend on the Game Mode: a pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in order, or typed text.
+One prompt with exactly one right answer. The number and form of its options depend on the Game Mode: a pick of options, a tap on a vowel, a pair in a pairs grid, chips tapped in order (letter tiles with decoys included), or typed text.
 _Avoid_: Level, question
 
 **Answer Form**:
@@ -430,5 +512,16 @@ The result screen's list of every played Round in order, in every Game Mode: its
 _Avoid_: Mistakes list, answer log
 
 **Daily Crossword**:
-«Кросворд дня»: one 5×5 grid a day, already full of letters, the same for every reader with the same Rarity Ceiling on a local date. Its hidden Words, all within the Rarity Ceiling and Hidden Entries included, use every letter once and snake through cells that touch by a side or a corner, turns allowed; their primary Definitions are the clues. The reader traces a Word cell by cell; a traced hidden Word locks as found, and every Word found solves the day (ADR 0073). It is not a Game: it has no Rounds, no Lives, no Best result and no Game Review, and solving it makes nothing Seen and changes no Knowledge Mark.
+«Кросворд дня»: one 5×5 crossing crossword a day, the same for every reader with the same Rarity Ceiling on a local date (ADR 0087). Its blocks leave runs of white cells, each run a Word within the Rarity Ceiling, Hidden Entries included, numbered where it starts; across and down Words cross and share their letters, and a few crossing cells come pre-filled. One clue at a time, the current Word's primary Definition, is entered on the Letter Wheel. Solving it earns XP once a day; it is not a Game. Off `crossingCrossword`, the traced grid of ADR 0073 stays.
 _Avoid_: Daily puzzle, crossword game, Word of the Day
+
+**Letter Wheel**:
+The Daily Crossword's ring of the current Word's letters, repeats kept, plus one decoy letter of the Edition's alphabet, shuffled by the day's seed and traced with a finger to enter the Word (ADR 0087).
+_Avoid_: keyboard, letter circle
+
+**Crossword Hint**:
+«Підказка»: fills the first empty letter of the Daily Crossword's current Word; it costs nothing and only marks the day as hinted, so its solve shows no «без підказок» (ADR 0087).
+_Avoid_: reveal, help
+
+**Solve time**:
+The seconds the Daily Crossword was on screen until it was solved, kept and synced with its XP log record; a solve recorded before it has none (ADR 0087).

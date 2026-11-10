@@ -151,7 +151,12 @@ export const cornerTile = {
  * A screen's header with a back tile (design `SlovoApp`, Settings): the gap
  * between the back tile and the title, and the room under it.
  */
-export const backHeader = { gap: 12, paddingBottom: 14 } as const;
+export const backHeader = {
+  gap: 12,
+  paddingBottom: 14,
+  /** The screen's own action: an ink plate with no edge, a little smaller while pressed (board 08). */
+  action: { height: 40, radius: 12, paddingHorizontal: 14, pressedScale: 0.95 },
+} as const;
 
 /**
  * The mistake report's comment field: four lines of `fieldText` show inside
@@ -165,3 +170,35 @@ export const mistakeReportField = {
   border: 1,
   maxFontScale: 1.5,
 } as const;
+
+/**
+ * A bottom sheet: how far down its top edge slants, from the right edge to the
+ * left, and the height of its rows and of its «Готово» button, from the design.
+ */
+export const sheetLayout = { slant: 30, rowHeight: 56 } as const;
+
+/**
+ * The undo toast: where it starts, in widths of the window, and how far it
+ * leans; its red mark; its undo button, from the design, whose tap area is taller.
+ */
+export const undoToast = {
+  start: { across: -1.2, lean: -12 },
+  mark: { width: 12, height: 22 },
+  undoHeight: 38,
+} as const;
+
+/** The Search button's size, the Stats pill's height beside it. */
+export const searchButtonSize = 40;
+
+/** The width of each swipe action of a swipeable row, from the design. */
+export const swipeActionWidth = 96;
+
+/** How far above its place a falling mark starts, as a share of the font size. */
+export const fallingMarkHeight = 0.4;
+
+/**
+ * A page turn of the vertical pager: how far, as a share of the page, a slow
+ * drag must go, and how fast, in points per second, a flick turns the page
+ * whatever its length.
+ */
+export const pageTurn = { distance: 0.2, velocity: 500 } as const;

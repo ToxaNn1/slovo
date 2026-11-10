@@ -3,10 +3,13 @@ import Svg, { Path } from 'react-native-svg';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { disabledOpacity, googleSignInButton, signInButtonHeight, space } from '../tokens';
-
-/** How far the largest text sizes of iOS may scale the label, so the button never outgrows its screen. */
-const LABEL_MAX_FONT_SCALE = 1.3;
+import {
+  disabledOpacity,
+  fontScaleCap,
+  googleSignInButton,
+  signInButtonHeight,
+  space,
+} from '../tokens';
 
 /**
  * Google's "G" logo, as Google's branding guidelines give it
@@ -83,7 +86,7 @@ export function GoogleSignInButton({
       <View style={styles.content}>
         {busy ? <ActivityIndicator color={theme.label} /> : <GoogleLogo />}
         <Text
-          maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
+          maxFontSizeMultiplier={fontScaleCap.number}
           style={[styles.label, { color: theme.label }]}
         >
           {label}

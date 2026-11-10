@@ -1,7 +1,6 @@
-import type { Edition } from '../edition/edition';
 import type { UserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
-import { searchKey } from './search-key';
+import type { TextComparison } from '../text/text-comparison';
 
 /** The most queries Search remembers (ADR 0054). */
 const RECENT_LIMIT = 10;
@@ -27,13 +26,14 @@ const { recentQueries } = userStateRecords;
 
 /** Opens the recent queries of Search in the user state. */
 export function createRecentQueries({
-  edition,
+  comparison,
   userState,
 }: {
-  edition: Pick<Edition, 'searchLetters'>;
+  /** The Edition's text comparison, built once by the composition. */
+  comparison: TextComparison;
   userState: Pick<UserState, 'read' | 'write'>;
 }): RecentQueries {
-  const keyOf = (text: string) => searchKey(text, edition.searchLetters);
+  const keyOf = (text: string) => comparison.key(text, 'searchQuery');
   const list = async () => (await userState.read(recentQueries)) ?? [];
 
   return {

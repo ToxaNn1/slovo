@@ -104,7 +104,8 @@ export async function openSync({
     }
   }
 
-  if (!signedIn()) await forgetSession();
+  // What fails to be forgotten is forgotten at the next launch signed out.
+  if (!signedIn()) await forgetSession().catch(() => undefined);
   const kept = await userState.read(syncSyncedAt).catch(() => undefined);
   let state: SyncState = {
     syncedAt: kept === undefined ? undefined : new Date(kept),
@@ -131,7 +132,7 @@ export async function openSync({
 
   /** One sync with the Session, tried again by the one rule while the Session lasts. */
   async function syncOnce(): Promise<void> {
-    if (!edition.isFeatureEnabled('account') || !edition.isFeatureEnabled('sync')) return;
+    if (!edition.isFeatureEnabled('sync')) return;
     if (!signedIn()) return;
     const session = endedSessions;
     const ended: SyncResult = { ok: false, reason: 'unauthorized', changed: false };

@@ -18,6 +18,7 @@ import { usePageTurnActions } from '../primitives/VerticalPager';
 import { WholeWordsText } from '../primitives/WholeWordsText';
 import { useFlyingText } from './reveal';
 import { ExampleText } from './WordCard';
+import { FitPanel } from './CardTabs';
 
 /**
  * The Synonym Row card's blocks inside the Entry card's frame: the dominant
@@ -36,6 +37,7 @@ export function SynonymRowCardBody({
   concealed,
   onOpenWord,
   corner,
+  tabs,
 }: {
   card: SynonymRowCardModel;
   /** The Lemma's size at the user's font size, which the dominant takes. */
@@ -46,10 +48,11 @@ export function SynonymRowCardBody({
   onOpenWord: ((wordId: string) => void) | undefined;
   /** The corner actions, set in one row beside the card's kicker (`KickerRow`). */
   corner: ReactNode | undefined;
+  /** The fixed frame of the Entry card, without a tab bar or pages, while `wordTabs` is on (ADR 0091). */
+  tabs: boolean;
 }) {
   const tokens = useTokens();
   const { colors } = tokens;
-  const sizes = useWordTextSizes();
   const edition = useEdition();
   const { voice } = edition;
   const strings = edition.strings.synonymRowCard;
@@ -95,46 +98,70 @@ export function SynonymRowCardBody({
           />
         </View>
       </View>
-      {shown.concealed ? null : (
-        <>
-          <Text
-            testID="synonym-row-meaning"
-            // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
-            accessibilityLabel={withoutStress(shown.card.meaning)}
-            {...voice}
-            {...turnActions}
-            style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
-          >
-            {shown.card.meaning}
-          </Text>
-          <View testID="synonym-row-members" style={styles.members}>
-            {shown.card.members.map((member, index) => (
-              <Member
-                key={index}
-                testID={`synonym-row-member-${String(index)}`}
-                member={member}
-                size={sizes.definition}
-                onOpenWord={onOpenWord}
-              />
-            ))}
-          </View>
-          {shown.card.example === undefined ? null : (
-            <ExampleText
-              testID="synonym-row-example"
-              example={shown.card.example}
-              size={sizes.example}
-            />
-          )}
-          {shown.card.sourceNames.length === 0 ? null : (
-            <Text
-              testID="synonym-row-source"
-              {...voice}
-              style={[typeStyle('meta', tokens), { color: colors.muted }]}
-            >
-              {fill(strings.source, { source: shown.card.sourceNames.join(SOURCE_SEPARATOR) })}
-            </Text>
-          )}
-        </>
+      {shown.concealed ? null : tabs ? (
+        // No tab bar and no pages: the whole row fills the card's fixed frame (ADR 0091).
+        <FitPanel testID="synonymRow" fitKey="row">
+          <SynonymRowContent card={shown.card} onOpenWord={onOpenWord} />
+        </FitPanel>
+      ) : (
+        <SynonymRowContent card={shown.card} onOpenWord={onOpenWord} />
+      )}
+    </>
+  );
+}
+
+/**
+ * The revealed row: the meaning, the members, the Example and the source
+ * line, at the font size of the frame it sits in.
+ */
+function SynonymRowContent({
+  card,
+  onOpenWord,
+}: {
+  card: SynonymRowCardModel;
+  onOpenWord: ((wordId: string) => void) | undefined;
+}) {
+  const tokens = useTokens();
+  const { colors } = tokens;
+  const sizes = useWordTextSizes();
+  const edition = useEdition();
+  const { voice } = edition;
+  const strings = edition.strings.synonymRowCard;
+  const turnActions = usePageTurnActions();
+  return (
+    <>
+      <Text
+        testID="synonym-row-meaning"
+        // The voices break a word at its Stress mark, so VoiceOver reads the text without it.
+        accessibilityLabel={withoutStress(card.meaning)}
+        {...voice}
+        {...turnActions}
+        style={[typeStyle('definition', tokens), sizes.definition, { color: colors.ink }]}
+      >
+        {card.meaning}
+      </Text>
+      <View testID="synonym-row-members" style={styles.members}>
+        {card.members.map((member, index) => (
+          <Member
+            key={index}
+            testID={`synonym-row-member-${String(index)}`}
+            member={member}
+            size={sizes.definition}
+            onOpenWord={onOpenWord}
+          />
+        ))}
+      </View>
+      {card.example === undefined ? null : (
+        <ExampleText testID="synonym-row-example" example={card.example} size={sizes.example} />
+      )}
+      {card.sourceNames.length === 0 ? null : (
+        <Text
+          testID="synonym-row-source"
+          {...voice}
+          style={[typeStyle('meta', tokens), { color: colors.muted }]}
+        >
+          {fill(strings.source, { source: card.sourceNames.join(SOURCE_SEPARATOR) })}
+        </Text>
       )}
     </>
   );
@@ -166,7 +193,7 @@ function Member({
       style={[
         typeStyle('listWord', tokens),
         size,
-        { color: wordId === undefined ? colors.ink : colors.accent },
+        { color: wordId === undefined ? colors.ink : colors.accentText },
       ]}
     >
       {member.text}

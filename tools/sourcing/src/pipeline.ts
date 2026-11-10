@@ -1,11 +1,12 @@
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+import type { EntryKind } from '@slovo/contracts';
 import { formatBuildError } from '@slovo/language-pack';
 import {
   EditionFolderError,
+  wordKey,
   type EditionFolder,
-  type EntryKind,
   type EntryText,
 } from '@slovo/language-pack/edition';
 
@@ -81,6 +82,8 @@ export interface KindOutcome {
 
 /** A kind of Entry the sourcing run drafts: Words, and the kinds that extend the run. */
 export interface SourcingKind<R> {
+  /** The kind of Entry it drafts, which says when two of them are one Entry. */
+  readonly entryKind: EntryKind;
   /** Its folder in the review folder, e.g. `words`. */
   readonly folder: string;
   /** The prefix of its ids, e.g. `w_`. */
@@ -99,9 +102,11 @@ const INCOMPLETE_DIR = 'incomplete';
  * One sourcing run: refuses an Edition the Ukrainian sources can't serve and a
  * list with any bad line before anything is fetched, drafts every line, and
  * writes the ready drafts to `drafts/`, the others to `incomplete/` and the
- * review report, all in the kind's folder of the review folder. A draft whose
- * text is already an Entry of the Edition, of any kind and Retired or not, or
- * the text of a ready draft before it in the run, is incomplete and flagged.
+ * review report, all in the kind's folder of the review folder. A draft that
+ * is already an Entry of the Edition, of any kind and Retired or not, or a
+ * ready draft before it in the run, is incomplete and flagged. Entries are the
+ * same by their text, but two Words only by their Lemma and primary
+ * Definition (`wordKey`): homonyms are separate Words.
  */
 export async function runSourcing<R>(
   list: string,
@@ -133,58 +138,69 @@ export async function runSourcing<R>(
     edition,
     newId: idMaker(kind.idPrefix, options.random, takenIds.ids),
   });
-  const existing = entriesByText(edition.entryTexts());
+  const existing = entriesTaking(edition.entryTexts());
   const readyIds = new Map<string, string>();
 
-  const dir = join(options.outDir, kind.folder);
-  for (const folder of [DRAFTS_DIR, INCOMPLETE_DIR]) {
-    rmSync(join(dir, folder), { recursive: true, force: true });
-    mkdirSync(join(dir, folder), { recursive: true });
+  // The run writes into a folder of its own and puts it in place of the kind's
+  // folder at the end: a run that stops leaves the previous drafts and report.
+  const kindDir = join(options.outDir, kind.folder);
+  mkdirSync(options.outDir, { recursive: true });
+  const dir = mkdtempSync(join(options.outDir, `.${kind.folder}-`));
+  try {
+    const report = await draftAll(dir, parsed.lines);
+    writeFileSync(join(dir, REPORT_FILE), formatReviewReport(report));
+    rmSync(kindDir, { recursive: true, force: true });
+    renameSync(dir, kindDir);
+    return { ok: true, report, reportFile: join(kindDir, REPORT_FILE) };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 
-  const lemmas: LemmaOutcome[] = [];
-  for (const { text, line, request } of parsed.lines) {
-    const outcome = await draft(request);
-    const drafts = outcome.drafts.map((kindDraft): DraftOutcome => {
-      const { text: draftText } = kindDraft.summary;
-      const taken = existing(draftText);
-      const twin = readyIds.get(matchKey(draftText));
-      const repeatFlags: Flag[] = [
-        ...(taken.length > 0 ? [existingEntryFlag(draftText, taken)] : []),
-        ...(twin === undefined
-          ? []
-          : [
-              {
-                kind: 'existing-entry' as const,
-                message: `"${draftText}" is already drafted in this run: ${twin}`,
-              },
-            ]),
-      ];
-      const flags = [...kindDraft.flags, ...repeatFlags];
-      const ready = kindDraft.issues.length === 0 && repeatFlags.length === 0;
-      if (ready) readyIds.set(matchKey(draftText), kindDraft.entry.id);
-      const file = `${ready ? DRAFTS_DIR : INCOMPLETE_DIR}/${kindDraft.entry.id}.json`;
-      writeFileSync(join(dir, file), `${JSON.stringify(kindDraft.entry, null, 2)}\n`);
-      return {
-        id: kindDraft.entry.id,
-        file,
-        ready,
-        headword: kindDraft.headword,
-        issues: kindDraft.issues,
-        flags,
-        summary: kindDraft.summary,
-      };
-    });
-    lemmas.push({ lemma: text, line, drafts, flags: outcome.flags });
-  }
+  async function draftAll(
+    dir: string,
+    lines: readonly { text: string; line: number; request: R }[],
+  ): Promise<ReviewReport> {
+    for (const folder of [DRAFTS_DIR, INCOMPLETE_DIR]) mkdirSync(join(dir, folder));
+    const lemmas: LemmaOutcome[] = [];
+    for (const { text, line, request } of lines) {
+      const outcome = await draft(request);
+      const drafts = outcome.drafts.map((kindDraft): DraftOutcome => {
+        const { summary } = kindDraft;
+        const draftText = summary.text;
+        const taken = existing(kind.entryKind, summary);
+        const key = draftKey(kind.entryKind, summary);
+        const twin = readyIds.get(key);
+        const repeatFlags: Flag[] = [
+          ...(taken.length > 0 ? [existingEntryFlag(draftText, taken)] : []),
+          ...(twin === undefined
+            ? []
+            : [
+                {
+                  kind: 'existing-entry' as const,
+                  message: `"${draftText}" is already drafted in this run: ${twin}`,
+                },
+              ]),
+        ];
+        const flags = [...kindDraft.flags, ...repeatFlags];
+        const ready = kindDraft.issues.length === 0 && repeatFlags.length === 0;
+        if (ready) readyIds.set(key, kindDraft.entry.id);
+        const file = `${ready ? DRAFTS_DIR : INCOMPLETE_DIR}/${kindDraft.entry.id}.json`;
+        writeFileSync(join(dir, file), `${JSON.stringify(kindDraft.entry, null, 2)}\n`);
+        return {
+          id: kindDraft.entry.id,
+          file,
+          ready,
+          headword: kindDraft.headword,
+          issues: kindDraft.issues,
+          flags,
+          summary: kindDraft.summary,
+        };
+      });
+      lemmas.push({ lemma: text, line, drafts, flags: outcome.flags });
+    }
 
-  const report: ReviewReport = {
-    lemmas,
-    requests: { ...client.stats, unreachable: { ...client.stats.unreachable } },
-  };
-  const reportFile = join(dir, REPORT_FILE);
-  writeFileSync(reportFile, formatReviewReport(report));
-  return { ok: true, report, reportFile };
+    return { lemmas, requests: { ...client.stats, unreachable: { ...client.stats.unreachable } } };
+  }
 }
 
 /** Reads the list: one request per line, `#` starts a comment; every bad or repeated line is named. */
@@ -231,11 +247,17 @@ function readTakenIds(
   }
 }
 
-/** New opaque ids that the Edition's id registry doesn't list, and no draft of this run has. */
+/** How many taken ids in a row `idMaker` draws before it gives up. */
+const ID_ATTEMPTS = 1000;
+
+/**
+ * New opaque ids that the Edition's id registry doesn't list, and no draft of
+ * this run has; throws when `random` keeps drawing taken ones.
+ */
 function idMaker(prefix: string, random: () => number, takenIds: Set<string>): () => string {
   const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
   return () => {
-    for (;;) {
+    for (let attempt = 0; attempt < ID_ATTEMPTS; attempt += 1) {
       let id = prefix;
       for (let i = 0; i < 6; i += 1) id += alphabet.charAt(Math.floor(random() * alphabet.length));
       if (!takenIds.has(id)) {
@@ -243,13 +265,13 @@ function idMaker(prefix: string, random: () => number, takenIds: Set<string>): (
         return id;
       }
     }
+    throw new Error(`No free ${prefix} id after ${String(ID_ATTEMPTS)} attempts`);
   };
 }
 
 /**
  * The Entries of an Edition that have a text, of any kind and Retired or not,
- * matched by `matchKey`: a sourcing run and `content import` both refuse a
- * new Entry whose text has one.
+ * matched by `matchKey`: `content import` refuses a new Entry whose text has one.
  */
 export function entriesByText(texts: readonly EntryText[]): (text: string) => readonly EntryText[] {
   const byText = new Map<string, EntryText[]>();
@@ -258,6 +280,33 @@ export function entriesByText(texts: readonly EntryText[]): (text: string) => re
     byText.set(key, [...(byText.get(key) ?? []), entry]);
   }
   return (text) => byText.get(matchKey(text)) ?? [];
+}
+
+/**
+ * The Entries of an Edition a new draft would repeat, of any kind and Retired
+ * or not: those with its text, but of the Words only one with its primary
+ * Definition too when the draft is a Word.
+ */
+function entriesTaking(
+  texts: readonly EntryText[],
+): (entryKind: EntryKind, summary: DraftSummary) => readonly EntryText[] {
+  const byText = entriesByText(texts);
+  return (entryKind, summary) =>
+    byText(summary.text).filter(
+      (entry) =>
+        entryKind !== 'word' ||
+        entry.kind !== 'word' ||
+        draftKey('word', { text: entry.text, definition: entry.primaryDefinition }) ===
+          draftKey('word', summary),
+    );
+}
+
+/** What two drafts of one run are one Entry by: a Word's Lemma and primary Definition, any other's text. */
+function draftKey(
+  entryKind: EntryKind,
+  { text, definition }: Pick<DraftSummary, 'text' | 'definition'>,
+): string {
+  return entryKind === 'word' ? wordKey(matchKey(text), definition) : matchKey(text);
 }
 
 const ENTRY_NAMES: Readonly<Record<EntryKind, string>> = {

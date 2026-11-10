@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { lte } from 'drizzle-orm';
 import { describe, expect, it } from 'vitest';
 
@@ -50,5 +52,22 @@ describe('a request heavier than the limit', () => {
     const later = new Date(now.getTime() + 61 * 1000);
     expect((await limits.take('heavy', limit, later, 6)).taken).toBe(false);
     expect((await limits.take('heavy', limit, later, 5)).taken).toBe(true);
+  });
+});
+
+describe('requests that come together', () => {
+  it('each count, and no more of them than the limit are taken', async () => {
+    const backend = testApp();
+    const limits = createRateLimits(backend.database, { secret: 'a-secret-of-this-test' });
+    const limit = { requests: 3, windowSeconds: 60 };
+    const now = new Date();
+    const key = `together-${randomUUID()}`;
+
+    const answers = await Promise.all(
+      Array.from({ length: 12 }, () => limits.take(key, limit, now, 1)),
+    );
+
+    expect(answers.filter((answer) => answer.taken)).toHaveLength(3);
+    expect((await limits.peek(key, now))?.count).toBe(3);
   });
 });

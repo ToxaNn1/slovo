@@ -9,12 +9,7 @@ import { anglicismMode } from './game/anglicism-mode';
 import { buildIdiomMode } from './game/build-idiom-mode';
 import { byLettersMode } from './game/by-letters-mode';
 import { correctionMode } from './game/correction-mode';
-import {
-  openDailyCrossword,
-  type CrosswordReadPort,
-  type DailyCrossword,
-} from './game/daily-crossword';
-import { openTracedCrossword, type TracedCrosswordOpening } from './game/traced-crossword';
+import { openDailyCrossword, type DailyCrosswordOpening } from './game/daily-crossword';
 import { openCycle } from './feed/cycle';
 import { openCorrectionTypes, type CorrectionTypes } from './dashboard/correction-types';
 import { openCuratedCollections, type CuratedCollections } from './dashboard/curated-collections';
@@ -22,6 +17,7 @@ import { openDashboard, type Dashboard } from './dashboard/dashboard';
 import { openMoodCheckIns, type MoodCheckIns } from './mood/mood';
 import { createDayChange, type OpenedEntry } from './feed/day-change';
 import type { Edition } from './edition/edition';
+import { createTextComparison } from './text/text-comparison';
 import type { Entries } from './entries/entries';
 import type { EntryRowModel } from './entries/entry-row';
 import { openFavorites, type Favorites } from './saved/favorites';
@@ -68,15 +64,16 @@ import { createWeeklyRecap, type WeeklyRecap } from './feed/weekly-recap';
 import { createRarityTest, type RarityTest } from './mix/rarity-test';
 import type { RarityCeiling } from './entries/rarity-ceiling';
 import { createRecentQueries, type RecentQueries } from './search/recent-queries';
-import { createSearch, type Search } from './search/search';
+import { createSearch, withNoResultEvent, type Search } from './search/search';
 import type { UserState } from './user-state/user-state';
 import { createSpotlight, type Spotlight } from './spotlight/spotlight';
 import { createSubject, type Subject } from './subject';
 import {
   createAnalytics,
-  type AnalyticsPort,
+  type AnalyticsSink,
   type EntryEventProperties,
   type ShareCardKind,
+  featureOfScreen,
 } from './analytics/analytics';
 import { openProgressShareCards, type ProgressShareCards } from './share/progress-share-cards';
 import { createWidget, type Widget } from './widget/widget';
@@ -186,19 +183,13 @@ export interface Composition extends Hiding {
   /** The Rarity Ceiling, the one «Рідкість» setting every surface obeys (ADR 0072). */
   readonly rarityCeiling: RarityCeiling;
   /**
-   * Opens today's Daily Crossword with the letters this device kept for it,
-   * for its card and its screen; nothing when the Edition has it off, the pack
-   * has no day for the local date or the composition was opened without
-   * `crossword`. Open it again once the next local day starts.
+   * Opens today's Daily Crossword, the one its card and its screen draw: the
+   * crossing one (ADR 0087) with the progress this device made in it, the
+   * traced one (ADR 0073) with the Words this device found while the crossing
+   * one is off, or none on a day no pattern fills, while the traced one cannot
+   * fill its grid or with both off. Open it again once the next local day starts.
    */
-  openDailyCrossword(): Promise<DailyCrossword | undefined>;
-  /**
-   * Opens today's traced Daily Crossword (ADR 0073) with the Words this device
-   * found in it: `off` while the Edition has it off, `no-tiling` when the Words
-   * within the Rarity Ceiling cannot fill the grid, for the screen's fallback
-   * to the printed Daily Crossword. Open it again once the next local day starts.
-   */
-  openTracedCrossword(): Promise<TracedCrosswordOpening>;
+  openDailyCrossword(): Promise<DailyCrosswordOpening>;
   /**
    * The Entry card of any Entry, Retired or not, for a screen that opens a
    * kept Entry or the Synonym Row a Word card links back to; nothing for an id the Language Pack doesn't have. The card of
@@ -252,6 +243,10 @@ export interface Composition extends Hiding {
     shareCardShared(card: ShareCardKind): Promise<void>;
     /** The reader opened the app from a notification of this kind. */
     notificationOpened(kind: NotificationKind): Promise<void>;
+    /** The app came to the foreground: a Visit begins. */
+    sessionStarted(): Promise<void>;
+    /** The app left the foreground: the Visit begun last ends, with how long it ran. */
+    sessionEnded(): Promise<void>;
   };
   /** The iPhone search: the Spotlight Snapshot the app hands its native module (ADR 0057). */
   readonly spotlight: Spotlight;
@@ -366,16 +361,13 @@ export async function openComposition({
   clock,
   random,
   gameModes = [],
-  crossword,
   feedNotices = noFeedNotices,
   backend,
-  analytics: analyticsPort,
+  analytics: analyticsSink,
   signedIn,
   ...ports
 }: {
   content: ContentReadPort;
-  /** The Daily Crossword's days, which the pack reader gives next to `content`; without it, as in tests of other features, there is none. */
-  crossword?: CrosswordReadPort;
   /** The Edition as the app runs it (`loadEdition`); each module reads of it what it names. */
   edition: Edition;
   userState: UserState;
@@ -395,7 +387,7 @@ export async function openComposition({
    */
   backend?: Pick<Backend, 'collectionLinks' | 'counters'>;
   /** Where the Analytics events go (ADR 0068); without it, as in tools and tests of other features, nowhere. */
-  analytics?: AnalyticsPort;
+  analytics?: AnalyticsSink;
   /**
    * Whether the reader is signed in to the Account, which opens apart from
    * the composition (ADR 0037); without it, as in tools and tests of other
@@ -404,6 +396,8 @@ export async function openComposition({
   signedIn?: () => boolean;
 }): Promise<Composition> {
   const { userState, scheduling, schedule, close } = closable(ports);
+  /** The Edition's text comparison, built once and handed to every module that compares text. */
+  const comparison = createTextComparison(edition);
   // The named subjects the modules link through (ADR 0018), made before any
   // module opens. A subject's listeners follow in the order the modules open.
   const eligibility: Subject<void> = createSubject();
@@ -425,7 +419,9 @@ export async function openComposition({
   // The Cycle reads the eligible Entries first; the Feed, the plan and the Game follow it.
   eligibility.subscribe(() => cycle.readEligibleAgain());
   const wordOfTheDay = await openWordOfTheDay({ cycle, userState, clock });
-  const analytics = createAnalytics({ edition, userState, port: analyticsPort });
+  const analytics = createAnalytics({ edition, userState, sink: analyticsSink });
+  /** When the Visit under way began, while the app is in the foreground. */
+  let visitStarted: Date | undefined;
   const { history, recorder } = await openHistory({ rows, userState });
   const xpLog = await openXpLog({
     edition,
@@ -517,6 +513,7 @@ export async function openComposition({
     returned,
     xpLog,
     activeDays,
+    analytics,
   });
   const later = openQuestionnaire({
     edition,
@@ -585,6 +582,7 @@ export async function openComposition({
     opened,
     quickQuestion: createQuickQuestion({
       edition,
+      comparison,
       entries,
       knowledge,
       xp: xpLog,
@@ -603,6 +601,7 @@ export async function openComposition({
   // that fails is tried again.
   const game = await openGame({
     edition,
+    comparison,
     entries,
     history,
     knowledge,
@@ -629,7 +628,7 @@ export async function openComposition({
         },
       },
     }),
-    openCollections({ rows, userState, clock, random }),
+    openCollections({ rows, userState, clock, random, comparison }),
   ]);
   const badges = await openBadges({
     edition,
@@ -761,23 +760,12 @@ export async function openComposition({
     game,
     onboarding,
     questionnaire: later.questionnaire,
-    search: createSearch({ content, edition, userState }),
-    recentQueries: createRecentQueries({ edition, userState }),
+    search: withNoResultEvent(createSearch({ content, edition, comparison, userState }), analytics),
+    recentQueries: createRecentQueries({ comparison, userState }),
     rarityTest,
     rarityCeiling,
-    async openDailyCrossword() {
-      if (crossword === undefined) return undefined;
-      return openDailyCrossword({
-        content: crossword,
-        userState,
-        clock,
-        edition,
-        xp: xpLog,
-        analytics,
-      });
-    },
-    openTracedCrossword: () =>
-      openTracedCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
+    openDailyCrossword: () =>
+      openDailyCrossword({ entries, userState, clock, edition, xp: xpLog, analytics }),
     ...createHiding({ rows, hiddenEntries, mix }),
     entryCard,
     openedFromNotification: openedFromOutside,
@@ -810,11 +798,26 @@ export async function openComposition({
     analytics: {
       pronunciationPlayed: (entryId) => entryEvent('pronunciationPlayed', entryId),
       wordHistoryOpened: (entryId) => entryEvent('wordHistoryOpened', entryId),
-      screenViewed: (screen) => analytics.track('screenViewed', { screen }).catch(() => undefined),
+      async screenViewed(screen) {
+        await analytics.track('screenViewed', { screen }).catch(() => undefined);
+        const feature = featureOfScreen(screen);
+        if (feature !== undefined)
+          await analytics.track('featureUsed', { feature }).catch(() => undefined);
+      },
       shareCardShared: (card) =>
         analytics.track('shareCardShared', { card }).catch(() => undefined),
       notificationOpened: (kind) =>
         analytics.track('notificationOpened', { kind }).catch(() => undefined),
+      async sessionStarted() {
+        visitStarted = clock.now();
+        await analytics.track('sessionStarted', {}).catch(() => undefined);
+      },
+      async sessionEnded() {
+        if (visitStarted === undefined) return;
+        const durationSeconds = Math.round((clock.now().getTime() - visitStarted.getTime()) / 1000);
+        visitStarted = undefined;
+        await analytics.track('sessionEnded', { durationSeconds }).catch(() => undefined);
+      },
     },
     close,
   };

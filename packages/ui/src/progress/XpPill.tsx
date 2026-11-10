@@ -2,10 +2,7 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
 import { useTokens } from '../providers/TokensProvider';
-import { space, streakPill, typeStyle } from '../tokens';
-
-/** How far the largest text sizes of iOS may scale the number, so it stays inside the 32 pt pill. */
-const NUMBER_MAX_FONT_SCALE = 1.3;
+import { fontScaleCap, space, streakPill, typeStyle } from '../tokens';
 
 /**
  * The XP earned in all on an ink pill beside the Games screen's title, from
@@ -25,7 +22,7 @@ export function XpPill({ text, label, testID }: { text: string; label: string; t
       style={[styles.pill, { backgroundColor: colors.ink }]}
     >
       <Text
-        maxFontSizeMultiplier={NUMBER_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         style={[typeStyle('xpPill', tokens), { color: colors.background }]}
       >
         {text}

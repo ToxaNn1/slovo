@@ -10,6 +10,7 @@ import {
   type RoundContent,
 } from './game-mode';
 import { shuffled } from '../shuffled';
+import type { TextComparison } from '../text/text-comparison';
 
 /** How many Rounds a Game has, in a Game Mode that sets no Round limit of its own. */
 export const GAME_ROUNDS = 15;
@@ -119,11 +120,14 @@ export function createRoundPlanner({
   knowledge,
   random,
   edition,
+  comparison,
 }: {
   history: Pick<History, 'list'>;
   knowledge: Pick<Knowledge, 'weak'>;
   random: Random;
   edition: GameEdition;
+  /** The Edition's text comparison, built once by the composition. */
+  comparison: TextComparison;
 }): RoundPlanner {
   return (mode, ofKind, count = roundsToPlanOf(mode), asked = new Set(), from = 1) => {
     if ('refusal' in ofKind) return ofKind;
@@ -132,8 +136,16 @@ export function createRoundPlanner({
     const inHistory = eligible.filter((entry) => met.has(entry.id));
     /** Whether the mode can ask about the Entry: it makes a Round of it. */
     const askable = (answer: AskableEntry) =>
-      mode.buildRound({ answer, eligible, next: [], upTo: 1, round: from, random, edition }) !==
-      undefined;
+      mode.buildRound({
+        answer,
+        eligible,
+        next: [],
+        upTo: 1,
+        round: from,
+        random,
+        edition,
+        comparison,
+      }) !== undefined;
     const pool = new Set(enough(inHistory, askable, GAME_ROUNDS) ? inHistory : eligible);
     const weak = new Set(knowledge.weak());
     const unasked = eligible.filter((entry) => !asked.has(entry.id));
@@ -175,6 +187,7 @@ export function createRoundPlanner({
           round: from + planned,
           random,
           edition,
+          comparison,
         });
         if (round === undefined) continue;
         const content = checkedRound(mode, round, upTo);

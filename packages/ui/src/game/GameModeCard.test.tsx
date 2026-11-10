@@ -4,23 +4,26 @@ import { render, screen } from '@testing-library/react-native';
 import { testStrings } from '../test-strings';
 
 function Card({
-  best,
+  best = '—',
+  bestLabel,
   refusal,
-  description = 'Read a Definition, pick a word',
+  line = 'Read a Definition, pick a word',
 }: {
   best?: string;
+  bestLabel?: string;
   refusal?: string;
-  description?: string;
+  line?: string;
 }) {
   return (
     <EditionProvider edition={{ locale: 'uk' }} strings={testStrings({})}>
       <GameModeCard
         glyph="?"
         title="Guess the word"
-        description={description}
+        line={line}
         canStart={refusal === undefined}
         refusal={refusal}
         best={best}
+        bestLabel={bestLabel}
         onPress={jest.fn()}
         testID="card"
       />
@@ -29,33 +32,33 @@ function Card({
 }
 
 describe('GameModeCard', () => {
-  it('shows the Best result and reads it last', async () => {
-    await render(<Card best="Best: 12 of 15" />);
+  it('shows the Best result and reads it last, in words', async () => {
+    await render(<Card best="★ 12" bestLabel="Best: 12 of 15" />);
 
-    expect(screen.getByText('Best: 12 of 15')).toBeTruthy();
+    expect(screen.getByText('★ 12')).toBeTruthy();
     expect(screen.getByRole('button').props['accessibilityLabel']).toBe(
       'Guess the word. Read a Definition, pick a word. Best: 12 of 15',
     );
   });
 
   it('keeps the Best result beside the reason a mode cannot start', async () => {
-    await render(<Card best="Best: 23" refusal="Too few words." />);
+    await render(<Card best="★ 23" bestLabel="Best: 23" refusal="Too few words." />);
 
     expect(screen.getByText('Too few words.')).toBeTruthy();
-    expect(screen.getByText('Best: 23')).toBeTruthy();
+    expect(screen.getByText('★ 23')).toBeTruthy();
   });
 
-  it('shows no Best result before the first finished Game', async () => {
+  it('shows a dash before the first finished Game and does not read it', async () => {
     await render(<Card />);
 
-    expect(screen.queryByText(/Best/)).toBeNull();
+    expect(screen.getByText('—')).toBeTruthy();
     expect(screen.getByRole('button').props['accessibilityLabel']).toBe(
       'Guess the word. Read a Definition, pick a word',
     );
   });
 
-  it('reads a description ending in its own full stop without another', async () => {
-    await render(<Card description="Pick one of four." best="Best: 7 of 15" />);
+  it('reads a line ending in its own full stop without another', async () => {
+    await render(<Card line="Pick one of four." best="★ 7" bestLabel="Best: 7 of 15" />);
 
     expect(screen.getByRole('button').props['accessibilityLabel']).toBe(
       'Guess the word. Pick one of four. Best: 7 of 15',

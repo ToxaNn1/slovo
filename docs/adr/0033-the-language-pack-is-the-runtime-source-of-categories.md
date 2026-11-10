@@ -1,5 +1,7 @@
 # The Language Pack is the runtime source of Categories
 
+**Amended by ADR 0081.** Every Category carries a required `description` and `tone`, and Categories get screens of their own.
+
 Over-the-air content updates (0.7) replace the Language Pack and keep the JavaScript bundle. A Category read from `edition.json`, which Metro bundles, would miss one that an update adds: it would have no name, and its Entries would never become Eligible, even for a reader whose Mix follows a default of every Category (ADR 0019).
 
 The Language Pack is the only place the app reads Categories from: the Categories of Words and, a list of their own, the Categories of Corrections (below). The pack build writes each list into its own table (`categories` and `correction_categories`) in the order the Edition declares it, and the content checksum (ADR 0011) covers both. Each Category carries a one-line description and a tone, `loud` or `quiet` (`CategorySchema` a union on the tone, spec #1604), in the columns `description` and `tone` of both tables (pack format 11). The Core's content read port lists each, with display name, description and tone, in the pack's order, also a Category whose Entries are all Retired (`listCategories` and `listCorrectionCategories`). One contract suite holds the in-memory adapter and the pack reader to it, as for the Entries (ADR 0015).

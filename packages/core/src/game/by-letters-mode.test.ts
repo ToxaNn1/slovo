@@ -10,6 +10,7 @@ import {
   type ContentReadPort,
   type CurrentGame,
   type Round,
+  type Random,
   type RoundBlank,
 } from '../index';
 import { createMemoryContentPort } from '../testing';
@@ -62,16 +63,25 @@ const words: Word[] = [
 
 const content = createMemoryContentPort({ categories: [test, crafts], words });
 
-/** The Core composition of one app run, every Feature Switch on but those turned off. */
+/** The Core composition of one app run, every Feature Switch on but those turned off: letter tiles unless named. */
 async function run({
   seed = 7,
-  off = [],
+  off = ['letterTiles'],
   words = content,
-}: { seed?: number; off?: readonly string[]; words?: ContentReadPort } = {}): Promise<Composition> {
+  random = seededRandom(seed),
+  apostrophes = ['ʼ', "'", '’'],
+}: {
+  seed?: number;
+  off?: readonly string[];
+  words?: ContentReadPort;
+  random?: Random;
+  apostrophes?: string[];
+} = {}): Promise<Composition> {
   const app = await openComposition({
     content: words,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
+      languageTraits: { apostrophes },
       userSettingDefaults: { mix: { categoryIds: ['test', 'crafts'] } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
@@ -79,7 +89,7 @@ async function run({
       now: () => new Date('2026-10-26T09:00:00+02:00'),
       timeZone: () => 'Europe/Kyiv',
     },
-    random: seededRandom(seed),
+    random,
   });
   const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
   if (planning()) {
@@ -223,6 +233,18 @@ describe('a Round of «За буквами»', () => {
     });
   });
 
+  it('keeps in place only what the Edition reads as an apostrophe', async () => {
+    for (let seed = 1; seed < 200; seed += 1) {
+      const app = await run({ seed, apostrophes: [] });
+      await app.game.start('by-letters');
+      if (lemmaOf(current(app).round) !== 'пірʼя') continue;
+
+      expect(blanksOf(app)).toEqual([{}, {}, {}, {}, {}]);
+      return;
+    }
+    throw new Error('No Game starts with «пірʼя»');
+  });
+
   it('draws an apostrophe of any kind and a hyphen as a mark in place, never a letter', async () => {
     const marked = ["п'ять", 'м’ята', 'пірʼя', 'будь-що'];
     const lemmas = [...playing.slice(0, GAME_ROUNDS - marked.length), ...marked];
@@ -342,5 +364,143 @@ describe('«Відкрити літеру» in «За буквами»', () => {
     await app.game.next();
     expect(blanksOf(app)?.every((blank) => !('letter' in blank))).toBe(true);
     expect(current(app).round).toMatchObject({ canOpenLetter: true });
+  });
+});
+
+/** The test Edition's alphabet, where decoys come from. */
+const ALPHABET = 'abcdefghijklmnopqrstuvwxyz';
+
+/** The letters of a Word that are tiles: every character but those that stay in place. */
+const lettersOf = (lemma: string): string[] => Array.from(lemma).filter((c) => !/['ʼ-]/.test(c));
+
+/** The chips Round in play, which must be letter tiles. */
+function tilesOf(app: Composition): Extract<Round, { form: 'chips' }> {
+  const { round } = current(app);
+  if (round.form !== 'chips') throw new Error(`The Round is a ${round.form} Round`);
+  return round;
+}
+
+/** The places of the tiles that spell the letters, each tile once. */
+function placesOf(chips: readonly string[], letters: readonly string[]): number[] {
+  const used = new Set<number>();
+  return letters.map((letter) => {
+    const place = chips.findIndex((chip, at) => chip === letter && !used.has(at));
+    if (place < 0) throw new Error(`No tile «${letter}» left`);
+    used.add(place);
+    return place;
+  });
+}
+
+/** Starts «За буквами» with letter tiles and plays it to its end, keeping each Round before its answer. */
+async function playTiles(app: Composition): Promise<Round[]> {
+  await app.game.start('by-letters');
+  const rounds: Round[] = [];
+  while (current(app).status === 'playing') {
+    const round = tilesOf(app);
+    rounds.push(round);
+    const chips = placesOf(round.chips, lettersOf(lemmaOf(round)));
+    await app.game.answer({ form: 'chips', chips });
+    if (current(app).status === 'answered') await app.game.next();
+  }
+  return rounds;
+}
+
+describe('«За буквами» with letter tiles', () => {
+  it("shows the Word's letters plus decoys from the alphabet, at least 8 tiles in a multiple of 4", async () => {
+    const rounds = await playTiles(await run({ off: [] }));
+
+    expect(rounds).toHaveLength(GAME_ROUNDS);
+    for (const round of rounds) {
+      if (round.form !== 'chips') throw new Error('Not a tiles Round');
+      const letters = lettersOf(lemmaOf(round));
+      const decoys = [...round.chips];
+      for (const letter of letters) decoys.splice(decoys.indexOf(letter), 1);
+
+      expect(round).toMatchObject({ layout: 'tiles', chipKind: 'letter', slots: letters.length });
+      expect(round.chips).toHaveLength(Math.max(8, Math.ceil(letters.length / 4) * 4));
+      expect(round.chips.length - decoys.length).toBe(letters.length);
+      for (const decoy of decoys) {
+        expect(ALPHABET).toContain(decoy);
+        expect(letters).not.toContain(decoy);
+      }
+    }
+  });
+
+  it('never shows the Word in order in its first tiles, even when the shuffle leaves it so', async () => {
+    // A source this high makes every shuffle keep its order.
+    const rounds = await playTiles(await run({ off: [], random: { next: () => 0.9999 } }));
+
+    expect(rounds.length).toBeGreaterThan(0);
+    for (const round of rounds) {
+      if (round.form !== 'chips') throw new Error('Not a tiles Round');
+      const letters = lettersOf(lemmaOf(round));
+      expect(round.chips.slice(0, letters.length)).not.toEqual(letters);
+    }
+  });
+
+  it('shows the tiles of a Word with a capital letter in lower case, and takes them as right', async () => {
+    const capital = createMemoryContentPort({
+      categories: [test, crafts],
+      words: words.map((entry) =>
+        entry.lemma === 'каганець'
+          ? { ...entry, lemma: 'Каганець', primaryDefinition: 'The meaning of каганець.' }
+          : entry,
+      ),
+    });
+    for (let seed = 1; seed < 200; seed += 1) {
+      const app = await run({ off: [], seed, words: capital });
+      await app.game.start('by-letters');
+      const round = tilesOf(app);
+      if (lemmaOf(round) !== 'каганець') continue;
+
+      expect(round.chips).not.toContain('К');
+      await app.game.answer({ form: 'chips', chips: placesOf(round.chips, lettersOf('каганець')) });
+      expect(current(app)).toMatchObject({ round: { answer: { right: true } } });
+      return;
+    }
+    throw new Error('No Game starts with «Каганець»');
+  });
+
+  it('keeps an apostrophe in place, no tile, and shows the same tiles for the same seed', async () => {
+    const first = await run({ off: [] });
+    const again = await run({ off: [] });
+    await first.game.start('by-letters');
+    await again.game.start('by-letters');
+
+    expect(tilesOf(again).chips).toEqual(tilesOf(first).chips);
+
+    const rounds = await playTiles(await run({ off: [] }));
+    const withApostrophe = rounds.find((round) => lemmaOf(round) === 'пірʼя');
+    expect(withApostrophe).toMatchObject({ fixed: [{ at: 3, text: 'ʼ' }], slots: 4 });
+    expect(withApostrophe?.form === 'chips' && withApostrophe.chips).not.toContain('ʼ');
+  });
+
+  it('answers right when the slots spell the Word and takes a Life for a decoy among them', async () => {
+    const app = await run({ off: [] });
+    await app.game.start('by-letters');
+    const round = tilesOf(app);
+    const letters = lettersOf(lemmaOf(round));
+    const right = placesOf(round.chips, letters);
+    const decoy = round.chips.findIndex((_, place) => !right.includes(place));
+    const lives = current(app).lives;
+
+    await app.game.answer({ form: 'chips', chips: [...right.slice(0, -1), decoy] });
+    expect(current(app)).toMatchObject({ status: 'answered', round: { answer: { right: false } } });
+    expect(current(app).lives).not.toEqual(lives);
+
+    await app.game.next();
+    const next = tilesOf(app);
+    await app.game.answer({
+      form: 'chips',
+      chips: placesOf(next.chips, lettersOf(lemmaOf(next))),
+    });
+    expect(current(app)).toMatchObject({ round: { answer: { right: true } } });
+  });
+
+  it('types the Word with letter tiles off', async () => {
+    const app = await run({ off: ['letterTiles'] });
+    await app.game.start('by-letters');
+
+    expect(current(app).round.form).toBe('typed');
   });
 });

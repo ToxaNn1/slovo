@@ -1,12 +1,9 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { useEdition } from '../providers/EditionProvider';
-import { iconButton, pressedFade, space, typeStyle } from '../tokens';
+import { fontScaleCap, iconButton, pressedFade, space, typeStyle } from '../tokens';
 import { useTokens } from '../providers/TokensProvider';
 import { Icon } from './Icon';
-
-/** How far the largest text sizes of iOS may scale the name. */
-const LABEL_MAX_FONT_SCALE = 1.3;
 
 /**
  * The back control at the top of a pushed screen, as the board draws it: the
@@ -40,7 +37,7 @@ export function BackLink({
       </View>
       <Text
         // At the largest accessibility sizes the screen's name would break across lines.
-        maxFontSizeMultiplier={LABEL_MAX_FONT_SCALE}
+        maxFontSizeMultiplier={fontScaleCap.number}
         numberOfLines={1}
         style={[styles.label, typeStyle('backLink', tokens), { color: colors.muted }]}
       >

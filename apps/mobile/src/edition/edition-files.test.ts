@@ -197,11 +197,11 @@ describe('the 0.8.12 Game strings', () => {
       { dailyCrossword: { ...(game['dailyCrossword'] as object), dated: 'Кросворд дня' } },
     ],
     [
-      'dailyCrossword.cellLabel',
+      'dailyCrossword.tracedCellLabel',
       {
         dailyCrossword: {
           ...(game['dailyCrossword'] as object),
-          cellLabel: '{cell}. {clue}. Рядок {row}',
+          tracedCellLabel: '{letter}. Рядок {row}',
         },
       },
     ],
@@ -268,7 +268,11 @@ describe('the 0.8.13 strings', () => {
         streak: 'серія',
       },
       yesterday: { title: 'Пам’ятаєш вчорашнє слово?' },
-      enoughForToday: { message: 'Може, на сьогодні досить?', keepGoing: 'Гортати далі' },
+      enoughForToday: {
+        message: 'Може, на сьогодні досить?',
+        body: 'Уже {n} карток позаду. Рідкісні слова краще засвоюються невеликими порціями.',
+        keepGoing: 'Гортати далі',
+      },
       firstWeek: { close: 'Зрозуміло', lastDayTitle: 'Тиждень із нами' },
     });
   });
@@ -954,8 +958,8 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
    * The «ви» forms, as whole words: the pronouns, the plural imperatives
    * («оберіть», «спробуйте», «торкніться», «позначте», «перевірте») and the plural present and future
    * («знаєте», «оберете», «торкнетеся»). Only words that merely end like a verb
-   * («навіть», «відкрите») are not «ви» forms, and the swipe hint sheet keeps the
-   * board's «ви», exactly these texts (ADR 0075, amended by ADR 0077).
+   * («навіть», «відкрите») are not «ви» forms. No text is an exception
+   * (ADR 0075, 0092).
    */
   const vyWord =
     /(?<![а-яіїєґʼ'’])(ви|вас|вам|вами|ваш[а-яіїє]*|[а-яіїєґʼ'’]+(іть|їть|йте|ьте|ете|єте|ите|їте|[бвгґджзклмнпрфхцчшщ]те)(ся|сь)?)(?![а-яіїєґʼ'’])/giu;
@@ -965,16 +969,11 @@ describe('the UA Edition addresses the reader with «ти» (ADR 0075)', () => {
       [...text.matchAll(vyWord)].some(([word]) => !notVerbs.has(word.toLowerCase())),
   };
 
-  const boardVy: [string, string][] = [
-    ['knowledge.swipe.hint.title', 'ГОРТАЙТЕ ПАЛЬЦЕМ'],
-    ['knowledge.swipe.hint.rows.next.body', 'Нове слово тільки коли ви готові.'],
-  ];
-
-  it('has no «ви» form in its UI strings but the swipe hint sheet', () => {
+  it('has no «ви» form in its UI strings', () => {
     const texts = textsOf(readJson('uk', 'strings'), '');
 
     expect(texts.length).toBeGreaterThan(100);
-    expect(texts.filter(([, text]) => vy.test(text))).toEqual(boardVy);
+    expect(texts.filter(([, text]) => vy.test(text))).toEqual([]);
   });
 
   it('has no «ви» form in what the Mascot says', () => {
@@ -1023,7 +1022,7 @@ describe('Sign in with Apple', () => {
   it('the UA Edition turns Sign in with Apple on', () => {
     expect(
       EditionConfigSchema.parse(readJson('uk', 'config')).featureSwitches.signInWithApple,
-    ).toBe(true);
+    ).toBe('on');
   });
 
   it.each(['bundleId', 'appleTeamId', 'appStoreConnectAppId', 'updateChannel'])(
@@ -1651,7 +1650,7 @@ describe('Edition Decor', () => {
       const { featureSwitches } = EditionConfigSchema.parse(readJson(edition, 'config'));
       const { seasons } = EditionDecorSchema.parse(readJson(edition, 'decor'));
 
-      if (featureSwitches.seasonalDecor) expect(seasons).toBeDefined();
+      if (featureSwitches.seasonalDecor === 'on') expect(seasons).toBeDefined();
     },
   );
 
@@ -1737,6 +1736,11 @@ const textPairs: readonly (readonly [text: keyof ColorTokens, behind: keyof Colo
   // The Pronunciation message on ink, and the speaker while it plays on accent.
   ['surface', 'ink'],
   ['surface', 'accent'],
+  // Small red text (ADR 0070): links, counts, refusals on every ground.
+  ['accentText', 'background'],
+  ['accentText', 'surface'],
+  ['accentText', 'surfaceSunken'],
+  ['accentText', 'tile'],
 ];
 
 /** The Core's colours and those of every Edition that supplies its own. */

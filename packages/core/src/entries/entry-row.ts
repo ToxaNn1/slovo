@@ -14,7 +14,7 @@ import { renderStress, withoutStress } from './stress';
  * What indexes the Edition's label of a row: the kind of a Word, a
  * Correction, a Synonym Row or a Tip, or an Idiom's Idiom Type (ADR 0046).
  */
-export type EntryLabelKey = 'word' | 'correction' | 'synonymRow' | 'tip' | IdiomType;
+type EntryLabelKey = 'word' | 'correction' | 'synonymRow' | 'tip' | IdiomType;
 
 /** What every row says of its Entry, whatever its kind. */
 interface EntryRowText {
@@ -57,7 +57,7 @@ export type EntryRowModel =
       /** What labels the Word, as codes the UI turns into the Edition's words (the Hidden screen shows them). */
       readonly partOfSpeech: PartOfSpeech;
       /** Only a noun has one. */
-      readonly gender?: Gender;
+      readonly gender: Gender | undefined;
       readonly registers: readonly Register[];
       /** The Word's rarity, which the confirmed-Entry counts go by (ADR 0043). */
       readonly rarity: Rarity;
@@ -96,7 +96,7 @@ export function buildEntryRow(entry: AskableEntry): EntryRowModel {
       kind: 'word',
       ...rowText(entry.id, renderStress(entry), entry.primaryDefinition, 'word'),
       partOfSpeech: entry.partOfSpeech,
-      ...(entry.gender === undefined ? {} : { gender: entry.gender }),
+      gender: entry.gender,
       registers: entry.registers,
       rarity: entry.rarity,
     };
@@ -119,13 +119,7 @@ export function buildEntryRow(entry: AskableEntry): EntryRowModel {
   }
   return {
     kind: 'correction',
-    ...rowText(
-      entry.id,
-      // The contracts require at least one standard equivalent.
-      entry.standardEquivalents[0] ?? entry.nonStandardForm,
-      entry.nonStandardForm,
-      'correction',
-    ),
+    ...rowText(entry.id, entry.standardEquivalents[0], entry.nonStandardForm, 'correction'),
     correctionType: entry.correctionType,
     standardForms: entry.standardEquivalents,
   };
@@ -133,7 +127,8 @@ export function buildEntryRow(entry: AskableEntry): EntryRowModel {
 
 /**
  * The row models of the Entries the user keeps, by id, read once per Entry:
- * the Language Pack is read-only, so a row never changes in an app session.
+ * the Language Pack changes only by a Patch, after which the app opens them
+ * again (ADR 0090).
  */
 export interface EntryRows {
   /** The row model of any Entry, Retired or not; nothing for an id the Language Pack doesn't have. */

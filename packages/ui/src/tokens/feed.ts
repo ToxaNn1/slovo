@@ -3,6 +3,26 @@
 /** The XP bar's side padding. */
 export const xpBarPadding = 14;
 
+/** The XP bar's height, the Search button's beside it. */
+export const xpBarHeight = 40;
+
+/** The height of the button under the Feed's loading and error states. */
+export const feedStateButtonHeight = 54;
+
+/**
+ * The gestures hint's demo (board 04): how far the finger travels over the
+ * card, the finger's size and the ring around it, and the size, corner and
+ * border of a key.
+ */
+export const gesturesHint = {
+  fingerTravel: 118,
+  fingerSize: 52,
+  fingerRing: 8,
+  keySize: 40,
+  keyRadius: 11,
+  keyBorder: 2,
+} as const;
+
 /**
  * The Feed's header, from the design: the logo's wedge and its gap to the
  * name, the gap between today and the Streak pill, and how tall the fade at

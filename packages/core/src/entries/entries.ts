@@ -77,7 +77,7 @@ export interface Entries {
    * each kind when the Edition turns it on and it is in the Mix, each in the
    * Language Pack's stable order, leaving out every Hidden Entry. The Mix and
    * the Hidden Entries are read afresh on every call, the ids of the live
-   * Entries from the Language Pack once: it never changes while it is open.
+   * Entries from the Language Pack once per Patch: a Patch makes new Entries.
    */
   eligible(): Promise<EntryIds>;
   /**
@@ -140,7 +140,7 @@ export interface Entries {
   getManyOfAnyKind(ids: readonly string[]): Promise<ReadonlyMap<string, AskableEntry>>;
   /**
    * Every Category of the Language Pack, with its display name, in its order,
-   * read once: the pack never changes while it is open (ADR 0033).
+   * read once per Patch: a Patch makes new Entries (ADR 0033, 0090).
    */
   categories(): Promise<readonly Category[]>;
   /** Every Category of Corrections of the Language Pack, as `categories` gives the Words'. */
@@ -157,23 +157,20 @@ export interface Entries {
     categoryId: string,
   ): Promise<readonly EntryOfKind<Kind>[]>;
   /**
-   * The live Corrections the Word is the standard form for, in the order the
-   * Word links them, or none when the Edition turns Corrections off or the
-   * user took Corrections out of the Mix. A Correction missing from the
-   * Language Pack is skipped. Read afresh on every call.
+   * The Corrections the Word is the standard form for that `eligible` holds,
+   * in the order the Word links them: none when the Edition turns Corrections
+   * off or the user took Corrections out of the Mix, and a Correction missing
+   * from the Language Pack, a Retired one, a Hidden one and one of a Category
+   * of Corrections out of the Mix skipped, by the one rule `eligible` applies,
+   * so a Hidden Entry is never reached through a Word card. Read
+   * afresh on every call.
    */
   linkedCorrections(word: Word): Promise<Correction[]>;
   /**
-   * Whether a Word links its Corrections at all: the Edition turns Corrections
-   * on and the user has them in the Mix. Read afresh on every call, so a caller
-   * can tell when the links of the Word cards it holds went stale.
-   */
-  linksCorrections(): Promise<boolean>;
-  /**
-   * The first live Synonym Row, in the Language Pack's stable order, that
-   * links the live Word as a member, or none when no row does, the Edition
-   * turns Synonym Rows off or the reader keeps them out of the Mix (ADR 0051).
-   * Derived from the rows: nothing on the Word names it.
+   * The first live Synonym Row that is not Hidden, in the Language Pack's
+   * stable order, that links the live Word as a member, or none when no such
+   * row does, the Edition turns Synonym Rows off or the reader keeps them out
+   * of the Mix (ADR 0051). Derived from the rows: nothing on the Word names it.
    */
   linkingSynonymRow(word: Word): Promise<SynonymRow | undefined>;
   /**
@@ -215,8 +212,9 @@ type MixChoice = ReturnType<EligibilityChoices['mix']>;
 const ALL_KINDS_IN: KindsInMix = { correction: true, idiom: true, synonymRow: true, tip: true };
 
 /**
- * Reads once and keeps the result, as the Language Pack never changes while
- * it is open; a read that fails is tried again on the next call.
+ * Reads once and keeps the result, as the Language Pack changes only by a
+ * Patch, which makes new Entries (ADR 0090); a read that fails is tried again
+ * on the next call.
  */
 function readOnce<T>(read: () => Promise<T>): () => Promise<T> {
   let kept: Promise<T> | undefined;
@@ -227,11 +225,8 @@ function readOnce<T>(read: () => Promise<T>): () => Promise<T> {
     }));
 }
 
-/**
- * What the Entries ask of the Edition. One that leaves out `illustrations`,
- * as in tests of other features, bundles no Illustration.
- */
-type EntriesEdition = Pick<Edition, 'isFeatureEnabled'> & Partial<Pick<Edition, 'illustrations'>>;
+/** What the Entries ask of the Edition. */
+type EntriesEdition = Pick<Edition, 'isFeatureEnabled' | 'illustrations'>;
 
 /**
  * The Entries over the Language Pack and the reader's choices, read live from
@@ -256,8 +251,6 @@ export function createEntries({
   /** Whether the reader is shown the kind as a whole now, by the Mix's one rule. */
   const shownNow = (kind: MixKind) => kindShown(edition, kindsOf(choices.mix()), kind);
 
-  const linksCorrections = () => Promise.resolve(shownNow('correction'));
-
   /**
    * The ids of every live Entry of each kind, read once from the Language
    * Pack: every Game Mode's offer reads them again.
@@ -279,8 +272,8 @@ export function createEntries({
     (await content.getEntries(ids)).filter(isShown);
 
   /**
-   * The live Entries of each kind by id, read once: the Language Pack never
-   * changes while it is open. A read that fails is tried again on the next call.
+   * The live Entries of each kind by id, read once per Patch: a Patch makes new
+   * Entries. A read that fails is tried again on the next call.
    */
   const live = tableOfKinds((kind) =>
     readOnce(async () => new Map((await readLive[kind]()).map((entry) => [entry.id, entry]))),
@@ -336,15 +329,25 @@ export function createEntries({
     return kind === 'word' ? mix.categoryIds : mix.correctionCategories.categoryIds;
   };
 
+  /**
+   * The ids of the eligible Corrections, the one rule `eligible` and the links
+   * from a Word share: none while the kind is out of the Mix, else the live
+   * Corrections of the Categories of Corrections in the Mix, in the Language
+   * Pack's order, leaving out every Hidden one.
+   */
+  async function eligibleCorrectionIds(mix: MixChoice): Promise<readonly string[]> {
+    if (!kindShown(edition, kindsOf(mix), 'correction')) return [];
+    const ids = await idsInCategories('correction', categoryIdsIn('correction', mix));
+    return ids.filter((id) => !choices.isHidden(id));
+  }
+
   async function eligible(): Promise<EntryIds> {
     const mix = choices.mix();
     const kinds = kindsOf(mix);
     const ofKind = (kind: MixKind) => (kindShown(edition, kinds, kind) ? listIds[kind]() : []);
     const [words, corrections, idioms, synonymRows, tips] = await Promise.all([
       idsInCategories('word', categoryIdsIn('word', mix)).then(underRarityCeiling),
-      kindShown(edition, kinds, 'correction')
-        ? idsInCategories('correction', categoryIdsIn('correction', mix))
-        : [],
+      eligibleCorrectionIds(mix),
       ofKind('idiom'),
       ofKind('synonymRow'),
       ofKind('tip'),
@@ -352,7 +355,7 @@ export function createEntries({
     const shown = (id: string) => !choices.isHidden(id);
     return {
       words: words.filter(shown),
-      corrections: corrections.filter(shown),
+      corrections,
       idioms: idioms.filter(shown),
       synonymRows: synonymRows.filter(shown),
       tips: tips.filter(shown),
@@ -445,23 +448,23 @@ export function createEntries({
     },
     categories,
     correctionCategories,
-    linksCorrections,
     async linkedCorrections(word) {
-      if (!(await linksCorrections())) return [];
+      const eligibleIds = new Set(await eligibleCorrectionIds(choices.mix()));
+      const linkedIds = word.correctionIds.filter((id) => eligibleIds.has(id));
+      if (linkedIds.length === 0) return [];
       const linked = new Map(
-        (await content.getEntries(word.correctionIds)).map((entry) => [entry.id, entry]),
+        (await content.getEntries(linkedIds)).map((entry) => [entry.id, entry]),
       );
-      return word.correctionIds
-        .map((id) => linked.get(id))
-        .filter(
-          (correction): correction is Correction =>
-            correction?.kind === 'correction' && !correction.retired,
-        );
+      return linkedIds.flatMap((id) => {
+        const entry = linked.get(id);
+        return entry?.kind === 'correction' ? [entry] : [];
+      });
     },
     async linkingSynonymRow(word) {
       // Like a link to a Correction, none while the reader keeps Synonym Rows out of the Mix.
       if (!shownNow('synonymRow')) return undefined;
-      const [first] = await content.listLinkingSynonymRowIds(word.id);
+      const linking = await content.listLinkingSynonymRowIds(word.id);
+      const first = linking.find((id) => !choices.isHidden(id));
       if (first === undefined) return undefined;
       const [row] = await content.getEntries([first]);
       return row?.kind === 'synonymRow' ? row : undefined;
@@ -469,7 +472,7 @@ export function createEntries({
     illustrationOf({ illustration }) {
       return illustration !== undefined &&
         edition.isFeatureEnabled('illustrations') &&
-        edition.illustrations?.has(illustration) === true
+        edition.illustrations.has(illustration)
         ? illustration
         : undefined;
     },

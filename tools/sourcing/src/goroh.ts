@@ -6,9 +6,11 @@
  */
 import { HTMLElement, NodeType, parse, type Node } from 'node-html-parser';
 
+import { LANGUAGE_MODEL } from '@slovo/content-rules';
+
 import type { DictionaryArticle } from './article';
 import type { PoliteClient } from './polite-client';
-import { matchKey, squeeze, unstressed } from './text';
+import { citedAs, SOURCE_LANGUAGE, squeeze, unstressed } from './text';
 
 const SITE = 'https://goroh.pp.ua/';
 
@@ -39,30 +41,7 @@ export async function fetchGoroh(
  */
 const EXPLANATORY_DICTIONARY = 'Тлумачний словник української мови';
 
-/** goroh's name for text a language model wrote; it is never quoted (ADR 0012). */
-export const LANGUAGE_MODEL = 'Велика мовна модель';
-
-/** One article block of a goroh page. */
-export interface ArticleBlock {
-  /** The headword as goroh shows it, with Stress marks. */
-  readonly headword: string;
-  /** The dictionary the block cites; empty when it cites none. */
-  readonly dictionary: string;
-  /** Whether a language model wrote the block rather than a dictionary. */
-  readonly languageModel: boolean;
-  /** The block's text, whitespace squeezed. */
-  readonly text: string;
-}
-
-/** Reads every article block of a goroh page, each with the dictionary it cites. */
-export function readArticleBlocks(html: string): ArticleBlock[] {
-  return blocksOf(html).map(({ element, headword, dictionary }) => ({
-    headword,
-    dictionary,
-    languageModel: dictionary.startsWith(LANGUAGE_MODEL),
-    text: squeeze(element.text),
-  }));
-}
+export { LANGUAGE_MODEL, readArticleBlocks, type ArticleBlock } from '@slovo/content-rules';
 
 function blocksOf(html: string): { element: HTMLElement; headword: string; dictionary: string }[] {
   return parse(html)
@@ -80,12 +59,22 @@ export interface GorohDefinitions {
   readonly leftOut: readonly string[];
 }
 
+/**
+ * Whether a «Тлумачення» headword is the Lemma. The explanatory dictionary
+ * prints its headwords in capitals, so case tells nothing there; a headword
+ * in mixed case keeps it, so a proper name stays apart, as in `isSameWord`.
+ */
+function isHeadwordOf(headword: string, lemma: string): boolean {
+  const inCapitals = headword === headword.toLocaleUpperCase(SOURCE_LANGUAGE);
+  return isSameWord(inCapitals ? headword.toLocaleLowerCase(SOURCE_LANGUAGE) : headword, lemma);
+}
+
 /** Reads the articles for the Lemma on a «Тлумачення» page, each with the dictionary it cites. */
 export function parseDefinitions(html: string, lemma: string): GorohDefinitions {
   const leftOut: string[] = [];
   const matching = blocksOf(html).flatMap(
     ({ element: block, headword, dictionary }): Omit<DictionaryArticle, 'homonymNumber'>[] => {
-      if (headword === '' || matchKey(headword) !== matchKey(lemma)) return [];
+      if (!isHeadwordOf(headword, lemma)) return [];
       if (!dictionary.startsWith(EXPLANATORY_DICTIONARY)) {
         leftOut.push(`${dictionary === '' ? '(no source)' : dictionary}: ${headword}`);
         return [];
@@ -105,7 +94,7 @@ export function parseDefinitions(html: string, lemma: string): GorohDefinitions 
             sense.querySelectorAll('.examples li').flatMap(exampleIn),
           ),
           unmarkedExamples: false,
-          source: { title: dictionary, url: gorohUrl('Тлумачення', lemma) },
+          source: { ...citedAs(dictionary), url: gorohUrl('Тлумачення', lemma) },
         },
       ];
     },

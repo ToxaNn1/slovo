@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Word } from '@slovo/contracts';
+import { createApiClient } from '@slovo/contracts/api';
+import { answeringWith } from '@slovo/contracts/api/test-support';
 
 import { openComposition, type Feed, type FeedCard } from '../index';
 import { createFakeBackend, type FakeBackend, createMemoryContentPort } from '../testing';
@@ -26,19 +28,22 @@ async function run({
   at,
   api,
   features = ON,
+  zone = 'Europe/Kyiv',
 }: {
   records: Map<string, string>;
   at: string;
+  /** The reader's time zone. */
+  zone?: string;
   api?: FakeBackend;
   features?: readonly string[];
 }) {
-  const { clock, advance } = fakeClock(at);
+  const { clock, advance } = fakeClock(at, zone);
   const app = await openComposition({
     content: createMemoryContentPort({ words }),
     edition: testEdition({
       isFeatureEnabled: (feature) => features.includes(feature),
       userSettingDefaults: {
-        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
+        mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
       },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -168,11 +173,25 @@ describe('The Community Word', () => {
     expect(api.calls).toHaveLength(0);
   });
 
+  it('keeps nothing and shows nothing when the backend answers out of shape', async () => {
+    const records = new Map<string, string>();
+    const api = createFakeBackend();
+    // The client checks no answer, so a backend bug reaches the Core as it is.
+    const backend = createApiClient({
+      url: 'http://backend.test',
+      fetch: answeringWith(200, '{ "communityWord": { "entryId": 42 } }'),
+    });
+    const app = await run({ records, at: monday, api: { ...api, backend } });
+
+    expect((await firstCards(app.feed, 4)).some((card) => card.kind === 'notice')).toBe(false);
+    expect([...records.keys()].filter((key) => key.startsWith('feed.communityWord'))).toEqual([]);
+  });
+
   it('is gone for the day once swiped past', async () => {
     const records = new Map<string, string>();
     const api = apiOfWord();
     const app = await run({ records, at: monday, api });
-    await firstCards(app.feed, 3);
+    expect(shownBy(await firstCards(app.feed, 3))[1]).toBe('communityWord');
 
     await app.feed.show(0);
     await app.feed.show(1);
@@ -206,7 +225,33 @@ describe('The Community Word', () => {
     expect(api.calls).toHaveLength(2);
   });
 
-  it('waits for the backend’s week to turn, as just past a local midnight east of UTC, and asks on a later run that day', async () => {
+  it('does not show on a local Sunday west of UTC whose UTC date is already Monday, and shows once the local Monday starts', async () => {
+    const records = new Map<string, string>();
+    const api = apiOfWord();
+
+    const sunday = await run({
+      records,
+      at: '2026-10-25T21:00:00-04:00',
+      api,
+      zone: 'America/New_York',
+    });
+    const onSunday = await firstCards(sunday.feed, 3);
+    const callsOnSunday = api.calls.length;
+    const mondayRun = await run({
+      records,
+      at: '2026-10-26T00:30:00-04:00',
+      api,
+      zone: 'America/New_York',
+    });
+    const onMonday = await firstCards(mondayRun.feed, 3);
+    // Sunday was an Active Day, so the Weekly Recap comes first.
+
+    expect(shownBy(onSunday)).not.toContain('communityWord');
+    expect(callsOnSunday).toBe(0);
+    expect(shownBy(onMonday.slice(1))).toEqual(['weeklyRecap', 'communityWord']);
+  });
+
+  it('waits for the backend’s UTC week to end, as just past a local midnight east of UTC, and asks on a later run that day', async () => {
     const records = new Map<string, string>();
     const api = apiOfWord();
 

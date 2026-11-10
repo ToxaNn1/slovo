@@ -2,16 +2,23 @@ import { describe, expect, it } from 'vitest';
 
 import {
   openComposition,
-  renderStress,
   type AnalyticsPort,
   type Composition,
   type FeatureSwitch,
   type FeedCard,
   type Round,
-  type XpRecord,
 } from '../index';
+import { renderStress } from '../entries/stress';
+import { type XpRecord } from './records';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, optionsOf, seededRandom, testEdition, word } from '../test-support';
+import {
+  fakeClock,
+  optionsOf,
+  seededRandom,
+  testEdition,
+  word,
+  analyticsInto,
+} from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { userStateRecords } from '../user-state-schema';
 
@@ -92,13 +99,13 @@ async function run({
     edition: testEdition({
       isFeatureEnabled: (feature) => ALL_ON.includes(feature) && !off.includes(feature),
       userSettingDefaults: {
-        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
+        mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
       },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: time.clock,
     random: seededRandom(7),
-    analytics: fake.port,
+    analytics: analyticsInto(fake.port),
   });
   return { app, events: fake.events };
 }
@@ -135,8 +142,8 @@ const rightOption = (round: Round) =>
     return answer !== undefined && text === renderStress(answer);
   });
 
-/** Starts «Вгадай слово» and answers its first Round right, which earns 1 XP. */
-async function earnOneXp(app: Composition): Promise<void> {
+/** Starts «Вгадай слово» and answers its first `rounds` Rounds right, which earns 1 XP each. */
+async function earnXp(app: Composition, rounds: number): Promise<void> {
   while (app.game.state.modes.some((offer) => 'planning' in offer)) {
     await new Promise<void>((resolve) => {
       const stop = app.game.subscribe(() => {
@@ -146,10 +153,16 @@ async function earnOneXp(app: Composition): Promise<void> {
     });
   }
   await app.game.start('guess-word');
-  const round = app.game.state.current?.round;
-  if (round === undefined || round.form === 'typed') throw new Error('No pick Round in play');
-  await app.game.answer({ form: 'pick', option: rightOption(round) });
+  for (let played = 0; played < rounds; played += 1) {
+    if (played > 0) await app.game.next();
+    const round = app.game.state.current?.round;
+    if (round === undefined || round.form === 'typed') throw new Error('No pick Round in play');
+    await app.game.answer({ form: 'pick', option: rightOption(round) });
+  }
 }
+
+/** Starts «Вгадай слово» and answers its first Round right, which earns 1 XP. */
+const earnOneXp = (app: Composition) => earnXp(app, 1);
 
 describe('the Level curve', () => {
   it('starts at level 0 with 50 XP to level 1', async () => {
@@ -260,6 +273,32 @@ describe('the Level curve', () => {
     const records = await readerWith(xp('2026-10-01', 400));
     expect((await run({ records, off: ['levels'] })).app.xpLog.state.level).toBeUndefined();
     expect((await run({ records, off: ['xpLog'] })).app.xpLog.state.level).toBeUndefined();
+  });
+});
+
+// Review ticket T-mobile-6: the Core tells a Level reached, so no app diffs Levels.
+describe('the Level reached', () => {
+  it('is told once, with its number and name, by the XP that crosses it', async () => {
+    const { app } = await run({ records: await readerWith(xp('2026-10-01', 48)) });
+    const reached: { level: number; name: string }[] = [];
+    app.xpLog.onLevelReached(({ level, name }) => reached.push({ level, name }));
+
+    // 49 XP, then 50 XP reach level 1, then 51 XP stay on it.
+    await earnXp(app, 3);
+
+    expect(app.xpLog.state.level).toMatchObject({ level: 1, progress: 1 });
+    expect(reached).toEqual([{ level: 1, name: 'Seed' }]);
+  });
+
+  it('is not told for a Level the log opened at, as after a sync, nor by XP that stays on it', async () => {
+    const { app } = await run({ records: await readerWith(xp('2026-10-01', 50)) });
+    const reached: number[] = [];
+    app.xpLog.onLevelReached(({ level }) => reached.push(level));
+
+    await earnOneXp(app);
+
+    expect(app.xpLog.state.level).toMatchObject({ level: 1, progress: 1 });
+    expect(reached).toEqual([]);
   });
 });
 

@@ -144,6 +144,22 @@ export const badgeTile = [
   [0, 0.14],
 ] as const satisfies Wedge;
 
+/** The checker tile shape of a Badge family, two corners cut: top left and bottom right (ADR 0087). */
+export const badgeChecker = [
+  [0.2, 0],
+  [1, 0],
+  [1, 0.8],
+  [0.8, 1],
+  [0, 1],
+  [0, 0.2],
+] as const satisfies Wedge;
+
+/**
+ * The face of a `checker` Badge in place of its symbol (ADR 0087): a square of
+ * `cells` by `cells`, `side` of the mark's side, centred on the cream inset.
+ */
+export const badgeCheckerFace = { cells: 3, side: 0.48 } as const;
+
 /** The «НОВА» tag over an earned Badge's top right corner, turned as on board 10.5. */
 export const badgeNewTag = {
   turn: 8,
@@ -259,6 +275,4 @@ export const badgeSheet = {
   barHeight: 10,
   barSkew: -14,
   doneTop: 22,
-  /** How far the toast stands above the sheet's slanted top. */
-  toastGap: 12,
 } as const;

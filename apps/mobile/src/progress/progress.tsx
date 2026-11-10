@@ -2,6 +2,7 @@ import { StatsPill, StatsSheet, type MoodDays } from '@slovo/ui';
 import { useEffect, useReducer, useState } from 'react';
 
 import { useComposition } from '../composition';
+import { logError } from '../diagnostics/log';
 import { useSubscribed } from '../opening';
 import { useShown } from '../shown-in-effect';
 
@@ -24,10 +25,15 @@ export function StatsPillAndSheet() {
   useEffect(() => {
     if (!open) return;
     let current = true;
-    void mood.daysByMood().then((days) => {
-      if (current)
-        setMoodDays(mood.moods.map((each) => ({ mood: each, days: days.get(each.id) ?? 0 })));
-    });
+    mood
+      .daysByMood()
+      .then((days) => {
+        if (current)
+          setMoodDays(mood.moods.map((each) => ({ mood: each, days: days.get(each.id) ?? 0 })));
+      })
+      .catch((error: unknown) => {
+        logError('Could not read the Mood days', error);
+      });
     return () => {
       current = false;
     };

@@ -1,9 +1,9 @@
+import { type WordFeedCard } from '@slovo/core/testing';
 import {
   buildShareCardContent,
   type EntryFeedCard,
   type EntryRowModel,
   type Haptics,
-  type WordFeedCard,
 } from '@slovo/core';
 import {
   EditionProvider,
@@ -79,6 +79,7 @@ const row: EntryRowModel = {
   labelKey: 'word',
   spoken: 'catalog, A list of things.',
   partOfSpeech: 'noun',
+  gender: undefined,
   registers: [],
   rarity: 3,
 };

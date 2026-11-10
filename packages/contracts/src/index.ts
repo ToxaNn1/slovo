@@ -17,9 +17,9 @@ export {
   DailyGoalSchema,
   DailyGoalsSchema,
   OnboardingNotificationTimesSchema,
-  DistractorRuleSchema,
   EditionConfigSchema,
   FeatureSwitchesSchema,
+  FeatureSwitchStateSchema,
   XpTableSchema,
   LevelsSchema,
   QuestionnaireSchema,
@@ -44,9 +44,9 @@ export {
   type DailyGoal,
   type DailyGoals,
   type OnboardingNotificationTimes,
-  type DistractorRule,
   type EditionConfig,
   type FeatureSwitch,
+  type FeatureSwitchState,
   type FeatureSwitches,
   type XpTable,
   type Levels,
@@ -191,6 +191,7 @@ export {
   type CuratedCollection,
 } from './curated-collection';
 export {
+  CommunityWordOutputSchema,
   NotificationTimeBucketSchema,
   type CountedQuestion,
   type CounterEvent,
@@ -241,3 +242,24 @@ export {
   type CrosswordDay,
   type CrosswordWord,
 } from './crossword';
+export {
+  AppVersionSchema,
+  ForceUpdateMinimumSchema,
+  ForceUpdateMinimumsSchema,
+  PlatformSchema,
+  RegionSchema,
+  RuleSchema,
+  RuleTargetsSchema,
+  RuleVerdictSchema,
+  VariantSchema,
+  type AppVersion,
+  type ForceUpdateMinimum,
+  type ForceUpdateMinimums,
+  type Platform,
+  type Rule,
+  type RuleTargets,
+  type RuleVerdict,
+  type Variant,
+} from './feature-switch-rules';
+export { DEPENDS_ON, switchedOn } from './feature-switch-dependencies';
+export { ContentTargetsSchema, type ContentTargets } from './content-targets';

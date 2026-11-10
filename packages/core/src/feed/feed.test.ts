@@ -1,14 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Correction, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
+import type { Correction, EntryKind, Idiom, SynonymRow, Tip, Word } from '@slovo/contracts';
 
 import {
-  buildEntryCard,
-  createEntries,
-  EVERYTHING_IN,
   isTodaysWordOfTheDay,
   openComposition,
-  SEEN_DWELL_MS,
   type Clock,
   type Composition,
   type ContentReadPort,
@@ -16,8 +12,10 @@ import {
   type FeedCard,
   type Random,
   type UserStatePort,
-  type WordFeedCard,
 } from '../index';
+import { buildEntryCard, SEEN_DWELL_MS } from './feed';
+import { createEntries, EVERYTHING_IN } from '../entries/entries';
+import { type WordFeedCard } from './feed-card';
 import { ENTRY_KINDS } from '../entries/entry-kinds';
 import { createMemoryContentPort } from '../testing';
 import {
@@ -156,6 +154,22 @@ describe('the Feed', () => {
 
     expect(ids).toHaveLength(liveIds.length);
     expect(new Set(ids)).toEqual(new Set(liveIds));
+  });
+
+  it('moves past an eligible Entry the Language Pack cannot read', async () => {
+    const expected = await walk(await run());
+    const unreadable = expected[2];
+    const memory = createMemoryContentPort({ words: pack });
+    const content: ContentReadPort = {
+      ...memory,
+      getEntries: async (ids) =>
+        (await memory.getEntries(ids)).filter((entry) => entry.id !== unreadable),
+    };
+    const feed = await run({ content });
+    await feed.next();
+
+    expect((await feed.next())?.entryId).toBe(expected[3]);
+    expect(await walk(feed)).toEqual(expected.filter((id) => id !== unreadable));
   });
 
   it('gives two cards in turn when asked for the next card twice at once', async () => {
@@ -349,7 +363,9 @@ describe('the Feed', () => {
 
       await look(feed, time, 0, SEEN_DWELL_MS);
 
-      expect(await unseenNextDay(records)).not.toContain(feed.cards[0]?.entryId);
+      const first = feed.cards[0]?.entryId;
+      expect(liveIds).toContain(first);
+      expect(await unseenNextDay(records)).not.toContain(first);
     });
 
     it('offers no Seen Word again after a restart in the same Cycle', async () => {
@@ -1181,7 +1197,8 @@ describe('Corrections in the Feed', () => {
       const { feed, position } = await feedOnLinkedWord({ records, clock: time.clock });
       const opened = await feed.openLinkedCorrection(position, 'c_protiazi');
 
-      await look(feed, time, opened ?? -1, SEEN_DWELL_MS);
+      expect(opened).toBe(position + 1);
+      await look(feed, time, position + 1, SEEN_DWELL_MS);
 
       const nextDay = fakeClock('2026-10-12T09:00:00+03:00').clock;
       const unseen = await walk(
@@ -1196,6 +1213,63 @@ describe('Corrections in the Feed', () => {
 
       expect(await feed.openLinkedCorrection(position, 'c_retired')).toBeUndefined();
       expect(await feed.openLinkedCorrection(position, 'c_live0')).toBeUndefined();
+      expect(feed.cards).toHaveLength(count);
+    });
+
+    it('drops the link to a Correction the reader hides, opens none, and links it again once unhidden', async () => {
+      const app = await runApp({ words, corrections: linkedCorrections });
+      const { feed } = app;
+      while (!feed.cards.some((card) => card.entryId === linked.id)) await feed.next();
+      const position = feed.cards.findIndex((card) => card.entryId === linked.id);
+      const link = { correctionId: 'c_protiazi', nonStandardForm: 'not protiazi' };
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([link]);
+
+      await app.hide({ kind: 'entry', entryId: 'c_protiazi' });
+
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([]);
+      expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBeUndefined();
+      expect(feed.cards.map((card) => card.entryId)).not.toContain('c_protiazi');
+
+      await app.hiddenEntries.restore('c_protiazi');
+
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([link]);
+      expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBe(position + 1);
+    });
+
+    it('builds again only the Word cards whose links a hide changes, and keeps every other card as it was', async () => {
+      const app = await runApp({ words, corrections: linkedCorrections });
+      const { feed } = app;
+      while (!feed.cards.some((card) => card.entryId === linked.id)) await feed.next();
+      await feed.next();
+      const before = feed.cards;
+      const position = before.findIndex((card) => card.entryId === linked.id);
+
+      await app.hide({ kind: 'entry', entryId: 'c_protiazi' });
+
+      expect(feed.cards.map((card) => card.entryId)).toEqual(before.map((card) => card.entryId));
+      feed.cards.forEach((card, at) => {
+        if (at === position) expect(card).not.toBe(before[at]);
+        else expect(card).toBe(before[at]);
+      });
+    });
+
+    it('links no Correction the Language Pack lists under no kind, by the one rule the Cycle covers Corrections, and opens none', async () => {
+      const pack = createMemoryContentPort({ words, corrections: linkedCorrections });
+      const content: ContentReadPort = {
+        ...pack,
+        async listIds(kind: EntryKind, categoryId?: string) {
+          const listed =
+            categoryId === undefined || (kind !== 'word' && kind !== 'correction')
+              ? await pack.listIds(kind)
+              : await pack.listIds(kind, categoryId);
+          return listed.filter((id) => id !== 'c_protiazi');
+        },
+      };
+      const { feed, position } = await feedOnLinkedWord({ content });
+      expect(wordCardOf(feed.cards[position])?.linkedCorrections).toEqual([]);
+      const count = feed.cards.length;
+
+      expect(await feed.openLinkedCorrection(position, 'c_protiazi')).toBeUndefined();
       expect(feed.cards).toHaveLength(count);
     });
 

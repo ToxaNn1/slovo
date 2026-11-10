@@ -41,6 +41,7 @@ const word = (entryId: string, title: string): EntryRowModel => ({
   labelKey: 'word',
   spoken: `${title}, what ${title} means`,
   partOfSpeech: 'noun',
+  gender: undefined,
   registers: [],
   rarity: 3,
 });

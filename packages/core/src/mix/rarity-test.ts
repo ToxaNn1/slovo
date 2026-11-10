@@ -58,8 +58,7 @@ export function createRarityTest({
   rarityCeiling: Pick<RarityCeiling, 'set'>;
   random: Random;
 }): RarityTest {
-  const isOn = () =>
-    edition.isFeatureEnabled('rarityTest') && edition.isFeatureEnabled('rarityCeiling');
+  const isOn = () => edition.isFeatureEnabled('rarityTest');
   return {
     async draw() {
       if (!isOn()) return [];

@@ -11,119 +11,135 @@ const validConfig = {
   displayName: 'SLOVO Test',
   accountName: 'Test ID',
   languageTraits: {
-    marksStress: true,
+    stress: { marked: true, vowels: 'a' },
     alphabet: 'a b c',
     sortLocale: 'xx',
-    distractorRule: 'same-part-of-speech',
-    vowels: 'a',
   },
   featureSwitches: {
-    game: true,
-    corrections: true,
-    idioms: true,
-    synonymRows: true,
-    tips: true,
-    account: true,
-    googleSignIn: true,
-    signInWithApple: true,
-    sync: true,
-    contentUpdates: true,
-    notifications: true,
-    widget: true,
-    shareCards: true,
-    pronunciation: true,
-    narratorVoice: true,
-    wordOfTheDay: true,
-    statistics: true,
-    knowledge: true,
-    selfCheck: true,
-    rarityCeiling: true,
-    gameReview: true,
-    gameGuessWord: true,
-    gameCorrection: true,
-    gameStress: true,
-    gamePairs: true,
-    gameSurvival: true,
-    gameTimed: true,
-    gameIdiomMeaning: true,
-    gameAnglicism: true,
-    gameBuildIdiom: true,
-    gameTypeWord: true,
-    gameAnagram: true,
-    gameByLetters: true,
-    gameOrigin: true,
-    dailyCrossword: true,
-    search: true,
-    rarityTest: true,
-    weeklyRecap: true,
-    confirmedEntries: true,
-    yesterday: true,
-    wordOfTheDayArchive: true,
-    activeDaysCalendar: true,
-    politePause: true,
-    firstWeek: true,
-    widgetHint: true,
-    seasonalDecor: true,
-    stressAnimation: true,
-    illustrations: true,
-    mistakeReports: true,
-    communityCounters: true,
-    communityWord: true,
-    calligraphy: true,
-    spotlight: true,
-    appIntents: true,
-    collectionLinks: true,
-    replaceOpenEntry: true,
-    mixKindWeights: true,
-    analytics: true,
-    xpLog: true,
-    streakFreezes: true,
-    streakBreak: true,
-    quickQuestion: true,
-    playStep: true,
-    seenWordXp: true,
-    levels: true,
-    noCounters: true,
-    dailyGoal: true,
-    enoughForToday: true,
-    widgetGoalRing: true,
-    lockScreenWidget: true,
-    questionnaire: true,
-    badges: true,
-    levelLadder: true,
-    newLevelScreen: true,
-    badgeSheet: true,
-    badgeToast: true,
-    streakFreezeCard: true,
-    breakCard: true,
-    calendarDayLines: true,
-    progressShareCards: true,
-    dailyCrosswordShare: true,
-    tracedCrossword: true,
-    eveningNotification: true,
-    notificationFarewell: true,
-    notificationExplainer: true,
-    notificationTimeStep: true,
-    laterQuestions: true,
-    profile: true,
-    mascot: true,
-    sounds: true,
-    reduceMotion: true,
-    fastReveal: true,
-    dashboard: true,
-    mood: true,
-    previousWords: true,
-    correctionTypes: true,
-    curatedCollections: true,
-    swipeMarks: true,
-    searchButton: true,
-    dashboardWordmark: true,
-    categoryScreens: true,
-    correctionCategoryScreens: true,
-    quietCategories: true,
-    collectionBoardStyle: true,
-    profileConfirmedByRarity: true,
-    profileGameBest: true,
+    game: 'on',
+    corrections: 'on',
+    idioms: 'on',
+    synonymRows: 'on',
+    tips: 'on',
+    account: 'on',
+    googleSignIn: 'on',
+    signInWithApple: 'on',
+    sync: 'on',
+    contentUpdates: 'on',
+    notifications: 'on',
+    widget: 'on',
+    shareCards: 'on',
+    pronunciation: 'on',
+    narratorVoice: 'on',
+    wordOfTheDay: 'on',
+    statistics: 'on',
+    knowledge: 'on',
+    selfCheck: 'on',
+    rarityCeiling: 'on',
+    gameReview: 'on',
+    gameGuessWord: 'on',
+    gameCorrection: 'on',
+    gameStress: 'on',
+    gamePairs: 'on',
+    gameSurvival: 'on',
+    gameTimed: 'on',
+    gameIdiomMeaning: 'on',
+    gameAnglicism: 'on',
+    gameBuildIdiom: 'on',
+    gameTypeWord: 'on',
+    gameAnagram: 'on',
+    gameByLetters: 'on',
+    gameOrigin: 'on',
+    dailyCrossword: 'on',
+    search: 'on',
+    rarityTest: 'on',
+    weeklyRecap: 'on',
+    confirmedEntries: 'on',
+    yesterday: 'on',
+    wordOfTheDayArchive: 'on',
+    activeDaysCalendar: 'on',
+    politePause: 'on',
+    firstWeek: 'on',
+    widgetHint: 'on',
+    seasonalDecor: 'on',
+    stressAnimation: 'on',
+    illustrations: 'on',
+    mistakeReports: 'on',
+    communityCounters: 'on',
+    communityWord: 'on',
+    calligraphy: 'on',
+    spotlight: 'on',
+    appIntents: 'on',
+    collectionLinks: 'on',
+    replaceOpenEntry: 'on',
+    mixKindWeights: 'on',
+    analytics: 'on',
+    analyticsSessions: 'on',
+    analyticsFeatureUsed: 'on',
+    analyticsSearchNoResult: 'on',
+    analyticsNotificationPermission: 'on',
+    analyticsNps: 'on',
+    analyticsGames: 'on',
+    xpLog: 'on',
+    streakFreezes: 'on',
+    streakBreak: 'on',
+    quickQuestion: 'on',
+    playStep: 'on',
+    seenWordXp: 'on',
+    levels: 'on',
+    noCounters: 'on',
+    dailyGoal: 'on',
+    enoughForToday: 'on',
+    widgetGoalRing: 'on',
+    lockScreenWidget: 'on',
+    questionnaire: 'on',
+    badges: 'on',
+    levelLadder: 'on',
+    newLevelScreen: 'on',
+    badgeSheet: 'on',
+    badgeToast: 'on',
+    streakFreezeCard: 'on',
+    breakCard: 'on',
+    calendarDayLines: 'on',
+    progressShareCards: 'on',
+    dailyCrosswordShare: 'on',
+    tracedCrossword: 'on',
+    crossingCrossword: 'on',
+    crosswordHint: 'on',
+    crosswordSolveTime: 'on',
+    crosswordSolvedScreen: 'on',
+    crosswordBadgeStamp: 'on',
+    gameAnswerCard: 'on',
+    letterTiles: 'on',
+    survivalStreak: 'on',
+    finishPoster: 'on',
+    eveningNotification: 'on',
+    notificationFarewell: 'on',
+    notificationExplainer: 'on',
+    notificationTimeStep: 'on',
+    laterQuestions: 'on',
+    profile: 'on',
+    mascot: 'on',
+    sounds: 'on',
+    reduceMotion: 'on',
+    fastReveal: 'on',
+    dashboard: 'on',
+    mood: 'on',
+    previousWords: 'on',
+    correctionTypes: 'on',
+    curatedCollections: 'on',
+    swipeMarks: 'on',
+    wordTabs: 'on',
+    searchButton: 'on',
+    dashboardWordmark: 'on',
+    feedTab: 'on',
+    categoryScreens: 'on',
+    correctionCategoryScreens: 'on',
+    quietCategories: 'on',
+    collectionBoardStyle: 'on',
+    profileConfirmedByRarity: 'on',
+    profileGameBest: 'on',
+    forceUpdate: 'on',
   },
   userSettingDefaults: {
     theme: 'system',
@@ -133,10 +149,7 @@ const validConfig = {
     mix: {
       categories: 'all',
       correctionCategories: 'all',
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
+      kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
     },
     rarityCeiling: 5,
   },
@@ -303,7 +316,7 @@ describe('loadEdition', () => {
 
     expect(edition.id).toBe('test');
     expect(edition.locale).toBe('xx-XX');
-    expect(edition.languageTraits.marksStress).toBe(true);
+    expect(edition.languageTraits.stress.marked).toBe(true);
   });
 
   it('reports the display name, the watermark of its Share Cards', () => {
@@ -313,16 +326,16 @@ describe('loadEdition', () => {
   it('reports an Edition that does not mark Stress', () => {
     const edition = loadEdition({
       ...validConfig,
-      languageTraits: { ...validConfig.languageTraits, marksStress: false },
+      languageTraits: { ...validConfig.languageTraits, stress: { marked: false } },
     });
 
-    expect(edition.languageTraits.marksStress).toBe(false);
+    expect(edition.languageTraits.stress).toEqual({ marked: false });
   });
 
   it('reports the Game as disabled when its Feature Switch is off', () => {
     const edition = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, game: false },
+      featureSwitches: { ...validConfig.featureSwitches, game: 'off' },
     });
 
     expect(edition.isFeatureEnabled('game')).toBe(false);
@@ -332,7 +345,7 @@ describe('loadEdition', () => {
   it('turns every Game Mode and the Daily Crossword off while the Game is off', () => {
     const edition = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, game: false },
+      featureSwitches: { ...validConfig.featureSwitches, game: 'off' },
     });
 
     for (const feature of gamePartSwitches) expect(edition.isFeatureEnabled(feature)).toBe(false);
@@ -364,6 +377,15 @@ describe('loadEdition', () => {
     'progressShareCards',
     'dailyCrosswordShare',
     'tracedCrossword',
+    'crossingCrossword',
+    'crosswordHint',
+    'crosswordSolveTime',
+    'crosswordSolvedScreen',
+    'crosswordBadgeStamp',
+    'gameAnswerCard',
+    'letterTiles',
+    'survivalStreak',
+    'finishPoster',
     'fastReveal',
     'dashboard',
     'correctionTypes',
@@ -371,7 +393,7 @@ describe('loadEdition', () => {
     const on = loadEdition(validConfig);
     const off = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, [feature]: false },
+      featureSwitches: { ...validConfig.featureSwitches, [feature]: 'off' },
     });
 
     expect(on.isFeatureEnabled(feature)).toBe(true);
@@ -383,8 +405,7 @@ describe('loadEdition', () => {
 
     expect(languageTraits.alphabet).toEqual(['a', 'b', 'c']);
     expect(languageTraits.sortLocale).toBe('xx');
-    expect(languageTraits.distractorRule).toBe('same-part-of-speech');
-    expect(languageTraits.vowels).toEqual(['a']);
+    expect(languageTraits.stress).toEqual({ marked: true, vowels: ['a'] });
   });
 
   it('reports the user-setting defaults, with a Mix of all left to the Language Pack', () => {
@@ -400,10 +421,7 @@ describe('loadEdition', () => {
       mix: {
         categoryIds: 'all',
         correctionCategoryIds: 'all',
-        corrections: true,
-        idioms: true,
-        synonymRows: true,
-        tips: true,
+        kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
       },
     });
   });
@@ -416,10 +434,7 @@ describe('loadEdition', () => {
         mix: {
           categories: ['speech'],
           correctionCategories: ['work'],
-          corrections: false,
-          idioms: true,
-          synonymRows: true,
-          tips: true,
+          kinds: { correction: false, idiom: true, synonymRow: true, tip: true },
         },
       },
     });
@@ -427,10 +442,7 @@ describe('loadEdition', () => {
     expect(edition.userSettingDefaults.mix).toEqual({
       categoryIds: ['speech'],
       correctionCategoryIds: ['work'],
-      corrections: false,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
+      kinds: { correction: false, idiom: true, synonymRow: true, tip: true },
     });
   });
 
@@ -540,7 +552,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the levels Feature Switch', () => {
     const { levels, ...switches } = validConfig.featureSwitches;
-    expect(levels).toBe(true);
+    expect(levels).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -586,6 +598,25 @@ describe('loadEdition', () => {
     const load = () => loadEdition({ ...validConfig, badges: [{ ...week, family: 'crossword' }] });
     expect(load).toThrow(InvalidEditionConfigError);
     expect(load).toThrow('\nbadges.0.family: ');
+  });
+
+  it('reads the checker shape of a Badge family and a Badge stamp kicker (ADR 0087)', () => {
+    const [run, skill] = validConfig.badgeFamilies;
+    const [week, sharpStress] = validConfig.badges;
+    const badgeFamilies = [run, { ...skill, shape: 'checker' }];
+    const badges = [{ ...week, stampKicker: '7 IN A ROW' }, sharpStress];
+    const edition = loadEdition({ ...validConfig, badgeFamilies, badges });
+
+    expect(edition.badgeFamilies).toEqual(badgeFamilies);
+    expect(edition.badges).toEqual(badges);
+  });
+
+  it('refuses an empty Badge stamp kicker', () => {
+    const [week, sharpStress] = validConfig.badges;
+    const load = () =>
+      loadEdition({ ...validConfig, badges: [{ ...week, stampKicker: '' }, sharpStress] });
+
+    expect(load).toThrow('\nbadges.0.stampKicker: ');
   });
 
   it('refuses Badge families left out, a family id twice, an unknown shape or tone', () => {
@@ -638,7 +669,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the profile Feature Switch', () => {
     const { profile, ...switches } = validConfig.featureSwitches;
-    expect(profile).toBe(true);
+    expect(profile).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -646,7 +677,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the badges Feature Switch', () => {
     const { badges, ...switches } = validConfig.featureSwitches;
-    expect(badges).toBe(true);
+    expect(badges).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -671,7 +702,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the mascot Feature Switch', () => {
     const { mascot, ...switches } = validConfig.featureSwitches;
-    expect(mascot).toBe(true);
+    expect(mascot).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -679,7 +710,7 @@ describe('loadEdition', () => {
 
   it('refuses an Edition without the «Менше руху» Feature Switch', () => {
     const { reduceMotion, ...switches } = validConfig.featureSwitches;
-    expect(reduceMotion).toBe(true);
+    expect(reduceMotion).toBe('on');
     expect(() => loadEdition({ ...validConfig, featureSwitches: switches })).toThrow(
       InvalidEditionConfigError,
     );
@@ -733,7 +764,7 @@ describe('loadEdition', () => {
   );
 
   it('accepts an Edition that lists no origin languages', () => {
-    expect(() => loadEdition({ ...validConfig, originLanguages: [] })).not.toThrow();
+    expect(loadEdition({ ...validConfig, originLanguages: [] }).originLanguages).toEqual([]);
   });
 
   it('lists the Illustrations the app bundles as Edition assets', () => {
@@ -802,14 +833,16 @@ describe('loadEdition', () => {
   });
 
   it('accepts an Edition whose Categories require no history', () => {
-    expect(() => loadEdition({ ...validConfig, categoriesRequiringHistory: [] })).not.toThrow();
+    // Code outside the Core reads this field from the Edition config; the loaded Edition does not carry it.
+    expect(loadEdition({ ...validConfig, categoriesRequiringHistory: [] }).id).toBe(validConfig.id);
   });
 
   it('requires the font file of the Word of the Day', () => {
     const { wordOfTheDayFont: _removed, ...config } = validConfig;
 
     expect(() => loadEdition(config)).toThrow('wordOfTheDayFont');
-    expect(() => loadEdition({ ...validConfig, wordOfTheDayFont: 'Script.otf' })).not.toThrow();
+    // Code outside the Core reads this field from the Edition config; the loaded Edition does not carry it.
+    expect(loadEdition({ ...validConfig, wordOfTheDayFont: 'Script.otf' }).id).toBe(validConfig.id);
   });
 
   it.each(['script.woff', 'fonts/Script.ttf', '', '.ttf'])(
@@ -850,9 +883,11 @@ describe('loadEdition', () => {
     // #767676 on white is 4.54:1, the lightest grey that passes WCAG AA.
     const parchment = { background: '#FFFFFF', text: '#767676' };
 
-    expect(() =>
-      loadEdition({ ...validConfig, widgetPalette: { ...validConfig.widgetPalette, parchment } }),
-    ).not.toThrow();
+    // Code outside the Core reads the palette from the Edition config; the loaded Edition does not carry it.
+    expect(
+      loadEdition({ ...validConfig, widgetPalette: { ...validConfig.widgetPalette, parchment } })
+        .id,
+    ).toBe(validConfig.id);
   });
 
   it.each(['F3E9D2', '#F3E9D', 'rgba(0, 0, 0, 1)'])(
@@ -938,6 +973,7 @@ describe('loadEdition', () => {
       withoutSwitch('dashboardWordmark'),
       'featureSwitches.dashboardWordmark',
     ],
+    ['a missing Feed tab Feature Switch', withoutSwitch('feedTab'), 'featureSwitches.feedTab'],
     [
       'a missing Search button Feature Switch',
       withoutSwitch('searchButton'),
@@ -1038,13 +1074,13 @@ describe('loadEdition', () => {
     ],
     [
       'an unknown Feature Switch',
-      { featureSwitches: { ...validConfig.featureSwitches, share: true } },
+      { featureSwitches: { ...validConfig.featureSwitches, share: 'on' } },
       'featureSwitches',
     ],
     [
-      'an unknown Distractor rule',
-      { languageTraits: { ...languageTraits, distractorRule: 'random' } },
-      'languageTraits.distractorRule',
+      'a Distractor rule',
+      { languageTraits: { ...languageTraits, distractorRule: 'same-part-of-speech' } },
+      'languageTraits',
     ],
     [
       'a repeated letter in the alphabet',
@@ -1053,13 +1089,13 @@ describe('loadEdition', () => {
     ],
     [
       'a Stress-marking Edition without vowels',
-      { languageTraits: { ...languageTraits, vowels: undefined } },
-      'languageTraits.vowels',
+      { languageTraits: { ...languageTraits, stress: { marked: true } } },
+      'languageTraits.stress.vowels',
     ],
     [
       'a vowel that is not a letter of the alphabet',
-      { languageTraits: { ...languageTraits, vowels: 'a e' } },
-      'languageTraits.vowels.1',
+      { languageTraits: { ...languageTraits, stress: { marked: true, vowels: 'a e' } } },
+      'languageTraits.stress.vowels.1',
     ],
     [
       'an unknown Theme',
@@ -1136,10 +1172,7 @@ describe('loadEdition', () => {
           mix: {
             categories: ['nature', 'military'],
             correctionCategories: 'all',
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1153,10 +1186,7 @@ describe('loadEdition', () => {
           mix: {
             categories: [],
             correctionCategories: 'all',
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1170,10 +1200,7 @@ describe('loadEdition', () => {
           mix: {
             categories: 'all',
             correctionCategories: ['nature'],
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1187,10 +1214,7 @@ describe('loadEdition', () => {
           mix: {
             categories: 'all',
             correctionCategories: [],
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1203,10 +1227,7 @@ describe('loadEdition', () => {
           ...userSettingDefaults,
           mix: {
             categories: 'all',
-            corrections: true,
-            idioms: true,
-            synonymRows: true,
-            tips: true,
+            kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
           },
         },
       },
@@ -1439,6 +1460,15 @@ const dependentSwitches = [
   ['progressShareCards', ['shareCards', 'xpLog']],
   ['dailyCrosswordShare', ['shareCards', 'dailyCrossword', 'game']],
   ['tracedCrossword', ['dailyCrossword', 'game']],
+  ['crossingCrossword', ['dailyCrossword', 'game']],
+  ['crosswordHint', ['crossingCrossword', 'dailyCrossword', 'game']],
+  ['crosswordSolveTime', ['crossingCrossword', 'dailyCrossword', 'game']],
+  ['crosswordSolvedScreen', ['crossingCrossword', 'dailyCrossword', 'game']],
+  ['crosswordBadgeStamp', ['crossingCrossword', 'badges', 'xpLog', 'dailyCrossword', 'game']],
+  ['gameAnswerCard', ['game']],
+  ['letterTiles', ['gameByLetters', 'game']],
+  ['survivalStreak', ['gameSurvival', 'game']],
+  ['finishPoster', ['game']],
   ['quickQuestion', ['game']],
   ['playStep', ['game']],
   ['rarityTest', ['rarityCeiling']],
@@ -1449,10 +1479,23 @@ const dependentSwitches = [
   ['swipeMarks', ['knowledge']],
   ['searchButton', ['search']],
   ['dashboardWordmark', ['dashboard', 'wordOfTheDay']],
+  ['feedTab', ['dashboard', 'wordOfTheDay']],
   ['narratorVoice', ['pronunciation']],
   ['categoryScreens', ['dashboard', 'wordOfTheDay']],
   ['correctionCategoryScreens', ['dashboard', 'wordOfTheDay', 'corrections']],
   ['quietCategories', ['categoryScreens', 'dashboard', 'wordOfTheDay']],
+  ['gameSurvival', ['corrections', 'game']],
+  ['gameAnglicism', ['corrections', 'game']],
+  ['gameTypeWord', ['corrections', 'game']],
+  ['gameCorrection', ['corrections', 'game']],
+  ['gameIdiomMeaning', ['idioms', 'game']],
+  ['gameBuildIdiom', ['idioms', 'game']],
+  ['communityWord', ['communityCounters']],
+  ['sync', ['account']],
+  ['widgetHint', ['widget']],
+  ['notificationExplainer', ['notifications']],
+  ['levels', ['xpLog']],
+  ['streakFreezes', ['xpLog']],
 ] as const;
 
 describe('the Feature Switches a feature depends on', () => {
@@ -1461,7 +1504,7 @@ describe('the Feature Switches a feature depends on', () => {
     for (const need of needs) {
       const edition = loadEdition({
         ...validConfig,
-        featureSwitches: { ...validConfig.featureSwitches, [need]: false },
+        featureSwitches: { ...validConfig.featureSwitches, [need]: 'off' },
       });
 
       expect(edition.isFeatureEnabled(feature)).toBe(false);
@@ -1471,7 +1514,7 @@ describe('the Feature Switches a feature depends on', () => {
   it('keep the Collection board style on while the Dashboard is off', () => {
     const edition = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, dashboard: false },
+      featureSwitches: { ...validConfig.featureSwitches, dashboard: 'off' },
     });
 
     expect(edition.isFeatureEnabled('categoryScreens')).toBe(false);
@@ -1481,7 +1524,7 @@ describe('the Feature Switches a feature depends on', () => {
   it('keep a feature on while only a feature that depends on it is off', () => {
     const edition = loadEdition({
       ...validConfig,
-      featureSwitches: { ...validConfig.featureSwitches, badges: false, quickQuestion: false },
+      featureSwitches: { ...validConfig.featureSwitches, badges: 'off', quickQuestion: 'off' },
     });
 
     expect(edition.isFeatureEnabled('xpLog')).toBe(true);

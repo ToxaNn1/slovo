@@ -1,8 +1,20 @@
 import { randomInt } from 'node:crypto';
 
-import { describe, expect, it } from 'vitest';
+import { createAdminAccess, systemClock } from '@slovo/server-core';
+import { describe, expect, it, onTestFinished } from 'vitest';
 
-import { testApp, testEditions } from '../test-support';
+import { runAdminCommand } from '../admin/admin-command';
+import { createAdminStore, hashToken } from '../admin/admin-store';
+import { createDatabase } from '../database/database';
+import { systemRandom } from '../random';
+import {
+  adminCommandDeps,
+  createTestDatabase,
+  silentLogger,
+  testApp,
+  testDatabaseUrl,
+  testEditions,
+} from '../test-support';
 
 const HTML = { accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8' };
 
@@ -22,14 +34,16 @@ const textOf = (page: string) =>
 describe('the web page of a Collection Link', () => {
   /**
    * A backend serving a copy of the UA Edition under the id with its
-   * pack published, and a link shared on it.
+   * content imported, and a link shared on it.
    */
   async function shared(entryIds: string[], edition = 'uk') {
     // The UA Edition is always there, so a link of another Edition can be asked for under its path.
     const folder = testEditions([...new Set(['uk', edition])]);
-    const pack = folder.buildPack(edition);
+    const content = folder.content(edition);
     const backend = testApp({ editions: folder.read() });
-    await backend.publish(pack);
+    // The tests of the file share the database, so each import takes the place of the last.
+    const imported = await backend.importContent(edition, content, { override: true });
+    if (!imported.ok) throw new Error(`${edition} did not import`);
     const name = newName();
     const { id } = await backend.client.collectionLinks.create({ edition, name, entryIds });
     return { ...backend, id, name, edition };
@@ -76,12 +90,78 @@ describe('the web page of a Collection Link', () => {
     expect(page).toContain(`<a href="slovo://c/${id}?edition=uk">Відкрити в SLOVO</a>`);
   });
 
-  it('lists only the Entries the published pack has', async () => {
-    const { request, id } = await shared(['w_00g2ap', 'w_zzzzzz']);
+  /**
+   * A backend on a database of the test's own with the UA Edition imported,
+   * a Власник, an Агент's client with a batch open, and a link shared on it.
+   */
+  async function editable(entryIds: string[]) {
+    const own = await createTestDatabase(testDatabaseUrl());
+    onTestFinished(() => own.drop());
+    const database = createDatabase(own.url, silentLogger);
+    onTestFinished(() => database.close());
+    const folder = testEditions(['uk']);
+    const content = folder.content('uk');
+    const backend = testApp({ database, editions: folder.read() });
+    const imported = await backend.importContent('uk', content);
+    if (!imported.ok) throw new Error('uk did not import');
+    const admin = createAdminAccess({
+      store: createAdminStore(database),
+      clock: systemClock,
+      random: systemRandom,
+      hash: hashToken,
+    });
+    const commandDeps = adminCommandDeps(admin, database);
+    const out: string[] = [];
+    const io = { out: (line: string) => out.push(line), err: () => undefined };
+    // The admin API is on once it has a Власник.
+    await runAdminCommand(['owner', 'add', 'owner@example.com'], commandDeps, io);
+    await runAdminCommand(['agent', 'add', 'claude-content'], commandDeps, io);
+    const token = out.find((line) => line.startsWith('slovo_agent_'));
+    if (token === undefined) throw new Error('no Агент token');
+    const agent = backend.clientOf(token);
+    const { batchId } = await agent.admin.content.openBatch({ editionId: 'uk' });
+    const { id } = await backend.client.collectionLinks.create({
+      edition: 'uk',
+      name: newName(),
+      entryIds,
+    });
+    return { ...backend, agent, batchId, id };
+  }
+
+  it('shows a Word as it is after an edit, with no pack published', async () => {
+    const { request, client, agent, batchId, id } = await editable(['w_00g2ap']);
+    const { words } = await client.content.snapshot({ editionId: 'uk' });
+    const word = words.find((found) => found.id === 'w_00g2ap');
+    if (word === undefined) throw new Error('no Word w_00g2ap');
+
+    await agent.admin.content.edit({
+      editionId: 'uk',
+      kind: 'word',
+      id: 'w_00g2ap',
+      batchId,
+      recordVersion: 1,
+      fields: { ...word, primaryDefinition: 'Сітка тріщинок на старій олійній картині.' },
+    });
+
+    const page = textOf(await (await request(`/uk/c/${id}`, { headers: HTML })).text());
+    expect(page).toContain('кракелю́р');
+    expect(page).toContain('Сітка тріщинок на старій олійній картині.');
+  });
+
+  it('lists only the Entries the Edition has and has not retired', async () => {
+    const { request, agent, batchId, id } = await editable(['w_00g2ap', 'i_25u9l7', 'w_zzzzzz']);
+
+    await agent.admin.content.retire({
+      editionId: 'uk',
+      kind: 'idiom',
+      id: 'i_25u9l7',
+      batchId,
+      recordVersion: 1,
+    });
 
     const page = await (await request(`/uk/c/${id}`, { headers: HTML })).text();
-
     expect(textOf(page)).toContain('кракелю́р');
+    expect(textOf(page)).not.toContain('Фразеологізми');
     expect(page).not.toContain('w_zzzzzz');
   });
 
@@ -108,8 +188,8 @@ describe('the web page of a Collection Link', () => {
 
   it('answers a link of an Edition with Collection Links switched off as not available', async () => {
     // The remote switch stays in the database the tests of the file share.
-    const { request, id, switchOff } = await shared(['w_00g2ap'], 'switched');
-    await switchOff('switched', 'collectionLinks');
+    const { request, id, kill } = await shared(['w_00g2ap'], 'switched');
+    await kill('switched', 'collectionLinks');
 
     const response = await request(`/switched/c/${id}`, { headers: HTML });
 

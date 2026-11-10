@@ -55,7 +55,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: { mix: { categoryIds: [], idioms: idiomsInMix } },
+      userSettingDefaults: { mix: { categoryIds: [], kinds: { idiom: idiomsInMix } } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {
@@ -190,7 +190,11 @@ describe('a Round of «Фразеологізми»', () => {
       if (round.form !== 'pick') throw new Error(`A ${round.form} Round`);
       const asked = askedOf(round);
       const texts = round.options.map(({ text }) => text);
-      expect(round).toMatchObject({ entryKind: 'idiom', prompt: asked.expression });
+      expect(round).toMatchObject({
+        entryKind: 'idiom',
+        prompt: asked.expression,
+        labelKind: 'meaning',
+      });
       expect(texts).toHaveLength(4);
       expect(new Set(texts).size).toBe(4);
       expect(texts.filter((text) => text === asked.primaryDefinition)).toHaveLength(1);

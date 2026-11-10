@@ -6,8 +6,6 @@ import {
   openAccount,
   openComposition,
   openSync,
-  renderStress,
-  SEEN_DWELL_MS,
   type AnalyticsPort,
   type Composition,
   type CurrentGame,
@@ -15,6 +13,8 @@ import {
   type Round,
   type UserStatePort,
 } from '../index';
+import { renderStress } from '../entries/stress';
+import { SEEN_DWELL_MS } from '../feed/feed';
 import {
   createFakeAppleSignInSheet,
   createFakeBackend,
@@ -31,6 +31,7 @@ import {
   testEdition,
   testSchedule,
   word,
+  analyticsInto,
 } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 import { trackChanges } from '../user-state/tracked-user-state';
@@ -87,7 +88,7 @@ async function run({
     userState: await openUserState({ port }),
     clock: time.clock,
     random: seededRandom(7),
-    ...(analytics === undefined ? {} : { analytics }),
+    ...(analytics === undefined ? {} : { analytics: analyticsInto(analytics) }),
   });
   const planning = () => app.game.state.modes.some((offer) => 'planning' in offer);
   if (planning()) {
@@ -610,6 +611,41 @@ describe('the Daily Goal', () => {
     expect(app.xpLog.state.dailyGoal).toBeNull();
   });
 
+  it('reads a past day the same whichever order its records at one instant come in', async () => {
+    const record = (id: string, value: object) => [`xp.${id}`, JSON.stringify(value)] as const;
+    const before = record('old', {
+      kind: 'daily-goal',
+      date: '2026-10-10',
+      at: '2026-10-10T05:00:00.000Z',
+      goal: 20,
+    });
+    const earned = record('2026-10-12-crossword', {
+      kind: 'xp',
+      date: '2026-10-12',
+      at: '2026-10-12T05:00:00.000Z',
+      source: 'daily-crossword',
+      amount: 25,
+    });
+    // Raised at the instant the 25 XP were earned: the record keys order the two.
+    const raised = record('raised', {
+      kind: 'daily-goal',
+      date: '2026-10-12',
+      at: '2026-10-12T05:00:00.000Z',
+      goal: 30,
+    });
+    const metIn = async (order: (typeof earned)[]) => {
+      const { app } = await run({
+        on: dailyGoal,
+        records: new Map([before, ...order]),
+        time: fakeClock('2026-10-15T08:00:00+03:00'),
+      });
+      return app.xpLog.dayOf('2026-10-12').dailyGoal?.met;
+    };
+
+    expect(await metIn([earned, raised])).toBe(true);
+    expect(await metIn([raised, earned])).toBe(true);
+  });
+
   it('keeps a past day met under a goal in XP set before Words counted', async () => {
     const record = (id: string, value: object) => [`xp.${id}`, JSON.stringify(value)] as const;
     const xp = (date: string, at: string, amount: number) =>
@@ -937,5 +973,51 @@ describe('the Seen-Word XP', () => {
     expect(app.xpLog.state.today).toBe(2);
     expect(app.xpLog.state.total).toBe(2);
     expect(app.xpLog.dayOf('2026-10-14').xp).toBe(2);
+  });
+});
+
+describe('the Daily Crossword solve in the XP log (ADR 0087)', () => {
+  const solve = (date: string, extra: object = {}) =>
+    [
+      `xp.daily-crossword-${date}`,
+      JSON.stringify({
+        kind: 'xp',
+        date,
+        at: `${date}T05:00:00.000Z`,
+        source: 'daily-crossword',
+        amount: 15,
+        ...extra,
+      }),
+    ] as const;
+
+  it('reads a solve recorded before the Solve time as no time and no hint', async () => {
+    const { app } = await run({ records: new Map([solve('2026-10-13')]) });
+
+    expect(app.xpLog.crosswordSolveOn('2026-10-13')).toEqual({
+      solveSeconds: undefined,
+      hinted: false,
+    });
+    expect(app.xpLog.crosswordSolveOn('2026-10-14')).toBeUndefined();
+  });
+
+  it('reads the Solve time and the hint a synced record carries', async () => {
+    const records = new Map([solve('2026-10-13', { solveSeconds: 95, hinted: true })]);
+    const { app } = await run({ records });
+
+    expect(app.xpLog.crosswordSolveOn('2026-10-13')).toEqual({ solveSeconds: 95, hinted: true });
+  });
+
+  it('keeps the Solve time and the hint of a solve it awards, still 15 XP', async () => {
+    const { app } = await run();
+    const award = app.xpLog.award({
+      source: 'daily-crossword',
+      date: '2026-10-14',
+      solveSeconds: 222,
+      hinted: false,
+    });
+    award.commit();
+
+    expect(award.amount).toBe(15);
+    expect(app.xpLog.crosswordSolveOn('2026-10-14')).toEqual({ solveSeconds: 222, hinted: false });
   });
 });

@@ -11,6 +11,10 @@ coverage/
 .turbo/
 .astro/
 
+# Stryker's reports, incremental file and sandboxes (packages/core/stryker.config.js, ADR 0097)
+packages/core/reports/
+.stryker-tmp/
+
 # Sourcing tool: the HTTP cache and the drafts awaiting review
 tools/sourcing/.cache/
 tools/sourcing/review/
@@ -27,3 +31,6 @@ apps/mobile/ios/
 
 # The private code-signing key of OTA updates lives in EAS only (ADR 0062).
 private-key.pem
+
+# Local copy review by the marketer and copywriter agents (not shared, see copy-review/README.md)
+copy-review/

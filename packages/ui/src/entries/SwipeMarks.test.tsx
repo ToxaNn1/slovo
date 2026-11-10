@@ -85,7 +85,7 @@ const correction: EntryFeedCard = {
   },
 };
 
-/** A place name, the Idiom card «Черкаси» is in the Ukrainian Edition. */
+/** A place name, the Idiom card «Черкаси» is in the UA Edition. */
 const placeName: EntryFeedCard = {
   kind: 'idiom',
   entryId: 'c1',
@@ -499,6 +499,16 @@ describe('SwipeMarks in a VerticalPager', () => {
     // The toast comes with the next Entry.
     expect(screen.getByText('Marked: unknown')).toBeTruthy();
     expect(screen.queryByTestId('swipe-next-chip')).toBeNull();
+  });
+
+  it('flies a fast fling off at the speed of the finger, sooner than 0.3 s', async () => {
+    await renderPaged();
+
+    // 2400 points a second over the 360 points left: off screen in 0.15 s, not slowing down first.
+    await sideSwipe(-160, -2400, { settle: false });
+    await pass(184);
+
+    expect(cardX()).toBe(-520);
   });
 
   it('turns to the next Entry as the card starts to fly, not after it flew', async () => {

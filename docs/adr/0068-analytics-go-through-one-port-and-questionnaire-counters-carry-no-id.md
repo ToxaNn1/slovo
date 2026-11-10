@@ -2,6 +2,8 @@
 
 The owner must measure D1/D7/D30 retention and goal completion and learn who the readers are, with no one identifiable. ADR 0060 allowed only anonymous Community Counters and named Analytics among the things to avoid; spec #1358 adds Analytics with the reader's consent.
 
+**Amended by ADR 0089.** The anonymous Analytics id is the Install id, one random id the app makes at first launch and keeps until reinstall, not an id PostHog makes; it is also the key of rollouts and variants. The analytics Feature Switch follows the rules of ADR 0089 like every other, and the Community Counters and questionnaire counters still carry no id of any kind.
+
 **One port.** The Core composition gains the port `track(event, properties)` with a typed event union for the 1.0 list: onboarding steps and questionnaire answers, Daily Goal chosen and changed, Game started and finished, the Daily Crossword, Review and Quick Question answers, Daily Goal met, freeze used, Break started, Streak broken, new Level, Badge, notification opened, Share Card shared, Account created, setting changed, screen viewed, Seen, Known and Unknown, Favorites. The Core emits an event where it changes state. The default adapter does nothing. The app shell provides the PostHog adapter: EU host, an anonymous id, no session recording, no tracking prompt, no advertising id, no location, no contacts. The Core imports nothing from PostHog or React Native (ADR 0006).
 
 **One switch.** «Ділитися анонімною статистикою» gates both the adapter and the Community Counters (ADR 0060). Off, nothing is sent and nothing is queued. A Feature Switch of the analytics adapter is required of every Edition and can be turned off remotely only (ADR 0040).

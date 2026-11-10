@@ -1,4 +1,4 @@
-import { describe, expect, it } from '@jest/globals';
+import { describe, expect, it, jest } from '@jest/globals';
 import {
   createMemorySessionStore,
   openAccount,
@@ -20,7 +20,7 @@ import type { AppStateStatus } from 'react-native';
 import { edition } from '../edition/edition';
 import { openOnce, type Opening } from '../opening';
 import { listen } from './lifecycle';
-import { opened, testShell } from './test-support';
+import { opened, switchedTo, testShell } from './test-support';
 
 const clock = { now: () => new Date('2026-10-18T09:00:00.000Z'), timeZone: () => 'Europe/Kyiv' };
 
@@ -147,5 +147,90 @@ describe('the lifecycle', () => {
     expect((await shell.settings.opened()).current.theme).toBe('dark');
     expect(widgetWrites.at(-1)).toBe(second.widget);
     stop();
+  });
+
+  it('logs a Widget Snapshot write that throws after a remote switch changed and the composition reopened', async () => {
+    const consoleError = jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const base = testShell({
+      remoteSwitches: opened({
+        ...(await switchedTo(edition).opened()),
+        ask: () => Promise.resolve(true),
+      }),
+    });
+    let reopened = false;
+    const shell = {
+      ...base,
+      composition: {
+        ...opened(await base.composition.opened()),
+        reopen() {
+          reopened = true;
+          return Promise.resolve();
+        },
+      },
+    };
+    const stop = listen(shell, {
+      clock,
+      appState,
+      writeWidgetSnapshot() {
+        if (reopened) throw new Error('No App Group');
+      },
+      spotlight: { replace: () => Promise.resolve() },
+    });
+
+    await waitFor(() => {
+      expect(consoleError).toHaveBeenCalledWith(
+        'Could not follow the remote Feature Switches',
+        expect.any(Error),
+      );
+    });
+    stop();
+    consoleError.mockRestore();
+  });
+
+  it('asks for the remote Feature Switches every two minutes from launch, reopens the composition when they change, and stops with the app', async () => {
+    const asking: string[] = [];
+    let changed: () => void = () => undefined;
+    const stub = await switchedTo(edition).opened();
+    const base = testShell({
+      remoteSwitches: opened({
+        ...stub,
+        start(onChange: () => void) {
+          asking.push('start');
+          changed = onChange;
+          return () => {
+            asking.push('stop');
+          };
+        },
+      }),
+    });
+    const events: string[] = [];
+    const shell = { ...base, composition: recorded('composition', base.composition, events) };
+    const stop = listen(shell, {
+      clock,
+      appState,
+      writeWidgetSnapshot() {
+        events.push('write the Widget Snapshot');
+      },
+      spotlight: { replace: () => Promise.resolve() },
+    });
+    await waitFor(() => {
+      expect(asking).toEqual(['start']);
+    });
+    await waitFor(() => {
+      expect(events).toContain('write the Widget Snapshot');
+    });
+    events.length = 0;
+
+    changed();
+
+    await waitFor(() => {
+      expect(events).toEqual([
+        'reopen composition',
+        'composition reopened',
+        'write the Widget Snapshot',
+      ]);
+    });
+    stop();
+    expect(asking).toEqual(['start', 'stop']);
   });
 });

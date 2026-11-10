@@ -158,7 +158,7 @@ describe('reports.send', () => {
   it('answers an Edition with Mistake Reports switched off as NOT_FOUND and keeps nothing', async () => {
     const folder = testEditions(['off'], (config) => ({
       ...config,
-      featureSwitches: { ...config.featureSwitches, mistakeReports: false },
+      featureSwitches: { ...config.featureSwitches, mistakeReports: 'off' },
     }));
     const { client, database } = testApp({ editions: folder.read() });
     const entryId = newEntryId();
@@ -170,8 +170,8 @@ describe('reports.send', () => {
   });
 
   it('answers NOT_FOUND once the owner turns Mistake Reports off remotely', async () => {
-    const { client, switchOff } = testApp({ editions: testEditions(['remote']).read() });
-    await switchOff('remote', 'mistakeReports');
+    const { client, kill } = testApp({ editions: testEditions(['remote']).read() });
+    await kill('remote', 'mistakeReports');
 
     await expect(
       client.reports.send(validReport(newEntryId(), { editionId: 'remote' })),

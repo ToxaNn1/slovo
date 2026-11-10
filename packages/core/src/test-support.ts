@@ -1,6 +1,7 @@
 import {
   FeatureSwitchesSchema,
   type Correction,
+  type FeatureSwitches,
   type Idiom,
   type LanguageTraits,
   type SynonymRow,
@@ -10,6 +11,7 @@ import {
 
 import {
   loadEdition,
+  switchedOn,
   type DefaultMix,
   type Edition,
   type UserSettingDefaults,
@@ -17,10 +19,14 @@ import {
 import type { PlayedRound, Round, RoundAnswer } from './game/game';
 import type { RoundOption } from './game/game-mode';
 import type { KnownCounts } from './knowledge/knowledge';
+import type { AnalyticsPort, AnalyticsSink } from './analytics/analytics';
+import type { ReaderFacts } from './edition/remote-switches';
+import { evaluateSwitches } from './edition/switch-evaluator';
 import type { Clock, ContentReadPort, PlannedNotification, Random, Schedule } from './ports';
 import { openEligibility } from './mix/open-eligibility';
 import { createSubject } from './subject';
 import type { UserState } from './user-state/user-state';
+import { createTextComparison } from './text/text-comparison';
 
 // Helpers the Core's tests share. They are not part of the public `index.ts`;
 // `testing.ts` exports `testEdition` to the tests of other packages.
@@ -29,8 +35,8 @@ import type { UserState } from './user-state/user-state';
  * The config of the test Edition, in the shape of a real Edition's
  * `edition.json`: every Feature Switch on, one Category `test`, the one the
  * test Words carry, in its default Mix with every kind of Entry, the Daily
- * Limit off, four moods that shift nothing, and no notification time, origin
- * language or search letter.
+ * Limit off, four moods that shift nothing, the UA Edition's apostrophes, and
+ * no notification time, origin language or search letter.
  */
 const testEditionConfig = {
   id: 'test',
@@ -38,13 +44,13 @@ const testEditionConfig = {
   displayName: 'SLOVO Test',
   accountName: 'Test ID',
   languageTraits: {
-    marksStress: false,
+    stress: { marked: false },
     alphabet: 'a b c d e f g h i j k l m n o p q r s t u v w x y z',
+    apostrophes: "ʼ ' ’",
     sortLocale: 'en',
-    distractorRule: 'same-part-of-speech',
   },
   featureSwitches: Object.fromEntries(
-    Object.keys(FeatureSwitchesSchema.shape).map((feature) => [feature, true]),
+    Object.keys(FeatureSwitchesSchema.shape).map((feature) => [feature, 'on']),
   ),
   userSettingDefaults: {
     theme: 'system',
@@ -55,10 +61,7 @@ const testEditionConfig = {
     mix: {
       categories: ['test'],
       correctionCategories: 'all',
-      corrections: true,
-      idioms: true,
-      synonymRows: true,
-      tips: true,
+      kinds: { correction: true, idiom: true, synonymRow: true, tip: true },
     },
   },
   wordOfTheDayFont: 'Test-Regular.ttf',
@@ -150,13 +153,17 @@ export interface TestEditionOverrides extends Partial<
 > {
   readonly languageTraits?: Partial<LanguageTraits>;
   readonly userSettingDefaults?: Partial<Omit<UserSettingDefaults, 'mix'>> & {
-    readonly mix?: Partial<DefaultMix>;
+    readonly mix?: Partial<Omit<DefaultMix, 'kinds'>> & {
+      readonly kinds?: Partial<DefaultMix['kinds']>;
+    };
   };
 }
 
 /**
  * The Edition a test runs the Core as: the test Edition with the overrides,
- * most often `isFeatureEnabled` and the default Mix. Built by `loadEdition`
+ * most often `isFeatureEnabled` and the default Mix. `isFeatureEnabled` says
+ * which switches are on by themselves; the Edition answers what is in effect,
+ * a feature off while a switch it depends on is off. Built by `loadEdition`
  * from a config in the shape of a real Edition's, so what the Core reads of
  * an Edition is what a config can say.
  */
@@ -165,20 +172,29 @@ export function testEdition({
   userSettingDefaults = {},
   ...overrides
 }: TestEditionOverrides = {}): Edition {
-  const { mix = {}, ...settings } = userSettingDefaults;
+  const { mix: { kinds = {}, ...mix } = {}, ...settings } = userSettingDefaults;
+  const { isFeatureEnabled } = overrides;
   return {
     ...baseTestEdition,
     ...overrides,
+    ...(isFeatureEnabled === undefined ? {} : { isFeatureEnabled: switchedOn(isFeatureEnabled) }),
     languageTraits: { ...baseTestEdition.languageTraits, ...languageTraits },
     userSettingDefaults: {
       ...baseTestEdition.userSettingDefaults,
       ...settings,
-      mix: { ...baseTestEdition.userSettingDefaults.mix, ...mix },
+      mix: {
+        ...baseTestEdition.userSettingDefaults.mix,
+        ...mix,
+        kinds: { ...baseTestEdition.userSettingDefaults.mix.kinds, ...kinds },
+      },
     },
   };
 }
 
 /** The Known counts by kind of Entry: those named, and 0 for every other kind. */
+/** How the test Edition compares text. */
+export const testComparison = createTextComparison(testEdition());
+
 export const knownCounts = (counts: Partial<KnownCounts> = {}): KnownCounts => ({
   word: 0,
   correction: 0,
@@ -439,3 +455,47 @@ export async function openLiveEntries({
   });
   return { entries, mix, rarityCeiling, hiddenEntries };
 }
+
+/** The Feature Switch states of an Edition: on where it turns a feature on, else off. */
+export function switchStatesOf(edition: Pick<Edition, 'isFeatureEnabled'>): FeatureSwitches {
+  return FeatureSwitchesSchema.parse(
+    Object.fromEntries(
+      FeatureSwitchesSchema.keyof().options.map((feature) => [
+        feature,
+        edition.isFeatureEnabled(feature) ? 'on' : 'off',
+      ]),
+    ),
+  );
+}
+
+/** A reader of 1.0.0 on iOS, signed out, with no region: one no targeted Rule matches. */
+export const readerFacts = (): ReaderFacts => ({
+  appVersion: '1.0.0',
+  platform: 'ios',
+  region: undefined,
+  signedIn: false,
+  installId: 'i',
+});
+
+/** The Install id of the test device, which the Analytics events carry. */
+export const TEST_INSTALL_ID = 'test-install';
+
+/** Analytics into `port` from the test device, with no Rule, so no Variant. */
+export const analyticsInto = (port: AnalyticsPort): AnalyticsSink => ({
+  port,
+  switches: {
+    installId: TEST_INSTALL_ID,
+    verdicts: evaluateSwitches({
+      rules: [],
+      states: FeatureSwitchesSchema.parse(
+        Object.fromEntries(FeatureSwitchesSchema.keyof().options.map((feature) => [feature, 'on'])),
+      ),
+      facts: {
+        ...readerFacts(),
+        installId: TEST_INSTALL_ID,
+        clock: { now: () => new Date(0), timeZone: () => 'UTC' },
+        clockOffsetMs: 0,
+      },
+    }),
+  },
+});

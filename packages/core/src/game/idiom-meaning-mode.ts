@@ -3,8 +3,6 @@ import type { Idiom } from '@slovo/contracts';
 import { ROUND_OPTIONS, type GameMode, type RoundOption } from './game-mode';
 import { shuffled } from '../shuffled';
 
-const folded = (text: string) => text.toLowerCase();
-
 const optionOf = (text: string): RoundOption => ({ text, stressedVowels: [] });
 
 /** An idiom proper or a proverb: a place name never plays, its meaning being its story (ADR 0046). */
@@ -13,7 +11,8 @@ const plays = (idiom: Idiom): boolean => idiom.idiomType !== 'placeName';
 /**
  * «Фразеологізми», the Core's Idiom meaning mode (ADR 0052), on while the
  * Edition turns Idioms on: a Round shows an idiom's or a proverb's expression
- * and four meanings, its primary Definition among them. The three
+ * and four meanings, its primary Definition among them, asked by its
+ * meaning (`labelKind` `meaning`). The three
  * Distractors are the primary Definitions of other eligible Idioms that
  * play, of the same Idiom Type first, never one of this Idiom's own
  * Definitions, no two options alike. A place name is never asked or offered.
@@ -24,12 +23,12 @@ export const idiomMeaningMode: GameMode = {
   id: 'idiom-meaning',
   group: 'idioms',
   entryKind: 'idiom',
-  isOn: (edition) =>
-    edition.isFeatureEnabled('gameIdiomMeaning') && edition.isFeatureEnabled('idioms'),
-  buildRound({ answer, eligible, random }) {
+  isOn: (edition) => edition.isFeatureEnabled('gameIdiomMeaning'),
+  buildRound({ answer, eligible, random, comparison }) {
     if (answer.kind !== 'idiom' || !plays(answer)) return undefined;
     const right = answer.primaryDefinition;
-    const taken = new Set([right, ...answer.extraDefinitions].map(folded));
+    const keyOf = (text: string) => comparison.key(text, 'definition');
+    const taken = new Set([right, ...answer.extraDefinitions].map(keyOf));
     const others = eligible.filter(
       (entry): entry is Idiom => entry.kind === 'idiom' && entry.id !== answer.id && plays(entry),
     );
@@ -46,8 +45,8 @@ export const idiomMeaningMode: GameMode = {
     ]) {
       if (distractors.length === ROUND_OPTIONS - 1) break;
       const text = other.primaryDefinition;
-      if (taken.has(folded(text))) continue;
-      taken.add(folded(text));
+      if (taken.has(keyOf(text))) continue;
+      taken.add(keyOf(text));
       distractors.push(text);
     }
     if (distractors.length < ROUND_OPTIONS - 1) return undefined;
@@ -55,6 +54,7 @@ export const idiomMeaningMode: GameMode = {
     return {
       form: 'pick',
       prompt: answer.expression,
+      labelKind: 'meaning',
       options: options.map(optionOf),
       correct: options.indexOf(right),
       sheet: { answer: optionOf(right), example: answer.examples[0] },

@@ -47,6 +47,7 @@ import { scheduleOnRN, scheduleOnUI } from 'react-native-worklets';
 
 import { useHaptics } from '../providers/HapticsProvider';
 import { useReduceMotion } from '../providers/useReduceMotion';
+import { pageTurn } from '../tokens';
 
 /**
  * How a swipe let go settles (ADR 0055, the audit's C1): a critically damped
@@ -74,12 +75,6 @@ const TURN = {
  * would otherwise skip the cross-fade too: the hook alone decides.
  */
 const CROSS_FADE = { duration: 200, easing: Easing.linear, reduceMotion: ReduceMotion.Never };
-
-/** How far, as a share of the page, a slow drag must go to turn the page. */
-const TURN_DISTANCE = 0.2;
-
-/** How fast, in points per second, a flick turns the page whatever its length. */
-const TURN_VELOCITY = 500;
 
 /** How much of a drag past the first or last page still moves it. */
 const EDGE_RESISTANCE = 0.3;
@@ -370,8 +365,8 @@ export function VerticalPager<Item>({
         const turned = translationY - turnFrom.value;
         const share = pageHeight.value === 0 ? 0 : turned / pageHeight.value;
         let target = start;
-        if (velocityY < -TURN_VELOCITY || share < -TURN_DISTANCE) target = start + 1;
-        else if (velocityY > TURN_VELOCITY || share > TURN_DISTANCE) target = start - 1;
+        if (velocityY < -pageTurn.velocity || share < -pageTurn.distance) target = start + 1;
+        else if (velocityY > pageTurn.velocity || share > pageTurn.distance) target = start - 1;
         target = Math.min(Math.max(target, 0), lastIndex.value);
         if (target !== start) {
           turnedTo.value = target;
@@ -641,19 +636,46 @@ function forget(scrolls: SharedValue<Record<number, PageScroll>>, index: number)
 /**
  * The scrolling content of a `VerticalPager` page, for a page that may be
  * taller than the screen. It scrolls with the same swipe that turns pages,
- * and holds still while the swipe turns the page.
+ * and holds still while the swipe turns the page. One drawn inside another
+ * owns the page's scroll while it is drawn, as a Word card's tab that scrolls
+ * inside its fixed frame does (ADR 0091). Outside a `VerticalPager`, as on the
+ * Entry screen, it is a plain scroll view.
  */
-export function PagerScrollView({
-  contentContainerStyle,
-  children,
-  testID,
-}: {
+export function PagerScrollView(props: PagerScrollViewProps) {
+  const pager = useContext(PagerContext);
+  return pager === undefined ? (
+    <ScrollView
+      testID={props.testID}
+      keyboardShouldPersistTaps="handled"
+      // Android scrolls a scroll view inside another only when it is asked to.
+      nestedScrollEnabled
+      contentContainerStyle={props.contentContainerStyle}
+    >
+      {props.children}
+    </ScrollView>
+  ) : (
+    <PageScrollView {...props} pager={pager} />
+  );
+}
+
+interface PagerScrollViewProps {
   contentContainerStyle?: StyleProp<ViewStyle>;
   children: ReactNode;
   testID?: string;
-}) {
-  const pager = useContext(PagerContext);
-  if (pager === undefined) throw new Error('PagerScrollView must be inside a VerticalPager');
+}
+
+/**
+ * Hands the page's scroll to a `PagerScrollView` drawn inside the one that
+ * provides it; the returned function hands it back.
+ */
+const NestScrollContext = createContext<(() => () => void) | undefined>(undefined);
+
+function PageScrollView({
+  contentContainerStyle,
+  children,
+  testID,
+  pager,
+}: PagerScrollViewProps & { pager: PagerContextValue }) {
   const { pan, scrolls, turning } = pager;
   const index = useContext(PageIndexContext);
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
@@ -662,16 +684,30 @@ export function PagerScrollView({
   /** Where the content holds while a swipe turns the page. */
   const heldAt = useSharedValue(0);
 
-  function measure() {
-    scheduleOnUI(keepMax, scrolls, index, Math.max(content.current - viewport.current, 0));
-  }
+  /** How many scroll views drawn inside this one own the page's scroll. */
+  const nested = useRef(0);
+  const outer = useContext(NestScrollContext);
 
-  useEffect(
-    () => () => {
+  const measure = useCallback(() => {
+    if (nested.current > 0) return;
+    scheduleOnUI(keepMax, scrolls, index, Math.max(content.current - viewport.current, 0));
+  }, [index, scrolls]);
+
+  const nest = useCallback(() => {
+    nested.current += 1;
+    return () => {
+      nested.current -= 1;
+      measure();
+    };
+  }, [measure]);
+
+  useEffect(() => {
+    const handBack = outer?.();
+    return () => {
       scheduleOnUI(forget, scrolls, index);
-    },
-    [index, scrolls],
-  );
+      handBack?.();
+    };
+  }, [index, scrolls, outer]);
 
   const onScroll = useAnimatedScrollHandler((event) => {
     const y = event.contentOffset.y;
@@ -685,30 +721,32 @@ export function PagerScrollView({
   });
 
   return (
-    <AnimatedScrollView
-      ref={scrollRef}
-      testID={testID}
-      simultaneousWith={pan}
-      // A sheet opened from the card is a child in React's tree (it is a Modal), and a
-      // scroll view that persists no taps would swallow the first tap in the sheet's
-      // name field to put the keyboard away.
-      keyboardShouldPersistTaps="handled"
-      // The page turns at the ends, so the content never bounces past them.
-      bounces={false}
-      scrollEventThrottle={16}
-      onScroll={onScroll}
-      onLayout={(event: LayoutChangeEvent) => {
-        viewport.current = event.nativeEvent.layout.height;
-        measure();
-      }}
-      onContentSizeChange={(_width: number, height: number) => {
-        content.current = height;
-        measure();
-      }}
-      contentContainerStyle={contentContainerStyle}
-    >
-      {children}
-    </AnimatedScrollView>
+    <NestScrollContext value={nest}>
+      <AnimatedScrollView
+        ref={scrollRef}
+        testID={testID}
+        simultaneousWith={pan}
+        // A sheet opened from the card is a child in React's tree (it is a Modal), and a
+        // scroll view that persists no taps would swallow the first tap in the sheet's
+        // name field to put the keyboard away.
+        keyboardShouldPersistTaps="handled"
+        // The page turns at the ends, so the content never bounces past them.
+        bounces={false}
+        scrollEventThrottle={16}
+        onScroll={onScroll}
+        onLayout={(event: LayoutChangeEvent) => {
+          viewport.current = event.nativeEvent.layout.height;
+          measure();
+        }}
+        onContentSizeChange={(_width: number, height: number) => {
+          content.current = height;
+          measure();
+        }}
+        contentContainerStyle={contentContainerStyle}
+      >
+        {children}
+      </AnimatedScrollView>
+    </NestScrollContext>
   );
 }
 

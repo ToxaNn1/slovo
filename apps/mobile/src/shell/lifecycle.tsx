@@ -64,15 +64,35 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
   reports.listen(composition, (opened, moment) => {
     if (moment === 'launch' || moment === 'background') writeWidgetSnapshot(opened.widget);
   });
+  // A Visit runs from a launch or a return to the background (spec #1709); its events never fail.
+  reports.listen(composition, (opened, moment) => {
+    if (moment === 'launch' || moment === 'return') void opened.analytics.sessionStarted();
+    if (moment === 'background') void opened.analytics.sessionEnded();
+  });
+  function logSwitchesError(error: unknown) {
+    logError('Could not follow the remote Feature Switches', error);
+  }
+  /** Reopens what read the old switches once an ask changed an effective value. */
+  async function reopenForSwitches() {
+    await composition.reopen();
+    // A reopen does what the launch did: the composition makes the plan as it opens.
+    const { state } = composition;
+    if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
+  }
+  // The switches are asked at launch, on each return and every two minutes in the foreground (ADR 0089).
+  let stopAsking: () => void = () => undefined;
   reports.listen(remoteSwitches, (switches, moment) => {
+    if (moment === 'background') stopAsking();
     if (moment !== 'launch' && moment !== 'return') return;
-    // Neither the ask nor a reopen rejects.
-    void switches.ask().then(async (changed) => {
-      if (!changed) return;
-      await composition.reopen();
-      // A reopen does what the launch did: the composition makes the plan as it opens.
-      const { state } = composition;
-      if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
+    switches
+      .ask()
+      .then(async (changed) => {
+        if (changed) await reopenForSwitches();
+      })
+      .catch(logSwitchesError);
+    stopAsking();
+    stopAsking = switches.start(() => {
+      reopenForSwitches().catch(logSwitchesError);
     });
   });
   const stopSpotlight = handOverSpotlight({
@@ -88,11 +108,31 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
       reopen: reopenAfterSync({ settings: shell.settings, composition, writeWidgetSnapshot }),
     });
   }
+  // While the app is in the foreground it checks for a Patch at once and every 15 minutes (ADR 0090).
+  let stopFollowing: () => void = () => undefined;
+  let unsubscribePatches: () => void = () => undefined;
   reports.listen(languagePack, ({ contentUpdate }, moment) => {
+    if (contentUpdate === undefined) return;
+    if (moment === 'launch') {
+      // A Patch changed the records: the composition reopens over them, as after a remote switch.
+      unsubscribePatches = contentUpdate.subscribe(() => {
+        void composition.reopen().then(() => {
+          const { state } = composition;
+          if (state.status === 'ready') writeWidgetSnapshot(state.value.widget);
+        });
+      });
+    }
+    if (moment === 'background') {
+      stopFollowing();
+      return;
+    }
     if (moment !== 'launch' && moment !== 'return') return;
     isOnInEffect('contentUpdates')
       .then(async (on) => {
-        if (on) await contentUpdate?.checkForUpdate();
+        if (!on) return;
+        stopFollowing();
+        stopFollowing = contentUpdate.followForeground();
+        await contentUpdate.checkForUpdate();
       })
       .catch((error: unknown) => {
         logError('Could not check for a content update', error);
@@ -118,7 +158,10 @@ export function listen(shell: Shell, device: LifecycleDevice): () => void {
     });
   }
   return () => {
+    stopAsking();
     stopSpotlight();
+    stopFollowing();
+    unsubscribePatches();
     reports.stop();
   };
 }

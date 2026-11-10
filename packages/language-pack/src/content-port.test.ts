@@ -5,8 +5,8 @@ import { fileURLToPath } from 'node:url';
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import { ALL_KINDS, ENTRY_KINDS, type ContentReadPort } from '@slovo/core';
-import { createMemoryContentPort } from '@slovo/core/testing';
+import { type ContentReadPort } from '@slovo/core';
+import { createMemoryContentPort, ALL_KINDS, ENTRY_KINDS } from '@slovo/core/testing';
 
 import { editionFiles } from './edition-folder';
 import { buildLanguagePack, openLanguagePack, recordContent } from './index';
@@ -238,7 +238,7 @@ describe.each(adapters)('the content read port %s', (_, open) => {
 });
 
 /**
- * Every test here builds or opens the whole Ukrainian Edition, about 1.6 s on an
+ * Every test here builds or opens the whole UA Edition, about 1.6 s on an
  * idle machine since content wave 4. On a busy machine that comes close to
  * Vitest's 5 s default, so these tests get the Feed walk's 20 s.
  */

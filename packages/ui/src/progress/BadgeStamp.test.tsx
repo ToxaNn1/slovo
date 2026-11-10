@@ -49,6 +49,26 @@ describe('BadgeStamp', () => {
     expect(screen.queryByTestId('badge-stamp-burst')).toBeNull();
   });
 
+  it('stamps with no kicker, Mascot or ribbon when they are left out', async () => {
+    await render(
+      <EditionProvider edition={{ locale: 'en' }} strings={testStrings({})}>
+        <BadgeStamp
+          shape="hexagon"
+          symbol="7"
+          name="A week"
+          line="A new Badge, yours for good."
+          doneLabel="DONE"
+          onClose={() => undefined}
+        />
+      </EditionProvider>,
+    );
+    expect(screen.getByRole('header', { name: 'A week' })).toBeOnTheScreen();
+    expect(screen.getByText('A new Badge, yours for good.')).toBeOnTheScreen();
+    expect(screen.queryByText('BADGE')).toBeNull();
+    expect(screen.queryByText('YOURS NOW')).toBeNull();
+    expect(screen.getByTestId('badge-stamp-done')).toBeOnTheScreen();
+  });
+
   it('closes on its done button, which comes in after the ribbon', async () => {
     const onClose = jest.fn();
     await draw(false, onClose);

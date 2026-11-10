@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { renderStress } from '../index';
+import { renderStress } from './stress';
 
 describe('renderStress', () => {
   it('puts a combining acute accent after the stressed vowel', () => {

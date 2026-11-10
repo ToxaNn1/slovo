@@ -18,6 +18,12 @@ export interface Shown {
   readonly tabs: readonly Tab[];
   /** The Game Review under the Game's result. */
   readonly gameReview: boolean;
+  /** The end poster of a Game, «Фініш» or «Час!» or the Lives-over one, in place of the old result screen (spec #1674). */
+  readonly finishPoster: boolean;
+  /** The streak counter of «Виживання» and its record, in place of the Rounds passed (spec #1674). */
+  readonly survivalStreak: boolean;
+  /** The inline answer card under a Round's options in place of the bottom sheet (spec #1674). */
+  readonly answerCard: boolean;
   /** The switchable buttons of an Entry card, wherever the card appears. */
   readonly entryButtons: {
     /** The Share Card button of the action row. */
@@ -31,6 +37,8 @@ export interface Shown {
   };
   /** Whether the Stress mark of a Word card's Lemma falls onto its vowel in the Feed and on the Entry screen. */
   readonly stressFall: boolean;
+  /** Whether the Entry cards of Words, Corrections, Idioms, Tips and Synonym Rows, in the Feed and on the Entry screen, are fixed-height cards with tabs (ADR 0091); the Word of the Day card is the red card while Self-check keeps it closed, and the Feed's header draws no XP bar. */
+  readonly wordTabs: boolean;
   /** Whether the Lemma on the Word of the Day card in the Feed is set in the Edition's calligraphic font. */
   readonly calligraphicLemma: boolean;
   /** Whether an Entry card is in Self-check. */
@@ -98,6 +106,10 @@ export interface Shown {
   readonly progressShareCards: boolean;
   /** «Поділитися» under a solved Daily Crossword, its Share Card with no letters. */
   readonly dailyCrosswordShare: boolean;
+  /** Board 08's «Розгадано!» screen once the crossing Daily Crossword is solved (ADR 0087). */
+  readonly crosswordSolvedScreen: boolean;
+  /** The crossing Daily Crossword's Solve time on its solved screen and share line (ADR 0087). */
+  readonly crosswordSolveTime: boolean;
   /** The Settings row that opens the Profile, with the reader's whole progress. */
   readonly profile: boolean;
   /** The Profile's confirmed Entries by rarity. */
@@ -118,6 +130,8 @@ export interface Shown {
   readonly dashboard: boolean;
   /** The Feed header's wordmark opens the Dashboard (ADR 0079). */
   readonly dashboardWordmark: boolean;
+  /** The «Стрічка» tab opens the Feed; the Dashboard stays the home at launch (ADR 0093). */
+  readonly feedTab: boolean;
   /** The Mood check-in block of the Dashboard, «Як настрій?» (ADR 0076). */
   readonly mood: boolean;
   /** The Curated Collections rail of the Dashboard, «Добірки» (ADR 0076). */
@@ -162,6 +176,9 @@ export function shownOf({
   return {
     tabs: allTabs.filter((tab) => tab !== 'game' || on('game')),
     gameReview: on('gameReview'),
+    finishPoster: on('finishPoster'),
+    survivalStreak: on('survivalStreak'),
+    answerCard: on('gameAnswerCard'),
     entryButtons: {
       shareCard: on('shareCards'),
       pronunciation: on('pronunciation'),
@@ -169,6 +186,7 @@ export function shownOf({
       mistakeReport: on('mistakeReports'),
     },
     stressFall: on('stressAnimation'),
+    wordTabs: on('wordTabs'),
     calligraphicLemma: on('calligraphy'),
     selfCheck: on('selfCheck') && settings.selfCheck,
     selfCheckSetting: on('selfCheck'),
@@ -195,6 +213,8 @@ export function shownOf({
     badges: on('badges'),
     progressShareCards: on('progressShareCards') && !noCounters,
     dailyCrosswordShare: on('dailyCrosswordShare'),
+    crosswordSolvedScreen: on('crosswordSolvedScreen'),
+    crosswordSolveTime: on('crosswordSolveTime'),
     profile: on('profile'),
     profileConfirmedByRarity: on('profileConfirmedByRarity'),
     profileGameBest: on('profileGameBest'),
@@ -205,6 +225,7 @@ export function shownOf({
     fastReveal: on('fastReveal'),
     dashboard: on('dashboard'),
     dashboardWordmark: on('dashboardWordmark'),
+    feedTab: on('feedTab'),
     mood: on('mood'),
     curatedCollections: on('curatedCollections'),
     swipeMarks: on('swipeMarks'),

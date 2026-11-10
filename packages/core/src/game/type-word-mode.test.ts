@@ -24,7 +24,7 @@ function correction(
   }: {
     correctionType?: CorrectionType;
     nonStandardForm?: string;
-    standardEquivalents?: string[];
+    standardEquivalents?: Correction['standardEquivalents'];
     sentence?: string;
   } = {},
 ): Correction {
@@ -89,7 +89,7 @@ async function run({
     content,
     edition: testEdition({
       isFeatureEnabled: (feature) => !off.includes(feature),
-      userSettingDefaults: { mix: { categoryIds: [], corrections: correctionsInMix } },
+      userSettingDefaults: { mix: { categoryIds: [], kinds: { correction: correctionsInMix } } },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(new Map()) }),
     clock: {
@@ -127,7 +127,7 @@ function askedOf({ prompt }: Round): Correction {
   return asked;
 }
 
-const standardOf = (asked: Correction) => asked.standardEquivalents[0] ?? '';
+const standardOf = (asked: Correction) => asked.standardEquivalents[0];
 
 /** Starts «Впиши слово» and plays it to its end, always typing the standard form, keeping each answered Round. */
 async function playGame(app: Composition): Promise<Round[]> {

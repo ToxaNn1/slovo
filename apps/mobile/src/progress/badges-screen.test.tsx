@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { FeatureSwitch, InterfaceSound } from '@slovo/core';
-import { EditionProvider, fill, InterfaceSoundsProvider } from '@slovo/ui';
+import { EditionProvider, InterfaceSoundsProvider } from '@slovo/ui';
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react-native';
 import { renderInGestureRoot } from '../shell/test-render';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -160,12 +160,11 @@ describe('the Badges screen', () => {
       screen.queryByText(editionStrings.settings.profile.badgeStamp.line),
     ).not.toBeOnTheScreen();
     expect(screen.queryByTestId('badge-sheet')).not.toBeOnTheScreen();
-    expect(screen.queryByText(fill(strings.lockedToast, { name: nameOf('streak-3') }))).toBeNull();
     expect(played).toEqual([]);
   });
 
   // Ticket #1646: board 10 p3/p4, the sheet at every tap on a Badge.
-  it('opens the sheet at a tap on a Badge not yet earned, with its progress and the toast, and no shout', async () => {
+  it('opens the sheet at a tap on a Badge not yet earned, with its progress, and no toast or shout', async () => {
     await renderScreen();
 
     await fireEvent.press(screen.getByTestId('badge-streak-3'));
@@ -174,9 +173,7 @@ describe('the Badges screen', () => {
     expect(within(sheet).getByText(strings.sheet.kicker)).toBeOnTheScreen();
     expect(within(sheet).getByRole('header')).toHaveTextContent(nameOf('streak-3'));
     expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Ще ні · 0 з 3 днів');
-    expect(
-      screen.getByText(fill(strings.lockedToast, { name: nameOf('streak-3') })),
-    ).toBeOnTheScreen();
+    expect(screen.queryByText(/не твоя/)).not.toBeOnTheScreen();
     expect(played).toEqual([]);
     expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.line)).toBeNull();
 
@@ -200,7 +197,7 @@ describe('the Badges screen', () => {
     expect(screen.getByTestId('badge-sheet-status')).toHaveTextContent('Отримано 13 жовтня');
     expect(screen.getByTestId('badge-sheet-mark-symbol')).toHaveTextContent('Сл');
     expect(played).toEqual(['shout']);
-    expect(screen.queryByText(fill(strings.lockedToast, { name: nameOf('win-words') }))).toBeNull();
+    expect(screen.queryByText(/не твоя/)).toBeNull();
     expect(screen.queryByText(editionStrings.settings.profile.badgeStamp.line)).toBeNull();
   });
 
@@ -255,5 +252,25 @@ describe('the Badges screen', () => {
     expect(screen.getByTestId('badge-streak-3-mark-symbol')).toBeOnTheScreen();
     expect(screen.queryByTestId('badge-streak-3-mark-new')).toBeNull();
     expect(screen.getByTestId('badge-win-stress-status')).not.toHaveTextContent(/Отримано/);
+  });
+
+  it('draws a «Кросворд» Badge as the checker under its name, and other families with their symbol', async () => {
+    const composition = await renderScreen();
+    expect(screen.getByTestId('badge-crossword-7-mark-checker')).toBeOnTheScreen();
+
+    await act(async () => {
+      composition.xpLog.award({ source: 'daily-crossword', date: '2026-10-13' }).commit();
+      composition.xpLog
+        .award({ source: 'game-finished', mode: 'guess-word', right: 10, played: 10 })
+        .commit();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    const crossword = screen.getByRole('button', { name: nameOf('crossword-7') });
+    expect(within(crossword).getByTestId('badge-crossword-7-mark-checker')).toBeOnTheScreen();
+    expect(within(crossword).queryByTestId('badge-crossword-7-mark-symbol')).toBeNull();
+    const words = screen.getByRole('button', { name: nameOf('win-words') });
+    expect(within(words).getByTestId('badge-win-words-mark-symbol')).toHaveTextContent('Сл');
+    expect(within(words).queryByTestId('badge-win-words-mark-checker')).toBeNull();
   });
 });

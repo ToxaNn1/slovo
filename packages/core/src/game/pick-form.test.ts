@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AnswerSheet, RoundOption } from './answer-form';
 import { pickForm, type PickContent } from './pick-form';
+import { testComparison } from '../test-support';
 
 const option = (text: string): RoundOption => ({ text, stressedVowels: [] });
 const sheet: AnswerSheet = { answer: option('ганок'), example: undefined };
@@ -19,21 +20,25 @@ describe('the pick form', () => {
   });
 
   it('judges the right option right, with the sheet', () => {
-    expect(pickForm.judge(content, round, { form: 'pick', option: 1 })).toEqual({
+    expect(pickForm.judge(content, round, { form: 'pick', option: 1 }, testComparison)).toEqual({
       answer: { form: 'pick', chosen: 1, correct: 1, right: true, sheet },
     });
   });
 
   it('judges another option wrong', () => {
-    expect(pickForm.judge(content, round, { form: 'pick', option: 3 })?.answer.right).toBe(false);
+    expect(
+      pickForm.judge(content, round, { form: 'pick', option: 3 }, testComparison)?.answer.right,
+    ).toBe(false);
   });
 
   it('judges nothing for an option the Round does not have', () => {
-    expect(pickForm.judge(content, round, { form: 'pick', option: 4 })).toBeUndefined();
+    expect(
+      pickForm.judge(content, round, { form: 'pick', option: 4 }, testComparison),
+    ).toBeUndefined();
   });
 
   it('shows the option picked in the Game Review', () => {
-    const judged = pickForm.judge(content, round, { form: 'pick', option: 2 });
+    const judged = pickForm.judge(content, round, { form: 'pick', option: 2 }, testComparison);
     expect(judged && pickForm.reviewAnswer(round, judged.answer)).toEqual(option('сіни'));
   });
 

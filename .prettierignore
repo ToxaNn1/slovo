@@ -15,5 +15,8 @@ apps/backend/migrations/meta/
 # The committed description of the API's /v1, rewritten by `pnpm describe:api`
 packages/contracts/src/api/v1.openapi.json
 
-# The videos, left out of lint, typecheck and tests (ADR 0087)
+# Written by the TanStack router plugin.
+apps/admin/src/routeTree.gen.ts
+
+# The videos, left out of lint, typecheck and tests (ADR 0102)
 apps/video/

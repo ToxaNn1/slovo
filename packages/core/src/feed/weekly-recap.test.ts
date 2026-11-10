@@ -74,7 +74,7 @@ async function run({
     edition: testEdition({
       isFeatureEnabled: (feature) => on.includes(feature) && !off.includes(feature),
       userSettingDefaults: {
-        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
+        mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
       },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
@@ -163,7 +163,7 @@ describe('the Weekly Recap', () => {
   it('comes on the first open of Monday and, swiped past, never again that day', async () => {
     const records = fakeWeek();
     const first = await run({ records, at: monday });
-    await firstCards(first);
+    expect(recapCards(await firstCards(first))).toHaveLength(1);
     // The reader swipes from the first card to the Weekly Recap, then past it.
     await first.feed.show(0);
     await first.feed.show(1);

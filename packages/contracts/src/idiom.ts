@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { SourceSchema, TextSchema } from './shared';
+import { SourceSchema, EntryTextSchema } from './shared';
 import { ExampleSchema } from './word';
 
 /**
@@ -39,15 +39,15 @@ export const IdiomSchema = z
   .strictObject({
     kind: z.literal('idiom').default('idiom'),
     id: IdiomIdSchema,
-    expression: TextSchema.refine(
+    expression: EntryTextSchema.refine(
       (expression) => expression === expression.normalize('NFC'),
       'Expected the expression in Unicode NFC, with every letter composed',
     ),
     idiomType: IdiomTypeSchema,
-    primaryDefinition: TextSchema,
-    extraDefinitions: z.array(TextSchema).default([]),
+    primaryDefinition: EntryTextSchema,
+    extraDefinitions: z.array(EntryTextSchema).default([]),
     examples: z.array(ExampleSchema).default([]),
-    etymology: TextSchema.optional(),
+    etymology: EntryTextSchema.optional(),
     sources: z.array(SourceSchema).min(1),
     retired: z.boolean().default(false),
   })

@@ -1,3 +1,4 @@
+import { buildCorrectionCard, createEntries, EVERYTHING_IN } from '@slovo/core/testing';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -5,15 +6,10 @@ import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import type { Correction } from '@slovo/contracts';
-import {
-  buildCorrectionCard,
-  createEntries,
-  EVERYTHING_IN,
-  type CorrectionCardModel,
-} from '@slovo/core';
+import { type CorrectionCardModel } from '@slovo/core';
 
-import { buildLanguagePack, openLanguagePack, type NodeLanguagePack } from './index';
-import { ukrainianFolder } from './test-support';
+import { openLanguagePack, type NodeLanguagePack } from './index';
+import { buildUkrainianPack } from './test-support';
 
 // The stress traps of the real Ukrainian Language Pack: wrong-stress
 // Corrections whose texts carry their Stress marks (spec #526, seam 1).
@@ -29,7 +25,7 @@ let cardOf: (correction: Correction) => Promise<CorrectionCardModel>;
 beforeAll(async () => {
   workDir = mkdtempSync(join(tmpdir(), 'slovo-stress-traps-'));
   const outFile = join(workDir, 'language-pack.db');
-  const result = buildLanguagePack({ editionDir: ukrainianFolder.dir, outFile });
+  const result = buildUkrainianPack(outFile);
   if (!result.ok) throw new Error('The Ukrainian Language Pack does not build');
   pack = openLanguagePack(outFile);
   corrections = (await pack.getEntries(await pack.listIds('correction'))).filter(
@@ -38,7 +34,7 @@ beforeAll(async () => {
   stressTraps = corrections.filter((correction) => correction.correctionType === 'wrongStress');
   const entries = createEntries({
     content: pack,
-    edition: { isFeatureEnabled: () => true },
+    edition: { isFeatureEnabled: () => true, illustrations: new Set() },
     choices: EVERYTHING_IN,
   });
   cardOf = (correction) => buildCorrectionCard({ correction, entries });

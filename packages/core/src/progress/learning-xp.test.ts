@@ -1,62 +1,25 @@
-import { CrosswordDaySchema, type CrosswordDay } from '@slovo/contracts';
 import { describe, expect, it } from 'vitest';
 
 import { openComposition, type AnalyticsPort, type FeatureSwitch } from '../index';
+import { vocabulary } from '../game/crossing-crossword.test-support';
 import { createMemoryContentPort } from '../testing';
-import { fakeClock, seededRandom, testEdition, word } from '../test-support';
+import { fakeClock, seededRandom, testEdition, word, analyticsInto } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
 
 // Spec #1358, ticket #1367, ADR 0066: the XP of the Daily Crossword and of Review answers.
 
 const words = Array.from({ length: 14 }, (_, index) => word(`w_${String(index).padStart(2, '0')}`));
+/** The Words Review marks, and Words of 3–5 letters for the Daily Crossword to cross. */
 const content = createMemoryContentPort({
   categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
-  words,
+  words: [...words, ...vocabulary],
 });
-
-/**
- * A day of four words:
- *
- *     к і т . .
- *     о . а . .
- *     т . к и т
- */
-const crosswordDay = (date: string): CrosswordDay =>
-  CrosswordDaySchema.parse({
-    date,
-    words: [
-      {
-        entryId: 'w_00',
-        answer: 'кіт',
-        clue: 'Домашній звір',
-        row: 0,
-        column: 0,
-        direction: 'across',
-      },
-      { entryId: 'w_01', answer: 'кот', clue: 'Він же', row: 0, column: 0, direction: 'down' },
-      { entryId: 'w_02', answer: 'так', clue: 'Згода', row: 0, column: 2, direction: 'down' },
-      { entryId: 'w_03', answer: 'кит', clue: 'Ссавець', row: 2, column: 2, direction: 'across' },
-    ],
-  });
-const crossword = { crosswordDay: (date: string) => Promise.resolve(crosswordDay(date)) };
-
-/** Every place of the grid that holds a letter. */
-const cells = [
-  [0, 0],
-  [0, 1],
-  [0, 2],
-  [1, 0],
-  [2, 0],
-  [1, 2],
-  [2, 2],
-  [2, 3],
-  [2, 4],
-] as const;
 
 const ALL_ON: readonly FeatureSwitch[] = [
   'xpLog',
   'game',
   'dailyCrossword',
+  'crossingCrossword',
   'knowledge',
   'analytics',
 ];
@@ -84,22 +47,44 @@ async function run({
   };
   const app = await openComposition({
     content,
-    crossword,
     edition: testEdition({ isFeatureEnabled: (feature) => on.includes(feature) }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),
     clock: time.clock,
     random: seededRandom(seed),
-    analytics,
+    analytics: analyticsInto(analytics),
   });
   return { app, records, events, time };
 }
 
-/** Opens today's Daily Crossword and opens every cell, which solves it. */
-async function solve(app: Awaited<ReturnType<typeof run>>['app']) {
-  const daily = await app.openDailyCrossword();
-  if (daily === undefined) throw new Error('No Daily Crossword today');
-  for (const [row, column] of cells) await daily.openCell({ row, column });
-  return daily;
+type App = Awaited<ReturnType<typeof run>>['app'];
+
+/** Opens today's Daily Crossword. */
+async function daily(app: App) {
+  const opening = await app.openDailyCrossword();
+  if (opening.kind !== 'crossing') throw new Error(`No Daily Crossword today: ${opening.kind}`);
+  return opening.crossword;
+}
+
+/** Enters the Word of this index on its Letter Wheel, letter by letter, and releases. */
+async function enter(crossword: Awaited<ReturnType<typeof daily>>, index: number) {
+  const target = crossword.puzzle.words[index];
+  if (!target) throw new Error('No such Word');
+  await crossword.play({ type: 'select', place: target.start });
+  if (crossword.state.current !== index)
+    await crossword.play({ type: 'select', place: target.start });
+  const used = new Set<number>();
+  for (const letter of target.letters) {
+    const tile = target.wheel.findIndex((candidate, i) => candidate === letter && !used.has(i));
+    used.add(tile);
+    await crossword.play({ type: 'extend', tile });
+  }
+  await crossword.play({ type: 'release' });
+}
+
+/** Opens today's Daily Crossword and enters every Word, which solves it. */
+async function solve(app: App) {
+  const crossword = await daily(app);
+  for (const index of crossword.puzzle.words.keys()) await enter(crossword, index);
 }
 
 /** Records of Entries due for Review today, by their ids. */
@@ -118,8 +103,7 @@ const xpKeys = (records: Map<string, string>) =>
 describe('the Daily Crossword XP', () => {
   it('gives 15 XP when the Daily Crossword is solved, and nothing before', async () => {
     const { app, events } = await run();
-    const daily = await app.openDailyCrossword();
-    await daily?.openCell({ row: 0, column: 0 });
+    await enter(await daily(app), 0);
     expect(app.xpLog.state).toMatchObject({ total: 0, today: 0 });
 
     await solve(app);
@@ -164,7 +148,7 @@ describe('the Daily Crossword XP', () => {
   });
 
   it('appends nothing with the xpLog switch off', async () => {
-    const { app, records } = await run({ on: ['game', 'dailyCrossword'] });
+    const { app, records } = await run({ on: ['game', 'dailyCrossword', 'crossingCrossword'] });
     await solve(app);
     expect(xpKeys(records)).toEqual([]);
   });

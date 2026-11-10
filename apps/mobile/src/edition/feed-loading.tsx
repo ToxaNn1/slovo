@@ -11,6 +11,13 @@ import { editionStrings } from './edition';
  */
 export const TOP_ROW = 80;
 
+/**
+ * The Feed's header over the tabbed cards with nothing under the logo row
+ * (board p1, ADR 0091): the room above the row (8), the row (32) and the
+ * room under it (14), where the first card starts.
+ */
+export const LOGO_ROW = 54;
+
 const { feed: feedStrings } = editionStrings;
 
 /** The Feed's loading state on its own screen: the `mascot` over the red wedges. */

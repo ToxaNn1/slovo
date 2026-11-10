@@ -2,13 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import type { FeatureSwitch, Word } from '@slovo/contracts';
 
-import {
-  openComposition,
-  SEEN_DWELL_MS,
-  type Composition,
-  type Feed,
-  type FeedCard,
-} from '../index';
+import { openComposition, type Composition, type Feed, type FeedCard } from '../index';
+import { SEEN_DWELL_MS } from './feed';
 import { createMemoryContentPort } from '../testing';
 import { fakeClock, randomOf, testEdition, word } from '../test-support';
 import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
@@ -40,7 +35,7 @@ async function run({
     edition: testEdition({
       isFeatureEnabled: (feature) => switches.includes(feature),
       userSettingDefaults: {
-        mix: { corrections: false, idioms: false, synonymRows: false, tips: false },
+        mix: { kinds: { correction: false, idiom: false, synonymRow: false, tip: false } },
       },
     }),
     userState: await openUserState({ port: createMemoryUserStatePort(records) }),

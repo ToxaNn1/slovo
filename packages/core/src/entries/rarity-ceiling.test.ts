@@ -41,10 +41,7 @@ const edition = ({ off = [], ceiling = 5 }: Options) =>
       rarityCeiling: ceiling,
       mix: {
         categoryIds: 'all',
-        corrections: true,
-        idioms: false,
-        synonymRows: false,
-        tips: false,
+        kinds: { correction: true, idiom: false, synonymRow: false, tip: false },
       },
       notificationTimes: ['09:00'],
     },
@@ -113,6 +110,24 @@ describe('the Rarity Ceiling', () => {
     const reopened = await open({ port: records });
     expect(reopened.rarityCeiling.state).toBe(2);
     expect(await raritiesInFeed(reopened)).toEqual(new Set([1, 2]));
+  });
+
+  it('tells its subscribers once the Feed holds no Word above the new ceiling', async () => {
+    const app = await open();
+    await app.feed.show(0);
+    await app.feed.show(1);
+    const raritiesHeld = () =>
+      app.feed.cards.flatMap((card) =>
+        card.entryId?.startsWith('w_') === true ? [Number(card.entryId.slice(3, 4))] : [],
+      );
+    expect(raritiesHeld().some((rarity) => rarity > 2)).toBe(true);
+    const told: number[][] = [];
+    app.rarityCeiling.subscribe(() => told.push(raritiesHeld()));
+
+    await app.rarityCeiling.set(2);
+
+    expect(told).toHaveLength(1);
+    expect(told[0]?.filter((rarity) => rarity > 2)).toEqual([]);
   });
 
   it('skips a ceiling that is not a rarity', async () => {

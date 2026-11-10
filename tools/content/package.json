@@ -2,7 +2,7 @@
   "name": "@slovo/content",
   "version": "0.0.0",
   "private": true,
-  "description": "Dev-only CLI that drafts, edits, retires and checks an Edition's content through $EDITOR, with the Language Pack build's own rules.",
+  "description": "Dev-only CLI: a thin client of the content write API, which checks drafts with the shared content rules and verifies their quotes.",
   "type": "module",
   "scripts": {
     "content": "tsx --disable-warning=ExperimentalWarning src/cli.ts",
@@ -11,15 +11,18 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@slovo/content-rules": "workspace:*",
+    "@slovo/contracts": "workspace:*",
     "@slovo/language-pack": "workspace:*",
     "@slovo/sourcing": "workspace:*"
   },
   "devDependencies": {
     "@slovo/config": "workspace:*",
     "@types/node": "^22.20.5",
-    "eslint": "^10.13.0",
+    "@vitest/coverage-v8": "5.1.0",
+    "eslint": "^10.14.0",
     "tsx": "^4.23.15",
     "typescript": "~6.0.3",
-    "vitest": "^5.0.5"
+    "vitest": "^5.1.0"
   }
 }

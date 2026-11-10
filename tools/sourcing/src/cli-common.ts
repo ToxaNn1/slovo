@@ -63,7 +63,14 @@ export function prepareRun(input: CliInput): CliRun {
   }
 }
 
-/** Prints a line per Lemma, the requests made and where the review report is; gives the exit code. */
+/** The host every kind drafts from: a run that could not reach it drafted nothing it should have. */
+const GOROH_HOST = 'goroh.pp.ua';
+
+/**
+ * Prints a line per Lemma, the requests made and where the review report is;
+ * gives the exit code: 1 for bad input, 3 when a line failed to fetch or
+ * goroh.pp.ua was unreachable, so a script tells a dead run from a good one.
+ */
 export function printSummary(result: SourcingResult): number {
   if (!result.ok) {
     console.error('Nothing fetched; fix the input first:');
@@ -88,7 +95,12 @@ export function printSummary(result: SourcingResult): number {
     console.log(`Skipped for this run: ${host} (${reason})`);
   }
   console.log(`Review report: ${displayPath(result.reportFile)}`);
-  return 0;
+  const fetchFailed = lemmas.some((lemma) =>
+    [...lemma.flags, ...lemma.drafts.flatMap((draft) => draft.flags)].some(
+      (flag) => flag.kind === 'fetch-failed',
+    ),
+  );
+  return fetchFailed || GOROH_HOST in requests.unreachable ? 3 : 0;
 }
 
 /** A path relative to the repo root when it lies inside the repo, absolute otherwise. */

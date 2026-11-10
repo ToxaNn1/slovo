@@ -65,8 +65,13 @@ export async function openRarityCeiling({
     if (rarity.data === state) return;
     await userState.write(record.change(rarity.data));
     state = rarity.data;
-    subscribers.tell();
-    await eligibility.publish();
+    // Eligibility is read again before the subscribers are told, as the Mix
+    // does, so a subscriber told of the new ceiling finds it read again.
+    try {
+      await eligibility.publish();
+    } finally {
+      subscribers.tell();
+    }
   }
 
   return {

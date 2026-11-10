@@ -598,7 +598,7 @@ describe('a Sync procedure', () => {
     async (feature) => {
       const { signIn } = syncing(['on', 'off'], (config) =>
         config.id === 'off'
-          ? { ...config, featureSwitches: { ...config.featureSwitches, [feature]: false } }
+          ? { ...config, featureSwitches: { ...config.featureSwitches, [feature]: 'off' } }
           : config,
       );
       const phone = await signIn();
@@ -613,14 +613,14 @@ describe('a Sync procedure', () => {
   it.each(['sync', 'account'] as const)(
     'is NOT_FOUND while %s is turned off remotely, and served once it is cleared',
     async (feature) => {
-      const { signIn, switchOff, clearSwitch } = syncing();
+      const { signIn, kill, clearRules } = syncing();
       const phone = await signIn();
 
-      await switchOff('uk', feature);
+      await kill('uk', feature);
       for (const run of Object.values(syncProcedures)) {
         await expect(run(phone, 'uk')).rejects.toMatchObject(notFound);
       }
-      await clearSwitch('uk', feature);
+      await clearRules('uk', feature);
       for (const run of Object.values(syncProcedures)) {
         await expect(run(phone, 'uk')).resolves.toBeDefined();
       }
