@@ -73,7 +73,7 @@ export const PatchSchema = z.object({
 
 export type Patch = z.infer<typeof PatchSchema>;
 
-/** How a client or a proxy keeps a Patch: always revalidated, by its ETag. */
+/** How a client or a proxy keeps a Patch: the CDN for a minute, the device revalidating it by its ETag. */
 const PatchCachingSchema = z.object({
   etag: z.string(),
   'cache-control': z.string(),

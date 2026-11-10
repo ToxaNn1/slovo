@@ -5,8 +5,13 @@ import type { EditionRegistry } from '@slovo/server-core';
 import { namesEtag } from '../etag';
 import type { ContentStore } from './content-store';
 
-/** A Patch changes with every edit, so the device revalidates it by its ETag each time. */
-const PATCH_CACHE_CONTROL = 'no-cache';
+/**
+ * The CDN keeps a Patch for a minute, keyed by its URL (the Edition and the
+ * device's content version), so most devices never reach the database; the
+ * device revalidates it by its ETag each time. An edit reaches every device
+ * within that minute, with no purge (ADR 0099).
+ */
+const PATCH_CACHE_CONTROL = 'public, max-age=0, s-maxage=60';
 
 /** The content procedures of the contract, over the Editions and the content tables. */
 export function contentProcedures(
