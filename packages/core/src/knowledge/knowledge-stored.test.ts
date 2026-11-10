@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { openComposition } from '../index';
-import { createFakeNotificationScheduler, createMemoryContentPort } from '../testing';
+import {
+  createFakeNotificationScheduler,
+  createMemoryContentPort,
+  seedUserState,
+} from '../testing';
 import { fakeClock, testEdition, word } from '../test-support';
-import { createMemoryUserStatePort, openUserState } from '../user-state/user-state';
+import { createMemoryUserStatePort } from '../user-state/user-state';
 
 const content = createMemoryContentPort({
   categories: [{ id: 'test', displayName: 'Test', description: 'Test.', tone: 'loud' }],
@@ -23,7 +27,7 @@ async function open(stored: Record<string, string>) {
         mix: { categoryIds: ['test'] },
       },
     }),
-    userState: await openUserState({ port: createMemoryUserStatePort(records) }),
+    userState: await seedUserState({}, { port: createMemoryUserStatePort(records) }),
     clock: time.clock,
     random: { next: () => 0.25 },
     scheduling: {
