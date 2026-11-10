@@ -68,19 +68,10 @@ function mandatory(edition, file, missing = '') {
  * `starter-media/` folder. The rest the app downloads from the Media Store.
  */
 function starterMedia(edition) {
-  const { recordings, illustrations } = starterMediaFiles(join(edition.dir, STARTER_MEDIA_DIR));
-  const byId = (files, indent) =>
-    Object.entries(files)
-      .map(([wordId, file]) => `${indent}${JSON.stringify(wordId)}: ${required(file)},`)
-      .join('\n');
-  const voices = Object.entries(recordings).map(
-    ([voice, files]) =>
-      `        ${JSON.stringify(voice)}: {\n${byId(files, '          ')}\n        },`,
-  );
-  return `{
-      recordings: {\n${voices.join('\n')}\n      },
-      illustrations: {\n${byId(illustrations, '        ')}\n      },
-    }`;
+  const files = Object.entries(starterMediaFiles(join(edition.dir, STARTER_MEDIA_DIR)))
+    .map(([path, file]) => `      ${JSON.stringify(path)}: ${required(file)},`)
+    .join('\n');
+  return `{\n${files}\n    }`;
 }
 
 /**

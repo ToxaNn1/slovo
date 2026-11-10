@@ -57,11 +57,19 @@ function patchOf(
   };
 }
 
-/** The bundled files of the Starter Media: the Word `starter` in the default voice. */
+/** The rows of the Word `starter`, whose Recording in the default voice and Illustration the app bundles. */
+const starterRows = {
+  recordings: [recording('starter', hashOf('s'))],
+  illustrations: [illustration('starter', hashOf('t'))],
+};
+
+/** The bundled files of the Starter Media, by Media Store path: the Word `starter` in the default voice. */
 const starter = {
-  recording: (wordId: string, voice: string) =>
-    wordId === 'starter' && voice === 'oksana' ? 'bundled:starter.mp3' : undefined,
-  illustration: (wordId: string) => (wordId === 'starter' ? 'bundled:starter.png' : undefined),
+  file: (path: string) =>
+    ({
+      [`recordings/oksana/plain/starter.${hashOf('s')}.mp3`]: 'bundled:starter.mp3',
+      [`illustrations/starter.${hashOf('t')}.png`]: 'bundled:starter.png',
+    })[path],
 };
 
 /** The Core media over a memory pack, a memory file cache and a fake fetcher serving every row. */
@@ -77,7 +85,10 @@ async function device({
   needsNewRecording?: string[];
 } = {}) {
   const store = createMemoryContentStore({ contentVersion: 1, needsNewRecording });
-  const patch = patchOf(1, rows);
+  const patch = patchOf(1, {
+    recordings: [...starterRows.recordings, ...(rows.recordings ?? [])],
+    illustrations: [...starterRows.illustrations, ...(rows.illustrations ?? [])],
+  });
   await store.apply(patch, '"uk.2.p2"');
   const cache = createMemoryMediaCache();
   const fetcher = createFakeMediaFetcher();
@@ -111,6 +122,27 @@ describe('the media of a Word card', () => {
       illustration: { kind: 'bundled', asset: 'bundled:starter.png' },
     });
     expect(fetcher.asked).toEqual([]);
+  });
+
+  it('answers a Starter Media Word whose Patch brought a new file remote, at the new URL', async () => {
+    const { media, store } = await device();
+    const patch = patchOf(2, {
+      recordings: [
+        recording('starter', hashOf('s'), { retired: true }),
+        recording('starter', hashOf('u')),
+      ],
+      illustrations: [illustration('starter', hashOf('t'), { retired: true })],
+    });
+    await store.apply(patch, '"uk.3.p2"');
+    await media.patchApplied(patch);
+
+    expect(await media.ofWord('starter')).toEqual({
+      recording: {
+        kind: 'remote',
+        url: `${BASE}/recordings/oksana/plain/starter.${hashOf('u')}.mp3`,
+      },
+      illustration: { kind: 'absent' },
+    });
   });
 
   it('answers a Word with rows and no cached file remote, at its Media Store URL', async () => {

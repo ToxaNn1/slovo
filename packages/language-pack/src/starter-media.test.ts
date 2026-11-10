@@ -147,10 +147,10 @@ describe('The Starter Media folder', () => {
 
   it('holds no files before the build downloads them', () => {
     const dir = mkdtempSync(join(tmpdir(), 'starter-'));
-    expect(starterMediaFiles(dir)).toEqual({ recordings: {}, illustrations: {} });
+    expect(starterMediaFiles(dir)).toEqual({});
   });
 
-  it('gives Metro every file downloaded, by voice and Word id', async () => {
+  it('gives Metro every file downloaded, by Media Store path', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'starter-'));
     const asked: string[] = [];
     const download = (url: string) => {
@@ -159,11 +159,9 @@ describe('The Starter Media folder', () => {
     };
     await downloadStarterMedia(list, dir, download);
     expect(starterMediaFiles(dir)).toEqual({
-      recordings: {
-        anna: { w1: join(dir, 'recordings/anna/plain/w1.a.mp3') },
-        boris: { w1: join(dir, 'recordings/boris/plain/w1.b.mp3') },
-      },
-      illustrations: { w1: join(dir, 'illustrations/w1.c.png') },
+      'recordings/anna/plain/w1.a.mp3': join(dir, 'recordings/anna/plain/w1.a.mp3'),
+      'recordings/boris/plain/w1.b.mp3': join(dir, 'recordings/boris/plain/w1.b.mp3'),
+      'illustrations/w1.c.png': join(dir, 'illustrations/w1.c.png'),
     });
     // A second build downloads nothing it has.
     await downloadStarterMedia(list, dir, download);
@@ -175,7 +173,7 @@ describe('The Starter Media folder', () => {
     await downloadStarterMedia({ ...list, files: [] }, dir, () =>
       Promise.resolve(new Uint8Array()),
     );
-    expect(starterMediaFiles(dir)).toEqual({ recordings: {}, illustrations: {} });
+    expect(starterMediaFiles(dir)).toEqual({});
     expect(existsSync(join(dir, 'list.json'))).toBe(true);
   });
 
@@ -185,6 +183,6 @@ describe('The Starter Media folder', () => {
       downloadStarterMedia(list, dir, () => Promise.resolve(new Uint8Array(1))),
     ).rejects.toThrow('ended at 1 of 3 bytes');
     expect(existsSync(join(dir, 'list.json'))).toBe(false);
-    expect(starterMediaFiles(dir).illustrations).toEqual({});
+    expect(starterMediaFiles(dir)).toEqual({});
   });
 });

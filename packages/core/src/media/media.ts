@@ -28,10 +28,13 @@ export interface CardMedia<Asset> {
   readonly illustration: MediaSource<Asset>;
 }
 
-/** The files the app bundles as Starter Media, by Word id (and voice, for a Recording). */
+/**
+ * The files the app bundles as Starter Media, by Media Store path. The path
+ * carries the file's hash, so a bundled file answers only while its row is
+ * live: a Patch that brings a new file names a new path.
+ */
 export interface StarterMedia<Asset> {
-  recording(wordId: string, voice: string): Asset | undefined;
-  illustration(wordId: string): Asset | undefined;
+  file(path: string): Asset | undefined;
 }
 
 /** The Core media module: what a card shows and plays, what to download ahead and what to drop. */
@@ -97,7 +100,6 @@ export function createMedia<Asset>({
     const row = media.recordings.find((r) => r.narratorVoice === narrator);
     const picture = media.illustrations[0];
     return {
-      voice: narrator,
       recording:
         row === undefined
           ? undefined
@@ -109,12 +111,10 @@ export function createMedia<Asset>({
     };
   }
 
-  async function sourceOf(
-    bundled: Asset | undefined,
-    file: StoredFile | undefined,
-  ): Promise<MediaSource<Asset>> {
-    if (bundled !== undefined) return { kind: 'bundled', asset: bundled };
+  async function sourceOf(file: StoredFile | undefined): Promise<MediaSource<Asset>> {
     if (file === undefined) return { kind: 'absent' };
+    const bundled = starter.file(file.path);
+    if (bundled !== undefined) return { kind: 'bundled', asset: bundled };
     const uri = await cache.get(file.path);
     if (uri !== undefined) return { kind: 'cached', uri };
     return { kind: 'remote', url: file.url };
@@ -129,13 +129,13 @@ export function createMedia<Asset>({
       files.recording !== undefined &&
       isOn('pronunciation') &&
       !media.needsNewRecording &&
-      starter.recording(wordId, files.voice) === undefined
+      starter.file(files.recording.path) === undefined
     )
       wants.push(files.recording);
     if (
       files.illustration !== undefined &&
       isOn('illustrations') &&
-      starter.illustration(wordId) === undefined
+      starter.file(files.illustration.path) === undefined
     )
       wants.push(files.illustration);
     return wants;
@@ -171,11 +171,9 @@ export function createMedia<Asset>({
     return {
       recording:
         isOn('pronunciation') && !media.needsNewRecording
-          ? await sourceOf(starter.recording(wordId, files.voice), files.recording)
+          ? await sourceOf(files.recording)
           : { kind: 'absent' },
-      illustration: isOn('illustrations')
-        ? await sourceOf(starter.illustration(wordId), files.illustration)
-        : { kind: 'absent' },
+      illustration: isOn('illustrations') ? await sourceOf(files.illustration) : { kind: 'absent' },
     };
   }
 

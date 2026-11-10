@@ -1,4 +1,5 @@
 import { describe, expect, it, jest } from '@jest/globals';
+import type { RecordingRow } from '@slovo/contracts';
 import { loadEdition, type Edition, type FeatureSwitch, type UserSettings } from '@slovo/core';
 import { EditionProvider } from '@slovo/ui';
 import { Pressable, Text } from 'react-native';
@@ -8,7 +9,7 @@ import { renderInGestureRoot } from '../shell/test-render';
 import { activeEditionFiles, edition, editionStrings } from '../edition/edition';
 import { SettingsProvider, useSettings } from '../settings/settings';
 import { ShellProvider } from '../shell-value';
-import { opened, settingsAt, switchedTo, testShell } from '../shell/test-support';
+import { opened, packWithMedia, settingsAt, switchedTo, testShell } from '../shell/test-support';
 import { LemmaPronunciation, useSampleReading } from './pronunciation-button';
 
 const { config } = activeEditionFiles;
@@ -17,6 +18,29 @@ const word = 'w_card';
 
 /** The Recording of the card's Word in each Narrator Voice, as the audio module gets it. */
 const cardRecordings: Record<string, number> = { oksana: 201, taras: 202 };
+
+/** The live Recording row of a Word in a Narrator Voice, whose file the app bundles. */
+function bundledRow(wordId: string, narratorVoice: string): RecordingRow {
+  return {
+    wordId,
+    narratorVoice,
+    recordingKind: 'plain',
+    hash: 'h'.repeat(64),
+    size: 1_000,
+    durationMs: 900,
+    retired: false,
+  };
+}
+
+/** The pack of the test: the card's Word in two voices and the sample Word in the default one. */
+const pack = () =>
+  packWithMedia({
+    recordings: [
+      bundledRow(word, 'oksana'),
+      bundledRow(word, 'taras'),
+      bundledRow(edition.narratorVoiceSample.word, 'oksana'),
+    ],
+  });
 
 /** The Recordings the audio module plays, each with the call that ends its reading; a stop clears them. */
 const played: { recording: number; end: () => void }[] = [];
@@ -27,12 +51,11 @@ jest.mock('../edition/edition', () => {
     ...actual,
     activeEditionFiles: {
       ...actual.activeEditionFiles,
+      // Bundled by Media Store path, each the file of a row of `packWithMedia` below, hash `h…`.
       starterMedia: {
-        ...actual.activeEditionFiles.starterMedia,
-        recordings: {
-          oksana: { w_card: 201, [actual.edition.narratorVoiceSample.word]: 301 },
-          taras: { w_card: 202 },
-        },
+        [`recordings/oksana/plain/w_card.${'h'.repeat(64)}.mp3`]: 201,
+        [`recordings/taras/plain/w_card.${'h'.repeat(64)}.mp3`]: 202,
+        [`recordings/oksana/plain/${actual.edition.narratorVoiceSample.word}.${'h'.repeat(64)}.mp3`]: 301,
       },
     },
   };
@@ -65,6 +88,7 @@ async function tapCard(
 ): Promise<number | undefined> {
   const shell = testShell({
     composition: opened(await testShell().composition.opened()),
+    languagePack: pack(),
     remoteSwitches: switchedTo(editionWith(switches)),
     settings: await settingsAt(changes),
   });
@@ -126,6 +150,7 @@ describe('The voice screen › «Звуки»', () => {
   it('stops the sample Word when «Звуки» go off while it reads', async () => {
     const shell = testShell({
       composition: opened(await testShell().composition.opened()),
+      languagePack: pack(),
       remoteSwitches: switchedTo(editionWith({})),
       settings: await settingsAt({}),
     });

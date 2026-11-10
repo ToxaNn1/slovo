@@ -14,6 +14,7 @@ import { ShellProvider } from '../shell-value';
 import { screenSettled } from '../use-open-screen';
 import {
   opened,
+  packWithMedia,
   recordedAnalytics,
   settingsAt,
   switchedTo,
@@ -36,6 +37,20 @@ const sampleRecordings: Record<string, number> = {
   ostap: 104,
 };
 const playedRecordings: number[] = [];
+
+/** The pack of the test: the sample Word's live Recording row in each voice, whose file the app bundles. */
+const samplePack = () =>
+  packWithMedia({
+    recordings: Object.keys(sampleRecordings).map((narratorVoice) => ({
+      wordId: edition.narratorVoiceSample.word,
+      narratorVoice,
+      recordingKind: 'plain',
+      hash: 'h'.repeat(64),
+      size: 1_000,
+      durationMs: 900,
+      retired: false,
+    })),
+  });
 jest.mock('../edition/edition', () => {
   const actual = jest.requireActual<typeof import('../edition/edition')>('../edition/edition');
   const word = actual.edition.narratorVoiceSample.word;
@@ -43,15 +58,13 @@ jest.mock('../edition/edition', () => {
     ...actual,
     activeEditionFiles: {
       ...actual.activeEditionFiles,
-      starterMedia: {
-        ...actual.activeEditionFiles.starterMedia,
-        recordings: Object.fromEntries(
-          Object.entries(sampleRecordings).map(([voice, recording]) => [
-            voice,
-            { [word]: recording },
-          ]),
-        ),
-      },
+      // Bundled by Media Store path, each the file of a row of `samplePack` below, hash `h…`.
+      starterMedia: Object.fromEntries(
+        Object.entries(sampleRecordings).map(([voice, recording]) => [
+          `recordings/${voice}/plain/${word}.${'h'.repeat(64)}.mp3`,
+          recording,
+        ]),
+      ),
     },
   };
 });
@@ -94,6 +107,7 @@ async function renderSettings(
   const settings = await settingsAt({}, analytics);
   const shell = testShell({
     composition: opened(await testShell().composition.opened()),
+    languagePack: samplePack(),
     remoteSwitches: switchedTo(editionWith(switches)),
     settings,
   });

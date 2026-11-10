@@ -1,4 +1,5 @@
 import type { Patch } from '@slovo/contracts/api';
+import type { IllustrationRow, RecordingRow } from '@slovo/contracts';
 
 import type { ContentStore, WordMedia } from '../ports';
 
@@ -16,6 +17,7 @@ export function createMemoryContentStore({
   etag,
   mediaBase = 'https://media.slovo.test',
   needsNewRecording = [],
+  media = {},
 }: {
   editionId?: string;
   contentVersion?: number;
@@ -23,6 +25,8 @@ export function createMemoryContentStore({
   mediaBase?: string;
   /** The Words marked «needs new recording». */
   needsNewRecording?: readonly string[];
+  /** The live media rows the pack holds from the start. */
+  media?: { recordings?: readonly RecordingRow[]; illustrations?: readonly IllustrationRow[] };
 } = {}): MemoryContentStore {
   let base = mediaBase;
   let version = contentVersion;
@@ -31,6 +35,22 @@ export function createMemoryContentStore({
   const applied: Patch[] = [];
   const recordings = new Map<string, WordMedia['recordings'][number]>();
   const illustrations = new Map<string, WordMedia['illustrations'][number]>();
+  function take(patch: {
+    recordings: readonly RecordingRow[];
+    illustrations: readonly IllustrationRow[];
+  }) {
+    for (const row of patch.recordings) {
+      const key = `${row.wordId} ${row.narratorVoice} ${row.recordingKind} ${row.hash}`;
+      if (row.retired) recordings.delete(key);
+      else recordings.set(key, liveOf(row));
+    }
+    for (const row of patch.illustrations) {
+      const key = `${row.wordId} ${row.hash}`;
+      if (row.retired) illustrations.delete(key);
+      else illustrations.set(key, liveOf(row));
+    }
+  }
+  take({ recordings: media.recordings ?? [], illustrations: media.illustrations ?? [] });
   return {
     applied,
     contentVersion: () => version,
@@ -44,16 +64,7 @@ export function createMemoryContentStore({
         return Promise.reject(new Error('The Patch is not for this pack'));
       }
       applied.push(patch);
-      for (const row of patch.recordings) {
-        const key = `${row.wordId} ${row.narratorVoice} ${row.recordingKind} ${row.hash}`;
-        if (row.retired) recordings.delete(key);
-        else recordings.set(key, liveOf(row));
-      }
-      for (const row of patch.illustrations) {
-        const key = `${row.wordId} ${row.hash}`;
-        if (row.retired) illustrations.delete(key);
-        else illustrations.set(key, liveOf(row));
-      }
+      take(patch);
       base = patch.mediaBase;
       version = patch.contentVersion;
       lastEtag = patchEtag;

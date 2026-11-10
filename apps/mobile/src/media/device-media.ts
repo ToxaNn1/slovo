@@ -93,11 +93,9 @@ const fetchMediaFetcher: MediaFetcher = {
   },
 };
 
-/** The Starter Media the app bundles, by Word id (and Narrator Voice, for a Recording). */
+/** The Starter Media the app bundles, by Media Store path. */
 const starter = {
-  recording: (wordId: string, voice: string) =>
-    activeEditionFiles.starterMedia.recordings[voice]?.[wordId],
-  illustration: (wordId: string) => activeEditionFiles.starterMedia.illustrations[wordId],
+  file: (path: string) => activeEditionFiles.starterMedia[path],
 };
 
 /** A media cache that holds nothing, for a binary without the file-system module: every file stays remote. */
