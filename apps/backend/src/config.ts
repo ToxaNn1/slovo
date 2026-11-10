@@ -114,16 +114,15 @@ const ServerVariablesSchema = z.object({
   EDITIONS_DIR: z.string().min(1).default(EDITIONS_DIR),
   // The URL root of the Media Store the snapshot and the Patch name (ADR
   // 0099), with no trailing slash: one setting moves it to media.<domain>.
-  MEDIA_BASE: z.preprocess(
-    (value) => (value === '' ? undefined : value),
+  MEDIA_BASE: unsetWhenEmpty(
     z
       .url({ error: 'must be a URL' })
-      .refine((url) => !url.endsWith('/'), 'must not end with a slash')
-      .default('http://localhost:8787/media'),
+      .refine((url) => !url.endsWith('/'), 'must not end with a slash'),
   ),
   // The Cloudflare R2 bucket of the Media Store and an API token's S3 keys
-  // with write access to it; all four or none. Unset, the Recordings command
-  // keeps its files in memory, which suits development only.
+  // with write access to it; all four or none, required in production. Unset,
+  // the backend and the Recordings command keep their files in memory, which
+  // suits development only.
   R2_ACCOUNT_ID: unsetWhenEmpty(z.string().min(1)),
   R2_BUCKET: unsetWhenEmpty(z.string().min(1)),
   R2_ACCESS_KEY_ID: unsetWhenEmpty(z.string().min(1)),
@@ -146,6 +145,40 @@ const R2_VARIABLES = [
   'R2_ACCESS_KEY_ID',
   'R2_SECRET_ACCESS_KEY',
 ] as const;
+
+/** Where a development backend serves its Media Store from, MEDIA_BASE unset. */
+const DEVELOPMENT_MEDIA_BASE = 'http://localhost:8787/media';
+
+type R2Variables = Partial<Record<(typeof R2_VARIABLES)[number], string | undefined>>;
+
+/** Names each R2 variable that is unset when production needs it, or when another one is set. */
+function refineR2(variables: R2Variables & { NODE_ENV: string }, context: z.RefinementCtx): void {
+  const unset = R2_VARIABLES.filter((name) => variables[name] === undefined);
+  const production = variables.NODE_ENV === 'production';
+  if (!production && unset.length === R2_VARIABLES.length) return;
+  for (const name of unset) {
+    context.addIssue({
+      code: 'custom',
+      path: [name],
+      message: production ? 'is required in production' : 'is required with the other R2 variables',
+    });
+  }
+}
+
+/** The R2 bucket's options, or none while its variables are unset. */
+function r2Of({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY }: R2Variables) {
+  return R2_ACCOUNT_ID === undefined ||
+    R2_BUCKET === undefined ||
+    R2_ACCESS_KEY_ID === undefined ||
+    R2_SECRET_ACCESS_KEY === undefined
+    ? undefined
+    : {
+        accountId: R2_ACCOUNT_ID,
+        bucket: R2_BUCKET,
+        accessKeyId: R2_ACCESS_KEY_ID,
+        secretAccessKey: R2_SECRET_ACCESS_KEY,
+      };
+}
 
 /** The options of PostHog's query API, or none while its key or project is unset. */
 function posthogOf({
@@ -184,6 +217,14 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
   for (const name of required) {
     if (variables[name] === undefined) context.addIssue({ code: 'custom', path: [name], message });
   }
+  if (variables.NODE_ENV === 'production' && variables.MEDIA_BASE === undefined) {
+    context.addIssue({
+      code: 'custom',
+      path: ['MEDIA_BASE'],
+      message: 'must be set in production',
+    });
+  }
+  refineR2(variables, context);
 }).transform(
   ({
     NODE_ENV: _environment,
@@ -196,10 +237,17 @@ export const ServerConfigSchema = ServerVariablesSchema.superRefine((variables, 
     POSTHOG_PERSONAL_API_KEY,
     POSTHOG_PROJECT_ID,
     POSTHOG_HOST,
+    MEDIA_BASE,
+    R2_ACCOUNT_ID,
+    R2_BUCKET,
+    R2_ACCESS_KEY_ID,
+    R2_SECRET_ACCESS_KEY,
     ...rest
   }) => ({
     ...rest,
     posthog: posthogOf({ POSTHOG_PERSONAL_API_KEY, POSTHOG_PROJECT_ID, POSTHOG_HOST }),
+    mediaBase: MEDIA_BASE ?? DEVELOPMENT_MEDIA_BASE,
+    r2: r2Of({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY }),
     smtp: {
       host: SMTP_HOST ?? 'localhost',
       port: SMTP_PORT ?? 1025,
@@ -253,35 +301,10 @@ export const RecordingsConfigSchema = ServerVariablesSchema.pick({
   RECORDINGS_PYTHON: true,
   RECORDINGS_MODEL_DIR: true,
 })
-  .superRefine((variables, context) => {
-    const unset = R2_VARIABLES.filter((name) => variables[name] === undefined);
-    const required = variables.NODE_ENV === 'production' || unset.length < R2_VARIABLES.length;
-    if (!required) return;
-    for (const name of unset) {
-      context.addIssue({
-        code: 'custom',
-        path: [name],
-        message:
-          variables.NODE_ENV === 'production'
-            ? 'is required in production'
-            : 'is required with the other R2 variables',
-      });
-    }
-  })
+  .superRefine(refineR2)
   .transform(({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, ...rest }) => ({
     ...rest,
-    r2:
-      R2_ACCOUNT_ID === undefined ||
-      R2_BUCKET === undefined ||
-      R2_ACCESS_KEY_ID === undefined ||
-      R2_SECRET_ACCESS_KEY === undefined
-        ? undefined
-        : {
-            accountId: R2_ACCOUNT_ID,
-            bucket: R2_BUCKET,
-            accessKeyId: R2_ACCESS_KEY_ID,
-            secretAccessKey: R2_SECRET_ACCESS_KEY,
-          },
+    r2: r2Of({ R2_ACCOUNT_ID, R2_BUCKET, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY }),
   }));
 
 /** An R2 variable the media import can't run without. */
