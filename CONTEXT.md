@@ -327,7 +327,7 @@ An Entry is Seen in the current Cycle once its card stayed on screen for a minim
 _Avoid_: Viewed, read
 
 **Cycle**:
-One pass through all eligible Entries. When every Entry is Seen, the user is told to wait for new Words, and the next swipe starts a new Cycle in which nothing is Seen yet.
+One pass through all eligible Entries. The first Cycle opens with the Starter Words, shuffled among themselves; later Cycles have no such head. When every Entry is Seen, the user is told to wait for new Words, and the next swipe starts a new Cycle in which nothing is Seen yet.
 _Avoid_: Round (that is a Game term), loop
 
 **Knowledge Mark**:
