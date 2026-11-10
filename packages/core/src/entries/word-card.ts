@@ -83,10 +83,7 @@ export async function buildWordCard({
   entries,
 }: {
   word: Word;
-  entries: Pick<
-    Entries,
-    'linkedCorrections' | 'categories' | 'linkingSynonymRow' | 'getMany'
-  >;
+  entries: Pick<Entries, 'linkedCorrections' | 'categories' | 'linkingSynonymRow' | 'getMany'>;
 }): Promise<WordCardModel> {
   const [linked, categories, synonymRow] = await Promise.all([
     entries.linkedCorrections(word),

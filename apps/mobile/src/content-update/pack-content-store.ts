@@ -1,13 +1,14 @@
 import type { ContentStore, WordMedia } from '@slovo/core';
 
-/** A Patch the content store applies. */
-type Patch = Parameters<ContentStore['apply']>[0];
 import {
   applyPatch,
   mediaOf,
   patchStateOf,
   type PackWriteDatabase,
 } from '@slovo/language-pack/reader';
+
+/** A Patch the content store applies. */
+type Patch = Parameters<ContentStore['apply']>[0];
 
 /** The Patch-related state of the pack, read in a transaction of its own. */
 async function stateOf(db: PackWriteDatabase) {
